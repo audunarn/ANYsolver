@@ -1,0 +1,219 @@
+{
+  "cases": {
+    "beam_column_buckling": {
+      "residuals": {
+        "status": "ok"
+      },
+      "results": {
+        "critical_load_factor": 647721.8609605149,
+        "num_modes_returned": 2
+      },
+      "timing": {
+        "solve_seconds": null
+      },
+      "topology": {
+        "boundary_conditions": 2,
+        "dofs": 30,
+        "elements": 4,
+        "nodes": 5
+      }
+    },
+    "beam_static": {
+      "residuals": {
+        "relative_residual": 0.0,
+        "status": "converged"
+      },
+      "results": {
+        "max_translation": 0.0015887873015873024,
+        "solution_norm": 0.003410093817860625,
+        "tip_uz": -0.0015887873015873024
+      },
+      "timing": {
+        "solve_seconds": null
+      },
+      "topology": {
+        "boundary_conditions": 1,
+        "dofs": 18,
+        "elements": 2,
+        "nodes": 3
+      }
+    },
+    "cylinder_static": {
+      "residuals": {
+        "relative_rigid_body_load_imbalance": 1.1627944027558828e-17,
+        "status": "converged"
+      },
+      "results": {
+        "max_displacement_norm": 1.8546129562454215e-07,
+        "max_radial_displacement": 1.8332231180154412e-07,
+        "nominal_von_mises": 43301.270189221934,
+        "von_mises_mean": 40086.811671528456
+      },
+      "timing": {
+        "solve_seconds": null
+      },
+      "topology": {
+        "elements": 16,
+        "nodes": 24,
+        "shell_elements": 16
+      }
+    },
+    "nonlinear_static": {
+      "residuals": {
+        "failure_reason": "None",
+        "status": "completed"
+      },
+      "results": {
+        "load_factor": 1.0,
+        "max_translation": 4.761904761904762e-08,
+        "peak_load_factor": 1.0,
+        "steps": 2
+      },
+      "timing": {
+        "solve_seconds": null
+      },
+      "topology": {
+        "boundary_conditions": 1,
+        "dofs": 12,
+        "elements": 1,
+        "nodes": 2
+      }
+    },
+    "plate_shell_static": {
+      "residuals": {
+        "relative_residual": 0.0,
+        "status": "converged"
+      },
+      "results": {
+        "max_translation": 0.0,
+        "solution_norm": 0.0
+      },
+      "timing": {
+        "solve_seconds": null
+      },
+      "topology": {
+        "boundary_conditions": 1,
+        "dofs": 36,
+        "elements": 2,
+        "nodes": 6
+      }
+    },
+    "transient_newmark": {
+      "residuals": {
+        "status": "completed"
+      },
+      "results": {
+        "energy_drift": 98.9175284568363,
+        "final_ux": 4.9957515290537056e-05,
+        "peak_displacement": 4.9957515290537056e-05
+      },
+      "timing": {
+        "solve_seconds": null
+      },
+      "topology": {
+        "boundary_conditions": 2,
+        "dofs": 12,
+        "elements": 1,
+        "nodes": 2
+      }
+    }
+  },
+  "commit": "4f25f9b19f60d9cc6f06bd7bd9d9649138eb7264",
+  "environment": {
+    "numpy": "2.4.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.9"
+  },
+  "generated_at": "2026-06-16T13:02:27Z",
+  "known_limitations": [
+    "Baselines are local deterministic smoke anchors, not external validation references.",
+    "Timing fields are informational and excluded from numeric baseline comparison."
+  ],
+  "schema_version": 1,
+  "tolerances": {
+    "beam_column_buckling": {
+      "residuals.relative_residual": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "residuals.relative_rigid_body_load_imbalance": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "results.*": {
+        "atol": 1e-10,
+        "rtol": 1e-08
+      }
+    },
+    "beam_static": {
+      "residuals.relative_residual": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "residuals.relative_rigid_body_load_imbalance": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "results.*": {
+        "atol": 1e-10,
+        "rtol": 1e-08
+      }
+    },
+    "cylinder_static": {
+      "residuals.relative_residual": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "residuals.relative_rigid_body_load_imbalance": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "results.*": {
+        "atol": 1e-10,
+        "rtol": 1e-08
+      }
+    },
+    "nonlinear_static": {
+      "residuals.relative_residual": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "residuals.relative_rigid_body_load_imbalance": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "results.*": {
+        "atol": 1e-10,
+        "rtol": 1e-08
+      }
+    },
+    "plate_shell_static": {
+      "residuals.relative_residual": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "residuals.relative_rigid_body_load_imbalance": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "results.*": {
+        "atol": 1e-10,
+        "rtol": 1e-08
+      }
+    },
+    "transient_newmark": {
+      "residuals.relative_residual": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "residuals.relative_rigid_body_load_imbalance": {
+        "atol": 1e-08,
+        "rtol": 0.0
+      },
+      "results.*": {
+        "atol": 1e-10,
+        "rtol": 1e-08
+      }
+    }
+  }
+}

@@ -5,26 +5,6 @@ shell, stiffened-panel, and cylindrical-shell analysis. It is an engineering
 solver with an explicit qualification scope, not a general-purpose CAD,
 contact, or fracture platform.
 
-Install the released package with:
-
-```powershell
-python -m pip install ANYsolver
-```
-
-For coordinated local development with ANYstructure:
-
-```powershell
-python -m pip install -e C:\Github\ANYsolver
-```
-
-Core analyses are available directly from `anysolver`; normalized flat-panel
-and cylinder workflows are exposed through `anysolver.runtime`:
-
-```python
-from anysolver import FEModel, LoadCase, solve_linear
-from anysolver.runtime import LightweightFEMConfig, run_production_fem
-```
-
 The source code and tests are authoritative. Generated reports under
 `reports/` are dated evidence snapshots and must be regenerated after solver
 changes before making release claims.
@@ -78,18 +58,16 @@ the generated production-scope artifacts before production use.
 
 ## Documentation map
 
-- [`ARCHITECTURE.md`](docs/ARCHITECTURE.md): package boundaries, analysis flow, and
+- [`ARCHITECTURE.md`](ARCHITECTURE.md): package boundaries, analysis flow, and
   invariants.
-- [`THEORY.md`](docs/THEORY.md): implemented formulations and validity limits.
-- [`ARC_LENGTH.md`](docs/ARC_LENGTH.md): continuation controls and use.
-- [`NONLINEAR_PERFORMANCE.md`](docs/NONLINEAR_PERFORMANCE.md): nonlinear assembly,
+- [`THEORY.md`](THEORY.md): implemented formulations and validity limits.
+- [`ARC_LENGTH.md`](ARC_LENGTH.md): continuation controls and use.
+- [`NONLINEAR_PERFORMANCE.md`](NONLINEAR_PERFORMANCE.md): nonlinear assembly,
   sparse backend, threading, and diagnostics.
-- [`QUALITY_CONTROL.md`](docs/QUALITY_CONTROL.md): verification commands, evidence
+- [`QUALITY_CONTROL.md`](QUALITY_CONTROL.md): verification commands, evidence
   hierarchy, and current checked status.
-- [`reference_cases/README.md`](docs/reference_cases/README.md):
+- [`../tests/reference_cases/README.md`](../tests/reference_cases/README.md):
   local CalculiX/PrePoMax reference-case layout.
-- [`MIGRATION.md`](MIGRATION.md): source provenance, inclusion boundary, and
-  import changes.
 
 ## Basic verification
 
