@@ -115,7 +115,11 @@ def test_triangular_shell_stiffness_mass_pressure_and_geometric_assembly(
 
     scale = max(float(np.max(np.abs(np.diag(K)))), 1.0)
     eigenvalues = np.linalg.eigvalsh(0.5 * (K + K.T))
-    near_zero_modes = int(np.sum(np.abs(eigenvalues) < 1.0e-8 * max(abs(float(eigenvalues[-1])), 1.0)))
+    spectral_scale = max(abs(float(eigenvalues[-1])), 1.0)
+    # Hourglass modes are deliberately stabilized at 1e-8 of the spectral
+    # scale. Keep the rigid-mode cutoff one order lower so LAPACK rounding
+    # cannot classify a stabilized mode as an additional rigid mode.
+    near_zero_modes = int(np.sum(np.abs(eigenvalues) < 1.0e-9 * spectral_scale))
     assert near_zero_modes == 6
 
     rigid_modes = [_rigid_translation(element, i) for i in range(3)]
