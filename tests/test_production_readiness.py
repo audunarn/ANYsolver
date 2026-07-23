@@ -5,12 +5,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from anysolver.elements import ShellElement
+from anysolver.fe_core import FEModel
 from anysolver.production_readiness import (
     build_capability_matrix,
     build_verification_scope_statement,
     scope_statement_markdown,
     write_production_readiness_artifacts,
 )
+from anysolver.validation import validate_production_model
 
 
 def _fake_report() -> dict:
@@ -46,8 +49,39 @@ def test_capability_matrix_reflects_blocked_gates() -> None:
 
     assert by_feature["flat_thin_shell_linear_static_modal_buckling"].status == "not_qualified"
     assert by_feature["flat_thin_shell_linear_static_modal_buckling"].gate_blockers == ["SHELL-009"]
+    assert by_feature["flat_thin_shell_linear_static_modal_buckling"].limits["shell_formulations"] == ["Q4", "Q8"]
+    assert any(
+        "Q8R is experimental" in limitation
+        for limitation in by_feature["flat_thin_shell_linear_static_modal_buckling"].limitations
+    )
     assert by_feature["curved_thin_stiffened_shell"].status == "not_evaluated"
     assert by_feature["unsupported_general_purpose_fe"].status == "unsupported"
+
+
+def test_production_validation_marks_q8r_as_experimental() -> None:
+    model = FEModel("q8r_validation")
+    model.add_material("steel", 210.0e9, 0.3)
+    coordinates = (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.0, 0.0),
+        (1.0, 1.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.5, 0.0, 0.0),
+        (1.0, 0.5, 0.0),
+        (0.5, 1.0, 0.0),
+        (0.0, 0.5, 0.0),
+    )
+    for node_id, coordinate in enumerate(coordinates, start=1):
+        model.add_node(node_id, *coordinate)
+    model.add_element(
+        1,
+        ShellElement(1, list(range(1, 9)), "steel", thickness=0.01, reduced_integration=True),
+    )
+
+    report = validate_production_model(model, allow_free_mechanisms=True)
+    issue = next(item for item in report.issues if item.code == "SHELL002")
+    assert issue.severity == "warning"
+    assert "experimental" in issue.message
 
 
 def test_scope_statement_and_artifact_writer() -> None:

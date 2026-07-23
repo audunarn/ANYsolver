@@ -211,6 +211,10 @@ def solve_eigenvalue_buckling(
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
 
+    # Make the solve independent of whether a caller happened to run another
+    # constrained analysis first.  Rigid-mode filtering reads the active DOF
+    # constraints, so boundary conditions must be applied here explicitly.
+    model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)
     KG, geometric_info = assemble_geometric_stiffness_matrix(model, element_states)
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)

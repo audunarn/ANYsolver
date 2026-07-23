@@ -17,6 +17,9 @@ from anysolver.nonlinear_performance_batch_c import (
 )
 from anysolver.nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
 from anysolver.nonlinear_static import solve_static_nonlinear
+from anysolver.nonlinear_static import _ensure_nonlinear_acceleration
+
+_ensure_nonlinear_acceleration()
 
 
 def _weighted_transformation(total_dofs: int) -> sparse.csr_matrix:

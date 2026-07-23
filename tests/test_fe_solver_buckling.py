@@ -74,6 +74,26 @@ def test_eigenvalue_buckling_returns_euler_column_scale_for_pinned_beam():
     assert result.result_case["solver_backend"] in {"scipy_superlu", None}
 
 
+def test_buckling_applies_model_constraints_independent_of_prior_call_history():
+    preapplied_model, _, _ = _beam_column_model(num_elements=8)
+    fresh_model, _, _ = _beam_column_model(num_elements=8)
+    fresh_model.mesh.dof_manager._constrained_dofs.clear()
+    assert fresh_model.boundary_conditions
+    assert fresh_model.mesh.dof_manager._constrained_dofs == set()
+    states = {element_id: {"axial_compression": 1.0} for element_id in preapplied_model.mesh.elements}
+
+    preapplied = solve_eigenvalue_buckling(preapplied_model, states, num_modes=2)
+    fresh = solve_eigenvalue_buckling(fresh_model, states, num_modes=2)
+
+    assert preapplied.solver_status == fresh.solver_status == "ok"
+    assert fresh.critical_load_factor == pytest.approx(preapplied.critical_load_factor, rel=1.0e-12)
+    assert fresh.num_modes_returned == preapplied.num_modes_returned
+    constrained = sorted(fresh_model.mesh.dof_manager._constrained_dofs)
+    assert constrained
+    for mode in fresh.modes:
+        np.testing.assert_allclose(mode.mode_shape[constrained], 0.0, atol=1.0e-12)
+
+
 def test_buckling_mode_shapes_respect_fixed_constraint_dofs():
     model, _, _ = _beam_column_model(num_elements=6)
     states = {element_id: {"axial_compression": 1.0} for element_id in model.mesh.elements}
@@ -199,7 +219,9 @@ def test_repeated_buckling_mode_groups_are_reported_for_symmetric_column():
     )
 
     assert result.solver_status == "ok"
-    assert result.assembly_info["nullspace"]["rank"] > 0
+    # The declared supports remove every rigid mode; buckling applies them
+    # itself rather than inheriting an empty constraint set from call history.
+    assert result.assembly_info["nullspace"]["rank"] == 0
     assert result.diagnostics["num_repeated_mode_groups"] >= 1
     first_group = result.diagnostics["repeated_mode_groups"][0]
     assert first_group["mode_numbers"][:2] == [1, 2]

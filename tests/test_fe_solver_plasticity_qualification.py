@@ -17,6 +17,8 @@ from anysolver import (
     yield_function_residual,
 )
 from anysolver.plasticity import plane_stress_return_map
+from anysolver.elements import _jit_integrate_nonlinear_response
+from anysolver.vectorized_nonlinear import _jit_batch_integrate_nonlinear_response
 
 import numpy as np
 
@@ -45,6 +47,71 @@ def test_yield_function_residual_matches_returned_state() -> None:
     )
 
     assert abs(yield_function_residual(stress[0], float(alpha[0]), curve)) < 1.0e-8
+
+
+def test_shell_membrane_bending_coupling_uses_both_consistent_cross_terms() -> None:
+    n_dof = 4
+    B_m = np.array(
+        [[[1.0, -0.3, 0.2, 0.4], [0.1, 0.7, -0.5, 0.2], [0.3, -0.1, 0.6, -0.2]]],
+        dtype=float,
+    )
+    B_b = np.array(
+        [[[0.2, 0.5, -0.4, 0.1], [-0.6, 0.3, 0.2, 0.8], [0.4, -0.2, 0.1, 0.5]]],
+        dtype=float,
+    )
+    C1 = np.array([[[3.0, 0.4, -0.2], [0.4, 2.0, 0.3], [-0.2, 0.3, 1.5]]], dtype=float)
+    detw = np.array([1.7], dtype=float)
+    zeros_resultant = np.zeros((1, 3), dtype=float)
+    zeros_modulus = np.zeros((1, 3, 3), dtype=float)
+    B_d = np.zeros((1, 1, n_dof), dtype=float)
+    Gw = np.zeros((1, 2, n_dof), dtype=float)
+    B_s = np.zeros((0, 2, n_dof), dtype=float)
+    expected = (B_m[0].T @ C1[0] @ B_b[0] + B_b[0].T @ C1[0] @ B_m[0]) * detw[0]
+
+    _force, tangent = _jit_integrate_nonlinear_response(
+        np.zeros(n_dof),
+        zeros_resultant,
+        zeros_resultant,
+        zeros_modulus,
+        C1,
+        zeros_modulus,
+        B_m,
+        B_b,
+        B_d,
+        Gw,
+        detw,
+        B_s,
+        np.zeros(0),
+        np.zeros((2, 2)),
+        0.0,
+        True,
+        True,
+        n_dof,
+    )
+    np.testing.assert_allclose(tangent, expected, rtol=1.0e-13, atol=1.0e-13)
+    np.testing.assert_allclose(tangent, tangent.T, rtol=1.0e-13, atol=1.0e-13)
+
+    _batch_force, batch_tangent = _jit_batch_integrate_nonlinear_response(
+        np.zeros((1, n_dof)),
+        zeros_resultant[None, ...],
+        zeros_resultant[None, ...],
+        zeros_modulus[None, ...],
+        C1[None, ...],
+        zeros_modulus[None, ...],
+        B_m[None, ...],
+        B_b[None, ...],
+        B_d[None, ...],
+        Gw[None, ...],
+        detw[None, ...],
+        B_s[None, ...],
+        np.zeros((1, 0)),
+        np.zeros((2, 2)),
+        0.0,
+        True,
+        True,
+        n_dof,
+    )
+    np.testing.assert_allclose(batch_tangent[0], expected, rtol=1.0e-13, atol=1.0e-13)
 
 
 def test_element_tangent_metrics_are_algorithmic_and_finite_difference_tight() -> None:

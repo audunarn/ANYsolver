@@ -1,11 +1,11 @@
 # Arc-length continuation
 
 `anysolver.arc_length` provides bounded Crisfield-style spherical arc-length
-continuation for nonlinear static capacity checks.
+continuation for nonlinear static capacity checks. The four public
+continuation symbols are also exported at the package root.
 
-The arc-length API is intentionally imported from `anysolver.arc_length`
-rather than re-exported at the package root. See [`THEORY.md`](THEORY.md) for
-the formulation context and [`README.md`](README.md) for production limits.
+See [`THEORY.md`](THEORY.md) for the formulation context and the project
+[`README.md`](../README.md) for production limits.
 
 ## Intended use
 
@@ -25,7 +25,7 @@ handling from `nonlinear_static.py`.
 ## Example
 
 ```python
-from anysolver.arc_length import ArcLengthControl, solve_static_arc_length
+from anysolver import ArcLengthControl, solve_static_arc_length
 
 control = ArcLengthControl(
     initial_load_increment=0.025,

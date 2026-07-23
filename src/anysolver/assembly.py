@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import json
 import time
+import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -385,7 +386,7 @@ def _solve_reduced_system(K_red: sparse.csr_matrix, F_red: np.ndarray, solver_ty
 
     if solver_type == "direct":
         try:
-            handle = factorize(K_red, MatrixClass.GENERAL)
+            handle = factorize(K_red, MatrixClass.SYMMETRIC_INDEFINITE)
             if handle.status != "ok":
                 return np.zeros(K_red.shape[0]), {
                     "status": "failed",
@@ -628,7 +629,7 @@ def solve_linear_many(
     )
     handle = factorize_cached(
         K_red,
-        MatrixClass.GENERAL,
+        MatrixClass.SYMMETRIC_INDEFINITE,
         cache=local_cache,
         signature=stiffness_signature,
     )
@@ -686,7 +687,16 @@ def solve_nonlinear(
     tolerance: float = 1.0e-6,
     method: str = "newton_raphson",
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
-    """Placeholder nonlinear solve using the same transformation constraints."""
+    """Deprecated prototype nonlinear solve.
+
+    Use :func:`anysolver.solve_static_nonlinear` for the qualified incremental
+    geometric/material nonlinear API.
+    """
+    warnings.warn(
+        "solve_nonlinear() is a deprecated prototype; use solve_static_nonlinear()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     mesh = model.mesh
     dof_manager = mesh.dof_manager
     model.apply_boundary_conditions()

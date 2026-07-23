@@ -1,9 +1,35 @@
 # Nonlinear solver performance layer
 
-The package installs an automatic performance layer during ordinary Python
-runs. The finite-element formulations and convergence criteria are unchanged.
+The package has an optional performance layer for nonlinear solves. Activation
+is lazy on the first `solve_static_nonlinear()` call, so ordinary imports and
+linear workflows do not pay the PyPardiso/nonlinear-bootstrap startup cost. The
+optimized paths preserve the scalar element formulations, discrete
+constitutive update, and convergence criteria.
 
 ## Implemented
+
+### Linear-time model construction and coupling lookup
+
+Topology and MPC revision updates invalidate global sparsity/signature caches
+without scanning every existing element or deleting unaffected element-local
+reference matrices. This removes the former quadratic construction behavior
+that arose when every `add_element()` revisited all prior elements.
+
+Structured panel coupling now builds the shell-cell lookup once per coupling
+generation and reuses it for every beam node. The lookup maps actual grid cells
+to element IDs and does not rely on element-number sequencing. This removes a
+second repeated full-grid reconstruction from stiffened-panel generation.
+
+The 2026-07-23 diagnostic sweep measured the topology construction portion of
+representative cylinder models as follows on the audit workstation:
+
+| Elements | Before | After | Speedup |
+| ---: | ---: | ---: | ---: |
+| 2,792 | 1.627 s | 0.051 s | 32x |
+| 11,038 | 25.877 s | 0.239 s | 108x |
+
+These timings are diagnostic observations, not release gates; benchmark
+comparisons must use the same machine, environment, and model.
 
 ### Persistent nonlinear assembly plan
 
@@ -32,8 +58,11 @@ sorting and COO-to-CSR conversion are removed from the Newton loop.
 ### Revision-based sparsity caching
 
 The general matrix-assembly sparsity cache uses mesh topology/MPC revision
-counters. It no longer rebuilds and SHA-hashes a JSON description of every
-element on each lookup.
+counters. A deterministic full-topology SHA signature is still retained for
+collision-resistant cache identity, but it is computed once per matrix type and
+topology/MPC revision instead of serializing and hashing every element on every
+lookup. Assembly timing includes final sparse conversion, checks, and signature
+work rather than stopping before post-assembly processing.
 
 ### Displacement-control block elimination
 
@@ -60,6 +89,14 @@ transformation is applied in place by 3x3 node-DOF blocks.
 
 When Numba is unavailable, Batch B is not installed; the existing NumPy batch
 path remains active to avoid a slow Python-loop fallback.
+
+The general elastic batch records actual layer strains. The direct Batch B
+kernel omits that optional field, causing recovery to recompute elastic stress
+from displacement instead of exposing a fabricated zero state. Plastic batches
+call the same plane-stress return map and discrete algorithmic tangent as scalar
+assembly. Reduced-integration Q8R is deliberately ineligible for shell batching
+because its experimental hourglass stiffness is not represented by the
+accelerated local kernel.
 
 ### Batch C: direct reduced-coordinate assembly
 
@@ -102,25 +139,41 @@ The sparse backend policy is tuneable through:
 ```text
 FE_SOLVER_PYPARDISO_MIN_DIMENSION
 FE_SOLVER_PYPARDISO_MIN_NNZ
+FE_SOLVER_PYPARDISO_WARM_MIN_DIMENSION
+FE_SOLVER_PYPARDISO_WARM_MIN_NNZ
 FE_SOLVER_PYPARDISO_MAX_PATTERN_SLOTS
 ```
 
+The cold defaults (`10,000` equations and `250,000` nonzeros) avoid paying MKL
+startup cost on small one-off solves. After the process has initialized
+PyPardiso, lower warm defaults (`1,000` and `25,000`) permit reuse where it was
+measured to help. Both thresholds must be met.
+
 The auto backend records the active thresholds and selected backend in solver
-diagnostics.  The PARDISO backend resolves the mkl_rt library path once per
-process (`PYPARDISO_MKL_RT`), factorizes symmetric matrix classes as upper
-triangles with symmetric mtypes (2 / -2, general fallback on failure), reuses
-the symbolic analysis (phase 22) when the sparsity pattern is unchanged through
-a small LRU of pattern slots, and releases MKL internal memory when slots are
-evicted or handles are garbage collected.  Handle diagnostics report
+diagnostics. The PyPardiso module and solver object are constructed only after
+the policy selects that backend. The PARDISO backend checks standard MKL
+library directories without a recursive environment scan, resolves `mkl_rt`
+once per process (`PYPARDISO_MKL_RT`), factorizes symmetric matrix classes as
+upper triangles with symmetric mtypes (2 / -2, general fallback on failure),
+reuses symbolic analysis (phase 22) when the sparsity pattern is unchanged
+through a small LRU of pattern slots, and releases MKL internal memory when
+slots are evicted or handles are garbage collected. Handle diagnostics report
 `pardiso_mtype` and `pardiso_symbolic_reused`.
+
+Linear static reduced stiffness matrices are declared symmetric indefinite
+rather than general, allowing a selected symmetric backend to use its native
+matrix class while retaining SuperLU fallback.
 
 ## Activation and A/B testing
 
-The performance layer is activated automatically during normal `anysolver`
-package import. Existing public solver calls are unchanged.
+Importing `anysolver` does not install the nonlinear performance layer.
+`solve_static_nonlinear()` performs a one-time lazy activation immediately
+before a nonlinear solve. Existing public solver calls are unchanged, and an
+optional acceleration import/initialization failure leaves the scalar path
+available.
 
-Set the environment variable below before Python starts to retain the legacy
-assembly path:
+Set the environment variable below before the first nonlinear solve to retain
+the scalar/legacy assembly path:
 
 ```text
 FE_SOLVER_DISABLE_FAST_NL=1
@@ -135,6 +188,10 @@ from anysolver.nonlinear_performance_bootstrap import nonlinear_performance_stat
 print(jit_diagnostics())
 print(nonlinear_performance_status())
 ```
+
+Before the first nonlinear solve, the status reports that activation has not
+yet been attempted. Calling the status helper directly does not activate the
+layer.
 
 The plan can be cleared explicitly after non-standard in-place model changes:
 
@@ -161,7 +218,9 @@ python scripts/benchmark_nonlinear_assembly.py --nx 20 --ny 10 --repeats 10 --we
 The dedicated tests compare optimized and legacy internal-force/tangent assembly,
 including tilted shells, selector constraints and weighted MPC transformations.
 They also verify cache invalidation, residual-only assembly, CSR uniqueness,
-persistent buffer reuse, nonlinear-solver activation and legacy restoration.
+persistent buffer reuse, exact plastic return-map/tangent parity, elastic layer
+state, Q8R scalar fallback, lazy nonlinear-solver activation, and legacy
+restoration.
 
 ## Deferred until measured
 
@@ -169,7 +228,10 @@ The following changes remain deferred until profiling identifies the
 next dominant phase:
 
 - upper-triangle-only element tangent integration;
-- retained arc-length predictor factorization.
+- retained arc-length predictor factorization;
+- automatic Numba thread selection (high logical-core counts can oversubscribe
+  memory bandwidth, so `assembly_threads` remains an explicit measured choice);
+- Q8R batch acceleration, pending a qualified stabilization formulation.
 
 Symbolic sparse-factorization reuse (PARDISO phase 22 with pattern slots) is
 implemented in the PyPardiso backend. Historical Batch B/C/D notes were folded

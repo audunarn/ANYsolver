@@ -21,6 +21,7 @@ from anysolver import (
     generate_simple_panel_mesh,
     solve_free_vibration,
 )
+from anysolver.boundary import LoadCase, LoadCombination
 from anysolver.elements import BeamElement
 
 
@@ -44,6 +45,69 @@ def test_beam_mass_properties_match_integrated_line_mass_and_assembled_translati
     assert props.assembled_translation_masses["y"] == pytest.approx(props.total_mass)
     assert props.assembled_translation_masses["z"] == pytest.approx(props.total_mass)
     assert props.rigid_body_mass_matrix.shape == (6, 6)
+
+
+def test_point_mass_contributes_to_scalar_mass_center_and_origin_inertia() -> None:
+    model = _axial_bar_model()
+    bare = calculate_mass_properties(model, reference_point=(0.0, 0.0, 0.0))
+
+    model.add_point_mass(2, 3.0)
+    loaded = calculate_mass_properties(model, reference_point=(0.0, 0.0, 0.0))
+
+    assert loaded.total_mass == pytest.approx(5.0)
+    np.testing.assert_allclose(loaded.center_of_mass, [0.8, 0.0, 0.0], atol=1.0e-14)
+    np.testing.assert_allclose(
+        loaded.inertia_tensor_origin - bare.inertia_tensor_origin,
+        np.diag([0.0, 3.0, 3.0]),
+        atol=1.0e-14,
+    )
+    for axis in ("x", "y", "z"):
+        assert loaded.assembled_translation_masses[axis] - bare.assembled_translation_masses[axis] == pytest.approx(3.0)
+    assert loaded.num_mass_points == bare.num_mass_points + 1
+
+
+@pytest.mark.parametrize("mass", [-1.0, np.inf, -np.inf, np.nan])
+def test_add_point_mass_rejects_invalid_mass_values(mass: float) -> None:
+    model = _axial_bar_model()
+
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        model.add_point_mass(1, mass)
+
+    assert model.mesh.point_masses == {}
+
+
+def test_add_point_mass_rejects_missing_node() -> None:
+    model = _axial_bar_model()
+
+    with pytest.raises(ValueError, match="missing node 99"):
+        model.add_point_mass(99, 1.0)
+
+
+def test_mass_properties_rejects_corrupt_direct_point_mass_entries() -> None:
+    model = _axial_bar_model()
+    model.mesh.point_masses[1] = np.nan
+
+    with pytest.raises(ValueError, match="node 1 must be finite and non-negative"):
+        calculate_mass_properties(model)
+
+
+def test_load_combination_forwards_material_density_for_gravity() -> None:
+    model = _axial_bar_model()
+    model.materials["steel"].density = 7.0
+    gravity = LoadCase("dead_load")
+    gravity.set_gravity(0.0, 0.0, -3.0)
+    combination = LoadCombination("uls", {"dead_load": 2.5})
+
+    combined = combination.get_combined_load_vector(
+        [gravity],
+        model.mesh,
+        model.mesh.dof_manager,
+        material_getter=model.get_material,
+    )
+
+    z_dofs = [node.dofs[2] for node in model.mesh.nodes.values()]
+    assert np.sum(combined[z_dofs]) == pytest.approx(2.5 * 7.0 * 1.0 * 1.0 * -3.0)
+    np.testing.assert_allclose(np.delete(combined, z_dofs), 0.0, atol=1.0e-14)
 
 
 def test_shell_mass_properties_match_density_area_thickness() -> None:

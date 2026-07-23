@@ -132,6 +132,7 @@ class FEMesh:
         "topology": 0,
         "geometry": 0,
         "material": 0,
+        "mass": 0,
         "load": 0,
         "boundary": 0,
         "mpc": 0,
@@ -141,13 +142,24 @@ class FEMesh:
     def bump_revision(self, category: str) -> None:
         """Increment a mesh/model revision category and clear stale caches."""
         self.revisions[category] = int(self.revisions.get(category, 0)) + 1
-        if category in {"topology", "geometry", "material", "mpc"}:
+        # Element-local matrices depend on an element's geometry and material,
+        # not on unrelated elements or MPC topology.  Scanning every existing
+        # element for every add_element() made model construction O(E**2).
+        if category in {"geometry", "material"}:
             for element in self.elements.values():
-                for name in ("_stiffness_matrix", "_mass_matrix", "_internal_forces", "_nl_cache"):
+                for name in (
+                    "_stiffness_matrix",
+                    "_mass_matrix",
+                    "_internal_forces",
+                    "_nl_cache",
+                    "_hourglass_stiffness_matrix",
+                ):
                     if hasattr(element, name):
                         setattr(element, name, None)
         if category in {"topology", "mpc"} and hasattr(self, "_sparsity_cache"):
             self._sparsity_cache = {}
+        if category in {"topology", "mpc"} and hasattr(self, "_topology_signature_cache"):
+            self._topology_signature_cache = {}
 
     def revision_signature(self) -> Dict[str, int]:
         return {key: int(value) for key, value in sorted(self.revisions.items())}
@@ -268,11 +280,16 @@ class FEModel:
         an acceleration/gravity field is applied, produces the corresponding
         inertial load.
         """
+        node_id = int(node_id)
+        if self.mesh.get_node(node_id) is None:
+            raise ValueError(f"Cannot attach point mass to missing node {node_id}")
         mass = float(mass)
+        if not np.isfinite(mass) or mass < 0.0:
+            raise ValueError("Point mass must be finite and non-negative")
         if mass == 0.0:
             return
-        self.mesh.point_masses[int(node_id)] = self.mesh.point_masses.get(int(node_id), 0.0) + mass
-        self.mesh.bump_revision("material")
+        self.mesh.point_masses[node_id] = self.mesh.point_masses.get(node_id, 0.0) + mass
+        self.mesh.bump_revision("mass")
 
     def add_boundary_condition(self, bc: 'BoundaryCondition'):
         """Add a boundary condition to the model."""

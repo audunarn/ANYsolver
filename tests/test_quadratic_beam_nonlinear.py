@@ -32,6 +32,24 @@ def _single_element_model(fiber: bool) -> tuple:
     return model, element
 
 
+def test_quadratic_beam_rejects_curved_midside_geometry() -> None:
+    model = FEModel("curved_q_beam")
+    model.add_material("steel", E_STEEL, 0.3, density=7850.0)
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, 0.5, 0.1, 0.0)
+    model.add_node(3, 1.0, 0.0, 0.0)
+    element = QuadraticBeamElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        {"area": 1.0e-3, "Iy": 1.0e-6, "Iz": 2.0e-6, "J": 1.0e-6},
+    )
+    model.add_element(1, element)
+
+    with pytest.raises(ValueError, match="straight-sided"):
+        element.compute_stiffness_matrix(model.mesh, model.get_material("steel"))
+
+
 @pytest.mark.parametrize("fiber", [False, True])
 def test_quadratic_beam_tangent_is_consistent_with_internal_force(fiber: bool) -> None:
     model, element = _single_element_model(fiber)

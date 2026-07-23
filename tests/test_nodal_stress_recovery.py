@@ -8,7 +8,11 @@ import pytest
 from anysolver.assembly import solve_linear
 from anysolver.boundary import LoadCase
 from anysolver.mesh_gen import generate_simple_panel_mesh
-from anysolver.results import _gauss_to_node_extrapolation, recover_nodal_stresses
+from anysolver.results import (
+    _cached_gauss_to_node_extrapolation,
+    _gauss_to_node_extrapolation,
+    recover_nodal_stresses,
+)
 from anysolver.s4_validity import _membrane_displacement, _single_s4_model
 
 
@@ -40,6 +44,27 @@ def test_extrapolation_operator_reproduces_matching_polynomials_exactly() -> Non
 
     nodes8 = np.array([[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float)
     np.testing.assert_allclose(op8 @ biquadratic(gauss_3x3), biquadratic(nodes8), rtol=1.0e-11)
+
+
+def test_extrapolation_operator_is_cached_by_topology_and_gauss_rule() -> None:
+    class _FakeElement:
+        num_nodes = 4
+
+        def __init__(self, gauss_points):
+            self.gauss_points = gauss_points
+
+    g = 1.0 / np.sqrt(3.0)
+    gauss_points = np.array([[-g, -g], [g, -g], [g, g], [-g, g]])
+    _cached_gauss_to_node_extrapolation.cache_clear()
+
+    first = _gauss_to_node_extrapolation(_FakeElement(gauss_points.copy()))
+    second = _gauss_to_node_extrapolation(_FakeElement(gauss_points.copy()))
+    cache_info = _cached_gauss_to_node_extrapolation.cache_info()
+
+    assert first is second
+    assert cache_info.misses == 1
+    assert cache_info.hits == 1
+    assert not first.flags.writeable
 
 
 def test_recovered_nodal_stresses_exact_for_constant_field_on_skew_element() -> None:

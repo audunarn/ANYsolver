@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Correct the layered-shell membrane/bending coupling tangent and keep the
+  accelerated plastic shell path consistent with the scalar return mapping.
+- Fail closed for curved B3 members, experimental Q8R qualification, unsupported
+  DNV-RP-C208 thickness rows, and path-dependent staged displacement control.
+- Include point masses in reported mass properties, make buckling constraints
+  call-order independent, and correct CalculiX gravity export.
+- Remove quadratic model-construction and beam/shell coupling lookup scaling,
+  cache recovery operators and topology signatures, defer optional acceleration
+  imports, and tune sparse-backend selection for cold-start cost.
+- Add explicit runtime exports, generic generated-geometry API aliases, and
+  package-root arc-length exports.
+
 ## 0.1.0 - 2026-07-22
 
 - Transfer the qualified beam/shell solver from ANYintelligent into its own package.

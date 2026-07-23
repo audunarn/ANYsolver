@@ -2,7 +2,7 @@ import numpy as np
 from typing import Tuple, Optional, Any, Dict
 
 from .jit_compiler import njit
-from .plasticity import _jit_plane_stress_return_map
+from .plasticity import plane_stress_return_map
 from .elements import lobatto_layers, plane_stress_elastic_matrix
 
 
@@ -111,19 +111,25 @@ def _jit_batch_integrate_nonlinear_response(
             if has_plasticity:
                 C1_g = C1[g]
                 C1_B_b = np.zeros((3, n_dof))
+                C1_B_eff = np.zeros((3, n_dof))
                 for r in range(3):
                     for c in range(n_dof):
-                        val1 = 0.0
+                        val_b = 0.0
+                        val_eff = 0.0
                         for k in range(3):
-                            val1 += C1_g[r, k] * B_b[k, c]
-                        C1_B_b[r, c] = val1
+                            val_b += C1_g[r, k] * B_b[k, c]
+                            val_eff += C1_g[r, k] * B_eff[k, c]
+                        C1_B_b[r, c] = val_b
+                        C1_B_eff[r, c] = val_eff
 
                 for r in range(n_dof):
                     for c in range(n_dof):
-                        val_c = 0.0
+                        forward = 0.0
+                        reverse = 0.0
                         for k in range(3):
-                            val_c += B_eff[k, r] * C1_B_b[k, c]
-                        K_loc_batch[e, r, c] += (val_c + val_c) * detw
+                            forward += B_eff[k, r] * C1_B_b[k, c]
+                            reverse += B_b[k, r] * C1_B_eff[k, c]
+                        K_loc_batch[e, r, c] += (forward + reverse) * detw
 
             N00 = N_g[0]
             N11 = N_g[1]
@@ -214,6 +220,11 @@ def batch_shell_nonlinear_response(
 
     curvature_batch = (B_b_all_batch @ u_loc_batch[:, None, :, None]).squeeze(-1)
 
+    z_layers, w_layers = lobatto_layers(num_layers, h)
+    layer_strain = (
+        memb_strain_batch[:, :, None, :] + z_layers[None, None, :, None] * curvature_batch[:, :, None, :]
+    ).reshape(n_elem * n_gp * num_layers, 3)
+
     has_plasticity = curve is not None
     if not has_plasticity:
         N_res_batch = memb_strain_batch @ (h * C_el).T
@@ -223,30 +234,15 @@ def batch_shell_nonlinear_response(
         C2_batch = np.broadcast_to(h**3 / 12.0 * C_el, (n_elem, n_gp, 3, 3))
         ep_new = plastic_strain_batch
         alpha_new = alpha_batch
-        layer_strain = np.zeros((n_elem * n_gp * num_layers, 3), dtype=float)
     else:
-        z_layers, w_layers = lobatto_layers(num_layers, h)
-        layer_strain = (
-            memb_strain_batch[:, :, None, :] + z_layers[None, None, :, None] * curvature_batch[:, :, None, :]
-        ).reshape(n_elem * n_gp * num_layers, 3)
-
-        sigma, C_tan, ep_new, alpha_new = _jit_plane_stress_return_map(
+        sigma, C_tan, ep_new, alpha_new = plane_stress_return_map(
             layer_strain,
             plastic_strain_batch.reshape(n_elem * n_gp * num_layers, 3),
             alpha_batch.reshape(n_elem * n_gp * num_layers),
             E,
             nu,
-            float(curve.sigma_prop),
-            float(curve.sigma_yield),
-            float(curve.sigma_yield_2),
-            float(curve.eps_p_y1),
-            float(curve.eps_p_y2),
-            float(curve.K),
-            float(curve.n),
-            float(curve._power_offset),
-            30,
-            1.0e-10,
-            tangent,
+            curve,
+            compute_tangent=tangent,
         )
 
         ep_new = ep_new.reshape(n_elem, n_gp * num_layers, 3)
@@ -287,6 +283,18 @@ def batch_shell_nonlinear_response(
         K_T_batch = np.zeros((n_elem, 0, 0))
 
     return F_int_batch, K_T_batch, ep_new, alpha_new, layer_strain
+
+
+def shell_nonlinear_batch_eligible(element: Any) -> bool:
+    """Return whether the vectorized kernel matches the scalar shell response."""
+
+    return bool(
+        getattr(element, "_is_quadrilateral", False)
+        and not (
+            getattr(element, "_is_8node", False)
+            and bool(getattr(element, "reduced_integration", False))
+        )
+    )
 
 
 @njit

@@ -147,13 +147,31 @@ _DNV_C208_LOW_FRACTILE_STEEL_MPA: Dict[str, tuple[tuple[float, float, Mapping[st
 }
 
 
-def dnv_c208_steel_curve(grade: str, thickness: float, fractile: str = "low") -> DNVC208MaterialCurve:
-    """Return an RP-C208 steel curve for a grade and plate thickness.
+def _thickness_class_label(lower_mm: float, upper_mm: float) -> str:
+    if lower_mm <= 0.0:
+        return f"t <= {upper_mm:g}"
+    return f"{lower_mm:g} < t <= {upper_mm:g}"
+
+
+def _normalized_thickness_class(value: str) -> str:
+    return str(value or "auto").strip().lower().replace(" ", "")
+
+
+def dnv_c208_steel_properties(
+    grade: str,
+    thickness: float,
+    thickness_class: str = "auto",
+    fractile: str = "low",
+) -> Dict[str, float | str]:
+    """Return one validated RP-C208 low-fractile steel table row in SI units.
 
     ``thickness`` is in metres, matching solver SI units.  The built-in table
     covers the RP-C208 low-fractile curves from section 4.6.6.  Mean curves are
     intentionally not guessed; pass explicit properties through
     ``curve_from_properties`` if mean data is required.
+
+    Automatic selection fails closed when the thickness is outside the table.
+    An explicit ``thickness_class`` may select a table row intentionally.
     """
     if fractile.lower() not in {"low", "low_fractile", "5%", "5_percent"}:
         raise NotImplementedError("Built-in RP-C208 mean curves are not available; supply explicit curve properties")
@@ -164,18 +182,50 @@ def dnv_c208_steel_curve(grade: str, thickness: float, fractile: str = "low") ->
     if thickness_mm <= 0.0:
         raise ValueError("thickness must be positive")
     rows = _DNV_C208_LOW_FRACTILE_STEEL_MPA[grade_key]
-    selected = rows[-1][2]
-    for lower, upper, properties_mpa in rows:
-        if thickness_mm <= upper and thickness_mm > lower:
-            selected = properties_mpa
-            break
+    selected: Optional[tuple[float, float, Mapping[str, float]]] = None
+    class_key = _normalized_thickness_class(thickness_class)
+    automatic = class_key in {"auto", "automatic", "bythickness", "autobyplatethickness"}
+    if automatic:
+        for row in rows:
+            lower, upper, _properties_mpa = row
+            if lower < thickness_mm <= upper:
+                selected = row
+                break
+        if selected is None:
+            raise ValueError(
+                f"Thickness {thickness_mm:g} mm is outside the built-in RP-C208 range "
+                f"for {grade_key} (maximum {rows[-1][1]:g} mm)"
+            )
+    else:
+        for row in rows:
+            lower, upper, _properties_mpa = row
+            if class_key == _normalized_thickness_class(_thickness_class_label(lower, upper)):
+                selected = row
+                break
+        if selected is None:
+            labels = [_thickness_class_label(lower, upper) for lower, upper, _properties in rows]
+            raise ValueError(f"Unsupported thickness_class {thickness_class!r} for {grade_key}; use one of {labels}")
+
+    lower, upper, selected_mpa = selected
     properties = {
-        "sigma_prop": float(selected["sigma_prop"]) * _MPA,
-        "sigma_yield": float(selected["sigma_yield"]) * _MPA,
-        "sigma_yield_2": float(selected["sigma_yield_2"]) * _MPA,
-        "eps_p_y1": float(selected.get("eps_p_y1", 0.004)),
-        "eps_p_y2": float(selected["eps_p_y2"]),
-        "K": float(selected["K"]) * _MPA,
-        "n": float(selected["n"]),
+        "grade": grade_key,
+        "thickness_class": _thickness_class_label(lower, upper),
+        "thickness_mm": thickness_mm,
+        "source": "DNV-RP-C208 section 4.6.6 low-fractile true stress-strain values",
+        "E_pa": 210_000.0 * _MPA,
+        "sigma_prop": float(selected_mpa["sigma_prop"]) * _MPA,
+        "sigma_yield": float(selected_mpa["sigma_yield"]) * _MPA,
+        "sigma_yield_2": float(selected_mpa["sigma_yield_2"]) * _MPA,
+        "eps_p_y1": float(selected_mpa.get("eps_p_y1", 0.004)),
+        "eps_p_y2": float(selected_mpa["eps_p_y2"]),
+        "K": float(selected_mpa["K"]) * _MPA,
+        "n": float(selected_mpa["n"]),
     }
+    return properties
+
+
+def dnv_c208_steel_curve(grade: str, thickness: float, fractile: str = "low") -> DNVC208MaterialCurve:
+    """Return a validated RP-C208 steel curve for a grade and plate thickness."""
+
+    properties = dnv_c208_steel_properties(grade, thickness, fractile=fractile)
     return curve_from_properties(properties)

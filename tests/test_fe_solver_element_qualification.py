@@ -9,6 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from anysolver import (
@@ -24,6 +25,8 @@ from anysolver import (
     q8r_patch_metric,
     reference_q8_geometries,
 )
+from anysolver.elements import ShellElement
+from anysolver.fe_core import FEModel
 
 
 def test_q8_free_element_has_six_rigid_modes_for_reference_geometries() -> None:
@@ -44,6 +47,26 @@ def test_q8r_free_element_has_six_rigid_modes_after_hourglass_stabilization() ->
         assert assessment["extra_zero_energy_modes"] == 0, name
         assert assessment["hourglass_control"] == "active", name
         assert assessment["qc_status"] == "passed_stabilized_free_mode_check", name
+
+
+def test_q8r_hourglass_cache_is_invalidated_after_geometry_change() -> None:
+    model = FEModel("q8r_cache")
+    model.add_material("steel", 210.0e9, 0.3)
+    for node_id, coordinate in enumerate(reference_q8_geometries()["square"], start=1):
+        model.add_node(node_id, *np.asarray(coordinate, dtype=float))
+    element = ShellElement(
+        1,
+        list(range(1, 9)),
+        "steel",
+        thickness=0.01,
+        reduced_integration=True,
+    )
+    model.add_element(1, element)
+    element.compute_stiffness_matrix(model.mesh, model.get_material("steel"))
+    assert element._hourglass_stiffness_matrix is not None
+    node = model.mesh.get_node(5)
+    model.set_node_coordinates(5, node.x, node.y, node.z + 1.0e-4)
+    assert element._hourglass_stiffness_matrix is None
 
 
 def test_q8_square_membrane_bending_and_shear_patches_are_exact() -> None:

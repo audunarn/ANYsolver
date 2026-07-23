@@ -372,15 +372,12 @@ def _batch_b_shell_build(
     points_per_element = int(batch.n_gp * batch.num_layers)
     shared_plastic = np.zeros((points_per_element, 3), dtype=float)
     shared_alpha = np.zeros(points_per_element, dtype=float)
-    shared_layer = np.zeros((points_per_element, 3), dtype=float)
     shared_plastic.setflags(write=False)
     shared_alpha.setflags(write=False)
-    shared_layer.setflags(write=False)
     batch.elastic_states = tuple(
         {
             "plastic_strain": shared_plastic,
             "alpha": shared_alpha,
-            "layer_strain": shared_layer,
         }
         for _ in batch.elements
     )
@@ -555,7 +552,6 @@ def _batch_b_plan_diagnostics(self) -> Dict[str, Any]:
                 sum(
                     batch.elastic_states[0]["plastic_strain"].nbytes
                     + batch.elastic_states[0]["alpha"].nbytes
-                    + batch.elastic_states[0]["layer_strain"].nbytes
                     for batch in elastic_batches
                     if batch.elastic_states
                 )

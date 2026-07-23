@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from types import SimpleNamespace
 
 from anysolver import nonlinear_performance, nonlinear_static
 from anysolver.elements import ShellElement
@@ -14,11 +15,14 @@ from anysolver.nonlinear_performance_bootstrap import (
     get_nonlinear_assembly_plan,
     nonlinear_performance_status,
 )
+from anysolver.runtime import _runtime_display_stresses
 
 pytestmark = pytest.mark.skipif(
     not JIT_ENABLED,
     reason=f"Batch B in-place shell kernel requires Numba ({JIT_DISABLED_REASON})",
 )
+
+nonlinear_static._ensure_nonlinear_acceleration()
 
 
 def _tilted_shell_model() -> FEModel:
@@ -74,7 +78,29 @@ def test_elastic_batch_releases_history_work_arrays() -> None:
         first_state = batch.elastic_states[0]
         assert first_state["plastic_strain"].flags.writeable is False
         assert first_state["alpha"].flags.writeable is False
-        assert first_state["layer_strain"].flags.writeable is False
+        # Elastic recovery must fall back to displacement-based stresses; a
+        # fabricated zero layer_strain would overwrite them with zero stress.
+        assert "layer_strain" not in first_state
+
+
+def test_elastic_batch_does_not_overwrite_recovered_stress_with_zero() -> None:
+    model = _tilted_shell_model()
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+    displacement[model.mesh.get_node(2).dofs[0]] = 2.0e-4
+    _force, _tangent, states = nonlinear_static._assemble_nonlinear_system(
+        model,
+        displacement,
+        {},
+        5,
+        tangent=True,
+    )
+    stresses, state_based = _runtime_display_stresses(
+        model,
+        displacement,
+        SimpleNamespace(element_states=states),
+    )
+    assert state_based == set()
+    assert float(np.max(np.asarray(stresses[1]["von_mises"], dtype=float))) > 0.0
 
 
 def test_batch_b_reuses_plan_buffers() -> None:

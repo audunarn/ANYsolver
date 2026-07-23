@@ -21,10 +21,9 @@ It also installs two low-risk solver improvements:
 * displacement-control block elimination using two right-hand sides on the
   ordinary structural tangent instead of an augmented sparse matrix.
 
-The installation is idempotent.  The FE package activates it during normal
-package import on the performance branch.  Set ``FE_SOLVER_DISABLE_FAST_NL=1``
-before importing :mod:`anysolver` to retain the legacy assembly path for
-comparison and debugging.
+The installation is idempotent.  The nonlinear solver activates it lazily on
+first use.  Set ``FE_SOLVER_DISABLE_FAST_NL=1`` before the first nonlinear
+solve to retain the legacy assembly path for comparison and debugging.
 """
 
 from __future__ import annotations
@@ -128,7 +127,6 @@ class _ShellBatchPlan:
     u_work: np.ndarray
     plastic_work: np.ndarray
     alpha_work: np.ndarray
-    elastic_states: Tuple[Dict[str, np.ndarray], ...]
 
     @property
     def has_plasticity(self) -> bool:
@@ -162,7 +160,6 @@ class _ShellBatchPlan:
         detw_shear = np.empty((n_elem, n_shear), dtype=float)
         element_ids = np.empty(n_elem, dtype=np.int64)
         elements: List[Any] = []
-        elastic_states: List[Dict[str, np.ndarray]] = []
 
         for batch_index, (element_id, element, scatter) in enumerate(items):
             cache = element._nonlinear_geometry(model.mesh)
@@ -179,15 +176,6 @@ class _ShellBatchPlan:
             detw[batch_index] = cache["detw_all"]
             B_s[batch_index] = cache["B_s_all"]
             detw_shear[batch_index] = cache["detw_shear_all"]
-            # Elastic shell states never evolve.  Stable per-element arrays avoid
-            # retaining views into reusable batch work buffers.
-            elastic_states.append(
-                {
-                    "plastic_strain": np.zeros((n_gp * num_layers, 3), dtype=float),
-                    "alpha": np.zeros(n_gp * num_layers, dtype=float),
-                    "layer_strain": np.zeros((n_gp * num_layers, 3), dtype=float),
-                }
-            )
 
         material = model.get_material(first.material_name)
         return cls(
@@ -214,7 +202,6 @@ class _ShellBatchPlan:
             u_work=np.zeros((n_elem, n_dof), dtype=float),
             plastic_work=np.zeros((n_elem, n_gp * num_layers, 3), dtype=float),
             alpha_work=np.zeros((n_elem, n_gp * num_layers), dtype=float),
-            elastic_states=tuple(elastic_states),
         )
 
     def evaluate(
@@ -287,9 +274,19 @@ class _ShellBatchPlan:
                     "layer_strain": layer_strain[start_layer:stop_layer].copy(),
                 }
         else:
+            points_per_element = self.n_gp * self.num_layers
             for index, element_id in enumerate(self.element_ids):
+                start_layer = index * points_per_element
+                stop_layer = start_layer + points_per_element
                 existing = committed_states.get(int(element_id))
-                states[int(element_id)] = existing if isinstance(existing, dict) else self.elastic_states[index]
+                if int(element_id) in deleted and isinstance(existing, dict):
+                    states[int(element_id)] = existing
+                else:
+                    states[int(element_id)] = {
+                        "plastic_strain": self.plastic_work[index].copy(),
+                        "alpha": self.alpha_work[index].copy(),
+                        "layer_strain": layer_strain[start_layer:stop_layer].copy(),
+                    }
 
         if deleted:
             for index, element_id in enumerate(self.element_ids):
@@ -339,6 +336,7 @@ class NonlinearAssemblyPlan:
     @classmethod
     def build(cls, model: "FEModel", num_layers: int) -> "NonlinearAssemblyPlan":
         from .elements import ShellElement
+        from .vectorized_nonlinear import shell_nonlinear_batch_eligible
 
         start = time.perf_counter()
         mesh = model.mesh
@@ -408,7 +406,7 @@ class NonlinearAssemblyPlan:
         non_shell: List[_ElementScatter] = []
         for element_id, element, *_rest in element_records:
             scatter = scatter_records[element_id]
-            if isinstance(element, ShellElement):
+            if isinstance(element, ShellElement) and shell_nonlinear_batch_eligible(element):
                 key = (
                     int(element.num_nodes),
                     float(element.thickness),

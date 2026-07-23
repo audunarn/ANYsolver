@@ -431,12 +431,22 @@ class LoadCombination:
         load_cases: List[LoadCase],
         mesh: "FEMesh",
         dof_manager: "DOFManager",
+        material_getter: Optional[Callable[[str], "Material"]] = None,
     ) -> np.ndarray:
+        """Assemble the factored load vector.
+
+        Pass ``model.get_material`` when combinations include gravity so each
+        element uses its assigned density.
+        """
         F_total = np.zeros(dof_manager.total_dofs)
         for load_case in load_cases:
             if load_case.name in self.factors:
                 factor = self.factors[load_case.name]
-                F_total += factor * load_case.get_load_vector(mesh, dof_manager)
+                F_total += factor * load_case.get_load_vector(
+                    mesh,
+                    dof_manager,
+                    material_getter,
+                )
         return F_total
 
 

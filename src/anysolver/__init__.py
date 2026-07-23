@@ -9,12 +9,10 @@ workflows, result recovery, and SESAM formatted FEM interchange.
 
 All nodes use ``ux, uy, uz, rx, ry, rz`` in SI units. Supports and beam-shell
 MPCs share the affine ``u = T q + u0`` reduction, and K/M/C/KG/F assembly stays
-separate. Bounded arc-length continuation is available from
-``anysolver.arc_length``; it is not re-exported here.
+separate. Bounded arc-length continuation is available from the root API.
 
-See ``anysolver/README.md`` for the capability/qualification boundary,
-``ARCHITECTURE.md`` for module responsibilities, and ``THEORY.md`` for
-formulations and validity limits.
+See the project README and ``docs/`` directory in the source repository for
+the capability boundary, architecture, theory, and qualification evidence.
 """
 
 from .fe_core import DOFManager, FEMesh, FEModel, Material, Node
@@ -184,6 +182,7 @@ from .material_curves import (
     DNVC208MaterialCurve,
     FiberSectionPlasticityConfig,
     curve_from_properties,
+    dnv_c208_steel_properties,
     dnv_c208_steel_curve,
 )
 from .imperfections import (
@@ -208,14 +207,18 @@ from .nonlinear_static import (
     NonlinearStaticStep,
     solve_static_nonlinear,
 )
+from .arc_length import ArcLengthControl, ArcLengthResult, ArcLengthStep, solve_static_arc_length
 from .anystructure_fem_mode import (
     AnyStructureFEMConfig,
     AnyStructureFEMResult,
+    GeneratedGeometryFEMConfig,
+    GeneratedGeometryFEMResult,
     build_fe_model_from_generated_geometry,
     build_symmetric_load_case,
     idealize_generated_geometry_members,
     recover_prestress_from_static_result,
     run_anystructure_fem_mode,
+    run_generated_geometry_fem,
 )
 from .matrix_assembly import (
     AssemblyError,
@@ -487,6 +490,7 @@ __all__ = [
     "DNVC208MaterialCurve",
     "FiberSectionPlasticityConfig",
     "curve_from_properties",
+    "dnv_c208_steel_properties",
     "dnv_c208_steel_curve",
     "CompositeImperfection",
     "EigenmodeImperfection",
@@ -506,14 +510,21 @@ __all__ = [
     "NonlinearStaticResult",
     "NonlinearStaticStep",
     "solve_static_nonlinear",
+    "ArcLengthControl",
+    "ArcLengthResult",
+    "ArcLengthStep",
+    "solve_static_arc_length",
     # Generated-geometry FEM mode
     "AnyStructureFEMConfig",
     "AnyStructureFEMResult",
+    "GeneratedGeometryFEMConfig",
+    "GeneratedGeometryFEMResult",
     "build_fe_model_from_generated_geometry",
     "build_symmetric_load_case",
     "idealize_generated_geometry_members",
     "recover_prestress_from_static_result",
     "run_anystructure_fem_mode",
+    "run_generated_geometry_fem",
     # Assembly and solving
     "AssemblyError",
     "assemble_damping_matrix",

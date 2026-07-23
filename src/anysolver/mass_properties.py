@@ -131,11 +131,21 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
     """Calculate integrated mass properties and assembled rigid-body mass.
 
     The scalar mass, first moment and inertia tensors are obtained from
-    element quadrature.  The 6x6 rigid-body mass matrix is additionally formed
-    from the assembled mass matrix using rigid translation/rotation fields, so
-    shell and beam rotary inertia terms are visible in diagnostics.
+    element quadrature plus model point masses.  The 6x6 rigid-body mass matrix
+    is additionally formed from the assembled mass matrix using rigid
+    translation/rotation fields, so shell and beam rotary inertia terms are
+    visible in diagnostics.
     """
     points, skipped = element_mass_points(model)
+    for node_id, mass in getattr(model.mesh, "point_masses", {}).items():
+        node = model.mesh.get_node(int(node_id))
+        if node is None:
+            raise ValueError(f"Point mass references missing node {node_id}")
+        mass_value = float(mass)
+        if not np.isfinite(mass_value) or mass_value < 0.0:
+            raise ValueError(f"Point mass at node {node_id} must be finite and non-negative")
+        if mass_value > 0.0:
+            points.append((mass_value, node.coords()))
     total_mass = float(sum(mass for mass, _ in points))
     first_moment = np.zeros(3, dtype=float)
     for mass, coords in points:
@@ -167,15 +177,3 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
         skipped_elements=skipped,
         assembly_info=assembly_info,
     )
-
-
-# Import-time bootstrap is placed here because this module is imported by the
-# package after nonlinear_static is fully initialized.  This keeps existing
-# public solver entry points unchanged while allowing an environment-variable
-# opt-out for A/B benchmarks.
-from .nonlinear_performance_bootstrap import (  # noqa: E402
-    install_nonlinear_performance_optimizations as _install_nonlinear_performance_optimizations,
-)
-
-_install_nonlinear_performance_optimizations()
-del _install_nonlinear_performance_optimizations

@@ -17,13 +17,26 @@ For coordinated local development with ANYstructure:
 python -m pip install -e C:\Github\ANYsolver
 ```
 
-Core analyses are available directly from `anysolver`; normalized flat-panel
-and cylinder workflows are exposed through `anysolver.runtime`:
+Core analyses and the solver-owned generated-geometry workflow are available
+directly from `anysolver`; the lightweight normalized flat-panel and cylinder
+facade is exposed through `anysolver.runtime`:
 
 ```python
-from anysolver import FEModel, LoadCase, solve_linear
+from anysolver import (
+    FEModel,
+    GeneratedGeometryFEMConfig,
+    LoadCase,
+    run_generated_geometry_fem,
+    solve_linear,
+)
 from anysolver.runtime import LightweightFEMConfig, run_production_fem
 ```
+
+The generic `GeneratedGeometryFEM*` names are the preferred workflow API.
+Historical `AnyStructureFEM*` aliases remain available only for downstream
+compatibility. Material selection is centralized in
+`dnv_c208_steel_properties()` and `dnv_c208_steel_curve()`; the runtime facade
+uses the same canonical table and validation.
 
 The source code and tests are authoritative. Generated reports under
 `reports/` are dated evidence snapshots and must be regenerated after solver
@@ -34,8 +47,8 @@ changes before making release claims.
 | Area | Implemented functionality |
 | --- | --- |
 | Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. |
-| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; optional Q8R reduced integration with stabilization; stiffness, mass, pressure, geometric stiffness, and stress recovery. |
-| Beams | 2-node and 3-node Timoshenko beams with axial, biaxial bending, shear, torsion, consistent/lumped mass options, geometric stiffness, and optional fiber-section plasticity. |
+| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; stiffness, mass, pressure, geometric stiffness, and stress recovery. Q8R reduced integration is experimental and outside the qualified thin-bending/nonlinear-batch scope. |
+| Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, shear, torsion, consistent/lumped mass options, geometric stiffness, and optional fiber-section plasticity. |
 | Coupling | Coincident or eccentric beam-shell kinematics through explicit interpolated MPC transformations. |
 | Loads | Nodal force/moment, shell pressure, in-plane edge loads, acceleration/gravity, prescribed displacement, load combinations, proportional and staged nonlinear loads. |
 | Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, and sparse factorization reuse. |
@@ -63,12 +76,23 @@ verified mesh, material, distortion, eccentricity, and load ranges.
 Important limits:
 
 - no arbitrary CAD topology or automatic general-purpose meshing;
-- no follower-pressure tangent unless separately implemented and verified;
+- Q8R is experimental: its hourglass stabilization is not qualified for thin
+  bending and it is deliberately excluded from nonlinear batch acceleration;
+- the 3-node quadratic beam is straight-sided; curved members must be
+  represented by straight beam segments until a true curved formulation is
+  implemented;
+- shell buckling uses the implemented membrane-resultant geometric stiffness,
+  not a complete finite-rotation shell geometric stiffness;
+- no follower-pressure load or tangent;
 - no general shell-shell, body-body, frictional, rolling, or self-contact;
 - no fluid-structure interaction, cavitation, or water-entry model;
 - no cohesive cracks, remeshing, material separation, or fracture-mechanics
   claim—the erosion models are engineering screens;
 - no unrestricted deep post-buckling or automatic bifurcation branch switching;
+- no consistent frame-derivative tangent for the corotational formulation;
+- no general material-aware stress reconstruction when committed nonlinear
+  layer/fiber state is unavailable;
+- no true multi-stage plastic preload followed by displacement control;
 - no unverified material laws, residual-stress fields, or distortion ranges;
 - SESAM `FEModel` export and external-solver execution/comparison remain outside
   the supported interchange gate.
