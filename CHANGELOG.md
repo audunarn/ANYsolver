@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 - 2026-07-25
 
 - Correct the layered-shell membrane/bending coupling tangent and keep the
   accelerated plastic shell path consistent with the scalar return mapping.
@@ -13,6 +13,8 @@
   imports, and tune sparse-backend selection for cold-start cost.
 - Add explicit runtime exports, generic generated-geometry API aliases, and
   package-root arc-length exports.
+- Adopt the pure-solver test files from ANYstructure (triangular shell
+  backend, local patch transition, geometry panel).
 
 ## 0.1.0 - 2026-07-22
 
