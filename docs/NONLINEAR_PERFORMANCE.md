@@ -12,8 +12,12 @@ constitutive update, and convergence criteria.
 
 Topology and MPC revision updates invalidate global sparsity/signature caches
 without scanning every existing element or deleting unaffected element-local
-reference matrices. This removes the former quadratic construction behavior
-that arose when every `add_element()` revisited all prior elements.
+reference matrices. Adding a genuinely new node advances the model-wide
+geometry revision without clearing elements that cannot reference that node.
+An incoming element has only its own mesh/material-dependent caches cleared,
+which also makes precomputed element insertion safe. These rules remove the
+former quadratic construction behavior from both element-at-a-time and
+interleaved node/element construction.
 
 Structured panel coupling now builds the shell-cell lookup once per coupling
 generation and reuses it for every beam node. The lookup maps actual grid cells
@@ -90,13 +94,15 @@ transformation is applied in place by 3x3 node-DOF blocks.
 When Numba is unavailable, Batch B is not installed; the existing NumPy batch
 path remains active to avoid a slow Python-loop fallback.
 
-The general elastic batch records actual layer strains. The direct Batch B
-kernel omits that optional field, causing recovery to recompute elastic stress
-from displacement instead of exposing a fabricated zero state. Plastic batches
-call the same plane-stress return map and discrete algorithmic tangent as scalar
-assembly. Reduced-integration Q8R is deliberately ineligible for shell batching
-because its experimental hourglass stiffness is not represented by the
-accelerated local kernel.
+The general elastic batch records actual layer strains during assembly. The
+direct Batch B kernel omits those displacement-derived arrays inside Newton
+iterations, then reconstructs the real layer strains once at the final
+converged displacement. Returned element states, stress envelopes, and strain
+summaries therefore retain the same recovery contract without paying that cost
+per iteration. Plastic batches call the same plane-stress return map and
+discrete algorithmic tangent as scalar assembly. Reduced-integration Q8R is
+deliberately ineligible for shell batching because its experimental hourglass
+stiffness is not represented by the accelerated local kernel.
 
 ### Batch C: direct reduced-coordinate assembly
 
@@ -145,13 +151,16 @@ FE_SOLVER_PYPARDISO_MAX_PATTERN_SLOTS
 ```
 
 The cold defaults (`10,000` equations and `250,000` nonzeros) avoid paying MKL
-startup cost on small one-off solves. After the process has initialized
-PyPardiso, lower warm defaults (`1,000` and `25,000`) permit reuse where it was
-measured to help. Both thresholds must be met.
+startup cost on small one-off solves. Lower warm defaults (`1,000` and
+`25,000`) apply only when a retained PARDISO slot has the same prepared
+sparsity pattern and a matrix type compatible with the incoming matrix class.
+Merely having initialized PyPardiso for an unrelated matrix does not activate
+the warm policy. Both thresholds must be met.
 
-The auto backend records the active thresholds and selected backend in solver
-diagnostics. The PyPardiso module and solver object are constructed only after
-the policy selects that backend. The PARDISO backend checks standard MKL
+The auto backend records the active thresholds, prior initialization state,
+compatible-pattern decision, retained-slot count, and selected backend in
+solver diagnostics. The PyPardiso module and solver object are constructed only
+after the policy selects that backend. The PARDISO backend checks standard MKL
 library directories without a recursive environment scan, resolves `mkl_rt`
 once per process (`PYPARDISO_MKL_RT`), factorizes symmetric matrix classes as
 upper triangles with symmetric mtypes (2 / -2, general fallback on failure),

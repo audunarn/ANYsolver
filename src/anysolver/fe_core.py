@@ -17,6 +17,23 @@ if TYPE_CHECKING:
     from .boundary import BoundaryCondition, LoadCase
 
 
+_ELEMENT_LOCAL_CACHE_NAMES = (
+    "_stiffness_matrix",
+    "_mass_matrix",
+    "_internal_forces",
+    "_nl_cache",
+    "_hourglass_stiffness_matrix",
+)
+
+
+def _clear_element_local_caches(element: "Element") -> None:
+    """Clear mesh/material-dependent state on one element in constant time."""
+
+    for name in _ELEMENT_LOCAL_CACHE_NAMES:
+        if hasattr(element, name):
+            setattr(element, name, None)
+
+
 class DOFManager:
     """
     Manages degrees of freedom for the FE model.
@@ -37,6 +54,8 @@ class DOFManager:
 
     def add_node(self, node_id: int) -> List[int]:
         """Add a new node and return its DOF indices."""
+        if node_id in self._node_to_dof:
+            raise ValueError(f"Node {node_id} already has assigned DOFs")
         dofs = list(range(self._total_dofs, self._total_dofs + self.DOF_PER_NODE))
         self._node_to_dof[node_id] = dofs
         for i, dof in enumerate(dofs):
@@ -139,23 +158,20 @@ class FEMesh:
         "result_state": 0,
     })
 
+    def _advance_revision(self, category: str) -> None:
+        """Increment one revision without applying invalidation policy."""
+
+        self.revisions[category] = int(self.revisions.get(category, 0)) + 1
+
     def bump_revision(self, category: str) -> None:
         """Increment a mesh/model revision category and clear stale caches."""
-        self.revisions[category] = int(self.revisions.get(category, 0)) + 1
+        self._advance_revision(category)
         # Element-local matrices depend on an element's geometry and material,
         # not on unrelated elements or MPC topology.  Scanning every existing
         # element for every add_element() made model construction O(E**2).
         if category in {"geometry", "material"}:
             for element in self.elements.values():
-                for name in (
-                    "_stiffness_matrix",
-                    "_mass_matrix",
-                    "_internal_forces",
-                    "_nl_cache",
-                    "_hourglass_stiffness_matrix",
-                ):
-                    if hasattr(element, name):
-                        setattr(element, name, None)
+                _clear_element_local_caches(element)
         if category in {"topology", "mpc"} and hasattr(self, "_sparsity_cache"):
             self._sparsity_cache = {}
         if category in {"topology", "mpc"} and hasattr(self, "_topology_signature_cache"):
@@ -166,15 +182,24 @@ class FEMesh:
 
     def add_node(self, node_id: int, x: float, y: float, z: float) -> Node:
         """Add a node to the mesh."""
+        if node_id in self.nodes:
+            raise ValueError(f"Node {node_id} already exists")
         node = Node(id=node_id, x=x, y=y, z=z)
         node.dofs = self.dof_manager.add_node(node_id)
         self.nodes[node_id] = node
         self.bump_revision("topology")
-        self.bump_revision("geometry")
+        # A genuinely new node cannot be referenced by any already-valid
+        # element, so existing element-local geometry caches remain valid.
+        # The geometry revision still advances to invalidate model-wide plans.
+        self._advance_revision("geometry")
         return node
 
     def add_element(self, element_id: int, element: 'Element'):
         """Add an element to the mesh."""
+        # Elements can be precomputed before insertion (including against
+        # another mesh).  Clear only the incoming element; revisiting every
+        # existing element would turn construction into O(E**2).
+        _clear_element_local_caches(element)
         self.elements[element_id] = element
         self.bump_revision("topology")
         self.bump_revision("mpc")

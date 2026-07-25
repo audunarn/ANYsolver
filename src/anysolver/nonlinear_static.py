@@ -767,6 +767,25 @@ def _copy_initial_states(initial_element_states: Optional[Mapping[int, Any]]) ->
     return copy.deepcopy(dict(initial_element_states or {}))
 
 
+def _finalize_nonlinear_element_states(
+    model: "FEModel",
+    displacements: np.ndarray,
+    element_states: Dict[int, Any],
+    num_layers: int,
+    *,
+    kinematics: str = "von_karman",
+) -> Dict[int, Any]:
+    """Return result-ready element states.
+
+    The default assembly paths already return complete recovery state. Optional
+    acceleration layers may replace this no-op with a final-displacement
+    recovery pass for data deliberately omitted inside Newton iterations.
+    """
+
+    del model, displacements, num_layers, kinematics
+    return element_states
+
+
 def _nonlinear_status_category(status: str, failure_reason: Optional[str]) -> str:
     if status == "completed":
         return "converged"
@@ -937,6 +956,13 @@ def _solve_static_displacement_control(
             )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = _finalize_nonlinear_element_states(
+        model,
+        u_final,
+        committed_states,
+        num_layers,
+        kinematics=kinematics,
+    )
     info["failure_reason"] = failure_reason
     info["stop_reason"] = "target_displacement_reached" if failure_reason is None else failure_reason
     info["status_category"] = _nonlinear_status_category(status, failure_reason)
@@ -1476,6 +1502,13 @@ def solve_static_nonlinear(
                     break
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = _finalize_nonlinear_element_states(
+        model,
+        u_final,
+        committed_states,
+        num_layers,
+        kinematics=kinematics,
+    )
     if "failure_reason" not in info and status == "completed":
         info["failure_reason"] = None
     failure_reason = info.get("failure_reason")

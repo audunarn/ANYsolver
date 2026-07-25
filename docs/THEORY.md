@@ -100,10 +100,12 @@ implemented and qualified.
 
 Shell mass is integrated consistently with the shell shape functions.  The
 translational mass scales with `rho h`; rotary inertia scales with
-`rho h^3 / 12`.  Beam mass uses translational lumping plus section rotary
-inertia for torsion and bending rotations. Explicit point masses contribute to
-the assembled mass matrix and to total-mass, center-of-mass, and inertia
-diagnostics.
+`rho h^3 / 12`. The 2-node beam uses translational and rotary lumping by
+default, or a consistent interpolation-based mass matrix when
+`consistent_mass=True` is set in its section data. The straight-sided 3-node
+beam always integrates a consistent translational and section-rotary mass
+matrix. Explicit point masses contribute to the assembled mass matrix and to
+total-mass, center-of-mass, and inertia diagnostics.
 
 Shell pressure is assembled as a consistent nodal load:
 

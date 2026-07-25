@@ -842,6 +842,13 @@ def _solve_static_displacement_control_block(
             )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = ns._finalize_nonlinear_element_states(
+        model,
+        u_final,
+        committed_states,
+        num_layers,
+        kinematics=kinematics,
+    )
     info["failure_reason"] = failure_reason
     info["last_converged_load_factor"] = float(lam)
     info["peak_load_factor"] = max((step.load_factor for step in steps), default=float(lam))

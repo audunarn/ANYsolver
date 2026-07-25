@@ -85,7 +85,9 @@ nonlinear assembly plans. In-place mutation outside model APIs may require an
 explicit nonlinear cache clear. The deterministic full-topology signature is
 computed once for a given topology/MPC revision and then cached; revision
 counters are invalidation keys, not substitutes for the collision-resistant
-signature.
+signature. New-node insertion preserves unrelated element-local caches, while
+element insertion clears only the incoming element so a matrix precomputed
+against another mesh cannot leak into the model.
 
 ### Analysis engines
 

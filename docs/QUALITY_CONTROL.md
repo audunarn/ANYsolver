@@ -23,19 +23,33 @@ reproducible handoff artifacts, not numerical validation.
 
 ## Current checked status
 
-Workspace audit on 2026-07-22 at commit `0d98e40`:
+Workspace audit on 2026-07-25 against the `0.1.1` release-candidate working
+tree based on tagged commit `6623291` (Windows 11, Python 3.13.9):
 
-- `pytest --collect-only`: 418 test cases collected;
-- full `pytest`: 418/418 passed in 99.63 s;
+- full `pytest`: 417/417 passed (183.18 s in the canonical runner);
+- focused FE verification set: 151/151 passed;
 - `python run_qc.py --no-save`: 18/18 passed;
-- focused latest-development regression set (SESAM, corotational, arc length,
-  nonlinear impact, and quadratic-beam nonlinear response): 62/62 passed;
 - comprehensive `scripts/run_fe_verification.py`: 18/18 command families
-  passed, including the manifest-driven beam-shell release gate.
+  passed;
+- manifest-driven beam/shell verification: 128 `PASS` and the two existing
+  expected `XFAIL` cases (`COUP-011` nonmatching coupling and `MAT-004`
+  kinematic hardening);
+- frozen-baseline comparison: passed with no failures or warnings;
+- wheel and source distribution build plus `twine check`: passed;
+- the wheel imported from an isolated target environment and completed
+  representative production flat-panel, cylinder, and adaptively refined B3
+  cylinder solves.
 
-The corresponding canonical report is
-`reports/verification/fe_verification_report.md`. Future cleanup or release
-runs must replace this dated evidence rather than infer status from it.
+The external-reference family generated three valid CalculiX handoff decks. It
+did not execute CalculiX, so no external numerical-agreement claim is made.
+
+The comprehensive test, QC, manifest, baseline, benchmark, and
+external-artifact results are recorded in
+`reports/verification/fe_verification_report.md`. The distribution build,
+`twine check`, isolated-wheel import, and wheel-only representative solves
+listed above were separately performed release checks; they are not embedded
+in that canonical runner report. Future cleanup or release runs must replace
+this dated evidence rather than infer status from it.
 
 ## Commands
 
@@ -82,6 +96,9 @@ python scripts/run_beam_shell_verification.py `
 
 python scripts/write_production_readiness.py `
   --output-dir reports/production_readiness/current
+
+python scripts/run_fe_verification.py --quick `
+  --output-dir reports/verification_quick_current
 ```
 
 The release manifest expects canonical artifacts in
@@ -94,8 +111,8 @@ The release manifest expects canonical artifacts in
 | --- | --- |
 | Core algebra | DOF order, separated K/M/F/KG assembly, sparse checks, factorization caching, multi-RHS equivalence. |
 | Constraints | Supports, prescribed values, multilevel/circular-MPC rejection, eccentric/interpolated coupling, reactions, free-free nullspace. |
-| Shells | T3/T6/Q4/Q8/Q8R shapes, rigid modes, patch tests, pressure/mass/geometric stiffness, locking/distortion metrics, local/global stresses. |
-| Beams | Linear/quadratic Timoshenko response, axes/orientation, torsion, consistent mass, Euler/Wagner buckling, nonlinear tangent, and fiber plasticity. |
+| Shells | T3/T6/Q4/Q8 shapes, rigid modes, patch tests, pressure/mass/geometric stiffness, locking/distortion metrics, and local/global stresses; Q8R remains explicitly experimental. |
+| Beams | Linear and straight-sided quadratic Timoshenko response, axes/orientation, torsion, consistent mass, Euler/Wagner buckling, nonlinear tangent, and fiber plasticity. |
 | Modal/buckling | Constrained and free-free modes, point mass, sparse shift-invert, repeated roots, beam and shell reference loads. |
 | Nonlinear capacity | DNV curves, layered shell plasticity, beam fibers, von Karman/corotational paths, load programs, displacement control, arc length, and imperfections. |
 | Transient/contact | Newmark/HHT-alpha, pressure patches, energy/impulse checks, shell/beam sphere contact, event subdivision, nonlinear impact, damage/erosion. |
@@ -113,7 +130,7 @@ The release manifest expects canonical artifacts in
 - Performance values are machine-dependent. Correctness equivalence and
   fallback behavior are gates; a historic speedup number is not.
 - Production qualification is narrower than the union of callable APIs. See
-  [`README.md`](README.md) and the generated capability matrix.
+  [`README.md`](../README.md) and the generated capability matrix.
 
 ## Canonical report locations
 

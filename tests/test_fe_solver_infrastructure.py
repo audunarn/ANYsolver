@@ -101,7 +101,7 @@ def test_default_sparse_backend_uses_superlu_for_small_matrices_and_can_force_py
     forced = factorize(A, MatrixClass.SPD, options={"backend": "pypardiso"})
     assert forced.backend_name in ("pypardiso", "scipy_superlu")
     if _HAS_PYPARDISO and forced.backend_name == "pypardiso":
-        assert forced.metadata["auto_backend_policy"] == "pypardiso_large_matrix"
+        assert forced.metadata["auto_backend_policy"] == "pypardiso_forced"
     elif _HAS_PYPARDISO:
         assert forced.metadata["auto_backend_policy"] == "scipy_after_pypardiso_failure"
     else:
@@ -163,6 +163,76 @@ def test_auto_sparse_backend_thresholds_are_environment_tunable(monkeypatch) -> 
     assert handle.metadata["pypardiso_active_min_dimension"] == 123
     assert handle.metadata["pypardiso_active_min_nnz"] == 456
     assert handle.metadata["pypardiso_initialized_before_selection"] is False
+    assert handle.metadata["pypardiso_compatible_pattern_before_selection"] is False
+    assert handle.metadata["pypardiso_warm_thresholds_active"] is False
+    assert handle.metadata["pypardiso_retained_pattern_slots_before_selection"] == 0
+
+
+def test_auto_sparse_backend_uses_warm_thresholds_only_for_a_compatible_pattern(
+    monkeypatch,
+) -> None:
+    for name in (
+        "FE_SOLVER_PYPARDISO_MIN_DIMENSION",
+        "FE_SOLVER_PYPARDISO_MIN_NNZ",
+        "FE_SOLVER_PYPARDISO_WARM_MIN_DIMENSION",
+        "FE_SOLVER_PYPARDISO_WARM_MIN_NNZ",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(linalg, "_HAS_PYPARDISO", True)
+
+    A = sparse.csr_matrix(
+        [
+            [4.0, 1.0, 0.0],
+            [1.0, 4.0, 1.0],
+            [0.0, 1.0, 4.0],
+        ]
+    )
+    pardiso = linalg.PyPardisoSolverBackend(max_pattern_slots=2)
+    prepared = linalg._pardiso_prepared_matrix(A, 2)
+    pardiso._slots.append(linalg._PardisoPatternSlot(object(), 2, prepared))
+
+    def fake_pardiso_factorize(matrix, matrix_class, *, signature=None, options=None):
+        return linalg.FactorizationHandle(
+            matrix_shape=matrix.shape,
+            matrix_class=matrix_class,
+            backend_name="pypardiso",
+            ordering="MKL PARDISO",
+            signature=signature,
+            factorization_time=0.0,
+            _solver=object(),
+        )
+
+    monkeypatch.setattr(pardiso, "factorize", fake_pardiso_factorize)
+    backend = AutoSparseSolverBackend(
+        pardiso_backend=pardiso,
+        pypardiso_min_dimension=100,
+        pypardiso_min_nnz=100,
+        pypardiso_warm_min_dimension=3,
+        pypardiso_warm_min_nnz=7,
+    )
+
+    reused = backend.factorize(A * 1.5, MatrixClass.SPD)
+    assert reused.backend_name == "pypardiso"
+    assert reused.metadata["auto_backend_policy"] == "pypardiso_compatible_pattern"
+    assert reused.metadata["pypardiso_initialized_before_selection"] is True
+    assert reused.metadata["pypardiso_compatible_pattern_before_selection"] is True
+    assert reused.metadata["pypardiso_warm_thresholds_active"] is True
+    assert reused.metadata["pypardiso_active_min_dimension"] == 3
+    assert reused.metadata["pypardiso_active_min_nnz"] == 7
+
+    changed_pattern = sparse.eye(3, format="csr")
+    cold = backend.factorize(changed_pattern, MatrixClass.SPD)
+    assert cold.backend_name == "scipy_superlu"
+    assert cold.metadata["pypardiso_initialized_before_selection"] is True
+    assert cold.metadata["pypardiso_compatible_pattern_before_selection"] is False
+    assert cold.metadata["pypardiso_warm_thresholds_active"] is False
+    assert cold.metadata["pypardiso_active_min_dimension"] == 100
+    assert cold.metadata["pypardiso_active_min_nnz"] == 100
+
+    incompatible_class = backend.factorize(A, MatrixClass.GENERAL)
+    assert incompatible_class.backend_name == "scipy_superlu"
+    assert incompatible_class.metadata["pypardiso_initialized_before_selection"] is True
+    assert incompatible_class.metadata["pypardiso_compatible_pattern_before_selection"] is False
 
 
 def test_factorization_cache_reuses_same_matrix_and_separates_changed_values() -> None:
@@ -296,6 +366,67 @@ def test_adding_an_element_preserves_unrelated_element_local_caches() -> None:
         ),
     )
     assert first._stiffness_matrix is cached
+
+
+def test_adding_precomputed_element_clears_only_its_cross_mesh_caches() -> None:
+    section = {"area": 0.01, "Iy": 1.0e-6, "Iz": 2.0e-6, "J": 1.0e-6}
+    source = FEModel("source")
+    source.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    source.add_node(1, 0.0, 0.0, 0.0)
+    source.add_node(2, 1.0, 0.0, 0.0)
+    incoming = BeamElement(1, [1, 2], "steel", section)
+    source_stiffness = incoming.compute_stiffness_matrix(
+        source.mesh,
+        source.get_material("steel"),
+    ).copy()
+    incoming._mass_matrix = np.ones((12, 12))
+    incoming._internal_forces = np.ones(12)
+    incoming._nl_cache = {"mesh": "source"}
+    incoming._hourglass_stiffness_matrix = np.eye(12)
+
+    target = FEModel("target")
+    target.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    target.add_node(1, 0.0, 0.0, 0.0)
+    target.add_node(2, 2.0, 0.0, 0.0)
+    target.add_element(1, incoming)
+
+    for name in (
+        "_stiffness_matrix",
+        "_mass_matrix",
+        "_internal_forces",
+        "_nl_cache",
+        "_hourglass_stiffness_matrix",
+    ):
+        assert getattr(incoming, name) is None
+    target_stiffness = incoming.compute_stiffness_matrix(
+        target.mesh,
+        target.get_material("steel"),
+    )
+    assert not np.allclose(target_stiffness, source_stiffness)
+
+
+def test_adding_new_nodes_preserves_element_caches_and_rejects_duplicate_ids() -> None:
+    model = generate_beam_mesh(1.0, num_divisions=1)
+    first = model.mesh.get_element(1)
+    assert first is not None
+    cached = first.compute_stiffness_matrix(
+        model.mesh,
+        model.get_material(first.material_name),
+    )
+    revisions_before = model.revision_signature()
+
+    model.add_node(3, 2.0, 0.0, 0.0)
+    assert first._stiffness_matrix is cached
+    assert model.revision_signature()["geometry"] == revisions_before["geometry"] + 1
+
+    total_dofs = model.mesh.dof_manager.total_dofs
+    revisions_before_duplicate = model.revision_signature()
+    node_before_duplicate = model.mesh.get_node(3)
+    with pytest.raises(ValueError, match="already exists"):
+        model.add_node(3, 99.0, 0.0, 0.0)
+    assert model.mesh.get_node(3) is node_before_duplicate
+    assert model.mesh.dof_manager.total_dofs == total_dofs
+    assert model.revision_signature() == revisions_before_duplicate
 
 
 class _BadElement:

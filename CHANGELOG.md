@@ -9,8 +9,12 @@
 - Include point masses in reported mass properties, make buckling constraints
   call-order independent, and correct CalculiX gravity export.
 - Remove quadratic model-construction and beam/shell coupling lookup scaling,
-  cache recovery operators and topology signatures, defer optional acceleration
-  imports, and tune sparse-backend selection for cold-start cost.
+  safely reset precomputed incoming elements, cache recovery operators and
+  topology signatures, defer optional acceleration imports, and use lower
+  PyPardiso thresholds only for compatible retained patterns.
+- Preserve straight-sided B3 midpoint geometry through adaptive cylinder
+  refinement and reconstruct complete elastic layer states after accelerated
+  nonlinear solves.
 - Add explicit runtime exports, generic generated-geometry API aliases, and
   package-root arc-length exports.
 - Adopt the pure-solver test files from ANYstructure (triangular shell

@@ -30,6 +30,7 @@ from scipy import sparse
 
 from .jit_compiler import njit, prange
 from .elements import plane_stress_elastic_matrix
+from .plasticity import lobatto_layers
 from . import nonlinear_performance as _performance
 
 
@@ -330,7 +331,104 @@ def _elastic_shell_batch_into_buffers(
 _ORIGINAL_BATCH_BUILD = _performance._ShellBatchPlan.build.__func__
 _ORIGINAL_PLAN_ASSEMBLE = _performance.NonlinearAssemblyPlan.assemble
 _ORIGINAL_PLAN_DIAGNOSTICS = _performance.NonlinearAssemblyPlan.diagnostics
+_ORIGINAL_STATE_FINALIZER = None
 _INSTALLED = False
+
+
+def _finalize_batch_b_element_states(
+    model,
+    displacements: np.ndarray,
+    element_states: Dict[int, Any],
+    num_layers: int,
+    *,
+    kinematics: str = "von_karman",
+) -> Dict[int, Any]:
+    """Recover elastic shell layer strains once, after the nonlinear solve.
+
+    Batch B intentionally omits displacement-derived layer strains from every
+    Newton iteration because elastic materials have no constitutive history to
+    commit.  Public result states still need those strains for stress recovery
+    and strain summaries, so reconstruct them in vectorized batch form at the
+    final displacement.
+    """
+
+    states = element_states
+    if _ORIGINAL_STATE_FINALIZER is not None:
+        states = _ORIGINAL_STATE_FINALIZER(
+            model,
+            displacements,
+            states,
+            num_layers,
+            kinematics=kinematics,
+        )
+    if str(kinematics) != "von_karman" or not states:
+        return states
+
+    from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
+
+    plan = get_nonlinear_assembly_plan(model, int(num_layers))
+    elastic_batches = tuple(
+        batch
+        for batch in plan.shell_batches
+        if getattr(batch, "_batch_b_elastic", False)
+    )
+    if not elastic_batches:
+        return states
+
+    displacement_array = np.asarray(displacements, dtype=float).reshape(-1)
+    finalized = dict(states)
+    for batch in elastic_batches:
+        element_displacements = displacement_array[batch.dof_mappings]
+        local_displacements = np.einsum(
+            "eij,ej->ei",
+            batch.T0,
+            element_displacements,
+            optimize=True,
+        )
+        rotations = np.einsum(
+            "egij,ej->egi",
+            batch.Gw,
+            local_displacements,
+            optimize=True,
+        )
+        membrane_strain = np.einsum(
+            "egij,ej->egi",
+            batch.B_m,
+            local_displacements,
+            optimize=True,
+        )
+        membrane_strain[..., 0] += 0.5 * rotations[..., 0] ** 2
+        membrane_strain[..., 1] += 0.5 * rotations[..., 1] ** 2
+        membrane_strain[..., 2] += rotations[..., 0] * rotations[..., 1]
+        curvature = np.einsum(
+            "egij,ej->egi",
+            batch.B_b,
+            local_displacements,
+            optimize=True,
+        )
+        layer_positions, _layer_weights = lobatto_layers(
+            int(num_layers),
+            float(batch.thickness),
+        )
+        layer_strain = (
+            membrane_strain[:, :, None, :]
+            + layer_positions[None, None, :, None] * curvature[:, :, None, :]
+        ).reshape(len(batch.element_ids), batch.n_gp * int(num_layers), 3)
+
+        for index, element_id in enumerate(batch.element_ids):
+            element_key = int(element_id)
+            existing = finalized.get(element_key)
+            if isinstance(existing, Mapping):
+                state = dict(existing)
+            else:
+                state = dict(batch.elastic_states[index])
+            state["layer_strain"] = layer_strain[index]
+            # Any carried elastic stress array describes an earlier
+            # displacement. Downstream recovery reconstructs it from the
+            # current strain and elastic constitutive matrix.
+            state.pop("layer_stress", None)
+            finalized[element_key] = state
+    return finalized
 
 
 def _batch_b_shell_build(
@@ -562,9 +660,17 @@ def _batch_b_plan_diagnostics(self) -> Dict[str, Any]:
 
 
 def install_batch_b_optimizations() -> bool:
-    global _INSTALLED
+    global _INSTALLED, _ORIGINAL_STATE_FINALIZER
     if _INSTALLED:
         return True
+    from . import nonlinear_static as _nonlinear_static
+
+    _ORIGINAL_STATE_FINALIZER = (
+        _nonlinear_static._finalize_nonlinear_element_states
+    )
+    _nonlinear_static._finalize_nonlinear_element_states = (
+        _finalize_batch_b_element_states
+    )
     _performance._ShellBatchPlan.build = classmethod(_batch_b_shell_build)
     _performance.NonlinearAssemblyPlan.assemble = _batch_b_plan_assemble
     _performance.NonlinearAssemblyPlan.diagnostics = _batch_b_plan_diagnostics
@@ -574,9 +680,20 @@ def install_batch_b_optimizations() -> bool:
 
 
 def uninstall_batch_b_optimizations() -> None:
-    global _INSTALLED
+    global _INSTALLED, _ORIGINAL_STATE_FINALIZER
     if not _INSTALLED:
         return
+    from . import nonlinear_static as _nonlinear_static
+
+    if (
+        _nonlinear_static._finalize_nonlinear_element_states
+        is _finalize_batch_b_element_states
+        and _ORIGINAL_STATE_FINALIZER is not None
+    ):
+        _nonlinear_static._finalize_nonlinear_element_states = (
+            _ORIGINAL_STATE_FINALIZER
+        )
+    _ORIGINAL_STATE_FINALIZER = None
     _performance._ShellBatchPlan.build = classmethod(_ORIGINAL_BATCH_BUILD)
     _performance.NonlinearAssemblyPlan.assemble = _ORIGINAL_PLAN_ASSEMBLE
     _performance.NonlinearAssemblyPlan.diagnostics = _ORIGINAL_PLAN_DIAGNOSTICS

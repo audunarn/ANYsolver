@@ -130,6 +130,49 @@ def test_runtime_rejects_curved_b3_ring_girders() -> None:
         )
 
 
+def test_runtime_cylinder_adaptive_refinement_preserves_b3_midnodes() -> None:
+    geometry = {
+        "geometry": "cylinder",
+        "radius_m": 1.0,
+        "length_m": 2.0,
+        "thickness_m": 0.012,
+        "has_stiffener": True,
+        "stiffener_spacing_m": 1.0,
+        "has_girder": False,
+        "stiffener_section": {
+            "area": 0.002,
+            "Iy": 1.0e-6,
+            "Iz": 2.0e-7,
+            "J": 1.0e-8,
+        },
+    }
+    config = runtime.LightweightFEMConfig(
+        mesh_fidelity="coarse",
+        beam_element_order="B3",
+        include_stiffeners=True,
+        include_girders=False,
+        point_refinement_enabled=True,
+        point_refinement_x_m=0.6,
+        point_refinement_y_m=0.3,
+        point_refinement_fine_factor=0.3,
+        point_refinement_extent_m=0.35,
+    )
+
+    generated = runtime.build_generated_geometry(geometry, config)
+    coordinates = {
+        int(node["id"]): [float(value) for value in node["coords"]]
+        for node in generated["nodes"]
+    }
+    b3_beams = [beam for beam in generated["beams"] if len(beam["node_ids"]) == 3]
+
+    assert generated["adaptive_mesh"]["enabled"]
+    assert b3_beams
+    for beam in b3_beams:
+        start, middle, end = (coordinates[int(node_id)] for node_id in beam["node_ids"])
+        expected_middle = [0.5 * (a + b) for a, b in zip(start, end)]
+        assert middle == pytest.approx(expected_middle, abs=1.0e-12)
+
+
 def test_runtime_lightweight_smoke() -> None:
     result = runtime.run_lightweight_fem(
         _flat_geometry(),

@@ -3457,8 +3457,6 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
     z_breaks = _axis_breaks(length, axial_div, axial_mandatory_breaks)
     if _custom_patch_axis_breaks(config, "a", length) or patch_width_b > 0.0:
         mesh_generation["pressure_patch_boundary_breaks"] = "cylinder_axial_exact_circumferential_refined"
-    if _wants_b3(config) and config.include_stiffeners and geometry.get("has_stiffener"):
-        z_breaks = _refined_midpoint_breaks(z_breaks)
     arc_breaks = _axis_breaks(circumference, circumferential_div, _thickness_region_axis_breaks(config, "b", circumference))
     z_breaks, arc_breaks, adaptive_mesh_info = _apply_cylinder_detail_refinement(
         config,
@@ -3469,6 +3467,12 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
         arc_breaks,
         axial_mandatory_breaks,
     )
+    # Adaptive refinement must run before the B3 midside-node insertion.
+    # Otherwise its additional, nonuniform axial breaks destroy the
+    # endpoint/midpoint/end triplets required by the straight-sided
+    # QuadraticBeamElement formulation.
+    if _wants_b3(config) and config.include_stiffeners and geometry.get("has_stiffener"):
+        z_breaks = _refined_midpoint_breaks(z_breaks)
     rows = len(z_breaks)
     axial_div = rows - 1
     cols = max(len(arc_breaks) - 1, 1)
@@ -5109,6 +5113,8 @@ def _wants_capacity_workflow(config: LightweightFEMConfig) -> bool:
     choice = _normalized_choice(config.runtime_solver, "stepwise")
     return choice in {
         "anysolver capacity workflow",
+        # Legacy serialized ANYstructure selector; retained so saved FEM
+        # option state remains readable after the package transfer.
         "anyintelligent capacity workflow",
         "capacity workflow",
         "nonlinear capacity workflow",

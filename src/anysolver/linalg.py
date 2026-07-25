@@ -371,6 +371,37 @@ class PyPardisoSolverBackend:
 
         return bool(self._slots)
 
+    @property
+    def retained_pattern_slots(self) -> int:
+        """Number of live symbolic-analysis slots retained by the backend."""
+
+        return len(self._slots)
+
+    def has_compatible_pattern(
+        self,
+        matrix: sparse.spmatrix,
+        matrix_class: MatrixClass,
+    ) -> bool:
+        """Return whether a retained slot can reuse this matrix's analysis.
+
+        A prior PARDISO solve alone is not enough to justify the lower warm
+        thresholds: reuse requires the same prepared sparsity pattern and a
+        PARDISO mtype compatible with the incoming matrix class.
+        """
+
+        if not self._slots:
+            return False
+        try:
+            csr = sparse.csr_matrix(matrix, copy=True)
+            csr.sort_indices()
+            for mtype in _pardiso_mtype_candidates(matrix_class):
+                prepared = _pardiso_prepared_matrix(csr, mtype)
+                if any(slot.matches(prepared, mtype) for slot in self._slots):
+                    return True
+        except Exception:
+            return False
+        return False
+
     def _factorize_prepared(self, prepared: sparse.csr_matrix, mtype: int) -> Tuple[_PardisoFactorization, bool]:
         for slot in self._slots:
             if slot.matches(prepared, mtype):
@@ -490,13 +521,25 @@ class AutoSparseSolverBackend:
         if self.pardiso_backend is not None:
             self.pardiso_backend.release_pattern_slots()
 
-    def _selection_thresholds(self, options: Mapping[str, Any]) -> Tuple[int, int, bool]:
-        is_warm = bool(self.pardiso_backend and self.pardiso_backend.initialized)
-        default_dimension = self.pypardiso_warm_min_dimension if is_warm else self.pypardiso_min_dimension
-        default_nnz = self.pypardiso_warm_min_nnz if is_warm else self.pypardiso_min_nnz
+    def _selection_thresholds(
+        self,
+        matrix: sparse.spmatrix,
+        matrix_class: MatrixClass,
+        options: Mapping[str, Any],
+    ) -> Tuple[int, int, bool]:
+        compatible_pattern = bool(
+            self.pardiso_backend
+            and self.pardiso_backend.has_compatible_pattern(matrix, matrix_class)
+        )
+        default_dimension = (
+            self.pypardiso_warm_min_dimension
+            if compatible_pattern
+            else self.pypardiso_min_dimension
+        )
+        default_nnz = self.pypardiso_warm_min_nnz if compatible_pattern else self.pypardiso_min_nnz
         min_dimension = int(options.get("pypardiso_min_dimension", default_dimension))
         min_nnz = int(options.get("pypardiso_min_nnz", default_nnz))
-        return min_dimension, min_nnz, is_warm
+        return min_dimension, min_nnz, compatible_pattern
 
     def _use_pypardiso(
         self,
@@ -523,11 +566,23 @@ class AutoSparseSolverBackend:
         options: Optional[Mapping[str, Any]] = None,
     ) -> FactorizationHandle:
         options_dict = dict(options or {})
-        active_dimension, active_nnz, was_initialized = self._selection_thresholds(options_dict)
+        was_initialized = bool(self.pardiso_backend and self.pardiso_backend.initialized)
+        active_dimension, active_nnz, compatible_pattern = self._selection_thresholds(
+            matrix,
+            matrix_class,
+            options_dict,
+        )
         selection_metadata = {
             "pypardiso_active_min_dimension": active_dimension,
             "pypardiso_active_min_nnz": active_nnz,
             "pypardiso_initialized_before_selection": was_initialized,
+            "pypardiso_compatible_pattern_before_selection": compatible_pattern,
+            "pypardiso_warm_thresholds_active": compatible_pattern,
+            "pypardiso_retained_pattern_slots_before_selection": (
+                self.pardiso_backend.retained_pattern_slots
+                if self.pardiso_backend is not None
+                else 0
+            ),
         }
         if not self._use_pypardiso(matrix, options_dict, active_dimension, active_nnz):
             handle = self.scipy_backend.factorize(matrix, matrix_class, signature=signature, options=options_dict)
@@ -544,7 +599,14 @@ class AutoSparseSolverBackend:
 
         assert self.pardiso_backend is not None
         handle = self.pardiso_backend.factorize(matrix, matrix_class, signature=signature, options=options_dict)
-        handle.metadata.setdefault("auto_backend_policy", "pypardiso_large_matrix")
+        requested = str(options_dict.get("backend", options_dict.get("solver", "auto"))).lower()
+        if requested in {"pypardiso", "pardiso", "mkl_pardiso"}:
+            selection_policy = "pypardiso_forced"
+        elif compatible_pattern:
+            selection_policy = "pypardiso_compatible_pattern"
+        else:
+            selection_policy = "pypardiso_large_matrix"
+        handle.metadata.setdefault("auto_backend_policy", selection_policy)
         handle.metadata.setdefault("pypardiso_min_dimension", self.pypardiso_min_dimension)
         handle.metadata.setdefault("pypardiso_min_nnz", self.pypardiso_min_nnz)
         for key, value in selection_metadata.items():

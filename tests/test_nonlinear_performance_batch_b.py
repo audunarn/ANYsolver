@@ -5,6 +5,7 @@ import pytest
 from types import SimpleNamespace
 
 from anysolver import nonlinear_performance, nonlinear_static
+from anysolver.boundary import FixedSupport, LoadCase
 from anysolver.elements import ShellElement
 from anysolver.fe_core import FEModel
 from anysolver.jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED, jit_diagnostics
@@ -101,6 +102,73 @@ def test_elastic_batch_does_not_overwrite_recovered_stress_with_zero() -> None:
     )
     assert state_based == set()
     assert float(np.max(np.asarray(stresses[1]["von_mises"], dtype=float))) > 0.0
+
+
+def test_final_result_recovers_elastic_layer_state_once() -> None:
+    model = generate_simple_panel_mesh(
+        1.0, 0.6, 0.01, num_divisions_x=1, num_divisions_y=1
+    )
+    left_nodes = [
+        node_id
+        for node_id, node in model.mesh.nodes.items()
+        if np.isclose(node.x, 0.0)
+    ]
+    right_nodes = [
+        node_id
+        for node_id, node in model.mesh.nodes.items()
+        if np.isclose(node.x, 1.0)
+    ]
+    model.add_boundary_condition(FixedSupport("fixed", left_nodes))
+    load = LoadCase("membrane")
+    for node_id in right_nodes:
+        load.add_nodal_load(node_id, [5.0e4, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    result = nonlinear_static.solve_static_nonlinear(
+        model,
+        load,
+        num_steps=2,
+        num_layers=5,
+    )
+    assert result.status == "completed"
+
+    legacy = nonlinear_performance._ORIGINAL_ASSEMBLER
+    assert legacy is not None
+    _force, _tangent, reference_states = legacy(
+        model,
+        result.displacements,
+        {},
+        5,
+        tangent=False,
+    )
+    assert set(result.element_states) == set(reference_states)
+    for element_id, reference_state in reference_states.items():
+        assert "layer_strain" in result.element_states[element_id]
+        np.testing.assert_allclose(
+            result.element_states[element_id]["layer_strain"],
+            reference_state["layer_strain"],
+            rtol=2.0e-12,
+            atol=1.0e-15,
+        )
+
+    reference_summary = nonlinear_static._nonlinear_state_summary(reference_states)
+    assert result.info["strain_summary"]["layer_strain_min"] == pytest.approx(
+        reference_summary["layer_strain_min"],
+        rel=2.0e-12,
+        abs=1.0e-15,
+    )
+    assert result.info["strain_summary"]["layer_strain_max"] == pytest.approx(
+        reference_summary["layer_strain_max"],
+        rel=2.0e-12,
+        abs=1.0e-15,
+    )
+    assert nonlinear_static.states_von_mises_map(
+        model,
+        result.element_states,
+    ) == pytest.approx(
+        nonlinear_static.states_von_mises_map(model, reference_states),
+        rel=2.0e-12,
+        abs=1.0e-6,
+    )
 
 
 def test_batch_b_reuses_plan_buffers() -> None:
