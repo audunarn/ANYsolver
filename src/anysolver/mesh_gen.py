@@ -707,74 +707,132 @@ def _shape_functions_8node(xi: float, eta: float) -> np.ndarray:
     )
 
 
+@dataclass(frozen=True)
+class _StructuredShellGrid:
+    """Reusable axis-aligned shell-cell index for coupling-point lookup."""
+
+    x_edges: np.ndarray
+    y_edges: np.ndarray
+    cells: Dict[Tuple[int, int], Tuple[List[int], float]]
+
+
+def _build_structured_shell_grid_index(
+    shell_nodes: Dict[int, Tuple[float, float, float]],
+    shell_elements: Dict[int, Tuple[List[int], float]],
+    tolerance: float,
+) -> Optional[_StructuredShellGrid]:
+    """Build a structured-cell index once, or return ``None`` for irregular meshes."""
+
+    tol = max(float(tolerance), 1.0e-10)
+    records: List[Tuple[float, float, float, float, List[int], float]] = []
+    x_edges: set[float] = set()
+    y_edges: set[float] = set()
+    try:
+        for node_ids, thickness in shell_elements.values():
+            corner_coords = np.asarray([shell_nodes[node_id] for node_id in node_ids[:4]], dtype=float)
+            xmin = float(np.min(corner_coords[:, 0]))
+            xmax = float(np.max(corner_coords[:, 0]))
+            ymin = float(np.min(corner_coords[:, 1]))
+            ymax = float(np.max(corner_coords[:, 1]))
+            if xmax - xmin <= tol or ymax - ymin <= tol:
+                return None
+            # The fast index is intentionally limited to axis-aligned cells.
+            for x_value, y_value in corner_coords[:, :2]:
+                if min(abs(float(x_value) - xmin), abs(float(x_value) - xmax)) > tol:
+                    return None
+                if min(abs(float(y_value) - ymin), abs(float(y_value) - ymax)) > tol:
+                    return None
+            qxmin = round(xmin / tol) * tol
+            qxmax = round(xmax / tol) * tol
+            qymin = round(ymin / tol) * tol
+            qymax = round(ymax / tol) * tol
+            x_edges.update((qxmin, qxmax))
+            y_edges.update((qymin, qymax))
+            records.append((qxmin, qxmax, qymin, qymax, list(node_ids), float(thickness)))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    xs = np.asarray(sorted(x_edges), dtype=float)
+    ys = np.asarray(sorted(y_edges), dtype=float)
+    nx = int(xs.size - 1)
+    ny = int(ys.size - 1)
+    if nx <= 0 or ny <= 0 or nx * ny != len(records):
+        return None
+
+    x_lookup = {float(value): index for index, value in enumerate(xs[:-1])}
+    y_lookup = {float(value): index for index, value in enumerate(ys[:-1])}
+    cells: Dict[Tuple[int, int], Tuple[List[int], float]] = {}
+    for xmin, xmax, ymin, ymax, node_ids, thickness in records:
+        i = x_lookup.get(float(xmin))
+        j = y_lookup.get(float(ymin))
+        if i is None or j is None:
+            return None
+        if abs(float(xs[i + 1]) - xmax) > tol or abs(float(ys[j + 1]) - ymax) > tol:
+            return None
+        if (i, j) in cells:
+            return None
+        cells[(i, j)] = (node_ids, thickness)
+    if len(cells) != nx * ny:
+        return None
+    return _StructuredShellGrid(xs, ys, cells)
+
+
+def _interpolate_shell_point(
+    x: float,
+    y: float,
+    node_ids: List[int],
+    shell_nodes: Dict[int, Tuple[float, float, float]],
+    tolerance: float,
+) -> Optional[Tuple[List[int], np.ndarray, np.ndarray]]:
+    """Return interpolation weights and point for one axis-aligned shell cell."""
+
+    tol = max(float(tolerance), 1.0e-10)
+    corner_coords = np.asarray([shell_nodes[node_id] for node_id in node_ids[:4]], dtype=float)
+    xmin, xmax = float(np.min(corner_coords[:, 0])), float(np.max(corner_coords[:, 0]))
+    ymin, ymax = float(np.min(corner_coords[:, 1])), float(np.max(corner_coords[:, 1]))
+    if x < xmin - tol or x > xmax + tol or y < ymin - tol or y > ymax + tol:
+        return None
+    dx = xmax - xmin
+    dy = ymax - ymin
+    if dx <= tol or dy <= tol:
+        return None
+    xi = float(np.clip(2.0 * (x - xmin) / dx - 1.0, -1.0, 1.0))
+    eta = float(np.clip(2.0 * (y - ymin) / dy - 1.0, -1.0, 1.0))
+    weights = _shape_functions_8node(xi, eta) if len(node_ids) == 8 else _shape_functions_4node(xi, eta)
+    shell_coords = np.asarray([shell_nodes[node_id] for node_id in node_ids], dtype=float)
+    return list(node_ids), weights, weights @ shell_coords
+
+
 def _locate_shell_element_at_xy(
     x: float,
     y: float,
     shell_nodes: Dict[int, Tuple[float, float, float]],
     shell_elements: Dict[int, Tuple[List[int], float]],
     tolerance: float,
+    grid_index: Optional[_StructuredShellGrid] = None,
 ) -> Optional[Tuple[List[int], np.ndarray, np.ndarray]]:
     """Find the shell element containing an x/y point and return node ids, weights and shell point."""
     tol = max(float(tolerance), 1.0e-10)
 
-    # Fast O(1) grid lookup path for regular rectangular grids
-    try:
-        xs = sorted(list(set(round(coords[0] / tol) * tol for coords in shell_nodes.values())))
-        ys = sorted(list(set(round(coords[1] / tol) * tol for coords in shell_nodes.values())))
-        xs_arr = np.array(xs, dtype=float)
-        ys_arr = np.array(ys, dtype=float)
-        nx = len(xs_arr) - 1
-        ny = len(ys_arr) - 1
-
-        if nx > 0 and ny > 0 and len(shell_elements) == nx * ny:
-            i = np.searchsorted(xs_arr, x) - 1
-            j = np.searchsorted(ys_arr, y) - 1
-            i = max(0, min(i, nx - 1))
-            j = max(0, min(j, ny - 1))
-
-            candidate_id = 1 + i * ny + j
-            if candidate_id in shell_elements:
-                node_ids, _thickness = shell_elements[candidate_id]
-                corner_ids = node_ids[:4]
-                corner_coords = np.asarray([shell_nodes[nid] for nid in corner_ids], dtype=float)
-                xmin, xmax = float(np.min(corner_coords[:, 0])), float(np.max(corner_coords[:, 0]))
-                ymin, ymax = float(np.min(corner_coords[:, 1])), float(np.max(corner_coords[:, 1]))
-
-                if xmin - tol <= x <= xmax + tol and ymin - tol <= y <= ymax + tol:
-                    dx = xmax - xmin
-                    dy = ymax - ymin
-                    if dx > tol and dy > tol:
-                        xi = 2.0 * (x - xmin) / dx - 1.0
-                        eta = 2.0 * (y - ymin) / dy - 1.0
-                        xi = float(np.clip(xi, -1.0, 1.0))
-                        eta = float(np.clip(eta, -1.0, 1.0))
-                        weights = _shape_functions_8node(xi, eta) if len(node_ids) == 8 else _shape_functions_4node(xi, eta)
-                        shell_coords = np.asarray([shell_nodes[nid] for nid in node_ids], dtype=float)
-                        shell_point = weights @ shell_coords
-                        return list(node_ids), weights, shell_point
-    except Exception:
-        pass
+    # Build on demand for direct callers; mesh generation passes a shared
+    # index so hundreds of beam nodes do not rebuild the same grid.
+    index = grid_index or _build_structured_shell_grid_index(shell_nodes, shell_elements, tol)
+    if index is not None:
+        i = int(np.searchsorted(index.x_edges, x) - 1)
+        j = int(np.searchsorted(index.y_edges, y) - 1)
+        i = max(0, min(i, len(index.x_edges) - 2))
+        j = max(0, min(j, len(index.y_edges) - 2))
+        candidate = index.cells.get((i, j))
+        if candidate is not None:
+            located = _interpolate_shell_point(x, y, candidate[0], shell_nodes, tol)
+            if located is not None:
+                return located
 
     # Fallback to sequential search
     for node_ids, _thickness in shell_elements.values():
-        corner_ids = node_ids[:4]
-        corner_coords = np.asarray([shell_nodes[nid] for nid in corner_ids], dtype=float)
-        xmin, xmax = float(np.min(corner_coords[:, 0])), float(np.max(corner_coords[:, 0]))
-        ymin, ymax = float(np.min(corner_coords[:, 1])), float(np.max(corner_coords[:, 1]))
-        if x < xmin - tol or x > xmax + tol or y < ymin - tol or y > ymax + tol:
-            continue
-        dx = xmax - xmin
-        dy = ymax - ymin
-        if abs(dx) <= tol or abs(dy) <= tol:
-            continue
-        xi = 2.0 * (x - xmin) / dx - 1.0
-        eta = 2.0 * (y - ymin) / dy - 1.0
-        xi = float(np.clip(xi, -1.0, 1.0))
-        eta = float(np.clip(eta, -1.0, 1.0))
-        weights = _shape_functions_8node(xi, eta) if len(node_ids) == 8 else _shape_functions_4node(xi, eta)
-        shell_coords = np.asarray([shell_nodes[nid] for nid in node_ids], dtype=float)
-        shell_point = weights @ shell_coords
-        return list(node_ids), weights, shell_point
+        located = _interpolate_shell_point(x, y, list(node_ids), shell_nodes, tol)
+        if located is not None:
+            return located
     return None
 
 
@@ -788,9 +846,17 @@ def _generate_coupling_elements(
     """Generate interpolated eccentric beam-shell MPC coupling elements."""
     coupling_elements: Dict[int, Tuple[int, List[int], np.ndarray, np.ndarray]] = {}
     elem_id = 30000
+    grid_index = _build_structured_shell_grid_index(shell_nodes, shell_elements, config.tolerance)
     for beam_node_id, beam_coords_tuple in beam_nodes.items():
         beam_coords = np.asarray(beam_coords_tuple, dtype=float)
-        located = _locate_shell_element_at_xy(beam_coords[0], beam_coords[1], shell_nodes, shell_elements, config.tolerance)
+        located = _locate_shell_element_at_xy(
+            beam_coords[0],
+            beam_coords[1],
+            shell_nodes,
+            shell_elements,
+            config.tolerance,
+            grid_index,
+        )
         if located is None:
             continue
         shell_node_ids, shape_weights, shell_point = located

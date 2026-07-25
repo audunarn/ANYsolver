@@ -64,6 +64,19 @@ def _relative_symmetry_error(matrix: sparse.spmatrix | np.ndarray) -> float:
 
 def _topology_signature(mesh: Any, matrix_type: str) -> str:
     revisions = getattr(mesh, "revision_signature", lambda: {})()
+    cache_key = (
+        str(matrix_type),
+        int(revisions.get("topology", 0)),
+        int(revisions.get("mpc", 0)),
+    )
+    cache = getattr(mesh, "_topology_signature_cache", None)
+    if cache is None:
+        cache = {}
+        mesh._topology_signature_cache = cache
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return str(cached)
+
     payload = {
         "matrix_type": matrix_type,
         "topology_revision": revisions.get("topology", 0),
@@ -79,7 +92,9 @@ def _topology_signature(mesh: Any, matrix_type: str) -> str:
         ],
     }
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    signature = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    cache[cache_key] = signature
+    return signature
 
 
 def _scatter_element_matrix(
@@ -285,11 +300,11 @@ def _assemble_element_matrix(
         info["element_times"][int(elem_id)] = time.time() - elem_start
         info["num_elements"] += 1
 
-    info["assembly_time"] = time.time() - start_time
-
     if not data_list:
         matrix = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
         info["diagnostics"]["assembled_symmetry_error"] = 0.0
+        info["sparsity_signature"] = _topology_signature(mesh, matrix_type)
+        info["assembly_time"] = time.time() - start_time
         return matrix, info
 
     data_concat = np.concatenate(data_list)
@@ -305,6 +320,7 @@ def _assemble_element_matrix(
         info["diagnostics"]["vectorized_shell_element_count"] = int(len(precomputed))
         info["diagnostics"]["scalar_shell_element_count"] = int(info["num_elements"] - len(precomputed))
     info["sparsity_signature"] = _topology_signature(mesh, matrix_type)
+    info["assembly_time"] = time.time() - start_time
     return matrix, info
 
 
@@ -408,12 +424,13 @@ def assemble_geometric_stiffness_matrix(
         info["element_times"][int(elem_id)] = time.time() - elem_start
         info["num_elements"] += 1
 
-    info["assembly_time"] = time.time() - start_time
     info["state_source"] = "none" if element_states is None else type(element_states).__name__
 
     if not data_list:
         matrix = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
         info["diagnostics"]["assembled_symmetry_error"] = 0.0
+        info["sparsity_signature"] = _topology_signature(mesh, "geometric_stiffness")
+        info["assembly_time"] = time.time() - start_time
         return matrix, info
 
     data_concat = np.concatenate(data_list)
@@ -425,6 +442,7 @@ def assemble_geometric_stiffness_matrix(
     matrix = coo.tocsr()
     info["diagnostics"]["assembled_symmetry_error"] = _relative_symmetry_error(matrix)
     info["sparsity_signature"] = _topology_signature(mesh, "geometric_stiffness")
+    info["assembly_time"] = time.time() - start_time
     return matrix, info
 
 

@@ -137,8 +137,14 @@ def _load_block(load_case: Optional[LoadCase]) -> Tuple[List[str], Dict[str, Any
             lines.append(f"{int(element_id)}, P, {_fmt(pressure)}")
     if load_case.gravity is not None:
         gx, gy, gz = np.asarray(load_case.gravity, dtype=float).reshape(3)
-        lines.append("*DLOAD")
-        lines.append(f"ALL, GRAV, {_fmt(np.linalg.norm([gx, gy, gz]))}, {_fmt(gx)}, {_fmt(gy)}, {_fmt(gz)}")
+        magnitude = float(np.linalg.norm([gx, gy, gz]))
+        if magnitude > 0.0:
+            direction = np.asarray([gx, gy, gz], dtype=float) / magnitude
+            lines.append("*DLOAD")
+            lines.append(
+                f"ALL, GRAV, {_fmt(magnitude)}, "
+                f"{_fmt(direction[0])}, {_fmt(direction[1])}, {_fmt(direction[2])}"
+            )
     return lines, {
         "name": load_case.name,
         "nodal_loads": len(load_case.nodal_loads),
@@ -174,6 +180,15 @@ def write_calculix_input_deck(
         for element_id in element_ids:
             element = model.mesh.elements[element_id]
             lines.append(f"{int(element_id)}, " + ", ".join(str(int(node_id)) for node_id in element.node_ids))
+    supported_element_ids = [
+        int(element_id)
+        for element_id, element in sorted(model.mesh.elements.items())
+        if _element_type(element) != "UNKNOWN"
+    ]
+    if supported_element_ids:
+        lines.append("*ELSET, ELSET=ALL")
+        for start in range(0, len(supported_element_ids), 16):
+            lines.append(", ".join(str(element_id) for element_id in supported_element_ids[start : start + 16]))
     lines.extend(_material_block(model.materials))
     section_lines, assumptions = _section_blocks(model)
     lines.extend(section_lines)

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import anysolver
+import pytest
 from anysolver import runtime
+from anysolver import anystructure_fem_mode
+from anysolver import arc_length
 
 
 def _flat_geometry() -> dict[str, object]:
@@ -40,6 +44,90 @@ def test_runtime_contract_is_headless_and_builds_geometry() -> None:
     assert generated["nodes"]
     assert generated["shells"]
     assert "beams" in generated
+
+
+def test_runtime_public_api_is_explicit_and_complete() -> None:
+    expected = {
+        "GeneratedGeometry",
+        "LightweightFEMConfig",
+        "LightweightFEMResult",
+        "NormalizedGeometry",
+        "StatusCallback",
+        "apply_mode_shape_imperfections",
+        "build_generated_geometry",
+        "dnv_c208_steel_properties",
+        "full_backend_api",
+        "full_backend_available",
+        "run_lightweight_fem",
+        "run_production_fem",
+        "runtime_imperfection_preview_offsets",
+        "warm_fe_solver_kernels",
+    }
+
+    assert set(runtime.__all__) == expected
+    assert all(hasattr(runtime, name) for name in runtime.__all__)
+
+
+def test_root_exports_arc_length_and_generic_generated_geometry_api() -> None:
+    expected_root_names = {
+        "ArcLengthControl",
+        "ArcLengthResult",
+        "ArcLengthStep",
+        "solve_static_arc_length",
+        "GeneratedGeometryFEMConfig",
+        "GeneratedGeometryFEMResult",
+        "run_generated_geometry_fem",
+    }
+
+    assert expected_root_names <= set(anysolver.__all__)
+    assert anysolver.ArcLengthControl is arc_length.ArcLengthControl
+    assert anysolver.ArcLengthResult is arc_length.ArcLengthResult
+    assert anysolver.ArcLengthStep is arc_length.ArcLengthStep
+    assert anysolver.solve_static_arc_length is arc_length.solve_static_arc_length
+
+
+def test_generic_generated_geometry_aliases_match_historical_api() -> None:
+    generic_names = {
+        "GeneratedGeometryFEMConfig",
+        "GeneratedGeometryFEMResult",
+        "run_generated_geometry_fem",
+    }
+
+    assert generic_names <= set(anystructure_fem_mode.__all__)
+    assert anysolver.GeneratedGeometryFEMConfig is anysolver.AnyStructureFEMConfig
+    assert anysolver.GeneratedGeometryFEMResult is anysolver.AnyStructureFEMResult
+    assert anysolver.run_generated_geometry_fem is anysolver.run_anystructure_fem_mode
+
+    assert (
+        anystructure_fem_mode.GeneratedGeometryFEMConfig
+        is anystructure_fem_mode.AnyStructureFEMConfig
+    )
+    assert (
+        anystructure_fem_mode.GeneratedGeometryFEMResult
+        is anystructure_fem_mode.AnyStructureFEMResult
+    )
+    assert (
+        anystructure_fem_mode.run_generated_geometry_fem
+        is anystructure_fem_mode.run_anystructure_fem_mode
+    )
+
+
+def test_runtime_rejects_curved_b3_ring_girders() -> None:
+    geometry = {
+        "geometry": "cylinder",
+        "radius_m": 1.0,
+        "length_m": 2.0,
+        "thickness_m": 0.012,
+        "has_stiffener": False,
+        "has_girder": True,
+        "girder_spacing_m": 1.0,
+    }
+
+    with pytest.raises(ValueError, match="B3 ring girders are not supported"):
+        runtime.build_generated_geometry(
+            geometry,
+            runtime.LightweightFEMConfig(beam_element_order="B3"),
+        )
 
 
 def test_runtime_lightweight_smoke() -> None:

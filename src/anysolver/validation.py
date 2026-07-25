@@ -327,6 +327,7 @@ def validate_production_model(
 
     slave_dof_owner: Dict[int, int] = {}
     min_edge_values: List[float] = []
+    q8r_element_ids: List[int] = []
     for element_id, element in model.mesh.elements.items():
         material_name = getattr(element, "material_name", None)
         if material_name not in model.materials:
@@ -337,6 +338,8 @@ def validate_production_model(
 
         if isinstance(element, ShellElement):
             mesh_quality["shell_count"] += 1
+            if getattr(element, "_is_8node", False) and bool(getattr(element, "reduced_integration", False)):
+                q8r_element_ids.append(int(element_id))
             try:
                 coords = element.get_node_coordinates(model.mesh)
                 metrics = _shell_corner_metrics(coords)
@@ -371,6 +374,19 @@ def validate_production_model(
 
     if min_edge_values:
         mesh_quality["min_edge_length"] = float(min(min_edge_values))
+    if q8r_element_ids:
+        issues.append(
+            _issue(
+                "SHELL002",
+                "warning",
+                "element",
+                q8r_element_ids[0],
+                f"{len(q8r_element_ids)} Q8R element(s) use an experimental reduced-integration "
+                "stabilization and lumped mass formulation.",
+                suggestion="Use full-integration Q8 for qualified thin-shell bending or independently "
+                "verify hourglass energy and inertia sensitivity.",
+            )
+        )
 
     for load_case in load_cases or ():
         if bool(getattr(load_case, "follower_pressure", False)):

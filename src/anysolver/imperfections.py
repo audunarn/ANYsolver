@@ -44,7 +44,13 @@ def _node_coords(model: "FEModel", node_ids: Iterable[int]) -> Dict[int, np.ndar
 
 def _invalidate_element_caches(model: "FEModel") -> None:
     for element in model.mesh.elements.values():
-        for name in ("_stiffness_matrix", "_mass_matrix", "_internal_forces", "_nl_cache"):
+        for name in (
+            "_stiffness_matrix",
+            "_mass_matrix",
+            "_internal_forces",
+            "_nl_cache",
+            "_hourglass_stiffness_matrix",
+        ):
             if hasattr(element, name):
                 setattr(element, name, None)
     if hasattr(model.mesh, "_sparsity_cache"):
@@ -243,7 +249,12 @@ def standard_member_bow(
     axis /= length
     direction_vector = _unit(direction)
     direction_vector = direction_vector - float(direction_vector @ axis) * axis
-    direction_vector = _unit(direction_vector)
+    if float(np.linalg.norm(direction_vector)) <= 1.0e-14:
+        # Choose the Cartesian axis least aligned with the member, then
+        # project it into the transverse plane.
+        basis = np.eye(3, dtype=float)[int(np.argmin(np.abs(axis)))]
+        direction_vector = basis - float(basis @ axis) * axis
+    direction_vector /= float(np.linalg.norm(direction_vector))
     amp = float(length / 300.0 if amplitude is None else amplitude)
     offsets: Dict[int, np.ndarray] = {}
     for node_id, coord in coords.items():
@@ -301,21 +312,29 @@ def standard_flange_twist(
     direction: Sequence[float] = (0.0, 0.0, 1.0),
     name: str = "flange_twist",
 ) -> ImperfectionField:
-    """Simple linear outstand twist pattern with DNV table default 0.02 rad."""
+    """Small rigid twist ``delta x = theta x r`` about ``direction``.
+
+    ``direction`` is the twist axis.  The default angle is 0.02 rad.
+    """
     coords = _node_coords(model, node_ids)
     values = np.asarray(list(coords.values()), dtype=float)
-    centroid = values.mean(axis=0)
-    lever = np.asarray([coord - centroid for coord in coords.values()])
-    if lever.size == 0:
+    if values.size == 0:
         return ImperfectionField({}, name=name)
-    lever_norm = np.linalg.norm(lever, axis=1)
-    max_lever = max(float(np.max(lever_norm)), 1.0e-14)
-    direction_vector = _unit(direction)
+    centroid = values.mean(axis=0)
+    twist_axis = _unit(direction)
     offsets = {
-        node_id: float(twist_radians) * float(np.linalg.norm(coord - centroid)) / max_lever * direction_vector
+        node_id: float(twist_radians) * np.cross(twist_axis, coord - centroid)
         for node_id, coord in coords.items()
     }
-    return ImperfectionField(offsets, name=name, metadata={"kind": "flange_twist", "twist_radians": float(twist_radians)})
+    return ImperfectionField(
+        offsets,
+        name=name,
+        metadata={
+            "kind": "flange_twist",
+            "twist_radians": float(twist_radians),
+            "twist_axis": twist_axis.tolist(),
+        },
+    )
 
 
 def calibrate_imperfection_amplitude(

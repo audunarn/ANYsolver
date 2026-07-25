@@ -14,6 +14,8 @@ import math
 import os
 import re
 import time
+from types import ModuleType
+from typing import Callable, Mapping, Sequence, TypeAlias
 
 import numpy as np
 
@@ -34,9 +36,32 @@ from .fracture import ImpactDamageConfig as _backend_ImpactDamageConfig
 from .fracture import PlasticImpactDamageConfig as _backend_PlasticImpactDamageConfig
 from .kernel_warmup import warm_fe_solver_kernels as _backend_warm_fe_solver_kernels
 from .material_curves import curve_from_properties as _backend_curve_from_properties
+from .material_curves import dnv_c208_steel_properties as _material_dnv_c208_steel_properties
 from .nonlinear import solve_nonlinear_load_stepping as _backend_solve_nonlinear_limit
 from .nonlinear_static import solve_static_nonlinear as _backend_solve_static_nonlinear
 from .validation import load_case_resultant as _backend_load_case_resultant
+
+
+StatusCallback: TypeAlias = Callable[[str], None]
+NormalizedGeometry: TypeAlias = Mapping[str, object]
+GeneratedGeometry: TypeAlias = dict[str, object]
+
+__all__ = [
+    "GeneratedGeometry",
+    "LightweightFEMConfig",
+    "LightweightFEMResult",
+    "NormalizedGeometry",
+    "StatusCallback",
+    "apply_mode_shape_imperfections",
+    "build_generated_geometry",
+    "dnv_c208_steel_properties",
+    "full_backend_api",
+    "full_backend_available",
+    "run_lightweight_fem",
+    "run_production_fem",
+    "runtime_imperfection_preview_offsets",
+    "warm_fe_solver_kernels",
+]
 
 
 @dataclass(frozen=True)
@@ -260,86 +285,18 @@ def _positive(value: float, fallback: float) -> float:
     return value if value > 0.0 else fallback
 
 
-_DNV_C208_STEEL_TABLES_MPA: dict[str, tuple[dict[str, float | str], ...]] = {
-    "S235": (
-        {"label": "t <= 16", "max_t_mm": 16.0, "E": 210000.0, "sigma_prop": 211.7, "sigma_yield": 236.2, "sigma_yield_2": 243.4, "eps_p_y1": 0.004, "eps_p_y2": 0.020, "K": 520.0, "n": 0.166},
-        {"label": "16 < t <= 40", "max_t_mm": 40.0, "E": 210000.0, "sigma_prop": 202.7, "sigma_yield": 226.1, "sigma_yield_2": 233.2, "eps_p_y1": 0.004, "eps_p_y2": 0.020, "K": 520.0, "n": 0.166},
-        {"label": "40 < t <= 63", "max_t_mm": 63.0, "E": 210000.0, "sigma_prop": 193.7, "sigma_yield": 216.1, "sigma_yield_2": 223.0, "eps_p_y1": 0.004, "eps_p_y2": 0.020, "K": 520.0, "n": 0.166},
-        {"label": "63 < t <= 100", "max_t_mm": 100.0, "E": 210000.0, "sigma_prop": 193.7, "sigma_yield": 216.1, "sigma_yield_2": 223.0, "eps_p_y1": 0.004, "eps_p_y2": 0.020, "K": 520.0, "n": 0.166},
-    ),
-    "S275": (
-        {"label": "t <= 16", "max_t_mm": 16.0, "E": 210000.0, "sigma_prop": 247.8, "sigma_yield": 276.5, "sigma_yield_2": 282.8, "eps_p_y1": 0.004, "eps_p_y2": 0.017, "K": 620.0, "n": 0.166},
-        {"label": "16 < t <= 40", "max_t_mm": 40.0, "E": 210000.0, "sigma_prop": 238.8, "sigma_yield": 266.4, "sigma_yield_2": 272.6, "eps_p_y1": 0.004, "eps_p_y2": 0.017, "K": 620.0, "n": 0.166},
-        {"label": "40 < t <= 63", "max_t_mm": 63.0, "E": 210000.0, "sigma_prop": 229.8, "sigma_yield": 256.3, "sigma_yield_2": 262.4, "eps_p_y1": 0.004, "eps_p_y2": 0.017, "K": 620.0, "n": 0.166},
-    ),
-    "S355": (
-        {"label": "t <= 16", "max_t_mm": 16.0, "E": 210000.0, "sigma_prop": 320.0, "sigma_yield": 357.0, "sigma_yield_2": 363.3, "eps_p_y1": 0.004, "eps_p_y2": 0.015, "K": 740.0, "n": 0.166},
-        {"label": "16 < t <= 40", "max_t_mm": 40.0, "E": 210000.0, "sigma_prop": 311.0, "sigma_yield": 346.9, "sigma_yield_2": 353.1, "eps_p_y1": 0.004, "eps_p_y2": 0.015, "K": 740.0, "n": 0.166},
-        {"label": "40 < t <= 63", "max_t_mm": 63.0, "E": 210000.0, "sigma_prop": 301.9, "sigma_yield": 336.9, "sigma_yield_2": 342.9, "eps_p_y1": 0.004, "eps_p_y2": 0.015, "K": 725.0, "n": 0.166},
-        {"label": "63 < t <= 100", "max_t_mm": 100.0, "E": 210000.0, "sigma_prop": 283.9, "sigma_yield": 316.7, "sigma_yield_2": 322.5, "eps_p_y1": 0.004, "eps_p_y2": 0.015, "K": 725.0, "n": 0.166},
-    ),
-    "S420": (
-        {"label": "t <= 16", "max_t_mm": 16.0, "E": 210000.0, "sigma_prop": 378.7, "sigma_yield": 422.5, "sigma_yield_2": 427.6, "eps_p_y1": 0.004, "eps_p_y2": 0.012, "K": 738.0, "n": 0.140},
-        {"label": "16 < t <= 40", "max_t_mm": 40.0, "E": 210000.0, "sigma_prop": 360.6, "sigma_yield": 402.4, "sigma_yield_2": 407.3, "eps_p_y1": 0.004, "eps_p_y2": 0.012, "K": 703.0, "n": 0.140},
-        {"label": "40 < t <= 63", "max_t_mm": 63.0, "E": 210000.0, "sigma_prop": 351.6, "sigma_yield": 392.3, "sigma_yield_2": 397.1, "eps_p_y1": 0.004, "eps_p_y2": 0.012, "K": 686.0, "n": 0.140},
-    ),
-    "S460": (
-        {"label": "t <= 16", "max_t_mm": 16.0, "E": 210000.0, "sigma_prop": 414.8, "sigma_yield": 462.8, "sigma_yield_2": 466.9, "eps_p_y1": 0.004, "eps_p_y2": 0.010, "K": 772.0, "n": 0.120},
-        {"label": "16 < t <= 40", "max_t_mm": 40.0, "E": 210000.0, "sigma_prop": 396.7, "sigma_yield": 442.7, "sigma_yield_2": 446.6, "eps_p_y1": 0.004, "eps_p_y2": 0.010, "K": 745.0, "n": 0.120},
-        {"label": "40 < t <= 63", "max_t_mm": 63.0, "E": 210000.0, "sigma_prop": 374.2, "sigma_yield": 417.5, "sigma_yield_2": 421.2, "eps_p_y1": 0.004, "eps_p_y2": 0.010, "K": 703.0, "n": 0.120},
-    ),
-}
-
-
 def dnv_c208_steel_properties(
     grade: str = "S355",
-    thickness_m: float = 0.0,
+    thickness_m: float = 0.016,
     thickness_class: str = "auto",
 ) -> dict[str, float | str]:
-    """Return DNV-RP-C208 low-fractile steel true-stress curve properties.
+    """Compatibility facade for the canonical material-curve table."""
 
-    Stress values and K are returned in Pa, E in Pa and strain values as true
-    plastic strain.  ``thickness_class`` may be one of the table labels or
-    ``auto`` to select by plate thickness.
-    """
-
-    grade_key = str(grade or "S355").strip().upper()
-    rows = _DNV_C208_STEEL_TABLES_MPA.get(grade_key, _DNV_C208_STEEL_TABLES_MPA["S355"])
-    class_choice = _normalized_choice(thickness_class, "auto")
-    try:
-        thickness_mm = float(thickness_m) * 1000.0
-    except (TypeError, ValueError):
-        thickness_mm = 0.0
-    if thickness_mm <= 0.0:
-        thickness_mm = 16.0
-
-    selected = rows[-1]
-    if class_choice not in {"auto", "automatic", "by thickness", "auto by plate thickness"}:
-        simplified = class_choice.replace(" ", "")
-        for row in rows:
-            if simplified == str(row["label"]).lower().replace(" ", ""):
-                selected = row
-                break
-    else:
-        for row in rows:
-            if thickness_mm <= float(row["max_t_mm"]) + 1.0e-9:
-                selected = row
-                break
-
-    result: dict[str, float | str] = {
-        "grade": grade_key if grade_key in _DNV_C208_STEEL_TABLES_MPA else "S355",
-        "thickness_class": str(selected["label"]),
-        "thickness_mm": float(thickness_mm),
-        "source": "DNV-RP-C208 Table 4-2 to 4-6 low-fractile true stress-strain values",
-    }
-    for key, value in selected.items():
-        if key in {"label", "max_t_mm"}:
-            continue
-        if key in {"E", "sigma_prop", "sigma_yield", "sigma_yield_2", "K"}:
-            result[key if key != "E" else "E_pa"] = float(value) * 1.0e6
-        else:
-            result[key] = float(value)
-    return result
+    return _material_dnv_c208_steel_properties(
+        grade,
+        thickness_m,
+        thickness_class=thickness_class,
+    )
 
 
 def _mesh_divisions(mesh_fidelity: str) -> int:
@@ -3647,6 +3604,11 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
                     }
                 )
                 beam_id += 1
+    if ring_rows and _wants_b3(config) and not _member_webs_as_shells(config):
+        raise ValueError(
+            "B3 ring girders are not supported: the current quadratic beam formulation is straight-sided. "
+            "Use B2 beam members or model the girder web/flanges with shell elements."
+        )
     if ring_rows:
         for row in ring_rows:
             if _member_webs_as_shells(config):
@@ -3860,7 +3822,7 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
     }
 
 
-def build_generated_geometry(geometry: dict, config: LightweightFEMConfig) -> dict[str, object]:
+def build_generated_geometry(geometry: NormalizedGeometry, config: LightweightFEMConfig) -> GeneratedGeometry:
     """Build the deterministic full shell/beam mesh consumed by the FE backend."""
 
     if geometry.get("geometry") == "cylinder":
@@ -8042,7 +8004,11 @@ def _add_cylinder_buckling_gauge(model, generated_geometry: dict) -> bool:
             "buckling_gauge_top_lid",
             [top_center],
             {"ux": 0.0, "uy": 0.0},))
-def apply_mode_shape_imperfections(generated_geometry: dict, config: LightweightFEMConfig, geometry: dict) -> dict:
+def apply_mode_shape_imperfections(
+    generated_geometry: GeneratedGeometry,
+    config: LightweightFEMConfig,
+    geometry: NormalizedGeometry,
+) -> GeneratedGeometry:
     """Build mesh, run linear buckling, extract mode shapes, and perturb the mesh."""
     import copy
     import json
@@ -8126,7 +8092,13 @@ def apply_mode_shape_imperfections(generated_geometry: dict, config: Lightweight
 
     return perturbed_geometry
 
-def run_production_fem(geometry: dict, config: LightweightFEMConfig, status_callback=None, imported_fem_model=None, precomputed_generated_geometry=None) -> LightweightFEMResult:
+def run_production_fem(
+    geometry: NormalizedGeometry,
+    config: LightweightFEMConfig,
+    status_callback: StatusCallback | None = None,
+    imported_fem_model: object | None = None,
+    precomputed_generated_geometry: GeneratedGeometry | None = None,
+) -> LightweightFEMResult:
     """Run the production FE mesh backend for normalized generated geometry."""
 
     if _full_backend is None or _backend_solve_linear is None or _backend_solve_buckling is None or _backend_load_case_resultant is None:
@@ -9016,7 +8988,11 @@ def _run_cylinder(geometry: dict, config: LightweightFEMConfig, status_callback=
         visualization=_cylinder_visualization(radius, length, displacement, von_mises, div, axial_div),
     )
 
-def run_lightweight_fem(geometry: dict, config: LightweightFEMConfig, status_callback=None) -> LightweightFEMResult:
+def run_lightweight_fem(
+    geometry: NormalizedGeometry,
+    config: LightweightFEMConfig,
+    status_callback: StatusCallback | None = None,
+) -> LightweightFEMResult:
     """Run the local lightweight solver for a normalized geometry summary."""
 
     if status_callback: status_callback("Running basic lightweight analytic FEM approximation...")
@@ -9030,7 +9006,7 @@ def full_backend_available() -> bool:
     return _full_backend is not None
 
 
-def full_backend_api():
+def full_backend_api() -> ModuleType:
     """Return the ANYsolver backend module for future integration."""
 
     if _full_backend is None:
@@ -9038,7 +9014,11 @@ def full_backend_api():
     return _full_backend
 
 
-def warm_fe_solver_kernels(shell_orders=("S4", "Q8", "Q8R"), *, include_nonlinear_impact: bool = False) -> dict[str, object]:
+def warm_fe_solver_kernels(
+    shell_orders: Sequence[str] = ("S4", "Q8", "Q8R"),
+    *,
+    include_nonlinear_impact: bool = False,
+) -> dict[str, object]:
     """Warm optional compiled FE backend kernels for runtime use."""
 
     if _backend_warm_fe_solver_kernels is None:

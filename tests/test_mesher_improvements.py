@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import anysolver.mesh_gen as mesh_gen
 from anysolver.fe_core import FEModel
 from anysolver.mesh_gen import (
     PanelGeometry,
@@ -60,6 +61,35 @@ def test_fast_locate_shell_element():
         assert res_fast[0] == res_seq[0]  # Same element node IDs
         assert np.allclose(res_fast[1], res_seq[1], atol=1e-7)  # Same shape weights
         assert np.allclose(res_fast[2], res_seq[2], atol=1e-7)  # Same coordinates on shell
+
+
+def test_coupling_generation_builds_structured_index_once(monkeypatch) -> None:
+    panel = PanelGeometry(
+        length=4.0,
+        width=2.0,
+        plate_thickness=0.01,
+        num_stiffeners=8,
+        stiffener_spacing=0.2,
+    )
+    config = MeshConfig(
+        shell_num_divisions_x=40,
+        shell_num_divisions_y=20,
+        beam_num_divisions=40,
+        align_mesh_to_stiffeners=False,
+    )
+    calls = 0
+    original = mesh_gen._build_structured_shell_grid_index
+
+    def counted(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(mesh_gen, "_build_structured_shell_grid_index", counted)
+    model = generate_stiffened_panel_mesh(panel, config)
+    assert model.mesh.num_elements > 800
+    assert calls == 1
+
 
 def test_stiffener_alignment():
     """Verify that shell grid lines align exactly with stiffeners when align_mesh_to_stiffeners=True."""

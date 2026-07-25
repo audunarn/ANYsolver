@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from anysolver import (
+    FEModel,
     classify_reference_case_from_nodes,
     compare_shell_benchmark_to_reference,
     discover_calculix_reference_cases,
@@ -19,11 +20,14 @@ from anysolver import (
     parse_calculix_shell_convergence_file,
     run_simple_supported_shell_benchmark,
     run_simple_supported_shell_convergence,
+    write_calculix_input_deck,
     write_internal_shell_convergence_table,
     upstream_calculix_reference_manifest,
     upstream_calculix_shell_reference_values,
     write_external_reference_report,
 )
+from anysolver.boundary import LoadCase
+from anysolver.elements import BeamElement
 
 
 def _make_repo_local_temp_dir() -> Path:
@@ -116,6 +120,30 @@ def test_generated_external_reference_decks_are_discoverable_input_cases() -> No
         assert kinds["pressure_plate_s4"] == "flat_plate"
         assert kinds["cylinder_s4_pressure"] == "cylinder"
         assert all(case.element_count > 0 for case in discovered)
+    finally:
+        shutil.rmtree(repo_root, ignore_errors=True)
+
+
+def test_calculix_gravity_uses_magnitude_unit_direction_and_defined_all_set() -> None:
+    repo_root = _make_repo_local_temp_dir()
+    try:
+        model = FEModel("gravity_export")
+        model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+        for node_id, x in enumerate((0.0, 1.0, 2.0), start=1):
+            model.add_node(node_id, x, 0.0, 0.0)
+        section = {"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6}
+        model.add_element(7, BeamElement(7, [1, 2], "steel", section))
+        model.add_element(42, BeamElement(42, [2, 3], "steel", section))
+        gravity = LoadCase("inclined_gravity")
+        gravity.set_gravity(3.0, 4.0, 0.0)
+
+        deck_path = repo_root / "gravity.inp"
+        write_calculix_input_deck(model, gravity, deck_path)
+        lines = deck_path.read_text(encoding="utf-8").splitlines()
+
+        all_set_index = lines.index("*ELSET, ELSET=ALL")
+        assert lines[all_set_index + 1] == "7, 42"
+        assert "ALL, GRAV, 5, 0.6, 0.8, 0" in lines
     finally:
         shutil.rmtree(repo_root, ignore_errors=True)
 

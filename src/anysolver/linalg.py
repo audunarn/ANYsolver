@@ -10,7 +10,7 @@ through the same factorization-handle API.
 from __future__ import annotations
 
 import ctypes
-import glob
+import importlib.util
 import site
 import sys
 import time
@@ -21,6 +21,7 @@ from enum import Enum
 import hashlib
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
@@ -29,10 +30,24 @@ from scipy.sparse import SparseEfficiencyWarning
 from scipy.sparse.linalg import LinearOperator, splu
 
 try:
-    from pypardiso import PyPardisoSolver
-    _HAS_PYPARDISO = True
-except ImportError:
+    _HAS_PYPARDISO = importlib.util.find_spec("pypardiso") is not None
+except (ImportError, ModuleNotFoundError, ValueError):
     _HAS_PYPARDISO = False
+
+_PYPARDISO_SOLVER_CLASS: Any = None
+
+
+def _new_pypardiso_solver(*, mtype: int) -> Any:
+    """Construct PyPardiso only after the backend has actually been selected."""
+
+    global _PYPARDISO_SOLVER_CLASS
+    if not _HAS_PYPARDISO:
+        raise ImportError("pypardiso is not installed")
+    if _PYPARDISO_SOLVER_CLASS is None:
+        from pypardiso import PyPardisoSolver as solver_class
+
+        _PYPARDISO_SOLVER_CLASS = solver_class
+    return _PYPARDISO_SOLVER_CLASS(mtype=int(mtype))
 
 try:
     from numba import njit, prange
@@ -154,14 +169,12 @@ _MKL_RT_ENV_READY = False
 
 
 def _ensure_mkl_rt_env() -> None:
-    """Locate mkl_rt once per process so PyPardisoSolver() skips its DLL search.
+    """Locate mkl_rt once before importing PyPardiso.
 
-    pypardiso's ``PyPardisoSolver.__init__`` falls back to a recursive glob over
-    the Python installation on every construction when ``find_library`` cannot
-    resolve mkl_rt (typical on Windows).  That search costs on the order of a
-    second per factorization.  pypardiso checks the ``PYPARDISO_MKL_RT``
-    environment variable first, so resolving the path once and publishing it
-    there makes every subsequent solver construction cheap.
+    Windows MKL wheels normally place the runtime directly in
+    ``<python>/Library/bin``.  Probe a small set of standard locations
+    non-recursively; pypardiso's recursive fallback can otherwise dominate
+    first-use time.
     """
 
     global _MKL_RT_ENV_READY
@@ -174,15 +187,29 @@ def _ensure_mkl_rt_env() -> None:
 
     path = find_library("mkl_rt") or find_library("mkl_rt.1")
     if path is None:
-        candidates = glob.glob(f"{sys.prefix}/[Ll]ib*/**/*mkl_rt*", recursive=True) or glob.glob(
-            f"{site.USER_BASE}/[Ll]ib*/**/*mkl_rt*", recursive=True
-        )
-        for candidate in sorted(candidates, key=len):
+        prefixes = [os.environ.get("CONDA_PREFIX"), sys.prefix, site.USER_BASE]
+        directories: List[Path] = []
+        for prefix in prefixes:
+            if not prefix:
+                continue
+            base = Path(prefix)
+            directories.extend((base / "Library" / "bin", base / "DLLs", base / "lib"))
+        candidates: List[Path] = []
+        for directory in directories:
             try:
-                ctypes.CDLL(candidate)
+                candidates.extend(directory.glob("mkl_rt*"))
             except OSError:
                 continue
-            path = candidate
+        unique_candidates = {
+            os.path.normcase(os.path.abspath(str(candidate)))
+            for candidate in candidates
+        }
+        for candidate_text in sorted(unique_candidates, key=len):
+            try:
+                ctypes.CDLL(candidate_text)
+            except OSError:
+                continue
+            path = candidate_text
             break
     if path:
         os.environ["PYPARDISO_MKL_RT"] = path
@@ -295,7 +322,7 @@ class _PardisoFactorization:
         slot = self._slot
         if slot is not None and slot.solver is not None and slot.generation == self._generation:
             return slot.solver
-        solver = PyPardisoSolver(mtype=self._mtype)
+        solver = _new_pypardiso_solver(mtype=self._mtype)
         _pardiso_full_factorize(solver, self._matrix)
         self._private_solver = solver
         weakref.finalize(self, _release_mkl_solver, solver)
@@ -338,6 +365,12 @@ class PyPardisoSolverBackend:
         while self._slots:
             self._slots.pop().release()
 
+    @property
+    def initialized(self) -> bool:
+        """Whether this backend has completed a retained factorization."""
+
+        return bool(self._slots)
+
     def _factorize_prepared(self, prepared: sparse.csr_matrix, mtype: int) -> Tuple[_PardisoFactorization, bool]:
         for slot in self._slots:
             if slot.matches(prepared, mtype):
@@ -350,7 +383,7 @@ class PyPardisoSolverBackend:
                 self._slots.remove(slot)
                 self._slots.insert(0, slot)
                 return _PardisoFactorization(slot, prepared, mtype), True
-        solver = PyPardisoSolver(mtype=int(mtype))
+        solver = _new_pypardiso_solver(mtype=int(mtype))
         _pardiso_full_factorize(solver, prepared)
         slot = _PardisoPatternSlot(solver, mtype, prepared)
         self._slots.insert(0, slot)
@@ -434,20 +467,44 @@ class AutoSparseSolverBackend:
         *,
         scipy_backend: Optional[SparseSolverBackend] = None,
         pardiso_backend: Optional[PyPardisoSolverBackend] = None,
-        pypardiso_min_dimension: int = 500,
-        pypardiso_min_nnz: int = 20_000,
+        pypardiso_min_dimension: int = 10_000,
+        pypardiso_min_nnz: int = 250_000,
+        pypardiso_warm_min_dimension: int = 1_000,
+        pypardiso_warm_min_nnz: int = 25_000,
     ):
         self.scipy_backend = scipy_backend or SparseSolverBackend()
         self.pardiso_backend = (pardiso_backend or PyPardisoSolverBackend()) if _HAS_PYPARDISO else None
         self.pypardiso_min_dimension = _env_int("FE_SOLVER_PYPARDISO_MIN_DIMENSION", int(pypardiso_min_dimension))
         self.pypardiso_min_nnz = _env_int("FE_SOLVER_PYPARDISO_MIN_NNZ", int(pypardiso_min_nnz))
+        self.pypardiso_warm_min_dimension = _env_int(
+            "FE_SOLVER_PYPARDISO_WARM_MIN_DIMENSION",
+            int(pypardiso_warm_min_dimension),
+        )
+        self.pypardiso_warm_min_nnz = _env_int(
+            "FE_SOLVER_PYPARDISO_WARM_MIN_NNZ",
+            int(pypardiso_warm_min_nnz),
+        )
 
     def release_pattern_slots(self) -> None:
         """Release MKL factorization memory retained for pattern reuse."""
         if self.pardiso_backend is not None:
             self.pardiso_backend.release_pattern_slots()
 
-    def _use_pypardiso(self, matrix: sparse.spmatrix, options: Mapping[str, Any]) -> bool:
+    def _selection_thresholds(self, options: Mapping[str, Any]) -> Tuple[int, int, bool]:
+        is_warm = bool(self.pardiso_backend and self.pardiso_backend.initialized)
+        default_dimension = self.pypardiso_warm_min_dimension if is_warm else self.pypardiso_min_dimension
+        default_nnz = self.pypardiso_warm_min_nnz if is_warm else self.pypardiso_min_nnz
+        min_dimension = int(options.get("pypardiso_min_dimension", default_dimension))
+        min_nnz = int(options.get("pypardiso_min_nnz", default_nnz))
+        return min_dimension, min_nnz, is_warm
+
+    def _use_pypardiso(
+        self,
+        matrix: sparse.spmatrix,
+        options: Mapping[str, Any],
+        min_dimension: int,
+        min_nnz: int,
+    ) -> bool:
         requested = str(options.get("backend", options.get("solver", "auto"))).lower()
         if requested in {"scipy", "scipy_superlu", "superlu"}:
             return False
@@ -455,8 +512,6 @@ class AutoSparseSolverBackend:
             return self.pardiso_backend is not None
         if self.pardiso_backend is None:
             return False
-        min_dimension = int(options.get("pypardiso_min_dimension", self.pypardiso_min_dimension))
-        min_nnz = int(options.get("pypardiso_min_nnz", self.pypardiso_min_nnz))
         return max(int(matrix.shape[0]), int(matrix.shape[1])) >= min_dimension and int(matrix.nnz) >= min_nnz
 
     def factorize(
@@ -468,11 +523,23 @@ class AutoSparseSolverBackend:
         options: Optional[Mapping[str, Any]] = None,
     ) -> FactorizationHandle:
         options_dict = dict(options or {})
-        if not self._use_pypardiso(matrix, options_dict):
+        active_dimension, active_nnz, was_initialized = self._selection_thresholds(options_dict)
+        selection_metadata = {
+            "pypardiso_active_min_dimension": active_dimension,
+            "pypardiso_active_min_nnz": active_nnz,
+            "pypardiso_initialized_before_selection": was_initialized,
+        }
+        if not self._use_pypardiso(matrix, options_dict, active_dimension, active_nnz):
             handle = self.scipy_backend.factorize(matrix, matrix_class, signature=signature, options=options_dict)
             handle.metadata.setdefault("auto_backend_policy", "scipy_small_matrix")
             handle.metadata.setdefault("pypardiso_min_dimension", self.pypardiso_min_dimension)
             handle.metadata.setdefault("pypardiso_min_nnz", self.pypardiso_min_nnz)
+            for key, value in selection_metadata.items():
+                handle.metadata.setdefault(key, value)
+            handle.metadata.setdefault(
+                "pypardiso_initialized",
+                bool(self.pardiso_backend and self.pardiso_backend.initialized),
+            )
             return handle
 
         assert self.pardiso_backend is not None
@@ -480,6 +547,9 @@ class AutoSparseSolverBackend:
         handle.metadata.setdefault("auto_backend_policy", "pypardiso_large_matrix")
         handle.metadata.setdefault("pypardiso_min_dimension", self.pypardiso_min_dimension)
         handle.metadata.setdefault("pypardiso_min_nnz", self.pypardiso_min_nnz)
+        for key, value in selection_metadata.items():
+            handle.metadata.setdefault(key, value)
+        handle.metadata.setdefault("pypardiso_initialized", bool(self.pardiso_backend.initialized))
         if handle.status == "ok":
             return handle
 
@@ -487,6 +557,7 @@ class AutoSparseSolverBackend:
         fallback.metadata["auto_backend_policy"] = "scipy_after_pypardiso_failure"
         fallback.metadata["pypardiso_min_dimension"] = self.pypardiso_min_dimension
         fallback.metadata["pypardiso_min_nnz"] = self.pypardiso_min_nnz
+        fallback.metadata.update(selection_metadata)
         fallback.metadata["fallback_from_backend"] = handle.backend_name
         fallback.metadata["fallback_failure_reason"] = handle.failure_reason
         return fallback

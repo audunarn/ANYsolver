@@ -47,6 +47,26 @@ def test_public_all_symbols_importable() -> None:
     assert missing == []
 
 
+def test_root_import_does_not_eagerly_load_optional_accelerators() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(repo_root / "src")
+    code = (
+        "import sys; import anysolver; "
+        "assert 'pypardiso' not in sys.modules; "
+        "assert 'anysolver.nonlinear_performance' not in sys.modules"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=repo_root,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
 def test_sparse_backend_solves_spd_indefinite_many_and_reports_failure() -> None:
     A = sparse.csr_matrix([[4.0, 1.0], [1.0, 3.0]])
     handle = factorize(A, MatrixClass.SPD, signature="spd_test")
@@ -140,6 +160,9 @@ def test_auto_sparse_backend_thresholds_are_environment_tunable(monkeypatch) -> 
     handle = factorize(A, MatrixClass.SPD, backend=backend)
     assert handle.metadata["pypardiso_min_dimension"] == 123
     assert handle.metadata["pypardiso_min_nnz"] == 456
+    assert handle.metadata["pypardiso_active_min_dimension"] == 123
+    assert handle.metadata["pypardiso_active_min_nnz"] == 456
+    assert handle.metadata["pypardiso_initialized_before_selection"] is False
 
 
 def test_factorization_cache_reuses_same_matrix_and_separates_changed_values() -> None:
@@ -252,6 +275,27 @@ def test_revision_signatures_and_sparsity_cache_are_safe_for_geometry_and_topolo
     model.add_element(2, BeamElement(2, [2, 3], "steel", {"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6}))
     _K3, info3 = assemble_stiffness_matrix(model)
     assert info3["sparsity_signature"] != sig1
+
+
+def test_adding_an_element_preserves_unrelated_element_local_caches() -> None:
+    model = generate_beam_mesh(1.0, num_divisions=1)
+    model.add_node(3, 2.0, 0.0, 0.0)
+    first = model.mesh.get_element(1)
+    assert first is not None
+    material = model.get_material(first.material_name)
+    cached = first.compute_stiffness_matrix(model.mesh, material)
+    assert first._stiffness_matrix is cached
+
+    model.add_element(
+        2,
+        BeamElement(
+            2,
+            [2, 3],
+            first.material_name,
+            {"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+        ),
+    )
+    assert first._stiffness_matrix is cached
 
 
 class _BadElement:

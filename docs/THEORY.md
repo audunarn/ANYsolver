@@ -1,8 +1,11 @@
 # FE Solver Theory Notes
 
-This note records the theoretical basis and validity limits for the production
-`anysolver` package.  The implementation target is an ANYsolver
-beam-shell solver, not a general-purpose nonlinear FE code.
+This note records the theoretical basis, equation audit, and validity limits
+for the production `anysolver` package. The implementation target is an
+ANYsolver beam-shell solver, not a general-purpose nonlinear FE code. A cited
+formulation is a design anchor; qualification still comes from the executable
+tests and comparison evidence described in
+[`QUALITY_CONTROL.md`](QUALITY_CONTROL.md).
 
 ## Units and DOFs
 
@@ -34,23 +37,32 @@ D_bending  = E h^3 / (12 (1 - nu^2)) times the same plane-stress block
 D_shear    = kappa G h I, kappa = 5/6
 ```
 
-The 4-node shell uses an MITC4-style assumed natural shear interpolation.  The
-covariant shear strains are sampled at the four edge midpoints and interpolated
-to the 2x2 integration points.  This avoids the excessive thin-plate shear
-stiffness of a fully integrated displacement Q4 without introducing the
-one-point reduced-shear hourglass mode.
+The 4-node shell uses an MITC4-style assumed natural shear interpolation,
+following the continuum-mechanics basis of
+[Dvorkin and Bathe's four-node shell formulation](https://web.mit.edu/kjb/www/Publications_Prior_to_1998/A_Continuum_Mechanics_Based_Four-Node_Shell_Element_for_General_Nonlinear_Analysis.pdf).
+The covariant shear strains are sampled at the four edge midpoints and
+interpolated to the 2x2 integration points. This avoids the excessive
+thin-plate shear stiffness of a fully integrated displacement Q4 without
+introducing the one-point reduced-shear hourglass mode.
 
 The 8-node shell uses full 3x3 membrane/bending integration and reduced 2x2
-transverse shear integration.  When `ShellElement(..., reduced_integration=True)`
-is used for S8R/Q8R, membrane/bending, mass, geometric stiffness, and stress
-recovery are evaluated at the reduced 2x2 rule.  The S8R/Q8R path adds a small
-nullspace-projection hourglass stiffness: the reduced-integration free-element
+transverse shear integration. When
+`ShellElement(..., reduced_integration=True)` is used for S8R/Q8R,
+membrane/bending, mass, geometric stiffness, and stress recovery are evaluated
+at the reduced 2x2 rule. The S8R/Q8R path adds a stiffness-scaled
+nullspace-projection hourglass term: the reduced-integration free-element
 nullspace is computed, the six rigid-body modes are projected out, and the
-remaining modes receive a small positive stiffness scaled from the element
-stiffness.  The intent is to remove spurious zero-energy modes while keeping
-rigid motion and reduced-point patch behavior unchanged.  Broad production use
-still requires external benchmark coverage for representative distorted shell
-panels.  Both shell topologies include a small drilling stabilization strain:
+remaining modes receive positive stabilization. This is an experimental
+implementation, not a production-qualified Q8R formulation. The current
+stabilization can dominate very thin bending and its rotary mass behavior needs
+further work. Q8R is therefore excluded from the qualified capability matrix
+and from nonlinear shell batching. Future work should replace it with a
+bending-aware stabilization and verify distorted-element, modal, and
+thin-limit convergence against the established hourglass-control literature,
+including [Flanagan and Belytschko](https://onlinelibrary.wiley.com/doi/abs/10.1002/nme.1620170504)
+and [Belytschko and Bindeman](https://www.sciencedirect.com/science/article/pii/004578259390124G).
+
+All shell topologies include a small drilling stabilization strain:
 
 ```text
 theta_z - 0.5 * (dv/dx - du/dy)
@@ -71,12 +83,27 @@ Frame-invariant outputs (von Mises, principal values) are unaffected.  Pass
 components in the global frame; the S4 constant-strain patch metrics compare in
 that frame.  The 3-node/6-node triangle shells follow the same convention.
 
+## Beam elements
+
+`BeamElement` is a 2-node and `QuadraticBeamElement` a 3-node Timoshenko beam.
+Both include axial, two transverse-shear, two bending, and torsional response
+in a local orthonormal frame. Their geometric stiffness is based on the
+reference axial force. The quadratic element evaluates quadratic interpolation
+along a straight reference axis: its middle node must lie at the chord
+midpoint, within numerical tolerance. A displaced midside node is not a curved
+beam definition and is rejected. Curved rings and arches must be discretized
+as straight 2-node segments until a true curved-isoparametric beam with
+objective frame interpolation and matching mass/geometric stiffness is
+implemented and qualified.
+
 ## Mass and Pressure Loading
 
 Shell mass is integrated consistently with the shell shape functions.  The
 translational mass scales with `rho h`; rotary inertia scales with
 `rho h^3 / 12`.  Beam mass uses translational lumping plus section rotary
-inertia for torsion and bending rotations.
+inertia for torsion and bending rotations. Explicit point masses contribute to
+the assembled mass matrix and to total-mass, center-of-mass, and inertia
+diagnostics.
 
 Shell pressure is assembled as a consistent nodal load:
 
@@ -84,8 +111,35 @@ Shell pressure is assembled as a consistent nodal load:
 f_i = integral_A N_i p n dA
 ```
 
-where `n` is the element normal implied by the element node order.  Follower
-load moments are not included in the linear load vector.
+where `n` is the element normal implied by the element node order. Pressure is
+dead loading in the current static formulation: neither an updated normal nor a
+consistent follower-load tangent is included. Follower pressure is a future
+implementation item for large-deformation equilibrium and continuation.
+
+## Linear equilibrium and vibration
+
+With the affine constraint map `u = T q + u0`, linear static equilibrium is
+reduced without penalty terms:
+
+```text
+(T.T K T) q = T.T (F - K u0)
+r = K u - F
+```
+
+where `r` is the full residual from which supported-DOF reactions and MPC-force
+diagnostics are derived. Free-free models use a rigid-body/nullspace treatment
+instead of artificial grounding.
+
+Undamped vibration solves the constrained generalized eigenproblem
+
+```text
+(T.T K T) phi = omega^2 (T.T M T) phi
+f = omega / (2 pi)
+```
+
+with rigid-body modes retained or filtered according to the requested free-free
+analysis. Modal mass and normalization use the same assembled mass matrix,
+including explicit point masses.
 
 ## Linear Transient Dynamics and Slamming V1
 
@@ -96,15 +150,17 @@ M qdd + C qd + K q = F(t)
 C = alpha M + beta_R K
 ```
 
-The default method is Newmark average acceleration:
+The default method is
+[Newmark average acceleration](https://ascelibrary.org/doi/10.1061/JMCEA3.0000098):
 
 ```text
 beta_N = 1/4
 gamma_N = 1/2
 ```
 
-`TransientConfig(hht_alpha=...)` activates the Hilber-Hughes-Taylor alpha
-method with `-1/3 <= alpha <= 0` (`alpha = 0` reproduces plain Newmark).  The
+`TransientConfig(hht_alpha=...)` activates the
+[Hilber-Hughes-Taylor alpha method](https://onlinelibrary.wiley.com/doi/abs/10.1002/eqe.4290050306)
+with `-1/3 <= alpha <= 0` (`alpha = 0` reproduces plain Newmark). The
 equilibrium is enforced in the alpha-weighted form
 
 ```text
@@ -114,11 +170,12 @@ M a_{n+1} + (1+alpha) (C v_{n+1} + K q_{n+1}) - alpha (C v_n + K q_n)
 
 with the HHT-optimal Newmark parameters `gamma = 1/2 - alpha` and
 `beta = (1 - alpha)^2 / 4` derived automatically when `beta`/`gamma` are left
-at their defaults.  HHT-alpha is second-order accurate and unconditionally
-stable in this range, and introduces controlled high-frequency numerical
-dissipation, which suppresses the non-physical stiff-mode ringing that plain
-average-acceleration Newmark preserves in impact and slamming responses.  The
-same alpha-weighting is applied to the sphere-impact solvers: the linear path
+at their defaults. For linear problems with the standard HHT assumptions this
+parameterization is second-order accurate and unconditionally stable in the
+stated range, and it introduces controlled high-frequency numerical
+dissipation. Those properties are not, by themselves, a convergence guarantee
+for nonlinear contact, material softening, or changing topology. The same
+alpha-weighting is applied to the sphere-impact solvers: the linear path
 weights the structural external+contact load, and the nonlinear path weights
 the internal force and damping terms in the Newton residual with the tangent
 scaled by `(1+alpha)`.  The rigid sphere itself keeps the plain Newmark
@@ -224,8 +281,9 @@ Material-nonlinear impact:
     shell element as `0.056 + 0.54 * (thickness / element_length)` (GL /
     RP-C208-style linear mesh scaling with `element_length = sqrt(area)`), so
     coarse elements that cannot resolve necking fail earlier.
-  - `"rtcl"`: RTCL (Rice-Tracey / Cockcroft-Latham, Tornqvist 2003) ductile
-    damage accumulation on top of the same mesh-scaled critical strain.  Per
+  - `"rtcl"`: RTCL (Rice-Tracey / Cockcroft-Latham,
+    [Tornqvist 2003](https://backend.orbit.dtu.dk/ws/portalfiles/portal/5443674/rt.pdf))
+    ductile damage accumulation on top of the same mesh-scaled critical strain. Per
     integration point (Gauss point x thickness layer), the damage increment is
     `dD = w(eta) * d(eps_p) / eps_cr` where `eta` is the stress triaxiality of
     the return-mapped plane-stress state and the weight `w` is 0 for
@@ -290,13 +348,47 @@ K phi = lambda KG phi
 ```
 
 with positive `KG` representing destabilizing compression in the supplied
-reference stress/resultant state.
+reference stress/resultant state. The current beam contribution is driven by
+axial force and the shell contribution by recovered membrane resultants. It is
+not a complete finite-rotation shell initial-stress operator; extending and
+qualifying the full shell geometric stiffness is future work.
 
 The incremental nonlinear static path uses von Karman shell kinematics,
 beam-column geometric coupling and optional layered J2 plane-stress plasticity
-with DNV-RP-C208 style material curves.  It is suitable for restrained
+with DNV-RP-C208-style material curves. It is suitable for restrained
 plate/stiffened-panel response and pre/post-buckling capacity checks in the
 implemented range.
+
+### Plane-stress J2 plasticity
+
+At each shell integration point and thickness layer, the membrane/bending
+strain is evaluated as
+
+```text
+epsilon(z) = epsilon_m + z kappa
+```
+
+and passed to a plane-stress J2 return map. The local nonlinear solve enforces
+the yield condition and `sigma_zz = 0`; its discrete algorithmic tangent is
+used by both scalar and vectorized assembly. The implementation follows the
+plane-stress return-mapping framework of
+[Simo and Taylor](https://onlinelibrary.wiley.com/doi/abs/10.1002/nme.1620220310)
+and the consistent-tangent principle of
+[Simo and Taylor](https://www.sciencedirect.com/science/article/pii/0045782585900702).
+
+For a layer tangent `C_alg`, membrane-bending coupling retains both transpose
+terms:
+
+```text
+K_layer = B_m.T C_alg B_m
+        + z B_m.T C_alg B_b
+        + z B_b.T C_alg B_m
+        + z^2 B_b.T C_alg B_b
+```
+
+The scalar and accelerated paths use the same return-map contract; reduced
+Q8R shells remain on the scalar path because their hourglass contribution is
+not part of the accelerated local tangent.
 
 ### Corotational kinematics (large rigid rotations)
 
@@ -328,12 +420,12 @@ Validity limits:
   state is objective under rigid rotation); fiber shear/torsion stay elastic
   as in the von Karman path, and fracture/erosion remains unsupported in
   corotational mode;
-- the tangent is the rotated local tangent `E k_local E^T`; frame-sensitivity
-  geometric terms were found to destabilize the symmetrized Newton map near
-  equilibrium and are not used — plain Newton without line search converges
-  in a handful of iterations instead (the residual-norm line search is
-  disabled automatically in corotational mode because the frame-rotation
-  excursion of the first iterate would otherwise be rejected);
+- the tangent is the rotated local tangent `E k_local E^T`; derivatives of the
+  corotational frame are not included, so this is not a fully consistent
+  corotational tangent. Plain Newton is used without the residual-norm line
+  search because the first frame-rotation excursion can otherwise be rejected.
+  A consistent objective tangent, verified near limit points and under follower
+  loading, is future work;
 - the pull-back has an intrinsic residual roundoff floor of roughly
   `eps * ||K_e|| * L` per element; use relative tolerances of 1e-5 to 1e-6 and
   realistic load magnitudes;
@@ -344,8 +436,8 @@ Validity limits:
 
 ### DNV-RP-C208 Capacity Workflow Anchors
 
-The nonlinear capacity workflow is aligned with the DNV-RP-C208 guidance
-reviewed from the supplied PDF:
+The nonlinear capacity workflow is aligned with
+[DNV-RP-C208](https://www.dnv.com/energy/standards-guidelines/dnv-rp-c208-determination-of-structural-capacity-by-non-linear-finite-element-analysis-methods/):
 
 - key parameters such as element type, mesh, material curve, imperfections and
   residual-stress representation should be selected conservatively or
@@ -361,10 +453,13 @@ reviewed from the supplied PDF:
 
 Implemented interfaces:
 
-- `dnv_c208_steel_curve(grade, thickness, fractile="low")` returns the built-in
-  low-fractile S235/S275/S355/S420/S460 section 4.6.6 curves.  Mean curves are
-  deliberately not guessed; supply explicit data through `curve_from_properties`
-  when a mean-capacity study is required.
+- `dnv_c208_steel_properties(grade, thickness, thickness_class="auto",
+  fractile="low")` is the canonical validated table lookup.
+  `dnv_c208_steel_curve(...)` builds the corresponding low-fractile
+  S235/S275/S355/S420/S460 section 4.6.6 curve. Automatic thickness selection
+  fails closed outside the tabulated range. Mean curves are deliberately not
+  guessed; supply explicit data through `curve_from_properties` when a
+  mean-capacity study is required.
 - `ImperfectionField`, `EigenmodeImperfection`, `StandardImperfection` and
   `CompositeImperfection` describe stress-free nodal reference-geometry offsets.
   `apply_imperfection()` modifies coordinates before the nonlinear solve, so
@@ -374,17 +469,21 @@ Implemented interfaces:
   (default `0.02 rad`).  The defaults correspond to the reviewed DNV table, but
   users should still calibrate or override amplitudes when the failure mode or
   tolerance class requires it.
-- `NonlinearLoadProgram` applies ordered stages.  The common DNV sequence is a
+- `NonlinearLoadProgram` applies ordered stages. The common DNV sequence is a
   permanent stage first and an environmental/pressure/compression stage second.
 - `DisplacementControl` augments the Newton system with a scalar displacement
   constraint and a load proportionality factor unknown, allowing monotonic
-  capacity tracing past a simple force-control limit.
+  capacity tracing past a simple force-control limit. It does not yet provide a
+  true committed plastic preload across multiple load stages; multi-stage
+  displacement control with path-dependent material hardening is rejected
+  rather than silently solving the wrong loading history.
 
 ### Arc-length continuation
 
-`anysolver.arc_length.solve_static_arc_length()` adds a bounded Crisfield-style
-spherical constraint to the same nonlinear element, material-state, load, and
-constraint machinery:
+`anysolver.arc_length.solve_static_arc_length()` adds a bounded
+[Crisfield-style](https://doi.org/10.1016/0045-7949(81)90108-5) spherical
+constraint to the same nonlinear element, material-state, load, and constraint
+machinery:
 
 ```text
 R(q, lambda) = F_constant + lambda F_reference - F_internal(q)
@@ -401,7 +500,7 @@ nonlinear free-free continuation, or unrestricted collapse tracing. See
 Material modelling:
 
 - Shells use layered plane-stress J2 plasticity through Gauss-Lobatto thickness
-  layers.  Result diagnostics include equivalent plastic strain, compressed-side
+  layers. Result diagnostics include equivalent plastic strain, compressed-side
   plastic strain and layer strain extrema when plastic state is available.
 - Beam/stiffener plasticity is opt-in through `FiberSectionPlasticityConfig`.
   The beam fiber model integrates uniaxial axial/bending stress over a section
@@ -413,6 +512,13 @@ Material modelling:
   the von Karman beam-column coupling and fiber response: the 2-node element
   uses end-difference strain measures, while the 3-node element evaluates the
   same measures at its Gauss points from quadratic interpolation.
+
+Stress output from a converged nonlinear solve is material-aware when committed
+layer/fiber state is retained. Generic displacement-only recovery otherwise
+reconstructs an elastic stress field. A unified recovery API that always
+carries material history, and a qualified superconvergent patch recovery based
+on [Zienkiewicz and Zhu](https://onlinelibrary.wiley.com/doi/10.1002/nme.1620330702)
+for supported meshes, are future work.
 
 Simplified fracture / element erosion:
 
@@ -438,6 +544,34 @@ Residual stresses:
   internal-force equilibrium and tangent stiffness, and must report diagnostics
   separately from geometric imperfections.
 
+## Substantial theory work marked for future implementation
+
+The 2026-07 theory sweep identified the following formulation work. These are
+explicit backlog items, not current capabilities:
+
+1. Replace experimental Q8R stabilization with a bending-aware formulation,
+   correct and verify its rotary mass, and qualify distorted, thin-limit,
+   modal, buckling, and nonlinear behavior before restoring it to production
+   or accelerated-batch scope.
+2. Implement true curved 3-node beam interpolation and a general curved-shell
+   reference geometry, including objective frames, consistent mass, geometric
+   stiffness, loads, and recovery.
+3. Extend the shell initial-stress operator to a complete, independently
+   verified geometric stiffness suitable for large-rotation buckling and
+   nonlinear continuation.
+4. Add updated follower pressure and its consistent tangent, plus a
+   frame-derivative-consistent corotational tangent.
+5. Make contact force, contact moment, and contact work fully consistent for
+   offset shell surfaces and profile-resolved members; retain the present
+   midpoint/beam-axis penalty models as engineering approximations.
+6. Carry committed constitutive history through a unified material-aware
+   recovery pipeline and qualify patch recovery on supported meshes.
+7. Implement equilibrated residual stress/prestrain fields and a true
+   preload/commit/restart sequence for multi-stage displacement control.
+8. Strengthen the local plane-stress plastic corrector with explicit
+   convergence/failure diagnostics for severe increments while preserving the
+   verified discrete algorithmic tangent.
+
 ## Verification anchors
 
 The test and report suites protect, among other checks:
@@ -460,6 +594,9 @@ The test and report suites protect, among other checks:
   capacity workflow, SESAM round trip/import, and SIF load-case isolation.
 
 CalculiX input decks and reference-case discovery support reproducible external
-comparison. A generated deck without an executed result is not evidence of
-numerical agreement. Verification commands and evidence interpretation are in
+comparison against the official CalculiX references for
+[buckling analysis](https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node128.html)
+and [`*DLOAD`](https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node190.html).
+A generated deck without an executed result is not evidence of numerical
+agreement. Verification commands and evidence interpretation are in
 [`QUALITY_CONTROL.md`](QUALITY_CONTROL.md).

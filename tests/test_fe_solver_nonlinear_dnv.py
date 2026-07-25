@@ -13,12 +13,14 @@ from anysolver.imperfections import (
     ImperfectionField,
     apply_imperfection,
     imperfection_from_buckling_mode,
+    standard_flange_twist,
     standard_member_bow,
     standard_plate_mode,
 )
 from anysolver.material_curves import (
     DNVC208MaterialCurve,
     FiberSectionPlasticityConfig,
+    dnv_c208_steel_properties,
     dnv_c208_steel_curve,
 )
 from anysolver.nonlinear_static import (
@@ -86,6 +88,60 @@ def test_dnv_c208_steel_curve_factory_matches_low_fractile_tables():
         dnv_c208_steel_curve("S355", 0.010, fractile="mean")
 
 
+@pytest.mark.parametrize(
+    ("grade", "maximum_thickness"),
+    [
+        ("S235", 0.100),
+        ("S275", 0.063),
+        ("S355", 0.100),
+        ("S420", 0.063),
+        ("S460", 0.063),
+    ],
+)
+def test_dnv_c208_automatic_thickness_selection_fails_outside_grade_table(
+    grade: str,
+    maximum_thickness: float,
+) -> None:
+    with pytest.raises(ValueError, match="thickness must be positive"):
+        dnv_c208_steel_properties(grade, 0.0)
+    with pytest.raises(ValueError, match="outside the built-in RP-C208 range"):
+        dnv_c208_steel_properties(grade, maximum_thickness + 0.001)
+
+
+def test_dnv_c208_validates_grade_and_explicit_thickness_class() -> None:
+    with pytest.raises(ValueError, match="Unsupported RP-C208 steel grade"):
+        dnv_c208_steel_properties("S500", 0.010)
+    with pytest.raises(ValueError, match="Unsupported thickness_class"):
+        dnv_c208_steel_properties("S355", 0.010, thickness_class="not-a-table-row")
+
+    selected = dnv_c208_steel_properties("s355", 0.200, thickness_class="40 < t <= 63")
+    assert selected["grade"] == "S355"
+    assert selected["thickness_class"] == "40 < t <= 63"
+    assert selected["thickness_mm"] == pytest.approx(200.0)
+    assert selected["sigma_yield"] == pytest.approx(336.9e6)
+
+
+@pytest.mark.parametrize(
+    ("grade", "thickness", "thickness_class"),
+    [
+        ("S235", 0.016, "auto"),
+        ("S355", 0.040, "16 < t <= 40"),
+        ("S460", 0.050, "auto"),
+    ],
+)
+def test_runtime_dnv_properties_facade_matches_canonical_table(
+    grade: str,
+    thickness: float,
+    thickness_class: str,
+) -> None:
+    from anysolver.runtime import dnv_c208_steel_properties as runtime_dnv_c208_steel_properties
+
+    canonical = dnv_c208_steel_properties(grade, thickness, thickness_class=thickness_class)
+    runtime = runtime_dnv_c208_steel_properties(grade, thickness, thickness_class=thickness_class)
+
+    assert runtime == canonical
+
+
 def test_eigenmode_imperfection_scales_to_requested_amplitude():
     model = FEModel(name="mode_scale")
     model.add_node(1, 0.0, 0.0, 0.0)
@@ -129,6 +185,49 @@ def test_standard_imperfections_and_stress_free_reference_geometry():
         tangent=False,
     )
     assert np.linalg.norm(f_int) == pytest.approx(0.0, abs=1.0e-9)
+
+
+def test_member_bow_parallel_direction_falls_back_to_transverse_offset():
+    model = FEModel(name="member_bow_parallel_direction")
+    axis = np.array([1.0, 2.0, 3.0])
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, *(0.5 * axis))
+    model.add_node(3, *axis)
+
+    field = standard_member_bow(
+        model,
+        [1, 2, 3],
+        amplitude=0.02,
+        direction=axis,
+    )
+    offsets = field.as_arrays()
+    axis_unit = axis / np.linalg.norm(axis)
+
+    np.testing.assert_allclose(offsets[1], np.zeros(3), atol=1.0e-15)
+    np.testing.assert_allclose(offsets[3], np.zeros(3), atol=1.0e-15)
+    assert np.linalg.norm(offsets[2]) == pytest.approx(0.02)
+    assert float(offsets[2] @ axis_unit) == pytest.approx(0.0, abs=1.0e-15)
+
+
+def test_flange_twist_is_angle_times_cross_product_about_requested_axis():
+    model = FEModel(name="flange_twist")
+    model.add_node(1, 2.0, 0.0, 0.0)
+    model.add_node(2, -2.0, 0.0, 0.0)
+    theta = 0.025
+
+    field = standard_flange_twist(
+        model,
+        [1, 2],
+        twist_radians=theta,
+        direction=(0.0, 0.0, 1.0),
+    )
+    offsets = field.as_arrays()
+
+    np.testing.assert_allclose(offsets[1], [0.0, 2.0 * theta, 0.0])
+    np.testing.assert_allclose(offsets[2], [0.0, -2.0 * theta, 0.0])
+    assert field.max_offset == pytest.approx(2.0 * theta)
+    assert field.metadata["twist_radians"] == pytest.approx(theta)
+    assert field.metadata["twist_axis"] == [0.0, 0.0, 1.0]
 
 
 def test_standard_plate_mode_default_s_over_200():
@@ -183,6 +282,36 @@ def test_displacement_control_reports_peak_load_and_strain_history():
     assert result.last_converged_load_factor == pytest.approx(result.load_factor)
     assert result.info["force_displacement_history"][-1]["control_value"] == pytest.approx(0.004)
     assert result.info["strain_summary"]["max_equivalent_plastic_strain"] > 0.0
+
+
+def test_multistage_displacement_control_rejects_path_dependent_plasticity():
+    model = _guided_beam_model(curve=EPP_CURVE, fiber=True)
+    preload = LoadCase(name="preload")
+    preload.add_nodal_load(2, load_vector=[1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    controlled = LoadCase(name="controlled")
+    controlled.add_nodal_load(2, load_vector=[1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    program = NonlinearLoadProgram(
+        [
+            NonlinearLoadStage("preload", preload),
+            NonlinearLoadStage("controlled", controlled),
+        ]
+    )
+
+    with pytest.raises(
+        NotImplementedError,
+        match="Multi-stage displacement control with path-dependent plasticity",
+    ):
+        solve_static_nonlinear(
+            model,
+            load_program=program,
+            control="displacement",
+            displacement_control=DisplacementControl(
+                node_id=2,
+                dof="ux",
+                target_displacement=0.004,
+            ),
+            num_steps=4,
+        )
 
 
 def test_nonlinear_load_program_applies_ordered_stages_to_completion():

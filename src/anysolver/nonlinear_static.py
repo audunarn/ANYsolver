@@ -26,10 +26,11 @@ loads or imperfection loads can be held while the proportional part ramps.
 
 from __future__ import annotations
 
-import time
 import copy
+import os
+import time
 from dataclasses import dataclass, field, replace as dataclass_replace
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from scipy import sparse
@@ -62,6 +63,25 @@ if TYPE_CHECKING:
 
 
 _DOF_INDEX = {"ux": 0, "uy": 1, "uz": 2, "rx": 3, "ry": 4, "rz": 5}
+_FAST_NL_BOOTSTRAPPED = False
+_FAST_NL_BOOTSTRAP_ERROR: Optional[str] = None
+
+
+def _ensure_nonlinear_acceleration() -> None:
+    """Install optional nonlinear acceleration on first nonlinear use."""
+
+    global _FAST_NL_BOOTSTRAPPED, _FAST_NL_BOOTSTRAP_ERROR
+    if _FAST_NL_BOOTSTRAPPED:
+        return
+    _FAST_NL_BOOTSTRAPPED = True
+    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return
+    try:
+        from .nonlinear_performance_bootstrap import install_nonlinear_performance_optimizations
+
+        install_nonlinear_performance_optimizations()
+    except Exception as exc:  # Optional acceleration must not disable the solver.
+        _FAST_NL_BOOTSTRAP_ERROR = f"{type(exc).__name__}: {exc}"
 
 
 @dataclass(frozen=True)
@@ -387,13 +407,13 @@ def _assemble_nonlinear_system(
         rows_concat, cols_concat = _get_cached_sparsity_pattern(mesh, "tangent_stiffness")
 
     from .elements import ShellElement
-    from .vectorized_nonlinear import batch_shell_nonlinear_response
+    from .vectorized_nonlinear import batch_shell_nonlinear_response, shell_nonlinear_batch_eligible
 
     groups = {}
     for elem_id, element in mesh.elements.items():
         if kinematics == "corotational":
             break
-        if isinstance(element, ShellElement) and getattr(element, "_is_quadrilateral", False):
+        if isinstance(element, ShellElement) and shell_nonlinear_batch_eligible(element):
             key = (
                 element.num_nodes,
                 element.thickness,
@@ -970,6 +990,9 @@ def solve_static_nonlinear(
     """
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
+    control_name = str(control).lower()
+    if control_name not in {"force", "displacement"}:
+        raise ValueError("control must be 'force' or 'displacement'")
     kinematics = str(kinematics).lower()
     if kinematics not in {"von_karman", "corotational"}:
         raise ValueError("kinematics must be 'von_karman' or 'corotational'")
@@ -983,6 +1006,20 @@ def solve_static_nonlinear(
         raise ValueError("max_load_factor must be positive")
     if fracture_config is not None and not isinstance(fracture_config, FractureConfig):
         raise TypeError("fracture_config must be a FractureConfig or None")
+    if (
+        control_name == "displacement"
+        and load_program is not None
+        and len(load_program.stages) > 1
+        and any(
+            getattr(model.get_material(getattr(element, "material_name", None)), "hardening_curve", None)
+            is not None
+            for element in model.mesh.elements.values()
+        )
+    ):
+        raise NotImplementedError(
+            "Multi-stage displacement control with path-dependent plasticity is not implemented. "
+            "Equilibrate and commit preload stages separately, then restart the controlled stage."
+        )
     settings = _coerce_convergence_settings(convergence_settings)
     if kinematics == "corotational" and settings.line_search in {"auto", "rescue"}:
         # Corotational Newton necessarily passes through a large intermediate
@@ -997,6 +1034,7 @@ def solve_static_nonlinear(
         from .imperfections import apply_imperfection
 
         model = apply_imperfection(model, imperfection, copy_model=True)
+    _ensure_nonlinear_acceleration()
     model.apply_boundary_conditions()
 
     # The constraint transformation only depends on supports/MPCs; the
@@ -1038,9 +1076,6 @@ def solve_static_nonlinear(
     if imperfection is not None:
         info["imperfection"] = getattr(model, "imperfection_metadata", [])
 
-    control_name = str(control).lower()
-    if control_name not in {"force", "displacement"}:
-        raise ValueError("control must be 'force' or 'displacement'")
     if fracture_config is not None and control_name != "force":
         raise ValueError("fracture_config is currently supported only with force control")
 

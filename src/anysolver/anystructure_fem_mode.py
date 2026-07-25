@@ -920,3 +920,23 @@ def run_anystructure_fem_mode(
         displacements=displacements,
         buckling_result=buckling,
     )
+
+
+# Generic solver-owned names.  Historical names remain available for
+# downstream ANYstructure compatibility.
+GeneratedGeometryFEMConfig = AnyStructureFEMConfig
+GeneratedGeometryFEMResult = AnyStructureFEMResult
+run_generated_geometry_fem = run_anystructure_fem_mode
+
+__all__ = [
+    "AnyStructureFEMConfig",
+    "AnyStructureFEMResult",
+    "GeneratedGeometryFEMConfig",
+    "GeneratedGeometryFEMResult",
+    "build_fe_model_from_generated_geometry",
+    "build_symmetric_load_case",
+    "idealize_generated_geometry_members",
+    "recover_prestress_from_static_result",
+    "run_anystructure_fem_mode",
+    "run_generated_geometry_fem",
+]

@@ -6,6 +6,7 @@ This module provides classes for storing and processing FE analysis results.
 
 from __future__ import annotations
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import TYPE_CHECKING, List, Dict, Tuple, Optional, Any
 import numpy as np
 
@@ -375,22 +376,39 @@ def _polynomial_basis(points: np.ndarray, num_gauss: int) -> np.ndarray:
     return np.ones((points.shape[0], 1), dtype=float)
 
 
-def _gauss_to_node_extrapolation(element: Any) -> Optional[np.ndarray]:
-    """Return the (num_nodes, num_gauss) extrapolation operator for one shell."""
-    gauss_points = np.asarray(getattr(element, "gauss_points", ()), dtype=float).reshape(-1, 2)
+@lru_cache(maxsize=16)
+def _cached_gauss_to_node_extrapolation(
+    num_nodes: int,
+    gauss_points_flat: Tuple[float, ...],
+) -> Optional[np.ndarray]:
+    """Build one operator per shell topology and Gauss rule."""
+
+    gauss_points = np.asarray(gauss_points_flat, dtype=float).reshape(-1, 2)
     num_gauss = gauss_points.shape[0]
     if num_gauss == 0:
         return None
-    if getattr(element, "num_nodes", 0) == 4:
+    if num_nodes == 4:
         node_natural = _QUAD4_NODE_NATURAL
-    elif getattr(element, "num_nodes", 0) == 8:
+    elif num_nodes == 8:
         node_natural = _QUAD8_NODE_NATURAL
     else:
         return None
     P_gauss = _polynomial_basis(gauss_points, num_gauss)
     P_nodes = _polynomial_basis(node_natural, num_gauss)
     coefficients, *_ = np.linalg.lstsq(P_gauss, np.eye(num_gauss), rcond=None)
-    return P_nodes @ coefficients
+    operator = P_nodes @ coefficients
+    operator.setflags(write=False)
+    return operator
+
+
+def _gauss_to_node_extrapolation(element: Any) -> Optional[np.ndarray]:
+    """Return the cached (num_nodes, num_gauss) operator for one shell."""
+
+    gauss_points = np.asarray(getattr(element, "gauss_points", ()), dtype=float).reshape(-1, 2)
+    return _cached_gauss_to_node_extrapolation(
+        int(getattr(element, "num_nodes", 0)),
+        tuple(float(value) for value in gauss_points.reshape(-1)),
+    )
 
 
 def _von_mises_surface(components: Dict[str, float], suffix: str) -> float:

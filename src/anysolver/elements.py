@@ -479,22 +479,29 @@ def _jit_integrate_nonlinear_response(
                 K_loc[r, c] += (val_eff + val_b) * detw
 
         if has_plasticity:
-            # coupling = B_eff.T @ C1[g] @ B_b
+            # Membrane-bending coupling:
+            # B_eff.T @ C1 @ B_b + B_b.T @ C1 @ B_eff.
             C1_g = C1[g]
             C1_B_b = np.zeros((3, n_dof))
+            C1_B_eff = np.zeros((3, n_dof))
             for r in range(3):
                 for c in range(n_dof):
-                    val1 = 0.0
+                    val_b = 0.0
+                    val_eff = 0.0
                     for k in range(3):
-                        val1 += C1_g[r, k] * B_b[k, c]
-                    C1_B_b[r, c] = val1
+                        val_b += C1_g[r, k] * B_b[k, c]
+                        val_eff += C1_g[r, k] * B_eff[k, c]
+                    C1_B_b[r, c] = val_b
+                    C1_B_eff[r, c] = val_eff
 
             for r in range(n_dof):
                 for c in range(n_dof):
-                    val_c = 0.0
+                    forward = 0.0
+                    reverse = 0.0
                     for k in range(3):
-                        val_c += B_eff[k, r] * C1_B_b[k, c]
-                    K_loc[r, c] += (val_c + val_c) * detw
+                        forward += B_eff[k, r] * C1_B_b[k, c]
+                        reverse += B_b[k, r] * C1_B_eff[k, c]
+                    K_loc[r, c] += (forward + reverse) * detw
 
         # Geometric initial stress stiffness
         N00 = N_g[0]
@@ -2447,6 +2454,15 @@ class QuadraticBeamElement(BeamElement):
             if node is None:
                 raise ValueError(f"Quadratic beam element {self.element_id} references missing node {node_id}")
             coords[i] = node.coords()
+        chord = coords[2] - coords[0]
+        length = float(np.linalg.norm(chord))
+        if length > _SMALL:
+            midpoint_error = float(np.linalg.norm(coords[1] - 0.5 * (coords[0] + coords[2])))
+            if midpoint_error > max(1.0e-8 * length, 1.0e-12):
+                raise ValueError(
+                    f"Quadratic beam element {self.element_id} is curved or has a non-midpoint middle node. "
+                    "The current B3 formulation is straight-sided; use two-node beam segments for curved geometry."
+                )
         return coords
 
     def compute_shape_functions(self, xi: float) -> Tuple[np.ndarray, np.ndarray]:
