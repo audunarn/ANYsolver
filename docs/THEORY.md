@@ -107,16 +107,40 @@ beam always integrates a consistent translational and section-rotary mass
 matrix. Explicit point masses contribute to the assembled mass matrix and to
 total-mass, center-of-mass, and inertia diagnostics.
 
-Shell pressure is assembled as a consistent nodal load:
+Shell pressure is assembled as a consistent nodal load. In natural
+coordinates, with current or reference covariant surface tangents
+`a_xi = dx/dxi` and `a_eta = dx/deta`,
 
 ```text
-f_i = integral_A N_i p n dA
+f_i(u) = integral N_i p (a_xi cross a_eta) dxi deta
 ```
 
-where `n` is the element normal implied by the element node order. Pressure is
-dead loading in the current static formulation: neither an updated normal nor a
-consistent follower-load tangent is included. Follower pressure is a future
-implementation item for large-deformation equilibrium and continuation.
+where the sign follows the element node order. Pressure is a dead load by
+default. With `LoadCase(..., follower_pressure=True)`, nonlinear static and
+arc-length solves evaluate the area vector from the current midsurface. The
+exact translational `3 x 3` block of its external-force derivative is
+
+```text
+d f_i / d u_j
+  = integral p N_i (-N_j,xi [a_eta]_x + N_j,eta [a_xi]_x) dxi deta
+```
+
+where `[a]_x b = a cross b`. Therefore the Newton operator is
+
+```text
+K_eff = K_internal - K_external
+```
+
+and is generally nonsymmetric for an open pressure patch. No independent
+rotational pressure moment is introduced because pressure virtual work is
+conjugate to midsurface translation. This follows the standard distinction
+between dead and follower distributed loads described in the
+[Abaqus distributed-load reference](https://docs.software.vt.edu/abaqusv2024/English/SIMACAEPRCRefMap/simaprc-c-loaddistributed.htm).
+The implementation is checked by analytical load resultants, rigid-rotation
+objectivity, finite differences of the load tangent, nonlinear equilibrium,
+and the
+[Abaqus pressurized-ring buckling benchmark](https://docs.software.vt.edu/abaqusv2025/English/SIMACAEBMKRefMap/simabmk-c-ringbuckling.htm),
+which illustrates why pressure-load stiffness cannot be omitted.
 
 ## Linear equilibrium and vibration
 
@@ -346,14 +370,46 @@ Impact fracture / contact erosion:
 Linear buckling solves:
 
 ```text
-K phi = lambda KG phi
+K phi = lambda (KG + K_load) phi
 ```
 
 with positive `KG` representing destabilizing compression in the supplied
-reference stress/resultant state. The current beam contribution is driven by
-axial force and the shell contribution by recovered membrane resultants. It is
-not a complete finite-rotation shell initial-stress operator; extending and
-qualifying the full shell geometric stiffness is future work.
+reference stress/resultant state. The beam contribution is driven by axial
+force. For shells, the implemented total-Lagrangian initial-stress operator
+uses the local Mindlin director field
+
+```text
+r(x, y, z) = [u + z ry, v - z rx, w]
+delta^2 Pi_sigma = integral_V (grad delta r)^T sigma (grad Delta r) dV
+```
+
+and the in-plane through-thickness stress moments
+
+```text
+N = integral sigma dz
+M = integral z sigma dz
+H = integral z^2 sigma dz
+```
+
+at each midsurface integration point, expressed in the package's
+compression-positive convention. `N` acts on gradients of all three midsurface
+translations, `H` acts on the `rx` and `ry` director gradients, and `M`
+provides the signed translation/director coupling implied by
+`u(z) = u + z ry` and `v(z) = v - z rx`. For uniform through-thickness stress,
+`H = N h^2 / 12`. The construction is consistent with the
+Reissner-Mindlin director kinematics surveyed in this
+[geometrically nonlinear Reissner-Mindlin review](https://doi.org/10.1007/s11831-021-09702-7).
+
+This is fuller than a transverse-displacement-only membrane `KG`, but it is not
+a claim of a complete geometrically exact finite-rotation shell. It includes
+no drilling-director or transverse-normal-stress contribution. `K_load` is the
+current-area follower-pressure tangent when a reference follower load is
+supplied. The present symmetric eigensolver accepts it only when the
+*constrained* follower tangent satisfies the requested symmetry tolerance;
+otherwise it returns `unsupported_nonsymmetric_follower_pencil`. General
+complex nonconservative eigenanalysis remains outside scope. The thin-ring
+pressure qualification follows the sensitivity highlighted by the
+[Abaqus ring benchmark](https://docs.software.vt.edu/abaqusv2025/English/SIMACAEBMKRefMap/simabmk-c-ringbuckling.htm).
 
 The incremental nonlinear static path uses von Karman shell kinematics,
 beam-column geometric coupling and optional layered J2 plane-stress plasticity
@@ -406,12 +462,39 @@ u_d (translation) = R_rig^T (x - x_c) - (X - X_c)
 u_d (rotation)    = rotvec(R_rig^T exp(skew(theta)))
 ```
 
-the element's linear-elastic reference stiffness acts on the deformational
-part, and forces are rotated forward: `f = E K_ref u_d` with
-`E = blockdiag(R_rig, ...)`.  Verified anchors: internal-force invariance
+the element's own nonlinear response acts on the deformational part, and
+forces are rotated forward: `f = E f_local(u_d)` with
+`E = blockdiag(R_rig, ...)`. Verified anchors: internal-force invariance
 under rigid rotations up to 170 degrees (machine precision, where von Karman
 produces GN-scale spurious forces), and the cantilever roll-up under end
 moment matching the analytic circle through 180 degrees of tip rotation.
+
+Two tangent modes are available:
+
+```text
+rotated:    K = E k_local E^T
+consistent: K = E k_local D + (S + E k_local U) G
+```
+
+For the consistent tangent, `D` is the fixed-frame pull-back derivative, `U`
+is the deformational pull-back sensitivity to rigid rotation, `S` rotates the
+internal force with the frame, and `G = d omega / d u` is the extracted-frame
+sensitivity. `D`, `U`, and `S` use the exact rotation-vector Jacobians; `G` is
+evaluated by bounded central differences of the shell or beam frame. The
+result is deliberately not symmetrized because additive rotation coordinates
+and frame terms produce a generally nonsymmetric Jacobian. Element-level
+finite-difference checks verify the complete force derivative. This is an
+application of the consistent-Jacobian principle represented by
+[Simo and Taylor](https://doi.org/10.1016/0045-7825(85)90070-2); it should not
+be read as adopting that paper's constitutive model as the corotational
+formulation.
+
+`corotational_tangent="auto"` keeps the lower-cost rotated tangent for ordinary
+corotational solves and selects `"consistent"` when follower pressure is
+active. Users may request `"consistent"` explicitly for demanding
+large-rotation Newton solves. An explicit `"rotated"` tangent is rejected for
+the follower-pressure/corotational combination because the complete
+nonsymmetric equilibrium Jacobian is then required.
 
 Validity limits:
 
@@ -422,12 +505,12 @@ Validity limits:
   state is objective under rigid rotation); fiber shear/torsion stay elastic
   as in the von Karman path, and fracture/erosion remains unsupported in
   corotational mode;
-- the tangent is the rotated local tangent `E k_local E^T`; derivatives of the
-  corotational frame are not included, so this is not a fully consistent
-  corotational tangent. Plain Newton is used without the residual-norm line
-  search because the first frame-rotation excursion can otherwise be rejected.
-  A consistent objective tangent, verified near limit points and under follower
-  loading, is future work;
+- the consistent tangent includes the extracted-frame derivative, but its
+  numerical `G` evaluation is more expensive and depends on a finite-difference
+  scale; the rotated tangent therefore remains the default when follower
+  pressure is absent. The automatic/rescue residual-norm line search is still
+  disabled in corotational mode because the first frame-rotation excursion can
+  otherwise be rejected;
 - the pull-back has an intrinsic residual roundoff floor of roughly
   `eps * ||K_e|| * L` per element; use relative tolerances of 1e-5 to 1e-6 and
   realistic load magnitudes;
@@ -488,15 +571,20 @@ constraint to the same nonlinear element, material-state, load, and constraint
 machinery:
 
 ```text
-R(q, lambda) = F_constant + lambda F_reference - F_internal(q)
+R(q, lambda) =
+    F_constant(q) + lambda F_reference(q) - F_internal(q)
+K_eff = K_internal - K_constant - lambda K_reference
 dq.T W dq + alpha^2 dlambda^2 = ds^2
 ```
 
 It is intended to cross a first limit point and retain a small, guarded
 descending branch. Controls limit the load increment, number of steps,
 post-peak count or load fraction, and maximum nodal translation. It does not
-perform automatic bifurcation branch switching, follower-load continuation,
-nonlinear free-free continuation, or unrestricted collapse tracing. See
+perform automatic bifurcation branch switching, nonlinear free-free
+continuation, or unrestricted collapse tracing. Current-area follower pressure
+is supported for the constant and/or proportional load cases; its exact load
+tangent is included in `K_eff`, and a general factorization is used for the
+resulting nonsymmetric system. See
 [`ARC_LENGTH.md`](ARC_LENGTH.md) for the API and acceptance limits.
 
 Material modelling:
@@ -515,12 +603,42 @@ Material modelling:
   uses end-difference strain measures, while the 3-node element evaluates the
   same measures at its Gauss points from quadratic interpolation.
 
-Stress output from a converged nonlinear solve is material-aware when committed
-layer/fiber state is retained. Generic displacement-only recovery otherwise
-reconstructs an elastic stress field. A unified recovery API that always
-carries material history, and a qualified superconvergent patch recovery based
-on [Zienkiewicz and Zhu](https://onlinelibrary.wiley.com/doi/10.1002/nme.1620330702)
-for supported meshes, are future work.
+### Material-history and patch stress recovery
+
+`recover_stress_result()` is the unified recovery entry point. It accepts a
+nonlinear or arc-length result, or explicitly supplied committed element
+states. When a result is supplied, recovery defaults to that result's
+displacement vector and rejects a mismatching explicit vector. Provenance is
+reported per element and per component, so a caller can distinguish
+`committed_shell_layer_state`, `committed_beam_fiber_state`, and explicitly
+labelled elastic fallback.
+
+For shells, committed return-mapped layer stresses are integrated with the
+same Gauss-Lobatto layer positions and weights used by the nonlinear
+formulation. The output includes membrane and bending stress measures, exact
+top/bottom layer values, and von Mises stress including the elastic transverse
+shear from the same solution. For fiber beams, the stored fiber coordinates,
+weights, and stations give axial force and biaxial bending resultants; the
+reported von Mises envelope also includes elastic shear and torsion. In
+corotational analyses, recovery uses the objective deformational pull-back,
+current coordinates, and current corotated frame. Material history can only be
+used when compatible committed states were retained; missing or invalid state
+is a visible elastic fallback, never a silent plastic-stress reconstruction.
+
+Passing `PatchRecoveryConfig` enables a guarded linear least-squares,
+[Zienkiewicz-Zhu-style](https://doi.org/10.1002/nme.1620330702) shell surface
+patch fit. Qualification is deliberately narrower than the general
+superconvergent-patch theory: only full-integration Q4 or Q8 neighborhoods with
+consistent topology, material, thickness, provenance, orientation, local
+planarity, sufficient rank, and bounded conditioning are accepted. Rank or
+conditioning failures fall back to Gauss-to-node extrapolation and averaging
+inside the same continuity region. Material, thickness, topology, provenance,
+or geometric discontinuities produce separate `nodal_regions`; values are
+never cross-averaged across the discontinuity. Q8R, warped/curved
+neighborhoods, and incomplete neighborhoods remain outside the qualified fit.
+The optional indicator is a normalized global top/bottom surface-stress L2
+discrepancy between raw and recovered stresses. It is explicitly *not* a
+compliance-weighted ZZ energy-norm error estimate and must not be used as one.
 
 Simplified fracture / element erosion:
 
@@ -558,21 +676,22 @@ explicit backlog items, not current capabilities:
 2. Implement true curved 3-node beam interpolation and a general curved-shell
    reference geometry, including objective frames, consistent mass, geometric
    stiffness, loads, and recovery.
-3. Extend the shell initial-stress operator to a complete, independently
-   verified geometric stiffness suitable for large-rotation buckling and
-   nonlinear continuation.
-4. Add updated follower pressure and its consistent tangent, plus a
-   frame-derivative-consistent corotational tangent.
-5. Make contact force, contact moment, and contact work fully consistent for
+3. Extend the current `N`/`M`/`H` Mindlin initial-stress operator to a
+   geometrically exact finite-rotation shell/director formulation, and add a
+   general complex eigensolver for nonsymmetric nonconservative follower-load
+   pencils.
+4. Make contact force, contact moment, and contact work fully consistent for
    offset shell surfaces and profile-resolved members; retain the present
    midpoint/beam-axis penalty models as engineering approximations.
-6. Carry committed constitutive history through a unified material-aware
-   recovery pipeline and qualify patch recovery on supported meshes.
-7. Implement equilibrated residual stress/prestrain fields and a true
+5. Implement equilibrated residual stress/prestrain fields and a true
    preload/commit/restart sequence for multi-stage displacement control.
-8. Strengthen the local plane-stress plastic corrector with explicit
+6. Strengthen the local plane-stress plastic corrector with explicit
    convergence/failure diagnostics for severe increments while preserving the
    verified discrete algorithmic tangent.
+7. Develop an equilibrated or compliance-weighted recovery estimator for
+   adaptive refinement. The current guarded patch result and normalized
+   stress-L2 discrepancy intentionally make no energy-norm or guaranteed-error
+   claim.
 
 ## Verification anchors
 
@@ -588,17 +707,24 @@ The test and report suites protect, among other checks:
   geometric stiffness, nonlinear tangent, and fiber yielding;
 - modal, Euler/Wagner/plate buckling, repeated roots, and sparse shift-invert;
 - DNV curve anchors, plane-stress return mapping, imperfections, staged loads,
-  displacement control, corotational objectivity, and arc-length limit points;
+  displacement control, corotational objectivity and consistent-tangent
+  finite differences, current-area follower pressure, and arc-length limit
+  points;
 - Newmark/HHT-alpha response, pressure-patch impulse, sphere-contact momentum
   and energy, beam contact, nonlinear impact, RTCL weighting, and committed-state
   damage;
-- selected/envelope recovery, memory policy, normalized geometry conversion,
+- material-history and guarded patch recovery, discontinuity separation,
+  selected/envelope recovery, memory policy, normalized geometry conversion,
   capacity workflow, SESAM round trip/import, and SIF load-case isolation.
 
 CalculiX input decks and reference-case discovery support reproducible external
 comparison against the official CalculiX references for
 [buckling analysis](https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node128.html)
 and [`*DLOAD`](https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node190.html).
-A generated deck without an executed result is not evidence of numerical
-agreement. Verification commands and evidence interpretation are in
+A deck-only run has status `not_executed` and is not evidence of numerical
+agreement. With explicit execution enabled, each case runs in an isolated
+directory, records executable version/hash provenance and logs, rejects stale
+or missing output, parses the requested FRD/DAT observables, and passes only
+when every declared analytical comparison meets tolerance. Verification
+commands and evidence interpretation are in
 [`QUALITY_CONTROL.md`](QUALITY_CONTROL.md).

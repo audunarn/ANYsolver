@@ -6,7 +6,11 @@ import numpy as np
 import pytest
 
 from anysolver.boundary import BoundaryCondition, LoadCase
-from anysolver.corotational import rotation_matrix_from_vector, rotation_vector_from_matrix
+from anysolver.corotational import (
+    corotational_element_response,
+    rotation_matrix_from_vector,
+    rotation_vector_from_matrix,
+)
 from anysolver.elements import BeamElement, QuadraticBeamElement, ShellElement
 from anysolver.fe_core import FEModel
 from anysolver.material_curves import dnv_c208_steel_curve
@@ -67,6 +71,72 @@ def _rigid_rotation_field(model: FEModel, angle_deg: float, axis) -> np.ndarray:
         u[np.asarray(node.dofs[:3])] = R @ X - X
         u[np.asarray(node.dofs[3:])] = theta
     return u
+
+
+@pytest.mark.parametrize("model_factory", [_single_shell_model, _single_beam_model])
+def test_consistent_corotational_tangent_matches_force_jacobian(model_factory) -> None:
+    """The opt-in tangent differentiates both pull-back and frame rotation."""
+
+    model = model_factory()
+    element = model.mesh.elements[1]
+    u = _rigid_rotation_field(model, 35.0, (0.2, 0.4, 1.0))
+    end_node = model.mesh.nodes[max(model.mesh.nodes)]
+    u[end_node.dofs[0]] += 0.003
+    u[end_node.dofs[2]] += 0.007
+    u[end_node.dofs[4]] -= 0.015
+
+    _force, tangent, _state = corotational_element_response(
+        model,
+        1,
+        element,
+        u,
+        tangent=True,
+        tangent_mode="consistent",
+    )
+    numerical = np.zeros_like(tangent)
+    step = 2.0e-7
+    for column in range(u.size):
+        plus = u.copy()
+        minus = u.copy()
+        plus[column] += step
+        minus[column] -= step
+        force_plus, _, _ = corotational_element_response(
+            model,
+            1,
+            element,
+            plus,
+            tangent=False,
+            tangent_mode="consistent",
+        )
+        force_minus, _, _ = corotational_element_response(
+            model,
+            1,
+            element,
+            minus,
+            tangent=False,
+            tangent_mode="consistent",
+        )
+        numerical[:, column] = (force_plus - force_minus) / (2.0 * step)
+
+    relative_error = np.linalg.norm(tangent - numerical) / max(np.linalg.norm(numerical), 1.0)
+    assert relative_error < 2.0e-7
+    # Additive rotation-vector coordinates make the exact Jacobian generally
+    # nonsymmetric away from equilibrium; symmetrizing it loses consistency.
+    assert np.linalg.norm(tangent - tangent.T) > 1.0e-6 * np.linalg.norm(tangent)
+
+
+def test_corotational_tangent_mode_rejects_unknown_value() -> None:
+    model = _single_shell_model()
+    element = model.mesh.elements[1]
+    with pytest.raises(ValueError, match="tangent_mode"):
+        corotational_element_response(
+            model,
+            1,
+            element,
+            np.zeros(element.total_dofs),
+            tangent=True,
+            tangent_mode="secant",
+        )
 
 
 @pytest.mark.parametrize("axis", [(0, 0, 1), (0, 1, 0), (1, 1, 1)])

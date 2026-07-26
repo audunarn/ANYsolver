@@ -7,12 +7,17 @@ This module provides classes for storing and processing FE analysis results.
 from __future__ import annotations
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import TYPE_CHECKING, List, Dict, Tuple, Optional, Any
+from typing import TYPE_CHECKING, List, Dict, Mapping, Tuple, Optional, Any
 import numpy as np
 
 if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh
-    from .recovery import RecoveryConfig, ResourceConfig
+    from .recovery import (
+        PatchRecoveryConfig,
+        RecoveryConfig,
+        ResourceConfig,
+        StressRecoveryResult,
+    )
 
 
 @dataclass
@@ -34,6 +39,7 @@ class FEResult:
     # Additional results
     strains: Dict[int, Dict[str, np.ndarray]] = field(default_factory=dict)
     forces: Dict[int, Dict[str, np.ndarray]] = field(default_factory=dict)
+    stress_recovery: Optional["StressRecoveryResult"] = None
 
     def __post_init__(self):
         if self.displacements is not None:
@@ -55,6 +61,22 @@ class FEResult:
         """Get reaction forces for a specific node."""
         return self.reactions.get(node_id)
 
+    @property
+    def committed_element_states(self) -> Dict[int, Any]:
+        """Committed constitutive state snapshot used for stress recovery."""
+
+        if self.stress_recovery is None:
+            return {}
+        return self.stress_recovery.committed_element_states
+
+    @property
+    def stress_recovery_provenance(self) -> Dict[str, Any]:
+        """Serializable elastic/material-history recovery provenance."""
+
+        if self.stress_recovery is None:
+            return {}
+        return self.stress_recovery.provenance_dict()
+
     def get_max_displacement(self) -> Tuple[float, int]:
         """Get maximum displacement and its node ID."""
         return self.max_displacement, self.max_displacement_node
@@ -74,6 +96,7 @@ class FEResult:
             'solver_info': self.solver_info,
             'assembly_info': self.assembly_info,
             'result_case': self.result_case,
+            'stress_recovery': self.stress_recovery_provenance,
             'node_displacements': {k: v.tolist() for k, v in self.node_displacements.items()},
             'reactions': {k: v.tolist() for k, v in self.reactions.items()}
         }
@@ -176,18 +199,30 @@ def create_fe_result(
     assembly_info: Dict[str, Any] = None,
     recovery_config: Optional["RecoveryConfig"] = None,
     resource_config: Optional["ResourceConfig"] = None,
+    *,
+    nonlinear_result: Optional[Any] = None,
+    element_states: Optional[Mapping[int, Any]] = None,
+    patch_recovery_config: Optional["PatchRecoveryConfig"] = None,
 ) -> FEResult:
     """
     Create a complete FE result from solver output.
 
     Args:
-        model: The FE model
-        displacements: Global displacement vector
-        solver_info: Solver information dictionary
-        assembly_info: Assembly information dictionary
+        model: The FE model.
+        displacements: Global displacement vector.
+        solver_info: Solver information dictionary.
+        assembly_info: Assembly information dictionary.
+        recovery_config: Element/node/component selection policy.
+        resource_config: Recovery worker and memory policy.
+        nonlinear_result: Converged nonlinear result whose committed material
+            states must correspond to ``displacements``.
+        element_states: Explicit committed shell-layer or beam-fiber states;
+            mutually exclusive with ``nonlinear_result``.
+        patch_recovery_config: Optional guarded Q4/Q8 shell patch-recovery
+            settings. Discontinuity regions remain separate.
 
     Returns:
-        FEResult object with all results
+        ``FEResult`` with unified elastic/material-history stress provenance.
     """
     from .assembly import compute_reactions
     from .recovery import (
@@ -195,15 +230,28 @@ def create_fe_result(
         enforce_memory_limit,
         estimate_model_memory,
         filter_reactions,
-        recover_element_stresses,
-        recover_element_stresses_with_report,
+        recover_stress_result,
         recovery_metadata,
         select_node_displacements,
     )
 
     policy_requested = recovery_config is not None or resource_config is not None
     recovery = default_recovery_config(recovery_config)
-    memory_estimate = estimate_model_memory(model, recovery_config=recovery) if policy_requested else None
+    state_recovery_requested = (
+        nonlinear_result is not None or element_states is not None
+    )
+    memory_estimate = (
+        estimate_model_memory(
+            model,
+            recovery_config=recovery,
+            nonlinear_state=state_recovery_requested,
+            # The nonlinear result/explicit state remains live while the
+            # default recovery result owns a defensive deep copy.
+            nonlinear_state_copies=2 if state_recovery_requested else 1,
+        )
+        if policy_requested
+        else None
+    )
     if memory_estimate is not None:
         enforce_memory_limit(memory_estimate, resource_config, context="create_fe_result")
     policy_metadata = recovery_metadata(recovery, resource_config, memory_estimate) if policy_requested else {}
@@ -220,17 +268,22 @@ def create_fe_result(
         load_case = solver_info['load_case']
         reactions = filter_reactions(compute_reactions(model, displacements, load_case), recovery, model)
 
-    # Compute stresses
-    if policy_requested:
-        element_stresses, stress_report = recover_element_stresses_with_report(
-            model,
-            displacements,
-            recovery,
-            resource_config=resource_config,
-        )
-        result_solver_info["recovery_policy"]["execution"] = {"element_stress_recovery": stress_report.to_dict()}
-    else:
-        element_stresses = recover_element_stresses(model, displacements, recovery)
+    # Compute stresses through the unified elastic/material-history path.
+    stress_recovery = recover_stress_result(
+        model,
+        displacements,
+        recovery,
+        nonlinear_result=nonlinear_result,
+        element_states=element_states,
+        resource_config=resource_config,
+        patch_config=patch_recovery_config,
+    )
+    element_stresses = stress_recovery.element_stresses
+    result_solver_info["stress_recovery"] = stress_recovery.provenance_dict()
+    if policy_requested and stress_recovery.execution_report is not None:
+        result_solver_info["recovery_policy"]["execution"] = {
+            "element_stress_recovery": stress_recovery.execution_report.to_dict()
+        }
 
     result_case = solver_info.get("result_case")
     if policy_requested and isinstance(result_case, dict):
@@ -249,6 +302,7 @@ def create_fe_result(
         solver_info=result_solver_info,
         assembly_info=assembly_info or {},
         result_case=result_case,
+        stress_recovery=stress_recovery,
     )
 
 

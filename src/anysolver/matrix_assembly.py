@@ -387,8 +387,10 @@ def assemble_geometric_stiffness_matrix(
     """Assemble the global geometric stiffness matrix KG only.
 
     ``element_states`` supplies the reference stress/resultant state for each
-    element.  The current beam-column implementation accepts a numeric value or
-    a mapping with ``axial_compression`` positive in compression.
+    element.  Beams accept a numeric value or a mapping with
+    ``axial_compression`` positive in compression.  Shell resultants act
+    through the Mindlin field ``[u+z*ry, v-z*rx, w]``; drilling rotation and
+    stress components normal to the midsurface are outside this operator.
     """
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
@@ -425,6 +427,9 @@ def assemble_geometric_stiffness_matrix(
         info["num_elements"] += 1
 
     info["state_source"] = "none" if element_states is None else type(element_states).__name__
+    info["diagnostics"]["shell_initial_stress_scope"] = (
+        "mindlin_translations_and_director_gradients; no_drilling_or_transverse_normal_stress_terms"
+    )
 
     if not data_list:
         matrix = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
@@ -446,15 +451,37 @@ def assemble_geometric_stiffness_matrix(
     return matrix, info
 
 
-def assemble_load_vector(model: "FEModel", load_case: Optional["LoadCase"] = None) -> Tuple[np.ndarray, Dict[str, Any]]:
-    """Assemble the global external load vector F only."""
+def assemble_load_vector(
+    model: "FEModel",
+    load_case: Optional["LoadCase"] = None,
+    displacements: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """Assemble the global external load vector ``F_external``.
+
+    ``displacements`` is ignored by ordinary dead loads.  A load case with
+    ``follower_pressure=True`` uses it to evaluate pressure on the current
+    shell midsurface.
+    """
     total_dofs = model.mesh.dof_manager.total_dofs
     start_time = time.time()
+    if displacements is not None:
+        displacements = np.asarray(displacements, dtype=float).reshape(-1)
+        if displacements.shape != (total_dofs,):
+            raise AssemblyError(
+                f"Displacement vector shape {displacements.shape} does not match total DOFs {(total_dofs,)}."
+            )
+        if not np.all(np.isfinite(displacements)):
+            raise AssemblyError("Displacement vector contains non-finite values.")
     if load_case is None:
         load_vector = np.zeros(total_dofs, dtype=float)
         load_name = None
     else:
-        load_vector = load_case.get_load_vector(model.mesh, model.mesh.dof_manager, model.get_material)
+        load_vector = load_case.get_load_vector(
+            model.mesh,
+            model.mesh.dof_manager,
+            model.get_material,
+            displacements=displacements,
+        )
         load_vector = np.asarray(load_vector, dtype=float).reshape(-1)
         load_name = load_case.name
 
@@ -470,7 +497,109 @@ def assemble_load_vector(model: "FEModel", load_case: Optional["LoadCase"] = Non
         "total_dofs": total_dofs,
         "assembly_time": time.time() - start_time,
         "load_norm": float(np.linalg.norm(load_vector)),
+        "pressure_configuration": (
+            "current"
+            if load_case is not None and bool(getattr(load_case, "follower_pressure", False))
+            else "reference"
+        ),
     }
+
+
+def assemble_external_load_tangent(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    displacements: Optional[np.ndarray] = None,
+) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+    """Assemble ``dF_external / du`` for current-area follower pressure.
+
+    Dead loads return an exact zero matrix.  The follower tangent is generally
+    nonsymmetric for an open pressure patch; callers must therefore use a
+    general sparse factorization for ``K_internal - K_external``.
+    """
+    total_dofs = model.mesh.dof_manager.total_dofs
+    start_time = time.time()
+    u = np.zeros(total_dofs, dtype=float) if displacements is None else np.asarray(displacements, dtype=float).reshape(-1)
+    if u.shape != (total_dofs,):
+        raise AssemblyError(f"Displacement vector shape {u.shape} does not match total DOFs {(total_dofs,)}.")
+    if not np.all(np.isfinite(u)):
+        raise AssemblyError("Displacement vector contains non-finite values.")
+
+    rows: list[np.ndarray] = []
+    cols: list[np.ndarray] = []
+    data: list[np.ndarray] = []
+    element_ids: list[int] = []
+    if load_case is not None and bool(getattr(load_case, "follower_pressure", False)):
+        for raw_element_id, pressure in getattr(load_case, "pressure_loads", {}).items():
+            element_id = int(raw_element_id)
+            element = model.mesh.get_element(element_id)
+            if element is None:
+                continue
+            if not hasattr(element, "node_ids"):
+                raise AssemblyError(f"Follower pressure element {element_id} has no nodal interpolation.")
+            dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+            coords = load_case._current_element_coordinates(element, model.mesh, u)
+            try:
+                element_tangent = load_case._consistent_pressure_tangent(
+                    element,
+                    model.mesh,
+                    float(pressure),
+                    coords,
+                )
+            except ValueError as exc:
+                raise AssemblyError(str(exc)) from exc
+            element_tangent = _check_element_matrix_shape(
+                element_id,
+                "external_load_tangent",
+                element_tangent,
+                int(dof_mapping.size),
+            )
+            row_grid, col_grid = np.meshgrid(dof_mapping, dof_mapping, indexing="ij")
+            rows.append(row_grid.ravel())
+            cols.append(col_grid.ravel())
+            data.append(element_tangent.ravel())
+            element_ids.append(element_id)
+
+    if data:
+        tangent = sparse.coo_matrix(
+            (np.concatenate(data), (np.concatenate(rows), np.concatenate(cols))),
+            shape=(total_dofs, total_dofs),
+            dtype=float,
+        ).tocsr()
+        tangent.eliminate_zeros()
+    else:
+        tangent = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
+
+    return tangent, {
+        "matrix_type": "external_load_tangent",
+        "load_case": None if load_case is None else load_case.name,
+        "total_dofs": total_dofs,
+        "num_pressure_elements": len(element_ids),
+        "pressure_element_ids": element_ids,
+        "pressure_configuration": (
+            "current"
+            if load_case is not None and bool(getattr(load_case, "follower_pressure", False))
+            else "reference"
+        ),
+        "diagnostics": {"assembled_symmetry_error": _relative_symmetry_error(tangent)},
+        "assembly_time": time.time() - start_time,
+    }
+
+
+def assemble_external_load_system(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    displacements: Optional[np.ndarray] = None,
+    *,
+    tangent: bool = True,
+) -> Tuple[np.ndarray, Optional[sparse.csr_matrix], Dict[str, Any]]:
+    """Assemble external force and, optionally, its configuration tangent."""
+    vector, vector_info = assemble_load_vector(model, load_case, displacements)
+    if tangent:
+        load_tangent, tangent_info = assemble_external_load_tangent(model, load_case, displacements)
+    else:
+        load_tangent = None
+        tangent_info = None
+    return vector, load_tangent, {"load": vector_info, "external_load_tangent": tangent_info}
 
 
 def assemble_load_matrix(

@@ -103,6 +103,157 @@ def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
     assert report["release_gates"]["curved_thin_stiffened_shell"]["status"] == "passed"
 
 
+def test_external_deck_case_is_a_handoff_pass_without_numerical_claim(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    external_report_path = tmp_path / "verification" / "external_reference_report.json"
+
+    report = run_beam_shell_verification(
+        selected_ids=["EXT-001", "VVR-001"],
+        external_reference_report=external_report_path,
+    )
+    results = {item["case_id"]: item for item in report["results"]}
+    external = results["EXT-001"]
+    package = results["VVR-001"]
+
+    assert external["status"] == "PASS"
+    assert external["evidence_type"] == "handoff_artifact"
+    assert external["analysis_type"] == "external_solver_handoff_artifact"
+    assert external["reference"]["numerical_validation_claim"] is False
+    assert external["result"]["external_report_status"] == "not_executed"
+    assert external["checks"]["evidence"]["numerical_validation_performed"] is False
+
+    manifest = package["checks"]
+    assert package["status"] == "PASS"
+    assert manifest["external_evidence_kind"] == "handoff_artifact"
+    assert manifest["external_handoff_artifact_status"] == "passed"
+    assert manifest["external_numerical_validation_performed"] is False
+    assert manifest["external_numerical_validation_status"] == "not_performed"
+    assert manifest["external_reference_report_status"] == "not_executed"
+    assert external_report_path.exists()
+
+
+def test_vvr_preserves_an_executed_external_report(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    report_path = tmp_path / "preserved_evidence" / "external_reference_report.json"
+    markdown_path = report_path.with_suffix(".md")
+    report_path.parent.mkdir(parents=True)
+    executed_report = {
+        "schema_version": 2,
+        "status": "passed",
+        "execution_mode": "calculix",
+        "validation_performed": True,
+        "solver": {"name": "CalculiX CrunchiX", "version": "2.22"},
+        "cases": [
+            {
+                "name": "preserved_case",
+                "validation": {
+                    "status": "passed",
+                    "executed": True,
+                    "comparisons": [{"status": "passed"}],
+                },
+            }
+        ],
+    }
+    original_json = json.dumps(executed_report, indent=2) + "\n"
+    original_markdown = "# Preserved executed CalculiX report\n"
+    report_path.write_text(original_json, encoding="utf-8")
+    markdown_path.write_text(original_markdown, encoding="utf-8")
+
+    report = run_beam_shell_verification(
+        selected_ids=["VVR-001"],
+        external_reference_report=report_path,
+    )
+    package = report["results"][0]
+    manifest = package["checks"]
+
+    assert package["status"] == "PASS"
+    assert manifest["external_report_disposition"] == "preserved_existing"
+    assert manifest["external_evidence_kind"] == "executed_numerical_validation"
+    assert manifest["external_numerical_validation_performed"] is True
+    assert manifest["external_numerical_validation_status"] == "passed"
+    assert report_path.read_text(encoding="utf-8") == original_json
+    assert markdown_path.read_text(encoding="utf-8") == original_markdown
+
+
+def test_vvr_replaces_a_stale_nonexecuted_report(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    report_path = tmp_path / "legacy" / "external_reference_report.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text(
+        json.dumps({"schema_version": 1, "status": "passed", "cases": []})
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = run_beam_shell_verification(
+        selected_ids=["VVR-001"],
+        external_reference_report=report_path,
+    )
+    package = report["results"][0]
+    manifest = package["checks"]
+    replacement = json.loads(report_path.read_text(encoding="utf-8"))
+
+    assert package["status"] == "PASS"
+    assert manifest["external_report_disposition"] == "replaced_invalid_nonexecuted"
+    assert replacement["execution_mode"] == "deck_only"
+    assert replacement["validation_performed"] is False
+    assert replacement["status"] == "not_executed"
+
+
+def test_vvr_preserves_and_rejects_invalid_executed_evidence(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    report_path = tmp_path / "invalid" / "external_reference_report.json"
+    report_path.parent.mkdir(parents=True)
+    invalid_executed = {
+        "schema_version": 2,
+        "status": "failed",
+        "execution_mode": "calculix",
+        "validation_performed": True,
+        "cases": [
+            {
+                "name": "failed_case",
+                "validation": {
+                    "status": "failed",
+                    "executed": True,
+                    "comparisons": [{"status": "failed"}],
+                },
+            }
+        ],
+    }
+    original = json.dumps(invalid_executed, indent=2) + "\n"
+    report_path.write_text(original, encoding="utf-8")
+
+    report = run_beam_shell_verification(
+        selected_ids=["VVR-001"],
+        external_reference_report=report_path,
+    )
+    manifest = json.loads(
+        (
+            tmp_path
+            / "reports"
+            / "verification_package"
+            / "release_evidence_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert report["results"][0]["status"] == "FAIL"
+    assert manifest["status"] == "incomplete"
+    assert manifest["external_report_disposition"] == "preserved_invalid_executed"
+    assert report_path.read_text(encoding="utf-8") == original
+
+
 def test_beam_shell_verification_report_writer_and_cli() -> None:
     output_dir = Path(".pytest_tmp_beam_shell_verification")
     output_dir.mkdir(exist_ok=True)

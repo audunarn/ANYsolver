@@ -20,7 +20,10 @@ The implementation is intended to:
 
 It reuses the nonlinear shell/beam tangent and internal-force routines, layered
 shell plasticity, constraint transformation and committed/trial material-state
-handling from `nonlinear_static.py`.
+handling from `nonlinear_static.py`. Dead pressure remains the default.
+Setting `LoadCase.follower_pressure = True` evaluates shell pressure on the
+current midsurface and includes its exact external-load tangent in the
+continuation equations.
 
 ## Example
 
@@ -43,6 +46,7 @@ result = solve_static_arc_length(
     max_iterations=30,
     tolerance=1.0e-6,
     num_layers=7,
+    kinematics="von_karman",
 )
 
 capacity_factor = result.peak_load_factor
@@ -50,10 +54,18 @@ capacity_factor = result.peak_load_factor
 
 ## Numerical formulation
 
-The reduced equilibrium residual is
+The reduced equilibrium residual, including configuration-dependent loads, is
 
 ```text
-R(q, lambda) = F_constant + lambda F_reference - F_internal(q)
+R(q, lambda) =
+    F_constant(q) + lambda F_reference(q) - F_internal(q)
+```
+
+and its effective tangent is
+
+```text
+K_effective =
+    K_internal - K_external,constant - lambda K_external,reference
 ```
 
 and the spherical constraint is
@@ -62,11 +74,12 @@ and the spherical constraint is
 dq.T W dq + alpha^2 dlambda^2 = ds^2
 ```
 
-The correction uses block elimination:
+The correction uses block elimination (all quantities are evaluated at the
+current trial state):
 
 ```text
-K_T a = R
-K_T b = F_reference
+K_effective a = R
+K_effective b = F_reference(q)
 
 dlambda = (-g - 2 dq.T W a) /
           (2 dq.T W b + 2 alpha^2 Delta_lambda)
@@ -74,20 +87,46 @@ dlambda = (-g - 2 dq.T W a) /
 dq_correction = a + b dlambda
 ```
 
-This keeps the production tangent solve symmetric-indefinite and avoids a
-nonsymmetric bordered matrix. Rotational DOFs are converted to equivalent
+This avoids assembling a bordered matrix. The ordinary dead-load path uses the
+symmetric-indefinite matrix class. Current-area follower pressure and the
+consistent corotational tangent are generally nonsymmetric and therefore use
+the general matrix class. Rotational DOFs are converted to equivalent
 translation through a characteristic-length metric before calculating the arc
 norm.
+
+Follower pressure uses
+
+```text
+f_i(q) = p integral N_i (a_xi x a_eta) dxi deta
+```
+
+on each supported shell, with the exact derivative of the current area vector.
+There are no independent pressure moments because pressure virtual work is
+conjugate to midsurface translations.
+
+For `kinematics="corotational"`,
+`corotational_tangent="auto"` keeps the inexpensive rotated tangent for
+ordinary loads and selects `consistent` when follower pressure is active. The
+consistent mode applies the full pull-back/frame/rotate-forward chain rule,
+uses centered differences only for rigid-frame sensitivity, and is generally
+nonsymmetric. Explicitly requesting `rotated` with follower pressure fails
+closed.
 
 ## Current limits
 
 The first production version intentionally does not provide:
 
-- follower-pressure load directions or an external-load tangent;
 - nonlinear free-free/nullspace continuation;
 - automatic branch switching at a perfect bifurcation;
 - contact or general-purpose path following;
 - unrestricted deep post-buckling analysis.
+
+Follower semantics apply to shell pressure loads only; nodal, user-provided
+element, gravity, and acceleration loads retain their prescribed directions.
+Linear buckling rejects an open nonsymmetric follower-pressure eigenpencil
+rather than silently symmetrizing it. The corotational consistent tangent is
+more expensive than the rotated approximation because its frame sensitivity
+is evaluated numerically.
 
 Use a nonzero eigenmode or standard fabrication imperfection for shell-buckling
 capacity work. The principal acceptance result is a confirmed peak followed by
@@ -122,6 +161,11 @@ limit load
 ```text
 lambda_max = 2 / (3 sqrt(3))
 ```
+
+`NLG-008` additionally checks the follower-pressure force/tangent contract and
+a thin-ring pressure-buckling case. These are implementation and analytical
+qualification gates, not a substitute for project-specific nonlinear
+validation.
 
 Before treating shell results as design values, also compare representative
 imperfect plate, stiffened-panel and cylindrical-shell cases against a trusted

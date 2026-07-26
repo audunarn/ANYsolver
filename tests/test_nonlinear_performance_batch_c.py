@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import sys
+from types import ModuleType
+
 import numpy as np
 import pytest
 from scipy import sparse
 
+from anysolver import arc_length, nonlinear_static
 from anysolver.boundary import BoundaryCondition, LoadCase
 from anysolver.elements import Element
 from anysolver.fe_core import FEModel
@@ -15,7 +19,11 @@ from anysolver.nonlinear_performance_batch_c import (
     build_reduced_assembly_plan,
     reset_batch_c_counters,
 )
-from anysolver.nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
+from anysolver.nonlinear_performance_bootstrap import (
+    get_nonlinear_assembly_plan,
+    install_nonlinear_performance_optimizations,
+    uninstall_nonlinear_performance_optimizations,
+)
 from anysolver.nonlinear_static import solve_static_nonlinear
 from anysolver.nonlinear_static import _ensure_nonlinear_acceleration
 
@@ -284,3 +292,58 @@ def test_nonlinear_solver_uses_direct_reduced_assembly() -> None:
     assert status["reduced_assemblies"] > 0
     assert status["full_coordinate_fallbacks"] == 0
     assert status["last_plan"]["mapping_kind"] == "selector"
+    assert status["active_context_depth"] == 0
+
+
+@pytest.mark.skipif(
+    not JIT_ENABLED,
+    reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
+)
+def test_lazy_install_updates_and_restores_prebound_consumer_aliases() -> None:
+    """A caller may import either solver before the lazy installer runs."""
+
+    consumer_name = "_anysolver_batch_c_prebound_consumer"
+    consumer = ModuleType(consumer_name)
+    uninstall_nonlinear_performance_optimizations()
+    original_static = nonlinear_static.solve_static_nonlinear
+    original_arc = arc_length.solve_static_arc_length
+    consumer.static_solver = original_static
+    consumer.arc_solver = original_arc
+    sys.modules[consumer_name] = consumer
+
+    try:
+        assert install_nonlinear_performance_optimizations() is True
+        assert consumer.static_solver is nonlinear_static.solve_static_nonlinear
+        assert consumer.arc_solver is arc_length.solve_static_arc_length
+        assert consumer.static_solver is not original_static
+        assert consumer.arc_solver is not original_arc
+        assert consumer.static_solver._batch_c_original is original_static
+        assert consumer.arc_solver._batch_c_original is original_arc
+
+        reset_batch_c_counters()
+        model, load = _spring_model()
+        static_result = consumer.static_solver(
+            model,
+            load_case=load,
+            max_load_factor=0.25,
+            num_steps=2,
+            max_iterations=8,
+            tolerance=1.0e-10,
+        )
+        zero_model, _ = _spring_model()
+        arc_result = consumer.arc_solver(zero_model, LoadCase("zero"))
+        status = batch_c_status()
+        assert static_result.status == "completed"
+        assert arc_result.status == "zero_reference_load"
+        assert status["contexts_entered"] >= 2
+        assert status["active_context_depth"] == 0
+
+        uninstall_nonlinear_performance_optimizations()
+        assert consumer.static_solver is original_static
+        assert consumer.arc_solver is original_arc
+        assert batch_c_status()["installed"] is False
+        assert batch_c_status()["active_context_depth"] == 0
+    finally:
+        uninstall_nonlinear_performance_optimizations()
+        sys.modules.pop(consumer_name, None)
+        install_nonlinear_performance_optimizations()

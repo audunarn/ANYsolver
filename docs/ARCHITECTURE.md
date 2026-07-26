@@ -19,8 +19,8 @@ contact/fracture coverage.
 
 1. Every node has six DOFs ordered `ux, uy, uz, rx, ry, rz`.
 2. Internal units are SI: metres, Newtons, Pascals, kilograms, and seconds.
-3. Stiffness, mass, damping, geometric stiffness, and load assembly remain
-   separate public operations.
+3. Stiffness, mass, damping, geometric stiffness, internal force, external
+   force, and external-load tangent assembly remain separate operations.
 4. Supports and MPC relations use one affine transformation:
 
    ```text
@@ -34,14 +34,18 @@ contact/fracture coverage.
 6. Free-free linear models use explicit rigid-body/nullspace treatment rather
    than artificial support stiffness.
 7. Linear buckling uses `K phi = lambda KG phi`, with positive `KG` denoting
-   destabilizing reference compression.
-8. Nonlinear trial material state is committed only after increment/substep
+   destabilizing reference compression. A follower-load contribution is
+   admitted only when the constrained eigenpencil remains symmetric.
+8. Nonlinear equilibrium uses the effective Jacobian
+   `K_effective = K_internal - K_external`; current-area pressure makes this
+   Jacobian generally nonsymmetric.
+9. Nonlinear trial material state is committed only after increment/substep
    convergence.
-9. Imperfections alter the stress-free reference geometry; they are not initial
+10. Imperfections alter the stress-free reference geometry; they are not initial
    displacements or implicit residual stress.
-10. Analysis results carry case, matrix, load, backend, recovery, and resource
+11. Analysis results carry case, matrix, load, backend, recovery, and resource
     provenance where the corresponding path supports it.
-11. Generated reports are evidence artifacts, not source-of-truth capability
+12. Generated reports are evidence artifacts, not source-of-truth capability
     declarations.
 
 ## Package layers
@@ -51,8 +55,8 @@ contact/fracture coverage.
 | Module | Responsibility |
 | --- | --- |
 | `fe_core.py` | `FEModel`, mesh, nodes, materials, point masses, revisions, and DOF numbering. |
-| `elements.py` | Triangle/quad shells, linear/quadratic Timoshenko beams, coupling elements, element matrices, nonlinear response, and stress recovery. |
-| `boundary.py` | Supports, prescribed DOFs, load cases, combinations, nodal/pressure/acceleration loads, and in-plane edge loads. |
+| `elements.py` | Triangle/quad shells, linear/quadratic Timoshenko beams, coupling elements, element matrices, nonlinear response, Mindlin initial-stress operators, and stress recovery. |
+| `boundary.py` | Supports, prescribed DOFs, load cases, combinations, dead/current-area follower pressure, acceleration loads, in-plane edge loads, and the exact follower-pressure load tangent. |
 | `mesh_gen.py` | Rectangular panel, stiffened-panel, and beam mesh generation with interpolated eccentric coupling and mesh-quality checks. |
 
 `ShellElement` accepts 3-, 4-, 6-, or 8-node connectivity. Production mesh
@@ -70,11 +74,20 @@ a profile-aware fiber layout that is recentered/rescaled to preserve `A`,
 middle node lies at the chord midpoint. Curved members are currently segmented
 with 2-node beams.
 
+The shell initial-stress operator is derived from the Mindlin director field
+`[u + z*ry, v - z*rx, w]`. It accepts uniform or Gauss-point-varying membrane
+resultants `N`, bending resultants `M`, and second stress moments `H`; when `H`
+is not supplied for a uniform through-thickness membrane stress it uses
+`N*h**2/12`. `N` acts on all translation gradients, `M` supplies the signed
+translation/director coupling, and `H` acts on `rx`/`ry` gradients. There is no
+`rz`, transverse-normal-stress, or geometrically exact finite-rotation
+director contribution.
+
 ### Assembly, constraints, and sparse algebra
 
 | Module | Responsibility |
 | --- | --- |
-| `matrix_assembly.py` | Canonical K/M/C/KG/F assembly, matrix checks, vectorized shell batches, and sparsity caching. |
+| `matrix_assembly.py` | Canonical K/M/C/KG/F assembly, current-configuration external force/tangent assembly, matrix checks, vectorized shell batches, and sparsity caching. |
 | `assembly.py` | Constraint transformation, free-free nullspace solve, static single/multiple RHS, reactions, and compatibility wrappers. |
 | `linalg.py` | Matrix classes, SuperLU/PyPardiso selection, factorization handles, content-signature caches, multi-RHS solves, and inverse operators. |
 | `cases.py` | Analysis/load/prestress/result provenance objects and signatures. |
@@ -94,11 +107,11 @@ against another mesh cannot leak into the model.
 | Module | Responsibility |
 | --- | --- |
 | `modal.py` | Constrained/free-free vibration modes using dense or sparse eigensolvers. |
-| `buckling.py` | Linear eigenvalue buckling, root filtering, residuals, range targeting, and repeated-mode grouping. |
+| `buckling.py` | Linear eigenvalue buckling, initial-stress and admissible follower-load tangents, root filtering, residuals, range targeting, and repeated-mode grouping. |
 | `nonlinear.py` | Lightweight proportional tangent-stability/limit-point monitor. |
-| `nonlinear_static.py` | Incremental geometric/material nonlinear statics, staged loading, force/displacement control, convergence profiles, and erosion integration. |
-| `corotational.py` | Element-independent large-rigid-rotation pull-back/rotate-forward response for supported shells and beams. |
-| `arc_length.py` | Bounded spherical arc-length continuation through a first limit point and guarded descending branch. |
+| `nonlinear_static.py` | Incremental geometric/material nonlinear statics, dead/follower external-load tangents, staged loading, force/displacement control, convergence profiles, and erosion integration. |
+| `corotational.py` | Element-independent large-rigid-rotation pull-back/rotate-forward response with rotated and consistent tangent modes for supported shells and beams. |
+| `arc_length.py` | Bounded spherical arc-length continuation, including current-area follower pressure, through a first limit point and guarded descending branch. |
 | `dynamics.py` | Linear implicit Newmark/HHT-alpha transient response and prescribed pressure patches. |
 | `contact.py` | Rigid-sphere impact, shell and opt-in beam contact, linear/nonlinear structural response, event subdivision, and impact damage orchestration. |
 
@@ -107,9 +120,12 @@ The nonlinear paths are intentionally distinct:
 - `solve_nonlinear_load_stepping()` monitors the linearized tangent and stops
   near instability.
 - `solve_static_nonlinear()` performs the production incremental nonlinear
-  equilibrium solve with force or displacement control.
+  equilibrium solve with force or displacement control. Current-area follower
+  pressure contributes both external force and its generally nonsymmetric
+  tangent.
 - `solve_static_arc_length()` follows a bounded equilibrium path and is called
-  from `anysolver.arc_length`.
+  from `anysolver.arc_length`; the same follower-pressure residual/tangent is
+  available in continuation.
 - `solve_transient_sphere_impact()` chooses the linear structural path unless
   `NonlinearTransientConfig(enabled=True)` is supplied.
 
@@ -125,13 +141,35 @@ supported execution path and is rejected rather than approximated.
 | `plasticity.py` | Layered plane-stress J2 return mapping and algorithmic tangent. |
 | `imperfections.py` | Explicit, eigenmode, standard, calibrated, and composite stress-free geometry offsets. |
 | `fracture.py` | Scalar damage measures, mesh-scaled/RTCL helpers, simplified erosion records, and load filtering. |
-| `recovery.py` | Selected node/element/component recovery, deterministic threading, history modes, memory estimates, and policy enforcement. |
-| `results.py` | Result containers, element/nodal stress recovery, reactions, and post-processing summaries. |
+| `recovery.py` | Unified elastic/material-history recovery, guarded shell patch recovery, selected node/element/component recovery, deterministic provenance/threading, memory estimates, and policy enforcement. |
+| `results.py` | Result containers, unified element/nodal stress recovery, reactions, and post-processing summaries. |
 | `mass_properties.py` | Integrated mass, center of mass, and inertia diagnostics. |
 
 Corotational kinematics supports the existing layered shell and fiber-beam
-plastic response, but not fracture/erosion. Fixed-direction eccentric MPC
-offsets are also unsuitable for regions undergoing large rigid rotation.
+plastic response. The inexpensive `rotated` tangent is the default for an
+ordinary corotational solve. `corotational_tangent="consistent"` applies the
+full chain rule through the deformational pull-back, additive nodal rotation
+coordinates, extracted rigid frame, and rotate-forward force map. `auto`
+selects that generally nonsymmetric consistent tangent when follower pressure
+is present and otherwise selects `rotated`. The consistent mode evaluates
+frame sensitivity by centered differences and is consequently more expensive.
+Fracture/erosion remains unsupported in corotational mode. Fixed-direction
+eccentric MPC offsets are also unsuitable for regions undergoing large rigid
+rotation.
+
+Committed layered-shell and beam-fiber states are the preferred recovery
+source for nonlinear results. The unified recovery API ties those states to
+the matching displacement vector, records a component-level source and
+explicitly labels any elastic displacement-reconstruction fallback. In
+corotational analyses it uses the same objective pull-back and current element
+frame as force assembly.
+
+The optional Zienkiewicz--Zhu-style shell patch fit is deliberately narrow. It
+is qualified only for locally planar, consistently oriented, materially and
+geometrically homogeneous, full-integration Q4/Q8 neighborhoods with adequate
+rank and conditioning. Discontinuities are returned as separate nodal regions
+and are never cross-averaged. The optional indicator is a normalized
+top/bottom surface-stress L2 discrepancy, not an energy-norm error estimate.
 
 Damage/erosion always means residual scaling after a converged increment or
 substep. It does not remove nodes, DOFs, or MPCs and is not crack mechanics.
@@ -179,7 +217,8 @@ thickness rules from diverging between integration paths.
 | `quality_control.py`, `test_cases.py` | Analytical, patch, convergence, support, and performance QC cases. |
 | `*_validity.py`, `*_qualification.py` | Focused generated evidence for beams, shells, buckling, modal/mass, plasticity, recovery, mesh/load/BC, and elements. |
 | `beam_shell_verification.py` | Stable case-ID ledger, release gates, PASS/XFAIL separation, and release-package manifest. |
-| `benchmarks.py`, `shell_benchmarks.py`, `cylinder_benchmarks.py`, `external_references.py` | Local performance/physics benchmarks and reproducible external-solver handoff decks. |
+| `benchmarks.py`, `shell_benchmarks.py`, `cylinder_benchmarks.py` | Local performance/physics benchmarks and comparison utilities. |
+| `external_references.py` | Reproducible CalculiX decks plus optional isolated execution, executable/version/hash provenance, ASCII FRD/DAT parsing, tolerance-controlled comparisons, and JSON/Markdown evidence. |
 | `jit_compiler.py`, `vectorized_stiffness.py`, `vectorized_nonlinear.py`, `nonlinear_performance*.py` | Optional Numba kernels, persistent nonlinear plans, direct reduced assembly, and runtime activation/fallback. |
 
 Optional nonlinear acceleration is lazy. Importing `anysolver` does not install
@@ -191,8 +230,12 @@ policy actually selects it. Missing or failed optional accelerators fall back to
 the NumPy/SciPy paths without changing the public solver call.
 
 Unsupported verification cases remain explicit XFAILs with reasons. A report
-passes when required cases pass; an XFAIL is not evidence that the missing
-external comparison or unsupported feature is validated.
+passes when required cases pass; an XFAIL is not evidence that the unsupported
+feature is validated. External deck generation has status `not_executed` and
+makes no numerical-agreement claim. Only a completed run whose parsed
+comparisons all meet their declared tolerances has status `passed`. The
+manifest consumes or preserves that executed evidence instead of replacing it
+with a later deck-only artifact.
 
 ## Analysis data flow
 
@@ -218,6 +261,8 @@ reference or imperfect model
   -> constant + proportional/staged load definition
   -> persistent nonlinear assembly plan
   -> trial internal force/tangent/material state
+  -> current external force and follower-load tangent
+  -> effective Jacobian K_internal - K_external
   -> transformed Newton correction
   -> convergence / cutback / growth
   -> commit state and optional erosion
@@ -226,6 +271,19 @@ reference or imperfect model
 
 Arc length reuses the same element state and constraint machinery but adds a
 spherical path constraint and bounded peak/descending-branch stop controls.
+For follower loads it updates both the constant and proportional pressure
+systems at every trial configuration.
+
+### Nonlinear stress recovery
+
+```text
+converged nonlinear result
+  -> verify matching displacement and committed-state snapshot
+  -> recover shell layers / beam fibers where history is available
+  -> explicitly labelled elastic reconstruction where it is not
+  -> optional guarded patch fit within each continuity region
+  -> stresses, resultants, nodal regions, indicator, and stable provenance
+```
 
 ### Transient and impact
 

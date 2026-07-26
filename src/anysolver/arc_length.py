@@ -44,8 +44,10 @@ from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from .nonlinear_static import (
     _assemble_nonlinear_system,
     _copy_initial_states,
+    _has_follower_pressure,
     _max_plastic_strain,
     _nonlinear_state_summary,
+    _weighted_external_load_system,
     solve_static_nonlinear,
 )
 
@@ -248,8 +250,14 @@ def _metric_norm(W: sparse.spmatrix, vector: np.ndarray) -> float:
     return float(np.sqrt(max(_metric_dot(W, vector, vector), 0.0)))
 
 
-def _factorized_solve(matrix: sparse.spmatrix, rhs: np.ndarray, signature: str) -> np.ndarray:
-    handle = factorize(matrix, MatrixClass.SYMMETRIC_INDEFINITE, signature=signature)
+def _factorized_solve(
+    matrix: sparse.spmatrix,
+    rhs: np.ndarray,
+    signature: str,
+    *,
+    matrix_class: MatrixClass = MatrixClass.SYMMETRIC_INDEFINITE,
+) -> np.ndarray:
+    handle = factorize(matrix, matrix_class, signature=signature)
     solution = np.asarray(handle.solve(np.asarray(rhs, dtype=float)), dtype=float).reshape(-1)
     if np.any(~np.isfinite(solution)):
         raise np.linalg.LinAlgError("non-finite tangent solution")
@@ -301,6 +309,8 @@ def solve_static_arc_length(
     num_layers: int = 5,
     imperfection: Optional[Any] = None,
     initial_element_states: Optional[Mapping[int, Any]] = None,
+    kinematics: str = "von_karman",
+    corotational_tangent: str = "auto",
     progress_callback: Optional[Any] = None,
 ) -> ArcLengthResult:
     """Trace the first nonlinear limit point with spherical arc-length control.
@@ -309,6 +319,12 @@ def solve_static_arc_length(
     the existing adaptive force-control solver.  Arc-length continuation then
     scales only ``load_case``.  Material states are committed only after a full
     equilibrium-plus-constraint convergence.
+
+    Current-area follower pressure contributes both its displacement-dependent
+    force and exact load tangent.  Corotational ``"auto"`` tangent selection
+    follows :func:`anysolver.solve_static_nonlinear`: it selects the consistent
+    chain-rule tangent for follower pressure and the rotated approximation
+    otherwise.
     """
     if load_case is None:
         raise ValueError("load_case is required for arc-length continuation")
@@ -320,6 +336,34 @@ def solve_static_arc_length(
         raise ValueError("num_layers must be positive")
 
     settings = control or ArcLengthControl()
+    follower_active = _has_follower_pressure(load_case) or _has_follower_pressure(constant_load_case)
+    kinematics = str(kinematics).strip().lower()
+    if kinematics not in {"von_karman", "corotational"}:
+        raise ValueError("kinematics must be 'von_karman' or 'corotational'")
+    from .corotational import (
+        resolve_corotational_tangent_mode,
+        validate_corotational_scope,
+    )
+
+    resolved_corotational_tangent = resolve_corotational_tangent_mode(
+        kinematics,
+        corotational_tangent,
+        follower_pressure=follower_active,
+    )
+    if kinematics == "corotational":
+        validate_corotational_scope(model)
+        if (
+            follower_active
+            and resolved_corotational_tangent != "consistent"
+        ):
+            raise NotImplementedError(
+                "Follower pressure with corotational kinematics requires "
+                "corotational_tangent='consistent'."
+            )
+    general_tangent = follower_active or (
+        kinematics == "corotational"
+        and resolved_corotational_tangent == "consistent"
+    )
     start_time = time.time()
     working_model = _copy_model_with_imperfection(model, imperfection)
     working_model.apply_boundary_conditions()
@@ -348,6 +392,11 @@ def solve_static_arc_length(
         "control": settings.to_dict(),
         "num_layers": int(num_layers),
         "formulation": "crisfield_spherical_block_elimination",
+        "kinematics": kinematics,
+        "corotational_tangent_requested": str(corotational_tangent).lower(),
+        "corotational_tangent": resolved_corotational_tangent,
+        "follower_pressure": follower_active,
+        "equilibrium_tangent": "K_internal-K_external" if follower_active else "K_internal",
     }
     if imperfection is not None:
         info["imperfection"] = getattr(working_model, "imperfection_metadata", [])
@@ -377,6 +426,8 @@ def solve_static_arc_length(
             tolerance=tolerance,
             num_layers=num_layers,
             initial_element_states=committed_states,
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
         )
         preload_info = preload.to_dict()
         if preload.status != "completed":
@@ -397,23 +448,83 @@ def solve_static_arc_length(
 
     rotation_scale = settings.rotation_length_scale or _characteristic_length(working_model)
     W = _reduced_metric(working_model, T, rotation_scale)
+    zero_load_tangent = sparse.csr_matrix(K0.shape, dtype=float)
+
+    def external_system(
+        displacements: np.ndarray,
+        load_factor: float,
+        *,
+        tangent: bool,
+    ) -> Tuple[
+        np.ndarray,
+        Optional[sparse.csr_matrix],
+        np.ndarray,
+        Optional[sparse.csr_matrix],
+    ]:
+        if not follower_active:
+            return (
+                F_const,
+                zero_load_tangent if tangent else None,
+                F_prop,
+                zero_load_tangent if tangent else None,
+            )
+        constant_force, constant_tangent = _weighted_external_load_system(
+            working_model,
+            [(constant_load_case, 1.0)],
+            displacements,
+            tangent=tangent,
+        )
+        proportional_force, proportional_tangent = _weighted_external_load_system(
+            working_model,
+            [(load_case, 1.0)],
+            displacements,
+            tangent=tangent,
+        )
+        return constant_force, constant_tangent, proportional_force, proportional_tangent
 
     # Establish the first tangent direction and derive fixed path-space radius
     # limits from the user-facing load-increment settings.
     u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
     F_int, K_T, _trial_states = _assemble_nonlinear_system(
-        working_model, u, committed_states, num_layers, tangent=True
+        working_model,
+        u,
+        committed_states,
+        num_layers,
+        tangent=True,
+        kinematics=kinematics,
+        corotational_tangent=resolved_corotational_tangent,
     )
-    residual0 = F_const_red + lam * F_prop_red - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
-    reference0 = max(float(np.linalg.norm(F_const_red + F_prop_red)), 1.0)
+    F_const_current, K_const, F_prop_current, K_prop = external_system(u, lam, tangent=True)
+    F_prop_red = np.asarray(T.T @ F_prop_current, dtype=float).reshape(-1)
+    residual0 = (
+        np.asarray(T.T @ (F_const_current + lam * F_prop_current), dtype=float).reshape(-1)
+        - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
+    )
+    reference0 = max(
+        float(np.linalg.norm(np.asarray(T.T @ (F_const_current + F_prop_current), dtype=float))),
+        1.0,
+    )
     if float(np.linalg.norm(residual0)) > 10.0 * tolerance * reference0:
         info["failure_reason"] = "initial_state_not_in_equilibrium"
         info["initial_residual_norm"] = float(np.linalg.norm(residual0))
         return ArcLengthResult([], "initial_equilibrium_failed", u, lam, lam, None, committed_states, info)
 
-    K_red = (T.T @ K_T @ T).tocsr()
+    K_red = (
+        (T.T @ K_T @ T)
+        - (T.T @ K_const @ T)
+        - lam * (T.T @ K_prop @ T)
+    ).tocsr()
     try:
-        tangent_direction = _factorized_solve(K_red, F_prop_red, "arc_length.initial_tangent")
+        tangent_direction = _factorized_solve(
+            K_red,
+            F_prop_red,
+            "arc_length.initial_tangent",
+            matrix_class=(
+                MatrixClass.GENERAL
+                if general_tangent
+                else MatrixClass.SYMMETRIC_INDEFINITE
+            ),
+        )
     except Exception as exc:
         info["failure_reason"] = "initial_tangent_factorization_failed"
         info["factorization_error"] = str(exc)
@@ -450,14 +561,35 @@ def solve_static_arc_length(
             total_retries += int(retry > 0)
             u_base = np.asarray(T @ q_base + u0, dtype=float).reshape(-1)
             F_base, K_base, _ = _assemble_nonlinear_system(
-                working_model, u_base, states_base, num_layers, tangent=True
+                working_model,
+                u_base,
+                states_base,
+                num_layers,
+                tangent=True,
+                kinematics=kinematics,
+                corotational_tangent=resolved_corotational_tangent,
             )
-            K_base_red = (T.T @ K_base @ T).tocsr()
+            F_const_base, K_const_base, F_prop_base, K_prop_base = external_system(
+                u_base,
+                lambda_base,
+                tangent=True,
+            )
+            K_base_red = (
+                (T.T @ K_base @ T)
+                - (T.T @ K_const_base @ T)
+                - lambda_base * (T.T @ K_prop_base @ T)
+            ).tocsr()
+            F_prop_base_red = np.asarray(T.T @ F_prop_base, dtype=float).reshape(-1)
             try:
                 load_direction = _factorized_solve(
                     K_base_red,
-                    F_prop_red,
+                    F_prop_base_red,
                     f"arc_length.predictor:{step_index}:{retry}",
+                    matrix_class=(
+                        MatrixClass.GENERAL
+                        if general_tangent
+                        else MatrixClass.SYMMETRIC_INDEFINITE
+                    ),
                 )
             except Exception:
                 step_failure = "singular_predictor_tangent"
@@ -495,11 +627,25 @@ def solve_static_arc_length(
                 total_iterations += 1
                 u_trial = np.asarray(T @ q_trial + u0, dtype=float).reshape(-1)
                 F_internal, K_trial, states_candidate = _assemble_nonlinear_system(
-                    working_model, u_trial, states_base, num_layers, tangent=True
+                    working_model,
+                    u_trial,
+                    states_base,
+                    num_layers,
+                    tangent=True,
+                    kinematics=kinematics,
+                    corotational_tangent=resolved_corotational_tangent,
                 )
+                F_const_trial, K_const_trial, F_prop_trial, K_prop_trial = external_system(
+                    u_trial,
+                    lambda_trial,
+                    tangent=True,
+                )
+                F_prop_trial_red = np.asarray(T.T @ F_prop_trial, dtype=float).reshape(-1)
                 residual = (
-                    F_const_red
-                    + lambda_trial * F_prop_red
+                    np.asarray(
+                        T.T @ (F_const_trial + lambda_trial * F_prop_trial),
+                        dtype=float,
+                    ).reshape(-1)
                     - np.asarray(T.T @ F_internal, dtype=float).reshape(-1)
                 )
                 residual_norm = float(np.linalg.norm(residual))
@@ -509,8 +655,15 @@ def solve_static_arc_length(
                     - radius * radius
                 )
                 force_reference = max(
-                    float(np.linalg.norm(F_const_red + lambda_trial * F_prop_red)),
-                    float(np.linalg.norm(F_prop_red)),
+                    float(
+                        np.linalg.norm(
+                            np.asarray(
+                                T.T @ (F_const_trial + lambda_trial * F_prop_trial),
+                                dtype=float,
+                            )
+                        )
+                    ),
+                    float(np.linalg.norm(F_prop_trial_red)),
                     1.0,
                 )
                 arc_reference = max(radius * radius, 1.0e-24)
@@ -523,15 +676,23 @@ def solve_static_arc_length(
                     accepted = True
                     break
 
-                K_trial_red = (T.T @ K_trial @ T).tocsr()
+                K_trial_red = (
+                    (T.T @ K_trial @ T)
+                    - (T.T @ K_const_trial @ T)
+                    - lambda_trial * (T.T @ K_prop_trial @ T)
+                ).tocsr()
                 try:
                     handle = factorize(
                         K_trial_red,
-                        MatrixClass.SYMMETRIC_INDEFINITE,
+                        (
+                            MatrixClass.GENERAL
+                            if general_tangent
+                            else MatrixClass.SYMMETRIC_INDEFINITE
+                        ),
                         signature=f"arc_length.corrector:{step_index}:{retry}:{iteration}",
                     )
                     correction_at_fixed_load = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-                    correction_per_load = np.asarray(handle.solve(F_prop_red), dtype=float).reshape(-1)
+                    correction_per_load = np.asarray(handle.solve(F_prop_trial_red), dtype=float).reshape(-1)
                 except Exception:
                     step_failure = "singular_corrector_tangent"
                     break
@@ -743,6 +904,8 @@ def solve_static_arc_length(
             "tolerance": float(tolerance),
             "arc_tolerance": float(arc_tolerance),
             "num_layers": int(num_layers),
+            "kinematics": kinematics,
+            "corotational_tangent": resolved_corotational_tangent,
         },
     ).to_dict()
 

@@ -130,6 +130,9 @@ class LoadCase:
     Contains nodal loads, element loads, pressure loads and optional gravity.
     Pressure loads on shell elements are assembled as consistent nodal loads by
     Gauss integration over the element surface, instead of equal area shares.
+    Pressure is a reference-configuration dead load by default.
+    ``follower_pressure=True`` switches every pressure in the load case to the
+    current-area formulation used by nonlinear static and arc-length analysis.
     """
 
     name: str
@@ -138,6 +141,7 @@ class LoadCase:
     pressure_loads: Dict[int, float] = field(default_factory=dict)
     gravity: Optional[np.ndarray] = None
     added_node_masses: Dict[int, float] = field(default_factory=dict)
+    follower_pressure: bool = False
 
     def add_nodal_load(
         self,
@@ -183,6 +187,12 @@ class LoadCase:
 
         Positive pressure follows the element normal as defined by the element
         node ordering and natural-coordinate surface Jacobian.
+
+        Pressure is a dead load by default.  Set ``follower_pressure=True`` on
+        the load case to integrate it over the current midsurface during a
+        nonlinear solve.  The flag is load-case-wide so one proportional load
+        pattern cannot accidentally mix reference- and current-configuration
+        pressure semantics.
         """
         self.pressure_loads[element_id] = float(pressure)
 
@@ -242,14 +252,21 @@ class LoadCase:
         return det_j, normal_raw / det_j
 
     @staticmethod
-    def _fallback_lumped_pressure_load(element, mesh: "FEMesh", pressure: float) -> np.ndarray:
+    def _fallback_lumped_pressure_load(
+        element,
+        mesh: "FEMesh",
+        pressure: float,
+        coords: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """
         Fallback for unsupported element topologies.
 
         This keeps old behaviour available for non-shell or future custom elements,
         but all 4/8-node shell elements should use the consistent path.
         """
-        coords = element.get_node_coordinates(mesh)
+        if coords is None:
+            coords = element.get_node_coordinates(mesh)
+        coords = np.asarray(coords, dtype=float)
         num_nodes = len(element.node_ids)
         f_elem = np.zeros(num_nodes * 6)
         if num_nodes < 3:
@@ -270,7 +287,46 @@ class LoadCase:
             f_elem[i * 6:i * 6 + 3] += nodal_force
         return f_elem
 
-    def _consistent_pressure_load(self, element, mesh: "FEMesh", pressure: float) -> np.ndarray:
+    @staticmethod
+    def _skew(vector: np.ndarray) -> np.ndarray:
+        """Return ``[vector]_x`` such that ``[vector]_x @ x = vector x x``."""
+        x, y, z = np.asarray(vector, dtype=float).reshape(3)
+        return np.array(
+            [
+                [0.0, -z, y],
+                [z, 0.0, -x],
+                [-y, x, 0.0],
+            ],
+            dtype=float,
+        )
+
+    @staticmethod
+    def _current_element_coordinates(
+        element,
+        mesh: "FEMesh",
+        displacements: Optional[np.ndarray],
+    ) -> np.ndarray:
+        """Return midsurface coordinates after nodal translations."""
+        coords = np.asarray(element.get_node_coordinates(mesh), dtype=float).copy()
+        if displacements is None:
+            return coords
+        u = np.asarray(displacements, dtype=float).reshape(-1)
+        for local_index, node_id in enumerate(element.node_ids):
+            node = mesh.get_node(int(node_id))
+            if node is None:
+                continue
+            translational_dofs = np.asarray(node.dofs[:3], dtype=np.intp)
+            if translational_dofs.size == 3 and int(np.max(translational_dofs)) < u.size:
+                coords[local_index] += u[translational_dofs]
+        return coords
+
+    def _consistent_pressure_load(
+        self,
+        element,
+        mesh: "FEMesh",
+        pressure: float,
+        coords: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """
         Assemble a consistent element pressure vector.
 
@@ -279,13 +335,16 @@ class LoadCase:
 
             f_i = integral_A N_i * p * n dA
 
-        Rotational pressure follower effects are deliberately not included here;
-        this is a linear static/eigen-prep load vector.
+        When ``coords`` are current midsurface coordinates this is a follower
+        load.  No independent rotational pressure moments are introduced:
+        pressure virtual work is conjugate to midsurface translations.
         """
         if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
-            return self._fallback_lumped_pressure_load(element, mesh, pressure)
+            return self._fallback_lumped_pressure_load(element, mesh, pressure, coords)
 
-        coords = element.get_node_coordinates(mesh)
+        if coords is None:
+            coords = element.get_node_coordinates(mesh)
+        coords = np.asarray(coords, dtype=float)
         num_nodes = len(element.node_ids)
         f_elem = np.zeros(num_nodes * 6)
         gauss_points = getattr(element, "gauss_points")
@@ -293,12 +352,66 @@ class LoadCase:
 
         for (xi, eta), weight in zip(gauss_points, gauss_weights):
             N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
-            det_j, normal = self._surface_jacobian_and_normal(coords, dN_dxi, dN_deta)
-            if det_j < _SMALL:
+            tangent_xi = coords.T @ dN_dxi
+            tangent_eta = coords.T @ dN_deta
+            area_vector = np.cross(tangent_xi, tangent_eta)
+            if float(np.linalg.norm(area_vector)) < _SMALL:
                 continue
             for i in range(num_nodes):
-                f_elem[i * 6:i * 6 + 3] += N[i] * pressure * normal * det_j * float(weight)
+                f_elem[i * 6:i * 6 + 3] += N[i] * pressure * area_vector * float(weight)
         return f_elem
+
+    def _consistent_pressure_tangent(
+        self,
+        element,
+        mesh: "FEMesh",
+        pressure: float,
+        coords: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """Return the exact current-area follower-pressure load tangent.
+
+        For ``f_i = integral N_i p (a_xi x a_eta) dxi deta``, the 3x3 block
+        derivative with respect to node ``j`` is
+
+        ``p N_i (-N_j,xi [a_eta]_x + N_j,eta [a_xi]_x)``.
+
+        The matrix is generally nonsymmetric for an open pressure patch.  It is
+        the derivative of the external force, so equilibrium Newton systems use
+        ``K_internal - K_external``.
+        """
+        if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
+            raise ValueError(
+                f"Follower pressure requires a shell interpolation with shape functions; "
+                f"element {getattr(element, 'element_id', '?')} is unsupported."
+            )
+
+        if coords is None:
+            coords = element.get_node_coordinates(mesh)
+        coords = np.asarray(coords, dtype=float)
+        num_nodes = len(element.node_ids)
+        tangent = np.zeros((num_nodes * 6, num_nodes * 6), dtype=float)
+        gauss_points = getattr(element, "gauss_points")
+        gauss_weights = getattr(element, "gauss_weights")
+
+        for (xi, eta), weight in zip(gauss_points, gauss_weights):
+            N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
+            tangent_xi = coords.T @ dN_dxi
+            tangent_eta = coords.T @ dN_deta
+            if float(np.linalg.norm(np.cross(tangent_xi, tangent_eta))) < _SMALL:
+                continue
+            skew_xi = self._skew(tangent_xi)
+            skew_eta = self._skew(tangent_eta)
+            scale = float(pressure) * float(weight)
+            for i in range(num_nodes):
+                row = slice(6 * i, 6 * i + 3)
+                for j in range(num_nodes):
+                    col = slice(6 * j, 6 * j + 3)
+                    tangent[row, col] += (
+                        scale
+                        * float(N[i])
+                        * (-float(dN_dxi[j]) * skew_eta + float(dN_deta[j]) * skew_xi)
+                    )
+        return tangent
 
     def _consistent_gravity_load(
         self,
@@ -327,8 +440,14 @@ class LoadCase:
         mesh: "FEMesh",
         dof_manager: "DOFManager",
         material_getter: Optional[Callable[[str], "Material"]] = None,
+        displacements: Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """Assemble the global load vector."""
+        """Assemble the global load vector.
+
+        ``displacements`` affects only pressure loads when
+        :attr:`follower_pressure` is true.  Dead pressure, nodal, element and
+        gravity loads retain their reference-configuration semantics.
+        """
         total_dofs = dof_manager.total_dofs
         F = np.zeros(total_dofs)
 
@@ -356,7 +475,10 @@ class LoadCase:
             element = mesh.get_element(element_id)
             if element is None or not hasattr(element, "node_ids"):
                 continue
-            f_elem = self._consistent_pressure_load(element, mesh, pressure)
+            coords = None
+            if self.follower_pressure:
+                coords = self._current_element_coordinates(element, mesh, displacements)
+            f_elem = self._consistent_pressure_load(element, mesh, pressure, coords)
             dof_mapping = element.get_dof_mapping(mesh)
             for i, dof in enumerate(dof_mapping):
                 if i < len(f_elem):

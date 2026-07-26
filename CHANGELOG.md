@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in executable CalculiX reference validation with isolated case runs,
+  stale-output protection, timeouts, solver version/hash provenance, ASCII
+  FRD/DAT parsing, tolerance-controlled comparisons, and preserved evidence
+  semantics. Deck-only generation remains explicitly `not_executed`; stale
+  non-executed legacy reports are regenerated deterministically, while invalid
+  executed evidence is preserved and rejected for diagnosis.
+- Add current-area follower pressure and its exact, generally nonsymmetric
+  external-load tangent to nonlinear static and arc-length solves. Extend
+  shell initial-stress stiffness to the Mindlin translation/director field
+  using membrane, bending, and second stress moments, and add the qualified
+  thin-ring pressure-buckling gate.
+- Add an opt-in consistent corotational tangent through the full
+  pull-back/frame/rotate-forward chain rule. `auto` retains the lower-cost
+  rotated tangent for ordinary loads and selects the consistent tangent for
+  follower pressure.
+- Unify nonlinear stress recovery around committed shell-layer and beam-fiber
+  histories, matching solution displacements, objective corotational frames,
+  component-level provenance, and explicit elastic fallbacks. Add guarded
+  full-integration Q4/Q8 patch recovery that separates discontinuities and
+  labels its optional surface-stress L2 indicator as non-energy-norm.
+
 ## 0.1.1 - 2026-07-25
 
 - Correct the layered-shell membrane/bending coupling tangent and keep the

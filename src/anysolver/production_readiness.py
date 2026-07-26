@@ -77,7 +77,8 @@ def build_capability_matrix(report: Optional[Mapping[str, Any]] = None) -> List[
             },
             limitations=[
                 "Q8R is experimental pending thickness-robust hourglass and inertia qualification.",
-                "Follower pressure, arbitrary contact and unverified material laws are unsupported.",
+                "Follower pressure is a nonlinear-static/arc-length capability and is outside this linear-analysis scope.",
+                "Arbitrary contact and unverified material laws are unsupported.",
             ],
             required_solver_configuration={"analysis": ["linear_static", "modal", "linear_buckling"]},
             gate_blockers=_gate_blockers(report, "flat_thin_shell"),
@@ -120,7 +121,8 @@ def build_capability_matrix(report: Optional[Mapping[str, Any]] = None) -> List[
             limits={"nonlinear_scope": "monotonic ultimate capacity with verified buckling-stop diagnostics"},
             limitations=[
                 "Unrestricted post-buckling continuation is not a production target.",
-                "Follower pressure is unsupported unless NLG-008 passes.",
+                "Follower-pressure support is limited to supported shell topologies and requires the NLG-008 load/tangent gate.",
+                "Nonsymmetric follower-load eigenvalue pencils remain outside the qualified buckling scope.",
             ],
             required_solver_configuration={"buckling_stop": "required", "post_buckling_target": False},
             gate_blockers=_gate_blockers(report, "nonlinear_capacity"),
@@ -218,7 +220,10 @@ def build_verification_scope_statement(report: Optional[Mapping[str, Any]] = Non
         "experimental": [],
         "unsupported": by_status.get("unsupported", []),
         "explicit_limitations": [
-            "Follower pressure unless implemented and verified.",
+            (
+                "Follower pressure is limited to nonlinear static and arc-length equilibrium on supported "
+                "shell elements; nonsymmetric follower-load eigenvalue pencils are unsupported."
+            ),
             "Arbitrary contact beyond limited rigid-sphere-to-shell contact.",
             "Fracture outside simplified nonlinear-static erosion and limited sphere-impact shell damage.",
             "Fluid-structure interaction.",

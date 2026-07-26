@@ -599,6 +599,9 @@ def _optimized_assemble_nonlinear_system(
     **extra,
 ):
     kinematics = str(extra.pop("kinematics", "von_karman"))
+    corotational_tangent = str(
+        extra.pop("corotational_tangent", "rotated")
+    )
     if extra or kinematics != "von_karman":
         # The assembly plan encodes the von Karman element response; other
         # kinematics or per-element scale options use the original assembler.
@@ -616,6 +619,7 @@ def _optimized_assemble_nonlinear_system(
             deleted_element_ids=tuple(deleted_element_ids or ()),
             residual_stiffness_fraction=float(residual_stiffness_fraction),
             kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
             **extra,
         )
     plan = get_nonlinear_assembly_plan(model, int(num_layers))
@@ -663,6 +667,8 @@ def _solve_static_displacement_control_block(
     F_const,
     F_prop,
     stage_vectors,
+    load_case,
+    constant_load_case,
     load_program,
     displacement_control,
     committed_states,
@@ -674,6 +680,7 @@ def _solve_static_displacement_control_block(
     start_time,
     resource_config=None,
     kinematics="von_karman",
+    corotational_tangent="not_applicable",
 ):
     """Displacement control using block elimination on the structural tangent."""
     from . import nonlinear_static as ns
@@ -681,7 +688,15 @@ def _solve_static_displacement_control_block(
     from .jit_compiler import numba_thread_scope
     from .linalg import MatrixClass, factorize
 
-    if str(kinematics) != "von_karman":
+    follower_active = ns._has_follower_pressure(
+        load_case
+    ) or ns._has_follower_pressure(constant_load_case)
+    if load_program is not None:
+        follower_active = follower_active or any(
+            ns._has_follower_pressure(stage.load_case)
+            for stage in load_program.stages
+        )
+    if str(kinematics) != "von_karman" or follower_active:
         # The block-elimination fast path encodes the von Karman assembly plan;
         # corotational displacement control uses the original solver.
         solver = _ORIGINAL_DISPLACEMENT_SOLVER
@@ -694,6 +709,8 @@ def _solve_static_displacement_control_block(
             F_const=F_const,
             F_prop=F_prop,
             stage_vectors=stage_vectors,
+            load_case=load_case,
+            constant_load_case=constant_load_case,
             load_program=load_program,
             displacement_control=displacement_control,
             committed_states=committed_states,
@@ -705,6 +722,7 @@ def _solve_static_displacement_control_block(
             start_time=start_time,
             resource_config=resource_config,
             kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
         )
 
     if load_program is not None:

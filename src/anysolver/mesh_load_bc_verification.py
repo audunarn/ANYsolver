@@ -544,7 +544,7 @@ def run_mesh_load_bc_verification(selected_ids: Optional[Iterable[str]] = None) 
         "results": [result.to_dict() for result in results],
         "known_limitations": [
             "This focused gate verifies supported ANYsolver mesh/load/boundary behavior only.",
-            "Follower pressure, contact and arbitrary CAD topology remain outside this gate.",
+            "Follower-pressure tangents, contact and arbitrary CAD topology are outside this focused gate.",
             "External pressure is negative element-normal direction; internal/outward pressure is positive normal.",
         ],
     }

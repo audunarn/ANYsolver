@@ -451,7 +451,12 @@ def detect_new_deletions(
     return tuple(records), max_utilization
 
 
-def deleted_pressure_load_resultant(model: Any, load_case: Optional[Any], deleted_element_ids: Iterable[int]) -> np.ndarray:
+def deleted_pressure_load_resultant(
+    model: Any,
+    load_case: Optional[Any],
+    deleted_element_ids: Iterable[int],
+    displacements: Optional[np.ndarray] = None,
+) -> np.ndarray:
     """Assemble the resultant force removed from deleted pressure elements."""
     deleted = {int(element_id) for element_id in deleted_element_ids}
     result = np.zeros(3, dtype=float)
@@ -463,7 +468,19 @@ def deleted_pressure_load_resultant(model: Any, load_case: Optional[Any], delete
         element = model.mesh.get_element(int(element_id))
         if element is None:
             continue
-        f_elem = load_case._consistent_pressure_load(element, model.mesh, float(pressure))
+        coords = None
+        if bool(getattr(load_case, "follower_pressure", False)):
+            coords = load_case._current_element_coordinates(
+                element,
+                model.mesh,
+                displacements,
+            )
+        f_elem = load_case._consistent_pressure_load(
+            element,
+            model.mesh,
+            float(pressure),
+            coords,
+        )
         for idx in range(0, len(f_elem), 6):
             result += f_elem[idx:idx + 3]
     return result

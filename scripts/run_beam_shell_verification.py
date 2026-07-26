@@ -19,9 +19,20 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_BEAM_SHELL_VERIFICATION_PATH)
     parser.add_argument("--markdown", type=Path, default=None)
     parser.add_argument("--case-id", action="append", default=None, help="Run only selected case id; may be repeated.")
+    parser.add_argument(
+        "--external-reference-report",
+        type=Path,
+        default=None,
+        help="Existing executed report to preserve/consume, or destination for a deck-only handoff report.",
+    )
     args = parser.parse_args()
 
-    report = write_beam_shell_verification_report(args.output, markdown=args.markdown, selected_ids=args.case_id)
+    report = write_beam_shell_verification_report(
+        args.output,
+        markdown=args.markdown,
+        selected_ids=args.case_id,
+        external_reference_report=args.external_reference_report,
+    )
     print(f"Wrote {args.output}")
     if args.markdown is not None:
         print(f"Wrote {args.markdown}")

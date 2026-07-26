@@ -3,9 +3,10 @@
 The package provides native model/element/load objects, separate matrix
 assembly, constrained and free-free linear solves, mass/modal and eigenvalue
 buckling analysis, incremental geometric/material nonlinear statics,
-corotational large-rotation response, implicit transient dynamics, limited
-rigid-sphere contact and engineering erosion, generated-geometry/capacity
-workflows, result recovery, and SESAM formatted FEM interchange.
+corotational large-rotation response, current-area follower pressure, implicit
+transient dynamics, limited rigid-sphere contact and engineering erosion,
+generated-geometry/capacity workflows, material-history-aware result recovery,
+and SESAM formatted FEM interchange.
 
 All nodes use ``ux, uy, uz, rx, ry, rz`` in SI units. Supports and beam-shell
 MPCs share the affine ``u = T q + u0`` reduction, and K/M/C/KG/F assembly stays
@@ -141,10 +142,20 @@ from .element_qualification import (
     write_element_qualification_report,
 )
 from .external_references import (
+    CALCULIX_EXECUTABLE_ENV,
+    DEFAULT_CALCULIX_RUN_PATH,
     DEFAULT_EXTERNAL_REFERENCE_PATH,
+    CalculixParsedResults,
     ExternalReferenceCase,
+    calculix_solver_provenance,
+    evaluate_calculix_comparisons,
     generate_external_reference_cases,
     generate_external_reference_report,
+    merge_calculix_results,
+    parse_calculix_dat,
+    parse_calculix_frd,
+    resolve_calculix_executable,
+    run_calculix_reference_case,
     write_calculix_input_deck,
     write_external_reference_report,
 )
@@ -160,16 +171,21 @@ from .plasticity_qualification import (
 )
 from .recovery import (
     MemoryEstimate,
+    PatchRecoveryConfig,
     RecoveryExecutionReport,
     RecoveryConfig,
     ResourcePolicyError,
     ResourceConfig,
+    StressRecoveryProvenance,
+    StressRecoveryResult,
     default_recovery_config,
     enforce_memory_limit,
     estimate_model_memory,
     filter_reactions,
     recover_element_stresses,
     recover_element_stresses_with_report,
+    recover_shell_patch_stresses,
+    recover_stress_result,
     recovery_metadata,
     select_node_displacements,
 )
@@ -223,6 +239,8 @@ from .anystructure_fem_mode import (
 from .matrix_assembly import (
     AssemblyError,
     assemble_damping_matrix,
+    assemble_external_load_system,
+    assemble_external_load_tangent,
     assemble_geometric_stiffness_matrix,
     assemble_load_matrix,
     assemble_load_vector,
@@ -456,10 +474,20 @@ __all__ = [
     "q8r_patch_metric",
     "reference_q8_geometries",
     "write_element_qualification_report",
+    "CALCULIX_EXECUTABLE_ENV",
+    "DEFAULT_CALCULIX_RUN_PATH",
     "DEFAULT_EXTERNAL_REFERENCE_PATH",
+    "CalculixParsedResults",
     "ExternalReferenceCase",
+    "calculix_solver_provenance",
+    "evaluate_calculix_comparisons",
     "generate_external_reference_cases",
     "generate_external_reference_report",
+    "merge_calculix_results",
+    "parse_calculix_dat",
+    "parse_calculix_frd",
+    "resolve_calculix_executable",
+    "run_calculix_reference_case",
     "write_calculix_input_deck",
     "write_external_reference_report",
     "DEFAULT_PLASTICITY_QUALIFICATION_PATH",
@@ -471,16 +499,21 @@ __all__ = [
     "write_plasticity_qualification_report",
     "yield_function_residual",
     "MemoryEstimate",
+    "PatchRecoveryConfig",
     "RecoveryExecutionReport",
     "RecoveryConfig",
     "ResourcePolicyError",
     "ResourceConfig",
+    "StressRecoveryProvenance",
+    "StressRecoveryResult",
     "default_recovery_config",
     "enforce_memory_limit",
     "estimate_model_memory",
     "filter_reactions",
     "recover_element_stresses",
     "recover_element_stresses_with_report",
+    "recover_shell_patch_stresses",
+    "recover_stress_result",
     "recovery_metadata",
     "select_node_displacements",
     "DEFAULT_RECOVERY_POLICY_PATH",
@@ -528,6 +561,8 @@ __all__ = [
     # Assembly and solving
     "AssemblyError",
     "assemble_damping_matrix",
+    "assemble_external_load_system",
+    "assemble_external_load_tangent",
     "assemble_geometric_stiffness_matrix",
     "assemble_load_matrix",
     "assemble_load_vector",
