@@ -291,6 +291,9 @@ def validate_production_model(
     model: "FEModel",
     load_cases: Optional[Sequence["LoadCase"]] = None,
     *,
+    analysis_type: Optional[str] = None,
+    kinematics: str = "von_karman",
+    corotational_tangent: str = "auto",
     allow_free_mechanisms: bool = False,
     aspect_ratio_limit: float = 8.0,
     warp_limit: float = 0.08,
@@ -388,13 +391,84 @@ def validate_production_model(
             )
         )
 
+    analysis_name = None if analysis_type is None else str(analysis_type).strip().lower()
+    kinematics_name = str(kinematics).strip().lower()
+    from .corotational import resolve_corotational_tangent_mode
+
+    try:
+        resolved_corotational_tangent = resolve_corotational_tangent_mode(
+            kinematics_name,
+            corotational_tangent,
+            follower_pressure=any(
+                bool(getattr(case, "follower_pressure", False))
+                for case in (load_cases or ())
+            ),
+        )
+    except ValueError as exc:
+        resolved_corotational_tangent = "invalid"
+        issues.append(
+            _issue(
+                "ANALYSIS001",
+                "error",
+                "model",
+                None,
+                str(exc),
+                suggestion=(
+                    "Use corotational_tangent='auto', 'rotated', or "
+                    "'consistent' with compatible kinematics."
+                ),
+            )
+        )
     for load_case in load_cases or ():
-        if bool(getattr(load_case, "follower_pressure", False)):
-            issues.append(_issue("LOAD001", "error", "load_case", None, f"Load case {load_case.name!r} requests follower pressure, which is outside the current verified production scope.", suggestion="Use prescribed fixed-direction pressure or explicitly implement/verify follower pressure first."))
+        follower_pressure = bool(getattr(load_case, "follower_pressure", False))
+        if follower_pressure and analysis_name not in {"nonlinear_static", "arc_length"}:
+            issues.append(
+                _issue(
+                    "LOAD001",
+                    "error",
+                    "load_case",
+                    None,
+                    f"Load case {load_case.name!r} requests follower pressure without an explicitly "
+                    f"supported analysis type (received {analysis_type!r}).",
+                    suggestion="Set analysis_type to nonlinear_static or arc_length, or use reference-configuration dead pressure.",
+                )
+            )
+        if (
+            follower_pressure
+            and kinematics_name == "corotational"
+            and resolved_corotational_tangent != "consistent"
+        ):
+            issues.append(
+                _issue(
+                    "LOAD001",
+                    "error",
+                    "load_case",
+                    None,
+                    f"Load case {load_case.name!r} combines follower pressure with "
+                    "a corotational solve that does not use the consistent "
+                    "frame-derivative tangent.",
+                    suggestion=(
+                        "Use corotational_tangent='consistent' (or 'auto') "
+                        "for follower-pressure equilibrium."
+                    ),
+                )
+            )
         for element_id in getattr(load_case, "pressure_loads", {}) or {}:
             element = model.mesh.get_element(int(element_id))
             if element is None:
                 issues.append(_issue("LOAD002", "error", "load_case", None, f"Load case {load_case.name!r} references missing pressure element {element_id}.", measured=float(element_id), suggestion="Remove stale pressure load entries or regenerate the load case."))
+            elif follower_pressure and not isinstance(element, ShellElement):
+                issues.append(
+                    _issue(
+                        "LOAD001",
+                        "error",
+                        "element",
+                        int(element_id),
+                        f"Follower pressure requires a 3/4/6/8-node shell interpolation; "
+                        f"element {element_id} is {type(element).__name__}.",
+                        suggestion="Apply follower pressure only to supported shell elements.",
+                    )
+                )
 
     if not allow_free_mechanisms and not any(issue.severity == "error" for issue in issues):
         try:

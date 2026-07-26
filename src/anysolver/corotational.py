@@ -11,8 +11,8 @@ rotated forward to the current configuration:
     u_d,i (translation) = R_rig^T (x_i - x_c) - (X_i - X_c)
     u_d,i (rotation)    = rotvec(R_rig^T exp(skew(theta_i)))
     f_global            = E f_local(u_d),  E = blockdiag(R_rig, R_rig, ...)
-    K_tangent           = E k_local E^T for shells (empirically stable), plus
-                          frame-sensitivity geometric terms for beams
+    K_tangent           = E k_local E^T                         (rotated mode)
+                        = d(E f_local(u_d)) / d u                (consistent mode)
 
 Scope and validity:
 
@@ -25,9 +25,12 @@ Scope and validity:
   plasticity and the local von Karman coupling are active in the corotated
   frame (plastic state is objective under rigid rotation); fracture/erosion
   remains unsupported in corotational mode;
-- the tangent omits the rotational geometric stiffness, so Newton convergence
-  is linear rather than quadratic near strongly rotating states — use more,
-  smaller increments;
+- ``tangent_mode="consistent"`` applies the full chain rule through the
+  deformational pull-back, nodal rotation coordinates, extracted element
+  frame, and rotate-forward force map.  The exact Jacobian is generally
+  nonsymmetric; frame sensitivity is evaluated by centered differences while
+  the remaining derivatives are analytical.  ``"rotated"`` retains the
+  inexpensive historical ``E k_local E.T`` approximation;
 - the pull-back subtracts order-one nodal coordinates, so the internal force
   carries an intrinsic roundoff floor of roughly ``eps * ||K_e|| * L`` per
   element (~1e-7 N for steel at metre scale).  Use residual tolerances of
@@ -47,6 +50,39 @@ if TYPE_CHECKING:
     from .fe_core import FEModel
 
 _SMALL = 1.0e-12
+
+
+def resolve_corotational_tangent_mode(
+    kinematics: str,
+    tangent_mode: str = "auto",
+    *,
+    follower_pressure: bool = False,
+) -> str:
+    """Validate and resolve the nonlinear solver's corotational tangent mode.
+
+    ``"auto"`` preserves the lower-cost rotated tangent for ordinary
+    corotational solves and selects the consistent tangent when follower
+    pressure makes the complete, generally nonsymmetric equilibrium Jacobian
+    mandatory.  Explicit ``"consistent"`` remains available for demanding
+    large-rotation Newton solves.
+    """
+
+    kinematics_name = str(kinematics).strip().lower()
+    requested = str(tangent_mode).strip().lower()
+    if requested not in {"auto", "rotated", "consistent"}:
+        raise ValueError(
+            "corotational_tangent must be 'auto', 'rotated', or 'consistent'"
+        )
+    if kinematics_name != "corotational":
+        if requested != "auto":
+            raise ValueError(
+                "corotational_tangent is only applicable when "
+                "kinematics='corotational'"
+            )
+        return "not_applicable"
+    if requested == "auto":
+        return "consistent" if follower_pressure else "rotated"
+    return requested
 
 
 def _skew(vector: np.ndarray) -> np.ndarray:
@@ -174,6 +210,39 @@ def _corotational_cache(model: "FEModel") -> Dict[int, _CorotationalReference]:
     return cache
 
 
+def _corotational_deformation_state(
+    reference: _CorotationalReference,
+    element: Any,
+    u_element: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return deformational DOFs, rigid rotation, and current coordinates.
+
+    Keeping this pull-back in one place ensures that constitutive recovery uses
+    exactly the same objective element state as nonlinear force assembly.
+    """
+
+    num_nodes = int(element.num_nodes)
+    u = np.asarray(u_element, dtype=float).reshape(num_nodes, 6)
+    translations = u[:, :3]
+    rotations = u[:, 3:]
+    deformed = reference.coordinates + translations
+    if reference.category == "shell":
+        R_rig = _shell_center_frame(element, deformed) @ reference.frame.T
+    else:
+        R_rig = _beam_rigid_rotation(reference.coordinates, deformed, rotations)
+
+    centroid_def = deformed.mean(axis=0)
+    u_d = np.zeros((num_nodes, 6), dtype=float)
+    for node in range(num_nodes):
+        u_d[node, :3] = (
+            R_rig.T @ (deformed[node] - centroid_def)
+            - (reference.coordinates[node] - reference.centroid)
+        )
+        R_node = rotation_matrix_from_vector(rotations[node])
+        u_d[node, 3:] = rotation_vector_from_matrix(R_rig.T @ R_node)
+    return u_d.reshape(-1), R_rig, deformed
+
+
 def corotational_element_response(
     model: "FEModel",
     element_id: int,
@@ -182,6 +251,7 @@ def corotational_element_response(
     tangent: bool,
     committed_state: Optional[Any] = None,
     num_layers: int = 5,
+    tangent_mode: str = "rotated",
 ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[Any]]:
     """Corotational internal force, tangent and trial state for one element.
 
@@ -195,34 +265,25 @@ def corotational_element_response(
     Returns ``(None, None, None)`` for element types outside the corotational
     scope so the caller can fall back to the element's own response.
     """
+    tangent_mode = str(tangent_mode).strip().lower()
+    if tangent_mode not in {"rotated", "consistent"}:
+        raise ValueError("corotational tangent_mode must be 'rotated' or 'consistent'")
+
     reference = _corotational_cache(model).get(int(element_id))
     if reference is None or reference.category is None:
         return None, None, None
     num_nodes = int(element.num_nodes)
     u = np.asarray(u_element, dtype=float).reshape(num_nodes, 6)
-    translations = u[:, :3]
     rotations = u[:, 3:]
-    deformed = reference.coordinates + translations
-
-    if reference.category == "shell":
-        R_ref = reference.frame
-    R_def = None
-    if reference.category == "shell":
-        R_def = _shell_center_frame(element, deformed)
-        R_rig = R_def @ reference.frame.T
-    else:
-        R_rig = _beam_rigid_rotation(reference.coordinates, deformed, rotations)
-
-    centroid_def = deformed.mean(axis=0)
-    u_d = np.zeros((num_nodes, 6), dtype=float)
-    for node in range(num_nodes):
-        u_d[node, :3] = R_rig.T @ (deformed[node] - centroid_def) - (reference.coordinates[node] - reference.centroid)
-        R_node = rotation_matrix_from_vector(rotations[node])
-        u_d[node, 3:] = rotation_vector_from_matrix(R_rig.T @ R_node)
+    u_d, R_rig, deformed = _corotational_deformation_state(
+        reference,
+        element,
+        u_element,
+    )
 
     material = model.get_material(element.material_name)
     f_ref, k_ref, trial_state = element.compute_nonlinear_response(
-        model.mesh, material, u_d.reshape(-1), committed_state, int(num_layers), tangent
+        model.mesh, material, u_d, committed_state, int(num_layers), tangent
     )
     f_ref = np.asarray(f_ref, dtype=float).reshape(-1)
     E = np.zeros((num_nodes * 6, num_nodes * 6), dtype=float)
@@ -233,13 +294,21 @@ def corotational_element_response(
     if not tangent:
         return f_global, None, trial_state
     k_ref = np.asarray(k_ref, dtype=float)
-    # The rotated local tangent is the empirically stable choice for both
-    # element families: adding the frame-sensitivity geometric terms (see
-    # _consistent_corotational_tangent, kept for future nonsymmetric-tangent
-    # work) makes the symmetrized Newton map repulsive near equilibrium for
-    # bending-dominated shells and for plastically softened beams, while
-    # E k E^T converges in a handful of iterations without line search.
-    k_global = E @ k_ref @ E.T
+    if tangent_mode == "consistent":
+        k_global = _consistent_corotational_tangent(
+            reference,
+            element,
+            deformed,
+            rotations,
+            R_rig,
+            E,
+            f_global,
+            k_ref,
+        )
+    else:
+        # The rotated local tangent remains the robust default for large load
+        # steps and preserves the historical convergence behavior.
+        k_global = E @ k_ref @ E.T
     return f_global, k_global, trial_state
 
 
@@ -255,6 +324,34 @@ def _rotation_right_jacobian(vector: np.ndarray) -> np.ndarray:
         - (1.0 - np.cos(angle)) / angle**2 * K
         + (angle - np.sin(angle)) / angle**3 * (K @ K)
     )
+
+
+def _rotation_right_jacobian_inverse(vector: np.ndarray) -> np.ndarray:
+    """Inverse right Jacobian for additive rotation-vector increments."""
+
+    vector = np.asarray(vector, dtype=float).reshape(3)
+    angle = float(np.linalg.norm(vector))
+    K = _skew(vector)
+    if angle < 1.0e-6:
+        return np.eye(3) + 0.5 * K + (K @ K) / 12.0
+    coefficient = 1.0 / angle**2 - 0.5 / angle * (
+        np.cos(0.5 * angle) / np.sin(0.5 * angle)
+    )
+    return np.eye(3) + 0.5 * K + coefficient * (K @ K)
+
+
+def _rotation_left_jacobian_inverse(vector: np.ndarray) -> np.ndarray:
+    """Inverse left Jacobian for an SO(3) logarithmic-map coordinate."""
+
+    vector = np.asarray(vector, dtype=float).reshape(3)
+    angle = float(np.linalg.norm(vector))
+    K = _skew(vector)
+    if angle < 1.0e-6:
+        return np.eye(3) - 0.5 * K + (K @ K) / 12.0
+    coefficient = 1.0 / angle**2 - 0.5 / angle * (
+        np.cos(0.5 * angle) / np.sin(0.5 * angle)
+    )
+    return np.eye(3) - 0.5 * K + coefficient * (K @ K)
 
 
 def _rigid_rotation_for_state(
@@ -317,7 +414,7 @@ def _consistent_corotational_tangent(
     f_global: np.ndarray,
     k_ref: np.ndarray,
 ) -> np.ndarray:
-    """Consistent (symmetrized) corotational tangent.
+    """Consistent corotational tangent for additive global DOF increments.
 
     Chain rule of ``f = E(omega) K_ref u_d(u, omega)`` through the three
     dependency paths:
@@ -328,8 +425,9 @@ def _consistent_corotational_tangent(
     - ``S`` — rotation of the internal force with the frame.
 
     ``K = E K_ref D + (S + E K_ref U) G`` with ``G`` the frame sensitivity
-    from :func:`_rotation_sensitivity`.  The result is symmetrized for the
-    solver's symmetric factorization; the skew part vanishes at equilibrium.
+    from :func:`_rotation_sensitivity`.  The result is deliberately not
+    symmetrized: additive rotation-vector coordinates and frame effects
+    produce a generally nonsymmetric exact Jacobian.
     """
     num_nodes = deformed.shape[0]
     n_dofs = num_nodes * 6
@@ -342,12 +440,21 @@ def _consistent_corotational_tangent(
         for j in range(num_nodes):
             weight = (1.0 if i == j else 0.0) - average
             D[i * 6 : i * 6 + 3, j * 6 : j * 6 + 3] = weight * Rt
-        D[i * 6 + 3 : i * 6 + 6, i * 6 + 3 : i * 6 + 6] = Rt @ _rotation_right_jacobian(rotations[i])
+        R_node = rotation_matrix_from_vector(rotations[i])
+        deformational_rotation = rotation_vector_from_matrix(Rt @ R_node)
+        D[i * 6 + 3 : i * 6 + 6, i * 6 + 3 : i * 6 + 6] = (
+            _rotation_right_jacobian_inverse(deformational_rotation)
+            @ _rotation_right_jacobian(rotations[i])
+        )
 
     U = np.zeros((n_dofs, 3), dtype=float)
     for i in range(num_nodes):
         U[i * 6 : i * 6 + 3, :] = Rt @ _skew(deformed[i] - centroid_def)
-        U[i * 6 + 3 : i * 6 + 6, :] = -Rt
+        R_node = rotation_matrix_from_vector(rotations[i])
+        deformational_rotation = rotation_vector_from_matrix(Rt @ R_node)
+        U[i * 6 + 3 : i * 6 + 6, :] = (
+            -_rotation_left_jacobian_inverse(deformational_rotation) @ Rt
+        )
 
     S = np.zeros((n_dofs, 3), dtype=float)
     for i in range(num_nodes):
@@ -356,8 +463,7 @@ def _consistent_corotational_tangent(
 
     G = _rotation_sensitivity(reference, element, deformed, rotations, R_rig)
     EK = E @ k_ref
-    tangent = EK @ D + (S + EK @ U) @ G
-    return 0.5 * (tangent + tangent.T)
+    return EK @ D + (S + EK @ U) @ G
 
 
 def validate_corotational_scope(model: "FEModel") -> None:

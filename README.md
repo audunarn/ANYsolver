@@ -47,21 +47,22 @@ changes before making release claims.
 | Area | Implemented functionality |
 | --- | --- |
 | Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. |
-| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; stiffness, mass, pressure, geometric stiffness, and stress recovery. Q8R reduced integration is experimental and outside the qualified thin-bending/nonlinear-batch scope. |
+| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; stiffness, mass, pressure, and stress recovery. The shell initial-stress operator includes membrane, bending, and second stress moments acting through the implemented Mindlin translation/director field. Q8R reduced integration is experimental and outside the qualified thin-bending/nonlinear-batch scope. |
 | Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, shear, torsion, consistent/lumped mass options, geometric stiffness, and optional fiber-section plasticity. |
 | Coupling | Coincident or eccentric beam-shell kinematics through explicit interpolated MPC transformations. |
-| Loads | Nodal force/moment, shell pressure, in-plane edge loads, acceleration/gravity, prescribed displacement, load combinations, proportional and staged nonlinear loads. |
+| Loads | Nodal force/moment, dead or current-area follower shell pressure, in-plane edge loads, acceleration/gravity, prescribed displacement, load combinations, proportional and staged nonlinear loads. Follower pressure includes its exact, generally nonsymmetric external-load tangent. |
 | Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, and sparse factorization reuse. |
 | Modal and mass | Consistent mass assembly, point masses, model mass/inertia properties, constrained and free-free vibration modes. |
-| Buckling | Linear eigenvalue buckling for beam axial force and shell membrane-resultant prestress, including sparse shift-invert and repeated-mode diagnostics. |
-| Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, von Karman or opt-in corotational kinematics, layered shell J2 plasticity, beam fiber plasticity, staged loads, and simplified element erosion. |
-| Continuation | Bounded Crisfield-style spherical arc-length tracing through a first limit point and a guarded descending branch. |
+| Buckling | Linear eigenvalue buckling for beam axial force and shell Mindlin initial-stress resultants, including sparse shift-invert and repeated-mode diagnostics. A follower-load stiffness can be included when its constrained tangent is symmetric; a general nonsymmetric follower eigenproblem is outside scope. |
+| Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, dead or follower pressure, von Karman or opt-in corotational kinematics, rotated or consistent corotational tangent, layered shell J2 plasticity, beam fiber plasticity, staged loads, and simplified element erosion. |
+| Continuation | Bounded Crisfield-style spherical arc-length tracing through a first limit point and a guarded descending branch, including current-area follower pressure and its load tangent. |
 | Dynamics | Newmark or HHT-alpha implicit transient response, Rayleigh damping, prescribed shell pressure patches, selected/envelope history storage, and memory preflight. |
 | Impact/contact | One rigid sphere with frictionless penalty contact against shells and opt-in beam-axis segments; event substepping, Aitken relaxation, nonlinear material response, and engineering damage/erosion options. |
 | Imperfections | Stress-free eigenmode, member-bow, plate-wave, flange-twist, explicit, and composite imperfection fields. |
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |
 | Interchange | Pure-Python SESAM formatted FEM record/document parsing, guarded round-trip writing, supported semantic import to `FEModel`, coordinate transforms, beam orientation, and SIF shell-stress reading by load case. |
-| Results | Result provenance, element and nodal stress recovery, selected recovery, reaction filtering, validation diagnostics, deterministic baselines, benchmarks, and generated qualification reports. |
+| Results | Result provenance; unified elastic or committed shell-layer/beam-fiber stress recovery; guarded Zienkiewicz-Zhu-style patch recovery for qualified shell neighborhoods; selected recovery; reaction filtering; validation diagnostics; deterministic baselines; benchmarks; and generated qualification reports. |
+| External verification | Reproducible CalculiX input generation plus opt-in isolated execution, FRD/DAT parsing, solver provenance, and tolerance-controlled analytical comparison. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
 
 Implemented does not automatically mean qualified for every geometry or load
 regime. The live capability matrix is produced by
@@ -81,21 +82,37 @@ Important limits:
 - the 3-node quadratic beam is straight-sided; curved members must be
   represented by straight beam segments until a true curved formulation is
   implemented;
-- shell buckling uses the implemented membrane-resultant geometric stiffness,
-  not a complete finite-rotation shell geometric stiffness;
-- no follower-pressure load or tangent;
+- the shell initial-stress operator covers the in-plane `N`, `M`, and `H`
+  stress moments acting on Mindlin midsurface translations and director
+  gradients; it does not add drilling, transverse-normal-stress, or a
+  geometrically exact finite-rotation shell/director formulation;
+- current-area follower pressure is supported in nonlinear static and
+  arc-length analyses, with its exact load tangent. Linear/dead pressure
+  remains the default. Linear buckling rejects a constrained nonsymmetric
+  follower-pressure pencil because general complex nonconservative
+  eigenanalysis is not implemented;
 - no general shell-shell, body-body, frictional, rolling, or self-contact;
 - no fluid-structure interaction, cavitation, or water-entry model;
 - no cohesive cracks, remeshing, material separation, or fracture-mechanics
   claim—the erosion models are engineering screens;
 - no unrestricted deep post-buckling or automatic bifurcation branch switching;
-- no consistent frame-derivative tangent for the corotational formulation;
-- no general material-aware stress reconstruction when committed nonlinear
-  layer/fiber state is unavailable;
+- the consistent corotational tangent includes frame derivatives and is
+  selected automatically for follower pressure, but its numerical
+  frame-sensitivity evaluation is costlier than the rotated tangent used by
+  default for ordinary corotational solves;
+- material-history-aware recovery requires retained, matching committed
+  nonlinear layer/fiber states; missing or invalid state is reported and the
+  affected components fall back explicitly to elastic reconstruction;
+- the guarded patch-recovery fit is qualified only for locally planar,
+  consistently oriented, homogeneous, full-integration Q4 or Q8 shell
+  neighborhoods. Discontinuities remain separate, and the optional normalized
+  stress-L2 discrepancy is a diagnostic—not an energy-norm error estimate;
 - no true multi-stage plastic preload followed by displacement control;
 - no unverified material laws, residual-stress fields, or distortion ranges;
-- SESAM `FEModel` export and external-solver execution/comparison remain outside
-  the supported interchange gate.
+- SESAM `FEModel` export remains outside the supported interchange gate;
+- CalculiX comparison requires a compatible local executable and an explicit
+  execution request. Deck generation alone is a reproducibility handoff, not
+  external numerical evidence.
 
 Use `validate_production_model()`, the analysis-specific preflight checks, and
 the generated production-scope artifacts before production use.
@@ -126,5 +143,16 @@ python scripts/run_fe_verification.py
 ```
 
 The last command regenerates the canonical JSON and Markdown evidence under
-`reports/verification/`. External-reference decks are handoff artifacts unless
-matching external-solver results have actually been executed and compared.
+`reports/verification/`. Its default external-reference mode generates
+handoff decks with status `not_executed`; that status is not a pass or a claim
+of numerical agreement. To execute the comparisons, provide a compatible
+CalculiX executable on `PATH`, through `ANYSOLVER_CALCULIX_EXECUTABLE`, or with
+`--calculix`, and run:
+
+```powershell
+python scripts/run_fe_verification.py --execute-calculix
+```
+
+An external case becomes passing evidence only after isolated execution,
+successful FRD/DAT parsing, and every declared comparison meeting its
+tolerance.

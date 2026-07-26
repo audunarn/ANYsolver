@@ -8,6 +8,7 @@ unsupported solver features.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import importlib.metadata
 import math
@@ -45,7 +46,13 @@ from .elements import BeamElement, CoupledBeamShellElement, Element, ShellElemen
 from .external_references import generate_external_reference_report, write_external_reference_report
 from .fe_core import FEModel
 from .mass_properties import calculate_mass_properties
-from .matrix_assembly import assemble_geometric_stiffness_matrix, assemble_mass_matrix, assemble_stiffness_matrix
+from .matrix_assembly import (
+    assemble_external_load_tangent,
+    assemble_geometric_stiffness_matrix,
+    assemble_load_vector,
+    assemble_mass_matrix,
+    assemble_stiffness_matrix,
+)
 from .mesh_load_bc_verification import mesh_load_bc_result_by_case
 from .mesh_gen import MeshConfig, PanelGeometry, StiffenerCrossSection, generate_beam_mesh, generate_simple_panel_mesh, generate_stiffened_panel_mesh
 from .modal import solve_free_vibration
@@ -56,6 +63,10 @@ from .validation import mpc_constraint_residuals, validate_production_model
 
 
 DEFAULT_BEAM_SHELL_VERIFICATION_PATH = Path("reports/beam_shell_verification/beam_shell_verification_report.json")
+_EXTERNAL_REFERENCE_REPORT_OVERRIDE: contextvars.ContextVar[Optional[Path]] = contextvars.ContextVar(
+    "anysolver_external_reference_report",
+    default=None,
+)
 
 DEFAULT_TOLERANCES: Dict[str, float] = {
     "stiffness_symmetry_rel": 1.0e-10,
@@ -254,7 +265,7 @@ CASE_ROWS: Tuple[Tuple[str, int, str, bool, str], ...] = (
     ("CYL-003", 3, "curved_mixed_buckling", True, "Ring-stiffened cylinder external-pressure benchmark"),
     ("NLG-006", 3, "nonlinear_static", True, "Thin stiffened-panel nonlinear increment study"),
     ("NLG-007", 3, "arc_length", True, "Arc-length imperfect stiffened-panel reference"),
-    ("NLG-008", 2, "scope_guard", True, "Follower-pressure capability guard"),
+    ("NLG-008", 2, "follower_pressure", True, "Follower-pressure load and tangent"),
     ("MAT-008", 3, "combined_plasticity", True, "Combined shell and beam plasticity"),
     ("DYN-001", 3, "transient", True, "Transient thin stiffened-panel benchmark"),
     ("EXT-001", 4, "cross_solver", True, "CalculiX reference pack"),
@@ -371,7 +382,7 @@ def _case_evidence_type(case_id: str, category: str) -> str:
     if case_id.startswith("BENCH-") or category in {"shell_benchmark"}:
         return "literature"
     if case_id.startswith("EXT-"):
-        return "cross_solver"
+        return "handoff_artifact"
     if category.startswith("model_pair") or category in {"curved_mixed", "curved_mixed_buckling"}:
         return "model_pair"
     if category in {"mixed_static", "mixed_modal", "mixed_buckling", "beam_modal", "shell_static", "shell_modal", "shell_buckling"}:
@@ -3126,16 +3137,103 @@ def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
 def _run_nlg_008(case: VerificationCase) -> VerificationCaseResult:
     model = _verification_plate_model(divisions=2, thickness=0.01, element_family="S4")
     follower = _pressure_load_all_shells(model, 1000.0)
-    setattr(follower, "follower_pressure", True)
-    report = validate_production_model(model, load_cases=[follower], allow_free_mechanisms=True)
-    codes = [issue.code for issue in report.issues]
-    _assert(report.status == "invalid" and "LOAD001" in codes, "follower-pressure scope guard did not reject unsupported load")
+    follower.follower_pressure = True
+    rng = np.random.default_rng(20260726)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+    translational_dofs: List[int] = []
+    for node in model.mesh.nodes.values():
+        displacement[node.dofs[:3]] = rng.normal(scale=0.015, size=3)
+        translational_dofs.extend(int(dof) for dof in node.dofs[:3])
+    tangent, tangent_info = assemble_external_load_tangent(model, follower, displacement)
+    step = 2.0e-7
+    maximum_error = 0.0
+    for dof in translational_dofs[:: max(len(translational_dofs) // 8, 1)]:
+        plus = displacement.copy()
+        minus = displacement.copy()
+        plus[dof] += step
+        minus[dof] -= step
+        force_plus, _ = assemble_load_vector(model, follower, plus)
+        force_minus, _ = assemble_load_vector(model, follower, minus)
+        numerical = (force_plus - force_minus) / (2.0 * step)
+        scale = max(float(np.linalg.norm(numerical)), 1.0)
+        error = float(np.linalg.norm(tangent[:, dof].toarray().reshape(-1) - numerical) / scale)
+        maximum_error = max(maximum_error, error)
+    report = validate_production_model(
+        model,
+        load_cases=[follower],
+        analysis_type="nonlinear_static",
+        allow_free_mechanisms=True,
+    )
+    _assert(report.status != "invalid", "qualified follower pressure failed production validation")
+    _assert(maximum_error < 1.0e-8, "follower-pressure tangent finite-difference mismatch")
+
+    ring_config = CylinderBenchmarkConfig(
+        radius=1.0,
+        height=1.0,
+        thickness=0.02,
+        pressure=1.0,
+        num_circumferential=24,
+        num_height=1,
+        closed_end_axial_load=False,
+    )
+    ring_model, ring_pressure = build_cylindrical_shell_benchmark_model(ring_config)
+    ring_pressure.follower_pressure = True
+    for index in range(ring_config.num_circumferential):
+        ring_model.add_element(
+            1000 + index,
+            CoupledBeamShellElement(
+                1000 + index,
+                beam_node_id=ring_config.num_circumferential + 1 + index,
+                shell_node_id=1 + index,
+                material_name="steel",
+                eccentricity=np.zeros(3),
+            ),
+        )
+    ring_states = {
+        int(element_id): {"membrane_compression_x": ring_config.radius}
+        for element_id, element in ring_model.mesh.elements.items()
+        if isinstance(element, ShellElement)
+    }
+    ring_buckling = solve_eigenvalue_buckling(
+        ring_model,
+        ring_states,
+        num_modes=2,
+        reference_load_case=ring_pressure,
+        dense_size_limit=10_000,
+        allow_dense_fallback=True,
+    )
+    ring_D = (
+        ring_config.elastic_modulus
+        * ring_config.thickness**3
+        / (12.0 * (1.0 - ring_config.poisson_ratio**2))
+    )
+    ring_reference = 3.0 * ring_D / ring_config.radius**3
+    ring_error = _rel_error(float(ring_buckling.critical_load_factor or 0.0), ring_reference)
+    _assert(
+        ring_buckling.solver_status == "ok" and ring_error < 0.06,
+        "thin-ring follower-pressure buckling mismatch",
+    )
     return _pass(
         case,
-        analysis_type="scope_guard",
-        reference={"type": "unsupported-feature guard", "unsupported": "follower pressure"},
-        result={"validation_status": report.status, "issue_codes": codes},
-        checks=report.to_dict(),
+        element_types=["shell4"],
+        analysis_type="nonlinear_static",
+        reference={
+            "type": "central finite difference plus analytical thin ring",
+            "ring_critical_pressure": ring_reference,
+            "ring_formula": "3*D/R^3",
+        },
+        result={
+            "validation_status": report.status,
+            "maximum_relative_tangent_error": maximum_error,
+            "external_tangent_symmetry_error": tangent_info["diagnostics"]["assembled_symmetry_error"],
+            "ring_critical_pressure": ring_buckling.critical_load_factor,
+            "ring_relative_error": ring_error,
+        },
+        checks={
+            "validation": report.to_dict(),
+            "load_tangent": tangent_info,
+            "ring_buckling": ring_buckling.diagnostics,
+        },
     )
 
 
@@ -3373,28 +3471,103 @@ def _run_nlg_003(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
+def _external_reference_locations() -> Tuple[Path, Path, Path]:
+    report_path = _EXTERNAL_REFERENCE_REPORT_OVERRIDE.get()
+    if report_path is None:
+        return (
+            Path("reports/external_references/external_reference_report.json"),
+            Path("reports/external_references/external_reference_report.md"),
+            Path("reports/external_references/decks"),
+        )
+    return report_path, report_path.with_suffix(".md"), report_path.parent / "external_reference_decks"
+
+
 def _external_reference_report_for_verification() -> Dict[str, Any]:
-    return generate_external_reference_report(Path("reports/external_references/decks"))
+    _report_path, _markdown_path, deck_dir = _external_reference_locations()
+    return generate_external_reference_report(deck_dir)
+
+
+def _external_report_evidence_summary(report: Mapping[str, Any]) -> Dict[str, Any]:
+    """Classify an external report without promoting deck generation to validation."""
+
+    execution_mode = str(report.get("execution_mode", ""))
+    validation_performed = report.get("validation_performed") is True
+    executed = execution_mode == "calculix" or validation_performed
+    cases = report.get("cases", [])
+    validations = [
+        item.get("validation", {})
+        for item in cases
+        if isinstance(item, Mapping) and isinstance(item.get("validation"), Mapping)
+    ]
+    if executed:
+        valid = (
+            execution_mode == "calculix"
+            and validation_performed
+            and report.get("status") == "passed"
+            and bool(validations)
+            and len(validations) == len(cases)
+            and all(item.get("executed") is True and item.get("status") == "passed" for item in validations)
+        )
+        return {
+            "evidence_kind": "executed_numerical_validation",
+            "numerical_validation_performed": True,
+            "numerical_validation_status": "passed" if valid else str(report.get("status") or "invalid"),
+            "report_is_acceptable": valid,
+        }
+
+    valid = (
+        execution_mode == "deck_only"
+        and report.get("validation_performed") is False
+        and report.get("status") == "not_executed"
+        and bool(validations)
+        and len(validations) == len(cases)
+        and all(item.get("executed") is False and item.get("status") == "not_executed" for item in validations)
+    )
+    return {
+        "evidence_kind": "handoff_artifact",
+        "numerical_validation_performed": False,
+        "numerical_validation_status": "not_performed",
+        "report_is_acceptable": valid,
+    }
 
 
 def _run_ext_001(case: VerificationCase) -> VerificationCaseResult:
     report = _external_reference_report_for_verification()
     cases = report.get("cases", [])
+    _report_path, _markdown_path, deck_dir = _external_reference_locations()
     discovered = discover_calculix_reference_cases(
-        roots=[Path("reports/external_references/decks")],
+        roots=[deck_dir],
         repo_root=Path.cwd(),
         require_frd=False,
     )
     names = {str(item.get("name")) for item in cases}
     kinds = {case.name: case.kind for case in discovered}
-    _assert(report.get("status") == "passed" and {"pressure_plate_s4", "beam_column_buckling", "cylinder_s4_pressure"} <= names, "CalculiX deck pack is incomplete")
+    evidence = _external_report_evidence_summary(report)
+    _assert(
+        report.get("status") == "not_executed"
+        and evidence["evidence_kind"] == "handoff_artifact"
+        and evidence["report_is_acceptable"]
+        and {"pressure_plate_s4", "beam_column_buckling", "cylinder_s4_pressure"} <= names,
+        "CalculiX handoff deck pack is incomplete or incorrectly presented as executed validation",
+    )
     _assert(len(discovered) >= 3 and all(case.element_count > 0 for case in discovered), "generated CalculiX decks are not discoverable")
     return _pass(
         case,
-        analysis_type="cross_solver_handoff",
-        reference={"type": "generated CalculiX/Abaqus-style input decks", "execution_status": "not_executed_locally"},
-        result={"case_count": len(cases), "discovered_count": len(discovered), "case_names": sorted(names)},
-        checks={"report": report, "discovered_kinds": kinds},
+        analysis_type="external_solver_handoff_artifact",
+        evidence_type="handoff_artifact",
+        reference={
+            "type": "generated CalculiX/Abaqus-style input decks",
+            "execution_status": "not_executed",
+            "numerical_validation_claim": False,
+        },
+        result={
+            "artifact_status": "passed",
+            "external_report_status": report.get("status"),
+            "case_count": len(cases),
+            "discovered_count": len(discovered),
+            "case_names": sorted(names),
+        },
+        checks={"evidence": evidence, "report": report, "discovered_kinds": kinds},
     )
 
 
@@ -3417,13 +3590,19 @@ def _run_ext_002(case: VerificationCase) -> VerificationCaseResult:
     return _pass(
         case,
         analysis_type="second_external_reference_handoff",
-        reference={"type": "upstream manifest plus neutral Abaqus-style deck syntax", "execution_status": "not_executed_locally"},
+        evidence_type="handoff_artifact",
+        reference={
+            "type": "upstream manifest plus neutral Abaqus-style deck syntax",
+            "execution_status": "not_executed",
+            "numerical_validation_claim": False,
+        },
         result={"upstream_manifest_entries": len(manifest), "deck_keyword_checks": abaqus_style_keywords},
         checks={"upstream_shell_reference": shell_entry, "known_limitations": report.get("known_limitations", [])},
     )
 
 
 def _run_vvr_001(case: VerificationCase) -> VerificationCaseResult:
+    external_report_path, external_markdown_path, external_deck_dir = _external_reference_locations()
     expected_release_paths = [
         Path("reports/beam_shell_verification/beam_shell_verification_report.json"),
         Path("reports/beam_shell_verification/beam_shell_verification_report.md"),
@@ -3432,25 +3611,75 @@ def _run_vvr_001(case: VerificationCase) -> VerificationCaseResult:
         Path("reports/production_readiness/current/verification_scope.md"),
         Path("reports/verification_quick_current/fe_verification_report.json"),
         Path("reports/verification_quick_current/fe_verification_report.md"),
-        Path("reports/external_references/external_reference_report.json"),
-        Path("reports/external_references/external_reference_report.md"),
+        external_report_path,
+        external_markdown_path,
     ]
-    external_report = write_external_reference_report(
-        Path("reports/external_references/external_reference_report.json"),
-        deck_dir=Path("reports/external_references/decks"),
-        markdown=Path("reports/external_references/external_reference_report.md"),
+    # Always regenerate deterministic handoff decks, but never overwrite a
+    # previously executed CalculiX report with a deck-only report.
+    handoff_report = _external_reference_report_for_verification()
+    handoff_evidence = _external_report_evidence_summary(handoff_report)
+    _assert(
+        handoff_evidence["evidence_kind"] == "handoff_artifact"
+        and handoff_evidence["report_is_acceptable"],
+        "external solver handoff artifacts are incomplete",
     )
+    if external_report_path.exists():
+        external_report = json.loads(
+            external_report_path.read_text(encoding="utf-8")
+        )
+        existing_evidence = _external_report_evidence_summary(external_report)
+        existing_looks_executed = (
+            str(external_report.get("execution_mode", "")) == "calculix"
+            or external_report.get("validation_performed") is True
+        )
+        if existing_evidence["report_is_acceptable"]:
+            external_report_disposition = "preserved_existing"
+        elif existing_looks_executed:
+            # Never hide or destroy invalid numerical evidence by replacing it
+            # with a deck-only artifact.  The manifest below fails closed and
+            # keeps the original report available for diagnosis.
+            external_report_disposition = "preserved_invalid_executed"
+        else:
+            # Legacy/deck-only report schemas are reproducible artifacts, not
+            # numerical evidence.  Replace them deterministically so a stale
+            # ignored report cannot make the source/test gate order-dependent.
+            external_report = write_external_reference_report(
+                external_report_path,
+                deck_dir=external_deck_dir,
+                markdown=external_markdown_path,
+            )
+            external_report_disposition = "replaced_invalid_nonexecuted"
+    else:
+        external_report = write_external_reference_report(
+            external_report_path,
+            deck_dir=external_deck_dir,
+            markdown=external_markdown_path,
+        )
+        external_report_disposition = "generated_deck_only"
+    external_evidence = _external_report_evidence_summary(external_report)
     present = [str(path) for path in expected_release_paths if path.exists()]
     package_dir = Path("reports/verification_package")
     package_dir.mkdir(parents=True, exist_ok=True)
+    package_status = "passed" if external_evidence["report_is_acceptable"] else "incomplete"
+    external_limitation = (
+        "The preserved external report contains executed, tolerance-controlled CalculiX comparisons."
+        if external_evidence["numerical_validation_performed"]
+        else "The external reference package is a reproducible handoff artifact; no external-solver numerical validation was performed."
+    )
     manifest = {
         "schema_version": 1,
-        "status": "passed" if external_report.get("status") == "passed" else "incomplete",
+        "status": package_status,
         "expected_release_artifacts": [str(path) for path in expected_release_paths],
         "present_artifacts_at_vvr_runtime": present,
-        "external_reference_status": external_report.get("status"),
+        "external_reference_report": str(external_report_path),
+        "external_report_disposition": external_report_disposition,
+        "external_reference_report_status": external_report.get("status"),
+        "external_evidence_kind": external_evidence["evidence_kind"],
+        "external_handoff_artifact_status": "passed",
+        "external_numerical_validation_performed": external_evidence["numerical_validation_performed"],
+        "external_numerical_validation_status": external_evidence["numerical_validation_status"],
         "known_limitations": [
-            "The external reference package contains reproducible handoff decks; it does not include executed external-solver result comparisons.",
+            external_limitation,
             "The verified production scope remains the documented ANYsolver beam-shell scope, not a general-purpose FE claim.",
             "The beam-shell and production-readiness reports are generated by the caller after this case completes, so VVR-001 avoids a circular dependency on the file currently being written.",
         ],
@@ -3461,7 +3690,9 @@ def _run_vvr_001(case: VerificationCase) -> VerificationCaseResult:
         f"- Status: {manifest['status']}\n"
         f"- Expected release artifacts: {len(expected_release_paths)}\n"
         f"- Present artifacts at VVR runtime: {len(present)}\n"
-        f"- External reference status: {manifest['external_reference_status']}\n\n"
+        f"- External evidence kind: {manifest['external_evidence_kind']}\n"
+        f"- External report status: {manifest['external_reference_report_status']}\n"
+        f"- External numerical validation: {manifest['external_numerical_validation_status']}\n\n"
         "## Known Limitations\n\n"
         + "\n".join(f"- {item}" for item in manifest["known_limitations"])
         + "\n",
@@ -4155,7 +4386,7 @@ def _release_gate_summary(results: List[VerificationCaseResult], selected_ids: O
     return gates
 
 
-def run_beam_shell_verification(selected_ids: Optional[Iterable[str]] = None) -> Dict[str, Any]:
+def _run_beam_shell_verification(selected_ids: Optional[Iterable[str]] = None) -> Dict[str, Any]:
     selected = None if selected_ids is None else {str(item) for item in selected_ids}
     results: List[VerificationCaseResult] = []
     for case in verification_manifest_cases():
@@ -4220,10 +4451,28 @@ def run_beam_shell_verification(selected_ids: Optional[Iterable[str]] = None) ->
         "results": [result.to_dict() for result in results],
         "known_limitations": [
             "XFAIL records are explicit missing fixtures, missing traceable reference datasets, or unsupported solver features.",
-            "Tier 3 and Tier 4 literature/cross-solver cases require traceable reference data and are not promoted to PASS from solver output.",
+            "External handoff-artifact PASS records verify reproducible decks and metadata only; they are not executed cross-solver numerical evidence.",
+            "Executed external numerical validation is reported separately and requires parsed tolerance-controlled solver results.",
             "This report is a verification coverage ledger; release capability claims should gate on specific PASS sets.",
         ],
     }
+
+
+def run_beam_shell_verification(
+    selected_ids: Optional[Iterable[str]] = None,
+    *,
+    external_reference_report: Optional[Path | str] = None,
+) -> Dict[str, Any]:
+    """Run the manifest, optionally consuming a separately generated external report."""
+
+    token = None
+    if external_reference_report is not None:
+        token = _EXTERNAL_REFERENCE_REPORT_OVERRIDE.set(Path(external_reference_report))
+    try:
+        return _run_beam_shell_verification(selected_ids=selected_ids)
+    finally:
+        if token is not None:
+            _EXTERNAL_REFERENCE_REPORT_OVERRIDE.reset(token)
 
 
 def _markdown(report: Mapping[str, Any]) -> str:
@@ -4264,8 +4513,12 @@ def write_beam_shell_verification_report(
     *,
     markdown: Optional[Path | str] = None,
     selected_ids: Optional[Iterable[str]] = None,
+    external_reference_report: Optional[Path | str] = None,
 ) -> Dict[str, Any]:
-    report = run_beam_shell_verification(selected_ids=selected_ids)
+    report = run_beam_shell_verification(
+        selected_ids=selected_ids,
+        external_reference_report=external_reference_report,
+    )
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -313,6 +313,9 @@ def _batch_c_assemble_nonlinear_system(
 ):
     deleted_tuple = tuple(deleted_element_ids or ())
     kinematics = str(extra.pop("kinematics", "von_karman"))
+    corotational_tangent = str(
+        extra.pop("corotational_tangent", "rotated")
+    )
     if deleted_tuple or extra or kinematics != "von_karman":
         # The reduced-assembly plan encodes the default von Karman element
         # response; erosion, per-element stiffness scales and corotational
@@ -326,6 +329,7 @@ def _batch_c_assemble_nonlinear_system(
             deleted_element_ids=deleted_tuple,
             residual_stiffness_fraction=float(residual_stiffness_fraction),
             kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
             **extra,
         )
     context = _active_context(model)
@@ -402,11 +406,25 @@ def _record_patch(module: ModuleType, name: str, replacement: Any) -> None:
 
 
 def _replace_function_references(original: Any, replacement: Any) -> None:
+    """Replace already-imported aliases of a solver entry point.
+
+    Batch C is installed lazily, so callers can legitimately bind
+    ``solve_static_nonlinear`` or ``solve_static_arc_length`` before the first
+    nonlinear solve triggers installation.  Restricting this pass to
+    ``anysolver.*`` modules leaves those consumer aliases pointing at the
+    unwrapped function and therefore bypasses the solve context required for
+    direct reduced assembly.
+
+    Only attributes whose value is the exact function object are changed, and
+    every change is recorded in ``_PATCHES`` for conditional restoration by
+    :func:`uninstall_batch_c_optimizations`.
+    """
+
     for module in list(sys.modules.values()):
         if not isinstance(module, ModuleType):
             continue
         module_name = getattr(module, "__name__", "")
-        if not module_name.startswith("anysolver") or module_name == __name__:
+        if module_name == __name__:
             continue
         for name, value in list(vars(module).items()):
             if value is original:

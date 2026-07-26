@@ -39,6 +39,7 @@ from .material_curves import curve_from_properties as _backend_curve_from_proper
 from .material_curves import dnv_c208_steel_properties as _material_dnv_c208_steel_properties
 from .nonlinear import solve_nonlinear_load_stepping as _backend_solve_nonlinear_limit
 from .nonlinear_static import solve_static_nonlinear as _backend_solve_static_nonlinear
+from .recovery import recover_stress_result as _recover_stress_result
 from .validation import load_case_resultant as _backend_load_case_resultant
 
 
@@ -7830,138 +7831,22 @@ def _stress_statistics_from_stresses(stresses_by_element: dict[int, object], per
     return {"max": float(np.max(arr)), "percentile": float(np.percentile(arr, percentile))}
 
 
-def _plane_stress_matrix(elastic_modulus: float, poisson_ratio: float) -> np.ndarray:
-    nu = float(poisson_ratio)
-    factor = float(elastic_modulus) / max(1.0 - nu**2, 1.0e-12)
-    return factor * np.array(
-        [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, (1.0 - nu) / 2.0]],
-        dtype=float,
-    )
-
-
-def _nonlinear_shell_stresses_from_states(model, element_states: dict[int, object] | None) -> dict[int, dict[str, np.ndarray]]:
-    """Recover display stresses/strains from committed nonlinear shell states."""
-
-    recovered: dict[int, dict[str, np.ndarray]] = {}
-    if not element_states:
-        return recovered
-
-    for element_id, state in element_states.items():
-        if not isinstance(state, dict):
-            continue
-        element = model.mesh.get_element(int(element_id))
-        if element is None or element.__class__.__name__ != "ShellElement":
-            continue
-
-        layer_strain = np.asarray(state.get("layer_strain", []), dtype=float)
-        if layer_strain.size == 0:
-            continue
-        layer_strain = layer_strain.reshape((-1, 3))
-        if not np.all(np.isfinite(layer_strain)):
-            continue
-
-        layer_stress = np.asarray(state.get("layer_stress", []), dtype=float)
-        if layer_stress.size:
-            layer_stress = layer_stress.reshape((-1, 3))
-        else:
-            plastic_strain = np.asarray(state.get("plastic_strain", np.zeros_like(layer_strain)), dtype=float)
-            if plastic_strain.size == 0:
-                plastic_strain = np.zeros_like(layer_strain)
-            plastic_strain = plastic_strain.reshape(layer_strain.shape)
-            material = model.get_material(element.material_name)
-            layer_stress = (layer_strain - plastic_strain) @ _plane_stress_matrix(
-                material.elastic_modulus,
-                material.poisson_ratio,
-            ).T
-
-        if layer_stress.shape != layer_strain.shape:
-            continue
-
-        gauss_points = getattr(element, "gauss_points", ())
-        n_gp = max(1, len(gauss_points))
-        if layer_strain.shape[0] % n_gp != 0:
-            n_gp = 1
-        n_layers = max(1, layer_strain.shape[0] // n_gp)
-        strain_layers = layer_strain.reshape((n_gp, n_layers, 3))
-        stress_layers = layer_stress.reshape((n_gp, n_layers, 3))
-
-        membrane_strain = np.mean(strain_layers, axis=1)
-        membrane_stress = np.mean(stress_layers, axis=1)
-        sx = stress_layers[:, :, 0]
-        sy = stress_layers[:, :, 1]
-        txy = stress_layers[:, :, 2]
-        von_mises = np.sqrt(np.maximum(sx**2 - sx * sy + sy**2 + 3.0 * txy**2, 0.0))
-
-        recovered[int(element_id)] = {
-            "membrane_strain_xx": membrane_strain[:, 0],
-            "membrane_strain_yy": membrane_strain[:, 1],
-            "membrane_strain_xy": membrane_strain[:, 2],
-            "membrane_xx": membrane_stress[:, 0],
-            "membrane_yy": membrane_stress[:, 1],
-            "membrane_xy": membrane_stress[:, 2],
-            "von_mises": np.max(von_mises, axis=1),
-        }
-
-    return recovered
-
-
-def _nonlinear_beam_stresses_from_states(model, element_states: dict[int, object] | None) -> dict[int, dict[str, float]]:
-    """Recover display stresses from committed beam fiber-section states.
-
-    Beam members run uniaxial fiber-section plasticity in material-nonlinear
-    solves (``cross_section['fiber_plasticity']``); the committed fiber
-    stresses are return-mapped and therefore respect the material curve,
-    unlike an elastic recovery from total displacements.
-    """
-
-    recovered: dict[int, dict[str, float]] = {}
-    if not element_states:
-        return recovered
-    for element_id, state in element_states.items():
-        if not isinstance(state, dict):
-            continue
-        fiber_stress = np.asarray(state.get("fiber_stress", ()), dtype=float).reshape(-1)
-        if fiber_stress.size == 0 or not np.all(np.isfinite(fiber_stress)):
-            continue
-        element = model.mesh.get_element(int(element_id))
-        if element is None or element.__class__.__name__ not in {"BeamElement", "QuadraticBeamElement"}:
-            continue
-        peak = float(np.max(np.abs(fiber_stress)))
-        axial = float(np.mean(fiber_stress))
-        recovered[int(element_id)] = {
-            "von_mises": peak,
-            "axial_stress": axial,
-            # Envelope split: the amount the extreme fiber exceeds the mean
-            # axial stress is the bending contribution.
-            "bending_stress_y": max(peak - abs(axial), 0.0),
-            "bending_stress_z": 0.0,
-            "shear_stress_y": 0.0,
-            "shear_stress_z": 0.0,
-            "torsional_stress": 0.0,
-        }
-    return recovered
-
-
 def _runtime_display_stresses(
     model,
     displacements: np.ndarray,
     nonlinear_static_result: object | None,
 ) -> tuple[dict[int, object], set[int]]:
     """Return display stresses and the ids of plastic (state-based) elements."""
-    elastic_stresses = (
-        _backend_compute_stresses(model, displacements)
-        if _backend_compute_stresses is not None
-        else {}
+    recovery = _recover_stress_result(
+        model,
+        displacements,
+        nonlinear_result=nonlinear_static_result,
+        copy_committed_states=False,
     )
-    element_states = getattr(nonlinear_static_result, "element_states", None)
-    nonlinear_shell_stresses = _nonlinear_shell_stresses_from_states(model, element_states)
-    nonlinear_beam_stresses = _nonlinear_beam_stresses_from_states(model, element_states)
-    if not nonlinear_shell_stresses and not nonlinear_beam_stresses:
-        return elastic_stresses, set()
-    merged = dict(elastic_stresses)
-    merged.update(nonlinear_shell_stresses)
-    merged.update(nonlinear_beam_stresses)
-    return merged, set(nonlinear_shell_stresses) | set(nonlinear_beam_stresses)
+    return (
+        recovery.element_stresses,
+        set(recovery.provenance.history_aware_element_ids),
+    )
 
 
 def _max_translation(model, displacements: np.ndarray) -> float:

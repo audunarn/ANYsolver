@@ -92,7 +92,11 @@ def test_scope_statement_and_artifact_writer() -> None:
 
     assert scope["production_release_status"] == "not_qualified"
     assert "unsupported_general_purpose_fe" in scope["unsupported"]
-    assert "Follower pressure unless implemented and verified." in scope["explicit_limitations"]
+    assert any(
+        "Follower pressure is limited to nonlinear static and arc-length equilibrium"
+        in limitation
+        for limitation in scope["explicit_limitations"]
+    )
     assert "Production release status: not_qualified" in markdown
 
     result = write_production_readiness_artifacts(output_dir, report=report)

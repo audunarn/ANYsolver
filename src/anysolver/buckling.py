@@ -23,9 +23,14 @@ from scipy.sparse import linalg as sparse_linalg
 from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
 from .cases import make_result_case
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
-from .matrix_assembly import assemble_geometric_stiffness_matrix, assemble_stiffness_matrix
+from .matrix_assembly import (
+    assemble_external_load_tangent,
+    assemble_geometric_stiffness_matrix,
+    assemble_stiffness_matrix,
+)
 
 if TYPE_CHECKING:
+    from .boundary import LoadCase
     from .fe_core import FEModel
 
 
@@ -199,17 +204,31 @@ def solve_eigenvalue_buckling(
     allow_dense_fallback: bool = False,
     allow_free_mechanisms: bool = False,
     factorization_cache: Optional[FactorizationCache] = None,
+    reference_load_case: Optional["LoadCase"] = None,
+    reference_displacements: Optional[np.ndarray] = None,
+    follower_symmetry_tolerance: float = 1.0e-10,
 ) -> BucklingResult:
-    """Solve ``K phi = lambda KG phi`` for positive buckling factors.
+    """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
     ``element_states`` is passed to
     :func:`anysolver.matrix_assembly.assemble_geometric_stiffness_matrix`.
     Beam elements accept axial reference compression and shell elements accept
     membrane resultant prestress (compression positive, or tension-positive
     ``membrane_forces``).
+
+    When ``reference_load_case`` carries follower pressure, its exact
+    current-area external-load stiffness is added to the destabilizing
+    right-hand operator.  This symmetric eigensolver accepts that extension
+    only when the *constrained* follower tangent is symmetric to
+    ``follower_symmetry_tolerance`` (for example, a conservative closed
+    pressure surface or boundary-restrained equivalent).  Open,
+    nonconservative pressure patches require a general complex eigenanalysis
+    and return an explicit unsupported status.
     """
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
+    if follower_symmetry_tolerance < 0.0:
+        raise ValueError("follower_symmetry_tolerance must be non-negative")
 
     # Make the solve independent of whether a caller happened to run another
     # constrained analysis first.  Rigid-mode filtering reads the active DOF
@@ -217,14 +236,26 @@ def solve_eigenvalue_buckling(
     model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)
     KG, geometric_info = assemble_geometric_stiffness_matrix(model, element_states)
+    K_load, load_tangent_info = assemble_external_load_tangent(
+        model,
+        reference_load_case,
+        reference_displacements,
+    )
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
     K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
     KG_red = (T.T @ KG @ T).tocsr()
+    K_load_red = (T.T @ K_load @ T).tocsr()
+    follower_symmetry_error = float(
+        sparse.linalg.norm(K_load_red - K_load_red.T)
+        / max(float(sparse.linalg.norm(K_load_red)), 1.0)
+    )
+    KG_red = (KG_red + K_load_red).tocsr()
 
     assembly_info = {
         "stiffness": stiffness_info,
         "geometric_stiffness": geometric_info,
+        "external_load_tangent": load_tangent_info,
         "total_dofs": model.mesh.dof_manager.total_dofs,
         "reduced_dofs": int(K_red.shape[0]),
     }
@@ -240,7 +271,39 @@ def solve_eigenvalue_buckling(
         "allow_dense_fallback": allow_dense_fallback,
         "allow_free_mechanisms": allow_free_mechanisms,
         "factorization_cache": None if factorization_cache is None else factorization_cache.name,
+        "reference_load_case": None if reference_load_case is None else reference_load_case.name,
+        "follower_symmetry_tolerance": float(follower_symmetry_tolerance),
     }
+
+    if follower_symmetry_error > float(follower_symmetry_tolerance):
+        diagnostics = {
+            "status": "unsupported_nonsymmetric_follower_pencil",
+            "reason": (
+                "The constrained follower-pressure load tangent is nonsymmetric; "
+                "general complex nonconservative eigenanalysis is not implemented."
+            ),
+            "follower_tangent_symmetry_error": follower_symmetry_error,
+            "follower_symmetry_tolerance": float(follower_symmetry_tolerance),
+        }
+        result_case = make_result_case(
+            name="linear_buckling",
+            analysis_type="linear_buckling",
+            load_cases=() if reference_load_case is None else (reference_load_case,),
+            assembly_info=assembly_info,
+            solver_info={"convergence_info": diagnostics},
+            recovery={"modes": num_modes},
+            settings=settings,
+            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+        ).to_dict()
+        return BucklingResult(
+            [],
+            num_modes,
+            "unsupported_nonsymmetric_follower_pencil",
+            constraint_info,
+            assembly_info,
+            result_case,
+            diagnostics,
+        )
 
     if K_red.shape[0] == 0:
         diagnostics = {"status": "empty_reduced_system"}
@@ -417,6 +480,8 @@ def solve_eigenvalue_buckling(
     diagnostics = {
         "status": status,
         "solver": solver_kind,
+        "follower_load_stiffness_included": bool(K_load_red.nnz),
+        "follower_tangent_symmetry_error": follower_symmetry_error,
         **shift_invert_diagnostics,
         "sparse_error": sparse_error,
         "nullspace_rank": int(Q_rigid.shape[1]),
@@ -433,6 +498,7 @@ def solve_eigenvalue_buckling(
     result_case = make_result_case(
         name="linear_buckling",
         analysis_type="linear_buckling",
+        load_cases=() if reference_load_case is None else (reference_load_case,),
         assembly_info=assembly_info,
         solver_info={"convergence_info": diagnostics},
         recovery={"modes": num_modes, "num_modes_returned": len(modes)},

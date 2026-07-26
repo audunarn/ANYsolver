@@ -157,12 +157,14 @@ def test_external_reference_report_cli_artifacts_are_written() -> None:
 
         report = write_external_reference_report(output, deck_dir=deck_dir, markdown=markdown)
 
-        assert report["status"] == "passed"
+        assert report["status"] == "not_executed"
+        assert report["validation_performed"] is False
         assert len(report["cases"]) == 3
+        assert all(case["validation"]["status"] == "not_executed" for case in report["cases"])
         assert output.exists()
         assert markdown.exists()
         assert (deck_dir / "pressure_plate_s4.inp").exists()
-        assert "does not execute CalculiX" in report["known_limitations"][0]
+        assert "not numerical validation" in report["known_limitations"][0]
     finally:
         shutil.rmtree(repo_root, ignore_errors=True)
 

@@ -67,7 +67,63 @@ def _pytest_command(*paths: str) -> List[str]:
     return [sys.executable, "-m", "pytest", *paths, "-q", "-p", "no:cacheprovider"]
 
 
-def _family_commands(output_dir: Path, families: Sequence[str]) -> List[tuple[str, List[str]]]:
+def _external_reference_command(
+    output_dir: Path,
+    *,
+    execute_calculix: bool = False,
+    calculix_executable: Path | None = None,
+    calculix_args: Sequence[str] = (),
+    calculix_timeout: float = 300.0,
+) -> List[str]:
+    command = [
+        sys.executable,
+        "scripts/run_external_references.py",
+        "--output",
+        str(output_dir / "external_reference_report.json"),
+        "--deck-dir",
+        str(output_dir / "external_reference_decks"),
+        "--markdown",
+        str(output_dir / "external_reference_report.md"),
+    ]
+    if execute_calculix:
+        command.extend(
+            [
+                "--execute",
+                "--run-dir",
+                str(output_dir / "external_reference_runs"),
+                "--timeout",
+                str(float(calculix_timeout)),
+            ]
+        )
+        if calculix_executable is not None:
+            command.extend(["--calculix", str(calculix_executable)])
+        for argument in calculix_args:
+            command.extend(["--calculix-arg", str(argument)])
+    return command
+
+
+def _beam_shell_verification_command(output_dir: Path) -> List[str]:
+    return [
+        sys.executable,
+        "scripts/run_beam_shell_verification.py",
+        "--output",
+        str(output_dir / "beam_shell_verification_report.json"),
+        "--markdown",
+        str(output_dir / "beam_shell_verification_report.md"),
+        "--external-reference-report",
+        str(output_dir / "external_reference_report.json"),
+    ]
+
+
+def _family_commands(
+    output_dir: Path,
+    families: Sequence[str],
+    *,
+    execute_calculix: bool = False,
+    calculix_executable: Path | None = None,
+    calculix_args: Sequence[str] = (),
+    calculix_timeout: float = 300.0,
+) -> List[tuple[str, List[str]]]:
     py = sys.executable
     commands: List[tuple[str, List[str]]] = []
     for family in families:
@@ -244,16 +300,13 @@ def _family_commands(output_dir: Path, families: Sequence[str]) -> List[tuple[st
             commands.append(
                 (
                     "external_reference_report",
-                    [
-                        py,
-                        "scripts/run_external_references.py",
-                        "--output",
-                        str(output_dir / "external_reference_report.json"),
-                        "--deck-dir",
-                        str(output_dir / "external_reference_decks"),
-                        "--markdown",
-                        str(output_dir / "external_reference_report.md"),
-                    ],
+                    _external_reference_command(
+                        output_dir,
+                        execute_calculix=execute_calculix,
+                        calculix_executable=calculix_executable,
+                        calculix_args=calculix_args,
+                        calculix_timeout=calculix_timeout,
+                    ),
                 )
             )
         elif family == "beam_shell":
@@ -261,14 +314,7 @@ def _family_commands(output_dir: Path, families: Sequence[str]) -> List[tuple[st
             commands.append(
                 (
                     "beam_shell_verification_report",
-                    [
-                        py,
-                        "scripts/run_beam_shell_verification.py",
-                        "--output",
-                        str(output_dir / "beam_shell_verification_report.json"),
-                        "--markdown",
-                        str(output_dir / "beam_shell_verification_report.md"),
-                    ],
+                    _beam_shell_verification_command(output_dir),
                 )
             )
         elif family == "mesh_load_bc":
@@ -289,7 +335,18 @@ def _family_commands(output_dir: Path, families: Sequence[str]) -> List[tuple[st
     return commands
 
 
-def _commands(output_dir: Path, quick: bool, skip_full: bool, skip_qc: bool, families: Sequence[str]) -> List[tuple[str, List[str]]]:
+def _commands(
+    output_dir: Path,
+    quick: bool,
+    skip_full: bool,
+    skip_qc: bool,
+    families: Sequence[str],
+    *,
+    execute_calculix: bool = False,
+    calculix_executable: Path | None = None,
+    calculix_args: Sequence[str] = (),
+    calculix_timeout: float = 300.0,
+) -> List[tuple[str, List[str]]]:
     py = sys.executable
     import_check = [
         py,
@@ -300,9 +357,44 @@ def _commands(output_dir: Path, quick: bool, skip_full: bool, skip_qc: bool, fam
     commands: List[tuple[str, List[str]]] = [("public_imports", import_check)]
     if quick:
         commands.append(("baseline_generation_smoke", [py, "scripts/generate_fe_baselines.py", "--output", str(output_dir / "quick_baseline.json"), "--no-timing"]))
+        if execute_calculix:
+            commands.append(
+                (
+                    "external_reference_report",
+                    _external_reference_command(
+                        output_dir,
+                        execute_calculix=True,
+                        calculix_executable=calculix_executable,
+                        calculix_args=calculix_args,
+                        calculix_timeout=calculix_timeout,
+                    ),
+                )
+            )
         return commands
     if families:
-        commands.extend(_family_commands(output_dir, families))
+        if execute_calculix and "reference" not in families:
+            commands.append(
+                (
+                    "external_reference_report",
+                    _external_reference_command(
+                        output_dir,
+                        execute_calculix=True,
+                        calculix_executable=calculix_executable,
+                        calculix_args=calculix_args,
+                        calculix_timeout=calculix_timeout,
+                    ),
+                )
+            )
+        commands.extend(
+            _family_commands(
+                output_dir,
+                families,
+                execute_calculix=execute_calculix,
+                calculix_executable=calculix_executable,
+                calculix_args=calculix_args,
+                calculix_timeout=calculix_timeout,
+            )
+        )
         return commands
     commands.append(
         (
@@ -458,29 +550,19 @@ def _commands(output_dir: Path, quick: bool, skip_full: bool, skip_qc: bool, fam
     commands.append(
         (
             "external_reference_report",
-            [
-                py,
-                "scripts/run_external_references.py",
-                "--output",
-                str(output_dir / "external_reference_report.json"),
-                "--deck-dir",
-                str(output_dir / "external_reference_decks"),
-                "--markdown",
-                str(output_dir / "external_reference_report.md"),
-            ],
+            _external_reference_command(
+                output_dir,
+                execute_calculix=execute_calculix,
+                calculix_executable=calculix_executable,
+                calculix_args=calculix_args,
+                calculix_timeout=calculix_timeout,
+            ),
         )
     )
     commands.append(
         (
             "beam_shell_verification_report",
-            [
-                py,
-                "scripts/run_beam_shell_verification.py",
-                "--output",
-                str(output_dir / "beam_shell_verification_report.json"),
-                "--markdown",
-                str(output_dir / "beam_shell_verification_report.md"),
-            ],
+            _beam_shell_verification_command(output_dir),
         )
     )
     commands.append(
@@ -554,7 +636,29 @@ def main() -> int:
     parser.add_argument("--reference", action="store_true", help="Run only external reference-case/deck checks plus import checks.")
     parser.add_argument("--beam-shell", action="store_true", help="Run only manifest-driven beam/shell verification checks plus import checks.")
     parser.add_argument("--mesh-load-bc", action="store_true", help="Run only mesh/load/boundary-condition verification checks plus import checks.")
+    parser.add_argument(
+        "--execute-calculix",
+        action="store_true",
+        help="Execute CalculiX reference cases and require parsed tolerance-controlled comparisons.",
+    )
+    parser.add_argument(
+        "--calculix",
+        type=Path,
+        default=None,
+        help="Explicit ccx executable path (otherwise ANYSOLVER_CALCULIX_EXECUTABLE/PATH discovery is used).",
+    )
+    parser.add_argument(
+        "--calculix-arg",
+        action="append",
+        default=[],
+        help="Argument inserted before '-i JOB' for a CalculiX wrapper; repeat as needed.",
+    )
+    parser.add_argument("--calculix-timeout", type=float, default=300.0, help="Per-case CalculiX timeout in seconds.")
     args = parser.parse_args()
+    if not args.execute_calculix and (args.calculix is not None or args.calculix_arg):
+        parser.error("--calculix and --calculix-arg require --execute-calculix")
+    if args.calculix_timeout <= 0.0:
+        parser.error("--calculix-timeout must be positive")
 
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -580,7 +684,20 @@ def main() -> int:
         )
         if enabled
     ]
-    command_results = [_run_command(name, command) for name, command in _commands(output_dir, args.quick, args.skip_full, args.skip_qc, families)]
+    command_results = [
+        _run_command(name, command)
+        for name, command in _commands(
+            output_dir,
+            args.quick,
+            args.skip_full,
+            args.skip_qc,
+            families,
+            execute_calculix=args.execute_calculix,
+            calculix_executable=args.calculix,
+            calculix_args=args.calculix_arg,
+            calculix_timeout=args.calculix_timeout,
+        )
+    ]
     status = "passed" if all(item["returncode"] == 0 for item in command_results) else "failed"
     report = {
         "date": started,
@@ -593,10 +710,18 @@ def main() -> int:
         },
         "commands": command_results,
         "selected_families": families,
+        "external_reference_mode": "calculix" if args.execute_calculix else "deck_only",
         "warnings": [
-            "This is a local evidence gate; it is not a substitute for external CalculiX/DNV validation.",
+            (
+                "CalculiX execution was not requested; generated external-reference decks are handoff artifacts, not numerical validation."
+                if not args.execute_calculix
+                else "CalculiX results are external-solver comparisons; DNV qualification remains a separate engineering-assurance activity."
+            ),
             "Baseline timing fields are informational and not used for numeric comparison.",
-            "This infrastructure batch intentionally preserves existing element theory and nonlinear physics.",
+            (
+                "Follower pressure, consistent corotational tangents, shell initial-stress stiffness and "
+                "history-aware recovery are qualified only by their documented verification cases and limits."
+            ),
         ],
     }
     json_path = output_dir / "fe_verification_report.json"

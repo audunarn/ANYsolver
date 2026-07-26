@@ -1138,6 +1138,129 @@ class ShellElement(Element):
             -float(force_xy or 0.0),
         )
 
+    @classmethod
+    def _membrane_compression_samples(
+        cls,
+        state: Optional[Any],
+        count: int,
+    ) -> np.ndarray:
+        """Return compression-positive ``[Nx, Ny, Nxy]`` at integration points.
+
+        Uniform legacy state keys remain supported.  Spatially varying
+        prestress can be supplied as ``membrane_compression_at_gauss`` or
+        tension-positive ``membrane_forces_at_gauss`` with shape ``(n_gp, 3)``.
+        The shorter aliases ``membrane_compression`` and ``membrane_forces``
+        also accept that two-dimensional form.
+        """
+        if isinstance(state, dict):
+            compression_values = state.get(
+                "membrane_compression_at_gauss",
+                state.get("membrane_compression"),
+            )
+            force_values = state.get(
+                "membrane_forces_at_gauss",
+                state.get("membrane_forces"),
+            )
+            values = compression_values if compression_values is not None else force_values
+            if values is not None:
+                samples = np.asarray(values, dtype=float)
+                if samples.ndim == 2:
+                    if samples.shape != (int(count), 3):
+                        raise ValueError(
+                            "Gauss-point membrane resultants must have shape "
+                            f"({int(count)}, 3), got {samples.shape}."
+                        )
+                    return samples.copy() if compression_values is not None else -samples
+
+        uniform = np.asarray(cls._membrane_compression_from_state(state), dtype=float)
+        return np.repeat(uniform.reshape(1, 3), int(count), axis=0)
+
+    @staticmethod
+    def _resultant_samples(
+        state: Optional[Any],
+        count: int,
+        *,
+        compression_keys: Tuple[str, ...],
+        tension_keys: Tuple[str, ...] = (),
+    ) -> np.ndarray:
+        """Read uniform or Gauss-point vector resultants with sign conversion."""
+        if not isinstance(state, dict):
+            return np.zeros((int(count), 3), dtype=float)
+        values = None
+        compression_positive = True
+        for key in compression_keys:
+            if key in state:
+                values = state[key]
+                break
+        if values is None:
+            for key in tension_keys:
+                if key in state:
+                    values = state[key]
+                    compression_positive = False
+                    break
+        if values is None:
+            return np.zeros((int(count), 3), dtype=float)
+        samples = np.asarray(values, dtype=float)
+        if samples.ndim == 1 and samples.size == 3:
+            samples = np.repeat(samples.reshape(1, 3), int(count), axis=0)
+        if samples.shape != (int(count), 3):
+            raise ValueError(
+                f"Initial-stress resultants must have shape (3,) or ({int(count)}, 3), "
+                f"got {samples.shape}."
+            )
+        return samples.copy() if compression_positive else -samples
+
+    @classmethod
+    def _bending_compression_samples(
+        cls,
+        state: Optional[Any],
+        count: int,
+    ) -> np.ndarray:
+        """Compression-positive first stress moments ``[Mx, My, Mxy]``."""
+        return cls._resultant_samples(
+            state,
+            count,
+            compression_keys=(
+                "bending_compression_at_gauss",
+                "bending_compression",
+                "bending_compression_moments_at_gauss",
+                "bending_compression_moments",
+            ),
+            tension_keys=("bending_moments_at_gauss", "bending_moments"),
+        )
+
+    @classmethod
+    def _stress_second_moment_samples(
+        cls,
+        state: Optional[Any],
+        count: int,
+        membrane_compression: np.ndarray,
+        thickness: float,
+    ) -> np.ndarray:
+        """Compression-positive second stress moments, defaulting to ``N h²/12``."""
+        explicit = cls._resultant_samples(
+            state,
+            count,
+            compression_keys=(
+                "stress_second_moment_at_gauss",
+                "stress_second_moment",
+                "membrane_compression_second_moment_at_gauss",
+                "membrane_compression_second_moment",
+            ),
+        )
+        has_explicit = isinstance(state, dict) and any(
+            key in state
+            for key in (
+                "stress_second_moment_at_gauss",
+                "stress_second_moment",
+                "membrane_compression_second_moment_at_gauss",
+                "membrane_compression_second_moment",
+            )
+        )
+        if has_explicit:
+            return explicit
+        return np.asarray(membrane_compression, dtype=float) * float(thickness) ** 2 / 12.0
+
     def compute_geometric_stiffness_matrix(
         self,
         mesh: "FEMesh",
@@ -1152,23 +1275,60 @@ class ShellElement(Element):
         compression-positive values (``membrane_compression_x/y/xy``).  The
         returned matrix follows the package convention
         ``K phi = lambda KG phi`` with compression destabilizing.
+
+        The total-Lagrangian initial-stress operator uses the Mindlin director
+        field ``[u + z*ry, v - z*rx, w]``.  Membrane resultants therefore act
+        on all translations, their second stress moment (``N*h**2/12`` for a
+        uniform through-thickness membrane stress) acts on ``rx``/``ry``
+        gradients, and optional bending resultants provide the signed
+        translation-director coupling.  Drilling ``rz`` has no director term.
         """
-        Nx, Ny, Nxy = self._membrane_compression_from_state(state)
-        if Nx == 0.0 and Ny == 0.0 and Nxy == 0.0:
+        compression = self._membrane_compression_samples(state, len(self.gauss_points))
+        bending_compression = self._bending_compression_samples(state, len(self.gauss_points))
+        second_moment = self._stress_second_moment_samples(
+            state,
+            len(self.gauss_points),
+            compression,
+            self.thickness,
+        )
+        if not np.any(compression) and not np.any(bending_compression) and not np.any(second_moment):
             return np.zeros((self.total_dofs, self.total_dofs), dtype=float)
 
         coords = self.get_node_coordinates(mesh)
         KG = np.zeros((self.total_dofs, self.total_dofs), dtype=float)
 
-        for (xi, eta), weight in zip(self.gauss_points, self.gauss_weights):
+        for gp_index, ((xi, eta), weight) in enumerate(zip(self.gauss_points, self.gauss_weights)):
             N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
             R, dN_dx, dN_dy, det_j = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
             T = self._local_dof_transform(R)
-            G = np.zeros((2, self.total_dofs), dtype=float)
-            G[0, 2::6] = dN_dx
-            G[1, 2::6] = dN_dy
+            Nx, Ny, Nxy = compression[gp_index]
             N_matrix = np.array([[Nx, Nxy], [Nxy, Ny]], dtype=float)
-            KG_local = (G.T @ N_matrix @ G) * det_j * float(weight)
+            Mx, My, Mxy = bending_compression[gp_index]
+            M_matrix = np.array([[Mx, Mxy], [Mxy, My]], dtype=float)
+            Hx, Hy, Hxy = second_moment[gp_index]
+            H_matrix = np.array([[Hx, Hxy], [Hxy, Hy]], dtype=float)
+            KG_local = np.zeros((self.total_dofs, self.total_dofs), dtype=float)
+            translation_gradients = []
+            for component in range(3):
+                G = np.zeros((2, self.total_dofs), dtype=float)
+                G[0, component::6] = dN_dx
+                G[1, component::6] = dN_dy
+                translation_gradients.append(G)
+                KG_local += G.T @ N_matrix @ G
+            G_rx = np.zeros((2, self.total_dofs), dtype=float)
+            G_ry = np.zeros((2, self.total_dofs), dtype=float)
+            G_rx[0, 3::6] = dN_dx
+            G_rx[1, 3::6] = dN_dy
+            G_ry[0, 4::6] = dN_dx
+            G_ry[1, 4::6] = dN_dy
+            KG_local += G_rx.T @ H_matrix @ G_rx
+            KG_local += G_ry.T @ H_matrix @ G_ry
+            # u(z)=u+z*ry and v(z)=v-z*rx.
+            coupling_u_ry = translation_gradients[0].T @ M_matrix @ G_ry
+            coupling_v_rx = translation_gradients[1].T @ M_matrix @ G_rx
+            KG_local += coupling_u_ry + coupling_u_ry.T
+            KG_local -= coupling_v_rx + coupling_v_rx.T
+            KG_local *= det_j * float(weight)
             KG += T.T @ KG_local @ T
         return KG
 

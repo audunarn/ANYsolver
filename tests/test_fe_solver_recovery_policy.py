@@ -108,6 +108,32 @@ def test_memory_estimate_reflects_selected_history_storage() -> None:
     assert selected.history_bytes_estimate == 5 * 6 * 8 * 3
 
 
+def test_memory_estimate_accounts_for_recovery_state_snapshot_copy() -> None:
+    model = generate_simple_panel_mesh(
+        1.0,
+        1.0,
+        0.01,
+        num_divisions_x=1,
+        num_divisions_y=1,
+    )
+
+    one_copy = estimate_model_memory(
+        model,
+        nonlinear_state=True,
+    )
+    two_copies = estimate_model_memory(
+        model,
+        nonlinear_state=True,
+        nonlinear_state_copies=2,
+    )
+
+    assert (
+        two_copies.nonlinear_state_bytes_estimate
+        == 2 * one_copy.nonlinear_state_bytes_estimate
+    )
+    assert "2 retained state copies" in " ".join(two_copies.notes)
+
+
 def test_memory_limit_rejects_result_recovery_preflight() -> None:
     model = generate_simple_panel_mesh(1.0, 1.0, 0.01, num_divisions_x=1, num_divisions_y=1)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)

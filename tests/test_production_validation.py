@@ -75,7 +75,7 @@ def test_validate_production_model_rejects_duplicate_mpc_slave_owner() -> None:
     assert "MPC001" in _issue_codes(report)
 
 
-def test_validate_production_model_rejects_follower_pressure_and_missing_pressure_element() -> None:
+def test_validate_production_model_requires_explicit_follower_analysis_and_rejects_missing_element() -> None:
     model = FEModel("follower_pressure")
     model.add_material("steel", 210e9, 0.3)
     load = LoadCase("pressure")
