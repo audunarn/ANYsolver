@@ -25,6 +25,14 @@ Setting `LoadCase.follower_pressure = True` evaluates shell pressure on the
 current midsurface and includes its exact external-load tangent in the
 continuation equations.
 
+Direct `initial_fields` setup, zero-load equilibration, and a
+field-bearing restart with matching nonzero displacements are currently
+provided only by `solve_static_nonlinear`. Arc-length accepts committed element
+state but has no initial-displacement restart parameter; it must therefore not
+be used to continue a residual-field state that equilibrated to nonzero
+displacement. Geometric-imperfection provenance remains distinct from
+residual-stress/prestrain provenance.
+
 ## Example
 
 ```python

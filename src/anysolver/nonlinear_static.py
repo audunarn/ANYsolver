@@ -66,6 +66,14 @@ if TYPE_CHECKING:
 _DOF_INDEX = {"ux": 0, "uy": 1, "uz": 2, "rx": 3, "ry": 4, "rz": 5}
 _FAST_NL_BOOTSTRAPPED = False
 _FAST_NL_BOOTSTRAP_ERROR: Optional[str] = None
+_INITIAL_FIELD_STATE_KEYS = (
+    "initial_membrane_stress",
+    "initial_bending_stress",
+    "initial_membrane_prestrain",
+    "initial_curvature_prestrain",
+    "initial_fiber_stress",
+    "initial_fiber_prestrain",
+)
 
 
 def _ensure_nonlinear_acceleration() -> None:
@@ -94,8 +102,14 @@ class NonlinearLoadStage:
     target_factor: float = 1.0
 
     def __post_init__(self) -> None:
-        if self.target_factor <= 0.0:
-            raise ValueError("target_factor must be positive")
+        name = str(self.name).strip()
+        if not name:
+            raise ValueError("NonlinearLoadStage name must not be empty")
+        factor = float(self.target_factor)
+        if not np.isfinite(factor) or factor <= 0.0:
+            raise ValueError("target_factor must be finite and positive")
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "target_factor", factor)
 
 
 @dataclass(frozen=True)
@@ -105,8 +119,17 @@ class NonlinearLoadProgram:
     stages: Sequence[NonlinearLoadStage]
 
     def __post_init__(self) -> None:
-        if not self.stages:
+        stages = tuple(self.stages)
+        if not stages:
             raise ValueError("NonlinearLoadProgram requires at least one stage")
+        names = [stage.name for stage in stages]
+        if len(set(names)) != len(names):
+            duplicates = sorted({name for name in names if names.count(name) > 1})
+            raise ValueError(
+                "NonlinearLoadProgram stage names must be unique; duplicates: "
+                + ", ".join(duplicates)
+            )
+        object.__setattr__(self, "stages", stages)
 
     @property
     def total_factor(self) -> float:
@@ -128,6 +151,87 @@ class NonlinearLoadProgram:
                 return stage.name
             remaining -= stage.target_factor
         return self.stages[-1].name
+
+
+@dataclass(frozen=True)
+class ShellInitialField:
+    """Prescribed shell residual stress and/or eigenstrain field.
+
+    Each stress or strain component uses shell-local engineering-vector order
+    ``[xx, yy, xy]``.  A three-value vector is uniform over the element;
+    arrays with one row per integration point are also accepted.
+
+    ``membrane_stress`` is the through-thickness-uniform stress.  The
+    ``bending_stress`` value is the antisymmetric stress at the positive
+    surface, varying linearly from its negative at ``-t/2``.  Prestrain is
+    subtracted from the kinematic strain; ``curvature_prestrain`` has units
+    of inverse length.
+    """
+
+    membrane_stress: Optional[Any] = None
+    bending_stress: Optional[Any] = None
+    membrane_prestrain: Optional[Any] = None
+    curvature_prestrain: Optional[Any] = None
+    source: str = "user"
+
+    def __post_init__(self) -> None:
+        if all(
+            value is None
+            for value in (
+                self.membrane_stress,
+                self.bending_stress,
+                self.membrane_prestrain,
+                self.curvature_prestrain,
+            )
+        ):
+            raise ValueError("ShellInitialField requires at least one stress or prestrain component")
+        if not str(self.source).strip():
+            raise ValueError("ShellInitialField source must not be empty")
+
+    def state_values(self) -> Dict[str, Any]:
+        values = {
+            "initial_membrane_stress": self.membrane_stress,
+            "initial_bending_stress": self.bending_stress,
+            "initial_membrane_prestrain": self.membrane_prestrain,
+            "initial_curvature_prestrain": self.curvature_prestrain,
+        }
+        return {
+            key: np.asarray(value, dtype=float).copy()
+            for key, value in values.items()
+            if value is not None
+        }
+
+
+@dataclass(frozen=True)
+class BeamInitialField:
+    """Prescribed beam-fiber residual stress and/or eigenstrain distribution.
+
+    Values may be scalar, one value per section fiber, or one value per
+    Gauss-point/fiber pair.  Arbitrary self-equilibrated distributions are
+    therefore representable.  Beam fiber fields require the element's
+    ``cross_section["fiber_plasticity"]`` configuration.
+    """
+
+    fiber_stress: Optional[Any] = None
+    fiber_prestrain: Optional[Any] = None
+    source: str = "user"
+
+    def __post_init__(self) -> None:
+        if self.fiber_stress is None and self.fiber_prestrain is None:
+            raise ValueError("BeamInitialField requires fiber_stress or fiber_prestrain")
+        if not str(self.source).strip():
+            raise ValueError("BeamInitialField source must not be empty")
+
+    def state_values(self) -> Dict[str, Any]:
+        values = {
+            "initial_fiber_stress": self.fiber_stress,
+            "initial_fiber_prestrain": self.fiber_prestrain,
+        }
+        return {
+            key: np.asarray(value, dtype=float).copy()
+            for key, value in values.items()
+            if value is not None
+        }
 
 
 @dataclass(frozen=True)
@@ -452,7 +556,15 @@ def _assemble_nonlinear_system(
     for elem_id, element in mesh.elements.items():
         if kinematics == "corotational":
             break
-        if isinstance(element, ShellElement) and shell_nonlinear_batch_eligible(element):
+        # Initial stress/eigenstrain fields are deliberately evaluated by the
+        # scalar element kernel.  The ordinary batched path stays untouched
+        # and fast, while field-bearing elements can retain their immutable
+        # offsets alongside the committed material history.
+        if (
+            isinstance(element, ShellElement)
+            and shell_nonlinear_batch_eligible(element)
+            and not _state_has_initial_field(committed_states.get(elem_id))
+        ):
             key = (
                 element.num_nodes,
                 element.thickness,
@@ -807,6 +919,174 @@ def _copy_initial_states(initial_element_states: Optional[Mapping[int, Any]]) ->
     return copy.deepcopy(dict(initial_element_states or {}))
 
 
+def _state_has_initial_field(state: Any) -> bool:
+    return isinstance(state, Mapping) and any(key in state for key in _INITIAL_FIELD_STATE_KEYS)
+
+
+def _initial_value_summary(value: Any) -> Dict[str, Any]:
+    array = np.asarray(value, dtype=float)
+    return {
+        "shape": list(array.shape),
+        "minimum": float(np.min(array)),
+        "maximum": float(np.max(array)),
+    }
+
+
+def _coerce_initial_field(value: Any) -> Union[ShellInitialField, BeamInitialField]:
+    if isinstance(value, (ShellInitialField, BeamInitialField)):
+        return value
+    if not isinstance(value, Mapping):
+        raise TypeError("Initial fields must be ShellInitialField, BeamInitialField, or mappings")
+    data = dict(value)
+    kind = str(data.pop("kind", "")).strip().lower()
+    shell_names = {"membrane_stress", "bending_stress", "membrane_prestrain", "curvature_prestrain"}
+    beam_names = {"fiber_stress", "fiber_prestrain"}
+    supplied = set(data) - {"source"}
+    if kind == "shell" or (not kind and supplied and supplied <= shell_names):
+        return ShellInitialField(**data)
+    if kind == "beam" or (not kind and supplied and supplied <= beam_names):
+        return BeamInitialField(**data)
+    raise ValueError(
+        "Initial-field mapping requires kind='shell' or kind='beam', or unambiguous field names"
+    )
+
+
+def _prepare_initial_states(
+    model: "FEModel",
+    initial_element_states: Optional[Mapping[int, Any]],
+    initial_fields: Optional[Mapping[int, Any]],
+    num_layers: int,
+) -> Tuple[Dict[int, Any], List[Dict[str, Any]]]:
+    """Merge prescribed residual fields into committed element state.
+
+    Initial fields remain immutable state offsets while plastic strain and
+    hardening variables are committed normally.  This separation prevents a
+    geometric imperfection from being mislabeled as residual stress and lets
+    restart states retain the manufacturing-field provenance.
+    """
+    states = _copy_initial_states(initial_element_states)
+    provenance: List[Dict[str, Any]] = []
+    for raw_element_id, state in states.items():
+        if not _state_has_initial_field(state):
+            continue
+        stored = state.get("initial_field_provenance", {}) if isinstance(state, Mapping) else {}
+        components = {
+            key.removeprefix("initial_"): _initial_value_summary(state[key])
+            for key in _INITIAL_FIELD_STATE_KEYS
+            if key in state
+        }
+        provenance.append(
+            {
+                "element_id": int(raw_element_id),
+                "kind": str(stored.get("kind", "unknown")),
+                "source": str(stored.get("source", "restart_state")),
+                "components": components,
+                "restored_from_committed_state": True,
+            }
+        )
+    if not initial_fields:
+        return states, provenance
+
+    from .elements import (
+        BeamElement,
+        QuadraticBeamElement,
+        ShellElement,
+        validate_initial_field_state,
+    )
+
+    for raw_element_id, raw_field in initial_fields.items():
+        element_id = int(raw_element_id)
+        provenance = [
+            entry for entry in provenance
+            if int(entry["element_id"]) != element_id
+        ]
+        element = model.mesh.get_element(element_id)
+        if element is None:
+            raise ValueError(f"Initial field references missing element {element_id}")
+        field_value = _coerce_initial_field(raw_field)
+        previous_state = states.get(element_id)
+        if isinstance(previous_state, Mapping):
+            previous_plastic = np.asarray(
+                previous_state.get("plastic_strain", ()),
+                dtype=float,
+            )
+            previous_alpha = np.asarray(
+                previous_state.get("alpha", ()),
+                dtype=float,
+            )
+            if (
+                previous_plastic.size
+                and np.any(np.abs(previous_plastic) > 1.0e-14)
+            ) or (
+                previous_alpha.size
+                and np.any(previous_alpha > 1.0e-14)
+            ):
+                raise ValueError(
+                    f"Cannot superpose a new initial field on nonzero plastic history for "
+                    f"element {element_id}; restart with the already-committed field state instead."
+                )
+        if isinstance(field_value, ShellInitialField):
+            if not isinstance(element, ShellElement):
+                raise TypeError(f"ShellInitialField requires a shell element; {element_id} is {type(element).__name__}")
+            state = states.get(element_id)
+            if state is None:
+                state = element.init_nonlinear_state(num_layers)
+            elif not isinstance(state, Mapping):
+                raise TypeError(f"Initial state for shell element {element_id} must be a mapping")
+            state = copy.deepcopy(dict(state))
+            values = field_value.state_values()
+            field_type = "shell"
+        else:
+            if not isinstance(element, (BeamElement, QuadraticBeamElement)):
+                raise TypeError(f"BeamInitialField requires a beam element; {element_id} is {type(element).__name__}")
+            if getattr(element, "_fiber_plasticity_config")(model.get_material(element.material_name)) is None:
+                raise ValueError(
+                    f"Beam initial fiber fields require fiber plasticity on element {element_id}"
+                )
+            state = states.get(element_id)
+            if state is None:
+                state = {}
+            elif not isinstance(state, Mapping):
+                raise TypeError(f"Initial state for beam element {element_id} must be a mapping")
+            state = copy.deepcopy(dict(state))
+            values = field_value.state_values()
+            field_type = "beam"
+        # Supplying a field for an element replaces its complete prior field
+        # definition. Mixing old components with a new source would make both
+        # the constitutive input and its provenance ambiguous; callers that
+        # want multiple components must provide them together in one field.
+        for key in (*_INITIAL_FIELD_STATE_KEYS, "initial_field_provenance"):
+            state.pop(key, None)
+        for key, array in values.items():
+            if array.size == 0 or np.any(~np.isfinite(array)):
+                raise ValueError(f"{key} for element {element_id} must contain finite values")
+            state[key] = array
+        state["initial_field_provenance"] = {
+            "kind": field_type,
+            "source": field_value.source,
+            "components": sorted(values),
+        }
+        validate_initial_field_state(
+            element,
+            model.get_material(element.material_name),
+            state,
+            num_layers,
+        )
+        states[element_id] = state
+        provenance.append(
+            {
+                "element_id": element_id,
+                "kind": field_type,
+                "source": field_value.source,
+                "components": {
+                    key.removeprefix("initial_"): _initial_value_summary(array)
+                    for key, array in values.items()
+                },
+            }
+        )
+    return states, provenance
+
+
 def _finalize_nonlinear_element_states(
     model: "FEModel",
     displacements: np.ndarray,
@@ -847,6 +1127,146 @@ def _nonlinear_status_category(status: str, failure_reason: Optional[str]) -> st
     return "failed"
 
 
+def _equilibrate_initial_fields(
+    *,
+    model: "FEModel",
+    T: sparse.csr_matrix,
+    u0: np.ndarray,
+    committed_states: Dict[int, Any],
+    num_layers: int,
+    max_iterations: int,
+    tolerance: float,
+    kinematics: str,
+    corotational_tangent: str,
+    general_tangent: bool,
+    initial_reduced_displacements: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, Dict[int, Any], List[Dict[str, Any]], Optional[str]]:
+    """Equilibrate prescribed residual fields before any external load.
+
+    The residual field is held fixed while compatible displacements and the
+    material history are solved from ``F_int = 0``.  Only a converged trial
+    state is committed.  This is intentionally a separate zero-load phase so
+    permanent/environmental loading cannot silently absorb an unbalanced
+    manufacturing field in its first increment.
+    """
+    n_red = int(T.shape[1])
+    if initial_reduced_displacements is None:
+        q = np.zeros(n_red, dtype=float)
+    else:
+        q = np.asarray(initial_reduced_displacements, dtype=float).reshape(-1).copy()
+        if q.size != n_red:
+            raise ValueError(
+                f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
+            )
+    committed_q = q.copy()
+    history: List[Dict[str, Any]] = []
+    reference: Optional[float] = None
+    for iteration in range(1, max_iterations + 1):
+        u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+        F_int, K_T, trial_states = _assemble_nonlinear_system(
+            model,
+            u,
+            committed_states,
+            num_layers,
+            tangent=True,
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
+        )
+        residual = -np.asarray(T.T @ F_int, dtype=float).reshape(-1)
+        residual_norm = float(np.linalg.norm(residual))
+        if reference is None:
+            reference = max(residual_norm, 1.0)
+        history.append(
+            {
+                "iteration": iteration,
+                "residual_norm": residual_norm,
+                "displacement_norm": float(np.linalg.norm(u)),
+            }
+        )
+        if not np.isfinite(residual_norm):
+            return committed_q, committed_states, history, "nonfinite_initial_state_residual"
+        if residual_norm <= tolerance * reference:
+            return q, trial_states, history, None
+        K_red = (T.T @ K_T @ T).tocsr()
+        try:
+            with np.errstate(all="ignore"):
+                handle = factorize(
+                    K_red,
+                    MatrixClass.GENERAL if general_tangent else MatrixClass.SYMMETRIC_INDEFINITE,
+                    signature=f"nonlinear.initial_state:{iteration}",
+                )
+                dq = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
+        except Exception:
+            return committed_q, committed_states, history, "singular_initial_state_tangent"
+        if np.any(~np.isfinite(dq)):
+            return committed_q, committed_states, history, "nonfinite_initial_state_increment"
+
+        # Residual-norm backtracking makes non-equilibrated user fields
+        # predictable without affecting the ordinary load-step fast path.
+        accepted = False
+        scale = 1.0
+        for _ in range(16):
+            q_candidate = q + scale * dq
+            u_candidate = np.asarray(T @ q_candidate + u0, dtype=float).reshape(-1)
+            F_candidate, _unused, _candidate_states = _assemble_nonlinear_system(
+                model,
+                u_candidate,
+                committed_states,
+                num_layers,
+                tangent=False,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+            )
+            candidate_norm = float(
+                np.linalg.norm(-np.asarray(T.T @ F_candidate, dtype=float).reshape(-1))
+            )
+            if np.isfinite(candidate_norm) and candidate_norm < residual_norm:
+                q = q_candidate
+                accepted = True
+                break
+            scale *= 0.5
+        if not accepted:
+            return committed_q, committed_states, history, "initial_state_line_search_failed"
+    return committed_q, committed_states, history, "maximum_initial_state_iterations_reached"
+
+
+def _reduced_coordinates(
+    T: sparse.csr_matrix,
+    u0: np.ndarray,
+    displacements: Optional[np.ndarray],
+) -> np.ndarray:
+    """Recover reduced coordinates for a compatible full displacement state."""
+    if displacements is None:
+        return np.zeros(int(T.shape[1]), dtype=float)
+    full = np.asarray(displacements, dtype=float).reshape(-1)
+    if full.size != T.shape[0]:
+        raise ValueError(f"initial_displacements has {full.size} entries; expected {T.shape[0]}")
+    if np.any(~np.isfinite(full)):
+        raise ValueError("initial_displacements must contain only finite values")
+    rhs = full - np.asarray(u0, dtype=float).reshape(-1)
+    if int(T.shape[1]) == 0:
+        error = float(np.linalg.norm(rhs))
+        scale = max(float(np.linalg.norm(full)), 1.0)
+        if error > 1.0e-9 * scale:
+            raise ValueError(
+                "initial_displacements is incompatible with the fully "
+                f"constrained state (residual {error:.3e})"
+            )
+        return np.zeros(0, dtype=float)
+    solution = sparse.linalg.lsqr(T, rhs, atol=1.0e-12, btol=1.0e-12)
+    q = np.asarray(solution[0], dtype=float).reshape(-1)
+    if np.any(~np.isfinite(q)):
+        raise ValueError("initial_displacements could not be reduced to finite coordinates")
+    error = float(np.linalg.norm(np.asarray(T @ q, dtype=float).reshape(-1) - rhs))
+    scale = max(float(np.linalg.norm(rhs)), 1.0)
+    if error > 1.0e-9 * scale:
+        raise ValueError(
+            "initial_displacements is incompatible with the active supports/MPC constraints "
+            f"(projection residual {error:.3e})"
+        )
+    return q
+
+
 def _solve_static_displacement_control(
     *,
     model: "FEModel",
@@ -869,6 +1289,7 @@ def _solve_static_displacement_control(
     resource_config: Optional[ResourceConfig] = None,
     kinematics: str = "von_karman",
     corotational_tangent: str = "not_applicable",
+    initial_reduced_displacements: Optional[np.ndarray] = None,
 ) -> NonlinearStaticResult:
     """Displacement-control Newton solve with load factor as an unknown."""
     if load_program is not None:
@@ -907,7 +1328,14 @@ def _solve_static_displacement_control(
         active_stage = "displacement_control"
 
     n_red = int(T.shape[1])
-    q = np.zeros(n_red, dtype=float)
+    if initial_reduced_displacements is None:
+        q = np.zeros(n_red, dtype=float)
+    else:
+        q = np.asarray(initial_reduced_displacements, dtype=float).reshape(-1).copy()
+        if q.size != n_red:
+            raise ValueError(
+                f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
+            )
     lam = 0.0
     steps: List[NonlinearStaticStep] = []
     history: List[Dict[str, Any]] = []
@@ -945,12 +1373,17 @@ def _solve_static_displacement_control(
     )
 
     target_total = float(displacement_control.target_displacement)
-    target_scale = max(abs(target_total), 1.0e-9)
+    initial_control = float(row_red @ q + row_u0)
+    target_increment = target_total - initial_control
+    target_scale = max(abs(target_increment), abs(target_total), 1.0e-9)
+    info["displacement_control_initial_value"] = initial_control
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         for step_index in range(1, num_steps + 1):
-            target = target_total * step_index / num_steps
+            q_step_start = q.copy()
+            lam_step_start = float(lam)
+            target = initial_control + target_increment * step_index / num_steps
             residual_norm = float("inf")
             constraint_error = float("inf")
             states_new = committed_states
@@ -1045,6 +1478,8 @@ def _solve_static_displacement_control(
                 failure_reason = "maximum_iterations_reached"
 
             if failure_reason is not None:
+                q = q_step_start
+                lam = lam_step_start
                 status = "stopped_at_limit" if steps else "diverged"
                 break
 
@@ -1126,6 +1561,9 @@ def solve_static_nonlinear(
     control: str = "force",
     displacement_control: Optional[DisplacementControl] = None,
     initial_element_states: Optional[Mapping[int, Any]] = None,
+    initial_fields: Optional[Mapping[int, Any]] = None,
+    initial_displacements: Optional[np.ndarray] = None,
+    equilibrate_initial_state: Optional[bool] = None,
     convergence_settings: Optional[Union[str, Mapping[str, Any], NonlinearConvergenceSettings]] = None,
     resource_config: Optional[ResourceConfig] = None,
     fracture_config: Optional[FractureConfig] = None,
@@ -1147,6 +1585,14 @@ def solve_static_nonlinear(
     full generally nonsymmetric chain-rule Jacobian.  ``"auto"`` selects the
     consistent tangent whenever a supplied load case uses current-area
     follower pressure and otherwise preserves the rotated tangent.
+
+    ``initial_fields`` maps element IDs to :class:`ShellInitialField` or
+    :class:`BeamInitialField` values. New fields are equilibrated at zero
+    external load by default. A true restart with field-bearing
+    ``initial_element_states`` must also supply the matching
+    ``initial_displacements``; alternatively pass
+    ``equilibrate_initial_state=True`` to deliberately re-equilibrate the
+    restored field from the supplied (or zero) displacement state.
     """
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
@@ -1187,20 +1633,6 @@ def solve_static_nonlinear(
         raise ValueError("max_load_factor must be positive")
     if fracture_config is not None and not isinstance(fracture_config, FractureConfig):
         raise TypeError("fracture_config must be a FractureConfig or None")
-    if (
-        control_name == "displacement"
-        and load_program is not None
-        and len(load_program.stages) > 1
-        and any(
-            getattr(model.get_material(getattr(element, "material_name", None)), "hardening_curve", None)
-            is not None
-            for element in model.mesh.elements.values()
-        )
-    ):
-        raise NotImplementedError(
-            "Multi-stage displacement control with path-dependent plasticity is not implemented. "
-            "Equilibrate and commit preload stages separately, then restart the controlled stage."
-        )
     settings = _coerce_convergence_settings(convergence_settings)
     if kinematics == "corotational" and settings.line_search in {"auto", "rescue"}:
         # Corotational Newton necessarily passes through a large intermediate
@@ -1262,14 +1694,87 @@ def solve_static_nonlinear(
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
     )
+    imperfection_provenance: List[Dict[str, Any]] = []
     if imperfection is not None:
-        info["imperfection"] = getattr(model, "imperfection_metadata", [])
+        imperfection_provenance = list(getattr(model, "imperfection_metadata", []))
+        info["imperfection"] = imperfection_provenance
+
+    committed_states, residual_field_provenance = _prepare_initial_states(
+        model,
+        initial_element_states,
+        initial_fields,
+        num_layers,
+    )
+    if kinematics == "corotational" and any(
+        _state_has_initial_field(state) for state in committed_states.values()
+    ):
+        raise NotImplementedError(
+            "Initial stress/prestrain fields are currently qualified only for "
+            "kinematics='von_karman' in element-local reference coordinates."
+        )
+    info["initial_condition_provenance"] = {
+        "geometric_imperfection": imperfection_provenance,
+        "residual_stress_or_prestrain": residual_field_provenance,
+        "coordinate_system": {
+            "geometric_imperfection": "global nodal coordinates",
+            "residual_stress_or_prestrain": "element-local reference coordinates",
+        },
+    }
 
     if fracture_config is not None and control_name != "force":
         raise ValueError("fracture_config is currently supported only with force control")
 
     n_red = int(T.shape[1])
+    q = _reduced_coordinates(T, u0, initial_displacements)
+    if (
+        initial_fields
+        and initial_displacements is not None
+        and equilibrate_initial_state is not False
+    ):
+        raise ValueError(
+            "initial_fields combined with initial_displacements is ambiguous during "
+            "automatic equilibration; pass equilibrate_initial_state=False for an "
+            "already-equilibrated restart."
+        )
     if n_red == 0:
+        has_initial_fields = any(
+            _state_has_initial_field(state) for state in committed_states.values()
+        )
+        requested_equilibration = (
+            bool(initial_fields)
+            if equilibrate_initial_state is None
+            else bool(equilibrate_initial_state)
+        )
+        info["initial_state_equilibration"] = {
+            "requested": requested_equilibration,
+            "converged": True,
+            "iterations": 0,
+            "history": [],
+            "failure_reason": None,
+            "free_dof_residual_norm": 0.0,
+            "fully_constrained": True,
+        }
+        if has_initial_fields:
+            # There are no admissible displacement corrections, so the
+            # prescribed field is already equilibrated in the free-DOF
+            # sense; its imbalance is carried entirely by reactions. Retain
+            # the evaluated constitutive state and provenance in the result.
+            internal_force, _unused_tangent, trial_states = (
+                _assemble_nonlinear_system(
+                    model,
+                    np.asarray(u0, dtype=float).reshape(-1),
+                    committed_states,
+                    num_layers,
+                    tangent=False,
+                    kinematics=kinematics,
+                    corotational_tangent=resolved_corotational_tangent,
+                )
+            )
+            committed_states = trial_states
+            info["initial_state_equilibration"][
+                "constrained_internal_force_norm"
+            ] = float(np.linalg.norm(internal_force))
+            info["strain_summary"] = _nonlinear_state_summary(committed_states)
         info["failure_reason"] = "empty_reduced_system"
         info["stop_reason"] = "empty_reduced_system"
         info["status_category"] = _nonlinear_status_category("empty_reduced_system", "empty_reduced_system")
@@ -1288,10 +1793,66 @@ def solve_static_nonlinear(
                 "corotational_tangent": resolved_corotational_tangent,
             },
         ).to_dict()
-        return NonlinearStaticResult([], "empty_reduced_system", u0.copy(), 0.0, {}, info)
+        return NonlinearStaticResult(
+            [],
+            "empty_reduced_system",
+            u0.copy(),
+            0.0,
+            committed_states,
+            info,
+        )
 
-    q = np.zeros(n_red, dtype=float)
-    committed_states: Dict[int, Any] = _copy_initial_states(initial_element_states)
+    has_initial_fields = any(_state_has_initial_field(state) for state in committed_states.values())
+    restored_initial_fields = has_initial_fields and not bool(initial_fields)
+    if (
+        restored_initial_fields
+        and initial_displacements is None
+        and equilibrate_initial_state is not True
+    ):
+        raise ValueError(
+            "Field-bearing initial_element_states require matching "
+            "initial_displacements for a restart. Pass "
+            "equilibrate_initial_state=True only when re-equilibration from "
+            "zero displacement is intended."
+        )
+    should_equilibrate = bool(initial_fields) if equilibrate_initial_state is None else bool(equilibrate_initial_state)
+    if should_equilibrate and has_initial_fields:
+        q, committed_states, initialization_history, initialization_failure = _equilibrate_initial_fields(
+            model=model,
+            T=T,
+            u0=u0,
+            committed_states=committed_states,
+            num_layers=num_layers,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+            kinematics=kinematics,
+            corotational_tangent=resolved_corotational_tangent,
+            general_tangent=general_tangent,
+            initial_reduced_displacements=q,
+        )
+        info["initial_state_equilibration"] = {
+            "requested": True,
+            "converged": initialization_failure is None,
+            "iterations": len(initialization_history),
+            "history": initialization_history,
+            "failure_reason": initialization_failure,
+        }
+        if initialization_failure is not None:
+            u_failed = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+            info["failure_reason"] = initialization_failure
+            info["stop_reason"] = initialization_failure
+            info["status_category"] = _nonlinear_status_category("diverged", initialization_failure)
+            info["strain_summary"] = _nonlinear_state_summary(committed_states)
+            info["solve_time"] = time.time() - start_time
+            return NonlinearStaticResult([], "diverged", u_failed, 0.0, committed_states, info)
+    else:
+        info["initial_state_equilibration"] = {
+            "requested": should_equilibrate,
+            "converged": True,
+            "iterations": 0,
+            "history": [],
+            "failure_reason": None,
+        }
     steps: List[NonlinearStaticStep] = []
     status = "completed"
     deleted_element_ids: set[int] = set()
@@ -1358,7 +1919,62 @@ def solve_static_nonlinear(
     if control_name == "displacement":
         if displacement_control is None:
             raise ValueError("displacement_control is required when control='displacement'")
-        return _solve_static_displacement_control(
+        preload_result: Optional[NonlinearStaticResult] = None
+        if load_program is not None and len(load_program.stages) > 1:
+            # Each permanent stage is first solved by force control and its
+            # displacement/material state committed.  The final stage then
+            # starts from that exact checkpoint under displacement control;
+            # the earlier loads remain constant in the controlled equilibrium.
+            preload_program = NonlinearLoadProgram(tuple(load_program.stages[:-1]))
+            preload_result = solve_static_nonlinear(
+                model,
+                constant_load_case=constant_load_case,
+                max_load_factor=preload_program.total_factor,
+                num_steps=max(num_steps, len(preload_program.stages)),
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                num_layers=num_layers,
+                min_step_fraction=min_step_fraction,
+                load_program=preload_program,
+                control="force",
+                initial_element_states=committed_states,
+                initial_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
+                equilibrate_initial_state=False,
+                convergence_settings=settings,
+                resource_config=resource_config,
+                kinematics=kinematics,
+                corotational_tangent=(
+                    "auto" if kinematics == "von_karman" else resolved_corotational_tangent
+                ),
+                status_callback=status_callback,
+                progress_callback=progress_callback,
+            )
+            if not preload_result.converged or (
+                preload_result.load_factor < preload_program.total_factor - 1.0e-10
+            ):
+                preload_result.info["requested_control"] = "displacement"
+                preload_result.info["failed_phase"] = "load_program_preload"
+                preload_result.info["initial_condition_provenance"] = info[
+                    "initial_condition_provenance"
+                ]
+                return preload_result
+            committed_states = _copy_initial_states(preload_result.element_states)
+            q = _reduced_coordinates(T, u0, preload_result.displacements)
+            info["load_program_preload"] = {
+                "status": preload_result.status,
+                "load_factor": preload_result.load_factor,
+                "stage_factors": preload_result.info.get("load_program_stage_factors", {}),
+                "steps": len(preload_result.steps),
+                "total_newton_iterations": preload_result.info.get("total_newton_iterations", 0),
+                "strain_summary": preload_result.info.get("strain_summary", {}),
+                "force_displacement_history": preload_result.info.get(
+                    "force_displacement_history",
+                    [],
+                ),
+            }
+            info["material_history_reused_from_preload"] = True
+
+        controlled_result = _solve_static_displacement_control(
             model=model,
             T=T,
             u0=u0,
@@ -1379,7 +1995,32 @@ def solve_static_nonlinear(
             info=info,
             start_time=start_time,
             resource_config=resource_config,
+            initial_reduced_displacements=q,
         )
+        if load_program is not None:
+            stage_factors = {
+                stage.name: stage.target_factor
+                for stage in load_program.stages[:-1]
+            }
+            stage_factors[load_program.stages[-1].name] = (
+                controlled_result.load_factor * load_program.stages[-1].target_factor
+            )
+            controlled_result.info["load_program_stage_factors"] = stage_factors
+        if preload_result is not None:
+            preload_steps = [
+                dataclass_replace(step, step_index=index)
+                for index, step in enumerate(preload_result.steps, start=1)
+            ]
+            offset = len(preload_steps)
+            controlled_steps = [
+                dataclass_replace(step, step_index=offset + index)
+                for index, step in enumerate(controlled_result.steps, start=1)
+            ]
+            controlled_result.steps = preload_steps + controlled_steps
+            controlled_result.info["total_newton_iterations"] = int(
+                controlled_result.info.get("total_newton_iterations", 0)
+            ) + int(preload_result.info.get("total_newton_iterations", 0))
+        return controlled_result
 
     base_step = target_load_factor / num_steps
     min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
@@ -1388,6 +2029,11 @@ def solve_static_nonlinear(
     lam = 0.0
     step_index = 0
     total_iterations = 0
+    stage_boundaries = (
+        np.cumsum([stage.target_factor for stage in load_program.stages], dtype=float)
+        if load_program is not None
+        else np.empty(0, dtype=float)
+    )
 
     def newton_increment(q_start, path_factor, reference, line_search):
         """One load increment.  Plain full Newton when ``line_search`` is
@@ -1553,7 +2199,15 @@ def solve_static_nonlinear(
     with numba_thread_scope(assembly_threads):
         while lam < target_load_factor - 1.0e-12:
             step_size = min(step_size, max(target_load_factor - lam, min_step))
-            lam_trial = min(lam + step_size, target_load_factor)
+            next_stage_boundary = target_load_factor
+            for boundary in stage_boundaries:
+                if boundary > lam + 1.0e-12:
+                    next_stage_boundary = min(float(boundary), target_load_factor)
+                    break
+            # Never jump across a cumulative stage boundary.  Converging and
+            # committing that endpoint is what makes the permanent-to-
+            # environmental material path independent of adaptive step growth.
+            lam_trial = min(lam + step_size, target_load_factor, next_stage_boundary)
             attempted_step_size = lam_trial - lam
             u_start = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             F_ext, _K_ext, stage_factors, active_stage = external_load_at(
@@ -1656,6 +2310,9 @@ def solve_static_nonlinear(
                         "line_search_used": line_search_used,
                         "stage_factors": stage_factors,
                         "active_stage": active_stage,
+                        "stage_endpoint_committed": bool(
+                            np.any(np.isclose(lam, stage_boundaries, rtol=0.0, atol=1.0e-12))
+                        ),
                         "deleted_element_count": len(deleted_element_ids),
                         "newly_deleted_element_ids": [record.element_id for record in new_records],
                         "max_fracture_utilization": max_fracture_utilization,

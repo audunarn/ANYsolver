@@ -434,6 +434,45 @@ plane-stress return-mapping framework of
 and the consistent-tangent principle of
 [Simo and Taylor](https://www.sciencedirect.com/science/article/pii/0045782585900702).
 
+For the converged plastic multiplier `dl`, define
+
+```text
+t = C (epsilon - epsilon_p,n)
+A = I + dl C P
+M = inverse(A)
+sigma = M t
+m = P sigma
+g = sqrt((2/3) sigma.T P sigma)
+beta = (2/3) sigma_y H
+v = M C m
+a = 1 - 2 beta dl / (3 g)
+```
+
+Exact implicit differentiation of the same discrete consistency equation gives
+
+```text
+C_alg = M C - a (v outer v) / (a m.T v + beta g)
+```
+
+on a smooth yielding branch; elastic points return `C`. This analytical
+consistent tangent is the production default. A central-difference derivative
+of the identical return map remains available as the qualification oracle and
+is selected automatically only when an analytical row is non-finite or has
+pathological amplification. A large elastic condition number alone does not
+replace an otherwise finite exact tangent. Numerical perturbations are scaled
+by the elastic-column magnitude and advanced to representable floating-point
+neighbors when required.
+
+Ordinary consistency iterations use Newton's method. Any point that does not
+meet the scaled yield-residual tolerance is completed with a bracketed
+bisection for the supported monotonic isotropic-hardening curves. The wrapper
+raises `PlaneStressConvergenceError` if the safeguarded solve still cannot
+satisfy the local residual; an unconverged stress update is never returned as
+valid merely because its tangent is finite. At the elastic/plastic switch and
+the piecewise DNV hardening-curve corners the derivative is directional, so
+centered-difference agreement is not claimed exactly at those nonsmooth
+points.
+
 For a layer tangent `C_alg`, membrane-bending coupling retains both transpose
 terms:
 
@@ -556,12 +595,16 @@ Implemented interfaces:
   tolerance class requires it.
 - `NonlinearLoadProgram` applies ordered stages. The common DNV sequence is a
   permanent stage first and an environmental/pressure/compression stage second.
+  Adaptive increments are capped at every cumulative stage boundary so each
+  endpoint is a converged material-state commit.
 - `DisplacementControl` augments the Newton system with a scalar displacement
   constraint and a load proportionality factor unknown, allowing monotonic
-  capacity tracing past a simple force-control limit. It does not yet provide a
-  true committed plastic preload across multiple load stages; multi-stage
-  displacement control with path-dependent material hardening is rejected
-  rather than silently solving the wrong loading history.
+  capacity tracing past a simple force-control limit. For a multi-stage load
+  program, all preceding stages are first equilibrated under force control and
+  committed. The final controlled stage restarts from that displacement and
+  material state, retains the preceding loads as constant terms, and
+  interpolates from the preloaded control value to the requested absolute
+  target.
 
 ### Arc-length continuation
 
@@ -616,14 +659,21 @@ labelled elastic fallback.
 For shells, committed return-mapped layer stresses are integrated with the
 same Gauss-Lobatto layer positions and weights used by the nonlinear
 formulation. The output includes membrane and bending stress measures, exact
-top/bottom layer values, and von Mises stress including the elastic transverse
-shear from the same solution. For fiber beams, the stored fiber coordinates,
-weights, and stations give axial force and biaxial bending resultants; the
-reported von Mises envelope also includes elastic shear and torsion. In
+top/bottom layer values, and an in-plane von Mises stress governed by the shell
+return map. For fiber beams, the stored fiber coordinates, weights, and
+stations give axial force and biaxial bending resultants; the material-history
+von Mises envelope is the uniaxial fiber-stress envelope when a plastic
+constitutive history is active. Transverse shell shear and beam shear/torsion
+are matching elastic reconstructions rather than return-mapped state variables.
+They remain available as individual components and in the explicitly labelled
+`mixed_reconstruction_von_mises` diagnostic, but are not folded into the
+hardening-curve-consistent `von_mises` field. A purely elastic nonlinear state
+instead retains the full mixed elastic equivalent stress as primary. In
 corotational analyses, recovery uses the objective deformational pull-back,
-current coordinates, and current corotated frame. Material history can only be
-used when compatible committed states were retained; missing or invalid state
-is a visible elastic fallback, never a silent plastic-stress reconstruction.
+current coordinates, and current corotated frame. Material history can only
+be used when compatible committed states were retained; missing or invalid
+state is a visible elastic fallback, never a silent plastic-stress
+reconstruction.
 
 Passing `PatchRecoveryConfig` enables a guarded linear least-squares,
 [Zienkiewicz-Zhu-style](https://doi.org/10.1002/nme.1620330702) shell surface
@@ -655,14 +705,51 @@ Simplified fracture / element erosion:
   not crack propagation, cohesive fracture, remeshing, impact fracture, fracture
   toughness assessment or a validated ductile-fracture model.
 
-Residual stresses:
+### Residual stress and prestrain fields
 
-- v1 treats calibrated equivalent geometric imperfections as the practical
-  residual-stress proxy for buckling capacity workflows.
-- `initial_element_states` is reserved for future residual stress/prestrain
-  fields.  A full residual-stress implementation must contribute to both
-  internal-force equilibrium and tangent stiffness, and must report diagnostics
-  separately from geometric imperfections.
+`ShellInitialField` and `BeamInitialField` provide explicit manufacturing-state
+inputs to `solve_static_nonlinear(..., initial_fields=...)`. Shell engineering
+vectors are in element-local `[xx, yy, xy]` order:
+
+```text
+sigma_0(z)   = sigma_membrane + (2 z / t) sigma_bending_positive_face
+epsilon_0(z) = epsilon_membrane + z kappa_0
+```
+
+Beam fields are scalar, one-section-fiber, or Gauss-point/fiber arrays on a
+configured fiber-plasticity section. Initial stress is represented by its
+equivalent elastic strain offset, while prestrain is an immutable eigenstrain:
+
+```text
+sigma = C (epsilon_kinematic - epsilon_prestrain
+           + inverse(C) sigma_initial - epsilon_p)
+```
+
+Before any external load is applied, the reduced free-DOF residual is solved to
+equilibrium and only the converged plastic state is committed. Requested fields
+may therefore redistribute during this initialization phase. Field provenance,
+the equilibration history, and geometric-imperfection provenance are reported
+separately. Imported stress must lie on or inside the flow surface associated
+with the supplied hardening state; a new field cannot be superposed on nonzero
+plastic history.
+
+Supplying a new field replaces the complete previous field definition for that
+element; multiple components must be supplied together under one source.
+Field-bearing restart state must be accompanied by the matching converged
+displacement vector. Re-equilibration without that vector requires the
+explicit `equilibrate_initial_state=True` opt-in. Failed initialization or
+displacement-control attempts restore the last converged displacement, load
+factor, and material-state checkpoint.
+
+This implements an initial-state model, not a reconstruction of welding,
+forming, or thermal manufacturing history. The stress/prestrain convention is
+qualified only in element-local reference coordinates with von Karman
+kinematics. Corotational initial fields fail closed pending a verified
+objective field transformation. The treatment follows the initial-strain and
+nonlinear initial-stress conventions documented in the
+[CalculiX 2.22 manual](https://www.dhondt.de/ccx_2.22.pdf) and the explicit
+initial-equilibrium treatment in the
+[Abaqus initial-conditions documentation](https://docs.software.vt.edu/abaqusv2024/English/SIMACAEKEYRefMap/simakey-r-initialconditions.htm).
 
 ## Substantial theory work marked for future implementation
 
@@ -683,15 +770,23 @@ explicit backlog items, not current capabilities:
 4. Make contact force, contact moment, and contact work fully consistent for
    offset shell surfaces and profile-resolved members; retain the present
    midpoint/beam-axis penalty models as engineering approximations.
-5. Implement equilibrated residual stress/prestrain fields and a true
-   preload/commit/restart sequence for multi-stage displacement control.
-6. Strengthen the local plane-stress plastic corrector with explicit
-   convergence/failure diagnostics for severe increments while preserving the
-   verified discrete algorithmic tangent.
-7. Develop an equilibrated or compliance-weighted recovery estimator for
+5. Develop an equilibrated or compliance-weighted recovery estimator for
    adaptive refinement. The current guarded patch result and normalized
    stress-L2 discrepancy intentionally make no energy-norm or guaranteed-error
    claim.
+6. Extend shell plasticity to transverse shear and beam-section plasticity to
+   shear/torsion interaction. Until then, large
+   `mixed_reconstruction_von_mises` values are model-scope warnings: the
+   underlying equilibrium used elastic shear/torsion and those components must
+   not be capped or described as plastically redistributed.
+7. Split shell patch-recovered nodal equivalent stress into the same
+   constitutive in-plane and explicitly mixed invariants used by element
+   recovery. The current patch tensor retains transverse shear and therefore
+   represents the mixed elastic/plastic diagnostic.
+8. Recover quadratic-beam shear and torsion at the same Gauss stations as each
+   fiber block before forming a mixed diagnostic. The current B3 diagnostic
+   combines station-dependent fiber stress with one element-level elastic
+   shear/torsion envelope; the constant-response B2 case is unaffected.
 
 ## Verification anchors
 

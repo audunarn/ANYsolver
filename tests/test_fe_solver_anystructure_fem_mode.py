@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
@@ -252,3 +254,76 @@ def test_prestress_recovery_returns_shell_states_from_static_result():
     assert solver_info["convergence_info"]["status"] == "converged"
     assert 1 in states
     assert summary["shell_elements"] == 1
+    assert np.asarray(states[1]["membrane_forces_at_gauss"]).shape == (4, 3)
+    assert np.asarray(states[1]["bending_moments_at_gauss"]).shape == (4, 3)
+
+
+def test_prestress_recovery_preserves_pure_bending_gauss_resultants():
+    model = build_fe_model_from_generated_geometry(_square_shell_geometry())
+    material = model.get_material("steel")
+    element = model.mesh.get_element(1)
+    kappa_x = 1.1e-3
+    displacements = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+    for node in model.mesh.nodes.values():
+        displacements[node.dofs[4]] = kappa_x * float(node.x)
+
+    states, summary = recover_prestress_from_static_result(model, displacements)
+
+    membrane = np.asarray(states[1]["membrane_forces_at_gauss"], dtype=float)
+    bending = np.asarray(states[1]["bending_moments_at_gauss"], dtype=float)
+    expected_mx = (
+        material.elastic_modulus
+        * float(element.thickness) ** 3
+        * kappa_x
+        / (12.0 * (1.0 - material.poisson_ratio**2))
+    )
+    np.testing.assert_allclose(membrane, 0.0, atol=1.0e-9)
+    np.testing.assert_allclose(bending[:, 0], expected_mx, rtol=1.0e-10, atol=1.0e-9)
+    np.testing.assert_allclose(
+        bending[:, 1],
+        material.poisson_ratio * expected_mx,
+        rtol=1.0e-10,
+        atol=1.0e-9,
+    )
+    np.testing.assert_allclose(bending[:, 2], 0.0, atol=1.0e-9)
+    assert summary["shell_elements"] == 1
+
+
+def test_prestress_recovery_uses_committed_nonlinear_shell_state():
+    model = build_fe_model_from_generated_geometry(_square_shell_geometry())
+    element = model.mesh.get_element(1)
+    num_layers = 3
+    num_points = len(element.gauss_points) * num_layers
+    committed_stress = np.array([-250.0e6, -50.0e6, -10.0e6])
+    committed_state = {
+        "layer_strain": np.zeros((num_points, 3), dtype=float),
+        "plastic_strain": np.zeros((num_points, 3), dtype=float),
+        "layer_stress": np.tile(committed_stress, (num_points, 1)),
+        "alpha": np.zeros(num_points, dtype=float),
+    }
+    displacements = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+    nonlinear_result = SimpleNamespace(
+        element_states={1: committed_state},
+        displacements=displacements,
+        info={"kinematics": "von_karman"},
+        status="completed",
+    )
+
+    states, summary = recover_prestress_from_static_result(
+        model,
+        displacements,
+        nonlinear_result=nonlinear_result,
+    )
+
+    membrane = np.asarray(states[1]["membrane_forces_at_gauss"], dtype=float)
+    expected = committed_stress * float(element.thickness)
+    np.testing.assert_allclose(membrane, np.tile(expected, (4, 1)))
+    assert np.max(np.abs(membrane)) > 0.0
+    assert summary["max_shell_compression_resultant"] == pytest.approx(
+        -expected[0]
+    )
+    provenance = summary["stress_recovery"]
+    assert provenance["mode"] == "material_history"
+    assert provenance["state_source"] == "SimpleNamespace.element_states"
+    assert provenance["history_aware_element_ids"] == [1]
+    assert provenance["per_element_source"][1] == "committed_shell_layer_state"

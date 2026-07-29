@@ -602,9 +602,27 @@ def _optimized_assemble_nonlinear_system(
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    if extra or kinematics != "von_karman":
+    has_initial_fields = any(
+        isinstance(state, Mapping)
+        and any(
+            key in state
+            for key in (
+                "initial_membrane_stress",
+                "initial_bending_stress",
+                "initial_membrane_prestrain",
+                "initial_curvature_prestrain",
+                "initial_fiber_stress",
+                "initial_fiber_prestrain",
+            )
+        )
+        for state in committed_states.values()
+    )
+    if extra or kinematics != "von_karman" or has_initial_fields:
         # The assembly plan encodes the von Karman element response; other
-        # kinematics or per-element scale options use the original assembler.
+        # kinematics, per-element scale options, and immutable initial
+        # stress/prestrain offsets use the scalar reference assembler.  The
+        # persistent shell batches intentionally transport only constitutive
+        # history and would otherwise discard these additional state fields.
         assembler = _ORIGINAL_ASSEMBLER
         if assembler is None:
             from . import nonlinear_static as _nonlinear_static
@@ -681,6 +699,7 @@ def _solve_static_displacement_control_block(
     resource_config=None,
     kinematics="von_karman",
     corotational_tangent="not_applicable",
+    initial_reduced_displacements=None,
 ):
     """Displacement control using block elimination on the structural tangent."""
     from . import nonlinear_static as ns
@@ -723,6 +742,7 @@ def _solve_static_displacement_control_block(
             resource_config=resource_config,
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
+            initial_reduced_displacements=initial_reduced_displacements,
         )
 
     if load_program is not None:
@@ -746,7 +766,14 @@ def _solve_static_displacement_control_block(
         active_stage = "displacement_control"
 
     n_red = int(T.shape[1])
-    q = np.zeros(n_red, dtype=float)
+    if initial_reduced_displacements is None:
+        q = np.zeros(n_red, dtype=float)
+    else:
+        q = np.asarray(initial_reduced_displacements, dtype=float).reshape(-1).copy()
+        if q.size != n_red:
+            raise ValueError(
+                f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
+            )
     lam = 0.0
     steps = []
     history: List[Dict[str, Any]] = []
@@ -766,12 +793,17 @@ def _solve_static_displacement_control_block(
         raise ValueError("Displacement control requires a non-zero proportional load vector")
 
     target_total = float(displacement_control.target_displacement)
-    target_scale = max(abs(target_total), 1.0e-9)
+    initial_control = float(row_red @ q + row_u0)
+    target_increment = target_total - initial_control
+    target_scale = max(abs(target_increment), abs(target_total), 1.0e-9)
+    info["displacement_control_initial_value"] = initial_control
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         for step_index in range(1, num_steps + 1):
-            target = target_total * step_index / num_steps
+            q_step_start = q.copy()
+            lam_step_start = float(lam)
+            target = initial_control + target_increment * step_index / num_steps
             residual_norm = float("inf")
             constraint_error = float("inf")
             states_new = committed_states
@@ -827,6 +859,8 @@ def _solve_static_displacement_control_block(
                 failure_reason = "maximum_iterations_reached"
 
             if failure_reason is not None:
+                q = q_step_start
+                lam = lam_step_start
                 status = "stopped_at_limit" if steps else "diverged"
                 break
 
@@ -868,6 +902,15 @@ def _solve_static_displacement_control_block(
         kinematics=kinematics,
     )
     info["failure_reason"] = failure_reason
+    info["stop_reason"] = (
+        "target_displacement_reached"
+        if failure_reason is None
+        else failure_reason
+    )
+    info["status_category"] = ns._nonlinear_status_category(
+        status,
+        failure_reason,
+    )
     info["last_converged_load_factor"] = float(lam)
     info["peak_load_factor"] = max((step.load_factor for step in steps), default=float(lam))
     info["force_displacement_history"] = history
@@ -887,6 +930,8 @@ def _solve_static_displacement_control_block(
             "num_steps": num_steps,
             "num_layers": num_layers,
             "linearization": "block_elimination",
+            "kinematics": kinematics,
+            "corotational_tangent": corotational_tangent,
         },
     ).to_dict()
     return ns.NonlinearStaticResult(steps, status, u_final, float(lam), committed_states, info)

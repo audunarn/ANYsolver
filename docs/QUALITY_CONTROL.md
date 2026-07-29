@@ -23,11 +23,39 @@ Use evidence in this order:
 Generated CalculiX-style input decks without matching executed results are
 reproducible handoff artifacts, not numerical validation.
 
-## Unreleased development-sweep status
+## Recorded 0.1.3 release-candidate evidence
 
-Checks on 2026-07-26 against the post-`0.1.1` working tree:
+Checks on 2026-07-28 against the finalized `0.1.3` release-candidate source:
 
-- full `pytest`: 465/465 passed (188.00 s in the canonical runner);
+- independent full `pytest`: 504/504 passed in 214.26 s;
+- comprehensive-run focused FE tests: 156/156 passed;
+- analytical quality control: 18/18 checks passed and 4/4 demonstration
+  cases completed;
+- comprehensive `scripts/run_fe_verification.py` with explicit CalculiX
+  execution: 18/18 command families passed;
+- frozen-baseline generation/comparison: passed without failures or warnings;
+- beam/shell verification ledger: 128 `PASS` and the existing two expected
+  `XFAIL` cases;
+- three real CalculiX 2.22 comparisons passed using
+  `C:\Program Files\FreeCAD 1.1\bin\ccx.exe` (SHA-256
+  `59b8fbc2eb90eec60e5e4c80014baf0f1cb6c892288ad8ba24f5e5235feb2774`);
+- wheel and source distribution build plus `twine check`: passed;
+- isolated wheel installation reported version `0.1.3` from the temporary
+  environment, exposed the public runtime-analysis selection API, and
+  completed representative flat-panel, closed-cylinder, and nonlinear
+  follower-pressure solves without either source repository on `PYTHONPATH`.
+
+The `0.1.3` release is required for the completed generated-geometry runtime
+bridge and its ANYstructure integration. PyPI `0.1.2` is immutable and does not
+contain the follower-pressure runtime field or
+`resolve_runtime_analysis()`.
+
+## Recorded 0.1.2 release-candidate evidence
+
+Checks on 2026-07-28 against the `0.1.2` release-candidate source:
+
+- full `pytest`: 495/495 passed (209.00 s against the finalized versioned
+  source);
 - focused FE verification set: 156/156 passed;
 - `python run_qc.py --test-cases --no-save`: 18/18 QC checks and 4/4
   demonstration cases passed;
@@ -38,6 +66,19 @@ Checks on 2026-07-26 against the post-`0.1.1` working tree:
 - focused unified recovery/runtime qualification groups passed, including an
   actual low-yield plastic-shell solve recovered from committed material
   history;
+- residual shell/beam field initialization, zero-load equilibration,
+  field/restart provenance, exact stage-boundary commits, persistent
+  multi-stage plastic history, and displacement-control rollback passed with
+  acceleration both enabled and disabled;
+- analytical plane-stress tangent qualification passed across elastic,
+  yielding, hardening, unloading, and stable near-singular paths. Maximum
+  analytical/oracle relative error was `1.34e-9`; the warmed 512-point
+  material batch was `2.65x` faster than the numerical derivative in this
+  run;
+- the analytical and numerical tangents both required 15 total Newton
+  iterations in the eight-element plastic-shell benchmark. Relative
+  displacement, reaction, and committed-state differences were `1.61e-15`,
+  `4.50e-14`, and `1.16e-14`;
 - an executable CalculiX 2.22 run passed all three declared reference cases:
   plate center displacement and maximum von Mises errors were 3.00% and
   3.32%, plate force imbalance was 0.00184 N, column buckling-factor error was
@@ -48,11 +89,23 @@ Checks on 2026-07-26 against the post-`0.1.1` working tree:
   beam/shell result.
 - stale non-executed external-report schemas are replaced deterministically;
   invalid executed evidence is preserved and fails closed. The focused
-  external/VVR regression group passed 14/14.
+  external/VVR regression group passed 14/14;
+- wheel and source distribution build plus `twine check`: passed. The wheel
+  imported from an isolated target with both runtime and package metadata at
+  `0.1.2`, completed representative flat-panel and cylinder solves, completed
+  shell initial-field equilibration, and retained a maximum analytical/oracle
+  tangent error of `1.34e-9`.
 
-This is development evidence, not a released-version declaration. A release
-candidate must rerun the complete canonical command set and replace its
-reports after the source is finalized.
+This evidence qualified the then-current `0.1.2` source snapshot. Distribution
+metadata, archive contents, and isolated-wheel execution are checked separately
+when the release artifacts are built; publishing remains a distinct, manually
+approved action.
+
+The later generated-geometry runtime bridge follow-up (shear/torsion routing,
+follower-pressure guards, corotational arc length, and committed-history
+prestress resultants) is not represented by the numbered snapshot above until
+the release verification and distribution checks are rerun against the final
+source.
 
 ## Recorded 0.1.1 release evidence
 
@@ -76,7 +129,7 @@ tree based on tagged commit `6623291` (Windows 11, Python 3.13.9):
 The `0.1.1` external-reference family generated three valid CalculiX handoff
 decks. It did not execute CalculiX, so the historical `0.1.1` evidence makes no
 external numerical-agreement claim. The executed comparison listed in the
-unreleased section above belongs to the later development sweep.
+`0.1.2` section above belongs to the later release-candidate sweep.
 
 The comprehensive test, QC, manifest, baseline, benchmark, and
 external-artifact results are recorded in
@@ -197,7 +250,7 @@ deck-only artifact.
 | Nonlinear capacity | DNV curves, layered shell plasticity, beam fibers, von Karman/corotational paths, rotated/consistent corotational tangents, follower-pressure Newton and arc-length paths, load programs, displacement control, and imperfections. |
 | Transient/contact | Newmark/HHT-alpha, pressure patches, energy/impulse checks, shell/beam sphere contact, event subdivision, nonlinear impact, damage/erosion. |
 | Recovery/resources | Committed shell-layer/beam-fiber recovery, explicitly labelled elastic fallback, corotational objectivity, component provenance, guarded Q4/Q8 patch fits, discontinuity regions, selected components, deterministic threading, memory estimation/limits, and provenance. |
-| Workflows/interchange | Normalized generated geometry, capacity workflow, SESAM FEM round trip/import, transforms/orientation, and SIF load-case stress isolation. |
+| Workflows/interchange | Normalized generated geometry; balanced axial/bending/shear/torsional runtime loads; guarded follower-pressure routing; corotational arc length; committed-history prestress with Gauss-point resultants and provenance; capacity workflow; SESAM FEM round trip/import; transforms/orientation; and SIF load-case stress isolation. |
 | Release scope | Stable verification IDs, PASS/XFAIL separation, production capability matrix, limitations, and evidence manifest. |
 
 ## Interpreting results

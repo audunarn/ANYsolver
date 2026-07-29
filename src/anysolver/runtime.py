@@ -52,6 +52,7 @@ __all__ = [
     "LightweightFEMConfig",
     "LightweightFEMResult",
     "NormalizedGeometry",
+    "RuntimeAnalysisSelection",
     "StatusCallback",
     "apply_mode_shape_imperfections",
     "build_generated_geometry",
@@ -60,6 +61,7 @@ __all__ = [
     "full_backend_available",
     "run_lightweight_fem",
     "run_production_fem",
+    "resolve_runtime_analysis",
     "runtime_imperfection_preview_offsets",
     "warm_fe_solver_kernels",
 ]
@@ -258,6 +260,19 @@ class LightweightFEMConfig:
     collision_damage_min_contact_area_m2: float = 1.0e-6
     collision_damage_max_deleted_fraction: float = 0.25
     collision_damage_neighbor_smoothing: bool = False
+    # Added at the end to preserve the positional field order of the 0.1.x
+    # configuration contract. New callers should prefer keyword arguments.
+    follower_pressure: bool = False
+
+
+@dataclass(frozen=True)
+class RuntimeAnalysisSelection:
+    """Effective analysis choices shared with application integrations."""
+
+    static_nonlinear: bool
+    material_nonlinear: bool
+    solution_control: str
+    kinematics: str
 
 
 @dataclass(frozen=True)
@@ -5251,9 +5266,25 @@ def _effective_nonlinear_static_kinematics(config: LightweightFEMConfig) -> str:
         return "von_karman"
     if _wants_tangent_stability_analysis(config):
         return "von_karman"
-    if _nonlinear_solution_control(config) == "arc length":
-        return "von_karman"
     return _normalized_kinematics(config.nonlinear_static_kinematics)
+
+
+def _invalid_follower_pressure_reason(config: LightweightFEMConfig) -> str:
+    if not bool(config.follower_pressure):
+        return ""
+    if bool(config.collision_enabled) or bool(config.custom_time_domain_enabled):
+        return "Follower pressure is not supported by transient or collision runtime paths."
+    if _wants_capacity_workflow(config):
+        return "Follower pressure is not supported by the structured capacity workflow."
+    if not _wants_static_nonlinear_analysis(config):
+        return "Follower pressure requires a nonlinear static or arc-length runtime path."
+    if _wants_eigenvalue_buckling(config):
+        return (
+            "Follower pressure requires the 'static only' or 'nonlinear static' runtime path; "
+            "the stepwise eigenvalue-buckling path does not yet include the follower-load "
+            "tangent in its stability pencil."
+        )
+    return ""
 
 
 def _invalid_corotational_static_fracture(config: LightweightFEMConfig) -> bool:
@@ -5319,6 +5350,24 @@ def _wants_material_nonlinear_analysis(config: LightweightFEMConfig) -> bool:
         "dnv rp c208",
         "rp c208 steel",
     }
+
+
+def resolve_runtime_analysis(
+    config: LightweightFEMConfig,
+) -> RuntimeAnalysisSelection:
+    """Return the normalized solver choices an integration should display.
+
+    This is the supported alternative to importing runtime implementation
+    helpers with leading underscores.  It lets a GUI reflect solver auto-
+    selections without duplicating the normalization rules.
+    """
+
+    return RuntimeAnalysisSelection(
+        static_nonlinear=_wants_static_nonlinear_analysis(config),
+        material_nonlinear=_wants_material_nonlinear_analysis(config),
+        solution_control=_nonlinear_solution_control(config),
+        kinematics=_effective_nonlinear_static_kinematics(config),
+    )
 
 
 def _wants_tangent_stability_analysis(config: LightweightFEMConfig) -> bool:
@@ -7817,13 +7866,20 @@ def _stress_statistics_from_model(model, displacements: np.ndarray, percentile: 
     return _stress_statistics_from_stresses(_backend_compute_stresses(model, displacements), percentile)
 
 
-def _stress_statistics_from_stresses(stresses_by_element: dict[int, object], percentile: float = 95.0) -> dict[str, float]:
+def _stress_statistics_from_stresses(
+    stresses_by_element: dict[int, object],
+    percentile: float = 95.0,
+    *,
+    component: str = "von_mises",
+) -> dict[str, float]:
     values = []
     for stress in (stresses_by_element or {}).values():
         if not isinstance(stress, dict):
             continue
-        if "von_mises" in stress:
-            values.extend(np.asarray(stress["von_mises"], dtype=float).reshape(-1).tolist())
+        if component in stress:
+            values.extend(
+                np.asarray(stress[component], dtype=float).reshape(-1).tolist()
+            )
     arr = np.asarray(values, dtype=float)
     arr = arr[np.isfinite(arr)]
     if arr.size == 0:
@@ -7835,8 +7891,8 @@ def _runtime_display_stresses(
     model,
     displacements: np.ndarray,
     nonlinear_static_result: object | None,
-) -> tuple[dict[int, object], set[int]]:
-    """Return display stresses and the ids of plastic (state-based) elements."""
+) -> tuple[dict[int, object], set[int], dict[str, object]]:
+    """Return display stresses and ids backed by committed element states."""
     recovery = _recover_stress_result(
         model,
         displacements,
@@ -7846,6 +7902,7 @@ def _runtime_display_stresses(
     return (
         recovery.element_stresses,
         set(recovery.provenance.history_aware_element_ids),
+        recovery.provenance.to_dict(),
     )
 
 
@@ -8225,6 +8282,23 @@ def run_production_fem(
         )
     if config.custom_time_domain_enabled:
         diagnostics.append("Custom time-domain pressure response is enabled and solved with the linear Newmark pressure-patch solver.")
+    follower_pressure_error = _invalid_follower_pressure_reason(config)
+    if follower_pressure_error:
+        return LightweightFEMResult(
+            status="invalid_follower_pressure",
+            stress_max_pa=0.0,
+            stress_p95_pa=0.0,
+            displacement_max_m=0.0,
+            diagnostics=tuple(diagnostics + [follower_pressure_error]),
+            mesh_info={
+                "nodes": int(len(generated_geometry.get("nodes", []))),
+                "shells": int(len(generated_geometry.get("shells", []))),
+                "beams": int(len(generated_geometry.get("beams", []))),
+                "rigid_lids": int(len(generated_geometry.get("rigid_lids", []))),
+                **_mesh_size_diagnostics(generated_geometry),
+            },
+            solver_name="ANYsolver production FE mesh",
+        )
     if _invalid_corotational_static_fracture(config):
         message = (
             "Corotational nonlinear static does not support fracture/erosion; "
@@ -8293,7 +8367,17 @@ def run_production_fem(
         if include_imported_loads:
             _add_generated_axial_force(model, load_case, generated_geometry, float(config.axial_force_n))
             _add_generated_end_moments(model, load_case, generated_geometry, float(config.top_bottom_moment_nm))
+            _add_generated_shear_force(model, load_case, generated_geometry, float(config.shear_force_n))
+            _add_generated_torsional_moment(
+                model, load_case, generated_geometry, float(config.torsional_moment_nm)
+            )
         _add_custom_edge_loads(model, load_case, generated_geometry, config)
+        if bool(config.follower_pressure):
+            load_case.follower_pressure = True
+            diagnostics.append(
+                "Current-area follower pressure is active; nonlinear equilibrium includes "
+                "the exact external-load tangent."
+            )
         added_mass_summary = _apply_acceleration_and_masses(model, load_case, generated_geometry, geometry, config)
         accel_vec = added_mass_summary.get("acceleration_m_s2", [0.0, 0.0, 0.0])
         if any(abs(float(component)) > 0.0 for component in accel_vec):
@@ -8471,7 +8555,11 @@ def run_production_fem(
                 if nonlinear_static_result.converged:
                     analysis_model = capacity_workflow_result.imperfect_model
                     displacements = np.asarray(nonlinear_static_result.displacements, dtype=float)
-                    prestress_states, recovered = _full_backend.recover_prestress_from_static_result(analysis_model, displacements)
+                    prestress_states, recovered = _full_backend.recover_prestress_from_static_result(
+                        analysis_model,
+                        displacements,
+                        nonlinear_result=nonlinear_static_result,
+                    )
                     prestress_summary.update(recovered)
                 prestress_summary["capacity_workflow_status"] = str(capacity_workflow_result.status)
                 prestress_summary["capacity_workflow_capacity_factor"] = float(capacity_workflow_result.capacity_factor)
@@ -8550,6 +8638,7 @@ def run_production_fem(
                         tolerance=max(float(config.nonlinear_tolerance), 1.0e-12),
                         arc_tolerance=max(float(config.nonlinear_tolerance), 1.0e-12),
                         num_layers=_nonlinear_layer_count(config.nonlinear_layers),
+                        kinematics=static_kinematics,
                         progress_callback=nonlinear_progress,
                     )
                 else:
@@ -8600,11 +8689,20 @@ def run_production_fem(
                         max(step.max_equivalent_plastic_strain for step in nonlinear_static_result.steps)
                 )
                 plastic_strain_by_node = _nodal_engineering_plastic_strain(model, nonlinear_static_result.element_states)
-                diagnostics.append("Ran " + nonlinear_control + " geometric/material nonlinear static solve: " + str(nonlinear_static_result.status) + ".")
-                diagnostics.append("Ran incremental geometric/material nonlinear static solve: " + str(nonlinear_static_result.status) + ".")
+                diagnostics.append(
+                    "Ran "
+                    + nonlinear_control
+                    + " geometric/material nonlinear static solve: "
+                    + str(nonlinear_static_result.status)
+                    + "."
+                )
                 if nonlinear_static_result.converged:
                     displacements = np.asarray(nonlinear_static_result.displacements, dtype=float)
-                    prestress_states, recovered = _full_backend.recover_prestress_from_static_result(model, displacements)
+                    prestress_states, recovered = _full_backend.recover_prestress_from_static_result(
+                        model,
+                        displacements,
+                        nonlinear_result=nonlinear_static_result,
+                    )
                     recovered.update({key: value for key, value in prestress_summary.items() if str(key).startswith("nonlinear_static")})
                     for key in (
                         "constraint_method",
@@ -8709,26 +8807,62 @@ def run_production_fem(
         prestress_summary["buckling_max_load_factor"] = 0.0 if load_factor_range[1] is None else float(load_factor_range[1])
     prestress_summary["buckling_allow_dense_fallback"] = 1.0 if bool(config.buckling_allow_dense_fallback) else 0.0
     stress_percentile = min(max(float(config.stress_percentile), 0.0), 100.0)
-    runtime_stresses_by_element, plastic_element_ids = _runtime_display_stresses(
+    runtime_stresses_by_element, history_element_ids, recovery_provenance = _runtime_display_stresses(
         analysis_model, displacements, nonlinear_static_result
     )
-    if plastic_element_ids:
+    prestress_summary["stress_recovery"] = recovery_provenance
+    for warning in recovery_provenance.get("warnings", ()) or ():
+        diagnostics.append("Stress recovery: " + str(warning))
+    if history_element_ids and material_curve is not None:
         # Committed elastoplastic states (shell layers and beam fiber
         # sections) respect the material curve; any remaining elements only
         # have elastic recovery and must not dominate the reported stresses.
         stress_stats = _stress_statistics_from_stresses(
-            {eid: s for eid, s in runtime_stresses_by_element.items() if eid in plastic_element_ids},
+            {
+                eid: stress
+                for eid, stress in runtime_stresses_by_element.items()
+                if eid in history_element_ids
+            },
             stress_percentile,
         )
         elastic_member_stats = _stress_statistics_from_stresses(
-            {eid: s for eid, s in runtime_stresses_by_element.items() if eid not in plastic_element_ids},
+            {
+                eid: stress
+                for eid, stress in runtime_stresses_by_element.items()
+                if eid not in history_element_ids
+            },
             stress_percentile,
         )
-        prestress_summary["elastic_member_peak_von_mises_pa"] = float(elastic_member_stats["max"])
-        diagnostics.append(
-            "Material-nonlinear stresses are recovered from the committed elastoplastic states "
-            "(shell layers and beam fiber sections) and respect the material curve."
+        mixed_reconstruction_stats = _stress_statistics_from_stresses(
+            {
+                eid: stress
+                for eid, stress in runtime_stresses_by_element.items()
+                if eid in history_element_ids
+            },
+            stress_percentile,
+            component="mixed_reconstruction_von_mises",
         )
+        prestress_summary["elastic_member_peak_von_mises_pa"] = float(elastic_member_stats["max"])
+        prestress_summary["mixed_reconstruction_peak_von_mises_pa"] = float(
+            mixed_reconstruction_stats["max"]
+        )
+        diagnostics.append(
+            "Material-nonlinear equivalent stresses are recovered from committed "
+            "elastoplastic states (shell in-plane layers and beam fibers) and respect "
+            "the material curve; transverse shear and torsion remain separately "
+            "labelled elastic reconstructions."
+        )
+        if mixed_reconstruction_stats["max"] > stress_stats["max"] * (
+            1.0 + 100.0 * np.finfo(float).eps
+        ):
+            diagnostics.append(
+                "Model-scope warning: the mixed stress diagnostic that combines "
+                "committed material history with elastic transverse shear/torsion reaches "
+                f"{mixed_reconstruction_stats['max'] / 1.0e6:.0f} MPa; it is retained "
+                "for review but excluded from material-curve equivalent-stress statistics. "
+                "The corresponding shear/torsion modes are outside the current plastic "
+                "return map and must not be interpreted as plastically redistributed."
+            )
         if elastic_member_stats["max"] > 0.0:
             diagnostics.append(
                 "Some members carry only elastic stress recovery; their peak von Mises "
@@ -8743,6 +8877,7 @@ def run_production_fem(
         displacements,
         stresses_by_element=runtime_stresses_by_element,
     )
+    visualization["stress_recovery_provenance"] = recovery_provenance
     if visualization:
         visualization["fea_result_import"] = _fea_result_import_payload(
             generated_geometry,

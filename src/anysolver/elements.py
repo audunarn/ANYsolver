@@ -78,6 +78,62 @@ if TYPE_CHECKING:
 
 
 _SMALL = 1.0e-12
+_INITIAL_SHELL_STATE_KEYS = (
+    "initial_membrane_stress",
+    "initial_bending_stress",
+    "initial_membrane_prestrain",
+    "initial_curvature_prestrain",
+    "initial_field_provenance",
+)
+_INITIAL_BEAM_STATE_KEYS = (
+    "initial_fiber_stress",
+    "initial_fiber_prestrain",
+    "initial_field_provenance",
+)
+
+
+def _copy_state_fields(state: Any, keys: Tuple[str, ...]) -> Dict[str, Any]:
+    if not isinstance(state, dict):
+        return {}
+    copied: Dict[str, Any] = {}
+    for key in keys:
+        if key not in state:
+            continue
+        value = state[key]
+        copied[key] = value.copy() if isinstance(value, np.ndarray) else value
+    return copied
+
+
+def _shell_field_rows(value: Any, n_gp: int, name: str) -> np.ndarray:
+    """Broadcast a shell-local engineering vector to one row per Gauss point."""
+    array = np.asarray(value, dtype=float)
+    if array.shape == (3,):
+        return np.broadcast_to(array, (n_gp, 3)).copy()
+    if array.shape == (1, 3):
+        return np.broadcast_to(array, (n_gp, 3)).copy()
+    if array.shape == (n_gp, 3):
+        return array.copy()
+    raise ValueError(f"{name} must have shape (3,) or ({n_gp}, 3); got {array.shape}")
+
+
+def _beam_fiber_field(
+    value: Any,
+    total_fibers: int,
+    section_fibers: int,
+    name: str,
+) -> np.ndarray:
+    """Broadcast a beam-fiber field over one or all integration sections."""
+    array = np.asarray(value, dtype=float).reshape(-1)
+    if array.size == 1:
+        return np.full(total_fibers, float(array[0]), dtype=float)
+    if array.size == section_fibers and total_fibers % section_fibers == 0:
+        return np.tile(array, total_fibers // section_fibers)
+    if array.size == total_fibers:
+        return array.copy()
+    raise ValueError(
+        f"{name} must be scalar, have {section_fibers} section-fiber values, "
+        f"or {total_fibers} total values; got {array.size}"
+    )
 
 
 @njit
@@ -1471,6 +1527,16 @@ class ShellElement(Element):
 
         if state is None:
             state = self.init_nonlinear_state(num_layers)
+        initial_state = _copy_state_fields(state, _INITIAL_SHELL_STATE_KEYS)
+        has_initial_field = any(
+            key in initial_state
+            for key in (
+                "initial_membrane_stress",
+                "initial_bending_stress",
+                "initial_membrane_prestrain",
+                "initial_curvature_prestrain",
+            )
+        )
 
         # Membrane and bending strains at every integration point.
         memb_strain = np.zeros((n_gp, 3), dtype=float)
@@ -1494,7 +1560,7 @@ class ShellElement(Element):
             B_eff_list.append(B_eff)
             theta_list.append(theta)
 
-        if curve is None:
+        if curve is None and not has_initial_field:
             # Elastic shortcut: resultants and integrated moduli in closed form.
             trial_state = state
             N_res = memb_strain @ (h * C_el).T
@@ -1503,21 +1569,74 @@ class ShellElement(Element):
             C1 = np.zeros((n_gp, 3, 3), dtype=float)
             C2 = np.broadcast_to(h**3 / 12.0 * C_el, (n_gp, 3, 3))
         else:
-            # Layer strains for all (gp, layer) points at once, then one
-            # vectorized return-map call for the whole element.
-            layer_strain = (
+            # Layer strains for all (gp, layer) points at once.  Prescribed
+            # residual stress is represented by its elastic strain offset and
+            # prestrain is subtracted as an eigenstrain.  Both therefore enter
+            # the same return map as the kinematic strain and participate in
+            # yielding, hardening, unloading, and the geometric stiffness.
+            kinematic_layer_strain = (
                 memb_strain[:, None, :] + z_layers[None, :, None] * curvature[:, None, :]
-            ).reshape(n_gp * num_layers, 3)
-            sigma, C_tan, ep_new, alpha_new = plane_stress_return_map(
-                layer_strain,
-                state["plastic_strain"],
-                state["alpha"],
-                E,
-                nu,
-                curve,
-                compute_tangent=tangent,
             )
-            trial_state = {"plastic_strain": ep_new, "alpha": alpha_new, "layer_strain": layer_strain.copy()}
+            zero_rows = np.zeros((n_gp, 3), dtype=float)
+            membrane_stress = _shell_field_rows(
+                initial_state.get("initial_membrane_stress", zero_rows),
+                n_gp,
+                "initial_membrane_stress",
+            )
+            bending_stress = _shell_field_rows(
+                initial_state.get("initial_bending_stress", zero_rows),
+                n_gp,
+                "initial_bending_stress",
+            )
+            membrane_prestrain = _shell_field_rows(
+                initial_state.get("initial_membrane_prestrain", zero_rows),
+                n_gp,
+                "initial_membrane_prestrain",
+            )
+            curvature_prestrain = _shell_field_rows(
+                initial_state.get("initial_curvature_prestrain", zero_rows),
+                n_gp,
+                "initial_curvature_prestrain",
+            )
+            initial_stress = (
+                membrane_stress[:, None, :]
+                + (2.0 * z_layers[None, :, None] / h) * bending_stress[:, None, :]
+            )
+            eigenstrain = (
+                membrane_prestrain[:, None, :]
+                + z_layers[None, :, None] * curvature_prestrain[:, None, :]
+            )
+            stress_strain_offset = np.einsum(
+                "ij,glj->gli",
+                np.linalg.inv(C_el),
+                initial_stress,
+            )
+            layer_strain = (kinematic_layer_strain - eigenstrain + stress_strain_offset).reshape(
+                n_gp * num_layers,
+                3,
+            )
+            if curve is None:
+                sigma = layer_strain @ C_el.T
+                C_tan = np.broadcast_to(C_el, (n_gp * num_layers, 3, 3)).copy()
+                ep_new = np.zeros_like(layer_strain)
+                alpha_new = np.zeros(n_gp * num_layers, dtype=float)
+            else:
+                sigma, C_tan, ep_new, alpha_new = plane_stress_return_map(
+                    layer_strain,
+                    state["plastic_strain"],
+                    state["alpha"],
+                    E,
+                    nu,
+                    curve,
+                    compute_tangent=tangent,
+                )
+            trial_state = {
+                "plastic_strain": ep_new,
+                "alpha": alpha_new,
+                "layer_strain": layer_strain.copy(),
+                "kinematic_layer_strain": kinematic_layer_strain.reshape(n_gp * num_layers, 3).copy(),
+                **initial_state,
+            }
 
             sigma = sigma.reshape(n_gp, num_layers, 3)
             C_tan = C_tan.reshape(n_gp, num_layers, 3, 3)
@@ -2118,6 +2237,12 @@ class BeamElement(Element):
         if isinstance(state, dict) and np.asarray(state.get("plastic_strain", [])).size == n:
             plastic_old = np.asarray(state["plastic_strain"], dtype=float).reshape(-1)
             alpha_old = np.asarray(state.get("alpha", np.zeros(n)), dtype=float).reshape(-1)
+            if alpha_old.size == 1:
+                alpha_old = np.full(n, float(alpha_old[0]), dtype=float)
+            elif alpha_old.size != n:
+                raise ValueError(
+                    f"Beam fiber alpha has {alpha_old.size} entries; expected 1 or {n}"
+                )
         else:
             plastic_old = np.zeros(n, dtype=float)
             alpha_old = np.zeros(n, dtype=float)
@@ -2176,8 +2301,22 @@ class BeamElement(Element):
         kappa_y = (u_loc[10] - u_loc[4]) / L
         kappa_z = (u_loc[11] - u_loc[5]) / L
         fiber_strain = eps0 + z * kappa_y + y * kappa_z
+        initial_state = _copy_state_fields(state, _INITIAL_BEAM_STATE_KEYS)
+        initial_stress = _beam_fiber_field(
+            initial_state.get("initial_fiber_stress", 0.0),
+            fiber_strain.size,
+            fiber_strain.size,
+            "initial_fiber_stress",
+        )
+        initial_prestrain = _beam_fiber_field(
+            initial_state.get("initial_fiber_prestrain", 0.0),
+            fiber_strain.size,
+            fiber_strain.size,
+            "initial_fiber_prestrain",
+        )
+        constitutive_fiber_strain = fiber_strain - initial_prestrain + initial_stress / E
         stress, Et, plastic_new, alpha_new = self._uniaxial_return_map(
-            fiber_strain, state, E, config.material_curve
+            constitutive_fiber_strain, state, E, config.material_curve
         )
 
         B = np.zeros((fiber_strain.size, 12), dtype=float)
@@ -2226,9 +2365,11 @@ class BeamElement(Element):
         trial_state = {
             "plastic_strain": plastic_new,
             "alpha": alpha_new,
-            "fiber_strain": fiber_strain.copy(),
+            "fiber_strain": constitutive_fiber_strain.copy(),
+            "kinematic_fiber_strain": fiber_strain.copy(),
             "fiber_stress": stress.copy(),
             "axial_force": N_force,
+            **initial_state,
         }
         if not tangent:
             return T.T @ F_loc, None, trial_state
@@ -2571,8 +2712,24 @@ class QuadraticBeamElement(BeamElement):
 
         trial_state: Optional[Any] = state
         if fiber_config is not None:
+            initial_state = _copy_state_fields(state, _INITIAL_BEAM_STATE_KEYS)
+            initial_stress = _beam_fiber_field(
+                initial_state.get("initial_fiber_stress", 0.0),
+                fiber_strain_all.size,
+                n_fibers,
+                "initial_fiber_stress",
+            )
+            initial_prestrain = _beam_fiber_field(
+                initial_state.get("initial_fiber_prestrain", 0.0),
+                fiber_strain_all.size,
+                n_fibers,
+                "initial_fiber_prestrain",
+            )
+            constitutive_fiber_strain = (
+                fiber_strain_all - initial_prestrain + initial_stress / E
+            )
             stress, Et, plastic_new, alpha_new = self._uniaxial_return_map(
-                fiber_strain_all, state, E, fiber_config.material_curve
+                constitutive_fiber_strain, state, E, fiber_config.material_curve
             )
             for jac, B_v, B_w, rows in gp_data:
                 weights_gp = w_f
@@ -2586,9 +2743,11 @@ class QuadraticBeamElement(BeamElement):
             trial_state = {
                 "plastic_strain": plastic_new,
                 "alpha": alpha_new,
-                "fiber_strain": fiber_strain_all.copy(),
+                "fiber_strain": constitutive_fiber_strain.copy(),
+                "kinematic_fiber_strain": fiber_strain_all.copy(),
                 "fiber_stress": stress.copy(),
                 "axial_force": float(np.mean(axial_forces)) if axial_forces else 0.0,
+                **initial_state,
             }
 
         if not tangent:
@@ -2847,6 +3006,103 @@ class CoupledBeamShellElement(Element):
 
     def compute_mass_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
         return np.zeros((self.total_dofs, self.total_dofs), dtype=float)
+
+
+def validate_initial_field_state(
+    element: Element,
+    material: "Material",
+    state: Dict[str, Any],
+    num_layers: int,
+) -> None:
+    """Validate that a prescribed initial stress is locally admissible.
+
+    Residual-stress input specifies the stress *at the initialized reference
+    state*; it is not a request for the solver to reconstruct an unknown
+    manufacturing load path.  For nonlinear materials the supplied stress
+    must therefore lie on or inside the flow surface associated with the
+    supplied hardening state.
+    """
+    tolerance = 1.0e-9
+    if isinstance(element, ShellElement) and (
+        "initial_membrane_stress" in state or "initial_bending_stress" in state
+    ):
+        curve = getattr(material, "hardening_curve", None)
+        if curve is None:
+            return
+        n_gp = len(element.gauss_points)
+        z_layers, _weights = lobatto_layers(num_layers, element.thickness)
+        zero = np.zeros((n_gp, 3), dtype=float)
+        membrane = _shell_field_rows(
+            state.get("initial_membrane_stress", zero),
+            n_gp,
+            "initial_membrane_stress",
+        )
+        bending = _shell_field_rows(
+            state.get("initial_bending_stress", zero),
+            n_gp,
+            "initial_bending_stress",
+        )
+        stress = (
+            membrane[:, None, :]
+            + (2.0 * z_layers[None, :, None] / element.thickness) * bending[:, None, :]
+        ).reshape(n_gp * num_layers, 3)
+        alpha = np.asarray(state.get("alpha", np.zeros(stress.shape[0])), dtype=float).reshape(-1)
+        if alpha.size != stress.shape[0]:
+            raise ValueError(
+                f"Shell initial alpha has {alpha.size} entries; expected {stress.shape[0]}"
+            )
+        equivalent = np.sqrt(
+            np.maximum(
+                stress[:, 0] ** 2
+                - stress[:, 0] * stress[:, 1]
+                + stress[:, 1] ** 2
+                + 3.0 * stress[:, 2] ** 2,
+                0.0,
+            )
+        )
+        flow = np.asarray(curve.flow_stress(alpha), dtype=float)
+        excess = equivalent - flow
+        if np.any(excess > tolerance * np.maximum(flow, 1.0)):
+            index = int(np.argmax(excess))
+            raise ValueError(
+                f"Initial shell stress on element {element.element_id} is outside the supplied "
+                f"hardening-state flow surface at point {index}: "
+                f"sigma_eq={equivalent[index]:.6g}, flow={flow[index]:.6g}. "
+                "Supply an admissible stress or compatible alpha history."
+            )
+    if isinstance(element, (BeamElement, QuadraticBeamElement)) and "initial_fiber_stress" in state:
+        config = element._fiber_plasticity_config(material)
+        if config is None:
+            return
+        curve = config.material_curve
+        y, _z, _weights = element._fiber_section_grid(config)
+        section_fibers = y.size
+        total_fibers = section_fibers * (
+            len(element.GAUSS_POINTS) if isinstance(element, QuadraticBeamElement) else 1
+        )
+        stress = _beam_fiber_field(
+            state["initial_fiber_stress"],
+            total_fibers,
+            section_fibers,
+            "initial_fiber_stress",
+        )
+        alpha = np.asarray(state.get("alpha", np.zeros(total_fibers)), dtype=float).reshape(-1)
+        if alpha.size not in {1, total_fibers}:
+            raise ValueError(
+                f"Beam initial alpha has {alpha.size} entries; expected 1 or {total_fibers}"
+            )
+        if alpha.size == 1:
+            alpha = np.full(total_fibers, float(alpha[0]), dtype=float)
+        flow = np.asarray(curve.flow_stress(alpha), dtype=float)
+        excess = np.abs(stress) - flow
+        if np.any(excess > tolerance * np.maximum(flow, 1.0)):
+            index = int(np.argmax(excess))
+            raise ValueError(
+                f"Initial beam-fiber stress on element {element.element_id} is outside the supplied "
+                f"hardening-state flow surface at fiber {index}: "
+                f"|sigma|={abs(stress[index]):.6g}, flow={flow[index]:.6g}. "
+                "Supply an admissible stress or compatible alpha history."
+            )
 
 
 ELEMENT_TYPES = {

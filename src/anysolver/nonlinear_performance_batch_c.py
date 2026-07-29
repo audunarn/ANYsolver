@@ -316,10 +316,26 @@ def _batch_c_assemble_nonlinear_system(
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    if deleted_tuple or extra or kinematics != "von_karman":
+    has_initial_fields = any(
+        isinstance(state, Mapping)
+        and any(
+            key in state
+            for key in (
+                "initial_membrane_stress",
+                "initial_bending_stress",
+                "initial_membrane_prestrain",
+                "initial_curvature_prestrain",
+                "initial_fiber_stress",
+                "initial_fiber_prestrain",
+            )
+        )
+        for state in committed_states.values()
+    )
+    if deleted_tuple or extra or kinematics != "von_karman" or has_initial_fields:
         # The reduced-assembly plan encodes the default von Karman element
-        # response; erosion, per-element stiffness scales and corotational
-        # kinematics take the full base assembler.
+        # response; erosion, per-element stiffness scales, corotational
+        # kinematics, and immutable initial stress/prestrain offsets take the
+        # full reference path.
         return _BASE_ASSEMBLER(
             model,
             displacements,
