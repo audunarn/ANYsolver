@@ -29,13 +29,33 @@ local y = local z cross local x
 
 Global nodal translations and rotations are transformed to that local frame
 before evaluating membrane strain, bending curvature and transverse shear.
-The elastic constitutive blocks are:
+For an isotropic material the elastic constitutive blocks are:
 
 ```text
 D_membrane = E h / (1 - nu^2) * [[1, nu, 0], [nu, 1, 0], [0, 0, (1 - nu)/2]]
 D_bending  = E h^3 / (12 (1 - nu^2)) times the same plane-stress block
 D_shear    = kappa G h I, kappa = 5/6
 ```
+
+For a homogeneous orthotropic material, the 3-D engineering compliance is
+supplied in material axes and Voigt order
+`[11, 22, 33, 23, 13, 12]`, with engineering shear strains. Plane stress uses
+the `[11, 22, 12]` compliance submatrix:
+
+```text
+Q = inverse(S[[11,22,12],[11,22,12]])
+D_membrane = h Q
+D_bending  = h^3 Q / 12
+D_shear    = kappa h diag(G13, G23)
+```
+
+Engineering strain/stress transformations rotate `Q` and the transverse-shear
+block from material axes into the integration-point shell frame, retaining
+off-axis extension/shear coupling. Drilling stabilization scales with `G12`.
+`material_direction` is projected into the shell plane; a parallel-to-normal
+projection fails validation. `material_angle_deg` is then applied
+right-handed about the positive shell normal. If no direction is supplied,
+the angle is measured from shell-local x.
 
 The 4-node shell uses an MITC4-style assumed natural shear interpolation,
 following the continuum-mechanics basis of
@@ -95,6 +115,12 @@ beam definition and is rejected. Curved rings and arches must be discretized
 as straight 2-node segments until a true curved-isoparametric beam with
 objective frame interpolation and matching mass/geometric stiffness is
 implemented and qualified.
+
+For orthotropic beams, material axes 1/2/3 coincide with beam-local x/y/z.
+Axial and both bending terms use `E1`; local-xy and local-xz transverse shear
+use `G12` and `G13`. Because a scalar material shear modulus and section `J`
+cannot represent general orthotropic torsion, the section must supply positive
+`torsional_rigidity` directly in N*m^2. Isotropic beams continue to use `G*J`.
 
 ## Mass and Pressure Loading
 
@@ -412,8 +438,9 @@ pressure qualification follows the sensitivity highlighted by the
 [Abaqus ring benchmark](https://docs.software.vt.edu/abaqusv2025/English/SIMACAEBMKRefMap/simabmk-c-ringbuckling.htm).
 
 The incremental nonlinear static path uses von Karman shell kinematics,
-beam-column geometric coupling and optional layered J2 plane-stress plasticity
-with DNV-RP-C208-style material curves. It is suitable for restrained
+beam-column geometric coupling and optional layered isotropic J2 or
+orthotropic Hill-48 plane-stress plasticity with DNV-RP-C208-style material
+curves. It is suitable for restrained
 plate/stiffened-panel response and pre/post-buckling capacity checks in the
 implemented range.
 
@@ -486,6 +513,40 @@ K_layer = B_m.T C_alg B_m
 The scalar and accelerated paths use the same return-map contract; reduced
 Q8R shells remain on the scalar path because their hourglass contribution is
 not part of the accelerated local tangent.
+
+### Plane-stress Hill-48 plasticity
+
+`Hill48Yield(X, Y, Z, S12, S13, S23)` defines symmetric directional strengths
+in material axes. The standard quadratic Hill coefficients form
+
+```text
+F(s2-s3)^2 + G(s3-s1)^2 + H(s1-s2)^2
+  + 2L t23^2 + 2M t13^2 + 2N t12^2 = 1
+```
+
+and the shell reduction acts on `[s11, s22, t12]`. The implementation performs
+a backward-Euler associated-flow update in material axes, stores material-axis
+plastic strain and Hill equivalent plastic strain, and rotates converged
+physical stress back to the shell frame for resultants and recovery. A scalar
+hardening curve scales every directional strength by
+`flow_stress(alpha)/flow_stress(0)`, preserving their ratios. The exact local
+Newton derivative is the production tangent; a central-difference derivative
+qualifies it and replaces invalid rows, while an unconverged consistency solve
+fails closed. In the isotropic-strength limit, the stress-valued Hill
+equivalent measure reduces to von Mises.
+When no hardening curve is supplied, the Hill strengths define an
+elastic-perfectly-plastic response. Initial residual stresses are transformed
+to material axes and checked against the same current Hill surface.
+
+Orthotropic beam fiber plasticity remains opt-in. Fibers use `E1` and the
+longitudinal strength `X`; transverse beam shear and torsion remain elastic.
+For orthotropic results, physical `von_mises` retains the elastic transverse
+shell shear or beam shear/torsion envelope. The separate
+`equivalent_stress_measure="hill48"`, `equivalent_stress`, and
+`hill_utilization` identify the constitutive Hill measure; utilization uses the
+current hardening-scaled strength. Beam Hill recovery is explicitly scoped to
+the return-mapped longitudinal fibers, with the mixed elastic components
+identified in provenance.
 
 ### Corotational kinematics (large rigid rotations)
 
@@ -632,9 +693,11 @@ resulting nonsymmetric system. See
 
 Material modelling:
 
-- Shells use layered plane-stress J2 plasticity through Gauss-Lobatto thickness
+- Isotropic shells use layered plane-stress J2 plasticity and orthotropic
+  shells use material-axis Hill-48 plasticity through Gauss-Lobatto thickness
   layers. Result diagnostics include equivalent plastic strain, compressed-side
-  plastic strain and layer strain extrema when plastic state is available.
+  plastic strain, layer strain extrema, and the applicable equivalent-stress
+  measure when plastic state is available.
 - Beam/stiffener plasticity is opt-in through `FiberSectionPlasticityConfig`.
   The beam fiber model integrates uniaxial axial/bending stress over a section
   grid scaled to the supplied `A`, `Iy` and `Iz`; shear and torsion stay
@@ -656,14 +719,17 @@ reported per element and per component, so a caller can distinguish
 `committed_shell_layer_state`, `committed_beam_fiber_state`, and explicitly
 labelled elastic fallback.
 
-For shells, committed return-mapped layer stresses are integrated with the
+For shells, committed return-mapped physical layer stresses are integrated with the
 same Gauss-Lobatto layer positions and weights used by the nonlinear
 formulation. The output includes membrane and bending stress measures, exact
-top/bottom layer values, and an in-plane von Mises stress governed by the shell
-return map. For fiber beams, the stored fiber coordinates, weights, and
+top/bottom layer values, conventional physical von Mises stress, and the
+labelled Hill equivalent/utilization for orthotropic state. For fiber beams,
+the stored fiber coordinates, weights, and
 stations give axial force and biaxial bending resultants; the material-history
-von Mises envelope is the uniaxial fiber-stress envelope when a plastic
-constitutive history is active. Transverse shell shear and beam shear/torsion
+isotropic von Mises envelope remains the uniaxial fiber-stress envelope when a
+plastic constitutive history is active for backward compatibility; orthotropic
+recovery reports the conventional mixed physical invariant. Transverse shell
+shear and beam shear/torsion
 are matching elastic reconstructions rather than return-mapped state variables.
 They remain available as individual components and in the explicitly labelled
 `mixed_reconstruction_von_mises` diagnostic, but are not folded into the
@@ -689,6 +755,11 @@ neighborhoods, and incomplete neighborhoods remain outside the qualified fit.
 The optional indicator is a normalized global top/bottom surface-stress L2
 discrepancy between raw and recovered stresses. It is explicitly *not* a
 compliance-weighted ZZ energy-norm error estimate and must not be used as one.
+
+The material scope is homogeneous isotropy or orthotropy. General anisotropic
+coupling, laminates and ply stacking, tension/compression-asymmetric strengths,
+progressive composite failure, and shear/torsion plastic interaction are not
+implemented.
 
 Simplified fracture / element erosion:
 

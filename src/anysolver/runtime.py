@@ -5495,13 +5495,34 @@ def _nonlinear_curve_payload(config: LightweightFEMConfig, geometry: dict) -> tu
 def _apply_material_curve_to_model(model, curve: object | None, properties: dict[str, float | str]) -> None:
     if curve is None:
         return
-    for material in getattr(model, "materials", {}).values():
+    from .materials import material_symmetry
+
+    isotropic_material_names: set[str] = set()
+    for material_name, material in getattr(model, "materials", {}).items():
+        # The runtime dropdown supplies an isotropic DNV steel curve.  Preserve
+        # orthotropic constitutive data (including an ANYmaterial-provided
+        # hardening law) instead of injecting a curve whose reference stress
+        # and elastic constants belong to a different material model.
+        if material_symmetry(material) != "isotropic":
+            continue
+        isotropic_material_names.add(str(material_name))
         material.hardening_curve = curve
-        material.elastic_modulus = float(properties.get("E_pa", material.elastic_modulus))
-        material.yield_stress = float(properties.get("sigma_yield", material.yield_stress))
+        if hasattr(material, "elastic_modulus"):
+            material.elastic_modulus = float(
+                properties.get("E_pa", material.elastic_modulus)
+            )
+        if hasattr(material, "yield_stress"):
+            material.yield_stress = float(
+                properties.get("sigma_yield", material.yield_stress)
+            )
 
     for element in getattr(model.mesh, "elements", {}).values():
         if element.__class__.__name__ in {"BeamElement", "QuadraticBeamElement"}:
+            if str(getattr(element, "material_name", "")) not in isotropic_material_names:
+                # Orthotropic fiber plasticity is an explicit section opt-in
+                # and requires Hill X; the isotropic runtime dropdown must not
+                # enable it as a side effect.
+                continue
             if not hasattr(element, "cross_section") or element.cross_section is None:
                 element.cross_section = {}
             if isinstance(element.cross_section, dict):

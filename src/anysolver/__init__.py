@@ -17,6 +17,30 @@ the capability boundary, architecture, theory, and qualification evidence.
 """
 
 from .fe_core import DOFManager, FEMesh, FEModel, Material, Node
+from .materials import (
+    BeamMaterialProperties,
+    ENGINEERING_VOIGT_ORDER,
+    Hill48Yield,
+    OrthotropicMaterial,
+    StructuralMaterial,
+    beam_material_properties,
+    elastic_compliance_matrix,
+    is_isotropic_material,
+    is_orthotropic_material,
+    material_symmetry,
+    material_validation_errors,
+    shell_characteristic_modulus,
+    shell_material_matrices,
+    validate_material,
+)
+from .plasticity import (
+    hill48_coefficients,
+    hill48_equivalent_stress,
+    hill48_plane_stress_coefficients,
+    hill48_plane_stress_equivalent_stress,
+    hill48_plane_stress_numerical_tangent,
+    hill48_plane_stress_return_map,
+)
 from .elements import BeamElement, CoupledBeamShellElement, QuadraticBeamElement, ShellElement, create_element
 from .boundary import (
     BoundaryCondition,
@@ -362,8 +386,28 @@ __all__ = [
     "DOFManager",
     "FEMesh",
     "FEModel",
+    "Hill48Yield",
     "Material",
     "Node",
+    "OrthotropicMaterial",
+    "StructuralMaterial",
+    "BeamMaterialProperties",
+    "ENGINEERING_VOIGT_ORDER",
+    "beam_material_properties",
+    "elastic_compliance_matrix",
+    "is_isotropic_material",
+    "is_orthotropic_material",
+    "material_symmetry",
+    "material_validation_errors",
+    "shell_characteristic_modulus",
+    "shell_material_matrices",
+    "validate_material",
+    "hill48_coefficients",
+    "hill48_equivalent_stress",
+    "hill48_plane_stress_coefficients",
+    "hill48_plane_stress_equivalent_stress",
+    "hill48_plane_stress_numerical_tangent",
+    "hill48_plane_stress_return_map",
     # Elements
     "BeamElement",
     "CoupledBeamShellElement",

@@ -65,14 +65,15 @@ changes before making release claims.
 | Area | Implemented functionality |
 | --- | --- |
 | Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. |
-| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; stiffness, mass, pressure, and stress recovery. The shell initial-stress operator includes membrane, bending, and second stress moments acting through the implemented Mindlin translation/director field. Q8R reduced integration is experimental and outside the qualified thin-bending/nonlinear-batch scope. |
-| Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, shear, torsion, consistent/lumped mass options, geometric stiffness, and optional fiber-section plasticity. |
+| Materials | Backward-compatible isotropic materials plus homogeneous 3-D engineering-constant orthotropic materials through a solver-owned compliance-matrix contract. Orthotropic shells support material direction/angle and Hill-48 plasticity; orthotropic beams use local material axes and an explicit section torsional rigidity. |
+| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; isotropic or rotated orthotropic stiffness, mass, pressure, and stress recovery. The shell initial-stress operator includes membrane, bending, and second stress moments acting through the implemented Mindlin translation/director field. Q8R reduced integration is experimental and outside the qualified thin-bending/nonlinear-batch scope. |
+| Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, direction-dependent shear, torsion, consistent/lumped mass options, geometric stiffness, and optional fiber-section plasticity. |
 | Coupling | Coincident or eccentric beam-shell kinematics through explicit interpolated MPC transformations. |
 | Loads | Nodal force/moment, dead or current-area follower shell pressure, in-plane edge loads, acceleration/gravity, prescribed displacement, load combinations, proportional and staged nonlinear loads. Follower pressure includes its exact, generally nonsymmetric external-load tangent. |
 | Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, and sparse factorization reuse. |
 | Modal and mass | Consistent mass assembly, point masses, model mass/inertia properties, constrained and free-free vibration modes. |
 | Buckling | Linear eigenvalue buckling for beam axial force and shell Mindlin initial-stress resultants, including sparse shift-invert and repeated-mode diagnostics. A follower-load stiffness can be included when its constrained tangent is symmetric; a general nonsymmetric follower eigenproblem is outside scope. |
-| Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, dead or follower pressure, von Karman or opt-in corotational kinematics, rotated or consistent corotational tangent, layered shell J2 plasticity with a safeguarded local solve and analytical consistent tangent, beam fiber plasticity, stage-boundary commits, true preload/restart displacement control, and simplified element erosion. |
+| Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, dead or follower pressure, von Karman or opt-in corotational kinematics, rotated or consistent corotational tangent, layered shell J2 or orthotropic Hill-48 plasticity with safeguarded local solves and consistent tangents, beam fiber plasticity, stage-boundary commits, true preload/restart displacement control, and simplified element erosion. |
 | Continuation | Bounded Crisfield-style spherical arc-length tracing through a first limit point and a guarded descending branch, including current-area follower pressure and its load tangent. |
 | Dynamics | Newmark or HHT-alpha implicit transient response, Rayleigh damping, prescribed shell pressure patches, selected/envelope history storage, and memory preflight. |
 | Impact/contact | One rigid sphere with frictionless penalty contact against shells and opt-in beam-axis segments; event substepping, Aitken relaxation, nonlinear material response, and engineering damage/erosion options. |
@@ -81,7 +82,22 @@ changes before making release claims.
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |
 | Interchange | Pure-Python SESAM formatted FEM record/document parsing, guarded round-trip writing, supported semantic import to `FEModel`, coordinate transforms, beam orientation, and SIF shell-stress reading by load case. |
 | Results | Result provenance; unified elastic or committed shell-layer/beam-fiber stress recovery; Gauss-point membrane-force and bending-moment resultants for generated-geometry prestress; guarded Zienkiewicz-Zhu-style patch recovery for qualified shell neighborhoods; selected recovery; reaction filtering; validation diagnostics; deterministic baselines; benchmarks; and generated qualification reports. |
-| External verification | Reproducible CalculiX input generation plus opt-in isolated execution, FRD/DAT parsing, solver provenance, and tolerance-controlled analytical comparison. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
+| External verification | Reproducible CalculiX input generation plus opt-in isolated execution, FRD/DAT parsing, solver provenance, and tolerance-controlled analytical comparison, including an oriented orthotropic S4 constant-stress reference. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
+
+`StructuralMaterial` is a runtime-checkable, solver-owned protocol containing
+`name`, `density`, `elastic_symmetry`, and
+`elastic_compliance_matrix()` in engineering Voigt order
+`[11, 22, 33, 23, 13, 12]`. `FEModel.register_material()` accepts compatible
+external objects without an ANYmaterial dependency;
+`FEModel.add_orthotropic_material()` constructs the built-in
+`OrthotropicMaterial`.
+
+For shells, `material_direction` is projected into the shell plane and then
+`material_angle_deg` is applied right-handed about the positive shell normal;
+without a direction, the angle starts at shell-local x. For beams, material
+axes 1/2/3 are beam-local x/y/z. Orthotropic beam sections must provide a
+positive `cross_section["torsional_rigidity"]` in N*m^2; isotropic beams retain
+`G*J`.
 
 Implemented does not automatically mean qualified for every geometry or load
 regime. The live capability matrix is produced by
@@ -96,6 +112,9 @@ verified mesh, material, distortion, eccentricity, and load ranges.
 Important limits:
 
 - no arbitrary CAD topology or automatic general-purpose meshing;
+- no general anisotropic constitutive coupling, laminates, ply stacks,
+  tension/compression-asymmetric composite failure, or progressive composite
+  damage; the implemented model is homogeneous orthotropy;
 - Q8R is experimental: its hourglass stabilization is not qualified for thin
   bending and it is deliberately excluded from nonlinear batch acceleration;
 - the 3-node quadratic beam is straight-sided; curved members must be
@@ -122,13 +141,13 @@ Important limits:
 - material-history-aware recovery requires retained, matching committed
   nonlinear layer/fiber states; missing or invalid state is reported and the
   affected components fall back explicitly to elastic reconstruction;
-- with an active plastic constitutive history, `von_mises` covers the
-  return-mapped shell in-plane or beam-fiber stress components. Transverse
-  shell shear and beam shear/torsion remain elastic reconstructions and are
-  exposed separately through `mixed_reconstruction_von_mises`, rather than
-  being presented as a hardening-curve-consistent equivalent stress. A purely
-  elastic nonlinear state keeps the full mixed elastic value as its primary
-  equivalent stress;
+- for legacy isotropic plastic histories, `von_mises` retains the established
+  return-mapped shell in-plane or beam-fiber scope. Orthotropic results keep
+  `von_mises` as the conventional invariant of the physical stress, including
+  matching elastic transverse shear/torsion reconstruction, while
+  `equivalent_stress` and `hill_utilization` remain explicitly scoped to the
+  Hill-return-mapped components. `mixed_reconstruction_von_mises` and recovery
+  provenance identify that mixed constitutive scope;
 - the guarded patch-recovery fit is qualified only for locally planar,
   consistently oriented, homogeneous, full-integration Q4 or Q8 shell
   neighborhoods. Discontinuities remain separate, and the optional normalized
@@ -144,6 +163,9 @@ Important limits:
   derivative remains an oracle and automatic invalid-row fallback; local
   yield-residual nonconvergence fails closed;
 - no unverified material laws or distortion ranges;
+- orthotropic shells use the general element/nonlinear paths and report their
+  deterministic constitutive fallback; beams use the general element path,
+  while the existing accelerated shell kernels remain isotropic-only;
 - SESAM `FEModel` export remains outside the supported interchange gate;
 - CalculiX comparison requires a compatible local executable and an explicit
   execution request. Deck generation alone is a reproducibility handoff, not

@@ -71,6 +71,11 @@ import numpy as np
 
 from .jit_compiler import njit
 from .material_curves import FiberSectionPlasticityConfig
+from .materials import (
+    beam_material_properties as _canonical_beam_material_properties,
+    elastic_compliance_matrix as _canonical_elastic_compliance,
+    material_symmetry as _canonical_material_symmetry,
+)
 from .plasticity import lobatto_layers, plane_stress_elastic_matrix, plane_stress_return_map
 
 if TYPE_CHECKING:
@@ -194,6 +199,178 @@ def _beam_rotation_matrix(e1: np.ndarray, orientation: Optional[np.ndarray]) -> 
     e3 = _cross3(e1, e2)
     e3 /= np.linalg.norm(e3)
     return np.column_stack((e1, e2, e3))
+
+
+def _elastic_symmetry(material: Any) -> str:
+    """Return the normalized elastic symmetry without inventing isotropic aliases."""
+
+    symmetry = _canonical_material_symmetry(material)
+    if symmetry not in {"isotropic", "orthotropic"}:
+        raise ValueError(
+            f"Unsupported elastic symmetry {symmetry!r}; ANYsolver currently supports "
+            "only isotropic and orthotropic materials."
+        )
+    return symmetry
+
+
+def _elastic_compliance(material: Any) -> np.ndarray:
+    """Engineering compliance in [11,22,33,23,13,12] order."""
+
+    compliance = np.asarray(_canonical_elastic_compliance(material), dtype=float)
+    if compliance.shape != (6, 6) or not np.all(np.isfinite(compliance)):
+        raise ValueError("elastic_compliance_matrix() must return a finite 6x6 matrix")
+    if not np.allclose(compliance, compliance.T, rtol=1.0e-10, atol=1.0e-18):
+        raise ValueError("elastic compliance matrix must be symmetric")
+    return 0.5 * (compliance + compliance.T)
+
+
+def _in_plane_transform_matrices(angle_rad: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Engineering-strain, stress, and transverse-shear transforms.
+
+    The material 1-axis is rotated by ``angle_rad`` from element-local x
+    toward local y about the positive shell normal.
+    """
+
+    c = float(np.cos(angle_rad))
+    s = float(np.sin(angle_rad))
+    axes = np.array([[c, -s], [s, c]], dtype=float)
+    strain_to_material = np.zeros((3, 3), dtype=float)
+    stress_to_local = np.zeros((3, 3), dtype=float)
+    for column in range(3):
+        engineering_strain = np.zeros(3, dtype=float)
+        engineering_strain[column] = 1.0
+        local_tensor = np.array(
+            [
+                [engineering_strain[0], 0.5 * engineering_strain[2]],
+                [0.5 * engineering_strain[2], engineering_strain[1]],
+            ],
+            dtype=float,
+        )
+        material_tensor = axes.T @ local_tensor @ axes
+        strain_to_material[:, column] = (
+            material_tensor[0, 0],
+            material_tensor[1, 1],
+            2.0 * material_tensor[0, 1],
+        )
+        material_stress = np.zeros(3, dtype=float)
+        material_stress[column] = 1.0
+        stress_tensor = np.array(
+            [
+                [material_stress[0], material_stress[2]],
+                [material_stress[2], material_stress[1]],
+            ],
+            dtype=float,
+        )
+        local_stress = axes @ stress_tensor @ axes.T
+        stress_to_local[:, column] = (
+            local_stress[0, 0],
+            local_stress[1, 1],
+            local_stress[0, 1],
+        )
+    return strain_to_material, stress_to_local, axes
+
+
+def _shell_material_matrices(
+    material: Any,
+    angle_rad: float,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return local plane-stress/shear matrices and material-axis transforms."""
+
+    symmetry = _elastic_symmetry(material)
+    # Preserve the legacy isotropic arithmetic exactly.  Forming and reducing
+    # the 3-D compliance is mathematically equivalent, but its final-bit
+    # roundoff can perturb tightly qualified eigenvalue thresholds.  External
+    # protocol objects without the historical scalar fields still use the
+    # compliance path below.
+    if (
+        symmetry == "isotropic"
+        and hasattr(material, "elastic_modulus")
+        and hasattr(material, "poisson_ratio")
+    ):
+        E = float(material.elastic_modulus)
+        nu = float(material.poisson_ratio)
+        G = float(
+            getattr(
+                material,
+                "shear_modulus",
+                E / (2.0 * (1.0 + nu)),
+            )
+        )
+        Q_material = E / (1.0 - nu**2) * np.array(
+            [
+                [1.0, nu, 0.0],
+                [nu, 1.0, 0.0],
+                [0.0, 0.0, (1.0 - nu) / 2.0],
+            ],
+            dtype=float,
+        )
+        return (
+            Q_material,
+            G * np.eye(2, dtype=float),
+            np.eye(3, dtype=float),
+            np.eye(3, dtype=float),
+        )
+
+    compliance = _elastic_compliance(material)
+    membrane_indices = np.array([0, 1, 5], dtype=np.intp)
+    shear_indices = np.array([4, 3], dtype=np.intp)  # [13, 23]
+    Q_material = np.linalg.inv(compliance[np.ix_(membrane_indices, membrane_indices)])
+    G_material = np.linalg.inv(compliance[np.ix_(shear_indices, shear_indices)])
+    strain_to_material, stress_to_local, axes = _in_plane_transform_matrices(angle_rad)
+    Q_local = stress_to_local @ Q_material @ strain_to_material
+    G_local = axes @ G_material @ axes.T
+    return (
+        0.5 * (Q_local + Q_local.T),
+        0.5 * (G_local + G_local.T),
+        strain_to_material,
+        stress_to_local,
+    )
+
+
+def _beam_material_properties(material: Any, cross_section: Dict[str, Any]) -> Tuple[float, float, float, float]:
+    """Return E1, G12, G13 and torsional rigidity for a beam."""
+
+    properties = _canonical_beam_material_properties(material)
+    E1 = float(properties.axial_modulus)
+    G12 = float(properties.shear_modulus_xy)
+    G13 = float(properties.shear_modulus_xz)
+    if _elastic_symmetry(material) == "orthotropic":
+        value = cross_section.get("torsional_rigidity")
+        try:
+            torsional_rigidity = float(value)
+        except (TypeError, ValueError):
+            torsional_rigidity = float("nan")
+        if not np.isfinite(torsional_rigidity) or torsional_rigidity <= 0.0:
+            raise ValueError(
+                "Orthotropic beam sections require a positive "
+                "cross_section['torsional_rigidity'] in N*m^2."
+            )
+    else:
+        torsional_rigidity = G12 * float(cross_section.get("J", 1.0e-8))
+    return E1, G12, G13, torsional_rigidity
+
+
+def _beam_flow_scale(material: Any, curve: Any) -> float:
+    """Scale a scalar hardening curve to the Hill longitudinal strength X.
+
+    With no curve, the returned value is the constant perfect-plastic flow
+    stress.  Otherwise it multiplies the curve so ``flow_stress(0) == X``.
+    """
+
+    if _elastic_symmetry(material) != "orthotropic":
+        return 1.0
+    hill_yield = getattr(material, "hill_yield", None)
+    if hill_yield is None:
+        raise ValueError(
+            f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+            "requires hill_yield for beam fiber plasticity."
+        )
+    if curve is None:
+        return float(hill_yield.X)
+    reference = float(np.asarray(curve.flow_stress(np.array([0.0])), dtype=float)[0])
+    if not np.isfinite(reference) or reference <= 0.0:
+        raise ValueError("hardening curve must provide a positive initial flow stress")
+    return float(hill_yield.X) / reference
 
 
 def _rotation_vector_from_matrix(rotation: np.ndarray) -> np.ndarray:
@@ -692,6 +869,8 @@ class ShellElement(Element):
         drilling_stabilization: float = 1.0e-3,
         reduced_integration: bool = False,
         hourglass_stabilization: float = 1.0e-8,
+        material_direction: Optional[np.ndarray] = None,
+        material_angle_deg: float = 0.0,
     ):
         super().__init__(element_id, node_ids, material_name)
         if len(set(node_ids)) != len(node_ids):
@@ -700,6 +879,18 @@ class ShellElement(Element):
         self.drilling_stabilization = float(drilling_stabilization)
         self.reduced_integration = reduced_integration
         self.hourglass_stabilization = float(hourglass_stabilization)
+        self.material_angle_deg = float(material_angle_deg)
+        if not np.isfinite(self.material_angle_deg):
+            raise ValueError("material_angle_deg must be finite")
+        if material_direction is None:
+            self.material_direction = None
+        else:
+            direction = np.asarray(material_direction, dtype=float).reshape(-1)
+            if direction.size != 3 or not np.all(np.isfinite(direction)):
+                raise ValueError("material_direction must be a finite 3-vector")
+            if float(np.linalg.norm(direction)) <= _SMALL:
+                raise ValueError("material_direction must be non-zero")
+            self.material_direction = direction.copy()
         self._is_3node = len(node_ids) == 3
         self._is_6node = len(node_ids) == 6
         self._is_8node = len(node_ids) == 8
@@ -708,6 +899,41 @@ class ShellElement(Element):
         self._is_quadrilateral = self._is_4node or self._is_8node
         if not (self._is_triangular or self._is_quadrilateral):
             raise ValueError(f"ShellElement requires 3, 4, 6 or 8 nodes, got {len(node_ids)}")
+
+    def _material_angle(self, local_frame: np.ndarray) -> float:
+        """Material 1-axis angle in the supplied element-local frame."""
+
+        angle = np.deg2rad(self.material_angle_deg)
+        if self.material_direction is None:
+            return float(angle)
+        frame = np.asarray(local_frame, dtype=float).reshape(3, 3)
+        direction = np.asarray(self.material_direction, dtype=float)
+        components = np.array(
+            [float(np.dot(direction, frame[:, 0])), float(np.dot(direction, frame[:, 1]))],
+            dtype=float,
+        )
+        norm = float(np.linalg.norm(components))
+        if norm <= 1.0e-10 * max(float(np.linalg.norm(direction)), 1.0):
+            raise ValueError(
+                f"Shell element {self.element_id} material_direction is parallel to "
+                "the shell normal and cannot define an in-plane material axis."
+            )
+        return float(np.arctan2(components[1], components[0]) + angle)
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = super().to_dict()
+        payload.update(
+            {
+                "thickness": float(self.thickness),
+                "material_angle_deg": float(self.material_angle_deg),
+                "material_direction": (
+                    None
+                    if self.material_direction is None
+                    else np.asarray(self.material_direction, dtype=float).tolist()
+                ),
+            }
+        )
+        return payload
 
     @property
     def num_nodes(self) -> int:
@@ -1065,36 +1291,43 @@ class ShellElement(Element):
 
     def compute_stiffness_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
         coords = self.get_node_coordinates(mesh)
-        E = material.elastic_modulus
-        nu = material.poisson_ratio
-        G = material.shear_modulus
+        _elastic_symmetry(material)
         h = self.thickness
         kappa = 5.0 / 6.0
-
-        shell_plane = np.array(
-            [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, (1.0 - nu) / 2.0]],
-            dtype=float,
-        )
-        D_membrane = E * h / (1.0 - nu**2) * shell_plane
-        D_bending = E * h**3 / (12.0 * (1.0 - nu**2)) * shell_plane
-        D_shear = G * kappa * h * np.eye(2, dtype=float)
+        compliance = _elastic_compliance(material)
+        drilling_modulus = 1.0 / float(compliance[5, 5])
 
         K = np.zeros((self.total_dofs, self.total_dofs), dtype=float)
 
         for (xi, eta), weight in zip(self.gauss_points, self.gauss_weights):
             N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
             R, dN_dx, dN_dy, det_j = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+            Q_local, _G_local, _strain_transform, _stress_transform = _shell_material_matrices(
+                material,
+                self._material_angle(R),
+            )
+            D_membrane = h * Q_local
+            D_bending = h**3 / 12.0 * Q_local
             T = self._local_dof_transform(R)
             B_m, B_b, _ = self._build_shell_b_matrices(N, dN_dx, dN_dy)
             B_d = self._build_drilling_b_matrix(N, dN_dx, dN_dy)
             K_local = (B_m.T @ D_membrane @ B_m + B_b.T @ D_bending @ B_b) * det_j * weight
 
-            drilling_stiffness = G * h * getattr(self, "drilling_stabilization", 1.0e-3)
+            drilling_stiffness = (
+                drilling_modulus
+                * h
+                * getattr(self, "drilling_stabilization", 1.0e-3)
+            )
             K_local += (B_d.T @ (drilling_stiffness * np.eye(1)) @ B_d) * det_j * weight
             K += T.T @ K_local @ T
 
         if self._is_4node:
             R = self._center_frame(coords)
+            _Q_local, G_local, _strain_transform, _stress_transform = _shell_material_matrices(
+                material,
+                self._material_angle(R),
+            )
+            D_shear = kappa * h * G_local
             T = self._local_dof_transform(R)
             planar, samples = self._mitc4_shear_samples(coords, R)
             for (xi, eta), weight in zip(self.GAUSS_POINTS_2x2, self.GAUSS_WEIGHTS_2x2):
@@ -1103,6 +1336,11 @@ class ShellElement(Element):
                 K += T.T @ K_local @ T
         elif self._is_3node:
             R = self._center_frame(coords)
+            _Q_local, G_local, _strain_transform, _stress_transform = _shell_material_matrices(
+                material,
+                self._material_angle(R),
+            )
+            D_shear = kappa * h * G_local
             T = self._local_dof_transform(R)
             B_s, det_j = self._tri3_assumed_shear_b_matrix(coords, R)
             K_local = (B_s.T @ D_shear @ B_s) * det_j * float(np.sum(self.shear_gauss_weights))
@@ -1111,6 +1349,11 @@ class ShellElement(Element):
             for (xi, eta), weight in zip(self.shear_gauss_points, self.shear_gauss_weights):
                 N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
                 R, dN_dx, dN_dy, det_j = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+                _Q_local, G_local, _strain_transform, _stress_transform = _shell_material_matrices(
+                    material,
+                    self._material_angle(R),
+                )
+                D_shear = kappa * h * G_local
                 T = self._local_dof_transform(R)
                 _, _, B_s = self._build_shell_b_matrices(N, dN_dx, dN_dy)
                 K_local = (B_s.T @ D_shear @ B_s) * det_j * weight
@@ -1479,6 +1722,7 @@ class ShellElement(Element):
             detw_shear_all[g] = sh["detw"]
 
         cache = {
+            "R0": R0,
             "T0": T0,
             "gp": gp_data,
             "shear": shear_data,
@@ -1510,17 +1754,35 @@ class ShellElement(Element):
         tangent: bool = True,
     ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
         cache = self._nonlinear_geometry(mesh)
+        R0 = cache["R0"]
         T0 = cache["T0"]
         u_loc = T0 @ np.asarray(u_elem, dtype=float)
 
-        E = material.elastic_modulus
-        nu = material.poisson_ratio
-        G_mod = material.shear_modulus
+        symmetry = _elastic_symmetry(material)
         h = self.thickness
         curve = getattr(material, "hardening_curve", None)
-        C_el = plane_stress_elastic_matrix(E, nu)
-        D_shear = G_mod * (5.0 / 6.0) * h * np.eye(2, dtype=float)
-        drilling_stiffness = G_mod * h * getattr(self, "drilling_stabilization", 1.0e-3)
+        C_el, shear_elastic, strain_to_material, stress_to_local = _shell_material_matrices(
+            material,
+            self._material_angle(R0),
+        )
+        C_material, _shear_material, _identity_strain, _identity_stress = (
+            _shell_material_matrices(material, 0.0)
+        )
+        drilling_modulus = 1.0 / float(_elastic_compliance(material)[5, 5])
+        D_shear = shear_elastic * (5.0 / 6.0) * h
+        drilling_stiffness = (
+            drilling_modulus
+            * h
+            * getattr(self, "drilling_stabilization", 1.0e-3)
+        )
+        hill_yield = getattr(material, "hill_yield", None)
+        if symmetry == "orthotropic" and curve is not None and hill_yield is None:
+            raise ValueError(
+                f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+                "requires hill_yield when hardening_curve is active."
+            )
+        hill_plasticity = symmetry == "orthotropic" and hill_yield is not None
+        constitutive_plasticity = curve is not None or hill_plasticity
 
         n_gp = len(cache["gp"])
         z_layers, w_layers = lobatto_layers(num_layers, h)
@@ -1560,7 +1822,7 @@ class ShellElement(Element):
             B_eff_list.append(B_eff)
             theta_list.append(theta)
 
-        if curve is None and not has_initial_field:
+        if not constitutive_plasticity and not has_initial_field:
             # Elastic shortcut: resultants and integrated moduli in closed form.
             trial_state = state
             N_res = memb_strain @ (h * C_el).T
@@ -1606,27 +1868,83 @@ class ShellElement(Element):
                 membrane_prestrain[:, None, :]
                 + z_layers[None, :, None] * curvature_prestrain[:, None, :]
             )
-            stress_strain_offset = np.einsum(
-                "ij,glj->gli",
-                np.linalg.inv(C_el),
-                initial_stress,
-            )
-            layer_strain = (kinematic_layer_strain - eigenstrain + stress_strain_offset).reshape(
-                n_gp * num_layers,
-                3,
-            )
-            if curve is None:
+            if symmetry == "orthotropic":
+                initial_stress_material = np.einsum(
+                    "ij,glj->gli",
+                    np.linalg.inv(stress_to_local),
+                    initial_stress,
+                )
+                kinematic_material = np.einsum(
+                    "ij,glj->gli",
+                    strain_to_material,
+                    kinematic_layer_strain,
+                )
+                eigenstrain_material = np.einsum(
+                    "ij,glj->gli",
+                    strain_to_material,
+                    eigenstrain,
+                )
+                stress_strain_offset = np.einsum(
+                    "ij,glj->gli",
+                    np.linalg.inv(C_material),
+                    initial_stress_material,
+                )
+                layer_strain_material = (
+                    kinematic_material - eigenstrain_material + stress_strain_offset
+                ).reshape(n_gp * num_layers, 3)
+                layer_strain = (
+                    kinematic_layer_strain - eigenstrain
+                    + np.einsum(
+                        "ij,glj->gli",
+                        np.linalg.inv(C_el),
+                        initial_stress,
+                    )
+                ).reshape(n_gp * num_layers, 3)
+            else:
+                stress_strain_offset = np.einsum(
+                    "ij,glj->gli",
+                    np.linalg.inv(C_el),
+                    initial_stress,
+                )
+                layer_strain = (
+                    kinematic_layer_strain - eigenstrain + stress_strain_offset
+                ).reshape(n_gp * num_layers, 3)
+                layer_strain_material = layer_strain
+            if not constitutive_plasticity:
                 sigma = layer_strain @ C_el.T
                 C_tan = np.broadcast_to(C_el, (n_gp * num_layers, 3, 3)).copy()
                 ep_new = np.zeros_like(layer_strain)
                 alpha_new = np.zeros(n_gp * num_layers, dtype=float)
+                if symmetry == "orthotropic":
+                    sigma_material = layer_strain_material @ C_material.T
+            elif hill_plasticity:
+                from .plasticity import hill48_plane_stress_return_map
+
+                sigma_material, C_tan_material, ep_new, alpha_new = (
+                    hill48_plane_stress_return_map(
+                        layer_strain_material,
+                        state["plastic_strain"],
+                        state["alpha"],
+                        C_material,
+                        hill_yield,
+                        curve,
+                        compute_tangent=tangent,
+                    )
+                )
+                sigma = sigma_material @ stress_to_local.T
+                C_tan = np.einsum(
+                    "ij,njk,kl->nil",
+                    stress_to_local,
+                    C_tan_material,
+                    strain_to_material,
+                )
             else:
                 sigma, C_tan, ep_new, alpha_new = plane_stress_return_map(
                     layer_strain,
                     state["plastic_strain"],
                     state["alpha"],
-                    E,
-                    nu,
+                    float(material.elastic_modulus),
+                    float(material.poisson_ratio),
                     curve,
                     compute_tangent=tangent,
                 )
@@ -1634,6 +1952,7 @@ class ShellElement(Element):
                 "plastic_strain": ep_new,
                 "alpha": alpha_new,
                 "layer_strain": layer_strain.copy(),
+                "layer_strain_material": layer_strain_material.copy(),
                 "kinematic_layer_strain": kinematic_layer_strain.reshape(n_gp * num_layers, 3).copy(),
                 **initial_state,
             }
@@ -1641,6 +1960,14 @@ class ShellElement(Element):
             sigma = sigma.reshape(n_gp, num_layers, 3)
             C_tan = C_tan.reshape(n_gp, num_layers, 3, 3)
             trial_state["layer_stress"] = sigma.reshape(n_gp * num_layers, 3).copy()
+            if symmetry == "orthotropic":
+                trial_state["layer_stress_material"] = sigma_material.reshape(
+                    n_gp * num_layers,
+                    3,
+                ).copy()
+                trial_state["equivalent_stress_measure"] = (
+                    "hill48" if hill_yield is not None else "von_mises"
+                )
 
             # Through-thickness resultants and integrated tangent moduli.
             N_res = np.einsum("l,gli->gi", w_layers, sigma)
@@ -1667,7 +1994,7 @@ class ShellElement(Element):
             D_shear,
             drilling_stiffness,
             tangent,
-            curve is not None,
+            constitutive_plasticity,
             n_dof,
         )
         K_loc = K_loc_temp if tangent else None
@@ -1699,18 +2026,9 @@ class ShellElement(Element):
     ) -> Dict[str, np.ndarray]:
         coords = self.get_node_coordinates(mesh)
         u_elem_global = self._get_element_displacements(mesh, displacements)
-        E = material.elastic_modulus
-        nu = material.poisson_ratio
-        G = material.shear_modulus
+        symmetry = _elastic_symmetry(material)
         h = self.thickness
         kappa = 5.0 / 6.0
-
-        shell_plane = np.array(
-            [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, (1.0 - nu) / 2.0]],
-            dtype=float,
-        )
-        D_stress = E / (1.0 - nu**2) * shell_plane
-        D_bending_moment = E * h**3 / (12.0 * (1.0 - nu**2)) * shell_plane
 
         num_ip = len(self.gauss_points)
         stresses: Dict[str, np.ndarray] = {
@@ -1723,7 +2041,13 @@ class ShellElement(Element):
             "shear_xz": np.zeros(num_ip),
             "shear_yz": np.zeros(num_ip),
             "von_mises": np.zeros(num_ip),
+            "equivalent_stress": np.zeros(num_ip),
+            "hill_utilization": np.zeros(num_ip),
         }
+        stresses["equivalent_stress_measure"] = (
+            "hill48" if symmetry == "orthotropic" and getattr(material, "hill_yield", None) is not None
+            else "von_mises"
+        )
         if return_global:
             stresses.update({
                 "local_xx_top": np.zeros(num_ip),
@@ -1759,16 +2083,28 @@ class ShellElement(Element):
         tri3_u_local = None
         if self._is_4node:
             R_center = self._center_frame(coords)
+            _Q_center, G_center, _strain_center, _stress_center = _shell_material_matrices(
+                material,
+                self._material_angle(R_center),
+            )
             mitc_planar, mitc_samples = self._mitc4_shear_samples(coords, R_center)
             mitc_u_local = self._local_dof_transform(R_center) @ u_elem_global
         elif self._is_3node:
             R_center = self._center_frame(coords)
+            _Q_center, G_center, _strain_center, _stress_center = _shell_material_matrices(
+                material,
+                self._material_angle(R_center),
+            )
             tri3_B_s, _ = self._tri3_assumed_shear_b_matrix(coords, R_center)
             tri3_u_local = self._local_dof_transform(R_center) @ u_elem_global
 
         for idx, (xi, eta) in enumerate(self.gauss_points):
             N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
             R, dN_dx, dN_dy, _ = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+            Q_local, G_local, _strain_to_material, stress_to_local = _shell_material_matrices(
+                material,
+                self._material_angle(R),
+            )
             T = self._local_dof_transform(R)
             u_local = T @ u_elem_global
             B_m, B_b, B_s = self._build_shell_b_matrices(N, dN_dx, dN_dy)
@@ -1782,10 +2118,11 @@ class ShellElement(Element):
             else:
                 shear_strain = B_s @ u_local
 
-            sigma_m = D_stress @ membrane_strain
-            moments = D_bending_moment @ curvature
+            sigma_m = Q_local @ membrane_strain
+            moments = (h**3 / 12.0 * Q_local) @ curvature
             sigma_b = 6.0 * moments / max(h**2, _SMALL)
-            tau_s = G * kappa * shear_strain
+            shear_matrix = G_center if self._is_4node or self._is_3node else G_local
+            tau_s = kappa * shear_matrix @ shear_strain
 
             stresses["membrane_xx"][idx] = sigma_m[0]
             stresses["membrane_yy"][idx] = sigma_m[1]
@@ -1813,6 +2150,27 @@ class ShellElement(Element):
             )
 
             stresses["von_mises"][idx] = max(vm_top, vm_bot)
+            hill_yield = getattr(material, "hill_yield", None)
+            if hill_yield is not None:
+                from .plasticity import hill48_plane_stress_equivalent_stress
+
+                top_material = np.linalg.solve(stress_to_local, np.array(
+                    [sigma_x_top, sigma_y_top, tau_xy_top],
+                    dtype=float,
+                ))
+                bottom_material = np.linalg.solve(stress_to_local, np.array(
+                    [sigma_x_bot, sigma_y_bot, tau_xy_bot],
+                    dtype=float,
+                ))
+                hill_values = hill48_plane_stress_equivalent_stress(
+                    np.vstack((top_material, bottom_material)),
+                    hill_yield,
+                )
+                equivalent = float(np.max(hill_values))
+                stresses["equivalent_stress"][idx] = equivalent
+                stresses["hill_utilization"][idx] = equivalent / max(float(hill_yield.X), _SMALL)
+            else:
+                stresses["equivalent_stress"][idx] = stresses["von_mises"][idx]
 
             if return_global:
                 # Top local stress tensor
@@ -1943,12 +2301,10 @@ class BeamElement(Element):
 
     def _local_linear_stiffness(self, length: float, material: "Material", include_axial: bool = True) -> np.ndarray:
         L = float(length)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         EA = E * self._A
         EIy = E * self._Iy
         EIz = E * self._Iz
-        GJ = G * self._J
         K = np.zeros((12, 12), dtype=float)
         if include_axial:
             K[0, 0] = K[6, 6] = EA / L
@@ -1956,7 +2312,7 @@ class BeamElement(Element):
 
         # Bending about local y: deflection w (local z), rotation ry, EIy,
         # Timoshenko shear parameter from the local-z shear area.
-        phi_w = 12.0 * EIy / max(G * self._A * self._kz * L**2, _SMALL)
+        phi_w = 12.0 * EIy / max(G13 * self._A * self._kz * L**2, _SMALL)
         K[2, 2] = K[8, 8] = 12.0 * EIy / (L**3 * (1.0 + phi_w))
         K[2, 8] = K[8, 2] = -K[2, 2]
         K[2, 4] = K[4, 2] = -6.0 * EIy / (L**2 * (1.0 + phi_w))
@@ -1968,7 +2324,7 @@ class BeamElement(Element):
 
         # Bending about local z: deflection v (local y), rotation rz, EIz,
         # Timoshenko shear parameter from the local-y shear area.
-        phi_v = 12.0 * EIz / max(G * self._A * self._ky * L**2, _SMALL)
+        phi_v = 12.0 * EIz / max(G12 * self._A * self._ky * L**2, _SMALL)
         K[1, 1] = K[7, 7] = 12.0 * EIz / (L**3 * (1.0 + phi_v))
         K[1, 7] = K[7, 1] = -K[1, 1]
         K[1, 5] = K[5, 1] = 6.0 * EIz / (L**2 * (1.0 + phi_v))
@@ -2140,6 +2496,13 @@ class BeamElement(Element):
             raise TypeError("cross_section['fiber_plasticity'] must be a FiberSectionPlasticityConfig, dict or True")
         curve = config.material_curve or getattr(material, "hardening_curve", None)
         if curve is None:
+            if (
+                _elastic_symmetry(material) == "orthotropic"
+                and getattr(material, "hill_yield", None) is not None
+            ):
+                # Hill X supplies an elastic-perfectly-plastic longitudinal
+                # fiber law when no scalar hardening curve is provided.
+                return config
             return None
         if config.material_curve is curve:
             return config
@@ -2231,6 +2594,7 @@ class BeamElement(Element):
         state: Optional[Any],
         E: float,
         curve: Any,
+        flow_scale: float = 1.0,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         strain = np.asarray(strain, dtype=float).reshape(-1)
         n = strain.size
@@ -2249,7 +2613,14 @@ class BeamElement(Element):
 
         trial = E * (strain - plastic_old)
         abs_trial = np.abs(trial)
-        flow_old = curve.flow_stress(alpha_old)
+        scale = float(flow_scale)
+        if not np.isfinite(scale) or scale <= 0.0:
+            raise ValueError("beam fiber flow_scale must be positive")
+        flow_old = (
+            np.full(n, scale, dtype=float)
+            if curve is None
+            else scale * curve.flow_stress(alpha_old)
+        )
         yielding = abs_trial > flow_old + 1.0e-9 * np.maximum(flow_old, 1.0)
 
         stress = trial.copy()
@@ -2263,15 +2634,36 @@ class BeamElement(Element):
         for idx in indices:
             sign = 1.0 if trial[idx] >= 0.0 else -1.0
             dgamma = 0.0
-            H = float(curve.hardening_modulus(np.array([alpha_old[idx]]))[0])
+            H = (
+                0.0
+                if curve is None
+                else scale
+                * float(
+                    curve.hardening_modulus(np.array([alpha_old[idx]]))[0]
+                )
+            )
+            converged = False
             for _ in range(30):
                 alpha_trial = alpha_old[idx] + dgamma
-                sy = float(curve.flow_stress(np.array([alpha_trial]))[0])
-                H = float(curve.hardening_modulus(np.array([alpha_trial]))[0])
+                if curve is None:
+                    sy = scale
+                    H = 0.0
+                else:
+                    sy = scale * float(
+                        curve.flow_stress(np.array([alpha_trial]))[0]
+                    )
+                    H = scale * float(
+                        curve.hardening_modulus(np.array([alpha_trial]))[0]
+                    )
                 residual = abs_trial[idx] - E * dgamma - sy
                 if abs(residual) <= 1.0e-8 * max(sy, 1.0):
+                    converged = True
                     break
                 dgamma = max(0.0, dgamma + residual / max(E + H, _SMALL))
+            if not converged:
+                raise RuntimeError(
+                    "Beam fiber return mapping did not converge after 30 iterations"
+                )
             stress[idx] = sign * max(abs_trial[idx] - E * dgamma, 0.0)
             plastic_new[idx] = plastic_old[idx] + sign * dgamma
             alpha_new[idx] = alpha_old[idx] + dgamma
@@ -2290,8 +2682,7 @@ class BeamElement(Element):
         coords = self.get_node_coordinates(mesh)
         L, T = self._beam_frame_and_transform(coords)
         u_loc = T @ np.asarray(u_elem, dtype=float)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         y, z, weights = self._fiber_section_grid(config)
 
         du = u_loc[6] - u_loc[0]
@@ -2316,7 +2707,11 @@ class BeamElement(Element):
         )
         constitutive_fiber_strain = fiber_strain - initial_prestrain + initial_stress / E
         stress, Et, plastic_new, alpha_new = self._uniaxial_return_map(
-            constitutive_fiber_strain, state, E, config.material_curve
+            constitutive_fiber_strain,
+            state,
+            E,
+            config.material_curve,
+            _beam_flow_scale(material, config.material_curve),
         )
 
         B = np.zeros((fiber_strain.size, 12), dtype=float)
@@ -2354,9 +2749,9 @@ class BeamElement(Element):
         B_torsion = np.zeros(12, dtype=float)
         B_torsion[3], B_torsion[9] = -1.0 / L, 1.0 / L
         K_aux = L * (
-            G * self._A * self._ky * np.outer(B_shear_y, B_shear_y)
-            + G * self._A * self._kz * np.outer(B_shear_z, B_shear_z)
-            + G * self._J * np.outer(B_torsion, B_torsion)
+            G12 * self._A * self._ky * np.outer(B_shear_y, B_shear_y)
+            + G13 * self._A * self._kz * np.outer(B_shear_z, B_shear_z)
+            + GJ * np.outer(B_torsion, B_torsion)
         )
         F_loc += K_aux @ u_loc
         if tangent:
@@ -2369,6 +2764,9 @@ class BeamElement(Element):
             "kinematic_fiber_strain": fiber_strain.copy(),
             "fiber_stress": stress.copy(),
             "axial_force": N_force,
+            "equivalent_stress_measure": (
+                "hill48" if _elastic_symmetry(material) == "orthotropic" else "von_mises"
+            ),
             **initial_state,
         }
         if not tangent:
@@ -2477,7 +2875,11 @@ class BeamElement(Element):
             for i in (0, 6):
                 K_loc[i, :] = 0.0
                 K_loc[:, i] = 0.0
-            cache = {"L": L, "T": T, "K_noax": K_loc, "EA": material.elastic_modulus * self._A}
+            E1, _G12, _G13, _GJ = _beam_material_properties(
+                material,
+                self.cross_section,
+            )
+            cache = {"L": L, "T": T, "K_noax": K_loc, "EA": E1 * self._A}
             self._nl_cache = cache
 
         L = cache["L"]
@@ -2526,8 +2928,7 @@ class BeamElement(Element):
         except ValueError:
             return {}
         u_local = T @ self._get_element_displacements(mesh, displacements)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         end_a, end_b = self._end_displacements(u_local)
         u1, v1, w1, rx1, ry1, rz1 = end_a
         u2, v2, w2, rx2, ry2, rz2 = end_b
@@ -2541,12 +2942,12 @@ class BeamElement(Element):
         sigma_bending_z = M_z * c_y / max(self._Iz, _SMALL)
         gamma_xy = (v2 - v1) / L - 0.5 * (rz1 + rz2)
         gamma_xz = (w2 - w1) / L + 0.5 * (ry1 + ry2)
-        tau_y = G * self._ky * gamma_xy
-        tau_z = G * self._kz * gamma_xz
-        tau_torsion = G * self._J * (rx2 - rx1) / L / self._torsion_section_modulus()
+        tau_y = G12 * self._ky * gamma_xy
+        tau_z = G13 * self._kz * gamma_xz
+        tau_torsion = GJ * (rx2 - rx1) / L / self._torsion_section_modulus()
         sigma_x = sigma_axial + sigma_bending_y + sigma_bending_z
         von_mises = np.sqrt(sigma_x**2 + 3.0 * (tau_y**2 + tau_z**2 + tau_torsion**2))
-        return {
+        recovered = {
             "axial_stress": sigma_axial,
             "bending_stress_y": sigma_bending_y,
             "bending_stress_z": sigma_bending_z,
@@ -2555,6 +2956,37 @@ class BeamElement(Element):
             "torsional_stress": tau_torsion,
             "von_mises": von_mises,
         }
+        hill_yield = getattr(material, "hill_yield", None)
+        if hill_yield is not None:
+            from .plasticity import hill48_equivalent_stress
+
+            # Section recovery supplies envelopes rather than a resolved
+            # perimeter stress point.  Include both directional transverse
+            # shears, and conservatively combine the torsional envelope with
+            # either x-y or x-z shear.
+            candidates = np.array(
+                [
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z, tau_y],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z, tau_y + tau_torsion],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z, tau_y - tau_torsion],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z + tau_torsion, tau_y],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z - tau_torsion, tau_y],
+                ],
+                dtype=float,
+            )
+            equivalent = float(
+                np.max(hill48_equivalent_stress(candidates, hill_yield))
+            )
+            recovered["equivalent_stress"] = equivalent
+            recovered["equivalent_stress_measure"] = "hill48"
+            recovered["hill_utilization"] = equivalent / max(float(hill_yield.X), _SMALL)
+            recovered["equivalent_stress_scope"] = (
+                "conservative beam-local axial/shear/torsion envelope"
+            )
+        else:
+            recovered["equivalent_stress"] = von_mises
+            recovered["equivalent_stress_measure"] = "von_mises"
+        return recovered
 
 
 class QuadraticBeamElement(BeamElement):
@@ -2625,14 +3057,12 @@ class QuadraticBeamElement(BeamElement):
                 self, mesh, material, u_elem, state, num_layers, tangent
             )
         u_loc = T @ np.asarray(u_elem, dtype=float)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         EA = E * self._A
         EIy = E * self._Iy
         EIz = E * self._Iz
-        GJ = G * self._J
-        GA_y = G * self._A * self._ky
-        GA_z = G * self._A * self._kz
+        GA_y = G12 * self._A * self._ky
+        GA_z = G13 * self._A * self._kz
 
         fiber_config = self._fiber_plasticity_config(material)
         num_gp = len(self.GAUSS_POINTS)
@@ -2729,7 +3159,11 @@ class QuadraticBeamElement(BeamElement):
                 fiber_strain_all - initial_prestrain + initial_stress / E
             )
             stress, Et, plastic_new, alpha_new = self._uniaxial_return_map(
-                constitutive_fiber_strain, state, E, fiber_config.material_curve
+                constitutive_fiber_strain,
+                state,
+                E,
+                fiber_config.material_curve,
+                _beam_flow_scale(material, fiber_config.material_curve),
             )
             for jac, B_v, B_w, rows in gp_data:
                 weights_gp = w_f
@@ -2747,6 +3181,11 @@ class QuadraticBeamElement(BeamElement):
                 "kinematic_fiber_strain": fiber_strain_all.copy(),
                 "fiber_stress": stress.copy(),
                 "axial_force": float(np.mean(axial_forces)) if axial_forces else 0.0,
+                "equivalent_stress_measure": (
+                    "hill48"
+                    if _elastic_symmetry(material) == "orthotropic"
+                    else "von_mises"
+                ),
                 **initial_state,
             }
 
@@ -2809,14 +3248,12 @@ class QuadraticBeamElement(BeamElement):
             L, T = self._beam_frame_and_transform(coords)
         except ValueError:
             return np.zeros((18, 18), dtype=float)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         EA = E * self._A
         EIy = E * self._Iy
         EIz = E * self._Iz
-        GJ = G * self._J
-        GA_y = G * self._A * self._ky
-        GA_z = G * self._A * self._kz
+        GA_y = G12 * self._A * self._ky
+        GA_z = G13 * self._A * self._kz
         K = np.zeros((18, 18), dtype=float)
         for xi, weight in zip(self.GAUSS_POINTS, self.GAUSS_WEIGHTS):
             N, dN_dxi = self.compute_shape_functions(float(xi))
@@ -3013,6 +3450,7 @@ def validate_initial_field_state(
     material: "Material",
     state: Dict[str, Any],
     num_layers: int,
+    mesh: Optional["FEMesh"] = None,
 ) -> None:
     """Validate that a prescribed initial stress is locally admissible.
 
@@ -3026,8 +3464,15 @@ def validate_initial_field_state(
     if isinstance(element, ShellElement) and (
         "initial_membrane_stress" in state or "initial_bending_stress" in state
     ):
+        symmetry = _elastic_symmetry(material)
         curve = getattr(material, "hardening_curve", None)
-        if curve is None:
+        hill_yield = getattr(material, "hill_yield", None)
+        if symmetry == "orthotropic" and curve is not None and hill_yield is None:
+            raise ValueError(
+                f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+                "requires hill_yield when hardening_curve is active."
+            )
+        if curve is None and hill_yield is None:
             return
         n_gp = len(element.gauss_points)
         z_layers, _weights = lobatto_layers(num_layers, element.thickness)
@@ -3051,16 +3496,57 @@ def validate_initial_field_state(
             raise ValueError(
                 f"Shell initial alpha has {alpha.size} entries; expected {stress.shape[0]}"
             )
-        equivalent = np.sqrt(
-            np.maximum(
-                stress[:, 0] ** 2
-                - stress[:, 0] * stress[:, 1]
-                + stress[:, 1] ** 2
-                + 3.0 * stress[:, 2] ** 2,
-                0.0,
+        if np.any(~np.isfinite(alpha)) or np.any(alpha < 0.0):
+            raise ValueError("Shell initial alpha must be finite and non-negative")
+        if symmetry == "orthotropic":
+            from .plasticity import hill48_plane_stress_equivalent_stress
+
+            if mesh is None:
+                if element.material_direction is not None:
+                    raise ValueError(
+                        "mesh is required to validate an oriented orthotropic "
+                        "shell initial stress"
+                    )
+                material_angle = np.deg2rad(element.material_angle_deg)
+            else:
+                coordinates = element.get_node_coordinates(mesh)
+                material_angle = element._material_angle(
+                    element._center_frame(coordinates)
+                )
+            _Q, _G, _strain_to_material, stress_to_local = (
+                _shell_material_matrices(material, material_angle)
             )
-        )
-        flow = np.asarray(curve.flow_stress(alpha), dtype=float)
+            stress_material = np.einsum(
+                "ij,nj->ni",
+                np.linalg.inv(stress_to_local),
+                stress,
+            )
+            equivalent = hill48_plane_stress_equivalent_stress(
+                stress_material,
+                hill_yield,
+            )
+            if curve is None:
+                flow = np.full(equivalent.shape, float(hill_yield.X))
+            else:
+                reference = float(
+                    np.asarray(curve.flow_stress(np.array([0.0])), dtype=float)[0]
+                )
+                flow = (
+                    float(hill_yield.X)
+                    * np.asarray(curve.flow_stress(alpha), dtype=float)
+                    / reference
+                )
+        else:
+            equivalent = np.sqrt(
+                np.maximum(
+                    stress[:, 0] ** 2
+                    - stress[:, 0] * stress[:, 1]
+                    + stress[:, 1] ** 2
+                    + 3.0 * stress[:, 2] ** 2,
+                    0.0,
+                )
+            )
+            flow = np.asarray(curve.flow_stress(alpha), dtype=float)
         excess = equivalent - flow
         if np.any(excess > tolerance * np.maximum(flow, 1.0)):
             index = int(np.argmax(excess))
@@ -3093,7 +3579,14 @@ def validate_initial_field_state(
             )
         if alpha.size == 1:
             alpha = np.full(total_fibers, float(alpha[0]), dtype=float)
-        flow = np.asarray(curve.flow_stress(alpha), dtype=float)
+        if np.any(~np.isfinite(alpha)) or np.any(alpha < 0.0):
+            raise ValueError("Beam initial alpha must be finite and non-negative")
+        scale = _beam_flow_scale(material, curve)
+        flow = (
+            np.full(alpha.shape, scale, dtype=float)
+            if curve is None
+            else scale * np.asarray(curve.flow_stress(alpha), dtype=float)
+        )
         excess = np.abs(stress) - flow
         if np.any(excess > tolerance * np.maximum(flow, 1.0)):
             index = int(np.argmax(excess))

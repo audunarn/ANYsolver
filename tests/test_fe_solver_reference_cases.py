@@ -110,15 +110,21 @@ def test_generated_external_reference_decks_are_discoverable_input_cases() -> No
     try:
         deck_dir = repo_root / "reference_cases"
         cases = generate_external_reference_cases(deck_dir)
-        assert [case.name for case in cases] == ["pressure_plate_s4", "beam_column_buckling", "cylinder_s4_pressure"]
+        assert [case.name for case in cases] == [
+            "pressure_plate_s4",
+            "beam_column_buckling",
+            "cylinder_s4_pressure",
+            "orthotropic_membrane_s4",
+        ]
         assert all(case.inp_path.exists() for case in cases)
         assert all(case.metadata_path.exists() for case in cases)
 
         discovered = discover_calculix_reference_cases(roots=[deck_dir], repo_root=repo_root, require_frd=False)
-        assert len(discovered) == 3
+        assert len(discovered) == 4
         kinds = {case.name: case.kind for case in discovered}
         assert kinds["pressure_plate_s4"] == "flat_plate"
         assert kinds["cylinder_s4_pressure"] == "cylinder"
+        assert kinds["orthotropic_membrane_s4"] == "flat_plate"
         assert all(case.element_count > 0 for case in discovered)
     finally:
         shutil.rmtree(repo_root, ignore_errors=True)
@@ -159,7 +165,7 @@ def test_external_reference_report_cli_artifacts_are_written() -> None:
 
         assert report["status"] == "not_executed"
         assert report["validation_performed"] is False
-        assert len(report["cases"]) == 3
+        assert len(report["cases"]) == 4
         assert all(case["validation"]["status"] == "not_executed" for case in report["cases"])
         assert output.exists()
         assert markdown.exists()

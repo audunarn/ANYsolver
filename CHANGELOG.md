@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Add a dependency-free structural material contract and homogeneous
+  orthotropic engineering materials for shells and beams. This includes
+  projected shell material directions/angles, explicit orthotropic beam
+  torsional rigidity, generated-geometry and CalculiX shell interchange, and
+  deterministic fallback from isotropic accelerated kernels to general
+  assembly.
+- Add material-axis Hill-48 shell plasticity with directional-strength
+  hardening, consistent tangent plus numerical oracle/fallback, stored physical
+  stress recovery, labelled Hill equivalent stress/utilization, orthotropic
+  beam-fiber longitudinal yielding, and damage/contact integration. General
+  anisotropy, laminates, ply failure, and shear/torsion plastic interaction
+  remain outside scope.
+- Add an exact constant-stress analytical/CalculiX orthotropic S4 reference
+  deck, perfect-plastic Hill behavior when no hardening curve is supplied, and
+  current-strength Hill utilization with physical-stress recovery provenance.
+
 ## 0.1.3 - 2026-07-28
 
 - Complete the generated-geometry runtime bridge: apply configured shear force

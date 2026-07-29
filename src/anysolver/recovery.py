@@ -781,6 +781,28 @@ def _state_uses_plastic_constitutive_history(
     return False
 
 
+def _hill_current_x_strength(material: Any, alpha: np.ndarray) -> np.ndarray:
+    """Directional-X strength at committed Hill equivalent plastic strain."""
+
+    hill_yield = getattr(material, "hill_yield", None)
+    if hill_yield is None:
+        raise ValueError("Hill current strength requires material.hill_yield")
+    alpha_values = np.asarray(alpha, dtype=float)
+    curve = getattr(material, "hardening_curve", None)
+    if curve is None:
+        return np.full(alpha_values.shape, float(hill_yield.X), dtype=float)
+    reference = float(
+        np.asarray(curve.flow_stress(np.array([0.0])), dtype=float).reshape(-1)[0]
+    )
+    if not np.isfinite(reference) or reference <= 0.0:
+        raise ValueError("Hill hardening curve must have positive flow_stress(0)")
+    return (
+        float(hill_yield.X)
+        * np.asarray(curve.flow_stress(alpha_values), dtype=float)
+        / reference
+    )
+
+
 def _state_shell_stresses(
     model: "FEModel",
     element: Any,
@@ -823,6 +845,12 @@ def _state_shell_stresses(
         plastic_strain = np.asarray(state.get("plastic_strain", ()), dtype=float)
         if plastic_strain.size != layer_strain.size:
             return None, "committed shell state lacks compatible layer_stress/plastic_strain"
+        from .materials import is_isotropic_material
+
+        if not is_isotropic_material(material):
+            return None, (
+                "orthotropic committed shell state lacks stored physical layer_stress"
+            )
         layer_stress = (layer_strain - plastic_strain.reshape(layer_strain.shape)) @ _plane_stress_matrix(
             material.elastic_modulus,
             material.poisson_ratio,
@@ -885,7 +913,13 @@ def _state_shell_stresses(
         material,
         state,
     )
-    primary_vm_layers = vm_layers if material_history_active else mixed_vm_layers
+    from .materials import is_orthotropic_material
+
+    primary_vm_layers = (
+        mixed_vm_layers
+        if is_orthotropic_material(material)
+        else (vm_layers if material_history_active else mixed_vm_layers)
+    )
     recovered: Dict[str, Any] = dict(elastic_stresses)
     recovered.update(
         {
@@ -901,11 +935,54 @@ def _state_shell_stresses(
             "shear_xz": shear_xz.copy(),
             "shear_yz": shear_yz.copy(),
             "von_mises": np.max(primary_vm_layers, axis=1),
+            "in_plane_von_mises": np.max(vm_layers, axis=1),
             "mixed_reconstruction_von_mises": np.max(
                 mixed_vm_layers, axis=1
             ),
         }
     )
+    hill_yield = getattr(material, "hill_yield", None)
+    material_layer_stress = np.asarray(
+        state.get("layer_stress_material", ()),
+        dtype=float,
+    )
+    if hill_yield is not None:
+        if material_layer_stress.size != layer_stress.size:
+            return None, (
+                "orthotropic Hill shell state lacks compatible "
+                "material-axis layer_stress_material"
+            )
+        from .plasticity import hill48_plane_stress_equivalent_stress
+
+        material_layer_stress = material_layer_stress.reshape(layer_stress.shape)
+        hill_equivalent = hill48_plane_stress_equivalent_stress(
+            material_layer_stress,
+            hill_yield,
+        ).reshape(n_gp, num_layers)
+        alpha = np.asarray(state.get("alpha", ()), dtype=float).reshape(-1)
+        if alpha.size == 0:
+            alpha = np.zeros(layer_stress.shape[0], dtype=float)
+        elif alpha.size == 1:
+            alpha = np.full(layer_stress.shape[0], float(alpha[0]), dtype=float)
+        elif alpha.size != layer_stress.shape[0]:
+            return None, "orthotropic committed shell alpha shape is incompatible"
+        current_strength = _hill_current_x_strength(material, alpha).reshape(
+            n_gp,
+            num_layers,
+        )
+        recovered["equivalent_stress"] = np.max(hill_equivalent, axis=1)
+        recovered["equivalent_stress_measure"] = "hill48"
+        recovered["hill_utilization"] = np.max(
+            hill_equivalent
+            / np.maximum(current_strength, np.finfo(float).tiny),
+            axis=1,
+        )
+        recovered["equivalent_stress_scope"] = (
+            "return-mapped material-axis plane-stress layers"
+        )
+    else:
+        recovered["equivalent_stress"] = recovered["von_mises"].copy()
+        recovered["equivalent_stress_measure"] = "von_mises"
 
     if return_global:
         local_surface: Dict[str, np.ndarray] = {
@@ -1083,10 +1160,16 @@ def _state_beam_stresses(
         material,
         state,
     )
+    from .materials import is_orthotropic_material
+
     primary_fiber_von_mises = (
-        fiber_von_mises
-        if material_history_active
-        else mixed_fiber_von_mises
+        mixed_fiber_von_mises
+        if is_orthotropic_material(material)
+        else (
+            fiber_von_mises
+            if material_history_active
+            else mixed_fiber_von_mises
+        )
     )
     recovered: Dict[str, Any] = dict(elastic_stresses)
     recovered.update(
@@ -1098,6 +1181,9 @@ def _state_beam_stresses(
             "shear_stress_y": shear_y,
             "shear_stress_z": shear_z,
             "torsional_stress": torsion,
+            "longitudinal_fiber_von_mises": float(
+                np.max(fiber_von_mises)
+            ),
             "fiber_stress_min": float(np.min(stress_by_station)),
             "fiber_stress_max": float(np.max(stress_by_station)),
             "fiber_von_mises_max": float(np.max(fiber_von_mises)),
@@ -1113,6 +1199,33 @@ def _state_beam_stresses(
             "fiber_station_count": station_count,
         }
     )
+    hill_yield = getattr(material, "hill_yield", None)
+    if hill_yield is not None:
+        equivalent_by_fiber = np.abs(stress_by_station)
+        alpha = np.asarray(state.get("alpha", ()), dtype=float).reshape(-1)
+        if alpha.size == 0:
+            alpha = np.zeros(stress_by_station.size, dtype=float)
+        elif alpha.size == 1:
+            alpha = np.full(stress_by_station.size, float(alpha[0]), dtype=float)
+        elif alpha.size != stress_by_station.size:
+            return None, "orthotropic committed beam alpha shape is incompatible"
+        current_strength = _hill_current_x_strength(material, alpha).reshape(
+            stress_by_station.shape
+        )
+        recovered["equivalent_stress"] = float(np.max(equivalent_by_fiber))
+        recovered["equivalent_stress_measure"] = "hill48"
+        recovered["hill_utilization"] = float(
+            np.max(
+                equivalent_by_fiber
+                / np.maximum(current_strength, np.finfo(float).tiny)
+            )
+        )
+        recovered["equivalent_stress_scope"] = (
+            "committed longitudinal fibers; elastic shear/torsion excluded"
+        )
+    else:
+        recovered["equivalent_stress"] = recovered["von_mises"]
+        recovered["equivalent_stress_measure"] = "von_mises"
     return recovered, ""
 
 
@@ -1164,9 +1277,16 @@ def _recover_one_committed_state(
         recovery_coordinates=recovery_coordinates,
     )
     if shell is not None:
+        shell_material = model.get_material(element.material_name)
         shell_material_history = _state_uses_plastic_constitutive_history(
-            model.get_material(element.material_name),
+            shell_material,
             state,
+        )
+        from .materials import is_orthotropic_material
+
+        shell_is_orthotropic = is_orthotropic_material(shell_material)
+        shell_uses_hill = (
+            shell.get("equivalent_stress_measure") == "hill48"
         )
         return (
             shell,
@@ -1176,12 +1296,21 @@ def _recover_one_committed_state(
                 "membrane_bending_and_surface_in_plane": "committed_shell_layer_state",
                 "transverse_shear": "elastic_reconstruction_from_same_solution",
                 "von_mises": (
-                    "committed_shell_layer_state_in_plane"
-                    if shell_material_history
+                    "committed_shell_layer_state_plus_elastic_transverse_shear"
+                    if shell_is_orthotropic
                     else (
-                        "committed_elastic_shell_layer_state_plus_"
-                        "elastic_transverse_shear"
+                        "committed_shell_layer_state_in_plane"
+                        if shell_material_history
+                        else (
+                            "committed_elastic_shell_layer_state_plus_"
+                            "elastic_transverse_shear"
+                        )
                     )
+                ),
+                "equivalent_stress": (
+                    "committed_material_axis_hill48_layer_state"
+                    if shell_uses_hill
+                    else "conventional_von_mises"
                 ),
                 "mixed_reconstruction_von_mises": (
                     "committed_shell_layer_state_plus_elastic_transverse_shear"
@@ -1197,9 +1326,16 @@ def _recover_one_committed_state(
         model, element, state, contextual_elastic
     )
     if beam is not None:
+        beam_material = model.get_material(element.material_name)
         beam_material_history = _state_uses_plastic_constitutive_history(
-            model.get_material(element.material_name),
+            beam_material,
             state,
+        )
+        from .materials import is_orthotropic_material
+
+        beam_is_orthotropic = is_orthotropic_material(beam_material)
+        beam_uses_hill = (
+            beam.get("equivalent_stress_measure") == "hill48"
         )
         return (
             beam,
@@ -1209,12 +1345,21 @@ def _recover_one_committed_state(
                 "axial_fibers_and_section_resultants": "committed_beam_fiber_state",
                 "shear_and_torsion": "elastic_reconstruction_from_same_solution",
                 "von_mises": (
-                    "committed_beam_fiber_state"
-                    if beam_material_history
+                    "committed_beam_fiber_state_plus_elastic_shear_and_torsion"
+                    if beam_is_orthotropic
                     else (
-                        "committed_elastic_beam_fiber_state_plus_"
-                        "elastic_shear_and_torsion"
+                        "committed_beam_fiber_state"
+                        if beam_material_history
+                        else (
+                            "committed_elastic_beam_fiber_state_plus_"
+                            "elastic_shear_and_torsion"
+                        )
                     )
+                ),
+                "equivalent_stress": (
+                    "committed_longitudinal_fiber_hill48_state"
+                    if beam_uses_hill
+                    else "conventional_von_mises"
                 ),
                 "mixed_reconstruction_von_mises": (
                     "committed_beam_fiber_state_plus_elastic_shear_and_torsion"

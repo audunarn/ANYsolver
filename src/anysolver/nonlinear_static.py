@@ -550,6 +550,7 @@ def _assemble_nonlinear_system(
         rows_concat, cols_concat = _get_cached_sparsity_pattern(mesh, "tangent_stiffness")
 
     from .elements import ShellElement
+    from .materials import is_isotropic_material
     from .vectorized_nonlinear import batch_shell_nonlinear_response, shell_nonlinear_batch_eligible
 
     groups = {}
@@ -563,6 +564,7 @@ def _assemble_nonlinear_system(
         if (
             isinstance(element, ShellElement)
             and shell_nonlinear_batch_eligible(element)
+            and is_isotropic_material(model.get_material(element.material_name))
             and not _state_has_initial_field(committed_states.get(elem_id))
         ):
             key = (
@@ -798,6 +800,24 @@ def states_von_mises_map(model: Any, states: Mapping[int, Any]) -> Dict[int, flo
         if fiber_stress.size:
             values[int(element_id)] = float(np.max(np.abs(fiber_stress)))
             continue
+        stored_stress = np.asarray(state.get("layer_stress", ()), dtype=float)
+        if stored_stress.size:
+            try:
+                stored_stress = stored_stress.reshape(-1, 3)
+            except ValueError:
+                stored_stress = np.empty((0, 3), dtype=float)
+            if stored_stress.size:
+                sxx = stored_stress[:, 0]
+                syy = stored_stress[:, 1]
+                sxy = stored_stress[:, 2]
+                von_mises = np.sqrt(
+                    np.maximum(
+                        sxx * sxx - sxx * syy + syy * syy + 3.0 * sxy * sxy,
+                        0.0,
+                    )
+                )
+                values[int(element_id)] = float(np.max(von_mises))
+                continue
         layer = np.asarray(state.get("layer_strain", ()), dtype=float)
         plastic = np.asarray(state.get("plastic_strain", ()), dtype=float)
         if layer.size == 0 or layer.shape != plastic.shape:
@@ -806,6 +826,13 @@ def states_von_mises_map(model: Any, states: Mapping[int, Any]) -> Dict[int, flo
         if layer.shape[-1] != 3:
             continue
         name = str(element.material_name)
+        from .materials import is_isotropic_material
+
+        # Modern orthotropic states always retain converged physical layer
+        # stress.  An incomplete legacy/restart state must not be reconstructed
+        # with fictitious isotropic constants.
+        if not is_isotropic_material(model.get_material(name)):
+            continue
         ids, layers, plastics = layered_groups.setdefault((name, layer.shape[0]), ([], [], []))
         ids.append(int(element_id))
         layers.append(layer)
@@ -1071,6 +1098,7 @@ def _prepare_initial_states(
             model.get_material(element.material_name),
             state,
             num_layers,
+            model.mesh,
         )
         states[element_id] = state
         provenance.append(
@@ -1561,9 +1589,6 @@ def solve_static_nonlinear(
     control: str = "force",
     displacement_control: Optional[DisplacementControl] = None,
     initial_element_states: Optional[Mapping[int, Any]] = None,
-    initial_fields: Optional[Mapping[int, Any]] = None,
-    initial_displacements: Optional[np.ndarray] = None,
-    equilibrate_initial_state: Optional[bool] = None,
     convergence_settings: Optional[Union[str, Mapping[str, Any], NonlinearConvergenceSettings]] = None,
     resource_config: Optional[ResourceConfig] = None,
     fracture_config: Optional[FractureConfig] = None,
@@ -1571,6 +1596,9 @@ def solve_static_nonlinear(
     corotational_tangent: str = "auto",
     status_callback: Optional[Callable[[str], None]] = None,
     progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    initial_fields: Optional[Mapping[int, Any]] = None,
+    initial_displacements: Optional[np.ndarray] = None,
+    equilibrate_initial_state: Optional[bool] = None,
 ) -> NonlinearStaticResult:
     """Incremental nonlinear static solve with adaptive load stepping.
 

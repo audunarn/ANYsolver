@@ -24,7 +24,8 @@ import numpy as np
 
 from .boundary import BoundaryCondition, LoadCase
 from .elements import BeamElement, ShellElement
-from .fe_core import FEModel, Material
+from .fe_core import FEModel
+from .materials import elastic_compliance_matrix, material_symmetry
 from .mesh_gen import generate_simple_panel_mesh
 
 
@@ -121,16 +122,50 @@ def _fmt(value: float) -> str:
     return f"{float(value):.16g}"
 
 
-def _material_block(materials: Mapping[str, Material]) -> List[str]:
+def _elastic_symmetry(material: Any) -> str:
+    symmetry = material_symmetry(material)
+    if symmetry not in {"isotropic", "orthotropic"}:
+        raise NotImplementedError(
+            f"CalculiX export does not support material {getattr(material, 'name', '<unnamed>')!r} "
+            f"with elastic_symmetry={symmetry!r}."
+        )
+    return symmetry
+
+
+def _material_block(materials: Mapping[str, Any]) -> List[str]:
     lines: List[str] = []
     for material in materials.values():
-        lines.extend(
-            [
-                f"*MATERIAL, NAME={material.name}",
-                "*ELASTIC",
-                f"{_fmt(material.elastic_modulus)}, {_fmt(material.poisson_ratio)}",
-            ]
-        )
+        lines.append(f"*MATERIAL, NAME={material.name}")
+        if _elastic_symmetry(material) == "orthotropic":
+            compliance = elastic_compliance_matrix(material)
+            E1 = 1.0 / float(compliance[0, 0])
+            E2 = 1.0 / float(compliance[1, 1])
+            E3 = 1.0 / float(compliance[2, 2])
+            engineering_constants = (
+                E1,
+                E2,
+                E3,
+                -float(compliance[0, 1]) * E1,
+                -float(compliance[0, 2]) * E1,
+                -float(compliance[1, 2]) * E2,
+                1.0 / float(compliance[5, 5]),
+                1.0 / float(compliance[4, 4]),
+                1.0 / float(compliance[3, 3]),
+            )
+            lines.extend(
+                [
+                    "*ELASTIC, TYPE=ENGINEERING CONSTANTS",
+                    ", ".join(_fmt(value) for value in engineering_constants[:8]),
+                    _fmt(engineering_constants[8]),
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    "*ELASTIC",
+                    f"{_fmt(material.elastic_modulus)}, {_fmt(material.poisson_ratio)}",
+                ]
+            )
         if material.density:
             lines.extend(["*DENSITY", _fmt(material.density)])
     return lines
@@ -138,7 +173,7 @@ def _material_block(materials: Mapping[str, Material]) -> List[str]:
 
 def _element_type(element: Any) -> str:
     if isinstance(element, ShellElement):
-        return "S8" if len(element.node_ids) == 8 else "S4"
+        return {3: "S3", 4: "S4", 6: "S6", 8: "S8"}.get(len(element.node_ids), "UNKNOWN")
     if isinstance(element, BeamElement):
         return "B31"
     return "UNKNOWN"
@@ -151,15 +186,90 @@ def _element_sets_by_type_and_material(model: FEModel) -> Dict[Tuple[str, str], 
     return groups
 
 
+def _deck_identifier(value: str) -> str:
+    token = re.sub(r"[^A-Za-z0-9_]", "_", str(value))
+    return token or "UNNAMED"
+
+
+def _resolved_shell_material_orientation(model: FEModel, element: ShellElement) -> Tuple[np.ndarray, np.ndarray]:
+    """Resolve the solver shell material axes as global CalculiX vectors."""
+
+    coords = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
+    frame = np.asarray(element._center_frame(coords), dtype=float)
+    local_x = frame[:, 0]
+    normal = frame[:, 2]
+    direction = getattr(element, "material_direction", None)
+    if direction is None:
+        axis_1 = local_x
+    else:
+        supplied = np.asarray(direction, dtype=float).reshape(-1)
+        if supplied.size != 3 or not np.all(np.isfinite(supplied)):
+            raise ValueError(f"Shell element {element.element_id} has an invalid material_direction")
+        projected = supplied - float(supplied @ normal) * normal
+        norm = float(np.linalg.norm(projected))
+        if norm <= 1.0e-12:
+            raise ValueError(
+                f"Shell element {element.element_id} material_direction has no in-plane projection"
+            )
+        axis_1 = projected / norm
+    angle = math.radians(float(getattr(element, "material_angle_deg", 0.0)))
+    axis_2_base = np.cross(normal, axis_1)
+    axis_1 = math.cos(angle) * axis_1 + math.sin(angle) * axis_2_base
+    axis_1 /= max(float(np.linalg.norm(axis_1)), 1.0e-30)
+    axis_2 = np.cross(normal, axis_1)
+    axis_2 /= max(float(np.linalg.norm(axis_2)), 1.0e-30)
+    return axis_1, axis_2
+
+
+def _orthotropic_shell_section_block(
+    model: FEModel,
+    element: ShellElement,
+    material_name: str,
+    element_type: str,
+) -> List[str]:
+    suffix = f"{_deck_identifier(material_name)}_{int(element.element_id)}"
+    elset = f"E_{element_type}_{suffix}"
+    orientation = f"ORI_{suffix}"
+    axis_1, axis_2 = _resolved_shell_material_orientation(model, element)
+    return [
+        f"*ELSET, ELSET={elset}",
+        str(int(element.element_id)),
+        f"*ORIENTATION, NAME={orientation}",
+        ", ".join(_fmt(value) for value in np.concatenate((axis_1, axis_2))),
+        f"*SHELL SECTION, ELSET={elset}, MATERIAL={material_name}, ORIENTATION={orientation}",
+        _fmt(element.thickness),
+    ]
+
+
 def _section_blocks(model: FEModel) -> Tuple[List[str], List[str]]:
     lines: List[str] = []
     assumptions: List[str] = []
     for (element_type, material_name), element_ids in _element_sets_by_type_and_material(model).items():
+        material = model.get_material(material_name)
+        symmetry = _elastic_symmetry(material)
+        first = model.mesh.elements[element_ids[0]]
+        if isinstance(first, ShellElement) and symmetry == "orthotropic":
+            for element_id in element_ids:
+                element = model.mesh.elements[element_id]
+                if not isinstance(element, ShellElement):
+                    raise TypeError(f"Element set {element_type}/{material_name} mixes shell and non-shell elements")
+                lines.extend(_orthotropic_shell_section_block(model, element, material_name, element_type))
+            assumptions.append(
+                f"Orthotropic shell material axes for {material_name} are exported as explicit "
+                "per-element rectangular orientations."
+            )
+            continue
+        if isinstance(first, BeamElement) and symmetry == "orthotropic":
+            raise NotImplementedError(
+                "CalculiX reference export cannot faithfully represent orthotropic beam "
+                f"element set {element_type}/{material_name}: the solver's explicit "
+                "cross_section['torsional_rigidity'] is independent of the equivalent RECT section. "
+                "Use analytical orthotropic beam validation."
+            )
         elset = f"E_{element_type}_{material_name}"
         lines.append(f"*ELSET, ELSET={elset}")
         for start in range(0, len(element_ids), 16):
             lines.append(", ".join(str(element_id) for element_id in element_ids[start : start + 16]))
-        first = model.mesh.elements[element_ids[0]]
         if isinstance(first, ShellElement):
             lines.extend([f"*SHELL SECTION, ELSET={elset}, MATERIAL={material_name}", _fmt(first.thickness)])
         elif isinstance(first, BeamElement):
@@ -637,12 +747,154 @@ def _cylindrical_shell_case(output_dir: Path) -> ExternalReferenceCase:
     )
 
 
+def _orthotropic_membrane_case(output_dir: Path) -> ExternalReferenceCase:
+    """Exact constant-stress S4 patch with the weak axis aligned globally x."""
+
+    model = FEModel("external_orthotropic_membrane_s4")
+    length = 2.0
+    width = 1.0
+    thickness = 0.01
+    total_force = 100.0e3
+    E1 = 150.0e9
+    E2 = 10.0e9
+    E3 = 8.0e9
+    nu12 = 0.25
+    material = model.add_orthotropic_material(
+        "orthotropic",
+        elastic_modulus_1=E1,
+        elastic_modulus_2=E2,
+        elastic_modulus_3=E3,
+        poisson_ratio_12=nu12,
+        poisson_ratio_13=0.20,
+        poisson_ratio_23=0.30,
+        shear_modulus_12=5.0e9,
+        shear_modulus_13=4.0e9,
+        shear_modulus_23=3.0e9,
+        density=1600.0,
+    )
+    for node_id, coordinate in enumerate(
+        (
+            (0.0, 0.0, 0.0),
+            (length, 0.0, 0.0),
+            (length, width, 0.0),
+            (0.0, width, 0.0),
+        ),
+        start=1,
+    ):
+        model.add_node(node_id, *coordinate)
+    model.add_element(
+        1,
+        ShellElement(
+            1,
+            [1, 2, 3, 4],
+            material.name,
+            thickness=thickness,
+            material_angle_deg=90.0,
+        ),
+    )
+    model.add_boundary_condition(
+        BoundaryCondition("left_edge_x", [1, 4], {"ux": 0.0})
+    )
+    model.add_boundary_condition(
+        BoundaryCondition("in_plane_anchor", [1], {"uy": 0.0})
+    )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "membrane_only",
+            [1, 2, 3, 4],
+            {"uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    load_case = LoadCase("constant_x_traction")
+    load_case.add_nodal_load(
+        2,
+        [0.5 * total_force, 0.0, 0.0, 0.0, 0.0, 0.0],
+    )
+    load_case.add_nodal_load(
+        3,
+        [0.5 * total_force, 0.0, 0.0, 0.0, 0.0, 0.0],
+    )
+
+    stress_x = total_force / (width * thickness)
+    displacement_x = stress_x * length / E2
+    displacement_y = nu12 * stress_x * width / E1
+    parameters = {
+        "length_m": length,
+        "width_m": width,
+        "thickness_m": thickness,
+        "total_edge_force_n": total_force,
+        "material_angle_deg": 90.0,
+        "E1_pa": E1,
+        "E2_pa": E2,
+        "nu12": nu12,
+        "global_x_material_axis": 2,
+    }
+    comparisons = [
+        _analytical_comparison(
+            "orthotropic_max_abs_ux",
+            "max_abs_displacement",
+            displacement_x,
+            component="x",
+            relative_tolerance=0.03,
+            absolute_tolerance=1.0e-12,
+            description="Constant-stress orthotropic membrane extension along material axis 2",
+            parameters=parameters,
+        ),
+        _analytical_comparison(
+            "orthotropic_max_abs_uy",
+            "max_abs_displacement",
+            displacement_y,
+            component="y",
+            relative_tolerance=0.05,
+            absolute_tolerance=1.0e-12,
+            description="Reciprocal-Poisson transverse contraction of the constant-stress patch",
+            parameters=parameters,
+        ),
+        _analytical_comparison(
+            "orthotropic_max_von_mises",
+            "max_von_mises_stress",
+            stress_x,
+            relative_tolerance=0.03,
+            absolute_tolerance=1.0,
+            description="Uniaxial physical stress invariant in the constant-stress membrane patch",
+            parameters=parameters,
+        ),
+        _analytical_comparison(
+            "orthotropic_nodal_force_balance_x",
+            "sum_nodal_force_balance",
+            0.0,
+            component="x",
+            relative_tolerance=0.0,
+            absolute_tolerance=0.1,
+            description="Static global-x equilibrium of applied and reaction nodal forces",
+            parameters={"total_edge_force_n": total_force},
+        ),
+    ]
+    return write_calculix_input_deck(
+        model,
+        load_case,
+        output_dir / "orthotropic_membrane_s4.inp",
+        analysis="static",
+        metadata={
+            "purpose": (
+                "Analytical and CalculiX S4 orthotropic membrane reference"
+            )
+        },
+        comparisons=comparisons,
+    )
+
+
 def generate_external_reference_cases(output_dir: Path | str = Path("reports/external_references/decks")) -> List[ExternalReferenceCase]:
     """Generate the default external reference decks."""
 
     root = Path(output_dir)
     root.mkdir(parents=True, exist_ok=True)
-    return [_pressure_plate_case(root), _beam_buckling_case(root), _cylindrical_shell_case(root)]
+    return [
+        _pressure_plate_case(root),
+        _beam_buckling_case(root),
+        _cylindrical_shell_case(root),
+        _orthotropic_membrane_case(root),
+    ]
 
 
 def _numbers(line: str) -> List[float]:

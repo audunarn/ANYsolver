@@ -3547,10 +3547,16 @@ def _run_ext_001(case: VerificationCase) -> VerificationCaseResult:
         report.get("status") == "not_executed"
         and evidence["evidence_kind"] == "handoff_artifact"
         and evidence["report_is_acceptable"]
-        and {"pressure_plate_s4", "beam_column_buckling", "cylinder_s4_pressure"} <= names,
+        and {
+            "pressure_plate_s4",
+            "beam_column_buckling",
+            "cylinder_s4_pressure",
+            "orthotropic_membrane_s4",
+        }
+        <= names,
         "CalculiX handoff deck pack is incomplete or incorrectly presented as executed validation",
     )
-    _assert(len(discovered) >= 3 and all(case.element_count > 0 for case in discovered), "generated CalculiX decks are not discoverable")
+    _assert(len(discovered) >= 4 and all(case.element_count > 0 for case in discovered), "generated CalculiX decks are not discoverable")
     return _pass(
         case,
         analysis_type="external_solver_handoff_artifact",
