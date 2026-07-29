@@ -161,9 +161,12 @@ from .external_references import (
 )
 from .plasticity_qualification import (
     DEFAULT_PLASTICITY_QUALIFICATION_PATH,
+    algorithmic_tangent_path_metrics,
+    algorithmic_tangent_performance_metrics,
     dnv_curve_metric,
     element_tangent_metrics,
     generate_plasticity_qualification_report,
+    global_newton_tangent_benchmark_metrics,
     material_point_path_metrics,
     reference_plastic_curve,
     write_plasticity_qualification_report,
@@ -215,12 +218,14 @@ from .imperfections import (
     standard_plate_mode,
 )
 from .nonlinear_static import (
+    BeamInitialField,
     DisplacementControl,
     NonlinearConvergenceSettings,
     NonlinearLoadProgram,
     NonlinearLoadStage,
     NonlinearStaticResult,
     NonlinearStaticStep,
+    ShellInitialField,
     solve_static_nonlinear,
 )
 from .arc_length import ArcLengthControl, ArcLengthResult, ArcLengthStep, solve_static_arc_length
@@ -350,7 +355,7 @@ from .sesam_fem import (
     write_sesam_fem_document,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 
 __all__ = [
     # Core classes
@@ -491,9 +496,12 @@ __all__ = [
     "write_calculix_input_deck",
     "write_external_reference_report",
     "DEFAULT_PLASTICITY_QUALIFICATION_PATH",
+    "algorithmic_tangent_path_metrics",
+    "algorithmic_tangent_performance_metrics",
     "dnv_curve_metric",
     "element_tangent_metrics",
     "generate_plasticity_qualification_report",
+    "global_newton_tangent_benchmark_metrics",
     "material_point_path_metrics",
     "reference_plastic_curve",
     "write_plasticity_qualification_report",
@@ -536,12 +544,14 @@ __all__ = [
     "standard_flange_twist",
     "standard_member_bow",
     "standard_plate_mode",
+    "BeamInitialField",
     "DisplacementControl",
     "NonlinearConvergenceSettings",
     "NonlinearLoadProgram",
     "NonlinearLoadStage",
     "NonlinearStaticResult",
     "NonlinearStaticStep",
+    "ShellInitialField",
     "solve_static_nonlinear",
     "ArcLengthControl",
     "ArcLengthResult",

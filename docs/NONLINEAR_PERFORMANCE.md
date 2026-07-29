@@ -99,10 +99,16 @@ direct Batch B kernel omits those displacement-derived arrays inside Newton
 iterations, then reconstructs the real layer strains once at the final
 converged displacement. Returned element states, stress envelopes, and strain
 summaries therefore retain the same recovery contract without paying that cost
-per iteration. Plastic batches call the same plane-stress return map and
-discrete algorithmic tangent as scalar assembly. Reduced-integration Q8R is
-deliberately ineligible for shell batching because its experimental hourglass
-stiffness is not represented by the accelerated local kernel.
+per iteration. Plastic batches call the same plane-stress return map and its
+analytical consistent tangent as scalar assembly. The central-difference
+tangent remains an explicit qualification oracle and guarded invalid-row
+fallback. A condition number alone does not discard a finite exact analytical
+row, and the oracle uses representable, stiffness-scaled perturbations.
+Shells carrying initial stress or prestrain fields use the scalar path so the
+immutable field, evolving plastic state, and provenance cannot be dropped by
+batch reconstruction. Reduced-integration Q8R is deliberately ineligible for
+shell batching because its experimental hourglass stiffness is not represented
+by the accelerated local kernel.
 
 ### Batch C: direct reduced-coordinate assembly
 
@@ -227,9 +233,12 @@ python scripts/benchmark_nonlinear_assembly.py --nx 20 --ny 10 --repeats 10 --we
 The dedicated tests compare optimized and legacy internal-force/tangent assembly,
 including tilted shells, selector constraints and weighted MPC transformations.
 They also verify cache invalidation, residual-only assembly, CSR uniqueness,
-persistent buffer reuse, exact plastic return-map/tangent parity, elastic layer
-state, Q8R scalar fallback, lazy nonlinear-solver activation, and legacy
-restoration.
+persistent buffer reuse, analytical/numerical plastic-tangent parity, elastic
+layer state, initial-field scalar fallback, Q8R scalar fallback, lazy
+nonlinear-solver activation, and legacy restoration. Qualification records
+warmed constitutive and representative global Newton timings for the
+analytical and numerical tangent paths; timing is evidence rather than a
+wall-clock pass gate.
 
 ## Deferred until measured
 

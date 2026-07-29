@@ -29,8 +29,26 @@ from anysolver import (
     run_generated_geometry_fem,
     solve_linear,
 )
-from anysolver.runtime import LightweightFEMConfig, run_production_fem
+from anysolver.runtime import (
+    LightweightFEMConfig,
+    resolve_runtime_analysis,
+    run_production_fem,
+)
 ```
+
+The runtime facade applies its normalized axial force, bending moment, shear
+force, torsional moment, and pressure inputs to the generated model. Set
+`LightweightFEMConfig.follower_pressure=True` only for nonlinear static or
+arc-length analysis using the `static only` or `nonlinear static` runtime
+path; incompatible linear, stepwise eigenvalue-buckling, transient, collision,
+and structured-capacity paths return an explicit `invalid_follower_pressure`
+status. Arc length retains the requested von Karman or corotational
+kinematics. Production runtime failures remain failures rather than being
+replaced by an estimator.
+
+Application integrations should use `resolve_runtime_analysis(config)` to
+reflect the solver's effective nonlinear/material/control/kinematics choices;
+the normalization helpers with leading underscores are implementation details.
 
 The generic `GeneratedGeometryFEM*` names are the preferred workflow API.
 Historical `AnyStructureFEM*` aliases remain available only for downstream
@@ -54,14 +72,15 @@ changes before making release claims.
 | Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, and sparse factorization reuse. |
 | Modal and mass | Consistent mass assembly, point masses, model mass/inertia properties, constrained and free-free vibration modes. |
 | Buckling | Linear eigenvalue buckling for beam axial force and shell Mindlin initial-stress resultants, including sparse shift-invert and repeated-mode diagnostics. A follower-load stiffness can be included when its constrained tangent is symmetric; a general nonsymmetric follower eigenproblem is outside scope. |
-| Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, dead or follower pressure, von Karman or opt-in corotational kinematics, rotated or consistent corotational tangent, layered shell J2 plasticity, beam fiber plasticity, staged loads, and simplified element erosion. |
+| Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, dead or follower pressure, von Karman or opt-in corotational kinematics, rotated or consistent corotational tangent, layered shell J2 plasticity with a safeguarded local solve and analytical consistent tangent, beam fiber plasticity, stage-boundary commits, true preload/restart displacement control, and simplified element erosion. |
 | Continuation | Bounded Crisfield-style spherical arc-length tracing through a first limit point and a guarded descending branch, including current-area follower pressure and its load tangent. |
 | Dynamics | Newmark or HHT-alpha implicit transient response, Rayleigh damping, prescribed shell pressure patches, selected/envelope history storage, and memory preflight. |
 | Impact/contact | One rigid sphere with frictionless penalty contact against shells and opt-in beam-axis segments; event substepping, Aitken relaxation, nonlinear material response, and engineering damage/erosion options. |
 | Imperfections | Stress-free eigenmode, member-bow, plate-wave, flange-twist, explicit, and composite imperfection fields. |
+| Initial fields | Element-local shell membrane/bending stress or membrane/curvature prestrain, arbitrary configured beam-fiber stress/prestrain distributions, zero-external-load equilibration, admissibility checks, and provenance kept separate from geometric imperfections. |
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |
 | Interchange | Pure-Python SESAM formatted FEM record/document parsing, guarded round-trip writing, supported semantic import to `FEModel`, coordinate transforms, beam orientation, and SIF shell-stress reading by load case. |
-| Results | Result provenance; unified elastic or committed shell-layer/beam-fiber stress recovery; guarded Zienkiewicz-Zhu-style patch recovery for qualified shell neighborhoods; selected recovery; reaction filtering; validation diagnostics; deterministic baselines; benchmarks; and generated qualification reports. |
+| Results | Result provenance; unified elastic or committed shell-layer/beam-fiber stress recovery; Gauss-point membrane-force and bending-moment resultants for generated-geometry prestress; guarded Zienkiewicz-Zhu-style patch recovery for qualified shell neighborhoods; selected recovery; reaction filtering; validation diagnostics; deterministic baselines; benchmarks; and generated qualification reports. |
 | External verification | Reproducible CalculiX input generation plus opt-in isolated execution, FRD/DAT parsing, solver provenance, and tolerance-controlled analytical comparison. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
 
 Implemented does not automatically mean qualified for every geometry or load
@@ -103,12 +122,28 @@ Important limits:
 - material-history-aware recovery requires retained, matching committed
   nonlinear layer/fiber states; missing or invalid state is reported and the
   affected components fall back explicitly to elastic reconstruction;
+- with an active plastic constitutive history, `von_mises` covers the
+  return-mapped shell in-plane or beam-fiber stress components. Transverse
+  shell shear and beam shear/torsion remain elastic reconstructions and are
+  exposed separately through `mixed_reconstruction_von_mises`, rather than
+  being presented as a hardening-curve-consistent equivalent stress. A purely
+  elastic nonlinear state keeps the full mixed elastic value as its primary
+  equivalent stress;
 - the guarded patch-recovery fit is qualified only for locally planar,
   consistently oriented, homogeneous, full-integration Q4 or Q8 shell
   neighborhoods. Discontinuities remain separate, and the optional normalized
   stress-L2 discrepancy is a diagnostic—not an energy-norm error estimate;
-- no true multi-stage plastic preload followed by displacement control;
-- no unverified material laws, residual-stress fields, or distortion ranges;
+- initial stress/prestrain fields are qualified only in element-local reference
+  coordinates with `kinematics="von_karman"`. Shell fields use the documented
+  membrane/positive-face-bending convention, and beam fields require a
+  configured fiber section. Input stress must be admissible for the supplied
+  hardening state; equilibration may redistribute it and does not reconstruct
+  the manufacturing history. A field-bearing restart also requires its
+  matching converged displacement vector;
+- the analytical plane-stress tangent is branch-consistent. The numerical
+  derivative remains an oracle and automatic invalid-row fallback; local
+  yield-residual nonconvergence fails closed;
+- no unverified material laws or distortion ranges;
 - SESAM `FEModel` export remains outside the supported interchange gate;
 - CalculiX comparison requires a compatible local executable and an explicit
   execution request. Deck generation alone is a reproducibility handoff, not

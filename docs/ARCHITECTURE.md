@@ -43,9 +43,19 @@ contact/fracture coverage.
    convergence.
 10. Imperfections alter the stress-free reference geometry; they are not initial
    displacements or implicit residual stress.
-11. Analysis results carry case, matrix, load, backend, recovery, and resource
+11. Residual stress/prestrain fields are immutable element-local constitutive
+    offsets. They are equilibrated before external loading, retained across
+    commits, and carry provenance separate from geometric imperfections.
+12. Every nonlinear load-program stage boundary is a converged commit point;
+    displacement-controlled final stages restart from the committed preload
+    displacement and material state.
+13. Failed initialization, Newton increments, and displacement-control steps
+    restore the last converged displacement, load factor, and material state.
+14. Nonlinear load-stage names are nonempty and unique so factor/provenance
+    mappings cannot alias stages.
+15. Analysis results carry case, matrix, load, backend, recovery, and resource
     provenance where the corresponding path supports it.
-12. Generated reports are evidence artifacts, not source-of-truth capability
+16. Generated reports are evidence artifacts, not source-of-truth capability
     declarations.
 
 ## Package layers
@@ -109,7 +119,7 @@ against another mesh cannot leak into the model.
 | `modal.py` | Constrained/free-free vibration modes using dense or sparse eigensolvers. |
 | `buckling.py` | Linear eigenvalue buckling, initial-stress and admissible follower-load tangents, root filtering, residuals, range targeting, and repeated-mode grouping. |
 | `nonlinear.py` | Lightweight proportional tangent-stability/limit-point monitor. |
-| `nonlinear_static.py` | Incremental geometric/material nonlinear statics, dead/follower external-load tangents, staged loading, force/displacement control, convergence profiles, and erosion integration. |
+| `nonlinear_static.py` | Incremental geometric/material nonlinear statics, dead/follower external-load tangents, residual-field preparation/equilibration, committed stage boundaries, preload/restart displacement control, convergence profiles, and erosion integration. |
 | `corotational.py` | Element-independent large-rigid-rotation pull-back/rotate-forward response with rotated and consistent tangent modes for supported shells and beams. |
 | `arc_length.py` | Bounded spherical arc-length continuation, including current-area follower pressure, through a first limit point and guarded descending branch. |
 | `dynamics.py` | Linear implicit Newmark/HHT-alpha transient response and prescribed pressure patches. |
@@ -129,16 +139,18 @@ The nonlinear paths are intentionally distinct:
 - `solve_transient_sphere_impact()` chooses the linear structural path unless
   `NonlinearTransientConfig(enabled=True)` is supplied.
 
-Multi-stage force-controlled loading commits state stage by stage. A true
-path-dependent plastic preload followed by displacement control is not yet a
-supported execution path and is rejected rather than approximated.
+Multi-stage force-controlled loading caps adaptive increments at each stage
+endpoint and commits there. With displacement control, all stages before the
+last are solved by force control; the last stage restarts from the exact
+preloaded reduced displacement and committed material state while retaining
+earlier loads as constant equilibrium terms.
 
 ### Materials, imperfections, damage, and recovery
 
 | Module | Responsibility |
 | --- | --- |
 | `material_curves.py` | Canonical validated DNV-RP-C208 property lookup, true stress/true plastic strain curves, and beam fiber configuration. |
-| `plasticity.py` | Layered plane-stress J2 return mapping and algorithmic tangent. |
+| `plasticity.py` | Layered plane-stress J2 return mapping, safeguarded local consistency solve, analytical consistent algorithmic tangent, representable-step numerical oracle, and guarded pathological-state fallback. |
 | `imperfections.py` | Explicit, eigenmode, standard, calibrated, and composite stress-free geometry offsets. |
 | `fracture.py` | Scalar damage measures, mesh-scaled/RTCL helpers, simplified erosion records, and load filtering. |
 | `recovery.py` | Unified elastic/material-history recovery, guarded shell patch recovery, selected node/element/component recovery, deterministic provenance/threading, memory estimates, and policy enforcement. |
@@ -157,12 +169,27 @@ Fracture/erosion remains unsupported in corotational mode. Fixed-direction
 eccentric MPC offsets are also unsuitable for regions undergoing large rigid
 rotation.
 
+Initial stress/prestrain fields are a separate von Karman-only state path.
+Shell fields enter every layer through a local reference stress/eigenstrain
+offset; beam fields enter the configured uniaxial fiber section. The scalar
+reference assembler is selected for field-bearing elements because the
+persistent shell batches transport only ordinary constitutive history. This
+keeps field state and recovery exact while leaving the accelerated path
+unchanged for ordinary elements.
+
 Committed layered-shell and beam-fiber states are the preferred recovery
 source for nonlinear results. The unified recovery API ties those states to
 the matching displacement vector, records a component-level source and
 explicitly labels any elastic displacement-reconstruction fallback. In
 corotational analyses it uses the same objective pull-back and current element
-frame as force assembly.
+frame as force assembly. With an active plastic constitutive history, the
+material-history `von_mises` field is formed only from components governed by
+the corresponding return map: shell in-plane layers or axial beam fibers. A
+separately labelled `mixed_reconstruction_von_mises` diagnostic combines those
+stresses with the matching elastic transverse-shear/torsion reconstruction
+without implying that the mixed value was return-mapped or bounded by the
+hardening curve. Committed states from purely elastic nonlinear analyses retain
+the full mixed elastic value as primary `von_mises`.
 
 The optional Zienkiewicz--Zhu-style shell patch fit is deliberately narrow. It
 is qualified only for locally planar, consistently oriented, materially and
@@ -179,7 +206,7 @@ substep. It does not remove nodes, DOFs, or MPCs and is not crack mechanics.
 | Module | Responsibility |
 | --- | --- |
 | `anystructure_fem_mode.py` | Solver-owned generated-geometry workflow: normalize geometry, idealize tagged members, build the FE model/load, solve static response, recover prestress, and solve buckling. The filename is retained for source compatibility. |
-| `runtime.py` | Headless lightweight facade for normalized flat-panel/cylinder geometry, meshing, production solves, kernel warm-up, and typed runtime contracts. |
+| `runtime.py` | Headless facade for normalized flat-panel/cylinder geometry, meshing, balanced generated axial/bending/shear/torsional loading, pressure/follower-pressure routing, production solves, kernel warm-up, and typed runtime contracts. |
 | `capacity_workflow.py` | Static solve -> prestress -> buckling -> stress-free imperfection -> nonlinear capacity. |
 | `sesam_fem/records.py` | Loss-aware sequential formatted-record parsing/writing. |
 | `sesam_fem/document.py` | Typed FEM document model, sections, transforms, loads, and preserved unknown records. |
@@ -192,6 +219,22 @@ Explicit line members are retained, while tagged member plates can be collapsed
 to equivalent beams. Disabling that idealization causes tagged member plates
 without matching beam members to fail closed, preventing double counting.
 
+The runtime facade is a production adapter, not a substitute solver. It applies
+configured shear and torsion as balanced edge or ring loading and forwards
+current-area pressure only when the selected path is nonlinear static or arc
+length without a subsequent stepwise eigenvalue solve. Linear, stepwise
+eigenvalue-buckling, transient, collision, and structured-capacity follower
+requests fail with an explicit status. Arc length preserves the selected von
+Karman or corotational kinematics. Downstream clients must preserve a
+non-success status; they must not relabel a compact estimate as a successful
+production solve.
+
+Generated-geometry prestress recovery uses matching committed nonlinear states
+when they are available. Shell buckling states retain the legacy mean membrane
+resultants for compatibility and additionally carry membrane forces and bending
+moments at each Gauss point. Recovery source, history use, warnings, and any
+explicit elastic fallback are retained in result provenance.
+
 ### Public API boundaries
 
 The package root exports the native model/analysis APIs and the generic
@@ -201,9 +244,12 @@ generated-geometry names `GeneratedGeometryFEMConfig`,
 solver-owned vocabulary.
 
 `anysolver.runtime` defines an explicit `__all__` and typed
-`NormalizedGeometry`, `GeneratedGeometry`, and `StatusCallback` contracts.
-Downstream applications own state extraction, option mapping, UI, and plotting;
-they pass normalized data into this headless facade.
+`NormalizedGeometry`, `GeneratedGeometry`, `StatusCallback`, and
+`RuntimeAnalysisSelection` contracts. Downstream applications own state
+extraction, option mapping, UI, and plotting; they pass normalized data into
+this headless facade. They use `resolve_runtime_analysis()` to reflect effective
+solver selections instead of importing normalization helpers with leading
+underscores.
 
 `dnv_c208_steel_properties()` is the single property-table entry point used by
 both the root analysis APIs and the runtime facade. This prevents grade and

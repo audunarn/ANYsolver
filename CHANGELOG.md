@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 0.1.3 - 2026-07-28
+
+- Complete the generated-geometry runtime bridge: apply configured shear force
+  and torsional moment, pass current-area follower pressure only to supported
+  nonlinear static/arc-length paths, retain the selected corotational
+  kinematics in arc length, and fail closed for incompatible follower paths.
+  Runtime prestress recovery now consumes matching committed nonlinear
+  histories and exposes Gauss-point membrane/bending resultants plus recovery
+  provenance.
+- Correct nonlinear display recovery so plastic-history von Mises values use
+  only the return-mapped shell in-plane or beam-fiber components, while purely
+  elastic nonlinear states retain their full equivalent stress. Preserve
+  combinations with elastically reconstructed transverse shear/torsion as a
+  separately labelled model-scope diagnostic.
+- Add the public `resolve_runtime_analysis()` contract so application GUIs can
+  reflect normalized nonlinear/material/control/kinematics selections without
+  importing private runtime helpers.
+
+## 0.1.2 - 2026-07-28
+
 - Add opt-in executable CalculiX reference validation with isolated case runs,
   stale-output protection, timeouts, solver version/hash provenance, ASCII
   FRD/DAT parsing, tolerance-controlled comparisons, and preserved evidence
@@ -22,7 +42,16 @@
   component-level provenance, and explicit elastic fallbacks. Add guarded
   full-integration Q4/Q8 patch recovery that separates discontinuities and
   labels its optional surface-stress L2 indicator as non-energy-norm.
-
+- Add shell membrane/bending stress and prestrain fields plus beam-fiber
+  initial fields, with zero-load equilibration, immutable field provenance,
+  exact load-stage boundary commits, and persistent plastic history through
+  multi-stage displacement control.
+- Replace the default finite-difference plane-stress algorithmic tangent with
+  the analytical consistent derivative of the discrete return map. Retain the
+  representable-step numerical tangent as a qualification oracle and guarded
+  invalid-row fallback, add a safeguarded local consistency solve with
+  fail-closed residual checks, and add constitutive and full-Newton
+  parity/performance evidence.
 ## 0.1.1 - 2026-07-25
 
 - Correct the layered-shell membrane/bending coupling tangent and keep the

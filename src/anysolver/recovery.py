@@ -766,6 +766,21 @@ def _element_recovery_context(
     return values, stress_frame, np.asarray(recovery_coords, dtype=float)
 
 
+def _state_uses_plastic_constitutive_history(
+    material: Any,
+    state: Mapping[str, Any],
+) -> bool:
+    """Return whether a committed state belongs to an active plastic model."""
+
+    if getattr(material, "hardening_curve", None) is not None:
+        return True
+    for key in ("alpha", "plastic_strain"):
+        values = np.asarray(state.get(key, ()), dtype=float).reshape(-1)
+        if values.size and np.any(np.abs(values) > np.finfo(float).eps):
+            return True
+    return False
+
+
 def _state_shell_stresses(
     model: "FEModel",
     element: Any,
@@ -798,6 +813,7 @@ def _state_shell_stresses(
         return None, "committed shell layer count is incompatible with its Gauss rule"
     num_layers = layer_strain.shape[0] // n_gp
 
+    material = model.get_material(element.material_name)
     layer_stress = np.asarray(state.get("layer_stress", ()), dtype=float)
     if layer_stress.size:
         if layer_stress.size != layer_strain.size:
@@ -807,7 +823,6 @@ def _state_shell_stresses(
         plastic_strain = np.asarray(state.get("plastic_strain", ()), dtype=float)
         if plastic_strain.size != layer_strain.size:
             return None, "committed shell state lacks compatible layer_stress/plastic_strain"
-        material = model.get_material(element.material_name)
         layer_stress = (layer_strain - plastic_strain.reshape(layer_strain.shape)) @ _plane_stress_matrix(
             material.elastic_modulus,
             material.poisson_ratio,
@@ -840,20 +855,37 @@ def _state_shell_stresses(
     sx = stress_layers[:, :, 0]
     sy = stress_layers[:, :, 1]
     txy = stress_layers[:, :, 2]
+    # The layered shell constitutive update is plane-stress J2.  Transverse
+    # shear is reconstructed elastically from the matching displacement field,
+    # but it is not part of the return-mapped material state.  Keep the public
+    # ``von_mises`` field history-consistent and expose the mixed diagnostic
+    # separately; otherwise large elastic transverse shear can falsely appear
+    # to violate the selected hardening curve.
     vm_layers = np.sqrt(
         np.maximum(
             sx**2
             - sx * sy
             + sy**2
+            + 3.0 * txy**2,
+            0.0,
+        )
+    )
+    mixed_vm_layers = np.sqrt(
+        np.maximum(
+            vm_layers**2
             + 3.0
             * (
-                txy**2
-                + shear_xz[:, None] ** 2
+                shear_xz[:, None] ** 2
                 + shear_yz[:, None] ** 2
             ),
             0.0,
         )
     )
+    material_history_active = _state_uses_plastic_constitutive_history(
+        material,
+        state,
+    )
+    primary_vm_layers = vm_layers if material_history_active else mixed_vm_layers
     recovered: Dict[str, Any] = dict(elastic_stresses)
     recovered.update(
         {
@@ -868,7 +900,10 @@ def _state_shell_stresses(
             "bending_xy": bending_stress[:, 2].copy(),
             "shear_xz": shear_xz.copy(),
             "shear_yz": shear_yz.copy(),
-            "von_mises": np.max(vm_layers, axis=1),
+            "von_mises": np.max(primary_vm_layers, axis=1),
+            "mixed_reconstruction_von_mises": np.max(
+                mixed_vm_layers, axis=1
+            ),
         }
     )
 
@@ -938,6 +973,7 @@ def _state_beam_stresses(
         return None, "element is not a beam"
     if not isinstance(state, Mapping):
         return None, "committed state is not a mapping"
+    material = model.get_material(element.material_name)
     fiber_stress = np.asarray(state.get("fiber_stress", ()), dtype=float).reshape(-1)
     if fiber_stress.size == 0:
         return None, "committed beam state has no fiber_stress"
@@ -952,7 +988,6 @@ def _state_beam_stresses(
         and fiber_y.size == fiber_z.size
         and fiber_y.size == fiber_weights.size
     ):
-        material = model.get_material(element.material_name)
         config = element._fiber_plasticity_config(material)
         if config is None:
             return None, (
@@ -1032,17 +1067,31 @@ def _state_beam_stresses(
             )
         )
     )
-    fiber_von_mises = np.sqrt(
+    # Beam plasticity return-maps the axial fiber stress only.  Shear and
+    # torsion are matching elastic reconstructions and therefore cannot be
+    # folded into a material-history equivalent stress without implying a
+    # three-dimensional return mapping that the element does not perform.
+    fiber_von_mises = np.abs(stress_by_station)
+    mixed_fiber_von_mises = np.sqrt(
         np.maximum(
             stress_by_station**2
             + 3.0 * (shear_y**2 + shear_z**2 + torsion**2),
             0.0,
         )
     )
+    material_history_active = _state_uses_plastic_constitutive_history(
+        material,
+        state,
+    )
+    primary_fiber_von_mises = (
+        fiber_von_mises
+        if material_history_active
+        else mixed_fiber_von_mises
+    )
     recovered: Dict[str, Any] = dict(elastic_stresses)
     recovered.update(
         {
-            "von_mises": float(np.max(fiber_von_mises)),
+            "von_mises": float(np.max(primary_fiber_von_mises)),
             "axial_stress": axial,
             "bending_stress_y": signed_envelope(bending_y_by_station),
             "bending_stress_z": signed_envelope(bending_z_by_station),
@@ -1052,6 +1101,12 @@ def _state_beam_stresses(
             "fiber_stress_min": float(np.min(stress_by_station)),
             "fiber_stress_max": float(np.max(stress_by_station)),
             "fiber_von_mises_max": float(np.max(fiber_von_mises)),
+            "mixed_reconstruction_von_mises": float(
+                np.max(mixed_fiber_von_mises)
+            ),
+            "fiber_mixed_reconstruction_von_mises_max": float(
+                np.max(mixed_fiber_von_mises)
+            ),
             "axial_force_by_station": axial_force.copy(),
             "bending_moment_y_by_station": moment_y.copy(),
             "bending_moment_z_by_station": moment_z.copy(),
@@ -1109,6 +1164,10 @@ def _recover_one_committed_state(
         recovery_coordinates=recovery_coordinates,
     )
     if shell is not None:
+        shell_material_history = _state_uses_plastic_constitutive_history(
+            model.get_material(element.material_name),
+            state,
+        )
         return (
             shell,
             "committed_shell_layer_state",
@@ -1116,6 +1175,17 @@ def _recover_one_committed_state(
             {
                 "membrane_bending_and_surface_in_plane": "committed_shell_layer_state",
                 "transverse_shear": "elastic_reconstruction_from_same_solution",
+                "von_mises": (
+                    "committed_shell_layer_state_in_plane"
+                    if shell_material_history
+                    else (
+                        "committed_elastic_shell_layer_state_plus_"
+                        "elastic_transverse_shear"
+                    )
+                ),
+                "mixed_reconstruction_von_mises": (
+                    "committed_shell_layer_state_plus_elastic_transverse_shear"
+                ),
                 "stress_frame": (
                     "current_corotated_center_frame"
                     if str(kinematics) == "corotational"
@@ -1127,6 +1197,10 @@ def _recover_one_committed_state(
         model, element, state, contextual_elastic
     )
     if beam is not None:
+        beam_material_history = _state_uses_plastic_constitutive_history(
+            model.get_material(element.material_name),
+            state,
+        )
         return (
             beam,
             "committed_beam_fiber_state",
@@ -1134,6 +1208,17 @@ def _recover_one_committed_state(
             {
                 "axial_fibers_and_section_resultants": "committed_beam_fiber_state",
                 "shear_and_torsion": "elastic_reconstruction_from_same_solution",
+                "von_mises": (
+                    "committed_beam_fiber_state"
+                    if beam_material_history
+                    else (
+                        "committed_elastic_beam_fiber_state_plus_"
+                        "elastic_shear_and_torsion"
+                    )
+                ),
+                "mixed_reconstruction_von_mises": (
+                    "committed_beam_fiber_state_plus_elastic_shear_and_torsion"
+                ),
                 "stress_frame": (
                     "current_corotated_frame"
                     if str(kinematics) == "corotational"

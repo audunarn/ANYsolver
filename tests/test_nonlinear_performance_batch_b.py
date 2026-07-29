@@ -95,12 +95,13 @@ def test_elastic_batch_does_not_overwrite_recovered_stress_with_zero() -> None:
         5,
         tangent=True,
     )
-    stresses, state_based = _runtime_display_stresses(
+    stresses, state_based, provenance = _runtime_display_stresses(
         model,
         displacement,
         SimpleNamespace(element_states=states),
     )
     assert state_based == set()
+    assert provenance["history_aware_element_ids"] == []
     assert float(np.max(np.asarray(stresses[1]["von_mises"], dtype=float))) > 0.0
 
 

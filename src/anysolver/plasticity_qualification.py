@@ -13,7 +13,13 @@ import numpy as np
 from .elements import BeamElement, ShellElement
 from .fe_core import FEModel
 from .material_curves import DNVC208MaterialCurve, FiberSectionPlasticityConfig, dnv_c208_steel_curve
-from .plasticity import plane_stress_elastic_matrix, plane_stress_return_map
+from .plasticity import (
+    plane_stress_elastic_matrix,
+    plane_stress_numerical_tangent,
+    plane_stress_return_map,
+    plane_stress_tangent_method,
+    plane_stress_tangent_diagnostics,
+)
 
 DEFAULT_PLASTICITY_QUALIFICATION_PATH = Path("reports/plasticity_qualification/plasticity_qualification_report.json")
 
@@ -60,21 +66,437 @@ def _material_tangent_fd_error(
     stress, tangent, plastic_new, alpha_new = plane_stress_return_map(
         strain, plastic, alpha, E_STEEL, NU_STEEL, curve
     )
-    fd = np.zeros((3, 3), dtype=float)
-    for col in range(3):
-        perturb = np.zeros_like(strain)
-        perturb[0, col] = step
-        sp = plane_stress_return_map(strain + perturb, plastic, alpha, E_STEEL, NU_STEEL, curve)[0][0]
-        sm = plane_stress_return_map(strain - perturb, plastic, alpha, E_STEEL, NU_STEEL, curve)[0][0]
-        fd[:, col] = (sp - sm) / (2.0 * step)
+    fd = plane_stress_numerical_tangent(
+        strain,
+        plastic,
+        alpha,
+        E_STEEL,
+        NU_STEEL,
+        curve,
+        step=step,
+    )[0]
     error = float(np.linalg.norm(tangent[0] - fd) / max(np.linalg.norm(fd), 1.0))
+    symmetry_error = float(
+        np.linalg.norm(tangent[0] - tangent[0].T)
+        / max(np.linalg.norm(tangent[0]), 1.0)
+    )
     return {
         "stress": stress[0].tolist(),
         "alpha": float(alpha_new[0]),
         "max_plastic_strain_component": float(np.max(np.abs(plastic_new))),
         "yield_residual": yield_function_residual(stress[0], float(alpha_new[0]), curve),
         "tangent_fd_relative_error": error,
-        "tangent_status": "tight" if error < 1.0e-3 else "diagnostic_current_continuum_tangent",
+        "tangent_symmetry_relative_error": symmetry_error,
+        "tangent_status": "tight" if error < 1.0e-3 else "diagnostic_oracle_mismatch",
+    }
+
+
+def algorithmic_tangent_path_metrics() -> Dict[str, Any]:
+    """Compare analytical and numerical tangents over representative states.
+
+    The path set deliberately spans the elastic branch, first yield, both
+    piecewise-linear and power-law hardening, elastic unloading from a
+    committed plastic state, and a highly ill-conditioned (but finite)
+    plane-stress elastic matrix.
+    """
+    curve = reference_plastic_curve()
+    zero_plastic = np.zeros((1, 3), dtype=float)
+    zero_alpha = np.zeros(1, dtype=float)
+
+    cases: Dict[str, Tuple[np.ndarray, np.ndarray, np.ndarray, float]] = {
+        "elastic": (
+            np.array([[2.0e-4, -0.5e-4, 0.25e-4]], dtype=float),
+            zero_plastic,
+            zero_alpha,
+            NU_STEEL,
+        ),
+        "yielding": (
+            np.array([[2.0e-3, 0.0, 0.0]], dtype=float),
+            zero_plastic,
+            zero_alpha,
+            NU_STEEL,
+        ),
+        "linear_hardening": (
+            np.array([[6.0e-3, 1.0e-3, 0.7e-3]], dtype=float),
+            zero_plastic,
+            zero_alpha,
+            NU_STEEL,
+        ),
+        "power_law_hardening": (
+            np.array([[0.16, 0.025, 0.01]], dtype=float),
+            zero_plastic,
+            zero_alpha,
+            NU_STEEL,
+        ),
+        "near_singular_plane_stress": (
+            np.array([[2.0e-10, -2.0e-10, 2.5e-11]], dtype=float),
+            zero_plastic,
+            zero_alpha,
+            -0.999999,
+        ),
+    }
+
+    preload_strain = np.array([[8.0e-3, 1.0e-3, 0.5e-3]], dtype=float)
+    _preload_stress, _preload_tangent, preload_plastic, preload_alpha = (
+        plane_stress_return_map(
+            preload_strain,
+            zero_plastic,
+            zero_alpha,
+            E_STEEL,
+            NU_STEEL,
+            curve,
+        )
+    )
+    cases["unloading"] = (
+        preload_strain - np.array([[1.0e-3, 0.25e-3, 0.1e-3]], dtype=float),
+        preload_plastic,
+        preload_alpha,
+        NU_STEEL,
+    )
+
+    results: Dict[str, Any] = {}
+    for name, (strain, plastic, alpha, nu) in cases.items():
+        diagnostics = plane_stress_tangent_diagnostics(
+            strain,
+            plastic,
+            alpha,
+            E_STEEL,
+            nu,
+            curve,
+        )
+        stress, tangent, plastic_new, alpha_new = plane_stress_return_map(
+            strain,
+            plastic,
+            alpha,
+            E_STEEL,
+            nu,
+            curve,
+        )
+        results[name] = {
+            **diagnostics,
+            "elastic_matrix_condition": float(
+                np.linalg.cond(plane_stress_elastic_matrix(E_STEEL, nu))
+            ),
+            "stress_norm": float(np.linalg.norm(stress)),
+            "tangent_norm": float(np.linalg.norm(tangent)),
+            "alpha": float(alpha_new[0]),
+            "alpha_increment": float(alpha_new[0] - alpha[0]),
+            "plastic_strain_increment_norm": float(
+                np.linalg.norm(plastic_new - plastic)
+            ),
+        }
+
+    return {
+        "method": "analytical_implicit_consistent",
+        "oracle": "central_finite_difference_discrete_return_map",
+        "cases": results,
+        "max_relative_error": max(
+            float(case["max_relative_error"]) for case in results.values()
+        ),
+        "max_symmetry_relative_error": max(
+            float(case["max_symmetry_relative_error"])
+            for case in results.values()
+        ),
+        "max_fallback_count": max(
+            int(case["fallback_count"]) for case in results.values()
+        ),
+    }
+
+
+def _best_elapsed(call: Any, repeats: int = 3) -> float:
+    best = float("inf")
+    for _ in range(max(int(repeats), 1)):
+        started = time.perf_counter()
+        call()
+        best = min(best, time.perf_counter() - started)
+    return float(best)
+
+
+def algorithmic_tangent_performance_metrics(
+    num_points: int = 512,
+    repeats: int = 3,
+) -> Dict[str, Any]:
+    """Benchmark analytical and numerical tangents on one yielding batch."""
+    count = max(int(num_points), 1)
+    curve = reference_plastic_curve()
+    phase = np.linspace(0.0, 1.0, count, dtype=float)
+    strain = np.column_stack(
+        (
+            0.004 + 0.004 * phase,
+            0.0005 + 0.001 * phase,
+            0.0002 + 0.0005 * phase,
+        )
+    )
+    plastic = np.zeros_like(strain)
+    alpha = np.zeros(count, dtype=float)
+
+    def analytical_call() -> None:
+        plane_stress_return_map(
+            strain,
+            plastic,
+            alpha,
+            E_STEEL,
+            NU_STEEL,
+            curve,
+            tangent_method="analytical",
+        )
+
+    def numerical_call() -> None:
+        plane_stress_return_map(
+            strain,
+            plastic,
+            alpha,
+            E_STEEL,
+            NU_STEEL,
+            curve,
+            tangent_method="numerical",
+        )
+
+    # Remove JIT compilation and allocator warm-up from steady-state timing.
+    analytical_call()
+    numerical_call()
+    analytical_seconds = _best_elapsed(analytical_call, repeats=repeats)
+    numerical_seconds = _best_elapsed(numerical_call, repeats=repeats)
+    return {
+        "num_points": count,
+        "repeats": max(int(repeats), 1),
+        "analytical_seconds": analytical_seconds,
+        "numerical_seconds": numerical_seconds,
+        "speedup": numerical_seconds / max(analytical_seconds, 1.0e-15),
+        "return_map_evaluations_per_update": {
+            "analytical": 1,
+            "numerical": 7,
+        },
+        "tangent_derivative_samples": {
+            "analytical": 0,
+            "numerical": 6,
+        },
+    }
+
+
+def _flatten_numeric_state(value: Any) -> np.ndarray:
+    parts = []
+    if isinstance(value, dict):
+        for key in sorted(value, key=str):
+            parts.append(_flatten_numeric_state(value[key]))
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            parts.append(_flatten_numeric_state(item))
+    else:
+        try:
+            array = np.asarray(value, dtype=float).reshape(-1)
+        except (TypeError, ValueError):
+            array = np.zeros(0, dtype=float)
+        if array.size:
+            parts.append(array)
+    nonempty = [part for part in parts if part.size]
+    return np.concatenate(nonempty) if nonempty else np.zeros(0, dtype=float)
+
+
+def _global_shell_newton_run(tangent_method: str) -> Dict[str, Any]:
+    """Run one force-controlled plastic shell solve without API plumbing."""
+    from .boundary import BoundaryCondition, LoadCase
+    from .elements import ShellElement
+    from .matrix_assembly import assemble_load_vector
+    from .nonlinear_static import _assemble_nonlinear_system, solve_static_nonlinear
+
+    model = FEModel(name=f"global_tangent_{tangent_method}")
+    curve = dnv_c208_steel_curve("S355", 0.010)
+    model.add_material("steel", E_STEEL, NU_STEEL, hardening_curve=curve)
+    nx, ny = 4, 2
+    nodes: Dict[Tuple[int, int], int] = {}
+    node_id = 1
+    for j in range(ny + 1):
+        for i in range(nx + 1):
+            model.add_node(node_id, i / nx, 0.2 * j / ny, 0.0)
+            nodes[(i, j)] = node_id
+            node_id += 1
+    element_id = 1
+    for j in range(ny):
+        for i in range(nx):
+            model.add_element(
+                element_id,
+                ShellElement(
+                    element_id,
+                    [
+                        nodes[(i, j)],
+                        nodes[(i + 1, j)],
+                        nodes[(i + 1, j + 1)],
+                        nodes[(i, j + 1)],
+                    ],
+                    "steel",
+                    thickness=0.010,
+                ),
+            )
+            element_id += 1
+    all_nodes = sorted(nodes.values())
+    left_nodes = [nodes[(0, j)] for j in range(ny + 1)]
+    right_nodes = [nodes[(nx, j)] for j in range(ny + 1)]
+    model.add_boundary_condition(
+        BoundaryCondition("left_x", left_nodes, {"ux": 0.0})
+    )
+    model.add_boundary_condition(
+        BoundaryCondition("origin_y", [nodes[(0, 0)]], {"uy": 0.0})
+    )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "in_plane",
+            all_nodes,
+            {"uz": 0.0, "rx": 0.0, "ry": 0.0},
+        )
+    )
+
+    target_stress = 340.0e6
+    total_force = target_stress * 0.2 * 0.010
+    load = LoadCase(name="plastic_pull")
+    edge_weights = np.ones(len(right_nodes), dtype=float)
+    edge_weights[[0, -1]] = 0.5
+    edge_weights /= np.sum(edge_weights)
+    for right_node, weight in zip(right_nodes, edge_weights):
+        load.add_nodal_load(
+            right_node,
+            [weight * total_force, 0.0, 0.0, 0.0, 0.0, 0.0],
+        )
+
+    started = time.perf_counter()
+    with plane_stress_tangent_method(tangent_method):
+        result = solve_static_nonlinear(
+            model,
+            load,
+            num_steps=6,
+            num_layers=3,
+            max_iterations=20,
+            tolerance=1.0e-8,
+            convergence_settings="legacy",
+        )
+    elapsed = time.perf_counter() - started
+
+    internal_force = _assemble_nonlinear_system(
+        model,
+        result.displacements,
+        result.element_states,
+        num_layers=3,
+        tangent=False,
+    )[0]
+    external_force = assemble_load_vector(
+        model,
+        load,
+        displacements=result.displacements,
+    )[0]
+    imbalance = internal_force - result.load_factor * external_force
+    constrained_dofs = [
+        model.mesh.get_node(constrained_node).dofs[local_dof]
+        for constrained_node in all_nodes
+        for local_dof in (2, 3, 4)
+    ]
+    constrained_dofs.extend(
+        model.mesh.get_node(constrained_node).dofs[0]
+        for constrained_node in left_nodes
+    )
+    constrained_dofs.append(model.mesh.get_node(nodes[(0, 0)]).dofs[1])
+    right_ux = np.array(
+        [
+            result.displacements[model.mesh.get_node(right_node).dofs[0]]
+            for right_node in right_nodes
+        ],
+        dtype=float,
+    )
+    state_vector = _flatten_numeric_state(result.element_states)
+    reaction_vector = imbalance[np.asarray(constrained_dofs, dtype=int)]
+    left_x_reactions = np.array(
+        [
+            imbalance[model.mesh.get_node(left_node).dofs[0]]
+            for left_node in left_nodes
+        ],
+        dtype=float,
+    )
+    return {
+        "status": result.status,
+        "load_factor": float(result.load_factor),
+        "total_newton_iterations": int(
+            result.info.get(
+                "total_newton_iterations",
+                sum(step.iterations for step in result.steps),
+            )
+        ),
+        "num_converged_steps": len(result.steps),
+        "elapsed_seconds": float(elapsed),
+        "reported_solve_seconds": float(result.info.get("solve_time", elapsed)),
+        "displacements": result.displacements.copy(),
+        "right_ux": right_ux,
+        "reaction_vector": reaction_vector,
+        "left_x_reactions": left_x_reactions,
+        "state_vector": state_vector,
+        "state_summary": result.info.get("strain_summary", {}),
+    }
+
+
+def _relative_array_error(first: np.ndarray, second: np.ndarray) -> float:
+    first = np.asarray(first, dtype=float)
+    second = np.asarray(second, dtype=float)
+    if first.shape != second.shape:
+        return float("inf")
+    return float(
+        np.linalg.norm(first - second)
+        / max(np.linalg.norm(first), np.linalg.norm(second), 1.0)
+    )
+
+
+def global_newton_tangent_benchmark_metrics(repeats: int = 1) -> Dict[str, Any]:
+    """Compare analytical/oracle tangents in an actual global shell solve."""
+    # Warm compilation, cached geometry, and the nonlinear acceleration layer
+    # with both modes before recording complete solve time.
+    _global_shell_newton_run("analytical")
+    _global_shell_newton_run("numerical")
+    retained: Dict[str, Dict[str, Any]] = {}
+    for method in ("analytical", "numerical"):
+        candidates = [
+            _global_shell_newton_run(method)
+            for _ in range(max(int(repeats), 1))
+        ]
+        retained[method] = min(
+            candidates, key=lambda candidate: candidate["elapsed_seconds"]
+        )
+
+    analytical = retained["analytical"]
+    numerical = retained["numerical"]
+    parity = {
+        "displacement_relative_error": _relative_array_error(
+            analytical["displacements"], numerical["displacements"]
+        ),
+        "right_ux_relative_error": _relative_array_error(
+            analytical["right_ux"], numerical["right_ux"]
+        ),
+        "reaction_relative_error": _relative_array_error(
+            analytical["reaction_vector"], numerical["reaction_vector"]
+        ),
+        "committed_state_relative_error": _relative_array_error(
+            analytical["state_vector"], numerical["state_vector"]
+        ),
+    }
+
+    def reportable(run: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "status": run["status"],
+            "load_factor": run["load_factor"],
+            "total_newton_iterations": run["total_newton_iterations"],
+            "num_converged_steps": run["num_converged_steps"],
+            "elapsed_seconds": run["elapsed_seconds"],
+            "reported_solve_seconds": run["reported_solve_seconds"],
+            "right_ux": run["right_ux"].tolist(),
+            "reaction_norm": float(np.linalg.norm(run["reaction_vector"])),
+            "left_x_reactions": run["left_x_reactions"].tolist(),
+            "state_summary": run["state_summary"],
+            "committed_state_norm": float(np.linalg.norm(run["state_vector"])),
+        }
+
+    return {
+        "model": "eight_element_force_controlled_plastic_shell_strip",
+        "analytical": reportable(analytical),
+        "numerical": reportable(numerical),
+        "parity": parity,
+        "speedup": numerical["elapsed_seconds"]
+        / max(analytical["elapsed_seconds"], 1.0e-15),
     }
 
 
@@ -284,8 +706,11 @@ def dnv_curve_metric() -> Dict[str, Any]:
 def generate_plasticity_qualification_report() -> Dict[str, Any]:
     material = material_point_path_metrics()
     element = element_tangent_metrics()
+    analytical_tangent = algorithmic_tangent_path_metrics()
+    tangent_performance = algorithmic_tangent_performance_metrics()
+    global_newton = global_newton_tangent_benchmark_metrics()
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "environment": {
             "platform": platform.platform(),
@@ -294,14 +719,33 @@ def generate_plasticity_qualification_report() -> Dict[str, Any]:
         },
         "dnv_curves": dnv_curve_metric(),
         "material_point": material,
+        "algorithmic_tangent": analytical_tangent,
         "element_tangents": element,
+        "performance": {
+            "material_batch": tangent_performance,
+            "global_nonlinear_shell_newton": global_newton,
+        },
         "status": "passed"
-        if material["max_abs_yield_residual"] < 1.0e-8 and element["max_algorithmic_tangent_error"] < 1.0e-4
+        if (
+            material["max_abs_yield_residual"] < 1.0e-8
+            and analytical_tangent["max_relative_error"] < 1.0e-5
+            and element["max_algorithmic_tangent_error"] < 1.0e-4
+            and global_newton["analytical"]["status"] == "completed"
+            and global_newton["numerical"]["status"] == "completed"
+            and global_newton["analytical"]["total_newton_iterations"]
+            <= global_newton["numerical"]["total_newton_iterations"]
+            and max(global_newton["parity"].values()) < 1.0e-8
+        )
         else "diagnostic",
         "known_limitations": [
-            "Plastic material tangents are now consistent numerical algorithmic tangents of the discrete return map.",
-            "The numerical tangent is intentionally correctness-first and more expensive than a closed-form analytical algorithmic tangent.",
-            "A future speed batch should replace the numerical tangent with an analytical derivative after preserving these finite-difference checks.",
+            "The analytical tangent is branch-consistent; exactly at a "
+            "piecewise hardening corner the derivative is directional.",
+            "The numerical tangent remains the qualification oracle and "
+            "automatic fallback for non-finite or ill-conditioned "
+            "pathological states.",
+            "Near loss of material ellipticity, a local tangent can be "
+            "physically ill-conditioned even when its differentiation is "
+            "accurate.",
         ],
     }
 

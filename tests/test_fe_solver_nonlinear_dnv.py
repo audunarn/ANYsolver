@@ -284,7 +284,7 @@ def test_displacement_control_reports_peak_load_and_strain_history():
     assert result.info["strain_summary"]["max_equivalent_plastic_strain"] > 0.0
 
 
-def test_multistage_displacement_control_rejects_path_dependent_plasticity():
+def test_multistage_displacement_control_commits_path_dependent_preload():
     model = _guided_beam_model(curve=EPP_CURVE, fiber=True)
     preload = LoadCase(name="preload")
     preload.add_nodal_load(2, load_vector=[1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
@@ -297,21 +297,26 @@ def test_multistage_displacement_control_rejects_path_dependent_plasticity():
         ]
     )
 
-    with pytest.raises(
-        NotImplementedError,
-        match="Multi-stage displacement control with path-dependent plasticity",
-    ):
-        solve_static_nonlinear(
-            model,
-            load_program=program,
-            control="displacement",
-            displacement_control=DisplacementControl(
-                node_id=2,
-                dof="ux",
-                target_displacement=0.004,
-            ),
-            num_steps=4,
-        )
+    result = solve_static_nonlinear(
+        model,
+        load_program=program,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=2,
+            dof="ux",
+            target_displacement=0.004,
+        ),
+        num_steps=4,
+    )
+
+    assert result.status == "completed"
+    assert result.info["material_history_reused_from_preload"] is True
+    assert result.info["load_program_preload"]["status"] == "completed"
+    assert result.steps[-1].control_value == pytest.approx(0.004)
+    assert result.info["load_program_stage_factors"] == {
+        "preload": pytest.approx(1.0),
+        "controlled": pytest.approx(result.load_factor),
+    }
 
 
 def test_nonlinear_load_program_applies_ordered_stages_to_completion():

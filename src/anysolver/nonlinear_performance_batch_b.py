@@ -418,6 +418,21 @@ def _finalize_batch_b_element_states(
         for index, element_id in enumerate(batch.element_ids):
             element_key = int(element_id)
             existing = finalized.get(element_key)
+            if isinstance(existing, Mapping) and any(
+                key in existing
+                for key in (
+                    "initial_membrane_stress",
+                    "initial_bending_stress",
+                    "initial_membrane_prestrain",
+                    "initial_curvature_prestrain",
+                )
+            ):
+                # Initial-field elements were assembled through the scalar
+                # reference path, which already stored the constitutive layer
+                # strain and stress.  Reconstructing the ordinary elastic
+                # kinematic strain here would erase the immutable offset and
+                # corrupt material-history recovery.
+                continue
             if isinstance(existing, Mapping):
                 state = dict(existing)
             else:

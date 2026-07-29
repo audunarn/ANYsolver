@@ -767,10 +767,35 @@ def build_symmetric_load_case(
     return load_case
 
 
-def recover_prestress_from_static_result(model: FEModel, displacements: np.ndarray) -> Tuple[Dict[int, Dict[str, float]], Dict[str, Any]]:
-    """Recover element prestress states for buckling from a static solution."""
-    states: Dict[int, Dict[str, float]] = {}
-    stresses = compute_stresses(model, displacements)
+def recover_prestress_from_static_result(
+    model: FEModel,
+    displacements: np.ndarray,
+    *,
+    nonlinear_result: Any = None,
+) -> Tuple[Dict[int, Dict[str, Any]], Dict[str, Any]]:
+    """Recover buckling prestress, retaining Gauss-point and material history.
+
+    Linear calls use displacement-based stress recovery.  When a matching
+    nonlinear result is supplied, the unified recovery path reconstructs
+    stresses from committed shell-layer and beam-fiber states and records its
+    provenance.
+    """
+
+    states: Dict[int, Dict[str, Any]] = {}
+    recovery_provenance: Dict[str, Any] | None = None
+    if nonlinear_result is None:
+        stresses = compute_stresses(model, displacements)
+    else:
+        from .recovery import recover_stress_result
+
+        recovery = recover_stress_result(
+            model,
+            displacements,
+            nonlinear_result=nonlinear_result,
+            copy_committed_states=False,
+        )
+        stresses = recovery.element_stresses
+        recovery_provenance = recovery.provenance.to_dict()
     shell_count = 0
     beam_count = 0
     shell_compression = []
@@ -778,15 +803,41 @@ def recover_prestress_from_static_result(model: FEModel, displacements: np.ndarr
     for element_id, element in model.mesh.elements.items():
         stress = stresses.get(element_id)
         if isinstance(element, ShellElement) and stress:
-            sx = float(np.mean(stress.get("membrane_xx", np.zeros(1))))
-            sy = float(np.mean(stress.get("membrane_yy", np.zeros(1))))
-            txy = float(np.mean(stress.get("membrane_xy", np.zeros(1))))
+            sx_gp = np.asarray(stress.get("membrane_xx", np.zeros(1)), dtype=float).reshape(-1)
+            sy_gp = np.asarray(stress.get("membrane_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+            txy_gp = np.asarray(stress.get("membrane_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+            if sy_gp.size != sx_gp.size or txy_gp.size != sx_gp.size:
+                raise ValueError("inconsistent shell membrane stress recovery shape")
+            bx_gp = np.asarray(stress.get("bending_xx", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+            by_gp = np.asarray(stress.get("bending_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+            bxy_gp = np.asarray(stress.get("bending_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+            if bx_gp.size != sx_gp.size or by_gp.size != sx_gp.size or bxy_gp.size != sx_gp.size:
+                raise ValueError("inconsistent shell bending stress recovery shape")
+
+            thickness = float(element.thickness)
+            membrane_resultants = np.column_stack((sx_gp, sy_gp, txy_gp)) * thickness
+            bending_resultants = (
+                np.column_stack((bx_gp, by_gp, bxy_gp))
+                * thickness
+                * thickness
+                / 6.0
+            )
+            sx = float(np.mean(sx_gp))
+            sy = float(np.mean(sy_gp))
+            txy = float(np.mean(txy_gp))
             states[int(element_id)] = {
-                "membrane_force_x": sx * element.thickness,
-                "membrane_force_y": sy * element.thickness,
-                "membrane_force_xy": txy * element.thickness,
+                # Legacy mean resultants remain for serialized/downstream
+                # compatibility; the enhanced Mindlin operator consumes the
+                # Gauss-point fields below.
+                "membrane_force_x": sx * thickness,
+                "membrane_force_y": sy * thickness,
+                "membrane_force_xy": txy * thickness,
+                "membrane_forces_at_gauss": membrane_resultants.tolist(),
+                "bending_moments_at_gauss": bending_resultants.tolist(),
             }
-            shell_compression.append(max(-sx * element.thickness, -sy * element.thickness, 0.0))
+            shell_compression.append(
+                float(max(np.max(-membrane_resultants[:, :2]), 0.0))
+            )
             shell_count += 1
         elif isinstance(element, (BeamElement, QuadraticBeamElement)) and stress:
             axial_force = float(stress.get("axial_stress", 0.0)) * float(getattr(element, "_A", 0.0))
@@ -800,6 +851,8 @@ def recover_prestress_from_static_result(model: FEModel, displacements: np.ndarr
         "max_shell_compression_resultant": float(max(shell_compression) if shell_compression else 0.0),
         "max_beam_compression_force": float(max(beam_compression) if beam_compression else 0.0),
     }
+    if recovery_provenance is not None:
+        summary["stress_recovery"] = recovery_provenance
     return states, summary
 
 
