@@ -69,6 +69,8 @@ contact/fracture coverage.
 | --- | --- |
 | `fe_core.py` | `FEModel`, mesh, nodes, materials, point masses, revisions, and DOF numbering. |
 | `materials.py` | Runtime-checkable structural material protocol, isotropic/orthotropic compliance dispatch, Hill-48 strength data, validation, and shell/beam material reductions. |
+| `sections.py` | Public runtime-checkable generalized shell/beam section contracts, component orders, coercion, and validation. |
+| `shell_sections.py` / `beam_sections.py` | Concrete pre-integrated `A/B/D/As` shell and coupled 6x6 beam section implementations. |
 | `elements.py` | Triangle/quad shells, linear/quadratic Timoshenko beams, coupling elements, element matrices, nonlinear response, Mindlin initial-stress operators, and stress recovery. |
 | `boundary.py` | Supports, prescribed DOFs, load cases, combinations, dead/current-area follower pressure, acceleration loads, in-plane edge loads, and the exact follower-pressure load tangent. |
 | `mesh_gen.py` | Rectangular panel, stiffened-panel, and beam mesh generation with interpolated eccentric coupling and mesh-quality checks. |
@@ -104,6 +106,17 @@ positive normal; the shell-local x axis is the default base direction.
 Orthotropic beam axes follow beam-local x/y/z, including the section
 orientation used to establish y/z. Such beams require a positive explicit
 `cross_section["torsional_rigidity"]`; isotropic sections retain `G*J`.
+
+Generalized sections are separate from materials. A
+`GeneralizedShellSectionProtocol` supplies pre-integrated `A`, `B`, `D`, and
+`As` matrices in its material axes; the element direction/angle rotates them
+into each shell frame. A `GeneralizedBeamSectionContract` supplies a local 6x6
+section stiffness from generalized strains
+`[eps_x,gamma_xy,gamma_xz,kappa_x,kappa_y,kappa_z]` to resultants
+`[N,V_y,V_z,T,M_y,M_z]`. These protocols are structural so future ANYmaterial
+objects need no ANYsolver base class. Optional shell mass/rotary inertia per
+area and beam 6x6 mass per length override legacy mass; omitted values retain
+the attached material/geometry mass path.
 
 The shell initial-stress operator is derived from the Mindlin director field
 `[u + z*ry, v - z*rx, w]`. It accepts uniform or Gauss-point-varying membrane
@@ -232,9 +245,12 @@ or beam shear/torsion envelope. The Hill measure remains explicitly scoped to
 the return-mapped material-axis shell layers or longitudinal beam fibers, and
 its utilization is normalized by the current hardening-scaled strength.
 
-The capability is homogeneous orthotropy, not arbitrary anisotropic coupling,
-laminates, ply stacking, progressive composite failure, or general beam-section
-constitutive coupling.
+The material capability remains homogeneous isotropy/orthotropy rather than an
+arbitrary 3-D anisotropic law. At section level, linear pre-integrated laminate
+`A/B/D/As` and general coupled beam 6x6 laws are supported. Ply stacking,
+through-thickness/ply stress recovery, section plasticity, progressive
+composite failure, and material-to-section homogenization remain outside the
+contract.
 
 ### Production workflows and interchange
 

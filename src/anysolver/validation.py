@@ -306,11 +306,17 @@ def validate_production_model(
     entity IDs and corrective hints.  It does not run a full analysis.
     """
     from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
+    from .beam_sections import (
+        generalized_beam_mass_matrix,
+        generalized_beam_stiffness,
+    )
     from .elements import BeamElement, CoupledBeamShellElement, QuadraticBeamElement, ShellElement
     from .materials import material_symmetry, material_validation_errors
     from .matrix_assembly import assemble_stiffness_matrix
+    from .shell_sections import validate_generalized_shell_section
 
     issues: List[ProductionValidationIssue] = []
+    analysis_name = None if analysis_type is None else str(analysis_type).strip().lower()
     mesh_quality: Dict[str, Any] = {
         "shell_count": 0,
         "beam_count": 0,
@@ -444,7 +450,49 @@ def validate_production_model(
                 if midside > midside_deviation_limit:
                     issues.append(_issue("MESH004", "warning", "element", int(element_id), "Q8/S8 midside node deviates strongly from edge midpoint.", measured=midside, limit=midside_deviation_limit, suggestion="Place midside nodes near geometric edge midpoints or regenerate the mesh."))
                 material = model.materials.get(material_name)
-                if material is not None and material_symmetry(material) == "orthotropic":
+                shell_section = getattr(element, "shell_section", None)
+                if shell_section is not None:
+                    try:
+                        validate_generalized_shell_section(shell_section)
+                    except (TypeError, ValueError) as exc:
+                        issues.append(
+                            _issue(
+                                "SHELL003",
+                                "error",
+                                "element",
+                                int(element_id),
+                                f"Generalized shell section is invalid: {exc}",
+                                suggestion=(
+                                    "Provide finite A/B/D/As matrices with a "
+                                    "positive-definite ABD and transverse-shear law."
+                                ),
+                            )
+                        )
+                    if analysis_name in {"nonlinear_static", "arc_length"} and (
+                        getattr(material, "hardening_curve", None) is not None
+                        or getattr(material, "hill_yield", None) is not None
+                    ):
+                        issues.append(
+                            _issue(
+                                "SHELL004",
+                                "error",
+                                "element",
+                                int(element_id),
+                                "Generalized shell sections are linear elastic and "
+                                "cannot use material layer plasticity.",
+                                suggestion=(
+                                    "Remove the material hardening/yield law or use "
+                                    "a homogeneous material-driven shell."
+                                ),
+                            )
+                        )
+                if (
+                    material is not None
+                    and (
+                        shell_section is not None
+                        or material_symmetry(material) == "orthotropic"
+                    )
+                ):
                     element._material_angle(element._center_frame(coords))
             except Exception as exc:
                 issues.append(_issue("MESH005", "error", "element", int(element_id), f"Shell mesh-quality evaluation failed: {exc}", suggestion="Check element connectivity and node coordinates."))
@@ -454,7 +502,31 @@ def validate_production_model(
             mesh_quality["beam_count"] += 1
             if isinstance(element, (BeamElement, QuadraticBeamElement)):
                 material = model.materials.get(material_name)
-                if material is not None and material_symmetry(material) == "orthotropic":
+                generalized_section = getattr(element, "generalized_section", None)
+                if generalized_section is not None:
+                    try:
+                        generalized_beam_stiffness(generalized_section)
+                        generalized_beam_mass_matrix(generalized_section)
+                    except (TypeError, ValueError) as exc:
+                        issues.append(
+                            _issue(
+                                "BEAM005",
+                                "error",
+                                "element",
+                                int(element_id),
+                                f"Generalized beam section is invalid: {exc}",
+                                suggestion=(
+                                    "Provide finite symmetric positive-definite "
+                                    "6x6 sectional stiffness and optional "
+                                    "mass-per-length matrices."
+                                ),
+                            )
+                        )
+                if (
+                    generalized_section is None
+                    and material is not None
+                    and material_symmetry(material) == "orthotropic"
+                ):
                     rigidity = getattr(element, "cross_section", {}).get("torsional_rigidity")
                     try:
                         rigidity_value = (
@@ -505,7 +577,6 @@ def validate_production_model(
             )
         )
 
-    analysis_name = None if analysis_type is None else str(analysis_type).strip().lower()
     kinematics_name = str(kinematics).strip().lower()
     from .corotational import resolve_corotational_tangent_mode
 

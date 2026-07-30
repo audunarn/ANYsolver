@@ -19,11 +19,19 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import numpy as np
 
 from .assembly import compute_stresses, solve_linear
+from .beam_sections import (
+    GeneralizedBeamSectionContract,
+    coerce_generalized_beam_section,
+)
 from .boundary import BoundaryCondition, LoadCase
 from .buckling import BucklingResult, solve_eigenvalue_buckling
 from .elements import BeamElement, QuadraticBeamElement, ShellElement
 from .fe_core import FEModel
 from .mesh_gen import InterpolatedBeamShellMPCElement, RigidLidMPCElement
+from .shell_sections import (
+    GeneralizedShellSection,
+    coerce_generalized_shell_section,
+)
 from .validation import LoadResultant, load_case_resultant
 
 
@@ -210,6 +218,15 @@ def _cross_section(item: Any) -> Dict[str, Any]:
         # Preserve an explicitly supplied invalid value so orthotropic beam
         # validation can fail closed instead of silently substituting G * J.
         section["torsional_rigidity"] = float(torsional_rigidity)
+    geometric_polar_radius_squared = _value(
+        source,
+        "geometric_polar_radius_squared",
+        default=None,
+    )
+    if geometric_polar_radius_squared is not None:
+        section["geometric_polar_radius_squared"] = float(
+            geometric_polar_radius_squared
+        )
     for key, aliases in (
         ("c_y", ("c_y", "cy", "fiber_distance_y")),
         ("c_z", ("c_z", "cz", "fiber_distance_z")),
@@ -225,6 +242,98 @@ def _cross_section(item: Any) -> Dict[str, Any]:
         if value is not None and float(value) > 0.0:
             section[key] = float(value)
     return section
+
+
+def _generalized_beam_section_definitions(
+    generated_geometry: Any,
+) -> Dict[str, GeneralizedBeamSectionContract]:
+    """Parse named generalized beam sections from generated geometry."""
+
+    sections: Dict[str, GeneralizedBeamSectionContract] = {}
+    for record in _collection(
+        generated_geometry,
+        "beam_sections",
+        "generalized_beam_sections",
+    ):
+        name = str(_value(record, "name", "id", default="")).strip()
+        if not name:
+            raise ValueError("generalized-beam-section-name-must-be-nonempty")
+        if name in sections:
+            raise ValueError(f"duplicate-generalized-beam-section-{name}")
+        value = _value(record, "value", default=record)
+        try:
+            sections[name] = coerce_generalized_beam_section(value, name=name)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid-generalized-beam-section-{name}: {exc}") from exc
+    return sections
+
+
+def _generalized_beam_section(
+    item: Any,
+    definitions: Mapping[str, GeneralizedBeamSectionContract],
+) -> Optional[GeneralizedBeamSectionContract]:
+    """Resolve an inline or named generalized section for one beam."""
+
+    source = _value(item, "cross_section", "section", default=None)
+    raw = _value(
+        item,
+        "generalized_section",
+        "generalized_beam_section",
+        "beam_section",
+        default=None,
+    )
+    if raw is None and source is not None:
+        raw = _value(
+            source,
+            "generalized_section",
+            "generalized_beam_section",
+            "beam_section",
+            default=None,
+        )
+    if raw is None:
+        stiffness = _value(
+            item,
+            "generalized_stiffness",
+            "section_stiffness",
+            default=None,
+        )
+        if stiffness is None and source is not None:
+            stiffness = _value(
+                source,
+                "generalized_stiffness",
+                "section_stiffness",
+                default=None,
+            )
+        if stiffness is None:
+            return None
+        raw = {
+            "stiffness": stiffness,
+            "mass_matrix": _value(
+                item,
+                "generalized_mass_matrix",
+                "generalized_mass_per_length",
+                "mass_per_length",
+                default=_value(
+                    source,
+                    "generalized_mass_matrix",
+                    "generalized_mass_per_length",
+                    "mass_per_length",
+                    default=None,
+                ),
+            ),
+        }
+    if isinstance(raw, str):
+        name = raw.strip()
+        if name not in definitions:
+            raise ValueError(f"unknown-generalized-beam-section-{name}")
+        return definitions[name]
+    try:
+        return coerce_generalized_beam_section(raw)
+    except (TypeError, ValueError) as exc:
+        element_id = _value(item, "id", "element_id", default="<unnamed>")
+        raise ValueError(
+            f"invalid-generalized-beam-section-for-element-{element_id}: {exc}"
+        ) from exc
 
 
 def _has_cross_section(item: Any) -> bool:
@@ -405,6 +514,63 @@ def _shell_material_kwargs(shell: Any) -> Dict[str, Any]:
         except (TypeError, ValueError) as exc:
             raise ValueError("shell-material-angle-must-be-numeric") from exc
     return kwargs
+
+
+def _generalized_shell_section_definitions(
+    generated_geometry: Any,
+) -> Dict[str, GeneralizedShellSection]:
+    """Parse named A/B/D/As shell sections from generated geometry."""
+
+    sections: Dict[str, GeneralizedShellSection] = {}
+    for record in _collection(
+        generated_geometry,
+        "shell_sections",
+        "generalized_shell_sections",
+    ):
+        name = str(_value(record, "name", "id", default="")).strip()
+        if not name:
+            raise ValueError("generalized-shell-section-name-must-be-nonempty")
+        if name in sections:
+            raise ValueError(f"duplicate-generalized-shell-section-{name}")
+        value = _value(record, "value", default=record)
+        if isinstance(value, Mapping) and "name" not in value:
+            value = {**value, "name": name}
+        try:
+            section = coerce_generalized_shell_section(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid-generalized-shell-section-{name}: {exc}") from exc
+        if section is None:  # Defensive: named section records cannot be null.
+            raise ValueError(f"invalid-generalized-shell-section-{name}: section is null")
+        sections[name] = section
+    return sections
+
+
+def _generalized_shell_section(
+    item: Any,
+    definitions: Mapping[str, GeneralizedShellSection],
+) -> Optional[GeneralizedShellSection]:
+    """Resolve an inline or named generalized section for one shell."""
+
+    raw = _value(
+        item,
+        "shell_section",
+        "generalized_shell_section",
+        default=None,
+    )
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        name = raw.strip()
+        if name not in definitions:
+            raise ValueError(f"unknown-generalized-shell-section-{name}")
+        return definitions[name]
+    try:
+        return coerce_generalized_shell_section(raw)
+    except (TypeError, ValueError) as exc:
+        element_id = _value(item, "id", "element_id", default="<unnamed>")
+        raise ValueError(
+            f"invalid-generalized-shell-section-for-element-{element_id}: {exc}"
+        ) from exc
 
 
 def _structural_member_role(item: Any, source_name: str = "") -> Optional[str]:
@@ -615,6 +781,22 @@ def idealize_generated_geometry_members(
         "rigid_lids": [_item_copy(item) for _source, item in _combined_collections(generated_geometry, "rigid_lids", "diaphragms")],
         "supports": [_item_copy(item) for _source, item in _combined_collections(generated_geometry, "supports", "boundary_conditions")],
         "materials": [_item_copy(item) for item in _collection(generated_geometry, "materials")],
+        "shell_sections": [
+            _item_copy(item)
+            for item in _collection(
+                generated_geometry,
+                "shell_sections",
+                "generalized_shell_sections",
+            )
+        ],
+        "beam_sections": [
+            _item_copy(item)
+            for item in _collection(
+                generated_geometry,
+                "beam_sections",
+                "generalized_beam_sections",
+            )
+        ],
         "idealization": {"auto_member_beams": [], "excluded_member_plates": []},
     }
 
@@ -747,6 +929,12 @@ def build_fe_model_from_generated_geometry(
 
     model = FEModel(str(_value(generated_geometry, "name", default="ANYsolverGeneratedGeometry")))
     _add_materials(model, generated_geometry, config)
+    generalized_shell_sections = _generalized_shell_section_definitions(
+        generated_geometry
+    )
+    generalized_beam_sections = _generalized_beam_section_definitions(
+        generated_geometry
+    )
 
     nodes = _collection(generated_geometry, "nodes")
     if not nodes:
@@ -780,6 +968,10 @@ def build_fe_model_from_generated_geometry(
                     _material_name(shell, config),
                     thickness=thickness,
                     reduced_integration=(elem_type == "S8R"),
+                    shell_section=_generalized_shell_section(
+                        shell,
+                        generalized_shell_sections,
+                    ),
                     **_shell_material_kwargs(shell),
                 ),
             )
@@ -802,12 +994,28 @@ def build_fe_model_from_generated_geometry(
             node_ids = _node_ids(beam)
             elem_id = int(_value(beam, "id", "element_id", default=20_000 + element_count + 1))
             section = _cross_section(beam)
+            generalized_section = _generalized_beam_section(
+                beam,
+                generalized_beam_sections,
+            )
             material_name = _material_name(beam, config)
             role = _structural_member_role(beam, source_name)
             if len(node_ids) == 2:
-                element = BeamElement(elem_id, node_ids, material_name, section)
+                element = BeamElement(
+                    elem_id,
+                    node_ids,
+                    material_name,
+                    section,
+                    section=generalized_section,
+                )
             elif len(node_ids) == 3:
-                element = QuadraticBeamElement(elem_id, node_ids, material_name, section)
+                element = QuadraticBeamElement(
+                    elem_id,
+                    node_ids,
+                    material_name,
+                    section,
+                    section=generalized_section,
+                )
             else:
                 raise ValueError(f"unsupported-beam-topology-{len(node_ids)}")
             element.structural_role = role or "beam"
@@ -1018,35 +1226,62 @@ def recover_prestress_from_static_result(
     for element_id, element in model.mesh.elements.items():
         stress = stresses.get(element_id)
         if isinstance(element, ShellElement) and stress:
-            sx_gp = np.asarray(stress.get("membrane_xx", np.zeros(1)), dtype=float).reshape(-1)
-            sy_gp = np.asarray(stress.get("membrane_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-            txy_gp = np.asarray(stress.get("membrane_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-            if sy_gp.size != sx_gp.size or txy_gp.size != sx_gp.size:
-                raise ValueError("inconsistent shell membrane stress recovery shape")
-            bx_gp = np.asarray(stress.get("bending_xx", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-            by_gp = np.asarray(stress.get("bending_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-            bxy_gp = np.asarray(stress.get("bending_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-            if bx_gp.size != sx_gp.size or by_gp.size != sx_gp.size or bxy_gp.size != sx_gp.size:
-                raise ValueError("inconsistent shell bending stress recovery shape")
+            if "membrane_resultants" in stress:
+                membrane_resultants = np.asarray(
+                    stress["membrane_resultants"],
+                    dtype=float,
+                )
+                bending_resultants = np.asarray(
+                    stress.get(
+                        "bending_resultants",
+                        np.zeros_like(membrane_resultants),
+                    ),
+                    dtype=float,
+                )
+                if (
+                    membrane_resultants.ndim != 2
+                    or membrane_resultants.shape[1] != 3
+                    or bending_resultants.shape != membrane_resultants.shape
+                ):
+                    raise ValueError(
+                        "inconsistent generalized shell resultant recovery shape"
+                    )
+                mean_membrane = np.mean(membrane_resultants, axis=0)
+            else:
+                sx_gp = np.asarray(stress.get("membrane_xx", np.zeros(1)), dtype=float).reshape(-1)
+                sy_gp = np.asarray(stress.get("membrane_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+                txy_gp = np.asarray(stress.get("membrane_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+                if sy_gp.size != sx_gp.size or txy_gp.size != sx_gp.size:
+                    raise ValueError("inconsistent shell membrane stress recovery shape")
+                bx_gp = np.asarray(stress.get("bending_xx", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+                by_gp = np.asarray(stress.get("bending_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+                bxy_gp = np.asarray(stress.get("bending_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
+                if bx_gp.size != sx_gp.size or by_gp.size != sx_gp.size or bxy_gp.size != sx_gp.size:
+                    raise ValueError("inconsistent shell bending stress recovery shape")
 
-            thickness = float(element.thickness)
-            membrane_resultants = np.column_stack((sx_gp, sy_gp, txy_gp)) * thickness
-            bending_resultants = (
-                np.column_stack((bx_gp, by_gp, bxy_gp))
-                * thickness
-                * thickness
-                / 6.0
-            )
-            sx = float(np.mean(sx_gp))
-            sy = float(np.mean(sy_gp))
-            txy = float(np.mean(txy_gp))
+                thickness = float(element.thickness)
+                membrane_resultants = np.column_stack((sx_gp, sy_gp, txy_gp)) * thickness
+                bending_resultants = (
+                    np.column_stack((bx_gp, by_gp, bxy_gp))
+                    * thickness
+                    * thickness
+                    / 6.0
+                )
+                mean_membrane = np.array(
+                    (
+                        float(np.mean(sx_gp)) * thickness,
+                        float(np.mean(sy_gp)) * thickness,
+                        float(np.mean(txy_gp)) * thickness,
+                    ),
+                    dtype=float,
+                )
             states[int(element_id)] = {
                 # Legacy mean resultants remain for serialized/downstream
                 # compatibility; the enhanced Mindlin operator consumes the
                 # Gauss-point fields below.
-                "membrane_force_x": sx * thickness,
-                "membrane_force_y": sy * thickness,
-                "membrane_force_xy": txy * thickness,
+                "membrane_force_x": float(mean_membrane[0]),
+                "membrane_force_y": float(mean_membrane[1]),
+                "membrane_force_xy": float(mean_membrane[2]),
                 "membrane_forces_at_gauss": membrane_resultants.tolist(),
                 "bending_moments_at_gauss": bending_resultants.tolist(),
             }
@@ -1055,7 +1290,28 @@ def recover_prestress_from_static_result(
             )
             shell_count += 1
         elif isinstance(element, (BeamElement, QuadraticBeamElement)) and stress:
-            axial_force = float(stress.get("axial_stress", 0.0)) * float(getattr(element, "_A", 0.0))
+            if "generalized_resultant" in stress:
+                generalized_resultant = np.asarray(
+                    stress["generalized_resultant"],
+                    dtype=float,
+                )
+                if generalized_resultant.ndim == 1:
+                    if generalized_resultant.shape != (6,):
+                        raise ValueError(
+                            "inconsistent generalized beam resultant recovery shape"
+                        )
+                    axial_force = float(generalized_resultant[0])
+                elif (
+                    generalized_resultant.ndim == 2
+                    and generalized_resultant.shape[1] == 6
+                ):
+                    axial_force = float(np.mean(generalized_resultant[:, 0]))
+                else:
+                    raise ValueError(
+                        "inconsistent generalized beam resultant recovery shape"
+                    )
+            else:
+                axial_force = float(stress.get("axial_stress", 0.0)) * float(getattr(element, "_A", 0.0))
             states[int(element_id)] = {"axial_force": axial_force}
             beam_compression.append(max(-axial_force, 0.0))
             beam_count += 1

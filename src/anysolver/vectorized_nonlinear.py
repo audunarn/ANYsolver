@@ -290,6 +290,7 @@ def shell_nonlinear_batch_eligible(element: Any) -> bool:
 
     return bool(
         getattr(element, "_is_quadrilateral", False)
+        and getattr(element, "shell_section", None) is None
         and not (
             getattr(element, "_is_8node", False)
             and bool(getattr(element, "reduced_integration", False))

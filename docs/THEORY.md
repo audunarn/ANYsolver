@@ -57,6 +57,25 @@ projection fails validation. `material_angle_deg` is then applied
 right-handed about the positive shell normal. If no direction is supplied,
 the angle is measured from shell-local x.
 
+A pre-integrated generalized shell section may instead provide
+
+```text
+[N]   [ A   B ][epsilon]
+[M] = [B^T  D ][ kappa ]
+
+Q_s = As gamma_s
+```
+
+in engineering membrane order `[11,22,12]` and shear order `[13,23]`.
+`A` and `As` have units N/m, `B` has units N, and `D` has units N*m. The
+assembled `ABD` and `As` laws must be symmetric positive definite. The same
+`material_direction`/`material_angle_deg` convention rotates section axes into
+the shell frame. This is a linear, already-integrated section law: it supports
+unbalanced membrane-bending coupling but contains no ply locations or ply
+constitutive data. Recovery therefore returns exact generalized
+strains/resultants and deliberately omits fabricated surface, von Mises, Hill,
+or ply stresses.
+
 The 4-node shell uses an MITC4-style assumed natural shear interpolation,
 following the continuum-mechanics basis of
 [Dvorkin and Bathe's four-node shell formulation](https://web.mit.edu/kjb/www/Publications_Prior_to_1998/A_Continuum_Mechanics_Based_Four-Node_Shell_Element_for_General_Nonlinear_Analysis.pdf).
@@ -122,6 +141,27 @@ use `G12` and `G13`. Because a scalar material shear modulus and section `J`
 cannot represent general orthotropic torsion, the section must supply positive
 `torsional_rigidity` directly in N*m^2. Isotropic beams continue to use `G*J`.
 
+A generalized beam section replaces the uncoupled scalar rigidities with
+
+```text
+[N, Vy, Vz, T, My, Mz]^T
+  = K_section
+    [eps_x, gamma_xy, gamma_xz, kappa_x, kappa_y, kappa_z]^T
+```
+
+where `K_section` is a finite symmetric positive-definite 6x6 matrix in
+beam-local axes. Off-diagonal terms represent extension-twist, bend-twist,
+shear-bending, and other sectional couplings. Beam2 and straight Beam3 use the
+law in linear and elastic von Karman response; Beam2 also participates in the
+existing corotational formulation. Fiber plasticity and physical fiber-stress
+recovery are unavailable because a generalized matrix carries no fiber
+geometry or material history. Recovery is explicitly resultants-only.
+Likewise, the generalized stiffness does not define the centroidal polar
+radius needed by the Wagner torsional geometric-stiffness term. That term is
+omitted unless the element supplies
+`cross_section["geometric_polar_radius_squared"]` explicitly in m^2; legacy
+`area`, `Iy`, and `Iz` keys are not inferred for a generalized section.
+
 ## Mass and Pressure Loading
 
 Shell mass is integrated consistently with the shell shape functions.  The
@@ -132,6 +172,32 @@ default, or a consistent interpolation-based mass matrix when
 beam always integrates a consistent translational and section-rotary mass
 matrix. Explicit point masses contribute to the assembled mass matrix and to
 total-mass, center-of-mass, and inertia diagnostics.
+
+Generalized shell sections may independently supply `mass_per_area` and
+`rotary_inertia_per_area`; either omitted value falls back to its corresponding
+homogeneous expression above. Generalized beam sections may supply a complete
+local 6x6 inertia matrix per unit length; otherwise legacy density/section
+mass is retained.
+
+Total mass, center of mass, and origin/center inertia diagnostics are projected
+from the assembled mass matrix with rigid-body translation and rotation
+fields. They therefore include the same section overrides, rotary inertia,
+beam orientation, point masses, and translation-rotation coupling as modal and
+dynamic analysis. For a generalized beam inertia to define these scalar
+summaries, its local block form in `[v, omega]` order must be
+
+```text
+M_section = [[mu I, -skew(h)],
+             [skew(h), J_axis]],   h = mu c
+```
+
+where `mu` is mass per length and `c` is the sectional center-of-mass offset
+from the beam reference axis. `J_axis` is the rotary inertia per length about
+that reference axis and may contain products of inertia. An arbitrary positive-
+definite 6x6 matrix remains usable as a generalized dynamic inertia, but if its
+translational block is anisotropic or its coupling block is not skew-symmetric,
+there is no unique scalar mass or center of mass; `calculate_mass_properties`
+rejects that diagnostic explicitly.
 
 Shell pressure is assembled as a consistent nodal load. In natural
 coordinates, with current or reference covariant surface tangents
@@ -756,10 +822,11 @@ The optional indicator is a normalized global top/bottom surface-stress L2
 discrepancy between raw and recovered stresses. It is explicitly *not* a
 compliance-weighted ZZ energy-norm error estimate and must not be used as one.
 
-The material scope is homogeneous isotropy or orthotropy. General anisotropic
-coupling, laminates and ply stacking, tension/compression-asymmetric strengths,
-progressive composite failure, and shear/torsion plastic interaction are not
-implemented.
+The material-point scope is homogeneous isotropy or orthotropy. General 3-D
+anisotropic materials, ply-stack integration, ply stresses,
+tension/compression-asymmetric strengths, progressive composite failure, and
+shear/torsion plastic interaction are not implemented. Linear laminate effects
+may be supplied only as an already-integrated generalized shell section.
 
 Simplified fracture / element erosion:
 

@@ -803,6 +803,354 @@ def _hill_current_x_strength(material: Any, alpha: np.ndarray) -> np.ndarray:
     )
 
 
+def _element_has_generalized_section(element: Any) -> bool:
+    """Return whether an element owns a pre-integrated section contract."""
+
+    return (
+        getattr(element, "shell_section", None) is not None
+        or getattr(element, "generalized_section", None) is not None
+    )
+
+
+def _committed_generalized_shell_state(
+    model: "FEModel",
+    element_id: int,
+    element: Any,
+    state: Any,
+    *,
+    displacements: np.ndarray,
+    kinematics: str,
+    return_global: bool,
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    """Recover a generalized shell state without reconstructing ply stress.
+
+    The nonlinear element has already evaluated the von Karman strain and the
+    A/B/D/As resultants at its constitutive integration stations.  Re-evaluating
+    ``compute_stresses`` would silently replace that state with a linear
+    displacement reconstruction, so the committed arrays are the sole source
+    of these resultants.
+    """
+
+    from .elements import ShellElement
+    from .shell_sections import (
+        SHELL_MEMBRANE_VOIGT_ORDER,
+        SHELL_TRANSVERSE_SHEAR_ORDER,
+    )
+
+    if not isinstance(element, ShellElement) or element.shell_section is None:
+        return None, "element has no generalized shell section"
+    if not isinstance(state, Mapping):
+        return None, "committed generalized shell state is not a mapping"
+
+    def matrix(name: str, width: int) -> Optional[np.ndarray]:
+        values = np.asarray(state.get(name, ()), dtype=float)
+        if values.size == 0:
+            return None
+        if values.ndim == 1 and values.shape == (width,):
+            values = values.reshape(1, width)
+        if values.ndim != 2 or values.shape[1] != width:
+            return None
+        if not np.all(np.isfinite(values)):
+            return None
+        return values.copy()
+
+    membrane_strain = matrix("membrane_strain", 3)
+    curvature = matrix("curvature", 3)
+    membrane_resultants = matrix("membrane_resultants", 3)
+    bending_resultants = matrix("bending_resultants", 3)
+    transverse_shear_strain = matrix("transverse_shear_strain", 2)
+    transverse_shear_resultants = matrix(
+        "transverse_shear_resultants",
+        2,
+    )
+    if any(
+        values is None
+        for values in (
+            membrane_strain,
+            curvature,
+            membrane_resultants,
+            bending_resultants,
+            transverse_shear_strain,
+            transverse_shear_resultants,
+        )
+    ):
+        return None, (
+            "committed generalized shell state lacks finite generalized "
+            "strain/resultant arrays"
+        )
+    assert membrane_strain is not None
+    assert curvature is not None
+    assert membrane_resultants is not None
+    assert bending_resultants is not None
+    assert transverse_shear_strain is not None
+    assert transverse_shear_resultants is not None
+    if not (
+        membrane_strain.shape
+        == curvature.shape
+        == membrane_resultants.shape
+        == bending_resultants.shape
+    ):
+        return None, (
+            "committed generalized shell membrane/bending arrays have "
+            "incompatible shapes"
+        )
+    if transverse_shear_strain.shape != transverse_shear_resultants.shape:
+        return None, (
+            "committed generalized shell transverse-shear arrays have "
+            "incompatible shapes"
+        )
+    membrane_order = tuple(
+        state.get("membrane_resultant_order", SHELL_MEMBRANE_VOIGT_ORDER)
+    )
+    shear_order = tuple(
+        state.get(
+            "transverse_shear_resultant_order",
+            SHELL_TRANSVERSE_SHEAR_ORDER,
+        )
+    )
+    if membrane_order != tuple(SHELL_MEMBRANE_VOIGT_ORDER):
+        return None, "committed generalized shell membrane order is unsupported"
+    if shear_order != tuple(SHELL_TRANSVERSE_SHEAR_ORDER):
+        return None, (
+            "committed generalized shell transverse-shear order is unsupported"
+        )
+
+    recovered: Dict[str, Any] = {
+        "generalized_stress_scope": "section_resultants_only",
+        "recovery_scope": "section_resultants_only",
+        "physical_stress_available": False,
+        "membrane_resultant_order": SHELL_MEMBRANE_VOIGT_ORDER,
+        "transverse_shear_resultant_order": SHELL_TRANSVERSE_SHEAR_ORDER,
+        "membrane_strain": membrane_strain,
+        "curvature": curvature,
+        "transverse_shear_strain": transverse_shear_strain,
+        "membrane_resultants": membrane_resultants,
+        "bending_resultants": bending_resultants,
+        "transverse_shear_resultants": transverse_shear_resultants,
+    }
+    if return_global:
+        reference_coordinates = np.asarray(
+            element.get_node_coordinates(model.mesh),
+            dtype=float,
+        )
+        recovery_coordinates = reference_coordinates
+        stress_frame = (
+            np.asarray(element._center_frame(reference_coordinates), dtype=float)
+            if hasattr(element, "_center_frame")
+            else np.eye(3, dtype=float)
+        )
+        if str(kinematics) == "corotational":
+            from .corotational import (
+                _corotational_cache,
+                _corotational_deformation_state,
+            )
+
+            reference = _corotational_cache(model).get(int(element_id))
+            if reference is not None:
+                dof_mapping = np.asarray(
+                    element.get_dof_mapping(model.mesh),
+                    dtype=np.intp,
+                )
+                _u_deformational, rigid_rotation, recovery_coordinates = (
+                    _corotational_deformation_state(
+                        reference,
+                        element,
+                        np.asarray(displacements, dtype=float)[dof_mapping],
+                    )
+                )
+                if getattr(reference, "category", None) == "shell":
+                    stress_frame = (
+                        rigid_rotation
+                        @ np.asarray(reference.frame, dtype=float)
+                    )
+
+        def rotate_tensor_rows(values: np.ndarray) -> np.ndarray:
+            output = np.zeros((values.shape[0], 3, 3), dtype=float)
+            for index, row in enumerate(values):
+                local = np.array(
+                    [
+                        [row[0], row[2], 0.0],
+                        [row[2], row[1], 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dtype=float,
+                )
+                output[index] = stress_frame @ local @ stress_frame.T
+            return output
+
+        recovered.update(
+            {
+                "global_membrane_resultant_tensors": rotate_tensor_rows(
+                    membrane_resultants
+                ),
+                "global_bending_resultant_tensors": rotate_tensor_rows(
+                    bending_resultants
+                ),
+                "global_transverse_shear_resultants": (
+                    transverse_shear_resultants[:, 0, None]
+                    * stress_frame[:, 0][None, :]
+                    + transverse_shear_resultants[:, 1, None]
+                    * stress_frame[:, 1][None, :]
+                ),
+                "_recovery_coordinates": np.asarray(
+                    recovery_coordinates,
+                    dtype=float,
+                ).copy(),
+                "_recovery_stress_frame": stress_frame.copy(),
+            }
+        )
+    return recovered, ""
+
+
+def _committed_generalized_beam_state(
+    element: Any,
+    state: Any,
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    """Recover exact committed generalized beam strains and resultants."""
+
+    from .elements import (
+        BeamElement,
+        GENERALIZED_BEAM_RESULTANT_ORDER,
+        GENERALIZED_BEAM_STRAIN_ORDER,
+        QuadraticBeamElement,
+        _generalized_beam_recovery,
+    )
+
+    if not isinstance(element, (BeamElement, QuadraticBeamElement)):
+        return None, "element is not a beam"
+    if getattr(element, "generalized_section", None) is None:
+        return None, "element has no generalized beam section"
+    if not isinstance(state, Mapping):
+        return None, "committed generalized beam state is not a mapping"
+    strains = np.asarray(state.get("generalized_strain", ()), dtype=float)
+    resultants = np.asarray(
+        state.get("generalized_resultant", ()),
+        dtype=float,
+    )
+    if strains.ndim == 1 and strains.shape == (6,):
+        strains = strains.reshape(1, 6)
+    if resultants.ndim == 1 and resultants.shape == (6,):
+        resultants = resultants.reshape(1, 6)
+    if (
+        strains.ndim != 2
+        or strains.shape[1] != 6
+        or resultants.shape != strains.shape
+        or not np.all(np.isfinite(strains))
+        or not np.all(np.isfinite(resultants))
+    ):
+        return None, (
+            "committed generalized beam state lacks compatible finite "
+            "generalized_strain/generalized_resultant arrays"
+        )
+    strain_order = tuple(
+        state.get("generalized_strain_order", GENERALIZED_BEAM_STRAIN_ORDER)
+    )
+    resultant_order = tuple(
+        state.get(
+            "generalized_resultant_order",
+            GENERALIZED_BEAM_RESULTANT_ORDER,
+        )
+    )
+    if strain_order != tuple(GENERALIZED_BEAM_STRAIN_ORDER):
+        return None, "committed generalized beam strain order is unsupported"
+    if resultant_order != tuple(GENERALIZED_BEAM_RESULTANT_ORDER):
+        return None, "committed generalized beam resultant order is unsupported"
+
+    stations = np.asarray(
+        state.get("generalized_station_coordinates", ()),
+        dtype=float,
+    ).reshape(-1)
+    if stations.size == 0:
+        stations = (
+            np.asarray(element.GAUSS_POINTS, dtype=float)
+            if isinstance(element, QuadraticBeamElement)
+            else np.array((-1.0, 0.0, 1.0), dtype=float)
+        )
+    if (
+        stations.shape != (strains.shape[0],)
+        or not np.all(np.isfinite(stations))
+    ):
+        return None, (
+            "committed generalized beam station coordinates are incompatible"
+        )
+    return (
+        _generalized_beam_recovery(
+            strains.copy(),
+            resultants.copy(),
+            stations=stations.copy(),
+        ),
+        "",
+    )
+
+
+def _recover_generalized_committed_state(
+    model: "FEModel",
+    element_id: int,
+    state: Any,
+    *,
+    displacements: np.ndarray,
+    kinematics: str,
+    return_global: bool,
+) -> Tuple[Optional[Dict[str, Any]], str, str, Dict[str, str]]:
+    """Dispatch exact resultants-only recovery for a generalized section."""
+
+    element = model.mesh.elements.get(int(element_id))
+    if element is None:
+        return None, "", "committed state references an unknown element", {}
+    if getattr(element, "shell_section", None) is not None:
+        recovered, reason = _committed_generalized_shell_state(
+            model,
+            int(element_id),
+            element,
+            state,
+            displacements=displacements,
+            kinematics=kinematics,
+            return_global=return_global,
+        )
+        if recovered is None:
+            return None, "", reason, {}
+        return (
+            recovered,
+            "committed_generalized_shell_section_state",
+            "",
+            {
+                "generalized_membrane_bending": (
+                    "committed_generalized_shell_section_state"
+                ),
+                "generalized_transverse_shear": (
+                    "committed_generalized_shell_section_state"
+                ),
+                "physical_stress": "unavailable_from_preintegrated_section",
+                "stress_frame": (
+                    "current_corotated_center_frame"
+                    if str(kinematics) == "corotational"
+                    else "reference_center_frame"
+                ),
+            },
+        )
+    if getattr(element, "generalized_section", None) is not None:
+        recovered, reason = _committed_generalized_beam_state(element, state)
+        if recovered is None:
+            return None, "", reason, {}
+        return (
+            recovered,
+            "committed_generalized_beam_section_state",
+            "",
+            {
+                "generalized_strain_and_resultant": (
+                    "committed_generalized_beam_section_state"
+                ),
+                "physical_stress": "unavailable_from_generalized_section",
+                "stress_frame": (
+                    "current_corotated_frame"
+                    if str(kinematics) == "corotational"
+                    else "reference_frame"
+                ),
+            },
+        )
+    return None, "", "element has no generalized section", {}
+
+
 def _state_shell_stresses(
     model: "FEModel",
     element: Any,
@@ -1242,6 +1590,15 @@ def _recover_one_committed_state(
     element = model.mesh.elements.get(int(element_id))
     if element is None:
         return None, "", "committed state references an unknown element", {}
+    if _element_has_generalized_section(element):
+        return _recover_generalized_committed_state(
+            model,
+            int(element_id),
+            state,
+            displacements=displacements,
+            kinematics=kinematics,
+            return_global=return_global,
+        )
     contextual_elastic, stress_frame, recovery_coordinates = (
         _element_recovery_context(
             model,
@@ -1499,15 +1856,18 @@ def recover_stress_result(
     :class:`~anysolver.nonlinear_static.NonlinearStaticResult` or an
     :class:`~anysolver.arc_length.ArcLengthResult`; any object exposing
     ``element_states`` follows the same contract.  Directly supplied
-    ``element_states`` are also supported.  Valid committed shell-layer and
-    beam-fiber states replace the corresponding elastic displacement
-    reconstruction.  Missing or invalid states are retained as explicitly
-    labelled elastic fallbacks.
+    ``element_states`` are also supported.  Valid committed shell-layer,
+    beam-fiber, and generalized shell/beam section states replace the
+    corresponding elastic displacement reconstruction.  Generalized states
+    retain their exact nonlinear section strains/resultants and never invent
+    ply or fiber stresses.  Missing or invalid states are retained as
+    explicitly labelled elastic fallbacks.
 
     Passing ``patch_config`` additionally performs guarded shell patch
     recovery from these unified integration-point stresses.  Therefore a
     yielded element is never silently replaced by elastic stresses in the
-    patch samples.
+    patch samples.  Patch recovery is rejected for pre-integrated generalized
+    shell sections because they do not define physical top/bottom stresses.
 
     When a nonlinear result is supplied, its displacement vector is used by
     default.  Passing a separate vector is allowed only when it matches the
@@ -1545,16 +1905,60 @@ def recover_stress_result(
         copy.deepcopy(selected_states) if copy_committed_states else dict(selected_states)
     )
 
+    # A valid generalized-section state already contains the exact nonlinear
+    # constitutive quantities.  Recover it before the elastic pass so von
+    # Karman terms and corotational basic forces cannot be overwritten by a
+    # call to the linear ``compute_stresses`` implementation.
+    committed_generalized: Dict[
+        int,
+        Tuple[Dict[str, Any], str, Dict[str, str]],
+    ] = {}
+    generalized_failures: Dict[int, str] = {}
+    generalized_return_global = bool(return_global or patch_config is not None)
+    for element_id, state in selected_states.items():
+        element = model.mesh.elements.get(int(element_id))
+        if element is None or not _element_has_generalized_section(element):
+            continue
+        state_stress, source, reason, component_sources = (
+            _recover_generalized_committed_state(
+                model,
+                int(element_id),
+                state,
+                displacements=displacement_values,
+                kinematics=resolved_kinematics,
+                return_global=generalized_return_global,
+            )
+        )
+        if state_stress is not None:
+            committed_generalized[int(element_id)] = (
+                state_stress,
+                source,
+                component_sources,
+            )
+        else:
+            generalized_failures[int(element_id)] = (
+                reason or "unsupported committed generalized-section state"
+            )
+
     unfiltered_recovery = replace(recovery, components=None)
+    elastic_recovery_ids = tuple(
+        element_id
+        for element_id in selected_ids
+        if element_id not in committed_generalized
+    )
+    elastic_recovery = replace(
+        unfiltered_recovery,
+        element_ids=elastic_recovery_ids,
+    )
     elastic_stresses, report = recover_element_stresses_with_report(
         model,
         displacement_values,
-        unfiltered_recovery,
+        elastic_recovery,
         return_global=bool(return_global or patch_config is not None),
         resource_config=resource_config,
     )
     if resolved_kinematics == "corotational":
-        for element_id in selected_ids:
+        for element_id in elastic_recovery_ids:
             element = model.mesh.elements.get(int(element_id))
             if element is None or not callable(
                 getattr(element, "compute_stresses", None)
@@ -1594,19 +1998,37 @@ def recover_stress_result(
     fallback_reasons: Dict[int, str] = {}
     warnings = list(initial_warnings)
     for element_id in selected_ids:
+        if int(element_id) in committed_generalized:
+            state_stress, source, component_sources = committed_generalized[
+                int(element_id)
+            ]
+            recovered[int(element_id)] = state_stress
+            per_element_source[int(element_id)] = source
+            per_element_component_sources[int(element_id)] = (
+                component_sources
+            )
+            continue
         elastic = elastic_stresses.get(int(element_id), {})
         if int(element_id) in selected_states:
-            state_stress, source, reason, component_sources = (
-                _recover_one_committed_state(
-                model,
-                int(element_id),
-                selected_states[int(element_id)],
-                elastic,
-                displacements=displacement_values,
-                kinematics=resolved_kinematics,
-                return_global=bool(return_global or patch_config is not None),
-            )
-            )
+            if int(element_id) in generalized_failures:
+                state_stress = None
+                source = ""
+                component_sources = {}
+                reason = generalized_failures[int(element_id)]
+            else:
+                state_stress, source, reason, component_sources = (
+                    _recover_one_committed_state(
+                        model,
+                        int(element_id),
+                        selected_states[int(element_id)],
+                        elastic,
+                        displacements=displacement_values,
+                        kinematics=resolved_kinematics,
+                        return_global=bool(
+                            return_global or patch_config is not None
+                        ),
+                    )
+                )
             if state_stress is not None:
                 recovered[int(element_id)] = state_stress
                 per_element_source[int(element_id)] = source
@@ -1647,6 +2069,24 @@ def recover_stress_result(
         warnings.append(
             "Some supplied committed states could not be recovered and are "
             "explicitly labelled elastic fallbacks."
+        )
+
+    generalized_shell_ids = tuple(
+        int(element_id)
+        for element_id in selected_ids
+        if int(element_id) in recovered
+        and getattr(
+            model.mesh.elements.get(int(element_id)),
+            "shell_section",
+            None,
+        )
+        is not None
+    )
+    if patch_config is not None and generalized_shell_ids:
+        raise ValueError(
+            "shell patch recovery requires physical top/bottom surface "
+            "stresses, which pre-integrated generalized shell sections do "
+            "not provide; recover section resultants without patch_config"
         )
 
     nodal_stresses = None

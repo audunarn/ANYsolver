@@ -541,14 +541,29 @@ class NonlinearAssemblyPlan:
         from .elements import ShellElement
         from .materials import is_orthotropic_material
 
-        fallback_ids = [
-            int(record.element_id)
-            for record in self.non_shell_elements
-            if isinstance(record.element, ShellElement)
-            and is_orthotropic_material(
+        fallback_reasons: Dict[str, List[int]] = {}
+        for record in self.non_shell_elements:
+            if not isinstance(record.element, ShellElement):
+                continue
+            if getattr(record.element, "shell_section", None) is not None:
+                reason = "generalized_shell_section"
+            elif is_orthotropic_material(
                 self.model.get_material(record.element.material_name)
-            )
-        ]
+            ):
+                reason = "orthotropic_material"
+            else:
+                continue
+            fallback_reasons.setdefault(reason, []).append(int(record.element_id))
+        for ids in fallback_reasons.values():
+            ids.sort()
+        fallback_ids = sorted(
+            element_id
+            for ids in fallback_reasons.values()
+            for element_id in ids
+        )
+        fallback_reason = next(iter(fallback_reasons), None)
+        if len(fallback_reasons) > 1:
+            fallback_reason = "mixed_constitutive"
         return {
             "num_layers": int(self.num_layers),
             "revision": list(self.revision),
@@ -560,8 +575,13 @@ class NonlinearAssemblyPlan:
                 if not fallback_ids
                 else {
                     "path": "general_element",
-                    "reason": "orthotropic_material",
-                    "element_ids": sorted(fallback_ids),
+                    "reason": fallback_reason,
+                    "element_ids": fallback_ids,
+                    **(
+                        {"reasons": fallback_reasons}
+                        if len(fallback_reasons) > 1
+                        else {}
+                    ),
                 }
             ),
             "total_dofs": self.total_dofs,

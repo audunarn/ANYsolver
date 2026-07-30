@@ -181,13 +181,29 @@ def _assemble_element_matrix(
 
         groups = {}
         constitutive_fallback_ids = []
+        generalized_section_fallback_ids = []
         for elem_id, element in mesh.elements.items():
             material = model.get_material(element.material_name)
+            shell_section = getattr(element, "shell_section", None)
+            has_section_mass = bool(
+                shell_section is not None
+                and (
+                    getattr(shell_section, "mass_per_area", None) is not None
+                    or getattr(shell_section, "rotary_inertia_per_area", None) is not None
+                )
+            )
             if (
                 isinstance(element, ShellElement)
                 and getattr(element, "_is_quadrilateral", False)
                 and not (getattr(element, "_is_8node", False) and bool(getattr(element, "reduced_integration", False)))
-                and (matrix_type == "mass" or is_isotropic_material(material))
+                and (
+                    (matrix_type == "mass" and not has_section_mass)
+                    or (
+                        matrix_type == "stiffness"
+                        and shell_section is None
+                        and is_isotropic_material(material)
+                    )
+                )
             ):
                 key = (
                     element.num_nodes,
@@ -203,15 +219,28 @@ def _assemble_element_matrix(
             elif (
                 matrix_type == "stiffness"
                 and isinstance(element, ShellElement)
+                and shell_section is None
                 and not is_isotropic_material(material)
             ):
                 constitutive_fallback_ids.append(int(elem_id))
+            elif (
+                matrix_type == "stiffness"
+                and isinstance(element, ShellElement)
+                and shell_section is not None
+            ):
+                generalized_section_fallback_ids.append(int(elem_id))
 
         if constitutive_fallback_ids:
             info["diagnostics"]["constitutive_fallback"] = {
                 "path": "general_element",
                 "reason": "orthotropic_material",
                 "element_ids": sorted(constitutive_fallback_ids),
+            }
+        if generalized_section_fallback_ids:
+            info["diagnostics"]["generalized_shell_section_fallback"] = {
+                "path": "general_element",
+                "reason": "preintegrated_generalized_shell_section",
+                "element_ids": sorted(generalized_section_fallback_ids),
             }
 
         for key, elem_list in groups.items():

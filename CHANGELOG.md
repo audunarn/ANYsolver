@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add dependency-free generalized section contracts: pre-integrated shell
+  `A/B/D/As` with membrane-bending coupling and optional areal inertia, plus a
+  coupled beam 6x6 stiffness and optional mass-per-length law. Generated
+  geometry accepts inline or named definitions; recovery exposes exact
+  generalized strains/resultants, nonlinear shell acceleration falls back
+  deterministically, and unsupported CalculiX/fiber/plastic mappings fail
+  closed.
 - Add a dependency-free structural material contract and homogeneous
   orthotropic engineering materials for shells and beams. This includes
   projected shell material directions/angles, explicit orthotropic beam

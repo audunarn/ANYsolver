@@ -244,6 +244,21 @@ def _orthotropic_shell_section_block(
 def _section_blocks(model: FEModel) -> Tuple[List[str], List[str]]:
     lines: List[str] = []
     assumptions: List[str] = []
+    for element_id, element in model.mesh.elements.items():
+        if getattr(element, "shell_section", None) is not None:
+            raise NotImplementedError(
+                "CalculiX reference export does not yet map generalized shell "
+                f"section resultants for element {int(element_id)}. A, B, D and "
+                "As (including membrane-bending coupling) must be validated "
+                "analytically or with a dedicated section-capable reference deck."
+            )
+        if getattr(element, "generalized_section", None) is not None:
+            raise NotImplementedError(
+                "CalculiX reference export cannot faithfully map the coupled "
+                f"6x6 generalized beam section on element {int(element_id)} to "
+                "the current equivalent RECT beam deck. Use analytical or "
+                "dedicated section-stiffness validation."
+            )
     for (element_type, material_name), element_ids in _element_sets_by_type_and_material(model).items():
         material = model.get_material(material_name)
         symmetry = _elastic_symmetry(material)

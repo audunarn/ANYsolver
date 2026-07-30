@@ -66,8 +66,8 @@ changes before making release claims.
 | --- | --- |
 | Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. |
 | Materials | Backward-compatible isotropic materials plus homogeneous 3-D engineering-constant orthotropic materials through a solver-owned compliance-matrix contract. Orthotropic shells support material direction/angle and Hill-48 plasticity; orthotropic beams use local material axes and an explicit section torsional rigidity. |
-| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; isotropic or rotated orthotropic stiffness, mass, pressure, and stress recovery. The shell initial-stress operator includes membrane, bending, and second stress moments acting through the implemented Mindlin translation/director field. Q8R reduced integration is experimental and outside the qualified thin-bending/nonlinear-batch scope. |
-| Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, direction-dependent shear, torsion, consistent/lumped mass options, geometric stiffness, and optional fiber-section plasticity. |
+| Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; isotropic, rotated orthotropic, or pre-integrated generalized `A/B/D/As` section stiffness. Generalized sections retain membrane-bending coupling and recover exact strains/resultants without inventing ply stresses. |
+| Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, direction-dependent shear, torsion, consistent/lumped mass options, geometric stiffness, optional fiber-section plasticity, or a fully coupled local 6x6 generalized section law. |
 | Coupling | Coincident or eccentric beam-shell kinematics through explicit interpolated MPC transformations. |
 | Loads | Nodal force/moment, dead or current-area follower shell pressure, in-plane edge loads, acceleration/gravity, prescribed displacement, load combinations, proportional and staged nonlinear loads. Follower pressure includes its exact, generally nonsymmetric external-load tangent. |
 | Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, and sparse factorization reuse. |
@@ -92,6 +92,15 @@ external objects without an ANYmaterial dependency;
 `FEModel.add_orthotropic_material()` constructs the built-in
 `OrthotropicMaterial`.
 
+`GeneralizedShellSectionProtocol` and `GeneralizedBeamSectionContract` are
+likewise solver-owned structural interfaces. The built-in
+`GeneralizedShellSection(A, B, D, As, ...)` accepts pre-integrated laminate or
+homogenized shell stiffness, while `GeneralizedBeamSection(stiffness, ...)`
+accepts a coupled 6x6 sectional law. They may be attached directly to elements
+or supplied inline/by name through generated geometry. Optional section mass
+data override the legacy homogeneous mass construction; otherwise the attached
+material, thickness, and legacy section geometry continue to define mass.
+
 For shells, `material_direction` is projected into the shell plane and then
 `material_angle_deg` is applied right-handed about the positive shell normal;
 without a direction, the angle starts at shell-local x. For beams, material
@@ -112,9 +121,10 @@ verified mesh, material, distortion, eccentricity, and load ranges.
 Important limits:
 
 - no arbitrary CAD topology or automatic general-purpose meshing;
-- no general anisotropic constitutive coupling, laminates, ply stacks,
-  tension/compression-asymmetric composite failure, or progressive composite
-  damage; the implemented model is homogeneous orthotropy;
+- no arbitrary 3-D anisotropic material law, ply-stack integration, ply stress
+  recovery, tension/compression-asymmetric composite failure, or progressive
+  composite damage. Pre-integrated linear shell `A/B/D/As` and beam 6x6
+  section laws are supported, including their elastic couplings;
 - Q8R is experimental: its hourglass stabilization is not qualified for thin
   bending and it is deliberately excluded from nonlinear batch acceleration;
 - the 3-node quadratic beam is straight-sided; curved members must be
@@ -163,9 +173,13 @@ Important limits:
   derivative remains an oracle and automatic invalid-row fallback; local
   yield-residual nonconvergence fails closed;
 - no unverified material laws or distortion ranges;
-- orthotropic shells use the general element/nonlinear paths and report their
-  deterministic constitutive fallback; beams use the general element path,
-  while the existing accelerated shell kernels remain isotropic-only;
+- orthotropic and generalized-section shells use the general
+  element/nonlinear paths and report deterministic fallback diagnostics;
+  generalized beams use the general element path, while the existing
+  accelerated shell kernels remain isotropic homogeneous-section only;
+- generalized-section recovery is resultants-only. CalculiX export rejects
+  these sections because the current deck mapping cannot preserve their
+  coupling; use analytical or a dedicated section-capable reference model;
 - SESAM `FEModel` export remains outside the supported interchange gate;
 - CalculiX comparison requires a compatible local executable and an explicit
   execution request. Deck generation alone is a reproducibility handoff, not

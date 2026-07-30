@@ -614,12 +614,35 @@ def material_characteristic_modulus(material: Any, structural_kind: str = "shell
     return value
 
 
+def _shell_element_characteristic_modulus(model: "FEModel", element: ShellElement) -> float:
+    """Return the shell's numerical modulus scale, including section laws."""
+
+    section = getattr(element, "shell_section", None)
+    if section is None:
+        return material_characteristic_modulus(
+            model.get_material(element.material_name),
+            "shell",
+        )
+    membrane = np.asarray(getattr(section, "A"), dtype=float)
+    stiffness = float(np.max(np.linalg.eigvalsh(0.5 * (membrane + membrane.T))))
+    thickness = float(getattr(element, "thickness", 0.0))
+    value = stiffness / max(thickness, 1.0e-30)
+    if not np.isfinite(value) or value <= 0.0:
+        raise ValueError(
+            "Generalized shell-section characteristic modulus must be finite "
+            "and positive"
+        )
+    return value
+
+
 def _representative_shell_stiffness(model: "FEModel") -> float:
     """Median shell membrane stiffness scale ``E_char * t`` in N/m."""
     values: List[float] = []
     for element in _shell_contact_candidates(model):
-        material = model.get_material(element.material_name)
-        values.append(material_characteristic_modulus(material, "shell") * float(element.thickness))
+        values.append(
+            _shell_element_characteristic_modulus(model, element)
+            * float(element.thickness)
+        )
     return float(np.median(values)) if values else 0.0
 
 
@@ -1110,6 +1133,11 @@ def _impact_material_capacity(model: "FEModel", element: ShellElement, config: I
     """Return yield/ultimate/user stress capacity in Pa for impact damage."""
     if config.capacity_basis == "user":
         return float(config.user_capacity), "user"
+    if getattr(element, "shell_section", None) is not None:
+        raise ValueError(
+            "Generalized shell-section linear impact pressure damage requires "
+            "ImpactDamageConfig(capacity_basis='user', user_capacity=...)."
+        )
     material = model.get_material(element.material_name)
     symmetry = material_symmetry(material)
     if symmetry == "orthotropic":
@@ -1159,8 +1187,7 @@ def _impact_damage_metrics(
     impulse_density = float(record.normal_force) * float(dt) / max(area, 1.0e-30)
     pressure_utilization = pressure / max(capacity, 1.0e-30)
     impulse_utilization = impulse_density / max(capacity * float(config.impulse_reference_time), 1.0e-30)
-    material = model.get_material(element.material_name)
-    elastic_modulus = material_characteristic_modulus(material, "shell")
+    elastic_modulus = _shell_element_characteristic_modulus(model, element)
     equivalent_plastic_strain_estimate = max(pressure - capacity, 0.0) / elastic_modulus * float(config.strain_scale)
     strain_utilization = equivalent_plastic_strain_estimate / max(float(config.plastic_strain_capacity), 1.0e-30)
     components = {
@@ -1409,14 +1436,26 @@ def _require_user_capacity_for_orthotropic_linear_damage(
     affected = []
     for element in _shell_contact_candidates(model):
         material = model.get_material(element.material_name)
-        if material_symmetry(material) == "orthotropic":
-            affected.append(str(element.material_name))
+        if (
+            getattr(element, "shell_section", None) is not None
+            or material_symmetry(material) == "orthotropic"
+        ):
+            affected.append(
+                str(
+                    getattr(
+                        getattr(element, "shell_section", None),
+                        "name",
+                        "",
+                    )
+                    or element.material_name
+                )
+            )
     if affected:
         names = ", ".join(sorted(set(affected)))
         raise ValueError(
-            "Orthotropic linear impact pressure damage requires "
+            "Orthotropic or generalized-section linear impact pressure damage requires "
             "ImpactDamageConfig(capacity_basis='user', user_capacity=...); "
-            f"affected shell material(s): {names}."
+            f"affected shell material/section name(s): {names}."
         )
 
 
