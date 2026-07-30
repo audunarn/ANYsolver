@@ -141,6 +141,14 @@ def test_generated_decks_have_active_reference_physics_and_analytical_observable
 
         cylinder = cases["cylinder_s4_pressure"]
         assert cylinder.model_summary["nodes"] == 288
+        orthotropic = cases["orthotropic_membrane_s4"]
+        orthotropic_text = orthotropic.inp_path.read_text(encoding="utf-8")
+        assert "*ELASTIC, TYPE=ENGINEERING CONSTANTS" in orthotropic_text
+        assert "*ORIENTATION, NAME=" in orthotropic_text
+        assert any(
+            item["name"] == "orthotropic_max_abs_ux"
+            for item in orthotropic.comparisons
+        )
         for case in cases.values():
             assert case.comparisons
             assert all(item["reference"]["kind"] == "analytical" for item in case.comparisons)
@@ -192,13 +200,21 @@ else:
         displacements = [(1, (0.0, 0.0, 0.0)), (2, (0.0, 0.0, -displacement))]
         stresses = [(1, (stress, 0.0, 0.0, 0.0, 0.0, 0.0)), (2, (stress, 0.0, 0.0, 0.0, 0.0, 0.0))]
         reactions = [(1, (0.0, 0.0, 12.5)), (2, (0.0, 0.0, -12.5))]
-    else:
+    elif job == "cylinder_s4_pressure":
         displacement = expected["cylinder_mean_abs_radial_displacement"] * (2.0 if mismatch else 1.0)
         stress = expected["cylinder_median_von_mises"]
         coordinates = [(1, (1.0, 0.0, 1.0)), (2, (-1.0, 0.0, 1.0))]
         displacements = [(1, (displacement, 0.0, 0.0)), (2, (-displacement, 0.0, 0.0))]
         stresses = [(1, (stress, 0.0, 0.0, 0.0, 0.0, 0.0)), (2, (stress, 0.0, 0.0, 0.0, 0.0, 0.0))]
         reactions = []
+    else:
+        ux = expected["orthotropic_max_abs_ux"] * (2.0 if mismatch else 1.0)
+        uy = expected["orthotropic_max_abs_uy"] * (2.0 if mismatch else 1.0)
+        stress = expected["orthotropic_max_von_mises"] * (2.0 if mismatch else 1.0)
+        coordinates = [(1, (0.0, 0.0, 0.0)), (2, (2.0, 1.0, 0.0))]
+        displacements = [(1, (0.0, 0.0, 0.0)), (2, (ux, -uy, 0.0))]
+        stresses = [(1, (stress, 0.0, 0.0, 0.0, 0.0, 0.0)), (2, (stress, 0.0, 0.0, 0.0, 0.0, 0.0))]
+        reactions = [(1, (-100000.0, 0.0, 0.0)), (2, (100000.0, 0.0, 0.0))]
     for node, values in coordinates:
         lines.append(" -1 %d %s" % (node, " ".join(f"{value:.12E}" for value in values)))
     lines.append(" -3")
@@ -234,7 +250,12 @@ def test_executed_report_requires_parsed_tolerance_controlled_results() -> None:
         assert report["status"] == "passed"
         assert report["validation_performed"] is True
         assert report["solver"]["version"] == "2.23"
-        assert [case["validation"]["status"] for case in report["cases"]] == ["passed", "passed", "passed"]
+        assert [case["validation"]["status"] for case in report["cases"]] == [
+            "passed",
+            "passed",
+            "passed",
+            "passed",
+        ]
         assert all(
             comparison["status"] == "passed"
             for case in report["cases"]
@@ -265,6 +286,7 @@ def test_executed_report_fails_when_an_observable_exceeds_tolerance() -> None:
         assert statuses["pressure_plate_s4"] == "failed"
         assert statuses["beam_column_buckling"] == "failed"
         assert statuses["cylinder_s4_pressure"] == "failed"
+        assert statuses["orthotropic_membrane_s4"] == "failed"
         assert any(
             comparison["status"] == "failed"
             for case in report["cases"]

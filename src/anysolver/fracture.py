@@ -350,15 +350,18 @@ def state_rtcl_increment(
     previous_alpha: Optional[np.ndarray],
     elastic_modulus: float,
     poisson_ratio: float,
+    *,
+    elastic_symmetry: str = "isotropic",
 ) -> Optional[Tuple[np.ndarray, np.ndarray]]:
     """RTCL-weighted plastic strain increments for one committed element state.
 
     Returns ``(alpha, weighted_increment)`` per integration point, where the
     increment is ``rtcl_weight(eta) * max(alpha - previous_alpha, 0)`` with the
-    triaxiality ``eta`` evaluated from the return-mapped plane-stress state
-    (``sigma = C_el (eps - eps_p)``).  Beam fiber states use the uniaxial
-    limits: weight 1 for fibers in tension, 0 in compression.  Returns ``None``
-    when the state carries no usable plastic data.
+    triaxiality ``eta`` evaluated from the stored, return-mapped physical
+    stress whenever available.  Legacy isotropic states without stored stress
+    fall back to ``sigma = C_el (eps - eps_p)``.  Beam fiber states use the
+    uniaxial limits: weight 1 for fibers in tension, 0 in compression.  Returns
+    ``None`` when the state carries no usable plastic data.
     """
     if not isinstance(state, Mapping):
         return None
@@ -376,6 +379,55 @@ def state_rtcl_increment(
         # Uniaxial fiber section: eta = +-1/3 exactly.
         weight = np.where(fiber_stress > 0.0, 1.0, 0.0)
         return alpha, weight * delta
+
+    stored_stress_value = state.get("physical_layer_stress", state.get("layer_stress", ()))
+    stored_stress = np.asarray(stored_stress_value, dtype=float)
+    if stored_stress.size:
+        stored_stress = (
+            stored_stress.reshape(-1, stored_stress.shape[-1])
+            if stored_stress.ndim > 1
+            else stored_stress.reshape(1, -1)
+        )
+        if stored_stress.shape[0] == alpha.size and stored_stress.shape[1] in {3, 6}:
+            s11 = stored_stress[:, 0]
+            s22 = stored_stress[:, 1]
+            if stored_stress.shape[1] == 3:
+                s33 = np.zeros_like(s11)
+                s23 = np.zeros_like(s11)
+                s13 = np.zeros_like(s11)
+                s12 = stored_stress[:, 2]
+            else:
+                # Engineering Voigt order [11, 22, 33, 23, 13, 12].
+                s33 = stored_stress[:, 2]
+                s23 = stored_stress[:, 3]
+                s13 = stored_stress[:, 4]
+                s12 = stored_stress[:, 5]
+            von_mises = np.sqrt(
+                np.maximum(
+                    0.5
+                    * (
+                        (s11 - s22) ** 2
+                        + (s22 - s33) ** 2
+                        + (s33 - s11) ** 2
+                    )
+                    + 3.0 * (s12 * s12 + s13 * s13 + s23 * s23),
+                    0.0,
+                )
+            )
+            mean_stress = (s11 + s22 + s33) / 3.0
+            tolerance = 1.0e-9 * max(float(elastic_modulus), 1.0)
+            triaxiality = np.where(
+                von_mises > tolerance,
+                mean_stress / np.maximum(von_mises, 1.0e-30),
+                0.0,
+            )
+            return alpha, rtcl_triaxiality_weight(triaxiality) * delta
+
+    if str(elastic_symmetry).strip().lower() != "isotropic":
+        # Reconstructing orthotropic stress from E/nu would silently apply a
+        # fictitious isotropic law.  Modern orthotropic states store physical
+        # stress, so a missing/incompatible array is treated as unusable.
+        return None
 
     layer = np.asarray(state.get("layer_strain", ()), dtype=float)
     plastic = np.asarray(state.get("plastic_strain", ()), dtype=float)

@@ -306,10 +306,17 @@ def validate_production_model(
     entity IDs and corrective hints.  It does not run a full analysis.
     """
     from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
-    from .elements import CoupledBeamShellElement, ShellElement
+    from .beam_sections import (
+        generalized_beam_mass_matrix,
+        generalized_beam_stiffness,
+    )
+    from .elements import BeamElement, CoupledBeamShellElement, QuadraticBeamElement, ShellElement
+    from .materials import material_symmetry, material_validation_errors
     from .matrix_assembly import assemble_stiffness_matrix
+    from .shell_sections import validate_generalized_shell_section
 
     issues: List[ProductionValidationIssue] = []
+    analysis_name = None if analysis_type is None else str(analysis_type).strip().lower()
     mesh_quality: Dict[str, Any] = {
         "shell_count": 0,
         "beam_count": 0,
@@ -321,12 +328,95 @@ def validate_production_model(
 
     for name, material in model.materials.items():
         entity_id = None
-        if not np.isfinite(material.elastic_modulus) or material.elastic_modulus <= 0.0:
-            issues.append(_issue("MAT001", "error", "material", entity_id, f"Material {name!r} has invalid elastic modulus.", measured=material.elastic_modulus, limit=0.0, suggestion="Use a positive SI elastic modulus."))
-        if not np.isfinite(material.poisson_ratio) or not (-0.99 < material.poisson_ratio < 0.5):
-            issues.append(_issue("MAT002", "error", "material", entity_id, f"Material {name!r} has unsupported Poisson ratio.", measured=material.poisson_ratio, limit=0.5, suggestion="Use -0.99 < nu < 0.5 for isotropic elastic material."))
-        if not np.isfinite(material.density) or material.density < 0.0:
-            issues.append(_issue("MAT003", "error", "material", entity_id, f"Material {name!r} has invalid density.", measured=material.density, limit=0.0, suggestion="Use zero or positive SI density."))
+        try:
+            symmetry = material_symmetry(material)
+        except ValueError as exc:
+            symmetry = ""
+            issues.append(
+                _issue(
+                    "MAT004",
+                    "error",
+                    "material",
+                    entity_id,
+                    f"Material {name!r} does not satisfy the structural material contract: {exc}",
+                    suggestion="Declare isotropic or orthotropic elasticity and provide 6x6 engineering compliance.",
+                )
+            )
+
+        if symmetry == "isotropic":
+            elastic_modulus = getattr(material, "elastic_modulus", None)
+            poisson_ratio = getattr(material, "poisson_ratio", None)
+            try:
+                elastic_modulus_value = (
+                    None if elastic_modulus is None else float(elastic_modulus)
+                )
+            except (TypeError, ValueError):
+                elastic_modulus_value = float("nan")
+            if elastic_modulus_value is not None and (
+                not np.isfinite(elastic_modulus_value) or elastic_modulus_value <= 0.0
+            ):
+                issues.append(_issue("MAT001", "error", "material", entity_id, f"Material {name!r} has invalid elastic modulus.", measured=elastic_modulus_value, limit=0.0, suggestion="Use a positive SI elastic modulus."))
+            try:
+                poisson_ratio_value = (
+                    None if poisson_ratio is None else float(poisson_ratio)
+                )
+            except (TypeError, ValueError):
+                poisson_ratio_value = float("nan")
+            if poisson_ratio_value is not None and (
+                not np.isfinite(poisson_ratio_value) or not (-0.99 < poisson_ratio_value < 0.5)
+            ):
+                issues.append(_issue("MAT002", "error", "material", entity_id, f"Material {name!r} has unsupported Poisson ratio.", measured=poisson_ratio_value, limit=0.5, suggestion="Use -0.99 < nu < 0.5 for isotropic elastic material."))
+        elif symmetry and symmetry not in {"isotropic", "orthotropic"}:
+            detail = (
+                "General anisotropic elasticity is not supported; arbitrary constitutive "
+                "coupling and general beam section stiffness are outside this capability."
+                if symmetry == "anisotropic"
+                else f"Elastic symmetry {symmetry!r} is not supported."
+            )
+            issues.append(
+                _issue(
+                    "MAT004",
+                    "error",
+                    "material",
+                    entity_id,
+                    f"Material {name!r}: {detail}",
+                    suggestion="Use elastic_symmetry='isotropic' or 'orthotropic'.",
+                )
+            )
+
+        density = getattr(material, "density", float("nan"))
+        try:
+            density_value = float(density)
+        except (TypeError, ValueError):
+            density_value = float("nan")
+        if not np.isfinite(density_value) or density_value < 0.0:
+            issues.append(_issue("MAT003", "error", "material", entity_id, f"Material {name!r} has invalid density.", measured=density_value, limit=0.0, suggestion="Use zero or positive SI density."))
+
+        contract_errors = material_validation_errors(material)
+        for message in contract_errors:
+            # Preserve the established, more specific diagnostics above.
+            if "density" in message:
+                continue
+            if symmetry == "isotropic" and (
+                "isotropic elastic modulus" in message
+                or "isotropic Poisson ratio" in message
+                or "positive definite" in message
+            ):
+                continue
+            if symmetry not in {"isotropic", "orthotropic"} and (
+                "not supported" in message or "anisotropic" in message
+            ):
+                continue
+            issues.append(
+                _issue(
+                    "MAT004",
+                    "error",
+                    "material",
+                    entity_id,
+                    f"Material {name!r} is invalid: {message}.",
+                    suggestion="Correct the structural material definition before analysis.",
+                )
+            )
 
     slave_dof_owner: Dict[int, int] = {}
     min_edge_values: List[float] = []
@@ -359,12 +449,108 @@ def validate_production_model(
                 mesh_quality["max_q8_midside_deviation"] = max(float(mesh_quality["max_q8_midside_deviation"]), midside)
                 if midside > midside_deviation_limit:
                     issues.append(_issue("MESH004", "warning", "element", int(element_id), "Q8/S8 midside node deviates strongly from edge midpoint.", measured=midside, limit=midside_deviation_limit, suggestion="Place midside nodes near geometric edge midpoints or regenerate the mesh."))
+                material = model.materials.get(material_name)
+                shell_section = getattr(element, "shell_section", None)
+                if shell_section is not None:
+                    try:
+                        validate_generalized_shell_section(shell_section)
+                    except (TypeError, ValueError) as exc:
+                        issues.append(
+                            _issue(
+                                "SHELL003",
+                                "error",
+                                "element",
+                                int(element_id),
+                                f"Generalized shell section is invalid: {exc}",
+                                suggestion=(
+                                    "Provide finite A/B/D/As matrices with a "
+                                    "positive-definite ABD and transverse-shear law."
+                                ),
+                            )
+                        )
+                    if analysis_name in {"nonlinear_static", "arc_length"} and (
+                        getattr(material, "hardening_curve", None) is not None
+                        or getattr(material, "hill_yield", None) is not None
+                    ):
+                        issues.append(
+                            _issue(
+                                "SHELL004",
+                                "error",
+                                "element",
+                                int(element_id),
+                                "Generalized shell sections are linear elastic and "
+                                "cannot use material layer plasticity.",
+                                suggestion=(
+                                    "Remove the material hardening/yield law or use "
+                                    "a homogeneous material-driven shell."
+                                ),
+                            )
+                        )
+                if (
+                    material is not None
+                    and (
+                        shell_section is not None
+                        or material_symmetry(material) == "orthotropic"
+                    )
+                ):
+                    element._material_angle(element._center_frame(coords))
             except Exception as exc:
                 issues.append(_issue("MESH005", "error", "element", int(element_id), f"Shell mesh-quality evaluation failed: {exc}", suggestion="Check element connectivity and node coordinates."))
         elif isinstance(element, CoupledBeamShellElement):
             pass
         else:
             mesh_quality["beam_count"] += 1
+            if isinstance(element, (BeamElement, QuadraticBeamElement)):
+                material = model.materials.get(material_name)
+                generalized_section = getattr(element, "generalized_section", None)
+                if generalized_section is not None:
+                    try:
+                        generalized_beam_stiffness(generalized_section)
+                        generalized_beam_mass_matrix(generalized_section)
+                    except (TypeError, ValueError) as exc:
+                        issues.append(
+                            _issue(
+                                "BEAM005",
+                                "error",
+                                "element",
+                                int(element_id),
+                                f"Generalized beam section is invalid: {exc}",
+                                suggestion=(
+                                    "Provide finite symmetric positive-definite "
+                                    "6x6 sectional stiffness and optional "
+                                    "mass-per-length matrices."
+                                ),
+                            )
+                        )
+                if (
+                    generalized_section is None
+                    and material is not None
+                    and material_symmetry(material) == "orthotropic"
+                ):
+                    rigidity = getattr(element, "cross_section", {}).get("torsional_rigidity")
+                    try:
+                        rigidity_value = (
+                            float("nan") if rigidity is None else float(rigidity)
+                        )
+                    except (TypeError, ValueError):
+                        rigidity_value = float("nan")
+                    if not np.isfinite(rigidity_value) or rigidity_value <= 0.0:
+                        issues.append(
+                            _issue(
+                                "BEAM004",
+                                "error",
+                                "element",
+                                int(element_id),
+                                "Orthotropic beam section lacks a positive torsional_rigidity.",
+                                measured=(
+                                    rigidity_value
+                                    if np.isfinite(rigidity_value)
+                                    else None
+                                ),
+                                limit=0.0,
+                                suggestion="Provide cross_section['torsional_rigidity'] in N*m^2.",
+                            )
+                        )
 
         getter = getattr(element, "get_mpc_constraints", None)
         if getter is not None:
@@ -391,7 +577,6 @@ def validate_production_model(
             )
         )
 
-    analysis_name = None if analysis_type is None else str(analysis_type).strip().lower()
     kinematics_name = str(kinematics).strip().lower()
     from .corotational import resolve_corotational_tangent_mode
 

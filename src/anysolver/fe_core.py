@@ -12,6 +12,13 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, List, Dict, Tuple, Optional, Union
 import numpy as np
 
+from .materials import (
+    Hill48Yield,
+    OrthotropicMaterial,
+    StructuralMaterial,
+    validate_material,
+)
+
 if TYPE_CHECKING:
     from .elements import Element
     from .boundary import BoundaryCondition, LoadCase
@@ -131,9 +138,33 @@ class Material:
     hardening_curve: Optional[object] = None
 
     @property
+    def elastic_symmetry(self) -> str:
+        """Elastic symmetry declared through the structural material contract."""
+
+        return "isotropic"
+
+    @property
     def shear_modulus(self) -> float:
         """Calculate shear modulus."""
         return self.elastic_modulus / (2 * (1 + self.poisson_ratio))
+
+    def elastic_compliance_matrix(self) -> np.ndarray:
+        """Return 3D engineering compliance in ``[11,22,33,23,13,12]`` order."""
+
+        E = float(self.elastic_modulus)
+        nu = float(self.poisson_ratio)
+        G = float(self.shear_modulus)
+        return np.array(
+            [
+                [1.0 / E, -nu / E, -nu / E, 0.0, 0.0, 0.0],
+                [-nu / E, 1.0 / E, -nu / E, 0.0, 0.0, 0.0],
+                [-nu / E, -nu / E, 1.0 / E, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0 / G, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 1.0 / G, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / G],
+            ],
+            dtype=float,
+        )
 
 
 @dataclass
@@ -249,7 +280,7 @@ class FEModel:
     """
     name: str
     mesh: FEMesh = field(default_factory=FEMesh)
-    materials: Dict[str, Material] = field(default_factory=dict)
+    materials: Dict[str, StructuralMaterial] = field(default_factory=dict)
     boundary_conditions: List['BoundaryCondition'] = field(default_factory=list)
     load_cases: List['LoadCase'] = field(default_factory=list)
     current_material: str = "default"
@@ -278,13 +309,63 @@ class FEModel:
         self.mesh.bump_revision("material")
         return mat
 
+    def register_material(self, material: StructuralMaterial) -> StructuralMaterial:
+        """Register a solver-compatible material object.
+
+        Registration is structural rather than inheritance-based: a future
+        ANYmaterial object can satisfy :class:`StructuralMaterial` directly.
+        A same-name registration replaces the previous material, matching
+        :meth:`add_material`, and invalidates material-dependent caches.
+        """
+
+        validate_material(material)
+        self.materials[material.name] = material
+        self.mesh.bump_revision("material")
+        return material
+
+    def add_orthotropic_material(
+        self,
+        name: str,
+        elastic_modulus_1: float,
+        elastic_modulus_2: float,
+        elastic_modulus_3: float,
+        poisson_ratio_12: float,
+        poisson_ratio_13: float,
+        poisson_ratio_23: float,
+        shear_modulus_12: float,
+        shear_modulus_13: float,
+        shear_modulus_23: float,
+        density: float = 0.0,
+        hill_yield: Optional[Hill48Yield] = None,
+        hardening_curve: Optional[object] = None,
+    ) -> OrthotropicMaterial:
+        """Construct and register a homogeneous orthotropic material."""
+
+        material = OrthotropicMaterial(
+            name=name,
+            elastic_modulus_1=elastic_modulus_1,
+            elastic_modulus_2=elastic_modulus_2,
+            elastic_modulus_3=elastic_modulus_3,
+            poisson_ratio_12=poisson_ratio_12,
+            poisson_ratio_13=poisson_ratio_13,
+            poisson_ratio_23=poisson_ratio_23,
+            shear_modulus_12=shear_modulus_12,
+            shear_modulus_13=shear_modulus_13,
+            shear_modulus_23=shear_modulus_23,
+            density=density,
+            hill_yield=hill_yield,
+            hardening_curve=hardening_curve,
+        )
+        self.register_material(material)
+        return material
+
     def set_material(self, name: str):
         """Set the current material for new elements."""
         if name not in self.materials:
             raise ValueError(f"Material '{name}' not found")
         self.current_material = name
 
-    def get_material(self, name: str = None) -> Material:
+    def get_material(self, name: str = None) -> StructuralMaterial:
         """Get a material by name, or the current material."""
         name = name or self.current_material
         return self.materials.get(name, self.materials["default"])

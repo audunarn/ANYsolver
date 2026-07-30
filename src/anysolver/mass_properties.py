@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import numpy as np
 
+from .beam_sections import generalized_beam_mass_matrix
 from .elements import BeamElement, QuadraticBeamElement, ShellElement
 from .matrix_assembly import assemble_mass_matrix
 
@@ -44,13 +45,89 @@ class MassProperties:
         }
 
 
-def _point_inertia(points: List[Tuple[float, np.ndarray]], reference: np.ndarray) -> np.ndarray:
-    inertia = np.zeros((3, 3), dtype=float)
-    eye = np.eye(3)
-    for mass, coords in points:
-        r = np.asarray(coords, dtype=float) - reference
-        inertia += float(mass) * ((float(r @ r) * eye) - np.outer(r, r))
-    return inertia
+def _spatial_inertia_components(
+    matrix: Any,
+    *,
+    label: str,
+) -> Tuple[float, np.ndarray, np.ndarray]:
+    """Extract scalar mass, first moment and origin inertia from a 6x6 inertia.
+
+    With generalized velocity order ``[v, omega]``, a physical spatial
+    inertia has the block form
+
+    ``[[m I, -[h]x], [[h]x, J_origin]]``
+
+    where ``h = m * center_of_mass``.  An arbitrary symmetric positive-
+    definite generalized inertia need not have that form: in particular, an
+    anisotropic translational block has no unique scalar mass or center of
+    mass.  Such matrices remain usable by element dynamics, but this scalar
+    mass-properties diagnostic rejects them rather than inventing a value.
+    """
+
+    spatial = np.asarray(matrix, dtype=float)
+    if spatial.shape != (6, 6):
+        raise ValueError(f"{label} must have shape (6, 6); got {spatial.shape}")
+    if not np.all(np.isfinite(spatial)):
+        raise ValueError(f"{label} must contain only finite values")
+    spatial = 0.5 * (spatial + spatial.T)
+
+    translation = spatial[:3, :3]
+    mass = float(np.trace(translation) / 3.0)
+    translation_scale = max(
+        float(np.max(np.abs(translation))),
+        abs(mass),
+        np.finfo(float).tiny,
+    )
+    if mass < -1.0e-10 * translation_scale:
+        raise ValueError(f"{label} has a negative scalar mass")
+    if abs(mass) <= 1.0e-13 * translation_scale:
+        mass = 0.0
+    if not np.allclose(
+        translation,
+        mass * np.eye(3),
+        rtol=1.0e-9,
+        atol=1.0e-10 * translation_scale,
+    ):
+        raise ValueError(
+            f"{label} is not a physical spatial inertia: its translational "
+            "3x3 block must equal scalar mass times the identity. An "
+            "anisotropic generalized translational inertia has no unique "
+            "total_mass or center_of_mass."
+        )
+
+    translation_rotation = spatial[:3, 3:]
+    coupling_scale = max(
+        float(np.max(np.abs(translation_rotation))),
+        np.finfo(float).tiny,
+    )
+    if not np.allclose(
+        translation_rotation,
+        -translation_rotation.T,
+        rtol=1.0e-9,
+        atol=1.0e-10 * coupling_scale,
+    ):
+        raise ValueError(
+            f"{label} is not a physical spatial inertia: its "
+            "translation-rotation block must be skew-symmetric so it "
+            "defines a unique center_of_mass."
+        )
+    coupling = 0.5 * (
+        translation_rotation - translation_rotation.T
+    )
+    first_moment = np.array(
+        (coupling[1, 2], coupling[2, 0], coupling[0, 1]),
+        dtype=float,
+    )
+    if mass == 0.0 and not np.allclose(
+        first_moment,
+        0.0,
+        rtol=0.0,
+        atol=1.0e-12 * max(coupling_scale, 1.0),
+    ):
+        raise ValueError(
+            f"{label} has zero scalar mass but a non-zero first moment"
+        )
+    return mass, first_moment, np.array(spatial[3:, 3:], copy=True)
 
 
 def _rigid_body_modes(model: "FEModel", reference: np.ndarray) -> np.ndarray:
@@ -80,11 +157,17 @@ def _rigid_body_modes(model: "FEModel", reference: np.ndarray) -> np.ndarray:
 def _shell_mass_points(model: "FEModel", element: ShellElement) -> List[Tuple[float, np.ndarray]]:
     material = model.get_material(element.material_name)
     coords = element.get_node_coordinates(model.mesh)
+    mass_per_area = (
+        float(element.shell_section.mass_per_area)
+        if element.shell_section is not None
+        and element.shell_section.mass_per_area is not None
+        else float(material.density) * float(element.thickness)
+    )
     points: List[Tuple[float, np.ndarray]] = []
     for (xi, eta), weight in zip(element.gauss_points, element.gauss_weights):
         N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
         _, _, _, det_j = element._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
-        mass = float(material.density) * float(element.thickness) * float(det_j) * float(weight)
+        mass = mass_per_area * float(det_j) * float(weight)
         points.append((mass, np.asarray(N @ coords, dtype=float)))
     return points
 
@@ -92,26 +175,66 @@ def _shell_mass_points(model: "FEModel", element: ShellElement) -> List[Tuple[fl
 def _beam_mass_points(model: "FEModel", element: BeamElement) -> List[Tuple[float, np.ndarray]]:
     material = model.get_material(element.material_name)
     coords = element.get_node_coordinates(model.mesh)
+    length, transform = element._beam_frame_and_transform(coords)
+    section_mass = (
+        None
+        if element.generalized_section is None
+        else generalized_beam_mass_matrix(element.generalized_section)
+    )
+    if section_mass is not None:
+        line_mass, local_first_moment, _ = _spatial_inertia_components(
+            section_mass,
+            label=(
+                f"Generalized beam-section mass matrix on element "
+                f"{element.element_id}"
+            ),
+        )
+        local_offset = (
+            local_first_moment / line_mass
+            if line_mass > 0.0
+            else np.zeros(3, dtype=float)
+        )
+        # The element transform maps global vectors to beam-local vectors.
+        # Its transpose therefore maps the sectional COM offset back to the
+        # global frame.
+        global_offset = transform[:3, :3].T @ local_offset
+    else:
+        line_mass = float(material.density) * float(element._A)
+        global_offset = np.zeros(3, dtype=float)
     if isinstance(element, QuadraticBeamElement):
-        length = float(np.linalg.norm(coords[2] - coords[0]))
         points = []
         for xi, weight in zip(element.GAUSS_POINTS, element.GAUSS_WEIGHTS):
             N, _ = element.compute_shape_functions(float(xi))
-            mass = float(material.density) * float(element._A) * length / 2.0 * float(weight)
-            points.append((mass, np.asarray(N @ coords, dtype=float)))
+            mass = line_mass * length / 2.0 * float(weight)
+            points.append(
+                (
+                    mass,
+                    np.asarray(N @ coords, dtype=float) + global_offset,
+                )
+            )
         return points
-    length = float(np.linalg.norm(coords[1] - coords[0]))
     xi_values = (-1.0 / np.sqrt(3.0), 1.0 / np.sqrt(3.0))
     points = []
     for xi in xi_values:
         N = np.array([(1.0 - xi) / 2.0, (1.0 + xi) / 2.0], dtype=float)
-        mass = float(material.density) * float(element._A) * length / 2.0
-        points.append((mass, np.asarray(N @ coords, dtype=float)))
+        mass = line_mass * length / 2.0
+        points.append(
+            (
+                mass,
+                np.asarray(N @ coords, dtype=float) + global_offset,
+            )
+        )
     return points
 
 
 def element_mass_points(model: "FEModel") -> Tuple[List[Tuple[float, np.ndarray]], List[int]]:
-    """Return quadrature mass points for elements with physical density."""
+    """Return scalar quadrature mass points for physically interpretable elements.
+
+    Generalized shell ``mass_per_area`` overrides material density.  A
+    generalized beam spatial inertia supplies both line mass and its
+    center-of-mass offset.  Elements whose generalized inertia has no scalar
+    mass interpretation are listed in ``skipped``.
+    """
     points: List[Tuple[float, np.ndarray]] = []
     skipped: List[int] = []
     for elem_id, element in model.mesh.elements.items():
@@ -130,11 +253,18 @@ def element_mass_points(model: "FEModel") -> Tuple[List[Tuple[float, np.ndarray]
 def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> MassProperties:
     """Calculate integrated mass properties and assembled rigid-body mass.
 
-    The scalar mass, first moment and inertia tensors are obtained from
-    element quadrature plus model point masses.  The 6x6 rigid-body mass matrix
-    is additionally formed from the assembled mass matrix using rigid
-    translation/rotation fields, so shell and beam rotary inertia terms are
-    visible in diagnostics.
+    Scalar mass, first moment and inertia tensors are extracted from rigid-body
+    projections of the assembled mass matrix.  Consequently they use exactly
+    the same shell rotary inertia, generalized beam sectional inertia,
+    orientations, and point masses as dynamics.  Element quadrature remains
+    available through :func:`element_mass_points` for integration diagnostics
+    and supplies ``num_mass_points``.
+
+    A coupled generalized beam mass matrix must have physical spatial-inertia
+    blocks to admit scalar mass properties.  Arbitrary positive-definite
+    generalized inertia remains valid for dynamics, but this routine raises
+    when its translational block is anisotropic or its translation-rotation
+    block cannot define a unique center of mass.
     """
     points, skipped = element_mass_points(model)
     for node_id, mass in getattr(model.mesh, "point_masses", {}).items():
@@ -146,19 +276,49 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
             raise ValueError(f"Point mass at node {node_id} must be finite and non-negative")
         if mass_value > 0.0:
             points.append((mass_value, node.coords()))
-    total_mass = float(sum(mass for mass, _ in points))
-    first_moment = np.zeros(3, dtype=float)
-    for mass, coords in points:
-        first_moment += float(mass) * np.asarray(coords, dtype=float)
-    center = first_moment / total_mass if total_mass > 0.0 else np.zeros(3, dtype=float)
-    reference = center if reference_point is None else np.asarray(reference_point, dtype=float).reshape(3)
 
     M, assembly_info = assemble_mass_matrix(model)
-    modes = _rigid_body_modes(model, reference)
-    rbm = np.asarray(modes.T @ (M @ modes), dtype=float)
-    tx = modes[:, 0]
-    ty = modes[:, 1]
-    tz = modes[:, 2]
+    origin = np.zeros(3, dtype=float)
+    origin_modes = _rigid_body_modes(model, origin)
+    rbm_origin = np.asarray(
+        origin_modes.T @ (M @ origin_modes),
+        dtype=float,
+    )
+    total_mass, first_moment, inertia_origin = (
+        _spatial_inertia_components(
+            rbm_origin,
+            label="Assembled rigid-body mass matrix",
+        )
+    )
+    center = (
+        first_moment / total_mass
+        if total_mass > 0.0
+        else np.zeros(3, dtype=float)
+    )
+    center_modes = _rigid_body_modes(model, center)
+    rbm_center = np.asarray(
+        center_modes.T @ (M @ center_modes),
+        dtype=float,
+    )
+    inertia_center = np.array(
+        0.5 * (rbm_center[3:, 3:] + rbm_center[3:, 3:].T),
+        dtype=float,
+    )
+
+    if reference_point is None:
+        rbm = rbm_center
+    else:
+        reference = np.asarray(reference_point, dtype=float).reshape(3)
+        if not np.all(np.isfinite(reference)):
+            raise ValueError("reference_point must contain only finite values")
+        reference_modes = _rigid_body_modes(model, reference)
+        rbm = np.asarray(
+            reference_modes.T @ (M @ reference_modes),
+            dtype=float,
+        )
+    tx = origin_modes[:, 0]
+    ty = origin_modes[:, 1]
+    tz = origin_modes[:, 2]
     assembled_translation_masses = {
         "x": float(tx @ (M @ tx)),
         "y": float(ty @ (M @ ty)),
@@ -169,8 +329,8 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
         total_mass=total_mass,
         center_of_mass=center,
         first_moment=first_moment,
-        inertia_tensor_origin=_point_inertia(points, np.zeros(3, dtype=float)),
-        inertia_tensor_center_of_mass=_point_inertia(points, center),
+        inertia_tensor_origin=inertia_origin,
+        inertia_tensor_center_of_mass=inertia_center,
         rigid_body_mass_matrix=rbm,
         assembled_translation_masses=assembled_translation_masses,
         num_mass_points=len(points),

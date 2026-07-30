@@ -57,6 +57,9 @@ contact/fracture coverage.
     provenance where the corresponding path supports it.
 16. Generated reports are evidence artifacts, not source-of-truth capability
     declarations.
+17. Constitutive dispatch uses the solver-owned engineering-compliance
+    contract. Orthotropic materials never acquire invented isotropic `E`,
+    `nu`, or `G` aliases.
 
 ## Package layers
 
@@ -65,6 +68,9 @@ contact/fracture coverage.
 | Module | Responsibility |
 | --- | --- |
 | `fe_core.py` | `FEModel`, mesh, nodes, materials, point masses, revisions, and DOF numbering. |
+| `materials.py` | Runtime-checkable structural material protocol, isotropic/orthotropic compliance dispatch, Hill-48 strength data, validation, and shell/beam material reductions. |
+| `sections.py` | Public runtime-checkable generalized shell/beam section contracts, component orders, coercion, and validation. |
+| `shell_sections.py` / `beam_sections.py` | Concrete pre-integrated `A/B/D/As` shell and coupled 6x6 beam section implementations. |
 | `elements.py` | Triangle/quad shells, linear/quadratic Timoshenko beams, coupling elements, element matrices, nonlinear response, Mindlin initial-stress operators, and stress recovery. |
 | `boundary.py` | Supports, prescribed DOFs, load cases, combinations, dead/current-area follower pressure, acceleration loads, in-plane edge loads, and the exact follower-pressure load tangent. |
 | `mesh_gen.py` | Rectangular panel, stiffened-panel, and beam mesh generation with interpolated eccentric coupling and mesh-quality checks. |
@@ -83,6 +89,34 @@ a profile-aware fiber layout that is recentered/rescaled to preserve `A`,
 `Iy`, and `Iz`. The quadratic beam is straight-sided and validates that its
 middle node lies at the chord midpoint. Curved members are currently segmented
 with 2-node beams.
+
+`StructuralMaterial` is intentionally owned by ANYsolver and contains only
+`name`, `density`, `elastic_symmetry`, and a 6-by-6 engineering compliance in
+Voigt order `[11,22,33,23,13,12]`. `FEModel.register_material()` therefore
+accepts a future ANYmaterial object structurally without importing that
+repository. The built-in `Material` remains isotropic and backward compatible;
+`OrthotropicMaterial` carries the nine 3-D engineering constants and optional
+Hill-48/hardening data. Registration validates compliance symmetry, reciprocal
+Poisson behavior, positive definiteness, density, and supported symmetry.
+General anisotropy fails explicitly.
+
+Shell material orientation is an element property. `material_direction` is
+projected into the shell plane and `material_angle_deg` is applied about the
+positive normal; the shell-local x axis is the default base direction.
+Orthotropic beam axes follow beam-local x/y/z, including the section
+orientation used to establish y/z. Such beams require a positive explicit
+`cross_section["torsional_rigidity"]`; isotropic sections retain `G*J`.
+
+Generalized sections are separate from materials. A
+`GeneralizedShellSectionProtocol` supplies pre-integrated `A`, `B`, `D`, and
+`As` matrices in its material axes; the element direction/angle rotates them
+into each shell frame. A `GeneralizedBeamSectionContract` supplies a local 6x6
+section stiffness from generalized strains
+`[eps_x,gamma_xy,gamma_xz,kappa_x,kappa_y,kappa_z]` to resultants
+`[N,V_y,V_z,T,M_y,M_z]`. These protocols are structural so future ANYmaterial
+objects need no ANYsolver base class. Optional shell mass/rotary inertia per
+area and beam 6x6 mass per length override legacy mass; omitted values retain
+the attached material/geometry mass path.
 
 The shell initial-stress operator is derived from the Mindlin director field
 `[u + z*ry, v - z*rx, w]`. It accepts uniform or Gauss-point-varying membrane
@@ -150,7 +184,7 @@ earlier loads as constant equilibrium terms.
 | Module | Responsibility |
 | --- | --- |
 | `material_curves.py` | Canonical validated DNV-RP-C208 property lookup, true stress/true plastic strain curves, and beam fiber configuration. |
-| `plasticity.py` | Layered plane-stress J2 return mapping, safeguarded local consistency solve, analytical consistent algorithmic tangent, representable-step numerical oracle, and guarded pathological-state fallback. |
+| `plasticity.py` | Layered plane-stress J2 and material-axis Hill-48 return mapping, safeguarded local consistency solves, consistent algorithmic tangents, numerical qualification oracles, and guarded pathological-state fallback. |
 | `imperfections.py` | Explicit, eigenmode, standard, calibrated, and composite stress-free geometry offsets. |
 | `fracture.py` | Scalar damage measures, mesh-scaled/RTCL helpers, simplified erosion records, and load filtering. |
 | `recovery.py` | Unified elastic/material-history recovery, guarded shell patch recovery, selected node/element/component recovery, deterministic provenance/threading, memory estimates, and policy enforcement. |
@@ -182,14 +216,13 @@ source for nonlinear results. The unified recovery API ties those states to
 the matching displacement vector, records a component-level source and
 explicitly labels any elastic displacement-reconstruction fallback. In
 corotational analyses it uses the same objective pull-back and current element
-frame as force assembly. With an active plastic constitutive history, the
-material-history `von_mises` field is formed only from components governed by
-the corresponding return map: shell in-plane layers or axial beam fibers. A
-separately labelled `mixed_reconstruction_von_mises` diagnostic combines those
-stresses with the matching elastic transverse-shear/torsion reconstruction
-without implying that the mixed value was return-mapped or bounded by the
-hardening curve. Committed states from purely elastic nonlinear analyses retain
-the full mixed elastic value as primary `von_mises`.
+frame as force assembly. Legacy isotropic plastic recovery retains its
+established return-mapped in-plane/fiber `von_mises` scope. Orthotropic
+`von_mises` is the conventional physical invariant and includes the matching
+elastic transverse-shear/torsion reconstruction; its separate Hill equivalent
+stress remains explicitly scoped to the return-mapped material-axis
+components. `mixed_reconstruction_von_mises` and component provenance expose
+that mixed constitutive origin.
 
 The optional Zienkiewicz--Zhu-style shell patch fit is deliberately narrow. It
 is qualified only for locally planar, consistently oriented, materially and
@@ -200,6 +233,24 @@ top/bottom surface-stress L2 discrepancy, not an energy-norm error estimate.
 
 Damage/erosion always means residual scaling after a converged increment or
 substep. It does not remove nodes, DOFs, or MPCs and is not crack mechanics.
+Orthotropic committed state stores converged physical layer/fiber stress so
+recovery and damage do not reconstruct it from isotropic constants. RTCL keeps
+physical von Mises triaxiality and weights increments with the committed Hill
+equivalent plastic strain. Linear contact-pressure damage requires an explicit
+user capacity for orthotropic targets; nonlinear impact uses committed
+constitutive state.
+Orthotropic public `von_mises` recovery remains the conventional physical
+stress invariant, including the separately reconstructed elastic shell shear
+or beam shear/torsion envelope. The Hill measure remains explicitly scoped to
+the return-mapped material-axis shell layers or longitudinal beam fibers, and
+its utilization is normalized by the current hardening-scaled strength.
+
+The material capability remains homogeneous isotropy/orthotropy rather than an
+arbitrary 3-D anisotropic law. At section level, linear pre-integrated laminate
+`A/B/D/As` and general coupled beam 6x6 laws are supported. Ply stacking,
+through-thickness/ply stress recovery, section plasticity, progressive
+composite failure, and material-to-section homogenization remain outside the
+contract.
 
 ### Production workflows and interchange
 
@@ -274,6 +325,10 @@ before the first nonlinear solve, after honoring
 `FE_SOLVER_DISABLE_FAST_NL`. PyPardiso is imported only if the sparse backend
 policy actually selects it. Missing or failed optional accelerators fall back to
 the NumPy/SciPy paths without changing the public solver call.
+The existing shell stiffness and nonlinear batch kernels remain isotropic.
+Orthotropic groups are excluded from those kernels, routed through the general
+element path, and recorded in deterministic constitutive-fallback diagnostics;
+isotropic selection and results are unchanged.
 
 Unsupported verification cases remain explicit XFAILs with reasons. A report
 passes when required cases pass; an XFAIL is not evidence that the unsupported

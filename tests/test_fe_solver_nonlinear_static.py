@@ -294,6 +294,54 @@ def test_legacy_convergence_settings_keep_original_step_cap():
     assert max(row["step_size"] for row in result.info["force_displacement_history"]) == pytest.approx(0.25)
 
 
+def test_legacy_positional_parameter_order_remains_compatible():
+    model = FEModel(name="legacy_positional_nonlinear_api")
+    model.add_material("steel", E, NU)
+    section = {
+        "area": 0.01,
+        "Iy": 1.0e-6,
+        "Iz": 1.0e-6,
+        "J": 1.0e-6,
+        "orientation": (0.0, 0.0, 1.0),
+    }
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, 1.0, 0.0, 0.0)
+    model.add_element(1, BeamElement(1, [1, 2], "steel", section))
+    model.add_boundary_condition(FixedSupport("fixed", [1]))
+
+    load = LoadCase("tip")
+    load.add_nodal_load(2, [0.0, 0.0, 10.0, 0.0, 0.0, 0.0])
+    settings = NonlinearConvergenceSettings.for_profile("legacy")
+
+    result = solve_static_nonlinear(
+        model,
+        load,
+        None,
+        1.0,
+        4,
+        25,
+        1.0e-6,
+        5,
+        1.0 / 1024.0,
+        None,
+        None,
+        "force",
+        None,
+        None,
+        settings,
+        ResourceConfig(),
+        None,
+        "von_karman",
+        "auto",
+        None,
+        None,
+    )
+
+    assert result.status == "completed"
+    assert len(result.steps) == 4
+    assert result.info["convergence_settings"]["profile"] == "legacy"
+
+
 def test_resource_config_assembly_threads_enters_nonlinear_numba_scope(monkeypatch):
     calls = []
 

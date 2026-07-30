@@ -39,6 +39,7 @@ from .jit_compiler import njit
 
 if TYPE_CHECKING:
     from .material_curves import DNVC208MaterialCurve
+    from .materials import Hill48Yield
 
 _P_MATRIX = np.array(
     [[2.0, -1.0, 0.0], [-1.0, 2.0, 0.0], [0.0, 0.0, 6.0]],
@@ -1032,6 +1033,813 @@ def _finite_difference_algorithmic_tangent(
         tolerance=tolerance,
         step=step,
     )
+
+
+def _hill48_strength_values(
+    yield_model: "Hill48Yield | Any",
+) -> Tuple[float, float, float, float, float, float]:
+    """Return and validate the six symmetric Hill-48 strengths.
+
+    ``yield_model`` is intentionally consumed by protocol rather than by a
+    concrete runtime import.  This keeps the constitutive kernel independent
+    of the model layer and lets a future ANYmaterial object provide the same
+    ``X``, ``Y``, ``Z``, ``S12``, ``S13`` and ``S23`` attributes.
+    """
+    names = ("X", "Y", "Z", "S12", "S13", "S23")
+    values = []
+    for name in names:
+        try:
+            value = float(getattr(yield_model, name))
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise TypeError(
+                "yield_model must provide finite positive X, Y, Z, "
+                "S12, S13 and S23 strengths"
+            ) from exc
+        if not np.isfinite(value) or value <= 0.0:
+            raise ValueError(
+                f"Hill-48 strength {name} must be finite and positive"
+            )
+        values.append(value)
+
+    X, Y, Z, S12, S13, S23 = values
+    ratios = np.asarray(
+        [X / Y, X / Z, X / S12, X / S13, X / S23],
+        dtype=float,
+    )
+    if np.any(~np.isfinite(ratios)) or np.any(ratios <= 0.0):
+        raise ValueError("Hill-48 strength ratios must be finite and positive")
+
+    # Convexity is checked on the dimensionless normal-stress block.  It has
+    # one intentional hydrostatic null mode; all other eigenvalues must be
+    # nonnegative.  Checking the complete quadratic is less restrictive and
+    # more accurate than requiring each of F, G and H separately to be
+    # positive.
+    xy2 = (X / Y) ** 2
+    xz2 = (X / Z) ** 2
+    F = 0.5 * (xy2 + xz2 - 1.0)
+    G = 0.5 * (xz2 + 1.0 - xy2)
+    H = 0.5 * (1.0 + xy2 - xz2)
+    normal_metric = np.asarray(
+        [
+            [G + H, -H, -G],
+            [-H, F + H, -F],
+            [-G, -F, F + G],
+        ],
+        dtype=float,
+    )
+    eigenvalues = np.linalg.eigvalsh(normal_metric)
+    eigenvalue_scale = max(float(np.max(np.abs(eigenvalues))), 1.0)
+    if float(np.min(eigenvalues)) < -1.0e-12 * eigenvalue_scale:
+        raise ValueError(
+            "Hill-48 strengths do not define a convex quadratic yield surface"
+        )
+    return X, Y, Z, S12, S13, S23
+
+
+def hill48_coefficients(
+    yield_model: "Hill48Yield | Any",
+) -> Dict[str, float]:
+    """Return the standard 3-D Hill-48 coefficients ``F`` through ``N``.
+
+    The convention is
+
+    ``F(s2-s3)^2 + G(s3-s1)^2 + H(s1-s2)^2
+       + 2L*t23^2 + 2M*t13^2 + 2N*t12^2 = 1``.
+    """
+    X, Y, Z, S12, S13, S23 = _hill48_strength_values(yield_model)
+    inv_x2 = 1.0 / X**2
+    inv_y2 = 1.0 / Y**2
+    inv_z2 = 1.0 / Z**2
+    coefficients = {
+        "F": 0.5 * (inv_y2 + inv_z2 - inv_x2),
+        "G": 0.5 * (inv_z2 + inv_x2 - inv_y2),
+        "H": 0.5 * (inv_x2 + inv_y2 - inv_z2),
+        "L": 0.5 / S23**2,
+        "M": 0.5 / S13**2,
+        "N": 0.5 / S12**2,
+    }
+    if any(not np.isfinite(value) for value in coefficients.values()):
+        raise ValueError("Hill-48 coefficients must be finite")
+    return coefficients
+
+
+def hill48_plane_stress_coefficients(
+    yield_model: "Hill48Yield | Any",
+) -> np.ndarray:
+    """Return the material-axis plane-stress Hill quadratic matrix.
+
+    For stress order ``[s11, s22, t12]``, the unscaled yield surface is
+    ``stress.T @ A @ stress = 1``.  The matrix therefore has inverse-stress
+    squared units.  :func:`hill48_plane_stress_equivalent_stress` multiplies
+    its square root by ``X`` to return a stress-valued equivalent measure.
+    """
+    coefficients = hill48_coefficients(yield_model)
+    X, Y, _Z, S12, _S13, _S23 = _hill48_strength_values(yield_model)
+    H = coefficients["H"]
+    return np.asarray(
+        [
+            [1.0 / X**2, -H, 0.0],
+            [-H, 1.0 / Y**2, 0.0],
+            [0.0, 0.0, 1.0 / S12**2],
+        ],
+        dtype=float,
+    )
+
+
+def hill48_equivalent_stress(
+    stress: np.ndarray,
+    yield_model: "Hill48Yield | Any",
+) -> np.ndarray:
+    """Return X-referenced 3-D Hill equivalent stress.
+
+    Stress order is engineering Voigt ``[11, 22, 33, 23, 13, 12]``.  The
+    function consumes the six-strength protocol directly so material records
+    from a future ANYmaterial package need not inherit ANYsolver classes.
+    """
+
+    values = np.asarray(stress, dtype=float)
+    if values.ndim == 0 or values.shape[-1:] != (6,):
+        raise ValueError("stress must have shape (..., 6)")
+    if np.any(~np.isfinite(values)):
+        raise ValueError("stress must contain only finite values")
+    coefficients = hill48_coefficients(yield_model)
+    s1, s2, s3, t23, t13, t12 = np.moveaxis(values, -1, 0)
+    utilization_squared = (
+        coefficients["F"] * (s2 - s3) ** 2
+        + coefficients["G"] * (s3 - s1) ** 2
+        + coefficients["H"] * (s1 - s2) ** 2
+        + 2.0 * coefficients["L"] * t23**2
+        + 2.0 * coefficients["M"] * t13**2
+        + 2.0 * coefficients["N"] * t12**2
+    )
+    scale = np.maximum(np.sum(values * values, axis=-1), 1.0)
+    if np.any(utilization_squared < -1.0e-12 * scale):
+        raise FloatingPointError("Hill equivalent stress squared is negative")
+    return float(yield_model.X) * np.sqrt(
+        np.maximum(utilization_squared, 0.0)
+    )
+
+
+def _hill48_plane_stress_metric(
+    yield_model: "Hill48Yield | Any",
+) -> Tuple[np.ndarray, float]:
+    """Return a well-scaled stress-valued equivalent-stress metric."""
+    X, Y, Z, S12, _S13, _S23 = _hill48_strength_values(yield_model)
+    h_scaled = 0.5 * (1.0 + (X / Y) ** 2 - (X / Z) ** 2)
+    metric = np.asarray(
+        [
+            [1.0, -h_scaled, 0.0],
+            [-h_scaled, (X / Y) ** 2, 0.0],
+            [0.0, 0.0, (X / S12) ** 2],
+        ],
+        dtype=float,
+    )
+    metric = 0.5 * (metric + metric.T)
+    eigenvalues = np.linalg.eigvalsh(metric)
+    scale = max(float(np.max(np.abs(eigenvalues))), 1.0)
+    if float(np.min(eigenvalues)) <= 1.0e-14 * scale:
+        raise ValueError(
+            "Hill-48 strengths must define a positive-definite plane-stress "
+            "quadratic"
+        )
+    return metric, X
+
+
+def hill48_plane_stress_equivalent_stress(
+    stress: np.ndarray,
+    yield_model: "Hill48Yield | Any",
+) -> np.ndarray:
+    """Return the stress-valued Hill equivalent stress in material axes.
+
+    The reference scale is the material-axis-1 strength ``X``.  Consequently
+    the base yield condition is ``equivalent_stress == X``.  In the isotropic
+    limit ``X=Y=Z=sy`` and ``S12=S13=S23=sy/sqrt(3)``, this is exactly the
+    conventional plane-stress von Mises stress.
+    """
+    stress_array = np.asarray(stress, dtype=float)
+    if stress_array.ndim == 0 or stress_array.shape[-1:] != (3,):
+        raise ValueError("stress must have shape (..., 3)")
+    if np.any(~np.isfinite(stress_array)):
+        raise ValueError("stress must contain only finite values")
+    metric, _reference_strength = _hill48_plane_stress_metric(yield_model)
+    equivalent_squared = np.einsum(
+        "...i,ij,...j->...",
+        stress_array,
+        metric,
+        stress_array,
+    )
+    scale = np.maximum(
+        np.einsum("...i,...i->...", stress_array, stress_array),
+        1.0,
+    )
+    if np.any(equivalent_squared < -1.0e-12 * scale):
+        raise FloatingPointError("Hill equivalent stress squared is negative")
+    return np.sqrt(np.maximum(equivalent_squared, 0.0))
+
+
+def _validate_hill48_plane_stress_inputs(
+    strain: np.ndarray,
+    plastic_strain: np.ndarray,
+    alpha: np.ndarray,
+    elastic_matrix: np.ndarray,
+    yield_model: "Hill48Yield | Any",
+    max_iterations: int,
+    tolerance: float,
+) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    float,
+    int,
+    float,
+]:
+    strain_array = np.asarray(strain, dtype=float)
+    plastic_array = np.asarray(plastic_strain, dtype=float)
+    alpha_array = np.asarray(alpha, dtype=float)
+    if strain_array.ndim != 2 or strain_array.shape[1:] != (3,):
+        raise ValueError("strain must have shape (n_points, 3)")
+    if plastic_array.shape != strain_array.shape:
+        raise ValueError("plastic_strain must have the same shape as strain")
+    if alpha_array.shape != (strain_array.shape[0],):
+        raise ValueError("alpha must have shape (n_points,)")
+    if np.any(~np.isfinite(strain_array)) or np.any(~np.isfinite(plastic_array)):
+        raise ValueError("strain and plastic_strain must contain only finite values")
+    if np.any(~np.isfinite(alpha_array)):
+        raise ValueError("alpha must contain only finite values")
+    if np.any(alpha_array < 0.0):
+        raise ValueError("alpha must be nonnegative")
+
+    elastic = np.asarray(elastic_matrix, dtype=float)
+    if elastic.shape != (3, 3):
+        raise ValueError("elastic_matrix must have shape (3, 3)")
+    if np.any(~np.isfinite(elastic)):
+        raise ValueError("elastic_matrix must contain only finite values")
+    elastic_scale = max(float(np.linalg.norm(elastic, ord=np.inf)), 1.0)
+    if not np.allclose(
+        elastic,
+        elastic.T,
+        rtol=1.0e-12,
+        atol=1.0e-12 * elastic_scale,
+    ):
+        raise ValueError("elastic_matrix must be symmetric")
+    elastic = 0.5 * (elastic + elastic.T)
+    try:
+        np.linalg.cholesky(elastic)
+    except np.linalg.LinAlgError as exc:
+        raise ValueError("elastic_matrix must be positive definite") from exc
+
+    if isinstance(max_iterations, (bool, np.bool_)):
+        raise ValueError("max_iterations must be a positive integer")
+    iterations = int(max_iterations)
+    if iterations <= 0 or float(iterations) != float(max_iterations):
+        raise ValueError("max_iterations must be a positive integer")
+    local_tolerance = float(tolerance)
+    if not np.isfinite(local_tolerance) or local_tolerance <= 0.0:
+        raise ValueError("tolerance must be finite and positive")
+
+    metric, reference_strength = _hill48_plane_stress_metric(yield_model)
+    return (
+        strain_array,
+        plastic_array,
+        alpha_array,
+        elastic,
+        metric,
+        reference_strength,
+        iterations,
+        local_tolerance,
+    )
+
+
+def _curve_scalar_value(curve: Any, method_name: str, alpha: float) -> float:
+    method = getattr(curve, method_name, None)
+    if method is None or not callable(method):
+        raise TypeError(f"hardening curve must provide {method_name}()")
+    argument = np.asarray([float(alpha)], dtype=float)
+    try:
+        result = np.asarray(method(argument), dtype=float).reshape(-1)
+    except (TypeError, ValueError):
+        result = np.asarray([method(float(alpha))], dtype=float).reshape(-1)
+    if result.size != 1 or not np.isfinite(result[0]):
+        raise ValueError(
+            f"hardening curve {method_name}() must return one finite value"
+        )
+    return float(result[0])
+
+
+def _hill48_reference_flow(curve: Any | None) -> float:
+    if curve is None:
+        return 1.0
+    reference = _curve_scalar_value(curve, "flow_stress", 0.0)
+    if reference <= 0.0:
+        raise ValueError("hardening curve flow_stress(0) must be positive")
+    return reference
+
+
+def _hill48_flow_stress_and_modulus(
+    alpha: float,
+    reference_strength: float,
+    curve: Any | None,
+    reference_flow: float,
+) -> Tuple[float, float]:
+    if curve is None:
+        return reference_strength, 0.0
+    flow = _curve_scalar_value(curve, "flow_stress", alpha)
+    if flow <= 0.0:
+        raise ValueError("hardening curve flow stress must remain positive")
+    hardening_method = getattr(curve, "hardening_modulus", None)
+    if callable(hardening_method):
+        hardening = _curve_scalar_value(curve, "hardening_modulus", alpha)
+    else:
+        derivative_step = np.sqrt(np.finfo(float).eps) * max(1.0, abs(alpha))
+        upper = _curve_scalar_value(
+            curve,
+            "flow_stress",
+            alpha + derivative_step,
+        )
+        if alpha > derivative_step:
+            lower = _curve_scalar_value(
+                curve,
+                "flow_stress",
+                alpha - derivative_step,
+            )
+            hardening = (upper - lower) / (2.0 * derivative_step)
+        else:
+            hardening = (upper - flow) / derivative_step
+    scaled_flow = reference_strength * flow / reference_flow
+    scaled_hardening = reference_strength * hardening / reference_flow
+    if not np.isfinite(scaled_flow) or not np.isfinite(scaled_hardening):
+        raise ValueError("scaled Hill-48 flow stress and modulus must be finite")
+    hardening_scale = max(abs(scaled_flow), reference_strength, 1.0)
+    if scaled_hardening < -1.0e-12 * hardening_scale:
+        raise ValueError("hardening curve must be nondecreasing")
+    return scaled_flow, max(scaled_hardening, 0.0)
+
+
+def _hill48_gamma_state(
+    trial_stress: np.ndarray,
+    elastic_matrix: np.ndarray,
+    metric: np.ndarray,
+    gamma: float,
+) -> Tuple[np.ndarray, float, np.ndarray, float]:
+    """Evaluate stress, equivalent stress, normal and d(phi)/d(gamma)."""
+    elastic_metric = elastic_matrix @ metric
+    projection = np.eye(3, dtype=float) + float(gamma) * elastic_metric
+    try:
+        stress = np.linalg.solve(projection, trial_stress)
+        stress_derivative = -np.linalg.solve(
+            projection,
+            elastic_metric @ stress,
+        )
+    except np.linalg.LinAlgError as exc:
+        raise PlaneStressConvergenceError(
+            "Hill-48 local projection matrix is singular"
+        ) from exc
+    metric_stress = metric @ stress
+    equivalent_squared = float(stress @ metric_stress)
+    if not np.isfinite(equivalent_squared) or equivalent_squared <= 0.0:
+        raise PlaneStressConvergenceError(
+            "Hill-48 local solve produced a nonpositive equivalent stress"
+        )
+    equivalent = float(np.sqrt(equivalent_squared))
+    normal = metric_stress / equivalent
+    equivalent_derivative = float(normal @ stress_derivative)
+    return stress, equivalent, normal, equivalent_derivative
+
+
+def _hill48_local_return(
+    trial_stress: np.ndarray,
+    alpha_n: float,
+    elastic_matrix: np.ndarray,
+    metric: np.ndarray,
+    reference_strength: float,
+    curve: Any | None,
+    reference_flow: float,
+    max_iterations: int,
+    tolerance: float,
+) -> Tuple[np.ndarray, float, float, np.ndarray, float]:
+    """Safeguarded scalar backward-Euler return for one material point."""
+
+    def evaluate(
+        gamma: float,
+    ) -> Tuple[
+        Tuple[np.ndarray, float, np.ndarray, float, float, float, float],
+        float,
+    ]:
+        stress, equivalent, normal, equivalent_derivative = (
+            _hill48_gamma_state(
+                trial_stress,
+                elastic_matrix,
+                metric,
+                gamma,
+            )
+        )
+        plastic_increment = gamma * equivalent
+        alpha_value = alpha_n + plastic_increment
+        flow, hardening = _hill48_flow_stress_and_modulus(
+            alpha_value,
+            reference_strength,
+            curve,
+            reference_flow,
+        )
+        residual = equivalent - flow
+        plastic_increment_derivative = (
+            equivalent + gamma * equivalent_derivative
+        )
+        residual_derivative = (
+            equivalent_derivative
+            - hardening * plastic_increment_derivative
+        )
+        return (
+            stress,
+            equivalent,
+            normal,
+            plastic_increment,
+            flow,
+            hardening,
+            residual,
+        ), residual_derivative
+
+    lower = 0.0
+    lower_state, _lower_derivative = evaluate(lower)
+    lower_residual = float(lower_state[-1])
+    residual_scale = max(
+        abs(float(lower_state[1])),
+        abs(float(lower_state[4])),
+        1.0,
+    )
+    if lower_residual <= tolerance * residual_scale:
+        stress, equivalent, normal, _increment, _flow, hardening, _residual = (
+            lower_state
+        )
+        return stress, 0.0, alpha_n, normal, hardening
+
+    upper = 1.0 / max(float(np.linalg.norm(elastic_matrix, ord=2)), 1.0)
+    upper_state = lower_state
+    for _ in range(128):
+        upper_state, _upper_derivative = evaluate(upper)
+        if float(upper_state[-1]) <= 0.0:
+            break
+        upper *= 2.0
+    else:
+        raise PlaneStressConvergenceError(
+            "Could not bracket the Hill-48 plane-stress consistency root"
+        )
+
+    gamma = lower
+    state = lower_state
+    converged = False
+    for _ in range(max_iterations):
+        state, derivative = evaluate(gamma)
+        residual = float(state[-1])
+        residual_scale = max(
+            abs(float(state[1])),
+            abs(float(state[4])),
+            1.0,
+        )
+        if abs(residual) <= tolerance * residual_scale:
+            converged = True
+            break
+        if residual > 0.0:
+            lower = gamma
+        else:
+            upper = gamma
+        candidate = float("nan")
+        if np.isfinite(derivative) and derivative < 0.0:
+            candidate = gamma - residual / derivative
+        if (
+            not np.isfinite(candidate)
+            or candidate <= lower
+            or candidate >= upper
+        ):
+            candidate = 0.5 * (lower + upper)
+        gamma = candidate
+
+    if not converged:
+        state, _derivative = evaluate(gamma)
+        residual = abs(float(state[-1]))
+        residual_scale = max(
+            abs(float(state[1])),
+            abs(float(state[4])),
+            1.0,
+        )
+        if residual > tolerance * residual_scale:
+            raise PlaneStressConvergenceError(
+                "Hill-48 plane-stress return mapping did not satisfy the "
+                "scaled yield residual after "
+                f"{max_iterations} iterations; scaled residual="
+                f"{residual / residual_scale:.6g}."
+            )
+
+    stress, _equivalent, normal, plastic_increment, _flow, hardening, _ = state
+    return (
+        stress,
+        float(plastic_increment),
+        float(alpha_n + plastic_increment),
+        normal,
+        float(hardening),
+    )
+
+
+def _hill48_return_map_core(
+    strain: np.ndarray,
+    plastic_strain: np.ndarray,
+    alpha: np.ndarray,
+    elastic_matrix: np.ndarray,
+    metric: np.ndarray,
+    reference_strength: float,
+    curve: Any | None,
+    reference_flow: float,
+    max_iterations: int,
+    tolerance: float,
+    compute_tangent: bool,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    n_points = int(strain.shape[0])
+    trial_stress = (strain - plastic_strain) @ elastic_matrix.T
+    stress = trial_stress.copy()
+    tangent = (
+        np.broadcast_to(elastic_matrix, (n_points, 3, 3)).copy()
+        if compute_tangent
+        else np.zeros((n_points, 3, 3), dtype=float)
+    )
+    new_plastic = plastic_strain.copy()
+    new_alpha = alpha.copy()
+    tangent_valid = np.ones(n_points, dtype=bool)
+
+    for point in range(n_points):
+        flow_n, _hardening_n = _hill48_flow_stress_and_modulus(
+            float(alpha[point]),
+            reference_strength,
+            curve,
+            reference_flow,
+        )
+        equivalent_trial = float(
+            np.sqrt(
+                max(
+                    float(trial_stress[point] @ metric @ trial_stress[point]),
+                    0.0,
+                )
+            )
+        )
+        if (
+            equivalent_trial - flow_n
+            <= tolerance * max(flow_n, equivalent_trial, 1.0)
+        ):
+            continue
+
+        (
+            returned_stress,
+            plastic_increment,
+            alpha_value,
+            normal,
+            hardening,
+        ) = _hill48_local_return(
+            trial_stress[point],
+            float(alpha[point]),
+            elastic_matrix,
+            metric,
+            reference_strength,
+            curve,
+            reference_flow,
+            max_iterations,
+            tolerance,
+        )
+        stress[point] = returned_stress
+        new_plastic[point] = plastic_strain[point] + plastic_increment * normal
+        new_alpha[point] = alpha_value
+
+        if not compute_tangent:
+            continue
+        equivalent = float(
+            np.sqrt(returned_stress @ metric @ returned_stress)
+        )
+        hessian = (
+            metric - np.outer(normal, normal)
+        ) / equivalent
+        jacobian = np.zeros((4, 4), dtype=float)
+        jacobian[:3, :3] = (
+            np.eye(3, dtype=float)
+            + plastic_increment * elastic_matrix @ hessian
+        )
+        jacobian[:3, 3] = elastic_matrix @ normal
+        jacobian[3, :3] = normal
+        jacobian[3, 3] = -hardening
+        right_hand_side = np.zeros((4, 3), dtype=float)
+        right_hand_side[:3] = elastic_matrix
+        try:
+            local_derivative = np.linalg.solve(jacobian, right_hand_side)[:3]
+        except np.linalg.LinAlgError:
+            tangent_valid[point] = False
+            tangent[point] = np.nan
+            continue
+        local_derivative = 0.5 * (
+            local_derivative + local_derivative.T
+        )
+        elastic_norm = max(float(np.linalg.norm(elastic_matrix)), 1.0)
+        tangent_valid[point] = bool(
+            np.all(np.isfinite(local_derivative))
+            and float(np.linalg.norm(local_derivative))
+            <= _ANALYTICAL_TANGENT_AMPLIFICATION_LIMIT * elastic_norm
+        )
+        tangent[point] = local_derivative
+    return stress, tangent, new_plastic, new_alpha, tangent_valid
+
+
+def hill48_plane_stress_return_map(
+    strain: np.ndarray,
+    plastic_strain: np.ndarray,
+    alpha: np.ndarray,
+    elastic_matrix: np.ndarray,
+    yield_model: "Hill48Yield | Any",
+    curve: Any | None = None,
+    max_iterations: int = 50,
+    tolerance: float = 1.0e-10,
+    compute_tangent: bool = True,
+    tangent_method: str = "analytical",
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Backward-Euler associated Hill-48 update in material axes.
+
+    Inputs use ``[e11, e22, gamma12]`` and ``[s11, s22, t12]`` engineering
+    order.  ``elastic_matrix`` may be any symmetric positive-definite 3-by-3
+    plane-stress matrix, including an off-axis orthotropic matrix.  Plastic
+    strain and Hill equivalent plastic strain ``alpha`` are state at the
+    beginning of the increment.
+
+    Directional strengths are scaled by
+    ``curve.flow_stress(alpha) / curve.flow_stress(0)``.  With ``curve=None``
+    the response is elastic-perfectly-plastic at the supplied strengths.
+    The default tangent is the exact derivative of the converged local
+    residual; invalid rows fall back to the central-difference oracle.
+    """
+    (
+        strain,
+        plastic_strain,
+        alpha,
+        elastic_matrix,
+        metric,
+        reference_strength,
+        max_iterations,
+        tolerance,
+    ) = _validate_hill48_plane_stress_inputs(
+        strain,
+        plastic_strain,
+        alpha,
+        elastic_matrix,
+        yield_model,
+        max_iterations,
+        tolerance,
+    )
+    override = _TANGENT_METHOD_OVERRIDE.get()
+    method = (
+        _normalize_tangent_method(override)
+        if override is not None
+        else _normalize_tangent_method(tangent_method)
+    )
+    reference_flow = _hill48_reference_flow(curve)
+    (
+        stress,
+        tangent,
+        new_plastic,
+        new_alpha,
+        tangent_valid,
+    ) = _hill48_return_map_core(
+        strain,
+        plastic_strain,
+        alpha,
+        elastic_matrix,
+        metric,
+        reference_strength,
+        curve,
+        reference_flow,
+        max_iterations,
+        tolerance,
+        compute_tangent and method == "analytical",
+    )
+    if not compute_tangent:
+        return stress, tangent, new_plastic, new_alpha
+    if method == "numerical":
+        tangent = hill48_plane_stress_numerical_tangent(
+            strain,
+            plastic_strain,
+            alpha,
+            elastic_matrix,
+            yield_model,
+            curve,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+        )
+        return stress, tangent, new_plastic, new_alpha
+    if np.any(~tangent_valid):
+        tangent[~tangent_valid] = hill48_plane_stress_numerical_tangent(
+            strain[~tangent_valid],
+            plastic_strain[~tangent_valid],
+            alpha[~tangent_valid],
+            elastic_matrix,
+            yield_model,
+            curve,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+        )
+    if np.any(~np.isfinite(tangent)):
+        raise FloatingPointError(
+            "Hill-48 plane-stress tangent remained non-finite after the "
+            "numerical fallback"
+        )
+    return stress, tangent, new_plastic, new_alpha
+
+
+def hill48_plane_stress_numerical_tangent(
+    strain: np.ndarray,
+    plastic_strain: np.ndarray,
+    alpha: np.ndarray,
+    elastic_matrix: np.ndarray,
+    yield_model: "Hill48Yield | Any",
+    curve: Any | None = None,
+    max_iterations: int = 50,
+    tolerance: float = 1.0e-10,
+    step: float = 1.0e-7,
+) -> np.ndarray:
+    """Central-difference oracle for the discrete Hill-48 stress update."""
+    (
+        strain,
+        plastic_strain,
+        alpha,
+        elastic_matrix,
+        _metric,
+        _reference_strength,
+        max_iterations,
+        tolerance,
+    ) = _validate_hill48_plane_stress_inputs(
+        strain,
+        plastic_strain,
+        alpha,
+        elastic_matrix,
+        yield_model,
+        max_iterations,
+        tolerance,
+    )
+    step = float(step)
+    if not np.isfinite(step) or step <= 0.0:
+        raise ValueError("step must be finite and positive")
+    tangent = np.zeros((strain.shape[0], 3, 3), dtype=float)
+    for column in range(3):
+        strain_plus = strain.copy()
+        strain_minus = strain.copy()
+        strain_plus[:, column] += step
+        strain_minus[:, column] -= step
+        unchanged_plus = strain_plus[:, column] == strain[:, column]
+        unchanged_minus = strain_minus[:, column] == strain[:, column]
+        strain_plus[unchanged_plus, column] = np.nextafter(
+            strain[unchanged_plus, column],
+            np.inf,
+        )
+        strain_minus[unchanged_minus, column] = np.nextafter(
+            strain[unchanged_minus, column],
+            -np.inf,
+        )
+        denominator = (
+            strain_plus[:, column] - strain_minus[:, column]
+        )
+        if np.any(~np.isfinite(denominator)) or np.any(denominator <= 0.0):
+            raise ValueError(
+                "Could not construct a representable numerical-tangent "
+                "perturbation"
+            )
+        stress_plus, _tangent, _plastic, _alpha = (
+            hill48_plane_stress_return_map(
+                strain_plus,
+                plastic_strain,
+                alpha,
+                elastic_matrix,
+                yield_model,
+                curve,
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                compute_tangent=False,
+            )
+        )
+        stress_minus, _tangent, _plastic, _alpha = (
+            hill48_plane_stress_return_map(
+                strain_minus,
+                plastic_strain,
+                alpha,
+                elastic_matrix,
+                yield_model,
+                curve,
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                compute_tangent=False,
+            )
+        )
+        tangent[:, :, column] = (
+            stress_plus - stress_minus
+        ) / denominator[:, None]
+    if np.any(~np.isfinite(tangent)):
+        raise FloatingPointError(
+            "Numerical Hill-48 plane-stress tangent is non-finite"
+        )
+    return tangent
 
 
 _LOBATTO_RULES = {

@@ -176,14 +176,34 @@ def _assemble_element_matrix(
     if matrix_type in {"stiffness", "mass"}:
         from .elements import ShellElement
         from .jit_compiler import JIT_ENABLED, JIT_DISABLED_REASON, jit_diagnostics
+        from .materials import is_isotropic_material
         from .vectorized_stiffness import compute_shell_mass_matrices_jit, compute_shell_stiffness_matrices_jit
 
         groups = {}
+        constitutive_fallback_ids = []
+        generalized_section_fallback_ids = []
         for elem_id, element in mesh.elements.items():
+            material = model.get_material(element.material_name)
+            shell_section = getattr(element, "shell_section", None)
+            has_section_mass = bool(
+                shell_section is not None
+                and (
+                    getattr(shell_section, "mass_per_area", None) is not None
+                    or getattr(shell_section, "rotary_inertia_per_area", None) is not None
+                )
+            )
             if (
                 isinstance(element, ShellElement)
                 and getattr(element, "_is_quadrilateral", False)
                 and not (getattr(element, "_is_8node", False) and bool(getattr(element, "reduced_integration", False)))
+                and (
+                    (matrix_type == "mass" and not has_section_mass)
+                    or (
+                        matrix_type == "stiffness"
+                        and shell_section is None
+                        and is_isotropic_material(material)
+                    )
+                )
             ):
                 key = (
                     element.num_nodes,
@@ -196,13 +216,36 @@ def _assemble_element_matrix(
                 if key not in groups:
                     groups[key] = []
                 groups[key].append((elem_id, element))
+            elif (
+                matrix_type == "stiffness"
+                and isinstance(element, ShellElement)
+                and shell_section is None
+                and not is_isotropic_material(material)
+            ):
+                constitutive_fallback_ids.append(int(elem_id))
+            elif (
+                matrix_type == "stiffness"
+                and isinstance(element, ShellElement)
+                and shell_section is not None
+            ):
+                generalized_section_fallback_ids.append(int(elem_id))
+
+        if constitutive_fallback_ids:
+            info["diagnostics"]["constitutive_fallback"] = {
+                "path": "general_element",
+                "reason": "orthotropic_material",
+                "element_ids": sorted(constitutive_fallback_ids),
+            }
+        if generalized_section_fallback_ids:
+            info["diagnostics"]["generalized_shell_section_fallback"] = {
+                "path": "general_element",
+                "reason": "preintegrated_generalized_shell_section",
+                "element_ids": sorted(generalized_section_fallback_ids),
+            }
 
         for key, elem_list in groups.items():
             num_nodes, thickness, drilling_stabilization, _reduced_integration, _hourglass_stabilization, material_name = key
             material = model.get_material(material_name)
-            E = float(material.elastic_modulus)
-            nu = float(material.poisson_ratio)
-            G = float(material.shear_modulus)
 
             n_elem = len(elem_list)
             coords_all = np.zeros((n_elem, num_nodes, 3))
@@ -226,6 +269,9 @@ def _assemble_element_matrix(
                 )
             else:
                 kernel_name = "compute_shell_stiffness_matrices_jit"
+                E = float(material.elastic_modulus)
+                nu = float(material.poisson_ratio)
+                G = float(material.shear_modulus)
                 if is_4node:
                     shear_points = np.empty((0, 2))
                     shear_weights = np.empty(0)

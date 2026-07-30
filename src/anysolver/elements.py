@@ -69,9 +69,27 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from .beam_sections import (
+    GENERALIZED_BEAM_RESULTANT_ORDER,
+    GENERALIZED_BEAM_STRAIN_ORDER,
+    generalized_beam_mass_matrix,
+    generalized_beam_stiffness,
+    resolve_generalized_beam_section,
+)
 from .jit_compiler import njit
 from .material_curves import FiberSectionPlasticityConfig
+from .materials import (
+    beam_material_properties as _canonical_beam_material_properties,
+    elastic_compliance_matrix as _canonical_elastic_compliance,
+    material_symmetry as _canonical_material_symmetry,
+)
 from .plasticity import lobatto_layers, plane_stress_elastic_matrix, plane_stress_return_map
+from .shell_sections import (
+    SHELL_MEMBRANE_VOIGT_ORDER,
+    SHELL_TRANSVERSE_SHEAR_ORDER,
+    GeneralizedShellSection,
+    coerce_generalized_shell_section,
+)
 
 if TYPE_CHECKING:
     from .fe_core import FEMesh, Material
@@ -194,6 +212,347 @@ def _beam_rotation_matrix(e1: np.ndarray, orientation: Optional[np.ndarray]) -> 
     e3 = _cross3(e1, e2)
     e3 /= np.linalg.norm(e3)
     return np.column_stack((e1, e2, e3))
+
+
+def _elastic_symmetry(material: Any) -> str:
+    """Return the normalized elastic symmetry without inventing isotropic aliases."""
+
+    symmetry = _canonical_material_symmetry(material)
+    if symmetry not in {"isotropic", "orthotropic"}:
+        raise ValueError(
+            f"Unsupported elastic symmetry {symmetry!r}; ANYsolver currently supports "
+            "only isotropic and orthotropic materials."
+        )
+    return symmetry
+
+
+def _elastic_compliance(material: Any) -> np.ndarray:
+    """Engineering compliance in [11,22,33,23,13,12] order."""
+
+    compliance = np.asarray(_canonical_elastic_compliance(material), dtype=float)
+    if compliance.shape != (6, 6) or not np.all(np.isfinite(compliance)):
+        raise ValueError("elastic_compliance_matrix() must return a finite 6x6 matrix")
+    if not np.allclose(compliance, compliance.T, rtol=1.0e-10, atol=1.0e-18):
+        raise ValueError("elastic compliance matrix must be symmetric")
+    return 0.5 * (compliance + compliance.T)
+
+
+def _in_plane_transform_matrices(angle_rad: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Engineering-strain, stress, and transverse-shear transforms.
+
+    The material 1-axis is rotated by ``angle_rad`` from element-local x
+    toward local y about the positive shell normal.
+    """
+
+    c = float(np.cos(angle_rad))
+    s = float(np.sin(angle_rad))
+    axes = np.array([[c, -s], [s, c]], dtype=float)
+    strain_to_material = np.zeros((3, 3), dtype=float)
+    stress_to_local = np.zeros((3, 3), dtype=float)
+    for column in range(3):
+        engineering_strain = np.zeros(3, dtype=float)
+        engineering_strain[column] = 1.0
+        local_tensor = np.array(
+            [
+                [engineering_strain[0], 0.5 * engineering_strain[2]],
+                [0.5 * engineering_strain[2], engineering_strain[1]],
+            ],
+            dtype=float,
+        )
+        material_tensor = axes.T @ local_tensor @ axes
+        strain_to_material[:, column] = (
+            material_tensor[0, 0],
+            material_tensor[1, 1],
+            2.0 * material_tensor[0, 1],
+        )
+        material_stress = np.zeros(3, dtype=float)
+        material_stress[column] = 1.0
+        stress_tensor = np.array(
+            [
+                [material_stress[0], material_stress[2]],
+                [material_stress[2], material_stress[1]],
+            ],
+            dtype=float,
+        )
+        local_stress = axes @ stress_tensor @ axes.T
+        stress_to_local[:, column] = (
+            local_stress[0, 0],
+            local_stress[1, 1],
+            local_stress[0, 1],
+        )
+    return strain_to_material, stress_to_local, axes
+
+
+def _shell_material_matrices(
+    material: Any,
+    angle_rad: float,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return local plane-stress/shear matrices and material-axis transforms."""
+
+    symmetry = _elastic_symmetry(material)
+    # Preserve the legacy isotropic arithmetic exactly.  Forming and reducing
+    # the 3-D compliance is mathematically equivalent, but its final-bit
+    # roundoff can perturb tightly qualified eigenvalue thresholds.  External
+    # protocol objects without the historical scalar fields still use the
+    # compliance path below.
+    if (
+        symmetry == "isotropic"
+        and hasattr(material, "elastic_modulus")
+        and hasattr(material, "poisson_ratio")
+    ):
+        E = float(material.elastic_modulus)
+        nu = float(material.poisson_ratio)
+        G = float(
+            getattr(
+                material,
+                "shear_modulus",
+                E / (2.0 * (1.0 + nu)),
+            )
+        )
+        Q_material = E / (1.0 - nu**2) * np.array(
+            [
+                [1.0, nu, 0.0],
+                [nu, 1.0, 0.0],
+                [0.0, 0.0, (1.0 - nu) / 2.0],
+            ],
+            dtype=float,
+        )
+        return (
+            Q_material,
+            G * np.eye(2, dtype=float),
+            np.eye(3, dtype=float),
+            np.eye(3, dtype=float),
+        )
+
+    compliance = _elastic_compliance(material)
+    membrane_indices = np.array([0, 1, 5], dtype=np.intp)
+    shear_indices = np.array([4, 3], dtype=np.intp)  # [13, 23]
+    Q_material = np.linalg.inv(compliance[np.ix_(membrane_indices, membrane_indices)])
+    G_material = np.linalg.inv(compliance[np.ix_(shear_indices, shear_indices)])
+    strain_to_material, stress_to_local, axes = _in_plane_transform_matrices(angle_rad)
+    Q_local = stress_to_local @ Q_material @ strain_to_material
+    G_local = axes @ G_material @ axes.T
+    return (
+        0.5 * (Q_local + Q_local.T),
+        0.5 * (G_local + G_local.T),
+        strain_to_material,
+        stress_to_local,
+    )
+
+
+def _beam_material_properties(material: Any, cross_section: Dict[str, Any]) -> Tuple[float, float, float, float]:
+    """Return E1, G12, G13 and torsional rigidity for a beam."""
+
+    properties = _canonical_beam_material_properties(material)
+    E1 = float(properties.axial_modulus)
+    G12 = float(properties.shear_modulus_xy)
+    G13 = float(properties.shear_modulus_xz)
+    if _elastic_symmetry(material) == "orthotropic":
+        value = cross_section.get("torsional_rigidity")
+        try:
+            torsional_rigidity = float(value)
+        except (TypeError, ValueError):
+            torsional_rigidity = float("nan")
+        if not np.isfinite(torsional_rigidity) or torsional_rigidity <= 0.0:
+            raise ValueError(
+                "Orthotropic beam sections require a positive "
+                "cross_section['torsional_rigidity'] in N*m^2."
+            )
+    else:
+        torsional_rigidity = G12 * float(cross_section.get("J", 1.0e-8))
+    return E1, G12, G13, torsional_rigidity
+
+
+def _beam2_basic_deformation_matrix(length: float) -> np.ndarray:
+    """Map local Beam2 DOFs to six work-conjugate basic deformations."""
+
+    L = float(length)
+    transform = np.zeros((6, 12), dtype=float)
+    # Axial extension and torsional rotation.
+    transform[0, 0], transform[0, 6] = -1.0, 1.0
+    transform[1, 3], transform[1, 9] = -1.0, 1.0
+    # Bending about y: rotations relative to the rigid chord rotation
+    # ry + (w2-w1)/L.
+    transform[2, 2], transform[2, 8], transform[2, 4] = (
+        -1.0 / L,
+        1.0 / L,
+        1.0,
+    )
+    transform[3, 2], transform[3, 8], transform[3, 10] = (
+        -1.0 / L,
+        1.0 / L,
+        1.0,
+    )
+    # Bending about z: rotations relative to the rigid chord rotation
+    # rz - (v2-v1)/L.
+    transform[4, 1], transform[4, 7], transform[4, 5] = (
+        1.0 / L,
+        -1.0 / L,
+        1.0,
+    )
+    transform[5, 1], transform[5, 7], transform[5, 11] = (
+        1.0 / L,
+        -1.0 / L,
+        1.0,
+    )
+    return transform
+
+
+def _beam2_force_interpolation(length: float, xi: float) -> np.ndarray:
+    """Map Beam2 basic forces to equilibrium section resultants."""
+
+    L = float(length)
+    x_over_length = 0.5 * (float(xi) + 1.0)
+    interpolation = np.zeros((6, 6), dtype=float)
+    interpolation[0, 0] = 1.0  # N
+    interpolation[3, 1] = 1.0  # T
+    # q[2:4] are the two basic local-y bending rotations.
+    interpolation[2, 2:4] = 1.0 / L  # Vz
+    interpolation[4, 2] = -1.0 + x_over_length  # My
+    interpolation[4, 3] = x_over_length
+    # q[4:6] are the two basic local-z bending rotations.  The sign of Vy
+    # follows gamma_xy = v' - rz.
+    interpolation[1, 4:6] = -1.0 / L  # Vy
+    interpolation[5, 4] = -1.0 + x_over_length  # Mz
+    interpolation[5, 5] = x_over_length
+    return interpolation
+
+
+def _beam2_generalized_flexibility(
+    length: float,
+    section_stiffness: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Return exact constant-section basic flexibility and stiffness."""
+
+    L = float(length)
+    compliance = np.linalg.inv(np.asarray(section_stiffness, dtype=float))
+    flexibility = np.zeros((6, 6), dtype=float)
+    points = (-np.sqrt(3.0 / 5.0), 0.0, np.sqrt(3.0 / 5.0))
+    weights = (5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0)
+    for xi, weight in zip(points, weights):
+        interpolation = _beam2_force_interpolation(L, xi)
+        flexibility += (
+            interpolation.T
+            @ compliance
+            @ interpolation
+            * (L / 2.0 * weight)
+        )
+    return flexibility, np.linalg.inv(flexibility)
+
+
+def _beam_generalized_strain_matrix_from_shape(
+    shape_functions: np.ndarray,
+    shape_derivatives: np.ndarray,
+) -> np.ndarray:
+    """Build a generalized beam B-matrix from compatible shape functions."""
+
+    N = np.asarray(shape_functions, dtype=float).reshape(-1)
+    derivative = np.asarray(shape_derivatives, dtype=float).reshape(-1)
+    if derivative.size != N.size:
+        raise ValueError("beam shape function and derivative sizes must match")
+    B = np.zeros((6, 6 * N.size), dtype=float)
+    for i in range(N.size):
+        base = 6 * i
+        B[0, base + 0] = derivative[i]  # eps_x
+        B[1, base + 1] = derivative[i]  # gamma_xy = v' - rz
+        B[1, base + 5] = -N[i]
+        B[2, base + 2] = derivative[i]  # gamma_xz = w' + ry
+        B[2, base + 4] = N[i]
+        B[3, base + 3] = derivative[i]  # kappa_x
+        B[4, base + 4] = derivative[i]  # kappa_y
+        B[5, base + 5] = derivative[i]  # kappa_z
+    return B
+
+
+def _generalized_beam_recovery(
+    strains: np.ndarray,
+    resultants: np.ndarray,
+    *,
+    stations: Optional[np.ndarray] = None,
+) -> Dict[str, Any]:
+    """Build resultants-only recovery without inventing physical stresses."""
+
+    strain_values = np.asarray(strains, dtype=float)
+    resultant_values = np.asarray(resultants, dtype=float)
+    recovered: Dict[str, Any] = {
+        "generalized_strain": strain_values.copy(),
+        "generalized_resultant": resultant_values.copy(),
+        "generalized_strain_order": GENERALIZED_BEAM_STRAIN_ORDER,
+        "generalized_resultant_order": GENERALIZED_BEAM_RESULTANT_ORDER,
+        "recovery_scope": "section_resultants_only",
+        "physical_stress_available": False,
+        "resultant_frame": "beam_local",
+        "station_coordinate_system": "natural_xi",
+    }
+    for index, key in enumerate(GENERALIZED_BEAM_STRAIN_ORDER):
+        recovered[key] = (
+            float(strain_values[index])
+            if strain_values.ndim == 1
+            else strain_values[:, index].copy()
+        )
+    for index, key in enumerate(GENERALIZED_BEAM_RESULTANT_ORDER):
+        recovered[key] = (
+            float(resultant_values[index])
+            if resultant_values.ndim == 1
+            else resultant_values[:, index].copy()
+        )
+    descriptive_strains = (
+        "axial_strain",
+        "shear_strain_xy",
+        "shear_strain_xz",
+        "twist_rate",
+        "curvature_y",
+        "curvature_z",
+    )
+    descriptive_resultants = (
+        "axial_force",
+        "shear_force_y",
+        "shear_force_z",
+        "torsional_moment",
+        "bending_moment_y",
+        "bending_moment_z",
+    )
+    for index, key in enumerate(descriptive_strains):
+        recovered[key] = (
+            float(strain_values[index])
+            if strain_values.ndim == 1
+            else strain_values[:, index].copy()
+        )
+    for index, key in enumerate(descriptive_resultants):
+        recovered[key] = (
+            float(resultant_values[index])
+            if resultant_values.ndim == 1
+            else resultant_values[:, index].copy()
+        )
+    if stations is not None:
+        recovered["station_coordinates"] = np.asarray(
+            stations,
+            dtype=float,
+        ).copy()
+    return recovered
+
+
+def _beam_flow_scale(material: Any, curve: Any) -> float:
+    """Scale a scalar hardening curve to the Hill longitudinal strength X.
+
+    With no curve, the returned value is the constant perfect-plastic flow
+    stress.  Otherwise it multiplies the curve so ``flow_stress(0) == X``.
+    """
+
+    if _elastic_symmetry(material) != "orthotropic":
+        return 1.0
+    hill_yield = getattr(material, "hill_yield", None)
+    if hill_yield is None:
+        raise ValueError(
+            f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+            "requires hill_yield for beam fiber plasticity."
+        )
+    if curve is None:
+        return float(hill_yield.X)
+    reference = float(np.asarray(curve.flow_stress(np.array([0.0])), dtype=float)[0])
+    if not np.isfinite(reference) or reference <= 0.0:
+        raise ValueError("hardening curve must provide a positive initial flow stress")
+    return float(hill_yield.X) / reference
 
 
 def _rotation_vector_from_matrix(rotation: np.ndarray) -> np.ndarray:
@@ -536,19 +895,22 @@ def _jit_integrate_nonlinear_response(
 
         if has_plasticity:
             # Membrane-bending coupling:
-            # B_eff.T @ C1 @ B_b + B_b.T @ C1 @ B_eff.
+            # B_eff.T @ C1 @ B_b + B_b.T @ C1.T @ B_eff.
+            # Layered material tangents make C1 symmetric, while a general
+            # pre-integrated section may legitimately supply a non-symmetric
+            # B coupling block in the symmetric [[A, B], [B.T, D]] law.
             C1_g = C1[g]
             C1_B_b = np.zeros((3, n_dof))
-            C1_B_eff = np.zeros((3, n_dof))
+            C1_T_B_eff = np.zeros((3, n_dof))
             for r in range(3):
                 for c in range(n_dof):
                     val_b = 0.0
                     val_eff = 0.0
                     for k in range(3):
                         val_b += C1_g[r, k] * B_b[k, c]
-                        val_eff += C1_g[r, k] * B_eff[k, c]
+                        val_eff += C1_g[k, r] * B_eff[k, c]
                     C1_B_b[r, c] = val_b
-                    C1_B_eff[r, c] = val_eff
+                    C1_T_B_eff[r, c] = val_eff
 
             for r in range(n_dof):
                 for c in range(n_dof):
@@ -556,7 +918,7 @@ def _jit_integrate_nonlinear_response(
                     reverse = 0.0
                     for k in range(3):
                         forward += B_eff[k, r] * C1_B_b[k, c]
-                        reverse += B_b[k, r] * C1_B_eff[k, c]
+                        reverse += B_b[k, r] * C1_T_B_eff[k, c]
                     K_loc[r, c] += (forward + reverse) * detw
 
         # Geometric initial stress stiffness
@@ -692,6 +1054,9 @@ class ShellElement(Element):
         drilling_stabilization: float = 1.0e-3,
         reduced_integration: bool = False,
         hourglass_stabilization: float = 1.0e-8,
+        material_direction: Optional[np.ndarray] = None,
+        material_angle_deg: float = 0.0,
+        shell_section: Optional[Any] = None,
     ):
         super().__init__(element_id, node_ids, material_name)
         if len(set(node_ids)) != len(node_ids):
@@ -700,6 +1065,19 @@ class ShellElement(Element):
         self.drilling_stabilization = float(drilling_stabilization)
         self.reduced_integration = reduced_integration
         self.hourglass_stabilization = float(hourglass_stabilization)
+        self.material_angle_deg = float(material_angle_deg)
+        if not np.isfinite(self.material_angle_deg):
+            raise ValueError("material_angle_deg must be finite")
+        if material_direction is None:
+            self.material_direction = None
+        else:
+            direction = np.asarray(material_direction, dtype=float).reshape(-1)
+            if direction.size != 3 or not np.all(np.isfinite(direction)):
+                raise ValueError("material_direction must be a finite 3-vector")
+            if float(np.linalg.norm(direction)) <= _SMALL:
+                raise ValueError("material_direction must be non-zero")
+            self.material_direction = direction.copy()
+        self.shell_section = coerce_generalized_shell_section(shell_section)
         self._is_3node = len(node_ids) == 3
         self._is_6node = len(node_ids) == 6
         self._is_8node = len(node_ids) == 8
@@ -708,6 +1086,54 @@ class ShellElement(Element):
         self._is_quadrilateral = self._is_4node or self._is_8node
         if not (self._is_triangular or self._is_quadrilateral):
             raise ValueError(f"ShellElement requires 3, 4, 6 or 8 nodes, got {len(node_ids)}")
+
+    def _material_angle(self, local_frame: np.ndarray) -> float:
+        """Material 1-axis angle in the supplied element-local frame."""
+
+        angle = np.deg2rad(self.material_angle_deg)
+        if self.material_direction is None:
+            return float(angle)
+        frame = np.asarray(local_frame, dtype=float).reshape(3, 3)
+        direction = np.asarray(self.material_direction, dtype=float)
+        components = np.array(
+            [float(np.dot(direction, frame[:, 0])), float(np.dot(direction, frame[:, 1]))],
+            dtype=float,
+        )
+        norm = float(np.linalg.norm(components))
+        if norm <= 1.0e-10 * max(float(np.linalg.norm(direction)), 1.0):
+            raise ValueError(
+                f"Shell element {self.element_id} material_direction is parallel to "
+                "the shell normal and cannot define an in-plane material axis."
+            )
+        return float(np.arctan2(components[1], components[0]) + angle)
+
+    def _generalized_section_in_frame(
+        self,
+        local_frame: np.ndarray,
+    ) -> Optional[GeneralizedShellSection]:
+        """Return the pre-integrated section rotated into shell-local axes."""
+
+        if self.shell_section is None:
+            return None
+        return self.shell_section.rotated(self._material_angle(local_frame))
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = super().to_dict()
+        payload.update(
+            {
+                "thickness": float(self.thickness),
+                "material_angle_deg": float(self.material_angle_deg),
+                "material_direction": (
+                    None
+                    if self.material_direction is None
+                    else np.asarray(self.material_direction, dtype=float).tolist()
+                ),
+                "shell_section": (
+                    None if self.shell_section is None else self.shell_section.to_dict()
+                ),
+            }
+        )
+        return payload
 
     @property
     def num_nodes(self) -> int:
@@ -1065,19 +1491,14 @@ class ShellElement(Element):
 
     def compute_stiffness_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
         coords = self.get_node_coordinates(mesh)
-        E = material.elastic_modulus
-        nu = material.poisson_ratio
-        G = material.shear_modulus
+        generalized_section = self.shell_section is not None
         h = self.thickness
-        kappa = 5.0 / 6.0
-
-        shell_plane = np.array(
-            [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, (1.0 - nu) / 2.0]],
-            dtype=float,
-        )
-        D_membrane = E * h / (1.0 - nu**2) * shell_plane
-        D_bending = E * h**3 / (12.0 * (1.0 - nu**2)) * shell_plane
-        D_shear = G * kappa * h * np.eye(2, dtype=float)
+        if generalized_section:
+            drilling_modulus = None
+        else:
+            _elastic_symmetry(material)
+            compliance = _elastic_compliance(material)
+            drilling_modulus = 1.0 / float(compliance[5, 5])
 
         K = np.zeros((self.total_dofs, self.total_dofs), dtype=float)
 
@@ -1087,14 +1508,54 @@ class ShellElement(Element):
             T = self._local_dof_transform(R)
             B_m, B_b, _ = self._build_shell_b_matrices(N, dN_dx, dN_dy)
             B_d = self._build_drilling_b_matrix(N, dN_dx, dN_dy)
-            K_local = (B_m.T @ D_membrane @ B_m + B_b.T @ D_bending @ B_b) * det_j * weight
-
-            drilling_stiffness = G * h * getattr(self, "drilling_stabilization", 1.0e-3)
+            if generalized_section:
+                section_local = self._generalized_section_in_frame(R)
+                assert section_local is not None
+                K_local = (
+                    B_m.T @ section_local.A @ B_m
+                    + B_m.T @ section_local.B @ B_b
+                    + B_b.T @ section_local.B.T @ B_m
+                    + B_b.T @ section_local.D @ B_b
+                ) * det_j * weight
+                drilling_stiffness = (
+                    float(section_local.A[2, 2])
+                    * getattr(self, "drilling_stabilization", 1.0e-3)
+                )
+            else:
+                Q_local, _G_local, _strain_transform, _stress_transform = (
+                    _shell_material_matrices(
+                        material,
+                        self._material_angle(R),
+                    )
+                )
+                D_membrane = h * Q_local
+                D_bending = h**3 / 12.0 * Q_local
+                K_local = (
+                    B_m.T @ D_membrane @ B_m
+                    + B_b.T @ D_bending @ B_b
+                ) * det_j * weight
+                drilling_stiffness = (
+                    float(drilling_modulus)
+                    * h
+                    * getattr(self, "drilling_stabilization", 1.0e-3)
+                )
             K_local += (B_d.T @ (drilling_stiffness * np.eye(1)) @ B_d) * det_j * weight
             K += T.T @ K_local @ T
 
         if self._is_4node:
             R = self._center_frame(coords)
+            if generalized_section:
+                section_local = self._generalized_section_in_frame(R)
+                assert section_local is not None
+                D_shear = section_local.As
+            else:
+                _Q_local, G_local, _strain_transform, _stress_transform = (
+                    _shell_material_matrices(
+                        material,
+                        self._material_angle(R),
+                    )
+                )
+                D_shear = (5.0 / 6.0) * h * G_local
             T = self._local_dof_transform(R)
             planar, samples = self._mitc4_shear_samples(coords, R)
             for (xi, eta), weight in zip(self.GAUSS_POINTS_2x2, self.GAUSS_WEIGHTS_2x2):
@@ -1103,6 +1564,18 @@ class ShellElement(Element):
                 K += T.T @ K_local @ T
         elif self._is_3node:
             R = self._center_frame(coords)
+            if generalized_section:
+                section_local = self._generalized_section_in_frame(R)
+                assert section_local is not None
+                D_shear = section_local.As
+            else:
+                _Q_local, G_local, _strain_transform, _stress_transform = (
+                    _shell_material_matrices(
+                        material,
+                        self._material_angle(R),
+                    )
+                )
+                D_shear = (5.0 / 6.0) * h * G_local
             T = self._local_dof_transform(R)
             B_s, det_j = self._tri3_assumed_shear_b_matrix(coords, R)
             K_local = (B_s.T @ D_shear @ B_s) * det_j * float(np.sum(self.shear_gauss_weights))
@@ -1111,6 +1584,18 @@ class ShellElement(Element):
             for (xi, eta), weight in zip(self.shear_gauss_points, self.shear_gauss_weights):
                 N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
                 R, dN_dx, dN_dy, det_j = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+                if generalized_section:
+                    section_local = self._generalized_section_in_frame(R)
+                    assert section_local is not None
+                    D_shear = section_local.As
+                else:
+                    _Q_local, G_local, _strain_transform, _stress_transform = (
+                        _shell_material_matrices(
+                            material,
+                            self._material_angle(R),
+                        )
+                    )
+                    D_shear = (5.0 / 6.0) * h * G_local
                 T = self._local_dof_transform(R)
                 _, _, B_s = self._build_shell_b_matrices(N, dN_dx, dN_dy)
                 K_local = (B_s.T @ D_shear @ B_s) * det_j * weight
@@ -1126,6 +1611,18 @@ class ShellElement(Element):
         coords = self.get_node_coordinates(mesh)
         rho = material.density
         h = self.thickness
+        mass_per_area = (
+            float(self.shell_section.mass_per_area)
+            if self.shell_section is not None
+            and self.shell_section.mass_per_area is not None
+            else float(rho) * h
+        )
+        rotary_inertia_per_area = (
+            float(self.shell_section.rotary_inertia_per_area)
+            if self.shell_section is not None
+            and self.shell_section.rotary_inertia_per_area is not None
+            else float(rho) * h**3 / 12.0
+        )
         M = np.zeros((self.total_dofs, self.total_dofs), dtype=float)
         if self._is_8node and self.reduced_integration:
             area = 0.0
@@ -1133,8 +1630,12 @@ class ShellElement(Element):
                 _N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
                 _R, _dN_dx, _dN_dy, det_j = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
                 area += float(det_j) * float(weight)
-            translational = float(rho) * float(h) * max(area, 0.0) / max(self.num_nodes, 1)
-            rotational = float(rho) * float(h) ** 3 / 12.0 * max(area, 0.0) / max(self.num_nodes, 1)
+            translational = mass_per_area * max(area, 0.0) / max(self.num_nodes, 1)
+            rotational = (
+                rotary_inertia_per_area
+                * max(area, 0.0)
+                / max(self.num_nodes, 1)
+            )
             for i in range(self.num_nodes):
                 base = 6 * i
                 M[base + 0, base + 0] = translational
@@ -1151,8 +1652,8 @@ class ShellElement(Element):
             T = self._local_dof_transform(R)
             M_local = np.zeros_like(M)
             outer_n = np.outer(N, N) * det_j * weight
-            translational = rho * h * outer_n
-            rotational = rho * h**3 / 12.0 * outer_n
+            translational = mass_per_area * outer_n
+            rotational = rotary_inertia_per_area * outer_n
             for d in range(3):
                 M_local[d::6, d::6] += translational
                 M_local[3 + d::6, 3 + d::6] += rotational
@@ -1479,6 +1980,7 @@ class ShellElement(Element):
             detw_shear_all[g] = sh["detw"]
 
         cache = {
+            "R0": R0,
             "T0": T0,
             "gp": gp_data,
             "shear": shear_data,
@@ -1493,12 +1995,145 @@ class ShellElement(Element):
         self._nl_cache = cache
         return cache
 
-    def init_nonlinear_state(self, num_layers: int) -> Dict[str, np.ndarray]:
+    def init_nonlinear_state(self, num_layers: int) -> Dict[str, Any]:
+        if self.shell_section is not None:
+            return {"generalized_section": True}
         n_points = len(self.gauss_points) * num_layers
         return {
             "plastic_strain": np.zeros((n_points, 3), dtype=float),
             "alpha": np.zeros(n_points, dtype=float),
         }
+
+    def _generalized_section_nonlinear_response(
+        self,
+        mesh: "FEMesh",
+        material: "Material",
+        u_elem: np.ndarray,
+        state: Optional[Any],
+        tangent: bool,
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[str, Any]]:
+        """Geometrically nonlinear response for a linear generalized section."""
+
+        if getattr(material, "hardening_curve", None) is not None or getattr(
+            material,
+            "hill_yield",
+            None,
+        ) is not None:
+            raise ValueError(
+                "Generalized shell sections are linear elastic and cannot use "
+                "material hardening or Hill plasticity; use a layered section "
+                "constitutive model for nonlinear laminate response."
+            )
+        if isinstance(state, dict) and any(key in state for key in _INITIAL_SHELL_STATE_KEYS):
+            raise ValueError(
+                "Initial layer stress/prestrain fields are not defined for a "
+                "pre-integrated generalized shell section."
+            )
+
+        cache = self._nonlinear_geometry(mesh)
+        R0 = cache["R0"]
+        T0 = cache["T0"]
+        u_loc = T0 @ np.asarray(u_elem, dtype=float)
+        section = self._generalized_section_in_frame(R0)
+        assert section is not None
+
+        n_gp = len(cache["gp"])
+        membrane_strain = np.zeros((n_gp, 3), dtype=float)
+        curvature = np.zeros((n_gp, 3), dtype=float)
+        for index, gp in enumerate(cache["gp"]):
+            theta = gp["Gw"] @ u_loc
+            membrane_strain[index] = gp["B_m"] @ u_loc + np.array(
+                [
+                    0.5 * theta[0] ** 2,
+                    0.5 * theta[1] ** 2,
+                    theta[0] * theta[1],
+                ],
+                dtype=float,
+            )
+            curvature[index] = gp["B_b"] @ u_loc
+
+        membrane_resultants = (
+            membrane_strain @ section.A.T + curvature @ section.B.T
+        )
+        bending_resultants = (
+            membrane_strain @ section.B + curvature @ section.D.T
+        )
+        transverse_shear_strain = np.einsum(
+            "gij,j->gi",
+            cache["B_s_all"],
+            u_loc,
+        )
+        transverse_shear_resultants = (
+            transverse_shear_strain @ section.As.T
+        )
+        C0 = np.broadcast_to(section.A, (n_gp, 3, 3))
+        C1 = np.broadcast_to(section.B, (n_gp, 3, 3))
+        C2 = np.broadcast_to(section.D, (n_gp, 3, 3))
+        drilling_stiffness = (
+            float(section.A[2, 2])
+            * getattr(self, "drilling_stabilization", 1.0e-3)
+        )
+
+        F_loc, K_loc = _jit_integrate_nonlinear_response(
+            u_loc,
+            membrane_resultants,
+            bending_resultants,
+            C0,
+            C1,
+            C2,
+            cache["B_m_all"],
+            cache["B_b_all"],
+            cache["B_d_all"],
+            cache["Gw_all"],
+            cache["detw_all"],
+            cache["B_s_all"],
+            cache["detw_shear_all"],
+            section.As,
+            drilling_stiffness,
+            tangent,
+            True,
+            self.total_dofs,
+        )
+
+        K_hg = getattr(self, "_hourglass_stiffness_matrix", None)
+        if (
+            self._is_8node
+            and self.reduced_integration
+            and float(getattr(self, "hourglass_stabilization", 0.0)) > 0.0
+            and K_hg is None
+        ):
+            self.compute_stiffness_matrix(mesh, material)
+            K_hg = getattr(self, "_hourglass_stiffness_matrix", None)
+
+        F_global = T0.T @ F_loc
+        if K_hg is not None:
+            F_global = F_global + K_hg @ np.asarray(u_elem, dtype=float)
+        K_global: Optional[np.ndarray]
+        if tangent:
+            K_global = T0.T @ K_loc @ T0
+            if K_hg is not None:
+                K_global = K_global + K_hg
+        else:
+            K_global = None
+
+        trial_state: Dict[str, Any] = {
+            "generalized_section": True,
+            "geometric_nonlinearity": "von_karman",
+            "membrane_strain": membrane_strain.copy(),
+            "curvature": curvature.copy(),
+            "transverse_shear_strain": transverse_shear_strain.copy(),
+            "membrane_resultants": membrane_resultants.copy(),
+            "bending_resultants": bending_resultants.copy(),
+            "transverse_shear_resultants": (
+                transverse_shear_resultants.copy()
+            ),
+            "membrane_resultant_order": SHELL_MEMBRANE_VOIGT_ORDER,
+            "transverse_shear_resultant_order": (
+                SHELL_TRANSVERSE_SHEAR_ORDER
+            ),
+            "recovery_scope": "section_resultants_only",
+        }
+        return F_global, K_global, trial_state
 
     def compute_nonlinear_response(
         self,
@@ -1509,18 +2144,44 @@ class ShellElement(Element):
         num_layers: int = 5,
         tangent: bool = True,
     ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
+        if self.shell_section is not None:
+            return self._generalized_section_nonlinear_response(
+                mesh,
+                material,
+                u_elem,
+                state,
+                tangent,
+            )
         cache = self._nonlinear_geometry(mesh)
+        R0 = cache["R0"]
         T0 = cache["T0"]
         u_loc = T0 @ np.asarray(u_elem, dtype=float)
 
-        E = material.elastic_modulus
-        nu = material.poisson_ratio
-        G_mod = material.shear_modulus
+        symmetry = _elastic_symmetry(material)
         h = self.thickness
         curve = getattr(material, "hardening_curve", None)
-        C_el = plane_stress_elastic_matrix(E, nu)
-        D_shear = G_mod * (5.0 / 6.0) * h * np.eye(2, dtype=float)
-        drilling_stiffness = G_mod * h * getattr(self, "drilling_stabilization", 1.0e-3)
+        C_el, shear_elastic, strain_to_material, stress_to_local = _shell_material_matrices(
+            material,
+            self._material_angle(R0),
+        )
+        C_material, _shear_material, _identity_strain, _identity_stress = (
+            _shell_material_matrices(material, 0.0)
+        )
+        drilling_modulus = 1.0 / float(_elastic_compliance(material)[5, 5])
+        D_shear = shear_elastic * (5.0 / 6.0) * h
+        drilling_stiffness = (
+            drilling_modulus
+            * h
+            * getattr(self, "drilling_stabilization", 1.0e-3)
+        )
+        hill_yield = getattr(material, "hill_yield", None)
+        if symmetry == "orthotropic" and curve is not None and hill_yield is None:
+            raise ValueError(
+                f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+                "requires hill_yield when hardening_curve is active."
+            )
+        hill_plasticity = symmetry == "orthotropic" and hill_yield is not None
+        constitutive_plasticity = curve is not None or hill_plasticity
 
         n_gp = len(cache["gp"])
         z_layers, w_layers = lobatto_layers(num_layers, h)
@@ -1560,7 +2221,7 @@ class ShellElement(Element):
             B_eff_list.append(B_eff)
             theta_list.append(theta)
 
-        if curve is None and not has_initial_field:
+        if not constitutive_plasticity and not has_initial_field:
             # Elastic shortcut: resultants and integrated moduli in closed form.
             trial_state = state
             N_res = memb_strain @ (h * C_el).T
@@ -1606,27 +2267,83 @@ class ShellElement(Element):
                 membrane_prestrain[:, None, :]
                 + z_layers[None, :, None] * curvature_prestrain[:, None, :]
             )
-            stress_strain_offset = np.einsum(
-                "ij,glj->gli",
-                np.linalg.inv(C_el),
-                initial_stress,
-            )
-            layer_strain = (kinematic_layer_strain - eigenstrain + stress_strain_offset).reshape(
-                n_gp * num_layers,
-                3,
-            )
-            if curve is None:
+            if symmetry == "orthotropic":
+                initial_stress_material = np.einsum(
+                    "ij,glj->gli",
+                    np.linalg.inv(stress_to_local),
+                    initial_stress,
+                )
+                kinematic_material = np.einsum(
+                    "ij,glj->gli",
+                    strain_to_material,
+                    kinematic_layer_strain,
+                )
+                eigenstrain_material = np.einsum(
+                    "ij,glj->gli",
+                    strain_to_material,
+                    eigenstrain,
+                )
+                stress_strain_offset = np.einsum(
+                    "ij,glj->gli",
+                    np.linalg.inv(C_material),
+                    initial_stress_material,
+                )
+                layer_strain_material = (
+                    kinematic_material - eigenstrain_material + stress_strain_offset
+                ).reshape(n_gp * num_layers, 3)
+                layer_strain = (
+                    kinematic_layer_strain - eigenstrain
+                    + np.einsum(
+                        "ij,glj->gli",
+                        np.linalg.inv(C_el),
+                        initial_stress,
+                    )
+                ).reshape(n_gp * num_layers, 3)
+            else:
+                stress_strain_offset = np.einsum(
+                    "ij,glj->gli",
+                    np.linalg.inv(C_el),
+                    initial_stress,
+                )
+                layer_strain = (
+                    kinematic_layer_strain - eigenstrain + stress_strain_offset
+                ).reshape(n_gp * num_layers, 3)
+                layer_strain_material = layer_strain
+            if not constitutive_plasticity:
                 sigma = layer_strain @ C_el.T
                 C_tan = np.broadcast_to(C_el, (n_gp * num_layers, 3, 3)).copy()
                 ep_new = np.zeros_like(layer_strain)
                 alpha_new = np.zeros(n_gp * num_layers, dtype=float)
+                if symmetry == "orthotropic":
+                    sigma_material = layer_strain_material @ C_material.T
+            elif hill_plasticity:
+                from .plasticity import hill48_plane_stress_return_map
+
+                sigma_material, C_tan_material, ep_new, alpha_new = (
+                    hill48_plane_stress_return_map(
+                        layer_strain_material,
+                        state["plastic_strain"],
+                        state["alpha"],
+                        C_material,
+                        hill_yield,
+                        curve,
+                        compute_tangent=tangent,
+                    )
+                )
+                sigma = sigma_material @ stress_to_local.T
+                C_tan = np.einsum(
+                    "ij,njk,kl->nil",
+                    stress_to_local,
+                    C_tan_material,
+                    strain_to_material,
+                )
             else:
                 sigma, C_tan, ep_new, alpha_new = plane_stress_return_map(
                     layer_strain,
                     state["plastic_strain"],
                     state["alpha"],
-                    E,
-                    nu,
+                    float(material.elastic_modulus),
+                    float(material.poisson_ratio),
                     curve,
                     compute_tangent=tangent,
                 )
@@ -1634,6 +2351,7 @@ class ShellElement(Element):
                 "plastic_strain": ep_new,
                 "alpha": alpha_new,
                 "layer_strain": layer_strain.copy(),
+                "layer_strain_material": layer_strain_material.copy(),
                 "kinematic_layer_strain": kinematic_layer_strain.reshape(n_gp * num_layers, 3).copy(),
                 **initial_state,
             }
@@ -1641,6 +2359,14 @@ class ShellElement(Element):
             sigma = sigma.reshape(n_gp, num_layers, 3)
             C_tan = C_tan.reshape(n_gp, num_layers, 3, 3)
             trial_state["layer_stress"] = sigma.reshape(n_gp * num_layers, 3).copy()
+            if symmetry == "orthotropic":
+                trial_state["layer_stress_material"] = sigma_material.reshape(
+                    n_gp * num_layers,
+                    3,
+                ).copy()
+                trial_state["equivalent_stress_measure"] = (
+                    "hill48" if hill_yield is not None else "von_mises"
+                )
 
             # Through-thickness resultants and integrated tangent moduli.
             N_res = np.einsum("l,gli->gi", w_layers, sigma)
@@ -1667,7 +2393,7 @@ class ShellElement(Element):
             D_shear,
             drilling_stiffness,
             tangent,
-            curve is not None,
+            constitutive_plasticity,
             n_dof,
         )
         K_loc = K_loc_temp if tangent else None
@@ -1690,27 +2416,169 @@ class ShellElement(Element):
             K_global = K_global + K_hg
         return F_global, K_global, trial_state
 
+    def _compute_generalized_section_results(
+        self,
+        mesh: "FEMesh",
+        displacements: np.ndarray,
+        *,
+        return_global: bool,
+    ) -> Dict[str, Any]:
+        """Recover exact generalized strains and resultants.
+
+        A/B/D/As do not contain enough information to reconstruct ply or
+        through-thickness surface stresses, so this path intentionally does
+        not report von Mises, Hill, or fabricated top/bottom stress fields.
+        """
+
+        coords = self.get_node_coordinates(mesh)
+        u_elem_global = self._get_element_displacements(mesh, displacements)
+        num_ip = len(self.gauss_points)
+        membrane_strain = np.zeros((num_ip, 3), dtype=float)
+        curvature = np.zeros((num_ip, 3), dtype=float)
+        transverse_shear_strain = np.zeros((num_ip, 2), dtype=float)
+        membrane_resultants = np.zeros((num_ip, 3), dtype=float)
+        bending_resultants = np.zeros((num_ip, 3), dtype=float)
+        transverse_shear_resultants = np.zeros((num_ip, 2), dtype=float)
+
+        global_membrane = (
+            np.zeros((num_ip, 3, 3), dtype=float) if return_global else None
+        )
+        global_bending = (
+            np.zeros((num_ip, 3, 3), dtype=float) if return_global else None
+        )
+        global_shear = (
+            np.zeros((num_ip, 3), dtype=float) if return_global else None
+        )
+
+        mitc_planar = None
+        mitc_samples = None
+        mitc_u_local = None
+        tri3_B_s = None
+        tri3_u_local = None
+        center_section = None
+        if self._is_4node:
+            R_center = self._center_frame(coords)
+            center_section = self._generalized_section_in_frame(R_center)
+            mitc_planar, mitc_samples = self._mitc4_shear_samples(coords, R_center)
+            mitc_u_local = self._local_dof_transform(R_center) @ u_elem_global
+        elif self._is_3node:
+            R_center = self._center_frame(coords)
+            center_section = self._generalized_section_in_frame(R_center)
+            tri3_B_s, _ = self._tri3_assumed_shear_b_matrix(coords, R_center)
+            tri3_u_local = self._local_dof_transform(R_center) @ u_elem_global
+
+        for index, (xi, eta) in enumerate(self.gauss_points):
+            N, dN_dxi, dN_deta = self.compute_shape_functions(
+                float(xi),
+                float(eta),
+            )
+            R, dN_dx, dN_dy, _ = self._local_frame_and_derivatives(
+                coords,
+                dN_dxi,
+                dN_deta,
+            )
+            section = self._generalized_section_in_frame(R)
+            assert section is not None
+            T = self._local_dof_transform(R)
+            u_local = T @ u_elem_global
+            B_m, B_b, B_s = self._build_shell_b_matrices(N, dN_dx, dN_dy)
+            strain = B_m @ u_local
+            bend = B_b @ u_local
+            if self._is_4node:
+                B_s_mitc, _ = self._mitc4_shear_b_matrix(
+                    mitc_planar,
+                    mitc_samples,
+                    float(xi),
+                    float(eta),
+                )
+                shear_strain = B_s_mitc @ mitc_u_local
+                shear_section = center_section
+            elif self._is_3node:
+                shear_strain = tri3_B_s @ tri3_u_local
+                shear_section = center_section
+            else:
+                shear_strain = B_s @ u_local
+                shear_section = section
+            assert shear_section is not None
+
+            force = section.A @ strain + section.B @ bend
+            moment = section.B.T @ strain + section.D @ bend
+            shear_force = shear_section.As @ shear_strain
+
+            membrane_strain[index] = strain
+            curvature[index] = bend
+            transverse_shear_strain[index] = shear_strain
+            membrane_resultants[index] = force
+            bending_resultants[index] = moment
+            transverse_shear_resultants[index] = shear_force
+
+            if return_global:
+                force_tensor = np.array(
+                    [
+                        [force[0], force[2], 0.0],
+                        [force[2], force[1], 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dtype=float,
+                )
+                moment_tensor = np.array(
+                    [
+                        [moment[0], moment[2], 0.0],
+                        [moment[2], moment[1], 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dtype=float,
+                )
+                assert global_membrane is not None
+                assert global_bending is not None
+                assert global_shear is not None
+                global_membrane[index] = R @ force_tensor @ R.T
+                global_bending[index] = R @ moment_tensor @ R.T
+                global_shear[index] = (
+                    shear_force[0] * R[:, 0] + shear_force[1] * R[:, 1]
+                )
+
+        results: Dict[str, Any] = {
+            "generalized_stress_scope": "section_resultants_only",
+            "recovery_scope": "section_resultants_only",
+            "physical_stress_available": False,
+            "membrane_resultant_order": SHELL_MEMBRANE_VOIGT_ORDER,
+            "transverse_shear_resultant_order": SHELL_TRANSVERSE_SHEAR_ORDER,
+            "membrane_strain": membrane_strain,
+            "curvature": curvature,
+            "transverse_shear_strain": transverse_shear_strain,
+            "membrane_resultants": membrane_resultants,
+            "bending_resultants": bending_resultants,
+            "transverse_shear_resultants": transverse_shear_resultants,
+        }
+        if return_global:
+            results.update(
+                {
+                    "global_membrane_resultant_tensors": global_membrane,
+                    "global_bending_resultant_tensors": global_bending,
+                    "global_transverse_shear_resultants": global_shear,
+                }
+            )
+        return results
+
     def compute_stresses(
         self,
         mesh: "FEMesh",
         displacements: np.ndarray,
         material: "Material",
         return_global: bool = False,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
+        if self.shell_section is not None:
+            return self._compute_generalized_section_results(
+                mesh,
+                displacements,
+                return_global=return_global,
+            )
         coords = self.get_node_coordinates(mesh)
         u_elem_global = self._get_element_displacements(mesh, displacements)
-        E = material.elastic_modulus
-        nu = material.poisson_ratio
-        G = material.shear_modulus
+        symmetry = _elastic_symmetry(material)
         h = self.thickness
         kappa = 5.0 / 6.0
-
-        shell_plane = np.array(
-            [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, (1.0 - nu) / 2.0]],
-            dtype=float,
-        )
-        D_stress = E / (1.0 - nu**2) * shell_plane
-        D_bending_moment = E * h**3 / (12.0 * (1.0 - nu**2)) * shell_plane
 
         num_ip = len(self.gauss_points)
         stresses: Dict[str, np.ndarray] = {
@@ -1723,7 +2591,13 @@ class ShellElement(Element):
             "shear_xz": np.zeros(num_ip),
             "shear_yz": np.zeros(num_ip),
             "von_mises": np.zeros(num_ip),
+            "equivalent_stress": np.zeros(num_ip),
+            "hill_utilization": np.zeros(num_ip),
         }
+        stresses["equivalent_stress_measure"] = (
+            "hill48" if symmetry == "orthotropic" and getattr(material, "hill_yield", None) is not None
+            else "von_mises"
+        )
         if return_global:
             stresses.update({
                 "local_xx_top": np.zeros(num_ip),
@@ -1759,16 +2633,28 @@ class ShellElement(Element):
         tri3_u_local = None
         if self._is_4node:
             R_center = self._center_frame(coords)
+            _Q_center, G_center, _strain_center, _stress_center = _shell_material_matrices(
+                material,
+                self._material_angle(R_center),
+            )
             mitc_planar, mitc_samples = self._mitc4_shear_samples(coords, R_center)
             mitc_u_local = self._local_dof_transform(R_center) @ u_elem_global
         elif self._is_3node:
             R_center = self._center_frame(coords)
+            _Q_center, G_center, _strain_center, _stress_center = _shell_material_matrices(
+                material,
+                self._material_angle(R_center),
+            )
             tri3_B_s, _ = self._tri3_assumed_shear_b_matrix(coords, R_center)
             tri3_u_local = self._local_dof_transform(R_center) @ u_elem_global
 
         for idx, (xi, eta) in enumerate(self.gauss_points):
             N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
             R, dN_dx, dN_dy, _ = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+            Q_local, G_local, _strain_to_material, stress_to_local = _shell_material_matrices(
+                material,
+                self._material_angle(R),
+            )
             T = self._local_dof_transform(R)
             u_local = T @ u_elem_global
             B_m, B_b, B_s = self._build_shell_b_matrices(N, dN_dx, dN_dy)
@@ -1782,10 +2668,11 @@ class ShellElement(Element):
             else:
                 shear_strain = B_s @ u_local
 
-            sigma_m = D_stress @ membrane_strain
-            moments = D_bending_moment @ curvature
+            sigma_m = Q_local @ membrane_strain
+            moments = (h**3 / 12.0 * Q_local) @ curvature
             sigma_b = 6.0 * moments / max(h**2, _SMALL)
-            tau_s = G * kappa * shear_strain
+            shear_matrix = G_center if self._is_4node or self._is_3node else G_local
+            tau_s = kappa * shear_matrix @ shear_strain
 
             stresses["membrane_xx"][idx] = sigma_m[0]
             stresses["membrane_yy"][idx] = sigma_m[1]
@@ -1813,6 +2700,27 @@ class ShellElement(Element):
             )
 
             stresses["von_mises"][idx] = max(vm_top, vm_bot)
+            hill_yield = getattr(material, "hill_yield", None)
+            if hill_yield is not None:
+                from .plasticity import hill48_plane_stress_equivalent_stress
+
+                top_material = np.linalg.solve(stress_to_local, np.array(
+                    [sigma_x_top, sigma_y_top, tau_xy_top],
+                    dtype=float,
+                ))
+                bottom_material = np.linalg.solve(stress_to_local, np.array(
+                    [sigma_x_bot, sigma_y_bot, tau_xy_bot],
+                    dtype=float,
+                ))
+                hill_values = hill48_plane_stress_equivalent_stress(
+                    np.vstack((top_material, bottom_material)),
+                    hill_yield,
+                )
+                equivalent = float(np.max(hill_values))
+                stresses["equivalent_stress"][idx] = equivalent
+                stresses["hill_utilization"][idx] = equivalent / max(float(hill_yield.X), _SMALL)
+            else:
+                stresses["equivalent_stress"][idx] = stresses["von_mises"][idx]
 
             if return_global:
                 # Top local stress tensor
@@ -1864,14 +2772,25 @@ class ShellElement(Element):
 
 
 class BeamElement(Element):
-    """2-node Timoshenko beam element with 6 DOF per node."""
+    """2-node Timoshenko beam element with 6 DOF per node.
+
+    ``section=`` opts into a coupled generalized section.  The same object may
+    be supplied under ``cross_section["generalized_section"]``; a raw matrix
+    is accepted under ``cross_section["generalized_stiffness"]``.  Legacy
+    scalar cross-section dictionaries retain their historical formulation.
+    A generalized stiffness matrix does not define centroidal geometry, so
+    its Wagner torsional geometric-stiffness term is omitted by default.
+    Supply ``cross_section["geometric_polar_radius_squared"]`` in m^2 to opt in
+    explicitly.
+    """
 
     def __init__(
         self,
         element_id: int,
         node_ids: List[int],
         material_name: str = "default",
-        cross_section: Optional[Dict[str, float]] = None,
+        cross_section: Optional[Dict[str, Any]] = None,
+        section: Any = None,
     ):
         super().__init__(element_id, node_ids, material_name)
         if len(node_ids) != 2:
@@ -1885,6 +2804,18 @@ class BeamElement(Element):
         self._kz = self.cross_section.get("shear_factor_z", 5.0 / 6.0)
         self._orientation = _section_orientation(self.cross_section)
         self._fiber_plasticity = self.cross_section.get("fiber_plasticity")
+        self.generalized_section = resolve_generalized_beam_section(
+            self.cross_section,
+            section,
+        )
+        if self.generalized_section is not None and self._fiber_plasticity is not None:
+            raise ValueError(
+                "Generalized beam sections do not support "
+                "cross_section['fiber_plasticity']; supply an elastic section "
+                "without fiber plasticity."
+            )
+        if self.generalized_section is not None:
+            self._geometric_polar_radius_squared()
         self._geometric_nonlinearity = str(
             self.cross_section.get("geometric_nonlinearity", self.cross_section.get("geometry", "von_karman"))
         ).lower()
@@ -1909,6 +2840,41 @@ class BeamElement(Element):
         if wt is None or wt <= 0.0:
             wt = 2.0 * self._A
         return max(float(wt), _SMALL)
+
+    def _geometric_polar_radius_squared(self) -> float:
+        """Return the section polar radius squared used by the Wagner term.
+
+        The legacy scalar section defines this quantity as ``(Iy + Iz) / A``.
+        A generalized 6x6 stiffness does not uniquely define any of those
+        geometric quantities, even when legacy keys happen to be present for
+        mass fallback or other workflows.  Generalized sections therefore
+        require an explicitly named geometric value and otherwise omit the
+        Wagner term.
+        """
+        if self.generalized_section is None:
+            return (self._Iy + self._Iz) / max(self._A, 1.0e-30)
+
+        value = self.cross_section.get("geometric_polar_radius_squared")
+        if value is None:
+            return 0.0
+        try:
+            polar_radius_squared = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "cross_section['geometric_polar_radius_squared'] must be a "
+                "finite non-negative value in m^2 for a generalized beam "
+                "section."
+            ) from exc
+        if (
+            not np.isfinite(polar_radius_squared)
+            or polar_radius_squared < 0.0
+        ):
+            raise ValueError(
+                "cross_section['geometric_polar_radius_squared'] must be a "
+                "finite non-negative value in m^2 for a generalized beam "
+                "section."
+            )
+        return polar_radius_squared
 
     @property
     def num_nodes(self) -> int:
@@ -1943,12 +2909,30 @@ class BeamElement(Element):
 
     def _local_linear_stiffness(self, length: float, material: "Material", include_axial: bool = True) -> np.ndarray:
         L = float(length)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        if self.generalized_section is not None:
+            section_stiffness = generalized_beam_stiffness(
+                self.generalized_section
+            )
+            basic_transform = _beam2_basic_deformation_matrix(L)
+            if not include_axial:
+                basic_transform = basic_transform.copy()
+                basic_transform[0, :] = 0.0
+            _flexibility, basic_stiffness = (
+                _beam2_generalized_flexibility(L, section_stiffness)
+            )
+            # Force-based integration satisfies beam equilibrium exactly and
+            # avoids shear locking.  For a diagonal section matrix this
+            # reduces to the historical closed-form Timoshenko stiffness;
+            # off-diagonal terms retain all generalized couplings.
+            return (
+                basic_transform.T
+                @ basic_stiffness
+                @ basic_transform
+            )
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         EA = E * self._A
         EIy = E * self._Iy
         EIz = E * self._Iz
-        GJ = G * self._J
         K = np.zeros((12, 12), dtype=float)
         if include_axial:
             K[0, 0] = K[6, 6] = EA / L
@@ -1956,7 +2940,7 @@ class BeamElement(Element):
 
         # Bending about local y: deflection w (local z), rotation ry, EIy,
         # Timoshenko shear parameter from the local-z shear area.
-        phi_w = 12.0 * EIy / max(G * self._A * self._kz * L**2, _SMALL)
+        phi_w = 12.0 * EIy / max(G13 * self._A * self._kz * L**2, _SMALL)
         K[2, 2] = K[8, 8] = 12.0 * EIy / (L**3 * (1.0 + phi_w))
         K[2, 8] = K[8, 2] = -K[2, 2]
         K[2, 4] = K[4, 2] = -6.0 * EIy / (L**2 * (1.0 + phi_w))
@@ -1968,7 +2952,7 @@ class BeamElement(Element):
 
         # Bending about local z: deflection v (local y), rotation rz, EIz,
         # Timoshenko shear parameter from the local-y shear area.
-        phi_v = 12.0 * EIz / max(G * self._A * self._ky * L**2, _SMALL)
+        phi_v = 12.0 * EIz / max(G12 * self._A * self._ky * L**2, _SMALL)
         K[1, 1] = K[7, 7] = 12.0 * EIz / (L**3 * (1.0 + phi_v))
         K[1, 7] = K[7, 1] = -K[1, 1]
         K[1, 5] = K[5, 1] = 6.0 * EIz / (L**2 * (1.0 + phi_v))
@@ -1999,6 +2983,30 @@ class BeamElement(Element):
             L, T = self._beam_frame_and_transform(coords)
         except ValueError:
             return np.zeros((self.total_dofs, self.total_dofs))
+        generalized_mass = (
+            None
+            if self.generalized_section is None
+            else generalized_beam_mass_matrix(self.generalized_section)
+        )
+        if generalized_mass is not None:
+            # Exact consistent integration of the linear interpolation.  A
+            # full sectional inertia matrix may include centre-of-mass or
+            # product-of-inertia translation/rotation coupling, so diagonal
+            # lumping would discard part of the supplied constitutive data.
+            interpolation_mass = np.array(
+                [[1.0 / 3.0, 1.0 / 6.0], [1.0 / 6.0, 1.0 / 3.0]],
+                dtype=float,
+            )
+            M = np.zeros((12, 12), dtype=float)
+            for i in range(2):
+                for j in range(2):
+                    M[
+                        i * 6 : (i + 1) * 6,
+                        j * 6 : (j + 1) * 6,
+                    ] = interpolation_mass[i, j] * L * generalized_mass
+            M_global = T.T @ M @ T
+            self._mass_matrix = M_global
+            return M_global
         rho = material.density
         M = np.zeros((12, 12), dtype=float)
         if bool(self.cross_section.get("consistent_mass", False)):
@@ -2119,7 +3127,7 @@ class BeamElement(Element):
         # at the centroid and warping is neglected, consistent with the
         # element's St. Venant torsion treatment, so the torsional critical
         # load is G*J*A/Ip.
-        polar_ratio = (self._Iy + self._Iz) / max(self._A, 1.0e-30)
+        polar_ratio = self._geometric_polar_radius_squared()
         g_torsion = axial_compression * polar_ratio / L
         K_geo[3, 3] += g_torsion
         K_geo[3, 9] -= g_torsion
@@ -2140,6 +3148,13 @@ class BeamElement(Element):
             raise TypeError("cross_section['fiber_plasticity'] must be a FiberSectionPlasticityConfig, dict or True")
         curve = config.material_curve or getattr(material, "hardening_curve", None)
         if curve is None:
+            if (
+                _elastic_symmetry(material) == "orthotropic"
+                and getattr(material, "hill_yield", None) is not None
+            ):
+                # Hill X supplies an elastic-perfectly-plastic longitudinal
+                # fiber law when no scalar hardening curve is provided.
+                return config
             return None
         if config.material_curve is curve:
             return config
@@ -2231,6 +3246,7 @@ class BeamElement(Element):
         state: Optional[Any],
         E: float,
         curve: Any,
+        flow_scale: float = 1.0,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         strain = np.asarray(strain, dtype=float).reshape(-1)
         n = strain.size
@@ -2249,7 +3265,14 @@ class BeamElement(Element):
 
         trial = E * (strain - plastic_old)
         abs_trial = np.abs(trial)
-        flow_old = curve.flow_stress(alpha_old)
+        scale = float(flow_scale)
+        if not np.isfinite(scale) or scale <= 0.0:
+            raise ValueError("beam fiber flow_scale must be positive")
+        flow_old = (
+            np.full(n, scale, dtype=float)
+            if curve is None
+            else scale * curve.flow_stress(alpha_old)
+        )
         yielding = abs_trial > flow_old + 1.0e-9 * np.maximum(flow_old, 1.0)
 
         stress = trial.copy()
@@ -2263,15 +3286,36 @@ class BeamElement(Element):
         for idx in indices:
             sign = 1.0 if trial[idx] >= 0.0 else -1.0
             dgamma = 0.0
-            H = float(curve.hardening_modulus(np.array([alpha_old[idx]]))[0])
+            H = (
+                0.0
+                if curve is None
+                else scale
+                * float(
+                    curve.hardening_modulus(np.array([alpha_old[idx]]))[0]
+                )
+            )
+            converged = False
             for _ in range(30):
                 alpha_trial = alpha_old[idx] + dgamma
-                sy = float(curve.flow_stress(np.array([alpha_trial]))[0])
-                H = float(curve.hardening_modulus(np.array([alpha_trial]))[0])
+                if curve is None:
+                    sy = scale
+                    H = 0.0
+                else:
+                    sy = scale * float(
+                        curve.flow_stress(np.array([alpha_trial]))[0]
+                    )
+                    H = scale * float(
+                        curve.hardening_modulus(np.array([alpha_trial]))[0]
+                    )
                 residual = abs_trial[idx] - E * dgamma - sy
                 if abs(residual) <= 1.0e-8 * max(sy, 1.0):
+                    converged = True
                     break
                 dgamma = max(0.0, dgamma + residual / max(E + H, _SMALL))
+            if not converged:
+                raise RuntimeError(
+                    "Beam fiber return mapping did not converge after 30 iterations"
+                )
             stress[idx] = sign * max(abs_trial[idx] - E * dgamma, 0.0)
             plastic_new[idx] = plastic_old[idx] + sign * dgamma
             alpha_new[idx] = alpha_old[idx] + dgamma
@@ -2290,8 +3334,7 @@ class BeamElement(Element):
         coords = self.get_node_coordinates(mesh)
         L, T = self._beam_frame_and_transform(coords)
         u_loc = T @ np.asarray(u_elem, dtype=float)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         y, z, weights = self._fiber_section_grid(config)
 
         du = u_loc[6] - u_loc[0]
@@ -2316,7 +3359,11 @@ class BeamElement(Element):
         )
         constitutive_fiber_strain = fiber_strain - initial_prestrain + initial_stress / E
         stress, Et, plastic_new, alpha_new = self._uniaxial_return_map(
-            constitutive_fiber_strain, state, E, config.material_curve
+            constitutive_fiber_strain,
+            state,
+            E,
+            config.material_curve,
+            _beam_flow_scale(material, config.material_curve),
         )
 
         B = np.zeros((fiber_strain.size, 12), dtype=float)
@@ -2354,9 +3401,9 @@ class BeamElement(Element):
         B_torsion = np.zeros(12, dtype=float)
         B_torsion[3], B_torsion[9] = -1.0 / L, 1.0 / L
         K_aux = L * (
-            G * self._A * self._ky * np.outer(B_shear_y, B_shear_y)
-            + G * self._A * self._kz * np.outer(B_shear_z, B_shear_z)
-            + G * self._J * np.outer(B_torsion, B_torsion)
+            G12 * self._A * self._ky * np.outer(B_shear_y, B_shear_y)
+            + G13 * self._A * self._kz * np.outer(B_shear_z, B_shear_z)
+            + GJ * np.outer(B_torsion, B_torsion)
         )
         F_loc += K_aux @ u_loc
         if tangent:
@@ -2369,6 +3416,9 @@ class BeamElement(Element):
             "kinematic_fiber_strain": fiber_strain.copy(),
             "fiber_stress": stress.copy(),
             "axial_force": N_force,
+            "equivalent_stress_measure": (
+                "hill48" if _elastic_symmetry(material) == "orthotropic" else "von_mises"
+            ),
             **initial_state,
         }
         if not tangent:
@@ -2429,10 +3479,118 @@ class BeamElement(Element):
             "rigid_rotation_vector": rigid_rotation.copy(),
             "basic_deformation_norm": float(np.linalg.norm(q)),
         }
+        if self.generalized_section is not None:
+            section_stiffness = generalized_beam_stiffness(
+                self.generalized_section
+            )
+            basic_deformation = (
+                _beam2_basic_deformation_matrix(L0) @ q
+            )
+            _flexibility, basic_stiffness = (
+                _beam2_generalized_flexibility(
+                    L0,
+                    section_stiffness,
+                )
+            )
+            basic_force = basic_stiffness @ basic_deformation
+            stations = np.array((-1.0, 0.0, 1.0), dtype=float)
+            generalized_resultant = np.asarray(
+                [
+                    _beam2_force_interpolation(L0, xi) @ basic_force
+                    for xi in stations
+                ],
+                dtype=float,
+            )
+            generalized_strain = (
+                generalized_resultant
+                @ np.linalg.inv(section_stiffness).T
+            )
+            trial_state.update(
+                {
+                    "generalized_section": True,
+                    "generalized_strain": generalized_strain.copy(),
+                    "generalized_resultant": generalized_resultant.copy(),
+                    "generalized_station_coordinates": stations,
+                    "generalized_strain_order": GENERALIZED_BEAM_STRAIN_ORDER,
+                    "generalized_resultant_order": (
+                        GENERALIZED_BEAM_RESULTANT_ORDER
+                    ),
+                    "axial_force": float(
+                        np.mean(generalized_resultant[:, 0])
+                    ),
+                    "recovery_scope": "section_resultants_only",
+                }
+            )
         if not tangent:
             return F_global, None, trial_state
         K_global = Tc.T @ K_loc @ Tc
         return F_global, K_global, trial_state
+
+    def _compute_generalized_von_karman_response(
+        self,
+        mesh: "FEMesh",
+        u_elem: np.ndarray,
+        state: Optional[Any],
+        tangent: bool,
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
+        """Coupled generalized-section response from one strain-energy law."""
+
+        coords = self.get_node_coordinates(mesh)
+        L, T = self._beam_frame_and_transform(coords)
+        u_loc = T @ np.asarray(u_elem, dtype=float)
+        basic_transform = _beam2_basic_deformation_matrix(L)
+        basic_deformation = basic_transform @ u_loc
+        dv = float(u_loc[7] - u_loc[1])
+        dw = float(u_loc[8] - u_loc[2])
+        basic_deformation[0] += (dv**2 + dw**2) / (2.0 * L)
+        basic_tangent = basic_transform.copy()
+        basic_tangent[0, 1], basic_tangent[0, 7] = -dv / L, dv / L
+        basic_tangent[0, 2], basic_tangent[0, 8] = -dw / L, dw / L
+
+        section_stiffness = generalized_beam_stiffness(
+            self.generalized_section
+        )
+        _flexibility, basic_stiffness = _beam2_generalized_flexibility(
+            L,
+            section_stiffness,
+        )
+        basic_force = basic_stiffness @ basic_deformation
+        F_loc = basic_tangent.T @ basic_force
+        stations = np.array((-1.0, 0.0, 1.0), dtype=float)
+        generalized_resultant = np.asarray(
+            [
+                _beam2_force_interpolation(L, xi) @ basic_force
+                for xi in stations
+            ],
+            dtype=float,
+        )
+        generalized_strain = (
+            generalized_resultant @ np.linalg.inv(section_stiffness).T
+        )
+        trial_state = {
+            **(dict(state) if isinstance(state, dict) else {}),
+            "generalized_section": True,
+            "geometric_nonlinearity": "von_karman",
+            "generalized_strain": generalized_strain.copy(),
+            "generalized_resultant": generalized_resultant.copy(),
+            "generalized_station_coordinates": stations,
+            "generalized_strain_order": GENERALIZED_BEAM_STRAIN_ORDER,
+            "generalized_resultant_order": GENERALIZED_BEAM_RESULTANT_ORDER,
+            "axial_force": float(np.mean(generalized_resultant[:, 0])),
+            "recovery_scope": "section_resultants_only",
+        }
+        if not tangent:
+            return T.T @ F_loc, None, trial_state
+
+        K_loc = basic_tangent.T @ basic_stiffness @ basic_tangent
+        # Hessian of the von Karman axial extension, multiplied by N.
+        string = float(basic_force[0]) / L
+        for a, b in ((1, 7), (2, 8)):
+            K_loc[a, a] += string
+            K_loc[b, b] += string
+            K_loc[a, b] -= string
+            K_loc[b, a] -= string
+        return T.T @ F_loc, T.T @ K_loc @ T, trial_state
 
     def compute_nonlinear_response(
         self,
@@ -2460,6 +3618,14 @@ class BeamElement(Element):
                 mesh, material, u_elem, state, tangent
             )
 
+        if self.generalized_section is not None:
+            return self._compute_generalized_von_karman_response(
+                mesh,
+                u_elem,
+                state,
+                tangent,
+            )
+
         fiber_config = self._fiber_plasticity_config(material)
         if fiber_config is not None:
             return self._compute_fiber_nonlinear_response(
@@ -2477,7 +3643,11 @@ class BeamElement(Element):
             for i in (0, 6):
                 K_loc[i, :] = 0.0
                 K_loc[:, i] = 0.0
-            cache = {"L": L, "T": T, "K_noax": K_loc, "EA": material.elastic_modulus * self._A}
+            E1, _G12, _G13, _GJ = _beam_material_properties(
+                material,
+                self.cross_section,
+            )
+            cache = {"L": L, "T": T, "K_noax": K_loc, "EA": E1 * self._A}
             self._nl_cache = cache
 
         L = cache["L"]
@@ -2526,8 +3696,52 @@ class BeamElement(Element):
         except ValueError:
             return {}
         u_local = T @ self._get_element_displacements(mesh, displacements)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        if self.generalized_section is not None:
+            section_stiffness = generalized_beam_stiffness(
+                self.generalized_section
+            )
+            if isinstance(self, QuadraticBeamElement):
+                strain_rows = []
+                for xi in self.GAUSS_POINTS:
+                    shape, derivative_xi = self.compute_shape_functions(
+                        float(xi)
+                    )
+                    B = _beam_generalized_strain_matrix_from_shape(
+                        shape,
+                        derivative_xi * 2.0 / L,
+                    )
+                    strain_rows.append(B @ u_local)
+                generalized_strain = np.asarray(strain_rows, dtype=float)
+                generalized_resultant = (
+                    generalized_strain @ section_stiffness.T
+                )
+                return _generalized_beam_recovery(
+                    generalized_strain,
+                    generalized_resultant,
+                    stations=np.asarray(self.GAUSS_POINTS, dtype=float),
+                )
+            basic_transform = _beam2_basic_deformation_matrix(L)
+            basic_deformation = basic_transform @ u_local
+            _flexibility, basic_stiffness = (
+                _beam2_generalized_flexibility(L, section_stiffness)
+            )
+            basic_force = basic_stiffness @ basic_deformation
+            compliance = np.linalg.inv(section_stiffness)
+            stations = np.array((-1.0, 0.0, 1.0), dtype=float)
+            generalized_resultant = np.asarray(
+                [
+                    _beam2_force_interpolation(L, xi) @ basic_force
+                    for xi in stations
+                ],
+                dtype=float,
+            )
+            generalized_strain = generalized_resultant @ compliance.T
+            return _generalized_beam_recovery(
+                generalized_strain,
+                generalized_resultant,
+                stations=stations,
+            )
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         end_a, end_b = self._end_displacements(u_local)
         u1, v1, w1, rx1, ry1, rz1 = end_a
         u2, v2, w2, rx2, ry2, rz2 = end_b
@@ -2541,12 +3755,12 @@ class BeamElement(Element):
         sigma_bending_z = M_z * c_y / max(self._Iz, _SMALL)
         gamma_xy = (v2 - v1) / L - 0.5 * (rz1 + rz2)
         gamma_xz = (w2 - w1) / L + 0.5 * (ry1 + ry2)
-        tau_y = G * self._ky * gamma_xy
-        tau_z = G * self._kz * gamma_xz
-        tau_torsion = G * self._J * (rx2 - rx1) / L / self._torsion_section_modulus()
+        tau_y = G12 * self._ky * gamma_xy
+        tau_z = G13 * self._kz * gamma_xz
+        tau_torsion = GJ * (rx2 - rx1) / L / self._torsion_section_modulus()
         sigma_x = sigma_axial + sigma_bending_y + sigma_bending_z
         von_mises = np.sqrt(sigma_x**2 + 3.0 * (tau_y**2 + tau_z**2 + tau_torsion**2))
-        return {
+        recovered = {
             "axial_stress": sigma_axial,
             "bending_stress_y": sigma_bending_y,
             "bending_stress_z": sigma_bending_z,
@@ -2555,6 +3769,37 @@ class BeamElement(Element):
             "torsional_stress": tau_torsion,
             "von_mises": von_mises,
         }
+        hill_yield = getattr(material, "hill_yield", None)
+        if hill_yield is not None:
+            from .plasticity import hill48_equivalent_stress
+
+            # Section recovery supplies envelopes rather than a resolved
+            # perimeter stress point.  Include both directional transverse
+            # shears, and conservatively combine the torsional envelope with
+            # either x-y or x-z shear.
+            candidates = np.array(
+                [
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z, tau_y],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z, tau_y + tau_torsion],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z, tau_y - tau_torsion],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z + tau_torsion, tau_y],
+                    [sigma_x, 0.0, 0.0, 0.0, tau_z - tau_torsion, tau_y],
+                ],
+                dtype=float,
+            )
+            equivalent = float(
+                np.max(hill48_equivalent_stress(candidates, hill_yield))
+            )
+            recovered["equivalent_stress"] = equivalent
+            recovered["equivalent_stress_measure"] = "hill48"
+            recovered["hill_utilization"] = equivalent / max(float(hill_yield.X), _SMALL)
+            recovered["equivalent_stress_scope"] = (
+                "conservative beam-local axial/shear/torsion envelope"
+            )
+        else:
+            recovered["equivalent_stress"] = von_mises
+            recovered["equivalent_stress_measure"] = "von_mises"
+        return recovered
 
 
 class QuadraticBeamElement(BeamElement):
@@ -2568,8 +3813,9 @@ class QuadraticBeamElement(BeamElement):
         element_id: int,
         node_ids: List[int],
         material_name: str = "default",
-        cross_section: Optional[Dict[str, float]] = None,
+        cross_section: Optional[Dict[str, Any]] = None,
         eccentricity: Optional[np.ndarray] = None,
+        section: Any = None,
     ):
         Element.__init__(self, element_id, node_ids, material_name)
         if len(node_ids) != 3:
@@ -2586,6 +3832,34 @@ class QuadraticBeamElement(BeamElement):
         self._c_z = self.cross_section.get("c_z")
         self._torsion_modulus = self.cross_section.get("torsion_modulus")
         self._fiber_plasticity = self.cross_section.get("fiber_plasticity")
+        self._geometric_nonlinearity = str(
+            self.cross_section.get(
+                "geometric_nonlinearity",
+                self.cross_section.get("geometry", "von_karman"),
+            )
+        ).lower()
+        self.generalized_section = resolve_generalized_beam_section(
+            self.cross_section,
+            section,
+        )
+        if self.generalized_section is not None and self._fiber_plasticity is not None:
+            raise ValueError(
+                "Generalized beam sections do not support "
+                "cross_section['fiber_plasticity']; supply an elastic section "
+                "without fiber plasticity."
+            )
+        if self.generalized_section is not None:
+            self._geometric_polar_radius_squared()
+        if self.generalized_section is not None and self._geometric_nonlinearity in {
+            "corotational",
+            "co_rotational",
+            "corot",
+        }:
+            raise ValueError(
+                "QuadraticBeamElement does not support corotational kinematics "
+                "with a generalized beam section; use BeamElement or "
+                "geometric_nonlinearity='von_karman'."
+            )
         self.eccentricity = np.zeros(3, dtype=float) if eccentricity is None else np.asarray(eccentricity, dtype=float)
 
     def _end_displacements(self, u_local: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -2593,6 +3867,91 @@ class QuadraticBeamElement(BeamElement):
         # end-difference over the full length equals the quadratic shape
         # function derivative evaluated at the element centre.
         return u_local[0:6], u_local[12:18]
+
+    def _compute_generalized_von_karman_response_quadratic(
+        self,
+        length: float,
+        transform: np.ndarray,
+        u_local: np.ndarray,
+        state: Optional[Any],
+        tangent: bool,
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
+        """Quadratic coupled-section response and exact energy tangent."""
+
+        L = float(length)
+        section_stiffness = generalized_beam_stiffness(
+            self.generalized_section
+        )
+        F_loc = np.zeros(18, dtype=float)
+        K_loc = np.zeros((18, 18), dtype=float) if tangent else None
+        strain_rows = []
+        resultant_rows = []
+        for xi, weight in zip(self.GAUSS_POINTS, self.GAUSS_WEIGHTS):
+            shape, derivative_xi = self.compute_shape_functions(float(xi))
+            derivative_x = derivative_xi * 2.0 / L
+            B_linear = _beam_generalized_strain_matrix_from_shape(
+                shape,
+                derivative_x,
+            )
+            B_v = np.zeros(18, dtype=float)
+            B_w = np.zeros(18, dtype=float)
+            for i in range(3):
+                B_v[i * 6 + 1] = derivative_x[i]
+                B_w[i * 6 + 2] = derivative_x[i]
+            v_gradient = float(B_v @ u_local)
+            w_gradient = float(B_w @ u_local)
+
+            generalized_strain = B_linear @ u_local
+            generalized_strain[0] += 0.5 * (
+                v_gradient**2 + w_gradient**2
+            )
+            B_tangent = B_linear.copy()
+            B_tangent[0, :] += (
+                v_gradient * B_v + w_gradient * B_w
+            )
+            generalized_resultant = (
+                section_stiffness @ generalized_strain
+            )
+            jacobian_weight = L / 2.0 * float(weight)
+            F_loc += (
+                jacobian_weight
+                * (B_tangent.T @ generalized_resultant)
+            )
+            if tangent:
+                K_loc += jacobian_weight * (
+                    B_tangent.T @ section_stiffness @ B_tangent
+                    + float(generalized_resultant[0])
+                    * (np.outer(B_v, B_v) + np.outer(B_w, B_w))
+                )
+            strain_rows.append(generalized_strain.copy())
+            resultant_rows.append(generalized_resultant.copy())
+
+        generalized_strains = np.asarray(strain_rows, dtype=float)
+        generalized_resultants = np.asarray(resultant_rows, dtype=float)
+        trial_state = {
+            **(dict(state) if isinstance(state, dict) else {}),
+            "generalized_section": True,
+            "geometric_nonlinearity": "von_karman",
+            "generalized_strain": generalized_strains,
+            "generalized_resultant": generalized_resultants,
+            "generalized_station_coordinates": np.asarray(
+                self.GAUSS_POINTS,
+                dtype=float,
+            ).copy(),
+            "generalized_strain_order": GENERALIZED_BEAM_STRAIN_ORDER,
+            "generalized_resultant_order": GENERALIZED_BEAM_RESULTANT_ORDER,
+            "axial_force": float(
+                np.mean(generalized_resultants[:, 0])
+            ),
+            "recovery_scope": "section_resultants_only",
+        }
+        if not tangent:
+            return transform.T @ F_loc, None, trial_state
+        return (
+            transform.T @ F_loc,
+            transform.T @ K_loc @ transform,
+            trial_state,
+        )
 
     def compute_nonlinear_response(
         self,
@@ -2625,14 +3984,20 @@ class QuadraticBeamElement(BeamElement):
                 self, mesh, material, u_elem, state, num_layers, tangent
             )
         u_loc = T @ np.asarray(u_elem, dtype=float)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        if self.generalized_section is not None:
+            return self._compute_generalized_von_karman_response_quadratic(
+                L,
+                T,
+                u_loc,
+                state,
+                tangent,
+            )
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         EA = E * self._A
         EIy = E * self._Iy
         EIz = E * self._Iz
-        GJ = G * self._J
-        GA_y = G * self._A * self._ky
-        GA_z = G * self._A * self._kz
+        GA_y = G12 * self._A * self._ky
+        GA_z = G13 * self._A * self._kz
 
         fiber_config = self._fiber_plasticity_config(material)
         num_gp = len(self.GAUSS_POINTS)
@@ -2729,7 +4094,11 @@ class QuadraticBeamElement(BeamElement):
                 fiber_strain_all - initial_prestrain + initial_stress / E
             )
             stress, Et, plastic_new, alpha_new = self._uniaxial_return_map(
-                constitutive_fiber_strain, state, E, fiber_config.material_curve
+                constitutive_fiber_strain,
+                state,
+                E,
+                fiber_config.material_curve,
+                _beam_flow_scale(material, fiber_config.material_curve),
             )
             for jac, B_v, B_w, rows in gp_data:
                 weights_gp = w_f
@@ -2747,6 +4116,11 @@ class QuadraticBeamElement(BeamElement):
                 "kinematic_fiber_strain": fiber_strain_all.copy(),
                 "fiber_stress": stress.copy(),
                 "axial_force": float(np.mean(axial_forces)) if axial_forces else 0.0,
+                "equivalent_stress_measure": (
+                    "hill48"
+                    if _elastic_symmetry(material) == "orthotropic"
+                    else "von_mises"
+                ),
                 **initial_state,
             }
 
@@ -2809,14 +4183,32 @@ class QuadraticBeamElement(BeamElement):
             L, T = self._beam_frame_and_transform(coords)
         except ValueError:
             return np.zeros((18, 18), dtype=float)
-        E = material.elastic_modulus
-        G = material.shear_modulus
+        if self.generalized_section is not None:
+            section_stiffness = generalized_beam_stiffness(
+                self.generalized_section
+            )
+            K = np.zeros((18, 18), dtype=float)
+            for xi, weight in zip(self.GAUSS_POINTS, self.GAUSS_WEIGHTS):
+                shape, derivative_xi = self.compute_shape_functions(float(xi))
+                B = _beam_generalized_strain_matrix_from_shape(
+                    shape,
+                    derivative_xi * 2.0 / L,
+                )
+                K += (
+                    B.T
+                    @ section_stiffness
+                    @ B
+                    * (L / 2.0 * float(weight))
+                )
+            K_global = T.T @ K @ T
+            self._stiffness_matrix = K_global
+            return K_global
+        E, G12, G13, GJ = _beam_material_properties(material, self.cross_section)
         EA = E * self._A
         EIy = E * self._Iy
         EIz = E * self._Iz
-        GJ = G * self._J
-        GA_y = G * self._A * self._ky
-        GA_z = G * self._A * self._kz
+        GA_y = G12 * self._A * self._ky
+        GA_z = G13 * self._A * self._kz
         K = np.zeros((18, 18), dtype=float)
         for xi, weight in zip(self.GAUSS_POINTS, self.GAUSS_WEIGHTS):
             N, dN_dxi = self.compute_shape_functions(float(xi))
@@ -2855,6 +4247,29 @@ class QuadraticBeamElement(BeamElement):
         except ValueError:
             return np.zeros((18, 18), dtype=float)
         M = np.zeros((18, 18), dtype=float)
+        generalized_mass = (
+            None
+            if self.generalized_section is None
+            else generalized_beam_mass_matrix(self.generalized_section)
+        )
+        if generalized_mass is not None:
+            for xi, weight in zip(self.GAUSS_POINTS, self.GAUSS_WEIGHTS):
+                N, _ = self.compute_shape_functions(float(xi))
+                jacobian_weight = float(weight) * L / 2.0
+                for i in range(3):
+                    for j in range(3):
+                        M[
+                            i * 6 : (i + 1) * 6,
+                            j * 6 : (j + 1) * 6,
+                        ] += (
+                            N[i]
+                            * N[j]
+                            * jacobian_weight
+                            * generalized_mass
+                        )
+            M_global = T.T @ M @ T
+            self._mass_matrix = M_global
+            return M_global
         rho = material.density
         # Consistent rotary inertia per rotation axis: polar (Iy+Iz) for
         # torsion, the matching section inertia for each bending rotation.
@@ -2900,7 +4315,7 @@ class QuadraticBeamElement(BeamElement):
 
         KG = np.zeros((18, 18), dtype=float)
         # Wagner term factor: see BeamElement.compute_geometric_stiffness_matrix.
-        polar_ratio = (self._Iy + self._Iz) / max(self._A, 1.0e-30)
+        polar_ratio = self._geometric_polar_radius_squared()
         for xi, weight in zip(self.GAUSS_POINTS, self.GAUSS_WEIGHTS):
             _, dN_dxi = self.compute_shape_functions(float(xi))
             dN_dx = dN_dxi * 2.0 / L
@@ -3013,6 +4428,7 @@ def validate_initial_field_state(
     material: "Material",
     state: Dict[str, Any],
     num_layers: int,
+    mesh: Optional["FEMesh"] = None,
 ) -> None:
     """Validate that a prescribed initial stress is locally admissible.
 
@@ -3026,8 +4442,15 @@ def validate_initial_field_state(
     if isinstance(element, ShellElement) and (
         "initial_membrane_stress" in state or "initial_bending_stress" in state
     ):
+        symmetry = _elastic_symmetry(material)
         curve = getattr(material, "hardening_curve", None)
-        if curve is None:
+        hill_yield = getattr(material, "hill_yield", None)
+        if symmetry == "orthotropic" and curve is not None and hill_yield is None:
+            raise ValueError(
+                f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+                "requires hill_yield when hardening_curve is active."
+            )
+        if curve is None and hill_yield is None:
             return
         n_gp = len(element.gauss_points)
         z_layers, _weights = lobatto_layers(num_layers, element.thickness)
@@ -3051,16 +4474,57 @@ def validate_initial_field_state(
             raise ValueError(
                 f"Shell initial alpha has {alpha.size} entries; expected {stress.shape[0]}"
             )
-        equivalent = np.sqrt(
-            np.maximum(
-                stress[:, 0] ** 2
-                - stress[:, 0] * stress[:, 1]
-                + stress[:, 1] ** 2
-                + 3.0 * stress[:, 2] ** 2,
-                0.0,
+        if np.any(~np.isfinite(alpha)) or np.any(alpha < 0.0):
+            raise ValueError("Shell initial alpha must be finite and non-negative")
+        if symmetry == "orthotropic":
+            from .plasticity import hill48_plane_stress_equivalent_stress
+
+            if mesh is None:
+                if element.material_direction is not None:
+                    raise ValueError(
+                        "mesh is required to validate an oriented orthotropic "
+                        "shell initial stress"
+                    )
+                material_angle = np.deg2rad(element.material_angle_deg)
+            else:
+                coordinates = element.get_node_coordinates(mesh)
+                material_angle = element._material_angle(
+                    element._center_frame(coordinates)
+                )
+            _Q, _G, _strain_to_material, stress_to_local = (
+                _shell_material_matrices(material, material_angle)
             )
-        )
-        flow = np.asarray(curve.flow_stress(alpha), dtype=float)
+            stress_material = np.einsum(
+                "ij,nj->ni",
+                np.linalg.inv(stress_to_local),
+                stress,
+            )
+            equivalent = hill48_plane_stress_equivalent_stress(
+                stress_material,
+                hill_yield,
+            )
+            if curve is None:
+                flow = np.full(equivalent.shape, float(hill_yield.X))
+            else:
+                reference = float(
+                    np.asarray(curve.flow_stress(np.array([0.0])), dtype=float)[0]
+                )
+                flow = (
+                    float(hill_yield.X)
+                    * np.asarray(curve.flow_stress(alpha), dtype=float)
+                    / reference
+                )
+        else:
+            equivalent = np.sqrt(
+                np.maximum(
+                    stress[:, 0] ** 2
+                    - stress[:, 0] * stress[:, 1]
+                    + stress[:, 1] ** 2
+                    + 3.0 * stress[:, 2] ** 2,
+                    0.0,
+                )
+            )
+            flow = np.asarray(curve.flow_stress(alpha), dtype=float)
         excess = equivalent - flow
         if np.any(excess > tolerance * np.maximum(flow, 1.0)):
             index = int(np.argmax(excess))
@@ -3093,7 +4557,14 @@ def validate_initial_field_state(
             )
         if alpha.size == 1:
             alpha = np.full(total_fibers, float(alpha[0]), dtype=float)
-        flow = np.asarray(curve.flow_stress(alpha), dtype=float)
+        if np.any(~np.isfinite(alpha)) or np.any(alpha < 0.0):
+            raise ValueError("Beam initial alpha must be finite and non-negative")
+        scale = _beam_flow_scale(material, curve)
+        flow = (
+            np.full(alpha.shape, scale, dtype=float)
+            if curve is None
+            else scale * np.asarray(curve.flow_stress(alpha), dtype=float)
+        )
         excess = np.abs(stress) - flow
         if np.any(excess > tolerance * np.maximum(flow, 1.0)):
             index = int(np.argmax(excess))

@@ -41,6 +41,7 @@ from .fracture import (
     state_rtcl_increment,
 )
 from .linalg import MatrixClass, factorize
+from .materials import beam_material_properties, material_symmetry, shell_characteristic_modulus
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import enforce_memory_limit, estimate_model_memory, recovery_metadata
 from .validation import ProductionValidationIssue, ProductionValidationReport, load_vector_resultant
@@ -591,12 +592,57 @@ def _representative_shell_edge_length(model: "FEModel") -> float:
     return _contact_geometry(model).representative_edge_length
 
 
+def material_characteristic_modulus(material: Any, structural_kind: str = "shell") -> float:
+    """Return a numerical stiffness scale, not a constitutive modulus.
+
+    Orthotropic shell contact uses ``max(E1, E2)`` and orthotropic beam
+    numerics use ``E1``.  Isotropic materials retain ``E``.  General
+    anisotropy is deliberately rejected until an arbitrary constitutive
+    scaling policy exists.
+    """
+
+    kind = str(structural_kind).strip().lower()
+    if kind not in {"shell", "beam"}:
+        raise ValueError("structural_kind must be 'shell' or 'beam'")
+    value = (
+        shell_characteristic_modulus(material)
+        if kind == "shell"
+        else beam_material_properties(material).characteristic_modulus
+    )
+    if not np.isfinite(value) or value <= 0.0:
+        raise ValueError(f"{kind} characteristic modulus must be finite and positive")
+    return value
+
+
+def _shell_element_characteristic_modulus(model: "FEModel", element: ShellElement) -> float:
+    """Return the shell's numerical modulus scale, including section laws."""
+
+    section = getattr(element, "shell_section", None)
+    if section is None:
+        return material_characteristic_modulus(
+            model.get_material(element.material_name),
+            "shell",
+        )
+    membrane = np.asarray(getattr(section, "A"), dtype=float)
+    stiffness = float(np.max(np.linalg.eigvalsh(0.5 * (membrane + membrane.T))))
+    thickness = float(getattr(element, "thickness", 0.0))
+    value = stiffness / max(thickness, 1.0e-30)
+    if not np.isfinite(value) or value <= 0.0:
+        raise ValueError(
+            "Generalized shell-section characteristic modulus must be finite "
+            "and positive"
+        )
+    return value
+
+
 def _representative_shell_stiffness(model: "FEModel") -> float:
-    """Median shell membrane stiffness scale ``E * t`` in N/m."""
+    """Median shell membrane stiffness scale ``E_char * t`` in N/m."""
     values: List[float] = []
     for element in _shell_contact_candidates(model):
-        material = model.get_material(element.material_name)
-        values.append(float(material.elastic_modulus) * float(element.thickness))
+        values.append(
+            _shell_element_characteristic_modulus(model, element)
+            * float(element.thickness)
+        )
     return float(np.median(values)) if values else 0.0
 
 
@@ -1087,7 +1133,18 @@ def _impact_material_capacity(model: "FEModel", element: ShellElement, config: I
     """Return yield/ultimate/user stress capacity in Pa for impact damage."""
     if config.capacity_basis == "user":
         return float(config.user_capacity), "user"
+    if getattr(element, "shell_section", None) is not None:
+        raise ValueError(
+            "Generalized shell-section linear impact pressure damage requires "
+            "ImpactDamageConfig(capacity_basis='user', user_capacity=...)."
+        )
     material = model.get_material(element.material_name)
+    symmetry = material_symmetry(material)
+    if symmetry == "orthotropic":
+        raise ValueError(
+            "Orthotropic linear impact pressure damage requires "
+            "ImpactDamageConfig(capacity_basis='user', user_capacity=...)."
+        )
     curve = getattr(material, "hardening_curve", None)
     if config.capacity_basis == "yield":
         if curve is not None and hasattr(curve, "sigma_yield"):
@@ -1110,7 +1167,7 @@ def _impact_material_capacity(model: "FEModel", element: ShellElement, config: I
                 return max(candidates), "hardening_curve.ultimate_proxy"
         if float(getattr(material, "yield_stress", 0.0)) > 0.0:
             return 1.15 * float(material.yield_stress), "material.yield_stress_ultimate_proxy"
-    elastic_proxy = max(0.002 * float(getattr(material, "elastic_modulus", 0.0)), 1.0)
+    elastic_proxy = max(0.002 * material_characteristic_modulus(material, "shell"), 1.0)
     return elastic_proxy, "elastic_0.2pct_proxy"
 
 
@@ -1130,8 +1187,7 @@ def _impact_damage_metrics(
     impulse_density = float(record.normal_force) * float(dt) / max(area, 1.0e-30)
     pressure_utilization = pressure / max(capacity, 1.0e-30)
     impulse_utilization = impulse_density / max(capacity * float(config.impulse_reference_time), 1.0e-30)
-    material = model.get_material(element.material_name)
-    elastic_modulus = max(float(getattr(material, "elastic_modulus", 0.0)), 1.0)
+    elastic_modulus = _shell_element_characteristic_modulus(model, element)
     equivalent_plastic_strain_estimate = max(pressure - capacity, 0.0) / elastic_modulus * float(config.strain_scale)
     strain_utilization = equivalent_plastic_strain_estimate / max(float(config.plastic_strain_capacity), 1.0e-30)
     components = {
@@ -1371,6 +1427,38 @@ def _impact_damage_preflight_warnings(
     return tuple(warnings)
 
 
+def _require_user_capacity_for_orthotropic_linear_damage(
+    model: "FEModel",
+    config: Optional[ImpactDamageConfig],
+) -> None:
+    if config is None or config.capacity_basis == "user":
+        return
+    affected = []
+    for element in _shell_contact_candidates(model):
+        material = model.get_material(element.material_name)
+        if (
+            getattr(element, "shell_section", None) is not None
+            or material_symmetry(material) == "orthotropic"
+        ):
+            affected.append(
+                str(
+                    getattr(
+                        getattr(element, "shell_section", None),
+                        "name",
+                        "",
+                    )
+                    or element.material_name
+                )
+            )
+    if affected:
+        names = ", ".join(sorted(set(affected)))
+        raise ValueError(
+            "Orthotropic or generalized-section linear impact pressure damage requires "
+            "ImpactDamageConfig(capacity_basis='user', user_capacity=...); "
+            f"affected shell material/section name(s): {names}."
+        )
+
+
 def _warnings_with_prefixes(warnings: Sequence[str], prefixes: Sequence[str]) -> Tuple[str, ...]:
     prefix_tuple = tuple(str(prefix) for prefix in prefixes)
     return tuple(str(warning) for warning in warnings if str(warning).startswith(prefix_tuple))
@@ -1465,7 +1553,7 @@ def _plastic_impact_damage_update(
     new_records: List[DeletedElementRecord] = []
     max_utilization = 0.0
     criterion = str(getattr(config, "criterion", "fixed"))
-    material_constants: Dict[str, Tuple[float, float]] = {}
+    material_constants: Dict[str, Tuple[float, float, str]] = {}
     for element_id, state in committed_states.items():
         element = model.mesh.elements.get(int(element_id))
         if element is None:
@@ -1510,9 +1598,23 @@ def _plastic_impact_damage_update(
             name = str(element.material_name)
             if name not in material_constants:
                 material = model.get_material(name)
-                material_constants[name] = (float(material.elastic_modulus), float(material.poisson_ratio))
-            E, nu = material_constants[name]
-            rtcl = state_rtcl_increment(state, previous.get("rtcl_alpha"), E, nu)
+                symmetry = material_symmetry(material)
+                structural_kind = "shell" if category == "shell" else "beam"
+                characteristic_modulus = material_characteristic_modulus(material, structural_kind)
+                poisson_ratio = (
+                    float(material.poisson_ratio)
+                    if symmetry == "isotropic"
+                    else float(getattr(material, "poisson_ratio_12", 0.0))
+                )
+                material_constants[name] = (characteristic_modulus, poisson_ratio, symmetry)
+            E, nu, symmetry = material_constants[name]
+            rtcl = state_rtcl_increment(
+                state,
+                previous.get("rtcl_alpha"),
+                E,
+                nu,
+                elastic_symmetry=symmetry,
+            )
             accumulated = np.asarray(previous.get("rtcl_damage", ()), dtype=float).reshape(-1)
             if rtcl is None:
                 utilization = previous_damage
@@ -2541,11 +2643,14 @@ def solve_transient_sphere_impact(
         raise TypeError("nonlinear_config must be a NonlinearTransientConfig or None")
     if plastic_damage_config is not None and not isinstance(plastic_damage_config, PlasticImpactDamageConfig):
         raise TypeError("plastic_damage_config must be a PlasticImpactDamageConfig or None")
+    nonlinear_enabled = nonlinear_config is not None and bool(nonlinear_config.enabled)
+    if not nonlinear_enabled:
+        _require_user_capacity_for_orthotropic_linear_damage(model, damage_config)
     validation = validate_contact_configuration(model, sphere, config, transient_config)
     if validation.errors:
         codes = ", ".join(issue.code for issue in validation.errors)
         raise ValueError(f"Invalid sphere contact configuration: {codes}")
-    if nonlinear_config is not None and bool(nonlinear_config.enabled):
+    if nonlinear_enabled:
         return _solve_transient_sphere_impact_nonlinear(
             model,
             transient_config,
