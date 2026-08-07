@@ -1,15 +1,10 @@
-"""
-Mesh generation from normalized stiffened-panel geometry.
+"""ANYsolver adapters for neutral meshes produced by ANYmesher.
 
-The generated meshes are intentionally limited to the rectangular panel/stiffener
-layout supported by the current FE solver. The mesh builder applies support
-conditions to full shell edges and uses explicit eccentric beam-shell MPC
-couplings instead of shared-node or penalty placeholders.
-
-Beam-shell coupling is shell-interpolated: each eccentric beam node is constrained
-to the shell element underneath it using the shell shape functions.  This avoids
-the earlier brittle requirement that each beam node must lie exactly on a shell
-node row/column.
+ANYmesher owns geometry, numbering, mesh quality and beam-shell coupling
+records.  This module retains the solver decisions: converting those records to
+FEModel elements and MPCs, assigning the legacy default material, and
+interpreting the historical support labels.  Public 0.1 mesh helpers remain
+available through this adapter for the 0.2.x compatibility line.
 """
 
 from __future__ import annotations
@@ -19,9 +14,20 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from anymesher import (
+    Mesh as NeutralMesh,
+    PanelMeshConfig as NeutralPanelMeshConfig,
+    StiffenedPanel as NeutralStiffenedPanel,
+    StiffenerCrossSection,
+    beam_mesh as neutral_beam_mesh,
+    panel_edge_nodes,
+    simple_panel_mesh as neutral_simple_panel_mesh,
+    stiffened_panel_mesh as neutral_stiffened_panel_mesh,
+    verify_mesh_quality as verify_neutral_mesh_quality,
+)
+
 if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh, Material
-
 
 @dataclass
 class MeshConfig:
@@ -121,84 +127,6 @@ class PanelGeometry:
         if hasattr(anystructure_data, "pressure"):
             geometry.pressure = anystructure_data.pressure
         return geometry
-
-
-@dataclass
-class StiffenerCrossSection:
-    """Cross-section properties for a line stiffener."""
-
-    area: float
-    Iy: float
-    Iz: float
-    J: float
-    shear_factor_y: float = 5.0 / 6.0
-    shear_factor_z: float = 5.0 / 6.0
-    c_y: float = 0.0
-    c_z: float = 0.0
-    torsion_modulus: float = 0.0
-
-    @staticmethod
-    def _composite_rectangles(
-        rectangles: List[Tuple[float, float, float, float]],
-    ) -> Tuple[float, float, float, float, float]:
-        """
-        Return A, Iy, Iz, c_y, c_z for rectangles described by
-        y, z, width_y, height_z, with c_y/c_z the extreme fiber distances
-        from the centroid.
-        """
-        areas = np.asarray([width * height for _y, _z, width, height in rectangles], dtype=float)
-        total_area = max(float(np.sum(areas)), 1.0e-30)
-        y_centroid = float(
-            np.sum([area * rect[0] for area, rect in zip(areas, rectangles)]) / total_area
-        )
-        z_centroid = float(
-            np.sum([area * rect[1] for area, rect in zip(areas, rectangles)]) / total_area
-        )
-
-        Iy = 0.0
-        Iz = 0.0
-        c_y = 0.0
-        c_z = 0.0
-        for area, (y, z, width, height) in zip(areas, rectangles):
-            Iy += width * height**3 / 12.0 + area * (z - z_centroid) ** 2
-            Iz += height * width**3 / 12.0 + area * (y - y_centroid) ** 2
-            c_y = max(c_y, abs(y - y_centroid) + width / 2.0)
-            c_z = max(c_z, abs(z - z_centroid) + height / 2.0)
-        return total_area, Iy, Iz, c_y, c_z
-
-    @classmethod
-    def from_geometry(cls, stiffener_type: str, hw: float, tw: float, b: float, tf: float) -> "StiffenerCrossSection":
-        # Open thin-walled torsion: J = sum(l*t^3)/3 and tau_max = T*t_max/J,
-        # so the torsional section modulus is Wt = J / t_max.
-        if stiffener_type == "T-bar":
-            A, Iy, Iz, c_y, c_z = cls._composite_rectangles(
-                [
-                    (0.0, hw / 2.0, tw, hw),
-                    (0.0, hw + tf / 2.0, b, tf),
-                ]
-            )
-            J = (hw * tw**3 + b * tf**3) / 3.0
-            t_max = max(tw, tf)
-        elif stiffener_type in ("L-bulb", "Angle"):
-            A, Iy, Iz, c_y, c_z = cls._composite_rectangles(
-                [
-                    (tw / 2.0, hw / 2.0, tw, hw),
-                    (b / 2.0, hw + tf / 2.0, b, tf),
-                ]
-            )
-            J = (hw * tw**3 + b * tf**3) / 3.0
-            t_max = max(tw, tf)
-        elif stiffener_type == "Flatbar":
-            A, Iy, Iz, c_y, c_z = cls._composite_rectangles([(0.0, 0.0, b, tf)])
-            J = b * tf**3 / 3.0
-            t_max = min(b, tf)
-        else:
-            A, Iy, Iz, c_y, c_z = cls._composite_rectangles([(0.0, hw / 2.0, tw, hw)])
-            J = hw * tw**3 / 3.0
-            t_max = tw
-        torsion_modulus = J / max(t_max, 1.0e-30)
-        return cls(area=A, Iy=Iy, Iz=Iz, J=J, c_y=c_y, c_z=c_z, torsion_modulus=torsion_modulus)
-
 
 class InterpolatedBeamShellMPCElement:
     """
@@ -439,463 +367,133 @@ class RigidLidMPCElement:
                 )
         return constraints
 
+def _neutral_panel(panel: PanelGeometry) -> NeutralStiffenedPanel:
+    """Copy geometry-only panel fields into the canonical mesher contract."""
 
-def _safe_divisions(value: int) -> int:
-    return max(int(value), 1)
+    return NeutralStiffenedPanel(
+        length=float(panel.length),
+        width=float(panel.width),
+        plate_thickness=float(panel.plate_thickness),
+        stiffener_type=str(panel.stiffener_type),
+        stiffener_spacing=float(panel.stiffener_spacing),
+        stiffener_height=float(panel.stiffener_height),
+        stiffener_web_thickness=float(panel.stiffener_web_thickness),
+        stiffener_flange_width=float(panel.stiffener_flange_width),
+        stiffener_flange_thickness=float(panel.stiffener_flange_thickness),
+        num_stiffeners=int(panel.num_stiffeners),
+    )
 
 
-def generate_stiffened_panel_mesh(panel: PanelGeometry, config: Optional[MeshConfig] = None) -> "FEModel":
-    """Generate a rectangular stiffened panel mesh."""
-    from .elements import BeamElement, QuadraticBeamElement, ShellElement
-    from .fe_core import FEModel
+def _neutral_config(config: MeshConfig) -> NeutralPanelMeshConfig:
+    """Copy mesh-only options into ANYmesher without analysis metadata."""
 
-    config = config or MeshConfig()
-    if config.use_shared_nodes:
-        raise ValueError(
-            "use_shared_nodes=True is no longer supported for eccentric stiffeners. "
-            "Use separate beam nodes with interpolated beam-shell MPC constraints instead."
-        )
+    return NeutralPanelMeshConfig(
+        shell_num_divisions_x=int(config.shell_num_divisions_x),
+        shell_num_divisions_y=int(config.shell_num_divisions_y),
+        beam_num_divisions=int(config.beam_num_divisions),
+        use_coupling_elements=bool(config.use_coupling_elements),
+        tolerance=float(config.tolerance),
+        use_8node_shells=bool(config.use_8node_shells),
+        align_mesh_to_stiffeners=bool(config.align_mesh_to_stiffeners),
+    )
 
-    model = FEModel(name=f"StiffenedPanel_{panel.length}x{panel.width}")
+
+def _add_legacy_steel(
+    model: "FEModel",
+    *,
+    density: float = 0.0,
+    yield_stress: float = 0.0,
+) -> None:
+    """Install the material historically supplied by generated test models."""
+
     model.add_material(
         name="steel",
         elastic_modulus=210.0e9,
         poisson_ratio=0.3,
-        density=7850.0,
-        yield_stress=235.0e6,
+        density=float(density),
+        yield_stress=float(yield_stress),
     )
     model.current_material = "steel"
 
-    shell_nodes, shell_elements = _generate_shell_mesh(panel, config)
-    beam_nodes, beam_elements = _generate_beam_mesh(panel, config)
 
-    all_nodes = {**shell_nodes, **beam_nodes}
-    for node_id, coords in all_nodes.items():
-        model.add_node(node_id, coords[0], coords[1], coords[2])
-
-    for elem_id, (node_ids, thickness) in shell_elements.items():
-        model.add_element(elem_id, ShellElement(elem_id, node_ids, material_name="steel", thickness=thickness))
-
-    for elem_id, (node_ids, element_data) in beam_elements.items():
-        if len(node_ids) == 3:
-            eccentricity = element_data.get("eccentricity", None)
-            cross_section = {k: v for k, v in element_data.items() if k != "eccentricity"}
-            element = QuadraticBeamElement(elem_id, node_ids, material_name="steel", cross_section=cross_section, eccentricity=eccentricity)
-        else:
-            cross_section = {k: v for k, v in element_data.items() if k != "eccentricity"}
-            element = BeamElement(elem_id, node_ids, material_name="steel", cross_section=cross_section)
-        model.add_element(elem_id, element)
-
-    if config.use_coupling_elements:
-        coupling_elements = _generate_coupling_elements(panel, config, shell_nodes, shell_elements, beam_nodes)
-        if len(coupling_elements) != len(beam_nodes):
-            raise ValueError(
-                f"Only generated {len(coupling_elements)} beam-shell MPC couplings for {len(beam_nodes)} beam nodes. "
-                "Check stiffener positions and panel dimensions."
-            )
-        for elem_id, data in coupling_elements.items():
-            beam_node_id, shell_node_ids, shape_weights, eccentricity = data
-            model.add_element(
-                elem_id,
-                InterpolatedBeamShellMPCElement(
-                    elem_id,
-                    beam_node_id=beam_node_id,
-                    shell_node_ids=shell_node_ids,
-                    shape_weights=shape_weights,
-                    eccentricity=eccentricity,
-                    material_name="steel",
-                ),
-            )
-
-    _add_boundary_conditions(model, panel, shell_nodes, config)
-    return model
+def _install_nodes(model: "FEModel", mesh: NeutralMesh) -> None:
+    for node_id, coordinates in mesh.nodes.items():
+        x, y, z = np.asarray(coordinates, dtype=float).reshape(3)
+        model.add_node(int(node_id), float(x), float(y), float(z))
 
 
+def _install_shells(
+    model: "FEModel",
+    mesh: NeutralMesh,
+    *,
+    thickness: float,
+    material_name: str = "steel",
+) -> None:
+    from .elements import ShellElement
 
-def _generate_shell_mesh(
+    for element_id, node_ids in {**mesh.quads, **mesh.tris}.items():
+        model.add_element(
+            int(element_id),
+            ShellElement(
+                int(element_id),
+                list(node_ids),
+                material_name=material_name,
+                thickness=float(thickness),
+            ),
+        )
+
+
+def _install_panel_beams(
+    model: "FEModel",
+    mesh: NeutralMesh,
     panel: PanelGeometry,
-    config: MeshConfig,
-) -> Tuple[Dict[int, Tuple[float, float, float]], Dict[int, Tuple[List[int], float]]]:
-    """Generate 4-node or 8-node quadrilateral shell mesh for the plating."""
-    nodes: Dict[int, Tuple[float, float, float]] = {}
-    elements: Dict[int, Tuple[List[int], float]] = {}
-    nx = _safe_divisions(config.shell_num_divisions_x)
-    ny = _safe_divisions(config.shell_num_divisions_y)
-    L = panel.length
-    W = panel.width
-    t = panel.plate_thickness
+    *,
+    material_name: str = "steel",
+) -> None:
+    from .elements import BeamElement, QuadraticBeamElement
 
-    if config.align_mesh_to_stiffeners:
-        num_stiffeners = max(int(panel.num_stiffeners), 1)
-        spacing = panel.stiffener_spacing if panel.stiffener_spacing > 0.0 else panel.width / (num_stiffeners + 1)
-        y_stiffeners = [(s + 1) * spacing for s in range(num_stiffeners)]
-        key_ys = [0.0] + y_stiffeners + [W]
-        n_segments = len(key_ys) - 1
-
-        if ny <= n_segments:
-            segment_divs = [1] * n_segments
-            ny = n_segments
-        else:
-            segment_divs = [1] * n_segments
-            remaining = ny - n_segments
-            widths = np.array([key_ys[k+1] - key_ys[k] for k in range(n_segments)], dtype=float)
-            shares = widths / np.sum(widths) * remaining
-            floored = np.floor(shares).astype(int)
-            segment_divs = [divs + f for divs, f in zip(segment_divs, floored)]
-            remaining -= np.sum(floored)
-            fractional = shares - floored
-            for idx in np.argsort(fractional)[::-1][:remaining]:
-                segment_divs[idx] += 1
-            ny = sum(segment_divs)
-
-        y_grid = []
-        for k in range(n_segments):
-            y0_seg = key_ys[k]
-            y1_seg = key_ys[k+1]
-            divs = segment_divs[k]
-            for d in range(divs):
-                y_grid.append(y0_seg + d * (y1_seg - y0_seg) / divs)
-        y_grid.append(W)
-    else:
-        y_grid = [j * W / ny for j in range(ny + 1)]
-
-    if config.use_8node_shells:
-        node_id = 1
-        corner_nodes: Dict[Tuple[int, int], int] = {}
-        for i in range(nx + 1):
-            for j in range(ny + 1):
-                corner_nodes[(i, j)] = node_id
-                nodes[node_id] = (i * L / nx, y_grid[j], 0.0)
-                node_id += 1
-        h_mid_nodes: Dict[Tuple[int, int], int] = {}
-        for i in range(nx):
-            for j in range(ny + 1):
-                h_mid_nodes[(i, j)] = node_id
-                nodes[node_id] = ((i + 0.5) * L / nx, y_grid[j], 0.0)
-                node_id += 1
-        v_mid_nodes: Dict[Tuple[int, int], int] = {}
-        for i in range(nx + 1):
-            for j in range(ny):
-                v_mid_nodes[(i, j)] = node_id
-                nodes[node_id] = (i * L / nx, 0.5 * (y_grid[j] + y_grid[j + 1]), 0.0)
-                node_id += 1
-        elem_id = 1
-        for i in range(nx):
-            for j in range(ny):
-                elements[elem_id] = (
-                    [
-                        corner_nodes[(i, j)],
-                        corner_nodes[(i + 1, j)],
-                        corner_nodes[(i + 1, j + 1)],
-                        corner_nodes[(i, j + 1)],
-                        h_mid_nodes[(i, j)],
-                        v_mid_nodes[(i + 1, j)],
-                        h_mid_nodes[(i, j + 1)],
-                        v_mid_nodes[(i, j)],
-                    ],
-                    t,
-                )
-                elem_id += 1
-    else:
-        node_id = 1
-        node_grid: Dict[Tuple[int, int], int] = {}
-        for i in range(nx + 1):
-            for j in range(ny + 1):
-                node_grid[(i, j)] = node_id
-                nodes[node_id] = (i * L / nx, y_grid[j], 0.0)
-                node_id += 1
-        elem_id = 1
-        for i in range(nx):
-            for j in range(ny):
-                elements[elem_id] = (
-                    [node_grid[(i, j)], node_grid[(i + 1, j)], node_grid[(i + 1, j + 1)], node_grid[(i, j + 1)]],
-                    t,
-                )
-                elem_id += 1
-    return nodes, elements
-
-
-def _stiffener_cross_section_dict(panel: PanelGeometry) -> Dict[str, float]:
-    cross_section = StiffenerCrossSection.from_geometry(
+    section = StiffenerCrossSection.from_geometry(
         panel.stiffener_type,
         panel.stiffener_height,
         panel.stiffener_web_thickness,
         panel.stiffener_flange_width,
         panel.stiffener_flange_thickness,
-    )
-    return {
-        "area": cross_section.area,
-        "Iy": cross_section.Iy,
-        "Iz": cross_section.Iz,
-        "J": cross_section.J,
-        "shear_factor_y": cross_section.shear_factor_y,
-        "shear_factor_z": cross_section.shear_factor_z,
-        "c_y": cross_section.c_y,
-        "c_z": cross_section.c_z,
-        "torsion_modulus": cross_section.torsion_modulus,
-        # Section local z (web direction): the panel lies in the global z=0
-        # plane with stiffener webs pointing in +Z.  This pins the beam local
-        # frame so Iy/Iz keep the meaning used by StiffenerCrossSection.
-        "orientation": (0.0, 0.0, 1.0),
-    }
-
-
-def _generate_beam_mesh(
-    panel: PanelGeometry,
-    config: MeshConfig,
-) -> Tuple[Dict[int, Tuple[float, float, float]], Dict[int, Tuple[List[int], Dict[str, float]]]]:
-    """Generate separate beam nodes/elements for longitudinal stiffeners."""
-    nodes: Dict[int, Tuple[float, float, float]] = {}
-    elements: Dict[int, Tuple[List[int], Dict[str, float]]] = {}
-    cross_section = _stiffener_cross_section_dict(panel)
-    n_div = _safe_divisions(config.beam_num_divisions)
-    num_stiffeners = max(int(panel.num_stiffeners), 1)
-    spacing = panel.stiffener_spacing if panel.stiffener_spacing > 0.0 else panel.width / (num_stiffeners + 1)
-    eccentricity = np.array([0.0, 0.0, panel.stiffener_height], dtype=float)
-
-    start_node_id = 10000
-    start_elem_id = 20000
-    for s in range(num_stiffeners):
-        y_pos = (s + 1) * spacing
-        for i in range(n_div + 1):
-            node_id = start_node_id + s * (n_div + 1) + i
-            nodes[node_id] = (i * panel.length / n_div, y_pos, panel.stiffener_height)
-        for i in range(n_div):
-            n1 = start_node_id + s * (n_div + 1) + i
-            n2 = n1 + 1
-            elem_id = start_elem_id + s * n_div + i
-            data = dict(cross_section)
-            data["eccentricity"] = eccentricity
-            elements[elem_id] = ([n1, n2], data)
-    return nodes, elements
-
-
-def _generate_beam_mesh_shared_nodes(
-    panel: PanelGeometry,
-    config: MeshConfig,
-    shell_nodes: Dict[int, Tuple[float, float, float]],
-) -> Tuple[Dict[int, Tuple[float, float, float]], Dict[int, Tuple[List[int], Dict[str, Any]]]]:
-    """Deprecated helper kept only for import compatibility."""
-    raise ValueError("Shared-node stiffener mesh is disabled; use interpolated eccentric MPC coupling instead.")
-
-
-def _shape_functions_4node(xi: float, eta: float) -> np.ndarray:
-    return np.array(
-        [
-            0.25 * (1.0 - xi) * (1.0 - eta),
-            0.25 * (1.0 + xi) * (1.0 - eta),
-            0.25 * (1.0 + xi) * (1.0 + eta),
-            0.25 * (1.0 - xi) * (1.0 + eta),
-        ],
-        dtype=float,
-    )
-
-
-def _shape_functions_8node(xi: float, eta: float) -> np.ndarray:
-    return np.array(
-        [
-            -0.25 * (1.0 - xi) * (1.0 - eta) * (1.0 + xi + eta),
-            -0.25 * (1.0 + xi) * (1.0 - eta) * (1.0 - xi + eta),
-            -0.25 * (1.0 + xi) * (1.0 + eta) * (1.0 - xi - eta),
-            -0.25 * (1.0 - xi) * (1.0 + eta) * (1.0 + xi - eta),
-            0.5 * (1.0 - xi**2) * (1.0 - eta),
-            0.5 * (1.0 + xi) * (1.0 - eta**2),
-            0.5 * (1.0 - xi**2) * (1.0 + eta),
-            0.5 * (1.0 - xi) * (1.0 - eta**2),
-        ],
-        dtype=float,
-    )
-
-
-@dataclass(frozen=True)
-class _StructuredShellGrid:
-    """Reusable axis-aligned shell-cell index for coupling-point lookup."""
-
-    x_edges: np.ndarray
-    y_edges: np.ndarray
-    cells: Dict[Tuple[int, int], Tuple[List[int], float]]
-
-
-def _build_structured_shell_grid_index(
-    shell_nodes: Dict[int, Tuple[float, float, float]],
-    shell_elements: Dict[int, Tuple[List[int], float]],
-    tolerance: float,
-) -> Optional[_StructuredShellGrid]:
-    """Build a structured-cell index once, or return ``None`` for irregular meshes."""
-
-    tol = max(float(tolerance), 1.0e-10)
-    records: List[Tuple[float, float, float, float, List[int], float]] = []
-    x_edges: set[float] = set()
-    y_edges: set[float] = set()
-    try:
-        for node_ids, thickness in shell_elements.values():
-            corner_coords = np.asarray([shell_nodes[node_id] for node_id in node_ids[:4]], dtype=float)
-            xmin = float(np.min(corner_coords[:, 0]))
-            xmax = float(np.max(corner_coords[:, 0]))
-            ymin = float(np.min(corner_coords[:, 1]))
-            ymax = float(np.max(corner_coords[:, 1]))
-            if xmax - xmin <= tol or ymax - ymin <= tol:
-                return None
-            # The fast index is intentionally limited to axis-aligned cells.
-            for x_value, y_value in corner_coords[:, :2]:
-                if min(abs(float(x_value) - xmin), abs(float(x_value) - xmax)) > tol:
-                    return None
-                if min(abs(float(y_value) - ymin), abs(float(y_value) - ymax)) > tol:
-                    return None
-            qxmin = round(xmin / tol) * tol
-            qxmax = round(xmax / tol) * tol
-            qymin = round(ymin / tol) * tol
-            qymax = round(ymax / tol) * tol
-            x_edges.update((qxmin, qxmax))
-            y_edges.update((qymin, qymax))
-            records.append((qxmin, qxmax, qymin, qymax, list(node_ids), float(thickness)))
-    except (KeyError, TypeError, ValueError):
-        return None
-
-    xs = np.asarray(sorted(x_edges), dtype=float)
-    ys = np.asarray(sorted(y_edges), dtype=float)
-    nx = int(xs.size - 1)
-    ny = int(ys.size - 1)
-    if nx <= 0 or ny <= 0 or nx * ny != len(records):
-        return None
-
-    x_lookup = {float(value): index for index, value in enumerate(xs[:-1])}
-    y_lookup = {float(value): index for index, value in enumerate(ys[:-1])}
-    cells: Dict[Tuple[int, int], Tuple[List[int], float]] = {}
-    for xmin, xmax, ymin, ymax, node_ids, thickness in records:
-        i = x_lookup.get(float(xmin))
-        j = y_lookup.get(float(ymin))
-        if i is None or j is None:
-            return None
-        if abs(float(xs[i + 1]) - xmax) > tol or abs(float(ys[j + 1]) - ymax) > tol:
-            return None
-        if (i, j) in cells:
-            return None
-        cells[(i, j)] = (node_ids, thickness)
-    if len(cells) != nx * ny:
-        return None
-    return _StructuredShellGrid(xs, ys, cells)
-
-
-def _interpolate_shell_point(
-    x: float,
-    y: float,
-    node_ids: List[int],
-    shell_nodes: Dict[int, Tuple[float, float, float]],
-    tolerance: float,
-) -> Optional[Tuple[List[int], np.ndarray, np.ndarray]]:
-    """Return interpolation weights and point for one axis-aligned shell cell."""
-
-    tol = max(float(tolerance), 1.0e-10)
-    corner_coords = np.asarray([shell_nodes[node_id] for node_id in node_ids[:4]], dtype=float)
-    xmin, xmax = float(np.min(corner_coords[:, 0])), float(np.max(corner_coords[:, 0]))
-    ymin, ymax = float(np.min(corner_coords[:, 1])), float(np.max(corner_coords[:, 1]))
-    if x < xmin - tol or x > xmax + tol or y < ymin - tol or y > ymax + tol:
-        return None
-    dx = xmax - xmin
-    dy = ymax - ymin
-    if dx <= tol or dy <= tol:
-        return None
-    xi = float(np.clip(2.0 * (x - xmin) / dx - 1.0, -1.0, 1.0))
-    eta = float(np.clip(2.0 * (y - ymin) / dy - 1.0, -1.0, 1.0))
-    weights = _shape_functions_8node(xi, eta) if len(node_ids) == 8 else _shape_functions_4node(xi, eta)
-    shell_coords = np.asarray([shell_nodes[node_id] for node_id in node_ids], dtype=float)
-    return list(node_ids), weights, weights @ shell_coords
-
-
-def _locate_shell_element_at_xy(
-    x: float,
-    y: float,
-    shell_nodes: Dict[int, Tuple[float, float, float]],
-    shell_elements: Dict[int, Tuple[List[int], float]],
-    tolerance: float,
-    grid_index: Optional[_StructuredShellGrid] = None,
-) -> Optional[Tuple[List[int], np.ndarray, np.ndarray]]:
-    """Find the shell element containing an x/y point and return node ids, weights and shell point."""
-    tol = max(float(tolerance), 1.0e-10)
-
-    # Build on demand for direct callers; mesh generation passes a shared
-    # index so hundreds of beam nodes do not rebuild the same grid.
-    index = grid_index or _build_structured_shell_grid_index(shell_nodes, shell_elements, tol)
-    if index is not None:
-        i = int(np.searchsorted(index.x_edges, x) - 1)
-        j = int(np.searchsorted(index.y_edges, y) - 1)
-        i = max(0, min(i, len(index.x_edges) - 2))
-        j = max(0, min(j, len(index.y_edges) - 2))
-        candidate = index.cells.get((i, j))
-        if candidate is not None:
-            located = _interpolate_shell_point(x, y, candidate[0], shell_nodes, tol)
-            if located is not None:
-                return located
-
-    # Fallback to sequential search
-    for node_ids, _thickness in shell_elements.values():
-        located = _interpolate_shell_point(x, y, list(node_ids), shell_nodes, tol)
-        if located is not None:
-            return located
-    return None
-
-
-def _generate_coupling_elements(
-    panel: PanelGeometry,
-    config: MeshConfig,
-    shell_nodes: Dict[int, Tuple[float, float, float]],
-    shell_elements: Dict[int, Tuple[List[int], float]],
-    beam_nodes: Dict[int, Tuple[float, float, float]],
-) -> Dict[int, Tuple[int, List[int], np.ndarray, np.ndarray]]:
-    """Generate interpolated eccentric beam-shell MPC coupling elements."""
-    coupling_elements: Dict[int, Tuple[int, List[int], np.ndarray, np.ndarray]] = {}
-    elem_id = 30000
-    grid_index = _build_structured_shell_grid_index(shell_nodes, shell_elements, config.tolerance)
-    for beam_node_id, beam_coords_tuple in beam_nodes.items():
-        beam_coords = np.asarray(beam_coords_tuple, dtype=float)
-        located = _locate_shell_element_at_xy(
-            beam_coords[0],
-            beam_coords[1],
-            shell_nodes,
-            shell_elements,
-            config.tolerance,
-            grid_index,
+    ).as_dict()
+    for element_id, node_ids in mesh.beams.items():
+        element_type = QuadraticBeamElement if len(node_ids) == 3 else BeamElement
+        model.add_element(
+            int(element_id),
+            element_type(
+                int(element_id),
+                list(node_ids),
+                material_name=material_name,
+                cross_section=dict(section),
+            ),
         )
-        if located is None:
-            continue
-        shell_node_ids, shape_weights, shell_point = located
-        eccentricity = beam_coords - shell_point
-        coupling_elements[elem_id] = (beam_node_id, shell_node_ids, shape_weights, eccentricity)
-        elem_id += 1
-    return coupling_elements
 
 
-def _edge_node_sets(
-    panel: PanelGeometry,
-    nodes: Dict[int, Tuple[float, float, float]],
-    tolerance: float,
-) -> Dict[str, List[int]]:
-    """Return all shell nodes lying on the four rectangular panel edges."""
-    L = panel.length
-    W = panel.width
-    tol = max(float(tolerance), 1.0e-9, 1.0e-8 * max(abs(L), abs(W), 1.0))
-    edge_nodes = {"x0": [], "xL": [], "y0": [], "yW": []}
-    for node_id, coords in nodes.items():
-        x, y, _ = coords
-        if abs(x) <= tol:
-            edge_nodes["x0"].append(node_id)
-        if abs(x - L) <= tol:
-            edge_nodes["xL"].append(node_id)
-        if abs(y) <= tol:
-            edge_nodes["y0"].append(node_id)
-        if abs(y - W) <= tol:
-            edge_nodes["yW"].append(node_id)
-    edge_nodes["x0"].sort(key=lambda nid: nodes[nid][1])
-    edge_nodes["xL"].sort(key=lambda nid: nodes[nid][1])
-    edge_nodes["y0"].sort(key=lambda nid: nodes[nid][0])
-    edge_nodes["yW"].sort(key=lambda nid: nodes[nid][0])
-    edge_nodes["all"] = sorted(set(edge_nodes["x0"] + edge_nodes["xL"] + edge_nodes["y0"] + edge_nodes["yW"]))
-    return edge_nodes
+def _install_couplings(
+    model: "FEModel",
+    mesh: NeutralMesh,
+    *,
+    material_name: str = "steel",
+) -> None:
+    for element_id, coupling in mesh.couplings.items():
+        model.add_element(
+            int(element_id),
+            InterpolatedBeamShellMPCElement(
+                int(element_id),
+                beam_node_id=int(coupling.beam_node),
+                shell_node_ids=list(coupling.plate_nodes),
+                shape_weights=np.asarray(coupling.weights, dtype=float),
+                eccentricity=np.asarray(coupling.eccentricity, dtype=float),
+                material_name=material_name,
+            ),
+        )
 
 
 def _unique_node_ids(*node_lists: List[int]) -> List[int]:
-    seen = set()
+    seen: set[int] = set()
     ordered: List[int] = []
     for node_list in node_lists:
         for node_id in node_list:
@@ -905,45 +503,98 @@ def _unique_node_ids(*node_lists: List[int]) -> List[int]:
     return ordered
 
 
-def _add_custom_support(model: "FEModel", name: str, node_ids: List[int], dof_constraints: Dict[str, float]) -> None:
+def _add_custom_support(
+    model: "FEModel",
+    name: str,
+    node_ids: List[int],
+    dof_constraints: Dict[str, float],
+) -> None:
     from .boundary import BoundaryCondition
 
-    node_ids = _unique_node_ids(node_ids)
-    if node_ids:
-        model.add_boundary_condition(BoundaryCondition(name, node_ids, dof_constraints))
+    unique_ids = _unique_node_ids(node_ids)
+    if unique_ids:
+        model.add_boundary_condition(BoundaryCondition(name, unique_ids, dof_constraints))
 
 
-def _add_boundary_conditions(
+def _add_panel_boundary_conditions(
     model: "FEModel",
     panel: PanelGeometry,
-    shell_nodes: Dict[int, Tuple[float, float, float]],
-    config: Optional[MeshConfig] = None,
+    edges: Dict[str, List[int]],
 ) -> None:
-    """Add edge-based support conditions to the model."""
-    config = config or MeshConfig()
-    edges = _edge_node_sets(panel, shell_nodes, config.tolerance)
+    """Interpret legacy support labels against ANYmesher's panel node sets."""
+
     support = (panel.in_plane_support or "").strip().lower()
     rotational = (panel.rotational_support or "").strip().upper()
-
     longitudinal_edges = _unique_node_ids(edges["y0"], edges["yW"])
     transverse_edges = _unique_node_ids(edges["x0"], edges["xL"])
     all_edge_nodes = edges["all"]
 
     if support == "integrated":
-        _add_custom_support(model, "Integrated_edge_translations", all_edge_nodes, {"ux": 0.0, "uy": 0.0, "uz": 0.0})
+        _add_custom_support(
+            model,
+            "Integrated_edge_translations",
+            all_edge_nodes,
+            {"ux": 0.0, "uy": 0.0, "uz": 0.0},
+        )
     elif support == "girder - long":
-        _add_custom_support(model, "Longitudinal_girder_edges", longitudinal_edges, {"ux": 0.0, "uy": 0.0, "uz": 0.0})
+        _add_custom_support(
+            model,
+            "Longitudinal_girder_edges",
+            longitudinal_edges,
+            {"ux": 0.0, "uy": 0.0, "uz": 0.0},
+        )
         _add_custom_support(model, "Transverse_reference_ux", edges["x0"][:1], {"ux": 0.0})
     elif support == "girder - trans":
-        _add_custom_support(model, "Transverse_girder_edges", transverse_edges, {"ux": 0.0, "uy": 0.0, "uz": 0.0})
+        _add_custom_support(
+            model,
+            "Transverse_girder_edges",
+            transverse_edges,
+            {"ux": 0.0, "uy": 0.0, "uz": 0.0},
+        )
         _add_custom_support(model, "Longitudinal_reference_uy", edges["y0"][:1], {"uy": 0.0})
     else:
         _add_custom_support(model, "Reference_out_of_plane", all_edge_nodes[:1], {"uz": 0.0})
 
     if rotational == "CL":
-        _add_custom_support(model, "Clamped_edge_rotations", all_edge_nodes, {"rx": 0.0, "ry": 0.0, "rz": 0.0})
+        _add_custom_support(
+            model,
+            "Clamped_edge_rotations",
+            all_edge_nodes,
+            {"rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
     elif rotational == "FS":
-        _add_custom_support(model, "Fixed_simple_longitudinal_rotations", longitudinal_edges, {"rx": 0.0, "ry": 0.0, "rz": 0.0})
+        _add_custom_support(
+            model,
+            "Fixed_simple_longitudinal_rotations",
+            longitudinal_edges,
+            {"rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+
+
+def generate_stiffened_panel_mesh(
+    panel: PanelGeometry,
+    config: Optional[MeshConfig] = None,
+) -> "FEModel":
+    """Build a solver model from ANYmesher's neutral stiffened-panel mesh."""
+
+    from .fe_core import FEModel
+
+    config = config or MeshConfig()
+    if config.use_shared_nodes:
+        raise ValueError(
+            "use_shared_nodes=True is no longer supported for eccentric stiffeners. "
+            "Use separate beam nodes with interpolated beam-shell MPC constraints instead."
+        )
+
+    neutral = neutral_stiffened_panel_mesh(_neutral_panel(panel), _neutral_config(config))
+    model = FEModel(name=f"StiffenedPanel_{panel.length}x{panel.width}")
+    _add_legacy_steel(model, density=7850.0, yield_stress=235.0e6)
+    _install_nodes(model, neutral)
+    _install_shells(model, neutral, thickness=panel.plate_thickness)
+    _install_panel_beams(model, neutral, panel)
+    _install_couplings(model, neutral)
+    _add_panel_boundary_conditions(model, panel, panel_edge_nodes(neutral))
+    return model
 
 
 def generate_simple_panel_mesh(
@@ -954,21 +605,24 @@ def generate_simple_panel_mesh(
     num_divisions_y: int = 4,
     use_8node_elements: bool = False,
 ) -> "FEModel":
-    """Generate a simple rectangular shell panel mesh for testing."""
-    from .elements import ShellElement
+    """Build the legacy solver panel from an ANYmesher neutral primitive."""
+
     from .fe_core import FEModel
 
-    config = MeshConfig(shell_num_divisions_x=num_divisions_x, shell_num_divisions_y=num_divisions_y, use_8node_shells=use_8node_elements)
+    neutral = neutral_simple_panel_mesh(
+        length,
+        width,
+        thickness,
+        num_divisions_x=num_divisions_x,
+        num_divisions_y=num_divisions_y,
+        use_8node_elements=use_8node_elements,
+    )
     panel = PanelGeometry(length=length, width=width, plate_thickness=thickness)
-    shell_nodes, shell_elements = _generate_shell_mesh(panel, config)
     model = FEModel(name=f"SimplePanel_{length}x{width}")
-    model.add_material("steel", 210.0e9, 0.3)
-    model.current_material = "steel"
-    for node_id, coords in shell_nodes.items():
-        model.add_node(node_id, coords[0], coords[1], coords[2])
-    for elem_id, (node_ids, elem_thickness) in shell_elements.items():
-        model.add_element(elem_id, ShellElement(elem_id, node_ids, material_name="steel", thickness=elem_thickness))
-    _add_boundary_conditions(model, panel, shell_nodes, config)
+    _add_legacy_steel(model)
+    _install_nodes(model, neutral)
+    _install_shells(model, neutral, thickness=thickness)
+    _add_panel_boundary_conditions(model, panel, panel_edge_nodes(neutral))
     return model
 
 
@@ -977,89 +631,67 @@ def generate_beam_mesh(
     num_divisions: int = 10,
     cross_section: Optional[Dict[str, float]] = None,
 ) -> "FEModel":
-    """Generate a simple cantilever beam mesh."""
+    """Build the legacy fixed-end solver beam from an ANYmesher primitive."""
+
     from .boundary import FixedSupport
     from .elements import BeamElement
     from .fe_core import FEModel
 
+    neutral = neutral_beam_mesh(length, num_divisions=num_divisions)
     model = FEModel(name=f"SimpleBeam_{length}")
-    model.add_material("steel", 210.0e9, 0.3)
-    model.current_material = "steel"
-    if cross_section is None:
-        cross_section = {"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6}
-    n_div = _safe_divisions(num_divisions)
-    for i in range(n_div + 1):
-        model.add_node(i + 1, i * length / n_div, 0.0, 0.0)
-    for i in range(n_div):
-        model.add_element(i + 1, BeamElement(i + 1, [i + 1, i + 2], material_name="steel", cross_section=cross_section))
+    _add_legacy_steel(model)
+    _install_nodes(model, neutral)
+    section = cross_section or {
+        "area": 0.01,
+        "Iy": 1.0e-6,
+        "Iz": 1.0e-6,
+        "J": 1.0e-6,
+    }
+    for element_id, node_ids in neutral.beams.items():
+        model.add_element(
+            int(element_id),
+            BeamElement(
+                int(element_id),
+                list(node_ids),
+                material_name="steel",
+                cross_section=section,
+            ),
+        )
     model.add_boundary_condition(FixedSupport("Fixed_1", [1]))
     return model
 
 
-def verify_mesh_quality(model: "FEModel") -> Dict[str, Any]:
-    """Analyze and verify mesh quality metrics (aspect ratio, warping)."""
+def _neutral_shell_mesh_from_model(model: "FEModel") -> NeutralMesh:
+    """Flatten solver shell geometry for canonical ANYmesher quality checks."""
+
     from .elements import ShellElement
 
-    aspect_ratios = []
-    warps = []
-    shell_count = 0
-
-    for elem in model.mesh.elements.values():
-        if not isinstance(elem, ShellElement):
+    neutral = NeutralMesh()
+    for element_id, element in model.mesh.elements.items():
+        if not isinstance(element, ShellElement):
             continue
-        shell_count += 1
-        coords = elem.get_node_coordinates(model.mesh)
-        corner_coords = coords[:4]
+        node_ids = tuple(int(node_id) for node_id in element.node_ids)
+        target = neutral.tris if len(node_ids) in (3, 6) else neutral.quads
+        target[int(element_id)] = node_ids
+        for node_id in node_ids:
+            neutral.nodes[node_id] = np.asarray(model.mesh.nodes[node_id].coords(), dtype=float)
+    return neutral
 
-        e1 = corner_coords[1] - corner_coords[0]
-        e2 = corner_coords[2] - corner_coords[1]
-        e3 = corner_coords[3] - corner_coords[2]
-        e4 = corner_coords[0] - corner_coords[3]
 
-        l1 = float(np.linalg.norm(e1))
-        l2 = float(np.linalg.norm(e2))
-        l3 = float(np.linalg.norm(e3))
-        l4 = float(np.linalg.norm(e4))
+def verify_mesh_quality(model: "FEModel") -> Dict[str, Any]:
+    """Return the historical dict facade over ANYmesher's quality report."""
 
-        lengths = [l1, l2, l3, l4]
-        max_l = max(lengths)
-        min_l = min(lengths)
+    return verify_neutral_mesh_quality(_neutral_shell_mesh_from_model(model)).as_dict()
 
-        ar = max_l / max(min_l, 1.0e-15)
-        aspect_ratios.append(ar)
 
-        # Calculate warp
-        n_raw = np.cross(e1, corner_coords[2] - corner_coords[0])
-        n_norm = np.linalg.norm(n_raw)
-        if n_norm > 1.0e-15:
-            n = n_raw / n_norm
-            d = abs(float(np.dot(corner_coords[3] - corner_coords[0], n)))
-            avg_l = sum(lengths) / 4.0
-            warp = d / max(avg_l, 1.0e-15)
-        else:
-            warp = 0.0
-        warps.append(warp)
-
-    warnings = []
-    max_ar = float(np.max(aspect_ratios)) if aspect_ratios else 1.0
-    mean_ar = float(np.mean(aspect_ratios)) if aspect_ratios else 1.0
-    max_warp = float(np.max(warps)) if warps else 0.0
-
-    if max_ar > 5.0:
-        warnings.append(
-            f"High aspect ratio detected (max AR = {max_ar:.2f}). "
-            "Highly stretched elements can reduce solver accuracy. Consider refining the mesh divisions."
-        )
-    if max_warp > 0.05:
-        warnings.append(
-            f"Significant element warp detected (max warp = {max_warp:.4f}). "
-            "Warped shell elements can lose accuracy. Ensure plate geometries are flat or sufficiently refined."
-        )
-
-    return {
-        "num_shell_elements": shell_count,
-        "max_aspect_ratio": max_ar,
-        "mean_aspect_ratio": mean_ar,
-        "max_warp": max_warp,
-        "warnings": warnings,
-    }
+__all__ = [
+    "InterpolatedBeamShellMPCElement",
+    "MeshConfig",
+    "PanelGeometry",
+    "RigidLidMPCElement",
+    "StiffenerCrossSection",
+    "generate_beam_mesh",
+    "generate_simple_panel_mesh",
+    "generate_stiffened_panel_mesh",
+    "verify_mesh_quality",
+]

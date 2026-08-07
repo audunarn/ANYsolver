@@ -67,13 +67,13 @@ contact/fracture coverage.
 
 | Module | Responsibility |
 | --- | --- |
-| `fe_core.py` | `FEModel`, mesh, nodes, materials, point masses, revisions, and DOF numbering. |
-| `materials.py` | Runtime-checkable structural material protocol, isotropic/orthotropic compliance dispatch, Hill-48 strength data, validation, and shell/beam material reductions. |
+| `fe_core.py` | `FEModel`, mesh, nodes, material registration, point masses, revisions, and DOF numbering. |
+| `materials.py` | Compatibility facade over ANYmaterial's structural protocol, isotropic/orthotropic compliance, Hill-48 data, validation, and shell/beam reductions. |
 | `sections.py` | Public runtime-checkable generalized shell/beam section contracts, component orders, coercion, and validation. |
 | `shell_sections.py` / `beam_sections.py` | Concrete pre-integrated `A/B/D/As` shell and coupled 6x6 beam section implementations. |
 | `elements.py` | Triangle/quad shells, linear/quadratic Timoshenko beams, coupling elements, element matrices, nonlinear response, Mindlin initial-stress operators, and stress recovery. |
 | `boundary.py` | Supports, prescribed DOFs, load cases, combinations, dead/current-area follower pressure, acceleration loads, in-plane edge loads, and the exact follower-pressure load tangent. |
-| `mesh_gen.py` | Rectangular panel, stiffened-panel, and beam mesh generation with interpolated eccentric coupling and mesh-quality checks. |
+| `mesh_gen.py` | Solver adapters over ANYmesher's neutral panel/beam meshes, including FEModel conversion, support conventions, and exact interpolated eccentric coupling. |
 
 `ShellElement` accepts 3-, 4-, 6-, or 8-node connectivity. Production mesh
 generation currently focuses on quadrilateral panel layouts, while normalized
@@ -90,15 +90,16 @@ a profile-aware fiber layout that is recentered/rescaled to preserve `A`,
 middle node lies at the chord midpoint. Curved members are currently segmented
 with 2-node beams.
 
-`StructuralMaterial` is intentionally owned by ANYsolver and contains only
-`name`, `density`, `elastic_symmetry`, and a 6-by-6 engineering compliance in
-Voigt order `[11,22,33,23,13,12]`. `FEModel.register_material()` therefore
-accepts a future ANYmaterial object structurally without importing that
-repository. The built-in `Material` remains isotropic and backward compatible;
-`OrthotropicMaterial` carries the nine 3-D engineering constants and optional
-Hill-48/hardening data. Registration validates compliance symmetry, reciprocal
-Poisson behavior, positive definiteness, density, and supported symmetry.
-General anisotropy fails explicitly.
+`StructuralMaterial` is owned by ANYmaterial and contains only `name`,
+`density`, `elastic_symmetry`, and a 6-by-6 engineering compliance in Voigt
+order `[11,22,33,23,13,12]`. `FEModel.register_material()` consumes that public
+structural contract. The root `Material` name is the canonical ANYmaterial
+isotropic object retained at the old import path for compatibility;
+`OrthotropicMaterial` likewise comes from ANYmaterial and carries the nine 3-D
+engineering constants and optional Hill-48/hardening data. Registration
+validates compliance symmetry, reciprocal Poisson behavior, positive
+definiteness, density, and supported symmetry. General anisotropy fails
+explicitly.
 
 Shell material orientation is an element property. `material_direction` is
 projected into the shell plane and `material_angle_deg` is applied about the
@@ -113,8 +114,8 @@ Generalized sections are separate from materials. A
 into each shell frame. A `GeneralizedBeamSectionContract` supplies a local 6x6
 section stiffness from generalized strains
 `[eps_x,gamma_xy,gamma_xz,kappa_x,kappa_y,kappa_z]` to resultants
-`[N,V_y,V_z,T,M_y,M_z]`. These protocols are structural so future ANYmaterial
-objects need no ANYsolver base class. Optional shell mass/rotary inertia per
+`[N,V_y,V_z,T,M_y,M_z]`. These solver-owned section protocols are structural,
+so material objects need no ANYsolver base class. Optional shell mass/rotary inertia per
 area and beam 6x6 mass per length override legacy mass; omitted values retain
 the attached material/geometry mass path.
 

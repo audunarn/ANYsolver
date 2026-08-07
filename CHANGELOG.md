@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Release 0.2.0 extraction boundary: material behavior now comes from
+  `ANYmaterial`, neutral geometry/meshing from `ANYmesher`, and SESAM/CalculiX
+  parsing and writing from `ANYfileio`. ANYsolver retains solver-specific
+  FEModel adapters, MPC elements, boundary interpretation, external execution,
+  comparisons, and the 0.2.x legacy import facades. Deterministic FE baselines
+  remain unchanged.
 - Add dependency-free generalized section contracts: pre-integrated shell
   `A/B/D/As` with membrane-bending coupling and optional areal inertia, plus a
   coupled beam 6x6 stiffness and optional mass-per-length law. Generated

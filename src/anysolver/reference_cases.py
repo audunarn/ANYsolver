@@ -25,6 +25,12 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from anyfileio.calculix import (
+    classify_geometry,
+    read_nodes_and_element_count,
+    summarize_deck,
+)
+
 
 DEFAULT_REFERENCE_ROOTS = (
     "tests/reference_cases",
@@ -196,90 +202,25 @@ def _case_insensitive_sidecar(inp_path: Path, suffix: str) -> Optional[Path]:
     return None
 
 
-def _parse_inp_nodes_and_element_count(inp_path: Path, max_lines: int = 200_000) -> Tuple[np.ndarray, int]:
-    """Parse node coordinates and count elements from a CalculiX/Abaqus input file.
+def _parse_inp_nodes_and_element_count(
+    inp_path: Path,
+    max_lines: int = 200_000,
+) -> Tuple[np.ndarray, int]:
+    """Compatibility wrapper over ANYfileio's conservative INP reader."""
 
-    This parser is deliberately conservative and only reads enough to classify
-    and summarize a reference case.  It is not a complete input deck parser.
-    """
-    nodes: List[Tuple[float, float, float]] = []
-    element_count = 0
-    section: Optional[str] = None
-
-    try:
-        with inp_path.open("r", encoding="utf-8", errors="ignore") as handle:
-            for line_number, raw_line in enumerate(handle, start=1):
-                if line_number > max_lines:
-                    break
-                line = raw_line.strip()
-                if not line or line.startswith("**"):
-                    continue
-                if line.startswith("*"):
-                    keyword = line.split(",", 1)[0].strip().lower()
-                    if keyword == "*node":
-                        section = "node"
-                    elif keyword == "*element":
-                        section = "element"
-                    else:
-                        section = None
-                    continue
-
-                if section == "node":
-                    parts = [part.strip() for part in line.split(",")]
-                    if len(parts) < 4:
-                        continue
-                    try:
-                        nodes.append((float(parts[1]), float(parts[2]), float(parts[3])))
-                    except ValueError:
-                        continue
-                elif section == "element":
-                    parts = [part.strip() for part in line.split(",")]
-                    if len(parts) >= 2:
-                        element_count += 1
-    except OSError:
-        return np.zeros((0, 3), dtype=float), 0
-
-    if not nodes:
-        return np.zeros((0, 3), dtype=float), element_count
-    return np.asarray(nodes, dtype=float), element_count
+    return read_nodes_and_element_count(inp_path, max_lines=max_lines)
 
 
 def classify_reference_case_from_nodes(nodes: np.ndarray) -> str:
-    """Classify a reference case from node coordinates as flat_plate, cylinder or unknown."""
-    nodes = np.asarray(nodes, dtype=float)
-    if nodes.ndim != 2 or nodes.shape[1] != 3 or nodes.shape[0] == 0:
-        return "unknown"
+    """Compatibility wrapper over ANYfileio's geometry classifier."""
 
-    span = np.ptp(nodes, axis=0)
-    max_span = max(float(np.max(span)), 1.0)
-    if float(np.min(span)) < 1.0e-8 * max_span:
-        return "flat_plate"
-
-    for columns in ((0, 1), (0, 2), (1, 2)):
-        radius = np.linalg.norm(nodes[:, columns] - np.mean(nodes[:, columns], axis=0), axis=1)
-        radius_mean = float(np.mean(radius))
-        radius_std = float(np.std(radius))
-        if radius_mean > 0.0 and radius_std / radius_mean < 0.10:
-            return "cylinder"
-
-    return "unknown"
+    return classify_geometry(nodes)
 
 
 def summarize_inp_geometry(inp_path: Path) -> Dict[str, Any]:
-    nodes, element_count = _parse_inp_nodes_and_element_count(inp_path)
-    if nodes.size:
-        bbox_min = tuple(float(v) for v in np.min(nodes, axis=0))
-        bbox_max = tuple(float(v) for v in np.max(nodes, axis=0))
-    else:
-        bbox_min = (0.0, 0.0, 0.0)
-        bbox_max = (0.0, 0.0, 0.0)
-    return {
-        "kind": classify_reference_case_from_nodes(nodes),
-        "node_count": int(nodes.shape[0]),
-        "element_count": int(element_count),
-        "bbox_min": bbox_min,
-        "bbox_max": bbox_max,
-    }
+    """Compatibility wrapper over ANYfileio's neutral deck summary."""
+
+    return summarize_deck(inp_path)
 
 
 def parse_calculix_shell_convergence_file(

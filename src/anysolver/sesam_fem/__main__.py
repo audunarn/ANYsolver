@@ -1,4 +1,4 @@
-"""Command line helpers for SESAM formatted FEM files."""
+"""Compatibility CLI over ANYfileio's SESAM syntax and solver adapters."""
 
 from __future__ import annotations
 

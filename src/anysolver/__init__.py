@@ -6,7 +6,7 @@ buckling analysis, incremental geometric/material nonlinear statics,
 corotational large-rotation response, current-area follower pressure, implicit
 transient dynamics, limited rigid-sphere contact and engineering erosion,
 generated-geometry/capacity workflows, material-history-aware result recovery,
-and SESAM formatted FEM interchange.
+and solver adapters over ANYfileio's SESAM/CalculiX interchange models.
 
 All nodes use ``ux, uy, uz, rx, ry, rz`` in SI units. Supports and beam-shell
 MPCs share the affine ``u = T q + u0`` reduction, and K/M/C/KG/F assembly stays
@@ -318,6 +318,7 @@ from .linalg import (
 from .mass_properties import MassProperties, calculate_mass_properties, element_mass_points
 from .modal import ModalMode, ModalResult, solve_free_vibration
 from .mesh_gen import (
+    InterpolatedBeamShellMPCElement,
     MeshConfig,
     PanelGeometry,
     StiffenerCrossSection,
@@ -397,7 +398,7 @@ from .sesam_fem import (
     write_sesam_fem_document,
 )
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 __all__ = [
     # Core classes
@@ -680,6 +681,7 @@ __all__ = [
     "ModalResult",
     "solve_free_vibration",
     # Mesh generation
+    "InterpolatedBeamShellMPCElement",
     "MeshConfig",
     "PanelGeometry",
     "StiffenerCrossSection",
@@ -739,7 +741,7 @@ __all__ = [
     "shear_patch_metric",
     "thin_plate_locking_sweep",
     "write_s4_validity_report",
-    # SESAM formatted FEM import/export
+    # SESAM compatibility facade and solver-model adapters (syntax: ANYfileio)
     "FemRawRecord",
     "SesamFemDocument",
     "SesamFemError",

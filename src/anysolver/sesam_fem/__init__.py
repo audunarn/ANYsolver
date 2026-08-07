@@ -1,4 +1,4 @@
-"""Pure-Python SESAM formatted FEM import/export support."""
+"""Compatibility facade plus the ANYfileio-to-ANYsolver model adapter."""
 
 from .diagnostics import FemDiagnostic, SesamFemError
 from .document import (

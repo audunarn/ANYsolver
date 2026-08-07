@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, List, Dict, Tuple, Optional, Union
 import numpy as np
 
+from anymaterial import IsotropicMaterial as Material
+
 from .materials import (
     Hill48Yield,
     OrthotropicMaterial,
@@ -120,51 +122,6 @@ class Node:
     def coords(self) -> np.ndarray:
         """Return node coordinates as numpy array."""
         return np.array([self.x, self.y, self.z])
-
-
-@dataclass
-class Material:
-    """Material properties for FE elements.
-
-    ``hardening_curve`` (e.g. a DNVC208MaterialCurve) enables material
-    nonlinearity in the incremental nonlinear solver; None keeps the
-    material linear elastic.
-    """
-    name: str
-    elastic_modulus: float  # Pa
-    poisson_ratio: float
-    density: float = 0.0  # kg/m^3
-    yield_stress: float = 0.0  # Pa
-    hardening_curve: Optional[object] = None
-
-    @property
-    def elastic_symmetry(self) -> str:
-        """Elastic symmetry declared through the structural material contract."""
-
-        return "isotropic"
-
-    @property
-    def shear_modulus(self) -> float:
-        """Calculate shear modulus."""
-        return self.elastic_modulus / (2 * (1 + self.poisson_ratio))
-
-    def elastic_compliance_matrix(self) -> np.ndarray:
-        """Return 3D engineering compliance in ``[11,22,33,23,13,12]`` order."""
-
-        E = float(self.elastic_modulus)
-        nu = float(self.poisson_ratio)
-        G = float(self.shear_modulus)
-        return np.array(
-            [
-                [1.0 / E, -nu / E, -nu / E, 0.0, 0.0, 0.0],
-                [-nu / E, 1.0 / E, -nu / E, 0.0, 0.0, 0.0],
-                [-nu / E, -nu / E, 1.0 / E, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0 / G, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 1.0 / G, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / G],
-            ],
-            dtype=float,
-        )
 
 
 @dataclass

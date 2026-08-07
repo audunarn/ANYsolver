@@ -5,17 +5,37 @@ shell, stiffened-panel, and cylindrical-shell analysis. It is an engineering
 solver with an explicit qualification scope, not a general-purpose CAD,
 contact, or fracture platform.
 
-Install the released package with:
+After compatible sibling releases are available on the package index, install
+the released package with:
 
 ```powershell
 python -m pip install ANYsolver
 ```
 
-For coordinated local development with ANYstructure:
+The extracted dependencies are not published yet. For coordinated local
+development, install the sibling checkouts first:
 
 ```powershell
+python -m pip install -e C:\Github\ANYmaterial
+python -m pip install -e C:\Github\ANYmesh
+python -m pip install -e C:\Github\ANYio
 python -m pip install -e C:\Github\ANYsolver
 ```
+
+### Release order for the 0.2 line
+
+ANYsolver 0.2 is not an independently installable release. Publish compatible
+0.1.x distributions to the same target index in this order:
+
+1. `ANYmaterial` and `ANYmesher` (either order).
+2. `ANYfileio`, which depends on both.
+3. `ANYsolver` 0.2.x, which depends on all three.
+
+Apply that order separately to TestPyPI and PyPI. The publish workflow checks
+the selected target index and refuses to build or upload ANYsolver unless
+`ANYmaterial>=0.1,<0.2`, `ANYmesher>=0.1,<0.2`, and
+`ANYfileio>=0.1,<0.2` can already be resolved there. CI uses sibling source
+checkouts until those releases exist.
 
 Core analyses and the solver-owned generated-geometry workflow are available
 directly from `anysolver`; the lightweight normalized flat-panel and cylinder
@@ -52,9 +72,9 @@ the normalization helpers with leading underscores are implementation details.
 
 The generic `GeneratedGeometryFEM*` names are the preferred workflow API.
 Historical `AnyStructureFEM*` aliases remain available only for downstream
-compatibility. Material selection is centralized in
-`dnv_c208_steel_properties()` and `dnv_c208_steel_curve()`; the runtime facade
-uses the same canonical table and validation.
+compatibility. Material selection is owned by `ANYmaterial`; the root-level
+`dnv_c208_steel_properties()` and `dnv_c208_steel_curve()` names are temporary
+compatibility imports over its canonical table and validation.
 
 The source code and tests are authoritative. Generated reports under
 `reports/` are dated evidence snapshots and must be regenerated after solver
@@ -65,7 +85,7 @@ changes before making release claims.
 | Area | Implemented functionality |
 | --- | --- |
 | Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. |
-| Materials | Backward-compatible isotropic materials plus homogeneous 3-D engineering-constant orthotropic materials through a solver-owned compliance-matrix contract. Orthotropic shells support material direction/angle and Hill-48 plasticity; orthotropic beams use local material axes and an explicit section torsional rigidity. |
+| Materials | Constitutive objects, elastic reductions, Hill-48 yield data, and DNV curves come from `ANYmaterial`; ANYsolver owns their use in element integration and nonlinear solution. Orthotropic shells support material direction/angle and Hill-48 plasticity; orthotropic beams use local material axes and an explicit section torsional rigidity. |
 | Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; isotropic, rotated orthotropic, or pre-integrated generalized `A/B/D/As` section stiffness. Generalized sections retain membrane-bending coupling and recover exact strains/resultants without inventing ply stresses. |
 | Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, direction-dependent shear, torsion, consistent/lumped mass options, geometric stiffness, optional fiber-section plasticity, or a fully coupled local 6x6 generalized section law. |
 | Coupling | Coincident or eccentric beam-shell kinematics through explicit interpolated MPC transformations. |
@@ -80,17 +100,22 @@ changes before making release claims.
 | Imperfections | Stress-free eigenmode, member-bow, plate-wave, flange-twist, explicit, and composite imperfection fields. |
 | Initial fields | Element-local shell membrane/bending stress or membrane/curvature prestrain, arbitrary configured beam-fiber stress/prestrain distributions, zero-external-load equilibration, admissibility checks, and provenance kept separate from geometric imperfections. |
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |
-| Interchange | Pure-Python SESAM formatted FEM record/document parsing, guarded round-trip writing, supported semantic import to `FEModel`, coordinate transforms, beam orientation, and SIF shell-stress reading by load case. |
+| Interchange | `ANYfileio` owns SESAM/CalculiX parsing, validation, neutral semantics, and guarded writing. ANYsolver retains only neutral-record-to-`FEModel` adapters and compatibility imports for the 0.2 line. |
 | Results | Result provenance; unified elastic or committed shell-layer/beam-fiber stress recovery; Gauss-point membrane-force and bending-moment resultants for generated-geometry prestress; guarded Zienkiewicz-Zhu-style patch recovery for qualified shell neighborhoods; selected recovery; reaction filtering; validation diagnostics; deterministic baselines; benchmarks; and generated qualification reports. |
-| External verification | Reproducible CalculiX input generation plus opt-in isolated execution, FRD/DAT parsing, solver provenance, and tolerance-controlled analytical comparison, including an oriented orthotropic S4 constant-stress reference. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
+| External verification | Reproducible CalculiX model flattening, opt-in isolated execution, solver provenance, and tolerance-controlled analytical comparison, using `ANYfileio` for deck writing and FRD/DAT parsing. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
 
-`StructuralMaterial` is a runtime-checkable, solver-owned protocol containing
+`StructuralMaterial` is a runtime-checkable, ANYmaterial-owned protocol containing
 `name`, `density`, `elastic_symmetry`, and
 `elastic_compliance_matrix()` in engineering Voigt order
 `[11, 22, 33, 23, 13, 12]`. `FEModel.register_material()` accepts compatible
-external objects without an ANYmaterial dependency;
-`FEModel.add_orthotropic_material()` constructs the built-in
+external objects through that contract;
+`FEModel.add_orthotropic_material()` constructs the canonical
 `OrthotropicMaterial`.
+
+ANYmesher owns neutral mesh topology, numbering, quality and coupling records;
+this package converts them into solver elements and exact constraints.
+ANYfileio owns SESAM and CalculiX syntax; this package converts neutral records
+to FEModel objects and retains execution and validation evidence.
 
 `GeneralizedShellSectionProtocol` and `GeneralizedBeamSectionContract` are
 likewise solver-owned structural interfaces. The built-in

@@ -50,7 +50,11 @@ def test_public_all_symbols_importable() -> None:
 def test_root_import_does_not_eagerly_load_optional_accelerators() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(repo_root / "src")
+    env["PYTHONPATH"] = os.pathsep.join(
+        path
+        for path in (str(repo_root / "src"), env.get("PYTHONPATH", ""))
+        if path
+    )
     code = (
         "import sys; import anysolver; "
         "assert 'pypardiso' not in sys.modules; "

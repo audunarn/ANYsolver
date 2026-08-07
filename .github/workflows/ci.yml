@@ -4,6 +4,16 @@ on:
   push:
   pull_request:
 
+# The extracted family packages are real runtime dependencies but are not on
+# PyPI yet.  Installing the sibling repositories first lets pip satisfy
+# ANYsolver's declared requirements; these lines can disappear after the
+# initial releases are published.
+env:
+  SIBLINGS: >-
+    git+https://github.com/audunarn/ANYmaterial
+    git+https://github.com/audunarn/ANYmesh
+    git+https://github.com/audunarn/ANYio
+
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
@@ -20,9 +30,62 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
+      - run: python -m pip install ${{ env.SIBLINGS }}
       - run: python -m pip install -e ".[dev]"
       - run: python -c "import anysolver; print(anysolver.__version__)"
       - run: python -m pytest
+
+  wheel:
+    name: Wheel smoke on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ["3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYmaterial
+          path: .ecosystem/ANYmaterial
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYmesh
+          path: .ecosystem/ANYmesh
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYio
+          path: .ecosystem/ANYio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Build and check distributions
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -c "import glob, subprocess, sys; subprocess.check_call([sys.executable, '-m', 'twine', 'check', *glob.glob('dist/*')])"
+      - name: Install wheel and unpublished siblings into a clean target
+        run: >-
+          python -c "import glob, subprocess, sys;
+          subprocess.check_call([sys.executable, '-m', 'pip', 'install',
+          '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',
+          '.ecosystem/ANYmesh', '.ecosystem/ANYio',
+          *glob.glob('dist/*.whl')])"
+      - name: Import the installed wheel without site packages
+        run: >-
+          python -S -c "import sys; from importlib.metadata import version;
+          from pathlib import Path; sys.path.insert(0,
+          str(Path('.wheel-smoke').resolve())); import anysolver;
+          from anysolver import Material, StiffenerCrossSection;
+          from anysolver.sesam_fem import SesamFemDocument;
+          assert anysolver.__version__ == version('ANYsolver');
+          assert Material.__module__.startswith('anymaterial.');
+          assert StiffenerCrossSection.__module__.startswith('anymesher.');
+          assert SesamFemDocument.__module__.startswith('anyfileio.');
+          print('wheel import OK', anysolver.__version__)"
 
   numba:
     runs-on: ${{ matrix.os }}
@@ -39,6 +102,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
+      - run: python -m pip install ${{ env.SIBLINGS }}
       - run: python -m pip install -e ".[dev,numba]"
       - run: python -m pytest tests/test_batch_b_activation.py tests/test_nonlinear_performance_batch_b.py tests/test_nonlinear_performance_batch_c.py
 
@@ -57,6 +121,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
+      - run: python -m pip install ${{ env.SIBLINGS }}
       - run: python -m pip install -e ".[dev,pardiso]"
       - run: python -c "import pypardiso"
       - run: python -m pytest tests/test_fe_solver_infrastructure.py

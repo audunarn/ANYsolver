@@ -3286,6 +3286,8 @@ class BeamElement(Element):
         for idx in indices:
             sign = 1.0 if trial[idx] >= 0.0 else -1.0
             dgamma = 0.0
+            lower = 0.0
+            upper = abs_trial[idx] / E
             H = (
                 0.0
                 if curve is None
@@ -3308,10 +3310,32 @@ class BeamElement(Element):
                         curve.hardening_modulus(np.array([alpha_trial]))[0]
                     )
                 residual = abs_trial[idx] - E * dgamma - sy
-                if abs(residual) <= 1.0e-8 * max(sy, 1.0):
+                # At very large trial strains, ``abs_trial - E * dgamma``
+                # loses several hundred pascals to floating-point cancellation.
+                # Do not demand a residual below the resolution of the terms
+                # being subtracted.  The physical tolerance remains governing
+                # for ordinary structural strain ranges.
+                roundoff_tolerance = 16.0 * np.finfo(float).eps * max(
+                    abs_trial[idx], abs(E * dgamma), abs(sy), 1.0
+                )
+                convergence_tolerance = max(
+                    1.0e-8 * max(abs(sy), 1.0), roundoff_tolerance
+                )
+                if abs(residual) <= convergence_tolerance:
                     converged = True
                     break
-                dgamma = max(0.0, dgamma + residual / max(E + H, _SMALL))
+                if residual > 0.0:
+                    lower = dgamma
+                else:
+                    upper = dgamma
+                newton = dgamma + residual / max(E + H, _SMALL)
+                if (
+                    not np.isfinite(newton)
+                    or newton <= lower
+                    or newton >= upper
+                ):
+                    newton = 0.5 * (lower + upper)
+                dgamma = newton
             if not converged:
                 raise RuntimeError(
                     "Beam fiber return mapping did not converge after 30 iterations"

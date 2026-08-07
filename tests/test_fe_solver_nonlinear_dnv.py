@@ -20,8 +20,8 @@ from anysolver.imperfections import (
 from anysolver.material_curves import (
     DNVC208MaterialCurve,
     FiberSectionPlasticityConfig,
-    dnv_c208_steel_properties,
     dnv_c208_steel_curve,
+    dnv_c208_steel_properties,
 )
 from anysolver.nonlinear_static import (
     DisplacementControl,
@@ -61,66 +61,6 @@ def _guided_beam_model(curve=None, fiber=False) -> FEModel:
     return model
 
 
-def test_dnv_c208_steel_curve_factory_matches_low_fractile_tables():
-    s355 = dnv_c208_steel_curve("S355", 0.010)
-    assert s355.sigma_prop == pytest.approx(320.0e6)
-    assert s355.sigma_yield == pytest.approx(357.0e6)
-    assert s355.sigma_yield_2 == pytest.approx(363.3e6)
-    assert s355.eps_p_y1 == pytest.approx(0.004)
-    assert s355.eps_p_y2 == pytest.approx(0.015)
-    assert s355.K == pytest.approx(740.0e6)
-    assert s355.n == pytest.approx(0.166)
-
-    s420 = dnv_c208_steel_curve("S420", 0.020)
-    assert s420.sigma_prop == pytest.approx(360.6e6)
-    assert s420.sigma_yield == pytest.approx(402.4e6)
-    assert s420.sigma_yield_2 == pytest.approx(407.3e6)
-    assert s420.eps_p_y2 == pytest.approx(0.012)
-    assert s420.K == pytest.approx(703.0e6)
-    assert s420.n == pytest.approx(0.14)
-
-    s460 = dnv_c208_steel_curve("S460", 0.050)
-    assert s460.sigma_prop == pytest.approx(374.2e6)
-    assert s460.sigma_yield == pytest.approx(417.5e6)
-    assert s460.sigma_yield_2 == pytest.approx(421.2e6)
-
-    with pytest.raises(NotImplementedError):
-        dnv_c208_steel_curve("S355", 0.010, fractile="mean")
-
-
-@pytest.mark.parametrize(
-    ("grade", "maximum_thickness"),
-    [
-        ("S235", 0.100),
-        ("S275", 0.063),
-        ("S355", 0.100),
-        ("S420", 0.063),
-        ("S460", 0.063),
-    ],
-)
-def test_dnv_c208_automatic_thickness_selection_fails_outside_grade_table(
-    grade: str,
-    maximum_thickness: float,
-) -> None:
-    with pytest.raises(ValueError, match="thickness must be positive"):
-        dnv_c208_steel_properties(grade, 0.0)
-    with pytest.raises(ValueError, match="outside the built-in RP-C208 range"):
-        dnv_c208_steel_properties(grade, maximum_thickness + 0.001)
-
-
-def test_dnv_c208_validates_grade_and_explicit_thickness_class() -> None:
-    with pytest.raises(ValueError, match="Unsupported RP-C208 steel grade"):
-        dnv_c208_steel_properties("S500", 0.010)
-    with pytest.raises(ValueError, match="Unsupported thickness_class"):
-        dnv_c208_steel_properties("S355", 0.010, thickness_class="not-a-table-row")
-
-    selected = dnv_c208_steel_properties("s355", 0.200, thickness_class="40 < t <= 63")
-    assert selected["grade"] == "S355"
-    assert selected["thickness_class"] == "40 < t <= 63"
-    assert selected["thickness_mm"] == pytest.approx(200.0)
-    assert selected["sigma_yield"] == pytest.approx(336.9e6)
-
-
 @pytest.mark.parametrize(
     ("grade", "thickness", "thickness_class"),
     [
@@ -140,6 +80,45 @@ def test_runtime_dnv_properties_facade_matches_canonical_table(
     runtime = runtime_dnv_c208_steel_properties(grade, thickness, thickness_class=thickness_class)
 
     assert runtime == canonical
+
+
+def test_beam_fiber_return_map_respects_float_resolution_at_extreme_trial_strain() -> None:
+    curve = dnv_c208_steel_curve("S355", 0.012)
+    evaluations = {"flow": 0, "hardening": 0}
+
+    class _CountingCurve:
+        def flow_stress(self, alpha):
+            evaluations["flow"] += 1
+            return curve.flow_stress(alpha)
+
+        def hardening_modulus(self, alpha):
+            evaluations["hardening"] += 1
+            return curve.hardening_modulus(alpha)
+
+    strain = np.array([7_536_054.89910133])
+
+    stress, tangent, plastic_strain, alpha = BeamElement._uniaxial_return_map(
+        strain,
+        state=None,
+        E=E,
+        curve=_CountingCurve(),
+    )
+
+    flow_stress = curve.flow_stress(alpha)
+    residual = np.abs(stress) - flow_stress
+    roundoff_tolerance = 16.0 * np.finfo(float).eps * max(
+        float(np.max(np.abs(E * strain))),
+        float(np.max(np.abs(E * plastic_strain))),
+        float(np.max(np.abs(flow_stress))),
+        1.0,
+    )
+    assert np.all(np.isfinite(stress))
+    assert np.all((tangent >= 0.0) & (tangent <= E))
+    assert abs(residual[0]) <= roundoff_tolerance
+    assert flow_stress[0] >= curve.flow_stress(np.zeros(1))[0]
+    assert plastic_strain[0] == pytest.approx(alpha[0])
+    assert evaluations["flow"] <= 8
+    assert evaluations["hardening"] <= 8
 
 
 def test_eigenmode_imperfection_scales_to_requested_amplitude():
