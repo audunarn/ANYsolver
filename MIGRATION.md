@@ -19,11 +19,31 @@ ANYsolver is a curated snapshot, not a filtered-history import.
 
 There is intentionally no `fe_solver` compatibility package.
 
+## 0.2 extraction boundary
+
+Version 0.2 removes the in-repository copies of material, neutral meshing, and
+file-format implementations. Their canonical homes are now:
+
+| Former ANYsolver surface | Canonical implementation |
+| --- | --- |
+| `anysolver.materials`, material curves | `anymaterial` |
+| neutral parts of `anysolver.mesh_gen` | `anymesher` |
+| SESAM records/documents/SIF and CalculiX readers/writer | `anyfileio` |
+
+The old ANYsolver imports remain as thin compatibility facades through the
+0.2.x line. Solver-owned behavior stays here: FEModel construction, exact MPC
+constraints, support-label interpretation, CalculiX execution/provenance and
+comparison evaluation. The extraction provenance and import replacements are
+recorded here; each extracted package carries its own detailed migration note
+and parity tests.
+
 ## Included
 
 - Numerical model, element, assembly, linear, modal, buckling, nonlinear, continuation, dynamic, contact, damage, recovery, and validation modules.
 - Generated-geometry and headless runtime analysis facades.
-- SESAM formatted FEM and SIF support.
+- Neutral SESAM-to-`FEModel` adapters and 0.2 compatibility imports over
+  `ANYfileio`; SESAM syntax, documents, SIF parsing, and writing live in that
+  package.
 - FE-only tests, deterministic baseline, benchmarks, qualification scripts, and current solver documentation.
 
 ## Excluded

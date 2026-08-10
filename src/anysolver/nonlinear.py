@@ -21,6 +21,8 @@ from .matrix_assembly import (
     assemble_load_vector,
     assemble_stiffness_matrix,
 )
+from .recovery import ResourceConfig
+from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
     from .boundary import LoadCase
@@ -136,6 +138,7 @@ def _estimate_limit_load_factor(
     return current_step.load_factor
 
 
+@resource_threaded
 def solve_nonlinear_load_stepping(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
@@ -144,6 +147,7 @@ def solve_nonlinear_load_stepping(
     num_steps: int = 20,
     stability_tolerance: float = 1.0e-3,
     stop_at_limit: bool = True,
+    resource_config: Optional[ResourceConfig] = None,
 ) -> NonlinearLimitPointResult:
     """Run proportional load stepping and stop near the first limit point.
 

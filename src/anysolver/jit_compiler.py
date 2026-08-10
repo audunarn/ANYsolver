@@ -16,6 +16,8 @@ import os
 import sys
 from typing import Any, Callable, TypeVar
 
+from .threading_policy import native_thread_scope
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -101,8 +103,14 @@ def set_numba_threads(thread_count: int | None) -> int | None:
 def numba_thread_scope(thread_count: int | None):
     """Temporarily set Numba threads for one solver phase."""
     previous = set_numba_threads(thread_count)
+    inner_native_threads = 1 if JIT_ENABLED and thread_count is not None and int(thread_count) > 1 else None
     try:
-        yield
+        with native_thread_scope(inner_native_threads, phase="parallel_numba_assembly") as report:
+            report["requested_numba_threads"] = None if thread_count is None else int(thread_count)
+            report["active_numba_threads"] = (
+                int(_numba_get_num_threads()) if JIT_ENABLED else None
+            )
+            yield report
     finally:
         if previous is not None:
             _numba_set_num_threads(previous)

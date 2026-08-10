@@ -16,24 +16,33 @@ import re
 import shutil
 import subprocess
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from anyfileio import (
+    CalculixParsedResults,
+    DeckModel,
+    DeckSupport,
+    merge_results as merge_calculix_results,
+    parse_dat as parse_calculix_dat,
+    parse_frd as parse_calculix_frd,
+    write_deck,
+)
+from anymaterial import material_symmetry
+from anymesher import Mesh as NeutralMesh
+
 from .boundary import BoundaryCondition, LoadCase
 from .elements import BeamElement, ShellElement
 from .fe_core import FEModel
-from .materials import elastic_compliance_matrix, material_symmetry
 from .mesh_gen import generate_simple_panel_mesh
 
 
 DEFAULT_EXTERNAL_REFERENCE_PATH = Path("reports/external_references/external_reference_report.json")
 DEFAULT_CALCULIX_RUN_PATH = Path("reports/external_references/runs")
 CALCULIX_EXECUTABLE_ENV = "ANYSOLVER_CALCULIX_EXECUTABLE"
-_DOF_TO_CALCULIX = {"ux": 1, "uy": 2, "uz": 3, "rx": 4, "ry": 5, "rz": 6}
-_FLOAT_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[EeDd][+-]?\d+)?")
 _COMPONENT_INDEX = {
     "x": 0,
     "ux": 0,
@@ -79,120 +88,11 @@ class ExternalReferenceCase:
         }
 
 
-@dataclass
-class CalculixParsedResults:
-    """The result fields needed by the external-reference comparisons."""
-
-    coordinates: Dict[int, Tuple[float, float, float]] = field(default_factory=dict)
-    displacements: Dict[int, Tuple[float, float, float]] = field(default_factory=dict)
-    reaction_forces: Dict[int, Tuple[float, float, float]] = field(default_factory=dict)
-    stresses: Dict[int, Tuple[float, ...]] = field(default_factory=dict)
-    reaction_total: Optional[Tuple[float, float, float]] = None
-    buckling_factors: List[float] = field(default_factory=list)
-    frequencies_hz: List[float] = field(default_factory=list)
-    source_files: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-
-    @property
-    def has_results(self) -> bool:
-        return bool(
-            self.displacements
-            or self.reaction_forces
-            or self.stresses
-            or self.reaction_total is not None
-            or self.buckling_factors
-            or self.frequencies_hz
-        )
-
-    def summary(self) -> Dict[str, Any]:
-        return {
-            "coordinate_nodes": len(self.coordinates),
-            "displacement_nodes": len(self.displacements),
-            "reaction_nodes": len(self.reaction_forces),
-            "stress_nodes": len(self.stresses),
-            "has_reaction_total": self.reaction_total is not None,
-            "buckling_factors": list(self.buckling_factors),
-            "frequencies_hz": list(self.frequencies_hz),
-            "source_files": list(self.source_files),
-            "warnings": list(self.warnings),
-        }
-
-
-def _fmt(value: float) -> str:
-    return f"{float(value):.16g}"
-
-
-def _elastic_symmetry(material: Any) -> str:
-    symmetry = material_symmetry(material)
-    if symmetry not in {"isotropic", "orthotropic"}:
-        raise NotImplementedError(
-            f"CalculiX export does not support material {getattr(material, 'name', '<unnamed>')!r} "
-            f"with elastic_symmetry={symmetry!r}."
-        )
-    return symmetry
-
-
-def _material_block(materials: Mapping[str, Any]) -> List[str]:
-    lines: List[str] = []
-    for material in materials.values():
-        lines.append(f"*MATERIAL, NAME={material.name}")
-        if _elastic_symmetry(material) == "orthotropic":
-            compliance = elastic_compliance_matrix(material)
-            E1 = 1.0 / float(compliance[0, 0])
-            E2 = 1.0 / float(compliance[1, 1])
-            E3 = 1.0 / float(compliance[2, 2])
-            engineering_constants = (
-                E1,
-                E2,
-                E3,
-                -float(compliance[0, 1]) * E1,
-                -float(compliance[0, 2]) * E1,
-                -float(compliance[1, 2]) * E2,
-                1.0 / float(compliance[5, 5]),
-                1.0 / float(compliance[4, 4]),
-                1.0 / float(compliance[3, 3]),
-            )
-            lines.extend(
-                [
-                    "*ELASTIC, TYPE=ENGINEERING CONSTANTS",
-                    ", ".join(_fmt(value) for value in engineering_constants[:8]),
-                    _fmt(engineering_constants[8]),
-                ]
-            )
-        else:
-            lines.extend(
-                [
-                    "*ELASTIC",
-                    f"{_fmt(material.elastic_modulus)}, {_fmt(material.poisson_ratio)}",
-                ]
-            )
-        if material.density:
-            lines.extend(["*DENSITY", _fmt(material.density)])
-    return lines
-
-
-def _element_type(element: Any) -> str:
-    if isinstance(element, ShellElement):
-        return {3: "S3", 4: "S4", 6: "S6", 8: "S8"}.get(len(element.node_ids), "UNKNOWN")
-    if isinstance(element, BeamElement):
-        return "B31"
-    return "UNKNOWN"
-
-
-def _element_sets_by_type_and_material(model: FEModel) -> Dict[Tuple[str, str], List[int]]:
-    groups: Dict[Tuple[str, str], List[int]] = {}
-    for element_id, element in model.mesh.elements.items():
-        groups.setdefault((_element_type(element), element.material_name), []).append(int(element_id))
-    return groups
-
-
-def _deck_identifier(value: str) -> str:
-    token = re.sub(r"[^A-Za-z0-9_]", "_", str(value))
-    return token or "UNNAMED"
-
-
-def _resolved_shell_material_orientation(model: FEModel, element: ShellElement) -> Tuple[np.ndarray, np.ndarray]:
-    """Resolve the solver shell material axes as global CalculiX vectors."""
+def _resolved_shell_material_orientation(
+    model: FEModel,
+    element: ShellElement,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Resolve solver shell material axes as global CalculiX vectors."""
 
     coords = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
     frame = np.asarray(element._center_frame(coords), dtype=float)
@@ -204,7 +104,9 @@ def _resolved_shell_material_orientation(model: FEModel, element: ShellElement) 
     else:
         supplied = np.asarray(direction, dtype=float).reshape(-1)
         if supplied.size != 3 or not np.all(np.isfinite(supplied)):
-            raise ValueError(f"Shell element {element.element_id} has an invalid material_direction")
+            raise ValueError(
+                f"Shell element {element.element_id} has an invalid material_direction"
+            )
         projected = supplied - float(supplied @ normal) * normal
         norm = float(np.linalg.norm(projected))
         if norm <= 1.0e-12:
@@ -221,29 +123,21 @@ def _resolved_shell_material_orientation(model: FEModel, element: ShellElement) 
     return axis_1, axis_2
 
 
-def _orthotropic_shell_section_block(
+def _neutral_calculix_model(
     model: FEModel,
-    element: ShellElement,
-    material_name: str,
-    element_type: str,
-) -> List[str]:
-    suffix = f"{_deck_identifier(material_name)}_{int(element.element_id)}"
-    elset = f"E_{element_type}_{suffix}"
-    orientation = f"ORI_{suffix}"
-    axis_1, axis_2 = _resolved_shell_material_orientation(model, element)
-    return [
-        f"*ELSET, ELSET={elset}",
-        str(int(element.element_id)),
-        f"*ORIENTATION, NAME={orientation}",
-        ", ".join(_fmt(value) for value in np.concatenate((axis_1, axis_2))),
-        f"*SHELL SECTION, ELSET={elset}, MATERIAL={material_name}, ORIENTATION={orientation}",
-        _fmt(element.thickness),
-    ]
+    load_case: Optional[LoadCase],
+) -> DeckModel:
+    """Flatten native solver objects into ANYfileio's neutral deck contract."""
 
+    neutral = NeutralMesh()
+    for node_id, node in model.mesh.nodes.items():
+        neutral.nodes[int(node_id)] = np.asarray(node.coords(), dtype=float)
 
-def _section_blocks(model: FEModel) -> Tuple[List[str], List[str]]:
-    lines: List[str] = []
-    assumptions: List[str] = []
+    material_of_element: Dict[int, str] = {}
+    thickness_of_element: Dict[int, float] = {}
+    beam_sections: Dict[int, Mapping[str, Any]] = {}
+    shell_orientations: Dict[int, Tuple[np.ndarray, np.ndarray]] = {}
+
     for element_id, element in model.mesh.elements.items():
         if getattr(element, "shell_section", None) is not None:
             raise NotImplementedError(
@@ -259,102 +153,74 @@ def _section_blocks(model: FEModel) -> Tuple[List[str], List[str]]:
                 "the current equivalent RECT beam deck. Use analytical or "
                 "dedicated section-stiffness validation."
             )
-    for (element_type, material_name), element_ids in _element_sets_by_type_and_material(model).items():
-        material = model.get_material(material_name)
-        symmetry = _elastic_symmetry(material)
-        first = model.mesh.elements[element_ids[0]]
-        if isinstance(first, ShellElement) and symmetry == "orthotropic":
-            for element_id in element_ids:
-                element = model.mesh.elements[element_id]
-                if not isinstance(element, ShellElement):
-                    raise TypeError(f"Element set {element_type}/{material_name} mixes shell and non-shell elements")
-                lines.extend(_orthotropic_shell_section_block(model, element, material_name, element_type))
-            assumptions.append(
-                f"Orthotropic shell material axes for {material_name} are exported as explicit "
-                "per-element rectangular orientations."
-            )
+
+        node_ids = tuple(int(node_id) for node_id in getattr(element, "node_ids", ()))
+        if isinstance(element, ShellElement):
+            target = neutral.tris if len(node_ids) in (3, 6) else neutral.quads
+            target[int(element_id)] = node_ids
+            thickness_of_element[int(element_id)] = float(element.thickness)
+            material = model.get_material(element.material_name)
+            if material_symmetry(material) == "orthotropic":
+                shell_orientations[int(element_id)] = _resolved_shell_material_orientation(
+                    model, element
+                )
+        elif isinstance(element, BeamElement):
+            material = model.get_material(element.material_name)
+            if material_symmetry(material) == "orthotropic":
+                element_type = "B32" if len(node_ids) == 3 else "B31"
+                raise NotImplementedError(
+                    "CalculiX reference export cannot faithfully represent orthotropic beam "
+                    f"element set {element_type}/{element.material_name}: the solver's explicit "
+                    "cross_section['torsional_rigidity'] is independent of the equivalent RECT "
+                    "section. Use analytical orthotropic beam validation."
+                )
+            neutral.beams[int(element_id)] = node_ids
+            beam_sections[int(element_id)] = dict(element.cross_section)
+        else:
             continue
-        if isinstance(first, BeamElement) and symmetry == "orthotropic":
-            raise NotImplementedError(
-                "CalculiX reference export cannot faithfully represent orthotropic beam "
-                f"element set {element_type}/{material_name}: the solver's explicit "
-                "cross_section['torsional_rigidity'] is independent of the equivalent RECT section. "
-                "Use analytical orthotropic beam validation."
+        material_of_element[int(element_id)] = str(element.material_name)
+
+    supports: List[DeckSupport] = []
+    for boundary_condition in model.boundary_conditions:
+        dofs = tuple(
+            str(name)
+            for name, value in boundary_condition.dof_constraints.items()
+            if abs(float(value)) == 0.0
+        )
+        for node_id in boundary_condition.node_ids:
+            if dofs:
+                supports.append(DeckSupport(int(node_id), dofs))
+
+    nodal_loads: Dict[int, Sequence[float]] = {}
+    pressure_of_element: Dict[int, float] = {}
+    gravity: Optional[Tuple[float, float, float]] = None
+    if load_case is not None:
+        nodal_loads = {
+            int(node_id): np.asarray(values, dtype=float)
+            for node_id, values in load_case.nodal_loads.items()
+        }
+        pressure_of_element = {
+            int(element_id): float(value)
+            for element_id, value in load_case.pressure_loads.items()
+        }
+        if load_case.gravity is not None:
+            gravity = tuple(
+                float(value) for value in np.asarray(load_case.gravity, dtype=float).reshape(3)
             )
-        elset = f"E_{element_type}_{material_name}"
-        lines.append(f"*ELSET, ELSET={elset}")
-        for start in range(0, len(element_ids), 16):
-            lines.append(", ".join(str(element_id) for element_id in element_ids[start : start + 16]))
-        if isinstance(first, ShellElement):
-            lines.extend([f"*SHELL SECTION, ELSET={elset}, MATERIAL={material_name}", _fmt(first.thickness)])
-        elif isinstance(first, BeamElement):
-            area = float(first.cross_section.get("area", 0.01))
-            side = np.sqrt(max(area, 1.0e-18))
-            lines.extend([f"*BEAM SECTION, ELSET={elset}, MATERIAL={material_name}, SECTION=RECT", f"{_fmt(side)}, {_fmt(side)}"])
-            square_inertia = area**2 / 12.0
-            iy = float(first.cross_section.get("Iy", square_inertia))
-            iz = float(first.cross_section.get("Iz", square_inertia))
-            if np.isclose(iy, square_inertia, rtol=1.0e-12, atol=0.0) and np.isclose(
-                iz, square_inertia, rtol=1.0e-12, atol=0.0
-            ):
-                assumptions.append(
-                    f"Beam element set {elset} uses a square RECT section preserving area and both bending inertias; "
-                    "the source J value is not represented independently."
-                )
-            else:
-                assumptions.append(
-                    f"Beam element set {elset} is exported as an equivalent square RECT section preserving area; "
-                    "Iy/Iz/J exact matching is not represented in this deck writer."
-                )
-    return lines, assumptions
 
-
-def _boundary_block(model: FEModel) -> List[str]:
-    lines: List[str] = []
-    if not model.boundary_conditions:
-        return lines
-    lines.append("*BOUNDARY")
-    for bc in model.boundary_conditions:
-        for node_id in bc.node_ids:
-            for dof_name, value in bc.dof_constraints.items():
-                if abs(float(value)) > 0.0:
-                    continue
-                dof = _DOF_TO_CALCULIX.get(dof_name)
-                if dof is not None:
-                    lines.append(f"{int(node_id)}, {dof}, {dof}, 0.")
-    return lines
-
-
-def _load_block(load_case: Optional[LoadCase]) -> Tuple[List[str], Dict[str, Any]]:
-    if load_case is None:
-        return [], {"name": None, "nodal_loads": 0, "pressure_loads": 0}
-    lines: List[str] = []
-    if load_case.nodal_loads:
-        lines.append("*CLOAD")
-        for node_id, values in sorted(load_case.nodal_loads.items()):
-            for idx, value in enumerate(np.asarray(values, dtype=float), start=1):
-                if abs(float(value)) > 0.0:
-                    lines.append(f"{int(node_id)}, {idx}, {_fmt(value)}")
-    if load_case.pressure_loads:
-        lines.append("*DLOAD")
-        for element_id, pressure in sorted(load_case.pressure_loads.items()):
-            lines.append(f"{int(element_id)}, P, {_fmt(pressure)}")
-    if load_case.gravity is not None:
-        gx, gy, gz = np.asarray(load_case.gravity, dtype=float).reshape(3)
-        magnitude = float(np.linalg.norm([gx, gy, gz]))
-        if magnitude > 0.0:
-            direction = np.asarray([gx, gy, gz], dtype=float) / magnitude
-            lines.append("*DLOAD")
-            lines.append(
-                f"ALL, GRAV, {_fmt(magnitude)}, "
-                f"{_fmt(direction[0])}, {_fmt(direction[1])}, {_fmt(direction[2])}"
-            )
-    return lines, {
-        "name": load_case.name,
-        "nodal_loads": len(load_case.nodal_loads),
-        "pressure_loads": len(load_case.pressure_loads),
-        "has_gravity": load_case.gravity is not None,
-    }
+    return DeckModel(
+        mesh=neutral,
+        name=model.name,
+        materials=dict(model.materials),
+        material_of_element=material_of_element,
+        thickness_of_element=thickness_of_element,
+        beam_section_of_element=beam_sections,
+        shell_orientation_of_element=shell_orientations,
+        supports=tuple(supports),
+        nodal_loads=nodal_loads,
+        pressure_of_element=pressure_of_element,
+        gravity=gravity,
+    )
 
 
 def write_calculix_input_deck(
@@ -366,77 +232,28 @@ def write_calculix_input_deck(
     metadata: Optional[Mapping[str, Any]] = None,
     comparisons: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> ExternalReferenceCase:
-    """Write a deterministic CalculiX-style input deck and sidecar metadata."""
+    """Write through ANYfileio while preserving the solver verification sidecar."""
 
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     model.apply_boundary_conditions()
-    lines: List[str] = [
-        "** Generated by anysolver.external_references",
-        f"** Model: {model.name}",
-        "*NODE",
-    ]
-    for node_id, node in sorted(model.mesh.nodes.items()):
-        lines.append(f"{int(node_id)}, {_fmt(node.x)}, {_fmt(node.y)}, {_fmt(node.z)}")
-    lines.append("*NSET, NSET=NALL")
-    all_node_ids = [int(node_id) for node_id in sorted(model.mesh.nodes)]
-    for start in range(0, len(all_node_ids), 16):
-        lines.append(", ".join(str(node_id) for node_id in all_node_ids[start : start + 16]))
-    support_node_ids = sorted(
-        {
-            int(node_id)
-            for boundary_condition in model.boundary_conditions
-            for node_id in boundary_condition.node_ids
-            if boundary_condition.dof_constraints
-        }
+    report = write_deck(
+        _neutral_calculix_model(model, load_case),
+        output,
+        analysis=analysis,
+        num_modes=5,
+        overwrite=True,
     )
-    if support_node_ids:
-        lines.append("*NSET, NSET=SUPPORT")
-        for start in range(0, len(support_node_ids), 16):
-            lines.append(", ".join(str(node_id) for node_id in support_node_ids[start : start + 16]))
-    reaction_set = "SUPPORT" if support_node_ids else "NALL"
-    for (element_type, _material_name), element_ids in sorted(_element_sets_by_type_and_material(model).items()):
-        if element_type == "UNKNOWN":
-            continue
-        lines.append(f"*ELEMENT, TYPE={element_type}")
-        for element_id in element_ids:
-            element = model.mesh.elements[element_id]
-            lines.append(f"{int(element_id)}, " + ", ".join(str(int(node_id)) for node_id in element.node_ids))
-    supported_element_ids = [
-        int(element_id)
-        for element_id, element in sorted(model.mesh.elements.items())
-        if _element_type(element) != "UNKNOWN"
-    ]
-    if supported_element_ids:
-        lines.append("*ELSET, ELSET=ALL")
-        for start in range(0, len(supported_element_ids), 16):
-            lines.append(", ".join(str(element_id) for element_id in supported_element_ids[start : start + 16]))
-    lines.extend(_material_block(model.materials))
-    section_lines, assumptions = _section_blocks(model)
-    lines.extend(section_lines)
-    lines.extend(_boundary_block(model))
-    load_lines, load_summary = _load_block(load_case)
-    if analysis == "buckling":
-        lines.extend(["*STEP", "*BUCKLE", "5"])
-    elif analysis == "frequency":
-        lines.extend(["*STEP", "*FREQUENCY", "5"])
-    else:
-        lines.extend(["*STEP", "*STATIC"])
-    lines.extend(load_lines)
-    lines.extend(
-        [
-            "*NODE FILE",
-            "U, RF",
-            "*EL FILE",
-            "S",
-            f"*NODE PRINT, NSET={reaction_set}, TOTALS=ONLY",
-            "RF",
-            "*END STEP",
-            "",
-        ]
-    )
-    output.write_text("\n".join(lines), encoding="utf-8")
 
+    if load_case is None:
+        load_summary = {"name": None, "nodal_loads": 0, "pressure_loads": 0}
+    else:
+        load_summary = {
+            "name": load_case.name,
+            "nodal_loads": len(load_case.nodal_loads),
+            "pressure_loads": len(load_case.pressure_loads),
+            "has_gravity": load_case.gravity is not None,
+        }
     model_summary = {
         "name": model.name,
         "nodes": len(model.mesh.nodes),
@@ -444,25 +261,33 @@ def write_calculix_input_deck(
         "materials": sorted(model.materials),
         "analysis": analysis,
     }
-    sidecar = output.with_suffix(".json")
+    assumptions = tuple(
+        item
+        for item in report.assumptions
+        if item != "No loads were supplied, so the static step is unloaded."
+    )
+    sidecar = report.path.with_suffix(".json")
     payload = {
-        "name": output.stem,
+        "name": report.path.stem,
         "kind": analysis,
         "model_summary": model_summary,
         "load_summary": load_summary,
-        "assumptions": assumptions,
+        "assumptions": list(assumptions),
         "metadata": dict(metadata or {}),
         "comparisons": [dict(item) for item in comparisons or ()],
     }
-    sidecar.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    sidecar.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return ExternalReferenceCase(
-        name=output.stem,
+        name=report.path.stem,
         kind=analysis,
-        inp_path=output,
+        inp_path=report.path,
         metadata_path=sidecar,
         model_summary=model_summary,
         load_summary=load_summary,
-        assumptions=tuple(assumptions),
+        assumptions=assumptions,
         comparisons=tuple(dict(item) for item in comparisons or ()),
     )
 
@@ -910,215 +735,6 @@ def generate_external_reference_cases(output_dir: Path | str = Path("reports/ext
         _cylindrical_shell_case(root),
         _orthotropic_membrane_case(root),
     ]
-
-
-def _numbers(line: str) -> List[float]:
-    return [float(token.replace("D", "E").replace("d", "e")) for token in _FLOAT_RE.findall(line)]
-
-
-def _finalize_frd_dataset(
-    parsed: CalculixParsedResults,
-    name: Optional[str],
-    values: Mapping[int, Tuple[float, ...]],
-) -> None:
-    label = (name or "").strip().upper()
-    if label.startswith("DISP"):
-        parsed.displacements.update({node: tuple(row[:3]) for node, row in values.items() if len(row) >= 3})
-    elif label.startswith("STRESS"):
-        parsed.stresses.update({node: tuple(row[:6]) for node, row in values.items() if len(row) >= 6})
-    elif label in {"RF", "FORC", "FORCE", "REACTION"} or label.startswith("FORC"):
-        parsed.reaction_forces.update({node: tuple(row[:3]) for node, row in values.items() if len(row) >= 3})
-
-
-def parse_calculix_frd(path: Path | str) -> CalculixParsedResults:
-    """Parse ASCII FRD coordinates, displacements, reactions, and stresses.
-
-    CalculiX ``*NODE FILE``/``*EL FILE`` output is ASCII FRD.  Both short and
-    long record widths are accepted; numeric extraction also handles adjacent
-    signed fixed-width fields and Fortran ``D`` exponents.
-    """
-
-    source = Path(path)
-    parsed = CalculixParsedResults(source_files=[str(source)])
-    lines = source.read_text(encoding="utf-8", errors="replace").splitlines()
-    reading_coordinates = False
-    dataset_name: Optional[str] = None
-    dataset_components = 0
-    dataset_header_components = 0
-    dataset_values: Dict[int, Tuple[float, ...]] = {}
-    pending_node: Optional[int] = None
-    pending_values: List[float] = []
-
-    def finish_dataset() -> None:
-        nonlocal dataset_name, dataset_components, dataset_header_components, dataset_values, pending_node, pending_values
-        _finalize_frd_dataset(parsed, dataset_name, dataset_values)
-        dataset_name = None
-        dataset_components = 0
-        dataset_header_components = 0
-        dataset_values = {}
-        pending_node = None
-        pending_values = []
-
-    for line in lines:
-        stripped = line.strip()
-        upper = stripped.upper()
-        if re.match(r"^2C(?:\s|$)", upper):
-            finish_dataset()
-            reading_coordinates = True
-            continue
-        if re.match(r"^(?:3C|100C|9999)(?:\s|$)", upper):
-            reading_coordinates = False
-        if stripped.startswith("-4"):
-            finish_dataset()
-            fields = stripped.split()
-            dataset_name = fields[1] if len(fields) >= 2 else ""
-            if len(fields) >= 3:
-                try:
-                    dataset_header_components = int(fields[2])
-                except ValueError:
-                    dataset_header_components = 0
-            dataset_components = 0
-            reading_coordinates = False
-            continue
-        if stripped.startswith("-5"):
-            fields = stripped.split()
-            # FRD header counts can include derived entities such as displacement
-            # magnitude ``ALL``.  Derived entities are not present in data rows.
-            if len(fields) >= 2 and fields[1].upper() != "ALL":
-                dataset_components += 1
-            continue
-        if stripped.startswith("-3"):
-            if dataset_name is not None:
-                finish_dataset()
-            reading_coordinates = False
-            continue
-        if not stripped.startswith(("-1", "-2")):
-            continue
-
-        values = _numbers(line)
-        if reading_coordinates and stripped.startswith("-1") and len(values) >= 5:
-            parsed.coordinates[int(values[1])] = (float(values[2]), float(values[3]), float(values[4]))
-            continue
-        if dataset_name is None or len(values) < 2:
-            continue
-        if dataset_components <= 0:
-            dataset_components = dataset_header_components
-        if stripped.startswith("-1"):
-            pending_node = int(values[1])
-            pending_values = [float(value) for value in values[2:]]
-        elif pending_node is not None:
-            continuation = [float(value) for value in values[1:]]
-            # Material-dependent records contain a material identifier before
-            # the actual tensor.  Keeping the final N components handles that
-            # form as well as ordinary continuation records.
-            if dataset_components and len(continuation) >= dataset_components:
-                pending_values = continuation[-dataset_components:]
-            else:
-                pending_values.extend(continuation)
-        if pending_node is not None and dataset_components and len(pending_values) >= dataset_components:
-            dataset_values[pending_node] = tuple(pending_values[-dataset_components:])
-            pending_node = None
-            pending_values = []
-    finish_dataset()
-    if not parsed.has_results:
-        parsed.warnings.append("No recognized result dataset was found in the FRD file")
-    return parsed
-
-
-def _spaced_heading(line: str) -> str:
-    return re.sub(r"[^A-Z0-9]+", "", line.upper())
-
-
-def parse_calculix_dat(path: Path | str) -> CalculixParsedResults:
-    """Parse DAT buckling/frequency tables and printed reaction totals."""
-
-    source = Path(path)
-    parsed = CalculixParsedResults(source_files=[str(source)])
-    lines = source.read_text(encoding="utf-8", errors="replace").splitlines()
-    index = 0
-    while index < len(lines):
-        compact = _spaced_heading(lines[index])
-        if "BUCKLINGFACTOROUTPUT" in compact or ("MODENO" in compact and "BUCKLING" in compact):
-            factors: List[float] = []
-            for candidate in lines[index + 1 : index + 60]:
-                candidate_compact = _spaced_heading(candidate)
-                if factors and any(
-                    token in candidate_compact
-                    for token in ("EIGENVALUEOUTPUT", "DISPLACEMENTS", "STRESSES", "FORCES")
-                ):
-                    break
-                values = _numbers(candidate)
-                if len(values) >= 2 and re.match(r"^\s*\d+\s", candidate):
-                    factors.append(float(values[1]))
-            if factors:
-                parsed.buckling_factors = factors
-        elif "EIGENVALUEOUTPUT" in compact:
-            frequencies: List[float] = []
-            for candidate in lines[index + 1 : index + 80]:
-                candidate_compact = _spaced_heading(candidate)
-                if frequencies and any(token in candidate_compact for token in ("DISPLACEMENTS", "STRESSES", "FORCES")):
-                    break
-                values = _numbers(candidate)
-                if len(values) >= 4 and re.match(r"^\s*\d+\s", candidate):
-                    # CalculiX tables list mode, eigenvalue, angular frequency,
-                    # and cycles/time.  The fourth numeric field is frequency.
-                    frequencies.append(float(values[3]))
-            if frequencies:
-                parsed.frequencies_hz = frequencies
-        elif (
-            ("FORCE" in compact or "REACTIONFORCE" in compact)
-            and "FX" in compact
-            and "FY" in compact
-            and "FZ" in compact
-        ):
-            reactions: Dict[int, Tuple[float, float, float]] = {}
-            totals_only = compact.startswith("TOTALFORCE")
-            blank_after_data = 0
-            for candidate in lines[index + 1 : index + 10000]:
-                candidate_compact = _spaced_heading(candidate)
-                values = _numbers(candidate)
-                if "TOTAL" in candidate_compact and len(values) >= 3:
-                    parsed.reaction_total = tuple(float(value) for value in values[-3:])
-                    continue
-                if totals_only and len(values) >= 3:
-                    parsed.reaction_total = tuple(float(value) for value in values[-3:])
-                    break
-                if len(values) >= 4 and re.match(r"^\s*\d+\s", candidate):
-                    reactions[int(values[0])] = tuple(float(value) for value in values[-3:])
-                    blank_after_data = 0
-                    continue
-                if reactions and not candidate.strip():
-                    blank_after_data += 1
-                    if blank_after_data >= 2:
-                        break
-                elif reactions and candidate.strip() and any(
-                    token in candidate_compact
-                    for token in ("DISPLACEMENTS", "STRESSES", "EIGENVALUEOUTPUT", "BUCKLINGFACTOROUTPUT")
-                ):
-                    break
-            parsed.reaction_forces.update(reactions)
-        index += 1
-    if not parsed.has_results:
-        parsed.warnings.append("No recognized result table was found in the DAT file")
-    return parsed
-
-
-def merge_calculix_results(*results: CalculixParsedResults) -> CalculixParsedResults:
-    merged = CalculixParsedResults()
-    for result in results:
-        merged.coordinates.update(result.coordinates)
-        merged.displacements.update(result.displacements)
-        merged.reaction_forces.update(result.reaction_forces)
-        merged.stresses.update(result.stresses)
-        if result.reaction_total is not None:
-            merged.reaction_total = result.reaction_total
-        if result.buckling_factors:
-            merged.buckling_factors = list(result.buckling_factors)
-        if result.frequencies_hz:
-            merged.frequencies_hz = list(result.frequencies_hz)
-        merged.source_files.extend(result.source_files)
-        merged.warnings.extend(result.warnings)
-    return merged
 
 
 def _component_index(component: Any) -> int:

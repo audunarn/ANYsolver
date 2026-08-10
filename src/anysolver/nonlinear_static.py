@@ -37,6 +37,7 @@ from scipy import sparse
 
 from .assembly import build_constraint_transformation
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary
 from .fracture import (
     DeletedElementRecord,
     FractureConfig,
@@ -57,6 +58,7 @@ from .matrix_assembly import (
     assemble_stiffness_matrix,
 )
 from .recovery import ResourceConfig
+from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
     from .boundary import LoadCase
@@ -1556,6 +1558,7 @@ def _solve_static_displacement_control(
     info["strain_summary"] = _nonlinear_state_summary(committed_states)
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
+    info["constraint_postcheck"] = constraint_residual_summary(model, u_final)
     info["result_case"] = make_result_case(
         name="nonlinear_static_displacement_control",
         analysis_type="nonlinear_static",
@@ -1574,6 +1577,7 @@ def _solve_static_displacement_control(
     return NonlinearStaticResult(steps, status, u_final, float(lam), committed_states, info)
 
 
+@resource_threaded
 def solve_static_nonlinear(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
@@ -1717,6 +1721,7 @@ def solve_static_nonlinear(
         "equilibrium_tangent": "K_internal-K_external" if follower_active else "K_internal",
         "convergence_settings": settings.to_dict(),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
+        "thread_policy": thread_policy_diagnostics(resource_config),
     }
     general_tangent = follower_active or (
         kinematics == "corotational"
@@ -2475,6 +2480,7 @@ def solve_static_nonlinear(
         info["load_program_stage_factors"] = load_program.stage_factors(lam)
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
+    info["constraint_postcheck"] = constraint_residual_summary(model, u_final)
     info["result_case"] = make_result_case(
         name="nonlinear_static",
         analysis_type="nonlinear_static",

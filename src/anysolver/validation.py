@@ -8,7 +8,7 @@ preflight checks can lock the supported architecture.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
@@ -79,6 +79,7 @@ class ProductionValidationReport:
     issues: Tuple[ProductionValidationIssue, ...]
     mesh_quality: Dict[str, Any]
     revision_signature: Dict[str, int]
+    constraint_audit: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def errors(self) -> Tuple[ProductionValidationIssue, ...]:
@@ -94,6 +95,7 @@ class ProductionValidationReport:
             "issues": [issue.to_dict() for issue in self.issues],
             "mesh_quality": self.mesh_quality,
             "revision_signature": self.revision_signature,
+            "constraint_audit": self.constraint_audit,
             "error_count": len(self.errors),
             "warning_count": len(self.warnings),
         }
@@ -314,8 +316,21 @@ def validate_production_model(
     from .materials import material_symmetry, material_validation_errors
     from .matrix_assembly import assemble_stiffness_matrix
     from .shell_sections import validate_generalized_shell_section
+    from .constraint_audit import audit_constraints
 
     issues: List[ProductionValidationIssue] = []
+    constraint_audit = audit_constraints(model)
+    for audit_issue in constraint_audit.issues:
+        issues.append(
+            _issue(
+                audit_issue.code,
+                audit_issue.severity,
+                "constraint",
+                audit_issue.dof,
+                audit_issue.message,
+                suggestion="Correct the support/MPC definition before analysis.",
+            )
+        )
     analysis_name = None if analysis_type is None else str(analysis_type).strip().lower()
     mesh_quality: Dict[str, Any] = {
         "shell_count": 0,
@@ -672,4 +687,10 @@ def validate_production_model(
 
     status = "invalid" if any(issue.severity == "error" for issue in issues) else ("warning" if issues else "ok")
     revision_signature = getattr(model, "revision_signature", lambda: {})()
-    return ProductionValidationReport(status, tuple(issues), mesh_quality, revision_signature)
+    return ProductionValidationReport(
+        status,
+        tuple(issues),
+        mesh_quality,
+        revision_signature,
+        constraint_audit.to_dict(),
+    )

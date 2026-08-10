@@ -446,6 +446,103 @@ def assemble_geometric_stiffness_matrix(
     # Retrieve or build cached sparsity pattern
     rows_concat, cols_concat = _get_cached_sparsity_pattern(mesh, "geometric_stiffness")
 
+    # S4 geometric stiffness is especially expensive in the scalar element
+    # loop because every element repeatedly reconstructs the same reference
+    # derivatives and coordinate transforms.  Keep the stress/resultant
+    # sampling in the element contract, but evaluate the common matrix
+    # operator in one compiled batch and cache its immutable geometry.
+    from .elements import ShellElement
+    from .jit_compiler import JIT_ENABLED, JIT_DISABLED_REASON, jit_diagnostics
+    from .vectorized_stiffness import (
+        compute_s4_geometric_stiffness_matrices_jit,
+        prepare_s4_geometric_kinematics_jit,
+    )
+
+    eligible_groups: Dict[Tuple[bytes, bytes], list[Tuple[int, Any]]] = {}
+    for elem_id, element in mesh.elements.items():
+        if isinstance(element, ShellElement) and bool(getattr(element, "_is_4node", False)):
+            points = np.ascontiguousarray(element.gauss_points, dtype=float)
+            weights = np.ascontiguousarray(element.gauss_weights, dtype=float)
+            key = (points.tobytes(), weights.tobytes())
+            eligible_groups.setdefault(key, []).append((int(elem_id), element))
+
+    precomputed: Dict[int, np.ndarray] = {}
+    geometry_cache = getattr(mesh, "_s4_geometric_kinematics_cache", None)
+    if geometry_cache is None:
+        geometry_cache = {}
+        mesh._s4_geometric_kinematics_cache = geometry_cache
+    revisions = getattr(mesh, "revision_signature", lambda: {})()
+    geometry_revision = (
+        int(revisions.get("topology", 0)),
+        int(revisions.get("geometry", 0)),
+    )
+    stale_geometry_keys = [
+        key for key in geometry_cache if not key or key[0] != geometry_revision
+    ]
+    for stale_key in stale_geometry_keys:
+        del geometry_cache[stale_key]
+    geometry_setup_seconds = 0.0
+    kernel_seconds = 0.0
+    cache_hits = 0
+    batched_ids: list[int] = []
+    for group_index, elem_list in enumerate(eligible_groups.values()):
+        first = elem_list[0][1]
+        points = np.ascontiguousarray(first.gauss_points, dtype=float)
+        weights = np.ascontiguousarray(first.gauss_weights, dtype=float)
+        element_ids = tuple(elem_id for elem_id, _element in elem_list)
+        cache_key = (geometry_revision, element_ids, points.tobytes(), weights.tobytes())
+        geometry = geometry_cache.get(cache_key)
+        if geometry is None:
+            coords = np.ascontiguousarray(
+                [element.get_node_coordinates(mesh) for _elem_id, element in elem_list],
+                dtype=float,
+            )
+            geometry_start = time.perf_counter()
+            geometry = prepare_s4_geometric_kinematics_jit(coords, points, weights)
+            geometry_setup_seconds += time.perf_counter() - geometry_start
+            geometry_cache[cache_key] = geometry
+        else:
+            cache_hits += 1
+
+        count = len(elem_list)
+        gp_count = points.shape[0]
+        membrane = np.zeros((count, gp_count, 3), dtype=float)
+        bending = np.zeros_like(membrane)
+        second_moment = np.zeros_like(membrane)
+        for index, (elem_id, element) in enumerate(elem_list):
+            state = _get_element_state(element_states, elem_id, element)
+            membrane[index] = element._membrane_compression_samples(state, gp_count)
+            bending[index] = element._bending_compression_samples(state, gp_count)
+            second_moment[index] = element._stress_second_moment_samples(
+                state,
+                gp_count,
+                membrane[index],
+                element.thickness,
+            )
+        kernel_start = time.perf_counter()
+        matrices = compute_s4_geometric_stiffness_matrices_jit(
+            *geometry,
+            membrane,
+            bending,
+            second_moment,
+        )
+        kernel_seconds += time.perf_counter() - kernel_start
+        for index, (elem_id, _element) in enumerate(elem_list):
+            precomputed[elem_id] = matrices[index]
+            batched_ids.append(elem_id)
+
+    info["diagnostics"]["vectorized_s4_geometric_stiffness"] = {
+        "element_count": len(batched_ids),
+        "group_count": len(eligible_groups),
+        "element_ids": sorted(batched_ids),
+        "geometry_cache_hits": cache_hits,
+        "geometry_setup_seconds": geometry_setup_seconds,
+        "kernel_seconds": kernel_seconds,
+        "jit_enabled": bool(JIT_ENABLED),
+        "jit_disabled_reason": JIT_DISABLED_REASON,
+        "jit": jit_diagnostics(),
+    }
+
     data_list = []
     for elem_id, element in mesh.elements.items():
         elem_start = time.time()
@@ -455,12 +552,15 @@ def assemble_geometric_stiffness_matrix(
             info["skipped_elements"].append(int(elem_id))
             continue
 
-        state = _get_element_state(element_states, int(elem_id), element)
-        getter = getattr(element, "compute_geometric_stiffness_matrix", None)
-        if getter is None:
-            element_matrix = np.zeros((dof_mapping.size, dof_mapping.size), dtype=float)
+        if int(elem_id) in precomputed:
+            element_matrix = precomputed[int(elem_id)]
         else:
-            element_matrix = getter(mesh, material, state)
+            state = _get_element_state(element_states, int(elem_id), element)
+            getter = getattr(element, "compute_geometric_stiffness_matrix", None)
+            if getter is None:
+                element_matrix = np.zeros((dof_mapping.size, dof_mapping.size), dtype=float)
+            else:
+                element_matrix = getter(mesh, material, state)
         element_matrix = _check_element_matrix_shape(
             int(elem_id),
             "geometric_stiffness",
@@ -473,6 +573,7 @@ def assemble_geometric_stiffness_matrix(
         info["num_elements"] += 1
 
     info["state_source"] = "none" if element_states is None else type(element_states).__name__
+    info["diagnostics"]["scalar_element_count"] = int(info["num_elements"] - len(batched_ids))
     info["diagnostics"]["shell_initial_stress_scope"] = (
         "mindlin_translations_and_director_gradients; no_drilling_or_transverse_normal_stress_terms"
     )

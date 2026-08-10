@@ -45,6 +45,66 @@ if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh
 
 
+_INITIAL_FIELD_KEYS = (
+    "initial_membrane_stress",
+    "initial_bending_stress",
+    "initial_membrane_prestrain",
+    "initial_curvature_prestrain",
+    "initial_fiber_stress",
+    "initial_fiber_prestrain",
+)
+
+
+def _state_has_initial_fields(state: Any) -> bool:
+    return isinstance(state, Mapping) and any(key in state for key in _INITIAL_FIELD_KEYS)
+
+
+def _apply_initial_field_shell_overrides(
+    plan: "NonlinearAssemblyPlan",
+    batch: "_ShellBatchPlan",
+    displacements: np.ndarray,
+    committed_states: Mapping[int, Any],
+    tangent: bool,
+    trial_states: Dict[int, Any],
+) -> int:
+    """Replace only initialized shell entries with the scalar exact response.
+
+    The compiled ordinary-shell kernel intentionally has no immutable initial
+    field inputs.  Evaluating the full batch and replacing the uncommon
+    initialized members preserves the fast path for every unaffected shell in
+    the same group without changing the element state contract.
+    """
+
+    model = plan.model
+    displacement_array = np.asarray(displacements, dtype=float)
+    override_count = 0
+    for index, (element_id, element) in enumerate(zip(batch.element_ids, batch.elements)):
+        element_key = int(element_id)
+        state = committed_states.get(element_key)
+        if not _state_has_initial_fields(state):
+            continue
+        if getattr(batch, "_batch_b_initial_fields_supported", False):
+            continue
+        material = model.get_material(element.material_name)
+        force, stiffness, trial_state = element.compute_nonlinear_response(
+            model.mesh,
+            material,
+            displacement_array[batch.dof_mappings[index]],
+            state,
+            plan.num_layers,
+            tangent,
+        )
+        plan.force_values[batch.force_positions[index]] = np.asarray(force, dtype=float).reshape(-1)
+        if tangent and stiffness is not None:
+            plan.tangent_values[batch.tangent_positions[index]] = np.asarray(
+                stiffness, dtype=float
+            ).reshape(-1)
+        if trial_state is not None:
+            trial_states[element_key] = trial_state
+        override_count += 1
+    return override_count
+
+
 @njit(cache=True)
 def _scatter_sum(values: np.ndarray, positions: np.ndarray, output_size: int) -> np.ndarray:
     """Sum flat local values into a precomputed unique global index space."""
@@ -78,6 +138,9 @@ class NonlinearAssemblyTimings:
     force_scatter_seconds: float = 0.0
     tangent_scatter_seconds: float = 0.0
     total_seconds: float = 0.0
+    initial_field_override_seconds: float = 0.0
+    initial_field_override_elements: int = 0
+    initial_field_accelerated_elements: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -90,6 +153,9 @@ class NonlinearAssemblyTimings:
             "force_scatter_seconds": float(self.force_scatter_seconds),
             "tangent_scatter_seconds": float(self.tangent_scatter_seconds),
             "total_seconds": float(self.total_seconds),
+            "initial_field_override_seconds": float(self.initial_field_override_seconds),
+            "initial_field_override_elements": int(self.initial_field_override_elements),
+            "initial_field_accelerated_elements": int(self.initial_field_accelerated_elements),
         }
 
 
@@ -300,6 +366,149 @@ class _ShellBatchPlan:
 
 
 @dataclass
+class _QuadraticBeamBatchPlan:
+    """Persistent geometry and scatter data for elastic Beam3 elements."""
+
+    element_ids: np.ndarray
+    elements: Tuple[Any, ...]
+    dof_mappings: np.ndarray
+    force_positions: np.ndarray
+    tangent_positions: np.ndarray
+    transforms: np.ndarray
+    strain_rows: np.ndarray
+    jacobian_weights: np.ndarray
+    properties: np.ndarray
+
+    @classmethod
+    def build(
+        cls,
+        model: "FEModel",
+        items: Sequence[Tuple[int, Any, _ElementScatter]],
+    ) -> "_QuadraticBeamBatchPlan":
+        from .elements import _beam_material_properties
+
+        count = len(items)
+        element_ids = np.empty(count, dtype=np.int64)
+        dof_mappings = np.empty((count, 18), dtype=np.intp)
+        force_positions = np.empty((count, 18), dtype=np.intp)
+        tangent_positions = np.empty((count, 18 * 18), dtype=np.intp)
+        transforms = np.empty((count, 18, 18), dtype=float)
+        strain_rows = np.zeros((count, 3, 8, 18), dtype=float)
+        jacobian_weights = np.empty((count, 3), dtype=float)
+        properties = np.empty((count, 6), dtype=float)
+        elements: List[Any] = []
+        for index, (element_id, element, scatter) in enumerate(items):
+            coords = element.get_node_coordinates(model.mesh)
+            length, transform = element._beam_frame_and_transform(coords)
+            material = model.get_material(element.material_name)
+            E, G12, G13, GJ = _beam_material_properties(material, element.cross_section)
+            element_ids[index] = int(element_id)
+            elements.append(element)
+            dof_mappings[index] = scatter.dof_mapping
+            force_positions[index] = scatter.force_positions
+            tangent_positions[index] = scatter.tangent_positions
+            transforms[index] = transform
+            properties[index] = (
+                E * element._A,
+                E * element._Iy,
+                E * element._Iz,
+                G12 * element._A * element._ky,
+                G13 * element._A * element._kz,
+                GJ,
+            )
+            for gp_index, (xi, weight) in enumerate(
+                zip(element.GAUSS_POINTS, element.GAUSS_WEIGHTS)
+            ):
+                shape, derivative_xi = element.compute_shape_functions(float(xi))
+                derivative_x = derivative_xi * 2.0 / float(length)
+                for node_index in range(3):
+                    base = node_index * 6
+                    strain_rows[index, gp_index, 0, base] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 1, base + 1] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 2, base + 2] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 3, base + 4] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 4, base + 5] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 5, base + 3] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 6, base + 1] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 6, base + 5] = -shape[node_index]
+                    strain_rows[index, gp_index, 7, base + 2] = derivative_x[node_index]
+                    strain_rows[index, gp_index, 7, base + 4] = shape[node_index]
+                jacobian_weights[index, gp_index] = float(length) / 2.0 * float(weight)
+        return cls(
+            element_ids=element_ids,
+            elements=tuple(elements),
+            dof_mappings=dof_mappings,
+            force_positions=force_positions,
+            tangent_positions=tangent_positions,
+            transforms=transforms,
+            strain_rows=strain_rows,
+            jacobian_weights=jacobian_weights,
+            properties=properties,
+        )
+
+    def evaluate_into_buffers(
+        self,
+        plan: "NonlinearAssemblyPlan",
+        displacements: np.ndarray,
+        committed_states: Mapping[int, Any],
+        tangent: bool,
+        trial_states: Dict[int, Any],
+        deleted_element_ids: Sequence[int] = (),
+        residual_stiffness_fraction: float = 1.0,
+    ) -> float:
+        from .vectorized_beam import quadratic_beam_nonlinear_into_buffers_jit
+
+        start = time.perf_counter()
+        quadratic_beam_nonlinear_into_buffers_jit(
+            np.asarray(displacements, dtype=float),
+            self.dof_mappings,
+            self.transforms,
+            self.strain_rows,
+            self.jacobian_weights,
+            self.properties,
+            self.force_positions,
+            self.tangent_positions,
+            plan.force_values,
+            plan.tangent_values,
+            bool(tangent),
+        )
+        for element_id in self.element_ids:
+            state = committed_states.get(int(element_id))
+            if state is not None:
+                trial_states[int(element_id)] = state
+        deleted = {int(element_id) for element_id in deleted_element_ids}
+        if deleted:
+            model = plan.model
+            for index, (element_id, element) in enumerate(zip(self.element_ids, self.elements)):
+                element_key = int(element_id)
+                if element_key not in deleted:
+                    continue
+                state = committed_states.get(element_key)
+                force, stiffness, trial_state = element.compute_nonlinear_response(
+                    model.mesh,
+                    model.get_material(element.material_name),
+                    np.asarray(displacements, dtype=float)[self.dof_mappings[index]],
+                    state,
+                    plan.num_layers,
+                    tangent,
+                )
+                plan.force_values[self.force_positions[index]] = (
+                    float(residual_stiffness_fraction)
+                    * np.asarray(force, dtype=float).reshape(-1)
+                )
+                if tangent and stiffness is not None:
+                    plan.tangent_values[self.tangent_positions[index]] = (
+                        float(residual_stiffness_fraction)
+                        * np.asarray(stiffness, dtype=float).reshape(-1)
+                    )
+                if state is not None:
+                    trial_states[element_key] = state
+                elif trial_state is not None:
+                    trial_states[element_key] = trial_state
+        return time.perf_counter() - start
+
+
+@dataclass
 class NonlinearAssemblyPlan:
     """Persistent nonlinear global assembly data for one FE model."""
 
@@ -307,6 +516,7 @@ class NonlinearAssemblyPlan:
     num_layers: int
     revision: Tuple[int, ...]
     shell_batches: Tuple[_ShellBatchPlan, ...]
+    quadratic_beam_batches: Tuple[_QuadraticBeamBatchPlan, ...]
     non_shell_elements: Tuple[_ElementScatter, ...]
     force_dofs_flat: np.ndarray
     tangent_scatter: np.ndarray
@@ -335,7 +545,7 @@ class NonlinearAssemblyPlan:
 
     @classmethod
     def build(cls, model: "FEModel", num_layers: int) -> "NonlinearAssemblyPlan":
-        from .elements import ShellElement
+        from .elements import QuadraticBeamElement, ShellElement
         from .materials import is_isotropic_material
         from .vectorized_nonlinear import shell_nonlinear_batch_eligible
 
@@ -404,6 +614,7 @@ class NonlinearAssemblyPlan:
             force_dofs.append(mapping)
 
         shell_groups: Dict[Tuple[Any, ...], List[Tuple[int, Any, _ElementScatter]]] = {}
+        quadratic_beams: List[Tuple[int, Any, _ElementScatter]] = []
         non_shell: List[_ElementScatter] = []
         for element_id, element, *_rest in element_records:
             scatter = scatter_records[element_id]
@@ -420,6 +631,12 @@ class NonlinearAssemblyPlan:
                     str(element.material_name),
                 )
                 shell_groups.setdefault(key, []).append((element_id, element, scatter))
+            elif (
+                isinstance(element, QuadraticBeamElement)
+                and element.generalized_section is None
+                and element._fiber_plasticity_config(material) is None
+            ):
+                quadratic_beams.append((element_id, element, scatter))
             else:
                 non_shell.append(scatter)
 
@@ -427,12 +644,18 @@ class NonlinearAssemblyPlan:
             _ShellBatchPlan.build(model, key, items, int(num_layers))
             for key, items in shell_groups.items()
         )
+        quadratic_beam_batches = (
+            (_QuadraticBeamBatchPlan.build(model, quadratic_beams),)
+            if quadratic_beams
+            else ()
+        )
 
         return cls(
             model_ref=weakref.ref(model),
             num_layers=int(num_layers),
             revision=_revision_tuple(mesh),
             shell_batches=shell_batches,
+            quadratic_beam_batches=quadratic_beam_batches,
             non_shell_elements=tuple(non_shell),
             force_dofs_flat=np.concatenate(force_dofs) if force_dofs else np.empty(0, dtype=np.intp),
             tangent_scatter=np.asarray(tangent_scatter, dtype=np.intp),
@@ -488,7 +711,29 @@ class NonlinearAssemblyPlan:
                 if tangent and K_batch is not None:
                     self.tangent_values[batch.tangent_positions.reshape(-1)] = np.asarray(K_batch, dtype=float).reshape(-1)
                 trial_states.update(batch_states)
+                override_start = time.perf_counter()
+                override_count = _apply_initial_field_shell_overrides(
+                    self,
+                    batch,
+                    displacements,
+                    committed_states,
+                    tangent,
+                    trial_states,
+                )
+                self.timings.initial_field_override_seconds += time.perf_counter() - override_start
+                self.timings.initial_field_override_elements += override_count
             self.timings.state_pack_seconds += time.perf_counter() - state_start
+
+            for batch in self.quadratic_beam_batches:
+                self.timings.non_shell_seconds += batch.evaluate_into_buffers(
+                    self,
+                    displacements,
+                    committed_states,
+                    tangent,
+                    trial_states,
+                    deleted_element_ids=tuple(deleted),
+                    residual_stiffness_fraction=residual_fraction,
+                )
 
             non_shell_start = time.perf_counter()
             model = self.model
@@ -569,6 +814,10 @@ class NonlinearAssemblyPlan:
             "revision": list(self.revision),
             "shell_batch_count": len(self.shell_batches),
             "shell_element_count": int(sum(batch.element_ids.size for batch in self.shell_batches)),
+            "quadratic_beam_batch_count": len(self.quadratic_beam_batches),
+            "quadratic_beam_element_count": int(
+                sum(batch.element_ids.size for batch in self.quadratic_beam_batches)
+            ),
             "non_shell_element_count": len(self.non_shell_elements),
             "constitutive_fallback": (
                 None
@@ -648,27 +897,11 @@ def _optimized_assemble_nonlinear_system(
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    has_initial_fields = any(
-        isinstance(state, Mapping)
-        and any(
-            key in state
-            for key in (
-                "initial_membrane_stress",
-                "initial_bending_stress",
-                "initial_membrane_prestrain",
-                "initial_curvature_prestrain",
-                "initial_fiber_stress",
-                "initial_fiber_prestrain",
-            )
-        )
-        for state in committed_states.values()
-    )
-    if extra or kinematics != "von_karman" or has_initial_fields:
+    if extra or kinematics != "von_karman":
         # The assembly plan encodes the von Karman element response; other
-        # kinematics, per-element scale options, and immutable initial
-        # stress/prestrain offsets use the scalar reference assembler.  The
-        # persistent shell batches intentionally transport only constitutive
-        # history and would otherwise discard these additional state fields.
+        # kinematics and per-element scale options use the scalar reference
+        # assembler. Immutable initial fields are handled by exact per-element
+        # overrides inside the otherwise accelerated shell batches.
         assembler = _ORIGINAL_ASSEMBLER
         if assembler is None:
             from . import nonlinear_static as _nonlinear_static

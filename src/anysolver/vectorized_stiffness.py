@@ -514,6 +514,129 @@ def compute_shell_stiffness_matrices_jit(
 
 
 @njit(cache=True, parallel=True)
+def prepare_s4_geometric_kinematics_jit(
+    coords_all: np.ndarray,
+    gauss_points: np.ndarray,
+    gauss_weights: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Prepare immutable S4 reference geometry for repeated KG assembly."""
+
+    num_elements = coords_all.shape[0]
+    num_gp = gauss_points.shape[0]
+    dndx = np.zeros((num_elements, num_gp, 4))
+    dndy = np.zeros((num_elements, num_gp, 4))
+    detw = np.zeros((num_elements, num_gp))
+    frames = np.zeros((num_elements, num_gp, 3, 3))
+    for element_index in prange(num_elements):
+        coords = coords_all[element_index]
+        for gp_index in range(num_gp):
+            xi = gauss_points[gp_index, 0]
+            eta = gauss_points[gp_index, 1]
+            _N, derivative_xi, derivative_eta = _compute_4node_shape_functions(
+                xi, eta
+            )
+            frame, dx, dy, determinant = _local_frame_and_derivatives_jit(
+                coords, derivative_xi, derivative_eta
+            )
+            dndx[element_index, gp_index] = dx
+            dndy[element_index, gp_index] = dy
+            detw[element_index, gp_index] = (
+                determinant * gauss_weights[gp_index]
+            )
+            frames[element_index, gp_index] = frame
+    return dndx, dndy, detw, frames
+
+
+@njit(cache=True, parallel=True)
+def compute_s4_geometric_stiffness_matrices_jit(
+    dndx: np.ndarray,
+    dndy: np.ndarray,
+    detw: np.ndarray,
+    frames: np.ndarray,
+    membrane_compression: np.ndarray,
+    bending_compression: np.ndarray,
+    stress_second_moment: np.ndarray,
+) -> np.ndarray:
+    """Assemble S4 initial-stress matrices from cached reference geometry."""
+
+    num_elements = dndx.shape[0]
+    num_gp = dndx.shape[1]
+    matrices = np.zeros((num_elements, 24, 24))
+    for element_index in prange(num_elements):
+        total = np.zeros((24, 24))
+        for gp_index in range(num_gp):
+            local = np.zeros((24, 24))
+            nx = membrane_compression[element_index, gp_index, 0]
+            ny = membrane_compression[element_index, gp_index, 1]
+            nxy = membrane_compression[element_index, gp_index, 2]
+            mx = bending_compression[element_index, gp_index, 0]
+            my = bending_compression[element_index, gp_index, 1]
+            mxy = bending_compression[element_index, gp_index, 2]
+            hx = stress_second_moment[element_index, gp_index, 0]
+            hy = stress_second_moment[element_index, gp_index, 1]
+            hxy = stress_second_moment[element_index, gp_index, 2]
+            for a in range(4):
+                ax = dndx[element_index, gp_index, a]
+                ay = dndy[element_index, gp_index, a]
+                for b in range(4):
+                    bx = dndx[element_index, gp_index, b]
+                    by = dndy[element_index, gp_index, b]
+                    n_value = (
+                        ax * (nx * bx + nxy * by)
+                        + ay * (nxy * bx + ny * by)
+                    )
+                    h_value = (
+                        ax * (hx * bx + hxy * by)
+                        + ay * (hxy * bx + hy * by)
+                    )
+                    m_value = (
+                        ax * (mx * bx + mxy * by)
+                        + ay * (mxy * bx + my * by)
+                    )
+                    for component in range(3):
+                        local[6 * a + component, 6 * b + component] += n_value
+                    local[6 * a + 3, 6 * b + 3] += h_value
+                    local[6 * a + 4, 6 * b + 4] += h_value
+                    # u(z)=u+z*ry and v(z)=v-z*rx.  Add both transpose
+                    # contributions exactly as the scalar element operator.
+                    local[6 * a, 6 * b + 4] += m_value
+                    local[6 * b + 4, 6 * a] += m_value
+                    local[6 * a + 1, 6 * b + 3] -= m_value
+                    local[6 * b + 3, 6 * a + 1] -= m_value
+
+            frame = frames[element_index, gp_index]
+            scale = detw[element_index, gp_index]
+            # The scalar transform is T.T @ K_local @ T with 3x3 diagonal
+            # blocks T=R.T, hence each global block is R K_local R.T.
+            for block_i in range(8):
+                for block_j in range(8):
+                    temp = np.zeros((3, 3))
+                    block = np.zeros((3, 3))
+                    for row in range(3):
+                        for column in range(3):
+                            value = 0.0
+                            for inner in range(3):
+                                value += (
+                                    frame[row, inner]
+                                    * local[3 * block_i + inner, 3 * block_j + column]
+                                )
+                            temp[row, column] = value
+                    for row in range(3):
+                        for column in range(3):
+                            value = 0.0
+                            for inner in range(3):
+                                value += temp[row, inner] * frame[column, inner]
+                            block[row, column] = value
+                    for row in range(3):
+                        for column in range(3):
+                            total[3 * block_i + row, 3 * block_j + column] += (
+                                block[row, column] * scale
+                            )
+        matrices[element_index] = total
+    return matrices
+
+
+@njit(cache=True, parallel=True)
 def compute_shell_mass_matrices_jit(
     coords_all: np.ndarray,      # (N, num_nodes, 3)
     is_4node: bool,

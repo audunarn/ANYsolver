@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from anysolver import (
     BoundaryCondition,
     CoupledBeamShellElement,
@@ -17,9 +19,12 @@ def _issue_codes(report):
     return {issue.code for issue in report.issues}
 
 
-def test_validate_production_model_rejects_invalid_material_and_thickness() -> None:
+def test_material_construction_fails_fast_and_validation_rejects_invalid_thickness() -> None:
     model = FEModel("invalid_shell")
-    model.add_material("bad", -1.0, 0.8, density=-5.0)
+    with pytest.raises(ValueError, match="isotropic elastic modulus must be finite and positive"):
+        model.add_material("bad", -1.0, 0.8, density=-5.0)
+
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
     for node_id, coords in {
         1: (0.0, 0.0, 0.0),
         2: (1.0, 0.0, 0.0),
@@ -27,13 +32,13 @@ def test_validate_production_model_rejects_invalid_material_and_thickness() -> N
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *coords)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "bad", thickness=0.0))
+    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.0))
 
     report = validate_production_model(model)
 
     assert report.status == "invalid"
-    assert {"MAT001", "MAT002", "MAT003", "SHELL001"} <= _issue_codes(report)
-    assert report.to_dict()["error_count"] >= 4
+    assert "SHELL001" in _issue_codes(report)
+    assert report.to_dict()["error_count"] >= 1
 
 
 def test_validate_production_model_reports_q8_midside_and_warp_warnings() -> None:

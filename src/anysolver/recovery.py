@@ -91,9 +91,11 @@ class RecoveryConfig:
 class ResourceConfig:
     """Bounded resource policy for solver phases.
 
-    This batch records requested limits and deterministic behavior.  It does not
-    force parallel execution; later measured-parallelism work can consume the
-    same contract.
+    ``solver_threads`` is enforced as a scoped native BLAS/OpenMP limit and is
+    restored after success or failure. ``assembly_threads`` scopes Numba
+    workers; when Numba assembly is explicitly parallel, inner native pools are
+    restricted to one thread to prevent oversubscription. Omitted limits retain
+    backend defaults.
     """
 
     solver_threads: Optional[int] = None

@@ -438,16 +438,19 @@ def _run_mlbc_008(case: MeshLoadBCCase) -> MeshLoadBCCaseResult:
     fixed_slave.add_node(2, 0.1, 0.0, 0.0)
     fixed_slave.add_element(1, CoupledBeamShellElement(1, beam_node_id=2, shell_node_id=1, material_name="steel"))
     fixed_slave.add_boundary_condition(BoundaryCondition("bad_fixed_slave", [2], {"ux": 0.0}))
-    fixed_slave.apply_boundary_conditions()
     load = np.zeros(fixed_slave.mesh.dof_manager.total_dofs)
     fixed_slave_error = ""
     try:
+        fixed_slave.apply_boundary_conditions()
         build_constraint_transformation(sparse.eye(fixed_slave.mesh.dof_manager.total_dofs, format="csr"), load, fixed_slave)
     except ValueError as exc:
         fixed_slave_error = str(exc)
 
     _assert("MPC001" in {issue.code for issue in duplicate_report.issues}, "duplicate MPC slave was not rejected")
-    _assert("both fixed and used as an MPC slave" in fixed_slave_error, "fixed MPC slave was not rejected")
+    _assert(
+        "CONSTRAINT002" in fixed_slave_error and "multiple dependent definitions" in fixed_slave_error,
+        "fixed MPC slave was not rejected before assembly",
+    )
     return _pass(
         case,
         measured={"duplicate_status": duplicate_report.status, "fixed_slave_error": fixed_slave_error},

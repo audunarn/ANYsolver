@@ -11,8 +11,11 @@ from scipy.sparse import linalg as sparse_linalg
 
 from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import assemble_mass_matrix, assemble_stiffness_matrix
+from .recovery import ResourceConfig
+from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
@@ -141,6 +144,7 @@ def _orthogonality_error(modes: List[ModalMode], M_red: sparse.spmatrix) -> floa
     return float(np.max(np.abs(gram - np.eye(gram.shape[0]))))
 
 
+@resource_threaded
 def solve_free_vibration(
     model: "FEModel",
     num_modes: int = 6,
@@ -149,6 +153,7 @@ def solve_free_vibration(
     eigen_tolerance: float = 1.0e-9,
     rigid_body_frequency_tolerance: float = 1.0e-6,
     factorization_cache: Optional[FactorizationCache] = None,
+    resource_config: Optional[ResourceConfig] = None,
 ) -> ModalResult:
     """Solve ``K phi = omega^2 M phi`` with the common constraint transform."""
     if num_modes <= 0:
@@ -175,6 +180,7 @@ def solve_free_vibration(
         "eigen_tolerance": float(eigen_tolerance),
         "rigid_body_frequency_tolerance": float(rigid_body_frequency_tolerance),
         "factorization_cache": None if factorization_cache is None else factorization_cache.name,
+        "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
 
     if K_red.shape[0] == 0:
@@ -265,11 +271,19 @@ def solve_free_vibration(
     status = "ok" if modes else "no_modes"
     diagnostics = {
         "status": status,
+        "thread_policy": thread_policy_diagnostics(resource_config),
         "solver": solver_kind,
         **sparse_diagnostics,
         "max_residual_norm": max((mode.residual_norm for mode in modes), default=0.0),
         "mass_orthogonality_error": _orthogonality_error(modes, M_sym),
         "num_rigid_body_modes": int(sum(1 for mode in modes if mode.is_rigid_body)),
+        "constraint_postcheck": constraint_residual_summary(
+            model,
+            np.column_stack([mode.mode_shape for mode in modes])
+            if modes
+            else np.zeros((model.mesh.dof_manager.total_dofs, 0), dtype=float),
+            homogeneous_variation=True,
+        ),
     }
     result_case = make_result_case(
         name="modal",

@@ -39,6 +39,7 @@ from scipy.sparse import linalg as sparse_linalg
 
 from .assembly import build_constraint_transformation
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from .nonlinear_static import (
@@ -50,6 +51,8 @@ from .nonlinear_static import (
     _weighted_external_load_system,
     solve_static_nonlinear,
 )
+from .recovery import ResourceConfig
+from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
     from .boundary import LoadCase
@@ -297,6 +300,7 @@ def _max_nodal_translation(model: "FEModel", displacements: np.ndarray) -> float
     return peak
 
 
+@resource_threaded
 def solve_static_arc_length(
     model: "FEModel",
     load_case: "LoadCase",
@@ -312,6 +316,7 @@ def solve_static_arc_length(
     kinematics: str = "von_karman",
     corotational_tangent: str = "auto",
     progress_callback: Optional[Any] = None,
+    resource_config: Optional[ResourceConfig] = None,
 ) -> ArcLengthResult:
     """Trace the first nonlinear limit point with spherical arc-length control.
 
@@ -885,6 +890,7 @@ def solve_static_arc_length(
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
     info["solve_time"] = float(time.time() - start_time)
+    info["constraint_postcheck"] = constraint_residual_summary(working_model, u_final)
     info["result_case"] = make_result_case(
         name="nonlinear_static_arc_length",
         analysis_type="nonlinear_static",

@@ -273,7 +273,8 @@ def _spring_model():
     not JIT_ENABLED,
     reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
 )
-def test_nonlinear_solver_uses_direct_reduced_assembly() -> None:
+def test_nonlinear_solver_uses_direct_reduced_assembly(monkeypatch) -> None:
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
     reset_batch_c_counters()
     model, load = _spring_model()
     result = solve_static_nonlinear(
@@ -293,6 +294,35 @@ def test_nonlinear_solver_uses_direct_reduced_assembly() -> None:
     assert status["full_coordinate_fallbacks"] == 0
     assert status["last_plan"]["mapping_kind"] == "selector"
     assert status["active_context_depth"] == 0
+
+
+@pytest.mark.skipif(
+    not JIT_ENABLED,
+    reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
+)
+def test_short_nonlinear_solve_skips_direct_reduction_setup(monkeypatch) -> None:
+    monkeypatch.delenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", raising=False)
+    reset_batch_c_counters()
+    model, load = _spring_model()
+    result = solve_static_nonlinear(
+        model,
+        load_case=load,
+        max_load_factor=0.25,
+        num_steps=2,
+        max_iterations=8,
+        tolerance=1.0e-10,
+    )
+    status = batch_c_status()
+    assert result.status == "completed"
+    assert status["reduced_plan_builds"] == 0
+    assert status["reduced_assemblies"] == 0
+    assert status["cost_gate_skips"] >= 1
+    assert status["last_cost_gate"] == {
+        "estimated_assemblies": 8,
+        "activation_threshold": 144,
+        "activated": False,
+        "reason": "estimated_assembly_budget_below_threshold",
+    }
 
 
 @pytest.mark.skipif(

@@ -1042,7 +1042,7 @@ def _hill48_strength_values(
 
     ``yield_model`` is intentionally consumed by protocol rather than by a
     concrete runtime import.  This keeps the constitutive kernel independent
-    of the model layer and lets a future ANYmaterial object provide the same
+    of the model layer and lets an ANYmaterial object provide the same
     ``X``, ``Y``, ``Z``, ``S12``, ``S13`` and ``S23`` attributes.
     """
     names = ("X", "Y", "Z", "S12", "S13", "S23")
@@ -1154,7 +1154,7 @@ def hill48_equivalent_stress(
 
     Stress order is engineering Voigt ``[11, 22, 33, 23, 13, 12]``.  The
     function consumes the six-strength protocol directly so material records
-    from a future ANYmaterial package need not inherit ANYsolver classes.
+    from ANYmaterial need not inherit ANYsolver classes.
     """
 
     values = np.asarray(stress, dtype=float)
