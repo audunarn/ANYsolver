@@ -11,10 +11,66 @@ from anysolver.elements import ShellElement
 from anysolver.fe_core import FEModel
 from anysolver.jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED
 from anysolver.kernel_warmup import warm_fe_solver_kernels
-from anysolver.matrix_assembly import assemble_stiffness_matrix
+from anysolver.matrix_assembly import (
+    assemble_geometric_stiffness_matrix,
+    assemble_stiffness_matrix,
+)
 from anysolver.mesh_gen import generate_simple_panel_mesh
 from anysolver.vectorized_stiffness import compute_shell_stiffness_matrices_jit
 import anysolver.kernel_warmup as kernel_warmup
+
+
+def test_batched_s4_geometric_stiffness_matches_warped_scalar_and_reuses_geometry():
+    model = FEModel("batched_kg_qualification")
+    model.add_material("steel", 210.0e9, 0.3)
+    coordinates = (
+        (0.0, 0.0, 0.0),
+        (1.2, 0.1, 0.15),
+        (1.1, 1.0, 0.25),
+        (-0.1, 0.9, -0.05),
+        (2.0, -0.2, 0.3),
+        (2.8, 0.2, 0.8),
+        (2.6, 1.1, 1.0),
+        (1.8, 0.8, 0.45),
+    )
+    for node_id, point in enumerate(coordinates, start=1):
+        model.add_node(node_id, *point)
+    first = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.018)
+    second = ShellElement(2, [5, 6, 7, 8], "steel", thickness=0.031)
+    model.add_element(1, first)
+    model.add_element(2, second)
+    states = {
+        1: {
+            "membrane_compression_at_gauss": np.array(
+                [[12.0, 7.0, 1.0], [11.0, 8.0, -0.5], [9.0, 6.0, 0.3], [13.0, 5.0, 0.8]]
+            ),
+            "bending_compression": [0.7, -0.2, 0.1],
+        },
+        2: {
+            "membrane_forces": [-16.0, -4.0, 2.0],
+            "stress_second_moment": [0.04, 0.03, -0.01],
+        },
+    }
+    expected = np.zeros((model.mesh.dof_manager.total_dofs,) * 2)
+    for element_id, element in model.mesh.elements.items():
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        local = element.compute_geometric_stiffness_matrix(
+            model.mesh,
+            model.get_material(element.material_name),
+            states[element_id],
+        )
+        expected[np.ix_(dofs, dofs)] += local
+
+    actual, first_info = assemble_geometric_stiffness_matrix(model, states)
+    repeated, second_info = assemble_geometric_stiffness_matrix(model, states)
+    np.testing.assert_allclose(actual.toarray(), expected, rtol=2.0e-12, atol=1.0e-12)
+    np.testing.assert_allclose(repeated.toarray(), expected, rtol=2.0e-12, atol=1.0e-12)
+    first_diag = first_info["diagnostics"]["vectorized_s4_geometric_stiffness"]
+    second_diag = second_info["diagnostics"]["vectorized_s4_geometric_stiffness"]
+    assert first_diag["element_count"] == 2
+    assert first_diag["geometry_cache_hits"] == 0
+    assert second_diag["geometry_cache_hits"] == 1
+    assert second_info["diagnostics"]["scalar_element_count"] == 0
 
 
 def test_vectorized_stiffness_matches_sequential():

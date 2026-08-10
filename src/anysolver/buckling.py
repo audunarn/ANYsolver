@@ -22,12 +22,15 @@ from scipy.sparse import linalg as sparse_linalg
 
 from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
     assemble_external_load_tangent,
     assemble_geometric_stiffness_matrix,
     assemble_stiffness_matrix,
 )
+from .recovery import ResourceConfig
+from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
     from .boundary import LoadCase
@@ -191,6 +194,7 @@ def _assign_repeated_groups(modes: List[BucklingMode], tolerance: float) -> List
     return groups
 
 
+@resource_threaded
 def solve_eigenvalue_buckling(
     model: "FEModel",
     element_states: Optional[Any] = None,
@@ -207,6 +211,7 @@ def solve_eigenvalue_buckling(
     reference_load_case: Optional["LoadCase"] = None,
     reference_displacements: Optional[np.ndarray] = None,
     follower_symmetry_tolerance: float = 1.0e-10,
+    resource_config: Optional[ResourceConfig] = None,
 ) -> BucklingResult:
     """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
@@ -273,6 +278,7 @@ def solve_eigenvalue_buckling(
         "factorization_cache": None if factorization_cache is None else factorization_cache.name,
         "reference_load_case": None if reference_load_case is None else reference_load_case.name,
         "follower_symmetry_tolerance": float(follower_symmetry_tolerance),
+        "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
 
     if follower_symmetry_error > float(follower_symmetry_tolerance):
@@ -494,6 +500,13 @@ def solve_eigenvalue_buckling(
         "repeated_mode_groups": repeated_groups,
         "num_repeated_mode_groups": int(len(repeated_groups)),
         "sorting": "nearest_shift" if shift_load_factor is not None else "ascending_load_factor",
+        "constraint_postcheck": constraint_residual_summary(
+            model,
+            np.column_stack([mode.mode_shape for mode in modes])
+            if modes
+            else np.zeros((model.mesh.dof_manager.total_dofs, 0), dtype=float),
+            homogeneous_variation=True,
+        ),
     }
     result_case = make_result_case(
         name="linear_buckling",

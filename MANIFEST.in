@@ -3,5 +3,8 @@ include README.md
 include CHANGELOG.md
 include MIGRATION.md
 recursive-include docs *.md
+prune reports
+include reports/extract_mat_mesh_io_performance_review.md
+include reports/femaster_adoption_review.md
 recursive-include scripts *.py
 recursive-include tests *.py *.json

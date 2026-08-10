@@ -29,6 +29,8 @@ from scipy import sparse
 from scipy.sparse import SparseEfficiencyWarning
 from scipy.sparse.linalg import LinearOperator, splu
 
+from .threading_policy import current_solver_threads, native_thread_scope
+
 try:
     _HAS_PYPARDISO = importlib.util.find_spec("pypardiso") is not None
 except (ImportError, ModuleNotFoundError, ValueError):
@@ -99,6 +101,7 @@ class FactorizationHandle:
     status: str = "ok"
     failure_reason: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    solver_threads: Optional[int] = field(default=None, repr=False)
     _solver: Any = field(default=None, repr=False)
 
     def solve(self, rhs: np.ndarray) -> np.ndarray:
@@ -689,6 +692,8 @@ class FactorizationCache:
         if cache_key in self._handles:
             self.hits += 1
             handle = self._handles[cache_key]
+            options_dict = dict(options or {})
+            handle.solver_threads = options_dict.get("solver_threads", current_solver_threads())
             handle.metadata["cache_name"] = self.name
             handle.metadata["cache_hit"] = True
             return handle
@@ -763,7 +768,18 @@ def factorize(
 ) -> FactorizationHandle:
     """Factorize a sparse matrix and return a reusable handle."""
     backend = backend or DEFAULT_BACKEND
-    return backend.factorize(matrix, _coerce_matrix_class(matrix_class), signature=signature, options=options)
+    options_dict = dict(options or {})
+    requested_threads = options_dict.pop("solver_threads", current_solver_threads())
+    with native_thread_scope(requested_threads, phase="factorization") as policy:
+        handle = backend.factorize(
+            matrix,
+            _coerce_matrix_class(matrix_class),
+            signature=signature,
+            options=options_dict,
+        )
+    handle.solver_threads = requested_threads
+    handle.metadata["thread_policy"] = dict(policy)
+    return handle
 
 
 def factorize_cached(
@@ -804,7 +820,9 @@ def solve(handle: FactorizationHandle, rhs: np.ndarray) -> np.ndarray:
         raise RuntimeError(f"Cannot solve with failed factorization: {handle.failure_reason}")
     rhs = np.asarray(rhs, dtype=float)
     start = time.time()
-    result = np.asarray(handle._solver.solve(rhs), dtype=float)
+    with native_thread_scope(handle.solver_threads, phase="linear_solve") as policy:
+        result = np.asarray(handle._solver.solve(rhs), dtype=float)
+    handle.metadata["last_solve_thread_policy"] = dict(policy)
     handle.solve_time += time.time() - start
     handle.solve_count += 1 if rhs.ndim == 1 else int(rhs.shape[1])
     if np.any(~np.isfinite(result)):

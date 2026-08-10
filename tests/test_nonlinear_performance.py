@@ -8,13 +8,14 @@ from anysolver import nonlinear_performance
 from anysolver.jit_compiler import JIT_ENABLED
 from anysolver import nonlinear_performance_batch_c
 from anysolver.material_curves import dnv_c208_steel_curve
-from anysolver.elements import ShellElement
+from anysolver.elements import QuadraticBeamElement, ShellElement
 from anysolver.fe_core import FEModel
 from anysolver.nonlinear_performance_bootstrap import (
     clear_nonlinear_assembly_cache,
     get_nonlinear_assembly_plan,
     nonlinear_performance_status,
 )
+from anysolver.nonlinear_static import ShellInitialField, _prepare_initial_states
 
 
 def _panel_model():
@@ -93,6 +94,98 @@ def test_cached_assembly_matches_legacy_shell_assembly() -> None:
             states_fast[element_id]["alpha"],
             states_reference[element_id]["alpha"],
         )
+
+
+def test_mixed_initial_field_shell_batch_accelerates_initialized_elastic_element() -> None:
+    model = generate_simple_panel_mesh(
+        1.2,
+        0.8,
+        0.01,
+        num_divisions_x=2,
+        num_divisions_y=1,
+    )
+    committed, _provenance = _prepare_initial_states(
+        model,
+        None,
+        {
+            1: ShellInitialField(
+                membrane_stress=[65.0e6, -8.0e6, 3.0e6],
+                bending_stress=[12.0e6, -3.0e6, 1.0e6],
+                membrane_prestrain=[2.0e-5, -4.0e-6, 1.0e-6],
+                curvature_prestrain=[8.0e-4, -2.0e-4, 1.0e-4],
+            )
+        },
+        5,
+    )
+    displacement = np.linspace(
+        -2.0e-5,
+        3.0e-5,
+        model.mesh.dof_manager.total_dofs,
+    )
+    legacy = nonlinear_performance._ORIGINAL_ASSEMBLER
+    assert legacy is not None
+    force_reference, tangent_reference, states_reference = legacy(
+        model, displacement, committed, 5, tangent=True
+    )
+    force_fast, tangent_fast, states_fast = nonlinear_static._assemble_nonlinear_system(
+        model, displacement, committed, 5, tangent=True
+    )
+    np.testing.assert_allclose(force_fast, force_reference, rtol=2.0e-11, atol=1.0e-6)
+    np.testing.assert_allclose(
+        tangent_fast.toarray(), tangent_reference.toarray(), rtol=2.0e-11, atol=1.0e-3
+    )
+    assert states_fast[1]["initial_field_provenance"] == states_reference[1]["initial_field_provenance"]
+    plan = get_nonlinear_assembly_plan(model, 5)
+    assert plan.timings.initial_field_accelerated_elements >= 1
+    assert plan.timings.initial_field_override_elements == 0
+    assert plan.diagnostics()["shell_element_count"] == 2
+
+
+def test_quadratic_beam_batch_matches_scalar_rotated_elements() -> None:
+    model = FEModel("beam3_batch_qualification")
+    model.add_material("steel", 210.0e9, 0.29, density=7850.0)
+    points = (
+        (0.0, 0.0, 0.0),
+        (0.5, 0.2, 0.1),
+        (1.0, 0.4, 0.2),
+        (0.2, 1.0, -0.1),
+        (0.5, 1.4, 0.25),
+        (0.8, 1.8, 0.6),
+    )
+    for node_id, point in enumerate(points, start=1):
+        model.add_node(node_id, *point)
+    first_section = {"area": 1.1e-3, "Iy": 1.7e-6, "Iz": 2.3e-6, "J": 8.0e-7}
+    second_section = {
+        "area": 8.0e-4,
+        "Iy": 9.0e-7,
+        "Iz": 1.4e-6,
+        "J": 5.0e-7,
+        "shear_factor_y": 0.72,
+        "shear_factor_z": 0.81,
+    }
+    model.add_element(1, QuadraticBeamElement(1, [1, 2, 3], "steel", first_section))
+    model.add_element(2, QuadraticBeamElement(2, [4, 5, 6], "steel", second_section))
+    displacement = np.random.default_rng(8102026).normal(
+        scale=8.0e-4,
+        size=model.mesh.dof_manager.total_dofs,
+    )
+    legacy = nonlinear_performance._ORIGINAL_ASSEMBLER
+    assert legacy is not None
+    force_reference, tangent_reference, states_reference = legacy(
+        model, displacement, {}, 5, tangent=True
+    )
+    force_fast, tangent_fast, states_fast = nonlinear_static._assemble_nonlinear_system(
+        model, displacement, {}, 5, tangent=True
+    )
+    np.testing.assert_allclose(force_fast, force_reference, rtol=2.0e-12, atol=1.0e-7)
+    np.testing.assert_allclose(
+        tangent_fast.toarray(), tangent_reference.toarray(), rtol=2.0e-12, atol=1.0e-4
+    )
+    assert states_fast == states_reference == {}
+    diagnostics = get_nonlinear_assembly_plan(model, 5).diagnostics()
+    assert diagnostics["quadratic_beam_batch_count"] == 1
+    assert diagnostics["quadratic_beam_element_count"] == 2
+    assert diagnostics["non_shell_element_count"] == 0
 
 
 def test_plastic_shell_batch_matches_scalar_algorithmic_tangent() -> None:

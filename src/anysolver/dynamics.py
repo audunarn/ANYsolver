@@ -16,11 +16,13 @@ from scipy import sparse
 
 from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary
 from .linalg import MatrixClass, factorize
 from .boundary import LoadCase
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import RecoveryConfig, ResourceConfig, enforce_memory_limit, estimate_model_memory, recovery_metadata
 from .validation import load_vector_resultant
+from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
@@ -387,6 +389,7 @@ def _selected_stresses(
     return recover_element_stresses(model, displacement, scoped)
 
 
+@resource_threaded
 def solve_transient_newmark(
     model: "FEModel",
     config: TransientConfig,
@@ -659,6 +662,10 @@ def solve_transient_newmark(
         "kinetic_energy": energy_kinetic,
         "strain_energy": energy_strain,
         "max_relative_energy_drift": energy_drift,
+        "constraint_postcheck": constraint_residual_summary(
+            model,
+            np.asarray(T @ q_red + u0, dtype=float).reshape(-1),
+        ),
     }
     assembly_info = {
         "stiffness": stiffness_info,

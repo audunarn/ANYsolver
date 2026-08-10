@@ -84,13 +84,13 @@ changes before making release claims.
 
 | Area | Implemented functionality |
 | --- | --- |
-| Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. |
+| Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. `audit_constraints()` reports equation provenance, feasibility, structural rank, dependency depth, and independent DOFs before assembly. |
 | Materials | Constitutive objects, elastic reductions, Hill-48 yield data, and DNV curves come from `ANYmaterial`; ANYsolver owns their use in element integration and nonlinear solution. Orthotropic shells support material direction/angle and Hill-48 plasticity; orthotropic beams use local material axes and an explicit section torsional rigidity. |
 | Shells | 3- and 6-node triangles; 4-node MITC-style and 8-node Mindlin-Reissner quadrilaterals; isotropic, rotated orthotropic, or pre-integrated generalized `A/B/D/As` section stiffness. Generalized sections retain membrane-bending coupling and recover exact strains/resultants without inventing ply stresses. |
 | Beams | 2-node and straight-sided 3-node Timoshenko beams with axial, biaxial bending, direction-dependent shear, torsion, consistent/lumped mass options, geometric stiffness, optional fiber-section plasticity, or a fully coupled local 6x6 generalized section law. |
 | Coupling | Coincident or eccentric beam-shell kinematics through explicit interpolated MPC transformations. |
 | Loads | Nodal force/moment, dead or current-area follower shell pressure, in-plane edge loads, acceleration/gravity, prescribed displacement, load combinations, proportional and staged nonlinear loads. Follower pressure includes its exact, generally nonsymmetric external-load tangent. |
-| Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, and sparse factorization reuse. |
+| Linear analysis | Static single- and multiple-RHS solves, reactions and MPC-force diagnostics, free-free rigid-body nullspace handling, sparse factorization reuse, and post-solve affine-constraint residual checks. |
 | Modal and mass | Consistent mass assembly, point masses, model mass/inertia properties, constrained and free-free vibration modes. |
 | Buckling | Linear eigenvalue buckling for beam axial force and shell Mindlin initial-stress resultants, including sparse shift-invert and repeated-mode diagnostics. A follower-load stiffness can be included when its constrained tangent is symmetric; a general nonsymmetric follower eigenproblem is outside scope. |
 | Nonlinear static | Incremental Newton solution, adaptive stepping, force or displacement control, dead or follower pressure, von Karman or opt-in corotational kinematics, rotated or consistent corotational tangent, layered shell J2 or orthotropic Hill-48 plasticity with safeguarded local solves and consistent tangents, beam fiber plasticity, stage-boundary commits, true preload/restart displacement control, and simplified element erosion. |
@@ -116,6 +116,19 @@ ANYmesher owns neutral mesh topology, numbering, quality and coupling records;
 this package converts them into solver elements and exact constraints.
 ANYfileio owns SESAM and CalculiX syntax; this package converts neutral records
 to FEModel objects and retains execution and validation evidence.
+
+Every production solver uses the same fixed/MPC preflight. Invalid or cyclic
+systems fail before assembly or factorization. Linear, modal, buckling,
+nonlinear, arc-length, transient, and impact results include a normalized
+constraint residual diagnostic. Modal and buckling modes correctly verify the
+homogeneous variation equations when the base model has prescribed offsets.
+
+`ResourceConfig(solver_threads=N, assembly_threads=M)` now applies scoped
+native and Numba limits. Native pools are restored even after exceptions, and
+parallel Numba assembly suppresses nested BLAS/OpenMP pools to one thread.
+Diagnostics record requested limits, active runtime pools, the selected sparse
+backend, and any limiter/backend fallback. Omitting the resource policy retains
+the backend's existing unrestricted default.
 
 `GeneralizedShellSectionProtocol` and `GeneralizedBeamSectionContract` are
 likewise solver-owned structural interfaces. The built-in
@@ -227,6 +240,11 @@ the generated production-scope artifacts before production use.
   local CalculiX/PrePoMax reference-case layout.
 - [`MIGRATION.md`](MIGRATION.md): source provenance, inclusion boundary, and
   import changes.
+- [`extract_mat_mesh_io_performance_review.md`](reports/extract_mat_mesh_io_performance_review.md):
+  current extraction, assembly, nonlinear, MPC and buckling performance evidence.
+- [`femaster_adoption_review.md`](reports/femaster_adoption_review.md): clean-room
+  FEMaster concept review, constraint/thread implementation, and the gated CSR
+  prototype measurements.
 
 ## Basic verification
 

@@ -18,6 +18,7 @@ from scipy import sparse
 from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .boundary import BoundaryCondition, LoadCase
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary
 from .dynamics import (
     TransientConfig,
     _full_initial_vector,
@@ -45,6 +46,7 @@ from .materials import beam_material_properties, material_symmetry, shell_charac
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import enforce_memory_limit, estimate_model_memory, recovery_metadata
 from .validation import ProductionValidationIssue, ProductionValidationReport, load_vector_resultant
+from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
@@ -2569,6 +2571,10 @@ def _solve_transient_sphere_impact_nonlinear(
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": factor_diagnostics,
         "constraint_info": constraint_info,
+        "constraint_postcheck": constraint_residual_summary(
+            model,
+            np.asarray(T @ q_red + u0, dtype=float).reshape(-1),
+        ),
         "stiffness": stiffness_info,
         "mass": mass_info,
         "base_load": base_load_info,
@@ -2619,6 +2625,7 @@ def _solve_transient_sphere_impact_nonlinear(
     )
 
 
+@resource_threaded
 def solve_transient_sphere_impact(
     model: "FEModel",
     transient_config: TransientConfig,
@@ -3308,6 +3315,10 @@ def solve_transient_sphere_impact(
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": cached_solver_diagnostics,
         "constraint_info": constraint_info,
+        "constraint_postcheck": constraint_residual_summary(
+            model,
+            np.asarray(T @ q_red + u0, dtype=float).reshape(-1),
+        ),
         "stiffness": stiffness_info,
         "mass": mass_info,
         "base_load": base_load_info,

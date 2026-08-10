@@ -336,6 +336,13 @@ from .results import (
     post_process_results,
     recover_nodal_stresses,
 )
+from .constraint_audit import (
+    ConstraintEquation,
+    ConstraintAuditIssue,
+    ConstraintAuditReport,
+    audit_constraints,
+    constraint_residual_summary,
+)
 from .validation import (
     LoadResultant,
     ProductionValidationIssue,
@@ -697,6 +704,12 @@ __all__ = [
     "create_fe_result",
     "post_process_results",
     "recover_nodal_stresses",
+    # Constraint integrity
+    "ConstraintAuditIssue",
+    "ConstraintEquation",
+    "ConstraintAuditReport",
+    "audit_constraints",
+    "constraint_residual_summary",
     # Validation helpers
     "LoadResultant",
     "ProductionValidationIssue",

@@ -29,7 +29,7 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit, prange
-from .elements import plane_stress_elastic_matrix
+from .elements import _shell_field_rows, plane_stress_elastic_matrix
 from .plasticity import lobatto_layers
 from . import nonlinear_performance as _performance
 
@@ -48,6 +48,8 @@ def _elastic_shell_batch_into_buffers(
     detw_shear_batch: np.ndarray,
     membrane_matrix: np.ndarray,
     bending_matrix: np.ndarray,
+    initial_membrane_resultants: np.ndarray,
+    initial_bending_resultants: np.ndarray,
     shear_matrix: np.ndarray,
     drilling_stiffness: float,
     force_positions: np.ndarray,
@@ -149,6 +151,12 @@ def _elastic_shell_batch_into_buffers(
                 + bending_matrix[2, 1] * curvature_1
                 + bending_matrix[2, 2] * curvature_2
             )
+            N_0 += initial_membrane_resultants[element_index, gp_index, 0]
+            N_1 += initial_membrane_resultants[element_index, gp_index, 1]
+            N_2 += initial_membrane_resultants[element_index, gp_index, 2]
+            M_0 += initial_bending_resultants[element_index, gp_index, 0]
+            M_1 += initial_bending_resultants[element_index, gp_index, 1]
+            M_2 += initial_bending_resultants[element_index, gp_index, 2]
 
             for dof_index in range(n_dof):
                 B_eff[0, dof_index] = B_m[0, dof_index] + theta_0 * Gw[0, dof_index]
@@ -427,11 +435,21 @@ def _finalize_batch_b_element_states(
                     "initial_curvature_prestrain",
                 )
             ):
-                # Initial-field elements were assembled through the scalar
-                # reference path, which already stored the constitutive layer
-                # strain and stress.  Reconstructing the ordinary elastic
-                # kinematic strain here would erase the immutable offset and
-                # corrupt material-history recovery.
+                # Newton iterations use integrated initial resultants in the
+                # compiled kernel. Reconstruct the complete layer/provenance
+                # state once at the converged displacement for public recovery.
+                element = batch.elements[index]
+                material = model.get_material(element.material_name)
+                _force, _tangent, recovered_state = element.compute_nonlinear_response(
+                    model.mesh,
+                    material,
+                    displacement_array[batch.dof_mappings[index]],
+                    existing,
+                    int(num_layers),
+                    False,
+                )
+                if recovered_state is not None:
+                    finalized[element_key] = recovered_state
                 continue
             if isinstance(existing, Mapping):
                 state = dict(existing)
@@ -465,6 +483,13 @@ def _batch_b_shell_build(
     batch._batch_b_elastic = True
     batch._batch_b_membrane_matrix = batch.thickness * elastic_matrix
     batch._batch_b_bending_matrix = batch.thickness**3 / 12.0 * elastic_matrix
+    batch._batch_b_initial_membrane_resultants = np.zeros(
+        (len(batch.elements), batch.n_gp, 3), dtype=float
+    )
+    batch._batch_b_initial_bending_resultants = np.zeros_like(
+        batch._batch_b_initial_membrane_resultants
+    )
+    batch._batch_b_initial_fields_supported = True
     batch._batch_b_shear_matrix = (
         float(batch.material.shear_modulus)
         * (5.0 / 6.0)
@@ -501,6 +526,86 @@ def _batch_b_shell_build(
     return batch
 
 
+def _populate_initial_field_resultants(batch, committed_states: Mapping[int, Any]) -> int:
+    """Integrate elastic initial fields into membrane/bending resultants."""
+
+    membrane_resultants = batch._batch_b_initial_membrane_resultants
+    bending_resultants = batch._batch_b_initial_bending_resultants
+    membrane_resultants.fill(0.0)
+    bending_resultants.fill(0.0)
+    layer_positions, layer_weights = lobatto_layers(
+        int(batch.num_layers), float(batch.thickness)
+    )
+    membrane_weight = float(np.sum(layer_weights))
+    second_weight = float(np.sum(layer_weights * layer_positions**2))
+    bending_stress_weight = 2.0 * second_weight / float(batch.thickness)
+    elastic_matrix = batch._batch_b_membrane_matrix / float(batch.thickness)
+    count = 0
+    zero = np.zeros((batch.n_gp, 3), dtype=float)
+    for index, element_id in enumerate(batch.element_ids):
+        state = committed_states.get(int(element_id))
+        if not _performance._state_has_initial_fields(state):
+            continue
+        membrane_stress = _shell_field_rows(
+            state.get("initial_membrane_stress", zero),
+            batch.n_gp,
+            "initial_membrane_stress",
+        )
+        bending_stress = _shell_field_rows(
+            state.get("initial_bending_stress", zero),
+            batch.n_gp,
+            "initial_bending_stress",
+        )
+        membrane_prestrain = _shell_field_rows(
+            state.get("initial_membrane_prestrain", zero),
+            batch.n_gp,
+            "initial_membrane_prestrain",
+        )
+        curvature_prestrain = _shell_field_rows(
+            state.get("initial_curvature_prestrain", zero),
+            batch.n_gp,
+            "initial_curvature_prestrain",
+        )
+        membrane_resultants[index] = (
+            membrane_weight * membrane_stress
+            - membrane_weight * (membrane_prestrain @ elastic_matrix.T)
+        )
+        bending_resultants[index] = (
+            bending_stress_weight * bending_stress
+            - second_weight * (curvature_prestrain @ elastic_matrix.T)
+        )
+        count += 1
+    return count
+
+
+def _recover_initial_field_states(
+    plan,
+    batch,
+    displacements: np.ndarray,
+    committed_states: Mapping[int, Any],
+    trial_states: Dict[int, Any],
+) -> None:
+    """Populate complete result state for residual-only terminal evaluations."""
+
+    displacement_array = np.asarray(displacements, dtype=float)
+    model = plan.model
+    for index, (element_id, element) in enumerate(zip(batch.element_ids, batch.elements)):
+        element_key = int(element_id)
+        existing = committed_states.get(element_key)
+        if not _performance._state_has_initial_fields(existing):
+            continue
+        _force, _tangent, recovered = element.compute_nonlinear_response(
+            model.mesh,
+            model.get_material(element.material_name),
+            displacement_array[batch.dof_mappings[index]],
+            existing,
+            plan.num_layers,
+            False,
+        )
+        if recovered is not None:
+            trial_states[element_key] = recovered
+
+
 def _batch_b_plan_assemble(
     self,
     displacements: np.ndarray,
@@ -534,6 +639,9 @@ def _batch_b_plan_assemble(
 
         for batch in self.shell_batches:
             if getattr(batch, "_batch_b_elastic", False):
+                initialized_count = _populate_initial_field_resultants(
+                    batch, committed_states
+                )
                 kernel_start = time.perf_counter()
                 _elastic_shell_batch_into_buffers(
                     np.asarray(displacements, dtype=float),
@@ -548,6 +656,8 @@ def _batch_b_plan_assemble(
                     batch.detw_shear,
                     batch._batch_b_membrane_matrix,
                     batch._batch_b_bending_matrix,
+                    batch._batch_b_initial_membrane_resultants,
+                    batch._batch_b_initial_bending_resultants,
                     batch._batch_b_shear_matrix,
                     float(batch._batch_b_drilling_stiffness),
                     batch.force_positions,
@@ -558,6 +668,7 @@ def _batch_b_plan_assemble(
                     bool(tangent),
                 )
                 self.timings.shell_kernel_seconds += time.perf_counter() - kernel_start
+                self.timings.initial_field_accelerated_elements += initialized_count
                 elastic_states = batch._batch_b_elastic_state_mapping
                 # Preserve explicitly supplied/previous elastic states without
                 # allocating a new mapping in the normal case.
@@ -576,6 +687,14 @@ def _batch_b_plan_assemble(
                         trial_states[element_key] = (
                             existing if isinstance(existing, dict) else elastic_states[element_key]
                         )
+                if initialized_count and not tangent:
+                    _recover_initial_field_states(
+                        self,
+                        batch,
+                        displacements,
+                        committed_states,
+                        trial_states,
+                    )
             else:
                 F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
                     displacements,
@@ -591,6 +710,29 @@ def _batch_b_plan_assemble(
                         K_batch, dtype=float
                     ).reshape(-1)
                 trial_states.update(batch_states)
+
+            override_start = time.perf_counter()
+            override_count = _performance._apply_initial_field_shell_overrides(
+                self,
+                batch,
+                displacements,
+                committed_states,
+                tangent,
+                trial_states,
+            )
+            self.timings.initial_field_override_seconds += (
+                time.perf_counter() - override_start
+            )
+            self.timings.initial_field_override_elements += override_count
+
+        for batch in self.quadratic_beam_batches:
+            self.timings.non_shell_seconds += batch.evaluate_into_buffers(
+                self,
+                displacements,
+                committed_states,
+                tangent,
+                trial_states,
+            )
 
         non_shell_start = time.perf_counter()
         model = self.model

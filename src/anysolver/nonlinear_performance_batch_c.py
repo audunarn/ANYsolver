@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import os
 import sys
 import threading
 import time
@@ -13,6 +14,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import numpy as np
 from scipy import sparse
 
+from . import nonlinear_performance as _performance
 from . import nonlinear_performance_batch_b as _batch_b
 from . import nonlinear_reduced_assembly as _reduced
 from .jit_compiler import JIT_ENABLED
@@ -105,6 +107,10 @@ class _SolveContext:
     transformation: Optional[_DirectReductionTransform] = None
     reduced_plan: Optional[ReducedAssemblyPlan] = None
     fallback_reason: Optional[str] = None
+    estimated_assemblies: int = 0
+    activation_threshold: int = 0
+    activation_allowed: bool = False
+    activation_reason: str = "not_evaluated"
 
 
 _CONTEXT = threading.local()
@@ -115,6 +121,8 @@ _STATUS: Dict[str, Any] = {
     "reduced_plan_builds": 0,
     "reduced_assemblies": 0,
     "full_coordinate_fallbacks": 0,
+    "cost_gate_skips": 0,
+    "last_cost_gate": None,
     "last_fallback_reason": None,
     "last_plan": None,
 }
@@ -142,13 +150,61 @@ def _active_context(model: Any) -> Optional[_SolveContext]:
     return None
 
 
+def _minimum_estimated_assemblies() -> int:
+    raw = os.environ.get("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "144")
+    try:
+        return max(int(raw), 0)
+    except ValueError:
+        return 144
+
+
+def _estimated_solver_assemblies(original: Any, args: Tuple[Any, ...], kwargs: Mapping[str, Any]) -> int:
+    """Conservative useful-assembly estimate for the direct-reduction gate.
+
+    The profiled MPC break-even was about 72 tangent evaluations.  Four
+    evaluations per converged increment is deliberately more realistic than
+    multiplying by the full Newton failure limit; the default activation
+    threshold adds a second 2x safety margin.
+    """
+
+    max_iterations = int(kwargs.get("max_iterations", args[5] if len(args) > 5 else 25))
+    typical_per_step = max(1, min(max_iterations, 4))
+    if getattr(original, "__module__", "").endswith("arc_length"):
+        control = kwargs.get("control")
+        steps = int(getattr(control, "max_steps", 100))
+    else:
+        steps = int(kwargs.get("num_steps", args[4] if len(args) > 4 else 10))
+    return max(steps, 0) * typical_per_step
+
+
 def _run_with_context(original, *args: Any, **kwargs: Any):
     model = args[0] if args else kwargs.get("model")
-    context = _SolveContext(requested_model=model)
+    estimated = _estimated_solver_assemblies(original, args, kwargs)
+    threshold = _minimum_estimated_assemblies()
+    allowed = estimated >= threshold
+    context = _SolveContext(
+        requested_model=model,
+        estimated_assemblies=estimated,
+        activation_threshold=threshold,
+        activation_allowed=allowed,
+        activation_reason=(
+            "estimated_assembly_budget_meets_threshold"
+            if allowed
+            else "estimated_assembly_budget_below_threshold"
+        ),
+    )
     stack = _context_stack()
     stack.append(context)
     with _STATUS_LOCK:
         _STATUS["contexts_entered"] += 1
+        _STATUS["last_cost_gate"] = {
+            "estimated_assemblies": estimated,
+            "activation_threshold": threshold,
+            "activated": allowed,
+            "reason": context.activation_reason,
+        }
+        if not allowed:
+            _STATUS["cost_gate_skips"] += 1
     try:
         return original(*args, **kwargs)
     finally:
@@ -179,7 +235,11 @@ def _constraint_builder_wrapper(K, F, model):
     context = stack[-1]
     if context.bound_model is None:
         context.bound_model = model
-    if context.bound_model is not model or _identity_transformation(transformation):
+    if (
+        context.bound_model is not model
+        or not context.activation_allowed
+        or _identity_transformation(transformation)
+    ):
         return result
     wrapped = _DirectReductionTransform(transformation, token=context.token)
     context.transformation = wrapped
@@ -203,6 +263,9 @@ def _batch_c_evaluate_local_responses(
 
     for batch in nonlinear_plan.shell_batches:
         if getattr(batch, "_batch_b_elastic", False):
+            initialized_count = _batch_b._populate_initial_field_resultants(
+                batch, committed_states
+            )
             kernel_start = time.perf_counter()
             _batch_b._elastic_shell_batch_into_buffers(
                 displacement_array,
@@ -217,6 +280,8 @@ def _batch_c_evaluate_local_responses(
                 batch.detw_shear,
                 batch._batch_b_membrane_matrix,
                 batch._batch_b_bending_matrix,
+                batch._batch_b_initial_membrane_resultants,
+                batch._batch_b_initial_bending_resultants,
                 batch._batch_b_shear_matrix,
                 float(batch._batch_b_drilling_stiffness),
                 batch.force_positions,
@@ -229,6 +294,7 @@ def _batch_c_evaluate_local_responses(
             nonlinear_plan.timings.shell_kernel_seconds += (
                 time.perf_counter() - kernel_start
             )
+            nonlinear_plan.timings.initial_field_accelerated_elements += initialized_count
             elastic_states = batch._batch_b_elastic_state_mapping
             use_cached_mapping = True
             for element_id in batch.element_ids:
@@ -250,23 +316,53 @@ def _batch_c_evaluate_local_responses(
                         if isinstance(existing, dict)
                         else elastic_states[element_key]
                     )
-            continue
+            if initialized_count and not tangent:
+                _batch_b._recover_initial_field_states(
+                    nonlinear_plan,
+                    batch,
+                    displacement_array,
+                    committed_states,
+                    trial_states,
+                )
+        else:
+            force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
+                displacement_array,
+                committed_states,
+                tangent,
+            )
+            nonlinear_plan.timings.shell_kernel_seconds += kernel_seconds
+            nonlinear_plan.force_values[batch.force_positions.reshape(-1)] = np.asarray(
+                force_batch,
+                dtype=float,
+            ).reshape(-1)
+            if tangent and tangent_batch is not None:
+                nonlinear_plan.tangent_values[
+                    batch.tangent_positions.reshape(-1)
+                ] = np.asarray(tangent_batch, dtype=float).reshape(-1)
+            trial_states.update(batch_states)
 
-        force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
+        override_start = time.perf_counter()
+        override_count = _performance._apply_initial_field_shell_overrides(
+            nonlinear_plan,
+            batch,
             displacement_array,
             committed_states,
             tangent,
+            trial_states,
         )
-        nonlinear_plan.timings.shell_kernel_seconds += kernel_seconds
-        nonlinear_plan.force_values[batch.force_positions.reshape(-1)] = np.asarray(
-            force_batch,
-            dtype=float,
-        ).reshape(-1)
-        if tangent and tangent_batch is not None:
-            nonlinear_plan.tangent_values[
-                batch.tangent_positions.reshape(-1)
-            ] = np.asarray(tangent_batch, dtype=float).reshape(-1)
-        trial_states.update(batch_states)
+        nonlinear_plan.timings.initial_field_override_seconds += (
+            time.perf_counter() - override_start
+        )
+        nonlinear_plan.timings.initial_field_override_elements += override_count
+
+    for batch in nonlinear_plan.quadratic_beam_batches:
+        nonlinear_plan.timings.non_shell_seconds += batch.evaluate_into_buffers(
+            nonlinear_plan,
+            displacement_array,
+            committed_states,
+            tangent,
+            trial_states,
+        )
 
     non_shell_start = time.perf_counter()
     model = nonlinear_plan.model
@@ -316,26 +412,11 @@ def _batch_c_assemble_nonlinear_system(
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    has_initial_fields = any(
-        isinstance(state, Mapping)
-        and any(
-            key in state
-            for key in (
-                "initial_membrane_stress",
-                "initial_bending_stress",
-                "initial_membrane_prestrain",
-                "initial_curvature_prestrain",
-                "initial_fiber_stress",
-                "initial_fiber_prestrain",
-            )
-        )
-        for state in committed_states.values()
-    )
-    if deleted_tuple or extra or kinematics != "von_karman" or has_initial_fields:
+    if deleted_tuple or extra or kinematics != "von_karman":
         # The reduced-assembly plan encodes the default von Karman element
         # response; erosion, per-element stiffness scales, corotational
-        # kinematics, and immutable initial stress/prestrain offsets take the
-        # full reference path.
+        # kinematics take the full reference path. Immutable initial fields
+        # remain eligible through exact local response overrides.
         return _BASE_ASSEMBLER(
             model,
             displacements,
@@ -352,6 +433,7 @@ def _batch_c_assemble_nonlinear_system(
     if (
         context is None
         or context.transformation is None
+        or context.transformation.shape[1] == 0
         or context.fallback_reason is not None
     ):
         return _BASE_ASSEMBLER(
@@ -522,6 +604,8 @@ def reset_batch_c_counters() -> None:
                 "reduced_plan_builds": 0,
                 "reduced_assemblies": 0,
                 "full_coordinate_fallbacks": 0,
+                "cost_gate_skips": 0,
+                "last_cost_gate": None,
                 "last_fallback_reason": None,
                 "last_plan": None,
             }
@@ -533,6 +617,7 @@ def batch_c_status() -> Dict[str, Any]:
         result = dict(_STATUS)
     result["eligible"] = bool(JIT_ENABLED)
     result["map_limit_mb"] = float(_maximum_map_bytes() / (1024.0**2))
+    result["default_activation_threshold"] = _minimum_estimated_assemblies()
     result["active_context_depth"] = len(_context_stack())
     result["batch_b_local_kernel_retained"] = bool(
         _reduced._evaluate_local_responses is _batch_c_evaluate_local_responses

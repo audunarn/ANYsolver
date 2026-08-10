@@ -40,12 +40,15 @@ from scipy import sparse
 from scipy.sparse.linalg import bicgstab, gmres, minres
 
 from .cases import make_result_case
+from .constraint_audit import constraint_residual_summary, require_valid_constraints
 from .linalg import FactorizationCache, MatrixClass, factorize, factorize_cached
 from .matrix_assembly import (
     assemble_load_matrix,
     assemble_mass_matrix as _canonical_assemble_mass_matrix,
     assemble_system as _canonical_assemble_system,
 )
+from .recovery import ResourceConfig
+from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
     from .boundary import LoadCase
@@ -102,6 +105,7 @@ def build_constraint_transformation(
     The returned system is K_red q = F_red and the full displacement vector is
     recovered from u = T q + u0.
     """
+    constraint_audit = require_valid_constraints(model)
     total_dofs = int(K.shape[0])
     fixed_values = _constraint_value_map(model)
     mpc_constraints = _collect_mpc_constraints(model)
@@ -212,6 +216,7 @@ def build_constraint_transformation(
         "num_mpc_constraints": int(len(mpc_constraints)),
         "fixed_dofs": sorted(fixed_dofs),
         "slave_dofs": sorted(slave_dofs),
+        "audit": constraint_audit.to_dict(),
     }
     return K_red, F_red, T, u0, independent_dofs, info
 
@@ -511,6 +516,7 @@ def _solve_nullspace_augmented_system(
     }
 
 
+@resource_threaded
 def solve_linear(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
@@ -518,6 +524,7 @@ def solve_linear(
     precond: bool = True,
     constraint_mode: str = "auto",
     allow_unbalanced_free_free: bool = False,
+    resource_config: Optional[ResourceConfig] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """
     Solve a linear FE problem using fixed-DOF/MPC transformation.
@@ -554,6 +561,7 @@ def solve_linear(
         "constraint_info": constraint_info,
         "nullspace_info": nullspace_info,
         "convergence_info": {},
+        "thread_policy": thread_policy_diagnostics(resource_config),
     }
 
     start_time = time.time()
@@ -568,6 +576,11 @@ def solve_linear(
         q, convergence_info = _solve_reduced_system(K_red, F_red, solver_type)
     solver_info["solve_time"] = time.time() - start_time
     solver_info["convergence_info"] = convergence_info
+    if convergence_info.get("status") != "converged":
+        displacement = u0.copy()
+    else:
+        displacement = reconstruct_full_solution(T, q, u0)
+    solver_info["constraint_postcheck"] = constraint_residual_summary(model, displacement)
     result_case = make_result_case(
         name=f"linear_static:{getattr(load_case, 'name', 'none')}",
         analysis_type="linear_static",
@@ -579,17 +592,16 @@ def solve_linear(
         warnings=convergence_info.get("warnings", ()),
     )
     solver_info["result_case"] = result_case.to_dict()
-
-    if convergence_info.get("status") != "converged":
-        return u0.copy(), solver_info
-    return reconstruct_full_solution(T, q, u0), solver_info
+    return displacement, solver_info
 
 
+@resource_threaded
 def solve_linear_many(
     model: "FEModel",
     load_cases: List[Optional["LoadCase"]],
     constraint_mode: str = "auto",
     factorization_cache: Optional[FactorizationCache] = None,
+    resource_config: Optional[ResourceConfig] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Solve several unchanged-stiffness static load cases with one factorization.
 
@@ -644,7 +656,10 @@ def solve_linear_many(
             "backend": handle.diagnostics(),
             "factorization_cache": local_cache.diagnostics(),
             "solve_time": time.time() - start,
+            "thread_policy": thread_policy_diagnostics(resource_config),
         }
+        displacement = np.tile(u0.reshape(-1, 1), (1, len(load_cases)))
+        info["constraint_postcheck"] = constraint_residual_summary(model, displacement)
         info["result_case"] = make_result_case(
             name="linear_static_many",
             analysis_type="linear_static_many",
@@ -654,7 +669,7 @@ def solve_linear_many(
             recovery={"displacements": True, "stresses": "on_demand", "reactions": "on_demand"},
             settings={"constraint_mode": mode, "num_load_cases": len(load_cases)},
         ).to_dict()
-        return np.tile(u0.reshape(-1, 1), (1, len(load_cases))), info
+        return displacement, info
     q_matrix = handle.solve_many(F_red)
     full = np.asarray(T @ q_matrix + u0[:, None], dtype=float)
     info = {
@@ -667,7 +682,9 @@ def solve_linear_many(
         "factorization_cache": local_cache.diagnostics(),
         "solve_time": time.time() - start,
         "num_result_cases": len(load_cases),
+        "thread_policy": thread_policy_diagnostics(resource_config),
     }
+    info["constraint_postcheck"] = constraint_residual_summary(model, full)
     info["result_case"] = make_result_case(
         name="linear_static_many",
         analysis_type="linear_static_many",

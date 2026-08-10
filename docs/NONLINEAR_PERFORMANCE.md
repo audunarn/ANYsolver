@@ -35,6 +35,18 @@ representative cylinder models as follows on the audit workstation:
 These timings are diagnostic observations, not release gates; benchmark
 comparisons must use the same machine, environment, and model.
 
+### Batched S4 geometric stiffness
+
+Linear buckling assembly batches the S4 initial-stress operator in a compiled
+kernel. Membrane resultants, bending resultants, stress second moments and
+per-Gauss local transformations retain the scalar element conventions.
+Reference derivatives, integration weights and frames are cached by topology
+and geometry revision; state sampling remains per assembly. Distorted, rotated
+and warped S4 qualification compares the assembled matrix with the scalar
+element oracle. Triangles, Q8, beams and unsupported element formulations stay
+on the general scalar path, and assembly diagnostics expose both counts and
+geometry/kernel timings.
+
 ### Persistent nonlinear assembly plan
 
 A `NonlinearAssemblyPlan` is built once for each `(model, num_layers)` pair and
@@ -43,6 +55,7 @@ retains:
 
 - shell grouping by element type, thickness, stabilization and material;
 - stacked reference transforms and shell B matrices;
+- stacked transforms and strain rows for eligible elastic Beam3 elements;
 - element DOF mappings;
 - reusable displacement and material-state work arrays;
 - flat local force/tangent storage;
@@ -104,11 +117,28 @@ analytical consistent tangent as scalar assembly. The central-difference
 tangent remains an explicit qualification oracle and guarded invalid-row
 fallback. A condition number alone does not discard a finite exact analytical
 row, and the oracle uses representable, stiffness-scaled perturbations.
-Shells carrying initial stress or prestrain fields use the scalar path so the
-immutable field, evolving plastic state, and provenance cannot be dropped by
-batch reconstruction. Reduced-integration Q8R is deliberately ineligible for
+Shells carrying initial stress or prestrain fields no longer disable batching
+for the whole model. For elastic S4 batches, immutable stress and prestrain are
+integrated into exact membrane and bending resultant offsets inside the JIT
+kernel; complete layer/provenance state is reconstructed once at convergence.
+Initialized plastic shells retain exact scalar element evaluation, while
+ordinary shells in the same model remain accelerated. Diagnostics separate
+accelerated initialized elements from scalar overrides. A 96-S4 case with
+fields on every element measured 2.03 ms accelerated versus 21.82 ms scalar
+after warm-up (10.7x). Reduced-integration Q8R is deliberately ineligible for
 shell batching because its experimental hourglass stiffness is not represented
 by the accelerated local kernel.
+
+### Elastic Beam3 batch
+
+Straight elastic `QuadraticBeamElement` members use a dedicated compiled batch
+for von Karman internal force and consistent tangent assembly. Reference
+transforms, Gauss-point strain rows and scatter positions are retained in the
+nonlinear plan. Generalized sections, fiber plasticity, deleted elements and
+corotational analyses retain their qualified scalar behavior. On the audit
+workstation, 72 rotated Beam3 elements measured 0.164 ms batched versus
+17.43 ms scalar after warm-up (106x); force and tangent qualification uses the
+scalar element implementation as the oracle.
 
 ### Batch C: direct reduced-coordinate assembly
 
@@ -135,6 +165,15 @@ Python starts to change its retained-map memory limit, which defaults to 512 MiB
 If the estimated map exceeds the limit, the solver automatically retains the
 full-coordinate assembly and projection path.
 
+Direct reduction also has a solve-cost gate. The representative weighted-MPC
+model broke even after about 72 tangent evaluations, so the default threshold
+is 144 estimated useful assemblies (a 2x safety margin). The estimate uses up
+to four useful Newton evaluations per requested increment instead of the full
+failure limit. Short solves keep full-coordinate persistent assembly and avoid
+the reduced-plan setup. Set
+`FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES` to override the threshold; status
+diagnostics record the estimate, threshold, decision and skip count.
+
 Batch C is installed only when Numba is active. Python/NumPy fallback runs keep
 the existing sparse projection path.
 
@@ -145,6 +184,20 @@ the element dimension.  `solve_static_nonlinear(...,
 resource_config=ResourceConfig(assembly_threads=N))` temporarily sets the Numba
 thread count for nonlinear assembly and restores the previous count after the
 solve.
+
+`ResourceConfig.solver_threads` is also enforced for every public solver entry
+point through a scoped `threadpoolctl` limit. Factorization and reusable-handle
+solve diagnostics retain requested and observed pool data. When
+`assembly_threads > 1` activates parallel Numba assembly, native BLAS/OpenMP
+pools are nested at one thread and both Numba and native limits are restored on
+normal return or exception. A missing limiter is reported explicitly; an
+omitted resource policy leaves backend defaults unchanged.
+
+The separate `experimental_csr_assembly` module is benchmark-only. It caches a
+CSR topology and local-entry scatter map, but the qualified linear K/M/KG path
+continues to use COO. Promotion requires at least 20% complete assembly gain,
+plus at least 5% end-to-end gain or 15% peak-memory reduction, matrix error no
+greater than `1e-12`, and no representative case regression above 5%.
 
 The sparse backend policy is tuneable through:
 
@@ -234,7 +287,8 @@ The dedicated tests compare optimized and legacy internal-force/tangent assembly
 including tilted shells, selector constraints and weighted MPC transformations.
 They also verify cache invalidation, residual-only assembly, CSR uniqueness,
 persistent buffer reuse, analytical/numerical plastic-tangent parity, elastic
-layer state, initial-field scalar fallback, Q8R scalar fallback, lazy
+layer state, mixed initial-field exact overrides, Beam3 scalar-oracle parity,
+Q8R scalar fallback, lazy
 nonlinear-solver activation, and legacy restoration. Qualification records
 warmed constitutive and representative global Newton timings for the
 analytical and numerical tangent paths; timing is evidence rather than a

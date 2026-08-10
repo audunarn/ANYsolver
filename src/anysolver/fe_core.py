@@ -366,6 +366,11 @@ class FEModel:
 
     def apply_boundary_conditions(self):
         """Apply all boundary conditions to the mesh DOF manager."""
+        # Keep invalid supports/MPCs from reaching element assembly or sparse
+        # factorization in every analysis family.
+        from .constraint_audit import require_valid_constraints
+
+        require_valid_constraints(self)
         for bc in self.boundary_conditions:
             bc.apply(self.mesh.dof_manager)
 
