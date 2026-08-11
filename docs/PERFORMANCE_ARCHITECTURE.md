@@ -134,7 +134,9 @@ The nonlinear impact loop separates four independent optimizations:
   assembly.
 - `DamageMatrixPlan` owns a fixed CSR pattern plus per-element value positions.
   It is constructed only after projected future events pass the measured
-  break-even and its retained arrays fit the solve's bounded memory allowance.
+  break-even and the combined retained footprint fits the solve's bounded
+  memory allowance. That footprint includes both the plan and the cached
+  legacy element-term arrays kept simultaneously for exact fallback.
   It applies only changed scales, keeps point masses independent, and returns
   to an exact cached-term rebuild if its model revision or input validity
   changes.

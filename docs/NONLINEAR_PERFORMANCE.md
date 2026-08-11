@@ -363,16 +363,21 @@ events must be observed, and their measured event density must project at
 least 11 *future* matrix updates in the remaining nominal steps. The retained
 array estimate must fit both a 256 MiB default cap and any smaller
 `ResourceConfig.memory_limit_bytes` headroom remaining after the solve
-preflight estimate. Until both gates pass, cached element terms drive the exact
-legacy rebuild. A model revision refreshes those terms and disables the plan
-for the rest of that solve.
+preflight estimate. This limit is applied to the peak combined retained
+footprint: the cached legacy element-term arrays remain alive for exact
+fallback while the plan owns its CSR arrays, contribution maps, and object
+overhead. Until both gates pass, cached element terms drive the exact legacy
+rebuild. A model revision refreshes those terms and disables the plan for the
+rest of that solve.
 
 `contact_work_buffer` diagnostics report assembly/scatter/materialization and
 growth counts. `damage_matrix_plan_selection` reports the event projection,
-break-even and memory decision, legacy/plan update counts, and selection
-reason. `damage_matrix_plan` reports setup/update time, retained bytes,
-changed/no-change counts, active scaled elements, invalidation and fallback
-counts, and K/M nonzero counts when the plan is selected.
+break-even and memory decision, cached-term, plan-only, combined estimated,
+combined actual, and conservatively accounted retained bytes, legacy/plan
+update counts, and selection reason. `damage_matrix_plan` reports setup/update
+time, retained bytes, changed/no-change counts, active scaled elements,
+invalidation and fallback counts, and K/M nonzero counts when the plan is
+selected.
 
 ### Batch D: multicore and sparse backend tuning
 

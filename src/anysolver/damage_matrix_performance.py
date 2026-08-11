@@ -36,9 +36,9 @@ def estimate_damage_matrix_plan_retained_bytes(
     The bound assumes 64-bit CSR indices, no duplicate compression, and one
     possible point-mass diagonal entry per global degree of freedom.  It also
     includes the plan's base-value copies, per-element contribution maps, and
-    a small object-overhead allowance.  The cached legacy terms are excluded:
-    callers retain those regardless so an invalidated plan has an exact
-    fallback without recomputing an unchanged model.
+    a small object-overhead allowance.  This plan-only estimate excludes the
+    cached legacy terms; the selection gate reports them separately and adds
+    them because they remain alive for exact fallback throughout plan use.
     """
 
     total_dofs, terms = cached_terms
@@ -71,6 +71,39 @@ def estimate_damage_matrix_plan_retained_bytes(
     )
 
 
+def estimate_damage_matrix_cached_terms_retained_bytes(
+    cached_terms: Tuple[int, Tuple[DamageElementTerm, ...]],
+) -> int:
+    """Return the array-buffer bytes retained by the exact fallback terms.
+
+    The contact solvers intentionally keep these arrays alive after selecting
+    an incremental plan so a revision or invalid input can fall back without
+    changing exact scalar-rebuild semantics.  Their buffers therefore overlap
+    the complete lifetime of a selected plan and must be charged to the same
+    retained-memory allowance.
+    """
+
+    _total_dofs, terms = cached_terms
+    return int(
+        sum(
+            int(np.asarray(array).nbytes)
+            for term in terms
+            for array in term[1:]
+        )
+    )
+
+
+def estimate_damage_matrix_combined_retained_bytes(
+    cached_terms: Tuple[int, Tuple[DamageElementTerm, ...]],
+) -> int:
+    """Return the peak retained bytes when the incremental plan is selected."""
+
+    return int(
+        estimate_damage_matrix_cached_terms_retained_bytes(cached_terms)
+        + estimate_damage_matrix_plan_retained_bytes(cached_terms)
+    )
+
+
 @dataclass
 class DamageMatrixPlanGate:
     """Conservative cost/memory selector for incremental damage matrices."""
@@ -85,7 +118,13 @@ class DamageMatrixPlanGate:
     observed_opportunities: int = 0
     remaining_opportunities: int = 0
     projected_future_update_events: int = 0
+    cached_terms_retained_bytes: int = 0
+    estimated_plan_retained_bytes: int = 0
+    estimated_combined_retained_bytes: int = 0
     estimated_retained_bytes: int = 0
+    actual_plan_retained_bytes: int = 0
+    actual_combined_retained_bytes: int = 0
+    accounted_combined_retained_bytes: int = 0
     actual_retained_bytes: int = 0
     legacy_update_count: int = 0
     plan_update_count: int = 0
@@ -162,7 +201,20 @@ class DamageMatrixPlanGate:
         self.projected_future_update_events = int(
             np.floor(observed_rate * float(self.remaining_opportunities))
         )
-        self.estimated_retained_bytes = estimate_damage_matrix_plan_retained_bytes(cached_terms)
+        self.cached_terms_retained_bytes = (
+            estimate_damage_matrix_cached_terms_retained_bytes(cached_terms)
+        )
+        self.estimated_plan_retained_bytes = (
+            estimate_damage_matrix_plan_retained_bytes(cached_terms)
+        )
+        self.estimated_combined_retained_bytes = int(
+            self.cached_terms_retained_bytes + self.estimated_plan_retained_bytes
+        )
+        self.accounted_combined_retained_bytes = self.estimated_combined_retained_bytes
+        # Compatibility name: this is the complete incremental-selection
+        # footprint now that the exact fallback terms are known to overlap the
+        # plan lifetime.
+        self.estimated_retained_bytes = self.estimated_combined_retained_bytes
 
         if self.plan_selected:
             self.selection_reason = "selected_cost_and_memory_gate_passed"
@@ -176,7 +228,7 @@ class DamageMatrixPlanGate:
         if self.projected_future_update_events < self.break_even_future_updates:
             self.selection_reason = "projected_future_updates_below_break_even"
             return False
-        if self.estimated_retained_bytes > self.retained_memory_allowance_bytes:
+        if self.estimated_combined_retained_bytes > self.retained_memory_allowance_bytes:
             self.selection_reason = "estimated_retained_memory_exceeds_allowance"
             return False
         self.plan_selected = True
@@ -185,8 +237,19 @@ class DamageMatrixPlanGate:
 
     def accept_built_plan(self, plan: "DamageMatrixPlan") -> bool:
         self.plan_build_count += 1
-        self.actual_retained_bytes = max(int(plan.retained_bytes), 0)
-        if self.actual_retained_bytes > self.retained_memory_allowance_bytes:
+        self.actual_plan_retained_bytes = max(int(plan.retained_bytes), 0)
+        self.actual_combined_retained_bytes = int(
+            self.cached_terms_retained_bytes + self.actual_plan_retained_bytes
+        )
+        # Continue to charge the conservative pre-build plan allowance after
+        # construction: ``plan.retained_bytes`` counts ndarray/CSR buffers but
+        # intentionally omits the plan's Python maps and object overhead.
+        self.accounted_combined_retained_bytes = max(
+            int(self.estimated_combined_retained_bytes),
+            int(self.actual_combined_retained_bytes),
+        )
+        self.actual_retained_bytes = self.actual_combined_retained_bytes
+        if self.accounted_combined_retained_bytes > self.retained_memory_allowance_bytes:
             self.rejected_plan_build_count += 1
             self.plan_selected = False
             self._disabled_reason = "actual_retained_memory_exceeds_allowance"
@@ -220,7 +283,8 @@ class DamageMatrixPlanGate:
                 "floor(observed update density * remaining nominal time steps)"
             ),
             "retained_memory_model": (
-                "conservative plan-owned array upper bound; cached legacy terms excluded"
+                "simultaneously retained cached legacy term arrays plus conservative "
+                "plan-owned arrays, maps, and object overhead"
             ),
             "plan_selected": bool(self.plan_selected),
             "selection_reason": str(self.selection_reason),
@@ -238,7 +302,13 @@ class DamageMatrixPlanGate:
             ),
             "preflight_memory_bytes": int(self.preflight_memory_bytes),
             "retained_memory_allowance_bytes": int(self.retained_memory_allowance_bytes),
+            "cached_terms_retained_bytes": int(self.cached_terms_retained_bytes),
+            "estimated_plan_retained_bytes": int(self.estimated_plan_retained_bytes),
+            "estimated_combined_retained_bytes": int(self.estimated_combined_retained_bytes),
             "estimated_retained_bytes": int(self.estimated_retained_bytes),
+            "actual_plan_retained_bytes": int(self.actual_plan_retained_bytes),
+            "actual_combined_retained_bytes": int(self.actual_combined_retained_bytes),
+            "accounted_combined_retained_bytes": int(self.accounted_combined_retained_bytes),
             "actual_retained_bytes": int(self.actual_retained_bytes),
             "legacy_update_count": int(self.legacy_update_count),
             "plan_update_count": int(self.plan_update_count),

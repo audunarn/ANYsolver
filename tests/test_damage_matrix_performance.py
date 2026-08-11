@@ -13,6 +13,8 @@ from anysolver.damage_matrix_performance import (
     DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES,
     DamageMatrixPlan,
     DamageMatrixPlanGate,
+    estimate_damage_matrix_cached_terms_retained_bytes,
+    estimate_damage_matrix_combined_retained_bytes,
     estimate_damage_matrix_plan_retained_bytes,
 )
 from anysolver.elements import ShellElement
@@ -163,9 +165,12 @@ def test_model_revision_invalidates_plan_and_helper_falls_back_to_scalar() -> No
 def test_plan_gate_requires_observed_future_break_even_and_bounds_memory() -> None:
     model = _panel()
     terms = _linear_element_matrix_terms(model)
-    estimate = estimate_damage_matrix_plan_retained_bytes(terms)
+    plan_estimate = estimate_damage_matrix_plan_retained_bytes(terms)
+    cached_terms_bytes = estimate_damage_matrix_cached_terms_retained_bytes(terms)
+    estimate = estimate_damage_matrix_combined_retained_bytes(terms)
+    assert estimate == plan_estimate + cached_terms_bytes
     plan = DamageMatrixPlan.build(model, terms)
-    assert estimate >= plan.retained_bytes
+    assert plan_estimate >= plan.retained_bytes
 
     gate = DamageMatrixPlanGate(
         total_opportunities=40,
@@ -178,6 +183,10 @@ def test_plan_gate_requires_observed_future_break_even_and_bounds_memory() -> No
     diagnostics = gate.diagnostics()
     assert diagnostics["projected_future_update_events"] >= DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES
     assert diagnostics["retained_memory_allowance_bytes"] > estimate
+    assert diagnostics["cached_terms_retained_bytes"] == cached_terms_bytes
+    assert diagnostics["estimated_plan_retained_bytes"] == plan_estimate
+    assert diagnostics["estimated_combined_retained_bytes"] == estimate
+    assert diagnostics["estimated_retained_bytes"] == estimate
 
     late_gate = DamageMatrixPlanGate(total_opportunities=20, preflight_memory_bytes=0)
     late_gate.register_cached_terms(model)
@@ -198,6 +207,70 @@ def test_plan_gate_requires_observed_future_break_even_and_bounds_memory() -> No
     memory_diagnostics = memory_gate.diagnostics()
     assert memory_diagnostics["retained_memory_allowance_bytes"] == estimate - 1
     assert memory_diagnostics["selection_reason"] == "estimated_retained_memory_exceeds_allowance"
+
+
+def test_plan_gate_charges_cached_fallback_terms_to_tiny_panel_headroom() -> None:
+    """Regression: plan-only headroom cannot cover two retained representations."""
+
+    model = _panel()
+    terms = _linear_element_matrix_terms(model)
+    plan_only_estimate = estimate_damage_matrix_plan_retained_bytes(terms)
+    cached_terms_bytes = estimate_damage_matrix_cached_terms_retained_bytes(terms)
+    plan = DamageMatrixPlan.build(model, terms)
+
+    # This is the audit reproduction: on this four-shell panel the legacy
+    # arrays retain 73,728 bytes beside a 144,808-byte plan.  The former gate
+    # saw only its conservative 192,512-byte plan estimate and selected it.
+    assert (cached_terms_bytes, plan.retained_bytes, plan_only_estimate) == (
+        73_728,
+        144_808,
+        192_512,
+    )
+    assert cached_terms_bytes == sum(
+        int(np.asarray(array).nbytes)
+        for term in terms[1]
+        for array in term[1:]
+    )
+    assert cached_terms_bytes > 0
+    assert plan.retained_bytes + cached_terms_bytes > plan_only_estimate
+
+    preflight_bytes = 1_000_000
+    gate = DamageMatrixPlanGate(
+        total_opportunities=40,
+        preflight_memory_bytes=preflight_bytes,
+        configured_memory_limit_bytes=preflight_bytes + plan_only_estimate,
+    )
+    gate.register_cached_terms(model)
+    assert gate.consider(terms, opportunity_index=1) is False
+    assert gate.consider(terms, opportunity_index=2) is False
+
+    diagnostics = gate.diagnostics()
+    assert diagnostics["retained_memory_allowance_bytes"] == plan_only_estimate
+    assert diagnostics["cached_terms_retained_bytes"] == cached_terms_bytes
+    assert diagnostics["estimated_plan_retained_bytes"] == plan_only_estimate
+    assert diagnostics["estimated_combined_retained_bytes"] == (
+        plan_only_estimate + cached_terms_bytes
+    )
+    assert diagnostics["estimated_combined_retained_bytes"] > diagnostics[
+        "retained_memory_allowance_bytes"
+    ]
+    assert diagnostics["accounted_combined_retained_bytes"] == diagnostics[
+        "estimated_combined_retained_bytes"
+    ]
+    assert diagnostics["plan_build_count"] == 0
+    assert diagnostics["selection_reason"] == "estimated_retained_memory_exceeds_allowance"
+
+    default_cap_gate = DamageMatrixPlanGate(
+        total_opportunities=40,
+        preflight_memory_bytes=0,
+        default_retained_bytes_cap=plan_only_estimate,
+    )
+    default_cap_gate.register_cached_terms(model)
+    assert default_cap_gate.consider(terms, opportunity_index=1) is False
+    assert default_cap_gate.consider(terms, opportunity_index=2) is False
+    assert default_cap_gate.diagnostics()["selection_reason"] == (
+        "estimated_retained_memory_exceeds_allowance"
+    )
 
 
 def test_plan_gate_disables_setup_after_cached_term_revision_refresh() -> None:
@@ -261,4 +334,13 @@ def test_gated_matrix_helper_retains_legacy_terms_then_promotes_with_parity() ->
     assert diagnostics["plan_build_count"] == 1
     assert diagnostics["legacy_update_count"] == 1
     assert diagnostics["plan_update_count"] == 1
-    assert diagnostics["actual_retained_bytes"] == plan.retained_bytes
+    assert diagnostics["actual_plan_retained_bytes"] == plan.retained_bytes
+    assert diagnostics["actual_combined_retained_bytes"] == (
+        diagnostics["cached_terms_retained_bytes"] + plan.retained_bytes
+    )
+    assert diagnostics["actual_retained_bytes"] == diagnostics[
+        "actual_combined_retained_bytes"
+    ]
+    assert diagnostics["accounted_combined_retained_bytes"] >= diagnostics[
+        "actual_combined_retained_bytes"
+    ]
