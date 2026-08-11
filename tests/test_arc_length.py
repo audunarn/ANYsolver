@@ -9,6 +9,10 @@ from anysolver.arc_length import ArcLengthControl, solve_static_arc_length
 from anysolver.boundary import BoundaryCondition, LoadCase
 from anysolver.elements import Element
 from anysolver.fe_core import FEModel
+from anysolver.nonlinear_static import (
+    _support_reaction_resultants,
+    _support_reaction_resultants_from_forces,
+)
 
 
 class SofteningSpringElement(Element):
@@ -231,6 +235,52 @@ def test_arc_length_continues_a_prescribed_displacement_without_load_case():
     assert progress[-1]["support_reactions"] == {
         name: list(values) for name, values in final_reactions.items()
     }
+    assert result.info["support_reaction_history"] == [
+        {
+            "step_index": step.step_index,
+            "load_factor": step.load_factor,
+            "support_reactions": {
+                name: list(values)
+                for name, values in step.support_reactions.items()
+            },
+        }
+        for step in result.steps
+    ]
+
+
+@pytest.mark.parametrize("plan_size", [32, 33])
+def test_force_based_support_reactions_match_residual_oracle(plan_size):
+    force_size = plan_size - 1
+    internal = np.linspace(-2.0, 3.0, force_size)
+    constant = np.linspace(0.5, -0.25, force_size)
+    proportional = np.linspace(-0.75, 1.25, force_size)
+    load_factor = 0.375
+    dofs = np.arange(plan_size, dtype=np.intp)
+    dofs[-1] = force_size + 7
+    components = np.arange(plan_size, dtype=np.intp) % 6
+    plan = {"shared support": (dofs, components)}
+    residual = internal - (constant + load_factor * proportional)
+    model = FEModel("support reaction oracle")
+
+    oracle = _support_reaction_resultants(
+        model, residual, dof_plan=plan
+    )
+    recovered = _support_reaction_resultants_from_forces(
+        model,
+        internal,
+        constant,
+        proportional,
+        load_factor,
+        dof_plan=plan,
+    )
+
+    assert recovered.keys() == oracle.keys()
+    np.testing.assert_allclose(
+        recovered["shared support"],
+        oracle["shared support"],
+        rtol=0.0,
+        atol=0.0,
+    )
 
 
 def test_arc_length_control_validates_increment_bounds():

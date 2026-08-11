@@ -160,6 +160,76 @@ def current_solver_threads() -> Optional[int]:
     return _SOLVER_THREADS.get()
 
 
+@functools.lru_cache(maxsize=32)
+def _cached_inherited_policy(
+    phase: str,
+    requested: Optional[int],
+    coordination: str,
+    status: str,
+    limiter_available: bool,
+    fallback_reason: Optional[str],
+) -> Mapping[str, Any]:
+    """Return a read-only-by-convention report template for a no-op scope."""
+
+    return {
+        "phase": phase,
+        "requested_threads": requested,
+        "limiter_available": limiter_available,
+        "fallback_reason": fallback_reason,
+        "pools_before": (),
+        "pools_active": (),
+        "pools_after": (),
+        "restored": True,
+        "coordination": coordination,
+        "status": status,
+    }
+
+
+def _inherited_native_thread_policy(
+    requested_threads: Optional[int], *, phase: str
+) -> Optional[Mapping[str, Any]]:
+    """Return an inherited policy when an outer same-thread scope is enough.
+
+    Low-level factorization and solve calls use this before constructing a
+    nested context manager.  The owner checks are identical to
+    :func:`native_thread_scope`, so copied contexts on another thread cannot
+    inherit the originating thread's reader or writer.
+    """
+
+    requested = None if requested_threads is None else int(requested_threads)
+    if requested is not None and requested <= 0:
+        raise ValueError("requested_threads must be positive when provided")
+    owner = threading.get_ident()
+    if (
+        requested is not None
+        and _ACTIVE_NATIVE_LIMIT.get() == requested
+        and _ACTIVE_NATIVE_LIMIT_OWNER.get() == owner
+    ):
+        return _cached_inherited_policy(
+            str(phase),
+            requested,
+            "writer_inherited",
+            "inherited_limit",
+            _HAS_THREADPOOLCTL,
+            _THREADPOOLCTL_ERROR,
+        )
+    if requested is None and _ACTIVE_NATIVE_DEFAULT_OWNER.get() == owner:
+        inherited_explicit = _ACTIVE_NATIVE_LIMIT_OWNER.get() == owner
+        return _cached_inherited_policy(
+            str(phase),
+            requested,
+            "writer_inherited" if inherited_explicit else "reader_inherited",
+            (
+                "inherited_explicit_limit"
+                if inherited_explicit
+                else "inherited_default"
+            ),
+            _HAS_THREADPOOLCTL,
+            _THREADPOOLCTL_ERROR,
+        )
+    return None
+
+
 @contextlib.contextmanager
 def native_thread_scope(
     requested_threads: Optional[int], *, phase: str

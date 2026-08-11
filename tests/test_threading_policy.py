@@ -7,6 +7,7 @@ import pytest
 from scipy import sparse
 
 import anysolver.threading_policy as policy_module
+import anysolver.linalg as linalg_module
 from anysolver.jit_compiler import JIT_ENABLED, numba_thread_scope
 from anysolver.linalg import MatrixClass, factorize
 from anysolver.assembly import solve_linear
@@ -87,6 +88,25 @@ def test_same_thread_nested_default_scope_inherits_reader_without_lock(monkeypat
     assert outer["restored"] is True
     assert len(acquire_calls) == 1
     assert len(release_calls) == 1
+
+
+@pytest.mark.parametrize("threads", [None, 1])
+def test_linalg_skips_inherited_nested_context_manager(monkeypatch, threads):
+    matrix = sparse.csr_matrix([[4.0, 1.0], [1.0, 3.0]])
+
+    def unexpected_nested_scope(*args, **kwargs):
+        raise AssertionError(f"unexpected nested scope: {args!r} {kwargs!r}")
+
+    monkeypatch.setattr(linalg_module, "native_thread_scope", unexpected_nested_scope)
+    options = {} if threads is None else {"solver_threads": threads}
+    with native_thread_scope(threads, phase="outer_solver"):
+        handle = factorize(matrix, MatrixClass.SPD, options=options)
+        result = handle.solve(np.array([1.0, 2.0]))
+
+    assert np.allclose(matrix @ result, [1.0, 2.0])
+    expected = "inherited_default" if threads is None else "inherited_limit"
+    assert handle.metadata["thread_policy"]["status"] == expected
+    assert handle.metadata["last_solve_thread_policy"]["status"] == expected
 
 
 def test_public_solver_applies_and_reports_resource_config():
@@ -264,6 +284,12 @@ def test_copied_context_cannot_inherit_another_threads_native_limit():
 
     def child():
         child_started.set()
+        assert (
+            policy_module._inherited_native_thread_policy(
+                1, phase="copied_context_probe"
+            )
+            is None
+        )
         with native_thread_scope(1, phase="copied_context_child") as report:
             child_status.append(report["status"])
             child_entered.set()
@@ -286,6 +312,12 @@ def test_copied_context_cannot_inherit_another_threads_default_reader():
     child_reports = []
 
     def child():
+        assert (
+            policy_module._inherited_native_thread_policy(
+                None, phase="copied_default_probe"
+            )
+            is None
+        )
         with native_thread_scope(None, phase="copied_default_child") as report:
             child_reports.append((report["status"], report["coordination"]))
             child_entered.set()

@@ -876,17 +876,16 @@ def _assemble_nonlinear_system(
     return F_int, K_T, state_payload
 
 
-def _support_reaction_resultants(
-    model: "FEModel", imbalance: np.ndarray
-) -> Dict[str, Tuple[float, ...]]:
-    """Sum nonlinear residual forces by named support boundary condition."""
+def _support_reaction_dof_plan(
+    model: "FEModel",
+) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+    """Precompute named support DOFs and their six result components."""
 
-    residual = np.asarray(imbalance, dtype=float).reshape(-1)
     manager = model.mesh.dof_manager
-    result: Dict[str, np.ndarray] = {}
+    entries: Dict[str, Tuple[List[int], List[int]]] = {}
     for index, boundary in enumerate(getattr(model, "boundary_conditions", ()) or ()):
         name = str(getattr(boundary, "name", "") or f"support {index + 1}")
-        vector = result.setdefault(name, np.zeros(6, dtype=float))
+        dofs, components = entries.setdefault(name, ([], []))
         indices = getattr(boundary, "_dof_indices", {})
         constraints = getattr(boundary, "dof_constraints", {})
         for node_id in getattr(boundary, "node_ids", ()) or ():
@@ -896,18 +895,118 @@ def _support_reaction_resultants(
                 if local is None or local >= len(node_dofs):
                     continue
                 dof = int(node_dofs[local])
-                if 0 <= dof < residual.size:
-                    vector[int(local)] += float(residual[dof])
+                if dof >= 0:
+                    dofs.append(dof)
+                    components.append(int(local))
     return {
-        name: tuple(float(value) for value in vector)
-        for name, vector in result.items()
+        name: (
+            np.asarray(dofs, dtype=np.intp),
+            np.asarray(components, dtype=np.intp),
+        )
+        for name, (dofs, components) in entries.items()
     }
+
+
+def _support_reaction_resultants(
+    model: "FEModel",
+    imbalance: np.ndarray,
+    *,
+    dof_plan: Optional[Mapping[str, Tuple[np.ndarray, np.ndarray]]] = None,
+) -> Dict[str, Tuple[float, ...]]:
+    """Sum nonlinear residual forces by named support boundary condition."""
+
+    residual = np.asarray(imbalance, dtype=float).reshape(-1)
+    plan = _support_reaction_dof_plan(model) if dof_plan is None else dof_plan
+    result: Dict[str, Tuple[float, ...]] = {}
+    for name, (dofs, components) in plan.items():
+        if dofs.size <= 32:
+            values = [0.0] * 6
+            for entry_index in range(int(dofs.size)):
+                dof = int(dofs[entry_index])
+                if dof < residual.size:
+                    component = int(components[entry_index])
+                    values[component] += float(residual[dof])
+            result[name] = tuple(values)
+            continue
+        valid = dofs < residual.size
+        if np.all(valid):
+            selected_dofs = dofs
+            selected_components = components
+        else:
+            selected_dofs = dofs[valid]
+            selected_components = components[valid]
+        vector = np.bincount(
+            selected_components,
+            weights=residual[selected_dofs],
+            minlength=6,
+        )[:6]
+        result[name] = tuple(float(value) for value in vector)
+    return result
+
+
+def _support_reaction_resultants_from_forces(
+    model: "FEModel",
+    internal_force: np.ndarray,
+    constant_force: np.ndarray,
+    proportional_force: np.ndarray,
+    load_factor: float,
+    *,
+    dof_plan: Optional[Mapping[str, Tuple[np.ndarray, np.ndarray]]] = None,
+) -> Dict[str, Tuple[float, ...]]:
+    """Recover named support reactions without full residual temporaries."""
+
+    internal = np.asarray(internal_force, dtype=float).reshape(-1)
+    constant = np.asarray(constant_force, dtype=float).reshape(-1)
+    proportional = np.asarray(proportional_force, dtype=float).reshape(-1)
+    available = min(internal.size, constant.size, proportional.size)
+    factor = float(load_factor)
+    plan = _support_reaction_dof_plan(model) if dof_plan is None else dof_plan
+    result: Dict[str, Tuple[float, ...]] = {}
+    for name, (dofs, components) in plan.items():
+        if dofs.size <= 32:
+            values = [0.0] * 6
+            for entry_index in range(int(dofs.size)):
+                dof = int(dofs[entry_index])
+                if dof < available:
+                    component = int(components[entry_index])
+                    values[component] += float(
+                        internal[dof]
+                        - (constant[dof] + factor * proportional[dof])
+                    )
+            result[name] = tuple(values)
+            continue
+        valid = dofs < available
+        if np.all(valid):
+            selected_dofs = dofs
+            selected_components = components
+        else:
+            selected_dofs = dofs[valid]
+            selected_components = components[valid]
+        weights = internal[selected_dofs] - (
+            constant[selected_dofs] + factor * proportional[selected_dofs]
+        )
+        vector = np.bincount(
+            selected_components,
+            weights=weights,
+            minlength=6,
+        )[:6]
+        result[name] = tuple(float(value) for value in vector)
+    return result
 
 
 def _max_plastic_strain(states: Mapping[int, Any]) -> float:
     if isinstance(states, NonlinearStateStore):
         return states.max_equivalent_plastic_strain()
-    return float(_nonlinear_state_summary(states)["max_equivalent_plastic_strain"])
+    alpha_parts: List[np.ndarray] = []
+    for state in states.values():
+        if not isinstance(state, dict):
+            continue
+        alpha = np.asarray(state.get("alpha", ()), dtype=float).reshape(-1)
+        if alpha.size:
+            alpha_parts.append(alpha)
+    if not alpha_parts:
+        return 0.0
+    return float(np.max(np.concatenate(alpha_parts)))
 
 
 def state_von_mises_envelope(state: Any, E: float, nu: float) -> Optional[float]:

@@ -321,6 +321,50 @@ def test_auto_sparse_backend_thresholds_are_environment_tunable(monkeypatch) -> 
     assert handle.metadata["pypardiso_retained_pattern_slots_before_selection"] == 0
 
 
+def test_auto_sparse_backend_uses_one_coherent_selection_snapshot(monkeypatch) -> None:
+    monkeypatch.setattr(linalg, "_HAS_PYPARDISO", True)
+
+    class SelectionSpy:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def selection_state(self, matrix, matrix_class):
+            del matrix, matrix_class
+            self.calls += 1
+            return True, 2, True
+
+        @property
+        def initialized(self):
+            raise AssertionError("legacy initialized accessor was used")
+
+        @property
+        def retained_pattern_slots(self):
+            raise AssertionError("legacy retained-slot accessor was used")
+
+        def has_compatible_pattern(self, matrix, matrix_class):
+            del matrix, matrix_class
+            raise AssertionError("legacy pattern accessor was used")
+
+    spy = SelectionSpy()
+    backend = AutoSparseSolverBackend(
+        pardiso_backend=spy,
+        pypardiso_min_dimension=200,
+        pypardiso_min_nnz=200,
+        pypardiso_warm_min_dimension=100,
+        pypardiso_warm_min_nnz=100,
+    )
+    handle = backend.factorize(sparse.eye(2, format="csr"), MatrixClass.SPD)
+
+    assert handle.backend_name == "scipy_superlu"
+    assert spy.calls == 1
+    assert handle.metadata["pypardiso_initialized_before_selection"] is True
+    assert handle.metadata["pypardiso_retained_pattern_slots_before_selection"] == 2
+    assert handle.metadata["pypardiso_compatible_pattern_before_selection"] is True
+    assert handle.metadata["pypardiso_warm_thresholds_active"] is True
+    assert handle.metadata["pypardiso_active_min_dimension"] == 100
+    assert handle.metadata["pypardiso_active_min_nnz"] == 100
+
+
 def test_auto_sparse_backend_uses_warm_thresholds_only_for_a_compatible_pattern(
     monkeypatch,
 ) -> None:

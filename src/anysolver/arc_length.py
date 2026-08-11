@@ -56,7 +56,8 @@ from .nonlinear_static import (
     _max_plastic_strain,
     _materialize_final_nonlinear_states,
     _nonlinear_state_summary,
-    _support_reaction_resultants,
+    _support_reaction_dof_plan,
+    _support_reaction_resultants_from_forces,
     _increment_snapshot,
     _weighted_external_load_system,
     solve_static_nonlinear,
@@ -420,6 +421,7 @@ def solve_static_arc_length(
 
     _, _, T, u0, _, constraint_info = build_constraint_transformation(K0, F_prop, working_model)
     prescribed_offset = np.asarray(u0, dtype=float).reshape(-1)
+    zero_prescribed_offset = not bool(np.any(prescribed_offset))
     prescribed_path_active = bool(
         prescribed_offset.size
         and float(np.max(np.abs(prescribed_offset))) > _SMALL
@@ -508,11 +510,23 @@ def solve_static_arc_length(
         q = _recover_reduced_coordinates(T, u0, preload.displacements)
         committed_states = copy.deepcopy(preload.element_states)
 
-    def full_displacement(q_reduced: np.ndarray, path_factor: float) -> np.ndarray:
-        return np.asarray(
-            T @ q_reduced + float(path_factor) * prescribed_offset,
-            dtype=float,
-        ).reshape(-1)
+    if zero_prescribed_offset:
+
+        def full_displacement(
+            q_reduced: np.ndarray, path_factor: float
+        ) -> np.ndarray:
+            del path_factor
+            return np.asarray(T @ q_reduced, dtype=float).reshape(-1)
+
+    else:
+
+        def full_displacement(
+            q_reduced: np.ndarray, path_factor: float
+        ) -> np.ndarray:
+            return np.asarray(
+                T @ q_reduced + float(path_factor) * prescribed_offset,
+                dtype=float,
+            ).reshape(-1)
 
     rotation_scale = settings.rotation_length_scale or _characteristic_length(working_model)
     W = _reduced_metric(working_model, T, rotation_scale)
@@ -640,22 +654,42 @@ def solve_static_arc_length(
         else max(physical_direction_norm, 1.0e-12)
     )
 
-    def path_metric_dot(
-        dq_left: np.ndarray,
-        dlambda_left: float,
-        dq_right: np.ndarray,
-        dlambda_right: float,
-    ) -> float:
-        """Full displacement metric plus the load-parameter weight."""
+    if not zero_prescribed_offset:
 
-        return float(
-            _metric_dot(W, dq_left, dq_right)
-            + float(dlambda_right) * float(metric_cross @ dq_left)
-            + float(dlambda_left) * float(metric_cross @ dq_right)
-            + float(dlambda_left)
-            * float(dlambda_right)
-            * (prescribed_metric + load_scaling * load_scaling)
-        )
+        def path_metric_dot(
+            dq_left: np.ndarray,
+            dlambda_left: float,
+            dq_right: np.ndarray,
+            dlambda_right: float,
+        ) -> float:
+            """Full affine-displacement metric plus the load weight."""
+
+            return float(
+                _metric_dot(W, dq_left, dq_right)
+                + float(dlambda_right) * float(metric_cross @ dq_left)
+                + float(dlambda_left) * float(metric_cross @ dq_right)
+                + float(dlambda_left)
+                * float(dlambda_right)
+                * (prescribed_metric + load_scaling * load_scaling)
+            )
+
+    else:
+
+        def path_metric_dot(
+            dq_left: np.ndarray,
+            dlambda_left: float,
+            dq_right: np.ndarray,
+            dlambda_right: float,
+        ) -> float:
+            """Mature force-driven metric without zero affine products."""
+
+            return float(
+                _metric_dot(W, dq_left, dq_right)
+                + float(dlambda_left)
+                * float(dlambda_right)
+                * load_scaling
+                * load_scaling
+            )
 
     predictor_norm = float(
         np.sqrt(
@@ -671,7 +705,11 @@ def solve_static_arc_length(
     previous_dlambda: Optional[float] = None
     peak_load_factor = float(lam)
     peak_step_index: Optional[int] = None
+    peak_step: Optional[ArcLengthStep] = None
     max_translation = 0.0
+    track_step_translation = (
+        progress_callback is not None or settings.max_translation is not None
+    )
     descending_steps = 0
     status = "maximum_steps_reached"
     failure_reason: Optional[str] = None
@@ -683,6 +721,9 @@ def solve_static_arc_length(
     reaction_force_reassembly_count = 0
     adaptation_history: List[Dict[str, Any]] = []
     snapshots: List[NonlinearIncrementSnapshot] = []
+    support_reaction_history: List[Dict[str, Any]] = []
+    support_reaction_dof_plan = _support_reaction_dof_plan(working_model)
+    corrector_rhs = np.empty((n_red, 2), dtype=float)
 
     for step_index in range(1, settings.max_steps + 1):
         cancellation_safe_point(
@@ -881,11 +922,10 @@ def solve_static_arc_length(
                         ),
                         signature=f"arc_length.corrector:{step_index}:{retry}:{iteration}",
                     )
+                    corrector_rhs[:, 0] = residual
+                    corrector_rhs[:, 1] = path_direction_trial_red
                     corrections = np.asarray(
-                        handle.solve_many(
-                            np.column_stack((residual, path_direction_trial_red))
-                        ),
-                        dtype=float,
+                        handle.solve_many(corrector_rhs), dtype=float
                     )
                     correction_at_fixed_load = corrections[:, 0]
                     correction_per_load = corrections[:, 1]
@@ -962,8 +1002,8 @@ def solve_static_arc_length(
                     peak_load_factor = float(lam)
                     peak_step_index = step_index
                     descending_steps = 0
-                    for old_step in steps:
-                        old_step.is_peak = False
+                    if peak_step is not None:
+                        peak_step.is_peak = False
                 else:
                     required_drop = settings.peak_drop_tolerance * max(abs(peak_load_factor), 1.0)
                     if peak_step_index is not None and lam < peak_load_factor - required_drop:
@@ -1013,12 +1053,26 @@ def solve_static_arc_length(
                     reaction_force_reuse_count += 1
                     reaction_constant = F_const_trial
                     reaction_proportional = F_prop_trial
-                support_reactions = _support_reaction_resultants(
+                support_reactions = _support_reaction_resultants_from_forces(
                     working_model,
-                    reaction_internal
-                    - (reaction_constant + lam * reaction_proportional),
+                    reaction_internal,
+                    reaction_constant,
+                    reaction_proportional,
+                    lam,
+                    dof_plan=support_reaction_dof_plan,
+                )
+                support_reaction_history.append(
+                    {
+                        "step_index": int(step_index),
+                        "load_factor": float(lam),
+                        "support_reactions": {
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
+                    }
                 )
 
+                displacement_norm = float(np.linalg.norm(u))
                 step = ArcLengthStep(
                     step_index=step_index,
                     load_factor=float(lam),
@@ -1027,7 +1081,7 @@ def solve_static_arc_length(
                     arc_radius=float(radius),
                     residual_norm=float(residual_norm),
                     arc_residual=float(arc_residual),
-                    displacement_norm=float(np.linalg.norm(u)),
+                    displacement_norm=displacement_norm,
                     load_increment=float(dlambda_total),
                     path_increment_norm=path_increment_norm,
                     max_equivalent_plastic_strain=_max_plastic_strain(committed_states),
@@ -1035,6 +1089,8 @@ def solve_static_arc_length(
                     support_reactions=support_reactions,
                 )
                 steps.append(step)
+                if is_new_peak:
+                    peak_step = step
                 if record_increment_snapshots:
                     snapshots.append(
                         _increment_snapshot(
@@ -1047,27 +1103,31 @@ def solve_static_arc_length(
                     )
                 previous_dq = dq_total.copy()
                 previous_dlambda = float(dlambda_total)
-                max_translation = _max_nodal_translation(working_model, u)
-                emit_progress(
-                    progress_callback,
-                    "nonlinear_static_step",
-                    "arc_length.continuation",
-                    completed=step_index,
-                    total=settings.max_steps,
-                    iteration=iteration,
-                    control="arc length",
-                    step_index=int(step_index),
-                    load_factor=float(lam),
-                    peak_load_factor=float(peak_load_factor),
-                    displacement_norm=float(np.linalg.norm(u)),
-                    max_translation=float(max_translation),
-                    iterations=int(iteration),
-                    max_equivalent_plastic_strain=float(step.max_equivalent_plastic_strain),
-                    support_reactions={
-                        name: list(values)
-                        for name, values in support_reactions.items()
-                    },
-                )
+                if track_step_translation:
+                    max_translation = _max_nodal_translation(working_model, u)
+                if progress_callback is not None:
+                    emit_progress(
+                        progress_callback,
+                        "nonlinear_static_step",
+                        "arc_length.continuation",
+                        completed=step_index,
+                        total=settings.max_steps,
+                        iteration=iteration,
+                        control="arc length",
+                        step_index=int(step_index),
+                        load_factor=float(lam),
+                        peak_load_factor=float(peak_load_factor),
+                        displacement_norm=displacement_norm,
+                        max_translation=float(max_translation),
+                        iterations=int(iteration),
+                        max_equivalent_plastic_strain=float(
+                            step.max_equivalent_plastic_strain
+                        ),
+                        support_reactions={
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
+                    )
 
                 old_radius = radius
                 if iteration <= max(settings.target_iterations // 2, 1):
@@ -1143,6 +1203,8 @@ def solve_static_arc_length(
         status = "maximum_steps_reached"
 
     u_final = full_displacement(q, lam)
+    if not track_step_translation and steps:
+        max_translation = _max_nodal_translation(working_model, u_final)
     committed_states = _materialize_final_nonlinear_states(committed_states, info)
     info["failure_reason"] = failure_reason
     info["last_converged_load_factor"] = float(lam)
@@ -1156,17 +1218,7 @@ def solve_static_arc_length(
     info["minimum_arc_radius"] = float(min_radius)
     info["maximum_arc_radius"] = float(max_radius)
     info["adaptation_history"] = adaptation_history
-    info["support_reaction_history"] = [
-        {
-            "step_index": int(step.step_index),
-            "load_factor": float(step.load_factor),
-            "support_reactions": {
-                name: list(values)
-                for name, values in step.support_reactions.items()
-            },
-        }
-        for step in steps
-    ]
+    info["support_reaction_history"] = support_reaction_history
     info["strain_summary"] = _nonlinear_state_summary(committed_states)
     info["preload"] = preload_info
     info["total_newton_iterations"] = int(total_iterations)

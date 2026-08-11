@@ -31,7 +31,11 @@ from scipy import sparse
 from scipy.sparse import SparseEfficiencyWarning
 from scipy.sparse.linalg import LinearOperator, splu
 
-from .threading_policy import current_solver_threads, native_thread_scope
+from .threading_policy import (
+    current_solver_threads,
+    _inherited_native_thread_policy,
+    native_thread_scope,
+)
 
 try:
     _HAS_PYPARDISO = importlib.util.find_spec("pypardiso") is not None
@@ -406,6 +410,24 @@ class PyPardisoSolverBackend:
 
         return len(self._slots)
 
+    def _has_compatible_pattern_unlocked(
+        self,
+        matrix: sparse.spmatrix,
+        matrix_class: MatrixClass,
+    ) -> bool:
+        if not self._slots:
+            return False
+        try:
+            csr = sparse.csr_matrix(matrix, copy=True)
+            csr.sort_indices()
+            for mtype in _pardiso_mtype_candidates(matrix_class):
+                prepared = _pardiso_prepared_matrix(csr, mtype)
+                if any(slot.matches(prepared, mtype) for slot in self._slots):
+                    return True
+        except Exception:
+            return False
+        return False
+
     @_serialized_pypardiso_call
     def has_compatible_pattern(
         self,
@@ -419,18 +441,21 @@ class PyPardisoSolverBackend:
         PARDISO mtype compatible with the incoming matrix class.
         """
 
-        if not self._slots:
-            return False
-        try:
-            csr = sparse.csr_matrix(matrix, copy=True)
-            csr.sort_indices()
-            for mtype in _pardiso_mtype_candidates(matrix_class):
-                prepared = _pardiso_prepared_matrix(csr, mtype)
-                if any(slot.matches(prepared, mtype) for slot in self._slots):
-                    return True
-        except Exception:
-            return False
-        return False
+        return self._has_compatible_pattern_unlocked(matrix, matrix_class)
+
+    @_serialized_pypardiso_call
+    def selection_state(
+        self,
+        matrix: sparse.spmatrix,
+        matrix_class: MatrixClass,
+    ) -> Tuple[bool, int, bool]:
+        """Return one coherent auto-selection snapshot under the process lock."""
+
+        return (
+            bool(self._slots),
+            len(self._slots),
+            self._has_compatible_pattern_unlocked(matrix, matrix_class),
+        )
 
     @_serialized_pypardiso_call
     def _factorize_prepared(self, prepared: sparse.csr_matrix, mtype: int) -> Tuple[_PardisoFactorization, bool]:
@@ -558,11 +583,16 @@ class AutoSparseSolverBackend:
         matrix: sparse.spmatrix,
         matrix_class: MatrixClass,
         options: Mapping[str, Any],
+        *,
+        compatible_pattern: Optional[bool] = None,
     ) -> Tuple[int, int, bool]:
-        compatible_pattern = bool(
-            self.pardiso_backend
-            and self.pardiso_backend.has_compatible_pattern(matrix, matrix_class)
-        )
+        if compatible_pattern is None:
+            compatible_pattern = bool(
+                self.pardiso_backend
+                and self.pardiso_backend.has_compatible_pattern(
+                    matrix, matrix_class
+                )
+            )
         default_dimension = (
             self.pypardiso_warm_min_dimension
             if compatible_pattern
@@ -598,11 +628,21 @@ class AutoSparseSolverBackend:
         options: Optional[Mapping[str, Any]] = None,
     ) -> FactorizationHandle:
         options_dict = dict(options or {})
-        was_initialized = bool(self.pardiso_backend and self.pardiso_backend.initialized)
+        if self.pardiso_backend is None:
+            was_initialized = False
+            retained_pattern_slots = 0
+            compatible_pattern = False
+        else:
+            (
+                was_initialized,
+                retained_pattern_slots,
+                compatible_pattern,
+            ) = self.pardiso_backend.selection_state(matrix, matrix_class)
         active_dimension, active_nnz, compatible_pattern = self._selection_thresholds(
             matrix,
             matrix_class,
             options_dict,
+            compatible_pattern=compatible_pattern,
         )
         selection_metadata = {
             "pypardiso_active_min_dimension": active_dimension,
@@ -610,11 +650,7 @@ class AutoSparseSolverBackend:
             "pypardiso_initialized_before_selection": was_initialized,
             "pypardiso_compatible_pattern_before_selection": compatible_pattern,
             "pypardiso_warm_thresholds_active": compatible_pattern,
-            "pypardiso_retained_pattern_slots_before_selection": (
-                self.pardiso_backend.retained_pattern_slots
-                if self.pardiso_backend is not None
-                else 0
-            ),
+            "pypardiso_retained_pattern_slots_before_selection": retained_pattern_slots,
         }
         if not self._use_pypardiso(matrix, options_dict, active_dimension, active_nnz):
             handle = self.scipy_backend.factorize(matrix, matrix_class, signature=signature, options=options_dict)
@@ -625,7 +661,7 @@ class AutoSparseSolverBackend:
                 handle.metadata.setdefault(key, value)
             handle.metadata.setdefault(
                 "pypardiso_initialized",
-                bool(self.pardiso_backend and self.pardiso_backend.initialized),
+                was_initialized,
             )
             return handle
 
@@ -813,7 +849,21 @@ def factorize(
     backend = backend or DEFAULT_BACKEND
     options_dict = dict(options or {})
     requested_threads = options_dict.pop("solver_threads", current_solver_threads())
-    with native_thread_scope(requested_threads, phase="factorization") as policy:
+    policy = _inherited_native_thread_policy(
+        requested_threads, phase="factorization"
+    )
+    if policy is None:
+        with native_thread_scope(
+            requested_threads, phase="factorization"
+        ) as scoped_policy:
+            handle = backend.factorize(
+                matrix,
+                _coerce_matrix_class(matrix_class),
+                signature=signature,
+                options=options_dict,
+            )
+        policy = scoped_policy
+    else:
         handle = backend.factorize(
             matrix,
             _coerce_matrix_class(matrix_class),
@@ -863,7 +913,16 @@ def solve(handle: FactorizationHandle, rhs: np.ndarray) -> np.ndarray:
         raise RuntimeError(f"Cannot solve with failed factorization: {handle.failure_reason}")
     rhs = np.asarray(rhs, dtype=float)
     start = time.time()
-    with native_thread_scope(handle.solver_threads, phase="linear_solve") as policy:
+    policy = _inherited_native_thread_policy(
+        handle.solver_threads, phase="linear_solve"
+    )
+    if policy is None:
+        with native_thread_scope(
+            handle.solver_threads, phase="linear_solve"
+        ) as scoped_policy:
+            result = np.asarray(handle._solver.solve(rhs), dtype=float)
+        policy = scoped_policy
+    else:
         result = np.asarray(handle._solver.solve(rhs), dtype=float)
     handle.metadata["last_solve_thread_policy"] = dict(policy)
     handle.solve_time += time.time() - start
