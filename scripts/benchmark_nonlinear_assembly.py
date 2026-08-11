@@ -23,6 +23,7 @@ from anysolver.nonlinear_performance_batch_c import (
 from anysolver.nonlinear_performance_bootstrap import (
     clear_nonlinear_assembly_cache,
     get_nonlinear_assembly_plan,
+    install_nonlinear_performance_optimizations,
 )
 
 
@@ -33,6 +34,22 @@ def _time_call(function, repeats: int) -> tuple[float, list[float]]:
         function()
         samples.append(time.perf_counter() - start)
     return statistics.median(samples), samples
+
+
+def _ensure_performance_layer():
+    """Activate the existing fast layer and return its retained scalar oracle."""
+
+    if not install_nonlinear_performance_optimizations():
+        raise RuntimeError(
+            "Performance layer is disabled; unset FE_SOLVER_DISABLE_FAST_NL "
+            "before running this benchmark"
+        )
+    original = nonlinear_performance._ORIGINAL_ASSEMBLER
+    if original is None:
+        raise RuntimeError(
+            "Performance layer installation did not retain the original assembler"
+        )
+    return original
 
 
 def _constraint_transformation(model, weighted_mpc_rows: int) -> sparse.csr_matrix:
@@ -91,6 +108,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    original = _ensure_performance_layer()
+
     model = generate_simple_panel_mesh(
         4.0,
         2.0,
@@ -109,12 +128,6 @@ def main() -> int:
         dtype=float,
     ).reshape(-1)
     committed = {}
-
-    original = nonlinear_performance._ORIGINAL_ASSEMBLER
-    if original is None:
-        raise RuntimeError(
-            "Performance layer was not installed; original assembler is unavailable"
-        )
 
     original(model, displacement, committed, args.layers, tangent=True)
     clear_nonlinear_assembly_cache(model)

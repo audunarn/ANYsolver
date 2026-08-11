@@ -10,5 +10,10 @@ reports/
 !reports/
 reports/*
 !reports/extract_mat_mesh_io_performance_review.md
+!reports/performance/
+reports/performance/*
+!reports/performance/sol_ultra_environment.json
+!reports/performance/sol_ultra_baseline.json
+!reports/performance/sol_ultra_baseline.md
 qc_results/
 .pytest_tmp_*/
