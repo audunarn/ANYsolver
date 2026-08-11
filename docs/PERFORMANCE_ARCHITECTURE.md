@@ -25,7 +25,7 @@ could conceal stale state; wrong-model and closed-session use therefore raise.
 | Layer | Owner | Retained data | End of lifetime |
 | --- | --- | --- | --- |
 | JIT | Process | Compiled kernels and bounded execution diagnostics. | Process exit or explicit diagnostic reset. |
-| Model assembly | Weak model association | Nonlinear element groups, reference arrays, CSR and reduced scatter maps. | Relevant model revision, explicit cache clear, or model collection. |
+| Model assembly | Weak model association | Nonlinear element groups, reference arrays, CSR and reduced scatter maps; no more than eight LRU layer-count variants per live model. | Relevant model revision, LRU eviction, explicit cache clear, or model collection. |
 | Mesh reference | Mesh | Corotational reference data, contact geometry, large-selection recovery plan. | Relevant mesh/model revision or explicit recovery clear. |
 | Nonlinear state | One static or arc-length solve | Contiguous committed/trial shell history and owned dictionary fallbacks. | Final materialization/solve completion. |
 | Analysis session | Caller | Bounded structural/constraint/output plans and factorization handles for one model. | Revision invalidation, bounded eviction, or `close()`/`release()`. |
@@ -169,6 +169,12 @@ logical-core count. Every scope restores the prior Numba/native setting on
 normal return and exception. Public contact helper buffers are thread-local;
 caller-owned sessions should still be scoped deliberately around related work
 rather than treated as process-global state.
+
+`threadpoolctl` changes process-global settings, so explicit native limits are
+coordinated as exclusive scopes. Default/unlimited scopes remain concurrent,
+while an explicit scope waits for other active defaults to finish before
+changing a pool. Nested scopes in one thread are reentrant and copied context
+state is accepted only when its recorded owner is the current thread.
 
 ## Diagnostics boundary
 

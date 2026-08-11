@@ -625,6 +625,12 @@ def recover_element_stresses_with_report(
         # on larger recoveries; paying them here regresses the mature path.
         stresses: Dict[int, Dict[str, np.ndarray]] = {}
         if used_workers <= 1:
+            native_report: Dict[str, Any] = {
+                "phase": "stress_recovery_serial",
+                "status": "not_needed_serial",
+                "requested_threads": None,
+                "restored": True,
+            }
             for element_id in selected_ids:
                 item = _compute_one_element_stress(
                     model,
@@ -635,18 +641,21 @@ def recover_element_stresses_with_report(
                 if item is not None:
                     stresses[item[0]] = item[1]
         else:
-            with ThreadPoolExecutor(max_workers=used_workers) as executor:
-                futures = [
-                    executor.submit(
-                        _compute_one_element_stress,
-                        model,
-                        displacements,
-                        element_id,
-                        return_global=return_global,
-                    )
-                    for element_id in selected_ids
-                ]
-                results = [future.result() for future in futures]
+            with native_thread_scope(
+                1, phase="stress_recovery_thread_pool"
+            ) as native_report:
+                with ThreadPoolExecutor(max_workers=used_workers) as executor:
+                    futures = [
+                        executor.submit(
+                            _compute_one_element_stress,
+                            model,
+                            displacements,
+                            element_id,
+                            return_global=return_global,
+                        )
+                        for element_id in selected_ids
+                    ]
+                    results = [future.result() for future in futures]
             for item in results:
                 if item is not None:
                     stresses[item[0]] = item[1]
@@ -685,11 +694,7 @@ def recover_element_stresses_with_report(
                 "plan_setup_seconds": 0.0,
                 "plan_lookup_seconds": 0.0,
                 "plan_retained_bytes": 0,
-                "native_thread_policy": {
-                    "status": "legacy_small_selection",
-                    "requested_threads": None,
-                    "restored": True,
-                },
+                "native_thread_policy": dict(native_report),
             },
         )
         return stresses, report

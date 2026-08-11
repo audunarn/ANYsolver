@@ -97,8 +97,10 @@ geometry/kernel timings.
 ### Persistent nonlinear assembly plan
 
 A `NonlinearAssemblyPlan` is built once for each `(model, num_layers)` pair and
-is invalidated when topology, geometry, material or MPC revisions change. It
-retains:
+is invalidated when topology, geometry, material or MPC revisions change. A
+live model retains at most eight layer-count variants; least-recently-used
+variants are evicted and the eviction count is observable in performance
+status. It retains:
 
 - shell grouping by element type, thickness, stabilization and material;
 - stacked reference transforms and shell B matrices;
@@ -395,6 +397,13 @@ pools are nested at one thread and both Numba and native limits are restored on
 normal return or exception. A missing limiter is reported explicitly; an
 omitted resource policy leaves backend defaults unchanged.
 
+Because native pool limits are process-global, explicit limit scopes are
+serialized across Python threads. Unlimited/default solver scopes may overlap;
+an explicit phase waits until other unlimited solves have left their scope so
+its limit cannot leak into them. Same-thread nesting and default-to-explicit
+upgrades remain reentrant, and ownership checks prevent a copied `ContextVar`
+from inheriting another thread's active limit.
+
 `ResourceConfig.recovery_threads` controls coarse formulation-homogeneous
 recovery work. A compiled-only isotropic S4 selection scopes Numba to the
 selected worker count. Mixed/scalar chunks use a thread pool and constrain
@@ -504,7 +513,7 @@ native/Numba thread policy.
 | Retained object | Owner and lifetime | Invalidation/release |
 | --- | --- | --- |
 | Numba machine code | Process-local and lazily initialized. | Process exit; unavailable JIT keeps the oracle path. |
-| Nonlinear assembly/reduced scatter plans | Weakly associated with a model and layer count; reusable across qualified solves. | Topology, geometry, material, or MPC revision; explicit `clear_nonlinear_assembly_cache()`. |
+| Nonlinear assembly/reduced scatter plans | Weakly associated with a model; reusable across qualified solves, with at most eight LRU layer-count variants per live model. | Topology, geometry, material, or MPC revision; LRU eviction; explicit `clear_nonlinear_assembly_cache()`. |
 | Nonlinear committed/trial state | One static/arc-length solver lifecycle. | Accepted candidate swaps/commits; rejected candidate discards; final public materialization ends the optimized lifecycle. |
 | Corotational reference and contact geometry | Mesh-owned immutable reference data. | Relevant topology/geometry revision. |
 | Recovery batch plan | Mesh-owned and reused by large recovery calls. | Topology/geometry/material revision; explicit clear. |

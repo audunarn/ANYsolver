@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import copy
 import os
+import threading
 import time
 from dataclasses import dataclass, field, replace as dataclass_replace
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
@@ -85,6 +86,7 @@ if TYPE_CHECKING:
 _DOF_INDEX = {"ux": 0, "uy": 1, "uz": 2, "rx": 3, "ry": 4, "rz": 5}
 _FAST_NL_BOOTSTRAPPED = False
 _FAST_NL_BOOTSTRAP_ERROR: Optional[str] = None
+_FAST_NL_BOOTSTRAP_LOCK = threading.RLock()
 _INITIAL_FIELD_STATE_KEYS = (
     "initial_membrane_stress",
     "initial_bending_stress",
@@ -101,15 +103,31 @@ def _ensure_nonlinear_acceleration() -> None:
     global _FAST_NL_BOOTSTRAPPED, _FAST_NL_BOOTSTRAP_ERROR
     if _FAST_NL_BOOTSTRAPPED:
         return
-    _FAST_NL_BOOTSTRAPPED = True
-    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {"1", "true", "yes", "on"}:
-        return
-    try:
-        from .nonlinear_performance_bootstrap import install_nonlinear_performance_optimizations
+    with _FAST_NL_BOOTSTRAP_LOCK:
+        if _FAST_NL_BOOTSTRAPPED:
+            return
+        _FAST_NL_BOOTSTRAP_ERROR = None
+        if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            _FAST_NL_BOOTSTRAPPED = True
+            return
+        try:
+            from .nonlinear_performance_bootstrap import (
+                install_nonlinear_performance_optimizations,
+            )
 
-        install_nonlinear_performance_optimizations()
-    except Exception as exc:  # Optional acceleration must not disable the solver.
-        _FAST_NL_BOOTSTRAP_ERROR = f"{type(exc).__name__}: {exc}"
+            install_nonlinear_performance_optimizations()
+        except Exception as exc:  # Optional acceleration must not disable the solver.
+            _FAST_NL_BOOTSTRAP_ERROR = f"{type(exc).__name__}: {exc}"
+        finally:
+            # Publish completion only after the composite install attempt has
+            # finished, so another first-use caller cannot observe a partially
+            # patched nonlinear stack.
+            _FAST_NL_BOOTSTRAPPED = True
 
 
 @dataclass(frozen=True)
