@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from anysolver import RecoveryConfig, ResourceConfig, generate_simple_panel_mesh
 from anysolver.recovery import (
@@ -29,17 +30,19 @@ def _large_panel():
     )
 
 
-def test_chunked_scalar_recovery_preserves_order_and_exact_values() -> None:
-    model = _panel()
+def test_chunked_scalar_recovery_preserves_order_and_exact_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _large_panel()
     displacement = np.linspace(
         0.0,
         1.0e-5,
         model.mesh.dof_manager.total_dofs,
     )
     recovery = RecoveryConfig(
-        element_ids=list(range(1, 8)),
         components=["von_mises"],
     )
+    monkeypatch.setattr("anysolver.recovery.JIT_ENABLED", False)
 
     serial, serial_report = recover_element_stresses_with_report(
         model,
@@ -70,32 +73,32 @@ def test_chunked_scalar_recovery_preserves_order_and_exact_values() -> None:
 
 
 def test_selection_is_runtime_only_and_plan_is_bounded() -> None:
-    model = _panel()
+    model = _large_panel()
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
 
     first, first_report = recover_element_stresses_with_report(
         model,
         displacement,
-        RecoveryConfig(element_ids=[7, 1, 4]),
+        RecoveryConfig(),
         resource_config=ResourceConfig(recovery_threads=2),
     )
     cached_plan = model.mesh._recovery_batch_plan
     second, second_report = recover_element_stresses_with_report(
         model,
         displacement,
-        RecoveryConfig(element_ids=[2, 5]),
+        RecoveryConfig(),
         resource_config=ResourceConfig(recovery_threads=2),
     )
 
-    assert list(first) == [1, 4, 7]
-    assert list(second) == [2, 5]
+    assert list(first) == list(model.mesh.elements)
+    assert list(second) == list(model.mesh.elements)
     assert model.mesh._recovery_batch_plan is cached_plan
     assert first_report.metadata["plan_reused"] is False
     assert second_report.metadata["plan_reused"] is True
 
 
 def test_plan_ignores_load_revision_and_invalidates_on_geometry() -> None:
-    model = _panel()
+    model = _large_panel()
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
 
     recover_element_stresses_with_report(model, displacement)
@@ -129,7 +132,8 @@ def test_report_serialization_exposes_fallback_diagnostics() -> None:
         model.mesh.elements
     )
     assert payload["metadata"]["eligible_element_count"] == 0
-    assert "batch_below_minimum_size" in payload["metadata"]["fallback_reasons"]
+    assert "below_recovery_plan_threshold" in payload["metadata"]["fallback_reasons"]
+    assert payload["metadata"]["plan_retained_bytes"] == 0
 
 
 def test_compiled_isotropic_s4_matches_scalar_oracle_for_warped_global_output() -> None:

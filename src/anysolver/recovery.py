@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 _DOF_COMPONENTS = ("ux", "uy", "uz", "rx", "ry", "rz")
 _HISTORY_MODES = {"full", "selected", "envelope"}
 _MIN_COMPILED_RECOVERY_BATCH = 100
+_MIN_RECOVERY_PLAN_SIZE = 100
 
 
 def _optional_int_tuple(values: Optional[Sequence[int]]) -> Optional[Tuple[int, ...]]:
@@ -618,6 +619,81 @@ def recover_element_stresses_with_report(
     deterministic = True if resource_config is None else bool(resource_config.deterministic)
     backend = "serial" if used_workers <= 1 else "thread_pool"
     start = time.perf_counter()
+    if len(selected_ids) < _MIN_RECOVERY_PLAN_SIZE:
+        # Preserve the low-setup scalar oracle for small selections.  The
+        # retained plan, native-pool scope and coarse scheduler break even only
+        # on larger recoveries; paying them here regresses the mature path.
+        stresses: Dict[int, Dict[str, np.ndarray]] = {}
+        if used_workers <= 1:
+            for element_id in selected_ids:
+                item = _compute_one_element_stress(
+                    model,
+                    displacements,
+                    element_id,
+                    return_global=return_global,
+                )
+                if item is not None:
+                    stresses[item[0]] = item[1]
+        else:
+            with ThreadPoolExecutor(max_workers=used_workers) as executor:
+                futures = [
+                    executor.submit(
+                        _compute_one_element_stress,
+                        model,
+                        displacements,
+                        element_id,
+                        return_global=return_global,
+                    )
+                    for element_id in selected_ids
+                ]
+                results = [future.result() for future in futures]
+            for item in results:
+                if item is not None:
+                    stresses[item[0]] = item[1]
+        components = recovery.selected_components()
+        if components is not None:
+            stresses = {
+                int(element_id): _filter_components(values, components)
+                for element_id, values in stresses.items()
+            }
+        report = RecoveryExecutionReport(
+            phase="element_stress_recovery",
+            item_count=len(selected_ids),
+            requested_workers=requested,
+            used_workers=used_workers,
+            backend=backend,
+            deterministic=deterministic,
+            elapsed_seconds=float(time.perf_counter() - start),
+            reason=reason,
+            metadata={
+                "recovery_backend": "scalar_legacy_small_selection",
+                "batch_counts": {"scalar_legacy": len(selected_ids)},
+                "compiled_batch_count": 0,
+                "compiled_batch_seconds": 0.0,
+                "eligible_element_count": 0,
+                "fallback_element_count": len(selected_ids),
+                "fallback_reasons": {
+                    "below_recovery_plan_threshold": {
+                        "element_ids": list(selected_ids),
+                        "minimum_size": _MIN_RECOVERY_PLAN_SIZE,
+                    }
+                },
+                "chunk_count": (
+                    len(selected_ids) if used_workers > 1 else int(bool(selected_ids))
+                ),
+                "plan_reused": False,
+                "plan_setup_seconds": 0.0,
+                "plan_lookup_seconds": 0.0,
+                "plan_retained_bytes": 0,
+                "native_thread_policy": {
+                    "status": "legacy_small_selection",
+                    "requested_threads": None,
+                    "restored": True,
+                },
+            },
+        )
+        return stresses, report
+
     plan_lookup_start = time.perf_counter()
     plan, plan_reused = get_recovery_batch_plan(model)
     plan_lookup_seconds = time.perf_counter() - plan_lookup_start
