@@ -180,12 +180,14 @@ def test_nonlinear_increment_snapshots_are_opt_in_and_committed() -> None:
     model, load = _elastic_cantilever()
 
     progress = []
+    status = []
     result = solve_static_nonlinear(
         model,
         load,
         num_steps=2,
         record_increment_snapshots=True,
         progress_callback=progress.append,
+        status_callback=status.append,
     )
 
     assert result.status == "completed"
@@ -194,6 +196,14 @@ def test_nonlinear_increment_snapshots_are_opt_in_and_committed() -> None:
     assert not result.snapshots[-1].displacements.flags.writeable
     assert result.snapshots[-1].element_states is not result.element_states
     assert all(isinstance(event, ProgressEvent) for event in progress)
+    assert all(event["nominal_increment_count"] == 2 for event in progress)
+    assert all(event["load_increment"] > 0.0 for event in progress)
+    assert status
+    assert all("/2" not in message for message in status)
+    assert "Increment trial 1" in status[0]
+    assert "load factor" in status[0]
+    assert "Newton iteration" in status[0]
+    assert "residual" in status[0]
     quantities = describe_result_quantities(result)
     assert {quantity.quantity_id for quantity in quantities} >= {"displacement", "load_factor"}
 

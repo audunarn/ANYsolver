@@ -2258,7 +2258,16 @@ def solve_static_nonlinear(
                 f"nonlinear_static.force.step:{step_index}.iteration:{iteration}",
             )
             if status_callback:
-                status_callback(f"\r  Step {step_index}/{num_steps}, Iteration {iteration}: Res {residual_norm:.2e}")
+                # ``num_steps`` defines the initial load partition, not a hard
+                # count: adaptive cutbacks/growth may produce far more or
+                # fewer converged increments.  A fraction such as 1459/10 was
+                # therefore numerically valid but semantically misleading.
+                status_callback(
+                    f"Increment trial {step_index + 1} | "
+                    f"load factor {path_factor:.6g} / {target_load_factor:.6g} | "
+                    f"increment {path_factor - lam:.3g} | "
+                    f"Newton iteration {iteration} | residual {residual_norm:.3e}"
+                )
             total_iterations += 1
             if residual_norm <= tolerance * reference:
                 return True, q_trial, trial_states, residual_norm, iteration, None
@@ -2552,6 +2561,8 @@ def solve_static_nonlinear(
                         max_translation=float(max_translation),
                         iterations=int(iterations_used),
                         max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
+                        nominal_increment_count=int(num_steps),
+                        load_increment=float(attempted_step_size),
                     )
                 if fracture_config is not None and deleted_element_ids:
                     scoped_total = sum(
