@@ -498,10 +498,26 @@ def test_impact_damage_softening_rebuilds_matrices_with_cached_terms() -> None:
 
     assert result.diagnostics["eroded_matrix_rebuild_count"] > 0
     assert result.diagnostics["linear_matrix_terms_cached"] is True
+    selection = result.diagnostics["damage_matrix_plan_selection"]
+    assert selection["observed_update_events"] == result.diagnostics["eroded_matrix_rebuild_count"]
+    assert (
+        selection["legacy_update_count"] + selection["plan_update_count"]
+        == result.diagnostics["eroded_matrix_rebuild_count"]
+    )
+    assert selection["break_even_future_update_events"] == 11
     matrix_plan = result.diagnostics["damage_matrix_plan"]
-    assert matrix_plan["fast_path_name"] == "incremental_damage_csr_updates"
-    assert matrix_plan["update_count"] == result.diagnostics["eroded_matrix_rebuild_count"]
-    assert matrix_plan["fallback_count"] == 0
+    if matrix_plan is None:
+        assert selection["plan_selected"] is False
+        assert selection["legacy_update_count"] == result.diagnostics["eroded_matrix_rebuild_count"]
+        assert selection["selection_reason"] in {
+            "insufficient_observed_update_events",
+            "projected_future_updates_below_break_even",
+        }
+    else:
+        assert selection["plan_selected"] is True
+        assert matrix_plan["fast_path_name"] == "incremental_damage_csr_updates"
+        assert matrix_plan["update_count"] == selection["plan_update_count"]
+        assert matrix_plan["fallback_count"] == 0
     assert result.diagnostics["impact_damage_summary"]["max_damage"] >= 0.01
 
 

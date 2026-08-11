@@ -16,8 +16,238 @@ if TYPE_CHECKING:
 DamageElementTerm = Tuple[int, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
 
 
+# The measured setup break-even is eleven *subsequent* matrix updates.  Keep
+# this explicit and conservative: the event that triggers plan construction is
+# not counted toward amortising the setup cost.
+DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES = 11
+DAMAGE_MATRIX_PLAN_MIN_OBSERVED_UPDATE_EVENTS = 2
+DAMAGE_MATRIX_PLAN_DEFAULT_RETAINED_BYTES_CAP = 256 * 1024 * 1024
+
+
 class DamageMatrixPlanFallback(ValueError):
     """Signal that a caller must use the exact scalar rebuild for this update."""
+
+
+def estimate_damage_matrix_plan_retained_bytes(
+    cached_terms: Tuple[int, Tuple[DamageElementTerm, ...]],
+) -> int:
+    """Return a conservative pre-build upper bound for plan-owned arrays.
+
+    The bound assumes 64-bit CSR indices, no duplicate compression, and one
+    possible point-mass diagonal entry per global degree of freedom.  It also
+    includes the plan's base-value copies, per-element contribution maps, and
+    a small object-overhead allowance.  The cached legacy terms are excluded:
+    callers retain those regardless so an invalidated plan has an exact
+    fallback without recomputing an unchanged model.
+    """
+
+    total_dofs, terms = cached_terms
+    total_dofs = max(int(total_dofs), 0)
+    local_entries = sum(int(np.asarray(term[1]).size) for term in terms)
+    element_count = len(terms)
+
+    # K has at most ``local_entries`` stored positions; M can additionally
+    # carry one point-mass entry per global degree of freedom.
+    stiffness_nnz_upper = local_entries
+    mass_nnz_upper = local_entries + total_dofs
+    csr_index_bytes = np.dtype(np.intp).itemsize
+    scalar_bytes = np.dtype(np.float64).itemsize
+    csr_owned = (
+        (stiffness_nnz_upper + mass_nnz_upper) * (scalar_bytes + csr_index_bytes)
+        + 2 * (total_dofs + 1) * csr_index_bytes
+    )
+    base_values = (stiffness_nnz_upper + mass_nnz_upper) * scalar_bytes
+    point_mass_maps = total_dofs * (csr_index_bytes + scalar_bytes)
+    contribution_arrays = local_entries * (2 * csr_index_bytes + 2 * scalar_bytes)
+    last_scales = element_count * scalar_bytes
+    object_overhead = 4096 + 256 * element_count
+    return int(
+        csr_owned
+        + base_values
+        + point_mass_maps
+        + contribution_arrays
+        + last_scales
+        + object_overhead
+    )
+
+
+@dataclass
+class DamageMatrixPlanGate:
+    """Conservative cost/memory selector for incremental damage matrices."""
+
+    total_opportunities: int
+    preflight_memory_bytes: int
+    configured_memory_limit_bytes: int | None = None
+    break_even_future_updates: int = DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES
+    default_retained_bytes_cap: int = DAMAGE_MATRIX_PLAN_DEFAULT_RETAINED_BYTES_CAP
+    min_observed_update_events: int = DAMAGE_MATRIX_PLAN_MIN_OBSERVED_UPDATE_EVENTS
+    observed_update_events: int = 0
+    observed_opportunities: int = 0
+    remaining_opportunities: int = 0
+    projected_future_update_events: int = 0
+    estimated_retained_bytes: int = 0
+    actual_retained_bytes: int = 0
+    legacy_update_count: int = 0
+    plan_update_count: int = 0
+    plan_build_count: int = 0
+    rejected_plan_build_count: int = 0
+    plan_update_fallback_count: int = 0
+    cached_terms_refresh_count: int = 0
+    model_revision_fallback_count: int = 0
+    plan_selected: bool = False
+    selection_reason: str = "no_damage_matrix_updates"
+    _cached_terms_revision_key: Tuple[int, int, int, int] | None = field(default=None, repr=False)
+    _disabled_reason: str | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        self.total_opportunities = max(int(self.total_opportunities), 0)
+        self.preflight_memory_bytes = max(int(self.preflight_memory_bytes), 0)
+        if self.configured_memory_limit_bytes is not None:
+            self.configured_memory_limit_bytes = max(int(self.configured_memory_limit_bytes), 0)
+        self.break_even_future_updates = max(int(self.break_even_future_updates), 1)
+        self.default_retained_bytes_cap = max(int(self.default_retained_bytes_cap), 0)
+        self.min_observed_update_events = max(int(self.min_observed_update_events), 1)
+
+    @property
+    def retained_memory_allowance_bytes(self) -> int:
+        allowance = int(self.default_retained_bytes_cap)
+        if self.configured_memory_limit_bytes is not None:
+            configured_headroom = max(
+                int(self.configured_memory_limit_bytes) - int(self.preflight_memory_bytes),
+                0,
+            )
+            allowance = min(allowance, configured_headroom)
+        return max(int(allowance), 0)
+
+    def cached_terms_match(self, model: "FEModel") -> bool:
+        return (
+            self._cached_terms_revision_key is not None
+            and self._cached_terms_revision_key == _revision_key(model)
+        )
+
+    @property
+    def cached_terms_registered(self) -> bool:
+        return self._cached_terms_revision_key is not None
+
+    def register_cached_terms(self, model: "FEModel", *, replacing_stale: bool = False) -> None:
+        if replacing_stale:
+            self.cached_terms_refresh_count += 1
+            self.model_revision_fallback_count += 1
+            self.plan_selected = False
+            self._disabled_reason = "model_revision_changed"
+            self.selection_reason = "model_revision_changed_legacy_fallback"
+        self._cached_terms_revision_key = _revision_key(model)
+
+    def consider(
+        self,
+        cached_terms: Tuple[int, Tuple[DamageElementTerm, ...]],
+        *,
+        opportunity_index: int,
+    ) -> bool:
+        """Record an update event and decide whether setup can amortise."""
+
+        self.observed_update_events += 1
+        self.observed_opportunities = min(
+            max(int(opportunity_index), 1),
+            max(int(self.total_opportunities), 1),
+        )
+        self.remaining_opportunities = max(
+            int(self.total_opportunities) - int(self.observed_opportunities),
+            0,
+        )
+        observed_rate = min(
+            float(self.observed_update_events) / float(self.observed_opportunities),
+            1.0,
+        )
+        self.projected_future_update_events = int(
+            np.floor(observed_rate * float(self.remaining_opportunities))
+        )
+        self.estimated_retained_bytes = estimate_damage_matrix_plan_retained_bytes(cached_terms)
+
+        if self.plan_selected:
+            self.selection_reason = "selected_cost_and_memory_gate_passed"
+            return True
+        if self._disabled_reason is not None:
+            self.selection_reason = f"{self._disabled_reason}_legacy_fallback"
+            return False
+        if self.observed_update_events < self.min_observed_update_events:
+            self.selection_reason = "insufficient_observed_update_events"
+            return False
+        if self.projected_future_update_events < self.break_even_future_updates:
+            self.selection_reason = "projected_future_updates_below_break_even"
+            return False
+        if self.estimated_retained_bytes > self.retained_memory_allowance_bytes:
+            self.selection_reason = "estimated_retained_memory_exceeds_allowance"
+            return False
+        self.plan_selected = True
+        self.selection_reason = "selected_cost_and_memory_gate_passed"
+        return True
+
+    def accept_built_plan(self, plan: "DamageMatrixPlan") -> bool:
+        self.plan_build_count += 1
+        self.actual_retained_bytes = max(int(plan.retained_bytes), 0)
+        if self.actual_retained_bytes > self.retained_memory_allowance_bytes:
+            self.rejected_plan_build_count += 1
+            self.plan_selected = False
+            self._disabled_reason = "actual_retained_memory_exceeds_allowance"
+            self.selection_reason = "actual_retained_memory_exceeds_allowance_legacy_fallback"
+            return False
+        return True
+
+    def reject_plan_setup(self, reason: str) -> None:
+        self.rejected_plan_build_count += 1
+        self.plan_selected = False
+        self._disabled_reason = str(reason)
+        self.selection_reason = f"{self._disabled_reason}_legacy_fallback"
+
+    def record_plan_update_fallback(self, reason: str) -> None:
+        self.plan_update_fallback_count += 1
+        self.plan_selected = False
+        self._disabled_reason = str(reason)
+        self.selection_reason = f"{self._disabled_reason}_legacy_fallback"
+
+    def record_update(self, *, used_plan: bool) -> None:
+        if used_plan:
+            self.plan_update_count += 1
+        else:
+            self.legacy_update_count += 1
+
+    def diagnostics(self) -> Dict[str, Any]:
+        return {
+            "fast_path_name": "incremental_damage_csr_updates",
+            "setup_cost_model": "require_benchmarked_break_even_in_future_updates",
+            "event_opportunity_model": (
+                "floor(observed update density * remaining nominal time steps)"
+            ),
+            "retained_memory_model": (
+                "conservative plan-owned array upper bound; cached legacy terms excluded"
+            ),
+            "plan_selected": bool(self.plan_selected),
+            "selection_reason": str(self.selection_reason),
+            "break_even_future_update_events": int(self.break_even_future_updates),
+            "min_observed_update_events": int(self.min_observed_update_events),
+            "observed_update_events": int(self.observed_update_events),
+            "observed_opportunities": int(self.observed_opportunities),
+            "remaining_opportunities": int(self.remaining_opportunities),
+            "projected_future_update_events": int(self.projected_future_update_events),
+            "default_retained_memory_cap_bytes": int(self.default_retained_bytes_cap),
+            "configured_memory_limit_bytes": (
+                None
+                if self.configured_memory_limit_bytes is None
+                else int(self.configured_memory_limit_bytes)
+            ),
+            "preflight_memory_bytes": int(self.preflight_memory_bytes),
+            "retained_memory_allowance_bytes": int(self.retained_memory_allowance_bytes),
+            "estimated_retained_bytes": int(self.estimated_retained_bytes),
+            "actual_retained_bytes": int(self.actual_retained_bytes),
+            "legacy_update_count": int(self.legacy_update_count),
+            "plan_update_count": int(self.plan_update_count),
+            "plan_build_count": int(self.plan_build_count),
+            "rejected_plan_build_count": int(self.rejected_plan_build_count),
+            "plan_update_fallback_count": int(self.plan_update_fallback_count),
+            "cached_terms_refresh_count": int(self.cached_terms_refresh_count),
+            "model_revision_fallback_count": int(self.model_revision_fallback_count),
+        }
 
 
 def _revision_key(model: "FEModel") -> Tuple[int, int, int, int]:

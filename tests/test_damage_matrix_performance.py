@@ -4,8 +4,17 @@ from __future__ import annotations
 
 import numpy as np
 
-from anysolver.contact import _assemble_damaged_linear_matrices, _linear_element_matrix_terms
-from anysolver.damage_matrix_performance import DamageMatrixPlan
+from anysolver.contact import (
+    _assemble_damaged_linear_matrices,
+    _assemble_damaged_linear_matrices_with_gate,
+    _linear_element_matrix_terms,
+)
+from anysolver.damage_matrix_performance import (
+    DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES,
+    DamageMatrixPlan,
+    DamageMatrixPlanGate,
+    estimate_damage_matrix_plan_retained_bytes,
+)
 from anysolver.elements import ShellElement
 from anysolver.fe_core import FEModel
 
@@ -149,3 +158,107 @@ def test_model_revision_invalidates_plan_and_helper_falls_back_to_scalar() -> No
     replacement_k, replacement_m = replacement.update(model, {1: 0.4, 2: 0.8})
     _assert_matrix_parity(replacement_k, reference_k)
     _assert_matrix_parity(replacement_m, reference_m)
+
+
+def test_plan_gate_requires_observed_future_break_even_and_bounds_memory() -> None:
+    model = _panel()
+    terms = _linear_element_matrix_terms(model)
+    estimate = estimate_damage_matrix_plan_retained_bytes(terms)
+    plan = DamageMatrixPlan.build(model, terms)
+    assert estimate >= plan.retained_bytes
+
+    gate = DamageMatrixPlanGate(
+        total_opportunities=40,
+        preflight_memory_bytes=10_000,
+    )
+    gate.register_cached_terms(model)
+    assert gate.consider(terms, opportunity_index=1) is False
+    assert gate.diagnostics()["selection_reason"] == "insufficient_observed_update_events"
+    assert gate.consider(terms, opportunity_index=2) is True
+    diagnostics = gate.diagnostics()
+    assert diagnostics["projected_future_update_events"] >= DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES
+    assert diagnostics["retained_memory_allowance_bytes"] > estimate
+
+    late_gate = DamageMatrixPlanGate(total_opportunities=20, preflight_memory_bytes=0)
+    late_gate.register_cached_terms(model)
+    assert late_gate.consider(terms, opportunity_index=9) is False
+    assert late_gate.consider(terms, opportunity_index=10) is False
+    late_diagnostics = late_gate.diagnostics()
+    assert late_diagnostics["projected_future_update_events"] < DAMAGE_MATRIX_PLAN_BREAK_EVEN_FUTURE_UPDATES
+    assert late_diagnostics["selection_reason"] == "projected_future_updates_below_break_even"
+
+    memory_gate = DamageMatrixPlanGate(
+        total_opportunities=40,
+        preflight_memory_bytes=1_000_000,
+        configured_memory_limit_bytes=1_000_000 + estimate - 1,
+    )
+    memory_gate.register_cached_terms(model)
+    assert memory_gate.consider(terms, opportunity_index=1) is False
+    assert memory_gate.consider(terms, opportunity_index=2) is False
+    memory_diagnostics = memory_gate.diagnostics()
+    assert memory_diagnostics["retained_memory_allowance_bytes"] == estimate - 1
+    assert memory_diagnostics["selection_reason"] == "estimated_retained_memory_exceeds_allowance"
+
+
+def test_plan_gate_disables_setup_after_cached_term_revision_refresh() -> None:
+    model = _panel()
+    terms = _linear_element_matrix_terms(model)
+    gate = DamageMatrixPlanGate(total_opportunities=40, preflight_memory_bytes=0)
+    gate.register_cached_terms(model)
+    assert gate.consider(terms, opportunity_index=1) is False
+    model.bump_revision("geometry")
+    assert gate.cached_terms_match(model) is False
+    refreshed = _linear_element_matrix_terms(model)
+    gate.register_cached_terms(model, replacing_stale=True)
+    assert gate.consider(refreshed, opportunity_index=2) is False
+    diagnostics = gate.diagnostics()
+    assert diagnostics["cached_terms_refresh_count"] == 1
+    assert diagnostics["model_revision_fallback_count"] == 1
+    assert diagnostics["selection_reason"] == "model_revision_changed_legacy_fallback"
+
+
+def test_gated_matrix_helper_retains_legacy_terms_then_promotes_with_parity() -> None:
+    model = _panel()
+    gate = DamageMatrixPlanGate(total_opportunities=40, preflight_memory_bytes=0)
+    terms = None
+    plan = None
+
+    first_scales = {1: 0.8}
+    first_k, first_m, terms, plan = _assemble_damaged_linear_matrices_with_gate(
+        model,
+        first_scales,
+        gate,
+        opportunity_index=1,
+        cached_terms=terms,
+        plan=plan,
+    )
+    reference_k, reference_m = _assemble_damaged_linear_matrices(model, first_scales, cached_terms=terms)
+    _assert_matrix_parity(first_k, reference_k)
+    _assert_matrix_parity(first_m, reference_m)
+    assert plan is None
+    assert gate.diagnostics()["legacy_update_count"] == 1
+
+    second_scales = {1: 0.6, 2: 0.9}
+    second_k, second_m, retained_terms, plan = _assemble_damaged_linear_matrices_with_gate(
+        model,
+        second_scales,
+        gate,
+        opportunity_index=2,
+        cached_terms=terms,
+        plan=plan,
+    )
+    reference_k, reference_m = _assemble_damaged_linear_matrices(
+        model,
+        second_scales,
+        cached_terms=retained_terms,
+    )
+    _assert_matrix_parity(second_k, reference_k)
+    _assert_matrix_parity(second_m, reference_m)
+    assert retained_terms is terms
+    assert plan is not None
+    diagnostics = gate.diagnostics()
+    assert diagnostics["plan_selected"] is True
+    assert diagnostics["plan_build_count"] == 1
+    assert diagnostics["legacy_update_count"] == 1
+    assert diagnostics["plan_update_count"] == 1
+    assert diagnostics["actual_retained_bytes"] == plan.retained_bytes

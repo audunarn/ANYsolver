@@ -22,7 +22,11 @@ from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .contact_performance import ContactWorkBuffer, ContactWorkCounters
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
-from .damage_matrix_performance import DamageMatrixPlan, DamageMatrixPlanFallback
+from .damage_matrix_performance import (
+    DamageMatrixPlan,
+    DamageMatrixPlanFallback,
+    DamageMatrixPlanGate,
+)
 from .dynamics import (
     TransientConfig,
     _full_initial_vector,
@@ -1150,6 +1154,76 @@ def _assemble_damaged_linear_matrices(
     return K, M
 
 
+def _assemble_damaged_linear_matrices_with_gate(
+    model: "FEModel",
+    element_scales: Mapping[int, float],
+    gate: DamageMatrixPlanGate,
+    *,
+    opportunity_index: int,
+    cached_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None,
+    plan: Optional[DamageMatrixPlan] = None,
+) -> Tuple[
+    sparse.csr_matrix,
+    sparse.csr_matrix,
+    Tuple[int, Tuple[LinearElementMatrixTerms, ...]],
+    Optional[DamageMatrixPlan],
+]:
+    """Select the incremental plan only after its production gates pass."""
+
+    cached_terms_stale = (
+        cached_terms is not None
+        and gate.cached_terms_registered
+        and not gate.cached_terms_match(model)
+    )
+    if cached_terms is None or cached_terms_stale:
+        cached_terms = _linear_element_matrix_terms(model)
+        gate.register_cached_terms(model, replacing_stale=cached_terms_stale)
+        if cached_terms_stale:
+            # A model revision invalidates both representations.  The freshly
+            # generated terms retain exact current-model scalar semantics; do
+            # not pay another incremental-plan setup in this analysis.
+            plan = None
+    elif not gate.cached_terms_registered:
+        gate.register_cached_terms(model)
+
+    use_plan = gate.consider(cached_terms, opportunity_index=int(opportunity_index))
+    if use_plan and plan is None:
+        try:
+            candidate = DamageMatrixPlan.build(model, cached_terms)
+        except MemoryError:
+            gate.reject_plan_setup("plan_setup_memory_error")
+        else:
+            if gate.accept_built_plan(candidate):
+                plan = candidate
+
+    if plan is not None:
+        try:
+            stiffness, mass = plan.update(model, element_scales)
+        except DamageMatrixPlanFallback:
+            revision_changed = not plan.is_valid(model)
+            gate.record_plan_update_fallback(plan.fallback_reason or "plan_update_fallback")
+            if revision_changed:
+                cached_terms = _linear_element_matrix_terms(model)
+                gate.register_cached_terms(model, replacing_stale=True)
+            plan = None
+            stiffness, mass = _assemble_damaged_linear_matrices(
+                model,
+                element_scales,
+                cached_terms=cached_terms,
+            )
+            gate.record_update(used_plan=False)
+        else:
+            gate.record_update(used_plan=True)
+    else:
+        stiffness, mass = _assemble_damaged_linear_matrices(
+            model,
+            element_scales,
+            cached_terms=cached_terms,
+        )
+        gate.record_update(used_plan=False)
+    return stiffness, mass, cached_terms, plan
+
+
 def _assemble_eroded_linear_matrices(
     model: "FEModel",
     deleted_element_ids: Sequence[int],
@@ -1884,6 +1958,16 @@ def _solve_transient_sphere_impact_nonlinear(
         recovery_config=recovery,
     )
     enforce_memory_limit(preflight_memory, transient_config.resource_config, context="solve_transient_sphere_impact.nonlinear")
+    damage_matrix_gate = DamageMatrixPlanGate(
+        total_opportunities=max(int(len(times) - 1), 0),
+        preflight_memory_bytes=int(preflight_memory.total_bytes_estimate),
+        configured_memory_limit_bytes=(
+            None
+            if transient_config.resource_config is None
+            or transient_config.resource_config.memory_limit_bytes is None
+            else int(transient_config.resource_config.memory_limit_bytes)
+        ),
+    )
 
     q = _full_initial_vector(transient_config.initial_displacement, total_dofs)
     v_full = _full_initial_vector(transient_config.initial_velocity, total_dofs)
@@ -1897,6 +1981,7 @@ def _solve_transient_sphere_impact_nonlinear(
     plastic_damage_records: List[DeletedElementRecord] = []
     plastic_damage_states: Dict[int, Dict[str, Any]] = {}
     damage_scale_by_element: Dict[int, float] = {}
+    linear_matrix_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None
     damage_matrix_plan: Optional[DamageMatrixPlan] = None
     if (
         bool(nl.equilibrate_base_load)
@@ -2601,12 +2686,15 @@ def _solve_transient_sphere_impact_nonlinear(
                 filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                 base_load, base_load_info = assemble_load_vector(model, filtered_base)
                 base_load_red = np.asarray(T.T @ base_load, dtype=float).reshape(-1)
-                if damage_matrix_plan is None:
-                    damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
-                _K_scaled, M_scaled = _assemble_damaged_linear_matrices(
-                    model,
-                    damage_scale_by_element,
-                    cached_terms=damage_matrix_plan,
+                _K_scaled, M_scaled, linear_matrix_terms, damage_matrix_plan = (
+                    _assemble_damaged_linear_matrices_with_gate(
+                        model,
+                        damage_scale_by_element,
+                        damage_matrix_gate,
+                        opportunity_index=int(step_index),
+                        cached_terms=linear_matrix_terms,
+                        plan=damage_matrix_plan,
+                    )
                 )
                 M_red = (T.T @ M_scaled @ T).tocsr()
                 C_red = (transient_config.rayleigh_alpha * M_red + transient_config.rayleigh_beta * K_red0).tocsr()
@@ -2806,6 +2894,8 @@ def _solve_transient_sphere_impact_nonlinear(
             "lazy_public_materialization": True,
             **contact_work_counters.diagnostics(),
         },
+        "linear_matrix_terms_cached": linear_matrix_terms is not None,
+        "damage_matrix_plan_selection": damage_matrix_gate.diagnostics(),
         "damage_matrix_plan": None if damage_matrix_plan is None else damage_matrix_plan.diagnostics(),
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": factor_diagnostics,
@@ -2925,6 +3015,7 @@ def solve_transient_sphere_impact(
     impact_damage_states: Dict[int, Dict[str, Any]] = {}
     max_damage_utilization = 0.0
     damage_scale_by_element: Dict[int, float] = {}
+    linear_matrix_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None
     damage_matrix_plan: Optional[DamageMatrixPlan] = None
     base_load, base_load_info = assemble_load_vector(model, base_load_case)
     zero_load = np.zeros(total_dofs, dtype=float)
@@ -2953,6 +3044,16 @@ def solve_transient_sphere_impact(
         recovery_config=recovery,
     )
     enforce_memory_limit(preflight_memory, transient_config.resource_config, context="solve_transient_sphere_impact")
+    damage_matrix_gate = DamageMatrixPlanGate(
+        total_opportunities=max(int(len(times) - 1), 0),
+        preflight_memory_bytes=int(preflight_memory.total_bytes_estimate),
+        configured_memory_limit_bytes=(
+            None
+            if transient_config.resource_config is None
+            or transient_config.resource_config.memory_limit_bytes is None
+            else int(transient_config.resource_config.memory_limit_bytes)
+        ),
+    )
 
     q = _full_initial_vector(transient_config.initial_displacement, total_dofs)
     v_full = _full_initial_vector(transient_config.initial_velocity, total_dofs)
@@ -3295,18 +3396,21 @@ def solve_transient_sphere_impact(
                     fracture_deleted_element_ids.update(record.element_id for record in new_fracture_records)
                     filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                     base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                    if damage_matrix_plan is None:
-                        damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
                     fracture_scales = {int(element_id): float(scale) for element_id, scale in damage_scale_by_element.items()}
                     for element_id in deleted_element_ids:
                         fracture_scales[int(element_id)] = min(
                             fracture_scales.get(int(element_id), 1.0),
                             float(fracture_config.residual_stiffness_fraction),
                         )
-                    K, M = _assemble_damaged_linear_matrices(
-                        model,
-                        fracture_scales,
-                        cached_terms=damage_matrix_plan,
+                    K, M, linear_matrix_terms, damage_matrix_plan = (
+                        _assemble_damaged_linear_matrices_with_gate(
+                            model,
+                            fracture_scales,
+                            damage_matrix_gate,
+                            opportunity_index=int(step_index),
+                            cached_terms=linear_matrix_terms,
+                            plan=damage_matrix_plan,
+                        )
                     )
                     eroded_matrix_rebuild_count += 1
                     K_red = (T.T @ K @ T).tocsr()
@@ -3376,12 +3480,15 @@ def solve_transient_sphere_impact(
                         )
                     filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                     base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                    if damage_matrix_plan is None:
-                        damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
-                    K, M = _assemble_damaged_linear_matrices(
-                        model,
-                        damage_scale_by_element,
-                        cached_terms=damage_matrix_plan,
+                    K, M, linear_matrix_terms, damage_matrix_plan = (
+                        _assemble_damaged_linear_matrices_with_gate(
+                            model,
+                            damage_scale_by_element,
+                            damage_matrix_gate,
+                            opportunity_index=int(step_index),
+                            cached_terms=linear_matrix_terms,
+                            plan=damage_matrix_plan,
+                        )
                     )
                     eroded_matrix_rebuild_count += 1
                     K_red = (T.T @ K @ T).tocsr()
@@ -3575,7 +3682,8 @@ def solve_transient_sphere_impact(
         "solve_count": int(solve_count),
         "eroded_matrix_rebuild_count": int(eroded_matrix_rebuild_count),
         "damage_state_update_count": int(damage_state_update_count),
-        "linear_matrix_terms_cached": damage_matrix_plan is not None,
+        "linear_matrix_terms_cached": linear_matrix_terms is not None,
+        "damage_matrix_plan_selection": damage_matrix_gate.diagnostics(),
         "damage_matrix_plan": None if damage_matrix_plan is None else damage_matrix_plan.diagnostics(),
         "contact_work_buffer": {
             "path": "compact_candidates_eager_public_records",
