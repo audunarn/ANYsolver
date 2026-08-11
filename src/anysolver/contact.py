@@ -19,6 +19,7 @@ from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .boundary import BoundaryCondition, LoadCase
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .dynamics import (
     TransientConfig,
     _full_initial_vector,
@@ -320,6 +321,12 @@ class SphereImpactResult:
     status: str
     diagnostics: Dict[str, Any]
     result_case: Optional[Dict[str, Any]] = None
+
+    @property
+    def quantity_metadata(self) -> Tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
 
 
 def _project_local_coordinates(
@@ -1745,8 +1752,9 @@ def _solve_transient_sphere_impact_nonlinear(
     base_load_case: Optional[LoadCase] = None,
     nonlinear_config: Optional[NonlinearTransientConfig] = None,
     plastic_damage_config: Optional[PlasticImpactDamageConfig] = None,
-    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    progress_callback: Optional[ProgressCallback] = None,
     status_callback: Optional[Callable[[str], None]] = None,
+    cancellation_token: Optional[CancellationToken] = None,
 ) -> SphereImpactResult:
     """Implicit Newmark nonlinear impact with material/geometric element response."""
     from .nonlinear_static import _assemble_nonlinear_system, _nonlinear_state_summary, states_von_mises_map
@@ -1789,6 +1797,7 @@ def _solve_transient_sphere_impact_nonlinear(
                 **kwargs,
             )
 
+    cancellation_safe_point(cancellation_token, "sphere_impact.nonlinear.start")
     nl = nonlinear_config or NonlinearTransientConfig(enabled=True)
     model.apply_boundary_conditions()
     total_dofs = model.mesh.dof_manager.total_dofs
@@ -1861,6 +1870,10 @@ def _solve_transient_sphere_impact_nonlinear(
         q_static = np.zeros_like(q_red)
         try:
             for static_iteration in range(25):
+                cancellation_safe_point(
+                    cancellation_token,
+                    f"sphere_impact.nonlinear.preload:{static_iteration + 1}",
+                )
                 F_int_static, K_static, _trial_unused = assemble_nonlinear(
                     reconstruct_full_solution(T, q_static, u0), {}, tangent=True
                 )
@@ -2004,23 +2017,22 @@ def _solve_transient_sphere_impact_nonlinear(
             # the plastic strain and overshoots the material curve.
             state_von_mises_history.append(states_von_mises_map(model, committed_states))
         if progress_callback is not None and history_storage_mode == "full":
-            try:
-                progress_callback(
-                    {
-                        "type": "sphere_impact_live_step",
-                        "time_s": float(time),
-                        "step_index": int(len(saved_times) - 1),
-                        "displacement": full_u.copy(),
-                        "sphere_position": np.asarray(sphere_x, dtype=float).copy(),
-                        "sphere_radius": float(sphere.radius),
-                        "contact_force": np.asarray(sphere_force, dtype=float).copy(),
-                        "active_contacts": tuple(record.to_dict() for record in records) if config.save_contact_history else tuple(),
-                        "nonlinear": True,
-                        "max_equivalent_plastic_strain": max_alpha,
-                    }
-                )
-            except Exception:
-                pass
+            emit_progress(
+                progress_callback,
+                "sphere_impact_live_step",
+                "sphere_impact.nonlinear.integration",
+                completed=float(time),
+                total=float(transient_config.t_end),
+                time_s=float(time),
+                step_index=int(len(saved_times) - 1),
+                displacement=full_u.copy(),
+                sphere_position=np.asarray(sphere_x, dtype=float).copy(),
+                sphere_radius=float(sphere.radius),
+                contact_force=np.asarray(sphere_force, dtype=float).copy(),
+                active_contacts=tuple(record.to_dict() for record in records) if config.save_contact_history else tuple(),
+                nonlinear=True,
+                max_equivalent_plastic_strain=max_alpha,
+            )
 
     initial_load, initial_sphere_force, initial_records = assemble_sphere_contact_load_vector(
         model,
@@ -2072,6 +2084,10 @@ def _solve_transient_sphere_impact_nonlinear(
     distress_halvings = 0
     preemptive_substep_count = 0
     while segments:
+        cancellation_safe_point(
+            cancellation_token,
+            "sphere_impact.nonlinear.segment",
+        )
         step_index, segment_start, sub_time, needs_travel_check = segments.pop(0)
         dt = float(sub_time - segment_start)
         if dt <= 0.0:
@@ -2139,6 +2155,10 @@ def _solve_transient_sphere_impact_nonlinear(
         factor_diagnostics: Dict[str, Any] = {}
         convergence_reason = "standard"
         for iteration in range(1, int(nl.max_iterations) + 1):
+            cancellation_safe_point(
+                cancellation_token,
+                f"sphere_impact.nonlinear.time:{sub_time:.16g}.iteration:{iteration}",
+            )
             if status_callback:
                 status_callback(f"\r  Time {sub_time:.4f} s, Iteration {iteration}: Res {residual_norm:.2e}")
             full_u = reconstruct_full_solution(T, q_trial, u0)
@@ -2636,11 +2656,13 @@ def solve_transient_sphere_impact(
     damage_config: Optional[ImpactDamageConfig] = None,
     nonlinear_config: Optional[NonlinearTransientConfig] = None,
     plastic_damage_config: Optional[PlasticImpactDamageConfig] = None,
-    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    progress_callback: Optional[ProgressCallback] = None,
     status_callback: Optional[Callable[[str], None]] = None,
+    cancellation_token: Optional[CancellationToken] = None,
 ) -> SphereImpactResult:
     """Solve a limited rigid-sphere-to-shell impact transient."""
 
+    cancellation_safe_point(cancellation_token, "sphere_impact.start")
     config = _resolved_contact_config(model, sphere, contact_config)
     if fracture_config is not None and not isinstance(fracture_config, ImpactFractureConfig):
         raise TypeError("fracture_config must be an ImpactFractureConfig or None")
@@ -2669,6 +2691,7 @@ def solve_transient_sphere_impact(
             plastic_damage_config=plastic_damage_config,
             progress_callback=progress_callback,
             status_callback=status_callback,
+            cancellation_token=cancellation_token,
         )
     model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)
@@ -2790,21 +2813,20 @@ def solve_transient_sphere_impact(
         energy_strain.append(0.5 * float(q_state @ (K_red @ q_state)))
         sphere_kinetic.append(0.5 * float(sphere.mass) * float(sphere_v @ sphere_v))
         if progress_callback is not None and history_storage_mode == "full":
-            try:
-                progress_callback(
-                    {
-                        "type": "sphere_impact_live_step",
-                        "time_s": float(time),
-                        "step_index": int(len(saved_times) - 1),
-                        "displacement": full_u.copy(),
-                        "sphere_position": np.asarray(sphere_x, dtype=float).copy(),
-                        "sphere_radius": float(sphere.radius),
-                        "contact_force": np.asarray(sphere_force, dtype=float).copy(),
-                        "active_contacts": tuple(record.to_dict() for record in records) if config.save_contact_history else tuple(),
-                    }
-                )
-            except Exception:
-                pass
+            emit_progress(
+                progress_callback,
+                "sphere_impact_live_step",
+                "sphere_impact.linear.integration",
+                completed=float(time),
+                total=float(transient_config.t_end),
+                time_s=float(time),
+                step_index=int(len(saved_times) - 1),
+                displacement=full_u.copy(),
+                sphere_position=np.asarray(sphere_x, dtype=float).copy(),
+                sphere_radius=float(sphere.radius),
+                contact_force=np.asarray(sphere_force, dtype=float).copy(),
+                active_contacts=tuple(record.to_dict() for record in records) if config.save_contact_history else tuple(),
+            )
 
     initial_load, initial_sphere_force, initial_records = assemble_sphere_contact_load_vector(
         model,
@@ -2873,6 +2895,10 @@ def solve_transient_sphere_impact(
     contact_period_dt = 0.2 * np.sqrt(float(sphere.mass) / max(float(config.penalty_stiffness), 1.0e-30))
     contact_active_last_step = bool(initial_records)
     for step_index in range(1, len(times)):
+        cancellation_safe_point(
+            cancellation_token,
+            f"sphere_impact.linear.step:{step_index}",
+        )
         target_time = float(times[step_index])
         dt_total = float(times[step_index] - times[step_index - 1])
         if dt_total <= 0.0:
@@ -2890,6 +2916,10 @@ def solve_transient_sphere_impact(
         last_sphere_force = np.zeros(3, dtype=float)
         last_step_diag: Dict[str, Any] = {}
         for substep in range(n_substeps):
+            cancellation_safe_point(
+                cancellation_token,
+                f"sphere_impact.linear.step:{step_index}.substep:{substep + 1}",
+            )
             sub_time = float(times[step_index - 1]) + (substep + 1) * dt_total / n_substeps
             dt = dt_total / n_substeps
             if sub_time - dt < sphere.t_start <= sub_time and np.linalg.norm(sphere_velocity) == 0.0:
@@ -2925,6 +2955,10 @@ def solve_transient_sphere_impact(
             relaxation = 1.0
             fixed_point_residual_prev: Optional[np.ndarray] = None
             for iteration in range(1, int(config.max_contact_iterations) + 1):
+                cancellation_safe_point(
+                    cancellation_token,
+                    f"sphere_impact.linear.step:{step_index}.substep:{substep + 1}.iteration:{iteration}",
+                )
                 load_next = base_load + contact_load
                 F_red = _reduced_load(T, K, u0, load_next)
                 rhs = (

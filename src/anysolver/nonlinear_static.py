@@ -38,6 +38,12 @@ from scipy import sparse
 from .assembly import build_constraint_transformation
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .control import (
+    CancellationToken,
+    ProgressCallback,
+    cancellation_safe_point,
+    emit_progress,
+)
 from .fracture import (
     DeletedElementRecord,
     FractureConfig,
@@ -413,6 +419,58 @@ class NonlinearStaticStep:
         }
 
 
+@dataclass(frozen=True)
+class NonlinearIncrementSnapshot:
+    """Opt-in committed state at one converged nonlinear increment.
+
+    Snapshots own defensive copies of the displacement vector and element
+    state map.  They are therefore suitable for true step animation and
+    material-history-aware recovery without reconstructing intermediate
+    states from the final solution.
+    """
+
+    step_index: int
+    load_factor: float
+    displacements: np.ndarray
+    element_states: Mapping[int, Any]
+    control_value: Optional[float] = None
+
+    def __post_init__(self) -> None:
+        values = np.asarray(self.displacements, dtype=float).reshape(-1).copy()
+        values.setflags(write=False)
+        object.__setattr__(self, "displacements", values)
+        object.__setattr__(self, "element_states", copy.deepcopy(dict(self.element_states)))
+
+    def to_dict(self, *, include_displacements: bool = False) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "step_index": int(self.step_index),
+            "load_factor": float(self.load_factor),
+            "control_value": self.control_value,
+            "num_dofs": int(self.displacements.size),
+            "element_state_ids": sorted(int(value) for value in self.element_states),
+        }
+        if include_displacements:
+            payload["displacements"] = self.displacements.tolist()
+        return payload
+
+
+def _increment_snapshot(
+    step_index: int,
+    load_factor: float,
+    displacements: np.ndarray,
+    element_states: Mapping[int, Any],
+    *,
+    control_value: Optional[float] = None,
+) -> NonlinearIncrementSnapshot:
+    return NonlinearIncrementSnapshot(
+        step_index=int(step_index),
+        load_factor=float(load_factor),
+        displacements=displacements,
+        element_states=element_states,
+        control_value=control_value,
+    )
+
+
 @dataclass
 class NonlinearStaticResult:
     """Result of the incremental geometric/material nonlinear solve."""
@@ -423,6 +481,7 @@ class NonlinearStaticResult:
     load_factor: float
     element_states: Dict[int, Any] = field(default_factory=dict)
     info: Dict[str, Any] = field(default_factory=dict)
+    snapshots: Tuple[NonlinearIncrementSnapshot, ...] = field(default_factory=tuple)
 
     @property
     def converged(self) -> bool:
@@ -465,7 +524,14 @@ class NonlinearStaticResult:
             "stop_reason": self.stop_reason,
             "info": self.info,
             "steps": [step.to_dict() for step in self.steps],
+            "snapshots": [snapshot.to_dict() for snapshot in self.snapshots],
         }
+
+    @property
+    def quantity_metadata(self) -> Tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
 
 
 def _local_dof_index(dof: Union[str, int]) -> int:
@@ -1170,6 +1236,7 @@ def _equilibrate_initial_fields(
     corotational_tangent: str,
     general_tangent: bool,
     initial_reduced_displacements: Optional[np.ndarray] = None,
+    cancellation_token: Optional[CancellationToken] = None,
 ) -> Tuple[np.ndarray, Dict[int, Any], List[Dict[str, Any]], Optional[str]]:
     """Equilibrate prescribed residual fields before any external load.
 
@@ -1192,6 +1259,10 @@ def _equilibrate_initial_fields(
     history: List[Dict[str, Any]] = []
     reference: Optional[float] = None
     for iteration in range(1, max_iterations + 1):
+        cancellation_safe_point(
+            cancellation_token,
+            f"nonlinear_static.initial_equilibration.iteration:{iteration}",
+        )
         u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
         F_int, K_T, trial_states = _assemble_nonlinear_system(
             model,
@@ -1320,6 +1391,9 @@ def _solve_static_displacement_control(
     kinematics: str = "von_karman",
     corotational_tangent: str = "not_applicable",
     initial_reduced_displacements: Optional[np.ndarray] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+    record_increment_snapshots: bool = False,
 ) -> NonlinearStaticResult:
     """Displacement-control Newton solve with load factor as an unknown."""
     if load_program is not None:
@@ -1368,6 +1442,7 @@ def _solve_static_displacement_control(
             )
     lam = 0.0
     steps: List[NonlinearStaticStep] = []
+    snapshots: List[NonlinearIncrementSnapshot] = []
     history: List[Dict[str, Any]] = []
     status = "completed"
     failure_reason: Optional[str] = None
@@ -1411,6 +1486,10 @@ def _solve_static_displacement_control(
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         for step_index in range(1, num_steps + 1):
+            cancellation_safe_point(
+                cancellation_token,
+                f"nonlinear_static.displacement.step:{step_index}",
+            )
             q_step_start = q.copy()
             lam_step_start = float(lam)
             target = initial_control + target_increment * step_index / num_steps
@@ -1419,6 +1498,10 @@ def _solve_static_displacement_control(
             states_new = committed_states
 
             for iteration in range(1, max_iterations + 1):
+                cancellation_safe_point(
+                    cancellation_token,
+                    f"nonlinear_static.displacement.step:{step_index}.iteration:{iteration}",
+                )
                 total_iterations += 1
                 u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
                 F_int, K_T, trial_states = _assemble_nonlinear_system(
@@ -1540,6 +1623,31 @@ def _solve_static_displacement_control(
                     "active_stage": active_stage,
                 }
             )
+            if record_increment_snapshots:
+                snapshots.append(
+                    _increment_snapshot(
+                        step_index,
+                        lam,
+                        u,
+                        committed_states,
+                        control_value=current,
+                    )
+                )
+            if progress_callback is not None:
+                emit_progress(
+                    progress_callback,
+                    "nonlinear_static_step",
+                    "nonlinear_static.displacement",
+                    completed=step_index,
+                    total=num_steps,
+                    iteration=iteration,
+                    control="displacement",
+                    step_index=int(step_index),
+                    load_factor=float(lam),
+                    control_value=float(current),
+                    displacement_norm=float(np.linalg.norm(u)),
+                    max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
+                )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
     committed_states = _finalize_nonlinear_element_states(
@@ -1574,7 +1682,15 @@ def _solve_static_displacement_control(
             "corotational_tangent": corotational_tangent,
         },
     ).to_dict()
-    return NonlinearStaticResult(steps, status, u_final, float(lam), committed_states, info)
+    return NonlinearStaticResult(
+        steps,
+        status,
+        u_final,
+        float(lam),
+        committed_states,
+        info,
+        tuple(snapshots),
+    )
 
 
 @resource_threaded
@@ -1599,10 +1715,12 @@ def solve_static_nonlinear(
     kinematics: str = "von_karman",
     corotational_tangent: str = "auto",
     status_callback: Optional[Callable[[str], None]] = None,
-    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    progress_callback: Optional[ProgressCallback] = None,
     initial_fields: Optional[Mapping[int, Any]] = None,
     initial_displacements: Optional[np.ndarray] = None,
     equilibrate_initial_state: Optional[bool] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    record_increment_snapshots: bool = False,
 ) -> NonlinearStaticResult:
     """Incremental nonlinear static solve with adaptive load stepping.
 
@@ -1626,6 +1744,7 @@ def solve_static_nonlinear(
     ``equilibrate_initial_state=True`` to deliberately re-equilibrate the
     restored field from the supplied (or zero) displacement state.
     """
+    cancellation_safe_point(cancellation_token, "nonlinear_static.start")
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
     control_name = str(control).lower()
@@ -1862,6 +1981,7 @@ def solve_static_nonlinear(
             corotational_tangent=resolved_corotational_tangent,
             general_tangent=general_tangent,
             initial_reduced_displacements=q,
+            cancellation_token=cancellation_token,
         )
         info["initial_state_equilibration"] = {
             "requested": True,
@@ -1981,6 +2101,8 @@ def solve_static_nonlinear(
                 ),
                 status_callback=status_callback,
                 progress_callback=progress_callback,
+                cancellation_token=cancellation_token,
+                record_increment_snapshots=record_increment_snapshots,
             )
             if not preload_result.converged or (
                 preload_result.load_factor < preload_program.total_factor - 1.0e-10
@@ -2029,6 +2151,9 @@ def solve_static_nonlinear(
             start_time=start_time,
             resource_config=resource_config,
             initial_reduced_displacements=q,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            record_increment_snapshots=record_increment_snapshots,
         )
         if load_program is not None:
             stage_factors = {
@@ -2050,6 +2175,15 @@ def solve_static_nonlinear(
                 for index, step in enumerate(controlled_result.steps, start=1)
             ]
             controlled_result.steps = preload_steps + controlled_steps
+            preload_snapshots = [
+                dataclass_replace(snapshot, step_index=index)
+                for index, snapshot in enumerate(preload_result.snapshots, start=1)
+            ]
+            controlled_snapshots = [
+                dataclass_replace(snapshot, step_index=offset + index)
+                for index, snapshot in enumerate(controlled_result.snapshots, start=1)
+            ]
+            controlled_result.snapshots = tuple(preload_snapshots + controlled_snapshots)
             controlled_result.info["total_newton_iterations"] = int(
                 controlled_result.info.get("total_newton_iterations", 0)
             ) + int(preload_result.info.get("total_newton_iterations", 0))
@@ -2068,14 +2202,33 @@ def solve_static_nonlinear(
         else np.empty(0, dtype=float)
     )
 
+    prescribed_offset = np.asarray(u0, dtype=float).reshape(-1)
+    info["prescribed_displacement_path"] = {
+        "mode": "proportional_to_load_factor",
+        "target_max_abs": float(np.max(np.abs(prescribed_offset)))
+        if prescribed_offset.size
+        else 0.0,
+    }
+
+    def full_displacement(q_reduced: np.ndarray, path_factor: float) -> np.ndarray:
+        """Expand a force-control state on its affine constraint path."""
+        return np.asarray(
+            T @ q_reduced + float(path_factor) * prescribed_offset,
+            dtype=float,
+        ).reshape(-1)
+
     def newton_increment(q_start, path_factor, reference, line_search):
         """One load increment.  Plain full Newton when ``line_search`` is
         False (the fast path); backtracking-line-search Newton otherwise.
         Returns (converged, q, states, residual_norm, iterations_used, failure_reason).
         """
         nonlocal total_iterations
+        cancellation_safe_point(
+            cancellation_token,
+            f"nonlinear_static.force.step:{step_index}.start",
+        )
         q_trial = q_start.copy()
-        u = np.asarray(T @ q_trial + u0, dtype=float).reshape(-1)
+        u = full_displacement(q_trial, path_factor)
         F_int, K_T, trial_states = _assemble_nonlinear_system(
             model,
             u,
@@ -2100,6 +2253,10 @@ def solve_static_nonlinear(
         residual_norm = float(np.linalg.norm(residual))
 
         for iteration in range(1, max_iterations + 1):
+            cancellation_safe_point(
+                cancellation_token,
+                f"nonlinear_static.force.step:{step_index}.iteration:{iteration}",
+            )
             if status_callback:
                 status_callback(f"\r  Step {step_index}/{num_steps}, Iteration {iteration}: Res {residual_norm:.2e}")
             total_iterations += 1
@@ -2126,7 +2283,7 @@ def solve_static_nonlinear(
 
             if not line_search:
                 q_trial = q_trial + dq
-                u = np.asarray(T @ q_trial + u0, dtype=float).reshape(-1)
+                u = full_displacement(q_trial, path_factor)
                 F_int, K_T, trial_states = _assemble_nonlinear_system(
                     model,
                     u,
@@ -2161,8 +2318,12 @@ def solve_static_nonlinear(
             accepted = False
             scale = 1.0
             for trial in range(settings.max_line_search_cuts):
+                cancellation_safe_point(
+                    cancellation_token,
+                    f"nonlinear_static.force.step:{step_index}.line_search:{trial + 1}",
+                )
                 q_candidate = q_trial + scale * dq
-                u = np.asarray(T @ q_candidate + u0, dtype=float).reshape(-1)
+                u = full_displacement(q_candidate, path_factor)
                 with_tangent = trial == 0
                 F_c, K_c, states_c = _assemble_nonlinear_system(
                     model,
@@ -2226,11 +2387,16 @@ def solve_static_nonlinear(
 
     force_displacement_history: List[Dict[str, Any]] = []
     convergence_adaptation: List[Dict[str, Any]] = []
+    snapshots: List[NonlinearIncrementSnapshot] = []
     force_line_search_next = False
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         while lam < target_load_factor - 1.0e-12:
+            cancellation_safe_point(
+                cancellation_token,
+                f"nonlinear_static.force.step:{step_index + 1}",
+            )
             step_size = min(step_size, max(target_load_factor - lam, min_step))
             next_stage_boundary = target_load_factor
             for boundary in stage_boundaries:
@@ -2242,7 +2408,7 @@ def solve_static_nonlinear(
             # environmental material path independent of adaptive step growth.
             lam_trial = min(lam + step_size, target_load_factor, next_stage_boundary)
             attempted_step_size = lam_trial - lam
-            u_start = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+            u_start = full_displacement(q, lam_trial)
             F_ext, _K_ext, stage_factors, active_stage = external_load_at(
                 lam_trial,
                 u_start,
@@ -2274,7 +2440,7 @@ def solve_static_nonlinear(
                 committed_states = states_new
                 force_line_search_next = False
                 step_index += 1
-                u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+                u = full_displacement(q, lam)
                 control_value = float(np.linalg.norm(u))
                 new_records: Tuple[DeletedElementRecord, ...] = ()
                 if fracture_config is not None:
@@ -2352,33 +2518,41 @@ def solve_static_nonlinear(
                         "deleted_pressure_force_resultant": removed_load.tolist(),
                     }
                 )
-                if progress_callback is not None:
-                    # Live equilibrium-path point for GUI plotting: one dict
-                    # per converged increment, same numbers as the history.
-                    try:
-                        max_translation = 0.0
-                        size = int(u.size)
-                        for node in model.mesh.nodes.values():
-                            dofs = np.asarray(node.dofs[:3], dtype=np.intp)
-                            if dofs.size == 0 or int(dofs.max()) >= size:
-                                continue
-                            value = float(np.linalg.norm(u[dofs]))
-                            if value > max_translation:
-                                max_translation = value
-                        progress_callback(
-                            {
-                                "type": "nonlinear_static_step",
-                                "control": "force",
-                                "step_index": int(step_index),
-                                "load_factor": float(lam),
-                                "displacement_norm": float(np.linalg.norm(u)),
-                                "max_translation": float(max_translation),
-                                "iterations": int(iterations_used),
-                                "max_equivalent_plastic_strain": float(_max_plastic_strain(committed_states)),
-                            }
+                if record_increment_snapshots:
+                    snapshots.append(
+                        _increment_snapshot(
+                            step_index,
+                            lam,
+                            u,
+                            committed_states,
+                            control_value=control_value,
                         )
-                    except Exception:
-                        pass
+                    )
+                if progress_callback is not None:
+                    max_translation = 0.0
+                    size = int(u.size)
+                    for node in model.mesh.nodes.values():
+                        dofs = np.asarray(node.dofs[:3], dtype=np.intp)
+                        if dofs.size == 0 or int(dofs.max()) >= size:
+                            continue
+                        value = float(np.linalg.norm(u[dofs]))
+                        if value > max_translation:
+                            max_translation = value
+                    emit_progress(
+                        progress_callback,
+                        "nonlinear_static_step",
+                        "nonlinear_static.force",
+                        completed=float(lam),
+                        total=float(target_load_factor),
+                        iteration=int(iterations_used),
+                        control="force",
+                        step_index=int(step_index),
+                        load_factor=float(lam),
+                        displacement_norm=float(np.linalg.norm(u)),
+                        max_translation=float(max_translation),
+                        iterations=int(iterations_used),
+                        max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
+                    )
                 if fracture_config is not None and deleted_element_ids:
                     scoped_total = sum(
                         1
@@ -2449,7 +2623,7 @@ def solve_static_nonlinear(
                     info["first_failed_iteration_reason"] = failure_reason
                     break
 
-    u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    u_final = full_displacement(q, lam)
     committed_states = _finalize_nonlinear_element_states(
         model,
         u_final,
@@ -2499,4 +2673,12 @@ def solve_static_nonlinear(
             "fracture": None if fracture_config is None else fracture_config.to_dict(),
         },
     ).to_dict()
-    return NonlinearStaticResult(steps, status, u_final, float(lam), committed_states, info)
+    return NonlinearStaticResult(
+        steps,
+        status,
+        u_final,
+        float(lam),
+        committed_states,
+        info,
+        tuple(snapshots),
+    )

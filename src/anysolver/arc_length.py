@@ -40,14 +40,17 @@ from scipy.sparse import linalg as sparse_linalg
 from .assembly import build_constraint_transformation
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from .nonlinear_static import (
+    NonlinearIncrementSnapshot,
     _assemble_nonlinear_system,
     _copy_initial_states,
     _has_follower_pressure,
     _max_plastic_strain,
     _nonlinear_state_summary,
+    _increment_snapshot,
     _weighted_external_load_system,
     solve_static_nonlinear,
 )
@@ -195,6 +198,7 @@ class ArcLengthResult:
     peak_step_index: Optional[int]
     element_states: Dict[int, Any] = field(default_factory=dict)
     info: Dict[str, Any] = field(default_factory=dict)
+    snapshots: tuple[NonlinearIncrementSnapshot, ...] = field(default_factory=tuple)
 
     @property
     def converged(self) -> bool:
@@ -220,7 +224,14 @@ class ArcLengthResult:
             "capacity_estimate": self.capacity_estimate,
             "info": self.info,
             "steps": [step.to_dict() for step in self.steps],
+            "snapshots": [snapshot.to_dict() for snapshot in self.snapshots],
         }
+
+    @property
+    def quantity_metadata(self) -> tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
 
 
 def _characteristic_length(model: "FEModel") -> float:
@@ -315,8 +326,10 @@ def solve_static_arc_length(
     initial_element_states: Optional[Mapping[int, Any]] = None,
     kinematics: str = "von_karman",
     corotational_tangent: str = "auto",
-    progress_callback: Optional[Any] = None,
+    progress_callback: Optional[ProgressCallback] = None,
     resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    record_increment_snapshots: bool = False,
 ) -> ArcLengthResult:
     """Trace the first nonlinear limit point with spherical arc-length control.
 
@@ -331,6 +344,7 @@ def solve_static_arc_length(
     chain-rule tangent for follower pressure and the rotated approximation
     otherwise.
     """
+    cancellation_safe_point(cancellation_token, "arc_length.start")
     if load_case is None:
         raise ValueError("load_case is required for arc-length continuation")
     if max_iterations <= 0:
@@ -433,6 +447,8 @@ def solve_static_arc_length(
             initial_element_states=committed_states,
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
+            cancellation_token=cancellation_token,
+            record_increment_snapshots=record_increment_snapshots,
         )
         preload_info = preload.to_dict()
         if preload.status != "completed":
@@ -554,8 +570,13 @@ def solve_static_arc_length(
     total_iterations = 0
     total_retries = 0
     adaptation_history: List[Dict[str, Any]] = []
+    snapshots: List[NonlinearIncrementSnapshot] = []
 
     for step_index in range(1, settings.max_steps + 1):
+        cancellation_safe_point(
+            cancellation_token,
+            f"arc_length.step:{step_index}",
+        )
         q_base = q.copy()
         lambda_base = float(lam)
         states_base = copy.deepcopy(committed_states)
@@ -563,6 +584,10 @@ def solve_static_arc_length(
         step_failure = "unknown"
 
         for retry in range(settings.max_retries_per_step + 1):
+            cancellation_safe_point(
+                cancellation_token,
+                f"arc_length.step:{step_index}.retry:{retry}",
+            )
             total_retries += int(retry > 0)
             u_base = np.asarray(T @ q_base + u0, dtype=float).reshape(-1)
             F_base, K_base, _ = _assemble_nonlinear_system(
@@ -629,6 +654,10 @@ def solve_static_arc_length(
             trial_states = states_base
 
             for iteration in range(1, max_iterations + 1):
+                cancellation_safe_point(
+                    cancellation_token,
+                    f"arc_length.step:{step_index}.iteration:{iteration}",
+                )
                 total_iterations += 1
                 u_trial = np.asarray(T @ q_trial + u0, dtype=float).reshape(-1)
                 F_internal, K_trial, states_candidate = _assemble_nonlinear_system(
@@ -779,26 +808,35 @@ def solve_static_arc_length(
                     is_peak=is_new_peak,
                 )
                 steps.append(step)
+                if record_increment_snapshots:
+                    snapshots.append(
+                        _increment_snapshot(
+                            step_index,
+                            lam,
+                            u,
+                            committed_states,
+                            control_value=float(lam),
+                        )
+                    )
                 previous_dq = dq_total.copy()
                 previous_dlambda = float(dlambda_total)
                 max_translation = _max_nodal_translation(working_model, u)
-                if progress_callback is not None:
-                    try:
-                        progress_callback(
-                            {
-                                "type": "nonlinear_static_step",
-                                "control": "arc length",
-                                "step_index": int(step_index),
-                                "load_factor": float(lam),
-                                "peak_load_factor": float(peak_load_factor),
-                                "displacement_norm": float(np.linalg.norm(u)),
-                                "max_translation": float(max_translation),
-                                "iterations": int(iteration),
-                                "max_equivalent_plastic_strain": float(step.max_equivalent_plastic_strain),
-                            }
-                        )
-                    except Exception:
-                        pass
+                emit_progress(
+                    progress_callback,
+                    "nonlinear_static_step",
+                    "arc_length.continuation",
+                    completed=step_index,
+                    total=settings.max_steps,
+                    iteration=iteration,
+                    control="arc length",
+                    step_index=int(step_index),
+                    load_factor=float(lam),
+                    peak_load_factor=float(peak_load_factor),
+                    displacement_norm=float(np.linalg.norm(u)),
+                    max_translation=float(max_translation),
+                    iterations=int(iteration),
+                    max_equivalent_plastic_strain=float(step.max_equivalent_plastic_strain),
+                )
 
                 old_radius = radius
                 if iteration <= max(settings.target_iterations // 2, 1):
@@ -924,4 +962,5 @@ def solve_static_arc_length(
         peak_step_index=peak_step_index,
         element_states=committed_states,
         info=info,
+        snapshots=tuple(snapshots),
     )

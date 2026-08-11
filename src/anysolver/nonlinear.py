@@ -15,6 +15,7 @@ from scipy.sparse.linalg import eigsh
 
 from .assembly import build_constraint_transformation
 from .cases import make_result_case
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import (
     assemble_geometric_stiffness_matrix,
@@ -148,6 +149,8 @@ def solve_nonlinear_load_stepping(
     stability_tolerance: float = 1.0e-3,
     stop_at_limit: bool = True,
     resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> NonlinearLimitPointResult:
     """Run proportional load stepping and stop near the first limit point.
 
@@ -159,6 +162,7 @@ def solve_nonlinear_load_stepping(
     stiffness theory, not a post-buckling continuation method; past the limit
     point the tangent is indefinite and displacements are not meaningful.
     """
+    cancellation_safe_point(cancellation_token, "nonlinear_limit.start")
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
     if max_load_factor < 0.0:
@@ -239,6 +243,10 @@ def solve_nonlinear_load_stepping(
     load_factors = np.linspace(max_load_factor / num_steps, max_load_factor, num_steps)
 
     for step_index, load_factor in enumerate(load_factors, start=1):
+        cancellation_safe_point(
+            cancellation_token,
+            f"nonlinear_limit.step:{step_index}",
+        )
         rhs = float(load_factor) * F_red
         KT_red = (K_red - float(load_factor) * KG_red).tocsr()
         try:
@@ -280,6 +288,19 @@ def solve_nonlinear_load_stepping(
             tangent_status=tangent_status,
         )
         steps.append(step)
+        emit_progress(
+            progress_callback,
+            "nonlinear_limit_step",
+            "nonlinear_limit.load_stepping",
+            completed=step_index,
+            total=num_steps,
+            iteration=1,
+            step_index=int(step_index),
+            load_factor=float(load_factor),
+            displacement_norm=float(np.linalg.norm(u)),
+            tangent_stability_index=float(stability_index),
+            tangent_status=tangent_status,
+        )
 
         if stop_at_limit and tangent_status in {"near_limit", "unstable"}:
             status = "limit_point_detected" if tangent_status == "unstable" else "near_limit_point"
