@@ -531,22 +531,55 @@ def _batch_b_shell_build(
     batch._batch_b_drilling_stiffness = np.empty(element_count, dtype=float)
     generalized = bool(batch.elements[0].shell_section is not None)
     batch._batch_b_generalized = generalized
-    for index, element in enumerate(batch.elements):
-        cache = element._nonlinear_geometry(model.mesh)
-        frame = cache["R0"]
-        material = model.get_material(element.material_name)
-        if element.shell_section is not None:
-            section = element._generalized_section_in_frame(frame)
-            assert section is not None
-            batch._batch_b_membrane_matrix[index] = section.A
-            batch._batch_b_coupling_matrix[index] = section.B
-            batch._batch_b_bending_matrix[index] = section.D
-            batch._batch_b_shear_matrix[index] = section.As
-            batch._batch_b_drilling_stiffness[index] = (
-                float(section.A[2, 2])
-                * float(element.drilling_stabilization)
-            )
-        else:
+    isotropic = bool(
+        not generalized
+        and getattr(batch.material, "elastic_symmetry", "isotropic")
+        == "isotropic"
+    )
+    if isotropic:
+        # The group key already guarantees one material, thickness and
+        # drilling stabilization value.  Isotropic constitutive matrices are
+        # frame-invariant, so compute them once and broadcast into the
+        # per-element arrays required by the generalized kernel.  Keeping the
+        # old one-computation setup path avoids making mature isotropic plan
+        # construction scale with the element count.
+        elastic_matrix, shear_matrix, _strain, _stress = (
+            _shell_material_matrices(batch.material, 0.0)
+        )
+        thickness = float(batch.thickness)
+        batch._batch_b_membrane_matrix[:] = thickness * elastic_matrix
+        batch._batch_b_bending_matrix[:] = (
+            thickness**3 / 12.0 * elastic_matrix
+        )
+        batch._batch_b_shear_matrix[:] = (
+            (5.0 / 6.0) * thickness * shear_matrix
+        )
+        drilling_modulus = 1.0 / float(
+            _elastic_compliance(batch.material)[5, 5]
+        )
+        batch._batch_b_drilling_stiffness.fill(
+            drilling_modulus
+            * thickness
+            * float(batch.drilling_stabilization)
+        )
+    else:
+        for index, element in enumerate(batch.elements):
+            cache = element._nonlinear_geometry(model.mesh)
+            frame = cache["R0"]
+            material = model.get_material(element.material_name)
+            if element.shell_section is not None:
+                section = element._generalized_section_in_frame(frame)
+                assert section is not None
+                batch._batch_b_membrane_matrix[index] = section.A
+                batch._batch_b_coupling_matrix[index] = section.B
+                batch._batch_b_bending_matrix[index] = section.D
+                batch._batch_b_shear_matrix[index] = section.As
+                batch._batch_b_drilling_stiffness[index] = (
+                    float(section.A[2, 2])
+                    * float(element.drilling_stabilization)
+                )
+                continue
+
             elastic_matrix, shear_matrix, _strain, _stress = (
                 _shell_material_matrices(
                     material,
@@ -575,19 +608,7 @@ def _batch_b_shell_build(
     batch._batch_b_initial_bending_resultants = np.zeros_like(
         batch._batch_b_initial_membrane_resultants
     )
-    batch._batch_b_initial_fields_supported = bool(
-        not generalized
-        and all(
-            getattr(element, "shell_section", None) is None
-            and getattr(
-                model.get_material(element.material_name),
-                "elastic_symmetry",
-                "isotropic",
-            )
-            == "isotropic"
-            for element in batch.elements
-        )
-    )
+    batch._batch_b_initial_fields_supported = isotropic
 
     # Elastic groups do not require mutable constitutive history.  Release the
     # per-element plastic work arrays allocated by the compatibility builder.
