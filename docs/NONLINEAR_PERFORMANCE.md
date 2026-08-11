@@ -177,6 +177,32 @@ diagnostics record the estimate, threshold, decision and skip count.
 Batch C is installed only when Numba is active. Python/NumPy fallback runs keep
 the existing sparse projection path.
 
+#### Nonlinear impact extension
+
+The nonlinear rigid-sphere impact loop can use the same retained reduced
+scatter plan for its internal force and tangent. Activation is deliberately
+narrower than static Batch C: it requires Numba, von Karman kinematics, a
+non-identity transformation, an exactly zero affine offset, no plastic-impact
+damage/softening/deletion configuration, a plan below the retained-map memory
+limit, and an estimated assembly count above the Batch C cost gate. Every
+exclusion keeps the full-coordinate impact oracle and is reported through
+`impact_reduced_assembly.fallback_reason` and `exclusion_reasons`.
+
+For eligible HHT-alpha runs, the accepted internal-force history is retained
+in reduced coordinates. Because eligibility requires `u0 == 0`, both the HHT
+residual and the nonlinear internal-work measure remain algebraically exact:
+`u.T @ F_int == q.T @ (T.T @ F_int)`. Public displacement, contact and element
+state histories are still materialized through the existing impact result
+path. Diagnostics expose direct-reduced and full-coordinate assembly counts,
+the selector/weighted-MPC mapping kind, setup memory and timing.
+
+The semantic merge seam is intentionally limited to
+`_solve_transient_sphere_impact_nonlinear()` in `contact.py`; eligibility and
+plan ownership live in `impact_reduced_assembly.py`. Incoming contact, damage
+or ANYfem-facing state changes should remain on the full-coordinate fallback
+until their force/tangent and committed-state semantics have explicit direct
+reduction qualification.
+
 ### Batch D: multicore and sparse backend tuning
 
 When Numba is active, the Batch B elastic shell kernel now uses `prange` over

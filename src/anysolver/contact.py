@@ -1796,6 +1796,8 @@ def _solve_transient_sphere_impact_nonlinear(
     """Implicit Newmark nonlinear impact with material/geometric element response."""
     from .nonlinear_static import _assemble_nonlinear_system, _nonlinear_state_summary, states_von_mises_map
 
+    full_coordinate_assembly_count = 0
+
     def assemble_nonlinear(
         displacements: np.ndarray,
         states: Dict[int, Any],
@@ -1803,6 +1805,7 @@ def _solve_transient_sphere_impact_nonlinear(
         tangent: bool,
         scales: Optional[Mapping[int, float]] = None,
     ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
+        nonlocal full_coordinate_assembly_count
         kwargs = {
             "deleted_element_ids": tuple(deleted_element_ids),
             "residual_stiffness_fraction": float(
@@ -1813,7 +1816,7 @@ def _solve_transient_sphere_impact_nonlinear(
         if scales:
             kwargs["element_stiffness_scales"] = scales
         try:
-            return _assemble_nonlinear_system(
+            result = _assemble_nonlinear_system(
                 model,
                 displacements,
                 states,
@@ -1821,11 +1824,13 @@ def _solve_transient_sphere_impact_nonlinear(
                 tangent=tangent,
                 **kwargs,
             )
+            full_coordinate_assembly_count += 1
+            return result
         except TypeError as exc:
             if "element_stiffness_scales" not in str(exc):
                 raise
             kwargs.pop("element_stiffness_scales", None)
-            return _assemble_nonlinear_system(
+            result = _assemble_nonlinear_system(
                 model,
                 displacements,
                 states,
@@ -1833,6 +1838,8 @@ def _solve_transient_sphere_impact_nonlinear(
                 tangent=tangent,
                 **kwargs,
             )
+            full_coordinate_assembly_count += 1
+            return result
 
     cancellation_safe_point(cancellation_token, "sphere_impact.nonlinear.start")
     nl = nonlinear_config or NonlinearTransientConfig(enabled=True)
@@ -1957,6 +1964,20 @@ def _solve_transient_sphere_impact_nonlinear(
     committed_states = trial0
     F_int_prev = np.asarray(F_int0, dtype=float).copy()
     F0_red = np.asarray(T.T @ (base_load - F_int0), dtype=float).reshape(-1)
+    from .impact_reduced_assembly import prepare_impact_reduced_assembly
+
+    impact_reduced_assembly = prepare_impact_reduced_assembly(
+        model,
+        T,
+        u0,
+        num_layers=int(nl.num_layers),
+        kinematics=str(nl.kinematics),
+        plastic_damage_enabled=plastic_damage_config is not None,
+        num_steps=max(int(len(times) - 1), 0),
+        max_iterations=int(nl.max_iterations),
+    )
+    base_load_red = np.asarray(T.T @ base_load, dtype=float).reshape(-1)
+    F_int_prev_red = np.asarray(T.T @ F_int_prev, dtype=float).reshape(-1)
     mass_handle = factorize(M_red, MatrixClass.SYMMETRIC_SEMIDEFINITE, signature="sphere_impact.nl.initial_mass")
     a_red = np.asarray(mass_handle.solve(F0_red - C_red @ v_red), dtype=float).reshape(-1)
 
@@ -2039,7 +2060,12 @@ def _solve_transient_sphere_impact_nonlinear(
             # force: exact strain energy for the elastic response, and an
             # internal-work proxy (elastic + dissipated) once plasticity is
             # active.
-            energy_strain.append(0.5 * float(full_u @ F_int_prev))
+            if impact_reduced_assembly.active:
+                # Direct assembly is eligible only for u0 == 0, hence
+                # full_u @ F_int == q @ (T.T @ F_int) exactly.
+                energy_strain.append(0.5 * float(q_state @ F_int_prev_red))
+            else:
+                energy_strain.append(0.5 * float(full_u @ F_int_prev))
         # One summary pass per saved step: it walks every element state, so
         # repeating it for the plastic-work history, the state history and
         # the progress payload triples a cost that rivals the Newton solves.
@@ -2098,6 +2124,7 @@ def _solve_transient_sphere_impact_nonlinear(
     tangent_reuse.set_initial_contact(initial_records)
 
     load_prev = base_load + initial_load
+    load_prev_red = np.asarray(T.T @ load_prev, dtype=float).reshape(-1)
     sphere_force_prev = initial_sphere_force.copy()
     impulse = np.zeros(total_dofs, dtype=float)
     sphere_impulse = np.zeros(3, dtype=float)
@@ -2172,8 +2199,10 @@ def _solve_transient_sphere_impact_nonlinear(
             dict(plastic_damage_states),
             dict(damage_scale_by_element),
             load_prev.copy(),
+            load_prev_red.copy(),
             sphere_force_prev.copy(),
             F_int_prev.copy(),
+            F_int_prev_red.copy(),
         )
         if sub_time - dt < sphere.t_start <= sub_time and np.linalg.norm(sphere_velocity) == 0.0:
             sphere_velocity = sphere.travel_velocity.copy()
@@ -2214,44 +2243,92 @@ def _solve_transient_sphere_impact_nonlinear(
                 status_callback(f"\r  Time {sub_time:.4f} s, Iteration {iteration}: Res {residual_norm:.2e}")
             full_u = reconstruct_full_solution(T, q_trial, u0)
             refresh_tangent, refresh_reasons = tangent_reuse.refresh_decision()
-            F_int, K_T, trial_states = assemble_nonlinear(
-                full_u,
-                committed_states,
-                tangent=refresh_tangent,
-                scales=damage_scale_by_element,
-            )
+            if impact_reduced_assembly.active:
+                F_int_red, K_T_red, trial_states = impact_reduced_assembly.assemble(
+                    full_u,
+                    committed_states,
+                    tangent=refresh_tangent,
+                )
+                F_int = None
+                K_T = None
+            else:
+                F_int, K_T, trial_states = assemble_nonlinear(
+                    full_u,
+                    committed_states,
+                    tangent=refresh_tangent,
+                    scales=damage_scale_by_element,
+                )
+                F_int_red = None
+                K_T_red = None
             a_trial = a0 * (q_trial - q_red) - a2 * v_red - a3 * a_red
             v_trial = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_trial)
-            if alpha_h != 0.0:
-                weighted_force = one_plus_alpha * (base_load + contact_load - F_int) - alpha_h * (load_prev - F_int_prev)
-                residual = (
-                    np.asarray(T.T @ weighted_force, dtype=float).reshape(-1)
-                    - one_plus_alpha * (C_red @ v_trial)
-                    + alpha_h * (C_red @ v_red)
-                    - M_red @ a_trial
+            if impact_reduced_assembly.active:
+                contact_load_red = np.asarray(T.T @ contact_load, dtype=float).reshape(-1)
+                external_load_red = base_load_red + contact_load_red
+                if alpha_h != 0.0:
+                    weighted_force_red = (
+                        one_plus_alpha * (external_load_red - F_int_red)
+                        - alpha_h * (load_prev_red - F_int_prev_red)
+                    )
+                    residual = (
+                        weighted_force_red
+                        - one_plus_alpha * (C_red @ v_trial)
+                        + alpha_h * (C_red @ v_red)
+                        - M_red @ a_trial
+                    )
+                else:
+                    residual = (
+                        external_load_red
+                        - F_int_red
+                        - C_red @ v_trial
+                        - M_red @ a_trial
+                    )
+                reference = max(
+                    float(np.linalg.norm(external_load_red)),
+                    float(np.linalg.norm(F_int_red)),
+                    1.0,
                 )
             else:
-                residual = np.asarray(T.T @ (base_load + contact_load - F_int), dtype=float).reshape(-1) - C_red @ v_trial - M_red @ a_trial
+                if alpha_h != 0.0:
+                    weighted_force = one_plus_alpha * (base_load + contact_load - F_int) - alpha_h * (load_prev - F_int_prev)
+                    residual = (
+                        np.asarray(T.T @ weighted_force, dtype=float).reshape(-1)
+                        - one_plus_alpha * (C_red @ v_trial)
+                        + alpha_h * (C_red @ v_red)
+                        - M_red @ a_trial
+                    )
+                else:
+                    residual = np.asarray(T.T @ (base_load + contact_load - F_int), dtype=float).reshape(-1) - C_red @ v_trial - M_red @ a_trial
+                reference = max(float(np.linalg.norm(np.asarray(T.T @ (base_load + contact_load), dtype=float))), float(np.linalg.norm(np.asarray(T.T @ F_int, dtype=float))), 1.0)
             residual_norm = float(np.linalg.norm(residual))
-            reference = max(float(np.linalg.norm(np.asarray(T.T @ (base_load + contact_load), dtype=float))), float(np.linalg.norm(np.asarray(T.T @ F_int, dtype=float))), 1.0)
             trial_refresh_reasons = tangent_reuse.assess_trial_state(residual_norm, trial_states)
             if not refresh_tangent and trial_refresh_reasons:
                 # A force-only trial exposed a stall or a material-state
                 # transition.  Reassemble the tangent at the same iterate so
                 # the invalidation takes effect before solving the correction.
-                F_int, K_T, trial_states = assemble_nonlinear(
-                    full_u,
-                    committed_states,
-                    tangent=True,
-                    scales=damage_scale_by_element,
-                )
+                if impact_reduced_assembly.active:
+                    F_int_red, K_T_red, trial_states = impact_reduced_assembly.assemble(
+                        full_u,
+                        committed_states,
+                        tangent=True,
+                    )
+                else:
+                    F_int, K_T, trial_states = assemble_nonlinear(
+                        full_u,
+                        committed_states,
+                        tangent=True,
+                        scales=damage_scale_by_element,
+                    )
                 refresh_tangent = True
                 refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
             elif refresh_tangent and trial_refresh_reasons:
                 refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
             try:
                 if refresh_tangent:
-                    K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+                    if impact_reduced_assembly.active:
+                        K_eff = (one_plus_alpha * K_T_red + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+                    else:
+                        K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
                     tangent_reuse.record_tangent_assembly(refresh_reasons)
                     handle = factorize(K_eff, MatrixClass.SYMMETRIC_INDEFINITE, signature=f"sphere_impact.nl.effective:{dt:.16g}:{iteration}")
                 else:
@@ -2384,8 +2461,10 @@ def _solve_transient_sphere_impact_nonlinear(
                     plastic_damage_states,
                     damage_scale_by_element,
                     load_prev,
+                    load_prev_red,
                     sphere_force_prev,
                     F_int_prev,
+                    F_int_prev_red,
                 ) = pre_state
                 midpoint = 0.5 * (float(segment_start) + float(sub_time))
                 segments.insert(0, (step_index, midpoint, float(sub_time), False))
@@ -2423,15 +2502,23 @@ def _solve_transient_sphere_impact_nonlinear(
                 decomposition: Dict[str, float] = {}
                 try:
                     full_u_fail = reconstruct_full_solution(T, q_trial, u0)
-                    F_int_fail, _K_unused, _states_unused = assemble_nonlinear(
-                        full_u_fail, committed_states, tangent=False, scales=damage_scale_by_element
-                    )
+                    if impact_reduced_assembly.active:
+                        F_int_fail_red, _K_unused, _states_unused = impact_reduced_assembly.assemble(
+                            full_u_fail,
+                            committed_states,
+                            tangent=False,
+                        )
+                    else:
+                        F_int_fail, _K_unused, _states_unused = assemble_nonlinear(
+                            full_u_fail, committed_states, tangent=False, scales=damage_scale_by_element
+                        )
+                        F_int_fail_red = np.asarray(T.T @ F_int_fail, dtype=float).reshape(-1)
                     a_fail = a0 * (q_trial - q_red) - a2 * v_red - a3 * a_red
                     v_fail = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_fail)
                     decomposition = {
                         "residual_contact_norm": float(np.linalg.norm(np.asarray(T.T @ contact_load, dtype=float))),
                         "residual_base_load_norm": float(np.linalg.norm(np.asarray(T.T @ base_load, dtype=float))),
-                        "residual_internal_norm": float(np.linalg.norm(np.asarray(T.T @ F_int_fail, dtype=float))),
+                        "residual_internal_norm": float(np.linalg.norm(F_int_fail_red)),
                         "residual_damping_norm": float(np.linalg.norm(C_red @ v_fail)),
                         "residual_inertia_norm": float(np.linalg.norm(M_red @ a_fail)),
                     }
@@ -2479,7 +2566,14 @@ def _solve_transient_sphere_impact_nonlinear(
         impulse += 0.5 * (load_prev + base_load + contact_load) * dt
         sphere_impulse += 0.5 * (sphere_force_prev + sphere_force) * dt
         load_prev = base_load + contact_load
-        F_int_prev = F_int
+        load_prev_red = np.asarray(T.T @ load_prev, dtype=float).reshape(-1)
+        if impact_reduced_assembly.active:
+            # The reduced plan owns a persistent force buffer, so retain an
+            # accepted-step copy for HHT history and internal work.
+            F_int_prev_red = np.asarray(F_int_red, dtype=float).copy()
+        else:
+            F_int_prev = F_int
+            F_int_prev_red = np.asarray(T.T @ F_int_prev, dtype=float).reshape(-1)
         sphere_force_prev = sphere_force.copy()
         q_red, v_red, a_red = q_next, v_next, a_next
         sphere_position, sphere_velocity, sphere_acceleration = sphere_x_next, sphere_v_next, sphere_a_next
@@ -2506,6 +2600,7 @@ def _solve_transient_sphere_impact_nonlinear(
             if damage_changed:
                 filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                 base_load, base_load_info = assemble_load_vector(model, filtered_base)
+                base_load_red = np.asarray(T.T @ base_load, dtype=float).reshape(-1)
                 if damage_matrix_plan is None:
                     damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
                 _K_scaled, M_scaled = _assemble_damaged_linear_matrices(
@@ -2660,6 +2755,10 @@ def _solve_transient_sphere_impact_nonlinear(
     energy_drift = 0.0
     if nonzero_energy.size:
         energy_drift = float((np.max(nonzero_energy) - np.min(nonzero_energy)) / max(abs(nonzero_energy[0]), 1.0e-30))
+    impact_reduced_diagnostics = impact_reduced_assembly.diagnostics()
+    impact_reduced_diagnostics["full_coordinate_assembly_count"] = int(
+        full_coordinate_assembly_count
+    )
     diagnostics = {
         "method": "nonlinear_newmark_sphere_penalty_contact",
         "solution_control": "implicit_newmark_time_domain",
@@ -2685,6 +2784,11 @@ def _solve_transient_sphere_impact_nonlinear(
         "nonlinear_failure_summary": nonlinear_failure_summary,
         "factorization_count": int(factorization_count),
         "solve_count": int(solve_count),
+        "direct_reduced_assembly_count": int(
+            impact_reduced_assembly.direct_reduced_assembly_count
+        ),
+        "full_coordinate_assembly_count": int(full_coordinate_assembly_count),
+        "impact_reduced_assembly": impact_reduced_diagnostics,
         "tangent_assembly_count": int(tangent_reuse.tangent_assembly_count),
         "tangent_reuse_count": int(tangent_reuse.tangent_reuse_count),
         "factorization_reuse_count": int(tangent_reuse.factorization_reuse_count),
