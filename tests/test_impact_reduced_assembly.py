@@ -8,6 +8,7 @@ import anysolver as fs
 from anysolver import impact_reduced_assembly as impact_reduced_module
 from anysolver import nonlinear_performance_bootstrap
 from anysolver.contact import _verification_contact_panel
+from anysolver.elements import BeamElement, QuadraticBeamElement
 from anysolver.impact_reduced_assembly import prepare_impact_reduced_assembly
 from anysolver.jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED
 from anysolver.nonlinear_reduced_assembly import ReducedAssemblyPlanLimit
@@ -154,6 +155,84 @@ def test_direct_reduced_impact_selector_reports_all_static_exclusions(
         max_iterations=20,
     )
     assert identity.fallback_reason == "identity_constraint_transformation"
+
+
+@pytest.mark.parametrize("plastic_attribute", ["hardening_curve", "hill_yield"])
+def test_direct_reduced_impact_excludes_ordinary_plastic_material_history(
+    monkeypatch,
+    plastic_attribute,
+) -> None:
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
+    model = _verification_contact_panel()
+    setattr(model.materials["soft"], plastic_attribute, object())
+
+    controller = prepare_impact_reduced_assembly(
+        model,
+        sparse.csr_matrix(np.asarray([[1.0], [0.5]], dtype=float)),
+        np.zeros(2),
+        num_layers=5,
+        kinematics="von_karman",
+        plastic_damage_enabled=False,
+        num_steps=100,
+        max_iterations=20,
+    )
+
+    assert controller.active is False
+    assert controller.fallback_reason == "plastic_material_history_unqualified"
+    assert controller.exclusion_reasons == (
+        "plastic_material_history_unqualified",
+    )
+
+
+@pytest.mark.parametrize(
+    ("element_type", "node_ids"),
+    [
+        (BeamElement, [5, 6]),
+        (QuadraticBeamElement, [5, 6, 7]),
+    ],
+    ids=("beam2", "beam3"),
+)
+def test_direct_reduced_impact_excludes_element_owned_fiber_plasticity(
+    monkeypatch,
+    element_type,
+    node_ids,
+) -> None:
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
+    model = _verification_contact_panel()
+    for node_id in node_ids:
+        model.add_node(node_id, float(node_id - 5), 2.0, 0.0)
+    model.add_element(
+        2,
+        element_type(
+            2,
+            node_ids,
+            "soft",
+            {
+                "area": 1.0e-3,
+                "Iy": 1.0e-7,
+                "Iz": 1.0e-7,
+                "J": 1.0e-7,
+                "fiber_plasticity": True,
+            },
+        ),
+    )
+
+    controller = prepare_impact_reduced_assembly(
+        model,
+        sparse.csr_matrix(np.asarray([[1.0], [0.5]], dtype=float)),
+        np.zeros(2),
+        num_layers=5,
+        kinematics="von_karman",
+        plastic_damage_enabled=False,
+        num_steps=100,
+        max_iterations=20,
+    )
+
+    assert controller.active is False
+    assert controller.fallback_reason == "beam_fiber_plasticity_unqualified"
+    assert controller.exclusion_reasons == (
+        "beam_fiber_plasticity_unqualified",
+    )
 
 
 @pytest.mark.skipif(

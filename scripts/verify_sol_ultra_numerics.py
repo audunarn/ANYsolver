@@ -1356,6 +1356,56 @@ def _contact_panel() -> Any:
     return model
 
 
+def _yielding_contact_panel(*, divisions: int = 4) -> Any:
+    """Small clamped panel with enough spatial freedom to yield under impact."""
+
+    from anysolver.boundary import BoundaryCondition
+    from anysolver.elements import ShellElement
+    from anysolver.fe_core import FEModel
+
+    model = FEModel("verification_yielding_contact_panel")
+    model.add_material("soft", 1.0e5, 0.3, density=20.0)
+    node_of: dict[tuple[int, int], int] = {}
+    node_id = 1
+    for j in range(divisions + 1):
+        for i in range(divisions + 1):
+            model.add_node(node_id, i / divisions, j / divisions, 0.0)
+            node_of[(i, j)] = node_id
+            node_id += 1
+    element_id = 1
+    for j in range(divisions):
+        for i in range(divisions):
+            model.add_element(
+                element_id,
+                ShellElement(
+                    element_id,
+                    [
+                        node_of[(i, j)],
+                        node_of[(i + 1, j)],
+                        node_of[(i + 1, j + 1)],
+                        node_of[(i, j + 1)],
+                    ],
+                    "soft",
+                    thickness=0.05,
+                ),
+            )
+            element_id += 1
+    edge_nodes = [
+        node_of[(i, j)]
+        for j in range(divisions + 1)
+        for i in range(divisions + 1)
+        if i in (0, divisions) or j in (0, divisions)
+    ]
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "clamped_impact_edge",
+            edge_nodes,
+            {"ux": 0.0, "uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    return model
+
+
 def _case_contact_load() -> dict[str, Any]:
     from anysolver.contact import (
         RigidSphereImpact,
@@ -1413,6 +1463,205 @@ def _impact_penetration_history(active_history: Sequence[Sequence[Mapping[str, A
     return np.asarray(values, dtype=float)
 
 
+def _append_aggregated_mapping_sequence(
+    metrics: MutableMapping[str, dict[str, Any]],
+    prefix: str,
+    items: Sequence[Any],
+    *,
+    gate: str,
+) -> None:
+    """Compare state fields as full vectors rather than fragile scalar norms."""
+
+    numeric_fields: dict[str, list[np.ndarray]] = {}
+
+    def visit(value: Any, path: str, item_index: int) -> None:
+        if dataclasses.is_dataclass(value):
+            value = dataclasses.asdict(value)
+        if isinstance(value, Mapping):
+            for key in sorted(value, key=lambda item: str(item)):
+                child = f"{path}.{key}" if path else str(key)
+                visit(value[key], child, item_index)
+            return
+        if isinstance(value, np.ndarray):
+            if value.dtype.kind in "biufc":
+                numeric_fields.setdefault(path, []).append(
+                    np.asarray(np.real_if_close(value), dtype=float).reshape(-1)
+                )
+            return
+        if isinstance(value, (list, tuple)):
+            try:
+                array = np.asarray(value)
+            except Exception:
+                array = np.asarray([], dtype=float)
+            if array.dtype.kind in "biufc" and array.dtype != object:
+                numeric_fields.setdefault(path, []).append(
+                    np.asarray(np.real_if_close(array), dtype=float).reshape(-1)
+                )
+            else:
+                for index, child_value in enumerate(value):
+                    visit(child_value, f"{path}.{index}", item_index)
+            return
+        if isinstance(value, (float, int, np.floating, np.integer)) and not isinstance(
+            value, (bool, np.bool_)
+        ):
+            numeric_fields.setdefault(path, []).append(
+                np.asarray([value], dtype=float)
+            )
+            return
+        if isinstance(value, (str, bool, np.bool_)) or value is None:
+            metric_name = f"{prefix}.{path}.category.{item_index}"
+            metrics[metric_name] = categorical_metric(
+                bool(value) if isinstance(value, np.bool_) else value
+            )
+
+    for item_index, item in enumerate(items):
+        visit(item, "", item_index)
+    for path, arrays in sorted(numeric_fields.items()):
+        values = np.concatenate(arrays) if arrays else np.asarray([], dtype=float)
+        metrics[f"{prefix}.{path}"] = numeric_metric(values, gate)
+
+
+def _append_plastic_impact_metrics(
+    metrics: MutableMapping[str, dict[str, Any]],
+    diagnostics: Mapping[str, Any],
+) -> list[str]:
+    """Record committed plastic state and compact damage/deletion histories."""
+
+    unavailable: list[str] = []
+    element_states = diagnostics.get("element_states")
+    if isinstance(element_states, Mapping):
+        state_ids = sorted(element_states, key=lambda value: int(value))
+        metrics["plastic.element_states.element_ids"] = exact_numeric_metric(
+            [int(value) for value in state_ids]
+        )
+        _append_aggregated_mapping_sequence(
+            metrics,
+            "plastic.element_states",
+            [element_states[element_id] for element_id in state_ids],
+            gate="plastic_state",
+        )
+    else:
+        unavailable.append("element_states")
+
+    element_state_history = diagnostics.get("element_state_history")
+    if isinstance(element_state_history, (list, tuple)):
+        _append_aggregated_mapping_sequence(
+            metrics,
+            "plastic.element_state_history",
+            element_state_history,
+            gate="plastic_state",
+        )
+    else:
+        unavailable.append("element_state_history")
+
+    state_von_mises_history = diagnostics.get("state_von_mises_history")
+    if isinstance(state_von_mises_history, (list, tuple)):
+        _append_aggregated_mapping_sequence(
+            metrics,
+            "plastic.state_von_mises_history",
+            state_von_mises_history,
+            gate="plastic_state",
+        )
+    else:
+        unavailable.append("state_von_mises_history")
+
+    if "plastic_work_proxy" in diagnostics:
+        metrics["plastic.plastic_work_proxy"] = numeric_metric(
+            diagnostics["plastic_work_proxy"], "plastic_state"
+        )
+    else:
+        unavailable.append("plastic_work_proxy")
+
+    summary = diagnostics.get("plastic_impact_damage_summary")
+    if not isinstance(summary, Mapping):
+        unavailable.append("plastic_impact_damage_summary")
+        return unavailable
+
+    for key in (
+        "enabled",
+        "deleted_count",
+        "deleted_fraction",
+        "deleted_element_ids",
+        "softened_element_ids",
+        "max_damage",
+        "max_utilization",
+        "max_equivalent_plastic_strain",
+    ):
+        if key in summary:
+            _append_numeric_tree(metrics, f"damage.summary.{key}", summary[key], gate="plastic_state")
+        else:
+            unavailable.append(f"plastic_impact_damage_summary.{key}")
+
+    records = summary.get("records", [])
+    records = records if isinstance(records, (list, tuple)) else []
+    metrics["damage.record_count"] = categorical_metric(len(records))
+    history_event_ids: list[tuple[int, int]] = []
+    history_times: list[float] = []
+    history_values: list[tuple[float, float, float, float]] = []
+    for record_index, record in enumerate(records):
+        if not isinstance(record, Mapping):
+            continue
+        element_id = int(record.get("element_id", -1))
+        metrics[f"damage.record.{record_index}.element_id"] = categorical_metric(element_id)
+        history = record.get("history", [])
+        history = history if isinstance(history, (list, tuple)) else []
+        metrics[f"damage.record.{record_index}.history_count"] = categorical_metric(len(history))
+        for history_index, event in enumerate(history):
+            if not isinstance(event, Mapping):
+                continue
+            history_event_ids.append((element_id, int(event.get("step_index", -1))))
+            history_times.append(float(event.get("time", 0.0)))
+            history_values.append(
+                (
+                    float(event.get("equivalent_plastic_strain", 0.0)),
+                    float(event.get("utilization", 0.0)),
+                    float(event.get("damage", 0.0)),
+                    float(event.get("scale", 1.0)),
+                )
+            )
+            metrics[
+                f"damage.record.{record_index}.history.{history_index}.location"
+            ] = categorical_metric(str(event.get("location", "")))
+    metrics["damage.history.event_ids"] = exact_numeric_metric(history_event_ids)
+    metrics["damage.history.times"] = numeric_metric(history_times, "contact_history")
+    metrics["damage.history.values"] = numeric_metric(history_values, "plastic_state")
+
+    deletions = summary.get("deletion_records", [])
+    deletions = deletions if isinstance(deletions, (list, tuple)) else []
+    metrics["damage.deletion_count"] = categorical_metric(len(deletions))
+    deletion_ids: list[tuple[int, int]] = []
+    deletion_values: list[tuple[float, float, float, float]] = []
+    for index, record in enumerate(deletions):
+        if not isinstance(record, Mapping):
+            continue
+        deletion_ids.append(
+            (int(record.get("element_id", -1)), int(record.get("step_index", -1)))
+        )
+        deletion_values.append(
+            (
+                float(record.get("load_factor", 0.0)),
+                float(record.get("trigger_value", 0.0)),
+                float(record.get("threshold", 0.0)),
+                float(record.get("measure", 0.0)),
+            )
+        )
+        for key in ("element_type", "trigger_name", "location"):
+            metrics[f"damage.deletion.{index}.{key}"] = categorical_metric(
+                str(record.get(key, ""))
+            )
+    metrics["damage.deletion.event_ids"] = exact_numeric_metric(deletion_ids)
+    metrics["damage.deletion.values"] = numeric_metric(
+        deletion_values, "plastic_state"
+    )
+
+    erosion = diagnostics.get("erosion_summary")
+    if isinstance(erosion, Mapping):
+        _append_numeric_tree(metrics, "damage.erosion", erosion, gate="plastic_state")
+    else:
+        unavailable.append("erosion_summary")
+    return unavailable
+
+
 def _case_nonlinear_impact() -> dict[str, Any]:
     from anysolver.contact import (
         NonlinearTransientConfig,
@@ -1424,7 +1673,7 @@ def _case_nonlinear_impact() -> dict[str, Any]:
     from anysolver.dynamics import TransientConfig
     from anysolver.material_curves import DNVC208MaterialCurve
 
-    model = _contact_panel()
+    model = _yielding_contact_panel()
     model.materials["soft"].hardening_curve = DNVC208MaterialCurve(
         sigma_prop=800.0,
         sigma_yield=1000.0,
@@ -1436,16 +1685,16 @@ def _case_nonlinear_impact() -> dict[str, Any]:
     )
     result = solve_transient_sphere_impact(
         model,
-        TransientConfig(dt=0.0025, t_end=0.12, output_nodes=[1]),
+        TransientConfig(dt=0.0025, t_end=0.05, output_nodes=[13]),
         RigidSphereImpact(
             "verification_nonlinear_hit",
-            radius=0.1,
-            mass=1.0,
+            radius=0.2,
+            mass=20.0,
             start_point=(0.5, 0.5, 0.25),
             travel_direction=(0.0, 0.0, -1.0),
-            speed=2.0,
+            speed=4.0,
         ),
-        SphereContactConfig(penalty_stiffness=4000.0, max_contact_iterations=40),
+        SphereContactConfig(penalty_stiffness=2000.0, max_contact_iterations=20),
         nonlinear_config=NonlinearTransientConfig(
             enabled=True,
             max_iterations=15,
@@ -1453,7 +1702,7 @@ def _case_nonlinear_impact() -> dict[str, Any]:
             tangent_reuse_iterations=2,
         ),
         plastic_damage_config=PlasticImpactDamageConfig(
-            threshold=0.5,
+            threshold=0.2,
             max_deleted_fraction=1.0,
         ),
     )
@@ -1462,6 +1711,8 @@ def _case_nonlinear_impact() -> dict[str, Any]:
         "status": categorical_metric(result.status),
         "times": numeric_metric(result.times, "contact_history"),
         "displacements": numeric_metric(result.displacements, "contact_history"),
+        "velocities": numeric_metric(result.velocities, "contact_history"),
+        "accelerations": numeric_metric(result.accelerations, "contact_history"),
         "sphere_positions": numeric_metric(result.sphere_positions, "contact_history"),
         "sphere_velocities": numeric_metric(result.sphere_velocities, "contact_history"),
         "contact_force_history": numeric_metric(
@@ -1526,11 +1777,126 @@ def _case_nonlinear_impact() -> dict[str, Any]:
             # These are reported and compared for visibility.  An optimized
             # candidate may legitimately reduce them but must not increase.
             metrics[f"diagnostic.{key}"] = nonincrease_metric(value, key)
+    unavailable_diagnostics.extend(
+        _append_plastic_impact_metrics(metrics, diagnostics)
+    )
+    strain_summary = diagnostics.get("strain_summary", {})
+    max_plastic = (
+        float(strain_summary.get("max_equivalent_plastic_strain", 0.0) or 0.0)
+        if isinstance(strain_summary, Mapping)
+        else 0.0
+    )
+    damage_summary = diagnostics.get("plastic_impact_damage_summary", {})
+    deletion_records = (
+        damage_summary.get("deletion_records", [])
+        if isinstance(damage_summary, Mapping)
+        else []
+    )
+    if max_plastic <= 0.0:
+        raise CaseUnavailable("nonlinear_impact_did_not_activate_plastic_history")
+    if not deletion_records:
+        raise CaseUnavailable("nonlinear_impact_did_not_produce_deletion_record")
     return {
         "metrics": metrics,
         "observations": {
             "topology": _topology(model),
             "unavailable_diagnostics": sorted(set(unavailable_diagnostics)),
+            "campaign_diagnostics": _campaign_diagnostics(diagnostics),
+        },
+    }
+
+
+def _case_nonlinear_impact_direct_reduced() -> dict[str, Any]:
+    """Elastic impact sized to activate candidate direct-reduced assembly."""
+
+    from anysolver.contact import (
+        NonlinearTransientConfig,
+        RigidSphereImpact,
+        SphereContactConfig,
+        solve_transient_sphere_impact,
+    )
+    from anysolver.dynamics import TransientConfig
+
+    model = _contact_panel()
+    result = solve_transient_sphere_impact(
+        model,
+        TransientConfig(dt=0.0025, t_end=0.12, output_nodes=[1]),
+        RigidSphereImpact(
+            "verification_direct_reduced_elastic_hit",
+            radius=0.1,
+            mass=1.0,
+            start_point=(0.5, 0.5, 0.25),
+            travel_direction=(0.0, 0.0, -1.0),
+            speed=2.0,
+        ),
+        SphereContactConfig(penalty_stiffness=4000.0, max_contact_iterations=40),
+        nonlinear_config=NonlinearTransientConfig(
+            enabled=True,
+            max_iterations=15,
+            max_cutbacks=4,
+            tangent_reuse_iterations=2,
+        ),
+    )
+    diagnostics = result.diagnostics
+    direct_diagnostics = diagnostics.get("impact_reduced_assembly")
+    # Baseline revisions predate this diagnostic and intentionally execute the
+    # full-coordinate oracle.  A candidate that exposes the selector must
+    # activate it here, otherwise this qualification case is not meaningful.
+    if isinstance(direct_diagnostics, Mapping) and not bool(
+        direct_diagnostics.get("activated", False)
+    ):
+        reason = direct_diagnostics.get("fallback_reason", "unknown")
+        raise CaseUnavailable(f"direct_reduced_impact_not_active:{reason}")
+
+    metrics: dict[str, dict[str, Any]] = {
+        "status": categorical_metric(result.status),
+        "times": numeric_metric(result.times, "contact_history"),
+        "displacements": numeric_metric(result.displacements, "contact_history"),
+        "velocities": numeric_metric(result.velocities, "contact_history"),
+        "accelerations": numeric_metric(result.accelerations, "contact_history"),
+        "sphere_positions": numeric_metric(result.sphere_positions, "contact_history"),
+        "sphere_velocities": numeric_metric(result.sphere_velocities, "contact_history"),
+        "contact_force_history": numeric_metric(
+            result.contact_force_history, "contact_history"
+        ),
+        "penetration_history": numeric_metric(
+            _impact_penetration_history(result.active_contact_history),
+            "contact_history",
+        ),
+        "sphere_impulse": numeric_metric(result.sphere_impulse, "contact_history"),
+        "max_penetration": numeric_metric(result.max_penetration, "contact_history"),
+        "peak_contact_force": numeric_metric(
+            result.peak_contact_force, "contact_history"
+        ),
+        "contact_duration": numeric_metric(result.contact_duration, "contact_history"),
+        "sphere_momentum_balance_error": numeric_metric(
+            result.sphere_momentum_balance_error, "contact_history"
+        ),
+    }
+    for key in (
+        "kinetic_energy",
+        "strain_energy",
+        "sphere_kinetic_energy",
+        "internal_work",
+    ):
+        if key in diagnostics:
+            metrics[f"energy.{key}"] = numeric_metric(
+                diagnostics[key], "contact_history"
+            )
+    iterations = diagnostics.get("iteration_counts", [])
+    if isinstance(iterations, (list, tuple)):
+        metrics["iteration_history"] = informational_numeric_metric(
+            iterations, "iteration_count"
+        )
+        metrics["total_iterations"] = nonincrease_metric(sum(iterations))
+    cutbacks = _diagnostic_int(diagnostics, ("cutback_count", "num_cutbacks"))
+    if cutbacks is not None:
+        metrics["cutback_count"] = nonincrease_metric(cutbacks)
+    return {
+        "metrics": metrics,
+        "observations": {
+            "topology": _topology(model),
+            "direct_reduced_assembly": _json_summary(direct_diagnostics),
             "campaign_diagnostics": _campaign_diagnostics(diagnostics),
         },
     }
@@ -1609,7 +1975,13 @@ CASE_SPECS: dict[str, CaseSpec] = {
             "nonlinear_impact",
             _case_nonlinear_impact,
             "full",
-            "nonlinear sphere impact histories, energy, counts, and cutbacks",
+            "plastic impact histories, committed state, damage, and deletion records",
+        ),
+        CaseSpec(
+            "nonlinear_impact_direct_reduced",
+            _case_nonlinear_impact_direct_reduced,
+            "full",
+            "elastic direct-reduced candidate histories against the full-coordinate baseline",
         ),
     )
 }

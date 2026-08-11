@@ -209,6 +209,83 @@ def test_hill48_capture_is_deterministic_and_unselected_cases_are_named(harness)
     assert document["cases"]["nonlinear_impact"]["reason"] == (
         "not_selected_by_suite:quick"
     )
+    assert document["cases"]["nonlinear_impact_direct_reduced"]["status"] == (
+        "unavailable"
+    )
+    assert document["cases"]["nonlinear_impact_direct_reduced"]["reason"] == (
+        "not_selected_by_suite:quick"
+    )
+
+
+def test_plastic_impact_metrics_capture_state_damage_and_deletion_timing(harness) -> None:
+    diagnostics = {
+        "element_states": {1: {"alpha": np.asarray([0.01, 0.02])}},
+        "element_state_history": [
+            {"time": 0.0, "max_equivalent_plastic_strain": 0.0},
+            {"time": 0.1, "max_equivalent_plastic_strain": 0.02},
+        ],
+        "state_von_mises_history": ({1: 1000.0}, {1: 1100.0}),
+        "plastic_work_proxy": [0.0, 0.02],
+        "plastic_impact_damage_summary": {
+            "enabled": True,
+            "deleted_count": 1,
+            "deleted_fraction": 1.0,
+            "deleted_element_ids": [1],
+            "softened_element_ids": [],
+            "max_damage": 1.2,
+            "max_utilization": 1.2,
+            "max_equivalent_plastic_strain": 0.02,
+            "records": [
+                {
+                    "element_id": 1,
+                    "history": [
+                        {
+                            "time": 0.1,
+                            "step_index": 4,
+                            "equivalent_plastic_strain": 0.02,
+                            "utilization": 1.2,
+                            "damage": 1.2,
+                            "scale": 1.0e-6,
+                            "location": "layer[2]",
+                        }
+                    ],
+                }
+            ],
+            "deletion_records": [
+                {
+                    "element_id": 1,
+                    "element_type": "ShellElement",
+                    "step_index": 4,
+                    "load_factor": 0.1,
+                    "trigger_name": "max_equivalent_plastic_strain",
+                    "trigger_value": 0.02,
+                    "threshold": 0.016,
+                    "location": "layer[2]",
+                    "measure": 0.25,
+                }
+            ],
+        },
+        "erosion_summary": {
+            "all_eroded_element_ids": [1],
+            "damage_triggered_element_ids": [1],
+            "active_softened_element_ids": [],
+            "residual_stiffness_model": "qualified fixture",
+        },
+    }
+    metrics = {}
+
+    unavailable = harness._append_plastic_impact_metrics(metrics, diagnostics)
+
+    assert unavailable == []
+    assert "plastic.element_states.alpha" in metrics
+    assert metrics["plastic.element_states.alpha"]["values"] == [0.01, 0.02]
+    assert metrics["damage.record_count"]["value"] == 1
+    assert metrics["damage.history.event_ids"]["shape"] == [1, 2]
+    assert metrics["damage.deletion_count"]["value"] == 1
+    assert metrics["damage.deletion.event_ids"]["values"] == [1.0, 4.0]
+    assert metrics["damage.deletion.0.trigger_name"]["value"] == (
+        "max_equivalent_plastic_strain"
+    )
 
 
 def test_metric_shape_change_and_missing_metric_fail_closed(harness) -> None:

@@ -71,6 +71,46 @@ def _identity_transformation(transformation: sparse.spmatrix) -> bool:
     )
 
 
+def _has_unqualified_material_history(model: Any) -> bool:
+    """Return whether the model can create ordinary constitutive history.
+
+    The direct-reduced impact path is currently qualified only for elastic
+    element response.  A material hardening curve activates isotropic J2
+    history, while a Hill yield surface activates orthotropic plastic history;
+    either must therefore stay on the full-coordinate oracle path even when no
+    separate impact-damage configuration was requested.
+    """
+
+    materials = getattr(model, "materials", None)
+    if not isinstance(materials, Mapping):
+        return False
+    return any(
+        getattr(material, "hardening_curve", None) is not None
+        or getattr(material, "hill_yield", None) is not None
+        for material in materials.values()
+    )
+
+
+def _has_unqualified_beam_fiber_history(model: Any) -> bool:
+    """Detect element-owned beam fiber plasticity without validating config."""
+
+    mesh = getattr(model, "mesh", None)
+    elements = getattr(mesh, "elements", None)
+    if not isinstance(elements, Mapping):
+        return False
+    for element in elements.values():
+        marker = getattr(element, "_fiber_plasticity", None)
+        if marker is not None:
+            return True
+        cross_section = getattr(element, "cross_section", None)
+        if (
+            isinstance(cross_section, Mapping)
+            and cross_section.get("fiber_plasticity") is not None
+        ):
+            return True
+    return False
+
+
 @dataclass
 class ImpactReducedAssemblyController:
     """Prepared direct-reduction path plus stable diagnostics and counters."""
@@ -164,6 +204,10 @@ def prepare_impact_reduced_assembly(
         exclusions.append("unsupported_kinematics")
     if bool(plastic_damage_enabled):
         exclusions.append("plastic_damage_or_erosion_enabled")
+    if _has_unqualified_material_history(model):
+        exclusions.append("plastic_material_history_unqualified")
+    if _has_unqualified_beam_fiber_history(model):
+        exclusions.append("beam_fiber_plasticity_unqualified")
     if np.any(np.asarray(affine_offset, dtype=float) != 0.0):
         exclusions.append("affine_constraint_offset_nonzero")
     if transformation.shape[1] == 0:
