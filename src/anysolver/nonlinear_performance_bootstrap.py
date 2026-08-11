@@ -6,6 +6,7 @@ import threading
 import weakref
 from typing import Any, Dict, Optional
 
+from . import corotational_performance as _corotational
 from . import linalg as _linalg
 from . import nonlinear_performance as _performance
 from . import nonlinear_performance_batch_b as _batch_b
@@ -102,6 +103,7 @@ def nonlinear_performance_status() -> Dict[str, Any]:
         "installed": bool(_performance._INSTALLED),
         "batch_b": batch_b,
         "batch_c": batch_c,
+        "corotational": _corotational.corotational_performance_status(),
         "cached_models": len(_PLAN_CACHE),
         "diagnostics": nonlinear_assembly_diagnostics(),
     }
