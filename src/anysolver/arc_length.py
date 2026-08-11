@@ -569,6 +569,7 @@ def solve_static_arc_length(
     failure_reason: Optional[str] = None
     total_iterations = 0
     total_retries = 0
+    corrector_solve_many_count = 0
     adaptation_history: List[Dict[str, Any]] = []
     snapshots: List[NonlinearIncrementSnapshot] = []
 
@@ -725,8 +726,15 @@ def solve_static_arc_length(
                         ),
                         signature=f"arc_length.corrector:{step_index}:{retry}:{iteration}",
                     )
-                    correction_at_fixed_load = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-                    correction_per_load = np.asarray(handle.solve(F_prop_trial_red), dtype=float).reshape(-1)
+                    corrections = np.asarray(
+                        handle.solve_many(
+                            np.column_stack((residual, F_prop_trial_red))
+                        ),
+                        dtype=float,
+                    )
+                    correction_at_fixed_load = corrections[:, 0]
+                    correction_per_load = corrections[:, 1]
+                    corrector_solve_many_count += 1
                 except Exception:
                     step_failure = "singular_corrector_tangent"
                     break
@@ -927,6 +935,7 @@ def solve_static_arc_length(
     info["preload"] = preload_info
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
+    info["corrector_solve_many_count"] = int(corrector_solve_many_count)
     info["solve_time"] = float(time.time() - start_time)
     info["constraint_postcheck"] = constraint_residual_summary(working_model, u_final)
     info["result_case"] = make_result_case(

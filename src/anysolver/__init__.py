@@ -314,6 +314,12 @@ from .assembly import (
     solve_linear_many,
     solve_nonlinear,
 )
+from .analysis_session import (
+    AnalysisSession,
+    ConstraintPlan,
+    OutputSelectionPlan,
+    StructuralMatrixPlan,
+)
 from .linalg import (
     AutoSparseSolverBackend,
     FactorizationCache,
@@ -676,6 +682,10 @@ __all__ = [
     "run_anystructure_fem_mode",
     "run_generated_geometry_fem",
     # Assembly and solving
+    "AnalysisSession",
+    "ConstraintPlan",
+    "OutputSelectionPlan",
+    "StructuralMatrixPlan",
     "AssemblyError",
     "assemble_damping_matrix",
     "assemble_external_load_system",

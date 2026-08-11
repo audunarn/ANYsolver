@@ -52,6 +52,7 @@ from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
+    from .analysis_session import AnalysisSession
     from .boundary import LoadCase
     from .fe_core import FEModel, FEMesh
 
@@ -485,13 +486,28 @@ def apply_boundary_conditions(K: sparse.csr_matrix, F: np.ndarray, dof_manager: 
     return K_modified.tocsr(), F_modified
 
 
-def _solve_reduced_system(K_red: sparse.csr_matrix, F_red: np.ndarray, solver_type: str) -> Tuple[np.ndarray, Dict[str, Any]]:
+def _solve_reduced_system(
+    K_red: sparse.csr_matrix,
+    F_red: np.ndarray,
+    solver_type: str,
+    *,
+    factorization_cache: Optional[FactorizationCache] = None,
+    factorization_signature: Optional[str] = None,
+) -> Tuple[np.ndarray, Dict[str, Any]]:
     if K_red.shape[0] == 0:
         return np.zeros(0), {"status": "converged", "note": "no independent DOFs"}
 
     if solver_type == "direct":
         try:
-            handle = factorize(K_red, MatrixClass.SYMMETRIC_INDEFINITE)
+            if factorization_cache is None:
+                handle = factorize(K_red, MatrixClass.SYMMETRIC_INDEFINITE)
+            else:
+                handle = factorize_cached(
+                    K_red,
+                    MatrixClass.SYMMETRIC_INDEFINITE,
+                    cache=factorization_cache,
+                    signature=factorization_signature,
+                )
             if handle.status != "ok":
                 return np.zeros(K_red.shape[0]), {
                     "status": "failed",
@@ -627,6 +643,7 @@ def solve_linear(
     resource_config: Optional[ResourceConfig] = None,
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """
     Solve a linear FE problem using fixed-DOF/MPC transformation.
@@ -642,17 +659,34 @@ def solve_linear(
     dof_manager = mesh.dof_manager
 
     model.apply_boundary_conditions()
-    K, F, assembly_info = assemble_system(model, load_case)
+    if session is None:
+        K, F, assembly_info = assemble_system(model, load_case)
+        K_red, F_red, T, u0, independent_dofs, constraint_info = (
+            build_constraint_transformation(K, F, model)
+        )
+        constraint_plan = None
+    else:
+        K, F, assembly_info, constraint_plan, F_red = session.linear_system(
+            load_case,
+            model,
+        )
+        K_red = constraint_plan.K_red
+        T = constraint_plan.T
+        u0 = constraint_plan.u0
+        independent_dofs = constraint_plan.independent_dofs
+        constraint_info = dict(constraint_plan.info)
     cancellation_safe_point(cancellation_token, "linear_static.after_assembly")
-    K_red, F_red, T, u0, independent_dofs, constraint_info = build_constraint_transformation(K, F, model)
 
     total_dofs = int(K.shape[0])
-    Q, nullspace_info = build_reduced_rigid_body_modes(
-        model,
-        independent_dofs,
-        total_dofs,
-        transformation=T,
-    )
+    if session is None:
+        Q, nullspace_info = build_reduced_rigid_body_modes(
+            model,
+            independent_dofs,
+            total_dofs,
+            transformation=T,
+        )
+    else:
+        Q, nullspace_info = session.rigid_body_modes(constraint_plan, model)
     mode = (constraint_mode or "auto").strip().lower()
     if mode not in {"auto", "transformation", "nullspace"}:
         raise ValueError(f"Unknown constraint_mode '{constraint_mode}'. Use auto, transformation or nullspace.")
@@ -672,6 +706,8 @@ def solve_linear(
         "convergence_info": {},
         "thread_policy": thread_policy_diagnostics(resource_config),
     }
+    if session is not None:
+        solver_info["analysis_session"] = session.diagnostics()
 
     start_time = time.time()
     if use_nullspace:
@@ -682,7 +718,21 @@ def solve_linear(
             allow_unbalanced_loads=allow_unbalanced_free_free,
         )
     else:
-        q, convergence_info = _solve_reduced_system(K_red, F_red, solver_type)
+        q, convergence_info = _solve_reduced_system(
+            K_red,
+            F_red,
+            solver_type,
+            factorization_cache=(
+                session.factorization_cache
+                if session is not None and solver_type == "direct"
+                else None
+            ),
+            factorization_signature=(
+                session.factorization_signature("linear_static", constraint_plan)
+                if session is not None and solver_type == "direct"
+                else None
+            ),
+        )
     cancellation_safe_point(cancellation_token, "linear_static.after_factorization")
     solver_info["solve_time"] = time.time() - start_time
     solver_info["convergence_info"] = convergence_info
@@ -723,6 +773,7 @@ def solve_linear_many(
     resource_config: Optional[ResourceConfig] = None,
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Solve several unchanged-stiffness static load cases with one factorization.
 
@@ -730,19 +781,33 @@ def solve_linear_many(
     """
     cancellation_safe_point(cancellation_token, "linear_static_many.start")
     model.apply_boundary_conditions()
-    K, _, assembly_info = assemble_system(model, None)
+    if session is None:
+        K, _, assembly_info = assemble_system(model, None)
+        zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+        K_red, _, T, u0, independent_dofs, constraint_info = (
+            build_constraint_transformation(K, zero_load, model)
+        )
+        constraint_plan = None
+    else:
+        K, _, assembly_info, constraint_plan, _ = session.linear_system(None, model)
+        K_red = constraint_plan.K_red
+        T = constraint_plan.T
+        u0 = constraint_plan.u0
+        independent_dofs = constraint_plan.independent_dofs
+        constraint_info = dict(constraint_plan.info)
     F_matrix, load_matrix_info = assemble_load_matrix(model, load_cases)
-    zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
-    K_red, _, T, u0, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
     F_red = np.asarray(T.T @ (F_matrix - (K @ u0)[:, None]), dtype=float)
 
     total_dofs = int(K.shape[0])
-    Q, nullspace_info = build_reduced_rigid_body_modes(
-        model,
-        independent_dofs,
-        total_dofs,
-        transformation=T,
-    )
+    if session is None:
+        Q, nullspace_info = build_reduced_rigid_body_modes(
+            model,
+            independent_dofs,
+            total_dofs,
+            transformation=T,
+        )
+    else:
+        Q, nullspace_info = session.rigid_body_modes(constraint_plan, model)
     mode = (constraint_mode or "auto").strip().lower()
     if mode not in {"auto", "transformation"}:
         raise ValueError("solve_linear_many supports constraint_mode 'auto' or 'transformation'")
@@ -750,22 +815,32 @@ def solve_linear_many(
         raise ValueError("solve_linear_many requires supports; use individual solve_linear for free-free nullspace solves")
 
     start = time.time()
-    local_cache = factorization_cache or FactorizationCache(name="linear_static_many", max_entries=1)
-    revisions = getattr(model, "revision_signature", lambda: getattr(model.mesh, "revision_signature", lambda: {})())()
-    stiffness_signature = json.dumps(
-        {
-            "analysis": "linear_static_many",
-            "matrix": "K_reduced",
-            "shape": tuple(int(v) for v in K_red.shape),
-            "nnz": int(K_red.nnz),
-            "model_revision": revisions,
-            "constraint_method": constraint_info.get("method"),
-            "num_independent_dofs": int(len(independent_dofs)),
-        },
-        sort_keys=True,
-        default=str,
-        separators=(",", ":"),
+    local_cache = (
+        factorization_cache
+        or (session.factorization_cache if session is not None else None)
+        or FactorizationCache(name="linear_static_many", max_entries=1)
     )
+    revisions = getattr(model, "revision_signature", lambda: getattr(model.mesh, "revision_signature", lambda: {})())()
+    if session is None:
+        stiffness_signature = json.dumps(
+            {
+                "analysis": "linear_static_many",
+                "matrix": "K_reduced",
+                "shape": tuple(int(v) for v in K_red.shape),
+                "nnz": int(K_red.nnz),
+                "model_revision": revisions,
+                "constraint_method": constraint_info.get("method"),
+                "num_independent_dofs": int(len(independent_dofs)),
+            },
+            sort_keys=True,
+            default=str,
+            separators=(",", ":"),
+        )
+    else:
+        stiffness_signature = session.factorization_signature(
+            "linear_static_many",
+            constraint_plan,
+        )
     handle = factorize_cached(
         K_red,
         MatrixClass.SYMMETRIC_INDEFINITE,
@@ -786,6 +861,8 @@ def solve_linear_many(
             "solve_time": time.time() - start,
             "thread_policy": thread_policy_diagnostics(resource_config),
         }
+        if session is not None:
+            info["analysis_session"] = session.diagnostics()
         displacement = np.tile(u0.reshape(-1, 1), (1, len(load_cases)))
         info["constraint_postcheck"] = constraint_residual_summary(model, displacement)
         info["result_case"] = make_result_case(
@@ -813,6 +890,8 @@ def solve_linear_many(
         "num_result_cases": len(load_cases),
         "thread_policy": thread_policy_diagnostics(resource_config),
     }
+    if session is not None:
+        info["analysis_session"] = session.diagnostics()
     info["constraint_postcheck"] = constraint_residual_summary(model, full)
     info["result_case"] = make_result_case(
         name="linear_static_many",

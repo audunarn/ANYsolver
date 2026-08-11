@@ -1,0 +1,228 @@
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from anysolver import (
+    AnalysisSession,
+    BoundaryCondition,
+    FixedSupport,
+    LoadCase,
+    solve_eigenvalue_buckling,
+    solve_free_vibration,
+    solve_linear,
+    solve_linear_many,
+)
+from anysolver.elements import BeamElement
+from anysolver.fe_core import FEModel
+from anysolver.mesh_gen import generate_beam_mesh
+
+
+def _loads() -> tuple[LoadCase, LoadCase]:
+    axial = LoadCase("axial")
+    axial.add_nodal_load(3, [100.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    bending = LoadCase("bending")
+    bending.add_nodal_load(3, [0.0, 0.0, -100.0, 0.0, 0.0, 0.0])
+    return axial, bending
+
+
+def _modal_bar() -> FEModel:
+    model = FEModel("session_modal_bar")
+    model.add_material("steel", elastic_modulus=100.0, poisson_ratio=0.3, density=2.0)
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, 1.0, 0.0, 0.0)
+    model.add_element(
+        1,
+        BeamElement(
+            1,
+            [1, 2],
+            "steel",
+            {"area": 1.0, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+        ),
+    )
+    model.add_boundary_condition(FixedSupport("fixed", [1]))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "slider",
+            [2],
+            {"uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    return model
+
+
+def _buckling_column(num_elements: int = 6) -> tuple[FEModel, dict[int, dict[str, float]]]:
+    model = FEModel("session_column")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    section = {"area": 0.02, "Iy": 3.0e-6, "Iz": 5.0e-6, "J": 2.0e-6}
+    for index in range(num_elements + 1):
+        model.add_node(index + 1, 4.0 * index / num_elements, 0.0, 0.0)
+    for index in range(num_elements):
+        model.add_element(
+            index + 1,
+            BeamElement(index + 1, [index + 1, index + 2], "steel", section),
+        )
+    all_nodes = list(range(1, num_elements + 2))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "suppress",
+            all_nodes,
+            {"ux": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0},
+        )
+    )
+    model.add_boundary_condition(
+        BoundaryCondition("pins", [1, num_elements + 1], {"uy": 0.0})
+    )
+    return model, {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+
+
+def test_repeated_static_session_matches_legacy_and_reuses_plans() -> None:
+    model = generate_beam_mesh(
+        1.0,
+        num_divisions=2,
+        cross_section={"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+    )
+    axial, bending = _loads()
+    expected_axial, _ = solve_linear(model, axial)
+    expected_bending, _ = solve_linear(model, bending)
+
+    with AnalysisSession(model) as session:
+        actual_axial, first_info = solve_linear(model, axial, session=session)
+        actual_bending, second_info = solve_linear(model, bending, session=session)
+        many, many_info = solve_linear_many(
+            model,
+            [axial, bending],
+            session=session,
+        )
+        diagnostics = session.diagnostics()
+
+    np.testing.assert_allclose(actual_axial, expected_axial, rtol=1.0e-11, atol=1.0e-13)
+    np.testing.assert_allclose(actual_bending, expected_bending, rtol=1.0e-11, atol=1.0e-13)
+    np.testing.assert_allclose(many[:, 0], expected_axial, rtol=1.0e-11, atol=1.0e-13)
+    np.testing.assert_allclose(many[:, 1], expected_bending, rtol=1.0e-11, atol=1.0e-13)
+    assert diagnostics["counters"]["stiffness_builds"] == 1
+    assert diagnostics["counters"]["constraint_builds"] == 1
+    assert diagnostics["counters"]["stiffness_hits"] >= 2
+    assert diagnostics["counters"]["constraint_hits"] >= 2
+    assert diagnostics["factorization_cache"]["misses"] == 1
+    assert diagnostics["factorization_cache"]["hits"] >= 2
+    assert first_info["analysis_session"]["plan_builds"] >= 2
+    assert second_info["analysis_session"]["plan_reused"] is True
+    assert many_info["analysis_session"]["plan_reused"] is True
+
+
+def test_prescribed_value_refresh_reuses_structure_and_factorization() -> None:
+    model = _modal_bar()
+    load = LoadCase("zero")
+    session = AnalysisSession(model)
+
+    first, _ = solve_linear(model, load, session=session)
+    first_plan = session.constraint_plan()
+    fixed = model.boundary_conditions[0]
+    fixed.dof_constraints["ux"] = 2.5e-4  # Direct public-object edit, no revision bump.
+    second, _ = solve_linear(model, load, session=session)
+    second_plan = session.constraint_plan()
+
+    assert second_plan.T is first_plan.T
+    assert second_plan.K_red is first_plan.K_red
+    assert second[model.mesh.get_node(1).dofs[0]] == pytest.approx(2.5e-4)
+    assert not np.array_equal(first_plan.u0, second_plan.u0)
+    diagnostics = session.diagnostics()
+    assert diagnostics["counters"]["constraint_value_refreshes"] == 1
+    assert diagnostics["factorization_cache"]["misses"] == 1
+    assert diagnostics["factorization_cache"]["hits"] == 1
+
+
+def test_revision_categories_invalidate_only_dependent_session_data() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    stiffness_1 = session.stiffness_plan()
+    mass_1 = session.mass_plan()
+    constraint_1 = session.constraint_plan(stiffness_1)
+    reduced_mass_1, _ = session.reduced_mass(constraint_1)
+
+    model.bump_revision("load")
+    assert session.stiffness_plan() is stiffness_1
+    assert session.mass_plan() is mass_1
+    assert session.constraint_plan(stiffness_1) is constraint_1
+
+    model.add_point_mass(2, 0.5)
+    mass_2 = session.mass_plan()
+    assert mass_2 is not mass_1
+    assert session.stiffness_plan() is stiffness_1
+    reduced_mass_2, _ = session.reduced_mass(constraint_1)
+    assert reduced_mass_2 is not reduced_mass_1
+
+    model.get_material("steel").elastic_modulus *= 1.1
+    model.bump_revision("material")
+    stiffness_2 = session.stiffness_plan()
+    constraint_2 = session.constraint_plan(stiffness_2)
+    assert stiffness_2 is not stiffness_1
+    assert constraint_2.K_red is not constraint_1.K_red
+    reasons = session.diagnostics()["invalidation_reasons"]
+    assert reasons["mass_revision"] >= 1
+    assert reasons["stiffness_revision"] >= 1
+
+
+def test_output_selection_is_bounded_and_close_releases_memory() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model, max_output_plans=2)
+    constraint = session.constraint_plan()
+    for dof in range(4):
+        plan = session.output_selection_plan(np.asarray([dof]), constraint)
+        reduced = np.zeros(constraint.K_red.shape[0], dtype=float)
+        np.testing.assert_allclose(plan.reconstruct(reduced), constraint.u0[[dof]])
+    diagnostics = session.diagnostics()
+    assert diagnostics["output_plan_count"] == 2
+    assert diagnostics["counters"]["output_plan_evictions"] == 2
+    assert diagnostics["estimated_retained_bytes"] > 0
+
+    other = _modal_bar()
+    with pytest.raises(ValueError, match="different FEModel"):
+        session.stiffness_plan(other)
+    session.close()
+    assert session.diagnostics()["estimated_retained_bytes"] == 0
+    with pytest.raises(RuntimeError, match="closed"):
+        session.stiffness_plan()
+
+
+def test_modal_and_buckling_session_parity() -> None:
+    modal_model = _modal_bar()
+    expected_modal = solve_free_vibration(modal_model, num_modes=1)
+    with AnalysisSession(modal_model) as modal_session:
+        actual_modal = solve_free_vibration(
+            modal_model,
+            num_modes=1,
+            session=modal_session,
+        )
+    np.testing.assert_allclose(
+        actual_modal.frequencies_hz,
+        expected_modal.frequencies_hz,
+        rtol=1.0e-12,
+        atol=1.0e-14,
+    )
+
+    buckling_model, states = _buckling_column()
+    expected_buckling = solve_eigenvalue_buckling(
+        buckling_model,
+        states,
+        num_modes=2,
+    )
+    with AnalysisSession(buckling_model) as buckling_session:
+        actual_buckling = solve_eigenvalue_buckling(
+            buckling_model,
+            states,
+            num_modes=2,
+            session=buckling_session,
+        )
+    assert actual_buckling.solver_status == expected_buckling.solver_status == "ok"
+    np.testing.assert_allclose(
+        [mode.load_factor for mode in actual_buckling.modes],
+        [mode.load_factor for mode in expected_buckling.modes],
+        rtol=1.0e-10,
+        atol=1.0e-8,
+    )
+
