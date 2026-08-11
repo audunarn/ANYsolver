@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import threading
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
@@ -654,12 +655,16 @@ class FactorizationCache:
 
     The cache is intentionally not global.  Analyses that can safely reuse a
     matrix factorization own the cache and therefore own its lifetime.
+    Cache lookup, insertion, eviction and counters are protected for concurrent
+    callers.  Returned handles retain the concurrency semantics of their
+    numerical backend; the cache does not serialize subsequent ``solve`` calls.
     """
 
     name: str = "factorization_cache"
     max_entries: int = 8
     backend: Optional[SparseSolverBackend] = None
     _handles: Dict[Tuple[str, str, str, str], FactorizationHandle] = field(default_factory=dict, init=False, repr=False)
+    _lock: Any = field(default_factory=threading.RLock, init=False, repr=False)
     hits: int = 0
     misses: int = 0
     factorization_failures: int = 0
@@ -689,33 +694,41 @@ class FactorizationCache:
         options: Optional[Mapping[str, Any]] = None,
     ) -> FactorizationHandle:
         cache_key = self.key(matrix, matrix_class, signature=signature, options=options)
-        if cache_key in self._handles:
-            self.hits += 1
-            handle = self._handles[cache_key]
-            options_dict = dict(options or {})
-            handle.solver_threads = options_dict.get("solver_threads", current_solver_threads())
+        with self._lock:
+            if cache_key in self._handles:
+                self.hits += 1
+                handle = self._handles[cache_key]
+                options_dict = dict(options or {})
+                handle.solver_threads = options_dict.get("solver_threads", current_solver_threads())
+                handle.metadata["cache_name"] = self.name
+                handle.metadata["cache_hit"] = True
+                return handle
+            self.misses += 1
+            handle = factorize(
+                matrix,
+                matrix_class,
+                signature=signature or cache_key[0],
+                options=options,
+                backend=self.backend,
+            )
             handle.metadata["cache_name"] = self.name
-            handle.metadata["cache_hit"] = True
+            handle.metadata["cache_hit"] = False
+            if handle.status == "ok":
+                if self.max_entries > 0 and len(self._handles) >= self.max_entries:
+                    oldest = next(iter(self._handles))
+                    self._handles.pop(oldest, None)
+                if self.max_entries != 0:
+                    self._handles[cache_key] = handle
+            else:
+                self.factorization_failures += 1
             return handle
-        self.misses += 1
-        handle = factorize(
-            matrix,
-            matrix_class,
-            signature=signature or cache_key[0],
-            options=options,
-            backend=self.backend,
-        )
-        handle.metadata["cache_name"] = self.name
-        handle.metadata["cache_hit"] = False
-        if handle.status == "ok":
-            if self.max_entries > 0 and len(self._handles) >= self.max_entries:
-                oldest = next(iter(self._handles))
-                self._handles.pop(oldest, None)
-            if self.max_entries != 0:
-                self._handles[cache_key] = handle
-        else:
-            self.factorization_failures += 1
-        return handle
+
+    def set_backend_if_absent(self, backend: SparseSolverBackend) -> None:
+        """Select a backend once without racing concurrent cache users."""
+
+        with self._lock:
+            if self.backend is None:
+                self.backend = backend
 
     def linear_operator(
         self,
@@ -738,18 +751,20 @@ class FactorizationCache:
         return operator, handle
 
     def diagnostics(self) -> Dict[str, Any]:
-        return {
-            "name": self.name,
-            "max_entries": int(self.max_entries),
-            "entries": int(len(self._handles)),
-            "hits": int(self.hits),
-            "misses": int(self.misses),
-            "factorization_failures": int(self.factorization_failures),
-            "backend": (self.backend or DEFAULT_BACKEND).name,
-        }
+        with self._lock:
+            return {
+                "name": self.name,
+                "max_entries": int(self.max_entries),
+                "entries": int(len(self._handles)),
+                "hits": int(self.hits),
+                "misses": int(self.misses),
+                "factorization_failures": int(self.factorization_failures),
+                "backend": (self.backend or DEFAULT_BACKEND).name,
+            }
 
     def clear(self) -> None:
-        self._handles.clear()
+        with self._lock:
+            self._handles.clear()
 
 
 def _coerce_matrix_class(matrix_class: MatrixClass | str) -> MatrixClass:
@@ -795,8 +810,8 @@ def factorize_cached(
 
     if cache is None:
         return factorize(matrix, matrix_class, signature=signature, options=options, backend=backend)
-    if backend is not None and cache.backend is None:
-        cache.backend = backend
+    if backend is not None:
+        cache.set_backend_if_absent(backend)
     return cache.factorize(matrix, matrix_class, signature=signature, options=options)
 
 

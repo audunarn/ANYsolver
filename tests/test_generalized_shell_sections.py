@@ -297,7 +297,7 @@ def test_generalized_shell_section_mass_metadata_overrides_homogeneous_fallback(
     )
 
 
-def test_generalized_shell_section_routes_assembly_through_general_path() -> None:
+def test_generalized_shell_section_routes_s4_assembly_through_batch_path() -> None:
     model, element = _model_with_shell(section=_isotropic_section())
     expected = element.compute_stiffness_matrix(
         model.mesh,
@@ -306,10 +306,10 @@ def test_generalized_shell_section_routes_assembly_through_general_path() -> Non
     assembled, info = assemble_stiffness_matrix(model)
 
     np.testing.assert_allclose(assembled.toarray(), expected, rtol=1.0e-12, atol=1.0e-5)
-    assert info["diagnostics"]["generalized_shell_section_fallback"] == {
-        "path": "general_element",
-        "reason": "preintegrated_generalized_shell_section",
-        "element_ids": [1],
+    assert info["diagnostics"]["advanced_s4_stiffness"] == {
+        "path": "compiled_batch",
+        "orthotropic_element_count": 0,
+        "generalized_element_count": 1,
     }
 
 

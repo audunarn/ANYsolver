@@ -1,3 +1,7 @@
+import contextlib
+import contextvars
+import threading
+
 import numpy as np
 import pytest
 from scipy import sparse
@@ -76,6 +80,118 @@ def test_backend_unavailable_is_reported(monkeypatch):
     with native_thread_scope(2, phase="fallback") as report:
         assert report["status"] == "backend_unavailable"
         assert report["fallback_reason"] == "isolated unavailable"
+
+
+def test_overlapping_explicit_native_limits_are_serialized(monkeypatch):
+    first_entered = threading.Event()
+    release_first = threading.Event()
+    second_entered = threading.Event()
+    errors = []
+
+    @contextlib.contextmanager
+    def fake_limits(*, limits):
+        del limits
+        yield
+
+    monkeypatch.setattr(policy_module, "_HAS_THREADPOOLCTL", True)
+    monkeypatch.setattr(policy_module, "threadpool_limits", fake_limits)
+    monkeypatch.setattr(policy_module, "_pool_snapshot", lambda: [])
+
+    def worker(name):
+        try:
+            with native_thread_scope(1, phase=name):
+                if name == "first":
+                    first_entered.set()
+                    assert release_first.wait(timeout=2.0)
+                else:
+                    second_entered.set()
+        except BaseException as exc:  # pragma: no cover - surfaced below
+            errors.append(exc)
+
+    first = threading.Thread(target=worker, args=("first",))
+    second = threading.Thread(target=worker, args=("second",))
+    first.start()
+    assert first_entered.wait(timeout=2.0)
+    second.start()
+    assert not second_entered.wait(timeout=0.1)
+    release_first.set()
+    first.join(timeout=2.0)
+    second.join(timeout=2.0)
+
+    assert not first.is_alive()
+    assert not second.is_alive()
+    assert second_entered.is_set()
+    assert errors == []
+
+
+def test_unlimited_default_native_scopes_can_overlap():
+    rendezvous = threading.Barrier(2)
+    errors = []
+
+    def worker():
+        try:
+            with native_thread_scope(None, phase="concurrent_default") as report:
+                assert report["status"] == "unlimited_default"
+                rendezvous.wait(timeout=2.0)
+        except BaseException as exc:  # pragma: no cover - surfaced below
+            errors.append(exc)
+
+    workers = [threading.Thread(target=worker) for _ in range(2)]
+    for worker_thread in workers:
+        worker_thread.start()
+    for worker_thread in workers:
+        worker_thread.join(timeout=2.0)
+
+    assert all(not worker_thread.is_alive() for worker_thread in workers)
+    assert errors == []
+
+
+def test_default_scope_can_upgrade_to_explicit_limit_and_restore():
+    with native_thread_scope(None, phase="outer_default") as outer:
+        with native_thread_scope(1, phase="inner_explicit") as inner:
+            assert inner["status"] in {"limited", "backend_unavailable"}
+        assert inner["restored"] is True
+        assert outer["restored"] is False
+    assert outer["restored"] is True
+
+
+def test_snapshot_failure_does_not_strand_native_scope_coordinator(monkeypatch):
+    def fail_snapshot():
+        raise RuntimeError("isolated snapshot failure")
+
+    monkeypatch.setattr(policy_module, "_pool_snapshot", fail_snapshot)
+    with pytest.raises(RuntimeError, match="isolated snapshot failure"):
+        with native_thread_scope(1, phase="snapshot_failure"):
+            pass
+
+    monkeypatch.setattr(policy_module, "_pool_snapshot", lambda: [])
+    with native_thread_scope(1, phase="after_snapshot_failure") as report:
+        assert report["status"] in {"limited", "backend_unavailable"}
+    assert report["restored"] is True
+
+
+def test_copied_context_cannot_inherit_another_threads_native_limit():
+    child_started = threading.Event()
+    child_entered = threading.Event()
+    child_status = []
+
+    def child():
+        child_started.set()
+        with native_thread_scope(1, phase="copied_context_child") as report:
+            child_status.append(report["status"])
+            child_entered.set()
+
+    with native_thread_scope(1, phase="copied_context_parent"):
+        copied_context = contextvars.copy_context()
+        worker = threading.Thread(target=lambda: copied_context.run(child))
+        worker.start()
+        assert child_started.wait(timeout=2.0)
+        assert not child_entered.wait(timeout=0.1)
+
+    worker.join(timeout=2.0)
+    assert not worker.is_alive()
+    assert child_entered.is_set()
+    assert child_status[0] in {"limited", "backend_unavailable"}
 
 
 @pytest.mark.skipif(not JIT_ENABLED, reason="Numba is not installed")

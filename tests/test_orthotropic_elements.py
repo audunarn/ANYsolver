@@ -363,7 +363,7 @@ def test_orthotropic_shell_bending_shear_and_rigid_body_patches(
         assert abs(float(mode @ stiffness @ mode)) < 1.0e-10 * scale
 
 
-def test_shell_isotropic_limit_and_general_assembly_fallback() -> None:
+def test_shell_isotropic_limit_and_orthotropic_s4_batch() -> None:
     E = 70.0e9
     nu = 0.25
     G = E / (2.0 * (1.0 + nu))
@@ -402,11 +402,10 @@ def test_shell_isotropic_limit_and_general_assembly_fallback() -> None:
     assert np.allclose(K_iso, K_ortho, rtol=2.0e-12, atol=1.0e-5)
 
     _matrix, info = assemble_stiffness_matrix(ortho_model)
-    fallback = info["diagnostics"]["constitutive_fallback"]
-    assert fallback == {
-        "path": "general_element",
-        "reason": "orthotropic_material",
-        "element_ids": [1],
+    assert info["diagnostics"]["advanced_s4_stiffness"] == {
+        "path": "compiled_batch",
+        "orthotropic_element_count": 1,
+        "generalized_element_count": 0,
     }
 
 

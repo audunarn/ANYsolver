@@ -294,6 +294,63 @@ def test_nonlinear_solver_uses_direct_reduced_assembly(monkeypatch) -> None:
     assert status["full_coordinate_fallbacks"] == 0
     assert status["last_plan"]["mapping_kind"] == "selector"
     assert status["active_context_depth"] == 0
+    performance = result.info["nonlinear_performance"]
+    assert performance["scope"] == "analysis_local_inclusive"
+    assert performance["assembly"]["path_counts"]["direct_reduced"] > 0
+    direct = performance["direct_reduced_assembly"]
+    assert direct["context_active"] is True
+    assert direct["activated"] is True
+    assert direct["fallback_reason"] is None
+    assert direct["assembly_count"] == status["reduced_assemblies"]
+
+
+@pytest.mark.skipif(
+    not JIT_ENABLED,
+    reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
+)
+def test_result_direct_counts_stay_local_when_source_plan_is_reused(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
+    reset_batch_c_counters()
+    model, load = _spring_model()
+
+    first = solve_static_nonlinear(
+        model,
+        load_case=load,
+        max_load_factor=0.25,
+        num_steps=2,
+        max_iterations=8,
+        tolerance=1.0e-10,
+    )
+    second = solve_static_nonlinear(
+        model,
+        load_case=load,
+        max_load_factor=0.25,
+        num_steps=2,
+        max_iterations=8,
+        tolerance=1.0e-10,
+    )
+
+    first_performance = first.info["nonlinear_performance"]
+    second_performance = second.info["nonlinear_performance"]
+    first_direct = first_performance["direct_reduced_assembly"]
+    second_direct = second_performance["direct_reduced_assembly"]
+    assert first_direct["assembly_count"] > 0
+    assert second_direct["assembly_count"] > 0
+    assert first_direct["assembly_count"] == first_performance["assembly"][
+        "path_counts"
+    ]["direct_reduced"]
+    assert second_direct["assembly_count"] == second_performance["assembly"][
+        "path_counts"
+    ]["direct_reduced"]
+    assert first_direct["plan_reused"] is True
+    assert second_direct["plan_reused"] is True
+    assert first_performance["assembly"]["plan_reused"] is True
+    assert second_performance["assembly"]["plan_reused"] is True
+    assert batch_c_status()["reduced_assemblies"] == (
+        first_direct["assembly_count"] + second_direct["assembly_count"]
+    )
 
 
 @pytest.mark.skipif(
@@ -323,6 +380,12 @@ def test_short_nonlinear_solve_skips_direct_reduction_setup(monkeypatch) -> None
         "activated": False,
         "reason": "estimated_assembly_budget_below_threshold",
     }
+    performance = result.info["nonlinear_performance"]
+    assert performance["assembly"]["path_counts"]["persistent_full_coordinate"] > 0
+    direct = performance["direct_reduced_assembly"]
+    assert direct["context_active"] is True
+    assert direct["activated"] is False
+    assert direct["fallback_reason"] == "estimated_assembly_budget_below_threshold"
 
 
 @pytest.mark.skipif(

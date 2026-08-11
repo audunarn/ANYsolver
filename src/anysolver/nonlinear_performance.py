@@ -40,12 +40,22 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
 from .nonlinear_state import (
+    NonlinearStateStore,
     PersistentStateEligibilityError,
     ShellStateBatch,
     ShellStateLayout,
     StateTrialToken,
+    begin_state_evaluation,
+    finish_state_evaluation,
 )
+
+
+# Batch B enables this only while its generalized elastic kernel is installed.
+# Keeping the flag here prevents the legacy/vectorized constitutive kernel from
+# receiving orthotropic or pre-integrated sections when Numba is unavailable.
+_EXTENDED_ELASTIC_S4_BATCHES = False
 
 if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh
@@ -655,7 +665,7 @@ class NonlinearAssemblyPlan:
     @classmethod
     def build(cls, model: "FEModel", num_layers: int) -> "NonlinearAssemblyPlan":
         from .elements import QuadraticBeamElement, ShellElement
-        from .materials import is_isotropic_material
+        from .materials import is_isotropic_material, is_orthotropic_material
         from .vectorized_nonlinear import shell_nonlinear_batch_eligible
 
         start = time.perf_counter()
@@ -728,16 +738,54 @@ class NonlinearAssemblyPlan:
         for element_id, element, *_rest in element_records:
             scatter = scatter_records[element_id]
             material = model.get_material(element.material_name)
-            if (
+            ordinary_shell_batch = (
                 isinstance(element, ShellElement)
                 and shell_nonlinear_batch_eligible(element)
                 and is_isotropic_material(material)
-            ):
+            )
+            extended_elastic_s4_batch = bool(
+                _EXTENDED_ELASTIC_S4_BATCHES
+                and isinstance(element, ShellElement)
+                and bool(getattr(element, "_is_4node", False))
+                and not (
+                    bool(getattr(element, "_is_8node", False))
+                    and bool(getattr(element, "reduced_integration", False))
+                )
+                and (
+                    getattr(element, "shell_section", None) is not None
+                    or is_orthotropic_material(material)
+                )
+                and getattr(material, "hardening_curve", None) is None
+                and getattr(material, "hill_yield", None) is None
+            )
+            if ordinary_shell_batch or extended_elastic_s4_batch:
+                shell_kind = (
+                    "generalized_s4"
+                    if getattr(element, "shell_section", None) is not None
+                    else (
+                        "orthotropic_s4"
+                        if is_orthotropic_material(material)
+                        else "isotropic"
+                    )
+                )
+                section = getattr(element, "shell_section", None)
+                section_key = (
+                    None
+                    if section is None
+                    else (
+                        np.asarray(section.A, dtype=float).tobytes(),
+                        np.asarray(section.B, dtype=float).tobytes(),
+                        np.asarray(section.D, dtype=float).tobytes(),
+                        np.asarray(section.As, dtype=float).tobytes(),
+                    )
+                )
                 key = (
+                    shell_kind,
                     int(element.num_nodes),
                     float(element.thickness),
                     float(element.drilling_stabilization),
                     str(element.material_name),
+                    section_key,
                 )
                 shell_groups.setdefault(key, []).append((element_id, element, scatter))
             elif (
@@ -792,6 +840,7 @@ class NonlinearAssemblyPlan:
     ) -> Tuple[np.ndarray, Optional[sparse.csr_matrix], Dict[int, Any]]:
         """Assemble internal force and tangent using persistent batch/scatter data."""
         with self._lock:
+            state_token = begin_state_evaluation(committed_states)
             start_total = time.perf_counter()
             self.timings.calls += 1
             if tangent:
@@ -808,29 +857,54 @@ class NonlinearAssemblyPlan:
 
             state_start = time.perf_counter()
             for batch in self.shell_batches:
-                F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
-                    displacements,
-                    committed_states,
-                    tangent,
-                    deleted_element_ids=tuple(deleted),
-                    residual_stiffness_fraction=residual_fraction,
+                used_persistent_state = False
+                persistent_trial = (
+                    committed_states.shell_trial_for_layout(
+                        state_token,
+                        batch.state_layout,
+                    )
+                    if isinstance(committed_states, NonlinearStateStore)
+                    and state_token is not None
+                    else None
                 )
+                if persistent_trial is not None and batch.persistent_state_eligibility(
+                    persistent_trial[0]
+                )[0]:
+                    used_persistent_state = True
+                    F_batch, K_batch, kernel_seconds = batch.evaluate_persistent(
+                        displacements,
+                        persistent_trial[0],
+                        persistent_trial[1],
+                        tangent,
+                        deleted_element_ids=tuple(deleted),
+                        residual_stiffness_fraction=residual_fraction,
+                    )
+                    batch_states = {}
+                else:
+                    F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
+                        displacements,
+                        committed_states,
+                        tangent,
+                        deleted_element_ids=tuple(deleted),
+                        residual_stiffness_fraction=residual_fraction,
+                    )
                 self.timings.shell_kernel_seconds += kernel_seconds
                 self.force_values[batch.force_positions.reshape(-1)] = np.asarray(F_batch, dtype=float).reshape(-1)
                 if tangent and K_batch is not None:
                     self.tangent_values[batch.tangent_positions.reshape(-1)] = np.asarray(K_batch, dtype=float).reshape(-1)
                 trial_states.update(batch_states)
-                override_start = time.perf_counter()
-                override_count = _apply_initial_field_shell_overrides(
-                    self,
-                    batch,
-                    displacements,
-                    committed_states,
-                    tangent,
-                    trial_states,
-                )
-                self.timings.initial_field_override_seconds += time.perf_counter() - override_start
-                self.timings.initial_field_override_elements += override_count
+                if not used_persistent_state:
+                    override_start = time.perf_counter()
+                    override_count = _apply_initial_field_shell_overrides(
+                        self,
+                        batch,
+                        displacements,
+                        committed_states,
+                        tangent,
+                        trial_states,
+                    )
+                    self.timings.initial_field_override_seconds += time.perf_counter() - override_start
+                    self.timings.initial_field_override_elements += override_count
             self.timings.state_pack_seconds += time.perf_counter() - state_start
 
             for batch in self.quadratic_beam_batches:
@@ -889,7 +963,12 @@ class NonlinearAssemblyPlan:
                 tangent_matrix = None
 
             self.timings.total_seconds += time.perf_counter() - start_total
-            return force, tangent_matrix, trial_states
+            state_payload = finish_state_evaluation(
+                committed_states,
+                state_token,
+                trial_states,
+            )
+            return force, tangent_matrix, state_payload
 
     def diagnostics(self) -> Dict[str, Any]:
         from .elements import ShellElement
@@ -1028,14 +1107,22 @@ def _optimized_assemble_nonlinear_system(
             corotational_tangent=corotational_tangent,
             **extra,
         )
+    assembly_start = time.perf_counter()
     plan = get_nonlinear_assembly_plan(model, int(num_layers))
-    return plan.assemble(
+    result = plan.assemble(
         displacements,
         committed_states,
         tangent=tangent,
         deleted_element_ids=tuple(deleted_element_ids or ()),
         residual_stiffness_fraction=float(residual_stiffness_fraction),
     )
+    record_nonlinear_assembly_execution(
+        path="persistent_full_coordinate",
+        tangent=bool(tangent),
+        elapsed_seconds=time.perf_counter() - assembly_start,
+        plan=plan,
+    )
+    return result
 
 
 def _revision_cached_sparsity_pattern(mesh: "FEMesh", matrix_type: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -1262,12 +1349,16 @@ def _solve_static_displacement_control_block(
                 failure_reason = "maximum_iterations_reached"
 
             if failure_reason is not None:
+                ns._discard_nonlinear_state_candidate(committed_states)
                 q = q_step_start
                 lam = lam_step_start
                 status = "stopped_at_limit" if steps else "diverged"
                 break
 
-            committed_states = states_new
+            committed_states = ns._commit_nonlinear_state_candidate(
+                committed_states,
+                states_new,
+            )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
             steps.append(
@@ -1324,6 +1415,10 @@ def _solve_static_displacement_control_block(
                 )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = ns._materialize_final_nonlinear_states(
+        committed_states,
+        info,
+    )
     committed_states = ns._finalize_nonlinear_element_states(
         model,
         u_final,

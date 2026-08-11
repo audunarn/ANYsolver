@@ -34,6 +34,7 @@ from .recovery import ResourceConfig
 from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
+    from .analysis_session import AnalysisSession
     from .boundary import LoadCase
     from .fe_core import FEModel
 
@@ -221,6 +222,7 @@ def solve_eigenvalue_buckling(
     resource_config: Optional[ResourceConfig] = None,
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
 ) -> BucklingResult:
     """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
@@ -249,7 +251,13 @@ def solve_eigenvalue_buckling(
     # constrained analysis first.  Rigid-mode filtering reads the active DOF
     # constraints, so boundary conditions must be applied here explicitly.
     model.apply_boundary_conditions()
-    K, stiffness_info = assemble_stiffness_matrix(model)
+    if session is None:
+        K, stiffness_info = assemble_stiffness_matrix(model)
+        stiffness_plan = None
+    else:
+        stiffness_plan = session.stiffness_plan(model)
+        K = stiffness_plan.matrix
+        stiffness_info = dict(stiffness_plan.info)
     KG, geometric_info = assemble_geometric_stiffness_matrix(model, element_states)
     K_load, load_tangent_info = assemble_external_load_tangent(
         model,
@@ -259,7 +267,17 @@ def solve_eigenvalue_buckling(
     cancellation_safe_point(cancellation_token, "buckling.after_assembly")
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
-    K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
+    if session is None:
+        K_red, _, T, _, independent_dofs, constraint_info = (
+            build_constraint_transformation(K, zero_load, model)
+        )
+        constraint_plan = None
+    else:
+        constraint_plan = session.constraint_plan(stiffness_plan, model)
+        K_red = constraint_plan.K_red
+        T = constraint_plan.T
+        independent_dofs = constraint_plan.independent_dofs
+        constraint_info = dict(constraint_plan.info)
     KG_red = (T.T @ KG @ T).tocsr()
     K_load_red = (T.T @ K_load @ T).tocsr()
     follower_symmetry_error = float(
@@ -275,6 +293,8 @@ def solve_eigenvalue_buckling(
         "total_dofs": model.mesh.dof_manager.total_dofs,
         "reduced_dofs": int(K_red.shape[0]),
     }
+    if session is not None:
+        assembly_info["analysis_session"] = session.diagnostics()
 
     settings = {
         "num_modes": num_modes,
@@ -286,7 +306,11 @@ def solve_eigenvalue_buckling(
         "repeated_tolerance": repeated_tolerance,
         "allow_dense_fallback": allow_dense_fallback,
         "allow_free_mechanisms": allow_free_mechanisms,
-        "factorization_cache": None if factorization_cache is None else factorization_cache.name,
+        "factorization_cache": (
+            (session.factorization_cache.name if session is not None else None)
+            if factorization_cache is None
+            else factorization_cache.name
+        ),
         "reference_load_case": None if reference_load_case is None else reference_load_case.name,
         "follower_symmetry_tolerance": float(follower_symmetry_tolerance),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
@@ -347,12 +371,15 @@ def solve_eigenvalue_buckling(
         ).to_dict()
         return BucklingResult([], num_modes, "zero_geometric_stiffness", constraint_info, assembly_info, result_case, diagnostics)
 
-    Q_rigid, nullspace_info = build_reduced_rigid_body_modes(
-        model,
-        independent_dofs,
-        int(K.shape[0]),
-        transformation=T,
-    )
+    if session is None:
+        Q_rigid, nullspace_info = build_reduced_rigid_body_modes(
+            model,
+            independent_dofs,
+            int(K.shape[0]),
+            transformation=T,
+        )
+    else:
+        Q_rigid, nullspace_info = session.rigid_body_modes(constraint_plan, model)
     assembly_info["nullspace"] = nullspace_info
 
     # Work with the inverted symmetric pencil KG phi = mu K phi where K is
@@ -376,7 +403,11 @@ def solve_eigenvalue_buckling(
             else:
                 sigma = 1.0 / float(shift_load_factor)
                 shift_matrix = (KG_sym - sigma * K_sym).tocsc()
-                cache = factorization_cache or FactorizationCache(name="buckling_shift_invert", max_entries=2)
+                cache = (
+                    factorization_cache
+                    or (session.factorization_cache if session is not None else None)
+                    or FactorizationCache(name="buckling_shift_invert", max_entries=2)
+                )
                 operator, handle = cached_inverse_operator(
                     shift_matrix,
                     MatrixClass.SYMMETRIC_INDEFINITE,
@@ -530,6 +561,8 @@ def solve_eigenvalue_buckling(
             homogeneous_variation=True,
         ),
     }
+    if session is not None:
+        diagnostics["analysis_session"] = session.diagnostics()
     result_case = make_result_case(
         name="linear_buckling",
         analysis_type="linear_buckling",

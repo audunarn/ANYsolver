@@ -9,6 +9,7 @@ contact, profile-resolved beam contact, or crack propagation.
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -19,7 +20,13 @@ from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .boundary import BoundaryCondition, LoadCase
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .contact_performance import ContactWorkBuffer, ContactWorkCounters
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .damage_matrix_performance import (
+    DamageMatrixPlan,
+    DamageMatrixPlanFallback,
+    DamageMatrixPlanGate,
+)
 from .dynamics import (
     TransientConfig,
     _full_initial_vector,
@@ -43,6 +50,7 @@ from .fracture import (
     state_rtcl_increment,
 )
 from .linalg import MatrixClass, factorize
+from .impact_performance import ImpactTangentReuseController
 from .materials import beam_material_properties, material_symmetry, shell_characteristic_modulus
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import enforce_memory_limit, estimate_model_memory, recovery_metadata
@@ -451,6 +459,7 @@ class _ContactGeometry:
         "beam_segment_slots",
         "beam_segment_radii",
         "beam_segment_element_ids",
+        "contact_work_local",
     )
 
     def __init__(self, model: "FEModel"):
@@ -512,6 +521,7 @@ class _ContactGeometry:
         self.beam_segment_slots = np.asarray(segment_slots, dtype=np.intp).reshape(-1, 2)
         self.beam_segment_radii = np.asarray(segment_radii, dtype=float)
         self.beam_segment_element_ids = np.asarray(segment_element_ids, dtype=np.int64)
+        self.contact_work_local = threading.local()
 
     def deformed_node_positions(self, displacement: Optional[np.ndarray]) -> np.ndarray:
         if displacement is None:
@@ -827,7 +837,7 @@ def validate_contact_configuration(
     return ProductionValidationReport(status, tuple(issues), mesh_quality, model.mesh.revision_signature())
 
 
-def assemble_sphere_contact_load_vector(
+def _assemble_sphere_contact_work_buffer(
     model: "FEModel",
     sphere: RigidSphereImpact,
     contact_config: SphereContactConfig,
@@ -838,8 +848,10 @@ def assemble_sphere_contact_load_vector(
     deleted_element_ids: Sequence[int] = (),
     contact_scale_by_element: Optional[Mapping[int, float]] = None,
     preferred_element_ids: Sequence[int] = (),
-) -> Tuple[np.ndarray, np.ndarray, Tuple[SphereContactRecord, ...]]:
-    """Assemble shell nodal loads from current rigid-sphere contact state.
+    work_buffer: Optional[ContactWorkBuffer] = None,
+    work_counters: Optional[ContactWorkCounters] = None,
+) -> ContactWorkBuffer:
+    """Assemble contact into reusable compact work storage.
 
     ``preferred_element_ids`` stabilizes the ``max_active_contacts`` reduction:
     adjacent coplanar elements report near-identical penetrations for one
@@ -855,14 +867,18 @@ def assemble_sphere_contact_load_vector(
     v = np.zeros(total_dofs, dtype=float) if structural_velocity is None else np.asarray(structural_velocity, dtype=float)
     center = np.asarray(sphere_position, dtype=float).reshape(3)
     velocity = np.asarray(sphere_velocity, dtype=float).reshape(3)
-    load = np.zeros(total_dofs, dtype=float)
-    sphere_force_total = np.zeros(3, dtype=float)
-    records: List[SphereContactRecord] = []
+    contact_work = work_buffer or ContactWorkBuffer(total_dofs, counters=work_counters)
+    contact_work.reset(total_dofs)
     contact_scales = {} if contact_scale_by_element is None else {int(k): float(v) for k, v in contact_scale_by_element.items()}
     geometry = _contact_geometry(model)
     has_beam_targets = bool(contact_config.beam_contact) and geometry.beam_segment_slots.shape[0] > 0
     if geometry.element_ids.shape[0] == 0 and not has_beam_targets:
-        return load, sphere_force_total, tuple(records)
+        contact_work.select_and_scatter(
+            max_active_contacts=int(contact_config.max_active_contacts),
+            preferred_element_ids=preferred_element_ids,
+            node_dofs=geometry.node_dofs,
+        )
+        return contact_work
     node_positions = geometry.deformed_node_positions(u)
     element_nodes, centroids, radii = geometry.element_centroids_and_radii(node_positions)
     active_mask = geometry.active_element_mask(deleted_element_ids)
@@ -933,25 +949,23 @@ def assemble_sphere_contact_load_vector(
         )
         if not patch_weights:
             patch_weights = {int(slot): float(N[local_index]) for local_index, slot in enumerate(element_slots)}
-        nodal_forces: Dict[int, np.ndarray] = {}
-        for slot, weight in patch_weights.items():
-            nodal = float(weight) * structure_force
-            load[geometry.node_dofs[slot]] += nodal
-            nodal_forces[int(geometry.node_ids[slot])] = nodal
-        sphere_force_total += sphere_force
-        records.append(
-            SphereContactRecord(
-                element_id=int(element.element_id),
-                local_coordinates=(float(local[0]), float(local[1])),
-                contact_point=surface_point,
-                normal=normal,
-                penetration=penetration,
-                normal_force=normal_force,
-                sphere_force=sphere_force,
-                structure_force=structure_force,
-                contact_classification=_contact_classification(element, local),
-                nodal_forces=nodal_forces,
-            )
+        nodal_slots = tuple(int(slot) for slot in patch_weights)
+        nodal_forces = np.asarray(
+            [float(patch_weights[slot]) * structure_force for slot in nodal_slots],
+            dtype=float,
+        )
+        contact_work.append(
+            element_id=int(element.element_id),
+            local_coordinates=(float(local[0]), float(local[1])),
+            contact_point=surface_point,
+            normal=normal,
+            penetration=penetration,
+            normal_force=normal_force,
+            sphere_force=sphere_force,
+            structure_force=structure_force,
+            contact_classification=_contact_classification(element, local),
+            nodal_slots=nodal_slots,
+            nodal_forces=nodal_forces,
         )
 
     if bool(contact_config.beam_contact) and geometry.beam_segment_slots.shape[0]:
@@ -992,49 +1006,68 @@ def assemble_sphere_contact_load_vector(
                 continue
             sphere_force = normal_force * normal
             structure_force = -sphere_force
-            nodal_forces = {
-                int(geometry.node_ids[slot_a]): (1.0 - t_value) * structure_force,
-                int(geometry.node_ids[slot_b]): t_value * structure_force,
-            }
-            load[geometry.node_dofs[slot_a]] += nodal_forces[int(geometry.node_ids[slot_a])]
-            load[geometry.node_dofs[slot_b]] += nodal_forces[int(geometry.node_ids[slot_b])]
-            sphere_force_total += sphere_force
-            records.append(
-                SphereContactRecord(
-                    element_id=beam_id,
-                    local_coordinates=(2.0 * t_value - 1.0, 0.0),
-                    contact_point=closest[segment_index].copy(),
-                    normal=normal.copy(),
-                    penetration=penetration,
-                    normal_force=normal_force,
-                    sphere_force=sphere_force,
-                    structure_force=structure_force,
-                    contact_classification="beam",
-                    nodal_forces=nodal_forces,
-                )
+            contact_work.append(
+                element_id=beam_id,
+                local_coordinates=(2.0 * t_value - 1.0, 0.0),
+                contact_point=closest[segment_index],
+                normal=normal,
+                penetration=penetration,
+                normal_force=normal_force,
+                sphere_force=sphere_force,
+                structure_force=structure_force,
+                contact_classification="beam",
+                nodal_slots=(slot_a, slot_b),
+                nodal_forces=np.asarray(
+                    [
+                        (1.0 - t_value) * structure_force,
+                        t_value * structure_force,
+                    ],
+                    dtype=float,
+                ),
             )
 
-    if len(records) > int(contact_config.max_active_contacts):
-        deepest = max(record.penetration for record in records)
-        tie_band = 0.95 * deepest
-        preferred = {int(element_id) for element_id in preferred_element_ids}
-        records = sorted(
-            records,
-            key=lambda item: (
-                item.penetration >= tie_band and int(item.element_id) in preferred,
-                item.penetration,
-                item.normal_force,
-            ),
-            reverse=True,
-        )[: int(contact_config.max_active_contacts)]
-        load = np.zeros(total_dofs, dtype=float)
-        sphere_force_total = np.zeros(3, dtype=float)
-        for record in records:
-            sphere_force_total += record.sphere_force
-            for node_id, nodal in record.nodal_forces.items():
-                load[geometry.node_dofs[geometry.node_id_to_slot[int(node_id)]]] += nodal
+    contact_work.select_and_scatter(
+        max_active_contacts=int(contact_config.max_active_contacts),
+        preferred_element_ids=preferred_element_ids,
+        node_dofs=geometry.node_dofs,
+    )
+    return contact_work
 
-    return load, sphere_force_total, tuple(records)
+
+def assemble_sphere_contact_load_vector(
+    model: "FEModel",
+    sphere: RigidSphereImpact,
+    contact_config: SphereContactConfig,
+    sphere_position: np.ndarray,
+    sphere_velocity: np.ndarray,
+    structural_displacement: Optional[np.ndarray] = None,
+    structural_velocity: Optional[np.ndarray] = None,
+    deleted_element_ids: Sequence[int] = (),
+    contact_scale_by_element: Optional[Mapping[int, float]] = None,
+    preferred_element_ids: Sequence[int] = (),
+) -> Tuple[np.ndarray, np.ndarray, Tuple[SphereContactRecord, ...]]:
+    """Assemble contact loads and materialize the stable public records."""
+
+    geometry = _contact_geometry(model)
+    public_work_buffer = getattr(geometry.contact_work_local, "buffer", None)
+    if public_work_buffer is None:
+        public_work_buffer = ContactWorkBuffer(model.mesh.dof_manager.total_dofs)
+        geometry.contact_work_local.buffer = public_work_buffer
+    contact_work = _assemble_sphere_contact_work_buffer(
+        model,
+        sphere,
+        contact_config,
+        sphere_position,
+        sphere_velocity,
+        structural_displacement=structural_displacement,
+        structural_velocity=structural_velocity,
+        deleted_element_ids=deleted_element_ids,
+        contact_scale_by_element=contact_scale_by_element,
+        preferred_element_ids=preferred_element_ids,
+        work_buffer=public_work_buffer,
+    )
+    records = contact_work.materialize_records(SphereContactRecord, geometry.node_ids)
+    return contact_work.load.copy(), contact_work.sphere_force.copy(), records
 
 
 def _contact_default_config(sphere: RigidSphereImpact) -> SphereContactConfig:
@@ -1074,9 +1107,17 @@ def _linear_element_matrix_terms(model: "FEModel") -> Tuple[int, Tuple[LinearEle
 def _assemble_damaged_linear_matrices(
     model: "FEModel",
     element_scales: Mapping[int, float],
-    cached_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None,
+    cached_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]] | DamageMatrixPlan] = None,
 ) -> Tuple[sparse.csr_matrix, sparse.csr_matrix]:
     """Assemble K and M with per-element damage stiffness/mass scales."""
+    if isinstance(cached_terms, DamageMatrixPlan):
+        try:
+            return cached_terms.update(model, element_scales)
+        except DamageMatrixPlanFallback:
+            # Revisions can change through a progress callback.  Preserve the
+            # scalar helper contract and exact current-model semantics instead
+            # of using a stale contribution map.
+            cached_terms = None
     if cached_terms is None:
         cached_terms = _linear_element_matrix_terms(model)
     total_dofs, terms = cached_terms
@@ -1111,6 +1152,76 @@ def _assemble_damaged_linear_matrices(
         if diagonal.any():
             M = (M + sparse.diags(diagonal, 0, shape=(total_dofs, total_dofs), format="csr")).tocsr()
     return K, M
+
+
+def _assemble_damaged_linear_matrices_with_gate(
+    model: "FEModel",
+    element_scales: Mapping[int, float],
+    gate: DamageMatrixPlanGate,
+    *,
+    opportunity_index: int,
+    cached_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None,
+    plan: Optional[DamageMatrixPlan] = None,
+) -> Tuple[
+    sparse.csr_matrix,
+    sparse.csr_matrix,
+    Tuple[int, Tuple[LinearElementMatrixTerms, ...]],
+    Optional[DamageMatrixPlan],
+]:
+    """Select the incremental plan only after its production gates pass."""
+
+    cached_terms_stale = (
+        cached_terms is not None
+        and gate.cached_terms_registered
+        and not gate.cached_terms_match(model)
+    )
+    if cached_terms is None or cached_terms_stale:
+        cached_terms = _linear_element_matrix_terms(model)
+        gate.register_cached_terms(model, replacing_stale=cached_terms_stale)
+        if cached_terms_stale:
+            # A model revision invalidates both representations.  The freshly
+            # generated terms retain exact current-model scalar semantics; do
+            # not pay another incremental-plan setup in this analysis.
+            plan = None
+    elif not gate.cached_terms_registered:
+        gate.register_cached_terms(model)
+
+    use_plan = gate.consider(cached_terms, opportunity_index=int(opportunity_index))
+    if use_plan and plan is None:
+        try:
+            candidate = DamageMatrixPlan.build(model, cached_terms)
+        except MemoryError:
+            gate.reject_plan_setup("plan_setup_memory_error")
+        else:
+            if gate.accept_built_plan(candidate):
+                plan = candidate
+
+    if plan is not None:
+        try:
+            stiffness, mass = plan.update(model, element_scales)
+        except DamageMatrixPlanFallback:
+            revision_changed = not plan.is_valid(model)
+            gate.record_plan_update_fallback(plan.fallback_reason or "plan_update_fallback")
+            if revision_changed:
+                cached_terms = _linear_element_matrix_terms(model)
+                gate.register_cached_terms(model, replacing_stale=True)
+            plan = None
+            stiffness, mass = _assemble_damaged_linear_matrices(
+                model,
+                element_scales,
+                cached_terms=cached_terms,
+            )
+            gate.record_update(used_plan=False)
+        else:
+            gate.record_update(used_plan=True)
+    else:
+        stiffness, mass = _assemble_damaged_linear_matrices(
+            model,
+            element_scales,
+            cached_terms=cached_terms,
+        )
+        gate.record_update(used_plan=False)
+    return stiffness, mass, cached_terms, plan
 
 
 def _assemble_eroded_linear_matrices(
@@ -1759,6 +1870,8 @@ def _solve_transient_sphere_impact_nonlinear(
     """Implicit Newmark nonlinear impact with material/geometric element response."""
     from .nonlinear_static import _assemble_nonlinear_system, _nonlinear_state_summary, states_von_mises_map
 
+    full_coordinate_assembly_count = 0
+
     def assemble_nonlinear(
         displacements: np.ndarray,
         states: Dict[int, Any],
@@ -1766,6 +1879,7 @@ def _solve_transient_sphere_impact_nonlinear(
         tangent: bool,
         scales: Optional[Mapping[int, float]] = None,
     ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
+        nonlocal full_coordinate_assembly_count
         kwargs = {
             "deleted_element_ids": tuple(deleted_element_ids),
             "residual_stiffness_fraction": float(
@@ -1776,7 +1890,7 @@ def _solve_transient_sphere_impact_nonlinear(
         if scales:
             kwargs["element_stiffness_scales"] = scales
         try:
-            return _assemble_nonlinear_system(
+            result = _assemble_nonlinear_system(
                 model,
                 displacements,
                 states,
@@ -1784,11 +1898,13 @@ def _solve_transient_sphere_impact_nonlinear(
                 tangent=tangent,
                 **kwargs,
             )
+            full_coordinate_assembly_count += 1
+            return result
         except TypeError as exc:
             if "element_stiffness_scales" not in str(exc):
                 raise
             kwargs.pop("element_stiffness_scales", None)
-            return _assemble_nonlinear_system(
+            result = _assemble_nonlinear_system(
                 model,
                 displacements,
                 states,
@@ -1796,6 +1912,8 @@ def _solve_transient_sphere_impact_nonlinear(
                 tangent=tangent,
                 **kwargs,
             )
+            full_coordinate_assembly_count += 1
+            return result
 
     cancellation_safe_point(cancellation_token, "sphere_impact.nonlinear.start")
     nl = nonlinear_config or NonlinearTransientConfig(enabled=True)
@@ -1840,6 +1958,16 @@ def _solve_transient_sphere_impact_nonlinear(
         recovery_config=recovery,
     )
     enforce_memory_limit(preflight_memory, transient_config.resource_config, context="solve_transient_sphere_impact.nonlinear")
+    damage_matrix_gate = DamageMatrixPlanGate(
+        total_opportunities=max(int(len(times) - 1), 0),
+        preflight_memory_bytes=int(preflight_memory.total_bytes_estimate),
+        configured_memory_limit_bytes=(
+            None
+            if transient_config.resource_config is None
+            or transient_config.resource_config.memory_limit_bytes is None
+            else int(transient_config.resource_config.memory_limit_bytes)
+        ),
+    )
 
     q = _full_initial_vector(transient_config.initial_displacement, total_dofs)
     v_full = _full_initial_vector(transient_config.initial_velocity, total_dofs)
@@ -1854,6 +1982,7 @@ def _solve_transient_sphere_impact_nonlinear(
     plastic_damage_states: Dict[int, Dict[str, Any]] = {}
     damage_scale_by_element: Dict[int, float] = {}
     linear_matrix_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None
+    damage_matrix_plan: Optional[DamageMatrixPlan] = None
     if (
         bool(nl.equilibrate_base_load)
         and transient_config.initial_displacement is None
@@ -1920,6 +2049,20 @@ def _solve_transient_sphere_impact_nonlinear(
     committed_states = trial0
     F_int_prev = np.asarray(F_int0, dtype=float).copy()
     F0_red = np.asarray(T.T @ (base_load - F_int0), dtype=float).reshape(-1)
+    from .impact_reduced_assembly import prepare_impact_reduced_assembly
+
+    impact_reduced_assembly = prepare_impact_reduced_assembly(
+        model,
+        T,
+        u0,
+        num_layers=int(nl.num_layers),
+        kinematics=str(nl.kinematics),
+        plastic_damage_enabled=plastic_damage_config is not None,
+        num_steps=max(int(len(times) - 1), 0),
+        max_iterations=int(nl.max_iterations),
+    )
+    base_load_red = np.asarray(T.T @ base_load, dtype=float).reshape(-1)
+    F_int_prev_red = np.asarray(T.T @ F_int_prev, dtype=float).reshape(-1)
     mass_handle = factorize(M_red, MatrixClass.SYMMETRIC_SEMIDEFINITE, signature="sphere_impact.nl.initial_mass")
     a_red = np.asarray(mass_handle.solve(F0_red - C_red @ v_red), dtype=float).reshape(-1)
 
@@ -2002,7 +2145,12 @@ def _solve_transient_sphere_impact_nonlinear(
             # force: exact strain energy for the elastic response, and an
             # internal-work proxy (elastic + dissipated) once plasticity is
             # active.
-            energy_strain.append(0.5 * float(full_u @ F_int_prev))
+            if impact_reduced_assembly.active:
+                # Direct assembly is eligible only for u0 == 0, hence
+                # full_u @ F_int == q @ (T.T @ F_int) exactly.
+                energy_strain.append(0.5 * float(q_state @ F_int_prev_red))
+            else:
+                energy_strain.append(0.5 * float(full_u @ F_int_prev))
         # One summary pass per saved step: it walks every element state, so
         # repeating it for the plastic-work history, the state history and
         # the progress payload triples a cost that rivals the Newton solves.
@@ -2034,7 +2182,10 @@ def _solve_transient_sphere_impact_nonlinear(
                 max_equivalent_plastic_strain=max_alpha,
             )
 
-    initial_load, initial_sphere_force, initial_records = assemble_sphere_contact_load_vector(
+    contact_work_counters = ContactWorkCounters()
+    contact_work_buffer = ContactWorkBuffer(total_dofs, counters=contact_work_counters)
+    contact_geometry = _contact_geometry(model)
+    initial_contact_work = _assemble_sphere_contact_work_buffer(
         model,
         sphere,
         config,
@@ -2044,11 +2195,21 @@ def _solve_transient_sphere_impact_nonlinear(
         structural_velocity=np.asarray(T @ v_red, dtype=float).reshape(-1),
         deleted_element_ids=tuple(deleted_element_ids),
         contact_scale_by_element=damage_scale_by_element,
+        work_buffer=contact_work_buffer,
+    )
+    initial_load = initial_contact_work.load.copy()
+    initial_sphere_force = initial_contact_work.sphere_force.copy()
+    initial_records = initial_contact_work.materialize_records(
+        SphereContactRecord,
+        contact_geometry.node_ids,
     )
     save_state(float(times[0]), q_red, v_red, a_red, sphere_position, sphere_velocity, sphere_acceleration, initial_sphere_force, initial_records)
     sticky_contact_ids: Tuple[int, ...] = tuple(int(record.element_id) for record in initial_records)
+    tangent_reuse = ImpactTangentReuseController(int(nl.tangent_reuse_iterations))
+    tangent_reuse.set_initial_contact(initial_records)
 
     load_prev = base_load + initial_load
+    load_prev_red = np.asarray(T.T @ load_prev, dtype=float).reshape(-1)
     sphere_force_prev = initial_sphere_force.copy()
     impulse = np.zeros(total_dofs, dtype=float)
     sphere_impulse = np.zeros(3, dtype=float)
@@ -2123,8 +2284,10 @@ def _solve_transient_sphere_impact_nonlinear(
             dict(plastic_damage_states),
             dict(damage_scale_by_element),
             load_prev.copy(),
+            load_prev_red.copy(),
             sphere_force_prev.copy(),
             F_int_prev.copy(),
+            F_int_prev_red.copy(),
         )
         if sub_time - dt < sphere.t_start <= sub_time and np.linalg.norm(sphere_velocity) == 0.0:
             sphere_velocity = sphere.travel_velocity.copy()
@@ -2134,10 +2297,12 @@ def _solve_transient_sphere_impact_nonlinear(
         a3 = 1.0 / (2.0 * beta) - 1.0
         a4 = gamma / beta - 1.0
         a5 = dt * (gamma / (2.0 * beta) - 1.0)
+        tangent_reuse.begin_substep(dt, damage_scale_by_element, deleted_element_ids)
         q_trial = q_red.copy()
         contact_load = np.zeros(total_dofs, dtype=float)
         sphere_force = np.zeros(3, dtype=float)
         records: Tuple[SphereContactRecord, ...] = tuple()
+        last_contact_work: Optional[ContactWorkBuffer] = None
         converged = False
         residual_norm = float("inf")
         displacement_increment = float("inf")
@@ -2162,32 +2327,106 @@ def _solve_transient_sphere_impact_nonlinear(
             if status_callback:
                 status_callback(f"\r  Time {sub_time:.4f} s, Iteration {iteration}: Res {residual_norm:.2e}")
             full_u = reconstruct_full_solution(T, q_trial, u0)
-            F_int, K_T, trial_states = assemble_nonlinear(
-                full_u,
-                committed_states,
-                tangent=True,
-                scales=damage_scale_by_element,
-            )
+            refresh_tangent, refresh_reasons = tangent_reuse.refresh_decision()
+            if impact_reduced_assembly.active:
+                F_int_red, K_T_red, trial_states = impact_reduced_assembly.assemble(
+                    full_u,
+                    committed_states,
+                    tangent=refresh_tangent,
+                )
+                F_int = None
+                K_T = None
+            else:
+                F_int, K_T, trial_states = assemble_nonlinear(
+                    full_u,
+                    committed_states,
+                    tangent=refresh_tangent,
+                    scales=damage_scale_by_element,
+                )
+                F_int_red = None
+                K_T_red = None
             a_trial = a0 * (q_trial - q_red) - a2 * v_red - a3 * a_red
             v_trial = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_trial)
-            if alpha_h != 0.0:
-                weighted_force = one_plus_alpha * (base_load + contact_load - F_int) - alpha_h * (load_prev - F_int_prev)
-                residual = (
-                    np.asarray(T.T @ weighted_force, dtype=float).reshape(-1)
-                    - one_plus_alpha * (C_red @ v_trial)
-                    + alpha_h * (C_red @ v_red)
-                    - M_red @ a_trial
+            if impact_reduced_assembly.active:
+                contact_load_red = np.asarray(T.T @ contact_load, dtype=float).reshape(-1)
+                external_load_red = base_load_red + contact_load_red
+                if alpha_h != 0.0:
+                    weighted_force_red = (
+                        one_plus_alpha * (external_load_red - F_int_red)
+                        - alpha_h * (load_prev_red - F_int_prev_red)
+                    )
+                    residual = (
+                        weighted_force_red
+                        - one_plus_alpha * (C_red @ v_trial)
+                        + alpha_h * (C_red @ v_red)
+                        - M_red @ a_trial
+                    )
+                else:
+                    residual = (
+                        external_load_red
+                        - F_int_red
+                        - C_red @ v_trial
+                        - M_red @ a_trial
+                    )
+                reference = max(
+                    float(np.linalg.norm(external_load_red)),
+                    float(np.linalg.norm(F_int_red)),
+                    1.0,
                 )
             else:
-                residual = np.asarray(T.T @ (base_load + contact_load - F_int), dtype=float).reshape(-1) - C_red @ v_trial - M_red @ a_trial
+                if alpha_h != 0.0:
+                    weighted_force = one_plus_alpha * (base_load + contact_load - F_int) - alpha_h * (load_prev - F_int_prev)
+                    residual = (
+                        np.asarray(T.T @ weighted_force, dtype=float).reshape(-1)
+                        - one_plus_alpha * (C_red @ v_trial)
+                        + alpha_h * (C_red @ v_red)
+                        - M_red @ a_trial
+                    )
+                else:
+                    residual = np.asarray(T.T @ (base_load + contact_load - F_int), dtype=float).reshape(-1) - C_red @ v_trial - M_red @ a_trial
+                reference = max(float(np.linalg.norm(np.asarray(T.T @ (base_load + contact_load), dtype=float))), float(np.linalg.norm(np.asarray(T.T @ F_int, dtype=float))), 1.0)
             residual_norm = float(np.linalg.norm(residual))
-            reference = max(float(np.linalg.norm(np.asarray(T.T @ (base_load + contact_load), dtype=float))), float(np.linalg.norm(np.asarray(T.T @ F_int, dtype=float))), 1.0)
-            K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+            trial_refresh_reasons = tangent_reuse.assess_trial_state(residual_norm, trial_states)
+            if not refresh_tangent and trial_refresh_reasons:
+                # A force-only trial exposed a stall or a material-state
+                # transition.  Reassemble the tangent at the same iterate so
+                # the invalidation takes effect before solving the correction.
+                if impact_reduced_assembly.active:
+                    F_int_red, K_T_red, trial_states = impact_reduced_assembly.assemble(
+                        full_u,
+                        committed_states,
+                        tangent=True,
+                    )
+                else:
+                    F_int, K_T, trial_states = assemble_nonlinear(
+                        full_u,
+                        committed_states,
+                        tangent=True,
+                        scales=damage_scale_by_element,
+                    )
+                refresh_tangent = True
+                refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
+            elif refresh_tangent and trial_refresh_reasons:
+                refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
             try:
-                handle = factorize(K_eff, MatrixClass.SYMMETRIC_INDEFINITE, signature=f"sphere_impact.nl.effective:{dt:.16g}:{iteration}")
+                if refresh_tangent:
+                    if impact_reduced_assembly.active:
+                        K_eff = (one_plus_alpha * K_T_red + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+                    else:
+                        K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+                    tangent_reuse.record_tangent_assembly(refresh_reasons)
+                    handle = factorize(K_eff, MatrixClass.SYMMETRIC_INDEFINITE, signature=f"sphere_impact.nl.effective:{dt:.16g}:{iteration}")
+                else:
+                    handle = tangent_reuse.cached_handle
+                    if handle is None:  # defensive; refresh_decision guards this
+                        raise RuntimeError("impact tangent reuse cache is unexpectedly empty")
                 factor_diagnostics = handle.diagnostics()
                 delta = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-                factorization_count += 1
+                if refresh_tangent:
+                    tangent_reuse.record_factorization(handle)
+                    factorization_count += 1
+                else:
+                    tangent_reuse.record_reuse()
                 solve_count += 1
             except Exception:
                 status = "nonlinear_tangent_failed"
@@ -2202,6 +2441,7 @@ def _solve_transient_sphere_impact_nonlinear(
                 factor = 1.0
                 while factor > float(nl.min_line_search_factor) and float(np.linalg.norm(factor * delta)) > 10.0 * max(float(np.linalg.norm(q_trial)), 1.0):
                     factor *= 0.5
+            tangent_reuse.observe_line_search(factor)
             q_next = q_trial + factor * delta
             displacement_increment = float(np.linalg.norm(factor * delta))
             residual_energy_increment = abs(float(np.dot(factor * delta, residual)))
@@ -2214,7 +2454,7 @@ def _solve_transient_sphere_impact_nonlinear(
             sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
             full_u_next = reconstruct_full_solution(T, q_next, u0)
             full_v_next = np.asarray(T @ v_next, dtype=float).reshape(-1)
-            new_contact_load, new_sphere_force, new_records = assemble_sphere_contact_load_vector(
+            last_contact_work = _assemble_sphere_contact_work_buffer(
                 model,
                 sphere,
                 config,
@@ -2225,12 +2465,22 @@ def _solve_transient_sphere_impact_nonlinear(
                 deleted_element_ids=tuple(deleted_element_ids),
                 contact_scale_by_element=damage_scale_by_element,
                 preferred_element_ids=sticky_contact_ids,
+                work_buffer=contact_work_buffer,
             )
-            if new_records:
-                sticky_contact_ids = tuple(int(record.element_id) for record in new_records)
-            contact_scale = max(float(np.linalg.norm(new_sphere_force)), 1.0)
-            contact_change = float(np.linalg.norm(new_sphere_force - sphere_force))
-            contact_load, sphere_force, records = new_contact_load, new_sphere_force, new_records
+            if last_contact_work.selected_indices.size:
+                sticky_contact_ids = last_contact_work.active_element_ids
+            contact_scale = max(float(np.linalg.norm(last_contact_work.sphere_force)), 1.0)
+            contact_change = float(np.linalg.norm(last_contact_work.sphere_force - sphere_force))
+            np.copyto(contact_load, last_contact_work.load)
+            np.copyto(sphere_force, last_contact_work.sphere_force)
+            tangent_reuse.observe_contact_signature(
+                tuple(
+                    zip(
+                        last_contact_work.active_element_ids,
+                        last_contact_work.active_classifications,
+                    )
+                )
+            )
             q_trial = q_next
             displacement_limit = float(nl.displacement_tolerance) * max(float(np.linalg.norm(q_next)), 1.0)
             residual_limit = float(nl.residual_tolerance) * reference
@@ -2275,6 +2525,11 @@ def _solve_transient_sphere_impact_nonlinear(
                 elif iteration >= int(nl.max_iterations) - 2:
                     distress_halvings = min(distress_halvings + 1, 2)
                 break
+        if last_contact_work is not None:
+            records = last_contact_work.materialize_records(
+                SphereContactRecord,
+                contact_geometry.node_ids,
+            )
         if not converged:
             if status in {"nonlinear_tangent_failed", "nonlinear_iteration_failed"}:
                 pass
@@ -2291,8 +2546,10 @@ def _solve_transient_sphere_impact_nonlinear(
                     plastic_damage_states,
                     damage_scale_by_element,
                     load_prev,
+                    load_prev_red,
                     sphere_force_prev,
                     F_int_prev,
+                    F_int_prev_red,
                 ) = pre_state
                 midpoint = 0.5 * (float(segment_start) + float(sub_time))
                 segments.insert(0, (step_index, midpoint, float(sub_time), False))
@@ -2330,15 +2587,23 @@ def _solve_transient_sphere_impact_nonlinear(
                 decomposition: Dict[str, float] = {}
                 try:
                     full_u_fail = reconstruct_full_solution(T, q_trial, u0)
-                    F_int_fail, _K_unused, _states_unused = assemble_nonlinear(
-                        full_u_fail, committed_states, tangent=False, scales=damage_scale_by_element
-                    )
+                    if impact_reduced_assembly.active:
+                        F_int_fail_red, _K_unused, _states_unused = impact_reduced_assembly.assemble(
+                            full_u_fail,
+                            committed_states,
+                            tangent=False,
+                        )
+                    else:
+                        F_int_fail, _K_unused, _states_unused = assemble_nonlinear(
+                            full_u_fail, committed_states, tangent=False, scales=damage_scale_by_element
+                        )
+                        F_int_fail_red = np.asarray(T.T @ F_int_fail, dtype=float).reshape(-1)
                     a_fail = a0 * (q_trial - q_red) - a2 * v_red - a3 * a_red
                     v_fail = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_fail)
                     decomposition = {
                         "residual_contact_norm": float(np.linalg.norm(np.asarray(T.T @ contact_load, dtype=float))),
                         "residual_base_load_norm": float(np.linalg.norm(np.asarray(T.T @ base_load, dtype=float))),
-                        "residual_internal_norm": float(np.linalg.norm(np.asarray(T.T @ F_int_fail, dtype=float))),
+                        "residual_internal_norm": float(np.linalg.norm(F_int_fail_red)),
                         "residual_damping_norm": float(np.linalg.norm(C_red @ v_fail)),
                         "residual_inertia_norm": float(np.linalg.norm(M_red @ a_fail)),
                     }
@@ -2386,7 +2651,14 @@ def _solve_transient_sphere_impact_nonlinear(
         impulse += 0.5 * (load_prev + base_load + contact_load) * dt
         sphere_impulse += 0.5 * (sphere_force_prev + sphere_force) * dt
         load_prev = base_load + contact_load
-        F_int_prev = F_int
+        load_prev_red = np.asarray(T.T @ load_prev, dtype=float).reshape(-1)
+        if impact_reduced_assembly.active:
+            # The reduced plan owns a persistent force buffer, so retain an
+            # accepted-step copy for HHT history and internal work.
+            F_int_prev_red = np.asarray(F_int_red, dtype=float).copy()
+        else:
+            F_int_prev = F_int
+            F_int_prev_red = np.asarray(T.T @ F_int_prev, dtype=float).reshape(-1)
         sphere_force_prev = sphere_force.copy()
         q_red, v_red, a_red = q_next, v_next, a_next
         sphere_position, sphere_velocity, sphere_acceleration = sphere_x_next, sphere_v_next, sphere_a_next
@@ -2413,9 +2685,17 @@ def _solve_transient_sphere_impact_nonlinear(
             if damage_changed:
                 filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                 base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                if linear_matrix_terms is None:
-                    linear_matrix_terms = _linear_element_matrix_terms(model)
-                _K_scaled, M_scaled = _assemble_damaged_linear_matrices(model, damage_scale_by_element, cached_terms=linear_matrix_terms)
+                base_load_red = np.asarray(T.T @ base_load, dtype=float).reshape(-1)
+                _K_scaled, M_scaled, linear_matrix_terms, damage_matrix_plan = (
+                    _assemble_damaged_linear_matrices_with_gate(
+                        model,
+                        damage_scale_by_element,
+                        damage_matrix_gate,
+                        opportunity_index=int(step_index),
+                        cached_terms=linear_matrix_terms,
+                        plan=damage_matrix_plan,
+                    )
+                )
                 M_red = (T.T @ M_scaled @ T).tocsr()
                 C_red = (transient_config.rayleigh_alpha * M_red + transient_config.rayleigh_beta * K_red0).tocsr()
                 scoped_total = sum(
@@ -2563,6 +2843,10 @@ def _solve_transient_sphere_impact_nonlinear(
     energy_drift = 0.0
     if nonzero_energy.size:
         energy_drift = float((np.max(nonzero_energy) - np.min(nonzero_energy)) / max(abs(nonzero_energy[0]), 1.0e-30))
+    impact_reduced_diagnostics = impact_reduced_assembly.diagnostics()
+    impact_reduced_diagnostics["full_coordinate_assembly_count"] = int(
+        full_coordinate_assembly_count
+    )
     diagnostics = {
         "method": "nonlinear_newmark_sphere_penalty_contact",
         "solution_control": "implicit_newmark_time_domain",
@@ -2588,6 +2872,31 @@ def _solve_transient_sphere_impact_nonlinear(
         "nonlinear_failure_summary": nonlinear_failure_summary,
         "factorization_count": int(factorization_count),
         "solve_count": int(solve_count),
+        "direct_reduced_assembly_count": int(
+            impact_reduced_assembly.direct_reduced_assembly_count
+        ),
+        "full_coordinate_assembly_count": int(full_coordinate_assembly_count),
+        "impact_reduced_assembly": impact_reduced_diagnostics,
+        "tangent_assembly_count": int(tangent_reuse.tangent_assembly_count),
+        "tangent_reuse_count": int(tangent_reuse.tangent_reuse_count),
+        "factorization_reuse_count": int(tangent_reuse.factorization_reuse_count),
+        "refresh_reason_counts": dict(sorted(tangent_reuse.refresh_reason_counts.items())),
+        "active_contact_set_changes": int(tangent_reuse.active_contact_set_changes),
+        "tangent_reuse": tangent_reuse.diagnostics(),
+        "contact_public_materialization_count": int(
+            contact_work_counters.public_materialization_count
+        ),
+        "contact_direct_full_scatter_count": int(
+            contact_work_counters.direct_full_scatter_count
+        ),
+        "contact_work_buffer": {
+            "path": "compact_internal_candidates_lazy_public_records",
+            "lazy_public_materialization": True,
+            **contact_work_counters.diagnostics(),
+        },
+        "linear_matrix_terms_cached": linear_matrix_terms is not None,
+        "damage_matrix_plan_selection": damage_matrix_gate.diagnostics(),
+        "damage_matrix_plan": None if damage_matrix_plan is None else damage_matrix_plan.diagnostics(),
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": factor_diagnostics,
         "constraint_info": constraint_info,
@@ -2707,6 +3016,7 @@ def solve_transient_sphere_impact(
     max_damage_utilization = 0.0
     damage_scale_by_element: Dict[int, float] = {}
     linear_matrix_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None
+    damage_matrix_plan: Optional[DamageMatrixPlan] = None
     base_load, base_load_info = assemble_load_vector(model, base_load_case)
     zero_load = np.zeros(total_dofs, dtype=float)
     K_red, _zero_red, T, u0, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
@@ -2734,6 +3044,16 @@ def solve_transient_sphere_impact(
         recovery_config=recovery,
     )
     enforce_memory_limit(preflight_memory, transient_config.resource_config, context="solve_transient_sphere_impact")
+    damage_matrix_gate = DamageMatrixPlanGate(
+        total_opportunities=max(int(len(times) - 1), 0),
+        preflight_memory_bytes=int(preflight_memory.total_bytes_estimate),
+        configured_memory_limit_bytes=(
+            None
+            if transient_config.resource_config is None
+            or transient_config.resource_config.memory_limit_bytes is None
+            else int(transient_config.resource_config.memory_limit_bytes)
+        ),
+    )
 
     q = _full_initial_vector(transient_config.initial_displacement, total_dofs)
     v_full = _full_initial_vector(transient_config.initial_velocity, total_dofs)
@@ -2978,6 +3298,9 @@ def solve_transient_sphere_impact(
                 sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
                 full_u = reconstruct_full_solution(T, q_next, u0)
                 full_v = np.asarray(T @ v_next, dtype=float).reshape(-1)
+                # Linear impact fracture and capacity damage consume public
+                # records below.  Keep eager materialization on this path;
+                # only the nonlinear state-driven loop uses lazy records.
                 new_contact_load, new_sphere_force, new_records = assemble_sphere_contact_load_vector(
                     model,
                     sphere,
@@ -3073,15 +3396,22 @@ def solve_transient_sphere_impact(
                     fracture_deleted_element_ids.update(record.element_id for record in new_fracture_records)
                     filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                     base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                    if linear_matrix_terms is None:
-                        linear_matrix_terms = _linear_element_matrix_terms(model)
                     fracture_scales = {int(element_id): float(scale) for element_id, scale in damage_scale_by_element.items()}
                     for element_id in deleted_element_ids:
                         fracture_scales[int(element_id)] = min(
                             fracture_scales.get(int(element_id), 1.0),
                             float(fracture_config.residual_stiffness_fraction),
                         )
-                    K, M = _assemble_damaged_linear_matrices(model, fracture_scales, cached_terms=linear_matrix_terms)
+                    K, M, linear_matrix_terms, damage_matrix_plan = (
+                        _assemble_damaged_linear_matrices_with_gate(
+                            model,
+                            fracture_scales,
+                            damage_matrix_gate,
+                            opportunity_index=int(step_index),
+                            cached_terms=linear_matrix_terms,
+                            plan=damage_matrix_plan,
+                        )
+                    )
                     eroded_matrix_rebuild_count += 1
                     K_red = (T.T @ K @ T).tocsr()
                     M_red = (T.T @ M @ T).tocsr()
@@ -3150,9 +3480,16 @@ def solve_transient_sphere_impact(
                         )
                     filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                     base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                    if linear_matrix_terms is None:
-                        linear_matrix_terms = _linear_element_matrix_terms(model)
-                    K, M = _assemble_damaged_linear_matrices(model, damage_scale_by_element, cached_terms=linear_matrix_terms)
+                    K, M, linear_matrix_terms, damage_matrix_plan = (
+                        _assemble_damaged_linear_matrices_with_gate(
+                            model,
+                            damage_scale_by_element,
+                            damage_matrix_gate,
+                            opportunity_index=int(step_index),
+                            cached_terms=linear_matrix_terms,
+                            plan=damage_matrix_plan,
+                        )
+                    )
                     eroded_matrix_rebuild_count += 1
                     K_red = (T.T @ K @ T).tocsr()
                     M_red = (T.T @ M @ T).tocsr()
@@ -3346,6 +3683,13 @@ def solve_transient_sphere_impact(
         "eroded_matrix_rebuild_count": int(eroded_matrix_rebuild_count),
         "damage_state_update_count": int(damage_state_update_count),
         "linear_matrix_terms_cached": linear_matrix_terms is not None,
+        "damage_matrix_plan_selection": damage_matrix_gate.diagnostics(),
+        "damage_matrix_plan": None if damage_matrix_plan is None else damage_matrix_plan.diagnostics(),
+        "contact_work_buffer": {
+            "path": "compact_candidates_eager_public_records",
+            "lazy_public_materialization": False,
+            "fallback_reason": "linear_fracture_damage_record_semantics",
+        },
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": cached_solver_diagnostics,
         "constraint_info": constraint_info,

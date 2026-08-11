@@ -343,6 +343,8 @@ class ShellStateBatch(Mapping[int, Any]):
         self._trial_buffer = np.empty_like(self._committed_buffer)
         self._packed_mask = np.ones(layout.n_elements, dtype=bool)
         self._deleted_mask = np.zeros(layout.n_elements, dtype=bool)
+        self._present_committed = np.zeros(layout.n_elements, dtype=bool)
+        self._present_trial_stamps = np.zeros(layout.n_elements, dtype=np.int64)
         self._sidecars: list[Mapping[str, Any]] = [
             MappingProxyType({}) for _ in range(layout.n_elements)
         ]
@@ -465,9 +467,15 @@ class ShellStateBatch(Mapping[int, Any]):
         views = self._views(self._committed_buffer)
         points = self.layout.points_per_element
         for index, element_id in enumerate(self.layout.element_ids):
+            present = element_id in committed_states
+            self._present_committed[index] = present
             state = committed_states.get(element_id)
             self._sidecars[index] = _extract_sidecar(state)
-            reason = _fallback_reason(state, self.layout)
+            reason = (
+                "state_is_explicit_none"
+                if present and state is None
+                else _fallback_reason(state, self.layout)
+            )
             if reason is not None:
                 self._packed_mask[index] = False
                 self._fallback_committed[element_id] = _owned_copy(state)
@@ -606,6 +614,7 @@ class ShellStateBatch(Mapping[int, Any]):
                     active_in_input = ~self._deleted_mask[indices]
                     getattr(trial_views, field_name)[active] = array[active_in_input]
                     self._write_stamps[_FIELD_INDEX[field_name], active] = self._serial
+            self._present_trial_stamps[active] = self._serial
             elapsed = time.perf_counter() - start
             self._metrics["state_trial_update_seconds"] += elapsed
             self._metrics["state_trial_update_count"] += 1
@@ -658,10 +667,12 @@ class ShellStateBatch(Mapping[int, Any]):
                         int(element_id), "legacy_dictionary_fallback"
                     ),
                 )
+                self._present_trial_stamps[index] = self._serial
                 return
             reason = _fallback_reason(owned_state, self.layout)
             if reason is not None:
                 self._trial_legacy[int(element_id)] = (owned_state, reason)
+                self._present_trial_stamps[index] = self._serial
                 return
             updates = {
                 key: owned_state[key]
@@ -699,6 +710,19 @@ class ShellStateBatch(Mapping[int, Any]):
             result[key] = _thaw_value(value)
         return result
 
+    def _is_present(
+        self,
+        index: int,
+        token: Optional[StateTrialToken],
+    ) -> bool:
+        return bool(
+            self._present_committed[index]
+            or (
+                token is not None
+                and self._present_trial_stamps[index] == self._serial
+            )
+        )
+
     def materialize(
         self,
         *,
@@ -718,6 +742,8 @@ class ShellStateBatch(Mapping[int, Any]):
             for index_value in indices:
                 index = int(index_value)
                 element_id = self.layout.element_ids[index]
+                if not self._is_present(index, trial_token):
+                    continue
                 if trial_token is not None and element_id in self._trial_legacy:
                     result[element_id] = _owned_copy(self._trial_legacy[element_id][0])
                 elif not self._packed_mask[index]:
@@ -779,6 +805,10 @@ class ShellStateBatch(Mapping[int, Any]):
                 next_fallback[element_id] = _owned_copy(state)
                 self._fallback_reasons[element_id] = reason
             self._fallback_committed = next_fallback
+            self._present_committed = np.logical_or(
+                self._present_committed,
+                self._present_trial_stamps == self._serial,
+            )
 
             self._committed_buffer, self._trial_buffer = (
                 self._trial_buffer,
@@ -838,6 +868,9 @@ class ShellStateBatch(Mapping[int, Any]):
                 "dictionary_fallback_element_count": len(self.fallback_element_ids),
                 "dictionary_fallback_reasons": fallback_reasons,
                 "deleted_element_count": int(np.count_nonzero(self._deleted_mask)),
+                "committed_present_element_count": int(
+                    np.count_nonzero(self._present_committed)
+                ),
                 "generation": int(self._generation),
                 **{
                     key: (_owned_copy(value) if isinstance(value, dict) else int(value))
@@ -858,10 +891,14 @@ class ShellStateBatch(Mapping[int, Any]):
         return self.materialize(element_ids=(key,))[key]
 
     def __iter__(self) -> Iterator[int]:
-        return iter(self.layout.element_ids)
+        return (
+            element_id
+            for index, element_id in enumerate(self.layout.element_ids)
+            if bool(self._present_committed[index])
+        )
 
     def __len__(self) -> int:
-        return self.layout.n_elements
+        return int(np.count_nonzero(self._present_committed))
 
 
 class NonlinearStateStore(Mapping[int, Any]):
@@ -921,6 +958,10 @@ class NonlinearStateStore(Mapping[int, Any]):
     @property
     def generation(self) -> int:
         return int(self._generation)
+
+    @property
+    def has_active_trial(self) -> bool:
+        return self._active_token is not None
 
     def add_shell_batch(
         self,
@@ -996,6 +1037,22 @@ class NonlinearStateStore(Mapping[int, Any]):
 
         return self.begin_trial()
 
+    def active_trial_token(self) -> StateTrialToken:
+        """Return the active token for an assembly evaluator."""
+
+        with self._lock:
+            if self._active_token is None:
+                raise StateTransactionError("No nonlinear-state trial is active")
+            return self._active_token
+
+    def replace_trial(self) -> StateTrialToken:
+        """Reject any prior candidate and begin another from committed state."""
+
+        with self._lock:
+            if self._active_token is not None:
+                self.discard_trial(self._active_token)
+            return self.begin_trial()
+
     def _require_active(self, token: StateTrialToken) -> None:
         valid = bool(
             isinstance(token, StateTrialToken)
@@ -1022,6 +1079,21 @@ class NonlinearStateStore(Mapping[int, Any]):
                 **fields,
             )
             return result
+
+    def shell_trial_for_layout(
+        self,
+        token: StateTrialToken,
+        layout: ShellStateLayout,
+    ) -> Optional[tuple[ShellStateBatch, StateTrialToken]]:
+        """Resolve a registered batch and its child transaction token."""
+
+        with self._lock:
+            self._require_active(token)
+            batch = self.shell_batch_for_layout(layout)
+            if batch is None:
+                return None
+            key = self._element_to_batch[layout.element_ids[0]]
+            return batch, self._batch_trial_tokens[key]
 
     def _validate_fallback_sidecar(self, element_id: int, state: Any) -> Any:
         sidecar = self._fallback_sidecars.get(element_id, MappingProxyType({}))
@@ -1066,7 +1138,11 @@ class NonlinearStateStore(Mapping[int, Any]):
                     self._fallback_trial[key] = self._validate_fallback_sidecar(key, state)
                     self._trial_update_seconds += time.perf_counter() - start
             else:
-                raise KeyError(f"Element state {key} is not registered")
+                # Scalar/non-shell elements can acquire their first material
+                # history during this candidate.  It becomes visible only if
+                # the enclosing increment is committed.
+                self._fallback_trial[key] = _owned_copy(state)
+                self._trial_update_seconds += time.perf_counter() - start
 
     def set_trial_states(
         self,
@@ -1110,6 +1186,9 @@ class NonlinearStateStore(Mapping[int, Any]):
                     }
                 )
                 self._fallback_committed = next_fallback
+                for element_id, state in self._fallback_trial.items():
+                    if element_id not in self._fallback_sidecars:
+                        self._fallback_sidecars[element_id] = _extract_sidecar(state)
             self._generation += 1
             self._active_token = None
             self._batch_trial_tokens = {}
@@ -1162,9 +1241,64 @@ class NonlinearStateStore(Mapping[int, Any]):
                     else state
                 )
                 result[element_id] = _owned_copy(source)
+            if trial_token is not None:
+                for element_id, state in self._fallback_trial.items():
+                    if element_id not in result:
+                        result[element_id] = _owned_copy(state)
             self._materialization_seconds += time.perf_counter() - start
             self._materialization_count += 1
             return result
+
+    def trial_view(self, token: StateTrialToken) -> "NonlinearStateTrialView":
+        with self._lock:
+            self._require_active(token)
+            return NonlinearStateTrialView(self, token)
+
+    def _trial_keys(self, token: StateTrialToken) -> tuple[int, ...]:
+        self._require_active(token)
+        keys: list[int] = []
+        for batch_key, batch in self._batches.items():
+            child_token = self._batch_trial_tokens[batch_key]
+            for index, element_id in enumerate(batch.layout.element_ids):
+                if batch._is_present(index, child_token):
+                    keys.append(element_id)
+        keys.extend(
+            element_id
+            for element_id in self._fallback_committed
+            if element_id not in keys
+        )
+        keys.extend(
+            element_id
+            for element_id in self._fallback_trial
+            if element_id not in keys
+        )
+        return tuple(keys)
+
+    def _materialize_trial_element(
+        self,
+        token: StateTrialToken,
+        element_id: int,
+    ) -> Any:
+        with self._lock:
+            self._require_active(token)
+            key = int(element_id)
+            batch_key = self._element_to_batch.get(key)
+            if batch_key is not None:
+                child_token = self._batch_trial_tokens[batch_key]
+                result = self._batches[batch_key].materialize(
+                    element_ids=(key,),
+                    trial_token=child_token,
+                )
+                try:
+                    return result[key]
+                except KeyError as exc:
+                    raise KeyError(key) from exc
+            if key in self._fallback_trial:
+                return _owned_copy(self._fallback_trial[key])
+            try:
+                return _owned_copy(self._fallback_committed[key])
+            except KeyError as exc:
+                raise KeyError(key) from exc
 
     def materialize_owned(
         self,
@@ -1175,6 +1309,40 @@ class NonlinearStateStore(Mapping[int, Any]):
         """Explicitly named alias emphasizing the ownership guarantee."""
 
         return self.materialize(trial_token=trial_token, policy=policy)
+
+    def max_equivalent_plastic_strain(self) -> float:
+        """Return the committed alpha envelope without public materialization.
+
+        Accepted-increment progress reporting needs this scalar frequently.  A
+        direct reduction keeps the normal lifecycle entirely in solver-owned
+        arrays; dictionary fallbacks are inspected in place and remain exact.
+        """
+
+        with self._lock:
+            maximum = 0.0
+            for batch in self._batches.values():
+                packed_present = np.logical_and(
+                    batch._packed_mask,
+                    batch._present_committed,
+                )
+                if np.any(packed_present):
+                    alpha = batch._views(batch._committed_buffer).alpha[packed_present]
+                    if alpha.size:
+                        maximum = max(maximum, float(np.max(alpha)))
+                for element_id, state in batch._fallback_committed.items():
+                    index = batch.layout.index(element_id)
+                    if not batch._present_committed[index]:
+                        continue
+                    if isinstance(state, Mapping):
+                        alpha = np.asarray(state.get("alpha", ()), dtype=float)
+                        if alpha.size:
+                            maximum = max(maximum, float(np.max(alpha)))
+            for state in self._fallback_committed.values():
+                if isinstance(state, Mapping):
+                    alpha = np.asarray(state.get("alpha", ()), dtype=float)
+                    if alpha.size:
+                        maximum = max(maximum, float(np.max(alpha)))
+            return float(maximum)
 
     def diagnostics(self) -> Dict[str, Any]:
         with self._lock:
@@ -1257,17 +1425,143 @@ class NonlinearStateStore(Mapping[int, Any]):
 
     def __iter__(self) -> Iterator[int]:
         for batch in self._batches.values():
-            yield from batch.layout.element_ids
+            yield from batch
         yield from self._fallback_committed
 
     def __len__(self) -> int:
-        return len(self._element_to_batch) + len(self._fallback_committed)
+        return sum(len(batch) for batch in self._batches.values()) + len(
+            self._fallback_committed
+        )
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> Dict[int, Any]:
+        del memo
+        return self.materialize_owned()
+
+
+class NonlinearStateTrialView(Mapping[int, Any]):
+    """Owned-on-access mapping for one uncommitted candidate generation."""
+
+    def __init__(self, store: NonlinearStateStore, token: StateTrialToken) -> None:
+        self._store = store
+        self._token = token
+
+    @property
+    def store(self) -> NonlinearStateStore:
+        return self._store
+
+    @property
+    def token(self) -> StateTrialToken:
+        return self._token
+
+    def commit(self) -> NonlinearStateStore:
+        self._store.commit(self._token)
+        return self._store
+
+    def discard(self) -> None:
+        self._store.discard_trial(self._token)
+
+    def materialize_owned(
+        self,
+        *,
+        policy: StateMaterializationPolicy | str = StateMaterializationPolicy.EXPLICIT,
+    ) -> Dict[int, Any]:
+        return self._store.materialize(trial_token=self._token, policy=policy)
+
+    def __getitem__(self, element_id: int) -> Any:
+        return self._store._materialize_trial_element(
+            self._token,
+            int(element_id),
+        )
+
+    def __iter__(self) -> Iterator[int]:
+        return iter(self._store._trial_keys(self._token))
+
+    def __len__(self) -> int:
+        return len(self._store._trial_keys(self._token))
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> Dict[int, Any]:
+        del memo
+        return self.materialize_owned()
+
+
+def begin_state_evaluation(
+    committed_states: Mapping[int, Any],
+) -> Optional[StateTrialToken]:
+    """Begin a fresh candidate when ``committed_states`` is persistent."""
+
+    if isinstance(committed_states, NonlinearStateStore):
+        return committed_states.replace_trial()
+    return None
+
+
+def finish_state_evaluation(
+    committed_states: Mapping[int, Any],
+    token: Optional[StateTrialToken],
+    legacy_trial_states: Mapping[int, Any],
+) -> Mapping[int, Any]:
+    """Route scalar fallbacks into a store and return a lazy trial mapping."""
+
+    if not isinstance(committed_states, NonlinearStateStore):
+        # Every assembler already owns a fresh trial dictionary.  Preserve
+        # the legacy zero-copy return path when persistent storage is not in
+        # use; copying O(elements) here is measurable on mature elastic
+        # assembly and provides no additional ownership guarantee.
+        return legacy_trial_states
+    if token is None:
+        raise StateTransactionError("Persistent state evaluation has no trial token")
+    committed_states.set_trial_states(token, legacy_trial_states)
+    return committed_states.trial_view(token)
+
+
+def commit_state_candidate(
+    committed_states: Mapping[int, Any],
+    candidate_states: Mapping[int, Any],
+) -> Mapping[int, Any]:
+    """Commit a lazy candidate or preserve the legacy mapping assignment."""
+
+    if isinstance(committed_states, NonlinearStateStore):
+        if not isinstance(candidate_states, NonlinearStateTrialView):
+            raise StateTransactionError(
+                "Persistent committed state requires a persistent trial candidate"
+            )
+        if candidate_states.store is not committed_states:
+            raise StateTransactionError("Candidate belongs to another state store")
+        return candidate_states.commit()
+    return candidate_states
+
+
+def discard_active_state_candidate(committed_states: Mapping[int, Any]) -> None:
+    """Discard a pending persistent candidate, if any."""
+
+    if isinstance(committed_states, NonlinearStateStore) and committed_states.has_active_trial:
+        committed_states.discard_trial(committed_states.active_trial_token())
+
+
+def materialize_state_mapping(
+    states: Mapping[int, Any],
+    *,
+    policy: StateMaterializationPolicy | str = StateMaterializationPolicy.EXPLICIT,
+) -> Dict[int, Any]:
+    """Return an owned public mapping while preserving ordinary dict behavior."""
+
+    if isinstance(states, NonlinearStateStore):
+        discard_active_state_candidate(states)
+        return states.materialize_owned(policy=policy)
+    if isinstance(states, NonlinearStateTrialView):
+        return states.materialize_owned(policy=policy)
+    return _owned_copy(dict(states))
 
 
 __all__ = [
     "ImmutableStateSidecarError",
+    "begin_state_evaluation",
+    "commit_state_candidate",
+    "discard_active_state_candidate",
+    "finish_state_evaluation",
+    "materialize_state_mapping",
     "NonlinearStateError",
     "NonlinearStateStore",
+    "NonlinearStateTrialView",
     "PersistentStateEligibilityError",
     "ShellStateArrays",
     "ShellStateBatch",

@@ -87,6 +87,9 @@ def test_threaded_stress_recovery_matches_serial_and_reports_workers() -> None:
     assert threaded_report.backend == "thread_pool"
     assert threaded_report.requested_workers == 2
     assert threaded_report.used_workers == 2
+    native_policy = threaded_report.metadata["native_thread_policy"]
+    assert native_policy["requested_threads"] == 1
+    assert native_policy["restored"] is True
     assert sorted(serial) == sorted(threaded)
     for element_id in serial:
         np.testing.assert_allclose(serial[element_id]["von_mises"], threaded[element_id]["von_mises"])

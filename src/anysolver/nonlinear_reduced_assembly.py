@@ -11,6 +11,11 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from .nonlinear_state import (
+    NonlinearStateStore,
+    begin_state_evaluation,
+    finish_state_evaluation,
+)
 
 
 @njit(cache=True)
@@ -648,13 +653,38 @@ def _evaluate_local_responses(
     if tangent:
         nonlinear_plan.tangent_values.fill(0.0)
     trial_states: Dict[int, Any] = {}
+    state_token = (
+        committed_states.active_trial_token()
+        if isinstance(committed_states, NonlinearStateStore)
+        else None
+    )
 
     for batch in nonlinear_plan.shell_batches:
-        force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
-            displacements,
-            committed_states,
-            tangent,
+        persistent_trial = (
+            committed_states.shell_trial_for_layout(
+                state_token,
+                batch.state_layout,
+            )
+            if isinstance(committed_states, NonlinearStateStore)
+            and state_token is not None
+            else None
         )
+        if persistent_trial is not None and batch.persistent_state_eligibility(
+            persistent_trial[0]
+        )[0]:
+            force_batch, tangent_batch, kernel_seconds = batch.evaluate_persistent(
+                displacements,
+                persistent_trial[0],
+                persistent_trial[1],
+                tangent,
+            )
+            batch_states = {}
+        else:
+            force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
+                displacements,
+                committed_states,
+                tangent,
+            )
         nonlinear_plan.timings.shell_kernel_seconds += kernel_seconds
         nonlinear_plan.force_values[batch.force_positions.reshape(-1)] = np.asarray(
             force_batch, dtype=float
@@ -706,6 +736,7 @@ def assemble_reduced_system(
     """Assemble reduced internal force and tangent directly from local buffers."""
 
     with nonlinear_plan._lock:
+        state_token = begin_state_evaluation(committed_states)
         start_total = time.perf_counter()
         nonlinear_plan.timings.calls += 1
         reduced_plan.timings.assemblies += 1
@@ -757,4 +788,9 @@ def assemble_reduced_system(
         elapsed = time.perf_counter() - start_total
         reduced_plan.timings.total_seconds += elapsed
         nonlinear_plan.timings.total_seconds += elapsed
-        return reduced_plan.force_buffer, tangent_matrix, trial_states
+        state_payload = finish_state_evaluation(
+            committed_states,
+            state_token,
+            trial_states,
+        )
+        return reduced_plan.force_buffer, tangent_matrix, state_payload

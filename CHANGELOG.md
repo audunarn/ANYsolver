@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- Complete the Sol Ultra `performance_2` campaign with qualified static/arc
+  persistent nonlinear state transactions, compiled canonical-curve Hill-48 batches,
+  orthotropic/generalized S4 kernels, revision-cached corotational block
+  transforms, large-selection isotropic S4 recovery, and direct reduced
+  elastic nonlinear-impact assembly. Unsupported formulations, curves, state
+  layouts, impact plastic/fiber history, small recovery selections, affine
+  constraints, and damage/state scopes retain explicit scalar or
+  full-coordinate fallbacks with reason diagnostics.
+- Add conservative opt-in impact tangent/factorization reuse, compact lazy
+  contact records, and revision-guarded incremental damage K/M updates. A zero
+  reuse budget remains the full-Newton oracle; contact, convergence, plastic,
+  damage, deletion, time-step, and line-search changes force a refresh. Damage
+  plan setup is gated by projected future events and retained-memory headroom;
+  invalidation returns to the exact rebuild and never scales point masses.
+- Add the optional caller-owned `AnalysisSession` for bounded K/M/constraint,
+  reduced-matrix, output-row, and factorization reuse across repeated linear,
+  modal, buckling, transient, and capacity work. Linear transient loads are
+  preprojected once and selected history output avoids full-vector
+  reconstruction when recovery does not require it. Explicit solver,
+  assembly, and recovery thread scopes remain independently controlled and are
+  restored after each call.
 - Release 0.2.0 extraction boundary: material behavior now comes from
   `ANYmaterial`, neutral geometry/meshing from `ANYmesher`, and SESAM/CalculiX
   parsing and writing from `ANYfileio`. ANYsolver retains solver-specific

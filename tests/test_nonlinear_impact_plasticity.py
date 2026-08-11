@@ -424,6 +424,12 @@ def test_nonlinear_impact_solves_with_rtcl_damage():
     assert summary["enabled"] is True
     assert summary["config"]["criterion"] == "rtcl"
     assert summary["max_damage"] >= 0.0
+    selection = result.diagnostics["damage_matrix_plan_selection"]
+    assert selection["break_even_future_update_events"] == 11
+    assert selection["observed_update_events"] == (
+        selection["legacy_update_count"] + selection["plan_update_count"]
+    )
+    assert selection["retained_memory_allowance_bytes"] > 0
 
 
 def test_rtcl_modified_scales_critical_strain_by_plane_strain_weight():

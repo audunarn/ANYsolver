@@ -18,6 +18,8 @@ from . import nonlinear_performance as _performance
 from . import nonlinear_performance_batch_b as _batch_b
 from . import nonlinear_reduced_assembly as _reduced
 from .jit_compiler import JIT_ENABLED
+from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
+from .nonlinear_state import NonlinearStateStore
 from .nonlinear_reduced_assembly import (
     ReducedAssemblyPlan,
     ReducedAssemblyPlanLimit,
@@ -111,6 +113,10 @@ class _SolveContext:
     activation_threshold: int = 0
     activation_allowed: bool = False
     activation_reason: str = "not_evaluated"
+    constraint_fallback_reason: Optional[str] = None
+    direct_assembly_count: int = 0
+    direct_residual_only_count: int = 0
+    direct_plan_build_count: int = 0
 
 
 _CONTEXT = threading.local()
@@ -268,8 +274,13 @@ def _constraint_builder_wrapper(K, F, model):
     if (
         context.bound_model is not model
         or not context.activation_allowed
-        or _identity_transformation(transformation)
     ):
+        return result
+    if int(transformation.shape[1]) == 0:
+        context.constraint_fallback_reason = "empty_reduced_system"
+        return result
+    if _identity_transformation(transformation):
+        context.constraint_fallback_reason = "identity_constraint_transformation"
         return result
     wrapped = _DirectReductionTransform(transformation, token=context.token)
     context.transformation = wrapped
@@ -290,8 +301,14 @@ def _batch_c_evaluate_local_responses(
         nonlinear_plan.tangent_values.fill(0.0)
     trial_states: Dict[int, Any] = {}
     displacement_array = np.asarray(displacements, dtype=float)
+    state_token = (
+        committed_states.active_trial_token()
+        if isinstance(committed_states, NonlinearStateStore)
+        else None
+    )
 
     for batch in nonlinear_plan.shell_batches:
+        used_persistent_state = False
         if getattr(batch, "_batch_b_elastic", False):
             initialized_count = _batch_b._populate_initial_field_resultants(
                 batch, committed_states
@@ -309,11 +326,12 @@ def _batch_c_evaluate_local_responses(
                 batch.B_s,
                 batch.detw_shear,
                 batch._batch_b_membrane_matrix,
+                batch._batch_b_coupling_matrix,
                 batch._batch_b_bending_matrix,
                 batch._batch_b_initial_membrane_resultants,
                 batch._batch_b_initial_bending_resultants,
                 batch._batch_b_shear_matrix,
-                float(batch._batch_b_drilling_stiffness),
+                batch._batch_b_drilling_stiffness,
                 batch.force_positions,
                 batch.tangent_positions,
                 nonlinear_plan.force_values,
@@ -325,27 +343,30 @@ def _batch_c_evaluate_local_responses(
                 time.perf_counter() - kernel_start
             )
             nonlinear_plan.timings.initial_field_accelerated_elements += initialized_count
-            elastic_states = batch._batch_b_elastic_state_mapping
-            use_cached_mapping = True
-            for element_id in batch.element_ids:
-                existing = committed_states.get(int(element_id))
-                if (
-                    isinstance(existing, dict)
-                    and existing is not elastic_states[int(element_id)]
-                ):
-                    use_cached_mapping = False
-                    break
-            if use_cached_mapping:
-                trial_states.update(elastic_states)
+            if getattr(batch, "_batch_b_generalized", False):
+                trial_states.update(_batch_b._generalized_trial_states(batch))
             else:
+                elastic_states = batch._batch_b_elastic_state_mapping
+                use_cached_mapping = True
                 for element_id in batch.element_ids:
-                    element_key = int(element_id)
-                    existing = committed_states.get(element_key)
-                    trial_states[element_key] = (
-                        existing
-                        if isinstance(existing, dict)
-                        else elastic_states[element_key]
-                    )
+                    existing = committed_states.get(int(element_id))
+                    if (
+                        isinstance(existing, dict)
+                        and existing is not elastic_states[int(element_id)]
+                    ):
+                        use_cached_mapping = False
+                        break
+                if use_cached_mapping:
+                    trial_states.update(elastic_states)
+                else:
+                    for element_id in batch.element_ids:
+                        element_key = int(element_id)
+                        existing = committed_states.get(element_key)
+                        trial_states[element_key] = (
+                            existing
+                            if isinstance(existing, dict)
+                            else elastic_states[element_key]
+                        )
             if initialized_count and not tangent:
                 _batch_b._recover_initial_field_states(
                     nonlinear_plan,
@@ -355,11 +376,32 @@ def _batch_c_evaluate_local_responses(
                     trial_states,
                 )
         else:
-            force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
-                displacement_array,
-                committed_states,
-                tangent,
+            persistent_trial = (
+                committed_states.shell_trial_for_layout(
+                    state_token,
+                    batch.state_layout,
+                )
+                if isinstance(committed_states, NonlinearStateStore)
+                and state_token is not None
+                else None
             )
+            if persistent_trial is not None and batch.persistent_state_eligibility(
+                persistent_trial[0]
+            )[0]:
+                used_persistent_state = True
+                force_batch, tangent_batch, kernel_seconds = batch.evaluate_persistent(
+                    displacement_array,
+                    persistent_trial[0],
+                    persistent_trial[1],
+                    tangent,
+                )
+                batch_states = {}
+            else:
+                force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
+                    displacement_array,
+                    committed_states,
+                    tangent,
+                )
             nonlinear_plan.timings.shell_kernel_seconds += kernel_seconds
             nonlinear_plan.force_values[batch.force_positions.reshape(-1)] = np.asarray(
                 force_batch,
@@ -371,19 +413,20 @@ def _batch_c_evaluate_local_responses(
                 ] = np.asarray(tangent_batch, dtype=float).reshape(-1)
             trial_states.update(batch_states)
 
-        override_start = time.perf_counter()
-        override_count = _performance._apply_initial_field_shell_overrides(
-            nonlinear_plan,
-            batch,
-            displacement_array,
-            committed_states,
-            tangent,
-            trial_states,
-        )
-        nonlinear_plan.timings.initial_field_override_seconds += (
-            time.perf_counter() - override_start
-        )
-        nonlinear_plan.timings.initial_field_override_elements += override_count
+        if not used_persistent_state:
+            override_start = time.perf_counter()
+            override_count = _performance._apply_initial_field_shell_overrides(
+                nonlinear_plan,
+                batch,
+                displacement_array,
+                committed_states,
+                tangent,
+                trial_states,
+            )
+            nonlinear_plan.timings.initial_field_override_seconds += (
+                time.perf_counter() - override_start
+            )
+            nonlinear_plan.timings.initial_field_override_elements += override_count
 
     for batch in nonlinear_plan.quadratic_beam_batches:
         nonlinear_plan.timings.non_shell_seconds += batch.evaluate_into_buffers(
@@ -477,6 +520,7 @@ def _batch_c_assemble_nonlinear_system(
             residual_stiffness_fraction=float(residual_stiffness_fraction),
         )
 
+    assembly_start = time.perf_counter()
     from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
 
     nonlinear_plan = get_nonlinear_assembly_plan(model, int(num_layers))
@@ -489,6 +533,7 @@ def _batch_c_assemble_nonlinear_system(
                 nonlinear_plan,
                 context.transformation,
             )
+            context.direct_plan_build_count += 1
             with _STATUS_LOCK:
                 _STATUS["reduced_plan_builds"] += 1
                 _STATUS["last_plan"] = context.reduced_plan.diagnostics()
@@ -514,9 +559,18 @@ def _batch_c_assemble_nonlinear_system(
         committed_states,
         tangent=tangent,
     )
+    context.direct_assembly_count += 1
+    if not tangent:
+        context.direct_residual_only_count += 1
     with _STATUS_LOCK:
         _STATUS["reduced_assemblies"] += 1
         _STATUS["last_plan"] = context.reduced_plan.diagnostics()
+    record_nonlinear_assembly_execution(
+        path="direct_reduced",
+        tangent=bool(tangent),
+        elapsed_seconds=time.perf_counter() - assembly_start,
+        plan=nonlinear_plan,
+    )
     force_payload = _ReducedVectorPayload(force_reduced, context.token)
     tangent_payload = (
         _ReducedMatrixPayload(tangent_reduced, context.token)
@@ -641,6 +695,60 @@ def reset_batch_c_counters() -> None:
                 "last_plan": None,
             }
         )
+
+
+def current_batch_c_analysis_diagnostics() -> Dict[str, Any]:
+    """Return selector diagnostics for the current thread-local solver call."""
+
+    stack = _context_stack()
+    if not stack:
+        return {
+            "context_active": False,
+            "activated": False,
+            "fallback_reason": "direct_reduction_context_not_active",
+            "estimated_assemblies": 0,
+            "activation_threshold": _minimum_estimated_assemblies(),
+            "assembly_count": 0,
+            "residual_only_assembly_count": 0,
+            "plan_build_count": 0,
+            "plan_reused": False,
+            "plan_reuse_scope": "within_analysis",
+            "plan": None,
+        }
+    context = stack[-1]
+    plan_diagnostics = (
+        None if context.reduced_plan is None else context.reduced_plan.diagnostics()
+    )
+    assembly_count = int(context.direct_assembly_count)
+    activated = assembly_count > 0
+    if activated and context.fallback_reason is not None:
+        fallback_reason = "partial_full_coordinate_fallback"
+    elif activated:
+        fallback_reason = None
+    else:
+        fallback_reason = (
+            context.fallback_reason
+            or context.constraint_fallback_reason
+            or (
+                context.activation_reason
+                if not context.activation_allowed
+                else "direct_reduction_not_exercised"
+            )
+        )
+    return {
+        "context_active": True,
+        "activated": activated,
+        "fallback_reason": fallback_reason,
+        "estimated_assemblies": int(context.estimated_assemblies),
+        "activation_threshold": int(context.activation_threshold),
+        "activation_reason": str(context.activation_reason),
+        "assembly_count": assembly_count,
+        "residual_only_assembly_count": int(context.direct_residual_only_count),
+        "plan_build_count": int(context.direct_plan_build_count),
+        "plan_reused": bool(assembly_count > context.direct_plan_build_count),
+        "plan_reuse_scope": "within_analysis",
+        "plan": plan_diagnostics,
+    }
 
 
 def batch_c_status() -> Dict[str, Any]:

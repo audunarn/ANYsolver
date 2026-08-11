@@ -43,12 +43,18 @@ from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
+from .nonlinear_analysis_diagnostics import capture_nonlinear_analysis_diagnostics
+from .nonlinear_state import NonlinearStateStore
 from .nonlinear_static import (
     NonlinearIncrementSnapshot,
     _assemble_nonlinear_system,
+    _activate_nonlinear_state_storage,
+    _commit_nonlinear_state_candidate,
     _copy_initial_states,
+    _discard_nonlinear_state_candidate,
     _has_follower_pressure,
     _max_plastic_strain,
+    _materialize_final_nonlinear_states,
     _nonlinear_state_summary,
     _support_reaction_resultants,
     _increment_snapshot,
@@ -326,6 +332,7 @@ def _max_nodal_translation(model: "FEModel", displacements: np.ndarray) -> float
 
 
 @resource_threaded
+@capture_nonlinear_analysis_diagnostics
 def solve_static_arc_length(
     model: "FEModel",
     load_case: Optional["LoadCase"],
@@ -611,6 +618,14 @@ def solve_static_arc_length(
         info["factorization_error"] = str(exc)
         return ArcLengthResult([], "initial_tangent_failed", u, lam, lam, None, committed_states, info)
 
+    committed_states = _activate_nonlinear_state_storage(
+        working_model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+    )
+
     physical_direction_norm_sq = (
         _metric_dot(W, tangent_direction, tangent_direction)
         + 2.0 * float(metric_cross @ tangent_direction)
@@ -662,6 +677,7 @@ def solve_static_arc_length(
     failure_reason: Optional[str] = None
     total_iterations = 0
     total_retries = 0
+    corrector_solve_many_count = 0
     adaptation_history: List[Dict[str, Any]] = []
     snapshots: List[NonlinearIncrementSnapshot] = []
 
@@ -672,7 +688,11 @@ def solve_static_arc_length(
         )
         q_base = q.copy()
         lambda_base = float(lam)
-        states_base = copy.deepcopy(committed_states)
+        states_base = (
+            committed_states
+            if isinstance(committed_states, NonlinearStateStore)
+            else copy.deepcopy(committed_states)
+        )
         accepted = False
         step_failure = "unknown"
 
@@ -727,6 +747,7 @@ def solve_static_arc_length(
                 )
             except Exception:
                 step_failure = "singular_predictor_tangent"
+                _discard_nonlinear_state_candidate(committed_states)
                 radius *= settings.cutback_factor
                 if radius < min_radius:
                     break
@@ -754,6 +775,7 @@ def solve_static_arc_length(
             )
             if direction_norm <= _SMALL:
                 step_failure = "zero_predictor_direction"
+                _discard_nonlinear_state_candidate(committed_states)
                 break
 
             dlambda_total = sign * radius / direction_norm
@@ -849,10 +871,15 @@ def solve_static_arc_length(
                         ),
                         signature=f"arc_length.corrector:{step_index}:{retry}:{iteration}",
                     )
-                    correction_at_fixed_load = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-                    correction_per_load = np.asarray(
-                        handle.solve(path_direction_trial_red), dtype=float
-                    ).reshape(-1)
+                    corrections = np.asarray(
+                        handle.solve_many(
+                            np.column_stack((residual, path_direction_trial_red))
+                        ),
+                        dtype=float,
+                    )
+                    correction_at_fixed_load = corrections[:, 0]
+                    correction_per_load = corrections[:, 1]
+                    corrector_solve_many_count += 1
                 except Exception:
                     step_failure = "singular_corrector_tangent"
                     break
@@ -902,7 +929,10 @@ def solve_static_arc_length(
             if accepted:
                 q = q_trial
                 lam = float(lambda_trial)
-                committed_states = trial_states
+                committed_states = _commit_nonlinear_state_candidate(
+                    committed_states,
+                    trial_states,
+                )
                 u = full_displacement(q, lam)
                 path_increment_norm = float(
                     np.sqrt(
@@ -941,6 +971,9 @@ def solve_static_arc_length(
                     corotational_tangent=resolved_corotational_tangent,
                     require_full_coordinates=True,
                 )
+                # Reaction recovery is diagnostic-only; do not leave its trial
+                # constitutive state active for the next continuation step.
+                _discard_nonlinear_state_candidate(committed_states)
                 (
                     reaction_constant,
                     _unused,
@@ -1027,6 +1060,7 @@ def solve_static_arc_length(
                 )
                 break
 
+            _discard_nonlinear_state_candidate(committed_states)
             radius *= settings.cutback_factor
             adaptation_history.append(
                 {
@@ -1076,6 +1110,7 @@ def solve_static_arc_length(
         status = "maximum_steps_reached"
 
     u_final = full_displacement(q, lam)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     info["failure_reason"] = failure_reason
     info["last_converged_load_factor"] = float(lam)
     info["peak_load_factor"] = float(peak_load_factor)
@@ -1103,6 +1138,7 @@ def solve_static_arc_length(
     info["preload"] = preload_info
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
+    info["corrector_solve_many_count"] = int(corrector_solve_many_count)
     info["solve_time"] = float(time.time() - start_time)
     info["constraint_postcheck"] = constraint_residual_summary(
         working_model, u_final, affine_scale=lam

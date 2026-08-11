@@ -232,6 +232,7 @@ from .recovery import (
     ResourceConfig,
     StressRecoveryProvenance,
     StressRecoveryResult,
+    clear_recovery_batch_plan,
     default_recovery_config,
     enforce_memory_limit,
     estimate_model_memory,
@@ -312,6 +313,12 @@ from .assembly import (
     solve_linear,
     solve_linear_many,
     solve_nonlinear,
+)
+from .analysis_session import (
+    AnalysisSession,
+    ConstraintPlan,
+    OutputSelectionPlan,
+    StructuralMatrixPlan,
 )
 from .linalg import (
     AutoSparseSolverBackend,
@@ -618,6 +625,7 @@ __all__ = [
     "ResourceConfig",
     "StressRecoveryProvenance",
     "StressRecoveryResult",
+    "clear_recovery_batch_plan",
     "default_recovery_config",
     "enforce_memory_limit",
     "estimate_model_memory",
@@ -674,6 +682,10 @@ __all__ = [
     "run_anystructure_fem_mode",
     "run_generated_geometry_fem",
     # Assembly and solving
+    "AnalysisSession",
+    "ConstraintPlan",
+    "OutputSelectionPlan",
+    "StructuralMatrixPlan",
     "AssemblyError",
     "assemble_damping_matrix",
     "assemble_external_load_system",
