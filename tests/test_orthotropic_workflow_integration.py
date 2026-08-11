@@ -464,11 +464,11 @@ def test_orthotropic_shell_linear_static_uses_rotated_engineering_modulus() -> N
         rel=2.0e-10,
     )
     assert solver_info["assembly"]["stiffness"]["diagnostics"][
-        "constitutive_fallback"
+        "advanced_s4_stiffness"
     ] == {
-        "path": "general_element",
-        "reason": "orthotropic_material",
-        "element_ids": [1],
+        "path": "compiled_batch",
+        "orthotropic_element_count": 1,
+        "generalized_element_count": 0,
     }
 
 

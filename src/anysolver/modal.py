@@ -19,6 +19,7 @@ from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
+    from .analysis_session import AnalysisSession
     from .fe_core import FEModel
 
 
@@ -163,6 +164,7 @@ def solve_free_vibration(
     resource_config: Optional[ResourceConfig] = None,
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
 ) -> ModalResult:
     """Solve ``K phi = omega^2 M phi`` with the common constraint transform."""
     cancellation_safe_point(cancellation_token, "modal.start")
@@ -170,18 +172,35 @@ def solve_free_vibration(
         raise ValueError("num_modes must be positive")
 
     model.apply_boundary_conditions()
-    K, stiffness_info = assemble_stiffness_matrix(model)
-    M, mass_info = assemble_mass_matrix(model)
+    if session is None:
+        K, stiffness_info = assemble_stiffness_matrix(model)
+        M, mass_info = assemble_mass_matrix(model)
+        zero = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+        K_red, _, T, _, independent_dofs, constraint_info = (
+            build_constraint_transformation(K, zero, model)
+        )
+        M_red = (T.T @ M @ T).tocsr()
+        Q, nullspace_info = build_reduced_rigid_body_modes(
+            model,
+            independent_dofs,
+            int(K.shape[0]),
+            transformation=T,
+        )
+    else:
+        stiffness_plan = session.stiffness_plan(model)
+        constraint_plan = session.constraint_plan(stiffness_plan, model)
+        mass_plan = session.mass_plan(model)
+        K = stiffness_plan.matrix
+        M = mass_plan.matrix
+        stiffness_info = dict(stiffness_plan.info)
+        mass_info = dict(mass_plan.info)
+        K_red = constraint_plan.K_red
+        M_red, _ = session.reduced_mass(constraint_plan, model)
+        T = constraint_plan.T
+        independent_dofs = constraint_plan.independent_dofs
+        constraint_info = dict(constraint_plan.info)
+        Q, nullspace_info = session.rigid_body_modes(constraint_plan, model)
     cancellation_safe_point(cancellation_token, "modal.after_assembly")
-    zero = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
-    K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, zero, model)
-    M_red = (T.T @ M @ T).tocsr()
-    Q, nullspace_info = build_reduced_rigid_body_modes(
-        model,
-        independent_dofs,
-        int(K.shape[0]),
-        transformation=T,
-    )
 
     assembly_info = {
         "stiffness": stiffness_info,
@@ -189,13 +208,19 @@ def solve_free_vibration(
         "total_dofs": model.mesh.dof_manager.total_dofs,
         "reduced_dofs": int(K_red.shape[0]),
     }
+    if session is not None:
+        assembly_info["analysis_session"] = session.diagnostics()
     settings = {
         "num_modes": int(num_modes),
         "shift": None if shift is None else float(shift),
         "dense_size_limit": int(dense_size_limit),
         "eigen_tolerance": float(eigen_tolerance),
         "rigid_body_frequency_tolerance": float(rigid_body_frequency_tolerance),
-        "factorization_cache": None if factorization_cache is None else factorization_cache.name,
+        "factorization_cache": (
+            (session.factorization_cache.name if session is not None else None)
+            if factorization_cache is None
+            else factorization_cache.name
+        ),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
 
@@ -225,7 +250,10 @@ def solve_free_vibration(
                 M_sym,
                 num_modes,
                 shift,
-                factorization_cache=factorization_cache,
+                factorization_cache=(
+                    factorization_cache
+                    or (session.factorization_cache if session is not None else None)
+                ),
             )
             solver_kind = "sparse_scipy_eigsh"
     except Exception as exc:
@@ -307,6 +335,8 @@ def solve_free_vibration(
             homogeneous_variation=True,
         ),
     }
+    if session is not None:
+        diagnostics["analysis_session"] = session.diagnostics()
     result_case = make_result_case(
         name="modal",
         analysis_type="modal",

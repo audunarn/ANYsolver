@@ -1,4 +1,6 @@
 __pycache__/
+.numba_cache_*/
+.perf2-worktrees/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
@@ -10,5 +12,15 @@ reports/
 !reports/
 reports/*
 !reports/extract_mat_mesh_io_performance_review.md
+!reports/performance/
+reports/performance/*
+!reports/performance/sol_ultra_environment.json
+!reports/performance/sol_ultra_baseline.json
+!reports/performance/sol_ultra_baseline.md
+!reports/performance/sol_ultra_final.json
+!reports/performance/sol_ultra_comparison.md
+!reports/performance/sol_ultra_independent_verification.md
+!reports/performance/sol_ultra_numerical_comparison.json
+!reports/performance/sol_ultra_decision_log.md
 qc_results/
 .pytest_tmp_*/

@@ -1646,6 +1646,162 @@ def _hill48_return_map_core(
     return stress, tangent, new_plastic, new_alpha, tangent_valid
 
 
+def _hill48_return_map_dispatch(
+    strain: np.ndarray,
+    plastic_strain: np.ndarray,
+    alpha: np.ndarray,
+    elastic_matrix: np.ndarray,
+    metric: np.ndarray,
+    reference_strength: float,
+    curve: Any | None,
+    reference_flow: float,
+    max_iterations: int,
+    tolerance: float,
+    compute_tangent: bool,
+) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    Dict[str, Any],
+]:
+    """Select the compiled canonical path or the exact scalar oracle.
+
+    Public validation has already completed before this function is called.
+    Unsupported custom curve protocols, unavailable JIT support, kernel-level
+    failures, and failed individual rows all remain explicit scalar fallbacks.
+    """
+
+    from . import vectorized_hill48 as accelerated
+
+    curve_pack, eligibility_reason = accelerated.pack_hill48_curve(curve)
+    curve_name = (
+        curve_pack.name
+        if curve_pack is not None
+        else type(curve).__name__ if curve is not None else "perfect_plasticity"
+    )
+    point_count = int(strain.shape[0])
+    metadata: Dict[str, Any] = {
+        "point_count": point_count,
+        "curve_name": curve_name,
+        "compiled": False,
+        "scalar_fallback_points": 0,
+        "fallback_reason_counts": {},
+    }
+
+    fallback_reason = eligibility_reason
+    if fallback_reason is None and not accelerated.JIT_ENABLED:
+        fallback_reason = "jit_unavailable"
+    if fallback_reason is not None:
+        metadata["scalar_fallback_points"] = point_count
+        metadata["fallback_reason_counts"] = {fallback_reason: point_count}
+        try:
+            result = _hill48_return_map_core(
+                strain,
+                plastic_strain,
+                alpha,
+                elastic_matrix,
+                metric,
+                reference_strength,
+                curve,
+                reference_flow,
+                max_iterations,
+                tolerance,
+                compute_tangent,
+            )
+        except Exception:
+            accelerated.record_hill48_execution(**metadata)
+            raise
+        return (*result, metadata)
+
+    assert curve_pack is not None
+    metadata["compiled"] = True
+    try:
+        (
+            stress,
+            tangent,
+            new_plastic,
+            new_alpha,
+            status,
+            _scaled_residual,
+            tangent_valid,
+        ) = accelerated.compiled_hill48_return_map(
+            strain,
+            plastic_strain,
+            alpha,
+            elastic_matrix,
+            metric,
+            reference_strength,
+            reference_flow,
+            curve_pack,
+            max_iterations,
+            tolerance,
+            _ANALYTICAL_TANGENT_AMPLIFICATION_LIMIT,
+            compute_tangent,
+        )
+    except Exception:
+        reason = "compiled_kernel_exception"
+        metadata["scalar_fallback_points"] = point_count
+        metadata["fallback_reason_counts"] = {reason: point_count}
+        try:
+            result = _hill48_return_map_core(
+                strain,
+                plastic_strain,
+                alpha,
+                elastic_matrix,
+                metric,
+                reference_strength,
+                curve,
+                reference_flow,
+                max_iterations,
+                tolerance,
+                compute_tangent,
+            )
+        except Exception:
+            accelerated.record_hill48_execution(**metadata)
+            raise
+        return (*result, metadata)
+
+    failed = np.flatnonzero(np.asarray(status, dtype=np.int8) != 0)
+    if failed.size:
+        reasons: Dict[str, int] = {}
+        for code in np.asarray(status, dtype=np.int8)[failed]:
+            reason = accelerated.status_fallback_reason(int(code))
+            reasons[reason] = reasons.get(reason, 0) + 1
+        metadata["scalar_fallback_points"] = int(failed.size)
+        metadata["fallback_reason_counts"] = reasons
+        try:
+            (
+                fallback_stress,
+                fallback_tangent,
+                fallback_plastic,
+                fallback_alpha,
+                fallback_tangent_valid,
+            ) = _hill48_return_map_core(
+                strain[failed],
+                plastic_strain[failed],
+                alpha[failed],
+                elastic_matrix,
+                metric,
+                reference_strength,
+                curve,
+                reference_flow,
+                max_iterations,
+                tolerance,
+                compute_tangent,
+            )
+        except Exception:
+            accelerated.record_hill48_execution(**metadata)
+            raise
+        stress[failed] = fallback_stress
+        tangent[failed] = fallback_tangent
+        new_plastic[failed] = fallback_plastic
+        new_alpha[failed] = fallback_alpha
+        tangent_valid[failed] = fallback_tangent_valid
+    return stress, tangent, new_plastic, new_alpha, tangent_valid, metadata
+
+
 def hill48_plane_stress_return_map(
     strain: np.ndarray,
     plastic_strain: np.ndarray,
@@ -1703,7 +1859,8 @@ def hill48_plane_stress_return_map(
         new_plastic,
         new_alpha,
         tangent_valid,
-    ) = _hill48_return_map_core(
+        execution_metadata,
+    ) = _hill48_return_map_dispatch(
         strain,
         plastic_strain,
         alpha,
@@ -1716,7 +1873,10 @@ def hill48_plane_stress_return_map(
         tolerance,
         compute_tangent and method == "analytical",
     )
+    from .vectorized_hill48 import record_hill48_execution
+
     if not compute_tangent:
+        record_hill48_execution(**execution_metadata)
         return stress, tangent, new_plastic, new_alpha
     if method == "numerical":
         tangent = hill48_plane_stress_numerical_tangent(
@@ -1729,8 +1889,18 @@ def hill48_plane_stress_return_map(
             max_iterations=max_iterations,
             tolerance=tolerance,
         )
+        record_hill48_execution(
+            **execution_metadata,
+            numerical_tangent_rows=int(strain.shape[0]),
+        )
         return stress, tangent, new_plastic, new_alpha
     if np.any(~tangent_valid):
+        fallback_count = int(np.count_nonzero(~tangent_valid))
+        reasons = dict(execution_metadata["fallback_reason_counts"])
+        reasons["analytical_tangent_invalid"] = (
+            int(reasons.get("analytical_tangent_invalid", 0)) + fallback_count
+        )
+        execution_metadata["fallback_reason_counts"] = reasons
         tangent[~tangent_valid] = hill48_plane_stress_numerical_tangent(
             strain[~tangent_valid],
             plastic_strain[~tangent_valid],
@@ -1742,10 +1912,12 @@ def hill48_plane_stress_return_map(
             tolerance=tolerance,
         )
     if np.any(~np.isfinite(tangent)):
+        record_hill48_execution(**execution_metadata)
         raise FloatingPointError(
             "Hill-48 plane-stress tangent remained non-finite after the "
             "numerical fallback"
         )
+    record_hill48_execution(**execution_metadata)
     return stress, tangent, new_plastic, new_alpha
 
 

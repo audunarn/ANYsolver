@@ -170,6 +170,11 @@ def test_corotational_beam_cantilever_rolls_up_to_analytic_circle() -> None:
     result = solve_static_nonlinear(model, load_case, num_steps=20, max_iterations=40, tolerance=1.0e-6, kinematics="corotational")
 
     assert result.status == "completed"
+    corotational_diagnostics = result.info["nonlinear_performance"]["corotational"]
+    assert corotational_diagnostics["activated"] is True
+    assert corotational_diagnostics["rotated_tangent_block_activated"] is True
+    assert corotational_diagnostics["dense_consistent_tangent_activated"] is False
+    assert corotational_diagnostics["fallback_reason"] is None
     tip = model.mesh.get_node(n + 1)
     u = result.displacements
     radius = E_STEEL * I / M

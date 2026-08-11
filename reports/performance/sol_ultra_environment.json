@@ -1,0 +1,91 @@
+{
+  "schema_name": "anysolver.sol_ultra.environment",
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-11T08:21:15.844000Z",
+  "revision": {
+    "baseline_branch": "perf2/baseline",
+    "initial_performance_2_sha": "575ddd3fd7712378e6a24b901c647cf101d7b0dc",
+    "origin_main_sha": "575ddd3fd7712378e6a24b901c647cf101d7b0dc",
+    "merge_base_sha": "575ddd3fd7712378e6a24b901c647cf101d7b0dc",
+    "source_root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\baseline",
+    "source_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\baseline\\src\\anysolver\\__init__.py"
+  },
+  "runtime": {
+    "python_executable": "C:\\Github\\ANYsolver\\.venv\\Scripts\\python.exe",
+    "python_version": "3.13.9",
+    "python_implementation": "CPython",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "operating_system": "Windows 11",
+    "machine": "AMD64",
+    "cpu": "AMD Ryzen 9 7950X 16-Core Processor",
+    "physical_cores": 16,
+    "logical_cores": 32,
+    "process_cpu_affinity_count": 32,
+    "physical_memory_bytes": 136522502144,
+    "available_memory_bytes_at_capture": 109998096384
+  },
+  "packages": {
+    "numpy": "2.4.3",
+    "scipy": "1.16.3",
+    "numba": "0.65.0",
+    "llvmlite": "0.47.0",
+    "pypardiso": "0.4.7",
+    "mkl": "2026.0.0",
+    "threadpoolctl": "3.6.0",
+    "pytest": "9.0.1",
+    "ANYsolver": "0.2.0",
+    "ANYmaterial": "0.1.0",
+    "ANYmesher": "0.1.0",
+    "ANYgeometry": "0.1.0",
+    "ANYfileio": "0.1.0"
+  },
+  "sibling_revisions": {
+    "ANYmaterial": {
+      "path": "C:\\Github\\ANYmaterial",
+      "sha": "4626887667f4c251479d26f321b9e73b046a2783"
+    },
+    "ANYmesher": {
+      "path": "C:\\Github\\ANYmesh",
+      "sha": "62afe35e63204717a82ff157f2487ae0a4a8ca01"
+    },
+    "ANYgeometry": {
+      "path": "C:\\Github\\ANYgeometry",
+      "sha": "f11fdd1e80dd3b765f3c8015d77f9d83f3fe65c3"
+    },
+    "ANYfileio": {
+      "path": "C:\\Github\\ANYio",
+      "sha": "82a0f5f110361fcd902cd3aac5d4c6beeaa187fa"
+    }
+  },
+  "native_runtimes": {
+    "numpy_blas": {
+      "implementation": "OpenBLAS",
+      "version": "0.3.31.dev",
+      "thread_count_at_capture": 1
+    },
+    "scipy_blas": {
+      "implementation": "OpenBLAS",
+      "version": "0.3.29.dev",
+      "thread_count_at_capture": 1
+    },
+    "pypardiso": {
+      "implementation": "Intel MKL",
+      "version": "2026.0-Product",
+      "runtime_path": "C:\\Python\\Python313\\Library\\bin\\mkl_rt.3.dll",
+      "thread_count_at_capture": 1
+    },
+    "numba": {
+      "enabled": true,
+      "backend": "numba",
+      "configured_threads": 32
+    }
+  },
+  "required_environment": {
+    "PYPARDISO_MKL_RT": "C:\\Python\\Python313\\Library\\bin\\mkl_rt.3.dll",
+    "pytest_basetemp": ".pytest_tmp_sol_ultra_baseline"
+  },
+  "capture_notes": [
+    "Benchmark scripts prepend this worktree's src directory, so the immutable baseline source is used even though the shared virtual environment has ANYsolver installed editable from C:\\Github\\ANYsolver.",
+    "Thread counts are observed values, not recommended defaults."
+  ]
+}

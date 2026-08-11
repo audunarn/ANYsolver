@@ -489,8 +489,14 @@ def constraint_residual_summary(
     displacements: np.ndarray,
     *,
     homogeneous_variation: bool = False,
+    affine_scale: float = 1.0,
 ) -> Dict[str, Any]:
-    """Return normalized support/MPC residuals for one vector or mode matrix."""
+    """Return normalized support/MPC residuals for one vector or mode matrix.
+
+    ``affine_scale`` evaluates a proportional prescribed-displacement path,
+    where every affine right-hand side is multiplied by the current path
+    factor.  Eigenvector checks still use ``homogeneous_variation=True``.
+    """
     values = np.asarray(displacements, dtype=float)
     if values.ndim == 1:
         values = values.reshape(-1, 1)
@@ -506,7 +512,9 @@ def constraint_residual_summary(
     worst_origin = ""
     residual_l2 = 0.0
     for equation in equations:
-        prescribed = 0.0 if homogeneous_variation else equation.value
+        prescribed = (
+            0.0 if homogeneous_variation else float(affine_scale) * equation.value
+        )
         residual = values[equation.dependent, :] - prescribed
         scale = np.maximum(np.abs(values[equation.dependent, :]), abs(prescribed))
         for master, coefficient in equation.coefficients.items():
@@ -531,6 +539,7 @@ def constraint_residual_summary(
         "worst_origin": worst_origin,
         "collection_issue_count": len(collection_issues),
         "homogeneous_variation": bool(homogeneous_variation),
+        "affine_scale": 0.0 if homogeneous_variation else float(affine_scale),
         "issue_code": None if passed else "CONSTRAINT006",
     }
 

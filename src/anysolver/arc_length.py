@@ -43,13 +43,21 @@ from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
+from .nonlinear_analysis_diagnostics import capture_nonlinear_analysis_diagnostics
+from .nonlinear_state import NonlinearStateStore
 from .nonlinear_static import (
     NonlinearIncrementSnapshot,
     _assemble_nonlinear_system,
+    _activate_nonlinear_state_storage,
+    _commit_nonlinear_state_candidate,
     _copy_initial_states,
+    _discard_nonlinear_state_candidate,
     _has_follower_pressure,
     _max_plastic_strain,
+    _materialize_final_nonlinear_states,
     _nonlinear_state_summary,
+    _support_reaction_dof_plan,
+    _support_reaction_resultants_from_forces,
     _increment_snapshot,
     _weighted_external_load_system,
     solve_static_nonlinear,
@@ -168,6 +176,7 @@ class ArcLengthStep:
     path_increment_norm: float
     max_equivalent_plastic_strain: float
     is_peak: bool = False
+    support_reactions: Dict[str, tuple[float, ...]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -183,6 +192,10 @@ class ArcLengthStep:
             "path_increment_norm": float(self.path_increment_norm),
             "max_equivalent_plastic_strain": float(self.max_equivalent_plastic_strain),
             "is_peak": bool(self.is_peak),
+            "support_reactions": {
+                str(name): [float(value) for value in values]
+                for name, values in self.support_reactions.items()
+            },
         }
 
 
@@ -243,8 +256,9 @@ def _characteristic_length(model: "FEModel") -> float:
     return value if value > _SMALL else 1.0
 
 
-def _reduced_metric(model: "FEModel", T: sparse.spmatrix, rotation_length_scale: float) -> sparse.csr_matrix:
-    """Project a translation-equivalent full-DOF metric to reduced coordinates."""
+def _full_metric_weights(model: "FEModel", rotation_length_scale: float) -> np.ndarray:
+    """Diagonal translation-equivalent weights in full DOF space."""
+
     total_dofs = model.mesh.dof_manager.total_dofs
     weights = np.ones(total_dofs, dtype=float)
     rotation_weight = float(rotation_length_scale) ** 2
@@ -252,6 +266,13 @@ def _reduced_metric(model: "FEModel", T: sparse.spmatrix, rotation_length_scale:
         _node_id, local_index, _name = model.mesh.dof_manager.get_dof_info(dof)
         if local_index >= 3:
             weights[dof] = rotation_weight
+    return weights
+
+
+def _reduced_metric(model: "FEModel", T: sparse.spmatrix, rotation_length_scale: float) -> sparse.csr_matrix:
+    """Project a translation-equivalent full-DOF metric to reduced coordinates."""
+
+    weights = _full_metric_weights(model, rotation_length_scale)
     W_full = sparse.diags(weights, format="csr")
     return (T.T @ W_full @ T).tocsr()
 
@@ -312,9 +333,10 @@ def _max_nodal_translation(model: "FEModel", displacements: np.ndarray) -> float
 
 
 @resource_threaded
+@capture_nonlinear_analysis_diagnostics
 def solve_static_arc_length(
     model: "FEModel",
-    load_case: "LoadCase",
+    load_case: Optional["LoadCase"],
     *,
     constant_load_case: Optional["LoadCase"] = None,
     control: Optional[ArcLengthControl] = None,
@@ -338,6 +360,10 @@ def solve_static_arc_length(
     scales only ``load_case``.  Material states are committed only after a full
     equilibrium-plus-constraint convergence.
 
+    A non-zero prescribed support/MPC field is proportional to the same path
+    factor.  It can be the sole continuation driver, so displacement-driven
+    models do not need a fictitious nodal load.
+
     Current-area follower pressure contributes both its displacement-dependent
     force and exact load tangent.  Corotational ``"auto"`` tangent selection
     follows :func:`anysolver.solve_static_nonlinear`: it selects the consistent
@@ -345,8 +371,6 @@ def solve_static_arc_length(
     otherwise.
     """
     cancellation_safe_point(cancellation_token, "arc_length.start")
-    if load_case is None:
-        raise ValueError("load_case is required for arc-length continuation")
     if max_iterations <= 0:
         raise ValueError("max_iterations must be positive")
     if tolerance <= 0.0 or arc_tolerance <= 0.0:
@@ -396,6 +420,12 @@ def solve_static_arc_length(
         F_const, constant_load_info = assemble_load_vector(working_model, constant_load_case)
 
     _, _, T, u0, _, constraint_info = build_constraint_transformation(K0, F_prop, working_model)
+    prescribed_offset = np.asarray(u0, dtype=float).reshape(-1)
+    zero_prescribed_offset = not bool(np.any(prescribed_offset))
+    prescribed_path_active = bool(
+        prescribed_offset.size
+        and float(np.max(np.abs(prescribed_offset))) > _SMALL
+    )
     n_red = int(T.shape[1])
     assembly_info = {
         "stiffness": stiffness_info,
@@ -416,6 +446,14 @@ def solve_static_arc_length(
         "corotational_tangent": resolved_corotational_tangent,
         "follower_pressure": follower_active,
         "equilibrium_tangent": "K_internal-K_external" if follower_active else "K_internal",
+        "prescribed_displacement_path": {
+            "mode": "proportional_to_load_factor",
+            "active": prescribed_path_active,
+            "target_max_abs": (
+                float(np.max(np.abs(prescribed_offset)))
+                if prescribed_offset.size else 0.0
+            ),
+        },
     }
     if imperfection is not None:
         info["imperfection"] = getattr(working_model, "imperfection_metadata", [])
@@ -426,7 +464,7 @@ def solve_static_arc_length(
 
     F_prop_red = np.asarray(T.T @ F_prop, dtype=float).reshape(-1)
     F_const_red = np.asarray(T.T @ F_const, dtype=float).reshape(-1)
-    if float(np.linalg.norm(F_prop_red)) <= _SMALL:
+    if float(np.linalg.norm(F_prop_red)) <= _SMALL and not prescribed_path_active:
         info["failure_reason"] = "zero_reduced_reference_load"
         return ArcLengthResult([], "zero_reference_load", u0.copy(), 0.0, 0.0, None, {}, info)
 
@@ -435,6 +473,11 @@ def solve_static_arc_length(
     lam = 0.0
     preload_info = None
 
+    if constant_load_case is not None and prescribed_path_active:
+        raise NotImplementedError(
+            "arc-length continuation does not yet combine a constant preload "
+            "with a proportional prescribed-displacement path"
+        )
     if constant_load_case is not None and float(np.linalg.norm(F_const_red)) > _SMALL:
         preload = solve_static_nonlinear(
             working_model,
@@ -467,8 +510,33 @@ def solve_static_arc_length(
         q = _recover_reduced_coordinates(T, u0, preload.displacements)
         committed_states = copy.deepcopy(preload.element_states)
 
+    if zero_prescribed_offset:
+
+        def full_displacement(
+            q_reduced: np.ndarray, path_factor: float
+        ) -> np.ndarray:
+            del path_factor
+            return np.asarray(T @ q_reduced, dtype=float).reshape(-1)
+
+    else:
+
+        def full_displacement(
+            q_reduced: np.ndarray, path_factor: float
+        ) -> np.ndarray:
+            return np.asarray(
+                T @ q_reduced + float(path_factor) * prescribed_offset,
+                dtype=float,
+            ).reshape(-1)
+
     rotation_scale = settings.rotation_length_scale or _characteristic_length(working_model)
     W = _reduced_metric(working_model, T, rotation_scale)
+    full_weights = _full_metric_weights(working_model, rotation_scale)
+    metric_cross = np.asarray(
+        T.T @ (full_weights * prescribed_offset), dtype=float
+    ).reshape(-1)
+    prescribed_metric = float(
+        prescribed_offset @ (full_weights * prescribed_offset)
+    )
     zero_load_tangent = sparse.csr_matrix(K0.shape, dtype=float)
 
     def external_system(
@@ -505,7 +573,7 @@ def solve_static_arc_length(
 
     # Establish the first tangent direction and derive fixed path-space radius
     # limits from the user-facing load-increment settings.
-    u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    u = full_displacement(q, lam)
     F_int, K_T, _trial_states = _assemble_nonlinear_system(
         working_model,
         u,
@@ -535,10 +603,23 @@ def solve_static_arc_length(
         - (T.T @ K_const @ T)
         - lam * (T.T @ K_prop @ T)
     ).tocsr()
+    if prescribed_path_active:
+        K_effective = K_T - K_const - lam * K_prop
+        path_direction_red = np.asarray(
+            T.T @ (F_prop_current - K_effective @ prescribed_offset),
+            dtype=float,
+        ).reshape(-1)
+    else:
+        path_direction_red = F_prop_red
+    if float(np.linalg.norm(path_direction_red)) <= _SMALL:
+        info["failure_reason"] = "zero_reduced_reference_load"
+        return ArcLengthResult(
+            [], "zero_reference_load", u.copy(), 0.0, 0.0, None, {}, info
+        )
     try:
         tangent_direction = _factorized_solve(
             K_red,
-            F_prop_red,
+            path_direction_red,
             "arc_length.initial_tangent",
             matrix_class=(
                 MatrixClass.GENERAL
@@ -551,9 +632,70 @@ def solve_static_arc_length(
         info["factorization_error"] = str(exc)
         return ArcLengthResult([], "initial_tangent_failed", u, lam, lam, None, committed_states, info)
 
-    tangent_norm = _metric_norm(W, tangent_direction)
-    load_scaling = float(settings.load_scaling) if settings.load_scaling is not None else max(tangent_norm, 1.0e-12)
-    predictor_norm = float(np.sqrt(tangent_norm * tangent_norm + load_scaling * load_scaling))
+    committed_states = _activate_nonlinear_state_storage(
+        working_model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+    )
+
+    physical_direction_norm_sq = (
+        _metric_dot(W, tangent_direction, tangent_direction)
+        + 2.0 * float(metric_cross @ tangent_direction)
+        + prescribed_metric
+    )
+    physical_direction_norm = float(
+        np.sqrt(max(physical_direction_norm_sq, 0.0))
+    )
+    load_scaling = (
+        float(settings.load_scaling)
+        if settings.load_scaling is not None
+        else max(physical_direction_norm, 1.0e-12)
+    )
+
+    if not zero_prescribed_offset:
+
+        def path_metric_dot(
+            dq_left: np.ndarray,
+            dlambda_left: float,
+            dq_right: np.ndarray,
+            dlambda_right: float,
+        ) -> float:
+            """Full affine-displacement metric plus the load weight."""
+
+            return float(
+                _metric_dot(W, dq_left, dq_right)
+                + float(dlambda_right) * float(metric_cross @ dq_left)
+                + float(dlambda_left) * float(metric_cross @ dq_right)
+                + float(dlambda_left)
+                * float(dlambda_right)
+                * (prescribed_metric + load_scaling * load_scaling)
+            )
+
+    else:
+
+        def path_metric_dot(
+            dq_left: np.ndarray,
+            dlambda_left: float,
+            dq_right: np.ndarray,
+            dlambda_right: float,
+        ) -> float:
+            """Mature force-driven metric without zero affine products."""
+
+            return float(
+                _metric_dot(W, dq_left, dq_right)
+                + float(dlambda_left)
+                * float(dlambda_right)
+                * load_scaling
+                * load_scaling
+            )
+
+    predictor_norm = float(
+        np.sqrt(
+            max(path_metric_dot(tangent_direction, 1.0, tangent_direction, 1.0), 0.0)
+        )
+    )
     radius = settings.initial_load_increment * predictor_norm
     min_radius = radius * settings.minimum_load_increment / settings.initial_load_increment
     max_radius = radius * settings.maximum_load_increment / settings.initial_load_increment
@@ -563,14 +705,25 @@ def solve_static_arc_length(
     previous_dlambda: Optional[float] = None
     peak_load_factor = float(lam)
     peak_step_index: Optional[int] = None
+    peak_step: Optional[ArcLengthStep] = None
     max_translation = 0.0
+    track_step_translation = (
+        progress_callback is not None or settings.max_translation is not None
+    )
     descending_steps = 0
     status = "maximum_steps_reached"
     failure_reason: Optional[str] = None
     total_iterations = 0
     total_retries = 0
+    corrector_solve_many_count = 0
+    corrector_tangent_projection_count = 0
+    reaction_force_reuse_count = 0
+    reaction_force_reassembly_count = 0
     adaptation_history: List[Dict[str, Any]] = []
     snapshots: List[NonlinearIncrementSnapshot] = []
+    support_reaction_history: List[Dict[str, Any]] = []
+    support_reaction_dof_plan = _support_reaction_dof_plan(working_model)
+    corrector_rhs = np.empty((n_red, 2), dtype=float)
 
     for step_index in range(1, settings.max_steps + 1):
         cancellation_safe_point(
@@ -579,7 +732,11 @@ def solve_static_arc_length(
         )
         q_base = q.copy()
         lambda_base = float(lam)
-        states_base = copy.deepcopy(committed_states)
+        states_base = (
+            committed_states
+            if isinstance(committed_states, NonlinearStateStore)
+            else copy.deepcopy(committed_states)
+        )
         accepted = False
         step_failure = "unknown"
 
@@ -589,7 +746,7 @@ def solve_static_arc_length(
                 f"arc_length.step:{step_index}.retry:{retry}",
             )
             total_retries += int(retry > 0)
-            u_base = np.asarray(T @ q_base + u0, dtype=float).reshape(-1)
+            u_base = full_displacement(q_base, lambda_base)
             F_base, K_base, _ = _assemble_nonlinear_system(
                 working_model,
                 u_base,
@@ -609,11 +766,22 @@ def solve_static_arc_length(
                 - (T.T @ K_const_base @ T)
                 - lambda_base * (T.T @ K_prop_base @ T)
             ).tocsr()
-            F_prop_base_red = np.asarray(T.T @ F_prop_base, dtype=float).reshape(-1)
+            if prescribed_path_active:
+                K_base_effective = (
+                    K_base - K_const_base - lambda_base * K_prop_base
+                )
+                path_direction_base_red = np.asarray(
+                    T.T @ (F_prop_base - K_base_effective @ prescribed_offset),
+                    dtype=float,
+                ).reshape(-1)
+            else:
+                path_direction_base_red = np.asarray(
+                    T.T @ F_prop_base, dtype=float
+                ).reshape(-1)
             try:
                 load_direction = _factorized_solve(
                     K_base_red,
-                    F_prop_base_red,
+                    path_direction_base_red,
                     f"arc_length.predictor:{step_index}:{retry}",
                     matrix_class=(
                         MatrixClass.GENERAL
@@ -623,6 +791,7 @@ def solve_static_arc_length(
                 )
             except Exception:
                 step_failure = "singular_predictor_tangent"
+                _discard_nonlinear_state_candidate(committed_states)
                 radius *= settings.cutback_factor
                 if radius < min_radius:
                     break
@@ -630,19 +799,27 @@ def solve_static_arc_length(
 
             sign = 1.0
             if previous_dq is not None and previous_dlambda is not None:
-                orientation = _metric_dot(W, previous_dq, load_direction) + (
-                    load_scaling * load_scaling * previous_dlambda
+                orientation = path_metric_dot(
+                    previous_dq,
+                    previous_dlambda,
+                    load_direction,
+                    1.0,
                 )
                 sign = 1.0 if orientation >= 0.0 else -1.0
 
             direction_norm = float(
                 np.sqrt(
-                    max(_metric_dot(W, load_direction, load_direction), 0.0)
-                    + load_scaling * load_scaling
+                    max(
+                        path_metric_dot(
+                            load_direction, 1.0, load_direction, 1.0
+                        ),
+                        0.0,
+                    )
                 )
             )
             if direction_norm <= _SMALL:
                 step_failure = "zero_predictor_direction"
+                _discard_nonlinear_state_candidate(committed_states)
                 break
 
             dlambda_total = sign * radius / direction_norm
@@ -659,7 +836,7 @@ def solve_static_arc_length(
                     f"arc_length.step:{step_index}.iteration:{iteration}",
                 )
                 total_iterations += 1
-                u_trial = np.asarray(T @ q_trial + u0, dtype=float).reshape(-1)
+                u_trial = full_displacement(q_trial, lambda_trial)
                 F_internal, K_trial, states_candidate = _assemble_nonlinear_system(
                     working_model,
                     u_trial,
@@ -674,7 +851,19 @@ def solve_static_arc_length(
                     lambda_trial,
                     tangent=True,
                 )
-                F_prop_trial_red = np.asarray(T.T @ F_prop_trial, dtype=float).reshape(-1)
+                if prescribed_path_active:
+                    K_trial_effective = (
+                        K_trial - K_const_trial - lambda_trial * K_prop_trial
+                    )
+                    path_direction_trial_red = np.asarray(
+                        T.T
+                        @ (F_prop_trial - K_trial_effective @ prescribed_offset),
+                        dtype=float,
+                    ).reshape(-1)
+                else:
+                    path_direction_trial_red = np.asarray(
+                        T.T @ F_prop_trial, dtype=float
+                    ).reshape(-1)
                 residual = (
                     np.asarray(
                         T.T @ (F_const_trial + lambda_trial * F_prop_trial),
@@ -684,8 +873,9 @@ def solve_static_arc_length(
                 )
                 residual_norm = float(np.linalg.norm(residual))
                 arc_residual = float(
-                    _metric_dot(W, dq_total, dq_total)
-                    + (load_scaling * dlambda_total) ** 2
+                    path_metric_dot(
+                        dq_total, dlambda_total, dq_total, dlambda_total
+                    )
                     - radius * radius
                 )
                 force_reference = max(
@@ -697,7 +887,7 @@ def solve_static_arc_length(
                             )
                         )
                     ),
-                    float(np.linalg.norm(F_prop_trial_red)),
+                    float(np.linalg.norm(path_direction_trial_red)),
                     1.0,
                 )
                 arc_reference = max(radius * radius, 1.0e-24)
@@ -710,11 +900,18 @@ def solve_static_arc_length(
                     accepted = True
                     break
 
+                # Match the mature correction path: tangent reduction is only
+                # needed when a Newton correction will actually be solved.
+                # Keeping it below the convergence check avoids three sparse
+                # projections and two sparse subtractions on every accepted
+                # iteration while leaving the prescribed-path direction above
+                # exact and unchanged.
                 K_trial_red = (
                     (T.T @ K_trial @ T)
                     - (T.T @ K_const_trial @ T)
                     - lambda_trial * (T.T @ K_prop_trial @ T)
                 ).tocsr()
+                corrector_tangent_projection_count += 1
                 try:
                     handle = factorize(
                         K_trial_red,
@@ -725,8 +922,14 @@ def solve_static_arc_length(
                         ),
                         signature=f"arc_length.corrector:{step_index}:{retry}:{iteration}",
                     )
-                    correction_at_fixed_load = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-                    correction_per_load = np.asarray(handle.solve(F_prop_trial_red), dtype=float).reshape(-1)
+                    corrector_rhs[:, 0] = residual
+                    corrector_rhs[:, 1] = path_direction_trial_red
+                    corrections = np.asarray(
+                        handle.solve_many(corrector_rhs), dtype=float
+                    )
+                    correction_at_fixed_load = corrections[:, 0]
+                    correction_per_load = corrections[:, 1]
+                    corrector_solve_many_count += 1
                 except Exception:
                     step_failure = "singular_corrector_tangent"
                     break
@@ -737,9 +940,11 @@ def solve_static_arc_length(
                     step_failure = "nonfinite_corrector_solution"
                     break
 
-                denominator = 2.0 * (
-                    _metric_dot(W, dq_total, correction_per_load)
-                    + load_scaling * load_scaling * dlambda_total
+                denominator = 2.0 * path_metric_dot(
+                    dq_total,
+                    dlambda_total,
+                    correction_per_load,
+                    1.0,
                 )
                 denominator_scale = max(
                     2.0 * radius * max(_metric_norm(W, correction_per_load), load_scaling),
@@ -749,8 +954,11 @@ def solve_static_arc_length(
                     step_failure = "singular_arc_constraint_linearization"
                     break
 
-                numerator = -arc_residual - 2.0 * _metric_dot(
-                    W, dq_total, correction_at_fixed_load
+                numerator = -arc_residual - 2.0 * path_metric_dot(
+                    dq_total,
+                    dlambda_total,
+                    correction_at_fixed_load,
+                    0.0,
                 )
                 dlambda_correction = numerator / denominator
                 dq_correction = correction_at_fixed_load + correction_per_load * dlambda_correction
@@ -771,12 +979,22 @@ def solve_static_arc_length(
             if accepted:
                 q = q_trial
                 lam = float(lambda_trial)
-                committed_states = trial_states
-                u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+                committed_states = _commit_nonlinear_state_candidate(
+                    committed_states,
+                    trial_states,
+                )
+                u = full_displacement(q, lam)
                 path_increment_norm = float(
                     np.sqrt(
-                        max(_metric_dot(W, dq_total, dq_total), 0.0)
-                        + (load_scaling * dlambda_total) ** 2
+                        max(
+                            path_metric_dot(
+                                dq_total,
+                                dlambda_total,
+                                dq_total,
+                                dlambda_total,
+                            ),
+                            0.0,
+                        )
                     )
                 )
                 is_new_peak = lam > peak_load_factor
@@ -784,8 +1002,8 @@ def solve_static_arc_length(
                     peak_load_factor = float(lam)
                     peak_step_index = step_index
                     descending_steps = 0
-                    for old_step in steps:
-                        old_step.is_peak = False
+                    if peak_step is not None:
+                        peak_step.is_peak = False
                 else:
                     required_drop = settings.peak_drop_tolerance * max(abs(peak_load_factor), 1.0)
                     if peak_step_index is not None and lam < peak_load_factor - required_drop:
@@ -793,6 +1011,68 @@ def solve_static_arc_length(
                     else:
                         descending_steps = 0
 
+                # The converged Newton evaluation already contains the exact
+                # accepted internal and external forces.  Reuse them for
+                # support reactions.  Direct reduced assembly carries a lazy,
+                # generation-qualified view of its local force buffers, so it
+                # needs only one full scatter here—not a second constitutive
+                # evaluation.  A stale/unrecognized payload conservatively
+                # falls back to the original full-coordinate recovery.
+                from .nonlinear_performance_batch_c import (
+                    materialize_full_internal_force,
+                )
+
+                reaction_internal = materialize_full_internal_force(
+                    F_internal,
+                    working_model.mesh.dof_manager.total_dofs,
+                )
+                if reaction_internal is None:
+                    reaction_internal, _unused, _reaction_states = (
+                        _assemble_nonlinear_system(
+                            working_model,
+                            u,
+                            committed_states,
+                            num_layers,
+                            tangent=False,
+                            kinematics=kinematics,
+                            corotational_tangent=resolved_corotational_tangent,
+                            require_full_coordinates=True,
+                        )
+                    )
+                    # Reaction recovery is diagnostic-only; do not leave its
+                    # trial state active for the next continuation step.
+                    _discard_nonlinear_state_candidate(committed_states)
+                    reaction_force_reassembly_count += 1
+                    (
+                        reaction_constant,
+                        _unused,
+                        reaction_proportional,
+                        _unused,
+                    ) = external_system(u, lam, tangent=False)
+                else:
+                    reaction_force_reuse_count += 1
+                    reaction_constant = F_const_trial
+                    reaction_proportional = F_prop_trial
+                support_reactions = _support_reaction_resultants_from_forces(
+                    working_model,
+                    reaction_internal,
+                    reaction_constant,
+                    reaction_proportional,
+                    lam,
+                    dof_plan=support_reaction_dof_plan,
+                )
+                support_reaction_history.append(
+                    {
+                        "step_index": int(step_index),
+                        "load_factor": float(lam),
+                        "support_reactions": {
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
+                    }
+                )
+
+                displacement_norm = float(np.linalg.norm(u))
                 step = ArcLengthStep(
                     step_index=step_index,
                     load_factor=float(lam),
@@ -801,13 +1081,16 @@ def solve_static_arc_length(
                     arc_radius=float(radius),
                     residual_norm=float(residual_norm),
                     arc_residual=float(arc_residual),
-                    displacement_norm=float(np.linalg.norm(u)),
+                    displacement_norm=displacement_norm,
                     load_increment=float(dlambda_total),
                     path_increment_norm=path_increment_norm,
                     max_equivalent_plastic_strain=_max_plastic_strain(committed_states),
                     is_peak=is_new_peak,
+                    support_reactions=support_reactions,
                 )
                 steps.append(step)
+                if is_new_peak:
+                    peak_step = step
                 if record_increment_snapshots:
                     snapshots.append(
                         _increment_snapshot(
@@ -820,23 +1103,31 @@ def solve_static_arc_length(
                     )
                 previous_dq = dq_total.copy()
                 previous_dlambda = float(dlambda_total)
-                max_translation = _max_nodal_translation(working_model, u)
-                emit_progress(
-                    progress_callback,
-                    "nonlinear_static_step",
-                    "arc_length.continuation",
-                    completed=step_index,
-                    total=settings.max_steps,
-                    iteration=iteration,
-                    control="arc length",
-                    step_index=int(step_index),
-                    load_factor=float(lam),
-                    peak_load_factor=float(peak_load_factor),
-                    displacement_norm=float(np.linalg.norm(u)),
-                    max_translation=float(max_translation),
-                    iterations=int(iteration),
-                    max_equivalent_plastic_strain=float(step.max_equivalent_plastic_strain),
-                )
+                if track_step_translation:
+                    max_translation = _max_nodal_translation(working_model, u)
+                if progress_callback is not None:
+                    emit_progress(
+                        progress_callback,
+                        "nonlinear_static_step",
+                        "arc_length.continuation",
+                        completed=step_index,
+                        total=settings.max_steps,
+                        iteration=iteration,
+                        control="arc length",
+                        step_index=int(step_index),
+                        load_factor=float(lam),
+                        peak_load_factor=float(peak_load_factor),
+                        displacement_norm=displacement_norm,
+                        max_translation=float(max_translation),
+                        iterations=int(iteration),
+                        max_equivalent_plastic_strain=float(
+                            step.max_equivalent_plastic_strain
+                        ),
+                        support_reactions={
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
+                    )
 
                 old_radius = radius
                 if iteration <= max(settings.target_iterations // 2, 1):
@@ -862,6 +1153,7 @@ def solve_static_arc_length(
                 )
                 break
 
+            _discard_nonlinear_state_candidate(committed_states)
             radius *= settings.cutback_factor
             adaptation_history.append(
                 {
@@ -910,7 +1202,10 @@ def solve_static_arc_length(
     else:
         status = "maximum_steps_reached"
 
-    u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    u_final = full_displacement(q, lam)
+    if not track_step_translation and steps:
+        max_translation = _max_nodal_translation(working_model, u_final)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     info["failure_reason"] = failure_reason
     info["last_converged_load_factor"] = float(lam)
     info["peak_load_factor"] = float(peak_load_factor)
@@ -923,16 +1218,31 @@ def solve_static_arc_length(
     info["minimum_arc_radius"] = float(min_radius)
     info["maximum_arc_radius"] = float(max_radius)
     info["adaptation_history"] = adaptation_history
+    info["support_reaction_history"] = support_reaction_history
     info["strain_summary"] = _nonlinear_state_summary(committed_states)
     info["preload"] = preload_info
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
+    info["corrector_solve_many_count"] = int(corrector_solve_many_count)
+    info["corrector_tangent_projection_count"] = int(
+        corrector_tangent_projection_count
+    )
+    info["reaction_force_recovery"] = {
+        "accepted_force_reuse_count": int(reaction_force_reuse_count),
+        "full_reassembly_count": int(reaction_force_reassembly_count),
+    }
     info["solve_time"] = float(time.time() - start_time)
-    info["constraint_postcheck"] = constraint_residual_summary(working_model, u_final)
+    info["constraint_postcheck"] = constraint_residual_summary(
+        working_model, u_final, affine_scale=lam
+    )
     info["result_case"] = make_result_case(
         name="nonlinear_static_arc_length",
         analysis_type="nonlinear_static",
-        load_cases=(load_case,) if constant_load_case is None else (constant_load_case, load_case),
+        load_cases=tuple(
+            case
+            for case in (constant_load_case, load_case)
+            if case is not None
+        ),
         assembly_info=assembly_info,
         solver_info={"convergence_info": {"status": status, "failure_reason": failure_reason}},
         recovery={

@@ -84,6 +84,45 @@ def test_elastic_batch_releases_history_work_arrays() -> None:
         assert "layer_strain" not in first_state
 
 
+def test_isotropic_batch_build_reuses_one_constitutive_matrix(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import anysolver.nonlinear_performance_batch_b as batch_b
+
+    model = generate_simple_panel_mesh(
+        1.2, 0.8, 0.01, num_divisions_x=4, num_divisions_y=2
+    )
+    calls = 0
+    original = batch_b._shell_material_matrices
+
+    def counted(material, angle_rad):
+        nonlocal calls
+        calls += 1
+        return original(material, angle_rad)
+
+    monkeypatch.setattr(batch_b, "_shell_material_matrices", counted)
+    clear_nonlinear_assembly_cache(model)
+    plan = get_nonlinear_assembly_plan(model, 5)
+
+    assert len(plan.shell_batches) == 1
+    assert calls == 1
+    batch = plan.shell_batches[0]
+    np.testing.assert_array_equal(
+        batch._batch_b_membrane_matrix,
+        np.broadcast_to(
+            batch._batch_b_membrane_matrix[0],
+            batch._batch_b_membrane_matrix.shape,
+        ),
+    )
+    np.testing.assert_array_equal(
+        batch._batch_b_shear_matrix,
+        np.broadcast_to(
+            batch._batch_b_shear_matrix[0],
+            batch._batch_b_shear_matrix.shape,
+        ),
+    )
+
+
 def test_elastic_batch_does_not_overwrite_recovered_stress_with_zero() -> None:
     model = _tilted_shell_model()
     displacement = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)

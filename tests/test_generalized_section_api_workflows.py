@@ -15,7 +15,11 @@ from anysolver import (
     validate_generalized_beam_section,
     validate_generalized_shell_section,
 )
-from anysolver.nonlinear_performance import NonlinearAssemblyPlan
+from anysolver.nonlinear_performance_bootstrap import (
+    clear_nonlinear_assembly_cache,
+    get_nonlinear_assembly_plan,
+    install_nonlinear_performance_optimizations,
+)
 from anysolver.vectorized_nonlinear import shell_nonlinear_batch_eligible
 
 
@@ -160,17 +164,16 @@ def test_generated_geometry_rejects_unknown_section_references(
         build_fe_model_from_generated_geometry(geometry)
 
 
-def test_generalized_shell_has_deterministic_scalar_fallback_diagnostic() -> None:
+def test_generalized_shell_uses_installed_extended_batch_diagnostic() -> None:
     model = build_fe_model_from_generated_geometry(_generated_geometry())
     shell = model.mesh.get_element(1)
 
     assert shell_nonlinear_batch_eligible(shell) is False
-    diagnostic = NonlinearAssemblyPlan.build(model, num_layers=3).diagnostics()
-    assert diagnostic["constitutive_fallback"] == {
-        "path": "general_element",
-        "reason": "generalized_shell_section",
-        "element_ids": [1],
-    }
+    install_nonlinear_performance_optimizations()
+    clear_nonlinear_assembly_cache(model)
+    diagnostic = get_nonlinear_assembly_plan(model, num_layers=3).diagnostics()
+    assert diagnostic["constitutive_fallback"] is None
+    assert diagnostic["generalized_elastic_fast_path_element_count"] == 1
 
 
 def test_generated_prestress_uses_exact_section_resultants() -> None:

@@ -1,10 +1,10 @@
 """Batch B optimizations for persistent nonlinear shell assembly.
 
 This module completes the nonlinear-assembly redesign for ordinary Python runs
-with Numba available.  Elastic shell groups use a dedicated in-place kernel that
-writes element force and tangent entries directly into the persistent assembly
-plan buffers.  The plastic shell path and all element formulations remain
-unchanged.
+with Numba available.  Elastic isotropic, orthotropic, and pre-integrated
+generalized S4 groups use a dedicated in-place kernel that writes element force
+and tangent entries directly into the persistent assembly plan buffers.  The
+plastic shell path and unsupported element formulations remain unchanged.
 
 The elastic path avoids, per Newton evaluation:
 
@@ -29,9 +29,18 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit, prange
-from .elements import _shell_field_rows, plane_stress_elastic_matrix
+from .elements import (
+    _elastic_compliance,
+    _shell_field_rows,
+    _shell_material_matrices,
+)
 from .plasticity import lobatto_layers
 from . import nonlinear_performance as _performance
+from .nonlinear_state import (
+    NonlinearStateStore,
+    begin_state_evaluation,
+    finish_state_evaluation,
+)
 
 
 @njit(cache=True, parallel=True)
@@ -46,12 +55,13 @@ def _elastic_shell_batch_into_buffers(
     detw_batch: np.ndarray,
     B_s_batch: np.ndarray,
     detw_shear_batch: np.ndarray,
-    membrane_matrix: np.ndarray,
-    bending_matrix: np.ndarray,
+    membrane_matrices: np.ndarray,
+    coupling_matrices: np.ndarray,
+    bending_matrices: np.ndarray,
     initial_membrane_resultants: np.ndarray,
     initial_bending_resultants: np.ndarray,
-    shear_matrix: np.ndarray,
-    drilling_stiffness: float,
+    shear_matrices: np.ndarray,
+    drilling_stiffnesses: np.ndarray,
     force_positions: np.ndarray,
     tangent_positions: np.ndarray,
     force_values: np.ndarray,
@@ -68,6 +78,11 @@ def _elastic_shell_batch_into_buffers(
     for element_index in prange(n_elem):
         T0 = T0_batch[element_index]
         u_local = u_local_work[element_index]
+        membrane_matrix = membrane_matrices[element_index]
+        coupling_matrix = coupling_matrices[element_index]
+        bending_matrix = bending_matrices[element_index]
+        shear_matrix = shear_matrices[element_index]
+        drilling_stiffness = drilling_stiffnesses[element_index]
 
         # Gather global element DOFs and transform to the reference local frame.
         for local_row in range(n_dof):
@@ -125,29 +140,47 @@ def _elastic_shell_batch_into_buffers(
                 membrane_matrix[0, 0] * membrane_strain_0
                 + membrane_matrix[0, 1] * membrane_strain_1
                 + membrane_matrix[0, 2] * membrane_strain_2
+                + coupling_matrix[0, 0] * curvature_0
+                + coupling_matrix[0, 1] * curvature_1
+                + coupling_matrix[0, 2] * curvature_2
             )
             N_1 = (
                 membrane_matrix[1, 0] * membrane_strain_0
                 + membrane_matrix[1, 1] * membrane_strain_1
                 + membrane_matrix[1, 2] * membrane_strain_2
+                + coupling_matrix[1, 0] * curvature_0
+                + coupling_matrix[1, 1] * curvature_1
+                + coupling_matrix[1, 2] * curvature_2
             )
             N_2 = (
                 membrane_matrix[2, 0] * membrane_strain_0
                 + membrane_matrix[2, 1] * membrane_strain_1
                 + membrane_matrix[2, 2] * membrane_strain_2
+                + coupling_matrix[2, 0] * curvature_0
+                + coupling_matrix[2, 1] * curvature_1
+                + coupling_matrix[2, 2] * curvature_2
             )
             M_0 = (
-                bending_matrix[0, 0] * curvature_0
+                coupling_matrix[0, 0] * membrane_strain_0
+                + coupling_matrix[1, 0] * membrane_strain_1
+                + coupling_matrix[2, 0] * membrane_strain_2
+                + bending_matrix[0, 0] * curvature_0
                 + bending_matrix[0, 1] * curvature_1
                 + bending_matrix[0, 2] * curvature_2
             )
             M_1 = (
-                bending_matrix[1, 0] * curvature_0
+                coupling_matrix[0, 1] * membrane_strain_0
+                + coupling_matrix[1, 1] * membrane_strain_1
+                + coupling_matrix[2, 1] * membrane_strain_2
+                + bending_matrix[1, 0] * curvature_0
                 + bending_matrix[1, 1] * curvature_1
                 + bending_matrix[1, 2] * curvature_2
             )
             M_2 = (
-                bending_matrix[2, 0] * curvature_0
+                coupling_matrix[0, 2] * membrane_strain_0
+                + coupling_matrix[1, 2] * membrane_strain_1
+                + coupling_matrix[2, 2] * membrane_strain_2
+                + bending_matrix[2, 0] * curvature_0
                 + bending_matrix[2, 1] * curvature_1
                 + bending_matrix[2, 2] * curvature_2
             )
@@ -188,9 +221,13 @@ def _elastic_shell_batch_into_buffers(
                         membrane_value += (
                             membrane_matrix[row, constitutive_index]
                             * B_eff[constitutive_index, dof_index]
+                            + coupling_matrix[row, constitutive_index]
+                            * B_b[constitutive_index, dof_index]
                         )
                         bending_value += (
-                            bending_matrix[row, constitutive_index]
+                            coupling_matrix[constitutive_index, row]
+                            * B_eff[constitutive_index, dof_index]
+                            + bending_matrix[row, constitutive_index]
                             * B_b[constitutive_index, dof_index]
                         )
                     membrane_times_B[row, dof_index] = membrane_value
@@ -379,6 +416,7 @@ def _finalize_batch_b_element_states(
         batch
         for batch in plan.shell_batches
         if getattr(batch, "_batch_b_elastic", False)
+        and not getattr(batch, "_batch_b_generalized", False)
     )
     if not elastic_batches:
         return states
@@ -476,31 +514,101 @@ def _batch_b_shell_build(
         batch._batch_b_elastic = False
         return batch
 
-    elastic_matrix = plane_stress_elastic_matrix(
-        float(batch.material.elastic_modulus),
-        float(batch.material.poisson_ratio),
-    )
+    element_count = len(batch.elements)
     batch._batch_b_elastic = True
-    batch._batch_b_membrane_matrix = batch.thickness * elastic_matrix
-    batch._batch_b_bending_matrix = batch.thickness**3 / 12.0 * elastic_matrix
+    batch._batch_b_membrane_matrix = np.empty(
+        (element_count, 3, 3), dtype=float
+    )
+    batch._batch_b_coupling_matrix = np.zeros(
+        (element_count, 3, 3), dtype=float
+    )
+    batch._batch_b_bending_matrix = np.empty(
+        (element_count, 3, 3), dtype=float
+    )
+    batch._batch_b_shear_matrix = np.empty(
+        (element_count, 2, 2), dtype=float
+    )
+    batch._batch_b_drilling_stiffness = np.empty(element_count, dtype=float)
+    generalized = bool(batch.elements[0].shell_section is not None)
+    batch._batch_b_generalized = generalized
+    isotropic = bool(
+        not generalized
+        and getattr(batch.material, "elastic_symmetry", "isotropic")
+        == "isotropic"
+    )
+    if isotropic:
+        # The group key already guarantees one material, thickness and
+        # drilling stabilization value.  Isotropic constitutive matrices are
+        # frame-invariant, so compute them once and broadcast into the
+        # per-element arrays required by the generalized kernel.  Keeping the
+        # old one-computation setup path avoids making mature isotropic plan
+        # construction scale with the element count.
+        elastic_matrix, shear_matrix, _strain, _stress = (
+            _shell_material_matrices(batch.material, 0.0)
+        )
+        thickness = float(batch.thickness)
+        batch._batch_b_membrane_matrix[:] = thickness * elastic_matrix
+        batch._batch_b_bending_matrix[:] = (
+            thickness**3 / 12.0 * elastic_matrix
+        )
+        batch._batch_b_shear_matrix[:] = (
+            (5.0 / 6.0) * thickness * shear_matrix
+        )
+        drilling_modulus = 1.0 / float(
+            _elastic_compliance(batch.material)[5, 5]
+        )
+        batch._batch_b_drilling_stiffness.fill(
+            drilling_modulus
+            * thickness
+            * float(batch.drilling_stabilization)
+        )
+    else:
+        for index, element in enumerate(batch.elements):
+            cache = element._nonlinear_geometry(model.mesh)
+            frame = cache["R0"]
+            material = model.get_material(element.material_name)
+            if element.shell_section is not None:
+                section = element._generalized_section_in_frame(frame)
+                assert section is not None
+                batch._batch_b_membrane_matrix[index] = section.A
+                batch._batch_b_coupling_matrix[index] = section.B
+                batch._batch_b_bending_matrix[index] = section.D
+                batch._batch_b_shear_matrix[index] = section.As
+                batch._batch_b_drilling_stiffness[index] = (
+                    float(section.A[2, 2])
+                    * float(element.drilling_stabilization)
+                )
+                continue
+
+            elastic_matrix, shear_matrix, _strain, _stress = (
+                _shell_material_matrices(
+                    material,
+                    element._material_angle(frame),
+                )
+            )
+            thickness = float(element.thickness)
+            batch._batch_b_membrane_matrix[index] = thickness * elastic_matrix
+            batch._batch_b_bending_matrix[index] = (
+                thickness**3 / 12.0 * elastic_matrix
+            )
+            batch._batch_b_shear_matrix[index] = (
+                (5.0 / 6.0) * thickness * shear_matrix
+            )
+            drilling_modulus = 1.0 / float(
+                _elastic_compliance(material)[5, 5]
+            )
+            batch._batch_b_drilling_stiffness[index] = (
+                drilling_modulus
+                * thickness
+                * float(element.drilling_stabilization)
+            )
     batch._batch_b_initial_membrane_resultants = np.zeros(
         (len(batch.elements), batch.n_gp, 3), dtype=float
     )
     batch._batch_b_initial_bending_resultants = np.zeros_like(
         batch._batch_b_initial_membrane_resultants
     )
-    batch._batch_b_initial_fields_supported = True
-    batch._batch_b_shear_matrix = (
-        float(batch.material.shear_modulus)
-        * (5.0 / 6.0)
-        * batch.thickness
-        * np.eye(2, dtype=float)
-    )
-    batch._batch_b_drilling_stiffness = (
-        float(batch.material.shear_modulus)
-        * batch.thickness
-        * batch.drilling_stabilization
-    )
+    batch._batch_b_initial_fields_supported = isotropic
 
     # Elastic groups do not require mutable constitutive history.  Release the
     # per-element plastic work arrays allocated by the compatibility builder.
@@ -513,10 +621,14 @@ def _batch_b_shell_build(
     shared_plastic.setflags(write=False)
     shared_alpha.setflags(write=False)
     batch.elastic_states = tuple(
-        {
-            "plastic_strain": shared_plastic,
-            "alpha": shared_alpha,
-        }
+        (
+            {"generalized_section": True}
+            if generalized
+            else {
+                "plastic_strain": shared_plastic,
+                "alpha": shared_alpha,
+            }
+        )
         for _ in batch.elements
     )
     batch._batch_b_elastic_state_mapping = {
@@ -529,6 +641,10 @@ def _batch_b_shell_build(
 def _populate_initial_field_resultants(batch, committed_states: Mapping[int, Any]) -> int:
     """Integrate elastic initial fields into membrane/bending resultants."""
 
+    if not getattr(batch, "_batch_b_initial_fields_supported", False):
+        batch._batch_b_initial_membrane_resultants.fill(0.0)
+        batch._batch_b_initial_bending_resultants.fill(0.0)
+        return 0
     membrane_resultants = batch._batch_b_initial_membrane_resultants
     bending_resultants = batch._batch_b_initial_bending_resultants
     membrane_resultants.fill(0.0)
@@ -539,7 +655,6 @@ def _populate_initial_field_resultants(batch, committed_states: Mapping[int, Any
     membrane_weight = float(np.sum(layer_weights))
     second_weight = float(np.sum(layer_weights * layer_positions**2))
     bending_stress_weight = 2.0 * second_weight / float(batch.thickness)
-    elastic_matrix = batch._batch_b_membrane_matrix / float(batch.thickness)
     count = 0
     zero = np.zeros((batch.n_gp, 3), dtype=float)
     for index, element_id in enumerate(batch.element_ids):
@@ -566,6 +681,10 @@ def _populate_initial_field_resultants(batch, committed_states: Mapping[int, Any
             batch.n_gp,
             "initial_curvature_prestrain",
         )
+        elastic_matrix = (
+            batch._batch_b_membrane_matrix[index]
+            / float(batch.elements[index].thickness)
+        )
         membrane_resultants[index] = (
             membrane_weight * membrane_stress
             - membrane_weight * (membrane_prestrain @ elastic_matrix.T)
@@ -576,6 +695,77 @@ def _populate_initial_field_resultants(batch, committed_states: Mapping[int, Any
         )
         count += 1
     return count
+
+
+def _generalized_trial_states(batch) -> Dict[int, Dict[str, Any]]:
+    """Materialize the scalar generalized-resultant state from batch arrays."""
+
+    local_displacements = batch.u_work
+    rotations = np.einsum(
+        "egij,ej->egi", batch.Gw, local_displacements, optimize=True
+    )
+    membrane_strain = np.einsum(
+        "egij,ej->egi", batch.B_m, local_displacements, optimize=True
+    )
+    membrane_strain[..., 0] += 0.5 * rotations[..., 0] ** 2
+    membrane_strain[..., 1] += 0.5 * rotations[..., 1] ** 2
+    membrane_strain[..., 2] += rotations[..., 0] * rotations[..., 1]
+    curvature = np.einsum(
+        "egij,ej->egi", batch.B_b, local_displacements, optimize=True
+    )
+    shear_strain = np.einsum(
+        "esij,ej->esi", batch.B_s, local_displacements, optimize=True
+    )
+    membrane_resultants = (
+        np.einsum(
+            "eij,egj->egi",
+            batch._batch_b_membrane_matrix,
+            membrane_strain,
+            optimize=True,
+        )
+        + np.einsum(
+            "eij,egj->egi",
+            batch._batch_b_coupling_matrix,
+            curvature,
+            optimize=True,
+        )
+    )
+    bending_resultants = (
+        np.einsum(
+            "eji,egj->egi",
+            batch._batch_b_coupling_matrix,
+            membrane_strain,
+            optimize=True,
+        )
+        + np.einsum(
+            "eij,egj->egi",
+            batch._batch_b_bending_matrix,
+            curvature,
+            optimize=True,
+        )
+    )
+    shear_resultants = np.einsum(
+        "eij,esj->esi",
+        batch._batch_b_shear_matrix,
+        shear_strain,
+        optimize=True,
+    )
+    states: Dict[int, Dict[str, Any]] = {}
+    for index, element_id in enumerate(batch.element_ids):
+        states[int(element_id)] = {
+            "generalized_section": True,
+            "geometric_nonlinearity": "von_karman",
+            "membrane_strain": membrane_strain[index].copy(),
+            "curvature": curvature[index].copy(),
+            "transverse_shear_strain": shear_strain[index].copy(),
+            "membrane_resultants": membrane_resultants[index].copy(),
+            "bending_resultants": bending_resultants[index].copy(),
+            "transverse_shear_resultants": shear_resultants[index].copy(),
+            "membrane_resultant_order": ("11", "22", "12"),
+            "transverse_shear_resultant_order": ("13", "23"),
+            "recovery_scope": "section_resultants_only",
+        }
+    return states
 
 
 def _recover_initial_field_states(
@@ -625,6 +815,7 @@ def _batch_b_plan_assemble(
             residual_stiffness_fraction=float(residual_stiffness_fraction),
         )
     with self._lock:
+        state_token = begin_state_evaluation(committed_states)
         start_total = time.perf_counter()
         self.timings.calls += 1
         if tangent:
@@ -638,6 +829,7 @@ def _batch_b_plan_assemble(
         trial_states: Dict[int, Any] = {}
 
         for batch in self.shell_batches:
+            used_persistent_state = False
             if getattr(batch, "_batch_b_elastic", False):
                 initialized_count = _populate_initial_field_resultants(
                     batch, committed_states
@@ -655,11 +847,12 @@ def _batch_b_plan_assemble(
                     batch.B_s,
                     batch.detw_shear,
                     batch._batch_b_membrane_matrix,
+                    batch._batch_b_coupling_matrix,
                     batch._batch_b_bending_matrix,
                     batch._batch_b_initial_membrane_resultants,
                     batch._batch_b_initial_bending_resultants,
                     batch._batch_b_shear_matrix,
-                    float(batch._batch_b_drilling_stiffness),
+                    batch._batch_b_drilling_stiffness,
                     batch.force_positions,
                     batch.tangent_positions,
                     self.force_values,
@@ -669,24 +862,32 @@ def _batch_b_plan_assemble(
                 )
                 self.timings.shell_kernel_seconds += time.perf_counter() - kernel_start
                 self.timings.initial_field_accelerated_elements += initialized_count
-                elastic_states = batch._batch_b_elastic_state_mapping
-                # Preserve explicitly supplied/previous elastic states without
-                # allocating a new mapping in the normal case.
-                use_cached_mapping = True
-                for element_id in batch.element_ids:
-                    existing = committed_states.get(int(element_id))
-                    if isinstance(existing, dict) and existing is not elastic_states[int(element_id)]:
-                        use_cached_mapping = False
-                        break
-                if use_cached_mapping:
-                    trial_states.update(elastic_states)
+                if getattr(batch, "_batch_b_generalized", False):
+                    trial_states.update(_generalized_trial_states(batch))
                 else:
+                    elastic_states = batch._batch_b_elastic_state_mapping
+                    # Preserve explicitly supplied/previous elastic states
+                    # without allocating a new mapping in the normal case.
+                    use_cached_mapping = True
                     for element_id in batch.element_ids:
-                        element_key = int(element_id)
-                        existing = committed_states.get(element_key)
-                        trial_states[element_key] = (
-                            existing if isinstance(existing, dict) else elastic_states[element_key]
-                        )
+                        existing = committed_states.get(int(element_id))
+                        if (
+                            isinstance(existing, dict)
+                            and existing is not elastic_states[int(element_id)]
+                        ):
+                            use_cached_mapping = False
+                            break
+                    if use_cached_mapping:
+                        trial_states.update(elastic_states)
+                    else:
+                        for element_id in batch.element_ids:
+                            element_key = int(element_id)
+                            existing = committed_states.get(element_key)
+                            trial_states[element_key] = (
+                                existing
+                                if isinstance(existing, dict)
+                                else elastic_states[element_key]
+                            )
                 if initialized_count and not tangent:
                     _recover_initial_field_states(
                         self,
@@ -696,11 +897,32 @@ def _batch_b_plan_assemble(
                         trial_states,
                     )
             else:
-                F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
-                    displacements,
-                    committed_states,
-                    tangent,
+                persistent_trial = (
+                    committed_states.shell_trial_for_layout(
+                        state_token,
+                        batch.state_layout,
+                    )
+                    if isinstance(committed_states, NonlinearStateStore)
+                    and state_token is not None
+                    else None
                 )
+                if persistent_trial is not None and batch.persistent_state_eligibility(
+                    persistent_trial[0]
+                )[0]:
+                    used_persistent_state = True
+                    F_batch, K_batch, kernel_seconds = batch.evaluate_persistent(
+                        displacements,
+                        persistent_trial[0],
+                        persistent_trial[1],
+                        tangent,
+                    )
+                    batch_states = {}
+                else:
+                    F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
+                        displacements,
+                        committed_states,
+                        tangent,
+                    )
                 self.timings.shell_kernel_seconds += kernel_seconds
                 self.force_values[batch.force_positions.reshape(-1)] = np.asarray(
                     F_batch, dtype=float
@@ -711,19 +933,20 @@ def _batch_b_plan_assemble(
                     ).reshape(-1)
                 trial_states.update(batch_states)
 
-            override_start = time.perf_counter()
-            override_count = _performance._apply_initial_field_shell_overrides(
-                self,
-                batch,
-                displacements,
-                committed_states,
-                tangent,
-                trial_states,
-            )
-            self.timings.initial_field_override_seconds += (
-                time.perf_counter() - override_start
-            )
-            self.timings.initial_field_override_elements += override_count
+            if not used_persistent_state:
+                override_start = time.perf_counter()
+                override_count = _performance._apply_initial_field_shell_overrides(
+                    self,
+                    batch,
+                    displacements,
+                    committed_states,
+                    tangent,
+                    trial_states,
+                )
+                self.timings.initial_field_override_seconds += (
+                    time.perf_counter() - override_start
+                )
+                self.timings.initial_field_override_elements += override_count
 
         for batch in self.quadratic_beam_batches:
             self.timings.non_shell_seconds += batch.evaluate_into_buffers(
@@ -785,7 +1008,12 @@ def _batch_b_plan_assemble(
             tangent_matrix = None
 
         self.timings.total_seconds += time.perf_counter() - start_total
-        return force, tangent_matrix, trial_states
+        state_payload = finish_state_evaluation(
+            committed_states,
+            state_token,
+            trial_states,
+        )
+        return force, tangent_matrix, state_payload
 
 
 def _batch_b_plan_diagnostics(self) -> Dict[str, Any]:
@@ -795,6 +1023,26 @@ def _batch_b_plan_diagnostics(self) -> Dict[str, Any]:
         for batch in self.shell_batches
         if getattr(batch, "_batch_b_elastic", False)
     ]
+    generalized_batches = [
+        batch
+        for batch in elastic_batches
+        if getattr(batch, "_batch_b_generalized", False)
+    ]
+    orthotropic_batches = [
+        batch
+        for batch in elastic_batches
+        if not getattr(batch, "_batch_b_generalized", False)
+        and any(
+            getattr(element, "shell_section", None) is None
+            and getattr(
+                self.model.get_material(element.material_name),
+                "elastic_symmetry",
+                "isotropic",
+            )
+            == "orthotropic"
+            for element in batch.elements
+        )
+    ]
     diagnostics.update(
         {
             "batch_b_installed": True,
@@ -803,12 +1051,25 @@ def _batch_b_plan_diagnostics(self) -> Dict[str, Any]:
                 sum(batch.element_ids.size for batch in elastic_batches)
             ),
             "plastic_batch_count": int(len(self.shell_batches) - len(elastic_batches)),
+            "orthotropic_elastic_fast_path_batch_count": len(
+                orthotropic_batches
+            ),
+            "orthotropic_elastic_fast_path_element_count": int(
+                sum(batch.element_ids.size for batch in orthotropic_batches)
+            ),
+            "generalized_elastic_fast_path_batch_count": len(
+                generalized_batches
+            ),
+            "generalized_elastic_fast_path_element_count": int(
+                sum(batch.element_ids.size for batch in generalized_batches)
+            ),
             "elastic_constitutive_state_bytes": int(
                 sum(
                     batch.elastic_states[0]["plastic_strain"].nbytes
                     + batch.elastic_states[0]["alpha"].nbytes
                     for batch in elastic_batches
                     if batch.elastic_states
+                    and "plastic_strain" in batch.elastic_states[0]
                 )
             ),
         }
@@ -828,6 +1089,7 @@ def install_batch_b_optimizations() -> bool:
     _nonlinear_static._finalize_nonlinear_element_states = (
         _finalize_batch_b_element_states
     )
+    _performance._EXTENDED_ELASTIC_S4_BATCHES = True
     _performance._ShellBatchPlan.build = classmethod(_batch_b_shell_build)
     _performance.NonlinearAssemblyPlan.assemble = _batch_b_plan_assemble
     _performance.NonlinearAssemblyPlan.diagnostics = _batch_b_plan_diagnostics
@@ -851,6 +1113,7 @@ def uninstall_batch_b_optimizations() -> None:
             _ORIGINAL_STATE_FINALIZER
         )
     _ORIGINAL_STATE_FINALIZER = None
+    _performance._EXTENDED_ELASTIC_S4_BATCHES = False
     _performance._ShellBatchPlan.build = classmethod(_ORIGINAL_BATCH_BUILD)
     _performance.NonlinearAssemblyPlan.assemble = _ORIGINAL_PLAN_ASSEMBLE
     _performance.NonlinearAssemblyPlan.diagnostics = _ORIGINAL_PLAN_DIAGNOSTICS
@@ -861,6 +1124,9 @@ def uninstall_batch_b_optimizations() -> None:
 def batch_b_status() -> Dict[str, Any]:
     return {
         "installed": bool(_INSTALLED),
-        "description": "in-place elastic shell assembly into persistent buffers",
+        "description": (
+            "in-place isotropic/orthotropic/generalized elastic shell "
+            "assembly into persistent buffers"
+        ),
         "parallel_kernel": True,
     }

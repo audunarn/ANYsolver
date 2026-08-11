@@ -342,6 +342,91 @@ def test_fully_constrained_model_validates_initial_displacements():
         )
 
 
+def test_fully_constrained_force_restart_retains_nonunit_affine_state():
+    def fully_constrained_patch(prescribed_ux: float) -> FEModel:
+        model = _membrane_patch()
+        model.add_boundary_condition(
+            BoundaryCondition("right_x", [2, 3], {"ux": prescribed_ux})
+        )
+        model.add_boundary_condition(
+            BoundaryCondition("remaining_y", [2, 3, 4], {"uy": 0.0})
+        )
+        return model
+
+    restart_target = 2.0e-3
+    restart_scale = 0.5
+    model = fully_constrained_patch(restart_target)
+    initial_displacements = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+    for node_id in (2, 3):
+        initial_displacements[model.mesh.get_node(node_id).dofs[0]] = (
+            restart_scale * restart_target
+        )
+
+    result = solve_static_nonlinear(
+        model,
+        initial_fields={
+            1: ShellInitialField(membrane_prestrain=[0.0, 0.0, 0.0])
+        },
+        initial_displacements=initial_displacements,
+        equilibrate_initial_state=False,
+        num_steps=1,
+        num_layers=3,
+    )
+
+    reference = fully_constrained_patch(restart_scale * restart_target)
+    reference_displacements = np.zeros(
+        reference.mesh.dof_manager.total_dofs,
+        dtype=float,
+    )
+    for node_id in (2, 3):
+        reference_displacements[reference.mesh.get_node(node_id).dofs[0]] = (
+            restart_scale * restart_target
+        )
+    reference_result = solve_static_nonlinear(
+        reference,
+        initial_fields={
+            1: ShellInitialField(membrane_prestrain=[0.0, 0.0, 0.0])
+        },
+        initial_displacements=reference_displacements,
+        equilibrate_initial_state=False,
+        num_steps=1,
+        num_layers=3,
+    )
+
+    assert result.status == "empty_reduced_system"
+    np.testing.assert_allclose(result.displacements, initial_displacements)
+    np.testing.assert_allclose(
+        result.element_states[1]["layer_strain"],
+        reference_result.element_states[1]["layer_strain"],
+    )
+    assert result.info["initial_state_equilibration"][
+        "constrained_internal_force_norm"
+    ] == pytest.approx(
+        reference_result.info["initial_state_equilibration"][
+            "constrained_internal_force_norm"
+        ]
+    )
+
+
+def test_fully_constrained_prescribed_model_without_restart_keeps_target_state():
+    model = _membrane_patch()
+    target = 2.0e-3
+    model.add_boundary_condition(
+        BoundaryCondition("right_x", [2, 3], {"ux": target})
+    )
+    model.add_boundary_condition(
+        BoundaryCondition("remaining_y", [2, 3, 4], {"uy": 0.0})
+    )
+
+    result = solve_static_nonlinear(model, num_steps=1)
+
+    assert result.status == "empty_reduced_system"
+    for node_id in (2, 3):
+        assert result.displacements[model.mesh.get_node(node_id).dofs[0]] == pytest.approx(
+            target
+        )
+
+
 def test_field_bearing_restart_requires_matching_displacements():
     model = _membrane_patch()
     from anysolver.nonlinear_static import _prepare_initial_states

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import copy
 import os
+import threading
 import time
 from dataclasses import dataclass, field, replace as dataclass_replace
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
@@ -63,6 +64,17 @@ from .matrix_assembly import (
     assemble_load_vector,
     assemble_stiffness_matrix,
 )
+from .nonlinear_analysis_diagnostics import (
+    capture_nonlinear_analysis_diagnostics,
+    record_nonlinear_assembly_execution,
+)
+from .nonlinear_state import (
+    NonlinearStateStore,
+    StateMaterializationPolicy,
+    commit_state_candidate,
+    discard_active_state_candidate,
+    materialize_state_mapping,
+)
 from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
@@ -74,6 +86,7 @@ if TYPE_CHECKING:
 _DOF_INDEX = {"ux": 0, "uy": 1, "uz": 2, "rx": 3, "ry": 4, "rz": 5}
 _FAST_NL_BOOTSTRAPPED = False
 _FAST_NL_BOOTSTRAP_ERROR: Optional[str] = None
+_FAST_NL_BOOTSTRAP_LOCK = threading.RLock()
 _INITIAL_FIELD_STATE_KEYS = (
     "initial_membrane_stress",
     "initial_bending_stress",
@@ -90,15 +103,31 @@ def _ensure_nonlinear_acceleration() -> None:
     global _FAST_NL_BOOTSTRAPPED, _FAST_NL_BOOTSTRAP_ERROR
     if _FAST_NL_BOOTSTRAPPED:
         return
-    _FAST_NL_BOOTSTRAPPED = True
-    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {"1", "true", "yes", "on"}:
-        return
-    try:
-        from .nonlinear_performance_bootstrap import install_nonlinear_performance_optimizations
+    with _FAST_NL_BOOTSTRAP_LOCK:
+        if _FAST_NL_BOOTSTRAPPED:
+            return
+        _FAST_NL_BOOTSTRAP_ERROR = None
+        if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            _FAST_NL_BOOTSTRAPPED = True
+            return
+        try:
+            from .nonlinear_performance_bootstrap import (
+                install_nonlinear_performance_optimizations,
+            )
 
-        install_nonlinear_performance_optimizations()
-    except Exception as exc:  # Optional acceleration must not disable the solver.
-        _FAST_NL_BOOTSTRAP_ERROR = f"{type(exc).__name__}: {exc}"
+            install_nonlinear_performance_optimizations()
+        except Exception as exc:  # Optional acceleration must not disable the solver.
+            _FAST_NL_BOOTSTRAP_ERROR = f"{type(exc).__name__}: {exc}"
+        finally:
+            # Publish completion only after the composite install attempt has
+            # finished, so another first-use caller cannot observe a partially
+            # patched nonlinear stack.
+            _FAST_NL_BOOTSTRAPPED = True
 
 
 @dataclass(frozen=True)
@@ -403,6 +432,7 @@ class NonlinearStaticStep:
     active_stage: Optional[str] = None
     deleted_element_count: int = 0
     max_fracture_utilization: float = 0.0
+    support_reactions: Dict[str, Tuple[float, ...]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -416,6 +446,10 @@ class NonlinearStaticStep:
             "active_stage": self.active_stage,
             "deleted_element_count": int(self.deleted_element_count),
             "max_fracture_utilization": float(self.max_fracture_utilization),
+            "support_reactions": {
+                str(name): [float(value) for value in values]
+                for name, values in self.support_reactions.items()
+            },
         }
 
 
@@ -462,6 +496,10 @@ def _increment_snapshot(
     *,
     control_value: Optional[float] = None,
 ) -> NonlinearIncrementSnapshot:
+    if isinstance(element_states, NonlinearStateStore):
+        element_states = element_states.materialize_owned(
+            policy=StateMaterializationPolicy.SAVED_STATE
+        )
     return NonlinearIncrementSnapshot(
         step_index=int(step_index),
         load_factor=float(load_factor),
@@ -593,6 +631,7 @@ def _assemble_nonlinear_system(
     element_stiffness_scales: Optional[Mapping[int, float]] = None,
     kinematics: str = "von_karman",
     corotational_tangent: str = "rotated",
+    require_full_coordinates: bool = False,
 ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
     """Assemble F_int (and the tangent K_T when requested) at a state.
 
@@ -601,6 +640,21 @@ def _assemble_nonlinear_system(
     rotations. ``corotational_tangent`` is already resolved to either
     ``"rotated"`` or ``"consistent"`` by the public solver.
     """
+    assembly_start = time.perf_counter()
+    if require_full_coordinates:
+        assembly_fallback_reason = "full_coordinates_explicitly_required"
+    elif str(kinematics) != "von_karman":
+        assembly_fallback_reason = "kinematics_not_von_karman"
+    elif tuple(deleted_element_ids or ()):
+        assembly_fallback_reason = "deleted_elements_require_reference_assembly"
+    elif element_stiffness_scales:
+        assembly_fallback_reason = "element_stiffness_scales_require_reference_assembly"
+    else:
+        assembly_fallback_reason = "persistent_assembly_plan_not_selected"
+    del require_full_coordinates  # consumed by the direct-reduction adapter
+    from .nonlinear_state import begin_state_evaluation, finish_state_evaluation
+
+    state_token = begin_state_evaluation(committed_states)
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
@@ -808,11 +862,151 @@ def _assemble_nonlinear_system(
     else:
         K_T = None
 
-    return F_int, K_T, trial_states
+    state_payload = finish_state_evaluation(
+        committed_states,
+        state_token,
+        trial_states,
+    )
+    record_nonlinear_assembly_execution(
+        path="reference_full_coordinate",
+        tangent=bool(tangent),
+        elapsed_seconds=time.perf_counter() - assembly_start,
+        fallback_reason=assembly_fallback_reason,
+    )
+    return F_int, K_T, state_payload
 
 
-def _max_plastic_strain(states: Dict[int, Any]) -> float:
-    return float(_nonlinear_state_summary(states)["max_equivalent_plastic_strain"])
+def _support_reaction_dof_plan(
+    model: "FEModel",
+) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+    """Precompute named support DOFs and their six result components."""
+
+    manager = model.mesh.dof_manager
+    entries: Dict[str, Tuple[List[int], List[int]]] = {}
+    for index, boundary in enumerate(getattr(model, "boundary_conditions", ()) or ()):
+        name = str(getattr(boundary, "name", "") or f"support {index + 1}")
+        dofs, components = entries.setdefault(name, ([], []))
+        indices = getattr(boundary, "_dof_indices", {})
+        constraints = getattr(boundary, "dof_constraints", {})
+        for node_id in getattr(boundary, "node_ids", ()) or ():
+            node_dofs = manager.get_node_dofs(int(node_id))
+            for component in constraints:
+                local = indices.get(component)
+                if local is None or local >= len(node_dofs):
+                    continue
+                dof = int(node_dofs[local])
+                if dof >= 0:
+                    dofs.append(dof)
+                    components.append(int(local))
+    return {
+        name: (
+            np.asarray(dofs, dtype=np.intp),
+            np.asarray(components, dtype=np.intp),
+        )
+        for name, (dofs, components) in entries.items()
+    }
+
+
+def _support_reaction_resultants(
+    model: "FEModel",
+    imbalance: np.ndarray,
+    *,
+    dof_plan: Optional[Mapping[str, Tuple[np.ndarray, np.ndarray]]] = None,
+) -> Dict[str, Tuple[float, ...]]:
+    """Sum nonlinear residual forces by named support boundary condition."""
+
+    residual = np.asarray(imbalance, dtype=float).reshape(-1)
+    plan = _support_reaction_dof_plan(model) if dof_plan is None else dof_plan
+    result: Dict[str, Tuple[float, ...]] = {}
+    for name, (dofs, components) in plan.items():
+        if dofs.size <= 32:
+            values = [0.0] * 6
+            for entry_index in range(int(dofs.size)):
+                dof = int(dofs[entry_index])
+                if dof < residual.size:
+                    component = int(components[entry_index])
+                    values[component] += float(residual[dof])
+            result[name] = tuple(values)
+            continue
+        valid = dofs < residual.size
+        if np.all(valid):
+            selected_dofs = dofs
+            selected_components = components
+        else:
+            selected_dofs = dofs[valid]
+            selected_components = components[valid]
+        vector = np.bincount(
+            selected_components,
+            weights=residual[selected_dofs],
+            minlength=6,
+        )[:6]
+        result[name] = tuple(float(value) for value in vector)
+    return result
+
+
+def _support_reaction_resultants_from_forces(
+    model: "FEModel",
+    internal_force: np.ndarray,
+    constant_force: np.ndarray,
+    proportional_force: np.ndarray,
+    load_factor: float,
+    *,
+    dof_plan: Optional[Mapping[str, Tuple[np.ndarray, np.ndarray]]] = None,
+) -> Dict[str, Tuple[float, ...]]:
+    """Recover named support reactions without full residual temporaries."""
+
+    internal = np.asarray(internal_force, dtype=float).reshape(-1)
+    constant = np.asarray(constant_force, dtype=float).reshape(-1)
+    proportional = np.asarray(proportional_force, dtype=float).reshape(-1)
+    available = min(internal.size, constant.size, proportional.size)
+    factor = float(load_factor)
+    plan = _support_reaction_dof_plan(model) if dof_plan is None else dof_plan
+    result: Dict[str, Tuple[float, ...]] = {}
+    for name, (dofs, components) in plan.items():
+        if dofs.size <= 32:
+            values = [0.0] * 6
+            for entry_index in range(int(dofs.size)):
+                dof = int(dofs[entry_index])
+                if dof < available:
+                    component = int(components[entry_index])
+                    values[component] += float(
+                        internal[dof]
+                        - (constant[dof] + factor * proportional[dof])
+                    )
+            result[name] = tuple(values)
+            continue
+        valid = dofs < available
+        if np.all(valid):
+            selected_dofs = dofs
+            selected_components = components
+        else:
+            selected_dofs = dofs[valid]
+            selected_components = components[valid]
+        weights = internal[selected_dofs] - (
+            constant[selected_dofs] + factor * proportional[selected_dofs]
+        )
+        vector = np.bincount(
+            selected_components,
+            weights=weights,
+            minlength=6,
+        )[:6]
+        result[name] = tuple(float(value) for value in vector)
+    return result
+
+
+def _max_plastic_strain(states: Mapping[int, Any]) -> float:
+    if isinstance(states, NonlinearStateStore):
+        return states.max_equivalent_plastic_strain()
+    alpha_parts: List[np.ndarray] = []
+    for state in states.values():
+        if not isinstance(state, dict):
+            continue
+        alpha = np.asarray(state.get("alpha", ()), dtype=float).reshape(-1)
+        if alpha.size:
+            alpha_parts.append(alpha)
+    if not alpha_parts:
+        return 0.0
+    return float(np.max(np.concatenate(alpha_parts)))
 
 
 def state_von_mises_envelope(state: Any, E: float, nu: float) -> Optional[float]:
@@ -1202,6 +1396,116 @@ def _finalize_nonlinear_element_states(
     return element_states
 
 
+def _activate_nonlinear_state_storage(
+    model: "FEModel",
+    committed_states: Mapping[int, Any],
+    num_layers: int,
+    info: Dict[str, Any],
+    *,
+    kinematics: str,
+) -> Mapping[int, Any]:
+    """Pack qualified plastic shell batches once for one solver lifecycle."""
+
+    diagnostic: Dict[str, Any] = {
+        "activated": False,
+        "eligible_batch_count": 0,
+        "fallback_reason": None,
+    }
+    info["nonlinear_state_storage"] = diagnostic
+    if str(kinematics) != "von_karman":
+        diagnostic["fallback_reason"] = "kinematics_not_von_karman"
+        return committed_states
+    if os.environ.get("FE_SOLVER_DISABLE_PERSISTENT_STATE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        diagnostic["fallback_reason"] = "persistent_state_storage_disabled"
+        return committed_states
+    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        diagnostic["fallback_reason"] = "nonlinear_acceleration_disabled"
+        return committed_states
+    try:
+        from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
+
+        plan = get_nonlinear_assembly_plan(model, int(num_layers))
+        plastic_batches = tuple(
+            batch for batch in plan.shell_batches if batch.has_plasticity
+        )
+        if not plastic_batches:
+            diagnostic["fallback_reason"] = "no_plastic_shell_batch"
+            return committed_states
+        store = NonlinearStateStore.from_shell_layouts(
+            tuple(batch.state_layout for batch in plastic_batches),
+            committed_states,
+        )
+        eligibility = []
+        for batch in plastic_batches:
+            state_batch = store.shell_batch_for_layout(batch.state_layout)
+            eligible, reason = batch.persistent_state_eligibility(state_batch)
+            eligibility.append(
+                {
+                    "element_ids": list(batch.state_layout.element_ids),
+                    "eligible": bool(eligible),
+                    "fallback_reason": reason,
+                }
+            )
+        eligible_count = sum(int(item["eligible"]) for item in eligibility)
+        diagnostic.update(
+            {
+                "eligible_batch_count": int(eligible_count),
+                "batch_eligibility": eligibility,
+            }
+        )
+        if eligible_count == 0:
+            diagnostic["fallback_reason"] = "no_persistent_state_batch_eligible"
+            return committed_states
+        diagnostic["activated"] = True
+        diagnostic.update(store.diagnostics())
+        return store
+    except Exception as exc:
+        diagnostic["fallback_reason"] = (
+            f"state_store_setup_failed:{type(exc).__name__}:{exc}"
+        )
+        return committed_states
+
+
+def _commit_nonlinear_state_candidate(
+    committed_states: Mapping[int, Any],
+    candidate_states: Mapping[int, Any],
+) -> Mapping[int, Any]:
+    return commit_state_candidate(committed_states, candidate_states)
+
+
+def _discard_nonlinear_state_candidate(
+    committed_states: Mapping[int, Any],
+) -> None:
+    discard_active_state_candidate(committed_states)
+
+
+def _materialize_final_nonlinear_states(
+    committed_states: Mapping[int, Any],
+    info: Dict[str, Any],
+) -> Dict[int, Any]:
+    store = committed_states if isinstance(committed_states, NonlinearStateStore) else None
+    result = materialize_state_mapping(
+        committed_states,
+        policy=StateMaterializationPolicy.FINAL_RESULT,
+    )
+    if store is not None:
+        activation = dict(info.get("nonlinear_state_storage", {}))
+        activation.update(store.diagnostics())
+        activation["activated"] = True
+        info["nonlinear_state_storage"] = activation
+    return result
+
+
 def _nonlinear_status_category(status: str, failure_reason: Optional[str]) -> str:
     if status == "completed":
         return "converged"
@@ -1366,6 +1670,62 @@ def _reduced_coordinates(
             f"(projection residual {error:.3e})"
         )
     return q
+
+
+def _reduced_coordinates_with_affine_scale(
+    T: sparse.csr_matrix,
+    u0: np.ndarray,
+    displacements: Optional[np.ndarray],
+) -> Tuple[np.ndarray, float]:
+    """Recover a restart state and its proportional affine-constraint scale.
+
+    A force-control restart must preserve the supplied physical support/MPC
+    state while a new proportional load path starts at zero.  Solving the
+    augmented compatible representation ``u = T q + s u0`` recovers both the
+    free coordinates and the already-committed affine scale ``s`` without
+    guessing it from one selected support row.
+    """
+
+    if displacements is None:
+        return np.zeros(int(T.shape[1]), dtype=float), 0.0
+    full = np.asarray(displacements, dtype=float).reshape(-1)
+    if full.size != T.shape[0]:
+        raise ValueError(
+            f"initial_displacements has {full.size} entries; expected {T.shape[0]}"
+        )
+    if np.any(~np.isfinite(full)):
+        raise ValueError("initial_displacements must contain only finite values")
+    affine = np.asarray(u0, dtype=float).reshape(-1)
+    if float(np.linalg.norm(affine)) <= 1.0e-30:
+        return _reduced_coordinates(T, np.zeros_like(affine), full), 0.0
+
+    augmented = sparse.hstack(
+        (T, sparse.csr_matrix(affine.reshape(-1, 1))),
+        format="csr",
+    )
+    solution = sparse.linalg.lsqr(
+        augmented,
+        full,
+        atol=1.0e-12,
+        btol=1.0e-12,
+    )
+    values = np.asarray(solution[0], dtype=float).reshape(-1)
+    q = values[:-1]
+    affine_scale = float(values[-1])
+    if np.any(~np.isfinite(q)) or not np.isfinite(affine_scale):
+        raise ValueError(
+            "initial_displacements could not be reduced to finite coordinates"
+        )
+    reconstructed = np.asarray(augmented @ values, dtype=float).reshape(-1)
+    error = float(np.linalg.norm(reconstructed - full))
+    scale = max(float(np.linalg.norm(full)), 1.0)
+    if error > 1.0e-9 * scale:
+        raise ValueError(
+            "initial_displacements is incompatible with the active "
+            "supports/MPC affine path "
+            f"(projection residual {error:.3e})"
+        )
+    return q, affine_scale
 
 
 def _solve_static_displacement_control(
@@ -1591,14 +1951,46 @@ def _solve_static_displacement_control(
                 failure_reason = "maximum_iterations_reached"
 
             if failure_reason is not None:
+                _discard_nonlinear_state_candidate(committed_states)
                 q = q_step_start
                 lam = lam_step_start
                 status = "stopped_at_limit" if steps else "diverged"
                 break
 
-            committed_states = states_new
+            committed_states = _commit_nonlinear_state_candidate(
+                committed_states,
+                states_new,
+            )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
+            reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
+                model,
+                u,
+                committed_states,
+                num_layers,
+                tangent=False,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+                require_full_coordinates=True,
+            )
+            # Reaction recovery is diagnostic-only; do not leave its trial
+            # constitutive state active for the next accepted increment.
+            _discard_nonlinear_state_candidate(committed_states)
+            if follower_active:
+                reaction_constant, _unused = _weighted_external_load_system(
+                    model, constant_terms, u, tangent=False
+                )
+                reaction_proportional, _unused = _weighted_external_load_system(
+                    model, [proportional_term], u, tangent=False
+                )
+            else:
+                reaction_constant = F_const_static
+                reaction_proportional = F_prop_static
+            support_reactions = _support_reaction_resultants(
+                model,
+                reaction_internal
+                - (reaction_constant + lam * reaction_proportional),
+            )
             steps.append(
                 NonlinearStaticStep(
                     step_index=step_index,
@@ -1609,6 +2001,7 @@ def _solve_static_displacement_control(
                     max_equivalent_plastic_strain=_max_plastic_strain(committed_states),
                     control_value=current,
                     active_stage=active_stage,
+                    support_reactions=support_reactions,
                 )
             )
             history.append(
@@ -1621,6 +2014,10 @@ def _solve_static_displacement_control(
                     "constraint_error": constraint_error,
                     "iterations": iteration,
                     "active_stage": active_stage,
+                    "support_reactions": {
+                        name: list(values)
+                        for name, values in support_reactions.items()
+                    },
                 }
             )
             if record_increment_snapshots:
@@ -1647,9 +2044,14 @@ def _solve_static_displacement_control(
                     control_value=float(current),
                     displacement_norm=float(np.linalg.norm(u)),
                     max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
+                    support_reactions={
+                        name: list(values)
+                        for name, values in support_reactions.items()
+                    },
                 )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     committed_states = _finalize_nonlinear_element_states(
         model,
         u_final,
@@ -1694,6 +2096,7 @@ def _solve_static_displacement_control(
 
 
 @resource_threaded
+@capture_nonlinear_analysis_diagnostics
 def solve_static_nonlinear(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
@@ -1877,7 +2280,20 @@ def solve_static_nonlinear(
         raise ValueError("fracture_config is currently supported only with force control")
 
     n_red = int(T.shape[1])
-    q = _reduced_coordinates(T, u0, initial_displacements)
+    force_restart = control_name == "force" and initial_displacements is not None
+    if control_name == "force":
+        q, initial_affine_scale = _reduced_coordinates_with_affine_scale(
+            T,
+            u0,
+            initial_displacements,
+        )
+        initial_affine_offset = (
+            float(initial_affine_scale) * np.asarray(u0, dtype=float).reshape(-1)
+        )
+    else:
+        q = _reduced_coordinates(T, u0, initial_displacements)
+        initial_affine_scale = 1.0
+        initial_affine_offset = np.asarray(u0, dtype=float).reshape(-1)
     if (
         initial_fields
         and initial_displacements is not None
@@ -1889,6 +2305,11 @@ def solve_static_nonlinear(
             "already-equilibrated restart."
         )
     if n_red == 0:
+        fully_constrained_displacement = (
+            initial_affine_offset
+            if force_restart
+            else np.asarray(u0, dtype=float).reshape(-1)
+        )
         has_initial_fields = any(
             _state_has_initial_field(state) for state in committed_states.values()
         )
@@ -1914,7 +2335,7 @@ def solve_static_nonlinear(
             internal_force, _unused_tangent, trial_states = (
                 _assemble_nonlinear_system(
                     model,
-                    np.asarray(u0, dtype=float).reshape(-1),
+                    fully_constrained_displacement,
                     committed_states,
                     num_layers,
                     tangent=False,
@@ -1948,7 +2369,7 @@ def solve_static_nonlinear(
         return NonlinearStaticResult(
             [],
             "empty_reduced_system",
-            u0.copy(),
+            fully_constrained_displacement.copy(),
             0.0,
             committed_states,
             info,
@@ -1972,7 +2393,7 @@ def solve_static_nonlinear(
         q, committed_states, initialization_history, initialization_failure = _equilibrate_initial_fields(
             model=model,
             T=T,
-            u0=u0,
+            u0=initial_affine_offset,
             committed_states=committed_states,
             num_layers=num_layers,
             max_iterations=max_iterations,
@@ -1991,7 +2412,10 @@ def solve_static_nonlinear(
             "failure_reason": initialization_failure,
         }
         if initialization_failure is not None:
-            u_failed = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+            u_failed = np.asarray(
+                T @ q + initial_affine_offset,
+                dtype=float,
+            ).reshape(-1)
             info["failure_reason"] = initialization_failure
             info["stop_reason"] = initialization_failure
             info["status_category"] = _nonlinear_status_category("diverged", initialization_failure)
@@ -2129,6 +2553,13 @@ def solve_static_nonlinear(
             }
             info["material_history_reused_from_preload"] = True
 
+        committed_states = _activate_nonlinear_state_storage(
+            model,
+            committed_states,
+            num_layers,
+            info,
+            kinematics=kinematics,
+        )
         controlled_result = _solve_static_displacement_control(
             model=model,
             T=T,
@@ -2189,6 +2620,13 @@ def solve_static_nonlinear(
             ) + int(preload_result.info.get("total_newton_iterations", 0))
         return controlled_result
 
+    committed_states = _activate_nonlinear_state_storage(
+        model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+    )
     base_step = target_load_factor / num_steps
     min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
     max_step = max(base_step * settings.max_step_factor, min_step)
@@ -2203,8 +2641,24 @@ def solve_static_nonlinear(
     )
 
     prescribed_offset = np.asarray(u0, dtype=float).reshape(-1)
+    prescribed_base = (
+        initial_affine_offset
+        if force_restart
+        else np.zeros_like(prescribed_offset)
+    )
+    prescribed_slope = (
+        np.zeros_like(prescribed_offset)
+        if force_restart
+        else prescribed_offset
+    )
     info["prescribed_displacement_path"] = {
-        "mode": "proportional_to_load_factor",
+        "mode": (
+            "restart_fixed_affine_state"
+            if force_restart
+            else "proportional_to_load_factor"
+        ),
+        "initial_affine_scale": float(initial_affine_scale),
+        "affine_scale_slope": 0.0 if force_restart else 1.0,
         "target_max_abs": float(np.max(np.abs(prescribed_offset)))
         if prescribed_offset.size
         else 0.0,
@@ -2213,7 +2667,7 @@ def solve_static_nonlinear(
     def full_displacement(q_reduced: np.ndarray, path_factor: float) -> np.ndarray:
         """Expand a force-control state on its affine constraint path."""
         return np.asarray(
-            T @ q_reduced + float(path_factor) * prescribed_offset,
+            T @ q_reduced + prescribed_base + float(path_factor) * prescribed_slope,
             dtype=float,
         ).reshape(-1)
 
@@ -2446,11 +2900,38 @@ def solve_static_nonlinear(
             if converged:
                 q = q_new
                 lam = lam_trial
-                committed_states = states_new
+                committed_states = _commit_nonlinear_state_candidate(
+                    committed_states,
+                    states_new,
+                )
                 force_line_search_next = False
                 step_index += 1
                 u = full_displacement(q, lam)
                 control_value = float(np.linalg.norm(u))
+                reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
+                    model,
+                    u,
+                    committed_states,
+                    num_layers,
+                    tangent=False,
+                    deleted_element_ids=tuple(deleted_element_ids),
+                    residual_stiffness_fraction=(
+                        fracture_config.residual_stiffness_fraction
+                        if fracture_config is not None else 1.0
+                    ),
+                    kinematics=kinematics,
+                    corotational_tangent=resolved_corotational_tangent,
+                    require_full_coordinates=True,
+                )
+                # Reaction recovery is diagnostic-only; do not leave its trial
+                # constitutive state active for the next accepted increment.
+                _discard_nonlinear_state_candidate(committed_states)
+                reaction_external, _unused_tangent, _unused_factors, _unused_stage = (
+                    external_load_at(lam, u, tangent=False)
+                )
+                support_reactions = _support_reaction_resultants(
+                    model, reaction_internal - reaction_external
+                )
                 new_records: Tuple[DeletedElementRecord, ...] = ()
                 if fracture_config is not None:
                     new_records, step_fracture_utilization = detect_new_deletions(
@@ -2480,6 +2961,7 @@ def solve_static_nonlinear(
                         active_stage=active_stage,
                         deleted_element_count=len(deleted_element_ids),
                         max_fracture_utilization=max_fracture_utilization,
+                        support_reactions=support_reactions,
                     )
                 )
                 removed_load = np.zeros(3, dtype=float)
@@ -2525,6 +3007,10 @@ def solve_static_nonlinear(
                         "newly_deleted_element_ids": [record.element_id for record in new_records],
                         "max_fracture_utilization": max_fracture_utilization,
                         "deleted_pressure_force_resultant": removed_load.tolist(),
+                        "support_reactions": {
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
                     }
                 )
                 if record_increment_snapshots:
@@ -2563,6 +3049,10 @@ def solve_static_nonlinear(
                         max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
                         nominal_increment_count=int(num_steps),
                         load_increment=float(attempted_step_size),
+                        support_reactions={
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
                     )
                 if fracture_config is not None and deleted_element_ids:
                     scoped_total = sum(
@@ -2599,6 +3089,7 @@ def solve_static_nonlinear(
                 )
                 step_size = next_step
             else:
+                _discard_nonlinear_state_candidate(committed_states)
                 if fracture_config is not None and deleted_element_ids and failure_reason in {
                     "singular_tangent_factorization",
                     "maximum_iterations_reached",
@@ -2635,6 +3126,7 @@ def solve_static_nonlinear(
                     break
 
     u_final = full_displacement(q, lam)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     committed_states = _finalize_nonlinear_element_states(
         model,
         u_final,
@@ -2665,7 +3157,16 @@ def solve_static_nonlinear(
         info["load_program_stage_factors"] = load_program.stage_factors(lam)
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
-    info["constraint_postcheck"] = constraint_residual_summary(model, u_final)
+    final_affine_scale = (
+        float(initial_affine_scale)
+        if force_restart
+        else float(lam)
+    )
+    info["constraint_postcheck"] = constraint_residual_summary(
+        model,
+        u_final,
+        affine_scale=final_affine_scale,
+    )
     info["result_case"] = make_result_case(
         name="nonlinear_static",
         analysis_type="nonlinear_static",

@@ -36,6 +36,7 @@ from .nonlinear_static import (
 from .recovery import ResourceConfig
 
 if TYPE_CHECKING:
+    from .analysis_session import AnalysisSession
     from .boundary import LoadCase
     from .fe_core import FEModel
 
@@ -232,7 +233,7 @@ def default_eigenmode_imperfection(
 
 def run_nonlinear_capacity_workflow(
     model: "FEModel",
-    reference_load_case: "LoadCase",
+    reference_load_case: Optional["LoadCase"] = None,
     *,
     nonlinear_load_case: Optional["LoadCase"] = None,
     nonlinear_load_program: Optional[NonlinearLoadProgram] = None,
@@ -242,32 +243,63 @@ def run_nonlinear_capacity_workflow(
     progress_callback: Optional[ProgressCallback] = None,
     cancellation_token: Optional[CancellationToken] = None,
     record_increment_snapshots: bool = False,
+    session: Optional["AnalysisSession"] = None,
 ) -> CapacityWorkflowResult:
-    """Run linear static -> buckling -> imperfection -> nonlinear capacity."""
+    """Run linear static -> buckling -> imperfection -> nonlinear capacity.
+
+    With no ``reference_load_case``, nonzero affine prescribed constraints are
+    the proportional reference action.  The returned factors then multiply
+    the prescribed displacement/rotation target rather than an external load.
+    """
     cancellation_safe_point(cancellation_token, "capacity.start")
     config = config or CapacityWorkflowConfig()
     start = time.perf_counter()
-    static_displacements, static_info = solve_linear(
-        model,
-        reference_load_case,
-        cancellation_token=cancellation_token,
-        progress_callback=progress_callback,
+    prescribed_action = any(
+        abs(float(value)) > 0.0
+        for condition in model.boundary_conditions
+        for value in condition.dof_constraints.values()
+    ) or any(
+        abs(float(equation.rhs)) > 0.0
+        for equation in getattr(model, "constraint_equations", ())
     )
-    static_status = str((static_info.get("convergence_info") or {}).get("status", "unknown"))
-    if static_status != "converged":
-        raise RuntimeError(f"Static prestress solve did not converge: {static_status}")
+    if reference_load_case is None and not prescribed_action:
+        raise ValueError(
+            "capacity needs an external reference load case or a nonzero "
+            "prescribed displacement/rotation"
+        )
+    from .analysis_session import AnalysisSession
 
-    prestress_states, prestress_summary = _recover_prestress(model, static_displacements)
-    cancellation_safe_point(cancellation_token, "capacity.prestress_recovery")
-    buckling = solve_eigenvalue_buckling(
-        model,
-        prestress_states,
-        num_modes=config.num_buckling_modes,
-        cancellation_token=cancellation_token,
-        progress_callback=progress_callback,
-    )
-    if not buckling.modes:
-        raise RuntimeError(f"Buckling solve returned no usable modes: {buckling.solver_status}")
+    owns_session = session is None
+    base_session = session or AnalysisSession(model)
+    session_diagnostics: Dict[str, Any] = {}
+    try:
+        static_displacements, static_info = solve_linear(
+            model,
+            reference_load_case,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            session=base_session,
+        )
+        static_status = str((static_info.get("convergence_info") or {}).get("status", "unknown"))
+        if static_status != "converged":
+            raise RuntimeError(f"Static prestress solve did not converge: {static_status}")
+
+        prestress_states, prestress_summary = _recover_prestress(model, static_displacements)
+        cancellation_safe_point(cancellation_token, "capacity.prestress_recovery")
+        buckling = solve_eigenvalue_buckling(
+            model,
+            prestress_states,
+            num_modes=config.num_buckling_modes,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            session=base_session,
+        )
+        if not buckling.modes:
+            raise RuntimeError(f"Buckling solve returned no usable modes: {buckling.solver_status}")
+        session_diagnostics = base_session.diagnostics()
+    finally:
+        if owns_session:
+            base_session.close()
 
     mesh_adequacy = evaluate_mode_mesh_adequacy(
         model,
@@ -322,7 +354,13 @@ def run_nonlinear_capacity_workflow(
         "element_count": int(model.mesh.num_elements),
         "reference_load_case": getattr(reference_load_case, "name", None),
         "nonlinear_load_case": getattr(nonlinear_load_case or reference_load_case, "name", None),
+        "reference_action": (
+            "prescribed_displacement"
+            if reference_load_case is None
+            else "load_case"
+        ),
         "config": config.__dict__,
+        "analysis_session": session_diagnostics,
         "environment": {
             "platform": platform.platform(),
             "python": sys.version.split()[0],

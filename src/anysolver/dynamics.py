@@ -26,6 +26,7 @@ from .validation import load_vector_resultant
 from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
+    from .analysis_session import AnalysisSession
     from .fe_core import FEModel
 
 
@@ -405,6 +406,7 @@ def solve_transient_newmark(
     *,
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
 ) -> TransientResult:
     """Solve linear transient response with Newmark time integration.
 
@@ -418,13 +420,31 @@ def solve_transient_newmark(
     """
     cancellation_safe_point(cancellation_token, "transient.start")
     model.apply_boundary_conditions()
-    K, stiffness_info = assemble_stiffness_matrix(model)
-    M, mass_info = assemble_mass_matrix(model)
     total_dofs = model.mesh.dof_manager.total_dofs
     base_load, base_load_info = assemble_load_vector(model, base_load_case)
-    zero_load = np.zeros(total_dofs, dtype=float)
-    K_red, _zero_red, T, u0, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
-    M_red = (T.T @ M @ T).tocsr()
+    if session is None:
+        K, stiffness_info = assemble_stiffness_matrix(model)
+        M, mass_info = assemble_mass_matrix(model)
+        zero_load = np.zeros(total_dofs, dtype=float)
+        K_red, _zero_red, T, u0, independent_dofs, constraint_info = (
+            build_constraint_transformation(K, zero_load, model)
+        )
+        M_red = (T.T @ M @ T).tocsr()
+        constraint_plan = None
+    else:
+        stiffness_plan = session.stiffness_plan(model)
+        constraint_plan = session.constraint_plan(stiffness_plan, model)
+        mass_plan = session.mass_plan(model)
+        K = stiffness_plan.matrix
+        M = mass_plan.matrix
+        stiffness_info = dict(stiffness_plan.info)
+        mass_info = dict(mass_plan.info)
+        K_red = constraint_plan.K_red
+        M_red, _ = session.reduced_mass(constraint_plan, model)
+        T = constraint_plan.T
+        u0 = constraint_plan.u0
+        independent_dofs = constraint_plan.independent_dofs
+        constraint_info = dict(constraint_plan.info)
     C_red = (config.rayleigh_alpha * M_red + config.rayleigh_beta * K_red).tocsr()
 
     if float(np.linalg.norm(M_red.diagonal())) <= 0.0 and M_red.nnz == 0:
@@ -438,9 +458,21 @@ def solve_transient_newmark(
         patch_vectors.append(vector)
         patch_infos.append(info)
 
+    base_load_red = _reduced_load(T, K, u0, base_load)
+    patch_vectors_red = [
+        np.asarray(T.T @ vector, dtype=float).reshape(-1)
+        for vector in patch_vectors
+    ]
+
     def full_load_at(time: float) -> np.ndarray:
         load = base_load.copy()
         for patch, vector in zip(patches, patch_vectors):
+            load += patch.pressure_at(time) * vector
+        return load
+
+    def reduced_load_at(time: float) -> np.ndarray:
+        load = base_load_red.copy()
+        for patch, vector in zip(patches, patch_vectors_red):
             load += patch.pressure_at(time) * vector
         return load
 
@@ -465,6 +497,45 @@ def solve_transient_newmark(
     if history_storage_mode == "selected" and not output_node_ids and (recovery is None or recovery.include_displacements):
         output_node_ids = tuple(int(node_id) for node_id in model.mesh.nodes)
     history_dof_indices = _node_dof_indices(model, output_node_ids) if history_storage_mode == "selected" else None
+    selected_output_plan = (
+        session.output_selection_plan(history_dof_indices, constraint_plan, model)
+        if session is not None and history_dof_indices is not None
+        else None
+    )
+    selected_T = (
+        T[np.asarray(history_dof_indices, dtype=np.intp)].tocsr()
+        if selected_output_plan is None and history_dof_indices is not None
+        else None
+    )
+    selected_u0 = (
+        u0[np.asarray(history_dof_indices, dtype=np.intp)]
+        if selected_output_plan is None and history_dof_indices is not None
+        else None
+    )
+    node_history_slices = {
+        int(node_id): slice(6 * index, 6 * (index + 1))
+        for index, node_id in enumerate(output_node_ids)
+    }
+    peak_node_ids, peak_dof_index = _translation_peak_index(model)
+    peak_flat_dofs = peak_dof_index.reshape(-1)
+    peak_rows_required = not (
+        history_storage_mode in {"full", "envelope"} or include_stress_history
+    )
+    peak_output_plan = (
+        session.output_selection_plan(peak_flat_dofs, constraint_plan, model)
+        if session is not None and peak_rows_required
+        else None
+    )
+    peak_T = (
+        T[peak_flat_dofs].tocsr()
+        if peak_output_plan is None and peak_rows_required
+        else None
+    )
+    peak_u0 = (
+        u0[peak_flat_dofs]
+        if peak_output_plan is None and peak_rows_required
+        else None
+    )
     estimated_saved_steps = _saved_step_count(times, config.save_every)
     preflight_memory = estimate_model_memory(
         model,
@@ -478,7 +549,7 @@ def solve_transient_newmark(
     q_red = np.asarray((q - u0)[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
     v_red = np.asarray(v_full[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
 
-    F0_red = _reduced_load(T, K, u0, full_load_at(float(times[0])))
+    F0_red = reduced_load_at(float(times[0]))
     try:
         mass_handle = factorize(M_red, MatrixClass.SYMMETRIC_SEMIDEFINITE, signature="transient.initial_mass")
         a_red = np.asarray(mass_handle.solve(F0_red - C_red @ v_red - K_red @ q_red), dtype=float).reshape(-1)
@@ -499,24 +570,52 @@ def solve_transient_newmark(
     peak_von_mises = 0.0
     energy_kinetic = []
     energy_strain = []
+    full_vector_reconstruction_count = 0
+    selected_output_reconstruction_count = 0
 
     def save_state(time: float, q_state: np.ndarray, v_state: np.ndarray, a_state: np.ndarray) -> None:
         nonlocal peak_displacement, peak_displacement_node, peak_von_mises
         nonlocal displacement_envelope, velocity_envelope, acceleration_envelope
-        full_u = reconstruct_full_solution(T, q_state, u0)
-        full_v = np.asarray(T @ v_state, dtype=float).reshape(-1)
-        full_a = np.asarray(T @ a_state, dtype=float).reshape(-1)
+        nonlocal full_vector_reconstruction_count, selected_output_reconstruction_count
+        needs_full = history_storage_mode in {"full", "envelope"} or stress_history is not None
+        full_u: Optional[np.ndarray]
+        full_v: Optional[np.ndarray]
+        full_a: Optional[np.ndarray]
+        if needs_full:
+            full_u = reconstruct_full_solution(T, q_state, u0)
+            full_v = np.asarray(T @ v_state, dtype=float).reshape(-1)
+            full_a = np.asarray(T @ a_state, dtype=float).reshape(-1)
+            full_vector_reconstruction_count += 1
+        else:
+            full_u = None
+            full_v = None
+            full_a = None
+        if selected_output_plan is not None:
+            selected_u = selected_output_plan.reconstruct(q_state)
+            selected_v = selected_output_plan.reconstruct(v_state, affine=False)
+            selected_a = selected_output_plan.reconstruct(a_state, affine=False)
+            selected_output_reconstruction_count += 1
+        elif selected_T is not None:
+            selected_u = np.asarray(selected_T @ q_state, dtype=float).reshape(-1) + np.asarray(selected_u0, dtype=float)
+            selected_v = np.asarray(selected_T @ v_state, dtype=float).reshape(-1)
+            selected_a = np.asarray(selected_T @ a_state, dtype=float).reshape(-1)
+            selected_output_reconstruction_count += 1
+        else:
+            selected_u = np.zeros(0, dtype=float)
+            selected_v = np.zeros(0, dtype=float)
+            selected_a = np.zeros(0, dtype=float)
         saved_times.append(float(time))
         if history_storage_mode == "full":
+            assert full_u is not None and full_v is not None and full_a is not None
             saved_u.append(full_u)
             saved_v.append(full_v)
             saved_a.append(full_a)
         elif history_storage_mode == "selected":
-            indices = np.asarray(history_dof_indices if history_dof_indices is not None else (), dtype=np.intp)
-            saved_u.append(full_u[indices])
-            saved_v.append(full_v[indices])
-            saved_a.append(full_a[indices])
+            saved_u.append(selected_u)
+            saved_v.append(selected_v)
+            saved_a.append(selected_a)
         elif history_storage_mode == "envelope":
+            assert full_u is not None and full_v is not None and full_a is not None
             abs_u = np.abs(full_u)
             abs_v = np.abs(full_v)
             abs_a = np.abs(full_a)
@@ -524,16 +623,37 @@ def solve_transient_newmark(
             velocity_envelope = abs_v if velocity_envelope is None else np.maximum(velocity_envelope, abs_v)
             acceleration_envelope = abs_a if acceleration_envelope is None else np.maximum(acceleration_envelope, abs_a)
         for node_id in output_node_ids:
-            node = model.mesh.get_node(int(node_id))
-            if node is not None:
-                node_history_values[int(node_id)].append(full_u[np.asarray(node.dofs, dtype=np.intp)])
-        current_peak, current_node = _translation_peak(model, full_u)
+            if full_u is not None:
+                node = model.mesh.get_node(int(node_id))
+                if node is not None:
+                    node_history_values[int(node_id)].append(full_u[np.asarray(node.dofs, dtype=np.intp)])
+            else:
+                node_history_values[int(node_id)].append(
+                    selected_u[node_history_slices[int(node_id)]]
+                )
+        if full_u is not None:
+            current_peak, current_node = _translation_peak(model, full_u)
+        elif peak_node_ids.size:
+            if peak_output_plan is not None:
+                translations = peak_output_plan.reconstruct(q_state).reshape(-1, 3)
+            else:
+                assert peak_T is not None and peak_u0 is not None
+                translations = (
+                    np.asarray(peak_T @ q_state, dtype=float).reshape(-1) + peak_u0
+                ).reshape(-1, 3)
+            magnitudes_sq = np.einsum("ij,ij->i", translations, translations)
+            best = int(np.argmax(magnitudes_sq))
+            current_peak = float(np.sqrt(magnitudes_sq[best]))
+            current_node = int(peak_node_ids[best])
+        else:
+            current_peak, current_node = 0.0, None
         if current_peak > peak_displacement:
             peak_displacement = current_peak
             peak_displacement_node = current_node
         energy_kinetic.append(0.5 * float(v_state @ (M_red @ v_state)))
         energy_strain.append(0.5 * float(q_state @ (K_red @ q_state)))
         if stress_history is not None:
+            assert full_u is not None
             stresses = _selected_stresses(model, full_u, output_element_ids, recovery)
             stress_history.append(stresses)
             for element_stresses in stresses.values():
@@ -599,7 +719,7 @@ def solve_transient_newmark(
         load_next = full_load_at(float(times[step_index]))
         impulse += 0.5 * (load_prev + load_next) * dt
         load_prev = load_next
-        F_red = _reduced_load(T, K, u0, load_next)
+        F_red = reduced_load_at(float(times[step_index]))
         rhs = (
             one_plus_alpha * F_red
             - alpha_h * F_red_prev
@@ -689,10 +809,16 @@ def solve_transient_newmark(
         "mass": mass_info,
         "base_load": base_load_info,
         "pressure_patches": patch_infos,
+        "preprojected_load_basis_count": int(1 + len(patch_vectors_red)),
+        "full_vector_reconstruction_count": int(full_vector_reconstruction_count),
+        "selected_output_reconstruction_count": int(selected_output_reconstruction_count),
         "output_nodes": [int(node_id) for node_id in output_node_ids],
         "output_elements": [] if output_element_ids is None else [int(element_id) for element_id in output_element_ids],
         "history_storage_mode": history_storage_mode,
         "history_dof_indices": None if history_dof_indices is None else [int(dof) for dof in history_dof_indices],
+        "session_output_plans_active": bool(
+            selected_output_plan is not None or peak_output_plan is not None
+        ),
         "recovery_policy": policy_metadata,
         "kinetic_energy": energy_kinetic,
         "strain_energy": energy_strain,
@@ -702,6 +828,8 @@ def solve_transient_newmark(
             np.asarray(T @ q_red + u0, dtype=float).reshape(-1),
         ),
     }
+    if session is not None:
+        diagnostics["analysis_session"] = session.diagnostics()
     assembly_info = {
         "stiffness": stiffness_info,
         "mass": mass_info,

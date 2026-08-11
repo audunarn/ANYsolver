@@ -178,10 +178,17 @@ def _assemble_element_matrix(
         from .jit_compiler import JIT_ENABLED, JIT_DISABLED_REASON, jit_diagnostics
         from .materials import is_isotropic_material
         from .vectorized_stiffness import compute_shell_mass_matrices_jit, compute_shell_stiffness_matrices_jit
+        from .vectorized_generalized_shell import (
+            prepare_s4_generalized_stiffness_batch,
+            prepare_s4_section_mass_batch,
+        )
 
         groups = {}
+        advanced_stiffness_items = []
+        section_mass_items = []
         constitutive_fallback_ids = []
         generalized_section_fallback_ids = []
+        generalized_mass_fallback_ids = []
         for elem_id, element in mesh.elements.items():
             material = model.get_material(element.material_name)
             shell_section = getattr(element, "shell_section", None)
@@ -192,6 +199,25 @@ def _assemble_element_matrix(
                     or getattr(shell_section, "rotary_inertia_per_area", None) is not None
                 )
             )
+            if (
+                matrix_type == "stiffness"
+                and isinstance(element, ShellElement)
+                and bool(getattr(element, "_is_4node", False))
+                and (
+                    shell_section is not None
+                    or not is_isotropic_material(material)
+                )
+            ):
+                advanced_stiffness_items.append((int(elem_id), element))
+                continue
+            if (
+                matrix_type == "mass"
+                and isinstance(element, ShellElement)
+                and bool(getattr(element, "_is_4node", False))
+                and has_section_mass
+            ):
+                section_mass_items.append((int(elem_id), element))
+                continue
             if (
                 isinstance(element, ShellElement)
                 and getattr(element, "_is_quadrilateral", False)
@@ -229,6 +255,12 @@ def _assemble_element_matrix(
                 and shell_section is not None
             ):
                 generalized_section_fallback_ids.append(int(elem_id))
+            elif (
+                matrix_type == "mass"
+                and isinstance(element, ShellElement)
+                and has_section_mass
+            ):
+                generalized_mass_fallback_ids.append(int(elem_id))
 
         if constitutive_fallback_ids:
             info["diagnostics"]["constitutive_fallback"] = {
@@ -241,6 +273,12 @@ def _assemble_element_matrix(
                 "path": "general_element",
                 "reason": "preintegrated_generalized_shell_section",
                 "element_ids": sorted(generalized_section_fallback_ids),
+            }
+        if generalized_mass_fallback_ids:
+            info["diagnostics"]["generalized_shell_section_mass_fallback"] = {
+                "path": "general_element",
+                "reason": "unsupported_shell_topology",
+                "element_ids": sorted(generalized_mass_fallback_ids),
             }
 
         for key, elem_list in groups.items():
@@ -310,6 +348,70 @@ def _assemble_element_matrix(
                     "backend": jit_info.get("backend"),
                 }
             )
+
+        if advanced_stiffness_items:
+            advanced_start = time.perf_counter()
+            advanced_matrices, advanced_counts = (
+                prepare_s4_generalized_stiffness_batch(
+                    model,
+                    [element for _element_id, element in advanced_stiffness_items],
+                )
+            )
+            advanced_seconds = time.perf_counter() - advanced_start
+            for index, (element_id, _element) in enumerate(
+                advanced_stiffness_items
+            ):
+                precomputed[element_id] = advanced_matrices[index]
+            jit_info = jit_diagnostics()
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S4",
+                    "num_elements": int(len(advanced_stiffness_items)),
+                    "jit_enabled": bool(JIT_ENABLED),
+                    "jit_disabled_reason": JIT_DISABLED_REASON,
+                    "kernel": "compute_s4_generalized_stiffness_matrices_jit",
+                    "parallel_kernel": True,
+                    "parallel_threads": jit_info.get("num_threads"),
+                    "backend": jit_info.get("backend"),
+                    "kernel_seconds": float(advanced_seconds),
+                    **advanced_counts,
+                }
+            )
+            info["diagnostics"]["advanced_s4_stiffness"] = {
+                "path": "compiled_batch",
+                **advanced_counts,
+            }
+
+        if section_mass_items:
+            section_mass_start = time.perf_counter()
+            section_mass_matrices = prepare_s4_section_mass_batch(
+                model,
+                [element for _element_id, element in section_mass_items],
+            )
+            section_mass_seconds = time.perf_counter() - section_mass_start
+            for index, (element_id, _element) in enumerate(section_mass_items):
+                precomputed[element_id] = section_mass_matrices[index]
+            jit_info = jit_diagnostics()
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S4",
+                    "num_elements": int(len(section_mass_items)),
+                    "jit_enabled": bool(JIT_ENABLED),
+                    "jit_disabled_reason": JIT_DISABLED_REASON,
+                    "kernel": "compute_s4_section_mass_matrices_jit",
+                    "parallel_kernel": True,
+                    "parallel_threads": jit_info.get("num_threads"),
+                    "backend": jit_info.get("backend"),
+                    "kernel_seconds": float(section_mass_seconds),
+                    "generalized_section_mass_element_count": int(
+                        len(section_mass_items)
+                    ),
+                }
+            )
+            info["diagnostics"]["generalized_s4_section_mass"] = {
+                "path": "compiled_batch",
+                "element_count": int(len(section_mass_items)),
+            }
 
     # Retrieve or build cached sparsity pattern
     rows_concat, cols_concat = _get_cached_sparsity_pattern(mesh, matrix_type)

@@ -7,6 +7,9 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -153,6 +156,152 @@ def test_pypardiso_backend_symmetric_mtypes_pattern_reuse_and_stale_handles() ->
     np.testing.assert_allclose(A_scaled @ second.solve(b), b, atol=1.0e-8)
 
 
+class _BlockingPardisoCalls:
+    """Deterministic overlap probe used by the fake PyPardiso tests."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.active = 0
+        self.max_active = 0
+        self.block_label: str | None = None
+        self.block_entered = threading.Event()
+        self.release_block = threading.Event()
+        self.overlap = threading.Event()
+
+    def block(self, label: str) -> None:
+        self.block_label = label
+        self.block_entered.clear()
+        self.release_block.clear()
+        self.overlap.clear()
+        self.max_active = 0
+
+    def call(self, label: str, value=None):
+        with self._lock:
+            self.active += 1
+            self.max_active = max(self.max_active, self.active)
+            if self.active > 1:
+                self.overlap.set()
+        try:
+            if label == self.block_label:
+                self.block_entered.set()
+                if not self.release_block.wait(timeout=3.0):
+                    raise RuntimeError(f"timed out waiting to release {label}")
+            return value
+        finally:
+            with self._lock:
+                self.active -= 1
+
+
+class _FakePardisoSolver:
+    def __init__(self, name: str, calls: _BlockingPardisoCalls) -> None:
+        self.name = name
+        self.calls = calls
+        self.phase = 0
+
+    def _check_A(self, matrix):
+        return matrix
+
+    def _check_b(self, matrix, rhs):
+        del matrix
+        return np.asarray(rhs, dtype=float)
+
+    def set_phase(self, phase: int) -> None:
+        self.phase = int(phase)
+
+    def _call_pardiso(self, matrix, rhs):
+        del matrix
+        return self.calls.call(f"{self.name}:phase-{self.phase}", np.asarray(rhs, dtype=float).copy())
+
+    def free_memory(self, *, everything: bool) -> None:
+        assert everything is True
+        self.calls.call(f"{self.name}:free")
+
+
+def _install_fake_pardiso(monkeypatch):
+    calls = _BlockingPardisoCalls()
+    solvers = []
+
+    def factory(*, mtype: int):
+        del mtype
+        solver = _FakePardisoSolver(f"solver-{len(solvers)}", calls)
+        solvers.append(solver)
+        return solver
+
+    monkeypatch.setattr(linalg, "_new_pypardiso_solver", factory)
+    monkeypatch.setattr(linalg, "_ensure_mkl_rt_env", lambda: None)
+    return calls, solvers
+
+
+def test_pypardiso_solves_are_process_serialized_across_independent_caches(monkeypatch) -> None:
+    calls, _solvers = _install_fake_pardiso(monkeypatch)
+    matrix = sparse.eye(3, format="csr")
+    cache_a = FactorizationCache(
+        name="pardiso_a",
+        backend=linalg.PyPardisoSolverBackend(max_pattern_slots=1),
+    )
+    cache_b = FactorizationCache(
+        name="pardiso_b",
+        backend=linalg.PyPardisoSolverBackend(max_pattern_slots=1),
+    )
+    handle_a = cache_a.factorize(matrix, MatrixClass.SPD, signature="cache-a")
+    handle_b = cache_b.factorize(matrix, MatrixClass.SPD, signature="cache-b")
+    assert handle_a.status == handle_b.status == "ok"
+
+    calls.block("solver-0:phase-33")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(handle_a.solve, np.array([1.0, 2.0, 3.0]))
+        assert calls.block_entered.wait(timeout=2.0)
+        second = executor.submit(handle_b.solve, np.array([3.0, 2.0, 1.0]))
+        assert not calls.overlap.wait(timeout=0.1)
+        calls.release_block.set()
+        np.testing.assert_allclose(first.result(timeout=2.0), [1.0, 2.0, 3.0])
+        np.testing.assert_allclose(second.result(timeout=2.0), [3.0, 2.0, 1.0])
+
+    assert calls.max_active == 1
+
+
+def test_pypardiso_cleanup_and_factorization_share_process_lock(monkeypatch) -> None:
+    calls, solvers = _install_fake_pardiso(monkeypatch)
+    matrix = sparse.eye(3, format="csr")
+    releasing_backend = linalg.PyPardisoSolverBackend(max_pattern_slots=1)
+    factoring_backend = linalg.PyPardisoSolverBackend(max_pattern_slots=1)
+    assert releasing_backend.factorize(matrix, MatrixClass.SPD).status == "ok"
+
+    calls.block("solver-0:free")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        cleanup = executor.submit(releasing_backend.release_pattern_slots)
+        assert calls.block_entered.wait(timeout=2.0)
+        factorization = executor.submit(factoring_backend.factorize, matrix, MatrixClass.SPD)
+        assert not calls.overlap.wait(timeout=0.1)
+        assert len(solvers) == 1
+        assert not factorization.done()
+        calls.release_block.set()
+        cleanup.result(timeout=2.0)
+        handle = factorization.result(timeout=2.0)
+
+    assert handle.status == "ok"
+    assert calls.max_active == 1
+    assert releasing_backend.retained_pattern_slots == 0
+
+
+def test_pypardiso_process_lock_does_not_serialize_scipy() -> None:
+    matrix = sparse.csr_matrix([[4.0, 1.0], [1.0, 3.0]])
+
+    def scipy_factorize_and_solve():
+        handle = factorize(
+            matrix,
+            MatrixClass.SPD,
+            backend=linalg.SparseSolverBackend(),
+        )
+        return handle.solve(np.array([1.0, 2.0]))
+
+    with linalg._PYPARDISO_PROCESS_LOCK:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            result = executor.submit(scipy_factorize_and_solve).result(timeout=2.0)
+
+    np.testing.assert_allclose(matrix @ result, [1.0, 2.0])
+
+
 def test_auto_sparse_backend_thresholds_are_environment_tunable(monkeypatch) -> None:
     monkeypatch.setenv("FE_SOLVER_PYPARDISO_MIN_DIMENSION", "123")
     monkeypatch.setenv("FE_SOLVER_PYPARDISO_MIN_NNZ", "456")
@@ -170,6 +319,50 @@ def test_auto_sparse_backend_thresholds_are_environment_tunable(monkeypatch) -> 
     assert handle.metadata["pypardiso_compatible_pattern_before_selection"] is False
     assert handle.metadata["pypardiso_warm_thresholds_active"] is False
     assert handle.metadata["pypardiso_retained_pattern_slots_before_selection"] == 0
+
+
+def test_auto_sparse_backend_uses_one_coherent_selection_snapshot(monkeypatch) -> None:
+    monkeypatch.setattr(linalg, "_HAS_PYPARDISO", True)
+
+    class SelectionSpy:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def selection_state(self, matrix, matrix_class):
+            del matrix, matrix_class
+            self.calls += 1
+            return True, 2, True
+
+        @property
+        def initialized(self):
+            raise AssertionError("legacy initialized accessor was used")
+
+        @property
+        def retained_pattern_slots(self):
+            raise AssertionError("legacy retained-slot accessor was used")
+
+        def has_compatible_pattern(self, matrix, matrix_class):
+            del matrix, matrix_class
+            raise AssertionError("legacy pattern accessor was used")
+
+    spy = SelectionSpy()
+    backend = AutoSparseSolverBackend(
+        pardiso_backend=spy,
+        pypardiso_min_dimension=200,
+        pypardiso_min_nnz=200,
+        pypardiso_warm_min_dimension=100,
+        pypardiso_warm_min_nnz=100,
+    )
+    handle = backend.factorize(sparse.eye(2, format="csr"), MatrixClass.SPD)
+
+    assert handle.backend_name == "scipy_superlu"
+    assert spy.calls == 1
+    assert handle.metadata["pypardiso_initialized_before_selection"] is True
+    assert handle.metadata["pypardiso_retained_pattern_slots_before_selection"] == 2
+    assert handle.metadata["pypardiso_compatible_pattern_before_selection"] is True
+    assert handle.metadata["pypardiso_warm_thresholds_active"] is True
+    assert handle.metadata["pypardiso_active_min_dimension"] == 100
+    assert handle.metadata["pypardiso_active_min_nnz"] == 100
 
 
 def test_auto_sparse_backend_uses_warm_thresholds_only_for_a_compatible_pattern(
@@ -255,6 +448,42 @@ def test_factorization_cache_reuses_same_matrix_and_separates_changed_values() -
     assert diagnostics["misses"] == 2
     assert diagnostics["entries"] == 2
     np.testing.assert_allclose(A @ first.solve(np.array([1.0, 0.0])), [1.0, 0.0])
+
+
+def test_factorization_cache_serializes_concurrent_mutation(monkeypatch) -> None:
+    cache = FactorizationCache(name="threaded_cache", max_entries=2)
+    matrix = sparse.csr_matrix([[4.0, 1.0], [1.0, 3.0]])
+    original_factorize = linalg.factorize
+    call_count = 0
+    call_count_lock = threading.Lock()
+    start = threading.Barrier(8)
+
+    def slow_factorize(*args, **kwargs):
+        nonlocal call_count
+        with call_count_lock:
+            call_count += 1
+        time.sleep(0.02)
+        return original_factorize(*args, **kwargs)
+
+    def cached_call():
+        start.wait()
+        return cache.factorize(matrix, MatrixClass.SPD, signature="shared")
+
+    monkeypatch.setattr(linalg, "factorize", slow_factorize)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        handles = list(executor.map(lambda _index: cached_call(), range(8)))
+
+    assert all(handle is handles[0] for handle in handles)
+    assert call_count == 1
+    assert cache.diagnostics() == {
+        "name": "threaded_cache",
+        "max_entries": 2,
+        "entries": 1,
+        "hits": 7,
+        "misses": 1,
+        "factorization_failures": 0,
+        "backend": cache.diagnostics()["backend"],
+    }
 
 
 def test_multiple_rhs_static_solve_matches_individual_solves() -> None:

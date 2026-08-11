@@ -10,6 +10,7 @@ through the same factorization-handle API.
 from __future__ import annotations
 
 import ctypes
+from functools import wraps
 import importlib.util
 import site
 import sys
@@ -22,6 +23,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import threading
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
@@ -29,7 +31,11 @@ from scipy import sparse
 from scipy.sparse import SparseEfficiencyWarning
 from scipy.sparse.linalg import LinearOperator, splu
 
-from .threading_policy import current_solver_threads, native_thread_scope
+from .threading_policy import (
+    current_solver_threads,
+    _inherited_native_thread_policy,
+    native_thread_scope,
+)
 
 try:
     _HAS_PYPARDISO = importlib.util.find_spec("pypardiso") is not None
@@ -37,8 +43,21 @@ except (ImportError, ModuleNotFoundError, ValueError):
     _HAS_PYPARDISO = False
 
 _PYPARDISO_SOLVER_CLASS: Any = None
+_PYPARDISO_PROCESS_LOCK = threading.RLock()
 
 
+def _serialized_pypardiso_call(function):
+    """Serialize access to process-global PyPardiso/MKL solver state."""
+
+    @wraps(function)
+    def serialized(*args, **kwargs):
+        with _PYPARDISO_PROCESS_LOCK:
+            return function(*args, **kwargs)
+
+    return serialized
+
+
+@_serialized_pypardiso_call
 def _new_pypardiso_solver(*, mtype: int) -> Any:
     """Construct PyPardiso only after the backend has actually been selected."""
 
@@ -255,6 +274,7 @@ def _pardiso_prepared_matrix(csr: sparse.csr_matrix, mtype: int) -> sparse.csr_m
     return upper
 
 
+@_serialized_pypardiso_call
 def _release_mkl_solver(solver: Any) -> None:
     """Release MKL's internal factorization memory (PARDISO phase -1)."""
     try:
@@ -263,6 +283,7 @@ def _release_mkl_solver(solver: Any) -> None:
         pass
 
 
+@_serialized_pypardiso_call
 def _pardiso_full_factorize(solver: Any, prepared: sparse.csr_matrix) -> None:
     solver._check_A(prepared)
     solver.set_phase(12)
@@ -282,6 +303,7 @@ class _PardisoPatternSlot:
         self.indices = prepared.indices.copy()
         self.generation = 0
 
+    @_serialized_pypardiso_call
     def matches(self, prepared: sparse.csr_matrix, mtype: int) -> bool:
         return (
             self.solver is not None
@@ -293,6 +315,7 @@ class _PardisoPatternSlot:
             and np.array_equal(self.indices, prepared.indices)
         )
 
+    @_serialized_pypardiso_call
     def release(self) -> None:
         self.generation += 1
         solver, self.solver = self.solver, None
@@ -319,6 +342,7 @@ class _PardisoFactorization:
         self._private_solver: Any = None
         self.stale_rebuild_count = 0
 
+    @_serialized_pypardiso_call
     def _active_solver(self) -> Any:
         if self._private_solver is not None:
             return self._private_solver
@@ -333,6 +357,7 @@ class _PardisoFactorization:
         self.stale_rebuild_count += 1
         return solver
 
+    @_serialized_pypardiso_call
     def solve(self, rhs: np.ndarray) -> np.ndarray:
         solver = self._active_solver()
         b = solver._check_b(self._matrix, np.asarray(rhs, dtype=np.float64))
@@ -354,7 +379,9 @@ class PyPardisoSolverBackend:
     - MKL internal memory is bounded and released: evicted slots and privately
       rebuilt factorizations free their memory (phase -1) via finalizers.
 
-    Not thread-safe; matches the existing single-threaded solver usage.
+    PyPardiso/MKL solver state is serialized process-wide.  This includes
+    independent backend instances and handles owned by separate analysis
+    caches; SciPy/SuperLU operations do not acquire this lock.
     """
 
     name = "pypardiso"
@@ -363,35 +390,31 @@ class PyPardisoSolverBackend:
         self.max_pattern_slots = _env_int("FE_SOLVER_PYPARDISO_MAX_PATTERN_SLOTS", int(max_pattern_slots))
         self._slots: List[_PardisoPatternSlot] = []
 
+    @_serialized_pypardiso_call
     def release_pattern_slots(self) -> None:
         """Release all retained MKL factorization memory."""
         while self._slots:
             self._slots.pop().release()
 
     @property
+    @_serialized_pypardiso_call
     def initialized(self) -> bool:
         """Whether this backend has completed a retained factorization."""
 
         return bool(self._slots)
 
     @property
+    @_serialized_pypardiso_call
     def retained_pattern_slots(self) -> int:
         """Number of live symbolic-analysis slots retained by the backend."""
 
         return len(self._slots)
 
-    def has_compatible_pattern(
+    def _has_compatible_pattern_unlocked(
         self,
         matrix: sparse.spmatrix,
         matrix_class: MatrixClass,
     ) -> bool:
-        """Return whether a retained slot can reuse this matrix's analysis.
-
-        A prior PARDISO solve alone is not enough to justify the lower warm
-        thresholds: reuse requires the same prepared sparsity pattern and a
-        PARDISO mtype compatible with the incoming matrix class.
-        """
-
         if not self._slots:
             return False
         try:
@@ -405,6 +428,36 @@ class PyPardisoSolverBackend:
             return False
         return False
 
+    @_serialized_pypardiso_call
+    def has_compatible_pattern(
+        self,
+        matrix: sparse.spmatrix,
+        matrix_class: MatrixClass,
+    ) -> bool:
+        """Return whether a retained slot can reuse this matrix's analysis.
+
+        A prior PARDISO solve alone is not enough to justify the lower warm
+        thresholds: reuse requires the same prepared sparsity pattern and a
+        PARDISO mtype compatible with the incoming matrix class.
+        """
+
+        return self._has_compatible_pattern_unlocked(matrix, matrix_class)
+
+    @_serialized_pypardiso_call
+    def selection_state(
+        self,
+        matrix: sparse.spmatrix,
+        matrix_class: MatrixClass,
+    ) -> Tuple[bool, int, bool]:
+        """Return one coherent auto-selection snapshot under the process lock."""
+
+        return (
+            bool(self._slots),
+            len(self._slots),
+            self._has_compatible_pattern_unlocked(matrix, matrix_class),
+        )
+
+    @_serialized_pypardiso_call
     def _factorize_prepared(self, prepared: sparse.csr_matrix, mtype: int) -> Tuple[_PardisoFactorization, bool]:
         for slot in self._slots:
             if slot.matches(prepared, mtype):
@@ -425,6 +478,7 @@ class PyPardisoSolverBackend:
             self._slots.pop().release()
         return _PardisoFactorization(slot, prepared, mtype), False
 
+    @_serialized_pypardiso_call
     def factorize(
         self,
         matrix: sparse.spmatrix,
@@ -529,11 +583,16 @@ class AutoSparseSolverBackend:
         matrix: sparse.spmatrix,
         matrix_class: MatrixClass,
         options: Mapping[str, Any],
+        *,
+        compatible_pattern: Optional[bool] = None,
     ) -> Tuple[int, int, bool]:
-        compatible_pattern = bool(
-            self.pardiso_backend
-            and self.pardiso_backend.has_compatible_pattern(matrix, matrix_class)
-        )
+        if compatible_pattern is None:
+            compatible_pattern = bool(
+                self.pardiso_backend
+                and self.pardiso_backend.has_compatible_pattern(
+                    matrix, matrix_class
+                )
+            )
         default_dimension = (
             self.pypardiso_warm_min_dimension
             if compatible_pattern
@@ -569,11 +628,21 @@ class AutoSparseSolverBackend:
         options: Optional[Mapping[str, Any]] = None,
     ) -> FactorizationHandle:
         options_dict = dict(options or {})
-        was_initialized = bool(self.pardiso_backend and self.pardiso_backend.initialized)
+        if self.pardiso_backend is None:
+            was_initialized = False
+            retained_pattern_slots = 0
+            compatible_pattern = False
+        else:
+            (
+                was_initialized,
+                retained_pattern_slots,
+                compatible_pattern,
+            ) = self.pardiso_backend.selection_state(matrix, matrix_class)
         active_dimension, active_nnz, compatible_pattern = self._selection_thresholds(
             matrix,
             matrix_class,
             options_dict,
+            compatible_pattern=compatible_pattern,
         )
         selection_metadata = {
             "pypardiso_active_min_dimension": active_dimension,
@@ -581,11 +650,7 @@ class AutoSparseSolverBackend:
             "pypardiso_initialized_before_selection": was_initialized,
             "pypardiso_compatible_pattern_before_selection": compatible_pattern,
             "pypardiso_warm_thresholds_active": compatible_pattern,
-            "pypardiso_retained_pattern_slots_before_selection": (
-                self.pardiso_backend.retained_pattern_slots
-                if self.pardiso_backend is not None
-                else 0
-            ),
+            "pypardiso_retained_pattern_slots_before_selection": retained_pattern_slots,
         }
         if not self._use_pypardiso(matrix, options_dict, active_dimension, active_nnz):
             handle = self.scipy_backend.factorize(matrix, matrix_class, signature=signature, options=options_dict)
@@ -596,7 +661,7 @@ class AutoSparseSolverBackend:
                 handle.metadata.setdefault(key, value)
             handle.metadata.setdefault(
                 "pypardiso_initialized",
-                bool(self.pardiso_backend and self.pardiso_backend.initialized),
+                was_initialized,
             )
             return handle
 
@@ -654,12 +719,16 @@ class FactorizationCache:
 
     The cache is intentionally not global.  Analyses that can safely reuse a
     matrix factorization own the cache and therefore own its lifetime.
+    Cache lookup, insertion, eviction and counters are protected for concurrent
+    callers.  Returned handles retain the concurrency semantics of their
+    numerical backend; the cache does not serialize subsequent ``solve`` calls.
     """
 
     name: str = "factorization_cache"
     max_entries: int = 8
     backend: Optional[SparseSolverBackend] = None
     _handles: Dict[Tuple[str, str, str, str], FactorizationHandle] = field(default_factory=dict, init=False, repr=False)
+    _lock: Any = field(default_factory=threading.RLock, init=False, repr=False)
     hits: int = 0
     misses: int = 0
     factorization_failures: int = 0
@@ -689,33 +758,41 @@ class FactorizationCache:
         options: Optional[Mapping[str, Any]] = None,
     ) -> FactorizationHandle:
         cache_key = self.key(matrix, matrix_class, signature=signature, options=options)
-        if cache_key in self._handles:
-            self.hits += 1
-            handle = self._handles[cache_key]
-            options_dict = dict(options or {})
-            handle.solver_threads = options_dict.get("solver_threads", current_solver_threads())
+        with self._lock:
+            if cache_key in self._handles:
+                self.hits += 1
+                handle = self._handles[cache_key]
+                options_dict = dict(options or {})
+                handle.solver_threads = options_dict.get("solver_threads", current_solver_threads())
+                handle.metadata["cache_name"] = self.name
+                handle.metadata["cache_hit"] = True
+                return handle
+            self.misses += 1
+            handle = factorize(
+                matrix,
+                matrix_class,
+                signature=signature or cache_key[0],
+                options=options,
+                backend=self.backend,
+            )
             handle.metadata["cache_name"] = self.name
-            handle.metadata["cache_hit"] = True
+            handle.metadata["cache_hit"] = False
+            if handle.status == "ok":
+                if self.max_entries > 0 and len(self._handles) >= self.max_entries:
+                    oldest = next(iter(self._handles))
+                    self._handles.pop(oldest, None)
+                if self.max_entries != 0:
+                    self._handles[cache_key] = handle
+            else:
+                self.factorization_failures += 1
             return handle
-        self.misses += 1
-        handle = factorize(
-            matrix,
-            matrix_class,
-            signature=signature or cache_key[0],
-            options=options,
-            backend=self.backend,
-        )
-        handle.metadata["cache_name"] = self.name
-        handle.metadata["cache_hit"] = False
-        if handle.status == "ok":
-            if self.max_entries > 0 and len(self._handles) >= self.max_entries:
-                oldest = next(iter(self._handles))
-                self._handles.pop(oldest, None)
-            if self.max_entries != 0:
-                self._handles[cache_key] = handle
-        else:
-            self.factorization_failures += 1
-        return handle
+
+    def set_backend_if_absent(self, backend: SparseSolverBackend) -> None:
+        """Select a backend once without racing concurrent cache users."""
+
+        with self._lock:
+            if self.backend is None:
+                self.backend = backend
 
     def linear_operator(
         self,
@@ -738,18 +815,20 @@ class FactorizationCache:
         return operator, handle
 
     def diagnostics(self) -> Dict[str, Any]:
-        return {
-            "name": self.name,
-            "max_entries": int(self.max_entries),
-            "entries": int(len(self._handles)),
-            "hits": int(self.hits),
-            "misses": int(self.misses),
-            "factorization_failures": int(self.factorization_failures),
-            "backend": (self.backend or DEFAULT_BACKEND).name,
-        }
+        with self._lock:
+            return {
+                "name": self.name,
+                "max_entries": int(self.max_entries),
+                "entries": int(len(self._handles)),
+                "hits": int(self.hits),
+                "misses": int(self.misses),
+                "factorization_failures": int(self.factorization_failures),
+                "backend": (self.backend or DEFAULT_BACKEND).name,
+            }
 
     def clear(self) -> None:
-        self._handles.clear()
+        with self._lock:
+            self._handles.clear()
 
 
 def _coerce_matrix_class(matrix_class: MatrixClass | str) -> MatrixClass:
@@ -770,7 +849,21 @@ def factorize(
     backend = backend or DEFAULT_BACKEND
     options_dict = dict(options or {})
     requested_threads = options_dict.pop("solver_threads", current_solver_threads())
-    with native_thread_scope(requested_threads, phase="factorization") as policy:
+    policy = _inherited_native_thread_policy(
+        requested_threads, phase="factorization"
+    )
+    if policy is None:
+        with native_thread_scope(
+            requested_threads, phase="factorization"
+        ) as scoped_policy:
+            handle = backend.factorize(
+                matrix,
+                _coerce_matrix_class(matrix_class),
+                signature=signature,
+                options=options_dict,
+            )
+        policy = scoped_policy
+    else:
         handle = backend.factorize(
             matrix,
             _coerce_matrix_class(matrix_class),
@@ -795,8 +888,8 @@ def factorize_cached(
 
     if cache is None:
         return factorize(matrix, matrix_class, signature=signature, options=options, backend=backend)
-    if backend is not None and cache.backend is None:
-        cache.backend = backend
+    if backend is not None:
+        cache.set_backend_if_absent(backend)
     return cache.factorize(matrix, matrix_class, signature=signature, options=options)
 
 
@@ -820,7 +913,16 @@ def solve(handle: FactorizationHandle, rhs: np.ndarray) -> np.ndarray:
         raise RuntimeError(f"Cannot solve with failed factorization: {handle.failure_reason}")
     rhs = np.asarray(rhs, dtype=float)
     start = time.time()
-    with native_thread_scope(handle.solver_threads, phase="linear_solve") as policy:
+    policy = _inherited_native_thread_policy(
+        handle.solver_threads, phase="linear_solve"
+    )
+    if policy is None:
+        with native_thread_scope(
+            handle.solver_threads, phase="linear_solve"
+        ) as scoped_policy:
+            result = np.asarray(handle._solver.solve(rhs), dtype=float)
+        policy = scoped_policy
+    else:
         result = np.asarray(handle._solver.solve(rhs), dtype=float)
     handle.metadata["last_solve_thread_policy"] = dict(policy)
     handle.solve_time += time.time() - start

@@ -180,13 +180,11 @@ def _element_category(element: Any) -> Optional[str]:
 
 
 class _CorotationalReference:
-    """Reference geometry, frame and linear stiffness per element."""
+    """Reference-only geometry and frame data per element."""
 
-    __slots__ = ("stiffness", "coordinates", "centroid", "frame", "category")
+    __slots__ = ("coordinates", "centroid", "frame", "category")
 
     def __init__(self, element: Any, model: "FEModel"):
-        material = model.get_material(element.material_name)
-        self.stiffness = np.asarray(element.compute_stiffness_matrix(model.mesh, material), dtype=float).copy()
         self.coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float).copy()
         self.centroid = self.coordinates.mean(axis=0)
         self.category = _element_category(element)
@@ -198,7 +196,11 @@ class _CorotationalReference:
 
 def _corotational_cache(model: "FEModel") -> Dict[int, _CorotationalReference]:
     mesh = model.mesh
-    signature = mesh.revision_signature()
+    revisions = mesh.revision_signature()
+    signature = (
+        int(revisions.get("topology", 0)),
+        int(revisions.get("geometry", 0)),
+    )
     cached = getattr(mesh, "_corotational_cache", None)
     if cached is not None and cached[0] == signature:
         return cached[1]
@@ -241,6 +243,16 @@ def _corotational_deformation_state(
         R_node = rotation_matrix_from_vector(rotations[node])
         u_d[node, 3:] = rotation_vector_from_matrix(R_rig.T @ R_node)
     return u_d.reshape(-1), R_rig, deformed
+
+
+def _dense_block_rotation(rotation: np.ndarray, num_nodes: int) -> np.ndarray:
+    """Dense block rotation retained only by the consistent tangent oracle."""
+
+    E = np.zeros((num_nodes * 6, num_nodes * 6), dtype=float)
+    for node in range(num_nodes):
+        E[node * 6 : node * 6 + 3, node * 6 : node * 6 + 3] = rotation
+        E[node * 6 + 3 : node * 6 + 6, node * 6 + 3 : node * 6 + 6] = rotation
+    return E
 
 
 def corotational_element_response(
@@ -286,15 +298,21 @@ def corotational_element_response(
         model.mesh, material, u_d, committed_state, int(num_layers), tangent
     )
     f_ref = np.asarray(f_ref, dtype=float).reshape(-1)
-    E = np.zeros((num_nodes * 6, num_nodes * 6), dtype=float)
-    for node in range(num_nodes):
-        E[node * 6 : node * 6 + 3, node * 6 : node * 6 + 3] = R_rig
-        E[node * 6 + 3 : node * 6 + 6, node * 6 + 3 : node * 6 + 6] = R_rig
-    f_global = E @ f_ref
     if not tangent:
+        from .corotational_performance import rotate_corotational_force_blocks
+
+        f_global = rotate_corotational_force_blocks(f_ref, R_rig)
         return f_global, None, trial_state
     k_ref = np.asarray(k_ref, dtype=float)
     if tangent_mode == "consistent":
+        from .corotational_performance import (
+            note_dense_consistent_rotation,
+            rotate_corotational_force_blocks,
+        )
+
+        f_global = rotate_corotational_force_blocks(f_ref, R_rig)
+        E = _dense_block_rotation(R_rig, num_nodes)
+        note_dense_consistent_rotation()
         k_global = _consistent_corotational_tangent(
             reference,
             element,
@@ -308,7 +326,15 @@ def corotational_element_response(
     else:
         # The rotated local tangent remains the robust default for large load
         # steps and preserves the historical convergence behavior.
-        k_global = E @ k_ref @ E.T
+        from .corotational_performance import (
+            rotate_corotational_force_tangent_blocks,
+        )
+
+        f_global, k_global = rotate_corotational_force_tangent_blocks(
+            f_ref,
+            k_ref,
+            R_rig,
+        )
     return f_global, k_global, trial_state
 
 

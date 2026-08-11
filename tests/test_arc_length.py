@@ -9,6 +9,10 @@ from anysolver.arc_length import ArcLengthControl, solve_static_arc_length
 from anysolver.boundary import BoundaryCondition, LoadCase
 from anysolver.elements import Element
 from anysolver.fe_core import FEModel
+from anysolver.nonlinear_static import (
+    _support_reaction_resultants,
+    _support_reaction_resultants_from_forces,
+)
 
 
 class SofteningSpringElement(Element):
@@ -62,6 +66,40 @@ class SofteningSpringElement(Element):
         return force, stiffness, trial_state
 
 
+class CoupledLinearElement(Element):
+    """Two translational DOFs with one free and one prescribed component."""
+
+    @property
+    def num_nodes(self) -> int:
+        return 2
+
+    @property
+    def dofs_per_node(self) -> int:
+        return 6
+
+    def get_node_coordinates(self, mesh):
+        return np.asarray(
+            [mesh.get_node(node_id).coords() for node_id in self.node_ids],
+            dtype=float,
+        )
+
+    @staticmethod
+    def _matrix():
+        matrix = np.eye(12, dtype=float)
+        matrix[np.ix_((0, 6), (0, 6))] = ((2.0, -1.0), (-1.0, 1.0))
+        return matrix
+
+    def compute_stiffness_matrix(self, mesh, material):
+        return self._matrix()
+
+    def compute_nonlinear_response(
+        self, mesh, material, u_elem, state=None, num_layers=5, tangent=True
+    ):
+        matrix = self._matrix()
+        displacement = np.asarray(u_elem, dtype=float)
+        return matrix @ displacement, matrix if tangent else None, {}
+
+
 def _spring_model(*, k: float = 1.0, c: float = 1.0):
     model = FEModel("softening_spring")
     model.add_node(1, 0.0, 0.0, 0.0)
@@ -76,6 +114,28 @@ def _spring_model(*, k: float = 1.0, c: float = 1.0):
     load = LoadCase("unit_reference")
     load.add_nodal_load(1, load_vector=[1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     return model, load
+
+
+def _prescribed_path_model():
+    model = FEModel("prescribed_path")
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, 1.0, 0.0, 0.0)
+    model.add_element(1, CoupledLinearElement(1, [1, 2], "default"))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "free-x-only",
+            [1],
+            {"uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "prescribed-x",
+            [2],
+            {"ux": 0.1, "uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    return model
 
 
 def test_arc_length_crosses_softening_limit_point_and_reports_peak():
@@ -140,6 +200,87 @@ def test_arc_length_rejects_zero_reference_load():
     result = solve_static_arc_length(model, zero)
     assert result.status == "zero_reference_load"
     assert not result.steps
+
+
+def test_arc_length_continues_a_prescribed_displacement_without_load_case():
+    model = _prescribed_path_model()
+    control = ArcLengthControl(
+        initial_load_increment=0.05,
+        minimum_load_increment=1.0e-4,
+        maximum_load_increment=0.10,
+        maximum_absolute_load_factor=0.5,
+        max_steps=30,
+    )
+
+    progress = []
+    result = solve_static_arc_length(
+        model,
+        None,
+        control=control,
+        tolerance=1.0e-10,
+        arc_tolerance=1.0e-10,
+        progress_callback=progress.append,
+    )
+
+    assert result.status == "load_factor_limit_reached"
+    assert result.load_factor >= 0.5
+    # The prescribed node follows lambda * 0.1 and the free node equilibrates
+    # to half that displacement for this coupled linear system.
+    assert result.displacements[6] == pytest.approx(0.1 * result.load_factor)
+    assert result.displacements[0] == pytest.approx(0.05 * result.load_factor)
+    assert result.info["prescribed_displacement_path"]["active"] is True
+    assert result.info["constraint_postcheck"]["status"] == "passed"
+    final_reactions = result.steps[-1].support_reactions
+    assert abs(final_reactions["prescribed-x"][0]) > 0.0
+    assert progress[-1]["support_reactions"] == {
+        name: list(values) for name, values in final_reactions.items()
+    }
+    assert result.info["support_reaction_history"] == [
+        {
+            "step_index": step.step_index,
+            "load_factor": step.load_factor,
+            "support_reactions": {
+                name: list(values)
+                for name, values in step.support_reactions.items()
+            },
+        }
+        for step in result.steps
+    ]
+
+
+@pytest.mark.parametrize("plan_size", [32, 33])
+def test_force_based_support_reactions_match_residual_oracle(plan_size):
+    force_size = plan_size - 1
+    internal = np.linspace(-2.0, 3.0, force_size)
+    constant = np.linspace(0.5, -0.25, force_size)
+    proportional = np.linspace(-0.75, 1.25, force_size)
+    load_factor = 0.375
+    dofs = np.arange(plan_size, dtype=np.intp)
+    dofs[-1] = force_size + 7
+    components = np.arange(plan_size, dtype=np.intp) % 6
+    plan = {"shared support": (dofs, components)}
+    residual = internal - (constant + load_factor * proportional)
+    model = FEModel("support reaction oracle")
+
+    oracle = _support_reaction_resultants(
+        model, residual, dof_plan=plan
+    )
+    recovered = _support_reaction_resultants_from_forces(
+        model,
+        internal,
+        constant,
+        proportional,
+        load_factor,
+        dof_plan=plan,
+    )
+
+    assert recovered.keys() == oracle.keys()
+    np.testing.assert_allclose(
+        recovered["shared support"],
+        oracle["shared support"],
+        rtol=0.0,
+        atol=0.0,
+    )
 
 
 def test_arc_length_control_validates_increment_bounds():
