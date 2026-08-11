@@ -1534,6 +1534,62 @@ def _reduced_coordinates(
     return q
 
 
+def _reduced_coordinates_with_affine_scale(
+    T: sparse.csr_matrix,
+    u0: np.ndarray,
+    displacements: Optional[np.ndarray],
+) -> Tuple[np.ndarray, float]:
+    """Recover a restart state and its proportional affine-constraint scale.
+
+    A force-control restart must preserve the supplied physical support/MPC
+    state while a new proportional load path starts at zero.  Solving the
+    augmented compatible representation ``u = T q + s u0`` recovers both the
+    free coordinates and the already-committed affine scale ``s`` without
+    guessing it from one selected support row.
+    """
+
+    if displacements is None:
+        return np.zeros(int(T.shape[1]), dtype=float), 0.0
+    full = np.asarray(displacements, dtype=float).reshape(-1)
+    if full.size != T.shape[0]:
+        raise ValueError(
+            f"initial_displacements has {full.size} entries; expected {T.shape[0]}"
+        )
+    if np.any(~np.isfinite(full)):
+        raise ValueError("initial_displacements must contain only finite values")
+    affine = np.asarray(u0, dtype=float).reshape(-1)
+    if float(np.linalg.norm(affine)) <= 1.0e-30:
+        return _reduced_coordinates(T, np.zeros_like(affine), full), 0.0
+
+    augmented = sparse.hstack(
+        (T, sparse.csr_matrix(affine.reshape(-1, 1))),
+        format="csr",
+    )
+    solution = sparse.linalg.lsqr(
+        augmented,
+        full,
+        atol=1.0e-12,
+        btol=1.0e-12,
+    )
+    values = np.asarray(solution[0], dtype=float).reshape(-1)
+    q = values[:-1]
+    affine_scale = float(values[-1])
+    if np.any(~np.isfinite(q)) or not np.isfinite(affine_scale):
+        raise ValueError(
+            "initial_displacements could not be reduced to finite coordinates"
+        )
+    reconstructed = np.asarray(augmented @ values, dtype=float).reshape(-1)
+    error = float(np.linalg.norm(reconstructed - full))
+    scale = max(float(np.linalg.norm(full)), 1.0)
+    if error > 1.0e-9 * scale:
+        raise ValueError(
+            "initial_displacements is incompatible with the active "
+            "supports/MPC affine path "
+            f"(projection residual {error:.3e})"
+        )
+    return q, affine_scale
+
+
 def _solve_static_displacement_control(
     *,
     model: "FEModel",
@@ -2085,7 +2141,20 @@ def solve_static_nonlinear(
         raise ValueError("fracture_config is currently supported only with force control")
 
     n_red = int(T.shape[1])
-    q = _reduced_coordinates(T, u0, initial_displacements)
+    force_restart = control_name == "force" and initial_displacements is not None
+    if control_name == "force":
+        q, initial_affine_scale = _reduced_coordinates_with_affine_scale(
+            T,
+            u0,
+            initial_displacements,
+        )
+        initial_affine_offset = (
+            float(initial_affine_scale) * np.asarray(u0, dtype=float).reshape(-1)
+        )
+    else:
+        q = _reduced_coordinates(T, u0, initial_displacements)
+        initial_affine_scale = 1.0
+        initial_affine_offset = np.asarray(u0, dtype=float).reshape(-1)
     if (
         initial_fields
         and initial_displacements is not None
@@ -2180,7 +2249,7 @@ def solve_static_nonlinear(
         q, committed_states, initialization_history, initialization_failure = _equilibrate_initial_fields(
             model=model,
             T=T,
-            u0=u0,
+            u0=initial_affine_offset,
             committed_states=committed_states,
             num_layers=num_layers,
             max_iterations=max_iterations,
@@ -2199,7 +2268,10 @@ def solve_static_nonlinear(
             "failure_reason": initialization_failure,
         }
         if initialization_failure is not None:
-            u_failed = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+            u_failed = np.asarray(
+                T @ q + initial_affine_offset,
+                dtype=float,
+            ).reshape(-1)
             info["failure_reason"] = initialization_failure
             info["stop_reason"] = initialization_failure
             info["status_category"] = _nonlinear_status_category("diverged", initialization_failure)
@@ -2425,8 +2497,24 @@ def solve_static_nonlinear(
     )
 
     prescribed_offset = np.asarray(u0, dtype=float).reshape(-1)
+    prescribed_base = (
+        initial_affine_offset
+        if force_restart
+        else np.zeros_like(prescribed_offset)
+    )
+    prescribed_slope = (
+        np.zeros_like(prescribed_offset)
+        if force_restart
+        else prescribed_offset
+    )
     info["prescribed_displacement_path"] = {
-        "mode": "proportional_to_load_factor",
+        "mode": (
+            "restart_fixed_affine_state"
+            if force_restart
+            else "proportional_to_load_factor"
+        ),
+        "initial_affine_scale": float(initial_affine_scale),
+        "affine_scale_slope": 0.0 if force_restart else 1.0,
         "target_max_abs": float(np.max(np.abs(prescribed_offset)))
         if prescribed_offset.size
         else 0.0,
@@ -2435,7 +2523,7 @@ def solve_static_nonlinear(
     def full_displacement(q_reduced: np.ndarray, path_factor: float) -> np.ndarray:
         """Expand a force-control state on its affine constraint path."""
         return np.asarray(
-            T @ q_reduced + float(path_factor) * prescribed_offset,
+            T @ q_reduced + prescribed_base + float(path_factor) * prescribed_slope,
             dtype=float,
         ).reshape(-1)
 
@@ -2925,8 +3013,15 @@ def solve_static_nonlinear(
         info["load_program_stage_factors"] = load_program.stage_factors(lam)
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
+    final_affine_scale = (
+        float(initial_affine_scale)
+        if force_restart
+        else float(lam)
+    )
     info["constraint_postcheck"] = constraint_residual_summary(
-        model, u_final, affine_scale=lam
+        model,
+        u_final,
+        affine_scale=final_affine_scale,
     )
     info["result_case"] = make_result_case(
         name="nonlinear_static",

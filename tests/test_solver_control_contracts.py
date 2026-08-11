@@ -78,6 +78,46 @@ def test_force_control_ramps_nonzero_prescribed_displacement_by_increment() -> N
     )
 
 
+def test_force_control_restart_holds_supplied_prescribed_state() -> None:
+    model, _load = _elastic_cantilever()
+    target = 4.0e-3
+    model.add_boundary_condition(
+        BoundaryCondition("prescribed-tip-x", [2], {"ux": target})
+    )
+    preload = solve_static_nonlinear(
+        model,
+        load_case=None,
+        num_steps=2,
+        record_increment_snapshots=True,
+    )
+    ux = model.mesh.nodes[2].dofs[0]
+    assert preload.displacements[ux] == pytest.approx(target)
+
+    restarted = solve_static_nonlinear(
+        model,
+        load_case=None,
+        max_load_factor=0.1,
+        num_steps=2,
+        initial_element_states=preload.element_states,
+        initial_displacements=preload.displacements,
+        equilibrate_initial_state=False,
+        record_increment_snapshots=True,
+    )
+
+    assert restarted.converged
+    assert restarted.info["prescribed_displacement_path"] == {
+        "mode": "restart_fixed_affine_state",
+        "initial_affine_scale": pytest.approx(1.0),
+        "affine_scale_slope": 0.0,
+        "target_max_abs": pytest.approx(target),
+    }
+    assert [snapshot.displacements[ux] for snapshot in restarted.snapshots] == (
+        pytest.approx([target] * len(restarted.snapshots))
+    )
+    assert restarted.displacements[ux] == pytest.approx(target)
+    assert restarted.info["constraint_postcheck"]["status"] == "passed"
+
+
 def test_cancellation_token_is_one_way_and_reports_safe_point() -> None:
     token = CancellationToken()
     assert not token.is_cancelled

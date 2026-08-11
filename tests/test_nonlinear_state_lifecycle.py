@@ -46,7 +46,10 @@ def _install_accelerated_assembly_before_ab_comparisons() -> None:
     _ensure_nonlinear_acceleration()
 
 
-def _plastic_membrane_patch() -> FEModel:
+def _plastic_membrane_patch(
+    *,
+    prescribed_right_x: float | None = None,
+) -> FEModel:
     model = FEModel("persistent_state_membrane_patch")
     model.add_material("steel", E, NU, hardening_curve=PLASTIC_CURVE)
     model.add_node(1, 0.0, 0.0, 0.0)
@@ -68,6 +71,14 @@ def _plastic_membrane_patch() -> FEModel:
             {"uz": 0.0, "rx": 0.0, "ry": 0.0},
         )
     )
+    if prescribed_right_x is not None:
+        model.add_boundary_condition(
+            BoundaryCondition(
+                "prescribed_right_x",
+                [2, 3],
+                {"ux": float(prescribed_right_x)},
+            )
+        )
     return model
 
 
@@ -246,6 +257,76 @@ def test_restart_pack_matches_mapping_fallback(monkeypatch: pytest.MonkeyPatch) 
     preload_alpha = preload.element_states[1]["alpha"].copy()
     persistent.element_states[1]["alpha"][...] = -1.0
     np.testing.assert_array_equal(preload.element_states[1]["alpha"], preload_alpha)
+
+
+def test_plastic_restart_preserves_nonzero_prescribed_state_and_reactions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = 3.0e-3
+    preload_model = _plastic_membrane_patch(prescribed_right_x=target)
+    preload = solve_static_nonlinear(
+        preload_model,
+        load_case=None,
+        num_steps=3,
+        num_layers=3,
+        max_iterations=20,
+        tolerance=1.0e-9,
+    )
+    assert preload.status == "completed"
+    assert np.max(preload.element_states[1]["alpha"]) > 0.0
+
+    restart_load = LoadCase("restart_shear")
+    restart_load.add_nodal_load(
+        3,
+        load_vector=[0.0, 1.0e3, 0.0, 0.0, 0.0, 0.0],
+    )
+    persistent_model = _plastic_membrane_patch(prescribed_right_x=target)
+    persistent = solve_static_nonlinear(
+        persistent_model,
+        restart_load,
+        max_load_factor=0.1,
+        num_steps=2,
+        num_layers=3,
+        max_iterations=20,
+        tolerance=1.0e-9,
+        initial_element_states=preload.element_states,
+        initial_displacements=preload.displacements,
+        equilibrate_initial_state=False,
+        record_increment_snapshots=True,
+    )
+
+    monkeypatch.setenv("FE_SOLVER_DISABLE_PERSISTENT_STATE", "1")
+    legacy_model = _plastic_membrane_patch(prescribed_right_x=target)
+    legacy = solve_static_nonlinear(
+        legacy_model,
+        restart_load,
+        max_load_factor=0.1,
+        num_steps=2,
+        num_layers=3,
+        max_iterations=20,
+        tolerance=1.0e-9,
+        initial_element_states=preload.element_states,
+        initial_displacements=preload.displacements,
+        equilibrate_initial_state=False,
+        record_increment_snapshots=True,
+    )
+
+    _assert_solution_equal(persistent, legacy)
+    assert persistent.info["nonlinear_state_storage"]["activated"] is True
+    assert persistent.info["prescribed_displacement_path"]["mode"] == (
+        "restart_fixed_affine_state"
+    )
+    for node_id in (2, 3):
+        dof = persistent_model.mesh.nodes[node_id].dofs[0]
+        assert persistent.displacements[dof] == pytest.approx(target)
+        assert [snapshot.displacements[dof] for snapshot in persistent.snapshots] == (
+            pytest.approx([target] * len(persistent.snapshots))
+        )
+    assert persistent.steps[-1].support_reactions == legacy.steps[-1].support_reactions
+    np.testing.assert_array_equal(
+        persistent.element_states[1]["alpha"],
+        legacy.element_states[1]["alpha"],
+    )
 
 
 def test_arc_length_store_matches_mapping_and_retries_safely(
