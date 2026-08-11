@@ -34,6 +34,8 @@ from .nonlinear_reduced_assembly import (
 class _ReducedVectorPayload:
     values: np.ndarray
     token: object
+    source_plan: Any
+    assembly_call: int
 
 
 @dataclass(frozen=True)
@@ -552,13 +554,24 @@ def _batch_c_assemble_nonlinear_system(
                 residual_stiffness_fraction=float(residual_stiffness_fraction),
             )
 
-    force_reduced, tangent_reduced, trial_states = assemble_reduced_system(
-        nonlinear_plan,
-        context.reduced_plan,
-        displacements,
-        committed_states,
-        tangent=tangent,
-    )
+    # Keep the assembly and lazy force-generation capture in one re-entrant
+    # plan-lock scope.  Otherwise a same-model assembly could replace the
+    # local buffers after ``assemble_reduced_system`` released its inner lock
+    # but before this payload recorded ``timings.calls``.
+    with nonlinear_plan._lock:
+        force_reduced, tangent_reduced, trial_states = assemble_reduced_system(
+            nonlinear_plan,
+            context.reduced_plan,
+            displacements,
+            committed_states,
+            tangent=tangent,
+        )
+        force_payload = _ReducedVectorPayload(
+            force_reduced,
+            context.token,
+            nonlinear_plan,
+            int(nonlinear_plan.timings.calls),
+        )
     context.direct_assembly_count += 1
     if not tangent:
         context.direct_residual_only_count += 1
@@ -571,13 +584,51 @@ def _batch_c_assemble_nonlinear_system(
         elapsed_seconds=time.perf_counter() - assembly_start,
         plan=nonlinear_plan,
     )
-    force_payload = _ReducedVectorPayload(force_reduced, context.token)
     tangent_payload = (
         _ReducedMatrixPayload(tangent_reduced, context.token)
         if tangent_reduced is not None
         else None
     )
     return force_payload, tangent_payload, trial_states
+
+
+def materialize_full_internal_force(
+    force_payload: Any,
+    total_dofs: int,
+) -> Optional[np.ndarray]:
+    """Recover a full force without repeating an accepted local response.
+
+    Ordinary full-coordinate assembly payloads are returned as one-dimensional
+    arrays.  A direct-reduced payload is expanded from its element-local force
+    buffers only while it is still the most recent assembly of that plan.  The
+    generation check makes the optimization conservative when the same model
+    is (unsupportedly) shared by overlapping solves: callers receive ``None``
+    and may perform a fresh full-coordinate recovery instead of consuming
+    buffers that another assembly has replaced.
+    """
+
+    expected = int(total_dofs)
+    if isinstance(force_payload, _ReducedVectorPayload):
+        plan = force_payload.source_plan
+        with plan._lock:
+            if (
+                int(plan.total_dofs) != expected
+                or int(plan.timings.calls) != int(force_payload.assembly_call)
+            ):
+                return None
+            return _performance._scatter_sum(
+                plan.force_values,
+                plan.force_dofs_flat,
+                plan.total_dofs,
+            )
+
+    try:
+        full = np.asarray(force_payload, dtype=float).reshape(-1)
+    except (TypeError, ValueError):
+        return None
+    if full.size != expected:
+        return None
+    return full
 
 
 def _record_patch(module: ModuleType, name: str, replacement: Any) -> None:

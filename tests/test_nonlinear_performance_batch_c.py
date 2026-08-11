@@ -7,7 +7,8 @@ import numpy as np
 import pytest
 from scipy import sparse
 
-from anysolver import arc_length, nonlinear_static
+from anysolver import arc_length, nonlinear_performance_batch_c, nonlinear_static
+from anysolver.arc_length import ArcLengthControl
 from anysolver.boundary import BoundaryCondition, LoadCase
 from anysolver.elements import Element
 from anysolver.fe_core import FEModel
@@ -159,6 +160,43 @@ def test_selector_reduced_plan_reuses_csr_and_work_buffers() -> None:
         assert np.all(row_indices[:-1] < row_indices[1:])
 
 
+def test_lazy_full_force_payload_rejects_replaced_plan_buffers() -> None:
+    model, _load = _spring_model()
+    plan = get_nonlinear_assembly_plan(model, 5)
+    displacement = np.zeros(plan.total_dofs, dtype=float)
+    expected, _tangent, _states = plan.assemble(
+        displacement,
+        {},
+        tangent=True,
+    )
+    payload = nonlinear_performance_batch_c._ReducedVectorPayload(
+        np.empty(0, dtype=float),
+        object(),
+        plan,
+        int(plan.timings.calls),
+    )
+
+    np.testing.assert_allclose(
+        nonlinear_performance_batch_c.materialize_full_internal_force(
+            payload,
+            plan.total_dofs,
+        ),
+        expected,
+    )
+    plan.assemble(
+        np.full(plan.total_dofs, 1.0e-4, dtype=float),
+        {},
+        tangent=True,
+    )
+    assert (
+        nonlinear_performance_batch_c.materialize_full_internal_force(
+            payload,
+            plan.total_dofs,
+        )
+        is None
+    )
+
+
 @pytest.mark.skipif(
     not JIT_ENABLED,
     reason=f"Batch C requires Batch B's Numba kernel ({JIT_DISABLED_REASON})",
@@ -302,6 +340,95 @@ def test_nonlinear_solver_uses_direct_reduced_assembly(monkeypatch) -> None:
     assert direct["activated"] is True
     assert direct["fallback_reason"] is None
     assert direct["assembly_count"] == status["reduced_assemblies"]
+
+
+@pytest.mark.skipif(
+    not JIT_ENABLED,
+    reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
+)
+def test_arc_reactions_reuse_accepted_direct_force_without_reassembly(
+    monkeypatch,
+) -> None:
+    """Reaction output must not repeat every accepted element evaluation."""
+
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
+    reset_batch_c_counters()
+    model, load = _spring_model()
+    result = arc_length.solve_static_arc_length(
+        model,
+        load,
+        control=ArcLengthControl(
+            initial_load_increment=0.05,
+            minimum_load_increment=1.0e-5,
+            maximum_load_increment=0.05,
+            max_steps=4,
+            maximum_absolute_load_factor=0.15,
+        ),
+        max_iterations=8,
+        tolerance=1.0e-10,
+        arc_tolerance=1.0e-10,
+    )
+
+    assert result.steps
+    recovery = result.info["reaction_force_recovery"]
+    assert recovery == {
+        "accepted_force_reuse_count": len(result.steps),
+        "full_reassembly_count": 0,
+    }
+    performance = result.info["nonlinear_performance"]
+    assert performance["direct_reduced_assembly"]["activated"] is True
+    assert performance["assembly"]["residual_only_calls"] == 0
+    assert "persistent_full_coordinate" not in performance["assembly"][
+        "path_counts"
+    ]
+    assert all(
+        np.all(np.isfinite(values))
+        for step in result.steps
+        for values in step.support_reactions.values()
+    )
+
+    # Force the conservative recovery path and use it as the reaction oracle.
+    monkeypatch.setattr(
+        nonlinear_performance_batch_c,
+        "materialize_full_internal_force",
+        lambda *_args, **_kwargs: None,
+    )
+    fallback_model, fallback_load = _spring_model()
+    fallback = arc_length.solve_static_arc_length(
+        fallback_model,
+        fallback_load,
+        control=ArcLengthControl(
+            initial_load_increment=0.05,
+            minimum_load_increment=1.0e-5,
+            maximum_load_increment=0.05,
+            max_steps=4,
+            maximum_absolute_load_factor=0.15,
+        ),
+        max_iterations=8,
+        tolerance=1.0e-10,
+        arc_tolerance=1.0e-10,
+    )
+    assert fallback.info["reaction_force_recovery"] == {
+        "accepted_force_reuse_count": 0,
+        "full_reassembly_count": len(fallback.steps),
+    }
+    assert len(result.steps) == len(fallback.steps)
+    for optimized_step, fallback_step in zip(result.steps, fallback.steps):
+        assert optimized_step.load_factor == pytest.approx(
+            fallback_step.load_factor,
+            rel=1.0e-12,
+            abs=1.0e-13,
+        )
+        assert optimized_step.support_reactions.keys() == (
+            fallback_step.support_reactions.keys()
+        )
+        for name, optimized_values in optimized_step.support_reactions.items():
+            np.testing.assert_allclose(
+                optimized_values,
+                fallback_step.support_reactions[name],
+                rtol=1.0e-12,
+                atol=1.0e-12,
+            )
 
 
 @pytest.mark.skipif(

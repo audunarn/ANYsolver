@@ -678,6 +678,8 @@ def solve_static_arc_length(
     total_iterations = 0
     total_retries = 0
     corrector_solve_many_count = 0
+    reaction_force_reuse_count = 0
+    reaction_force_reassembly_count = 0
     adaptation_history: List[Dict[str, Any]] = []
     snapshots: List[NonlinearIncrementSnapshot] = []
 
@@ -961,25 +963,48 @@ def solve_static_arc_length(
                     else:
                         descending_steps = 0
 
-                reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
-                    working_model,
-                    u,
-                    committed_states,
-                    num_layers,
-                    tangent=False,
-                    kinematics=kinematics,
-                    corotational_tangent=resolved_corotational_tangent,
-                    require_full_coordinates=True,
+                # The converged Newton evaluation already contains the exact
+                # accepted internal and external forces.  Reuse them for
+                # support reactions.  Direct reduced assembly carries a lazy,
+                # generation-qualified view of its local force buffers, so it
+                # needs only one full scatter here—not a second constitutive
+                # evaluation.  A stale/unrecognized payload conservatively
+                # falls back to the original full-coordinate recovery.
+                from .nonlinear_performance_batch_c import (
+                    materialize_full_internal_force,
                 )
-                # Reaction recovery is diagnostic-only; do not leave its trial
-                # constitutive state active for the next continuation step.
-                _discard_nonlinear_state_candidate(committed_states)
-                (
-                    reaction_constant,
-                    _unused,
-                    reaction_proportional,
-                    _unused,
-                ) = external_system(u, lam, tangent=False)
+
+                reaction_internal = materialize_full_internal_force(
+                    F_internal,
+                    working_model.mesh.dof_manager.total_dofs,
+                )
+                if reaction_internal is None:
+                    reaction_internal, _unused, _reaction_states = (
+                        _assemble_nonlinear_system(
+                            working_model,
+                            u,
+                            committed_states,
+                            num_layers,
+                            tangent=False,
+                            kinematics=kinematics,
+                            corotational_tangent=resolved_corotational_tangent,
+                            require_full_coordinates=True,
+                        )
+                    )
+                    # Reaction recovery is diagnostic-only; do not leave its
+                    # trial state active for the next continuation step.
+                    _discard_nonlinear_state_candidate(committed_states)
+                    reaction_force_reassembly_count += 1
+                    (
+                        reaction_constant,
+                        _unused,
+                        reaction_proportional,
+                        _unused,
+                    ) = external_system(u, lam, tangent=False)
+                else:
+                    reaction_force_reuse_count += 1
+                    reaction_constant = F_const_trial
+                    reaction_proportional = F_prop_trial
                 support_reactions = _support_reaction_resultants(
                     working_model,
                     reaction_internal
@@ -1139,6 +1164,10 @@ def solve_static_arc_length(
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
     info["corrector_solve_many_count"] = int(corrector_solve_many_count)
+    info["reaction_force_recovery"] = {
+        "accepted_force_reuse_count": int(reaction_force_reuse_count),
+        "full_reassembly_count": int(reaction_force_reassembly_count),
+    }
     info["solve_time"] = float(time.time() - start_time)
     info["constraint_postcheck"] = constraint_residual_summary(
         working_model, u_final, affine_scale=lam
