@@ -166,6 +166,32 @@ def native_thread_scope(
     requested = None if requested_threads is None else int(requested_threads)
     if requested is not None and requested <= 0:
         raise ValueError("requested_threads must be positive when provided")
+    owner = threading.get_ident()
+    if (
+        requested is not None
+        and _ACTIVE_NATIVE_LIMIT.get() == requested
+        and _ACTIVE_NATIVE_LIMIT_OWNER.get() == owner
+    ):
+        # The outer scope already owns the process-global limiter.  This is the
+        # hot path for repeated solves through one factorization handle, so do
+        # not repeat threadpool discovery for every right-hand side.
+        report: Dict[str, Any] = {
+            "phase": str(phase),
+            "requested_threads": requested,
+            "limiter_available": _HAS_THREADPOOLCTL,
+            "fallback_reason": _THREADPOOLCTL_ERROR,
+            "pools_before": [],
+            "pools_active": [],
+            "pools_after": [],
+            "restored": False,
+            "coordination": "writer_inherited",
+            "status": "inherited_limit",
+        }
+        try:
+            yield report
+        finally:
+            report["restored"] = True
+        return
     if requested is None:
         coordinator_token = _NATIVE_SCOPE_COORDINATOR.acquire_reader()
         report: Dict[str, Any] = {
@@ -209,7 +235,6 @@ def native_thread_scope(
         # Snapshot only after exclusive ownership: threadpoolctl reports and
         # mutations must describe one coherent process-global interval.
         report["pools_before"] = _pool_snapshot()
-        owner = threading.get_ident()
         if (
             _ACTIVE_NATIVE_LIMIT.get() == requested
             and _ACTIVE_NATIVE_LIMIT_OWNER.get() == owner

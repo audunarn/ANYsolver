@@ -155,6 +155,36 @@ def test_default_scope_can_upgrade_to_explicit_limit_and_restore():
     assert outer["restored"] is True
 
 
+def test_same_thread_inherited_limit_skips_repeated_pool_discovery(monkeypatch):
+    snapshot_calls = []
+
+    @contextlib.contextmanager
+    def fake_limits(*, limits):
+        del limits
+        yield
+
+    def fake_snapshot():
+        snapshot_calls.append(threading.get_ident())
+        return []
+
+    monkeypatch.setattr(policy_module, "_HAS_THREADPOOLCTL", True)
+    monkeypatch.setattr(policy_module, "threadpool_limits", fake_limits)
+    monkeypatch.setattr(policy_module, "_pool_snapshot", fake_snapshot)
+
+    with native_thread_scope(1, phase="outer") as outer:
+        outer_snapshot_count = len(snapshot_calls)
+        with native_thread_scope(1, phase="repeated_solve") as inner:
+            assert inner["status"] == "inherited_limit"
+            assert inner["coordination"] == "writer_inherited"
+            assert inner["pools_before"] == []
+            assert inner["pools_after"] == []
+        assert len(snapshot_calls) == outer_snapshot_count
+
+    assert outer["restored"] is True
+    assert inner["restored"] is True
+    assert len(snapshot_calls) == outer_snapshot_count + 1
+
+
 def test_snapshot_failure_does_not_strand_native_scope_coordinator(monkeypatch):
     def fail_snapshot():
         raise RuntimeError("isolated snapshot failure")
