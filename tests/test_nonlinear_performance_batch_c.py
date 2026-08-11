@@ -25,7 +25,7 @@ from anysolver.nonlinear_performance_bootstrap import (
     install_nonlinear_performance_optimizations,
     uninstall_nonlinear_performance_optimizations,
 )
-from anysolver.nonlinear_static import solve_static_nonlinear
+from anysolver.nonlinear_static import DisplacementControl, solve_static_nonlinear
 from anysolver.nonlinear_static import _ensure_nonlinear_acceleration
 
 _ensure_nonlinear_acceleration()
@@ -307,6 +307,90 @@ def _spring_model():
     return model, load
 
 
+class _AxialSpringElement(Element):
+    def __init__(self, element_id: int, node_ids, stiffness: float = 2.0):
+        super().__init__(element_id, node_ids, "default")
+        self.stiffness = float(stiffness)
+
+    @property
+    def num_nodes(self) -> int:
+        return 2
+
+    @property
+    def dofs_per_node(self) -> int:
+        return 6
+
+    def get_node_coordinates(self, mesh):
+        return np.asarray(
+            [mesh.get_node(node_id).coords() for node_id in self.node_ids],
+            dtype=float,
+        )
+
+    def compute_stiffness_matrix(self, mesh, material):
+        matrix = np.zeros((12, 12), dtype=float)
+        matrix[0, 0] = self.stiffness
+        matrix[0, 6] = -self.stiffness
+        matrix[6, 0] = -self.stiffness
+        matrix[6, 6] = self.stiffness
+        return matrix
+
+    def compute_nonlinear_response(
+        self,
+        mesh,
+        material,
+        u_elem,
+        state=None,
+        num_layers: int = 5,
+        tangent: bool = True,
+    ):
+        stiffness = self.compute_stiffness_matrix(mesh, material)
+        displacement = np.asarray(u_elem, dtype=float)
+        force = stiffness @ displacement
+        return force, stiffness if tangent else None, {
+            "spring_extension": float(displacement[6] - displacement[0]),
+        }
+
+
+def _supported_axial_spring_model():
+    model = FEModel("batch_c_supported_axial_spring")
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, 1.0, 0.0, 0.0)
+    model.add_element(1, _AxialSpringElement(1, [1, 2]))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "fixed",
+            [1],
+            {
+                "ux": 0.0,
+                "uy": 0.0,
+                "uz": 0.0,
+                "rx": 0.0,
+                "ry": 0.0,
+                "rz": 0.0,
+            },
+        )
+    )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "guide",
+            [2],
+            {
+                "uy": 0.0,
+                "uz": 0.0,
+                "rx": 0.0,
+                "ry": 0.0,
+                "rz": 0.0,
+            },
+        )
+    )
+    load = LoadCase("unit_pull")
+    load.add_nodal_load(
+        2,
+        load_vector=[1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    )
+    return model, load
+
+
 @pytest.mark.skipif(
     not JIT_ENABLED,
     reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
@@ -340,6 +424,105 @@ def test_nonlinear_solver_uses_direct_reduced_assembly(monkeypatch) -> None:
     assert direct["activated"] is True
     assert direct["fallback_reason"] is None
     assert direct["assembly_count"] == status["reduced_assemblies"]
+
+
+@pytest.mark.skipif(
+    not JIT_ENABLED,
+    reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
+)
+def test_block_displacement_reactions_reuse_accepted_direct_force_with_oracle_parity(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
+    reset_batch_c_counters()
+    model, load = _supported_axial_spring_model()
+    progress = []
+    result = solve_static_nonlinear(
+        model,
+        load_case=load,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=2,
+            dof="ux",
+            target_displacement=0.02,
+        ),
+        num_steps=3,
+        max_iterations=8,
+        tolerance=1.0e-12,
+        progress_callback=progress.append,
+        record_increment_snapshots=True,
+    )
+
+    assert result.status == "completed"
+    assert result.info["displacement_control_linearization"] == "block_elimination"
+    direct = result.info["nonlinear_performance"]["direct_reduced_assembly"]
+    assert direct["context_active"] is True
+    assert direct["activated"] is True
+    assert direct["fallback_reason"] is None
+    assert result.info["reaction_force_recovery"] == {
+        "accepted_force_reuse_count": len(result.steps),
+        "full_reassembly_count": 0,
+    }
+    assert result.info["constraint_postcheck"]["status"] == "passed"
+    assert len(result.snapshots) == len(result.steps)
+
+    final_reactions = result.steps[-1].support_reactions
+    fixed_x = final_reactions["fixed"][0]
+    applied_x = result.load_factor
+    assert abs(fixed_x) > 0.0
+    assert fixed_x == pytest.approx(-applied_x, rel=1.0e-12, abs=1.0e-12)
+    assert result.info["force_displacement_history"][-1]["support_reactions"] == {
+        name: list(values) for name, values in final_reactions.items()
+    }
+    assert progress[-1]["support_reactions"] == {
+        name: list(values) for name, values in final_reactions.items()
+    }
+
+    # Force the conservative full-coordinate recovery and use it as the
+    # reaction oracle for the generation-qualified accepted-force payload.
+    monkeypatch.setattr(
+        nonlinear_performance_batch_c,
+        "materialize_full_internal_force",
+        lambda *_args, **_kwargs: None,
+    )
+    oracle_model, oracle_load = _supported_axial_spring_model()
+    oracle = solve_static_nonlinear(
+        oracle_model,
+        load_case=oracle_load,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=2,
+            dof="ux",
+            target_displacement=0.02,
+        ),
+        num_steps=3,
+        max_iterations=8,
+        tolerance=1.0e-12,
+    )
+    assert oracle.info["reaction_force_recovery"] == {
+        "accepted_force_reuse_count": 0,
+        "full_reassembly_count": len(oracle.steps),
+    }
+    assert oracle.info["constraint_postcheck"] == result.info[
+        "constraint_postcheck"
+    ]
+    assert len(result.steps) == len(oracle.steps)
+    for optimized_step, oracle_step in zip(result.steps, oracle.steps):
+        assert optimized_step.load_factor == pytest.approx(
+            oracle_step.load_factor,
+            rel=1.0e-12,
+            abs=1.0e-13,
+        )
+        assert optimized_step.support_reactions.keys() == (
+            oracle_step.support_reactions.keys()
+        )
+        for name, optimized_values in optimized_step.support_reactions.items():
+            np.testing.assert_allclose(
+                optimized_values,
+                oracle_step.support_reactions[name],
+                rtol=1.0e-12,
+                atol=1.0e-12,
+            )
 
 
 @pytest.mark.skipif(

@@ -1262,6 +1262,8 @@ def _solve_static_displacement_control_block(
     status = "completed"
     failure_reason: Optional[str] = None
     total_iterations = 0
+    reaction_force_reuse_count = 0
+    reaction_force_reassembly_count = 0
 
     row_full = displacement_control.full_row(model)
     row_red = np.asarray(row_full @ T, dtype=float).reshape(-1)
@@ -1361,6 +1363,44 @@ def _solve_static_displacement_control_block(
             )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
+            # The converged Newton evaluation already contains the exact
+            # accepted internal force.  Direct reduced assembly carries a
+            # generation-qualified view of its element-local force buffers,
+            # so expand that payload while it is still current instead of
+            # repeating every constitutive evaluation.  If the payload is
+            # stale or otherwise unrecognized, conservatively recover the
+            # force through the original full-coordinate path.
+            from .nonlinear_performance_batch_c import (
+                materialize_full_internal_force,
+            )
+
+            reaction_internal = materialize_full_internal_force(
+                F_int,
+                model.mesh.dof_manager.total_dofs,
+            )
+            if reaction_internal is None:
+                reaction_internal, _unused, _reaction_states = (
+                    ns._assemble_nonlinear_system(
+                        model,
+                        u,
+                        committed_states,
+                        num_layers,
+                        tangent=False,
+                        kinematics=kinematics,
+                        corotational_tangent=corotational_tangent,
+                        require_full_coordinates=True,
+                    )
+                )
+                # Reaction recovery is diagnostic-only; do not leave its
+                # trial constitutive state active for the next increment.
+                ns._discard_nonlinear_state_candidate(committed_states)
+                reaction_force_reassembly_count += 1
+            else:
+                reaction_force_reuse_count += 1
+            support_reactions = ns._support_reaction_resultants(
+                model,
+                reaction_internal - (F_const_dc + lam * F_prop_dc),
+            )
             steps.append(
                 ns.NonlinearStaticStep(
                     step_index=step_index,
@@ -1371,6 +1411,7 @@ def _solve_static_displacement_control_block(
                     max_equivalent_plastic_strain=ns._max_plastic_strain(committed_states),
                     control_value=current,
                     active_stage=active_stage,
+                    support_reactions=support_reactions,
                 )
             )
             history.append(
@@ -1384,6 +1425,10 @@ def _solve_static_displacement_control_block(
                     "iterations": iteration,
                     "active_stage": active_stage,
                     "linearization": "block_elimination",
+                    "support_reactions": {
+                        name: list(values)
+                        for name, values in support_reactions.items()
+                    },
                 }
             )
             if record_increment_snapshots:
@@ -1412,6 +1457,10 @@ def _solve_static_displacement_control_block(
                     max_equivalent_plastic_strain=float(
                         ns._max_plastic_strain(committed_states)
                     ),
+                    support_reactions={
+                        name: list(values)
+                        for name, values in support_reactions.items()
+                    },
                 )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
@@ -1442,7 +1491,12 @@ def _solve_static_displacement_control_block(
     info["strain_summary"] = ns._nonlinear_state_summary(committed_states)
     info["total_newton_iterations"] = total_iterations
     info["displacement_control_linearization"] = "block_elimination"
+    info["reaction_force_recovery"] = {
+        "accepted_force_reuse_count": reaction_force_reuse_count,
+        "full_reassembly_count": reaction_force_reassembly_count,
+    }
     info["solve_time"] = time.time() - start_time
+    info["constraint_postcheck"] = ns.constraint_residual_summary(model, u_final)
     info["result_case"] = make_result_case(
         name="nonlinear_static_displacement_control",
         analysis_type="nonlinear_static",
