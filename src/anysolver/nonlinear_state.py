@@ -1502,7 +1502,11 @@ def finish_state_evaluation(
     """Route scalar fallbacks into a store and return a lazy trial mapping."""
 
     if not isinstance(committed_states, NonlinearStateStore):
-        return dict(legacy_trial_states)
+        # Every assembler already owns a fresh trial dictionary.  Preserve
+        # the legacy zero-copy return path when persistent storage is not in
+        # use; copying O(elements) here is measurable on mature elastic
+        # assembly and provides no additional ownership guarantee.
+        return legacy_trial_states
     if token is None:
         raise StateTransactionError("Persistent state evaluation has no trial token")
     committed_states.set_trial_states(token, legacy_trial_states)

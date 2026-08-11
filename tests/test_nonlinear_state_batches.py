@@ -13,6 +13,8 @@ from anysolver.nonlinear_state import (
     ShellStateLayout,
     StaleStateTokenError,
     StateMaterializationPolicy,
+    begin_state_evaluation,
+    finish_state_evaluation,
 )
 
 
@@ -37,6 +39,15 @@ def _trial_arrays(layout: ShellStateLayout, value: float):
         "alpha": np.full((count, points), 10.0 * value, dtype=float),
         "layer_strain": np.full((count, points, 3), 100.0 * value, dtype=float),
     }
+
+
+def test_legacy_state_evaluation_preserves_fresh_trial_mapping_identity() -> None:
+    committed: dict[int, object] = {}
+    trial = {17: {"alpha": np.array([0.25])}}
+
+    token = begin_state_evaluation(committed)
+    assert token is None
+    assert finish_state_evaluation(committed, token, trial) is trial
 
 
 def test_layout_is_immutable_and_pack_materialize_owns_contiguous_state() -> None:
