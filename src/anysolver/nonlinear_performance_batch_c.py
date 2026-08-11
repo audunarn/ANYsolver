@@ -177,20 +177,50 @@ def _estimated_solver_assemblies(original: Any, args: Tuple[Any, ...], kwargs: M
     return max(steps, 0) * typical_per_step
 
 
+def _has_nonzero_affine_path(model: Any) -> bool:
+    for boundary in getattr(model, "boundary_conditions", ()) or ():
+        for value in getattr(boundary, "dof_constraints", {}).values():
+            try:
+                if abs(float(value)) > 1.0e-14:
+                    return True
+            except (TypeError, ValueError):
+                continue
+    for equation in getattr(model, "constraint_equations", ()) or ():
+        try:
+            if abs(float(getattr(equation, "rhs", 0.0))) > 1.0e-14:
+                return True
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
 def _run_with_context(original, *args: Any, **kwargs: Any):
     model = args[0] if args else kwargs.get("model")
     estimated = _estimated_solver_assemblies(original, args, kwargs)
     threshold = _minimum_estimated_assemblies()
     allowed = estimated >= threshold
+    prescribed_arc_path = (
+        getattr(original, "__module__", "").endswith("arc_length")
+        and _has_nonzero_affine_path(model)
+    )
+    if prescribed_arc_path:
+        # Direct reduced assembly intentionally does not retain the full
+        # constrained/free tangent coupling K*u0 required by the derivative
+        # of u = T*q + lambda*u0.  Use the qualified full-coordinate path.
+        allowed = False
     context = _SolveContext(
         requested_model=model,
         estimated_assemblies=estimated,
         activation_threshold=threshold,
         activation_allowed=allowed,
         activation_reason=(
-            "estimated_assembly_budget_meets_threshold"
-            if allowed
-            else "estimated_assembly_budget_below_threshold"
+            "prescribed_arc_path_requires_full_tangent"
+            if prescribed_arc_path
+            else (
+                "estimated_assembly_budget_meets_threshold"
+                if allowed
+                else "estimated_assembly_budget_below_threshold"
+            )
         ),
     )
     stack = _context_stack()
@@ -408,11 +438,12 @@ def _batch_c_assemble_nonlinear_system(
     **extra,
 ):
     deleted_tuple = tuple(deleted_element_ids or ())
+    require_full_coordinates = bool(extra.pop("require_full_coordinates", False))
     kinematics = str(extra.pop("kinematics", "von_karman"))
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    if deleted_tuple or extra or kinematics != "von_karman":
+    if require_full_coordinates or deleted_tuple or extra or kinematics != "von_karman":
         # The reduced-assembly plan encodes the default von Karman element
         # response; erosion, per-element stiffness scales, corotational
         # kinematics take the full reference path. Immutable initial fields

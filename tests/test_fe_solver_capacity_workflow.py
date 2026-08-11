@@ -44,6 +44,24 @@ def _compression_load(model: FEModel) -> LoadCase:
     return load
 
 
+def _prescribed_compression_model(num_elements: int = 6) -> FEModel:
+    model = _beam_column_model(num_elements)
+    end = num_elements + 1
+    model.boundary_conditions = [
+        condition
+        for condition in model.boundary_conditions
+        if condition.name != "pin_right"
+    ]
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "prescribed_right",
+            [end],
+            {"ux": -0.0001, "uy": 0.0},
+        )
+    )
+    return model
+
+
 def test_capacity_workflow_runs_static_buckling_imperfection_and_nonlinear_capacity() -> None:
     model = _beam_column_model()
     load = _compression_load(model)
@@ -67,6 +85,30 @@ def test_capacity_workflow_runs_static_buckling_imperfection_and_nonlinear_capac
     assert result.capacity_factor == pytest.approx(1.0)
     assert result.mesh_adequacy.status in {"ok", "warning"}
     assert result.to_dict()["imperfection"]["max_offset"] == pytest.approx(0.004)
+
+
+def test_capacity_workflow_scales_prescribed_displacement_without_load_case() -> None:
+    result = run_nonlinear_capacity_workflow(
+        _prescribed_compression_model(),
+        config=CapacityWorkflowConfig(
+            num_buckling_modes=1,
+            eigenmode_imperfection_amplitude=0.001,
+            nonlinear_num_steps=2,
+            nonlinear_max_load_factor=0.2,
+            nonlinear_num_layers=3,
+        ),
+    )
+
+    assert result.status == "completed"
+    assert result.static_solver_info["convergence_info"]["status"] == "converged"
+    assert result.buckling_result.solver_status == "ok"
+    assert result.nonlinear_result.load_factor == pytest.approx(0.2)
+    assert result.diagnostics["reference_action"] == "prescribed_displacement"
+
+
+def test_capacity_workflow_rejects_an_actionless_model() -> None:
+    with pytest.raises(ValueError, match="external reference load case or a nonzero"):
+        run_nonlinear_capacity_workflow(_beam_column_model())
 
 
 def test_capacity_workflow_mesh_mode_adequacy_warns_for_coarse_mode_representation() -> None:

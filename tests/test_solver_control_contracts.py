@@ -49,11 +49,13 @@ def test_force_control_ramps_nonzero_prescribed_displacement_by_increment() -> N
     model.add_boundary_condition(
         BoundaryCondition("prescribed-tip-x", [2], {"ux": target})
     )
+    progress = []
     result = solve_static_nonlinear(
         model,
         load_case=None,
         num_steps=4,
         record_increment_snapshots=True,
+        progress_callback=progress.append,
     )
 
     assert result.converged
@@ -66,6 +68,13 @@ def test_force_control_ramps_nonzero_prescribed_displacement_by_increment() -> N
     assert result.displacements[ux] == pytest.approx(target)
     assert result.info["prescribed_displacement_path"]["mode"] == (
         "proportional_to_load_factor"
+    )
+    assert result.steps[-1].support_reactions["fixed"][0] == pytest.approx(
+        -result.steps[-1].support_reactions["prescribed-tip-x"][0]
+    )
+    assert abs(result.steps[-1].support_reactions["fixed"][0]) > 0.0
+    assert progress[-1]["support_reactions"]["fixed"][0] == pytest.approx(
+        result.steps[-1].support_reactions["fixed"][0]
     )
 
 

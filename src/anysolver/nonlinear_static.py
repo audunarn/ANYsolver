@@ -403,6 +403,7 @@ class NonlinearStaticStep:
     active_stage: Optional[str] = None
     deleted_element_count: int = 0
     max_fracture_utilization: float = 0.0
+    support_reactions: Dict[str, Tuple[float, ...]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -416,6 +417,10 @@ class NonlinearStaticStep:
             "active_stage": self.active_stage,
             "deleted_element_count": int(self.deleted_element_count),
             "max_fracture_utilization": float(self.max_fracture_utilization),
+            "support_reactions": {
+                str(name): [float(value) for value in values]
+                for name, values in self.support_reactions.items()
+            },
         }
 
 
@@ -593,6 +598,7 @@ def _assemble_nonlinear_system(
     element_stiffness_scales: Optional[Mapping[int, float]] = None,
     kinematics: str = "von_karman",
     corotational_tangent: str = "rotated",
+    require_full_coordinates: bool = False,
 ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
     """Assemble F_int (and the tangent K_T when requested) at a state.
 
@@ -601,6 +607,7 @@ def _assemble_nonlinear_system(
     rotations. ``corotational_tangent`` is already resolved to either
     ``"rotated"`` or ``"consistent"`` by the public solver.
     """
+    del require_full_coordinates  # consumed by the direct-reduction adapter
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
@@ -809,6 +816,34 @@ def _assemble_nonlinear_system(
         K_T = None
 
     return F_int, K_T, trial_states
+
+
+def _support_reaction_resultants(
+    model: "FEModel", imbalance: np.ndarray
+) -> Dict[str, Tuple[float, ...]]:
+    """Sum nonlinear residual forces by named support boundary condition."""
+
+    residual = np.asarray(imbalance, dtype=float).reshape(-1)
+    manager = model.mesh.dof_manager
+    result: Dict[str, np.ndarray] = {}
+    for index, boundary in enumerate(getattr(model, "boundary_conditions", ()) or ()):
+        name = str(getattr(boundary, "name", "") or f"support {index + 1}")
+        vector = result.setdefault(name, np.zeros(6, dtype=float))
+        indices = getattr(boundary, "_dof_indices", {})
+        constraints = getattr(boundary, "dof_constraints", {})
+        for node_id in getattr(boundary, "node_ids", ()) or ():
+            node_dofs = manager.get_node_dofs(int(node_id))
+            for component in constraints:
+                local = indices.get(component)
+                if local is None or local >= len(node_dofs):
+                    continue
+                dof = int(node_dofs[local])
+                if 0 <= dof < residual.size:
+                    vector[int(local)] += float(residual[dof])
+    return {
+        name: tuple(float(value) for value in vector)
+        for name, vector in result.items()
+    }
 
 
 def _max_plastic_strain(states: Dict[int, Any]) -> float:
@@ -1599,6 +1634,31 @@ def _solve_static_displacement_control(
             committed_states = states_new
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
+            reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
+                model,
+                u,
+                committed_states,
+                num_layers,
+                tangent=False,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+                require_full_coordinates=True,
+            )
+            if follower_active:
+                reaction_constant, _unused = _weighted_external_load_system(
+                    model, constant_terms, u, tangent=False
+                )
+                reaction_proportional, _unused = _weighted_external_load_system(
+                    model, [proportional_term], u, tangent=False
+                )
+            else:
+                reaction_constant = F_const_static
+                reaction_proportional = F_prop_static
+            support_reactions = _support_reaction_resultants(
+                model,
+                reaction_internal
+                - (reaction_constant + lam * reaction_proportional),
+            )
             steps.append(
                 NonlinearStaticStep(
                     step_index=step_index,
@@ -1609,6 +1669,7 @@ def _solve_static_displacement_control(
                     max_equivalent_plastic_strain=_max_plastic_strain(committed_states),
                     control_value=current,
                     active_stage=active_stage,
+                    support_reactions=support_reactions,
                 )
             )
             history.append(
@@ -1621,6 +1682,10 @@ def _solve_static_displacement_control(
                     "constraint_error": constraint_error,
                     "iterations": iteration,
                     "active_stage": active_stage,
+                    "support_reactions": {
+                        name: list(values)
+                        for name, values in support_reactions.items()
+                    },
                 }
             )
             if record_increment_snapshots:
@@ -1647,6 +1712,10 @@ def _solve_static_displacement_control(
                     control_value=float(current),
                     displacement_norm=float(np.linalg.norm(u)),
                     max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
+                    support_reactions={
+                        name: list(values)
+                        for name, values in support_reactions.items()
+                    },
                 )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
@@ -2451,6 +2520,27 @@ def solve_static_nonlinear(
                 step_index += 1
                 u = full_displacement(q, lam)
                 control_value = float(np.linalg.norm(u))
+                reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
+                    model,
+                    u,
+                    committed_states,
+                    num_layers,
+                    tangent=False,
+                    deleted_element_ids=tuple(deleted_element_ids),
+                    residual_stiffness_fraction=(
+                        fracture_config.residual_stiffness_fraction
+                        if fracture_config is not None else 1.0
+                    ),
+                    kinematics=kinematics,
+                    corotational_tangent=resolved_corotational_tangent,
+                    require_full_coordinates=True,
+                )
+                reaction_external, _unused_tangent, _unused_factors, _unused_stage = (
+                    external_load_at(lam, u, tangent=False)
+                )
+                support_reactions = _support_reaction_resultants(
+                    model, reaction_internal - reaction_external
+                )
                 new_records: Tuple[DeletedElementRecord, ...] = ()
                 if fracture_config is not None:
                     new_records, step_fracture_utilization = detect_new_deletions(
@@ -2480,6 +2570,7 @@ def solve_static_nonlinear(
                         active_stage=active_stage,
                         deleted_element_count=len(deleted_element_ids),
                         max_fracture_utilization=max_fracture_utilization,
+                        support_reactions=support_reactions,
                     )
                 )
                 removed_load = np.zeros(3, dtype=float)
@@ -2525,6 +2616,10 @@ def solve_static_nonlinear(
                         "newly_deleted_element_ids": [record.element_id for record in new_records],
                         "max_fracture_utilization": max_fracture_utilization,
                         "deleted_pressure_force_resultant": removed_load.tolist(),
+                        "support_reactions": {
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
                     }
                 )
                 if record_increment_snapshots:
@@ -2563,6 +2658,10 @@ def solve_static_nonlinear(
                         max_equivalent_plastic_strain=float(_max_plastic_strain(committed_states)),
                         nominal_increment_count=int(num_steps),
                         load_increment=float(attempted_step_size),
+                        support_reactions={
+                            name: list(values)
+                            for name, values in support_reactions.items()
+                        },
                     )
                 if fracture_config is not None and deleted_element_ids:
                     scoped_total = sum(
@@ -2665,7 +2764,9 @@ def solve_static_nonlinear(
         info["load_program_stage_factors"] = load_program.stage_factors(lam)
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
-    info["constraint_postcheck"] = constraint_residual_summary(model, u_final)
+    info["constraint_postcheck"] = constraint_residual_summary(
+        model, u_final, affine_scale=lam
+    )
     info["result_case"] = make_result_case(
         name="nonlinear_static",
         analysis_type="nonlinear_static",
