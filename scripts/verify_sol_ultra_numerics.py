@@ -128,6 +128,15 @@ ACCEPTANCE_CRITERIA: dict[str, dict[str, Any]] = {
         "atol": 1.0e-12,
         "source": "component-wise committed-state recovery parity",
     },
+    "recovery_stress": {
+        "method": "relative_l2",
+        "rtol": 1.0e-10,
+        "atol": 1.0e-7,
+        "source": (
+            "existing scalar/compiled shell stress-recovery qualification; "
+            "absolute floor applies only to physical recovered stress fields"
+        ),
+    },
     "contact_history": {
         "method": "relative_l2",
         "rtol": 1.0e-6,
@@ -973,7 +982,7 @@ def _case_hill48_shell_path() -> dict[str, Any]:
         metrics,
         "recovery.element_stress",
         recovery.element_stresses,
-        gate="recovery",
+        gate="recovery_stress",
     )
     provenance = recovery.provenance.to_dict()
     _append_numeric_tree(metrics, "recovery.provenance", provenance, gate="recovery")

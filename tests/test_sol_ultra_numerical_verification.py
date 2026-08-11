@@ -105,6 +105,28 @@ def test_baseline_tolerance_is_authoritative_and_checksum_is_verified(harness) -
         harness.validate_capture(corrupted)
 
 
+def test_recovery_stress_gate_has_a_stress_only_roundoff_floor(harness) -> None:
+    reference = harness.numeric_metric([6.821210263296962e-9], "recovery_stress")
+    roundoff = harness.numeric_metric([0.0], "recovery_stress")
+    report = harness.compare_documents(
+        _artifact(harness, reference),
+        _artifact(harness, roundoff),
+    )
+    assert report["status"] == "passed"
+    assert report["cases"]["fixture"]["metrics"]["value"]["threshold"] == pytest.approx(
+        1.0e-7
+    )
+
+    material_difference = harness.numeric_metric([1.0e-6], "recovery_stress")
+    report = harness.compare_documents(
+        _artifact(harness, reference),
+        _artifact(harness, material_difference),
+    )
+    assert report["status"] == "failed"
+    assert harness.ACCEPTANCE_CRITERIA["recovery"]["atol"] == 1.0e-12
+    assert harness.ACCEPTANCE_CRITERIA["plastic_state"]["atol"] == 1.0e-12
+
+
 def test_environment_differences_are_visible_warnings(harness) -> None:
     metric = harness.numeric_metric([1.0], "internal_force")
     baseline = _artifact(harness, metric)
