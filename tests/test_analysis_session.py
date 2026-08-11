@@ -391,4 +391,3 @@ def test_modal_and_buckling_session_parity() -> None:
         rtol=1.0e-10,
         atol=1.0e-8,
     )
-

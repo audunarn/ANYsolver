@@ -124,4 +124,3 @@ def test_selected_stress_history_explicitly_materializes_full_displacement() -> 
     assert len(result.stress_history) == len(result.times)
     assert result.diagnostics["full_vector_reconstruction_count"] == len(result.times)
     assert result.diagnostics["selected_output_reconstruction_count"] == len(result.times)
-

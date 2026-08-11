@@ -155,4 +155,3 @@ def corotational_performance_status() -> Dict[str, Any]:
         "fallback_reason": JIT_DISABLED_REASON,
         **counters,
     }
-
