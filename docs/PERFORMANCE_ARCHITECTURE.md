@@ -128,11 +128,16 @@ The nonlinear impact loop separates four independent optimizations:
 - `ContactWorkBuffer` owns compact candidate/active arrays and scatters directly
   to the full load vector. Public records are lazy at saved/result boundaries.
 - `ImpactReducedAssemblyController` owns eligibility and a retained reduced
-  scatter plan. Any unsupported state, damage, affine constraint, kinematics,
-  cost, memory, or JIT condition keeps full-coordinate assembly.
+  scatter plan. It is qualified for elastic material response; material
+  hardening/Hill history, beam-fiber plasticity, damage, affine constraints,
+  unsupported kinematics, cost, memory, or JIT conditions keep full-coordinate
+  assembly.
 - `DamageMatrixPlan` owns a fixed CSR pattern plus per-element value positions.
+  It is constructed only after projected future events pass the measured
+  break-even and its retained arrays fit the solve's bounded memory allowance.
   It applies only changed scales, keeps point masses independent, and returns
-  to an exact rebuild if its model revision or input validity changes.
+  to an exact cached-term rebuild if its model revision or input validity
+  changes.
 
 These controllers do not own public histories or relax the accepted-state
 boundary. Contact selection remains deterministic, and damage/deletion changes
@@ -172,3 +177,10 @@ record materialization, changed damage terms, selected-output reconstruction,
 recovery backend, and requested/observed thread policy. These fields are the
 source for the Sol Ultra comparison and decision reports; wall time alone is
 not activation evidence.
+
+Static and arc-length results also carry a task/thread-local
+`nonlinear_performance` payload. Execution hooks record into a `ContextVar`
+scope, so concurrent analyses are not inferred by subtracting process-global
+counters. Nested preload work is explicitly counted, source-plan cumulative
+timings are labeled, and fast block rotation is distinguished from the dense
+consistent-corotational oracle.

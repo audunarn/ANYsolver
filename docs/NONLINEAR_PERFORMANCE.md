@@ -27,8 +27,8 @@ The promoted implementation scope is:
 - blockwise force/tangent rotations and revision-cached reference data for
   rotated corotational shell and beam response;
 - conservative nonlinear-impact tangent/factorization reuse, compact contact
-  work buffers, direct reduced impact assembly, and incremental damage-matrix
-  updates;
+  work buffers, elastic direct reduced impact assembly, and gated incremental
+  damage-matrix updates;
 - an optional caller-owned `AnalysisSession` for repeated linear, modal,
   buckling, transient, and capacity analyses;
 - preprojected transient load bases and selected-output transform rows; and
@@ -39,14 +39,14 @@ Every path retains a qualified fallback:
 
 | Fast path | Explicit fallback or exclusion |
 | --- | --- |
-| Persistent state arrays | Legacy owned dictionaries for incompatible layouts, immutable initial-field overrides, unbatched elements, non-von-Karman kinematics, disabled acceleration, or setup failure. |
+| Persistent state arrays | Legacy owned dictionaries for incompatible layouts, immutable initial-field overrides, unbatched elements, non-von-Karman kinematics, disabled acceleration, setup failure, and the nonlinear-impact lifecycle. |
 | Compiled Hill-48 | The safeguarded scalar return map for custom curve protocols; guarded numerical-tangent behavior remains available for pathological rows. |
 | Orthotropic/generalized S4 batches | Scalar element evaluation for unsupported formulations or sections, triangles, Q8/Q8R, initialized states requiring an exact override, and any batch rejected by eligibility checks. |
 | Corotational block transforms | The dense transformation is retained for the consistent-tangent chain-rule oracle; unsupported corotational element scope still fails closed. |
 | Impact tangent reuse | `tangent_reuse_iterations=0` is the full-Newton oracle. Enabled reuse refreshes on each new substep and on contact, damage, deletion, plastic-state, convergence, line-search, or reuse-budget changes. |
-| Direct reduced impact assembly | Full-coordinate nonlinear assembly followed by projection whenever the transformation, kinematics, state/damage scope, setup cost, memory estimate, or JIT availability is ineligible. |
+| Direct reduced impact assembly | Full-coordinate nonlinear assembly followed by projection whenever the transformation, kinematics, plastic/fiber history, damage scope, setup cost, memory estimate, or JIT availability is ineligible. |
 | Compact contact work storage | Public `SphereContactRecord` objects are materialized at result/API boundaries; the linear impact path keeps eager public records where its fracture semantics require them. |
-| Incremental damage matrices | Exact scalar K/M rebuild after plan invalidation, non-finite scale input, or unsupported update semantics. Point-mass terms remain unscaled. |
+| Incremental damage matrices | Exact cached-term K/M rebuild until projected future updates amortize setup, when retained memory exceeds the allowance, after plan invalidation, or for unsupported input. Point-mass terms remain unscaled. |
 | Recovery batches | The exact legacy recovery path for selections below 100 elements, unsupported formulations, disabled JIT, or a failed compiled batch. |
 | `AnalysisSession` | Omitting `session=` preserves the one-shot assembly/factorization behavior. A closed session or a session for another model raises instead of silently falling back. |
 
@@ -144,6 +144,12 @@ state throughout the lifecycle. `nonlinear_state_storage` diagnostics report
 activation, batch eligibility, `state_point_count`, retained buffer bytes,
 commit/discard counts and timings, materialization count, and dictionary
 fallback elements/reasons.
+
+The qualified transaction wiring is deliberately limited to nonlinear static
+and arc-length. Nonlinear impact still owns committed/trial dictionaries so
+its substep checkpoint and cutback behavior remains the established oracle.
+Impact state-array transactions are deferred until their rollback, deletion,
+restart, and saved-history materialization boundaries are qualified together.
 
 ### Compiled Hill-48 constitutive batches
 
@@ -295,10 +301,12 @@ The nonlinear rigid-sphere impact loop can use the same retained reduced
 scatter plan for its internal force and tangent. Activation is deliberately
 narrower than static Batch C: it requires Numba, von Karman kinematics, a
 non-identity transformation, an exactly zero affine offset, no plastic-impact
-damage/softening/deletion configuration, a plan below the retained-map memory
-limit, and an estimated assembly count above the Batch C cost gate. Every
-exclusion keeps the full-coordinate impact oracle and is reported through
-`impact_reduced_assembly.fallback_reason` and `exclusion_reasons`.
+damage/softening/deletion configuration, no material hardening/Hill history or
+beam-fiber plasticity marker, a plan below the retained-map memory limit, and
+an estimated assembly count above the Batch C cost gate. Every exclusion keeps
+the full-coordinate impact oracle and is reported through
+`impact_reduced_assembly.fallback_reason` and `exclusion_reasons`. Plastic
+impact remains qualified with tangent reuse on the full-coordinate path.
 
 For eligible HHT-alpha runs, the accepted internal-force history is retained
 in reduced coordinates. Because eligibility requires `u0 == 0`, both the HHT
@@ -350,10 +358,21 @@ accumulated subtraction roundoff. It is created lazily inside one impact solve
 and is invalidated by topology, geometry, material, or mass revision. An
 invalid plan or non-finite scale invokes the exact scalar matrix rebuild.
 
+Plan construction also has production cost and memory gates. At least two
+events must be observed, and their measured event density must project at
+least 11 *future* matrix updates in the remaining nominal steps. The retained
+array estimate must fit both a 256 MiB default cap and any smaller
+`ResourceConfig.memory_limit_bytes` headroom remaining after the solve
+preflight estimate. Until both gates pass, cached element terms drive the exact
+legacy rebuild. A model revision refreshes those terms and disables the plan
+for the rest of that solve.
+
 `contact_work_buffer` diagnostics report assembly/scatter/materialization and
-growth counts. `damage_matrix_plan` reports setup/update time, retained bytes,
+growth counts. `damage_matrix_plan_selection` reports the event projection,
+break-even and memory decision, legacy/plan update counts, and selection
+reason. `damage_matrix_plan` reports setup/update time, retained bytes,
 changed/no-change counts, active scaled elements, invalidation and fallback
-counts, and K/M nonzero counts.
+counts, and K/M nonzero counts when the plan is selected.
 
 ### Batch D: multicore and sparse backend tuning
 
@@ -500,7 +519,11 @@ the campaign. Depending on analysis type, inspect:
   `fallback_reasons`;
 - `nonlinear_state_storage` for state points, buffer bytes, transaction counts,
   materializations, and dictionary fallbacks;
-- `hill48_vectorized_diagnostics()` for compiled/scalar points and row reasons;
+- result-local `nonlinear_performance` for assembly/direct-reduction paths,
+  nested solve counts, plan reuse, Hill compiled/scalar points, and
+  corotational block/dense fallback activation;
+- `hill48_vectorized_diagnostics()` for the additional process-wide compiled/
+  scalar point and row-reason view;
 - nonlinear-plan formulation counts, including orthotropic/generalized S4;
 - `impact_reduced_assembly`, `tangent_reuse`, `contact_work_buffer`, and
   `damage_matrix_plan`;
@@ -589,6 +612,9 @@ wall-clock pass gate.
 The following changes remain deferred until profiling identifies the
 next dominant phase:
 
+- persistent constitutive-state transactions in nonlinear impact;
+- batched corotational frame extraction/local element response beyond the
+  promoted direct 3x3 force/tangent block rotations;
 - upper-triangle-only element tangent integration;
 - retained arc-length predictor factorization;
 - automatic Numba thread selection (high logical-core counts can oversubscribe
