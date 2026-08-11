@@ -26,6 +26,7 @@ from .material_curves import (
     PiecewiseLinearCurve,
     PowerLawHardeningCurve,
 )
+from .nonlinear_analysis_diagnostics import record_hill48_analysis_execution
 
 
 _CURVE_PERFECT = 0
@@ -896,6 +897,14 @@ def record_hill48_execution(
             "fallback_reason_counts": dict(sorted(reasons.items())),
             "numerical_tangent_rows": int(numerical_tangent_rows),
         }
+    record_hill48_analysis_execution(
+        point_count=points,
+        curve_name=curve_name,
+        compiled=compiled,
+        scalar_fallback_points=scalar_points,
+        fallback_reason_counts=reasons,
+        numerical_tangent_rows=numerical_tangent_rows,
+    )
 
 
 def hill48_vectorized_diagnostics() -> Dict[str, Any]:

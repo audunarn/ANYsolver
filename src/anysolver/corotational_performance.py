@@ -16,6 +16,7 @@ from typing import Any, Dict, Optional, Tuple
 import numpy as np
 
 from .jit_compiler import JIT_BACKEND, JIT_DISABLED_REASON, JIT_ENABLED, njit
+from .nonlinear_analysis_diagnostics import record_corotational_analysis_execution
 
 
 @njit(cache=True)
@@ -100,6 +101,7 @@ def rotate_corotational_force_blocks(
     result = _rotate_force_blocks_jit(force_array, rotation_array)
     with _STATUS_LOCK:
         _STATUS["force_block_rotations"] += 1
+    record_corotational_analysis_execution(force_blocks=1)
     return result
 
 
@@ -124,6 +126,7 @@ def rotate_corotational_force_tangent_blocks(
     with _STATUS_LOCK:
         _STATUS["force_block_rotations"] += 1
         _STATUS["tangent_block_rotations"] += 1
+    record_corotational_analysis_execution(force_blocks=1, tangent_blocks=1)
     return result
 
 
@@ -132,6 +135,7 @@ def note_dense_consistent_rotation() -> None:
 
     with _STATUS_LOCK:
         _STATUS["dense_consistent_rotations"] += 1
+    record_corotational_analysis_execution(dense_consistent=1)
 
 
 def reset_corotational_performance_status() -> None:

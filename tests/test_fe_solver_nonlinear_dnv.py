@@ -290,6 +290,10 @@ def test_multistage_displacement_control_commits_path_dependent_preload():
 
     assert result.status == "completed"
     assert result.info["material_history_reused_from_preload"] is True
+    performance = result.info["nonlinear_performance"]
+    assert performance["scope"] == "analysis_local_inclusive"
+    assert performance["nested_analysis_count"] == 1
+    assert performance["assembly"]["calls"] > 0
     assert result.info["load_program_preload"]["status"] == "completed"
     assert result.steps[-1].control_value == pytest.approx(0.004)
     assert result.info["load_program_stage_factors"] == {

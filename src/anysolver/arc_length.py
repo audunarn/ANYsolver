@@ -43,6 +43,7 @@ from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
+from .nonlinear_analysis_diagnostics import capture_nonlinear_analysis_diagnostics
 from .nonlinear_state import NonlinearStateStore
 from .nonlinear_static import (
     NonlinearIncrementSnapshot,
@@ -331,6 +332,7 @@ def _max_nodal_translation(model: "FEModel", displacements: np.ndarray) -> float
 
 
 @resource_threaded
+@capture_nonlinear_analysis_diagnostics
 def solve_static_arc_length(
     model: "FEModel",
     load_case: Optional["LoadCase"],

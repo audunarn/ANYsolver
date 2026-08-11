@@ -63,6 +63,10 @@ from .matrix_assembly import (
     assemble_load_vector,
     assemble_stiffness_matrix,
 )
+from .nonlinear_analysis_diagnostics import (
+    capture_nonlinear_analysis_diagnostics,
+    record_nonlinear_assembly_execution,
+)
 from .nonlinear_state import (
     NonlinearStateStore,
     StateMaterializationPolicy,
@@ -618,6 +622,17 @@ def _assemble_nonlinear_system(
     rotations. ``corotational_tangent`` is already resolved to either
     ``"rotated"`` or ``"consistent"`` by the public solver.
     """
+    assembly_start = time.perf_counter()
+    if require_full_coordinates:
+        assembly_fallback_reason = "full_coordinates_explicitly_required"
+    elif str(kinematics) != "von_karman":
+        assembly_fallback_reason = "kinematics_not_von_karman"
+    elif tuple(deleted_element_ids or ()):
+        assembly_fallback_reason = "deleted_elements_require_reference_assembly"
+    elif element_stiffness_scales:
+        assembly_fallback_reason = "element_stiffness_scales_require_reference_assembly"
+    else:
+        assembly_fallback_reason = "persistent_assembly_plan_not_selected"
     del require_full_coordinates  # consumed by the direct-reduction adapter
     from .nonlinear_state import begin_state_evaluation, finish_state_evaluation
 
@@ -833,6 +848,12 @@ def _assemble_nonlinear_system(
         committed_states,
         state_token,
         trial_states,
+    )
+    record_nonlinear_assembly_execution(
+        path="reference_full_coordinate",
+        tangent=bool(tangent),
+        elapsed_seconds=time.perf_counter() - assembly_start,
+        fallback_reason=assembly_fallback_reason,
     )
     return F_int, K_T, state_payload
 
@@ -1958,6 +1979,7 @@ def _solve_static_displacement_control(
 
 
 @resource_threaded
+@capture_nonlinear_analysis_diagnostics
 def solve_static_nonlinear(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,

@@ -283,6 +283,10 @@ def test_global_newton_solution_and_iteration_count_match_scalar_path(monkeypatc
         max_iterations=25,
         tolerance=1.0e-8,
     )
+    hill_diagnostics = compiled.info["nonlinear_performance"]["hill48"]
+    assert hill_diagnostics["activated"] is True
+    assert hill_diagnostics["compiled_call_count"] > 0
+    assert hill_diagnostics["compiled_point_count"] > 0
     monkeypatch.setattr(vectorized_hill48, "JIT_ENABLED", False)
     scalar_model, scalar_load = _global_hill_shell()
     scalar = solve_static_nonlinear(
@@ -330,6 +334,10 @@ def test_global_arc_length_path_matches_scalar_path(monkeypatch) -> None:
         tolerance=1.0e-8,
         arc_tolerance=1.0e-8,
     )
+    hill_diagnostics = compiled.info["nonlinear_performance"]["hill48"]
+    assert hill_diagnostics["activated"] is True
+    assert hill_diagnostics["compiled_call_count"] > 0
+    assert hill_diagnostics["compiled_point_count"] > 0
     monkeypatch.setattr(vectorized_hill48, "JIT_ENABLED", False)
     scalar_model, scalar_load = _global_hill_shell()
     scalar = solve_static_arc_length(

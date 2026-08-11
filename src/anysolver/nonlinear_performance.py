@@ -40,6 +40,7 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
 from .nonlinear_state import (
     NonlinearStateStore,
     PersistentStateEligibilityError,
@@ -1106,14 +1107,22 @@ def _optimized_assemble_nonlinear_system(
             corotational_tangent=corotational_tangent,
             **extra,
         )
+    assembly_start = time.perf_counter()
     plan = get_nonlinear_assembly_plan(model, int(num_layers))
-    return plan.assemble(
+    result = plan.assemble(
         displacements,
         committed_states,
         tangent=tangent,
         deleted_element_ids=tuple(deleted_element_ids or ()),
         residual_stiffness_fraction=float(residual_stiffness_fraction),
     )
+    record_nonlinear_assembly_execution(
+        path="persistent_full_coordinate",
+        tangent=bool(tangent),
+        elapsed_seconds=time.perf_counter() - assembly_start,
+        plan=plan,
+    )
+    return result
 
 
 def _revision_cached_sparsity_pattern(mesh: "FEMesh", matrix_type: str) -> Tuple[np.ndarray, np.ndarray]:
