@@ -279,11 +279,12 @@ def _batch_c_evaluate_local_responses(
                 batch.B_s,
                 batch.detw_shear,
                 batch._batch_b_membrane_matrix,
+                batch._batch_b_coupling_matrix,
                 batch._batch_b_bending_matrix,
                 batch._batch_b_initial_membrane_resultants,
                 batch._batch_b_initial_bending_resultants,
                 batch._batch_b_shear_matrix,
-                float(batch._batch_b_drilling_stiffness),
+                batch._batch_b_drilling_stiffness,
                 batch.force_positions,
                 batch.tangent_positions,
                 nonlinear_plan.force_values,
@@ -295,27 +296,30 @@ def _batch_c_evaluate_local_responses(
                 time.perf_counter() - kernel_start
             )
             nonlinear_plan.timings.initial_field_accelerated_elements += initialized_count
-            elastic_states = batch._batch_b_elastic_state_mapping
-            use_cached_mapping = True
-            for element_id in batch.element_ids:
-                existing = committed_states.get(int(element_id))
-                if (
-                    isinstance(existing, dict)
-                    and existing is not elastic_states[int(element_id)]
-                ):
-                    use_cached_mapping = False
-                    break
-            if use_cached_mapping:
-                trial_states.update(elastic_states)
+            if getattr(batch, "_batch_b_generalized", False):
+                trial_states.update(_batch_b._generalized_trial_states(batch))
             else:
+                elastic_states = batch._batch_b_elastic_state_mapping
+                use_cached_mapping = True
                 for element_id in batch.element_ids:
-                    element_key = int(element_id)
-                    existing = committed_states.get(element_key)
-                    trial_states[element_key] = (
-                        existing
-                        if isinstance(existing, dict)
-                        else elastic_states[element_key]
-                    )
+                    existing = committed_states.get(int(element_id))
+                    if (
+                        isinstance(existing, dict)
+                        and existing is not elastic_states[int(element_id)]
+                    ):
+                        use_cached_mapping = False
+                        break
+                if use_cached_mapping:
+                    trial_states.update(elastic_states)
+                else:
+                    for element_id in batch.element_ids:
+                        element_key = int(element_id)
+                        existing = committed_states.get(element_key)
+                        trial_states[element_key] = (
+                            existing
+                            if isinstance(existing, dict)
+                            else elastic_states[element_key]
+                        )
             if initialized_count and not tangent:
                 _batch_b._recover_initial_field_states(
                     nonlinear_plan,

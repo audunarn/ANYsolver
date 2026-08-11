@@ -47,6 +47,12 @@ from .nonlinear_state import (
     StateTrialToken,
 )
 
+
+# Batch B enables this only while its generalized elastic kernel is installed.
+# Keeping the flag here prevents the legacy/vectorized constitutive kernel from
+# receiving orthotropic or pre-integrated sections when Numba is unavailable.
+_EXTENDED_ELASTIC_S4_BATCHES = False
+
 if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh
 
@@ -655,7 +661,7 @@ class NonlinearAssemblyPlan:
     @classmethod
     def build(cls, model: "FEModel", num_layers: int) -> "NonlinearAssemblyPlan":
         from .elements import QuadraticBeamElement, ShellElement
-        from .materials import is_isotropic_material
+        from .materials import is_isotropic_material, is_orthotropic_material
         from .vectorized_nonlinear import shell_nonlinear_batch_eligible
 
         start = time.perf_counter()
@@ -728,16 +734,54 @@ class NonlinearAssemblyPlan:
         for element_id, element, *_rest in element_records:
             scatter = scatter_records[element_id]
             material = model.get_material(element.material_name)
-            if (
+            ordinary_shell_batch = (
                 isinstance(element, ShellElement)
                 and shell_nonlinear_batch_eligible(element)
                 and is_isotropic_material(material)
-            ):
+            )
+            extended_elastic_s4_batch = bool(
+                _EXTENDED_ELASTIC_S4_BATCHES
+                and isinstance(element, ShellElement)
+                and bool(getattr(element, "_is_4node", False))
+                and not (
+                    bool(getattr(element, "_is_8node", False))
+                    and bool(getattr(element, "reduced_integration", False))
+                )
+                and (
+                    getattr(element, "shell_section", None) is not None
+                    or is_orthotropic_material(material)
+                )
+                and getattr(material, "hardening_curve", None) is None
+                and getattr(material, "hill_yield", None) is None
+            )
+            if ordinary_shell_batch or extended_elastic_s4_batch:
+                shell_kind = (
+                    "generalized_s4"
+                    if getattr(element, "shell_section", None) is not None
+                    else (
+                        "orthotropic_s4"
+                        if is_orthotropic_material(material)
+                        else "isotropic"
+                    )
+                )
+                section = getattr(element, "shell_section", None)
+                section_key = (
+                    None
+                    if section is None
+                    else (
+                        np.asarray(section.A, dtype=float).tobytes(),
+                        np.asarray(section.B, dtype=float).tobytes(),
+                        np.asarray(section.D, dtype=float).tobytes(),
+                        np.asarray(section.As, dtype=float).tobytes(),
+                    )
+                )
                 key = (
+                    shell_kind,
                     int(element.num_nodes),
                     float(element.thickness),
                     float(element.drilling_stabilization),
                     str(element.material_name),
+                    section_key,
                 )
                 shell_groups.setdefault(key, []).append((element_id, element, scatter))
             elif (
