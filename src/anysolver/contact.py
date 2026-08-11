@@ -22,6 +22,7 @@ from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .contact_performance import ContactWorkBuffer, ContactWorkCounters
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .damage_matrix_performance import DamageMatrixPlan, DamageMatrixPlanFallback
 from .dynamics import (
     TransientConfig,
     _full_initial_vector,
@@ -1102,9 +1103,17 @@ def _linear_element_matrix_terms(model: "FEModel") -> Tuple[int, Tuple[LinearEle
 def _assemble_damaged_linear_matrices(
     model: "FEModel",
     element_scales: Mapping[int, float],
-    cached_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None,
+    cached_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]] | DamageMatrixPlan] = None,
 ) -> Tuple[sparse.csr_matrix, sparse.csr_matrix]:
     """Assemble K and M with per-element damage stiffness/mass scales."""
+    if isinstance(cached_terms, DamageMatrixPlan):
+        try:
+            return cached_terms.update(model, element_scales)
+        except DamageMatrixPlanFallback:
+            # Revisions can change through a progress callback.  Preserve the
+            # scalar helper contract and exact current-model semantics instead
+            # of using a stale contribution map.
+            cached_terms = None
     if cached_terms is None:
         cached_terms = _linear_element_matrix_terms(model)
     total_dofs, terms = cached_terms
@@ -1881,7 +1890,7 @@ def _solve_transient_sphere_impact_nonlinear(
     plastic_damage_records: List[DeletedElementRecord] = []
     plastic_damage_states: Dict[int, Dict[str, Any]] = {}
     damage_scale_by_element: Dict[int, float] = {}
-    linear_matrix_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None
+    damage_matrix_plan: Optional[DamageMatrixPlan] = None
     if (
         bool(nl.equilibrate_base_load)
         and transient_config.initial_displacement is None
@@ -2497,9 +2506,13 @@ def _solve_transient_sphere_impact_nonlinear(
             if damage_changed:
                 filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                 base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                if linear_matrix_terms is None:
-                    linear_matrix_terms = _linear_element_matrix_terms(model)
-                _K_scaled, M_scaled = _assemble_damaged_linear_matrices(model, damage_scale_by_element, cached_terms=linear_matrix_terms)
+                if damage_matrix_plan is None:
+                    damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
+                _K_scaled, M_scaled = _assemble_damaged_linear_matrices(
+                    model,
+                    damage_scale_by_element,
+                    cached_terms=damage_matrix_plan,
+                )
                 M_red = (T.T @ M_scaled @ T).tocsr()
                 C_red = (transient_config.rayleigh_alpha * M_red + transient_config.rayleigh_beta * K_red0).tocsr()
                 scoped_total = sum(
@@ -2689,6 +2702,7 @@ def _solve_transient_sphere_impact_nonlinear(
             "lazy_public_materialization": True,
             **contact_work_counters.diagnostics(),
         },
+        "damage_matrix_plan": None if damage_matrix_plan is None else damage_matrix_plan.diagnostics(),
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": factor_diagnostics,
         "constraint_info": constraint_info,
@@ -2807,7 +2821,7 @@ def solve_transient_sphere_impact(
     impact_damage_states: Dict[int, Dict[str, Any]] = {}
     max_damage_utilization = 0.0
     damage_scale_by_element: Dict[int, float] = {}
-    linear_matrix_terms: Optional[Tuple[int, Tuple[LinearElementMatrixTerms, ...]]] = None
+    damage_matrix_plan: Optional[DamageMatrixPlan] = None
     base_load, base_load_info = assemble_load_vector(model, base_load_case)
     zero_load = np.zeros(total_dofs, dtype=float)
     K_red, _zero_red, T, u0, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
@@ -3177,15 +3191,19 @@ def solve_transient_sphere_impact(
                     fracture_deleted_element_ids.update(record.element_id for record in new_fracture_records)
                     filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                     base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                    if linear_matrix_terms is None:
-                        linear_matrix_terms = _linear_element_matrix_terms(model)
+                    if damage_matrix_plan is None:
+                        damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
                     fracture_scales = {int(element_id): float(scale) for element_id, scale in damage_scale_by_element.items()}
                     for element_id in deleted_element_ids:
                         fracture_scales[int(element_id)] = min(
                             fracture_scales.get(int(element_id), 1.0),
                             float(fracture_config.residual_stiffness_fraction),
                         )
-                    K, M = _assemble_damaged_linear_matrices(model, fracture_scales, cached_terms=linear_matrix_terms)
+                    K, M = _assemble_damaged_linear_matrices(
+                        model,
+                        fracture_scales,
+                        cached_terms=damage_matrix_plan,
+                    )
                     eroded_matrix_rebuild_count += 1
                     K_red = (T.T @ K @ T).tocsr()
                     M_red = (T.T @ M @ T).tocsr()
@@ -3254,9 +3272,13 @@ def solve_transient_sphere_impact(
                         )
                     filtered_base = filtered_load_case_for_deleted_elements(base_load_case, deleted_element_ids)
                     base_load, base_load_info = assemble_load_vector(model, filtered_base)
-                    if linear_matrix_terms is None:
-                        linear_matrix_terms = _linear_element_matrix_terms(model)
-                    K, M = _assemble_damaged_linear_matrices(model, damage_scale_by_element, cached_terms=linear_matrix_terms)
+                    if damage_matrix_plan is None:
+                        damage_matrix_plan = DamageMatrixPlan.build(model, _linear_element_matrix_terms(model))
+                    K, M = _assemble_damaged_linear_matrices(
+                        model,
+                        damage_scale_by_element,
+                        cached_terms=damage_matrix_plan,
+                    )
                     eroded_matrix_rebuild_count += 1
                     K_red = (T.T @ K @ T).tocsr()
                     M_red = (T.T @ M @ T).tocsr()
@@ -3449,7 +3471,8 @@ def solve_transient_sphere_impact(
         "solve_count": int(solve_count),
         "eroded_matrix_rebuild_count": int(eroded_matrix_rebuild_count),
         "damage_state_update_count": int(damage_state_update_count),
-        "linear_matrix_terms_cached": linear_matrix_terms is not None,
+        "linear_matrix_terms_cached": damage_matrix_plan is not None,
+        "damage_matrix_plan": None if damage_matrix_plan is None else damage_matrix_plan.diagnostics(),
         "contact_work_buffer": {
             "path": "compact_candidates_eager_public_records",
             "lazy_public_materialization": False,
