@@ -167,6 +167,97 @@ def test_revision_categories_invalidate_only_dependent_session_data() -> None:
     assert reasons["stiffness_revision"] >= 1
 
 
+def test_topology_change_invalidates_structural_and_constraint_plans() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    stiffness_1 = session.stiffness_plan()
+    constraint_1 = session.constraint_plan(stiffness_1)
+
+    model.add_node(3, 2.0, 0.0, 0.0)
+    model.add_element(
+        2,
+        BeamElement(
+            2,
+            [2, 3],
+            "steel",
+            {"area": 1.0, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+        ),
+    )
+    stiffness_2 = session.stiffness_plan()
+    constraint_2 = session.constraint_plan(stiffness_2)
+
+    assert stiffness_2 is not stiffness_1
+    assert stiffness_2.matrix.shape == (18, 18)
+    assert constraint_2 is not constraint_1
+    assert constraint_2.T.shape[0] == 18
+    assert session.diagnostics()["invalidation_reasons"]["stiffness_revision"] == 1
+
+
+def test_geometry_change_invalidates_structural_and_reduced_plans() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    stiffness_1 = session.stiffness_plan()
+    constraint_1 = session.constraint_plan(stiffness_1)
+
+    model.set_node_coordinates(2, 1.25, 0.0, 0.0)
+    stiffness_2 = session.stiffness_plan()
+    constraint_2 = session.constraint_plan(stiffness_2)
+
+    assert stiffness_2 is not stiffness_1
+    assert constraint_2 is not constraint_1
+    assert constraint_2.K_red is not constraint_1.K_red
+    assert not np.array_equal(stiffness_2.matrix.data, stiffness_1.matrix.data)
+    assert session.diagnostics()["invalidation_reasons"]["stiffness_revision"] == 1
+
+
+def test_support_structure_change_invalidates_constraint_and_output_plans() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    stiffness = session.stiffness_plan()
+    constraint_1 = session.constraint_plan(stiffness)
+    tip_ux = np.asarray([model.mesh.get_node(2).dofs[0]], dtype=np.intp)
+    output_1 = session.output_selection_plan(tip_ux, constraint_1)
+
+    model.add_boundary_condition(BoundaryCondition("tip_x", [2], {"ux": 0.0}))
+    constraint_2 = session.constraint_plan(stiffness)
+    output_2 = session.output_selection_plan(tip_ux, constraint_2)
+
+    assert session.stiffness_plan() is stiffness
+    assert constraint_2 is not constraint_1
+    assert constraint_2.T.shape[1] == constraint_1.T.shape[1] - 1
+    assert output_2 is not output_1
+    diagnostics = session.diagnostics()
+    assert diagnostics["invalidation_reasons"]["constraint_structure"] == 1
+    assert diagnostics["counters"]["output_plan_builds"] == 2
+
+
+def test_mpc_structure_change_invalidates_constraint_and_factorization_plans() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    load = LoadCase("unit")
+    load.add_nodal_load(2, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    solve_linear(model, load, session=session)
+    stiffness = session.stiffness_plan()
+    constraint_1 = session.constraint_plan(stiffness)
+    node_1_ux = model.mesh.get_node(1).dofs[0]
+    node_2_ux = model.mesh.get_node(2).dofs[0]
+
+    model.add_constraint_equation(
+        terms=((node_2_ux, 1.0), (node_1_ux, -1.0)),
+        source_id="tip-link",
+        dependent_dof=node_2_ux,
+    )
+    model.bump_revision("mpc")
+    constraint_2 = session.constraint_plan(stiffness)
+
+    assert session.stiffness_plan() is stiffness
+    assert constraint_2 is not constraint_1
+    assert constraint_2.T.shape[1] == constraint_1.T.shape[1] - 1
+    diagnostics = session.diagnostics()
+    assert diagnostics["invalidation_reasons"]["constraint_structure"] == 1
+    assert diagnostics["factorization_cache"]["entries"] == 0
+
+
 def test_output_selection_is_bounded_and_close_releases_memory() -> None:
     model = _modal_bar()
     session = AnalysisSession(model, max_output_plans=2)

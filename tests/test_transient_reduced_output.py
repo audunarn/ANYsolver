@@ -51,10 +51,21 @@ def test_selected_history_matches_full_without_saved_full_reconstruction() -> No
             store_full_histories=False,
         ),
     )
+    expected_selected = solve_transient_newmark(
+        model,
+        selected_config,
+        base_load_case=load,
+    )
 
     with AnalysisSession(model) as session:
         full = solve_transient_newmark(model, full_config, base_load_case=load, session=session)
         selected = solve_transient_newmark(
+            model,
+            selected_config,
+            base_load_case=load,
+            session=session,
+        )
+        selected_reused = solve_transient_newmark(
             model,
             selected_config,
             base_load_case=load,
@@ -68,16 +79,27 @@ def test_selected_history_matches_full_without_saved_full_reconstruction() -> No
     np.testing.assert_allclose(selected.velocities, full.velocities[:, node_dofs], rtol=1.0e-12, atol=1.0e-14)
     np.testing.assert_allclose(selected.accelerations, full.accelerations[:, node_dofs], rtol=1.0e-12, atol=1.0e-14)
     np.testing.assert_allclose(selected.node_histories[2], full.node_histories[2], rtol=1.0e-12, atol=1.0e-14)
+    np.testing.assert_array_equal(selected.displacements, expected_selected.displacements)
+    np.testing.assert_array_equal(selected.velocities, expected_selected.velocities)
+    np.testing.assert_array_equal(selected.accelerations, expected_selected.accelerations)
+    np.testing.assert_array_equal(selected_reused.displacements, selected.displacements)
+    np.testing.assert_array_equal(selected_reused.velocities, selected.velocities)
+    np.testing.assert_array_equal(selected_reused.accelerations, selected.accelerations)
     np.testing.assert_allclose(selected.load_impulse, full.load_impulse, rtol=0.0, atol=1.0e-14)
     assert selected.peak_displacement == full.peak_displacement
     assert selected.peak_displacement_node == full.peak_displacement_node
     assert selected.diagnostics["preprojected_load_basis_count"] == 1
     assert selected.diagnostics["full_vector_reconstruction_count"] == 0
     assert selected.diagnostics["selected_output_reconstruction_count"] == len(selected.times)
+    assert selected.diagnostics["session_output_plans_active"] is True
+    assert selected_reused.diagnostics["session_output_plans_active"] is True
+    assert expected_selected.diagnostics["session_output_plans_active"] is False
     assert session_diagnostics["counters"]["stiffness_builds"] == 1
     assert session_diagnostics["counters"]["mass_builds"] == 1
     assert session_diagnostics["counters"]["stiffness_hits"] >= 1
     assert session_diagnostics["counters"]["mass_hits"] >= 1
+    assert session_diagnostics["counters"]["output_plan_builds"] == 2
+    assert session_diagnostics["counters"]["output_plan_hits"] >= 2
 
 
 def test_selected_stress_history_explicitly_materializes_full_displacement() -> None:

@@ -7,6 +7,9 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -255,6 +258,42 @@ def test_factorization_cache_reuses_same_matrix_and_separates_changed_values() -
     assert diagnostics["misses"] == 2
     assert diagnostics["entries"] == 2
     np.testing.assert_allclose(A @ first.solve(np.array([1.0, 0.0])), [1.0, 0.0])
+
+
+def test_factorization_cache_serializes_concurrent_mutation(monkeypatch) -> None:
+    cache = FactorizationCache(name="threaded_cache", max_entries=2)
+    matrix = sparse.csr_matrix([[4.0, 1.0], [1.0, 3.0]])
+    original_factorize = linalg.factorize
+    call_count = 0
+    call_count_lock = threading.Lock()
+    start = threading.Barrier(8)
+
+    def slow_factorize(*args, **kwargs):
+        nonlocal call_count
+        with call_count_lock:
+            call_count += 1
+        time.sleep(0.02)
+        return original_factorize(*args, **kwargs)
+
+    def cached_call():
+        start.wait()
+        return cache.factorize(matrix, MatrixClass.SPD, signature="shared")
+
+    monkeypatch.setattr(linalg, "factorize", slow_factorize)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        handles = list(executor.map(lambda _index: cached_call(), range(8)))
+
+    assert all(handle is handles[0] for handle in handles)
+    assert call_count == 1
+    assert cache.diagnostics() == {
+        "name": "threaded_cache",
+        "max_entries": 2,
+        "entries": 1,
+        "hits": 7,
+        "misses": 1,
+        "factorization_failures": 0,
+        "backend": cache.diagnostics()["backend"],
+    }
 
 
 def test_multiple_rhs_static_solve_matches_individual_solves() -> None:

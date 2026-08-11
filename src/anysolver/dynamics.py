@@ -497,14 +497,19 @@ def solve_transient_newmark(
     if history_storage_mode == "selected" and not output_node_ids and (recovery is None or recovery.include_displacements):
         output_node_ids = tuple(int(node_id) for node_id in model.mesh.nodes)
     history_dof_indices = _node_dof_indices(model, output_node_ids) if history_storage_mode == "selected" else None
+    selected_output_plan = (
+        session.output_selection_plan(history_dof_indices, constraint_plan, model)
+        if session is not None and history_dof_indices is not None
+        else None
+    )
     selected_T = (
         T[np.asarray(history_dof_indices, dtype=np.intp)].tocsr()
-        if history_dof_indices is not None
+        if selected_output_plan is None and history_dof_indices is not None
         else None
     )
     selected_u0 = (
         u0[np.asarray(history_dof_indices, dtype=np.intp)]
-        if history_dof_indices is not None
+        if selected_output_plan is None and history_dof_indices is not None
         else None
     )
     node_history_slices = {
@@ -513,8 +518,24 @@ def solve_transient_newmark(
     }
     peak_node_ids, peak_dof_index = _translation_peak_index(model)
     peak_flat_dofs = peak_dof_index.reshape(-1)
-    peak_T = T[peak_flat_dofs].tocsr()
-    peak_u0 = u0[peak_flat_dofs]
+    peak_rows_required = not (
+        history_storage_mode in {"full", "envelope"} or include_stress_history
+    )
+    peak_output_plan = (
+        session.output_selection_plan(peak_flat_dofs, constraint_plan, model)
+        if session is not None and peak_rows_required
+        else None
+    )
+    peak_T = (
+        T[peak_flat_dofs].tocsr()
+        if peak_output_plan is None and peak_rows_required
+        else None
+    )
+    peak_u0 = (
+        u0[peak_flat_dofs]
+        if peak_output_plan is None and peak_rows_required
+        else None
+    )
     estimated_saved_steps = _saved_step_count(times, config.save_every)
     preflight_memory = estimate_model_memory(
         model,
@@ -569,7 +590,12 @@ def solve_transient_newmark(
             full_u = None
             full_v = None
             full_a = None
-        if selected_T is not None:
+        if selected_output_plan is not None:
+            selected_u = selected_output_plan.reconstruct(q_state)
+            selected_v = selected_output_plan.reconstruct(v_state, affine=False)
+            selected_a = selected_output_plan.reconstruct(a_state, affine=False)
+            selected_output_reconstruction_count += 1
+        elif selected_T is not None:
             selected_u = np.asarray(selected_T @ q_state, dtype=float).reshape(-1) + np.asarray(selected_u0, dtype=float)
             selected_v = np.asarray(selected_T @ v_state, dtype=float).reshape(-1)
             selected_a = np.asarray(selected_T @ a_state, dtype=float).reshape(-1)
@@ -608,9 +634,13 @@ def solve_transient_newmark(
         if full_u is not None:
             current_peak, current_node = _translation_peak(model, full_u)
         elif peak_node_ids.size:
-            translations = (
-                np.asarray(peak_T @ q_state, dtype=float).reshape(-1) + peak_u0
-            ).reshape(-1, 3)
+            if peak_output_plan is not None:
+                translations = peak_output_plan.reconstruct(q_state).reshape(-1, 3)
+            else:
+                assert peak_T is not None and peak_u0 is not None
+                translations = (
+                    np.asarray(peak_T @ q_state, dtype=float).reshape(-1) + peak_u0
+                ).reshape(-1, 3)
             magnitudes_sq = np.einsum("ij,ij->i", translations, translations)
             best = int(np.argmax(magnitudes_sq))
             current_peak = float(np.sqrt(magnitudes_sq[best]))
@@ -786,6 +816,9 @@ def solve_transient_newmark(
         "output_elements": [] if output_element_ids is None else [int(element_id) for element_id in output_element_ids],
         "history_storage_mode": history_storage_mode,
         "history_dof_indices": None if history_dof_indices is None else [int(dof) for dof in history_dof_indices],
+        "session_output_plans_active": bool(
+            selected_output_plan is not None or peak_output_plan is not None
+        ),
         "recovery_policy": policy_metadata,
         "kinetic_energy": energy_kinetic,
         "strain_energy": energy_strain,
