@@ -10,6 +10,7 @@ through the same factorization-handle API.
 from __future__ import annotations
 
 import ctypes
+from functools import wraps
 import importlib.util
 import site
 import sys
@@ -38,8 +39,21 @@ except (ImportError, ModuleNotFoundError, ValueError):
     _HAS_PYPARDISO = False
 
 _PYPARDISO_SOLVER_CLASS: Any = None
+_PYPARDISO_PROCESS_LOCK = threading.RLock()
 
 
+def _serialized_pypardiso_call(function):
+    """Serialize access to process-global PyPardiso/MKL solver state."""
+
+    @wraps(function)
+    def serialized(*args, **kwargs):
+        with _PYPARDISO_PROCESS_LOCK:
+            return function(*args, **kwargs)
+
+    return serialized
+
+
+@_serialized_pypardiso_call
 def _new_pypardiso_solver(*, mtype: int) -> Any:
     """Construct PyPardiso only after the backend has actually been selected."""
 
@@ -256,6 +270,7 @@ def _pardiso_prepared_matrix(csr: sparse.csr_matrix, mtype: int) -> sparse.csr_m
     return upper
 
 
+@_serialized_pypardiso_call
 def _release_mkl_solver(solver: Any) -> None:
     """Release MKL's internal factorization memory (PARDISO phase -1)."""
     try:
@@ -264,6 +279,7 @@ def _release_mkl_solver(solver: Any) -> None:
         pass
 
 
+@_serialized_pypardiso_call
 def _pardiso_full_factorize(solver: Any, prepared: sparse.csr_matrix) -> None:
     solver._check_A(prepared)
     solver.set_phase(12)
@@ -283,6 +299,7 @@ class _PardisoPatternSlot:
         self.indices = prepared.indices.copy()
         self.generation = 0
 
+    @_serialized_pypardiso_call
     def matches(self, prepared: sparse.csr_matrix, mtype: int) -> bool:
         return (
             self.solver is not None
@@ -294,6 +311,7 @@ class _PardisoPatternSlot:
             and np.array_equal(self.indices, prepared.indices)
         )
 
+    @_serialized_pypardiso_call
     def release(self) -> None:
         self.generation += 1
         solver, self.solver = self.solver, None
@@ -320,6 +338,7 @@ class _PardisoFactorization:
         self._private_solver: Any = None
         self.stale_rebuild_count = 0
 
+    @_serialized_pypardiso_call
     def _active_solver(self) -> Any:
         if self._private_solver is not None:
             return self._private_solver
@@ -334,6 +353,7 @@ class _PardisoFactorization:
         self.stale_rebuild_count += 1
         return solver
 
+    @_serialized_pypardiso_call
     def solve(self, rhs: np.ndarray) -> np.ndarray:
         solver = self._active_solver()
         b = solver._check_b(self._matrix, np.asarray(rhs, dtype=np.float64))
@@ -355,7 +375,9 @@ class PyPardisoSolverBackend:
     - MKL internal memory is bounded and released: evicted slots and privately
       rebuilt factorizations free their memory (phase -1) via finalizers.
 
-    Not thread-safe; matches the existing single-threaded solver usage.
+    PyPardiso/MKL solver state is serialized process-wide.  This includes
+    independent backend instances and handles owned by separate analysis
+    caches; SciPy/SuperLU operations do not acquire this lock.
     """
 
     name = "pypardiso"
@@ -364,23 +386,27 @@ class PyPardisoSolverBackend:
         self.max_pattern_slots = _env_int("FE_SOLVER_PYPARDISO_MAX_PATTERN_SLOTS", int(max_pattern_slots))
         self._slots: List[_PardisoPatternSlot] = []
 
+    @_serialized_pypardiso_call
     def release_pattern_slots(self) -> None:
         """Release all retained MKL factorization memory."""
         while self._slots:
             self._slots.pop().release()
 
     @property
+    @_serialized_pypardiso_call
     def initialized(self) -> bool:
         """Whether this backend has completed a retained factorization."""
 
         return bool(self._slots)
 
     @property
+    @_serialized_pypardiso_call
     def retained_pattern_slots(self) -> int:
         """Number of live symbolic-analysis slots retained by the backend."""
 
         return len(self._slots)
 
+    @_serialized_pypardiso_call
     def has_compatible_pattern(
         self,
         matrix: sparse.spmatrix,
@@ -406,6 +432,7 @@ class PyPardisoSolverBackend:
             return False
         return False
 
+    @_serialized_pypardiso_call
     def _factorize_prepared(self, prepared: sparse.csr_matrix, mtype: int) -> Tuple[_PardisoFactorization, bool]:
         for slot in self._slots:
             if slot.matches(prepared, mtype):
@@ -426,6 +453,7 @@ class PyPardisoSolverBackend:
             self._slots.pop().release()
         return _PardisoFactorization(slot, prepared, mtype), False
 
+    @_serialized_pypardiso_call
     def factorize(
         self,
         matrix: sparse.spmatrix,
