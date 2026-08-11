@@ -43,6 +43,7 @@ from .fracture import (
     state_rtcl_increment,
 )
 from .linalg import MatrixClass, factorize
+from .impact_performance import ImpactTangentReuseController
 from .materials import beam_material_properties, material_symmetry, shell_characteristic_modulus
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import enforce_memory_limit, estimate_model_memory, recovery_metadata
@@ -2047,6 +2048,8 @@ def _solve_transient_sphere_impact_nonlinear(
     )
     save_state(float(times[0]), q_red, v_red, a_red, sphere_position, sphere_velocity, sphere_acceleration, initial_sphere_force, initial_records)
     sticky_contact_ids: Tuple[int, ...] = tuple(int(record.element_id) for record in initial_records)
+    tangent_reuse = ImpactTangentReuseController(int(nl.tangent_reuse_iterations))
+    tangent_reuse.set_initial_contact(initial_records)
 
     load_prev = base_load + initial_load
     sphere_force_prev = initial_sphere_force.copy()
@@ -2134,6 +2137,7 @@ def _solve_transient_sphere_impact_nonlinear(
         a3 = 1.0 / (2.0 * beta) - 1.0
         a4 = gamma / beta - 1.0
         a5 = dt * (gamma / (2.0 * beta) - 1.0)
+        tangent_reuse.begin_substep(dt, damage_scale_by_element, deleted_element_ids)
         q_trial = q_red.copy()
         contact_load = np.zeros(total_dofs, dtype=float)
         sphere_force = np.zeros(3, dtype=float)
@@ -2162,10 +2166,11 @@ def _solve_transient_sphere_impact_nonlinear(
             if status_callback:
                 status_callback(f"\r  Time {sub_time:.4f} s, Iteration {iteration}: Res {residual_norm:.2e}")
             full_u = reconstruct_full_solution(T, q_trial, u0)
+            refresh_tangent, refresh_reasons = tangent_reuse.refresh_decision()
             F_int, K_T, trial_states = assemble_nonlinear(
                 full_u,
                 committed_states,
-                tangent=True,
+                tangent=refresh_tangent,
                 scales=damage_scale_by_element,
             )
             a_trial = a0 * (q_trial - q_red) - a2 * v_red - a3 * a_red
@@ -2182,12 +2187,37 @@ def _solve_transient_sphere_impact_nonlinear(
                 residual = np.asarray(T.T @ (base_load + contact_load - F_int), dtype=float).reshape(-1) - C_red @ v_trial - M_red @ a_trial
             residual_norm = float(np.linalg.norm(residual))
             reference = max(float(np.linalg.norm(np.asarray(T.T @ (base_load + contact_load), dtype=float))), float(np.linalg.norm(np.asarray(T.T @ F_int, dtype=float))), 1.0)
-            K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+            trial_refresh_reasons = tangent_reuse.assess_trial_state(residual_norm, trial_states)
+            if not refresh_tangent and trial_refresh_reasons:
+                # A force-only trial exposed a stall or a material-state
+                # transition.  Reassemble the tangent at the same iterate so
+                # the invalidation takes effect before solving the correction.
+                F_int, K_T, trial_states = assemble_nonlinear(
+                    full_u,
+                    committed_states,
+                    tangent=True,
+                    scales=damage_scale_by_element,
+                )
+                refresh_tangent = True
+                refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
+            elif refresh_tangent and trial_refresh_reasons:
+                refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
             try:
-                handle = factorize(K_eff, MatrixClass.SYMMETRIC_INDEFINITE, signature=f"sphere_impact.nl.effective:{dt:.16g}:{iteration}")
+                if refresh_tangent:
+                    K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+                    tangent_reuse.record_tangent_assembly(refresh_reasons)
+                    handle = factorize(K_eff, MatrixClass.SYMMETRIC_INDEFINITE, signature=f"sphere_impact.nl.effective:{dt:.16g}:{iteration}")
+                else:
+                    handle = tangent_reuse.cached_handle
+                    if handle is None:  # defensive; refresh_decision guards this
+                        raise RuntimeError("impact tangent reuse cache is unexpectedly empty")
                 factor_diagnostics = handle.diagnostics()
                 delta = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-                factorization_count += 1
+                if refresh_tangent:
+                    tangent_reuse.record_factorization(handle)
+                    factorization_count += 1
+                else:
+                    tangent_reuse.record_reuse()
                 solve_count += 1
             except Exception:
                 status = "nonlinear_tangent_failed"
@@ -2202,6 +2232,7 @@ def _solve_transient_sphere_impact_nonlinear(
                 factor = 1.0
                 while factor > float(nl.min_line_search_factor) and float(np.linalg.norm(factor * delta)) > 10.0 * max(float(np.linalg.norm(q_trial)), 1.0):
                     factor *= 0.5
+            tangent_reuse.observe_line_search(factor)
             q_next = q_trial + factor * delta
             displacement_increment = float(np.linalg.norm(factor * delta))
             residual_energy_increment = abs(float(np.dot(factor * delta, residual)))
@@ -2231,6 +2262,7 @@ def _solve_transient_sphere_impact_nonlinear(
             contact_scale = max(float(np.linalg.norm(new_sphere_force)), 1.0)
             contact_change = float(np.linalg.norm(new_sphere_force - sphere_force))
             contact_load, sphere_force, records = new_contact_load, new_sphere_force, new_records
+            tangent_reuse.observe_contact(new_records)
             q_trial = q_next
             displacement_limit = float(nl.displacement_tolerance) * max(float(np.linalg.norm(q_next)), 1.0)
             residual_limit = float(nl.residual_tolerance) * reference
@@ -2588,6 +2620,12 @@ def _solve_transient_sphere_impact_nonlinear(
         "nonlinear_failure_summary": nonlinear_failure_summary,
         "factorization_count": int(factorization_count),
         "solve_count": int(solve_count),
+        "tangent_assembly_count": int(tangent_reuse.tangent_assembly_count),
+        "tangent_reuse_count": int(tangent_reuse.tangent_reuse_count),
+        "factorization_reuse_count": int(tangent_reuse.factorization_reuse_count),
+        "refresh_reason_counts": dict(sorted(tangent_reuse.refresh_reason_counts.items())),
+        "active_contact_set_changes": int(tangent_reuse.active_contact_set_changes),
+        "tangent_reuse": tangent_reuse.diagnostics(),
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": factor_diagnostics,
         "constraint_info": constraint_info,
