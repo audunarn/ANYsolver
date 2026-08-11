@@ -12,6 +12,7 @@ from scipy.sparse import linalg as sparse_linalg
 from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import ResourceConfig
@@ -70,6 +71,12 @@ class ModalResult:
     @property
     def num_modes_returned(self) -> int:
         return len(self.modes)
+
+    @property
+    def quantity_metadata(self) -> Tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
 
     @property
     def frequencies_hz(self) -> np.ndarray:
@@ -154,18 +161,27 @@ def solve_free_vibration(
     rigid_body_frequency_tolerance: float = 1.0e-6,
     factorization_cache: Optional[FactorizationCache] = None,
     resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> ModalResult:
     """Solve ``K phi = omega^2 M phi`` with the common constraint transform."""
+    cancellation_safe_point(cancellation_token, "modal.start")
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
 
     model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)
     M, mass_info = assemble_mass_matrix(model)
+    cancellation_safe_point(cancellation_token, "modal.after_assembly")
     zero = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
     K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, zero, model)
     M_red = (T.T @ M @ T).tocsr()
-    Q, nullspace_info = build_reduced_rigid_body_modes(model, independent_dofs, int(K.shape[0]))
+    Q, nullspace_info = build_reduced_rigid_body_modes(
+        model,
+        independent_dofs,
+        int(K.shape[0]),
+        transformation=T,
+    )
 
     assembly_info = {
         "stiffness": stiffness_info,
@@ -224,12 +240,18 @@ def solve_free_vibration(
         ).to_dict()
         return ModalResult([], num_modes, "failed", constraint_info, nullspace_info, assembly_info, diagnostics, result_case)
 
+    cancellation_safe_point(cancellation_token, "modal.after_eigensolve")
+
     order = np.argsort(np.real(eigenvalues))
     eigenvalues = np.real(eigenvalues[order])
     eigenvectors = np.real(eigenvectors[:, order])
 
     modes: List[ModalMode] = []
     for value, vector in zip(eigenvalues, eigenvectors.T):
+        cancellation_safe_point(
+            cancellation_token,
+            f"modal.recovery:{len(modes) + 1}",
+        )
         if len(modes) >= num_modes:
             break
         if not np.isfinite(value):
@@ -293,4 +315,13 @@ def solve_free_vibration(
         recovery={"modes": num_modes, "num_modes_returned": len(modes)},
         settings=settings,
     ).to_dict()
+    emit_progress(
+        progress_callback,
+        "modal_complete",
+        "modal.complete",
+        completed=len(modes),
+        total=num_modes,
+        status=status,
+        num_modes_returned=len(modes),
+    )
     return ModalResult(modes, num_modes, status, constraint_info, nullspace_info, assembly_info, diagnostics, result_case)

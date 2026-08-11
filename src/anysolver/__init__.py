@@ -17,6 +17,15 @@ the capability boundary, architecture, theory, and qualification evidence.
 """
 
 from .fe_core import DOFManager, FEMesh, FEModel, Material, Node
+from .control import (
+    CancellationToken,
+    ProgressCallback,
+    ProgressEvent,
+    SolveCancelled,
+    cancellation_safe_point,
+    emit_progress,
+)
+from .quantities import ResultQuantity, describe_result_quantities
 from .materials import (
     BeamMaterialProperties,
     ENGINEERING_VOIGT_ORDER,
@@ -267,6 +276,7 @@ from .nonlinear_static import (
     NonlinearLoadStage,
     NonlinearStaticResult,
     NonlinearStaticStep,
+    NonlinearIncrementSnapshot,
     ShellInitialField,
     solve_static_nonlinear,
 )
@@ -415,6 +425,14 @@ __all__ = [
     "Hill48Yield",
     "Material",
     "Node",
+    "CancellationToken",
+    "ProgressCallback",
+    "ProgressEvent",
+    "SolveCancelled",
+    "cancellation_safe_point",
+    "emit_progress",
+    "ResultQuantity",
+    "describe_result_quantities",
     "OrthotropicMaterial",
     "StructuralMaterial",
     "BeamMaterialProperties",
@@ -637,6 +655,7 @@ __all__ = [
     "NonlinearLoadStage",
     "NonlinearStaticResult",
     "NonlinearStaticStep",
+    "NonlinearIncrementSnapshot",
     "ShellInitialField",
     "solve_static_nonlinear",
     "ArcLengthControl",

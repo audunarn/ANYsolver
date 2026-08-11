@@ -17,6 +17,7 @@ from scipy import sparse
 from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .boundary import LoadCase
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
@@ -266,6 +267,12 @@ class TransientResult:
             raise ValueError(f"Node {node_id} was not saved in {self.history_storage_mode!r} transient history storage")
         return self.displacements[:, node.dofs]
 
+    @property
+    def quantity_metadata(self) -> Tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
+
 
 def _time_grid(config: TransientConfig) -> np.ndarray:
     if config.t_end == 0.0:
@@ -395,6 +402,9 @@ def solve_transient_newmark(
     config: TransientConfig,
     pressure_patches: Optional[Sequence[PressurePatch]] = None,
     base_load_case: Optional[LoadCase] = None,
+    *,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> TransientResult:
     """Solve linear transient response with Newmark time integration.
 
@@ -406,6 +416,7 @@ def solve_transient_newmark(
     the static solver.  ``C`` is Rayleigh damping
     ``alpha * M + beta * K``.
     """
+    cancellation_safe_point(cancellation_token, "transient.start")
     model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)
     M, mass_info = assemble_mass_matrix(model)
@@ -533,6 +544,16 @@ def solve_transient_newmark(
                     )
 
     save_state(float(times[0]), q_red, v_red, a_red)
+    emit_progress(
+        progress_callback,
+        "transient_step",
+        "transient.integration",
+        completed=0,
+        total=max(len(times) - 1, 0),
+        step_index=0,
+        time_s=float(times[0]),
+        saved=True,
+    )
     load_prev = full_load_at(float(times[0]))
     impulse = np.zeros(total_dofs, dtype=float)
 
@@ -547,6 +568,10 @@ def solve_transient_newmark(
     one_plus_alpha = 1.0 + alpha_h
     F_red_prev = F0_red
     for step_index in range(1, len(times)):
+        cancellation_safe_point(
+            cancellation_token,
+            f"transient.step:{step_index}",
+        )
         dt = float(times[step_index] - times[step_index - 1])
         if dt <= 0.0:
             continue
@@ -602,6 +627,16 @@ def solve_transient_newmark(
 
         if step_index % int(config.save_every) == 0 or step_index == len(times) - 1:
             save_state(float(times[step_index]), q_red, v_red, a_red)
+        emit_progress(
+            progress_callback,
+            "transient_step",
+            "transient.integration",
+            completed=step_index,
+            total=max(len(times) - 1, 0),
+            step_index=int(step_index),
+            time_s=float(times[step_index]),
+            saved=bool(step_index % int(config.save_every) == 0 or step_index == len(times) - 1),
+        )
 
     impulse_resultant = load_vector_resultant(model, impulse)
     total_energy = np.asarray(energy_kinetic, dtype=float) + np.asarray(energy_strain, dtype=float)

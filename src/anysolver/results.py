@@ -53,6 +53,12 @@ class FEResult:
         """Get displacement for a specific node."""
         return self.node_displacements.get(node_id)
 
+    @property
+    def quantity_metadata(self) -> Tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
+
     def get_element_stress(self, element_id: int) -> Optional[Dict[str, np.ndarray]]:
         """Get stresses for a specific element."""
         return self.element_stresses.get(element_id)

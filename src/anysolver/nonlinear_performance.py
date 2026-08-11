@@ -979,6 +979,9 @@ def _solve_static_displacement_control_block(
     kinematics="von_karman",
     corotational_tangent="not_applicable",
     initial_reduced_displacements=None,
+    cancellation_token=None,
+    progress_callback=None,
+    record_increment_snapshots=False,
 ):
     """Displacement control using block elimination on the structural tangent."""
     from . import nonlinear_static as ns
@@ -1022,6 +1025,9 @@ def _solve_static_displacement_control_block(
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
             initial_reduced_displacements=initial_reduced_displacements,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            record_increment_snapshots=record_increment_snapshots,
         )
 
     if load_program is not None:
@@ -1055,6 +1061,7 @@ def _solve_static_displacement_control_block(
             )
     lam = 0.0
     steps = []
+    snapshots = []
     history: List[Dict[str, Any]] = []
     status = "completed"
     failure_reason: Optional[str] = None
@@ -1080,6 +1087,10 @@ def _solve_static_displacement_control_block(
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         for step_index in range(1, num_steps + 1):
+            ns.cancellation_safe_point(
+                cancellation_token,
+                f"nonlinear_static.displacement.step:{step_index}",
+            )
             q_step_start = q.copy()
             lam_step_start = float(lam)
             target = initial_control + target_increment * step_index / num_steps
@@ -1088,6 +1099,10 @@ def _solve_static_displacement_control_block(
             states_new = committed_states
 
             for iteration in range(1, max_iterations + 1):
+                ns.cancellation_safe_point(
+                    cancellation_token,
+                    f"nonlinear_static.displacement.step:{step_index}.iteration:{iteration}",
+                )
                 total_iterations += 1
                 u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
                 F_int, K_T, trial_states = ns._assemble_nonlinear_system(
@@ -1171,6 +1186,33 @@ def _solve_static_displacement_control_block(
                     "linearization": "block_elimination",
                 }
             )
+            if record_increment_snapshots:
+                snapshots.append(
+                    ns._increment_snapshot(
+                        step_index,
+                        lam,
+                        u,
+                        committed_states,
+                        control_value=current,
+                    )
+                )
+            if progress_callback is not None:
+                ns.emit_progress(
+                    progress_callback,
+                    "nonlinear_static_step",
+                    "nonlinear_static.displacement.block",
+                    completed=step_index,
+                    total=num_steps,
+                    iteration=iteration,
+                    control="displacement",
+                    step_index=int(step_index),
+                    load_factor=float(lam),
+                    control_value=float(current),
+                    displacement_norm=float(np.linalg.norm(u)),
+                    max_equivalent_plastic_strain=float(
+                        ns._max_plastic_strain(committed_states)
+                    ),
+                )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
     committed_states = ns._finalize_nonlinear_element_states(
@@ -1213,7 +1255,15 @@ def _solve_static_displacement_control_block(
             "corotational_tangent": corotational_tangent,
         },
     ).to_dict()
-    return ns.NonlinearStaticResult(steps, status, u_final, float(lam), committed_states, info)
+    return ns.NonlinearStaticResult(
+        steps,
+        status,
+        u_final,
+        float(lam),
+        committed_states,
+        info,
+        tuple(snapshots),
+    )
 
 
 def install_nonlinear_performance_optimizations() -> bool:

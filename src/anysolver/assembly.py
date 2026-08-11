@@ -41,6 +41,7 @@ from scipy.sparse.linalg import bicgstab, gmres, minres
 
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary, require_valid_constraints
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import FactorizationCache, MatrixClass, factorize, factorize_cached
 from .matrix_assembly import (
     assemble_load_matrix,
@@ -82,8 +83,29 @@ def _constraint_value_map(model: "FEModel") -> Dict[int, float]:
 
 
 def _collect_mpc_constraints(model: "FEModel") -> List[Dict[str, Any]]:
-    """Collect linear slave/master constraints from elements."""
+    """Collect model equations and element slave/master constraints."""
     constraints: List[Dict[str, Any]] = []
+    for index, equation in enumerate(getattr(model, "constraint_equations", ())):
+        raw_terms = getattr(equation, "terms", getattr(equation, "coefficients", ()))
+        term_items = raw_terms.items() if hasattr(raw_terms, "items") else raw_terms
+        terms: Dict[int, float] = {}
+        for dof, coefficient in term_items:
+            terms[int(dof)] = terms.get(int(dof), 0.0) + float(coefficient)
+        slave = int(getattr(equation, "dependent_dof"))
+        pivot = float(terms.pop(slave))
+        constraints.append(
+            {
+                "slave": slave,
+                "masters": {
+                    int(dof): -float(coefficient) / pivot
+                    for dof, coefficient in terms.items()
+                    if abs(float(coefficient)) > 0.0
+                },
+                "value": float(getattr(equation, "rhs", getattr(equation, "value", 0.0))) / pivot,
+                "label": str(getattr(equation, "source_id", "") or f"equation_{index}"),
+                "kind": "equation",
+            }
+        )
     for element in model.mesh.elements.values():
         getter = getattr(element, "get_mpc_constraints", None)
         if getter is None:
@@ -107,8 +129,36 @@ def build_constraint_transformation(
     """
     constraint_audit = require_valid_constraints(model)
     total_dofs = int(K.shape[0])
-    fixed_values = _constraint_value_map(model)
-    mpc_constraints = _collect_mpc_constraints(model)
+    fixed_values: Dict[int, float] = {}
+    mpc_constraints: List[Dict[str, Any]] = []
+    for equation in constraint_audit.equations:
+        coefficients = {int(dof): float(value) for dof, value in equation.coefficients}
+        dependent = int(equation.dependent_dof)
+        pivot = coefficients.pop(dependent)
+        prescribed = float(equation.value) / pivot
+        if equation.kind == "support":
+            previous = fixed_values.get(dependent)
+            if previous is not None and not np.isclose(previous, prescribed):
+                # Normally unreachable because require_valid_constraints has
+                # already rejected the conflict; retain a defensive guard.
+                raise ValueError(
+                    f"Conflicting prescribed displacement for DOF {dependent}: "
+                    f"{previous} vs {prescribed}"
+                )
+            fixed_values[dependent] = prescribed
+            continue
+        mpc_constraints.append(
+            {
+                "slave": dependent,
+                "masters": {
+                    dof: -coefficient / pivot
+                    for dof, coefficient in coefficients.items()
+                },
+                "value": prescribed,
+                "label": equation.origin,
+                "kind": equation.kind,
+            }
+        )
 
     slave_constraints: Dict[int, Dict[str, Any]] = {}
     for constraint in mpc_constraints:
@@ -214,6 +264,9 @@ def build_constraint_transformation(
         "num_fixed_dofs": int(len(fixed_dofs)),
         "num_mpc_slave_dofs": int(len(slave_dofs)),
         "num_mpc_constraints": int(len(mpc_constraints)),
+        "num_generalized_constraint_equations": int(
+            sum(str(constraint.get("kind", "mpc")) == "equation" for constraint in mpc_constraints)
+        ),
         "fixed_dofs": sorted(fixed_dofs),
         "slave_dofs": sorted(slave_dofs),
         "audit": constraint_audit.to_dict(),
@@ -354,12 +407,52 @@ def build_reduced_rigid_body_modes(
     model: "FEModel",
     independent_dofs: np.ndarray,
     total_dofs: int,
+    transformation: Optional[sparse.spmatrix] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
-    """Build orthonormal rigid-body modes in reduced independent DOF space."""
+    """Build constraint-compatible rigid modes in reduced coordinate space.
+
+    When ``transformation`` is supplied, rigid translations/rotations are
+    intersected with the homogeneous affine constraint space.  The small Gram
+    eigenproblem operates on at most six columns per connected component and
+    correctly retains combinations such as translation along a rotated roller
+    while rejecting the restrained normal direction.
+    """
     full_modes, component_info = _rigid_body_modes_full(model, total_dofs)
     if len(independent_dofs) == 0:
         return np.zeros((0, 0), dtype=float), {"rank": 0, "kept_mode_indices": [], "components": component_info}
-    reduced_modes = full_modes[np.asarray(independent_dofs, dtype=int), :]
+    reduced_seed = full_modes[np.asarray(independent_dofs, dtype=int), :]
+    compatibility_rank = int(full_modes.shape[1])
+    compatibility_error = 0.0
+    if transformation is None or full_modes.shape[1] == 0:
+        reduced_modes = reduced_seed
+    else:
+        active_columns = np.linalg.norm(full_modes, axis=0) > 1.0e-14
+        full_active = full_modes[:, active_columns]
+        seed_active = reduced_seed[:, active_columns]
+        if full_active.shape[1] == 0:
+            reduced_modes = np.zeros((len(independent_dofs), 0), dtype=float)
+            compatibility_rank = 0
+            mismatch = np.zeros((total_dofs, 0), dtype=float)
+        else:
+            reconstructed = np.asarray(transformation @ seed_active, dtype=float)
+            mismatch = full_active - reconstructed
+        gram = np.asarray(mismatch.T @ mismatch, dtype=float)
+        gram = 0.5 * (gram + gram.T)
+        if gram.shape[0] > 0:
+            eigenvalues, eigenvectors = np.linalg.eigh(gram)
+            reference = max(float(np.linalg.norm(full_active)) ** 2, 1.0)
+            threshold = (1.0e-10 ** 2) * reference
+            compatible = eigenvalues <= threshold
+            compatibility_rank = int(np.count_nonzero(compatible))
+            if compatibility_rank:
+                coefficient_basis = eigenvectors[:, compatible]
+                reduced_modes = seed_active @ coefficient_basis
+                compatibility_error = float(
+                    np.linalg.norm(mismatch @ coefficient_basis)
+                    / max(float(np.linalg.norm(full_active @ coefficient_basis)), 1.0)
+                )
+            else:
+                reduced_modes = np.zeros((len(independent_dofs), 0), dtype=float)
     q_modes, kept = _orthonormalize_columns(reduced_modes)
     return q_modes, {
         "rank": int(q_modes.shape[1]),
@@ -367,6 +460,13 @@ def build_reduced_rigid_body_modes(
         "component_count": len(component_info),
         "components": component_info,
         "rank_method": "modified_gram_schmidt_with_rank_tolerance",
+        "constraint_compatibility_rank": compatibility_rank,
+        "constraint_compatibility_error": compatibility_error,
+        "constraint_compatibility_method": (
+            "affine_transformation_intersection"
+            if transformation is not None
+            else "independent_dof_projection"
+        ),
         "description": "Six rigid-body candidates per connected component: Tx, Ty, Tz, Rx, Ry, Rz.",
     }
 
@@ -525,6 +625,8 @@ def solve_linear(
     constraint_mode: str = "auto",
     allow_unbalanced_free_free: bool = False,
     resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """
     Solve a linear FE problem using fixed-DOF/MPC transformation.
@@ -535,15 +637,22 @@ def solve_linear(
         - "transformation": always use the ordinary reduced solve.
         - "nullspace": always use nullspace augmentation after MPC/fixed reduction.
     """
+    cancellation_safe_point(cancellation_token, "linear_static.start")
     mesh = model.mesh
     dof_manager = mesh.dof_manager
 
     model.apply_boundary_conditions()
     K, F, assembly_info = assemble_system(model, load_case)
+    cancellation_safe_point(cancellation_token, "linear_static.after_assembly")
     K_red, F_red, T, u0, independent_dofs, constraint_info = build_constraint_transformation(K, F, model)
 
     total_dofs = int(K.shape[0])
-    Q, nullspace_info = build_reduced_rigid_body_modes(model, independent_dofs, total_dofs)
+    Q, nullspace_info = build_reduced_rigid_body_modes(
+        model,
+        independent_dofs,
+        total_dofs,
+        transformation=T,
+    )
     mode = (constraint_mode or "auto").strip().lower()
     if mode not in {"auto", "transformation", "nullspace"}:
         raise ValueError(f"Unknown constraint_mode '{constraint_mode}'. Use auto, transformation or nullspace.")
@@ -574,6 +683,7 @@ def solve_linear(
         )
     else:
         q, convergence_info = _solve_reduced_system(K_red, F_red, solver_type)
+    cancellation_safe_point(cancellation_token, "linear_static.after_factorization")
     solver_info["solve_time"] = time.time() - start_time
     solver_info["convergence_info"] = convergence_info
     if convergence_info.get("status") != "converged":
@@ -592,6 +702,15 @@ def solve_linear(
         warnings=convergence_info.get("warnings", ()),
     )
     solver_info["result_case"] = result_case.to_dict()
+    emit_progress(
+        progress_callback,
+        "linear_static_complete",
+        "linear_static.complete",
+        completed=1,
+        total=1,
+        status=convergence_info.get("status", "unknown"),
+        num_free_dofs=int(len(independent_dofs)),
+    )
     return displacement, solver_info
 
 
@@ -602,11 +721,14 @@ def solve_linear_many(
     constraint_mode: str = "auto",
     factorization_cache: Optional[FactorizationCache] = None,
     resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Solve several unchanged-stiffness static load cases with one factorization.
 
     The returned displacement matrix has one column per load case.
     """
+    cancellation_safe_point(cancellation_token, "linear_static_many.start")
     model.apply_boundary_conditions()
     K, _, assembly_info = assemble_system(model, None)
     F_matrix, load_matrix_info = assemble_load_matrix(model, load_cases)
@@ -615,7 +737,12 @@ def solve_linear_many(
     F_red = np.asarray(T.T @ (F_matrix - (K @ u0)[:, None]), dtype=float)
 
     total_dofs = int(K.shape[0])
-    Q, nullspace_info = build_reduced_rigid_body_modes(model, independent_dofs, total_dofs)
+    Q, nullspace_info = build_reduced_rigid_body_modes(
+        model,
+        independent_dofs,
+        total_dofs,
+        transformation=T,
+    )
     mode = (constraint_mode or "auto").strip().lower()
     if mode not in {"auto", "transformation"}:
         raise ValueError("solve_linear_many supports constraint_mode 'auto' or 'transformation'")
@@ -645,6 +772,7 @@ def solve_linear_many(
         cache=local_cache,
         signature=stiffness_signature,
     )
+    cancellation_safe_point(cancellation_token, "linear_static_many.after_factorization")
     if handle.status != "ok":
         info = {
             "status": "failed",
@@ -671,6 +799,7 @@ def solve_linear_many(
         ).to_dict()
         return displacement, info
     q_matrix = handle.solve_many(F_red)
+    cancellation_safe_point(cancellation_token, "linear_static_many.after_solve")
     full = np.asarray(T @ q_matrix + u0[:, None], dtype=float)
     info = {
         "status": "converged",
@@ -694,6 +823,15 @@ def solve_linear_many(
         recovery={"displacements": True, "stresses": "on_demand", "reactions": "on_demand"},
         settings={"constraint_mode": mode, "num_load_cases": len(load_cases)},
     ).to_dict()
+    emit_progress(
+        progress_callback,
+        "linear_static_many_complete",
+        "linear_static_many.complete",
+        completed=len(load_cases),
+        total=len(load_cases),
+        num_result_cases=len(load_cases),
+        status="converged",
+    )
     return full, info
 
 
@@ -703,12 +841,15 @@ def solve_nonlinear(
     max_iterations: int = 20,
     tolerance: float = 1.0e-6,
     method: str = "newton_raphson",
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Deprecated prototype nonlinear solve.
 
     Use :func:`anysolver.solve_static_nonlinear` for the qualified incremental
     geometric/material nonlinear API.
     """
+    cancellation_safe_point(cancellation_token, "deprecated_nonlinear.start")
     warnings.warn(
         "solve_nonlinear() is a deprecated prototype; use solve_static_nonlinear()",
         DeprecationWarning,
@@ -738,12 +879,25 @@ def solve_nonlinear(
     }
 
     for iteration in range(max_iterations):
+        cancellation_safe_point(
+            cancellation_token,
+            f"deprecated_nonlinear.iteration:{iteration + 1}",
+        )
         iter_start = time.time()
         F_int = compute_internal_forces(model, u)
         residual_full = F_ext - F_int
         residual_red = np.asarray(T.T @ residual_full, dtype=float).reshape(-1)
         residual_norm = float(np.linalg.norm(residual_red))
         solver_info["residual_history"].append(residual_norm)
+        emit_progress(
+            progress_callback,
+            "nonlinear_iteration",
+            "deprecated_nonlinear.iteration",
+            completed=iteration + 1,
+            total=max_iterations,
+            iteration=iteration + 1,
+            residual_norm=residual_norm,
+        )
 
         if residual_norm < tolerance:
             solver_info["converged"] = True
@@ -881,7 +1035,12 @@ def compute_constraint_force_diagnostics(
 
     K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, F_ext, model)
     reduced_residual = np.asarray(T.T @ residual, dtype=float).reshape(-1)
-    Q, nullspace_info = build_reduced_rigid_body_modes(model, independent_dofs, int(K.shape[0]))
+    Q, nullspace_info = build_reduced_rigid_body_modes(
+        model,
+        independent_dofs,
+        int(K.shape[0]),
+        transformation=T,
+    )
     if Q.shape[1] > 0:
         nullspace_generalized_forces = np.asarray(Q.T @ reduced_residual, dtype=float).reshape(-1)
     else:

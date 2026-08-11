@@ -24,6 +24,7 @@ from .materials import (
 if TYPE_CHECKING:
     from .elements import Element
     from .boundary import BoundaryCondition, LoadCase
+    from .constraint_audit import ConstraintEquation
 
 
 _ELEMENT_LOCAL_CACHE_NAMES = (
@@ -241,6 +242,7 @@ class FEModel:
     boundary_conditions: List['BoundaryCondition'] = field(default_factory=list)
     load_cases: List['LoadCase'] = field(default_factory=list)
     current_material: str = "default"
+    constraint_equations: List['ConstraintEquation'] = field(default_factory=list)
 
     def __post_init__(self):
         if "default" not in self.materials:
@@ -359,6 +361,41 @@ class FEModel:
         self.boundary_conditions.append(bc)
         self.mesh.bump_revision("boundary")
 
+    def add_constraint_equation(
+        self,
+        equation: Optional['ConstraintEquation'] = None,
+        *,
+        terms: Optional[Tuple[Tuple[int, float], ...]] = None,
+        rhs: float = 0.0,
+        source_id: str = "",
+        dependent_dof: Optional[int] = None,
+    ) -> 'ConstraintEquation':
+        """Add a generalized affine constraint to the common reduction path.
+
+        Callers may pass an existing :class:`ConstraintEquation` or its public
+        construction fields.  The first term is the pivot when
+        ``dependent_dof`` is omitted.
+        """
+
+        from .constraint_audit import ConstraintEquation
+
+        if equation is not None and terms is not None:
+            raise ValueError("Pass either equation or terms, not both")
+        if equation is None:
+            if terms is None:
+                raise ValueError("terms are required")
+            equation = ConstraintEquation(
+                terms=terms,
+                rhs=rhs,
+                source_id=source_id,
+                dependent_dof=dependent_dof,
+            )
+        if not isinstance(equation, ConstraintEquation):
+            raise TypeError("equation must be a ConstraintEquation")
+        self.constraint_equations.append(equation)
+        self.mesh.bump_revision("boundary")
+        return equation
+
     def add_load_case(self, load_case: 'LoadCase'):
         """Add a load case to the model."""
         self.load_cases.append(load_case)
@@ -377,6 +414,7 @@ class FEModel:
     def clear_boundary_conditions(self):
         """Clear all boundary conditions."""
         self.boundary_conditions.clear()
+        self.constraint_equations.clear()
         self.mesh.dof_manager = DOFManager()
         # Re-add nodes to reset DOFs
         for node_id, node in self.mesh.nodes.items():

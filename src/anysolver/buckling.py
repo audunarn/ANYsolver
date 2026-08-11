@@ -23,6 +23,7 @@ from scipy.sparse import linalg as sparse_linalg
 from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
     assemble_external_load_tangent,
@@ -83,6 +84,12 @@ class BucklingResult:
     @property
     def num_modes_returned(self) -> int:
         return len(self.modes)
+
+    @property
+    def quantity_metadata(self) -> Tuple[Any, ...]:
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self)
 
     @property
     def critical_load_factor(self) -> Optional[float]:
@@ -212,6 +219,8 @@ def solve_eigenvalue_buckling(
     reference_displacements: Optional[np.ndarray] = None,
     follower_symmetry_tolerance: float = 1.0e-10,
     resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> BucklingResult:
     """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
@@ -230,6 +239,7 @@ def solve_eigenvalue_buckling(
     nonconservative pressure patches require a general complex eigenanalysis
     and return an explicit unsupported status.
     """
+    cancellation_safe_point(cancellation_token, "buckling.start")
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
     if follower_symmetry_tolerance < 0.0:
@@ -246,6 +256,7 @@ def solve_eigenvalue_buckling(
         reference_load_case,
         reference_displacements,
     )
+    cancellation_safe_point(cancellation_token, "buckling.after_assembly")
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
     K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, zero_load, model)
@@ -336,7 +347,12 @@ def solve_eigenvalue_buckling(
         ).to_dict()
         return BucklingResult([], num_modes, "zero_geometric_stiffness", constraint_info, assembly_info, result_case, diagnostics)
 
-    Q_rigid, nullspace_info = build_reduced_rigid_body_modes(model, independent_dofs, int(K.shape[0]))
+    Q_rigid, nullspace_info = build_reduced_rigid_body_modes(
+        model,
+        independent_dofs,
+        int(K.shape[0]),
+        transformation=T,
+    )
     assembly_info["nullspace"] = nullspace_info
 
     # Work with the inverted symmetric pencil KG phi = mu K phi where K is
@@ -413,9 +429,15 @@ def solve_eigenvalue_buckling(
         ).to_dict()
         return BucklingResult([], num_modes, "failed", constraint_info, assembly_info, result_case, diagnostics)
 
+    cancellation_safe_point(cancellation_token, "buckling.after_eigensolve")
+
     candidates: List[tuple[float, np.ndarray, float, float, float, float]] = []
     rejected: List[Dict[str, Any]] = []
     for i in range(eigenvectors.shape[1]):
+        cancellation_safe_point(
+            cancellation_token,
+            f"buckling.root:{i + 1}",
+        )
         reduced_mode = np.asarray(np.real(eigenvectors[:, i]), dtype=float)
         mode_norm = float(np.linalg.norm(reduced_mode))
         if not np.isfinite(mode_norm) or mode_norm <= 0.0:
@@ -518,4 +540,13 @@ def solve_eigenvalue_buckling(
         settings=settings,
         metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
     ).to_dict()
+    emit_progress(
+        progress_callback,
+        "buckling_complete",
+        "buckling.complete",
+        completed=len(modes),
+        total=num_modes,
+        status=status,
+        num_modes_returned=len(modes),
+    )
     return BucklingResult(modes, num_modes, status, constraint_info, assembly_info, result_case, diagnostics)

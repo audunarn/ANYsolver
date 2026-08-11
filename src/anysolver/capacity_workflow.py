@@ -25,6 +25,7 @@ import numpy as np
 
 from .assembly import solve_linear
 from .buckling import BucklingResult, solve_eigenvalue_buckling
+from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .imperfections import EigenmodeImperfection, ImperfectionField, apply_imperfection, to_imperfection_field
 from .nonlinear_static import (
     NonlinearConvergenceSettings,
@@ -238,17 +239,33 @@ def run_nonlinear_capacity_workflow(
     imperfection: Optional[Any] = None,
     config: Optional[CapacityWorkflowConfig] = None,
     status_callback: Optional[Callable[[str], None]] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    record_increment_snapshots: bool = False,
 ) -> CapacityWorkflowResult:
     """Run linear static -> buckling -> imperfection -> nonlinear capacity."""
+    cancellation_safe_point(cancellation_token, "capacity.start")
     config = config or CapacityWorkflowConfig()
     start = time.perf_counter()
-    static_displacements, static_info = solve_linear(model, reference_load_case)
+    static_displacements, static_info = solve_linear(
+        model,
+        reference_load_case,
+        cancellation_token=cancellation_token,
+        progress_callback=progress_callback,
+    )
     static_status = str((static_info.get("convergence_info") or {}).get("status", "unknown"))
     if static_status != "converged":
         raise RuntimeError(f"Static prestress solve did not converge: {static_status}")
 
     prestress_states, prestress_summary = _recover_prestress(model, static_displacements)
-    buckling = solve_eigenvalue_buckling(model, prestress_states, num_modes=config.num_buckling_modes)
+    cancellation_safe_point(cancellation_token, "capacity.prestress_recovery")
+    buckling = solve_eigenvalue_buckling(
+        model,
+        prestress_states,
+        num_modes=config.num_buckling_modes,
+        cancellation_token=cancellation_token,
+        progress_callback=progress_callback,
+    )
     if not buckling.modes:
         raise RuntimeError(f"Buckling solve returned no usable modes: {buckling.solver_status}")
 
@@ -276,6 +293,9 @@ def run_nonlinear_capacity_workflow(
             convergence_settings=config.nonlinear_convergence_settings,
             resource_config=config.nonlinear_resource_config,
             status_callback=status_callback,
+            progress_callback=progress_callback,
+            cancellation_token=cancellation_token,
+            record_increment_snapshots=record_increment_snapshots,
         )
     else:
         nonlinear_result = solve_static_nonlinear(
@@ -289,6 +309,9 @@ def run_nonlinear_capacity_workflow(
             convergence_settings=config.nonlinear_convergence_settings,
             resource_config=config.nonlinear_resource_config,
             status_callback=status_callback,
+            progress_callback=progress_callback,
+            cancellation_token=cancellation_token,
+            record_increment_snapshots=record_increment_snapshots,
         )
 
     status = "completed" if nonlinear_result.converged else "nonlinear_not_converged"
@@ -309,7 +332,7 @@ def run_nonlinear_capacity_workflow(
     if mesh_adequacy.warnings:
         diagnostics["warnings"] = list(mesh_adequacy.warnings)
 
-    return CapacityWorkflowResult(
+    result = CapacityWorkflowResult(
         status=status,
         static_displacements=static_displacements,
         static_solver_info=static_info,
@@ -322,6 +345,16 @@ def run_nonlinear_capacity_workflow(
         mesh_adequacy=mesh_adequacy,
         diagnostics=diagnostics,
     )
+    emit_progress(
+        progress_callback,
+        "capacity_complete",
+        "capacity.complete",
+        completed=1,
+        total=1,
+        status=status,
+        capacity_estimate=float(nonlinear_result.capacity_estimate),
+    )
+    return result
 
 
 def write_capacity_workflow_report(
@@ -341,10 +374,20 @@ def run_capacity_workflow_from_builder(
     *,
     config: Optional[CapacityWorkflowConfig] = None,
     report_path: Path | str = DEFAULT_CAPACITY_WORKFLOW_PATH,
+    progress_callback: Optional[ProgressCallback] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    record_increment_snapshots: bool = False,
 ) -> CapacityWorkflowResult:
     """Convenience helper for scripted examples/tests."""
     model = model_builder()
     load_case = load_case_builder(model)
-    result = run_nonlinear_capacity_workflow(model, load_case, config=config)
+    result = run_nonlinear_capacity_workflow(
+        model,
+        load_case,
+        config=config,
+        progress_callback=progress_callback,
+        cancellation_token=cancellation_token,
+        record_increment_snapshots=record_increment_snapshots,
+    )
     write_capacity_workflow_report(result, report_path)
     return result
