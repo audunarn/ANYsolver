@@ -559,6 +559,12 @@ def test_arc_reactions_reuse_accepted_direct_force_without_reassembly(
         "full_reassembly_count": 0,
     }
     performance = result.info["nonlinear_performance"]
+    assert result.info["corrector_tangent_projection_count"] == result.info[
+        "corrector_solve_many_count"
+    ]
+    assert result.info["corrector_tangent_projection_count"] < result.info[
+        "total_newton_iterations"
+    ]
     assert performance["direct_reduced_assembly"]["activated"] is True
     assert performance["assembly"]["residual_only_calls"] == 0
     assert "persistent_full_coordinate" not in performance["assembly"][

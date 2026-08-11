@@ -678,6 +678,7 @@ def solve_static_arc_length(
     total_iterations = 0
     total_retries = 0
     corrector_solve_many_count = 0
+    corrector_tangent_projection_count = 0
     reaction_force_reuse_count = 0
     reaction_force_reassembly_count = 0
     adaptation_history: List[Dict[str, Any]] = []
@@ -809,11 +810,6 @@ def solve_static_arc_length(
                     lambda_trial,
                     tangent=True,
                 )
-                K_trial_red = (
-                    (T.T @ K_trial @ T)
-                    - (T.T @ K_const_trial @ T)
-                    - lambda_trial * (T.T @ K_prop_trial @ T)
-                ).tocsr()
                 if prescribed_path_active:
                     K_trial_effective = (
                         K_trial - K_const_trial - lambda_trial * K_prop_trial
@@ -863,6 +859,18 @@ def solve_static_arc_length(
                     accepted = True
                     break
 
+                # Match the mature correction path: tangent reduction is only
+                # needed when a Newton correction will actually be solved.
+                # Keeping it below the convergence check avoids three sparse
+                # projections and two sparse subtractions on every accepted
+                # iteration while leaving the prescribed-path direction above
+                # exact and unchanged.
+                K_trial_red = (
+                    (T.T @ K_trial @ T)
+                    - (T.T @ K_const_trial @ T)
+                    - lambda_trial * (T.T @ K_prop_trial @ T)
+                ).tocsr()
+                corrector_tangent_projection_count += 1
                 try:
                     handle = factorize(
                         K_trial_red,
@@ -1164,6 +1172,9 @@ def solve_static_arc_length(
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
     info["corrector_solve_many_count"] = int(corrector_solve_many_count)
+    info["corrector_tangent_projection_count"] = int(
+        corrector_tangent_projection_count
+    )
     info["reaction_force_recovery"] = {
         "accepted_force_reuse_count": int(reaction_force_reuse_count),
         "full_reassembly_count": int(reaction_force_reassembly_count),
