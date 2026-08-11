@@ -11,12 +11,24 @@ from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from .jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED, numba_thread_scope
+from .recovery_batches import (
+    RecoveryPlanItem,
+    build_recovery_chunks,
+    clear_recovery_batch_plan,
+    formulation_counts,
+    get_recovery_batch_plan,
+)
+from .recovery_s4 import recover_isotropic_s4
+from .threading_policy import native_thread_scope
+
 if TYPE_CHECKING:
     from .fe_core import FEModel
 
 
 _DOF_COMPONENTS = ("ux", "uy", "uz", "rx", "ry", "rz")
 _HISTORY_MODES = {"full", "selected", "envelope"}
+_MIN_COMPILED_RECOVERY_BATCH = 100
 
 
 def _optional_int_tuple(values: Optional[Sequence[int]]) -> Optional[Tuple[int, ...]]:
@@ -195,6 +207,7 @@ class RecoveryExecutionReport:
     deterministic: bool
     elapsed_seconds: float
     reason: str = ""
+    metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -206,6 +219,7 @@ class RecoveryExecutionReport:
             "deterministic": bool(self.deterministic),
             "elapsed_seconds": float(self.elapsed_seconds),
             "reason": self.reason,
+            "metadata": dict(self.metadata),
         }
 
 
@@ -534,10 +548,14 @@ def _compute_one_element_stress(
     element_id: int,
     *,
     return_global: bool,
+    dof_mapping: Optional[np.ndarray] = None,
 ) -> Optional[Tuple[int, Dict[str, np.ndarray]]]:
     element = model.mesh.elements[int(element_id)]
     material = model.get_material(element.material_name)
-    dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+    if dof_mapping is None:
+        dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+    else:
+        dof_mapping = np.asarray(dof_mapping, dtype=np.intp)
     if dof_mapping.size == 0 or int(dof_mapping.max()) >= displacements.size:
         return None
     try:
@@ -549,6 +567,25 @@ def _compute_one_element_stress(
         )
     except (IndexError, ValueError):
         return None
+
+
+def _compute_recovery_chunk(
+    model: "FEModel",
+    displacements: np.ndarray,
+    items: Sequence[RecoveryPlanItem],
+    *,
+    return_global: bool,
+) -> Tuple[Optional[Tuple[int, Dict[str, np.ndarray]]], ...]:
+    return tuple(
+        _compute_one_element_stress(
+            model,
+            displacements,
+            item.element_id,
+            return_global=return_global,
+            dof_mapping=item.dof_mapping,
+        )
+        for item in items
+    )
 
 
 def recover_element_stresses_with_report(
@@ -581,27 +618,148 @@ def recover_element_stresses_with_report(
     deterministic = True if resource_config is None else bool(resource_config.deterministic)
     backend = "serial" if used_workers <= 1 else "thread_pool"
     start = time.perf_counter()
-    stresses: Dict[int, Dict[str, np.ndarray]] = {}
-    if used_workers <= 1:
-        for element_id in selected_ids:
-            item = _compute_one_element_stress(model, displacements, element_id, return_global=return_global)
+    plan_lookup_start = time.perf_counter()
+    plan, plan_reused = get_recovery_batch_plan(model)
+    plan_lookup_seconds = time.perf_counter() - plan_lookup_start
+    selected_items = plan.select(selected_ids)
+    batch_counts = formulation_counts(selected_items)
+    recovered_by_id: Dict[int, Dict[str, np.ndarray]] = {}
+    compiled_ids: set[int] = set()
+    compiled_seconds = 0.0
+    compiled_error: Optional[str] = None
+    candidate_indices = (
+        np.empty(0, dtype=np.intp)
+        if plan.isotropic_s4 is None
+        else plan.isotropic_s4.select_indices(selected_ids)
+    )
+    compiled_active = bool(
+        JIT_ENABLED
+        and plan.isotropic_s4 is not None
+        and candidate_indices.size >= _MIN_COMPILED_RECOVERY_BATCH
+    )
+    if compiled_active:
+        compiled_start = time.perf_counter()
+        try:
+            with numba_thread_scope(used_workers):
+                recovered_by_id.update(
+                    recover_isotropic_s4(
+                        plan.isotropic_s4,
+                        candidate_indices,
+                        displacements,
+                        return_global=return_global,
+                    )
+                )
+            compiled_ids.update(recovered_by_id)
+        except Exception as exc:  # scalar oracle is the production fallback
+            recovered_by_id.clear()
+            compiled_ids.clear()
+            compiled_error = f"{type(exc).__name__}: {exc}"
+        compiled_seconds = time.perf_counter() - compiled_start
+
+    fallback_items = tuple(
+        item for item in selected_items if item.element_id not in compiled_ids
+    )
+    chunks = build_recovery_chunks(fallback_items, used_workers)
+    if not fallback_items:
+        native_report: Mapping[str, Any] = {
+            "status": "not_needed",
+            "requested_threads": None,
+            "restored": True,
+        }
+    elif used_workers <= 1:
+        for plan_item in fallback_items:
+            item = _compute_one_element_stress(
+                model,
+                displacements,
+                plan_item.element_id,
+                return_global=return_global,
+                dof_mapping=plan_item.dof_mapping,
+            )
             if item is not None:
-                stresses[item[0]] = item[1]
+                recovered_by_id[item[0]] = item[1]
+        native_report = {
+            "status": "not_needed",
+            "requested_threads": None,
+            "restored": True,
+        }
     else:
-        with ThreadPoolExecutor(max_workers=used_workers) as executor:
-            futures = [
-                executor.submit(_compute_one_element_stress, model, displacements, element_id, return_global=return_global)
-                for element_id in selected_ids
-            ]
-            results = [future.result() for future in futures]
-        for item in results:
-            if item is not None:
-                stresses[item[0]] = item[1]
+        with native_thread_scope(1, phase="stress_recovery_thread_pool") as native_report:
+            with ThreadPoolExecutor(max_workers=used_workers) as executor:
+                futures = [
+                    executor.submit(
+                        _compute_recovery_chunk,
+                        model,
+                        displacements,
+                        chunk,
+                        return_global=return_global,
+                    )
+                    for chunk in chunks
+                ]
+                chunk_results = [future.result() for future in futures]
+        recovered_by_id.update({
+            item[0]: item[1]
+            for results in chunk_results
+            for item in results
+            if item is not None
+        })
+
+    stresses = {
+        int(element_id): recovered_by_id[int(element_id)]
+        for element_id in selected_ids
+        if int(element_id) in recovered_by_id
+    }
 
     components = recovery.selected_components()
     if components is not None:
         stresses = {int(element_id): _filter_components(values, components) for element_id, values in stresses.items()}
     elapsed = time.perf_counter() - start
+    if compiled_ids and fallback_items:
+        recovery_backend = (
+            "hybrid_numba_thread_pool" if used_workers > 1 else "hybrid_numba_serial"
+        )
+    elif compiled_ids:
+        recovery_backend = "compiled_isotropic_s4"
+    else:
+        recovery_backend = (
+            "scalar_serial" if used_workers <= 1 else "scalar_chunk_thread_pool"
+        )
+    # Preserve the public report contract.  Detailed backend selection is
+    # exposed through metadata so existing callers that distinguish only
+    # serial/threaded execution continue to work unchanged.
+    backend = "serial" if used_workers <= 1 else "thread_pool"
+
+    fallback_reasons: Dict[str, Any] = {}
+    unsupported_ids = [
+        int(item.element_id)
+        for item in fallback_items
+        if plan.isotropic_s4 is None
+        or int(item.element_id) not in plan.isotropic_s4.index_by_id
+    ]
+    eligible_fallback_ids = [
+        int(item.element_id)
+        for item in fallback_items
+        if plan.isotropic_s4 is not None
+        and int(item.element_id) in plan.isotropic_s4.index_by_id
+    ]
+    if unsupported_ids:
+        fallback_reasons["unsupported_formulation"] = unsupported_ids
+    if eligible_fallback_ids:
+        if compiled_error is not None:
+            fallback_reasons["compiled_batch_error"] = {
+                "element_ids": eligible_fallback_ids,
+                "error": compiled_error,
+            }
+        elif not JIT_ENABLED:
+            fallback_reasons["jit_disabled"] = {
+                "element_ids": eligible_fallback_ids,
+                "reason": JIT_DISABLED_REASON,
+            }
+        else:
+            fallback_reasons["batch_below_minimum_size"] = {
+                "element_ids": eligible_fallback_ids,
+                "minimum_size": _MIN_COMPILED_RECOVERY_BATCH,
+            }
+
     report = RecoveryExecutionReport(
         phase="element_stress_recovery",
         item_count=len(selected_ids),
@@ -611,6 +769,21 @@ def recover_element_stresses_with_report(
         deterministic=deterministic,
         elapsed_seconds=float(elapsed),
         reason=reason,
+        metadata={
+            "recovery_backend": recovery_backend,
+            "batch_counts": batch_counts,
+            "compiled_batch_count": int(bool(compiled_ids)),
+            "compiled_batch_seconds": float(compiled_seconds),
+            "eligible_element_count": len(compiled_ids),
+            "fallback_element_count": len(fallback_items),
+            "fallback_reasons": fallback_reasons,
+            "chunk_count": len(chunks) if used_workers > 1 else int(bool(fallback_items)),
+            "plan_reused": bool(plan_reused),
+            "plan_setup_seconds": float(plan.setup_seconds),
+            "plan_lookup_seconds": float(plan_lookup_seconds),
+            "plan_retained_bytes": int(plan.retained_bytes),
+            "native_thread_policy": dict(native_report),
+        },
     )
     return stresses, report
 
