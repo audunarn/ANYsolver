@@ -116,6 +116,13 @@ def test_modified_newton_reuse_matches_legacy_history_and_reduces_factorizations
     assert reuse_diag["cutback_count"] == legacy_diag["cutback_count"] == 0
     assert reuse_diag["active_contact_set_changes"] >= 1
     assert "active_contact_set_change" in reuse_diag["refresh_reason_counts"]
+    contact_work = reuse_diag["contact_work_buffer"]
+    assert contact_work["path"] == "compact_internal_candidates_lazy_public_records"
+    assert contact_work["lazy_public_materialization"] is True
+    assert contact_work["direct_full_scatter_count"] == contact_work["assembly_calls"]
+    assert contact_work["public_materialization_count"] < contact_work["assembly_calls"]
+    assert reuse_diag["contact_public_materialization_count"] == contact_work["public_materialization_count"]
+    assert reuse_diag["contact_direct_full_scatter_count"] == contact_work["direct_full_scatter_count"]
 
 
 def test_zero_reuse_budget_reports_explicit_full_newton_oracle():

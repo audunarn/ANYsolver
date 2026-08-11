@@ -203,7 +203,22 @@ class ImpactTangentReuseController:
 
         if not self.enabled:
             return tuple()
-        signature = _contact_signature(records)
+        return self.observe_contact_signature(_contact_signature(records))
+
+    def observe_contact_signature(
+        self,
+        signature: Sequence[Tuple[int, str]],
+    ) -> Tuple[str, ...]:
+        """Track contact changes without materializing public records."""
+
+        if not self.enabled:
+            return tuple()
+        signature = tuple(
+            sorted(
+                (int(element_id), str(classification))
+                for element_id, classification in signature
+            )
+        )
         previous = self._last_contact_signature
         self._last_contact_signature = signature
         if previous is None:

@@ -9,6 +9,7 @@ contact, profile-resolved beam contact, or crack propagation.
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -19,6 +20,7 @@ from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .boundary import BoundaryCondition, LoadCase
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
+from .contact_performance import ContactWorkBuffer, ContactWorkCounters
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .dynamics import (
     TransientConfig,
@@ -452,6 +454,7 @@ class _ContactGeometry:
         "beam_segment_slots",
         "beam_segment_radii",
         "beam_segment_element_ids",
+        "contact_work_local",
     )
 
     def __init__(self, model: "FEModel"):
@@ -513,6 +516,7 @@ class _ContactGeometry:
         self.beam_segment_slots = np.asarray(segment_slots, dtype=np.intp).reshape(-1, 2)
         self.beam_segment_radii = np.asarray(segment_radii, dtype=float)
         self.beam_segment_element_ids = np.asarray(segment_element_ids, dtype=np.int64)
+        self.contact_work_local = threading.local()
 
     def deformed_node_positions(self, displacement: Optional[np.ndarray]) -> np.ndarray:
         if displacement is None:
@@ -828,7 +832,7 @@ def validate_contact_configuration(
     return ProductionValidationReport(status, tuple(issues), mesh_quality, model.mesh.revision_signature())
 
 
-def assemble_sphere_contact_load_vector(
+def _assemble_sphere_contact_work_buffer(
     model: "FEModel",
     sphere: RigidSphereImpact,
     contact_config: SphereContactConfig,
@@ -839,8 +843,10 @@ def assemble_sphere_contact_load_vector(
     deleted_element_ids: Sequence[int] = (),
     contact_scale_by_element: Optional[Mapping[int, float]] = None,
     preferred_element_ids: Sequence[int] = (),
-) -> Tuple[np.ndarray, np.ndarray, Tuple[SphereContactRecord, ...]]:
-    """Assemble shell nodal loads from current rigid-sphere contact state.
+    work_buffer: Optional[ContactWorkBuffer] = None,
+    work_counters: Optional[ContactWorkCounters] = None,
+) -> ContactWorkBuffer:
+    """Assemble contact into reusable compact work storage.
 
     ``preferred_element_ids`` stabilizes the ``max_active_contacts`` reduction:
     adjacent coplanar elements report near-identical penetrations for one
@@ -856,14 +862,18 @@ def assemble_sphere_contact_load_vector(
     v = np.zeros(total_dofs, dtype=float) if structural_velocity is None else np.asarray(structural_velocity, dtype=float)
     center = np.asarray(sphere_position, dtype=float).reshape(3)
     velocity = np.asarray(sphere_velocity, dtype=float).reshape(3)
-    load = np.zeros(total_dofs, dtype=float)
-    sphere_force_total = np.zeros(3, dtype=float)
-    records: List[SphereContactRecord] = []
+    contact_work = work_buffer or ContactWorkBuffer(total_dofs, counters=work_counters)
+    contact_work.reset(total_dofs)
     contact_scales = {} if contact_scale_by_element is None else {int(k): float(v) for k, v in contact_scale_by_element.items()}
     geometry = _contact_geometry(model)
     has_beam_targets = bool(contact_config.beam_contact) and geometry.beam_segment_slots.shape[0] > 0
     if geometry.element_ids.shape[0] == 0 and not has_beam_targets:
-        return load, sphere_force_total, tuple(records)
+        contact_work.select_and_scatter(
+            max_active_contacts=int(contact_config.max_active_contacts),
+            preferred_element_ids=preferred_element_ids,
+            node_dofs=geometry.node_dofs,
+        )
+        return contact_work
     node_positions = geometry.deformed_node_positions(u)
     element_nodes, centroids, radii = geometry.element_centroids_and_radii(node_positions)
     active_mask = geometry.active_element_mask(deleted_element_ids)
@@ -934,25 +944,23 @@ def assemble_sphere_contact_load_vector(
         )
         if not patch_weights:
             patch_weights = {int(slot): float(N[local_index]) for local_index, slot in enumerate(element_slots)}
-        nodal_forces: Dict[int, np.ndarray] = {}
-        for slot, weight in patch_weights.items():
-            nodal = float(weight) * structure_force
-            load[geometry.node_dofs[slot]] += nodal
-            nodal_forces[int(geometry.node_ids[slot])] = nodal
-        sphere_force_total += sphere_force
-        records.append(
-            SphereContactRecord(
-                element_id=int(element.element_id),
-                local_coordinates=(float(local[0]), float(local[1])),
-                contact_point=surface_point,
-                normal=normal,
-                penetration=penetration,
-                normal_force=normal_force,
-                sphere_force=sphere_force,
-                structure_force=structure_force,
-                contact_classification=_contact_classification(element, local),
-                nodal_forces=nodal_forces,
-            )
+        nodal_slots = tuple(int(slot) for slot in patch_weights)
+        nodal_forces = np.asarray(
+            [float(patch_weights[slot]) * structure_force for slot in nodal_slots],
+            dtype=float,
+        )
+        contact_work.append(
+            element_id=int(element.element_id),
+            local_coordinates=(float(local[0]), float(local[1])),
+            contact_point=surface_point,
+            normal=normal,
+            penetration=penetration,
+            normal_force=normal_force,
+            sphere_force=sphere_force,
+            structure_force=structure_force,
+            contact_classification=_contact_classification(element, local),
+            nodal_slots=nodal_slots,
+            nodal_forces=nodal_forces,
         )
 
     if bool(contact_config.beam_contact) and geometry.beam_segment_slots.shape[0]:
@@ -993,49 +1001,68 @@ def assemble_sphere_contact_load_vector(
                 continue
             sphere_force = normal_force * normal
             structure_force = -sphere_force
-            nodal_forces = {
-                int(geometry.node_ids[slot_a]): (1.0 - t_value) * structure_force,
-                int(geometry.node_ids[slot_b]): t_value * structure_force,
-            }
-            load[geometry.node_dofs[slot_a]] += nodal_forces[int(geometry.node_ids[slot_a])]
-            load[geometry.node_dofs[slot_b]] += nodal_forces[int(geometry.node_ids[slot_b])]
-            sphere_force_total += sphere_force
-            records.append(
-                SphereContactRecord(
-                    element_id=beam_id,
-                    local_coordinates=(2.0 * t_value - 1.0, 0.0),
-                    contact_point=closest[segment_index].copy(),
-                    normal=normal.copy(),
-                    penetration=penetration,
-                    normal_force=normal_force,
-                    sphere_force=sphere_force,
-                    structure_force=structure_force,
-                    contact_classification="beam",
-                    nodal_forces=nodal_forces,
-                )
+            contact_work.append(
+                element_id=beam_id,
+                local_coordinates=(2.0 * t_value - 1.0, 0.0),
+                contact_point=closest[segment_index],
+                normal=normal,
+                penetration=penetration,
+                normal_force=normal_force,
+                sphere_force=sphere_force,
+                structure_force=structure_force,
+                contact_classification="beam",
+                nodal_slots=(slot_a, slot_b),
+                nodal_forces=np.asarray(
+                    [
+                        (1.0 - t_value) * structure_force,
+                        t_value * structure_force,
+                    ],
+                    dtype=float,
+                ),
             )
 
-    if len(records) > int(contact_config.max_active_contacts):
-        deepest = max(record.penetration for record in records)
-        tie_band = 0.95 * deepest
-        preferred = {int(element_id) for element_id in preferred_element_ids}
-        records = sorted(
-            records,
-            key=lambda item: (
-                item.penetration >= tie_band and int(item.element_id) in preferred,
-                item.penetration,
-                item.normal_force,
-            ),
-            reverse=True,
-        )[: int(contact_config.max_active_contacts)]
-        load = np.zeros(total_dofs, dtype=float)
-        sphere_force_total = np.zeros(3, dtype=float)
-        for record in records:
-            sphere_force_total += record.sphere_force
-            for node_id, nodal in record.nodal_forces.items():
-                load[geometry.node_dofs[geometry.node_id_to_slot[int(node_id)]]] += nodal
+    contact_work.select_and_scatter(
+        max_active_contacts=int(contact_config.max_active_contacts),
+        preferred_element_ids=preferred_element_ids,
+        node_dofs=geometry.node_dofs,
+    )
+    return contact_work
 
-    return load, sphere_force_total, tuple(records)
+
+def assemble_sphere_contact_load_vector(
+    model: "FEModel",
+    sphere: RigidSphereImpact,
+    contact_config: SphereContactConfig,
+    sphere_position: np.ndarray,
+    sphere_velocity: np.ndarray,
+    structural_displacement: Optional[np.ndarray] = None,
+    structural_velocity: Optional[np.ndarray] = None,
+    deleted_element_ids: Sequence[int] = (),
+    contact_scale_by_element: Optional[Mapping[int, float]] = None,
+    preferred_element_ids: Sequence[int] = (),
+) -> Tuple[np.ndarray, np.ndarray, Tuple[SphereContactRecord, ...]]:
+    """Assemble contact loads and materialize the stable public records."""
+
+    geometry = _contact_geometry(model)
+    public_work_buffer = getattr(geometry.contact_work_local, "buffer", None)
+    if public_work_buffer is None:
+        public_work_buffer = ContactWorkBuffer(model.mesh.dof_manager.total_dofs)
+        geometry.contact_work_local.buffer = public_work_buffer
+    contact_work = _assemble_sphere_contact_work_buffer(
+        model,
+        sphere,
+        contact_config,
+        sphere_position,
+        sphere_velocity,
+        structural_displacement=structural_displacement,
+        structural_velocity=structural_velocity,
+        deleted_element_ids=deleted_element_ids,
+        contact_scale_by_element=contact_scale_by_element,
+        preferred_element_ids=preferred_element_ids,
+        work_buffer=public_work_buffer,
+    )
+    records = contact_work.materialize_records(SphereContactRecord, geometry.node_ids)
+    return contact_work.load.copy(), contact_work.sphere_force.copy(), records
 
 
 def _contact_default_config(sphere: RigidSphereImpact) -> SphereContactConfig:
@@ -2035,7 +2062,10 @@ def _solve_transient_sphere_impact_nonlinear(
                 max_equivalent_plastic_strain=max_alpha,
             )
 
-    initial_load, initial_sphere_force, initial_records = assemble_sphere_contact_load_vector(
+    contact_work_counters = ContactWorkCounters()
+    contact_work_buffer = ContactWorkBuffer(total_dofs, counters=contact_work_counters)
+    contact_geometry = _contact_geometry(model)
+    initial_contact_work = _assemble_sphere_contact_work_buffer(
         model,
         sphere,
         config,
@@ -2045,6 +2075,13 @@ def _solve_transient_sphere_impact_nonlinear(
         structural_velocity=np.asarray(T @ v_red, dtype=float).reshape(-1),
         deleted_element_ids=tuple(deleted_element_ids),
         contact_scale_by_element=damage_scale_by_element,
+        work_buffer=contact_work_buffer,
+    )
+    initial_load = initial_contact_work.load.copy()
+    initial_sphere_force = initial_contact_work.sphere_force.copy()
+    initial_records = initial_contact_work.materialize_records(
+        SphereContactRecord,
+        contact_geometry.node_ids,
     )
     save_state(float(times[0]), q_red, v_red, a_red, sphere_position, sphere_velocity, sphere_acceleration, initial_sphere_force, initial_records)
     sticky_contact_ids: Tuple[int, ...] = tuple(int(record.element_id) for record in initial_records)
@@ -2142,6 +2179,7 @@ def _solve_transient_sphere_impact_nonlinear(
         contact_load = np.zeros(total_dofs, dtype=float)
         sphere_force = np.zeros(3, dtype=float)
         records: Tuple[SphereContactRecord, ...] = tuple()
+        last_contact_work: Optional[ContactWorkBuffer] = None
         converged = False
         residual_norm = float("inf")
         displacement_increment = float("inf")
@@ -2245,7 +2283,7 @@ def _solve_transient_sphere_impact_nonlinear(
             sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
             full_u_next = reconstruct_full_solution(T, q_next, u0)
             full_v_next = np.asarray(T @ v_next, dtype=float).reshape(-1)
-            new_contact_load, new_sphere_force, new_records = assemble_sphere_contact_load_vector(
+            last_contact_work = _assemble_sphere_contact_work_buffer(
                 model,
                 sphere,
                 config,
@@ -2256,13 +2294,22 @@ def _solve_transient_sphere_impact_nonlinear(
                 deleted_element_ids=tuple(deleted_element_ids),
                 contact_scale_by_element=damage_scale_by_element,
                 preferred_element_ids=sticky_contact_ids,
+                work_buffer=contact_work_buffer,
             )
-            if new_records:
-                sticky_contact_ids = tuple(int(record.element_id) for record in new_records)
-            contact_scale = max(float(np.linalg.norm(new_sphere_force)), 1.0)
-            contact_change = float(np.linalg.norm(new_sphere_force - sphere_force))
-            contact_load, sphere_force, records = new_contact_load, new_sphere_force, new_records
-            tangent_reuse.observe_contact(new_records)
+            if last_contact_work.selected_indices.size:
+                sticky_contact_ids = last_contact_work.active_element_ids
+            contact_scale = max(float(np.linalg.norm(last_contact_work.sphere_force)), 1.0)
+            contact_change = float(np.linalg.norm(last_contact_work.sphere_force - sphere_force))
+            np.copyto(contact_load, last_contact_work.load)
+            np.copyto(sphere_force, last_contact_work.sphere_force)
+            tangent_reuse.observe_contact_signature(
+                tuple(
+                    zip(
+                        last_contact_work.active_element_ids,
+                        last_contact_work.active_classifications,
+                    )
+                )
+            )
             q_trial = q_next
             displacement_limit = float(nl.displacement_tolerance) * max(float(np.linalg.norm(q_next)), 1.0)
             residual_limit = float(nl.residual_tolerance) * reference
@@ -2307,6 +2354,11 @@ def _solve_transient_sphere_impact_nonlinear(
                 elif iteration >= int(nl.max_iterations) - 2:
                     distress_halvings = min(distress_halvings + 1, 2)
                 break
+        if last_contact_work is not None:
+            records = last_contact_work.materialize_records(
+                SphereContactRecord,
+                contact_geometry.node_ids,
+            )
         if not converged:
             if status in {"nonlinear_tangent_failed", "nonlinear_iteration_failed"}:
                 pass
@@ -2626,6 +2678,17 @@ def _solve_transient_sphere_impact_nonlinear(
         "refresh_reason_counts": dict(sorted(tangent_reuse.refresh_reason_counts.items())),
         "active_contact_set_changes": int(tangent_reuse.active_contact_set_changes),
         "tangent_reuse": tangent_reuse.diagnostics(),
+        "contact_public_materialization_count": int(
+            contact_work_counters.public_materialization_count
+        ),
+        "contact_direct_full_scatter_count": int(
+            contact_work_counters.direct_full_scatter_count
+        ),
+        "contact_work_buffer": {
+            "path": "compact_internal_candidates_lazy_public_records",
+            "lazy_public_materialization": True,
+            **contact_work_counters.diagnostics(),
+        },
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": factor_diagnostics,
         "constraint_info": constraint_info,
@@ -3016,6 +3079,9 @@ def solve_transient_sphere_impact(
                 sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
                 full_u = reconstruct_full_solution(T, q_next, u0)
                 full_v = np.asarray(T @ v_next, dtype=float).reshape(-1)
+                # Linear impact fracture and capacity damage consume public
+                # records below.  Keep eager materialization on this path;
+                # only the nonlinear state-driven loop uses lazy records.
                 new_contact_load, new_sphere_force, new_records = assemble_sphere_contact_load_vector(
                     model,
                     sphere,
@@ -3384,6 +3450,11 @@ def solve_transient_sphere_impact(
         "eroded_matrix_rebuild_count": int(eroded_matrix_rebuild_count),
         "damage_state_update_count": int(damage_state_update_count),
         "linear_matrix_terms_cached": linear_matrix_terms is not None,
+        "contact_work_buffer": {
+            "path": "compact_candidates_eager_public_records",
+            "lazy_public_materialization": False,
+            "fallback_reason": "linear_fracture_damage_record_semantics",
+        },
         "initial_mass_factorization": mass_handle.diagnostics(),
         "effective_stiffness_factorization": cached_solver_diagnostics,
         "constraint_info": constraint_info,
