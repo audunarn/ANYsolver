@@ -120,6 +120,7 @@ class OutputSelectionPlan:
     transformation_rows: sparse.csr_matrix
     prescribed_rows: np.ndarray
     structure_key: Tuple[Any, ...]
+    value_key: Tuple[Any, ...] = ()
 
     def reconstruct(self, reduced: np.ndarray, *, affine: bool = True) -> np.ndarray:
         values = np.asarray(self.transformation_rows @ reduced, dtype=float)
@@ -187,6 +188,73 @@ class AnalysisSession:
         if model is not None and (id(model) != self._model_id or model is not owned):
             raise ValueError("AnalysisSession belongs to a different FEModel")
         return owned
+
+    def _require_current_structural_plan(
+        self,
+        plan: Optional[StructuralMatrixPlan],
+        *,
+        matrix_type: str,
+        model: "FEModel",
+    ) -> StructuralMatrixPlan:
+        """Return the current session-owned structural plan or reject ``plan``.
+
+        Revision keys are deliberately insufficient as an ownership token: two
+        sessions for the same model can legitimately produce plans with equal
+        keys but independent retained matrices and invalidation lifecycles.
+        """
+
+        if matrix_type == "stiffness":
+            current = self.stiffness_plan(model)
+            expected_key = _revision_key(model, "topology", "geometry", "material")
+        elif matrix_type == "mass":
+            current = self.mass_plan(model)
+            expected_key = _revision_key(
+                model,
+                "topology",
+                "geometry",
+                "material",
+                "mass",
+            )
+        else:  # pragma: no cover - private API guard
+            raise ValueError(f"unsupported structural matrix type: {matrix_type!r}")
+        if plan is None:
+            return current
+        if (
+            plan is not current
+            or plan.matrix_type != matrix_type
+            or plan.revision_key != expected_key
+            or plan.revision_key != current.revision_key
+        ):
+            self._counters[f"{matrix_type}_plan_rejections"] += 1
+            raise ValueError(
+                f"stale or foreign StructuralMatrixPlan for {matrix_type}; "
+                f"call session.{matrix_type}_plan() again after model changes"
+            )
+        return current
+
+    def _require_current_constraint_plan(
+        self,
+        plan: Optional[ConstraintPlan],
+        *,
+        model: "FEModel",
+    ) -> ConstraintPlan:
+        """Return the current session-owned affine plan or reject ``plan``."""
+
+        current = self.constraint_plan(model=model)
+        if plan is None:
+            return current
+        if (
+            plan is not current
+            or plan.structure_key != current.structure_key
+            or plan.value_key != current.value_key
+            or plan.stiffness_key != current.stiffness_key
+        ):
+            self._counters["constraint_plan_rejections"] += 1
+            raise ValueError(
+                "stale or foreign ConstraintPlan; call "
+                "session.constraint_plan() again after model or prescribed-value changes"
+            )
+        return current
 
     def __enter__(self) -> "AnalysisSession":
         self._require_model()
@@ -269,7 +337,11 @@ class AnalysisSession:
 
         with self._lock:
             owned = self._require_model(model)
-            stiffness = stiffness or self.stiffness_plan(owned)
+            stiffness = self._require_current_structural_plan(
+                stiffness,
+                matrix_type="stiffness",
+                model=owned,
+            )
             structure, values = _constraint_fingerprints(owned)
             structure_key = (
                 *_revision_key(owned, "topology", "geometry", "boundary", "mpc"),
@@ -342,7 +414,10 @@ class AnalysisSession:
     ) -> Tuple[sparse.csr_matrix, Mapping[str, Any]]:
         with self._lock:
             owned = self._require_model(model)
-            constraint = constraint or self.constraint_plan(model=owned)
+            constraint = self._require_current_constraint_plan(
+                constraint,
+                model=owned,
+            )
             mass = self.mass_plan(owned)
             key = (mass.revision_key, constraint.structure_key)
             if self._reduced_mass is not None and self._reduced_mass[0] == key:
@@ -364,7 +439,10 @@ class AnalysisSession:
 
         with self._lock:
             owned = self._require_model(model)
-            constraint = constraint or self.constraint_plan(model=owned)
+            constraint = self._require_current_constraint_plan(
+                constraint,
+                model=owned,
+            )
             key = constraint.structure_key
             if self._rigid_modes is not None and self._rigid_modes[0] == key:
                 self._counters["rigid_mode_hits"] += 1
@@ -389,11 +467,18 @@ class AnalysisSession:
     ) -> OutputSelectionPlan:
         with self._lock:
             owned = self._require_model(model)
-            constraint = constraint or self.constraint_plan(model=owned)
+            constraint = self._require_current_constraint_plan(
+                constraint,
+                model=owned,
+            )
             dofs = np.asarray(full_dofs, dtype=np.intp).reshape(-1)
             if np.any(dofs < 0) or np.any(dofs >= constraint.T.shape[0]):
                 raise ValueError("output selection contains an out-of-range DOF")
-            key = (constraint.structure_key, tuple(int(value) for value in dofs))
+            key = (
+                constraint.structure_key,
+                constraint.value_key,
+                tuple(int(value) for value in dofs),
+            )
             existing = self._output_plans.get(key)
             if existing is not None:
                 self._output_plans.move_to_end(key)
@@ -404,6 +489,7 @@ class AnalysisSession:
                 constraint.T[dofs].tocsr(),
                 constraint.u0[dofs].copy(),
                 constraint.structure_key,
+                constraint.value_key,
             )
             self._output_plans[key] = plan
             self._output_plans.move_to_end(key)
@@ -450,19 +536,24 @@ class AnalysisSession:
         purpose: str,
         constraint: Optional[ConstraintPlan] = None,
     ) -> str:
-        constraint = constraint or self.constraint_plan()
-        # The factorization is a property of the matrix, not the caller.  The
-        # purpose argument is retained for readable call sites while static
-        # one-RHS and many-RHS solves deliberately share the same handle.
-        _ = purpose
-        return repr(
-            (
-                constraint.stiffness_key,
-                constraint.structure_key,
-                tuple(int(value) for value in constraint.K_red.shape),
-                int(constraint.K_red.nnz),
+        with self._lock:
+            owned = self._require_model()
+            constraint = self._require_current_constraint_plan(
+                constraint,
+                model=owned,
             )
-        )
+            # The factorization is a property of the matrix, not the caller.
+            # The purpose argument is retained for readable call sites while
+            # static one-RHS and many-RHS solves share the same handle.
+            _ = purpose
+            return repr(
+                (
+                    constraint.stiffness_key,
+                    constraint.structure_key,
+                    tuple(int(value) for value in constraint.K_red.shape),
+                    int(constraint.K_red.nnz),
+                )
+            )
 
     def diagnostics(self) -> Dict[str, Any]:
         with self._lock:

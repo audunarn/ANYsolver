@@ -136,6 +136,58 @@ def test_prescribed_value_refresh_reuses_structure_and_factorization() -> None:
     assert diagnostics["factorization_cache"]["hits"] == 1
 
 
+def test_stale_constraint_plan_is_rejected_after_prescribed_value_refresh() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    constrained_ux = np.asarray([model.mesh.get_node(1).dofs[0]], dtype=np.intp)
+    old_constraint = session.constraint_plan()
+    old_output = session.output_selection_plan(constrained_ux, old_constraint)
+
+    fixed = model.boundary_conditions[0]
+    fixed.dof_constraints["ux"] = 3.5e-4  # No revision bump: fingerprint only.
+
+    stale_consumers = (
+        lambda: session.output_selection_plan(constrained_ux, old_constraint),
+        lambda: session.reduced_mass(old_constraint),
+        lambda: session.rigid_body_modes(old_constraint),
+        lambda: session.factorization_signature("test", old_constraint),
+    )
+    for consume in stale_consumers:
+        with pytest.raises(ValueError, match="stale or foreign ConstraintPlan"):
+            consume()
+
+    current_constraint = session.constraint_plan()
+    current_output = session.output_selection_plan(constrained_ux, current_constraint)
+    reduced_zero = np.zeros(current_constraint.K_red.shape[0], dtype=float)
+
+    assert current_constraint is not old_constraint
+    assert current_output is not old_output
+    assert current_output.value_key == current_constraint.value_key
+    assert old_output.value_key != current_output.value_key
+    np.testing.assert_allclose(current_output.reconstruct(reduced_zero), [3.5e-4])
+    diagnostics = session.diagnostics()
+    assert diagnostics["counters"]["constraint_value_refreshes"] == 1
+    assert diagnostics["counters"]["constraint_plan_rejections"] == 4
+
+
+def test_foreign_plans_are_rejected_even_when_revision_keys_match() -> None:
+    model = _modal_bar()
+    first = AnalysisSession(model)
+    second = AnalysisSession(model)
+    first_stiffness = first.stiffness_plan()
+    first_constraint = first.constraint_plan(first_stiffness)
+    second_stiffness = second.stiffness_plan()
+    second_constraint = second.constraint_plan(second_stiffness)
+
+    assert first_stiffness.revision_key == second_stiffness.revision_key
+    assert first_constraint.structure_key == second_constraint.structure_key
+    assert first_constraint.value_key == second_constraint.value_key
+    with pytest.raises(ValueError, match="stale or foreign StructuralMatrixPlan"):
+        first.constraint_plan(second_stiffness)
+    with pytest.raises(ValueError, match="stale or foreign ConstraintPlan"):
+        first.output_selection_plan(np.asarray([0]), second_constraint)
+
+
 def test_revision_categories_invalidate_only_dependent_session_data() -> None:
     model = _modal_bar()
     session = AnalysisSession(model)
@@ -208,6 +260,29 @@ def test_geometry_change_invalidates_structural_and_reduced_plans() -> None:
     assert constraint_2.K_red is not constraint_1.K_red
     assert not np.array_equal(stiffness_2.matrix.data, stiffness_1.matrix.data)
     assert session.diagnostics()["invalidation_reasons"]["stiffness_revision"] == 1
+
+
+def test_old_structural_and_constraint_plans_fail_after_revision_refresh() -> None:
+    model = _modal_bar()
+    session = AnalysisSession(model)
+    old_stiffness = session.stiffness_plan()
+    old_constraint = session.constraint_plan(old_stiffness)
+
+    model.set_node_coordinates(2, 1.25, 0.0, 0.0)
+
+    with pytest.raises(ValueError, match="stale or foreign StructuralMatrixPlan"):
+        session.constraint_plan(old_stiffness)
+    with pytest.raises(ValueError, match="stale or foreign ConstraintPlan"):
+        session.output_selection_plan(np.asarray([0]), old_constraint)
+
+    current_stiffness = session.stiffness_plan()
+    current_constraint = session.constraint_plan(current_stiffness)
+    assert current_stiffness is not old_stiffness
+    assert current_constraint is not old_constraint
+    assert current_constraint.stiffness_key == current_stiffness.revision_key
+    diagnostics = session.diagnostics()
+    assert diagnostics["counters"]["stiffness_plan_rejections"] == 1
+    assert diagnostics["counters"]["constraint_plan_rejections"] == 1
 
 
 def test_support_structure_change_invalidates_constraint_and_output_plans() -> None:
