@@ -31,6 +31,9 @@ _ACTIVE_NATIVE_LIMIT: contextvars.ContextVar[Optional[int]] = contextvars.Contex
 _ACTIVE_NATIVE_LIMIT_OWNER: contextvars.ContextVar[Optional[int]] = contextvars.ContextVar(
     "anysolver_active_native_limit_owner", default=None
 )
+_ACTIVE_NATIVE_DEFAULT_OWNER: contextvars.ContextVar[Optional[int]] = contextvars.ContextVar(
+    "anysolver_active_native_default_owner", default=None
+)
 
 
 class _NativeScopeCoordinator:
@@ -192,6 +195,35 @@ def native_thread_scope(
         finally:
             report["restored"] = True
         return
+    if requested is None and _ACTIVE_NATIVE_DEFAULT_OWNER.get() == owner:
+        # A same-thread outer default scope already owns a coordinator reader.
+        # Keep that reader as the lifetime guard instead of taking the
+        # condition lock for every nested solve.  Context copies retain the
+        # originating thread id, so a child thread cannot inherit this path.
+        inherited_explicit = _ACTIVE_NATIVE_LIMIT_OWNER.get() == owner
+        report = {
+            "phase": str(phase),
+            "requested_threads": requested,
+            "limiter_available": _HAS_THREADPOOLCTL,
+            "fallback_reason": _THREADPOOLCTL_ERROR,
+            "pools_before": [],
+            "pools_active": [],
+            "pools_after": [],
+            "restored": False,
+            "coordination": (
+                "writer_inherited" if inherited_explicit else "reader_inherited"
+            ),
+            "status": (
+                "inherited_explicit_limit"
+                if inherited_explicit
+                else "inherited_default"
+            ),
+        }
+        try:
+            yield report
+        finally:
+            report["restored"] = True
+        return
     if requested is None:
         coordinator_token = _NATIVE_SCOPE_COORDINATOR.acquire_reader()
         report: Dict[str, Any] = {
@@ -210,11 +242,18 @@ def native_thread_scope(
                 else "unlimited_default"
             ),
         }
+        default_owner_token = None
+        if coordinator_token[0] == "reader":
+            default_owner_token = _ACTIVE_NATIVE_DEFAULT_OWNER.set(owner)
         try:
             yield report
         finally:
-            report["restored"] = True
-            _NATIVE_SCOPE_COORDINATOR.release_reader(coordinator_token)
+            try:
+                report["restored"] = True
+                if default_owner_token is not None:
+                    _ACTIVE_NATIVE_DEFAULT_OWNER.reset(default_owner_token)
+            finally:
+                _NATIVE_SCOPE_COORDINATOR.release_reader(coordinator_token)
         return
 
     coordinator_token = _NATIVE_SCOPE_COORDINATOR.acquire_writer()

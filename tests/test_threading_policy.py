@@ -57,6 +57,38 @@ def test_unlimited_default_is_unchanged():
         assert report["requested_threads"] is None
 
 
+def test_same_thread_nested_default_scope_inherits_reader_without_lock(monkeypatch):
+    acquire_calls = []
+    release_calls = []
+    coordinator = policy_module._NATIVE_SCOPE_COORDINATOR
+    original_acquire = coordinator.acquire_reader
+    original_release = coordinator.release_reader
+
+    def tracked_acquire():
+        acquire_calls.append(threading.get_ident())
+        return original_acquire()
+
+    def tracked_release(token):
+        release_calls.append(threading.get_ident())
+        return original_release(token)
+
+    monkeypatch.setattr(coordinator, "acquire_reader", tracked_acquire)
+    monkeypatch.setattr(coordinator, "release_reader", tracked_release)
+
+    with native_thread_scope(None, phase="outer_default") as outer:
+        with native_thread_scope(None, phase="nested_solve") as inner:
+            assert inner["status"] == "inherited_default"
+            assert inner["coordination"] == "reader_inherited"
+            assert inner["pools_before"] == []
+            assert inner["pools_after"] == []
+        assert inner["restored"] is True
+        assert outer["restored"] is False
+
+    assert outer["restored"] is True
+    assert len(acquire_calls) == 1
+    assert len(release_calls) == 1
+
+
 def test_public_solver_applies_and_reports_resource_config():
     model = generate_beam_mesh(1.0, num_divisions=1)
     load = LoadCase("tip")
@@ -155,6 +187,31 @@ def test_default_scope_can_upgrade_to_explicit_limit_and_restore():
     assert outer["restored"] is True
 
 
+def test_default_reader_fast_path_does_not_skip_explicit_writer_upgrade(monkeypatch):
+    writer_calls = []
+    coordinator = policy_module._NATIVE_SCOPE_COORDINATOR
+    original_acquire = coordinator.acquire_writer
+
+    def tracked_acquire():
+        writer_calls.append(threading.get_ident())
+        return original_acquire()
+
+    monkeypatch.setattr(coordinator, "acquire_writer", tracked_acquire)
+    monkeypatch.setattr(policy_module, "_pool_snapshot", lambda: [])
+
+    with native_thread_scope(None, phase="outer_default"):
+        with native_thread_scope(1, phase="inner_explicit") as explicit:
+            assert explicit["status"] in {"limited", "backend_unavailable"}
+            with native_thread_scope(None, phase="default_under_writer") as inherited:
+                assert inherited["status"] == "inherited_explicit_limit"
+                assert inherited["coordination"] == "writer_inherited"
+        with native_thread_scope(None, phase="default_after_writer") as restored_reader:
+            assert restored_reader["status"] == "inherited_default"
+            assert restored_reader["coordination"] == "reader_inherited"
+
+    assert len(writer_calls) == 1
+
+
 def test_same_thread_inherited_limit_skips_repeated_pool_discovery(monkeypatch):
     snapshot_calls = []
 
@@ -222,6 +279,26 @@ def test_copied_context_cannot_inherit_another_threads_native_limit():
     assert not worker.is_alive()
     assert child_entered.is_set()
     assert child_status[0] in {"limited", "backend_unavailable"}
+
+
+def test_copied_context_cannot_inherit_another_threads_default_reader():
+    child_entered = threading.Event()
+    child_reports = []
+
+    def child():
+        with native_thread_scope(None, phase="copied_default_child") as report:
+            child_reports.append((report["status"], report["coordination"]))
+            child_entered.set()
+
+    with native_thread_scope(None, phase="copied_default_parent"):
+        copied_context = contextvars.copy_context()
+        worker = threading.Thread(target=lambda: copied_context.run(child))
+        worker.start()
+        assert child_entered.wait(timeout=2.0)
+
+    worker.join(timeout=2.0)
+    assert not worker.is_alive()
+    assert child_reports == [("unlimited_default", "reader")]
 
 
 @pytest.mark.skipif(not JIT_ENABLED, reason="Numba is not installed")
