@@ -233,7 +233,7 @@ def default_eigenmode_imperfection(
 
 def run_nonlinear_capacity_workflow(
     model: "FEModel",
-    reference_load_case: "LoadCase",
+    reference_load_case: Optional["LoadCase"] = None,
     *,
     nonlinear_load_case: Optional["LoadCase"] = None,
     nonlinear_load_program: Optional[NonlinearLoadProgram] = None,
@@ -245,10 +245,28 @@ def run_nonlinear_capacity_workflow(
     record_increment_snapshots: bool = False,
     session: Optional["AnalysisSession"] = None,
 ) -> CapacityWorkflowResult:
-    """Run linear static -> buckling -> imperfection -> nonlinear capacity."""
+    """Run linear static -> buckling -> imperfection -> nonlinear capacity.
+
+    With no ``reference_load_case``, nonzero affine prescribed constraints are
+    the proportional reference action.  The returned factors then multiply
+    the prescribed displacement/rotation target rather than an external load.
+    """
     cancellation_safe_point(cancellation_token, "capacity.start")
     config = config or CapacityWorkflowConfig()
     start = time.perf_counter()
+    prescribed_action = any(
+        abs(float(value)) > 0.0
+        for condition in model.boundary_conditions
+        for value in condition.dof_constraints.values()
+    ) or any(
+        abs(float(equation.rhs)) > 0.0
+        for equation in getattr(model, "constraint_equations", ())
+    )
+    if reference_load_case is None and not prescribed_action:
+        raise ValueError(
+            "capacity needs an external reference load case or a nonzero "
+            "prescribed displacement/rotation"
+        )
     from .analysis_session import AnalysisSession
 
     owns_session = session is None
@@ -336,6 +354,11 @@ def run_nonlinear_capacity_workflow(
         "element_count": int(model.mesh.num_elements),
         "reference_load_case": getattr(reference_load_case, "name", None),
         "nonlinear_load_case": getattr(nonlinear_load_case or reference_load_case, "name", None),
+        "reference_action": (
+            "prescribed_displacement"
+            if reference_load_case is None
+            else "load_case"
+        ),
         "config": config.__dict__,
         "analysis_session": session_diagnostics,
         "environment": {
