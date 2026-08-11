@@ -2206,6 +2206,11 @@ def solve_static_nonlinear(
             "already-equilibrated restart."
         )
     if n_red == 0:
+        fully_constrained_displacement = (
+            initial_affine_offset
+            if force_restart
+            else np.asarray(u0, dtype=float).reshape(-1)
+        )
         has_initial_fields = any(
             _state_has_initial_field(state) for state in committed_states.values()
         )
@@ -2231,7 +2236,7 @@ def solve_static_nonlinear(
             internal_force, _unused_tangent, trial_states = (
                 _assemble_nonlinear_system(
                     model,
-                    np.asarray(u0, dtype=float).reshape(-1),
+                    fully_constrained_displacement,
                     committed_states,
                     num_layers,
                     tangent=False,
@@ -2265,7 +2270,7 @@ def solve_static_nonlinear(
         return NonlinearStaticResult(
             [],
             "empty_reduced_system",
-            u0.copy(),
+            fully_constrained_displacement.copy(),
             0.0,
             committed_states,
             info,
