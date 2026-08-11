@@ -40,6 +40,12 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from .nonlinear_state import (
+    PersistentStateEligibilityError,
+    ShellStateBatch,
+    ShellStateLayout,
+    StateTrialToken,
+)
 
 if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh
@@ -190,6 +196,7 @@ class _ShellBatchPlan:
     n_gp: int
     n_dof: int
     num_layers: int
+    state_layout: ShellStateLayout
     u_work: np.ndarray
     plastic_work: np.ndarray
     alpha_work: np.ndarray
@@ -265,6 +272,11 @@ class _ShellBatchPlan:
             n_gp=n_gp,
             n_dof=n_dof,
             num_layers=int(num_layers),
+            state_layout=ShellStateLayout.from_dimensions(
+                element_ids,
+                n_gp,
+                int(num_layers),
+            ),
             u_work=np.zeros((n_elem, n_dof), dtype=float),
             plastic_work=np.zeros((n_elem, n_gp * num_layers, 3), dtype=float),
             alpha_work=np.zeros((n_elem, n_gp * num_layers), dtype=float),
@@ -363,6 +375,103 @@ class _ShellBatchPlan:
                     K_batch[index] *= residual_fraction
 
         return F_batch, K_batch if tangent else None, states, time.perf_counter() - start
+
+    def persistent_state_eligibility(
+        self,
+        state_batch: ShellStateBatch,
+    ) -> Tuple[bool, Optional[str]]:
+        """Return whether this exact batch can consume persistent state arrays.
+
+        Elastic Batch-B shells deliberately omit iteration state, and immutable
+        initial fields still require the qualified scalar/exact override.  Both
+        therefore remain on their existing explicit mapping paths.
+        """
+
+        if not self.has_plasticity:
+            return False, "elastic_shell_has_no_mutable_constitutive_history"
+        if not isinstance(state_batch, ShellStateBatch):
+            return False, "state_input_is_legacy_mapping"
+        return state_batch.persistent_eligibility(self.state_layout)
+
+    def evaluate_persistent(
+        self,
+        displacements: np.ndarray,
+        state_batch: ShellStateBatch,
+        trial_token: StateTrialToken,
+        tangent: bool,
+        deleted_element_ids: Sequence[int] = (),
+        residual_stiffness_fraction: float = 1.0,
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], float]:
+        """Evaluate directly from/to solver-owned committed/trial arrays.
+
+        This is a narrow production integration point for solver lifecycles that
+        explicitly own a :class:`ShellStateBatch`.  It does not mutate or attach
+        constitutive history to the cached assembly plan.  Existing callers keep
+        using :meth:`evaluate`, which remains the public-dictionary fallback.
+        """
+
+        from .vectorized_nonlinear import batch_shell_nonlinear_response
+
+        eligible, reason = self.persistent_state_eligibility(state_batch)
+        if not eligible:
+            raise PersistentStateEligibilityError(
+                f"Persistent shell state is not eligible: {reason}"
+            )
+        state_batch.validate_trial_token(trial_token)
+        start = time.perf_counter()
+        batch_element_ids = set(self.state_layout.element_ids)
+        deleted = tuple(
+            int(element_id)
+            for element_id in deleted_element_ids
+            if int(element_id) in batch_element_ids
+        )
+        if deleted:
+            state_batch.freeze_deleted(deleted)
+        committed = state_batch.committed_arrays()
+        self.u_work[:] = np.asarray(displacements, dtype=float)[self.dof_mappings]
+        F_batch, K_batch, ep_new, alpha_new, layer_strain = (
+            batch_shell_nonlinear_response(
+                self.u_work,
+                self.T0,
+                self.B_m,
+                self.B_b,
+                self.B_d,
+                self.Gw,
+                self.detw,
+                self.B_s,
+                self.detw_shear,
+                float(self.material.elastic_modulus),
+                float(self.material.poisson_ratio),
+                float(self.material.shear_modulus),
+                self.thickness,
+                self.drilling_stabilization,
+                bool(tangent),
+                getattr(self.material, "hardening_curve", None),
+                committed.plastic_strain,
+                committed.alpha,
+                self.num_layers,
+            )
+        )
+        state_batch.update_trial(
+            trial_token,
+            plastic_strain=ep_new,
+            alpha=alpha_new,
+            layer_strain=layer_strain,
+        )
+        if deleted:
+            deleted_set = set(deleted)
+            residual_fraction = float(residual_stiffness_fraction)
+            for index, element_id in enumerate(self.element_ids):
+                if int(element_id) not in deleted_set:
+                    continue
+                F_batch[index] *= residual_fraction
+                if tangent and K_batch is not None:
+                    K_batch[index] *= residual_fraction
+        return (
+            F_batch,
+            K_batch if tangent else None,
+            time.perf_counter() - start,
+        )
 
 
 @dataclass
