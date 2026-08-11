@@ -63,6 +63,13 @@ from .matrix_assembly import (
     assemble_load_vector,
     assemble_stiffness_matrix,
 )
+from .nonlinear_state import (
+    NonlinearStateStore,
+    StateMaterializationPolicy,
+    commit_state_candidate,
+    discard_active_state_candidate,
+    materialize_state_mapping,
+)
 from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
@@ -462,6 +469,10 @@ def _increment_snapshot(
     *,
     control_value: Optional[float] = None,
 ) -> NonlinearIncrementSnapshot:
+    if isinstance(element_states, NonlinearStateStore):
+        element_states = element_states.materialize_owned(
+            policy=StateMaterializationPolicy.SAVED_STATE
+        )
     return NonlinearIncrementSnapshot(
         step_index=int(step_index),
         load_factor=float(load_factor),
@@ -601,6 +612,9 @@ def _assemble_nonlinear_system(
     rotations. ``corotational_tangent`` is already resolved to either
     ``"rotated"`` or ``"consistent"`` by the public solver.
     """
+    from .nonlinear_state import begin_state_evaluation, finish_state_evaluation
+
+    state_token = begin_state_evaluation(committed_states)
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
@@ -808,10 +822,17 @@ def _assemble_nonlinear_system(
     else:
         K_T = None
 
-    return F_int, K_T, trial_states
+    state_payload = finish_state_evaluation(
+        committed_states,
+        state_token,
+        trial_states,
+    )
+    return F_int, K_T, state_payload
 
 
-def _max_plastic_strain(states: Dict[int, Any]) -> float:
+def _max_plastic_strain(states: Mapping[int, Any]) -> float:
+    if isinstance(states, NonlinearStateStore):
+        return states.max_equivalent_plastic_strain()
     return float(_nonlinear_state_summary(states)["max_equivalent_plastic_strain"])
 
 
@@ -1200,6 +1221,116 @@ def _finalize_nonlinear_element_states(
 
     del model, displacements, num_layers, kinematics
     return element_states
+
+
+def _activate_nonlinear_state_storage(
+    model: "FEModel",
+    committed_states: Mapping[int, Any],
+    num_layers: int,
+    info: Dict[str, Any],
+    *,
+    kinematics: str,
+) -> Mapping[int, Any]:
+    """Pack qualified plastic shell batches once for one solver lifecycle."""
+
+    diagnostic: Dict[str, Any] = {
+        "activated": False,
+        "eligible_batch_count": 0,
+        "fallback_reason": None,
+    }
+    info["nonlinear_state_storage"] = diagnostic
+    if str(kinematics) != "von_karman":
+        diagnostic["fallback_reason"] = "kinematics_not_von_karman"
+        return committed_states
+    if os.environ.get("FE_SOLVER_DISABLE_PERSISTENT_STATE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        diagnostic["fallback_reason"] = "persistent_state_storage_disabled"
+        return committed_states
+    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        diagnostic["fallback_reason"] = "nonlinear_acceleration_disabled"
+        return committed_states
+    try:
+        from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
+
+        plan = get_nonlinear_assembly_plan(model, int(num_layers))
+        plastic_batches = tuple(
+            batch for batch in plan.shell_batches if batch.has_plasticity
+        )
+        if not plastic_batches:
+            diagnostic["fallback_reason"] = "no_plastic_shell_batch"
+            return committed_states
+        store = NonlinearStateStore.from_shell_layouts(
+            tuple(batch.state_layout for batch in plastic_batches),
+            committed_states,
+        )
+        eligibility = []
+        for batch in plastic_batches:
+            state_batch = store.shell_batch_for_layout(batch.state_layout)
+            eligible, reason = batch.persistent_state_eligibility(state_batch)
+            eligibility.append(
+                {
+                    "element_ids": list(batch.state_layout.element_ids),
+                    "eligible": bool(eligible),
+                    "fallback_reason": reason,
+                }
+            )
+        eligible_count = sum(int(item["eligible"]) for item in eligibility)
+        diagnostic.update(
+            {
+                "eligible_batch_count": int(eligible_count),
+                "batch_eligibility": eligibility,
+            }
+        )
+        if eligible_count == 0:
+            diagnostic["fallback_reason"] = "no_persistent_state_batch_eligible"
+            return committed_states
+        diagnostic["activated"] = True
+        diagnostic.update(store.diagnostics())
+        return store
+    except Exception as exc:
+        diagnostic["fallback_reason"] = (
+            f"state_store_setup_failed:{type(exc).__name__}:{exc}"
+        )
+        return committed_states
+
+
+def _commit_nonlinear_state_candidate(
+    committed_states: Mapping[int, Any],
+    candidate_states: Mapping[int, Any],
+) -> Mapping[int, Any]:
+    return commit_state_candidate(committed_states, candidate_states)
+
+
+def _discard_nonlinear_state_candidate(
+    committed_states: Mapping[int, Any],
+) -> None:
+    discard_active_state_candidate(committed_states)
+
+
+def _materialize_final_nonlinear_states(
+    committed_states: Mapping[int, Any],
+    info: Dict[str, Any],
+) -> Dict[int, Any]:
+    store = committed_states if isinstance(committed_states, NonlinearStateStore) else None
+    result = materialize_state_mapping(
+        committed_states,
+        policy=StateMaterializationPolicy.FINAL_RESULT,
+    )
+    if store is not None:
+        activation = dict(info.get("nonlinear_state_storage", {}))
+        activation.update(store.diagnostics())
+        activation["activated"] = True
+        info["nonlinear_state_storage"] = activation
+    return result
 
 
 def _nonlinear_status_category(status: str, failure_reason: Optional[str]) -> str:
@@ -1591,12 +1722,16 @@ def _solve_static_displacement_control(
                 failure_reason = "maximum_iterations_reached"
 
             if failure_reason is not None:
+                _discard_nonlinear_state_candidate(committed_states)
                 q = q_step_start
                 lam = lam_step_start
                 status = "stopped_at_limit" if steps else "diverged"
                 break
 
-            committed_states = states_new
+            committed_states = _commit_nonlinear_state_candidate(
+                committed_states,
+                states_new,
+            )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
             steps.append(
@@ -1650,6 +1785,7 @@ def _solve_static_displacement_control(
                 )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     committed_states = _finalize_nonlinear_element_states(
         model,
         u_final,
@@ -2129,6 +2265,13 @@ def solve_static_nonlinear(
             }
             info["material_history_reused_from_preload"] = True
 
+        committed_states = _activate_nonlinear_state_storage(
+            model,
+            committed_states,
+            num_layers,
+            info,
+            kinematics=kinematics,
+        )
         controlled_result = _solve_static_displacement_control(
             model=model,
             T=T,
@@ -2189,6 +2332,13 @@ def solve_static_nonlinear(
             ) + int(preload_result.info.get("total_newton_iterations", 0))
         return controlled_result
 
+    committed_states = _activate_nonlinear_state_storage(
+        model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+    )
     base_step = target_load_factor / num_steps
     min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
     max_step = max(base_step * settings.max_step_factor, min_step)
@@ -2446,7 +2596,10 @@ def solve_static_nonlinear(
             if converged:
                 q = q_new
                 lam = lam_trial
-                committed_states = states_new
+                committed_states = _commit_nonlinear_state_candidate(
+                    committed_states,
+                    states_new,
+                )
                 force_line_search_next = False
                 step_index += 1
                 u = full_displacement(q, lam)
@@ -2599,6 +2752,7 @@ def solve_static_nonlinear(
                 )
                 step_size = next_step
             else:
+                _discard_nonlinear_state_candidate(committed_states)
                 if fracture_config is not None and deleted_element_ids and failure_reason in {
                     "singular_tangent_factorization",
                     "maximum_iterations_reached",
@@ -2635,6 +2789,7 @@ def solve_static_nonlinear(
                     break
 
     u_final = full_displacement(q, lam)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     committed_states = _finalize_nonlinear_element_states(
         model,
         u_final,

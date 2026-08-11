@@ -43,12 +43,17 @@ from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
+from .nonlinear_state import NonlinearStateStore
 from .nonlinear_static import (
     NonlinearIncrementSnapshot,
     _assemble_nonlinear_system,
+    _activate_nonlinear_state_storage,
+    _commit_nonlinear_state_candidate,
     _copy_initial_states,
+    _discard_nonlinear_state_candidate,
     _has_follower_pressure,
     _max_plastic_strain,
+    _materialize_final_nonlinear_states,
     _nonlinear_state_summary,
     _increment_snapshot,
     _weighted_external_load_system,
@@ -551,6 +556,14 @@ def solve_static_arc_length(
         info["factorization_error"] = str(exc)
         return ArcLengthResult([], "initial_tangent_failed", u, lam, lam, None, committed_states, info)
 
+    committed_states = _activate_nonlinear_state_storage(
+        working_model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+    )
+
     tangent_norm = _metric_norm(W, tangent_direction)
     load_scaling = float(settings.load_scaling) if settings.load_scaling is not None else max(tangent_norm, 1.0e-12)
     predictor_norm = float(np.sqrt(tangent_norm * tangent_norm + load_scaling * load_scaling))
@@ -580,7 +593,11 @@ def solve_static_arc_length(
         )
         q_base = q.copy()
         lambda_base = float(lam)
-        states_base = copy.deepcopy(committed_states)
+        states_base = (
+            committed_states
+            if isinstance(committed_states, NonlinearStateStore)
+            else copy.deepcopy(committed_states)
+        )
         accepted = False
         step_failure = "unknown"
 
@@ -624,6 +641,7 @@ def solve_static_arc_length(
                 )
             except Exception:
                 step_failure = "singular_predictor_tangent"
+                _discard_nonlinear_state_candidate(committed_states)
                 radius *= settings.cutback_factor
                 if radius < min_radius:
                     break
@@ -644,6 +662,7 @@ def solve_static_arc_length(
             )
             if direction_norm <= _SMALL:
                 step_failure = "zero_predictor_direction"
+                _discard_nonlinear_state_candidate(committed_states)
                 break
 
             dlambda_total = sign * radius / direction_norm
@@ -779,7 +798,10 @@ def solve_static_arc_length(
             if accepted:
                 q = q_trial
                 lam = float(lambda_trial)
-                committed_states = trial_states
+                committed_states = _commit_nonlinear_state_candidate(
+                    committed_states,
+                    trial_states,
+                )
                 u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
                 path_increment_norm = float(
                     np.sqrt(
@@ -870,6 +892,7 @@ def solve_static_arc_length(
                 )
                 break
 
+            _discard_nonlinear_state_candidate(committed_states)
             radius *= settings.cutback_factor
             adaptation_history.append(
                 {
@@ -919,6 +942,7 @@ def solve_static_arc_length(
         status = "maximum_steps_reached"
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+    committed_states = _materialize_final_nonlinear_states(committed_states, info)
     info["failure_reason"] = failure_reason
     info["last_converged_load_factor"] = float(lam)
     info["peak_load_factor"] = float(peak_load_factor)

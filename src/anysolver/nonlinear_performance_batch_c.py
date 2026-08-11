@@ -18,6 +18,7 @@ from . import nonlinear_performance as _performance
 from . import nonlinear_performance_batch_b as _batch_b
 from . import nonlinear_reduced_assembly as _reduced
 from .jit_compiler import JIT_ENABLED
+from .nonlinear_state import NonlinearStateStore
 from .nonlinear_reduced_assembly import (
     ReducedAssemblyPlan,
     ReducedAssemblyPlanLimit,
@@ -260,8 +261,14 @@ def _batch_c_evaluate_local_responses(
         nonlinear_plan.tangent_values.fill(0.0)
     trial_states: Dict[int, Any] = {}
     displacement_array = np.asarray(displacements, dtype=float)
+    state_token = (
+        committed_states.active_trial_token()
+        if isinstance(committed_states, NonlinearStateStore)
+        else None
+    )
 
     for batch in nonlinear_plan.shell_batches:
+        used_persistent_state = False
         if getattr(batch, "_batch_b_elastic", False):
             initialized_count = _batch_b._populate_initial_field_resultants(
                 batch, committed_states
@@ -329,11 +336,32 @@ def _batch_c_evaluate_local_responses(
                     trial_states,
                 )
         else:
-            force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
-                displacement_array,
-                committed_states,
-                tangent,
+            persistent_trial = (
+                committed_states.shell_trial_for_layout(
+                    state_token,
+                    batch.state_layout,
+                )
+                if isinstance(committed_states, NonlinearStateStore)
+                and state_token is not None
+                else None
             )
+            if persistent_trial is not None and batch.persistent_state_eligibility(
+                persistent_trial[0]
+            )[0]:
+                used_persistent_state = True
+                force_batch, tangent_batch, kernel_seconds = batch.evaluate_persistent(
+                    displacement_array,
+                    persistent_trial[0],
+                    persistent_trial[1],
+                    tangent,
+                )
+                batch_states = {}
+            else:
+                force_batch, tangent_batch, batch_states, kernel_seconds = batch.evaluate(
+                    displacement_array,
+                    committed_states,
+                    tangent,
+                )
             nonlinear_plan.timings.shell_kernel_seconds += kernel_seconds
             nonlinear_plan.force_values[batch.force_positions.reshape(-1)] = np.asarray(
                 force_batch,
@@ -345,19 +373,20 @@ def _batch_c_evaluate_local_responses(
                 ] = np.asarray(tangent_batch, dtype=float).reshape(-1)
             trial_states.update(batch_states)
 
-        override_start = time.perf_counter()
-        override_count = _performance._apply_initial_field_shell_overrides(
-            nonlinear_plan,
-            batch,
-            displacement_array,
-            committed_states,
-            tangent,
-            trial_states,
-        )
-        nonlinear_plan.timings.initial_field_override_seconds += (
-            time.perf_counter() - override_start
-        )
-        nonlinear_plan.timings.initial_field_override_elements += override_count
+        if not used_persistent_state:
+            override_start = time.perf_counter()
+            override_count = _performance._apply_initial_field_shell_overrides(
+                nonlinear_plan,
+                batch,
+                displacement_array,
+                committed_states,
+                tangent,
+                trial_states,
+            )
+            nonlinear_plan.timings.initial_field_override_seconds += (
+                time.perf_counter() - override_start
+            )
+            nonlinear_plan.timings.initial_field_override_elements += override_count
 
     for batch in nonlinear_plan.quadratic_beam_batches:
         nonlinear_plan.timings.non_shell_seconds += batch.evaluate_into_buffers(

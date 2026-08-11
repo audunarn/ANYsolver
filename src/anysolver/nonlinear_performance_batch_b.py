@@ -36,6 +36,11 @@ from .elements import (
 )
 from .plasticity import lobatto_layers
 from . import nonlinear_performance as _performance
+from .nonlinear_state import (
+    NonlinearStateStore,
+    begin_state_evaluation,
+    finish_state_evaluation,
+)
 
 
 @njit(cache=True, parallel=True)
@@ -789,6 +794,7 @@ def _batch_b_plan_assemble(
             residual_stiffness_fraction=float(residual_stiffness_fraction),
         )
     with self._lock:
+        state_token = begin_state_evaluation(committed_states)
         start_total = time.perf_counter()
         self.timings.calls += 1
         if tangent:
@@ -802,6 +808,7 @@ def _batch_b_plan_assemble(
         trial_states: Dict[int, Any] = {}
 
         for batch in self.shell_batches:
+            used_persistent_state = False
             if getattr(batch, "_batch_b_elastic", False):
                 initialized_count = _populate_initial_field_resultants(
                     batch, committed_states
@@ -869,11 +876,32 @@ def _batch_b_plan_assemble(
                         trial_states,
                     )
             else:
-                F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
-                    displacements,
-                    committed_states,
-                    tangent,
+                persistent_trial = (
+                    committed_states.shell_trial_for_layout(
+                        state_token,
+                        batch.state_layout,
+                    )
+                    if isinstance(committed_states, NonlinearStateStore)
+                    and state_token is not None
+                    else None
                 )
+                if persistent_trial is not None and batch.persistent_state_eligibility(
+                    persistent_trial[0]
+                )[0]:
+                    used_persistent_state = True
+                    F_batch, K_batch, kernel_seconds = batch.evaluate_persistent(
+                        displacements,
+                        persistent_trial[0],
+                        persistent_trial[1],
+                        tangent,
+                    )
+                    batch_states = {}
+                else:
+                    F_batch, K_batch, batch_states, kernel_seconds = batch.evaluate(
+                        displacements,
+                        committed_states,
+                        tangent,
+                    )
                 self.timings.shell_kernel_seconds += kernel_seconds
                 self.force_values[batch.force_positions.reshape(-1)] = np.asarray(
                     F_batch, dtype=float
@@ -884,19 +912,20 @@ def _batch_b_plan_assemble(
                     ).reshape(-1)
                 trial_states.update(batch_states)
 
-            override_start = time.perf_counter()
-            override_count = _performance._apply_initial_field_shell_overrides(
-                self,
-                batch,
-                displacements,
-                committed_states,
-                tangent,
-                trial_states,
-            )
-            self.timings.initial_field_override_seconds += (
-                time.perf_counter() - override_start
-            )
-            self.timings.initial_field_override_elements += override_count
+            if not used_persistent_state:
+                override_start = time.perf_counter()
+                override_count = _performance._apply_initial_field_shell_overrides(
+                    self,
+                    batch,
+                    displacements,
+                    committed_states,
+                    tangent,
+                    trial_states,
+                )
+                self.timings.initial_field_override_seconds += (
+                    time.perf_counter() - override_start
+                )
+                self.timings.initial_field_override_elements += override_count
 
         for batch in self.quadratic_beam_batches:
             self.timings.non_shell_seconds += batch.evaluate_into_buffers(
@@ -958,7 +987,12 @@ def _batch_b_plan_assemble(
             tangent_matrix = None
 
         self.timings.total_seconds += time.perf_counter() - start_total
-        return force, tangent_matrix, trial_states
+        state_payload = finish_state_evaluation(
+            committed_states,
+            state_token,
+            trial_states,
+        )
+        return force, tangent_matrix, state_payload
 
 
 def _batch_b_plan_diagnostics(self) -> Dict[str, Any]:
