@@ -195,6 +195,42 @@ def test_provenance_float_fields_reject_boolean_string_and_nonfinite_coercions()
         )
 
 
+def test_fingerprint_and_identity_fields_reject_nonstring_objects() -> None:
+    for field_name in (
+        "source_geometry_package_version",
+        "source_geometry_document_checksum",
+        "source_units",
+        "source_coordinate_transform_fingerprint",
+        "source_mesh_generator_version",
+    ):
+        with pytest.raises(TypeError, match="must be a string"):
+            _header(**{field_name: object()})
+    with pytest.raises(TypeError, match="must be a string"):
+        _header(source_geometry_tolerance_summary=((object(), 1.0e-7),))
+    with pytest.raises(TypeError, match="must be a string"):
+        SupportSurfaceRecord(object(), "surface-fingerprint")
+    with pytest.raises(TypeError, match="must be a string"):
+        SupportSurfaceRecord("plane", object())
+    with pytest.raises(TypeError, match="must be a string"):
+        SourceEntityHandle(object(), "face", 1)
+
+
+def test_analysis_fingerprint_components_reject_nondeterministic_objects() -> None:
+    for field_name in (
+        "topology_fingerprint",
+        "numeric_reference_fingerprint",
+        "material_section_mapping_fingerprint",
+    ):
+        values: dict[str, object] = {
+            "topology_fingerprint": "topology-a",
+            "numeric_reference_fingerprint": "directors-a",
+            "material_section_mapping_fingerprint": "section-a",
+        }
+        values[field_name] = object()
+        with pytest.raises(TypeError, match="must be a string"):
+            analysis_provenance_fingerprint(None, **values)
+
+
 def test_stale_revision_and_adapter_stale_flag_fail_closed_in_constant_time_gate() -> None:
     tables, _ = _resolved_tables()
     validate_provenance_snapshot(

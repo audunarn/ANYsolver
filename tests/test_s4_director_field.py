@@ -7,6 +7,7 @@ import math
 import numpy as np
 import pytest
 
+import anysolver.shell_formulations.director_field as director_field_module
 from anysolver.shell_formulations.director_field import (
     DIRECTOR_PROVENANCE_NUMERIC_CODE,
     DirectorProvenanceCode,
@@ -287,7 +288,40 @@ def test_numeric_fingerprint_preserves_integer_signedness_and_rejects_nonfinite_
         numeric_payload_fingerprint(np.asarray((np.nan,), dtype=np.float64))
 
 
-def test_direct_prepared_field_rejects_nonfinite_directors_and_narrowed_provenance() -> None:
+def _internal_prepared_copy(
+    valid: PreparedDirectorField,
+    **changes: object,
+) -> PreparedDirectorField:
+    values: dict[str, object] = {
+        "directors": valid.directors,
+        "provenance_codes": valid.provenance_codes,
+        "element_quality": valid.element_quality,
+        "quality": valid.quality,
+        "diagnostics": valid.diagnostics,
+        "numeric_fingerprint": valid.numeric_fingerprint,
+    }
+    values.update(changes)
+    return PreparedDirectorField(
+        **values,
+        _factory_token=director_field_module._PREPARED_DIRECTOR_FACTORY_TOKEN,
+    )
+
+
+def test_direct_prepared_field_construction_is_factory_only() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    valid = reconstruct_corner_directors(coordinates, connectivity)
+    with pytest.raises(TypeError, match="direct construction is unsupported"):
+        PreparedDirectorField(
+            valid.directors,
+            valid.provenance_codes,
+            valid.element_quality,
+            valid.quality,
+            valid.diagnostics,
+            valid.numeric_fingerprint,
+        )
+
+
+def test_internal_prepared_field_validation_rejects_hostile_records() -> None:
     coordinates, connectivity = _two_quad_plane()
     valid = reconstruct_corner_directors(coordinates, connectivity)
 
@@ -295,38 +329,60 @@ def test_direct_prepared_field_rejects_nonfinite_directors_and_narrowed_provenan
         invalid_directors = valid.directors.copy()
         invalid_directors[0, 0, 0] = invalid_value
         with pytest.raises(ValueError, match="must remain finite"):
-            PreparedDirectorField(
-                invalid_directors,
-                valid.provenance_codes,
-                valid.element_quality,
-                valid.quality,
-                valid.diagnostics,
-                valid.numeric_fingerprint,
-            )
+            _internal_prepared_copy(valid, directors=invalid_directors)
+
+    zero_directors = valid.directors.copy()
+    zero_directors[0, 0] = 0.0
+    with pytest.raises(ValueError, match="finite nonzero length"):
+        _internal_prepared_copy(valid, directors=zero_directors)
 
     for narrowed in (
         np.full(valid.provenance_codes.shape, 256, dtype=np.uint16),
         np.full(valid.provenance_codes.shape, -1, dtype=np.int16),
     ):
         with pytest.raises(ValueError, match=r"\[0, 255\]"):
-            PreparedDirectorField(
-                valid.directors,
-                narrowed,
-                valid.element_quality,
-                valid.quality,
-                valid.diagnostics,
-                valid.numeric_fingerprint,
-            )
+            _internal_prepared_copy(valid, provenance_codes=narrowed)
 
     unregistered = np.full(valid.provenance_codes.shape, 6, dtype=np.uint8)
     with pytest.raises(ValueError, match="unknown numeric director provenance"):
-        PreparedDirectorField(
-            valid.directors,
-            unregistered,
-            valid.element_quality,
-            valid.quality,
-            valid.diagnostics,
-            valid.numeric_fingerprint,
+        _internal_prepared_copy(valid, provenance_codes=unregistered)
+
+    for changes, message in (
+        ({"element_quality": (object(),) * len(valid.element_quality)}, "CornerDirectorQuality"),
+        ({"quality": object()}, "DirectorFieldQuality"),
+        ({"diagnostics": (object(),)}, "nonempty strings"),
+        ({"numeric_fingerprint": object()}, "canonical lowercase"),
+        ({"numeric_fingerprint": "A" * 64}, "canonical lowercase"),
+        ({"numeric_fingerprint": "0" * 63}, "canonical lowercase"),
+    ):
+        with pytest.raises((TypeError, ValueError), match=message):
+            _internal_prepared_copy(valid, **changes)
+
+
+def test_director_validation_limits_reject_boolean_and_nonscalar_values() -> None:
+    fields = (
+        "normalization_atol",
+        "minimum_geometry_alignment",
+        "maximum_corner_spread_degrees",
+        "crease_angle_degrees",
+    )
+    for field_name in fields:
+        for hostile in (True, np.bool_(False), np.asarray(1.0), np.asarray([1.0]), object(), "1"):
+            with pytest.raises(TypeError, match="real numeric scalar"):
+                DirectorValidationLimits(**{field_name: hostile})
+
+
+def test_invalid_limit_type_cannot_relax_director_normalization() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    corners = coordinates[connectivity[:1]]
+    directors = np.tile((0.0, 0.0, 2.0), (1, 4, 1))
+    with pytest.raises(ValueError, match="maximum norm error"):
+        prepare_supplied_corner_directors(corners, directors)
+    with pytest.raises(TypeError, match="real numeric scalar"):
+        prepare_supplied_corner_directors(
+            corners,
+            directors,
+            limits=DirectorValidationLimits(normalization_atol=True),
         )
 
 

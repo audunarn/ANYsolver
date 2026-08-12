@@ -105,7 +105,10 @@ class GeometryProvenanceHeader:
             "source_mesh_revision",
             _nonnegative_integer(self.source_mesh_revision, "source_mesh_revision"),
         )
-        package_version = str(self.source_geometry_package_version).strip()
+        package_version = _nonempty_string(
+            self.source_geometry_package_version,
+            "source_geometry_package_version",
+        )
         validate_anygeometry_version(package_version)
         object.__setattr__(self, "source_geometry_package_version", package_version)
         schema = _nonnegative_integer(self.source_geometry_schema, "source_geometry_schema")
@@ -133,15 +136,20 @@ class GeometryProvenanceHeader:
 
         checksum = self.source_geometry_document_checksum
         if checksum is not None:
-            checksum = str(checksum).strip()
-            if not checksum:
-                raise ValueError("source geometry document checksum must be nonempty when present")
+            checksum = _nonempty_string(
+                checksum,
+                "source_geometry_document_checksum",
+            )
         object.__setattr__(self, "source_geometry_document_checksum", checksum)
-        units = str(self.source_units).strip()
-        transform = str(self.source_coordinate_transform_fingerprint).strip()
-        generator = str(self.source_mesh_generator_version).strip()
-        if not units or not transform or not generator:
-            raise ValueError("source units, transform fingerprint, and mesh generator version must be nonempty")
+        units = _nonempty_string(self.source_units, "source_units")
+        transform = _nonempty_string(
+            self.source_coordinate_transform_fingerprint,
+            "source_coordinate_transform_fingerprint",
+        )
+        generator = _nonempty_string(
+            self.source_mesh_generator_version,
+            "source_mesh_generator_version",
+        )
         object.__setattr__(self, "source_units", units)
         object.__setattr__(self, "source_coordinate_transform_fingerprint", transform)
         object.__setattr__(self, "source_mesh_generator_version", generator)
@@ -155,7 +163,10 @@ class GeometryProvenanceHeader:
         object.__setattr__(self, "source_local_origin", origin)
         tolerance_summary = tuple(
             sorted(
-                (str(name), _finite_float(value, f"source geometry tolerance {name!r}"))
+                (
+                    _nonempty_string(name, "source geometry tolerance name"),
+                    _finite_float(value, f"source geometry tolerance {name!r}"),
+                )
                 for name, value in self.source_geometry_tolerance_summary
             )
         )
@@ -199,7 +210,7 @@ class GeometryProvenanceHeader:
             source_geometry_audit_status=payload["source_geometry_audit_status"],
             source_geometry_audit_certifiable=payload["source_geometry_audit_certifiable"],
             source_geometry_tolerance_summary=tuple(
-                (str(name), value)
+                (name, value)
                 for name, value in payload.get("source_geometry_tolerance_summary", ())
             ),
             source_units=payload.get("source_units", "m"),
@@ -297,10 +308,14 @@ class SupportSurfaceRecord:
     fingerprint: str
 
     def __post_init__(self) -> None:
-        surface_type = str(self.surface_type).strip().lower()
-        fingerprint = str(self.fingerprint).strip()
-        if not surface_type or not fingerprint:
-            raise ValueError("support surface type and fingerprint must be nonempty")
+        surface_type = _nonempty_string(
+            self.surface_type,
+            "support surface type",
+        ).lower()
+        fingerprint = _nonempty_string(
+            self.fingerprint,
+            "support surface fingerprint",
+        )
         object.__setattr__(self, "surface_type", surface_type)
         object.__setattr__(self, "fingerprint", fingerprint)
 
@@ -386,9 +401,13 @@ class CouplingIntentRecord:
         ):
             index = getattr(self, index_name)
             kind = getattr(self, kind_name)
-            if index >= 0 and (kind is None or not str(kind).strip()):
+            if index >= 0 and kind is None:
                 raise ValueError(f"{kind_name} is required when {index_name} is present")
-            object.__setattr__(self, kind_name, None if kind is None else str(kind).strip().lower())
+            object.__setattr__(
+                self,
+                kind_name,
+                None if kind is None else _nonempty_string(kind, kind_name).lower(),
+            )
         if self.member_parameter is not None:
             member_parameter = _finite_float(self.member_parameter, "member_parameter")
             if not 0.0 <= member_parameter <= 1.0:
@@ -645,7 +664,8 @@ class GeometryProvenanceTables:
 def validate_anygeometry_version(version: str) -> tuple[int, int, int]:
     """Validate the public ``>=0.2,<0.3`` API boundary without importing it."""
 
-    match = _VERSION_PATTERN.match(str(version).strip())
+    normalized = _nonempty_string(version, "source geometry package version")
+    match = _VERSION_PATTERN.match(normalized)
     if match is None:
         raise ValueError(f"invalid source geometry package version: {version!r}")
     parsed = (
@@ -803,18 +823,22 @@ def analysis_provenance_fingerprint(
         validate_provenance_snapshot(tables)
     components = {
         "geometry_provenance": "unavailable" if tables is None else tables.fingerprint,
-        "topology": str(topology_fingerprint),
-        "numeric_reference": str(numeric_reference_fingerprint),
-        "material_section_mapping": str(material_section_mapping_fingerprint),
+        "topology": _nonempty_string(topology_fingerprint, "topology_fingerprint"),
+        "numeric_reference": _nonempty_string(
+            numeric_reference_fingerprint,
+            "numeric_reference_fingerprint",
+        ),
+        "material_section_mapping": _nonempty_string(
+            material_section_mapping_fingerprint,
+            "material_section_mapping_fingerprint",
+        ),
     }
-    if any(not value for value in components.values()):
-        raise ValueError("analysis provenance fingerprint components must be nonempty")
     canonical = json.dumps(components, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _normal_kind(value: str) -> str:
-    kind = str(value).strip().lower().replace("-", "_")
+    kind = _nonempty_string(value, "source entity kind").lower().replace("-", "_")
     if kind not in SUPPORTED_SOURCE_ENTITY_KINDS:
         raise ValueError(f"unsupported source entity kind: {value!r}")
     return kind
@@ -828,8 +852,10 @@ def _checked_index(index: int, length: int, label: str) -> int:
 
 
 def _canonical_model_id(value: object) -> str:
+    if not isinstance(value, str):
+        raise TypeError("source geometry model ID must be a string")
     try:
-        made = UUID(str(value))
+        made = UUID(value)
     except (AttributeError, TypeError, ValueError) as exc:
         raise ValueError("source geometry model ID must be a valid UUID") from exc
     if made.int == 0:
@@ -881,4 +907,15 @@ def _finite_float(value: object, label: str) -> float:
         raise ValueError(f"{label} cannot be represented as float64") from exc
     if not math.isfinite(made):
         raise ValueError(f"{label} must be finite")
+    return made
+
+
+def _nonempty_string(value: object, label: str) -> str:
+    """Require an actual stable string instead of coercing arbitrary objects."""
+
+    if not isinstance(value, str):
+        raise TypeError(f"{label} must be a string")
+    made = value.strip()
+    if not made:
+        raise ValueError(f"{label} must be nonempty")
     return made

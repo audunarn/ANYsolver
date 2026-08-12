@@ -17,6 +17,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+import anysolver.shell_formulations.director_field as director_field_module  # noqa: E402
 from anysolver.shell_formulations.director_field import (  # noqa: E402
     DirectorValidationLimits,
     PreparedDirectorField,
@@ -357,6 +358,21 @@ def _hostile_numeric_input_check() -> MappingResult:
     if signed_fingerprint == unsigned_fingerprint:
         raise AssertionError("signed -1 and uint64 maximum share a numeric fingerprint")
 
+    def internal_prepared(**changes: object) -> PreparedDirectorField:
+        values: dict[str, object] = {
+            "directors": prepared.directors,
+            "provenance_codes": prepared.provenance_codes,
+            "element_quality": prepared.element_quality,
+            "quality": prepared.quality,
+            "diagnostics": prepared.diagnostics,
+            "numeric_fingerprint": prepared.numeric_fingerprint,
+        }
+        values.update(changes)
+        return PreparedDirectorField(
+            **values,
+            _factory_token=director_field_module._PREPARED_DIRECTOR_FACTORY_TOKEN,
+        )
+
     return {
         "compact_uint64_max": _rejection(
             lambda: reconstruct_corner_directors(
@@ -367,26 +383,39 @@ def _hostile_numeric_input_check() -> MappingResult:
             label="compact uint64 maximum",
         ),
         "provenance_256": _rejection(
-            lambda: PreparedDirectorField(
-                prepared.directors,
-                narrowed_provenance,
-                prepared.element_quality,
-                prepared.quality,
-                prepared.diagnostics,
-                prepared.numeric_fingerprint,
-            ),
+            lambda: internal_prepared(provenance_codes=narrowed_provenance),
             label="narrowed provenance 256",
         ),
         "nonfinite_director": _rejection(
+            lambda: internal_prepared(directors=invalid_directors),
+            label="NaN prepared director",
+        ),
+        "direct_construction": _rejection(
             lambda: PreparedDirectorField(
-                invalid_directors,
+                prepared.directors,
                 prepared.provenance_codes,
                 prepared.element_quality,
                 prepared.quality,
                 prepared.diagnostics,
                 prepared.numeric_fingerprint,
             ),
-            label="NaN prepared director",
+            label="direct prepared-field construction",
+        ),
+        "boolean_limit": _rejection(
+            lambda: DirectorValidationLimits(normalization_atol=True),
+            label="boolean director validation limit",
+        ),
+        "nonscalar_limit": _rejection(
+            lambda: DirectorValidationLimits(normalization_atol=np.asarray(1.0)),
+            label="nonscalar director validation limit",
+        ),
+        "noncanonical_fingerprint": _rejection(
+            lambda: internal_prepared(numeric_fingerprint=object()),
+            label="noncanonical prepared-field fingerprint",
+        ),
+        "untyped_quality": _rejection(
+            lambda: internal_prepared(quality=object()),
+            label="untyped prepared-field quality",
         ),
         "overflow_prone_parallel_tangents": _rejection(
             lambda: SourceCornerSamples(

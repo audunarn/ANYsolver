@@ -236,6 +236,19 @@ unsigned integers as little-endian `uint64`, so `uint64(max)` cannot collide
 with the signed `-1` sentinel. Unsupported object/complex arrays and non-finite
 floating payloads are rejected instead of hashed through a lossy conversion.
 
+Fingerprint and identity inputs must already be actual strings; arbitrary
+objects are never converted with `str()`. Generated numeric fingerprints are
+canonical lowercase 64-hex SHA-256 values. `PreparedDirectorField` is an
+immutable returned type whose direct construction is unsupported: only the two
+validated preparation functions may create it using a module-private identity
+token after computing the fingerprint from the complete canonical inputs.
+Restart or decode wiring must re-enter one of those validated preparation
+paths rather than instantiate a prepared record from untrusted fields.
+
+`DirectorValidationLimits` accepts finite real scalar values only. Booleans,
+strings, objects, and NumPy arrays (including zero-dimensional arrays) cannot
+coerce into a scientific acceptance tolerance.
+
 Every provenance association validates its integer bounds when constructed.
 Packing accepts only validated `ShellSourceAssociation` records and therefore
 cannot be the first point at which an out-of-range source or region index is

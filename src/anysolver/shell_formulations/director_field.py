@@ -9,10 +9,11 @@ sheets, parts, creases, or declared continuity regions.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from enum import Enum
 import math
 from operator import index as integer_index
+import re
 from typing import Iterable, Sequence
 
 import numpy as np
@@ -44,6 +45,25 @@ DIRECTOR_PROVENANCE_FROM_NUMERIC_CODE: dict[int, DirectorProvenanceCode] = {
     value: key for key, value in DIRECTOR_PROVENANCE_NUMERIC_CODE.items()
 }
 _INT64_MAX = int(np.iinfo(np.int64).max)
+_CANONICAL_SHA256 = re.compile(r"[0-9a-f]{64}")
+_PREPARED_DIRECTOR_FACTORY_TOKEN = object()
+
+
+def _strict_real_scalar(value: object, *, label: str) -> float:
+    """Return one finite real scalar without accepting coercive containers."""
+
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value,
+        (int, float, np.integer, np.floating),
+    ):
+        raise TypeError(f"{label} must be a real numeric scalar")
+    try:
+        made = float(value)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{label} cannot be represented as float64") from exc
+    if not math.isfinite(made):
+        raise ValueError(f"{label} must be finite")
+    return made
 
 
 def _strict_integer_array(
@@ -98,14 +118,38 @@ class DirectorValidationLimits:
     crease_angle_degrees: float = 35.0
 
     def __post_init__(self) -> None:
-        if not math.isfinite(self.normalization_atol) or self.normalization_atol < 0.0:
+        normalization_atol = _strict_real_scalar(
+            self.normalization_atol,
+            label="normalization_atol",
+        )
+        minimum_geometry_alignment = _strict_real_scalar(
+            self.minimum_geometry_alignment,
+            label="minimum_geometry_alignment",
+        )
+        maximum_corner_spread_degrees = _strict_real_scalar(
+            self.maximum_corner_spread_degrees,
+            label="maximum_corner_spread_degrees",
+        )
+        crease_angle_degrees = _strict_real_scalar(
+            self.crease_angle_degrees,
+            label="crease_angle_degrees",
+        )
+        if normalization_atol < 0.0:
             raise ValueError("normalization_atol must be finite and nonnegative")
-        if not -1.0 < self.minimum_geometry_alignment <= 1.0:
+        if not -1.0 < minimum_geometry_alignment <= 1.0:
             raise ValueError("minimum_geometry_alignment must lie in (-1, 1]")
-        if not 0.0 <= self.maximum_corner_spread_degrees <= 180.0:
+        if not 0.0 <= maximum_corner_spread_degrees <= 180.0:
             raise ValueError("maximum_corner_spread_degrees must lie in [0, 180]")
-        if not 0.0 <= self.crease_angle_degrees <= 180.0:
+        if not 0.0 <= crease_angle_degrees <= 180.0:
             raise ValueError("crease_angle_degrees must lie in [0, 180]")
+        object.__setattr__(self, "normalization_atol", normalization_atol)
+        object.__setattr__(self, "minimum_geometry_alignment", minimum_geometry_alignment)
+        object.__setattr__(
+            self,
+            "maximum_corner_spread_degrees",
+            maximum_corner_spread_degrees,
+        )
+        object.__setattr__(self, "crease_angle_degrees", crease_angle_degrees)
 
 
 @dataclass(frozen=True)
@@ -127,7 +171,12 @@ class DirectorFieldQuality:
 
 @dataclass(frozen=True)
 class PreparedDirectorField:
-    """Immutable per-element-corner directors and compact provenance codes."""
+    """Immutable per-element-corner directors and compact provenance codes.
+
+    Instances are returned by the validated preparation functions. Direct
+    construction is unsupported so callers cannot pair director arrays with
+    stale quality or fingerprint records.
+    """
 
     directors: np.ndarray
     provenance_codes: np.ndarray
@@ -135,8 +184,14 @@ class PreparedDirectorField:
     quality: DirectorFieldQuality
     diagnostics: tuple[str, ...]
     numeric_fingerprint: str
+    _factory_token: InitVar[object] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, _factory_token: object) -> None:
+        if _factory_token is not _PREPARED_DIRECTOR_FACTORY_TOKEN:
+            raise TypeError(
+                "PreparedDirectorField direct construction is unsupported; "
+                "use a validated director preparation function"
+            )
         directors = np.array(
             _finite_float64_array(self.directors, label="prepared directors"),
             dtype=np.float64,
@@ -147,6 +202,12 @@ class PreparedDirectorField:
             raise ValueError("prepared directors must have shape (n_element, 4, 3)")
         if directors.shape[0] == 0:
             raise ValueError("prepared director field requires at least one element")
+        with np.errstate(over="ignore", invalid="ignore"):
+            director_norms = np.linalg.norm(directors, axis=2)
+        if not np.all(np.isfinite(director_norms)) or np.any(
+            director_norms <= np.finfo(np.float64).tiny
+        ):
+            raise ValueError("prepared directors must have finite nonzero length")
         validated_provenance_codes = _strict_integer_array(
             self.provenance_codes,
             label="director provenance codes",
@@ -169,17 +230,31 @@ class PreparedDirectorField:
             order="C",
             copy=True,
         )
+        if not isinstance(self.element_quality, tuple) or any(
+            not isinstance(item, CornerDirectorQuality) for item in self.element_quality
+        ):
+            raise TypeError("element_quality must contain CornerDirectorQuality records")
         if len(self.element_quality) != directors.shape[0]:
             raise ValueError("element_quality must contain one record per element")
-        fingerprint = str(self.numeric_fingerprint).strip()
-        if not fingerprint:
-            raise ValueError("numeric director fingerprint must be nonempty")
+        if not isinstance(self.quality, DirectorFieldQuality):
+            raise TypeError("quality must be a DirectorFieldQuality record")
+        if not isinstance(self.diagnostics, tuple) or any(
+            not isinstance(value, str) or not value for value in self.diagnostics
+        ):
+            raise TypeError("diagnostics must contain nonempty strings")
+        if not isinstance(self.numeric_fingerprint, str) or _CANONICAL_SHA256.fullmatch(
+            self.numeric_fingerprint
+        ) is None:
+            raise ValueError(
+                "numeric director fingerprint must be canonical lowercase SHA-256 hex"
+            )
+        fingerprint = self.numeric_fingerprint
         directors.setflags(write=False)
         provenance_codes.setflags(write=False)
         object.__setattr__(self, "directors", directors)
         object.__setattr__(self, "provenance_codes", provenance_codes)
         object.__setattr__(self, "element_quality", tuple(self.element_quality))
-        object.__setattr__(self, "diagnostics", tuple(str(value) for value in self.diagnostics))
+        object.__setattr__(self, "diagnostics", self.diagnostics)
         object.__setattr__(self, "numeric_fingerprint", fingerprint)
 
     @property
@@ -436,6 +511,7 @@ def prepare_supplied_corner_directors(
             f"provenance={provenance_code.value}",
         ),
         numeric_fingerprint=numeric_payload_fingerprint(corners, directors, source_signs),
+        _factory_token=_PREPARED_DIRECTOR_FACTORY_TOKEN,
     )
 
 
@@ -719,4 +795,5 @@ def reconstruct_corner_directors(
             np.asarray(sorted(blocked_edges), dtype=np.int64).reshape((-1, 2)),
             directors,
         ),
+        _factory_token=_PREPARED_DIRECTOR_FACTORY_TOKEN,
     )
