@@ -18,7 +18,7 @@ jobs:
           TARGET_INDEX_URL: ${{ github.event_name == 'release' && 'https://pypi.org/simple' || 'https://test.pypi.org/simple' }}
         run: |
           python -m pip install --upgrade pip
-          python -m pip download --no-deps --dest sibling-distributions --index-url "$TARGET_INDEX_URL" "ANYmaterial>=0.1,<0.2" "ANYmesher>=0.1,<0.2" "ANYfileio>=0.1,<0.2"
+          python -m pip download --no-deps --dest sibling-distributions --index-url "$TARGET_INDEX_URL" "ANYmaterial>=0.1,<0.2" "ANYmesher>=0.1,<0.3" "ANYfileio>=0.1,<0.2"
 
   build:
     needs: dependency-gate

@@ -12,7 +12,7 @@ env:
   SIBLINGS: >-
     git+https://github.com/audunarn/ANYmaterial
     git+https://github.com/audunarn/ANYmesh
-    git+https://github.com/audunarn/ANYio
+    git+https://github.com/audunarn/ANYfileIO
 
 jobs:
   pytest:
@@ -35,6 +35,65 @@ jobs:
       - run: python -c "import anysolver; print(anysolver.__version__)"
       - run: python -m pytest
 
+  anymesher-compatibility:
+    name: ANYmesher ${{ matrix.anymesher-version }} compatibility
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - anymesher-version: "0.1.0"
+            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96
+          - anymesher-version: "0.2.1"
+            anymesher-ref: 574fac99db064cc447bdb3e91ff029047a3c2248
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYmaterial
+          path: .ecosystem/ANYmaterial
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYfileIO
+          path: .ecosystem/ANYfileIO
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYgeometry
+          ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288
+          path: .ecosystem/ANYgeometry
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: audunarn/ANYmesh
+          ref: ${{ matrix.anymesher-ref }}
+          path: .ecosystem/ANYmesh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Build the ANYsolver wheel
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip build
+          python -m pip install numpy scipy threadpoolctl
+          python -m pip install --no-deps .ecosystem/ANYmaterial .ecosystem/ANYfileIO .ecosystem/ANYgeometry .ecosystem/ANYmesh
+          python -m build --wheel
+      - name: Probe the installed endpoint outside the checkout
+        shell: pwsh
+        env:
+          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}
+        run: |
+          $wheel = @(Get-ChildItem -LiteralPath dist -Filter '*.whl' -File)
+          if ($wheel.Count -ne 1) { throw "Expected one ANYsolver wheel, found $($wheel.Count)" }
+          python -m pip install --no-deps --force-reinstall $wheel[0].FullName
+          Push-Location $env:RUNNER_TEMP
+          try {
+            python "$env:GITHUB_WORKSPACE\tests\test_anymesher_version_compatibility.py" --probe
+          } finally {
+            Pop-Location
+          }
+
   wheel:
     name: Wheel smoke on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -56,8 +115,8 @@ jobs:
           path: .ecosystem/ANYmesh
       - uses: actions/checkout@v4
         with:
-          repository: audunarn/ANYio
-          path: .ecosystem/ANYio
+          repository: audunarn/ANYfileIO
+          path: .ecosystem/ANYfileIO
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -72,7 +131,7 @@ jobs:
           python -c "import glob, subprocess, sys;
           subprocess.check_call([sys.executable, '-m', 'pip', 'install',
           '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',
-          '.ecosystem/ANYmesh', '.ecosystem/ANYio',
+          '.ecosystem/ANYmesh', '.ecosystem/ANYfileIO',
           *glob.glob('dist/*.whl')])"
       - name: Import the installed wheel without site packages
         run: >-

@@ -18,7 +18,7 @@ development, install the sibling checkouts first:
 ```powershell
 python -m pip install -e C:\Github\ANYmaterial
 python -m pip install -e C:\Github\ANYmesh
-python -m pip install -e C:\Github\ANYio
+python -m pip install -e C:\Github\ANYfileIO
 python -m pip install -e C:\Github\ANYsolver
 ```
 
@@ -33,9 +33,16 @@ ANYsolver 0.2 is not an independently installable release. Publish compatible
 
 Apply that order separately to TestPyPI and PyPI. The publish workflow checks
 the selected target index and refuses to build or upload ANYsolver unless
-`ANYmaterial>=0.1,<0.2`, `ANYmesher>=0.1,<0.2`, and
+`ANYmaterial>=0.1,<0.2`, `ANYmesher>=0.1,<0.3`, and
 `ANYfileio>=0.1,<0.2` can already be resolved there. CI uses sibling source
 checkouts until those releases exist.
+
+ANYsolver uses the neutral mesh, panel-generation, quality, and section APIs
+available in ANYmesher 0.1 and retains compatibility with the additive 0.2
+line. The strict `<0.3` cap prevents an unqualified major contract change.
+The endpoint compatibility job exercises pinned 0.1.0 and 0.2.1 installed
+wheels on Windows AMD64 CPython 3.13; that focused job is not a wider platform
+or interpreter qualification claim.
 
 Core analyses and the solver-owned generated-geometry workflow are available
 directly from `anysolver`; the lightweight normalized flat-panel and cylinder
