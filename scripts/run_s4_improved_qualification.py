@@ -173,8 +173,141 @@ SWEEPS: dict[str, Any] = {
     ],
     "slenderness_L_over_t": [10, 30, 100, 300, 1000, 3000, 10000, 30000],
     "aspect_ratio": [1, 2, 5, 10, 20],
-    "distortion_sequences": ["skew", "taper", "warpage"],
+    "distortion_sequences": {
+        "skew_offset_over_height": [0.0, 0.10, 0.25, 0.50, 0.75],
+        "taper_top_over_bottom": [1.0, 0.80, 0.60, 0.40, 0.25],
+        "warpage_over_short_edge": [0.0, 0.01, 0.03, 0.07, 0.12],
+    },
     "mesh_sequences": ["regular", "irregular"],
+    "uniform_refinements": [1, 2, 4, 8, 16, 32],
+}
+
+
+# JSON-native fixtures are deliberately kept in this runner instead of the
+# implementation modules. They are independent inputs, not values generated
+# by the candidate element. Parametric curved patches are sampled by the test
+# harness without calling a live geometry model.
+FROZEN_FIXTURES: dict[str, Any] = {
+    "units": "SI",
+    "random_seed": 20260812,
+    "linear_material": {
+        "elastic_modulus": 210.0e9,
+        "poisson_ratio": 0.30,
+        "density": 7850.0,
+        "thickness": 0.010,
+    },
+    "generalized_section": {
+        "A": [
+            [2.30e9, 6.20e8, 0.0],
+            [6.20e8, 1.85e9, 0.0],
+            [0.0, 0.0, 7.20e8],
+        ],
+        "B": [
+            [1.10e5, -2.00e4, 1.50e4],
+            [3.00e4, -8.00e4, 9.00e3],
+            [-1.20e4, 7.00e3, 4.00e4],
+        ],
+        "D": [
+            [2.10e4, 5.00e3, 0.0],
+            [5.00e3, 1.70e4, 0.0],
+            [0.0, 0.0, 6.50e3],
+        ],
+        "As": [[7.50e8, 4.00e7], [4.00e7, 6.20e8]],
+        "mass_per_area": 78.50,
+        "rotary_inertia_per_area": 6.541666666666667e-4,
+    },
+    "planar_coordinates": {
+        "square": [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0],
+            [2.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ],
+        "parallelogram": [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0],
+            [2.4, 1.0, 0.0],
+            [0.4, 1.0, 0.0],
+        ],
+        "skew": [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0],
+            [1.55, 1.0, 0.0],
+            [-0.45, 1.0, 0.0],
+        ],
+        "tapered": [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0],
+            [1.70, 1.0, 0.0],
+            [0.20, 1.0, 0.0],
+        ],
+        "high_aspect_ratio": [
+            [0.0, 0.0, 0.0],
+            [20.0, 0.0, 0.0],
+            [20.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ],
+    },
+    "warped_coordinates": {
+        "mild_warp": [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.01],
+            [2.0, 1.0, 0.03],
+            [0.0, 1.0, -0.01],
+        ],
+        "strong_valid_warp": [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.10],
+            [2.0, 1.0, 0.25],
+            [0.0, 1.0, -0.08],
+        ],
+    },
+    "global_rigid_transform": {
+        "axis": [1.0, 2.0, 3.0],
+        "angle_radians": 0.71,
+        "translation": [1.0e6, -2.0e6, 3.0e6],
+    },
+    "curved_patches": {
+        "singly_curved": {
+            "surface": "cylinder",
+            "radius": 10.0,
+            "angle_radians": [-0.05, 0.05],
+            "axial_coordinate": [0.0, 1.0],
+            "directors": "analytic_outward_radial_at_corners",
+        },
+        "doubly_curved": {
+            "surface": "sphere",
+            "radius": 10.0,
+            "longitude_radians": [-0.04, 0.04],
+            "latitude_radians": [0.18, 0.26],
+            "directors": "analytic_outward_radial_at_corners",
+        },
+    },
+    "prescribed_fields": {
+        "membrane_extension": {
+            "u_x": "1.0e-4*x",
+            "u_y": "-3.0e-5*y",
+        },
+        "in_plane_shear": {"u_x": "2.0e-4*y", "u_y": "0"},
+        "pure_bending": {
+            "w": "5.0e-4*x*x",
+            "rotation_y": "-1.0e-3*x",
+        },
+        "transverse_shear": {"w": "2.0e-4*x", "rotation_y": "0"},
+    },
+    "mass_case": {
+        "coordinates_fixture": "square",
+        "thickness": 0.020,
+        "density": 7850.0,
+        "expected_total_mass": 314.0,
+        "expected_centre_of_mass": [1.0, 0.5, 0.0],
+    },
+    "recovery_case": {
+        "coordinates_fixture": "strong_valid_warp",
+        "displacement_rule": "(arange(24)-11.5)*1.0e-7",
+        "surface_coordinates": [-1.0, 1.0],
+        "return_local_and_global": True,
+    },
 }
 
 
@@ -411,6 +544,7 @@ def qualification_contract() -> dict[str, Any]:
             "live_geometry_hot_loop_calls_allowed": False,
         },
         "sweeps": SWEEPS,
+        "fixtures": FROZEN_FIXTURES,
         "tolerances": TOLERANCES,
         "cases": [asdict(case) for case in QUALIFICATION_CASES],
         "external_status_vocabulary": ["executed", "failed", "unavailable"],
@@ -427,7 +561,7 @@ def qualification_contract_sha256() -> str:
 
 # Updated only by an intentional review of the pre-implementation contract.
 QUALIFICATION_CONTRACT_SHA256 = (
-    "5B40EF4B98FBD0DDAECB2BF6CB6600750AE6EB17F2E34E3E2534883DAF2B9CF5"
+    "1591906DB90B83A7018E51D1C6CF35A545BCE28787ED3108713CDEECC51103F1"
 )
 
 

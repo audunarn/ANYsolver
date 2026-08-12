@@ -52,6 +52,22 @@ def test_qualification_contract_is_hashed_and_complete() -> None:
         30000,
     ]
     assert contract["sweeps"]["aspect_ratio"] == [1, 2, 5, 10, 20]
+    assert contract["sweeps"]["distortion_sequences"] == {
+        "skew_offset_over_height": [0.0, 0.10, 0.25, 0.50, 0.75],
+        "taper_top_over_bottom": [1.0, 0.80, 0.60, 0.40, 0.25],
+        "warpage_over_short_edge": [0.0, 0.01, 0.03, 0.07, 0.12],
+    }
+    assert contract["fixtures"]["mass_case"] == {
+        "coordinates_fixture": "square",
+        "thickness": 0.020,
+        "density": 7850.0,
+        "expected_total_mass": 314.0,
+        "expected_centre_of_mass": [1.0, 0.5, 0.0],
+    }
+    assert (
+        contract["fixtures"]["warped_coordinates"]["strong_valid_warp"][2]
+        == [2.0, 1.0, 0.25]
+    )
     families = {case["family"] for case in contract["cases"]}
     assert families == {
         "algebra",
