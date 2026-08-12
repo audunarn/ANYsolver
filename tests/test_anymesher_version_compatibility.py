@@ -11,12 +11,22 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any
 
+from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
+from packaging.utils import canonicalize_name
+
 
 EXPECTED_REQUIREMENT = "ANYmesher>=0.1,<0.3"
+EXPECTED_SPECIFIER = SpecifierSet(">=0.1,<0.3")
 
 
-def _compact_requirement(requirement: str) -> str:
-    return re.sub(r"\s+", "", requirement)
+def _assert_expected_anymesher_requirement(requirement: str) -> None:
+    parsed = Requirement(requirement)
+    assert canonicalize_name(parsed.name) == "anymesher"
+    assert not parsed.extras
+    assert parsed.marker is None
+    assert parsed.url is None
+    assert parsed.specifier == EXPECTED_SPECIFIER
 
 
 def _installed_anymesher_requirements() -> list[str]:
@@ -90,7 +100,7 @@ def probe_anymesher_public_contract(
     installed_requirements = _installed_anymesher_requirements()
     if require_installed_metadata:
         assert len(installed_requirements) == 1
-        assert _compact_requirement(installed_requirements[0]) == EXPECTED_REQUIREMENT
+        _assert_expected_anymesher_requirement(installed_requirements[0])
 
     return {
         "anymesher_version": anymesher.__version__,
@@ -118,6 +128,10 @@ def test_source_declares_exact_anymesher_compatibility_range() -> None:
         if requirement.lower().startswith("anymesher")
     ]
     assert requirements == [EXPECTED_REQUIREMENT]
+
+
+def test_installed_requirement_accepts_canonicalized_specifier_order() -> None:
+    _assert_expected_anymesher_requirement("ANYmesher<0.3,>=0.1")
 
 
 def test_anymesher_public_contract_used_by_anysolver() -> None:
