@@ -4,7 +4,7 @@
 
 - Branch: `native_hybrid_mesher`
 - Baseline SHA: `61e2f45ae2ca4fa87a6e149b0f89fabf209e5279`
-- Delivery commit: pending
+- Delivery commit: `1fd1c19`
 - Owner: current native-hybrid-mesher task
 
 ## Owned changed paths
