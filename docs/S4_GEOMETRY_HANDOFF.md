@@ -215,6 +215,32 @@ either invalidates reference data.
 `float64[n_q4,4,3]` tangent arrays. Tangent pairs must be finite, nonzero, and
 linearly independent. These samples remain outside the element hot payload.
 
+## Numeric conversion and overflow policy
+
+All cold handoff validation occurs before a narrowing cast. Boolean values are
+not integer indices. Compact indices must fit signed `int64`; `-1` is accepted
+only by fields that explicitly define it as the unavailable sentinel. Director
+provenance must fit `uint8` and must also be one of the registered codes. Thus
+an unsigned maximum, an arbitrary-precision Python integer, or provenance
+value `256` cannot wrap into a valid sentinel or code.
+
+Numeric coordinate, director, UV, tangent, and normalized-parameter inputs
+must be real and remain finite when represented as `float64`. Geometry quality
+operations also reject a non-finite intermediate. Source tangent independence
+is evaluated after component-scaled normalization, avoiding overflow-prone raw
+norm and cross-product ratios while still rejecting zero or parallel pairs.
+
+Numeric fingerprints preserve Boolean, signed-integer, unsigned-integer, and
+floating categories. Signed integers canonicalize as little-endian `int64` and
+unsigned integers as little-endian `uint64`, so `uint64(max)` cannot collide
+with the signed `-1` sentinel. Unsupported object/complex arrays and non-finite
+floating payloads are rejected instead of hashed through a lossy conversion.
+
+Every provenance association validates its integer bounds when constructed.
+Packing accepts only validated `ShellSourceAssociation` records and therefore
+cannot be the first point at which an out-of-range source or region index is
+discovered.
+
 ## Director provenance and priority
 
 Permanent provenance labels and numeric codes are:

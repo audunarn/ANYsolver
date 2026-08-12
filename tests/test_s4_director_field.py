@@ -11,6 +11,7 @@ from anysolver.shell_formulations.director_field import (
     DIRECTOR_PROVENANCE_NUMERIC_CODE,
     DirectorProvenanceCode,
     DirectorValidationLimits,
+    PreparedDirectorField,
     SourceCornerSamples,
     prepare_supplied_corner_directors,
     reconstruct_corner_directors,
@@ -276,6 +277,59 @@ def test_numeric_reference_fingerprint_is_deterministic_and_revision_sensitive()
     )
 
 
+def test_numeric_fingerprint_preserves_integer_signedness_and_rejects_nonfinite_float() -> None:
+    unsigned_maximum = np.asarray((np.iinfo(np.uint64).max,), dtype=np.uint64)
+    signed_sentinel = np.asarray((-1,), dtype=np.int64)
+    assert numeric_payload_fingerprint(unsigned_maximum) != numeric_payload_fingerprint(
+        signed_sentinel
+    )
+    with pytest.raises(ValueError, match="must remain finite"):
+        numeric_payload_fingerprint(np.asarray((np.nan,), dtype=np.float64))
+
+
+def test_direct_prepared_field_rejects_nonfinite_directors_and_narrowed_provenance() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    valid = reconstruct_corner_directors(coordinates, connectivity)
+
+    for invalid_value in (np.nan, np.inf, -np.inf):
+        invalid_directors = valid.directors.copy()
+        invalid_directors[0, 0, 0] = invalid_value
+        with pytest.raises(ValueError, match="must remain finite"):
+            PreparedDirectorField(
+                invalid_directors,
+                valid.provenance_codes,
+                valid.element_quality,
+                valid.quality,
+                valid.diagnostics,
+                valid.numeric_fingerprint,
+            )
+
+    for narrowed in (
+        np.full(valid.provenance_codes.shape, 256, dtype=np.uint16),
+        np.full(valid.provenance_codes.shape, -1, dtype=np.int16),
+    ):
+        with pytest.raises(ValueError, match=r"\[0, 255\]"):
+            PreparedDirectorField(
+                valid.directors,
+                narrowed,
+                valid.element_quality,
+                valid.quality,
+                valid.diagnostics,
+                valid.numeric_fingerprint,
+            )
+
+    unregistered = np.full(valid.provenance_codes.shape, 6, dtype=np.uint8)
+    with pytest.raises(ValueError, match="unknown numeric director provenance"):
+        PreparedDirectorField(
+            valid.directors,
+            unregistered,
+            valid.element_quality,
+            valid.quality,
+            valid.diagnostics,
+            valid.numeric_fingerprint,
+        )
+
+
 def test_optional_source_uv_and_tangent_samples_are_cold_numeric_evidence() -> None:
     uv = np.asarray(((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)))
     tangent_1 = np.tile((1.0, 0.0, 0.0), (4, 1))
@@ -290,12 +344,43 @@ def test_optional_source_uv_and_tangent_samples_are_cold_numeric_evidence() -> N
         SourceCornerSamples(source_tangent_1=tangent_1, source_tangent_2=tangent_1)
 
 
+def test_source_corner_tangent_validation_is_overflow_safe() -> None:
+    huge = np.finfo(np.float64).max
+    tangent_1 = np.tile((huge, huge, 0.0), (4, 1))
+    tangent_2 = np.tile((0.0, huge, huge), (4, 1))
+    samples = SourceCornerSamples(
+        source_tangent_1=tangent_1,
+        source_tangent_2=tangent_2,
+    )
+    assert samples.element_count == 1
+    assert np.all(np.isfinite(samples.source_tangent_1))
+
+    with pytest.raises(ValueError, match="linearly independent"):
+        SourceCornerSamples(
+            source_tangent_1=tangent_1,
+            source_tangent_2=tangent_1,
+        )
+
+
 def test_q4_quality_rejects_concave_or_orientation_reversing_mapping() -> None:
     concave = np.asarray(
         ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.2, 0.2, 0.0), (0.0, 1.0, 0.0))
     )
     with pytest.raises(ValueError, match="Jacobian"):
         q4_geometry_quality(concave)
+
+    huge = np.finfo(np.float64).max
+    overflow_geometry = np.asarray(
+        ((huge, 0.0, 0.0), (-huge, 0.0, 0.0), (-huge, 1.0, 0.0), (huge, 1.0, 0.0))
+    )
+    with pytest.raises(ValueError, match="overflowed"):
+        q4_geometry_quality(overflow_geometry)
+
+    overflow_scale = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0e154, 0.0, 0.0), (2.0e154, 0.0, 0.0), (1.0e154, 0.0, 0.0))
+    )
+    with pytest.raises(ValueError, match="tolerance scale overflowed"):
+        q4_geometry_quality(overflow_scale)
 
 
 def test_mesh_handoff_indices_must_be_integer_arrays() -> None:
@@ -306,13 +391,30 @@ def test_mesh_handoff_indices_must_be_integer_arrays() -> None:
         reconstruct_corner_directors(coordinates, connectivity.astype(float))
     with pytest.raises(ValueError, match="-1.*or nonnegative"):
         reconstruct_corner_directors(coordinates, connectivity, sheet_indices=(-2, -2))
+    unsigned_maximum = np.full(2, np.iinfo(np.uint64).max, dtype=np.uint64)
+    with pytest.raises(ValueError, match="compact integer"):
+        reconstruct_corner_directors(
+            coordinates,
+            connectivity,
+            sheet_indices=unsigned_maximum,
+        )
+    with pytest.raises(ValueError, match="compact integer"):
+        reconstruct_corner_directors(
+            coordinates,
+            connectivity,
+            sheet_indices=(1 << 100, 1 << 100),
+        )
+    hostile_connectivity = connectivity.astype(np.uint64)
+    hostile_connectivity[0, 0] = np.iinfo(np.uint64).max
+    with pytest.raises(ValueError, match="nonnegative integer node indices"):
+        reconstruct_corner_directors(coordinates, hostile_connectivity)
     with pytest.raises(ValueError, match="true integer node indices"):
         reconstruct_corner_directors(coordinates, connectivity, crease_edges=((0.5, 1),))
     with pytest.raises(ValueError, match="not booleans"):
         reconstruct_corner_directors(coordinates, connectivity, crease_edges=((False, 1),))
-    with pytest.raises(ValueError, match=r"only \+1 or -1"):
+    with pytest.raises(ValueError, match=r"lie in \[-1, 1\]"):
         reconstruct_corner_directors(
             coordinates,
             connectivity,
-            source_face_use_orientation_signs=(257, 257),
+            source_face_use_orientation_signs=unsigned_maximum,
         )

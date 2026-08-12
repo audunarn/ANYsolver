@@ -19,6 +19,7 @@ import numpy as np
 
 from .mitc4_plus_d_quality import (
     CornerDirectorQuality,
+    _finite_float64_array,
     corner_director_quality,
     numeric_payload_fingerprint,
     q4_geometry_quality,
@@ -42,6 +43,49 @@ DIRECTOR_PROVENANCE_NUMERIC_CODE: dict[DirectorProvenanceCode, int] = {
 DIRECTOR_PROVENANCE_FROM_NUMERIC_CODE: dict[int, DirectorProvenanceCode] = {
     value: key for key, value in DIRECTOR_PROVENANCE_NUMERIC_CODE.items()
 }
+_INT64_MAX = int(np.iinfo(np.int64).max)
+
+
+def _strict_integer_array(
+    values: object,
+    *,
+    label: str,
+    minimum: int,
+    maximum: int,
+    dtype: np.dtype | type,
+) -> np.ndarray:
+    """Validate integer meaning and range before any narrowing conversion."""
+
+    source = np.asarray(values)
+    if np.issubdtype(source.dtype, np.bool_):
+        raise ValueError(f"{label} must contain true integers, not booleans")
+
+    if np.issubdtype(source.dtype, np.integer):
+        if np.issubdtype(source.dtype, np.signedinteger):
+            outside = np.any(source < minimum) or np.any(source > maximum)
+        else:
+            outside = (minimum > 0 and np.any(source < minimum)) or np.any(
+                source > maximum
+            )
+        if outside:
+            raise ValueError(f"{label} values must lie in [{minimum}, {maximum}]")
+        return np.asarray(source, dtype=dtype)
+
+    if source.dtype.kind == "O":
+        checked: list[int] = []
+        for value in source.flat:
+            if isinstance(value, (bool, np.bool_)):
+                raise ValueError(f"{label} must contain true integers, not booleans")
+            try:
+                made = int(integer_index(value))
+            except TypeError as exc:
+                raise ValueError(f"{label} must contain true integers") from exc
+            if made < minimum or made > maximum:
+                raise ValueError(f"{label} values must lie in [{minimum}, {maximum}]")
+            checked.append(made)
+        return np.asarray(checked, dtype=dtype).reshape(source.shape)
+
+    raise ValueError(f"{label} must contain true integers")
 
 
 @dataclass(frozen=True)
@@ -93,19 +137,40 @@ class PreparedDirectorField:
     numeric_fingerprint: str
 
     def __post_init__(self) -> None:
-        directors = np.array(self.directors, dtype=np.float64, order="C", copy=True)
-        provenance_codes = np.array(self.provenance_codes, dtype=np.uint8, order="C", copy=True)
+        directors = np.array(
+            _finite_float64_array(self.directors, label="prepared directors"),
+            dtype=np.float64,
+            order="C",
+            copy=True,
+        )
         if directors.ndim != 3 or directors.shape[1:] != (4, 3):
             raise ValueError("prepared directors must have shape (n_element, 4, 3)")
-        if provenance_codes.shape != directors.shape[:2]:
+        if directors.shape[0] == 0:
+            raise ValueError("prepared director field requires at least one element")
+        validated_provenance_codes = _strict_integer_array(
+            self.provenance_codes,
+            label="director provenance codes",
+            minimum=0,
+            maximum=int(np.iinfo(np.uint8).max),
+            dtype=np.int64,
+        )
+        if validated_provenance_codes.shape != directors.shape[:2]:
             raise ValueError("director provenance codes must have shape (n_element, 4)")
-        if len(self.element_quality) != directors.shape[0]:
-            raise ValueError("element_quality must contain one record per element")
-        unknown_codes = set(int(value) for value in np.unique(provenance_codes)) - set(
+        unknown_codes = set(
+            int(value) for value in np.unique(validated_provenance_codes)
+        ) - set(
             DIRECTOR_PROVENANCE_FROM_NUMERIC_CODE
         )
         if unknown_codes:
             raise ValueError(f"unknown numeric director provenance codes: {sorted(unknown_codes)}")
+        provenance_codes = np.array(
+            validated_provenance_codes,
+            dtype=np.uint8,
+            order="C",
+            copy=True,
+        )
+        if len(self.element_quality) != directors.shape[0]:
+            raise ValueError("element_quality must contain one record per element")
         fingerprint = str(self.numeric_fingerprint).strip()
         if not fingerprint:
             raise ValueError("numeric director fingerprint must be nonempty")
@@ -162,14 +227,12 @@ class SourceCornerSamples:
         if len(element_counts) != 1:
             raise ValueError("source UV and tangent samples must have the same element count")
         if tangent_1 is not None and tangent_2 is not None:
-            norm_1 = np.linalg.norm(tangent_1, axis=2)
-            norm_2 = np.linalg.norm(tangent_2, axis=2)
-            cross_norm = np.linalg.norm(np.cross(tangent_1, tangent_2), axis=2)
-            if np.any(norm_1 <= np.finfo(np.float64).tiny) or np.any(
-                norm_2 <= np.finfo(np.float64).tiny
-            ):
-                raise ValueError("source corner tangents must have nonzero length")
-            relative_cross = cross_norm / (norm_1 * norm_2)
+            unit_1 = _scaled_unit_vectors(tangent_1, label="source corner tangent 1")
+            unit_2 = _scaled_unit_vectors(tangent_2, label="source corner tangent 2")
+            with np.errstate(over="ignore", invalid="ignore"):
+                relative_cross = np.linalg.norm(np.cross(unit_1, unit_2), axis=2)
+            if not np.all(np.isfinite(relative_cross)):
+                raise ValueError("normalized source corner tangent cross products must be finite")
             if np.any(relative_cross <= 128.0 * np.finfo(np.float64).eps):
                 raise ValueError("source corner tangent pairs must be linearly independent")
         object.__setattr__(self, "source_uv", uv)
@@ -193,30 +256,44 @@ def _optional_corner_array(
 ) -> np.ndarray | None:
     if values is None:
         return None
-    array = np.asarray(values, dtype=np.float64)
+    array = _finite_float64_array(values, label=label)
     if array.shape == (4, trailing_size):
         array = array[None, :, :]
     if array.ndim != 3 or array.shape[1:] != (4, trailing_size) or array.shape[0] == 0:
         raise ValueError(
             f"{label} must have shape (n_element, 4, {trailing_size}), got {array.shape}"
         )
-    if not np.all(np.isfinite(array)):
-        raise ValueError(f"{label} must be finite")
     made = np.array(array, dtype=np.float64, order="C", copy=True)
     made.setflags(write=False)
     return made
 
 
+def _scaled_unit_vectors(vectors: np.ndarray, *, label: str) -> np.ndarray:
+    """Normalize finite vectors without overflowing raw norm calculations."""
+
+    scale = np.max(np.abs(vectors), axis=2)
+    if not np.all(np.isfinite(scale)):
+        raise ValueError(f"{label} scale must be finite")
+    if np.any(scale <= 0.0):
+        raise ValueError(f"{label} must have nonzero length")
+    scaled = vectors / scale[:, :, None]
+    norm = np.linalg.norm(scaled, axis=2)
+    if not np.all(np.isfinite(norm)) or np.any(norm <= 0.0):
+        raise ValueError(f"{label} normalized length must be finite and nonzero")
+    unit = scaled / norm[:, :, None]
+    if not np.all(np.isfinite(unit)):
+        raise ValueError(f"{label} normalized vectors must be finite")
+    return unit
+
+
 def _batch_corner_coordinates(values: Sequence[Sequence[Sequence[float]]] | np.ndarray) -> np.ndarray:
-    corners = np.asarray(values, dtype=np.float64)
+    corners = _finite_float64_array(values, label="corner coordinates")
     if corners.shape == (4, 3):
         corners = corners[None, :, :]
     if corners.ndim != 3 or corners.shape[1:] != (4, 3):
         raise ValueError(f"corner coordinates must have shape (n_element, 4, 3), got {corners.shape}")
     if corners.shape[0] == 0:
         raise ValueError("at least one Q4 element is required")
-    if not np.all(np.isfinite(corners)):
-        raise ValueError("corner coordinates must be finite")
     return np.ascontiguousarray(corners)
 
 
@@ -232,11 +309,16 @@ def _source_face_use_orientation_signs(
         signs = np.asarray(values)
         if signs.shape != (count,):
             raise ValueError(f"face-use orientation signs must have shape ({count},)")
-        if np.issubdtype(signs.dtype, np.bool_) or not np.issubdtype(signs.dtype, np.integer):
-            raise ValueError("face-use orientation signs must be integers")
-    if not np.all(np.isin(signs, (-1, 1))):
+        signs = _strict_integer_array(
+            signs,
+            label="face-use orientation signs",
+            minimum=-1,
+            maximum=1,
+            dtype=np.int8,
+        )
+    if not np.all(np.abs(signs) == 1):
         raise ValueError("face-use orientation signs must contain only +1 or -1")
-    return np.asarray(signs, dtype=np.int8)
+    return signs
 
 
 def validate_element_corner_directors(
@@ -299,13 +381,11 @@ def prepare_supplied_corner_directors(
     """
 
     corners = _batch_corner_coordinates(corner_coordinates)
-    directors = np.asarray(reference_directors, dtype=np.float64)
+    directors = _finite_float64_array(reference_directors, label="reference directors")
     if directors.shape == (4, 3) and corners.shape[0] == 1:
         directors = directors[None, :, :]
     if directors.shape != corners.shape:
         raise ValueError(f"reference directors must have shape {corners.shape}, got {directors.shape}")
-    if not np.all(np.isfinite(directors)):
-        raise ValueError("reference directors must be finite")
     source_signs = _source_face_use_orientation_signs(
         source_face_use_orientation_signs,
         corners.shape[0],
@@ -370,12 +450,19 @@ def _compact_indices(
     array = np.asarray(values)
     if array.shape != (count,):
         raise ValueError(f"{label} must have shape ({count},)")
-    if np.issubdtype(array.dtype, np.bool_) or not np.issubdtype(array.dtype, np.integer):
-        raise ValueError(f"{label} must contain compact integer indices")
-    made = np.asarray(array, dtype=np.int64)
-    if np.any(made < -1):
-        raise ValueError(f"{label} values must be -1 (unavailable) or nonnegative")
-    return made
+    try:
+        return _strict_integer_array(
+            array,
+            label=label,
+            minimum=-1,
+            maximum=_INT64_MAX,
+            dtype=np.int64,
+        )
+    except ValueError as exc:
+        raise ValueError(
+            f"{label} must contain -1 (unavailable) or nonnegative compact integer "
+            f"indices no greater than {_INT64_MAX}"
+        ) from exc
 
 
 def _edge_set(edges: Iterable[Sequence[int]], node_count: int, *, label: str) -> set[tuple[int, int]]:
@@ -408,18 +495,23 @@ def _coerce_mesh(
     node_coordinates: Sequence[Sequence[float]] | np.ndarray,
     connectivity: Sequence[Sequence[int]] | np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    coordinates = np.asarray(node_coordinates, dtype=np.float64)
+    coordinates = _finite_float64_array(node_coordinates, label="node_coordinates")
     if coordinates.ndim != 2 or coordinates.shape[1] != 3 or coordinates.shape[0] == 0:
         raise ValueError("node_coordinates must have shape (n_node, 3)")
-    if not np.all(np.isfinite(coordinates)):
-        raise ValueError("node_coordinates must be finite")
     elements = np.asarray(connectivity)
     if elements.ndim != 2 or elements.shape[1] != 4 or elements.shape[0] == 0:
         raise ValueError("connectivity must have shape (n_element, 4)")
-    if np.issubdtype(elements.dtype, np.bool_) or not np.issubdtype(elements.dtype, np.integer):
-        raise ValueError("connectivity must contain integer node indices")
-    elements = np.asarray(elements, dtype=np.int64)
-    if np.min(elements) < 0 or np.max(elements) >= coordinates.shape[0]:
+    try:
+        elements = _strict_integer_array(
+            elements,
+            label="connectivity",
+            minimum=0,
+            maximum=_INT64_MAX,
+            dtype=np.int64,
+        )
+    except ValueError as exc:
+        raise ValueError("connectivity must contain nonnegative integer node indices") from exc
+    if np.max(elements) >= coordinates.shape[0]:
         raise ValueError("connectivity contains a node index outside node_coordinates")
     if any(len(set(int(value) for value in row)) != 4 for row in elements):
         raise ValueError("each Q4 connectivity row must contain four distinct nodes")

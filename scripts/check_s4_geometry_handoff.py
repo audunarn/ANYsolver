@@ -19,6 +19,8 @@ if str(SRC) not in sys.path:
 
 from anysolver.shell_formulations.director_field import (  # noqa: E402
     DirectorValidationLimits,
+    PreparedDirectorField,
+    SourceCornerSamples,
     prepare_supplied_corner_directors,
     reconstruct_corner_directors,
 )
@@ -35,6 +37,9 @@ from anysolver.shell_formulations.geometry_provenance import (  # noqa: E402
     pack_shell_source_associations,
     validate_provenance_snapshot,
     validate_shell_source_association,
+)
+from anysolver.shell_formulations.mitc4_plus_d_quality import (  # noqa: E402
+    numeric_payload_fingerprint,
 )
 
 
@@ -322,6 +327,82 @@ def _no_geometry_import_check() -> MappingResult:
     return {"geometry_package_imports": 0}
 
 
+def _rejection(operation: Callable[[], object], *, label: str) -> str:
+    try:
+        operation()
+    except (TypeError, ValueError) as exc:
+        return f"{type(exc).__name__}: {exc}"
+    raise AssertionError(f"hostile numeric input was accepted: {label}")
+
+
+def _hostile_numeric_input_check() -> MappingResult:
+    """Exercise the audit-reported narrowing and non-finite failure modes."""
+
+    coordinates = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0))
+    )
+    connectivity = np.asarray(((0, 1, 2, 3),), dtype=np.int64)
+    prepared = reconstruct_corner_directors(coordinates, connectivity)
+    unsigned_maximum = np.uint64(np.iinfo(np.uint64).max)
+
+    invalid_directors = prepared.directors.copy()
+    invalid_directors[0, 0, 0] = np.nan
+    narrowed_provenance = np.full(prepared.provenance_codes.shape, 256, dtype=np.uint16)
+    huge_tangent = np.tile((np.finfo(np.float64).max,) * 3, (4, 1))
+
+    signed_fingerprint = numeric_payload_fingerprint(np.asarray((-1,), dtype=np.int64))
+    unsigned_fingerprint = numeric_payload_fingerprint(
+        np.asarray((unsigned_maximum,), dtype=np.uint64)
+    )
+    if signed_fingerprint == unsigned_fingerprint:
+        raise AssertionError("signed -1 and uint64 maximum share a numeric fingerprint")
+
+    return {
+        "compact_uint64_max": _rejection(
+            lambda: reconstruct_corner_directors(
+                coordinates,
+                connectivity,
+                sheet_indices=np.asarray((unsigned_maximum,), dtype=np.uint64),
+            ),
+            label="compact uint64 maximum",
+        ),
+        "provenance_256": _rejection(
+            lambda: PreparedDirectorField(
+                prepared.directors,
+                narrowed_provenance,
+                prepared.element_quality,
+                prepared.quality,
+                prepared.diagnostics,
+                prepared.numeric_fingerprint,
+            ),
+            label="narrowed provenance 256",
+        ),
+        "nonfinite_director": _rejection(
+            lambda: PreparedDirectorField(
+                invalid_directors,
+                prepared.provenance_codes,
+                prepared.element_quality,
+                prepared.quality,
+                prepared.diagnostics,
+                prepared.numeric_fingerprint,
+            ),
+            label="NaN prepared director",
+        ),
+        "overflow_prone_parallel_tangents": _rejection(
+            lambda: SourceCornerSamples(
+                source_tangent_1=huge_tangent,
+                source_tangent_2=huge_tangent,
+            ),
+            label="overflow-prone parallel source tangents",
+        ),
+        "association_uint64_max": _rejection(
+            lambda: ShellSourceAssociation(material_region_index=unsigned_maximum),
+            label="shell association uint64 maximum",
+        ),
+        "signed_unsigned_fingerprints_distinct": True,
+    }
+
+
 def run_geometry_handoff_checks(*, full: bool = False) -> dict[str, Any]:
     """Run lightweight synthetic contract checks and return a JSON-ready report."""
 
@@ -332,6 +413,7 @@ def run_geometry_handoff_checks(*, full: bool = False) -> dict[str, Any]:
     _record_check(checks, "sharp_fold_corner_directors", _sharp_fold_check)
     _record_check(checks, "sheet_boundary_corner_directors", _sheet_boundary_check)
     _record_check(checks, "zero_production_geometry_imports", _no_geometry_import_check)
+    _record_check(checks, "hostile_numeric_input_rejection", _hostile_numeric_input_check)
     if full:
         _record_check(checks, "rigid_motion_and_element_order_invariance", _invariance_check)
         _record_check(checks, "face_use_reference_jacobian", _face_use_reference_jacobian_check)

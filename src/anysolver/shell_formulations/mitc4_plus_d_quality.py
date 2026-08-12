@@ -16,6 +16,22 @@ from typing import Iterable, Sequence
 import numpy as np
 
 
+def _finite_float64_array(values: object, *, label: str) -> np.ndarray:
+    """Convert a real numeric array to finite ``float64`` without overflow escape."""
+
+    source = np.asarray(values)
+    if source.dtype.kind not in "iuf":
+        raise ValueError(f"{label} must contain real numeric values, not {source.dtype}")
+    try:
+        with np.errstate(over="ignore", invalid="ignore"):
+            made = np.asarray(source, dtype=np.float64)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{label} cannot be represented as float64") from exc
+    if not np.all(np.isfinite(made)):
+        raise ValueError(f"{label} must remain finite when represented as float64")
+    return made
+
+
 @dataclass(frozen=True)
 class Q4GeometryQuality:
     """Scale-aware reference-geometry metrics for one four-node shell."""
@@ -45,11 +61,9 @@ class CornerDirectorQuality:
 
 
 def _q4_corners(corner_coordinates: Sequence[Sequence[float]] | np.ndarray) -> np.ndarray:
-    corners = np.asarray(corner_coordinates, dtype=np.float64)
+    corners = _finite_float64_array(corner_coordinates, label="Q4 corner coordinates")
     if corners.shape != (4, 3):
         raise ValueError(f"Q4 corner coordinates must have shape (4, 3), got {corners.shape}")
-    if not np.all(np.isfinite(corners)):
-        raise ValueError("Q4 corner coordinates must be finite")
     return corners
 
 
@@ -69,14 +83,21 @@ def q4_area_vector(corner_coordinates: Sequence[Sequence[float]] | np.ndarray) -
     """
 
     corners = _q4_corners(corner_coordinates)
-    return 0.5 * np.cross(corners[2] - corners[0], corners[3] - corners[1])
+    with np.errstate(over="ignore", invalid="ignore"):
+        area_vector = 0.5 * np.cross(corners[2] - corners[0], corners[3] - corners[1])
+    if not np.all(np.isfinite(area_vector)):
+        raise ValueError("Q4 area vector overflowed finite float64 geometry")
+    return area_vector
 
 
 def q4_corner_angles(corner_coordinates: Sequence[Sequence[float]] | np.ndarray) -> np.ndarray:
     """Return the four unsigned corner angles in radians."""
 
     corners = _q4_corners(corner_coordinates)
-    edge_lengths = np.linalg.norm(np.roll(corners, -1, axis=0) - corners, axis=1)
+    with np.errstate(over="ignore", invalid="ignore"):
+        edge_lengths = np.linalg.norm(np.roll(corners, -1, axis=0) - corners, axis=1)
+    if not np.all(np.isfinite(edge_lengths)):
+        raise ValueError("Q4 edge lengths overflowed finite float64 geometry")
     scale = max(float(np.max(edge_lengths)), 1.0)
     tolerance = 64.0 * np.finfo(np.float64).eps * scale
     if np.any(edge_lengths <= tolerance):
@@ -86,8 +107,12 @@ def q4_corner_angles(corner_coordinates: Sequence[Sequence[float]] | np.ndarray)
     for corner in range(4):
         previous = corners[(corner - 1) % 4] - corners[corner]
         following = corners[(corner + 1) % 4] - corners[corner]
-        previous /= np.linalg.norm(previous)
-        following /= np.linalg.norm(following)
+        previous_norm = float(np.linalg.norm(previous))
+        following_norm = float(np.linalg.norm(following))
+        if not math.isfinite(previous_norm) or not math.isfinite(following_norm):
+            raise ValueError("Q4 corner edge norm is not finite")
+        previous /= previous_norm
+        following /= following_norm
         cosine = float(np.clip(np.dot(previous, following), -1.0, 1.0))
         angles[corner] = math.acos(cosine)
     return angles
@@ -99,10 +124,16 @@ def q4_geometry_quality(
     """Validate one Q4 and return FE-scale geometry metrics."""
 
     corners = _q4_corners(corner_coordinates)
-    edges = np.roll(corners, -1, axis=0) - corners
-    edge_lengths = np.linalg.norm(edges, axis=1)
+    with np.errstate(over="ignore", invalid="ignore"):
+        edges = np.roll(corners, -1, axis=0) - corners
+        edge_lengths = np.linalg.norm(edges, axis=1)
+        coordinate_span = np.ptp(corners, axis=0)
+    if not np.all(np.isfinite(edges)) or not np.all(np.isfinite(edge_lengths)):
+        raise ValueError("Q4 edge geometry overflowed finite float64 range")
+    if not np.all(np.isfinite(coordinate_span)):
+        raise ValueError("Q4 coordinate span overflowed finite float64 range")
     maximum_edge = float(np.max(edge_lengths))
-    characteristic_length = max(maximum_edge, float(np.ptp(corners, axis=0).max()))
+    characteristic_length = max(maximum_edge, float(coordinate_span.max()))
     if not math.isfinite(characteristic_length) or characteristic_length <= 0.0:
         raise ValueError("Q4 has no finite characteristic length")
     length_tolerance = 64.0 * np.finfo(np.float64).eps * characteristic_length
@@ -111,11 +142,20 @@ def q4_geometry_quality(
         raise ValueError("Q4 has a zero or numerically unresolved edge")
 
     area_vector = q4_area_vector(corners)
-    area_tolerance = 128.0 * np.finfo(np.float64).eps * characteristic_length**2
+    with np.errstate(over="ignore", invalid="ignore"):
+        characteristic_area = float(
+            np.float64(characteristic_length) * np.float64(characteristic_length)
+        )
+    if not math.isfinite(characteristic_area):
+        raise ValueError("Q4 area tolerance scale overflowed finite float64 range")
+    area_tolerance = 128.0 * np.finfo(np.float64).eps * characteristic_area
     unit_normal, _projected_area = _unit(area_vector, tolerance=area_tolerance, label="Q4 area vector")
 
-    triangle_a = np.cross(corners[1] - corners[0], corners[2] - corners[0])
-    triangle_b = np.cross(corners[2] - corners[0], corners[3] - corners[0])
+    with np.errstate(over="ignore", invalid="ignore"):
+        triangle_a = np.cross(corners[1] - corners[0], corners[2] - corners[0])
+        triangle_b = np.cross(corners[2] - corners[0], corners[3] - corners[0])
+    if not np.all(np.isfinite(triangle_a)) or not np.all(np.isfinite(triangle_b)):
+        raise ValueError("Q4 triangle area vectors overflowed finite float64 range")
     triangle_a_unit, triangle_a_twice_area = _unit(
         triangle_a, tolerance=area_tolerance, label="first Q4 triangle"
     )
@@ -143,16 +183,26 @@ def q4_geometry_quality(
         derivative_eta = 0.25 * np.asarray((-(1.0 - xi), -(1.0 + xi), 1.0 + xi, 1.0 - xi))
         covariant_xi = derivative_xi @ corners
         covariant_eta = derivative_eta @ corners
-        jacobian_vector = np.cross(covariant_xi, covariant_eta)
-        jacobian = float(np.linalg.norm(jacobian_vector))
-        signed_jacobian = float(np.dot(jacobian_vector, unit_normal))
-        if not math.isfinite(jacobian) or signed_jacobian <= area_tolerance:
+        with np.errstate(over="ignore", invalid="ignore"):
+            jacobian_vector = np.cross(covariant_xi, covariant_eta)
+            jacobian = float(np.linalg.norm(jacobian_vector))
+            signed_jacobian = float(np.dot(jacobian_vector, unit_normal))
+        if (
+            not np.all(np.isfinite(jacobian_vector))
+            or not math.isfinite(jacobian)
+            or not math.isfinite(signed_jacobian)
+            or signed_jacobian <= area_tolerance
+        ):
             raise ValueError("Q4 surface Jacobian is zero, unresolved, or reverses orientation")
         jacobians.append(jacobian)
         jacobian_orientations.append(signed_jacobian / jacobian)
 
+    area = 0.5 * triangle_a_twice_area + 0.5 * triangle_b_twice_area
+    if not math.isfinite(area):
+        raise ValueError("Q4 surface area overflowed finite float64 range")
+
     return Q4GeometryQuality(
-        area=0.5 * (triangle_a_twice_area + triangle_b_twice_area),
+        area=area,
         unit_normal=tuple(float(value) for value in unit_normal),
         corner_angles_radians=tuple(float(value) for value in q4_corner_angles(corners)),
         minimum_edge_length=minimum_edge,
@@ -179,12 +229,13 @@ def corner_director_quality(
 
     geometry = q4_geometry_quality(corner_coordinates)
     corners = _q4_corners(corner_coordinates)
-    directors = np.asarray(reference_directors, dtype=np.float64)
+    directors = _finite_float64_array(reference_directors, label="reference directors")
     if directors.shape != (4, 3):
         raise ValueError(f"reference directors must have shape (4, 3), got {directors.shape}")
-    if not np.all(np.isfinite(directors)):
-        raise ValueError("reference directors must be finite")
-    norms = np.linalg.norm(directors, axis=1)
+    with np.errstate(over="ignore", invalid="ignore"):
+        norms = np.linalg.norm(directors, axis=1)
+    if not np.all(np.isfinite(norms)):
+        raise ValueError("reference director norms must remain finite")
     if np.any(norms <= np.finfo(np.float64).tiny):
         raise ValueError("reference directors must have nonzero length")
     unit_directors = directors / norms[:, None]
@@ -196,9 +247,12 @@ def corner_director_quality(
     covariant_xi = derivative_xi @ corners
     covariant_eta = derivative_eta @ corners
     center_director = np.mean(unit_directors, axis=0)
-    center_director_jacobian = float(
-        np.dot(np.cross(covariant_xi, covariant_eta), center_director)
-    )
+    with np.errstate(over="ignore", invalid="ignore"):
+        center_director_jacobian = float(
+            np.dot(np.cross(covariant_xi, covariant_eta), center_director)
+        )
+    if not math.isfinite(center_director_jacobian):
+        raise ValueError("center reference director Jacobian must remain finite")
 
     maximum_angle = 0.0
     for first in range(4):
@@ -219,10 +273,11 @@ def corner_director_quality(
 def numeric_payload_fingerprint(*arrays: Iterable[float] | np.ndarray) -> str:
     """Hash numeric shape, dtype, and values for cache invalidation.
 
-    Floating values are canonicalized as little-endian ``float64`` and integer
-    values as little-endian ``int64``.  Preserving the numeric category avoids
-    losing large compact indices through a float conversion.  Provenance
-    metadata has its own canonical JSON hash.
+    Floating values are canonicalized as little-endian ``float64``. Signed and
+    unsigned integers are separately canonicalized as little-endian ``int64``
+    and ``uint64`` so unsigned maximum cannot collide with the signed ``-1``
+    sentinel. Unsupported object/complex arrays and non-finite float values
+    fail closed. Provenance metadata has its own canonical JSON hash.
     """
 
     digest = hashlib.sha256()
@@ -232,14 +287,26 @@ def numeric_payload_fingerprint(*arrays: Iterable[float] | np.ndarray) -> str:
         if np.issubdtype(source.dtype, np.bool_):
             array = np.ascontiguousarray(source, dtype=np.uint8)
             category = b"bool"
-        elif np.issubdtype(source.dtype, np.integer):
+        elif np.issubdtype(source.dtype, np.signedinteger):
             array = np.ascontiguousarray(source, dtype="<i8")
-            category = b"int64"
+            category = b"signed-int64"
+        elif np.issubdtype(source.dtype, np.unsignedinteger):
+            array = np.ascontiguousarray(source, dtype="<u8")
+            category = b"unsigned-int64"
         elif np.issubdtype(source.dtype, np.floating):
-            array = np.ascontiguousarray(source, dtype="<f8")
+            try:
+                with np.errstate(over="ignore", invalid="ignore"):
+                    array = np.ascontiguousarray(source, dtype="<f8")
+            except (OverflowError, TypeError, ValueError) as exc:
+                raise ValueError("floating numeric payload cannot be represented as float64") from exc
+            if not np.all(np.isfinite(array)):
+                raise ValueError("floating numeric payload must remain finite as float64")
             category = b"float64"
         else:
-            raise TypeError("numeric payload fingerprint accepts only boolean, integer, or floating arrays")
+            raise TypeError(
+                "numeric payload fingerprint accepts only boolean, signed integer, "
+                "unsigned integer, or floating arrays"
+            )
         digest.update(category)
         digest.update(b"\0")
         digest.update(str(array.ndim).encode("ascii"))

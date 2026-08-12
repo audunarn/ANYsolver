@@ -162,6 +162,39 @@ def test_model_identity_and_entity_ids_follow_public_handle_invariants() -> None
         SourceEntityHandle(MODEL_ID, "face", 0)
 
 
+def test_model_and_association_integers_reject_values_outside_compact_int64_range() -> None:
+    unsigned_maximum = np.uint64(np.iinfo(np.uint64).max)
+    for too_large in (unsigned_maximum, 1 << 100):
+        with pytest.raises(ValueError, match="no greater"):
+            _header(source_geometry_revision=too_large)
+        with pytest.raises(ValueError, match="table index"):
+            ShellSourceAssociation(material_region_index=too_large)
+    with pytest.raises(ValueError, match="no greater"):
+        SourceEntityHandle(MODEL_ID, "face", unsigned_maximum)
+    with pytest.raises(ValueError, match="table index"):
+        MemberSourceAssociation(member_handle_index=0, edge_handle_index=unsigned_maximum)
+    with pytest.raises(ValueError, match="table index"):
+        CouplingIntentRecord(
+            attachment_handle_index=unsigned_maximum,
+            attachment_kind="member_on_face",
+        )
+
+
+def test_provenance_float_fields_reject_boolean_string_and_nonfinite_coercions() -> None:
+    with pytest.raises(TypeError, match="real numeric"):
+        _header(source_local_origin=(True, 0.0, 0.0))
+    with pytest.raises(TypeError, match="real numeric"):
+        _header(source_geometry_tolerance_summary=(("length", "1e-7"),))
+    with pytest.raises(TypeError, match="real numeric"):
+        MemberSourceAssociation(member_handle_index=0, normalized_parameter_start=False)
+    with pytest.raises(ValueError, match="must be finite"):
+        CouplingIntentRecord(
+            attachment_handle_index=0,
+            attachment_kind="member_on_face",
+            face_or_edge_parameter=(np.inf,),
+        )
+
+
 def test_stale_revision_and_adapter_stale_flag_fail_closed_in_constant_time_gate() -> None:
     tables, _ = _resolved_tables()
     validate_provenance_snapshot(
@@ -282,6 +315,8 @@ def test_element_associations_pack_as_read_only_integer_indices() -> None:
     assert not packed.flags.writeable
     with pytest.raises(ValueError):
         packed[0, 0] = 99
+    with pytest.raises(TypeError, match="validated records"):
+        pack_shell_source_associations((object(),))
 
 
 def test_session_fingerprint_changes_for_geometry_numeric_or_mapping_revision() -> None:
@@ -343,7 +378,7 @@ def test_geometry_handoff_check_script_reports_synthetic_scope_without_claiming_
         assert report["status"] == "passed"
         assert report["scope"] == "synthetic_neutral_handoff"
         assert report["upstream_activation"] == "not_exercised_by_synthetic_contract_check"
-        assert report["summary"] == {"failed": 0, "passed": 9}
+        assert report["summary"] == {"failed": 0, "passed": 10}
     finally:
         if output_dir.exists():
             shutil.rmtree(output_dir)

@@ -25,6 +25,7 @@ import numpy as np
 SUPPORTED_ANYGEOMETRY_API = ">=0.2,<0.3"
 SUPPORTED_GEOMETRY_SCHEMAS = (3, 4)
 FORWARD_GEOMETRY_SCHEMA = 4
+_INT64_MAX = int(np.iinfo(np.int64).max)
 SUPPORTED_SOURCE_ENTITY_KINDS = (
     "vertex",
     "edge",
@@ -145,14 +146,20 @@ class GeometryProvenanceHeader:
         object.__setattr__(self, "source_coordinate_transform_fingerprint", transform)
         object.__setattr__(self, "source_mesh_generator_version", generator)
 
-        origin = tuple(float(value) for value in self.source_local_origin)
-        if len(origin) != 3 or not all(math.isfinite(value) for value in origin):
+        origin = tuple(
+            _finite_float(value, "source_local_origin coordinate")
+            for value in self.source_local_origin
+        )
+        if len(origin) != 3:
             raise ValueError("source_local_origin must contain three finite coordinates")
         object.__setattr__(self, "source_local_origin", origin)
         tolerance_summary = tuple(
-            sorted((str(name), float(value)) for name, value in self.source_geometry_tolerance_summary)
+            sorted(
+                (str(name), _finite_float(value, f"source geometry tolerance {name!r}"))
+                for name, value in self.source_geometry_tolerance_summary
+            )
         )
-        if any(not name or not math.isfinite(value) or value < 0.0 for name, value in tolerance_summary):
+        if any(not name or value < 0.0 for name, value in tolerance_summary):
             raise ValueError("source geometry tolerance summary requires named finite nonnegative values")
         if len({name for name, _ in tolerance_summary}) != len(tolerance_summary):
             raise ValueError("source geometry tolerance summary names must be unique")
@@ -192,7 +199,7 @@ class GeometryProvenanceHeader:
             source_geometry_audit_status=payload["source_geometry_audit_status"],
             source_geometry_audit_certifiable=payload["source_geometry_audit_certifiable"],
             source_geometry_tolerance_summary=tuple(
-                (str(name), float(value))
+                (str(name), value)
                 for name, value in payload.get("source_geometry_tolerance_summary", ())
             ),
             source_units=payload.get("source_units", "m"),
@@ -341,13 +348,14 @@ class MemberSourceAssociation:
             "edge_handle_index",
             "part_handle_index",
         ):
-            value = _strict_integer(getattr(self, name), name)
-            minimum = 0 if name == "member_handle_index" else -1
-            if value < minimum:
-                raise ValueError(f"{name} is outside its compact table-index range")
+            value = (
+                _nonnegative_integer(getattr(self, name), name)
+                if name == "member_handle_index"
+                else _optional_table_index(getattr(self, name), name)
+            )
             object.__setattr__(self, name, value)
-        start = float(self.normalized_parameter_start)
-        end = float(self.normalized_parameter_end)
+        start = _finite_float(self.normalized_parameter_start, "normalized_parameter_start")
+        end = _finite_float(self.normalized_parameter_end, "normalized_parameter_end")
         if not 0.0 <= start < end <= 1.0:
             raise ValueError("normalized member parameter range must satisfy 0 <= start < end <= 1")
         object.__setattr__(self, "normalized_parameter_start", start)
@@ -382,13 +390,14 @@ class CouplingIntentRecord:
                 raise ValueError(f"{kind_name} is required when {index_name} is present")
             object.__setattr__(self, kind_name, None if kind is None else str(kind).strip().lower())
         if self.member_parameter is not None:
-            member_parameter = float(self.member_parameter)
+            member_parameter = _finite_float(self.member_parameter, "member_parameter")
             if not 0.0 <= member_parameter <= 1.0:
                 raise ValueError("member_parameter must lie in [0, 1]")
             object.__setattr__(self, "member_parameter", member_parameter)
-        parameters = tuple(float(value) for value in self.face_or_edge_parameter)
-        if any(not math.isfinite(value) for value in parameters):
-            raise ValueError("face_or_edge_parameter values must be finite")
+        parameters = tuple(
+            _finite_float(value, "face_or_edge_parameter")
+            for value in self.face_or_edge_parameter
+        )
         object.__setattr__(self, "face_or_edge_parameter", parameters)
 
 
@@ -767,6 +776,8 @@ def pack_shell_source_associations(
 ) -> np.ndarray:
     """Pack per-element provenance into a read-only contiguous integer array."""
 
+    if any(not isinstance(association, ShellSourceAssociation) for association in associations):
+        raise TypeError("shell source association packing requires validated records")
     columns = (*_SHELL_ASSOCIATION_INDEX_FIELDS[:5], "source_face_use_orientation", *_SHELL_ASSOCIATION_INDEX_FIELDS[5:])
     packed = np.asarray(
         [[int(getattr(association, name)) for name in columns] for association in associations],
@@ -837,20 +848,37 @@ def _strict_integer(value: object, label: str) -> int:
 
 def _nonnegative_integer(value: object, label: str) -> int:
     made = _strict_integer(value, label)
-    if made < 0:
-        raise ValueError(f"{label} must be nonnegative")
+    if made < 0 or made > _INT64_MAX:
+        raise ValueError(f"{label} must be nonnegative and no greater than {_INT64_MAX}")
     return made
 
 
 def _positive_integer(value: object, label: str) -> int:
     made = _strict_integer(value, label)
-    if made <= 0:
-        raise ValueError(f"{label} must be positive")
+    if made <= 0 or made > _INT64_MAX:
+        raise ValueError(f"{label} must be positive and no greater than {_INT64_MAX}")
     return made
 
 
 def _optional_table_index(value: object, label: str) -> int:
     made = _strict_integer(value, label)
-    if made < -1:
-        raise ValueError(f"{label} must be -1 (unavailable) or a nonnegative table index")
+    if made < -1 or made > _INT64_MAX:
+        raise ValueError(
+            f"{label} must be -1 (unavailable) or a table index in [0, {_INT64_MAX}]"
+        )
+    return made
+
+
+def _finite_float(value: object, label: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value,
+        (int, float, np.integer, np.floating),
+    ):
+        raise TypeError(f"{label} must be a real numeric value, not {type(value).__name__}")
+    try:
+        made = float(value)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{label} cannot be represented as float64") from exc
+    if not math.isfinite(made):
+        raise ValueError(f"{label} must be finite")
     return made
