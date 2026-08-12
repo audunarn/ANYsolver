@@ -136,6 +136,7 @@ class FEMesh:
     elements: Dict[int, 'Element'] = field(default_factory=dict)
     dof_manager: DOFManager = field(default_factory=DOFManager)
     point_masses: Dict[int, float] = field(default_factory=dict)
+    element_activity: Optional[object] = None
     revisions: Dict[str, int] = field(default_factory=lambda: {
         "topology": 0,
         "geometry": 0,
@@ -167,7 +168,14 @@ class FEMesh:
             self._topology_signature_cache = {}
 
     def revision_signature(self) -> Dict[str, int]:
-        return {key: int(value) for key, value in sorted(self.revisions.items())}
+        signature = {
+            key: int(value) for key, value in sorted(self.revisions.items())
+        }
+        if self.element_activity is not None:
+            signature["activity"] = int(
+                getattr(self.element_activity, "sequence", 0)
+            )
+        return signature
 
     def add_node(self, node_id: int, x: float, y: float, z: float) -> Node:
         """Add a node to the mesh."""
@@ -251,6 +259,28 @@ class FEModel:
                 elastic_modulus=210e9,  # Steel
                 poisson_ratio=0.3
             )
+
+    def set_element_activity(self, activity: Optional[object]) -> Optional[object]:
+        """Attach activity state for exactly the mesh's stable element IDs."""
+
+        if activity is not None:
+            managed = {
+                int(element_id)
+                for element_id in np.asarray(
+                    getattr(activity, "element_ids", ()), dtype=np.int64
+                ).reshape(-1)
+            }
+            actual = {int(element_id) for element_id in self.mesh.elements}
+            if managed != actual:
+                missing = sorted(actual - managed)
+                extra = sorted(managed - actual)
+                raise ValueError(
+                    "ElementActivity IDs must exactly match the FE mesh; "
+                    f"missing={missing[:8]}, extra={extra[:8]}"
+                )
+        self.mesh.element_activity = activity
+        self.mesh.bump_revision("result_state")
+        return activity
 
     def add_material(self, name: str, elastic_modulus: float, poisson_ratio: float,
                     density: float = 0.0, yield_stress: float = 0.0,

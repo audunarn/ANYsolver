@@ -798,3 +798,40 @@ __all__ = [
     "validate_sesam_fem_document",
     "write_sesam_fem_document",
 ]
+
+# Stable-ID, array-based progressive damage and hard-deletion lifecycle.
+from .activity import (
+    ActivityChange,
+    ActivityFilter,
+    ActivityPolicy,
+    ContributionPolicy,
+    CouplingPolicy,
+    CouplingResolution,
+    CouplingResolutionError,
+    DamageHistoryEntry,
+    ElementActivity,
+    ElementActivityError,
+    ElementActivityManager,
+    ElementActivityPolicies,
+    ElementActivityPolicy,
+    OrphanDofReport,
+    RestartStateError,
+)
+
+__all__ += [
+    "ActivityChange",
+    "ActivityFilter",
+    "ActivityPolicy",
+    "ContributionPolicy",
+    "CouplingPolicy",
+    "CouplingResolution",
+    "CouplingResolutionError",
+    "DamageHistoryEntry",
+    "ElementActivity",
+    "ElementActivityError",
+    "ElementActivityManager",
+    "ElementActivityPolicies",
+    "ElementActivityPolicy",
+    "OrphanDofReport",
+    "RestartStateError",
+]

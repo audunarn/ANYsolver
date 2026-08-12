@@ -24,6 +24,39 @@ class AssemblyError(ValueError):
     """Raised when an element returns an invalid matrix or load contribution."""
 
 
+def _element_activity(model: "FEModel") -> Any | None:
+    return getattr(model.mesh, "element_activity", None)
+
+
+def _activity_scales(
+    model: "FEModel", quantity: str
+) -> tuple[Any | None, Dict[int, float], Dict[str, Any] | None]:
+    activity = _element_activity(model)
+    if activity is None:
+        return None, {}, None
+    element_ids = tuple(int(element_id) for element_id in model.mesh.elements)
+    try:
+        values = np.asarray(
+            activity.scales(quantity, element_ids), dtype=float
+        ).reshape(-1)
+    except Exception as error:
+        raise AssemblyError(
+            f"element activity cannot provide {quantity} scales for the FE mesh: {error}"
+        ) from error
+    if values.shape != (len(element_ids),) or not np.all(np.isfinite(values)):
+        raise AssemblyError(f"element activity returned invalid {quantity} scales")
+    scales = dict(zip(element_ids, (float(value) for value in values)))
+    return activity, scales, {
+        "quantity": str(quantity),
+        "sequence": int(getattr(activity, "sequence", 0)),
+        "element_count": len(element_ids),
+        "scaled_element_count": int(np.count_nonzero(values != 1.0)),
+        "zero_contribution_count": int(np.count_nonzero(values == 0.0)),
+        "minimum_scale": float(np.min(values)) if len(values) else 1.0,
+        "maximum_scale": float(np.max(values)) if len(values) else 1.0,
+    }
+
+
 def _base_info(model: "FEModel", matrix_type: str) -> Dict[str, Any]:
     mesh = model.mesh
     return {
@@ -164,11 +197,19 @@ def _assemble_element_matrix(
     model: "FEModel",
     matrix_type: str,
     element_matrix_getter: Callable[[Any, Any, Any], np.ndarray],
+    *,
+    activity_quantity: str | None = None,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     info = _base_info(model, matrix_type)
     start_time = time.time()
+    quantity = activity_quantity or (
+        "stiffness" if matrix_type == "geometric_stiffness" else matrix_type
+    )
+    _activity, activity_scales, activity_info = _activity_scales(model, quantity)
+    if activity_info is not None:
+        info["diagnostics"]["element_activity"] = activity_info
 
     # Precompute shell matrices in a JIT-compiled batch for stiffness and mass assembly
     precomputed = {}
@@ -443,7 +484,10 @@ def _assemble_element_matrix(
                     f"Element {elem_id} returned nonsymmetric {matrix_type}; "
                     f"relative symmetry error {local_symmetry:.3e}."
                 )
-        data_list.append(np.asarray(element_matrix, dtype=float).ravel())
+        scale = activity_scales.get(int(elem_id), 1.0)
+        data_list.append(
+            (scale * np.asarray(element_matrix, dtype=float)).ravel()
+        )
 
         info["element_times"][int(elem_id)] = time.time() - elem_start
         info["num_elements"] += 1
@@ -462,6 +506,8 @@ def _assemble_element_matrix(
         dtype=float,
     )
     matrix = coo.tocsr()
+    if activity_info is not None and activity_info["zero_contribution_count"]:
+        matrix.eliminate_zeros()
     info["diagnostics"]["assembled_symmetry_error"] = _relative_symmetry_error(matrix)
     if matrix_type in {"stiffness", "mass"}:
         info["diagnostics"]["vectorized_shell_groups"] = vectorized_shell_groups
@@ -544,6 +590,11 @@ def assemble_geometric_stiffness_matrix(
     total_dofs = mesh.dof_manager.total_dofs
     info = _base_info(model, "geometric_stiffness")
     start_time = time.time()
+    _activity, activity_scales, activity_info = _activity_scales(
+        model, "stiffness"
+    )
+    if activity_info is not None:
+        info["diagnostics"]["element_activity"] = activity_info
 
     # Retrieve or build cached sparsity pattern
     rows_concat, cols_concat = _get_cached_sparsity_pattern(mesh, "geometric_stiffness")
@@ -669,7 +720,10 @@ def assemble_geometric_stiffness_matrix(
             element_matrix,
             int(dof_mapping.size),
         )
-        data_list.append(np.asarray(element_matrix, dtype=float).ravel())
+        scale = activity_scales.get(int(elem_id), 1.0)
+        data_list.append(
+            (scale * np.asarray(element_matrix, dtype=float)).ravel()
+        )
 
         info["element_times"][int(elem_id)] = time.time() - elem_start
         info["num_elements"] += 1
@@ -694,6 +748,8 @@ def assemble_geometric_stiffness_matrix(
         dtype=float,
     )
     matrix = coo.tocsr()
+    if activity_info is not None and activity_info["zero_contribution_count"]:
+        matrix.eliminate_zeros()
     info["diagnostics"]["assembled_symmetry_error"] = _relative_symmetry_error(matrix)
     info["sparsity_signature"] = _topology_signature(mesh, "geometric_stiffness")
     info["assembly_time"] = time.time() - start_time
@@ -730,6 +786,7 @@ def assemble_load_vector(
             model.mesh.dof_manager,
             model.get_material,
             displacements=displacements,
+            element_activity=_element_activity(model),
         )
         load_vector = np.asarray(load_vector, dtype=float).reshape(-1)
         load_name = load_case.name
@@ -739,6 +796,7 @@ def assemble_load_vector(
     if not np.all(np.isfinite(load_vector)):
         raise AssemblyError(f"Load case {load_name!r} produced non-finite load vector values.")
 
+    activity = _element_activity(model)
     return load_vector, {
         "vector_type": "load",
         "load_case": load_name,
@@ -750,6 +808,14 @@ def assemble_load_vector(
             "current"
             if load_case is not None and bool(getattr(load_case, "follower_pressure", False))
             else "reference"
+        ),
+        "element_activity": (
+            None
+            if activity is None
+            else {
+                "quantity": "load",
+                "sequence": int(getattr(activity, "sequence", 0)),
+            }
         ),
     }
 
@@ -777,6 +843,7 @@ def assemble_external_load_tangent(
     cols: list[np.ndarray] = []
     data: list[np.ndarray] = []
     element_ids: list[int] = []
+    _activity, activity_scales, activity_info = _activity_scales(model, "load")
     if load_case is not None and bool(getattr(load_case, "follower_pressure", False)):
         for raw_element_id, pressure in getattr(load_case, "pressure_loads", {}).items():
             element_id = int(raw_element_id)
@@ -801,6 +868,9 @@ def assemble_external_load_tangent(
                 "external_load_tangent",
                 element_tangent,
                 int(dof_mapping.size),
+            )
+            element_tangent = (
+                activity_scales.get(element_id, 1.0) * element_tangent
             )
             row_grid, col_grid = np.meshgrid(dof_mapping, dof_mapping, indexing="ij")
             rows.append(row_grid.ravel())
@@ -829,7 +899,10 @@ def assemble_external_load_tangent(
             if load_case is not None and bool(getattr(load_case, "follower_pressure", False))
             else "reference"
         ),
-        "diagnostics": {"assembled_symmetry_error": _relative_symmetry_error(tangent)},
+        "diagnostics": {
+            "assembled_symmetry_error": _relative_symmetry_error(tangent),
+            "element_activity": activity_info,
+        },
         "assembly_time": time.time() - start_time,
     }
 
@@ -886,8 +959,27 @@ def assemble_damping_matrix(
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble Rayleigh damping C = alpha M + beta K."""
     start = time.time()
-    M, mass_info = assemble_mass_matrix(model)
-    K, stiffness_info = assemble_stiffness_matrix(model)
+    if _element_activity(model) is None:
+        M, mass_info = assemble_mass_matrix(model)
+        K, stiffness_info = assemble_stiffness_matrix(model)
+    else:
+        M, mass_info = _assemble_element_matrix(
+            model,
+            "mass",
+            lambda element, mesh, material: element.compute_mass_matrix(
+                mesh, material
+            ),
+            activity_quantity="damping",
+        )
+        M = _add_point_masses_to_matrix(model, M)
+        K, stiffness_info = _assemble_element_matrix(
+            model,
+            "stiffness",
+            lambda element, mesh, material: element.compute_stiffness_matrix(
+                mesh, material
+            ),
+            activity_quantity="damping",
+        )
     C = (float(rayleigh_alpha) * M + float(rayleigh_beta) * K).tocsr()
     return C, {
         "matrix_type": "damping",

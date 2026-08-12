@@ -870,6 +870,27 @@ def _assemble_sphere_contact_work_buffer(
     contact_work = work_buffer or ContactWorkBuffer(total_dofs, counters=work_counters)
     contact_work.reset(total_dofs)
     contact_scales = {} if contact_scale_by_element is None else {int(k): float(v) for k, v in contact_scale_by_element.items()}
+    deleted_ids = {int(element_id) for element_id in deleted_element_ids}
+    element_activity = getattr(model.mesh, "element_activity", None)
+    if element_activity is not None:
+        activity_ids = np.asarray(
+            element_activity.element_ids, dtype=np.int64
+        ).reshape(-1)
+        activity_scales = np.asarray(
+            element_activity.contact_scales(activity_ids), dtype=float
+        ).reshape(-1)
+        for element_id, scale in zip(activity_ids, activity_scales):
+            identifier = int(element_id)
+            contact_scales[identifier] = (
+                float(contact_scales.get(identifier, 1.0)) * float(scale)
+            )
+        deleted_ids.update(
+            int(element_id)
+            for element_id in activity_ids[
+                np.asarray(element_activity.hard_deleted_mask, dtype=bool)
+            ]
+        )
+    deleted_element_ids = tuple(sorted(deleted_ids))
     geometry = _contact_geometry(model)
     has_beam_targets = bool(contact_config.beam_contact) and geometry.beam_segment_slots.shape[0] > 0
     if geometry.element_ids.shape[0] == 0 and not has_beam_targets:

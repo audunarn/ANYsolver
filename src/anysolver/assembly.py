@@ -1057,7 +1057,12 @@ def compute_constraint_force_diagnostics(
     if load_case is None:
         F_ext = np.zeros(dof_manager.total_dofs, dtype=float)
     else:
-        F_ext = load_case.get_load_vector(mesh, dof_manager, model.get_material)
+        F_ext = load_case.get_load_vector(
+            mesh,
+            dof_manager,
+            model.get_material,
+            element_activity=getattr(mesh, "element_activity", None),
+        )
 
     u = np.asarray(displacements, dtype=float).reshape(-1)
     if u.shape[0] != int(K.shape[0]):

@@ -441,6 +441,7 @@ class LoadCase:
         dof_manager: "DOFManager",
         material_getter: Optional[Callable[[str], "Material"]] = None,
         displacements: Optional[np.ndarray] = None,
+        element_activity: Optional[object] = None,
     ) -> np.ndarray:
         """Assemble the global load vector.
 
@@ -450,6 +451,12 @@ class LoadCase:
         """
         total_dofs = dof_manager.total_dofs
         F = np.zeros(total_dofs)
+
+        def activity_scale(element_id: int) -> float:
+            if element_activity is None:
+                return 1.0
+            values = element_activity.load_scales([int(element_id)])
+            return float(np.asarray(values, dtype=float).reshape(-1)[0])
 
         # Nodal loads.
         for node_id, load in self.nodal_loads.items():
@@ -466,9 +473,10 @@ class LoadCase:
                 continue
             dof_mapping = element.get_dof_mapping(mesh)
             load = np.asarray(load, dtype=float)
+            scale = activity_scale(int(element_id))
             for i, dof in enumerate(dof_mapping):
                 if i < len(load):
-                    F[dof] += load[i]
+                    F[dof] += scale * load[i]
 
         # Consistent pressure loads for shell elements.
         for element_id, pressure in self.pressure_loads.items():
@@ -479,14 +487,15 @@ class LoadCase:
             if self.follower_pressure:
                 coords = self._current_element_coordinates(element, mesh, displacements)
             f_elem = self._consistent_pressure_load(element, mesh, pressure, coords)
+            scale = activity_scale(int(element_id))
             dof_mapping = element.get_dof_mapping(mesh)
             for i, dof in enumerate(dof_mapping):
                 if i < len(f_elem):
-                    F[dof] += f_elem[i]
+                    F[dof] += scale * f_elem[i]
 
         # Gravity loads from element mass matrices.
         if self.gravity is not None:
-            for element in mesh.elements.values():
+            for element_id, element in mesh.elements.items():
                 if not hasattr(element, "node_ids"):
                     continue
                 if material_getter is None:
@@ -494,10 +503,11 @@ class LoadCase:
                 else:
                     material = material_getter(element.material_name)
                 f_elem = self._consistent_gravity_load(element, mesh, material)
+                scale = activity_scale(int(element_id))
                 dof_mapping = element.get_dof_mapping(mesh)
                 for i, dof in enumerate(dof_mapping):
                     if i < len(f_elem):
-                        F[dof] += f_elem[i]
+                        F[dof] += scale * f_elem[i]
 
         # Inertial load from added masses under the acceleration field: both
         # model-level point masses (which also enter the mass matrix) and any
@@ -554,6 +564,7 @@ class LoadCombination:
         mesh: "FEMesh",
         dof_manager: "DOFManager",
         material_getter: Optional[Callable[[str], "Material"]] = None,
+        element_activity: Optional[object] = None,
     ) -> np.ndarray:
         """Assemble the factored load vector.
 
@@ -568,6 +579,7 @@ class LoadCombination:
                     mesh,
                     dof_manager,
                     material_getter,
+                    element_activity=element_activity,
                 )
         return F_total
 
