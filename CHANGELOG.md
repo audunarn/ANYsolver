@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-- Widen the qualified ANYmesher consumer range to `>=0.1,<0.3`. Preserve the
-  public neutral panel, mesh, quality, and section contract across real 0.1.0
-  and 0.2.1 wheel endpoints, retain the strict 0.3 cap, and align CI and
+- Widen the declared ANYmesher consumer range to `>=0.1,<0.3`, add CI coverage
+  for pinned 0.1.0 and 0.2.1 endpoints, preserve the public neutral panel, mesh,
+  quality, and section contract, retain the strict 0.3 cap, and align CI and
   publication dependency gates with the declared metadata.
 - Complete the Sol Ultra `performance_2` campaign with qualified static/arc
   persistent nonlinear state transactions, compiled canonical-curve Hill-48 batches,
