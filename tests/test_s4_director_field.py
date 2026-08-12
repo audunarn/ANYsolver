@@ -1,0 +1,264 @@
+"""Per-element-corner S4 director validation and reconstruction checks."""
+
+from __future__ import annotations
+
+import math
+
+import numpy as np
+import pytest
+
+from anysolver.shell_formulations.director_field import (
+    DIRECTOR_PROVENANCE_NUMERIC_CODE,
+    DirectorProvenanceCode,
+    DirectorValidationLimits,
+    SourceCornerSamples,
+    prepare_supplied_corner_directors,
+    reconstruct_corner_directors,
+    validate_element_corner_directors,
+)
+from anysolver.shell_formulations.mitc4_plus_d_quality import (
+    numeric_payload_fingerprint,
+    q4_geometry_quality,
+)
+
+
+def _two_quad_plane() -> tuple[np.ndarray, np.ndarray]:
+    coordinates = np.asarray(
+        (
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (2.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (2.0, 1.0, 0.0),
+        )
+    )
+    connectivity = np.asarray(((0, 1, 4, 3), (1, 2, 5, 4)), dtype=np.int64)
+    return coordinates, connectivity
+
+
+def _right_angle_fold() -> tuple[np.ndarray, np.ndarray]:
+    coordinates = np.asarray(
+        (
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+            (1.0, 0.0, 1.0),
+        )
+    )
+    connectivity = np.asarray(((0, 1, 2, 3), (1, 0, 4, 5)), dtype=np.int64)
+    return coordinates, connectivity
+
+
+def _rotation_matrix() -> np.ndarray:
+    axis = np.asarray((1.0, -2.0, 0.7), dtype=float)
+    axis /= np.linalg.norm(axis)
+    angle = 0.71
+    cross = np.asarray(
+        (
+            (0.0, -axis[2], axis[1]),
+            (axis[2], 0.0, -axis[0]),
+            (-axis[1], axis[0], 0.0),
+        )
+    )
+    return np.eye(3) + math.sin(angle) * cross + (1.0 - math.cos(angle)) * (cross @ cross)
+
+
+def test_supplied_directors_are_strictly_numeric_normalized_and_immutable() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    corners = coordinates[connectivity]
+    directors = np.zeros_like(corners)
+    directors[:, :, 2] = 1.0
+    prepared = prepare_supplied_corner_directors(
+        corners,
+        directors,
+        provenance=DirectorProvenanceCode.SOURCE_SURFACE_EXACT,
+    )
+    assert prepared.directors.shape == (2, 4, 3)
+    assert not prepared.directors.flags.writeable
+    assert set(np.unique(prepared.provenance_codes)) == {
+        DIRECTOR_PROVENANCE_NUMERIC_CODE[DirectorProvenanceCode.SOURCE_SURFACE_EXACT]
+    }
+    assert prepared.provenance_labels[0] == ("source_surface_exact",) * 4
+    with pytest.raises(ValueError):
+        prepared.directors[0, 0, 0] = 2.0
+
+    invalid = directors.copy()
+    invalid[0, 0] *= 2.0
+    with pytest.raises(ValueError, match="normalized"):
+        prepare_supplied_corner_directors(corners, invalid)
+    invalid = directors.copy()
+    invalid[0, 0] *= -1.0
+    with pytest.raises(ValueError, match="orientation"):
+        prepare_supplied_corner_directors(corners, invalid)
+
+
+def test_reconstruction_is_translation_rotation_and_fe_numbering_invariant() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    baseline = reconstruct_corner_directors(
+        coordinates,
+        connectivity,
+        part_indices=(4, 4),
+        sheet_indices=(8, 8),
+    )
+    rotation = _rotation_matrix()
+    translated_rotated = coordinates @ rotation.T + np.asarray((1.0e5, -2.0e5, 3.0e5))
+    transformed = reconstruct_corner_directors(
+        translated_rotated,
+        connectivity,
+        part_indices=(4, 4),
+        sheet_indices=(8, 8),
+    )
+    np.testing.assert_allclose(transformed.directors, baseline.directors @ rotation.T, atol=2.0e-11)
+
+    element_order = np.asarray((1, 0))
+    reordered = reconstruct_corner_directors(
+        coordinates,
+        connectivity[element_order],
+        part_indices=np.asarray((4, 4))[element_order],
+        sheet_indices=np.asarray((8, 8))[element_order],
+    )
+    np.testing.assert_allclose(reordered.directors[np.argsort(element_order)], baseline.directors, atol=1.0e-14)
+
+    new_to_old = np.asarray((2, 0, 5, 1, 4, 3))
+    old_to_new = np.empty_like(new_to_old)
+    old_to_new[new_to_old] = np.arange(new_to_old.size)
+    renumbered = reconstruct_corner_directors(
+        coordinates[new_to_old],
+        old_to_new[connectivity],
+        part_indices=(4, 4),
+        sheet_indices=(8, 8),
+    )
+    np.testing.assert_allclose(renumbered.directors, baseline.directors, atol=1.0e-14)
+
+
+def test_sharp_fold_keeps_distinct_directors_at_one_shared_global_node() -> None:
+    coordinates, connectivity = _right_angle_fold()
+    field = reconstruct_corner_directors(coordinates, connectivity)
+    np.testing.assert_allclose(field.directors[0, 0], (0.0, 0.0, 1.0), atol=1.0e-14)
+    np.testing.assert_allclose(field.directors[1, 1], (0.0, 1.0, 0.0), atol=1.0e-14)
+    assert field.quality.angular_crease_edge_count == 1
+    assert not np.allclose(field.directors[0, 0], field.directors[1, 1])
+
+
+@pytest.mark.parametrize(
+    ("part_indices", "sheet_indices", "continuity_indices"),
+    [
+        ((1, 2), (3, 3), (4, 4)),
+        ((1, 1), (3, 9), (4, 4)),
+        ((1, 1), (3, 3), (4, 7)),
+    ],
+)
+def test_part_sheet_and_declared_continuity_boundaries_never_average(
+    part_indices: tuple[int, int],
+    sheet_indices: tuple[int, int],
+    continuity_indices: tuple[int, int],
+) -> None:
+    coordinates, connectivity = _right_angle_fold()
+    permissive = DirectorValidationLimits(crease_angle_degrees=180.0)
+    field = reconstruct_corner_directors(
+        coordinates,
+        connectivity,
+        part_indices=part_indices,
+        sheet_indices=sheet_indices,
+        continuity_indices=continuity_indices,
+        limits=permissive,
+    )
+    np.testing.assert_allclose(field.directors[0, 0], (0.0, 0.0, 1.0), atol=1.0e-14)
+    np.testing.assert_allclose(field.directors[1, 1], (0.0, 1.0, 0.0), atol=1.0e-14)
+    assert field.quality.region_boundary_edge_count == 1
+
+
+def test_smooth_fan_averages_only_when_no_crease_or_source_boundary_blocks_it() -> None:
+    coordinates, connectivity = _right_angle_fold()
+    limits = DirectorValidationLimits(
+        maximum_corner_spread_degrees=90.0,
+        crease_angle_degrees=180.0,
+    )
+    field = reconstruct_corner_directors(coordinates, connectivity, limits=limits)
+    expected = np.asarray((0.0, 1.0, 1.0)) / math.sqrt(2.0)
+    np.testing.assert_allclose(field.directors[0, 0], expected, atol=1.0e-14)
+    np.testing.assert_allclose(field.directors[1, 1], expected, atol=1.0e-14)
+    assert field.quality.smooth_interior_edge_count == 1
+    assert field.quality.maximum_smoothing_component_size == 2
+
+    blocked = reconstruct_corner_directors(
+        coordinates,
+        connectivity,
+        crease_edges=((0, 1),),
+        limits=limits,
+    )
+    np.testing.assert_allclose(blocked.directors[0, 0], (0.0, 0.0, 1.0), atol=1.0e-14)
+    np.testing.assert_allclose(blocked.directors[1, 1], (0.0, 1.0, 0.0), atol=1.0e-14)
+    assert blocked.quality.declared_crease_edge_count == 1
+
+
+def test_face_use_orientation_allows_reversed_node_order_without_director_reversal() -> None:
+    coordinates = np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)))
+    forward = reconstruct_corner_directors(coordinates, ((0, 1, 2, 3),))
+    reversed_order = reconstruct_corner_directors(
+        coordinates,
+        ((3, 2, 1, 0),),
+        orientation_signs=(-1,),
+    )
+    np.testing.assert_allclose(forward.directors[0], (reversed_order.directors[0])[::-1], atol=1.0e-14)
+
+
+def test_degenerate_geometry_and_excessive_director_spread_fail_closed() -> None:
+    with pytest.raises(ValueError, match="characteristic length|zero or numerically unresolved"):
+        reconstruct_corner_directors(
+            ((0.0, 0.0, 0.0),) * 4,
+            ((0, 1, 2, 3),),
+        )
+
+    corners = np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)))
+    directors = np.asarray(((0.0, 0.0, 1.0), (0.5, 0.0, math.sqrt(0.75)), (0.0, 0.0, 1.0), (0.0, 0.0, 1.0)))
+    with pytest.raises(ValueError, match="angular variation"):
+        validate_element_corner_directors(
+            corners,
+            directors,
+            limits=DirectorValidationLimits(maximum_corner_spread_degrees=20.0),
+        )
+
+
+def test_numeric_reference_fingerprint_is_deterministic_and_revision_sensitive() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    field = reconstruct_corner_directors(coordinates, connectivity)
+    assert field.numeric_fingerprint == reconstruct_corner_directors(coordinates, connectivity).numeric_fingerprint
+    changed = field.directors.copy()
+    changed[0, 0, 0] = 1.0e-12
+    assert numeric_payload_fingerprint(coordinates, field.directors) != numeric_payload_fingerprint(
+        coordinates, changed
+    )
+
+
+def test_optional_source_uv_and_tangent_samples_are_cold_numeric_evidence() -> None:
+    uv = np.asarray(((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)))
+    tangent_1 = np.tile((1.0, 0.0, 0.0), (4, 1))
+    tangent_2 = np.tile((0.0, 1.0, 0.0), (4, 1))
+    samples = SourceCornerSamples(uv, tangent_1, tangent_2)
+    assert samples.element_count == 1
+    assert not samples.source_uv.flags.writeable
+    assert len(samples.numeric_fingerprint) == 64
+    with pytest.raises(ValueError, match="supplied together"):
+        SourceCornerSamples(source_tangent_1=tangent_1)
+    with pytest.raises(ValueError, match="linearly independent"):
+        SourceCornerSamples(source_tangent_1=tangent_1, source_tangent_2=tangent_1)
+
+
+def test_q4_quality_rejects_concave_or_orientation_reversing_mapping() -> None:
+    concave = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.2, 0.2, 0.0), (0.0, 1.0, 0.0))
+    )
+    with pytest.raises(ValueError, match="Jacobian"):
+        q4_geometry_quality(concave)
+
+
+def test_mesh_handoff_indices_must_be_integer_arrays() -> None:
+    coordinates, connectivity = _two_quad_plane()
+    with pytest.raises(ValueError, match="compact integer"):
+        reconstruct_corner_directors(coordinates, connectivity, sheet_indices=(1.0, 1.0))
+    with pytest.raises(ValueError, match="integer node indices"):
+        reconstruct_corner_directors(coordinates, connectivity.astype(float))
