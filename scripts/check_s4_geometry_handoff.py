@@ -19,6 +19,7 @@ if str(SRC) not in sys.path:
 
 from anysolver.shell_formulations.director_field import (  # noqa: E402
     DirectorValidationLimits,
+    prepare_supplied_corner_directors,
     reconstruct_corner_directors,
 )
 from anysolver.shell_formulations.geometry_provenance import (  # noqa: E402
@@ -228,6 +229,49 @@ def _invariance_check() -> MappingResult:
     return {"maximum_absolute_error": error}
 
 
+def _reference_center_jacobian(corners: np.ndarray, directors: np.ndarray) -> float:
+    derivative_xi = 0.25 * np.asarray((-1.0, 1.0, 1.0, -1.0))
+    derivative_eta = 0.25 * np.asarray((-1.0, -1.0, 1.0, 1.0))
+    covariant_xi = derivative_xi @ corners
+    covariant_eta = derivative_eta @ corners
+    return float(
+        np.dot(
+            np.cross(covariant_xi, covariant_eta),
+            np.mean(directors, axis=0),
+        )
+    )
+
+
+def _face_use_reference_jacobian_check() -> MappingResult:
+    coordinates = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0))
+    )
+    jacobians: dict[str, float] = {}
+    for label, connectivity, source_sign in (
+        ("forward", (0, 1, 2, 3), 1),
+        ("reversed", (3, 2, 1, 0), -1),
+    ):
+        corners = coordinates[np.asarray(connectivity)]
+        reconstructed = reconstruct_corner_directors(
+            coordinates,
+            (connectivity,),
+            source_face_use_orientation_signs=(source_sign,),
+        )
+        supplied = prepare_supplied_corner_directors(
+            corners,
+            reconstructed.directors[0],
+            source_face_use_orientation_signs=(source_sign,),
+        )
+        for path, prepared in (("reconstructed", reconstructed), ("supplied", supplied)):
+            jacobian = _reference_center_jacobian(corners, prepared.directors[0])
+            if jacobian <= 0.0:
+                raise AssertionError(
+                    f"{label} face-use {path} directors give nonpositive reference Jacobian"
+                )
+            jacobians[f"{label}_{path}"] = jacobian
+    return jacobians
+
+
 def _strip_director_counts(element_count: int) -> tuple[int, int]:
     bottom = [(float(index), 0.0, 0.0) for index in range(element_count + 1)]
     top = [(float(index), 1.0, 0.0) for index in range(element_count + 1)]
@@ -290,6 +334,7 @@ def run_geometry_handoff_checks(*, full: bool = False) -> dict[str, Any]:
     _record_check(checks, "zero_production_geometry_imports", _no_geometry_import_check)
     if full:
         _record_check(checks, "rigid_motion_and_element_order_invariance", _invariance_check)
+        _record_check(checks, "face_use_reference_jacobian", _face_use_reference_jacobian_check)
         _record_check(checks, "linear_preprocessing_structure", _linear_preprocessing_structure_check)
     failed = [item for item in checks if item["status"] != "passed"]
     return {

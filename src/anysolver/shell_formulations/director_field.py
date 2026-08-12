@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 import math
+from operator import index as integer_index
 from typing import Iterable, Sequence
 
 import numpy as np
@@ -219,7 +220,12 @@ def _batch_corner_coordinates(values: Sequence[Sequence[Sequence[float]]] | np.n
     return np.ascontiguousarray(corners)
 
 
-def _orientation_signs(values: Sequence[int] | np.ndarray | None, count: int) -> np.ndarray:
+def _source_face_use_orientation_signs(
+    values: Sequence[int] | np.ndarray | None,
+    count: int,
+) -> np.ndarray:
+    """Validate source-relative signs retained as cold provenance only."""
+
     if values is None:
         signs = np.ones(count, dtype=np.int8)
     else:
@@ -228,30 +234,40 @@ def _orientation_signs(values: Sequence[int] | np.ndarray | None, count: int) ->
             raise ValueError(f"face-use orientation signs must have shape ({count},)")
         if np.issubdtype(signs.dtype, np.bool_) or not np.issubdtype(signs.dtype, np.integer):
             raise ValueError("face-use orientation signs must be integers")
-        signs = np.asarray(signs, dtype=np.int8)
     if not np.all(np.isin(signs, (-1, 1))):
         raise ValueError("face-use orientation signs must contain only +1 or -1")
-    return signs
+    return np.asarray(signs, dtype=np.int8)
 
 
 def validate_element_corner_directors(
     corner_coordinates: Sequence[Sequence[float]] | np.ndarray,
     reference_directors: Sequence[Sequence[float]] | np.ndarray,
     *,
-    orientation_sign: int = 1,
     limits: DirectorValidationLimits = DirectorValidationLimits(),
 ) -> CornerDirectorQuality:
-    """Fail closed unless one element's supplied directors meet the contract."""
+    """Fail closed unless directors give a positive reference Jacobian.
 
-    quality = corner_director_quality(
-        corner_coordinates,
-        reference_directors,
-        orientation_sign=orientation_sign,
-    )
+    The comparison frame is the normal induced by finalized element
+    connectivity.  Source face-use orientation has already selected that
+    connectivity upstream and must not be multiplied into directors again.
+    """
+
+    quality = corner_director_quality(corner_coordinates, reference_directors)
     if quality.maximum_norm_error > limits.normalization_atol:
         raise ValueError(
             "reference directors must be normalized before solver handoff "
             f"(maximum norm error {quality.maximum_norm_error:.3e})"
+        )
+    jacobian_tolerance = (
+        128.0
+        * np.finfo(np.float64).eps
+        * quality.geometry.characteristic_length**2
+    )
+    if quality.center_director_jacobian <= jacobian_tolerance:
+        raise ValueError(
+            "reference directors do not produce a positive center reference Jacobian "
+            "with finalized Q4 connectivity "
+            f"({quality.center_director_jacobian:.6g})"
         )
     if quality.minimum_geometry_alignment <= limits.minimum_geometry_alignment:
         raise ValueError(
@@ -270,11 +286,17 @@ def prepare_supplied_corner_directors(
     corner_coordinates: Sequence[Sequence[Sequence[float]]] | np.ndarray,
     reference_directors: Sequence[Sequence[Sequence[float]]] | np.ndarray,
     *,
-    orientation_signs: Sequence[int] | np.ndarray | None = None,
+    source_face_use_orientation_signs: Sequence[int] | np.ndarray | None = None,
     provenance: DirectorProvenanceCode | str = DirectorProvenanceCode.USER_SUPPLIED,
     limits: DirectorValidationLimits = DirectorValidationLimits(),
 ) -> PreparedDirectorField:
-    """Validate already-normalized numeric directors without reconstructing them."""
+    """Validate numeric directors in the finalized connectivity frame.
+
+    ``source_face_use_orientation_signs`` records whether each source face use
+    is forward or reversed relative to its underlying source face.  It is
+    validated and fingerprinted as cold provenance, but never flips a
+    director: node ordering has already applied that source convention.
+    """
 
     corners = _batch_corner_coordinates(corner_coordinates)
     directors = np.asarray(reference_directors, dtype=np.float64)
@@ -284,7 +306,10 @@ def prepare_supplied_corner_directors(
         raise ValueError(f"reference directors must have shape {corners.shape}, got {directors.shape}")
     if not np.all(np.isfinite(directors)):
         raise ValueError("reference directors must be finite")
-    signs = _orientation_signs(orientation_signs, corners.shape[0])
+    source_signs = _source_face_use_orientation_signs(
+        source_face_use_orientation_signs,
+        corners.shape[0],
+    )
     try:
         provenance_code = DirectorProvenanceCode(provenance)
     except ValueError as exc:
@@ -299,7 +324,6 @@ def prepare_supplied_corner_directors(
         validate_element_corner_directors(
             corners[element],
             directors[element],
-            orientation_sign=int(signs[element]),
             limits=limits,
         )
         for element in range(corners.shape[0])
@@ -326,8 +350,12 @@ def prepare_supplied_corner_directors(
         provenance_codes=codes,
         element_quality=element_quality,
         quality=quality,
-        diagnostics=("validated_numeric_input", f"provenance={provenance_code.value}"),
-        numeric_fingerprint=numeric_payload_fingerprint(corners, directors, signs),
+        diagnostics=(
+            "validated_numeric_input",
+            "source_face_use_orientation_applied_upstream",
+            f"provenance={provenance_code.value}",
+        ),
+        numeric_fingerprint=numeric_payload_fingerprint(corners, directors, source_signs),
     )
 
 
@@ -344,14 +372,31 @@ def _compact_indices(
         raise ValueError(f"{label} must have shape ({count},)")
     if np.issubdtype(array.dtype, np.bool_) or not np.issubdtype(array.dtype, np.integer):
         raise ValueError(f"{label} must contain compact integer indices")
-    return np.asarray(array, dtype=np.int64)
+    made = np.asarray(array, dtype=np.int64)
+    if np.any(made < -1):
+        raise ValueError(f"{label} values must be -1 (unavailable) or nonnegative")
+    return made
 
 
 def _edge_set(edges: Iterable[Sequence[int]], node_count: int, *, label: str) -> set[tuple[int, int]]:
     result: set[tuple[int, int]] = set()
     for raw_edge in edges:
-        edge = tuple(int(value) for value in raw_edge)
-        if len(edge) != 2 or edge[0] == edge[1]:
+        try:
+            raw_values = tuple(raw_edge)
+        except TypeError as exc:
+            raise ValueError(f"{label} entries must be pairs of integer node indices") from exc
+        if len(raw_values) != 2:
+            raise ValueError(f"{label} entries must be pairs of distinct node indices")
+        made: list[int] = []
+        for value in raw_values:
+            if isinstance(value, (bool, np.bool_)):
+                raise ValueError(f"{label} must contain true integer node indices, not booleans")
+            try:
+                made.append(int(integer_index(value)))
+            except TypeError as exc:
+                raise ValueError(f"{label} must contain true integer node indices") from exc
+        edge = (made[0], made[1])
+        if edge[0] == edge[1]:
             raise ValueError(f"{label} entries must be pairs of distinct node indices")
         if min(edge) < 0 or max(edge) >= node_count:
             raise ValueError(f"{label} contains a node index outside the coordinate array")
@@ -388,7 +433,7 @@ def reconstruct_corner_directors(
     part_indices: Sequence[int] | np.ndarray | None = None,
     sheet_indices: Sequence[int] | np.ndarray | None = None,
     continuity_indices: Sequence[int] | np.ndarray | None = None,
-    orientation_signs: Sequence[int] | np.ndarray | None = None,
+    source_face_use_orientation_signs: Sequence[int] | np.ndarray | None = None,
     crease_edges: Iterable[Sequence[int]] = (),
     declared_intersection_edges: Iterable[Sequence[int]] = (),
     limits: DirectorValidationLimits = DirectorValidationLimits(),
@@ -401,11 +446,19 @@ def reconstruct_corner_directors(
     crease limit.  Smoothing is then performed separately for every
     ``(element corner, global node)`` fan.  Consequently, one global node may
     produce several directors without duplicating its global rotation DOFs.
+
+    Source face-use signs are provenance relative to underlying source faces.
+    They are validated and fingerprinted, but do not flip connectivity facet
+    normals.  The upstream adapter must already have ordered each Q4 so its
+    connectivity normal is the intended positive thickness direction.
     """
 
     coordinates, elements = _coerce_mesh(node_coordinates, connectivity)
     element_count = elements.shape[0]
-    signs = _orientation_signs(orientation_signs, element_count)
+    source_signs = _source_face_use_orientation_signs(
+        source_face_use_orientation_signs,
+        element_count,
+    )
     parts = _compact_indices(part_indices, element_count, label="part_indices")
     sheets = _compact_indices(sheet_indices, element_count, label="sheet_indices")
     continuity = _compact_indices(continuity_indices, element_count, label="continuity_indices")
@@ -419,8 +472,8 @@ def reconstruct_corner_directors(
 
     corners = coordinates[elements]
     geometry = tuple(q4_geometry_quality(corners[element]) for element in range(element_count))
-    oriented_normals = np.asarray(
-        [signs[element] * np.asarray(geometry[element].unit_normal) for element in range(element_count)],
+    connectivity_normals = np.asarray(
+        [np.asarray(geometry[element].unit_normal) for element in range(element_count)],
         dtype=np.float64,
     )
     corner_weights = np.asarray(
@@ -467,7 +520,7 @@ def reconstruct_corner_directors(
         if first_region != second_region:
             region_boundaries += 1
             continue
-        alignment = float(np.dot(oriented_normals[first], oriented_normals[second]))
+        alignment = float(np.dot(connectivity_normals[first], connectivity_normals[second]))
         if alignment < crease_cosine:
             angular_creases += 1
             continue
@@ -502,7 +555,7 @@ def reconstruct_corner_directors(
             for candidate in sorted(component):
                 candidate_local = local_corner_by_node[candidate][node]
                 weighted_normals.append(
-                    corner_weights[candidate, candidate_local] * oriented_normals[candidate]
+                    corner_weights[candidate, candidate_local] * connectivity_normals[candidate]
                 )
             averaged = np.asarray(
                 [math.fsum(float(vector[axis]) for vector in weighted_normals) for axis in range(3)],
@@ -521,7 +574,6 @@ def reconstruct_corner_directors(
         validate_element_corner_directors(
             corners[element],
             directors[element],
-            orientation_sign=int(signs[element]),
             limits=limits,
         )
         for element in range(element_count)
@@ -553,6 +605,7 @@ def reconstruct_corner_directors(
     diagnostics = (
         "numeric_mesh_only",
         "element_corner_storage",
+        "source_face_use_orientation_applied_upstream",
         f"provenance={provenance.value}",
         f"smooth_edges={smooth_interior_edges}",
         f"blocked_edges={len(blocked_edges)}",
@@ -567,7 +620,7 @@ def reconstruct_corner_directors(
         numeric_fingerprint=numeric_payload_fingerprint(
             coordinates,
             elements,
-            signs,
+            source_signs,
             parts,
             sheets,
             continuity,

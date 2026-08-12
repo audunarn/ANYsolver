@@ -135,6 +135,16 @@ def test_model_uuid_is_validated_then_stored_once_in_compact_serialization() -> 
     assert restored == tables
     assert restored.fingerprint == tables.fingerprint
 
+    missing_fingerprint = tables.to_dict()
+    missing_fingerprint.pop("fingerprint")
+    with pytest.raises(ValueError, match="requires a provenance fingerprint"):
+        GeometryProvenanceTables.from_dict(missing_fingerprint)
+
+    wrong_fingerprint = tables.to_dict()
+    wrong_fingerprint["fingerprint"] = "0" * 64
+    with pytest.raises(ValueError, match="does not match"):
+        GeometryProvenanceTables.from_dict(wrong_fingerprint)
+
 
 def test_wrong_model_is_rejected_before_source_handles_become_compact() -> None:
     handles = (
@@ -333,7 +343,7 @@ def test_geometry_handoff_check_script_reports_synthetic_scope_without_claiming_
         assert report["status"] == "passed"
         assert report["scope"] == "synthetic_neutral_handoff"
         assert report["upstream_activation"] == "not_exercised_by_synthetic_contract_check"
-        assert report["summary"] == {"failed": 0, "passed": 8}
+        assert report["summary"] == {"failed": 0, "passed": 9}
     finally:
         if output_dir.exists():
             shutil.rmtree(output_dir)

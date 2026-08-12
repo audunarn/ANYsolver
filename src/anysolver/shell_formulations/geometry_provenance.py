@@ -587,6 +587,11 @@ class GeometryProvenanceTables:
             raise ValueError("unsupported neutral S4 geometry handoff contract")
         if payload.get("anygeometry_api") != SUPPORTED_ANYGEOMETRY_API:
             raise ValueError("neutral handoff declares an incompatible ANYgeometry API boundary")
+        if "fingerprint" not in payload:
+            raise ValueError("neutral S4 geometry handoff v1 requires a provenance fingerprint")
+        expected = payload["fingerprint"]
+        if not isinstance(expected, str) or not expected:
+            raise ValueError("neutral S4 geometry handoff fingerprint must be a nonempty string")
         table = cls(
             header=GeometryProvenanceHeader.from_dict(payload["header"]),
             entity_kind_table=tuple(payload.get("entity_kind_table", ())),
@@ -623,8 +628,7 @@ class GeometryProvenanceTables:
                 for item in payload.get("coupling_intent_table", ())
             ),
         )
-        expected = payload.get("fingerprint")
-        if expected is not None and expected != table.fingerprint:
+        if expected != table.fingerprint:
             raise ValueError("neutral S4 geometry handoff fingerprint does not match its payload")
         return table
 
@@ -647,11 +651,20 @@ def validate_anygeometry_version(version: str) -> tuple[int, int, int]:
     return parsed
 
 
-def validate_face_use_orientation(source_orientation: int, element_orientation: int) -> None:
-    """Reject a node-order/source-side mismatch before element preparation."""
+def validate_face_use_orientation(
+    source_face_use_orientation: int,
+    element_source_orientation: int,
+) -> None:
+    """Reject a source-relative node-order mismatch before preparation.
 
-    source = _strict_integer(source_orientation, "source_orientation")
-    element = _strict_integer(element_orientation, "element_orientation")
+    Both signs are measured relative to the same underlying source face.  Once
+    they agree, finalized element connectivity defines the positive reference
+    normal and directors must follow that connectivity normal directly.  This
+    check never supplies a multiplier for element director construction.
+    """
+
+    source = _strict_integer(source_face_use_orientation, "source_face_use_orientation")
+    element = _strict_integer(element_source_orientation, "element_source_orientation")
     if source not in (-1, 1) or element not in (-1, 1):
         raise ValueError("source and element orientation signs must be +1 or -1")
     if source != element:

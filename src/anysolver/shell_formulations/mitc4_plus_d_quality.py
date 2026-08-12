@@ -40,6 +40,7 @@ class CornerDirectorQuality:
     maximum_norm_error: float
     minimum_geometry_alignment: float
     maximum_pair_angle_degrees: float
+    center_director_jacobian: float
     geometry: Q4GeometryQuality
 
 
@@ -167,14 +168,17 @@ def q4_geometry_quality(
 def corner_director_quality(
     corner_coordinates: Sequence[Sequence[float]] | np.ndarray,
     reference_directors: Sequence[Sequence[float]] | np.ndarray,
-    *,
-    orientation_sign: int = 1,
 ) -> CornerDirectorQuality:
-    """Return unit-length and geometry-compatibility director metrics."""
+    """Return director metrics in the finalized element-connectivity frame.
 
-    if orientation_sign not in (-1, 1):
-        raise ValueError("orientation_sign must be +1 or -1")
+    Source face-use orientation is deliberately absent here.  The upstream
+    adapter has already used it to choose the element node order.  The
+    continuum reference Jacobian is positive only when the interpolated
+    director follows the normal induced by that final connectivity.
+    """
+
     geometry = q4_geometry_quality(corner_coordinates)
+    corners = _q4_corners(corner_coordinates)
     directors = np.asarray(reference_directors, dtype=np.float64)
     if directors.shape != (4, 3):
         raise ValueError(f"reference directors must have shape (4, 3), got {directors.shape}")
@@ -184,8 +188,17 @@ def corner_director_quality(
     if np.any(norms <= np.finfo(np.float64).tiny):
         raise ValueError("reference directors must have nonzero length")
     unit_directors = directors / norms[:, None]
-    oriented_normal = orientation_sign * np.asarray(geometry.unit_normal)
-    alignments = unit_directors @ oriented_normal
+    connectivity_normal = np.asarray(geometry.unit_normal)
+    alignments = unit_directors @ connectivity_normal
+
+    derivative_xi = 0.25 * np.asarray((-1.0, 1.0, 1.0, -1.0))
+    derivative_eta = 0.25 * np.asarray((-1.0, -1.0, 1.0, 1.0))
+    covariant_xi = derivative_xi @ corners
+    covariant_eta = derivative_eta @ corners
+    center_director = np.mean(unit_directors, axis=0)
+    center_director_jacobian = float(
+        np.dot(np.cross(covariant_xi, covariant_eta), center_director)
+    )
 
     maximum_angle = 0.0
     for first in range(4):
@@ -198,6 +211,7 @@ def corner_director_quality(
         maximum_norm_error=float(np.max(np.abs(norms - 1.0))),
         minimum_geometry_alignment=float(np.min(alignments)),
         maximum_pair_angle_degrees=maximum_angle,
+        center_director_jacobian=center_director_jacobian,
         geometry=geometry,
     )
 

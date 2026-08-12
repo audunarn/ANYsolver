@@ -66,6 +66,20 @@ def _rotation_matrix() -> np.ndarray:
     return np.eye(3) + math.sin(angle) * cross + (1.0 - math.cos(angle)) * (cross @ cross)
 
 
+def _reference_center_director_jacobian(
+    corners: np.ndarray,
+    directors: np.ndarray,
+) -> float:
+    """Midsurface determinant factor used by the reference continuum map."""
+
+    derivative_xi = 0.25 * np.asarray((-1.0, 1.0, 1.0, -1.0))
+    derivative_eta = 0.25 * np.asarray((-1.0, -1.0, 1.0, 1.0))
+    covariant_xi = derivative_xi @ corners
+    covariant_eta = derivative_eta @ corners
+    center_director = np.mean(directors, axis=0)
+    return float(np.dot(np.cross(covariant_xi, covariant_eta), center_director))
+
+
 def test_supplied_directors_are_strictly_numeric_normalized_and_immutable() -> None:
     coordinates, connectivity = _two_quad_plane()
     corners = coordinates[connectivity]
@@ -195,15 +209,43 @@ def test_smooth_fan_averages_only_when_no_crease_or_source_boundary_blocks_it() 
     assert blocked.quality.declared_crease_edge_count == 1
 
 
-def test_face_use_orientation_allows_reversed_node_order_without_director_reversal() -> None:
+@pytest.mark.parametrize(
+    ("connectivity", "source_face_use_orientation"),
+    [
+        ((0, 1, 2, 3), 1),
+        ((3, 2, 1, 0), -1),
+    ],
+)
+def test_every_prepared_field_is_directly_consumable_by_reference_jacobian_convention(
+    connectivity: tuple[int, int, int, int],
+    source_face_use_orientation: int,
+) -> None:
     coordinates = np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)))
-    forward = reconstruct_corner_directors(coordinates, ((0, 1, 2, 3),))
-    reversed_order = reconstruct_corner_directors(
+    corners = coordinates[np.asarray(connectivity)]
+    reconstructed = reconstruct_corner_directors(
         coordinates,
-        ((3, 2, 1, 0),),
-        orientation_signs=(-1,),
+        (connectivity,),
+        source_face_use_orientation_signs=(source_face_use_orientation,),
     )
-    np.testing.assert_allclose(forward.directors[0], (reversed_order.directors[0])[::-1], atol=1.0e-14)
+    supplied = prepare_supplied_corner_directors(
+        corners,
+        reconstructed.directors[0],
+        source_face_use_orientation_signs=(source_face_use_orientation,),
+        provenance=DirectorProvenanceCode.SOURCE_SURFACE_SAMPLED,
+    )
+    connectivity_normal = np.asarray(q4_geometry_quality(corners).unit_normal)
+    for prepared in (reconstructed, supplied):
+        np.testing.assert_allclose(prepared.directors[0], np.tile(connectivity_normal, (4, 1)))
+        jacobian = _reference_center_director_jacobian(corners, prepared.directors[0])
+        assert jacobian > 0.0
+        assert prepared.element_quality[0].center_director_jacobian == pytest.approx(jacobian)
+
+    with pytest.raises(ValueError, match="positive center reference Jacobian"):
+        prepare_supplied_corner_directors(
+            corners,
+            -reconstructed.directors[0],
+            source_face_use_orientation_signs=(source_face_use_orientation,),
+        )
 
 
 def test_degenerate_geometry_and_excessive_director_spread_fail_closed() -> None:
@@ -262,3 +304,15 @@ def test_mesh_handoff_indices_must_be_integer_arrays() -> None:
         reconstruct_corner_directors(coordinates, connectivity, sheet_indices=(1.0, 1.0))
     with pytest.raises(ValueError, match="integer node indices"):
         reconstruct_corner_directors(coordinates, connectivity.astype(float))
+    with pytest.raises(ValueError, match="-1.*or nonnegative"):
+        reconstruct_corner_directors(coordinates, connectivity, sheet_indices=(-2, -2))
+    with pytest.raises(ValueError, match="true integer node indices"):
+        reconstruct_corner_directors(coordinates, connectivity, crease_edges=((0.5, 1),))
+    with pytest.raises(ValueError, match="not booleans"):
+        reconstruct_corner_directors(coordinates, connectivity, crease_edges=((False, 1),))
+    with pytest.raises(ValueError, match=r"only \+1 or -1"):
+        reconstruct_corner_directors(
+            coordinates,
+            connectivity,
+            source_face_use_orientation_signs=(257, 257),
+        )

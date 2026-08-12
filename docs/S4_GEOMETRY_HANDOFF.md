@@ -124,8 +124,9 @@ model-table indices.
 
 The neutral `to_dict()` payload contains no geometry document. It records one
 contract marker, the shared header, model-owned tables, and the canonical
-fingerprint. `from_dict()` validates this neutral payload and its fingerprint;
-it does not call a geometry deserializer.
+fingerprint. The v1 fingerprint is mandatory: `from_dict()` rejects omission
+as well as mismatch before accepting a payload. It does not call a geometry
+deserializer.
 
 ## Per-shell source association
 
@@ -169,15 +170,26 @@ The source `FaceUse.orientation` is authoritative for:
 - material axes;
 - top/bottom recovery.
 
-The adapter checks node ordering against this orientation. It either corrects
-node order while building the immutable FE model or rejects the model.
-`validate_face_use_orientation()` implements the fail-closed check. The
-element hot kernel never guesses, flips, or repairs source orientation.
+Two different signs must not be conflated:
 
-For numeric mesh reconstruction, `orientation_signs[n_shell]` converts each
-connectivity-derived facet normal to its already-validated source side. This
-also lets two equivalent elements with opposite local traversal produce the
-same physical director.
+- `source_face_use_orientation` is `+1` or `-1` relative to the underlying
+  source face and determines the intended physical shell side;
+- `element_source_orientation` is the finalized connectivity traversal
+  evaluated upstream relative to that same source face.
+
+The adapter requires these source-relative signs to agree. It either corrects
+node order while building the immutable FE model or rejects the model.
+`validate_face_use_orientation()` implements that fail-closed comparison.
+After it passes, the finalized connectivity-induced normal is the element's
+positive reference normal. Reference directors must align directly with this
+normal so `dot(cross(a_xi, a_eta), d)` is positive.
+
+`source_face_use_orientation_signs[n_shell]` is therefore cold provenance in
+numeric director preparation. It is validated and included in the reference
+fingerprint, but it is never multiplied into a connectivity normal or supplied
+director. Multiplying it again would double-flip a reversed face use and make
+the continuum reference Jacobian negative. The element hot kernel never
+guesses, flips, or repairs either convention.
 
 ## Numeric corner geometry
 
@@ -225,9 +237,10 @@ The production priority is:
 
 A facet-derived director is never labelled as exact source-surface data.
 `prepare_supplied_corner_directors()` accepts only finite `(n,4,3)` arrays,
-requires unit vectors, checks source orientation and local Q4 compatibility,
-and records one compact code per corner. It does not silently normalize bad
-input or silently fall back.
+requires unit vectors, checks alignment with finalized Q4 connectivity and a
+positive center reference Jacobian, and records one compact code per corner.
+The source face-use sign remains fingerprinted metadata. The routine does not
+silently normalize, double-flip, or fall back.
 
 ## Sheet-, part-, and crease-aware reconstruction
 
@@ -240,24 +253,29 @@ connectivity                     integer[n_q4,4]
 part_indices                     optional integer[n_q4]
 sheet_indices                    optional integer[n_q4]
 continuity_indices               optional integer[n_q4]
-orientation_signs                optional integer[n_q4]
+source_face_use_orientation_signs optional integer[n_q4]
 crease_edges                     optional node-index pairs
 declared_intersection_edges      optional node-index pairs
 ```
+
+Region indices are `-1` for unavailable or nonnegative true integers.
+Declared edge pairs likewise require true integer node indices; floats and
+booleans are rejected rather than coerced.
 
 The algorithm is deterministic and linear in Q4 count plus shell adjacency:
 
 1. validate each Q4 with tolerances scaled from its FE edge lengths and
    machine precision;
-2. form an oriented facet area normal without using absolute-position cross
-   products;
+2. form the finalized-connectivity facet area normal without using
+   absolute-position cross products or reapplying source orientation;
 3. build edge adjacency;
 4. allow smoothing across an edge only when exactly two Q4s use it, their
    part/sheet/continuity indices match, no explicit crease/intersection blocks
    it, and the oriented normal jump is within the crease angle;
 5. build a smooth fan separately for each `(element corner, mesh node)`;
 6. average only that fan with area-times-corner-angle weights;
-7. normalize and revalidate every element-corner director;
+7. normalize and revalidate every element-corner director, including positive
+   reference center Jacobian;
 8. freeze the C-contiguous director and provenance arrays.
 
 Boundary and non-manifold edges do not connect smoothing fans. Separate parts,
@@ -284,6 +302,7 @@ The cold quality records include:
 - director norm error;
 - minimum director/facet alignment;
 - maximum within-element director spread;
+- signed center reference director Jacobian;
 - smooth, angular-crease, declared-crease, region-boundary, boundary, and
   non-manifold edge counts;
 - minimum and maximum smooth-fan size;
