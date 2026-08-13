@@ -34,7 +34,7 @@ ANYsolver 0.2 is not an independently installable release. Publish compatible
 Apply that order separately to TestPyPI and PyPI. The publish workflow checks
 the selected target index and refuses to build or upload ANYsolver unless
 `ANYmaterial>=0.1,<0.2`, `ANYmesher>=0.1,<0.3`, and
-`ANYfileio>=0.1,<0.2` can already be resolved there. CI uses sibling source
+`ANYfileio>=0.1,<0.3` can already be resolved there. CI uses pinned sibling source
 checkouts until those releases exist.
 
 ANYsolver uses the neutral mesh, panel-generation, quality, and section APIs

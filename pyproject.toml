@@ -28,7 +28,7 @@ dependencies = [
   "threadpoolctl>=3.5",
   "ANYmaterial>=0.1,<0.2",
   "ANYmesher>=0.1,<0.3",
-  "ANYfileio>=0.1,<0.2",
+  "ANYfileio>=0.1,<0.3",
 ]
 
 [project.optional-dependencies]

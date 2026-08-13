@@ -9,6 +9,7 @@ import re
 import tomllib
 from importlib import metadata
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 from packaging.requirements import Requirement
@@ -38,17 +39,81 @@ def _installed_anymesher_requirements() -> list[str]:
     ]
 
 
+def _source_anymesher_requirements() -> list[str]:
+    root = Path(__file__).resolve().parents[1]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    return [
+        requirement
+        for requirement in project["project"]["dependencies"]
+        if canonicalize_name(Requirement(requirement).name) == "anymesher"
+    ]
+
+
+def _is_beneath(path: Path, root: Path) -> bool:
+    path_text = os.path.normcase(str(path.resolve()))
+    root_text = os.path.normcase(str(root.resolve()))
+    return os.path.commonpath((path_text, root_text)) == root_text
+
+
+def _assert_probe_identities(
+    modules: dict[str, ModuleType], *, metadata_mode: str
+) -> None:
+    expected_variables = {
+        "ANYsolver": "EXPECTED_ANYSOLVER_VERSION",
+        "ANYmaterial": "EXPECTED_ANYMATERIAL_VERSION",
+        "ANYgeometry": "EXPECTED_ANYGEOMETRY_VERSION",
+        "ANYmesher": "EXPECTED_ANYMESHER_VERSION",
+        "ANYfileio": "EXPECTED_ANYFILEIO_VERSION",
+    }
+    workspace_raw = os.environ.get("GITHUB_WORKSPACE")
+    if metadata_mode == "installed":
+        assert workspace_raw is not None
+    for distribution_name, module in modules.items():
+        expected = os.environ.get(expected_variables[distribution_name])
+        if metadata_mode == "installed":
+            assert expected is not None, expected_variables[distribution_name]
+        if expected is not None:
+            assert module.__version__ == expected
+        if metadata_mode == "installed":
+            distribution = metadata.distribution(distribution_name)
+            assert distribution.version == expected
+            distribution_root = Path(distribution.locate_file("")).resolve()
+            origin = Path(module.__file__).resolve()
+            assert _is_beneath(origin, distribution_root)
+            assert not _is_beneath(origin, Path(workspace_raw))
+            assert not _is_beneath(distribution_root, Path(workspace_raw))
+
+
+def _metadata_requirement(metadata_mode: str) -> str:
+    if metadata_mode == "source":
+        requirements = _source_anymesher_requirements()
+    else:
+        assert metadata_mode == "installed"
+        requirements = _installed_anymesher_requirements()
+    assert len(requirements) == 1
+    _assert_expected_anymesher_requirement(requirements[0])
+    return requirements[0]
+
+
 def probe_anymesher_public_contract(
-    *, require_installed_metadata: bool = False
+    *, metadata_mode: str = "source"
 ) -> dict[str, Any]:
     """Exercise the exact neutral-meshing surface consumed by ANYsolver."""
 
+    import anyfileio
+    import anygeometry
+    import anymaterial
     import anymesher
     import anysolver
 
-    expected_version = os.environ.get("EXPECTED_ANYMESHER_VERSION")
-    if expected_version is not None:
-        assert anymesher.__version__ == expected_version
+    modules = {
+        "ANYsolver": anysolver,
+        "ANYmaterial": anymaterial,
+        "ANYgeometry": anygeometry,
+        "ANYmesher": anymesher,
+        "ANYfileio": anyfileio,
+    }
+    _assert_probe_identities(modules, metadata_mode=metadata_mode)
 
     required_names = (
         "Mesh",
@@ -97,19 +162,21 @@ def probe_anymesher_public_contract(
     shell_element_count = len(mesh.quads) + len(mesh.tris)
     assert shell_element_count > 0
 
-    installed_requirements = _installed_anymesher_requirements()
-    if require_installed_metadata:
-        assert len(installed_requirements) == 1
-        _assert_expected_anymesher_requirement(installed_requirements[0])
+    requirement = _metadata_requirement(metadata_mode)
 
     return {
         "anymesher_version": anymesher.__version__,
         "anymesher_origin": str(Path(anymesher.__file__).resolve()),
+        "anygeometry_version": anygeometry.__version__,
+        "anygeometry_origin": str(Path(anygeometry.__file__).resolve()),
+        "anyfileio_version": anyfileio.__version__,
+        "anyfileio_origin": str(Path(anyfileio.__file__).resolve()),
+        "anymaterial_version": anymaterial.__version__,
+        "anymaterial_origin": str(Path(anymaterial.__file__).resolve()),
         "anysolver_version": anysolver.__version__,
         "anysolver_origin": str(Path(anysolver.__file__).resolve()),
-        "requirement": (
-            installed_requirements[0] if installed_requirements else None
-        ),
+        "requirement": requirement,
+        "metadata_mode": metadata_mode,
         "node_count": len(mesh.nodes),
         "quad_count": len(mesh.quads),
         "beam_count": len(mesh.beams),
@@ -143,12 +210,17 @@ def test_anymesher_public_contract_used_by_anysolver() -> None:
 def _main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--probe", action="store_true")
+    parser.add_argument(
+        "--metadata-mode", choices=("source", "installed"), required=True
+    )
     arguments = parser.parse_args()
     if not arguments.probe:
         parser.error("the standalone entry point requires --probe")
     print(
         json.dumps(
-            probe_anymesher_public_contract(require_installed_metadata=True),
+            probe_anymesher_public_contract(
+                metadata_mode=arguments.metadata_mode
+            ),
             sort_keys=True,
         )
     )

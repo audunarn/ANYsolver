@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Widen the declared ANYfileio consumer range to `>=0.1,<0.3`, add pinned
+  source compatibility cells for the 0.1 and 0.2 public contracts, and align
+  the publication dependency gate. Installed-wheel, index-resolver, and
+  publication qualification remain separate release gates.
 - Widen the declared ANYmesher consumer range to `>=0.1,<0.3`, add CI coverage
   for pinned 0.1.0 and 0.2.1 endpoints, preserve the public neutral panel, mesh,
   quality, and section contract, retain the strict 0.3 cap, and align CI and
