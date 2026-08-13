@@ -264,7 +264,7 @@ jobs:
         run: >-
           python -c "import glob, subprocess, sys;
           subprocess.check_call([sys.executable, '-m', 'pip', 'install',
-          '--no-deps', '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',
+          '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',
           '.ecosystem/ANYgeometry', '.ecosystem/ANYmesh', '.ecosystem/ANYfileIO',
           *glob.glob('dist/*.whl')])"
       - name: Import the installed wheel without site packages

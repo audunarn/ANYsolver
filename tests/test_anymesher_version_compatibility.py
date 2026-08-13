@@ -52,7 +52,31 @@ def _source_anymesher_requirements() -> list[str]:
 def _is_beneath(path: Path, root: Path) -> bool:
     path_text = os.path.normcase(str(path.resolve()))
     root_text = os.path.normcase(str(root.resolve()))
-    return os.path.commonpath((path_text, root_text)) == root_text
+    try:
+        return os.path.commonpath((path_text, root_text)) == root_text
+    except ValueError:
+        return False
+
+
+def test_is_beneath_treats_commonpath_value_error_as_not_beneath(
+    monkeypatch,
+) -> None:
+    def reject_cross_drive(_paths: tuple[str, str]) -> str:
+        raise ValueError("Paths don't have the same drive")
+
+    monkeypatch.setattr(os.path, "commonpath", reject_cross_drive)
+    assert _is_beneath(Path("installed-origin"), Path("workspace")) is False
+
+
+def test_is_beneath_propagates_non_value_error(monkeypatch) -> None:
+    import pytest
+
+    def fail_unexpectedly(_paths: tuple[str, str]) -> str:
+        raise RuntimeError("unexpected commonpath failure")
+
+    monkeypatch.setattr(os.path, "commonpath", fail_unexpectedly)
+    with pytest.raises(RuntimeError, match="unexpected commonpath failure"):
+        _is_beneath(Path("installed-origin"), Path("workspace"))
 
 
 def _assert_probe_identities(

@@ -65,7 +65,31 @@ def _installed_fileio_requirements() -> list[str]:
 def _is_beneath(path: Path, root: Path) -> bool:
     path_text = os.path.normcase(str(path.resolve()))
     root_text = os.path.normcase(str(root.resolve()))
-    return os.path.commonpath((path_text, root_text)) == root_text
+    try:
+        return os.path.commonpath((path_text, root_text)) == root_text
+    except ValueError:
+        return False
+
+
+def test_is_beneath_treats_commonpath_value_error_as_not_beneath(
+    monkeypatch,
+) -> None:
+    def reject_cross_drive(_paths: tuple[str, str]) -> str:
+        raise ValueError("Paths don't have the same drive")
+
+    monkeypatch.setattr(os.path, "commonpath", reject_cross_drive)
+    assert _is_beneath(Path("installed-origin"), Path("workspace")) is False
+
+
+def test_is_beneath_propagates_non_value_error(monkeypatch) -> None:
+    import pytest
+
+    def fail_unexpectedly(_paths: tuple[str, str]) -> str:
+        raise RuntimeError("unexpected commonpath failure")
+
+    monkeypatch.setattr(os.path, "commonpath", fail_unexpectedly)
+    with pytest.raises(RuntimeError, match="unexpected commonpath failure"):
+        _is_beneath(Path("installed-origin"), Path("workspace"))
 
 
 def _assert_module_identity(
@@ -541,6 +565,32 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     mesh_job = job_block(ci, "anymesher-compatibility")
     fileio_job = job_block(ci, "anyfileio-compatibility")
+    wheel_job = job_block(ci, "wheel")
+
+    wheel_target_marker = (
+        "      - name: Install wheel and pinned siblings into a clean target\n"
+    )
+    wheel_import_marker = (
+        "      - name: Import the installed wheel without site packages\n"
+    )
+    assert wheel_job.count(wheel_target_marker) == 1
+    assert wheel_job.count(wheel_import_marker) == 1
+    wheel_target_tail = wheel_job.split(wheel_target_marker, maxsplit=1)[1]
+    wheel_target_step, separator, wheel_import_step = wheel_target_tail.partition(
+        wheel_import_marker
+    )
+    assert separator
+    assert wheel_target_step == (
+        "        run: >-\n"
+        '          python -c "import glob, subprocess, sys;\n'
+        "          subprocess.check_call([sys.executable, '-m', 'pip', 'install',\n"
+        "          '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',\n"
+        "          '.ecosystem/ANYgeometry', '.ecosystem/ANYmesh', '.ecosystem/ANYfileIO',\n"
+        "          *glob.glob('dist/*.whl')])\"\n"
+    )
+    assert "--no-deps" not in wheel_target_step
+    assert wheel_import_step.count("python -S -c") == 1
+    assert wheel_import_step.count("str(Path('.wheel-smoke').resolve())") == 1
 
     def matrix_rows(block: str) -> str:
         marker = "      matrix:\n        include:\n"
