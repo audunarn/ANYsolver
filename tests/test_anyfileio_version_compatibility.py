@@ -543,6 +543,11 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         block = job_block(ci, name)
         assert checkout_pattern.findall(block) == current_checkouts
         assert block.count(checkout_ref) == 5
+    pytest_block = job_block(ci, "pytest")
+    numba_block = job_block(ci, "numba")
+    numba_test_install = 'python -m pip install -e ".[dev,numba]"'
+    assert pytest_block.count(numba_test_install) == 1
+    assert numba_block.count(numba_test_install) == 1
     for name, expected in compatibility_checkouts.items():
         block = job_block(ci, name)
         actual = checkout_pattern.findall(block)
