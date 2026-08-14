@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Preserve the corrected published-2025 S4 reference, nullspace proof, geometry
+  handoff, and qualification scaffold as dormant release evidence. The legacy
+  S4 remains the production default and improved-S4 activation remains
+  unavailable under the recorded restrictions; no gauge constraint, invented
+  stiffness, dispatch route, or activity-policy change is introduced.
 - Widen the declared ANYfileio consumer range to `>=0.1,<0.3`, add pinned
   source compatibility cells for the 0.1 and 0.2 public contracts, and align
   the publication dependency gate. Installed-wheel, index-resolver, and

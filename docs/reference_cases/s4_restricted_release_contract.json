@@ -1,0 +1,111 @@
+{
+  "activity_contract": {
+    "canonical_owner": "ElementActivity",
+    "changed_by_policy": false,
+    "delivery_commit": "1fd1c196518ac92b9dee920676f54c2d0cf58d26",
+    "ledger_commit": "7daa6e8c61954cfc1bc4469457fef0db154d3375",
+    "scaling": "element_local_pre_scatter",
+    "unchanged_blob_ids": {
+      "ACTIVITY_S4_HANDOFF.md": "e8d0877977d7089eee10d361f663a9b7155f5e8e",
+      "src/anysolver/__init__.py": "a7ca8e18f62435a8eb4f2d52cc658b77e13cfb35",
+      "src/anysolver/activity.py": "3da61672ff0ad6a59849603c55f336b0e42406fb",
+      "src/anysolver/assembly.py": "716d51b80de0aa08c5fd4ef0923bf88fbcfc39cb",
+      "src/anysolver/boundary.py": "69980890be01e865dce2bd505eaaa4161faeb24a",
+      "src/anysolver/contact.py": "75fde0e1f32e594e857e5202e173521c7d06fa2f",
+      "src/anysolver/fe_core.py": "deb426b7d41415290e49f5763d83676f8cda6beb",
+      "src/anysolver/matrix_assembly.py": "880da192308a2494b1c4e91cb9510a81654217f7",
+      "tests/test_element_activity.py": "55790eb60ed8d7183ff7fa2baa5cbe11065de0f0",
+      "tests/test_element_activity_integration.py": "9961c63577ee5b4fa67ce61a06551143ba5acaac"
+    }
+  },
+  "accepted_evidence": {
+    "batch_qualification": {
+      "commit": "89ea46d8c1b1365b1d4a390ce6f34e2609c434f9",
+      "tree": "2c85e3aacc9068fa67e59ed3e78534d6b39df810"
+    },
+    "geometry_handoff": {
+      "commit": "931ed76943dc84fb9d01b26a5d6dd4c46af3d74a",
+      "tree": "3f9a0b2c0588fbb95021665c0a9526266cdd0610"
+    },
+    "integration_base": {
+      "commit": "4db31b633d0f886fcb4ad82946a982eb6fadde0e",
+      "tree": "beb5b2d0a599500bb8e2b00e99254540e18323e9"
+    },
+    "nullspace_proof": {
+      "commit": "cfaf9c7a6e51e1cc0c3113648f84835e917fca2a",
+      "tree": "de487ca7252e14b0f0135c99807321262db169b9"
+    },
+    "qualification_contract_sha256": "1591906DB90B83A7018E51D1C6CF35A545BCE28787ED3108713CDEECC51103F1"
+  },
+  "default_formulation": {
+    "changed": false,
+    "id": "anysolver.shell_element.legacy_s4",
+    "identity_kind": "descriptive_release_identity"
+  },
+  "deferred_scopes": [
+    "generally_usable_energetic_rank_18_formulation",
+    "nonlinear_mitc4_plus_d",
+    "geometric_stiffness",
+    "buckling",
+    "production_recovery",
+    "optimized_batches",
+    "production_coupling",
+    "curved_or_warped_threshold_policy"
+  ],
+  "dormant_artifacts": {
+    "modules": [
+      "src/anysolver/shell_formulations/director_field.py",
+      "src/anysolver/shell_formulations/geometry_provenance.py",
+      "src/anysolver/shell_formulations/mitc4_plus_d_quality.py",
+      "src/anysolver/shell_formulations/mitc4_plus_d_reference.py",
+      "src/anysolver/shell_formulations/mitc4_plus_d_scalar.py",
+      "src/anysolver/shell_formulations/protocol.py",
+      "src/anysolver/shell_formulations/q4_common.py"
+    ],
+    "production_dispatch_wired": false,
+    "root_exported": false,
+    "scripts": [
+      "scripts/benchmark_s4_improved.py",
+      "scripts/compare_s4_improved.py",
+      "scripts/run_s4_improved_qualification.py"
+    ]
+  },
+  "gauge_policy": {
+    "constraint_applied": false,
+    "definition": "G=ker(B_w) intersection ker(H_w)",
+    "removal_action": "none"
+  },
+  "improved_formulation": {
+    "id": "mitc4_plus_d_published_2025_eq21_eq25_reference_v2",
+    "production_activation_available": false,
+    "release_state": "dormant_research_evidence",
+    "restricted_reason_codes": [
+      "s4_improved.research_only",
+      "s4_improved.positive_mass_zero_stiffness_z",
+      "s4_improved.threshold_sensitive_geometry",
+      "s4_improved.coupling_unqualified",
+      "s4_improved.nonlinear_unqualified",
+      "s4_improved.geometric_stiffness_unqualified",
+      "s4_improved.buckling_unqualified",
+      "s4_improved.recovery_unqualified",
+      "s4_improved.optimized_batches_unqualified",
+      "s4_improved.provenance_unavailable_or_unqualified"
+    ],
+    "selector_available": false,
+    "serialized_token_available": false
+  },
+  "schema": "anysolver.s4.restricted-release",
+  "square_nullspace": {
+    "G": 1,
+    "N": 8,
+    "P": 7,
+    "R": 6,
+    "RQ": 6,
+    "R_G": 0,
+    "R_N": 6,
+    "Z": 1,
+    "rank_B": 16,
+    "z_classification": "positive_mass_zero_stiffness_not_gauge"
+  },
+  "version": 1
+}
