@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import platform
 import subprocess
 import sys
 
@@ -169,8 +170,23 @@ def _check_zero_empty_signed_zero_and_canonical_basis_conventions() -> None:
 
 def _check_environment_manifest_and_same_environment_snapshots() -> None:
     manifest, digest = ORACLE.environment_manifest()
-    assert digest == "8ec3966b8ab8a72a304a4b340e6f18bac6506391a877c9bb7510c0251295417d"
+    repeated_manifest, repeated_digest = ORACLE.environment_manifest()
+    assert repeated_manifest == manifest
+    assert repeated_digest == digest
+    snapshot_runtime_supported = (
+        platform.python_implementation() == "CPython"
+        and platform.system() == "Windows"
+        and sys.byteorder == "little"
+    )
+    if not snapshot_runtime_supported:
+        assert manifest is None
+        assert digest is None
+        return
+
     assert manifest is not None and manifest["schema"] == ORACLE.ENVIRONMENT_SCHEMA
+    assert digest is not None and len(digest) == 64
+    assert all(character in "0123456789abcdef" for character in digest)
+    assert hashlib.sha256(ORACLE._manifest_json_bytes(manifest)).hexdigest() == digest
     assert manifest["thread_controls"] == {name: "1" for name in ORACLE._THREAD_CONTROLS}
     assert set(manifest["numpy_cpu"]) == {"features", "baseline", "dispatch"}
     assert set(manifest["blas_runtime"]) == {"library", "distribution"}
@@ -322,6 +338,25 @@ def test_clean_process_proof_worker() -> None:
     assert completed.returncode == 0, completed.stderr
     report = json.loads(completed.stdout)
     assert report["passed"] == len(_WORKER_CHECKS) == 13
+
+
+def test_unsupported_snapshot_runtime_requires_no_manifest(monkeypatch) -> None:
+    """Cross-runtime proof uses numerical invariants, not a foreign snapshot digest."""
+
+    class UnsupportedOracle:
+        calls = 0
+
+        @classmethod
+        def environment_manifest(cls):
+            cls.calls += 1
+            return None, None
+
+    monkeypatch.setattr(sys.modules[__name__], "ORACLE", UnsupportedOracle)
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+
+    _check_environment_manifest_and_same_environment_snapshots()
+
+    assert UnsupportedOracle.calls == 2
 
 
 if __name__ == "__main__":
