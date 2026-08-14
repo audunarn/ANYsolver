@@ -3189,8 +3189,17 @@ def _run_nlg_008(case: VerificationCase) -> VerificationCaseResult:
                 eccentricity=np.zeros(3),
             ),
         )
+    polygon_membrane_compression = (
+        ring_config.pressure
+        * ring_config.radius
+        * np.cos(np.pi / ring_config.num_circumferential)
+    )
     ring_states = {
-        int(element_id): {"membrane_compression_x": ring_config.radius}
+        int(element_id): {
+            "membrane_compression_x": polygon_membrane_compression,
+            "membrane_compression_y": 0.0,
+            "membrane_compression_xy": 0.0,
+        }
         for element_id, element in ring_model.mesh.elements.items()
         if isinstance(element, ShellElement)
     }

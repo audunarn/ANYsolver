@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+from scipy import linalg, sparse
 
+import anysolver.buckling as buckling_module
 from anysolver.boundary import BoundaryCondition
 from anysolver.buckling import solve_eigenvalue_buckling
 from anysolver.elements import BeamElement
@@ -109,21 +111,221 @@ def test_buckling_mode_shapes_respect_fixed_constraint_dofs():
         assert mode.residual_norm < 1.0e-8
 
 
-def test_free_free_buckling_reports_and_filters_rigid_body_nullspace():
+def _free_beam_model(length: float = 25.0) -> FEModel:
     model = FEModel("free_free_buckling_guard")
     model.add_material("steel", 210.0e9, 0.3)
     model.add_node(1, 0.0, 0.0, 0.0)
-    model.add_node(2, 1.0, 0.0, 0.0)
+    model.add_node(2, length, 0.0, 0.0)
     model.add_element(1, BeamElement(1, [1, 2], "steel", {"area": 0.02, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6}))
+    return model
 
-    result = solve_eigenvalue_buckling(model, {1: {"axial_compression": 1.0}}, num_modes=2, allow_dense_fallback=True)
 
-    assert result.solver_status == "ok"
+def test_free_free_dead_prestress_fails_closed_when_geometric_operator_does_not_descend():
+    model = _free_beam_model()
+
+    result = solve_eigenvalue_buckling(
+        model,
+        {1: {"axial_compression": 1.0}},
+        num_modes=2,
+        allow_dense_fallback=True,
+        allow_free_mechanisms=True,
+    )
+
+    assert result.solver_status == "invalid_rigid_quotient"
+    assert result.modes == []
+    assert result.diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
+    assert result.diagnostics["rigid_body_handling"] == "projected"
+    assert result.diagnostics["free_mechanism_handling"] == "retained"
+    assert "does not descend" in result.diagnostics["reason"]
+    projection = result.diagnostics["rigid_projection"]
+    dimension_tolerance = 4096.0 * projection["original_dofs"] * 2.220446049250313e-16
+    assert projection["applied"] is True
+    assert projection["metric_version"] == "dimensionless_full_dof_bbox_v1"
+    assert projection["characteristic_length"] == pytest.approx(25.0)
+    assert projection["rigid_rank"] == 6
+    assert projection["elastic_null_residual"] <= dimension_tolerance
+    assert projection["elastic_cross_residual"] <= dimension_tolerance
+    assert projection["geometric_null_residual"] > dimension_tolerance
+    assert projection["geometric_cross_residual"] > dimension_tolerance
+
+
+def test_synthetic_descending_pencil_uses_basis_invariant_dimensionless_quotient(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    model = _free_beam_model(length=100.0)
+    total_dofs = model.mesh.dof_manager.total_dofs
+    identity_transformation = sparse.eye(total_dofs, format="csr", dtype=float)
+
+    original_builder = buckling_module.build_reduced_rigid_body_modes
+    rigid_basis, _ = original_builder(
+        model,
+        np.arange(total_dofs, dtype=int),
+        total_dofs,
+        transformation=identity_transformation,
+    )
+    inverse_scale = np.ones(total_dofs, dtype=float)
+    for node in model.mesh.nodes.values():
+        inverse_scale[np.asarray(node.dofs[:3], dtype=np.intp)] = 1.0 / 100.0
+    _metric_basis, metric_factor = linalg.qr(
+        np.diag(inverse_scale),
+        mode="economic",
+    )
+    metric_inverse = linalg.solve_triangular(
+        metric_factor,
+        np.eye(total_dofs),
+        lower=False,
+    )
+    quotient_basis, _ = linalg.qr(metric_factor @ rigid_basis, mode="full")
+    flexible_basis = quotient_basis[:, rigid_basis.shape[1] :]
+    mapped_flexible = metric_inverse @ flexible_basis
+    legacy_correlations = np.max(
+        np.abs(
+            rigid_basis.T
+            @ (mapped_flexible / np.linalg.norm(mapped_flexible, axis=0, keepdims=True))
+        ),
+        axis=0,
+    )
+    descending_order = np.argsort(-legacy_correlations)
+    flexible_basis = flexible_basis[:, descending_order]
+    assert float(legacy_correlations[descending_order[0]]) > 0.90
+
+    physical_factors = np.arange(1.0, flexible_basis.shape[1] + 1.0)
+    stiffness_y = flexible_basis @ np.diag(physical_factors) @ flexible_basis.T
+    geometric_y = flexible_basis @ flexible_basis.T
+    stiffness = sparse.csr_matrix(metric_factor.T @ stiffness_y @ metric_factor)
+    geometric = sparse.csr_matrix(metric_factor.T @ geometric_y @ metric_factor)
+    zero = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
+
+    monkeypatch.setattr(
+        buckling_module,
+        "assemble_stiffness_matrix",
+        lambda _model: (stiffness, {"matrix_type": "synthetic_stiffness"}),
+    )
+    monkeypatch.setattr(
+        buckling_module,
+        "assemble_geometric_stiffness_matrix",
+        lambda _model, _states: (geometric, {"matrix_type": "synthetic_geometric_stiffness"}),
+    )
+    monkeypatch.setattr(
+        buckling_module,
+        "assemble_external_load_tangent",
+        lambda _model, _case, _displacements: (zero, {"matrix_type": "synthetic_zero_load_tangent"}),
+    )
+
+    captured: dict[str, np.ndarray] = {}
+
+    def _capture_basis(*args, **kwargs):
+        basis, info = original_builder(*args, **kwargs)
+        captured["basis"] = basis.copy()
+        return basis, info
+
+    monkeypatch.setattr(buckling_module, "build_reduced_rigid_body_modes", _capture_basis)
+    result = solve_eigenvalue_buckling(
+        model,
+        {},
+        num_modes=2,
+        allow_dense_fallback=True,
+    )
+
+    assert result.solver_status == "ok", result.diagnostics
     assert result.num_modes_returned == 2
     assert result.diagnostics["nullspace_rank"] == 6
     assert result.diagnostics["free_mechanism_handling"] == "rigid_body_roots_filtered"
+    assert result.diagnostics["rigid_body_handling"] == "projected"
+    assert result.diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
     assert result.assembly_info["nullspace"]["rank"] == 6
-    assert all(mode.rigid_body_correlation <= 0.90 for mode in result.modes)
+    projection = result.diagnostics["rigid_projection"]
+    assert set(projection) == {
+        "applied",
+        "metric_version",
+        "characteristic_length",
+        "original_dofs",
+        "projected_dofs",
+        "rigid_rank",
+        "orthonormality_residual",
+        "elastic_null_residual",
+        "geometric_null_residual",
+        "elastic_cross_residual",
+        "geometric_cross_residual",
+        "elastic_min_eigenvalue",
+        "elastic_max_eigenvalue",
+        "spd_tolerance",
+        "spd_sensitivity",
+    }
+    assert projection["applied"] is True
+    assert projection["metric_version"] == "dimensionless_full_dof_bbox_v1"
+    assert projection["characteristic_length"] == pytest.approx(100.0)
+    assert projection["original_dofs"] == 12
+    assert projection["projected_dofs"] == 6
+    assert projection["rigid_rank"] == 6
+    assert set(projection["spd_sensitivity"]) == {"0.25", "1", "4"}
+    assert all(item["positive_definite"] for item in projection["spd_sensitivity"].values())
+    assert all(mode.rigid_body_correlation < 1.0e-12 for mode in result.modes)
+
+    # Orthogonality is defined in the registered dimensionless metric.  For
+    # this long beam the mapped physical representative has high Euclidean-z
+    # correlation with the legacy basis and must not be rejected on that basis.
+    mapped_mode_correlations = [
+        float(
+            np.max(
+                np.abs(
+                    captured["basis"].T
+                    @ mode.reduced_mode_shape
+                    / np.linalg.norm(mode.reduced_mode_shape)
+                )
+            )
+        )
+        for mode in result.modes
+    ]
+    assert max(mapped_mode_correlations) > 0.90
+
+    rigid_rank = captured["basis"].shape[1]
+    orthogonal_change = np.eye(rigid_rank, dtype=float)
+    for first, angle in ((0, 0.37), (2, -0.61), (4, 0.83)):
+        cosine = np.cos(angle)
+        sine = np.sin(angle)
+        orthogonal_change[first : first + 2, first : first + 2] = [
+            [cosine, -sine],
+            [sine, cosine],
+        ]
+    np.testing.assert_allclose(
+        orthogonal_change.T @ orthogonal_change,
+        np.eye(rigid_rank),
+        rtol=0.0,
+        atol=1.0e-15,
+    )
+
+    def _rotated_basis(*args, **kwargs):
+        basis, info = original_builder(*args, **kwargs)
+        return basis @ orthogonal_change, info
+
+    monkeypatch.setattr(buckling_module, "build_reduced_rigid_body_modes", _rotated_basis)
+    rotated = solve_eigenvalue_buckling(
+        model,
+        {},
+        num_modes=2,
+        allow_dense_fallback=True,
+    )
+    assert rotated.solver_status == "ok"
+    assert rotated.diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
+    assert rotated.diagnostics["rigid_projection"]["metric_version"] == "dimensionless_full_dof_bbox_v1"
+    np.testing.assert_allclose(
+        [mode.load_factor for mode in rotated.modes],
+        [mode.load_factor for mode in result.modes],
+        rtol=1.0e-11,
+        atol=0.0,
+    )
+
+    requires_dense = solve_eigenvalue_buckling(
+        model,
+        {},
+        num_modes=2,
+        dense_size_limit=2,
+        allow_dense_fallback=False,
+    )
+    assert requires_dense.solver_status == "rigid_projection_requires_dense"
+    assert requires_dense.diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
+    assert requires_dense.diagnostics["rigid_projection"]["applied"] is False
 
 
 def test_buckling_load_factor_scales_inverse_to_reference_compression():

@@ -114,15 +114,54 @@ def test_triangular_shell_stiffness_mass_pressure_and_geometric_assembly(
     assert np.all(np.isfinite(K))
     np.testing.assert_allclose(K, K.T, rtol=1.0e-10, atol=1.0e-5)
 
-    scale = max(float(np.max(np.abs(np.diag(K)))), 1.0)
-    eigenvalues = np.linalg.eigvalsh(0.5 * (K + K.T))
-    near_zero_modes = int(np.sum(np.abs(eigenvalues) < 1.0e-8 * max(abs(float(eigenvalues[-1])), 1.0)))
-    assert near_zero_modes == 6
-
     rigid_modes = [_rigid_translation(element, i) for i in range(3)]
     rigid_modes.extend(_rigid_rotation(element, model, i) for i in range(3))
+    scale = max(float(np.max(np.abs(np.diag(K)))), 1.0)
     for mode in rigid_modes:
         assert abs(float(mode @ K @ mode)) < 1.0e-10 * scale
+
+    # The hourglass coefficient and the old eigenvalue-count threshold are
+    # both 1e-8 of the stiffness scale.  Test the invariant rigid quotient
+    # instead of classifying that deliberately small positive mode as zero.
+    eps = 2.220446049250313e-16
+    smallest_normal = float(np.finfo(np.float64).tiny)
+    coordinates = element.get_node_coordinates(model.mesh)
+    characteristic_length = float(
+        np.linalg.norm(np.max(coordinates, axis=0) - np.min(coordinates, axis=0))
+    )
+    assert np.isfinite(characteristic_length) and characteristic_length > 0.0
+    inverse_scale = np.ones(element.total_dofs, dtype=np.float64)
+    for local_index in range(len(node_ids)):
+        inverse_scale[6 * local_index : 6 * local_index + 3] = 1.0 / characteristic_length
+    _metric_basis, metric_factor = np.linalg.qr(np.diag(inverse_scale), mode="reduced")
+    metric_inverse = np.linalg.solve(metric_factor, np.eye(element.total_dofs))
+    stiffness_y = metric_inverse.T @ (0.5 * (K + K.T)) @ metric_inverse
+    rigid_y = metric_factor @ np.column_stack(rigid_modes)
+    complete_basis, _ = np.linalg.qr(rigid_y, mode="complete")
+    rigid_basis = complete_basis[:, :6]
+    flexible_basis = complete_basis[:, 6:]
+    dimension_tolerance = 4096.0 * element.total_dofs * eps
+    orthonormality_residual = float(
+        np.linalg.norm(complete_basis.T @ complete_basis - np.eye(element.total_dofs), ord="fro")
+    )
+    stiffness_norm = max(float(np.linalg.norm(stiffness_y, ord="fro")), smallest_normal)
+    rigid_null_residual = float(np.linalg.norm(stiffness_y @ rigid_basis, ord="fro") / stiffness_norm)
+    rigid_cross_residual = float(
+        np.linalg.norm(rigid_basis.T @ stiffness_y @ flexible_basis, ord="fro") / stiffness_norm
+    )
+    assert orthonormality_residual <= dimension_tolerance
+    assert rigid_null_residual <= dimension_tolerance
+    assert rigid_cross_residual <= dimension_tolerance
+
+    flexible_stiffness = flexible_basis.T @ stiffness_y @ flexible_basis
+    flexible_stiffness = 0.5 * (flexible_stiffness + flexible_stiffness.T)
+    flexible_eigenvalues = np.linalg.eigvalsh(flexible_stiffness)
+    sigma_max = float(np.linalg.svd(flexible_stiffness, compute_uv=False)[0])
+    spd_tolerance = 64.0 * max(flexible_stiffness.shape) * eps * sigma_max
+    assert all(
+        float(flexible_eigenvalues[0]) > multiplier * spd_tolerance
+        for multiplier in (0.25, 1.0, 4.0)
+    )
 
     M = element.compute_mass_matrix(model.mesh, material)
     np.testing.assert_allclose(M, M.T, rtol=1.0e-12, atol=1.0e-12)

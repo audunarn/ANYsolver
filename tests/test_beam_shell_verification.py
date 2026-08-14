@@ -44,6 +44,22 @@ def test_manifest_contains_stable_case_ids_from_spec() -> None:
     assert "VVR-001" in ids
 
 
+def test_nlg_008_follower_pressure_case_passes() -> None:
+    report = run_beam_shell_verification(selected_ids={"NLG-008"})
+
+    assert report["status"] == "passed"
+    assert report["required_failures"] == []
+    assert len(report["results"]) == 1
+    result = report["results"][0]
+    assert result["case_id"] == "NLG-008"
+    assert result["status"] == "PASS"
+    ring_diagnostics = result["checks"]["ring_buckling"]
+    assert ring_diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
+    assert ring_diagnostics["rigid_body_handling"] == "projected"
+    assert ring_diagnostics["rigid_projection"]["applied"] is True
+    assert ring_diagnostics["rigid_projection"]["metric_version"] == "dimensionless_full_dof_bbox_v1"
+
+
 def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
     report = run_beam_shell_verification()
 

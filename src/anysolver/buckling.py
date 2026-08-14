@@ -117,6 +117,66 @@ def _as_symmetric_dense(matrix: sparse.spmatrix) -> np.ndarray:
     return 0.5 * (dense + dense.T)
 
 
+_FLOAT64_EPS = 2.220446049250313e-16
+_FLOAT64_SMALLEST_NORMAL = float(np.finfo(np.float64).tiny)
+_RIGID_METRIC_VERSION = "dimensionless_full_dof_bbox_v1"
+
+
+def _rank_threshold(matrix: np.ndarray) -> float:
+    """Return the frozen scale-aware float64 rank threshold."""
+    array = np.asarray(matrix, dtype=np.float64)
+    if array.size == 0:
+        return 0.0
+    singular_values = np.linalg.svd(array, compute_uv=False)
+    sigma_max = float(singular_values[0]) if singular_values.size else 0.0
+    if sigma_max == 0.0:
+        return 0.0
+    return float(64.0 * max(array.shape) * _FLOAT64_EPS * sigma_max)
+
+
+def _relative_frobenius_action(matrix: np.ndarray, basis: np.ndarray) -> float:
+    denominator = max(float(np.linalg.norm(matrix, ord="fro")), _FLOAT64_SMALLEST_NORMAL)
+    return float(np.linalg.norm(matrix @ basis, ord="fro") / denominator)
+
+
+def _relative_frobenius_cross(matrix: np.ndarray, left: np.ndarray, right: np.ndarray) -> float:
+    denominator = max(float(np.linalg.norm(matrix, ord="fro")), _FLOAT64_SMALLEST_NORMAL)
+    return float(np.linalg.norm(left.T @ matrix @ right, ord="fro") / denominator)
+
+
+def _relative_symmetry_residual(matrix: np.ndarray) -> float:
+    denominator = max(float(np.linalg.norm(matrix, ord="fro")), _FLOAT64_SMALLEST_NORMAL)
+    return float(np.linalg.norm(matrix - matrix.T, ord="fro") / denominator)
+
+
+def _rigid_projection_diagnostics(
+    *,
+    applied: bool,
+    characteristic_length: Optional[float],
+    original_dofs: int,
+    projected_dofs: Optional[int],
+    rigid_rank: int,
+) -> Dict[str, Any]:
+    """Create the stable diagnostics schema for the rigid quotient."""
+    return {
+        "applied": bool(applied),
+        "metric_version": _RIGID_METRIC_VERSION,
+        "characteristic_length": characteristic_length,
+        "original_dofs": int(original_dofs),
+        "projected_dofs": None if projected_dofs is None else int(projected_dofs),
+        "rigid_rank": int(rigid_rank),
+        "orthonormality_residual": None,
+        "elastic_null_residual": None,
+        "geometric_null_residual": None,
+        "elastic_cross_residual": None,
+        "geometric_cross_residual": None,
+        "elastic_min_eigenvalue": None,
+        "elastic_max_eigenvalue": None,
+        "spd_tolerance": None,
+        "spd_sensitivity": {},
+    }
+
+
 def _normalize_mode(full_mode: np.ndarray, reduced_mode: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     scale = float(np.max(np.abs(full_mode))) if full_mode.size else 0.0
     if scale <= 0.0:
@@ -382,21 +442,263 @@ def solve_eigenvalue_buckling(
         Q_rigid, nullspace_info = session.rigid_body_modes(constraint_plan, model)
     assembly_info["nullspace"] = nullspace_info
 
-    # Work with the inverted symmetric pencil KG phi = mu K phi where K is
-    # positive definite after constraint elimination.  The largest mu
-    # correspond to the smallest positive load factors lambda = 1/mu, and the
-    # symmetric formulation lets both the Lanczos and the dense solver work on
-    # well-posed problems (KG itself may be indefinite or singular).
+    # Work with the inverted symmetric pencil KG phi = mu K phi.  Constrained
+    # systems without an analytic rigid space retain the existing sparse/dense
+    # selection.  Free systems are first reduced to the dimensionless rigid
+    # quotient so a known singular elastic pencil is never sent to an
+    # eigensolver.
     n_red = int(K_red.shape[0])
     K_sym = (0.5 * (K_red + K_red.T)).tocsr()
     KG_sym = (0.5 * (KG_red + KG_red.T)).tocsr()
     k = min(max(num_modes * max(int(search_factor), 1), num_modes + 2), n_red - 1)
 
     eigenvectors = None
+    projection_y_vectors = None
+    projected_rigid_basis = None
+    projection_diagnostics = None
     solver_kind = "not_started"
     sparse_error = None
     shift_invert_diagnostics: Dict[str, Any] = {"shift_invert": False}
-    if n_red > dense_size_limit and 1 <= k < n_red:
+
+    def _projection_failure(status: str, reason: str) -> BucklingResult:
+        diagnostics = {
+            "status": status,
+            "reason": reason,
+            "solver": "dense_scipy_eigh_rigid_quotient",
+            "follower_load_stiffness_included": bool(K_load_red.nnz),
+            "follower_tangent_symmetry_error": follower_symmetry_error,
+            "nullspace_rank": int(Q_rigid.shape[1]),
+            "nullspace_info": nullspace_info,
+            "free_mechanism_handling": (
+                "retained" if allow_free_mechanisms else "rigid_body_roots_filtered"
+            ),
+            "rigid_body_handling": "projected",
+            "rigid_projection": projection_diagnostics,
+        }
+        result_case = make_result_case(
+            name="linear_buckling",
+            analysis_type="linear_buckling",
+            load_cases=() if reference_load_case is None else (reference_load_case,),
+            assembly_info=assembly_info,
+            solver_info={"convergence_info": diagnostics},
+            recovery={"modes": num_modes, "num_modes_returned": 0},
+            settings=settings,
+            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+        ).to_dict()
+        return BucklingResult(
+            [],
+            num_modes,
+            status,
+            constraint_info,
+            assembly_info,
+            result_case,
+            diagnostics,
+        )
+
+    if Q_rigid.shape[1]:
+        coordinates = np.asarray(model.mesh.get_node_coordinates(), dtype=np.float64)
+        characteristic_length: Optional[float] = None
+        if coordinates.ndim == 2 and coordinates.shape[0] > 0 and coordinates.shape[1] == 3:
+            coordinate_extent = np.max(coordinates, axis=0) - np.min(coordinates, axis=0)
+            characteristic_length = float(np.linalg.norm(coordinate_extent))
+        projection_diagnostics = _rigid_projection_diagnostics(
+            applied=False,
+            characteristic_length=characteristic_length,
+            original_dofs=n_red,
+            projected_dofs=None,
+            rigid_rank=int(Q_rigid.shape[1]),
+        )
+        if (
+            not np.all(np.isfinite(coordinates))
+            or characteristic_length is None
+            or not np.isfinite(characteristic_length)
+            or characteristic_length <= 0.0
+        ):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "The dimensionless rigid metric requires a finite, positive bounding-box diagonal.",
+            )
+        if n_red > dense_size_limit and not allow_dense_fallback:
+            return _projection_failure(
+                "rigid_projection_requires_dense",
+                "The analytic rigid space requires the dense quotient, but dense fallback is disabled for this reduced size.",
+            )
+
+        transformation = np.asarray(T.toarray(), dtype=np.float64)
+        full_scale = np.ones(transformation.shape[0], dtype=np.float64)
+        for node in model.mesh.nodes.values():
+            node_dofs = np.asarray(node.dofs[:3], dtype=np.intp)
+            full_scale[node_dofs] = 1.0 / characteristic_length
+        scaled_transformation = full_scale[:, None] * transformation
+        if not (
+            np.all(np.isfinite(transformation))
+            and np.all(np.isfinite(scaled_transformation))
+            and np.all(np.isfinite(Q_rigid))
+        ):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "The constraint transformation or rigid basis contains non-finite values.",
+            )
+
+        _Q_transformation, R_transformation = linalg.qr(
+            scaled_transformation,
+            mode="economic",
+            check_finite=True,
+        )
+        transformation_singular_values = np.linalg.svd(R_transformation, compute_uv=False)
+        transformation_threshold = _rank_threshold(R_transformation)
+        if (
+            R_transformation.shape != (n_red, n_red)
+            or transformation_singular_values.size != n_red
+            or float(transformation_singular_values[-1]) <= transformation_threshold
+        ):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "The dimensionless constraint transformation is rank deficient.",
+            )
+
+        identity = np.eye(n_red, dtype=np.float64)
+        R_inverse = linalg.solve_triangular(
+            R_transformation,
+            identity,
+            lower=False,
+            check_finite=True,
+        )
+        K_dense = _as_symmetric_dense(K_red)
+        KG_dense = _as_symmetric_dense(KG_red)
+        K_y_raw = R_inverse.T @ K_dense @ R_inverse
+        KG_y_raw = R_inverse.T @ KG_dense @ R_inverse
+        dimension_tolerance = float(4096.0 * n_red * _FLOAT64_EPS)
+        if (
+            not np.all(np.isfinite(K_y_raw))
+            or not np.all(np.isfinite(KG_y_raw))
+            or _relative_symmetry_residual(K_y_raw) > dimension_tolerance
+            or _relative_symmetry_residual(KG_y_raw) > dimension_tolerance
+        ):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "A transformed operator is non-finite or violates the frozen symmetry residual.",
+            )
+        K_y = 0.5 * (K_y_raw + K_y_raw.T)
+        KG_y = 0.5 * (KG_y_raw + KG_y_raw.T)
+
+        rigid_y = R_transformation @ np.asarray(Q_rigid, dtype=np.float64)
+        rigid_singular_values = np.linalg.svd(rigid_y, compute_uv=False)
+        rigid_threshold = _rank_threshold(rigid_y)
+        rigid_rank = int(np.count_nonzero(rigid_singular_values > rigid_threshold))
+        if rigid_rank != int(Q_rigid.shape[1]):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "The transformed analytic rigid basis is rank deficient.",
+            )
+        Q_complete, _R_rigid = linalg.qr(rigid_y, mode="full", check_finite=True)
+        projected_rigid_basis = np.asarray(Q_complete[:, :rigid_rank], dtype=np.float64)
+        flexible_basis = np.asarray(Q_complete[:, rigid_rank:], dtype=np.float64)
+        projection_diagnostics["applied"] = True
+        projection_diagnostics["projected_dofs"] = int(flexible_basis.shape[1])
+        if flexible_basis.shape[1] == 0:
+            return _projection_failure(
+                "empty_flexible_subspace",
+                "The analytic rigid space spans the complete reduced system.",
+            )
+
+        orthonormality_residual = float(
+            np.linalg.norm(Q_complete.T @ Q_complete - identity, ord="fro")
+        )
+        elastic_null_residual = _relative_frobenius_action(K_y, projected_rigid_basis)
+        geometric_null_residual = _relative_frobenius_action(KG_y, projected_rigid_basis)
+        elastic_cross_residual = _relative_frobenius_cross(
+            K_y,
+            projected_rigid_basis,
+            flexible_basis,
+        )
+        geometric_cross_residual = _relative_frobenius_cross(
+            KG_y,
+            projected_rigid_basis,
+            flexible_basis,
+        )
+        projection_diagnostics.update(
+            {
+                "orthonormality_residual": orthonormality_residual,
+                "elastic_null_residual": elastic_null_residual,
+                "geometric_null_residual": geometric_null_residual,
+                "elastic_cross_residual": elastic_cross_residual,
+                "geometric_cross_residual": geometric_cross_residual,
+            }
+        )
+        if orthonormality_residual > dimension_tolerance:
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "The complete dimensionless quotient basis is not orthonormal under the frozen residual.",
+            )
+        if (
+            elastic_null_residual > dimension_tolerance
+            or geometric_null_residual > dimension_tolerance
+            or elastic_cross_residual > dimension_tolerance
+            or geometric_cross_residual > dimension_tolerance
+        ):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "The elastic or combined geometric operator does not descend to the analytic rigid quotient.",
+            )
+
+        K_f_raw = flexible_basis.T @ K_y @ flexible_basis
+        KG_f_raw = flexible_basis.T @ KG_y @ flexible_basis
+        if (
+            _relative_symmetry_residual(K_f_raw) > dimension_tolerance
+            or _relative_symmetry_residual(KG_f_raw) > dimension_tolerance
+        ):
+            return _projection_failure(
+                "invalid_rigid_quotient",
+                "A quotient operator violates the frozen symmetry residual.",
+            )
+        K_f = 0.5 * (K_f_raw + K_f_raw.T)
+        KG_f = 0.5 * (KG_f_raw + KG_f_raw.T)
+        elastic_eigenvalues = np.linalg.eigvalsh(K_f)
+        elastic_minimum = float(elastic_eigenvalues[0])
+        elastic_maximum = float(elastic_eigenvalues[-1])
+        spd_tolerance = _rank_threshold(K_f)
+        spd_sensitivity = {
+            key: {
+                "threshold": float(multiplier * spd_tolerance),
+                "positive_definite": bool(elastic_minimum > multiplier * spd_tolerance),
+            }
+            for key, multiplier in (("0.25", 0.25), ("1", 1.0), ("4", 4.0))
+        }
+        projection_diagnostics.update(
+            {
+                "elastic_min_eigenvalue": elastic_minimum,
+                "elastic_max_eigenvalue": elastic_maximum,
+                "spd_tolerance": float(spd_tolerance),
+                "spd_sensitivity": spd_sensitivity,
+            }
+        )
+        positive_definite_values = {
+            bool(item["positive_definite"])
+            for item in spd_sensitivity.values()
+        }
+        if positive_definite_values != {True}:
+            return _projection_failure(
+                "singular_projected_stiffness",
+                "The quotient elastic operator is not stably positive definite at all frozen sensitivity multipliers.",
+            )
+
+        try:
+            _inverted_eigenvalues, flexible_eigenvectors = linalg.eigh(
+                KG_f,
+                K_f,
+                check_finite=True,
+            )
+        except linalg.LinAlgError:
+            return _projection_failure(
+                "singular_projected_stiffness",
+                "The symmetric quotient pencil rejected the verified elastic operator.",
+            )
+        projection_y_vectors = flexible_basis @ flexible_eigenvectors
+        eigenvectors = R_inverse @ projection_y_vectors
+        solver_kind = "dense_scipy_eigh_rigid_quotient"
+
+    if not Q_rigid.shape[1] and n_red > dense_size_limit and 1 <= k < n_red:
         try:
             if shift_load_factor is None:
                 _, eigenvectors = sparse_linalg.eigsh(KG_sym.tocsc(), k=k, M=K_sym.tocsc(), which="LA")
@@ -431,7 +733,7 @@ def solve_eigenvalue_buckling(
         except Exception as exc:
             sparse_error = str(exc)
             eigenvectors = None
-    if eigenvectors is None and (n_red <= dense_size_limit or allow_dense_fallback):
+    if not Q_rigid.shape[1] and eigenvectors is None and (n_red <= dense_size_limit or allow_dense_fallback):
         K_dense = _as_symmetric_dense(K_red)
         KG_dense = _as_symmetric_dense(KG_red)
         try:
@@ -475,8 +777,23 @@ def solve_eigenvalue_buckling(
             rejected.append({"root_index": int(i), "reason": "invalid_or_zero_norm"})
             continue
         reduced_mode = reduced_mode / mode_norm
-        rigid_body_correlation = float(np.max(np.abs(Q_rigid.T @ reduced_mode))) if Q_rigid.shape[1] else 0.0
-        if rigid_body_correlation > 0.90 and not allow_free_mechanisms:
+        if projection_y_vectors is not None:
+            y_mode = np.asarray(np.real(projection_y_vectors[:, i]), dtype=np.float64)
+            y_mode_norm = float(np.linalg.norm(y_mode))
+            if not np.isfinite(y_mode_norm) or y_mode_norm <= 0.0:
+                rejected.append({"root_index": int(i), "reason": "invalid_or_zero_dimensionless_norm"})
+                continue
+            y_mode = y_mode / y_mode_norm
+            rigid_body_correlation = float(
+                np.max(np.abs(projected_rigid_basis.T @ y_mode))
+            )
+        else:
+            rigid_body_correlation = (
+                float(np.max(np.abs(Q_rigid.T @ reduced_mode)))
+                if Q_rigid.shape[1]
+                else 0.0
+            )
+        if projection_y_vectors is None and rigid_body_correlation > 0.90 and not allow_free_mechanisms:
             rejected.append(
                 {
                     "root_index": int(i),
@@ -561,6 +878,9 @@ def solve_eigenvalue_buckling(
             homogeneous_variation=True,
         ),
     }
+    if projection_diagnostics is not None:
+        diagnostics["rigid_body_handling"] = "projected"
+        diagnostics["rigid_projection"] = projection_diagnostics
     if session is not None:
         diagnostics["analysis_session"] = session.diagnostics()
     result_case = make_result_case(

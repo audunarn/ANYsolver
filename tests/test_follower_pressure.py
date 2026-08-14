@@ -398,8 +398,17 @@ def test_thin_ring_follower_pressure_converges_to_analytical_buckling(
                 eccentricity=np.zeros(3),
             ),
         )
+    polygon_membrane_compression = (
+        config.pressure
+        * config.radius
+        * np.cos(np.pi / circumferential_elements)
+    )
     unit_pressure_prestress = {
-        int(element_id): {"membrane_compression_x": config.radius}
+        int(element_id): {
+            "membrane_compression_x": polygon_membrane_compression,
+            "membrane_compression_y": 0.0,
+            "membrane_compression_xy": 0.0,
+        }
         for element_id, element in model.mesh.elements.items()
         if isinstance(element, ShellElement)
     }
@@ -424,17 +433,57 @@ def test_thin_ring_follower_pressure_converges_to_analytical_buckling(
         / (12.0 * (1.0 - config.poisson_ratio**2))
     )
     analytical_pressure = 3.0 * bending_stiffness / config.radius**3
-    relative_error = abs(float(follower.critical_load_factor) / analytical_pressure - 1.0)
 
-    assert follower.solver_status == "ok"
+    assert follower.solver_status == "ok", (
+        follower.diagnostics.get("reason"),
+        {
+            key: follower.diagnostics.get("rigid_projection", {}).get(key)
+            for key in (
+                "elastic_null_residual",
+                "geometric_null_residual",
+                "elastic_cross_residual",
+                "geometric_cross_residual",
+            )
+        },
+    )
     assert follower.critical_load_factor is not None
+    relative_error = abs(float(follower.critical_load_factor) / analytical_pressure - 1.0)
     assert relative_error < max_error
+    assert follower.diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
+    assert follower.diagnostics["rigid_body_handling"] == "projected"
+    follower_projection = follower.diagnostics["rigid_projection"]
+    assert follower_projection["applied"] is True
+    assert follower_projection["metric_version"] == "dimensionless_full_dof_bbox_v1"
+    # The upper-to-lower plane-ring MPCs preserve four compatible rigid modes;
+    # rotations about the two in-plane axes are intentionally excluded.
+    assert follower_projection["rigid_rank"] == follower.diagnostics["nullspace_rank"] == 4
+    follower_tolerance = (
+        4096.0
+        * follower_projection["original_dofs"]
+        * 2.220446049250313e-16
+    )
+    assert follower_projection["elastic_null_residual"] <= follower_tolerance
+    assert follower_projection["geometric_null_residual"] <= follower_tolerance
+    assert follower_projection["elastic_cross_residual"] <= follower_tolerance
+    assert follower_projection["geometric_cross_residual"] <= follower_tolerance
+    assert all(
+        item["positive_definite"]
+        for item in follower_projection["spd_sensitivity"].values()
+    )
     assert follower.diagnostics["follower_load_stiffness_included"] is True
     assert follower.diagnostics["follower_tangent_symmetry_error"] < 1.0e-12
-    # Omitting the pressure-load stiffness is the known nonconservative error:
-    # this mesh overpredicts the classical ring pressure by roughly one third.
-    assert dead.critical_load_factor > 1.20 * analytical_pressure
-    assert follower.critical_load_factor < dead.critical_load_factor
+    # Without the follower load tangent, the imposed dead-prestress operator
+    # does not descend to the free ring's rigid quotient.  An eigenvalue would
+    # depend on the chosen rigid representative, so the solver must fail closed.
+    assert dead.solver_status == "invalid_rigid_quotient"
+    assert dead.modes == []
+    assert dead.diagnostics["solver"] == "dense_scipy_eigh_rigid_quotient"
+    assert "does not descend" in dead.diagnostics["reason"]
+    dead_projection = dead.diagnostics["rigid_projection"]
+    dead_tolerance = 4096.0 * dead_projection["original_dofs"] * 2.220446049250313e-16
+    assert dead_projection["applied"] is True
+    assert dead_projection["geometric_null_residual"] > dead_tolerance
+    assert dead_projection["geometric_cross_residual"] > dead_tolerance
 
 
 def test_shell_initial_stress_acts_on_all_translations_and_supports_gauss_fields() -> None:
