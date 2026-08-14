@@ -1,0 +1,191 @@
+{
+  "schema": "s4-nullspace-semantics-cases-v1",
+  "plan_hashes": {
+    "proof_plan": "855d76f0ca40549cbaead8360152f973b3162671295c53b16f58a5341cc382ca",
+    "vidar_editor_plan": "136cd18281f61d2705fd3c1145c95c63498be8b255c1d0f8118701d3e33ff3a6",
+    "heimdall_auditor_plan": "6ab98ddb6f50139544610c2058d8ffb0c833749f25f126d404c8f18b76811530"
+  },
+  "source_hashes": {
+    "protocol.py": "32bf05e0bd0b282c49c47392caf9400d2c8c136b9b6d1d398b3b54451eacb089",
+    "q4_common.py": "de2dcdcd3bc04a90a4db2c074ec15d4e4b097123010f146a0c718506443c3d19",
+    "mitc4_plus_d_reference.py": "aaf44046eee607541f2a84ea16cba948cb98130a568bbf8b5b03b243928e9536",
+    "mitc4_plus_d_scalar.py": "9e3f1827f813546ff9c183c77e654f268c8a67f976b63ff010749efdeab3118b"
+  },
+  "frozen_constants": {
+    "eps64_hex": "0x1.0000000000000p-52",
+    "svd_factor": 64.0,
+    "residual_factor": 4096.0,
+    "canonical_tie_factor": 256.0,
+    "sensitivity_multipliers": [0.25, 1.0, 4.0]
+  },
+  "algebraic_cases": {
+    "quotient_counterexample": {
+      "id": "algebraic_quotient_counterexample",
+      "N_projector": [[1.0, 0.0], [0.0, 1.0]],
+      "G_basis": [[0.0], [1.0]],
+      "R_N_basis": [[0.7071067811865476], [0.7071067811865476]],
+      "expected": {"R_N_intersect_P": 0, "R_N_intersect_G": 0, "RQ": 1, "Z": 0}
+    },
+    "inherited_scale_family": {
+      "id": "algebraic_inherited_scale_family",
+      "deltas_hex": ["0x0.0p+0", "0x1.0000000000000p-60", "0x1.0000000000000p-40", "0x1.0000000000000p+0"],
+      "Q": [[0.0], [1.0]],
+      "parent_scale": 1.0,
+      "expected_ranks": [0, 0, 1, 1]
+    }
+  },
+  "local_cases": [
+    {
+      "id": "local_square_uniform",
+      "coordinates": [[-1.0, -1.0, 0.0], [1.0, -1.0, 0.0], [1.0, 1.0, 0.0], [-1.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.2, 0.2, 0.2, 0.2],
+      "expected": {"rank": 16, "N": 8, "G": 1, "P": 7, "R": 6, "R_N": 6, "R_G": 0, "RQ": 6, "Z": 1},
+      "numbering_variants": [
+        {"id": "cyclic", "order": [1, 2, 3, 0], "director_sign": 1},
+        {"id": "anchored_reversal", "order": [0, 3, 2, 1], "director_sign": -1}
+      ],
+      "notes": ["The constant nodal drill candidate is zero-strain and zero-mass; the alternating candidate is zero-strain with positive mass."]
+    },
+    {
+      "id": "local_affine_skew",
+      "coordinates": [[-0.8, -1.2, 0.3], [1.6, -0.6, 0.3], [1.2, 1.0, 0.3], [-1.2, 0.4, 0.3]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.14, 0.14, 0.14, 0.14],
+      "expected": {"rank": 16, "N": 8, "G": 1, "P": 7, "R": 6, "R_N": 6, "R_G": 0, "RQ": 6, "Z": 1},
+      "numbering_variants": [{"id": "cyclic", "order": [2, 3, 0, 1], "director_sign": 1}],
+      "notes": ["Affine skew mapping separates geometric skew from taper and warping."]
+    },
+    {
+      "id": "local_tapered_nonuniform",
+      "coordinates": [[-0.692, -1.122, 0.3], [0.892, -0.978, 0.3], [1.708, 0.978, 0.3], [-1.108, 0.722, 0.3]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.16, 0.2, 0.24, 0.18],
+      "numbering_variants": [{"id": "anchored_reversal", "order": [0, 3, 2, 1], "director_sign": -1}],
+      "notes": ["Bilinear taper and nodal thickness variation exercise non-affine surface and through-thickness weights."]
+    },
+    {
+      "id": "local_distorted_varied_directors",
+      "coordinates": [[-1.3679, -1.0166, 0.3], [1.2479, -1.0234, 0.3], [1.2521, 1.1834, 0.3], [-0.3321, 0.4566, 0.3]],
+      "directors": [[0.049927657307386346, 0.019971062922954537, 0.9985531461477268], [-0.03995009355511379, 0.02996257016633534, 0.9987523388778446], [0.019971062922954537, -0.049927657307386346, 0.9985531461477268], [-0.029980518991926525, -0.019987012661284352, 0.9993506330642176]],
+      "thickness": [0.12, 0.17, 0.21, 0.15],
+      "numbering_variants": [{"id": "cyclic", "order": [1, 2, 3, 0], "director_sign": 1}],
+      "notes": ["Distortion and varied directors test whether a visually constant scalar drill remains in either invariant kernel."]
+    },
+    {
+      "id": "local_warped_varied_directors",
+      "coordinates": [[-0.4389553422197831, -1.296571663726179, 0.3059231930885298], [1.198955342219783, -0.6634283362738209, -0.1459231930885298], [1.1010446577802169, 0.703428336273821, 1.1059231930885298], [-1.0610446577802168, 0.8565716637261791, -0.06592319308852984]],
+      "directors": [[-0.10738965629507725, -0.2600359005753676, 0.9596086661409341], [-0.17494805750273365, -0.24576287655322912, 0.9534116559410749], [-0.1327206030264483, -0.29936679932058674, 0.9448622973729258], [-0.16103840567725877, -0.26881038614127417, 0.9496355133415694]],
+      "thickness": [0.11, 0.16, 0.19, 0.13],
+      "numbering_variants": [
+        {"id": "cyclic", "order": [3, 0, 1, 2], "director_sign": 1},
+        {"id": "anchored_reversal", "order": [0, 3, 2, 1], "director_sign": -1}
+      ],
+      "notes": ["Valid warped mapping exercises the literal covariant Eq.21 and Appendix-B membrane path already accepted in the quarantined source."]
+    }
+  ],
+  "topology_cases": [
+    {
+      "id": "topology_one_element",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1],
+      "elements": [{"nodes": [0, 1, 2, 3], "state": "active", "density": 2.0}],
+      "expected": {"rank": 16, "N": 8, "G": 1, "P": 7, "R": 6, "R_N": 6, "R_G": 0, "RQ": 6, "Z": 1},
+      "notes": ["Assembled single-element baseline uses the unchanged global node universe."]
+    },
+    {
+      "id": "topology_two_shared_edge_constraints",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      "elements": [{"nodes": [0, 1, 4, 3], "state": "active"}, {"nodes": [1, 2, 5, 4], "state": "active"}],
+      "constraint_sets": [
+        {"id": "fixed_drill", "kind": "support", "rows": [{"terms": [[5, 1.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true}},
+        {"id": "tied_drill", "kind": "mpc", "rows": [{"terms": [[5, 1.0], [11, -1.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true}},
+        {"id": "weighted_affine", "kind": "affine_mpc", "rows": [{"terms": [[5, 0.5], [11, 0.5]], "rhs": 0.125}], "expected": {"rank": 1, "feasible": true}},
+        {"id": "dependent_rows", "kind": "mpc", "rows": [{"terms": [[5, 1.0], [11, -1.0]], "rhs": 0.0}, {"terms": [[5, 2.0], [11, -2.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true}},
+        {"id": "redundant_zero_row", "kind": "mpc", "rows": [{"terms": [], "rhs": 0.0}, {"terms": [[5, 1.0], [11, -1.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true, "omitted_zero_rows": 1}},
+        {"id": "inconsistent_affine", "kind": "affine_mpc", "rows": [{"terms": [[5, 1.0]], "rhs": 0.0}, {"terms": [[5, 1.0]], "rhs": 1.0}], "expected": {"rank": 1, "feasible": false}},
+        {"id": "abstract_shell_shell", "kind": "abstract_shell_shell_coupling", "intended_work_conjugacy": "Equal and opposite generalized drill-transfer work across a declared shell interface; this is not production validation.", "rows": [{"terms": [[11, 1.0], [29, -1.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true}},
+        {"id": "abstract_beam_shell", "kind": "abstract_beam_shell_coupling", "intended_work_conjugacy": "A declared beam generalized rotation is work-conjugate to a weighted shell drill trace; this is an algebra-only row.", "rows": [{"terms": [[5, 0.5], [11, 0.5], [17, -1.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true}}
+      ],
+      "notes": ["Affine RHS is reported separately and never enters tangent/null rank."]
+    },
+    {
+      "id": "topology_regular_2x2",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0], [0.0, 2.0, 0.0], [1.0, 2.0, 0.0], [2.0, 2.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      "elements": [{"nodes": [0, 1, 4, 3], "state": "active"}, {"nodes": [1, 2, 5, 4], "state": "active"}, {"nodes": [3, 4, 7, 6], "state": "active"}, {"nodes": [4, 5, 8, 7], "state": "active"}],
+      "notes": ["Conforming regular patch provides a topology-derived bipartite drill graph."]
+    },
+    {
+      "id": "topology_odd_cycle_prism",
+      "kind": "assembled_topology",
+      "coordinates": [[1.0, 0.0, 0.0], [-0.5, 0.8660254037844386, 0.0], [-0.5, -0.8660254037844386, 0.0], [1.0, 0.0, 1.0], [-0.5, 0.8660254037844386, 1.0], [-0.5, -0.8660254037844386, 1.0]],
+      "directors": [[1.0, 0.0, 0.0], [-0.5, 0.8660254037844387, 0.0], [-0.5, -0.8660254037844387, 0.0], [1.0, 0.0, 0.0], [-0.5, 0.8660254037844387, 0.0], [-0.5, -0.8660254037844387, 0.0]],
+      "thickness": [0.08, 0.08, 0.08, 0.08, 0.08, 0.08],
+      "elements": [{"nodes": [0, 1, 4, 3], "state": "active"}, {"nodes": [1, 2, 5, 4], "state": "active"}, {"nodes": [2, 0, 3, 5], "state": "active"}],
+      "notes": ["Three side quads form an odd element-adjacency cycle and a non-bipartite nodal edge graph; no alternating candidate is manufactured."]
+    },
+    {
+      "id": "topology_distorted_patch",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.1, -0.1, 0.0], [2.2, 0.1, 0.0], [-0.1, 1.0, 0.0], [0.9, 1.15, 0.0], [2.1, 0.9, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.11, 0.12, 0.13, 0.14, 0.15, 0.16],
+      "elements": [{"nodes": [0, 1, 4, 3], "state": "active"}, {"nodes": [1, 2, 5, 4], "state": "active"}],
+      "notes": ["Distorted flat patch separates connectivity claims from regular-grid symmetry."]
+    },
+    {
+      "id": "topology_curved_warped_patch",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.08], [2.0, 0.0, 0.0], [0.0, 1.0, 0.05], [1.0, 1.0, 0.16], [2.0, 1.0, 0.02]],
+      "directors": [[-0.07964635881193319, -0.04977897425745824, 0.9955794851491648], [-0.00007700043563723606, -0.06484874404412455, 0.9978951019354853], [0.07949286335171643, -0.07949286335171643, 0.9936607918964554], [-0.07964635881193319, -0.04977897425745824, 0.9955794851491648], [-0.00007700043563723606, -0.06484874404412455, 0.9978951019354853], [0.07949286335171643, -0.07949286335171643, 0.9936607918964554]],
+      "thickness": [0.09, 0.11, 0.13, 0.1, 0.12, 0.14],
+      "elements": [{"nodes": [0, 1, 4, 3], "state": "active"}, {"nodes": [1, 2, 5, 4], "state": "active"}],
+      "notes": ["Curved/warped patch uses averaged positive directors and makes no flat-drill assumption."]
+    },
+    {
+      "id": "topology_disconnected",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [3.0, 0.0, 0.0], [4.0, 0.0, 0.0], [4.0, 1.0, 0.0], [3.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1, 0.12, 0.12, 0.12, 0.12],
+      "elements": [{"nodes": [0, 1, 2, 3], "state": "active"}, {"nodes": [4, 5, 6, 7], "state": "active"}],
+      "notes": ["Each retained connectivity component receives its own fixed-centroid analytic rigid candidate fields."]
+    },
+    {
+      "id": "topology_softened",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      "elements": [{"nodes": [0, 1, 4, 3], "state": "softened", "alpha": 0.35, "beta": 0.6}, {"nodes": [1, 2, 5, 4], "state": "active"}],
+      "notes": ["Positive element-local pre-scatter alpha/beta weights alter the metric but are not deletion or a constraint."]
+    },
+    {
+      "id": "topology_deletion_split",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0], [3.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      "elements": [{"nodes": [0, 1, 5, 4], "state": "active"}, {"nodes": [1, 2, 6, 5], "state": "deleted"}, {"nodes": [2, 3, 7, 6], "state": "active"}],
+      "notes": ["Deleting the middle element removes its rows and incidence while retaining all original node/DOF indices, producing two retained components."]
+    },
+    {
+      "id": "topology_deletion_orphans",
+      "kind": "assembled_topology",
+      "coordinates": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [3.0, 0.0, 0.0], [4.0, 0.0, 0.0], [4.0, 1.0, 0.0], [3.0, 1.0, 0.0]],
+      "directors": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+      "thickness": [0.1, 0.1, 0.1, 0.1, 0.12, 0.12, 0.12, 0.12],
+      "elements": [{"nodes": [0, 1, 2, 3], "state": "active"}, {"nodes": [4, 5, 6, 7], "state": "deleted"}],
+      "constraint_sets": [{"id": "orphan_fixed_drill", "kind": "support", "rows": [{"terms": [[29, 1.0]], "rhs": 0.0}], "expected": {"rank": 1, "feasible": true}}],
+      "notes": ["Nodes 4-7 remain in the declared universe as explicit zero-B/zero-H orphan coordinates; C uses their unchanged original indices."]
+    }
+  ]
+}
