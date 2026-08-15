@@ -1,0 +1,228 @@
+{
+  "schema": "s4-drill-constraint-certification-cases-v1",
+  "governing_plan_sha256": "90b5c4903ee6a9c06056f7e1f3ab21dae0626c185a27627843a04bf289430e3a",
+  "tor_plan_sha256": "8e969863806461124510e7c31d99a3244fccf15dd67424517320ee819439aa90",
+  "primary_pdf_sha256": "89c10de1fb13056eb967111c2dbb28fe2d18179090814141455f4e8901d919ea",
+  "accepted_source_sha256": {
+    "protocol.py": "32bf05e0bd0b282c49c47392caf9400d2c8c136b9b6d1d398b3b54451eacb089",
+    "q4_common.py": "de2dcdcd3bc04a90a4db2c074ec15d4e4b097123010f146a0c718506443c3d19",
+    "mitc4_plus_d_reference.py": "aaf44046eee607541f2a84ea16cba948cb98130a568bbf8b5b03b243928e9536",
+    "mitc4_plus_d_scalar.py": "9e3f1827f813546ff9c183c77e654f268c8a67f976b63ff010749efdeab3118b"
+  },
+  "precision": {
+    "decimal_digits": [80, 160, 320],
+    "sensitivity_multipliers": ["0.25", "1", "4"],
+    "svd_factor": "64",
+    "residual_factor": "4096",
+    "basis_factor": "256"
+  },
+  "sample_points": [
+    {"kind": "center"},
+    {"kind": "gauss", "r_sign": "-1", "s_sign": "-1"},
+    {"kind": "gauss", "r_sign": "1", "s_sign": "-1"},
+    {"kind": "gauss", "r_sign": "1", "s_sign": "1"},
+    {"kind": "gauss", "r_sign": "-1", "s_sign": "1"},
+    {"kind": "decimal", "r": "-0.77", "s": "0.64"},
+    {"kind": "decimal", "r": "0.61", "s": "-0.57"},
+    {"kind": "decimal", "r": "0.91", "s": "-0.83"}
+  ],
+  "local_cases": [
+    {
+      "id": "square_uniform",
+      "coordinates": [["-1", "-1", "0"], ["1", "-1", "0"], ["1", "1", "0"], ["-1", "1", "0"]],
+      "director_seeds": [["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"]],
+      "thickness": ["0.2", "0.2", "0.2", "0.2"],
+      "expected_free": {"rank_B": 16, "N": 8, "G": 1, "P": 7, "R_N": 6, "RQ": 6, "Z": 1},
+      "numbering": ["cyclic", "anchored_reversal"]
+    },
+    {
+      "id": "affine_skew_uniform",
+      "coordinates": [["-0.8", "-1.2", "0.3"], ["1.6", "-0.6", "0.3"], ["1.2", "1.0", "0.3"], ["-1.2", "0.4", "0.3"]],
+      "director_seeds": [["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"]],
+      "thickness": ["0.14", "0.14", "0.14", "0.14"],
+      "numbering": ["cyclic"]
+    },
+    {
+      "id": "tapered_nonuniform",
+      "coordinates": [["-0.692", "-1.122", "0.3"], ["0.892", "-0.978", "0.3"], ["1.708", "0.978", "0.3"], ["-1.108", "0.722", "0.3"]],
+      "director_seeds": [["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"]],
+      "thickness": ["0.16", "0.2", "0.24", "0.18"],
+      "numbering": ["anchored_reversal"]
+    },
+    {
+      "id": "distorted_varied_directors",
+      "coordinates": [["-1.3679", "-1.0166", "0.3"], ["1.2479", "-1.0234", "0.3"], ["1.2521", "1.1834", "0.3"], ["-0.3321", "0.4566", "0.3"]],
+      "director_seeds": [["0.05", "0.02", "1"], ["-0.04", "0.03", "1"], ["0.02", "-0.05", "1"], ["-0.03", "-0.02", "1"]],
+      "thickness": ["0.11", "0.13", "0.17", "0.19"],
+      "numbering": ["cyclic", "anchored_reversal"]
+    },
+    {
+      "id": "warped_varied_directors",
+      "coordinates": [["-0.979060191035632", "-1.231325981091184", "0.772754217773983"], ["1.019060191035632", "-0.908674018908816", "0.047245782226017"], ["1.680939808964368", "0.948674018908816", "0.712754217773983"], ["-0.920939808964368", "0.791325981091184", "-0.332754217773983"]],
+      "director_seeds": [["-0.08", "-0.05", "1"], ["0.01", "-0.06", "1"], ["0.08", "-0.08", "1"], ["-0.03", "0.04", "1"]],
+      "thickness": ["0.09", "0.11", "0.13", "0.1"],
+      "numbering": ["cyclic", "anchored_reversal"]
+    }
+  ],
+  "topology_cases": [
+    {
+      "id": "one_square",
+      "nodes": [
+        {"id": "n0", "x": ["-1", "-1", "0"]}, {"id": "n1", "x": ["1", "-1", "0"]},
+        {"id": "n2", "x": ["1", "1", "0"]}, {"id": "n3", "x": ["-1", "1", "0"]}
+      ],
+      "elements": [{"id": "e0", "nodes": ["n0", "n1", "n2", "n3"], "state": "active", "director_seeds": [["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"], ["0", "0", "1"]], "thickness": ["0.2", "0.2", "0.2", "0.2"]}]
+    },
+    {
+      "id": "distorted_varied_directors",
+      "nodes": [
+        {"id": "n0", "x": ["-1.3679", "-1.0166", "0.3"]}, {"id": "n1", "x": ["1.2479", "-1.0234", "0.3"]},
+        {"id": "n2", "x": ["1.2521", "1.1834", "0.3"]}, {"id": "n3", "x": ["-0.3321", "0.4566", "0.3"]}
+      ],
+      "elements": [{"id": "e0", "nodes": ["n0", "n1", "n2", "n3"], "state": "active", "director_seeds": [["0.05", "0.02", "1"], ["-0.04", "0.03", "1"], ["0.02", "-0.05", "1"], ["-0.03", "-0.02", "1"]], "thickness": ["0.11", "0.13", "0.17", "0.19"]}],
+      "constraint_sets": [{"id": "distorted_fixed_drill", "kind": "support", "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "1"]], "rhs": "0"}]}]
+    },
+    {
+      "id": "warped_varied_directors",
+      "nodes": [
+        {"id": "n0", "x": ["-0.979060191035632", "-1.231325981091184", "0.772754217773983"]}, {"id": "n1", "x": ["1.019060191035632", "-0.908674018908816", "0.047245782226017"]},
+        {"id": "n2", "x": ["1.680939808964368", "0.948674018908816", "0.712754217773983"]}, {"id": "n3", "x": ["-0.920939808964368", "0.791325981091184", "-0.332754217773983"]}
+      ],
+      "elements": [{"id": "e0", "nodes": ["n0", "n1", "n2", "n3"], "state": "active", "director_seeds": [["-0.08", "-0.05", "1"], ["0.01", "-0.06", "1"], ["0.08", "-0.08", "1"], ["-0.03", "0.04", "1"]], "thickness": ["0.09", "0.11", "0.13", "0.1"]}],
+      "constraint_sets": [{"id": "warped_fixed_drill", "kind": "support", "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "1"]], "rhs": "0"}]}]
+    },
+    {
+      "id": "two_shared_edge_constraints",
+      "nodes": [
+        {"id": "n0", "x": ["0", "0", "0"]}, {"id": "n1", "x": ["1", "0", "0"]}, {"id": "n2", "x": ["2", "0", "0"]},
+        {"id": "n3", "x": ["0", "1", "0"]}, {"id": "n4", "x": ["1", "1", "0"]}, {"id": "n5", "x": ["2", "1", "0"]}
+      ],
+      "elements": [
+        {"id": "e0", "nodes": ["n0", "n1", "n4", "n3"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e1", "nodes": ["n1", "n2", "n5", "n4"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"}
+      ],
+      "constraint_sets": [
+        {"id": "fixed_drill", "kind": "support", "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "1"]], "rhs": "0"}]},
+        {"id": "tied_drill", "kind": "mpc", "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "1"], ["n1", "rz", "-1"]], "rhs": "0"}]},
+        {"id": "dependent_drill", "kind": "mpc", "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "1"], ["n1", "rz", "-1"]], "rhs": "0"}, {"terms": [["n0", "rz", "2"], ["n1", "rz", "-2"]], "rhs": "0"}]},
+        {"id": "weighted_affine", "kind": "affine_mpc", "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "0.5"], ["n1", "rz", "0.5"]], "rhs": "0.125"}]},
+        {"id": "infeasible_affine", "kind": "affine_mpc", "expected_feasible": false, "rows": [{"terms": [["n0", "rz", "1"]], "rhs": "0"}, {"terms": [["n0", "rz", "1"]], "rhs": "1"}]},
+        {"id": "abstract_shell_shell", "kind": "abstract_shell_shell", "qualified": false, "expected_feasible": true, "rows": [{"terms": [["n1", "rz", "1"], ["n4", "rz", "-1"]], "rhs": "0"}]},
+        {"id": "rigid_beam_shell_work", "kind": "beam_shell", "qualified": true, "expected_feasible": true, "rows": [{"terms": [["n0", "rz", "0.5"], ["n1", "rz", "0.5"], ["n4", "rz", "-1"]], "rhs": "0"}]}
+      ]
+    },
+    {
+      "id": "regular_2x2",
+      "nodes": [
+        {"id": "n00", "x": ["0", "0", "0"]}, {"id": "n01", "x": ["0", "1", "0"]}, {"id": "n02", "x": ["0", "2", "0"]},
+        {"id": "n10", "x": ["1", "0", "0"]}, {"id": "n11", "x": ["1", "1", "0"]}, {"id": "n12", "x": ["1", "2", "0"]},
+        {"id": "n20", "x": ["2", "0", "0"]}, {"id": "n21", "x": ["2", "1", "0"]}, {"id": "n22", "x": ["2", "2", "0"]}
+      ],
+      "elements": [
+        {"id": "e00", "nodes": ["n00", "n10", "n11", "n01"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e01", "nodes": ["n01", "n11", "n12", "n02"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e10", "nodes": ["n10", "n20", "n21", "n11"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e11", "nodes": ["n11", "n21", "n22", "n12"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"}
+      ]
+    },
+    {
+      "id": "odd_cycle_prism",
+      "nodes": [
+        {"id": "n0", "x": ["1", "0", "0"]}, {"id": "n1", "x": ["-0.5", "0.8660254037844386", "0"]}, {"id": "n2", "x": ["-0.5", "-0.8660254037844386", "0"]},
+        {"id": "n3", "x": ["1", "0", "1"]}, {"id": "n4", "x": ["-0.5", "0.8660254037844386", "1"]}, {"id": "n5", "x": ["-0.5", "-0.8660254037844386", "1"]}
+      ],
+      "elements": [
+        {"id": "e0", "nodes": ["n0", "n1", "n4", "n3"], "state": "active", "director_seed": ["0.8660254037844386", "0.5", "0"], "thickness": "0.08"},
+        {"id": "e1", "nodes": ["n1", "n2", "n5", "n4"], "state": "active", "director_seed": ["-1", "0", "0"], "thickness": "0.08"},
+        {"id": "e2", "nodes": ["n2", "n0", "n3", "n5"], "state": "active", "director_seed": ["0.8660254037844386", "-0.5", "0"], "thickness": "0.08"}
+      ]
+    },
+    {
+      "id": "disconnected",
+      "nodes": [
+        {"id": "a0", "x": ["0", "0", "0"]}, {"id": "a1", "x": ["1", "0", "0"]}, {"id": "a2", "x": ["1", "1", "0"]}, {"id": "a3", "x": ["0", "1", "0"]},
+        {"id": "b0", "x": ["3", "0", "0"]}, {"id": "b1", "x": ["4", "0", "0"]}, {"id": "b2", "x": ["4", "1", "0"]}, {"id": "b3", "x": ["3", "1", "0"]}
+      ],
+      "elements": [
+        {"id": "ea", "nodes": ["a0", "a1", "a2", "a3"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "eb", "nodes": ["b0", "b1", "b2", "b3"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.12"}
+      ]
+    },
+    {
+      "id": "softened_invariance",
+      "nodes": [
+        {"id": "n0", "x": ["0", "0", "0"]}, {"id": "n1", "x": ["1", "0", "0"]}, {"id": "n2", "x": ["2", "0", "0"]},
+        {"id": "n3", "x": ["0", "1", "0"]}, {"id": "n4", "x": ["1", "1", "0"]}, {"id": "n5", "x": ["2", "1", "0"]}
+      ],
+      "elements": [
+        {"id": "e0", "nodes": ["n0", "n1", "n4", "n3"], "state": "softened", "alpha": "0.35", "beta": "0.6", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e1", "nodes": ["n1", "n2", "n5", "n4"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"}
+      ]
+    },
+    {
+      "id": "deletion_split",
+      "nodes": [
+        {"id": "n00", "x": ["0", "0", "0"]}, {"id": "n01", "x": ["0", "1", "0"]},
+        {"id": "n10", "x": ["1", "0", "0"]}, {"id": "n11", "x": ["1", "1", "0"]},
+        {"id": "n20", "x": ["2", "0", "0"]}, {"id": "n21", "x": ["2", "1", "0"]},
+        {"id": "n30", "x": ["3", "0", "0"]}, {"id": "n31", "x": ["3", "1", "0"]}
+      ],
+      "elements": [
+        {"id": "e0", "nodes": ["n00", "n10", "n11", "n01"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e1", "nodes": ["n10", "n20", "n21", "n11"], "state": "deleted", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "e2", "nodes": ["n20", "n30", "n31", "n21"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"}
+      ]
+    },
+    {
+      "id": "deletion_orphans",
+      "nodes": [
+        {"id": "a0", "x": ["0", "0", "0"]}, {"id": "a1", "x": ["1", "0", "0"]}, {"id": "a2", "x": ["1", "1", "0"]}, {"id": "a3", "x": ["0", "1", "0"]},
+        {"id": "z0", "x": ["3", "0", "0"]}, {"id": "z1", "x": ["4", "0", "0"]}, {"id": "z2", "x": ["4", "1", "0"]}, {"id": "z3", "x": ["3", "1", "0"]}
+      ],
+      "elements": [
+        {"id": "active", "nodes": ["a0", "a1", "a2", "a3"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1"},
+        {"id": "deleted", "nodes": ["z0", "z1", "z2", "z3"], "state": "deleted", "director_seed": ["0", "0", "1"], "thickness": "0.12"}
+      ],
+      "constraint_sets": [{"id": "orphan_support", "kind": "support", "expected_feasible": true, "rows": [{"terms": [["z0", "rz", "1"]], "rhs": "0"}]}]
+    },
+    {
+      "id": "noncoplanar_rigid_fan",
+      "joint": "declared_rigid",
+      "nodes": [
+        {"id": "h2", "x": ["1", "1", "0"]}, {"id": "h3", "x": ["0", "1", "0"]},
+        {"id": "s0", "x": ["0", "0", "0"]}, {"id": "s1", "x": ["1", "0", "0"]},
+        {"id": "v2", "x": ["1", "0", "1"]}, {"id": "v3", "x": ["0", "0", "1"]}
+      ],
+      "elements": [
+        {"id": "horizontal", "nodes": ["s0", "s1", "h2", "h3"], "state": "active", "director_seed": ["0", "0", "1"], "thickness": "0.1", "provenance": "fan-horizontal-v1"},
+        {"id": "vertical", "nodes": ["s0", "s1", "v2", "v3"], "state": "active", "director_seed": ["0", "-1", "0"], "thickness": "0.1", "provenance": "fan-vertical-v1"}
+      ]
+    }
+  ],
+  "derived_variants": {
+    "coordinate_scales_pow2": [-20, 0, 20],
+    "proper_rotation": [["0", "-1", "0"], ["1", "0", "0"], ["0", "0", "1"]],
+    "origin_shift": ["7.25", "-3.5", "11.75"],
+    "warped_numbering_covariance": {
+      "topology_id": "warped_varied_directors",
+      "cyclic": {
+        "local_corner_order": [1, 2, 3, 0],
+        "natural_map_old_from_new": [["0", "-1"], ["1", "0"]],
+        "director_sign": "1",
+        "global_dof_pullback": "identity"
+      },
+      "anchored_reversal": {
+        "local_corner_order": [0, 3, 2, 1],
+        "natural_map_old_from_new": [["0", "1"], ["1", "0"]],
+        "director_sign": "-1",
+        "global_dof_pullback": "identity"
+      }
+    }
+  },
+  "probe_ids": {
+    "rigid": ["translation_x", "translation_y", "translation_z", "rotation_x", "rotation_y", "rotation_z"],
+    "drill": ["constant_drill", "bipartite_alternating_drill"],
+    "patch": ["extension_x", "in_plane_shear_xy", "bending_x", "transverse_shear_xz"],
+    "coupling": ["beam_shell_virtual_work"]
+  }
+}

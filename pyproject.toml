@@ -37,6 +37,7 @@ pardiso = ["pypardiso>=0.4"]
 accelerated = ["numba>=0.59", "pypardiso>=0.4"]
 dev = [
   "build>=1.2",
+  "mpmath==1.3.0",
   "pytest>=8",
   "twine>=5",
 ]
