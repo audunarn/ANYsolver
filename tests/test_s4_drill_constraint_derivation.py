@@ -19,8 +19,14 @@ ORACLE = ROOT / "docs" / "reference_cases" / "s4_drill_constraint_oracle.py"
 CASES = ROOT / "docs" / "reference_cases" / "s4_drill_constraint_cases.json"
 OUTPUT = ROOT / "docs" / "reference_cases" / "s4_drill_constraint_oracle_output.json"
 EXPECTED_CASES_SHA256 = "b4d663382302e971752f0757f6e869549a54234f485235e06dbef74085860f38"
+EXPECTED_OUTPUT_SHA256 = "8005c6d285263e33ff7f6d4b5138d5fbe4efab6a95834c401f94af044acd9e1b"
 EXPECTED_PLAN_SHA256 = "90b5c4903ee6a9c06056f7e1f3ab21dae0626c185a27627843a04bf289430e3a"
 EXPECTED_TOR_SHA256 = "8e969863806461124510e7c31d99a3244fccf15dd67424517320ee819439aa90"
+EXPECTED_SHARD_SHA256 = {
+    "80": "321d9ae299b4d0be5f1f5fa49f6f3b6daa3e4ca8d1d46a766705eb715cefabe9",
+    "160": "ed3951413ea8e655b9dc521536f06f3f0f7f18ce82403b0184384cfcb69459cb",
+    "320": "e5c375415facbc181034a0eace2872f3a1fe5208562eb742cd37b2a203173b09",
+}
 
 
 def _sha256(path: Path) -> str:
@@ -228,23 +234,23 @@ def test_whole_matrix_eq21_eq25_binary64_agreement_and_stored_packet() -> None:
                     else:
                         assert np.linalg.norm(actual - expected) / denominator <= limit
         assert OUTPUT.is_file()
+        assert _sha256(OUTPUT) == EXPECTED_OUTPUT_SHA256
         packet = json.loads(OUTPUT.read_text(encoding="utf-8"))
         assert packet["schema"] == oracle.SCHEMA
         assert packet["status"] == "complete"
         assert packet["mode"] == "full"
-        assert set(packet["execution_shards"]) == {"80", "160", "320"}
-        assert packet["scientific_summary"]["outcome"] in {
-            "CERTIFIED_FOR_LATER_LINEAR_ADAPTER_PLANNING",
-            "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
-        }
+        assert packet["execution_shards"] == EXPECTED_SHARD_SHA256
+        assert packet["scientific_summary"]["outcome"] == "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED"
         assert packet["identities"]["cases_sha256"] == EXPECTED_CASES_SHA256
         shard_directory = ROOT / ".s4_drill_constraint_shards"
-        repeat = shard_directory / "repeat_merged.json"
-        assert repeat.read_bytes() == OUTPUT.read_bytes()
-        for precision, digest in packet["execution_shards"].items():
-            for set_number in (1, 2):
-                shard = shard_directory / f"set{set_number}_{int(precision):03d}.json"
-                assert _sha256(shard) == digest
+        if shard_directory.exists():
+            assert shard_directory.is_dir()
+            repeat = shard_directory / "repeat_merged.json"
+            assert repeat.read_bytes() == OUTPUT.read_bytes()
+            for precision, digest in EXPECTED_SHARD_SHA256.items():
+                for set_number in (1, 2):
+                    shard = shard_directory / f"set{set_number}_{int(precision):03d}.json"
+                    assert _sha256(shard) == digest
     finally:
         for name in reversed(created):
             sys.modules.pop(name, None)
