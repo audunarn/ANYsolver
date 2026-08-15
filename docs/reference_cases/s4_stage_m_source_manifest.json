@@ -1,0 +1,89 @@
+{
+  "acquisition_attempts": [
+    {
+      "date": "2026-08-15",
+      "endpoint": "local:C:/Github;C:/Users/AudunArnesenNyhus/.codex",
+      "result": "no_matching_primary_pdf",
+      "transport": "read_only_rg_file_inventory"
+    },
+    {
+      "date": "2026-08-15",
+      "endpoint": "https://api.openalex.org/works?filter=doi:https://doi.org/10.1016/0045-7825(92)90002-2",
+      "result": "work_W1971013052_has_no_pdf_or_repository_fulltext",
+      "transport": "read_only_https_get"
+    },
+    {
+      "date": "2026-08-15",
+      "endpoint": "https://api.crossref.org/works/10.1016/0045-7825(92)90002-2",
+      "result": "metadata_and_tdm_links_only",
+      "transport": "read_only_https_get"
+    },
+    {
+      "date": "2026-08-15",
+      "endpoint": "https://api.elsevier.com/content/article/pii/0045782592900022?httpAccept=text/xml",
+      "result": "minimized_metadata_reports_open_archive_but_contains_no_article_body",
+      "transport": "read_only_https_get"
+    },
+    {
+      "date": "2026-08-15",
+      "endpoint": "https://api.elsevier.com/content/article/pii/0045782592900022?view=FULL&httpAccept=text/xml",
+      "result": "authentication_error_invalid_api_key",
+      "transport": "read_only_https_get"
+    },
+    {
+      "date": "2026-08-15",
+      "endpoint": "https://www.sciencedirect.com/science/article/pii/0045782592900022/pdfft",
+      "result": "http_403",
+      "transport": "read_only_https_head"
+    },
+    {
+      "date": "2026-08-15",
+      "endpoint": "https://www.sciencedirect.com/science/article/pii/0045782592900022",
+      "result": "publisher_captcha_encountered_and_not_solved_or_bypassed",
+      "transport": "read_only_in_app_browser"
+    }
+  ],
+  "candidate_a": {
+    "classification": null,
+    "equation_implementation_authorized": false,
+    "reason": "primary_pdf_unavailable",
+    "status": "BLOCKED_PRIMARY_SOURCE_UNAVAILABLE"
+  },
+  "candidate_b": {
+    "comparison_work_authorized_after_manifest_acceptance": true,
+    "may_resolve_overall_selection": false,
+    "status": "not_started"
+  },
+  "governing_plan": {
+    "commit": "8930253a81aaa10f2a56c530c91f9b2e535dac82",
+    "path": "docs/S4_STAGE_M_MECHANICS_SELECTION_PLAN.md",
+    "raw_sha256": "4AE07F5954C9A2E6E6B002BEA24A9FC274B528D405EE6E5FCACE630893021E5B",
+    "tree": "eda8a364f2aada03eabffea6ba64fdac03f79014"
+  },
+  "primary_source": {
+    "authors": [
+      "D. D. Fox",
+      "J. C. Simo"
+    ],
+    "bibliography": "Computer Methods in Applied Mechanics and Engineering 98 (1992) 329-343",
+    "doi": "10.1016/0045-7825(92)90002-2",
+    "license_metadata": "CC BY-NC-ND 4.0 reported by Crossref and Elsevier metadata",
+    "local_path": null,
+    "page_count": null,
+    "pdf_available": false,
+    "raw_sha256": null,
+    "size_bytes": null,
+    "title": "A drill rotation formulation for geometrically exact shells",
+    "used_equation_locations": []
+  },
+  "resume_rule": "A lawful PDF may replace this blocked record only through a new content-addressed manifest amendment with raw hash, size, page count, rendered-page audit, and frozen equation/interpolation/quadrature map before any Candidate A equation edit or run.",
+  "schema": "anysolver.s4.stage-m.source-manifest",
+  "schema_version": 1,
+  "selection_status": "BLOCKED_PRIMARY_SOURCE_UNAVAILABLE",
+  "source_boundary": {
+    "abstracts_snippets_and_secondary_sources_are_primary_evidence": false,
+    "captcha_or_access_control_bypassed": false,
+    "fox_simo_equations_implemented": false,
+    "paywall_bypassed": false
+  }
+}
