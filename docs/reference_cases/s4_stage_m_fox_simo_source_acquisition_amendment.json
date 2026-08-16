@@ -177,7 +177,7 @@
     "has_forms": false,
     "has_javascript": false,
     "page_count": 15,
-    "page_size_points": [
+    "common_cropbox_size_points": [
       540,
       756
     ],
@@ -231,6 +231,128 @@
       13,
       14,
       15
+    ],
+    "render_inventory": [
+      {
+        "filename": "page-01.png",
+        "pdf_page": 1,
+        "pixel_height": 1267,
+        "pixel_width": 909,
+        "raw_sha256": "31ABF563C5D506490D7F735D6C24F1E4BE4DCF383BC7F0D05ADE2C1BC4C61126",
+        "size_bytes": 170988
+      },
+      {
+        "filename": "page-02.png",
+        "pdf_page": 2,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "CCDD635F4A9AA9CB27319AADA7923398663DA9557E080B9591BB0CA2C00A299D",
+        "size_bytes": 234201
+      },
+      {
+        "filename": "page-03.png",
+        "pdf_page": 3,
+        "pixel_height": 1262,
+        "pixel_width": 902,
+        "raw_sha256": "0483DF9E7DDA2E61B990F330EBA124FD7B9A185A75165BAF365AC5CC61DE3070",
+        "size_bytes": 165399
+      },
+      {
+        "filename": "page-04.png",
+        "pdf_page": 4,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "9C2F5B696EB21A5DF8F72FEA90311A304034476206E7133D6AB16D3DA991CAFC",
+        "size_bytes": 116076
+      },
+      {
+        "filename": "page-05.png",
+        "pdf_page": 5,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "15CBCF2B9E790F682DFCF8395851A362941641828574849E937456F5B3886B58",
+        "size_bytes": 118564
+      },
+      {
+        "filename": "page-06.png",
+        "pdf_page": 6,
+        "pixel_height": 1262,
+        "pixel_width": 902,
+        "raw_sha256": "4463903F2C53F9C216E08DB82E136A5E40E13E052DA7E57C9943DD0AE9FEE460",
+        "size_bytes": 129530
+      },
+      {
+        "filename": "page-07.png",
+        "pdf_page": 7,
+        "pixel_height": 1262,
+        "pixel_width": 904,
+        "raw_sha256": "B50BD9DD1F86C54003187391C2A4B64D4D92BA7AD6066F122534B3B1E3C97EF2",
+        "size_bytes": 166675
+      },
+      {
+        "filename": "page-08.png",
+        "pdf_page": 8,
+        "pixel_height": 1262,
+        "pixel_width": 904,
+        "raw_sha256": "169F63FEF4B0D91CA891FD6AC76014D71AF19364D0B2C889147CC92A253E818D",
+        "size_bytes": 154538
+      },
+      {
+        "filename": "page-09.png",
+        "pdf_page": 9,
+        "pixel_height": 1264,
+        "pixel_width": 905,
+        "raw_sha256": "A4467F1EEC96B245EFC0A6D79302EEA347B12A6E8129D436E19F4653A2F72249",
+        "size_bytes": 123083
+      },
+      {
+        "filename": "page-10.png",
+        "pdf_page": 10,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "2425D82917B153CF0286A358DFC8C6B2964116D44EC90D0DF29B1F21063AA942",
+        "size_bytes": 145661
+      },
+      {
+        "filename": "page-11.png",
+        "pdf_page": 11,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "A42D17A307D919BA922B9588BC254BC3324205D8490EBCFBA446CD580BEB3C7D",
+        "size_bytes": 117880
+      },
+      {
+        "filename": "page-12.png",
+        "pdf_page": 12,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "4D5C909C6D611D44ACC0423AAB3E9FA6F2803EEB4F14D1B234AB737A6E453538",
+        "size_bytes": 126994
+      },
+      {
+        "filename": "page-13.png",
+        "pdf_page": 13,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "56F22B5BB32915A72F3784D2A2CDC3E309214ED15660FFF416F9A24CF7CA6098",
+        "size_bytes": 134736
+      },
+      {
+        "filename": "page-14.png",
+        "pdf_page": 14,
+        "pixel_height": 1262,
+        "pixel_width": 902,
+        "raw_sha256": "F162BA3C3FFEF3B80A1C182C1598E62A74296EE153874DBC5476D3FC346C01A6",
+        "size_bytes": 162494
+      },
+      {
+        "filename": "page-15.png",
+        "pdf_page": 15,
+        "pixel_height": 1260,
+        "pixel_width": 900,
+        "raw_sha256": "9BAB2373F7837D8A93EE79436D8155DDBFCE205D85E86B7ED43808C4A1737057",
+        "size_bytes": 165765
+      }
     ],
     "renderer": "Poppler 26.05.0"
   },
