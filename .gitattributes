@@ -22,3 +22,7 @@ docs/agent_plans/S4_CANDIDATE_E0_* text eol=lf
 docs/reference_cases/s4_candidate_e0_* text eol=lf
 docs/S4_CANDIDATE_E0_* text eol=lf
 tests/test_s4_candidate_e0_* text eol=lf
+docs/agent_plans/S4_CANDIDATE_E1_* text eol=lf
+docs/reference_cases/s4_candidate_e1_* text eol=lf
+docs/S4_CANDIDATE_E1_* text eol=lf
+tests/test_s4_candidate_e1_* text eol=lf
