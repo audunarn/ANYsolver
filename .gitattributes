@@ -1,4 +1,5 @@
 docs/reference_cases/s4_nullspace_semantics_cases.json text eol=lf
+.gitattributes text eol=lf
 docs/agent_plans/s4_drill_constraint_tor_agent.md text eol=lf
 docs/reference_cases/s4_drill_constraint_cases.json text eol=lf
 docs/reference_cases/s4_drill_constraint_oracle.py text eol=lf
@@ -17,3 +18,7 @@ tests/test_s4_candidate_c_quotient_* text eol=lf
 docs/reference_cases/s4_improved_qualification_final_status.json text eol=lf
 docs/S4_IMPROVED_QUALIFICATION_FINAL_STATUS.md text eol=lf
 tests/test_s4_improved_qualification_closeout.py text eol=lf
+docs/agent_plans/S4_CANDIDATE_E0_* text eol=lf
+docs/reference_cases/s4_candidate_e0_* text eol=lf
+docs/S4_CANDIDATE_E0_* text eol=lf
+tests/test_s4_candidate_e0_* text eol=lf
