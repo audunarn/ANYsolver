@@ -6,3 +6,7 @@ docs/reference_cases/s4_drill_constraint_oracle_output.json text eol=lf
 docs/S4_DRILL_CONSTRAINT_DERIVATION.md text eol=lf
 tests/test_s4_drill_constraint_derivation.py text eol=lf
 docs/S4_NULLSPACE_SEMANTICS_PROOF.md text eol=crlf
+docs/agent_plans/S4_CANDIDATE_A_OPEN_QUALIFICATION_PLAN.md text eol=lf
+docs/reference_cases/s4_candidate_a_open_* text eol=lf
+docs/S4_CANDIDATE_A_OPEN_* text eol=lf
+tests/test_s4_candidate_a_open_* text eol=lf
