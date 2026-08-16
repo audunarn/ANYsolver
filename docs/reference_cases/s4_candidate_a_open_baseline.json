@@ -1,0 +1,76 @@
+{
+  "attachment": {
+    "bytes": 44067,
+    "path_role": "user_supplied_plan_proposal",
+    "raw_sha256": "A27339F96DD798C93E0E3E16C441000C9C0FF57E8DEC454823DD466249DC2B25"
+  },
+  "environment": {
+    "byteorder": "little",
+    "implementation": "CPython",
+    "locale_encoding": "cp1252",
+    "mpmath": "1.3.0",
+    "numpy": "2.4.3",
+    "pytest": "9.0.1",
+    "python": "3.13.9",
+    "python_executable": "C:\\Python\\Python313\\python.exe",
+    "scipy": "1.16.3"
+  },
+  "frozen_inputs": [
+    {"bytes": 4630, "path": "docs/S4_RESTRICTED_RELEASE_STATUS.md", "raw_sha256": "9570D0C58A04AF43E3E94C18926225925E790B753959EE0CE0290DDECC362ACF"},
+    {"bytes": 3716, "path": "docs/S4_STAGE_M_CANDIDATE_A_DISCRETIZATION_REPORT.md", "raw_sha256": "286F5D85D70D9FCB5AC1698C5C80CB21F4EBD9DD67F12072052B2A2F6EBC680D"},
+    {"bytes": 4420, "path": "docs/S4_STAGE_M_SELECTION_REPORT.md", "raw_sha256": "5E72EA0876823F7C03D395E2DC51CFF8A527B046C3096786850BE32ED388DE04"},
+    {"bytes": 12745, "path": "docs/S4_NULLSPACE_SEMANTICS_PROOF.md", "raw_sha256": "713465F03BE6221119C1CCB7539301BE01324445DE54FC466D398185B7B481CD"},
+    {"bytes": 8744, "path": "docs/S4_DRILL_CONSTRAINT_DERIVATION.md", "raw_sha256": "73CC92FBC445B1267C5C9721E7FEDD21333B65BDDD3285518F5B5DB6BE4CD7F3"},
+    {"bytes": 32910, "path": "src/anysolver/shell_formulations/mitc4_plus_d_reference.py", "raw_sha256": "D736BAAED3D32D5929664D406B91DD92E7AD91791750B863F1DC4D5ADE49862F"},
+    {"bytes": 8130, "path": "src/anysolver/shell_formulations/mitc4_plus_d_scalar.py", "raw_sha256": "7F18C6EEEB0C6B5B2B66FDA8C63A724687BC9DEBCE2BE217F9055CBC95EEE2B5"},
+    {"bytes": 2401, "path": "src/anysolver/shell_formulations/s4_restricted_policy.py", "raw_sha256": "E182666421747EFAB4764CD89CE4BE6F8FEA639E598EF4B51F738FC2739CD861"},
+    {"bytes": 6616, "path": "docs/reference_cases/s4_stage_m_candidate_a_discretization_cases.json", "raw_sha256": "BB29F6AE7AE53E961C992BBC2EA764D50B73F935C9B5F9C21C1E21462DCC3E9C"},
+    {"bytes": 3907, "path": "docs/reference_cases/s4_stage_m_candidate_a_discretization_contract.json", "raw_sha256": "8861943D1339373FB36448EA376E75D4CBAB64DE1A8450D6B547A235AA62844C"},
+    {"bytes": 25713, "path": "docs/reference_cases/s4_stage_m_candidate_a_discretization_oracle.py", "raw_sha256": "3240C3C60754B44C06F790F74B553ACF2DF88070E3618082287C0D9DE175992A"},
+    {"bytes": 19267, "path": "docs/reference_cases/s4_stage_m_candidate_a_discretization_output.json", "raw_sha256": "6904490675315E7F2E17B1AA848837B56FC3E7633B4643B8B6C91989ED8E2059"},
+    {"bytes": 5781, "path": "tests/test_s4_stage_m_candidate_a_discretization.py", "raw_sha256": "E777121E5EA40CE0FC3BE02E9B21AAA1633070903A4027091E5E5B5FE6F8BE87"},
+    {"bytes": 5824196, "path": "docs/reference_cases/s4_stage_m_mechanics_output.json", "raw_sha256": "3A26052DB79CE914FF8A1FCA7835F3B86C15F1D351754B45CA904753D8EFDA0D"},
+    {"bytes": 1434454, "path": "docs/reference_cases/s4_drill_constraint_oracle_output.json", "raw_sha256": "8005C6D285263E33FF7F6D4B5138D5FBE4EFAB6A95834C401F94AF044ACD9E1B"}
+  ],
+  "git": {
+    "baseline_commit": "148ccb45ba79266d48dae1a84c4c500bdc1b4d85",
+    "baseline_parent": "b88a7cd94f5b07f72ae8be2fb0fef417ce087bc2",
+    "baseline_tree": "0a0809b2111c07098058fd43891729c6f9266b06",
+    "main": "cdc592df5e95f32d2ce922b44589edebea54da4b",
+    "origin_main": "cdc592df5e95f32d2ce922b44589edebea54da4b",
+    "tracked_worktree_clean": true,
+    "index_clean": true,
+    "untracked_evidence_preserved": true
+  },
+  "pinned_import_roots": [
+    {"path": "tmp/s4_candidate_a_mpmath_valid", "role": "mpmath_1_3_0_valid_metadata"},
+    {"commit": "5513881827cdee9fd337497a2730a5912d8ea751", "path": ".s4_candidate_a_pinned/fileio/src", "role": "ANYfileIO"},
+    {"commit": "4626887667f4c251479d26f321b9e73b046a2783", "path": ".s4_candidate_a_pinned/material/src", "role": "ANYmaterial"},
+    {"commit": "c95328b604bfa4607ba82bbde76ceb8491134b1a", "path": ".s4_candidate_a_pinned/mesh/src", "role": "ANYmesh"},
+    {"commit": "37234b7bc6b6c3f2e02cf1c53acb875245d9c3aa", "path": ".s4_candidate_a_pinned/geometry/src", "role": "ANYgeometry"}
+  ],
+  "schema": "anysolver.s4.candidate-a-open-baseline-v1",
+  "serialization": "json_sort_keys_compact_utf8_lf_no_bom_nonfinite_forbidden",
+  "test_gate": {
+    "duration_seconds": "98.30",
+    "passed": 64,
+    "paths": [
+      "tests/test_s4_stage_m_candidate_a_discretization.py",
+      "tests/test_s4_eq21_eq25_reference.py",
+      "tests/test_s4_nullspace_semantics_proof.py",
+      "tests/test_s4_drill_constraint_derivation.py",
+      "tests/test_s4_geometry_handoff.py",
+      "tests/test_s4_restricted_activity.py",
+      "tests/test_s4_restricted_integration.py",
+      "tests/test_s4_improved_qualification.py"
+    ]
+  },
+  "untracked_roots": [
+    ".s4_candidate_a_pinned/",
+    ".s4_stage_m_execution/",
+    ".s4_stage_m_mpmath/",
+    ".s4_stage_m_mpmath_clean/",
+    ".s4_stage_m_patch_tools/",
+    "tmp/"
+  ]
+}

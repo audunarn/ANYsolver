@@ -1,0 +1,49 @@
+{
+  "entries": [
+    {
+      "classification": "D",
+      "id": "accepted_mitc4_plus_d_operator",
+      "indispensable": true,
+      "path": "src/anysolver/shell_formulations/mitc4_plus_d_reference.py",
+      "raw_sha256": "D736BAAED3D32D5929664D406B91DD92E7AD91791750B863F1DC4D5ADE49862F"
+    },
+    {
+      "classification": "D",
+      "id": "accepted_nullspace_semantics",
+      "indispensable": true,
+      "path": "docs/S4_NULLSPACE_SEMANTICS_PROOF.md",
+      "raw_sha256": "713465F03BE6221119C1CCB7539301BE01324445DE54FC466D398185B7B481CD"
+    },
+    {
+      "classification": "D",
+      "id": "registered_candidate_a_moment_rows_and_pairs",
+      "indispensable": true,
+      "path": "docs/reference_cases/s4_stage_m_candidate_a_discretization_cases.json",
+      "raw_sha256": "BB29F6AE7AE53E961C992BBC2EA764D50B73F935C9B5F9C21C1E21462DCC3E9C"
+    },
+    {
+      "classification": "D",
+      "id": "candidate_a_coverage_contract",
+      "indispensable": true,
+      "path": "docs/reference_cases/s4_stage_m_candidate_a_discretization_contract.json",
+      "raw_sha256": "8861943D1339373FB36448EA376E75D4CBAB64DE1A8450D6B547A235AA62844C"
+    },
+    {
+      "classification": "D",
+      "id": "candidate_b_preserved_no_go",
+      "indispensable": true,
+      "path": "docs/reference_cases/s4_stage_m_mechanics_output.json",
+      "raw_sha256": "3A26052DB79CE914FF8A1FCA7835F3B86C15F1D351754B45CA904753D8EFDA0D"
+    },
+    {
+      "classification": "D",
+      "id": "rank_four_constraint_preserved_no_go",
+      "indispensable": true,
+      "path": "docs/reference_cases/s4_drill_constraint_oracle_output.json",
+      "raw_sha256": "8005C6D285263E33FF7F6D4B5138D5FBE4EFAB6A95834C401F94AF044ACD9E1B"
+    }
+  ],
+  "offline_reproduction": true,
+  "remote_source_required": false,
+  "schema": "anysolver.s4.candidate-a-open-source-registry-v1"
+}
