@@ -43,6 +43,7 @@
       "raw_sha256": "8005C6D285263E33FF7F6D4B5138D5FBE4EFAB6A95834C401F94AF044ACD9E1B"
     }
   ],
+  "hash_semantics": "registered baseline-checkout raw bytes; canonical Git-LF scientific identities are supplied by the exact-screen certificates and successor contract",
   "offline_reproduction": true,
   "remote_source_required": false,
   "schema": "anysolver.s4.candidate-a-open-source-registry-v1"

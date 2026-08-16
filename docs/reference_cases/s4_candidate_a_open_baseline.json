@@ -15,6 +15,7 @@
     "python_executable": "C:\\Python\\Python313\\python.exe",
     "scipy": "1.16.3"
   },
+  "frozen_input_hash_semantics": "raw bytes in the accepted Windows baseline checkout; canonical Git-LF scientific identities are recorded separately by the exact-screen certificates and successor contract",
   "frozen_inputs": [
     {"bytes": 4630, "path": "docs/S4_RESTRICTED_RELEASE_STATUS.md", "raw_sha256": "9570D0C58A04AF43E3E94C18926225925E790B753959EE0CE0290DDECC362ACF"},
     {"bytes": 3716, "path": "docs/S4_STAGE_M_CANDIDATE_A_DISCRETIZATION_REPORT.md", "raw_sha256": "286F5D85D70D9FCB5AC1698C5C80CB21F4EBD9DD67F12072052B2A2F6EBC680D"},
@@ -50,7 +51,7 @@
     {"commit": "37234b7bc6b6c3f2e02cf1c53acb875245d9c3aa", "path": ".s4_candidate_a_pinned/geometry/src", "role": "ANYgeometry"}
   ],
   "schema": "anysolver.s4.candidate-a-open-baseline-v1",
-  "serialization": "json_sort_keys_compact_utf8_lf_no_bom_nonfinite_forbidden",
+  "scientific_output_serialization": "json_sort_keys_compact_utf8_lf_no_bom_nonfinite_forbidden",
   "test_gate": {
     "duration_seconds": "98.30",
     "passed": 64,
