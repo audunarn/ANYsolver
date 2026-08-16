@@ -10,3 +10,7 @@ docs/agent_plans/S4_CANDIDATE_A_OPEN_QUALIFICATION_PLAN.md text eol=lf
 docs/reference_cases/s4_candidate_a_open_* text eol=lf
 docs/S4_CANDIDATE_A_OPEN_* text eol=lf
 tests/test_s4_candidate_a_open_* text eol=lf
+docs/agent_plans/S4_CANDIDATE_C_LINEAR_QUOTIENT_QUALIFICATION_PLAN.md text eol=lf
+docs/reference_cases/s4_candidate_c_quotient_* text eol=lf
+docs/S4_CANDIDATE_C_QUOTIENT_* text eol=lf
+tests/test_s4_candidate_c_quotient_* text eol=lf
