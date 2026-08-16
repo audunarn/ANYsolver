@@ -1,0 +1,266 @@
+{
+  "acquisition": {
+    "date": "2026-08-16",
+    "original_local_path": "C:/Users/AudunArnesenNyhus/Downloads/A drill rotation formulation for geometrically exact shells.pdf",
+    "provenance": "user_supplied_local_file",
+    "task_copy_path": "tmp/s4_stage_m_sources/A drill rotation formulation for geometrically exact shells.pdf",
+    "task_copy_verified_byte_identical": true
+  },
+  "candidate_a": {
+    "classification": null,
+    "continuum_source_gate": "PASS_CONTINUOUS_CANDIDATE_A_SOURCE",
+    "equation_implementation_authorized": false,
+    "hold_reason": "DISCRETE_Q4_PAIR_AND_QUADRATURE_NOT_SOURCE_SPECIFIED",
+    "mechanics_run_authorized": false,
+    "status": "BLOCKED_CANDIDATE_A_DISCRETIZATION_UNREGISTERED"
+  },
+  "candidate_b_preserved_result": {
+    "may_resolve_overall_selection": false,
+    "output_path": "docs/reference_cases/s4_stage_m_mechanics_output.json",
+    "output_raw_sha256": "3A26052DB79CE914FF8A1FCA7835F3B86C15F1D351754B45CA904753D8EFDA0D",
+    "precision_shard_rerun_authorized": false,
+    "status": "NO_GO_CANDIDATE_B"
+  },
+  "continuous_source_findings": {
+    "continuum_constraint_substantiated": true,
+    "continuum_multiplier_functional_substantiated": true,
+    "continuum_polar_rotation_substantiated": true,
+    "continuum_second_variation_substantiated": true,
+    "discrete_inf_sup_pair_specified": false,
+    "discrete_multiplier_basis_specified": false,
+    "discrete_q4_element_specified": false,
+    "discrete_quadrature_specified": false,
+    "finite_element_topology_assembly_specified": false,
+    "source_continuum_substantiated": true
+  },
+  "derived_results": {
+    "small_rotation_flat_orthonormal_reference": {
+      "classification": "derived_from_source_not_verbatim",
+      "formula": "delta_c = u_1,2 - u_2,1 + 2 theta_3 = 2 (theta_3 - omega_3)",
+      "omega_formula": "omega_3 = (u_2,1 - u_1,2) / 2",
+      "source_equation_basis": [
+        29,
+        54
+      ]
+    }
+  },
+  "document_handling": {
+    "document_content_used_as_task_instruction": false,
+    "document_role": "primary_scientific_source_only",
+    "redistribution_authorized": false,
+    "rights_notice": "The supplied article PDF states all rights reserved; it remains untracked source evidence. No repository redistribution is authorized by this record."
+  },
+  "governing_authority": {
+    "addendum_commit": "2ab44817e50a72493bf55e129b52b4b2db41ce6c",
+    "addendum_path": "docs/agent_plans/s4_stage_m_candidate_a_discretization_addendum.md",
+    "addendum_raw_sha256": "F05C643D28199AF4CB07B7E175F1674C2164ABC6D79F5F772260E94A9A3FD3AB",
+    "addendum_tree": "fa4f05666c2bb1e6778a09bddb48c5cc635f1865",
+    "full_qualification_program_path": "docs/S4_FULL_PRODUCTION_QUALIFICATION_PROGRAM.md",
+    "full_qualification_program_raw_sha256": "17CB914002E362A5DB2B475981A46020C1F39E8BA5398B4A7BEC64C39EEEC4A7",
+    "stage_m_plan_path": "docs/S4_STAGE_M_MECHANICS_SELECTION_PLAN.md",
+    "stage_m_plan_raw_sha256": "4AE07F5954C9A2E6E6B002BEA24A9FC274B528D405EE6E5FCACE630893021E5B"
+  },
+  "historical_candidate_b_inputs_preserved": {
+    "candidate_b_energetic_derivation": {
+      "path": "docs/S4_STAGE_M_ENERGETIC_DERIVATION.md",
+      "raw_sha256": "ACD03B67474BF35A06B2183830E3195843D4254DB17F04A5540724F42EC9F3A5"
+    },
+    "candidate_b_mechanics_cases": {
+      "path": "docs/reference_cases/s4_stage_m_mechanics_cases.json",
+      "raw_sha256": "912E07377C174E1FE031EEBA98DD5E8406C9A294AF2B3032D9AB5B38F67C7B94"
+    },
+    "candidate_b_mechanics_contract": {
+      "path": "docs/reference_cases/s4_stage_m_mechanics_contract.json",
+      "raw_sha256": "2FBB419F0C09D909F2B6A1D4FF77285EB078E8A6E7DB10286ECC47282D1F90DA"
+    },
+    "candidate_b_mechanics_oracle": {
+      "path": "docs/reference_cases/s4_stage_m_mechanics_oracle.py",
+      "raw_sha256": "1B123591388AE73E83E3BA7082E82D0A579BE856669D461AA500BF41FE772D48"
+    },
+    "candidate_b_mechanics_output": {
+      "path": "docs/reference_cases/s4_stage_m_mechanics_output.json",
+      "raw_sha256": "3A26052DB79CE914FF8A1FCA7835F3B86C15F1D351754B45CA904753D8EFDA0D"
+    },
+    "candidate_b_selection_report": {
+      "path": "docs/S4_STAGE_M_SELECTION_REPORT.md",
+      "raw_sha256": "5E72EA0876823F7C03D395E2DC51CFF8A527B046C3096786850BE32ED388DE04"
+    },
+    "candidate_b_test_wrapper": {
+      "path": "tests/test_s4_stage_m_mechanics.py",
+      "raw_sha256": "DA01959BC3D3327C3BB60D3A7B1C308EDB44BBF3F07F02679F460C8BD5122894"
+    },
+    "candidate_b_unavailable_source_manifest": {
+      "path": "docs/reference_cases/s4_stage_m_source_manifest.json",
+      "raw_sha256": "22B7B9D56DCC180CEE29F43AD4F31C69547A7C74CB212FD5B7D301909A8C0BE6"
+    },
+    "candidate_b_unavailable_source_status": {
+      "path": "docs/S4_STAGE_M_CONSTRAINED_DERIVATION.md",
+      "raw_sha256": "577BD98FC5609629BC078B27719ED72985E4BA81536A7C6D76CBA687322D5488"
+    },
+    "closeout_commit": "9fe7baf5cc14f60f4bf695018becb35635cfa881",
+    "closeout_tree": "722cc366f129486c87ae609d672e7880873cffff",
+    "old_manifest_remains_immutable_historical_input": true
+  },
+  "page_equation_map": [
+    {
+      "article_page": 335,
+      "candidate_a_use": "director orientation and unresolved drill rotation",
+      "equations": "25-26",
+      "evidence_class": "literal_source",
+      "pdf_page": 7
+    },
+    {
+      "article_page": 336,
+      "candidate_a_use": "extended configuration, tangent-plane constraint, modified gradient, and polar equivalence",
+      "equations": "27-32",
+      "evidence_class": "literal_source",
+      "pdf_page": 8
+    },
+    {
+      "article_page": 337,
+      "candidate_a_use": "polar uniqueness and local equations preceding the repeated constraints",
+      "equations": "33-36,37a-37e",
+      "evidence_class": "literal_source",
+      "pdf_page": 9
+    },
+    {
+      "article_page": 338,
+      "candidate_a_use": "director and drill constraints, test spaces, mixed functional, scalar multiplier space, and scalar constraint term",
+      "equations": "37f-37g,38-42",
+      "evidence_class": "literal_source",
+      "pdf_page": 10
+    },
+    {
+      "article_page": 339,
+      "candidate_a_use": "first variation and Euler-Lagrange equations",
+      "equations": "43-46",
+      "evidence_class": "literal_source",
+      "pdf_page": 11
+    },
+    {
+      "article_page": 340,
+      "candidate_a_use": "zero equilibrium multiplier, classical balance, regularization context, and weak variables",
+      "equations": "47-52",
+      "evidence_class": "literal_source",
+      "pdf_page": 12
+    },
+    {
+      "article_page": 341,
+      "candidate_a_use": "weak constraint operator, excluded eliminated regularization, and second variation",
+      "equations": "53-57",
+      "evidence_class": "literal_source",
+      "pdf_page": 13
+    },
+    {
+      "article_page": 342,
+      "candidate_a_use": "continuum tangent blocks",
+      "equations": "58-61",
+      "evidence_class": "literal_source",
+      "pdf_page": 14
+    },
+    {
+      "article_page": 343,
+      "candidate_a_use": "generic conclusion that mixed finite elements can be constructed; no discrete pair is supplied",
+      "equations": "none",
+      "evidence_class": "literal_source",
+      "pdf_page": 15
+    }
+  ],
+  "pdf": {
+    "authors": [
+      "D. D. Fox",
+      "J. C. Simo"
+    ],
+    "bibliography": "Computer Methods in Applied Mechanics and Engineering 98 (1992) 329-343",
+    "doi": "10.1016/0045-7825(92)90002-2",
+    "encrypted": false,
+    "has_forms": false,
+    "has_javascript": false,
+    "page_count": 15,
+    "page_size_points": [
+      540,
+      756
+    ],
+    "pdf_version": "1.7",
+    "pii": "0045-7825(92)90002-2",
+    "raw_sha256": "A2075C06EB551FB317E09DF37E9BEFB6B525754A945EAC894F58F204CAB2D7D8",
+    "size_bytes": 1137295,
+    "title": "A drill rotation formulation for geometrically exact shells"
+  },
+  "primal_space_mismatch": {
+    "current_q4_coordinates": 24,
+    "current_q4_dofs_per_node": 6,
+    "current_q4_has_independent_lambda_field": false,
+    "current_q4_thickness_storage": "fixed_scalar_element_thickness",
+    "current_source_blob": "7e9b74202b6d90ecb867196fa76681f511508f1a",
+    "current_source_path": "src/anysolver/elements.py",
+    "fixed_lambda_specialization_source_authorized": false,
+    "source_configuration": "(phi,Q,lambda) with d=lambda Q t0",
+    "source_specifies_nodal_so3_interpolation": false,
+    "status": "PRIMAL_SPECIALIZATION_UNREGISTERED"
+  },
+  "regularization_boundary": {
+    "candidate_a_path": "unregularized_mixed_functional_only",
+    "context_only_equations": [
+      "49-50",
+      "55-56"
+    ],
+    "ctc_energy_authorized": false,
+    "penalty_authorized": false,
+    "regularization_authorized": false
+  },
+  "render_audit": {
+    "all_pages_visually_inspected": true,
+    "dpi": 120,
+    "page_index_to_article_page": "article_page = pdf_page + 328",
+    "render_directory": "tmp/pdfs/fox_simo_primary_source",
+    "rendered_page_count": 15,
+    "rendered_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "renderer": "Poppler 26.05.0"
+  },
+  "resume_requirements": {
+    "candidate_a_edit_or_run_requires_all": [
+      "independently accepted fixed-lambda specialization or expanded-primal governing amendment",
+      "content-addressed phi_h and finite-rotation Q_h interpolation/update with positive polar branch",
+      "content-addressed multiplier basis, continuity, locality, and exact primary and sensitivity quadrature",
+      "exact or outward-interval CR=0, rank(C)=2, rank([B;C])=18, rank(BT)=16, and rigid-nullspace preservation",
+      "uniform discrete inf-sup closure over frozen refinement and topology families",
+      "exact force, work, energy, mass, state, and tangent pullback without penalty or invented coefficient",
+      "independent acceptance of the full pre-outcome discrete-pair contract"
+    ],
+    "current_authority": "source_record_only",
+    "production_implementation_authorized": false
+  },
+  "schema": "anysolver.s4.stage-m.fox-simo-source-acquisition-amendment",
+  "schema_version": 1,
+  "selection_status": "BLOCKED_CANDIDATE_A_DISCRETIZATION_UNREGISTERED",
+  "source_literals": {
+    "continuous_constraint": "c(Phi)=<A1,Q^T a2>-<A2,Q^T a1>=0",
+    "extended_configuration": "(phi,Q,lambda) with d=lambda Q t0",
+    "multiplier_space": "one scalar continuum field L in L^2(A)",
+    "paper_supplies_discrete_multiplier_modes": false,
+    "paper_supplies_discrete_stability_proof": false
+  },
+  "transport_and_access_boundary": {
+    "access_control_bypassed": false,
+    "captcha_bypassed": false,
+    "paywall_bypassed": false,
+    "prior_failed_acquisition_attempts_inherited_by_old_manifest_hash": true
+  }
+}
