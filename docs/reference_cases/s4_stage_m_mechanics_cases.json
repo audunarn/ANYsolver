@@ -1,0 +1,290 @@
+{
+  "schema": "anysolver.s4.stage-m-mechanics-cases-v1",
+  "candidate_id": "mitc4_plus_hd_compatible_surface_v1",
+  "authority": {
+    "governing_program_sha256": "17CB914002E362A5DB2B475981A46020C1F39E8BA5398B4A7BEC64C39EEEC4A7",
+    "stage_m_plan_sha256": "4AE07F5954C9A2E6E6B002BEA24A9FC274B528D405EE6E5FCACE630893021E5B",
+    "source_manifest_sha256": "22B7B9D56DCC180CEE29F43AD4F31C69547A7C74CB212FD5B7D301909A8C0BE6",
+    "candidate_b_derivation_sha256": "ACD03B67474BF35A06B2183830E3195843D4254DB17F04A5540724F42EC9F3A5",
+    "candidate_a_status_sha256": "577BD98FC5609629BC078B27719ED72985E4BA81536A7C6D76CBA687322D5488"
+  },
+  "contract_text_transport": {
+    "raw_sha256_verified_before_parse": true,
+    "accepted_transports": ["lf", "crlf"],
+    "parse_view": "strict_crlf_to_lf",
+    "bom_forbidden": true,
+    "lone_cr_forbidden": true,
+    "mixed_lf_crlf_forbidden": true,
+    "terminal_newline_required": true,
+    "record_raw_and_canonical_identities": true
+  },
+  "exact_scalar_grammar": {
+    "allowed_kinds": ["rational", "pow2", "sqrt", "add", "mul", "div", "neg", "ref"],
+    "rational": {"keys": ["kind", "numerator", "denominator"], "integer_strings": true, "positive_denominator": true},
+    "pow2": {"keys": ["kind", "significand", "exponent"], "integer_strings": true},
+    "sqrt": {"keys": ["kind", "radicand"], "radicand_kind": "exact_scalar", "nonnegative": true},
+    "add": {"keys": ["kind", "terms"], "minimum_terms": 2},
+    "mul": {"keys": ["kind", "factors"], "minimum_factors": 2},
+    "div": {"keys": ["kind", "numerator", "denominator"], "nonzero_denominator": true},
+    "neg": {"keys": ["kind", "value"]},
+    "ref": {"keys": ["kind", "id"], "target": "exact_constants", "cycles_forbidden": true},
+    "binary_float_forbidden": true,
+    "unknown_or_extra_key_fails": true
+  },
+  "exact_constants": {
+    "zero": {"kind": "rational", "numerator": "0", "denominator": "1"},
+    "one_half": {"kind": "rational", "numerator": "1", "denominator": "2"},
+    "one": {"kind": "rational", "numerator": "1", "denominator": "1"},
+    "three_halves": {"kind": "rational", "numerator": "3", "denominator": "2"},
+    "two": {"kind": "rational", "numerator": "2", "denominator": "1"},
+    "three": {"kind": "rational", "numerator": "3", "denominator": "1"},
+    "four": {"kind": "rational", "numerator": "4", "denominator": "1"}
+  },
+  "calculus": {
+    "decimal_digits": [80, 160, 320],
+    "sensitivity_multipliers": [
+      {"kind": "rational", "numerator": "1", "denominator": "4"},
+      {"kind": "rational", "numerator": "1", "denominator": "1"},
+      {"kind": "rational", "numerator": "4", "denominator": "1"}
+    ],
+    "eps64": {"kind": "pow2", "significand": "1", "exponent": "-52"},
+    "svd_factor": "64",
+    "residual_factor": "4096",
+    "basis_factor": "256",
+    "inherited_parent_scale": true,
+    "zero_matrix_convention": "stage_m_plan_and_nullspace_proof"
+  },
+  "execution": {
+    "mode": "precision_shards_then_canonical_merge",
+    "precision_shards": [80, 160, 320],
+    "repeat_sets": 2,
+    "shard_timeout_seconds": 7200,
+    "merge_timeout_seconds": 300,
+    "task_owned_directory": ".s4_stage_m_execution",
+    "shard_filenames": [
+      "set1_080.json",
+      "set1_160.json",
+      "set1_320.json",
+      "set2_080.json",
+      "set2_160.json",
+      "set2_320.json"
+    ],
+    "merge_filenames": ["set1_merged.json", "set2_merged.json"],
+    "completion_manifest": "COMPLETE.json",
+    "pending_suffix": ".pending",
+    "full_execution_environment_variable": "ANYSOLVER_RUN_S4_STAGE_M_FULL",
+    "full_execution_environment_value": "PRECISION_SHARDS_THEN_CANONICAL_MERGE_V1",
+    "shard_status": "partial",
+    "shards_are_nonterminal": true,
+    "quick_summary_decimal_digits": 80,
+    "merge_precision_decimal_digits": 320,
+    "completed_shards_are_preserved": true,
+    "merge_recomputes_scientific_summary": true,
+    "monolithic_timeout": {
+      "timeout_seconds": 7200,
+      "packet_produced": false,
+      "scientific_result": false,
+      "evidence_directory_created": false
+    }
+  },
+  "quadrature": {
+    "primary": {
+      "id": "G3xG3xG2",
+      "surface_1d": [
+        {"node_sign": "-1", "node": {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "3", "denominator": "5"}}, "weight": {"kind": "rational", "numerator": "5", "denominator": "9"}},
+        {"node_sign": "0", "node": {"kind": "rational", "numerator": "0", "denominator": "1"}, "weight": {"kind": "rational", "numerator": "8", "denominator": "9"}},
+        {"node_sign": "1", "node": {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "3", "denominator": "5"}}, "weight": {"kind": "rational", "numerator": "5", "denominator": "9"}}
+      ],
+      "thickness_1d": [
+        {"node_sign": "-1", "node": {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "1", "denominator": "3"}}, "weight": {"kind": "rational", "numerator": "1", "denominator": "1"}},
+        {"node_sign": "1", "node": {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "1", "denominator": "3"}}, "weight": {"kind": "rational", "numerator": "1", "denominator": "1"}}
+      ]
+    },
+    "sensitivity": {
+      "id": "G4xG4xG3",
+      "surface_formula": {
+        "x_inner": {"kind": "sqrt", "radicand": {"kind": "div", "numerator": {"kind": "add", "terms": [{"kind": "rational", "numerator": "3", "denominator": "1"}, {"kind": "neg", "value": {"kind": "mul", "factors": [{"kind": "rational", "numerator": "2", "denominator": "1"}, {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "6", "denominator": "5"}}]}}]}, "denominator": {"kind": "rational", "numerator": "7", "denominator": "1"}}},
+        "x_outer": {"kind": "sqrt", "radicand": {"kind": "div", "numerator": {"kind": "add", "terms": [{"kind": "rational", "numerator": "3", "denominator": "1"}, {"kind": "mul", "factors": [{"kind": "rational", "numerator": "2", "denominator": "1"}, {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "6", "denominator": "5"}}]}]}, "denominator": {"kind": "rational", "numerator": "7", "denominator": "1"}}},
+        "w_inner": {"kind": "div", "numerator": {"kind": "add", "terms": [{"kind": "rational", "numerator": "18", "denominator": "1"}, {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "30", "denominator": "1"}}]}, "denominator": {"kind": "rational", "numerator": "36", "denominator": "1"}},
+        "w_outer": {"kind": "div", "numerator": {"kind": "add", "terms": [{"kind": "rational", "numerator": "18", "denominator": "1"}, {"kind": "neg", "value": {"kind": "sqrt", "radicand": {"kind": "rational", "numerator": "30", "denominator": "1"}}}]}, "denominator": {"kind": "rational", "numerator": "36", "denominator": "1"}},
+        "order": ["-x_outer", "-x_inner", "x_inner", "x_outer"]
+      },
+      "thickness_rule": "G3"
+    },
+    "adaptive_or_case_selected": false,
+    "categorical_agreement_required": true
+  },
+  "constitutive_fixtures": [
+    {
+      "id": "isotropic_plane_stress_rational",
+      "kind": "isotropic_plane_stress",
+      "youngs_modulus": {"kind": "rational", "numerator": "210", "denominator": "1"},
+      "poisson_ratio": {"kind": "rational", "numerator": "3", "denominator": "10"}
+    },
+    {
+      "id": "coupled_orthotropic_spd_cholesky",
+      "kind": "spd_from_lower_cholesky",
+      "component_order": ["e11", "e22", "gamma12", "gamma13", "gamma23"],
+      "lower": [
+        [{"kind": "ref", "id": "four"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}],
+        [{"kind": "ref", "id": "one"}, {"kind": "ref", "id": "three"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}],
+        [{"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "two"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}],
+        [{"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "two"}, {"kind": "ref", "id": "zero"}],
+        [{"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "zero"}, {"kind": "ref", "id": "one_half"}, {"kind": "ref", "id": "three_halves"}]
+      ],
+      "constitutive_definition": "C=lower*transpose(lower)"
+    }
+  ],
+  "positive_scales_pow2": [
+    {"kind": "pow2", "significand": "1", "exponent": "-20"},
+    {"kind": "pow2", "significand": "1", "exponent": "0"},
+    {"kind": "pow2", "significand": "1", "exponent": "20"}
+  ],
+  "pointwise_derivative_samples": [
+    {"id": "center", "r": {"kind": "ref", "id": "zero"}, "s": {"kind": "ref", "id": "zero"}},
+    {"id": "corner_0", "r": {"kind": "rational", "numerator": "-1", "denominator": "1"}, "s": {"kind": "rational", "numerator": "-1", "denominator": "1"}},
+    {"id": "corner_1", "r": {"kind": "ref", "id": "one"}, "s": {"kind": "rational", "numerator": "-1", "denominator": "1"}},
+    {"id": "corner_2", "r": {"kind": "ref", "id": "one"}, "s": {"kind": "ref", "id": "one"}},
+    {"id": "corner_3", "r": {"kind": "rational", "numerator": "-1", "denominator": "1"}, "s": {"kind": "ref", "id": "one"}},
+    {"id": "edge_bottom", "r": {"kind": "ref", "id": "zero"}, "s": {"kind": "rational", "numerator": "-1", "denominator": "1"}},
+    {"id": "edge_right", "r": {"kind": "ref", "id": "one"}, "s": {"kind": "ref", "id": "zero"}},
+    {"id": "edge_top", "r": {"kind": "ref", "id": "zero"}, "s": {"kind": "ref", "id": "one"}},
+    {"id": "edge_left", "r": {"kind": "rational", "numerator": "-1", "denominator": "1"}, "s": {"kind": "ref", "id": "zero"}},
+    {"id": "offcenter_a", "r": {"kind": "rational", "numerator": "2", "denominator": "5"}, "s": {"kind": "rational", "numerator": "-3", "denominator": "7"}},
+    {"id": "offcenter_b", "r": {"kind": "rational", "numerator": "-5", "denominator": "8"}, "s": {"kind": "rational", "numerator": "4", "denominator": "9"}}
+  ],
+  "exact_certificates": {
+    "flat_polynomial_evaluation_grid": ["-1", "0", "1"],
+    "flat_surface_degree_bound": 2,
+    "flat_thickness_degree_bound": 1,
+    "rank_profile": "lexicographic_column_then_original_row_fraction_gauss_jordan",
+    "minor_check": "exact_fraction_determinant_then_dyadic_point_interval_lu",
+    "rounded_mpf_points_are_not_intervals": true,
+    "topology_interval_bits": 768,
+    "unclosed_interval_is": "BORDERLINE"
+  },
+  "response_fixtures": {
+    "patch": {
+      "topology_id": "regular_2x2",
+      "membrane_extension_x": "u_x=x; all_other_dofs=0; expected_local_strain=[1,0,0,0,0]",
+      "constant_bending_x": "u_z=x^2/2; theta_y=-x; expected_local_strain=[-zeta*t/2,0,0,0,0]",
+      "transverse_shear_xz": "u_z=x; all_rotations=0; expected_local_strain=[0,0,0,1,0]"
+    },
+    "thickness_sequence": {
+      "topology_id": "regular_2x2",
+      "power_two_exponents": [0, -1, -2],
+      "membrane_energy_power": 1,
+      "bending_energy_power": 3,
+      "locking_field": "constant_bending_x",
+      "required_direct_shear_ratio": "zero_within_inherited_r_tol"
+    },
+    "curved_refinement": {
+      "kind": "parabolic_strip",
+      "levels": [1, 2, 4, 8],
+      "x_interval": ["0", "1"],
+      "y_values": ["0", "1"],
+      "z_formula": "x^2/10",
+      "director_seed_formula": "[-x/5,0,1]",
+      "thickness": "0.1",
+      "node_id_format": "bNNN_then_tNNN_ordinal",
+      "element_id_format": "eNNN_ordinal",
+      "connectivity": "[b_i,b_i+1,t_i+1,t_i]",
+      "field": "membrane_extension_x",
+      "response_quantity": "total_physical_strain_energy",
+      "error_definition": "abs(E_level-E_reference)/abs(E_reference)",
+      "reference_level": 8,
+      "nominal_order": 2,
+      "minimum_observed_slope_fraction": "0.85",
+      "no_positive_mass_quotient_mechanism": true
+    },
+    "beam_shell_virtual_work": {
+      "topology_id": "two_shared_edge_constraints",
+      "constraint_id": "rigid_beam_shell_work",
+      "coordinate_system": "physical_dofs",
+      "shell_terms": [["n0", "rz"], ["n1", "rz"]],
+      "beam_terms": [["n4", "rz"]],
+      "admissible_increment": [["n0", "rz", "1"], ["n1", "rz", "1"], ["n4", "rz", "1"]],
+      "multiplier": "2",
+      "required_identity": "constraint_zero_and_shell_work_plus_beam_work_exact_zero"
+    }
+  },
+  "execution_coverage_policy": {
+    "required_rows": 174,
+    "exact_per_coverage_key_executor_required": true,
+    "raw_identity_is_not_execution": true,
+    "aggregate_gate_fanout_forbidden": true,
+    "unresolved_exact_executor_status": "BORDERLINE",
+    "go_requires_every_row_pass": true
+  },
+  "reused_fixture_inventories": [
+    {"path": "docs/reference_cases/s4_nullspace_semantics_cases.json", "raw_sha256": "223C0E1A1F03D30AA5EFBB13E8ECD8F64E5F7F0865E6F11274577D15C6691ABF", "selectors": ["algebraic_cases", "local_cases", "topology_cases"]},
+    {"path": "docs/reference_cases/s4_drill_constraint_cases.json", "raw_sha256": "B4D663382302E971752F0757F6E869549A54234F485235E06DBEF74085860F38", "selectors": ["sample_points", "local_cases", "topology_cases", "derived_variants", "probe_ids"]},
+    {"path": "tests/test_s4_eq21_eq25_reference.py", "raw_sha256": "E5112C7BF98A5C1F8F3FB28D2331B76B9B872F073372D0E7045AA59E70703B36", "selectors": ["case_coordinates", "parameter_rows", "literal_operator_oracles"]},
+    {"path": "tests/test_s4_geometry_handoff.py", "raw_sha256": "942BCAF44FCA897A231F0685EF6466BCC1ED1716C017C644677606C58AEE3250", "selectors": ["parameter_rows", "rigid_patch_topology_provenance"]},
+    {"path": "tests/test_s4_restricted_activity.py", "raw_sha256": "AAEDCA8FE1AB61552A4566BACF73855FCEF0F49CE20501901E2D3CDCCA8068B4", "selectors": ["activity_deletion_orphan"]}
+  ],
+  "flat_square_expected": {
+    "rank_B": 17,
+    "N": 7,
+    "G": 1,
+    "P": 6,
+    "R": 6,
+    "R_N": 6,
+    "R_G": 0,
+    "RQ": 6,
+    "Z": 0,
+    "pure_drill_rank": 3,
+    "reduced_coordinate_count": 23,
+    "reduced_rank": 17,
+    "reduced_nullity": 6
+  },
+  "candidate_case_ids": [
+    "candidate_b.derivation.full_hd_eq15_16",
+    "candidate_b.identity.eq24_25_literal",
+    "candidate_b.identity.eq21_supersession_scope",
+    "candidate_b.identity.eq27_unused",
+    "candidate_b.constitutive.coefficient_free",
+    "candidate_b.quadrature.primary_and_sensitivity",
+    "candidate_b.square.rank_and_quotient",
+    "candidate_b.square.checkerboard_coercivity",
+    "candidate_b.square.common_drill_exact_g",
+    "candidate_b.square.reported_exact_g_reduction",
+    "candidate_b.rigid.six_modes",
+    "candidate_b.energy.gradient",
+    "candidate_b.energy.hessian",
+    "candidate_b.energy.virtual_work",
+    "candidate_b.patch.membrane",
+    "candidate_b.patch.bending",
+    "candidate_b.patch.transverse_shear",
+    "candidate_b.thickness.membrane_t_bending_t3",
+    "candidate_b.locking.thin_sequence",
+    "candidate_b.geometry.distorted",
+    "candidate_b.geometry.warped_interval",
+    "candidate_b.geometry.curved_refinement",
+    "candidate_b.geometry.noncoplanar_fan",
+    "candidate_b.topology.connected",
+    "candidate_b.topology.disconnected",
+    "candidate_b.topology.odd_cycle",
+    "candidate_b.constraint.support",
+    "candidate_b.constraint.mpc",
+    "candidate_b.constraint.affine_feasibility",
+    "candidate_b.coupling.beam_shell_work",
+    "candidate_b.coupling.shell_shell_unqualified",
+    "candidate_b.activity.positive_invariance",
+    "candidate_b.activity.hard_deletion",
+    "candidate_b.activity.orphan_dofs",
+    "candidate_b.covariance.cyclic",
+    "candidate_b.covariance.reversal",
+    "candidate_b.covariance.frame",
+    "candidate_b.covariance.origin",
+    "candidate_b.covariance.scale"
+  ],
+  "terminal_precedence": [
+    "BLOCKED_INPUT_IDENTITY",
+    "BLOCKED_CONTRACT_VIOLATION",
+    "NO_GO_CANDIDATE_B",
+    "UNCLASSIFIED_CANDIDATE_B",
+    "GO_CANDIDATE_B"
+  ],
+  "overall_stage_m_status_while_candidate_a_blocked": "BLOCKED_PRIMARY_SOURCE_UNAVAILABLE"
+}
