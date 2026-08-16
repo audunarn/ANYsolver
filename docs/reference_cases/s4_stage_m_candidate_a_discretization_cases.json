@@ -1,0 +1,130 @@
+{
+  "authority": {
+    "acquisition_sha256": "3A70FD3639A763ED5E34E8A0A8530FAF3FB944179EA190DC5660F8062A68EB73",
+    "addendum_sha256": "F05C643D28199AF4CB07B7E175F1674C2164ABC6D79F5F772260E94A9A3FD3AB",
+    "base_commit": "b88a7cd94f5b07f72ae8be2fb0fef417ce087bc2",
+    "base_tree": "d0deb3752fd1f523ef7b81624c586c602d8c6cef",
+    "candidate_b_output_sha256": "3A26052DB79CE914FF8A1FCA7835F3B86C15F1D351754B45CA904753D8EFDA0D",
+    "derivation_sha256": "A8E012E69E3FCFCDAF94E73C97C413B4715CE51A6A1DA8FDA3A50C0467580BF8",
+    "fox_simo_pdf_sha256": "A2075C06EB551FB317E09DF37E9BEFB6B525754A945EAC894F58F204CAB2D7D8",
+    "program_sha256": "17CB914002E362A5DB2B475981A46020C1F39E8BA5398B4A7BEC64C39EEEC4A7",
+    "stage_m_plan_sha256": "4AE07F5954C9A2E6E6B002BEA24A9FC274B528D405EE6E5FCACE630893021E5B"
+  },
+  "candidate_pairs": [
+    {
+      "id": "candidate_a.d4.span_r_s",
+      "multiplier_basis": [
+        {"coefficient": {"kind": "sqrt_rational", "numerator": "3", "denominator": "4"}, "polynomial": "r"},
+        {"coefficient": {"kind": "sqrt_rational", "numerator": "3", "denominator": "4"}, "polynomial": "s"}
+      ],
+      "projector_diagonal": ["0", "1", "1", "0"]
+    },
+    {
+      "id": "candidate_a.d4.span_1_rs",
+      "multiplier_basis": [
+        {"coefficient": {"kind": "rational", "numerator": "1", "denominator": "2"}, "polynomial": "1"},
+        {"coefficient": {"kind": "rational", "numerator": "3", "denominator": "2"}, "polynomial": "rs"}
+      ],
+      "projector_diagonal": ["1", "0", "0", "1"]
+    }
+  ],
+  "constraint": {
+    "flat_formula": "u_,s-v_,r+2*psi",
+    "moment_rows_raw": {
+      "1": ["-1", "1", "0", "0", "0", "2", "-1", "-1", "0", "0", "0", "2", "1", "-1", "0", "0", "0", "2", "1", "1", "0", "0", "0", "2"],
+      "r": ["1/3", "0", "0", "0", "0", "-2/3", "-1/3", "0", "0", "0", "0", "2/3", "1/3", "0", "0", "0", "0", "2/3", "-1/3", "0", "0", "0", "0", "-2/3"],
+      "rs": ["0", "0", "0", "0", "0", "2/9", "0", "0", "0", "0", "0", "-2/9", "0", "0", "0", "0", "0", "2/9", "0", "0", "0", "0", "0", "-2/9"],
+      "s": ["0", "-1/3", "0", "0", "0", "-2/3", "0", "1/3", "0", "0", "0", "-2/3", "0", "-1/3", "0", "0", "0", "2/3", "0", "1/3", "0", "0", "0", "2/3"]
+    },
+    "node_order": [["-1", "-1"], ["1", "-1"], ["1", "1"], ["-1", "1"]],
+    "orientation": "u_,s-v_,r+2*psi",
+    "per_node_dofs": ["u", "v", "w", "theta_x", "theta_y", "psi"]
+  },
+  "exact_scalar_grammar": {
+    "allowed_kinds": ["integer", "rational", "sqrt_rational", "normalized_quaternion"],
+    "json_numbers_forbidden": true,
+    "nonfinite_forbidden": true
+  },
+  "execution": {
+    "decimal_digits": [80, 160, 320],
+    "environment_same_manifest_required": true,
+    "merge_decimal_digits": 320,
+    "repeat_sets": 2,
+    "svd_multipliers": [
+      {"denominator": "4", "numerator": "1"},
+      {"denominator": "1", "numerator": "1"},
+      {"denominator": "1", "numerator": "4"}
+    ]
+  },
+  "exclusions": {
+    "candidate_b_rerun": false,
+    "cleanup": false,
+    "penalty_or_ctc": false,
+    "production_activation": false,
+    "production_source_edit": false,
+    "publication": false,
+    "selector": false
+  },
+  "fixed_lambda_checkpoint": {
+    "director_norm": "1",
+    "lambda": "1",
+    "physical_offset": "zeta*(thickness/2)*director",
+    "required_pullbacks": ["constraint", "force", "energy", "tangent", "mass", "rotary_inertia", "load", "section_ABDAs", "state", "recovery"],
+    "thickness_is_separate": true
+  },
+  "inf_sup": {
+    "certificate": "exact_2x2_macroelement_plus_outward_shape_regular_pullback",
+    "multiplier_norm": "physical_surface_L2_mass",
+    "observed_singular_values_are_proof": false,
+    "primal_norm": "dimensionless_surface_H1_translation_by_diameter_rotation_dimensionless"
+  },
+  "quadrature": {
+    "constraint_flat_exact_check": "tensor_2x2_and_symbolic",
+    "constraint_primary": "surface_gauss_3x3",
+    "constraint_sensitivity": "surface_gauss_4x4",
+    "energy_mass_primary": "surface_gauss_3x3_thickness_gauss_2",
+    "energy_mass_sensitivity": "surface_gauss_4x4_thickness_gauss_3"
+  },
+  "rotation_cases": [
+    {
+      "id": "identity",
+      "nodal_quaternions": [{"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}, {"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}, {"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}, {"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}],
+      "sample_points": [["0", "0"], ["-1/3", "1/5"], ["2/5", "-1/7"]]
+    },
+    {
+      "id": "common_rational_rotation",
+      "nodal_quaternions": [{"components": ["2", "1", "2", "0"], "kind": "normalized_quaternion"}, {"components": ["2", "1", "2", "0"], "kind": "normalized_quaternion"}, {"components": ["2", "1", "2", "0"], "kind": "normalized_quaternion"}, {"components": ["2", "1", "2", "0"], "kind": "normalized_quaternion"}],
+      "sample_points": [["0", "0"], ["-1/3", "1/5"]]
+    },
+    {
+      "id": "heterogeneous_positive",
+      "nodal_quaternions": [{"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}, {"components": ["4", "1", "0", "0"], "kind": "normalized_quaternion"}, {"components": ["4", "0", "1", "2"], "kind": "normalized_quaternion"}, {"components": ["4", "0", "0", "1"], "kind": "normalized_quaternion"}],
+      "sample_points": [["0", "0"], ["-1/3", "1/5"], ["2/5", "-1/7"]]
+    },
+    {
+      "id": "singular_center_guard",
+      "nodal_quaternions": [{"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}, {"components": ["0", "0", "0", "1"], "kind": "normalized_quaternion"}, {"components": ["0", "0", "0", "1"], "kind": "normalized_quaternion"}, {"components": ["1", "0", "0", "0"], "kind": "normalized_quaternion"}],
+      "sample_points": [["0", "0"]]
+    }
+  ],
+  "rotation_checkpoint": {
+    "branch": "positive_polar_only",
+    "invalid_action": "reject_without_regularization",
+    "nodal_update": "Q_i_plus=exp(hat(delta_theta_i))*Q_i",
+    "pointwise_map": "Q_h=polar_positive(sum_i(N_i*Q_i))",
+    "source_comparison": "Q_p=polar_positive(f_tilde_h)"
+  },
+  "schema": "anysolver.s4.stage-m-candidate-a-discretization-cases-v1",
+  "terminal_precedence": [
+    "BLOCKED_INPUT_IDENTITY",
+    "BLOCKED_CONTRACT_VIOLATION",
+    "BLOCKED_CANDIDATE_A_EXPANDED_PRIMAL_AMENDMENT_REQUIRED",
+    "NO_GO_CANDIDATE_A_FIXED_LAMBDA_SPECIALIZATION",
+    "NO_GO_CANDIDATE_A_ROTATION_MAPPING",
+    "UNCLASSIFIED_CANDIDATE_A_FIXED_LAMBDA_SPECIALIZATION",
+    "UNCLASSIFIED_CANDIDATE_A_ROTATION_MAPPING",
+    "NO_GO_CANDIDATE_A_DISCRETE_PAIR",
+    "UNCLASSIFIED_CANDIDATE_A_DISCRETE_PAIR",
+    "GO_CANDIDATE_A_DISCRETE_PAIR"
+  ]
+}

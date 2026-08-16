@@ -80,11 +80,23 @@ restriction of the *constraint sector*. It does not establish equivalence
 between the current five-component Reissner-Mindlin/section potential and the
 source's extended primal potential.
 
-Before this checkpoint can pass, a content-addressed derivation must freeze
-whether the nondimensional director uses `lambda_e=1` or the physical director
-uses `lambda_e=t_e/2`, then prove the surviving force, work, tangent, mass,
-rotary inertia, load, generalized `A/B/D/As`, state, and recovery pullbacks.
-Those conventions are not interchangeable.
+The repository kinematics settle the scaling choice. Reference directors are
+unit vectors, and `mitc4_plus_d_reference.py` applies the physical offset as
+`(t_e/2) d_i` independently. The only compatible source identification is
+
+```text
+lambda_e = 1,
+d_i = Q_i t0_i,
+x_h(r,s,zeta) = sum_i N_i [X_i + zeta (t_i/2) d_i].
+```
+
+Using `lambda_e=t_e/2` inside `d=lambda Q t0` would apply thickness twice and
+is forbidden. The constraint and its first/second variations pull back
+exactly because they contain no `lambda` column. The full physical pullback is
+not closed: the immutable MITC4+/D assumed-strain/section potential is not a
+literal discretization of the source extended primal potential, and no
+identity currently proves equality of force, work, tangent, mass, rotary
+inertia, load, generalized `A/B/D/As`, state, or recovery maps.
 
 Current result:
 
@@ -242,9 +254,28 @@ Current result:
 UNCLASSIFIED_CANDIDATE_A_ROTATION_MAPPING
 ```
 
-A future pre-outcome contract must freeze `Q_i`, `Q_h(r,s)`, update side and
-order, branch domain, reference-director relation, positive-polar rejection,
-and exact first/second derivatives before any pair run.
+The preregistered research map is now fixed, without changing production:
+
+```text
+Q_i^+ = exp(hat(delta theta_i)) Q_i,
+A_h(r,s) = sum_i N_i(r,s) Q_i,
+Q_h(r,s) = polar_+(A_h) = A_h (A_h^T A_h)^(-1/2).
+```
+
+It is defined only when an outward certificate proves `det(A_h)>0` and
+`sigma_min(A_h)>0`; otherwise the state is rejected rather than regularized.
+The source comparison uses its modified gradient
+`f_tilde_h=eta_alpha tensor A^alpha+d tensor A^3` and
+`Q_p=polar_+(f_tilde_h)` on the same positive branch. First and second
+variations are obtained by differentiating the polar decomposition and its
+symmetric-factor Sylvester equation. Finite differences may corroborate but
+cannot establish the gate.
+
+This defines a research interpolation, but the repository still lacks an
+exact proof that `Q_h=Q_p` follows from the discrete scalar constraint on all
+registered warped states, and it lacks a production multiplicative state
+update. The rotation checkpoint therefore remains unclassified and pair
+mechanics stays forbidden.
 
 ## 7. Inf-sup and topology boundary
 

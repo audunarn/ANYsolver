@@ -13,6 +13,16 @@ close the discrete Q4 gate.
   `F05C643D28199AF4CB07B7E175F1674C2164ABC6D79F5F772260E94A9A3FD3AB`.
 - Preserved Candidate-B output SHA-256:
   `3A26052DB79CE914FF8A1FCA7835F3B86C15F1D351754B45CA904753D8EFDA0D`.
+- Candidate-A cases SHA-256:
+  `BB29F6AE7AE53E961C992BBC2EA764D50B73F935C9B5F9C21C1E21462DCC3E9C`.
+- Candidate-A oracle SHA-256:
+  `3240C3C60754B44C06F790F74B553ACF2DF88070E3618082287C0D9DE175992A`.
+- Candidate-A contract SHA-256:
+  `8861943D1339373FB36448EA376E75D4CBAB64DE1A8450D6B547A235AA62844C`.
+- Candidate-A output SHA-256:
+  `6904490675315E7F2E17B1AA848837B56FC3E7633B4643B8B6C91989ED8E2059`.
+- Candidate-A pytest wrapper SHA-256:
+  `E777121E5EA40CE0FC3BE02E9B21AAA1633070903A4027091E5E5B5FE6F8BE87`.
 
 ## Result
 
@@ -21,13 +31,20 @@ and tangent are source-substantiated. The exact flat small-rotation constraint
 and the two exhaustive D4 rank-two multiplier spaces are now derived and
 preregistered without choosing a winner.
 
+The exact cases, independent oracle, contract, and canonical output are now
+materialized. Two byte-identical executions covered 80/160/320 decimal digits.
+They reproduce the exact flat moment rows and both D4 spaces; all registered
+finite positive-polar samples pass objectivity/orthogonality checks, and the
+singular blend is rejected without regularization.
+
 The pair test was not run. Two mandatory prerequisites remain unclosed:
 
-1. The source includes `(phi,Q,lambda)`, while the current Q4 has fixed scalar
-   thickness and no independent `lambda`; the full force/work/tangent/mass
-   specialization is not yet proved.
-2. The repository has no pointwise finite `Q_h`, multiplicative nodal update,
-   positive-polar branch, or exact source constraint tangent to reuse.
+1. `lambda=1` is now fixed because unit directors and `t/2` are separate, but
+   equality of the source primal potential with the immutable assumed-strain
+   MITC4+/D force/work/tangent/mass/section/state/recovery maps is unproved.
+2. A proof-only positive-polar `Q_h` is defined and its finite samples pass,
+   but global `Q_h=Q_p`, analytic first/second variation closure, and a
+   production multiplicative rotation state remain unproved.
 
 Exact current terminals:
 
@@ -41,8 +58,19 @@ Candidate B:       NO_GO_CANDIDATE_B
 overall Stage-M:   BLOCKED_CANDIDATE_A_DISCRETIZATION_UNREGISTERED
 ```
 
-No Candidate-A mechanics equation, rank outcome, selector, production path,
-or activation was implemented. No Candidate-B shard was rerun.
+No Candidate-A pair mechanics, rank outcome, inf-sup claim, selector,
+production path, or activation was implemented. All 348 inherited pair rows
+are bound but remain `NOT_RUN_PREREQUISITE_UNCLOSED`. No Candidate-B shard was
+rerun.
+
+## Verification
+
+- Candidate-A wrapper: 3 passed.
+- Candidate-A plus the unchanged Eq21/Eq25, nullspace, drill-constraint,
+  geometry-handoff, restricted-activity, restricted-integration, and improved
+  qualification gates: 64 passed.
+- The two direct oracle executions were byte-identical at 19,267 bytes and
+  output SHA-256 `69044906...8E2059`.
 
 ## Resume condition
 
