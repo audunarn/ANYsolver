@@ -104,9 +104,10 @@ def _canonical_lf(raw: bytes) -> bytes:
 def _read_input(name: str) -> bytes:
     relative, size, digest = INPUTS[name]
     raw = (ROOT / relative).read_bytes()
-    if len(raw) != size or _sha(raw) != digest:
+    canonical = _canonical_lf(raw)
+    if len(canonical) != size or _sha(canonical) != digest:
         raise InputIdentityError(f"identity mismatch: {name}")
-    return raw
+    return canonical
 
 
 def _integer(value: Any) -> int:
@@ -301,14 +302,20 @@ def _contract() -> dict[str, Any]:
             "serialization_change": False,
         },
         "identities": {
-            name: {"bytes": size, "path": path, "raw_sha256": digest}
+            name: {
+                "canonical_lf_bytes": size,
+                "canonical_lf_sha256": digest,
+                "path": path,
+                "text_identity": "canonical_git_lf",
+            }
             for name, (path, size, digest) in INPUTS.items()
         }
         | {
             "oracle": {
-                "bytes": len(oracle_raw),
+                "canonical_lf_bytes": len(oracle_raw),
+                "canonical_lf_sha256": _sha(oracle_raw),
                 "path": "docs/reference_cases/s4_candidate_a_open_oracle.py",
-                "raw_sha256": _sha(oracle_raw),
+                "text_identity": "canonical_git_lf",
             }
         },
         "preserved": {
@@ -443,6 +450,7 @@ def _result(contract_sha256: str, values: dict[str, Any]) -> dict[str, Any]:
             name: digest for name, (_path, _size, digest) in INPUTS.items()
         }
         | {"oracle": _sha(Path(__file__).read_bytes())},
+        "identity_semantics": "canonical_git_lf_sha256",
         "mode": "exact_necessary_screens",
         "overall_release_terminal": RELEASE_TERMINAL if closed else "BLOCKED_CANDIDATE_A_QUALIFICATION_INCOMPLETE",
         "pair_terminal": PAIR_TERMINAL if closed else "UNCLASSIFIED_CANDIDATE_A_DISCRETE_PAIR",
