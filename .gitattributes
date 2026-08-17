@@ -26,3 +26,7 @@ docs/agent_plans/S4_CANDIDATE_E1_* text eol=lf
 docs/reference_cases/s4_candidate_e1_* text eol=lf
 docs/S4_CANDIDATE_E1_* text eol=lf
 tests/test_s4_candidate_e1_* text eol=lf
+docs/agent_plans/S4_E2_A_* text eol=lf
+docs/reference_cases/s4_e2_a_* text eol=lf
+docs/S4_E2_A_* text eol=lf
+tests/test_s4_e2_a_* text eol=lf
