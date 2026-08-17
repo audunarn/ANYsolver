@@ -34,3 +34,7 @@ docs/agent_plans/S4_E3_* text eol=lf
 docs/E3_* text eol=lf
 docs/reference_cases/e3_* text eol=lf
 tests/test_e3_* text eol=lf
+docs/agent_plans/S4_E4_* text eol=lf
+docs/E4_* text eol=lf
+docs/reference_cases/e4_* text eol=lf
+tests/test_e4_* text eol=lf
