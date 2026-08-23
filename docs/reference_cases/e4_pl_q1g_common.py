@@ -259,6 +259,42 @@ def _git(repository_root: Path, *arguments: str) -> str:
     return completed.stdout.strip()
 
 
+def _verify_tracked_clean(repository_root: Path, relative: str) -> None:
+    if Path(relative).is_absolute() or ".." in Path(relative).parts:
+        raise Q1GError("reviewed path is not repository-relative")
+    _git(repository_root, "ls-files", "--error-unmatch", "--", relative)
+    completed = subprocess.run(
+        ["git", "diff", "--quiet", "HEAD", "--", relative],
+        cwd=repository_root, check=False,
+    )
+    if completed.returncode != 0:
+        raise Q1GError(f"tracked authority path differs from HEAD: {relative}")
+
+
+def _verify_review(repository_root: Path, relative: str, schema: str, verdict: str) -> dict[str, Any]:
+    raw, review = read_json(repository_root / relative)
+    if review.get("schema") != schema or review.get("verdict") != verdict or review.get("findings") != []:
+        raise Q1GError(f"review authority mismatch: {relative}")
+    rows = review.get("reviewed_inputs")
+    if not isinstance(rows, list) or not rows:
+        raise Q1GError(f"reviewed input extent is empty: {relative}")
+    paths: set[str] = set()
+    for row in rows:
+        exact_keys(row, {"bytes", "path", "sha256"}, "reviewed input")
+        path = row["path"]
+        if path in paths:
+            raise Q1GError("duplicate reviewed input path")
+        paths.add(path)
+        _verify_tracked_clean(repository_root, path)
+        current = (repository_root / path).read_bytes()
+        if len(current) != row["bytes"] or sha256(current) != row["sha256"]:
+            raise Q1GError(f"reviewed input identity mismatch: {path}")
+    _verify_tracked_clean(repository_root, relative)
+    if canonical_bytes(review) != raw:
+        raise Q1GError("review is not canonical")
+    return review
+
+
 def validate_contract(repository_root: Path, path: Path, caller_sha256: str) -> dict[str, Any]:
     root = repository_root.resolve()
     expected_path = contract_path(root)
@@ -283,6 +319,32 @@ def validate_contract(repository_root: Path, path: Path, caller_sha256: str) -> 
             raise Q1GError(f"Q1F input identity mismatch: {row['path']}")
     if len(value.get("rejected_drafts", [])) != 8:
         raise Q1GError("rejected draft inventory mismatch")
+    plan_review = _verify_review(
+        root, "docs/reference_cases/e4_pl_q1g_plan_review.json",
+        "anysolver.s4.e4-pl-q1g-plan-review-v1",
+        "ACCEPT_Q1G_RIGID_RANGE_PREREGISTRATION_NO_P0_P1",
+    )
+    implementation_review = _verify_review(
+        root, "docs/reference_cases/e4_pl_q1g_implementation_review.json",
+        "anysolver.s4.e4-pl-q1g-implementation-review-v1",
+        "ACCEPT_Q1G_RIGID_RANGE_IMPLEMENTATION_NO_P0_P1",
+    )
+    execution_review = _verify_review(
+        root, "docs/reference_cases/e4_pl_q1g_execution_review.json",
+        "anysolver.s4.e4-pl-q1g-execution-review-v1",
+        "ACCEPT_Q1G_BOUNDED_EXECUTION_CONTRACT_NO_P0_P1",
+    )
+    expected_execution_paths = {
+        "docs/reference_cases/e4_pl_q1g_contract.json",
+        "docs/reference_cases/e4_pl_q1g_implementation_review.json",
+        "docs/reference_cases/e4_pl_q1g_plan_review.json",
+    }
+    if {row["path"] for row in execution_review["reviewed_inputs"]} != expected_execution_paths:
+        raise Q1GError("execution review exact input extent mismatch")
+    if plan_review.get("reviewer_independence", {}).get("mechanics_executed") is not False:
+        raise Q1GError("plan review mechanics boundary mismatch")
+    if implementation_review.get("reviewer_independence", {}).get("checker_imports_producer") is not False:
+        raise Q1GError("implementation independence mismatch")
     return value
 
 

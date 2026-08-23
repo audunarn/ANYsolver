@@ -117,15 +117,22 @@ def test_q1g_independence_extent_and_production_boundary() -> None:
     ).stdout.splitlines()
     changed = {line[3:].replace("\\", "/") for line in status if not line[3:].startswith((".q1g_smoke/", "docs/reference_cases/__pycache__/", "tests/__pycache__/", ".pytest"))}
     allowed = {
+        "docs/E4_PL_Q1G_COMPLETION.md",
+        "docs/E4_PL_Q1G_DOMAIN_COERCIVITY.md",
         "docs/agent_plans/S4_E4_PL_Q1G_RIGID_RANGE_COERCIVITY_PLAN.md",
         "docs/reference_cases/e4_pl_q1g_bounded_runner.py",
         "docs/reference_cases/e4_pl_q1g_common.py",
         "docs/reference_cases/e4_pl_q1g_contract.json",
         "docs/reference_cases/e4_pl_q1g_domain_checker.py",
         "docs/reference_cases/e4_pl_q1g_domain_producer.py",
+        "docs/reference_cases/e4_pl_q1g_evidence.json",
+        "docs/reference_cases/e4_pl_q1g_execution_review.json",
         "docs/reference_cases/e4_pl_q1g_implementation_manifest.json",
         "docs/reference_cases/e4_pl_q1g_implementation_review.json",
         "docs/reference_cases/e4_pl_q1g_plan_review.json",
+        "docs/reference_cases/e4_pl_q1g_scientific_review.json",
+        "docs/reference_cases/e4_pl_q1g_status.json",
+        "tests/test_e4_pl_q1g_closeout.py",
         "tests/test_e4_pl_q1g_rigid_range_coercivity.py",
     }
     assert changed <= allowed
