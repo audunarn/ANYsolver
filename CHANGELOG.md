@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-08-23
+
 - Preserve the corrected published-2025 S4 reference, nullspace proof, geometry
   handoff, and qualification scaffold as dormant release evidence. The legacy
   S4 remains the production default and improved-S4 activation remains

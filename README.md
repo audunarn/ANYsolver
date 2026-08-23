@@ -5,15 +5,14 @@ shell, stiffened-panel, and cylindrical-shell analysis. It is an engineering
 solver with an explicit qualification scope, not a general-purpose CAD,
 contact, or fracture platform.
 
-After compatible sibling releases are available on the package index, install
-the released package with:
+Install the released package with:
 
 ```powershell
 python -m pip install ANYsolver
 ```
 
-The extracted dependencies are not published yet. For coordinated local
-development, install the sibling checkouts first:
+For coordinated local development across sibling repositories, install the
+checkouts first:
 
 ```powershell
 python -m pip install -e C:\Github\ANYmaterial
@@ -22,20 +21,21 @@ python -m pip install -e C:\Github\ANYfileIO
 python -m pip install -e C:\Github\ANYsolver
 ```
 
-### Release order for the 0.2 line
+### Release order for the 0.3 line
 
-ANYsolver 0.2 is not an independently installable release. Publish compatible
-0.1.x distributions to the same target index in this order:
+ANYsolver 0.3 depends on compatible extracted packages. Publish them to the
+same target index in this order:
 
 1. `ANYmaterial` and `ANYmesher` (either order).
 2. `ANYfileio`, which depends on both.
-3. `ANYsolver` 0.2.x, which depends on all three.
+3. `ANYsolver` 0.3.x, which depends on all three.
 
-Apply that order separately to TestPyPI and PyPI. The publish workflow checks
-the selected target index and refuses to build or upload ANYsolver unless
+Apply that order separately to TestPyPI and PyPI. The compatible sibling
+releases are available on PyPI. The publish workflow checks the selected
+target index and refuses to build or upload ANYsolver unless
 `ANYmaterial>=0.1,<0.2`, `ANYmesher>=0.1,<0.3`, and
-`ANYfileio>=0.1,<0.3` can already be resolved there. CI uses pinned sibling source
-checkouts until those releases exist.
+`ANYfileio>=0.1,<0.3` can already be resolved there. CI also uses pinned sibling
+source checkouts to exercise the exact compatibility graph.
 
 ANYsolver uses the neutral mesh, panel-generation, quality, and section APIs
 available in ANYmesher 0.1 and retains compatibility with the additive 0.2
@@ -107,7 +107,7 @@ changes before making release claims.
 | Imperfections | Stress-free eigenmode, member-bow, plate-wave, flange-twist, explicit, and composite imperfection fields. |
 | Initial fields | Element-local shell membrane/bending stress or membrane/curvature prestrain, arbitrary configured beam-fiber stress/prestrain distributions, zero-external-load equilibration, admissibility checks, and provenance kept separate from geometric imperfections. |
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |
-| Interchange | `ANYfileio` owns SESAM/CalculiX parsing, validation, neutral semantics, and guarded writing. ANYsolver retains only neutral-record-to-`FEModel` adapters and compatibility imports for the 0.2 line. |
+| Interchange | `ANYfileio` owns SESAM/CalculiX parsing, validation, neutral semantics, and guarded writing. ANYsolver retains only neutral-record-to-`FEModel` adapters and the legacy compatibility imports introduced for the 0.2 line. |
 | Results | Result provenance; unified elastic or committed shell-layer/beam-fiber stress recovery; Gauss-point membrane-force and bending-moment resultants for generated-geometry prestress; guarded Zienkiewicz-Zhu-style patch recovery for qualified shell neighborhoods; selected recovery; reaction filtering; validation diagnostics; deterministic baselines; benchmarks; and generated qualification reports. |
 | External verification | Reproducible CalculiX model flattening, opt-in isolated execution, solver provenance, and tolerance-controlled analytical comparison, using `ANYfileio` for deck writing and FRD/DAT parsing. Deck-only reports remain explicitly `not_executed` and make no numerical-agreement claim. |
 
