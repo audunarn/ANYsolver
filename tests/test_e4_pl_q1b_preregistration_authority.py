@@ -25,6 +25,7 @@ PLAN6 = {
     "docs/reference_cases/e4_pl_q1b_test_inventory.json",
     "tests/test_e4_pl_q1b_preregistration_authority.py",
 }
+ACCEPTED_PLAN_COMMIT = "9cba0a191eb5f82ca4f9959ffc4f92df69b98d42"
 
 
 def _reject_constant(value: str) -> None:
@@ -67,16 +68,14 @@ def test_q1b_base_and_inherited_authority_are_exact() -> None:
         "subject": "Merge pull request #13 from audunarn/codex/s4-e4-pl-q1aa-local-qualification-synthesis",
         "tree": "b412998399c3fa0bc5d40bd4658dbea77ab945ab",
     }
-    head = _git("rev-parse", "HEAD")
-    if head == baseline["base"]["commit"]:
-        # Precommit review mode: the six PLAN paths are still untracked.
-        pass
-    else:
-        # Postcommit mode: accept only the exact one-commit PLAN6 child.
-        assert _git("rev-parse", "HEAD^") == baseline["base"]["commit"]
-        assert _git("show", "-s", "--format=%s", "HEAD") == "docs: preregister E4 PL Q1B nonintrusion stability locking"
-        committed_paths = set(_git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").splitlines())
-        assert committed_paths == PLAN6
+    # Bind the accepted PLAN6 commit itself, then permit normal merge commits
+    # and later preregistered descendants without coupling this historical test
+    # to whatever commit happens to be current HEAD.
+    assert _git("rev-parse", f"{ACCEPTED_PLAN_COMMIT}^") == baseline["base"]["commit"]
+    assert _git("show", "-s", "--format=%s", ACCEPTED_PLAN_COMMIT) == "docs: preregister E4 PL Q1B nonintrusion stability locking"
+    committed_paths = set(_git("diff-tree", "--no-commit-id", "--name-only", "-r", ACCEPTED_PLAN_COMMIT).splitlines())
+    assert committed_paths == PLAN6
+    _git("merge-base", "--is-ancestor", ACCEPTED_PLAN_COMMIT, "HEAD")
     assert len(baseline["authority_rows"]) == 12
     assert len({row["path"] for row in baseline["authority_rows"]}) == 12
     for row in baseline["authority_rows"]:
