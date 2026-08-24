@@ -25,7 +25,15 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
-from .quantities import ResultQuantity, describe_result_quantities
+from .quantities import (
+    QuantityUnavailableError,
+    ReactionFrame,
+    ResolvedResultQuantity,
+    ResultQuantity,
+    describe_result_quantities,
+    registered_result_quantity_ids,
+    resolve_result_quantity,
+)
 from .materials import (
     BeamMaterialProperties,
     ENGINEERING_VOIGT_ORDER,
@@ -452,8 +460,13 @@ __all__ = [
     "SolveCancelled",
     "cancellation_safe_point",
     "emit_progress",
+    "QuantityUnavailableError",
+    "ReactionFrame",
+    "ResolvedResultQuantity",
     "ResultQuantity",
     "describe_result_quantities",
+    "registered_result_quantity_ids",
+    "resolve_result_quantity",
     "OrthotropicMaterial",
     "StructuralMaterial",
     "BeamMaterialProperties",

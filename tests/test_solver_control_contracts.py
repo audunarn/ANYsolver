@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 from scipy import sparse
@@ -8,9 +10,13 @@ from anysolver import (
     CancellationToken,
     ConstraintEquation,
     ProgressEvent,
+    QuantityUnavailableError,
+    ReactionFrame,
     SolveCancelled,
     audit_constraints,
     describe_result_quantities,
+    registered_result_quantity_ids,
+    resolve_result_quantity,
     solve_nonlinear_load_stepping,
 )
 from anysolver.assembly import (
@@ -273,3 +279,44 @@ def test_progress_observer_can_request_cooperative_cancellation() -> None:
             cancellation_token=token,
             progress_callback=cancel_after_first_step,
         )
+
+
+def test_result_quantity_resolver_is_canonical_and_fail_closed() -> None:
+    snapshots = (
+        SimpleNamespace(step_index=1, element_states={5: {"alpha": [0.0, 0.01]}}),
+        SimpleNamespace(step_index=2, element_states={5: {"layer_strain": [0.02]}}),
+        SimpleNamespace(step_index=3, element_states={5: {"alpha": [0.02, 0.03]}}),
+    )
+    result = SimpleNamespace(
+        displacements=np.arange(12, dtype=float),
+        element_states={5: {"alpha": np.asarray([0.02, 0.03])}},
+        snapshots=snapshots,
+        times=np.asarray([0.0, 0.1]),
+        reaction_history=(
+            ReactionFrame(0, 0.0, "time", {7: np.ones(6)}, {"fixed": np.ones(6)}),
+            ReactionFrame(1, 0.1, "time", {7: 2.0 * np.ones(6)}, {"fixed": 2.0 * np.ones(6)}),
+        ),
+        diagnostics={
+            "strain_energy_measure": "internal_work_proxy",
+            "kinetic_energy": [3.0, 2.0],
+            "strain_energy": [0.0, 1.0],
+            "sphere_kinetic_energy": [4.0],
+        },
+    )
+
+    assert registered_result_quantity_ids()[0] == "displacement"
+    assert resolve_result_quantity(result, "displacement").data is result.displacements
+    assert resolve_result_quantity(
+        result, "equivalent_plastic_strain"
+    ).data == {5: pytest.approx(0.03)}
+    history = resolve_result_quantity(
+        result, "equivalent_plastic_strain_history"
+    )
+    assert history.data == ({5: pytest.approx(0.01)}, {5: pytest.approx(0.03)})
+    assert history.descriptor.metadata["frame_indices"] == [1, 3]
+    assert resolve_result_quantity(result, "reaction_history").data is result.reaction_history
+    assert resolve_result_quantity(result, "internal_work").data == [0.0, 1.0]
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(result, "strain_energy")
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(result, "impactor_kinetic_energy")

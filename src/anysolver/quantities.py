@@ -45,6 +45,65 @@ class ResultQuantity:
         return payload
 
 
+@dataclass(frozen=True)
+class ResolvedResultQuantity:
+    """One available descriptor paired with its authoritative data."""
+
+    descriptor: ResultQuantity
+    data: Any
+
+
+class QuantityUnavailableError(LookupError):
+    """Raised when a result genuinely carries no requested quantity."""
+
+
+@dataclass(frozen=True)
+class ReactionFrame:
+    """Nodal and support reactions at one committed result frame."""
+
+    frame_index: int
+    abscissa: float
+    abscissa_kind: str
+    reactions: Mapping[int, Any]
+    support_resultants: Mapping[str, Any]
+
+
+_REGISTERED_QUANTITY_IDS = (
+    "displacement",
+    "velocity",
+    "acceleration",
+    "stress",
+    "stress_history",
+    "reaction",
+    "reaction_history",
+    "equivalent_plastic_strain",
+    "equivalent_plastic_strain_history",
+    "load_factor",
+    "mode_shape",
+    "frequency",
+    "buckling_factor",
+    "time",
+    "contact_force",
+    "impactor_position",
+    "force_impulse",
+    "moment_impulse",
+    "load_impulse",
+    "kinetic_energy",
+    "strain_energy",
+    "internal_work",
+    "impactor_kinetic_energy",
+    "displacement_envelope",
+    "velocity_envelope",
+    "acceleration_envelope",
+)
+
+
+def registered_result_quantity_ids() -> Tuple[str, ...]:
+    """Stable canonical IDs that callers may resolve fail-closed."""
+
+    return _REGISTERED_QUANTITY_IDS
+
+
 def _array_frames(value: Any, *, default: int = 1) -> int:
     if value is None:
         return 0
@@ -258,3 +317,256 @@ def describe_result_quantities(result: Any) -> Tuple[ResultQuantity, ...]:
             )
 
     return tuple(quantities)
+
+
+def _resolved(descriptor: ResultQuantity, data: Any) -> ResolvedResultQuantity:
+    return ResolvedResultQuantity(descriptor=descriptor, data=data)
+
+
+def _nonempty_array(value: Any) -> bool:
+    if value is None:
+        return False
+    try:
+        return bool(np.asarray(value).size)
+    except (TypeError, ValueError):
+        return False
+
+
+def _described_data(result: Any, quantity_id: str) -> Any:
+    attribute_by_id = {
+        "displacement": "displacements",
+        "velocity": "velocities",
+        "acceleration": "accelerations",
+        "stress": "element_stresses",
+        "stress_history": "stress_history",
+        "reaction": "reactions",
+        "time": "times",
+        "contact_force": "contact_force_history",
+        "impactor_position": "sphere_positions",
+        "force_impulse": "force_impulse",
+        "moment_impulse": "moment_impulse",
+        "displacement_envelope": "displacement_envelope",
+        "velocity_envelope": "velocity_envelope",
+        "acceleration_envelope": "acceleration_envelope",
+    }
+    attribute = attribute_by_id.get(quantity_id)
+    if attribute is not None:
+        return getattr(result, attribute, None)
+    if quantity_id == "load_factor":
+        return tuple(getattr(step, "load_factor", None) for step in result.steps)
+    if quantity_id == "mode_shape":
+        return tuple(getattr(mode, "mode_shape", None) for mode in result.modes)
+    if quantity_id == "frequency":
+        return tuple(getattr(mode, "frequency_hz", None) for mode in result.modes)
+    if quantity_id == "buckling_factor":
+        return tuple(getattr(mode, "load_factor", None) for mode in result.modes)
+    return None
+
+
+def _state_peeq(state: Any) -> float | None:
+    if not isinstance(state, Mapping):
+        return None
+    for key in (
+        "equivalent_plastic_strain",
+        "max_equivalent_plastic_strain",
+        "peeq",
+        "alpha",
+    ):
+        value = state.get(key)
+        if value is None:
+            continue
+        try:
+            values = np.asarray(value, dtype=float)
+        except (TypeError, ValueError):
+            continue
+        if values.size and np.all(np.isfinite(values)):
+            return float(np.max(np.abs(values)))
+    return None
+
+
+def _element_peeq(states: Any) -> Dict[int, float]:
+    if not isinstance(states, Mapping):
+        return {}
+    resolved: Dict[int, float] = {}
+    for raw_element_id, state in states.items():
+        try:
+            element_id = int(raw_element_id)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        value = _state_peeq(state)
+        if value is not None:
+            resolved[element_id] = value
+    return resolved
+
+
+def _plastic_strain_quantity(
+    result: Any, quantity_id: str
+) -> ResolvedResultQuantity:
+    snapshots = tuple(getattr(result, "snapshots", ()) or ())
+    if quantity_id == "equivalent_plastic_strain":
+        data = _element_peeq(getattr(result, "element_states", None))
+        if not data and snapshots:
+            data = _element_peeq(getattr(snapshots[-1], "element_states", None))
+        if not data:
+            raise QuantityUnavailableError("equivalent plastic strain is unavailable")
+        descriptor = ResultQuantity(
+            quantity_id,
+            "Equivalent plastic strain",
+            "element",
+            ("PEEQ",),
+            "1",
+            data_path="element_states",
+            recovery="committed_state",
+            metadata={"reduction": "maximum committed integration-point value"},
+        )
+        return _resolved(descriptor, data)
+
+    frames = []
+    frame_indices = []
+    for ordinal, snapshot in enumerate(snapshots):
+        data = _element_peeq(getattr(snapshot, "element_states", None))
+        if not data:
+            continue
+        frames.append(data)
+        frame_indices.append(int(getattr(snapshot, "step_index", ordinal)))
+    if not frames:
+        raise QuantityUnavailableError("equivalent plastic strain history is unavailable")
+    descriptor = ResultQuantity(
+        quantity_id,
+        "Equivalent plastic strain history",
+        "element",
+        ("PEEQ",),
+        "1",
+        frame_count=len(frames),
+        has_history=True,
+        data_path="snapshots[].element_states",
+        recovery="committed_state",
+        metadata={
+            "frame_indices": frame_indices,
+            "reduction": "maximum committed integration-point value",
+        },
+    )
+    return _resolved(descriptor, tuple(frames))
+
+
+def _reaction_history_quantity(result: Any) -> ResolvedResultQuantity:
+    frames = tuple(getattr(result, "reaction_history", ()) or ())
+    if not frames:
+        raise QuantityUnavailableError("reaction history is unavailable")
+    descriptor = ResultQuantity(
+        "reaction_history",
+        "Reaction history",
+        "node",
+        ("FX", "FY", "FZ", "MX", "MY", "MZ"),
+        "mixed:N,N*m",
+        frame_count=len(frames),
+        has_history=True,
+        data_path="reaction_history",
+        metadata={"abscissa_kind": getattr(frames[0], "abscissa_kind", "frame")},
+    )
+    return _resolved(descriptor, frames)
+
+
+def _energy_quantity(result: Any, quantity_id: str) -> ResolvedResultQuantity:
+    diagnostics = getattr(result, "diagnostics", None)
+    if not isinstance(diagnostics, Mapping):
+        raise QuantityUnavailableError(f"{quantity_id} is unavailable")
+    measure = str(diagnostics.get("strain_energy_measure", ""))
+    if quantity_id == "kinetic_energy":
+        source_key = "kinetic_energy"
+        label = "Kinetic energy"
+    elif quantity_id == "strain_energy":
+        if measure != "elastic_strain_energy":
+            raise QuantityUnavailableError("elastic strain energy is unavailable")
+        source_key = "strain_energy"
+        label = "Strain energy"
+    elif quantity_id == "internal_work":
+        if measure != "internal_work_proxy":
+            raise QuantityUnavailableError("internal work is unavailable")
+        source_key = "strain_energy"
+        label = "Internal work"
+    else:
+        source_key = "sphere_kinetic_energy"
+        label = "Impactor kinetic energy"
+    values = diagnostics.get(source_key)
+    if not _nonempty_array(values):
+        raise QuantityUnavailableError(f"{quantity_id} is unavailable")
+    array = np.asarray(values, dtype=float)
+    if not np.all(np.isfinite(array)):
+        raise QuantityUnavailableError(f"{quantity_id} contains nonfinite values")
+    times = getattr(result, "times", None)
+    if times is not None and int(np.asarray(times).size) != int(array.size):
+        raise QuantityUnavailableError(f"{quantity_id} is not aligned with result frames")
+    descriptor = ResultQuantity(
+        quantity_id,
+        label,
+        "global",
+        ("VALUE",),
+        "J",
+        frame_count=int(array.size),
+        has_history=True,
+        data_path=f"diagnostics.{source_key}",
+        metadata={"measure": measure or quantity_id},
+    )
+    return _resolved(descriptor, values)
+
+
+def resolve_result_quantity(result: Any, quantity_id: str) -> ResolvedResultQuantity:
+    """Resolve one canonical quantity without inventing absent values."""
+
+    key = str(quantity_id)
+    if key not in _REGISTERED_QUANTITY_IDS:
+        raise QuantityUnavailableError(f"unknown result quantity {key!r}")
+    if key in {
+        "equivalent_plastic_strain",
+        "equivalent_plastic_strain_history",
+    }:
+        return _plastic_strain_quantity(result, key)
+    if key == "reaction_history":
+        return _reaction_history_quantity(result)
+    if key in {
+        "kinetic_energy",
+        "strain_energy",
+        "internal_work",
+        "impactor_kinetic_energy",
+    }:
+        return _energy_quantity(result, key)
+    if key == "load_impulse":
+        value = getattr(result, "load_impulse", None)
+        if not _nonempty_array(value):
+            raise QuantityUnavailableError("load impulse is unavailable")
+        descriptor = ResultQuantity(
+            key,
+            "Load impulse",
+            "node",
+            ("IX", "IY", "IZ", "IRX", "IRY", "IRZ"),
+            "mixed:N*s,N*m*s",
+            data_path="load_impulse",
+        )
+        return _resolved(descriptor, value)
+
+    descriptors = {
+        descriptor.quantity_id: descriptor
+        for descriptor in describe_result_quantities(result)
+    }
+    descriptor = descriptors.get(key)
+    if descriptor is None:
+        raise QuantityUnavailableError(
+            f"{type(result).__name__} carries no result quantity {key!r}"
+        )
+    data = _described_data(result, key)
+    if data is None:
+        raise QuantityUnavailableError(
+            f"{type(result).__name__} carries no data for result quantity {key!r}"
+        )
+    if isinstance(data, Mapping):
+        available = bool(data)
+    elif isinstance(data, (tuple, list)):
+        available = bool(data) and all(value is not None for value in data)
+    else:
+        available = _nonempty_array(data)
+    if not available:
+        raise QuantityUnavailableError(
+            f"{type(result).__name__} carries no data for result quantity {key!r}"
+        )
+    return _resolved(descriptor, data)
