@@ -53,7 +53,7 @@ recorded. A rollback incident resets the two-gate counter.
 
 - Freeze the implementation and harness before running a registered resource
   request.  The live contract records the exact quick and package commands,
-  including the correction-4 clean ANYgeometry root; the runner constructs
+  including the correction-5 clean ANYgeometry root; the runner constructs
   the remaining required source environment itself.
 - The package lane accepts only tracked/index-clean committed `HEAD` inputs.
   It creates a Git archive for ANYsolver, ANYmesh, ANYgeometry, ANYmaterial,
@@ -62,7 +62,7 @@ recorded. A rollback incident resets the two-gate counter.
   ANYsolver and paired ANYfem must be fully clean including untracked paths;
   the four archived sibling inputs may retain unrelated untracked work.  A
   frozen source-root override is permitted only when its exact commit/tree is
-  bound by the live contract; correction 4 uses the isolated clean
+  bound by the live contract; corrections 4 and 5 use the isolated clean
   `q1m-anygeometry-frozen` worktree so unrelated tracked development in the
   shared ANYgeometry checkout is never imported.
 - Each pytest lane creates temporary distribution metadata from the exact
@@ -100,17 +100,17 @@ Its status uses schema `anysolver.s4.e4-pl-q1m-status-v1`, terminal
 unauthorized.  Its accepted review verdict is
 `ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1`.
 
-A correction-4 failure uses commit subject
-`docs: record E4 PL Q1M correction-4 blocked gate` and exactly:
+A correction-5 failure uses commit subject
+`docs: record E4 PL Q1M correction-5 blocked gate` and exactly:
 
-1. `docs/reference_cases/e4_pl_q1m_correction4_blocked_gate_result.json`
-2. `docs/reference_cases/e4_pl_q1m_correction4_blocked_status.json`
-3. `docs/reference_cases/e4_pl_q1m_correction4_blocked_review.json`
+1. `docs/reference_cases/e4_pl_q1m_correction5_blocked_gate_result.json`
+2. `docs/reference_cases/e4_pl_q1m_correction5_blocked_status.json`
+3. `docs/reference_cases/e4_pl_q1m_correction5_blocked_review.json`
 
 Its status uses the same status schema, terminal
-`BLOCKED_E4_PL_Q1M_CORRECTION_4_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
+`BLOCKED_E4_PL_Q1M_CORRECTION_5_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
 unauthorized.  Its accepted review verdict is
-`ACCEPT_Q1M_CORRECTION_4_BLOCKED_GATE_NO_P0_P1`.
+`ACCEPT_Q1M_CORRECTION_5_BLOCKED_GATE_NO_P0_P1`.
 
 The first failed gate remains immutable under its original three blocked paths.
 Its exact authority is preserved byte-for-byte as
@@ -121,7 +121,9 @@ correction-2 ecosystem failure remains immutable under
 `docs/reference_cases/e4_pl_q1m_burnin_contract_cycle2.json`.  The
 correction-3 source-metadata failure remains immutable under
 `docs/reference_cases/e4_pl_q1m_burnin_contract_cycle3.json`.  The live
-contract binds fresh correction-4 resource requests and never rewrites any
+correction-4 performance-diagnostic failure remains immutable under
+`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle4.json`.  The live
+contract binds fresh correction-5 resource requests and never rewrites any
 historical result.
 
 Correction 3 closes only the observed compatibility gaps: fail-closed solver
@@ -138,11 +140,19 @@ ephemeral metadata from the already frozen source graph so
 0.1.0 installation that blocked correction 3.  It does not modify ANYfileIO,
 any production package, or any E4-PL Q4 mechanic.
 
+Correction 5 changes only the two performance assertions that still required
+the retired `advanced_s4_stiffness` diagnostic after the functional corpus
+was migrated to the qualified Q4 selector, plus this authority packet.  The
+existing numerical matrix-equality assertions remain unchanged.  The updated
+assertions require the production `qualified_e4_pl_stiffness` route and its
+exact shared-geometry-cache counts; no tolerance, coefficient, source,
+mechanics, or performance threshold changes.
+
 All pytest lanes use a fresh ignored workspace-local `--basetemp` and remove
 it after execution, avoiding user-global Windows ACL state without changing
 the registered outer resource commands.
 
-Both reviews use schema `anysolver.s4.e4-pl-q1m-independent-review-v1` and
+All adjudication reviews use schema `anysolver.s4.e4-pl-q1m-independent-review-v1` and
 exactly five top-level keys: `findings`, `reviewed_inputs`,
 `reviewer_independence`, `schema`, and `verdict`.  Acceptance requires empty
 findings; exact independence assertions that the reviewer did not author the

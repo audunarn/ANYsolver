@@ -39,6 +39,9 @@ CONTRACT_CYCLE2 = (
 CONTRACT_CYCLE3 = (
     ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle3.json"
 )
+CONTRACT_CYCLE4 = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle4.json"
+)
 
 
 def _gate_module():
@@ -261,14 +264,14 @@ def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
     assert contract["gate_result_schema"] == "anysolver.s4.e4-pl-q1m-gate-result-v2"
     assert contract["package_result_schema"] == "anysolver.s4.e4-pl-q1m-package-lane-v2"
     assert contract["adjudication"] == {
-        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_4_BLOCKED_GATE_NO_P0_P1",
+        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_5_BLOCKED_GATE_NO_P0_P1",
         "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-        "blocked_commit_subject": "docs: record E4 PL Q1M correction-4 blocked gate",
-        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_4_BURN_IN_GATE",
+        "blocked_commit_subject": "docs: record E4 PL Q1M correction-5 blocked gate",
+        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_5_BURN_IN_GATE",
         "blocked_paths": [
-            "docs/reference_cases/e4_pl_q1m_correction4_blocked_gate_result.json",
-            "docs/reference_cases/e4_pl_q1m_correction4_blocked_status.json",
-            "docs/reference_cases/e4_pl_q1m_correction4_blocked_review.json",
+            "docs/reference_cases/e4_pl_q1m_correction5_blocked_gate_result.json",
+            "docs/reference_cases/e4_pl_q1m_correction5_blocked_status.json",
+            "docs/reference_cases/e4_pl_q1m_correction5_blocked_review.json",
         ],
         "review_independence": {
             "did_not_author_candidate": True,
@@ -1205,6 +1208,7 @@ def test_blocked_cycles_remain_verifiable_under_immutable_authority() -> None:
         ("e4_pl_q1m_correction1_blocked", CONTRACT_CYCLE1),
         ("e4_pl_q1m_correction2_blocked", CONTRACT_CYCLE2),
         ("e4_pl_q1m_correction3_blocked", CONTRACT_CYCLE3),
+        ("e4_pl_q1m_correction4_blocked", CONTRACT_CYCLE4),
     )
     blocked_request_ids: set[str] = set()
     for stem, authority_path in historical:

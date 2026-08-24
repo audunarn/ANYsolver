@@ -1,13 +1,13 @@
 {
   "adjudication": {
-    "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_5_BLOCKED_GATE_NO_P0_P1",
+    "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_4_BLOCKED_GATE_NO_P0_P1",
     "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-    "blocked_commit_subject": "docs: record E4 PL Q1M correction-5 blocked gate",
-    "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_5_BURN_IN_GATE",
+    "blocked_commit_subject": "docs: record E4 PL Q1M correction-4 blocked gate",
+    "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_4_BURN_IN_GATE",
     "blocked_paths": [
-      "docs/reference_cases/e4_pl_q1m_correction5_blocked_gate_result.json",
-      "docs/reference_cases/e4_pl_q1m_correction5_blocked_status.json",
-      "docs/reference_cases/e4_pl_q1m_correction5_blocked_review.json"
+      "docs/reference_cases/e4_pl_q1m_correction4_blocked_gate_result.json",
+      "docs/reference_cases/e4_pl_q1m_correction4_blocked_status.json",
+      "docs/reference_cases/e4_pl_q1m_correction4_blocked_review.json"
     ],
     "review_independence": {
       "did_not_author_candidate": true,
@@ -113,18 +113,18 @@
   "resource_requests": {
     "anyfem": {
       "command_sha256": "29c62d3f3e85c7085dd8f430ec6a4efcdf640d4a93aec4ee22bc61ceccc8a667",
-      "request_id": "4dff23e56f964b5f97d96ee05b02b823",
-      "request_sha256": "1891427c9c1a38cc6502e29e2ec12529943f9819357f4cb79bb3caf5f2b776b6"
+      "request_id": "01adfb747dbe4c47ab08334f3052819f",
+      "request_sha256": "b77a85a72673d6c353705f7248e58e600c9b5fc79380d8af71ccc0230cb73d4f"
     },
     "functional": {
       "command_sha256": "514bda995a718f32c92b52bdd47a4b491687b5c5ccb877ad9d22e5db978e00f5",
-      "request_id": "e0a4b4fc66e548208b458547166d2833",
-      "request_sha256": "6f4941ec5033c3453cc92346c75c3549f4e6c61f8f4a9717f68b0c8b1151f7ba"
+      "request_id": "e92f09cbc9b349e18717fa445adb4447",
+      "request_sha256": "9fb4e35f4a08e15f35a24f2df4fa8c451aca71d7b2a7519ad2ef91d8722357a1"
     },
     "performance": {
       "command_sha256": "304dd8c2e4125033f062da7f54c2553cf55fa39de7f6846dcbd000e226af5022",
-      "request_id": "41f68e5f3d4f4e95a6bbc84b9192eec9",
-      "request_sha256": "a4411f20c8efc29a9e279c946dbd658bd8ce32ad080d280c8c7af87d9c8813e6"
+      "request_id": "0a8b54268e034656a2f1fdca5b7c2894",
+      "request_sha256": "6a60f4842e11ccbb5e7f813c7be2e6f9290168a19f28dae816078eff2666a4e1"
     }
   },
   "repository_cleanliness": {
