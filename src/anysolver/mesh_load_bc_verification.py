@@ -19,7 +19,7 @@ from .anystructure_fem_mode import AnyStructureFEMConfig, build_fe_model_from_ge
 from .assembly import build_constraint_transformation, solve_linear
 from .boundary import BoundaryCondition, FixedSupport, LoadCase, PinnedSupport, RollerSupport, SymmetryBC
 from .dynamics import PressurePatch, assemble_pressure_patch_load_vector
-from .elements import BeamElement, CoupledBeamShellElement, ShellElement
+from .elements import BeamElement, CoupledBeamShellElement, ShellElement, create_shell_element
 from .fe_core import FEModel
 from .validation import load_case_resultant, load_vector_resultant, validate_production_model
 
@@ -208,7 +208,7 @@ def _q8_model(midside_offset: float = 0.0, warp: float = 0.0) -> FEModel:
     }
     for node_id, xyz in coords.items():
         model.add_node(node_id, *xyz)
-    model.add_element(1, ShellElement(1, list(range(1, 9)), "steel", thickness=0.01))
+    model.add_element(1, create_shell_element(1, list(range(1, 9)), "steel", thickness=0.01))
     return model
 
 

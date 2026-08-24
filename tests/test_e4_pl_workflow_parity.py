@@ -73,7 +73,7 @@ def test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle() -
     direct = element.compute_stiffness_matrix(model.mesh, material).copy()
     assembled, info = assemble_stiffness_matrix(model)
     np.testing.assert_allclose(assembled.toarray(), direct, rtol=1.0e-12, atol=1.0e-10)
-    assert shell_nonlinear_batch_eligible(element) is False
+    assert shell_nonlinear_batch_eligible(element) is True
     assert element.legacy_stiffness_batch_eligible is False
 
     baseline_mass, _ = assemble_mass_matrix(model)

@@ -779,7 +779,29 @@ def _assemble_nonlinear_system(
             num_layers,
         )
 
+        correction_cache: Dict[tuple[Any, ...], np.ndarray] = {}
         for idx, (elem_id, element) in enumerate(elem_list):
+            correction_builder = getattr(element, "_qualified_linear_correction", None)
+            if callable(correction_builder):
+                cache_key_builder = getattr(
+                    element, "_qualified_stiffness_cache_key", None
+                )
+                correction_key = (
+                    int(num_layers),
+                    cache_key_builder(mesh, material)
+                    if callable(cache_key_builder)
+                    else (int(elem_id),),
+                )
+                correction = correction_cache.get(correction_key)
+                if correction is None:
+                    correction = np.asarray(
+                        correction_builder(mesh, material, int(num_layers)),
+                        dtype=float,
+                    )
+                    correction_cache[correction_key] = correction
+                F_int_batch[idx] += correction @ u_elem_batch[idx]
+                if tangent:
+                    K_T_batch[idx] += correction
             precomputed_F[elem_id] = F_int_batch[idx]
             if tangent:
                 precomputed_K[elem_id] = K_T_batch[idx]

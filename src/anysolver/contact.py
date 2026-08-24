@@ -36,7 +36,7 @@ from .dynamics import (
     _time_grid,
     _translation_peak,
 )
-from .elements import ShellElement
+from .elements import ShellElement, create_shell_element
 from .fracture import (
     DeletedElementRecord,
     ImpactDamageConfig,
@@ -3771,7 +3771,7 @@ def _verification_contact_panel(stiffener: bool = False) -> "FEModel":
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 1.0, 0.0)
     model.add_node(4, 0.0, 1.0, 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "soft", thickness=0.05))
+    model.add_element(1, create_shell_element(1, [1, 2, 3, 4], "soft", thickness=0.05))
     model.add_boundary_condition(
         BoundaryCondition(
             "restrain_shell_nonimpact_modes",
@@ -3803,8 +3803,8 @@ def _two_shell_contact_verification_panel() -> "FEModel":
         6: (2.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *xyz)
-    model.add_element(1, ShellElement(1, [1, 2, 5, 4], "soft", thickness=0.05))
-    model.add_element(2, ShellElement(2, [2, 3, 6, 5], "soft", thickness=0.05))
+    model.add_element(1, create_shell_element(1, [1, 2, 5, 4], "soft", thickness=0.05))
+    model.add_element(2, create_shell_element(2, [2, 3, 6, 5], "soft", thickness=0.05))
     return model
 
 

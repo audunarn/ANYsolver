@@ -341,6 +341,21 @@ def _batch_c_evaluate_local_responses(
                 batch.u_work,
                 bool(tangent),
             )
+            if np.any(batch.linear_corrections):
+                element_displacements = displacement_array[batch.dof_mappings]
+                correction_forces = np.einsum(
+                    "eij,ej->ei",
+                    batch.linear_corrections,
+                    element_displacements,
+                    optimize=True,
+                )
+                nonlinear_plan.force_values[batch.force_positions] += (
+                    correction_forces
+                )
+                if tangent:
+                    nonlinear_plan.tangent_values[batch.tangent_positions] += (
+                        batch.linear_corrections.reshape(len(batch.elements), -1)
+                    )
             nonlinear_plan.timings.shell_kernel_seconds += (
                 time.perf_counter() - kernel_start
             )

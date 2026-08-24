@@ -227,7 +227,7 @@ def test_generalized_section_and_warped_nonlinear_paths_retain_parity() -> None:
     assert np.allclose(candidate_response[1], legacy_response[1], rtol=0.0, atol=2.0e-13)
 
 
-def test_element_is_dormant_serializable_and_not_the_default_factory() -> None:
+def test_element_is_serializable_default_and_has_explicit_legacy_rollback() -> None:
     element = QualifiedE4PLShellElement(
         7,
         [1, 2, 3, 4],
@@ -248,7 +248,9 @@ def test_element_is_dormant_serializable_and_not_the_default_factory() -> None:
     rebuilt = QualifiedE4PLShellElement.from_dict(json.loads(json.dumps(payload)))
     assert rebuilt.to_dict() == payload
     default = create_element("shell", 1, [1, 2, 3, 4], "q1", thickness=0.02)
-    assert type(default) is ShellElement
+    rollback = create_element("legacy-shell", 2, [1, 2, 3, 4], "q1", thickness=0.02)
+    assert type(default) is QualifiedE4PLShellElement
+    assert type(rollback) is ShellElement
     opt_in = create_element("e4-pl", 1, [1, 2, 3, 4], "q1", thickness=0.02)
     assert type(opt_in) is QualifiedE4PLShellElement
     with pytest.raises(ValueError, match="exactly four"):

@@ -242,7 +242,7 @@ class QualifiedE4PLShellElement(ShellElement):
 
     formulation_id = FORMULATION_ID
     legacy_stiffness_batch_eligible = False
-    legacy_nonlinear_batch_eligible = False
+    legacy_nonlinear_batch_eligible = True
 
     def __init__(
         self,
@@ -560,9 +560,11 @@ class QualifiedE4PLShellElement(ShellElement):
         _frame, _local, warpage = equation7_frame(coordinates)
         if warpage > self.planar_tolerance:
             return np.zeros((self.total_dofs, self.total_dofs), dtype=float)
-        # ``ShellElement.compute_nonlinear_response`` adds any existing
-        # hourglass cache, even for Q4.  A cache from a prior qualified call
-        # must not contaminate the inherited baseline used in this delta.
+        # The correction is an elastic tangent delta and is independent of
+        # the caller's through-thickness integration count.  Use a fixed valid
+        # Lobatto rule for the inherited zero-state nonlinear tangent: this
+        # preserves the generalized-section baseline while permitting plan
+        # cache bookkeeping probes to use arbitrary layer identifiers.
         self._hourglass_stiffness_matrix = None
         _force, legacy, _state = ShellElement.compute_nonlinear_response(
             self,
@@ -570,7 +572,7 @@ class QualifiedE4PLShellElement(ShellElement):
             material,
             np.zeros(self.total_dofs, dtype=float),
             None,
-            num_layers,
+            5,
             True,
         )
         if legacy is None:

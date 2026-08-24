@@ -16,7 +16,7 @@ import numpy as np
 
 from .assembly import compute_stresses, solve_linear
 from .boundary import LoadCase
-from .elements import ShellElement
+from .elements import ShellElement, create_shell_element
 from .fe_core import FEModel
 
 
@@ -281,7 +281,12 @@ def build_cylindrical_shell_benchmark_model(config: Optional[CylinderBenchmarkCo
                 node_ids = [n0, n1, n2, n3]
             model.add_element(
                 element_id,
-                ShellElement(element_id, node_ids, material_name="steel", thickness=config.thickness),
+                create_shell_element(
+                    element_id,
+                    node_ids,
+                    material_name="steel",
+                    thickness=config.thickness,
+                ),
             )
             element_id += 1
 

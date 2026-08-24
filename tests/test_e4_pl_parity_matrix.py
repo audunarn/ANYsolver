@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from anysolver import QualifiedE4PLShellElement
-from anysolver.elements import ShellElement, create_element
+from anysolver.elements import LegacyShellElement, create_element
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +28,7 @@ def _public_shell_api() -> set[str]:
 
 def test_parity_matrix_classifies_every_public_shell_capability() -> None:
     matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
-    assert matrix["schema"] == "anysolver.s4.e4-pl-q1j-parity-matrix-v1"
+    assert matrix["schema"] == "anysolver.s4.e4-pl-q1l-parity-matrix-v2"
     assert set(matrix["public_api"]) == _public_shell_api()
     capabilities = matrix["capabilities"]
     assert len({row["id"] for row in capabilities}) == len(capabilities)
@@ -48,22 +48,25 @@ def test_parity_matrix_classifies_every_public_shell_capability() -> None:
         assert capability in required
 
 
-def test_open_parity_items_fail_closed_before_default_activation() -> None:
+def test_every_required_parity_item_is_closed_at_default_activation() -> None:
     matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
     open_markers = ("PENDING", "BLOCKED", "LEGACY_FALLBACK")
     open_required = [
         row for row in matrix["capabilities"]
         if row["required"] and any(marker in row["status"] for marker in open_markers)
     ]
-    assert {row["id"] for row in open_required} == {"factory_and_default_activation"}
+    assert open_required == []
     assert matrix["activation"] == {
-        "default_factory": "BLOCKED_UNTIL_ALL_REQUIRED_CAPABILITIES_CLOSE",
-        "legacy_shell_default": True,
+        "default_factory": "QUALIFIED_E4_PL_Q4",
+        "explicit_legacy_rollback": True,
+        "legacy_shell_default": False,
         "public_package_export": True,
         "qualified_element_factory_alias": True,
     }
     default = create_element("shell", 1, [1, 2, 3, 4], "steel")
-    assert type(default) is ShellElement
+    rollback = create_element("legacy-shell", 2, [1, 2, 3, 4], "steel")
+    assert type(default) is QualifiedE4PLShellElement
+    assert type(rollback) is LegacyShellElement
     assert QualifiedE4PLShellElement.__module__ == "anysolver.e4_pl_element"
 
 
@@ -74,7 +77,10 @@ def test_warped_and_performance_rows_are_closed_before_activation() -> None:
         "QUALIFIED_DIRECT_VARYING_FRAME_Q4"
     )
     assert by_id["batched_assembly_and_performance"]["status"] == (
-        "SHARED_GEOMETRY_COLD_AND_WARM_PARITY_TESTED"
+        "SHARED_GEOMETRY_COLD_WARM_AND_NONLINEAR_BATCH_PARITY_TESTED"
+    )
+    assert by_id["factory_and_default_activation"]["status"] == (
+        "ACTIVATED_QUALIFIED_E4_PL_Q4_WITH_EXPLICIT_LEGACY_ROLLBACK"
     )
 
 

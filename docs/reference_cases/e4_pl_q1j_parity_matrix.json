@@ -1,7 +1,8 @@
 {
   "activation": {
-    "default_factory": "BLOCKED_UNTIL_ALL_REQUIRED_CAPABILITIES_CLOSE",
-    "legacy_shell_default": true,
+    "default_factory": "QUALIFIED_E4_PL_Q4",
+    "explicit_legacy_rollback": true,
+    "legacy_shell_default": false,
     "public_package_export": true,
     "qualified_element_factory_alias": true
   },
@@ -22,9 +23,9 @@
     {"id": "contact_and_coupling", "required": true, "status": "INHERITED_WORKFLOW_PARITY_TESTED", "evidence": ["test_e4_pl_workflow_parity"]},
     {"id": "deletion_damage_and_restart_state", "required": true, "status": "INHERITED_ACTIVITY_AND_RESTART_WORKFLOW_TESTED", "evidence": ["test_e4_pl_workflow_parity"]},
     {"id": "serialization_and_restart_reconstruction", "required": true, "status": "LOSSLESS_DORMANT_ROUNDTRIP_TESTED", "evidence": ["test_e4_pl_dormant_element"]},
-    {"id": "batched_assembly_and_performance", "required": true, "status": "SHARED_GEOMETRY_COLD_AND_WARM_PARITY_TESTED", "evidence": ["e4_pl_element.py", "matrix_assembly.py", "vectorized_nonlinear.py", "test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "batched_assembly_and_performance", "required": true, "status": "SHARED_GEOMETRY_COLD_WARM_AND_NONLINEAR_BATCH_PARITY_TESTED", "evidence": ["e4_pl_element.py", "matrix_assembly.py", "nonlinear_performance.py", "nonlinear_performance_batch_b.py", "nonlinear_performance_batch_c.py", "vectorized_nonlinear.py", "test_e4_pl_dormant_element", "test_e4_pl_workflow_parity", "test_nonlinear_performance", "test_nonlinear_performance_batch_b", "test_nonlinear_performance_batch_c"]},
     {"id": "runtime_exact_class_name_dispatch", "required": true, "status": "CLOSED_ISINSTANCE_DISPATCH", "evidence": ["runtime.py", "test_cases.py", "test_e4_pl_parity_matrix"]},
-    {"id": "factory_and_default_activation", "required": true, "status": "BLOCKED_BY_OPEN_PARITY_ITEMS", "evidence": []}
+    {"id": "factory_and_default_activation", "required": true, "status": "ACTIVATED_QUALIFIED_E4_PL_Q4_WITH_EXPLICIT_LEGACY_ROLLBACK", "evidence": ["elements.py", "mesh_gen.py", "anystructure_fem_mode.py", "cylinder_benchmarks.py", "sesam_fem/importer.py", "test_e4_pl_default_activation"]}
   ],
   "legacy_type": "ShellElement",
   "public_api": {
@@ -48,10 +49,10 @@
     "to_dict": "QUALIFIED_OVERRIDE",
     "total_dofs": "INHERITED"
   },
-  "schema": "anysolver.s4.e4-pl-q1j-parity-matrix-v1",
+  "schema": "anysolver.s4.e4-pl-q1l-parity-matrix-v2",
   "scope": {
     "legacy_non_q4_topologies": "REMAIN_ON_LEGACY_SHELL_ELEMENT",
-    "production_changes": "DORMANT_Q4_IMPLEMENTATION_ONLY",
-    "q4_default_replacement": "NOT_AUTHORIZED"
+    "production_changes": "QUALIFIED_Q4_DEFAULT_ACTIVE",
+    "q4_default_replacement": "ACTIVATED_WITH_EXPLICIT_LEGACY_ROLLBACK"
   }
 }
