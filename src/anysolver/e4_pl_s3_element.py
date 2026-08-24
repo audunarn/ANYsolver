@@ -41,6 +41,7 @@ BUBBLE_OFFSET_D = 1.0e-4
 BUBBLE_CONVENTION = "hierarchical_rotation_relative_to_corner_average"
 QUADRATURE_ID = "dunavant_degree5_7point"
 DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
+MASS_MOMENT_ID = "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1"
 STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
 MINIMUM_OWNER_NORMAL_ALIGNMENT = 1.0e-8
 
@@ -89,12 +90,12 @@ PHYSICAL_EXTERNAL_INDICES = np.asarray(
 CAPABILITY_GAPS = frozenset(
     {
         "buckling",
-        "consistent_mass_and_dynamics",
         "contact_state",
         "geometric_stiffness",
         "global_recovery",
         "initial_fields",
         "material_nonlinearity",
+        "modal_and_transient_algebraic_dynamics",
         "nonlinear_geometry",
         "orthotropic_physical_recovery",
         "physical_director_reversal",
@@ -511,6 +512,30 @@ def _pl_operators(local: np.ndarray, k_d: float) -> tuple[np.ndarray, np.ndarray
     return constraint, gram, 0.5 * (condensed + condensed.T)
 
 
+def _analytic_mass_moments(area: float) -> tuple[np.ndarray, np.ndarray, float]:
+    """Return exact barycentric moments for ``(L1,L2,L3,b)``.
+
+    The stiffness rule is degree five, while ``b**2`` is degree six.  Dynamic
+    formulation identity therefore uses the closed-form triangle moments
+
+    ``integral(L_i L_j)``, ``integral(L_i b)``, and ``integral(b**2)``
+
+    with ``b = 27 L1 L2 L3``.  Keeping this helper independent of
+    :data:`TRIANGLE_QUADRATURE` prevents accidental under-integration.
+    """
+
+    made = float(area)
+    if not math.isfinite(made) or made <= 0.0:
+        raise ValueError("qualified S3 mass integration requires a positive finite area")
+    corner = (made / 12.0) * np.asarray(
+        ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
+        dtype=float,
+    )
+    corner_bubble = np.full(3, 3.0 * made / 20.0, dtype=float)
+    bubble = 81.0 * made / 280.0
+    return corner, corner_bubble, bubble
+
+
 class QualifiedE4PLS3ShellElement(ShellElement):
     """Opt-in three-node flat MITC3+ shell with three-mode PL completion."""
 
@@ -597,6 +622,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
 
     def capability_matrix(self) -> Dict[str, str]:
         return {
+            "consistent_mass": "PARITY_REPLACED",
             "linear_stiffness": "PARITY_REPLACED",
             "linear_internal_force": "PARITY_REPLACED",
             "local_physical_recovery": "PARITY_REPLACED",
@@ -613,6 +639,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "bubble_convention": BUBBLE_CONVENTION,
                 "quadrature_id": QUADRATURE_ID,
                 "dynamic_reduction_policy": DYNAMIC_REDUCTION_POLICY,
+                "mass_moment_id": MASS_MOMENT_ID,
                 "state_layout_id": STATE_LAYOUT_ID,
                 "reference_normal": (
                     None
@@ -636,6 +663,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError("serialized qualified S3 quadrature identity is incompatible")
         if data.get("dynamic_reduction_policy") != DYNAMIC_REDUCTION_POLICY:
             raise ValueError("serialized qualified S3 dynamic policy is incompatible")
+        if data.get("mass_moment_id") != MASS_MOMENT_ID:
+            raise ValueError("serialized qualified S3 mass moment identity is incompatible")
         if data.get("state_layout_id") != STATE_LAYOUT_ID:
             raise ValueError("serialized qualified S3 state layout is incompatible")
         if data.get("type") not in {cls.__name__, "e4-pl-s3", "qualified-s3"}:
@@ -932,7 +961,107 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         )
 
     def compute_mass_matrix(self, mesh: Any, material: Any) -> np.ndarray:
-        raise self._gap("consistent_mass_and_dynamics")
+        return np.asarray(self.compute_mass_components(mesh, material)["global"])
+
+    def _compute_mass_components(
+        self,
+        mesh: Any,
+        material: Any,
+        *,
+        enforce_positive_winding: bool,
+    ) -> Dict[str, Any]:
+        """Build the analytic nodal-plus-bubble mass and Guyan reduction."""
+
+        stiffness = self._compute_stiffness_components(
+            mesh,
+            material,
+            enforce_positive_winding=enforce_positive_winding,
+        )
+        local_nodes = np.asarray(stiffness["local_nodes"], dtype=float)
+        _jacobian_matrix, _inverse, determinant = _jacobian(local_nodes)
+        area = 0.5 * abs(float(determinant))
+        corner, corner_bubble, bubble = _analytic_mass_moments(area)
+
+        density = float(material.density)
+        mass_per_area = (
+            float(self.shell_section.mass_per_area)
+            if self.shell_section is not None
+            and self.shell_section.mass_per_area is not None
+            else density * float(self.thickness)
+        )
+        rotary_inertia_per_area = (
+            float(self.shell_section.rotary_inertia_per_area)
+            if self.shell_section is not None
+            and self.shell_section.rotary_inertia_per_area is not None
+            else density * float(self.thickness) ** 3 / 12.0
+        )
+        for label, value in (
+            ("mass_per_area", mass_per_area),
+            ("rotary_inertia_per_area", rotary_inertia_per_area),
+        ):
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"qualified S3 {label} must be finite and nonnegative")
+
+        full_local = np.zeros((20, 20), dtype=float)
+        for component in range(3):
+            indices = np.asarray(
+                [6 * node + component for node in range(3)], dtype=np.intp
+            )
+            full_local[np.ix_(indices, indices)] = mass_per_area * corner
+
+        rotation_moment = np.zeros((4, 4), dtype=float)
+        rotation_moment[:3, :3] = corner
+        rotation_moment[:3, 3] = corner_bubble
+        rotation_moment[3, :3] = corner_bubble
+        rotation_moment[3, 3] = bubble
+        for component, bubble_index in ((3, 18), (4, 19)):
+            indices = np.asarray(
+                [6 * node + component for node in range(3)] + [bubble_index],
+                dtype=np.intp,
+            )
+            full_local[np.ix_(indices, indices)] = (
+                rotary_inertia_per_area * rotation_moment
+            )
+
+        bubble_map_18 = np.zeros((2, 18), dtype=float)
+        bubble_map_18[:, PHYSICAL_EXTERNAL_INDICES] = np.asarray(
+            stiffness["bubble_map"], dtype=float
+        )
+        guyan = np.vstack((np.eye(18, dtype=float), bubble_map_18))
+        condensed_local = guyan.T @ full_local @ guyan
+        condensed_local = 0.5 * (condensed_local + condensed_local.T)
+        transform = self._local_dof_transform(np.asarray(stiffness["frame"], dtype=float))
+        global_mass = transform.T @ condensed_local @ transform
+        global_mass = 0.5 * (global_mass + global_mass.T)
+        self._mass_matrix = global_mass
+
+        return {
+            "area": area,
+            "bubble_map_18": bubble_map_18,
+            "condensed_local": condensed_local,
+            "corner_bubble_moment": corner_bubble,
+            "corner_moment": corner,
+            "full_local": full_local,
+            "global": global_mass,
+            "guyan": guyan,
+            "mass_moment_id": MASS_MOMENT_ID,
+            "mass_per_area": mass_per_area,
+            "rotary_inertia_per_area": rotary_inertia_per_area,
+            "bubble_moment": bubble,
+            "full_rank": _matrix_rank(full_local),
+            "condensed_rank": _matrix_rank(condensed_local),
+            "formulation_id": FORMULATION_ID,
+            "zero_drill_inertia": True,
+        }
+
+    def compute_mass_components(self, mesh: Any, material: Any) -> Dict[str, Any]:
+        """Return the admitted analytic mass and its Guyan audit blocks."""
+
+        return self._compute_mass_components(
+            mesh,
+            material,
+            enforce_positive_winding=True,
+        )
 
     def compute_geometric_stiffness_matrix(
         self, mesh: Any, material: Any, state: Optional[Any] = None
@@ -957,6 +1086,7 @@ __all__ = [
     "MITC3_PLUS_SOURCE_BYTES",
     "MITC3_PLUS_SOURCE_SHA256",
     "MITC3_PLUS_SOURCE_URL",
+    "MASS_MOMENT_ID",
     "MINIMUM_OWNER_NORMAL_ALIGNMENT",
     "PHYSICAL_EXTERNAL_INDICES",
     "QUADRATURE_ID",

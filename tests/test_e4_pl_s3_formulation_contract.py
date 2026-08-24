@@ -9,6 +9,7 @@ import pytest
 from anysolver.e4_pl_s3_element import (
     BUBBLE_OFFSET_D,
     FORMULATION_ID,
+    MASS_MOMENT_ID,
     MITC3_PLUS_SOURCE_BYTES,
     MITC3_PLUS_SOURCE_SHA256,
     QUADRATURE_ID,
@@ -83,6 +84,7 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
         "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
         "formulation_id": FORMULATION_ID,
         "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
+        "mass_moment_id": MASS_MOMENT_ID,
         "quadrature_id": "dunavant_degree5_7point",
         "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1",
     }

@@ -24,8 +24,11 @@
   },
   "dynamic_policy": {
     "bubble_mass_integration": "ANALYTIC_BARYCENTRIC_MOMENTS_THROUGH_DEGREE_6",
+    "bubble_moment": "81*A/280",
     "bubble_reduction": "GUYAN_USING_STATIC_BUBBLE_EQUILIBRIUM_MAP",
     "condensed_mass": "Gb_TRANSPOSE_M_FULL_Gb",
+    "corner_bubble_moment": "3*A/20",
+    "corner_corner_moment": "A/6_DIAGONAL_A/12_OFF_DIAGONAL",
     "drill_inertia": "ZERO_ALGEBRAIC_COORDINATE",
     "gb": "VERTICAL_STACK_IDENTITY_AND_MINUS_KAA_INVERSE_KAQ"
   },
@@ -233,6 +236,7 @@
     "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
     "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
     "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
+    "mass_moment_id": "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1",
     "quadrature_id": "dunavant_degree5_7point",
     "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
   },

@@ -18,6 +18,7 @@ from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import MatrixClass, factorize
 from .boundary import LoadCase
 from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
@@ -419,6 +420,11 @@ def solve_transient_newmark(
     ``alpha * M + beta * K``.
     """
     cancellation_safe_point(cancellation_token, "transient.start")
+    require_model_element_capabilities(
+        model,
+        "modal_and_transient_algebraic_dynamics",
+        context="linear transient analysis",
+    )
     model.apply_boundary_conditions()
     total_dofs = model.mesh.dof_manager.total_dofs
     base_load, base_load_info = assemble_load_vector(model, base_load_case)

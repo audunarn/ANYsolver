@@ -2993,6 +2993,13 @@ def solve_transient_sphere_impact(
     """Solve a limited rigid-sphere-to-shell impact transient."""
 
     cancellation_safe_point(cancellation_token, "sphere_impact.start")
+    from .element_capabilities import require_model_element_capabilities
+
+    require_model_element_capabilities(
+        model,
+        ("contact_state", "modal_and_transient_algebraic_dynamics", "nonlinear_geometry"),
+        context="sphere-impact analysis",
+    )
     config = _resolved_contact_config(model, sphere, contact_config)
     if fracture_config is not None and not isinstance(fracture_config, ImpactFractureConfig):
         raise TypeError("fracture_config must be an ImpactFractureConfig or None")

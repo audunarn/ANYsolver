@@ -578,10 +578,11 @@ def test_every_test_file_has_one_burn_in_lane_and_heavy_files_are_serialized() -
     assert "tests/test_fe_solver_shell_verification.py" in lanes["functional"]
     assert "tests/test_nonlinear_performance.py" in lanes["performance"]
     assert "tests/test_e4_pl_q1v_contract.py" in lanes["extended"]
+    assert "tests/test_e4_pl_s3_opt_in.py" in lanes["additive"]
     assert all("performance" not in Path(path).name for path in lanes["functional"])
 
 
-def test_ci_lane_is_exactly_quick_plus_functional(
+def test_ci_lane_is_exactly_quick_plus_functional_plus_additive(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     gate = _gate_module()
@@ -590,6 +591,7 @@ def test_ci_lane_is_exactly_quick_plus_functional(
         "functional": ["tests/functional.py"],
         "performance": ["tests/performance.py"],
         "extended": ["tests/extended.py"],
+        "additive": ["tests/additive.py"],
     }
     observed: dict[str, object] = {}
     monkeypatch.setattr(gate, "inventory", lambda: lanes)
@@ -603,7 +605,7 @@ def test_ci_lane_is_exactly_quick_plus_functional(
     assert gate.main(["ci"]) == 0
     assert observed == {
         "lane": "ci",
-        "selected": ["tests/quick.py", "tests/functional.py"],
+        "selected": ["tests/quick.py", "tests/functional.py", "tests/additive.py"],
     }
 
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
@@ -1112,7 +1114,9 @@ def test_pytest_source_metadata_overlay_binds_the_frozen_source_graph(
         "ANYgeometry": "0.2.4",
         "ANYmaterial": "0.1.1",
         "ANYmesher": "0.2.5",
-        "ANYsolver": "0.3.0",
+        "ANYsolver": gate.tomllib.loads(
+            (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        )["project"]["version"],
     }
     environment = gate._pytest_environment(
         roots=roots,

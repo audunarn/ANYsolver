@@ -25,6 +25,7 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
+from .element_capabilities import ElementCapabilityError
 from .outcomes import (
     SolveDisposition,
     SolveOutcome,
@@ -619,6 +620,7 @@ __all__ = [
     "PressurePatch",
     "TransientConfig",
     "TransientResult",
+    "ElementCapabilityError",
     "assemble_pressure_patch_load_vector",
     "solve_transient_newmark",
     "NonlinearTransientConfig",

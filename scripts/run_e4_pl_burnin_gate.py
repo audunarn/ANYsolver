@@ -80,6 +80,10 @@ EXTENDED_EXACT = {
     "test_s4_drill_constraint_derivation.py",
 }
 
+# Successor element-family tests must run in pull requests without changing
+# the immutable Q1M gate inventories recorded before those files existed.
+ADDITIVE_CI_PREFIXES = ("test_e4_pl_s3_",)
+
 PACKAGE_CHECKS = (
     "BUILD_LOCAL_WHEELS_WITHOUT_ISOLATION",
     "INSTALL_FRESH_TARGET_WITHOUT_DEPENDENCY_RESOLUTION",
@@ -126,11 +130,16 @@ def classify_test(path: Path) -> str:
         return "performance"
     if name in EXTENDED_EXACT or name.startswith(EXTENDED_PREFIXES):
         return "extended"
+    if name.startswith(ADDITIVE_CI_PREFIXES):
+        return "additive"
     return "functional"
 
 
 def inventory() -> dict[str, list[str]]:
-    result = {lane: [] for lane in ("quick", "functional", "performance", "extended")}
+    result = {
+        lane: []
+        for lane in ("quick", "functional", "performance", "extended", "additive")
+    }
     for path in sorted(TESTS.glob("test_*.py")):
         result[classify_test(path)].append(path.relative_to(ROOT).as_posix())
     return result
@@ -1714,8 +1723,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.lane == "ci":
         # Pull requests exercise the non-resource production inventory while
         # immutable historical studies and serialized performance stay out of
-        # the merge prerequisite.
-        selected = [*lanes["quick"], *lanes["functional"]]
+        # the merge prerequisite. Additive successor tests run here without
+        # mutating Q1M's frozen gate inventories.
+        selected = [*lanes["quick"], *lanes["functional"], *lanes["additive"]]
     else:
         selected = lanes[args.lane]
     if not selected:

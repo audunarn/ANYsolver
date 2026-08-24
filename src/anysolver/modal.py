@@ -13,6 +13,7 @@ from .assembly import build_constraint_transformation, build_reduced_rigid_body_
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import ResourceConfig
@@ -170,6 +171,11 @@ def solve_free_vibration(
     cancellation_safe_point(cancellation_token, "modal.start")
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
+    require_model_element_capabilities(
+        model,
+        "modal_and_transient_algebraic_dynamics",
+        context="free-vibration analysis",
+    )
 
     model.apply_boundary_conditions()
     if session is None:

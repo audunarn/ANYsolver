@@ -401,6 +401,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "bubble_convention",
         "quadrature_id",
         "dynamic_reduction_policy",
+        "mass_moment_id",
         "state_layout_id",
     ):
         historical.pop(key)
@@ -414,6 +415,13 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     missing.pop("formulation_id")
     with pytest.raises(ValueError, match="missing formulation_id"):
         shell_element_from_dict(missing)
+    missing_mass_identity = dict(payload)
+    missing_mass_identity.pop("mass_moment_id")
+    with pytest.raises(ValueError, match="mass moment identity"):
+        shell_element_from_dict(missing_mass_identity)
+    mutated_mass = dict(payload, mass_moment_id="UNDERINTEGRATED_DEGREE5")
+    with pytest.raises(ValueError, match="mass moment identity"):
+        shell_element_from_dict(mutated_mass)
 
 
 def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> None:
@@ -458,8 +466,9 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
         element.capability_matrix()[name] == "PARITY_GAP"
         for name in CAPABILITY_GAPS
     )
-    with pytest.raises(NotImplementedError, match="consistent_mass_and_dynamics"):
-        element.compute_mass_matrix(_mesh(nodes), _material())
+    mass = element.compute_mass_matrix(_mesh(nodes), _material())
+    assert mass.shape == (18, 18)
+    assert np.all(np.isfinite(mass))
     with pytest.raises(NotImplementedError, match="geometric_stiffness"):
         element.compute_geometric_stiffness_matrix(_mesh(nodes), _material())
     with pytest.raises(NotImplementedError, match="nonlinear_geometry"):
