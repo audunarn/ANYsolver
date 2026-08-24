@@ -511,6 +511,31 @@ def test_every_test_file_has_one_burn_in_lane_and_heavy_files_are_serialized() -
     assert all("performance" not in Path(path).name for path in lanes["functional"])
 
 
+def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gate = _gate_module()
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "_pytest_environment", lambda: {"Q1M_TEST": "1"})
+    observed: dict[str, object] = {}
+
+    def fake_run(command, *, cwd, env, check):
+        observed.update(command=list(command), cwd=cwd, env=env, check=check)
+        basetemp_arg = next(item for item in command if item.startswith("--basetemp="))
+        basetemp = Path(basetemp_arg.split("=", 1)[1])
+        assert basetemp.parent == tmp_path / ".pytest_tmp_q1m_runtime"
+        (basetemp / "nested").mkdir(parents=True)
+        (basetemp / "nested" / "probe.txt").write_text("probe\n", encoding="utf-8")
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+    assert gate._run_pytest_lane("functional", ["tests/test_probe.py"]) == 0
+    assert observed["cwd"] == tmp_path
+    assert observed["env"] == {"Q1M_TEST": "1"}
+    assert observed["check"] is False
+    assert not (tmp_path / ".pytest_tmp_q1m_runtime").exists()
+
+
 def test_package_lane_is_isolated_and_covers_the_declared_wheel_smoke() -> None:
     gate = _gate_module()
     assert gate.PACKAGE_CHECKS == (
@@ -934,7 +959,12 @@ def test_status_and_independent_review_bind_exact_canonical_inputs(tmp_path: Pat
     review_path = tmp_path / "review.json"
     review_path.write_bytes(gate.canonical_json_bytes(review))
     with pytest.raises(gate.EvidenceError, match="outside the repository"):
-        gate.validate_adjudication_files(gate_path, status_path, review_path)
+        gate.validate_adjudication_files(
+            gate_path,
+            status_path,
+            review_path,
+            repository_root=ROOT / "docs",
+        )
     gate.validate_adjudication_files(
         gate_path, status_path, review_path, repository_root=None
     )

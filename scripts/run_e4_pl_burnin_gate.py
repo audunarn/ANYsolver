@@ -1055,6 +1055,60 @@ def _pytest_environment() -> dict[str, str]:
     return environment
 
 
+def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
+    """Run one lane with an isolated workspace-local pytest temp root.
+
+    The user-global pytest root can be owned by another Windows security
+    context.  A fresh ignored directory under this worktree avoids that
+    cross-context ACL dependency while leaving the registered outer command
+    unchanged.  Cleanup is fail-closed and never follows a substituted link.
+    """
+
+    if lane not in {"quick", "functional", "performance", "extended"}:
+        raise EvidenceError(f"pytest lane does not support basetemp isolation: {lane}")
+    parent = ROOT / ".pytest_tmp_q1m_runtime"
+    if parent.exists() and parent.is_symlink():
+        raise EvidenceError("Q1M pytest temp parent must not be a symlink")
+    parent.mkdir(exist_ok=True)
+    if parent.resolve().parent != ROOT.resolve():
+        raise EvidenceError("Q1M pytest temp parent escaped the repository")
+    basetemp = Path(tempfile.mkdtemp(prefix=f"{lane}-", dir=parent))
+    if basetemp.resolve().parent != parent.resolve():
+        raise EvidenceError("Q1M pytest basetemp escaped its parent")
+
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-q",
+                f"--basetemp={basetemp}",
+                *selected,
+            ],
+            cwd=ROOT,
+            env=_pytest_environment(),
+            check=False,
+        )
+        return int(completed.returncode)
+    finally:
+        if os.path.lexists(basetemp):
+            if basetemp.is_symlink() or not basetemp.is_dir():
+                basetemp.unlink()
+            else:
+                def make_writable_and_retry(function, path, _excinfo):
+                    os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+                    function(path)
+
+                shutil.rmtree(basetemp, onexc=make_writable_and_retry)
+        try:
+            parent.rmdir()
+        except OSError:
+            # Another explicitly launched non-resource lane may share only the
+            # ignored parent; each randomized child remains isolated.
+            pass
+
+
 def _tracked_head_identity(repository: Path) -> dict[str, str]:
     """Return HEAD authority after rejecting tracked/index modifications.
 
@@ -1527,14 +1581,9 @@ def main(argv: list[str] | None = None) -> int:
     selected = lanes[args.lane]
     if not selected:
         raise SystemExit(f"burn-in lane {args.lane!r} is empty")
-    completed = subprocess.run(
-        [sys.executable, "-m", "pytest", "-q", *selected],
-        cwd=ROOT,
-        env=_pytest_environment(),
-        check=False,
-    )
-    if completed.returncode:
-        return int(completed.returncode)
+    returncode = _run_pytest_lane(args.lane, selected)
+    if returncode:
+        return returncode
     if args.lane == "performance":
         from measure_e4_pl_q1m_baseline import collect_performance_observation
 
