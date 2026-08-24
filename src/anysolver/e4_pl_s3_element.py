@@ -1,0 +1,969 @@
+"""Opt-in flat MITC3+ companion for the qualified E4-PL Q4 shell.
+
+This module implements only the frozen *linear* local formulation.  It does
+not inherit the legacy TRI3 shear, drilling, nonlinear, dynamic, buckling or
+recovery operators.  Capabilities that still need formulation-native work
+fail closed; see :data:`CAPABILITY_GAPS`.
+
+The assumed-shear equations are Eqs. (7), (13), (15)--(17) of Lee, Lee and
+Bathe, *Computers & Structures* 138 (2014) 12--23.  The public author copy
+used for the equation map is bound below by byte count and SHA-256.
+"""
+
+from __future__ import annotations
+
+import math
+from typing import Any, Dict, Mapping, Optional, Sequence
+
+import numpy as np
+
+from .elements import ShellElement, _shell_material_matrices
+from .materials import is_isotropic_material
+
+
+FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+FORMULATION_SCHEMA = "anysolver.e4_pl_s3.linear.v1"
+MITC3_PLUS_SOURCE_URL = (
+    "https://web.mit.edu/kjb/www/Principal_Publications/"
+    "The_MITC3%2B_shell_element_and_its_performance.pdf"
+)
+MITC3_PLUS_SOURCE_BYTES = 1_146_142
+MITC3_PLUS_SOURCE_SHA256 = (
+    "182F52217277B55E17627B8C41A3A4626ED91ED5378399088E0EA1748AD93EF0"
+)
+MITC3_PLUS_EQUATION_MAP = {
+    "bubble_interpolation": "equations_6_to_8",
+    "internal_tying_directions": "equations_12_to_15",
+    "assumed_covariant_shear": "equations_16_and_17",
+}
+
+BUBBLE_OFFSET_D = 1.0e-4
+BUBBLE_CONVENTION = "hierarchical_rotation_relative_to_corner_average"
+QUADRATURE_ID = "dunavant_degree5_7point"
+DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
+STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
+MINIMUM_OWNER_NORMAL_ALIGNMENT = 1.0e-8
+
+TYING_POINTS = {
+    "A": (1.0 / 6.0, 2.0 / 3.0),
+    "B": (2.0 / 3.0, 1.0 / 6.0),
+    "C": (1.0 / 6.0, 1.0 / 6.0),
+    "D": (1.0 / 3.0 + BUBBLE_OFFSET_D, 1.0 / 3.0 - 2.0 * BUBBLE_OFFSET_D),
+    "E": (1.0 / 3.0 - 2.0 * BUBBLE_OFFSET_D, 1.0 / 3.0 + BUBBLE_OFFSET_D),
+    "F": (1.0 / 3.0 + BUBBLE_OFFSET_D, 1.0 / 3.0 + BUBBLE_OFFSET_D),
+}
+
+_DUNAVANT_A1 = 0.059715871789770
+_DUNAVANT_B1 = 0.470142064105115
+_DUNAVANT_A2 = 0.797426985353087
+_DUNAVANT_B2 = 0.101286507323456
+TRIANGLE_QUADRATURE = tuple(
+    (r, s, weight)
+    for (r, s), weight in zip(
+        (
+            (1.0 / 3.0, 1.0 / 3.0),
+            (_DUNAVANT_B1, _DUNAVANT_B1),
+            (_DUNAVANT_A1, _DUNAVANT_B1),
+            (_DUNAVANT_B1, _DUNAVANT_A1),
+            (_DUNAVANT_B2, _DUNAVANT_B2),
+            (_DUNAVANT_A2, _DUNAVANT_B2),
+            (_DUNAVANT_B2, _DUNAVANT_A2),
+        ),
+        (
+            0.1125,
+            0.066197076394253,
+            0.066197076394253,
+            0.066197076394253,
+            0.062969590272414,
+            0.062969590272414,
+            0.062969590272414,
+        ),
+    )
+)
+
+PHYSICAL_EXTERNAL_INDICES = np.asarray(
+    [6 * node + component for node in range(3) for component in range(5)],
+    dtype=np.intp,
+)
+
+CAPABILITY_GAPS = frozenset(
+    {
+        "buckling",
+        "consistent_mass_and_dynamics",
+        "contact_state",
+        "geometric_stiffness",
+        "global_recovery",
+        "initial_fields",
+        "material_nonlinearity",
+        "nonlinear_geometry",
+        "orthotropic_physical_recovery",
+        "physical_director_reversal",
+        "restart_history",
+    }
+)
+
+
+def _normalize(vector: np.ndarray, label: str) -> np.ndarray:
+    norm = float(np.linalg.norm(vector))
+    if not math.isfinite(norm) or norm <= np.finfo(float).tiny:
+        raise ValueError(f"cannot normalize S3 {label}")
+    return vector / norm
+
+
+def _matrix_rank(matrix: np.ndarray) -> int:
+    equilibrated = _equilibrated_symmetric(matrix)
+    singular = np.linalg.svd(equilibrated, compute_uv=False)
+    if singular.size == 0 or singular[0] == 0.0:
+        return 0
+    tolerance = 4096.0 * max(matrix.shape) * np.finfo(float).eps * singular[0]
+    return int(np.count_nonzero(singular > tolerance))
+
+
+def _inertia(matrix: np.ndarray) -> tuple[int, int, int]:
+    equilibrated = _equilibrated_symmetric(matrix)
+    eigenvalues = np.linalg.eigvalsh(equilibrated)
+    scale = max(float(np.max(np.abs(eigenvalues))), 1.0)
+    tolerance = 4096.0 * max(matrix.shape) * np.finfo(float).eps * scale
+    return (
+        int(np.count_nonzero(eigenvalues > tolerance)),
+        int(np.count_nonzero(eigenvalues < -tolerance)),
+        int(np.count_nonzero(np.abs(eigenvalues) <= tolerance)),
+    )
+
+
+def _rectangular_rank(matrix: np.ndarray) -> int:
+    """Rank of an already nondimensional kinematic/coupling operator."""
+
+    made = np.asarray(matrix, dtype=float)
+    if made.ndim != 2 or not np.all(np.isfinite(made)):
+        raise ValueError("S3 structural-rank operator must be a finite matrix")
+    singular = np.linalg.svd(made, compute_uv=False)
+    if singular.size == 0 or singular[0] == 0.0:
+        return 0
+    tolerance = 4096.0 * max(made.shape) * np.finfo(float).eps * singular[0]
+    return int(np.count_nonzero(singular > tolerance))
+
+
+def _structural_rank_certificate(
+    operators: Sequence[np.ndarray],
+    constraint: np.ndarray,
+    characteristic_length: float,
+) -> Dict[str, Any]:
+    """Certify staged ranks from the dimensionless kinematic subspaces.
+
+    For a positive section and positive quadrature, ``rank(K)=rank(B)``.
+    Working with B avoids declaring the legitimate ``(t/L)^2`` separation of
+    membrane and bending energy to be a zero mode.  The condensed physical
+    range is the part of the external operator outside the two bubble columns;
+    PL rank addition is then checked on that quotient directly.
+    """
+
+    length = float(characteristic_length)
+    if not math.isfinite(length) or length <= 0.0:
+        raise ValueError("S3 characteristic length must be finite and positive")
+    column_scale_17 = np.ones(17, dtype=float)
+    for node in range(3):
+        column_scale_17[5 * node : 5 * node + 3] = length
+    row_scale = np.asarray((1.0, 1.0, 1.0, length, length, length, 1.0, 1.0))
+    made = np.vstack(
+        [row_scale[:, None] * np.asarray(item) * column_scale_17[None, :] for item in operators]
+    )
+    external = made[:, :15]
+    bubble = made[:, 15:]
+    bubble_solution, *_ = np.linalg.lstsq(bubble, external, rcond=None)
+    condensed = external - bubble @ bubble_solution
+
+    embedded = np.zeros((condensed.shape[0], 18), dtype=float)
+    embedded[:, PHYSICAL_EXTERNAL_INDICES] = condensed
+    column_scale_18 = np.ones(18, dtype=float)
+    for node in range(3):
+        column_scale_18[6 * node : 6 * node + 3] = length
+    pl_operator = np.asarray(constraint, dtype=float) * column_scale_18[None, :]
+    total_operator = np.vstack((embedded, pl_operator))
+
+    uncondensed_20 = np.zeros((made.shape[0], 20), dtype=float)
+    combined = np.concatenate((PHYSICAL_EXTERNAL_INDICES, np.asarray((18, 19))))
+    uncondensed_20[:, combined] = made
+    pl_20 = np.zeros((3, 20), dtype=float)
+    pl_20[:, :18] = pl_operator
+    positive_saddle_rank = _rectangular_rank(np.vstack((uncondensed_20, pl_20)))
+    nullity = 20 - positive_saddle_rank
+    return {
+        "uncondensed_physical_rank": _rectangular_rank(made),
+        "bubble_rank": _rectangular_rank(bubble),
+        "condensed_physical_rank": _rectangular_rank(condensed),
+        "embedded_physical_rank": _rectangular_rank(embedded),
+        "pl_rank": _rectangular_rank(pl_operator),
+        "total_rank": _rectangular_rank(total_operator),
+        "saddle_rank": positive_saddle_rank + 3,
+        "saddle_inertia": (positive_saddle_rank, 3, nullity),
+    }
+
+
+def _equilibrated_symmetric(matrix: np.ndarray) -> np.ndarray:
+    """Return a unit- and DOF-scaled congruence for rank/inertia diagnostics.
+
+    Raw shell matrices mix translational, rotational, bubble, and multiplier
+    coordinates and span membrane/bending scales.  A raw SVD therefore changes
+    its reported rank under passive unit conversion.  Positive diagonal energy
+    is the natural congruence scale; the row maximum is a fail-closed fallback
+    for an indefinite saddle coordinate whose diagonal is exactly zero.
+    """
+
+    made = np.asarray(matrix, dtype=float)
+    if made.ndim != 2 or made.shape[0] != made.shape[1]:
+        raise ValueError("S3 rank diagnostics require a square matrix")
+    if not np.all(np.isfinite(made)):
+        raise ValueError("S3 rank diagnostics require finite entries")
+    symmetric = 0.5 * (made + made.T)
+    equilibrated = symmetric.copy()
+    # Symmetric Ruiz max-norm equilibration also balances the q/tau coupling
+    # of the indefinite PL saddle, where diagonal-only Jacobi scaling leaves
+    # a dimensioned off-diagonal block many orders larger than unity.
+    for _iteration in range(32):
+        row_scale = np.max(np.abs(equilibrated), axis=1)
+        active = row_scale > 0.0
+        scaling = np.ones_like(row_scale)
+        scaling[active] = 1.0 / np.sqrt(row_scale[active])
+        equilibrated = scaling[:, None] * equilibrated * scaling[None, :]
+    return 0.5 * (equilibrated + equilibrated.T)
+
+
+def triangle_frame(
+    nodes: Sequence[Sequence[float]],
+    reference_normal: Optional[Sequence[float]] = None,
+) -> tuple[np.ndarray, np.ndarray, Dict[str, float]]:
+    """Return the numbered flat-triangle frame, local nodes and quality data."""
+
+    coordinates = np.asarray(nodes, dtype=float)
+    if coordinates.shape != (3, 3) or not np.all(np.isfinite(coordinates)):
+        raise ValueError("qualified S3 nodes must be a finite 3x3 array")
+    edge_r = coordinates[1] - coordinates[0]
+    edge_s = coordinates[2] - coordinates[0]
+    normal_raw = np.cross(edge_r, edge_s)
+    twice_area = float(np.linalg.norm(normal_raw))
+    lengths = np.asarray(
+        (
+            np.linalg.norm(coordinates[1] - coordinates[0]),
+            np.linalg.norm(coordinates[2] - coordinates[1]),
+            np.linalg.norm(coordinates[0] - coordinates[2]),
+        ),
+        dtype=float,
+    )
+    max_edge = float(np.max(lengths))
+    min_edge = float(np.min(lengths))
+    if not math.isfinite(max_edge) or max_edge <= 0.0 or min_edge <= 0.0:
+        raise ValueError("qualified S3 requires three distinct nodes")
+    normalized_twice_area = twice_area / (max_edge * max_edge)
+    minimum_area = max(64.0 * np.finfo(float).eps, 1.0e-14)
+    if not math.isfinite(normalized_twice_area) or normalized_twice_area <= minimum_area:
+        raise ValueError("qualified S3 has a zero or near-zero signed area")
+
+    e1 = _normalize(edge_r, "first edge")
+    e3 = _normalize(normal_raw, "normal")
+    connectivity_sign = 1.0
+    reference_alignment = 1.0
+    if reference_normal is not None:
+        supplied = np.asarray(reference_normal, dtype=float).reshape(-1)
+        if supplied.size != 3 or not np.all(np.isfinite(supplied)):
+            raise ValueError("qualified S3 reference_normal must be a finite 3-vector")
+        supplied = _normalize(supplied, "reference normal")
+        reference_alignment = float(np.dot(e3, supplied))
+        if abs(reference_alignment) <= MINIMUM_OWNER_NORMAL_ALIGNMENT:
+            raise ValueError("qualified S3 reference_normal is tangential to the facet")
+        if reference_alignment < 0.0:
+            e3 = -e3
+            connectivity_sign = -1.0
+        reference_alignment = abs(reference_alignment)
+    e2 = _normalize(np.cross(e3, e1), "second tangent")
+    e1 = _normalize(np.cross(e2, e3), "renormalized first tangent")
+    frame = np.column_stack((e1, e2, e3))
+    local = (coordinates - coordinates[0]) @ frame[:, :2]
+
+    cosines = np.empty(3, dtype=float)
+    for index in range(3):
+        left = coordinates[(index + 1) % 3] - coordinates[index]
+        right = coordinates[(index - 1) % 3] - coordinates[index]
+        cosines[index] = float(
+            np.clip(np.dot(left, right) / (np.linalg.norm(left) * np.linalg.norm(right)), -1.0, 1.0)
+        )
+    angles = np.degrees(np.arccos(cosines))
+    corner_scaled_jacobian = float(np.min(np.sin(np.radians(angles))))
+    normalized_area = float(2.0 * math.sqrt(3.0) * twice_area / np.dot(lengths, lengths))
+    quality = {
+        "area": 0.5 * twice_area,
+        "normalized_twice_area": normalized_twice_area,
+        "minimum_angle_deg": float(np.min(angles)),
+        "maximum_angle_deg": float(np.max(angles)),
+        "edge_ratio": max_edge / min_edge,
+        "minimum_scaled_jacobian": corner_scaled_jacobian,
+        "normalized_area": normalized_area,
+        "connectivity_sign": connectivity_sign,
+        "reference_normal_alignment": reference_alignment,
+    }
+    return frame, local, quality
+
+
+def _require_admitted_quality(
+    quality: Mapping[str, float], *, enforce_positive_winding: bool = True
+) -> None:
+    failures = []
+    if enforce_positive_winding and quality["connectivity_sign"] <= 0.0:
+        failures.append("connectivity winding opposes the authoritative owner normal")
+    if quality["minimum_angle_deg"] < 30.0 - 1.0e-12:
+        failures.append("minimum angle is below 30 degrees")
+    if quality["maximum_angle_deg"] > 150.0 + 1.0e-12:
+        failures.append("maximum angle exceeds 150 degrees")
+    if quality["edge_ratio"] > 4.0 + 1.0e-12:
+        failures.append("edge ratio exceeds 4.0")
+    if quality["minimum_scaled_jacobian"] < 0.20 - 1.0e-12:
+        failures.append("minimum scaled Jacobian is below 0.20")
+    if quality["normalized_area"] < 0.60 - 1.0e-12:
+        failures.append("normalized area is below 0.60")
+    if failures:
+        raise ValueError("qualified S3 quality admission failed: " + "; ".join(failures))
+
+
+def invariant_drilling_scale(membrane_matrix: np.ndarray) -> float:
+    """Return the frozen basis-invariant membrane shear scale ``k_D``."""
+
+    membrane = np.asarray(membrane_matrix, dtype=float)
+    if membrane.shape != (3, 3) or not np.all(np.isfinite(membrane)):
+        raise ValueError("S3 membrane matrix A must be a finite 3x3 matrix")
+    membrane = 0.5 * (membrane + membrane.T)
+    membrane_eigenvalues = np.linalg.eigvalsh(membrane)
+    if float(membrane_eigenvalues[0]) <= 0.0:
+        raise ValueError("S3 membrane matrix A must be positive definite")
+    projector = np.asarray(((1.0, 0.0), (-1.0, 0.0), (0.0, 1.0)), dtype=float)
+    restricted = projector.T @ membrane @ projector
+    inverse_metric_sqrt = np.diag((1.0 / math.sqrt(2.0), math.sqrt(2.0)))
+    canonical = inverse_metric_sqrt @ restricted @ inverse_metric_sqrt
+    value = 0.5 * float(np.linalg.eigvalsh(0.5 * (canonical + canonical.T))[0])
+    if not math.isfinite(value) or value <= 0.0:
+        raise ValueError("S3 invariant drilling scale must be finite and positive")
+    return value
+
+
+def _is_isotropic_engineering_matrix(matrix: np.ndarray) -> bool:
+    values = np.asarray(matrix, dtype=float)
+    if values.shape != (3, 3):
+        return False
+    scale = max(float(np.linalg.norm(values, ord=np.inf)), 1.0)
+    tolerance = 1.0e-10 * scale
+    target = np.asarray(
+        (
+            (values[0, 0], values[0, 1], 0.0),
+            (values[0, 1], values[0, 0], 0.0),
+            (0.0, 0.0, 0.5 * (values[0, 0] - values[0, 1])),
+        ),
+        dtype=float,
+    )
+    return bool(np.linalg.norm(values - target, ord=np.inf) <= tolerance)
+
+
+def _is_rotation_invariant_section(section: Any) -> bool:
+    if not all(
+        _is_isotropic_engineering_matrix(matrix)
+        for matrix in (section.A, section.B, section.D)
+    ):
+        return False
+    shear = np.asarray(section.As, dtype=float)
+    scale = max(float(np.linalg.norm(shear, ord=np.inf)), 1.0)
+    target = float(np.trace(shear) / 2.0) * np.eye(2)
+    return bool(np.linalg.norm(shear - target, ord=np.inf) <= 1.0e-10 * scale)
+
+
+def _reference_fields(r: float, s: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float, float]:
+    shape = np.asarray((1.0 - r - s, r, s), dtype=float)
+    derivative_r = np.asarray((-1.0, 1.0, 0.0), dtype=float)
+    derivative_s = np.asarray((-1.0, 0.0, 1.0), dtype=float)
+    bubble = 27.0 * r * s * (1.0 - r - s)
+    bubble_r = 27.0 * s * (1.0 - 2.0 * r - s)
+    bubble_s = 27.0 * r * (1.0 - r - 2.0 * s)
+    return shape, derivative_r, derivative_s, bubble, bubble_r, bubble_s
+
+
+def _jacobian(local: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
+    jacobian = np.asarray(
+        (
+            (local[1, 0] - local[0, 0], local[1, 1] - local[0, 1]),
+            (local[2, 0] - local[0, 0], local[2, 1] - local[0, 1]),
+        ),
+        dtype=float,
+    )
+    determinant = float(np.linalg.det(jacobian))
+    if not math.isfinite(determinant) or abs(determinant) <= np.finfo(float).tiny:
+        raise ValueError("qualified S3 local Jacobian must be nonzero")
+    return jacobian, np.linalg.inv(jacobian), determinant
+
+
+def _compatible_kinematics(
+    local: np.ndarray,
+    r: float,
+    s: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    shape, derivative_r, derivative_s, bubble, bubble_r, bubble_s = _reference_fields(r, s)
+    _jac, inverse, _determinant = _jacobian(local)
+    derivative_x = inverse[0, 0] * derivative_r + inverse[0, 1] * derivative_s
+    derivative_y = inverse[1, 0] * derivative_r + inverse[1, 1] * derivative_s
+    bubble_x = inverse[0, 0] * bubble_r + inverse[0, 1] * bubble_s
+    bubble_y = inverse[1, 0] * bubble_r + inverse[1, 1] * bubble_s
+
+    membrane = np.zeros((3, 17), dtype=float)
+    bending = np.zeros((3, 17), dtype=float)
+    shear = np.zeros((2, 17), dtype=float)
+    for node in range(3):
+        base = 5 * node
+        membrane[0, base] = derivative_x[node]
+        membrane[1, base + 1] = derivative_y[node]
+        membrane[2, base] = derivative_y[node]
+        membrane[2, base + 1] = derivative_x[node]
+        bending[0, base + 4] = derivative_x[node]
+        bending[1, base + 3] = -derivative_y[node]
+        bending[2, base + 4] = derivative_y[node]
+        bending[2, base + 3] = -derivative_x[node]
+        shear[0, base + 2] = derivative_x[node]
+        shear[0, base + 4] = shape[node]
+        shear[1, base + 2] = derivative_y[node]
+        shear[1, base + 3] = -shape[node]
+
+    # Hierarchical internal coordinates are theta_bubble minus the mean corner
+    # rotation, making the published f_i=L_i-b/3, f_4=b interpolation equal
+    # to sum(L_i theta_i) + b alpha.
+    bending[0, 16] = bubble_x
+    bending[1, 15] = -bubble_y
+    bending[2, 16] = bubble_y
+    bending[2, 15] = -bubble_x
+    shear[0, 16] = bubble
+    shear[1, 15] = -bubble
+    return membrane, bending, shear
+
+
+def _covariant_shear(local: np.ndarray, point: tuple[float, float]) -> np.ndarray:
+    jacobian, _inverse, _determinant = _jacobian(local)
+    _membrane, _bending, cartesian = _compatible_kinematics(local, *point)
+    return jacobian @ cartesian
+
+
+def _assumed_shear_samples(local: np.ndarray) -> Dict[str, np.ndarray]:
+    return {name: _covariant_shear(local, point) for name, point in TYING_POINTS.items()}
+
+
+def _assumed_shear(
+    local: np.ndarray,
+    r: float,
+    s: float,
+    samples: Optional[Mapping[str, np.ndarray]] = None,
+) -> np.ndarray:
+    if samples is None:
+        samples = _assumed_shear_samples(local)
+    constant_r = (
+        (2.0 / 3.0) * (samples["B"][0] - 0.5 * samples["B"][1])
+        + (1.0 / 3.0) * (samples["C"][0] + samples["C"][1])
+    )
+    constant_s = (
+        (2.0 / 3.0) * (samples["A"][1] - 0.5 * samples["A"][0])
+        + (1.0 / 3.0) * (samples["C"][0] + samples["C"][1])
+    )
+    twisting = (
+        samples["F"][0]
+        - samples["D"][0]
+        - samples["F"][1]
+        + samples["E"][1]
+    )
+    covariant = np.vstack(
+        (
+            constant_r + (twisting / 3.0) * (3.0 * s - 1.0),
+            constant_s + (twisting / 3.0) * (1.0 - 3.0 * r),
+        )
+    )
+    _jac, inverse, _determinant = _jacobian(local)
+    return inverse @ covariant
+
+
+def _kinematic_matrix(
+    local: np.ndarray,
+    r: float,
+    s: float,
+    shear_samples: Optional[Mapping[str, np.ndarray]] = None,
+) -> np.ndarray:
+    membrane, bending, _compatible_shear = _compatible_kinematics(local, r, s)
+    return np.vstack((membrane, bending, _assumed_shear(local, r, s, shear_samples)))
+
+
+def _pl_operators(local: np.ndarray, k_d: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    _jac, inverse, determinant = _jacobian(local)
+    derivative_r = np.asarray((-1.0, 1.0, 0.0), dtype=float)
+    derivative_s = np.asarray((-1.0, 0.0, 1.0), dtype=float)
+    derivative_x = inverse[0, 0] * derivative_r + inverse[0, 1] * derivative_s
+    derivative_y = inverse[1, 0] * derivative_r + inverse[1, 1] * derivative_s
+    constraint = np.zeros((3, 18), dtype=float)
+    for row in range(3):
+        constraint[row, 0::6] = 0.5 * derivative_y
+        constraint[row, 1::6] = -0.5 * derivative_x
+        constraint[row, 6 * row + 5] = 1.0
+    area = 0.5 * abs(determinant)
+    gram = (area / 12.0) * np.asarray(
+        ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
+        dtype=float,
+    )
+    condensed = k_d * (constraint.T @ gram @ constraint)
+    return constraint, gram, 0.5 * (condensed + condensed.T)
+
+
+class QualifiedE4PLS3ShellElement(ShellElement):
+    """Opt-in three-node flat MITC3+ shell with three-mode PL completion."""
+
+    formulation_id = FORMULATION_ID
+    legacy_stiffness_batch_eligible = False
+    legacy_nonlinear_batch_eligible = False
+
+    def __init__(
+        self,
+        element_id: int,
+        node_ids: list[int],
+        material_name: str = "default",
+        thickness: float = 0.01,
+        drilling_stabilization: Optional[float] = None,
+        reduced_integration: bool = False,
+        hourglass_stabilization: Optional[float] = None,
+        material_direction: Optional[np.ndarray] = None,
+        material_angle_deg: float = 0.0,
+        shell_section: Optional[Any] = None,
+        reference_normal: Optional[Sequence[float]] = None,
+    ) -> None:
+        if len(node_ids) != 3:
+            raise ValueError("QualifiedE4PLS3ShellElement requires exactly three nodes")
+        if material_direction is None and float(material_angle_deg) != 0.0:
+            raise ValueError(
+                "qualified S3 material_angle_deg requires a physical material_direction"
+            )
+        if drilling_stabilization not in {None, 0, 0.0}:
+            raise ValueError(
+                "qualified S3 has no user drilling coefficient; use formulation='legacy-s3'"
+            )
+        if hourglass_stabilization not in {None, 0, 0.0}:
+            raise ValueError(
+                "qualified S3 has no hourglass coefficient; use formulation='legacy-s3'"
+            )
+        if bool(reduced_integration):
+            raise ValueError(
+                "qualified S3 uses its frozen seven-point rule; use formulation='legacy-s3' "
+                "for reduced_integration"
+            )
+        super().__init__(
+            element_id,
+            node_ids,
+            material_name,
+            thickness,
+            0.0,
+            False,
+            0.0,
+            material_direction,
+            material_angle_deg,
+            shell_section,
+        )
+        if reference_normal is None:
+            raise ValueError(
+                "qualified S3 requires an authoritative reference_normal; "
+                "connectivity winding is not a physical director"
+            )
+        normal = np.asarray(reference_normal, dtype=float).reshape(-1)
+        if normal.size != 3 or not np.all(np.isfinite(normal)):
+            raise ValueError("qualified S3 reference_normal must be a finite 3-vector")
+        self.reference_normal = _normalize(normal, "reference normal")
+        self._qualified_components: Optional[Dict[str, Any]] = None
+        self._qualified_cache_key: Optional[tuple[Any, ...]] = None
+
+    @property
+    def capability_gaps(self) -> frozenset[str]:
+        return CAPABILITY_GAPS
+
+    @property
+    def gauss_points(self) -> np.ndarray:
+        return np.asarray([(r, s) for r, s, _weight in TRIANGLE_QUADRATURE], dtype=float)
+
+    @property
+    def gauss_weights(self) -> np.ndarray:
+        return np.asarray([weight for _r, _s, weight in TRIANGLE_QUADRATURE], dtype=float)
+
+    @property
+    def shear_gauss_points(self) -> np.ndarray:
+        return self.gauss_points
+
+    @property
+    def shear_gauss_weights(self) -> np.ndarray:
+        return self.gauss_weights
+
+    def capability_matrix(self) -> Dict[str, str]:
+        return {
+            "linear_stiffness": "PARITY_REPLACED",
+            "linear_internal_force": "PARITY_REPLACED",
+            "local_physical_recovery": "PARITY_REPLACED",
+            "generalized_sections": "PARITY_REPLACED",
+            **{name: "PARITY_GAP" for name in sorted(CAPABILITY_GAPS)},
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = super().to_dict()
+        payload.update(
+            {
+                "formulation_id": FORMULATION_ID,
+                "formulation_schema": FORMULATION_SCHEMA,
+                "bubble_convention": BUBBLE_CONVENTION,
+                "quadrature_id": QUADRATURE_ID,
+                "dynamic_reduction_policy": DYNAMIC_REDUCTION_POLICY,
+                "state_layout_id": STATE_LAYOUT_ID,
+                "reference_normal": (
+                    None
+                    if self.reference_normal is None
+                    else np.asarray(self.reference_normal, dtype=float).tolist()
+                ),
+            }
+        )
+        return payload
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "QualifiedE4PLS3ShellElement":
+        data = dict(payload)
+        if data.get("formulation_id") != FORMULATION_ID:
+            raise ValueError("serialized qualified S3 formulation_id is missing or incompatible")
+        if data.get("formulation_schema") != FORMULATION_SCHEMA:
+            raise ValueError("serialized qualified S3 formulation schema is incompatible")
+        if data.get("bubble_convention") != BUBBLE_CONVENTION:
+            raise ValueError("serialized qualified S3 bubble convention is incompatible")
+        if data.get("quadrature_id") != QUADRATURE_ID:
+            raise ValueError("serialized qualified S3 quadrature identity is incompatible")
+        if data.get("dynamic_reduction_policy") != DYNAMIC_REDUCTION_POLICY:
+            raise ValueError("serialized qualified S3 dynamic policy is incompatible")
+        if data.get("state_layout_id") != STATE_LAYOUT_ID:
+            raise ValueError("serialized qualified S3 state layout is incompatible")
+        if data.get("type") not in {cls.__name__, "e4-pl-s3", "qualified-s3"}:
+            raise ValueError("serialized qualified S3 type is incompatible")
+        return cls(
+            element_id=int(data["element_id"]),
+            node_ids=[int(value) for value in data["node_ids"]],
+            material_name=str(data.get("material_name", "default")),
+            thickness=float(data.get("thickness", 0.01)),
+            material_direction=data.get("material_direction"),
+            material_angle_deg=float(data.get("material_angle_deg", 0.0)),
+            shell_section=data.get("shell_section"),
+            reference_normal=data.get("reference_normal"),
+        )
+
+    def _cache_key(self, mesh: Any, material: Any, coordinates: np.ndarray) -> tuple[Any, ...]:
+        revisions = getattr(mesh, "revision_signature", lambda: {})()
+        relative = coordinates - np.mean(coordinates, axis=0)
+        return (
+            id(mesh),
+            id(material),
+            int(revisions.get("geometry", 0)),
+            int(revisions.get("material", 0)),
+            np.ascontiguousarray(relative, dtype=float).tobytes(),
+            float(self.thickness),
+            float(self.material_angle_deg),
+            None
+            if self.material_direction is None
+            else tuple(np.asarray(self.material_direction, dtype=float)),
+            id(self.shell_section),
+            None
+            if self.reference_normal is None
+            else tuple(np.asarray(self.reference_normal, dtype=float)),
+        )
+
+    def _constitutive(self, material: Any, frame: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        constitutive = np.zeros((8, 8), dtype=float)
+        if self.shell_section is not None:
+            if self.material_direction is None and not _is_rotation_invariant_section(
+                self.shell_section
+            ):
+                raise ValueError(
+                    "qualified S3 anisotropic generalized sections require a physical "
+                    "material_direction"
+                )
+            section = self._generalized_section_in_frame(frame)
+            assert section is not None
+            constitutive[:3, :3] = section.A
+            constitutive[:3, 3:6] = section.B
+            constitutive[3:6, :3] = section.B.T
+            constitutive[3:6, 3:6] = section.D
+            constitutive[6:, 6:] = section.As
+            membrane = np.asarray(section.A, dtype=float)
+        else:
+            if self.material_direction is None and not is_isotropic_material(material):
+                raise ValueError(
+                    "qualified S3 anisotropic materials require a physical material_direction"
+                )
+            membrane_material, shear, _strain_transform, _stress_transform = (
+                _shell_material_matrices(material, self._material_angle(frame))
+            )
+            membrane = self.thickness * membrane_material
+            constitutive[:3, :3] = membrane
+            constitutive[3:6, 3:6] = self.thickness**3 / 12.0 * membrane_material
+            constitutive[6:, 6:] = (5.0 / 6.0) * self.thickness * shear
+        if not np.all(np.isfinite(constitutive)):
+            raise ValueError("qualified S3 constitutive matrix must be finite")
+        if float(np.linalg.eigvalsh(0.5 * (constitutive + constitutive.T))[0]) <= 0.0:
+            raise ValueError("qualified S3 constitutive matrix must be positive definite")
+        return constitutive, membrane
+
+    def _compute_stiffness_components(
+        self,
+        mesh: Any,
+        material: Any,
+        *,
+        enforce_positive_winding: bool,
+    ) -> Dict[str, Any]:
+        coordinates = self.get_node_coordinates(mesh)
+        cache_key = (*self._cache_key(mesh, material, coordinates), enforce_positive_winding)
+        if self._qualified_components is not None and self._qualified_cache_key == cache_key:
+            return self._qualified_components
+
+        frame, local, quality = triangle_frame(coordinates, self.reference_normal)
+        _require_admitted_quality(
+            quality, enforce_positive_winding=enforce_positive_winding
+        )
+        _jac, _inverse, determinant = _jacobian(local)
+        constitutive, membrane = self._constitutive(material, frame)
+        k_d = invariant_drilling_scale(membrane)
+
+        shear_samples = _assumed_shear_samples(local)
+        uncondensed = np.zeros((17, 17), dtype=float)
+        kinematic_operators = []
+        for r, s, weight in TRIANGLE_QUADRATURE:
+            operator = _kinematic_matrix(local, r, s, shear_samples)
+            kinematic_operators.append(operator)
+            uncondensed += abs(determinant) * weight * (operator.T @ constitutive @ operator)
+        uncondensed = 0.5 * (uncondensed + uncondensed.T)
+        external_block = uncondensed[:15, :15]
+        external_internal = uncondensed[:15, 15:]
+        internal_block = uncondensed[15:, 15:]
+        if _matrix_rank(internal_block) != 2:
+            raise ValueError("qualified S3 bubble block is singular")
+        if float(np.linalg.eigvalsh(internal_block)[0]) <= 0.0:
+            raise ValueError("qualified S3 bubble block is not positive definite")
+        bubble_map = -np.linalg.solve(internal_block, external_internal.T)
+        physical_15 = external_block + external_internal @ bubble_map
+        physical_15 = 0.5 * (physical_15 + physical_15.T)
+        physical_local = np.zeros((18, 18), dtype=float)
+        physical_local[np.ix_(PHYSICAL_EXTERNAL_INDICES, PHYSICAL_EXTERNAL_INDICES)] = physical_15
+
+        constraint, multiplier_gram, pl_local = _pl_operators(local, k_d)
+        total_local = physical_local + pl_local
+        transform = self._local_dof_transform(frame)
+        physical = transform.T @ physical_local @ transform
+        pl = transform.T @ pl_local @ transform
+        total = transform.T @ total_local @ transform
+        for matrix in (physical, pl, total):
+            matrix[:] = 0.5 * (matrix + matrix.T)
+
+        embedded_uncondensed = np.zeros((20, 20), dtype=float)
+        combined_indices = np.concatenate((PHYSICAL_EXTERNAL_INDICES, np.asarray((18, 19))))
+        embedded_uncondensed[np.ix_(combined_indices, combined_indices)] = uncondensed
+        coupling = np.zeros((20, 3), dtype=float)
+        coupling[:18] = constraint.T @ multiplier_gram
+        saddle = np.zeros((23, 23), dtype=float)
+        saddle[:20, :20] = embedded_uncondensed
+        saddle[:20, 20:] = coupling
+        saddle[20:, :20] = coupling.T
+        saddle[20:, 20:] = -multiplier_gram / k_d
+
+        characteristic_length = float(
+            max(
+                np.linalg.norm(local[1] - local[0]),
+                np.linalg.norm(local[2] - local[1]),
+                np.linalg.norm(local[0] - local[2]),
+            )
+        )
+        ranks = _structural_rank_certificate(
+            kinematic_operators, constraint, characteristic_length
+        )
+        result: Dict[str, Any] = {
+            "physical": physical,
+            "core": physical,
+            "pl": pl,
+            "hourglass": np.zeros((18, 18), dtype=float),
+            "numerical": pl,
+            "total": total,
+            "frame": frame,
+            "local_nodes": local,
+            "quality": quality,
+            "constitutive": constitutive,
+            "k_d": k_d,
+            "uncondensed_physical": uncondensed,
+            "condensed_physical_15": physical_15,
+            "bubble_block": internal_block,
+            "bubble_map": bubble_map,
+            "pl_constraint": constraint,
+            "pl_multiplier_gram": multiplier_gram,
+            "full_saddle": saddle,
+            "assumed_shear_samples": shear_samples,
+            "ranks": ranks,
+            "rank_certificate": "DIMENSIONLESS_KINEMATIC_SUBSPACE_V1",
+            "floating_matrix_diagnostics": {
+                "bubble_rank": _matrix_rank(internal_block),
+                "saddle_inertia": _inertia(saddle),
+            },
+            "mixed_condensed": True,
+            "legacy_fallback": False,
+            "formulation_id": FORMULATION_ID,
+        }
+        self._qualified_components = result
+        self._qualified_cache_key = cache_key
+        self._hourglass_stiffness_matrix = np.zeros((18, 18), dtype=float)
+        self._stiffness_matrix = total
+        return result
+
+    def compute_stiffness_components(self, mesh: Any, material: Any) -> Dict[str, Any]:
+        """Return the production-admitted linear component split."""
+
+        return self._compute_stiffness_components(
+            mesh, material, enforce_positive_winding=True
+        )
+
+    def compute_stiffness_matrix(self, mesh: Any, material: Any) -> np.ndarray:
+        return np.asarray(self.compute_stiffness_components(mesh, material)["total"])
+
+    def compute_internal_forces(
+        self,
+        mesh: Any,
+        displacements: np.ndarray,
+        material: Any,
+    ) -> np.ndarray:
+        vector = self._get_element_displacements(mesh, displacements)
+        return self.compute_stiffness_matrix(mesh, material) @ vector
+
+    def numerical_internal_force(self, displacement: np.ndarray) -> Dict[str, np.ndarray]:
+        if self._qualified_components is None:
+            raise RuntimeError("compute_stiffness_matrix must run before numerical force recovery")
+        vector = np.asarray(displacement, dtype=float).reshape(self.total_dofs)
+        pl = np.asarray(self._qualified_components["pl"]) @ vector
+        return {
+            "pl": pl,
+            "hourglass": np.zeros_like(pl),
+            "numerical": pl.copy(),
+        }
+
+    def compute_stresses(
+        self,
+        mesh: Any,
+        displacements: np.ndarray,
+        material: Any,
+        return_global: bool = False,
+    ) -> Dict[str, Any]:
+        """Recover formulation-native local physical fields at seven points."""
+
+        if return_global:
+            raise NotImplementedError(
+                "qualified S3 global recovery is a PARITY_GAP; local physical recovery is available"
+            )
+        if self.shell_section is None and not is_isotropic_material(material):
+            raise self._gap("orthotropic_physical_recovery")
+        components = self.compute_stiffness_components(mesh, material)
+        local_external = self._local_dof_transform(components["frame"]) @ self._get_element_displacements(
+            mesh, displacements
+        )
+        physical_external = local_external[PHYSICAL_EXTERNAL_INDICES]
+        bubble = np.asarray(components["bubble_map"]) @ physical_external
+        coordinates = np.concatenate((physical_external, bubble))
+        strains = np.zeros((len(TRIANGLE_QUADRATURE), 8), dtype=float)
+        resultants = np.zeros_like(strains)
+        for index, (r, s, _weight) in enumerate(TRIANGLE_QUADRATURE):
+            strains[index] = _kinematic_matrix(
+                components["local_nodes"], r, s, components["assumed_shear_samples"]
+            ) @ coordinates
+            resultants[index] = np.asarray(components["constitutive"]) @ strains[index]
+        recovered: Dict[str, Any] = {
+            "generalized_stress_scope": "section_resultants_only",
+            "recovery_scope": "qualified_s3_local_physical_only",
+            "physical_stress_available": self.shell_section is None,
+            "membrane_strain": strains[:, :3],
+            "curvature": strains[:, 3:6],
+            "transverse_shear_strain": strains[:, 6:],
+            "membrane_resultants": resultants[:, :3],
+            "bending_resultants": resultants[:, 3:6],
+            "transverse_shear_resultants": resultants[:, 6:],
+            "bubble_rotations": bubble.copy(),
+            "numerical_fields_excluded": True,
+        }
+        if self.shell_section is None:
+            membrane_material, shear, _strain_transform, _stress_transform = (
+                _shell_material_matrices(material, self._material_angle(components["frame"]))
+            )
+            membrane_stress = strains[:, :3] @ membrane_material.T
+            moment = resultants[:, 3:6]
+            bending_stress = 6.0 * moment / (self.thickness * self.thickness)
+            transverse = strains[:, 6:] @ ((5.0 / 6.0) * shear).T
+            recovered.update(
+                {
+                    "membrane_xx": membrane_stress[:, 0],
+                    "membrane_yy": membrane_stress[:, 1],
+                    "membrane_xy": membrane_stress[:, 2],
+                    "bending_xx": bending_stress[:, 0],
+                    "bending_yy": bending_stress[:, 1],
+                    "bending_xy": bending_stress[:, 2],
+                    "shear_xz": transverse[:, 0],
+                    "shear_yz": transverse[:, 1],
+                }
+            )
+            top = membrane_stress + bending_stress
+            bottom = membrane_stress - bending_stress
+            vm_top = np.sqrt(
+                top[:, 0] ** 2
+                - top[:, 0] * top[:, 1]
+                + top[:, 1] ** 2
+                + 3.0 * (top[:, 2] ** 2 + transverse[:, 0] ** 2 + transverse[:, 1] ** 2)
+            )
+            vm_bottom = np.sqrt(
+                bottom[:, 0] ** 2
+                - bottom[:, 0] * bottom[:, 1]
+                + bottom[:, 1] ** 2
+                + 3.0
+                * (bottom[:, 2] ** 2 + transverse[:, 0] ** 2 + transverse[:, 1] ** 2)
+            )
+            recovered["von_mises"] = np.maximum(vm_top, vm_bottom)
+            recovered["equivalent_stress"] = recovered["von_mises"].copy()
+        return recovered
+
+    @staticmethod
+    def _gap(name: str) -> NotImplementedError:
+        return NotImplementedError(
+            f"qualified S3 {name} is a PARITY_GAP and cannot use legacy TRI3 mechanics"
+        )
+
+    def compute_mass_matrix(self, mesh: Any, material: Any) -> np.ndarray:
+        raise self._gap("consistent_mass_and_dynamics")
+
+    def compute_geometric_stiffness_matrix(
+        self, mesh: Any, material: Any, state: Optional[Any] = None
+    ) -> np.ndarray:
+        raise self._gap("geometric_stiffness")
+
+    def init_nonlinear_state(self, *args: Any, **kwargs: Any) -> Any:
+        raise self._gap("material_nonlinearity")
+
+    def compute_nonlinear_response(self, *args: Any, **kwargs: Any) -> Any:
+        raise self._gap("nonlinear_geometry")
+
+
+__all__ = [
+    "BUBBLE_CONVENTION",
+    "BUBBLE_OFFSET_D",
+    "CAPABILITY_GAPS",
+    "DYNAMIC_REDUCTION_POLICY",
+    "FORMULATION_ID",
+    "FORMULATION_SCHEMA",
+    "MITC3_PLUS_EQUATION_MAP",
+    "MITC3_PLUS_SOURCE_BYTES",
+    "MITC3_PLUS_SOURCE_SHA256",
+    "MITC3_PLUS_SOURCE_URL",
+    "MINIMUM_OWNER_NORMAL_ALIGNMENT",
+    "PHYSICAL_EXTERNAL_INDICES",
+    "QUADRATURE_ID",
+    "STATE_LAYOUT_ID",
+    "TRIANGLE_QUADRATURE",
+    "TYING_POINTS",
+    "QualifiedE4PLS3ShellElement",
+    "invariant_drilling_scale",
+    "triangle_frame",
+]

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add the explicitly selected `e4-pl-s3`/`qualified-s3` linear MITC3+
+  companion candidate with frozen source identity, two bubble rotations,
+  basis-invariant three-mode PL completion, stable serialization identity,
+  authoritative-normal admission, and formulation-native local recovery.
+  Existing S3 aliases remain legacy and every unqualified nonlinear, dynamic,
+  buckling, restart, reversal, and advanced-recovery path fails closed.
 - Keep qualified E4-PL as the production Q4 default and begin the explicit
   legacy-Q4 retirement window. Legacy Q4 selectors now emit a dedicated
   deprecation warning, diagnostics expose the selected formulation and

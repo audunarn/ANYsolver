@@ -84,6 +84,7 @@ from .plasticity import (
 )
 from .elements import (
     DEFAULT_Q4_FORMULATION,
+    DEFAULT_S3_FORMULATION,
     BeamElement,
     CoupledBeamShellElement,
     LEGACY_Q4_AVAILABLE_THROUGH,
@@ -95,8 +96,16 @@ from .elements import (
     create_element,
     create_shell_element,
     shell_formulation_diagnostics,
+    shell_element_from_dict,
 )
-from .e4_pl_element import QualifiedE4PLShellElement
+from .e4_pl_element import (
+    FORMULATION_ID as QUALIFIED_Q4_FORMULATION_ID,
+    QualifiedE4PLShellElement,
+)
+from .e4_pl_s3_element import (
+    FORMULATION_ID as QUALIFIED_S3_FORMULATION_ID,
+    QualifiedE4PLS3ShellElement,
+)
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -450,7 +459,7 @@ from .sesam_fem import (
     write_sesam_fem_document,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     # Core classes
@@ -516,16 +525,21 @@ __all__ = [
     "BeamElement",
     "CoupledBeamShellElement",
     "DEFAULT_Q4_FORMULATION",
+    "DEFAULT_S3_FORMULATION",
     "LEGACY_Q4_AVAILABLE_THROUGH",
     "LEGACY_Q4_REMOVAL_TARGET",
     "LegacyShellElement",
     "LegacyQ4DeprecationWarning",
     "QuadraticBeamElement",
     "QualifiedE4PLShellElement",
+    "QualifiedE4PLS3ShellElement",
+    "QUALIFIED_Q4_FORMULATION_ID",
+    "QUALIFIED_S3_FORMULATION_ID",
     "ShellElement",
     "create_element",
     "create_shell_element",
     "shell_formulation_diagnostics",
+    "shell_element_from_dict",
     # Boundary and loads
     "BoundaryCondition",
     "FixedSupport",

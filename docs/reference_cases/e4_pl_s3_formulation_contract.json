@@ -1,0 +1,275 @@
+{
+  "candidate_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+  "coordinate_contract": {
+    "bubble_coordinates": [
+      "alpha_1",
+      "alpha_2"
+    ],
+    "external_dof_count": 18,
+    "external_node_major_order": [
+      "u",
+      "v",
+      "w",
+      "theta_1",
+      "theta_2",
+      "theta_D"
+    ],
+    "physical_external_dof_count": 15,
+    "pl_multiplier_basis": [
+      "L1",
+      "L2",
+      "L3"
+    ],
+    "pl_multiplier_count": 3
+  },
+  "dynamic_policy": {
+    "bubble_mass_integration": "ANALYTIC_BARYCENTRIC_MOMENTS_THROUGH_DEGREE_6",
+    "bubble_reduction": "GUYAN_USING_STATIC_BUBBLE_EQUILIBRIUM_MAP",
+    "condensed_mass": "Gb_TRANSPOSE_M_FULL_Gb",
+    "drill_inertia": "ZERO_ALGEBRAIC_COORDINATE",
+    "gb": "VERTICAL_STACK_IDENTITY_AND_MINUS_KAA_INVERSE_KAQ"
+  },
+  "formulation": {
+    "bubble": "27*L1*L2*L3",
+    "bubble_offset_d": "1/10000",
+    "engineering_membrane_order": [
+      "epsilon_11",
+      "epsilon_22",
+      "gamma_12"
+    ],
+    "engineering_resultant_order": [
+      "N11",
+      "N22",
+      "N12",
+      "M11",
+      "M22",
+      "M12",
+      "Q1",
+      "Q2"
+    ],
+    "engineering_strain_order": [
+      "epsilon_11",
+      "epsilon_22",
+      "gamma_12",
+      "kappa_11",
+      "kappa_22",
+      "kappa_12",
+      "gamma_13",
+      "gamma_23"
+    ],
+    "hierarchical_rotation": "SUM_Li_THETAi_PLUS_BUBBLE_ALPHA",
+    "reference_coordinates": {
+      "L1": "1-r-s",
+      "L2": "r",
+      "L3": "s"
+    },
+    "tying_points": {
+      "A": [
+        "1/6",
+        "2/3"
+      ],
+      "B": [
+        "2/3",
+        "1/6"
+      ],
+      "C": [
+        "1/6",
+        "1/6"
+      ],
+      "D": [
+        "1/3+d",
+        "1/3-2*d"
+      ],
+      "E": [
+        "1/3-2*d",
+        "1/3+d"
+      ],
+      "F": [
+        "1/3+d",
+        "1/3+d"
+      ]
+    }
+  },
+  "geometry_admission": {
+    "authoritative_owner_normal_required": true,
+    "maximum_angle_degrees": "150",
+    "maximum_edge_ratio": "4",
+    "minimum_angle_degrees": "30",
+    "minimum_owner_normal_alignment": "STRICTLY_GREATER_THAN_1E_MINUS_8",
+    "minimum_normalized_area": "3/5",
+    "minimum_scaled_jacobian": "1/5",
+    "signed_twice_area_over_max_edge_squared": "STRICTLY_GREATER_THAN_MAX_64_EPSILON_AND_1E_MINUS_14"
+  },
+  "invariant_drilling_scale": {
+    "G": [
+      [
+        "2",
+        "0"
+      ],
+      [
+        "0",
+        "1/2"
+      ]
+    ],
+    "P": [
+      [
+        "1",
+        "0"
+      ],
+      [
+        "-1",
+        "0"
+      ],
+      [
+        "0",
+        "1"
+      ]
+    ],
+    "definition": "ONE_HALF_MIN_GENERALIZED_EIGENVALUE_OF_P_TRANSPOSE_A_P_AGAINST_G",
+    "material_state": "ELASTIC_MEMBRANE_SECTION_MATRIX_A",
+    "required": "FINITE_STRICTLY_POSITIVE"
+  },
+  "pl_completion": {
+    "condensed_operator": "kD*C_TRANSPOSE*M*C",
+    "constraint_at_node_i": "theta_D_i-(v_x-u_y)/2",
+    "gram": [
+      [
+        "A/6",
+        "A/12",
+        "A/12"
+      ],
+      [
+        "A/12",
+        "A/6",
+        "A/12"
+      ],
+      [
+        "A/12",
+        "A/12",
+        "A/6"
+      ]
+    ],
+    "one_point_centroid_integration": "FORBIDDEN",
+    "saddle_q_tau": "C_TRANSPOSE*M",
+    "saddle_tau_tau": "-M/kD"
+  },
+  "quadrature": {
+    "mass": "ANALYTIC_BARYCENTRIC_MOMENTS_THROUGH_DEGREE_6",
+    "stiffness": {
+      "id": "DUNAVANT_DEGREE_5_SEVEN_POINT_REFERENCE_AREA_ONE_HALF",
+      "points_r_s_weight": [
+        [
+          "0.333333333333333333333333333333333",
+          "0.333333333333333333333333333333333",
+          "0.1125"
+        ],
+        [
+          "0.470142064105115",
+          "0.470142064105115",
+          "0.066197076394253"
+        ],
+        [
+          "0.059715871789770",
+          "0.470142064105115",
+          "0.066197076394253"
+        ],
+        [
+          "0.470142064105115",
+          "0.059715871789770",
+          "0.066197076394253"
+        ],
+        [
+          "0.101286507323456",
+          "0.101286507323456",
+          "0.062969590272414"
+        ],
+        [
+          "0.797426985353087",
+          "0.101286507323456",
+          "0.062969590272414"
+        ],
+        [
+          "0.101286507323456",
+          "0.797426985353087",
+          "0.062969590272414"
+        ]
+      ]
+    }
+  },
+  "rank_contract": {
+    "bubble_block": {
+      "positive": 2,
+      "rank": 2
+    },
+    "condensed_external_18": {
+      "nullity": 6,
+      "rank": 12
+    },
+    "condensed_physical_15": {
+      "nullity": 6,
+      "rank": 9
+    },
+    "full_saddle_23": {
+      "inertia_negative": 3,
+      "inertia_positive": 14,
+      "inertia_zero": 6,
+      "nullity": 6,
+      "rank": 17
+    },
+    "physical_embedded_18": {
+      "nullity": 9,
+      "rank": 9
+    },
+    "uncondensed_physical_17": {
+      "inertia_negative": 0,
+      "inertia_positive": 11,
+      "inertia_zero": 6,
+      "nullity": 6,
+      "rank": 11
+    }
+  },
+  "serialization_fingerprint": {
+    "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
+    "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
+    "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+    "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
+    "quadrature_id": "dunavant_degree5_7point",
+    "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
+  },
+  "schema": "anysolver.e4-pl-s3-formulation-contract-v1",
+  "source_authority": {
+    "modal": {
+      "bytes": 2334731,
+      "role": "GUYAN_REDUCED_MASS_VALIDATION_AUTHORITY",
+      "sha256": "5D7DBFC19C06EC5DDA3E380F82E12735318F52D1AF9C373A107DF917E5F16461",
+      "url": "https://web.mit.edu/kjb/www/Principal_Publications/The_modal_behavior_of_the_MITC3_plus_triangular_shell_element.pdf"
+    },
+    "nonlinear": {
+      "bytes": 2312312,
+      "role": "FORMULATION_NATIVE_NONLINEAR_AUTHORITY",
+      "sha256": "8006F7EBB9A8A3D72F29C356F6C9D76668A38CC5DC80A9B48D489FC2A87E082A",
+      "url": "https://web.mit.edu/kjb/www/Principal_Publications/The_MITC3%2B_shell_element_in_geometric_nonlinear_analysis.pdf"
+    },
+    "primary": {
+      "bytes": 1146142,
+      "equation_map": {
+        "bubble_geometry_and_displacement": "PDF_PAGES_2_TO_3_EQUATIONS_6_TO_8",
+        "fixed_d_and_ellipticity": "PDF_PAGE_5",
+        "seven_point_stiffness": "PDF_PAGE_10",
+        "shear_directions_and_samples": "PDF_PAGES_3_TO_4_EQUATIONS_12_TO_15_AND_TABLE_1",
+        "shear_linear_and_final": "PDF_PAGE_4_EQUATIONS_16_TO_17"
+      },
+      "role": "LINEAR_MITC3_PLUS_PHYSICAL_CORE_AUTHORITY",
+      "sha256": "182F52217277B55E17627B8C41A3A4626ED91ED5378399088E0EA1748AD93EF0",
+      "url": "https://web.mit.edu/kjb/www/Principal_Publications/The_MITC3%2B_shell_element_and_its_performance.pdf"
+    }
+  },
+  "transport_contract": {
+    "connectivity_permutations": "ALL_SIX_D3_ACTIONS_WITH_PHYSICAL_DIRECTOR_FIXED",
+    "director_reversal": "REVERSE_THICKNESS_OFFSET_B_COUPLING_LAYER_ORDER_MOMENTS_AND_RECOVERY_SURFACES",
+    "material_orientation": "PERSIST_PHYSICAL_SURFACE_DIRECTION_AND_DERIVE_LOCAL_ANGLE_AFTER_NUMBERING",
+    "pl_constraint_and_multiplier": "TRANSPORT_IN_THE_ORIENTED_LOCAL_FRAME_AND_BARYCENTRIC_NODE_BASIS",
+    "production_negative_winding": "REJECT_AFTER_BELOW_ADMISSION_LAYER_D3_COVARIANCE_TEST",
+    "stage_1_director_reversal": "PARITY_GAP_NOT_CLAIMED"
+  }
+}

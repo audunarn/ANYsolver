@@ -66,7 +66,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -4629,6 +4629,10 @@ ELEMENT_TYPES = {
 
 
 DEFAULT_Q4_FORMULATION = "e4-pl"
+# S3 remains legacy-by-default during the additive qualification release.
+# The qualified companion is available only through an explicit formulation
+# request until its parity and mixed-mesh gates are closed.
+DEFAULT_S3_FORMULATION = "legacy-s3"
 LEGACY_Q4_AVAILABLE_THROUGH = "0.4.x"
 LEGACY_Q4_REMOVAL_TARGET = "0.5.0"
 
@@ -4644,16 +4648,42 @@ def _normalized_shell_formulation(
     node_count: int,
     formulation: Optional[str],
 ) -> str:
-    resolved = DEFAULT_Q4_FORMULATION if formulation is None else str(formulation)
+    if formulation is None:
+        resolved = (
+            DEFAULT_Q4_FORMULATION
+            if node_count == 4
+            else DEFAULT_S3_FORMULATION
+            if node_count == 3
+            else "legacy"
+        )
+    else:
+        resolved = str(formulation)
     resolved = resolved.strip().lower().replace("_", "-")
-    e4_aliases = {"e4-pl", "qualified-s4", "default"}
+    if resolved == "default":
+        resolved = (
+            DEFAULT_Q4_FORMULATION
+            if node_count == 4
+            else DEFAULT_S3_FORMULATION
+            if node_count == 3
+            else "legacy"
+        )
+    e4_aliases = {"e4-pl", "qualified-s4"}
+    s3_aliases = {"e4-pl-s3", "qualified-s3"}
     legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
     if node_count == 4 and resolved in e4_aliases:
         return "e4-pl"
-    if resolved in legacy_aliases or (formulation is None and node_count != 4):
+    if node_count == 3 and resolved in s3_aliases:
+        return "e4-pl-s3"
+    if resolved == "legacy-s3":
+        if node_count != 3:
+            raise ValueError("legacy-s3 is available only for three-node shell topology")
+        return "legacy-s3"
+    if resolved in legacy_aliases:
         return "legacy"
     if resolved in e4_aliases:
         raise ValueError("E4-PL is available only for four-node shell topology")
+    if resolved in s3_aliases:
+        raise ValueError("qualified E4-PL S3 is available only for three-node shell topology")
     raise ValueError(f"Unknown shell formulation: {formulation}")
 
 
@@ -4689,7 +4719,11 @@ def shell_formulation_diagnostics(
             else (
                 "DEPRECATED_LEGACY_Q4_ROLLBACK"
                 if count == 4
-                else "PRESERVED_LEGACY_NON_Q4"
+                else (
+                    "QUALIFIED_E4_PL_S3_OPT_IN"
+                    if count == 3 and selected == "e4-pl-s3"
+                    else "PRESERVED_LEGACY_NON_Q4"
+                )
             )
         ),
         "legacy_q4": {
@@ -4710,10 +4744,11 @@ def create_shell_element(
     formulation: Optional[str] = None,
     **kwargs: Any,
 ) -> ShellElement:
-    """Create the production-default shell while retaining an explicit rollback.
+    """Create a topology-selected shell while retaining explicit rollbacks.
 
     Four-node shells select the qualified E4-PL implementation by default.
-    Other supported shell topologies retain :class:`LegacyShellElement`.
+    Other supported shell topologies retain :class:`LegacyShellElement`;
+    qualified S3 is available through ``formulation="e4-pl-s3"`` only.
     Passing ``formulation="legacy"`` is the documented rollback/compatibility
     route; an explicit E4-PL request rejects non-Q4 topology.
     """
@@ -4728,9 +4763,71 @@ def create_shell_element(
             material_name,
             **kwargs,
         )
-    if resolved == "legacy":
+    if resolved == "e4-pl-s3":
+        from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+
+        return QualifiedE4PLS3ShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
+    if resolved in {"legacy", "legacy-s3"}:
         return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
     raise AssertionError(f"unreachable shell formulation selection: {resolved}")
+
+
+def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
+    """Deserialize a shell without guessing a qualified formulation.
+
+    Historical three-node records without ``formulation_id`` remain legacy.
+    Qualified records are dispatched by their exact identity and unknown
+    identities fail closed.
+    """
+
+    if not isinstance(payload, Mapping):
+        raise TypeError("serialized shell element must be a mapping")
+    data = dict(payload)
+    node_ids = [int(value) for value in data.get("node_ids", ())]
+    formulation_id = data.get("formulation_id")
+    if formulation_id is not None:
+        from .e4_pl_element import (
+            FORMULATION_ID as Q4_FORMULATION_ID,
+            QualifiedE4PLShellElement,
+            _PLANAR_FORMULATION_ID,
+        )
+        from .e4_pl_s3_element import (
+            FORMULATION_ID as S3_FORMULATION_ID,
+            QualifiedE4PLS3ShellElement,
+        )
+
+        if formulation_id in {Q4_FORMULATION_ID, _PLANAR_FORMULATION_ID}:
+            return QualifiedE4PLShellElement.from_dict(data)
+        if formulation_id == S3_FORMULATION_ID:
+            return QualifiedE4PLS3ShellElement.from_dict(data)
+        raise ValueError(f"unknown serialized shell formulation_id: {formulation_id}")
+    if str(data.get("type", "")) in {
+        "QualifiedE4PLShellElement",
+        "QualifiedE4PLS3ShellElement",
+        "e4-pl",
+        "e4-pl-s3",
+        "qualified-s3",
+    }:
+        raise ValueError("serialized qualified shell is missing formulation_id")
+    if len(node_ids) not in {3, 4, 6, 8}:
+        raise ValueError("serialized legacy shell requires 3, 4, 6 or 8 nodes")
+    return LegacyShellElement(
+        element_id=int(data["element_id"]),
+        node_ids=node_ids,
+        material_name=str(data.get("material_name", "default")),
+        thickness=float(data.get("thickness", 0.01)),
+        drilling_stabilization=float(data.get("drilling_stabilization", 1.0e-3)),
+        reduced_integration=bool(data.get("reduced_integration", False)),
+        hourglass_stabilization=float(data.get("hourglass_stabilization", 1.0e-8)),
+        material_direction=data.get("material_direction"),
+        material_angle_deg=float(data.get("material_angle_deg", 0.0)),
+        shell_section=data.get("shell_section"),
+    )
 
 
 def create_element(
@@ -4741,6 +4838,22 @@ def create_element(
     **kwargs: Any,
 ) -> Element:
     normalized_type = str(element_type).lower()
+    if normalized_type in {"e4-pl-s3", "e4_pl_s3", "qualified-s3", "qualified_s3"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3",
+            **kwargs,
+        )
+    if normalized_type in {"legacy-s3", "legacy_s3"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="legacy-s3",
+            **kwargs,
+        )
     if normalized_type in {"e4-pl", "e4_pl", "qualified_s4"}:
         return create_shell_element(
             element_id,
@@ -4759,6 +4872,15 @@ def create_element(
         )
     if normalized_type == "shell":
         formulation = kwargs.pop("formulation", None)
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation=formulation,
+            **kwargs,
+        )
+    if normalized_type in {"shell3", "tri3", "tria3", "t3", "s3"}:
+        formulation = kwargs.pop("formulation", "legacy-s3")
         return create_shell_element(
             element_id,
             node_ids,
