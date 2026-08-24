@@ -9,7 +9,6 @@ from anysolver import (
     QualifiedE4PLS3ShellElement,
     RigidSphereImpact,
     TransientConfig,
-    solve_transient_newmark,
     solve_transient_sphere_impact,
 )
 
@@ -32,14 +31,12 @@ def _model() -> FEModel:
     return model
 
 
-def test_transient_rejects_before_assembly() -> None:
-    model = _model()
-    before = model.mesh.revision_signature()
-
-    with pytest.raises(ElementCapabilityError, match="linear transient.*7"):
-        solve_transient_newmark(model, TransientConfig(dt=0.01, t_end=0.01))
-
-    assert model.mesh.revision_signature() == before
+def test_linear_transient_is_no_longer_a_qualified_s3_capability_gap() -> None:
+    element = _model().mesh.elements[7]
+    assert "transient_algebraic_dynamics" not in element.capability_gaps
+    assert element.capability_matrix()["transient_algebraic_dynamics"] == (
+        "PARITY_REPLACED"
+    )
 
 
 def test_contact_rejects_before_contact_resolution_or_state_creation() -> None:
@@ -86,8 +83,20 @@ def test_guard_diagnostics_are_sorted_and_bounded() -> None:
             ),
         )
 
+    sphere = RigidSphereImpact(
+        "guard-order",
+        radius=0.1,
+        mass=1.0,
+        start_point=(0.3, 0.3, 0.2),
+        travel_direction=(0.0, 0.0, -1.0),
+        speed=1.0,
+    )
     with pytest.raises(ElementCapabilityError) as caught:
-        solve_transient_newmark(model, TransientConfig(dt=0.01, t_end=0.01))
+        solve_transient_sphere_impact(
+            model,
+            TransientConfig(dt=0.01, t_end=0.01),
+            sphere,
+        )
 
     message = str(caught.value)
     assert message.index("3 (") < message.index("11 (")

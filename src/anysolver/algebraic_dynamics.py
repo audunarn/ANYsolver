@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import numpy as np
 from scipy import linalg, sparse
+from scipy.sparse.csgraph import maximum_bipartite_matching
 from scipy.sparse import linalg as sparse_linalg
 
 from .linalg import FactorizationCache, MatrixClass, factorize_cached
@@ -31,6 +32,12 @@ if TYPE_CHECKING:
 
 
 DESCRIPTOR_MODAL_POLICY_ID = "SWAPPED_MASSLESS_ALGEBRAIC_PENCIL_V1"
+DESCRIPTOR_TRANSIENT_POLICY_ID = "STATIC_ALGEBRAIC_TRANSIENT_REDUCTION_V1"
+DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID = "STATIC_DISPLACEMENT_PROJECTION"
+DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID = "FIRST_ORDER_VELOCITY_PROJECTION"
+DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID = (
+    "CONSTRAINT_ELIMINATED_ALGEBRAIC_COORDINATES"
+)
 DESCRIPTOR_SHIFT_RATIO = 1.0e-6
 DESCRIPTOR_COORDINATE_SHEAR_LIMIT = 256.0
 DESCRIPTOR_DENSE_CONDENSATION_LIMIT = 512
@@ -58,6 +65,316 @@ class DeclaredAlgebraicBasis:
     diagnostics: Dict[str, Any]
 
 
+@dataclass
+class AlgebraicStaticReduction:
+    """Sparse coordinate partition for an index-one massless descriptor.
+
+    The original reduced coordinate is represented as ``q = E*x + Z*a``,
+    where ``E`` selects the deterministic nonpivot rows and ``Z`` is the
+    certified assembled mass-null basis.  ``a`` is always obtained from its
+    static equilibrium equation; only ``x`` carries inertia.
+    """
+
+    basis: sparse.csc_matrix
+    physical_rows: np.ndarray
+    stiffness_reduced: sparse.csr_matrix
+    stiffness_physical: sparse.csr_matrix
+    mass_physical: sparse.csr_matrix
+    stiffness_coupling: sparse.csr_matrix
+    stiffness_algebraic: sparse.csc_matrix
+    algebraic_factor: Any
+    pivot_rows: np.ndarray
+    pivot_factor: Any
+    diagnostics: Dict[str, Any]
+
+    @property
+    def physical_dimension(self) -> int:
+        return int(self.physical_rows.size)
+
+    @property
+    def algebraic_dimension(self) -> int:
+        return int(self.basis.shape[1])
+
+    @property
+    def reduced_dimension(self) -> int:
+        return int(self.basis.shape[0])
+
+    def solve_algebraic(self, rhs: np.ndarray) -> np.ndarray:
+        try:
+            made = np.asarray(rhs, dtype=float).reshape(-1)
+        except (TypeError, ValueError) as error:
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic right-hand side is invalid"
+            ) from error
+        if made.shape != (self.algebraic_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic right-hand side has an incompatible dimension"
+            )
+        if np.any(~np.isfinite(made)):
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic right-hand side contains non-finite values"
+            )
+        try:
+            solved = np.asarray(
+                self.algebraic_factor.solve(made), dtype=float
+            ).reshape(-1)
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic stiffness solve failed"
+            ) from error
+        if solved.shape != (self.algebraic_dimension,) or np.any(
+            ~np.isfinite(solved)
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic stiffness solve returned an invalid result"
+            )
+        return solved
+
+    def stiffness_action(self, physical: np.ndarray) -> np.ndarray:
+        made = np.asarray(physical, dtype=float)
+        algebraic_rhs = np.asarray(
+            self.stiffness_coupling.T @ made, dtype=float
+        )
+        correction = self.solve_algebraic(algebraic_rhs)
+        return np.asarray(
+            self.stiffness_physical @ made
+            - self.stiffness_coupling @ correction,
+            dtype=float,
+        )
+
+    def condensed_load(self, reduced_load: np.ndarray) -> np.ndarray:
+        made = np.asarray(reduced_load, dtype=float).reshape(-1)
+        if made.shape != (self.reduced_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor load has an incompatible reduced dimension"
+            )
+        algebraic_load = np.asarray(self.basis.T @ made, dtype=float).reshape(-1)
+        correction = self.solve_algebraic(algebraic_load)
+        return np.asarray(
+            made[self.physical_rows] - self.stiffness_coupling @ correction,
+            dtype=float,
+        ).reshape(-1)
+
+    def algebraic_load_equilibrium(self, reduced_load: np.ndarray) -> np.ndarray:
+        made = np.asarray(reduced_load, dtype=float).reshape(-1)
+        if made.shape != (self.reduced_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor load has an incompatible reduced dimension"
+            )
+        algebraic_load = np.asarray(self.basis.T @ made, dtype=float).reshape(-1)
+        return self.solve_algebraic(algebraic_load).reshape(-1)
+
+    def split_k_orthogonal_state(
+        self, reduced_state: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        physical, algebraic_coordinate = self.split_partition_state(
+            reduced_state
+        )
+        static_coupling = self.solve_algebraic(
+            np.asarray(self.stiffness_coupling.T @ physical, dtype=float).reshape(-1)
+        ).reshape(-1)
+        k_orthogonal = algebraic_coordinate + static_coupling
+        return physical, k_orthogonal
+
+    def split_partition_state(
+        self, reduced_state: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Split a reduced state into its deterministic ``(x, a)`` blocks."""
+
+        made = np.asarray(reduced_state, dtype=float).reshape(-1)
+        if made.shape != (self.reduced_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor state has an incompatible reduced dimension"
+            )
+        algebraic_coordinate = self.algebraic_partition_coordinate(made)
+        physical = made[self.physical_rows].copy() - np.asarray(
+            self.basis[self.physical_rows, :] @ algebraic_coordinate,
+            dtype=float,
+        ).reshape(-1)
+        return physical, algebraic_coordinate
+
+    def algebraic_partition_coordinate(
+        self, reduced_state: np.ndarray
+    ) -> np.ndarray:
+        """Return the coefficient of ``basis`` in the deterministic partition."""
+
+        made = np.asarray(reduced_state, dtype=float).reshape(-1)
+        if made.shape != (self.reduced_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor state has an incompatible reduced dimension"
+            )
+        if np.any(~np.isfinite(made)):
+            raise AlgebraicDynamicsError(
+                "descriptor state contains non-finite values"
+            )
+        try:
+            solved = np.asarray(
+                self.pivot_factor.solve(made[self.pivot_rows]), dtype=float
+            ).reshape(-1)
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic pivot solve failed"
+            ) from error
+        if solved.shape != (self.algebraic_dimension,) or np.any(
+            ~np.isfinite(solved)
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic pivot solve returned an invalid result"
+            )
+        return solved
+
+    def reconstruct_partition_state(
+        self,
+        physical: np.ndarray,
+        algebraic_coordinate: np.ndarray,
+    ) -> np.ndarray:
+        """Reconstruct ``q = E*x + basis*a`` in the certified partition."""
+
+        made = np.asarray(physical, dtype=float).reshape(-1)
+        algebraic = np.asarray(algebraic_coordinate, dtype=float).reshape(-1)
+        if made.shape != (self.physical_dimension,) or algebraic.shape != (
+            self.algebraic_dimension,
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor partition state has incompatible dimensions"
+            )
+        result = np.asarray(self.basis @ algebraic, dtype=float).reshape(-1)
+        result[self.physical_rows] += made
+        return result
+
+    def reconstruct_k_orthogonal_state(
+        self,
+        physical: np.ndarray,
+        k_orthogonal: np.ndarray,
+    ) -> np.ndarray:
+        made = np.asarray(physical, dtype=float).reshape(-1)
+        algebraic = np.asarray(k_orthogonal, dtype=float).reshape(-1)
+        if made.shape != (self.physical_dimension,) or algebraic.shape != (
+            self.algebraic_dimension,
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor K-orthogonal state has incompatible dimensions"
+            )
+        coordinate = self.partition_coordinate_from_k_orthogonal(
+            made,
+            algebraic,
+        )
+        result = np.asarray(self.basis @ coordinate, dtype=float).reshape(-1)
+        result[self.physical_rows] += made
+        target_action = np.asarray(
+            self.stiffness_algebraic @ algebraic, dtype=float
+        ).reshape(-1)
+        # Refine in the represented full reduced operator.  The block formula
+        # is exact algebraically, but a shell stiffness spans enough scales
+        # that the subsequent sparse K@q evaluation can retain a visible
+        # cancellation residual along the massless directions.
+        for _iteration in range(2):
+            actual_action = np.asarray(
+                self.basis.T @ (self.stiffness_reduced @ result), dtype=float
+            ).reshape(-1)
+            correction = self.solve_algebraic(target_action - actual_action)
+            result += np.asarray(self.basis @ correction, dtype=float).reshape(-1)
+        return result
+
+    def partition_coordinate_from_k_orthogonal(
+        self,
+        physical: np.ndarray,
+        k_orthogonal: np.ndarray,
+    ) -> np.ndarray:
+        """Map a K-orthogonal algebraic value to the partition coefficient."""
+
+        made = np.asarray(physical, dtype=float).reshape(-1)
+        algebraic = np.asarray(k_orthogonal, dtype=float).reshape(-1)
+        if made.shape != (self.physical_dimension,) or algebraic.shape != (
+            self.algebraic_dimension,
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor K-orthogonal state has incompatible dimensions"
+            )
+        static_coupling = self.solve_algebraic(
+            np.asarray(self.stiffness_coupling.T @ made, dtype=float).reshape(-1)
+        ).reshape(-1)
+        return algebraic - static_coupling
+
+    def equilibrated_reduced_displacement(
+        self,
+        physical: np.ndarray,
+        reduced_load: np.ndarray,
+    ) -> np.ndarray:
+        made = np.asarray(physical, dtype=float).reshape(-1)
+        if made.shape != (self.physical_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor physical state has an incompatible dimension"
+            )
+        load = np.asarray(reduced_load, dtype=float).reshape(-1)
+        if load.shape != (self.reduced_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor load has an incompatible reduced dimension"
+            )
+        algebraic_rhs = np.asarray(self.basis.T @ load, dtype=float).reshape(-1)
+        algebraic_rhs -= np.asarray(
+            self.stiffness_coupling.T @ made, dtype=float
+        ).reshape(-1)
+        algebraic = self.solve_algebraic(algebraic_rhs)
+        result = np.asarray(self.basis @ algebraic, dtype=float).reshape(-1)
+        result[self.physical_rows] += made
+        return result
+
+    def homogeneous_reduced_vector(self, physical: np.ndarray) -> np.ndarray:
+        zeros = np.zeros(self.reduced_dimension, dtype=float)
+        return self.equilibrated_reduced_displacement(physical, zeros)
+
+    def effective_block_matrix(
+        self,
+        *,
+        stiffness_coefficient: float,
+        mass_coefficient: float,
+    ) -> sparse.csc_matrix:
+        stiffness_coefficient = float(stiffness_coefficient)
+        mass_coefficient = float(mass_coefficient)
+        if (
+            not np.isfinite(stiffness_coefficient)
+            or not np.isfinite(mass_coefficient)
+            or stiffness_coefficient <= 0.0
+            or mass_coefficient <= 0.0
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor effective coefficients must be finite and positive"
+            )
+        upper_left = (
+            stiffness_coefficient * self.stiffness_physical
+            + mass_coefficient * self.mass_physical
+        ).tocsr()
+        upper_right = (
+            stiffness_coefficient * self.stiffness_coupling
+        ).tocsr()
+        lower_right = (
+            stiffness_coefficient * self.stiffness_algebraic
+        ).tocsr()
+        return sparse.bmat(
+            (
+                (upper_left, upper_right),
+                (upper_right.T, lower_right),
+            ),
+            format="csc",
+        )
+
+    def effective_rhs(self, reduced_rhs: np.ndarray) -> np.ndarray:
+        """Transform a reduced-coordinate right-hand side by ``[E,basis].T``."""
+
+        made = np.asarray(reduced_rhs, dtype=float).reshape(-1)
+        if made.shape != (self.reduced_dimension,):
+            raise AlgebraicDynamicsError(
+                "descriptor effective right-hand side has an incompatible dimension"
+            )
+        return np.concatenate(
+            (
+                made[self.physical_rows],
+                np.asarray(self.basis.T @ made, dtype=float).reshape(-1),
+            )
+        )
+
+
 def declared_algebraic_mass_elements(model: "FEModel") -> Tuple[int, ...]:
     """Return stable IDs of elements declaring exact massless coordinates."""
 
@@ -80,7 +397,7 @@ def declared_algebraic_mass_elements(model: "FEModel") -> Tuple[int, ...]:
 
 
 def uses_declared_algebraic_mass(model: "FEModel") -> bool:
-    """Return whether the model requires descriptor modal handling."""
+    """Return whether the model requires descriptor dynamic handling."""
 
     return bool(declared_algebraic_mass_elements(model))
 
@@ -139,7 +456,7 @@ def _local_declarations(
             components.get("rotary_inertia_per_area", 0.0)
         ) <= 0.0:
             raise AlgebraicDynamicsError(
-                f"element {element_id} descriptor modal analysis requires positive "
+                f"element {element_id} descriptor dynamics require positive "
                 "areal mass and rotary inertia"
             )
         witness = str(getattr(element, "dynamic_algebraic_mass_witness", ""))
@@ -572,6 +889,607 @@ def build_declared_algebraic_basis(
         "elements": records,
     }
     return DeclaredAlgebraicBasis(full_basis, reduced_basis, diagnostics)
+
+
+def _algebraic_coordinate_pivot_rows(
+    basis: sparse.spmatrix,
+    *,
+    dense_size_limit: int,
+) -> tuple[np.ndarray, str]:
+    made = sparse.csc_matrix(basis, dtype=float)
+    row_count, column_count = (int(made.shape[0]), int(made.shape[1]))
+    if column_count <= 0 or column_count >= row_count:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic basis has no physical coordinate complement"
+        )
+    if int(dense_size_limit) < 1:
+        raise AlgebraicDynamicsError(
+            "descriptor dense-size limit must be positive"
+        )
+    if row_count <= int(dense_size_limit):
+        dense = np.asarray(made.toarray(), dtype=float)
+        try:
+            _q, upper, order = linalg.qr(
+                dense.T,
+                mode="economic",
+                pivoting=True,
+                check_finite=True,
+            )
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "could not select bounded descriptor algebraic pivot rows"
+            ) from error
+        diagonal = np.abs(np.diag(upper[:, :column_count]))
+        floor = float(
+            4096.0
+            * np.finfo(float).eps
+            * max(float(np.max(diagonal, initial=0.0)), np.finfo(float).tiny)
+            * max(column_count, 1)
+        )
+        if diagonal.size != column_count or np.any(diagonal <= floor):
+            raise AlgebraicDynamicsError(
+                "bounded descriptor algebraic pivot block is rank deficient"
+            )
+        return (
+            np.sort(np.asarray(order[:column_count], dtype=np.intp)),
+            "dense_column_pivoted_qr",
+        )
+
+    graph = made.T.tocsr(copy=True)
+    graph.eliminate_zeros()
+    graph.sort_indices()
+    for row in range(graph.shape[0]):
+        start, stop = int(graph.indptr[row]), int(graph.indptr[row + 1])
+        values = np.abs(graph.data[start:stop])
+        if values.size == 0:
+            raise AlgebraicDynamicsError(
+                "sparse descriptor algebraic basis contains an empty column"
+            )
+        threshold = 2.0e-12 * float(np.max(values))
+        graph.data[start:stop] = np.where(values > threshold, 1.0, 0.0)
+    graph.eliminate_zeros()
+    graph.sort_indices()
+    matched = np.asarray(
+        maximum_bipartite_matching(graph, perm_type="column"),
+        dtype=np.intp,
+    )
+    if matched.shape != (column_count,) or np.any(matched < 0):
+        raise AlgebraicDynamicsError(
+            "sparse descriptor algebraic basis has no stable structural pivot matching"
+        )
+    return np.sort(matched), "sparse_maximum_bipartite_matching"
+
+
+def _pivot_coordinate_shear_certificate(
+    pivot_block: sparse.spmatrix,
+    physical_block: sparse.spmatrix,
+    *,
+    dense_size_limit: int,
+) -> Dict[str, Any]:
+    """Bound the complete deterministic partition coordinate transform.
+
+    With pivot rows ordered last, the split and reconstruction maps are
+
+    ``[[I, -B_r B_p^-1], [0, B_p^-1]]`` and
+    ``[[I, B_r], [0, B_p]]``.
+
+    Bounding ``B_p`` alone is insufficient: a well-conditioned pivot can
+    still induce an arbitrarily sheared physical coordinate through ``B_r``.
+    """
+
+    made = sparse.csc_matrix(pivot_block, dtype=float)
+    physical = sparse.csc_matrix(physical_block, dtype=float)
+    size = int(made.shape[0])
+    if made.shape != (size, size) or size <= 0:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot block must be nonempty and square"
+        )
+    if physical.shape[1] != size or np.any(~np.isfinite(physical.data)):
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic physical block is incompatible"
+        )
+    full_size = size + int(physical.shape[0])
+    if full_size <= int(dense_size_limit):
+        dense_pivot = np.asarray(made.toarray(), dtype=float)
+        dense_physical = np.asarray(physical.toarray(), dtype=float)
+        singular = np.asarray(
+            linalg.svdvals(dense_pivot, check_finite=True),
+            dtype=float,
+        )
+        smallest = float(np.min(singular, initial=float("inf")))
+        largest = float(np.max(singular, initial=0.0))
+        try:
+            pivot_inverse = linalg.solve(
+                dense_pivot,
+                np.eye(size, dtype=float),
+                assume_a="gen",
+                check_finite=True,
+            )
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "descriptor algebraic pivot coordinate shear is unresolved"
+            ) from error
+        coupling = dense_physical @ pivot_inverse
+        physical_size = int(physical.shape[0])
+        split_map = np.block(
+            [
+                [
+                    np.eye(physical_size, dtype=float),
+                    -coupling,
+                ],
+                [
+                    np.zeros((size, physical_size), dtype=float),
+                    pivot_inverse,
+                ],
+            ]
+        )
+        reconstruction_map = np.block(
+            [
+                [
+                    np.eye(physical_size, dtype=float),
+                    dense_physical,
+                ],
+                [
+                    np.zeros((size, physical_size), dtype=float),
+                    dense_pivot,
+                ],
+            ]
+        )
+        split_upper = float(
+            np.max(linalg.svdvals(split_map, check_finite=True), initial=0.0)
+        )
+        reconstruction_upper = float(
+            np.max(
+                linalg.svdvals(reconstruction_map, check_finite=True),
+                initial=0.0,
+            )
+        )
+        physical_upper = float(
+            np.max(
+                linalg.svdvals(dense_physical, check_finite=True),
+                initial=0.0,
+            )
+        )
+        coupling_upper = float(
+            np.max(linalg.svdvals(coupling, check_finite=True), initial=0.0)
+        )
+        method = "dense_svd_full_partition_condition"
+    else:
+        gram = (made.T @ made).tocsc()
+        scaled_lower, gram_method = _certify_spd(
+            gram,
+            dense_size_limit=dense_size_limit,
+            label="descriptor algebraic pivot Gram matrix",
+        )
+        gram_diagonal = np.asarray(gram.diagonal(), dtype=float).reshape(-1)
+        diagonal_minimum = float(
+            np.min(gram_diagonal, initial=float("inf"))
+        )
+        smallest = float(np.sqrt(scaled_lower * diagonal_minimum))
+        one_norm = float(sparse_linalg.norm(made, ord=1))
+        infinity_norm = float(sparse_linalg.norm(made, ord=np.inf))
+        largest = float(np.sqrt(one_norm * infinity_norm))
+        physical_one_norm = float(sparse_linalg.norm(physical, ord=1))
+        physical_infinity_norm = float(
+            sparse_linalg.norm(physical, ord=np.inf)
+        )
+        physical_upper = float(
+            np.sqrt(physical_one_norm * physical_infinity_norm)
+        )
+        inverse_upper = 1.0 / smallest
+        coupling_upper = physical_upper * inverse_upper
+        split_upper = float(
+            linalg.svdvals(
+                np.asarray(
+                    ((1.0, coupling_upper), (0.0, inverse_upper)),
+                    dtype=float,
+                ),
+                check_finite=True,
+            )[0]
+        )
+        reconstruction_upper = float(
+            linalg.svdvals(
+                np.asarray(
+                    ((1.0, physical_upper), (0.0, largest)),
+                    dtype=float,
+                ),
+                check_finite=True,
+            )[0]
+        )
+        method = (
+            "sparse_certified_full_partition_condition:"
+            f"{gram_method}"
+        )
+    if (
+        not np.isfinite(smallest)
+        or not np.isfinite(largest)
+        or smallest <= 0.0
+        or largest <= 0.0
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot coordinate shear is unresolved"
+        )
+    inverse_amplification = 1.0 / smallest
+    pivot_condition = largest / smallest
+    coordinate_shear = split_upper * reconstruction_upper
+    if (
+        not np.isfinite(coordinate_shear)
+        or coordinate_shear > DESCRIPTOR_COORDINATE_SHEAR_LIMIT
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot coordinate shear exceeds the bounded limit"
+        )
+    return {
+        "partition_coordinate_shear_limit": DESCRIPTOR_COORDINATE_SHEAR_LIMIT,
+        "partition_coordinate_shear_upper_bound": coordinate_shear,
+        "pivot_smallest_singular_value_lower_bound": smallest,
+        "pivot_largest_singular_value_upper_bound": largest,
+        "pivot_inverse_amplification_upper_bound": inverse_amplification,
+        "pivot_condition_upper_bound": pivot_condition,
+        "physical_block_norm_upper_bound": physical_upper,
+        "physical_pivot_coupling_norm_upper_bound": coupling_upper,
+        "partition_split_norm_upper_bound": split_upper,
+        "partition_reconstruction_norm_upper_bound": reconstruction_upper,
+        "partition_coordinate_shear_method": method,
+    }
+
+
+def _static_coordinate_shear_certificate(
+    stiffness_algebraic: sparse.spmatrix,
+    stiffness_coupling: sparse.spmatrix,
+    *,
+    scaled_algebraic_minimum: float,
+    dense_size_limit: int,
+) -> Dict[str, Any]:
+    """Bound ``K_aa^-1 K_ap`` used by the K-orthogonal state map."""
+
+    algebraic = sparse.csc_matrix(stiffness_algebraic, dtype=float)
+    coupling = sparse.csc_matrix(stiffness_coupling, dtype=float)
+    nullity = int(algebraic.shape[0])
+    physical_dimension = int(coupling.shape[0])
+    if (
+        algebraic.shape != (nullity, nullity)
+        or coupling.shape[1] != nullity
+        or nullity <= 0
+        or np.any(~np.isfinite(algebraic.data))
+        or np.any(~np.isfinite(coupling.data))
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor static coordinate map is incompatible"
+        )
+    if nullity + physical_dimension <= int(dense_size_limit):
+        try:
+            static_map = linalg.solve(
+                algebraic.toarray(),
+                coupling.T.toarray(),
+                assume_a="pos",
+                check_finite=True,
+            )
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "descriptor static coordinate shear is unresolved"
+            ) from error
+        static_map_coupling_upper = float(
+            np.max(linalg.svdvals(static_map, check_finite=True), initial=0.0)
+        )
+        method = "dense_spd_solve_and_svd_static_coordinate_shear"
+        algebraic_minimum_lower = float(
+            np.min(linalg.eigvalsh(algebraic.toarray()), initial=float("inf"))
+        )
+        coupling_upper = float(
+            np.max(
+                linalg.svdvals(coupling.toarray(), check_finite=True),
+                initial=0.0,
+            )
+        )
+    else:
+        diagonal = np.asarray(algebraic.diagonal(), dtype=float).reshape(-1)
+        diagonal_minimum = float(np.min(diagonal, initial=float("inf")))
+        algebraic_minimum_lower = (
+            float(scaled_algebraic_minimum) * diagonal_minimum
+        )
+        coupling_one_norm = float(sparse_linalg.norm(coupling, ord=1))
+        coupling_infinity_norm = float(
+            sparse_linalg.norm(coupling, ord=np.inf)
+        )
+        coupling_upper = float(
+            np.sqrt(coupling_one_norm * coupling_infinity_norm)
+        )
+        static_map_coupling_upper = coupling_upper / algebraic_minimum_lower
+        method = "sparse_certified_spd_lower_and_norm_upper_static_coordinate_shear"
+    if (
+        not np.isfinite(algebraic_minimum_lower)
+        or algebraic_minimum_lower <= 0.0
+        or not np.isfinite(static_map_coupling_upper)
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor static coordinate shear is unresolved"
+        )
+    static_map_norm_upper = float(
+        linalg.svdvals(
+            np.asarray(
+                (
+                    (1.0, 0.0),
+                    (static_map_coupling_upper, 1.0),
+                ),
+                dtype=float,
+            ),
+            check_finite=True,
+        )[0]
+    )
+    static_coordinate_condition_upper = static_map_norm_upper**2
+    if (
+        not np.isfinite(static_coordinate_condition_upper)
+        or static_coordinate_condition_upper
+        > DESCRIPTOR_COORDINATE_SHEAR_LIMIT
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor static coordinate shear exceeds the bounded limit"
+        )
+    return {
+        "static_coordinate_shear_limit": DESCRIPTOR_COORDINATE_SHEAR_LIMIT,
+        "static_coordinate_shear_upper_bound": (
+            static_coordinate_condition_upper
+        ),
+        "static_coordinate_algebraic_minimum_lower_bound": (
+            algebraic_minimum_lower
+        ),
+        "static_coordinate_stiffness_coupling_norm_upper_bound": coupling_upper,
+        "static_coordinate_map_coupling_norm_upper_bound": (
+            static_map_coupling_upper
+        ),
+        "static_coordinate_split_norm_upper_bound": static_map_norm_upper,
+        "static_coordinate_reconstruction_norm_upper_bound": (
+            static_map_norm_upper
+        ),
+        "static_coordinate_shear_method": method,
+    }
+
+
+def _composed_coordinate_shear_certificate(
+    partition: Dict[str, Any],
+    static: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Bound the composed reduced-q to K-orthogonal coordinate transform."""
+
+    split_upper = float(
+        partition["partition_split_norm_upper_bound"]
+    ) * float(static["static_coordinate_split_norm_upper_bound"])
+    reconstruction_upper = float(
+        partition["partition_reconstruction_norm_upper_bound"]
+    ) * float(static["static_coordinate_reconstruction_norm_upper_bound"])
+    condition_upper = split_upper * reconstruction_upper
+    if (
+        not np.isfinite(split_upper)
+        or not np.isfinite(reconstruction_upper)
+        or not np.isfinite(condition_upper)
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor composed coordinate shear is unresolved"
+        )
+    if condition_upper > DESCRIPTOR_COORDINATE_SHEAR_LIMIT:
+        raise AlgebraicDynamicsError(
+            "descriptor composed coordinate shear exceeds the bounded limit"
+        )
+    return {
+        "coordinate_shear_limit": DESCRIPTOR_COORDINATE_SHEAR_LIMIT,
+        "coordinate_shear_upper_bound": condition_upper,
+        "coordinate_split_norm_upper_bound": split_upper,
+        "coordinate_reconstruction_norm_upper_bound": reconstruction_upper,
+        "coordinate_shear_method": (
+            "CERTIFIED_PRODUCT_OF_PARTITION_AND_K_ORTHOGONAL_MAP_BOUNDS"
+        ),
+    }
+
+
+def build_algebraic_static_reduction(
+    stiffness: sparse.spmatrix,
+    mass: sparse.spmatrix,
+    algebraic_basis: sparse.spmatrix,
+    *,
+    dense_size_limit: int,
+) -> AlgebraicStaticReduction:
+    """Build the sparse static partition used by descriptor transients."""
+
+    raw_stiffness = sparse.csr_matrix(stiffness, dtype=float)
+    raw_mass = sparse.csr_matrix(mass, dtype=float)
+    basis = sparse.csc_matrix(algebraic_basis, dtype=float)
+    if (
+        raw_stiffness.shape != raw_mass.shape
+        or raw_stiffness.shape[0] != raw_stiffness.shape[1]
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor stiffness and mass must be square and shape-compatible"
+        )
+    if np.any(~np.isfinite(raw_stiffness.data)) or np.any(
+        ~np.isfinite(raw_mass.data)
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor stiffness and mass must be finite"
+        )
+    for label, matrix in (
+        ("stiffness", raw_stiffness),
+        ("mass", raw_mass),
+    ):
+        relative_asymmetry = float(
+            sparse_linalg.norm(matrix - matrix.T)
+            / max(sparse_linalg.norm(matrix), np.finfo(float).tiny)
+        )
+        if (
+            not np.isfinite(relative_asymmetry)
+            or relative_asymmetry > 2.0e-13
+        ):
+            raise AlgebraicDynamicsError(
+                f"descriptor {label} matrix is not symmetric"
+            )
+    K = _symmetric(raw_stiffness)
+    M = _symmetric(raw_mass)
+    size = int(K.shape[0])
+    nullity = int(basis.shape[1])
+    if basis.shape[0] != size or nullity <= 0 or nullity >= size:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic basis has an incompatible reduction shape"
+        )
+    if np.any(~np.isfinite(basis.data)):
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic basis contains non-finite values"
+        )
+    mass_action = M @ basis
+    mass_null_residual = float(
+        sparse_linalg.norm(mass_action)
+        / max(
+            sparse_linalg.norm(M) * max(sparse_linalg.norm(basis), 1.0),
+            np.finfo(float).tiny,
+        )
+    )
+    if not np.isfinite(mass_null_residual) or mass_null_residual > 2.0e-11:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic basis is not mass-null"
+        )
+
+    pivot_rows, pivot_method = _algebraic_coordinate_pivot_rows(
+        basis,
+        dense_size_limit=dense_size_limit,
+    )
+    pivot_mask = np.zeros(size, dtype=bool)
+    pivot_mask[pivot_rows] = True
+    physical_rows = np.flatnonzero(~pivot_mask).astype(np.intp, copy=False)
+    stiffness_physical = K[physical_rows, :][:, physical_rows].tocsr()
+    mass_physical = M[physical_rows, :][:, physical_rows].tocsr()
+    stiffness_coupling = (K[physical_rows, :] @ basis).tocsr()
+    stiffness_algebraic = (basis.T @ K @ basis).tocsc()
+    algebraic_minimum, algebraic_method = _certify_spd(
+        stiffness_algebraic,
+        dense_size_limit=dense_size_limit,
+        label="descriptor algebraic stiffness block",
+    )
+    mass_minimum, mass_method = _certify_spd(
+        mass_physical,
+        dense_size_limit=dense_size_limit,
+        label="descriptor physical mass block",
+    )
+    static_coordinate_shear_certificate = _static_coordinate_shear_certificate(
+        stiffness_algebraic,
+        stiffness_coupling,
+        scaled_algebraic_minimum=algebraic_minimum,
+        dense_size_limit=dense_size_limit,
+    )
+    try:
+        algebraic_factor = sparse_linalg.splu(stiffness_algebraic)
+    except Exception as error:
+        raise AlgebraicDynamicsError(
+            "could not factor the descriptor algebraic stiffness block"
+        ) from error
+    pivot_block = basis[pivot_rows, :].tocsc()
+    coordinate_shear_certificate = _pivot_coordinate_shear_certificate(
+        pivot_block,
+        basis[physical_rows, :],
+        dense_size_limit=dense_size_limit,
+    )
+    composed_coordinate_shear_certificate = (
+        _composed_coordinate_shear_certificate(
+            coordinate_shear_certificate,
+            static_coordinate_shear_certificate,
+        )
+    )
+    try:
+        pivot_factor = sparse_linalg.splu(pivot_block)
+    except Exception as error:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot block is numerically singular"
+        ) from error
+    pivot_trials = _deterministic_block(nullity, min(4, nullity))
+    try:
+        pivot_solutions = np.asarray(
+            pivot_factor.solve(pivot_trials), dtype=float
+        )
+    except Exception as error:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot inverse solve failed"
+        ) from error
+    if pivot_solutions.shape != pivot_trials.shape or np.any(
+        ~np.isfinite(pivot_solutions)
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot inverse solve returned an invalid result"
+        )
+    pivot_residual = float(
+        np.linalg.norm(np.asarray(pivot_block @ pivot_solutions) - pivot_trials)
+        / max(np.linalg.norm(pivot_trials), np.finfo(float).tiny)
+    )
+    if not np.isfinite(pivot_residual) or pivot_residual > 2.0e-9:
+        raise AlgebraicDynamicsError(
+            "descriptor algebraic pivot inverse failed its residual gate"
+        )
+    diagnostics = {
+        "policy_id": DESCRIPTOR_TRANSIENT_POLICY_ID,
+        "reduced_dimension": size,
+        "physical_dimension": int(physical_rows.size),
+        "algebraic_dimension": nullity,
+        "pivot_row_method": pivot_method,
+        "pivot_rows": pivot_rows.tolist(),
+        "mass_null_residual": mass_null_residual,
+        "algebraic_stiffness_minimum_eigenvalue": algebraic_minimum,
+        "algebraic_stiffness_spd_method": algebraic_method,
+        "physical_mass_minimum_eigenvalue": mass_minimum,
+        "physical_mass_spd_method": mass_method,
+        "pivot_inverse_residual": pivot_residual,
+        **coordinate_shear_certificate,
+        **static_coordinate_shear_certificate,
+        **composed_coordinate_shear_certificate,
+    }
+    return AlgebraicStaticReduction(
+        basis=basis,
+        physical_rows=physical_rows,
+        stiffness_reduced=K,
+        stiffness_physical=stiffness_physical,
+        mass_physical=mass_physical,
+        stiffness_coupling=stiffness_coupling,
+        stiffness_algebraic=stiffness_algebraic,
+        algebraic_factor=algebraic_factor,
+        pivot_rows=pivot_rows,
+        pivot_factor=pivot_factor,
+        diagnostics=diagnostics,
+    )
+
+
+def certify_descriptor_effective_operator(
+    matrix: sparse.spmatrix,
+    *,
+    dense_size_limit: int,
+) -> Dict[str, Any]:
+    """Pre-certify an effective descriptor operator before backend selection."""
+
+    made = sparse.csc_matrix(matrix, dtype=float)
+    if made.shape[0] != made.shape[1] or made.shape[0] <= 0:
+        raise AlgebraicDynamicsError(
+            "descriptor effective operator must be nonempty and square"
+        )
+    if np.any(~np.isfinite(made.data)):
+        raise AlgebraicDynamicsError(
+            "descriptor effective operator contains non-finite values"
+        )
+    asymmetry = made - made.T
+    asymmetry_relative = float(
+        sparse_linalg.norm(asymmetry)
+        / max(sparse_linalg.norm(made), np.finfo(float).tiny)
+    )
+    if not np.isfinite(asymmetry_relative) or asymmetry_relative > 2.0e-13:
+        raise AlgebraicDynamicsError(
+            "descriptor effective operator is not symmetric"
+        )
+    minimum, method = _certify_spd(
+        made,
+        dense_size_limit=dense_size_limit,
+        label="descriptor transient effective operator",
+    )
+    return {
+        "policy_id": "PRECERTIFIED_SPD_EFFECTIVE_OPERATOR_V1",
+        "dimension": int(made.shape[0]),
+        "relative_asymmetry": asymmetry_relative,
+        "scaled_minimum_eigenvalue_lower_bound": float(minimum),
+        "certification_method": method,
+    }
 
 
 def _symmetric(matrix: sparse.spmatrix) -> sparse.csr_matrix:
@@ -1608,14 +2526,21 @@ def solve_descriptor_spectrum(
 
 
 __all__ = [
+    "AlgebraicStaticReduction",
     "AlgebraicDynamicsError",
     "DESCRIPTOR_COORDINATE_SHEAR_LIMIT",
     "DESCRIPTOR_DENSE_CONDENSATION_LIMIT",
     "DESCRIPTOR_MODAL_POLICY_ID",
+    "DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID",
+    "DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID",
+    "DESCRIPTOR_TRANSIENT_POLICY_ID",
+    "DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID",
     "DESCRIPTOR_SHIFT_RATIO",
     "DeclaredAlgebraicBasis",
     "DescriptorSpectrum",
     "build_declared_algebraic_basis",
+    "build_algebraic_static_reduction",
+    "certify_descriptor_effective_operator",
     "declared_algebraic_mass_elements",
     "solve_descriptor_spectrum",
     "uses_declared_algebraic_mass",

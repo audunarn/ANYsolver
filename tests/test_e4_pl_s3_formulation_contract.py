@@ -11,6 +11,10 @@ from anysolver.algebraic_dynamics import (
     DESCRIPTOR_DENSE_CONDENSATION_LIMIT,
     DESCRIPTOR_MODAL_POLICY_ID,
     DESCRIPTOR_SHIFT_RATIO,
+    DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID,
+    DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID,
+    DESCRIPTOR_TRANSIENT_POLICY_ID,
+    DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID,
 )
 from anysolver.e4_pl_s3_element import (
     ALGEBRAIC_COORDINATE_POLICY_ID,
@@ -110,6 +114,26 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
     assert contract["dynamic_policy"]["descriptor_large_system_policy"] == (
         "SWAPPED_PENCIL_WITH_FAIL_CLOSED_COORDINATE_SHEAR"
     )
+    assert contract["dynamic_policy"]["descriptor_transient_policy"] == (
+        DESCRIPTOR_TRANSIENT_POLICY_ID
+    )
+    assert contract["dynamic_policy"]["descriptor_transient_static_policy"] == (
+        DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID
+    )
+    assert contract["dynamic_policy"][
+        "descriptor_transient_first_order_policy"
+    ] == DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID
+    assert contract["dynamic_policy"][
+        "descriptor_transient_constrained_policy"
+    ] == DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID
+    assert int(
+        contract["dynamic_policy"][
+            "descriptor_transient_coordinate_shear_limit"
+        ]
+    ) == int(DESCRIPTOR_COORDINATE_SHEAR_LIMIT)
+    assert contract["dynamic_policy"][
+        "descriptor_transient_effective_factorization"
+    ] == "PRECERTIFIED_SPD_MATRIX_CLASS_NO_CALLER_GENERAL_FALLBACK"
 
 
 def test_quadrature_decimal_authority_integrates_reference_area() -> None:

@@ -9,11 +9,24 @@ average-acceleration method by default.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from scipy import sparse
 
+from .algebraic_dynamics import (
+    AlgebraicDynamicsError,
+    AlgebraicStaticReduction,
+    DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID,
+    DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID,
+    DESCRIPTOR_TRANSIENT_POLICY_ID,
+    DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID,
+    build_algebraic_static_reduction,
+    build_declared_algebraic_basis,
+    certify_descriptor_effective_operator,
+    declared_algebraic_mass_elements,
+)
 from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
@@ -294,6 +307,66 @@ def _full_initial_vector(value: Optional[np.ndarray], size: int) -> np.ndarray:
     return vector
 
 
+def _sampled_grid_derivative(
+    times: Sequence[float],
+    values: Sequence[np.ndarray],
+    order: int,
+    *,
+    evaluation_index: int,
+) -> np.ndarray:
+    """Differentiate a deterministic local polynomial through sampled values."""
+
+    if not values:
+        raise ValueError("load derivative requires at least one sampled value")
+    reference = np.asarray(values[0], dtype=float)
+    if order not in {1, 2}:
+        raise ValueError("load derivative order must be one or two")
+    count_all = min(len(values), len(times))
+    index = int(evaluation_index)
+    if index < 0:
+        index += count_all
+    if index < 0 or index >= count_all:
+        raise ValueError("load derivative evaluation index is out of range")
+    required = order + 1
+    count = min(3, count_all)
+    if count < required:
+        return np.zeros_like(reference)
+    start = min(max(index - count + 1, 0), count_all - count)
+    stop = start + count
+    local_times = np.asarray(times[start:stop], dtype=float)
+    offsets = local_times - float(times[index])
+    powers = np.arange(count, dtype=int)
+    system = offsets[None, :] ** powers[:, None]
+    rhs = np.zeros(count, dtype=float)
+    rhs[order] = float(math.factorial(order))
+    try:
+        weights = np.linalg.solve(system, rhs)
+    except Exception as error:
+        raise ValueError("could not construct deterministic load-derivative weights") from error
+    result = np.zeros_like(reference)
+    derivative_origin = np.asarray(values[index], dtype=float)
+    for weight, value in zip(weights, values[start:stop]):
+        result += float(weight) * (
+            np.asarray(value, dtype=float) - derivative_origin
+        )
+    if np.any(~np.isfinite(result)):
+        raise ValueError("sampled load derivative is non-finite")
+    return result
+
+
+def _forward_grid_derivative(
+    times: np.ndarray,
+    values: Sequence[np.ndarray],
+    order: int,
+) -> np.ndarray:
+    return _sampled_grid_derivative(
+        times,
+        values,
+        order,
+        evaluation_index=0,
+    )
+
+
 def _translation_peak_index(model: "FEModel") -> Tuple[np.ndarray, np.ndarray]:
     """Cached (node_ids, translation-DOF-index) arrays for peak scans."""
     mesh = model.mesh
@@ -451,9 +524,69 @@ def solve_transient_newmark(
         u0 = constraint_plan.u0
         independent_dofs = constraint_plan.independent_dofs
         constraint_info = dict(constraint_plan.info)
-    C_red = (config.rayleigh_alpha * M_red + config.rayleigh_beta * K_red).tocsr()
+    descriptor_elements = declared_algebraic_mass_elements(model)
+    descriptor_guarded = bool(descriptor_elements)
+    descriptor_reduction: Optional[AlgebraicStaticReduction] = None
+    descriptor_certificate: Optional[Dict[str, Any]] = None
+    descriptor_formulations = [
+        {
+            "element_id": int(element_id),
+            "formulation_id": str(
+                getattr(model.mesh.elements[element_id], "formulation_id", "")
+            ),
+            "algebraic_coordinate_policy": str(
+                getattr(
+                    model.mesh.elements[element_id],
+                    "dynamic_algebraic_policy",
+                    "",
+                )
+            ),
+        }
+        for element_id in descriptor_elements
+    ]
+    if descriptor_elements:
+        descriptor_basis = build_declared_algebraic_basis(
+            model,
+            M,
+            M_red,
+            T,
+            independent_dofs,
+            dense_size_limit=512,
+        )
+        if descriptor_basis.reduced_basis.shape[1]:
+            descriptor_reduction = build_algebraic_static_reduction(
+                K_red,
+                M_red,
+                descriptor_basis.reduced_basis,
+                dense_size_limit=512,
+            )
+        descriptor_certificate = {"mass_basis": descriptor_basis.diagnostics}
+        if descriptor_reduction is not None:
+            descriptor_certificate["static_reduction"] = (
+                descriptor_reduction.diagnostics
+            )
+            M_dynamic = descriptor_reduction.mass_physical
+        else:
+            M_dynamic = M_red
+    else:
+        M_dynamic = M_red
+    C_red = (
+        config.rayleigh_alpha * M_red + config.rayleigh_beta * K_red
+    ).tocsr()
+    if descriptor_guarded:
+        rayleigh_coefficients = np.asarray(
+            (config.rayleigh_alpha, config.rayleigh_beta),
+            dtype=float,
+        )
+        if np.any(~np.isfinite(rayleigh_coefficients)) or np.any(
+            rayleigh_coefficients < 0.0
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor transient analysis requires finite non-negative "
+                "Rayleigh damping"
+            )
 
-    if float(np.linalg.norm(M_red.diagonal())) <= 0.0 and M_red.nnz == 0:
+    if float(np.linalg.norm(M_dynamic.diagonal())) <= 0.0 and M_dynamic.nnz == 0:
         raise ValueError("Transient analysis requires a non-zero mass matrix; set material density values.")
 
     patches = tuple(pressure_patches or ())
@@ -474,12 +607,20 @@ def solve_transient_newmark(
         load = base_load.copy()
         for patch, vector in zip(patches, patch_vectors):
             load += patch.pressure_at(time) * vector
+        if descriptor_guarded and np.any(~np.isfinite(load)):
+            raise AlgebraicDynamicsError(
+                "descriptor transient full load is non-finite"
+            )
         return load
 
     def reduced_load_at(time: float) -> np.ndarray:
         load = base_load_red.copy()
         for patch, vector in zip(patches, patch_vectors_red):
             load += patch.pressure_at(time) * vector
+        if descriptor_guarded and np.any(~np.isfinite(load)):
+            raise AlgebraicDynamicsError(
+                "descriptor transient reduced load is non-finite"
+            )
         return load
 
     times = _time_grid(config)
@@ -554,13 +695,234 @@ def solve_transient_newmark(
     v_full = _full_initial_vector(config.initial_velocity, total_dofs)
     q_red = np.asarray((q - u0)[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
     v_red = np.asarray(v_full[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
+    if descriptor_guarded and (
+        np.any(~np.isfinite(q_red)) or np.any(~np.isfinite(v_red))
+    ):
+        raise AlgebraicDynamicsError(
+            "descriptor transient initial state is non-finite"
+        )
 
     F0_red = reduced_load_at(float(times[0]))
-    try:
-        mass_handle = factorize(M_red, MatrixClass.SYMMETRIC_SEMIDEFINITE, signature="transient.initial_mass")
-        a_red = np.asarray(mass_handle.solve(F0_red - C_red @ v_red - K_red @ q_red), dtype=float).reshape(-1)
-    except Exception as exc:
-        raise ValueError(f"Could not compute initial acceleration: {exc}") from exc
+    algebraic_displacement: Optional[np.ndarray] = None
+    algebraic_velocity: Optional[np.ndarray] = None
+    algebraic_acceleration: Optional[np.ndarray] = None
+    algebraic_load_equilibria: list[np.ndarray] = []
+    descriptor_initial_dae_residual = 0.0
+    descriptor_initial_algebraic_residual = 0.0
+    descriptor_partition_displacement: Optional[np.ndarray] = None
+    descriptor_partition_velocity: Optional[np.ndarray] = None
+    descriptor_partition_acceleration: Optional[np.ndarray] = None
+    if descriptor_reduction is not None:
+        sampled_loads = [
+            reduced_load_at(float(time)) for time in times[: min(3, len(times))]
+        ]
+        algebraic_load_equilibria = [
+            descriptor_reduction.algebraic_load_equilibrium(load)
+            for load in sampled_loads
+        ]
+        load_equilibrium = algebraic_load_equilibria[0]
+        load_equilibrium_rate = _forward_grid_derivative(
+            times,
+            algebraic_load_equilibria,
+            1,
+        )
+        load_equilibrium_acceleration = _forward_grid_derivative(
+            times,
+            algebraic_load_equilibria,
+            2,
+        )
+        physical_displacement, initial_algebraic_displacement = (
+            descriptor_reduction.split_k_orthogonal_state(q_red)
+        )
+        physical_velocity, _initial_algebraic_velocity = (
+            descriptor_reduction.split_k_orthogonal_state(v_red)
+        )
+        damping_time = float(config.rayleigh_beta)
+        if damping_time == 0.0:
+            algebraic_displacement = load_equilibrium.copy()
+            algebraic_velocity = load_equilibrium_rate.copy()
+            algebraic_acceleration = load_equilibrium_acceleration.copy()
+        else:
+            algebraic_displacement = initial_algebraic_displacement.copy()
+            algebraic_velocity = (
+                load_equilibrium - algebraic_displacement
+            ) / damping_time
+            algebraic_acceleration = (
+                load_equilibrium_rate - algebraic_velocity
+            ) / damping_time
+        q_red = descriptor_reduction.reconstruct_k_orthogonal_state(
+            physical_displacement,
+            algebraic_displacement,
+        )
+        v_red = descriptor_reduction.reconstruct_k_orthogonal_state(
+            physical_velocity,
+            algebraic_velocity,
+        )
+        condensed_force = descriptor_reduction.condensed_load(F0_red)
+        stiffness_force = descriptor_reduction.stiffness_action(
+            physical_displacement
+        )
+        damping_force = (
+            float(config.rayleigh_alpha)
+            * np.asarray(
+                descriptor_reduction.mass_physical @ physical_velocity,
+                dtype=float,
+            ).reshape(-1)
+            + float(config.rayleigh_beta)
+            * descriptor_reduction.stiffness_action(physical_velocity).reshape(-1)
+        )
+        try:
+            mass_handle = factorize(
+                descriptor_reduction.mass_physical,
+                MatrixClass.SPD,
+                signature="transient.initial_descriptor_physical_mass",
+            )
+        except Exception as exc:
+            raise AlgebraicDynamicsError(
+                "descriptor physical mass factorization failed"
+            ) from exc
+        if mass_handle.status != "ok":
+            raise AlgebraicDynamicsError(
+                "descriptor physical mass factorization failed"
+            )
+        try:
+            physical_acceleration = np.asarray(
+                mass_handle.solve(
+                    condensed_force - damping_force - stiffness_force
+                ),
+                dtype=float,
+            ).reshape(-1)
+        except Exception as exc:
+            raise AlgebraicDynamicsError(
+                "descriptor physical mass solve failed"
+            ) from exc
+        a_red = descriptor_reduction.reconstruct_k_orthogonal_state(
+            physical_acceleration,
+            algebraic_acceleration,
+        )
+        descriptor_partition_displacement = np.concatenate(
+            (
+                physical_displacement,
+                descriptor_reduction.partition_coordinate_from_k_orthogonal(
+                    physical_displacement,
+                    algebraic_displacement,
+                ),
+            )
+        )
+        descriptor_partition_velocity = np.concatenate(
+            (
+                physical_velocity,
+                descriptor_reduction.partition_coordinate_from_k_orthogonal(
+                    physical_velocity,
+                    algebraic_velocity,
+                ),
+            )
+        )
+        descriptor_partition_acceleration = np.concatenate(
+            (
+                physical_acceleration,
+                descriptor_reduction.partition_coordinate_from_k_orthogonal(
+                    physical_acceleration,
+                    algebraic_acceleration,
+                ),
+            )
+        )
+        initial_residual = np.asarray(
+            M_red @ a_red + C_red @ v_red + K_red @ q_red - F0_red,
+            dtype=float,
+        ).reshape(-1)
+        initial_scale = np.asarray(
+            abs(M_red) @ np.abs(a_red)
+            + abs(C_red) @ np.abs(v_red)
+            + abs(K_red) @ np.abs(q_red)
+            + np.abs(F0_red),
+            dtype=float,
+        ).reshape(-1)
+        initial_relative = float(
+            np.linalg.norm(initial_residual)
+            / max(np.linalg.norm(initial_scale), 1.0)
+        )
+        initial_algebraic = np.asarray(
+            descriptor_reduction.basis.T
+            @ (K_red @ q_red + C_red @ v_red - F0_red),
+            dtype=float,
+        ).reshape(-1)
+        initial_algebraic_scale = np.asarray(
+            abs(descriptor_reduction.basis.T)
+            @ (
+                abs(K_red) @ np.abs(q_red)
+                + abs(C_red) @ np.abs(v_red)
+                + np.abs(F0_red)
+            ),
+            dtype=float,
+        ).reshape(-1)
+        initial_algebraic_relative = float(
+            np.linalg.norm(initial_algebraic)
+            / max(np.linalg.norm(initial_algebraic_scale), 1.0)
+        )
+        descriptor_initial_dae_residual = initial_relative
+        descriptor_initial_algebraic_residual = initial_algebraic_relative
+        if (
+            not np.isfinite(initial_relative)
+            or not np.isfinite(initial_algebraic_relative)
+            or initial_relative > 2.0e-9
+            or initial_algebraic_relative > 2.0e-9
+        ):
+            raise AlgebraicDynamicsError(
+                "descriptor initial state failed the DAE residual gate"
+            )
+    else:
+        if descriptor_guarded:
+            constrained_mass_certificate = certify_descriptor_effective_operator(
+                M_red,
+                dense_size_limit=512,
+            )
+            assert descriptor_certificate is not None
+            descriptor_certificate["constrained_physical_mass"] = (
+                constrained_mass_certificate
+            )
+            try:
+                mass_handle = factorize(
+                    M_red,
+                    MatrixClass.SPD,
+                    signature="transient.initial_descriptor_constrained_mass",
+                )
+            except Exception as exc:
+                raise AlgebraicDynamicsError(
+                    "descriptor constrained physical mass factorization failed"
+                ) from exc
+            if mass_handle.status != "ok":
+                raise AlgebraicDynamicsError(
+                    "descriptor constrained physical mass factorization failed"
+                )
+            try:
+                a_red = np.asarray(
+                    mass_handle.solve(F0_red - C_red @ v_red - K_red @ q_red),
+                    dtype=float,
+                ).reshape(-1)
+            except Exception as exc:
+                raise AlgebraicDynamicsError(
+                    "descriptor constrained physical mass solve failed"
+                ) from exc
+            if a_red.shape != (M_red.shape[0],) or np.any(~np.isfinite(a_red)):
+                raise AlgebraicDynamicsError(
+                    "descriptor constrained physical mass solve returned an invalid result"
+                )
+        else:
+            try:
+                mass_handle = factorize(
+                    M_red,
+                    MatrixClass.SYMMETRIC_SEMIDEFINITE,
+                    signature="transient.initial_mass",
+                )
+                a_red = np.asarray(
+                    mass_handle.solve(F0_red - C_red @ v_red - K_red @ q_red),
+                    dtype=float,
+                ).reshape(-1)
+            except Exception as exc:
+                raise ValueError(
+                    f"Could not compute initial acceleration: {exc}"
+                ) from exc
 
     saved_times = []
     saved_u = []
@@ -576,6 +938,7 @@ def solve_transient_newmark(
     peak_von_mises = 0.0
     energy_kinetic = []
     energy_strain = []
+    descriptor_algebraic_energy: list[float] = []
     full_vector_reconstruction_count = 0
     selected_output_reconstruction_count = 0
 
@@ -658,6 +1021,20 @@ def solve_transient_newmark(
             peak_displacement_node = current_node
         energy_kinetic.append(0.5 * float(v_state @ (M_red @ v_state)))
         energy_strain.append(0.5 * float(q_state @ (K_red @ q_state)))
+        if descriptor_reduction is not None:
+            _physical_state, algebraic_state = (
+                descriptor_reduction.split_k_orthogonal_state(q_state)
+            )
+            descriptor_algebraic_energy.append(
+                0.5
+                * float(
+                    algebraic_state
+                    @ (
+                        descriptor_reduction.stiffness_algebraic
+                        @ algebraic_state
+                    )
+                )
+            )
         if stress_history is not None:
             assert full_u is not None
             stresses = _selected_stresses(model, full_u, output_element_ids, recovery)
@@ -693,12 +1070,65 @@ def solve_transient_newmark(
     alpha_h, beta, gamma = config.integration_parameters()
     one_plus_alpha = 1.0 + alpha_h
     F_red_prev = F0_red
+    descriptor_max_dae_residual = descriptor_initial_dae_residual
+    descriptor_max_algebraic_residual = descriptor_initial_algebraic_residual
+    descriptor_external_work = 0.0
+    descriptor_algebraic_external_work = 0.0
+    descriptor_algebraic_load_norm_max = 0.0
+    descriptor_effective_certificates: list[Dict[str, Any]] = []
+    descriptor_abs_mass = abs(M_red) if descriptor_reduction is not None else None
+    descriptor_abs_damping = (
+        abs(C_red) if descriptor_reduction is not None else None
+    )
+    descriptor_abs_stiffness = (
+        abs(K_red) if descriptor_reduction is not None else None
+    )
+    descriptor_abs_basis_transpose = (
+        abs(descriptor_reduction.basis.T)
+        if descriptor_reduction is not None
+        else None
+    )
+    descriptor_previous_coordinate = (
+        descriptor_reduction.algebraic_partition_coordinate(q_red)
+        if descriptor_reduction is not None
+        else None
+    )
+    descriptor_previous_load = (
+        np.asarray(
+            descriptor_reduction.basis.T @ F0_red,
+            dtype=float,
+        ).reshape(-1)
+        if descriptor_reduction is not None
+        else None
+    )
+    if descriptor_previous_load is not None:
+        descriptor_algebraic_load_norm_max = float(
+            np.linalg.norm(descriptor_previous_load)
+        )
     for step_index in range(1, len(times)):
         cancellation_safe_point(
             cancellation_token,
             f"transient.step:{step_index}",
         )
         dt = float(times[step_index] - times[step_index - 1])
+        if descriptor_guarded:
+            final_step_index = len(times) - 1
+            nominal_end = float(final_step_index) * float(config.dt)
+            end_time = float(config.t_end)
+            nominal_roundoff = 8.0 * max(
+                math.ulp(end_time),
+                math.ulp(nominal_end),
+                float(final_step_index) * math.ulp(float(config.dt)),
+            )
+            nominal_uniform_end = (
+                abs(end_time - nominal_end) <= nominal_roundoff
+            )
+            if step_index < final_step_index or nominal_uniform_end:
+                dt = float(config.dt)
+            else:
+                dt = end_time - float(
+                    final_step_index - 1
+                ) * float(config.dt)
         if dt <= 0.0:
             continue
         a0 = 1.0 / (beta * dt**2)
@@ -707,16 +1137,107 @@ def solve_transient_newmark(
         a3 = 1.0 / (2.0 * beta) - 1.0
         a4 = gamma / beta - 1.0
         a5 = dt * (gamma / (2.0 * beta) - 1.0)
-        if cached_solver is None or cached_dt is None or not np.isclose(dt, cached_dt):
-            K_eff = (one_plus_alpha * K_red + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+        descriptor_dt_changed = (
+            descriptor_guarded
+            and cached_dt is not None
+            and dt != cached_dt
+        )
+        ordinary_dt_changed = (
+            not descriptor_guarded
+            and cached_dt is not None
+            and not np.isclose(dt, cached_dt)
+        )
+        if (
+            cached_solver is None
+            or cached_dt is None
+            or descriptor_dt_changed
+            or ordinary_dt_changed
+        ):
+            if descriptor_reduction is not None:
+                stiffness_coefficient = one_plus_alpha * (
+                    1.0 + a1 * float(config.rayleigh_beta)
+                )
+                mass_coefficient = a0 + one_plus_alpha * a1 * float(
+                    config.rayleigh_alpha
+                )
+                K_eff = descriptor_reduction.effective_block_matrix(
+                    stiffness_coefficient=stiffness_coefficient,
+                    mass_coefficient=mass_coefficient,
+                )
+                effective_certificate = certify_descriptor_effective_operator(
+                    K_eff,
+                    dense_size_limit=512,
+                )
+                effective_certificate.update(
+                    {
+                        "dt": dt,
+                        "stiffness_coefficient": stiffness_coefficient,
+                        "mass_coefficient": mass_coefficient,
+                    }
+                )
+                descriptor_effective_certificates.append(effective_certificate)
+                factorization_signature = (
+                    f"transient.effective.descriptor:{dt:.16g}"
+                )
+            else:
+                K_eff = (
+                    one_plus_alpha * K_red
+                    + a0 * M_red
+                    + one_plus_alpha * a1 * C_red
+                ).tocsr()
+                if descriptor_guarded:
+                    effective_certificate = certify_descriptor_effective_operator(
+                        K_eff,
+                        dense_size_limit=512,
+                    )
+                    effective_certificate.update(
+                        {
+                            "dt": dt,
+                            "stiffness_coefficient": one_plus_alpha
+                            * (1.0 + a1 * float(config.rayleigh_beta)),
+                            "mass_coefficient": a0
+                            + one_plus_alpha
+                            * a1
+                            * float(config.rayleigh_alpha),
+                        }
+                    )
+                    descriptor_effective_certificates.append(
+                        effective_certificate
+                    )
+                    factorization_signature = (
+                        f"transient.effective.descriptor_constrained:{dt:.16g}"
+                    )
+                else:
+                    factorization_signature = f"transient.effective:{dt:.16g}"
             try:
                 cached_solver = factorize(
                     K_eff,
-                    MatrixClass.SYMMETRIC_INDEFINITE,
-                    signature=f"transient.effective:{dt:.16g}",
+                    (
+                        MatrixClass.SPD
+                        if descriptor_guarded
+                        else MatrixClass.SYMMETRIC_INDEFINITE
+                    ),
+                    signature=factorization_signature,
                 )
+                if (
+                    descriptor_guarded
+                    and cached_solver.status != "ok"
+                ):
+                    raise AlgebraicDynamicsError(
+                        "descriptor effective operator factorization failed"
+                    )
                 cached_solver_diagnostics = cached_solver.diagnostics()
-            except Exception:
+                if descriptor_guarded:
+                    cached_solver_diagnostics["coordinate_system"] = (
+                        "CERTIFIED_PHYSICAL_ALGEBRAIC_PARTITION"
+                        if descriptor_reduction is not None
+                        else "CONSTRAINT_ELIMINATED_ALGEBRAIC_COORDINATES"
+                    )
+            except Exception as exc:
+                if descriptor_guarded:
+                    raise AlgebraicDynamicsError(
+                        "descriptor effective operator failed its SPD factorization"
+                    ) from exc
                 cached_solver = None
                 cached_solver_diagnostics = {"failure_reason": "effective_stiffness_factorization_failed"}
             cached_dt = dt
@@ -734,10 +1255,44 @@ def solve_transient_newmark(
         )
         if alpha_h != 0.0:
             rhs += alpha_h * (K_red @ q_red) + alpha_h * (C_red @ v_red)
+        descriptor_partition_next: Optional[np.ndarray] = None
         if cached_solver is not None:
-            q_next = np.asarray(cached_solver.solve(rhs), dtype=float).reshape(-1)
+            effective_rhs = (
+                descriptor_reduction.effective_rhs(rhs)
+                if descriptor_reduction is not None
+                else rhs
+            )
+            try:
+                effective_solution = np.asarray(
+                    cached_solver.solve(effective_rhs), dtype=float
+                ).reshape(-1)
+            except Exception as exc:
+                if descriptor_guarded:
+                    raise AlgebraicDynamicsError(
+                        "descriptor effective operator solve failed"
+                    ) from exc
+                raise
+            if descriptor_guarded and (
+                effective_solution.shape != (K_eff.shape[0],)
+                or np.any(~np.isfinite(effective_solution))
+            ):
+                raise AlgebraicDynamicsError(
+                    "descriptor effective operator solve returned an invalid result"
+                )
+            if descriptor_reduction is not None:
+                descriptor_partition_next = effective_solution.copy()
+                q_next = descriptor_reduction.reconstruct_partition_state(
+                    effective_solution[: descriptor_reduction.physical_dimension],
+                    effective_solution[descriptor_reduction.physical_dimension :],
+                )
+            else:
+                q_next = effective_solution
             factorization_reused = True
         else:
+            if descriptor_guarded:
+                raise AlgebraicDynamicsError(
+                    "descriptor effective operator has no certified solver"
+                )
             fallback_handle = factorize(
                 (one_plus_alpha * K_red + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr(),
                 MatrixClass.GENERAL,
@@ -746,8 +1301,165 @@ def solve_transient_newmark(
             q_next = np.asarray(fallback_handle.solve(rhs), dtype=float).reshape(-1)
             cached_solver_diagnostics = fallback_handle.diagnostics()
         solve_count += 1
-        a_next = a0 * (q_next - q_red) - a2 * v_red - a3 * a_red
-        v_next = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_next)
+        if descriptor_reduction is not None:
+            assert descriptor_partition_next is not None
+            assert descriptor_partition_displacement is not None
+            assert descriptor_partition_velocity is not None
+            assert descriptor_partition_acceleration is not None
+            damping_time = float(config.rayleigh_beta)
+            if damping_time == 0.0:
+                current_equilibrium = (
+                    descriptor_reduction.algebraic_load_equilibrium(F_red)
+                )
+                physical_q = descriptor_partition_next[
+                    : descriptor_reduction.physical_dimension
+                ]
+                descriptor_partition_next[
+                    descriptor_reduction.physical_dimension :
+                ] = descriptor_reduction.partition_coordinate_from_k_orthogonal(
+                    physical_q,
+                    current_equilibrium,
+                )
+            descriptor_partition_a_next = (
+                a0
+                * (
+                    descriptor_partition_next
+                    - descriptor_partition_displacement
+                )
+                - a2 * descriptor_partition_velocity
+                - a3 * descriptor_partition_acceleration
+            )
+            descriptor_partition_v_next = (
+                descriptor_partition_velocity
+                + dt
+                * (
+                    (1.0 - gamma) * descriptor_partition_acceleration
+                    + gamma * descriptor_partition_a_next
+                )
+            )
+            q_next = descriptor_reduction.reconstruct_partition_state(
+                descriptor_partition_next[
+                    : descriptor_reduction.physical_dimension
+                ],
+                descriptor_partition_next[
+                    descriptor_reduction.physical_dimension :
+                ],
+            )
+            v_next = descriptor_reduction.reconstruct_partition_state(
+                descriptor_partition_v_next[
+                    : descriptor_reduction.physical_dimension
+                ],
+                descriptor_partition_v_next[
+                    descriptor_reduction.physical_dimension :
+                ],
+            )
+            a_next = descriptor_reduction.reconstruct_partition_state(
+                descriptor_partition_a_next[
+                    : descriptor_reduction.physical_dimension
+                ],
+                descriptor_partition_a_next[
+                    descriptor_reduction.physical_dimension :
+                ],
+            )
+            descriptor_partition_displacement = descriptor_partition_next
+            descriptor_partition_velocity = descriptor_partition_v_next
+            descriptor_partition_acceleration = descriptor_partition_a_next
+        else:
+            a_next = a0 * (q_next - q_red) - a2 * v_red - a3 * a_red
+            v_next = v_red + dt * (
+                (1.0 - gamma) * a_red + gamma * a_next
+            )
+        if descriptor_reduction is not None:
+            current_static_residual = np.asarray(
+                C_red @ v_next + K_red @ q_next - F_red,
+                dtype=float,
+            ).reshape(-1)
+            previous_static_residual = np.asarray(
+                C_red @ v_red + K_red @ q_red - F_red_prev,
+                dtype=float,
+            ).reshape(-1)
+            dae_residual = np.asarray(M_red @ a_next, dtype=float).reshape(-1)
+            dae_residual += one_plus_alpha * current_static_residual
+            dae_residual -= alpha_h * previous_static_residual
+            assert descriptor_abs_mass is not None
+            assert descriptor_abs_damping is not None
+            assert descriptor_abs_stiffness is not None
+            assert descriptor_abs_basis_transpose is not None
+            dae_scale = np.asarray(
+                descriptor_abs_mass @ np.abs(a_next)
+                + abs(one_plus_alpha)
+                * (
+                    descriptor_abs_damping @ np.abs(v_next)
+                    + descriptor_abs_stiffness @ np.abs(q_next)
+                    + np.abs(F_red)
+                )
+                + abs(alpha_h)
+                * (
+                    descriptor_abs_damping @ np.abs(v_red)
+                    + descriptor_abs_stiffness @ np.abs(q_red)
+                    + np.abs(F_red_prev)
+                ),
+                dtype=float,
+            ).reshape(-1)
+            dae_relative = float(
+                np.linalg.norm(dae_residual)
+                / max(np.linalg.norm(dae_scale), 1.0)
+            )
+            algebraic_residual = np.asarray(
+                descriptor_reduction.basis.T
+                @ (K_red @ q_next + C_red @ v_next - F_red),
+                dtype=float,
+            ).reshape(-1)
+            algebraic_scale = np.asarray(
+                descriptor_abs_basis_transpose
+                @ (
+                    descriptor_abs_stiffness @ np.abs(q_next)
+                    + descriptor_abs_damping @ np.abs(v_next)
+                    + np.abs(F_red)
+                ),
+                dtype=float,
+            ).reshape(-1)
+            algebraic_relative = float(
+                np.linalg.norm(algebraic_residual)
+                / max(np.linalg.norm(algebraic_scale), 1.0)
+            )
+            descriptor_max_dae_residual = max(
+                descriptor_max_dae_residual, dae_relative
+            )
+            descriptor_max_algebraic_residual = max(
+                descriptor_max_algebraic_residual, algebraic_relative
+            )
+            descriptor_external_work += 0.5 * float(
+                (F_red_prev + F_red) @ (q_next - q_red)
+            )
+            algebraic_coordinate = (
+                descriptor_reduction.algebraic_partition_coordinate(q_next)
+            )
+            algebraic_load = np.asarray(
+                descriptor_reduction.basis.T @ F_red,
+                dtype=float,
+            ).reshape(-1)
+            assert descriptor_previous_coordinate is not None
+            assert descriptor_previous_load is not None
+            descriptor_algebraic_external_work += 0.5 * float(
+                (descriptor_previous_load + algebraic_load)
+                @ (algebraic_coordinate - descriptor_previous_coordinate)
+            )
+            descriptor_previous_coordinate = algebraic_coordinate
+            descriptor_previous_load = algebraic_load
+            descriptor_algebraic_load_norm_max = max(
+                descriptor_algebraic_load_norm_max,
+                float(np.linalg.norm(algebraic_load)),
+            )
+            if (
+                not np.isfinite(dae_relative)
+                or not np.isfinite(algebraic_relative)
+                or dae_relative > 2.0e-8
+                or algebraic_relative > 2.0e-9
+            ):
+                raise AlgebraicDynamicsError(
+                    "descriptor transient state failed the DAE residual gate"
+                )
         q_red, v_red, a_red = q_next, v_next, a_next
         F_red_prev = F_red
 
@@ -834,6 +1546,83 @@ def solve_transient_newmark(
             np.asarray(T @ q_red + u0, dtype=float).reshape(-1),
         ),
     }
+    descriptor_transient_provenance: Optional[Dict[str, Any]] = None
+    if descriptor_elements:
+        if descriptor_reduction is not None:
+            algebraic_endpoint_policy = (
+                DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID
+                if float(config.rayleigh_beta) == 0.0
+                else DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID
+            )
+            descriptor_disposition = "ACTIVE_COMPATIBLE_ALGEBRAIC_REDUCTION"
+        else:
+            algebraic_endpoint_policy = (
+                DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID
+            )
+            descriptor_disposition = (
+                "COMPATIBLE_ALGEBRAIC_NULLITY_ZERO_ORDINARY_REDUCED_SYSTEM"
+            )
+        assert descriptor_certificate is not None
+        descriptor_transient_provenance = {
+            "policy_id": DESCRIPTOR_TRANSIENT_POLICY_ID,
+            "algebraic_endpoint_policy": algebraic_endpoint_policy,
+            "disposition": descriptor_disposition,
+            "declared_algebraic_element_ids": [
+                int(element_id) for element_id in descriptor_elements
+            ],
+            "declared_algebraic_formulations": descriptor_formulations,
+        }
+    if descriptor_reduction is not None:
+        assert descriptor_transient_provenance is not None
+        assert descriptor_certificate is not None
+        diagnostics.update(
+            {
+                "descriptor_transient": True,
+                **descriptor_transient_provenance,
+                "declared_algebraic_mass_certificate": descriptor_certificate,
+                "initial_dae_relative_residual": float(
+                    descriptor_initial_dae_residual
+                ),
+                "initial_algebraic_relative_residual": float(
+                    descriptor_initial_algebraic_residual
+                ),
+                "max_dae_relative_residual": float(
+                    descriptor_max_dae_residual
+                ),
+                "max_algebraic_relative_residual": float(
+                    descriptor_max_algebraic_residual
+                ),
+                "algebraic_external_work_after_initial_consistency": float(
+                    descriptor_algebraic_external_work
+                ),
+                "total_external_work_after_initial_consistency": float(
+                    descriptor_external_work
+                ),
+                "algebraic_strain_energy": descriptor_algebraic_energy,
+                "max_algebraic_generalized_load_norm": float(
+                    descriptor_algebraic_load_norm_max
+                ),
+                "effective_operator_certificates": (
+                    descriptor_effective_certificates
+                ),
+                "load_impulse_policy": "FULL_UNPROJECTED_LOAD_VECTOR_TRAPEZOIDAL_V1",
+                "reaction_recovery_policy": (
+                    "FULL_LOAD_RETAINED_DYNAMIC_REACTION_HISTORY_NOT_EXPOSED"
+                ),
+            }
+        )
+    elif descriptor_transient_provenance is not None:
+        assert descriptor_certificate is not None
+        diagnostics.update(
+            {
+                "descriptor_transient": False,
+                **descriptor_transient_provenance,
+                "declared_algebraic_mass_certificate": descriptor_certificate,
+                "effective_operator_certificates": (
+                    descriptor_effective_certificates
+                ),
+            }
+        )
     if session is not None:
         diagnostics["analysis_session"] = session.diagnostics()
     assembly_info = {
@@ -841,6 +1630,15 @@ def solve_transient_newmark(
         "mass": mass_info,
         "load": base_load_info,
     }
+    result_metadata: Dict[str, Any] = {
+        "pressure_patches": [info.get("patch_name") for info in patch_infos],
+        "resources": policy_metadata.get("resources"),
+        "memory_estimate": policy_metadata.get("memory_estimate"),
+    }
+    if descriptor_transient_provenance is not None:
+        result_metadata["descriptor_transient_provenance"] = (
+            descriptor_transient_provenance
+        )
     result_case = make_result_case(
         name="linear_transient_newmark",
         analysis_type="linear_transient",
@@ -868,11 +1666,7 @@ def solve_transient_newmark(
             "rayleigh_beta": config.rayleigh_beta,
             "save_every": config.save_every,
         },
-        metadata={
-            "pressure_patches": [info.get("patch_name") for info in patch_infos],
-            "resources": policy_metadata.get("resources"),
-            "memory_estimate": policy_metadata.get("memory_estimate"),
-        },
+        metadata=result_metadata,
     ).to_dict()
     diagnostics["result_case"] = result_case
     return TransientResult(

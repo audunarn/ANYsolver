@@ -34,6 +34,13 @@
     "descriptor_large_system_policy": "SWAPPED_PENCIL_WITH_FAIL_CLOSED_COORDINATE_SHEAR",
     "descriptor_modal_policy": "SWAPPED_MASSLESS_ALGEBRAIC_PENCIL_V1",
     "descriptor_shift_ratio": "1e-6",
+    "descriptor_transient_constrained_policy": "CONSTRAINT_ELIMINATED_ALGEBRAIC_COORDINATES",
+    "descriptor_transient_coordinate_shear_limit": "256",
+    "descriptor_transient_effective_factorization": "PRECERTIFIED_SPD_MATRIX_CLASS_NO_CALLER_GENERAL_FALLBACK",
+    "descriptor_transient_first_order_policy": "FIRST_ORDER_VELOCITY_PROJECTION",
+    "descriptor_transient_load_impulse": "FULL_UNPROJECTED_LOAD_VECTOR_TRAPEZOIDAL_V1",
+    "descriptor_transient_policy": "STATIC_ALGEBRAIC_TRANSIENT_REDUCTION_V1",
+    "descriptor_transient_static_policy": "STATIC_DISPLACEMENT_PROJECTION",
     "drill_inertia": "ZERO_ALGEBRAIC_COORDINATE",
     "gb": "VERTICAL_STACK_IDENTITY_AND_MINUS_KAA_INVERSE_KAQ"
   },

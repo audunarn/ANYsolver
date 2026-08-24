@@ -96,7 +96,6 @@ CAPABILITY_GAPS = frozenset(
         "global_recovery",
         "initial_fields",
         "material_nonlinearity",
-        "transient_algebraic_dynamics",
         "nonlinear_geometry",
         "orthotropic_physical_recovery",
         "physical_director_reversal",
@@ -632,6 +631,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "linear_internal_force": "PARITY_REPLACED",
             "local_physical_recovery": "PARITY_REPLACED",
             "generalized_sections": "PARITY_REPLACED",
+            "transient_algebraic_dynamics": "PARITY_REPLACED",
             **{name: "PARITY_GAP" for name in sorted(CAPABILITY_GAPS)},
         }
 
