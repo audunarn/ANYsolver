@@ -207,12 +207,14 @@ def test_corotational_beam_cantilever_rolls_up_to_analytic_circle() -> None:
     assert result.diagnostics.get("kinematics", result.solver_info.get("kinematics")) if hasattr(result, "solver_info") else True
 
 
-def test_corotational_matches_von_karman_for_small_displacements() -> None:
+def test_legacy_corotational_matches_von_karman_for_registered_small_displacements() -> None:
+    """Preserve the pre-activation 150 N kinematics regression explicitly."""
+
     # Note the realistic load scale: the corotational pull-back has an
     # intrinsic residual floor of about eps * ||K|| * L per element, so
     # convergence tolerances must sit above that floor (documented in
     # anysolver.corotational).
-    model = _single_shell_model()
+    model = _single_legacy_shell_model()
     model.add_boundary_condition(BoundaryCondition("clamp", [1, 4], {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0}))
     # ~0.5% of span deflection: small-displacement regime, but the residual
     # scale stays far above the corotational roundoff floor.
@@ -220,7 +222,7 @@ def test_corotational_matches_von_karman_for_small_displacements() -> None:
     load_case.add_nodal_load(3, forces=np.array([0.0, 0.0, 150.0]))
 
     reference = solve_static_nonlinear(model, load_case, num_steps=2, max_iterations=20, tolerance=1.0e-6)
-    model2 = _single_shell_model()
+    model2 = _single_legacy_shell_model()
     model2.add_boundary_condition(BoundaryCondition("clamp", [1, 4], {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0}))
     corotational = solve_static_nonlinear(model2, load_case, num_steps=2, max_iterations=20, tolerance=1.0e-6, kinematics="corotational")
 

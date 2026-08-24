@@ -140,6 +140,7 @@ def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None
         {
             ("tests/test_corotational.py", "_single_legacy_shell_model"): 1,
             ("tests/test_follower_pressure.py", "_clamped_pressure_plate"): 1,
+            ("tests/test_follower_pressure.py", "_legacy_q4_shell"): 1,
             ("tests/test_generalized_shell_sections.py", "_legacy_shell"): 2,
             (
                 "tests/test_recovery_qualification.py",
@@ -148,7 +149,7 @@ def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None
         }
     )
     assert calls["LegacyShellElement"] == expected_legacy
-    assert sum(calls["LegacyShellElement"].values()) == 5
+    assert sum(calls["LegacyShellElement"].values()) == 6
 
 
 def test_production_constructor_calls_are_confined_to_central_factory() -> None:

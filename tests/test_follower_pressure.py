@@ -77,6 +77,24 @@ def _single_shell(node_count: int = 4) -> tuple[FEModel, ShellElement]:
     return model, element
 
 
+def _legacy_q4_shell(
+    element_id: int,
+    node_ids: list[int],
+    material_name: str,
+    *,
+    thickness: float,
+) -> LegacyShellElement:
+    """Construct an explicit rollback element for registered legacy fixtures."""
+
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        return LegacyShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            thickness=thickness,
+        )
+
+
 def _axis_angle(axis: np.ndarray, angle: float) -> np.ndarray:
     axis = np.asarray(axis, dtype=float)
     axis /= np.linalg.norm(axis)
@@ -363,7 +381,9 @@ def test_buckling_rejects_open_nonsymmetric_follower_pressure_pencil() -> None:
     assert "complex nonconservative eigenanalysis" in result.diagnostics["reason"]
 
 
-def test_buckling_includes_conservative_closed_surface_follower_stiffness() -> None:
+def test_legacy_buckling_preserves_registered_closed_surface_follower_stiffness() -> None:
+    """Preserve the pre-activation closed-cube eigenvalue as rollback evidence."""
+
     model = FEModel("closed_pressure_cube")
     model.add_material("steel", 2.0e5, 0.3)
     points = [
@@ -389,9 +409,7 @@ def test_buckling_includes_conservative_closed_surface_follower_stiffness() -> N
     for element_id, nodes in enumerate(outward_faces, start=1):
         model.add_element(
             element_id,
-            create_shell_element(
-                element_id, nodes, "steel", thickness=0.02
-            ),
+            _legacy_q4_shell(element_id, nodes, "steel", thickness=0.02),
         )
     model.add_boundary_condition(FixedSupport("fixed_bottom", [1, 2, 3, 4]))
     load = LoadCase("closed_pressure", follower_pressure=True)
