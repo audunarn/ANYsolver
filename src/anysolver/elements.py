@@ -4626,6 +4626,17 @@ def create_element(
     **kwargs: Any,
 ) -> Element:
     normalized_type = str(element_type).lower()
+    if normalized_type in {"e4-pl", "e4_pl", "qualified_s4"}:
+        # Lazy import avoids a module cycle: the dormant candidate subclasses
+        # ShellElement but does not replace any legacy factory key.
+        from .e4_pl_element import QualifiedE4PLShellElement
+
+        return QualifiedE4PLShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
     if normalized_type not in ELEMENT_TYPES:
         raise ValueError(f"Unknown element type: {element_type}")
     if normalized_type == "coupled":

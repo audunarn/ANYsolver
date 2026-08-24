@@ -69,6 +69,7 @@ from .plasticity import (
     hill48_plane_stress_return_map,
 )
 from .elements import BeamElement, CoupledBeamShellElement, QuadraticBeamElement, ShellElement, create_element
+from .e4_pl_element import QualifiedE4PLShellElement
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -479,6 +480,7 @@ __all__ = [
     "BeamElement",
     "CoupledBeamShellElement",
     "QuadraticBeamElement",
+    "QualifiedE4PLShellElement",
     "ShellElement",
     "create_element",
     # Boundary and loads

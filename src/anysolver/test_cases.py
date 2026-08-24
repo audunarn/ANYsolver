@@ -97,7 +97,7 @@ class ShipPanelTestCase(TestCase):
         """Run the ship panel test case."""
         from . import (
             PanelGeometry, MeshConfig, generate_stiffened_panel_mesh,
-            LoadCase, solve_linear, create_fe_result, FixedSupport
+            LoadCase, ShellElement, solve_linear, create_fe_result, FixedSupport
         )
 
         result = {
@@ -142,7 +142,7 @@ class ShipPanelTestCase(TestCase):
         result['results']['mesh'] = {
             'num_nodes': model.mesh.num_nodes,
             'num_elements': model.mesh.num_elements,
-            'num_shell_elements': len([e for e in model.mesh.elements.values() if e.__class__.__name__ == 'ShellElement']),
+            'num_shell_elements': len([e for e in model.mesh.elements.values() if isinstance(e, ShellElement)]),
             'num_beam_elements': len([e for e in model.mesh.elements.values() if e.__class__.__name__ == 'BeamElement']),
             'num_coupling_elements': len([e for e in model.mesh.elements.values() if e.__class__.__name__ == 'CoupledBeamShellElement'])
         }
@@ -167,7 +167,7 @@ class ShipPanelTestCase(TestCase):
 
         # Apply lateral pressure to all shell elements
         for elem_id, element in model.mesh.elements.items():
-            if element.__class__.__name__ == 'ShellElement':
+            if isinstance(element, ShellElement):
                 load_case.add_pressure_load(elem_id, pressure=self.lateral_pressure)
 
         # Apply in-plane loads (simplified as nodal loads)

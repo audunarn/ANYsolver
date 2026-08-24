@@ -3990,7 +3990,7 @@ def _fea_result_import_payload(
     elsets: dict[str, list[int]] = collections.defaultdict(list)
     section_meta: dict[str, dict[str, object]] = {}
     for element_id, element in sorted(model.mesh.elements.items()):
-        if element.__class__.__name__ != "ShellElement":
+        if not isinstance(element, _full_backend.ShellElement):
             continue
         generated_shell = shell_by_id.get(int(element_id), {})
         thickness = float(getattr(element, "thickness", generated_shell.get("thickness", 0.0)) or 0.0)
@@ -4036,7 +4036,7 @@ def _fea_result_import_payload(
     stress_counts: dict[int, int] = collections.defaultdict(int)
     for element_id, stress in (stresses_by_element or {}).items():
         element = model.mesh.elements.get(int(element_id))
-        if element is None or element.__class__.__name__ != "ShellElement":
+        if element is None or not isinstance(element, _full_backend.ShellElement):
             continue
         components = _shell_global_membrane_components(model, element, stress)
         if components is None:
@@ -7940,7 +7940,7 @@ def _cylinder_pressure_prestress_states(model, pressure: float, radius: float) -
     if compression <= 0.0:
         return states
     for element_id, element in model.mesh.elements.items():
-        if element.__class__.__name__ == "ShellElement":
+        if isinstance(element, _full_backend.ShellElement):
             states[int(element_id)] = {
                 "membrane_compression_x": compression,
                 "membrane_compression_y": 0.5 * compression,
@@ -8090,7 +8090,7 @@ def run_production_fem(
         shells = []
         beams = []
         for eid, el in imported_fem_model.mesh.elements.items():
-            if el.__class__.__name__ == "ShellElement":
+            if isinstance(el, _full_backend.ShellElement):
                 shells.append({"id": eid, "node_ids": list(el.node_ids), "role": "skin"})
             elif el.__class__.__name__ == "BeamElement":
                 beams.append({"id": eid, "node_ids": list(el.node_ids), "role": "stiffener"})
