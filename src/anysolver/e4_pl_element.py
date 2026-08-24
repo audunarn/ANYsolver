@@ -3,8 +3,10 @@
 The class deliberately is not registered as the package default.  It reuses
 the mature :class:`~anysolver.elements.ShellElement` infrastructure for mass,
 geometric stiffness, recovery, state, nonlinear, dynamics, contact and
-serialization behavior, while replacing the planar four-node elastic tangent
-with the qualified 35+3 stationary E4-PL formulation.
+serialization behavior.  Planar facets use the qualified 35+3 stationary
+E4-PL formulation.  Genuinely warped facets use the established varying-frame
+Q4 surface kernel explicitly, because a single projected plane does not retain
+the six physical rigid modes on a warped bilinear surface.
 
 The physical condensed tangent, centre-PL term and retained drilling
 hourglass term are exposed separately so numerical fields cannot silently
@@ -21,7 +23,9 @@ import numpy as np
 from .elements import ShellElement, _shell_material_matrices
 
 
-FORMULATION_ID = "E4_PL_QUALIFIED_PLANAR_LINEAR_V1"
+FORMULATION_ID = "E4_PL_QUALIFIED_Q4_HYBRID_V2"
+_PLANAR_FORMULATION_ID = "E4_PL_QUALIFIED_PLANAR_LINEAR_V1"
+_WARPED_FORMULATIONS = frozenset({"varying_frame", "reject"})
 _GAUSS = tuple(
     (r, s)
     for r, s in (
@@ -234,7 +238,7 @@ def _global_transform(frame: np.ndarray) -> np.ndarray:
 
 
 class QualifiedE4PLShellElement(ShellElement):
-    """Dormant qualified E4-PL element for four-node planar shell facets."""
+    """Dormant qualified E4-PL element for four-node shell facets."""
 
     formulation_id = FORMULATION_ID
     legacy_stiffness_batch_eligible = False
@@ -255,7 +259,8 @@ class QualifiedE4PLShellElement(ShellElement):
         *,
         pl_stabilization: float = 1.0,
         planar_tolerance: float = 1.0e-10,
-        legacy_warped_fallback: bool = True,
+        warped_formulation: str = "varying_frame",
+        legacy_warped_fallback: Optional[bool] = None,
     ) -> None:
         if len(node_ids) != 4:
             raise ValueError("QualifiedE4PLShellElement requires exactly four nodes")
@@ -273,11 +278,20 @@ class QualifiedE4PLShellElement(ShellElement):
         )
         self.pl_stabilization = float(pl_stabilization)
         self.planar_tolerance = float(planar_tolerance)
-        self.legacy_warped_fallback = bool(legacy_warped_fallback)
+        if legacy_warped_fallback is not None:
+            warped_formulation = (
+                "varying_frame" if bool(legacy_warped_fallback) else "reject"
+            )
+        self.warped_formulation = str(warped_formulation).strip().lower()
         if not math.isfinite(self.pl_stabilization) or self.pl_stabilization < 0.0:
             raise ValueError("pl_stabilization must be finite and nonnegative")
         if not math.isfinite(self.planar_tolerance) or self.planar_tolerance < 0.0:
             raise ValueError("planar_tolerance must be finite and nonnegative")
+        if self.warped_formulation not in _WARPED_FORMULATIONS:
+            raise ValueError(
+                "warped_formulation must be one of "
+                f"{sorted(_WARPED_FORMULATIONS)}"
+            )
         self._qualified_components: Optional[Dict[str, Any]] = None
         self._qualified_cache_key: Optional[tuple[Any, ...]] = None
 
@@ -288,10 +302,10 @@ class QualifiedE4PLShellElement(ShellElement):
                 "drilling_stabilization": float(self.drilling_stabilization),
                 "formulation_id": FORMULATION_ID,
                 "hourglass_stabilization": float(self.hourglass_stabilization),
-                "legacy_warped_fallback": self.legacy_warped_fallback,
                 "planar_tolerance": self.planar_tolerance,
                 "pl_stabilization": self.pl_stabilization,
                 "reduced_integration": bool(self.reduced_integration),
+                "warped_formulation": self.warped_formulation,
             }
         )
         return payload
@@ -301,7 +315,7 @@ class QualifiedE4PLShellElement(ShellElement):
         """Reconstruct a candidate from its lossless JSON-compatible record."""
 
         data = dict(payload)
-        if data.get("formulation_id") != FORMULATION_ID:
+        if data.get("formulation_id") not in {FORMULATION_ID, _PLANAR_FORMULATION_ID}:
             raise ValueError("serialized E4-PL formulation_id is missing or incompatible")
         if data.get("type") not in {cls.__name__, "e4-pl"}:
             raise ValueError("serialized E4-PL type is incompatible")
@@ -318,7 +332,14 @@ class QualifiedE4PLShellElement(ShellElement):
             shell_section=data.get("shell_section"),
             pl_stabilization=float(data.get("pl_stabilization", 1.0)),
             planar_tolerance=float(data.get("planar_tolerance", 1.0e-10)),
-            legacy_warped_fallback=bool(data.get("legacy_warped_fallback", True)),
+            warped_formulation=str(
+                data.get(
+                    "warped_formulation",
+                    "varying_frame"
+                    if bool(data.get("legacy_warped_fallback", True))
+                    else "reject",
+                )
+            ),
         )
 
     def _constitutive_and_drill_stiffness(
@@ -375,7 +396,7 @@ class QualifiedE4PLShellElement(ShellElement):
             id(self.shell_section),
             float(self.pl_stabilization),
             float(self.planar_tolerance),
-            bool(self.legacy_warped_fallback),
+            self.warped_formulation,
         )
 
     def _adopt_qualified_components(
@@ -402,12 +423,12 @@ class QualifiedE4PLShellElement(ShellElement):
             return self._qualified_components
         frame, local, warpage = equation7_frame(coordinates)
         if warpage > self.planar_tolerance:
-            if not self.legacy_warped_fallback:
+            if self.warped_formulation == "reject":
                 raise ValueError(
                     f"E4-PL element {self.element_id} is warped by {warpage:.6e}, "
                     f"above planar_tolerance={self.planar_tolerance:.6e}"
                 )
-            physical = super().compute_stiffness_matrix(mesh, material)
+            physical = ShellElement.compute_stiffness_matrix(self, mesh, material)
             zero = np.zeros_like(physical)
             result = {
                 "core": physical.copy(),
@@ -419,7 +440,9 @@ class QualifiedE4PLShellElement(ShellElement):
                 "frame": frame,
                 "jacobian_centre": math.nan,
                 "mixed_condensed": False,
-                "legacy_fallback": True,
+                "legacy_fallback": False,
+                "warped_direct": True,
+                "warped_formulation": "varying_frame",
                 "warpage_ratio": warpage,
             }
             self._qualified_components = result
@@ -492,6 +515,8 @@ class QualifiedE4PLShellElement(ShellElement):
             "jacobian_centre": c["jc"],
             "mixed_condensed": True,
             "legacy_fallback": False,
+            "warped_direct": False,
+            "warped_formulation": "planar_e4_pl",
             "warpage_ratio": warpage,
         }
         self._qualified_components = result

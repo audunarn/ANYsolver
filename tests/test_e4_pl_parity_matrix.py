@@ -55,7 +55,7 @@ def test_open_parity_items_fail_closed_before_default_activation() -> None:
         row for row in matrix["capabilities"]
         if row["required"] and any(marker in row["status"] for marker in open_markers)
     ]
-    assert open_required
+    assert {row["id"] for row in open_required} == {"factory_and_default_activation"}
     assert matrix["activation"] == {
         "default_factory": "BLOCKED_UNTIL_ALL_REQUIRED_CAPABILITIES_CLOSE",
         "legacy_shell_default": True,
@@ -65,6 +65,17 @@ def test_open_parity_items_fail_closed_before_default_activation() -> None:
     default = create_element("shell", 1, [1, 2, 3, 4], "steel")
     assert type(default) is ShellElement
     assert QualifiedE4PLShellElement.__module__ == "anysolver.e4_pl_element"
+
+
+def test_warped_and_performance_rows_are_closed_before_activation() -> None:
+    matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
+    by_id = {row["id"]: row for row in matrix["capabilities"]}
+    assert by_id["warped_curved_geometry"]["status"] == (
+        "QUALIFIED_DIRECT_VARYING_FRAME_Q4"
+    )
+    assert by_id["batched_assembly_and_performance"]["status"] == (
+        "SHARED_GEOMETRY_COLD_AND_WARM_PARITY_TESTED"
+    )
 
 
 def test_runtime_shell_dispatch_accepts_subclasses_without_exact_name_checks() -> None:

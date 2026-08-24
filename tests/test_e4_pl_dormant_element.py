@@ -120,14 +120,16 @@ def test_numerical_terms_are_separate_from_physical_recovery() -> None:
             assert np.allclose(candidate_stress[key], legacy_stress[key])
 
 
-def test_inherited_mass_geometric_state_and_warped_fallback_parity() -> None:
+def test_inherited_mass_geometric_state_and_direct_warped_parity() -> None:
     nodes = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.02], [1.0, 1.0, -0.01], [0.0, 1.0, 0.01]]
     mesh = _mesh(nodes)
     material = _material()
     candidate = QualifiedE4PLShellElement(1, [1, 2, 3, 4], "q1", thickness=0.02)
     legacy = ShellElement(2, [1, 2, 3, 4], "q1", thickness=0.02)
     components = candidate.compute_stiffness_components(mesh, material)
-    assert components["legacy_fallback"] is True
+    assert components["legacy_fallback"] is False
+    assert components["warped_direct"] is True
+    assert components["warped_formulation"] == "varying_frame"
     assert np.array_equal(components["total"], legacy.compute_stiffness_matrix(mesh, material))
     assert np.array_equal(candidate.compute_mass_matrix(mesh, material), legacy.compute_mass_matrix(mesh, material))
     state = {"membrane_compression": [2.0, 1.0, 0.25]}
@@ -137,7 +139,11 @@ def test_inherited_mass_geometric_state_and_warped_fallback_parity() -> None:
     )
     with pytest.raises(ValueError, match="warped"):
         QualifiedE4PLShellElement(
-            3, [1, 2, 3, 4], "q1", thickness=0.02, legacy_warped_fallback=False
+            3,
+            [1, 2, 3, 4],
+            "q1",
+            thickness=0.02,
+            warped_formulation="reject",
         ).compute_stiffness_matrix(mesh, material)
 
 
@@ -233,12 +239,12 @@ def test_element_is_dormant_serializable_and_not_the_default_factory() -> None:
         material_angle_deg=17.0,
         pl_stabilization=0.8,
         planar_tolerance=2.0e-9,
-        legacy_warped_fallback=False,
+        warped_formulation="reject",
     )
     payload = element.to_dict()
     assert payload["formulation_id"] == FORMULATION_ID
     assert payload["type"] == "QualifiedE4PLShellElement"
-    assert payload["legacy_warped_fallback"] is False
+    assert payload["warped_formulation"] == "reject"
     rebuilt = QualifiedE4PLShellElement.from_dict(json.loads(json.dumps(payload)))
     assert rebuilt.to_dict() == payload
     default = create_element("shell", 1, [1, 2, 3, 4], "q1", thickness=0.02)
