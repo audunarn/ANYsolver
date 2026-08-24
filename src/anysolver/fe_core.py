@@ -33,6 +33,8 @@ _ELEMENT_LOCAL_CACHE_NAMES = (
     "_internal_forces",
     "_nl_cache",
     "_hourglass_stiffness_matrix",
+    "_qualified_components",
+    "_qualified_cache_key",
 )
 
 

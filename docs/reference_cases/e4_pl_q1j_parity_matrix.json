@@ -1,0 +1,57 @@
+{
+  "activation": {
+    "default_factory": "BLOCKED_UNTIL_ALL_REQUIRED_CAPABILITIES_CLOSE",
+    "legacy_shell_default": true,
+    "public_package_export": true,
+    "qualified_element_factory_alias": true
+  },
+  "candidate": "QualifiedE4PLShellElement",
+  "capabilities": [
+    {"id": "planar_linear_stiffness", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["Q1B", "Q1H", "Q1I", "test_e4_pl_dormant_element"]},
+    {"id": "d4_numbering_and_distortion", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["Q1X", "Q1Y3", "test_e4_pl_dormant_element"]},
+    {"id": "isotropic_material", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["test_e4_pl_dormant_element"]},
+    {"id": "orthotropic_material", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["test_e4_pl_dormant_element"]},
+    {"id": "generalized_shell_sections", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["test_e4_pl_dormant_element"]},
+    {"id": "warped_curved_geometry", "required": true, "status": "FACETED_CURVATURE_DIRECT_WARPED_LEGACY_FALLBACK_PENDING_NEW_FORMULATION_QUALIFICATION", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "mass_and_dynamics", "required": true, "status": "INHERITED_WORKFLOW_PARITY_TESTED", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "geometric_stiffness_and_buckling", "required": true, "status": "INHERITED_WORKFLOW_PARITY_TESTED", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "nonlinear_geometry", "required": true, "status": "QUALIFIED_BASELINE_WITH_INHERITED_INCREMENT", "evidence": ["test_e4_pl_dormant_element"]},
+    {"id": "material_nonlinearity_and_initial_fields", "required": true, "status": "INHERITED_STATE_PARITY_TESTED", "evidence": ["test_e4_pl_dormant_element"]},
+    {"id": "physical_recovery", "required": true, "status": "INHERITED_PHYSICAL_ONLY_PARITY_TESTED", "evidence": ["Q1X", "Q1AA", "test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "numerical_field_separation", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["Q1AA", "test_e4_pl_dormant_element"]},
+    {"id": "contact_and_coupling", "required": true, "status": "INHERITED_WORKFLOW_PARITY_TESTED", "evidence": ["test_e4_pl_workflow_parity"]},
+    {"id": "deletion_damage_and_restart_state", "required": true, "status": "INHERITED_ACTIVITY_AND_RESTART_WORKFLOW_TESTED", "evidence": ["test_e4_pl_workflow_parity"]},
+    {"id": "serialization_and_restart_reconstruction", "required": true, "status": "LOSSLESS_DORMANT_ROUNDTRIP_TESTED", "evidence": ["test_e4_pl_dormant_element"]},
+    {"id": "batched_assembly_and_performance", "required": true, "status": "SHARED_GEOMETRY_COLD_AND_WARM_PARITY_TESTED", "evidence": ["e4_pl_element.py", "matrix_assembly.py", "vectorized_nonlinear.py", "test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "runtime_exact_class_name_dispatch", "required": true, "status": "CLOSED_ISINSTANCE_DISPATCH", "evidence": ["runtime.py", "test_cases.py", "test_e4_pl_parity_matrix"]},
+    {"id": "factory_and_default_activation", "required": true, "status": "BLOCKED_BY_OPEN_PARITY_ITEMS", "evidence": []}
+  ],
+  "legacy_type": "ShellElement",
+  "public_api": {
+    "compute_geometric_stiffness_matrix": "INHERITED",
+    "compute_internal_forces": "QUALIFIED_DIRECT",
+    "compute_jacobian": "INHERITED",
+    "compute_mass_matrix": "INHERITED",
+    "compute_nonlinear_response": "QUALIFIED_BASELINE_WITH_INHERITED_INCREMENT",
+    "compute_shape_functions": "INHERITED",
+    "compute_stiffness_matrix": "QUALIFIED_DIRECT",
+    "compute_stresses": "INHERITED_PHYSICAL_ONLY",
+    "dofs_per_node": "INHERITED",
+    "gauss_points": "INHERITED",
+    "gauss_weights": "INHERITED",
+    "get_dof_mapping": "INHERITED",
+    "get_node_coordinates": "INHERITED",
+    "init_nonlinear_state": "INHERITED",
+    "num_nodes": "INHERITED",
+    "shear_gauss_points": "INHERITED",
+    "shear_gauss_weights": "INHERITED",
+    "to_dict": "QUALIFIED_OVERRIDE",
+    "total_dofs": "INHERITED"
+  },
+  "schema": "anysolver.s4.e4-pl-q1j-parity-matrix-v1",
+  "scope": {
+    "legacy_non_q4_topologies": "REMAIN_ON_LEGACY_SHELL_ELEMENT",
+    "production_changes": "DORMANT_Q4_IMPLEMENTATION_ONLY",
+    "q4_default_replacement": "NOT_AUTHORIZED"
+  }
+}

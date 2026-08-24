@@ -225,6 +225,7 @@ def _assemble_element_matrix(
         )
 
         groups = {}
+        qualified_stiffness_items = []
         advanced_stiffness_items = []
         section_mass_items = []
         constitutive_fallback_ids = []
@@ -243,6 +244,16 @@ def _assemble_element_matrix(
             if (
                 matrix_type == "stiffness"
                 and isinstance(element, ShellElement)
+                and not bool(getattr(element, "legacy_stiffness_batch_eligible", True))
+                and hasattr(element, "_qualified_stiffness_cache_key")
+                and hasattr(element, "_adopt_qualified_components")
+            ):
+                qualified_stiffness_items.append((int(elem_id), element))
+                continue
+            if (
+                matrix_type == "stiffness"
+                and isinstance(element, ShellElement)
+                and bool(getattr(element, "legacy_stiffness_batch_eligible", True))
                 and bool(getattr(element, "_is_4node", False))
                 and (
                     shell_section is not None
@@ -267,6 +278,7 @@ def _assemble_element_matrix(
                     (matrix_type == "mass" and not has_section_mass)
                     or (
                         matrix_type == "stiffness"
+                        and bool(getattr(element, "legacy_stiffness_batch_eligible", True))
                         and shell_section is None
                         and is_isotropic_material(material)
                     )
@@ -320,6 +332,52 @@ def _assemble_element_matrix(
                 "path": "general_element",
                 "reason": "unsupported_shell_topology",
                 "element_ids": sorted(generalized_mass_fallback_ids),
+            }
+
+        if qualified_stiffness_items:
+            shared_components = {}
+            for element_id, element in qualified_stiffness_items:
+                material = model.get_material(element.material_name)
+                cache_key = element._qualified_stiffness_cache_key(mesh, material)
+                current_components = getattr(element, "_qualified_components", None)
+                if (
+                    current_components is not None
+                    and getattr(element, "_qualified_cache_key", None) == cache_key
+                ):
+                    shared_components.setdefault(cache_key, current_components)
+                    precomputed[element_id] = np.asarray(
+                        current_components["total"], dtype=float
+                    )
+                    continue
+                components = shared_components.get(cache_key)
+                if components is None:
+                    precomputed[element_id] = element.compute_stiffness_matrix(
+                        mesh, material
+                    )
+                    components = element._qualified_components
+                    if components is None:
+                        raise RuntimeError(
+                            "Qualified E4-PL stiffness did not populate its component cache"
+                        )
+                    shared_components[cache_key] = components
+                else:
+                    precomputed[element_id] = element._adopt_qualified_components(
+                        cache_key,
+                        components,
+                    )
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S4",
+                    "num_elements": int(len(qualified_stiffness_items)),
+                    "kernel": "e4_pl_shared_geometry_cache",
+                    "parallel_kernel": False,
+                    "unique_geometry_count": int(len(shared_components)),
+                }
+            )
+            info["diagnostics"]["qualified_e4_pl_stiffness"] = {
+                "path": "shared_geometry_cache",
+                "element_count": int(len(qualified_stiffness_items)),
+                "unique_geometry_count": int(len(shared_components)),
             }
 
         for key, elem_list in groups.items():

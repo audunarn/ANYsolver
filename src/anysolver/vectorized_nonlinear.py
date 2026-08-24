@@ -289,7 +289,8 @@ def shell_nonlinear_batch_eligible(element: Any) -> bool:
     """Return whether the vectorized kernel matches the scalar shell response."""
 
     return bool(
-        getattr(element, "_is_quadrilateral", False)
+        getattr(element, "legacy_nonlinear_batch_eligible", True)
+        and getattr(element, "_is_quadrilateral", False)
         and getattr(element, "shell_section", None) is None
         and not (
             getattr(element, "_is_8node", False)
