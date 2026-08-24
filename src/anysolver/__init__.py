@@ -25,6 +25,12 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
+from .outcomes import (
+    SolveDisposition,
+    SolveOutcome,
+    SupportsSolveOutcome,
+    solve_outcome,
+)
 from .quantities import (
     QuantityUnavailableError,
     ReactionFrame,
@@ -460,6 +466,10 @@ __all__ = [
     "SolveCancelled",
     "cancellation_safe_point",
     "emit_progress",
+    "SolveDisposition",
+    "SolveOutcome",
+    "SupportsSolveOutcome",
+    "solve_outcome",
     "QuantityUnavailableError",
     "ReactionFrame",
     "ResolvedResultQuantity",

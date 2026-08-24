@@ -7,16 +7,21 @@ import pytest
 from scipy import sparse
 
 from anysolver import (
+    AnyStructureFEMResult,
     CancellationToken,
     ConstraintEquation,
     ProgressEvent,
+    ImperfectionCalibrationResult,
     QuantityUnavailableError,
     ReactionFrame,
     SolveCancelled,
+    SolveDisposition,
+    SolveOutcome,
     audit_constraints,
     describe_result_quantities,
     registered_result_quantity_ids,
     resolve_result_quantity,
+    solve_outcome,
     solve_nonlinear_load_stepping,
 )
 from anysolver.assembly import (
@@ -27,7 +32,11 @@ from anysolver.assembly import (
 from anysolver.boundary import BoundaryCondition, FixedSupport, LoadCase
 from anysolver.elements import BeamElement
 from anysolver.fe_core import FEModel
-from anysolver.nonlinear_static import solve_static_nonlinear
+from anysolver.buckling import BucklingMode, BucklingResult
+from anysolver.modal import ModalMode, ModalResult
+from anysolver.nonlinear_static import NonlinearStaticResult, solve_static_nonlinear
+from anysolver.recovery import StressRecoveryProvenance, StressRecoveryResult
+from anysolver.results import FEResult
 
 
 def _elastic_cantilever() -> tuple[FEModel, LoadCase]:
@@ -81,6 +90,14 @@ def test_force_control_ramps_nonzero_prescribed_displacement_by_increment() -> N
     assert abs(result.steps[-1].support_reactions["fixed"][0]) > 0.0
     assert progress[-1]["support_reactions"]["fixed"][0] == pytest.approx(
         result.steps[-1].support_reactions["fixed"][0]
+    )
+    reaction_history = resolve_result_quantity(result, "reaction_history")
+    assert reaction_history.descriptor.data_path == "steps[].support_reactions"
+    assert reaction_history.descriptor.location == "support"
+    assert reaction_history.descriptor.metadata["nodal_reactions_available"] is False
+    assert len(reaction_history.data) == len(result.steps)
+    assert reaction_history.data[-1].support_resultants == (
+        result.steps[-1].support_reactions
     )
 
 
@@ -283,9 +300,24 @@ def test_progress_observer_can_request_cooperative_cancellation() -> None:
 
 def test_result_quantity_resolver_is_canonical_and_fail_closed() -> None:
     snapshots = (
-        SimpleNamespace(step_index=1, element_states={5: {"alpha": [0.0, 0.01]}}),
-        SimpleNamespace(step_index=2, element_states={5: {"layer_strain": [0.02]}}),
-        SimpleNamespace(step_index=3, element_states={5: {"alpha": [0.02, 0.03]}}),
+        SimpleNamespace(
+            step_index=1,
+            load_factor=0.25,
+            control_value=None,
+            element_states={5: {"alpha": [0.0, 0.01]}},
+        ),
+        SimpleNamespace(
+            step_index=2,
+            load_factor=0.5,
+            control_value=None,
+            element_states={5: {"layer_strain": [0.02]}},
+        ),
+        SimpleNamespace(
+            step_index=3,
+            load_factor=0.75,
+            control_value=None,
+            element_states={5: {"alpha": [0.02, 0.03]}},
+        ),
     )
     result = SimpleNamespace(
         displacements=np.arange(12, dtype=float),
@@ -314,9 +346,454 @@ def test_result_quantity_resolver_is_canonical_and_fail_closed() -> None:
     )
     assert history.data == ({5: pytest.approx(0.01)}, {5: pytest.approx(0.03)})
     assert history.descriptor.metadata["frame_indices"] == [1, 3]
+    assert history.descriptor.data_path == "snapshots[].element_states"
+    assert history.descriptor.metadata["source_keys_by_frame"] == [
+        {"5": "alpha"},
+        {"5": "alpha"},
+    ]
     assert resolve_result_quantity(result, "reaction_history").data is result.reaction_history
     assert resolve_result_quantity(result, "internal_work").data == [0.0, 1.0]
     with pytest.raises(QuantityUnavailableError):
         resolve_result_quantity(result, "strain_energy")
     with pytest.raises(QuantityUnavailableError):
         resolve_result_quantity(result, "impactor_kinetic_energy")
+
+
+def test_real_result_diagnostic_shapes_resolve_without_inventing_fields() -> None:
+    impact = SimpleNamespace(
+        diagnostics={
+            "method": "nonlinear_newmark_sphere_penalty_contact",
+            "element_states": {11: {"alpha": np.array([0.0, 0.025])}},
+            "kinetic_energy": [2.0, 1.5],
+            "strain_energy": [0.0, 0.4],
+            "sphere_kinetic_energy": [3.0, 2.2],
+        },
+        times=np.array([0.0, 0.1]),
+    )
+
+    peeq = resolve_result_quantity(impact, "equivalent_plastic_strain")
+    assert peeq.data == {11: 0.025}
+    assert peeq.descriptor.data_path == "diagnostics.element_states"
+    internal_work = resolve_result_quantity(impact, "internal_work")
+    kinetic = resolve_result_quantity(impact, "kinetic_energy")
+    impactor_kinetic = resolve_result_quantity(impact, "impactor_kinetic_energy")
+    assert internal_work.data == [0.0, 0.4]
+    assert internal_work.descriptor.metadata["measure"] == (
+        "committed_internal_work_proxy"
+    )
+    assert kinetic.data == [2.0, 1.5]
+    assert kinetic.descriptor.metadata["measure"] == "structural_kinetic_energy"
+    assert impactor_kinetic.data == [3.0, 2.2]
+    assert impactor_kinetic.descriptor.metadata["measure"] == (
+        "rigid_impactor_kinetic_energy"
+    )
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(impact, "strain_energy")
+
+    transient = SimpleNamespace(
+        diagnostics={
+            "method": "hht_alpha",
+            "kinetic_energy": [1.0, 0.5],
+            "strain_energy": [0.0, 0.5],
+        },
+        times=np.array([0.0, 0.1]),
+    )
+    assert resolve_result_quantity(transient, "strain_energy").data == [0.0, 0.5]
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(transient, "internal_work")
+
+    recovery = StressRecoveryResult(
+        element_stresses={
+            4: {
+                "membrane_strain_xx": np.array([1.0e-4]),
+                "membrane_xx": np.array([21.0e6]),
+                "local_xx_top": np.array([22.0e6]),
+                "global_xx_top": np.array([20.0e6]),
+                "von_mises": np.array([23.0e6]),
+                "diagnostic_von_mises_ratio": np.array([0.1]),
+                "equivalent_stress_measure": "von_mises",
+            },
+            5: {
+                "generalized_stress_scope": "section_resultants_only",
+                "recovery_scope": "section_resultants_only",
+                "physical_stress_available": False,
+                "membrane_strain": np.zeros((1, 3)),
+                "membrane_resultants": np.ones((1, 3)),
+            },
+        },
+        provenance=StressRecoveryProvenance(
+            mode="material_history",
+            state_source="committed",
+        ),
+        committed_element_states={4: {"alpha": np.array([0.0, 0.125])}},
+    )
+    fe_result = FEResult(
+        model_name="recovered-peeq",
+        displacements=np.zeros(6),
+        element_stresses=recovery.element_stresses,
+        stress_recovery=recovery,
+    )
+    recovered_peeq = resolve_result_quantity(
+        fe_result, "equivalent_plastic_strain"
+    )
+    assert recovered_peeq.data == {4: pytest.approx(0.125)}
+    assert recovered_peeq.descriptor.data_path == "committed_element_states"
+
+    recovered_stress = resolve_result_quantity(fe_result, "stress")
+    assert set(recovered_stress.data) == {4}
+    assert set(recovered_stress.data[4]) == {
+        "membrane_xx",
+        "local_xx_top",
+        "global_xx_top",
+        "von_mises",
+    }
+    assert recovered_stress.descriptor.unit == "Pa"
+    assert recovered_stress.descriptor.basis == "component_specific"
+    assert recovered_stress.descriptor.metadata["component_basis"] == {
+        "global_xx_top": "global",
+        "local_xx_top": "element_local",
+        "membrane_xx": "element_local",
+        "von_mises": "invariant",
+    }
+    assert recovered_stress.descriptor.metadata[
+        "excluded_nonphysical_element_ids"
+    ] == (5,)
+    assert "membrane_strain_xx" not in recovered_stress.data[4]
+    assert "diagnostic_von_mises_ratio" not in recovered_stress.data[4]
+
+    stress_history = resolve_result_quantity(
+        SimpleNamespace(
+            stress_history=(
+                recovery.element_stresses,
+                recovery.element_stresses,
+            ),
+            times=np.array([0.0, 1.0]),
+        ),
+        "stress_history",
+    )
+    assert len(stress_history.data) == 2
+    assert all(set(frame) == {4} for frame in stress_history.data)
+    assert stress_history.descriptor.basis == "component_specific"
+    assert stress_history.descriptor.metadata[
+        "excluded_nonphysical_element_ids_by_frame"
+    ] == ((5,), (5,))
+
+
+def test_result_quantity_resolver_rejects_malformed_history_and_energy() -> None:
+    malformed_history = SimpleNamespace(
+        reaction_history=(
+            ReactionFrame(0, 0.0, "time", {1: np.zeros(5)}, {}),
+        )
+    )
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(malformed_history, "reaction_history")
+    for malformed_history in (
+        SimpleNamespace(
+            reaction_history=(
+                ReactionFrame(0, "0.0", "time", {1: np.zeros(6)}, {}),
+            )
+        ),
+        SimpleNamespace(
+            reaction_history=(
+                ReactionFrame(0, 0.0, True, {1: np.zeros(6)}, {}),
+            )
+        ),
+        SimpleNamespace(
+            reaction_history=(
+                ReactionFrame(0, 0.0, "time", {1: ["0"] * 6}, {}),
+            )
+        ),
+    ):
+        with pytest.raises(QuantityUnavailableError):
+            resolve_result_quantity(malformed_history, "reaction_history")
+
+    malformed_energy = SimpleNamespace(
+        diagnostics={"method": "newmark", "kinetic_energy": ["not-a-number"]},
+        times=np.array([0.0]),
+    )
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(malformed_energy, "kinetic_energy")
+
+    for malformed in (
+        SimpleNamespace(
+            diagnostics={"method": "newmark", "kinetic_energy": [1.0]},
+            times=["bad"],
+        ),
+        SimpleNamespace(
+            diagnostics={"method": "newmark", "kinetic_energy": [1.0]},
+            times=[np.nan],
+        ),
+        SimpleNamespace(
+            diagnostics={"method": "newmark", "kinetic_energy": [[1.0, 2.0]]},
+            times=[0.0, 0.1],
+        ),
+    ):
+        with pytest.raises(QuantityUnavailableError):
+            resolve_result_quantity(malformed, "kinetic_energy")
+
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(SimpleNamespace(load_impulse=["bad"]), "load_impulse")
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(SimpleNamespace(load_impulse=[1.0, 2.0]), "load_impulse")
+    malformed_displacement = SimpleNamespace(displacements=["bad"])
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(malformed_displacement, "displacement")
+    assert not describe_result_quantities(malformed_displacement)
+
+    for malformed_nodal, quantity_id in (
+        (SimpleNamespace(displacements=np.zeros(5)), "displacement"),
+        (SimpleNamespace(velocities=np.zeros((2, 5))), "velocity"),
+        (
+            SimpleNamespace(velocities=np.zeros(6), times=np.array([0.0])),
+            "velocity",
+        ),
+        (
+            SimpleNamespace(accelerations=np.zeros(6), times=np.array([0.0])),
+            "acceleration",
+        ),
+        (
+            SimpleNamespace(displacement_envelope=np.zeros((1, 6))),
+            "displacement_envelope",
+        ),
+        (
+            SimpleNamespace(displacements=np.zeros((2, 6)), times=np.array([0.0])),
+            "displacement",
+        ),
+        (
+            SimpleNamespace(
+                contact_force_history=np.zeros((2, 3)), times=np.array([0.0])
+            ),
+            "contact_force",
+        ),
+        (SimpleNamespace(times=np.array([0.0, 2.0, 1.0])), "time"),
+        (SimpleNamespace(displacements=[[0.0], [0.0, 1.0]]), "displacement"),
+    ):
+        assert quantity_id not in {
+            item.quantity_id for item in describe_result_quantities(malformed_nodal)
+        }
+
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(
+            SimpleNamespace(element_states={3: {"alpha": [-0.2]}}),
+            "equivalent_plastic_strain",
+        )
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(
+            SimpleNamespace(
+                element_states={
+                    1: {"alpha": [0.2]},
+                    2: {"alpha": [-0.3]},
+                }
+            ),
+            "equivalent_plastic_strain",
+        )
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(
+            SimpleNamespace(
+                snapshots=(
+                    SimpleNamespace(
+                        step_index=1,
+                        element_states={1: {"alpha": [0.2]}},
+                    ),
+                )
+            ),
+            "equivalent_plastic_strain_history",
+        )
+
+    for reactions in (
+        {1: np.zeros(5)},
+        {1: np.array([0.0, 0.0, 0.0, 0.0, 0.0, np.nan])},
+        {1.5: np.zeros(6)},
+        {1: np.zeros(6), "1": np.ones(6)},
+        {"not-a-node": np.zeros(6)},
+    ):
+        malformed_reaction = SimpleNamespace(reactions=reactions)
+        assert "reaction" not in {
+            item.quantity_id for item in describe_result_quantities(malformed_reaction)
+        }
+        with pytest.raises(QuantityUnavailableError):
+            resolve_result_quantity(malformed_reaction, "reaction")
+
+    with pytest.raises(QuantityUnavailableError):
+        resolve_result_quantity(
+            SimpleNamespace(
+                element_states={1: {"alpha": [0.2]}, "1": {"alpha": [0.3]}}
+            ),
+            "equivalent_plastic_strain",
+        )
+
+
+def test_snapshot_displacement_descriptor_and_data_are_aligned() -> None:
+    snapshots = (
+        SimpleNamespace(displacements=np.arange(6, dtype=float)),
+        SimpleNamespace(displacements=np.arange(6, dtype=float) + 10.0),
+    )
+    result = SimpleNamespace(
+        displacements=np.arange(6, dtype=float) + 99.0,
+        snapshots=snapshots,
+    )
+
+    resolved = resolve_result_quantity(result, "displacement")
+
+    assert resolved.descriptor.data_path == "snapshots[].displacements"
+    assert resolved.descriptor.frame_count == 2
+    assert isinstance(resolved.data, tuple)
+    np.testing.assert_array_equal(resolved.data[0], snapshots[0].displacements)
+    np.testing.assert_array_equal(resolved.data[1], snapshots[1].displacements)
+
+    mismatched = SimpleNamespace(
+        displacements=np.arange(12, dtype=float),
+        snapshots=snapshots,
+    )
+    final = resolve_result_quantity(mismatched, "displacement")
+    assert final.descriptor.data_path == "displacements"
+    assert final.data is mismatched.displacements
+
+
+def test_solve_outcome_round_trip_is_public_and_fail_closed() -> None:
+    outcome = SolveOutcome.stopped(
+        "minimum_increment_reached",
+        requested_control=1.0,
+        achieved_control=0.8,
+        last_converged_frame=4,
+    )
+
+    assert outcome.disposition is SolveDisposition.PARTIAL
+    assert outcome.partial and outcome.has_results and not outcome.target_reached
+    assert SolveOutcome.from_dict(outcome.to_dict()) == outcome
+    assert solve_outcome(SimpleNamespace(outcome=outcome)) is outcome
+    with pytest.raises(TypeError):
+        solve_outcome(SimpleNamespace(status="completed"))
+    with pytest.raises(TypeError):
+        SolveOutcome.from_dict(
+            {
+                "status": "partial",
+                "termination": "minimum_increment_reached",
+                "target_reached": False,
+                "converged": True,
+                "has_results": "false",
+            }
+        )
+    with pytest.raises(ValueError):
+        SolveOutcome.from_dict(
+            {
+                **outcome.to_dict(),
+                "unexpected": "not-authoritative",
+            }
+        )
+
+
+def test_real_nonlinear_result_is_adapted_without_false_completion() -> None:
+    result = NonlinearStaticResult(
+        steps=[],
+        status="diverged",
+        displacements=np.zeros(6),
+        load_factor=0.0,
+        info={"failure_reason": "nonconvergence"},
+    )
+
+    outcome = solve_outcome(result)
+
+    assert outcome.failed
+    assert not outcome.completed
+    assert not outcome.has_results
+    assert outcome.termination == "nonconvergence"
+
+
+def test_public_workflow_result_families_have_exact_type_outcomes() -> None:
+    generated = AnyStructureFEMResult(
+        valid=False,
+        status="invalid",
+        invalid_reason="invalid generated geometry",
+    )
+    calibration = ImperfectionCalibrationResult(
+        amplitude=0.0,
+        capacity=0.0,
+        iterations=0,
+        converged=False,
+        history=(),
+        result=None,
+    )
+
+    assert solve_outcome(generated).failed
+    assert solve_outcome(generated).termination == "invalid generated geometry"
+    assert solve_outcome(calibration).failed
+
+    spoof_type = type(
+        "NonlinearStaticResult",
+        (),
+        {"__module__": "anysolver.nonlinear_static"},
+    )
+    with pytest.raises(TypeError):
+        solve_outcome(spoof_type())
+
+
+def test_mode_outcomes_require_the_requested_mode_count() -> None:
+    modal_mode = ModalMode(
+        mode_number=1,
+        eigenvalue=1.0,
+        angular_frequency=1.0,
+        frequency_hz=1.0 / (2.0 * np.pi),
+        period=2.0 * np.pi,
+        mode_shape=np.zeros(6),
+        reduced_mode_shape=np.zeros(1),
+        modal_mass=1.0,
+        modal_stiffness=1.0,
+        residual_norm=0.0,
+        rigid_body_correlation=0.0,
+        is_rigid_body=False,
+    )
+    modal = ModalResult([modal_mode], 2, "ok", {}, {}, {}, {})
+    buckling_mode = BucklingMode(
+        mode_number=1,
+        load_factor=1.0,
+        eigenvalue=-1.0,
+        mode_shape=np.zeros(6),
+        reduced_mode_shape=np.zeros(1),
+        modal_stiffness=1.0,
+        modal_geometric_stiffness=-1.0,
+    )
+    buckling = BucklingResult([buckling_mode], 2, "ok", {}, {})
+
+    assert solve_outcome(modal).partial
+    assert solve_outcome(modal).termination == "partial_modes_extracted"
+    assert solve_outcome(buckling).partial
+    assert solve_outcome(buckling).termination == (
+        "partial_buckling_modes_extracted"
+    )
+    modal.num_modes_requested = 1
+    assert solve_outcome(modal).completed
+    modal.num_modes_requested = 0
+    with pytest.raises(TypeError):
+        solve_outcome(modal)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "status": "completed",
+            "termination": "nonconvergence",
+            "target_reached": False,
+            "converged": False,
+            "has_results": False,
+        },
+        {
+            "status": "partial",
+            "termination": "limit",
+            "target_reached": True,
+            "converged": True,
+            "has_results": True,
+        },
+        {
+            "status": "failed",
+            "termination": "nonconvergence",
+            "target_reached": False,
+            "converged": False,
+            "has_results": True,
+        },
+    ],
+)
+def test_solve_outcome_rejects_inconsistent_disposition_flags(payload) -> None:
+    with pytest.raises(ValueError):
+        SolveOutcome.from_dict(payload)
