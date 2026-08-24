@@ -402,6 +402,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "quadrature_id",
         "dynamic_reduction_policy",
         "algebraic_coordinate_policy",
+        "geometric_stiffness_policy",
         "mass_moment_id",
         "state_layout_id",
     ):
@@ -426,6 +427,18 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     mutated_mass = dict(payload, mass_moment_id="UNDERINTEGRATED_DEGREE5")
     with pytest.raises(ValueError, match="mass moment identity"):
         shell_element_from_dict(mutated_mass)
+    mutated_geometric = dict(
+        payload, geometric_stiffness_policy="NODE_ONLY_INITIAL_STRESS"
+    )
+    with pytest.raises(ValueError, match="geometric stiffness policy"):
+        shell_element_from_dict(mutated_geometric)
+    for key, value, message in (
+        ("drilling_stabilization", 0.01, "no user drilling coefficient"),
+        ("hourglass_stabilization", 0.01, "no hourglass coefficient"),
+        ("reduced_integration", True, "seven-point"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            shell_element_from_dict(dict(payload, **{key: value}))
 
 
 def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> None:
@@ -473,8 +486,10 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
     mass = element.compute_mass_matrix(_mesh(nodes), _material())
     assert mass.shape == (18, 18)
     assert np.all(np.isfinite(mass))
-    with pytest.raises(NotImplementedError, match="geometric_stiffness"):
-        element.compute_geometric_stiffness_matrix(_mesh(nodes), _material())
+    np.testing.assert_array_equal(
+        element.compute_geometric_stiffness_matrix(_mesh(nodes), _material()),
+        np.zeros((18, 18)),
+    )
     with pytest.raises(NotImplementedError, match="nonlinear_geometry"):
         element.compute_nonlinear_response(_mesh(nodes), _material(), np.zeros(18))
 

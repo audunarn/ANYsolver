@@ -24,6 +24,7 @@ from .assembly import build_constraint_transformation, build_reduced_rigid_body_
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
     assemble_external_load_tangent,
@@ -306,6 +307,11 @@ def solve_eigenvalue_buckling(
         raise ValueError("num_modes must be positive")
     if follower_symmetry_tolerance < 0.0:
         raise ValueError("follower_symmetry_tolerance must be non-negative")
+    require_model_element_capabilities(
+        model,
+        "buckling",
+        context="solve_eigenvalue_buckling",
+    )
 
     # Make the solve independent of whether a caller happened to run another
     # constrained analysis first.  Rigid-mode filtering reads the active DOF

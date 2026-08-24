@@ -20,10 +20,13 @@ from anysolver.e4_pl_s3_element import (
     ALGEBRAIC_COORDINATE_POLICY_ID,
     BUBBLE_OFFSET_D,
     FORMULATION_ID,
+    GEOMETRIC_STIFFNESS_POLICY_ID,
+    HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID,
     MASS_MOMENT_ID,
     MITC3_PLUS_SOURCE_BYTES,
     MITC3_PLUS_SOURCE_SHA256,
     QUADRATURE_ID,
+    REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
     TRIANGLE_QUADRATURE,
     TYING_POINTS,
 )
@@ -96,6 +99,7 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
         "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
         "formulation_id": FORMULATION_ID,
         "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
+        "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
         "mass_moment_id": MASS_MOMENT_ID,
         "quadrature_id": "dunavant_degree5_7point",
         "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1",
@@ -134,6 +138,23 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
     assert contract["dynamic_policy"][
         "descriptor_transient_effective_factorization"
     ] == "PRECERTIFIED_SPD_MATRIX_CLASS_NO_CALLER_GENERAL_FALLBACK"
+    assert contract["geometric_stiffness_policy"] == {
+        "bubble_linearization_policy": REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
+        "bubble_reduction": "Gb_TRANSPOSE_KG_FULL_Gb_SCHUR_DERIVATIVE",
+        "component_frame": "NUMBERED_LOCAL_SYMMETRIC_TENSORS_AT_SEVEN_ORDERED_STIFFNESS_STATIONS",
+        "director_field": "[u+z*theta_2,v-z*theta_1,w]",
+        "excluded_terms": "TRANSVERSE_SHEAR_NORMAL_STRESS_AND_FINITE_PRESTRESS_RECONDENSATION",
+        "generalized_section_second_moment": "EXPLICIT_H_REQUIRED_FOR_NONZERO_N_OR_M",
+        "homogeneous_elastic_second_moment_default": "H=N*h^2/12_ONLY_WITH_FROZEN_PROFILE",
+        "homogeneous_elastic_stress_profile": HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID,
+        "integration": "DUNAVANT_DEGREE_5_SEVEN_POINT",
+        "numerical_fields": "PL_AND_DRILL_EXCLUDED",
+        "nonzero_state_authority": "EXPLICIT_REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_REQUIRED",
+        "policy_id": GEOMETRIC_STIFFNESS_POLICY_ID,
+        "resultant_inputs": "COMPRESSION_POSITIVE_N_M_H",
+        "resultant_second_moment": "EXPLICIT_H_OR_FROZEN_HOMOGENEOUS_PROFILE_REQUIRED_FOR_EVERY_NONZERO_N_OR_M",
+        "schur_linearization": "DERIVATIVE_AT_REFERENCE_MATERIAL_TANGENT",
+    }
 
 
 def test_quadrature_decimal_authority_integrates_reference_area() -> None:

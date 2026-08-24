@@ -16,6 +16,7 @@ from scipy.sparse.linalg import eigsh
 from .assembly import build_constraint_transformation
 from .cases import make_result_case
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import (
     assemble_geometric_stiffness_matrix,
@@ -169,6 +170,11 @@ def solve_nonlinear_load_stepping(
         raise ValueError("max_load_factor must be non-negative")
     if stability_tolerance < 0.0:
         raise ValueError("stability_tolerance must be non-negative")
+    require_model_element_capabilities(
+        model,
+        "nonlinear_geometry",
+        context="solve_nonlinear_load_stepping",
+    )
 
     model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)

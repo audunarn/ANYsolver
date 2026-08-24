@@ -105,6 +105,23 @@
       ]
     }
   },
+  "geometric_stiffness_policy": {
+    "bubble_linearization_policy": "REFERENCE_ELASTIC_BUBBLE_SCHUR_DERIVATIVE_V1",
+    "bubble_reduction": "Gb_TRANSPOSE_KG_FULL_Gb_SCHUR_DERIVATIVE",
+    "component_frame": "NUMBERED_LOCAL_SYMMETRIC_TENSORS_AT_SEVEN_ORDERED_STIFFNESS_STATIONS",
+    "director_field": "[u+z*theta_2,v-z*theta_1,w]",
+    "excluded_terms": "TRANSVERSE_SHEAR_NORMAL_STRESS_AND_FINITE_PRESTRESS_RECONDENSATION",
+    "generalized_section_second_moment": "EXPLICIT_H_REQUIRED_FOR_NONZERO_N_OR_M",
+    "homogeneous_elastic_second_moment_default": "H=N*h^2/12_ONLY_WITH_FROZEN_PROFILE",
+    "homogeneous_elastic_stress_profile": "HOMOGENEOUS_ELASTIC_LINEAR_THROUGH_THICKNESS_V1",
+    "integration": "DUNAVANT_DEGREE_5_SEVEN_POINT",
+    "numerical_fields": "PL_AND_DRILL_EXCLUDED",
+    "nonzero_state_authority": "EXPLICIT_REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_REQUIRED",
+    "policy_id": "TOTAL_LAGRANGIAN_MINDLIN_BUBBLE_SCHUR_INITIAL_STRESS_V1",
+    "resultant_inputs": "COMPRESSION_POSITIVE_N_M_H",
+    "resultant_second_moment": "EXPLICIT_H_OR_FROZEN_HOMOGENEOUS_PROFILE_REQUIRED_FOR_EVERY_NONZERO_N_OR_M",
+    "schur_linearization": "DERIVATIVE_AT_REFERENCE_MATERIAL_TANGENT"
+  },
   "geometry_admission": {
     "authoritative_owner_normal_required": true,
     "maximum_angle_degrees": "150",
@@ -249,6 +266,7 @@
     "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
     "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
     "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
+    "geometric_stiffness_policy": "TOTAL_LAGRANGIAN_MINDLIN_BUBBLE_SCHUR_INITIAL_STRESS_V1",
     "mass_moment_id": "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1",
     "quadrature_id": "dunavant_degree5_7point",
     "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"

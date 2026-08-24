@@ -43,6 +43,15 @@ QUADRATURE_ID = "dunavant_degree5_7point"
 DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
 MASS_MOMENT_ID = "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1"
 ALGEBRAIC_COORDINATE_POLICY_ID = "S3_NODAL_DRILL_ZERO_INERTIA_V1"
+GEOMETRIC_STIFFNESS_POLICY_ID = (
+    "TOTAL_LAGRANGIAN_MINDLIN_BUBBLE_SCHUR_INITIAL_STRESS_V1"
+)
+HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID = (
+    "HOMOGENEOUS_ELASTIC_LINEAR_THROUGH_THICKNESS_V1"
+)
+REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID = (
+    "REFERENCE_ELASTIC_BUBBLE_SCHUR_DERIVATIVE_V1"
+)
 STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
 MINIMUM_OWNER_NORMAL_ALIGNMENT = 1.0e-8
 
@@ -92,7 +101,6 @@ CAPABILITY_GAPS = frozenset(
     {
         "buckling",
         "contact_state",
-        "geometric_stiffness",
         "global_recovery",
         "initial_fields",
         "material_nonlinearity",
@@ -631,6 +639,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "linear_internal_force": "PARITY_REPLACED",
             "local_physical_recovery": "PARITY_REPLACED",
             "generalized_sections": "PARITY_REPLACED",
+            "geometric_stiffness": "PARITY_REPLACED",
             "transient_algebraic_dynamics": "PARITY_REPLACED",
             **{name: "PARITY_GAP" for name in sorted(CAPABILITY_GAPS)},
         }
@@ -645,6 +654,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "quadrature_id": QUADRATURE_ID,
                 "dynamic_reduction_policy": DYNAMIC_REDUCTION_POLICY,
                 "algebraic_coordinate_policy": ALGEBRAIC_COORDINATE_POLICY_ID,
+                "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
                 "mass_moment_id": MASS_MOMENT_ID,
                 "state_layout_id": STATE_LAYOUT_ID,
                 "reference_normal": (
@@ -671,6 +681,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError("serialized qualified S3 dynamic policy is incompatible")
         if data.get("algebraic_coordinate_policy") != ALGEBRAIC_COORDINATE_POLICY_ID:
             raise ValueError("serialized qualified S3 algebraic coordinate policy is incompatible")
+        if data.get("geometric_stiffness_policy") != GEOMETRIC_STIFFNESS_POLICY_ID:
+            raise ValueError("serialized qualified S3 geometric stiffness policy is incompatible")
         if data.get("mass_moment_id") != MASS_MOMENT_ID:
             raise ValueError("serialized qualified S3 mass moment identity is incompatible")
         if data.get("state_layout_id") != STATE_LAYOUT_ID:
@@ -682,6 +694,9 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             node_ids=[int(value) for value in data["node_ids"]],
             material_name=str(data.get("material_name", "default")),
             thickness=float(data.get("thickness", 0.01)),
+            drilling_stabilization=data.get("drilling_stabilization"),
+            reduced_integration=data.get("reduced_integration", False),
+            hourglass_stabilization=data.get("hourglass_stabilization"),
             material_direction=data.get("material_direction"),
             material_angle_deg=float(data.get("material_angle_deg", 0.0)),
             shell_section=data.get("shell_section"),
@@ -1088,10 +1103,484 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         )
         return np.asarray(transform.T @ local, dtype=float)
 
+    def _compute_geometric_stiffness_components(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Optional[Any],
+        *,
+        enforce_positive_winding: bool,
+    ) -> Dict[str, Any]:
+        """Build and condense the formulation-native initial-stress operator.
+
+        The uncondensed 20-coordinate field contains the 18 nodal coordinates
+        and the two hierarchical bubble rotations.  The physical Mindlin
+        displacement through the thickness is
+
+        ``[u + z*theta_y, v - z*theta_x, w]``.
+
+        Membrane, bending, and second stress moments therefore act on the
+        corresponding translation/director gradients.  The derivative of the
+        bubble Schur complement is exactly ``G_b.T @ K_G @ G_b`` at the
+        reference material tangent, with ``G_b`` equal to the frozen linear
+        bubble equilibrium map.  This method therefore rejects material-
+        history/current-tangent prestress.  Numerical PL/drill coordinates do
+        not enter this physical operator.
+        """
+
+        point_count = len(TRIANGLE_QUADRATURE)
+        if state is None:
+            normalized_state: Dict[str, Any] = {}
+        elif isinstance(state, Mapping):
+            normalized_state = dict(state)
+        else:
+            raise ValueError(
+                "qualified S3 geometric state must be a mapping or None"
+            )
+
+        membrane_compression_vectors = (
+            "membrane_compression_at_gauss",
+            "membrane_compression",
+        )
+        membrane_tension_vectors = (
+            "membrane_forces_at_gauss",
+            "membrane_forces",
+            "membrane_resultants",
+        )
+        membrane_compression_scalars = (
+            "membrane_compression_x",
+            "membrane_compression_y",
+            "membrane_compression_xy",
+            "Nx_compression",
+            "Ny_compression",
+            "Nxy_compression",
+        )
+        membrane_tension_scalars = (
+            "membrane_force_x",
+            "membrane_force_y",
+            "membrane_force_xy",
+            "Nx",
+            "Ny",
+            "Nxy",
+        )
+        membrane_groups = (
+            tuple(key for key in membrane_compression_vectors if key in normalized_state),
+            tuple(key for key in membrane_tension_vectors if key in normalized_state),
+            tuple(key for key in membrane_compression_scalars if key in normalized_state),
+            tuple(key for key in membrane_tension_scalars if key in normalized_state),
+        )
+        compression_present = bool(membrane_groups[0] or membrane_groups[2])
+        tension_present = bool(membrane_groups[1] or membrane_groups[3])
+        if (
+            (compression_present and tension_present)
+            or len(membrane_groups[0]) > 1
+            or len(membrane_groups[1]) > 1
+        ):
+            raise ValueError(
+                "qualified S3 geometric state has ambiguous membrane resultant representations"
+            )
+        for alternatives in (
+            ("membrane_compression_x", "Nx_compression"),
+            ("membrane_compression_y", "Ny_compression"),
+            ("membrane_compression_xy", "Nxy_compression"),
+            ("membrane_force_x", "Nx"),
+            ("membrane_force_y", "Ny"),
+            ("membrane_force_xy", "Nxy"),
+        ):
+            if sum(key in normalized_state for key in alternatives) > 1:
+                raise ValueError(
+                    "qualified S3 geometric state has ambiguous membrane "
+                    "component aliases"
+                )
+
+        bending_compression_keys = (
+            "bending_compression_at_gauss",
+            "bending_compression",
+            "bending_compression_moments_at_gauss",
+            "bending_compression_moments",
+        )
+        bending_tension_keys = (
+            "bending_moments_at_gauss",
+            "bending_moments",
+            "bending_resultants",
+        )
+        if sum(
+            key in normalized_state
+            for key in bending_compression_keys + bending_tension_keys
+        ) > 1:
+            raise ValueError(
+                "qualified S3 geometric state has ambiguous bending resultant representations"
+            )
+        second_moment_keys = (
+            "stress_second_moment_at_gauss",
+            "stress_second_moment",
+            "membrane_compression_second_moment_at_gauss",
+            "membrane_compression_second_moment",
+        )
+        if sum(key in normalized_state for key in second_moment_keys) > 1:
+            raise ValueError(
+                "qualified S3 geometric state has ambiguous stress second moment representations"
+            )
+
+        alias_pairs = (
+            ("membrane_resultants", "membrane_forces_at_gauss"),
+            ("bending_resultants", "bending_moments_at_gauss"),
+        )
+        for source_key, target_key in alias_pairs:
+            if source_key not in normalized_state:
+                continue
+            if target_key in normalized_state:
+                raise ValueError(
+                    f"qualified S3 geometric state contains both {source_key} "
+                    f"and {target_key}"
+                )
+            normalized_state[target_key] = normalized_state[source_key]
+
+        at_gauss_keys = (
+            "membrane_compression_at_gauss",
+            "membrane_forces_at_gauss",
+            "bending_compression_at_gauss",
+            "bending_compression_moments_at_gauss",
+            "bending_moments_at_gauss",
+            "stress_second_moment_at_gauss",
+            "membrane_compression_second_moment_at_gauss",
+        )
+        uniform_or_gauss_keys = (
+            "membrane_compression",
+            "membrane_forces",
+            "bending_compression",
+            "bending_compression_moments",
+            "bending_moments",
+            "stress_second_moment",
+            "membrane_compression_second_moment",
+        )
+        for key in at_gauss_keys:
+            if key not in normalized_state:
+                continue
+            values = np.asarray(normalized_state[key], dtype=float)
+            if values.shape != (point_count, 3) or np.any(~np.isfinite(values)):
+                raise ValueError(
+                    f"qualified S3 geometric {key} must be a finite "
+                    f"({point_count}, 3) array"
+                )
+        for key in uniform_or_gauss_keys:
+            if key not in normalized_state:
+                continue
+            values = np.asarray(normalized_state[key], dtype=float)
+            if values.shape not in {(3,), (point_count, 3)} or np.any(
+                ~np.isfinite(values)
+            ):
+                raise ValueError(
+                    f"qualified S3 geometric {key} must be a finite (3,) or "
+                    f"({point_count}, 3) array"
+                )
+        scalar_keys = (
+            "membrane_compression_x",
+            "membrane_compression_y",
+            "membrane_compression_xy",
+            "Nx_compression",
+            "Ny_compression",
+            "Nxy_compression",
+            "membrane_force_x",
+            "membrane_force_y",
+            "membrane_force_xy",
+            "Nx",
+            "Ny",
+            "Nxy",
+        )
+        for key in scalar_keys:
+            if key not in normalized_state:
+                continue
+            values = np.asarray(normalized_state[key], dtype=float)
+            if values.shape != () or not math.isfinite(float(values)):
+                raise ValueError(
+                    f"qualified S3 geometric {key} must be a finite scalar"
+                )
+
+        def require_consistent_scalar_summary(
+            vector_keys: Sequence[str],
+            scalar_alternatives: Sequence[Sequence[str]],
+        ) -> None:
+            vector_key = next(
+                (key for key in vector_keys if key in normalized_state),
+                None,
+            )
+            if vector_key is None:
+                return
+            vector = np.asarray(normalized_state[vector_key], dtype=float)
+            summary = vector if vector.ndim == 1 else np.mean(vector, axis=0)
+            for component, alternatives in enumerate(scalar_alternatives):
+                scalar_key = next(
+                    (key for key in alternatives if key in normalized_state),
+                    None,
+                )
+                if scalar_key is None:
+                    continue
+                scalar = float(normalized_state[scalar_key])
+                expected = float(summary[component])
+                tolerance = (
+                    64.0
+                    * np.finfo(float).eps
+                    * max(abs(scalar), abs(expected), 1.0)
+                )
+                if abs(scalar - expected) > tolerance:
+                    raise ValueError(
+                        "qualified S3 geometric state has an inconsistent "
+                        f"{scalar_key} summary for {vector_key}"
+                    )
+
+        require_consistent_scalar_summary(
+            membrane_compression_vectors,
+            (
+                ("membrane_compression_x", "Nx_compression"),
+                ("membrane_compression_y", "Ny_compression"),
+                ("membrane_compression_xy", "Nxy_compression"),
+            ),
+        )
+        require_consistent_scalar_summary(
+            membrane_tension_vectors,
+            (
+                ("membrane_force_x", "Nx"),
+                ("membrane_force_y", "Ny"),
+                ("membrane_force_xy", "Nxy"),
+            ),
+        )
+
+        membrane_compression = self._membrane_compression_samples(
+            normalized_state,
+            point_count,
+        )
+        bending_compression = self._bending_compression_samples(
+            normalized_state,
+            point_count,
+        )
+        explicit_second_moment = any(
+            key in normalized_state for key in second_moment_keys
+        )
+        stress_profile = normalized_state.get("through_thickness_stress_profile")
+        if (
+            stress_profile is not None
+            and stress_profile != HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID
+        ):
+            raise ValueError(
+                "qualified S3 geometric through_thickness_stress_profile is incompatible"
+            )
+        bubble_linearization = normalized_state.get(
+            "bubble_linearization_policy"
+        )
+        if (
+            bubble_linearization is not None
+            and bubble_linearization
+            != REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID
+        ):
+            raise ValueError(
+                "qualified S3 geometric bubble_linearization_policy is incompatible"
+            )
+        stress_second_moment = self._stress_second_moment_samples(
+            normalized_state,
+            point_count,
+            membrane_compression,
+            self.thickness,
+        )
+        for label, values in (
+            ("membrane resultants", membrane_compression),
+            ("bending resultants", bending_compression),
+            ("stress second moments", stress_second_moment),
+        ):
+            if values.shape != (point_count, 3) or np.any(~np.isfinite(values)):
+                raise ValueError(
+                    f"qualified S3 geometric {label} must be finite at all seven points"
+                )
+        if (
+            (
+                self.shell_section is not None
+                or stress_profile != HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID
+            )
+            and not explicit_second_moment
+            and (
+                np.any(membrane_compression)
+                or np.any(bending_compression)
+            )
+        ):
+            source = (
+                "generalized shell sections"
+                if self.shell_section is not None
+                else "resultants without homogeneous-elastic provenance"
+            )
+            raise ValueError(
+                "qualified S3 geometric "
+                f"{source} require an explicit stress_second_moment; "
+                "N and M do not determine the through-thickness second moment H"
+            )
+        nonzero_initial_stress = bool(
+            np.any(membrane_compression)
+            or np.any(bending_compression)
+            or np.any(stress_second_moment)
+        )
+        if (
+            nonzero_initial_stress
+            and bubble_linearization
+            != REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID
+        ):
+            raise ValueError(
+                "qualified S3 geometric nonzero prestress requires "
+                "bubble_linearization_policy="
+                f"{REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID}; material-history "
+                "or current-tangent bubble condensation remains a PARITY_GAP"
+            )
+
+        stiffness = self._compute_stiffness_components(
+            mesh,
+            material,
+            enforce_positive_winding=enforce_positive_winding,
+        )
+        local_nodes = np.asarray(stiffness["local_nodes"], dtype=float)
+        _jacobian_matrix, inverse, determinant = _jacobian(local_nodes)
+        full_local = np.zeros((20, 20), dtype=float)
+        for point_index, (r, s, weight) in enumerate(TRIANGLE_QUADRATURE):
+            (
+                _shape,
+                derivative_r,
+                derivative_s,
+                _bubble,
+                bubble_r,
+                bubble_s,
+            ) = _reference_fields(r, s)
+            derivative_x = (
+                inverse[0, 0] * derivative_r
+                + inverse[0, 1] * derivative_s
+            )
+            derivative_y = (
+                inverse[1, 0] * derivative_r
+                + inverse[1, 1] * derivative_s
+            )
+            bubble_x = inverse[0, 0] * bubble_r + inverse[0, 1] * bubble_s
+            bubble_y = inverse[1, 0] * bubble_r + inverse[1, 1] * bubble_s
+
+            membrane = membrane_compression[point_index]
+            bending = bending_compression[point_index]
+            second = stress_second_moment[point_index]
+            membrane_matrix = np.asarray(
+                ((membrane[0], membrane[2]), (membrane[2], membrane[1])),
+                dtype=float,
+            )
+            bending_matrix = np.asarray(
+                ((bending[0], bending[2]), (bending[2], bending[1])),
+                dtype=float,
+            )
+            second_matrix = np.asarray(
+                ((second[0], second[2]), (second[2], second[1])),
+                dtype=float,
+            )
+
+            translation_gradients = []
+            point_operator = np.zeros((20, 20), dtype=float)
+            for component in range(3):
+                gradient = np.zeros((2, 20), dtype=float)
+                gradient[0, component:18:6] = derivative_x
+                gradient[1, component:18:6] = derivative_y
+                translation_gradients.append(gradient)
+                point_operator += gradient.T @ membrane_matrix @ gradient
+
+            rotation_x_gradient = np.zeros((2, 20), dtype=float)
+            rotation_y_gradient = np.zeros((2, 20), dtype=float)
+            rotation_x_gradient[0, 3:18:6] = derivative_x
+            rotation_x_gradient[1, 3:18:6] = derivative_y
+            rotation_x_gradient[:, 18] = (bubble_x, bubble_y)
+            rotation_y_gradient[0, 4:18:6] = derivative_x
+            rotation_y_gradient[1, 4:18:6] = derivative_y
+            rotation_y_gradient[:, 19] = (bubble_x, bubble_y)
+            point_operator += (
+                rotation_x_gradient.T
+                @ second_matrix
+                @ rotation_x_gradient
+            )
+            point_operator += (
+                rotation_y_gradient.T
+                @ second_matrix
+                @ rotation_y_gradient
+            )
+            coupling_u_ry = (
+                translation_gradients[0].T
+                @ bending_matrix
+                @ rotation_y_gradient
+            )
+            coupling_v_rx = (
+                translation_gradients[1].T
+                @ bending_matrix
+                @ rotation_x_gradient
+            )
+            point_operator += coupling_u_ry + coupling_u_ry.T
+            point_operator -= coupling_v_rx + coupling_v_rx.T
+            full_local += abs(determinant) * float(weight) * point_operator
+        full_local = 0.5 * (full_local + full_local.T)
+        bubble_map_18 = np.zeros((2, 18), dtype=float)
+        bubble_map_18[:, PHYSICAL_EXTERNAL_INDICES] = np.asarray(
+            stiffness["bubble_map"],
+            dtype=float,
+        )
+        bubble_schur_map = np.vstack((np.eye(18, dtype=float), bubble_map_18))
+        condensed_local = bubble_schur_map.T @ full_local @ bubble_schur_map
+        condensed_local = 0.5 * (condensed_local + condensed_local.T)
+        transform = self._local_dof_transform(
+            np.asarray(stiffness["frame"], dtype=float)
+        )
+        global_operator = transform.T @ condensed_local @ transform
+        global_operator = 0.5 * (global_operator + global_operator.T)
+        return {
+            "bubble_schur_map": bubble_schur_map,
+            "condensed_local": condensed_local,
+            "formulation_id": FORMULATION_ID,
+            "frame": np.asarray(stiffness["frame"], dtype=float),
+            "full_local": full_local,
+            "global": global_operator,
+            "membrane_compression": membrane_compression.copy(),
+            "bending_compression": bending_compression.copy(),
+            "bubble_linearization_policy": (
+                REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID
+                if nonzero_initial_stress
+                else None
+            ),
+            "stress_second_moment": stress_second_moment.copy(),
+            "second_moment_authority": (
+                None
+                if not nonzero_initial_stress
+                else (
+                    "EXPLICIT_H"
+                    if explicit_second_moment
+                    else HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID
+                )
+            ),
+            "numerical_fields_excluded": True,
+            "policy_id": GEOMETRIC_STIFFNESS_POLICY_ID,
+        }
+
+    def compute_geometric_stiffness_components(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Return auditable admitted initial-stress blocks and condensation."""
+
+        return self._compute_geometric_stiffness_components(
+            mesh,
+            material,
+            state,
+            enforce_positive_winding=True,
+        )
+
     def compute_geometric_stiffness_matrix(
         self, mesh: Any, material: Any, state: Optional[Any] = None
     ) -> np.ndarray:
-        raise self._gap("geometric_stiffness")
+        return np.asarray(
+            self.compute_geometric_stiffness_components(
+                mesh,
+                material,
+                state,
+            )["global"],
+            dtype=float,
+        )
 
     def init_nonlinear_state(self, *args: Any, **kwargs: Any) -> Any:
         raise self._gap("material_nonlinearity")
@@ -1108,6 +1597,8 @@ __all__ = [
     "DYNAMIC_REDUCTION_POLICY",
     "FORMULATION_ID",
     "FORMULATION_SCHEMA",
+    "GEOMETRIC_STIFFNESS_POLICY_ID",
+    "HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID",
     "MITC3_PLUS_EQUATION_MAP",
     "MITC3_PLUS_SOURCE_BYTES",
     "MITC3_PLUS_SOURCE_SHA256",
@@ -1116,6 +1607,7 @@ __all__ = [
     "MINIMUM_OWNER_NORMAL_ALIGNMENT",
     "PHYSICAL_EXTERNAL_INDICES",
     "QUADRATURE_ID",
+    "REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID",
     "STATE_LAYOUT_ID",
     "TRIANGLE_QUADRATURE",
     "TYING_POINTS",
