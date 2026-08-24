@@ -20,6 +20,7 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import tomllib
 import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
@@ -103,6 +104,8 @@ SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_OBJECT_RE = re.compile(r"[0-9a-f]{40}\Z")
 REQUEST_ID_RE = re.compile(r"[0-9a-f]{32}\Z")
 UTC_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\Z")
+PROJECT_NAME_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?\Z")
+PROJECT_VERSION_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._+-]*[A-Za-z0-9])?\Z")
 PERFORMANCE_OBSERVATION_SCHEMA = (
     "anysolver.s4.e4-pl-q1m-performance-observation-v1"
 )
@@ -1077,14 +1080,81 @@ def _local_roots() -> dict[str, Path]:
     return roots
 
 
-def _pytest_environment() -> dict[str, str]:
+def _normalise_distribution_name(value: str) -> str:
+    return re.sub(r"[-_.]+", "-", value).lower()
+
+
+def _write_source_metadata_overlay(
+    roots: Mapping[str, Path], destination: Path
+) -> dict[str, str]:
+    """Create deterministic distribution metadata for the exact source graph.
+
+    Source worktrees intentionally contain no generated distribution metadata.
+    Without this overlay, importlib.metadata can report an unrelated globally
+    installed distribution even while Python imports the frozen source tree.
+    Each record is derived solely from that source tree's tracked pyproject
+    file and is deleted with the lane-local pytest temp directory.
+    """
+
+    expected_roots = {name for name, _distribution, _package in LOCAL_DISTRIBUTIONS}
+    if set(roots) != expected_roots:
+        raise EvidenceError("source metadata roots do not match the package graph")
+    destination.mkdir()
+    versions: dict[str, str] = {}
+    for repository_name, distribution_name, _package_name in LOCAL_DISTRIBUTIONS:
+        project_path = roots[repository_name] / "pyproject.toml"
+        if not project_path.is_file() or project_path.is_symlink():
+            raise EvidenceError(
+                f"source project metadata is unavailable: {repository_name}"
+            )
+        try:
+            document = tomllib.loads(project_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, tomllib.TOMLDecodeError) as exc:
+            raise EvidenceError(
+                f"source project metadata is invalid: {repository_name}"
+            ) from exc
+        project = document.get("project")
+        if not isinstance(project, dict):
+            raise EvidenceError(f"source project table is missing: {repository_name}")
+        name = project.get("name")
+        version = project.get("version")
+        if (
+            not isinstance(name, str)
+            or not PROJECT_NAME_RE.fullmatch(name)
+            or _normalise_distribution_name(name)
+            != _normalise_distribution_name(distribution_name)
+        ):
+            raise EvidenceError(
+                f"source distribution name mismatch: {repository_name}"
+            )
+        if not isinstance(version, str) or not PROJECT_VERSION_RE.fullmatch(version):
+            raise EvidenceError(
+                f"source distribution version is invalid: {repository_name}"
+            )
+        normalised = _normalise_distribution_name(distribution_name).replace("-", "_")
+        record = destination / f"{normalised}-{version}.dist-info"
+        record.mkdir()
+        metadata = (
+            "Metadata-Version: 2.1\n"
+            f"Name: {distribution_name}\n"
+            f"Version: {version}\n\n"
+        ).encode("ascii")
+        with (record / "METADATA").open("xb") as stream:
+            stream.write(metadata)
+        versions[distribution_name] = version
+    return versions
+
+
+def _pytest_environment(
+    *, roots: Mapping[str, Path], metadata_overlay: Path
+) -> dict[str, str]:
     """Provide the exact source set required by the frozen preflight command."""
 
-    roots = _local_roots()
     environment = os.environ.copy()
     environment["PYTHONPATH"] = os.pathsep.join(
         str(path)
         for path in (
+            metadata_overlay,
             ROOT / "src",
             roots["ANYmesh"] / "src",
             roots["ANYgeometry"] / "src",
@@ -1092,6 +1162,7 @@ def _pytest_environment() -> dict[str, str]:
             roots["ANYfileIO"] / "src",
         )
     )
+    environment["PYTHONNOUSERSITE"] = "1"
     return environment
 
 
@@ -1112,11 +1183,24 @@ def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
     parent.mkdir(exist_ok=True)
     if parent.resolve().parent != ROOT.resolve():
         raise EvidenceError("Q1M pytest temp parent escaped the repository")
-    basetemp = Path(tempfile.mkdtemp(prefix=f"{lane}-", dir=parent))
-    if basetemp.resolve().parent != parent.resolve():
-        raise EvidenceError("Q1M pytest basetemp escaped its parent")
-
+    basetemp: Path | None = None
+    metadata_workspace: Path | None = None
     try:
+        basetemp = Path(tempfile.mkdtemp(prefix=f"{lane}-", dir=parent))
+        if basetemp.resolve().parent != parent.resolve():
+            raise EvidenceError("Q1M pytest basetemp escaped its parent")
+        metadata_workspace = Path(
+            tempfile.mkdtemp(prefix=f"{lane}-metadata-", dir=parent)
+        )
+        if metadata_workspace.resolve().parent != parent.resolve():
+            raise EvidenceError("Q1M metadata workspace escaped its parent")
+        roots = _local_roots()
+        metadata_overlay = metadata_workspace / "source-distributions"
+        _write_source_metadata_overlay(roots, metadata_overlay)
+        environment = _pytest_environment(
+            roots=roots,
+            metadata_overlay=metadata_overlay,
+        )
         completed = subprocess.run(
             [
                 sys.executable,
@@ -1127,20 +1211,23 @@ def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
                 *selected,
             ],
             cwd=ROOT,
-            env=_pytest_environment(),
+            env=environment,
             check=False,
         )
         return int(completed.returncode)
     finally:
-        if os.path.lexists(basetemp):
-            if basetemp.is_symlink() or not basetemp.is_dir():
-                basetemp.unlink()
-            else:
-                def make_writable_and_retry(function, path, _excinfo):
-                    os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
-                    function(path)
+        for temporary_path in (basetemp, metadata_workspace):
+            if temporary_path is None or not os.path.lexists(temporary_path):
+                continue
+            if temporary_path.is_symlink() or not temporary_path.is_dir():
+                temporary_path.unlink()
+                continue
 
-                shutil.rmtree(basetemp, onexc=make_writable_and_retry)
+            def make_writable_and_retry(function, path, _excinfo):
+                os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+                function(path)
+
+            shutil.rmtree(temporary_path, onexc=make_writable_and_retry)
         try:
             parent.rmdir()
         except OSError:

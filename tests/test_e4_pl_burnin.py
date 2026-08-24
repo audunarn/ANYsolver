@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 import subprocess
+import sys
 import warnings
 from pathlib import Path
 
@@ -34,6 +35,9 @@ CONTRACT_CYCLE1 = (
 )
 CONTRACT_CYCLE2 = (
     ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle2.json"
+)
+CONTRACT_CYCLE3 = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle3.json"
 )
 
 
@@ -257,14 +261,14 @@ def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
     assert contract["gate_result_schema"] == "anysolver.s4.e4-pl-q1m-gate-result-v2"
     assert contract["package_result_schema"] == "anysolver.s4.e4-pl-q1m-package-lane-v2"
     assert contract["adjudication"] == {
-        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_3_BLOCKED_GATE_NO_P0_P1",
+        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_4_BLOCKED_GATE_NO_P0_P1",
         "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-        "blocked_commit_subject": "docs: record E4 PL Q1M correction-3 blocked gate",
-        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_3_BURN_IN_GATE",
+        "blocked_commit_subject": "docs: record E4 PL Q1M correction-4 blocked gate",
+        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_4_BURN_IN_GATE",
         "blocked_paths": [
-            "docs/reference_cases/e4_pl_q1m_correction3_blocked_gate_result.json",
-            "docs/reference_cases/e4_pl_q1m_correction3_blocked_status.json",
-            "docs/reference_cases/e4_pl_q1m_correction3_blocked_review.json",
+            "docs/reference_cases/e4_pl_q1m_correction4_blocked_gate_result.json",
+            "docs/reference_cases/e4_pl_q1m_correction4_blocked_status.json",
+            "docs/reference_cases/e4_pl_q1m_correction4_blocked_review.json",
         ],
         "review_independence": {
             "did_not_author_candidate": True,
@@ -574,7 +578,25 @@ def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
 ) -> None:
     gate = _gate_module()
     monkeypatch.setattr(gate, "ROOT", tmp_path)
-    monkeypatch.setattr(gate, "_pytest_environment", lambda: {"Q1M_TEST": "1"})
+    monkeypatch.setattr(
+        gate,
+        "_local_roots",
+        lambda: {
+            name: tmp_path
+            for name, _distribution, _package in gate.LOCAL_DISTRIBUTIONS
+        },
+    )
+
+    def fake_metadata_overlay(_roots, destination):
+        destination.mkdir()
+        return {}
+
+    monkeypatch.setattr(gate, "_write_source_metadata_overlay", fake_metadata_overlay)
+    monkeypatch.setattr(
+        gate,
+        "_pytest_environment",
+        lambda **_kwargs: {"Q1M_TEST": "1"},
+    )
     observed: dict[str, object] = {}
 
     def fake_run(command, *, cwd, env, check):
@@ -591,6 +613,61 @@ def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
     assert observed["cwd"] == tmp_path
     assert observed["env"] == {"Q1M_TEST": "1"}
     assert observed["check"] is False
+    assert not (tmp_path / ".pytest_tmp_q1m_runtime").exists()
+
+
+def test_pytest_lane_cleans_basetemp_when_metadata_overlay_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gate = _gate_module()
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "_local_roots", lambda: {})
+
+    def reject_overlay(_roots, _destination):
+        raise gate.EvidenceError("metadata rejected")
+
+    monkeypatch.setattr(gate, "_write_source_metadata_overlay", reject_overlay)
+
+    with pytest.raises(gate.EvidenceError, match="metadata rejected"):
+        gate._run_pytest_lane("functional", ["tests/test_probe.py"])
+    assert not (tmp_path / ".pytest_tmp_q1m_runtime").exists()
+
+
+def test_pytest_lane_keeps_source_metadata_visible_during_real_execution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gate = _gate_module()
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    projects = {
+        "ANYgeometry": ("ANYgeometry", "0.2.4"),
+        "ANYmaterial": ("ANYmaterial", "0.1.1"),
+        "ANYmesh": ("ANYmesher", "0.2.5"),
+        "ANYfileIO": ("ANYfileio", "0.2.0"),
+        "ANYsolver": ("ANYsolver", "0.3.0"),
+    }
+    roots = {}
+    for repository, (distribution, version) in projects.items():
+        project = tmp_path if repository == "ANYsolver" else tmp_path / repository
+        project.mkdir(exist_ok=True)
+        (project / "pyproject.toml").write_text(
+            f'[project]\nname = "{distribution}"\nversion = "{version}"\n',
+            encoding="utf-8",
+        )
+        roots[repository] = project
+    monkeypatch.setattr(gate, "_local_roots", lambda: roots)
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_metadata_probe.py").write_text(
+        "from importlib import metadata\n\n"
+        "def test_frozen_source_metadata_is_visible(tmp_path):\n"
+        "    assert tmp_path.is_dir()\n"
+        "    assert metadata.version('ANYmesher') == '0.2.5'\n",
+        encoding="utf-8",
+    )
+
+    assert gate._run_pytest_lane(
+        "functional", ["tests/test_metadata_probe.py"]
+    ) == 0
     assert not (tmp_path / ".pytest_tmp_q1m_runtime").exists()
 
 
@@ -940,6 +1017,66 @@ def test_package_source_override_is_explicit_and_resolved(
     assert roots["ANYsolver"] == ROOT.resolve()
 
 
+def test_pytest_source_metadata_overlay_binds_the_frozen_source_graph(
+    tmp_path: Path,
+) -> None:
+    gate = _gate_module()
+    roots = gate._local_roots()
+    overlay = tmp_path / "source-distributions"
+
+    versions = gate._write_source_metadata_overlay(roots, overlay)
+
+    assert versions == {
+        "ANYfileio": "0.2.0",
+        "ANYgeometry": "0.2.4",
+        "ANYmaterial": "0.1.1",
+        "ANYmesher": "0.2.5",
+        "ANYsolver": "0.3.0",
+    }
+    environment = gate._pytest_environment(
+        roots=roots,
+        metadata_overlay=overlay,
+    )
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "from importlib import metadata; "
+                "print(metadata.version('ANYmesher')); "
+                "print(metadata.version('ANYmaterial')); "
+                "from anyfileio._semantic_dependencies import require_semantics; "
+                "print(require_semantics().Mesh.__name__)"
+            ),
+        ],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.splitlines() == ["0.2.5", "0.1.1", "Mesh"]
+
+
+def test_source_metadata_overlay_rejects_a_mismatched_project(
+    tmp_path: Path,
+) -> None:
+    gate = _gate_module()
+    roots = gate._local_roots()
+    impostor = tmp_path / "impostor"
+    impostor.mkdir()
+    (impostor / "pyproject.toml").write_text(
+        '[project]\nname = "not-anymesher"\nversion = "0.2.5"\n',
+        encoding="utf-8",
+    )
+    roots["ANYmesh"] = impostor
+
+    with pytest.raises(gate.EvidenceError, match="distribution name mismatch"):
+        gate._write_source_metadata_overlay(roots, tmp_path / "metadata")
+
+
 def test_final_validation_binds_requests_logs_package_and_wheel(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -1067,6 +1204,7 @@ def test_blocked_cycles_remain_verifiable_under_immutable_authority() -> None:
         ("e4_pl_q1m_blocked", CONTRACT_CYCLE0),
         ("e4_pl_q1m_correction1_blocked", CONTRACT_CYCLE1),
         ("e4_pl_q1m_correction2_blocked", CONTRACT_CYCLE2),
+        ("e4_pl_q1m_correction3_blocked", CONTRACT_CYCLE3),
     )
     blocked_request_ids: set[str] = set()
     for stem, authority_path in historical:

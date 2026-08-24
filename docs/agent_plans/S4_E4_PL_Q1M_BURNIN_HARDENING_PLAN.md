@@ -53,7 +53,7 @@ recorded. A rollback incident resets the two-gate counter.
 
 - Freeze the implementation and harness before running a registered resource
   request.  The live contract records the exact quick and package commands,
-  including the correction-3 clean ANYgeometry root; the runner constructs
+  including the correction-4 clean ANYgeometry root; the runner constructs
   the remaining required source environment itself.
 - The package lane accepts only tracked/index-clean committed `HEAD` inputs.
   It creates a Git archive for ANYsolver, ANYmesh, ANYgeometry, ANYmaterial,
@@ -62,9 +62,16 @@ recorded. A rollback incident resets the two-gate counter.
   ANYsolver and paired ANYfem must be fully clean including untracked paths;
   the four archived sibling inputs may retain unrelated untracked work.  A
   frozen source-root override is permitted only when its exact commit/tree is
-  bound by the live contract; correction 3 uses the isolated clean
+  bound by the live contract; correction 4 uses the isolated clean
   `q1m-anygeometry-frozen` worktree so unrelated tracked development in the
   shared ANYgeometry checkout is never imported.
+- Each pytest lane creates temporary distribution metadata from the exact
+  name/version pairs in the five frozen `pyproject.toml` files and places it
+  ahead of globally installed metadata.  This metadata-only overlay is
+  deleted with the lane-local temp directory; imported modules still come
+  exclusively from the frozen source roots.  It prevents an unrelated stale
+  installed distribution from misidentifying the source under test without
+  weakening ANYfileIO's semantic dependency check.
 - Resource commands are bound byte-for-byte through their immutable request
   JSON and command SHA-256.  Required external logs are nonempty and bind an
   exit code; `PASS` requires zero and `FAIL` requires nonzero.
@@ -93,17 +100,17 @@ Its status uses schema `anysolver.s4.e4-pl-q1m-status-v1`, terminal
 unauthorized.  Its accepted review verdict is
 `ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1`.
 
-A correction-3 failure uses commit subject
-`docs: record E4 PL Q1M correction-3 blocked gate` and exactly:
+A correction-4 failure uses commit subject
+`docs: record E4 PL Q1M correction-4 blocked gate` and exactly:
 
-1. `docs/reference_cases/e4_pl_q1m_correction3_blocked_gate_result.json`
-2. `docs/reference_cases/e4_pl_q1m_correction3_blocked_status.json`
-3. `docs/reference_cases/e4_pl_q1m_correction3_blocked_review.json`
+1. `docs/reference_cases/e4_pl_q1m_correction4_blocked_gate_result.json`
+2. `docs/reference_cases/e4_pl_q1m_correction4_blocked_status.json`
+3. `docs/reference_cases/e4_pl_q1m_correction4_blocked_review.json`
 
 Its status uses the same status schema, terminal
-`BLOCKED_E4_PL_Q1M_CORRECTION_3_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
+`BLOCKED_E4_PL_Q1M_CORRECTION_4_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
 unauthorized.  Its accepted review verdict is
-`ACCEPT_Q1M_CORRECTION_3_BLOCKED_GATE_NO_P0_P1`.
+`ACCEPT_Q1M_CORRECTION_4_BLOCKED_GATE_NO_P0_P1`.
 
 The first failed gate remains immutable under its original three blocked paths.
 Its exact authority is preserved byte-for-byte as
@@ -111,8 +118,10 @@ Its exact authority is preserved byte-for-byte as
 correction failure and its global-pytest-temp incident remain immutable under
 `docs/reference_cases/e4_pl_q1m_burnin_contract_cycle1.json`.  The live
 correction-2 ecosystem failure remains immutable under
-`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle2.json`.  The live
-contract binds fresh correction-3 resource requests and never rewrites any
+`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle2.json`.  The
+correction-3 source-metadata failure remains immutable under
+`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle3.json`.  The live
+contract binds fresh correction-4 resource requests and never rewrites any
 historical result.
 
 Correction 3 closes only the observed compatibility gaps: fail-closed solver
@@ -122,6 +131,12 @@ all five sibling commit/tree identities.  Protected integration follows the
 dependency order ANYmesh, ANYsolver Q1M, then ANYfem; the paired ANYfem commit
 is still executed locally before Q1M adjudication.  No E4-PL Q4 mechanics file
 changes in this correction.
+
+Correction 4 changes only the burn-in harness and its authority.  It derives
+ephemeral metadata from the already frozen source graph so
+`importlib.metadata` observes ANYmesher 0.2.5 rather than the unrelated global
+0.1.0 installation that blocked correction 3.  It does not modify ANYfileIO,
+any production package, or any E4-PL Q4 mechanic.
 
 All pytest lanes use a fresh ignored workspace-local `--basetemp` and remove
 it after execution, avoiding user-global Windows ACL state without changing
