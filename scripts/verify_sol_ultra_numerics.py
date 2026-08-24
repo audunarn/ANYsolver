@@ -837,7 +837,7 @@ def _case_hill48_material() -> dict[str, Any]:
 
 def _orthotropic_hill_shell_model() -> Any:
     from anysolver.boundary import BoundaryCondition
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_element
     from anysolver.fe_core import FEModel
     from anysolver.material_curves import DNVC208MaterialCurve
     from anysolver.materials import Hill48Yield
@@ -878,7 +878,8 @@ def _orthotropic_hill_shell_model() -> Any:
         model.add_node(node_id, *xyz)
     model.add_element(
         1,
-        ShellElement(
+        create_element(
+            "shell",
             1,
             [1, 2, 3, 4],
             "lamina",
@@ -1012,7 +1013,7 @@ def _case_hill48_shell_path() -> dict[str, Any]:
 
 
 def _generalized_shell_model() -> tuple[Any, Any]:
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_element
     from anysolver.fe_core import FEModel
     from anysolver.shell_sections import GeneralizedShellSection
 
@@ -1043,7 +1044,8 @@ def _generalized_shell_model() -> tuple[Any, Any]:
         rotary_inertia_per_area=0.08,
         name="verification_abd",
     )
-    element = ShellElement(
+    element = create_element(
+        "shell",
         1,
         [1, 2, 3, 4],
         "dummy",
@@ -1132,7 +1134,7 @@ def _rigid_rotation_field(model: Any, angle_degrees: float, axis: Sequence[float
 
 
 def _corotational_models() -> list[tuple[str, Any, Any]]:
-    from anysolver.elements import BeamElement, ShellElement
+    from anysolver.elements import BeamElement, create_element
     from anysolver.fe_core import FEModel
 
     shell_model = FEModel("verification_corotational_shell")
@@ -1142,7 +1144,9 @@ def _corotational_models() -> list[tuple[str, Any, Any]]:
         start=1,
     ):
         shell_model.add_node(node_id, x, y, 0.0)
-    shell = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    shell = create_element(
+        "shell", 1, [1, 2, 3, 4], "steel", thickness=0.01
+    )
     shell_model.add_element(1, shell)
 
     beam_model = FEModel("verification_corotational_beam")
@@ -1345,7 +1349,7 @@ def _case_arc_length() -> dict[str, Any]:
 
 def _contact_panel() -> Any:
     from anysolver.boundary import BoundaryCondition
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_element
     from anysolver.fe_core import FEModel
 
     model = FEModel("verification_contact_panel")
@@ -1354,7 +1358,12 @@ def _contact_panel() -> Any:
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 1.0, 0.0)
     model.add_node(4, 0.0, 1.0, 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "soft", thickness=0.05))
+    model.add_element(
+        1,
+        create_element(
+            "shell", 1, [1, 2, 3, 4], "soft", thickness=0.05
+        ),
+    )
     model.add_boundary_condition(
         BoundaryCondition(
             "restrain_shell_nonimpact_modes",
@@ -1369,7 +1378,7 @@ def _yielding_contact_panel(*, divisions: int = 4) -> Any:
     """Small clamped panel with enough spatial freedom to yield under impact."""
 
     from anysolver.boundary import BoundaryCondition
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_element
     from anysolver.fe_core import FEModel
 
     model = FEModel("verification_yielding_contact_panel")
@@ -1386,7 +1395,8 @@ def _yielding_contact_panel(*, divisions: int = 4) -> Any:
         for i in range(divisions):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_element(
+                    "shell",
                     element_id,
                     [
                         node_of[(i, j)],

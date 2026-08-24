@@ -11,7 +11,7 @@ from anysolver.corotational_performance import (
     rotate_corotational_force_blocks,
     rotate_corotational_force_tangent_blocks,
 )
-from anysolver.elements import BeamElement, QuadraticBeamElement, ShellElement
+from anysolver.elements import BeamElement, QuadraticBeamElement, create_element
 from anysolver.fe_core import FEModel
 from anysolver.nonlinear_performance_bootstrap import nonlinear_performance_status
 
@@ -99,7 +99,10 @@ def _models() -> tuple[FEModel, FEModel, FEModel]:
     shell.add_material("steel", 210.0e9, 0.3)
     for node_id, (x, y) in enumerate(((0, 0), (1, 0), (1, 1), (0, 1)), 1):
         shell.add_node(node_id, float(x), float(y), 0.0)
-    shell.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    shell.add_element(
+        1,
+        create_element("shell", 1, [1, 2, 3, 4], "steel", thickness=0.01),
+    )
     return beam, quadratic, shell
 
 

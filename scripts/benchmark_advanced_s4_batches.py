@@ -22,8 +22,8 @@ from anysolver import (  # noqa: E402
     GeneralizedShellSection,
     Material,
     OrthotropicMaterial,
-    ShellElement,
     assemble_stiffness_matrix,
+    create_element,
 )
 from anysolver.nonlinear_performance_bootstrap import (  # noqa: E402
     clear_nonlinear_assembly_cache,
@@ -83,7 +83,8 @@ def _build_model(kind: str, nx: int, ny: int) -> FEModel:
         for column in range(nx):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_element(
+                    "shell",
                     element_id,
                     [
                         int(node_ids[row, column]),

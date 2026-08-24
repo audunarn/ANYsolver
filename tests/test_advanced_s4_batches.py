@@ -10,9 +10,9 @@ from anysolver import (
     GeneralizedShellSection,
     Material,
     OrthotropicMaterial,
-    ShellElement,
     assemble_mass_matrix,
     assemble_stiffness_matrix,
+    create_element,
 )
 from anysolver.nonlinear_performance_bootstrap import (
     clear_nonlinear_assembly_cache,
@@ -95,7 +95,8 @@ def _shell_model(kind: str, *, with_mass: bool = False) -> FEModel:
             next_node += 1
         model.add_element(
             element_index,
-            ShellElement(
+            create_element(
+                "shell",
                 element_index,
                 node_ids,
                 material.name,
@@ -149,10 +150,10 @@ def test_linear_orthotropic_s4_batch_matches_scalar_on_geometry_matrix() -> None
     actual, info = assemble_stiffness_matrix(model)
 
     np.testing.assert_allclose(actual.toarray(), expected, rtol=3.0e-12, atol=2.0e-5)
-    assert info["diagnostics"]["advanced_s4_stiffness"] == {
-        "path": "compiled_batch",
-        "orthotropic_element_count": 4,
-        "generalized_element_count": 0,
+    assert info["diagnostics"]["qualified_e4_pl_stiffness"] == {
+        "path": "shared_geometry_cache",
+        "element_count": 4,
+        "unique_geometry_count": 4,
     }
 
 
@@ -163,9 +164,11 @@ def test_linear_generalized_s4_batch_preserves_nonsymmetric_B() -> None:
 
     np.testing.assert_allclose(actual.toarray(), expected, rtol=3.0e-12, atol=2.0e-8)
     np.testing.assert_allclose(actual.toarray(), actual.toarray().T, rtol=0.0, atol=2.0e-8)
-    assert info["diagnostics"]["advanced_s4_stiffness"][
-        "generalized_element_count"
-    ] == 4
+    assert info["diagnostics"]["qualified_e4_pl_stiffness"] == {
+        "path": "shared_geometry_cache",
+        "element_count": 4,
+        "unique_geometry_count": 4,
+    }
 
 
 def test_generalized_section_mass_batch_matches_scalar() -> None:
@@ -288,7 +291,8 @@ def test_unsupported_generalized_triangle_reports_scalar_fallback() -> None:
     model.add_node(1, 0.0, 0.0, 0.0)
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 0.1, 0.9, 0.0)
-    element = ShellElement(
+    element = create_element(
+        "shell",
         1,
         [1, 2, 3],
         material.name,

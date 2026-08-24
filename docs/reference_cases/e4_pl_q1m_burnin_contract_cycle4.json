@@ -1,0 +1,174 @@
+{
+  "adjudication": {
+    "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_4_BLOCKED_GATE_NO_P0_P1",
+    "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
+    "blocked_commit_subject": "docs: record E4 PL Q1M correction-4 blocked gate",
+    "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_4_BURN_IN_GATE",
+    "blocked_paths": [
+      "docs/reference_cases/e4_pl_q1m_correction4_blocked_gate_result.json",
+      "docs/reference_cases/e4_pl_q1m_correction4_blocked_status.json",
+      "docs/reference_cases/e4_pl_q1m_correction4_blocked_review.json"
+    ],
+    "review_independence": {
+      "did_not_author_candidate": true,
+      "did_not_execute_resource_lanes": true,
+      "reviewed_frozen_evidence_only": true
+    },
+    "review_required_keys": [
+      "findings",
+      "reviewed_inputs",
+      "reviewer_independence",
+      "schema",
+      "verdict"
+    ],
+    "reviewed_input_hashes": [
+      "contract_sha256",
+      "gate_result_sha256",
+      "status_sha256"
+    ],
+    "status_required_keys": [
+      "clean_gate_index",
+      "gate_result_sha256",
+      "legacy_removal_authorized",
+      "schema",
+      "terminal"
+    ],
+    "success_terminal": "Q1M_CLEAN_GATE_1_OF_2_RECORDED",
+    "success_paths": [
+      "docs/reference_cases/e4_pl_q1m_gate_result.json",
+      "docs/reference_cases/e4_pl_q1m_status.json",
+      "docs/reference_cases/e4_pl_q1m_review.json"
+    ],
+    "success_commit_subject": "docs: record E4 PL Q1M clean burn-in gate 1"
+  },
+  "anyfem_commit": "ba8b21b9cf2732168b099cfedc7508789bdcfbb3",
+  "burn_in": {
+    "clean_release_gates_required": 2,
+    "counter_reset": "ANY_UNRESOLVED_LEGACY_Q4_ROLLBACK_INCIDENT",
+    "earliest_removal_release": "0.5.0",
+    "legacy_q4_available_through": "0.4.x",
+    "state": "ACTIVE"
+  },
+  "default": "QUALIFIED_E4_PL_Q4",
+  "diagnostics_schema": "anysolver.shell-formulation-diagnostics-v1",
+  "evidence_lanes": {
+    "ecosystem": "ANYFEM_PUBLIC_SELECTOR_AND_ENGINEERING_REFERENCE",
+    "extended": "OPTIONAL_RESEARCH_DIAGNOSTICS",
+    "functional": "COMPLETE_PRODUCTION_FUNCTIONAL_AND_MODEL_CORPUS",
+    "package": "WHEEL_BUILD_AND_EXTRACTED_INSTALL_SMOKE",
+    "performance": "RESOURCE_MANAGER_SERIALIZED",
+    "quick": "REQUIRED_FOR_EVERY_CHANGE"
+  },
+  "gate_result_schema": "anysolver.s4.e4-pl-q1m-gate-result-v2",
+  "hard_performance_gates": {
+    "batch_path_equality": [
+      "tests/test_e4_pl_workflow_parity.py::test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle",
+      "tests/test_e4_pl_workflow_parity.py::test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry"
+    ],
+    "q4_numerical_parity": [
+      "tests/test_e4_pl_workflow_parity.py::test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle"
+    ],
+    "warm_cache_reuse": [
+      "tests/test_e4_pl_workflow_parity.py::test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry"
+    ]
+  },
+  "legacy_q4": {
+    "direct_class_construction": "DEPRECATED",
+    "factory_selectors": ["legacy", "legacy-shell", "legacy-s4"],
+    "state": "DEPRECATED_EXPLICIT_ROLLBACK",
+    "warning": "LegacyQ4DeprecationWarning"
+  },
+  "non_q4": {
+    "deprecated": false,
+    "topologies": ["TRI3", "TRI6", "Q8", "Q8R"],
+    "implementation": "ShellElement"
+  },
+  "non_resource_commands": {
+    "package": {
+      "command": "$env:Q1M_ANYMESH_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen'; $env:Q1M_ANYGEOMETRY_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen'; python scripts/run_e4_pl_burnin_gate.py package",
+      "command_sha256": "d8c272af5d0ec96e57cca9031fc0ff811a176675836ad68e140eee6b65e20de0"
+    },
+    "quick": {
+      "command": "$env:Q1M_ANYMESH_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen'; $env:Q1M_ANYGEOMETRY_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen'; python scripts/run_e4_pl_burnin_gate.py quick",
+      "command_sha256": "f9031b74a2a4cc2eebc1e90dbc53495f7edd234e29359dd845ba34ba09bb4649"
+    }
+  },
+  "package_result_schema": "anysolver.s4.e4-pl-q1m-package-lane-v2",
+  "production_boundary": {
+    "default": "QUALIFIED_E4_PL_Q4",
+    "legacy_q4_available_through": "0.4.x",
+    "mechanics_changed": false,
+    "removal_not_before": "0.5.0"
+  },
+  "performance_baseline": {
+    "measurement_names": [
+      "qualified_q4_cached_tangent",
+      "qualified_q4_warm_global_assembly"
+    ],
+    "repetitions": 11,
+    "schema": "anysolver.s4.e4-pl-q1m-performance-baseline-v1",
+    "speed_claim": "GATE_1_BASELINE_ONLY_NO_SPEED_CLAIM",
+    "warmups": 1
+  },
+  "resource_requests": {
+    "anyfem": {
+      "command_sha256": "29c62d3f3e85c7085dd8f430ec6a4efcdf640d4a93aec4ee22bc61ceccc8a667",
+      "request_id": "01adfb747dbe4c47ab08334f3052819f",
+      "request_sha256": "b77a85a72673d6c353705f7248e58e600c9b5fc79380d8af71ccc0230cb73d4f"
+    },
+    "functional": {
+      "command_sha256": "514bda995a718f32c92b52bdd47a4b491687b5c5ccb877ad9d22e5db978e00f5",
+      "request_id": "e92f09cbc9b349e18717fa445adb4447",
+      "request_sha256": "9fb4e35f4a08e15f35a24f2df4fa8c451aca71d7b2a7519ad2ef91d8722357a1"
+    },
+    "performance": {
+      "command_sha256": "304dd8c2e4125033f062da7f54c2553cf55fa39de7f6846dcbd000e226af5022",
+      "request_id": "0a8b54268e034656a2f1fdca5b7c2894",
+      "request_sha256": "6a60f4842e11ccbb5e7f813c7be2e6f9290168a19f28dae816078eff2666a4e1"
+    }
+  },
+  "repository_cleanliness": {
+    "ANYfem": "FULLY_CLEAN_INCLUDING_UNTRACKED",
+    "ANYfileIO": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+    "ANYgeometry": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+    "ANYmaterial": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+    "ANYmesh": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+    "ANYsolver": "FULLY_CLEAN_INCLUDING_UNTRACKED"
+  },
+  "review_schema": "anysolver.s4.e4-pl-q1m-independent-review-v1",
+  "removal_gates": [
+    "COMPLETE_FUNCTIONAL_SUITE",
+    "PACKAGE_BUILD_AND_INSTALLED_WHEEL_SMOKE",
+    "REPRESENTATIVE_MODEL_CORPUS",
+    "ECOSYSTEM_ANYFEM_ENGINEERING_REFERENCE",
+    "PARITY_MATRIX_CLOSED",
+    "SERIALIZATION_AND_RESTART",
+    "SERIALIZED_PERFORMANCE",
+    "NO_PRODUCTION_OR_PERFORMANCE_SELECTOR_BYPASS",
+    "NO_UNRESOLVED_ROLLBACK_INCIDENT"
+  ],
+  "schema": "anysolver.s4.e4-pl-q1m-burn-in-contract-v1",
+  "sibling_authority": {
+    "ANYfem": {
+      "commit": "ba8b21b9cf2732168b099cfedc7508789bdcfbb3",
+      "tree": "49a150bcccece1fef92dd627ae54689a545e0e61"
+    },
+    "ANYfileIO": {
+      "commit": "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+      "tree": "70b406be2574adceab4a7b688c0e489e0937df5d"
+    },
+    "ANYgeometry": {
+      "commit": "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
+      "tree": "a563515df3ab24e7df388009b7412582e840e31e"
+    },
+    "ANYmaterial": {
+      "commit": "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
+      "tree": "0d3c57eba577f243a3749b3f1102cbb94a3b51bf"
+    },
+    "ANYmesh": {
+      "commit": "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
+      "tree": "d443f008173003d560fb55673b0d90bf92f65e03"
+    }
+  },
+  "status_schema": "anysolver.s4.e4-pl-q1m-status-v1"
+}

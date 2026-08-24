@@ -22,7 +22,7 @@ from anysolver.contact import (
     assemble_sphere_contact_load_vector,
 )
 from anysolver.contact_performance import ContactWorkBuffer, ContactWorkCounters
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 
 
@@ -52,7 +52,8 @@ def _case_inputs(name: str):
             for i in range(division):
                 model.add_element(
                     element_id,
-                    ShellElement(
+                    create_element(
+                        "shell",
                         element_id,
                         [
                             node_of[(i, j)],

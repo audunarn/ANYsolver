@@ -15,7 +15,7 @@ import numpy as np
 import anysolver as fs
 from anysolver.assembly import build_constraint_transformation
 from anysolver.boundary import BoundaryCondition
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
@@ -45,7 +45,8 @@ def _panel(divisions: int) -> FEModel:
         for column in range(divisions):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_element(
+                    "shell",
                     element_id,
                     [
                         node_ids[(column, row)],

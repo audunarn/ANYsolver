@@ -19,6 +19,7 @@ from anysolver import (
     solve_linear,
     solve_static_nonlinear,
     solve_transient_newmark,
+    create_shell_element,
 )
 from anysolver.anystructure_fem_mode import build_fe_model_from_generated_geometry
 from anysolver.contact import (
@@ -120,7 +121,7 @@ def _orthotropic_model(
             model.add_node(node_id, *coords)
         model.add_element(
             1,
-            ShellElement(
+            create_shell_element(
                 1,
                 [1, 2, 3, 4],
                 "lamina",
@@ -464,11 +465,11 @@ def test_orthotropic_shell_linear_static_uses_rotated_engineering_modulus() -> N
         rel=2.0e-10,
     )
     assert solver_info["assembly"]["stiffness"]["diagnostics"][
-        "advanced_s4_stiffness"
+        "qualified_e4_pl_stiffness"
     ] == {
-        "path": "compiled_batch",
-        "orthotropic_element_count": 1,
-        "generalized_element_count": 0,
+        "path": "shared_geometry_cache",
+        "element_count": 1,
+        "unique_geometry_count": 1,
     }
 
 

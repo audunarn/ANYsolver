@@ -11,7 +11,7 @@ from anysolver import nonlinear_performance_bootstrap
 from anysolver.jit_compiler import JIT_ENABLED
 from anysolver import nonlinear_performance_batch_c
 from anysolver.material_curves import dnv_c208_steel_curve
-from anysolver.elements import QuadraticBeamElement, ShellElement
+from anysolver.elements import QuadraticBeamElement, create_element
 from anysolver.fe_core import FEModel
 from anysolver.nonlinear_performance_bootstrap import (
     MAX_NONLINEAR_LAYER_PLANS_PER_MODEL,
@@ -371,7 +371,8 @@ def test_q8r_uses_scalar_nonlinear_path_with_hourglass_parity() -> None:
     )
     for node_id, coordinate in enumerate(coordinates, start=1):
         model.add_node(node_id, *coordinate)
-    element = ShellElement(
+    element = create_element(
+        "shell",
         1,
         list(range(1, 9)),
         "steel",

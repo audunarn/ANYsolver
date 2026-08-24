@@ -416,6 +416,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
         "0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
         "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
+        "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
+        "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
+        "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
+        "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
     }
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
@@ -501,6 +505,28 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             ".ecosystem/ANYfileIO",
         ),
     ]
+    q1m_checkouts = [
+        (
+            "audunarn/ANYmaterial",
+            "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
+            ".ecosystem/ANYmaterial",
+        ),
+        (
+            "audunarn/ANYgeometry",
+            "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
+            ".ecosystem/ANYgeometry",
+        ),
+        (
+            "audunarn/ANYmesh",
+            "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
+            ".ecosystem/ANYmesh",
+        ),
+        (
+            "audunarn/ANYfileIO",
+            "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+            ".ecosystem/ANYfileIO",
+        ),
+    ]
     compatibility_checkouts = {
         "anymesher-compatibility": [
             current_checkouts[0],
@@ -539,7 +565,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             ),
         ],
     }
-    for name in ("pytest", "wheel", "numba", "pardiso"):
+    assert checkout_pattern.findall(job_block(ci, "pytest")) == q1m_checkouts
+    for name in ("wheel", "numba", "pardiso"):
         block = job_block(ci, name)
         assert checkout_pattern.findall(block) == current_checkouts
         assert block.count(checkout_ref) == 5

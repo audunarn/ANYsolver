@@ -65,6 +65,7 @@ The assembly solver eliminates these slave beam DOFs through a transformation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -1061,6 +1062,15 @@ class ShellElement(Element):
         super().__init__(element_id, node_ids, material_name)
         if len(set(node_ids)) != len(node_ids):
             raise ValueError(f"Shell element {element_id} has repeated node ids")
+        if self.__class__ is ShellElement and len(node_ids) == 4:
+            warnings.warn(
+                "Legacy four-node ShellElement is a temporary rollback path; "
+                "use create_shell_element() or QualifiedE4PLShellElement. The "
+                "legacy Q4 implementation is available through the 0.4.x "
+                "burn-in line and is scheduled for removal no earlier than 0.5.0.",
+                LegacyQ4DeprecationWarning,
+                stacklevel=2,
+            )
         self.thickness = float(thickness)
         self.drilling_stabilization = float(drilling_stabilization)
         self.reduced_integration = reduced_integration
@@ -4619,7 +4629,77 @@ ELEMENT_TYPES = {
 
 
 DEFAULT_Q4_FORMULATION = "e4-pl"
+LEGACY_Q4_AVAILABLE_THROUGH = "0.4.x"
+LEGACY_Q4_REMOVAL_TARGET = "0.5.0"
+
+
+class LegacyQ4DeprecationWarning(DeprecationWarning):
+    """Warning emitted when the temporary legacy four-node rollback is used."""
+
+
 LegacyShellElement = ShellElement
+
+
+def _normalized_shell_formulation(
+    node_count: int,
+    formulation: Optional[str],
+) -> str:
+    resolved = DEFAULT_Q4_FORMULATION if formulation is None else str(formulation)
+    resolved = resolved.strip().lower().replace("_", "-")
+    e4_aliases = {"e4-pl", "qualified-s4", "default"}
+    legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
+    if node_count == 4 and resolved in e4_aliases:
+        return "e4-pl"
+    if resolved in legacy_aliases or (formulation is None and node_count != 4):
+        return "legacy"
+    if resolved in e4_aliases:
+        raise ValueError("E4-PL is available only for four-node shell topology")
+    raise ValueError(f"Unknown shell formulation: {formulation}")
+
+
+def shell_formulation_diagnostics(
+    *,
+    node_count: int = 4,
+    formulation: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Describe shell selection and the temporary legacy-Q4 rollback state.
+
+    This helper performs no element construction or mechanics.  It is intended
+    for migration tooling, logs, and support diagnostics.
+    """
+
+    count = int(node_count)
+    if count not in {3, 4, 6, 8}:
+        raise ValueError("shell node_count must be one of 3, 4, 6 or 8")
+    selected = _normalized_shell_formulation(count, formulation)
+    normalized_request = (
+        None
+        if formulation is None
+        else str(formulation).strip().lower().replace("_", "-")
+    )
+    return {
+        "schema": "anysolver.shell-formulation-diagnostics-v1",
+        "node_count": count,
+        "requested_formulation": normalized_request,
+        "selected_formulation": selected,
+        "production_default": formulation is None and count == 4,
+        "topology_policy": (
+            "QUALIFIED_E4_PL_Q4"
+            if count == 4 and selected == "e4-pl"
+            else (
+                "DEPRECATED_LEGACY_Q4_ROLLBACK"
+                if count == 4
+                else "PRESERVED_LEGACY_NON_Q4"
+            )
+        ),
+        "legacy_q4": {
+            "state": "DEPRECATED_BURN_IN_ROLLBACK",
+            "available_through": LEGACY_Q4_AVAILABLE_THROUGH,
+            "removal_not_before": LEGACY_Q4_REMOVAL_TARGET,
+            "selector": "legacy",
+            "warning": "LegacyQ4DeprecationWarning",
+        },
+    }
 
 
 def create_shell_element(
@@ -4638,11 +4718,8 @@ def create_shell_element(
     route; an explicit E4-PL request rejects non-Q4 topology.
     """
 
-    resolved = DEFAULT_Q4_FORMULATION if formulation is None else str(formulation)
-    resolved = resolved.strip().lower().replace("_", "-")
-    e4_aliases = {"e4-pl", "qualified-s4", "default"}
-    legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
-    if len(node_ids) == 4 and resolved in e4_aliases:
+    resolved = _normalized_shell_formulation(len(node_ids), formulation)
+    if resolved == "e4-pl":
         from .e4_pl_element import QualifiedE4PLShellElement
 
         return QualifiedE4PLShellElement(
@@ -4651,11 +4728,9 @@ def create_shell_element(
             material_name,
             **kwargs,
         )
-    if resolved in legacy_aliases or (formulation is None and len(node_ids) != 4):
+    if resolved == "legacy":
         return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
-    if resolved in e4_aliases:
-        raise ValueError("E4-PL is available only for four-node shell topology")
-    raise ValueError(f"Unknown shell formulation: {formulation}")
+    raise AssertionError(f"unreachable shell formulation selection: {resolved}")
 
 
 def create_element(

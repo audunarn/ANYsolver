@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from anysolver.boundary import BoundaryCondition, FixedSupport, LoadCase
-from anysolver.elements import BeamElement, ShellElement
+from anysolver.elements import BeamElement, create_shell_element
 from anysolver.fe_core import FEModel
 from anysolver.imperfections import ImperfectionField
 from anysolver.material_curves import DNVC208MaterialCurve, FiberSectionPlasticityConfig
@@ -40,7 +40,9 @@ def _membrane_patch() -> FEModel:
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 1.0, 0.0)
     model.add_node(4, 0.0, 1.0, 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", 0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
     model.add_boundary_condition(BoundaryCondition("left_x", [1, 4], {"ux": 0.0}))
     model.add_boundary_condition(BoundaryCondition("pin_y", [1], {"uy": 0.0}))
     model.add_boundary_condition(

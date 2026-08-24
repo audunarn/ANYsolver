@@ -11,7 +11,13 @@ from anysolver.corotational import (
     rotation_matrix_from_vector,
     rotation_vector_from_matrix,
 )
-from anysolver.elements import BeamElement, QuadraticBeamElement, ShellElement
+from anysolver.elements import (
+    BeamElement,
+    LegacyShellElement,
+    LegacyQ4DeprecationWarning,
+    QuadraticBeamElement,
+    create_shell_element,
+)
 from anysolver.fe_core import FEModel
 from anysolver.material_curves import dnv_c208_steel_curve
 from anysolver.nonlinear_static import _assemble_nonlinear_system, solve_static_nonlinear
@@ -37,7 +43,24 @@ def _single_shell_model() -> FEModel:
     model.add_material("steel", E_STEEL, 0.0, density=7850.0)
     for i, (x, y) in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)], start=1):
         model.add_node(i, float(x), float(y), 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
+    return model
+
+
+def _single_legacy_shell_model() -> FEModel:
+    """Build the registered legacy-Q4 rollback fixture explicitly."""
+
+    model = FEModel("cr_legacy_shell")
+    model.add_material("steel", E_STEEL, 0.0, density=7850.0)
+    for i, (x, y) in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)], start=1):
+        model.add_node(i, float(x), float(y), 0.0)
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        element = LegacyShellElement(
+            1, [1, 2, 3, 4], "steel", thickness=0.01
+        )
+    model.add_element(1, element)
     return model
 
 
@@ -184,12 +207,14 @@ def test_corotational_beam_cantilever_rolls_up_to_analytic_circle() -> None:
     assert result.diagnostics.get("kinematics", result.solver_info.get("kinematics")) if hasattr(result, "solver_info") else True
 
 
-def test_corotational_matches_von_karman_for_small_displacements() -> None:
+def test_legacy_corotational_matches_von_karman_for_registered_small_displacements() -> None:
+    """Preserve the pre-activation 150 N kinematics regression explicitly."""
+
     # Note the realistic load scale: the corotational pull-back has an
     # intrinsic residual floor of about eps * ||K|| * L per element, so
     # convergence tolerances must sit above that floor (documented in
     # anysolver.corotational).
-    model = _single_shell_model()
+    model = _single_legacy_shell_model()
     model.add_boundary_condition(BoundaryCondition("clamp", [1, 4], {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0}))
     # ~0.5% of span deflection: small-displacement regime, but the residual
     # scale stays far above the corotational roundoff floor.
@@ -197,7 +222,7 @@ def test_corotational_matches_von_karman_for_small_displacements() -> None:
     load_case.add_nodal_load(3, forces=np.array([0.0, 0.0, 150.0]))
 
     reference = solve_static_nonlinear(model, load_case, num_steps=2, max_iterations=20, tolerance=1.0e-6)
-    model2 = _single_shell_model()
+    model2 = _single_legacy_shell_model()
     model2.add_boundary_condition(BoundaryCondition("clamp", [1, 4], {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0}))
     corotational = solve_static_nonlinear(model2, load_case, num_steps=2, max_iterations=20, tolerance=1.0e-6, kinematics="corotational")
 
@@ -262,17 +287,56 @@ def test_corotational_fiber_plasticity_matches_von_karman_at_small_rotation(quad
     assert plastic_cr == pytest.approx(plastic_vk, rel=0.25)
 
 
-def test_corotational_plastic_shell_matches_von_karman_at_small_displacement() -> None:
+def test_corotational_shell_matches_von_karman_at_small_displacement() -> None:
     def _run(kinematics: str):
         model = _single_shell_model()
-        model.materials["steel"].hardening_curve = dnv_c208_steel_curve("S355", 0.01)
         model.add_boundary_condition(
             BoundaryCondition("clamp", [1, 4], {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0})
         )
         load_case = LoadCase("f")
-        load_case.add_nodal_load(3, forces=np.array([0.0, 0.0, 900.0]))
+        load_case.add_nodal_load(3, forces=np.array([0.0, 0.0, 200.0]))
         result = solve_static_nonlinear(model, load_case, num_steps=4, max_iterations=25, tolerance=1.0e-6, kinematics=kinematics)
-        plastic = float((result.info or {}).get("strain_summary", {}).get("max_equivalent_plastic_strain", 0.0) or 0.0)
+        return result.status, result.displacements.copy()
+
+    status_vk, u_vk = _run("von_karman")
+    status_cr, u_cr = _run("corotational")
+    assert status_vk == "completed"
+    assert status_cr == "completed"
+    scale = max(float(np.max(np.abs(u_vk))), 1.0e-12)
+    assert np.max(np.abs(u_cr - u_vk)) < 5.0e-2 * scale
+
+
+def test_legacy_corotational_shell_preserves_registered_900n_comparison() -> None:
+    """Keep the pre-Q1M Q4 kinematics fixture as explicit rollback coverage."""
+
+    def _run(kinematics: str):
+        model = _single_legacy_shell_model()
+        model.materials["steel"].hardening_curve = dnv_c208_steel_curve(
+            "S355", 0.01
+        )
+        model.add_boundary_condition(
+            BoundaryCondition(
+                "clamp",
+                [1, 4],
+                {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0},
+            )
+        )
+        load_case = LoadCase("f")
+        load_case.add_nodal_load(3, forces=np.array([0.0, 0.0, 900.0]))
+        result = solve_static_nonlinear(
+            model,
+            load_case,
+            num_steps=4,
+            max_iterations=25,
+            tolerance=1.0e-6,
+            kinematics=kinematics,
+        )
+        plastic = float(
+            (result.info or {})
+            .get("strain_summary", {})
+            .get("max_equivalent_plastic_strain", 0.0)
+            or 0.0
+        )
         return result.status, result.displacements.copy(), plastic
 
     status_vk, u_vk, plastic_vk = _run("von_karman")
@@ -363,7 +427,15 @@ def test_corotational_shell_strip_rolls_to_quarter_circle_efficiently() -> None:
             nid[(i, j)] = node_id
             node_id += 1
     for i in range(n):
-        model.add_element(i + 1, ShellElement(i + 1, [nid[(i, 0)], nid[(i + 1, 0)], nid[(i + 1, 1)], nid[(i, 1)]], "steel", thickness=thickness))
+        model.add_element(
+            i + 1,
+            create_shell_element(
+                i + 1,
+                [nid[(i, 0)], nid[(i + 1, 0)], nid[(i + 1, 1)], nid[(i, 1)]],
+                "steel",
+                thickness=thickness,
+            ),
+        )
     model.add_boundary_condition(
         BoundaryCondition("clamp", [nid[(0, 0)], nid[(0, 1)]], {"ux": 0, "uy": 0, "uz": 0, "rx": 0, "ry": 0, "rz": 0})
     )

@@ -59,3 +59,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["src"]
 addopts = ["-ra", "-p", "no:cacheprovider"]
+filterwarnings = [
+  "ignore:Legacy four-node ShellElement is a temporary rollback path:DeprecationWarning",
+]

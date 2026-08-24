@@ -15,6 +15,7 @@ from anysolver import (
     QuadraticBeamElement,
     ShellElement,
     assemble_stiffness_matrix,
+    create_shell_element,
     recover_stress_result,
     validate_production_model,
 )
@@ -111,7 +112,7 @@ def _square_shell(
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 1.0, 0.0)
     model.add_node(4, 0.0, 1.0, 0.0)
-    element = ShellElement(
+    element = create_shell_element(
         1,
         [1, 2, 3, 4],
         material.name,
@@ -167,13 +168,23 @@ def _shell_topology(
     model.register_material(material)
     for node_id, coordinate in enumerate(coordinates, start=1):
         model.add_node(node_id, *coordinate)
-    element = ShellElement(
-        1,
-        list(range(1, node_count + 1)),
-        material.name,
-        thickness=0.01,
-        material_angle_deg=angle,
-    )
+    node_ids = list(range(1, node_count + 1))
+    if node_count == 4:
+        element = create_shell_element(
+            1,
+            node_ids,
+            material.name,
+            thickness=0.01,
+            material_angle_deg=angle,
+        )
+    else:
+        element = ShellElement(
+            1,
+            node_ids,
+            material.name,
+            thickness=0.01,
+            material_angle_deg=angle,
+        )
     model.add_element(1, element)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
     for node in model.mesh.nodes.values():
@@ -363,7 +374,7 @@ def test_orthotropic_shell_bending_shear_and_rigid_body_patches(
         assert abs(float(mode @ stiffness @ mode)) < 1.0e-10 * scale
 
 
-def test_shell_isotropic_limit_and_orthotropic_s4_batch() -> None:
+def test_shell_isotropic_limit_and_orthotropic_q4_default_path() -> None:
     E = 70.0e9
     nu = 0.25
     G = E / (2.0 * (1.0 + nu))
@@ -402,10 +413,10 @@ def test_shell_isotropic_limit_and_orthotropic_s4_batch() -> None:
     assert np.allclose(K_iso, K_ortho, rtol=2.0e-12, atol=1.0e-5)
 
     _matrix, info = assemble_stiffness_matrix(ortho_model)
-    assert info["diagnostics"]["advanced_s4_stiffness"] == {
-        "path": "compiled_batch",
-        "orthotropic_element_count": 1,
-        "generalized_element_count": 0,
+    assert info["diagnostics"]["qualified_e4_pl_stiffness"] == {
+        "path": "shared_geometry_cache",
+        "element_count": 1,
+        "unique_geometry_count": 1,
     }
 
 

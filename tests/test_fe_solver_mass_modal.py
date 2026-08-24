@@ -236,7 +236,7 @@ def test_consistent_beam_mass_option_exact_rigid_inertia_and_better_frequencies(
 def test_point_mass_enters_mass_matrix_and_shifts_frequency() -> None:
     """model.add_point_mass augments M (modal/dynamic) and the acceleration load."""
     from anysolver.boundary import LoadCase
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_shell_element
     from anysolver.matrix_assembly import assemble_load_vector, assemble_mass_matrix
 
     def _plate(add_mass: float = 0.0):
@@ -253,7 +253,20 @@ def test_point_mass_enters_mass_matrix_and_shifts_frequency() -> None:
         eid = 1
         for j in range(n):
             for i in range(n):
-                model.add_element(eid, ShellElement(eid, [ids[(i, j)], ids[(i + 1, j)], ids[(i + 1, j + 1)], ids[(i, j + 1)]], "steel", thickness=0.01))
+                model.add_element(
+                    eid,
+                    create_shell_element(
+                        eid,
+                        [
+                            ids[(i, j)],
+                            ids[(i + 1, j)],
+                            ids[(i + 1, j + 1)],
+                            ids[(i, j + 1)],
+                        ],
+                        "steel",
+                        thickness=0.01,
+                    ),
+                )
                 eid += 1
         edge = (
             [ids[(i, 0)] for i in range(n + 1)] + [ids[(i, n)] for i in range(n + 1)]

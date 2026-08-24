@@ -13,7 +13,13 @@ from anysolver.cylinder_benchmarks import (
     CylinderBenchmarkConfig,
     build_cylindrical_shell_benchmark_model,
 )
-from anysolver.elements import CoupledBeamShellElement, ShellElement
+from anysolver.elements import (
+    CoupledBeamShellElement,
+    LegacyQ4DeprecationWarning,
+    LegacyShellElement,
+    ShellElement,
+    create_shell_element,
+)
 from anysolver.fe_core import FEModel
 from anysolver.matrix_assembly import (
     assemble_external_load_tangent,
@@ -61,9 +67,32 @@ def _single_shell(node_count: int = 4) -> tuple[FEModel, ShellElement]:
         raise ValueError(node_count)
     for node_id, xyz in enumerate(coordinates, start=1):
         model.add_node(node_id, *xyz)
-    element = ShellElement(1, list(range(1, node_count + 1)), "steel", 0.01)
+    node_ids = list(range(1, node_count + 1))
+    element = (
+        create_shell_element(1, node_ids, "steel", thickness=0.01)
+        if node_count == 4
+        else ShellElement(1, node_ids, "steel", thickness=0.01)
+    )
     model.add_element(1, element)
     return model, element
+
+
+def _legacy_q4_shell(
+    element_id: int,
+    node_ids: list[int],
+    material_name: str,
+    *,
+    thickness: float,
+) -> LegacyShellElement:
+    """Construct an explicit rollback element for registered legacy fixtures."""
+
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        return LegacyShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            thickness=thickness,
+        )
 
 
 def _axis_angle(axis: np.ndarray, angle: float) -> np.ndarray:
@@ -146,16 +175,17 @@ def _clamped_pressure_plate(*, legacy_q4: bool = False) -> tuple[FEModel, int]:
     model = generate_simple_panel_mesh(1.0, 1.0, 0.01, 2, 2)
     if legacy_q4:
         for element_id, element in tuple(model.mesh.elements.items()):
-            model.add_element(
-                int(element_id),
-                ShellElement(
+            with pytest.warns(
+                LegacyQ4DeprecationWarning, match="temporary rollback"
+            ):
+                rollback = LegacyShellElement(
                     int(element_id),
                     list(element.node_ids),
                     str(element.material_name),
                     thickness=float(element.thickness),
                     drilling_stabilization=float(element.drilling_stabilization),
-                ),
-            )
+                )
+            model.add_element(int(element_id), rollback)
     model.clear_boundary_conditions()
     edge_nodes = []
     centre_node = -1
@@ -351,7 +381,9 @@ def test_buckling_rejects_open_nonsymmetric_follower_pressure_pencil() -> None:
     assert "complex nonconservative eigenanalysis" in result.diagnostics["reason"]
 
 
-def test_buckling_includes_conservative_closed_surface_follower_stiffness() -> None:
+def test_legacy_buckling_preserves_registered_closed_surface_follower_stiffness() -> None:
+    """Preserve the pre-activation closed-cube eigenvalue as rollback evidence."""
+
     model = FEModel("closed_pressure_cube")
     model.add_material("steel", 2.0e5, 0.3)
     points = [
@@ -375,7 +407,10 @@ def test_buckling_includes_conservative_closed_surface_follower_stiffness() -> N
         [2, 3, 7, 6],
     ]
     for element_id, nodes in enumerate(outward_faces, start=1):
-        model.add_element(element_id, ShellElement(element_id, nodes, "steel", 0.02))
+        model.add_element(
+            element_id,
+            _legacy_q4_shell(element_id, nodes, "steel", thickness=0.02),
+        )
     model.add_boundary_condition(FixedSupport("fixed_bottom", [1, 2, 3, 4]))
     load = LoadCase("closed_pressure", follower_pressure=True)
     for element_id in model.mesh.elements:
@@ -566,7 +601,9 @@ def test_shell_initial_stress_energy_matches_through_thickness_quadrature() -> N
         start=1,
     ):
         model.add_node(node_id, *xyz)
-    element = ShellElement(1, [1, 2, 3, 4], "steel", 0.12)
+    element = create_shell_element(
+        1, [1, 2, 3, 4], "steel", thickness=0.12
+    )
     model.add_element(1, element)
     membrane = np.array([80.0, 31.0, -9.0])
     bending = np.array([1.8, -0.7, 0.35])
@@ -623,7 +660,12 @@ def test_shell_initial_stress_matrix_is_objective_under_coordinate_rotation() ->
     for node_id, node in base.mesh.nodes.items():
         xyz = rotation @ node.coords() + np.array([0.8, -0.2, 1.1])
         rotated.add_node(node_id, *xyz)
-    rotated.add_element(1, ShellElement(1, list(base_element.node_ids), "steel", 0.01))
+    rotated.add_element(
+        1,
+        create_shell_element(
+            1, list(base_element.node_ids), "steel", thickness=0.01
+        ),
+    )
     state = {1: {"membrane_compression": [91.0, 37.0, -12.0]}}
 
     K_base, _ = assemble_geometric_stiffness_matrix(base, state)

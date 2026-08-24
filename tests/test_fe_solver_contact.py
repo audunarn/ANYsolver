@@ -18,6 +18,7 @@ from anysolver import (
     recommend_sphere_contact_penalty,
     solve_transient_sphere_impact,
     validate_contact_configuration,
+    create_shell_element,
 )
 from anysolver.contact import _impact_contact_patch_area, _update_impact_damage_states
 from anysolver.recovery import RecoveryConfig
@@ -33,7 +34,9 @@ def _contact_panel(stiffener: bool = False) -> FEModel:
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 1.0, 0.0)
     model.add_node(4, 0.0, 1.0, 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "soft", thickness=0.05))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "soft", thickness=0.05)
+    )
     model.add_boundary_condition(
         BoundaryCondition(
             "restrain_shell_nonimpact_modes",
@@ -200,8 +203,12 @@ def test_adjacent_coplanar_contact_is_reduced_to_single_deepest_record() -> None
         6: (2.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *xyz)
-    model.add_element(1, ShellElement(1, [1, 2, 5, 4], "soft", thickness=0.05))
-    model.add_element(2, ShellElement(2, [2, 3, 6, 5], "soft", thickness=0.05))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 5, 4], "soft", thickness=0.05)
+    )
+    model.add_element(
+        2, create_shell_element(2, [2, 3, 6, 5], "soft", thickness=0.05)
+    )
     sphere = RigidSphereImpact("shared_edge", radius=0.2, mass=1.0, start_point=(1.0, 0.5, 0.1), travel_direction=(0.0, 0.0, -1.0), speed=0.0)
 
     _vector, sphere_force, records = assemble_sphere_contact_load_vector(
@@ -711,7 +718,17 @@ def test_aitken_relaxation_converges_high_penalty_corner_contact() -> None:
             for i in range(n):
                 model.add_element(
                     element_id,
-                    ShellElement(element_id, [ids[(i, j)], ids[(i + 1, j)], ids[(i + 1, j + 1)], ids[(i, j + 1)]], "steel", thickness=0.01),
+                    create_shell_element(
+                        element_id,
+                        [
+                            ids[(i, j)],
+                            ids[(i + 1, j)],
+                            ids[(i + 1, j + 1)],
+                            ids[(i, j + 1)],
+                        ],
+                        "steel",
+                        thickness=0.01,
+                    ),
                 )
                 element_id += 1
         edge = (
@@ -847,7 +864,9 @@ def test_capacity_impact_damage_warns_it_skips_beam_contact_targets() -> None:
     model.add_material("steel", 2.1e11, 0.3, density=7850.0)
     for node_id, xyz in {1: (0, 0, 0), 2: (1, 0, 0), 3: (1, 1, 0), 4: (0, 1, 0)}.items():
         model.add_node(node_id, *xyz)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
     model.add_node(5, 0.0, 0.5, 0.0)
     model.add_node(6, 1.0, 0.5, 0.0)
     model.add_element(2, BeamElement(2, [5, 6], "steel", {"area": 1e-3, "Iy": 1e-7, "Iz": 1e-7, "J": 1e-7}))
@@ -879,7 +898,20 @@ def test_auto_contact_period_substepping_makes_coarse_dt_robust() -> None:
         eid = 1
         for j in range(n):
             for i in range(n):
-                model.add_element(eid, ShellElement(eid, [ids[(i, j)], ids[(i + 1, j)], ids[(i + 1, j + 1)], ids[(i, j + 1)]], "steel", thickness=0.012))
+                model.add_element(
+                    eid,
+                    create_shell_element(
+                        eid,
+                        [
+                            ids[(i, j)],
+                            ids[(i + 1, j)],
+                            ids[(i + 1, j + 1)],
+                            ids[(i, j + 1)],
+                        ],
+                        "steel",
+                        thickness=0.012,
+                    ),
+                )
                 eid += 1
         edge = [ids[(i, 0)] for i in range(n + 1)] + [ids[(i, n)] for i in range(n + 1)] + [ids[(0, j)] for j in range(1, n)] + [ids[(n, j)] for j in range(1, n)]
         model.add_boundary_condition(BoundaryCondition("edges", edge, {"ux": 0.0, "uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0}))

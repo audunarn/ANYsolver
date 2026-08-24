@@ -9,10 +9,13 @@ import pytest
 
 from anysolver import (
     FEModel,
+    LegacyQ4DeprecationWarning,
+    LegacyShellElement,
     ShellElement,
     assemble_mass_matrix,
     assemble_stiffness_matrix,
     create_element,
+    create_shell_element,
 )
 from anysolver.shell_sections import (
     GeneralizedShellSection,
@@ -85,22 +88,39 @@ def _model_with_shell(
     section: GeneralizedShellSection | None = None,
     thickness: float = 0.02,
     material_angle_deg: float = 0.0,
+    legacy: bool = False,
 ) -> tuple[FEModel, ShellElement]:
     model = FEModel("generalized_shell")
     model.add_material("aluminium", 70.0e9, 0.25, density=2700.0)
     coordinates = _topology_coordinates(node_count)
     for node_id, coordinate in enumerate(coordinates, start=1):
         model.add_node(node_id, *coordinate)
-    element = ShellElement(
-        1,
-        list(range(1, node_count + 1)),
-        "aluminium",
-        thickness=thickness,
-        material_angle_deg=material_angle_deg,
-        shell_section=section,
-    )
+    node_ids = list(range(1, node_count + 1))
+    kwargs = {
+        "thickness": thickness,
+        "material_angle_deg": material_angle_deg,
+        "shell_section": section,
+    }
+    if legacy:
+        element = _legacy_shell(1, node_ids, "aluminium", **kwargs)
+    elif node_count == 4:
+        element = create_shell_element(1, node_ids, "aluminium", **kwargs)
+    else:
+        element = ShellElement(1, node_ids, "aluminium", **kwargs)
     model.add_element(1, element)
     return model, element
+
+
+def _legacy_shell(
+    element_id: int,
+    node_ids: list[int],
+    material_name: str,
+    **kwargs,
+) -> LegacyShellElement:
+    if len(node_ids) == 4:
+        with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+            return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
+    return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
 
 
 def test_generalized_shell_section_validates_and_accepts_structural_objects() -> None:
@@ -170,8 +190,10 @@ def test_isotropic_generalized_section_matches_legacy_shell_stiffness(
     node_count: int,
 ) -> None:
     thickness = 0.02
-    model, legacy = _model_with_shell(node_count, thickness=thickness)
-    section_element = ShellElement(
+    model, legacy = _model_with_shell(
+        node_count, thickness=thickness, legacy=True
+    )
+    section_element = _legacy_shell(
         2,
         legacy.node_ids,
         "aluminium",
@@ -297,7 +319,7 @@ def test_generalized_shell_section_mass_metadata_overrides_homogeneous_fallback(
     )
 
 
-def test_generalized_shell_section_routes_s4_assembly_through_batch_path() -> None:
+def test_generalized_shell_section_routes_q4_default_through_qualified_cache() -> None:
     model, element = _model_with_shell(section=_isotropic_section())
     expected = element.compute_stiffness_matrix(
         model.mesh,
@@ -306,10 +328,10 @@ def test_generalized_shell_section_routes_s4_assembly_through_batch_path() -> No
     assembled, info = assemble_stiffness_matrix(model)
 
     np.testing.assert_allclose(assembled.toarray(), expected, rtol=1.0e-12, atol=1.0e-5)
-    assert info["diagnostics"]["advanced_s4_stiffness"] == {
-        "path": "compiled_batch",
-        "orthotropic_element_count": 0,
-        "generalized_element_count": 1,
+    assert info["diagnostics"]["qualified_e4_pl_stiffness"] == {
+        "path": "shared_geometry_cache",
+        "element_count": 1,
+        "unique_geometry_count": 1,
     }
 
 
@@ -353,7 +375,9 @@ def test_generalized_shell_section_nonlinear_tangent_matches_difference() -> Non
 
 def test_shell_element_serialization_round_trips_inline_section() -> None:
     section = _isotropic_section(name="serialized", mass_per_area=5.0)
-    element = ShellElement(7, [1, 2, 3, 4], "aluminium", shell_section=section)
+    element = _legacy_shell(
+        7, [1, 2, 3, 4], "aluminium", shell_section=section
+    )
     payload = element.to_dict()
     payload.pop("type")
     rebuilt = create_element(

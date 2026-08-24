@@ -17,7 +17,7 @@ from anysolver.material_curves import (
 from anysolver.materials import Hill48Yield
 from anysolver.arc_length import ArcLengthControl, solve_static_arc_length
 from anysolver.boundary import BoundaryCondition, LoadCase
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 from anysolver.nonlinear_state import ShellStateBatch, ShellStateLayout
 from anysolver.nonlinear_static import solve_static_nonlinear
@@ -99,7 +99,8 @@ def _global_hill_shell() -> tuple[FEModel, LoadCase]:
         model.add_node(node_id, *coordinates)
     model.add_element(
         1,
-        ShellElement(
+        create_element(
+            "shell",
             1,
             [1, 2, 3, 4],
             "lamina",

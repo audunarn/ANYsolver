@@ -89,6 +89,13 @@ changes before making release claims.
 
 ## Functional overview
 
+Production four-node shell selectors use the qualified E4-PL formulation by
+default. TRI3, TRI6, Q8, and Q8R remain on their established implementations.
+The explicit legacy-Q4 rollback is deprecated during the 0.4.x burn-in and is
+scheduled for removal no earlier than 0.5.0; see
+[the E4-PL migration guide](docs/E4_PL_MIGRATION.md) for diagnostics, rollback,
+and release gates.
+
 | Area | Implemented functionality |
 | --- | --- |
 | Model | Six DOFs per node; SI units; materials, density, nodal mass, shell/beam topology, supports, and MPC constraints. `audit_constraints()` reports equation provenance, feasibility, structural rank, dependency depth, and independent DOFs before assembly. |

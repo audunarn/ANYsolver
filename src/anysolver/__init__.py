@@ -25,7 +25,21 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
-from .quantities import ResultQuantity, describe_result_quantities
+from .outcomes import (
+    SolveDisposition,
+    SolveOutcome,
+    SupportsSolveOutcome,
+    solve_outcome,
+)
+from .quantities import (
+    QuantityUnavailableError,
+    ReactionFrame,
+    ResolvedResultQuantity,
+    ResultQuantity,
+    describe_result_quantities,
+    registered_result_quantity_ids,
+    resolve_result_quantity,
+)
 from .materials import (
     BeamMaterialProperties,
     ENGINEERING_VOIGT_ORDER,
@@ -72,11 +86,15 @@ from .elements import (
     DEFAULT_Q4_FORMULATION,
     BeamElement,
     CoupledBeamShellElement,
+    LEGACY_Q4_AVAILABLE_THROUGH,
+    LEGACY_Q4_REMOVAL_TARGET,
     LegacyShellElement,
+    LegacyQ4DeprecationWarning,
     QuadraticBeamElement,
     ShellElement,
     create_element,
     create_shell_element,
+    shell_formulation_diagnostics,
 )
 from .e4_pl_element import QualifiedE4PLShellElement
 from .boundary import (
@@ -448,8 +466,17 @@ __all__ = [
     "SolveCancelled",
     "cancellation_safe_point",
     "emit_progress",
+    "SolveDisposition",
+    "SolveOutcome",
+    "SupportsSolveOutcome",
+    "solve_outcome",
+    "QuantityUnavailableError",
+    "ReactionFrame",
+    "ResolvedResultQuantity",
     "ResultQuantity",
     "describe_result_quantities",
+    "registered_result_quantity_ids",
+    "resolve_result_quantity",
     "OrthotropicMaterial",
     "StructuralMaterial",
     "BeamMaterialProperties",
@@ -489,12 +516,16 @@ __all__ = [
     "BeamElement",
     "CoupledBeamShellElement",
     "DEFAULT_Q4_FORMULATION",
+    "LEGACY_Q4_AVAILABLE_THROUGH",
+    "LEGACY_Q4_REMOVAL_TARGET",
     "LegacyShellElement",
+    "LegacyQ4DeprecationWarning",
     "QuadraticBeamElement",
     "QualifiedE4PLShellElement",
     "ShellElement",
     "create_element",
     "create_shell_element",
+    "shell_formulation_diagnostics",
     # Boundary and loads
     "BoundaryCondition",
     "FixedSupport",

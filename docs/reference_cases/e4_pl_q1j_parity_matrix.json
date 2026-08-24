@@ -1,7 +1,9 @@
 {
   "activation": {
+    "burn_in_contract": "Q1M_TWO_CLEAN_RELEASE_GATES",
     "default_factory": "QUALIFIED_E4_PL_Q4",
-    "explicit_legacy_rollback": true,
+    "explicit_legacy_rollback": "DEPRECATED_AVAILABLE_THROUGH_0.4.x",
+    "legacy_q4_removal_not_before": "0.5.0",
     "legacy_shell_default": false,
     "public_package_export": true,
     "qualified_element_factory_alias": true
@@ -24,8 +26,10 @@
     {"id": "deletion_damage_and_restart_state", "required": true, "status": "INHERITED_ACTIVITY_AND_RESTART_WORKFLOW_TESTED", "evidence": ["test_e4_pl_workflow_parity"]},
     {"id": "serialization_and_restart_reconstruction", "required": true, "status": "LOSSLESS_DORMANT_ROUNDTRIP_TESTED", "evidence": ["test_e4_pl_dormant_element"]},
     {"id": "batched_assembly_and_performance", "required": true, "status": "SHARED_GEOMETRY_COLD_WARM_AND_NONLINEAR_BATCH_PARITY_TESTED", "evidence": ["e4_pl_element.py", "matrix_assembly.py", "nonlinear_performance.py", "nonlinear_performance_batch_b.py", "nonlinear_performance_batch_c.py", "vectorized_nonlinear.py", "test_e4_pl_dormant_element", "test_e4_pl_workflow_parity", "test_nonlinear_performance", "test_nonlinear_performance_batch_b", "test_nonlinear_performance_batch_c"]},
+    {"id": "performance_and_verification_script_routing", "required": true, "status": "CLOSED_PUBLIC_SELECTOR_NO_LEGACY_Q4_BYPASS", "evidence": ["scripts/benchmark_advanced_s4_batches.py", "scripts/benchmark_contact_work_buffer.py", "scripts/benchmark_damage_matrix_updates.py", "scripts/benchmark_impact_reduced_assembly.py", "scripts/benchmark_sol_ultra_performance.py", "scripts/verify_sol_ultra_numerics.py", "test_e4_pl_burnin"]},
     {"id": "runtime_exact_class_name_dispatch", "required": true, "status": "CLOSED_ISINSTANCE_DISPATCH", "evidence": ["runtime.py", "test_cases.py", "test_e4_pl_parity_matrix"]},
-    {"id": "factory_and_default_activation", "required": true, "status": "ACTIVATED_QUALIFIED_E4_PL_Q4_WITH_EXPLICIT_LEGACY_ROLLBACK", "evidence": ["elements.py", "mesh_gen.py", "anystructure_fem_mode.py", "cylinder_benchmarks.py", "sesam_fem/importer.py", "test_e4_pl_default_activation"]}
+    {"id": "ecosystem_anyfem_default_routing", "required": true, "status": "CLOSED_PUBLIC_SELECTOR_WITH_ENGINEERING_REFERENCE", "evidence": ["ANYfem:197e0af", "ANYfem:src/anyfem/solve/build.py", "ANYfem:test_e4_pl_default_routing", "ANYfem:STAT-02"]},
+    {"id": "factory_and_default_activation", "required": true, "status": "ACTIVATED_QUALIFIED_E4_PL_Q4_WITH_DEPRECATED_LEGACY_ROLLBACK", "evidence": ["elements.py", "mesh_gen.py", "anystructure_fem_mode.py", "cylinder_benchmarks.py", "sesam_fem/importer.py", "test_e4_pl_default_activation", "test_e4_pl_burnin"]}
   ],
   "legacy_type": "ShellElement",
   "public_api": {
@@ -49,7 +53,7 @@
     "to_dict": "QUALIFIED_OVERRIDE",
     "total_dofs": "INHERITED"
   },
-  "schema": "anysolver.s4.e4-pl-q1l-parity-matrix-v2",
+  "schema": "anysolver.s4.e4-pl-q1m-parity-matrix-v3",
   "scope": {
     "legacy_non_q4_topologies": "REMAIN_ON_LEGACY_SHELL_ELEMENT",
     "production_changes": "QUALIFIED_Q4_DEFAULT_ACTIVE",

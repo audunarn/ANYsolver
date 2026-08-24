@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from anysolver.fe_core import FEModel
-from anysolver.elements import BeamElement, QuadraticBeamElement, ShellElement
+from anysolver.elements import BeamElement, QuadraticBeamElement, create_shell_element
 from anysolver.boundary import BoundaryCondition, FixedSupport, LoadCase
 from anysolver.assembly import compute_stresses, solve_linear
 from anysolver.buckling import solve_eigenvalue_buckling
@@ -29,7 +29,7 @@ def _single_shell_model(node_coords, connectivity, thickness=0.01):
     model.add_material("steel", E, NU)
     for node_id, (x, y, z) in enumerate(node_coords, start=1):
         model.add_node(node_id, x, y, z)
-    model.add_element(1, ShellElement(1, connectivity, "steel", thickness))
+    model.add_element(1, create_shell_element(1, connectivity, "steel", thickness=thickness))
     return model
 
 
@@ -69,7 +69,12 @@ def test_thin_plate_cantilever_strip_does_not_shear_lock():
     for i in range(n):
         model.add_element(
             i + 1,
-            ShellElement(i + 1, [nid[(i, 0)], nid[(i + 1, 0)], nid[(i + 1, 1)], nid[(i, 1)]], "steel", t),
+            create_shell_element(
+                i + 1,
+                [nid[(i, 0)], nid[(i + 1, 0)], nid[(i + 1, 1)], nid[(i, 1)]],
+                "steel",
+                thickness=t,
+            ),
         )
     model.add_boundary_condition(FixedSupport("fix", [nid[(0, 0)], nid[(0, 1)]]))
     P = 1.0

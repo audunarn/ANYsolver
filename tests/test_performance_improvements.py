@@ -7,7 +7,7 @@ import time
 import numpy as np
 import pytest
 
-from anysolver.elements import ShellElement
+from anysolver.elements import LegacyShellElement, create_element
 from anysolver.fe_core import FEModel
 from anysolver.jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED
 from anysolver.kernel_warmup import warm_fe_solver_kernels
@@ -35,8 +35,8 @@ def test_batched_s4_geometric_stiffness_matches_warped_scalar_and_reuses_geometr
     )
     for node_id, point in enumerate(coordinates, start=1):
         model.add_node(node_id, *point)
-    first = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.018)
-    second = ShellElement(2, [5, 6, 7, 8], "steel", thickness=0.031)
+    first = create_element("shell", 1, [1, 2, 3, 4], "steel", thickness=0.018)
+    second = create_element("shell", 2, [5, 6, 7, 8], "steel", thickness=0.031)
     model.add_element(1, first)
     model.add_element(2, second)
     states = {
@@ -96,8 +96,10 @@ def test_vectorized_stiffness_matches_sequential():
     model.add_node(12, 2.0, 0.75, 0.0)
 
     # Add elements
-    el1 = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.02)
-    el2 = ShellElement(2, [5, 6, 7, 8, 9, 10, 11, 12], "steel", thickness=0.02)
+    el1 = LegacyShellElement(1, [1, 2, 3, 4], "steel", thickness=0.02)
+    el2 = LegacyShellElement(
+        2, [5, 6, 7, 8, 9, 10, 11, 12], "steel", thickness=0.02
+    )
     model.add_element(1, el1)
     model.add_element(2, el2)
 
@@ -181,7 +183,7 @@ def test_parallel_legacy_shell_stiffness_batch_matches_legacy_reference(
         # legacy rollback element rather than the production Q4 default.
         reference_element = element
         if bool(getattr(element, "_is_4node", False)):
-            reference_element = ShellElement(
+            reference_element = LegacyShellElement(
                 int(element.element_id),
                 list(element.node_ids),
                 str(element.material_name),
@@ -222,7 +224,7 @@ def test_nonlinear_response_jit_matches_sequential():
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 1.0, 0.0)
     model.add_node(4, 0.0, 1.0, 0.0)
-    el = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.02)
+    el = LegacyShellElement(1, [1, 2, 3, 4], "steel", thickness=0.02)
     model.add_element(1, el)
 
     mesh = model.mesh
@@ -330,7 +332,9 @@ def test_vectorized_stiffness_performance():
             n2 = n1 + 1
             n4 = n1 + (n_div + 1)
             n3 = n4 + 1
-            el = ShellElement(elem_id, [n1, n2, n3, n4], "steel", thickness=0.01)
+            el = LegacyShellElement(
+                elem_id, [n1, n2, n3, n4], "steel", thickness=0.01
+            )
             model.add_element(elem_id, el)
             elem_id += 1
 
@@ -389,8 +393,10 @@ def test_vectorized_mass_matches_sequential_and_assembly_uses_batch():
     model.add_node(11, 2.7, 1.5, 0.01)
     model.add_node(12, 1.95, 0.7, 0.0)
 
-    el1 = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.02)
-    el2 = ShellElement(2, [5, 6, 7, 8, 9, 10, 11, 12], "steel", thickness=0.02)
+    el1 = create_element("shell", 1, [1, 2, 3, 4], "steel", thickness=0.02)
+    el2 = LegacyShellElement(
+        2, [5, 6, 7, 8, 9, 10, 11, 12], "steel", thickness=0.02
+    )
     model.add_element(1, el1)
     model.add_element(2, el2)
 
@@ -443,7 +449,13 @@ def test_q8r_mass_assembly_keeps_scalar_lumped_path():
     model.add_node(6, 1.5, 0.75, 0.0)
     model.add_node(7, 0.75, 1.5, 0.0)
     model.add_node(8, 0.0, 0.75, 0.0)
-    element = ShellElement(1, [1, 2, 3, 4, 5, 6, 7, 8], "steel", thickness=0.02, reduced_integration=True)
+    element = LegacyShellElement(
+        1,
+        [1, 2, 3, 4, 5, 6, 7, 8],
+        "steel",
+        thickness=0.02,
+        reduced_integration=True,
+    )
     model.add_element(1, element)
 
     M, info = assemble_mass_matrix(model)
