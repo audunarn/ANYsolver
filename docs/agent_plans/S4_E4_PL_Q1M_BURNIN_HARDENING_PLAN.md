@@ -91,22 +91,29 @@ Its status uses schema `anysolver.s4.e4-pl-q1m-status-v1`, terminal
 unauthorized.  Its accepted review verdict is
 `ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1`.
 
-A correction-1 failure uses commit subject
-`docs: record E4 PL Q1M correction-1 blocked gate` and exactly:
+A correction-2 failure uses commit subject
+`docs: record E4 PL Q1M correction-2 blocked gate` and exactly:
 
-1. `docs/reference_cases/e4_pl_q1m_correction1_blocked_gate_result.json`
-2. `docs/reference_cases/e4_pl_q1m_correction1_blocked_status.json`
-3. `docs/reference_cases/e4_pl_q1m_correction1_blocked_review.json`
+1. `docs/reference_cases/e4_pl_q1m_correction2_blocked_gate_result.json`
+2. `docs/reference_cases/e4_pl_q1m_correction2_blocked_status.json`
+3. `docs/reference_cases/e4_pl_q1m_correction2_blocked_review.json`
 
 Its status uses the same status schema, terminal
-`BLOCKED_E4_PL_Q1M_CORRECTION_1_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
+`BLOCKED_E4_PL_Q1M_CORRECTION_2_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
 unauthorized.  Its accepted review verdict is
-`ACCEPT_Q1M_CORRECTION_1_BLOCKED_GATE_NO_P0_P1`.
+`ACCEPT_Q1M_CORRECTION_2_BLOCKED_GATE_NO_P0_P1`.
 
 The first failed gate remains immutable under its original three blocked paths.
 Its exact authority is preserved byte-for-byte as
-`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle0.json`; the live contract
-binds fresh correction-1 resource requests and never rewrites that evidence.
+`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle0.json`.  The first
+correction failure and its global-pytest-temp incident remain immutable under
+`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle1.json`.  The live
+contract binds fresh correction-2 resource requests and never rewrites either
+historical result.
+
+All pytest lanes use a fresh ignored workspace-local `--basetemp` and remove
+it after execution, avoiding user-global Windows ACL state without changing
+the registered outer resource commands.
 
 Both reviews use schema `anysolver.s4.e4-pl-q1m-independent-review-v1` and
 exactly five top-level keys: `findings`, `reviewed_inputs`,

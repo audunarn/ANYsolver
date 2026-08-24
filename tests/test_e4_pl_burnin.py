@@ -29,6 +29,9 @@ CONTRACT = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.json"
 CONTRACT_CYCLE0 = (
     ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle0.json"
 )
+CONTRACT_CYCLE1 = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle1.json"
+)
 
 
 def _gate_module():
@@ -235,14 +238,14 @@ def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
     assert contract["gate_result_schema"] == "anysolver.s4.e4-pl-q1m-gate-result-v2"
     assert contract["package_result_schema"] == "anysolver.s4.e4-pl-q1m-package-lane-v2"
     assert contract["adjudication"] == {
-        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_1_BLOCKED_GATE_NO_P0_P1",
+        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_2_BLOCKED_GATE_NO_P0_P1",
         "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-        "blocked_commit_subject": "docs: record E4 PL Q1M correction-1 blocked gate",
-        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_1_BURN_IN_GATE",
+        "blocked_commit_subject": "docs: record E4 PL Q1M correction-2 blocked gate",
+        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_2_BURN_IN_GATE",
         "blocked_paths": [
-            "docs/reference_cases/e4_pl_q1m_correction1_blocked_gate_result.json",
-            "docs/reference_cases/e4_pl_q1m_correction1_blocked_status.json",
-            "docs/reference_cases/e4_pl_q1m_correction1_blocked_review.json",
+            "docs/reference_cases/e4_pl_q1m_correction2_blocked_gate_result.json",
+            "docs/reference_cases/e4_pl_q1m_correction2_blocked_status.json",
+            "docs/reference_cases/e4_pl_q1m_correction2_blocked_review.json",
         ],
         "review_independence": {
             "did_not_author_candidate": True,
@@ -977,32 +980,38 @@ def test_status_and_independent_review_bind_exact_canonical_inputs(tmp_path: Pat
         )
 
 
-def test_blocked_cycle0_remains_verifiable_under_immutable_authority() -> None:
+def test_blocked_cycles_remain_verifiable_under_immutable_authority() -> None:
     gate = _gate_module()
     evidence_root = ROOT / "docs" / "reference_cases"
-    gate_path = evidence_root / "e4_pl_q1m_blocked_gate_result.json"
-    status_path = evidence_root / "e4_pl_q1m_blocked_status.json"
-    review_path = evidence_root / "e4_pl_q1m_blocked_review.json"
-
-    review = gate.strict_json_load(review_path)
-    assert gate.file_hash_record(CONTRACT_CYCLE0)["sha256"] == review[
-        "reviewed_inputs"
-    ]["contract_sha256"]
-    gate.validate_adjudication_files(
-        gate_path,
-        status_path,
-        review_path,
-        contract_path=CONTRACT_CYCLE0,
+    historical = (
+        ("e4_pl_q1m_blocked", CONTRACT_CYCLE0),
+        ("e4_pl_q1m_correction1_blocked", CONTRACT_CYCLE1),
     )
+    blocked_request_ids: set[str] = set()
+    for stem, authority_path in historical:
+        gate_path = evidence_root / f"{stem}_gate_result.json"
+        status_path = evidence_root / f"{stem}_status.json"
+        review_path = evidence_root / f"{stem}_review.json"
+
+        review = gate.strict_json_load(review_path)
+        assert gate.file_hash_record(authority_path)["sha256"] == review[
+            "reviewed_inputs"
+        ]["contract_sha256"]
+        gate.validate_adjudication_files(
+            gate_path,
+            status_path,
+            review_path,
+            contract_path=authority_path,
+        )
+        blocked_gate = gate.strict_json_load(gate_path)
+        blocked_request_ids.update(
+            row["request_id"] for row in blocked_gate["resource_requests"]
+        )
 
     live_contract = gate.strict_json_load(CONTRACT)
-    blocked_gate = gate.strict_json_load(gate_path)
     live_request_ids = {
         authority["request_id"]
         for authority in live_contract["resource_requests"].values()
-    }
-    blocked_request_ids = {
-        row["request_id"] for row in blocked_gate["resource_requests"]
     }
     assert live_request_ids.isdisjoint(blocked_request_ids)
 
