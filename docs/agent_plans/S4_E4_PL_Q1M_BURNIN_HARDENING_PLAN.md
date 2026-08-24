@@ -91,17 +91,22 @@ Its status uses schema `anysolver.s4.e4-pl-q1m-status-v1`, terminal
 unauthorized.  Its accepted review verdict is
 `ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1`.
 
-A failed run uses commit subject
-`docs: record E4 PL Q1M blocked burn-in gate` and exactly:
+A correction-1 failure uses commit subject
+`docs: record E4 PL Q1M correction-1 blocked gate` and exactly:
 
-1. `docs/reference_cases/e4_pl_q1m_blocked_gate_result.json`
-2. `docs/reference_cases/e4_pl_q1m_blocked_status.json`
-3. `docs/reference_cases/e4_pl_q1m_blocked_review.json`
+1. `docs/reference_cases/e4_pl_q1m_correction1_blocked_gate_result.json`
+2. `docs/reference_cases/e4_pl_q1m_correction1_blocked_status.json`
+3. `docs/reference_cases/e4_pl_q1m_correction1_blocked_review.json`
 
 Its status uses the same status schema, terminal
-`BLOCKED_E4_PL_Q1M_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
+`BLOCKED_E4_PL_Q1M_CORRECTION_1_BURN_IN_GATE`, clean-gate index 0, and keeps legacy removal
 unauthorized.  Its accepted review verdict is
-`ACCEPT_Q1M_BLOCKED_GATE_NO_P0_P1`.
+`ACCEPT_Q1M_CORRECTION_1_BLOCKED_GATE_NO_P0_P1`.
+
+The first failed gate remains immutable under its original three blocked paths.
+Its exact authority is preserved byte-for-byte as
+`docs/reference_cases/e4_pl_q1m_burnin_contract_cycle0.json`; the live contract
+binds fresh correction-1 resource requests and never rewrites that evidence.
 
 Both reviews use schema `anysolver.s4.e4-pl-q1m-independent-review-v1` and
 exactly five top-level keys: `findings`, `reviewed_inputs`,

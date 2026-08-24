@@ -1,13 +1,13 @@
 {
   "adjudication": {
-    "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_1_BLOCKED_GATE_NO_P0_P1",
+    "accepted_blocked_verdict": "ACCEPT_Q1M_BLOCKED_GATE_NO_P0_P1",
     "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-    "blocked_commit_subject": "docs: record E4 PL Q1M correction-1 blocked gate",
-    "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_1_BURN_IN_GATE",
+    "blocked_commit_subject": "docs: record E4 PL Q1M blocked burn-in gate",
+    "blocked_terminal": "BLOCKED_E4_PL_Q1M_BURN_IN_GATE",
     "blocked_paths": [
-      "docs/reference_cases/e4_pl_q1m_correction1_blocked_gate_result.json",
-      "docs/reference_cases/e4_pl_q1m_correction1_blocked_status.json",
-      "docs/reference_cases/e4_pl_q1m_correction1_blocked_review.json"
+      "docs/reference_cases/e4_pl_q1m_blocked_gate_result.json",
+      "docs/reference_cases/e4_pl_q1m_blocked_status.json",
+      "docs/reference_cases/e4_pl_q1m_blocked_review.json"
     ],
     "review_independence": {
       "did_not_author_candidate": true,
@@ -113,18 +113,18 @@
   "resource_requests": {
     "anyfem": {
       "command_sha256": "e9c9508fc64c44d7638b4aad0afbf9c804f0216b606df671405542356dabbd42",
-      "request_id": "5e49f95b85ef44c59ee45c696ef56517",
-      "request_sha256": "10c085e3cc35a1c932571b01fec1917c610aee8f7491f30d77e68e2264c3a568"
+      "request_id": "4e4f9b5f75b148e3b140464ba026442d",
+      "request_sha256": "43b88eb90c56bba2ab5fb33e4d502800301272cdbcdaaa91804ac1f15266e4ca"
     },
     "functional": {
       "command_sha256": "c34df28c5e98d52163be557c4f3cb4a7fcfcbf6c6c5b76d88b57797ef758e619",
-      "request_id": "40a7ecfb868644038b32b4ae33d7046e",
-      "request_sha256": "6b6e565c68a5c4d754ec5b33d562de1a5b25220f7f24837f8bb7a52f1425e1c0"
+      "request_id": "799e261ee075405693b91555c731a5d4",
+      "request_sha256": "55168085ccb4042580f7711c860305c599cd0e44f05b1411db8bc8cdff27ac5c"
     },
     "performance": {
       "command_sha256": "f49d5a98485d96c243b55a05248ab924f01ba0214776cb19f6b0a90af72b2b26",
-      "request_id": "bc92234007f649ad85df29ecbad55f3b",
-      "request_sha256": "cdeba11ace8650db9e4c40d483dbfd44f80f734caea355d221a7acd5c66375f7"
+      "request_id": "296a84454c844994a88749fb6ed96483",
+      "request_sha256": "196516174f14b2c1c91ff65da3ac9f4b03058211c77c054e75c6104481f88a6e"
     }
   },
   "repository_cleanliness": {
