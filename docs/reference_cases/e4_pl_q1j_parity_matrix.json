@@ -12,7 +12,7 @@
     {"id": "isotropic_material", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["test_e4_pl_dormant_element"]},
     {"id": "orthotropic_material", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["test_e4_pl_dormant_element"]},
     {"id": "generalized_shell_sections", "required": true, "status": "QUALIFIED_DIRECT", "evidence": ["test_e4_pl_dormant_element"]},
-    {"id": "warped_curved_geometry", "required": true, "status": "FACETED_CURVATURE_DIRECT_WARPED_LEGACY_FALLBACK_PENDING_NEW_FORMULATION_QUALIFICATION", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
+    {"id": "warped_curved_geometry", "required": true, "status": "QUALIFIED_DIRECT_VARYING_FRAME_Q4", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_warped_qualification", "test_e4_pl_workflow_parity"]},
     {"id": "mass_and_dynamics", "required": true, "status": "INHERITED_WORKFLOW_PARITY_TESTED", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
     {"id": "geometric_stiffness_and_buckling", "required": true, "status": "INHERITED_WORKFLOW_PARITY_TESTED", "evidence": ["test_e4_pl_dormant_element", "test_e4_pl_workflow_parity"]},
     {"id": "nonlinear_geometry", "required": true, "status": "QUALIFIED_BASELINE_WITH_INHERITED_INCREMENT", "evidence": ["test_e4_pl_dormant_element"]},
