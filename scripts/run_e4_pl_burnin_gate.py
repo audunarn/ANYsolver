@@ -1175,7 +1175,7 @@ def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
     unchanged.  Cleanup is fail-closed and never follows a substituted link.
     """
 
-    if lane not in {"quick", "functional", "performance", "extended"}:
+    if lane not in {"quick", "functional", "performance", "extended", "ci"}:
         raise EvidenceError(f"pytest lane does not support basetemp isolation: {lane}")
     parent = ROOT / ".pytest_tmp_q1m_runtime"
     if parent.exists() and parent.is_symlink():
@@ -1227,7 +1227,12 @@ def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
                 os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
                 function(path)
 
-            shutil.rmtree(temporary_path, onexc=make_writable_and_retry)
+            if sys.version_info >= (3, 12):
+                shutil.rmtree(temporary_path, onexc=make_writable_and_retry)
+            else:
+                # ``onexc`` was added in Python 3.12. ANYsolver also supports
+                # Python 3.11, whose equivalent callback is ``onerror``.
+                shutil.rmtree(temporary_path, onerror=make_writable_and_retry)
         try:
             parent.rmdir()
         except OSError:
@@ -1616,6 +1621,7 @@ def main(argv: list[str] | None = None) -> int:
             "functional",
             "performance",
             "extended",
+            "ci",
             "list",
             "validate-evidence",
         ),
@@ -1705,7 +1711,13 @@ def main(argv: list[str] | None = None) -> int:
     ):
         parser.error("evidence/package options are invalid for this lane")
     lanes = inventory()
-    selected = lanes[args.lane]
+    if args.lane == "ci":
+        # Pull requests exercise the non-resource production inventory while
+        # immutable historical studies and serialized performance stay out of
+        # the merge prerequisite.
+        selected = [*lanes["quick"], *lanes["functional"]]
+    else:
+        selected = lanes[args.lane]
     if not selected:
         raise SystemExit(f"burn-in lane {args.lane!r} is empty")
     returncode = _run_pytest_lane(args.lane, selected)

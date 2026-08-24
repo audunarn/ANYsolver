@@ -7,6 +7,11 @@ on:
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
+    env:
+      Q1M_ANYMATERIAL_ROOT: ${{ github.workspace }}/.ecosystem/ANYmaterial
+      Q1M_ANYGEOMETRY_ROOT: ${{ github.workspace }}/.ecosystem/ANYgeometry
+      Q1M_ANYMESH_ROOT: ${{ github.workspace }}/.ecosystem/ANYmesh
+      Q1M_ANYFILEIO_ROOT: ${{ github.workspace }}/.ecosystem/ANYfileIO
     strategy:
       fail-fast: false
       matrix:
@@ -18,25 +23,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: 74100a95988a633e311f8eb21df3d24cbb6bcc0d
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: 6fb06c8b68b73dd0630aa41ac81ef999ef610457
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: 9b1e5adea77a20155bbc23866af8c9aad853ddfd
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -50,7 +55,7 @@ jobs:
       - run: python -m pip install -e ".[dev,numba]"
       - run: python -m pip check
       - run: python -c "import anysolver; print(anysolver.__version__)"
-      - run: python -m pytest
+      - run: python scripts/run_e4_pl_burnin_gate.py ci
 
   anymesher-compatibility:
     name: ANYmesher ${{ matrix.anymesher-version }} compatibility

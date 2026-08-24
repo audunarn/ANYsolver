@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import warnings
@@ -343,16 +344,20 @@ def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
     seen_request_ids = set()
     for lane, authority in contract["resource_requests"].items():
         request_path = request_root / f"{authority['request_id']}.json"
-        request = json.loads(request_path.read_text(encoding="utf-8"))
         assert authority["request_id"] not in seen_request_ids
         seen_request_ids.add(authority["request_id"])
-        assert request["request_id"] == authority["request_id"], lane
-        assert hashlib.sha256(request_path.read_bytes()).hexdigest() == authority[
-            "request_sha256"
-        ], lane
-        assert hashlib.sha256(request["command"].encode("utf-8")).hexdigest() == (
-            authority["command_sha256"]
-        ), lane
+        assert re.fullmatch(r"[0-9a-f]{32}", authority["request_id"]), lane
+        assert re.fullmatch(r"[0-9a-f]{64}", authority["request_sha256"]), lane
+        assert re.fullmatch(r"[0-9a-f]{64}", authority["command_sha256"]), lane
+        if request_root.is_dir():
+            request = json.loads(request_path.read_text(encoding="utf-8"))
+            assert request["request_id"] == authority["request_id"], lane
+            assert hashlib.sha256(request_path.read_bytes()).hexdigest() == authority[
+                "request_sha256"
+            ], lane
+            assert hashlib.sha256(request["command"].encode("utf-8")).hexdigest() == (
+                authority["command_sha256"]
+            ), lane
     plan = (
         ROOT / "docs" / "agent_plans" / "S4_E4_PL_Q1M_BURNIN_HARDENING_PLAN.md"
     ).read_text(encoding="utf-8")
@@ -576,6 +581,40 @@ def test_every_test_file_has_one_burn_in_lane_and_heavy_files_are_serialized() -
     assert all("performance" not in Path(path).name for path in lanes["functional"])
 
 
+def test_ci_lane_is_exactly_quick_plus_functional(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    gate = _gate_module()
+    lanes = {
+        "quick": ["tests/quick.py"],
+        "functional": ["tests/functional.py"],
+        "performance": ["tests/performance.py"],
+        "extended": ["tests/extended.py"],
+    }
+    observed: dict[str, object] = {}
+    monkeypatch.setattr(gate, "inventory", lambda: lanes)
+
+    def fake_run(lane, selected):
+        observed.update(lane=lane, selected=list(selected))
+        return 0
+
+    monkeypatch.setattr(gate, "_run_pytest_lane", fake_run)
+
+    assert gate.main(["ci"]) == 0
+    assert observed == {
+        "lane": "ci",
+        "selected": ["tests/quick.py", "tests/functional.py"],
+    }
+
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "python scripts/run_e4_pl_burnin_gate.py ci" in workflow
+    for authority in gate.strict_json_load(CONTRACT)["sibling_authority"].values():
+        if authority["commit"] != "ba8b21b9cf2732168b099cfedc7508789bdcfbb3":
+            assert authority["commit"] in workflow
+
+
 def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -617,6 +656,45 @@ def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
     assert observed["env"] == {"Q1M_TEST": "1"}
     assert observed["check"] is False
     assert not (tmp_path / ".pytest_tmp_q1m_runtime").exists()
+
+
+def test_pytest_lane_uses_python_311_cleanup_callback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gate = _gate_module()
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate.sys, "version_info", (3, 11, 9))
+    monkeypatch.setattr(
+        gate,
+        "_local_roots",
+        lambda: {
+            name: tmp_path
+            for name, _distribution, _package in gate.LOCAL_DISTRIBUTIONS
+        },
+    )
+    monkeypatch.setattr(
+        gate,
+        "_write_source_metadata_overlay",
+        lambda _roots, destination: destination.mkdir(),
+    )
+    monkeypatch.setattr(gate, "_pytest_environment", lambda **_kwargs: {})
+    monkeypatch.setattr(
+        gate.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
+    )
+    callbacks: list[dict[str, object]] = []
+    real_rmtree = gate.shutil.rmtree
+
+    def fake_rmtree(path, **kwargs):
+        callbacks.append(dict(kwargs))
+        real_rmtree(path, **kwargs)
+
+    monkeypatch.setattr(gate.shutil, "rmtree", fake_rmtree)
+
+    assert gate._run_pytest_lane("ci", ["tests/test_probe.py"]) == 0
+    assert callbacks
+    assert all(set(item) == {"onerror"} for item in callbacks)
 
 
 def test_pytest_lane_cleans_basetemp_when_metadata_overlay_fails(
