@@ -429,12 +429,12 @@ def _install_shells(
     thickness: float,
     material_name: str = "steel",
 ) -> None:
-    from .elements import ShellElement
+    from .elements import create_shell_element
 
     for element_id, node_ids in {**mesh.quads, **mesh.tris}.items():
         model.add_element(
             int(element_id),
-            ShellElement(
+            create_shell_element(
                 int(element_id),
                 list(node_ids),
                 material_name=material_name,

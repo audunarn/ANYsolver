@@ -932,7 +932,7 @@ class QualityControl:
         A single element with prescribed displacements should produce constant strain.
         """
         from .fe_core import FEModel
-        from .elements import ShellElement
+        from .elements import create_shell_element
 
         # Create single element
         model = FEModel(name="ConstantStrainPatch")
@@ -949,7 +949,7 @@ class QualityControl:
             model.add_node(i + 1, x, y, z)
 
         # Create shell element
-        elem = ShellElement(
+        elem = create_shell_element(
             element_id=1,
             node_ids=[1, 2, 3, 4],
             material_name="steel",

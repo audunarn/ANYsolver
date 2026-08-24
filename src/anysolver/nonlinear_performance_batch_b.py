@@ -860,6 +860,23 @@ def _batch_b_plan_assemble(
                     batch.u_work,
                     bool(tangent),
                 )
+                if np.any(batch.linear_corrections):
+                    element_displacements = np.asarray(
+                        displacements, dtype=float
+                    )[batch.dof_mappings]
+                    correction_forces = np.einsum(
+                        "eij,ej->ei",
+                        batch.linear_corrections,
+                        element_displacements,
+                        optimize=True,
+                    )
+                    self.force_values[batch.force_positions] += correction_forces
+                    if tangent:
+                        self.tangent_values[batch.tangent_positions] += (
+                            batch.linear_corrections.reshape(
+                                len(batch.elements), -1
+                            )
+                        )
                 self.timings.shell_kernel_seconds += time.perf_counter() - kernel_start
                 self.timings.initial_field_accelerated_elements += initialized_count
                 if getattr(batch, "_batch_b_generalized", False):

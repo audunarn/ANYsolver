@@ -58,7 +58,7 @@ def _warm_nonlinear_impact_kernel() -> Dict[str, Any]:
         solve_transient_sphere_impact,
     )
     from .dynamics import TransientConfig
-    from .elements import ShellElement
+    from .elements import create_shell_element
     from .fe_core import FEModel
     from .fracture import PlasticImpactDamageConfig
     from .material_curves import DNVC208MaterialCurve
@@ -81,7 +81,7 @@ def _warm_nonlinear_impact_kernel() -> Dict[str, Any]:
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *xyz)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "soft", thickness=0.05))
+    model.add_element(1, create_shell_element(1, [1, 2, 3, 4], "soft", thickness=0.05))
     model.add_boundary_condition(
         BoundaryCondition(
             "warmup_restrain",

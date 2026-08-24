@@ -146,7 +146,9 @@ def test_vectorized_stiffness_matches_sequential():
 
 
 @pytest.mark.parametrize("use_8node_elements", [False, True])
-def test_parallel_shell_stiffness_batch_matches_element_reference(use_8node_elements: bool) -> None:
+def test_parallel_legacy_shell_stiffness_batch_matches_legacy_reference(
+    use_8node_elements: bool,
+) -> None:
     model = generate_simple_panel_mesh(
         2.0,
         1.0,
@@ -173,7 +175,22 @@ def test_parallel_shell_stiffness_batch_matches_element_reference(use_8node_elem
         shear_weights=np.empty(0) if getattr(first, "_is_4node", False) else first.shear_gauss_weights,
     )
     for index, element in enumerate(elements):
-        reference = element.compute_stiffness_matrix(model.mesh, material)
+        # ``compute_shell_stiffness_matrices_jit`` is the retained legacy
+        # kernel.  Q4 panel builders now select the qualified E4-PL element,
+        # so compare this low-level compatibility kernel with an explicit
+        # legacy rollback element rather than the production Q4 default.
+        reference_element = element
+        if bool(getattr(element, "_is_4node", False)):
+            reference_element = ShellElement(
+                int(element.element_id),
+                list(element.node_ids),
+                str(element.material_name),
+                thickness=float(element.thickness),
+                drilling_stabilization=float(element.drilling_stabilization),
+                reduced_integration=bool(element.reduced_integration),
+                hourglass_stabilization=float(element.hourglass_stabilization),
+            )
+        reference = reference_element.compute_stiffness_matrix(model.mesh, material)
         np.testing.assert_allclose(K_all[index], reference, rtol=1.0e-10, atol=1.0e-3)
 
 

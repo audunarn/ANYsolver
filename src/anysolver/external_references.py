@@ -35,7 +35,7 @@ from anymaterial import material_symmetry
 from anymesher import Mesh as NeutralMesh
 
 from .boundary import BoundaryCondition, LoadCase
-from .elements import BeamElement, ShellElement
+from .elements import BeamElement, ShellElement, create_shell_element
 from .fe_core import FEModel
 from .mesh_gen import generate_simple_panel_mesh
 
@@ -514,7 +514,7 @@ def _cylindrical_shell_case(output_dir: Path) -> ExternalReferenceCase:
             n2 = grid[(iz, (it + 1) % n_circ)]
             n3 = grid[(iz + 1, (it + 1) % n_circ)]
             n4 = grid[(iz + 1, it)]
-            model.add_element(elem_id, ShellElement(elem_id, [n1, n2, n3, n4], "steel", thickness=thickness))
+            model.add_element(elem_id, create_shell_element(elem_id, [n1, n2, n3, n4], "steel", thickness=thickness))
             elem_id += 1
     bottom = [grid[(0, it)] for it in range(n_circ)]
     top = [grid[(n_z, it)] for it in range(n_circ)]
@@ -624,7 +624,7 @@ def _orthotropic_membrane_case(output_dir: Path) -> ExternalReferenceCase:
         model.add_node(node_id, *coordinate)
     model.add_element(
         1,
-        ShellElement(
+        create_shell_element(
             1,
             [1, 2, 3, 4],
             material.name,

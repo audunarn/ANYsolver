@@ -42,7 +42,13 @@ from .cylinder_benchmarks import (
 )
 from .element_qualification import q8_patch_metric, reference_q8_geometries
 from .dynamics import PressurePatch, TransientConfig, solve_transient_newmark
-from .elements import BeamElement, CoupledBeamShellElement, Element, ShellElement
+from .elements import (
+    BeamElement,
+    CoupledBeamShellElement,
+    Element,
+    ShellElement,
+    create_shell_element,
+)
 from .external_references import generate_external_reference_report, write_external_reference_report
 from .fe_core import FEModel
 from .mass_properties import calculate_mass_properties
@@ -654,7 +660,7 @@ def _run_alg_001(case: VerificationCase) -> VerificationCaseResult:
     max_partition = 0.0
     max_derivative = 0.0
     for nnode in (4, 8):
-        element = ShellElement(1, list(range(1, nnode + 1)), "steel")
+        element = create_shell_element(1, list(range(1, nnode + 1)), "steel")
         for xi, eta in points:
             N, dxi, deta = element.compute_shape_functions(xi, eta)
             max_partition = max(max_partition, abs(float(np.sum(N) - 1.0)))
@@ -675,7 +681,7 @@ def _run_alg_002(case: VerificationCase) -> VerificationCaseResult:
     }
     max_error = 0.0
     for nnode, coords in natural.items():
-        element = ShellElement(1, list(range(1, nnode + 1)), "steel")
+        element = create_shell_element(1, list(range(1, nnode + 1)), "steel")
         for node_index, (xi, eta) in enumerate(coords):
             N, _, _ = element.compute_shape_functions(xi, eta)
             expected = np.zeros(nnode)
@@ -694,7 +700,7 @@ def _single_shell_model(nnode: int = 4) -> FEModel:
         coords = [(0.0, 0.0, 0.0), (1.2, 0.0, 0.0), (1.35, 0.8, 0.05), (0.1, 0.9, 0.0), (0.6, 0.0, 0.0), (1.275, 0.4, 0.025), (0.725, 0.85, 0.025), (0.05, 0.45, 0.0)]
     for i, xyz in enumerate(coords, start=1):
         model.add_node(i, *xyz)
-    model.add_element(1, ShellElement(1, list(range(1, nnode + 1)), "steel", thickness=0.01))
+    model.add_element(1, create_shell_element(1, list(range(1, nnode + 1)), "steel", thickness=0.01))
     return model
 
 
@@ -1073,7 +1079,7 @@ def _rotated_single_shell_model(nnode: int, rotation: np.ndarray, translation: n
         coords = rotation @ node.coords() + translation
         rotated.add_node(node_id, float(coords[0]), float(coords[1]), float(coords[2]))
     base_element = base.mesh.elements[1]
-    rotated.add_element(1, ShellElement(1, list(base_element.node_ids), "steel", thickness=base_element.thickness))
+    rotated.add_element(1, create_shell_element(1, list(base_element.node_ids), "steel", thickness=base_element.thickness))
     return rotated
 
 
@@ -1831,7 +1837,7 @@ def _curved_strip_model(
         for itheta in range(int(nt)):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_shell_element(
                     element_id,
                     [ids[(ix, itheta)], ids[(ix + 1, itheta)], ids[(ix + 1, itheta + 1)], ids[(ix, itheta + 1)]],
                     "steel",
@@ -1910,7 +1916,7 @@ def _run_bench_001(case: VerificationCase) -> VerificationCaseResult:
             for iy in range(n):
                 model.add_element(
                     element_id,
-                    ShellElement(element_id, [ids[(ix, iy)], ids[(ix + 1, iy)], ids[(ix + 1, iy + 1)], ids[(ix, iy + 1)]], "steel", thickness=0.01),
+                    create_shell_element(element_id, [ids[(ix, iy)], ids[(ix + 1, iy)], ids[(ix + 1, iy + 1)], ids[(ix, iy + 1)]], "steel", thickness=0.01),
                 )
                 element_id += 1
         model.add_boundary_condition(FixedSupport("root", [ids[(0, iy)] for iy in range(n + 1)]))
@@ -3254,7 +3260,7 @@ def _run_mat_008(case: VerificationCase) -> VerificationCaseResult:
         model.add_node(node_id, *coord)
     model.add_node(101, 0.0, 1.4, 0.0)
     model.add_node(102, 1.0, 1.4, 0.0)
-    shell = ShellElement(1, [1, 2, 3, 4], "steel", 0.01)
+    shell = create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
     beam = BeamElement(2, [101, 102], "steel", {"area": 0.01, "Iy": 1.0e-5, "Iz": 1.0e-5, "J": 1.0e-5, "fiber_plasticity": True})
     model.add_element(1, shell)
     model.add_element(2, beam)
@@ -3373,7 +3379,7 @@ def _hemisphere_cap_model(n_phi: int = 4, n_theta: int = 8) -> Tuple[FEModel, Lo
         for itheta in range(int(n_theta)):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_shell_element(
                     element_id,
                     [
                         ids[(iphi, itheta)],
@@ -3797,7 +3803,7 @@ def _fracture_panel_model(curve: Optional[Any] = None) -> FEModel:
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 0.2, 0.0)
     model.add_node(4, 0.0, 0.2, 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", 0.01))
+    model.add_element(1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01))
     model.add_boundary_condition(BoundaryCondition("left_x", [1, 4], {"ux": 0.0}))
     model.add_boundary_condition(BoundaryCondition("plane", [1, 2, 3, 4], {"uz": 0.0, "rx": 0.0, "ry": 0.0}))
     model.add_boundary_condition(BoundaryCondition("pin_y", [1], {"uy": 0.0}))
@@ -3839,7 +3845,7 @@ def _fracture_verification_metrics() -> Dict[str, Dict[str, Any]]:
         panel.add_node(2, 1.0, 0.0, 0.0)
         panel.add_node(3, 1.0, 1.0, 0.0)
         panel.add_node(4, 0.0, 1.0, 0.0)
-        panel.add_element(1, ShellElement(1, [1, 2, 3, 4], "soft", thickness=0.05))
+        panel.add_element(1, create_shell_element(1, [1, 2, 3, 4], "soft", thickness=0.05))
         panel.add_boundary_condition(
             BoundaryCondition(
                 "restrain_shell_nonimpact_modes",

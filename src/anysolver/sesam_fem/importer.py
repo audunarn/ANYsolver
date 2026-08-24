@@ -107,7 +107,7 @@ def build_fe_model_from_sesam_document(
     """Build native solver objects from ANYfileio's neutral SESAM semantics."""
 
     from ..boundary import BoundaryCondition, LoadCase
-    from ..elements import BeamElement, QuadraticBeamElement, ShellElement
+    from ..elements import BeamElement, QuadraticBeamElement, create_shell_element
     from ..fe_core import FEModel
 
     semantics = read_sesam_semantics(document, strict=False)
@@ -131,7 +131,7 @@ def build_fe_model_from_sesam_document(
         try:
             if element_id in semantics.mesh.quads:
                 node_ids = semantics.mesh.quads[element_id]
-                solver_element = ShellElement(
+                solver_element = create_shell_element(
                     element_id,
                     list(node_ids),
                     material_name=material_name,
@@ -139,7 +139,7 @@ def build_fe_model_from_sesam_document(
                 )
             elif element_id in semantics.mesh.tris:
                 node_ids = semantics.mesh.tris[element_id]
-                solver_element = ShellElement(
+                solver_element = create_shell_element(
                     element_id,
                     list(node_ids),
                     material_name=material_name,

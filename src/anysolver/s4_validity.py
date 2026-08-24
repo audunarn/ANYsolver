@@ -15,7 +15,7 @@ import numpy as np
 
 from .assembly import solve_linear
 from .boundary import FixedSupport, LoadCase
-from .elements import ShellElement
+from .elements import ShellElement, create_shell_element
 from .fe_core import FEModel
 from .mesh_gen import generate_simple_panel_mesh
 from .shell_benchmarks import run_simple_supported_shell_benchmark
@@ -58,7 +58,7 @@ def _single_s4_model(coords: Sequence[Sequence[float]], thickness: float = 0.01)
     model.add_material("steel", E_STEEL, NU_STEEL)
     for node_id, coord in enumerate(coords, start=1):
         model.add_node(node_id, float(coord[0]), float(coord[1]), float(coord[2]))
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness))
+    model.add_element(1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=thickness))
     return model
 
 
@@ -204,7 +204,7 @@ def thin_plate_locking_sweep(
         for i in range(num_divisions):
             model.add_element(
                 i + 1,
-                ShellElement(i + 1, [nid[(i, 0)], nid[(i + 1, 0)], nid[(i + 1, 1)], nid[(i, 1)]], "steel", thickness),
+                create_shell_element(i + 1, [nid[(i, 0)], nid[(i + 1, 0)], nid[(i + 1, 1)], nid[(i, 1)]], "steel", thickness=thickness),
             )
         model.add_boundary_condition(FixedSupport("fixed", [nid[(0, 0)], nid[(0, 1)]]))
         load_case = LoadCase("tip")

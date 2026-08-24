@@ -12,7 +12,7 @@ import numpy as np
 
 from .assembly import solve_linear
 from .boundary import BoundaryCondition, FixedSupport, LoadCase
-from .elements import BeamElement, QuadraticBeamElement, ShellElement
+from .elements import BeamElement, QuadraticBeamElement, ShellElement, create_shell_element
 from .fe_core import FEModel
 from .mass_properties import calculate_mass_properties
 from .shell_benchmarks import run_simple_supported_shell_benchmark
@@ -63,7 +63,7 @@ def _single_q8_model(coords: Sequence[Sequence[float]], thickness: float = 0.01)
     model.add_material("steel", E_STEEL, NU_STEEL, density=7850.0)
     for node_id, coord in enumerate(coords, start=1):
         model.add_node(node_id, float(coord[0]), float(coord[1]), float(coord[2]))
-    model.add_element(1, ShellElement(1, list(range(1, 9)), "steel", thickness))
+    model.add_element(1, create_shell_element(1, list(range(1, 9)), "steel", thickness=thickness))
     return model
 
 
@@ -72,7 +72,7 @@ def _single_q8r_model(coords: Sequence[Sequence[float]], thickness: float = 0.01
     model.add_material("steel", E_STEEL, NU_STEEL, density=7850.0)
     for node_id, coord in enumerate(coords, start=1):
         model.add_node(node_id, float(coord[0]), float(coord[1]), float(coord[2]))
-    model.add_element(1, ShellElement(1, list(range(1, 9)), "steel", thickness, reduced_integration=True))
+    model.add_element(1, create_shell_element(1, list(range(1, 9)), "steel", thickness=thickness, reduced_integration=True))
     return model
 
 

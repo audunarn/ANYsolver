@@ -4618,6 +4618,46 @@ ELEMENT_TYPES = {
 }
 
 
+DEFAULT_Q4_FORMULATION = "e4-pl"
+LegacyShellElement = ShellElement
+
+
+def create_shell_element(
+    element_id: int,
+    node_ids: List[int],
+    material_name: str = "default",
+    *,
+    formulation: Optional[str] = None,
+    **kwargs: Any,
+) -> ShellElement:
+    """Create the production-default shell while retaining an explicit rollback.
+
+    Four-node shells select the qualified E4-PL implementation by default.
+    Other supported shell topologies retain :class:`LegacyShellElement`.
+    Passing ``formulation="legacy"`` is the documented rollback/compatibility
+    route; an explicit E4-PL request rejects non-Q4 topology.
+    """
+
+    resolved = DEFAULT_Q4_FORMULATION if formulation is None else str(formulation)
+    resolved = resolved.strip().lower().replace("_", "-")
+    e4_aliases = {"e4-pl", "qualified-s4", "default"}
+    legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
+    if len(node_ids) == 4 and resolved in e4_aliases:
+        from .e4_pl_element import QualifiedE4PLShellElement
+
+        return QualifiedE4PLShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
+    if resolved in legacy_aliases or (formulation is None and len(node_ids) != 4):
+        return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
+    if resolved in e4_aliases:
+        raise ValueError("E4-PL is available only for four-node shell topology")
+    raise ValueError(f"Unknown shell formulation: {formulation}")
+
+
 def create_element(
     element_type: str,
     element_id: int,
@@ -4627,14 +4667,28 @@ def create_element(
 ) -> Element:
     normalized_type = str(element_type).lower()
     if normalized_type in {"e4-pl", "e4_pl", "qualified_s4"}:
-        # Lazy import avoids a module cycle: the dormant candidate subclasses
-        # ShellElement but does not replace any legacy factory key.
-        from .e4_pl_element import QualifiedE4PLShellElement
-
-        return QualifiedE4PLShellElement(
+        return create_shell_element(
             element_id,
             node_ids,
             material_name,
+            formulation="e4-pl",
+            **kwargs,
+        )
+    if normalized_type in {"legacy-shell", "legacy_shell", "legacy-s4", "legacy_s4"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="legacy",
+            **kwargs,
+        )
+    if normalized_type == "shell":
+        formulation = kwargs.pop("formulation", None)
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation=formulation,
             **kwargs,
         )
     if normalized_type not in ELEMENT_TYPES:

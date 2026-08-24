@@ -10,7 +10,7 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
-from .elements import BeamElement, ShellElement
+from .elements import BeamElement, ShellElement, create_shell_element
 from .fe_core import FEModel
 from .material_curves import DNVC208MaterialCurve, FiberSectionPlasticityConfig, dnv_c208_steel_curve
 from .plasticity import (
@@ -296,7 +296,7 @@ def _flatten_numeric_state(value: Any) -> np.ndarray:
 def _global_shell_newton_run(tangent_method: str) -> Dict[str, Any]:
     """Run one force-controlled plastic shell solve without API plumbing."""
     from .boundary import BoundaryCondition, LoadCase
-    from .elements import ShellElement
+    from .elements import create_shell_element
     from .matrix_assembly import assemble_load_vector
     from .nonlinear_static import _assemble_nonlinear_system, solve_static_nonlinear
 
@@ -316,7 +316,7 @@ def _global_shell_newton_run(tangent_method: str) -> Dict[str, Any]:
         for i in range(nx):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_shell_element(
                     element_id,
                     [
                         nodes[(i, j)],
@@ -623,7 +623,7 @@ def _shell_model(curve: DNVC208MaterialCurve | None = None) -> Tuple[FEModel, Sh
     model.add_material("steel", E_STEEL, NU_STEEL, hardening_curve=curve)
     for node_id, coord in enumerate(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)), start=1):
         model.add_node(node_id, *coord)
-    element = ShellElement(1, [1, 2, 3, 4], "steel", 0.01)
+    element = create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
     model.add_element(1, element)
     return model, element
 

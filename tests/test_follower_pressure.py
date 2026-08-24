@@ -142,8 +142,20 @@ def test_follower_pressure_force_is_objective_under_rigid_rotation() -> None:
         np.testing.assert_allclose(rotated_force[dofs[3:]], 0.0, atol=0.0)
 
 
-def _clamped_pressure_plate() -> tuple[FEModel, int]:
+def _clamped_pressure_plate(*, legacy_q4: bool = False) -> tuple[FEModel, int]:
     model = generate_simple_panel_mesh(1.0, 1.0, 0.01, 2, 2)
+    if legacy_q4:
+        for element_id, element in tuple(model.mesh.elements.items()):
+            model.add_element(
+                int(element_id),
+                ShellElement(
+                    int(element_id),
+                    list(element.node_ids),
+                    str(element.material_name),
+                    thickness=float(element.thickness),
+                    drilling_stabilization=float(element.drilling_stabilization),
+                ),
+            )
     model.clear_boundary_conditions()
     edge_nodes = []
     centre_node = -1
@@ -177,9 +189,27 @@ def test_nonlinear_static_uses_follower_pressure_effective_tangent() -> None:
     assert result.info["follower_pressure"] is True
     assert result.info["equilibrium_tangent"] == "K_internal-K_external"
     assert result.displacements[model.mesh.get_node(centre_node).dofs[2]] == pytest.approx(
-        0.013745211987271156,
+        0.013869955023377319,
         rel=2.0e-5,
     )
+
+    # The explicit rollback remains numerically frozen at the legacy response;
+    # activating E4-PL must not silently remove that compatibility route.
+    legacy_model, legacy_centre = _clamped_pressure_plate(legacy_q4=True)
+    legacy_load = LoadCase("legacy_follower", follower_pressure=True)
+    for element_id in legacy_model.mesh.elements:
+        legacy_load.add_pressure_load(int(element_id), 2.0e5)
+    legacy_result = solve_static_nonlinear(
+        legacy_model,
+        legacy_load,
+        num_steps=5,
+        max_iterations=30,
+        tolerance=1.0e-7,
+    )
+    assert legacy_result.status == "completed"
+    assert legacy_result.displacements[
+        legacy_model.mesh.get_node(legacy_centre).dofs[2]
+    ] == pytest.approx(0.013745211987271156, rel=2.0e-5)
 
 
 def test_corotational_follower_pressure_selects_consistent_tangent() -> None:

@@ -25,7 +25,7 @@ from .beam_sections import (
 )
 from .boundary import BoundaryCondition, LoadCase
 from .buckling import BucklingResult, solve_eigenvalue_buckling
-from .elements import BeamElement, QuadraticBeamElement, ShellElement
+from .elements import BeamElement, QuadraticBeamElement, ShellElement, create_shell_element
 from .fe_core import FEModel
 from .mesh_gen import InterpolatedBeamShellMPCElement, RigidLidMPCElement
 from .shell_sections import (
@@ -962,7 +962,7 @@ def build_fe_model_from_generated_geometry(
             _add_model_element(
                 model,
                 elem_id,
-                ShellElement(
+                create_shell_element(
                     elem_id,
                     node_ids,
                     _material_name(shell, config),

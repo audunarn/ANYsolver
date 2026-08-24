@@ -200,6 +200,7 @@ class _ShellBatchPlan:
     detw: np.ndarray
     B_s: np.ndarray
     detw_shear: np.ndarray
+    linear_corrections: np.ndarray
     material: Any
     thickness: float
     drilling_stabilization: float
@@ -243,6 +244,8 @@ class _ShellBatchPlan:
         detw_shear = np.empty((n_elem, n_shear), dtype=float)
         element_ids = np.empty(n_elem, dtype=np.int64)
         elements: List[Any] = []
+        linear_corrections = np.zeros((n_elem, n_dof, n_dof), dtype=float)
+        correction_cache: Dict[Tuple[Any, ...], np.ndarray] = {}
 
         for batch_index, (element_id, element, scatter) in enumerate(items):
             cache = element._nonlinear_geometry(model.mesh)
@@ -259,6 +262,26 @@ class _ShellBatchPlan:
             detw[batch_index] = cache["detw_all"]
             B_s[batch_index] = cache["B_s_all"]
             detw_shear[batch_index] = cache["detw_shear_all"]
+            correction_builder = getattr(element, "_qualified_linear_correction", None)
+            if callable(correction_builder):
+                material = model.get_material(element.material_name)
+                cache_key_builder = getattr(
+                    element, "_qualified_stiffness_cache_key", None
+                )
+                correction_key = (
+                    int(num_layers),
+                    cache_key_builder(model.mesh, material)
+                    if callable(cache_key_builder)
+                    else (int(element_id),),
+                )
+                correction = correction_cache.get(correction_key)
+                if correction is None:
+                    correction = np.asarray(
+                        correction_builder(model.mesh, material, int(num_layers)),
+                        dtype=float,
+                    )
+                    correction_cache[correction_key] = correction
+                linear_corrections[batch_index] = correction
 
         material = model.get_material(first.material_name)
         return cls(
@@ -276,6 +299,7 @@ class _ShellBatchPlan:
             detw=detw,
             B_s=B_s,
             detw_shear=detw_shear,
+            linear_corrections=linear_corrections,
             material=material,
             thickness=float(first.thickness),
             drilling_stabilization=float(first.drilling_stabilization),
@@ -338,6 +362,15 @@ class _ShellBatchPlan:
             self.alpha_work,
             self.num_layers,
         )
+        if np.any(self.linear_corrections):
+            F_batch += np.einsum(
+                "eij,ej->ei",
+                self.linear_corrections,
+                self.u_work,
+                optimize=True,
+            )
+            if tangent and K_batch is not None:
+                K_batch += self.linear_corrections
 
         states: Dict[int, Any] = {}
         if self.has_plasticity:
@@ -462,6 +495,15 @@ class _ShellBatchPlan:
                 self.num_layers,
             )
         )
+        if np.any(self.linear_corrections):
+            F_batch += np.einsum(
+                "eij,ej->ei",
+                self.linear_corrections,
+                self.u_work,
+                optimize=True,
+            )
+            if tangent and K_batch is not None:
+                K_batch += self.linear_corrections
         state_batch.update_trial(
             trial_token,
             plastic_strain=ep_new,

@@ -389,9 +389,9 @@ def _fracture_damage_case() -> Dict[str, Any]:
     impact_model.add_node(2, 1.0, 0.0, 0.0)
     impact_model.add_node(3, 1.0, 1.0, 0.0)
     impact_model.add_node(4, 0.0, 1.0, 0.0)
-    from .elements import ShellElement
+    from .elements import create_shell_element
 
-    impact_model.add_element(1, ShellElement(1, [1, 2, 3, 4], "soft", thickness=0.05))
+    impact_model.add_element(1, create_shell_element(1, [1, 2, 3, 4], "soft", thickness=0.05))
     impact_model.add_boundary_condition(
         BoundaryCondition(
             "restrain_shell_nonimpact_modes",
