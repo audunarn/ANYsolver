@@ -42,6 +42,7 @@ from scipy.sparse.linalg import bicgstab, gmres, minres
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary, require_valid_constraints
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import FactorizationCache, MatrixClass, factorize, factorize_cached
 from .matrix_assembly import (
     assemble_load_matrix,
@@ -1172,8 +1173,20 @@ def compute_stresses(
     """Compute stresses for all or selected elements."""
     mesh = model.mesh
     stresses: Dict[int, Dict[str, np.ndarray]] = {}
-    displacements = np.asarray(displacements, dtype=float)
     selected = None if element_ids is None else {int(element_id) for element_id in element_ids}
+    selected_ids = (
+        tuple(int(element_id) for element_id in mesh.elements)
+        if selected is None
+        else tuple(sorted(selected))
+    )
+    if return_global:
+        require_model_element_capabilities(
+            model,
+            "global_recovery",
+            context="compute_stresses",
+            element_ids=selected_ids,
+        )
+    displacements = np.asarray(displacements, dtype=float)
     for elem_id, element in mesh.elements.items():
         if selected is not None and int(elem_id) not in selected:
             continue

@@ -507,9 +507,21 @@ def recover_nodal_stresses(
     per-element nodal (unaveraged) values, and the peak recovered von Mises.
     """
     from .elements import ShellElement
+    from .element_capabilities import require_model_element_capabilities
 
     keys = [f"global_{component}_{surface}" for surface in ("top", "bot") for component in _RECOVERED_STRESS_COMPONENTS]
     selected = None if element_ids is None else {int(element_id) for element_id in element_ids}
+    selected_ids = (
+        tuple(int(element_id) for element_id in model.mesh.elements)
+        if selected is None
+        else tuple(sorted(selected))
+    )
+    require_model_element_capabilities(
+        model,
+        ("global_recovery", "patch_recovery"),
+        context="recover_nodal_stresses",
+        element_ids=selected_ids,
+    )
     node_sums: Dict[int, Dict[str, float]] = {}
     node_counts: Dict[int, int] = {}
     element_nodal: Dict[int, Dict[str, np.ndarray]] = {}

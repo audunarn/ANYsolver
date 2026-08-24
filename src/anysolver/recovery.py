@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from .element_capabilities import require_model_element_capabilities
 from .jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED, numba_thread_scope
 from .recovery_batches import (
     RecoveryPlanItem,
@@ -614,6 +615,13 @@ def recover_element_stresses_with_report(
         return {}, report
 
     selected_ids = _ordered_element_ids(model, recovery.selected_element_ids(model))
+    if return_global:
+        require_model_element_capabilities(
+            model,
+            "global_recovery",
+            context="recover_element_stresses_with_report",
+            element_ids=selected_ids,
+        )
     displacements = np.asarray(displacements, dtype=float)
     requested, used_workers, reason = _recovery_worker_count(resource_config, len(selected_ids))
     deterministic = True if resource_config is None else bool(resource_config.deterministic)
@@ -2137,6 +2145,41 @@ def recover_stress_result(
     """
 
     recovery = default_recovery_config(recovery_config)
+    selected_ids = _ordered_element_ids(
+        model,
+        recovery.selected_element_ids(model),
+    )
+    states, state_source, initial_warnings = _coerce_element_states(
+        nonlinear_result=nonlinear_result,
+        element_states=element_states,
+    )
+    selected_set = set(selected_ids)
+    selected_state_ids = tuple(
+        sorted(
+            int(element_id)
+            for element_id in states
+            if int(element_id) in selected_set
+        )
+    )
+    if selected_state_ids:
+        require_model_element_capabilities(
+            model,
+            "restart_history",
+            context="recover_stress_result",
+            element_ids=selected_state_ids,
+        )
+    required_capabilities: set[str] = set()
+    if return_global and recovery.include_stresses:
+        required_capabilities.add("global_recovery")
+    if patch_config is not None:
+        required_capabilities.update(("global_recovery", "patch_recovery"))
+    if required_capabilities:
+        require_model_element_capabilities(
+            model,
+            required_capabilities,
+            context="recover_stress_result",
+            element_ids=selected_ids,
+        )
     displacement_values = _recovery_displacements(
         model,
         displacements,
@@ -2146,12 +2189,6 @@ def recover_stress_result(
         nonlinear_result,
         kinematics,
     )
-    states, state_source, initial_warnings = _coerce_element_states(
-        nonlinear_result=nonlinear_result,
-        element_states=element_states,
-    )
-    selected_ids = _ordered_element_ids(model, recovery.selected_element_ids(model))
-    selected_set = set(selected_ids)
     selected_states = {
         int(element_id): state
         for element_id, state in sorted(states.items(), key=lambda item: int(item[0]))
@@ -2841,6 +2878,17 @@ def recover_shell_patch_stresses(
     ``nodal_regions`` and never cross-average into a misleading single value.
     """
 
+    selected_ids = (
+        tuple(int(element_id) for element_id in element_ids)
+        if element_ids is not None
+        else tuple(int(element_id) for element_id in element_stresses)
+    )
+    require_model_element_capabilities(
+        model,
+        "patch_recovery",
+        context="recover_shell_patch_stresses",
+        element_ids=selected_ids,
+    )
     settings = config if config is not None else PatchRecoveryConfig()
     sources = per_element_source or {}
     prepared, skipped, all_shell_incidence = _prepare_shell_patch_elements(

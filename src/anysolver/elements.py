@@ -4641,6 +4641,10 @@ class LegacyQ4DeprecationWarning(DeprecationWarning):
     """Warning emitted when the temporary legacy four-node rollback is used."""
 
 
+class LegacyS3MigrationWarning(UserWarning):
+    """Warning emitted when a missing-ID historical TRI3 loads as legacy."""
+
+
 LegacyShellElement = ShellElement
 
 
@@ -4816,7 +4820,7 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         raise ValueError("serialized qualified shell is missing formulation_id")
     if len(node_ids) not in {3, 4, 6, 8}:
         raise ValueError("serialized legacy shell requires 3, 4, 6 or 8 nodes")
-    return create_shell_element(
+    element = create_shell_element(
         element_id=int(data["element_id"]),
         node_ids=node_ids,
         material_name=str(data.get("material_name", "default")),
@@ -4829,6 +4833,16 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         material_angle_deg=float(data.get("material_angle_deg", 0.0)),
         shell_section=data.get("shell_section"),
     )
+    if len(node_ids) == 3:
+        warnings.warn(
+            "LEGACY_S3_MISSING_FORMULATION_ID: historical three-node shell "
+            "record loaded as legacy-s3; qualified-s3 was not inferred; "
+            "qualified-s3 hot restart is forbidden without full load-history "
+            "replay",
+            LegacyS3MigrationWarning,
+            stacklevel=2,
+        )
+    return element
 
 
 def create_element(

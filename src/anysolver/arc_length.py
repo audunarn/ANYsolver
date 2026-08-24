@@ -41,6 +41,7 @@ from .assembly import build_constraint_transformation
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from .nonlinear_analysis_diagnostics import capture_nonlinear_analysis_diagnostics
@@ -379,10 +380,30 @@ def solve_static_arc_length(
         raise ValueError("num_layers must be positive")
 
     settings = control or ArcLengthControl()
-    follower_active = _has_follower_pressure(load_case) or _has_follower_pressure(constant_load_case)
     kinematics = str(kinematics).strip().lower()
     if kinematics not in {"von_karman", "corotational"}:
         raise ValueError("kinematics must be 'von_karman' or 'corotational'")
+    if imperfection is not None:
+        require_model_element_capabilities(
+            model,
+            "initial_fields",
+            context="solve_static_arc_length",
+        )
+    if bool(initial_element_states):
+        require_model_element_capabilities(
+            model,
+            "restart_history",
+            context="solve_static_arc_length",
+            element_ids=initial_element_states,
+        )
+    require_model_element_capabilities(
+        model,
+        ("material_nonlinearity", "nonlinear_geometry"),
+        context="solve_static_arc_length",
+    )
+    follower_active = _has_follower_pressure(load_case) or _has_follower_pressure(
+        constant_load_case
+    )
     from .corotational import (
         resolve_corotational_tangent_mode,
         validate_corotational_scope,

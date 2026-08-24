@@ -9,8 +9,10 @@ import pytest
 from anysolver import (
     DEFAULT_Q4_FORMULATION,
     DEFAULT_S3_FORMULATION,
+    ElementCapabilityError,
     FEModel,
     ImperfectionField,
+    LegacyS3MigrationWarning,
     LegacyShellElement,
     QualifiedE4PLS3ShellElement,
     QualifiedE4PLShellElement,
@@ -408,7 +410,12 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     ):
         historical.pop(key)
     historical["type"] = "ShellElement"
-    assert type(shell_element_from_dict(historical)) is LegacyShellElement
+    with pytest.warns(
+        LegacyS3MigrationWarning,
+        match="LEGACY_S3_MISSING_FORMULATION_ID",
+    ):
+        migrated = shell_element_from_dict(historical)
+    assert type(migrated) is LegacyShellElement
 
     mutated = dict(payload, formulation_id="E4_PL_QUALIFIED_S3_UNKNOWN")
     with pytest.raises(ValueError, match="unknown serialized"):
@@ -508,7 +515,10 @@ def test_direct_solver_imperfection_cannot_bypass_initial_field_parity_gap() -> 
     )
     before = model.mesh.get_node(3).coords().copy()
 
-    with pytest.raises(NotImplementedError, match="initial_fields PARITY_GAP"):
+    with pytest.raises(
+        ElementCapabilityError,
+        match="apply_imperfection.*initial_fields",
+    ):
         apply_imperfection(
             model,
             ImperfectionField({3: (0.0, 0.0, 0.1)}),

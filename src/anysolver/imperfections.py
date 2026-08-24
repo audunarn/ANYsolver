@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Option
 
 import numpy as np
 
+from .element_capabilities import require_model_element_capabilities
+
 if TYPE_CHECKING:
     from .buckling import BucklingResult
     from .fe_core import FEModel
@@ -175,16 +177,11 @@ def to_imperfection_field(model: "FEModel", imperfection: Any) -> ImperfectionFi
 
 def apply_imperfection(model: "FEModel", imperfection: Any, copy_model: bool = True) -> "FEModel":
     """Apply a stress-free geometric imperfection to a model."""
-    blocked = sorted(
-        int(element_id)
-        for element_id, element in model.mesh.elements.items()
-        if "initial_fields" in getattr(element, "capability_gaps", ())
+    require_model_element_capabilities(
+        model,
+        "initial_fields",
+        context="apply_imperfection",
     )
-    if blocked:
-        raise NotImplementedError(
-            "stress-free geometric imperfections are an initial_fields "
-            "PARITY_GAP for element IDs " + ", ".join(map(str, blocked[:8]))
-        )
     target = copy.deepcopy(model) if copy_model else model
     field = to_imperfection_field(target, imperfection)
     for node_id, offset in field.as_arrays().items():

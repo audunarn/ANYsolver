@@ -45,6 +45,7 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
+from .element_capabilities import require_model_element_capabilities
 from .fracture import (
     DeletedElementRecord,
     FractureConfig,
@@ -2178,6 +2179,31 @@ def solve_static_nonlinear(
     kinematics = str(kinematics).lower()
     if kinematics not in {"von_karman", "corotational"}:
         raise ValueError("kinematics must be 'von_karman' or 'corotational'")
+    if imperfection is not None:
+        require_model_element_capabilities(
+            model,
+            "initial_fields",
+            context="solve_static_nonlinear",
+        )
+    elif bool(initial_fields):
+        require_model_element_capabilities(
+            model,
+            "initial_fields",
+            context="solve_static_nonlinear",
+            element_ids=initial_fields,
+        )
+    if bool(initial_element_states):
+        require_model_element_capabilities(
+            model,
+            "restart_history",
+            context="solve_static_nonlinear",
+            element_ids=initial_element_states,
+        )
+    require_model_element_capabilities(
+        model,
+        ("material_nonlinearity", "nonlinear_geometry"),
+        context="solve_static_nonlinear",
+    )
     specified_load_cases = [
         case
         for case in (

@@ -106,6 +106,7 @@ CAPABILITY_GAPS = frozenset(
         "material_nonlinearity",
         "nonlinear_geometry",
         "orthotropic_physical_recovery",
+        "patch_recovery",
         "physical_director_reversal",
         "restart_history",
     }

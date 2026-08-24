@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 
 class ElementCapabilityError(NotImplementedError):
@@ -14,6 +14,7 @@ def require_model_element_capabilities(
     capabilities: str | Iterable[str],
     *,
     context: str,
+    element_ids: Optional[Iterable[int]] = None,
 ) -> None:
     """Reject declared element gaps before assembly, state, or geometry work."""
 
@@ -26,7 +27,14 @@ def require_model_element_capabilities(
         raise ValueError("at least one element capability is required")
     blocked: list[tuple[int, tuple[str, ...]]] = []
     elements = getattr(getattr(model, "mesh", None), "elements", {})
+    selected = (
+        None
+        if element_ids is None
+        else frozenset(int(element_id) for element_id in element_ids)
+    )
     for element_id, element in elements.items():
+        if selected is not None and int(element_id) not in selected:
+            continue
         gaps = frozenset(str(value) for value in getattr(element, "capability_gaps", ()))
         overlap = tuple(sorted(requested & gaps))
         if overlap:
