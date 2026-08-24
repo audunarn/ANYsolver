@@ -32,6 +32,9 @@ CONTRACT_CYCLE0 = (
 CONTRACT_CYCLE1 = (
     ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle1.json"
 )
+CONTRACT_CYCLE2 = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract_cycle2.json"
+)
 
 
 def _gate_module():
@@ -45,13 +48,21 @@ def _gate_module():
 
 def _prospective_gate_result(gate) -> dict[str, object]:
     contract = gate.strict_json_load(CONTRACT)
-    sibling_commits = {
-        "ANYfem": contract["anyfem_commit"],
-        "ANYmesh": "2" * 40,
-        "ANYgeometry": "3" * 40,
-        "ANYmaterial": "4" * 40,
-        "ANYfileIO": "5" * 40,
-    }
+    sibling_authority = contract.get("sibling_authority")
+    sibling_commits = (
+        {
+            name: sibling_authority[name]["commit"]
+            for name in gate.SIBLING_NAMES
+        }
+        if sibling_authority is not None
+        else {
+            "ANYfem": contract["anyfem_commit"],
+            "ANYmesh": "2" * 40,
+            "ANYgeometry": "3" * 40,
+            "ANYmaterial": "4" * 40,
+            "ANYfileIO": "5" * 40,
+        }
+    )
     request_rows = [
         {
             "lane": lane,
@@ -126,7 +137,15 @@ def _prospective_gate_result(gate) -> dict[str, object]:
         },
         "schema": contract["gate_result_schema"],
         "siblings": {
-            name: {"clean": True, "commit": commit, "tree": "b" * 40}
+            name: {
+                "clean": True,
+                "commit": commit,
+                "tree": (
+                    sibling_authority[name]["tree"]
+                    if sibling_authority is not None
+                    else "b" * 40
+                ),
+            }
             for name, commit in sibling_commits.items()
         },
         "wheel": {
@@ -238,14 +257,14 @@ def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
     assert contract["gate_result_schema"] == "anysolver.s4.e4-pl-q1m-gate-result-v2"
     assert contract["package_result_schema"] == "anysolver.s4.e4-pl-q1m-package-lane-v2"
     assert contract["adjudication"] == {
-        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_2_BLOCKED_GATE_NO_P0_P1",
+        "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_3_BLOCKED_GATE_NO_P0_P1",
         "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-        "blocked_commit_subject": "docs: record E4 PL Q1M correction-2 blocked gate",
-        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_2_BURN_IN_GATE",
+        "blocked_commit_subject": "docs: record E4 PL Q1M correction-3 blocked gate",
+        "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_3_BURN_IN_GATE",
         "blocked_paths": [
-            "docs/reference_cases/e4_pl_q1m_correction2_blocked_gate_result.json",
-            "docs/reference_cases/e4_pl_q1m_correction2_blocked_status.json",
-            "docs/reference_cases/e4_pl_q1m_correction2_blocked_review.json",
+            "docs/reference_cases/e4_pl_q1m_correction3_blocked_gate_result.json",
+            "docs/reference_cases/e4_pl_q1m_correction3_blocked_status.json",
+            "docs/reference_cases/e4_pl_q1m_correction3_blocked_review.json",
         ],
         "review_independence": {
             "did_not_author_candidate": True,
@@ -287,10 +306,46 @@ def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
         "ANYmesh": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
         "ANYsolver": "FULLY_CLEAN_INCLUDING_UNTRACKED",
     }
+    assert contract["sibling_authority"] == {
+        "ANYfem": {
+            "commit": "ba8b21b9cf2732168b099cfedc7508789bdcfbb3",
+            "tree": "49a150bcccece1fef92dd627ae54689a545e0e61",
+        },
+        "ANYfileIO": {
+            "commit": "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+            "tree": "70b406be2574adceab4a7b688c0e489e0937df5d",
+        },
+        "ANYgeometry": {
+            "commit": "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
+            "tree": "a563515df3ab24e7df388009b7412582e840e31e",
+        },
+        "ANYmaterial": {
+            "commit": "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
+            "tree": "0d3c57eba577f243a3749b3f1102cbb94a3b51bf",
+        },
+        "ANYmesh": {
+            "commit": "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
+            "tree": "d443f008173003d560fb55673b0d90bf92f65e03",
+        },
+    }
     for lane, authority in contract["non_resource_commands"].items():
         assert authority["command_sha256"] == hashlib.sha256(
             authority["command"].encode("utf-8")
         ).hexdigest(), lane
+    request_root = ROOT.parents[2] / ".resource-manager" / "requests"
+    seen_request_ids = set()
+    for lane, authority in contract["resource_requests"].items():
+        request_path = request_root / f"{authority['request_id']}.json"
+        request = json.loads(request_path.read_text(encoding="utf-8"))
+        assert authority["request_id"] not in seen_request_ids
+        seen_request_ids.add(authority["request_id"])
+        assert request["request_id"] == authority["request_id"], lane
+        assert hashlib.sha256(request_path.read_bytes()).hexdigest() == authority[
+            "request_sha256"
+        ], lane
+        assert hashlib.sha256(request["command"].encode("utf-8")).hexdigest() == (
+            authority["command_sha256"]
+        ), lane
     plan = (
         ROOT / "docs" / "agent_plans" / "S4_E4_PL_Q1M_BURNIN_HARDENING_PLAN.md"
     ).read_text(encoding="utf-8")
@@ -832,6 +887,16 @@ def test_repository_cleanliness_policy_is_full_for_candidate_and_anyfem(monkeypa
         assert status_modes[name] == "--untracked-files=no"
 
 
+def test_complete_sibling_authority_is_fail_closed() -> None:
+    gate = _gate_module()
+    record = _prospective_gate_result(gate)
+    gate.validate_gate_result(record)
+
+    record["siblings"]["ANYmesh"]["tree"] = "0" * 40
+    with pytest.raises(gate.EvidenceError, match="ANYmesh tree"):
+        gate.validate_gate_result(record)
+
+
 def test_external_log_and_wheel_hashes_are_verified(tmp_path: Path) -> None:
     gate = _gate_module()
     record = _prospective_gate_result(gate)
@@ -858,6 +923,21 @@ def test_external_log_and_wheel_hashes_are_verified(tmp_path: Path) -> None:
     record["lanes"]["quick"]["log"]["sha256"] = "0" * 64
     with pytest.raises(gate.EvidenceError, match="external log mismatch"):
         gate.validate_gate_result(record, lane_log_paths=log_paths, wheel_path=wheel)
+
+
+def test_package_source_override_is_explicit_and_resolved(
+    tmp_path: Path, monkeypatch
+) -> None:
+    gate = _gate_module()
+    frozen = tmp_path / "frozen-anygeometry"
+    frozen.mkdir()
+    (frozen / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    monkeypatch.setenv("Q1M_ANYGEOMETRY_ROOT", str(frozen))
+
+    roots = gate._local_roots()
+
+    assert roots["ANYgeometry"] == frozen.resolve()
+    assert roots["ANYsolver"] == ROOT.resolve()
 
 
 def test_final_validation_binds_requests_logs_package_and_wheel(
@@ -986,6 +1066,7 @@ def test_blocked_cycles_remain_verifiable_under_immutable_authority() -> None:
     historical = (
         ("e4_pl_q1m_blocked", CONTRACT_CYCLE0),
         ("e4_pl_q1m_correction1_blocked", CONTRACT_CYCLE1),
+        ("e4_pl_q1m_correction2_blocked", CONTRACT_CYCLE2),
     )
     blocked_request_ids: set[str] = set()
     for stem, authority_path in historical:

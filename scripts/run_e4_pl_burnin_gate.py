@@ -574,8 +574,44 @@ def validate_gate_result(
             raise EvidenceError(f"sibling repository {name} must be clean")
         _require_match(identity["commit"], GIT_OBJECT_RE, f"$.siblings.{name}.commit")
         _require_match(identity["tree"], GIT_OBJECT_RE, f"$.siblings.{name}.tree")
-    if siblings["ANYfem"]["commit"] != contract["anyfem_commit"]:
-        raise EvidenceError("ANYfem commit does not match the contract")
+    sibling_authority = contract.get("sibling_authority")
+    if sibling_authority is None:
+        # Immutable cycle-0/1/2 authorities predate the complete sibling
+        # graph and bind the paired adapter commit directly.
+        if siblings["ANYfem"]["commit"] != contract["anyfem_commit"]:
+            raise EvidenceError("ANYfem commit does not match the contract")
+    else:
+        sibling_authority = _exact_keys(
+            sibling_authority,
+            set(SIBLING_NAMES),
+            "$.contract.sibling_authority",
+        )
+        for name in SIBLING_NAMES:
+            expected = _exact_keys(
+                sibling_authority[name],
+                {"commit", "tree"},
+                f"$.contract.sibling_authority.{name}",
+            )
+            _require_match(
+                expected["commit"],
+                GIT_OBJECT_RE,
+                f"$.contract.sibling_authority.{name}.commit",
+            )
+            _require_match(
+                expected["tree"],
+                GIT_OBJECT_RE,
+                f"$.contract.sibling_authority.{name}.tree",
+            )
+            if siblings[name]["commit"] != expected["commit"]:
+                raise EvidenceError(
+                    f"sibling repository {name} commit does not match the contract"
+                )
+            if siblings[name]["tree"] != expected["tree"]:
+                raise EvidenceError(
+                    f"sibling repository {name} tree does not match the contract"
+                )
+        if contract.get("anyfem_commit") != sibling_authority["ANYfem"]["commit"]:
+            raise EvidenceError("ANYfem authority aliases disagree")
 
     expected_requests = contract["resource_requests"]
     requests = record["resource_requests"]
@@ -1031,6 +1067,10 @@ def _local_roots() -> dict[str, Path]:
         "ANYfileIO": github / "ANYfileIO",
         "ANYsolver": ROOT,
     }
+    for name in tuple(roots):
+        override = os.environ.get(f"Q1M_{name.upper()}_ROOT")
+        if override:
+            roots[name] = Path(override).resolve()
     for name, path in roots.items():
         if not (path / "pyproject.toml").is_file():
             raise RuntimeError(f"required local source snapshot is unavailable: {name}")

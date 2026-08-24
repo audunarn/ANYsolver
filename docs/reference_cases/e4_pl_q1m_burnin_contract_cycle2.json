@@ -1,13 +1,13 @@
 {
   "adjudication": {
-    "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_3_BLOCKED_GATE_NO_P0_P1",
+    "accepted_blocked_verdict": "ACCEPT_Q1M_CORRECTION_2_BLOCKED_GATE_NO_P0_P1",
     "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
-    "blocked_commit_subject": "docs: record E4 PL Q1M correction-3 blocked gate",
-    "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_3_BURN_IN_GATE",
+    "blocked_commit_subject": "docs: record E4 PL Q1M correction-2 blocked gate",
+    "blocked_terminal": "BLOCKED_E4_PL_Q1M_CORRECTION_2_BURN_IN_GATE",
     "blocked_paths": [
-      "docs/reference_cases/e4_pl_q1m_correction3_blocked_gate_result.json",
-      "docs/reference_cases/e4_pl_q1m_correction3_blocked_status.json",
-      "docs/reference_cases/e4_pl_q1m_correction3_blocked_review.json"
+      "docs/reference_cases/e4_pl_q1m_correction2_blocked_gate_result.json",
+      "docs/reference_cases/e4_pl_q1m_correction2_blocked_status.json",
+      "docs/reference_cases/e4_pl_q1m_correction2_blocked_review.json"
     ],
     "review_independence": {
       "did_not_author_candidate": true,
@@ -41,7 +41,7 @@
     ],
     "success_commit_subject": "docs: record E4 PL Q1M clean burn-in gate 1"
   },
-  "anyfem_commit": "ba8b21b9cf2732168b099cfedc7508789bdcfbb3",
+  "anyfem_commit": "197e0af2ddd7696809a522a3c1cca9b2a8f13bf1",
   "burn_in": {
     "clean_release_gates_required": 2,
     "counter_reset": "ANY_UNRESOLVED_LEGACY_Q4_ROLLBACK_INCIDENT",
@@ -85,12 +85,12 @@
   },
   "non_resource_commands": {
     "package": {
-      "command": "$env:Q1M_ANYMESH_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen'; $env:Q1M_ANYGEOMETRY_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen'; python scripts/run_e4_pl_burnin_gate.py package",
-      "command_sha256": "d8c272af5d0ec96e57cca9031fc0ff811a176675836ad68e140eee6b65e20de0"
+      "command": "python scripts/run_e4_pl_burnin_gate.py package",
+      "command_sha256": "a08c47ffdf7c5bdf05e034c41eb5e6e559f8d45c3cf956565139e3c22451bf04"
     },
     "quick": {
-      "command": "$env:Q1M_ANYMESH_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen'; $env:Q1M_ANYGEOMETRY_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen'; python scripts/run_e4_pl_burnin_gate.py quick",
-      "command_sha256": "f9031b74a2a4cc2eebc1e90dbc53495f7edd234e29359dd845ba34ba09bb4649"
+      "command": "python scripts/run_e4_pl_burnin_gate.py quick",
+      "command_sha256": "3e6414bd7e0a5aaf8cc34eecf34e34d0638e16d235c694b8c66b62e1e9f7e41b"
     }
   },
   "package_result_schema": "anysolver.s4.e4-pl-q1m-package-lane-v2",
@@ -112,19 +112,19 @@
   },
   "resource_requests": {
     "anyfem": {
-      "command_sha256": "29c62d3f3e85c7085dd8f430ec6a4efcdf640d4a93aec4ee22bc61ceccc8a667",
-      "request_id": "1f657eac10b44b52b5439927091c518a",
-      "request_sha256": "d326e3337ea8d287492066c9cfa7b401720740554f439c5f9cb6b8f59c92dcd0"
+      "command_sha256": "e9c9508fc64c44d7638b4aad0afbf9c804f0216b606df671405542356dabbd42",
+      "request_id": "989ae6c113b14e7c85bde75fe5900453",
+      "request_sha256": "55127c423aab7d728d114931063cf6acd736566625d83a4e8e931fdf6305d2f6"
     },
     "functional": {
-      "command_sha256": "514bda995a718f32c92b52bdd47a4b491687b5c5ccb877ad9d22e5db978e00f5",
-      "request_id": "5a390b0443f44d5f8a05e60403e55c26",
-      "request_sha256": "e25a1e15b7c3665801f43a4a1165f1fe3704524a42d4cd1e5ea0bf88d973e157"
+      "command_sha256": "c34df28c5e98d52163be557c4f3cb4a7fcfcbf6c6c5b76d88b57797ef758e619",
+      "request_id": "43bfe7cdd4ef4dddbb65cbadba88d49f",
+      "request_sha256": "c6ff27657736d10877eda4983bac5105ad50a7867e627a72842e8e3571884529"
     },
     "performance": {
-      "command_sha256": "304dd8c2e4125033f062da7f54c2553cf55fa39de7f6846dcbd000e226af5022",
-      "request_id": "bb2313a3560b4065875382bb6e44e193",
-      "request_sha256": "09a10ba1ab5bd153273fb475112e1e7ffe2329a3d9f0c66f83cf6c5b3d63ceca"
+      "command_sha256": "f49d5a98485d96c243b55a05248ab924f01ba0214776cb19f6b0a90af72b2b26",
+      "request_id": "16f626419db245bfbd88efc4bccd2b31",
+      "request_sha256": "125b9d4848b8a822c885aa1e7b8a0c1143a51fbe1d73bdb94a0e98e4f247f9f9"
     }
   },
   "repository_cleanliness": {
@@ -148,27 +148,5 @@
     "NO_UNRESOLVED_ROLLBACK_INCIDENT"
   ],
   "schema": "anysolver.s4.e4-pl-q1m-burn-in-contract-v1",
-  "sibling_authority": {
-    "ANYfem": {
-      "commit": "ba8b21b9cf2732168b099cfedc7508789bdcfbb3",
-      "tree": "49a150bcccece1fef92dd627ae54689a545e0e61"
-    },
-    "ANYfileIO": {
-      "commit": "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
-      "tree": "70b406be2574adceab4a7b688c0e489e0937df5d"
-    },
-    "ANYgeometry": {
-      "commit": "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
-      "tree": "a563515df3ab24e7df388009b7412582e840e31e"
-    },
-    "ANYmaterial": {
-      "commit": "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
-      "tree": "0d3c57eba577f243a3749b3f1102cbb94a3b51bf"
-    },
-    "ANYmesh": {
-      "commit": "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
-      "tree": "d443f008173003d560fb55673b0d90bf92f65e03"
-    }
-  },
   "status_schema": "anysolver.s4.e4-pl-q1m-status-v1"
 }
