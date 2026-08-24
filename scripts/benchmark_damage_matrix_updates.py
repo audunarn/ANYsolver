@@ -14,7 +14,7 @@ import numpy as np
 
 from anysolver.contact import _assemble_damaged_linear_matrices, _linear_element_matrix_terms
 from anysolver.damage_matrix_performance import DamageMatrixPlan
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 
 
@@ -33,7 +33,8 @@ def _panel(nx: int, ny: int) -> FEModel:
         for i in range(nx):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_element(
+                    "shell",
                     element_id,
                     [
                         node_ids[(i, j)],

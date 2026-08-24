@@ -9,6 +9,8 @@ import pytest
 
 from anysolver import (
     FEModel,
+    LegacyQ4DeprecationWarning,
+    LegacyShellElement,
     PatchRecoveryConfig,
     QuadraticBeamElement,
     ShellElement,
@@ -407,12 +409,13 @@ def test_patch_rejects_reduced_q8_and_warped_q4_outside_qualified_scope() -> Non
     )
     for node_id, coordinates in enumerate(warped_coordinates, start=1):
         warped.add_node(node_id, *coordinates)
-    warped_element = ShellElement(
-        1,
-        [1, 2, 3, 4],
-        "steel",
-        thickness=0.01,
-    )
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        warped_element = LegacyShellElement(
+            1,
+            [1, 2, 3, 4],
+            "steel",
+            thickness=0.01,
+        )
     warped.add_element(1, warped_element)
     warped_patch = recover_shell_patch_stresses(
         warped,

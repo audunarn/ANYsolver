@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Keep qualified E4-PL as the production Q4 default and begin the explicit
+  legacy-Q4 retirement window. Legacy Q4 selectors now emit a dedicated
+  deprecation warning, diagnostics expose the selected formulation and
+  rollback lifecycle, and migration guidance freezes availability through
+  0.4.x with removal no earlier than 0.5.0 after two clean release gates.
+  TRI3, TRI6, Q8, and Q8R remain unchanged.
+
 ## 0.3.0 - 2026-08-23
 
 - Preserve the corrected published-2025 S4 reference, nullspace proof, geometry

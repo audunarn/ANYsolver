@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from anysolver.fe_core import FEModel
-from anysolver.elements import BeamElement, ShellElement
+from anysolver.elements import BeamElement, create_shell_element
 from anysolver.boundary import BoundaryCondition, FixedSupport, LoadCase
 from anysolver.assembly import solve_linear
 from anysolver.material_curves import DNVC208MaterialCurve
@@ -78,9 +78,20 @@ def _strip_model(nx, ny, length, width, t, curve):
     eidx = 1
     for j in range(ny):
         for i in range(nx):
-            model.add_element(eidx, ShellElement(
-                eidx, [nid[(i, j)], nid[(i + 1, j)], nid[(i + 1, j + 1)], nid[(i, j + 1)]],
-                "steel", t))
+            model.add_element(
+                eidx,
+                create_shell_element(
+                    eidx,
+                    [
+                        nid[(i, j)],
+                        nid[(i + 1, j)],
+                        nid[(i + 1, j + 1)],
+                        nid[(i, j + 1)],
+                    ],
+                    "steel",
+                    thickness=t,
+                ),
+            )
             eidx += 1
     return model, nid
 

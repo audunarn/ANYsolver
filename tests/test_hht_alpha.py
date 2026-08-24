@@ -15,7 +15,7 @@ from anysolver.contact import (
     solve_transient_sphere_impact,
 )
 from anysolver.dynamics import TransientConfig, solve_transient_newmark
-from anysolver.elements import ShellElement
+from anysolver.elements import create_shell_element
 from anysolver.fe_core import FEModel
 from anysolver.material_curves import DNVC208MaterialCurve
 
@@ -54,7 +54,17 @@ def _clamped_plate(n: int = 4) -> FEModel:
         for i in range(n):
             model.add_element(
                 element_id,
-                ShellElement(element_id, [ids[(i, j)], ids[(i + 1, j)], ids[(i + 1, j + 1)], ids[(i, j + 1)]], "steel", thickness=0.01),
+                create_shell_element(
+                    element_id,
+                    [
+                        ids[(i, j)],
+                        ids[(i + 1, j)],
+                        ids[(i + 1, j + 1)],
+                        ids[(i, j + 1)],
+                    ],
+                    "steel",
+                    thickness=0.01,
+                ),
             )
             element_id += 1
     edge = sorted(

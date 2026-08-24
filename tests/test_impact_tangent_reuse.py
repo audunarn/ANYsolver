@@ -6,7 +6,7 @@ import pytest
 import anysolver as fs
 from anysolver.boundary import BoundaryCondition
 from anysolver.contact import _verification_contact_panel
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 from anysolver.impact_performance import ImpactTangentReuseController
 from anysolver.material_curves import DNVC208MaterialCurve
@@ -150,7 +150,8 @@ def _yielding_panel() -> FEModel:
         for i in range(division):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_element(
+                    "shell",
                     element_id,
                     [
                         node_of[(i, j)],

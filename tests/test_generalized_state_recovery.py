@@ -14,6 +14,7 @@ from anysolver import (
     GeneralizedShellSection,
     PatchRecoveryConfig,
     ShellElement,
+    create_shell_element,
     recover_prestress_from_static_result,
     recover_stress_result,
 )
@@ -57,7 +58,7 @@ def _shell_model() -> tuple[FEModel, ShellElement]:
         As=np.array([[20.0, 2.0], [2.0, 15.0]]),
         name="laminate_abd",
     )
-    element = ShellElement(
+    element = create_shell_element(
         1,
         [1, 2, 3, 4],
         "dummy",

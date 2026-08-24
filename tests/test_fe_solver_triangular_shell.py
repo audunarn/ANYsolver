@@ -16,6 +16,7 @@ from anysolver import (
     assemble_stiffness_matrix,
     build_fe_model_from_generated_geometry,
     create_element,
+    create_shell_element,
 )
 
 
@@ -182,7 +183,9 @@ def test_triangular_aliases_and_mixed_q4_t3_assembly() -> None:
         5: (2.0, 0.0, 0.0),
     }.items():
         model.add_node(node_id, *xyz)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
     model.add_element(2, ShellElement(2, [2, 5, 3], "steel", thickness=0.01))
 
     K, _ = assemble_stiffness_matrix(model)

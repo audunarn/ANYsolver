@@ -11,8 +11,8 @@ from anysolver import (
     GeneralizedBeamSection,
     GeneralizedShellSection,
     QuadraticBeamElement,
-    ShellElement,
     calculate_mass_properties,
+    create_shell_element,
     element_mass_points,
 )
 
@@ -73,7 +73,7 @@ def test_shell_section_mass_and_rotary_metadata_drive_all_summaries() -> None:
     )
     model.add_element(
         1,
-        ShellElement(
+        create_shell_element(
             1,
             [1, 2, 3, 4],
             "dummy",

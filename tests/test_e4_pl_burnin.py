@@ -1,0 +1,1006 @@
+from __future__ import annotations
+
+import ast
+import copy
+import hashlib
+import importlib.util
+import json
+import os
+import subprocess
+import warnings
+from pathlib import Path
+
+import pytest
+
+from anysolver import (
+    LEGACY_Q4_AVAILABLE_THROUGH,
+    LEGACY_Q4_REMOVAL_TARGET,
+    LegacyQ4DeprecationWarning,
+    QualifiedE4PLShellElement,
+    ShellElement,
+    create_element,
+    create_shell_element,
+    shell_formulation_diagnostics,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONTRACT = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.json"
+
+
+def _gate_module():
+    path = ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    spec = importlib.util.spec_from_file_location("e4_pl_burnin_gate", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _prospective_gate_result(gate) -> dict[str, object]:
+    contract = gate.strict_json_load(CONTRACT)
+    sibling_commits = {
+        "ANYfem": contract["anyfem_commit"],
+        "ANYmesh": "2" * 40,
+        "ANYgeometry": "3" * 40,
+        "ANYmaterial": "4" * 40,
+        "ANYfileIO": "5" * 40,
+    }
+    request_rows = [
+        {
+            "lane": lane,
+            "request_id": request["request_id"],
+            "request_sha256": request["request_sha256"],
+        }
+        for lane, request in sorted(contract["resource_requests"].items())
+    ]
+    lanes = {}
+    for lane, paths in gate.gate_inventories().items():
+        request_id = (
+            contract["resource_requests"][lane]["request_id"]
+            if lane in contract["resource_requests"]
+            else None
+        )
+        lanes[lane] = {
+            "command_sha256": (
+                contract["non_resource_commands"][lane]["command_sha256"]
+                if lane in contract["non_resource_commands"]
+                else contract["resource_requests"][lane]["command_sha256"]
+            ),
+            "exit_code": 0,
+            "finished_at_utc": "2026-08-24T10:01:00Z",
+            "inventory": paths,
+            "log": {
+                "bytes": len(lane),
+                "sha256": hashlib.sha256(lane.encode("ascii")).hexdigest(),
+            },
+            "resource_request_id": request_id,
+            "started_at_utc": "2026-08-24T10:00:00Z",
+            "status": "PASS",
+        }
+    return {
+        "candidate": {
+            "clean": True,
+            "commit": "1" * 40,
+            "repository": "ANYsolver",
+            "tree": "a" * 40,
+        },
+        "clean_gate_index": 1,
+        "hard_gates": {
+            name: {
+                "evidence_nodes": nodes,
+                "observed": True,
+                "status": "PASS",
+            }
+            for name, nodes in sorted(contract["hard_performance_gates"].items())
+        },
+        "lanes": lanes,
+        "legacy_removal_authorized": False,
+        "package_result": {"bytes": 1, "sha256": "6" * 64},
+        "performance_baseline": {
+            "measurements": {
+                name: {
+                    "mad_ns": 3,
+                    "median_ns": 6,
+                    "p95_ns": 11,
+                    "samples_ns": list(range(1, 12)),
+                }
+                for name in contract["performance_baseline"]["measurement_names"]
+            },
+            "repetitions": 11,
+            "schema": "anysolver.s4.e4-pl-q1m-performance-baseline-v1",
+            "speed_claim": "GATE_1_BASELINE_ONLY_NO_SPEED_CLAIM",
+            "warmups": 1,
+        },
+        "production_boundary": contract["production_boundary"],
+        "resource_requests": request_rows,
+        "rollback": {
+            "state": "NO_UNRESOLVED_ROLLBACK_INCIDENT",
+            "unresolved_incidents": [],
+        },
+        "schema": contract["gate_result_schema"],
+        "siblings": {
+            name: {"clean": True, "commit": commit, "tree": "b" * 40}
+            for name, commit in sibling_commits.items()
+        },
+        "wheel": {
+            "bytes": 123,
+            "filename": "anysolver-0.3.0-py3-none-any.whl",
+            "sha256": "7" * 64,
+        },
+    }
+
+
+def _prospective_package_result(gate, gate_result) -> dict[str, object]:
+    contract = gate.strict_json_load(CONTRACT)
+    content = b"record\n"
+    log = {
+        "bytes": len(content),
+        "returncode": 0,
+        "sha256": hashlib.sha256(content).hexdigest(),
+    }
+    empty_log = {
+        "bytes": 0,
+        "returncode": 0,
+        "sha256": hashlib.sha256(b"").hexdigest(),
+    }
+    names = [name for name, _distribution, _package in gate.LOCAL_DISTRIBUTIONS]
+    identities = {
+        "ANYsolver": gate_result["candidate"],
+        **{name: gate_result["siblings"][name] for name in names if name != "ANYsolver"},
+    }
+    return {
+        "build_logs": {name: copy.deepcopy(log) for name in names},
+        "install_log": copy.deepcopy(log),
+        "schema": contract["package_result_schema"],
+        "smoke": {
+            "diagnostics_schema": contract["diagnostics_schema"],
+            "legacy_warning": contract["legacy_q4"]["warning"],
+            "non_q4_types": ["ShellElement"] * 4,
+            "origins": {
+                package: f"{package}/__init__.py"
+                for _name, _distribution, package in gate.LOCAL_DISTRIBUTIONS
+            },
+            "q4_type": "QualifiedE4PLShellElement",
+        },
+        "smoke_log": {"bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()},
+        "sources": {
+            name: {
+                "archive": {"bytes": 1, "sha256": "a" * 64},
+                "archive_log": copy.deepcopy(empty_log),
+                "commit": identities[name]["commit"],
+                "content": {"files": 1, "sha256": "b" * 64},
+                "tree": identities[name]["tree"],
+            }
+            for name in names
+        },
+        "status": "PASS",
+        "wheels": {
+            name: {
+                "bytes": 123,
+                "filename": f"{distribution.lower()}-1-py3-none-any.whl",
+                "sha256": "c" * 64,
+            }
+            for name, distribution, _package in gate.LOCAL_DISTRIBUTIONS
+        },
+    }
+
+
+def _blocked_at(gate, record, failed_lane: str, incident: str):
+    failed_index = gate.GATE_LANES.index(failed_lane)
+    for index, lane in enumerate(gate.GATE_LANES):
+        lane_record = record["lanes"][lane]
+        if index == failed_index:
+            lane_record.update({"exit_code": 1, "status": "FAIL"})
+        elif index > failed_index:
+            record["lanes"][lane] = {
+                key: lane_record[key]
+                for key in ("command_sha256", "inventory", "resource_request_id", "status")
+            }
+            record["lanes"][lane]["status"] = "NOT_RUN"
+    if record["lanes"]["performance"]["status"] != "PASS":
+        record.pop("hard_gates", None)
+        record.pop("performance_baseline", None)
+    if record["lanes"]["package"]["status"] != "PASS":
+        record.pop("package_result", None)
+        record.pop("wheel", None)
+    record["clean_gate_index"] = 0
+    record["rollback"] = {
+        "state": "UNRESOLVED_LEGACY_Q4_ROLLBACK_INCIDENT",
+        "unresolved_incidents": [incident],
+    }
+    return record
+
+
+def test_burn_in_contract_and_runtime_diagnostics_are_aligned() -> None:
+    contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    assert contract["schema"] == "anysolver.s4.e4-pl-q1m-burn-in-contract-v1"
+    assert contract["default"] == "QUALIFIED_E4_PL_Q4"
+    assert contract["burn_in"] == {
+        "clean_release_gates_required": 2,
+        "counter_reset": "ANY_UNRESOLVED_LEGACY_Q4_ROLLBACK_INCIDENT",
+        "earliest_removal_release": LEGACY_Q4_REMOVAL_TARGET,
+        "legacy_q4_available_through": LEGACY_Q4_AVAILABLE_THROUGH,
+        "state": "ACTIVE",
+    }
+    assert contract["evidence_lanes"]["ecosystem"] == (
+        "ANYFEM_PUBLIC_SELECTOR_AND_ENGINEERING_REFERENCE"
+    )
+    assert contract["evidence_lanes"]["package"] == (
+        "WHEEL_BUILD_AND_EXTRACTED_INSTALL_SMOKE"
+    )
+    assert contract["gate_result_schema"] == "anysolver.s4.e4-pl-q1m-gate-result-v2"
+    assert contract["package_result_schema"] == "anysolver.s4.e4-pl-q1m-package-lane-v2"
+    assert contract["adjudication"] == {
+        "accepted_blocked_verdict": "ACCEPT_Q1M_BLOCKED_GATE_NO_P0_P1",
+        "accepted_success_verdict": "ACCEPT_Q1M_BURN_IN_GATE_1_NO_P0_P1",
+        "blocked_commit_subject": "docs: record E4 PL Q1M blocked burn-in gate",
+        "blocked_terminal": "BLOCKED_E4_PL_Q1M_BURN_IN_GATE",
+        "blocked_paths": [
+            "docs/reference_cases/e4_pl_q1m_blocked_gate_result.json",
+            "docs/reference_cases/e4_pl_q1m_blocked_status.json",
+            "docs/reference_cases/e4_pl_q1m_blocked_review.json",
+        ],
+        "review_independence": {
+            "did_not_author_candidate": True,
+            "did_not_execute_resource_lanes": True,
+            "reviewed_frozen_evidence_only": True,
+        },
+        "review_required_keys": [
+            "findings",
+            "reviewed_inputs",
+            "reviewer_independence",
+            "schema",
+            "verdict",
+        ],
+        "reviewed_input_hashes": [
+            "contract_sha256",
+            "gate_result_sha256",
+            "status_sha256",
+        ],
+        "status_required_keys": [
+            "clean_gate_index",
+            "gate_result_sha256",
+            "legacy_removal_authorized",
+            "schema",
+            "terminal",
+        ],
+        "success_terminal": "Q1M_CLEAN_GATE_1_OF_2_RECORDED",
+        "success_paths": [
+            "docs/reference_cases/e4_pl_q1m_gate_result.json",
+            "docs/reference_cases/e4_pl_q1m_status.json",
+            "docs/reference_cases/e4_pl_q1m_review.json",
+        ],
+        "success_commit_subject": "docs: record E4 PL Q1M clean burn-in gate 1",
+    }
+    assert contract["repository_cleanliness"] == {
+        "ANYfem": "FULLY_CLEAN_INCLUDING_UNTRACKED",
+        "ANYfileIO": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+        "ANYgeometry": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+        "ANYmaterial": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+        "ANYmesh": "TRACKED_AND_INDEX_CLEAN_HEAD_ARCHIVE_UNTRACKED_EXCLUDED",
+        "ANYsolver": "FULLY_CLEAN_INCLUDING_UNTRACKED",
+    }
+    for lane, authority in contract["non_resource_commands"].items():
+        assert authority["command_sha256"] == hashlib.sha256(
+            authority["command"].encode("utf-8")
+        ).hexdigest(), lane
+    plan = (
+        ROOT / "docs" / "agent_plans" / "S4_E4_PL_Q1M_BURNIN_HARDENING_PLAN.md"
+    ).read_text(encoding="utf-8")
+    for value in (
+        contract["gate_result_schema"],
+        contract["package_result_schema"],
+        contract["status_schema"],
+        contract["review_schema"],
+        contract["adjudication"]["success_terminal"],
+        contract["adjudication"]["blocked_terminal"],
+        contract["adjudication"]["accepted_success_verdict"],
+        contract["adjudication"]["accepted_blocked_verdict"],
+        contract["adjudication"]["success_commit_subject"],
+        contract["adjudication"]["blocked_commit_subject"],
+        *contract["adjudication"]["success_paths"],
+        *contract["adjudication"]["blocked_paths"],
+    ):
+        assert value in plan
+    assert contract["hard_performance_gates"] == {
+        "batch_path_equality": [
+            "tests/test_e4_pl_workflow_parity.py::test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle",
+            "tests/test_e4_pl_workflow_parity.py::test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry",
+        ],
+        "q4_numerical_parity": [
+            "tests/test_e4_pl_workflow_parity.py::test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle",
+        ],
+        "warm_cache_reuse": [
+            "tests/test_e4_pl_workflow_parity.py::test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry",
+        ],
+    }
+    assert contract["performance_baseline"] == {
+        "measurement_names": [
+            "qualified_q4_cached_tangent",
+            "qualified_q4_warm_global_assembly",
+        ],
+        "repetitions": 11,
+        "schema": "anysolver.s4.e4-pl-q1m-performance-baseline-v1",
+        "speed_claim": "GATE_1_BASELINE_ONLY_NO_SPEED_CLAIM",
+        "warmups": 1,
+    }
+    assert {
+        "ECOSYSTEM_ANYFEM_ENGINEERING_REFERENCE",
+        "NO_PRODUCTION_OR_PERFORMANCE_SELECTOR_BYPASS",
+        "PACKAGE_BUILD_AND_INSTALLED_WHEEL_SMOKE",
+    } <= set(contract["removal_gates"])
+    default = shell_formulation_diagnostics(node_count=4)
+    assert default == {
+        "schema": "anysolver.shell-formulation-diagnostics-v1",
+        "node_count": 4,
+        "requested_formulation": None,
+        "selected_formulation": "e4-pl",
+        "production_default": True,
+        "topology_policy": "QUALIFIED_E4_PL_Q4",
+        "legacy_q4": {
+            "state": "DEPRECATED_BURN_IN_ROLLBACK",
+            "available_through": "0.4.x",
+            "removal_not_before": "0.5.0",
+            "selector": "legacy",
+            "warning": "LegacyQ4DeprecationWarning",
+        },
+    }
+    rollback = shell_formulation_diagnostics(node_count=4, formulation="legacy_s4")
+    assert rollback["selected_formulation"] == "legacy"
+    assert rollback["topology_policy"] == "DEPRECATED_LEGACY_Q4_ROLLBACK"
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    migration = (ROOT / "docs" / "E4_PL_MIGRATION.md").read_text(encoding="utf-8")
+    assert "docs/E4_PL_MIGRATION.md" in readme
+    assert "0.4.x" in migration and "0.5.0" in migration
+
+
+def test_legacy_q4_factory_and_direct_class_emit_dedicated_warning() -> None:
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        rollback = create_shell_element(
+            1, [1, 2, 3, 4], "steel", formulation="legacy"
+        )
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        alias = create_element("legacy-shell", 2, [1, 2, 3, 4], "steel")
+    with pytest.warns(LegacyQ4DeprecationWarning, match="temporary rollback"):
+        direct = ShellElement(3, [1, 2, 3, 4], "steel")
+    assert type(rollback) is ShellElement
+    assert type(alias) is ShellElement
+    assert type(direct) is ShellElement
+
+
+def test_default_q4_and_preserved_non_q4_topologies_do_not_warn() -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        default = create_shell_element(1, [1, 2, 3, 4], "steel")
+        tri3 = create_shell_element(2, [1, 2, 3], "steel")
+        tri6 = create_shell_element(3, list(range(1, 7)), "steel")
+        q8 = create_shell_element(4, list(range(1, 9)), "steel")
+    assert type(default) is QualifiedE4PLShellElement
+    assert type(tri3) is ShellElement
+    assert type(tri6) is ShellElement
+    assert type(q8) is ShellElement
+    assert [item for item in caught if item.category is LegacyQ4DeprecationWarning] == []
+    for count in (3, 6, 8):
+        diagnostic = shell_formulation_diagnostics(node_count=count)
+        assert diagnostic["topology_policy"] == "PRESERVED_LEGACY_NON_Q4"
+
+
+def test_diagnostics_fail_closed_for_unknown_topology_and_formulation() -> None:
+    with pytest.raises(ValueError, match="node_count"):
+        shell_formulation_diagnostics(node_count=5)
+    with pytest.raises(ValueError, match="Unknown shell formulation"):
+        shell_formulation_diagnostics(node_count=4, formulation="experimental")
+    with pytest.raises(ValueError, match="only for four-node"):
+        shell_formulation_diagnostics(node_count=8, formulation="e4-pl")
+
+
+def test_migration_surface_is_mechanics_free_and_production_bypasses_stay_closed() -> None:
+    diagnostics_source = ast.parse(
+        (ROOT / "src" / "anysolver" / "elements.py").read_text(encoding="utf-8")
+    )
+    function = next(
+        node
+        for node in diagnostics_source.body
+        if isinstance(node, ast.FunctionDef)
+        and node.name == "shell_formulation_diagnostics"
+    )
+    called = {
+        node.func.id
+        for node in ast.walk(function)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+    }
+    assert called <= {"int", "str", "ValueError", "_normalized_shell_formulation"}
+
+    bypasses: list[str] = []
+    legacy_calls: set[str] = set()
+    routed_scripts: set[str] = set()
+    routed_performance_tests: set[str] = set()
+    performance_paths = [
+        ROOT / relative for relative in _gate_module().inventory()["performance"]
+    ]
+    guarded_paths = [
+        *(ROOT / "src" / "anysolver").rglob("*.py"),
+        *(ROOT / "scripts").glob("*.py"),
+        *performance_paths,
+    ]
+    for path in guarded_paths:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        shell_aliases = {"ShellElement"}
+        legacy_aliases = {"LegacyShellElement"}
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+            for imported in node.names:
+                local_name = imported.asname or imported.name
+                if imported.name == "ShellElement":
+                    shell_aliases.add(local_name)
+                elif imported.name == "LegacyShellElement":
+                    legacy_aliases.add(local_name)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            called_name = (
+                node.func.id
+                if isinstance(node.func, ast.Name)
+                else node.func.attr
+                if isinstance(node.func, ast.Attribute)
+                else None
+            )
+            if called_name in shell_aliases or called_name == "ShellElement":
+                bypasses.append(f"{path.relative_to(ROOT)}:{node.lineno}")
+            if called_name in legacy_aliases or called_name == "LegacyShellElement":
+                legacy_calls.add(path.relative_to(ROOT).as_posix())
+            if (
+                path.parent == ROOT / "scripts"
+                and called_name == "create_element"
+                and node.args
+                and isinstance(node.args[0], ast.Constant)
+                and node.args[0].value == "shell"
+            ):
+                routed_scripts.add(path.relative_to(ROOT).as_posix())
+            if (
+                path in performance_paths
+                and called_name == "create_element"
+                and node.args
+                and isinstance(node.args[0], ast.Constant)
+                and node.args[0].value == "shell"
+            ):
+                routed_performance_tests.add(path.relative_to(ROOT).as_posix())
+    assert bypasses == []
+    assert legacy_calls == {
+        "src/anysolver/elements.py",
+        "tests/test_performance_improvements.py",
+    }
+    assert routed_scripts >= {
+        "scripts/benchmark_advanced_s4_batches.py",
+        "scripts/benchmark_contact_work_buffer.py",
+        "scripts/benchmark_damage_matrix_updates.py",
+        "scripts/benchmark_impact_reduced_assembly.py",
+        "scripts/benchmark_sol_ultra_performance.py",
+        "scripts/verify_sol_ultra_numerics.py",
+    }
+    assert routed_performance_tests >= {
+        "tests/test_advanced_s4_batches.py",
+        "tests/test_corotational_performance.py",
+        "tests/test_damage_matrix_performance.py",
+        "tests/test_impact_tangent_reuse.py",
+        "tests/test_nonlinear_performance.py",
+        "tests/test_nonlinear_performance_batch_b.py",
+        "tests/test_performance_improvements.py",
+        "tests/test_vectorized_hill48.py",
+    }
+
+
+def test_every_test_file_has_one_burn_in_lane_and_heavy_files_are_serialized() -> None:
+    gate = _gate_module()
+    lanes = gate.inventory()
+    discovered = {
+        path.relative_to(ROOT).as_posix() for path in (ROOT / "tests").glob("test_*.py")
+    }
+    classified = [path for paths in lanes.values() for path in paths]
+    assert len(classified) == len(set(classified))
+    assert set(classified) == discovered
+    assert "tests/test_e4_pl_burnin.py" in lanes["quick"]
+    assert "tests/test_fe_solver_shell_verification.py" in lanes["functional"]
+    assert "tests/test_nonlinear_performance.py" in lanes["performance"]
+    assert "tests/test_e4_pl_q1v_contract.py" in lanes["extended"]
+    assert all("performance" not in Path(path).name for path in lanes["functional"])
+
+
+def test_package_lane_is_isolated_and_covers_the_declared_wheel_smoke() -> None:
+    gate = _gate_module()
+    assert gate.PACKAGE_CHECKS == (
+        "BUILD_LOCAL_WHEELS_WITHOUT_ISOLATION",
+        "INSTALL_FRESH_TARGET_WITHOUT_DEPENDENCY_RESOLUTION",
+        "REJECT_SOURCE_TREE_IMPORTS",
+        "VERIFY_QUALIFIED_Q4_DEFAULT",
+        "VERIFY_NON_Q4_PRESERVATION",
+        "VERIFY_DIAGNOSTICS_EXPORT",
+        "VERIFY_EXPLICIT_LEGACY_WARNING",
+    )
+    assert [(name, distribution, package) for name, distribution, package in gate.LOCAL_DISTRIBUTIONS] == [
+        ("ANYgeometry", "ANYgeometry", "anygeometry"),
+        ("ANYmaterial", "ANYmaterial", "anymaterial"),
+        ("ANYmesh", "ANYmesher", "anymesher"),
+        ("ANYfileIO", "ANYfileio", "anyfileio"),
+        ("ANYsolver", "ANYsolver", "anysolver"),
+    ]
+    source = (ROOT / "scripts" / "run_e4_pl_burnin_gate.py").read_text(encoding="utf-8")
+    assert 'environment.pop("PYTHONPATH", None)' in source
+    assert 'environment.pop("PYTHONHOME", None)' in source
+    assert 'environment["PYTHONNOUSERSITE"] = "1"' in source
+    assert '"archive"' in source
+    assert '"--format=zip"' in source
+    assert '"--untracked-files=no"' in source
+    assert "_copy_source_snapshot" not in source
+    assert '"--no-build-isolation"' in source
+    assert '"--no-deps"' in source
+    assert '"-I"' in source
+    assert "source repository leaked onto sys.path" in gate.PACKAGE_SMOKE
+    assert "QualifiedE4PLShellElement" in gate.PACKAGE_SMOKE
+    assert "LegacyQ4DeprecationWarning" in gate.PACKAGE_SMOKE
+
+
+def test_package_snapshot_uses_only_clean_tracked_head(tmp_path: Path) -> None:
+    gate = _gate_module()
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    subprocess.run(["git", "init", "-q", str(repository)], check=True)
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "user.email", "q1m@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "user.name", "Q1M Test"],
+        check=True,
+    )
+    (repository / "tracked.txt").write_text("authority\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repository), "add", "tracked.txt"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repository), "commit", "-q", "-m", "fixture"], check=True
+    )
+    (repository / "untracked-s3.txt").write_text("must not enter archive\n", encoding="utf-8")
+
+    snapshot = tmp_path / "snapshot"
+    source = gate._archive_head_snapshot(
+        repository,
+        tmp_path / "archives" / "repository.zip",
+        snapshot,
+        environment=os.environ.copy(),
+    )
+    assert (snapshot / "tracked.txt").read_text(encoding="utf-8") == "authority\n"
+    assert not (snapshot / "untracked-s3.txt").exists()
+    assert source["commit"] == subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert source["content"]["files"] == 1
+
+    (repository / "tracked.txt").write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="tracked or index changes"):
+        gate._archive_head_snapshot(
+            repository,
+            tmp_path / "archives" / "dirty.zip",
+            tmp_path / "dirty-snapshot",
+            environment=os.environ.copy(),
+        )
+
+
+def test_package_result_binds_source_archives_and_wheel_identity() -> None:
+    gate = _gate_module()
+    gate_result = _prospective_gate_result(gate)
+    package = _prospective_package_result(gate, gate_result)
+    gate.validate_package_result(package)
+
+    mutation = copy.deepcopy(package)
+    mutation["sources"]["ANYmesh"]["content"]["sha256"] = "invalid"
+    with pytest.raises(gate.EvidenceError, match="invalid format"):
+        gate.validate_package_result(mutation)
+
+
+def test_strict_json_rejects_duplicate_keys_and_nonfinite_values() -> None:
+    gate = _gate_module()
+    with pytest.raises(gate.EvidenceError, match="duplicate JSON key"):
+        gate.strict_json_loads('{"schema":"one","schema":"two"}')
+    for token in ("NaN", "Infinity", "-Infinity"):
+        with pytest.raises(gate.EvidenceError, match="non-finite"):
+            gate.strict_json_loads('{"value":' + token + "}")
+    with pytest.raises(gate.EvidenceError, match="non-finite"):
+        gate.canonical_json_bytes({"value": float("nan")})
+
+
+def test_gate_result_schema_is_canonical_and_exclusive(
+    tmp_path: Path, monkeypatch
+) -> None:
+    gate = _gate_module()
+    record = _prospective_gate_result(gate)
+    first = gate.canonical_gate_result_bytes(record)
+    second = gate.canonical_gate_result_bytes(copy.deepcopy(record))
+    assert first == second
+    assert first.endswith(b"\n")
+    assert first == gate.canonical_json_bytes(gate.strict_json_loads(first))
+    output = tmp_path / "gate.json"
+    with pytest.raises(gate.EvidenceError, match="repository/request/log bindings"):
+        gate.write_gate_result_exclusive(output, record)
+    monkeypatch.setattr(gate, "canonical_gate_result_bytes", lambda *args, **kwargs: first)
+    bindings = {
+        "repository_paths": {},
+        "lane_log_paths": {},
+        "package_result_path": tmp_path / "package.json",
+        "request_paths": {},
+        "wheel_path": tmp_path / "candidate.whl",
+    }
+    gate.write_gate_result_exclusive(output, record, **bindings)
+    assert output.read_bytes() == first
+    with pytest.raises(gate.EvidenceError, match="refusing to replace"):
+        gate.write_gate_result_exclusive(output, record, **bindings)
+
+
+def test_gate_result_rejects_missing_mutated_and_reused_authority() -> None:
+    gate = _gate_module()
+    base = _prospective_gate_result(gate)
+
+    mutations = []
+
+    missing_lane = copy.deepcopy(base)
+    del missing_lane["lanes"]["package"]
+    mutations.append(missing_lane)
+
+    changed_inventory = copy.deepcopy(base)
+    changed_inventory["lanes"]["quick"]["inventory"] = []
+    mutations.append(changed_inventory)
+
+    arbitrary_command = copy.deepcopy(base)
+    arbitrary_command["lanes"]["quick"]["command_sha256"] = "f" * 64
+    mutations.append(arbitrary_command)
+
+    empty_log = copy.deepcopy(base)
+    empty_log["lanes"]["package"]["log"] = {
+        "bytes": 0,
+        "sha256": hashlib.sha256(b"").hexdigest(),
+    }
+    mutations.append(empty_log)
+
+    contradictory_exit = copy.deepcopy(base)
+    contradictory_exit["lanes"]["anyfem"]["exit_code"] = 1
+    mutations.append(contradictory_exit)
+
+    changed_hash = copy.deepcopy(base)
+    changed_hash["resource_requests"][0]["request_sha256"] = "8" * 64
+    mutations.append(changed_hash)
+
+    reused_id = copy.deepcopy(base)
+    reused_id["resource_requests"][1]["request_id"] = reused_id["resource_requests"][0]["request_id"]
+    mutations.append(reused_id)
+
+    dirty_candidate = copy.deepcopy(base)
+    dirty_candidate["candidate"]["clean"] = False
+    mutations.append(dirty_candidate)
+
+    wrong_anyfem = copy.deepcopy(base)
+    wrong_anyfem["siblings"]["ANYfem"]["commit"] = "9" * 40
+    mutations.append(wrong_anyfem)
+
+    wrong_wheel_hash = copy.deepcopy(base)
+    wrong_wheel_hash["wheel"]["sha256"] = "not-a-hash"
+    mutations.append(wrong_wheel_hash)
+
+    early_removal = copy.deepcopy(base)
+    early_removal["legacy_removal_authorized"] = True
+    mutations.append(early_removal)
+
+    for mutation in mutations:
+        with pytest.raises(gate.EvidenceError):
+            gate.validate_gate_result(mutation)
+
+
+def test_failed_or_rollback_gate_cannot_increment_clean_counter() -> None:
+    gate = _gate_module()
+    unrecorded_failure = _blocked_at(
+        gate,
+        _prospective_gate_result(gate),
+        "functional",
+        "FUNCTIONAL_GATE_FAILED",
+    )
+    unrecorded_failure["rollback"] = {
+        "state": "NO_UNRESOLVED_ROLLBACK_INCIDENT",
+        "unresolved_incidents": [],
+    }
+    with pytest.raises(gate.EvidenceError, match="rollback incident"):
+        gate.validate_gate_result(unrecorded_failure)
+
+    failed = _blocked_at(
+        gate,
+        _prospective_gate_result(gate),
+        "functional",
+        "FUNCTIONAL_GATE_FAILED",
+    )
+    gate.validate_gate_result(failed)
+
+    incident = _prospective_gate_result(gate)
+    incident["rollback"] = {
+        "state": "UNRESOLVED_LEGACY_Q4_ROLLBACK_INCIDENT",
+        "unresolved_incidents": ["INCIDENT-1"],
+    }
+    incident["clean_gate_index"] = 0
+    gate.validate_gate_result(incident)
+
+    invalid = copy.deepcopy(failed)
+    invalid["clean_gate_index"] = 1
+    with pytest.raises(gate.EvidenceError, match="clean_gate_index"):
+        gate.validate_gate_result(invalid)
+
+
+def test_fail_fast_blocked_result_forbids_fabricated_downstream_evidence() -> None:
+    gate = _gate_module()
+    blocked = _blocked_at(
+        gate, _prospective_gate_result(gate), "quick", "QUICK_GATE_FAILED"
+    )
+    gate.validate_gate_result(blocked)
+    assert "package_result" not in blocked and "wheel" not in blocked
+    assert "performance_baseline" not in blocked and "hard_gates" not in blocked
+
+    fabricated = copy.deepcopy(blocked)
+    fabricated["wheel"] = {
+        "bytes": 1,
+        "filename": "fabricated.whl",
+        "sha256": "a" * 64,
+    }
+    with pytest.raises(gate.EvidenceError, match="package artifacts are forbidden"):
+        gate.validate_gate_result(fabricated)
+
+    logged_not_run = copy.deepcopy(blocked)
+    logged_not_run["lanes"]["package"]["log"] = {
+        "bytes": 1,
+        "sha256": "b" * 64,
+    }
+    with pytest.raises(gate.EvidenceError, match="keys mismatch"):
+        gate.validate_gate_result(logged_not_run)
+
+    out_of_order = copy.deepcopy(blocked)
+    out_of_order["lanes"]["functional"]["status"] = "PASS"
+    with pytest.raises(gate.EvidenceError):
+        gate.validate_gate_result(out_of_order)
+
+
+def test_repository_identity_validation_fails_closed_on_dirty_inputs(monkeypatch) -> None:
+    gate = _gate_module()
+    record = _prospective_gate_result(gate)
+    paths = {name: Path(name) for name in ("ANYsolver", *gate.SIBLING_NAMES)}
+
+    def dirty_git(_repository: Path, *args: str) -> str:
+        return " M tracked.py" if args[0] == "status" else ""
+
+    monkeypatch.setattr(gate, "_git", dirty_git)
+    with pytest.raises(gate.EvidenceError, match="has any changes"):
+        gate.validate_gate_result(record, repository_paths=paths)
+
+
+def test_repository_cleanliness_policy_is_full_for_candidate_and_anyfem(monkeypatch) -> None:
+    gate = _gate_module()
+    record = _prospective_gate_result(gate)
+    paths = {name: Path(name) for name in ("ANYsolver", *gate.SIBLING_NAMES)}
+    status_modes = {}
+
+    def clean_git(repository: Path, *args: str) -> str:
+        name = repository.name
+        if args[0] == "status":
+            status_modes[name] = args[-1]
+            return ""
+        identity = record["candidate"] if name == "ANYsolver" else record["siblings"][name]
+        return identity["tree"] if args[-1] == "HEAD^{tree}" else identity["commit"]
+
+    monkeypatch.setattr(gate, "_git", clean_git)
+    gate.validate_gate_result(record, repository_paths=paths)
+    assert status_modes["ANYsolver"] == "--untracked-files=all"
+    assert status_modes["ANYfem"] == "--untracked-files=all"
+    for name in ("ANYmesh", "ANYgeometry", "ANYmaterial", "ANYfileIO"):
+        assert status_modes[name] == "--untracked-files=no"
+
+
+def test_external_log_and_wheel_hashes_are_verified(tmp_path: Path) -> None:
+    gate = _gate_module()
+    record = _prospective_gate_result(gate)
+    log_paths = {}
+    for lane in gate.GATE_LANES:
+        path = tmp_path / f"{lane}.log"
+        content = f"{lane}\n".encode("ascii")
+        if lane == "performance":
+            observation = {
+                "hard_gates": record["hard_gates"],
+                "performance_baseline": record["performance_baseline"],
+                "schema": gate.PERFORMANCE_OBSERVATION_SCHEMA,
+            }
+            content += gate.PERFORMANCE_BASELINE_MARKER
+            content += gate.canonical_json_bytes(observation)
+        path.write_bytes(content)
+        log_paths[lane] = path
+        record["lanes"][lane]["log"] = gate.file_hash_record(path)
+    wheel = tmp_path / record["wheel"]["filename"]
+    wheel.write_bytes(b"wheel bytes")
+    record["wheel"] = gate.wheel_hash_record(wheel)
+    gate.validate_gate_result(record, lane_log_paths=log_paths, wheel_path=wheel)
+
+    record["lanes"]["quick"]["log"]["sha256"] = "0" * 64
+    with pytest.raises(gate.EvidenceError, match="external log mismatch"):
+        gate.validate_gate_result(record, lane_log_paths=log_paths, wheel_path=wheel)
+
+
+def test_final_validation_binds_requests_logs_package_and_wheel(
+    tmp_path: Path, monkeypatch
+) -> None:
+    gate = _gate_module()
+    contract = copy.deepcopy(gate.strict_json_load(CONTRACT))
+    record = _prospective_gate_result(gate)
+
+    request_paths = {}
+    for lane, authority in contract["resource_requests"].items():
+        request = {"command": f"registered {lane}", "request_id": authority["request_id"]}
+        path = tmp_path / "requests" / f"{authority['request_id']}.json"
+        path.parent.mkdir(exist_ok=True)
+        path.write_bytes(gate.canonical_json_bytes(request))
+        request_paths[lane] = path
+        authority["request_sha256"] = gate.file_hash_record(path)["sha256"]
+        authority["command_sha256"] = hashlib.sha256(
+            request["command"].encode("utf-8")
+        ).hexdigest()
+        row = next(item for item in record["resource_requests"] if item["lane"] == lane)
+        row["request_sha256"] = authority["request_sha256"]
+        record["lanes"][lane]["command_sha256"] = authority["command_sha256"]
+
+    log_paths = {}
+    for lane in gate.GATE_LANES:
+        path = tmp_path / f"{lane}.log"
+        payload = f"{lane} passed\n".encode("ascii")
+        if lane == "performance":
+            observation = {
+                "hard_gates": record["hard_gates"],
+                "performance_baseline": record["performance_baseline"],
+                "schema": gate.PERFORMANCE_OBSERVATION_SCHEMA,
+            }
+            payload += gate.PERFORMANCE_BASELINE_MARKER + gate.canonical_json_bytes(observation)
+        path.write_bytes(payload)
+        log_paths[lane] = path
+        record["lanes"][lane]["log"] = gate.file_hash_record(path)
+
+    wheel = tmp_path / record["wheel"]["filename"]
+    wheel.write_bytes(b"preserved installed-wheel candidate")
+    record["wheel"] = gate.wheel_hash_record(wheel)
+    package = _prospective_package_result(gate, record)
+    package["wheels"]["ANYsolver"] = record["wheel"]
+    package_path = tmp_path / "package-result.json"
+    package_path.write_bytes(gate.canonical_json_bytes(package))
+    record["package_result"] = gate.file_hash_record(package_path)
+
+    monkeypatch.setattr(gate, "_validate_repository_identities", lambda *_args: None)
+    repositories = {name: tmp_path / name for name in ("ANYsolver", *gate.SIBLING_NAMES)}
+    gate.validate_final_gate_result(
+        record,
+        contract=contract,
+        repository_paths=repositories,
+        lane_log_paths=log_paths,
+        package_result_path=package_path,
+        request_paths=request_paths,
+        wheel_path=wheel,
+    )
+
+    package["sources"]["ANYmesh"]["commit"] = "d" * 40
+    package_path.write_bytes(gate.canonical_json_bytes(package))
+    record["package_result"] = gate.file_hash_record(package_path)
+    with pytest.raises(gate.EvidenceError, match="source identity mismatch"):
+        gate.validate_final_gate_result(
+            record,
+            contract=contract,
+            repository_paths=repositories,
+            lane_log_paths=log_paths,
+            package_result_path=package_path,
+            request_paths=request_paths,
+            wheel_path=wheel,
+        )
+
+
+def test_status_and_independent_review_bind_exact_canonical_inputs(tmp_path: Path) -> None:
+    gate = _gate_module()
+    contract = gate.strict_json_load(CONTRACT)
+    record = _prospective_gate_result(gate)
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_bytes(gate.canonical_json_bytes(record))
+    status = {
+        "clean_gate_index": 1,
+        "gate_result_sha256": gate.file_hash_record(gate_path)["sha256"],
+        "legacy_removal_authorized": False,
+        "schema": contract["status_schema"],
+        "terminal": contract["adjudication"]["success_terminal"],
+    }
+    status_path = tmp_path / "status.json"
+    status_path.write_bytes(gate.canonical_json_bytes(status))
+    review = {
+        "findings": [],
+        "reviewed_inputs": {
+            "contract_sha256": gate.file_hash_record(CONTRACT)["sha256"],
+            "gate_result_sha256": gate.file_hash_record(gate_path)["sha256"],
+            "status_sha256": gate.file_hash_record(status_path)["sha256"],
+        },
+        "reviewer_independence": contract["adjudication"]["review_independence"],
+        "schema": contract["review_schema"],
+        "verdict": contract["adjudication"]["accepted_success_verdict"],
+    }
+    review_path = tmp_path / "review.json"
+    review_path.write_bytes(gate.canonical_json_bytes(review))
+    with pytest.raises(gate.EvidenceError, match="outside the repository"):
+        gate.validate_adjudication_files(gate_path, status_path, review_path)
+    gate.validate_adjudication_files(
+        gate_path, status_path, review_path, repository_root=None
+    )
+
+    review["reviewed_inputs"]["status_sha256"] = "0" * 64
+    review_path.write_bytes(gate.canonical_json_bytes(review))
+    with pytest.raises(gate.EvidenceError, match="reviewed-input hashes"):
+        gate.validate_adjudication_files(
+            gate_path, status_path, review_path, repository_root=None
+        )
+
+
+def test_performance_hard_gates_and_timing_baseline_are_strict(tmp_path: Path) -> None:
+    gate = _gate_module()
+    record = _prospective_gate_result(gate)
+    gate.validate_gate_result(record)
+
+    changed_gate = copy.deepcopy(record)
+    changed_gate["hard_gates"]["warm_cache_reuse"]["observed"] = False
+    with pytest.raises(gate.EvidenceError, match="status contradicts"):
+        gate.validate_gate_result(changed_gate)
+
+    failed_gate = copy.deepcopy(record)
+    failed_gate["hard_gates"]["warm_cache_reuse"].update(
+        {"observed": False, "status": "FAIL"}
+    )
+    failed_gate["clean_gate_index"] = 0
+    failed_gate["rollback"] = {
+        "state": "UNRESOLVED_LEGACY_Q4_ROLLBACK_INCIDENT",
+        "unresolved_incidents": ["WARM_CACHE_GATE_FAILED"],
+    }
+    gate.validate_gate_result(failed_gate)
+
+    changed_statistic = copy.deepcopy(record)
+    changed_statistic["performance_baseline"]["measurements"][
+        "qualified_q4_cached_tangent"
+    ]["p95_ns"] = 10
+    with pytest.raises(gate.EvidenceError, match="timing samples"):
+        gate.validate_gate_result(changed_statistic)
+
+    observation = {
+        "hard_gates": record["hard_gates"],
+        "performance_baseline": record["performance_baseline"],
+        "schema": gate.PERFORMANCE_OBSERVATION_SCHEMA,
+    }
+    log = tmp_path / "performance.log"
+    log.write_bytes(
+        b"pytest output\n"
+        + gate.PERFORMANCE_BASELINE_MARKER
+        + gate.canonical_json_bytes(observation)
+    )
+    assert gate.extract_performance_observation(log) == observation
+
+    duplicate = tmp_path / "duplicate.log"
+    marker = gate.PERFORMANCE_BASELINE_MARKER + gate.canonical_json_bytes(observation)
+    duplicate.write_bytes(marker + marker)
+    with pytest.raises(gate.EvidenceError, match="exactly one"):
+        gate.extract_performance_observation(duplicate)
+
+
+def test_performance_baseline_statistic_definition_is_deterministic() -> None:
+    path = ROOT / "scripts" / "measure_e4_pl_q1m_baseline.py"
+    spec = importlib.util.spec_from_file_location("e4_pl_q1m_baseline", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.timing_summary(list(range(1, 12))) == {
+        "mad_ns": 3,
+        "median_ns": 6,
+        "p95_ns": 11,
+        "samples_ns": list(range(1, 12)),
+    }

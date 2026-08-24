@@ -17,7 +17,7 @@ from anysolver.damage_matrix_performance import (
     estimate_damage_matrix_combined_retained_bytes,
     estimate_damage_matrix_plan_retained_bytes,
 )
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 
 
@@ -36,7 +36,8 @@ def _panel(nx: int = 2, ny: int = 2) -> FEModel:
         for i in range(nx):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_element(
+                    "shell",
                     element_id,
                     [
                         node_ids[(i, j)],

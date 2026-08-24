@@ -3,7 +3,7 @@ import pytest
 from scipy.sparse.linalg import spsolve
 
 from anysolver.fe_core import FEModel
-from anysolver.elements import BeamElement, ShellElement
+from anysolver.elements import BeamElement, create_shell_element
 from anysolver.boundary import FixedSupport, LoadCase, BoundaryCondition
 from anysolver.assembly import build_constraint_transformation, solve_linear
 
@@ -127,7 +127,13 @@ def test_drilling_stabilization():
     model.add_node(4, 0.0, 1.0, 0.0)
 
     # Enable physical drilling stabilization parameter
-    elem = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01, drilling_stabilization=1.0e-3)
+    elem = create_shell_element(
+        1,
+        [1, 2, 3, 4],
+        "steel",
+        thickness=0.01,
+        drilling_stabilization=1.0e-3,
+    )
     model.add_element(1, elem)
 
     # Compute stiffness matrix
@@ -157,7 +163,7 @@ def test_global_stress_recovery():
     model.add_node(3, c - s, s + c, 0.0)  # (0, sqrt(2), 0)
     model.add_node(4, -s, c, 0.0)
 
-    elem = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    elem = create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
     model.add_element(1, elem)
 
     # Create displacements vector corresponding to pure uniaxial tension sigma_xx = 100 MPa along global X

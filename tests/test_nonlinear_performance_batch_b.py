@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 from anysolver import nonlinear_performance, nonlinear_static
 from anysolver.boundary import FixedSupport, LoadCase
-from anysolver.elements import ShellElement
+from anysolver.elements import create_element
 from anysolver.fe_core import FEModel
 from anysolver.jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED, jit_diagnostics
 from anysolver.mesh_gen import generate_simple_panel_mesh
@@ -33,7 +33,10 @@ def _tilted_shell_model() -> FEModel:
     model.add_node(2, 1.1, 0.2, 0.4)
     model.add_node(3, 1.0, 1.1, 0.9)
     model.add_node(4, -0.1, 0.9, 0.5)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.012))
+    model.add_element(
+        1,
+        create_element("shell", 1, [1, 2, 3, 4], "steel", thickness=0.012),
+    )
     return model
 
 

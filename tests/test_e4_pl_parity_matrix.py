@@ -28,7 +28,7 @@ def _public_shell_api() -> set[str]:
 
 def test_parity_matrix_classifies_every_public_shell_capability() -> None:
     matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
-    assert matrix["schema"] == "anysolver.s4.e4-pl-q1l-parity-matrix-v2"
+    assert matrix["schema"] == "anysolver.s4.e4-pl-q1m-parity-matrix-v3"
     assert set(matrix["public_api"]) == _public_shell_api()
     capabilities = matrix["capabilities"]
     assert len({row["id"] for row in capabilities}) == len(capabilities)
@@ -43,6 +43,8 @@ def test_parity_matrix_classifies_every_public_shell_capability() -> None:
         "physical_recovery",
         "deletion_damage_and_restart_state",
         "batched_assembly_and_performance",
+        "performance_and_verification_script_routing",
+        "ecosystem_anyfem_default_routing",
         "factory_and_default_activation",
     ):
         assert capability in required
@@ -57,8 +59,10 @@ def test_every_required_parity_item_is_closed_at_default_activation() -> None:
     ]
     assert open_required == []
     assert matrix["activation"] == {
+        "burn_in_contract": "Q1M_TWO_CLEAN_RELEASE_GATES",
         "default_factory": "QUALIFIED_E4_PL_Q4",
-        "explicit_legacy_rollback": True,
+        "explicit_legacy_rollback": "DEPRECATED_AVAILABLE_THROUGH_0.4.x",
+        "legacy_q4_removal_not_before": "0.5.0",
         "legacy_shell_default": False,
         "public_package_export": True,
         "qualified_element_factory_alias": True,
@@ -80,7 +84,7 @@ def test_warped_and_performance_rows_are_closed_before_activation() -> None:
         "SHARED_GEOMETRY_COLD_WARM_AND_NONLINEAR_BATCH_PARITY_TESTED"
     )
     assert by_id["factory_and_default_activation"]["status"] == (
-        "ACTIVATED_QUALIFIED_E4_PL_Q4_WITH_EXPLICIT_LEGACY_ROLLBACK"
+        "ACTIVATED_QUALIFIED_E4_PL_Q4_WITH_DEPRECATED_LEGACY_ROLLBACK"
     )
 
 

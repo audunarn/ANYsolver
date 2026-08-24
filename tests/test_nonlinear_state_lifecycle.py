@@ -10,7 +10,7 @@ import pytest
 
 from anysolver.arc_length import ArcLengthControl, solve_static_arc_length
 from anysolver.boundary import BoundaryCondition, LoadCase
-from anysolver.elements import ShellElement
+from anysolver.elements import create_shell_element
 from anysolver.fe_core import FEModel
 from anysolver.material_curves import DNVC208MaterialCurve
 from anysolver.nonlinear_static import (
@@ -58,7 +58,7 @@ def _plastic_membrane_patch(
     model.add_node(4, 0.0, WIDTH, 0.0)
     model.add_element(
         1,
-        ShellElement(1, [1, 2, 3, 4], "steel", THICKNESS),
+        create_shell_element(1, [1, 2, 3, 4], "steel", thickness=THICKNESS),
     )
     model.add_boundary_condition(
         BoundaryCondition("left_x", [1, 4], {"ux": 0.0})

@@ -11,6 +11,7 @@ from anysolver import (
     FixedSupport,
     LoadCase,
     ShellElement,
+    create_shell_element,
     validate_production_model,
 )
 
@@ -32,7 +33,9 @@ def test_material_construction_fails_fast_and_validation_rejects_invalid_thickne
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *coords)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.0))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.0)
+    )
 
     report = validate_production_model(model)
 
@@ -103,7 +106,9 @@ def test_validate_production_model_rejects_free_mechanism_by_default() -> None:
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *coords)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
 
     free_report = validate_production_model(model)
     allowed_report = validate_production_model(model, allow_free_mechanisms=True)
@@ -123,7 +128,9 @@ def test_validate_production_model_accepts_supported_plate() -> None:
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *coords)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
     model.add_boundary_condition(FixedSupport("fixed", [1]))
     model.add_boundary_condition(BoundaryCondition("edge_w", [2, 3, 4], {"uz": 0.0}))
 

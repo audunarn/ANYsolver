@@ -219,7 +219,7 @@ def test_state_von_mises_envelope_reconstructs_return_mapped_stress():
 def _clamped_grid_panel(n: int = 4) -> "object":
     """1 m x 1 m clamped shell grid that can actually bend and yield."""
     from anysolver.boundary import BoundaryCondition
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_shell_element
     from anysolver.fe_core import FEModel
 
     model = FEModel("yielding_panel")
@@ -236,7 +236,7 @@ def _clamped_grid_panel(n: int = 4) -> "object":
         for i in range(n):
             model.add_element(
                 element_id,
-                ShellElement(
+                create_shell_element(
                     element_id,
                     [node_of[(i, j)], node_of[(i + 1, j)], node_of[(i + 1, j + 1)], node_of[(i, j + 1)]],
                     "soft",
@@ -332,13 +332,15 @@ def test_rtcl_damage_ignores_compression_but_deletes_in_tension():
     """RTCL erosion: a compressed element accumulates no damage while a
     tension element with the same plastic strain softens and deletes."""
     from anysolver.contact import _plastic_impact_damage_update, _verification_contact_panel
-    from anysolver.elements import ShellElement
+    from anysolver.elements import create_shell_element
 
     model = _verification_contact_panel()
     # second shell, same material, so both categories are in scope
     model.add_node(5, 2.0, 0.0, 0.0)
     model.add_node(6, 2.0, 1.0, 0.0)
-    model.add_element(2, ShellElement(2, [2, 5, 6, 3], "soft", thickness=0.05))
+    model.add_element(
+        2, create_shell_element(2, [2, 5, 6, 3], "soft", thickness=0.05)
+    )
 
     E = float(model.materials["soft"].elastic_modulus)
     yield_strain = 0.01

@@ -39,7 +39,7 @@ from anysolver.benchmarks import BENCHMARK_CASES
 from anysolver.boundary import BoundaryCondition, LoadCase
 from anysolver.corotational import rotation_matrix_from_vector
 from anysolver.dynamics import TransientConfig, solve_transient_newmark
-from anysolver.elements import BeamElement, Element, ShellElement
+from anysolver.elements import BeamElement, Element, create_element
 from anysolver.fe_core import FEModel
 from anysolver.materials import Hill48Yield, OrthotropicMaterial
 from anysolver.matrix_assembly import (
@@ -711,7 +711,12 @@ def _single_corotational_model(kind: str) -> FEModel:
     if kind == "shell":
         for node_id, (x, y) in enumerate(((0, 0), (1, 0), (1, 1), (0, 1)), 1):
             model.add_node(node_id, float(x), float(y), 0.0)
-        model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+        model.add_element(
+            1,
+            create_element(
+                "shell", 1, [1, 2, 3, 4], "steel", thickness=0.01
+            ),
+        )
     else:
         model.add_node(1, 0.0, 0.0, 0.0)
         model.add_node(2, 1.0, 0.0, 0.0)

@@ -12,7 +12,12 @@ from anysolver.assembly import (
     solve_linear,
 )
 from anysolver.boundary import FixedSupport, LoadCase
-from anysolver.elements import BeamElement, CoupledBeamShellElement, ShellElement
+from anysolver.elements import (
+    BeamElement,
+    CoupledBeamShellElement,
+    ShellElement,
+    create_shell_element,
+)
 from anysolver.fe_core import FEModel
 from anysolver.mesh_gen import StiffenerCrossSection, generate_beam_mesh
 
@@ -55,7 +60,11 @@ def _rigid_mode_vector(model, mode):
 
 @pytest.mark.parametrize("node_ids", [[1, 2, 3, 4], list(range(1, 9))])
 def test_shell_shape_functions_partition_unity(node_ids):
-    element = ShellElement(1, node_ids, thickness=0.01)
+    element = (
+        create_shell_element(1, node_ids, thickness=0.01)
+        if len(node_ids) == 4
+        else ShellElement(1, node_ids, thickness=0.01)
+    )
 
     for xi, eta in [(-0.3, 0.7), (0.0, 0.0), (0.85, -0.6)]:
         N, dN_dxi, dN_deta = element.compute_shape_functions(xi, eta)
@@ -159,7 +168,9 @@ def test_shell_element_has_no_rigid_body_stiffness():
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, x, y, z)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.1))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.1)
+    )
 
     K, _, _ = assemble_system(model)
     stiffness_scale = max(float(sparse.linalg.norm(K)), 1.0)
@@ -182,7 +193,7 @@ def test_shell_constant_membrane_strain_patch_recovers_plane_stress():
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, x, y, z)
-    element = ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.04)
+    element = create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.04)
     model.add_element(1, element)
 
     eps_x = 1.0e-5
@@ -224,7 +235,9 @@ def test_consistent_shell_pressure_load_has_correct_resultant():
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, x, y, z)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.1))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.1)
+    )
 
     load_case = LoadCase("pressure")
     load_case.add_pressure_load(1, pressure=5.0)
@@ -304,7 +317,9 @@ def test_gravity_load_uses_element_mass_and_material_density():
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, x, y, z)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "light", thickness=0.2))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "light", thickness=0.2)
+    )
 
     load_case = LoadCase("gravity")
     load_case.set_gravity(0.0, 0.0, -9.81)
@@ -393,7 +408,9 @@ def test_acceleration_and_added_node_mass_load():
     model.add_material("steel", 2.1e11, 0.3, density=7850.0)
     for node_id, (x, y) in {1: (0.0, 0.0), 2: (1.0, 0.0), 3: (1.0, 1.0), 4: (0.0, 1.0)}.items():
         model.add_node(node_id, x, y, 0.0)
-    model.add_element(1, ShellElement(1, [1, 2, 3, 4], "steel", thickness=0.01))
+    model.add_element(
+        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+    )
     structural_mass = 7850.0 * 0.01 * 1.0
 
     # acceleration in +x produces a body load m * a

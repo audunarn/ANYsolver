@@ -72,11 +72,15 @@ from .elements import (
     DEFAULT_Q4_FORMULATION,
     BeamElement,
     CoupledBeamShellElement,
+    LEGACY_Q4_AVAILABLE_THROUGH,
+    LEGACY_Q4_REMOVAL_TARGET,
     LegacyShellElement,
+    LegacyQ4DeprecationWarning,
     QuadraticBeamElement,
     ShellElement,
     create_element,
     create_shell_element,
+    shell_formulation_diagnostics,
 )
 from .e4_pl_element import QualifiedE4PLShellElement
 from .boundary import (
@@ -489,12 +493,16 @@ __all__ = [
     "BeamElement",
     "CoupledBeamShellElement",
     "DEFAULT_Q4_FORMULATION",
+    "LEGACY_Q4_AVAILABLE_THROUGH",
+    "LEGACY_Q4_REMOVAL_TARGET",
     "LegacyShellElement",
+    "LegacyQ4DeprecationWarning",
     "QuadraticBeamElement",
     "QualifiedE4PLShellElement",
     "ShellElement",
     "create_element",
     "create_shell_element",
+    "shell_formulation_diagnostics",
     # Boundary and loads
     "BoundaryCondition",
     "FixedSupport",

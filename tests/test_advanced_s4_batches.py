@@ -10,9 +10,9 @@ from anysolver import (
     GeneralizedShellSection,
     Material,
     OrthotropicMaterial,
-    ShellElement,
     assemble_mass_matrix,
     assemble_stiffness_matrix,
+    create_element,
 )
 from anysolver.nonlinear_performance_bootstrap import (
     clear_nonlinear_assembly_cache,
@@ -95,7 +95,8 @@ def _shell_model(kind: str, *, with_mass: bool = False) -> FEModel:
             next_node += 1
         model.add_element(
             element_index,
-            ShellElement(
+            create_element(
+                "shell",
                 element_index,
                 node_ids,
                 material.name,
@@ -288,7 +289,8 @@ def test_unsupported_generalized_triangle_reports_scalar_fallback() -> None:
     model.add_node(1, 0.0, 0.0, 0.0)
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 0.1, 0.9, 0.0)
-    element = ShellElement(
+    element = create_element(
+        "shell",
         1,
         [1, 2, 3],
         material.name,
