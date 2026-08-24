@@ -401,6 +401,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "bubble_convention",
         "quadrature_id",
         "dynamic_reduction_policy",
+        "algebraic_coordinate_policy",
         "mass_moment_id",
         "state_layout_id",
     ):
@@ -419,6 +420,9 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     missing_mass_identity.pop("mass_moment_id")
     with pytest.raises(ValueError, match="mass moment identity"):
         shell_element_from_dict(missing_mass_identity)
+    mutated_descriptor = dict(payload, algebraic_coordinate_policy="INVENTED_DRILL_MASS")
+    with pytest.raises(ValueError, match="algebraic coordinate policy"):
+        shell_element_from_dict(mutated_descriptor)
     mutated_mass = dict(payload, mass_moment_id="UNDERINTEGRATED_DEGREE5")
     with pytest.raises(ValueError, match="mass moment identity"):
         shell_element_from_dict(mutated_mass)

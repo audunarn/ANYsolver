@@ -6,9 +6,12 @@
   companion candidate with frozen source identity, two bubble rotations,
   basis-invariant three-mode PL completion, stable serialization identity,
   authoritative-normal admission, formulation-native local recovery, and
-  analytic nodal-plus-bubble mass with the frozen Guyan reduction. Existing
-  S3 aliases remain legacy and every unqualified nonlinear, modal/transient,
-  contact, buckling, restart, reversal, and advanced-recovery path fails closed.
+  analytic nodal-plus-bubble mass with the frozen Guyan reduction. The modal
+  solver excludes exact zero-inertia drill coordinates without inventing mass,
+  using coordinate-invariant static condensation for bounded systems and a
+  fail-closed swapped descriptor pencil for larger systems. Existing S3 aliases remain legacy
+  and every unqualified nonlinear, transient, contact, buckling, restart,
+  reversal, and advanced-recovery path fails closed.
 - Keep qualified E4-PL as the production Q4 default and begin the explicit
   legacy-Q4 retirement window. Legacy Q4 selectors now emit a dedicated
   deprecation warning, diagnostics expose the selected formulation and

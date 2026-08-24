@@ -422,7 +422,7 @@ def solve_transient_newmark(
     cancellation_safe_point(cancellation_token, "transient.start")
     require_model_element_capabilities(
         model,
-        "modal_and_transient_algebraic_dynamics",
+        "transient_algebraic_dynamics",
         context="linear transient analysis",
     )
     model.apply_boundary_conditions()

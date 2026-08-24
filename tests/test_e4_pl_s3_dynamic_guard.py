@@ -9,7 +9,6 @@ from anysolver import (
     QualifiedE4PLS3ShellElement,
     RigidSphereImpact,
     TransientConfig,
-    solve_free_vibration,
     solve_transient_newmark,
     solve_transient_sphere_impact,
 )
@@ -33,12 +32,10 @@ def _model() -> FEModel:
     return model
 
 
-def test_modal_and_transient_reject_before_assembly() -> None:
+def test_transient_rejects_before_assembly() -> None:
     model = _model()
     before = model.mesh.revision_signature()
 
-    with pytest.raises(ElementCapabilityError, match="free-vibration.*7"):
-        solve_free_vibration(model, num_modes=1)
     with pytest.raises(ElementCapabilityError, match="linear transient.*7"):
         solve_transient_newmark(model, TransientConfig(dt=0.01, t_end=0.01))
 
@@ -90,7 +87,7 @@ def test_guard_diagnostics_are_sorted_and_bounded() -> None:
         )
 
     with pytest.raises(ElementCapabilityError) as caught:
-        solve_free_vibration(model, num_modes=1)
+        solve_transient_newmark(model, TransientConfig(dt=0.01, t_end=0.01))
 
     message = str(caught.value)
     assert message.index("3 (") < message.index("11 (")

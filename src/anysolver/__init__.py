@@ -26,6 +26,7 @@ from .control import (
     emit_progress,
 )
 from .element_capabilities import ElementCapabilityError
+from .algebraic_dynamics import AlgebraicDynamicsError
 from .outcomes import (
     SolveDisposition,
     SolveOutcome,
@@ -621,6 +622,7 @@ __all__ = [
     "TransientConfig",
     "TransientResult",
     "ElementCapabilityError",
+    "AlgebraicDynamicsError",
     "assemble_pressure_patch_load_vector",
     "solve_transient_newmark",
     "NonlinearTransientConfig",

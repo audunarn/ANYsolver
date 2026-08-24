@@ -29,6 +29,11 @@
     "condensed_mass": "Gb_TRANSPOSE_M_FULL_Gb",
     "corner_bubble_moment": "3*A/20",
     "corner_corner_moment": "A/6_DIAGONAL_A/12_OFF_DIAGONAL",
+    "descriptor_bounded_coordinate_solver": "STATIC_CONDENSATION_THROUGH_REDUCED_DIMENSION_512",
+    "descriptor_coordinate_shear_limit": "256",
+    "descriptor_large_system_policy": "SWAPPED_PENCIL_WITH_FAIL_CLOSED_COORDINATE_SHEAR",
+    "descriptor_modal_policy": "SWAPPED_MASSLESS_ALGEBRAIC_PENCIL_V1",
+    "descriptor_shift_ratio": "1e-6",
     "drill_inertia": "ZERO_ALGEBRAIC_COORDINATE",
     "gb": "VERTICAL_STACK_IDENTITY_AND_MINUS_KAA_INVERSE_KAQ"
   },
@@ -232,6 +237,7 @@
     }
   },
   "serialization_fingerprint": {
+    "algebraic_coordinate_policy": "S3_NODAL_DRILL_ZERO_INERTIA_V1",
     "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
     "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
     "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",

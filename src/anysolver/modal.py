@@ -10,10 +10,16 @@ from scipy import linalg, sparse
 from scipy.sparse import linalg as sparse_linalg
 
 from .assembly import build_constraint_transformation, build_reduced_rigid_body_modes
+from .algebraic_dynamics import (
+    AlgebraicDynamicsError,
+    DESCRIPTOR_MODAL_POLICY_ID,
+    build_declared_algebraic_basis,
+    declared_algebraic_mass_elements,
+    solve_descriptor_spectrum,
+)
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
-from .element_capabilities import require_model_element_capabilities
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import assemble_mass_matrix, assemble_stiffness_matrix
 from .recovery import ResourceConfig
@@ -171,12 +177,6 @@ def solve_free_vibration(
     cancellation_safe_point(cancellation_token, "modal.start")
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
-    require_model_element_capabilities(
-        model,
-        "modal_and_transient_algebraic_dynamics",
-        context="free-vibration analysis",
-    )
-
     model.apply_boundary_conditions()
     if session is None:
         K, stiffness_info = assemble_stiffness_matrix(model)
@@ -229,6 +229,17 @@ def solve_free_vibration(
         ),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
+    descriptor_formulations = [
+        {
+            "element_id": int(element_id),
+            "formulation_id": str(getattr(element, "formulation_id", "")),
+            "algebraic_coordinate_policy": str(
+                getattr(element, "dynamic_algebraic_policy", "")
+            ),
+        }
+        for element_id, element in sorted(model.mesh.elements.items())
+        if str(getattr(element, "dynamic_algebraic_policy", ""))
+    ]
 
     if K_red.shape[0] == 0:
         diagnostics = {"status": "empty_reduced_system"}
@@ -239,15 +250,66 @@ def solve_free_vibration(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
+            metadata=(
+                {
+                    "descriptor_modal_provenance": {
+                        "policy_id": DESCRIPTOR_MODAL_POLICY_ID,
+                        "elements": descriptor_formulations,
+                    }
+                }
+                if descriptor_formulations
+                else None
+            ),
         ).to_dict()
         return ModalResult([], num_modes, "empty_reduced_system", constraint_info, nullspace_info, assembly_info, diagnostics, result_case)
 
     K_sym = _sym(K_red)
     M_sym = _sym(M_red)
     n_red = int(K_sym.shape[0])
+    descriptor_elements: Tuple[int, ...] = ()
+    descriptor_modal = False
+    descriptor_certificate = None
     try:
         sparse_diagnostics: Dict[str, Any] = {}
-        if n_red <= dense_size_limit or n_red <= num_modes + 1:
+        descriptor_elements = declared_algebraic_mass_elements(model)
+        descriptor_modal = bool(descriptor_elements)
+        if descriptor_modal:
+            descriptor_basis = build_declared_algebraic_basis(
+                model,
+                M,
+                M_sym,
+                T,
+                independent_dofs,
+                dense_size_limit=dense_size_limit,
+            )
+            descriptor_certificate = descriptor_basis.diagnostics
+            descriptor = solve_descriptor_spectrum(
+                K_sym,
+                M_sym,
+                num_modes=num_modes,
+                dense_size_limit=dense_size_limit,
+                algebraic_nullity=int(descriptor_basis.reduced_basis.shape[1]),
+                algebraic_basis=descriptor_basis.reduced_basis,
+                target_shift=shift,
+                factorization_cache=(
+                    factorization_cache
+                    or (session.factorization_cache if session is not None else None)
+                ),
+            )
+            eigenvalues = descriptor.eigenvalues
+            eigenvectors = descriptor.eigenvectors
+            sparse_diagnostics = dict(descriptor.diagnostics)
+            sparse_diagnostics["declared_algebraic_element_ids"] = list(
+                descriptor_elements
+            )
+            sparse_diagnostics["declared_algebraic_formulations"] = (
+                descriptor_formulations
+            )
+            sparse_diagnostics["declared_algebraic_mass_certificate"] = (
+                descriptor_certificate
+            )
+            solver_kind = str(descriptor.diagnostics["solver"])
+        elif n_red <= dense_size_limit or n_red <= num_modes + 1:
             eigenvalues, eigenvectors = _dense_eigensolve(K_sym, M_sym)
             solver_kind = "dense_scipy_eigh"
         else:
@@ -263,7 +325,20 @@ def solve_free_vibration(
             )
             solver_kind = "sparse_scipy_eigsh"
     except Exception as exc:
-        diagnostics = {"status": "failed", "error": str(exc)}
+        diagnostics = {
+            "status": "failed",
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+        }
+        if isinstance(exc, AlgebraicDynamicsError):
+            diagnostics.update(
+                {
+                    "error_code": "ALGEBRAIC_DESCRIPTOR_INVALID",
+                    "policy_id": DESCRIPTOR_MODAL_POLICY_ID,
+                    "declared_algebraic_element_ids": list(descriptor_elements),
+                    "declared_algebraic_formulations": descriptor_formulations,
+                }
+            )
         result_case = make_result_case(
             name="modal",
             analysis_type="modal",
@@ -271,6 +346,16 @@ def solve_free_vibration(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
+            metadata=(
+                {
+                    "descriptor_modal_provenance": {
+                        "policy_id": DESCRIPTOR_MODAL_POLICY_ID,
+                        "elements": descriptor_formulations,
+                    }
+                }
+                if descriptor_formulations
+                else None
+            ),
         ).to_dict()
         return ModalResult([], num_modes, "failed", constraint_info, nullspace_info, assembly_info, diagnostics, result_case)
 
@@ -279,8 +364,22 @@ def solve_free_vibration(
     order = np.argsort(np.real(eigenvalues))
     eigenvalues = np.real(eigenvalues[order])
     eigenvectors = np.real(eigenvectors[:, order])
+    stiffness_operator_norm = (
+        float(sparse_linalg.norm(K_sym)) if descriptor_modal else 0.0
+    )
+    mass_operator_norm = float(sparse_linalg.norm(M_sym)) if descriptor_modal else 0.0
+    if descriptor_modal and Q.shape[1]:
+        mass_times_rigid = np.asarray(M_sym @ Q, dtype=float)
+        rigid_mass_gram = np.asarray(Q.T @ mass_times_rigid, dtype=float)
+        rigid_mass_inverse = np.linalg.pinv(
+            0.5 * (rigid_mass_gram + rigid_mass_gram.T), rcond=1.0e-12
+        )
+    else:
+        mass_times_rigid = np.zeros((n_red, 0), dtype=float)
+        rigid_mass_inverse = np.zeros((0, 0), dtype=float)
 
     modes: List[ModalMode] = []
+    descriptor_backward_errors: List[float] = []
     for value, vector in zip(eigenvalues, eigenvectors.T):
         cancellation_safe_point(
             cancellation_token,
@@ -297,14 +396,57 @@ def solve_free_vibration(
         reduced = reduced / np.sqrt(modal_mass)
         reduced = _deterministic_sign(reduced)
         modal_mass = float(reduced @ (M_sym @ reduced))
-        modal_stiffness = float(reduced @ (K_sym @ reduced))
-        eig = max(float(value), 0.0) if abs(float(value)) <= eigen_tolerance else float(value)
+        raw_modal_stiffness = float(reduced @ (K_sym @ reduced))
+        if descriptor_modal:
+            # The descriptor solver may obtain the certified finite value from
+            # a statically condensed quotient.  Recomputing x^T K x in a
+            # strongly sheared algebraic coordinate system can catastrophically
+            # cancel even when the full residual is at componentwise roundoff.
+            modal_stiffness = float(value)
+        else:
+            modal_stiffness = raw_modal_stiffness
+        eig = (
+            float(modal_stiffness)
+            if descriptor_modal
+            else (
+                max(float(value), 0.0)
+                if abs(float(value)) <= eigen_tolerance
+                else float(value)
+            )
+        )
+        reduced_norm = float(np.linalg.norm(reduced))
+        if descriptor_modal:
+            if Q.shape[1]:
+                coefficients = rigid_mass_inverse @ (mass_times_rigid.T @ reduced)
+                projected = Q @ coefficients
+                projected_mass = float(projected @ (M_sym @ projected))
+                rigid_corr = float(
+                    np.sqrt(max(projected_mass, 0.0) / max(modal_mass, np.finfo(float).tiny))
+                )
+            else:
+                rigid_corr = 0.0
+            rigid_corr = min(max(rigid_corr, 0.0), 1.0)
+        else:
+            # Preserve the established Q4/legacy/beam result semantics exactly.
+            rigid_corr = float(np.max(np.abs(Q.T @ reduced))) if Q.shape[1] else 0.0
         omega = float(np.sqrt(max(eig, 0.0)))
         frequency = omega / (2.0 * np.pi)
         residual = np.asarray(K_sym @ reduced - eig * (M_sym @ reduced), dtype=float).reshape(-1)
-        denominator = max(float(np.linalg.norm(K_sym @ reduced)) + abs(eig) * float(np.linalg.norm(M_sym @ reduced)), 1.0)
+        denominator = max(
+            float(np.linalg.norm(K_sym @ reduced))
+            + abs(eig) * float(np.linalg.norm(M_sym @ reduced)),
+            1.0,
+        )
+        if descriptor_modal:
+            backward_denominator = max(
+                (stiffness_operator_norm + abs(eig) * mass_operator_norm)
+                * reduced_norm,
+                1.0,
+            )
+            descriptor_backward_errors.append(
+                float(np.linalg.norm(residual) / backward_denominator)
+            )
         residual_norm = float(np.linalg.norm(residual) / denominator)
-        rigid_corr = float(np.max(np.abs(Q.T @ reduced))) if Q.shape[1] else 0.0
         is_rigid = bool(frequency <= rigid_body_frequency_tolerance or rigid_corr > 0.90)
         full = np.asarray(T @ reduced, dtype=float).reshape(-1)
         modes.append(
@@ -341,6 +483,11 @@ def solve_free_vibration(
             homogeneous_variation=True,
         ),
     }
+    if descriptor_modal:
+        diagnostics["descriptor_modal"] = True
+        diagnostics["max_normwise_backward_error"] = max(
+            descriptor_backward_errors, default=0.0
+        )
     if session is not None:
         diagnostics["analysis_session"] = session.diagnostics()
     result_case = make_result_case(
@@ -350,6 +497,16 @@ def solve_free_vibration(
         solver_info={"convergence_info": diagnostics},
         recovery={"modes": num_modes, "num_modes_returned": len(modes)},
         settings=settings,
+        metadata=(
+            {
+                "descriptor_modal_provenance": {
+                    "policy_id": DESCRIPTOR_MODAL_POLICY_ID,
+                    "elements": descriptor_formulations,
+                }
+            }
+            if descriptor_modal
+            else None
+        ),
     ).to_dict()
     emit_progress(
         progress_callback,

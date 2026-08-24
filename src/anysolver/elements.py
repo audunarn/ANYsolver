@@ -4816,10 +4816,11 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         raise ValueError("serialized qualified shell is missing formulation_id")
     if len(node_ids) not in {3, 4, 6, 8}:
         raise ValueError("serialized legacy shell requires 3, 4, 6 or 8 nodes")
-    return LegacyShellElement(
+    return create_shell_element(
         element_id=int(data["element_id"]),
         node_ids=node_ids,
         material_name=str(data.get("material_name", "default")),
+        formulation="legacy-s3" if len(node_ids) == 3 else "legacy",
         thickness=float(data.get("thickness", 0.01)),
         drilling_stabilization=float(data.get("drilling_stabilization", 1.0e-3)),
         reduced_integration=bool(data.get("reduced_integration", False)),

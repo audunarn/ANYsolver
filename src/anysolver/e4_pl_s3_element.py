@@ -42,6 +42,7 @@ BUBBLE_CONVENTION = "hierarchical_rotation_relative_to_corner_average"
 QUADRATURE_ID = "dunavant_degree5_7point"
 DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
 MASS_MOMENT_ID = "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1"
+ALGEBRAIC_COORDINATE_POLICY_ID = "S3_NODAL_DRILL_ZERO_INERTIA_V1"
 STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
 MINIMUM_OWNER_NORMAL_ALIGNMENT = 1.0e-8
 
@@ -95,7 +96,7 @@ CAPABILITY_GAPS = frozenset(
         "global_recovery",
         "initial_fields",
         "material_nonlinearity",
-        "modal_and_transient_algebraic_dynamics",
+        "transient_algebraic_dynamics",
         "nonlinear_geometry",
         "orthotropic_physical_recovery",
         "physical_director_reversal",
@@ -540,6 +541,10 @@ class QualifiedE4PLS3ShellElement(ShellElement):
     """Opt-in three-node flat MITC3+ shell with three-mode PL completion."""
 
     formulation_id = FORMULATION_ID
+    dynamic_algebraic_nullity = 3
+    dynamic_algebraic_policy = ALGEBRAIC_COORDINATE_POLICY_ID
+    dynamic_algebraic_mass_witness = "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1"
+    dynamic_algebraic_local_zero_indices = (5, 11, 17)
     legacy_stiffness_batch_eligible = False
     legacy_nonlinear_batch_eligible = False
 
@@ -639,6 +644,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "bubble_convention": BUBBLE_CONVENTION,
                 "quadrature_id": QUADRATURE_ID,
                 "dynamic_reduction_policy": DYNAMIC_REDUCTION_POLICY,
+                "algebraic_coordinate_policy": ALGEBRAIC_COORDINATE_POLICY_ID,
                 "mass_moment_id": MASS_MOMENT_ID,
                 "state_layout_id": STATE_LAYOUT_ID,
                 "reference_normal": (
@@ -663,6 +669,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError("serialized qualified S3 quadrature identity is incompatible")
         if data.get("dynamic_reduction_policy") != DYNAMIC_REDUCTION_POLICY:
             raise ValueError("serialized qualified S3 dynamic policy is incompatible")
+        if data.get("algebraic_coordinate_policy") != ALGEBRAIC_COORDINATE_POLICY_ID:
+            raise ValueError("serialized qualified S3 algebraic coordinate policy is incompatible")
         if data.get("mass_moment_id") != MASS_MOMENT_ID:
             raise ValueError("serialized qualified S3 mass moment identity is incompatible")
         if data.get("state_layout_id") != STATE_LAYOUT_ID:
@@ -1063,6 +1071,23 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             enforce_positive_winding=True,
         )
 
+    def dynamic_algebraic_directions(
+        self, mesh: Any, material: Any
+    ) -> np.ndarray:
+        """Return the three global nodal rotations with exactly zero inertia."""
+
+        components = self._compute_stiffness_components(
+            mesh, material, enforce_positive_winding=True
+        )
+        local = np.zeros((18, 3), dtype=float)
+        local[5, 0] = 1.0
+        local[11, 1] = 1.0
+        local[17, 2] = 1.0
+        transform = self._local_dof_transform(
+            np.asarray(components["frame"], dtype=float)
+        )
+        return np.asarray(transform.T @ local, dtype=float)
+
     def compute_geometric_stiffness_matrix(
         self, mesh: Any, material: Any, state: Optional[Any] = None
     ) -> np.ndarray:
@@ -1077,6 +1102,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
 
 __all__ = [
     "BUBBLE_CONVENTION",
+    "ALGEBRAIC_COORDINATE_POLICY_ID",
     "BUBBLE_OFFSET_D",
     "CAPABILITY_GAPS",
     "DYNAMIC_REDUCTION_POLICY",

@@ -2997,7 +2997,7 @@ def solve_transient_sphere_impact(
 
     require_model_element_capabilities(
         model,
-        ("contact_state", "modal_and_transient_algebraic_dynamics", "nonlinear_geometry"),
+        ("contact_state", "transient_algebraic_dynamics", "nonlinear_geometry"),
         context="sphere-impact analysis",
     )
     config = _resolved_contact_config(model, sphere, contact_config)

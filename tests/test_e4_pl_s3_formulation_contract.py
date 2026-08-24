@@ -6,7 +6,14 @@ from pathlib import Path
 
 import pytest
 
+from anysolver.algebraic_dynamics import (
+    DESCRIPTOR_COORDINATE_SHEAR_LIMIT,
+    DESCRIPTOR_DENSE_CONDENSATION_LIMIT,
+    DESCRIPTOR_MODAL_POLICY_ID,
+    DESCRIPTOR_SHIFT_RATIO,
+)
 from anysolver.e4_pl_s3_element import (
+    ALGEBRAIC_COORDINATE_POLICY_ID,
     BUBBLE_OFFSET_D,
     FORMULATION_ID,
     MASS_MOMENT_ID,
@@ -80,6 +87,7 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
         "rank": 17,
     }
     assert contract["serialization_fingerprint"] == {
+        "algebraic_coordinate_policy": ALGEBRAIC_COORDINATE_POLICY_ID,
         "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
         "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
         "formulation_id": FORMULATION_ID,
@@ -88,6 +96,20 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
         "quadrature_id": "dunavant_degree5_7point",
         "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1",
     }
+    assert contract["dynamic_policy"]["descriptor_modal_policy"] == DESCRIPTOR_MODAL_POLICY_ID
+    assert float(contract["dynamic_policy"]["descriptor_shift_ratio"]) == (
+        DESCRIPTOR_SHIFT_RATIO
+    )
+    assert contract["dynamic_policy"]["descriptor_bounded_coordinate_solver"] == (
+        "STATIC_CONDENSATION_THROUGH_REDUCED_DIMENSION_512"
+    )
+    assert int(contract["dynamic_policy"]["descriptor_coordinate_shear_limit"]) == (
+        int(DESCRIPTOR_COORDINATE_SHEAR_LIMIT)
+    )
+    assert DESCRIPTOR_DENSE_CONDENSATION_LIMIT == 512
+    assert contract["dynamic_policy"]["descriptor_large_system_policy"] == (
+        "SWAPPED_PENCIL_WITH_FAIL_CLOSED_COORDINATE_SHEAR"
+    )
 
 
 def test_quadrature_decimal_authority_integrates_reference_area() -> None:
