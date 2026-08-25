@@ -25,6 +25,12 @@ from .elements import (
     _shell_material_matrices,
 )
 from .materials import is_isotropic_material
+from .s3_reference_batch import (
+    MIN_REFERENCE_S3_RECOVERY_GROUP,
+    ReferenceS3RecoveryBatch,
+    build_reference_s3_recovery_batch,
+    reference_s3_candidate,
+)
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
@@ -90,6 +96,9 @@ class RecoveryBatchPlan:
     setup_seconds: float
     retained_bytes: int
     isotropic_s4: "RecoveryS4Batch | None"
+    reference_s3: "ReferenceS3RecoveryBatch | None"
+    reference_s3_candidate_ids: Tuple[int, ...]
+    reference_s3_fallback_reasons: Mapping[str, Tuple[int, ...]]
 
     @classmethod
     def build(cls, model: "FEModel") -> "RecoveryBatchPlan":
@@ -101,6 +110,7 @@ class RecoveryBatchPlan:
         s4_q_local = []
         s4_g_local = []
         s4_thickness = []
+        reference_s3_items = []
         retained_bytes = 0
         for element_id, element in model.mesh.elements.items():
             mapping = np.asarray(
@@ -116,6 +126,10 @@ class RecoveryBatchPlan:
                     dof_mapping=mapping,
                 )
             )
+            if reference_s3_candidate(element):
+                reference_s3_items.append(
+                    (int(element_id), element, mapping)
+                )
             if items[-1].formulation in {"shell_s4_isotropic", "shell_s4r_isotropic"}:
                 material = model.get_material(element.material_name)
                 q_local, g_local, _strain_transform, _stress_transform = (
@@ -148,6 +162,23 @@ class RecoveryBatchPlan:
                 ),
             )
             retained_bytes += isotropic_s4.retained_bytes
+        reference_s3 = None
+        reference_s3_candidate_ids: Tuple[int, ...] = ()
+        reference_s3_fallback_reasons: Mapping[str, Tuple[int, ...]] = (
+            MappingProxyType({})
+        )
+        # Keep small selections on the existing scalar oracle with no retained
+        # batch state.  This is intentionally checked before component
+        # preparation so ordinary small models pay no S3 batch setup cost.
+        if len(reference_s3_items) >= MIN_REFERENCE_S3_RECOVERY_GROUP:
+            reference_s3, prepared_s3 = build_reference_s3_recovery_batch(
+                model,
+                reference_s3_items,
+            )
+            reference_s3_candidate_ids = prepared_s3.candidate_element_ids
+            reference_s3_fallback_reasons = prepared_s3.fallback_reasons
+            if reference_s3 is not None:
+                retained_bytes += reference_s3.retained_bytes
         return cls(
             revision_key=_revision_key(model),
             items=item_tuple,
@@ -157,6 +188,9 @@ class RecoveryBatchPlan:
             setup_seconds=float(time.perf_counter() - start),
             retained_bytes=int(retained_bytes),
             isotropic_s4=isotropic_s4,
+            reference_s3=reference_s3,
+            reference_s3_candidate_ids=reference_s3_candidate_ids,
+            reference_s3_fallback_reasons=reference_s3_fallback_reasons,
         )
 
     def is_valid(self, model: "FEModel") -> bool:

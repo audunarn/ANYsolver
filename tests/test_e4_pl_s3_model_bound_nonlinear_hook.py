@@ -5,6 +5,8 @@ from typing import Any
 import numpy as np
 import pytest
 
+from anysolver.assembly import solve_nonlinear
+from anysolver.boundary import LoadCase
 from anysolver.corotational import (
     corotational_element_response,
     validate_corotational_scope,
@@ -20,6 +22,8 @@ from anysolver.nonlinear_static import (
 from anysolver.nonlinear_performance import (
     _state_has_initial_fields as _performance_state_has_initial_fields,
 )
+from anysolver.nonlinear import solve_nonlinear_load_stepping
+from anysolver.nonlinear_state import StateTransactionError
 
 
 _TRIANGLE = (
@@ -276,6 +280,39 @@ def test_generic_corotational_wrapper_rejects_native_s3_before_mechanics(
             committed_state=None,
             num_layers=3,
         )
+    assert calls == []
+
+
+def test_legacy_nonlinear_entry_points_reject_native_s3_before_mechanics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    element = QualifiedE4PLS3ShellElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        thickness=0.012,
+        reference_normal=[0.0, 0.0, 1.0],
+    )
+    model = _model_with(element)
+    load_case = LoadCase("zero")
+    calls: list[str] = []
+
+    def forbidden(*_args: Any, **_kwargs: Any) -> Any:
+        calls.append("mechanics")
+        raise AssertionError("legacy nonlinear entry evaluated native S3 mechanics")
+
+    monkeypatch.setattr(element, "compute_nonlinear_response", forbidden)
+    with pytest.warns(DeprecationWarning):
+        with pytest.raises(
+            StateTransactionError,
+            match=r"deprecated solve_nonlinear.*solver-owned native.*element IDs \[1\]",
+        ):
+            solve_nonlinear(model, load_case, max_iterations=1)
+    with pytest.raises(
+        StateTransactionError,
+        match=r"solve_nonlinear_load_stepping.*solver-owned native.*element IDs \[1\]",
+    ):
+        solve_nonlinear_load_stepping(model, load_case, num_steps=1)
     assert calls == []
 
 

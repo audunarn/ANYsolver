@@ -28,6 +28,12 @@ import numpy as np
 
 from anymaterial import StructuralMaterial, elastic_compliance_matrix, material_symmetry
 
+from .e4_pl_s3_initial_fields import (
+    GENERALIZED_INITIAL_FIELD_POLICY_ID,
+    integrate_generalized_initial_fields,
+)
+from .shell_sections import validate_generalized_shell_section
+
 
 FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
 FORMULATION_SCHEMA = "anysolver.e4_pl_s3.linear.v1"
@@ -64,25 +70,82 @@ MITC3_PLUS_NONLINEAR_EQUATION_MAP = MappingProxyType(
     }
 )
 EXTERNAL_COORDINATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_V1"
-NONLINEAR_STATE_SCHEMA = "anysolver.e4_pl_s3.committed_state.v1"
-NONLINEAR_STATE_VERSION = 1
-NONLINEAR_STATE_LAYOUT_ID = "S3_TL_Q18_TRIADS4_BUBBLE2_STATION7_LAYERED_V1"
+NONLINEAR_STATE_SCHEMA = "anysolver.e4_pl_s3.committed_state.v2"
+NONLINEAR_STATE_VERSION = 2
+NONLINEAR_STATE_LAYOUT_ID = (
+    "S3_TL_Q18_NODE_SO3_PL3_TRIADS4_BUBBLE2_STATION7_LAYERED_V2"
+)
 NONLINEAR_KINEMATICS_ID = (
-    "MITC3_PLUS_TOTAL_LAGRANGIAN_INCREMENTAL_DIRECTORS_EQ7_31_V1"
+    "MITC3_PLUS_TOTAL_LAGRANGIAN_SHARED_SO3_CORNERS_EQ7_31_V2"
 )
 DIRECTOR_GAUGE_ID = "MITC3_PLUS_EQ11_GLOBAL_EY_WITH_EZ_PARALLEL_FALLBACK_V1"
 EXTERNAL_ROTATION_MAP_ID = (
-    "GLOBAL_ADDITIVE_ROTATION_TO_EQ14_MINIMAL_DIRECTOR_SECOND_ORDER_V1"
+    "GLOBAL_COORDINATES_WITH_SOLVER_OWNED_LEFT_MULTIPLICATIVE_SO3_V1"
 )
+DIRECTOR_INCREMENT_MAP_ID = (
+    "CORNER_FROM_SOLVER_SHARED_SO3_BUBBLE_EQ14_HIERARCHICAL_V1"
+)
+SURFACE_ROTATION_POLICY_ID = "SURFACE_RIGHT_POLAR_FRAME_3X2_V1"
+PL_TWIST_POLICY_ID = "RELATIVE_SWING_TWIST_ATAN2_UNWRAPPED_V1"
+NODAL_ROTATION_UPDATE_POLICY_ID = "LEFT_MULTIPLICATIVE_SPATIAL_ROTATION_UPDATE_V1"
+PL_PHASE_POLICY_ID = "NEAREST_COMMITTED_PHASE_UNIQUE_PI_MARGIN_V1"
+NONLINEAR_PL_ENERGY_POLICY_ID = "BARYCENTRIC_PL_ENERGY_EXACT_HESSIAN_V1"
+PL_PHASE_MARGIN_ID = "PI_MINUS_64_SQRT_BINARY64_EPSILON_V1"
+PL_MINIMUM_TWIST_DENOMINATOR_ID = "64_SQRT_BINARY64_EPSILON_V1"
+PL_PHASE_MARGIN = 64.0 * math.sqrt(np.finfo(np.float64).eps)
+PL_MINIMUM_TWIST_DENOMINATOR = 64.0 * math.sqrt(np.finfo(np.float64).eps)
 BUBBLE_STATE_ROLE = "RESERVED_ZERO_NEW_INCREMENT_PREDICTOR_ONLY"
 BUBBLE_PREDICTOR_COMMIT_POLICY_ID = "RESET_TO_ZERO_AFTER_EVERY_ACCEPTED_STEP_V1"
 COMMIT_STATUS = "committed_converged"
 STATE_MODE = "layered_material"
 
+# Pre-integrated generalized sections have no layer/material-point history and
+# must never be serialized with the layered V2 schema.  Their state is a
+# separately identified contract so restart cannot silently reinterpret
+# section resultants as layer stresses (or vice versa).
+GENERALIZED_NONLINEAR_STATE_SCHEMA = (
+    "anysolver.e4_pl_s3.committed_state.generalized_section.v4"
+)
+GENERALIZED_NONLINEAR_STATE_VERSION = 4
+GENERALIZED_NONLINEAR_STATE_LAYOUT_ID = (
+    "S3_TL_Q18_NODE_SO3_PL3_TRIADS4_BUBBLE2_STATION7_"
+    "GENERALIZED_STATELESS_INITIAL_FIELDS_V4"
+)
+GENERALIZED_STATE_MODE = "stateless_generalized_section"
+GENERALIZED_ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA = (
+    "anysolver.e4_pl_s3.element_configuration.generalized_section.v3"
+)
+GENERALIZED_SECTION_DESCRIPTOR_SCHEMA = (
+    "anysolver.e4_pl_s3.generalized_section.binary64.v1"
+)
+GENERALIZED_STATE_FIELD_MANIFEST_ID = (
+    "S3_GENERALIZED_STATELESS_STATION7_SHARED_SO3_INITIAL_FIELDS_V2"
+)
+GENERALIZED_SECTION_HISTORY_POLICY_ID = (
+    "STATELESS_PREINTEGRATED_GENERALIZED_SECTION_ONLY_V1"
+)
+
 BUBBLE_CONVENTION = "hierarchical_rotation_relative_to_corner_average"
 QUADRATURE_ID = "dunavant_degree5_7point"
-NONLINEAR_POLICY_ID = "TOTAL_LAGRANGIAN_MITC3_PLUS_QUADRATIC_DIRECTOR_SCHUR_V1"
-RECOVERY_POLICY_ID = "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1"
+NONLINEAR_POLICY_ID = (
+    "TOTAL_LAGRANGIAN_MITC3_PLUS_SHARED_SO3_CORNER_BUBBLE_SCHUR_V2"
+)
+RECOVERY_POLICY_ID = "S3_NATIVE_PHYSICAL_DIRECTOR_POLARITY_RECOVERY_V2"
+DIRECTOR_POLARITY_POLICY_ID = (
+    "ELEMENT_OWNED_PHYSICAL_DIRECTOR_INDEPENDENT_OF_SHEET_OWNER_NORMAL_V1"
+)
+DIRECTOR_REVERSAL_TRANSFORM_ID = (
+    "GENERALIZED_DIAG_I3_POLARITY_I5_WITH_LAYER_ORDER_REVERSAL_V1"
+)
+REFERENCE_SURFACE_OFFSET_POLICY_ID = (
+    "SIGNED_SECTION_ORIGIN_TO_NODAL_REFERENCE_ALONG_PHYSICAL_DIRECTOR_V1"
+)
+REFERENCE_SURFACE_STRAIN_TRANSFORM_ID = (
+    "EPSILON_SECTION_EQ_EPSILON_REFERENCE_MINUS_OFFSET_KAPPA_V1"
+)
+REFERENCE_SURFACE_MASS_SHIFT_ID = (
+    "M1_REFERENCE_EQ_MINUS_OFFSET_M0_AND_M2_REFERENCE_EQ_M2_SECTION_PLUS_OFFSET_SQUARED_M0_V1"
+)
 NONLINEAR_SOURCE_SHA256 = MITC3_PLUS_NONLINEAR_SOURCE_SHA256
 BUBBLE_OFFSET_D = 1.0e-4
 BUBBLE_OFFSET_EXACT = "1/10000"
@@ -131,11 +194,13 @@ ISOTROPIC_CONSTITUTIVE_INTEGRATION_ID = "PLANE_STRESS_RETURN_MAP_CONSISTENT_V1"
 ORTHOTROPIC_CONSTITUTIVE_INTEGRATION_ID = (
     "HILL48_PLANE_STRESS_RETURN_MAP_CONSISTENT_V1"
 )
-GENERALIZED_SECTION_INTEGRATION_ID = "STATELESS_TOTAL_GENERALIZED_STRAIN_V1"
+GENERALIZED_SECTION_INTEGRATION_ID = (
+    "STATELESS_KINEMATIC_MINUS_INITIAL_EIGENSTRAIN_PLUS_INITIAL_RESULTANT_V2"
+)
 
 CANONICALIZATION_ID = "RFC8259_SORTED_UTF8_COMPACT_LF_SIGNED_ZERO_NORMALIZED_V1"
 ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA = (
-    "anysolver.e4_pl_s3.element_configuration.layered.v1"
+    "anysolver.e4_pl_s3.element_configuration.layered.v3"
 )
 MATERIAL_DESCRIPTOR_SCHEMA = "anysolver.e4_pl_s3.material.dataclass.v1"
 MATERIAL_DESCRIPTOR_VALIDATION_ID = (
@@ -268,11 +333,53 @@ LOBATTO_NORMALIZED_TABLES = (
 )
 
 STATE_FIELD_MANIFEST = {
+    "reference_corner_directors": {
+        "role": "immutable_element_owned_reference_with_strict_polarity",
+        "component_frame": "global",
+        "component_order": ("x", "y", "z"),
+        "point_order": "ordered_connectivity_nodes",
+    },
     "committed_total_u": {
         "role": "authoritative",
         "component_frame": "global",
         "component_order": EXTERNAL_NODE_COORDINATE_ORDER,
         "point_order": "ordered_connectivity_nodes",
+    },
+    "committed_nodal_rotation_matrices": {
+        "role": "authoritative_node_shared_redundant_copy",
+        "component_frame": "global_operator_rows_columns",
+        "component_order": ("global_x", "global_y", "global_z"),
+        "point_order": "ordered_connectivity_nodes",
+    },
+    "committed_pl_twist": {
+        "role": "authoritative_unwrapped_phase",
+        "component_frame": "relative_surface_nodal_twist",
+        "component_order": ("scalar_angle_radians",),
+        "point_order": "ordered_connectivity_nodes",
+    },
+    "committed_pl_turn_count": {
+        "role": "authoritative_unwrapped_phase_integer",
+        "component_frame": "relative_surface_nodal_twist",
+        "component_order": ("integer_turn_count",),
+        "point_order": "ordered_connectivity_nodes",
+    },
+    "committed_pl_multiplier": {
+        "role": "numerical_diagnostic",
+        "component_frame": "barycentric_pl_constraint",
+        "component_order": ("tau_equals_kd_times_twist",),
+        "point_order": "ordered_connectivity_nodes",
+    },
+    "committed_pl_internal_force": {
+        "role": "numerical_diagnostic",
+        "component_frame": "global",
+        "component_order": EXTERNAL_NODE_FORCE_ORDER,
+        "point_order": "ordered_connectivity_nodes",
+    },
+    "committed_pl_energy": {
+        "role": "numerical_diagnostic",
+        "component_frame": "scalar",
+        "component_order": ("energy",),
+        "point_order": "single_element",
     },
     "committed_director_triads": {
         "role": "authoritative",
@@ -308,43 +415,43 @@ STATE_FIELD_MANIFEST = {
         "role": "authoritative_material_history",
         "component_frame": "physical_material_engineering_strain",
         "component_order": LAYER_STRAIN_COMPONENT_ORDER,
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "alpha": {
         "role": "authoritative_material_history",
         "component_frame": "scalar",
         "component_order": ("equivalent_plastic_strain",),
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "kinematic_layer_strain": {
         "role": "authoritative_redundant_validated",
         "component_frame": "numbered_reference_engineering_strain",
         "component_order": LAYER_STRAIN_COMPONENT_ORDER,
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "layer_strain": {
         "role": "derived_integrity_protected",
         "component_frame": "numbered_reference_engineering_strain",
         "component_order": LAYER_STRAIN_COMPONENT_ORDER,
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "layer_strain_material": {
         "role": "derived_integrity_protected",
         "component_frame": "physical_material_engineering_strain",
         "component_order": LAYER_STRAIN_COMPONENT_ORDER,
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "layer_stress": {
         "role": "derived_integrity_protected",
         "component_frame": "numbered_reference_tensor_stress",
         "component_order": LAYER_STRESS_COMPONENT_ORDER,
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "layer_stress_material": {
         "role": "derived_integrity_protected",
         "component_frame": "physical_material_tensor_stress",
         "component_order": LAYER_STRESS_COMPONENT_ORDER,
-        "point_order": "station_major_layer_minor_bottom_to_top",
+        "point_order": "station_major_layer_minor_physical_director_bottom_to_top",
     },
     "initial_membrane_stress": {
         "role": "authoritative_initial_field",
@@ -375,6 +482,73 @@ STATE_FIELD_MANIFEST = {
         "component_frame": "canonical_metadata",
         "component_order": ("sorted_string_keys",),
         "point_order": "not_applicable",
+    },
+}
+
+# This manifest intentionally has no layer, ply-stress, plastic-strain, or
+# alpha entries.  The four public shell initial fields are authoritative
+# station inputs, while their analytically integrated generalized offsets are
+# redundant and strictly validated.  No manufacturing layers are reconstructed.
+GENERALIZED_STATE_FIELD_MANIFEST = {
+    "reference_corner_directors": STATE_FIELD_MANIFEST[
+        "reference_corner_directors"
+    ],
+    "committed_total_u": STATE_FIELD_MANIFEST["committed_total_u"],
+    "committed_nodal_rotation_matrices": STATE_FIELD_MANIFEST[
+        "committed_nodal_rotation_matrices"
+    ],
+    "committed_pl_twist": STATE_FIELD_MANIFEST["committed_pl_twist"],
+    "committed_pl_turn_count": STATE_FIELD_MANIFEST[
+        "committed_pl_turn_count"
+    ],
+    "committed_pl_multiplier": STATE_FIELD_MANIFEST[
+        "committed_pl_multiplier"
+    ],
+    "committed_pl_internal_force": STATE_FIELD_MANIFEST[
+        "committed_pl_internal_force"
+    ],
+    "committed_pl_energy": STATE_FIELD_MANIFEST["committed_pl_energy"],
+    "committed_director_triads": STATE_FIELD_MANIFEST[
+        "committed_director_triads"
+    ],
+    "bubble_rotation_last_increment": STATE_FIELD_MANIFEST[
+        "bubble_rotation_last_increment"
+    ],
+    "committed_internal_force": STATE_FIELD_MANIFEST[
+        "committed_internal_force"
+    ],
+    "station_generalized_strain": STATE_FIELD_MANIFEST[
+        "station_generalized_strain"
+    ],
+    "station_generalized_resultant": STATE_FIELD_MANIFEST[
+        "station_generalized_resultant"
+    ],
+    "initial_membrane_stress": STATE_FIELD_MANIFEST[
+        "initial_membrane_stress"
+    ],
+    "initial_bending_stress": STATE_FIELD_MANIFEST[
+        "initial_bending_stress"
+    ],
+    "initial_membrane_prestrain": STATE_FIELD_MANIFEST[
+        "initial_membrane_prestrain"
+    ],
+    "initial_curvature_prestrain": STATE_FIELD_MANIFEST[
+        "initial_curvature_prestrain"
+    ],
+    "initial_field_provenance": STATE_FIELD_MANIFEST[
+        "initial_field_provenance"
+    ],
+    "initial_generalized_prestrain": {
+        "role": "derived_initial_field_redundant_validated",
+        "component_frame": "numbered_reference_engineering_strain",
+        "component_order": GENERALIZED_STRAIN_COMPONENT_ORDER,
+        "point_order": "ordered_surface_stations",
+    },
+    "initial_generalized_resultant": {
+        "role": "derived_initial_field_redundant_validated",
+        "component_frame": "numbered_reference_tensor_resultant",
+        "component_order": GENERALIZED_RESULTANT_COMPONENT_ORDER,
+        "point_order": "ordered_surface_stations",
     },
 }
 
@@ -436,6 +610,8 @@ _IDENTITY_KEYS = frozenset(
         "node_order_fingerprint",
         "reference_geometry_fingerprint",
         "reference_frame_fingerprint",
+        "reference_corner_directors_fingerprint",
+        "director_polarity",
         "material_fingerprint",
         "initial_fields_fingerprint",
         "state_mode",
@@ -447,7 +623,12 @@ _IDENTITY_KEYS = frozenset(
     }
 )
 _ARRAY_SHAPES_FIXED = {
+    "reference_corner_directors": (3, 3),
     "committed_total_u": (18,),
+    "committed_nodal_rotation_matrices": (3, 3, 3),
+    "committed_pl_twist": (3,),
+    "committed_pl_multiplier": (3,),
+    "committed_pl_internal_force": (18,),
     "committed_director_triads": (4, 3, 3),
     "bubble_rotation_last_increment": (2,),
     "committed_internal_force": (18,),
@@ -476,6 +657,14 @@ _STATE_KEYS = frozenset(
         "nonlinear_kinematics_id",
         "director_gauge_id",
         "external_rotation_map_id",
+        "director_increment_map_id",
+        "surface_rotation_policy_id",
+        "pl_twist_policy_id",
+        "nodal_rotation_update_policy_id",
+        "pl_phase_policy_id",
+        "pl_phase_margin_id",
+        "pl_minimum_twist_denominator_id",
+        "nonlinear_pl_energy_policy_id",
         "bubble_convention",
         "bubble_state_role",
         "bubble_predictor_commit_policy_id",
@@ -496,6 +685,8 @@ _STATE_KEYS = frozenset(
         "node_ids",
         "node_order_fingerprint",
         "reference_geometry_fingerprint",
+        "reference_corner_directors_fingerprint",
+        "director_polarity",
         "material_fingerprint",
         "initial_fields_fingerprint",
         "reference_frame_fingerprint",
@@ -505,6 +696,13 @@ _STATE_KEYS = frozenset(
         "material_symmetry",
         "equivalent_stress_measure",
         "committed_total_u",
+        "reference_corner_directors",
+        "committed_nodal_rotation_matrices",
+        "committed_pl_twist",
+        "committed_pl_turn_count",
+        "committed_pl_multiplier",
+        "committed_pl_internal_force",
+        "committed_pl_energy",
         "committed_director_triads",
         "bubble_rotation_last_increment",
         "committed_internal_force",
@@ -517,6 +715,119 @@ _STATE_KEYS = frozenset(
         "kinematic_layer_strain",
         "layer_stress",
         "layer_stress_material",
+        *INITIAL_FIELD_NAMES,
+        "initial_field_provenance",
+    }
+)
+
+_GENERALIZED_IDENTITY_KEYS = frozenset(
+    {
+        "generalized_formulation_fingerprint",
+        "element_id",
+        "element_configuration_fingerprint",
+        "node_ids",
+        "node_order_fingerprint",
+        "reference_geometry_fingerprint",
+        "reference_frame_fingerprint",
+        "reference_corner_directors_fingerprint",
+        "director_polarity",
+        "section_fingerprint",
+        "initial_fields_fingerprint",
+        "thickness",
+        "state_mode",
+    }
+)
+_GENERALIZED_ARRAY_SHAPES = {
+    "reference_corner_directors": (3, 3),
+    "committed_total_u": (18,),
+    "committed_nodal_rotation_matrices": (3, 3, 3),
+    "committed_pl_twist": (3,),
+    "committed_pl_multiplier": (3,),
+    "committed_pl_internal_force": (18,),
+    "committed_director_triads": (4, 3, 3),
+    "bubble_rotation_last_increment": (2,),
+    "committed_internal_force": (18,),
+    "station_generalized_strain": (
+        NUM_INTEGRATION_STATIONS,
+        GENERALIZED_COMPONENTS,
+    ),
+    "station_generalized_resultant": (
+        NUM_INTEGRATION_STATIONS,
+        GENERALIZED_COMPONENTS,
+    ),
+    "initial_generalized_prestrain": (
+        NUM_INTEGRATION_STATIONS,
+        GENERALIZED_COMPONENTS,
+    ),
+    "initial_generalized_resultant": (
+        NUM_INTEGRATION_STATIONS,
+        GENERALIZED_COMPONENTS,
+    ),
+    **{name: (NUM_INTEGRATION_STATIONS, 3) for name in INITIAL_FIELD_NAMES},
+}
+_GENERALIZED_STATE_KEYS = frozenset(
+    {
+        "state_schema",
+        "state_version",
+        "commit_status",
+        "state_mode",
+        "formulation_id",
+        "formulation_schema",
+        "external_coordinate_layout_id",
+        "nonlinear_state_layout_id",
+        "nonlinear_kinematics_id",
+        "director_gauge_id",
+        "external_rotation_map_id",
+        "director_increment_map_id",
+        "surface_rotation_policy_id",
+        "pl_twist_policy_id",
+        "nodal_rotation_update_policy_id",
+        "pl_phase_policy_id",
+        "pl_phase_margin_id",
+        "pl_minimum_twist_denominator_id",
+        "nonlinear_pl_energy_policy_id",
+        "bubble_convention",
+        "bubble_state_role",
+        "bubble_predictor_commit_policy_id",
+        "quadrature_id",
+        "nonlinear_policy_id",
+        "generalized_section_integration_id",
+        "generalized_section_history_policy_id",
+        "generalized_initial_field_policy_id",
+        "recovery_scope",
+        "physical_layer_recovery_available",
+        "canonicalization_id",
+        "state_integrity_id",
+        "stiffness_station_table_sha256",
+        "generalized_state_field_manifest_sha256",
+        "generalized_formulation_fingerprint",
+        "state_integrity_sha256",
+        "element_id",
+        "element_configuration_fingerprint",
+        "node_ids",
+        "node_order_fingerprint",
+        "reference_geometry_fingerprint",
+        "reference_frame_fingerprint",
+        "reference_corner_directors_fingerprint",
+        "director_polarity",
+        "section_fingerprint",
+        "initial_fields_fingerprint",
+        "thickness",
+        "reference_corner_directors",
+        "committed_total_u",
+        "committed_nodal_rotation_matrices",
+        "committed_pl_twist",
+        "committed_pl_turn_count",
+        "committed_pl_multiplier",
+        "committed_pl_internal_force",
+        "committed_pl_energy",
+        "committed_director_triads",
+        "bubble_rotation_last_increment",
+        "committed_internal_force",
+        "station_generalized_strain",
+        "station_generalized_resultant",
+        "initial_generalized_prestrain",
+        "initial_generalized_resultant",
         *INITIAL_FIELD_NAMES,
         "initial_field_provenance",
     }
@@ -621,6 +932,17 @@ def lobatto_table_fingerprint() -> str:
 def state_field_manifest_fingerprint() -> str:
     return canonical_sha256(
         {"layout_id": STATE_ARRAY_LAYOUT_ID, "fields": STATE_FIELD_MANIFEST}
+    )
+
+
+def generalized_state_field_manifest_fingerprint() -> str:
+    """Hash the closed field set for stateless generalized-section history."""
+
+    return canonical_sha256(
+        {
+            "layout_id": GENERALIZED_STATE_FIELD_MANIFEST_ID,
+            "fields": GENERALIZED_STATE_FIELD_MANIFEST,
+        }
     )
 
 
@@ -912,13 +1234,287 @@ def resolved_material_descriptor(material: Any) -> dict[str, Any]:
     }
 
 
+_GENERALIZED_SECTION_HISTORY_MARKERS = frozenset(
+    {
+        "committed_state",
+        "history_schema",
+        "init_nonlinear_state",
+        "initialize_state",
+        "requires_history",
+        "state_layout_id",
+        "state_schema",
+        "update_nonlinear_state",
+        "update_state",
+    }
+)
+
+
+def require_stateless_generalized_section(section: Any) -> None:
+    """Reject section-owned history until an authoritative protocol exists.
+
+    ``GeneralizedShellSection`` is a frozen constitutive snapshot.  Structural
+    input objects and mappings are accepted by the linear API, but a history
+    marker must not be silently discarded by coercion when nonlinear state is
+    enabled.  There is deliberately no fallback to invented layer history.
+    """
+
+    if section is None:
+        return
+    if isinstance(section, Mapping):
+        markers = sorted(
+            str(key)
+            for key in section
+            if str(key) in _GENERALIZED_SECTION_HISTORY_MARKERS
+        )
+    else:
+        markers = sorted(
+            name
+            for name in _GENERALIZED_SECTION_HISTORY_MARKERS
+            if hasattr(section, name)
+        )
+    if markers:
+        raise S3CommittedStateError(
+            "qualified S3 generalized nonlinear response supports only a "
+            "stateless pre-integrated section; unsupported section-owned "
+            "history markers: "
+            + ", ".join(markers)
+        )
+
+
+def generalized_section_descriptor(section: Any) -> dict[str, Any]:
+    """Return the exact binary64 constitutive identity of a stateless section."""
+
+    require_stateless_generalized_section(section)
+    try:
+        made = validate_generalized_shell_section(section)
+    except (TypeError, ValueError) as exc:
+        raise S3CommittedStateError(
+            "qualified S3 generalized section is incompatible"
+        ) from exc
+    return {
+        "descriptor_schema": GENERALIZED_SECTION_DESCRIPTOR_SCHEMA,
+        "history_policy_id": GENERALIZED_SECTION_HISTORY_POLICY_ID,
+        "name": str(made.name),
+        "A": np.asarray(made.A, dtype=np.float64).tolist(),
+        "B": np.asarray(made.B, dtype=np.float64).tolist(),
+        "D": np.asarray(made.D, dtype=np.float64).tolist(),
+        "As": np.asarray(made.As, dtype=np.float64).tolist(),
+        "mass_per_area": (
+            None if made.mass_per_area is None else float(made.mass_per_area)
+        ),
+        "rotary_inertia_per_area": (
+            None
+            if made.rotary_inertia_per_area is None
+            else float(made.rotary_inertia_per_area)
+        ),
+    }
+
+
+def _validate_generalized_section_descriptor(
+    value: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise S3CommittedStateError(
+            "generalized_section_descriptor must be a mapping"
+        )
+    expected = frozenset(
+        {
+            "descriptor_schema",
+            "history_policy_id",
+            "name",
+            "A",
+            "B",
+            "D",
+            "As",
+            "mass_per_area",
+            "rotary_inertia_per_area",
+        }
+    )
+    _closed_keys(value, expected, "generalized_section_descriptor")
+    if value["descriptor_schema"] != GENERALIZED_SECTION_DESCRIPTOR_SCHEMA:
+        raise S3CommittedStateError(
+            "incompatible generalized section descriptor schema"
+        )
+    if value["history_policy_id"] != GENERALIZED_SECTION_HISTORY_POLICY_ID:
+        raise S3CommittedStateError(
+            "incompatible generalized section history policy"
+        )
+    rebuilt = generalized_section_descriptor(
+        {
+            "name": value["name"],
+            "A": value["A"],
+            "B": value["B"],
+            "D": value["D"],
+            "As": value["As"],
+            "mass_per_area": value["mass_per_area"],
+            "rotary_inertia_per_area": value["rotary_inertia_per_area"],
+        }
+    )
+    if _canonical_value(dict(value)) != rebuilt:
+        raise S3CommittedStateError(
+            "generalized section descriptor is not normalized"
+        )
+    return rebuilt
+
+
+def generalized_section_fingerprint(section_descriptor: Mapping[str, Any]) -> str:
+    return canonical_sha256(
+        {
+            "layout": "QUALIFIED_S3_GENERALIZED_SECTION_IDENTITY_V1",
+            "descriptor": _validate_generalized_section_descriptor(
+                section_descriptor
+            ),
+        }
+    )
+
+
+def build_generalized_element_configuration_descriptor(
+    *,
+    thickness: float,
+    reference_normal: Any,
+    director_polarity: Any,
+    material_direction: Any | None,
+    material_angle_deg: float,
+    shell_section: Any,
+    reference_surface_offset: float = 0.0,
+) -> dict[str, Any]:
+    """Build the closed configuration identity for generalized-section state."""
+
+    if shell_section is None:
+        raise S3CommittedStateError(
+            "generalized qualified S3 state requires a shell section"
+        )
+    if isinstance(thickness, (bool, np.bool_)) or not isinstance(
+        thickness, (int, float, np.integer, np.floating)
+    ):
+        raise S3CommittedStateError("thickness must be a finite positive scalar")
+    thickness_value = float(thickness)
+    if not math.isfinite(thickness_value) or thickness_value <= 0.0:
+        raise S3CommittedStateError("thickness must be a finite positive scalar")
+    normal = _finite_array(reference_normal, (3,), "reference_normal")
+    normal_norm = float(np.linalg.norm(normal))
+    if not math.isfinite(normal_norm) or normal_norm <= np.finfo(float).tiny:
+        raise S3CommittedStateError("reference_normal must have positive norm")
+    normal /= normal_norm
+    if material_direction is None:
+        direction: list[float] | None = None
+    else:
+        made_direction = _finite_array(
+            material_direction, (3,), "material_direction"
+        )
+        tangent = made_direction - float(made_direction @ normal) * normal
+        tangent_norm = float(np.linalg.norm(tangent))
+        if not math.isfinite(tangent_norm) or tangent_norm <= np.finfo(float).tiny:
+            raise S3CommittedStateError(
+                "material_direction must define a surface tangent"
+            )
+        direction = (tangent / tangent_norm).tolist()
+    if isinstance(material_angle_deg, (bool, np.bool_)) or not isinstance(
+        material_angle_deg, (int, float, np.integer, np.floating)
+    ):
+        raise S3CommittedStateError("material_angle_deg must be finite")
+    angle = float(material_angle_deg)
+    if not math.isfinite(angle):
+        raise S3CommittedStateError("material_angle_deg must be finite")
+    if direction is None and angle != 0.0:
+        raise S3CommittedStateError(
+            "material_angle_deg requires a physical material_direction"
+        )
+    section_descriptor = generalized_section_descriptor(shell_section)
+    polarity = _director_polarity(director_polarity)
+    offset = _reference_surface_offset(reference_surface_offset)
+    return {
+        "descriptor_schema": GENERALIZED_ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA,
+        "thickness": thickness_value,
+        "reference_surface_offset": offset,
+        "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+        "reference_normal": normal.tolist(),
+        "director_polarity": polarity,
+        "material_direction": direction,
+        "material_angle_deg": angle,
+        "section_mode": GENERALIZED_STATE_MODE,
+        "generalized_section": section_descriptor,
+    }
+
+
+def _validate_generalized_element_descriptor(
+    value: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise S3CommittedStateError("element_descriptor must be a mapping")
+    expected = frozenset(
+        {
+            "descriptor_schema",
+            "thickness",
+            "reference_surface_offset",
+            "reference_surface_offset_policy_id",
+            "reference_normal",
+            "director_polarity",
+            "material_direction",
+            "material_angle_deg",
+            "section_mode",
+            "generalized_section",
+        }
+    )
+    _closed_keys(value, expected, "generalized element_descriptor")
+    if value["descriptor_schema"] != GENERALIZED_ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA:
+        raise S3CommittedStateError(
+            "incompatible generalized element descriptor schema"
+        )
+    if value["section_mode"] != GENERALIZED_STATE_MODE:
+        raise S3CommittedStateError("incompatible generalized element section mode")
+    if value["reference_surface_offset_policy_id"] != REFERENCE_SURFACE_OFFSET_POLICY_ID:
+        raise S3CommittedStateError(
+            "incompatible generalized reference-surface offset policy"
+        )
+    section = _validate_generalized_section_descriptor(
+        value["generalized_section"]
+    )
+    rebuilt = build_generalized_element_configuration_descriptor(
+        thickness=value["thickness"],
+        reference_normal=value["reference_normal"],
+        director_polarity=value["director_polarity"],
+        material_direction=value["material_direction"],
+        material_angle_deg=value["material_angle_deg"],
+        shell_section=section,
+        reference_surface_offset=value["reference_surface_offset"],
+    )
+    if _canonical_value(dict(value)) != rebuilt:
+        raise S3CommittedStateError(
+            "generalized element descriptor is not normalized"
+        )
+    return rebuilt
+
+
+def generalized_element_configuration_fingerprint(
+    element_id: int,
+    node_ids: Sequence[int],
+    element_descriptor: Mapping[str, Any],
+) -> str:
+    if isinstance(element_id, (bool, np.bool_)) or not isinstance(
+        element_id, (int, np.integer)
+    ):
+        raise S3CommittedStateError("element_id must be an integer")
+    descriptor = _validate_generalized_element_descriptor(element_descriptor)
+    return canonical_sha256(
+        {
+            "layout": "QUALIFIED_S3_GENERALIZED_ELEMENT_CONFIGURATION_V3",
+            "element_id": int(element_id),
+            "node_ids": _node_ids(node_ids),
+            "descriptor": descriptor,
+        }
+    )
+
+
 def build_element_configuration_descriptor(
     *,
     thickness: float,
     reference_normal: Any,
+    director_polarity: Any,
     material_direction: Any | None,
     material_angle_deg: float,
     shell_section: Any | None,
+    reference_surface_offset: float = 0.0,
 ) -> dict[str, Any]:
     """Build the complete layered-state configuration descriptor.
 
@@ -966,10 +1562,15 @@ def build_element_configuration_descriptor(
         raise S3CommittedStateError(
             "material_angle_deg requires a physical material_direction"
         )
+    polarity = _director_polarity(director_polarity)
+    offset = _reference_surface_offset(reference_surface_offset)
     return {
         "descriptor_schema": ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA,
         "thickness": thickness_value,
+        "reference_surface_offset": offset,
+        "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
         "reference_normal": normal.tolist(),
+        "director_polarity": polarity,
         "material_direction": direction,
         "material_angle_deg": angle,
         "section_mode": "homogeneous_layered_material",
@@ -983,19 +1584,28 @@ def _validate_element_descriptor(value: Mapping[str, Any]) -> dict[str, Any]:
         {
             "descriptor_schema",
             "thickness",
+            "reference_surface_offset",
+            "reference_surface_offset_policy_id",
             "reference_normal",
+            "director_polarity",
             "material_direction",
             "material_angle_deg",
             "section_mode",
         }
     )
     _closed_keys(value, expected, "element_descriptor")
+    if value["reference_surface_offset_policy_id"] != REFERENCE_SURFACE_OFFSET_POLICY_ID:
+        raise S3CommittedStateError(
+            "incompatible layered reference-surface offset policy"
+        )
     rebuilt = build_element_configuration_descriptor(
         thickness=value["thickness"],
         reference_normal=value["reference_normal"],
+        director_polarity=value["director_polarity"],
         material_direction=value["material_direction"],
         material_angle_deg=value["material_angle_deg"],
         shell_section=None,
+        reference_surface_offset=value["reference_surface_offset"],
     )
     if value["descriptor_schema"] != ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA:
         raise S3CommittedStateError("incompatible element descriptor schema")
@@ -1056,6 +1666,30 @@ def formulation_mechanics_contract_payload() -> dict[str, Any]:
     """Return the exact formulation mechanics authority used by production."""
 
     return {
+        "physical_director_reversal": {
+            "polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
+            "transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+            "admitted_polarities": (-1, 1),
+            "sheet_owner_normal_is_independent": True,
+            "generalized_component_transform": (
+                "diag(1,1,1,p,p,p,p,p)"
+            ),
+            "generalized_section_B_transform": "B_physical=p*B_owner",
+            "layer_order": "bottom_to_top_along_physical_director",
+            "equivalent_offset_transform": "(polarity,offset)->(-polarity,-offset)",
+        },
+        "reference_surface_offset": {
+            "policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+            "strain_transform_id": REFERENCE_SURFACE_STRAIN_TRANSFORM_ID,
+            "mass_shift_id": REFERENCE_SURFACE_MASS_SHIFT_ID,
+            "positive_direction": "section_origin_to_nodal_reference_along_physical_director",
+            "section_strain": "epsilon_section=epsilon_reference-offset*kappa",
+            "layer_coordinate_from_reference": "xi=z-offset",
+            "material_surfaces_from_reference": (
+                "bottom=-thickness/2-offset",
+                "top=thickness/2-offset",
+            ),
+        },
         "linear_source": {
             "url": MITC3_PLUS_SOURCE_URL,
             "byte_count": MITC3_PLUS_SOURCE_BYTES,
@@ -1083,6 +1717,19 @@ def formulation_mechanics_contract_payload() -> dict[str, Any]:
             "gram_numerator": PL_GRAM_NUMERATOR,
             "block_sign_id": PL_BLOCK_SIGN_ID,
             "condensation_id": PL_CONDENSATION_ID,
+            "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+            "twist_policy_id": PL_TWIST_POLICY_ID,
+            "rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+            "phase_policy_id": PL_PHASE_POLICY_ID,
+            "phase_margin_id": PL_PHASE_MARGIN_ID,
+            "phase_margin_binary64": PL_PHASE_MARGIN,
+            "minimum_twist_denominator_id": (
+                PL_MINIMUM_TWIST_DENOMINATOR_ID
+            ),
+            "minimum_twist_denominator_binary64": (
+                PL_MINIMUM_TWIST_DENOMINATOR
+            ),
+            "energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
         },
         "drilling_scale": {
             "policy_id": DRILL_SCALE_POLICY_ID,
@@ -1118,6 +1765,27 @@ def formulation_fingerprint_payload() -> dict[str, Any]:
         "director_gauge_fallback_axis": DIRECTOR_GAUGE_FALLBACK_AXIS,
         "director_gauge_switch_tolerance": DIRECTOR_GAUGE_SWITCH_TOLERANCE,
         "external_rotation_map_id": EXTERNAL_ROTATION_MAP_ID,
+        "director_increment_map_id": DIRECTOR_INCREMENT_MAP_ID,
+        "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
+        "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+        "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+        "reference_surface_strain_transform_id": (
+            REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+        ),
+        "reference_surface_mass_shift_id": REFERENCE_SURFACE_MASS_SHIFT_ID,
+        "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+        "pl_twist_policy_id": PL_TWIST_POLICY_ID,
+        "nodal_rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+        "pl_phase_policy_id": PL_PHASE_POLICY_ID,
+        "pl_phase_margin_id": PL_PHASE_MARGIN_ID,
+        "pl_phase_margin_binary64": PL_PHASE_MARGIN,
+        "pl_minimum_twist_denominator_id": (
+            PL_MINIMUM_TWIST_DENOMINATOR_ID
+        ),
+        "pl_minimum_twist_denominator_binary64": (
+            PL_MINIMUM_TWIST_DENOMINATOR
+        ),
+        "nonlinear_pl_energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
         "bubble_state_role": BUBBLE_STATE_ROLE,
         "bubble_predictor_commit_policy_id": BUBBLE_PREDICTOR_COMMIT_POLICY_ID,
         "bubble_convention": BUBBLE_CONVENTION,
@@ -1204,6 +1872,95 @@ def formulation_fingerprint() -> str:
     return canonical_sha256(formulation_fingerprint_payload())
 
 
+def generalized_formulation_fingerprint_payload() -> dict[str, Any]:
+    """Return the independently identified stateless-section state contract."""
+
+    return {
+        "formulation_id": FORMULATION_ID,
+        "formulation_schema": FORMULATION_SCHEMA,
+        "state_schema": GENERALIZED_NONLINEAR_STATE_SCHEMA,
+        "state_version": GENERALIZED_NONLINEAR_STATE_VERSION,
+        "state_layout_id": GENERALIZED_NONLINEAR_STATE_LAYOUT_ID,
+        "state_mode": GENERALIZED_STATE_MODE,
+        "external_coordinate_layout_id": EXTERNAL_COORDINATE_LAYOUT_ID,
+        "nonlinear_kinematics_id": NONLINEAR_KINEMATICS_ID,
+        "director_gauge_id": DIRECTOR_GAUGE_ID,
+        "external_rotation_map_id": EXTERNAL_ROTATION_MAP_ID,
+        "director_increment_map_id": DIRECTOR_INCREMENT_MAP_ID,
+        "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
+        "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+        "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+        "reference_surface_strain_transform_id": (
+            REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+        ),
+        "reference_surface_mass_shift_id": REFERENCE_SURFACE_MASS_SHIFT_ID,
+        "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+        "pl_twist_policy_id": PL_TWIST_POLICY_ID,
+        "nodal_rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+        "pl_phase_policy_id": PL_PHASE_POLICY_ID,
+        "pl_phase_margin_id": PL_PHASE_MARGIN_ID,
+        "pl_phase_margin_binary64": PL_PHASE_MARGIN,
+        "pl_minimum_twist_denominator_id": (
+            PL_MINIMUM_TWIST_DENOMINATOR_ID
+        ),
+        "pl_minimum_twist_denominator_binary64": (
+            PL_MINIMUM_TWIST_DENOMINATOR
+        ),
+        "nonlinear_pl_energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
+        "bubble_state_role": BUBBLE_STATE_ROLE,
+        "bubble_predictor_commit_policy_id": BUBBLE_PREDICTOR_COMMIT_POLICY_ID,
+        "bubble_convention": BUBBLE_CONVENTION,
+        "quadrature_id": QUADRATURE_ID,
+        "nonlinear_policy_id": NONLINEAR_POLICY_ID,
+        "generalized_section_integration_id": GENERALIZED_SECTION_INTEGRATION_ID,
+        "generalized_initial_field_policy": {
+            "id": GENERALIZED_INITIAL_FIELD_POLICY_ID,
+            "source_convention": "SHELL_INITIAL_FIELD_LOCAL_SURFACE_STRESS_V1",
+            "membrane_resultant": "N0_EQUALS_H_TIMES_SIGMA_MEMBRANE",
+            "bending_resultant": "M0_EQUALS_H_SQUARED_OVER_6_TIMES_SIGMA_BENDING_SURFACE",
+            "constitutive_relation": (
+                "RESULTANT_EQUALS_C_TIMES_KINEMATIC_MINUS_PRESTRAIN_PLUS_INITIAL_RESULTANT"
+            ),
+            "station_count": NUM_INTEGRATION_STATIONS,
+            "physical_layer_reconstruction": "FORBIDDEN",
+        },
+        "generalized_section_history_policy_id": (
+            GENERALIZED_SECTION_HISTORY_POLICY_ID
+        ),
+        "generalized_initial_field_policy_id": (
+            GENERALIZED_INITIAL_FIELD_POLICY_ID
+        ),
+        "rejected_section_history_markers": tuple(
+            sorted(_GENERALIZED_SECTION_HISTORY_MARKERS)
+        ),
+        "generalized_section_descriptor_schema": (
+            GENERALIZED_SECTION_DESCRIPTOR_SCHEMA
+        ),
+        "element_configuration_descriptor_schema": (
+            GENERALIZED_ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA
+        ),
+        "canonicalization_id": CANONICALIZATION_ID,
+        "state_integrity_id": STATE_INTEGRITY_ID,
+        "stiffness_station_table_sha256": stiffness_station_table_fingerprint(),
+        "state_field_manifest_sha256": (
+            generalized_state_field_manifest_fingerprint()
+        ),
+        "recovery_scope": "section_resultants_only",
+        "physical_layer_recovery_available": False,
+        "state_keys": tuple(sorted(_GENERALIZED_STATE_KEYS)),
+        "identity_keys": tuple(sorted(_GENERALIZED_IDENTITY_KEYS)),
+        "fixed_array_shapes": {
+            key: shape
+            for key, shape in sorted(_GENERALIZED_ARRAY_SHAPES.items())
+        },
+        "formulation_mechanics_sha256": formulation_mechanics_fingerprint(),
+    }
+
+
+def generalized_formulation_fingerprint() -> str:
+    return canonical_sha256(generalized_formulation_fingerprint_payload())
+
+
 def _node_ids(value: Sequence[int]) -> tuple[int, int, int]:
     if isinstance(value, (str, bytes, bytearray)):
         raise S3CommittedStateError("qualified S3 state requires exactly three node IDs")
@@ -1238,6 +1995,35 @@ def _layer_count(value: Any, label: str) -> int:
             f"{label} must be one of {list(SUPPORTED_LOBATTO_LAYER_COUNTS)}"
         )
     return made
+
+
+def _director_polarity(value: Any, label: str = "director_polarity") -> int:
+    """Return the strict element-owned physical-director polarity."""
+
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value, (int, np.integer)
+    ):
+        raise S3CommittedStateError(f"{label} must be the integer -1 or +1")
+    polarity = int(value)
+    if polarity not in (-1, 1):
+        raise S3CommittedStateError(f"{label} must be the integer -1 or +1")
+    return polarity
+
+
+def _reference_surface_offset(
+    value: Any,
+    label: str = "reference_surface_offset",
+) -> float:
+    """Return the strict signed physical-director reference-surface offset."""
+
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value, (int, float, np.integer, np.floating)
+    ):
+        raise S3CommittedStateError(f"{label} must be a finite real scalar")
+    offset = float(value)
+    if not math.isfinite(offset):
+        raise S3CommittedStateError(f"{label} must be a finite real scalar")
+    return 0.0 if offset == 0.0 else offset
 
 
 def _constitutive_identity(
@@ -1318,6 +2104,40 @@ def _finite_state_array(
 ) -> np.ndarray:
     _validate_state_float_values(value, label)
     return _finite_array(value, shape, label)
+
+
+def _integer_state_array(
+    value: Any, shape: tuple[int, ...], label: str
+) -> np.ndarray:
+    if isinstance(value, np.ndarray):
+        if value.dtype != np.dtype(np.int64):
+            raise S3CommittedStateError(
+                f"{label} must contain canonical signed 64-bit integers"
+            )
+    elif isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        for member in value:
+            if type(member) is not int:
+                raise S3CommittedStateError(
+                    f"{label} must contain canonical integer values"
+                )
+    else:
+        raise S3CommittedStateError(f"{label} must be an integer array")
+    result = np.asarray(value, dtype=np.int64)
+    if result.shape != shape:
+        raise S3CommittedStateError(
+            f"{label} has shape {result.shape}; expected {shape}"
+        )
+    return np.array(result, dtype=np.int64, order="C", copy=True)
+
+
+def _finite_state_scalar(value: Any, label: str) -> float:
+    if type(value) is not float or not math.isfinite(value):
+        raise S3CommittedStateError(
+            f"{label} must be a finite canonical binary64 scalar"
+        )
+    return float(value)
 
 
 def qualified_s3_triangle_frame(
@@ -1553,6 +2373,40 @@ def _validate_triads(triads: np.ndarray) -> None:
             )
 
 
+def _validate_nodal_rotation_state(
+    reference_directors: np.ndarray,
+    rotations: np.ndarray,
+    triads: np.ndarray,
+) -> None:
+    identity = np.eye(3, dtype=np.float64)
+    for index in range(3):
+        reference = reference_directors[index]
+        norm_error = abs(float(np.linalg.norm(reference)) - 1.0)
+        if norm_error > DIRECTOR_ORTHONORMALITY_TOLERANCE:
+            raise S3CommittedStateError(
+                f"reference_corner_directors[{index}] is not a unit physical director"
+            )
+        rotation = rotations[index]
+        gram_error = float(np.max(np.abs(rotation.T @ rotation - identity)))
+        determinant = float(np.linalg.det(rotation))
+        if (
+            gram_error > DIRECTOR_ORTHONORMALITY_TOLERANCE
+            or determinant <= 0.0
+            or abs(determinant - 1.0) > DIRECTOR_ORTHONORMALITY_TOLERANCE
+        ):
+            raise S3CommittedStateError(
+                f"committed_nodal_rotation_matrices[{index}] is not a proper SO(3) operator"
+            )
+        expected_normal = rotation @ reference
+        normal_error = float(
+            np.max(np.abs(triads[index, :, 2] - expected_normal))
+        )
+        if normal_error > DIRECTOR_ORTHONORMALITY_TOLERANCE:
+            raise S3CommittedStateError(
+                f"committed director {index} contradicts its node-shared rotation operator"
+            )
+
+
 def _fingerprint(value: Any, label: str) -> str:
     if not isinstance(value, str) or _HEX_SHA256.fullmatch(value) is None:
         raise S3CommittedStateError(f"{label} must be an uppercase SHA-256")
@@ -1593,6 +2447,33 @@ def reference_frame_fingerprint(reference_frame: Any) -> str:
     )
 
 
+def reference_corner_directors_fingerprint(
+    node_ids: Sequence[int],
+    reference_corner_directors: Any,
+) -> str:
+    """Bind the element-owned physical director at every ordered corner."""
+
+    nodes = _node_ids(node_ids)
+    directors = _finite_array(
+        reference_corner_directors,
+        (3, 3),
+        "reference_corner_directors",
+    )
+    for index, director in enumerate(directors):
+        norm_error = abs(float(np.linalg.norm(director)) - 1.0)
+        if norm_error > DIRECTOR_ORTHONORMALITY_TOLERANCE:
+            raise S3CommittedStateError(
+                f"reference_corner_directors[{index}] is not a unit physical director"
+            )
+    return canonical_sha256(
+        {
+            "layout": "ORDERED_S3_ELEMENT_OWNED_REFERENCE_DIRECTORS_GLOBAL_V1",
+            "node_ids": nodes,
+            "directors": directors,
+        }
+    )
+
+
 def material_fingerprint(material_descriptor: Mapping[str, Any]) -> str:
     descriptor = _validate_material_descriptor(material_descriptor)
     return canonical_sha256(
@@ -1617,7 +2498,7 @@ def element_configuration_fingerprint(
     descriptor = _validate_element_descriptor(element_descriptor)
     return canonical_sha256(
         {
-            "layout": "QUALIFIED_S3_ELEMENT_CONFIGURATION_V1",
+            "layout": "QUALIFIED_S3_ELEMENT_CONFIGURATION_V3",
             "element_id": int(element_id),
             "node_ids": _node_ids(node_ids),
             "descriptor": descriptor,
@@ -1668,6 +2549,7 @@ def build_state_identity(
         "reference_coordinates",
     )
     descriptor_normal = np.asarray(descriptor["reference_normal"], dtype=np.float64)
+    polarity = _director_polarity(descriptor["director_polarity"])
     derived_frame, _local, _quality = qualified_s3_triangle_frame(
         coordinates,
         descriptor_normal,
@@ -1697,6 +2579,13 @@ def build_state_identity(
             nodes, coordinates
         ),
         "reference_frame_fingerprint": reference_frame_fingerprint(frame),
+        "reference_corner_directors_fingerprint": (
+            reference_corner_directors_fingerprint(
+                nodes,
+                np.repeat((polarity * frame[:, 2])[None, :], 3, axis=0),
+            )
+        ),
+        "director_polarity": polarity,
         "material_fingerprint": material_fingerprint(material_descriptor),
         "initial_fields_fingerprint": _initial_fields_fingerprint(fields, provenance),
         "state_mode": STATE_MODE,
@@ -1705,6 +2594,90 @@ def build_state_identity(
         "num_layers": layers,
         "material_symmetry": symmetry,
         "equivalent_stress_measure": measure,
+    }
+
+
+def build_generalized_state_identity(
+    *,
+    element_id: int,
+    node_ids: Sequence[int],
+    reference_coordinates: Any,
+    reference_frame: Any,
+    element_descriptor: Mapping[str, Any],
+    initial_fields: Mapping[str, Any] | None = None,
+    initial_field_provenance: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Bind one V4 generalized state to geometry, section, and initial fields."""
+
+    nodes = _node_ids(node_ids)
+    if isinstance(element_id, (bool, np.bool_)) or not isinstance(
+        element_id, (int, np.integer)
+    ):
+        raise S3CommittedStateError("element_id must be an integer")
+    frame = _finite_array(reference_frame, (3, 3), "reference_frame")
+    _validate_right_handed_triad(frame, "reference_frame")
+    descriptor = _validate_generalized_element_descriptor(element_descriptor)
+    coordinates = _finite_array(
+        reference_coordinates,
+        (3, 3),
+        "reference_coordinates",
+    )
+    descriptor_normal = np.asarray(
+        descriptor["reference_normal"], dtype=np.float64
+    )
+    polarity = _director_polarity(descriptor["director_polarity"])
+    derived_frame, _local, _quality = qualified_s3_triangle_frame(
+        coordinates,
+        descriptor_normal,
+        enforce_admission=True,
+        enforce_positive_winding=True,
+    )
+    frame_error = float(np.max(np.abs(frame - derived_frame)))
+    if frame_error > REFERENCE_FRAME_MATCH_TOLERANCE:
+        raise S3CommittedStateError(
+            "reference_frame does not match the admitted numbered geometry"
+        )
+    fields = _normalized_initial_fields(initial_fields)
+    provenance_value = (
+        {} if initial_field_provenance is None else initial_field_provenance
+    )
+    if not isinstance(provenance_value, Mapping):
+        raise S3CommittedStateError("initial_field_provenance must be a mapping")
+    provenance = _canonical_value(
+        provenance_value, path="$.initial_field_provenance"
+    )
+    assert isinstance(provenance, dict)
+    return {
+        "generalized_formulation_fingerprint": (
+            generalized_formulation_fingerprint()
+        ),
+        "element_id": int(element_id),
+        "element_configuration_fingerprint": (
+            generalized_element_configuration_fingerprint(
+                int(element_id), nodes, descriptor
+            )
+        ),
+        "node_ids": nodes,
+        "node_order_fingerprint": node_order_fingerprint(nodes),
+        "reference_geometry_fingerprint": reference_geometry_fingerprint(
+            nodes, coordinates
+        ),
+        "reference_frame_fingerprint": reference_frame_fingerprint(frame),
+        "reference_corner_directors_fingerprint": (
+            reference_corner_directors_fingerprint(
+                nodes,
+                np.repeat((polarity * frame[:, 2])[None, :], 3, axis=0),
+            )
+        ),
+        "director_polarity": polarity,
+        "section_fingerprint": generalized_section_fingerprint(
+            descriptor["generalized_section"]
+        ),
+        "initial_fields_fingerprint": _initial_fields_fingerprint(
+            fields, provenance
+        ),
+        "thickness": descriptor["thickness"],
+        "state_mode": GENERALIZED_STATE_MODE,
     }
 
 
@@ -1781,7 +2754,9 @@ def initialize_zero_committed_s3_state(
 
     frame = _finite_array(reference_frame, (3, 3), "reference_frame")
     _validate_right_handed_triad(frame, "reference_frame")
-    reference_triad = reconstruct_director_triad(frame[:, 2])
+    descriptor = _validate_element_descriptor(element_descriptor)
+    polarity = _director_polarity(descriptor["director_polarity"])
+    reference_triad = reconstruct_director_triad(polarity * frame[:, 2])
     triads = np.repeat(reference_triad[np.newaxis, :, :], 4, axis=0)
     _validate_triads(triads)
     fields = _normalized_initial_fields(initial_fields)
@@ -1818,6 +2793,16 @@ def initialize_zero_committed_s3_state(
         "nonlinear_kinematics_id": NONLINEAR_KINEMATICS_ID,
         "director_gauge_id": DIRECTOR_GAUGE_ID,
         "external_rotation_map_id": EXTERNAL_ROTATION_MAP_ID,
+        "director_increment_map_id": DIRECTOR_INCREMENT_MAP_ID,
+        "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+        "pl_twist_policy_id": PL_TWIST_POLICY_ID,
+        "nodal_rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+        "pl_phase_policy_id": PL_PHASE_POLICY_ID,
+        "pl_phase_margin_id": PL_PHASE_MARGIN_ID,
+        "pl_minimum_twist_denominator_id": (
+            PL_MINIMUM_TWIST_DENOMINATOR_ID
+        ),
+        "nonlinear_pl_energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
         "bubble_convention": BUBBLE_CONVENTION,
         "bubble_state_role": BUBBLE_STATE_ROLE,
         "bubble_predictor_commit_policy_id": BUBBLE_PREDICTOR_COMMIT_POLICY_ID,
@@ -1833,7 +2818,19 @@ def initialize_zero_committed_s3_state(
         "state_field_manifest_sha256": state_field_manifest_fingerprint(),
         "thickness_quadrature_id": THICKNESS_QUADRATURE_ID,
         **identity,
+        "reference_corner_directors": np.repeat(
+            (polarity * frame[:, 2])[None, :], 3, axis=0
+        ),
+        "director_polarity": polarity,
         "committed_total_u": np.zeros(18, dtype=np.float64),
+        "committed_nodal_rotation_matrices": np.repeat(
+            np.eye(3, dtype=np.float64)[None, :, :], 3, axis=0
+        ),
+        "committed_pl_twist": np.zeros(3, dtype=np.float64),
+        "committed_pl_turn_count": np.zeros(3, dtype=np.int64),
+        "committed_pl_multiplier": np.zeros(3, dtype=np.float64),
+        "committed_pl_internal_force": np.zeros(18, dtype=np.float64),
+        "committed_pl_energy": 0.0,
         "committed_director_triads": triads,
         "bubble_rotation_last_increment": np.zeros(2, dtype=np.float64),
         "committed_internal_force": np.zeros(18, dtype=np.float64),
@@ -1857,6 +2854,603 @@ def initialize_zero_committed_s3_state(
         seal_committed_s3_state(state),
         expected_identity=identity,
     )
+
+
+def _validate_generalized_identity(
+    identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(identity, Mapping):
+        raise S3CommittedStateError("expected_identity must be a mapping")
+    unknown = set(identity) - _GENERALIZED_IDENTITY_KEYS
+    missing = _GENERALIZED_IDENTITY_KEYS - set(identity)
+    if unknown or missing:
+        raise S3CommittedStateError(
+            "expected generalized identity keys mismatch; "
+            f"missing={_key_labels(missing)}, unknown={_key_labels(unknown)}"
+        )
+    nodes = _node_ids(identity["node_ids"])
+    result = {
+        "generalized_formulation_fingerprint": _fingerprint(
+            identity["generalized_formulation_fingerprint"],
+            "generalized_formulation_fingerprint",
+        ),
+        "element_id": identity["element_id"],
+        "element_configuration_fingerprint": _fingerprint(
+            identity["element_configuration_fingerprint"],
+            "element_configuration_fingerprint",
+        ),
+        "node_ids": nodes,
+        "node_order_fingerprint": _fingerprint(
+            identity["node_order_fingerprint"], "node_order_fingerprint"
+        ),
+        "reference_geometry_fingerprint": _fingerprint(
+            identity["reference_geometry_fingerprint"],
+            "reference_geometry_fingerprint",
+        ),
+        "reference_frame_fingerprint": _fingerprint(
+            identity["reference_frame_fingerprint"],
+            "reference_frame_fingerprint",
+        ),
+        "reference_corner_directors_fingerprint": _fingerprint(
+            identity["reference_corner_directors_fingerprint"],
+            "reference_corner_directors_fingerprint",
+        ),
+        "director_polarity": _director_polarity(
+            identity["director_polarity"],
+            "expected_identity director_polarity",
+        ),
+        "section_fingerprint": _fingerprint(
+            identity["section_fingerprint"], "section_fingerprint"
+        ),
+        "initial_fields_fingerprint": _fingerprint(
+            identity["initial_fields_fingerprint"],
+            "initial_fields_fingerprint",
+        ),
+        "thickness": identity["thickness"],
+        "state_mode": identity["state_mode"],
+    }
+    if isinstance(result["element_id"], (bool, np.bool_)) or not isinstance(
+        result["element_id"], (int, np.integer)
+    ):
+        raise S3CommittedStateError(
+            "expected_identity element_id must be an integer"
+        )
+    result["element_id"] = int(result["element_id"])
+    if result["state_mode"] != GENERALIZED_STATE_MODE:
+        raise S3CommittedStateError(
+            "expected_identity generalized state_mode mismatch"
+        )
+    if isinstance(result["thickness"], (bool, np.bool_)) or not isinstance(
+        result["thickness"], (int, float, np.integer, np.floating)
+    ):
+        raise S3CommittedStateError(
+            "expected_identity thickness must be finite and positive"
+        )
+    result["thickness"] = float(result["thickness"])
+    if not math.isfinite(result["thickness"]) or result["thickness"] <= 0.0:
+        raise S3CommittedStateError(
+            "expected_identity thickness must be finite and positive"
+        )
+    if (
+        result["generalized_formulation_fingerprint"]
+        != generalized_formulation_fingerprint()
+    ):
+        raise S3CommittedStateError(
+            "expected generalized formulation fingerprint mismatch"
+        )
+    if result["node_order_fingerprint"] != node_order_fingerprint(nodes):
+        raise S3CommittedStateError(
+            "expected_identity node-order fingerprint mismatch"
+        )
+    return result
+
+
+def initialize_zero_committed_s3_generalized_state(
+    *,
+    element_id: int,
+    node_ids: Sequence[int],
+    reference_coordinates: Any,
+    reference_frame: Any,
+    element_descriptor: Mapping[str, Any],
+    constitutive: Any,
+    drilling_scale: Any,
+    initial_fields: Mapping[str, Any] | None = None,
+    initial_field_provenance: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return a complete zero-history V4 stateless-section state."""
+
+    frame = _finite_array(reference_frame, (3, 3), "reference_frame")
+    _validate_right_handed_triad(frame, "reference_frame")
+    descriptor = _validate_generalized_element_descriptor(element_descriptor)
+    polarity = _director_polarity(descriptor["director_polarity"])
+    coordinates = _finite_array(
+        reference_coordinates, (3, 3), "reference_coordinates"
+    )
+    section = _finite_array(constitutive, (8, 8), "constitutive")
+    if not np.array_equal(section, section.T):
+        raise S3CommittedStateError(
+            "generalized section constitutive matrix must be exactly symmetric"
+        )
+    scale = _finite_state_scalar(drilling_scale, "drilling_scale")
+    if scale <= 0.0:
+        raise S3CommittedStateError("drilling_scale must be strictly positive")
+    fields = _normalized_initial_fields(initial_fields)
+    provenance_value = (
+        {} if initial_field_provenance is None else initial_field_provenance
+    )
+    if not isinstance(provenance_value, Mapping):
+        raise S3CommittedStateError("initial_field_provenance must be a mapping")
+    provenance = _canonical_value(
+        provenance_value, path="$.initial_field_provenance"
+    )
+    assert isinstance(provenance, dict)
+    try:
+        initial_prestrain, initial_resultant = (
+            integrate_generalized_initial_fields(
+                fields,
+                descriptor["thickness"],
+                station_count=NUM_INTEGRATION_STATIONS,
+            )
+        )
+    except (TypeError, ValueError) as exc:
+        raise S3CommittedStateError(str(exc)) from exc
+    identity = build_generalized_state_identity(
+        element_id=element_id,
+        node_ids=node_ids,
+        reference_coordinates=coordinates,
+        reference_frame=frame,
+        element_descriptor=element_descriptor,
+        initial_fields=fields,
+        initial_field_provenance=provenance,
+    )
+    reference_triad = reconstruct_director_triad(polarity * frame[:, 2])
+    triads = np.repeat(reference_triad[np.newaxis, :, :], 4, axis=0)
+    _validate_triads(triads)
+    zero_station_strain = np.zeros(
+        (NUM_INTEGRATION_STATIONS, GENERALIZED_COMPONENTS),
+        dtype=np.float64,
+    )
+    zero_station_resultant = (
+        (zero_station_strain - initial_prestrain) @ section.T
+        + initial_resultant
+    )
+    state: dict[str, Any] = {
+        "state_schema": GENERALIZED_NONLINEAR_STATE_SCHEMA,
+        "state_version": GENERALIZED_NONLINEAR_STATE_VERSION,
+        "commit_status": COMMIT_STATUS,
+        "state_mode": GENERALIZED_STATE_MODE,
+        "formulation_id": FORMULATION_ID,
+        "formulation_schema": FORMULATION_SCHEMA,
+        "external_coordinate_layout_id": EXTERNAL_COORDINATE_LAYOUT_ID,
+        "nonlinear_state_layout_id": GENERALIZED_NONLINEAR_STATE_LAYOUT_ID,
+        "nonlinear_kinematics_id": NONLINEAR_KINEMATICS_ID,
+        "director_gauge_id": DIRECTOR_GAUGE_ID,
+        "external_rotation_map_id": EXTERNAL_ROTATION_MAP_ID,
+        "director_increment_map_id": DIRECTOR_INCREMENT_MAP_ID,
+        "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+        "pl_twist_policy_id": PL_TWIST_POLICY_ID,
+        "nodal_rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+        "pl_phase_policy_id": PL_PHASE_POLICY_ID,
+        "pl_phase_margin_id": PL_PHASE_MARGIN_ID,
+        "pl_minimum_twist_denominator_id": (
+            PL_MINIMUM_TWIST_DENOMINATOR_ID
+        ),
+        "nonlinear_pl_energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
+        "bubble_convention": BUBBLE_CONVENTION,
+        "bubble_state_role": BUBBLE_STATE_ROLE,
+        "bubble_predictor_commit_policy_id": BUBBLE_PREDICTOR_COMMIT_POLICY_ID,
+        "quadrature_id": QUADRATURE_ID,
+        "nonlinear_policy_id": NONLINEAR_POLICY_ID,
+        "generalized_section_integration_id": GENERALIZED_SECTION_INTEGRATION_ID,
+        "generalized_section_history_policy_id": (
+            GENERALIZED_SECTION_HISTORY_POLICY_ID
+        ),
+        "generalized_initial_field_policy_id": (
+            GENERALIZED_INITIAL_FIELD_POLICY_ID
+        ),
+        "recovery_scope": "section_resultants_only",
+        "physical_layer_recovery_available": False,
+        "canonicalization_id": CANONICALIZATION_ID,
+        "state_integrity_id": STATE_INTEGRITY_ID,
+        "stiffness_station_table_sha256": stiffness_station_table_fingerprint(),
+        "generalized_state_field_manifest_sha256": (
+            generalized_state_field_manifest_fingerprint()
+        ),
+        **identity,
+        "reference_corner_directors": np.repeat(
+            (polarity * frame[:, 2])[None, :], 3, axis=0
+        ),
+        "director_polarity": polarity,
+        "committed_total_u": np.zeros(18, dtype=np.float64),
+        "committed_nodal_rotation_matrices": np.repeat(
+            np.eye(3, dtype=np.float64)[None, :, :], 3, axis=0
+        ),
+        "committed_pl_twist": np.zeros(3, dtype=np.float64),
+        "committed_pl_turn_count": np.zeros(3, dtype=np.int64),
+        "committed_pl_multiplier": np.zeros(3, dtype=np.float64),
+        "committed_pl_internal_force": np.zeros(18, dtype=np.float64),
+        "committed_pl_energy": 0.0,
+        "committed_director_triads": triads,
+        "bubble_rotation_last_increment": np.zeros(2, dtype=np.float64),
+        "committed_internal_force": np.zeros(18, dtype=np.float64),
+        "station_generalized_strain": zero_station_strain,
+        "station_generalized_resultant": zero_station_resultant,
+        "initial_generalized_prestrain": initial_prestrain,
+        "initial_generalized_resultant": initial_resultant,
+        **fields,
+        "initial_field_provenance": provenance,
+    }
+    area = 0.5 * float(
+        np.linalg.norm(
+            np.cross(coordinates[1] - coordinates[0], coordinates[2] - coordinates[0])
+        )
+    )
+    return validate_committed_s3_generalized_state(
+        seal_committed_s3_state(state),
+        expected_identity=identity,
+        expected_constitutive=section,
+        expected_drilling_scale=scale,
+        expected_reference_area=area,
+    )
+
+
+def validate_committed_s3_generalized_state(
+    state: Mapping[str, Any],
+    *,
+    expected_identity: Mapping[str, Any],
+    expected_constitutive: Any,
+    expected_drilling_scale: Any,
+    expected_reference_area: Any,
+    expected_committed_total_u: Any | None = None,
+) -> dict[str, Any]:
+    """Strictly validate and own one stateless generalized-section state."""
+
+    if not isinstance(state, Mapping):
+        raise S3CommittedStateError(
+            "qualified S3 generalized committed state must be a mapping"
+        )
+    non_string = {key for key in state if not isinstance(key, str)}
+    if non_string:
+        raise S3CommittedStateError(
+            "committed state keys must be strings: "
+            + ", ".join(_key_labels(non_string))
+        )
+    missing = _GENERALIZED_STATE_KEYS - set(state)
+    unknown = set(state) - _GENERALIZED_STATE_KEYS
+    if missing or unknown:
+        raise S3CommittedStateError(
+            "generalized committed state keys mismatch; "
+            f"missing={_key_labels(missing)}, unknown={_key_labels(unknown)}"
+        )
+    expected_constants: dict[str, Any] = {
+        "state_schema": GENERALIZED_NONLINEAR_STATE_SCHEMA,
+        "state_version": GENERALIZED_NONLINEAR_STATE_VERSION,
+        "commit_status": COMMIT_STATUS,
+        "state_mode": GENERALIZED_STATE_MODE,
+        "formulation_id": FORMULATION_ID,
+        "formulation_schema": FORMULATION_SCHEMA,
+        "external_coordinate_layout_id": EXTERNAL_COORDINATE_LAYOUT_ID,
+        "nonlinear_state_layout_id": GENERALIZED_NONLINEAR_STATE_LAYOUT_ID,
+        "nonlinear_kinematics_id": NONLINEAR_KINEMATICS_ID,
+        "director_gauge_id": DIRECTOR_GAUGE_ID,
+        "external_rotation_map_id": EXTERNAL_ROTATION_MAP_ID,
+        "director_increment_map_id": DIRECTOR_INCREMENT_MAP_ID,
+        "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+        "pl_twist_policy_id": PL_TWIST_POLICY_ID,
+        "nodal_rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+        "pl_phase_policy_id": PL_PHASE_POLICY_ID,
+        "pl_phase_margin_id": PL_PHASE_MARGIN_ID,
+        "pl_minimum_twist_denominator_id": (
+            PL_MINIMUM_TWIST_DENOMINATOR_ID
+        ),
+        "nonlinear_pl_energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
+        "bubble_convention": BUBBLE_CONVENTION,
+        "bubble_state_role": BUBBLE_STATE_ROLE,
+        "bubble_predictor_commit_policy_id": BUBBLE_PREDICTOR_COMMIT_POLICY_ID,
+        "quadrature_id": QUADRATURE_ID,
+        "nonlinear_policy_id": NONLINEAR_POLICY_ID,
+        "generalized_section_integration_id": GENERALIZED_SECTION_INTEGRATION_ID,
+        "generalized_section_history_policy_id": (
+            GENERALIZED_SECTION_HISTORY_POLICY_ID
+        ),
+        "generalized_initial_field_policy_id": (
+            GENERALIZED_INITIAL_FIELD_POLICY_ID
+        ),
+        "recovery_scope": "section_resultants_only",
+        "physical_layer_recovery_available": False,
+        "canonicalization_id": CANONICALIZATION_ID,
+        "state_integrity_id": STATE_INTEGRITY_ID,
+        "stiffness_station_table_sha256": stiffness_station_table_fingerprint(),
+        "generalized_state_field_manifest_sha256": (
+            generalized_state_field_manifest_fingerprint()
+        ),
+    }
+    for key, expected_value in expected_constants.items():
+        actual = state[key]
+        if key == "state_version":
+            matches = (
+                isinstance(actual, (int, np.integer))
+                and not isinstance(actual, (bool, np.bool_))
+                and int(actual) == int(expected_value)
+            )
+        elif key == "physical_layer_recovery_available":
+            matches = isinstance(actual, (bool, np.bool_)) and not bool(actual)
+        else:
+            matches = isinstance(actual, str) and actual == expected_value
+        if not matches:
+            raise S3CommittedStateError(f"incompatible {key}")
+
+    nodes = _node_ids(state["node_ids"])
+    fingerprints = {
+        name: _fingerprint(state[name], name)
+        for name in (
+            "generalized_formulation_fingerprint",
+            "element_configuration_fingerprint",
+            "node_order_fingerprint",
+            "reference_geometry_fingerprint",
+            "reference_frame_fingerprint",
+            "reference_corner_directors_fingerprint",
+            "section_fingerprint",
+            "initial_fields_fingerprint",
+            "state_integrity_sha256",
+        )
+    }
+    element_id_value = state["element_id"]
+    if isinstance(element_id_value, (bool, np.bool_)) or not isinstance(
+        element_id_value, (int, np.integer)
+    ):
+        raise S3CommittedStateError("element_id must be an integer")
+    element_id = int(element_id_value)
+    if fingerprints["node_order_fingerprint"] != node_order_fingerprint(nodes):
+        raise S3CommittedStateError("node-order fingerprint mismatch")
+    if (
+        fingerprints["generalized_formulation_fingerprint"]
+        != generalized_formulation_fingerprint()
+    ):
+        raise S3CommittedStateError(
+            "generalized formulation fingerprint mismatch"
+        )
+    normalized: dict[str, Any] = dict(expected_constants)
+    normalized.update(
+        {
+            "generalized_formulation_fingerprint": fingerprints[
+                "generalized_formulation_fingerprint"
+            ],
+            "element_id": element_id,
+            "element_configuration_fingerprint": fingerprints[
+                "element_configuration_fingerprint"
+            ],
+            "node_ids": nodes,
+            "node_order_fingerprint": fingerprints["node_order_fingerprint"],
+            "reference_geometry_fingerprint": fingerprints[
+                "reference_geometry_fingerprint"
+            ],
+            "reference_frame_fingerprint": fingerprints[
+                "reference_frame_fingerprint"
+            ],
+            "reference_corner_directors_fingerprint": fingerprints[
+                "reference_corner_directors_fingerprint"
+            ],
+            "director_polarity": _director_polarity(
+                state["director_polarity"]
+            ),
+            "section_fingerprint": fingerprints["section_fingerprint"],
+            "initial_fields_fingerprint": fingerprints[
+                "initial_fields_fingerprint"
+            ],
+            "thickness": _finite_state_scalar(state["thickness"], "thickness"),
+            "state_integrity_sha256": fingerprints["state_integrity_sha256"],
+        }
+    )
+    for key, shape in _GENERALIZED_ARRAY_SHAPES.items():
+        normalized[key] = _finite_state_array(state[key], shape, key)
+    normalized["committed_pl_turn_count"] = _integer_state_array(
+        state["committed_pl_turn_count"], (3,), "committed_pl_turn_count"
+    )
+    normalized["committed_pl_energy"] = _finite_state_scalar(
+        state["committed_pl_energy"], "committed_pl_energy"
+    )
+    if normalized["committed_pl_energy"] < 0.0:
+        raise S3CommittedStateError("committed PL energy must be nonnegative")
+    if normalized["thickness"] <= 0.0:
+        raise S3CommittedStateError("generalized state thickness must be positive")
+    provenance_value = state["initial_field_provenance"]
+    if not isinstance(provenance_value, Mapping):
+        raise S3CommittedStateError("initial_field_provenance must be a mapping")
+    provenance = _canonical_value(
+        provenance_value, path="$.initial_field_provenance"
+    )
+    assert isinstance(provenance, dict)
+    normalized["initial_field_provenance"] = provenance
+    fields = {name: normalized[name] for name in INITIAL_FIELD_NAMES}
+    current_initial_fingerprint = _initial_fields_fingerprint(
+        fields, provenance
+    )
+    if current_initial_fingerprint != normalized["initial_fields_fingerprint"]:
+        raise S3CommittedStateError("initial-fields fingerprint mismatch")
+    try:
+        expected_initial_prestrain, expected_initial_resultant = (
+            integrate_generalized_initial_fields(
+                fields,
+                normalized["thickness"],
+                station_count=NUM_INTEGRATION_STATIONS,
+            )
+        )
+    except (TypeError, ValueError) as exc:
+        raise S3CommittedStateError(str(exc)) from exc
+    if not np.array_equal(
+        normalized["initial_generalized_prestrain"],
+        expected_initial_prestrain,
+    ):
+        raise S3CommittedStateError(
+            "initial generalized prestrain contradicts the public shell field"
+        )
+    if not np.array_equal(
+        normalized["initial_generalized_resultant"],
+        expected_initial_resultant,
+    ):
+        raise S3CommittedStateError(
+            "initial generalized resultant contradicts the public shell stress field"
+        )
+    _validate_triads(normalized["committed_director_triads"])
+    _validate_nodal_rotation_state(
+        normalized["reference_corner_directors"],
+        normalized["committed_nodal_rotation_matrices"],
+        normalized["committed_director_triads"],
+    )
+    actual_reference_fingerprint = reference_corner_directors_fingerprint(
+        nodes, normalized["reference_corner_directors"]
+    )
+    if (
+        actual_reference_fingerprint
+        != normalized["reference_corner_directors_fingerprint"]
+    ):
+        raise S3CommittedStateError(
+            "reference corner directors contradict their model-bound fingerprint"
+        )
+    principal_twist = normalized["committed_pl_twist"] - (
+        2.0 * math.pi * normalized["committed_pl_turn_count"]
+    )
+    if np.any(principal_twist <= -math.pi) or np.any(principal_twist > math.pi):
+        raise S3CommittedStateError(
+            "committed PL turn count is incompatible with its unwrapped twist"
+        )
+    canonical_turn_count = np.asarray(
+        [
+            math.ceil((float(twist) - math.pi) / (2.0 * math.pi))
+            for twist in normalized["committed_pl_twist"]
+        ],
+        dtype=np.int64,
+    )
+    if not np.array_equal(
+        normalized["committed_pl_turn_count"], canonical_turn_count
+    ):
+        raise S3CommittedStateError(
+            "committed PL turn count is not the canonical (-pi, pi] phase"
+        )
+    if np.any(normalized["bubble_rotation_last_increment"] != 0.0):
+        raise S3CommittedStateError(
+            "committed bubble predictor must reset to exact zero"
+        )
+
+    # Reject a state from another geometry/section before interpreting its
+    # redundant resultants with the current section matrix.
+    state_identity = {
+        "generalized_formulation_fingerprint": normalized[
+            "generalized_formulation_fingerprint"
+        ],
+        "element_id": normalized["element_id"],
+        "element_configuration_fingerprint": normalized[
+            "element_configuration_fingerprint"
+        ],
+        "node_ids": nodes,
+        "node_order_fingerprint": normalized["node_order_fingerprint"],
+        "reference_geometry_fingerprint": normalized[
+            "reference_geometry_fingerprint"
+        ],
+        "reference_frame_fingerprint": normalized[
+            "reference_frame_fingerprint"
+        ],
+        "reference_corner_directors_fingerprint": normalized[
+            "reference_corner_directors_fingerprint"
+        ],
+        "director_polarity": normalized["director_polarity"],
+        "section_fingerprint": normalized["section_fingerprint"],
+        "initial_fields_fingerprint": normalized[
+            "initial_fields_fingerprint"
+        ],
+        "thickness": normalized["thickness"],
+        "state_mode": normalized["state_mode"],
+    }
+    expected = _validate_generalized_identity(expected_identity)
+    if state_identity != expected:
+        mismatched = sorted(
+            key
+            for key in _GENERALIZED_IDENTITY_KEYS
+            if state_identity[key] != expected[key]
+        )
+        raise S3CommittedStateError(
+            "generalized state identity does not match current model: "
+            + ", ".join(mismatched)
+        )
+
+    section = _finite_array(
+        expected_constitutive, (8, 8), "expected_constitutive"
+    )
+    if not np.array_equal(section, section.T):
+        raise S3CommittedStateError(
+            "expected generalized constitutive matrix must be exactly symmetric"
+        )
+    expected_resultants = (
+        (
+            normalized["station_generalized_strain"]
+            - normalized["initial_generalized_prestrain"]
+        )
+        @ section.T
+        + normalized["initial_generalized_resultant"]
+    )
+    if not np.array_equal(
+        normalized["station_generalized_resultant"], expected_resultants
+    ):
+        raise S3CommittedStateError(
+            "station generalized resultants contradict the bound section"
+        )
+    drilling_scale = _finite_state_scalar(
+        expected_drilling_scale, "expected_drilling_scale"
+    )
+    if drilling_scale <= 0.0:
+        raise S3CommittedStateError(
+            "expected_drilling_scale must be strictly positive"
+        )
+    expected_multiplier = drilling_scale * normalized["committed_pl_twist"]
+    if not np.array_equal(
+        normalized["committed_pl_multiplier"], expected_multiplier
+    ):
+        raise S3CommittedStateError(
+            "committed PL multiplier contradicts the bound drill scale"
+        )
+    area = _finite_state_scalar(
+        expected_reference_area, "expected_reference_area"
+    )
+    if area <= 0.0:
+        raise S3CommittedStateError(
+            "expected_reference_area must be strictly positive"
+        )
+    gram = (area / 12.0) * np.asarray(PL_GRAM_NUMERATOR, dtype=np.float64)
+    mixed_force = np.asarray(
+        [
+            sum(
+                float(gram[row, column])
+                * float(normalized["committed_pl_multiplier"][column])
+                for column in range(3)
+            )
+            for row in range(3)
+        ],
+        dtype=np.float64,
+    )
+    expected_energy = sum(
+        0.5 * float(normalized["committed_pl_twist"][row]) * float(mixed_force[row])
+        for row in range(3)
+    )
+    if normalized["committed_pl_energy"] != expected_energy:
+        raise S3CommittedStateError(
+            "committed PL energy contradicts twist, multiplier, and Gram matrix"
+        )
+
+    if expected_committed_total_u is not None:
+        expected_u = _finite_array(
+            expected_committed_total_u, (18,), "expected_committed_total_u"
+        )
+        if not np.array_equal(normalized["committed_total_u"], expected_u):
+            raise S3CommittedStateError(
+                "committed_total_u does not match the current global displacement slice"
+            )
+    actual_integrity = _state_integrity_sha256(normalized)
+    if actual_integrity != normalized["state_integrity_sha256"]:
+        raise S3CommittedStateError(
+            "committed generalized state integrity fingerprint mismatch"
+        )
+    return normalized
 
 
 def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
@@ -1890,6 +3484,14 @@ def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
         "reference_frame_fingerprint": _fingerprint(
             identity["reference_frame_fingerprint"],
             "reference_frame_fingerprint",
+        ),
+        "reference_corner_directors_fingerprint": _fingerprint(
+            identity["reference_corner_directors_fingerprint"],
+            "reference_corner_directors_fingerprint",
+        ),
+        "director_polarity": _director_polarity(
+            identity["director_polarity"],
+            "expected_identity director_polarity",
         ),
         "material_fingerprint": _fingerprint(
             identity["material_fingerprint"], "material_fingerprint"
@@ -1976,6 +3578,16 @@ def validate_committed_s3_state(
         "nonlinear_kinematics_id": NONLINEAR_KINEMATICS_ID,
         "director_gauge_id": DIRECTOR_GAUGE_ID,
         "external_rotation_map_id": EXTERNAL_ROTATION_MAP_ID,
+        "director_increment_map_id": DIRECTOR_INCREMENT_MAP_ID,
+        "surface_rotation_policy_id": SURFACE_ROTATION_POLICY_ID,
+        "pl_twist_policy_id": PL_TWIST_POLICY_ID,
+        "nodal_rotation_update_policy_id": NODAL_ROTATION_UPDATE_POLICY_ID,
+        "pl_phase_policy_id": PL_PHASE_POLICY_ID,
+        "pl_phase_margin_id": PL_PHASE_MARGIN_ID,
+        "pl_minimum_twist_denominator_id": (
+            PL_MINIMUM_TWIST_DENOMINATOR_ID
+        ),
+        "nonlinear_pl_energy_policy_id": NONLINEAR_PL_ENERGY_POLICY_ID,
         "bubble_convention": BUBBLE_CONVENTION,
         "bubble_state_role": BUBBLE_STATE_ROLE,
         "bubble_predictor_commit_policy_id": BUBBLE_PREDICTOR_COMMIT_POLICY_ID,
@@ -2021,6 +3633,10 @@ def validate_committed_s3_state(
         "reference_frame_fingerprint": _fingerprint(
             state["reference_frame_fingerprint"],
             "reference_frame_fingerprint",
+        ),
+        "reference_corner_directors_fingerprint": _fingerprint(
+            state["reference_corner_directors_fingerprint"],
+            "reference_corner_directors_fingerprint",
         ),
         "material_fingerprint": _fingerprint(
             state["material_fingerprint"], "material_fingerprint"
@@ -2079,6 +3695,12 @@ def validate_committed_s3_state(
             "reference_frame_fingerprint": fingerprint_values[
                 "reference_frame_fingerprint"
             ],
+            "reference_corner_directors_fingerprint": fingerprint_values[
+                "reference_corner_directors_fingerprint"
+            ],
+            "director_polarity": _director_polarity(
+                state["director_polarity"]
+            ),
             "material_fingerprint": fingerprint_values["material_fingerprint"],
             "initial_fields_fingerprint": fingerprint_values[
                 "initial_fields_fingerprint"
@@ -2094,7 +3716,55 @@ def validate_committed_s3_state(
     )
     for key, shape in _ARRAY_SHAPES_FIXED.items():
         normalized[key] = _finite_state_array(state[key], shape, key)
+    normalized["committed_pl_turn_count"] = _integer_state_array(
+        state["committed_pl_turn_count"],
+        (3,),
+        "committed_pl_turn_count",
+    )
+    normalized["committed_pl_energy"] = _finite_state_scalar(
+        state["committed_pl_energy"],
+        "committed_pl_energy",
+    )
+    if normalized["committed_pl_energy"] < 0.0:
+        raise S3CommittedStateError("committed PL energy must be nonnegative")
     _validate_triads(normalized["committed_director_triads"])
+    _validate_nodal_rotation_state(
+        normalized["reference_corner_directors"],
+        normalized["committed_nodal_rotation_matrices"],
+        normalized["committed_director_triads"],
+    )
+    actual_reference_directors_fingerprint = (
+        reference_corner_directors_fingerprint(
+            nodes,
+            normalized["reference_corner_directors"],
+        )
+    )
+    if actual_reference_directors_fingerprint != normalized[
+        "reference_corner_directors_fingerprint"
+    ]:
+        raise S3CommittedStateError(
+            "reference corner directors contradict their model-bound fingerprint"
+        )
+    principal_twist = normalized["committed_pl_twist"] - (
+        2.0 * math.pi * normalized["committed_pl_turn_count"]
+    )
+    if np.any(principal_twist <= -math.pi) or np.any(principal_twist > math.pi):
+        raise S3CommittedStateError(
+            "committed PL turn count is incompatible with its unwrapped twist"
+        )
+    canonical_turn_count = np.asarray(
+        [
+            math.ceil((float(twist) - math.pi) / (2.0 * math.pi))
+            for twist in normalized["committed_pl_twist"]
+        ],
+        dtype=np.int64,
+    )
+    if not np.array_equal(
+        normalized["committed_pl_turn_count"], canonical_turn_count
+    ):
+        raise S3CommittedStateError(
+            "committed PL turn count is not the canonical (-pi, pi] phase"
+        )
     if np.any(normalized["bubble_rotation_last_increment"] != 0.0):
         raise S3CommittedStateError(
             "committed bubble predictor must reset to exact zero in the frozen gauge policy"
@@ -2196,6 +3866,10 @@ def validate_committed_s3_state(
             "reference_geometry_fingerprint"
         ],
         "reference_frame_fingerprint": normalized["reference_frame_fingerprint"],
+        "reference_corner_directors_fingerprint": normalized[
+            "reference_corner_directors_fingerprint"
+        ],
+        "director_polarity": normalized["director_polarity"],
         "material_fingerprint": normalized["material_fingerprint"],
         "initial_fields_fingerprint": normalized["initial_fields_fingerprint"],
         "state_mode": normalized["state_mode"],
@@ -2248,6 +3922,9 @@ __all__ = [
     "COMMIT_STATUS",
     "DIRECTOR_GAUGE_FALLBACK_AXIS",
     "DIRECTOR_GAUGE_ID",
+    "DIRECTOR_INCREMENT_MAP_ID",
+    "DIRECTOR_POLARITY_POLICY_ID",
+    "DIRECTOR_REVERSAL_TRANSFORM_ID",
     "DIRECTOR_GAUGE_PRIMARY_AXIS",
     "DIRECTOR_GAUGE_SWITCH_TOLERANCE",
     "DIRECTOR_ORTHONORMALITY_TOLERANCE",
@@ -2260,10 +3937,20 @@ __all__ = [
     "EXTERNAL_ROTATION_MAP_ID",
     "FORMULATION_ID",
     "FORMULATION_SCHEMA",
+    "GENERALIZED_ELEMENT_CONFIGURATION_DESCRIPTOR_SCHEMA",
+    "GENERALIZED_INITIAL_FIELD_POLICY_ID",
     "GENERALIZED_COMPONENTS",
     "GENERALIZED_COMPONENT_ORDER",
+    "GENERALIZED_NONLINEAR_STATE_LAYOUT_ID",
+    "GENERALIZED_NONLINEAR_STATE_SCHEMA",
+    "GENERALIZED_NONLINEAR_STATE_VERSION",
     "GENERALIZED_RESULTANT_COMPONENT_ORDER",
+    "GENERALIZED_SECTION_DESCRIPTOR_SCHEMA",
+    "GENERALIZED_SECTION_HISTORY_POLICY_ID",
     "GENERALIZED_SECTION_INTEGRATION_ID",
+    "GENERALIZED_STATE_FIELD_MANIFEST",
+    "GENERALIZED_STATE_FIELD_MANIFEST_ID",
+    "GENERALIZED_STATE_MODE",
     "GENERALIZED_STRAIN_COMPONENT_ORDER",
     "INITIAL_FIELD_NAMES",
     "ISOTROPIC_CONSTITUTIVE_INTEGRATION_ID",
@@ -2283,7 +3970,9 @@ __all__ = [
     "MITC3_PLUS_SOURCE_SHA256",
     "MITC3_PLUS_SOURCE_URL",
     "NONLINEAR_KINEMATICS_ID",
+    "NODAL_ROTATION_UPDATE_POLICY_ID",
     "NONLINEAR_POLICY_ID",
+    "NONLINEAR_PL_ENERGY_POLICY_ID",
     "NONLINEAR_SOURCE_SHA256",
     "NONLINEAR_STATE_LAYOUT_ID",
     "NONLINEAR_STATE_SCHEMA",
@@ -2296,9 +3985,18 @@ __all__ = [
     "PL_CONSTRAINT_ID",
     "PL_GRAM_NUMERATOR",
     "PL_GRAM_SCALE_ID",
+    "PL_MINIMUM_TWIST_DENOMINATOR",
+    "PL_MINIMUM_TWIST_DENOMINATOR_ID",
+    "PL_PHASE_MARGIN",
+    "PL_PHASE_MARGIN_ID",
+    "PL_PHASE_POLICY_ID",
+    "PL_TWIST_POLICY_ID",
     "QUADRATURE_ID",
     "RECOVERY_POLICY_ID",
     "REFERENCE_GEOMETRY_VALIDATION_ID",
+    "REFERENCE_SURFACE_MASS_SHIFT_ID",
+    "REFERENCE_SURFACE_OFFSET_POLICY_ID",
+    "REFERENCE_SURFACE_STRAIN_TRANSFORM_ID",
     "S3CommittedStateError",
     "STATE_ARRAY_LAYOUT_ID",
     "STATE_FIELD_MANIFEST",
@@ -2307,11 +4005,14 @@ __all__ = [
     "STATE_REDUNDANCY_VALIDATION_ID",
     "STIFFNESS_STATION_TABLE",
     "SUPPORTED_LOBATTO_LAYER_COUNTS",
+    "SURFACE_ROTATION_POLICY_ID",
     "THICKNESS_COORDINATE_SIGN_ID",
     "THICKNESS_QUADRATURE_ID",
     "TYING_POINTS",
     "TYING_POINT_DEFINITIONS",
     "build_element_configuration_descriptor",
+    "build_generalized_element_configuration_descriptor",
+    "build_generalized_state_identity",
     "build_state_identity",
     "canonical_json_bytes",
     "canonical_sha256",
@@ -2320,20 +4021,30 @@ __all__ = [
     "formulation_fingerprint_payload",
     "formulation_mechanics_contract_payload",
     "formulation_mechanics_fingerprint",
+    "generalized_element_configuration_fingerprint",
+    "generalized_formulation_fingerprint",
+    "generalized_formulation_fingerprint_payload",
+    "generalized_section_descriptor",
+    "generalized_section_fingerprint",
+    "generalized_state_field_manifest_fingerprint",
+    "initialize_zero_committed_s3_generalized_state",
     "initialize_zero_committed_s3_state",
     "lobatto_table_fingerprint",
     "material_fingerprint",
     "node_order_fingerprint",
     "reference_frame_fingerprint",
+    "reference_corner_directors_fingerprint",
     "reference_geometry_fingerprint",
     "reconstruct_director_triad",
     "qualified_s3_lobatto_layers",
     "qualified_s3_triangle_frame",
     "require_qualified_s3_quality",
+    "require_stateless_generalized_section",
     "resolved_material_descriptor",
     "seal_committed_s3_state",
     "state_field_manifest_fingerprint",
     "stiffness_station_table_fingerprint",
     "strict_canonical_json_loads",
+    "validate_committed_s3_generalized_state",
     "validate_committed_s3_state",
 ]

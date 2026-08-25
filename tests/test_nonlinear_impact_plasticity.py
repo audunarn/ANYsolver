@@ -72,6 +72,88 @@ def test_nonlinear_sphere_impact_smoke_preserves_result_contract():
     assert result.displacements.shape[0] == len(result.times)
 
 
+def test_nonlinear_impact_commits_state_from_exact_accepted_newton_iterate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Committed history must name the configuration that produced it.
+
+    Loose convergence tolerances make one nonzero Newton correction sufficient.
+    The confirmation evaluation must therefore be committed, rather than the
+    unevaluated post-correction candidate paired with the preceding state.
+    """
+
+    from scipy import sparse
+
+    from anysolver.boundary import LoadCase
+    from anysolver import nonlinear_static
+
+    model = _verification_contact_panel()
+    load = LoadCase("newton-state-identity")
+    load.add_nodal_load(1, forces=np.asarray((0.0, 0.0, 1.0)))
+    evaluated_displacements: list[np.ndarray] = []
+
+    def recording_assembler(
+        _model,
+        displacements,
+        _committed_states,
+        _num_layers,
+        *,
+        tangent=True,
+        **_kwargs,
+    ):
+        evaluated = np.asarray(displacements, dtype=float).copy()
+        evaluated_displacements.append(evaluated)
+        size = evaluated.size
+        return (
+            np.zeros(size, dtype=float),
+            sparse.csr_matrix((size, size), dtype=float) if tangent else None,
+            {1: {"evaluated_full_displacement": evaluated.copy()}},
+        )
+
+    monkeypatch.setattr(
+        nonlinear_static,
+        "_assemble_nonlinear_system",
+        recording_assembler,
+    )
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "1000000")
+
+    result = fs.solve_transient_sphere_impact(
+        model,
+        fs.TransientConfig(dt=0.01, t_end=0.01),
+        fs.RigidSphereImpact(
+            "newton-state-identity",
+            radius=0.1,
+            mass=1.0,
+            start_point=(0.5, 0.5, 5.0),
+            travel_direction=(1.0, 0.0, 0.0),
+            speed=1.0,
+        ),
+        fs.SphereContactConfig(penalty_stiffness=500.0),
+        base_load_case=load,
+        nonlinear_config=fs.NonlinearTransientConfig(
+            enabled=True,
+            max_iterations=1,
+            max_cutbacks=0,
+            residual_tolerance=1.0e6,
+            displacement_tolerance=1.0e6,
+            contact_force_tolerance=1.0e6,
+            line_search=False,
+            equilibrate_base_load=False,
+        ),
+    )
+
+    assert result.status in {"completed", "no_contact"}
+    accepted = np.asarray(result.displacements[-1], dtype=float)
+    committed = np.asarray(
+        result.diagnostics["element_states"][1]["evaluated_full_displacement"],
+        dtype=float,
+    )
+    assert any(np.any(values != 0.0) for values in evaluated_displacements)
+    assert np.any(accepted != 0.0)
+    np.testing.assert_array_equal(committed, accepted)
+    assert committed.tobytes(order="C") == accepted.tobytes(order="C")
+
+
 def test_nonlinear_event_substepping_catches_contact_that_single_large_step_would_miss():
     model = _verification_contact_panel()
     model.materials["soft"].hardening_curve = DNVC208MaterialCurve(

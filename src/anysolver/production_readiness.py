@@ -52,6 +52,42 @@ def _status_from_gate(report: Mapping[str, Any], name: str) -> str:
     return "not_evaluated"
 
 
+def _qualified_s3_companion_entry() -> CapabilityEntry:
+    """Report the opt-in S3 candidate without converting code parity to release authority."""
+
+    return CapabilityEntry(
+        feature="qualified_s3_companion_shell_candidate",
+        status="not_qualified",
+        release_gate="qualified_s3_companion_activation",
+        verification_cases=[],
+        limits={
+            "default_formulation": "legacy-s3",
+            "explicit_selectors": ["e4-pl-s3", "qualified-s3"],
+            "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+            "shell_topology": "S3",
+        },
+        limitations=[
+            "The qualified S3 formulation is an additive opt-in candidate and is not a production default.",
+            "Element capability replacement records prove implemented paths only; they do not replace independent local, mixed-mesh, performance, or ecosystem qualification.",
+            "History-dependent generalized-section material response is outside the admitted stateless generalized-section scope.",
+            "Broad current-state buckling, section-offset reversal, deterministic mesh repair, and the two-cycle mixed campaign remain release gates.",
+        ],
+        required_solver_configuration={
+            "authoritative_reference_normal": True,
+            "formulation": "e4-pl-s3",
+            "geometry_admission": "ANYMESHER_QUALIFIED_S3_ADMISSION_V1",
+        },
+        gate_blockers=[
+            "S3_INDEPENDENT_LOCAL_ORACLE_AND_INTERVAL",
+            "S3_CURRENT_STATE_BUCKLING",
+            "S3_DIRECTOR_OFFSET_AND_RESTART",
+            "S3_MIXED_MESH_CAMPAIGN_TWO_CYCLES",
+            "S3_PERFORMANCE_AND_BATCH",
+            "S3_ECOSYSTEM_CROSS_WHEEL",
+        ],
+    )
+
+
 def build_capability_matrix(report: Optional[Mapping[str, Any]] = None) -> List[CapabilityEntry]:
     """Return production capability entries derived from verification gates."""
 
@@ -188,6 +224,7 @@ def build_capability_matrix(report: Optional[Mapping[str, Any]] = None) -> List[
             required_solver_configuration={"qualification_evidence": "complete immutable release package"},
             gate_blockers=_gate_blockers(report, "fully_documented_verified_release"),
         ),
+        _qualified_s3_companion_entry(),
         CapabilityEntry(
             feature="unsupported_general_purpose_fe",
             status="unsupported",

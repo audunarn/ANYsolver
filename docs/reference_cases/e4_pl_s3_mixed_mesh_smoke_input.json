@@ -1,0 +1,142 @@
+{
+  "authority": {
+    "connectivity_manifest": {
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+      "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    },
+    "qualification_contract": {
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_qualification_contract.json",
+      "sha256": "091D6D63BF0950B8A5CBB298095E0787DEB78ECD4954E9F421741259F1E93FDD"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "SMOKE_N20_COMPACT_CLUSTER_5PCT_ALTERNATING",
+      "topology": {
+        "connectivity_sha256": "2DACA915ADFD1B325E48466A98ED6C311924C6715DB914F00DB4855EBE98F663",
+        "diagonal": "alternating",
+        "level": 20,
+        "mask": "compact_cluster",
+        "split_base_cell_count": 20
+      }
+    },
+    {
+      "case_id": "SMOKE_N40_DISPERSED_1PCT_ALTERNATING",
+      "topology": {
+        "connectivity_sha256": "765244E147C62DA7F2673331A7BC6B07BE028B0F2A8CD22D23ECFDE5B7DB24D6",
+        "diagonal": "alternating",
+        "level": 40,
+        "mask": "dispersed",
+        "split_base_cell_count": 4
+      }
+    }
+  ],
+  "execution": {
+    "canonical_cycles": 1,
+    "classification": "SMOKE_ONLY_NOT_QUALIFICATION",
+    "executor": "LINEAR_PATCH_EQUILIBRIUM_SMOKE_V1",
+    "numerical_library_threads_per_process": 1
+  },
+  "factories": {
+    "default_s3_expected": "legacy-s3",
+    "q4": {
+      "class_module": "anysolver.e4_pl_element",
+      "class_name": "QualifiedE4PLShellElement",
+      "formulation_id": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+      "selector": "e4-pl"
+    },
+    "s3": {
+      "class_module": "anysolver.e4_pl_s3_element",
+      "class_name": "QualifiedE4PLS3ShellElement",
+      "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+      "selector": "e4-pl-s3"
+    }
+  },
+  "model": {
+    "boundary_conditions": [
+      {
+        "dofs": [
+          "uz",
+          "rx",
+          "ry"
+        ],
+        "name": "plane",
+        "selection": "all_nodes",
+        "value": 0.0
+      },
+      {
+        "dofs": [
+          "ux"
+        ],
+        "name": "left_axial",
+        "selection": "left_edge",
+        "value": 0.0
+      },
+      {
+        "dofs": [
+          "uy"
+        ],
+        "name": "origin_transverse",
+        "selection": "origin",
+        "value": 0.0
+      }
+    ],
+    "coordinates": {
+      "length_x": 1.0,
+      "length_y": 1.0,
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "owner_normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "rule": "ROW_MAJOR_UNIT_RECTANGLE_BINARY64_V1"
+    },
+    "material": {
+      "density": 7850.0,
+      "elastic_modulus": 210000000000.0,
+      "name": "smoke_steel",
+      "poisson_ratio": 0.3
+    },
+    "patches": {
+      "bending": {
+        "kappa_x": 0.0011
+      },
+      "membrane": {
+        "eps_x": 0.00012,
+        "eps_y": -4e-05,
+        "gamma_xy": 7e-05
+      },
+      "shear": {
+        "gamma_xz": 0.0002,
+        "gamma_yz": -0.00011
+      }
+    },
+    "section": {
+      "q4_drilling_stabilization": 0.001,
+      "q4_hourglass_stabilization": 0.001,
+      "q4_pl_stabilization": 1.0,
+      "q4_planar_tolerance": 1e-10,
+      "q4_warped_formulation": "varying_frame",
+      "s3_director_polarity": 1,
+      "thickness": 0.01
+    },
+    "static_probe": {
+      "distribution": "CONSISTENT_UNIFORM_RIGHT_EDGE_LINE_RESULTANT_V1",
+      "name": "right_edge_membrane_traction",
+      "right_edge_resultant": [
+        1000.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "schema": "anysolver.e4-pl-s3-mixed-mesh-runner-input-v1"
+}

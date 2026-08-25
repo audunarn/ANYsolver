@@ -189,7 +189,8 @@ class LoadCase:
         node ordering and natural-coordinate surface Jacobian.
 
         Pressure is a dead load by default.  Set ``follower_pressure=True`` on
-        the load case to integrate it over the current midsurface during a
+        the load case to integrate it over the current nodal interpolation
+        surface during a
         nonlinear solve.  The flag is load-case-wide so one proportional load
         pattern cannot accidentally mix reference- and current-configuration
         pressure semantics.
@@ -306,7 +307,7 @@ class LoadCase:
         mesh: "FEMesh",
         displacements: Optional[np.ndarray],
     ) -> np.ndarray:
-        """Return midsurface coordinates after nodal translations."""
+        """Return nodal interpolation-surface coordinates after translations."""
         coords = np.asarray(element.get_node_coordinates(mesh), dtype=float).copy()
         if displacements is None:
             return coords
@@ -335,9 +336,9 @@ class LoadCase:
 
             f_i = integral_A N_i * p * n dA
 
-        When ``coords`` are current midsurface coordinates this is a follower
+        When ``coords`` are current nodal interpolation-surface coordinates this is a follower
         load.  No independent rotational pressure moments are introduced:
-        pressure virtual work is conjugate to midsurface translations.
+        pressure virtual work is conjugate to interpolation-surface translations.
         """
         if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
             return self._fallback_lumped_pressure_load(element, mesh, pressure, coords)
@@ -349,12 +350,22 @@ class LoadCase:
         f_elem = np.zeros(num_nodes * 6)
         gauss_points = getattr(element, "gauss_points")
         gauss_weights = getattr(element, "gauss_weights")
+        orientation_provider = getattr(
+            element, "sheet_area_orientation_sign", None
+        )
+        orientation_sign = (
+            float(orientation_provider(mesh))
+            if callable(orientation_provider)
+            else 1.0
+        )
+        if orientation_sign not in (-1.0, 1.0):
+            raise ValueError("shell sheet area orientation sign must be -1 or +1")
 
         for (xi, eta), weight in zip(gauss_points, gauss_weights):
             N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
             tangent_xi = coords.T @ dN_dxi
             tangent_eta = coords.T @ dN_deta
-            area_vector = np.cross(tangent_xi, tangent_eta)
+            area_vector = orientation_sign * np.cross(tangent_xi, tangent_eta)
             if float(np.linalg.norm(area_vector)) < _SMALL:
                 continue
             for i in range(num_nodes):
@@ -392,6 +403,16 @@ class LoadCase:
         tangent = np.zeros((num_nodes * 6, num_nodes * 6), dtype=float)
         gauss_points = getattr(element, "gauss_points")
         gauss_weights = getattr(element, "gauss_weights")
+        orientation_provider = getattr(
+            element, "sheet_area_orientation_sign", None
+        )
+        orientation_sign = (
+            float(orientation_provider(mesh))
+            if callable(orientation_provider)
+            else 1.0
+        )
+        if orientation_sign not in (-1.0, 1.0):
+            raise ValueError("shell sheet area orientation sign must be -1 or +1")
 
         for (xi, eta), weight in zip(gauss_points, gauss_weights):
             N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
@@ -401,7 +422,7 @@ class LoadCase:
                 continue
             skew_xi = self._skew(tangent_xi)
             skew_eta = self._skew(tangent_eta)
-            scale = float(pressure) * float(weight)
+            scale = orientation_sign * float(pressure) * float(weight)
             for i in range(num_nodes):
                 row = slice(6 * i, 6 * i + 3)
                 for j in range(num_nodes):

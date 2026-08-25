@@ -421,6 +421,14 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "mass_moment_id",
         "recovery_policy_id",
         "state_layout_id",
+        "director_polarity",
+        "director_polarity_policy_id",
+        "director_reversal_transform_id",
+        "reference_normal",
+        "reference_surface_offset",
+        "reference_surface_offset_policy_id",
+        "reference_surface_strain_transform_id",
+        "reference_surface_mass_shift_id",
     ):
         historical.pop(key)
     historical["type"] = "ShellElement"
@@ -438,6 +446,10 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "geometric_stiffness_policy",
         "mass_moment_id",
         "quadrature_id",
+        "reference_surface_mass_shift_id",
+        "reference_surface_offset",
+        "reference_surface_offset_policy_id",
+        "reference_surface_strain_transform_id",
         "recovery_policy_id",
         "state_layout_id",
     ):
@@ -531,10 +543,24 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
     element = QualifiedE4PLS3ShellElement(
         1, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
     )
-    assert element.capability_gaps == CAPABILITY_GAPS
+    closed_layered_capabilities = {
+        "initial_fields",
+        "material_nonlinearity",
+        "nonlinear_geometry",
+        "patch_recovery",
+        "committed_state_recovery",
+        "contact_state",
+        "static_restart_history",
+        "arc_length_restart_history",
+    }
+    assert element.capability_gaps == CAPABILITY_GAPS - closed_layered_capabilities
     assert all(
         element.capability_matrix()[name] == "PARITY_GAP"
-        for name in CAPABILITY_GAPS
+        for name in element.capability_gaps
+    )
+    assert all(
+        element.capability_matrix()[name] == "PARITY_REPLACED"
+        for name in closed_layered_capabilities
     )
     mass = element.compute_mass_matrix(_mesh(nodes), _material())
     assert mass.shape == (18, 18)
@@ -543,11 +569,11 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
         element.compute_geometric_stiffness_matrix(_mesh(nodes), _material()),
         np.zeros((18, 18)),
     )
-    with pytest.raises(NotImplementedError, match="nonlinear_geometry"):
+    with pytest.raises(TypeError, match="native_rotation_trial"):
         element.compute_nonlinear_response(_mesh(nodes), _material(), np.zeros(18))
 
 
-def test_direct_solver_imperfection_cannot_bypass_initial_field_parity_gap() -> None:
+def test_layered_s3_accepts_a_model_imperfection_without_legacy_mechanics() -> None:
     model = FEModel("qualified-s3-imperfection")
     for node_id, coordinate in enumerate(
         ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.2, 0.9, 0.0)), start=1
@@ -561,14 +587,14 @@ def test_direct_solver_imperfection_cannot_bypass_initial_field_parity_gap() -> 
     )
     before = model.mesh.get_node(3).coords().copy()
 
-    with pytest.raises(
-        ElementCapabilityError,
-        match="apply_imperfection.*initial_fields",
-    ):
-        apply_imperfection(
-            model,
-            ImperfectionField({3: (0.0, 0.0, 0.1)}),
-            copy_model=False,
-        )
+    returned = apply_imperfection(
+        model,
+        ImperfectionField({3: (0.0, 0.0, 0.1)}),
+        copy_model=False,
+    )
 
-    np.testing.assert_array_equal(model.mesh.get_node(3).coords(), before)
+    assert returned is model
+    np.testing.assert_array_equal(
+        model.mesh.get_node(3).coords(),
+        before + np.asarray((0.0, 0.0, 0.1)),
+    )

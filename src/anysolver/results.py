@@ -423,6 +423,74 @@ _QUAD8_NODE_NATURAL = np.array(
 _RECOVERED_STRESS_COMPONENTS = ("xx", "yy", "zz", "xy", "yz", "xz")
 
 
+@lru_cache(maxsize=8)
+def _cached_qualified_s3_barycentric_extrapolation(
+    station_points_flat: Tuple[float, ...],
+    station_weights: Tuple[float, ...],
+) -> np.ndarray:
+    """Return the frozen seven-station-to-corner S3 recovery operator.
+
+    The qualified S3 stores physical fields at the seven points of its
+    stiffness rule.  A weighted projection onto the complete barycentric
+    linear basis is therefore the formulation-native recovery: the three
+    projection coefficients are the values at corners ``L1``, ``L2`` and
+    ``L3``.  This is intentionally separate from the quadrilateral polynomial
+    extrapolator and is never selected by a legacy TRI3.
+    """
+
+    points = np.asarray(station_points_flat, dtype=float).reshape(-1, 2)
+    weights = np.asarray(station_weights, dtype=float).reshape(-1)
+    if points.shape != (7, 2) or weights.shape != (7,):
+        raise ValueError(
+            "qualified S3 barycentric recovery requires seven surface stations"
+        )
+    if not np.all(np.isfinite(points)) or not np.all(np.isfinite(weights)):
+        raise ValueError("qualified S3 recovery stations must be finite")
+    if np.any(weights <= 0.0):
+        raise ValueError("qualified S3 recovery weights must be positive")
+    barycentric = np.column_stack(
+        (1.0 - points[:, 0] - points[:, 1], points[:, 0], points[:, 1])
+    )
+    gram = barycentric.T @ (weights[:, None] * barycentric)
+    if np.linalg.matrix_rank(gram) != 3:
+        raise ValueError("qualified S3 barycentric recovery basis is singular")
+    operator = np.linalg.solve(
+        gram,
+        barycentric.T * weights[None, :],
+    )
+    # Recondition the tiny binary64 quadrature-rounding residual so the
+    # identity being certified is the barycentric projection itself, not the
+    # decimal spelling of the published rule.
+    reproduction = operator @ barycentric
+    operator = np.linalg.solve(reproduction, operator)
+    if not np.allclose(
+        operator @ barycentric,
+        np.eye(3, dtype=float),
+        rtol=0.0,
+        atol=32.0 * np.finfo(float).eps,
+    ):
+        raise ValueError(
+            "qualified S3 recovery operator does not reproduce linear fields"
+        )
+    operator.setflags(write=False)
+    return operator
+
+
+def _qualified_s3_barycentric_extrapolation(element: Any) -> Optional[np.ndarray]:
+    """Return the native S3 operator only for the qualified formulation."""
+
+    from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+
+    if not isinstance(element, QualifiedE4PLS3ShellElement):
+        return None
+    points = np.asarray(element.gauss_points, dtype=float).reshape(-1, 2)
+    weights = np.asarray(element.gauss_weights, dtype=float).reshape(-1)
+    return _cached_qualified_s3_barycentric_extrapolation(
+        tuple(float(value) for value in points.reshape(-1)),
+        tuple(float(value) for value in weights),
+    )
+
+
 def _polynomial_basis(points: np.ndarray, num_gauss: int) -> np.ndarray:
     """Polynomial basis matched to the Gauss rule for stress extrapolation."""
     xi = points[:, 0]
@@ -464,6 +532,9 @@ def _cached_gauss_to_node_extrapolation(
 def _gauss_to_node_extrapolation(element: Any) -> Optional[np.ndarray]:
     """Return the cached (num_nodes, num_gauss) operator for one shell."""
 
+    qualified_s3 = _qualified_s3_barycentric_extrapolation(element)
+    if qualified_s3 is not None:
+        return qualified_s3
     gauss_points = np.asarray(getattr(element, "gauss_points", ()), dtype=float).reshape(-1, 2)
     return _cached_gauss_to_node_extrapolation(
         int(getattr(element, "num_nodes", 0)),

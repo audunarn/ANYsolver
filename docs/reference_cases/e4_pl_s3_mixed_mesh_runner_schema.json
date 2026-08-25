@@ -1,0 +1,461 @@
+{
+  "$id": "anysolver.e4-pl-s3-mixed-mesh-runner-input-v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Strict campaign input. The implemented executor is smoke-only; the remaining executor IDs are reserved extension points and fail closed until implemented.",
+  "properties": {
+    "authority": {
+      "additionalProperties": false,
+      "properties": {
+        "connectivity_manifest": {
+          "$ref": "#/$defs/authority"
+        },
+        "qualification_contract": {
+          "$ref": "#/$defs/authority"
+        }
+      },
+      "required": [
+        "connectivity_manifest",
+        "qualification_contract"
+      ],
+      "type": "object"
+    },
+    "cases": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "topology": {
+            "additionalProperties": false,
+            "properties": {
+              "connectivity_sha256": {
+                "pattern": "^[0-9A-F]{64}$",
+                "type": "string"
+              },
+              "diagonal": {
+                "enum": [
+                  "alternating",
+                  "backslash",
+                  "slash"
+                ]
+              },
+              "level": {
+                "enum": [
+                  20,
+                  40,
+                  80,
+                  160
+                ]
+              },
+              "mask": {
+                "enum": [
+                  "boundary_band",
+                  "chain",
+                  "compact_cluster",
+                  "dispersed",
+                  "hole_band",
+                  "none"
+                ]
+              },
+              "split_base_cell_count": {
+                "enum": [
+                  0,
+                  4,
+                  20,
+                  40,
+                  100
+                ]
+              }
+            },
+            "required": [
+              "connectivity_sha256",
+              "diagonal",
+              "level",
+              "mask",
+              "split_base_cell_count"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "case_id",
+          "topology"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "execution": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_cycles": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "classification": {
+          "const": "SMOKE_ONLY_NOT_QUALIFICATION"
+        },
+        "executor": {
+          "enum": [
+            "LINEAR_PATCH_EQUILIBRIUM_SMOKE_V1",
+            "MIXED_BATCH_THROUGHPUT_V1",
+            "MIXED_BUCKLING_V1",
+            "MIXED_CONVERGENCE_V1",
+            "MIXED_INTERFACE_RESULTANTS_V1",
+            "MIXED_LOCKING_V1",
+            "MIXED_MODAL_V1",
+            "MIXED_PERFORMANCE_V1"
+          ]
+        },
+        "numerical_library_threads_per_process": {
+          "const": 1
+        }
+      },
+      "required": [
+        "canonical_cycles",
+        "classification",
+        "executor",
+        "numerical_library_threads_per_process"
+      ],
+      "type": "object"
+    },
+    "factories": {
+      "additionalProperties": false,
+      "properties": {
+        "default_s3_expected": {
+          "const": "legacy-s3"
+        },
+        "q4": {
+          "$ref": "#/$defs/factory"
+        },
+        "s3": {
+          "$ref": "#/$defs/factory"
+        }
+      },
+      "required": [
+        "default_s3_expected",
+        "q4",
+        "s3"
+      ],
+      "type": "object"
+    },
+    "model": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary_conditions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "dofs": {
+                "items": {
+                  "enum": [
+                    "rx",
+                    "ry",
+                    "rz",
+                    "ux",
+                    "uy",
+                    "uz"
+                  ]
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "name": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "selection": {
+                "enum": [
+                  "all_nodes",
+                  "left_edge",
+                  "origin"
+                ]
+              },
+              "value": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "dofs",
+              "name",
+              "selection",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "coordinates": {
+          "additionalProperties": false,
+          "properties": {
+            "length_x": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "length_y": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "origin": {
+              "$ref": "#/$defs/vector3"
+            },
+            "owner_normal": {
+              "$ref": "#/$defs/vector3"
+            },
+            "rule": {
+              "const": "ROW_MAJOR_UNIT_RECTANGLE_BINARY64_V1"
+            }
+          },
+          "required": [
+            "length_x",
+            "length_y",
+            "origin",
+            "owner_normal",
+            "rule"
+          ],
+          "type": "object"
+        },
+        "material": {
+          "additionalProperties": false,
+          "properties": {
+            "density": {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            "elastic_modulus": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "name": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "poisson_ratio": {
+              "exclusiveMaximum": 0.5,
+              "exclusiveMinimum": -1.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "density",
+            "elastic_modulus",
+            "name",
+            "poisson_ratio"
+          ],
+          "type": "object"
+        },
+        "patches": {
+          "additionalProperties": false,
+          "properties": {
+            "bending": {
+              "additionalProperties": false,
+              "properties": {
+                "kappa_x": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "kappa_x"
+              ],
+              "type": "object"
+            },
+            "membrane": {
+              "additionalProperties": false,
+              "properties": {
+                "eps_x": {
+                  "type": "number"
+                },
+                "eps_y": {
+                  "type": "number"
+                },
+                "gamma_xy": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "eps_x",
+                "eps_y",
+                "gamma_xy"
+              ],
+              "type": "object"
+            },
+            "shear": {
+              "additionalProperties": false,
+              "properties": {
+                "gamma_xz": {
+                  "type": "number"
+                },
+                "gamma_yz": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "gamma_xz",
+                "gamma_yz"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "bending",
+            "membrane",
+            "shear"
+          ],
+          "type": "object"
+        },
+        "section": {
+          "additionalProperties": false,
+          "properties": {
+            "q4_drilling_stabilization": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "q4_hourglass_stabilization": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "q4_planar_tolerance": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "q4_pl_stabilization": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            "q4_warped_formulation": {
+              "const": "varying_frame"
+            },
+            "s3_director_polarity": {
+              "const": 1
+            },
+            "thickness": {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "q4_drilling_stabilization",
+            "q4_hourglass_stabilization",
+            "q4_planar_tolerance",
+            "q4_pl_stabilization",
+            "q4_warped_formulation",
+            "s3_director_polarity",
+            "thickness"
+          ],
+          "type": "object"
+        },
+        "static_probe": {
+          "additionalProperties": false,
+          "properties": {
+            "distribution": {
+              "const": "CONSISTENT_UNIFORM_RIGHT_EDGE_LINE_RESULTANT_V1"
+            },
+            "name": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "right_edge_resultant": {
+              "$ref": "#/$defs/vector6"
+            }
+          },
+          "required": [
+            "distribution",
+            "name",
+            "right_edge_resultant"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "boundary_conditions",
+        "coordinates",
+        "material",
+        "patches",
+        "section",
+        "static_probe"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "anysolver.e4-pl-s3-mixed-mesh-runner-input-v1"
+    }
+  },
+  "required": [
+    "authority",
+    "cases",
+    "execution",
+    "factories",
+    "model",
+    "schema"
+  ],
+  "title": "ANYsolver mixed qualified-Q4/S3 campaign input",
+  "type": "object",
+  "$defs": {
+    "authority": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9A-F]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "factory": {
+      "additionalProperties": false,
+      "properties": {
+        "class_module": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "class_name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "formulation_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "selector": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_module",
+        "class_name",
+        "formulation_id",
+        "selector"
+      ],
+      "type": "object"
+    },
+    "vector3": {
+      "items": {
+        "type": "number"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "type": "array"
+    },
+    "vector6": {
+      "items": {
+        "type": "number"
+      },
+      "maxItems": 6,
+      "minItems": 6,
+      "type": "array"
+    }
+  }
+}

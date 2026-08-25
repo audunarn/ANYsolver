@@ -4,17 +4,21 @@ import numpy as np
 import pytest
 
 from anysolver import (
+    BoundaryCondition,
     ElementCapabilityError,
     FEModel,
+    FixedSupport,
     QualifiedE4PLS3ShellElement,
     RigidSphereImpact,
     TransientConfig,
     solve_transient_sphere_impact,
 )
+from anysolver.element_capabilities import require_model_element_capabilities
 
 
 def _model() -> FEModel:
     model = FEModel("guarded-qualified-s3")
+    model.add_material("steel", 2.1e11, 0.3, density=7850.0)
     for node_id, coordinate in enumerate(
         ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.2, 0.9, 0.0)), start=1
     ):
@@ -28,6 +32,14 @@ def _model() -> FEModel:
             reference_normal=np.asarray((0.0, 0.0, 1.0)),
         ),
     )
+    model.add_boundary_condition(FixedSupport("edge-12", [1, 2]))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "node-3-guided",
+            [3],
+            {"ux": 0.0, "uy": 0.0, "rz": 0.0},
+        )
+    )
     return model
 
 
@@ -39,7 +51,7 @@ def test_linear_transient_is_no_longer_a_qualified_s3_capability_gap() -> None:
     )
 
 
-def test_contact_rejects_before_contact_resolution_or_state_creation() -> None:
+def test_public_contact_uses_the_native_qualified_s3_path() -> None:
     model = _model()
     sphere = RigidSphereImpact(
         "guard",
@@ -50,16 +62,18 @@ def test_contact_rejects_before_contact_resolution_or_state_creation() -> None:
         speed=1.0,
     )
 
-    with pytest.raises(ElementCapabilityError, match="sphere-impact.*7"):
-        solve_transient_sphere_impact(
-            model,
-            TransientConfig(dt=0.01, t_end=0.01),
-            sphere,
-        )
+    result = solve_transient_sphere_impact(
+        model,
+        TransientConfig(dt=0.01, t_end=0.01),
+        sphere,
+    )
+    assert result.status in {"completed", "no_contact"}
+    assert "contact_state" not in model.mesh.elements[7].capability_gaps
 
 
 def test_guard_diagnostics_are_sorted_and_bounded() -> None:
     model = FEModel("guard-order")
+    model.add_material("steel", 2.1e11, 0.3, density=7850.0)
     for node_id, coordinate in enumerate(
         (
             (0.0, 0.0, 0.0),
@@ -83,19 +97,11 @@ def test_guard_diagnostics_are_sorted_and_bounded() -> None:
             ),
         )
 
-    sphere = RigidSphereImpact(
-        "guard-order",
-        radius=0.1,
-        mass=1.0,
-        start_point=(0.3, 0.3, 0.2),
-        travel_direction=(0.0, 0.0, -1.0),
-        speed=1.0,
-    )
     with pytest.raises(ElementCapabilityError) as caught:
-        solve_transient_sphere_impact(
+        require_model_element_capabilities(
             model,
-            TransientConfig(dt=0.01, t_end=0.01),
-            sphere,
+            "buckling",
+            context="broad-current-state-buckling",
         )
 
     message = str(caught.value)

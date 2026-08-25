@@ -15,6 +15,7 @@ import anysolver.results as results_module
 from anysolver import (
     ElementCapabilityError,
     FEModel,
+    GeneralizedShellSection,
     ImperfectionField,
     LegacyS3MigrationWarning,
     LegacyShellElement,
@@ -34,7 +35,23 @@ S3_ID = 7
 Q4_ID = 20
 
 
-def _mixed_model() -> FEModel:
+class _DeclaredGuardGapS3(QualifiedE4PLS3ShellElement):
+    """Negative-profile element proving the workflow guard stays fail closed."""
+
+    @property
+    def capability_gaps(self) -> frozenset[str]:
+        return super().capability_gaps | {
+            "initial_fields",
+            "static_restart_history",
+            "arc_length_restart_history",
+        }
+
+
+def _mixed_model(
+    *,
+    generalized_s3: bool = False,
+    declared_guard_gaps: bool = False,
+) -> FEModel:
     model = FEModel("qualified-s3-guard-boundary")
     model.add_material("steel", 210.0e9, 0.3, density=7850.0)
     coordinates = (
@@ -48,14 +65,35 @@ def _mixed_model() -> FEModel:
     )
     for node_id, coordinate in enumerate(coordinates, start=1):
         model.add_node(node_id, *coordinate)
+    section = (
+        GeneralizedShellSection(
+            A=np.asarray(
+                ((120.0, 12.0, 0.0), (12.0, 100.0, 0.0), (0.0, 0.0, 44.0))
+            ),
+            B=np.zeros((3, 3)),
+            D=np.asarray(
+                ((14.0, 1.0, 0.0), (1.0, 11.0, 0.0), (0.0, 0.0, 5.0))
+            ),
+            As=np.asarray(((28.0, 0.0), (0.0, 24.0))),
+        )
+        if generalized_s3
+        else None
+    )
+    element_type = (
+        _DeclaredGuardGapS3
+        if declared_guard_gaps
+        else QualifiedE4PLS3ShellElement
+    )
     model.add_element(
         S3_ID,
-        QualifiedE4PLS3ShellElement(
+        element_type(
             S3_ID,
             [1, 2, 3],
             "steel",
             thickness=0.1,
             reference_normal=OWNER_NORMAL,
+            shell_section=section,
+            material_direction=(1.0, 0.0, 0.0) if generalized_s3 else None,
         ),
     )
     q4 = create_shell_element(
@@ -121,10 +159,10 @@ def test_capability_guard_scopes_exact_element_ids_and_orders_failures() -> None
     assert "3 (" not in str(caught_single.value)
 
 
-def test_static_nonlinear_rejects_before_any_model_evaluation(
+def test_static_nonlinear_restart_gap_rejects_before_any_model_evaluation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = _mixed_model()
+    model = _mixed_model(generalized_s3=True, declared_guard_gaps=True)
     calls: list[str] = []
 
     def forbidden(name: str):
@@ -158,51 +196,68 @@ def test_static_nonlinear_rejects_before_any_model_evaluation(
 
     with pytest.raises(
         ElementCapabilityError,
-        match="solve_static_nonlinear.*material_nonlinearity.*nonlinear_geometry",
+        match="solve_static_nonlinear.*static_restart_history",
     ):
-        nonlinear_static_module.solve_static_nonlinear(model, num_steps=1)
-    assert calls == []
-
-
-def test_static_nonlinear_state_and_field_guards_are_id_scoped() -> None:
-    model = _mixed_model()
-
-    with pytest.raises(ElementCapabilityError, match="initial_fields"):
-        nonlinear_static_module.solve_static_nonlinear(
-            model,
-            num_steps=1,
-            initial_fields={S3_ID: object()},
-        )
-    with pytest.raises(ElementCapabilityError, match="restart_history"):
         nonlinear_static_module.solve_static_nonlinear(
             model,
             num_steps=1,
             initial_element_states={S3_ID: {}},
         )
+    assert calls == []
 
-    with pytest.raises(ElementCapabilityError) as field_for_q4:
+
+def test_static_nonlinear_state_and_field_guards_are_id_scoped() -> None:
+    model = _mixed_model()
+    generalized_model = _mixed_model(generalized_s3=True)
+    guarded_generalized_model = _mixed_model(
+        generalized_s3=True,
+        declared_guard_gaps=True,
+    )
+
+    with pytest.raises(ElementCapabilityError, match="initial_fields"):
         nonlinear_static_module.solve_static_nonlinear(
-            model,
+            guarded_generalized_model,
             num_steps=1,
-            initial_fields={Q4_ID: object()},
+            initial_fields={S3_ID: object()},
         )
-    assert "material_nonlinearity" in str(field_for_q4.value)
-    assert "initial_fields" not in str(field_for_q4.value)
-
-    with pytest.raises(ElementCapabilityError) as state_for_q4:
-        nonlinear_static_module.solve_static_nonlinear(
+    require_model_element_capabilities(
+        generalized_model,
+        "initial_fields",
+        context="qualified-generalized-s3-field-selection",
+        element_ids=(S3_ID,),
+    )
+    require_model_element_capabilities(
+        model,
+        ("static_restart_history", "arc_length_restart_history"),
+        context="qualified-s3-checkpoint-selection",
+        element_ids=(S3_ID,),
+    )
+    with pytest.raises(ElementCapabilityError, match="restart_history"):
+        require_model_element_capabilities(
             model,
-            num_steps=1,
-            initial_element_states={Q4_ID: {}},
+            "restart_history",
+            context="generic-restart-selection",
+            element_ids=(S3_ID,),
         )
-    assert "material_nonlinearity" in str(state_for_q4.value)
-    assert "restart_history" not in str(state_for_q4.value)
+
+    require_model_element_capabilities(
+        generalized_model,
+        "initial_fields",
+        context="q4-field-selection",
+        element_ids=(Q4_ID,),
+    )
+    require_model_element_capabilities(
+        generalized_model,
+        "restart_history",
+        context="q4-state-selection",
+        element_ids=(Q4_ID,),
+    )
 
 
-def test_arc_length_rejects_before_load_copy_boundary_or_stiffness(
+def test_arc_length_restart_gap_rejects_before_load_copy_boundary_or_stiffness(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = _mixed_model()
+    model = _mixed_model(generalized_s3=True, declared_guard_gaps=True)
     calls: list[str] = []
 
     def forbidden(name: str):
@@ -231,17 +286,14 @@ def test_arc_length_rejects_before_load_copy_boundary_or_stiffness(
 
     with pytest.raises(
         ElementCapabilityError,
-        match="solve_static_arc_length.*material_nonlinearity.*nonlinear_geometry",
+        match="solve_static_arc_length.*arc_length_restart_history",
     ):
-        arc_length_module.solve_static_arc_length(model, None)
-    assert calls == []
-
-    with pytest.raises(ElementCapabilityError, match="restart_history"):
         arc_length_module.solve_static_arc_length(
             model,
             None,
             initial_element_states={S3_ID: {}},
         )
+    assert calls == []
     with pytest.raises(ElementCapabilityError, match="initial_fields"):
         arc_length_module.solve_static_arc_length(
             model,
@@ -254,7 +306,7 @@ def test_arc_length_rejects_before_load_copy_boundary_or_stiffness(
 def test_apply_imperfection_rejects_before_copy_conversion_or_geometry_mutation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = _mixed_model()
+    model = _mixed_model(generalized_s3=True, declared_guard_gaps=True)
     coordinates = {
         node_id: node.coords().copy() for node_id, node in model.mesh.nodes.items()
     }
@@ -297,7 +349,10 @@ def test_apply_imperfection_rejects_before_copy_conversion_or_geometry_mutation(
 def test_patch_recovery_rejects_before_displacement_or_state_evaluation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = _mixed_model()
+    # Layered S3 patch recovery is now native.  A pre-integrated generalized
+    # section still has no physical top/bottom stress field and therefore
+    # retains the patch capability guard.
+    model = _mixed_model(generalized_s3=True)
     selected = RecoveryConfig(element_ids=[S3_ID])
     calls: list[str] = []
 
@@ -331,19 +386,26 @@ def test_patch_recovery_rejects_before_displacement_or_state_evaluation(
     assert calls == []
 
 
-def test_recovery_state_history_guard_is_selection_scoped() -> None:
+def test_committed_state_recovery_is_selection_scoped_and_model_bound() -> None:
     model = _mixed_model()
+    element = model.mesh.elements[S3_ID]
+    state = element.init_model_bound_nonlinear_state(
+        model.mesh,
+        model.get_material(element.material_name),
+        3,
+    )
 
-    with pytest.raises(
-        ElementCapabilityError,
-        match="recover_stress_result.*restart_history",
-    ):
-        recovery_module.recover_stress_result(
-            model,
-            object(),
-            RecoveryConfig(element_ids=[S3_ID]),
-            element_states={S3_ID: {}},
-        )
+    native = recovery_module.recover_stress_result(
+        model,
+        _zero_displacements(model),
+        RecoveryConfig(element_ids=[S3_ID]),
+        element_states={S3_ID: state},
+        return_global=True,
+    )
+    assert tuple(native.element_stresses) == (S3_ID,)
+    assert native.provenance.per_element_source[S3_ID] == (
+        "committed_qualified_s3_native_state"
+    )
 
     recovered = recovery_module.recover_stress_result(
         model,
@@ -360,7 +422,7 @@ def test_recovery_state_history_guard_is_selection_scoped() -> None:
     "mode",
     ("explicit_von_karman", "explicit_corotational", "inferred_von_karman", "inferred_corotational"),
 )
-def test_nonlinear_context_recovery_remains_guarded_before_displacement_evaluation(
+def test_nonlinear_context_recovery_reaches_displacement_after_native_closure(
     monkeypatch: pytest.MonkeyPatch,
     mode: str,
 ) -> None:
@@ -369,7 +431,7 @@ def test_nonlinear_context_recovery_remains_guarded_before_displacement_evaluati
 
     def forbidden(*_args, **_kwargs):
         calls.append("displacements")
-        raise AssertionError("corotational recovery evaluated displacements")
+        raise RuntimeError("native-recovery-displacement-sentinel")
 
     monkeypatch.setattr(recovery_module, "_recovery_displacements", forbidden)
     resolved = "corotational" if mode.endswith("corotational") else "von_karman"
@@ -380,10 +442,7 @@ def test_nonlinear_context_recovery_remains_guarded_before_displacement_evaluati
             displacements=object(),
         )
     } if mode.startswith("inferred") else {"kinematics": resolved}
-    with pytest.raises(
-        ElementCapabilityError,
-        match="recover_stress_result.*nonlinear_geometry",
-    ):
+    with pytest.raises(RuntimeError, match="native-recovery-displacement-sentinel"):
         recovery_module.recover_stress_result(
             model,
             object(),
@@ -391,38 +450,25 @@ def test_nonlinear_context_recovery_remains_guarded_before_displacement_evaluati
             return_global=True,
             **kwargs,
         )
-    assert calls == []
+    assert calls == ["displacements"]
 
 
-def test_nonlinear_recovery_guard_precedes_result_state_and_info_access() -> None:
+def test_nonlinear_recovery_accepts_closed_native_geometry_capability() -> None:
     model = _mixed_model()
-
-    class StateTrap:
-        info = {"kinematics": "corotational"}
-
-        @property
-        def element_states(self):
-            raise AssertionError("nonlinear state accessed before capability guard")
-
-    class InfoTrap:
-        element_states = {}
-
-        @property
-        def info(self):
-            raise AssertionError("nonlinear info accessed before capability guard")
-
-    for nonlinear_result in (StateTrap(), InfoTrap()):
-        with pytest.raises(
-            ElementCapabilityError,
-            match="recover_stress_result.*nonlinear_geometry",
-        ):
-            recovery_module.recover_stress_result(
-                model,
-                object(),
-                RecoveryConfig(element_ids=[S3_ID]),
-                nonlinear_result=nonlinear_result,
-                return_global=True,
-            )
+    nonlinear_result = SimpleNamespace(
+        info={"kinematics": "von_karman"},
+        element_states={},
+        displacements=_zero_displacements(model),
+    )
+    recovered = recovery_module.recover_stress_result(
+        model,
+        None,
+        RecoveryConfig(element_ids=[S3_ID]),
+        nonlinear_result=nonlinear_result,
+        return_global=True,
+    )
+    assert tuple(recovered.element_stresses) == (S3_ID,)
+    assert recovered.provenance.analysis_context["kinematics"] == "von_karman"
 
 
 def test_disabled_global_recovery_preserves_noop_semantics(
@@ -483,7 +529,7 @@ def test_disabled_global_recovery_preserves_noop_semantics(
 def test_patch_and_nodal_recovery_reject_before_preparation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = _mixed_model()
+    model = _mixed_model(generalized_s3=True)
     calls: list[str] = []
 
     def forbidden(name: str):
@@ -508,9 +554,11 @@ def test_patch_and_nodal_recovery_reject_before_preparation(
             element_ids=[S3_ID],
         )
 
-    assert results_module._gauss_to_node_extrapolation(
+    operator = results_module._gauss_to_node_extrapolation(
         model.mesh.elements[S3_ID]
-    ) is None
+    )
+    assert operator is not None
+    assert operator.shape == (3, 7)
     monkeypatch.setattr(
         results_module,
         "_gauss_to_node_extrapolation",
@@ -729,3 +777,35 @@ def test_explicit_legacy_and_qualified_records_do_not_emit_migration_warning() -
         issubclass(item.category, LegacyS3MigrationWarning)
         for item in deserialization_warnings
     )
+
+
+@pytest.mark.parametrize(
+    "retained_marker",
+    (
+        "director_polarity",
+        "director_polarity_policy_id",
+        "director_reversal_transform_id",
+        "reference_normal",
+    ),
+)
+def test_new_qualified_s3_fingerprint_markers_cannot_downgrade_to_legacy(
+    retained_marker: str,
+) -> None:
+    qualified = QualifiedE4PLS3ShellElement(
+        95,
+        [1, 2, 3],
+        "steel",
+        reference_normal=OWNER_NORMAL,
+        director_polarity=-1,
+    ).to_dict()
+    stripped = {
+        "type": "ShellElement",
+        "element_id": 95,
+        "node_ids": [1, 2, 3],
+        "material_name": "steel",
+        retained_marker: copy.deepcopy(qualified[retained_marker]),
+    }
+    before = copy.deepcopy(stripped)
+    with pytest.raises(ValueError, match="retains qualified S3 fingerprint"):
+        shell_element_from_dict(stripped)
+    assert stripped == before

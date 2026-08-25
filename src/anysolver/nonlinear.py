@@ -23,6 +23,7 @@ from .matrix_assembly import (
     assemble_load_vector,
     assemble_stiffness_matrix,
 )
+from .nonlinear_state import require_no_native_total_lagrangian_elements
 from .recovery import ResourceConfig
 from .threading_policy import resource_threaded
 
@@ -170,6 +171,10 @@ def solve_nonlinear_load_stepping(
         raise ValueError("max_load_factor must be non-negative")
     if stability_tolerance < 0.0:
         raise ValueError("stability_tolerance must be non-negative")
+    require_no_native_total_lagrangian_elements(
+        model,
+        context="solve_nonlinear_load_stepping",
+    )
     require_model_element_capabilities(
         model,
         "nonlinear_geometry",

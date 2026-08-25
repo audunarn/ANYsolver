@@ -223,8 +223,13 @@ def _assemble_element_matrix(
             prepare_s4_generalized_stiffness_batch,
             prepare_s4_section_mass_batch,
         )
+        from .s3_reference_batch import (
+            get_reference_s3_stiffness_components,
+            reference_s3_candidate,
+        )
 
         groups = {}
+        reference_s3_items = []
         qualified_stiffness_items = []
         advanced_stiffness_items = []
         section_mass_items = []
@@ -241,6 +246,15 @@ def _assemble_element_matrix(
                     or getattr(shell_section, "rotary_inertia_per_area", None) is not None
                 )
             )
+            if (
+                matrix_type == "stiffness"
+                and reference_s3_candidate(element)
+            ):
+                # Qualified S3 has a formulation-native reference-elastic
+                # batch.  It must never enter either the legacy TRI3 or the
+                # qualified-Q4 kernels below, including on scalar fallback.
+                reference_s3_items.append((int(elem_id), element))
+                continue
             if (
                 matrix_type == "stiffness"
                 and isinstance(element, ShellElement)
@@ -333,6 +347,37 @@ def _assemble_element_matrix(
                 "reason": "unsupported_shell_topology",
                 "element_ids": sorted(generalized_mass_fallback_ids),
             }
+
+        if reference_s3_items:
+            prepared_s3, s3_plan_reused = get_reference_s3_stiffness_components(
+                model,
+                reference_s3_items,
+            )
+            precomputed.update(prepared_s3.matrices)
+            s3_diagnostics = prepared_s3.diagnostics()
+            s3_diagnostics["plan_reused"] = bool(s3_plan_reused)
+            info["diagnostics"]["qualified_s3_reference_elastic_stiffness"] = (
+                s3_diagnostics
+            )
+            if prepared_s3.batched_element_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(prepared_s3.batched_element_ids),
+                        "kernel": (
+                            "qualified_s3_reference_elastic_shared_components"
+                        ),
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(
+                            prepared_s3.group_element_ids
+                        ),
+                        "component_evaluation_count": (
+                            prepared_s3.component_evaluation_count
+                        ),
+                        "formulation_id": s3_diagnostics["formulation_id"],
+                        "speedup_claimed": False,
+                    }
+                )
 
         if qualified_stiffness_items:
             shared_components = {}
@@ -814,6 +859,51 @@ def assemble_geometric_stiffness_matrix(
     return matrix, info
 
 
+def _qualified_s3_pressure_surface_records(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+) -> list[Dict[str, Any]]:
+    """Identify the exact surface carrying qualified-S3 pressure work.
+
+    The S3 section origin may be offset from its nodal interpolation surface.
+    Pressure is intentionally conjugate to the latter; reporting that choice
+    prevents force/reaction post-processing from silently treating the material
+    midsurface as the pressure surface.  Other shell formulations retain their
+    existing diagnostics unchanged.
+    """
+
+    if load_case is None:
+        return []
+    records: list[Dict[str, Any]] = []
+    for raw_element_id in getattr(load_case, "pressure_loads", {}):
+        element_id = int(raw_element_id)
+        element = model.mesh.get_element(element_id)
+        if (
+            element is None
+            or str(getattr(element, "formulation_id", ""))
+            != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+        ):
+            continue
+        offset = float(getattr(element, "reference_surface_offset", 0.0))
+        if not np.isfinite(offset):
+            raise AssemblyError(
+                f"Qualified S3 element {element_id} has a non-finite reference-surface offset."
+            )
+        records.append(
+            {
+                "element_id": element_id,
+                "pressure_surface_id": "ELEMENT_NODAL_REFERENCE_SURFACE_V1",
+                "reference_surface_offset": offset,
+                "resultant_and_reaction_reference": (
+                    "GLOBAL_NODAL_REFERENCE_COORDINATES"
+                ),
+                "section_origin_offset_from_reference": -offset,
+                "virtual_work": "TRANSLATIONAL_NODAL_REFERENCE_SURFACE_ONLY",
+            }
+        )
+    return records
+
+
 def assemble_load_vector(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
@@ -823,7 +913,7 @@ def assemble_load_vector(
 
     ``displacements`` is ignored by ordinary dead loads.  A load case with
     ``follower_pressure=True`` uses it to evaluate pressure on the current
-    shell midsurface.
+    shell nodal interpolation surface.
     """
     total_dofs = model.mesh.dof_manager.total_dofs
     start_time = time.time()
@@ -855,7 +945,7 @@ def assemble_load_vector(
         raise AssemblyError(f"Load case {load_name!r} produced non-finite load vector values.")
 
     activity = _element_activity(model)
-    return load_vector, {
+    info = {
         "vector_type": "load",
         "load_case": load_name,
         "num_nodes": model.mesh.num_nodes,
@@ -876,6 +966,10 @@ def assemble_load_vector(
             }
         ),
     }
+    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    if pressure_surfaces:
+        info["qualified_s3_pressure_surfaces"] = pressure_surfaces
+    return load_vector, info
 
 
 def assemble_external_load_tangent(
@@ -946,7 +1040,7 @@ def assemble_external_load_tangent(
     else:
         tangent = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
 
-    return tangent, {
+    info = {
         "matrix_type": "external_load_tangent",
         "load_case": None if load_case is None else load_case.name,
         "total_dofs": total_dofs,
@@ -963,6 +1057,10 @@ def assemble_external_load_tangent(
         },
         "assembly_time": time.time() - start_time,
     }
+    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    if pressure_surfaces:
+        info["qualified_s3_pressure_surfaces"] = pressure_surfaces
+    return tangent, info
 
 
 def assemble_external_load_system(

@@ -9,9 +9,16 @@
   analytic nodal-plus-bubble mass with the frozen Guyan reduction. The modal
   solver excludes exact zero-inertia drill coordinates without inventing mass,
   using coordinate-invariant static condensation for bounded systems and a
-  fail-closed swapped descriptor pencil for larger systems. Existing S3 aliases remain legacy
-  and every unqualified nonlinear, transient, contact, buckling, restart,
-  reversal, and advanced-recovery path fails closed.
+  fail-closed swapped descriptor pencil for larger systems. The candidate now
+  also supplies formulation-native total-Lagrangian layered response,
+  stateless generalized-section geometry with analytically integrated initial
+  stress resultants and generalized eigenstrains, contact virtual work,
+  committed recovery without fabricated layer data, physical-director
+  reversal, current-state modal/buckling operators, and solver-owned
+  static/arc-length checkpoints. Existing S3 aliases remain
+  legacy; unsupported broad workflow scopes and every unqualified route still
+  fail closed pending the independent domain, mixed-mesh, performance, and
+  ecosystem release gates.
 - Keep qualified E4-PL as the production Q4 default and begin the explicit
   legacy-Q4 retirement window. Legacy Q4 selectors now emit a dedicated
   deprecation warning, diagnostics expose the selected formulation and

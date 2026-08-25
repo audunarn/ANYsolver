@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -20,14 +21,115 @@ from .algebraic_dynamics import (
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
-from .matrix_assembly import assemble_mass_matrix, assemble_stiffness_matrix
+from .matrix_assembly import (
+    assemble_geometric_stiffness_matrix,
+    assemble_mass_matrix,
+    assemble_stiffness_matrix,
+)
 from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
     from .analysis_session import AnalysisSession
     from .fe_core import FEModel
+
+
+PRESTRESSED_MODAL_POLICY_ID = (
+    "MATERIAL_TANGENT_MINUS_COMPRESSION_POSITIVE_GEOMETRIC_V1"
+)
+CURRENT_STATE_MODAL_POLICY_ID = (
+    "COMMITTED_NATIVE_TOTAL_TANGENT_WITH_REFERENCE_CONSISTENT_MASS_V1"
+)
+
+
+def _assemble_committed_current_tangent(
+    model: "FEModel",
+    displacements: Any,
+    element_states: Any,
+    num_layers: int,
+) -> tuple[sparse.csr_matrix, Dict[str, Any]]:
+    """Evaluate one read-only zero-increment committed nonlinear tangent."""
+
+    full = np.asarray(displacements, dtype=np.float64)
+    total_dofs = int(model.mesh.dof_manager.total_dofs)
+    if full.shape != (total_dofs,) or not np.all(np.isfinite(full)):
+        raise ValueError(
+            "current-state modal analysis requires the complete finite "
+            "committed displacement vector"
+        )
+    if not isinstance(element_states, Mapping):
+        raise TypeError(
+            "current-state modal analysis requires an element-state mapping"
+        )
+    if isinstance(num_layers, (bool, np.bool_)) or not isinstance(
+        num_layers, (int, np.integer)
+    ) or int(num_layers) <= 0:
+        raise ValueError("current_state_num_layers must be a positive integer")
+
+    from .nonlinear_state import (
+        NonlinearStateStore,
+        create_model_native_rotation_store,
+        discard_active_state_candidate,
+    )
+
+    store = NonlinearStateStore.from_shell_layouts((), element_states)
+    rotation_store = create_model_native_rotation_store(model, store, full)
+    if rotation_store is not None:
+        store.attach_native_rotation_store(rotation_store)
+    try:
+        from .nonlinear_static import _assemble_nonlinear_system
+
+        _force, tangent, _candidate = _assemble_nonlinear_system(
+            model,
+            full,
+            store,
+            int(num_layers),
+            tangent=True,
+            kinematics="von_karman",
+            require_full_coordinates=True,
+        )
+    finally:
+        discard_active_state_candidate(store)
+    if tangent is None:
+        raise ValueError("current-state nonlinear assembly returned no tangent")
+    made = sparse.csr_matrix(tangent, dtype=float)
+    if made.shape != (total_dofs, total_dofs) or np.any(~np.isfinite(made.data)):
+        raise ValueError("current-state nonlinear tangent is incompatible")
+    skew = made - made.T
+    tangent_norm = max(float(sparse_linalg.norm(made)), 1.0)
+    relative_skew = float(sparse_linalg.norm(skew) / tangent_norm)
+    skew_limit = 512.0 * np.finfo(np.float64).eps
+    if relative_skew > skew_limit:
+        raise ValueError(
+            "current-state nonlinear tangent is not symmetric within its "
+            "binary64 assembly bound"
+        )
+    made = (0.5 * (made + made.T)).tocsr()
+    state_digests = {
+        str(int(element_id)): str(
+            state.get(
+                "state_digest",
+                state.get("state_integrity_sha256", ""),
+            )
+        )
+        for element_id, state in sorted(
+            element_states.items(), key=lambda item: int(item[0])
+        )
+        if isinstance(state, Mapping)
+        and (
+            "state_digest" in state
+            or "state_integrity_sha256" in state
+        )
+    }
+    return made, {
+        "matrix_type": "committed_nonlinear_tangent",
+        "policy_id": CURRENT_STATE_MODAL_POLICY_ID,
+        "relative_symmetry_error": relative_skew,
+        "state_digests": state_digests,
+        "state_storage": store.diagnostics(),
+    }
 
 
 @dataclass
@@ -172,15 +274,75 @@ def solve_free_vibration(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     session: Optional["AnalysisSession"] = None,
+    prestress_states: Optional[Any] = None,
+    current_state_displacements: Optional[Any] = None,
+    current_state_element_states: Optional[Any] = None,
+    current_state_num_layers: int = 5,
 ) -> ModalResult:
-    """Solve ``K phi = omega^2 M phi`` with the common constraint transform."""
+    """Solve ``K phi = omega^2 M phi`` with the common constraint transform.
+
+    ``prestress_states`` activates the stress-stiffened tangent
+    ``K_material - K_G``.  ``K_G`` uses the same compression-positive
+    convention as linear buckling.  Element operators own bubble/internal
+    condensation; this solver only assembles their final nodal matrices.
+
+    ``current_state_displacements`` plus ``current_state_element_states``
+    instead evaluate the formulation-native committed total tangent through
+    a read-only zero-increment state transaction.  That path retains the
+    current material, geometric, bubble-Schur and objective-PL tangent while
+    continuing to use the formulation's consistent reference mass.
+    """
     cancellation_safe_point(cancellation_token, "modal.start")
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
+    current_state = (
+        current_state_displacements is not None
+        or current_state_element_states is not None
+    )
+    if (current_state_displacements is None) != (
+        current_state_element_states is None
+    ):
+        raise ValueError(
+            "current-state modal analysis requires both committed "
+            "displacements and element states"
+        )
+    if current_state and prestress_states is not None:
+        raise ValueError(
+            "current-state modal tangent and reference-elastic prestress_states "
+            "are mutually exclusive"
+        )
+    if current_state:
+        require_model_element_capabilities(
+            model,
+            "current_state_modal",
+            context="solve_free_vibration",
+        )
+    if prestress_states is not None:
+        require_model_element_capabilities(
+            model,
+            "reference_elastic_prestressed_modal",
+            context="solve_free_vibration",
+        )
     model.apply_boundary_conditions()
-    if session is None:
-        K, stiffness_info = assemble_stiffness_matrix(model)
+    current_state_info = None
+    if session is None or current_state:
+        if current_state:
+            K, current_state_info = _assemble_committed_current_tangent(
+                model,
+                current_state_displacements,
+                current_state_element_states,
+                current_state_num_layers,
+            )
+            stiffness_info = dict(current_state_info)
+        else:
+            K, stiffness_info = assemble_stiffness_matrix(model)
         M, mass_info = assemble_mass_matrix(model)
+        geometric_info = None
+        if prestress_states is not None:
+            geometric, geometric_info = assemble_geometric_stiffness_matrix(
+                model, prestress_states
+            )
+            K = (K - geometric).tocsr()
         zero = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
         K_red, _, T, _, independent_dofs, constraint_info = (
             build_constraint_transformation(K, zero, model)
@@ -200,7 +362,15 @@ def solve_free_vibration(
         M = mass_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
         mass_info = dict(mass_plan.info)
-        K_red = constraint_plan.K_red
+        geometric_info = None
+        if prestress_states is None:
+            K_red = constraint_plan.K_red
+        else:
+            geometric, geometric_info = assemble_geometric_stiffness_matrix(
+                model, prestress_states
+            )
+            K = (K - geometric).tocsr()
+            K_red = (constraint_plan.T.T @ K @ constraint_plan.T).tocsr()
         M_red, _ = session.reduced_mass(constraint_plan, model)
         T = constraint_plan.T
         independent_dofs = constraint_plan.independent_dofs
@@ -214,6 +384,20 @@ def solve_free_vibration(
         "total_dofs": model.mesh.dof_manager.total_dofs,
         "reduced_dofs": int(K_red.shape[0]),
     }
+    if geometric_info is not None:
+        assembly_info["geometric_stiffness"] = geometric_info
+        assembly_info["prestressed_modal_policy_id"] = (
+            PRESTRESSED_MODAL_POLICY_ID
+        )
+    if current_state_info is not None:
+        assembly_info["current_state_tangent"] = current_state_info
+        assembly_info["current_state_modal_policy_id"] = (
+            CURRENT_STATE_MODAL_POLICY_ID
+        )
+        if session is not None:
+            assembly_info["analysis_session_bypass_reason"] = (
+                "committed_current_state_tangent_is_not_cacheable"
+            )
     if session is not None:
         assembly_info["analysis_session"] = session.diagnostics()
     settings = {
@@ -229,6 +413,20 @@ def solve_free_vibration(
         ),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
+    if prestress_states is not None:
+        settings.update(
+            {
+                "prestress_state_source": type(prestress_states).__name__,
+                "prestressed_modal_policy_id": PRESTRESSED_MODAL_POLICY_ID,
+            }
+        )
+    if current_state:
+        settings.update(
+            {
+                "current_state_modal_policy_id": CURRENT_STATE_MODAL_POLICY_ID,
+                "current_state_num_layers": int(current_state_num_layers),
+            }
+        )
     descriptor_formulations = [
         {
             "element_id": int(element_id),

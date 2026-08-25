@@ -45,7 +45,10 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
-from .element_capabilities import require_model_element_capabilities
+from .element_capabilities import (
+    require_model_element_capabilities,
+    require_model_nonlinear_workflow_capabilities,
+)
 from .fracture import (
     DeletedElementRecord,
     FractureConfig,
@@ -73,9 +76,17 @@ from .nonlinear_analysis_diagnostics import (
 from .nonlinear_state import (
     NonlinearStateStore,
     StateMaterializationPolicy,
+    StateTransactionError,
     commit_state_candidate,
     discard_active_state_candidate,
     materialize_state_mapping,
+)
+from .nonlinear_restart import (
+    canonical_checkpoint_json_bytes,
+    create_nonlinear_checkpoint,
+    load_case_descriptor,
+    load_nonlinear_checkpoint,
+    validate_nonlinear_checkpoint,
 )
 from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
@@ -522,6 +533,7 @@ class NonlinearStaticResult:
     element_states: Dict[int, Any] = field(default_factory=dict)
     info: Dict[str, Any] = field(default_factory=dict)
     snapshots: Tuple[NonlinearIncrementSnapshot, ...] = field(default_factory=tuple)
+    restart_checkpoint: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     @property
     def converged(self) -> bool:
@@ -553,7 +565,7 @@ class NonlinearStaticResult:
         return self.info.get("stop_reason", self.failure_reason)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "status": self.status,
             "status_category": self.status_category,
             "converged": self.converged,
@@ -566,12 +578,287 @@ class NonlinearStaticResult:
             "steps": [step.to_dict() for step in self.steps],
             "snapshots": [snapshot.to_dict() for snapshot in self.snapshots],
         }
+        if self.restart_checkpoint is not None:
+            payload["restart_checkpoint"] = {
+                "schema": self.restart_checkpoint["schema"],
+                "version": self.restart_checkpoint["version"],
+                "analysis_kind": self.restart_checkpoint["analysis_kind"],
+                "checkpoint_sha256": self.restart_checkpoint["checkpoint_sha256"],
+            }
+        return payload
+
+    def to_restart_checkpoint(self) -> Dict[str, Any]:
+        """Return an owned complete checkpoint of the last committed step."""
+
+        if self.restart_checkpoint is None:
+            raise ValueError("this result does not contain a nonlinear restart checkpoint")
+        return copy.deepcopy(self.restart_checkpoint)
+
+    def restart_checkpoint_bytes(self) -> bytes:
+        """Return the complete checkpoint as strict canonical JSON."""
+
+        return canonical_checkpoint_json_bytes(self.to_restart_checkpoint())
 
     @property
     def quantity_metadata(self) -> Tuple[Any, ...]:
         from .quantities import describe_result_quantities
 
         return describe_result_quantities(self)
+
+
+def _static_restart_analysis_contract(
+    *,
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    constant_load_case: Optional["LoadCase"],
+    load_program: Optional[NonlinearLoadProgram],
+    control_name: str,
+    displacement_control: Optional[DisplacementControl],
+    num_layers: int,
+    max_iterations: int,
+    tolerance: float,
+    effective_min_step_fraction: float,
+    settings: NonlinearConvergenceSettings,
+    fracture_config: Optional[FractureConfig],
+    resource_config: Optional[ResourceConfig],
+    kinematics: str,
+    resolved_corotational_tangent: str,
+) -> Dict[str, Any]:
+    """Return invariant inputs required to continue the same static path.
+
+    Target load/displacement and the number of additional increments are
+    intentionally excluded.  The checkpoint owns the accepted path position
+    and adaptive increment state; a resumed call may extend that same path.
+    """
+
+    if load_program is None:
+        stages: List[Dict[str, Any]] = []
+    else:
+        stages = [
+            {
+                "name": stage.name,
+                "target_factor": float(stage.target_factor),
+                "load_case": load_case_descriptor(stage.load_case),
+            }
+            for stage in load_program.stages
+        ]
+    control_descriptor: Optional[Dict[str, Any]] = None
+    if control_name == "displacement":
+        if displacement_control is None:
+            raise ValueError("displacement_control is required when control='displacement'")
+        control_descriptor = {
+            # The row defines the physical continuation coordinate.  Its new
+            # target is deliberately not part of the invariant contract.
+            "full_row": displacement_control.full_row(model).tolist(),
+        }
+    return {
+        "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V1",
+        "control": control_name,
+        "load_case": load_case_descriptor(load_case),
+        "constant_load_case": load_case_descriptor(constant_load_case),
+        "load_program": stages,
+        "displacement_control": control_descriptor,
+        "num_layers": int(num_layers),
+        "max_iterations": int(max_iterations),
+        "tolerance": float(tolerance),
+        "effective_min_step_fraction": float(effective_min_step_fraction),
+        "convergence_settings": settings.to_dict(),
+        "fracture_config": (
+            None if fracture_config is None else fracture_config.to_dict()
+        ),
+        "resource_config": (
+            None if resource_config is None else resource_config.to_dict()
+        ),
+        "kinematics": str(kinematics),
+        "corotational_tangent": str(resolved_corotational_tangent),
+    }
+
+
+def _static_step_from_restart(value: Any) -> NonlinearStaticStep:
+    if not isinstance(value, Mapping):
+        raise ValueError("checkpoint static step must be a mapping")
+    expected = {
+        "step_index",
+        "load_factor",
+        "iterations",
+        "residual_norm",
+        "displacement_norm",
+        "max_equivalent_plastic_strain",
+        "control_value",
+        "active_stage",
+        "deleted_element_count",
+        "max_fracture_utilization",
+        "support_reactions",
+    }
+    if set(value) != expected:
+        raise ValueError("checkpoint static step schema is incompatible")
+    reactions = value["support_reactions"]
+    if not isinstance(reactions, Mapping):
+        raise ValueError("checkpoint static step reactions must be a mapping")
+    return NonlinearStaticStep(
+        step_index=int(value["step_index"]),
+        load_factor=float(value["load_factor"]),
+        iterations=int(value["iterations"]),
+        residual_norm=float(value["residual_norm"]),
+        displacement_norm=float(value["displacement_norm"]),
+        max_equivalent_plastic_strain=float(value["max_equivalent_plastic_strain"]),
+        control_value=(
+            None if value["control_value"] is None else float(value["control_value"])
+        ),
+        active_stage=(
+            None if value["active_stage"] is None else str(value["active_stage"])
+        ),
+        deleted_element_count=int(value["deleted_element_count"]),
+        max_fracture_utilization=float(value["max_fracture_utilization"]),
+        support_reactions={
+            str(name): tuple(float(item) for item in components)
+            for name, components in reactions.items()
+        },
+    )
+
+
+def _restore_static_path_state(
+    value: Mapping[str, Any],
+    *,
+    control_name: str,
+    n_red: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Validate static continuation state before solver assembly."""
+
+    if not isinstance(value, Mapping):
+        raise ValueError("static checkpoint path_state must be a mapping")
+    common = {
+        "mode",
+        "load_factor",
+        "step_index",
+        "total_iterations",
+        "steps",
+        "force_displacement_history",
+        "reduced_coordinates",
+        "terminal_status",
+        "failure_reason",
+    }
+    expected = (
+        common
+        | {
+            "base_step",
+            "minimum_step",
+            "maximum_step",
+            "next_step_size",
+            "force_line_search_next",
+            "convergence_adaptation",
+            "deletion_records",
+            "fracture_warnings",
+            "max_fracture_utilization",
+        }
+        if control_name == "force"
+        else common
+    )
+    if set(value) != expected or value.get("mode") != control_name:
+        raise ValueError("static checkpoint path schema is incompatible")
+    steps_raw = value["steps"]
+    history = value["force_displacement_history"]
+    if not isinstance(steps_raw, list) or not isinstance(history, list):
+        raise ValueError("static checkpoint histories must be lists")
+    steps = [_static_step_from_restart(item) for item in steps_raw]
+    step_index = int(value["step_index"])
+    if step_index < 0 or len(steps) != step_index:
+        raise ValueError("static checkpoint step count is inconsistent")
+    if len(history) != step_index:
+        raise ValueError("static checkpoint force/displacement history is incomplete")
+    if [step.step_index for step in steps] != list(range(1, step_index + 1)):
+        raise ValueError("static checkpoint step ordering is inconsistent")
+    load_factor = float(value["load_factor"])
+    if steps and steps[-1].load_factor != load_factor:
+        raise ValueError("static checkpoint load factor differs from its last step")
+    restored: Dict[str, Any] = {
+        "mode": control_name,
+        "load_factor": load_factor,
+        "step_index": step_index,
+        "total_iterations": int(value["total_iterations"]),
+        "steps": steps,
+        "force_displacement_history": copy.deepcopy(history),
+        "terminal_status": str(value["terminal_status"]),
+        "failure_reason": (
+            None if value["failure_reason"] is None else str(value["failure_reason"])
+        ),
+    }
+    reduced_coordinates = np.asarray(value["reduced_coordinates"], dtype=float)
+    if (
+        reduced_coordinates.ndim != 1
+        or not np.all(np.isfinite(reduced_coordinates))
+        or (n_red is not None and reduced_coordinates.shape != (int(n_red),))
+    ):
+        raise ValueError("static checkpoint reduced coordinates are incompatible")
+    restored["reduced_coordinates"] = reduced_coordinates.copy()
+    if restored["total_iterations"] < 0:
+        raise ValueError("static checkpoint iteration count is invalid")
+    if control_name == "force":
+        from .fracture import DeletedElementRecord
+
+        deletion_records_raw = value["deletion_records"]
+        if not isinstance(deletion_records_raw, list):
+            raise ValueError("static checkpoint deletion records must be a list")
+        deletion_records = [
+            DeletedElementRecord(**record) for record in deletion_records_raw
+        ]
+        deletion_ids = [int(record.element_id) for record in deletion_records]
+        if len(deletion_ids) != len(set(deletion_ids)):
+            raise ValueError("static checkpoint deletion records contain duplicate IDs")
+        if steps and steps[-1].deleted_element_count != len(deletion_ids):
+            raise ValueError("static checkpoint deletion count differs from its last step")
+        restored.update(
+            {
+                "base_step": float(value["base_step"]),
+                "minimum_step": float(value["minimum_step"]),
+                "maximum_step": float(value["maximum_step"]),
+                "next_step_size": float(value["next_step_size"]),
+                "force_line_search_next": bool(value["force_line_search_next"]),
+                "convergence_adaptation": copy.deepcopy(value["convergence_adaptation"]),
+                "deletion_records": deletion_records,
+                "fracture_warnings": [str(item) for item in value["fracture_warnings"]],
+                "max_fracture_utilization": float(value["max_fracture_utilization"]),
+            }
+        )
+        positive_names = ("base_step", "minimum_step", "maximum_step", "next_step_size")
+        if any(restored[name] <= 0.0 for name in positive_names):
+            raise ValueError("static checkpoint adaptive step sizes must be positive")
+        if restored["minimum_step"] > restored["maximum_step"]:
+            raise ValueError("static checkpoint adaptive step bounds are inconsistent")
+        if not isinstance(restored["convergence_adaptation"], list):
+            raise ValueError("static checkpoint convergence history must be a list")
+    return restored
+
+
+def _static_restart_path_payload(
+    *,
+    control_name: str,
+    load_factor: float,
+    step_index: int,
+    total_iterations: int,
+    steps: Sequence[NonlinearStaticStep],
+    force_displacement_history: Sequence[Mapping[str, Any]],
+    reduced_coordinates: np.ndarray,
+    terminal_status: str,
+    failure_reason: Optional[str],
+    **force_values: Any,
+) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "mode": str(control_name),
+        "load_factor": float(load_factor),
+        "step_index": int(step_index),
+        "total_iterations": int(total_iterations),
+        "steps": [step.to_dict() for step in steps],
+        "force_displacement_history": copy.deepcopy(list(force_displacement_history)),
+        "reduced_coordinates": np.asarray(
+            reduced_coordinates, dtype=float
+        ).reshape(-1).tolist(),
+        "terminal_status": str(terminal_status),
+        "failure_reason": None if failure_reason is None else str(failure_reason),
+    }
+    if control_name == "force":
+        payload.update(force_values)
+    return payload
 
 
 def _local_dof_index(dof: Union[str, int]) -> int:
@@ -622,7 +909,7 @@ def _weighted_external_load_system(
     return force, load_tangent
 
 
-def _assemble_nonlinear_system(
+def _assemble_nonlinear_system_unchecked(
     model: "FEModel",
     displacements: np.ndarray,
     committed_states: Dict[int, Any],
@@ -656,7 +943,11 @@ def _assemble_nonlinear_system(
     del require_full_coordinates  # consumed by the direct-reduction adapter
     from .nonlinear_state import begin_state_evaluation, finish_state_evaluation
 
-    state_token = begin_state_evaluation(committed_states)
+    state_token = begin_state_evaluation(
+        committed_states,
+        model=model,
+        displacements=displacements,
+    )
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
@@ -675,6 +966,7 @@ def _assemble_nonlinear_system(
 
     from .elements import ShellElement
     from .materials import is_isotropic_material
+    from .nonlinear_element_evaluation import evaluate_nonlinear_element
     from .vectorized_nonlinear import batch_shell_nonlinear_response, shell_nonlinear_batch_eligible
 
     groups = {}
@@ -852,8 +1144,17 @@ def _assemble_nonlinear_system(
             if f_elem is None:
                 material = model.get_material(element.material_name)
                 u_elem = displacements[dof_mapping]
-                f_elem, k_elem, trial_state = element.compute_nonlinear_response(
-                    mesh, material, u_elem, committed_states.get(elem_id), num_layers, tangent
+                f_elem, k_elem, trial_state = evaluate_nonlinear_element(
+                    element,
+                    mesh,
+                    material,
+                    u_elem,
+                    committed_states.get(elem_id),
+                    num_layers,
+                    tangent,
+                    committed_states=committed_states,
+                    state_token=state_token,
+                    element_id=elem_id,
                 )
                 if trial_state is not None:
                     trial_states[elem_id] = trial_state
@@ -898,6 +1199,46 @@ def _assemble_nonlinear_system(
         fallback_reason=assembly_fallback_reason,
     )
     return F_int, K_T, state_payload
+
+
+def _assemble_nonlinear_system(
+    model: "FEModel",
+    displacements: np.ndarray,
+    committed_states: Dict[int, Any],
+    num_layers: int,
+    tangent: bool = True,
+    deleted_element_ids: Optional[Sequence[int]] = None,
+    residual_stiffness_fraction: float = 1.0,
+    element_stiffness_scales: Optional[Mapping[int, float]] = None,
+    kinematics: str = "von_karman",
+    corotational_tangent: str = "rotated",
+    require_full_coordinates: bool = False,
+) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
+    """Run one reference assembly as an all-or-nothing state evaluation.
+
+    The reference assembler opens a persistent trial transaction before it
+    invokes any element.  An element exception must not strand that token:
+    retries, cutbacks, and cancellation cleanup all require the committed
+    state to be immediately reusable.
+    """
+
+    try:
+        return _assemble_nonlinear_system_unchecked(
+            model,
+            displacements,
+            committed_states,
+            num_layers,
+            tangent=tangent,
+            deleted_element_ids=deleted_element_ids,
+            residual_stiffness_fraction=residual_stiffness_fraction,
+            element_stiffness_scales=element_stiffness_scales,
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
+            require_full_coordinates=require_full_coordinates,
+        )
+    except BaseException:
+        _discard_nonlinear_state_candidate(committed_states)
+        raise
 
 
 def _support_reaction_dof_plan(
@@ -1264,6 +1605,52 @@ def _coerce_initial_field(value: Any) -> Union[ShellInitialField, BeamInitialFie
     )
 
 
+def _initialize_missing_model_bound_states(
+    model: "FEModel",
+    states: Dict[int, Any],
+    num_layers: int,
+) -> None:
+    """Materialize virgin native states before the shared-SO(3) store.
+
+    Legacy elements deliberately retain their established lazy ``state=None``
+    path.  A formulation-native element whose state is model-bound cannot do
+    that: the node-shared rotation store must bind its reference directors and
+    identity before the first trial begins.
+    """
+
+    for raw_element_id, element in model.mesh.elements.items():
+        element_id = int(raw_element_id)
+        if element_id in states:
+            continue
+        initializer = getattr(
+            element,
+            "init_model_bound_nonlinear_state",
+            None,
+        )
+        if not (
+            bool(
+                getattr(
+                    element,
+                    "formulation_native_total_lagrangian",
+                    False,
+                )
+            )
+            and callable(initializer)
+        ):
+            continue
+        initialized = initializer(
+            model.mesh,
+            model.get_material(element.material_name),
+            num_layers,
+        )
+        if not isinstance(initialized, Mapping):
+            raise TypeError(
+                f"Model-bound initializer for element {element_id} must "
+                "return a mapping"
+            )
+        states[element_id] = initialized
+
+
 def _prepare_initial_states(
     model: "FEModel",
     initial_element_states: Optional[Mapping[int, Any]],
@@ -1298,6 +1685,7 @@ def _prepare_initial_states(
             }
         )
     if not initial_fields:
+        _initialize_missing_model_bound_states(model, states, num_layers)
         return states, provenance
 
     from .elements import (
@@ -1434,6 +1822,7 @@ def _prepare_initial_states(
                 },
             }
         )
+    _initialize_missing_model_bound_states(model, states, num_layers)
     return states, provenance
 
 
@@ -1463,44 +1852,109 @@ def _activate_nonlinear_state_storage(
     info: Dict[str, Any],
     *,
     kinematics: str,
+    committed_displacements: Optional[np.ndarray] = None,
 ) -> Mapping[int, Any]:
-    """Pack qualified plastic shell batches once for one solver lifecycle."""
+    """Create one solver-owned material/native-rotation transaction store."""
 
+    previous_diagnostic = info.get("nonlinear_state_storage")
+    native_required = any(
+        bool(getattr(element, "formulation_native_total_lagrangian", False))
+        for element in model.mesh.elements.values()
+    )
+    if native_required and not isinstance(committed_states, NonlinearStateStore):
+        initialized_states = copy.deepcopy(dict(committed_states))
+        _initialize_missing_model_bound_states(
+            model,
+            initialized_states,
+            num_layers,
+        )
+        committed_states = initialized_states
     diagnostic: Dict[str, Any] = {
         "activated": False,
         "eligible_batch_count": 0,
         "fallback_reason": None,
     }
+    if native_required:
+        diagnostic.update(
+            {
+                "native_rotation_required": True,
+                "native_rotation_activated": False,
+            }
+        )
     info["nonlinear_state_storage"] = diagnostic
+    if isinstance(committed_states, NonlinearStateStore):
+        if isinstance(previous_diagnostic, Mapping):
+            for key in (
+                "eligible_batch_count",
+                "batch_eligibility",
+                "array_batch_fallback_reason",
+            ):
+                if key in previous_diagnostic:
+                    diagnostic[key] = copy.deepcopy(previous_diagnostic[key])
+        if native_required and not committed_states.has_native_rotations:
+            if committed_displacements is None:
+                raise StateTransactionError(
+                    "Native state storage requires committed displacements"
+                )
+            from .nonlinear_state import create_model_native_rotation_store
+
+            rotation_store = create_model_native_rotation_store(
+                model,
+                committed_states,
+                committed_displacements,
+            )
+            if rotation_store is None:
+                raise StateTransactionError(
+                    "Native elements were present but no rotation store was created"
+                )
+            committed_states.attach_native_rotation_store(rotation_store)
+        diagnostic["activated"] = True
+        if native_required:
+            diagnostic["native_rotation_activated"] = (
+                committed_states.has_native_rotations
+            )
+        diagnostic.update(committed_states.diagnostics())
+        return committed_states
     if str(kinematics) != "von_karman":
+        if native_required:
+            raise NotImplementedError(
+                "Formulation-native total-Lagrangian elements cannot use the "
+                f"generic {kinematics!r} nonlinear kinematics path"
+            )
         diagnostic["fallback_reason"] = "kinematics_not_von_karman"
         return committed_states
-    if os.environ.get("FE_SOLVER_DISABLE_PERSISTENT_STATE", "").strip().lower() in {
+    persistent_disabled = os.environ.get(
+        "FE_SOLVER_DISABLE_PERSISTENT_STATE", ""
+    ).strip().lower() in {
         "1",
         "true",
         "yes",
         "on",
-    }:
+    }
+    acceleration_disabled = os.environ.get(
+        "FE_SOLVER_DISABLE_FAST_NL", ""
+    ).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    allow_array_batches = not persistent_disabled and not acceleration_disabled
+    if not native_required and persistent_disabled:
         diagnostic["fallback_reason"] = "persistent_state_storage_disabled"
         return committed_states
-    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
+    if not native_required and acceleration_disabled:
         diagnostic["fallback_reason"] = "nonlinear_acceleration_disabled"
         return committed_states
     try:
-        from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
+        plastic_batches: tuple[Any, ...] = ()
+        if allow_array_batches:
+            from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
 
-        plan = get_nonlinear_assembly_plan(model, int(num_layers))
-        plastic_batches = tuple(
-            batch for batch in plan.shell_batches if batch.has_plasticity
-        )
-        if not plastic_batches:
-            diagnostic["fallback_reason"] = "no_plastic_shell_batch"
-            return committed_states
+            plan = get_nonlinear_assembly_plan(model, int(num_layers))
+            plastic_batches = tuple(
+                batch for batch in plan.shell_batches if batch.has_plasticity
+            )
         store = NonlinearStateStore.from_shell_layouts(
             tuple(batch.state_layout for batch in plastic_batches),
             committed_states,
@@ -1523,13 +1977,49 @@ def _activate_nonlinear_state_storage(
                 "batch_eligibility": eligibility,
             }
         )
-        if eligible_count == 0:
-            diagnostic["fallback_reason"] = "no_persistent_state_batch_eligible"
+        if not native_required and eligible_count == 0:
+            if persistent_disabled:
+                diagnostic["fallback_reason"] = "persistent_state_storage_disabled"
+            elif acceleration_disabled:
+                diagnostic["fallback_reason"] = "nonlinear_acceleration_disabled"
+            elif not plastic_batches:
+                diagnostic["fallback_reason"] = "no_plastic_shell_batch"
+            else:
+                diagnostic["fallback_reason"] = "no_persistent_state_batch_eligible"
             return committed_states
+        if native_required:
+            if committed_displacements is None:
+                raise StateTransactionError(
+                    "Native state storage requires committed displacements"
+                )
+            from .nonlinear_state import create_model_native_rotation_store
+
+            rotation_store = create_model_native_rotation_store(
+                model,
+                committed_states,
+                committed_displacements,
+            )
+            if rotation_store is None:
+                raise StateTransactionError(
+                    "Native elements were present but no rotation store was created"
+                )
+            store.attach_native_rotation_store(rotation_store)
+            diagnostic["native_rotation_activated"] = True
+            if not allow_array_batches:
+                diagnostic["array_batch_fallback_reason"] = (
+                    "persistent_state_storage_disabled"
+                    if persistent_disabled
+                    else "nonlinear_acceleration_disabled"
+                )
         diagnostic["activated"] = True
         diagnostic.update(store.diagnostics())
         return store
     except Exception as exc:
+        if native_required:
+            diagnostic["fallback_reason"] = (
+                f"native_state_store_setup_failed:{type(exc).__name__}:{exc}"
+            )
+            raise
         diagnostic["fallback_reason"] = (
             f"state_store_setup_failed:{type(exc).__name__}:{exc}"
         )
@@ -1539,8 +2029,16 @@ def _activate_nonlinear_state_storage(
 def _commit_nonlinear_state_candidate(
     committed_states: Mapping[int, Any],
     candidate_states: Mapping[int, Any],
+    *,
+    model: Any = None,
+    accepted_displacements: Any = None,
 ) -> Mapping[int, Any]:
-    return commit_state_candidate(committed_states, candidate_states)
+    return commit_state_candidate(
+        committed_states,
+        candidate_states,
+        model=model,
+        accepted_full_displacement=accepted_displacements,
+    )
 
 
 def _discard_nonlinear_state_candidate(
@@ -1587,7 +2085,7 @@ def _nonlinear_status_category(status: str, failure_reason: Optional[str]) -> st
     return "failed"
 
 
-def _equilibrate_initial_fields(
+def _equilibrate_initial_fields_candidate(
     *,
     model: "FEModel",
     T: sparse.csr_matrix,
@@ -1693,6 +2191,57 @@ def _equilibrate_initial_fields(
         if not accepted:
             return committed_q, committed_states, history, "initial_state_line_search_failed"
     return committed_q, committed_states, history, "maximum_initial_state_iterations_reached"
+
+
+def _equilibrate_initial_fields(
+    *,
+    model: "FEModel",
+    T: sparse.csr_matrix,
+    u0: np.ndarray,
+    committed_states: Dict[int, Any],
+    num_layers: int,
+    max_iterations: int,
+    tolerance: float,
+    kinematics: str,
+    corotational_tangent: str,
+    general_tangent: bool,
+    initial_reduced_displacements: Optional[np.ndarray] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+) -> Tuple[np.ndarray, Dict[int, Any], List[Dict[str, Any]], Optional[str]]:
+    """Commit exactly one accepted zero-load state and discard every other trial."""
+
+    try:
+        q, candidate_states, history, failure = (
+            _equilibrate_initial_fields_candidate(
+                model=model,
+                T=T,
+                u0=u0,
+                committed_states=committed_states,
+                num_layers=num_layers,
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+                general_tangent=general_tangent,
+                initial_reduced_displacements=initial_reduced_displacements,
+                cancellation_token=cancellation_token,
+            )
+        )
+        if failure is not None:
+            return q, committed_states, history, failure
+        accepted_states = _commit_nonlinear_state_candidate(
+            committed_states,
+            candidate_states,
+            model=model,
+            accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
+        )
+        return q, accepted_states, history, None
+    finally:
+        # This is a no-op after a successful persistent commit and for legacy
+        # dictionaries.  Every failure return, cancellation, and exception
+        # therefore leaves the input state reusable without duplicating
+        # cleanup at each exit site in the Newton/backtracking implementation.
+        _discard_nonlinear_state_candidate(committed_states)
 
 
 def _reduced_coordinates(
@@ -1814,6 +2363,12 @@ def _solve_static_displacement_control(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     record_increment_snapshots: bool = False,
+    initial_load_factor: float = 0.0,
+    step_index_offset: int = 0,
+    initial_steps: Sequence[NonlinearStaticStep] = (),
+    initial_history: Sequence[Mapping[str, Any]] = (),
+    initial_total_iterations: int = 0,
+    restart_analysis_contract: Optional[Mapping[str, Any]] = None,
 ) -> NonlinearStaticResult:
     """Displacement-control Newton solve with load factor as an unknown."""
     if load_program is not None:
@@ -1860,13 +2415,13 @@ def _solve_static_displacement_control(
             raise ValueError(
                 f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
             )
-    lam = 0.0
-    steps: List[NonlinearStaticStep] = []
+    lam = float(initial_load_factor)
+    steps: List[NonlinearStaticStep] = list(initial_steps)
     snapshots: List[NonlinearIncrementSnapshot] = []
-    history: List[Dict[str, Any]] = []
+    history: List[Dict[str, Any]] = copy.deepcopy(list(initial_history))
     status = "completed"
     failure_reason: Optional[str] = None
-    total_iterations = 0
+    total_iterations = int(initial_total_iterations)
 
     row_full = displacement_control.full_row(model)
     row_red = np.asarray(row_full @ T, dtype=float).reshape(-1)
@@ -1905,14 +2460,15 @@ def _solve_static_displacement_control(
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
-        for step_index in range(1, num_steps + 1):
+        for local_step_index in range(1, num_steps + 1):
+            step_index = int(step_index_offset) + local_step_index
             cancellation_safe_point(
                 cancellation_token,
                 f"nonlinear_static.displacement.step:{step_index}",
             )
             q_step_start = q.copy()
             lam_step_start = float(lam)
-            target = initial_control + target_increment * step_index / num_steps
+            target = initial_control + target_increment * local_step_index / num_steps
             residual_norm = float("inf")
             constraint_error = float("inf")
             states_new = committed_states
@@ -2020,6 +2576,8 @@ def _solve_static_displacement_control(
             committed_states = _commit_nonlinear_state_candidate(
                 committed_states,
                 states_new,
+                model=model,
+                accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
             )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
@@ -2095,7 +2653,7 @@ def _solve_static_displacement_control(
                     progress_callback,
                     "nonlinear_static_step",
                     "nonlinear_static.displacement",
-                    completed=step_index,
+                    completed=local_step_index,
                     total=num_steps,
                     iteration=iteration,
                     control="displacement",
@@ -2144,6 +2702,27 @@ def _solve_static_displacement_control(
             "corotational_tangent": corotational_tangent,
         },
     ).to_dict()
+    restart_payload = None
+    if restart_analysis_contract is not None:
+        restart_payload = create_nonlinear_checkpoint(
+            analysis_kind="static",
+            model=model,
+            analysis_contract=restart_analysis_contract,
+            displacements=u_final,
+            element_states=committed_states,
+            deleted_element_ids=(),
+            path_state=_static_restart_path_payload(
+                control_name="displacement",
+                load_factor=float(lam),
+                step_index=len(steps),
+                total_iterations=total_iterations,
+                steps=steps,
+                force_displacement_history=history,
+                reduced_coordinates=q,
+                terminal_status=status,
+                failure_reason=failure_reason,
+            ),
+        )
     return NonlinearStaticResult(
         steps,
         status,
@@ -2152,6 +2731,7 @@ def _solve_static_displacement_control(
         committed_states,
         info,
         tuple(snapshots),
+        restart_payload,
     )
 
 
@@ -2184,6 +2764,8 @@ def solve_static_nonlinear(
     equilibrate_initial_state: Optional[bool] = None,
     cancellation_token: Optional[CancellationToken] = None,
     record_increment_snapshots: bool = False,
+    restart_checkpoint: Optional[Any] = None,
+    emit_restart_checkpoint: bool = False,
 ) -> NonlinearStaticResult:
     """Incremental nonlinear static solve with adaptive load stepping.
 
@@ -2206,6 +2788,10 @@ def solve_static_nonlinear(
     ``initial_displacements``; alternatively pass
     ``equilibrate_initial_state=True`` to deliberately re-equilibrate the
     restored field from the supplied (or zero) displacement state.
+
+    ``restart_checkpoint`` resumes the last committed solver transaction.  It
+    is mutually exclusive with the lower-level initial-state arguments and is
+    fingerprint-validated before stiffness or load assembly.
     """
     cancellation_safe_point(cancellation_token, "nonlinear_static.start")
     if num_steps <= 0:
@@ -2216,6 +2802,35 @@ def solve_static_nonlinear(
     kinematics = str(kinematics).lower()
     if kinematics not in {"von_karman", "corotational"}:
         raise ValueError("kinematics must be 'von_karman' or 'corotational'")
+    parsed_restart_checkpoint: Optional[Dict[str, Any]] = None
+    if restart_checkpoint is not None:
+        emit_restart_checkpoint = True
+        if initial_element_states is not None:
+            raise ValueError(
+                "restart_checkpoint cannot be combined with initial_element_states"
+            )
+        if initial_displacements is not None:
+            raise ValueError(
+                "restart_checkpoint cannot be combined with initial_displacements"
+            )
+        if initial_fields is not None:
+            raise ValueError("restart_checkpoint cannot be combined with initial_fields")
+        if equilibrate_initial_state not in {None, False}:
+            raise ValueError(
+                "restart_checkpoint cannot request initial-state re-equilibration"
+            )
+        parsed_restart_checkpoint = load_nonlinear_checkpoint(restart_checkpoint)
+        require_model_element_capabilities(
+            model,
+            "static_restart_history",
+            context="solve_static_nonlinear",
+        )
+    elif emit_restart_checkpoint:
+        require_model_element_capabilities(
+            model,
+            "static_restart_history",
+            context="solve_static_nonlinear",
+        )
     if imperfection is not None:
         require_model_element_capabilities(
             model,
@@ -2229,16 +2844,15 @@ def solve_static_nonlinear(
             context="solve_static_nonlinear",
             element_ids=initial_fields,
         )
-    if bool(initial_element_states):
+    if initial_element_states is not None:
         require_model_element_capabilities(
             model,
-            "restart_history",
+            "static_restart_history",
             context="solve_static_nonlinear",
             element_ids=initial_element_states,
         )
-    require_model_element_capabilities(
+    require_model_nonlinear_workflow_capabilities(
         model,
-        ("material_nonlinearity", "nonlinear_geometry"),
         context="solve_static_nonlinear",
     )
     specified_load_cases = [
@@ -2286,6 +2900,68 @@ def solve_static_nonlinear(
         from .imperfections import apply_imperfection
 
         model = apply_imperfection(model, imperfection, copy_model=True)
+    restart_analysis_contract = _static_restart_analysis_contract(
+        model=model,
+        load_case=load_case,
+        constant_load_case=constant_load_case,
+        load_program=load_program,
+        control_name=control_name,
+        displacement_control=displacement_control,
+        num_layers=num_layers,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
+        effective_min_step_fraction=effective_min_step_fraction,
+        settings=settings,
+        fracture_config=fracture_config,
+        resource_config=resource_config,
+        kinematics=kinematics,
+        resolved_corotational_tangent=resolved_corotational_tangent,
+    )
+    restored_static_path: Optional[Dict[str, Any]] = None
+    validated_restart = None
+    if parsed_restart_checkpoint is not None:
+        validated_restart = validate_nonlinear_checkpoint(
+            parsed_restart_checkpoint,
+            analysis_kind="static",
+            model=model,
+            analysis_contract=restart_analysis_contract,
+            num_layers=num_layers,
+        )
+        restored_static_path = _restore_static_path_state(
+            validated_restart.path_state,
+            control_name=control_name,
+        )
+        if restored_static_path["terminal_status"] != "completed":
+            raise ValueError(
+                "restart checkpoint does not end at a continuable completed static target"
+            )
+        if control_name == "force":
+            requested_target = (
+                load_program.total_factor
+                if load_program is not None and max_load_factor == 1.0
+                else float(max_load_factor)
+            )
+            if restored_static_path["load_factor"] > requested_target + 1.0e-12:
+                raise ValueError(
+                    "restart checkpoint is beyond the requested maximum load factor"
+                )
+            recorded_deleted = {
+                int(record.element_id)
+                for record in restored_static_path["deletion_records"]
+            }
+            if recorded_deleted != validated_restart.deleted_element_ids:
+                raise ValueError(
+                    "restart checkpoint deletion records and deleted IDs disagree"
+                )
+            if fracture_config is None and recorded_deleted:
+                raise ValueError(
+                    "restart checkpoint contains fracture history without fracture_config"
+                )
+        if validated_restart.activity is not None:
+            model.set_element_activity(validated_restart.activity)
+        initial_element_states = validated_restart.element_states
+        initial_displacements = validated_restart.displacements
+        equilibrate_initial_state = False
     _ensure_nonlinear_acceleration()
     model.apply_boundary_conditions()
 
@@ -2311,6 +2987,12 @@ def solve_static_nonlinear(
         F_const = np.zeros_like(F_prop)
         constant_load_info = None
     _, _, T, u0, _, constraint_info = build_constraint_transformation(K0, F_prop, model)
+    if restored_static_path is not None:
+        restored_static_path = _restore_static_path_state(
+            validated_restart.path_state,
+            control_name=control_name,
+            n_red=int(T.shape[1]),
+        )
 
     info: Dict[str, Any] = {
         "stiffness": stiffness_info,
@@ -2330,6 +3012,13 @@ def solve_static_nonlinear(
         "resource_config": None if resource_config is None else resource_config.to_dict(),
         "thread_policy": thread_policy_diagnostics(resource_config),
     }
+    if validated_restart is not None:
+        info["restart"] = {
+            "schema": validated_restart.payload["schema"],
+            "checkpoint_sha256": validated_restart.payload["checkpoint_sha256"],
+            "resumed_load_factor": float(restored_static_path["load_factor"]),
+            "resumed_step_index": int(restored_static_path["step_index"]),
+        }
     general_tangent = follower_active or (
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
@@ -2365,8 +3054,21 @@ def solve_static_nonlinear(
         raise ValueError("fracture_config is currently supported only with force control")
 
     n_red = int(T.shape[1])
-    force_restart = control_name == "force" and initial_displacements is not None
-    if control_name == "force":
+    checkpoint_resume = validated_restart is not None
+    force_restart = (
+        control_name == "force"
+        and initial_displacements is not None
+        and not checkpoint_resume
+    )
+    if control_name == "force" and checkpoint_resume:
+        resumed_lam = float(restored_static_path["load_factor"])
+        resumed_affine = resumed_lam * np.asarray(u0, dtype=float).reshape(-1)
+        q = np.asarray(
+            restored_static_path["reduced_coordinates"], dtype=float
+        ).copy()
+        initial_affine_scale = resumed_lam
+        initial_affine_offset = resumed_affine
+    elif control_name == "force":
         q, initial_affine_scale = _reduced_coordinates_with_affine_scale(
             T,
             u0,
@@ -2376,9 +3078,42 @@ def solve_static_nonlinear(
             float(initial_affine_scale) * np.asarray(u0, dtype=float).reshape(-1)
         )
     else:
-        q = _reduced_coordinates(T, u0, initial_displacements)
+        q = (
+            np.asarray(restored_static_path["reduced_coordinates"], dtype=float).copy()
+            if checkpoint_resume
+            else _reduced_coordinates(T, u0, initial_displacements)
+        )
         initial_affine_scale = 1.0
         initial_affine_offset = np.asarray(u0, dtype=float).reshape(-1)
+    initial_committed_displacement = np.asarray(
+        T @ q
+        + (
+            initial_affine_offset
+            if control_name == "force"
+            else np.asarray(u0, dtype=float).reshape(-1)
+        ),
+        dtype=float,
+    ).reshape(-1)
+    if checkpoint_resume and not np.array_equal(
+        initial_committed_displacement,
+        np.asarray(initial_displacements, dtype=float).reshape(-1),
+    ):
+        raise ValueError(
+            "restart checkpoint reduced coordinates do not exactly reconstruct "
+            "its committed displacement"
+        )
+    # Native multiplicative rotations are solver-owned and must exist before
+    # the first possible constitutive evaluation (initial-field equilibrium or
+    # a fully constrained prescribed state).  Q4-only models retain the prior
+    # dictionary/array activation behavior.
+    committed_states = _activate_nonlinear_state_storage(
+        model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+        committed_displacements=initial_committed_displacement,
+    )
     if (
         initial_fields
         and initial_displacements is not None
@@ -2391,12 +3126,26 @@ def solve_static_nonlinear(
         )
     if n_red == 0:
         fully_constrained_displacement = (
-            initial_affine_offset
-            if force_restart
-            else np.asarray(u0, dtype=float).reshape(-1)
+            initial_committed_displacement.copy()
+            if checkpoint_resume
+            else (
+                initial_affine_offset
+                if force_restart
+                else np.asarray(u0, dtype=float).reshape(-1)
+            )
         )
         has_initial_fields = any(
             _state_has_initial_field(state) for state in committed_states.values()
+        )
+        requires_native_tl_evaluation = any(
+            bool(
+                getattr(
+                    element,
+                    "formulation_native_total_lagrangian",
+                    False,
+                )
+            )
+            for element in model.mesh.elements.values()
         )
         requested_equilibration = (
             bool(initial_fields)
@@ -2412,11 +3161,12 @@ def solve_static_nonlinear(
             "free_dof_residual_norm": 0.0,
             "fully_constrained": True,
         }
-        if has_initial_fields:
+        if has_initial_fields or requires_native_tl_evaluation:
             # There are no admissible displacement corrections, so the
-            # prescribed field is already equilibrated in the free-DOF
-            # sense; its imbalance is carried entirely by reactions. Retain
-            # the evaluated constitutive state and provenance in the result.
+            # prescribed field/native kinematics are already equilibrated in
+            # the free-DOF sense; any imbalance is carried by reactions.
+            # Native-TL elements still require one real evaluation so their
+            # accepted element-owned kinematic state is not silently omitted.
             internal_force, _unused_tangent, trial_states = (
                 _assemble_nonlinear_system(
                     model,
@@ -2428,10 +3178,17 @@ def solve_static_nonlinear(
                     corotational_tangent=resolved_corotational_tangent,
                 )
             )
-            committed_states = trial_states
+            committed_states = _commit_nonlinear_state_candidate(
+                committed_states,
+                trial_states,
+                model=model,
+                accepted_displacements=fully_constrained_displacement,
+            )
             info["initial_state_equilibration"][
                 "constrained_internal_force_norm"
             ] = float(np.linalg.norm(internal_force))
+            if requires_native_tl_evaluation:
+                info["initial_state_equilibration"]["native_tl_evaluated"] = True
             info["strain_summary"] = _nonlinear_state_summary(committed_states)
         info["failure_reason"] = "empty_reduced_system"
         info["stop_reason"] = "empty_reduced_system"
@@ -2451,12 +3208,16 @@ def solve_static_nonlinear(
                 "corotational_tangent": resolved_corotational_tangent,
             },
         ).to_dict()
+        final_committed_states = _materialize_final_nonlinear_states(
+            committed_states,
+            info,
+        )
         return NonlinearStaticResult(
             [],
             "empty_reduced_system",
             fully_constrained_displacement.copy(),
             0.0,
-            committed_states,
+            final_committed_states,
             info,
         )
 
@@ -2515,12 +3276,32 @@ def solve_static_nonlinear(
             "history": [],
             "failure_reason": None,
         }
-    steps: List[NonlinearStaticStep] = []
+    steps: List[NonlinearStaticStep] = (
+        list(restored_static_path["steps"])
+        if restored_static_path is not None
+        else []
+    )
     status = "completed"
-    deleted_element_ids: set[int] = set()
-    deletion_records: List[DeletedElementRecord] = []
-    fracture_warnings: List[str] = []
-    max_fracture_utilization = 0.0
+    deleted_element_ids: set[int] = (
+        set(validated_restart.deleted_element_ids)
+        if validated_restart is not None
+        else set()
+    )
+    deletion_records: List[DeletedElementRecord] = (
+        list(restored_static_path["deletion_records"])
+        if restored_static_path is not None and control_name == "force"
+        else []
+    )
+    fracture_warnings: List[str] = (
+        list(restored_static_path["fracture_warnings"])
+        if restored_static_path is not None and control_name == "force"
+        else []
+    )
+    max_fracture_utilization = (
+        float(restored_static_path["max_fracture_utilization"])
+        if restored_static_path is not None and control_name == "force"
+        else 0.0
+    )
 
     if load_program is not None and max_load_factor == 1.0:
         target_load_factor = load_program.total_factor
@@ -2582,7 +3363,11 @@ def solve_static_nonlinear(
         if displacement_control is None:
             raise ValueError("displacement_control is required when control='displacement'")
         preload_result: Optional[NonlinearStaticResult] = None
-        if load_program is not None and len(load_program.stages) > 1:
+        if (
+            load_program is not None
+            and len(load_program.stages) > 1
+            and not checkpoint_resume
+        ):
             # Each permanent stage is first solved by force control and its
             # displacement/material state committed.  The final stage then
             # starts from that exact checkpoint under displacement control;
@@ -2644,6 +3429,7 @@ def solve_static_nonlinear(
             num_layers,
             info,
             kinematics=kinematics,
+            committed_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
         )
         controlled_result = _solve_static_displacement_control(
             model=model,
@@ -2670,6 +3456,34 @@ def solve_static_nonlinear(
             cancellation_token=cancellation_token,
             progress_callback=progress_callback,
             record_increment_snapshots=record_increment_snapshots,
+            initial_load_factor=(
+                float(restored_static_path["load_factor"])
+                if restored_static_path is not None
+                else 0.0
+            ),
+            step_index_offset=(
+                int(restored_static_path["step_index"])
+                if restored_static_path is not None
+                else 0
+            ),
+            initial_steps=(
+                restored_static_path["steps"]
+                if restored_static_path is not None
+                else ()
+            ),
+            initial_history=(
+                restored_static_path["force_displacement_history"]
+                if restored_static_path is not None
+                else ()
+            ),
+            initial_total_iterations=(
+                int(restored_static_path["total_iterations"])
+                if restored_static_path is not None
+                else 0
+            ),
+            restart_analysis_contract=(
+                restart_analysis_contract if emit_restart_checkpoint else None
+            ),
         )
         if load_program is not None:
             stage_factors = {
@@ -2703,6 +3517,44 @@ def solve_static_nonlinear(
             controlled_result.info["total_newton_iterations"] = int(
                 controlled_result.info.get("total_newton_iterations", 0)
             ) + int(preload_result.info.get("total_newton_iterations", 0))
+            if emit_restart_checkpoint:
+                checkpoint_history = copy.deepcopy(
+                    preload_result.info.get("force_displacement_history", [])
+                ) + copy.deepcopy(
+                    controlled_result.info.get("force_displacement_history", [])
+                )
+                for index, item in enumerate(checkpoint_history, start=1):
+                    if isinstance(item, dict):
+                        item["step_index"] = index
+                controlled_result.info[
+                    "force_displacement_history"
+                ] = checkpoint_history
+                controlled_result.restart_checkpoint = create_nonlinear_checkpoint(
+                    analysis_kind="static",
+                    model=model,
+                    analysis_contract=restart_analysis_contract,
+                    displacements=controlled_result.displacements,
+                    element_states=controlled_result.element_states,
+                    deleted_element_ids=(),
+                    path_state=_static_restart_path_payload(
+                        control_name="displacement",
+                        load_factor=controlled_result.load_factor,
+                        step_index=len(controlled_result.steps),
+                        total_iterations=int(
+                            controlled_result.info.get("total_newton_iterations", 0)
+                        ),
+                        steps=controlled_result.steps,
+                        force_displacement_history=checkpoint_history,
+                        reduced_coordinates=np.asarray(
+                            controlled_result.restart_checkpoint["path_state"][
+                                "reduced_coordinates"
+                            ],
+                            dtype=float,
+                        ),
+                        terminal_status=controlled_result.status,
+                        failure_reason=controlled_result.failure_reason,
+                    ),
+                )
         return controlled_result
 
     committed_states = _activate_nonlinear_state_storage(
@@ -2711,14 +3563,24 @@ def solve_static_nonlinear(
         num_layers,
         info,
         kinematics=kinematics,
+        committed_displacements=initial_committed_displacement,
     )
-    base_step = target_load_factor / num_steps
-    min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
-    max_step = max(base_step * settings.max_step_factor, min_step)
-    step_size = base_step
-    lam = 0.0
-    step_index = 0
-    total_iterations = 0
+    if restored_static_path is not None:
+        base_step = float(restored_static_path["base_step"])
+        min_step = float(restored_static_path["minimum_step"])
+        max_step = float(restored_static_path["maximum_step"])
+        step_size = float(restored_static_path["next_step_size"])
+        lam = float(restored_static_path["load_factor"])
+        step_index = int(restored_static_path["step_index"])
+        total_iterations = int(restored_static_path["total_iterations"])
+    else:
+        base_step = target_load_factor / num_steps
+        min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
+        max_step = max(base_step * settings.max_step_factor, min_step)
+        step_size = base_step
+        lam = 0.0
+        step_index = 0
+        total_iterations = 0
     stage_boundaries = (
         np.cumsum([stage.target_factor for stage in load_program.stages], dtype=float)
         if load_program is not None
@@ -2933,10 +3795,22 @@ def solve_static_nonlinear(
 
         return False, q_start, committed_states, residual_norm, max_iterations, "maximum_iterations_reached"
 
-    force_displacement_history: List[Dict[str, Any]] = []
-    convergence_adaptation: List[Dict[str, Any]] = []
+    force_displacement_history: List[Dict[str, Any]] = (
+        copy.deepcopy(restored_static_path["force_displacement_history"])
+        if restored_static_path is not None
+        else []
+    )
+    convergence_adaptation: List[Dict[str, Any]] = (
+        copy.deepcopy(restored_static_path["convergence_adaptation"])
+        if restored_static_path is not None
+        else []
+    )
     snapshots: List[NonlinearIncrementSnapshot] = []
-    force_line_search_next = False
+    force_line_search_next = (
+        bool(restored_static_path["force_line_search_next"])
+        if restored_static_path is not None
+        else False
+    )
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
@@ -2988,6 +3862,8 @@ def solve_static_nonlinear(
                 committed_states = _commit_nonlinear_state_candidate(
                     committed_states,
                     states_new,
+                    model=model,
+                    accepted_displacements=full_displacement(q_new, lam_trial),
                 )
                 force_line_search_next = False
                 step_index += 1
@@ -3270,6 +4146,36 @@ def solve_static_nonlinear(
             "fracture": None if fracture_config is None else fracture_config.to_dict(),
         },
     ).to_dict()
+    restart_payload = None
+    if emit_restart_checkpoint:
+        restart_payload = create_nonlinear_checkpoint(
+            analysis_kind="static",
+            model=model,
+            analysis_contract=restart_analysis_contract,
+            displacements=u_final,
+            element_states=committed_states,
+            deleted_element_ids=tuple(sorted(deleted_element_ids)),
+            path_state=_static_restart_path_payload(
+                control_name="force",
+                load_factor=float(lam),
+                step_index=int(step_index),
+                total_iterations=int(total_iterations),
+                steps=steps,
+                force_displacement_history=force_displacement_history,
+                reduced_coordinates=q,
+                terminal_status=status,
+                failure_reason=failure_reason,
+                base_step=float(base_step),
+                minimum_step=float(min_step),
+                maximum_step=float(max_step),
+                next_step_size=float(step_size),
+                force_line_search_next=bool(force_line_search_next),
+                convergence_adaptation=convergence_adaptation,
+                deletion_records=[record.to_dict() for record in deletion_records],
+                fracture_warnings=list(fracture_warnings),
+                max_fracture_utilization=float(max_fracture_utilization),
+            ),
+        )
     return NonlinearStaticResult(
         steps,
         status,
@@ -3278,4 +4184,5 @@ def solve_static_nonlinear(
         committed_states,
         info,
         tuple(snapshots),
+        restart_payload,
     )

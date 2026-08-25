@@ -1,0 +1,173 @@
+{
+  "acceptance_gates": {
+    "batch": {
+      "eligible_element_count": 4096,
+      "minimum_throughput_ratio": "1.50",
+      "scalar_equality_relative": "1e-12",
+      "scalar_fallback_required": true
+    },
+    "buckling": {
+      "clustered_mac_minimum": "0.95",
+      "first_factor_count": 5,
+      "maximum_factor_error": "0.03",
+      "new_nonpositive_factor_allowed": false
+    },
+    "convergence": {
+      "energy_norm_slope_lower_95_percent": "0.90",
+      "finest_error_ratio_at_25_percent": "1.50",
+      "finest_error_ratio_through_10_percent": "1.25",
+      "response_slope_lower_bound": "1.80",
+      "response_slope_maximum_deficit_from_all_q4": "0.15",
+      "successive_error_factor_maximum": "1.02"
+    },
+    "interface_resultants": {
+      "l2_ratio_at_25_percent": "1.50",
+      "l2_ratio_through_10_percent": "1.25",
+      "p99_ratio_at_25_percent": "2.00",
+      "p99_ratio_through_10_percent": "1.50"
+    },
+    "locking": {
+      "finest_response_error_maximum": "0.02",
+      "independent_reference_required": true,
+      "thickness_over_length": [
+        "1e-1",
+        "1e-2",
+        "1e-3",
+        "1e-4",
+        "1e-5",
+        "1e-6"
+      ],
+      "thin_range_response_spread_maximum": "0.005"
+    },
+    "modal": {
+      "clustered_mac_minimum": "0.95",
+      "elastic_frequency_count": 10,
+      "exact_rigid_mode_count": 6,
+      "maximum_frequency_error": "0.02"
+    },
+    "patch_and_equilibrium": {
+      "action_reaction_residual_maximum": "1e-10",
+      "edge_work_residual_maximum": "1e-10",
+      "force_residual_maximum": "1e-10",
+      "moment_residual_maximum": "1e-10",
+      "patch_residual_maximum": "1e-10"
+    },
+    "performance": {
+      "candidate_hot_path_regression_maximum": "0.05",
+      "mixed_assembly_solve_rss_regression_maximum": "0.10",
+      "repetitions_minimum": 11,
+      "reported_statistics": [
+        "median",
+        "mad",
+        "p95"
+      ],
+      "warm_s3_tangent_ratio_to_qualified_q4_maximum": "1.00",
+      "warmup_count": 1
+    },
+    "pl_participation": {
+      "finest_fraction_maximum": "0.01",
+      "nonincreasing_required": true,
+      "reported_separately": [
+        "S3_PL",
+        "Q4_PL",
+        "Q4_RESIDUAL_HOURGLASS"
+      ]
+    },
+    "symmetry_and_covariance_residual_maximum": "1e-12"
+  },
+  "campaign": {
+    "base_grid": 20,
+    "diagonal_policies": [
+      "slash",
+      "backslash",
+      "alternating"
+    ],
+    "gated_s3_area_fractions_percent": [
+      0,
+      1,
+      5,
+      10,
+      25
+    ],
+    "gated_split_base_cell_counts": [
+      0,
+      4,
+      20,
+      40,
+      100
+    ],
+    "levels": [
+      20,
+      40,
+      80,
+      160
+    ],
+    "mask_policies": [
+      "dispersed",
+      "chain",
+      "compact_cluster",
+      "boundary_band",
+      "hole_band"
+    ],
+    "refinement": "EXACT_ONE_TO_FOUR_FOR_Q4_AND_PAIRED_S3_TOPOLOGY",
+    "research_control": {
+      "classification": "NOT_A_PRODUCTION_GATE",
+      "s3_area_fraction_percent": 100,
+      "split_base_cell_count": 400
+    },
+    "special_fixtures": [
+      "ISOLATED_S3",
+      "PAIRED_S3",
+      "Q4_S3_Q4_CHAIN",
+      "DISTORTED_Q4_INTERFACE",
+      "ALL_SIX_D3_NUMBERINGS",
+      "PHYSICAL_DIRECTOR_REVERSAL",
+      "PUBLISHED_MESH_A",
+      "PUBLISHED_MESH_B"
+    ]
+  },
+  "candidate": {
+    "qualified_q4_formulation_id": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+    "qualified_q4_mechanics_blob": "bc0de942573e12089ee5a3619249eeb9b4412cb3",
+    "qualified_q4_mechanics_sha256": "EE49BAE1C9439C41EC2D61798A8A8B88CBA9081DCAD2DFDC857FE313C6C0D4D1",
+    "qualified_s3_formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+    "source_base_commit": "534985fa7699dd4bb484e99ff295e523557555e6",
+    "source_base_tree": "06a2251edcd271f4f8a55246f43d46528b4f505b"
+  },
+  "connectivity_authority": {
+    "bytes": 110005,
+    "gated_record_count": 252,
+    "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+    "research_control_record_count": 12,
+    "schema": "anysolver.e4-pl-s3-mixed-mesh-connectivity-manifest-v1",
+    "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+  },
+  "ecosystem": {
+    "active_adapter_heads": "BIND_EXACT_CLEAN_HEADS_AT_EXECUTION",
+    "anyfem_source_base": "6aca83ff3c20ff2057305b06da6122665108d31e",
+    "anymesh_source_base": "ddacfa0859b04d9c35d382527ca863a6e384e019",
+    "candidate_release_policy": "ADDITIVE_OPT_IN_ONLY",
+    "default_activation": "FORBIDDEN_UNTIL_TWO_CLEAN_FULL_PARITY_AND_MIXED_CAMPAIGN_CYCLES",
+    "legacy_s3_retention": "AT_LEAST_TWO_COORDINATED_RELEASES_AND_180_DAYS",
+    "qualified_q4_mechanics_change": "FORBIDDEN"
+  },
+  "execution_policy": {
+    "automatic_retry": false,
+    "canonical_cycles": 2,
+    "deterministic_cycle_equality": "BYTE_IDENTICAL_CANONICAL_AGGREGATES",
+    "external_diagnostics": true,
+    "maximum_memory_gib_per_process": 24,
+    "maximum_seconds_per_process": 600,
+    "numerical_library_threads_per_process": 1,
+    "partial_output_is_canonical": false,
+    "worker_directories": "FRESH_AND_DISTINCT"
+  },
+  "result_policy": {
+    "activation_authority": "ALL_GATES_PASS_IN_BOTH_CYCLES_WITH_EMPTY_INDEPENDENT_REVIEW_FINDINGS",
+    "failure": "NO_QUALIFICATION_OR_DEFAULT_ACTIVATION",
+    "present_status": "PREREGISTERED_NOT_EXECUTED",
+    "production_restriction": "QUALIFIED_S3_REMAINS_OPT_IN_AND_QUALIFIED_Q4_REMAINS_UNCHANGED",
+    "research_control_can_classify": false
+  },
+  "schema": "anysolver.e4-pl-s3-mixed-mesh-qualification-contract-v1"
+}

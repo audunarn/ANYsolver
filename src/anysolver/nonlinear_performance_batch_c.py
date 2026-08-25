@@ -19,7 +19,8 @@ from . import nonlinear_performance_batch_b as _batch_b
 from . import nonlinear_reduced_assembly as _reduced
 from .jit_compiler import JIT_ENABLED
 from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
-from .nonlinear_state import NonlinearStateStore
+from .nonlinear_element_evaluation import evaluate_nonlinear_element
+from .nonlinear_state import NonlinearStateStore, discard_active_state_candidate
 from .nonlinear_reduced_assembly import (
     ReducedAssemblyPlan,
     ReducedAssemblyPlanLimit,
@@ -461,13 +462,17 @@ def _batch_c_evaluate_local_responses(
         material = model.get_material(record.element.material_name)
         element_displacement = displacement_array[record.dof_mapping]
         force_element, tangent_element, trial_state = (
-            record.element.compute_nonlinear_response(
+            evaluate_nonlinear_element(
+                record.element,
                 mesh,
                 material,
                 element_displacement,
                 committed_states.get(record.element_id),
                 nonlinear_plan.num_layers,
                 tangent,
+                committed_states=committed_states,
+                state_token=state_token,
+                element_id=record.element_id,
             )
         )
         nonlinear_plan.force_values[record.force_positions] = np.asarray(
@@ -573,38 +578,45 @@ def _batch_c_assemble_nonlinear_system(
     # plan-lock scope.  Otherwise a same-model assembly could replace the
     # local buffers after ``assemble_reduced_system`` released its inner lock
     # but before this payload recorded ``timings.calls``.
-    with nonlinear_plan._lock:
-        force_reduced, tangent_reduced, trial_states = assemble_reduced_system(
-            nonlinear_plan,
-            context.reduced_plan,
-            displacements,
-            committed_states,
-            tangent=tangent,
+    try:
+        with nonlinear_plan._lock:
+            force_reduced, tangent_reduced, trial_states = assemble_reduced_system(
+                nonlinear_plan,
+                context.reduced_plan,
+                displacements,
+                committed_states,
+                tangent=tangent,
+            )
+            force_payload = _ReducedVectorPayload(
+                force_reduced,
+                context.token,
+                nonlinear_plan,
+                int(nonlinear_plan.timings.calls),
+            )
+        context.direct_assembly_count += 1
+        if not tangent:
+            context.direct_residual_only_count += 1
+        with _STATUS_LOCK:
+            _STATUS["reduced_assemblies"] += 1
+            _STATUS["last_plan"] = context.reduced_plan.diagnostics()
+        record_nonlinear_assembly_execution(
+            path="direct_reduced",
+            tangent=bool(tangent),
+            elapsed_seconds=time.perf_counter() - assembly_start,
+            plan=nonlinear_plan,
         )
-        force_payload = _ReducedVectorPayload(
-            force_reduced,
-            context.token,
-            nonlinear_plan,
-            int(nonlinear_plan.timings.calls),
+        tangent_payload = (
+            _ReducedMatrixPayload(tangent_reduced, context.token)
+            if tangent_reduced is not None
+            else None
         )
-    context.direct_assembly_count += 1
-    if not tangent:
-        context.direct_residual_only_count += 1
-    with _STATUS_LOCK:
-        _STATUS["reduced_assemblies"] += 1
-        _STATUS["last_plan"] = context.reduced_plan.diagnostics()
-    record_nonlinear_assembly_execution(
-        path="direct_reduced",
-        tangent=bool(tangent),
-        elapsed_seconds=time.perf_counter() - assembly_start,
-        plan=nonlinear_plan,
-    )
-    tangent_payload = (
-        _ReducedMatrixPayload(tangent_reduced, context.token)
-        if tangent_reduced is not None
-        else None
-    )
-    return force_payload, tangent_payload, trial_states
+        return force_payload, tangent_payload, trial_states
+    except BaseException:
+        # Direct-reduced assembly owns the same candidate transaction as the
+        # full-coordinate paths.  Never leak it across a failed local kernel
+        # or post-assembly observer.
+        discard_active_state_candidate(committed_states)
+        raise
 
 
 def materialize_full_internal_force(

@@ -41,11 +41,21 @@ from .assembly import build_constraint_transformation
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
-from .element_capabilities import require_model_element_capabilities
+from .element_capabilities import (
+    require_model_element_capabilities,
+    require_model_nonlinear_workflow_capabilities,
+)
 from .linalg import MatrixClass, factorize
 from .matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from .nonlinear_analysis_diagnostics import capture_nonlinear_analysis_diagnostics
 from .nonlinear_state import NonlinearStateStore
+from .nonlinear_restart import (
+    canonical_checkpoint_json_bytes,
+    create_nonlinear_checkpoint,
+    load_case_descriptor,
+    load_nonlinear_checkpoint,
+    validate_nonlinear_checkpoint,
+)
 from .nonlinear_static import (
     NonlinearIncrementSnapshot,
     _assemble_nonlinear_system,
@@ -213,6 +223,7 @@ class ArcLengthResult:
     element_states: Dict[int, Any] = field(default_factory=dict)
     info: Dict[str, Any] = field(default_factory=dict)
     snapshots: tuple[NonlinearIncrementSnapshot, ...] = field(default_factory=tuple)
+    restart_checkpoint: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     @property
     def converged(self) -> bool:
@@ -229,7 +240,7 @@ class ArcLengthResult:
         return float(self.peak_load_factor)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "status": self.status,
             "converged": self.converged,
             "load_factor": float(self.load_factor),
@@ -240,12 +251,290 @@ class ArcLengthResult:
             "steps": [step.to_dict() for step in self.steps],
             "snapshots": [snapshot.to_dict() for snapshot in self.snapshots],
         }
+        if self.restart_checkpoint is not None:
+            payload["restart_checkpoint"] = {
+                "schema": self.restart_checkpoint["schema"],
+                "version": self.restart_checkpoint["version"],
+                "analysis_kind": self.restart_checkpoint["analysis_kind"],
+                "checkpoint_sha256": self.restart_checkpoint["checkpoint_sha256"],
+            }
+        return payload
+
+    def to_restart_checkpoint(self) -> Dict[str, Any]:
+        if self.restart_checkpoint is None:
+            raise ValueError("this result does not contain an arc-length restart checkpoint")
+        return copy.deepcopy(self.restart_checkpoint)
+
+    def restart_checkpoint_bytes(self) -> bytes:
+        return canonical_checkpoint_json_bytes(self.to_restart_checkpoint())
 
     @property
     def quantity_metadata(self) -> tuple[Any, ...]:
         from .quantities import describe_result_quantities
 
         return describe_result_quantities(self)
+
+
+def _arc_restart_analysis_contract(
+    *,
+    load_case: Optional["LoadCase"],
+    constant_load_case: Optional["LoadCase"],
+    settings: ArcLengthControl,
+    max_iterations: int,
+    tolerance: float,
+    arc_tolerance: float,
+    num_layers: int,
+    resource_config: Optional[ResourceConfig],
+    kinematics: str,
+    resolved_corotational_tangent: str,
+) -> Dict[str, Any]:
+    settings_payload = settings.to_dict()
+    # max_steps is the number of *additional* accepted path points requested
+    # by one invocation.  Every other control remains path-defining.
+    settings_payload.pop("max_steps")
+    return {
+        "schema": "ANYSOLVER_ARC_LENGTH_RESTART_CONTRACT_V1",
+        "load_case": load_case_descriptor(load_case),
+        "constant_load_case": load_case_descriptor(constant_load_case),
+        "control": settings_payload,
+        "max_iterations": int(max_iterations),
+        "tolerance": float(tolerance),
+        "arc_tolerance": float(arc_tolerance),
+        "num_layers": int(num_layers),
+        "resource_config": (
+            None if resource_config is None else resource_config.to_dict()
+        ),
+        "kinematics": str(kinematics),
+        "corotational_tangent": str(resolved_corotational_tangent),
+    }
+
+
+def _arc_step_from_restart(value: Any) -> ArcLengthStep:
+    if not isinstance(value, Mapping):
+        raise ValueError("checkpoint arc-length step must be a mapping")
+    expected = {
+        "step_index",
+        "load_factor",
+        "iterations",
+        "retries",
+        "arc_radius",
+        "residual_norm",
+        "arc_residual",
+        "displacement_norm",
+        "load_increment",
+        "path_increment_norm",
+        "max_equivalent_plastic_strain",
+        "is_peak",
+        "support_reactions",
+    }
+    if set(value) != expected or not isinstance(value["support_reactions"], Mapping):
+        raise ValueError("checkpoint arc-length step schema is incompatible")
+    return ArcLengthStep(
+        step_index=int(value["step_index"]),
+        load_factor=float(value["load_factor"]),
+        iterations=int(value["iterations"]),
+        retries=int(value["retries"]),
+        arc_radius=float(value["arc_radius"]),
+        residual_norm=float(value["residual_norm"]),
+        arc_residual=float(value["arc_residual"]),
+        displacement_norm=float(value["displacement_norm"]),
+        load_increment=float(value["load_increment"]),
+        path_increment_norm=float(value["path_increment_norm"]),
+        max_equivalent_plastic_strain=float(value["max_equivalent_plastic_strain"]),
+        is_peak=bool(value["is_peak"]),
+        support_reactions={
+            str(name): tuple(float(item) for item in components)
+            for name, components in value["support_reactions"].items()
+        },
+    )
+
+
+def _restore_arc_path_state(
+    value: Mapping[str, Any], *, n_red: Optional[int] = None
+) -> Dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError("arc-length checkpoint path_state must be a mapping")
+    expected = {
+        "mode",
+        "load_factor",
+        "step_index",
+        "steps",
+        "reduced_coordinates",
+        "radius",
+        "minimum_radius",
+        "maximum_radius",
+        "initial_radius",
+        "previous_dq",
+        "previous_dlambda",
+        "peak_load_factor",
+        "peak_step_index",
+        "descending_steps",
+        "max_translation",
+        "load_scaling",
+        "rotation_length_scale",
+        "adaptation_history",
+        "support_reaction_history",
+        "total_iterations",
+        "total_retries",
+        "corrector_solve_many_count",
+        "corrector_tangent_projection_count",
+        "reaction_force_reuse_count",
+        "reaction_force_reassembly_count",
+        "preload_info",
+        "terminal_status",
+        "failure_reason",
+    }
+    if set(value) != expected or value.get("mode") != "arc_length":
+        raise ValueError("arc-length checkpoint path schema is incompatible")
+    steps_raw = value["steps"]
+    if not isinstance(steps_raw, list):
+        raise ValueError("arc-length checkpoint steps must be a list")
+    steps = [_arc_step_from_restart(item) for item in steps_raw]
+    step_index = int(value["step_index"])
+    if len(steps) != step_index or [step.step_index for step in steps] != list(
+        range(1, step_index + 1)
+    ):
+        raise ValueError("arc-length checkpoint step ordering is inconsistent")
+    lam = float(value["load_factor"])
+    if steps and steps[-1].load_factor != lam:
+        raise ValueError("arc-length checkpoint load factor differs from its last step")
+    previous_dq_raw = value["previous_dq"]
+    if previous_dq_raw is None:
+        previous_dq = None
+    else:
+        previous_dq = np.asarray(previous_dq_raw, dtype=float)
+        if (
+            previous_dq.ndim != 1
+            or not np.all(np.isfinite(previous_dq))
+            or (n_red is not None and previous_dq.shape != (int(n_red),))
+        ):
+            raise ValueError("arc-length checkpoint predictor direction is incompatible")
+    previous_dlambda = (
+        None
+        if value["previous_dlambda"] is None
+        else float(value["previous_dlambda"])
+    )
+    if (previous_dq is None) != (previous_dlambda is None):
+        raise ValueError("arc-length checkpoint predictor state is incomplete")
+    reduced_coordinates = np.asarray(value["reduced_coordinates"], dtype=float)
+    if (
+        reduced_coordinates.ndim != 1
+        or not np.all(np.isfinite(reduced_coordinates))
+        or (n_red is not None and reduced_coordinates.shape != (int(n_red),))
+    ):
+        raise ValueError("arc-length checkpoint reduced coordinates are incompatible")
+    radius = float(value["radius"])
+    min_radius = float(value["minimum_radius"])
+    max_radius = float(value["maximum_radius"])
+    initial_radius = float(value["initial_radius"])
+    if min(radius, min_radius, max_radius, initial_radius) <= 0.0:
+        raise ValueError("arc-length checkpoint radii must be positive")
+    if min_radius > max_radius:
+        raise ValueError("arc-length checkpoint radius bounds are inconsistent")
+    peak_step_index = value["peak_step_index"]
+    peak_step_index = None if peak_step_index is None else int(peak_step_index)
+    if peak_step_index is not None and not (1 <= peak_step_index <= step_index):
+        raise ValueError("arc-length checkpoint peak step index is invalid")
+    list_names = ("adaptation_history", "support_reaction_history")
+    if any(not isinstance(value[name], list) for name in list_names):
+        raise ValueError("arc-length checkpoint diagnostic histories must be lists")
+    if len(value["support_reaction_history"]) != step_index:
+        raise ValueError("arc-length checkpoint reaction history is incomplete")
+    if len(value["adaptation_history"]) < step_index:
+        raise ValueError("arc-length checkpoint adaptation history is incomplete")
+    count_names = (
+        "total_iterations",
+        "total_retries",
+        "corrector_solve_many_count",
+        "corrector_tangent_projection_count",
+        "reaction_force_reuse_count",
+        "reaction_force_reassembly_count",
+    )
+    counts = {name: int(value[name]) for name in count_names}
+    if any(item < 0 for item in counts.values()):
+        raise ValueError("arc-length checkpoint counters must be non-negative")
+    return {
+        **copy.deepcopy(dict(value)),
+        **counts,
+        "load_factor": lam,
+        "step_index": step_index,
+        "steps": steps,
+        "reduced_coordinates": reduced_coordinates.copy(),
+        "radius": radius,
+        "minimum_radius": min_radius,
+        "maximum_radius": max_radius,
+        "initial_radius": initial_radius,
+        "previous_dq": None if previous_dq is None else previous_dq.copy(),
+        "previous_dlambda": previous_dlambda,
+        "peak_step_index": peak_step_index,
+        "terminal_status": str(value["terminal_status"]),
+        "failure_reason": (
+            None if value["failure_reason"] is None else str(value["failure_reason"])
+        ),
+    }
+
+
+def _arc_restart_path_payload(
+    *,
+    load_factor: float,
+    steps: Sequence[ArcLengthStep],
+    reduced_coordinates: np.ndarray,
+    radius: float,
+    minimum_radius: float,
+    maximum_radius: float,
+    initial_radius: float,
+    previous_dq: Optional[np.ndarray],
+    previous_dlambda: Optional[float],
+    peak_load_factor: float,
+    peak_step_index: Optional[int],
+    descending_steps: int,
+    max_translation: float,
+    load_scaling: float,
+    rotation_length_scale: float,
+    adaptation_history: Sequence[Mapping[str, Any]],
+    support_reaction_history: Sequence[Mapping[str, Any]],
+    total_iterations: int,
+    total_retries: int,
+    corrector_solve_many_count: int,
+    corrector_tangent_projection_count: int,
+    reaction_force_reuse_count: int,
+    reaction_force_reassembly_count: int,
+    preload_info: Any,
+    terminal_status: str,
+    failure_reason: Optional[str],
+) -> Dict[str, Any]:
+    return {
+        "mode": "arc_length",
+        "load_factor": float(load_factor),
+        "step_index": len(steps),
+        "steps": [step.to_dict() for step in steps],
+        "reduced_coordinates": np.asarray(
+            reduced_coordinates, dtype=float
+        ).reshape(-1).tolist(),
+        "radius": float(radius),
+        "minimum_radius": float(minimum_radius),
+        "maximum_radius": float(maximum_radius),
+        "initial_radius": float(initial_radius),
+        "previous_dq": None if previous_dq is None else previous_dq.tolist(),
+        "previous_dlambda": previous_dlambda,
+        "peak_load_factor": float(peak_load_factor),
+        "peak_step_index": peak_step_index,
+        "descending_steps": int(descending_steps),
+        "max_translation": float(max_translation),
+        "load_scaling": float(load_scaling),
+        "rotation_length_scale": float(rotation_length_scale),
+        "adaptation_history": copy.deepcopy(list(adaptation_history)),
+        "support_reaction_history": copy.deepcopy(list(support_reaction_history)),
+        "total_iterations": int(total_iterations),
+        "total_retries": int(total_retries),
+        "corrector_solve_many_count": int(corrector_solve_many_count),
+        "corrector_tangent_projection_count": int(corrector_tangent_projection_count),
+        "reaction_force_reuse_count": int(reaction_force_reuse_count),
+        "reaction_force_reassembly_count": int(reaction_force_reassembly_count),
+        "preload_info": copy.deepcopy(preload_info),
+        "terminal_status": str(terminal_status),
+        "failure_reason": None if failure_reason is None else str(failure_reason),
+    }
 
 
 def _characteristic_length(model: "FEModel") -> float:
@@ -353,6 +642,8 @@ def solve_static_arc_length(
     resource_config: Optional[ResourceConfig] = None,
     cancellation_token: Optional[CancellationToken] = None,
     record_increment_snapshots: bool = False,
+    restart_checkpoint: Optional[Any] = None,
+    emit_restart_checkpoint: bool = False,
 ) -> ArcLengthResult:
     """Trace the first nonlinear limit point with spherical arc-length control.
 
@@ -383,22 +674,40 @@ def solve_static_arc_length(
     kinematics = str(kinematics).strip().lower()
     if kinematics not in {"von_karman", "corotational"}:
         raise ValueError("kinematics must be 'von_karman' or 'corotational'")
+    parsed_restart_checkpoint: Optional[Dict[str, Any]] = None
+    if restart_checkpoint is not None:
+        emit_restart_checkpoint = True
+        if initial_element_states is not None:
+            raise ValueError(
+                "restart_checkpoint cannot be combined with initial_element_states"
+            )
+        parsed_restart_checkpoint = load_nonlinear_checkpoint(restart_checkpoint)
+        require_model_element_capabilities(
+            model,
+            "arc_length_restart_history",
+            context="solve_static_arc_length",
+        )
+    elif emit_restart_checkpoint:
+        require_model_element_capabilities(
+            model,
+            "arc_length_restart_history",
+            context="solve_static_arc_length",
+        )
     if imperfection is not None:
         require_model_element_capabilities(
             model,
             "initial_fields",
             context="solve_static_arc_length",
         )
-    if bool(initial_element_states):
+    if initial_element_states is not None:
         require_model_element_capabilities(
             model,
-            "restart_history",
+            "arc_length_restart_history",
             context="solve_static_arc_length",
             element_ids=initial_element_states,
         )
-    require_model_element_capabilities(
+    require_model_nonlinear_workflow_capabilities(
         model,
-        ("material_nonlinearity", "nonlinear_geometry"),
         context="solve_static_arc_length",
     )
     follower_active = _has_follower_pressure(load_case) or _has_follower_pressure(
@@ -430,6 +739,38 @@ def solve_static_arc_length(
     )
     start_time = time.time()
     working_model = _copy_model_with_imperfection(model, imperfection)
+    restart_analysis_contract = _arc_restart_analysis_contract(
+        load_case=load_case,
+        constant_load_case=constant_load_case,
+        settings=settings,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
+        arc_tolerance=arc_tolerance,
+        num_layers=num_layers,
+        resource_config=resource_config,
+        kinematics=kinematics,
+        resolved_corotational_tangent=resolved_corotational_tangent,
+    )
+    validated_restart = None
+    restored_arc_path: Optional[Dict[str, Any]] = None
+    if parsed_restart_checkpoint is not None:
+        validated_restart = validate_nonlinear_checkpoint(
+            parsed_restart_checkpoint,
+            analysis_kind="arc_length",
+            model=working_model,
+            analysis_contract=restart_analysis_contract,
+            num_layers=num_layers,
+        )
+        restored_arc_path = _restore_arc_path_state(validated_restart.path_state)
+        if restored_arc_path["terminal_status"] != "maximum_steps_reached":
+            raise ValueError(
+                "arc-length checkpoint does not end at a continuable maximum-step boundary"
+            )
+        if validated_restart.deleted_element_ids:
+            raise ValueError("arc-length checkpoints cannot contain deletion state")
+        if validated_restart.activity is not None:
+            working_model.set_element_activity(validated_restart.activity)
+        initial_element_states = validated_restart.element_states
     working_model.apply_boundary_conditions()
 
     K0, stiffness_info = assemble_stiffness_matrix(working_model)
@@ -448,6 +789,11 @@ def solve_static_arc_length(
         and float(np.max(np.abs(prescribed_offset))) > _SMALL
     )
     n_red = int(T.shape[1])
+    if restored_arc_path is not None:
+        restored_arc_path = _restore_arc_path_state(
+            validated_restart.path_state,
+            n_red=n_red,
+        )
     assembly_info = {
         "stiffness": stiffness_info,
         "load": load_info,
@@ -476,6 +822,13 @@ def solve_static_arc_length(
             ),
         },
     }
+    if validated_restart is not None:
+        info["restart"] = {
+            "schema": validated_restart.payload["schema"],
+            "checkpoint_sha256": validated_restart.payload["checkpoint_sha256"],
+            "resumed_load_factor": float(restored_arc_path["load_factor"]),
+            "resumed_step_index": int(restored_arc_path["step_index"]),
+        }
     if imperfection is not None:
         info["imperfection"] = getattr(working_model, "imperfection_metadata", [])
 
@@ -490,16 +843,25 @@ def solve_static_arc_length(
         return ArcLengthResult([], "zero_reference_load", u0.copy(), 0.0, 0.0, None, {}, info)
 
     committed_states: Dict[int, Any] = _copy_initial_states(initial_element_states)
-    q = np.zeros(n_red, dtype=float)
-    lam = 0.0
-    preload_info = None
+    if restored_arc_path is not None:
+        lam = float(restored_arc_path["load_factor"])
+        q = np.asarray(restored_arc_path["reduced_coordinates"], dtype=float).copy()
+        preload_info = copy.deepcopy(restored_arc_path["preload_info"])
+    else:
+        q = np.zeros(n_red, dtype=float)
+        lam = 0.0
+        preload_info = None
 
     if constant_load_case is not None and prescribed_path_active:
         raise NotImplementedError(
             "arc-length continuation does not yet combine a constant preload "
             "with a proportional prescribed-displacement path"
         )
-    if constant_load_case is not None and float(np.linalg.norm(F_const_red)) > _SMALL:
+    if (
+        restored_arc_path is None
+        and constant_load_case is not None
+        and float(np.linalg.norm(F_const_red)) > _SMALL
+    ):
         preload = solve_static_nonlinear(
             working_model,
             load_case=constant_load_case,
@@ -549,7 +911,20 @@ def solve_static_arc_length(
                 dtype=float,
             ).reshape(-1)
 
-    rotation_scale = settings.rotation_length_scale or _characteristic_length(working_model)
+    if restored_arc_path is not None and not np.array_equal(
+        full_displacement(q, lam),
+        validated_restart.displacements,
+    ):
+        raise ValueError(
+            "arc-length checkpoint reduced coordinates do not exactly reconstruct "
+            "its committed displacement"
+        )
+
+    rotation_scale = (
+        float(restored_arc_path["rotation_length_scale"])
+        if restored_arc_path is not None
+        else settings.rotation_length_scale or _characteristic_length(working_model)
+    )
     W = _reduced_metric(working_model, T, rotation_scale)
     full_weights = _full_metric_weights(working_model, rotation_scale)
     metric_cross = np.asarray(
@@ -595,6 +970,14 @@ def solve_static_arc_length(
     # Establish the first tangent direction and derive fixed path-space radius
     # limits from the user-facing load-increment settings.
     u = full_displacement(q, lam)
+    committed_states = _activate_nonlinear_state_storage(
+        working_model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+        committed_displacements=u,
+    )
     F_int, K_T, _trial_states = _assemble_nonlinear_system(
         working_model,
         u,
@@ -604,6 +987,10 @@ def solve_static_arc_length(
         kinematics=kinematics,
         corotational_tangent=resolved_corotational_tangent,
     )
+    # The initial tangent is diagnostic at the already committed base.  It is
+    # not an accepted continuation increment and must never advance either
+    # material history or node-shared multiplicative rotations.
+    _discard_nonlinear_state_candidate(committed_states)
     F_const_current, K_const, F_prop_current, K_prop = external_system(u, lam, tangent=True)
     F_prop_red = np.asarray(T.T @ F_prop_current, dtype=float).reshape(-1)
     residual0 = (
@@ -653,14 +1040,6 @@ def solve_static_arc_length(
         info["factorization_error"] = str(exc)
         return ArcLengthResult([], "initial_tangent_failed", u, lam, lam, None, committed_states, info)
 
-    committed_states = _activate_nonlinear_state_storage(
-        working_model,
-        committed_states,
-        num_layers,
-        info,
-        kinematics=kinematics,
-    )
-
     physical_direction_norm_sq = (
         _metric_dot(W, tangent_direction, tangent_direction)
         + 2.0 * float(metric_cross @ tangent_direction)
@@ -670,9 +1049,13 @@ def solve_static_arc_length(
         np.sqrt(max(physical_direction_norm_sq, 0.0))
     )
     load_scaling = (
-        float(settings.load_scaling)
-        if settings.load_scaling is not None
-        else max(physical_direction_norm, 1.0e-12)
+        float(restored_arc_path["load_scaling"])
+        if restored_arc_path is not None
+        else (
+            float(settings.load_scaling)
+            if settings.load_scaling is not None
+            else max(physical_direction_norm, 1.0e-12)
+        )
     )
 
     if not zero_prescribed_offset:
@@ -717,36 +1100,95 @@ def solve_static_arc_length(
             max(path_metric_dot(tangent_direction, 1.0, tangent_direction, 1.0), 0.0)
         )
     )
-    radius = settings.initial_load_increment * predictor_norm
-    min_radius = radius * settings.minimum_load_increment / settings.initial_load_increment
-    max_radius = radius * settings.maximum_load_increment / settings.initial_load_increment
-
-    steps: List[ArcLengthStep] = []
-    previous_dq: Optional[np.ndarray] = None
-    previous_dlambda: Optional[float] = None
-    peak_load_factor = float(lam)
-    peak_step_index: Optional[int] = None
-    peak_step: Optional[ArcLengthStep] = None
-    max_translation = 0.0
+    if restored_arc_path is not None:
+        radius = float(restored_arc_path["radius"])
+        min_radius = float(restored_arc_path["minimum_radius"])
+        max_radius = float(restored_arc_path["maximum_radius"])
+        initial_radius = float(restored_arc_path["initial_radius"])
+        steps = list(restored_arc_path["steps"])
+        previous_dq = (
+            None
+            if restored_arc_path["previous_dq"] is None
+            else np.asarray(restored_arc_path["previous_dq"], dtype=float).copy()
+        )
+        previous_dlambda = restored_arc_path["previous_dlambda"]
+        peak_load_factor = float(restored_arc_path["peak_load_factor"])
+        peak_step_index = restored_arc_path["peak_step_index"]
+        peak_step = (
+            None
+            if peak_step_index is None
+            else steps[int(peak_step_index) - 1]
+        )
+        max_translation = float(restored_arc_path["max_translation"])
+    else:
+        radius = settings.initial_load_increment * predictor_norm
+        min_radius = radius * settings.minimum_load_increment / settings.initial_load_increment
+        max_radius = radius * settings.maximum_load_increment / settings.initial_load_increment
+        initial_radius = float(radius)
+        steps: List[ArcLengthStep] = []
+        previous_dq: Optional[np.ndarray] = None
+        previous_dlambda: Optional[float] = None
+        peak_load_factor = float(lam)
+        peak_step_index: Optional[int] = None
+        peak_step: Optional[ArcLengthStep] = None
+        max_translation = 0.0
     track_step_translation = (
         progress_callback is not None or settings.max_translation is not None
     )
-    descending_steps = 0
+    descending_steps = (
+        int(restored_arc_path["descending_steps"])
+        if restored_arc_path is not None
+        else 0
+    )
     status = "maximum_steps_reached"
     failure_reason: Optional[str] = None
-    total_iterations = 0
-    total_retries = 0
-    corrector_solve_many_count = 0
-    corrector_tangent_projection_count = 0
-    reaction_force_reuse_count = 0
-    reaction_force_reassembly_count = 0
-    adaptation_history: List[Dict[str, Any]] = []
+    total_iterations = (
+        int(restored_arc_path["total_iterations"])
+        if restored_arc_path is not None
+        else 0
+    )
+    total_retries = (
+        int(restored_arc_path["total_retries"])
+        if restored_arc_path is not None
+        else 0
+    )
+    corrector_solve_many_count = (
+        int(restored_arc_path["corrector_solve_many_count"])
+        if restored_arc_path is not None
+        else 0
+    )
+    corrector_tangent_projection_count = (
+        int(restored_arc_path["corrector_tangent_projection_count"])
+        if restored_arc_path is not None
+        else 0
+    )
+    reaction_force_reuse_count = (
+        int(restored_arc_path["reaction_force_reuse_count"])
+        if restored_arc_path is not None
+        else 0
+    )
+    reaction_force_reassembly_count = (
+        int(restored_arc_path["reaction_force_reassembly_count"])
+        if restored_arc_path is not None
+        else 0
+    )
+    adaptation_history: List[Dict[str, Any]] = (
+        copy.deepcopy(restored_arc_path["adaptation_history"])
+        if restored_arc_path is not None
+        else []
+    )
     snapshots: List[NonlinearIncrementSnapshot] = []
-    support_reaction_history: List[Dict[str, Any]] = []
+    support_reaction_history: List[Dict[str, Any]] = (
+        copy.deepcopy(restored_arc_path["support_reaction_history"])
+        if restored_arc_path is not None
+        else []
+    )
     support_reaction_dof_plan = _support_reaction_dof_plan(working_model)
     corrector_rhs = np.empty((n_red, 2), dtype=float)
 
-    for step_index in range(1, settings.max_steps + 1):
+    step_index_offset = len(steps)
+    for local_step_index in range(1, settings.max_steps + 1):
+        step_index = step_index_offset + local_step_index
         cancellation_safe_point(
             cancellation_token,
             f"arc_length.step:{step_index}",
@@ -1003,6 +1445,11 @@ def solve_static_arc_length(
                 committed_states = _commit_nonlinear_state_candidate(
                     committed_states,
                     trial_states,
+                    model=working_model,
+                    accepted_displacements=full_displacement(
+                        q_trial,
+                        lambda_trial,
+                    ),
                 )
                 u = full_displacement(q, lam)
                 path_increment_norm = float(
@@ -1131,7 +1578,7 @@ def solve_static_arc_length(
                         progress_callback,
                         "nonlinear_static_step",
                         "arc_length.continuation",
-                        completed=step_index,
+                        completed=local_step_index,
                         total=settings.max_steps,
                         iteration=iteration,
                         control="arc length",
@@ -1235,7 +1682,7 @@ def solve_static_arc_length(
     info["final_max_translation"] = float(max_translation)
     info["load_scaling"] = float(load_scaling)
     info["rotation_length_scale"] = float(rotation_scale)
-    info["initial_arc_radius"] = float(settings.initial_load_increment * predictor_norm)
+    info["initial_arc_radius"] = float(initial_radius)
     info["minimum_arc_radius"] = float(min_radius)
     info["maximum_arc_radius"] = float(max_radius)
     info["adaptation_history"] = adaptation_history
@@ -1284,6 +1731,49 @@ def solve_static_arc_length(
         },
     ).to_dict()
 
+    restart_payload = None
+    if emit_restart_checkpoint:
+        restart_payload = create_nonlinear_checkpoint(
+            analysis_kind="arc_length",
+            model=working_model,
+            analysis_contract=restart_analysis_contract,
+            displacements=u_final,
+            element_states=committed_states,
+            deleted_element_ids=(),
+            path_state=_arc_restart_path_payload(
+                load_factor=float(lam),
+                steps=steps,
+                reduced_coordinates=q,
+                radius=float(radius),
+                minimum_radius=float(min_radius),
+                maximum_radius=float(max_radius),
+                initial_radius=float(initial_radius),
+                previous_dq=previous_dq,
+                previous_dlambda=previous_dlambda,
+                peak_load_factor=float(peak_load_factor),
+                peak_step_index=peak_step_index,
+                descending_steps=int(descending_steps),
+                max_translation=float(max_translation),
+                load_scaling=float(load_scaling),
+                rotation_length_scale=float(rotation_scale),
+                adaptation_history=adaptation_history,
+                support_reaction_history=support_reaction_history,
+                total_iterations=int(total_iterations),
+                total_retries=int(total_retries),
+                corrector_solve_many_count=int(corrector_solve_many_count),
+                corrector_tangent_projection_count=int(
+                    corrector_tangent_projection_count
+                ),
+                reaction_force_reuse_count=int(reaction_force_reuse_count),
+                reaction_force_reassembly_count=int(
+                    reaction_force_reassembly_count
+                ),
+                preload_info=preload_info,
+                terminal_status=status,
+                failure_reason=failure_reason,
+            ),
+        )
+
     return ArcLengthResult(
         steps=steps,
         status=status,
@@ -1294,4 +1784,5 @@ def solve_static_arc_length(
         element_states=committed_states,
         info=info,
         snapshots=tuple(snapshots),
+        restart_checkpoint=restart_payload,
     )

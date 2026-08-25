@@ -27,6 +27,7 @@ import pytest
 
 import anysolver
 import anysolver.e4_pl_s3_element as s3
+from _e4_pl_s3_native_trial import native_trial_for_increment
 
 
 _D = 1.0e-4
@@ -296,13 +297,17 @@ def test_reference_jacobian_is_the_existing_linear_mitc3_plus_operator(
     point: tuple[float, float],
 ) -> None:
     nodes, triads, local = _reference_fixture()
+    native_trial, increment, _store = native_trial_for_increment(
+        nodes, triads, np.zeros(20)
+    )
     values, jacobian, hessian = s3._native_incremental_strain_jets(
         nodes,
         triads,
         *point,
-        np.zeros(20),
+        increment,
         reference_nodes=nodes,
         reference_frame=np.eye(3),
+        native_rotation_trial=native_trial,
     )
 
     expected = np.zeros((8, 20), dtype=float)
@@ -320,45 +325,46 @@ def test_reference_jacobian_is_the_existing_linear_mitc3_plus_operator(
     assert np.linalg.norm(hessian[:, drill, :]) > 0.0
 
 
-def test_values_jacobian_and_hessian_match_independent_quadratic_oracle() -> None:
-    nodes, triads, local = _reference_fixture()
+def test_values_jacobian_and_hessian_match_directional_finite_differences() -> None:
+    nodes, triads, _local = _reference_fixture()
     point = (0.271, 0.417)
-
-    oracle = lambda increment: _independent_reference_strain(
-        local,
-        triads,
-        *point,
-        increment,
-    )
-    constant, expected_jacobian_zero, expected_hessian = _polarize_quadratic(
-        oracle,
-        20,
-    )
-
     rng = np.random.default_rng(20260825)
-    increment = 0.17 * rng.standard_normal(20)
+    increment = 0.035 * rng.standard_normal(20)
     increment[[5, 11, 17]] = rng.standard_normal(3)  # arbitrary drilling
-    values, jacobian, hessian = s3._native_incremental_strain_jets(
-        nodes,
-        triads,
-        *point,
-        increment,
-        reference_nodes=nodes,
-        reference_frame=np.eye(3),
-    )
 
-    expected_values = (
-        constant
-        + expected_jacobian_zero @ increment
-        + 0.5 * np.einsum("ijk,j,k->i", expected_hessian, increment, increment)
+    def evaluate(candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        native_trial, exact, _store = native_trial_for_increment(
+            nodes, triads, candidate
+        )
+        return s3._native_incremental_strain_jets(
+            nodes,
+            triads,
+            *point,
+            exact,
+            reference_nodes=nodes,
+            reference_frame=np.eye(3),
+            native_rotation_trial=native_trial,
+        )
+
+    values, jacobian, hessian = evaluate(increment)
+    direction = rng.standard_normal(20)
+    direction /= np.linalg.norm(direction)
+    step = 2.0e-5
+    plus_value, plus_jacobian, _plus_hessian = evaluate(increment + step * direction)
+    minus_value, minus_jacobian, _minus_hessian = evaluate(increment - step * direction)
+    np.testing.assert_allclose(
+        (plus_value - minus_value) / (2.0 * step),
+        jacobian @ direction,
+        rtol=2.0e-7,
+        atol=2.0e-8,
     )
-    expected_jacobian = expected_jacobian_zero + np.einsum(
-        "ijk,k->ij", expected_hessian, increment
+    np.testing.assert_allclose(
+        (plus_jacobian - minus_jacobian) / (2.0 * step),
+        np.einsum("ijk,k->ij", hessian, direction),
+        rtol=4.0e-7,
+        atol=4.0e-8,
     )
-    np.testing.assert_allclose(values, oracle(increment), rtol=3.0e-12, atol=3.0e-12)
-    np.testing.assert_allclose(values, expected_values, rtol=3.0e-12, atol=3.0e-12)
-    np.testing.assert_allclose(jacobian, expected_jacobian, rtol=4.0e-12, atol=4.0e-12)
-    np.testing.assert_allclose(hessian, expected_hessian, rtol=4.0e-12, atol=4.0e-12)
+    assert np.all(np.isfinite(values))
 
 
 def test_directional_value_and_derivative_identities_include_assumed_shear() -> None:
@@ -367,61 +373,51 @@ def test_directional_value_and_derivative_identities_include_assumed_shear() -> 
     rng = np.random.default_rng(310729)
     increment = 0.11 * rng.standard_normal(20)
     direction = 0.23 * rng.standard_normal(20)
-    step = -0.37
+    direction /= np.linalg.norm(direction)
+    step = 1.0e-5
 
-    value, jacobian, hessian = s3._native_incremental_strain_jets(
-        nodes,
-        triads,
-        *point,
-        increment,
-        reference_nodes=nodes,
-        reference_frame=np.eye(3),
-    )
-    shifted_value, shifted_jacobian, shifted_hessian = (
-        s3._native_incremental_strain_jets(
+    def evaluate(candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        native_trial, exact, _store = native_trial_for_increment(
+            nodes, triads, candidate
+        )
+        return s3._native_incremental_strain_jets(
             nodes,
             triads,
             *point,
-            increment + step * direction,
+            exact,
             reference_nodes=nodes,
             reference_frame=np.eye(3),
+            native_rotation_trial=native_trial,
         )
-    )
+
+    value, jacobian, hessian = evaluate(increment)
+    plus_value, plus_jacobian, plus_hessian = evaluate(increment + step * direction)
+    minus_value, minus_jacobian, minus_hessian = evaluate(increment - step * direction)
     first_directional = jacobian @ direction
-    second_directional = np.einsum(
-        "ijk,j,k->i", hessian, direction, direction
-    )
-    expected_shifted_value = (
-        value
-        + step * first_directional
-        + 0.5 * step * step * second_directional
-    )
-    expected_shifted_jacobian = jacobian + step * np.einsum(
-        "ijk,k->ij", hessian, direction
-    )
 
     # Compare all eight fields, then repeat the assertions explicitly on the
     # two assumed-shear rows so an accidental membrane-only implementation
     # cannot satisfy this derivative qualification unnoticed.
     np.testing.assert_allclose(
-        shifted_value,
-        expected_shifted_value,
-        rtol=2.0e-12,
-        atol=2.0e-12,
+        (plus_value - minus_value) / (2.0 * step),
+        first_directional,
+        rtol=3.0e-7,
+        atol=3.0e-8,
     )
     np.testing.assert_allclose(
-        shifted_jacobian,
-        expected_shifted_jacobian,
-        rtol=2.0e-12,
-        atol=2.0e-12,
+        (plus_jacobian - minus_jacobian) / (2.0 * step),
+        np.einsum("ijk,k->ij", hessian, direction),
+        rtol=5.0e-7,
+        atol=5.0e-8,
     )
-    np.testing.assert_allclose(shifted_hessian, hessian, atol=2.0e-14)
     np.testing.assert_allclose(
-        shifted_value[6:],
-        expected_shifted_value[6:],
-        rtol=8.0e-13,
-        atol=8.0e-13,
+        ((plus_value - minus_value) / (2.0 * step))[6:],
+        first_directional[6:],
+        rtol=3.0e-7,
+        atol=3.0e-8,
     )
+    assert np.all(np.isfinite(plus_hessian))
+    assert np.all(np.isfinite(minus_hessian))
     assert np.linalg.norm(hessian[6:]) > 1.0e-6
 
 

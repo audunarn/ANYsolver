@@ -66,6 +66,7 @@ MATERIAL_DESCRIPTOR = resolved_material_descriptor(MATERIAL)
 ELEMENT_DESCRIPTOR = build_element_configuration_descriptor(
     thickness=THICKNESS,
     reference_normal=OWNER_NORMAL,
+    director_polarity=1,
     material_direction=(1.0, 0.0, 0.0),
     material_angle_deg=0.0,
     shell_section=None,
@@ -331,7 +332,7 @@ def test_component_schemas_and_frames_are_explicit_and_not_conflated() -> None:
         "layer_stress_material",
     ):
         assert STATE_FIELD_MANIFEST[field]["point_order"] == (
-            "station_major_layer_minor_bottom_to_top"
+            "station_major_layer_minor_physical_director_bottom_to_top"
         )
 
 
@@ -648,6 +649,13 @@ def test_bubble_predictor_is_zero_at_every_commit_restart_and_chart_switch() -> 
     switched["committed_director_triads"] = np.repeat(
         switched_triad[np.newaxis, :, :], 4, axis=0
     )
+    rotation_z_to_y = np.asarray(
+        ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0)),
+        dtype=np.float64,
+    )
+    switched["committed_nodal_rotation_matrices"] = np.repeat(
+        rotation_z_to_y[np.newaxis, :, :], 3, axis=0
+    )
     switched["bubble_rotation_last_increment"][:] = 0.0
     sealed = seal_committed_s3_state(switched)
     validate_committed_s3_state(sealed, expected_identity=_identity())
@@ -672,6 +680,43 @@ def test_formulation_fingerprint_binds_every_tying_point_and_mechanics_family(
         ("PL_GRAM_SCALE_ID", state_module.PL_GRAM_SCALE_ID + "_MUTATED"),
         ("PL_BLOCK_SIGN_ID", state_module.PL_BLOCK_SIGN_ID + "_MUTATED"),
         ("PL_CONDENSATION_ID", state_module.PL_CONDENSATION_ID + "_MUTATED"),
+        (
+            "EXTERNAL_ROTATION_MAP_ID",
+            state_module.EXTERNAL_ROTATION_MAP_ID + "_MUTATED",
+        ),
+        (
+            "DIRECTOR_INCREMENT_MAP_ID",
+            state_module.DIRECTOR_INCREMENT_MAP_ID + "_MUTATED",
+        ),
+        (
+            "SURFACE_ROTATION_POLICY_ID",
+            state_module.SURFACE_ROTATION_POLICY_ID + "_MUTATED",
+        ),
+        ("PL_TWIST_POLICY_ID", state_module.PL_TWIST_POLICY_ID + "_MUTATED"),
+        (
+            "NODAL_ROTATION_UPDATE_POLICY_ID",
+            state_module.NODAL_ROTATION_UPDATE_POLICY_ID + "_MUTATED",
+        ),
+        ("PL_PHASE_POLICY_ID", state_module.PL_PHASE_POLICY_ID + "_MUTATED"),
+        ("PL_PHASE_MARGIN_ID", state_module.PL_PHASE_MARGIN_ID + "_MUTATED"),
+        (
+            "PL_MINIMUM_TWIST_DENOMINATOR_ID",
+            state_module.PL_MINIMUM_TWIST_DENOMINATOR_ID + "_MUTATED",
+        ),
+        (
+            "NONLINEAR_PL_ENERGY_POLICY_ID",
+            state_module.NONLINEAR_PL_ENERGY_POLICY_ID + "_MUTATED",
+        ),
+        (
+            "PL_PHASE_MARGIN",
+            np.nextafter(state_module.PL_PHASE_MARGIN, math.inf),
+        ),
+        (
+            "PL_MINIMUM_TWIST_DENOMINATOR",
+            np.nextafter(
+                state_module.PL_MINIMUM_TWIST_DENOMINATOR, math.inf
+            ),
+        ),
         (
             "DRILL_SCALE_POLICY_ID",
             state_module.DRILL_SCALE_POLICY_ID + "_MUTATED",
@@ -755,6 +800,58 @@ def test_state_field_manifest_binds_all_initial_field_semantics() -> None:
         "component_frame": "canonical_metadata",
         "component_order": ("sorted_string_keys",),
         "point_order": "not_applicable",
+    }
+
+
+def test_state_field_manifest_binds_node_shared_so3_and_objective_pl_history() -> None:
+    assert STATE_FIELD_MANIFEST["reference_corner_directors"] == {
+        "role": "immutable_element_owned_reference_with_strict_polarity",
+        "component_frame": "global",
+        "component_order": ("x", "y", "z"),
+        "point_order": "ordered_connectivity_nodes",
+    }
+    assert STATE_FIELD_MANIFEST["committed_nodal_rotation_matrices"] == {
+        "role": "authoritative_node_shared_redundant_copy",
+        "component_frame": "global_operator_rows_columns",
+        "component_order": ("global_x", "global_y", "global_z"),
+        "point_order": "ordered_connectivity_nodes",
+    }
+    assert STATE_FIELD_MANIFEST["committed_pl_twist"] == {
+        "role": "authoritative_unwrapped_phase",
+        "component_frame": "relative_surface_nodal_twist",
+        "component_order": ("scalar_angle_radians",),
+        "point_order": "ordered_connectivity_nodes",
+    }
+    assert STATE_FIELD_MANIFEST["committed_pl_turn_count"] == {
+        "role": "authoritative_unwrapped_phase_integer",
+        "component_frame": "relative_surface_nodal_twist",
+        "component_order": ("integer_turn_count",),
+        "point_order": "ordered_connectivity_nodes",
+    }
+    assert STATE_FIELD_MANIFEST["committed_pl_multiplier"] == {
+        "role": "numerical_diagnostic",
+        "component_frame": "barycentric_pl_constraint",
+        "component_order": ("tau_equals_kd_times_twist",),
+        "point_order": "ordered_connectivity_nodes",
+    }
+    assert STATE_FIELD_MANIFEST["committed_pl_internal_force"] == {
+        "role": "numerical_diagnostic",
+        "component_frame": "global",
+        "component_order": (
+            "force_global_x",
+            "force_global_y",
+            "force_global_z",
+            "moment_global_x",
+            "moment_global_y",
+            "moment_global_z",
+        ),
+        "point_order": "ordered_connectivity_nodes",
+    }
+    assert STATE_FIELD_MANIFEST["committed_pl_energy"] == {
+        "role": "numerical_diagnostic",
+        "component_frame": "scalar",
+        "component_order": ("energy",),
+        "point_order": "single_element",
     }
 
 

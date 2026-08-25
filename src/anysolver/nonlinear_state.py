@@ -30,6 +30,15 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
+from ._native_rotation_state import (
+    NativeElementRotationView,
+    NativeRotationStateStore,
+    NativeRotationTrialToken,
+    NativeRotationValidationError,
+    create_native_rotation_state_store,
+    validate_proper_rotation_matrices,
+)
+
 
 _CORE_FIELDS = ("plastic_strain", "alpha", "layer_strain")
 _FIELD_INDEX = {name: index for index, name in enumerate(_CORE_FIELDS)}
@@ -165,6 +174,59 @@ class StateTrialToken:
     generation: int
     serial: int
     _owner: object = field(repr=False, compare=False, hash=False)
+
+
+@dataclass(frozen=True, slots=True)
+class _NativeElementStateBinding:
+    """Frozen model ownership needed to cross-check redundant S3 state."""
+
+    node_ids: tuple[int, ...]
+    dof_mapping: np.ndarray = field(repr=False, compare=False, hash=False)
+    reference_directors: np.ndarray = field(repr=False, compare=False, hash=False)
+    state_consistency_required: bool = False
+
+    def __post_init__(self) -> None:
+        nodes = tuple(int(value) for value in self.node_ids)
+        if not nodes or len(set(nodes)) != len(nodes):
+            raise NativeRotationValidationError(
+                "native element binding requires unique nonempty node_ids"
+            )
+        dofs = np.asarray(self.dof_mapping, dtype=np.intp)
+        if dofs.shape != (6 * len(nodes),) or np.any(dofs < 0):
+            raise NativeRotationValidationError(
+                "native element binding requires six valid DOFs per node"
+            )
+        directors = np.asarray(self.reference_directors, dtype=np.float64)
+        if directors.shape != (len(nodes), 3) or not np.all(np.isfinite(directors)):
+            raise NativeRotationValidationError(
+                "native element binding has incompatible reference directors"
+            )
+        object.__setattr__(self, "node_ids", nodes)
+        object.__setattr__(
+            self,
+            "state_consistency_required",
+            bool(self.state_consistency_required),
+        )
+        object.__setattr__(
+            self,
+            "dof_mapping",
+            np.frombuffer(
+                np.ascontiguousarray(dofs).tobytes(order="C"),
+                dtype=np.intp,
+            ).reshape(dofs.shape),
+        )
+        object.__setattr__(
+            self,
+            "reference_directors",
+            np.frombuffer(
+                np.ascontiguousarray(directors).tobytes(order="C"),
+                dtype=np.float64,
+            ).reshape(directors.shape),
+        )
+
+
+_NATIVE_ELEMENT_BINDINGS_ATTRIBUTE = "_anysolver_native_element_state_bindings_v1"
+_NATIVE_DIRECTOR_CONSISTENCY_TOLERANCE = 1.0e-12
 
 
 @dataclass(frozen=True, slots=True)
@@ -916,6 +978,12 @@ class NonlinearStateStore(Mapping[int, Any]):
         self._serial = 0
         self._active_token: Optional[StateTrialToken] = None
         self._batch_trial_tokens: Dict[Hashable, StateTrialToken] = {}
+        self._native_rotation_store: Optional[NativeRotationStateStore] = None
+        self._native_rotation_trial_token: Optional[NativeRotationTrialToken] = None
+        self._native_element_bindings: Optional[
+            Dict[int, _NativeElementStateBinding]
+        ] = None
+        self._native_trial_full_displacement: Optional[np.ndarray] = None
         self._fallback_trial: Dict[int, Any] = {}
         self._pack_seconds = 0.0
         self._trial_update_seconds = 0.0
@@ -962,6 +1030,63 @@ class NonlinearStateStore(Mapping[int, Any]):
     @property
     def has_active_trial(self) -> bool:
         return self._active_token is not None
+
+    @property
+    def has_native_rotations(self) -> bool:
+        return self._native_rotation_store is not None
+
+    @property
+    def native_rotation_store(self) -> Optional[NativeRotationStateStore]:
+        return self._native_rotation_store
+
+    def attach_native_rotation_store(
+        self,
+        rotation_store: NativeRotationStateStore,
+    ) -> None:
+        """Attach the one solver-owned native kinematic history before use."""
+
+        if not isinstance(rotation_store, NativeRotationStateStore):
+            raise TypeError("rotation_store must be a NativeRotationStateStore")
+        with self._lock:
+            if self._active_token is not None:
+                raise StateTransactionError(
+                    "Cannot attach native rotations during an active trial"
+                )
+            if self._native_rotation_store is not None:
+                raise StateTransactionError(
+                    "Native rotation state is already attached"
+                )
+            if self._generation != 0 or rotation_store.generation != 0:
+                raise StateTransactionError(
+                    "Native rotations must be attached before the first nonlinear trial"
+                )
+            raw_bindings = getattr(
+                rotation_store,
+                _NATIVE_ELEMENT_BINDINGS_ATTRIBUTE,
+                MappingProxyType({}),
+            )
+            if not isinstance(raw_bindings, Mapping):
+                raise NativeRotationValidationError(
+                    "Native rotation store carries malformed element ownership"
+                )
+            bindings: Dict[int, _NativeElementStateBinding] = {}
+            for raw_element_id, binding in raw_bindings.items():
+                element_id = int(raw_element_id)
+                if not isinstance(binding, _NativeElementStateBinding):
+                    raise NativeRotationValidationError(
+                        f"Native element {element_id} has malformed state ownership"
+                    )
+                if (
+                    binding.dof_mapping.size
+                    and int(np.max(binding.dof_mapping))
+                    >= rotation_store.committed_full_displacement.size
+                ):
+                    raise NativeRotationValidationError(
+                        f"Native element {element_id} DOF ownership is out of bounds"
+                    )
+                bindings[element_id] = binding
+            self._native_rotation_store = rotation_store
+            self._native_element_bindings = bindings
 
     def add_shell_batch(
         self,
@@ -1013,29 +1138,71 @@ class NonlinearStateStore(Mapping[int, Any]):
         batch = self._batches[key]
         return batch if batch.compatible_with(layout) else None
 
-    def begin_trial(self) -> StateTrialToken:
+    def begin_trial(
+        self,
+        *,
+        full_displacement: Any = None,
+        full_coordinates: Any = None,
+    ) -> StateTrialToken:
         with self._lock:
             if self._active_token is not None:
                 raise StateTransactionError("A nonlinear-state trial is already active")
+            if self._native_rotation_store is not None and (
+                full_displacement is None or full_coordinates is None
+            ):
+                raise StateTransactionError(
+                    "Native nonlinear-state trials require the complete global "
+                    "displacement and nodal-coordinate arrays"
+                )
             self._serial += 1
             token = StateTrialToken(self._generation, self._serial, self._owner)
             child_tokens: Dict[Hashable, StateTrialToken] = {}
+            native_token: Optional[NativeRotationTrialToken] = None
             try:
                 for key, batch in self._batches.items():
                     child_tokens[key] = batch.begin_trial()
+                if self._native_rotation_store is not None:
+                    native_token = self._native_rotation_store.begin_trial(
+                        full_displacement,
+                        full_coordinates,
+                    )
             except Exception:
                 for key, child_token in child_tokens.items():
                     self._batches[key].discard_trial(child_token)
+                if (
+                    self._native_rotation_store is not None
+                    and native_token is not None
+                ):
+                    self._native_rotation_store.discard_trial(native_token)
                 raise
             self._batch_trial_tokens = child_tokens
+            self._native_rotation_trial_token = native_token
+            self._native_trial_full_displacement = (
+                None
+                if native_token is None
+                else np.frombuffer(
+                    np.ascontiguousarray(
+                        np.asarray(full_displacement, dtype=np.float64)
+                    ).tobytes(order="C"),
+                    dtype=np.float64,
+                ).reshape(np.asarray(full_displacement).shape)
+            )
             self._fallback_trial = {}
             self._active_token = token
             return token
 
-    def begin(self) -> StateTrialToken:
+    def begin(
+        self,
+        *,
+        full_displacement: Any = None,
+        full_coordinates: Any = None,
+    ) -> StateTrialToken:
         """Short transaction alias for :meth:`begin_trial`."""
 
-        return self.begin_trial()
+        return self.begin_trial(
+            full_displacement=full_displacement,
+            full_coordinates=full_coordinates,
+        )
 
     def active_trial_token(self) -> StateTrialToken:
         """Return the active token for an assembly evaluator."""
@@ -1045,13 +1212,21 @@ class NonlinearStateStore(Mapping[int, Any]):
                 raise StateTransactionError("No nonlinear-state trial is active")
             return self._active_token
 
-    def replace_trial(self) -> StateTrialToken:
+    def replace_trial(
+        self,
+        *,
+        full_displacement: Any = None,
+        full_coordinates: Any = None,
+    ) -> StateTrialToken:
         """Reject any prior candidate and begin another from committed state."""
 
         with self._lock:
             if self._active_token is not None:
                 self.discard_trial(self._active_token)
-            return self.begin_trial()
+            return self.begin_trial(
+                full_displacement=full_displacement,
+                full_coordinates=full_coordinates,
+            )
 
     def _require_active(self, token: StateTrialToken) -> None:
         valid = bool(
@@ -1095,6 +1270,238 @@ class NonlinearStateStore(Mapping[int, Any]):
             key = self._element_to_batch[layout.element_ids[0]]
             return batch, self._batch_trial_tokens[key]
 
+    def native_element_rotation_view(
+        self,
+        token: StateTrialToken,
+        element_id: Hashable,
+        node_ids: Sequence[int],
+        reference_directors: Any,
+    ) -> NativeElementRotationView:
+        """Return one immutable node-shared native trial in element order."""
+
+        with self._lock:
+            self._require_active(token)
+            if (
+                self._native_rotation_store is None
+                or self._native_rotation_trial_token is None
+            ):
+                raise StateTransactionError(
+                    "No native rotation transaction is active"
+                )
+            key = int(element_id)
+            bindings = self._native_element_bindings
+            binding = None if bindings is None else bindings.get(key)
+            if binding is None:
+                # Low-level synthetic/native-extension stores can be attached
+                # without model metadata.  They may consume a node-shared view,
+                # but cannot persist an S3 redundant kinematic state.
+                return self._native_rotation_store.element_view(
+                    element_id,
+                    node_ids,
+                    reference_directors,
+                    trial_token=self._native_rotation_trial_token,
+                )
+            normalized_nodes = tuple(int(value) for value in node_ids)
+            made_directors = np.asarray(reference_directors, dtype=np.float64)
+            if normalized_nodes != binding.node_ids:
+                raise NativeRotationValidationError(
+                    f"Native element {key} connectivity disagrees with its model binding"
+                )
+            if (
+                made_directors.shape != binding.reference_directors.shape
+                or not np.all(np.isfinite(made_directors))
+                or not np.array_equal(made_directors, binding.reference_directors)
+            ):
+                raise NativeRotationValidationError(
+                    f"Native element {key} reference directors disagree with its model binding"
+                )
+            return self._native_rotation_store.element_view(
+                key,
+                binding.node_ids,
+                binding.reference_directors,
+                trial_token=self._native_rotation_trial_token,
+            )
+
+    def _native_view_for_binding(
+        self,
+        element_id: int,
+        *,
+        trial: bool,
+    ) -> NativeElementRotationView:
+        rotation_store = self._native_rotation_store
+        bindings = self._native_element_bindings
+        if rotation_store is None or bindings is None or element_id not in bindings:
+            raise NativeRotationValidationError(
+                f"Native element {element_id} has no solver-owned state binding"
+            )
+        binding = bindings[element_id]
+        trial_token = None
+        if trial:
+            trial_token = self._native_rotation_trial_token
+            if trial_token is None:
+                raise StateTransactionError(
+                    "Native state consistency requires an active rotation candidate"
+                )
+        return rotation_store.element_view(
+            element_id,
+            binding.node_ids,
+            binding.reference_directors,
+            trial_token=trial_token,
+        )
+
+    def _validate_native_element_state(
+        self,
+        element_id: int,
+        state: Any,
+        full_displacement: Any,
+    ) -> None:
+        bindings = self._native_element_bindings
+        if (
+            bindings is None
+            or element_id not in bindings
+            or not bindings[element_id].state_consistency_required
+        ):
+            return
+        if not isinstance(state, Mapping):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} trial state must be a mapping"
+            )
+        required = (
+            "committed_total_u",
+            "reference_corner_directors",
+            "committed_nodal_rotation_matrices",
+            "committed_director_triads",
+        )
+        missing = [name for name in required if name not in state]
+        if missing:
+            raise NativeRotationValidationError(
+                f"Native element {element_id} trial state is missing "
+                + ", ".join(missing)
+            )
+        binding = bindings[element_id]
+        full = np.asarray(full_displacement, dtype=np.float64)
+        if (
+            full.ndim != 1
+            or not np.all(np.isfinite(full))
+            or int(np.max(binding.dof_mapping)) >= full.size
+        ):
+            raise NativeRotationValidationError(
+                "Native state consistency requires a complete finite displacement vector"
+            )
+        expected_total = full[binding.dof_mapping]
+        stored_total = np.asarray(state["committed_total_u"], dtype=np.float64)
+        if (
+            stored_total.shape != expected_total.shape
+            or not np.all(np.isfinite(stored_total))
+            or not np.array_equal(stored_total, expected_total)
+        ):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} committed_total_u disagrees with "
+                "the solver-owned trial"
+            )
+        view = self._native_view_for_binding(element_id, trial=True)
+        stored_reference = np.asarray(
+            state["reference_corner_directors"], dtype=np.float64
+        )
+        if (
+            stored_reference.shape != view.reference_directors.shape
+            or not np.all(np.isfinite(stored_reference))
+            or not np.array_equal(stored_reference, view.reference_directors)
+        ):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} reference_corner_directors "
+                "disagree with the solver-owned trial"
+            )
+        stored_rotations = np.asarray(
+            state["committed_nodal_rotation_matrices"], dtype=np.float64
+        )
+        if (
+            stored_rotations.shape != view.trial_rotation_matrices.shape
+            or not np.all(np.isfinite(stored_rotations))
+            or not np.array_equal(stored_rotations, view.trial_rotation_matrices)
+        ):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} committed_nodal_rotation_matrices "
+                "disagree with the solver-owned trial"
+            )
+        triads = np.asarray(state["committed_director_triads"], dtype=np.float64)
+        corner_count = len(binding.node_ids)
+        if (
+            triads.ndim != 3
+            or triads.shape[0] < corner_count
+            or triads.shape[1:] != (3, 3)
+            or not np.all(np.isfinite(triads))
+            or not np.allclose(
+                triads[:corner_count, :, 2],
+                view.trial_directors,
+                rtol=0.0,
+                atol=_NATIVE_DIRECTOR_CONSISTENCY_TOLERANCE,
+            )
+        ):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} corner director normals disagree "
+                "with the solver-owned trial"
+            )
+
+    def _materialize_native_element_state(
+        self,
+        element_id: int,
+        state: Any,
+        full_displacement: Any,
+        *,
+        trial: bool,
+    ) -> Any:
+        bindings = self._native_element_bindings
+        if (
+            bindings is None
+            or element_id not in bindings
+            or not bindings[element_id].state_consistency_required
+        ):
+            return _owned_copy(state)
+        if not isinstance(state, Mapping):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} committed state must be a mapping"
+            )
+        binding = bindings[element_id]
+        full = np.asarray(full_displacement, dtype=np.float64)
+        if full.ndim != 1 or int(np.max(binding.dof_mapping)) >= full.size:
+            raise NativeRotationValidationError(
+                "Native state materialization requires a complete displacement vector"
+            )
+        view = self._native_view_for_binding(element_id, trial=trial)
+        result = _owned_copy(dict(state))
+        triads = np.asarray(
+            result.get("committed_director_triads", ()), dtype=np.float64
+        ).copy()
+        corner_count = len(binding.node_ids)
+        if triads.ndim != 3 or triads.shape[0] < corner_count or triads.shape[1:] != (3, 3):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} has no materializable director triads"
+            )
+        from .e4_pl_s3_state import reconstruct_director_triad
+
+        directors = view.trial_directors if trial else view.committed_directors
+        for local_node in range(corner_count):
+            triads[local_node] = reconstruct_director_triad(directors[local_node])
+        result["committed_total_u"] = np.asarray(
+            full[binding.dof_mapping], dtype=np.float64
+        ).copy()
+        result["reference_corner_directors"] = np.asarray(
+            view.reference_directors, dtype=np.float64
+        ).copy()
+        result["committed_nodal_rotation_matrices"] = np.asarray(
+            view.trial_rotation_matrices
+            if trial
+            else view.committed_rotation_matrices,
+            dtype=np.float64,
+        ).copy()
+        result["committed_director_triads"] = triads
+        if "state_integrity_sha256" in result:
+            from .e4_pl_s3_state import seal_committed_s3_state
+
+            result = seal_committed_s3_state(result)
+        return result
+
     def _validate_fallback_sidecar(self, element_id: int, state: Any) -> Any:
         sidecar = self._fallback_sidecars.get(element_id, MappingProxyType({}))
         if not isinstance(state, Mapping):
@@ -1128,6 +1535,20 @@ class NonlinearStateStore(Mapping[int, Any]):
             self._require_active(token)
             key = int(element_id)
             start = time.perf_counter()
+            if (
+                self._native_element_bindings is not None
+                and key in self._native_element_bindings
+                and self._native_element_bindings[key].state_consistency_required
+            ):
+                if self._native_trial_full_displacement is None:
+                    raise StateTransactionError(
+                        "Native element trial state has no solver-owned displacement"
+                    )
+                self._validate_native_element_state(
+                    key,
+                    state,
+                    self._native_trial_full_displacement,
+                )
             batch_key = self._element_to_batch.get(key)
             if batch_key is not None:
                 self._batches[batch_key].set_trial_state(
@@ -1167,16 +1588,31 @@ class NonlinearStateStore(Mapping[int, Any]):
             for batch_key, ids in by_batch.items():
                 self._batches[batch_key].freeze_deleted(ids)
 
-    def commit(self, token: StateTrialToken) -> int:
+    def commit(
+        self,
+        token: StateTrialToken,
+        *,
+        accepted_full_displacement: Any = None,
+        accepted_full_coordinates: Any = None,
+    ) -> int:
         with self._lock:
             self._require_active(token)
             # Validate every child before the first pointer swap for atomicity.
             for key, batch in self._batches.items():
                 batch._require_active(self._batch_trial_tokens[key])
-            start = time.perf_counter()
-            for key, batch in self._batches.items():
-                batch.commit(self._batch_trial_tokens[key])
-            if self._fallback_trial:
+            if self._native_rotation_store is not None:
+                if self._native_rotation_trial_token is None:
+                    raise StateTransactionError(
+                        "Native nonlinear state has no active rotation candidate"
+                    )
+                self._native_rotation_store.validate_commit_configuration(
+                    self._native_rotation_trial_token,
+                    accepted_full_displacement,
+                    accepted_full_coordinates,
+                )
+            next_fallback: Optional[Dict[int, Any]] = None
+            next_sidecars: Optional[Dict[int, Mapping[str, Any]]] = None
+            if self._fallback_trial or self._native_element_bindings is not None:
                 next_fallback = dict(self._fallback_committed)
                 next_fallback.update(
                     {
@@ -1185,13 +1621,61 @@ class NonlinearStateStore(Mapping[int, Any]):
                         if element_id not in self._deleted_fallback
                     }
                 )
-                self._fallback_committed = next_fallback
+                next_sidecars = dict(self._fallback_sidecars)
                 for element_id, state in self._fallback_trial.items():
-                    if element_id not in self._fallback_sidecars:
-                        self._fallback_sidecars[element_id] = _extract_sidecar(state)
+                    if element_id not in next_sidecars:
+                        next_sidecars[element_id] = _extract_sidecar(state)
+            if self._native_element_bindings is not None:
+                assert next_fallback is not None
+                for element_id in self._native_element_bindings:
+                    if not self._native_element_bindings[
+                        element_id
+                    ].state_consistency_required:
+                        continue
+                    if element_id in self._element_to_batch:
+                        raise NativeRotationValidationError(
+                            f"Native element {element_id} cannot use a generic packed state batch"
+                        )
+                    if element_id not in next_fallback:
+                        raise NativeRotationValidationError(
+                            f"Native element {element_id} has no committed material state"
+                        )
+                    if element_id not in self._deleted_fallback:
+                        if element_id not in self._fallback_trial:
+                            raise NativeRotationValidationError(
+                                f"Native element {element_id} produced no trial material state"
+                            )
+                        self._validate_native_element_state(
+                            element_id,
+                            self._fallback_trial[element_id],
+                            accepted_full_displacement,
+                        )
+                    next_fallback[element_id] = self._materialize_native_element_state(
+                        element_id,
+                        next_fallback[element_id],
+                        accepted_full_displacement,
+                        trial=True,
+                    )
+            start = time.perf_counter()
+            for key, batch in self._batches.items():
+                batch.commit(self._batch_trial_tokens[key])
+            if self._native_rotation_store is not None:
+                assert self._native_rotation_trial_token is not None
+                self._native_rotation_store.commit_trial(
+                    self._native_rotation_trial_token,
+                    accepted_full_displacement,
+                    accepted_full_coordinates,
+                )
+            if self._fallback_trial or self._native_element_bindings is not None:
+                assert next_fallback is not None
+                assert next_sidecars is not None
+                self._fallback_committed = next_fallback
+                self._fallback_sidecars = next_sidecars
             self._generation += 1
             self._active_token = None
             self._batch_trial_tokens = {}
+            self._native_rotation_trial_token = None
+            self._native_trial_full_displacement = None
             self._fallback_trial = {}
             self._commit_seconds += time.perf_counter() - start
             return int(self._generation)
@@ -1202,8 +1686,18 @@ class NonlinearStateStore(Mapping[int, Any]):
             start = time.perf_counter()
             for key, batch in self._batches.items():
                 batch.discard_trial(self._batch_trial_tokens[key])
+            if self._native_rotation_store is not None:
+                if self._native_rotation_trial_token is None:
+                    raise StateTransactionError(
+                        "Native nonlinear state has no active rotation candidate"
+                    )
+                self._native_rotation_store.discard_trial(
+                    self._native_rotation_trial_token
+                )
             self._active_token = None
             self._batch_trial_tokens = {}
+            self._native_rotation_trial_token = None
+            self._native_trial_full_displacement = None
             self._fallback_trial = {}
             self._discard_seconds += time.perf_counter() - start
 
@@ -1406,6 +1900,17 @@ class NonlinearStateStore(Mapping[int, Any]):
                     + sum(item["deleted_element_count"] for item in batch_diagnostics)
                 ),
                 "generation": int(self._generation),
+                "native_rotation_activated": self._native_rotation_store is not None,
+                "native_rotation_node_count": (
+                    0
+                    if self._native_rotation_store is None
+                    else len(self._native_rotation_store.node_ids)
+                ),
+                "native_rotation_generation": (
+                    0
+                    if self._native_rotation_store is None
+                    else self._native_rotation_store.generation
+                ),
                 "stale_token_error_count": int(
                     self._stale_token_errors
                     + sum(item["stale_token_error_count"] for item in batch_diagnostics)
@@ -1453,8 +1958,17 @@ class NonlinearStateTrialView(Mapping[int, Any]):
     def token(self) -> StateTrialToken:
         return self._token
 
-    def commit(self) -> NonlinearStateStore:
-        self._store.commit(self._token)
+    def commit(
+        self,
+        *,
+        accepted_full_displacement: Any = None,
+        accepted_full_coordinates: Any = None,
+    ) -> NonlinearStateStore:
+        self._store.commit(
+            self._token,
+            accepted_full_displacement=accepted_full_displacement,
+            accepted_full_coordinates=accepted_full_coordinates,
+        )
         return self._store
 
     def discard(self) -> None:
@@ -1484,13 +1998,352 @@ class NonlinearStateTrialView(Mapping[int, Any]):
         return self.materialize_owned()
 
 
+def _model_full_coordinates(
+    model: Any,
+    displacements: Any,
+    coordinate_node_ids: Sequence[int],
+) -> np.ndarray:
+    """Build physical nodal coordinates in an explicit frozen row order."""
+
+    mesh = getattr(model, "mesh", None)
+    nodes = getattr(mesh, "nodes", None)
+    if not isinstance(nodes, Mapping):
+        raise StateTransactionError(
+            "Native state evaluation requires a model with an explicit node mapping"
+        )
+    full = np.asarray(displacements, dtype=np.float64)
+    total_dofs = int(getattr(getattr(mesh, "dof_manager", None), "total_dofs", -1))
+    if (
+        full.ndim != 1
+        or full.size != total_dofs
+        or not np.all(np.isfinite(full))
+    ):
+        raise StateTransactionError(
+            "Native state evaluation requires the complete finite global displacement vector"
+        )
+    model_node_ids = tuple(int(value) for value in nodes)
+    normalized_node_ids = tuple(int(value) for value in coordinate_node_ids)
+    if set(model_node_ids) != set(normalized_node_ids):
+        raise StateTransactionError(
+            "Native rotation topology differs from the current model node set"
+        )
+    coordinates = np.empty((len(normalized_node_ids), 3), dtype=np.float64)
+    for row, node_id in enumerate(normalized_node_ids):
+        try:
+            node = nodes[node_id]
+        except KeyError as exc:
+            raise StateTransactionError(
+                f"Native rotation topology references missing node {node_id}"
+            ) from exc
+        node_dofs = np.asarray(getattr(node, "dofs", ()), dtype=np.intp)
+        if node_dofs.size < 3 or np.any(node_dofs[:3] < 0) or np.any(node_dofs[:3] >= full.size):
+            raise StateTransactionError(
+                f"Native node {node_id} has an invalid translational DOF mapping"
+            )
+        reference = np.asarray(node.coords(), dtype=np.float64)
+        if reference.shape != (3,) or not np.all(np.isfinite(reference)):
+            raise StateTransactionError(
+                f"Native node {node_id} has invalid reference coordinates"
+            )
+        coordinates[row] = reference + full[node_dofs[:3]]
+    return coordinates
+
+
+def native_trial_full_coordinates(
+    committed_states: NonlinearStateStore,
+    model: Any,
+    displacements: Any,
+) -> np.ndarray:
+    """Build physical nodal coordinates in the store's frozen row order."""
+
+    rotation_store = committed_states.native_rotation_store
+    if rotation_store is None:
+        raise StateTransactionError("Nonlinear state has no native rotations")
+    return _model_full_coordinates(
+        model,
+        displacements,
+        rotation_store.coordinate_node_ids,
+    )
+
+
+def require_no_native_total_lagrangian_elements(
+    model: Any,
+    *,
+    context: str,
+) -> None:
+    """Reject entry points that cannot own the native rotation transaction.
+
+    A formulation-native element cannot safely fall through a legacy solver
+    merely because it exposes familiar nodal DOFs.  Such a path would bypass
+    the node-shared multiplicative history and could commit element-local
+    additive rotations.  Entry points without the complete transaction
+    lifecycle call this guard before evaluating any mechanics.
+    """
+
+    elements = getattr(getattr(model, "mesh", None), "elements", None)
+    if not isinstance(elements, Mapping):
+        raise StateTransactionError(
+            f"{context} requires an explicit model element mapping"
+        )
+    native_ids = sorted(
+        int(element_id)
+        for element_id, element in elements.items()
+        if bool(getattr(element, "formulation_native_total_lagrangian", False))
+    )
+    if native_ids:
+        labels = ", ".join(str(value) for value in native_ids)
+        raise StateTransactionError(
+            f"{context} does not implement solver-owned native total-"
+            "Lagrangian rotation transactions; use solve_static_nonlinear "
+            f"for native element IDs [{labels}]"
+        )
+
+
+def create_model_native_rotation_store(
+    model: Any,
+    committed_states: Mapping[int, Any],
+    committed_full_displacement: Any,
+) -> Optional[NativeRotationStateStore]:
+    """Reconstruct one node-shared native history from model-bound states.
+
+    Redundant per-element operator copies must agree exactly at a shared node.
+    In the absence of such history, only a zero rotational coordinate is
+    unambiguous; a nonzero additive coordinate cannot reconstruct a finite
+    multiplicative path and therefore fails closed.
+    """
+
+    mesh = getattr(model, "mesh", None)
+    elements = getattr(mesh, "elements", None)
+    nodes = getattr(mesh, "nodes", None)
+    if not isinstance(elements, Mapping) or not isinstance(nodes, Mapping):
+        raise NativeRotationValidationError(
+            "Native rotation setup requires explicit model element and node mappings"
+        )
+    native_elements = tuple(
+        (int(element_id), element)
+        for element_id, element in elements.items()
+        if bool(getattr(element, "formulation_native_total_lagrangian", False))
+    )
+    if not native_elements:
+        return None
+    full = np.asarray(committed_full_displacement, dtype=np.float64)
+    total_dofs = int(getattr(getattr(mesh, "dof_manager", None), "total_dofs", -1))
+    if full.ndim != 1 or full.size != total_dofs or not np.all(np.isfinite(full)):
+        raise NativeRotationValidationError(
+            "Native rotation setup requires the complete finite committed displacement"
+        )
+
+    native_node_ids: set[int] = set()
+    rotation_by_node: Dict[int, np.ndarray] = {}
+    element_bindings: Dict[int, _NativeElementStateBinding] = {}
+    for element_id, element in native_elements:
+        element_node_ids = tuple(int(value) for value in getattr(element, "node_ids", ()))
+        if not element_node_ids or len(set(element_node_ids)) != len(element_node_ids):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} has invalid connectivity"
+            )
+        native_node_ids.update(element_node_ids)
+        try:
+            dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
+        except Exception as exc:
+            raise NativeRotationValidationError(
+                f"Native element {element_id} has no valid global DOF mapping"
+            ) from exc
+        expected_size = 6 * len(element_node_ids)
+        if dof_mapping.shape != (expected_size,):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} must expose six nodal DOFs per node"
+            )
+        reference_provider = getattr(element, "native_reference_directors", None)
+        if not callable(reference_provider):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} does not expose reference directors"
+            )
+        try:
+            reference_directors = np.asarray(
+                reference_provider(mesh), dtype=np.float64
+            )
+        except Exception as exc:
+            raise NativeRotationValidationError(
+                f"Native element {element_id} reference directors are unavailable"
+            ) from exc
+        if (
+            reference_directors.shape != (len(element_node_ids), 3)
+            or not np.all(np.isfinite(reference_directors))
+        ):
+            raise NativeRotationValidationError(
+                f"Native element {element_id} reference directors are incompatible"
+            )
+        state = committed_states.get(element_id)
+        native_state_keys = {
+            "committed_total_u",
+            "reference_corner_directors",
+            "committed_nodal_rotation_matrices",
+            "committed_director_triads",
+        }
+        state_consistency_required = bool(
+            str(getattr(element, "formulation_id", ""))
+            == "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            or getattr(element, "native_state_consistency_required", False)
+        )
+        if state_consistency_required:
+            if not isinstance(state, Mapping):
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} requires a committed state mapping"
+                )
+            missing = sorted(native_state_keys.difference(state))
+            if missing:
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} committed state is missing "
+                    + ", ".join(missing)
+                )
+            stored_reference = np.asarray(
+                state["reference_corner_directors"], dtype=np.float64
+            )
+            if (
+                stored_reference.shape != reference_directors.shape
+                or not np.all(np.isfinite(stored_reference))
+                or not np.array_equal(stored_reference, reference_directors)
+            ):
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} reference_corner_directors "
+                    "disagree with the model binding"
+                )
+        if isinstance(state, Mapping) and "committed_total_u" in state:
+            stored_total = np.asarray(state["committed_total_u"], dtype=np.float64)
+            if (
+                stored_total.shape != (expected_size,)
+                or not np.all(np.isfinite(stored_total))
+                or not np.array_equal(stored_total, full[dof_mapping])
+            ):
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} committed_total_u disagrees with "
+                    "the solver's committed global displacement"
+                )
+        stored_rotations = None
+        if isinstance(state, Mapping) and "committed_nodal_rotation_matrices" in state:
+            stored_rotations = validate_proper_rotation_matrices(
+                state["committed_nodal_rotation_matrices"],
+                name=(
+                    f"element[{element_id}].committed_nodal_rotation_matrices"
+                ),
+            )
+            if stored_rotations.shape != (len(element_node_ids), 3, 3):
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} stored rotations do not match connectivity"
+                )
+        if state_consistency_required:
+            assert isinstance(state, Mapping)
+            assert stored_rotations is not None
+            triads = np.asarray(
+                state["committed_director_triads"], dtype=np.float64
+            )
+            expected_directors = np.einsum(
+                "nij,nj->ni", stored_rotations, reference_directors
+            )
+            if (
+                triads.ndim != 3
+                or triads.shape[0] < len(element_node_ids)
+                or triads.shape[1:] != (3, 3)
+                or not np.all(np.isfinite(triads))
+                or not np.allclose(
+                    triads[: len(element_node_ids), :, 2],
+                    expected_directors,
+                    rtol=0.0,
+                    atol=_NATIVE_DIRECTOR_CONSISTENCY_TOLERANCE,
+                )
+            ):
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} corner director normals disagree "
+                    "with its committed rotation history"
+                )
+        element_bindings[element_id] = _NativeElementStateBinding(
+            node_ids=element_node_ids,
+            dof_mapping=dof_mapping,
+            reference_directors=reference_directors,
+            state_consistency_required=state_consistency_required,
+        )
+        for local_node, node_id in enumerate(element_node_ids):
+            if node_id not in nodes:
+                raise NativeRotationValidationError(
+                    f"Native element {element_id} references missing node {node_id}"
+                )
+            node_dofs = np.asarray(getattr(nodes[node_id], "dofs", ()), dtype=np.intp)
+            if node_dofs.size < 6:
+                raise NativeRotationValidationError(
+                    f"Native node {node_id} does not expose six shell DOFs"
+                )
+            if stored_rotations is None:
+                if np.any(full[node_dofs[3:6]] != 0.0):
+                    raise NativeRotationValidationError(
+                        f"Native node {node_id} has nonzero committed rotation "
+                        "coordinates but no multiplicative rotation history"
+                    )
+                candidate = np.eye(3, dtype=np.float64)
+            else:
+                candidate = np.asarray(stored_rotations[local_node], dtype=np.float64)
+            previous = rotation_by_node.get(node_id)
+            if previous is not None and not np.array_equal(previous, candidate):
+                raise NativeRotationValidationError(
+                    f"Native shared node {node_id} has conflicting committed rotation copies"
+                )
+            rotation_by_node[node_id] = candidate.copy()
+
+    coordinate_node_ids = tuple(sorted(int(value) for value in nodes))
+    coordinate_rows = {
+        node_id: row for row, node_id in enumerate(coordinate_node_ids)
+    }
+    full_coordinates = _model_full_coordinates(
+        model,
+        full,
+        coordinate_node_ids,
+    )
+    rotational_dofs = {
+        node_id: tuple(int(value) for value in nodes[node_id].dofs[3:6])
+        for node_id in sorted(native_node_ids)
+    }
+    result = create_native_rotation_state_store(
+        tuple(sorted(native_node_ids)),
+        rotational_dofs=rotational_dofs,
+        coordinate_rows=coordinate_rows,
+        coordinate_node_ids=coordinate_node_ids,
+        committed_full_displacement=full,
+        committed_full_coordinates=full_coordinates,
+        committed_rotation_matrices=rotation_by_node,
+    )
+    assert result is not None
+    setattr(
+        result,
+        _NATIVE_ELEMENT_BINDINGS_ATTRIBUTE,
+        MappingProxyType(dict(element_bindings)),
+    )
+    return result
+
+
 def begin_state_evaluation(
     committed_states: Mapping[int, Any],
+    *,
+    model: Any = None,
+    displacements: Any = None,
 ) -> Optional[StateTrialToken]:
     """Begin a fresh candidate when ``committed_states`` is persistent."""
 
     if isinstance(committed_states, NonlinearStateStore):
-        return committed_states.replace_trial()
+        full_coordinates = None
+        if committed_states.has_native_rotations:
+            if model is None or displacements is None:
+                raise StateTransactionError(
+                    "Native state evaluation requires model and full displacements"
+                )
+            full_coordinates = native_trial_full_coordinates(
+                committed_states,
+                model,
+                displacements,
+            )
+        return committed_states.replace_trial(
+            full_displacement=displacements,
+            full_coordinates=full_coordinates,
+        )
     return None
 
 
@@ -1516,6 +2369,9 @@ def finish_state_evaluation(
 def commit_state_candidate(
     committed_states: Mapping[int, Any],
     candidate_states: Mapping[int, Any],
+    *,
+    accepted_full_displacement: Any = None,
+    model: Any = None,
 ) -> Mapping[int, Any]:
     """Commit a lazy candidate or preserve the legacy mapping assignment."""
 
@@ -1526,7 +2382,21 @@ def commit_state_candidate(
             )
         if candidate_states.store is not committed_states:
             raise StateTransactionError("Candidate belongs to another state store")
-        return candidate_states.commit()
+        accepted_coordinates = None
+        if committed_states.has_native_rotations:
+            if model is None or accepted_full_displacement is None:
+                raise StateTransactionError(
+                    "Native state commit requires model and accepted full displacements"
+                )
+            accepted_coordinates = native_trial_full_coordinates(
+                committed_states,
+                model,
+                accepted_full_displacement,
+            )
+        return candidate_states.commit(
+            accepted_full_displacement=accepted_full_displacement,
+            accepted_full_coordinates=accepted_coordinates,
+        )
     return candidate_states
 
 
@@ -1556,9 +2426,13 @@ __all__ = [
     "ImmutableStateSidecarError",
     "begin_state_evaluation",
     "commit_state_candidate",
+    "create_model_native_rotation_store",
     "discard_active_state_candidate",
     "finish_state_evaluation",
     "materialize_state_mapping",
+    "native_trial_full_coordinates",
+    "NativeElementRotationView",
+    "NativeRotationStateStore",
     "NonlinearStateError",
     "NonlinearStateStore",
     "NonlinearStateTrialView",
@@ -1570,4 +2444,5 @@ __all__ = [
     "StateMaterializationPolicy",
     "StateTransactionError",
     "StateTrialToken",
+    "require_no_native_total_lagrangian_elements",
 ]

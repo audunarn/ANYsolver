@@ -49,6 +49,7 @@ from .matrix_assembly import (
     assemble_mass_matrix as _canonical_assemble_mass_matrix,
     assemble_system as _canonical_assemble_system,
 )
+from .nonlinear_state import require_no_native_total_lagrangian_elements
 from .recovery import ResourceConfig
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
@@ -934,6 +935,10 @@ def solve_nonlinear(
         "solve_nonlinear() is a deprecated prototype; use solve_static_nonlinear()",
         DeprecationWarning,
         stacklevel=2,
+    )
+    require_no_native_total_lagrangian_elements(
+        model,
+        context="deprecated solve_nonlinear",
     )
     mesh = model.mesh
     dof_manager = mesh.dof_manager

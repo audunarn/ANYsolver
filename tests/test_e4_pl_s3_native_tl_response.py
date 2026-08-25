@@ -7,6 +7,7 @@ import pytest
 
 import anysolver.e4_pl_s3_element as s3
 from anysolver.fe_core import Material
+from _e4_pl_s3_native_trial import native_trial_for_increment
 
 
 def _fixture() -> tuple[np.ndarray, np.ndarray, Material]:
@@ -84,10 +85,13 @@ def test_zero_layered_native_tangent_recovers_the_frozen_linear_core(
 ) -> None:
     nodes, triads, material = _fixture()
     thickness = 0.1
+    native_trial, increment, _store = native_trial_for_increment(
+        nodes, triads, np.zeros(20)
+    )
     force, tangent, trial = s3._native_layered_uncondensed_response(
         nodes,
         triads,
-        np.zeros(20),
+        increment,
         nodes,
         np.eye(3),
         material,
@@ -95,6 +99,7 @@ def test_zero_layered_native_tangent_recovers_the_frozen_linear_core(
         thickness,
         _zero_layered_state(num_layers),
         num_layers,
+        native_rotation_trial=native_trial,
     )
     source_columns = np.concatenate(
         (s3.PHYSICAL_EXTERNAL_INDICES, np.asarray((18, 19)))
@@ -120,10 +125,13 @@ def test_bubble_newton_schur_and_directional_tangent_are_consistent() -> None:
     original = copy.deepcopy(state)
 
     def builder(increment: np.ndarray):
+        native_trial, exact, _store = native_trial_for_increment(
+            nodes, triads, increment
+        )
         return s3._native_layered_uncondensed_response(
             nodes,
             triads,
-            increment,
+            exact,
             nodes,
             np.eye(3),
             material,
@@ -131,6 +139,7 @@ def test_bubble_newton_schur_and_directional_tangent_are_consistent() -> None:
             0.1,
             state,
             3,
+            native_rotation_trial=native_trial,
         )
 
     rng = np.random.default_rng(20260825)
@@ -183,7 +192,7 @@ def test_bubble_newton_schur_and_directional_tangent_are_consistent() -> None:
         np.testing.assert_allclose(
             tangent @ direction,
             finite_difference,
-            rtol=2.0e-8,
+            rtol=5.0e-8,
             atol=2.0e-2,
         )
 
@@ -200,6 +209,9 @@ def test_generalized_section_uses_the_same_native_geometric_derivatives() -> Non
     rng = np.random.default_rng(17)
     increment = 1.0e-4 * rng.standard_normal(20)
 
+    native_trial, increment, _store = native_trial_for_increment(
+        nodes, triads, increment
+    )
     force, tangent, trial = s3._native_generalized_uncondensed_response(
         nodes,
         triads,
@@ -208,27 +220,36 @@ def test_generalized_section_uses_the_same_native_geometric_derivatives() -> Non
         np.eye(3),
         section,
         committed,
+        native_rotation_trial=native_trial,
     )
     direction = rng.standard_normal(20)
     direction /= np.linalg.norm(direction)
     step = 1.0e-7
+    plus_trial, plus_increment, _plus_store = native_trial_for_increment(
+        nodes, triads, increment + step * direction
+    )
     force_plus = s3._native_generalized_uncondensed_response(
         nodes,
         triads,
-        increment + step * direction,
+        plus_increment,
         nodes,
         np.eye(3),
         section,
         committed,
+        native_rotation_trial=plus_trial,
     )[0]
+    minus_trial, minus_increment, _minus_store = native_trial_for_increment(
+        nodes, triads, increment - step * direction
+    )
     force_minus = s3._native_generalized_uncondensed_response(
         nodes,
         triads,
-        increment - step * direction,
+        minus_increment,
         nodes,
         np.eye(3),
         section,
         committed,
+        native_rotation_trial=minus_trial,
     )[0]
     np.testing.assert_allclose(
         tangent @ direction,

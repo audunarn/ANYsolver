@@ -255,7 +255,10 @@ def test_recovery_capabilities_are_explicitly_replaced() -> None:
     assert element.capability_matrix()["orthotropic_physical_recovery"] == (
         "PARITY_REPLACED"
     )
-    assert element.capability_matrix()["patch_recovery"] == "PARITY_GAP"
+    assert element.capability_matrix()["patch_recovery"] == "PARITY_REPLACED"
+    assert element.capability_matrix()["committed_state_recovery"] == (
+        "PARITY_REPLACED"
+    )
     assert element.capability_matrix()["restart_history"] == "PARITY_GAP"
     assert element.recovery_errors_fail_closed is True
 
@@ -279,6 +282,11 @@ def test_recovery_schema_is_frozen_and_nonfinite_values_fail_closed() -> None:
         "transverse_shear_resultants",
         "bubble_rotations",
         "numerical_fields_excluded",
+        "reference_surface_offset",
+        "reference_surface_offset_policy_id",
+        "section_origin_offset_from_reference",
+        "physical_bottom_offset_from_reference",
+        "physical_top_offset_from_reference",
     }
     physical_provenance = {
         "bubble_linearization_policy",

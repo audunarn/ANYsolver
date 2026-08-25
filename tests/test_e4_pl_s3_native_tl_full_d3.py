@@ -17,6 +17,7 @@ import numpy as np
 
 import anysolver.e4_pl_s3_element as s3
 from anysolver import OrthotropicMaterial
+from _e4_pl_s3_native_trial import native_trial_for_increment
 
 
 _THICKNESS = 0.083
@@ -358,10 +359,13 @@ def _response(
     )
 
     def builder(increment: np.ndarray):
+        native_trial, exact, _store = native_trial_for_increment(
+            current_nodes, triads, increment
+        )
         return s3._native_layered_uncondensed_response(
             current_nodes,
             triads,
-            increment,
+            exact,
             reference_nodes,
             frame,
             material,
@@ -369,6 +373,7 @@ def _response(
             _THICKNESS,
             state,
             _LAYER_COUNT,
+            native_rotation_trial=native_trial,
         )
 
     return s3._solve_native_bubble_equilibrium(
@@ -617,11 +622,29 @@ def test_all_six_d3_numberings_transport_full_layered_bubble_response() -> None:
         baseline_full_increment = np.concatenate(
             (external, np.asarray(baseline_meta["bubble_increment"]))
         )
+        numbered_rotation_trial, full_increment, _numbered_store = (
+            native_trial_for_increment(
+                numbered_current,
+                numbered_triads,
+                full_increment,
+            )
+        )
+        baseline_rotation_trial, baseline_full_increment, _baseline_store = (
+            native_trial_for_increment(
+                current_nodes,
+                triads,
+                baseline_full_increment,
+            )
+        )
         updated = s3._update_native_director_triads(
-            numbered_triads, full_increment
+            numbered_triads,
+            full_increment,
+            native_rotation_trial=numbered_rotation_trial,
         )
         baseline_updated = s3._update_native_director_triads(
-            triads, baseline_full_increment
+            triads,
+            baseline_full_increment,
+            native_rotation_trial=baseline_rotation_trial,
         )
         expected_triads = np.concatenate(
             (baseline_updated[:3][list(permutation)], baseline_updated[3:]),

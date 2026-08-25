@@ -14,6 +14,7 @@ import numpy as np
 
 import anysolver.e4_pl_s3_element as s3
 from anysolver.e4_pl_s3_state import reconstruct_director_triad
+from _e4_pl_s3_native_trial import native_trial_for_increment
 
 
 def _normalized(vector: np.ndarray) -> np.ndarray:
@@ -91,8 +92,8 @@ def _mixed_rigid_increment(
     return increment
 
 
-def test_mixed_axis_exact_rigid_q_residual_is_third_order() -> None:
-    """The retained quadratic director update leaves only O(theta^3)."""
+def test_mixed_axis_exact_rigid_q_residual_is_binary64_zero() -> None:
+    """The shared full exponential gives complete finite rigid objectivity."""
 
     nodes = np.asarray(
         ((0.0, 0.0, 0.0), (2.3, 0.1, 0.0), (0.37, 1.41, 0.0)),
@@ -100,29 +101,23 @@ def test_mixed_axis_exact_rigid_q_residual_is_third_order() -> None:
     )
     triads = np.broadcast_to(np.eye(3), (4, 3, 3)).copy()
     axis = np.asarray((0.31, -0.47, 0.826), dtype=float)
-    residuals = []
-    for angle in (0.01, 0.02, 0.04):
+    for angle in (0.01, 0.31, 0.91):
+        native_trial, increment, _store = native_trial_for_increment(
+            nodes,
+            triads,
+            _mixed_rigid_increment(nodes, axis, angle),
+        )
         values, _jacobian, _hessian = s3._native_incremental_strain_jets(
             nodes,
             triads,
             0.23,
             0.31,
-            _mixed_rigid_increment(nodes, axis, angle),
+            increment,
             reference_nodes=nodes,
             reference_frame=np.eye(3),
+            native_rotation_trial=native_trial,
         )
-        # Exact Q nodal transport cancels the membrane terms.  A uniform
-        # director field also cancels curvature, leaving only the cubic
-        # remainder of the quadratic assumed-shear director expansion.
-        np.testing.assert_allclose(values[:6], 0.0, atol=1.0e-14)
-        residuals.append(float(np.linalg.norm(values, ord=np.inf)))
-
-    observed_orders = [
-        math.log(residuals[index + 1] / residuals[index], 2.0)
-        for index in range(2)
-    ]
-    assert all(2.98 < order < 3.03 for order in observed_orders)
-    assert residuals[0] > 1.0e-8
+        np.testing.assert_allclose(values, 0.0, rtol=0.0, atol=8.0e-15)
 
 
 def test_eq11_commit_reconstructs_gauge_instead_of_transporting_it() -> None:
@@ -135,20 +130,19 @@ def test_eq11_commit_reconstructs_gauge_instead_of_transporting_it() -> None:
     rotation = np.asarray((0.08, -0.06, 0.12), dtype=float)
     increment = np.zeros(20, dtype=float)
     increment[3:6] = rotation
-
-    updated = s3._update_native_director_triads(triads, increment)[0]
-
-    first = float(rotation @ triads[0, :, 0])
-    second = float(rotation @ triads[0, :, 1])
-    drill = float(rotation @ triads[0, :, 2])
-    corrected_first = first - 0.5 * drill * second
-    corrected_second = second + 0.5 * drill * first
-    minimal_rotation = (
-        corrected_first * triads[0, :, 0]
-        + corrected_second * triads[0, :, 1]
+    nodes = np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
+    native_trial, increment, _store = native_trial_for_increment(
+        nodes, triads, increment
     )
+
+    updated = s3._update_native_director_triads(
+        triads,
+        increment,
+        native_rotation_trial=native_trial,
+    )[0]
+
     expected_normal = (
-        _independent_rodrigues(minimal_rotation) @ triads[0, :, 2]
+        _independent_rodrigues(rotation) @ triads[0, :, 2]
     )
     expected = _independent_eq11_gauge(expected_normal)
     q_transported = _independent_rodrigues(rotation) @ triads[0]
@@ -157,10 +151,7 @@ def test_eq11_commit_reconstructs_gauge_instead_of_transporting_it() -> None:
     np.testing.assert_allclose(updated.T @ updated, np.eye(3), atol=2.0e-15)
     assert np.linalg.det(updated) > 0.999999999999998
     assert np.linalg.norm(updated[:, :2] - q_transported[:, :2]) > 0.1
-    # Even the normal differs at the expected third-order truncation scale;
-    # this guards against silently replacing the Eq. (14) minimal update by
-    # a full global rotation-vector transport.
-    assert np.linalg.norm(updated[:, 2] - q_transported[:, 2]) > 1.0e-5
+    np.testing.assert_allclose(updated[:, 2], q_transported[:, 2], atol=2.0e-15)
 
 
 def test_exact_global_ey_normal_uses_global_ez_fallback() -> None:
@@ -202,53 +193,29 @@ def test_source_node_four_mapping_uses_hierarchical_values_and_own_gauge() -> No
         ),
         dtype=float,
     )
-    rotations = increment[:18].reshape(3, 6)[:, 3:]
-    tangent_first = np.einsum("ij,ij->i", rotations, triads[:3, :, 0])
-    tangent_second = np.einsum("ij,ij->i", rotations, triads[:3, :, 1])
-    drill = np.einsum("ij,ij->i", rotations, triads[:3, :, 2])
-    corner_first = tangent_first - 0.5 * drill * tangent_second
-    corner_second = tangent_second + 0.5 * drill * tangent_first
-    expected_first = np.concatenate(
-        (corner_first, (float(np.mean(corner_first) + increment[18]),))
+    nodes = np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
+    native_trial, increment, _store = native_trial_for_increment(
+        nodes, triads, increment
     )
-    expected_second = np.concatenate(
-        (corner_second, (float(np.mean(corner_second) + increment[19]),))
-    )
-
-    actual_first, actual_second = s3._native_source_rotation_values(
-        triads,
-        increment,
-    )
-    np.testing.assert_allclose(
-        actual_first, expected_first, rtol=0.0, atol=2.0e-17
-    )
-    np.testing.assert_allclose(
-        actual_second, expected_second, rtol=0.0, atol=2.0e-17
-    )
-    np.testing.assert_allclose(
-        actual_first[3] - np.mean(actual_first[:3]),
-        increment[18],
-        rtol=0.0,
-        atol=4.0e-18,
-    )
-    np.testing.assert_allclose(
-        actual_second[3] - np.mean(actual_second[:3]),
-        increment[19],
-        rtol=0.0,
-        atol=4.0e-18,
-    )
-
-    # The hierarchical values are components of the fourth source rotation
-    # in its own, distinct Eq. (11) gauge.
+    rotations = increment[:18].reshape(3, 6)[:, 3:6]
     expected_source_rotation = (
-        expected_first[3] * triads[3, :, 0]
-        + expected_second[3] * triads[3, :, 1]
+        np.mean(rotations, axis=0)
+        + increment[18] * triads[3, :, 0]
+        + increment[19] * triads[3, :, 1]
     )
     expected_source_normal = (
         _independent_rodrigues(expected_source_rotation) @ triads[3, :, 2]
     )
     expected_source_triad = _independent_eq11_gauge(expected_source_normal)
-    updated = s3._update_native_director_triads(triads, increment)
+    updated = s3._update_native_director_triads(
+        triads,
+        increment,
+        native_rotation_trial=native_trial,
+    )
+    for node in range(3):
+        np.testing.assert_allclose(
+            updated[node, :, 2], native_trial.trial_directors[node], atol=2.0e-15
+        )
     np.testing.assert_allclose(updated[3], expected_source_triad, atol=2.0e-15)
 
 
@@ -271,6 +238,9 @@ def test_deformed_current_covariants_use_explicit_reference_basis() -> None:
     for node in range(3):
         increment[6 * node : 6 * node + 3] = translation[node]
     triads = np.broadcast_to(np.eye(3), (4, 3, 3)).copy()
+    native_trial, increment, _store = native_trial_for_increment(
+        current_nodes, triads, increment
+    )
 
     actual, _jacobian, _hessian = s3._native_incremental_strain_jets(
         current_nodes,
@@ -280,6 +250,7 @@ def test_deformed_current_covariants_use_explicit_reference_basis() -> None:
         increment,
         reference_nodes=reference_nodes,
         reference_frame=np.eye(3),
+        native_rotation_trial=native_trial,
     )
     twice_green_lagrange_increment = (
         current_gradient.T @ increment_gradient
@@ -309,6 +280,7 @@ def test_deformed_current_covariants_use_explicit_reference_basis() -> None:
             increment,
             reference_nodes=current_nodes,
             reference_frame=np.eye(3),
+            native_rotation_trial=native_trial,
         )
     )
     assert np.linalg.norm(deformed_basis_result[:3] - actual[:3]) > 0.04
@@ -341,7 +313,15 @@ def test_all_six_d3_numberings_commute_with_director_commit_update() -> None:
         ),
         dtype=float,
     )
-    baseline = s3._update_native_director_triads(triads, increment)
+    nodes = np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
+    baseline_trial, baseline_increment, _store = native_trial_for_increment(
+        nodes, triads, increment
+    )
+    baseline = s3._update_native_director_triads(
+        triads,
+        baseline_increment,
+        native_rotation_trial=baseline_trial,
+    )
     external_by_node = increment[:18].reshape(3, 6)
 
     for permutation in itertools.permutations(range(3)):
@@ -355,9 +335,16 @@ def test_all_six_d3_numberings_commute_with_director_commit_update() -> None:
                 increment[18:],
             )
         )
+        numbered_nodes = nodes[list(permutation)]
+        numbered_trial, numbered_increment, _numbered_store = native_trial_for_increment(
+            numbered_nodes,
+            numbered_triads,
+            numbered_increment,
+        )
         actual = s3._update_native_director_triads(
             numbered_triads,
             numbered_increment,
+            native_rotation_trial=numbered_trial,
         )
         expected = np.concatenate(
             (baseline[:3][list(permutation)], baseline[3:]),

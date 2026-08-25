@@ -12,7 +12,9 @@ reference compression state.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+import math
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -38,6 +40,55 @@ if TYPE_CHECKING:
     from .analysis_session import AnalysisSession
     from .boundary import LoadCase
     from .fe_core import FEModel
+
+
+REFERENCE_ELASTIC_BUCKLING_POLICY_ID = (
+    "REFERENCE_ELASTIC_BUBBLE_CONDENSED_INITIAL_STRESS_V1"
+)
+CURRENT_STATE_BUCKLING_POLICY_ID = (
+    "COMMITTED_MATERIAL_VS_NEGATIVE_STRESS_HESSIAN_V1"
+)
+_QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+_REFERENCE_ELASTIC_BUBBLE_POLICY_ID = (
+    "REFERENCE_ELASTIC_BUBBLE_SCHUR_DERIVATIVE_V1"
+)
+
+
+def _require_reference_elastic_s3_states(
+    model: "FEModel",
+    element_states: Any,
+) -> None:
+    """Validate the narrow S3 reference-elastic buckling authority boundary."""
+
+    s3_ids = tuple(
+        int(element_id)
+        for element_id, element in sorted(model.mesh.elements.items())
+        if str(getattr(element, "formulation_id", ""))
+        == _QUALIFIED_S3_FORMULATION_ID
+    )
+    if not s3_ids:
+        return
+    if not isinstance(element_states, Mapping):
+        raise ValueError(
+            "reference-elastic qualified S3 buckling requires an explicit "
+            "element-state mapping"
+        )
+    for element_id in s3_ids:
+        state = element_states.get(element_id)
+        if not isinstance(state, Mapping):
+            raise ValueError(
+                "reference-elastic qualified S3 buckling requires a state "
+                f"mapping for element {element_id}"
+            )
+        if (
+            state.get("bubble_linearization_policy")
+            != _REFERENCE_ELASTIC_BUBBLE_POLICY_ID
+        ):
+            raise ValueError(
+                "reference-elastic qualified S3 buckling requires "
+                "bubble_linearization_policy="
+                f"{_REFERENCE_ELASTIC_BUBBLE_POLICY_ID} for element {element_id}"
+            )
 
 
 @dataclass
@@ -284,6 +335,11 @@ def solve_eigenvalue_buckling(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     session: Optional["AnalysisSession"] = None,
+    reference_elastic_only: bool = False,
+    current_state_displacements: Optional[Any] = None,
+    current_state_element_states: Optional[Any] = None,
+    current_state_num_layers: int = 5,
+    current_state_load_scale: float = 1.0,
 ) -> BucklingResult:
     """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
@@ -307,9 +363,80 @@ def solve_eigenvalue_buckling(
         raise ValueError("num_modes must be positive")
     if follower_symmetry_tolerance < 0.0:
         raise ValueError("follower_symmetry_tolerance must be non-negative")
+    current_state = (
+        current_state_displacements is not None
+        or current_state_element_states is not None
+    )
+    if (current_state_displacements is None) != (
+        current_state_element_states is None
+    ):
+        raise ValueError(
+            "current-state buckling requires both committed displacements and "
+            "element states"
+        )
+    if current_state and element_states is not None:
+        raise ValueError(
+            "current-state buckling and reference element_states are mutually "
+            "exclusive"
+        )
+    if current_state and bool(reference_elastic_only):
+        raise ValueError(
+            "current-state buckling and reference_elastic_only are mutually "
+            "exclusive"
+        )
+    if current_state and (
+        reference_load_case is not None or reference_displacements is not None
+    ):
+        raise ValueError(
+            "current-state buckling and reference follower-load inputs are "
+            "mutually exclusive"
+        )
+    if current_state and factorization_cache is not None:
+        raise ValueError(
+            "current-state buckling and a persistent factorization_cache are "
+            "mutually exclusive"
+        )
+    if isinstance(current_state_load_scale, (bool, np.bool_)):
+        raise ValueError("current_state_load_scale must be finite and positive")
+    load_scale = float(current_state_load_scale)
+    if not math.isfinite(load_scale) or load_scale <= 0.0:
+        raise ValueError("current_state_load_scale must be finite and positive")
+    if not current_state and load_scale != 1.0:
+        raise ValueError(
+            "current_state_load_scale is available only with committed "
+            "current-state inputs"
+        )
+    if not current_state and (
+        isinstance(current_state_num_layers, (bool, np.bool_))
+        or not isinstance(current_state_num_layers, (int, np.integer))
+        or int(current_state_num_layers) != 5
+    ):
+        raise ValueError(
+            "current_state_num_layers is available only with committed "
+            "current-state inputs"
+        )
+
+    if current_state:
+        from .current_state_tangent import (
+            validate_committed_current_tangent_inputs,
+        )
+
+        validate_committed_current_tangent_inputs(
+            model,
+            current_state_displacements,
+            current_state_element_states,
+            current_state_num_layers,
+            context="solve_eigenvalue_buckling current-state path",
+        )
+        required_capability = "current_state_buckling"
+    elif bool(reference_elastic_only):
+        _require_reference_elastic_s3_states(model, element_states)
+        required_capability = "reference_elastic_buckling"
+    else:
+        required_capability = "buckling"
     require_model_element_capabilities(
         model,
-        "buckling",
+        required_capability,
         context="solve_eigenvalue_buckling",
     )
 
@@ -317,14 +444,59 @@ def solve_eigenvalue_buckling(
     # constrained analysis first.  Rigid-mode filtering reads the active DOF
     # constraints, so boundary conditions must be applied here explicitly.
     model.apply_boundary_conditions()
-    if session is None:
+    current_state_info = None
+    if current_state:
+        from .current_state_tangent import (
+            assemble_committed_current_tangent_components,
+        )
+
+        K, internal_geometric, current_total, current_state_info = (
+            assemble_committed_current_tangent_components(
+                model,
+                current_state_displacements,
+                current_state_element_states,
+                current_state_num_layers,
+            )
+        )
+        KG = (-load_scale * internal_geometric).tocsr()
+        stiffness_info = {
+            "matrix_type": "committed_current_material_tangent",
+            "policy_id": CURRENT_STATE_BUCKLING_POLICY_ID,
+            "relative_symmetry_error": current_state_info[
+                "relative_symmetry_error"
+            ],
+            "matrix_persistence": "none",
+        }
+        geometric_info = {
+            "matrix_type": "negative_committed_stress_hessian",
+            "policy_id": CURRENT_STATE_BUCKLING_POLICY_ID,
+            "sign_convention": "compression_positive_equals_negative_internal_geometric",
+            "load_scale": load_scale,
+            "relative_symmetry_error": current_state_info[
+                "relative_symmetry_error"
+            ],
+            "matrix_persistence": "none",
+        }
+        total_closure = current_total - K - internal_geometric
+        current_state_info = dict(current_state_info)
+        current_state_info["buckling_total_closure_relative_error"] = float(
+            sparse_linalg.norm(total_closure)
+            / max(float(sparse_linalg.norm(current_total)), 1.0)
+        )
+        stiffness_plan = None
+    elif session is None:
         K, stiffness_info = assemble_stiffness_matrix(model)
         stiffness_plan = None
+        KG, geometric_info = assemble_geometric_stiffness_matrix(
+            model, element_states
+        )
     else:
         stiffness_plan = session.stiffness_plan(model)
         K = stiffness_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
-    KG, geometric_info = assemble_geometric_stiffness_matrix(model, element_states)
+        KG, geometric_info = assemble_geometric_stiffness_matrix(
+            model, element_states
+        )
     K_load, load_tangent_info = assemble_external_load_tangent(
         model,
         reference_load_case,
@@ -333,7 +505,7 @@ def solve_eigenvalue_buckling(
     cancellation_safe_point(cancellation_token, "buckling.after_assembly")
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
-    if session is None:
+    if session is None or current_state:
         K_red, _, T, _, independent_dofs, constraint_info = (
             build_constraint_transformation(K, zero_load, model)
         )
@@ -359,6 +531,15 @@ def solve_eigenvalue_buckling(
         "total_dofs": model.mesh.dof_manager.total_dofs,
         "reduced_dofs": int(K_red.shape[0]),
     }
+    if current_state_info is not None:
+        assembly_info["current_state_tangent_components"] = current_state_info
+        assembly_info["current_state_buckling_policy_id"] = (
+            CURRENT_STATE_BUCKLING_POLICY_ID
+        )
+        if session is not None:
+            assembly_info["analysis_session_bypass_reason"] = (
+                "committed_current_state_matrices_and_factors_are_not_cacheable"
+            )
     if session is not None:
         assembly_info["analysis_session"] = session.diagnostics()
 
@@ -373,7 +554,11 @@ def solve_eigenvalue_buckling(
         "allow_dense_fallback": allow_dense_fallback,
         "allow_free_mechanisms": allow_free_mechanisms,
         "factorization_cache": (
-            (session.factorization_cache.name if session is not None else None)
+            (
+                None
+                if current_state
+                else (session.factorization_cache.name if session is not None else None)
+            )
             if factorization_cache is None
             else factorization_cache.name
         ),
@@ -381,6 +566,32 @@ def solve_eigenvalue_buckling(
         "follower_symmetry_tolerance": float(follower_symmetry_tolerance),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
+    if bool(reference_elastic_only):
+        settings["reference_elastic_buckling_policy_id"] = (
+            REFERENCE_ELASTIC_BUCKLING_POLICY_ID
+        )
+        assembly_info["reference_elastic_buckling_policy_id"] = (
+            REFERENCE_ELASTIC_BUCKLING_POLICY_ID
+        )
+    if current_state:
+        settings.update(
+            {
+                "current_state_buckling_policy_id": (
+                    CURRENT_STATE_BUCKLING_POLICY_ID
+                ),
+                "current_state_num_layers": int(current_state_num_layers),
+                "current_state_load_scale": load_scale,
+                "current_state_matrix_persistence": "none",
+                "current_state_factorization_persistence": "none",
+            }
+        )
+    prestress_state_source = (
+        type(current_state_element_states).__name__
+        if current_state
+        else (
+            "none" if element_states is None else type(element_states).__name__
+        )
+    )
 
     if follower_symmetry_error > float(follower_symmetry_tolerance):
         diagnostics = {
@@ -400,7 +611,7 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
         return BucklingResult(
             [],
@@ -421,7 +632,7 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
         return BucklingResult([], num_modes, "empty_reduced_system", constraint_info, assembly_info, result_case, diagnostics)
     if KG_red.nnz == 0:
@@ -433,7 +644,7 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
         return BucklingResult([], num_modes, "zero_geometric_stiffness", constraint_info, assembly_info, result_case, diagnostics)
 
@@ -489,7 +700,7 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes, "num_modes_returned": 0},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
         return BucklingResult(
             [],
@@ -713,8 +924,19 @@ def solve_eigenvalue_buckling(
                 shift_matrix = (KG_sym - sigma * K_sym).tocsc()
                 cache = (
                     factorization_cache
-                    or (session.factorization_cache if session is not None else None)
-                    or FactorizationCache(name="buckling_shift_invert", max_entries=2)
+                    or (
+                        session.factorization_cache
+                        if session is not None and not current_state
+                        else None
+                    )
+                    or FactorizationCache(
+                        name=(
+                            "buckling_current_state_transient"
+                            if current_state
+                            else "buckling_shift_invert"
+                        ),
+                        max_entries=2,
+                    )
                 )
                 operator, handle = cached_inverse_operator(
                     shift_matrix,
@@ -764,7 +986,7 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
         return BucklingResult([], num_modes, "failed", constraint_info, assembly_info, result_case, diagnostics)
 
@@ -897,7 +1119,7 @@ def solve_eigenvalue_buckling(
         solver_info={"convergence_info": diagnostics},
         recovery={"modes": num_modes, "num_modes_returned": len(modes)},
         settings=settings,
-        metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+        metadata={"prestress_state_source": prestress_state_source},
     ).to_dict()
     emit_progress(
         progress_callback,

@@ -1,5 +1,15 @@
 {
   "candidate_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+  "contact_policy": {
+    "admitted_scope": "NATIVE_LAYERED_AND_STATELESS_GENERALIZED_SPHERE_SHELL_CONTACT",
+    "configuration": "EXACT_NATIVE_ROTATION_TRIAL_AT_CURRENT_CONTACT_CONFIGURATION",
+    "cutback_state": "TRIAL_STATE_DISCARDED_AND_COMMITTED_STATE_BYTE_STABLE",
+    "director_and_numbering": "PHYSICAL_DIRECTOR_POLARITY_AND_ALL_SIX_D3_NUMBERINGS",
+    "drill_policy": "ZERO_INERTIA_DESCRIPTOR_STATIC_ALGEBRAIC_TRANSIENT_REDUCTION_WITHOUT_ARTIFICIAL_DRILL_MASS",
+    "mixed_topology": "Q4_AND_S3_TARGETED_BY_THEIR_OWN_CURRENT_SURFACES",
+    "offset_surfaces": "MIDSURFACE_TOP_BOTTOM_WITH_EXACT_FORCE_MOMENT_VIRTUAL_WORK_CONJUGACY",
+    "status": "PARITY_REPLACED"
+  },
   "coordinate_contract": {
     "bubble_coordinates": [
       "alpha_1",
@@ -43,6 +53,31 @@
     "descriptor_transient_static_policy": "STATIC_DISPLACEMENT_PROJECTION",
     "drill_inertia": "ZERO_ALGEBRAIC_COORDINATE",
     "gb": "VERTICAL_STACK_IDENTITY_AND_MINUS_KAA_INVERSE_KAQ"
+  },
+  "eigen_workflows": {
+    "broad_buckling": "PARITY_GAP_BROAD_LAYERED_GENERALIZED_AND_MIXED_WORKFLOW_SCOPE_NOT_FULLY_QUALIFIED",
+    "current_state_buckling": {
+      "admitted_scope": "S3_ONLY_LAYERED_AND_STATELESS_FIXED_GENERALIZED_SECTION_COMMITTED_STATES",
+      "destabilizing_operator": "NEGATIVE_INTERNAL_TENSION_POSITIVE_STRESS_HESSIAN_COMPRESSION_POSITIVE",
+      "load_scaling": "DESTABILIZING_OPERATOR_SCALES_LINEARLY_AND_FACTORS_SCALE_INVERSELY",
+      "policy_id": "COMMITTED_MATERIAL_VS_NEGATIVE_STRESS_HESSIAN_V1",
+      "session_policy": "TRANSIENT_MATRICES_AND_FACTORS_NEVER_PERSISTED_OR_SESSION_CACHED",
+      "stabilizing_operator": "COMMITTED_CONSTITUTIVE_PLUS_OBJECTIVE_PL_MATERIAL_NUMERICAL_TANGENT",
+      "state_authority": "EXACT_MODEL_BOUND_COMMITTED_DISPLACEMENT_ROTATION_AND_INTEGRITY_SEALED_ELEMENT_STATE",
+      "status": "PARITY_REPLACED"
+    },
+    "current_state_modal": {
+      "policy_id": "COMMITTED_NATIVE_TOTAL_TANGENT_WITH_REFERENCE_CONSISTENT_MASS_V1",
+      "status": "PARITY_REPLACED"
+    },
+    "reference_elastic_buckling": {
+      "policy_id": "REFERENCE_ELASTIC_BUBBLE_CONDENSED_INITIAL_STRESS_V1",
+      "status": "PARITY_REPLACED"
+    },
+    "reference_elastic_prestressed_modal": {
+      "policy_id": "MATERIAL_TANGENT_MINUS_COMPRESSION_POSITIVE_GEOMETRIC_V1",
+      "status": "PARITY_REPLACED"
+    }
   },
   "formulation": {
     "bubble": "27*L1*L2*L3",
@@ -171,11 +206,30 @@
       "relative_tolerance": 5e-11,
       "step_tolerance": 5e-13
     },
-    "commit_rotation": "RODRIGUES_OF_A_EFFECTIVE_V1_PLUS_B_EFFECTIVE_V2_RETAINED_STEP_CONVENTION_WITH_O3_TARGET_DIRECTOR_DIFFERENCE",
+    "committed_current_tangent": {
+      "bubble_projection": "G_VERTICAL_STACK_I_AND_T_PROJECTS_BOTH_COMPONENTS_WITH_THE_SAME_T",
+      "bubble_projection_policy_id": "TOTAL_KAA_KAQ_SENSITIVITY_PROJECTS_EACH_TANGENT_PIECE_V1",
+      "bubble_sensitivity": "T_EQUALS_MINUS_KAA_TOTAL_INVERSE_KAQ_TOTAL_AFTER_CONVERGED_BUBBLE_SOLVE",
+      "geometric_component": "RESULTANT_OR_STRESS_HESSIAN_TENSION_POSITIVE",
+      "material_component": "CONSTITUTIVE_ALGORITHMIC_PLUS_OBJECTIVE_PL_MATERIAL_NUMERICAL",
+      "persistence": "READ_ONLY_TRANSIENT_API_NO_MATRIX_SENSITIVITY_OR_FACTORIZATION_STATE",
+      "policy_id": "COMMITTED_NATIVE_MATERIAL_PLUS_STRESS_HESSIAN_SINGLE_BUBBLE_MAP_V1",
+      "state_immutability": "CANONICAL_INPUT_BYTES_AND_INTEGRITY_DIGEST_VERIFIED_UNCHANGED",
+      "total_closure": "KMATERIAL_PLUS_KGEOMETRIC_EQUALS_EXISTING_CONSISTENT_TOTAL_TANGENT",
+      "uncondensed_split": "LAYERED_AND_STATELESS_GENERALIZED_CONSTITUTIVE_VERSUS_RESULTANT_HESSIAN"
+    },
     "constitutive_integration_ids": {
-      "generalized_section": "STATELESS_TOTAL_GENERALIZED_STRAIN_V1",
+      "generalized_section": "STATELESS_KINEMATIC_MINUS_INITIAL_EIGENSTRAIN_PLUS_INITIAL_RESULTANT_V2",
       "isotropic": "PLANE_STRESS_RETURN_MAP_CONSISTENT_V1",
       "orthotropic": "HILL48_PLANE_STRESS_RETURN_MAP_CONSISTENT_V1"
+    },
+    "corner_rotation_authority": {
+      "commit_binding": "ACCEPTED_Q_AND_EXACT_ACCEPTED_FULL_GLOBAL_DISPLACEMENT",
+      "element_mesh_node_mutation": "FORBIDDEN",
+      "id": "LEFT_MULTIPLICATIVE_SPATIAL_ROTATION_UPDATE_V1",
+      "ownership": "SOLVER_OWNED_NODE_SHARED_PER_ANALYSIS",
+      "trial_base": "COMMITTED_Q_ONLY_NEVER_PREVIOUS_TRIAL",
+      "trial_update": "Q_TRIAL=EXP(THETA_TRIAL_MINUS_THETA_COMMITTED)@Q_COMMITTED"
     },
     "director_gauge": {
       "fallback_axis_global": [
@@ -193,33 +247,100 @@
       "reconstruction": "V1=NORMALIZE(AXIS_CROSS_VN)_AND_V2=VN_CROSS_V1_AFTER_EVERY_COMMIT",
       "validation": "STORED_TANGENTS_MUST_EQUAL_RECONSTRUCTION_WITH_ABSOLUTE_TOLERANCE_1E_MINUS_12"
     },
+    "director_increment_map": {
+      "bubble_coordinates": "TWO_COMPONENT_HIERARCHICAL_ROTATION_RELATIVE_TO_CORNER_AVERAGE",
+      "bubble_director": "PUBLISHED_EQ14_WITH_HIERARCHICAL_SOURCE_NODE_ONLY",
+      "corner_directors": "VN_I=Q_I@VN_I_REFERENCE",
+      "id": "CORNER_FROM_SOLVER_SHARED_SO3_BUBBLE_EQ14_HIERARCHICAL_V1",
+      "scope": "SOLVER_SHARED_SO3_FOR_CORNERS_EQ14_ONLY_FOR_BUBBLE"
+    },
     "external_rotation_map": {
-      "a": "PHI_DOT_V1",
-      "a_effective": "a-(d*b)/2",
-      "b": "PHI_DOT_V2",
-      "b_effective": "b+(d*a)/2",
-      "d": "PHI_DOT_VN",
-      "id": "GLOBAL_ADDITIVE_ROTATION_TO_EQ14_MINIMAL_DIRECTOR_SECOND_ORDER_V1",
-      "mixed_drill_tilt": "RETAINED_SECOND_ORDER_DIRECTOR_COORDINATE_PULLBACK",
-      "pure_drill": "EXACT_PHYSICAL_NULL_WHEN_A_AND_B_ARE_ZERO"
+      "component_frame": "GLOBAL_XYZ",
+      "id": "GLOBAL_COORDINATES_WITH_SOLVER_OWNED_LEFT_MULTIPLICATIVE_SO3_V1",
+      "shared_node_consistency": "EXACT_CROSS_ELEMENT_Q_AGREEMENT_REQUIRED",
+      "stored_coordinates": "GLOBAL_ROTATION_VECTOR_COMPONENTS"
     },
-    "hierarchical_source_node": {
-      "first_order": "A4=MEAN_A_CORNER_PLUS_ALPHA1_AND_B4=MEAN_B_CORNER_PLUS_ALPHA2",
-      "physical_update": "SOURCE_NODE_4_USES_ITS_OWN_CURRENT_EQ11_GAUGE",
-      "second_order": "A4_SECOND=MEAN_A_CORNER_SECOND_AND_B4_SECOND=MEAN_B_CORNER_SECOND"
+    "generalized_state": {
+      "field_manifest_sha256": "56A7D6E9348A2DC8144BF6961B2F99ACFE4A327CD55C47532EDB49B739B7F0BF",
+      "forbidden_fabricated_fields": [
+        "alpha",
+        "kinematic_layer_strain",
+        "layer_strain",
+        "layer_strain_material",
+        "layer_stress",
+        "layer_stress_material",
+        "plastic_strain"
+      ],
+      "formulation_fingerprint_sha256": "58FCDFF989ECAE2D0310296560EC81ADEF56A37DA108ECB76E2F92361A2839C7",
+      "history_policy_id": "STATELESS_PREINTEGRATED_GENERALIZED_SECTION_ONLY_V1",
+      "initial_field_contract": {
+        "bending_resultant": "M0_EQUALS_H_SQUARED_OVER_6_TIMES_SIGMA_BENDING_SURFACE",
+        "constitutive_relation": "RESULTANT_EQUALS_C_TIMES_KINEMATIC_MINUS_PRESTRAIN_PLUS_INITIAL_RESULTANT",
+        "fingerprint_binding": "RAW_STATION_FIELDS_PLUS_CANONICAL_PROVENANCE",
+        "membrane_resultant": "N0_EQUALS_H_TIMES_SIGMA_MEMBRANE",
+        "physical_layer_reconstruction": "FORBIDDEN",
+        "policy_id": "SHELL_INITIAL_FIELD_ANALYTIC_N_H_SIGMA_M_M_H2_OVER6_SIGMA_B_V1",
+        "source_convention": "SHELL_INITIAL_FIELD_LOCAL_SURFACE_STRESS_V1",
+        "station_count": 7
+      },
+      "integration_id": "STATELESS_KINEMATIC_MINUS_INITIAL_EIGENSTRAIN_PLUS_INITIAL_RESULTANT_V2",
+      "layout_id": "S3_TL_Q18_NODE_SO3_PL3_TRIADS4_BUBBLE2_STATION7_GENERALIZED_STATELESS_INITIAL_FIELDS_V4",
+      "physical_layer_recovery_available": false,
+      "recovery_scope": "section_resultants_only",
+      "rejected_history_markers": [
+        "committed_state",
+        "history_schema",
+        "init_nonlinear_state",
+        "initialize_state",
+        "requires_history",
+        "state_layout_id",
+        "state_schema",
+        "update_nonlinear_state",
+        "update_state"
+      ],
+      "restart_binding": "STATE_CODEC_BINDS_EXACT_SECTION_GEOMETRY_OFFSET_Q_U_BUBBLE_PL_STRAIN_RESULTANT_INITIAL_FIELDS_PROVENANCE_AND_COMPLETE_STATE_DIGEST",
+      "schema": "anysolver.e4_pl_s3.committed_state.generalized_section.v4",
+      "section_descriptor_schema": "anysolver.e4_pl_s3.generalized_section.binary64.v1",
+      "solver_restart_policy": {
+        "analysis_kinds": [
+          "static",
+          "arc_length"
+        ],
+        "checkpoint_integrity_id": "SHA256_CANONICAL_JSON_EXCLUDING_SELF_V1",
+        "checkpoint_schema": "ANYSOLVER_NONLINEAR_CHECKPOINT_V1",
+        "checkpoint_version": 1,
+        "generic_restart_history": "PARITY_GAP_OUTSIDE_STATIC_AND_ARC_LENGTH_CONTINUATION",
+        "ownership": "SOLVER_OWNED_MODEL_LOAD_GLOBAL_DISPLACEMENT_ELEMENT_STATE_ACTIVITY_DELETION_AND_PATH_BINDING",
+        "status": "STATIC_AND_ARC_LENGTH_PARITY_REPLACED"
+      },
+      "state_mode": "stateless_generalized_section",
+      "state_version": 4
     },
-    "incremental_director": "MINUS_A_EFFECTIVE_V2_PLUS_B_EFFECTIVE_V1_MINUS_HALF_(A_SQUARED_PLUS_B_SQUARED)_VN",
-    "policy_id": "TOTAL_LAGRANGIAN_MITC3_PLUS_QUADRATIC_DIRECTOR_SCHUR_V1",
-    "quadratic_square_rule": "SQUARE_ONLY_FIRST_ORDER_A_AND_B_NEVER_A_EFFECTIVE_OR_B_EFFECTIVE",
+    "objective_pl": {
+      "energy_policy_id": "BARYCENTRIC_PL_ENERGY_EXACT_HESSIAN_V1",
+      "force_tangent": "EXACT_GRADIENT_AND_HESSIAN_OF_BARYCENTRIC_PL_ENERGY",
+      "minimum_twist_denominator_binary64": 9.5367431640625e-07,
+      "minimum_twist_denominator_id": "64_SQRT_BINARY64_EPSILON_V1",
+      "phase_interval": "(-PI,PI]",
+      "phase_margin_binary64": 9.5367431640625e-07,
+      "phase_margin_id": "PI_MINUS_64_SQRT_BINARY64_EPSILON_V1",
+      "phase_policy_id": "NEAREST_COMMITTED_PHASE_UNIQUE_PI_MARGIN_V1",
+      "rotation_update_policy_id": "LEFT_MULTIPLICATIVE_SPATIAL_ROTATION_UPDATE_V1",
+      "surface_rotation_policy_id": "SURFACE_RIGHT_POLAR_FRAME_3X2_V1",
+      "twist_policy_id": "RELATIVE_SWING_TWIST_ATAN2_UNWRAPPED_V1"
+    },
+    "policy_id": "TOTAL_LAGRANGIAN_MITC3_PLUS_SHARED_SO3_CORNER_BUBBLE_SCHUR_V2",
     "reference_component_basis": "EXPLICIT_FROZEN_REFERENCE_NODES_AND_REFERENCE_FRAME_REQUIRED_NO_CURRENT_BASIS_FALLBACK",
     "state": {
       "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
       "bubble_predictor_commit_policy_id": "RESET_TO_ZERO_AFTER_EVERY_ACCEPTED_STEP_V1",
       "canonicalization_id": "RFC8259_SORTED_UTF8_COMPACT_LF_SIGNED_ZERO_NORMALIZED_V1",
+      "director_increment_map_id": "CORNER_FROM_SOLVER_SHARED_SO3_BUBBLE_EQ14_HIERARCHICAL_V1",
       "external_coordinate_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_V1",
-      "field_manifest_sha256": "4892D5860CD20BA6681C9FDABE8D211AF6B6B23F71F9F56C0478D6DB00389697",
-      "formulation_fingerprint_sha256": "1C782C5D15D0F5E3791BC20F7ABBF3D79D5A092C0A7EBFA35A7F472FFD98FD6D",
-      "formulation_mechanics_sha256": "9A2B67F074F179B9C18F35A65B9286CB84A81D6573751EFA450104989C1D1183",
+      "external_rotation_map_id": "GLOBAL_COORDINATES_WITH_SOLVER_OWNED_LEFT_MULTIPLICATIVE_SO3_V1",
+      "field_manifest_sha256": "8BE3B71CA42CFC59CDA09E774CC42174A6D387782CC108E1DE6F75E87656A04A",
+      "formulation_fingerprint_sha256": "4ADF654B0D3461BE5D863FD550CBFD888853E8C2D4FA9DE45BF6AFDACC035D4D",
+      "formulation_mechanics_sha256": "69559A6424890E7FCE1ED1220CB54B8D79C630730EE8A9DF883C7541A1582404",
       "generalized_resultant_component_order": [
         "membrane_force_xx",
         "membrane_force_yy",
@@ -250,18 +371,28 @@
         "inplane_yy",
         "inplane_xy_tensor"
       ],
-      "layout_id": "S3_TL_Q18_TRIADS4_BUBBLE2_STATION7_LAYERED_V1",
+      "layout_id": "S3_TL_Q18_NODE_SO3_PL3_TRIADS4_BUBBLE2_STATION7_LAYERED_V2",
       "lobatto_table_sha256": "AFB165D4522DA2D285BF9149F6FF0044130D3824B075AED9D0048706838437E9",
       "material_descriptor_validation_id": "REGISTERED_ANYMATERIAL_DATACLASS_COMPLIANCE_CROSSCHECK_V1",
-      "nonlinear_kinematics_id": "MITC3_PLUS_TOTAL_LAGRANGIAN_INCREMENTAL_DIRECTORS_EQ7_31_V1",
+      "nodal_rotation_update_policy_id": "LEFT_MULTIPLICATIVE_SPATIAL_ROTATION_UPDATE_V1",
+      "nonlinear_kinematics_id": "MITC3_PLUS_TOTAL_LAGRANGIAN_SHARED_SO3_CORNERS_EQ7_31_V2",
+      "nonlinear_pl_energy_policy_id": "BARYCENTRIC_PL_ENERGY_EXACT_HESSIAN_V1",
+      "pl_minimum_twist_denominator_binary64": 9.5367431640625e-07,
+      "pl_minimum_twist_denominator_id": "64_SQRT_BINARY64_EPSILON_V1",
+      "pl_phase_margin_binary64": 9.5367431640625e-07,
+      "pl_phase_margin_id": "PI_MINUS_64_SQRT_BINARY64_EPSILON_V1",
+      "pl_phase_policy_id": "NEAREST_COMMITTED_PHASE_UNIQUE_PI_MARGIN_V1",
+      "pl_twist_policy_id": "RELATIVE_SWING_TWIST_ATAN2_UNWRAPPED_V1",
       "quadrature_id": "dunavant_degree5_7point",
-      "recovery_policy_id": "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1",
+      "recovery_policy_id": "S3_NATIVE_PHYSICAL_DIRECTOR_POLARITY_RECOVERY_V2",
+      "reference_corner_directors_fingerprint_layout_id": "ORDERED_S3_ELEMENT_OWNED_REFERENCE_DIRECTORS_GLOBAL_V1",
       "reference_geometry_validation_id": "QUALIFIED_ADMISSION_DERIVED_NUMBERED_FRAME_EXACT_IDENTITY_V1",
-      "schema": "anysolver.e4_pl_s3.committed_state.v1",
+      "schema": "anysolver.e4_pl_s3.committed_state.v2",
       "state_array_layout_id": "S3_STATION_MAJOR_LAYER_BOTTOM_TO_TOP_MINOR_V1",
       "state_integrity_id": "SHA256_CANONICAL_COMPLETE_STATE_EXCLUDING_DIGEST_V1",
       "state_mode": "layered_material",
       "state_redundancy_validation_id": "KINEMATIC_FROM_GENERALIZED_AND_INPLANE_RESULTANT_FROM_LAYER_STRESS_V1",
+      "state_version": 2,
       "stiffness_station_table_sha256": "262F420E3B1F2B01192E4D9F12E315A4E7587C1A469D60874B78528CBBFBBE62",
       "supported_lobatto_layer_counts": [
         3,
@@ -270,9 +401,34 @@
         9,
         11
       ],
+      "surface_rotation_policy_id": "SURFACE_RIGHT_POLAR_FRAME_3X2_V1",
       "thickness_coordinate_sign_id": "ZETA_MINUS_ONE_BOTTOM_OPPOSITE_DIRECTOR_TO_PLUS_ONE_TOP_ALONG_DIRECTOR_V1",
       "thickness_quadrature_id": "GAUSS_LOBATTO_3_5_7_9_11_V1"
     }
+  },
+  "physical_director_reversal": {
+    "constitutive_transform": "S=DIAG_I3_POLARITY_I5_AND_C_POLARITY=S_TRANSPOSE_C_OWNER_S",
+    "director_polarity": "REQUIRED_INTEGER_MINUS_OR_PLUS_ONE",
+    "director_polarity_policy_id": "ELEMENT_OWNED_PHYSICAL_DIRECTOR_INDEPENDENT_OF_SHEET_OWNER_NORMAL_V1",
+    "director_reversal_transform_id": "GENERALIZED_DIAG_I3_POLARITY_I5_WITH_LAYER_ORDER_REVERSAL_V1",
+    "element_configuration_descriptor_schemas": {
+      "generalized": "anysolver.e4_pl_s3.element_configuration.generalized_section.v3",
+      "layered": "anysolver.e4_pl_s3.element_configuration.layered.v3"
+    },
+    "initial_fields": "MEMBRANE_UNCHANGED_BENDING_STRESS_AND_CURVATURE_PRESTRAIN_MULTIPLIED_BY_POLARITY",
+    "layer_order": "STATION_MAJOR_LAYER_MINOR_PHYSICAL_DIRECTOR_BOTTOM_TO_TOP",
+    "material_orientation": "PHYSICAL_SURFACE_DIRECTION_AND_SIGNED_IN_PLANE_ANGLE_REMAIN_INVARIANT_UNDER_DIRECTOR_REEXPRESSION",
+    "offset_policy": "SIGNED_OFFSET_REVERSES_WITH_DIRECTOR_POLARITY_SO_THE_PHYSICAL_SECTION_ORIGIN_AND_REFERENCE_SURFACE_REMAIN_FIXED",
+    "owner_normal": "AUTHORITATIVE_SHEET_AREA_ORIENTATION_INDEPENDENT_OF_ELEMENT_DIRECTOR_POLARITY",
+    "pressure_and_follower_tangent": "OWNER_NORMAL_ORIENTATION_FOR_ALL_SIX_D3_ACTIONS_INDEPENDENT_OF_POLARITY",
+    "recovery": "LOCAL_FIRST_MOMENTS_AND_SHEAR_CHANGE_SIGN_GLOBAL_PHYSICAL_RESULTANTS_ARE_INVARIANT_AND_TOP_BOTTOM_SWAP",
+    "state_schema_compatibility": "OLD_PAYLOADS_MISSING_DIRECTOR_POLARITY_REFERENCE_SURFACE_OFFSET_OR_GENERALIZED_INITIAL_FIELDS_IDENTITY_FAIL_CLOSED",
+    "state_schemas": {
+      "generalized": "anysolver.e4_pl_s3.committed_state.generalized_section.v4",
+      "layered": "anysolver.e4_pl_s3.committed_state.v2"
+    },
+    "thickness_coordinate": "BOTTOM_IS_MINUS_ALONG_PHYSICAL_DIRECTOR_TOP_IS_PLUS_ALONG_PHYSICAL_DIRECTOR",
+    "virtual_work": "GLOBAL_NODAL_FORCE_AND_TANGENT_WORK_INVARIANT_UNDER_PURE_DIRECTOR_REEXPRESSION"
   },
   "pl_completion": {
     "condensed_operator": "kD*C_TRANSPOSE*M*C",
@@ -375,36 +531,63 @@
   },
   "recovery_policy": {
     "bubble_state": "ELASTIC_SCHUR_BACK_SUBSTITUTION_USED_BY_THE_TANGENT",
-    "director_reversal": "EXCLUDED_PENDING_NATIVE_REVERSAL_PARITY",
+    "committed_state_recovery": "STRICT_MODEL_BOUND_LAYERED_V2_AND_STATELESS_GENERALIZED_V4_WITH_COMPLETE_STATE_DIGEST",
+    "director_reversal": "IMPLEMENTED_FOR_NATIVE_LINEAR_LAYERED_AND_STATELESS_GENERALIZED_WITH_TOP_BOTTOM_SWAP",
     "engineering_conventions": "MEMBRANE_AND_CURVATURE_ENGINEERING_SHEAR_WITH_TENSOR_N_AND_M",
     "failure_policy": "QUALIFIED_RECOVERY_ERRORS_PROPAGATE_WITHOUT_SILENT_ELEMENT_OMISSION",
     "generalized_sections": "SEVEN_STATION_RESULTANTS_ONLY_WITHOUT_FABRICATED_PHYSICAL_STRESS",
     "geometric_prestress_provenance": "HOMOGENEOUS_PHYSICAL_RECOVERY_EMITS_REFERENCE_BUBBLE_AND_THROUGH_THICKNESS_PROFILE_IDS_GENERALIZED_RECOVERY_DOES_NOT",
-    "global_transport": "SURFACE_TENSORS_AND_N_M_BY_FRAME_CONGRUENCE_Q_BY_FRAME_VECTOR_MAP",
+    "global_transport": "OWNER_FRAME_CONGRUENCE_WITH_POLARITY_CONVERSION_FOR_PHYSICAL_M_AND_Q",
     "hill48_measure": "MAX_TOP_BOTTOM_MATERIAL_AXIS_PLANE_STRESS_TRANSVERSE_SHEAR_EXCLUDED_UTILIZATION_OVER_X",
     "homogeneous_surface_stress": "SIGMA_M=N_OVER_H_SIGMA_B=6M_OVER_H_SQUARED",
     "kinematics": "NATIVE_SEVEN_STATION_MITC3_PLUS_WITH_RECOVERED_BUBBLE",
-    "material_orientation": "PHYSICAL_SURFACE_DIRECTION_PLUS_SIGNED_ANGLE_ABOUT_OWNER_DIRECTOR",
-    "nonlinear_history_patch": "EXCLUDED_PENDING_FORMULATION_NATIVE_PARITY",
+    "material_orientation": "PHYSICAL_SURFACE_DIRECTION_PLUS_SIGNED_IN_PLANE_ANGLE_INVARIANT_UNDER_DIRECTOR_REEXPRESSION",
+    "nonlinear_history_patch": "LAYERED_V2_COMMITTED_STATION_AND_LAYER_HISTORY_WITH_NATIVE_SEVEN_TO_THREE_PATCH_GENERALIZED_V4_RESULTANTS_ONLY_NO_PHYSICAL_PATCH",
     "numerical_fields": "PL_AND_DRILL_EXCLUDED_FROM_PHYSICAL_RECOVERY",
-    "policy_id": "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1",
+    "policy_id": "S3_NATIVE_PHYSICAL_DIRECTOR_POLARITY_RECOVERY_V2",
     "resultant_sign": "TENSION_POSITIVE_N_M_Q",
     "summary_policy": "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1",
-    "surface_sign": "TOP_PLUS_H_OVER_2_ALONG_AUTHORITATIVE_DIRECTOR_BOTTOM_MINUS_H_OVER_2",
+    "surface_sign": "FROM_NODAL_REFERENCE_TOP_PLUS_H_OVER_2_MINUS_OFFSET_ALONG_PHYSICAL_DIRECTOR_BOTTOM_MINUS_H_OVER_2_MINUS_OFFSET",
     "transverse_shear": "Q_OVER_H_EQUALS_FIVE_SIXTHS_G_GAMMA_REPEATED_AT_BOTH_SURFACES",
     "von_mises_measure": "MAX_TOP_BOTTOM_3D_EQUIVALENT_WITH_AVERAGE_TRANSVERSE_SHEAR"
+  },
+  "reference_surface_offset": {
+    "contact_surfaces": "MATERIAL_MIDSURFACE_AND_SIGNED_TOP_BOTTOM_COORDINATES_ARE_Z_MINUS_OFFSET_FROM_THE_NODAL_REFERENCE_SURFACE",
+    "default": 0.0,
+    "direct_couples": "GLOBAL_NODAL_AND_ELEMENT_COUPLES_REMAIN_DIRECTLY_CONJUGATE_TO_GLOBAL_ROTATION_COORDINATES",
+    "generalized_section_origin": "A_B_D_AND_GENERALIZED_RESULTANTS_ARE_DEFINED_AT_THE_PHYSICAL_SECTION_ORIGIN",
+    "geometric_resultant_shift": "M_REFERENCE=M_SECTION-OFFSET*N_AND_H_REFERENCE=H_SECTION-2*OFFSET*M_SECTION+OFFSET_SQUARED*N",
+    "internal_virtual_work": "SECTION_ORIGIN_STRAIN_EQUALS_REFERENCE_SURFACE_STRAIN_MINUS_OFFSET_TIMES_CURVATURE_WITH_CONSISTENT_FORCE_AND_SCHUR_TANGENT_PULLBACK",
+    "layer_coordinate": "Z_REFERENCE=Z_SECTION-OFFSET_WITH_Z_SECTION_POSITIVE_ALONG_THE_PHYSICAL_DIRECTOR",
+    "mass_shift_id": "M1_REFERENCE_EQ_MINUS_OFFSET_M0_AND_M2_REFERENCE_EQ_M2_SECTION_PLUS_OFFSET_SQUARED_M0_V1",
+    "mass_translation_rotation_coupling": "FULL_NODAL_PLUS_BUBBLE_CONSISTENT_MASS_U_RY_PLUS_M1_AND_V_RX_MINUS_M1_BEFORE_GUYAN_REDUCTION",
+    "polarity_transform": "DIRECTOR_POLARITY_AND_SIGNED_OFFSET_REVERSE_TOGETHER_WHILE_THE_PHYSICAL_OFFSET_VECTOR_REMAINS_FIXED",
+    "pressure_surface": "DEAD_AND_FOLLOWER_PRESSURE_ARE_NORMAL_TRACTIONS_ON_THE_NODAL_REFERENCE_SURFACE_WITH_NO_ARTIFICIAL_OFFSET_COUPLE",
+    "public_api": "ADDITIVE_FINITE_SIGNED_LENGTH_DEFAULT_ZERO",
+    "recovery_coordinates": "MATERIAL_SECTION_COORDINATES_AND_LAYER_ORDER_ARE_PHYSICAL_WHILE_REFERENCE_SURFACE_COORDINATES_REMAIN_SEPARATELY_IDENTIFIED",
+    "restart_policy": "OFFSET_VALUE_AND_ALL_THREE_POLICY_IDENTITIES_ARE_STRICT_ELEMENT_CONFIGURATION_AND_STATE_FINGERPRINT_INPUTS",
+    "signed_convention": "X_REFERENCE=X_SECTION_ORIGIN+OFFSET_TIMES_PHYSICAL_DIRECTOR",
+    "strain_transform_id": "EPSILON_SECTION_EQ_EPSILON_REFERENCE_MINUS_OFFSET_KAPPA_V1",
+    "zero_offset": "PRESERVES_THE_PREOFFSET_NUMERICAL_PATH_AND_ARRAY_VALUES_WHERE_NO_SCHEMA_OR_FINGERPRINT_IS_OBSERVED"
   },
   "schema": "anysolver.e4-pl-s3-formulation-contract-v1",
   "serialization_fingerprint": {
     "algebraic_coordinate_policy": "S3_NODAL_DRILL_ZERO_INERTIA_V1",
     "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
+    "director_polarity": "REQUIRED_INTEGER_MINUS_OR_PLUS_ONE",
+    "director_polarity_policy_id": "ELEMENT_OWNED_PHYSICAL_DIRECTOR_INDEPENDENT_OF_SHEET_OWNER_NORMAL_V1",
+    "director_reversal_transform_id": "GENERALIZED_DIAG_I3_POLARITY_I5_WITH_LAYER_ORDER_REVERSAL_V1",
     "dynamic_reduction_policy": "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1",
     "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
     "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
     "geometric_stiffness_policy": "TOTAL_LAGRANGIAN_MINDLIN_BUBBLE_SCHUR_INITIAL_STRESS_V1",
     "mass_moment_id": "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1",
     "quadrature_id": "dunavant_degree5_7point",
-    "recovery_policy_id": "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1",
+    "recovery_policy_id": "S3_NATIVE_PHYSICAL_DIRECTOR_POLARITY_RECOVERY_V2",
+    "reference_surface_mass_shift_id": "M1_REFERENCE_EQ_MINUS_OFFSET_M0_AND_M2_REFERENCE_EQ_M2_SECTION_PLUS_OFFSET_SQUARED_M0_V1",
+    "reference_surface_offset": "FINITE_SIGNED_LENGTH_DEFAULT_ZERO",
+    "reference_surface_offset_policy_id": "SIGNED_SECTION_ORIGIN_TO_NODAL_REFERENCE_ALONG_PHYSICAL_DIRECTOR_V1",
+    "reference_surface_strain_transform_id": "EPSILON_SECTION_EQ_EPSILON_REFERENCE_MINUS_OFFSET_KAPPA_V1",
     "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
   },
   "source_authority": {
@@ -442,11 +625,11 @@
     }
   },
   "transport_contract": {
-    "connectivity_permutations": "ALL_SIX_D3_ACTIONS_WITH_PHYSICAL_DIRECTOR_FIXED",
-    "director_reversal": "REVERSE_THICKNESS_OFFSET_B_COUPLING_LAYER_ORDER_MOMENTS_AND_RECOVERY_SURFACES",
-    "material_orientation": "PERSIST_PHYSICAL_SURFACE_DIRECTION_AND_DERIVE_LOCAL_ANGLE_AFTER_NUMBERING",
+    "connectivity_permutations": "ALL_SIX_D3_ACTIONS_FOR_BOTH_ELEMENT_DIRECTOR_POLARITIES_WITH_OWNER_NORMAL_FIXED",
+    "director_reversal": "REVERSE_THICKNESS_B_COUPLING_LAYER_ORDER_INITIAL_FIRST_MOMENTS_CURVATURES_MOMENTS_SHEAR_AND_RECOVERY_SURFACES",
+    "material_orientation": "PERSIST_PHYSICAL_SURFACE_DIRECTION_AND_DERIVE_NUMBERING_LOCAL_ANGLE_WITHOUT_DIRECTOR_POLARITY_DEPENDENCE",
     "pl_constraint_and_multiplier": "TRANSPORT_IN_THE_ORIENTED_LOCAL_FRAME_AND_BARYCENTRIC_NODE_BASIS",
     "production_negative_winding": "REJECT_AFTER_BELOW_ADMISSION_LAYER_D3_COVARIANCE_TEST",
-    "stage_1_director_reversal": "PARITY_GAP_NOT_CLAIMED"
+    "stage_1_director_reversal": "IMPLEMENTED_WITH_BROAD_GAP_RETAINED_UNTIL_OFFSET_AND_FULL_ECOSYSTEM_EVIDENCE"
   }
 }

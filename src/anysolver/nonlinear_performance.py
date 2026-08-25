@@ -42,6 +42,10 @@ from scipy import sparse
 from .jit_compiler import njit
 from .initial_field_state import state_has_active_initial_fields
 from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
+from .nonlinear_element_evaluation import (
+    evaluate_nonlinear_element,
+    require_legacy_direct_nonlinear_element,
+)
 from .nonlinear_state import (
     NonlinearStateStore,
     PersistentStateEligibilityError,
@@ -49,6 +53,7 @@ from .nonlinear_state import (
     ShellStateLayout,
     StateTrialToken,
     begin_state_evaluation,
+    discard_active_state_candidate,
     finish_state_evaluation,
 )
 
@@ -103,6 +108,10 @@ def _apply_initial_field_shell_overrides(
         if getattr(batch, "_batch_b_initial_fields_supported", False):
             continue
         material = model.get_material(element.material_name)
+        require_legacy_direct_nonlinear_element(
+            element,
+            context="compiled shell initial-field override",
+        )
         force, stiffness, trial_state = element.compute_nonlinear_response(
             model.mesh,
             material,
@@ -646,6 +655,10 @@ class _QuadraticBeamBatchPlan:
                 if element_key not in deleted:
                     continue
                 state = committed_states.get(element_key)
+                require_legacy_direct_nonlinear_element(
+                    element,
+                    context="quadratic-beam deleted-element fallback",
+                )
                 force, stiffness, trial_state = element.compute_nonlinear_response(
                     model.mesh,
                     model.get_material(element.material_name),
@@ -883,7 +896,11 @@ class NonlinearAssemblyPlan:
     ) -> Tuple[np.ndarray, Optional[sparse.csr_matrix], Dict[int, Any]]:
         """Assemble internal force and tangent using persistent batch/scatter data."""
         with self._lock:
-            state_token = begin_state_evaluation(committed_states)
+            state_token = begin_state_evaluation(
+                committed_states,
+                model=self.model,
+                displacements=displacements,
+            )
             start_total = time.perf_counter()
             self.timings.calls += 1
             if tangent:
@@ -967,13 +984,17 @@ class NonlinearAssemblyPlan:
             for record in self.non_shell_elements:
                 material = model.get_material(record.element.material_name)
                 u_element = np.asarray(displacements, dtype=float)[record.dof_mapping]
-                f_element, k_element, trial_state = record.element.compute_nonlinear_response(
+                f_element, k_element, trial_state = evaluate_nonlinear_element(
+                    record.element,
                     mesh,
                     material,
                     u_element,
                     committed_states.get(record.element_id),
                     self.num_layers,
                     tangent,
+                    committed_states=committed_states,
+                    state_token=state_token,
+                    element_id=record.element_id,
                 )
                 if record.element_id in deleted:
                     f_element = residual_fraction * np.asarray(f_element, dtype=float)
@@ -1152,20 +1173,27 @@ def _optimized_assemble_nonlinear_system(
         )
     assembly_start = time.perf_counter()
     plan = get_nonlinear_assembly_plan(model, int(num_layers))
-    result = plan.assemble(
-        displacements,
-        committed_states,
-        tangent=tangent,
-        deleted_element_ids=tuple(deleted_element_ids or ()),
-        residual_stiffness_fraction=float(residual_stiffness_fraction),
-    )
-    record_nonlinear_assembly_execution(
-        path="persistent_full_coordinate",
-        tangent=bool(tangent),
-        elapsed_seconds=time.perf_counter() - assembly_start,
-        plan=plan,
-    )
-    return result
+    try:
+        result = plan.assemble(
+            displacements,
+            committed_states,
+            tangent=tangent,
+            deleted_element_ids=tuple(deleted_element_ids or ()),
+            residual_stiffness_fraction=float(residual_stiffness_fraction),
+        )
+        record_nonlinear_assembly_execution(
+            path="persistent_full_coordinate",
+            tangent=bool(tangent),
+            elapsed_seconds=time.perf_counter() - assembly_start,
+            plan=plan,
+        )
+        return result
+    except BaseException:
+        # Batch A/B plans open the same solver-owned candidate transaction as
+        # the reference assembler.  Keep retries and cancellation reusable
+        # when an element, compiled kernel, or post-assembly observer fails.
+        discard_active_state_candidate(committed_states)
+        raise
 
 
 def _revision_cached_sparsity_pattern(mesh: "FEMesh", matrix_type: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -1221,12 +1249,68 @@ def _solve_static_displacement_control_block(
     cancellation_token=None,
     progress_callback=None,
     record_increment_snapshots=False,
+    initial_load_factor=0.0,
+    step_index_offset=0,
+    initial_steps=(),
+    initial_history=(),
+    initial_total_iterations=0,
+    restart_analysis_contract=None,
 ):
     """Displacement control using block elimination on the structural tangent."""
     from . import nonlinear_static as ns
     from .cases import make_result_case
     from .jit_compiler import numba_thread_scope
     from .linalg import MatrixClass, factorize
+
+    checkpoint_path = (
+        restart_analysis_contract is not None
+        or float(initial_load_factor) != 0.0
+        or int(step_index_offset) != 0
+        or bool(initial_steps)
+        or bool(initial_history)
+        or int(initial_total_iterations) != 0
+    )
+    if checkpoint_path:
+        # Checkpoint continuation has one authoritative implementation.  Do
+        # not let first-use acceleration substitute a second path-state
+        # machine with subtly different commit/retry semantics.
+        solver = _ORIGINAL_DISPLACEMENT_SOLVER
+        if solver is None:
+            raise RuntimeError(
+                "reference displacement-control solver is unavailable for restart"
+            )
+        return solver(
+            model=model,
+            T=T,
+            u0=u0,
+            F_const=F_const,
+            F_prop=F_prop,
+            stage_vectors=stage_vectors,
+            load_case=load_case,
+            constant_load_case=constant_load_case,
+            load_program=load_program,
+            displacement_control=displacement_control,
+            committed_states=committed_states,
+            num_layers=num_layers,
+            num_steps=num_steps,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+            info=info,
+            start_time=start_time,
+            resource_config=resource_config,
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
+            initial_reduced_displacements=initial_reduced_displacements,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            record_increment_snapshots=record_increment_snapshots,
+            initial_load_factor=initial_load_factor,
+            step_index_offset=step_index_offset,
+            initial_steps=initial_steps,
+            initial_history=initial_history,
+            initial_total_iterations=initial_total_iterations,
+            restart_analysis_contract=restart_analysis_contract,
+        )
 
     follower_active = ns._has_follower_pressure(
         load_case
@@ -1267,6 +1351,12 @@ def _solve_static_displacement_control_block(
             cancellation_token=cancellation_token,
             progress_callback=progress_callback,
             record_increment_snapshots=record_increment_snapshots,
+            initial_load_factor=initial_load_factor,
+            step_index_offset=step_index_offset,
+            initial_steps=initial_steps,
+            initial_history=initial_history,
+            initial_total_iterations=initial_total_iterations,
+            restart_analysis_contract=restart_analysis_contract,
         )
 
     if load_program is not None:
@@ -1403,6 +1493,8 @@ def _solve_static_displacement_control_block(
             committed_states = ns._commit_nonlinear_state_candidate(
                 committed_states,
                 states_new,
+                model=model,
+                accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
             )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)

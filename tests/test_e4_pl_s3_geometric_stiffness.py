@@ -18,6 +18,7 @@ from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.fe_core import FEMesh, Material
 from anysolver.matrix_assembly import assemble_geometric_stiffness_matrix
 from anysolver.nonlinear import solve_nonlinear_load_stepping
+from anysolver.nonlinear_state import StateTransactionError
 from anysolver.shell_sections import GeneralizedShellSection
 
 
@@ -410,7 +411,10 @@ def test_limit_point_gap_is_checked_before_boundary_or_matrix_evaluation(
         raise AssertionError("limit-point solve evaluated the model before its guard")
 
     monkeypatch.setattr(model, "apply_boundary_conditions", forbidden)
-    with pytest.raises(ElementCapabilityError, match="nonlinear_geometry"):
+    with pytest.raises(
+        StateTransactionError,
+        match="does not implement solver-owned native total-Lagrangian",
+    ):
         solve_nonlinear_load_stepping(
             model,
             element_states={1: _state()},

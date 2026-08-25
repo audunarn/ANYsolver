@@ -161,3 +161,51 @@ def test_fracture_displacement_control_is_explicitly_unsupported() -> None:
             displacement_control=DisplacementControl(node_id=2, dof="ux", target_displacement=1.0e-3),
             fracture_config=FractureConfig(threshold=1.0e-4),
         )
+
+
+def test_fracture_deletion_history_survives_exact_checkpoint_continuation() -> None:
+    config = FractureConfig(
+        threshold=1.0e-5,
+        residual_stiffness_fraction=0.1,
+        max_deleted_fraction=1.0,
+    )
+    uninterrupted_model = _one_shell_model()
+    uninterrupted = solve_static_nonlinear(
+        uninterrupted_model,
+        _tension_load(uninterrupted_model),
+        max_load_factor=1.25,
+        num_steps=5,
+        num_layers=3,
+        fracture_config=config,
+        convergence_settings="legacy",
+        emit_restart_checkpoint=True,
+    )
+    first_model = _one_shell_model()
+    first = solve_static_nonlinear(
+        first_model,
+        _tension_load(first_model),
+        max_load_factor=1.0,
+        num_steps=4,
+        num_layers=3,
+        fracture_config=config,
+        convergence_settings="legacy",
+        emit_restart_checkpoint=True,
+    )
+    assert first.restart_checkpoint["deleted_element_ids"] == [1]
+
+    resumed_model = _one_shell_model()
+    resumed = solve_static_nonlinear(
+        resumed_model,
+        _tension_load(resumed_model),
+        max_load_factor=1.25,
+        num_steps=1,
+        num_layers=3,
+        fracture_config=config,
+        convergence_settings="legacy",
+        restart_checkpoint=first.restart_checkpoint_bytes(),
+    )
+
+    assert uninterrupted.status == resumed.status
+    np.testing.assert_array_equal(uninterrupted.displacements, resumed.displacements)
+    assert uninterrupted.info["fracture_summary"] == resumed.info["fracture_summary"]
+    assert uninterrupted.restart_checkpoint_bytes() == resumed.restart_checkpoint_bytes()

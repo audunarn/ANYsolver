@@ -18,6 +18,7 @@ from anysolver.e4_pl_s3_state import (
     formulation_fingerprint_payload,
 )
 from anysolver.fe_core import Material
+from _e4_pl_s3_native_trial import native_trial_for_increment
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -149,6 +150,11 @@ def test_native_layered_response_rejects_nonexact_or_unsupported_layer_counts(
 ) -> None:
     nodes, triads, material = _fixture()
     state_layers = int(num_layers)
+    native_trial, exact_increment, _store = native_trial_for_increment(
+        nodes,
+        triads,
+        np.zeros(20, dtype=float),
+    )
     with pytest.raises(
         ValueError,
         match=r"num_layers must be one of \[3, 5, 7, 9, 11\]",
@@ -156,7 +162,7 @@ def test_native_layered_response_rejects_nonexact_or_unsupported_layer_counts(
         s3._native_layered_uncondensed_response(
             nodes,
             triads,
-            np.zeros(20, dtype=float),
+            exact_increment,
             nodes,
             np.eye(3, dtype=float),
             material,
@@ -164,6 +170,7 @@ def test_native_layered_response_rejects_nonexact_or_unsupported_layer_counts(
             0.1,
             _zero_layered_state(state_layers),
             num_layers,  # type: ignore[arg-type]
+            native_rotation_trial=native_trial,
         )
 
 

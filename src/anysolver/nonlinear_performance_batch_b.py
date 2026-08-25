@@ -36,6 +36,10 @@ from .elements import (
 )
 from .plasticity import lobatto_layers
 from . import nonlinear_performance as _performance
+from .nonlinear_element_evaluation import (
+    evaluate_nonlinear_element,
+    require_legacy_direct_nonlinear_element,
+)
 from .nonlinear_state import (
     NonlinearStateStore,
     begin_state_evaluation,
@@ -478,6 +482,10 @@ def _finalize_batch_b_element_states(
                 # state once at the converged displacement for public recovery.
                 element = batch.elements[index]
                 material = model.get_material(element.material_name)
+                require_legacy_direct_nonlinear_element(
+                    element,
+                    context="Batch B finalized initial-field recovery",
+                )
                 _force, _tangent, recovered_state = element.compute_nonlinear_response(
                     model.mesh,
                     material,
@@ -784,6 +792,10 @@ def _recover_initial_field_states(
         existing = committed_states.get(element_key)
         if not _performance._state_has_initial_fields(existing):
             continue
+        require_legacy_direct_nonlinear_element(
+            element,
+            context="Batch B residual-only initial-field recovery",
+        )
         _force, _tangent, recovered = element.compute_nonlinear_response(
             model.mesh,
             model.get_material(element.material_name),
@@ -815,7 +827,11 @@ def _batch_b_plan_assemble(
             residual_stiffness_fraction=float(residual_stiffness_fraction),
         )
     with self._lock:
-        state_token = begin_state_evaluation(committed_states)
+        state_token = begin_state_evaluation(
+            committed_states,
+            model=self.model,
+            displacements=displacements,
+        )
         start_total = time.perf_counter()
         self.timings.calls += 1
         if tangent:
@@ -980,13 +996,17 @@ def _batch_b_plan_assemble(
         for record in self.non_shell_elements:
             material = model.get_material(record.element.material_name)
             u_element = np.asarray(displacements, dtype=float)[record.dof_mapping]
-            f_element, k_element, trial_state = record.element.compute_nonlinear_response(
+            f_element, k_element, trial_state = evaluate_nonlinear_element(
+                record.element,
                 mesh,
                 material,
                 u_element,
                 committed_states.get(record.element_id),
                 self.num_layers,
                 tangent,
+                committed_states=committed_states,
+                state_token=state_token,
+                element_id=record.element_id,
             )
             self.force_values[record.force_positions] = np.asarray(
                 f_element, dtype=float
