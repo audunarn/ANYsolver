@@ -170,6 +170,7 @@ _LAYERED_NATIVE_CLOSED_CAPABILITIES = frozenset(
         "material_nonlinearity",
         "nonlinear_geometry",
         "patch_recovery",
+        "physical_director_reversal",
         "static_restart_history",
     }
 )
@@ -181,6 +182,7 @@ _GENERALIZED_NATIVE_CLOSED_CAPABILITIES = frozenset(
         "contact_state",
         "initial_fields",
         "nonlinear_geometry",
+        "physical_director_reversal",
         "static_restart_history",
     }
 )

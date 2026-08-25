@@ -548,6 +548,7 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
         "material_nonlinearity",
         "nonlinear_geometry",
         "patch_recovery",
+        "physical_director_reversal",
         "committed_state_recovery",
         "contact_state",
         "static_restart_history",
