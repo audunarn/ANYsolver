@@ -1,0 +1,398 @@
+{
+  "$defs": {
+    "file": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9A-F]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bytes",
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "patch_case": {
+      "additionalProperties": false,
+      "properties": {
+        "diagonal": {
+          "enum": [
+            "slash",
+            "backslash",
+            "alternating"
+          ]
+        },
+        "fraction_percent": {
+          "enum": [
+            0,
+            1,
+            5,
+            10,
+            25
+          ]
+        },
+        "level": {
+          "enum": [
+            20,
+            40,
+            80,
+            160
+          ]
+        },
+        "mask": {
+          "enum": [
+            "none",
+            "dispersed",
+            "chain",
+            "compact_cluster",
+            "boundary_band",
+            "hole_band"
+          ]
+        }
+      },
+      "required": [
+        "diagonal",
+        "fraction_percent",
+        "level",
+        "mask"
+      ],
+      "type": "object"
+    },
+    "sequence": {
+      "additionalProperties": false,
+      "properties": {
+        "diagonal": {
+          "enum": [
+            "slash",
+            "backslash",
+            "alternating"
+          ]
+        },
+        "fraction_percent": {
+          "enum": [
+            0,
+            1,
+            5,
+            10,
+            25
+          ]
+        },
+        "mask": {
+          "enum": [
+            "none",
+            "dispersed",
+            "chain",
+            "compact_cluster",
+            "boundary_band",
+            "hole_band"
+          ]
+        }
+      },
+      "required": [
+        "diagonal",
+        "fraction_percent",
+        "mask"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "anysolver.e4-pl-s3-mixed-structural-input-v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority": {
+      "additionalProperties": false,
+      "properties": {
+        "connectivity_manifest": {
+          "$ref": "#/$defs/file"
+        },
+        "input_schema": {
+          "$ref": "#/$defs/file"
+        },
+        "model_authority": {
+          "$ref": "#/$defs/file"
+        },
+        "programs": {
+          "additionalProperties": false,
+          "properties": {
+            "common": {
+              "$ref": "#/$defs/file"
+            },
+            "coordinator": {
+              "$ref": "#/$defs/file"
+            },
+            "producer": {
+              "$ref": "#/$defs/file"
+            },
+            "qualification_test": {
+              "$ref": "#/$defs/file"
+            }
+          },
+          "required": [
+            "common",
+            "coordinator",
+            "producer",
+            "qualification_test"
+          ],
+          "type": "object"
+        },
+        "q4_mechanics": {
+          "$ref": "#/$defs/file"
+        },
+        "qualification_contract": {
+          "$ref": "#/$defs/file"
+        }
+      },
+      "required": [
+        "connectivity_manifest",
+        "input_schema",
+        "model_authority",
+        "programs",
+        "q4_mechanics",
+        "qualification_contract"
+      ],
+      "type": "object"
+    },
+    "candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "const": "4e5b5976d4286ffd0cda5b8424d154132f3f8da0"
+        },
+        "parent": {
+          "const": "7d85ecef35daa6ebe11f11536a7ede4d288e0aa3"
+        },
+        "qualified_q4_formulation_id": {
+          "const": "E4_PL_QUALIFIED_Q4_HYBRID_V2"
+        },
+        "qualified_s3_formulation_id": {
+          "const": "E4_PL_QUALIFIED_S3_COMPANION_V1"
+        },
+        "subject": {
+          "const": "perf: amortize immutable S3 matrix validation"
+        },
+        "tree": {
+          "const": "96f60dcdd61a78111091ce4f93d7170cf7d0878a"
+        }
+      },
+      "required": [
+        "commit",
+        "parent",
+        "qualified_q4_formulation_id",
+        "qualified_s3_formulation_id",
+        "subject",
+        "tree"
+      ],
+      "type": "object"
+    },
+    "coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "convergence_reference": {
+          "additionalProperties": false,
+          "properties": {
+            "interface_series_max_odd_index": {
+              "const": 31
+            },
+            "length": {
+              "const": 1.0
+            },
+            "pressure": {
+              "const": 1000.0
+            },
+            "series_max_odd_index": {
+              "const": 99
+            },
+            "shear_correction": {
+              "const": "5/6"
+            },
+            "theory": {
+              "const": "INDEPENDENT_NAVIER_REISSNER_MINDLIN_UNIFORM_PRESSURE_V1"
+            },
+            "thickness": {
+              "const": 0.01
+            },
+            "width": {
+              "const": 1.0
+            }
+          },
+          "required": [
+            "interface_series_max_odd_index",
+            "length",
+            "pressure",
+            "series_max_odd_index",
+            "shear_correction",
+            "theory",
+            "thickness",
+            "width"
+          ],
+          "type": "object"
+        },
+        "convergence_sequences": {
+          "items": {
+            "$ref": "#/$defs/sequence"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "locking_fixture": {
+          "additionalProperties": false,
+          "properties": {
+            "diagonal": {
+              "const": "alternating"
+            },
+            "fractions_percent": {
+              "const": [
+                0,
+                10,
+                25
+              ]
+            },
+            "length": {
+              "const": 1.0
+            },
+            "longitudinal_divisions": {
+              "const": 160
+            },
+            "mask": {
+              "const": "DETERMINISTIC_STRIP_DISPERSED_V1"
+            },
+            "tip_force": {
+              "const": 1.0
+            },
+            "transverse_divisions": {
+              "const": 16
+            },
+            "width": {
+              "const": 0.1
+            }
+          },
+          "required": [
+            "diagonal",
+            "fractions_percent",
+            "length",
+            "longitudinal_divisions",
+            "mask",
+            "tip_force",
+            "transverse_divisions",
+            "width"
+          ],
+          "type": "object"
+        },
+        "patch_basis_cases": {
+          "items": {
+            "$ref": "#/$defs/patch_case"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "required_diagonals": {
+          "const": [
+            "slash",
+            "backslash",
+            "alternating"
+          ]
+        },
+        "required_fractions_percent": {
+          "const": [
+            0,
+            1,
+            5,
+            10,
+            25
+          ]
+        },
+        "required_levels": {
+          "const": [
+            20,
+            40,
+            80,
+            160
+          ]
+        },
+        "required_masks": {
+          "const": [
+            "dispersed",
+            "chain",
+            "compact_cluster",
+            "boundary_band",
+            "hole_band"
+          ]
+        },
+        "special_fixtures": {
+          "const": [
+            "ISOLATED_S3",
+            "PAIRED_S3",
+            "Q4_S3_Q4_CHAIN",
+            "DISTORTED_Q4_INTERFACE",
+            "ALL_SIX_D3_NUMBERINGS",
+            "PHYSICAL_DIRECTOR_REVERSAL",
+            "PUBLISHED_MESH_A",
+            "PUBLISHED_MESH_B"
+          ]
+        }
+      },
+      "required": [
+        "convergence_reference",
+        "convergence_sequences",
+        "locking_fixture",
+        "patch_basis_cases",
+        "required_diagonals",
+        "required_fractions_percent",
+        "required_levels",
+        "required_masks",
+        "special_fixtures"
+      ],
+      "type": "object"
+    },
+    "execution": {
+      "const": {
+        "allowed_changed_paths": [
+          "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
+          "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
+          "docs/reference_cases/e4_pl_s3_mixed_structural_input.json",
+          "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
+          "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+          "tests/test_e4_pl_s3_mixed_structural_qualification.py"
+        ],
+        "automatic_retry": false,
+        "canonical_cycles": 2,
+        "memory_limit_gib_per_process": 24,
+        "numerical_threads_per_process": 1,
+        "shards": [
+          "PATCH_EQUILIBRIUM_COVARIANCE",
+          "CONVERGENCE_INTERFACE_PARTICIPATION",
+          "LOCKING_AND_SPECIAL_FIXTURES"
+        ],
+        "timeout_seconds_per_process": 600,
+        "workers": 3
+      }
+    },
+    "schema": {
+      "const": "anysolver.e4-pl-s3-mixed-structural-input-v1"
+    }
+  },
+  "required": [
+    "authority",
+    "candidate",
+    "coverage",
+    "execution",
+    "schema"
+  ],
+  "type": "object"
+}
