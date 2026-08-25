@@ -288,6 +288,7 @@ class PreparedReferenceS3Components:
     minimum_group_size: int
     material_names: Tuple[str, ...]
     validation_signature: Tuple[Any, ...]
+    matrices_prevalidated: bool
 
     def diagnostics(self) -> Dict[str, Any]:
         if self.batched_element_ids and self.cached_element_ids:
@@ -309,6 +310,9 @@ class PreparedReferenceS3Components:
             "exact_element_cache_reuse_count": len(self.cached_element_ids),
             "exact_translation_group_count": len(self.group_element_ids),
             "component_evaluation_count": int(self.component_evaluation_count),
+            "matrix_shape_finite_symmetry_prevalidated": bool(
+                self.matrices_prevalidated
+            ),
             "element_ids": list(self.matrices),
             "group_element_ids": [list(group) for group in self.group_element_ids],
             "fallback_reasons": {
@@ -433,6 +437,16 @@ def prepare_reference_s3_components(
             for element_id, matrix in matrices.items()
         }
     )
+    matrices_prevalidated = bool(frozen_matrices) and all(
+        matrix.shape == (18, 18)
+        and bool(np.all(np.isfinite(matrix)))
+        and float(
+            np.linalg.norm(matrix - matrix.T)
+            / max(float(np.linalg.norm(matrix)), 1.0)
+        )
+        <= 1.0e-8
+        for matrix in frozen_matrices.values()
+    )
     frozen_element_cache_keys = MappingProxyType(
         {
             int(element_id): tuple(cache_key)
@@ -476,6 +490,7 @@ def prepare_reference_s3_components(
             model,
             tuple(sorted(candidate_material_names)),
         ),
+        matrices_prevalidated=matrices_prevalidated,
     )
 
 

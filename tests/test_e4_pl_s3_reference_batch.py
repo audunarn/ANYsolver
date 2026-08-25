@@ -15,6 +15,7 @@ from typing import Any, Mapping
 import numpy as np
 import pytest
 
+import anysolver.matrix_assembly as matrix_assembly_module
 import anysolver.s3_reference_batch as s3_batch_module
 from anysolver.activity import ElementActivity
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
@@ -214,6 +215,7 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
         "exact_element_cache_reuse_count": 0,
         "exact_translation_group_count": 1,
         "component_evaluation_count": 1,
+        "matrix_shape_finite_symmetry_prevalidated": True,
         "element_ids": list(range(1, 9)),
         "group_element_ids": [list(range(1, 9))],
         "fallback_reasons": {},
@@ -309,6 +311,50 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
     assert scaled_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is True
+
+
+def test_warm_immutable_s3_plan_reuses_one_time_matrix_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    plan = model.mesh._qualified_s3_reference_stiffness_plan
+    assert plan.matrices_prevalidated is True
+    assert all(
+        matrix.flags.writeable is False for matrix in plan.matrices.values()
+    )
+
+    calls = 0
+    original = matrix_assembly_module._relative_symmetry_error
+
+    def counted(matrix: Any) -> float:
+        nonlocal calls
+        calls += 1
+        return original(matrix)
+
+    monkeypatch.setattr(
+        matrix_assembly_module,
+        "_relative_symmetry_error",
+        counted,
+    )
+    repeated, info = assemble_stiffness_matrix(model)
+    np.testing.assert_array_equal(baseline.toarray(), repeated.toarray())
+    assert info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    # Only the assembled global CSR matrix is checked.  The eight exact,
+    # immutable local matrices retain their plan-build certificates.
+    assert calls == 1
+
+    element = model.mesh.elements[1]
+    original_mapping = np.asarray(element.get_dof_mapping(model.mesh))
+    monkeypatch.setattr(
+        element,
+        "get_dof_mapping",
+        lambda _mesh: original_mapping[:-1],
+    )
+    with pytest.raises(matrix_assembly_module.AssemblyError, match="expected"):
+        assemble_stiffness_matrix(model)
 
 
 def test_stiffness_batch_is_revision_bound_and_small_groups_fall_back() -> None:

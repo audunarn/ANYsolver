@@ -213,6 +213,7 @@ def _assemble_element_matrix(
 
     # Precompute shell matrices in a JIT-compiled batch for stiffness and mass assembly
     precomputed = {}
+    prevalidated_element_ids: set[int] = set()
     vectorized_shell_groups = []
     if matrix_type in {"stiffness", "mass"}:
         from .elements import ShellElement
@@ -355,6 +356,13 @@ def _assemble_element_matrix(
                 complete_candidate_items=True,
             )
             precomputed.update(prepared_s3.matrices)
+            if prepared_s3.matrices_prevalidated:
+                # The plan owns bytes-backed immutable matrices and binds the
+                # complete S3 eligibility/component-key preimage.  Shape,
+                # finiteness and symmetry were checked once when those exact
+                # arrays entered the plan, so warm assembly need not repeat
+                # three dense validations for every unchanged element.
+                prevalidated_element_ids.update(prepared_s3.matrices)
             s3_diagnostics = prepared_s3.diagnostics()
             s3_diagnostics["plan_reused"] = bool(s3_plan_reused)
             info["diagnostics"]["qualified_s3_reference_elastic_stiffness"] = (
@@ -593,13 +601,21 @@ def _assemble_element_matrix(
         else:
             element_matrix = element_matrix_getter(element, mesh, material)
 
-        element_matrix = _check_element_matrix_shape(
-            int(elem_id),
-            matrix_type,
-            element_matrix,
-            int(dof_mapping.size),
+        matrix_prevalidated = (
+            int(elem_id) in prevalidated_element_ids
+            and int(dof_mapping.size) == 18
         )
-        if matrix_type in {"stiffness", "mass", "geometric_stiffness"}:
+        if not matrix_prevalidated:
+            element_matrix = _check_element_matrix_shape(
+                int(elem_id),
+                matrix_type,
+                element_matrix,
+                int(dof_mapping.size),
+            )
+        if (
+            matrix_type in {"stiffness", "mass", "geometric_stiffness"}
+            and not matrix_prevalidated
+        ):
             local_symmetry = _relative_symmetry_error(element_matrix)
             if local_symmetry > 1.0e-8:
                 raise AssemblyError(
