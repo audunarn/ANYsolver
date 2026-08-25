@@ -40,6 +40,7 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from .initial_field_state import state_has_active_initial_fields
 from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
 from .nonlinear_state import (
     NonlinearStateStore,
@@ -72,7 +73,7 @@ _INITIAL_FIELD_KEYS = (
 
 
 def _state_has_initial_fields(state: Any) -> bool:
-    return isinstance(state, Mapping) and any(key in state for key in _INITIAL_FIELD_KEYS)
+    return state_has_active_initial_fields(state, _INITIAL_FIELD_KEYS)
 
 
 def _apply_initial_field_shell_overrides(

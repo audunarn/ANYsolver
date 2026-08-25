@@ -277,6 +277,11 @@ def corotational_element_response(
     Returns ``(None, None, None)`` for element types outside the corotational
     scope so the caller can fall back to the element's own response.
     """
+    if bool(getattr(element, "formulation_native_total_lagrangian", False)):
+        raise ValueError(
+            "qualified S3 uses formulation-native total-Lagrangian mechanics "
+            "and cannot be evaluated through the generic corotational wrapper"
+        )
     tangent_mode = str(tangent_mode).strip().lower()
     if tangent_mode not in {"rotated", "consistent"}:
         raise ValueError("corotational tangent_mode must be 'rotated' or 'consistent'")
@@ -500,4 +505,10 @@ def validate_corotational_scope(model: "FEModel") -> None:
     plasticity and beam fiber plasticity are supported.  The function is kept
     as the hook for future scope checks.
     """
+    for element in model.mesh.elements.values():
+        if bool(getattr(element, "formulation_native_total_lagrangian", False)):
+            raise ValueError(
+                "qualified S3 uses formulation-native total-Lagrangian mechanics "
+                "and cannot be selected with generic corotational kinematics"
+            )
     return None

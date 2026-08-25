@@ -57,6 +57,7 @@ from .fracture import (
     mpc_warning_for_deleted_shells,
 )
 from .linalg import MatrixClass, factorize
+from .initial_field_state import state_has_active_initial_fields
 from .jit_compiler import numba_thread_scope
 from .matrix_assembly import (
     _scatter_element_matrix,
@@ -1232,7 +1233,7 @@ def _copy_initial_states(initial_element_states: Optional[Mapping[int, Any]]) ->
 
 
 def _state_has_initial_field(state: Any) -> bool:
-    return isinstance(state, Mapping) and any(key in state for key in _INITIAL_FIELD_STATE_KEYS)
+    return state_has_active_initial_fields(state, _INITIAL_FIELD_STATE_KEYS)
 
 
 def _initial_value_summary(value: Any) -> Dict[str, Any]:
@@ -1341,11 +1342,8 @@ def _prepare_initial_states(
             if not isinstance(element, ShellElement):
                 raise TypeError(f"ShellInitialField requires a shell element; {element_id} is {type(element).__name__}")
             state = states.get(element_id)
-            if state is None:
-                state = element.init_nonlinear_state(num_layers)
-            elif not isinstance(state, Mapping):
+            if state is not None and not isinstance(state, Mapping):
                 raise TypeError(f"Initial state for shell element {element_id} must be a mapping")
-            state = copy.deepcopy(dict(state))
             values = field_value.state_values()
             field_type = "shell"
         else:
@@ -1363,21 +1361,60 @@ def _prepare_initial_states(
             state = copy.deepcopy(dict(state))
             values = field_value.state_values()
             field_type = "beam"
-        # Supplying a field for an element replaces its complete prior field
-        # definition. Mixing old components with a new source would make both
-        # the constitutive input and its provenance ambiguous; callers that
-        # want multiple components must provide them together in one field.
-        for key in (*_INITIAL_FIELD_STATE_KEYS, "initial_field_provenance"):
-            state.pop(key, None)
-        for key, array in values.items():
-            if array.size == 0 or np.any(~np.isfinite(array)):
-                raise ValueError(f"{key} for element {element_id} must contain finite values")
-            state[key] = array
-        state["initial_field_provenance"] = {
+        field_provenance = {
             "kind": field_type,
             "source": field_value.source,
             "components": sorted(values),
         }
+        for key, array in values.items():
+            if array.size == 0 or np.any(~np.isfinite(array)):
+                raise ValueError(
+                    f"{key} for element {element_id} must contain finite values"
+                )
+        initialized_atomically = False
+        if isinstance(field_value, ShellInitialField):
+            model_bound_initializer = getattr(
+                element,
+                "init_model_bound_nonlinear_state",
+                None,
+            )
+            if callable(model_bound_initializer):
+                if state is not None:
+                    raise ValueError(
+                        "Cannot replace qualified model-bound initial fields on an "
+                        f"existing state for element {element_id}; rebuild the virgin "
+                        "state atomically or continue the stored restart history."
+                    )
+                state = model_bound_initializer(
+                    model.mesh,
+                    model.get_material(element.material_name),
+                    num_layers,
+                    initial_fields=values,
+                    initial_field_provenance=field_provenance,
+                )
+                if not isinstance(state, Mapping):
+                    raise TypeError(
+                        f"Model-bound initializer for element {element_id} must return a mapping"
+                    )
+                initialized_atomically = True
+            elif state is None:
+                state = element.init_nonlinear_state(num_layers)
+        if not isinstance(state, Mapping):
+            raise TypeError(
+                f"Initial state for element {element_id} must be a mapping"
+            )
+        if not initialized_atomically:
+            state = copy.deepcopy(dict(state))
+        # Supplying a field for an element replaces its complete prior field
+        # definition. Mixing old components with a new source would make both
+        # the constitutive input and its provenance ambiguous; callers that
+        # want multiple components must provide them together in one field.
+        if not initialized_atomically:
+            for key in (*_INITIAL_FIELD_STATE_KEYS, "initial_field_provenance"):
+                state.pop(key, None)
+            for key, array in values.items():
+                state[key] = array
+            state["initial_field_provenance"] = field_provenance
         validate_initial_field_state(
             element,
             model.get_material(element.material_name),

@@ -36,6 +36,9 @@ from .e4_pl_s3_state import (
     BUBBLE_POLYNOMIAL_SCALE,
     BUBBLE_RELATIVE_TOLERANCE,
     BUBBLE_STEP_TOLERANCE,
+    INITIAL_FIELD_NAMES,
+    build_element_configuration_descriptor,
+    build_state_identity,
     DIRECTOR_GAUGE_ID,
     DRILL_SCALE_INVERSE_METRIC_SQRT,
     DRILL_SCALE_PROJECTOR,
@@ -62,6 +65,9 @@ from .e4_pl_s3_state import (
     qualified_s3_triangle_frame,
     reconstruct_director_triad,
     require_qualified_s3_quality,
+    initialize_zero_committed_s3_state,
+    resolved_material_descriptor,
+    validate_committed_s3_state,
 )
 from .materials import is_isotropic_material
 from .plasticity import plane_stress_return_map
@@ -1603,6 +1609,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
     """Opt-in three-node flat MITC3+ shell with three-mode PL completion."""
 
     formulation_id = FORMULATION_ID
+    formulation_native_total_lagrangian = True
     dynamic_algebraic_nullity = 3
     dynamic_algebraic_policy = ALGEBRAIC_COORDINATE_POLICY_ID
     dynamic_algebraic_mass_witness = "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1"
@@ -2802,8 +2809,131 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             dtype=float,
         )
 
-    def init_nonlinear_state(self, *args: Any, **kwargs: Any) -> Any:
-        raise self._gap("material_nonlinearity")
+    def init_model_bound_nonlinear_state(
+        self,
+        mesh: Any,
+        material: Any,
+        num_layers: int,
+        *,
+        initial_fields: Optional[Mapping[str, Any]] = None,
+        initial_field_provenance: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create a complete qualified state bound to the current model."""
+
+        (
+            coordinates,
+            frame,
+            element_descriptor,
+            material_descriptor,
+        ) = self._model_bound_nonlinear_context(mesh, material)
+        return initialize_zero_committed_s3_state(
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            reference_coordinates=coordinates,
+            reference_frame=frame,
+            element_descriptor=element_descriptor,
+            material_descriptor=material_descriptor,
+            num_layers=num_layers,
+            material_symmetry=str(material_descriptor["material_symmetry"]),
+            equivalent_stress_measure=str(
+                material_descriptor["equivalent_stress_measure"]
+            ),
+            initial_fields=initial_fields,
+            initial_field_provenance=initial_field_provenance,
+        )
+
+    def _model_bound_nonlinear_context(
+        self,
+        mesh: Any,
+        material: Any,
+    ) -> tuple[np.ndarray, np.ndarray, Dict[str, Any], Dict[str, Any]]:
+        if self.shell_section is not None:
+            raise self._gap("material_nonlinearity")
+        coordinates = self.get_node_coordinates(mesh)
+        frame, _local, quality = triangle_frame(
+            coordinates,
+            self.reference_normal,
+        )
+        _require_admitted_quality(quality, enforce_positive_winding=True)
+        element_descriptor = build_element_configuration_descriptor(
+            thickness=self.thickness,
+            reference_normal=self.reference_normal,
+            material_direction=self.material_direction,
+            material_angle_deg=self.material_angle_deg,
+            shell_section=None,
+        )
+        material_descriptor = resolved_material_descriptor(material)
+        return coordinates, frame, element_descriptor, material_descriptor
+
+    def validate_model_bound_nonlinear_state(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int,
+        *,
+        expected_committed_total_u: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Validate a committed state against current element/model identity."""
+
+        (
+            coordinates,
+            frame,
+            element_descriptor,
+            material_descriptor,
+        ) = self._model_bound_nonlinear_context(mesh, material)
+        initial_fields = {
+            name: state[name]
+            for name in INITIAL_FIELD_NAMES
+            if isinstance(state, Mapping) and name in state
+        }
+        provenance = (
+            state.get("initial_field_provenance", {})
+            if isinstance(state, Mapping)
+            else {}
+        )
+        identity = build_state_identity(
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            reference_coordinates=coordinates,
+            reference_frame=frame,
+            element_descriptor=element_descriptor,
+            material_descriptor=material_descriptor,
+            num_layers=num_layers,
+            material_symmetry=str(material_descriptor["material_symmetry"]),
+            equivalent_stress_measure=str(
+                material_descriptor["equivalent_stress_measure"]
+            ),
+            initial_fields=initial_fields,
+            initial_field_provenance=provenance,
+        )
+        return validate_committed_s3_state(
+            state,
+            expected_identity=identity,
+            expected_num_layers=num_layers,
+            expected_committed_total_u=expected_committed_total_u,
+        )
+
+    def init_nonlinear_state(
+        self,
+        num_layers: int,
+        *,
+        mesh: Optional[Any] = None,
+        material: Optional[Any] = None,
+        initial_fields: Optional[Mapping[str, Any]] = None,
+        initial_field_provenance: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        if mesh is None or material is None:
+            raise ValueError(
+                "qualified S3 nonlinear state is model-bound; provide mesh and material"
+            )
+        return self.init_model_bound_nonlinear_state(
+            mesh,
+            material,
+            num_layers,
+            initial_fields=initial_fields,
+            initial_field_provenance=initial_field_provenance,
+        )
 
     def compute_nonlinear_response(self, *args: Any, **kwargs: Any) -> Any:
         raise self._gap("nonlinear_geometry")
