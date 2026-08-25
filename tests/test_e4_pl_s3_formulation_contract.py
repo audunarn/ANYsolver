@@ -26,7 +26,9 @@ from anysolver.e4_pl_s3_element import (
     MITC3_PLUS_SOURCE_BYTES,
     MITC3_PLUS_SOURCE_SHA256,
     QUADRATURE_ID,
+    RECOVERY_POLICY_ID,
     REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
+    RESULTANT_SUMMARY_POLICY_ID,
     TRIANGLE_QUADRATURE,
     TYING_POINTS,
 )
@@ -102,7 +104,51 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
         "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
         "mass_moment_id": MASS_MOMENT_ID,
         "quadrature_id": "dunavant_degree5_7point",
+        "recovery_policy_id": RECOVERY_POLICY_ID,
         "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1",
+    }
+    assert contract["recovery_policy"] == {
+        "bubble_state": "ELASTIC_SCHUR_BACK_SUBSTITUTION_USED_BY_THE_TANGENT",
+        "director_reversal": "EXCLUDED_PENDING_NATIVE_REVERSAL_PARITY",
+        "engineering_conventions": (
+            "MEMBRANE_AND_CURVATURE_ENGINEERING_SHEAR_WITH_TENSOR_N_AND_M"
+        ),
+        "failure_policy": (
+            "QUALIFIED_RECOVERY_ERRORS_PROPAGATE_WITHOUT_SILENT_ELEMENT_OMISSION"
+        ),
+        "generalized_sections": (
+            "SEVEN_STATION_RESULTANTS_ONLY_WITHOUT_FABRICATED_PHYSICAL_STRESS"
+        ),
+        "geometric_prestress_provenance": (
+            "HOMOGENEOUS_PHYSICAL_RECOVERY_EMITS_REFERENCE_BUBBLE_AND_"
+            "THROUGH_THICKNESS_PROFILE_IDS_GENERALIZED_RECOVERY_DOES_NOT"
+        ),
+        "global_transport": (
+            "SURFACE_TENSORS_AND_N_M_BY_FRAME_CONGRUENCE_Q_BY_FRAME_VECTOR_MAP"
+        ),
+        "hill48_measure": (
+            "MAX_TOP_BOTTOM_MATERIAL_AXIS_PLANE_STRESS_TRANSVERSE_SHEAR_"
+            "EXCLUDED_UTILIZATION_OVER_X"
+        ),
+        "homogeneous_surface_stress": "SIGMA_M=N_OVER_H_SIGMA_B=6M_OVER_H_SQUARED",
+        "kinematics": "NATIVE_SEVEN_STATION_MITC3_PLUS_WITH_RECOVERED_BUBBLE",
+        "material_orientation": (
+            "PHYSICAL_SURFACE_DIRECTION_PLUS_SIGNED_ANGLE_ABOUT_OWNER_DIRECTOR"
+        ),
+        "nonlinear_history_patch": "EXCLUDED_PENDING_FORMULATION_NATIVE_PARITY",
+        "numerical_fields": "PL_AND_DRILL_EXCLUDED_FROM_PHYSICAL_RECOVERY",
+        "policy_id": RECOVERY_POLICY_ID,
+        "resultant_sign": "TENSION_POSITIVE_N_M_Q",
+        "summary_policy": RESULTANT_SUMMARY_POLICY_ID,
+        "surface_sign": (
+            "TOP_PLUS_H_OVER_2_ALONG_AUTHORITATIVE_DIRECTOR_BOTTOM_MINUS_H_OVER_2"
+        ),
+        "transverse_shear": (
+            "Q_OVER_H_EQUALS_FIVE_SIXTHS_G_GAMMA_REPEATED_AT_BOTH_SURFACES"
+        ),
+        "von_mises_measure": (
+            "MAX_TOP_BOTTOM_3D_EQUIVALENT_WITH_AVERAGE_TRANSVERSE_SHEAR"
+        ),
     }
     assert contract["dynamic_policy"]["descriptor_modal_policy"] == DESCRIPTOR_MODAL_POLICY_ID
     assert float(contract["dynamic_policy"]["descriptor_shift_ratio"]) == (

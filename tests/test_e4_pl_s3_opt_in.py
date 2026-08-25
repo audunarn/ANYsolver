@@ -376,8 +376,21 @@ def test_native_linear_recovery_excludes_pl_fields() -> None:
     numerical = element.numerical_internal_force(displacement)
     assert np.array_equal(numerical["hourglass"], np.zeros(18))
     assert np.array_equal(numerical["numerical"], numerical["pl"])
-    with pytest.raises(NotImplementedError, match="global recovery"):
-        element.compute_stresses(mesh, displacement, _material(), return_global=True)
+    global_recovery = element.compute_stresses(
+        mesh,
+        displacement,
+        _material(),
+        return_global=True,
+    )
+    assert global_recovery["recovery_scope"] == (
+        "qualified_s3_local_and_global_physical"
+    )
+    assert global_recovery["global_membrane_resultant_tensors"].shape == (7, 3, 3)
+    assert global_recovery["global_bending_resultant_tensors"].shape == (7, 3, 3)
+    assert global_recovery["global_transverse_shear_resultants"].shape == (7, 3)
+    for surface in ("top", "bot"):
+        for component in ("xx", "yy", "zz", "xy", "yz", "xz"):
+            assert global_recovery[f"global_{component}_{surface}"].shape == (7,)
 
 
 def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() -> None:
@@ -406,6 +419,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "algebraic_coordinate_policy",
         "geometric_stiffness_policy",
         "mass_moment_id",
+        "recovery_policy_id",
         "state_layout_id",
     ):
         historical.pop(key)
@@ -416,6 +430,22 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     ):
         migrated = shell_element_from_dict(historical)
     assert type(migrated) is LegacyShellElement
+    for marker in (
+        "algebraic_coordinate_policy",
+        "bubble_convention",
+        "dynamic_reduction_policy",
+        "formulation_schema",
+        "geometric_stiffness_policy",
+        "mass_moment_id",
+        "quadrature_id",
+        "recovery_policy_id",
+        "state_layout_id",
+    ):
+        with pytest.raises(
+            ValueError,
+            match="retains qualified S3 fingerprint markers.*missing formulation_id",
+        ):
+            shell_element_from_dict(dict(historical, **{marker: "retained"}))
 
     mutated = dict(payload, formulation_id="E4_PL_QUALIFIED_S3_UNKNOWN")
     with pytest.raises(ValueError, match="unknown serialized"):
@@ -424,6 +454,12 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     missing.pop("formulation_id")
     with pytest.raises(ValueError, match="missing formulation_id"):
         shell_element_from_dict(missing)
+    generic_with_fingerprint = dict(missing, type="ShellElement")
+    with pytest.raises(
+        ValueError,
+        match="retains qualified S3 fingerprint markers.*missing formulation_id",
+    ):
+        shell_element_from_dict(generic_with_fingerprint)
     missing_mass_identity = dict(payload)
     missing_mass_identity.pop("mass_moment_id")
     with pytest.raises(ValueError, match="mass moment identity"):
@@ -439,6 +475,16 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     )
     with pytest.raises(ValueError, match="geometric stiffness policy"):
         shell_element_from_dict(mutated_geometric)
+    missing_recovery_policy = dict(payload)
+    missing_recovery_policy.pop("recovery_policy_id")
+    with pytest.raises(ValueError, match="recovery policy"):
+        shell_element_from_dict(missing_recovery_policy)
+    mutated_recovery_policy = dict(
+        payload,
+        recovery_policy_id="LEGACY_TRI3_SURFACE_RECOVERY",
+    )
+    with pytest.raises(ValueError, match="recovery policy"):
+        shell_element_from_dict(mutated_recovery_policy)
     for key, value, message in (
         ("drilling_stabilization", 0.01, "no user drilling coefficient"),
         ("hourglass_stabilization", 0.01, "no hourglass coefficient"),

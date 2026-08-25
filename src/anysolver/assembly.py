@@ -1192,13 +1192,24 @@ def compute_stresses(
             continue
         material = model.get_material(element.material_name)
         dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
-        if dof_mapping.size == 0 or int(dof_mapping.max()) >= displacements.size:
+        if (
+            dof_mapping.size == 0
+            or int(dof_mapping.min()) < 0
+            or int(dof_mapping.max()) >= displacements.size
+        ):
+            if bool(getattr(element, "recovery_errors_fail_closed", False)):
+                raise ValueError(
+                    "fail-closed element recovery requires a complete in-range "
+                    "DOF mapping"
+                )
             continue
         try:
             stresses[elem_id] = element.compute_stresses(
                 mesh, displacements[dof_mapping], material, return_global=return_global
             )
         except (IndexError, ValueError):
+            if bool(getattr(element, "recovery_errors_fail_closed", False)):
+                raise
             continue
     return stresses
 

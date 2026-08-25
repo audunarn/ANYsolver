@@ -5,6 +5,8 @@ import pytest
 
 from anysolver import (
     AnyStructureFEMConfig,
+    FEModel,
+    QualifiedE4PLS3ShellElement,
     build_fe_model_from_generated_geometry,
     build_symmetric_load_case,
     idealize_generated_geometry_members,
@@ -13,6 +15,11 @@ from anysolver import (
     run_anystructure_fem_mode,
 )
 from anysolver.assembly import solve_linear
+from anysolver.e4_pl_s3_element import (
+    HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID,
+    REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
+    RESULTANT_SUMMARY_POLICY_ID,
+)
 from anysolver.elements import BeamElement, ShellElement
 from anysolver.matrix_assembly import assemble_geometric_stiffness_matrix
 
@@ -44,6 +51,29 @@ def _square_shell_geometry():
         ],
         "shells": [{"id": 1, "node_ids": [1, 2, 3, 4], "thickness": 0.02}],
     }
+
+
+def _qualified_s3_model() -> tuple[FEModel, QualifiedE4PLS3ShellElement]:
+    model = FEModel("qualified-s3-prestress-consumer")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    for node_id, coordinate in enumerate(
+        (
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (0.5, np.sqrt(3.0) / 2.0, 0.0),
+        ),
+        start=1,
+    ):
+        model.add_node(node_id, *coordinate)
+    element = QualifiedE4PLS3ShellElement(
+        1,
+        (1, 2, 3),
+        "steel",
+        thickness=0.1,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    model.add_element(1, element)
+    return model, element
 
 
 def _cylinder_geometry(num_circ=8):
@@ -256,6 +286,153 @@ def test_prestress_recovery_returns_shell_states_from_static_result():
     assert summary["shell_elements"] == 1
     assert np.asarray(states[1]["membrane_forces_at_gauss"]).shape == (4, 3)
     assert np.asarray(states[1]["bending_moments_at_gauss"]).shape == (4, 3)
+
+
+def test_qualified_s3_prestress_consumer_preserves_all_seven_native_stations():
+    model, element = _qualified_s3_model()
+    displacement = 2.0e-5 * np.sin(
+        np.arange(model.mesh.dof_manager.total_dofs, dtype=float) + 0.23
+    )
+    direct = element.compute_stresses(
+        model.mesh,
+        displacement,
+        model.get_material("steel"),
+    )
+
+    states, summary = recover_prestress_from_static_result(model, displacement)
+
+    membrane = np.asarray(states[1]["membrane_forces_at_gauss"])
+    bending = np.asarray(states[1]["bending_moments_at_gauss"])
+    assert membrane.shape == bending.shape == (len(element.gauss_points), 3) == (7, 3)
+    np.testing.assert_array_equal(membrane, direct["membrane_resultants"])
+    np.testing.assert_array_equal(bending, direct["bending_resultants"])
+    np.testing.assert_array_equal(
+        (
+            states[1]["membrane_force_x"],
+            states[1]["membrane_force_y"],
+            states[1]["membrane_force_xy"],
+        ),
+        np.average(membrane, axis=0, weights=element.gauss_weights),
+    )
+    assert states[1]["resultant_summary_policy"] == RESULTANT_SUMMARY_POLICY_ID
+    assert states[1]["bubble_linearization_policy"] == (
+        REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID
+    )
+    assert states[1]["through_thickness_stress_profile"] == (
+        HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID
+    )
+    assert "transverse_shear_resultants" not in states[1]
+    assert summary["shell_elements"] == 1
+    assert summary["max_shell_compression_resultant"] == pytest.approx(
+        max(float(np.max(-membrane[:, :2])), 0.0)
+    )
+    geometric = element.compute_geometric_stiffness_matrix(
+        model.mesh,
+        model.get_material("steel"),
+        states[1],
+    )
+    assert np.all(np.isfinite(geometric))
+    np.testing.assert_array_equal(geometric, geometric.T)
+    assert np.linalg.norm(geometric) > 0.0
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "six_stations",
+        "eight_stations",
+        "mismatched",
+        "nan",
+        "infinite",
+        "missing_membrane",
+        "missing_bending",
+    ),
+)
+def test_shell_prestress_consumer_rejects_wrong_or_nonfinite_station_fields(
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+) -> None:
+    model, _element = _qualified_s3_model()
+    membrane = np.zeros((7, 3), dtype=float)
+    bending = np.zeros_like(membrane)
+    if mutation == "six_stations":
+        membrane = membrane[:6]
+        bending = bending[:6]
+    elif mutation == "eight_stations":
+        membrane = np.vstack((membrane, np.zeros((1, 3))))
+        bending = np.vstack((bending, np.zeros((1, 3))))
+    elif mutation == "mismatched":
+        bending = bending[:6]
+    elif mutation == "nan":
+        membrane[3, 1] = np.nan
+    else:
+        if mutation == "infinite":
+            bending[5, 2] = np.inf
+
+    stress = {}
+    if mutation != "missing_membrane":
+        stress["membrane_resultants"] = membrane
+    if mutation != "missing_bending":
+        stress["bending_resultants"] = bending
+
+    monkeypatch.setattr(
+        "anysolver.anystructure_fem_mode.compute_stresses",
+        lambda *_args, **_kwargs: {1: stress},
+    )
+    with pytest.raises(
+        ValueError,
+        match=(
+            "requires paired membrane and bending"
+            if mutation.startswith("missing")
+            else "inconsistent or non-finite generalized shell resultant"
+        ),
+    ):
+        recover_prestress_from_static_result(
+            model,
+            np.zeros(model.mesh.dof_manager.total_dofs),
+        )
+
+
+def test_shell_prestress_consumer_prefers_native_resultants_over_stress_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _element = _qualified_s3_model()
+    membrane = np.arange(21, dtype=float).reshape(7, 3) - 9.0
+    bending = 0.1 * membrane
+    monkeypatch.setattr(
+        "anysolver.anystructure_fem_mode.compute_stresses",
+        lambda *_args, **_kwargs: {
+            1: {
+                "membrane_resultants": membrane,
+                "bending_resultants": bending,
+                "membrane_xx": np.full(7, 9.9e20),
+                "membrane_yy": np.full(7, -9.9e20),
+                "membrane_xy": np.full(7, 4.2e20),
+            }
+        },
+    )
+
+    states, _summary = recover_prestress_from_static_result(
+        model,
+        np.zeros(model.mesh.dof_manager.total_dofs),
+    )
+
+    np.testing.assert_array_equal(states[1]["membrane_forces_at_gauss"], membrane)
+    np.testing.assert_array_equal(states[1]["bending_moments_at_gauss"], bending)
+    weighted = np.average(
+        membrane,
+        axis=0,
+        weights=model.mesh.elements[1].gauss_weights,
+    )
+    np.testing.assert_array_equal(
+        (
+            states[1]["membrane_force_x"],
+            states[1]["membrane_force_y"],
+            states[1]["membrane_force_xy"],
+        ),
+        weighted,
+    )
+    assert not np.array_equal(weighted, np.mean(membrane, axis=0))
 
 
 def test_prestress_recovery_preserves_pure_bending_gauss_resultants():

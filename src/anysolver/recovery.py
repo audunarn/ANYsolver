@@ -558,7 +558,16 @@ def _compute_one_element_stress(
         dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
     else:
         dof_mapping = np.asarray(dof_mapping, dtype=np.intp)
-    if dof_mapping.size == 0 or int(dof_mapping.max()) >= displacements.size:
+    if (
+        dof_mapping.size == 0
+        or int(dof_mapping.min()) < 0
+        or int(dof_mapping.max()) >= displacements.size
+    ):
+        if bool(getattr(element, "recovery_errors_fail_closed", False)):
+            raise ValueError(
+                "fail-closed element recovery requires a complete in-range "
+                "DOF mapping"
+            )
         return None
     try:
         return int(element_id), element.compute_stresses(
@@ -568,6 +577,8 @@ def _compute_one_element_stress(
             return_global=return_global,
         )
     except (IndexError, ValueError):
+        if bool(getattr(element, "recovery_errors_fail_closed", False)):
+            raise
         return None
 
 
@@ -2149,9 +2160,34 @@ def recover_stress_result(
         model,
         recovery.selected_element_ids(model),
     )
+    if recovery.include_stresses and (
+        kinematics is not None or nonlinear_result is not None
+    ):
+        require_model_element_capabilities(
+            model,
+            "nonlinear_geometry",
+            context="recover_stress_result",
+            element_ids=selected_ids,
+        )
+    required_capabilities: set[str] = set()
+    if return_global and recovery.include_stresses:
+        required_capabilities.add("global_recovery")
+    if patch_config is not None:
+        required_capabilities.update(("global_recovery", "patch_recovery"))
+    if required_capabilities:
+        require_model_element_capabilities(
+            model,
+            required_capabilities,
+            context="recover_stress_result",
+            element_ids=selected_ids,
+        )
     states, state_source, initial_warnings = _coerce_element_states(
         nonlinear_result=nonlinear_result,
         element_states=element_states,
+    )
+    resolved_kinematics, analysis_context = _recovery_analysis_context(
+        nonlinear_result,
+        kinematics,
     )
     selected_set = set(selected_ids)
     selected_state_ids = tuple(
@@ -2168,27 +2204,6 @@ def recover_stress_result(
             context="recover_stress_result",
             element_ids=selected_state_ids,
         )
-    required_capabilities: set[str] = set()
-    if return_global and recovery.include_stresses:
-        required_capabilities.add("global_recovery")
-    if patch_config is not None:
-        required_capabilities.update(("global_recovery", "patch_recovery"))
-    if required_capabilities:
-        require_model_element_capabilities(
-            model,
-            required_capabilities,
-            context="recover_stress_result",
-            element_ids=selected_ids,
-        )
-    displacement_values = _recovery_displacements(
-        model,
-        displacements,
-        nonlinear_result,
-    )
-    resolved_kinematics, analysis_context = _recovery_analysis_context(
-        nonlinear_result,
-        kinematics,
-    )
     selected_states = {
         int(element_id): state
         for element_id, state in sorted(states.items(), key=lambda item: int(item[0]))
@@ -2196,6 +2211,33 @@ def recover_stress_result(
     }
     state_snapshot = (
         copy.deepcopy(selected_states) if copy_committed_states else dict(selected_states)
+    )
+    if not recovery.include_stresses:
+        _disabled_stresses, report = recover_element_stresses_with_report(
+            model,
+            displacements,
+            recovery,
+            return_global=bool(return_global),
+            resource_config=resource_config,
+        )
+        provenance = StressRecoveryProvenance(
+            mode="disabled",
+            state_source=state_source,
+            analysis_context=analysis_context,
+            return_global=bool(return_global),
+            warnings=initial_warnings,
+        )
+        return StressRecoveryResult(
+            {},
+            provenance,
+            state_snapshot,
+            report,
+            None,
+        )
+    displacement_values = _recovery_displacements(
+        model,
+        displacements,
+        nonlinear_result,
     )
 
     # A valid generalized-section state already contains the exact nonlinear
@@ -2269,22 +2311,6 @@ def recover_stress_result(
                 current_coords, dtype=float
             ).copy()
             elastic_stresses[int(element_id)] = contextual
-    if not recovery.include_stresses:
-        provenance = StressRecoveryProvenance(
-            mode="disabled",
-            state_source=state_source,
-            analysis_context=analysis_context,
-            return_global=bool(return_global),
-            warnings=initial_warnings,
-        )
-        return StressRecoveryResult(
-            {},
-            provenance,
-            state_snapshot,
-            report,
-            None,
-        )
-
     recovered: Dict[int, Dict[str, Any]] = {}
     per_element_source: Dict[int, str] = {}
     per_element_component_sources: Dict[int, Dict[str, str]] = {}

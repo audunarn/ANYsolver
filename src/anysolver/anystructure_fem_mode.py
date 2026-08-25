@@ -1226,38 +1226,82 @@ def recover_prestress_from_static_result(
     for element_id, element in model.mesh.elements.items():
         stress = stresses.get(element_id)
         if isinstance(element, ShellElement) and stress:
-            if "membrane_resultants" in stress:
+            expected_stations = len(np.asarray(element.gauss_points))
+            if expected_stations <= 0:
+                raise ValueError("shell prestress recovery requires integration stations")
+            station_weights = np.asarray(element.gauss_weights, dtype=float).reshape(-1)
+            if (
+                station_weights.shape != (expected_stations,)
+                or not np.all(np.isfinite(station_weights))
+                or np.any(station_weights <= 0.0)
+                or not np.isfinite(float(np.sum(station_weights)))
+                or float(np.sum(station_weights)) <= 0.0
+            ):
+                raise ValueError(
+                    "shell prestress recovery requires positive finite integration weights"
+                )
+            has_membrane_resultants = "membrane_resultants" in stress
+            has_bending_resultants = "bending_resultants" in stress
+            if has_membrane_resultants != has_bending_resultants:
+                raise ValueError(
+                    "shell resultant recovery requires paired membrane and "
+                    "bending fields"
+                )
+            if has_membrane_resultants:
                 membrane_resultants = np.asarray(
                     stress["membrane_resultants"],
                     dtype=float,
                 )
                 bending_resultants = np.asarray(
-                    stress.get(
-                        "bending_resultants",
-                        np.zeros_like(membrane_resultants),
-                    ),
+                    stress["bending_resultants"],
                     dtype=float,
                 )
                 if (
-                    membrane_resultants.ndim != 2
-                    or membrane_resultants.shape[1] != 3
-                    or bending_resultants.shape != membrane_resultants.shape
+                    membrane_resultants.shape != (expected_stations, 3)
+                    or bending_resultants.shape != (expected_stations, 3)
+                    or not np.all(np.isfinite(membrane_resultants))
+                    or not np.all(np.isfinite(bending_resultants))
                 ):
                     raise ValueError(
-                        "inconsistent generalized shell resultant recovery shape"
+                        "inconsistent or non-finite generalized shell resultant "
+                        f"recovery shape; expected {(expected_stations, 3)}"
                     )
-                mean_membrane = np.mean(membrane_resultants, axis=0)
+                mean_membrane = np.average(
+                    membrane_resultants,
+                    axis=0,
+                    weights=station_weights,
+                )
             else:
                 sx_gp = np.asarray(stress.get("membrane_xx", np.zeros(1)), dtype=float).reshape(-1)
                 sy_gp = np.asarray(stress.get("membrane_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
                 txy_gp = np.asarray(stress.get("membrane_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-                if sy_gp.size != sx_gp.size or txy_gp.size != sx_gp.size:
-                    raise ValueError("inconsistent shell membrane stress recovery shape")
+                if (
+                    sx_gp.size != expected_stations
+                    or sy_gp.size != expected_stations
+                    or txy_gp.size != expected_stations
+                    or not np.all(np.isfinite(sx_gp))
+                    or not np.all(np.isfinite(sy_gp))
+                    or not np.all(np.isfinite(txy_gp))
+                ):
+                    raise ValueError(
+                        "inconsistent or non-finite shell membrane stress "
+                        f"recovery shape; expected {expected_stations} stations"
+                    )
                 bx_gp = np.asarray(stress.get("bending_xx", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
                 by_gp = np.asarray(stress.get("bending_yy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
                 bxy_gp = np.asarray(stress.get("bending_xy", np.zeros_like(sx_gp)), dtype=float).reshape(-1)
-                if bx_gp.size != sx_gp.size or by_gp.size != sx_gp.size or bxy_gp.size != sx_gp.size:
-                    raise ValueError("inconsistent shell bending stress recovery shape")
+                if (
+                    bx_gp.size != expected_stations
+                    or by_gp.size != expected_stations
+                    or bxy_gp.size != expected_stations
+                    or not np.all(np.isfinite(bx_gp))
+                    or not np.all(np.isfinite(by_gp))
+                    or not np.all(np.isfinite(bxy_gp))
+                ):
+                    raise ValueError(
+                        "inconsistent or non-finite shell bending stress "
+                        f"recovery shape; expected {expected_stations} stations"
+                    )
 
                 thickness = float(element.thickness)
                 membrane_resultants = np.column_stack((sx_gp, sy_gp, txy_gp)) * thickness
@@ -1269,22 +1313,32 @@ def recover_prestress_from_static_result(
                 )
                 mean_membrane = np.array(
                     (
-                        float(np.mean(sx_gp)) * thickness,
-                        float(np.mean(sy_gp)) * thickness,
-                        float(np.mean(txy_gp)) * thickness,
+                        float(np.average(sx_gp, weights=station_weights)) * thickness,
+                        float(np.average(sy_gp, weights=station_weights)) * thickness,
+                        float(np.average(txy_gp, weights=station_weights)) * thickness,
                     ),
                     dtype=float,
                 )
-            states[int(element_id)] = {
-                # Legacy mean resultants remain for serialized/downstream
-                # compatibility; the enhanced Mindlin operator consumes the
-                # Gauss-point fields below.
+            state = {
+                # Legacy scalar summaries remain for serialized/downstream
+                # compatibility, but are now quadrature-weighted.  The
+                # enhanced Mindlin operator consumes the full station fields.
                 "membrane_force_x": float(mean_membrane[0]),
                 "membrane_force_y": float(mean_membrane[1]),
                 "membrane_force_xy": float(mean_membrane[2]),
                 "membrane_forces_at_gauss": membrane_resultants.tolist(),
                 "bending_moments_at_gauss": bending_resultants.tolist(),
+                "resultant_summary_policy": (
+                    "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1"
+                ),
             }
+            for provenance_key in (
+                "bubble_linearization_policy",
+                "through_thickness_stress_profile",
+            ):
+                if provenance_key in stress:
+                    state[provenance_key] = stress[provenance_key]
+            states[int(element_id)] = state
             shell_compression.append(
                 float(max(np.max(-membrane_resultants[:, :2]), 0.0))
             )

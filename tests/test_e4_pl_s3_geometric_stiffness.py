@@ -523,6 +523,9 @@ def test_generalized_and_history_resultants_require_an_explicit_second_moment() 
             "stress_second_moment": [0.01, 0.01, 0.0],
         },
         {
+            "resultant_summary_policy": "UNWEIGHTED_STATION_MEAN",
+        },
+        {
             "membrane_forces_at_gauss": np.repeat(
                 np.asarray(((1.0, 2.0, 3.0),)), 7, axis=0
             ),

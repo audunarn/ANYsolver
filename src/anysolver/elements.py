@@ -4818,6 +4818,26 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         "qualified-s3",
     }:
         raise ValueError("serialized qualified shell is missing formulation_id")
+    qualified_s3_markers = frozenset(
+        {
+            "algebraic_coordinate_policy",
+            "bubble_convention",
+            "dynamic_reduction_policy",
+            "formulation_schema",
+            "geometric_stiffness_policy",
+            "mass_moment_id",
+            "quadrature_id",
+            "recovery_policy_id",
+            "state_layout_id",
+        }
+    )
+    retained_s3_markers = tuple(sorted(qualified_s3_markers & data.keys()))
+    if len(node_ids) == 3 and retained_s3_markers:
+        raise ValueError(
+            "serialized three-node shell retains qualified S3 fingerprint "
+            "markers but is missing formulation_id: "
+            + ", ".join(retained_s3_markers)
+        )
     if len(node_ids) not in {3, 4, 6, 8}:
         raise ValueError("serialized legacy shell requires 3, 4, 6 or 8 nodes")
     element = create_shell_element(

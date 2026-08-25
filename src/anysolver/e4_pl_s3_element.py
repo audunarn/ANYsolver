@@ -1,9 +1,10 @@
 """Opt-in flat MITC3+ companion for the qualified E4-PL Q4 shell.
 
-This module implements only the frozen *linear* local formulation.  It does
-not inherit the legacy TRI3 shear, drilling, nonlinear, dynamic, buckling or
-recovery operators.  Capabilities that still need formulation-native work
-fail closed; see :data:`CAPABILITY_GAPS`.
+This module implements the frozen linear formulation and its formulation-native
+mass, initial-stress and physical-recovery operators.  It does not inherit the
+legacy TRI3 shear, drilling, nonlinear, dynamic, buckling or recovery
+mechanics.  Capabilities that still need formulation-native work fail closed;
+see :data:`CAPABILITY_GAPS`.
 
 The assumed-shear equations are Eqs. (7), (13), (15)--(17) of Lee, Lee and
 Bathe, *Computers & Structures* 138 (2014) 12--23.  The public author copy
@@ -19,6 +20,10 @@ import numpy as np
 
 from .elements import ShellElement, _shell_material_matrices
 from .materials import is_isotropic_material
+from .shell_sections import (
+    SHELL_MEMBRANE_VOIGT_ORDER,
+    SHELL_TRANSVERSE_SHEAR_ORDER,
+)
 
 
 FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
@@ -52,6 +57,8 @@ HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID = (
 REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID = (
     "REFERENCE_ELASTIC_BUBBLE_SCHUR_DERIVATIVE_V1"
 )
+RECOVERY_POLICY_ID = "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1"
+RESULTANT_SUMMARY_POLICY_ID = "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1"
 STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
 MINIMUM_OWNER_NORMAL_ALIGNMENT = 1.0e-8
 
@@ -101,11 +108,9 @@ CAPABILITY_GAPS = frozenset(
     {
         "buckling",
         "contact_state",
-        "global_recovery",
         "initial_fields",
         "material_nonlinearity",
         "nonlinear_geometry",
-        "orthotropic_physical_recovery",
         "patch_recovery",
         "physical_director_reversal",
         "restart_history",
@@ -555,6 +560,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
     dynamic_algebraic_local_zero_indices = (5, 11, 17)
     legacy_stiffness_batch_eligible = False
     legacy_nonlinear_batch_eligible = False
+    recovery_errors_fail_closed = True
 
     def __init__(
         self,
@@ -639,6 +645,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "linear_stiffness": "PARITY_REPLACED",
             "linear_internal_force": "PARITY_REPLACED",
             "local_physical_recovery": "PARITY_REPLACED",
+            "global_recovery": "PARITY_REPLACED",
+            "orthotropic_physical_recovery": "PARITY_REPLACED",
             "generalized_sections": "PARITY_REPLACED",
             "geometric_stiffness": "PARITY_REPLACED",
             "transient_algebraic_dynamics": "PARITY_REPLACED",
@@ -657,6 +665,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "algebraic_coordinate_policy": ALGEBRAIC_COORDINATE_POLICY_ID,
                 "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
                 "mass_moment_id": MASS_MOMENT_ID,
+                "recovery_policy_id": RECOVERY_POLICY_ID,
                 "state_layout_id": STATE_LAYOUT_ID,
                 "reference_normal": (
                     None
@@ -686,6 +695,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError("serialized qualified S3 geometric stiffness policy is incompatible")
         if data.get("mass_moment_id") != MASS_MOMENT_ID:
             raise ValueError("serialized qualified S3 mass moment identity is incompatible")
+        if data.get("recovery_policy_id") != RECOVERY_POLICY_ID:
+            raise ValueError("serialized qualified S3 recovery policy is incompatible")
         if data.get("state_layout_id") != STATE_LAYOUT_ID:
             raise ValueError("serialized qualified S3 state layout is incompatible")
         if data.get("type") not in {cls.__name__, "e4-pl-s3", "qualified-s3"}:
@@ -897,25 +908,34 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "numerical": pl.copy(),
         }
 
-    def compute_stresses(
+    def _compute_stresses(
         self,
         mesh: Any,
         displacements: np.ndarray,
         material: Any,
-        return_global: bool = False,
+        *,
+        return_global: bool,
+        enforce_positive_winding: bool,
     ) -> Dict[str, Any]:
-        """Recover formulation-native local physical fields at seven points."""
+        """Recover native local/global physical fields at seven points.
 
-        if return_global:
-            raise NotImplementedError(
-                "qualified S3 global recovery is a PARITY_GAP; local physical recovery is available"
-            )
-        if self.shell_section is None and not is_isotropic_material(material):
-            raise self._gap("orthotropic_physical_recovery")
-        components = self.compute_stiffness_components(mesh, material)
-        local_external = self._local_dof_transform(components["frame"]) @ self._get_element_displacements(
-            mesh, displacements
+        The two bubble rotations are recovered from the same elastic Schur
+        map used by the tangent.  PL forces never enter section resultants or
+        physical stresses.  Global surface tensors are passive rotations of
+        the numbered-frame stresses and therefore remain invariant under D3
+        connectivity re-expression.
+        """
+
+        element_displacements = self._get_element_displacements(mesh, displacements)
+        if not np.all(np.isfinite(element_displacements)):
+            raise ValueError("qualified S3 recovery requires finite displacements")
+        components = self._compute_stiffness_components(
+            mesh,
+            material,
+            enforce_positive_winding=enforce_positive_winding,
         )
+        frame = np.asarray(components["frame"], dtype=float)
+        local_external = self._local_dof_transform(frame) @ element_displacements
         physical_external = local_external[PHYSICAL_EXTERNAL_INDICES]
         bubble = np.asarray(components["bubble_map"]) @ physical_external
         coordinates = np.concatenate((physical_external, bubble))
@@ -927,9 +947,16 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             ) @ coordinates
             resultants[index] = np.asarray(components["constitutive"]) @ strains[index]
         recovered: Dict[str, Any] = {
-            "generalized_stress_scope": "section_resultants_only",
-            "recovery_scope": "qualified_s3_local_physical_only",
+            "recovery_scope": (
+                "qualified_s3_local_and_global_physical"
+                if return_global and self.shell_section is None
+                else "qualified_s3_local_physical_only"
+                if self.shell_section is None
+                else "section_resultants_only"
+            ),
             "physical_stress_available": self.shell_section is None,
+            "membrane_resultant_order": SHELL_MEMBRANE_VOIGT_ORDER,
+            "transverse_shear_resultant_order": SHELL_TRANSVERSE_SHEAR_ORDER,
             "membrane_strain": strains[:, :3],
             "curvature": strains[:, 3:6],
             "transverse_shear_strain": strains[:, 6:],
@@ -939,8 +966,57 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "bubble_rotations": bubble.copy(),
             "numerical_fields_excluded": True,
         }
+        if self.shell_section is not None:
+            recovered["generalized_stress_scope"] = "section_resultants_only"
+        else:
+            recovered.update(
+                {
+                    "bubble_linearization_policy": (
+                        REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID
+                    ),
+                    "through_thickness_stress_profile": (
+                        HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID
+                    ),
+                }
+            )
+        if return_global:
+            global_membrane = np.zeros((len(TRIANGLE_QUADRATURE), 3, 3), dtype=float)
+            global_bending = np.zeros_like(global_membrane)
+            global_shear = np.zeros((len(TRIANGLE_QUADRATURE), 3), dtype=float)
+            for index in range(len(TRIANGLE_QUADRATURE)):
+                membrane = resultants[index, :3]
+                bending = resultants[index, 3:6]
+                membrane_tensor = np.asarray(
+                    (
+                        (membrane[0], membrane[2], 0.0),
+                        (membrane[2], membrane[1], 0.0),
+                        (0.0, 0.0, 0.0),
+                    ),
+                    dtype=float,
+                )
+                bending_tensor = np.asarray(
+                    (
+                        (bending[0], bending[2], 0.0),
+                        (bending[2], bending[1], 0.0),
+                        (0.0, 0.0, 0.0),
+                    ),
+                    dtype=float,
+                )
+                global_membrane[index] = frame @ membrane_tensor @ frame.T
+                global_bending[index] = frame @ bending_tensor @ frame.T
+                global_shear[index] = (
+                    resultants[index, 6] * frame[:, 0]
+                    + resultants[index, 7] * frame[:, 1]
+                )
+            recovered.update(
+                {
+                    "global_membrane_resultant_tensors": global_membrane,
+                    "global_bending_resultant_tensors": global_bending,
+                    "global_transverse_shear_resultants": global_shear,
+                }
+            )
         if self.shell_section is None:
-            membrane_material, shear, _strain_transform, _stress_transform = (
+            membrane_material, shear, _strain_transform, stress_to_local = (
                 _shell_material_matrices(material, self._material_angle(components["frame"]))
             )
             membrane_stress = strains[:, :3] @ membrane_material.T
@@ -975,8 +1051,86 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 * (bottom[:, 2] ** 2 + transverse[:, 0] ** 2 + transverse[:, 1] ** 2)
             )
             recovered["von_mises"] = np.maximum(vm_top, vm_bottom)
-            recovered["equivalent_stress"] = recovered["von_mises"].copy()
+            recovered["hill_utilization"] = np.zeros(len(TRIANGLE_QUADRATURE), dtype=float)
+            hill_yield = getattr(material, "hill_yield", None)
+            if hill_yield is not None:
+                from .plasticity import hill48_plane_stress_equivalent_stress
+
+                top_material = np.linalg.solve(stress_to_local, top.T).T
+                bottom_material = np.linalg.solve(stress_to_local, bottom.T).T
+                hill_top = hill48_plane_stress_equivalent_stress(
+                    top_material,
+                    hill_yield,
+                )
+                hill_bottom = hill48_plane_stress_equivalent_stress(
+                    bottom_material,
+                    hill_yield,
+                )
+                equivalent = np.maximum(hill_top, hill_bottom)
+                recovered["equivalent_stress"] = equivalent
+                recovered["hill_utilization"] = equivalent / max(
+                    float(hill_yield.X),
+                    np.finfo(float).tiny,
+                )
+                recovered["equivalent_stress_measure"] = "hill48"
+            else:
+                recovered["equivalent_stress"] = recovered["von_mises"].copy()
+                recovered["equivalent_stress_measure"] = "von_mises"
+            if return_global:
+                for surface, values in (("top", top), ("bot", bottom)):
+                    local_tensors = np.zeros(
+                        (len(TRIANGLE_QUADRATURE), 3, 3),
+                        dtype=float,
+                    )
+                    local_tensors[:, 0, 0] = values[:, 0]
+                    local_tensors[:, 1, 1] = values[:, 1]
+                    local_tensors[:, 0, 1] = values[:, 2]
+                    local_tensors[:, 1, 0] = values[:, 2]
+                    local_tensors[:, 0, 2] = transverse[:, 0]
+                    local_tensors[:, 2, 0] = transverse[:, 0]
+                    local_tensors[:, 1, 2] = transverse[:, 1]
+                    local_tensors[:, 2, 1] = transverse[:, 1]
+                    global_tensors = np.asarray(
+                        [frame @ tensor @ frame.T for tensor in local_tensors],
+                        dtype=float,
+                    )
+                    for first, second, label in (
+                        (0, 0, "xx"),
+                        (1, 1, "yy"),
+                        (2, 2, "zz"),
+                        (0, 1, "xy"),
+                        (1, 2, "yz"),
+                        (0, 2, "xz"),
+                    ):
+                        recovered[f"local_{label}_{surface}"] = local_tensors[
+                            :, first, second
+                        ].copy()
+                        recovered[f"global_{label}_{surface}"] = global_tensors[
+                            :, first, second
+                        ].copy()
+        for name, values in recovered.items():
+            if isinstance(values, np.ndarray) and not np.all(np.isfinite(values)):
+                raise ValueError(
+                    f"qualified S3 recovery produced non-finite field {name!r}"
+                )
         return recovered
+
+    def compute_stresses(
+        self,
+        mesh: Any,
+        displacements: np.ndarray,
+        material: Any,
+        return_global: bool = False,
+    ) -> Dict[str, Any]:
+        """Recover production-admitted formulation-native physical fields."""
+
+        return self._compute_stresses(
+            mesh,
+            displacements,
+            material,
+            return_global=return_global,
+            enforce_positive_winding=True,
+        )
 
     @staticmethod
     def _gap(name: str) -> NotImplementedError:
@@ -1297,6 +1451,14 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 raise ValueError(
                     f"qualified S3 geometric {key} must be a finite scalar"
                 )
+        summary_policy = normalized_state.get("resultant_summary_policy")
+        if (
+            summary_policy is not None
+            and summary_policy != RESULTANT_SUMMARY_POLICY_ID
+        ):
+            raise ValueError(
+                "qualified S3 geometric resultant_summary_policy is incompatible"
+            )
 
         def require_consistent_scalar_summary(
             vector_keys: Sequence[str],
@@ -1309,7 +1471,15 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             if vector_key is None:
                 return
             vector = np.asarray(normalized_state[vector_key], dtype=float)
-            summary = vector if vector.ndim == 1 else np.mean(vector, axis=0)
+            summary = (
+                vector
+                if vector.ndim == 1
+                else np.average(
+                    vector,
+                    axis=0,
+                    weights=np.asarray(self.gauss_weights, dtype=float),
+                )
+            )
             for component, alternatives in enumerate(scalar_alternatives):
                 scalar_key = next(
                     (key for key in alternatives if key in normalized_state),
@@ -1608,7 +1778,9 @@ __all__ = [
     "MINIMUM_OWNER_NORMAL_ALIGNMENT",
     "PHYSICAL_EXTERNAL_INDICES",
     "QUADRATURE_ID",
+    "RECOVERY_POLICY_ID",
     "REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID",
+    "RESULTANT_SUMMARY_POLICY_ID",
     "STATE_LAYOUT_ID",
     "TRIANGLE_QUADRATURE",
     "TYING_POINTS",
