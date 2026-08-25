@@ -176,6 +176,17 @@ REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID = (
 )
 RESULTANT_SUMMARY_POLICY_ID = "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1"
 STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
+LINEAR_BUBBLE_CONDENSATION_ID = (
+    "NORMALIZED_STRAIN_PROJECTION_COMPENSATED_GRAM_V1"
+)
+# The two-coordinate solve is used to remove an O(t) shear contribution before
+# the O(t^3) bending energy is formed.  A successful LAPACK return is not an
+# accuracy certificate: bound the solve's forward error from its normalized
+# residual and a conservative binary64 roundoff allowance.  The limit is far
+# below any scientific response tolerance while leaving ordinary well-scaled
+# isotropic and generalized sections unaffected.
+_LINEAR_BUBBLE_SOLVE_ROUNDOFF = 64.0 * np.finfo(np.float64).eps
+_LINEAR_BUBBLE_FORWARD_ERROR_LIMIT = 1.0e-8
 CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID = (
     "COMMITTED_NATIVE_MATERIAL_PLUS_STRESS_HESSIAN_SINGLE_BUBBLE_MAP_V1"
 )
@@ -203,17 +214,42 @@ PHYSICAL_EXTERNAL_INDICES = np.asarray(
 
 CAPABILITY_GAPS = frozenset(
     {
-        "buckling",
         "committed_state_recovery",
         "contact_state",
         "initial_fields",
         "material_nonlinearity",
+        "mixed_current_state_buckling",
         "nonlinear_geometry",
         "patch_recovery",
         "physical_director_reversal",
-        "restart_history",
         "static_restart_history",
         "arc_length_restart_history",
+    }
+)
+
+RESTART_HISTORY_SCOPE = "STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
+STATELESS_GENERALIZED_MATERIAL_DISPOSITION = (
+    "NOT_APPLICABLE_STATELESS_FIXED_SECTION"
+)
+STATELESS_GENERALIZED_PATCH_DISPOSITION = (
+    "NOT_APPLICABLE_NO_PHYSICAL_LAYER_FIELD"
+)
+EXPLICIT_BUCKLING_PROFILE_DISPOSITION = (
+    "EXPLICIT_REFERENCE_ELASTIC_OR_CURRENT_STATE_AUTHORITY_REQUIRED"
+)
+LINEARIZED_LIMIT_POINT_DISPOSITION = "UNSUPPORTED_OUTSIDE_ADMITTED_PROFILE"
+
+_GENERALIZED_NOT_APPLICABLE_CAPABILITIES = MappingProxyType(
+    {
+        "material_nonlinearity": STATELESS_GENERALIZED_MATERIAL_DISPOSITION,
+        "patch_recovery": STATELESS_GENERALIZED_PATCH_DISPOSITION,
+    }
+)
+_COMMON_CAPABILITY_RESTRICTIONS = MappingProxyType(
+    {
+        "buckling": EXPLICIT_BUCKLING_PROFILE_DISPOSITION,
+        "linearized_limit_point": LINEARIZED_LIMIT_POINT_DISPOSITION,
+        "restart_history": RESTART_HISTORY_SCOPE,
     }
 )
 
@@ -338,6 +374,157 @@ def _structural_rank_certificate(
         "total_rank": _rectangular_rank(total_operator),
         "saddle_rank": positive_saddle_rank + 3,
         "saddle_inertia": (positive_saddle_rank, 3, nullity),
+    }
+
+
+def _compensated_strain_gram(
+    operators: Sequence[np.ndarray],
+    constitutive: np.ndarray,
+    determinant: float,
+) -> np.ndarray:
+    """Return ``sum(B.T C B dA)`` with deterministic compensated addition."""
+
+    if len(operators) != len(TRIANGLE_QUADRATURE):
+        raise ValueError("qualified S3 stiffness station coverage is incomplete")
+    section = np.asarray(constitutive, dtype=np.float64)
+    if section.shape != (8, 8) or not np.all(np.isfinite(section)):
+        raise ValueError("qualified S3 normalized constitutive matrix is invalid")
+    width = int(np.asarray(operators[0]).shape[1]) if operators else 0
+    total = np.zeros((width, width), dtype=np.float64)
+    correction = np.zeros_like(total)
+    area_scale = abs(float(determinant))
+    if not math.isfinite(area_scale) or area_scale <= 0.0:
+        raise ValueError("qualified S3 stiffness area scale must be positive")
+    for operator, (_r, _s, weight) in zip(
+        operators, TRIANGLE_QUADRATURE, strict=True
+    ):
+        made = np.asarray(operator, dtype=np.float64)
+        if made.shape != (8, width) or not np.all(np.isfinite(made)):
+            raise ValueError("qualified S3 kinematic operator is invalid")
+        term = area_scale * float(weight) * (made.T @ section @ made)
+        increment = term - correction
+        updated = total + increment
+        correction = (updated - total) - increment
+        total = updated
+    total = 0.5 * (total + total.T)
+    if not np.all(np.isfinite(total)):
+        raise ValueError("qualified S3 strain Gram matrix overflowed")
+    return total
+
+
+def _normalized_linear_bubble_condensation(
+    operators: Sequence[np.ndarray],
+    constitutive: np.ndarray,
+    determinant: float,
+) -> Dict[str, Any]:
+    """Condense the two elastic bubble coordinates without energy subtraction.
+
+    The raw Schur expression ``K_ee-K_ea K_aa^-1 K_ae`` subtracts two
+    ``O(t)`` shear-energy matrices to recover an ``O(t^3)`` bending matrix.
+    At ``t/L=1e-6`` that ordering discards useful binary64 digits even when
+    the MITC3+ kinematics are exactly locking-free.  Normalize the complete
+    generalized section, solve the two-coordinate equilibrium in that scale,
+    and re-integrate the projected strain operator instead:
+
+    ``B_c = B_e + B_a T_a`` and ``K_c = integral(B_c.T C B_c)``.
+
+    This is the same Schur complement in exact arithmetic, works unchanged
+    for coupled ``A/B/D/As`` sections, and forms the small residual strain
+    before squaring it.  A residual/condition forward-error certificate makes
+    the production path fail closed if the 2x2 solve itself is untrustworthy.
+    """
+
+    section = np.asarray(constitutive, dtype=np.float64)
+    section_scale = float(np.max(np.abs(section)))
+    if (
+        not math.isfinite(section_scale)
+        or section_scale <= np.finfo(np.float64).tiny
+    ):
+        raise ValueError("qualified S3 constitutive normalization is unresolved")
+    normalized_section = section / section_scale
+    uncondensed_normalized = _compensated_strain_gram(
+        operators, normalized_section, determinant
+    )
+    coupling_normalized = uncondensed_normalized[:15, 15:]
+    bubble_normalized = uncondensed_normalized[15:, 15:]
+    if float(np.linalg.eigvalsh(bubble_normalized)[0]) <= 0.0:
+        raise ValueError("qualified S3 bubble block is not positive definite")
+
+    # D3 re-numbering changes the two hierarchical bubble coordinates by an
+    # orthogonal basis map.  Infinity-norm conditioning is not invariant under
+    # that map and can therefore accept one numbering while rejecting another.
+    # The spectral condition and the compatible matrix 2-norm backward error
+    # below are invariant under both the bubble and external orthogonal maps.
+    bubble_singular = np.linalg.svd(
+        bubble_normalized, compute_uv=False
+    )
+    if (
+        bubble_singular.shape != (2,)
+        or not np.all(np.isfinite(bubble_singular))
+        or float(bubble_singular[-1]) <= 0.0
+    ):
+        raise ValueError("qualified S3 bubble block is singular")
+    condition = float(bubble_singular[0] / bubble_singular[-1])
+    if not math.isfinite(condition) or condition > BUBBLE_CONDITION_LIMIT:
+        raise ValueError(
+            "qualified S3 normalized bubble block is singular or ill-conditioned"
+        )
+    try:
+        bubble_map = -np.linalg.solve(
+            bubble_normalized, coupling_normalized.T
+        )
+    except np.linalg.LinAlgError as exc:
+        raise ValueError("qualified S3 normalized bubble solve failed") from exc
+    equilibrium_residual = (
+        bubble_normalized @ bubble_map + coupling_normalized.T
+    )
+    denominator = (
+        float(bubble_singular[0])
+        * float(np.linalg.norm(bubble_map, ord=2))
+        + float(np.linalg.norm(coupling_normalized.T, ord=2))
+    )
+    backward_error = float(np.linalg.norm(equilibrium_residual, ord=2)) / max(
+        denominator, np.finfo(np.float64).tiny
+    )
+    amplification = condition * (
+        backward_error + _LINEAR_BUBBLE_SOLVE_ROUNDOFF
+    )
+    forward_error_bound = (
+        amplification / (1.0 - amplification)
+        if math.isfinite(amplification) and amplification < 1.0
+        else math.inf
+    )
+    if (
+        not math.isfinite(backward_error)
+        or not math.isfinite(forward_error_bound)
+        or forward_error_bound > _LINEAR_BUBBLE_FORWARD_ERROR_LIMIT
+    ):
+        raise ValueError(
+            "qualified S3 normalized bubble solve has uncertified forward accuracy"
+        )
+
+    condensed_operators = tuple(
+        np.asarray(operator, dtype=np.float64)[:, :15]
+        + np.asarray(operator, dtype=np.float64)[:, 15:] @ bubble_map
+        for operator in operators
+    )
+    condensed_normalized = _compensated_strain_gram(
+        condensed_operators, normalized_section, determinant
+    )
+    uncondensed = section_scale * uncondensed_normalized
+    condensed = section_scale * condensed_normalized
+    for matrix in (uncondensed, condensed):
+        matrix[:] = 0.5 * (matrix + matrix.T)
+        if not np.all(np.isfinite(matrix)):
+            raise ValueError("qualified S3 normalized condensation overflowed")
+    return {
+        "bubble_backward_error": backward_error,
+        "bubble_condition_2": condition,
+        "bubble_forward_error_bound": forward_error_bound,
+        "bubble_map": bubble_map,
+        "condensed": condensed,
+        "constitutive_scale": section_scale,
+        "uncondensed": uncondensed,
     }
 
 
@@ -2847,7 +3034,24 @@ class QualifiedE4PLS3ShellElement(ShellElement):
     def capability_gaps(self) -> frozenset[str]:
         if self.shell_section is None:
             return CAPABILITY_GAPS - _LAYERED_NATIVE_CLOSED_CAPABILITIES
-        return CAPABILITY_GAPS - _GENERALIZED_NATIVE_CLOSED_CAPABILITIES
+        return (
+            CAPABILITY_GAPS
+            - _GENERALIZED_NATIVE_CLOSED_CAPABILITIES
+            - frozenset(_GENERALIZED_NOT_APPLICABLE_CAPABILITIES)
+        )
+
+    @property
+    def capability_restrictions(self) -> Mapping[str, str]:
+        """Return fail-closed dispositions that are not implementation gaps."""
+
+        if self.shell_section is None:
+            return _COMMON_CAPABILITY_RESTRICTIONS
+        return MappingProxyType(
+            {
+                **_COMMON_CAPABILITY_RESTRICTIONS,
+                **_GENERALIZED_NOT_APPLICABLE_CAPABILITIES,
+            }
+        )
 
     @property
     def nonlinear_material_response_mode(self) -> str:
@@ -2887,8 +3091,10 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "reference_elastic_prestressed_modal": "PARITY_REPLACED",
             "reference_elastic_buckling": "PARITY_REPLACED",
             "current_state_modal": "PARITY_REPLACED",
-            "current_state_buckling": "PARITY_REPLACED",
+            "current_state_buckling_s3": "PARITY_REPLACED",
             "transient_algebraic_dynamics": "PARITY_REPLACED",
+            "restart_history": RESTART_HISTORY_SCOPE,
+            **dict(self.capability_restrictions),
             **(
                 {
                     "stateless_generalized_section_nonlinear_geometry": (
@@ -3170,9 +3376,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         reference_surface_transform = _reference_surface_strain_transform(
             self.reference_surface_offset
         )
-        uncondensed = np.zeros((17, 17), dtype=float)
         kinematic_operators = []
-        for r, s, weight in TRIANGLE_QUADRATURE:
+        for r, s, _weight in TRIANGLE_QUADRATURE:
             physical_reference_operator = (
                 director_generalized_transform
                 @ _kinematic_matrix(local, r, s, shear_samples)
@@ -3183,18 +3388,13 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 else reference_surface_transform @ physical_reference_operator
             )
             kinematic_operators.append(operator)
-            uncondensed += abs(determinant) * weight * (operator.T @ constitutive @ operator)
-        uncondensed = 0.5 * (uncondensed + uncondensed.T)
-        external_block = uncondensed[:15, :15]
-        external_internal = uncondensed[:15, 15:]
+        condensation = _normalized_linear_bubble_condensation(
+            kinematic_operators, constitutive, determinant
+        )
+        uncondensed = np.asarray(condensation["uncondensed"], dtype=float)
         internal_block = uncondensed[15:, 15:]
-        if _matrix_rank(internal_block) != 2:
-            raise ValueError("qualified S3 bubble block is singular")
-        if float(np.linalg.eigvalsh(internal_block)[0]) <= 0.0:
-            raise ValueError("qualified S3 bubble block is not positive definite")
-        bubble_map = -np.linalg.solve(internal_block, external_internal.T)
-        physical_15 = external_block + external_internal @ bubble_map
-        physical_15 = 0.5 * (physical_15 + physical_15.T)
+        bubble_map = np.asarray(condensation["bubble_map"], dtype=float)
+        physical_15 = np.asarray(condensation["condensed"], dtype=float)
         physical_local = np.zeros((18, 18), dtype=float)
         physical_local[np.ix_(PHYSICAL_EXTERNAL_INDICES, PHYSICAL_EXTERNAL_INDICES)] = physical_15
 
@@ -3260,6 +3460,19 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "rank_certificate": "DIMENSIONLESS_KINEMATIC_SUBSPACE_V1",
             "floating_matrix_diagnostics": {
                 "bubble_rank": _matrix_rank(internal_block),
+                "bubble_backward_error": float(
+                    condensation["bubble_backward_error"]
+                ),
+                "bubble_condition_2": float(
+                    condensation["bubble_condition_2"]
+                ),
+                "bubble_condensation_id": LINEAR_BUBBLE_CONDENSATION_ID,
+                "bubble_forward_error_bound": float(
+                    condensation["bubble_forward_error_bound"]
+                ),
+                "constitutive_normalization_scale": float(
+                    condensation["constitutive_scale"]
+                ),
                 "saddle_inertia": _inertia(saddle),
             },
             "mixed_condensed": True,
@@ -5291,6 +5504,9 @@ __all__ = [
     "FORMULATION_SCHEMA",
     "GEOMETRIC_STIFFNESS_POLICY_ID",
     "HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID",
+    "EXPLICIT_BUCKLING_PROFILE_DISPOSITION",
+    "LINEARIZED_LIMIT_POINT_DISPOSITION",
+    "LINEAR_BUBBLE_CONDENSATION_ID",
     "MITC3_PLUS_EQUATION_MAP",
     "MITC3_PLUS_NONLINEAR_EQUATION_MAP",
     "MITC3_PLUS_NONLINEAR_SOURCE_BYTES",
@@ -5304,11 +5520,14 @@ __all__ = [
     "NONLINEAR_POLICY_ID",
     "PHYSICAL_EXTERNAL_INDICES",
     "QUADRATURE_ID",
+    "RESTART_HISTORY_SCOPE",
     "RECOVERY_POLICY_ID",
     "REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID",
     "RESULTANT_SUMMARY_POLICY_ID",
     "S3BubbleEquilibriumError",
     "STATE_LAYOUT_ID",
+    "STATELESS_GENERALIZED_MATERIAL_DISPOSITION",
+    "STATELESS_GENERALIZED_PATCH_DISPOSITION",
     "TRIANGLE_QUADRATURE",
     "TYING_POINTS",
     "QualifiedE4PLS3ShellElement",

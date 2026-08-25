@@ -25,7 +25,13 @@ from .beam_sections import (
 )
 from .boundary import BoundaryCondition, LoadCase
 from .buckling import BucklingResult, solve_eigenvalue_buckling
-from .elements import BeamElement, QuadraticBeamElement, ShellElement, create_shell_element
+from .elements import (
+    BeamElement,
+    QuadraticBeamElement,
+    ShellElement,
+    _normalized_shell_formulation,
+    create_shell_element,
+)
 from .fe_core import FEModel
 from .mesh_gen import InterpolatedBeamShellMPCElement, RigidLidMPCElement
 from .shell_sections import (
@@ -516,6 +522,67 @@ def _shell_material_kwargs(shell: Any) -> Dict[str, Any]:
     return kwargs
 
 
+def _shell_formulation_policy(
+    shell: Any,
+    node_count: int,
+) -> tuple[Optional[str], str]:
+    """Return the authored request and centrally resolved shell policy."""
+
+    formulation = _value(shell, "formulation", default=None)
+    shell_formulation = _value(shell, "shell_formulation", default=None)
+    if formulation is not None and shell_formulation is not None:
+        first = _normalized_shell_formulation(int(node_count), str(formulation))
+        second = _normalized_shell_formulation(int(node_count), str(shell_formulation))
+        if first != second:
+            raise ValueError("conflicting-shell-formulation-fields")
+    request = formulation if formulation is not None else shell_formulation
+    requested = None if request is None else str(request)
+    return requested, _normalized_shell_formulation(int(node_count), requested)
+
+
+def _shell_director_kwargs(
+    shell: Any,
+    selected_formulation: str,
+) -> Dict[str, Any]:
+    """Forward an explicitly authored shell-director authority.
+
+    A generalized membrane/bending coupling matrix has a physical thickness
+    direction, so qualified Q4 construction must not infer that direction from
+    connectivity winding.  Normalized generated geometry may supply the exact
+    authority as ``reference_normal`` (and, optionally, ``director_polarity``).
+    The authority is valid only for the qualified Q4 or opt-in qualified S3
+    route.  A legacy request fails closed instead of discarding or interpreting
+    formulation-specific state.
+    """
+
+    reference_normal = _value(shell, "reference_normal", default=None)
+    director_polarity = _value(shell, "director_polarity", default=None)
+    if reference_normal is None and director_polarity is None:
+        return {}
+    if selected_formulation not in {"e4-pl", "e4-pl-s3"}:
+        raise ValueError(
+            "shell-director-authority-requires-qualified-shell-formulation"
+        )
+
+    kwargs: Dict[str, Any] = {}
+    if reference_normal is not None:
+        try:
+            components = np.asarray(reference_normal, dtype=float).reshape(-1)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("shell-reference-normal-must-be-a-vector") from exc
+        if components.size != 3:
+            raise ValueError("shell-reference-normal-must-have-three-components")
+        if not np.all(np.isfinite(components)):
+            raise ValueError("shell-reference-normal-must-be-finite")
+        component_scale = float(np.max(np.abs(components)))
+        if component_scale <= 0.0:
+            raise ValueError("shell-reference-normal-must-be-nonzero")
+        kwargs["reference_normal"] = tuple(float(value) for value in components)
+    if director_polarity is not None:
+        kwargs["director_polarity"] = director_polarity
+    return kwargs
+
+
 def _generalized_shell_section_definitions(
     generated_geometry: Any,
 ) -> Dict[str, GeneralizedShellSection]:
@@ -959,6 +1026,10 @@ def build_fe_model_from_generated_geometry(
             if thickness <= 0.0:
                 raise ValueError("shell-thickness-must-be-positive")
             elem_type = str(_value(shell, "type", default="")).upper()
+            formulation, selected_formulation = _shell_formulation_policy(
+                shell,
+                len(node_ids),
+            )
             _add_model_element(
                 model,
                 elem_id,
@@ -966,6 +1037,7 @@ def build_fe_model_from_generated_geometry(
                     elem_id,
                     node_ids,
                     _material_name(shell, config),
+                    formulation=formulation,
                     thickness=thickness,
                     reduced_integration=(elem_type == "S8R"),
                     shell_section=_generalized_shell_section(
@@ -973,6 +1045,7 @@ def build_fe_model_from_generated_geometry(
                         generalized_shell_sections,
                     ),
                     **_shell_material_kwargs(shell),
+                    **_shell_director_kwargs(shell, selected_formulation),
                 ),
             )
             element_count += 1

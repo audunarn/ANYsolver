@@ -23,6 +23,7 @@ from anysolver.e4_pl_s3_element import (
     BUBBLE_OFFSET_D,
     CURRENT_STATE_BUBBLE_PROJECTION_POLICY_ID,
     CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID,
+    EXPLICIT_BUCKLING_PROFILE_DISPOSITION,
     FORMULATION_ID,
     GEOMETRIC_STIFFNESS_POLICY_ID,
     HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID,
@@ -35,9 +36,11 @@ from anysolver.e4_pl_s3_element import (
     QUADRATURE_ID,
     RECOVERY_POLICY_ID,
     REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
+    RESTART_HISTORY_SCOPE,
     RESULTANT_SUMMARY_POLICY_ID,
     TRIANGLE_QUADRATURE,
     TYING_POINTS,
+    QualifiedE4PLS3ShellElement,
 )
 from anysolver.e4_pl_s3_state import (
     BUBBLE_CONVENTION as STATE_BUBBLE_CONVENTION,
@@ -173,6 +176,31 @@ def _load_contract_bytes(raw: bytes) -> dict:
 
 def _contract() -> dict:
     return _load_contract_bytes(CONTRACT_PATH.read_bytes())
+
+
+def test_runtime_capability_contract_has_exact_bounded_successor_scope() -> None:
+    """Bind the runtime successor without rewriting historical evidence."""
+
+    element = QualifiedE4PLS3ShellElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    matrix = element.capability_matrix()
+    assert matrix["restart_history"] == RESTART_HISTORY_SCOPE == (
+        "STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
+    )
+    assert element.capability_restrictions["restart_history"] == (
+        RESTART_HISTORY_SCOPE
+    )
+    assert matrix["reference_elastic_buckling"] == "PARITY_REPLACED"
+    assert matrix["current_state_buckling_s3"] == "PARITY_REPLACED"
+    assert matrix["mixed_current_state_buckling"] == "PARITY_GAP"
+    assert matrix["buckling"] == EXPLICIT_BUCKLING_PROFILE_DISPOSITION
+    assert matrix["linearized_limit_point"] == (
+        "UNSUPPORTED_OUTSIDE_ADMITTED_PROFILE"
+    )
 
 
 def test_contract_binds_the_exact_public_source_and_candidate() -> None:

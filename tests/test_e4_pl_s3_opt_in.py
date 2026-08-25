@@ -182,7 +182,8 @@ def test_structural_rank_certificate_is_unit_and_thickness_scaled() -> None:
         assert components["ranks"] == expected
 
 
-def test_all_d3_numberings_are_operator_covariant() -> None:
+@pytest.mark.parametrize("thickness", (0.2, 1.0e-6), ids=("ordinary", "ultrathin"))
+def test_all_d3_numberings_are_operator_covariant(thickness: float) -> None:
     nodes = np.asarray(
         ((0.1, 0.2, 0.3), (1.2, 0.1, 0.5), (0.3, 1.0, 0.4)), dtype=float
     )
@@ -190,7 +191,7 @@ def test_all_d3_numberings_are_operator_covariant() -> None:
 
     def stiffness(numbered: np.ndarray) -> np.ndarray:
         element = QualifiedE4PLS3ShellElement(
-            1, [1, 2, 3], "steel", thickness=0.2, reference_normal=np.cross(
+            1, [1, 2, 3], "steel", thickness=thickness, reference_normal=np.cross(
                 nodes[1] - nodes[0], nodes[2] - nodes[0]
             )
         )
@@ -206,7 +207,10 @@ def test_all_d3_numberings_are_operator_covariant() -> None:
         assert _relative(actual, expected) < 2.0e-14, permutation
 
 
-def test_all_d3_numberings_transport_uncondensed_bubble_pl_and_saddle_blocks() -> None:
+@pytest.mark.parametrize("thickness", (0.2, 1.0e-6), ids=("ordinary", "ultrathin"))
+def test_all_d3_numberings_transport_uncondensed_bubble_pl_and_saddle_blocks(
+    thickness: float,
+) -> None:
     nodes = np.asarray(
         ((0.1, 0.2, 0.3), (1.2, 0.1, 0.5), (0.3, 1.0, 0.4)), dtype=float
     )
@@ -218,7 +222,7 @@ def test_all_d3_numberings_transport_uncondensed_bubble_pl_and_saddle_blocks() -
             1,
             [1, 2, 3],
             "steel",
-            thickness=0.2,
+            thickness=thickness,
             reference_normal=owner,
         )
         made = element._compute_stiffness_components(
@@ -269,6 +273,70 @@ def test_all_d3_numberings_transport_uncondensed_bubble_pl_and_saddle_blocks() -
             transport_23.T @ numbered["full_saddle"] @ transport_23,
             baseline["full_saddle"],
         ) < 2.0e-14
+
+
+def test_all_d3_numberings_share_the_anisotropic_bubble_accuracy_disposition() -> None:
+    """The fail-closed solve certificate is a physical, not basis, decision."""
+
+    nodes = np.asarray(
+        ((0.0, 0.0, 0.0), (1.2, 0.0, 0.0), (0.2, 0.9, 0.0)),
+        dtype=float,
+    )
+    material = Material("carrier", 1.0, 0.2, density=1.0)
+
+    def section(shear_ratio: float) -> GeneralizedShellSection:
+        return GeneralizedShellSection(
+            name=f"D3-near-bubble-bound-{shear_ratio:g}",
+            A=np.eye(3),
+            B=np.zeros((3, 3)),
+            D=1.0e-12 * np.eye(3),
+            As=np.diag((1.0, shear_ratio)),
+            mass_per_area=1.0,
+            rotary_inertia_per_area=1.0,
+        )
+
+    passing_conditions = []
+    passing_bounds = []
+    for permutation in itertools.permutations(range(3)):
+        numbered = nodes[list(permutation)]
+        element = QualifiedE4PLS3ShellElement(
+            1,
+            [1, 2, 3],
+            "carrier",
+            thickness=1.0,
+            shell_section=section(600_000.0),
+            material_direction=(1.0, 0.0, 0.0),
+            reference_normal=(0.0, 0.0, 1.0),
+        )
+        diagnostics = element._compute_stiffness_components(
+            _mesh(numbered), material, enforce_positive_winding=False
+        )["floating_matrix_diagnostics"]
+        passing_conditions.append(diagnostics["bubble_condition_2"])
+        passing_bounds.append(diagnostics["bubble_forward_error_bound"])
+
+    np.testing.assert_allclose(
+        passing_conditions,
+        np.full(6, passing_conditions[0]),
+        rtol=2.0e-10,
+        atol=0.0,
+    )
+    assert max(passing_bounds) < 1.0e-8
+
+    for permutation in itertools.permutations(range(3)):
+        numbered = nodes[list(permutation)]
+        element = QualifiedE4PLS3ShellElement(
+            1,
+            [1, 2, 3],
+            "carrier",
+            thickness=1.0,
+            shell_section=section(800_000.0),
+            material_direction=(1.0, 0.0, 0.0),
+            reference_normal=(0.0, 0.0, 1.0),
+        )
+        with pytest.raises(ValueError, match="uncertified forward accuracy"):
+            element._compute_stiffness_components(
+                _mesh(numbered), material, enforce_positive_winding=False
+            )
 
 
 def test_b_coupled_section_requires_and_uses_authoritative_normal() -> None:
@@ -562,6 +630,18 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
     assert all(
         element.capability_matrix()[name] == "PARITY_REPLACED"
         for name in closed_layered_capabilities
+    )
+    assert element.capability_gaps == frozenset(
+        {"mixed_current_state_buckling"}
+    )
+    assert element.capability_matrix()["current_state_buckling_s3"] == (
+        "PARITY_REPLACED"
+    )
+    assert element.capability_matrix()["restart_history"] == (
+        "STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
+    )
+    assert element.capability_matrix()["linearized_limit_point"] == (
+        "UNSUPPORTED_OUTSIDE_ADMITTED_PROFILE"
     )
     mass = element.compute_mass_matrix(_mesh(nodes), _material())
     assert mass.shape == (18, 18)

@@ -4839,12 +4839,30 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
             "state_layout_id",
         }
     )
+    qualified_q4_markers = frozenset(
+        {
+            "director_polarity",
+            "director_polarity_policy_id",
+            "director_reversal_transform_id",
+            "implementation_id",
+            "recovery_policy_id",
+            "reference_normal",
+            "stationary_solve_policy_id",
+        }
+    )
     retained_s3_markers = tuple(sorted(qualified_s3_markers & data.keys()))
     if len(node_ids) == 3 and retained_s3_markers:
         raise ValueError(
             "serialized three-node shell retains qualified S3 fingerprint "
             "markers but is missing formulation_id: "
             + ", ".join(retained_s3_markers)
+        )
+    retained_q4_markers = tuple(sorted(qualified_q4_markers & data.keys()))
+    if len(node_ids) == 4 and retained_q4_markers:
+        raise ValueError(
+            "serialized four-node shell retains qualified Q4 fingerprint "
+            "markers but is missing formulation_id: "
+            + ", ".join(retained_q4_markers)
         )
     if len(node_ids) not in {3, 4, 6, 8}:
         raise ValueError("serialized legacy shell requires 3, 4, 6 or 8 nodes")

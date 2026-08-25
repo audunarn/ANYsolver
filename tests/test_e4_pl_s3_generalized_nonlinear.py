@@ -187,13 +187,29 @@ def test_generalized_zero_response_has_distinct_state_and_no_layer_fabrication()
     ):
         assert forbidden not in state
     assert "nonlinear_geometry" not in element.capability_gaps
-    assert "material_nonlinearity" in element.capability_gaps
+    assert "material_nonlinearity" not in element.capability_gaps
+    assert element.capability_matrix()["material_nonlinearity"] == (
+        "NOT_APPLICABLE_STATELESS_FIXED_SECTION"
+    )
+    assert "patch_recovery" not in element.capability_gaps
+    assert element.capability_matrix()["patch_recovery"] == (
+        "NOT_APPLICABLE_NO_PHYSICAL_LAYER_FIELD"
+    )
     assert "committed_state_recovery" not in element.capability_gaps
     assert "initial_fields" not in element.capability_gaps
-    assert "restart_history" in element.capability_gaps
+    assert "restart_history" not in element.capability_gaps
+    assert element.capability_matrix()["restart_history"] == (
+        "STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
+    )
     assert "static_restart_history" not in element.capability_gaps
     assert "arc_length_restart_history" not in element.capability_gaps
-    assert "buckling" in element.capability_gaps
+    assert "buckling" not in element.capability_gaps
+    assert element.capability_matrix()["current_state_buckling_s3"] == (
+        "PARITY_REPLACED"
+    )
+    assert element.capability_matrix()["mixed_current_state_buckling"] == (
+        "PARITY_GAP"
+    )
 
     repeated_force, no_tangent, repeated_state, _repeated_view = _response(
         model, element, zero, state, tangent=False

@@ -19,6 +19,9 @@ from anysolver import (
 )
 from anysolver.boundary import LoadCase
 from anysolver.assembly import build_constraint_transformation
+from anysolver.algebraic_dynamics import (
+    DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID,
+)
 from anysolver.e4_pl_s3_element import (
     REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
 )
@@ -348,6 +351,15 @@ def test_mixed_q4_s3_current_state_modal_matches_virgin_reference() -> None:
     )
 
     assert reference.solver_status == current.solver_status == "ok"
+    for result in (reference, current):
+        assert result.diagnostics["candidate_eigenvalue_policy_id"] == (
+            DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID
+        )
+        assert result.diagnostics["candidate_eigenvalue_disposition"] == (
+            "FULL_SYSTEM_RAYLEIGH_REFINED"
+        )
+        assert result.diagnostics["candidate_rayleigh_refined_count"] > 0
+        assert result.diagnostics["candidate_condensed_preserved_count"] == 0
     np.testing.assert_allclose(
         current.frequencies_hz,
         reference.frequencies_hz,
@@ -452,7 +464,11 @@ def test_capability_matrix_records_both_eigen_workflows_as_native() -> None:
     assert matrix["reference_elastic_prestressed_modal"] == "PARITY_REPLACED"
     assert matrix["reference_elastic_buckling"] == "PARITY_REPLACED"
     assert matrix["current_state_modal"] == "PARITY_REPLACED"
-    assert matrix["buckling"] == "PARITY_GAP"
+    assert matrix["current_state_buckling_s3"] == "PARITY_REPLACED"
+    assert matrix["mixed_current_state_buckling"] == "PARITY_GAP"
+    assert matrix["buckling"] == (
+        "EXPLICIT_REFERENCE_ELASTIC_OR_CURRENT_STATE_AUTHORITY_REQUIRED"
+    )
 
 
 def test_eigen_authority_profiles_reject_ambiguous_inputs_before_mechanics(

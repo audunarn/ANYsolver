@@ -15,6 +15,7 @@ from anysolver import (
 )
 from anysolver.algebraic_dynamics import (
     DESCRIPTOR_MODAL_POLICY_ID,
+    DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID,
     solve_descriptor_spectrum,
 )
 from anysolver.assembly import build_constraint_transformation
@@ -351,6 +352,17 @@ def test_mixed_qualified_q4_s3_modal_matches_homogeneous_pencil() -> None:
 
     assert result.solver_status == "ok"
     assert result.diagnostics["declared_algebraic_element_ids"] == [2]
+    assert result.diagnostics["candidate_eigenvalue_policy_id"] == (
+        DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID
+    )
+    assert result.diagnostics["candidate_eigenvalue_disposition"] == (
+        "FULL_SYSTEM_RAYLEIGH_REFINED"
+    )
+    assert result.diagnostics["candidate_rayleigh_refined_count"] > 0
+    assert result.diagnostics["candidate_condensed_preserved_count"] == 0
+    assert not result.diagnostics[
+        "candidate_rayleigh_refinement_rejection_reasons"
+    ]
     np.testing.assert_allclose(
         np.asarray([mode.eigenvalue for mode in result.modes]),
         oracle[:4],

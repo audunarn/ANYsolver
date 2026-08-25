@@ -12,6 +12,7 @@ from anysolver.corotational import (
     validate_corotational_scope,
 )
 from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
+from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.elements import ShellElement
 from anysolver.fe_core import FEModel
 from anysolver.nonlinear_static import (
@@ -309,8 +310,11 @@ def test_legacy_nonlinear_entry_points_reject_native_s3_before_mechanics(
         ):
             solve_nonlinear(model, load_case, max_iterations=1)
     with pytest.raises(
-        StateTransactionError,
-        match=r"solve_nonlinear_load_stepping.*solver-owned native.*element IDs \[1\]",
+        ElementCapabilityError,
+        match=(
+            "solve_nonlinear_load_stepping.*linearized_limit_point="
+            "UNSUPPORTED_OUTSIDE_ADMITTED_PROFILE"
+        ),
     ):
         solve_nonlinear_load_stepping(model, load_case, num_steps=1)
     assert calls == []

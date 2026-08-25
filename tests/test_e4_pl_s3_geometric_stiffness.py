@@ -18,7 +18,6 @@ from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.fe_core import FEMesh, Material
 from anysolver.matrix_assembly import assemble_geometric_stiffness_matrix
 from anysolver.nonlinear import solve_nonlinear_load_stepping
-from anysolver.nonlinear_state import StateTransactionError
 from anysolver.shell_sections import GeneralizedShellSection
 
 
@@ -101,7 +100,9 @@ def test_zero_state_is_exactly_zero_and_only_the_element_operator_is_closed() ->
     np.testing.assert_array_equal(made["condensed_local"], np.zeros((18, 18)))
     np.testing.assert_array_equal(made["global"], np.zeros((18, 18)))
     assert element.capability_matrix()["geometric_stiffness"] == "PARITY_REPLACED"
-    assert element.capability_matrix()["buckling"] == "PARITY_GAP"
+    assert element.capability_matrix()["buckling"] == (
+        "EXPLICIT_REFERENCE_ELASTIC_OR_CURRENT_STATE_AUTHORITY_REQUIRED"
+    )
 
 
 def test_full_mindlin_energy_and_bubble_reduction_have_an_independent_oracle() -> None:
@@ -374,7 +375,9 @@ def test_assembly_uses_the_formulation_native_operator_without_claiming_buckling
 
     np.testing.assert_allclose(assembled.toarray(), expected, rtol=0.0, atol=0.0)
     assert info["matrix_type"] == "geometric_stiffness"
-    assert element.capability_matrix()["buckling"] == "PARITY_GAP"
+    assert element.capability_matrix()["buckling"] == (
+        "EXPLICIT_REFERENCE_ELASTIC_OR_CURRENT_STATE_AUTHORITY_REQUIRED"
+    )
 
 
 def test_buckling_gap_is_checked_before_boundary_or_matrix_evaluation(
@@ -412,8 +415,8 @@ def test_limit_point_gap_is_checked_before_boundary_or_matrix_evaluation(
 
     monkeypatch.setattr(model, "apply_boundary_conditions", forbidden)
     with pytest.raises(
-        StateTransactionError,
-        match="does not implement solver-owned native total-Lagrangian",
+        ElementCapabilityError,
+        match="linearized_limit_point=UNSUPPORTED_OUTSIDE_ADMITTED_PROFILE",
     ):
         solve_nonlinear_load_stepping(
             model,

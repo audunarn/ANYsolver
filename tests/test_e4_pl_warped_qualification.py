@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from anysolver.e4_pl_element import QualifiedE4PLShellElement
+from anysolver.e4_pl_element import QualifiedE4PLShellElement, equation7_frame
 from anysolver.elements import ShellElement
 from anysolver.fe_core import FEMesh, Material
 from anysolver.materials import OrthotropicMaterial
@@ -52,6 +52,35 @@ def _element(identifier: int = 1) -> QualifiedE4PLShellElement:
 def _relative_residual(left: np.ndarray, right: np.ndarray) -> float:
     scale = max(float(np.linalg.norm(right, ord=np.inf)), 1.0)
     return float(np.linalg.norm(left - right, ord=np.inf) / scale)
+
+
+def _owner_normal(nodes: np.ndarray) -> np.ndarray:
+    normal = np.cross(nodes[1] - nodes[0], nodes[3] - nodes[0])
+    return normal / np.linalg.norm(normal)
+
+
+def _warped_generalized_section() -> GeneralizedShellSection:
+    return GeneralizedShellSection(
+        A=np.asarray(((120.0, 12.0, 4.0), (12.0, 95.0, -3.0), (4.0, -3.0, 42.0))),
+        B=np.asarray(((1.2, 0.1, -0.2), (0.05, -0.8, 0.1), (0.3, -0.15, 0.4))),
+        D=np.asarray(((15.0, 1.0, 0.2), (1.0, 11.0, -0.1), (0.2, -0.1, 5.0))),
+        As=np.asarray(((25.0, 1.5), (1.5, 20.0))),
+        mass_per_area=8.0,
+        rotary_inertia_per_area=0.02,
+    )
+
+
+def _station_positions(element: QualifiedE4PLShellElement, nodes: np.ndarray) -> np.ndarray:
+    return np.asarray(
+        [element.compute_shape_functions(*point)[0] @ nodes for point in element.gauss_points],
+        dtype=float,
+    )
+
+
+def _physical_station_order(reference: np.ndarray, actual: np.ndarray) -> list[int]:
+    order = [int(np.argmin(np.linalg.norm(actual - point, axis=1))) for point in reference]
+    assert len(set(order)) == len(order)
+    return order
 
 
 @pytest.mark.parametrize("nodes", WARPED_GEOMETRIES)
@@ -136,6 +165,25 @@ def test_warped_direct_kernel_retains_established_shell_response(nodes: np.ndarr
     )
     np.testing.assert_array_equal(candidate_force, established_force)
     np.testing.assert_array_equal(candidate_tangent, established_tangent)
+    for return_global in (False, True):
+        candidate_recovery = candidate.compute_stresses(
+            mesh,
+            displacement,
+            material,
+            return_global=return_global,
+        )
+        established_recovery = established.compute_stresses(
+            mesh,
+            displacement,
+            material,
+            return_global=return_global,
+        )
+        assert candidate_recovery.keys() == established_recovery.keys()
+        for name, values in candidate_recovery.items():
+            if isinstance(values, np.ndarray):
+                np.testing.assert_array_equal(values, established_recovery[name])
+            else:
+                assert values == established_recovery[name]
 
 
 def test_warped_direct_kernel_covers_orthotropic_and_generalized_sections() -> None:
@@ -183,10 +231,19 @@ def test_warped_direct_kernel_covers_orthotropic_and_generalized_sections() -> N
         rotary_inertia_per_area=0.02,
     )
     candidate_section = QualifiedE4PLShellElement(
-        3, [1, 2, 3, 4], "warped", shell_section=section
+        3,
+        [1, 2, 3, 4],
+        "warped",
+        shell_section=section,
+        reference_normal=np.asarray((0.0, 0.0, 1.0)),
+        drilling_stabilization=0.0,
     )
     established_section = ShellElement(
-        4, [1, 2, 3, 4], "warped", shell_section=section
+        4,
+        [1, 2, 3, 4],
+        "warped",
+        shell_section=section,
+        drilling_stabilization=0.0,
     )
     material = _material()
     np.testing.assert_array_equal(
@@ -197,3 +254,248 @@ def test_warped_direct_kernel_covers_orthotropic_and_generalized_sections() -> N
         candidate_section.compute_mass_matrix(mesh, material),
         established_section.compute_mass_matrix(mesh, material),
     )
+
+
+@pytest.mark.parametrize("director_polarity", (-1, 1))
+def test_warped_b_coupled_section_is_all_d4_physically_covariant(
+    director_polarity: int,
+) -> None:
+    nodes = WARPED_GEOMETRIES[1]
+    authority = _owner_normal(nodes)
+    material_direction = nodes[1] - nodes[0]
+    section = _warped_generalized_section()
+    material = _material()
+    displacement = np.linspace(-2.0e-4, 3.0e-4, 24)
+
+    def make() -> QualifiedE4PLShellElement:
+        return QualifiedE4PLShellElement(
+            11,
+            [1, 2, 3, 4],
+            "warped",
+            shell_section=section,
+            material_direction=material_direction,
+            reference_normal=authority,
+            director_polarity=director_polarity,
+        )
+
+    baseline_element = make()
+    baseline_mesh = _mesh(nodes)
+    baseline_stiffness = baseline_element.compute_stiffness_matrix(
+        baseline_mesh, material
+    )
+    baseline_mass = baseline_element.compute_mass_matrix(baseline_mesh, material)
+    baseline_force, baseline_tangent, _state = (
+        baseline_element.compute_nonlinear_response(
+            baseline_mesh,
+            material,
+            displacement,
+            tangent=True,
+        )
+    )
+    assert baseline_tangent is not None
+    baseline_recovery = baseline_element.compute_stresses(
+        baseline_mesh,
+        displacement,
+        material,
+        return_global=True,
+    )
+    baseline_positions = _station_positions(baseline_element, nodes)
+
+    for operation in OPERATIONS:
+        slots = np.asarray(operation, dtype=int)
+        numbered_nodes = nodes[slots]
+        numbered_displacement = displacement.reshape(4, 6)[slots].reshape(24)
+        element = make()
+        mesh = _mesh(numbered_nodes)
+        dofs = np.asarray(
+            [6 * int(slot) + component for slot in slots for component in range(6)],
+            dtype=int,
+        )
+        np.testing.assert_allclose(
+            element.compute_stiffness_matrix(mesh, material),
+            baseline_stiffness[np.ix_(dofs, dofs)],
+            rtol=0.0,
+            atol=2.0e-12,
+        )
+        np.testing.assert_allclose(
+            element.compute_mass_matrix(mesh, material),
+            baseline_mass[np.ix_(dofs, dofs)],
+            rtol=0.0,
+            atol=2.0e-14,
+        )
+        force, tangent, _state = element.compute_nonlinear_response(
+            mesh,
+            material,
+            numbered_displacement,
+            tangent=True,
+        )
+        assert tangent is not None
+        np.testing.assert_allclose(
+            force,
+            baseline_force[dofs],
+            rtol=0.0,
+            atol=2.0e-12,
+        )
+        np.testing.assert_allclose(
+            tangent,
+            baseline_tangent[np.ix_(dofs, dofs)],
+            rtol=0.0,
+            atol=2.0e-12,
+        )
+        recovery = element.compute_stresses(
+            mesh,
+            numbered_displacement,
+            material,
+            return_global=True,
+        )
+        order = _physical_station_order(
+            baseline_positions,
+            _station_positions(element, numbered_nodes),
+        )
+        for key in (
+            "global_membrane_resultant_tensors",
+            "global_bending_resultant_tensors",
+            "global_transverse_shear_resultants",
+            "physical_directors",
+        ):
+            np.testing.assert_allclose(
+                recovery[key][order],
+                baseline_recovery[key],
+                rtol=0.0,
+                atol=2.0e-12,
+            )
+        assert recovery["physical_director_authoritative"] is True
+        assert recovery["warped_direct"] is True
+
+
+def test_warped_director_reversal_changes_b_coupling_but_not_mass() -> None:
+    nodes = WARPED_GEOMETRIES[1]
+    authority = _owner_normal(nodes)
+    section = _warped_generalized_section()
+    material = _material()
+
+    def make(polarity: int) -> QualifiedE4PLShellElement:
+        return QualifiedE4PLShellElement(
+            12,
+            [1, 2, 3, 4],
+            "warped",
+            shell_section=section,
+            material_direction=nodes[1] - nodes[0],
+            reference_normal=authority,
+            director_polarity=polarity,
+        )
+
+    mesh = _mesh(nodes)
+    positive = make(1)
+    negative = make(-1)
+    np.testing.assert_array_equal(
+        positive.compute_mass_matrix(mesh, material),
+        negative.compute_mass_matrix(mesh, material),
+    )
+    assert not np.allclose(
+        positive.compute_stiffness_matrix(mesh, material),
+        negative.compute_stiffness_matrix(mesh, material),
+        rtol=1.0e-12,
+        atol=1.0e-12,
+    )
+    positive_recovery = positive.compute_stresses(
+        mesh, np.zeros(24), material, return_global=True
+    )
+    negative_recovery = negative.compute_stresses(
+        mesh, np.zeros(24), material, return_global=True
+    )
+    np.testing.assert_allclose(
+        negative_recovery["physical_directors"],
+        -positive_recovery["physical_directors"],
+        rtol=0.0,
+        atol=2.0e-15,
+    )
+
+
+@pytest.mark.parametrize("length", (1.0e-6, 1.0, 1.0e6))
+@pytest.mark.parametrize("warped", (False, True))
+def test_qualified_q4_geometry_guards_are_scale_invariant_publicly(
+    length: float,
+    warped: bool,
+) -> None:
+    unit_nodes = (
+        WARPED_GEOMETRIES[0]
+        if warped
+        else np.asarray(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)))
+    )
+    nodes = length * unit_nodes
+    mesh = _mesh(nodes)
+    material = _material()
+    element = QualifiedE4PLShellElement(
+        21,
+        [1, 2, 3, 4],
+        "warped",
+        thickness=0.025 * length,
+    )
+    _frame, _local, warpage = equation7_frame(nodes)
+    expected_warpage = equation7_frame(unit_nodes)[2]
+    assert warpage == pytest.approx(expected_warpage, rel=2.0e-14, abs=2.0e-16)
+    stiffness = element.compute_stiffness_matrix(mesh, material)
+    mass = element.compute_mass_matrix(mesh, material)
+    recovery = element.compute_stresses(
+        mesh,
+        np.zeros(24),
+        material,
+        return_global=True,
+    )
+    force, tangent, _state = element.compute_nonlinear_response(
+        mesh,
+        material,
+        np.zeros(24),
+        tangent=True,
+    )
+    assert tangent is not None
+    for values in (stiffness, mass, force, tangent):
+        assert np.all(np.isfinite(values))
+    for values in recovery.values():
+        if isinstance(values, np.ndarray):
+            assert np.all(np.isfinite(values))
+    np.testing.assert_array_equal(force, np.zeros(24))
+    if not warped:
+        np.testing.assert_allclose(tangent, stiffness, rtol=2.0e-12, atol=2.0e-12)
+
+
+@pytest.mark.parametrize("length", (1.0e-6, 1.0, 1.0e6))
+def test_near_collapsed_warped_q4_is_rejected_at_every_scale_and_public_route(
+    length: float,
+) -> None:
+    nodes = length * np.asarray(
+        (
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 1.0e-14),
+            (1.0, 4.0e-14, 0.0),
+            (0.0, 4.0e-14, -1.0e-14),
+        ),
+        dtype=float,
+    )
+    mesh = _mesh(nodes)
+    material = _material()
+
+    def make() -> QualifiedE4PLShellElement:
+        return QualifiedE4PLShellElement(
+            31,
+            [1, 2, 3, 4],
+            "warped",
+            thickness=0.01 * length,
+            planar_tolerance=0.0,
+        )
+
+    routes = (
+        lambda: make().compute_stiffness_matrix(mesh, material),
+        lambda: make().compute_mass_matrix(mesh, material),
+        lambda: make().compute_stresses(mesh, np.zeros(24), material),
+        lambda: make().compute_nonlinear_response(
+            mesh,
+            material,
+            np.zeros(24),
+            tangent=True,
+        ),
+    )
+    for route in routes:
+        with pytest.raises(ValueError, match="dimensionless|nonpositive local Jacobian"):
+            route()

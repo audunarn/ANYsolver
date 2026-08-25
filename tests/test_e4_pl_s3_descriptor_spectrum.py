@@ -8,6 +8,7 @@ from scipy import linalg, sparse
 
 from anysolver.algebraic_dynamics import (
     AlgebraicDynamicsError,
+    DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID,
     _deterministic_block,
     solve_descriptor_spectrum,
 )
@@ -361,6 +362,17 @@ def test_bounded_static_condensation_catches_trial_orthogonal_coordinate_shear(
         == "coordinate_invariant_static_condensation_fallback"
     )
     assert np.all(spectrum.eigenvalues[:3] > 0.0)
+    assert spectrum.diagnostics["candidate_eigenvalue_policy_id"] == (
+        DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID
+    )
+    assert spectrum.diagnostics["candidate_eigenvalue_disposition"] == (
+        "CONDENSED_INPUT_PRESERVED"
+    )
+    assert spectrum.diagnostics["candidate_rayleigh_refined_count"] == 0
+    assert spectrum.diagnostics["candidate_condensed_preserved_count"] > 0
+    assert "COORDINATE_SHEAR" in spectrum.diagnostics[
+        "candidate_rayleigh_refinement_rejection_reasons"
+    ]
     np.testing.assert_allclose(
         spectrum.eigenvalues[:3], expected, rtol=2.0e-10, atol=2.0e-9
     )

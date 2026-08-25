@@ -20,6 +20,9 @@ from anysolver.nonlinear_performance_bootstrap import (
     get_nonlinear_assembly_plan,
     install_nonlinear_performance_optimizations,
 )
+from anysolver.e4_pl_element import QualifiedE4PLShellElement
+from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
+from anysolver.elements import LegacyShellElement
 from anysolver.vectorized_nonlinear import shell_nonlinear_batch_eligible
 
 
@@ -87,6 +90,8 @@ def _generated_geometry() -> dict:
                 "node_ids": [1, 2, 3, 4],
                 "thickness": 0.02,
                 "shell_section": "laminate",
+                # Authored surface authority; never inferred from connectivity.
+                "reference_normal": [0.0, 0.0, 1.0],
             }
         ],
         "beams": [
@@ -138,11 +143,58 @@ def test_generated_geometry_resolves_named_shell_and_beam_sections() -> None:
 
     assert shell.shell_section.name == "laminate"
     assert shell.shell_section.mass_per_area == pytest.approx(12.0)
+    assert type(shell) is QualifiedE4PLShellElement
+    np.testing.assert_array_equal(shell.reference_normal, (0.0, 0.0, 1.0))
     assert beam.generalized_section.name == "coupled"
     np.testing.assert_allclose(
         beam.generalized_section.generalized_stiffness_matrix(),
         _beam_stiffness(),
     )
+
+
+def test_generated_geometry_routes_explicit_qualified_s3_with_director_authority() -> None:
+    geometry = _generated_geometry()
+    geometry["shells"] = [
+        {
+            "id": 1,
+            "node_ids": [1, 2, 4],
+            "thickness": 0.02,
+            "shell_section": "laminate",
+            "shell_formulation": "qualified-s3",
+            "reference_normal": [0.0, 0.0, 1.0],
+        }
+    ]
+
+    model = build_fe_model_from_generated_geometry(geometry)
+    shell = model.mesh.get_element(1)
+    assert type(shell) is QualifiedE4PLS3ShellElement
+    assert shell.shell_section.name == "laminate"
+    np.testing.assert_array_equal(shell.reference_normal, (0.0, 0.0, 1.0))
+
+
+def test_generated_geometry_preserves_legacy_s3_default_and_rejects_director_state() -> None:
+    geometry = _generated_geometry()
+    geometry["shells"] = [
+        {
+            "id": 1,
+            "node_ids": [1, 2, 4],
+            "thickness": 0.02,
+        }
+    ]
+    model = build_fe_model_from_generated_geometry(geometry)
+    assert type(model.mesh.get_element(1)) is LegacyShellElement
+
+    geometry["shells"][0].update(
+        {
+            "formulation": "legacy-s3",
+            "reference_normal": [0.0, 0.0, 1.0],
+        }
+    )
+    with pytest.raises(
+        ValueError,
+        match="shell-director-authority-requires-qualified-shell-formulation",
+    ):
+        build_fe_model_from_generated_geometry(geometry)
 
 
 @pytest.mark.parametrize(

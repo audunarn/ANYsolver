@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, Iterable, Optional
 
 
@@ -37,7 +38,9 @@ def require_model_element_capabilities(
     )
     if not requested:
         raise ValueError("at least one element capability is required")
-    blocked: list[tuple[int, tuple[str, ...]]] = []
+    blocked: list[
+        tuple[int, tuple[str, ...], tuple[tuple[str, str], ...]]
+    ] = []
     elements = getattr(getattr(model, "mesh", None), "elements", {})
     selected = (
         None
@@ -49,20 +52,49 @@ def require_model_element_capabilities(
             continue
         gaps = frozenset(str(value) for value in getattr(element, "capability_gaps", ()))
         overlap = tuple(sorted(requested & gaps))
-        if overlap:
-            blocked.append((int(element_id), overlap))
+        raw_restrictions = getattr(element, "capability_restrictions", {})
+        restrictions = (
+            {
+                str(name): str(disposition)
+                for name, disposition in raw_restrictions.items()
+            }
+            if isinstance(raw_restrictions, Mapping)
+            else {}
+        )
+        restricted = tuple(
+            sorted(
+                (name, restrictions[name])
+                for name in requested
+                if name in restrictions
+            )
+        )
+        if overlap or restricted:
+            blocked.append((int(element_id), overlap, restricted))
     if not blocked:
         return
     blocked.sort(key=lambda item: item[0])
-    details = "; ".join(
-        f"{element_id} ({', '.join(gaps)})" for element_id, gaps in blocked[:8]
-    )
+    def blocked_label(
+        item: tuple[int, tuple[str, ...], tuple[tuple[str, str], ...]],
+    ) -> str:
+        element_id, gaps, restrictions = item
+        labels = [*gaps]
+        labels.extend(
+            f"{name}={disposition}" for name, disposition in restrictions
+        )
+        return f"{element_id} ({', '.join(labels)})"
+
+    details = "; ".join(blocked_label(item) for item in blocked[:8])
     if len(blocked) > 8:
         details += f"; and {len(blocked) - 8} more"
-    raise ElementCapabilityError(
-        f"{context} is unavailable because element capability PARITY_GAP remains: "
-        f"{details}"
+    has_restriction = any(
+        restrictions for _element_id, _gaps, restrictions in blocked
     )
+    reason = (
+        "element capability disposition rejects the requested profile"
+        if has_restriction
+        else "element capability PARITY_GAP remains"
+    )
+    raise ElementCapabilityError(f"{context} is unavailable because {reason}: {details}")
 
 
 def require_model_nonlinear_workflow_capabilities(

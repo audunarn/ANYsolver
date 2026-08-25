@@ -89,6 +89,7 @@ def _model_with_shell(
     thickness: float = 0.02,
     material_angle_deg: float = 0.0,
     legacy: bool = False,
+    reference_normal: tuple[float, float, float] | None = None,
 ) -> tuple[FEModel, ShellElement]:
     model = FEModel("generalized_shell")
     model.add_material("aluminium", 70.0e9, 0.25, density=2700.0)
@@ -101,6 +102,8 @@ def _model_with_shell(
         "material_angle_deg": material_angle_deg,
         "shell_section": section,
     }
+    if reference_normal is not None:
+        kwargs["reference_normal"] = reference_normal
     if legacy:
         element = _legacy_shell(1, node_ids, "aluminium", **kwargs)
     elif node_count == 4:
@@ -223,7 +226,10 @@ def test_generalized_shell_section_recovers_exact_strains_and_resultants() -> No
         [[12.0, 1.0, 0.3], [1.0, 9.0, -0.2], [0.3, -0.2, 4.0]]
     )
     section = GeneralizedShellSection(A=A, B=B, D=D, As=np.diag([20.0, 15.0]))
-    model, element = _model_with_shell(section=section)
+    model, element = _model_with_shell(
+        section=section,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
     material = model.get_material("aluminium")
 
     strain = np.array([1.2e-3, -0.4e-3, 0.7e-3])
@@ -342,7 +348,10 @@ def test_generalized_shell_section_nonlinear_tangent_matches_difference() -> Non
         D=np.array([[10.0, 0.8, 0.2], [0.8, 8.0, -0.1], [0.2, -0.1, 3.0]]),
         As=np.diag([18.0, 14.0]),
     )
-    model, element = _model_with_shell(section=section)
+    model, element = _model_with_shell(
+        section=section,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
     material = model.get_material("aluminium")
     displacement = np.linspace(-2.0e-3, 2.0e-3, element.total_dofs)
     force, tangent, _state = element.compute_nonlinear_response(

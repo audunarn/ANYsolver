@@ -259,7 +259,9 @@ def test_recovery_capabilities_are_explicitly_replaced() -> None:
     assert element.capability_matrix()["committed_state_recovery"] == (
         "PARITY_REPLACED"
     )
-    assert element.capability_matrix()["restart_history"] == "PARITY_GAP"
+    assert element.capability_matrix()["restart_history"] == (
+        "STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
+    )
     assert element.recovery_errors_fail_closed is True
 
 

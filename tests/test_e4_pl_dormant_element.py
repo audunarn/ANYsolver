@@ -114,10 +114,31 @@ def test_numerical_terms_are_separate_from_physical_recovery() -> None:
     legacy = ShellElement(2, [1, 2, 3, 4], "q1", thickness=2.0 / 3.0)
     candidate_stress = element.compute_stresses(mesh, displacement, material)
     legacy_stress = legacy.compute_stresses(mesh, displacement, material)
-    assert candidate_stress.keys() == legacy_stress.keys()
-    for key in candidate_stress:
-        if isinstance(candidate_stress[key], np.ndarray):
-            assert np.allclose(candidate_stress[key], legacy_stress[key])
+    assert candidate_stress["numerical_fields_excluded"] is True
+    assert candidate_stress["recovery_scope"] == "qualified_q4_local_physical_only"
+    inherited_resultants = np.column_stack(
+        (
+            np.column_stack(
+                tuple(legacy_stress[key] for key in ("membrane_xx", "membrane_yy", "membrane_xy"))
+            )
+            * element.thickness,
+            np.column_stack(
+                tuple(legacy_stress[key] for key in ("bending_xx", "bending_yy", "bending_xy"))
+            )
+            * element.thickness**2
+            / 6.0,
+            np.column_stack(tuple(legacy_stress[key] for key in ("shear_xz", "shear_yz")))
+            * element.thickness,
+        )
+    )
+    stationary_resultants = np.column_stack(
+        (
+            candidate_stress["membrane_resultants"],
+            candidate_stress["bending_resultants"],
+            candidate_stress["transverse_shear_resultants"],
+        )
+    )
+    assert not np.allclose(stationary_resultants, inherited_resultants)
 
 
 def test_inherited_mass_geometric_state_and_direct_warped_parity() -> None:
@@ -198,7 +219,11 @@ def test_generalized_section_and_warped_nonlinear_paths_retain_parity() -> None:
         rotary_inertia_per_area=0.02,
     )
     element = QualifiedE4PLShellElement(
-        1, [1, 2, 3, 4], "q1", shell_section=section
+        1,
+        [1, 2, 3, 4],
+        "q1",
+        shell_section=section,
+        reference_normal=np.asarray((0.0, 0.0, -1.0)),
     )
     qualified = element.compute_stiffness_matrix(mesh, material).copy()
     force, tangent, state = element.compute_nonlinear_response(

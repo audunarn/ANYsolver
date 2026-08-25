@@ -421,6 +421,21 @@ def solve_eigenvalue_buckling(
             validate_committed_current_tangent_inputs,
         )
 
+        qualified_s3_ids = tuple(
+            int(element_id)
+            for element_id, element in sorted(model.mesh.elements.items())
+            if str(getattr(element, "formulation_id", ""))
+            == _QUALIFIED_S3_FORMULATION_ID
+        )
+        if qualified_s3_ids and len(qualified_s3_ids) != len(
+            model.mesh.elements
+        ):
+            require_model_element_capabilities(
+                model,
+                "mixed_current_state_buckling",
+                context="solve_eigenvalue_buckling current-state path",
+                element_ids=qualified_s3_ids,
+            )
         validate_committed_current_tangent_inputs(
             model,
             current_state_displacements,
@@ -428,7 +443,11 @@ def solve_eigenvalue_buckling(
             current_state_num_layers,
             context="solve_eigenvalue_buckling current-state path",
         )
-        required_capability = "current_state_buckling"
+        required_capability = (
+            "current_state_buckling_s3"
+            if qualified_s3_ids
+            else "current_state_buckling"
+        )
     elif bool(reference_elastic_only):
         _require_reference_elastic_s3_states(model, element_states)
         required_capability = "reference_elastic_buckling"

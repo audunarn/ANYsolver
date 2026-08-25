@@ -171,6 +171,11 @@ def solve_nonlinear_load_stepping(
         raise ValueError("max_load_factor must be non-negative")
     if stability_tolerance < 0.0:
         raise ValueError("stability_tolerance must be non-negative")
+    require_model_element_capabilities(
+        model,
+        "linearized_limit_point",
+        context="solve_nonlinear_load_stepping",
+    )
     require_no_native_total_lagrangian_elements(
         model,
         context="solve_nonlinear_load_stepping",

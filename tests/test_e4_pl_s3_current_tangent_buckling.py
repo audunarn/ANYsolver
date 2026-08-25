@@ -619,7 +619,10 @@ def test_current_state_guards_fail_before_mechanics_and_mixed_q4_is_explicit(
 
     mixed = _mixed_model()
     monkeypatch.setattr(mixed, "apply_boundary_conditions", forbidden)
-    with pytest.raises(ElementCapabilityError, match=r"unsupported element IDs \[1\]"):
+    with pytest.raises(
+        ElementCapabilityError,
+        match="mixed_current_state_buckling",
+    ):
         solve_eigenvalue_buckling(
             mixed,
             current_state_displacements=np.zeros(
@@ -629,8 +632,11 @@ def test_current_state_guards_fail_before_mechanics_and_mixed_q4_is_explicit(
         )
 
     matrix = element.capability_matrix()
-    assert matrix["current_state_buckling"] == "PARITY_REPLACED"
-    assert matrix["buckling"] == "PARITY_GAP"
+    assert matrix["current_state_buckling_s3"] == "PARITY_REPLACED"
+    assert matrix["mixed_current_state_buckling"] == "PARITY_GAP"
+    assert matrix["buckling"] == (
+        "EXPLICIT_REFERENCE_ELASTIC_OR_CURRENT_STATE_AUTHORITY_REQUIRED"
+    )
     assert matrix["material_nonlinearity"] == "PARITY_REPLACED"
 
 

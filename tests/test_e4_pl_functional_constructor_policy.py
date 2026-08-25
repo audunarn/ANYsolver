@@ -128,7 +128,56 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
     )
     assert calls["ShellElement"] == expected_non_q4
     assert sum(calls["ShellElement"].values()) == 20
-    assert calls["QualifiedE4PLShellElement"] == Counter()
+    expected_qualified_q4 = Counter(
+        {
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_b_coupled_section_requires_persistent_director_and_restart_identity",
+            ): 3,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_recovery_is_d4_and_proper_global_covariant_with_physical_material_direction",
+            ): 3,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_numerical_fields_and_nonfinite_values_cannot_enter_planar_recovery",
+            ): 2,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_authoritative_director_keeps_isotropic_top_and_bottom_physical",
+            ): 2,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_stationary_equilibrium_and_recovered_resultants_close_virtual_work",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_combined_patch_recovery_is_exact_at_gauss_and_arbitrary_common_points",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_generalized_section_keeps_resultants_only_schema_with_mixed_fields",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_reflected_abd_congruence_uses_exact_engineering_field_maps",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "make",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_qualified_q4_fingerprint_cannot_downgrade_to_legacy_without_formulation_id",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_stationary_conditioning.py",
+                "_stationary_case",
+            ): 1,
+        }
+    )
+    assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
+    assert sum(calls["QualifiedE4PLShellElement"].values()) == 17
 
 
 def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None:

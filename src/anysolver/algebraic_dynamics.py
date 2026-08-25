@@ -41,6 +41,14 @@ DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID = (
 DESCRIPTOR_SHIFT_RATIO = 1.0e-6
 DESCRIPTOR_COORDINATE_SHEAR_LIMIT = 256.0
 DESCRIPTOR_DENSE_CONDENSATION_LIMIT = 3072
+DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID = (
+    "FULL_SYSTEM_RAYLEIGH_AFTER_BOUNDED_STATIC_CONDENSATION_V1"
+)
+DESCRIPTOR_RAYLEIGH_REFINEMENT_BACKWARD_ERROR_LIMIT = 1.0e-10
+DESCRIPTOR_RAYLEIGH_REFINEMENT_COORDINATE_SHEAR_LIMIT = 16.0
+DESCRIPTOR_RAYLEIGH_REFINEMENT_CANCELLATION_LIMIT = 1.0e-8
+DESCRIPTOR_RAYLEIGH_REFINEMENT_DISAGREEMENT_LIMIT = 1.0e-8
+DESCRIPTOR_RAYLEIGH_REFINEMENT_ROUNDOFF_SAFETY_FACTOR = 64.0
 
 
 class AlgebraicDynamicsError(ValueError):
@@ -1785,7 +1793,10 @@ def _validate_physical_candidates(
     descriptor_shift: float,
     transformed_values: Optional[np.ndarray] = None,
     preserve_input_eigenvalues: bool = False,
-) -> tuple[np.ndarray, np.ndarray, Dict[str, float]]:
+    rayleigh_coordinate_shear: Optional[np.ndarray] = None,
+    rayleigh_cancellation_roundoff: Optional[np.ndarray] = None,
+    allow_safe_rayleigh_refinement: bool = False,
+) -> tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
     """Certify residuals, signs, transformed values, and M orthogonality."""
 
     values = np.asarray(eigenvalues, dtype=float).reshape(-1)
@@ -1799,14 +1810,35 @@ def _validate_physical_candidates(
             raise AlgebraicDynamicsError(
                 "descriptor transformed candidates have incompatible shapes"
             )
-    certified_values: list[float] = []
-    certified_modes: list[np.ndarray] = []
-    backward_errors: list[float] = []
-    transform_errors: list[float] = []
-    sign_tolerances: list[float] = []
-    rayleigh_disagreements: list[float] = []
+
+    coordinate_shear = None
+    cancellation_roundoff = None
+    if rayleigh_coordinate_shear is not None:
+        coordinate_shear = np.asarray(
+            rayleigh_coordinate_shear, dtype=float
+        ).reshape(-1)
+        if coordinate_shear.size != values.size:
+            raise AlgebraicDynamicsError(
+                "descriptor Rayleigh coordinate-shear certificate has an "
+                "incompatible shape"
+            )
+    if rayleigh_cancellation_roundoff is not None:
+        cancellation_roundoff = np.asarray(
+            rayleigh_cancellation_roundoff, dtype=float
+        ).reshape(-1)
+        if cancellation_roundoff.size != values.size:
+            raise AlgebraicDynamicsError(
+                "descriptor Rayleigh cancellation certificate has an "
+                "incompatible shape"
+            )
+
     absolute_stiffness = abs(sparse.csr_matrix(K))
     absolute_mass = abs(sparse.csr_matrix(M))
+    normalized_modes: list[np.ndarray] = []
+    rayleigh_values: list[float] = []
+    input_backward_errors: list[float] = []
+    rayleigh_disagreements: list[float] = []
+    input_residuals_finite: list[bool] = []
     for index, vector in enumerate(modes.T):
         made = np.asarray(vector, dtype=float).reshape(-1)
         modal_mass = float(made @ (M @ made))
@@ -1815,22 +1847,115 @@ def _validate_physical_candidates(
                 "descriptor eigensolver returned a non-physical candidate"
             )
         made = made / np.sqrt(modal_mass)
-        rayleigh = float(made @ (K @ made))
+        stiffness_action = np.asarray(K @ made, dtype=float).reshape(-1)
+        mass_action = np.asarray(M @ made, dtype=float).reshape(-1)
+        rayleigh = float(made @ stiffness_action)
+        input_value = float(values[index])
         if not np.isfinite(rayleigh):
             raise AlgebraicDynamicsError(
                 "descriptor eigensolver returned a non-finite Rayleigh value"
             )
+        if not np.isfinite(input_value):
+            raise AlgebraicDynamicsError(
+                "descriptor eigensolver returned a non-finite eigenvalue"
+            )
+        normalized_modes.append(made)
+        rayleigh_values.append(rayleigh)
+        if preserve_input_eigenvalues:
+            input_residual = stiffness_action - input_value * mass_action
+            input_scale = np.asarray(
+                absolute_stiffness @ np.abs(made)
+                + abs(input_value) * (absolute_mass @ np.abs(made)),
+                dtype=float,
+            ).reshape(-1)
+            input_denominator = max(
+                float(np.linalg.norm(input_scale)), np.finfo(float).tiny
+            )
+            input_backward = float(
+                np.linalg.norm(input_residual) / input_denominator
+            )
+            input_backward_errors.append(input_backward)
+            input_residuals_finite.append(
+                bool(
+                    np.all(np.isfinite(input_residual))
+                    and np.isfinite(input_backward)
+                )
+            )
+            rayleigh_disagreements.append(
+                abs(rayleigh - input_value)
+                / max(abs(rayleigh), abs(input_value), 1.0)
+            )
+        else:
+            input_backward_errors.append(0.0)
+            input_residuals_finite.append(True)
+            rayleigh_disagreements.append(0.0)
+
+    # Refinement is deliberately an all-candidate decision.  That keeps the
+    # returned ordering on one numerical policy and prevents a benign-looking
+    # low mode from opting into a full-coordinate Rayleigh quotient when any
+    # selected companion exposes unsafe coordinate shear or cancellation.
+    refinement_rejection_reasons: list[str] = []
+    refinement_requested = bool(
+        preserve_input_eigenvalues and allow_safe_rayleigh_refinement
+    )
+    if refinement_requested:
+        if coordinate_shear is None or cancellation_roundoff is None:
+            refinement_rejection_reasons.append("MISSING_SAFETY_CERTIFICATE")
+        else:
+            if (
+                not np.all(np.isfinite(coordinate_shear))
+                or not np.all(np.isfinite(cancellation_roundoff))
+                or not all(input_residuals_finite)
+            ):
+                refinement_rejection_reasons.append("NONFINITE_CERTIFICATE")
+            if (
+                not input_backward_errors
+                or max(input_backward_errors)
+                > DESCRIPTOR_RAYLEIGH_REFINEMENT_BACKWARD_ERROR_LIMIT
+            ):
+                refinement_rejection_reasons.append("INPUT_BACKWARD_ERROR")
+            if (
+                np.any(~np.isfinite(coordinate_shear))
+                or np.any(
+                    coordinate_shear
+                    > DESCRIPTOR_RAYLEIGH_REFINEMENT_COORDINATE_SHEAR_LIMIT
+                )
+            ):
+                refinement_rejection_reasons.append("COORDINATE_SHEAR")
+            if (
+                np.any(~np.isfinite(cancellation_roundoff))
+                or np.any(
+                    cancellation_roundoff
+                    > DESCRIPTOR_RAYLEIGH_REFINEMENT_CANCELLATION_LIMIT
+                )
+            ):
+                refinement_rejection_reasons.append("ENERGY_CANCELLATION")
+            if (
+                not rayleigh_disagreements
+                or max(rayleigh_disagreements)
+                > DESCRIPTOR_RAYLEIGH_REFINEMENT_DISAGREEMENT_LIMIT
+            ):
+                refinement_rejection_reasons.append("RAYLEIGH_DISAGREEMENT")
+    refinement_safe = bool(
+        refinement_requested and not refinement_rejection_reasons
+    )
+
+    certified_values: list[float] = []
+    certified_modes: list[np.ndarray] = []
+    backward_errors: list[float] = []
+    transform_errors: list[float] = []
+    sign_tolerances: list[float] = []
+    for index, made in enumerate(normalized_modes):
+        rayleigh = rayleigh_values[index]
         candidate_value = (
-            float(values[index]) if preserve_input_eigenvalues else rayleigh
+            rayleigh
+            if refinement_safe or not preserve_input_eigenvalues
+            else float(values[index])
         )
         if not np.isfinite(candidate_value):
             raise AlgebraicDynamicsError(
                 "descriptor eigensolver returned a non-finite eigenvalue"
             )
-        rayleigh_disagreements.append(
-            abs(rayleigh - candidate_value)
-            / max(abs(rayleigh), abs(candidate_value), 1.0)
-        )
         # Use the independently constructed finite-spectrum scale for the
         # sign decision.  A componentwise ``|x|^T |K| |x|`` bound is useful
         # for backward error, but it is not a sound sign threshold: an
@@ -1906,18 +2031,73 @@ def _validate_physical_candidates(
             )
     else:
         orthogonality_error = 0.0
+    candidate_diagnostics: Dict[str, Any] = {
+        "candidate_max_backward_error": max(backward_errors, default=0.0),
+        "candidate_max_transformed_value_error": max(transform_errors, default=0.0),
+        "candidate_mass_orthogonality_error": orthogonality_error,
+        "negative_eigenvalue_tolerance": max(sign_tolerances, default=0.0),
+        "candidate_max_full_rayleigh_disagreement": max(
+            rayleigh_disagreements, default=0.0
+        ),
+    }
+    if preserve_input_eigenvalues:
+        coordinate_shear_max = (
+            None
+            if coordinate_shear is None or np.any(~np.isfinite(coordinate_shear))
+            else float(np.max(coordinate_shear, initial=0.0))
+        )
+        cancellation_roundoff_max = (
+            None
+            if cancellation_roundoff is None
+            or np.any(~np.isfinite(cancellation_roundoff))
+            else float(np.max(cancellation_roundoff, initial=0.0))
+        )
+        candidate_diagnostics.update(
+            {
+                "candidate_eigenvalue_policy_id": (
+                    DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID
+                ),
+                "candidate_eigenvalue_disposition": (
+                    "FULL_SYSTEM_RAYLEIGH_REFINED"
+                    if refinement_safe
+                    else "CONDENSED_INPUT_PRESERVED"
+                ),
+                "candidate_rayleigh_refined_count": (
+                    len(certified_values) if refinement_safe else 0
+                ),
+                "candidate_condensed_preserved_count": (
+                    0 if refinement_safe else len(certified_values)
+                ),
+                "candidate_max_input_backward_error": max(
+                    input_backward_errors, default=0.0
+                ),
+                "candidate_coordinate_shear_max": coordinate_shear_max,
+                "candidate_cancellation_roundoff_bound_max": (
+                    cancellation_roundoff_max
+                ),
+                "candidate_rayleigh_refinement_rejection_reasons": (
+                    refinement_rejection_reasons
+                ),
+                "candidate_rayleigh_refinement_limits": {
+                    "input_backward_error": (
+                        DESCRIPTOR_RAYLEIGH_REFINEMENT_BACKWARD_ERROR_LIMIT
+                    ),
+                    "coordinate_shear": (
+                        DESCRIPTOR_RAYLEIGH_REFINEMENT_COORDINATE_SHEAR_LIMIT
+                    ),
+                    "cancellation_roundoff": (
+                        DESCRIPTOR_RAYLEIGH_REFINEMENT_CANCELLATION_LIMIT
+                    ),
+                    "rayleigh_disagreement": (
+                        DESCRIPTOR_RAYLEIGH_REFINEMENT_DISAGREEMENT_LIMIT
+                    ),
+                },
+            }
+        )
     return (
         np.asarray(certified_values, dtype=float),
         output_modes,
-        {
-            "candidate_max_backward_error": max(backward_errors, default=0.0),
-            "candidate_max_transformed_value_error": max(transform_errors, default=0.0),
-            "candidate_mass_orthogonality_error": orthogonality_error,
-            "negative_eigenvalue_tolerance": max(sign_tolerances, default=0.0),
-            "candidate_max_full_rayleigh_disagreement": max(
-                rayleigh_disagreements, default=0.0
-            ),
-        },
+        candidate_diagnostics,
     )
 
 
@@ -2072,6 +2252,38 @@ def _dense_static_condensed_spectrum(
     algebraic_coordinates = -back_substitution @ physical_vectors
     vectors = basis @ algebraic_coordinates
     vectors[physical_rows, :] += physical_vectors
+    embedded_physical = np.zeros_like(vectors)
+    embedded_physical[physical_rows, :] = physical_vectors
+    algebraic_vectors = basis @ algebraic_coordinates
+    physical_norms = np.linalg.norm(embedded_physical, axis=0)
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        coordinate_shear = np.linalg.norm(algebraic_vectors, axis=0) / np.maximum(
+            physical_norms, np.finfo(float).tiny
+        )
+        absolute_vectors = np.abs(vectors)
+        absolute_energy = np.sum(
+            absolute_vectors * (np.abs(dense_stiffness) @ absolute_vectors),
+            axis=0,
+        )
+        represented_energy = np.abs(
+            np.sum(vectors * (dense_stiffness @ vectors), axis=0)
+        )
+        cancellation_ratio = absolute_energy / np.maximum(
+            represented_energy, np.finfo(float).tiny
+        )
+        dot_product_gamma = (
+            size * np.finfo(float).eps
+            / max(1.0 - size * np.finfo(float).eps, np.finfo(float).eps)
+        )
+        # A full-coordinate Rayleigh quotient is accepted only when a
+        # dimension-aware dot-product bound, enlarged by a fixed safety
+        # factor, remains small.  Strongly sheared descriptors therefore keep
+        # the coordinate-invariant condensed eigenvalue.
+        cancellation_roundoff = (
+            DESCRIPTOR_RAYLEIGH_REFINEMENT_ROUNDOFF_SAFETY_FACTOR
+            * dot_product_gamma
+            * cancellation_ratio
+        )
     values, vectors, candidate_diagnostics = _validate_physical_candidates(
         K,
         M,
@@ -2080,6 +2292,9 @@ def _dense_static_condensed_spectrum(
         stiffness_mass_scale=stiffness_mass_scale,
         descriptor_shift=descriptor_shift,
         preserve_input_eigenvalues=True,
+        rayleigh_coordinate_shear=coordinate_shear,
+        rayleigh_cancellation_roundoff=cancellation_roundoff,
+        allow_safe_rayleigh_refinement=True,
     )
     return DescriptorSpectrum(
         values,
@@ -2563,6 +2778,7 @@ __all__ = [
     "DESCRIPTOR_COORDINATE_SHEAR_LIMIT",
     "DESCRIPTOR_DENSE_CONDENSATION_LIMIT",
     "DESCRIPTOR_MODAL_POLICY_ID",
+    "DESCRIPTOR_RAYLEIGH_REFINEMENT_POLICY_ID",
     "DESCRIPTOR_TRANSIENT_FIRST_ORDER_POLICY_ID",
     "DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID",
     "DESCRIPTOR_TRANSIENT_POLICY_ID",

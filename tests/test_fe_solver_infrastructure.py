@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -17,6 +18,7 @@ import pytest
 from scipy import sparse
 
 import anysolver
+import anysolver.assembly as assembly_module
 import anysolver.linalg as linalg
 from anysolver import (
     AssemblyError,
@@ -48,6 +50,77 @@ from anysolver.nonlinear_static import solve_static_nonlinear
 def test_public_all_symbols_importable() -> None:
     missing = [name for name in anysolver.__all__ if not hasattr(anysolver, name)]
     assert missing == []
+
+
+def test_supported_stiffness_uses_symmetric_congruence_and_reports_backward_error() -> None:
+    matrix = sparse.csr_matrix(
+        np.asarray(
+            (
+                (1.0e-12, 1.0e-8),
+                (1.0e-8, 1.0),
+            ),
+            dtype=float,
+        )
+    )
+    expected = np.asarray((1.25, -0.75), dtype=float)
+    rhs = np.asarray(matrix @ expected, dtype=float)
+
+    equilibrated, scaling, diagnostics = (
+        assembly_module._equilibrate_supported_stiffness(matrix)
+    )
+    congruence = scaling[:, None] * matrix.toarray() * scaling[None, :]
+    assert equilibrated.toarray() == pytest.approx(congruence, rel=0.0, abs=0.0)
+    assert np.diag(equilibrated.toarray()) == pytest.approx(np.ones(2))
+    assert diagnostics == {
+        "id": "SYMMETRIC_DIAGONAL_CONGRUENCE_Q1C_V1",
+        "applied": True,
+        "diagonal_floor": pytest.approx(1.0e-30),
+        "diagonal_ratio": pytest.approx(1.0e12),
+        "scaled_diagonal_ratio": pytest.approx(1.0),
+        "disposition": "EQUILIBRATED",
+    }
+
+    solution, info = assembly_module._solve_reduced_system(
+        matrix,
+        rhs,
+        "direct",
+    )
+    assert solution == pytest.approx(expected, rel=4.0e-12, abs=4.0e-12)
+    assert info["status"] == "converged"
+    assert info["equilibration"]["id"] == diagnostics["id"]
+    assert info["relative_backward_error"] <= 8.0 * np.finfo(float).eps
+
+
+def test_supported_stiffness_diagnostics_are_strict_json_and_backward_error_fails_closed() -> None:
+    zero = sparse.csr_matrix((2, 2), dtype=float)
+    _matrix, _scaling, diagnostics = assembly_module._equilibrate_supported_stiffness(
+        zero
+    )
+    assert diagnostics["disposition"] == "NO_POSITIVE_DIAGONAL"
+    assert diagnostics["diagonal_ratio"] is None
+    assert diagnostics["scaled_diagonal_ratio"] is None
+    json.dumps(diagnostics, allow_nan=False)
+
+    overflow_norm = sparse.csr_matrix(
+        np.asarray(
+            ((1.0e308, 9.0e307), (9.0e307, 1.0e308)),
+            dtype=float,
+        )
+    )
+    expected = np.asarray((1.0e-308, -1.0e-308), dtype=float)
+    rhs = np.asarray(overflow_norm @ expected, dtype=float)
+    assert np.all(np.isfinite(rhs))
+    assert math.isinf(assembly_module._backward_error(overflow_norm, expected, rhs))
+
+    _solution, info = assembly_module._solve_reduced_system(
+        overflow_norm,
+        rhs,
+        "direct",
+    )
+    assert info["status"] == "failed"
+    assert info["relative_backward_error"] is None
+    assert info["relative_backward_error_disposition"] == "NONFINITE_OR_OVERFLOW"
+    json.dumps(info, allow_nan=False)
 
 
 def test_root_import_does_not_eagerly_load_optional_accelerators() -> None:
@@ -503,10 +576,37 @@ def test_multiple_rhs_static_solve_matches_individual_solves() -> None:
     assert info["status"] == "converged"
     assert info["backend"]["factorization_count"] == 1
     assert info["factorization_cache"]["misses"] == 1
+    assert info["equilibration"]["id"] == "SYMMETRIC_DIAGONAL_CONGRUENCE_Q1C_V1"
+    assert info["relative_backward_error"] <= info["relative_backward_error_limit"]
+    assert info["relative_backward_error_disposition"] == "CERTIFIED"
     assert info["result_case"]["analysis_case"]["analysis_type"] == "linear_static_many"
     assert [item["name"] for item in info["result_case"]["analysis_case"]["load_cases"]] == ["x", "z"]
     np.testing.assert_allclose(many[:, 0], one_x, rtol=1.0e-9, atol=1.0e-12)
     np.testing.assert_allclose(many[:, 1], one_z, rtol=1.0e-9, atol=1.0e-12)
+
+
+def test_multiple_rhs_backward_error_overflow_fails_closed(monkeypatch) -> None:
+    model = generate_beam_mesh(
+        1.0,
+        num_divisions=2,
+        cross_section={"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+    )
+    first = LoadCase("first")
+    first.add_nodal_load(3, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    second = LoadCase("second")
+    second.add_nodal_load(3, [0.0, 0.0, -1.0, 0.0, 0.0, 0.0])
+    monkeypatch.setattr(
+        assembly_module,
+        "_backward_error",
+        lambda _matrix, _solution, _rhs: float("inf"),
+    )
+
+    displacement, info = solve_linear_many(model, [first, second])
+    assert info["status"] == "failed"
+    assert info["relative_backward_error"] is None
+    assert info["relative_backward_error_disposition"] == "NONFINITE_OR_OVERFLOW"
+    np.testing.assert_array_equal(displacement, np.zeros_like(displacement))
+    json.dumps(info, allow_nan=False)
 
 
 def test_static_result_provenance_is_attached_to_solver_info_and_fe_result() -> None:

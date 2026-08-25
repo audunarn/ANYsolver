@@ -232,13 +232,21 @@ def test_static_nonlinear_state_and_field_guards_are_id_scoped() -> None:
         context="qualified-s3-checkpoint-selection",
         element_ids=(S3_ID,),
     )
-    with pytest.raises(ElementCapabilityError, match="restart_history"):
+    with pytest.raises(
+        ElementCapabilityError,
+        match=(
+            "restart_history=STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
+        ),
+    ):
         require_model_element_capabilities(
             model,
             "restart_history",
             context="generic-restart-selection",
             element_ids=(S3_ID,),
         )
+    assert model.mesh.elements[S3_ID].capability_matrix()[
+        "restart_history"
+    ] == "STATIC_AND_ARC_LENGTH_CHECKPOINTS_ONLY"
 
     require_model_element_capabilities(
         generalized_model,

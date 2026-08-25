@@ -293,7 +293,14 @@ def test_generalized_v3_state_exposes_resultants_without_fabricating_stress() ->
         model.get_material("steel"),
         3,
     )
-    assert "material_nonlinearity" in element.capability_gaps
+    assert "material_nonlinearity" not in element.capability_gaps
+    assert element.capability_matrix()["material_nonlinearity"] == (
+        "NOT_APPLICABLE_STATELESS_FIXED_SECTION"
+    )
+    assert "patch_recovery" not in element.capability_gaps
+    assert element.capability_matrix()["patch_recovery"] == (
+        "NOT_APPLICABLE_NO_PHYSICAL_LAYER_FIELD"
+    )
     assert "nonlinear_geometry" not in element.capability_gaps
     assert element.capability_matrix()[
         "stateless_generalized_section_nonlinear_geometry"
