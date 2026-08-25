@@ -22,7 +22,7 @@ import copy
 import math
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -46,8 +46,9 @@ MIN_REFERENCE_S3_RECOVERY_GROUP = 128
 
 def _readonly(values: np.ndarray) -> np.ndarray:
     made = np.ascontiguousarray(values)
-    made.setflags(write=False)
-    return made
+    return np.frombuffer(
+        made.tobytes(order="C"), dtype=made.dtype
+    ).reshape(made.shape)
 
 
 def _revision_key(model: "FEModel") -> Tuple[int, int, int]:
@@ -56,6 +57,16 @@ def _revision_key(model: "FEModel") -> Tuple[int, int, int]:
         int(revisions.get("topology", 0)),
         int(revisions.get("geometry", 0)),
         int(revisions.get("material", 0)),
+    )
+
+
+def _direct_state_key(model: "FEModel") -> Tuple[int, int, int, int]:
+    token = getattr(model.mesh, "_qualified_direct_state_token", (-1,))
+    return (
+        id(model.mesh.nodes),
+        id(model.mesh.elements),
+        id(token),
+        int(token[0]),
     )
 
 
@@ -149,59 +160,27 @@ def _component_key(model: "FEModel", element: Any) -> Tuple[Any, ...]:
 
 def _plan_validation_signature(
     model: "FEModel",
-    items: Sequence[Tuple[int, Any]],
+    material_names: Sequence[str],
 ) -> Tuple[Any, ...]:
     """Bind every input that can change eligibility or the S3 component key.
 
     The mesh revision catches supported topology/geometry/material mutations.
-    Exact node mutation revisions additionally catch direct node edits.
-    Qualified S3
-    attribute replacement advances the element-owned plan revision, while its
-    vector inputs are immutable.  Equality of this stronger preimage therefore
+    A mesh-owned direct-state revision catches coordinate or qualified-S3
+    attribute replacement without an element-by-element coordinate scan.
+    Qualified S3 connectivity and vector inputs are immutable, so every
+    supported element-state change also advances that shared revision.
+    Equality of this stronger preimage therefore
     guarantees that both ``reference_s3_eligibility`` and ``_component_key``
     have the same result as when the plan was built, without repeated frame
     construction or centered-coordinate arithmetic.
     """
 
-    from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+    from .e4_pl_s3_element import _elastic_material_cache_fingerprint
 
-    referenced_node_ids: set[int] = set()
-    material_by_name: Dict[str, Any] = {}
-    reference_normals: list[Any] = []
-    rows: list[Tuple[int, int, int, Tuple[int, ...]]] = []
-    for raw_element_id, element in items:
-        if (
-            type(element) is not QualifiedE4PLS3ShellElement
-            or getattr(element, "formulation_id", None)
-            != REFERENCE_S3_FORMULATION_ID
-        ):
-            continue
-        material_name = str(element.material_name)
-        if material_name not in material_by_name:
-            material_by_name[material_name] = model.get_material(material_name)
-        node_ids = tuple(int(node_id) for node_id in element.node_ids)
-        referenced_node_ids.update(node_ids)
-        reference_normals.append(element.reference_normal)
-        rows.append(
-            (
-                int(raw_element_id),
-                id(element),
-                int(getattr(element, "_qualified_plan_state_revision", -1)),
-                node_ids,
-            )
-        )
-    ordered_node_ids = tuple(sorted(referenced_node_ids))
-    node_state = tuple(
-        (
-            node_id,
-            id(model.mesh.nodes[node_id]),
-            int(getattr(model.mesh.nodes[node_id], "_coordinate_revision", -1)),
-        )
-        for node_id in ordered_node_ids
-    )
-    reference_normal_state = np.ascontiguousarray(
-        np.asarray(reference_normals, dtype=float)
-    ).tobytes(order="C")
+    material_by_name = {
+        str(material_name): model.get_material(str(material_name))
+        for material_name in material_names
+    }
     material_state = tuple(
         (
             material_name,
@@ -210,6 +189,7 @@ def _plan_validation_signature(
             id(material),
             str(getattr(material, "elastic_symmetry", "")),
             bool(is_isotropic_material(material)),
+            _elastic_material_cache_fingerprint(material),
             getattr(material, "hill_yield", None) is None,
             getattr(material, "hardening_curve", None) is None,
         )
@@ -218,22 +198,62 @@ def _plan_validation_signature(
     return (
         id(model.mesh),
         _revision_key(model),
-        ordered_node_ids,
-        node_state,
-        reference_normal_state,
+        _direct_state_key(model),
         material_state,
-        tuple(rows),
     )
 
 
-def _copy_components(components: Mapping[str, Any]) -> Dict[str, Any]:
-    copied: Dict[str, Any] = {}
-    for name, value in components.items():
-        if isinstance(value, np.ndarray):
-            copied[name] = value.copy()
-        else:
-            copied[name] = copy.deepcopy(value)
-    return copied
+def _bind_plan_state_sources(
+    model: "FEModel",
+    items: Sequence[Tuple[int, Any]],
+) -> None:
+    """Normalize direct public-mapping replacements before plan creation."""
+
+    from .fe_core import (
+        _bind_qualified_direct_state_token,
+        _ensure_qualified_state_mappings,
+        _freeze_qualified_element_vector_inputs,
+    )
+
+    _ensure_qualified_state_mappings(model.mesh)
+    token = model.mesh._qualified_direct_state_token
+    for _raw_element_id, element in items:
+        if not reference_s3_candidate(element):
+            continue
+        _freeze_qualified_element_vector_inputs(element)
+        _bind_qualified_direct_state_token(element, token)
+        for node_id in element.node_ids:
+            node = model.mesh.nodes.get(int(node_id))
+            if node is not None:
+                _bind_qualified_direct_state_token(node, token)
+
+
+def _immutable_component_copy(
+    value: Any,
+    frozen_arrays: Optional[Dict[int, np.ndarray]] = None,
+) -> Any:
+    arrays = {} if frozen_arrays is None else frozen_arrays
+    if isinstance(value, np.ndarray):
+        identity = id(value)
+        frozen = arrays.get(identity)
+        if frozen is None:
+            frozen = _readonly(value)
+            arrays[identity] = frozen
+        return frozen
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {
+                key: _immutable_component_copy(item, arrays)
+                for key, item in value.items()
+            }
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_immutable_component_copy(item, arrays) for item in value)
+    return copy.deepcopy(value)
+
+
+def _copy_components(components: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _immutable_component_copy(components)
 
 
 def _adopt_components(
@@ -242,8 +262,10 @@ def _adopt_components(
     components: Mapping[str, Any],
 ) -> np.ndarray:
     copied = _copy_components(components)
-    element._qualified_components = copied
-    element._qualified_cache_key = cache_key
+    # These assignments adopt derived caches produced from already-bound
+    # inputs.  They must not advance the model-input mutation epoch.
+    object.__setattr__(element, "_qualified_components", copied)
+    object.__setattr__(element, "_qualified_cache_key", cache_key)
     element._hourglass_stiffness_matrix = np.asarray(
         copied["hourglass"], dtype=float
     )
@@ -255,16 +277,16 @@ def _adopt_components(
 class PreparedReferenceS3Components:
     matrices: Mapping[int, np.ndarray]
     element_cache_keys: Mapping[int, Tuple[Any, ...]]
-    element_component_objects: Mapping[int, Tuple[Mapping[str, Any], Any]]
     batched_element_ids: Tuple[int, ...]
     cached_element_ids: Tuple[int, ...]
     group_element_ids: Tuple[Tuple[int, ...], ...]
     candidate_element_ids: Tuple[int, ...]
-    eligible_element_ids: Tuple[int, ...]
+    complete_eligible_coverage: bool
     fallback_reasons: Mapping[str, Tuple[int, ...]]
     component_evaluation_count: int
     revision_key: Tuple[int, int, int]
     minimum_group_size: int
+    material_names: Tuple[str, ...]
     validation_signature: Tuple[Any, ...]
 
     def diagnostics(self) -> Dict[str, Any]:
@@ -306,12 +328,15 @@ def prepare_reference_s3_components(
     items: Sequence[Tuple[int, Any]],
     *,
     minimum_group_size: int = MIN_REFERENCE_S3_STIFFNESS_GROUP,
+    allow_exact_element_cache_reuse: bool = True,
 ) -> PreparedReferenceS3Components:
     """Prepare one validated component evaluation per exact cache-key group."""
 
+    _bind_plan_state_sources(model, items)
     minimum = max(1, int(minimum_group_size))
     candidate_ids: list[int] = []
     eligible_ids: list[int] = []
+    candidate_material_names: set[str] = set()
     groups: Dict[Tuple[Any, ...], list[Tuple[int, Any]]] = {}
     fallback: Dict[str, list[int]] = {}
     for raw_element_id, element in items:
@@ -319,6 +344,7 @@ def prepare_reference_s3_components(
         if not reference_s3_candidate(element):
             continue
         candidate_ids.append(element_id)
+        candidate_material_names.add(str(element.material_name))
         eligible, reason = reference_s3_eligibility(model, element)
         if not eligible:
             fallback.setdefault(reason, []).append(element_id)
@@ -343,20 +369,22 @@ def prepare_reference_s3_components(
             # byte-identical group.  No geometry is rounded and no matrix is
             # shared between distinct cache keys.
             cached_group: Dict[int, np.ndarray] = {}
-            for element_id, element in group:
-                current = getattr(element, "_qualified_components", None)
-                current_key = getattr(element, "_qualified_cache_key", None)
-                if (
-                    current is None
-                    or current_key != cache_key
-                    or current.get("formulation_id") != REFERENCE_S3_FORMULATION_ID
-                    or bool(current.get("legacy_fallback", True))
-                ):
-                    cached_group = {}
-                    break
-                cached_group[int(element_id)] = np.asarray(
-                    current["total"], dtype=float
-                )
+            if allow_exact_element_cache_reuse:
+                for element_id, element in group:
+                    current = getattr(element, "_qualified_components", None)
+                    current_key = getattr(element, "_qualified_cache_key", None)
+                    if (
+                        current is None
+                        or current_key != cache_key
+                        or current.get("formulation_id")
+                        != REFERENCE_S3_FORMULATION_ID
+                        or bool(current.get("legacy_fallback", True))
+                    ):
+                        cached_group = {}
+                        break
+                    cached_group[int(element_id)] = np.asarray(
+                        current["total"], dtype=float
+                    )
             if cached_group:
                 matrices.update(cached_group)
                 cached_element_ids.extend(cached_group)
@@ -411,20 +439,6 @@ def prepare_reference_s3_components(
             for element_id, cache_key in element_cache_keys.items()
         }
     )
-    elements_by_id = {
-        int(element_id): element for element_id, element in items
-    }
-    frozen_component_objects = MappingProxyType(
-        {
-            int(element_id): (
-                elements_by_id[int(element_id)]._qualified_components,
-                elements_by_id[int(element_id)]._qualified_components[
-                    "total"
-                ],
-            )
-            for element_id in matrices
-        }
-    )
     frozen_fallback = MappingProxyType(
         {
             reason: tuple(sorted(int(element_id) for element_id in element_ids))
@@ -440,7 +454,6 @@ def prepare_reference_s3_components(
     return PreparedReferenceS3Components(
         matrices=frozen_matrices,
         element_cache_keys=frozen_element_cache_keys,
-        element_component_objects=frozen_component_objects,
         batched_element_ids=tuple(
             int(element_id)
             for element_id, _element in items
@@ -453,51 +466,35 @@ def prepare_reference_s3_components(
         ),
         group_element_ids=tuple(admitted_groups),
         candidate_element_ids=tuple(candidate_ids),
-        eligible_element_ids=tuple(eligible_ids),
+        complete_eligible_coverage=(set(eligible_ids) == set(matrices)),
         fallback_reasons=frozen_fallback,
         component_evaluation_count=int(evaluation_count),
         revision_key=_revision_key(model),
         minimum_group_size=minimum,
-        validation_signature=_plan_validation_signature(model, items),
+        material_names=tuple(sorted(candidate_material_names)),
+        validation_signature=_plan_validation_signature(
+            model,
+            tuple(sorted(candidate_material_names)),
+        ),
     )
 
 
 def _stiffness_plan_is_current(
     model: "FEModel",
-    items: Sequence[Tuple[int, Any]],
     cached: PreparedReferenceS3Components,
 ) -> bool:
     """Revalidate the exact key preimage, provenance, and retained matrices."""
 
     try:
-        if _plan_validation_signature(model, items) != cached.validation_signature:
+        if (
+            _plan_validation_signature(model, cached.material_names)
+            != cached.validation_signature
+        ):
             return False
         # A cold scalar fallback populates its element cache after plan
         # construction.  Rebuild once rather than perpetually omitting it.
-        if set(cached.eligible_element_ids) != set(cached.matrices):
+        if not cached.complete_eligible_coverage:
             return False
-        by_id = {int(element_id): element for element_id, element in items}
-        for element_id, expected_key in cached.element_cache_keys.items():
-            element = by_id.get(int(element_id))
-            if element is None:
-                return False
-            components = getattr(element, "_qualified_components", None)
-            if (
-                components is None
-                or getattr(element, "_qualified_cache_key", None) != expected_key
-                or components.get("formulation_id")
-                != REFERENCE_S3_FORMULATION_ID
-                or bool(components.get("legacy_fallback", True))
-            ):
-                return False
-            current_total = components.get("total")
-            expected_objects = cached.element_component_objects.get(element_id)
-            if (
-                expected_objects is None
-                or components is not expected_objects[0]
-                or current_total is not expected_objects[1]
-            ):
-                return False
     except (AttributeError, KeyError, TypeError, ValueError):
         return False
     return True
@@ -508,14 +505,10 @@ def get_reference_s3_stiffness_components(
     items: Sequence[Tuple[int, Any]],
     *,
     minimum_group_size: int = MIN_REFERENCE_S3_STIFFNESS_GROUP,
+    complete_candidate_items: bool = False,
 ) -> Tuple[PreparedReferenceS3Components, bool]:
-    """Return a mesh-owned admitted plan and whether it was reused."""
+    """Return a mesh-owned plan; reuse requires the caller's complete set."""
 
-    candidate_ids = tuple(
-        int(element_id)
-        for element_id, element in items
-        if reference_s3_candidate(element)
-    )
     revision = _revision_key(model)
     minimum = max(1, int(minimum_group_size))
     cached = getattr(
@@ -525,11 +518,11 @@ def get_reference_s3_stiffness_components(
     )
     if (
         isinstance(cached, PreparedReferenceS3Components)
+        and bool(complete_candidate_items)
         and cached.revision_key == revision
         and cached.minimum_group_size == minimum
-        and cached.candidate_element_ids == candidate_ids
         and bool(cached.matrices)
-        and _stiffness_plan_is_current(model, items, cached)
+        and _stiffness_plan_is_current(model, cached)
     ):
         return cached, True
     prepared = prepare_reference_s3_components(
@@ -572,6 +565,7 @@ class ReferenceS3RecoveryKernel:
 @dataclass(frozen=True)
 class ReferenceS3RecoveryBatch:
     revision_key: Tuple[int, int, int]
+    direct_state_key: Tuple[int, int, int, int]
     element_ids: np.ndarray
     index_by_id: Mapping[int, int]
     dof_mappings: np.ndarray
@@ -590,7 +584,10 @@ class ReferenceS3RecoveryBatch:
         )
 
     def is_valid(self, model: "FEModel") -> bool:
-        return self.revision_key == _revision_key(model)
+        return (
+            self.revision_key == _revision_key(model)
+            and self.direct_state_key == _direct_state_key(model)
+        )
 
     def select_indices(self, element_ids: Iterable[int]) -> np.ndarray:
         return np.asarray(
@@ -702,6 +699,7 @@ def build_reference_s3_recovery_batch(
             kernel_index_by_row[row_by_id[int(element_id)]] = kernel_index
     batch = ReferenceS3RecoveryBatch(
         revision_key=_revision_key(model),
+        direct_state_key=_direct_state_key(model),
         element_ids=_readonly(np.asarray(ordered_ids, dtype=np.int64)),
         index_by_id=MappingProxyType(
             {element_id: index for index, element_id in enumerate(ordered_ids)}

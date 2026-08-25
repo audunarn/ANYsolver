@@ -4,11 +4,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import sys
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Sequence
+
+
+THREAD_ENVIRONMENT = {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+}
+THREAD_ENVIRONMENT_AT_IMPORT = {
+    name: os.environ.get(name) for name in THREAD_ENVIRONMENT
+}
 
 import numpy as np
 
@@ -198,8 +210,24 @@ def main() -> int:
     parser.add_argument("--return-global", action="store_true")
     parser.add_argument("--include-q4-comparator", action="store_true")
     args = parser.parse_args()
-    if args.elements <= 0 or args.repeats < 11:
-        parser.error("elements must be positive and repeats must be at least 11")
+    if args.elements < s3_batch.MIN_REFERENCE_S3_RECOVERY_GROUP:
+        parser.error(
+            "elements must cover the qualified S3 recovery batch minimum "
+            f"({s3_batch.MIN_REFERENCE_S3_RECOVERY_GROUP})"
+        )
+    if args.repeats < 11:
+        parser.error("repeats must be at least 11")
+    thread_environment = {
+        name: os.environ.get(name) for name in THREAD_ENVIRONMENT
+    }
+    if (
+        THREAD_ENVIRONMENT_AT_IMPORT != THREAD_ENVIRONMENT
+        or thread_environment != THREAD_ENVIRONMENT
+    ):
+        parser.error(
+            "benchmark requires OMP, OpenBLAS, MKL, and NumExpr thread "
+            "environment variables to equal 1 before process startup"
+        )
 
     batch_model = _build_model(args.elements)
     scalar_model = _build_model(args.elements)
@@ -212,12 +240,13 @@ def main() -> int:
     original_get = s3_batch.get_reference_s3_stiffness_components
     original_prepare = s3_batch.prepare_reference_s3_components
 
-    def scalar_prepare(model, items):
+    def scalar_prepare(model, items, **_kwargs):
         return (
             original_prepare(
                 model,
                 items,
                 minimum_group_size=args.elements + 1,
+                allow_exact_element_cache_reuse=False,
             ),
             False,
         )
@@ -315,7 +344,10 @@ def main() -> int:
         "warmups_per_route": 1,
         "repeats": int(args.repeats),
         "return_global": bool(args.return_global),
-        "one_numerical_thread": True,
+        "one_numerical_thread": (
+            THREAD_ENVIRONMENT_AT_IMPORT == THREAD_ENVIRONMENT
+            and thread_environment == THREAD_ENVIRONMENT
+        ),
         "stiffness": {
             "batch": stiffness_batch,
             "scalar": stiffness_scalar,
@@ -356,7 +388,9 @@ def main() -> int:
             ),
         },
         "speedup_claim_permitted": bool(
-            stiffness_error["maximum_scaled_error"] <= 1.0e-12
+            THREAD_ENVIRONMENT_AT_IMPORT == THREAD_ENVIRONMENT
+            and thread_environment == THREAD_ENVIRONMENT
+            and stiffness_error["maximum_scaled_error"] <= 1.0e-12
             and recovery_error["maximum_scaled_error"] <= 1.0e-12
             and stiffness_scalar["median_seconds"]
             / stiffness_batch["median_seconds"]

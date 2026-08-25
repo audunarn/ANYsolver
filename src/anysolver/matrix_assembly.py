@@ -352,6 +352,7 @@ def _assemble_element_matrix(
             prepared_s3, s3_plan_reused = get_reference_s3_stiffness_components(
                 model,
                 reference_s3_items,
+                complete_candidate_items=True,
             )
             precomputed.update(prepared_s3.matrices)
             s3_diagnostics = prepared_s3.diagnostics()

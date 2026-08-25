@@ -13,6 +13,7 @@ used for the equation map is bound below by byte count and SHA-256.
 
 from __future__ import annotations
 
+import copy
 import math
 from types import MappingProxyType
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence
@@ -98,12 +99,67 @@ from .e4_pl_s3_state import (
     validate_committed_s3_state,
 )
 from .material_curves import DNVC208MaterialCurve
-from .materials import Hill48Yield, is_isotropic_material
+from .materials import (
+    Hill48Yield,
+    elastic_compliance_matrix,
+    is_isotropic_material,
+    material_symmetry,
+)
 from .plasticity import plane_stress_return_map
 from .shell_sections import (
     SHELL_MEMBRANE_VOIGT_ORDER,
     SHELL_TRANSVERSE_SHEAR_ORDER,
 )
+
+
+def _freeze_component_cache_value(
+    value: Any,
+    frozen_arrays: Optional[Dict[int, np.ndarray]] = None,
+) -> Any:
+    """Recursively freeze every mechanics-bearing cache container and array."""
+
+    arrays = {} if frozen_arrays is None else frozen_arrays
+    if isinstance(value, np.ndarray):
+        identity = id(value)
+        frozen = arrays.get(identity)
+        if frozen is None:
+            contiguous = np.ascontiguousarray(value)
+            frozen = np.frombuffer(
+                contiguous.tobytes(order="C"), dtype=contiguous.dtype
+            ).reshape(contiguous.shape)
+            arrays[identity] = frozen
+        return frozen
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {
+                key: _freeze_component_cache_value(item, arrays)
+                for key, item in value.items()
+            }
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(
+            _freeze_component_cache_value(item, arrays) for item in value
+        )
+    return value
+
+
+def _elastic_material_cache_fingerprint(material: Any) -> tuple[Any, ...]:
+    """Return the exact elastic inputs consumed by the S3 stiffness path."""
+
+    if is_isotropic_material(material):
+        return (
+            "isotropic",
+            float(material.elastic_modulus),
+            float(material.poisson_ratio),
+        )
+    compliance = np.ascontiguousarray(
+        np.asarray(elastic_compliance_matrix(material), dtype=np.float64)
+    )
+    return (
+        str(material_symmetry(material)),
+        compliance.shape,
+        compliance.tobytes(order="C"),
+    )
 
 
 DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
@@ -2607,10 +2663,19 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "reference_surface_offset",
             "shell_section",
             "thickness",
+            "_qualified_cache_key",
+            "_qualified_components",
         }
     )
 
     def __setattr__(self, name: str, value: Any) -> None:
+        if name == "node_ids":
+            value = tuple(int(node_id) for node_id in value)
+        elif name in {"material_direction", "reference_normal"} and value is not None:
+            made = np.ascontiguousarray(np.asarray(value, dtype=float))
+            value = np.frombuffer(made.tobytes(order="C"), dtype=float).reshape(
+                made.shape
+            )
         revision = self.__dict__.get("_qualified_plan_state_revision")
         if revision is not None and name in self._plan_invalidating_attributes:
             object.__setattr__(
@@ -2618,7 +2683,82 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "_qualified_plan_state_revision",
                 int(revision) + 1,
             )
+            tokens = self.__dict__.get("_qualified_direct_state_tokens")
+            if tokens is None:
+                token = self.__dict__.get("_qualified_direct_state_token")
+                tokens = () if token is None else (token,)
+            for token in tokens:
+                token[0] = int(token[0]) + 1
         super().__setattr__(name, value)
+
+    def __deepcopy__(
+        self,
+        memo: Dict[int, Any],
+    ) -> "QualifiedE4PLS3ShellElement":
+        """Copy model inputs without exporting mesh bindings or derived caches."""
+
+        made = type(self).__new__(type(self))
+        memo[id(self)] = made
+        derived = {
+            "_hourglass_stiffness_matrix",
+            "_internal_forces",
+            "_mass_matrix",
+            "_nl_cache",
+            "_qualified_cache_key",
+            "_qualified_components",
+            "_stiffness_matrix",
+        }
+        for name, value in self.__dict__.items():
+            if name in {
+                "_qualified_direct_state_token",
+                "_qualified_direct_state_tokens",
+            }:
+                continue
+            if name in derived:
+                object.__setattr__(made, name, None)
+                continue
+            if name in {"material_direction", "reference_normal"} and value is not None:
+                vector = np.ascontiguousarray(np.asarray(value, dtype=float))
+                value = np.frombuffer(
+                    vector.tobytes(order="C"), dtype=float
+                ).reshape(vector.shape)
+            else:
+                value = copy.deepcopy(value, memo)
+            object.__setattr__(made, name, value)
+        return made
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Serialize owned inputs while excluding all derived mesh caches."""
+
+        state = dict(self.__dict__)
+        state.pop("_qualified_direct_state_token", None)
+        state.pop("_qualified_direct_state_tokens", None)
+        for name in {
+            "_hourglass_stiffness_matrix",
+            "_internal_forces",
+            "_mass_matrix",
+            "_nl_cache",
+            "_qualified_cache_key",
+            "_qualified_components",
+            "_stiffness_matrix",
+        }:
+            state[name] = None
+        return state
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        self.__dict__.update(state)
+        for name in ("material_direction", "reference_normal"):
+            value = self.__dict__.get(name)
+            if value is None:
+                continue
+            vector = np.ascontiguousarray(np.asarray(value, dtype=float))
+            object.__setattr__(
+                self,
+                name,
+                np.frombuffer(
+                    vector.tobytes(order="C"), dtype=float
+                ).reshape(vector.shape),
+            )
 
     def __init__(
         self,
@@ -2696,14 +2836,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "qualified S3 reference_surface_offset must be a finite real scalar"
             )
         self.reference_surface_offset = 0.0 if offset == 0.0 else offset
-        self._qualified_components: Optional[Dict[str, Any]] = None
+        self._qualified_components: Optional[Mapping[str, Any]] = None
         self._qualified_cache_key: Optional[tuple[Any, ...]] = None
-        # Vector-valued cache inputs cannot be mutated in place without
-        # bypassing ``__setattr__``.  Freeze the element-owned copies so every
+        # ``__setattr__`` stores vector-valued cache inputs over immutable byte
+        # buffers.  Connectivity is an immutable tuple.  Consequently every
         # supported change advances the inexpensive plan-state revision.
-        self.reference_normal.setflags(write=False)
-        if isinstance(self.material_direction, np.ndarray):
-            self.material_direction.setflags(write=False)
         self._qualified_plan_state_revision = 0
 
     @property
@@ -2779,6 +2916,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         payload = super().to_dict()
         payload.update(
             {
+                "node_ids": [int(node_id) for node_id in self.node_ids],
                 "formulation_id": FORMULATION_ID,
                 "formulation_schema": FORMULATION_SCHEMA,
                 "bubble_convention": BUBBLE_CONVENTION,
@@ -2887,6 +3025,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         return (
             id(mesh),
             id(material),
+            _elastic_material_cache_fingerprint(material),
             int(revisions.get("geometry", 0)),
             int(revisions.get("material", 0)),
             np.ascontiguousarray(relative, dtype=float).tobytes(),
@@ -3012,7 +3151,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         material: Any,
         *,
         enforce_positive_winding: bool,
-    ) -> Dict[str, Any]:
+    ) -> Mapping[str, Any]:
         coordinates = self.get_node_coordinates(mesh)
         cache_key = (*self._cache_key(mesh, material, coordinates), enforce_positive_winding)
         if self._qualified_components is not None and self._qualified_cache_key == cache_key:
@@ -3127,13 +3266,24 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "legacy_fallback": False,
             "formulation_id": FORMULATION_ID,
         }
-        self._qualified_components = result
-        self._qualified_cache_key = cache_key
-        self._hourglass_stiffness_matrix = np.zeros((18, 18), dtype=float)
-        self._stiffness_matrix = total
-        return result
+        frozen_result: Mapping[str, Any] = _freeze_component_cache_value(result)
 
-    def compute_stiffness_components(self, mesh: Any, material: Any) -> Dict[str, Any]:
+        # These are derived caches, not model-input mutations.  Bypass the
+        # public assignment hook so a successful recomputation does not make
+        # the freshly built mesh plan immediately stale.  Direct external
+        # replacement still goes through ``__setattr__`` and advances the
+        # mesh-owned mutation epoch.  The returned mapping and every array are
+        # irrevocably immutable, so entry or in-place mutation cannot bypass
+        # that hook.
+        object.__setattr__(self, "_qualified_components", frozen_result)
+        object.__setattr__(self, "_qualified_cache_key", cache_key)
+        self._hourglass_stiffness_matrix = frozen_result["hourglass"]
+        self._stiffness_matrix = frozen_result["total"]
+        return frozen_result
+
+    def compute_stiffness_components(
+        self, mesh: Any, material: Any
+    ) -> Mapping[str, Any]:
         """Return the production-admitted linear component split."""
 
         return self._compute_stiffness_components(

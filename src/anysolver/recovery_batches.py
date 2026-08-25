@@ -25,6 +25,7 @@ from .elements import (
     _shell_material_matrices,
 )
 from .materials import is_isotropic_material
+from .materials import elastic_compliance_matrix, material_symmetry
 from .s3_reference_batch import (
     MIN_REFERENCE_S3_RECOVERY_GROUP,
     ReferenceS3RecoveryBatch,
@@ -38,8 +39,9 @@ if TYPE_CHECKING:
 
 def _readonly(array: np.ndarray) -> np.ndarray:
     result = np.ascontiguousarray(array)
-    result.setflags(write=False)
-    return result
+    return np.frombuffer(
+        result.tobytes(order="C"), dtype=result.dtype
+    ).reshape(result.shape)
 
 
 def _revision_key(model: "FEModel") -> Tuple[int, int, int]:
@@ -49,6 +51,55 @@ def _revision_key(model: "FEModel") -> Tuple[int, int, int]:
         int(revisions.get("geometry", 0)),
         int(revisions.get("material", 0)),
     )
+
+
+def _direct_state_key(model: "FEModel") -> Tuple[int, int, int, int]:
+    token = getattr(model.mesh, "_qualified_direct_state_token", (-1,))
+    return (
+        id(model.mesh.nodes),
+        id(model.mesh.elements),
+        id(token),
+        int(token[0]),
+    )
+
+
+def _material_state_key(model: "FEModel") -> Tuple[Tuple[object, ...], ...]:
+    names = sorted(str(name) for name in model.materials)
+    rows = []
+    for name in names:
+        material = model.get_material(name)
+        if is_isotropic_material(material):
+            elastic = (
+                "isotropic",
+                float(material.elastic_modulus),
+                float(material.poisson_ratio),
+            )
+        else:
+            compliance = np.ascontiguousarray(
+                np.asarray(elastic_compliance_matrix(material), dtype=np.float64)
+            )
+            elastic = (
+                str(material_symmetry(material)),
+                compliance.shape,
+                compliance.tobytes(order="C"),
+            )
+        hill = getattr(material, "hill_yield", None)
+        hardening = getattr(material, "hardening_curve", None)
+        rows.append(
+            (
+                name,
+                type(material).__module__,
+                type(material).__qualname__,
+                id(material),
+                bool(is_isotropic_material(material)),
+                elastic,
+                hill is None,
+                id(hill),
+                hardening is None,
+                id(hardening),
+            )
+        )
+    return tuple(rows)
 
 
 def _formulation_name(model: "FEModel", element: object) -> str:
@@ -91,6 +142,8 @@ class RecoveryBatchPlan:
     """Immutable layout shared by repeated recovery calls for one mesh."""
 
     revision_key: Tuple[int, int, int]
+    direct_state_key: Tuple[int, int, int, int]
+    material_state_key: Tuple[Tuple[object, ...], ...]
     items: Tuple[RecoveryPlanItem, ...]
     item_by_id: Mapping[int, RecoveryPlanItem]
     setup_seconds: float
@@ -102,6 +155,12 @@ class RecoveryBatchPlan:
 
     @classmethod
     def build(cls, model: "FEModel") -> "RecoveryBatchPlan":
+        from .fe_core import _ensure_qualified_state_mappings
+
+        # A wholesale public mapping replacement invalidates the prior plan
+        # by identity.  Normalize the replacement before capturing a new key
+        # so subsequent direct node/element mutations remain observable.
+        _ensure_qualified_state_mappings(model.mesh)
         start = time.perf_counter()
         items = []
         s4_element_ids = []
@@ -113,11 +172,11 @@ class RecoveryBatchPlan:
         reference_s3_items = []
         retained_bytes = 0
         for element_id, element in model.mesh.elements.items():
-            mapping = np.asarray(
-                element.get_dof_mapping(model.mesh), dtype=np.intp
-            ).reshape(-1)
-            mapping = np.ascontiguousarray(mapping)
-            mapping.setflags(write=False)
+            mapping = _readonly(
+                np.asarray(
+                    element.get_dof_mapping(model.mesh), dtype=np.intp
+                ).reshape(-1)
+            )
             retained_bytes += int(mapping.nbytes)
             items.append(
                 RecoveryPlanItem(
@@ -181,6 +240,8 @@ class RecoveryBatchPlan:
                 retained_bytes += reference_s3.retained_bytes
         return cls(
             revision_key=_revision_key(model),
+            direct_state_key=_direct_state_key(model),
+            material_state_key=_material_state_key(model),
             items=item_tuple,
             item_by_id=MappingProxyType(
                 {item.element_id: item for item in item_tuple}
@@ -194,7 +255,11 @@ class RecoveryBatchPlan:
         )
 
     def is_valid(self, model: "FEModel") -> bool:
-        return self.revision_key == _revision_key(model)
+        return (
+            self.revision_key == _revision_key(model)
+            and self.direct_state_key == _direct_state_key(model)
+            and self.material_state_key == _material_state_key(model)
+        )
 
     def select(self, element_ids: Iterable[int]) -> Tuple[RecoveryPlanItem, ...]:
         wanted = {int(element_id) for element_id in element_ids}

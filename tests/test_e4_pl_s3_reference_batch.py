@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+import copy
+from dataclasses import asdict
+import json
+import os
+import pickle
+from pathlib import Path
+import subprocess
+import sys
 from typing import Any, Mapping
 
 import numpy as np
@@ -11,7 +19,7 @@ import anysolver.s3_reference_batch as s3_batch_module
 from anysolver.activity import ElementActivity
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
-from anysolver.fe_core import FEModel
+from anysolver.fe_core import FEModel, FEMesh
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.materials import Hill48Yield
 from anysolver.recovery import (
@@ -21,10 +29,12 @@ from anysolver.recovery import (
     recover_element_stresses_with_report,
     recover_stress_result,
 )
+from anysolver.recovery_batches import get_recovery_batch_plan
 from anysolver.s3_reference_batch import (
     MIN_REFERENCE_S3_RECOVERY_GROUP,
     REFERENCE_S3_BATCH_POLICY_ID,
     REFERENCE_S3_FORMULATION_ID,
+    get_reference_s3_stiffness_components,
     prepare_reference_s3_components,
     reference_s3_eligibility,
 )
@@ -222,6 +232,22 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
     second = model.mesh.elements[2]
     assert first._qualified_cache_key == second._qualified_cache_key
     assert first._qualified_components is not second._qualified_components
+    with pytest.raises(TypeError):
+        first._qualified_components["total"] = np.zeros((18, 18))
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        first._qualified_components["total"].setflags(write=True)
+    with pytest.raises(TypeError):
+        first._qualified_components["assumed_shear_samples"]["A"] = np.zeros(
+            (2, 17)
+        )
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        first._qualified_components["assumed_shear_samples"]["A"].setflags(
+            write=True
+        )
+    retained = model.mesh._qualified_s3_reference_stiffness_plan.matrices[1]
+    assert retained.flags.owndata is False
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        retained.setflags(write=True)
     assert not np.shares_memory(
         first._qualified_components["total"],
         second._qualified_components["total"],
@@ -236,7 +262,7 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
     scalar_model = _build_model(8, include_q4=True)
     original_get = s3_batch_module.get_reference_s3_stiffness_components
 
-    def force_scalar(candidate_model, items):
+    def force_scalar(candidate_model, items, **_kwargs):
         return (
             prepare_reference_s3_components(
                 candidate_model,
@@ -329,6 +355,33 @@ def test_stiffness_batch_is_revision_bound_and_small_groups_fall_back() -> None:
     assert second_diagnostics["element_count"] == 8
     assert second_diagnostics["component_evaluation_count"] == 1
     assert second_diagnostics["revision_key"] != first_revision
+
+
+def test_partial_helper_request_never_reuses_a_complete_candidate_plan() -> None:
+    model = _build_model(8)
+    items = list(model.mesh.elements.items())
+    full, full_reused = get_reference_s3_stiffness_components(
+        model,
+        items,
+        complete_candidate_items=True,
+    )
+    assert full_reused is False
+    assert len(full.matrices) == 8
+    repeated, repeated_reused = get_reference_s3_stiffness_components(
+        model,
+        items,
+        complete_candidate_items=True,
+    )
+    assert repeated_reused is True
+    assert len(repeated.matrices) == 8
+
+    partial, partial_reused = get_reference_s3_stiffness_components(
+        model,
+        items[:4],
+    )
+    assert partial_reused is False
+    assert partial.candidate_element_ids == (1, 2, 3, 4)
+    assert tuple(partial.matrices) == (1, 2, 3, 4)
 
 
 def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
@@ -466,7 +519,9 @@ def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision(
 
     geometry_revision = model.mesh.revisions["geometry"]
     coordinate_revision = model.mesh.nodes[1]._coordinate_revision
+    direct_revision = model.mesh._qualified_direct_state_token[0]
     model.mesh.nodes[1].x -= 1.0e-4
+    assert model.mesh._qualified_direct_state_token[0] == direct_revision + 1
     changed, changed_info = assemble_stiffness_matrix(model)
     assert model.mesh.revisions["geometry"] == geometry_revision
     assert model.mesh.nodes[1]._coordinate_revision == coordinate_revision + 1
@@ -481,6 +536,80 @@ def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision(
         element.reference_normal[0] = 0.25
 
 
+def test_warm_plan_binds_direct_elastic_material_edits() -> None:
+    model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    _warm, warm_info = assemble_stiffness_matrix(model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    material = model.materials["steel"]
+    material_revision = model.mesh.revisions["material"]
+    material.elastic_modulus *= 0.75
+    changed, changed_info = assemble_stiffness_matrix(model)
+    assert model.mesh.revisions["material"] == material_revision
+    assert changed_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    assert not np.array_equal(baseline.toarray(), changed.toarray())
+
+
+def test_warm_plan_detects_and_rebinds_public_mapping_replacements() -> None:
+    node_model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(node_model)
+    _warm, warm_info = assemble_stiffness_matrix(node_model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    replacement_node = copy.deepcopy(node_model.mesh.nodes[1])
+    replacement_node.x -= 1.0e-4
+    node_model.mesh.nodes[1] = replacement_node
+    changed_node, node_info = assemble_stiffness_matrix(node_model)
+    assert node_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    assert not np.array_equal(baseline.toarray(), changed_node.toarray())
+    assert replacement_node._qualified_direct_state_token is (
+        node_model.mesh._qualified_direct_state_token
+    )
+    token_before_node_edit = node_model.mesh._qualified_direct_state_token[0]
+    replacement_node.x -= 1.0e-4
+    assert (
+        node_model.mesh._qualified_direct_state_token[0]
+        == token_before_node_edit + 1
+    )
+
+    element_model = _build_model(8)
+    baseline_element, _baseline_element_info = assemble_stiffness_matrix(
+        element_model
+    )
+    _warm_element, warm_element_info = assemble_stiffness_matrix(element_model)
+    assert warm_element_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    replacement_element = copy.deepcopy(element_model.mesh.elements[1])
+    replacement_element.thickness *= 2.0
+    element_model.mesh.elements[1] = replacement_element
+    changed_element, element_info = assemble_stiffness_matrix(element_model)
+    assert element_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    assert not np.array_equal(
+        baseline_element.toarray(), changed_element.toarray()
+    )
+    assert replacement_element._qualified_direct_state_token is (
+        element_model.mesh._qualified_direct_state_token
+    )
+    token_before_element_edit = element_model.mesh._qualified_direct_state_token[0]
+    replacement_element.thickness *= 1.1
+    assert (
+        element_model.mesh._qualified_direct_state_token[0]
+        == token_before_element_edit + 1
+    )
+
+
 def test_warm_plan_binds_reference_normal_bytes_even_if_writes_are_reenabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -493,8 +622,10 @@ def test_warm_plan_binds_reference_normal_bytes_even_if_writes_are_reenabled(
     ]["plan_reused"] is True
 
     element = model.mesh.elements[1]
-    element.reference_normal.setflags(write=True)
-    element.reference_normal[:] = (0.0, 0.0, -1.0)
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        element.reference_normal.setflags(write=True)
+    element.reference_normal = np.asarray((0.0, 0.0, -1.0))
+    assert element.reference_normal.flags.writeable is False
     assert reference_s3_eligibility(model, element) == (
         False,
         "nonpositive_winding",
@@ -502,6 +633,150 @@ def test_warm_plan_binds_reference_normal_bytes_even_if_writes_are_reenabled(
     with pytest.raises(ValueError, match="winding opposes"):
         assemble_stiffness_matrix(model)
 
+
+def test_model_deepcopy_drops_derived_plan_and_rebinds_direct_state_tokens() -> None:
+    model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    _warm, warm_info = assemble_stiffness_matrix(model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    original_direct_revision = model.mesh._qualified_direct_state_token[0]
+
+    copied = copy.deepcopy(model)
+    assert not hasattr(copied.mesh, "_qualified_s3_reference_stiffness_plan")
+    assert copied.mesh._qualified_direct_state_token is not (
+        model.mesh._qualified_direct_state_token
+    )
+    assert all(
+        node._qualified_direct_state_token
+        is copied.mesh._qualified_direct_state_token
+        and len(node._qualified_direct_state_tokens) == 1
+        for node in copied.mesh.nodes.values()
+    )
+    assert all(
+        element._qualified_direct_state_token
+        is copied.mesh._qualified_direct_state_token
+        and len(element._qualified_direct_state_tokens) == 1
+        for element in copied.mesh.elements.values()
+    )
+    assert all(
+        element.reference_normal.flags.writeable is False
+        and (
+            element.material_direction is None
+            or element.material_direction.flags.writeable is False
+        )
+        for element in copied.mesh.elements.values()
+    )
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        copied.mesh.elements[1].reference_normal.setflags(write=True)
+    copied_matrix, _copied_info = assemble_stiffness_matrix(copied)
+    np.testing.assert_array_equal(baseline.toarray(), copied_matrix.toarray())
+
+    original_x = model.mesh.nodes[1].x
+    copied_direct_revision = copied.mesh._qualified_direct_state_token[0]
+    copied.mesh.nodes[1].x -= 1.0e-4
+    assert model.mesh.nodes[1].x == original_x
+    assert copied.mesh._qualified_direct_state_token[0] == copied_direct_revision + 1
+    assert (
+        model.mesh._qualified_direct_state_token[0]
+        == original_direct_revision
+    )
+
+
+def test_tracked_mesh_mappings_remain_dataclass_and_json_serializable() -> None:
+    payload = asdict(FEMesh())
+    encoded = json.dumps(
+        {"nodes": payload["nodes"], "elements": payload["elements"]},
+        sort_keys=True,
+    )
+    assert '"nodes"' in encoded
+    assert '"elements"' in encoded
+
+    mesh = FEMesh()
+    mesh.add_node(1, 0.0, 0.0, 0.0)
+    restored = pickle.loads(pickle.dumps(mesh))
+    assert restored.nodes[1]._qualified_direct_state_token is (
+        restored._qualified_direct_state_token
+    )
+
+    warm_model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(warm_model)
+    assert hasattr(
+        warm_model.mesh, "_qualified_s3_reference_stiffness_plan"
+    )
+    restored_model = pickle.loads(pickle.dumps(warm_model))
+    assert not hasattr(
+        restored_model.mesh, "_qualified_s3_reference_stiffness_plan"
+    )
+    assert all(
+        element._qualified_components is None
+        for element in restored_model.mesh.elements.values()
+    )
+    restored_matrix, _restored_info = assemble_stiffness_matrix(restored_model)
+    np.testing.assert_array_equal(
+        baseline.toarray(), restored_matrix.toarray()
+    )
+
+
+def test_standalone_element_deepcopy_stays_immutable_when_added() -> None:
+    source_model = _build_model(1)
+    standalone = copy.deepcopy(source_model.mesh.elements[1])
+    assert not hasattr(standalone, "_qualified_direct_state_token")
+    assert standalone.reference_normal.flags.writeable is False
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        standalone.reference_normal.setflags(write=True)
+
+    target = _build_model(8)
+    replacement_id = 1
+    standalone.element_id = replacement_id
+    target.mesh.elements.pop(replacement_id)
+    target.mesh.add_element(replacement_id, standalone)
+    assert standalone._qualified_direct_state_token is (
+        target.mesh._qualified_direct_state_token
+    )
+    assert standalone.reference_normal.flags.writeable is False
+    _baseline, _baseline_info = assemble_stiffness_matrix(target)
+    _warm, warm_info = assemble_stiffness_matrix(target)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    with pytest.raises(ValueError, match="WRITEABLE flag"):
+        standalone.reference_normal.setflags(write=True)
+
+
+def test_shared_element_invalidates_every_owning_mesh_plan() -> None:
+    first = _build_model(8)
+    shared = first.mesh.elements[1]
+    assemble_stiffness_matrix(first)
+    assemble_stiffness_matrix(first)
+
+    second = _build_model(8)
+    second.mesh.elements.pop(1)
+    second.mesh.add_element(1, shared)
+    baseline_second, _baseline_second_info = assemble_stiffness_matrix(second)
+    _warm_second, warm_second_info = assemble_stiffness_matrix(second)
+    assert warm_second_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    assemble_stiffness_matrix(first)
+    _warm_first, warm_first_info = assemble_stiffness_matrix(first)
+    assert warm_first_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    first_token = first.mesh._qualified_direct_state_token[0]
+    second_token = second.mesh._qualified_direct_state_token[0]
+    shared.thickness *= 2.0
+    assert first.mesh._qualified_direct_state_token[0] == first_token + 1
+    assert second.mesh._qualified_direct_state_token[0] == second_token + 1
+    changed_second, changed_second_info = assemble_stiffness_matrix(second)
+    assert changed_second_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    assert not np.array_equal(
+        baseline_second.toarray(), changed_second.toarray()
+    )
 
 def test_generalized_orthotropic_history_and_winding_never_enter_batch() -> None:
     cases = (
@@ -607,6 +882,188 @@ def test_large_mixed_recovery_is_byte_identical_to_scalar_and_reuses_plan() -> N
     assert batch_diagnostics["legacy_nonlinear_batch_eligible"] is False
     assert first_report.metadata["plan_reused"] is False
     assert second_report.metadata["plan_reused"] is True
+
+
+def test_recovery_plan_invalidates_on_direct_qualified_state_mutation() -> None:
+    model = _build_model(MIN_REFERENCE_S3_RECOVERY_GROUP)
+    vector = 2.0e-5 * np.sin(
+        np.arange(model.mesh.dof_manager.total_dofs, dtype=float) + 0.375
+    )
+    config = RecoveryConfig()
+    resources = ResourceConfig(recovery_threads=1)
+    baseline, _baseline_report = recover_element_stresses_with_report(
+        model,
+        vector,
+        config,
+        return_global=True,
+        resource_config=resources,
+    )
+    _warm, _warm_report = recover_element_stresses_with_report(
+        model,
+        vector,
+        config,
+        return_global=True,
+        resource_config=resources,
+    )
+    _warm_plan, warm_plan_reused = get_recovery_batch_plan(model)
+    assert warm_plan_reused is True
+
+    model.mesh.elements[1].thickness *= 2.0
+    changed, changed_report = recover_element_stresses_with_report(
+        model,
+        vector,
+        config,
+        return_global=True,
+        resource_config=resources,
+    )
+    assert changed_report.metadata["plan_reused"] is False
+    assert any(
+        isinstance(value, np.ndarray)
+        and not np.array_equal(value, baseline[1][name])
+        for name, value in changed[1].items()
+    )
+    scalar_item = _compute_one_element_stress(
+        model,
+        vector,
+        1,
+        return_global=True,
+    )
+    assert scalar_item is not None
+    _payload_bytes_equal({1: changed[1]}, {1: scalar_item[1]})
+
+    model.materials["steel"].elastic_modulus *= 0.9
+    changed_material, changed_material_report = (
+        recover_element_stresses_with_report(
+            model,
+            vector,
+            config,
+            return_global=True,
+            resource_config=resources,
+        )
+    )
+    assert changed_material_report.metadata["plan_reused"] is False
+    scalar_material_item = _compute_one_element_stress(
+        model,
+        vector,
+        1,
+        return_global=True,
+    )
+    assert scalar_material_item is not None
+    _payload_bytes_equal(
+        {1: changed_material[1]},
+        {1: scalar_material_item[1]},
+    )
+
+    # Use a fresh homogeneous group for material-option eligibility.  The
+    # thickness mutation above intentionally split ``model`` into exact groups
+    # of 1 and 127, neither of which meets the 128-element recovery threshold.
+    material_model = _build_model(MIN_REFERENCE_S3_RECOVERY_GROUP)
+    baseline_plan, baseline_reused = get_recovery_batch_plan(material_model)
+    assert baseline_reused is False
+    assert baseline_plan.reference_s3 is not None
+    material = material_model.materials["steel"]
+    material.hardening_curve = object()
+    hardening_plan, hardening_reused = get_recovery_batch_plan(material_model)
+    assert hardening_reused is False
+    assert hardening_plan.reference_s3 is None
+    material.hardening_curve = None
+    restored_plan, restored_reused = get_recovery_batch_plan(material_model)
+    assert restored_reused is False
+    assert restored_plan.reference_s3 is not None
+    material.hill_yield = object()
+    hill_plan, hill_reused = get_recovery_batch_plan(material_model)
+    assert hill_reused is False
+    assert hill_plan.reference_s3 is None
+
+
+def test_benchmark_rejects_unbounded_group_and_thread_configuration() -> None:
+    root = Path(__file__).resolve().parents[1]
+    benchmark = root / "scripts" / "benchmark_e4_pl_s3_reference_batch.py"
+    base_command = [sys.executable, str(benchmark), "--repeats", "11"]
+
+    invalid_threads = dict(os.environ)
+    thread_names = (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    )
+    for name in thread_names:
+        invalid_threads[name] = "4"
+    thread_result = subprocess.run(
+        [*base_command, "--elements", str(MIN_REFERENCE_S3_RECOVERY_GROUP)],
+        cwd=root,
+        env=invalid_threads,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert thread_result.returncode != 0
+    assert "thread environment variables to equal 1" in thread_result.stderr
+
+    bounded_threads = dict(os.environ)
+    for name in thread_names:
+        bounded_threads[name] = "1"
+    group_result = subprocess.run(
+        [*base_command, "--elements", str(MIN_REFERENCE_S3_RECOVERY_GROUP - 1)],
+        cwd=root,
+        env=bounded_threads,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert group_result.returncode != 0
+    assert "recovery batch minimum" in group_result.stderr
+
+
+def test_recovery_rebinds_wholesale_public_mapping_replacements() -> None:
+    model = _build_model(MIN_REFERENCE_S3_RECOVERY_GROUP)
+    vector = 2.0e-5 * np.sin(
+        np.arange(model.mesh.dof_manager.total_dofs, dtype=float) + 0.375
+    )
+    config = RecoveryConfig()
+    resources = ResourceConfig(recovery_threads=1)
+    recover_element_stresses_with_report(
+        model,
+        vector,
+        config,
+        return_global=True,
+        resource_config=resources,
+    )
+    _warm, _warm_report = recover_element_stresses_with_report(
+        model,
+        vector,
+        config,
+        return_global=True,
+        resource_config=resources,
+    )
+    _warm_plan, warm_plan_reused = get_recovery_batch_plan(model)
+    assert warm_plan_reused is True
+
+    model.mesh.elements = {
+        element_id: copy.deepcopy(element)
+        for element_id, element in model.mesh.elements.items()
+    }
+    _rebound_plan, rebound_plan_reused = get_recovery_batch_plan(model)
+    assert rebound_plan_reused is False
+    recover_element_stresses_with_report(
+        model,
+        vector,
+        config,
+        return_global=True,
+        resource_config=resources,
+    )
+    assert all(
+        element._qualified_direct_state_token is (
+            model.mesh._qualified_direct_state_token
+        )
+        for element in model.mesh.elements.values()
+    )
+    token = model.mesh._qualified_direct_state_token[0]
+    model.mesh.elements[1].thickness *= 2.0
+    assert model.mesh._qualified_direct_state_token[0] == token + 1
+    _changed_plan, changed_plan_reused = get_recovery_batch_plan(model)
+    assert changed_plan_reused is False
 
 
 def test_committed_state_recovery_stays_outside_reference_batch(
