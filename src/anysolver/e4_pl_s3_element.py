@@ -1,10 +1,10 @@
 """Opt-in flat MITC3+ companion for the qualified E4-PL Q4 shell.
 
-This module implements the frozen linear formulation and its formulation-native
-mass, initial-stress and physical-recovery operators.  It does not inherit the
-legacy TRI3 shear, drilling, nonlinear, dynamic, buckling or recovery
-mechanics.  Capabilities that still need formulation-native work fail closed;
-see :data:`CAPABILITY_GAPS`.
+This module implements the frozen formulation and its formulation-native
+stiffness, nonlinear, mass, initial-stress and physical-recovery operators.  It
+does not inherit the legacy TRI3 strain, assumed-shear, drilling, nonlinear,
+dynamic, buckling or recovery mechanics.  Capabilities that still need
+formulation-native work fail closed; see :data:`CAPABILITY_GAPS`.
 
 The assumed-shear equations are Eqs. (7), (13), (15)--(17) of Lee, Lee and
 Bathe, *Computers & Structures* 138 (2014) 12--23.  The public author copy
@@ -14,37 +14,63 @@ used for the equation map is bound below by byte count and SHA-256.
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence
 
 import numpy as np
 
-from .elements import ShellElement, _shell_material_matrices
+from .elements import (
+    ShellElement,
+    _copy_state_fields,
+    _elastic_symmetry,
+    _shell_field_rows,
+    _shell_material_matrices,
+)
+from .e4_pl_s3_state import (
+    BUBBLE_CONVENTION,
+    BUBBLE_CONDITION_LIMIT,
+    BUBBLE_FORCE_CONDENSATION_ID,
+    BUBBLE_LINE_SEARCH_MIN_FACTOR,
+    BUBBLE_LINE_SEARCH_REDUCTION,
+    BUBBLE_MAX_ITERATIONS,
+    BUBBLE_OFFSET_D,
+    BUBBLE_POLYNOMIAL_SCALE,
+    BUBBLE_RELATIVE_TOLERANCE,
+    BUBBLE_STEP_TOLERANCE,
+    DIRECTOR_GAUGE_ID,
+    DRILL_SCALE_INVERSE_METRIC_SQRT,
+    DRILL_SCALE_PROJECTOR,
+    EXTERNAL_ROTATION_MAP_ID,
+    FORMULATION_ID,
+    FORMULATION_SCHEMA,
+    MITC3_PLUS_EQUATION_MAP,
+    MITC3_PLUS_NONLINEAR_EQUATION_MAP,
+    MITC3_PLUS_NONLINEAR_SOURCE_BYTES,
+    MITC3_PLUS_NONLINEAR_SOURCE_SHA256,
+    MITC3_PLUS_NONLINEAR_SOURCE_URL,
+    MITC3_PLUS_SOURCE_BYTES,
+    MITC3_PLUS_SOURCE_SHA256,
+    MITC3_PLUS_SOURCE_URL,
+    MINIMUM_OWNER_NORMAL_ALIGNMENT,
+    NONLINEAR_POLICY_ID,
+    PL_GRAM_NUMERATOR,
+    QUADRATURE_ID,
+    RECOVERY_POLICY_ID,
+    S3CommittedStateError,
+    STIFFNESS_STATION_TABLE,
+    TYING_POINTS,
+    qualified_s3_lobatto_layers,
+    qualified_s3_triangle_frame,
+    reconstruct_director_triad,
+    require_qualified_s3_quality,
+)
 from .materials import is_isotropic_material
+from .plasticity import plane_stress_return_map
 from .shell_sections import (
     SHELL_MEMBRANE_VOIGT_ORDER,
     SHELL_TRANSVERSE_SHEAR_ORDER,
 )
 
 
-FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
-FORMULATION_SCHEMA = "anysolver.e4_pl_s3.linear.v1"
-MITC3_PLUS_SOURCE_URL = (
-    "https://web.mit.edu/kjb/www/Principal_Publications/"
-    "The_MITC3%2B_shell_element_and_its_performance.pdf"
-)
-MITC3_PLUS_SOURCE_BYTES = 1_146_142
-MITC3_PLUS_SOURCE_SHA256 = (
-    "182F52217277B55E17627B8C41A3A4626ED91ED5378399088E0EA1748AD93EF0"
-)
-MITC3_PLUS_EQUATION_MAP = {
-    "bubble_interpolation": "equations_6_to_8",
-    "internal_tying_directions": "equations_12_to_15",
-    "assumed_covariant_shear": "equations_16_and_17",
-}
-
-BUBBLE_OFFSET_D = 1.0e-4
-BUBBLE_CONVENTION = "hierarchical_rotation_relative_to_corner_average"
-QUADRATURE_ID = "dunavant_degree5_7point"
 DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
 MASS_MOMENT_ID = "ANALYTIC_BARYCENTRIC_B2_DEGREE6_V1"
 ALGEBRAIC_COORDINATE_POLICY_ID = "S3_NODAL_DRILL_ZERO_INERTIA_V1"
@@ -57,47 +83,21 @@ HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID = (
 REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID = (
     "REFERENCE_ELASTIC_BUBBLE_SCHUR_DERIVATIVE_V1"
 )
-RECOVERY_POLICY_ID = "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1"
 RESULTANT_SUMMARY_POLICY_ID = "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1"
 STATE_LAYOUT_ID = "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
-MINIMUM_OWNER_NORMAL_ALIGNMENT = 1.0e-8
 
-TYING_POINTS = {
-    "A": (1.0 / 6.0, 2.0 / 3.0),
-    "B": (2.0 / 3.0, 1.0 / 6.0),
-    "C": (1.0 / 6.0, 1.0 / 6.0),
-    "D": (1.0 / 3.0 + BUBBLE_OFFSET_D, 1.0 / 3.0 - 2.0 * BUBBLE_OFFSET_D),
-    "E": (1.0 / 3.0 - 2.0 * BUBBLE_OFFSET_D, 1.0 / 3.0 + BUBBLE_OFFSET_D),
-    "F": (1.0 / 3.0 + BUBBLE_OFFSET_D, 1.0 / 3.0 + BUBBLE_OFFSET_D),
-}
-
-_DUNAVANT_A1 = 0.059715871789770
-_DUNAVANT_B1 = 0.470142064105115
-_DUNAVANT_A2 = 0.797426985353087
-_DUNAVANT_B2 = 0.101286507323456
-TRIANGLE_QUADRATURE = tuple(
-    (r, s, weight)
-    for (r, s), weight in zip(
-        (
-            (1.0 / 3.0, 1.0 / 3.0),
-            (_DUNAVANT_B1, _DUNAVANT_B1),
-            (_DUNAVANT_A1, _DUNAVANT_B1),
-            (_DUNAVANT_B1, _DUNAVANT_A1),
-            (_DUNAVANT_B2, _DUNAVANT_B2),
-            (_DUNAVANT_A2, _DUNAVANT_B2),
-            (_DUNAVANT_B2, _DUNAVANT_A2),
-        ),
-        (
-            0.1125,
-            0.066197076394253,
-            0.066197076394253,
-            0.066197076394253,
-            0.062969590272414,
-            0.062969590272414,
-            0.062969590272414,
-        ),
-    )
+_INITIAL_SHELL_STATE_KEYS = (
+    "initial_membrane_stress",
+    "initial_bending_stress",
+    "initial_membrane_prestrain",
+    "initial_curvature_prestrain",
+    "initial_field_provenance",
 )
+_BUBBLE_MAX_ITERATIONS = BUBBLE_MAX_ITERATIONS
+_BUBBLE_RELATIVE_TOLERANCE = BUBBLE_RELATIVE_TOLERANCE
+_BUBBLE_STEP_TOLERANCE = BUBBLE_STEP_TOLERANCE
+
+TRIANGLE_QUADRATURE = STIFFNESS_STATION_TABLE
 
 PHYSICAL_EXTERNAL_INDICES = np.asarray(
     [6 * node + component for node in range(3) for component in range(5)],
@@ -250,93 +250,26 @@ def triangle_frame(
 ) -> tuple[np.ndarray, np.ndarray, Dict[str, float]]:
     """Return the numbered flat-triangle frame, local nodes and quality data."""
 
-    coordinates = np.asarray(nodes, dtype=float)
-    if coordinates.shape != (3, 3) or not np.all(np.isfinite(coordinates)):
-        raise ValueError("qualified S3 nodes must be a finite 3x3 array")
-    edge_r = coordinates[1] - coordinates[0]
-    edge_s = coordinates[2] - coordinates[0]
-    normal_raw = np.cross(edge_r, edge_s)
-    twice_area = float(np.linalg.norm(normal_raw))
-    lengths = np.asarray(
-        (
-            np.linalg.norm(coordinates[1] - coordinates[0]),
-            np.linalg.norm(coordinates[2] - coordinates[1]),
-            np.linalg.norm(coordinates[0] - coordinates[2]),
-        ),
-        dtype=float,
-    )
-    max_edge = float(np.max(lengths))
-    min_edge = float(np.min(lengths))
-    if not math.isfinite(max_edge) or max_edge <= 0.0 or min_edge <= 0.0:
-        raise ValueError("qualified S3 requires three distinct nodes")
-    normalized_twice_area = twice_area / (max_edge * max_edge)
-    minimum_area = max(64.0 * np.finfo(float).eps, 1.0e-14)
-    if not math.isfinite(normalized_twice_area) or normalized_twice_area <= minimum_area:
-        raise ValueError("qualified S3 has a zero or near-zero signed area")
-
-    e1 = _normalize(edge_r, "first edge")
-    e3 = _normalize(normal_raw, "normal")
-    connectivity_sign = 1.0
-    reference_alignment = 1.0
-    if reference_normal is not None:
-        supplied = np.asarray(reference_normal, dtype=float).reshape(-1)
-        if supplied.size != 3 or not np.all(np.isfinite(supplied)):
-            raise ValueError("qualified S3 reference_normal must be a finite 3-vector")
-        supplied = _normalize(supplied, "reference normal")
-        reference_alignment = float(np.dot(e3, supplied))
-        if abs(reference_alignment) <= MINIMUM_OWNER_NORMAL_ALIGNMENT:
-            raise ValueError("qualified S3 reference_normal is tangential to the facet")
-        if reference_alignment < 0.0:
-            e3 = -e3
-            connectivity_sign = -1.0
-        reference_alignment = abs(reference_alignment)
-    e2 = _normalize(np.cross(e3, e1), "second tangent")
-    e1 = _normalize(np.cross(e2, e3), "renormalized first tangent")
-    frame = np.column_stack((e1, e2, e3))
-    local = (coordinates - coordinates[0]) @ frame[:, :2]
-
-    cosines = np.empty(3, dtype=float)
-    for index in range(3):
-        left = coordinates[(index + 1) % 3] - coordinates[index]
-        right = coordinates[(index - 1) % 3] - coordinates[index]
-        cosines[index] = float(
-            np.clip(np.dot(left, right) / (np.linalg.norm(left) * np.linalg.norm(right)), -1.0, 1.0)
+    try:
+        return qualified_s3_triangle_frame(
+            nodes,
+            reference_normal,
+            enforce_admission=False,
         )
-    angles = np.degrees(np.arccos(cosines))
-    corner_scaled_jacobian = float(np.min(np.sin(np.radians(angles))))
-    normalized_area = float(2.0 * math.sqrt(3.0) * twice_area / np.dot(lengths, lengths))
-    quality = {
-        "area": 0.5 * twice_area,
-        "normalized_twice_area": normalized_twice_area,
-        "minimum_angle_deg": float(np.min(angles)),
-        "maximum_angle_deg": float(np.max(angles)),
-        "edge_ratio": max_edge / min_edge,
-        "minimum_scaled_jacobian": corner_scaled_jacobian,
-        "normalized_area": normalized_area,
-        "connectivity_sign": connectivity_sign,
-        "reference_normal_alignment": reference_alignment,
-    }
-    return frame, local, quality
+    except S3CommittedStateError as exc:
+        raise ValueError(str(exc)) from exc
 
 
 def _require_admitted_quality(
     quality: Mapping[str, float], *, enforce_positive_winding: bool = True
 ) -> None:
-    failures = []
-    if enforce_positive_winding and quality["connectivity_sign"] <= 0.0:
-        failures.append("connectivity winding opposes the authoritative owner normal")
-    if quality["minimum_angle_deg"] < 30.0 - 1.0e-12:
-        failures.append("minimum angle is below 30 degrees")
-    if quality["maximum_angle_deg"] > 150.0 + 1.0e-12:
-        failures.append("maximum angle exceeds 150 degrees")
-    if quality["edge_ratio"] > 4.0 + 1.0e-12:
-        failures.append("edge ratio exceeds 4.0")
-    if quality["minimum_scaled_jacobian"] < 0.20 - 1.0e-12:
-        failures.append("minimum scaled Jacobian is below 0.20")
-    if quality["normalized_area"] < 0.60 - 1.0e-12:
-        failures.append("normalized area is below 0.60")
-    if failures:
-        raise ValueError("qualified S3 quality admission failed: " + "; ".join(failures))
+    try:
+        require_qualified_s3_quality(
+            quality,
+            enforce_positive_winding=enforce_positive_winding,
+        )
+    except S3CommittedStateError as exc:
+        raise ValueError(str(exc)) from exc
 
 
 def invariant_drilling_scale(membrane_matrix: np.ndarray) -> float:
@@ -349,9 +282,9 @@ def invariant_drilling_scale(membrane_matrix: np.ndarray) -> float:
     membrane_eigenvalues = np.linalg.eigvalsh(membrane)
     if float(membrane_eigenvalues[0]) <= 0.0:
         raise ValueError("S3 membrane matrix A must be positive definite")
-    projector = np.asarray(((1.0, 0.0), (-1.0, 0.0), (0.0, 1.0)), dtype=float)
+    projector = np.asarray(DRILL_SCALE_PROJECTOR, dtype=float)
     restricted = projector.T @ membrane @ projector
-    inverse_metric_sqrt = np.diag((1.0 / math.sqrt(2.0), math.sqrt(2.0)))
+    inverse_metric_sqrt = np.asarray(DRILL_SCALE_INVERSE_METRIC_SQRT, dtype=float)
     canonical = inverse_metric_sqrt @ restricted @ inverse_metric_sqrt
     value = 0.5 * float(np.linalg.eigvalsh(0.5 * (canonical + canonical.T))[0])
     if not math.isfinite(value) or value <= 0.0:
@@ -392,9 +325,9 @@ def _reference_fields(r: float, s: float) -> tuple[np.ndarray, np.ndarray, np.nd
     shape = np.asarray((1.0 - r - s, r, s), dtype=float)
     derivative_r = np.asarray((-1.0, 1.0, 0.0), dtype=float)
     derivative_s = np.asarray((-1.0, 0.0, 1.0), dtype=float)
-    bubble = 27.0 * r * s * (1.0 - r - s)
-    bubble_r = 27.0 * s * (1.0 - 2.0 * r - s)
-    bubble_s = 27.0 * r * (1.0 - r - 2.0 * s)
+    bubble = BUBBLE_POLYNOMIAL_SCALE * r * s * (1.0 - r - s)
+    bubble_r = BUBBLE_POLYNOMIAL_SCALE * s * (1.0 - 2.0 * r - s)
+    bubble_s = BUBBLE_POLYNOMIAL_SCALE * r * (1.0 - r - 2.0 * s)
     return shape, derivative_r, derivative_s, bubble, bubble_r, bubble_s
 
 
@@ -518,10 +451,7 @@ def _pl_operators(local: np.ndarray, k_d: float) -> tuple[np.ndarray, np.ndarray
         constraint[row, 1::6] = -0.5 * derivative_x
         constraint[row, 6 * row + 5] = 1.0
     area = 0.5 * abs(determinant)
-    gram = (area / 12.0) * np.asarray(
-        ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
-        dtype=float,
-    )
+    gram = (area / 12.0) * np.asarray(PL_GRAM_NUMERATOR, dtype=float)
     condensed = k_d * (constraint.T @ gram @ constraint)
     return constraint, gram, 0.5 * (condensed + condensed.T)
 
@@ -548,6 +478,1125 @@ def _analytic_mass_moments(area: float) -> tuple[np.ndarray, np.ndarray, float]:
     corner_bubble = np.full(3, 3.0 * made / 20.0, dtype=float)
     bubble = 81.0 * made / 280.0
     return corner, corner_bubble, bubble
+
+
+class _SecondOrderJet:
+    """Scalar value with exact first and second derivatives.
+
+    The native nonlinear S3 strain map is a low-order polynomial in the 18
+    external increments and two hierarchical bubble increments.  Carrying its
+    gradient and Hessian explicitly keeps the implementation close to the
+    published ``B U + 1/2 U.T N U`` equations and avoids numerical
+    differentiation in the production tangent.
+    """
+
+    __slots__ = ("value", "gradient", "hessian")
+
+    def __init__(
+        self,
+        value: float,
+        gradient: np.ndarray,
+        hessian: np.ndarray,
+    ) -> None:
+        self.value = float(value)
+        self.gradient = np.asarray(gradient, dtype=float)
+        self.hessian = np.asarray(hessian, dtype=float)
+
+    @classmethod
+    def constant(cls, value: float, size: int) -> "_SecondOrderJet":
+        return cls(
+            value,
+            np.zeros(size, dtype=float),
+            np.zeros((size, size), dtype=float),
+        )
+
+    @classmethod
+    def variable(
+        cls, value: float, index: int, size: int
+    ) -> "_SecondOrderJet":
+        gradient = np.zeros(size, dtype=float)
+        gradient[int(index)] = 1.0
+        return cls(value, gradient, np.zeros((size, size), dtype=float))
+
+    def _coerce(self, other: Any) -> "_SecondOrderJet":
+        if isinstance(other, _SecondOrderJet):
+            return other
+        return _SecondOrderJet.constant(float(other), self.gradient.size)
+
+    def __add__(self, other: Any) -> "_SecondOrderJet":
+        made = self._coerce(other)
+        return _SecondOrderJet(
+            self.value + made.value,
+            self.gradient + made.gradient,
+            self.hessian + made.hessian,
+        )
+
+    __radd__ = __add__
+
+    def __neg__(self) -> "_SecondOrderJet":
+        return _SecondOrderJet(-self.value, -self.gradient, -self.hessian)
+
+    def __sub__(self, other: Any) -> "_SecondOrderJet":
+        return self + (-self._coerce(other))
+
+    def __rsub__(self, other: Any) -> "_SecondOrderJet":
+        return self._coerce(other) + (-self)
+
+    def __mul__(self, other: Any) -> "_SecondOrderJet":
+        made = self._coerce(other)
+        return _SecondOrderJet(
+            self.value * made.value,
+            self.gradient * made.value + made.gradient * self.value,
+            self.hessian * made.value
+            + made.hessian * self.value
+            + np.outer(self.gradient, made.gradient)
+            + np.outer(made.gradient, self.gradient),
+        )
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other: Any) -> "_SecondOrderJet":
+        if isinstance(other, _SecondOrderJet):
+            raise TypeError("native S3 jet division by a variable is not defined")
+        divisor = float(other)
+        if divisor == 0.0:
+            raise ZeroDivisionError("native S3 jet division by zero")
+        return self * (1.0 / divisor)
+
+
+def _jet_linear_combination(
+    coefficients: Sequence[float],
+    values: Sequence[_SecondOrderJet],
+) -> _SecondOrderJet:
+    if len(coefficients) != len(values) or not values:
+        raise ValueError("native S3 jet linear combination has incompatible inputs")
+    result = _SecondOrderJet.constant(0.0, values[0].gradient.size)
+    for coefficient, value in zip(coefficients, values):
+        result = result + float(coefficient) * value
+    return result
+
+
+def _jet_dot(
+    left: Sequence[_SecondOrderJet | float],
+    right: Sequence[_SecondOrderJet | float],
+    size: int,
+) -> _SecondOrderJet:
+    if len(left) != len(right):
+        raise ValueError("native S3 jet dot product has incompatible inputs")
+    result = _SecondOrderJet.constant(0.0, size)
+    for first, second in zip(left, right):
+        first_jet = (
+            first
+            if isinstance(first, _SecondOrderJet)
+            else _SecondOrderJet.constant(float(first), size)
+        )
+        result = result + first_jet * second
+    return result
+
+
+def _current_surface_frame(
+    current_nodes: np.ndarray,
+    director_triads: np.ndarray,
+) -> np.ndarray:
+    """Return the oriented flat current midsurface frame.
+
+    The source element keeps a flat three-corner midsurface.  Its current
+    normal sign follows the transported physical directors, never the node
+    numbering alone.
+    """
+
+    nodes = np.asarray(current_nodes, dtype=float)
+    triads = np.asarray(director_triads, dtype=float)
+    if nodes.shape != (3, 3) or triads.shape != (4, 3, 3):
+        raise ValueError("native S3 current geometry requires 3 nodes and 4 triads")
+    if not np.all(np.isfinite(nodes)) or not np.all(np.isfinite(triads)):
+        raise ValueError("native S3 current geometry must be finite")
+    first_edge = nodes[1] - nodes[0]
+    second_edge = nodes[2] - nodes[0]
+    e1 = _normalize(first_edge, "current first edge")
+    normal = _normalize(np.cross(first_edge, second_edge), "current normal")
+    director = np.sum(triads[:3, :, 2], axis=0)
+    if float(np.dot(normal, director)) < 0.0:
+        normal = -normal
+    e2 = _normalize(np.cross(normal, e1), "current second tangent")
+    e1 = _normalize(np.cross(e2, normal), "current first tangent")
+    return np.column_stack((e1, e2, normal))
+
+
+def _native_source_increment_jets(
+    director_triads: np.ndarray,
+    increment: np.ndarray,
+) -> tuple[
+    list[list[_SecondOrderJet]],
+    list[_SecondOrderJet],
+    list[_SecondOrderJet],
+    list[_SecondOrderJet],
+    list[_SecondOrderJet],
+]:
+    """Map external/bubble increments to the source node coordinates.
+
+    The last two entries of ``increment`` are hierarchical bubble rotations.
+    The paper's fourth-node rotations equal those entries plus the mean of the
+    three corner rotations, which makes ``f_i=L_i-b/3, f_4=b`` identical to
+    the frozen ``sum(L_i theta_i)+b*alpha`` interpolation.
+    """
+
+    made = np.asarray(increment, dtype=float).reshape(-1)
+    if made.size != 20 or not np.all(np.isfinite(made)):
+        raise ValueError("native S3 increment must contain 20 finite coordinates")
+    triads = np.asarray(director_triads, dtype=float).reshape(4, 3, 3)
+    variables = [
+        _SecondOrderJet.variable(value, index, 20)
+        for index, value in enumerate(made)
+    ]
+    translations: list[list[_SecondOrderJet]] = []
+    rotations_a_first: list[_SecondOrderJet] = []
+    rotations_b_first: list[_SecondOrderJet] = []
+    rotations_a_second: list[_SecondOrderJet] = []
+    rotations_b_second: list[_SecondOrderJet] = []
+    for node in range(3):
+        base = 6 * node
+        translations.append(variables[base : base + 3])
+        rotation = variables[base + 3 : base + 6]
+        tangent_a = _jet_linear_combination(triads[node, :, 0], rotation)
+        tangent_b = _jet_linear_combination(triads[node, :, 1], rotation)
+        drilling = _jet_linear_combination(triads[node, :, 2], rotation)
+        # The solver exposes additive global rotation vectors.  Eq. (14),
+        # however, requires the minimal two-component rotation that produces
+        # the same director change.  The consistently retained second-order
+        # pullback is obtained by matching exp(phi) Vn through O(|phi|^2).
+        rotations_a_first.append(tangent_a)
+        rotations_b_first.append(tangent_b)
+        rotations_a_second.append(-0.5 * drilling * tangent_b)
+        rotations_b_second.append(0.5 * drilling * tangent_a)
+    rotations_a_first.append(
+        variables[18]
+        + (
+            rotations_a_first[0]
+            + rotations_a_first[1]
+            + rotations_a_first[2]
+        )
+        / 3.0
+    )
+    rotations_b_first.append(
+        variables[19]
+        + (
+            rotations_b_first[0]
+            + rotations_b_first[1]
+            + rotations_b_first[2]
+        )
+        / 3.0
+    )
+    rotations_a_second.append(
+        (
+            rotations_a_second[0]
+            + rotations_a_second[1]
+            + rotations_a_second[2]
+        )
+        / 3.0
+    )
+    rotations_b_second.append(
+        (
+            rotations_b_second[0]
+            + rotations_b_second[1]
+            + rotations_b_second[2]
+        )
+        / 3.0
+    )
+    return (
+        translations,
+        rotations_a_first,
+        rotations_b_first,
+        rotations_a_second,
+        rotations_b_second,
+    )
+
+
+def _native_point_incremental_covariants(
+    current_nodes: np.ndarray,
+    director_triads: np.ndarray,
+    r: float,
+    s: float,
+    translations: Sequence[Sequence[_SecondOrderJet]],
+    rotations_a: Sequence[_SecondOrderJet],
+    rotations_b: Sequence[_SecondOrderJet],
+    rotations_a_second: Sequence[_SecondOrderJet],
+    rotations_b_second: Sequence[_SecondOrderJet],
+) -> tuple[
+    tuple[_SecondOrderJet, _SecondOrderJet, _SecondOrderJet],
+    tuple[_SecondOrderJet, _SecondOrderJet, _SecondOrderJet],
+    tuple[_SecondOrderJet, _SecondOrderJet],
+]:
+    """Return midsurface, curvature and compatible-shear covariants."""
+
+    nodes = np.asarray(current_nodes, dtype=float).reshape(3, 3)
+    triads = np.asarray(director_triads, dtype=float).reshape(4, 3, 3)
+    (
+        shape,
+        derivative_r,
+        derivative_s,
+        bubble,
+        bubble_r,
+        bubble_s,
+    ) = _reference_fields(float(r), float(s))
+    functions = np.concatenate((shape - bubble / 3.0, (bubble,)))
+    functions_r = np.concatenate(
+        (derivative_r - bubble_r / 3.0, (bubble_r,))
+    )
+    functions_s = np.concatenate(
+        (derivative_s - bubble_s / 3.0, (bubble_s,))
+    )
+
+    size = 20
+    translation_r = [
+        _jet_linear_combination(derivative_r, [translations[node][axis] for node in range(3)])
+        for axis in range(3)
+    ]
+    translation_s = [
+        _jet_linear_combination(derivative_s, [translations[node][axis] for node in range(3)])
+        for axis in range(3)
+    ]
+
+    director_increments_linear: list[list[_SecondOrderJet]] = []
+    director_increments_quadratic: list[list[_SecondOrderJet]] = []
+    for node in range(4):
+        a_value = rotations_a[node]
+        b_value = rotations_b[node]
+        a_second = rotations_a_second[node]
+        b_second = rotations_b_second[node]
+        quadratic = -0.5 * (a_value * a_value + b_value * b_value)
+        director_increments_linear.append(
+            [
+                -a_value * triads[node, axis, 1]
+                + b_value * triads[node, axis, 0]
+                for axis in range(3)
+            ]
+        )
+        director_increments_quadratic.append(
+            [
+                -a_second * triads[node, axis, 1]
+                + b_second * triads[node, axis, 0]
+                + quadratic * triads[node, axis, 2]
+                for axis in range(3)
+            ]
+        )
+
+    director = np.einsum("i,iaj->aj", functions, triads)[:, 2]
+    director_r = np.einsum("i,iaj->aj", functions_r, triads)[:, 2]
+    director_s = np.einsum("i,iaj->aj", functions_s, triads)[:, 2]
+    increment_director_linear = [
+        _jet_linear_combination(
+            functions,
+            [director_increments_linear[node][axis] for node in range(4)],
+        )
+        for axis in range(3)
+    ]
+    increment_director_quadratic = [
+        _jet_linear_combination(
+            functions,
+            [director_increments_quadratic[node][axis] for node in range(4)],
+        )
+        for axis in range(3)
+    ]
+    increment_director_r_linear = [
+        _jet_linear_combination(
+            functions_r,
+            [director_increments_linear[node][axis] for node in range(4)],
+        )
+        for axis in range(3)
+    ]
+    increment_director_r_quadratic = [
+        _jet_linear_combination(
+            functions_r,
+            [director_increments_quadratic[node][axis] for node in range(4)],
+        )
+        for axis in range(3)
+    ]
+    increment_director_s_linear = [
+        _jet_linear_combination(
+            functions_s,
+            [director_increments_linear[node][axis] for node in range(4)],
+        )
+        for axis in range(3)
+    ]
+    increment_director_s_quadratic = [
+        _jet_linear_combination(
+            functions_s,
+            [director_increments_quadratic[node][axis] for node in range(4)],
+        )
+        for axis in range(3)
+    ]
+
+    tangent_r = nodes[1] - nodes[0]
+    tangent_s = nodes[2] - nodes[0]
+    membrane_rr = _jet_dot(tangent_r, translation_r, size) + 0.5 * _jet_dot(
+        translation_r, translation_r, size
+    )
+    membrane_ss = _jet_dot(tangent_s, translation_s, size) + 0.5 * _jet_dot(
+        translation_s, translation_s, size
+    )
+    membrane_rs = (
+        _jet_dot(tangent_r, translation_s, size)
+        + _jet_dot(tangent_s, translation_r, size)
+        + _jet_dot(translation_r, translation_s, size)
+    )
+
+    curvature_rr = (
+        _jet_dot(tangent_r, increment_director_r_linear, size)
+        + _jet_dot(tangent_r, increment_director_r_quadratic, size)
+        + _jet_dot(director_r, translation_r, size)
+        + _jet_dot(translation_r, increment_director_r_linear, size)
+    )
+    curvature_ss = (
+        _jet_dot(tangent_s, increment_director_s_linear, size)
+        + _jet_dot(tangent_s, increment_director_s_quadratic, size)
+        + _jet_dot(director_s, translation_s, size)
+        + _jet_dot(translation_s, increment_director_s_linear, size)
+    )
+    curvature_rs = (
+        _jet_dot(tangent_r, increment_director_s_linear, size)
+        + _jet_dot(tangent_r, increment_director_s_quadratic, size)
+        + _jet_dot(director_r, translation_s, size)
+        + _jet_dot(tangent_s, increment_director_r_linear, size)
+        + _jet_dot(tangent_s, increment_director_r_quadratic, size)
+        + _jet_dot(director_s, translation_r, size)
+        + _jet_dot(translation_r, increment_director_s_linear, size)
+        + _jet_dot(increment_director_r_linear, translation_s, size)
+    )
+
+    shear_r = (
+        _jet_dot(tangent_r, increment_director_linear, size)
+        + _jet_dot(tangent_r, increment_director_quadratic, size)
+        + _jet_dot(director, translation_r, size)
+        + _jet_dot(translation_r, increment_director_linear, size)
+    )
+    shear_s = (
+        _jet_dot(tangent_s, increment_director_linear, size)
+        + _jet_dot(tangent_s, increment_director_quadratic, size)
+        + _jet_dot(director, translation_s, size)
+        + _jet_dot(translation_s, increment_director_linear, size)
+    )
+    return (
+        (membrane_rr, membrane_ss, membrane_rs),
+        (curvature_rr, curvature_ss, curvature_rs),
+        (shear_r, shear_s),
+    )
+
+
+def _covariant_inplane_to_cartesian(
+    covariant: Sequence[_SecondOrderJet],
+    inverse_jacobian: np.ndarray,
+) -> tuple[_SecondOrderJet, _SecondOrderJet, _SecondOrderJet]:
+    inverse = np.asarray(inverse_jacobian, dtype=float).reshape(2, 2)
+    rr, ss, rs = covariant
+    xx = (
+        inverse[0, 0] ** 2 * rr
+        + inverse[0, 1] ** 2 * ss
+        + inverse[0, 0] * inverse[0, 1] * rs
+    )
+    yy = (
+        inverse[1, 0] ** 2 * rr
+        + inverse[1, 1] ** 2 * ss
+        + inverse[1, 0] * inverse[1, 1] * rs
+    )
+    xy = (
+        2.0 * inverse[0, 0] * inverse[1, 0] * rr
+        + 2.0 * inverse[0, 1] * inverse[1, 1] * ss
+        + (
+            inverse[0, 0] * inverse[1, 1]
+            + inverse[0, 1] * inverse[1, 0]
+        )
+        * rs
+    )
+    return xx, yy, xy
+
+
+def _native_incremental_strain_jets(
+    current_nodes: np.ndarray,
+    director_triads: np.ndarray,
+    r: float,
+    s: float,
+    increment20: np.ndarray,
+    *,
+    reference_nodes: np.ndarray,
+    reference_frame: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Evaluate the published incremental TL strain and its exact B/N data.
+
+    Output ordering is membrane engineering strain, curvature engineering
+    strain and assumed engineering transverse shear.  Derivatives are with
+    respect to the 18 global external increments followed by the two
+    hierarchical bubble increments.
+    """
+
+    nodes = np.asarray(current_nodes, dtype=float).reshape(3, 3)
+    triads = np.asarray(director_triads, dtype=float).reshape(4, 3, 3)
+    basis_nodes = np.asarray(reference_nodes, dtype=float).reshape(3, 3)
+    if not np.all(np.isfinite(basis_nodes)):
+        raise ValueError("native S3 reference nodes must be finite")
+    frame = np.asarray(reference_frame, dtype=float).reshape(3, 3)
+    if not np.all(np.isfinite(frame)):
+        raise ValueError("native S3 reference frame must be finite")
+    local = (basis_nodes - basis_nodes[0]) @ frame[:, :2]
+    _jacobian_matrix, inverse, _determinant = _jacobian(local)
+    (
+        translations,
+        rotations_a,
+        rotations_b,
+        rotations_a_second,
+        rotations_b_second,
+    ) = _native_source_increment_jets(triads, increment20)
+    membrane_covariant, curvature_covariant, _compatible = (
+        _native_point_incremental_covariants(
+            nodes,
+            triads,
+            float(r),
+            float(s),
+            translations,
+            rotations_a,
+            rotations_b,
+            rotations_a_second,
+            rotations_b_second,
+        )
+    )
+    membrane = _covariant_inplane_to_cartesian(membrane_covariant, inverse)
+    curvature = _covariant_inplane_to_cartesian(curvature_covariant, inverse)
+
+    samples: Dict[str, tuple[_SecondOrderJet, _SecondOrderJet]] = {}
+    for name, point in TYING_POINTS.items():
+        _membrane, _curvature, compatible = _native_point_incremental_covariants(
+            nodes,
+            triads,
+            float(point[0]),
+            float(point[1]),
+            translations,
+            rotations_a,
+            rotations_b,
+            rotations_a_second,
+            rotations_b_second,
+        )
+        samples[name] = compatible
+    constant_r = (
+        (2.0 / 3.0) * (samples["B"][0] - 0.5 * samples["B"][1])
+        + (1.0 / 3.0) * (samples["C"][0] + samples["C"][1])
+    )
+    constant_s = (
+        (2.0 / 3.0) * (samples["A"][1] - 0.5 * samples["A"][0])
+        + (1.0 / 3.0) * (samples["C"][0] + samples["C"][1])
+    )
+    twisting = (
+        samples["F"][0]
+        - samples["D"][0]
+        - samples["F"][1]
+        + samples["E"][1]
+    )
+    shear_covariant = (
+        constant_r + (twisting / 3.0) * (3.0 * float(s) - 1.0),
+        constant_s + (twisting / 3.0) * (1.0 - 3.0 * float(r)),
+    )
+    shear = (
+        inverse[0, 0] * shear_covariant[0]
+        + inverse[0, 1] * shear_covariant[1],
+        inverse[1, 0] * shear_covariant[0]
+        + inverse[1, 1] * shear_covariant[1],
+    )
+    jets = (*membrane, *curvature, *shear)
+    values = np.asarray([item.value for item in jets], dtype=float)
+    gradients = np.asarray([item.gradient for item in jets], dtype=float)
+    hessians = np.asarray([item.hessian for item in jets], dtype=float)
+    if (
+        not np.all(np.isfinite(values))
+        or not np.all(np.isfinite(gradients))
+        or not np.all(np.isfinite(hessians))
+    ):
+        raise ValueError("native S3 incremental strain evaluation is non-finite")
+    return values, gradients, hessians
+
+
+def _native_source_rotation_values(
+    director_triads: np.ndarray,
+    increment20: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return the four source-node a/b increments as plain values."""
+
+    triads = np.asarray(director_triads, dtype=float).reshape(4, 3, 3)
+    increment = np.asarray(increment20, dtype=float).reshape(-1)
+    if increment.size != 20 or not np.all(np.isfinite(increment)):
+        raise ValueError("native S3 increment must contain 20 finite coordinates")
+    rotations = increment[:18].reshape(3, 6)[:, 3:6]
+    tangent_a = np.einsum("ij,ij->i", rotations, triads[:3, :, 0])
+    tangent_b = np.einsum("ij,ij->i", rotations, triads[:3, :, 1])
+    drilling = np.einsum("ij,ij->i", rotations, triads[:3, :, 2])
+    corner_a = tangent_a - 0.5 * drilling * tangent_b
+    corner_b = tangent_b + 0.5 * drilling * tangent_a
+    source_a = np.concatenate(
+        (corner_a, (float(np.mean(corner_a) + increment[18]),))
+    )
+    source_b = np.concatenate(
+        (corner_b, (float(np.mean(corner_b) + increment[19]),))
+    )
+    return source_a, source_b
+
+
+def _rodrigues_rotation(rotation_vector: np.ndarray) -> np.ndarray:
+    """Exact Rodrigues map used to commit a converged director increment."""
+
+    vector = np.asarray(rotation_vector, dtype=float).reshape(3)
+    if not np.all(np.isfinite(vector)):
+        raise ValueError("native S3 director increment must be finite")
+    angle = float(np.linalg.norm(vector))
+    skew = np.asarray(
+        (
+            (0.0, -vector[2], vector[1]),
+            (vector[2], 0.0, -vector[0]),
+            (-vector[1], vector[0], 0.0),
+        ),
+        dtype=float,
+    )
+    if angle < 1.0e-8:
+        angle2 = angle * angle
+        sine_ratio = 1.0 - angle2 / 6.0 + angle2 * angle2 / 120.0
+        cosine_ratio = 0.5 - angle2 / 24.0 + angle2 * angle2 / 720.0
+    else:
+        sine_ratio = math.sin(angle) / angle
+        cosine_ratio = (1.0 - math.cos(angle)) / (angle * angle)
+    return np.eye(3, dtype=float) + sine_ratio * skew + cosine_ratio * (skew @ skew)
+
+
+def _update_native_director_triads(
+    director_triads: np.ndarray,
+    increment20: np.ndarray,
+) -> np.ndarray:
+    """Update directors with Eqs. (10)--(15), then apply Eq. (11)."""
+
+    triads = np.asarray(director_triads, dtype=float).reshape(4, 3, 3)
+    source_a, source_b = _native_source_rotation_values(triads, increment20)
+    updated = np.empty_like(triads)
+    for node in range(4):
+        rotation_vector = (
+            source_a[node] * triads[node, :, 0]
+            + source_b[node] * triads[node, :, 1]
+        )
+        new_normal = _rodrigues_rotation(rotation_vector) @ triads[node, :, 2]
+        updated[node] = reconstruct_director_triad(new_normal)
+    return updated
+
+
+class S3BubbleEquilibriumError(RuntimeError):
+    """A native S3 trial whose two internal rotations did not equilibrate."""
+
+
+def _solve_native_bubble_equilibrium(
+    external_increment: np.ndarray,
+    initial_bubble_increment: np.ndarray,
+    response_builder: Callable[
+        [np.ndarray], tuple[np.ndarray, np.ndarray, Dict[str, Any]]
+    ],
+) -> tuple[np.ndarray, np.ndarray, Dict[str, Any], Dict[str, Any]]:
+    """Solve and consistently condense the two source bubble equations.
+
+    ``response_builder`` must always evaluate from the same committed material
+    state.  The deterministic backtracking is a local trial safeguard only;
+    failed candidates are discarded and cannot mutate that state.
+    """
+
+    external = np.asarray(external_increment, dtype=float).reshape(-1)
+    bubble = np.asarray(initial_bubble_increment, dtype=float).reshape(-1).copy()
+    if external.size != 18 or not np.all(np.isfinite(external)):
+        raise ValueError("native S3 external increment must contain 18 finite values")
+    if bubble.size != 2 or not np.all(np.isfinite(bubble)):
+        raise ValueError("native S3 bubble predictor must contain two finite values")
+
+    evaluations = 0
+    accepted: Optional[tuple[np.ndarray, np.ndarray, Dict[str, Any]]] = None
+    residual_norm = math.inf
+    residual_scale = 1.0
+    for iteration in range(1, _BUBBLE_MAX_ITERATIONS + 1):
+        if accepted is None:
+            force, tangent, trial_state = response_builder(
+                np.concatenate((external, bubble))
+            )
+            evaluations += 1
+        else:
+            force, tangent, trial_state = accepted
+            accepted = None
+        force = np.asarray(force, dtype=float)
+        tangent = np.asarray(tangent, dtype=float)
+        if force.shape != (20,) or tangent.shape != (20, 20):
+            raise S3BubbleEquilibriumError(
+                "native S3 uncondensed response has an incompatible shape"
+            )
+        if not np.all(np.isfinite(force)) or not np.all(np.isfinite(tangent)):
+            raise S3BubbleEquilibriumError(
+                "native S3 uncondensed response is non-finite"
+            )
+        residual = force[18:].copy()
+        residual_norm = float(np.linalg.norm(residual, ord=np.inf))
+        bubble_block = tangent[18:, 18:]
+        residual_scale = max(
+            1.0,
+            float(np.linalg.norm(force[:18], ord=np.inf)),
+            float(np.linalg.norm(bubble_block, ord=np.inf))
+            * max(1.0, float(np.linalg.norm(bubble, ord=np.inf))),
+        )
+        condition = float(np.linalg.cond(bubble_block))
+        if not math.isfinite(condition) or condition > BUBBLE_CONDITION_LIMIT:
+            raise S3BubbleEquilibriumError(
+                "native S3 bubble tangent is singular or ill-conditioned"
+            )
+        if residual_norm <= _BUBBLE_RELATIVE_TOLERANCE * residual_scale:
+            coupling = tangent[18:, :18]
+            try:
+                sensitivity = np.linalg.solve(bubble_block, coupling)
+                residual_correction = np.linalg.solve(bubble_block, residual)
+            except np.linalg.LinAlgError as exc:
+                raise S3BubbleEquilibriumError(
+                    "native S3 converged bubble block is singular"
+                ) from exc
+            condensed = tangent[:18, :18] - tangent[:18, 18:] @ sensitivity
+            condensed_force = (
+                force[:18] - tangent[:18, 18:] @ residual_correction
+            )
+            metadata = {
+                "bubble_increment": bubble.copy(),
+                "bubble_iterations": iteration,
+                "bubble_evaluations": evaluations,
+                "bubble_residual": residual.copy(),
+                "bubble_residual_norm": residual_norm,
+                "bubble_residual_scale": residual_scale,
+                "bubble_condition": condition,
+                "bubble_force_correction": (
+                    tangent[:18, 18:] @ residual_correction
+                ).copy(),
+                "bubble_force_correction_excluded": False,
+                "bubble_force_condensation_id": BUBBLE_FORCE_CONDENSATION_ID,
+                "bubble_condensation": "KQQ_MINUS_KQA_SOLVE_KAA_KAQ",
+            }
+            return condensed_force, condensed, trial_state, metadata
+        try:
+            step = np.linalg.solve(bubble_block, -residual)
+        except np.linalg.LinAlgError as exc:
+            raise S3BubbleEquilibriumError(
+                "native S3 bubble tangent solve failed"
+            ) from exc
+        step_norm = float(np.linalg.norm(step, ord=np.inf))
+        if step_norm <= _BUBBLE_STEP_TOLERANCE * max(
+            1.0, float(np.linalg.norm(bubble, ord=np.inf))
+        ):
+            raise S3BubbleEquilibriumError(
+                "native S3 bubble equilibrium stagnated above tolerance"
+            )
+
+        factor = 1.0
+        accepted_candidate: Optional[
+            tuple[np.ndarray, np.ndarray, Dict[str, Any]]
+        ] = None
+        accepted_bubble: Optional[np.ndarray] = None
+        while factor >= BUBBLE_LINE_SEARCH_MIN_FACTOR:
+            candidate_bubble = bubble + factor * step
+            candidate = response_builder(
+                np.concatenate((external, candidate_bubble))
+            )
+            evaluations += 1
+            candidate_force = np.asarray(candidate[0], dtype=float)
+            candidate_tangent = np.asarray(candidate[1], dtype=float)
+            if (
+                candidate_force.shape == (20,)
+                and candidate_tangent.shape == (20, 20)
+                and np.all(np.isfinite(candidate_force))
+                and np.all(np.isfinite(candidate_tangent))
+            ):
+                candidate_norm = float(
+                    np.linalg.norm(candidate_force[18:], ord=np.inf)
+                )
+                if candidate_norm < residual_norm:
+                    accepted_candidate = (
+                        candidate_force,
+                        candidate_tangent,
+                        candidate[2],
+                    )
+                    accepted_bubble = candidate_bubble
+                    break
+            factor *= BUBBLE_LINE_SEARCH_REDUCTION
+        if accepted_candidate is None or accepted_bubble is None:
+            raise S3BubbleEquilibriumError(
+                "native S3 safeguarded bubble Newton found no residual decrease"
+            )
+        bubble = accepted_bubble
+        accepted = accepted_candidate
+
+    raise S3BubbleEquilibriumError(
+        "native S3 bubble equilibrium exceeded the iteration limit "
+        f"with residual {residual_norm:.6g} and scale {residual_scale:.6g}"
+    )
+
+
+def _native_station_kinematics(
+    current_nodes: np.ndarray,
+    director_triads: np.ndarray,
+    increment20: np.ndarray,
+    reference_nodes: np.ndarray,
+    reference_frame: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return ordered station strains, first derivatives, and Hessians."""
+
+    values = np.zeros((len(TRIANGLE_QUADRATURE), 8), dtype=float)
+    gradients = np.zeros((len(TRIANGLE_QUADRATURE), 8, 20), dtype=float)
+    hessians = np.zeros((len(TRIANGLE_QUADRATURE), 8, 20, 20), dtype=float)
+    for index, (r, s, _weight) in enumerate(TRIANGLE_QUADRATURE):
+        values[index], gradients[index], hessians[index] = (
+            _native_incremental_strain_jets(
+                current_nodes,
+                director_triads,
+                r,
+                s,
+                increment20,
+                reference_nodes=reference_nodes,
+                reference_frame=reference_frame,
+            )
+        )
+    return values, gradients, hessians
+
+
+def _native_generalized_uncondensed_response(
+    current_nodes: np.ndarray,
+    director_triads: np.ndarray,
+    increment20: np.ndarray,
+    reference_nodes: np.ndarray,
+    reference_frame: np.ndarray,
+    constitutive: np.ndarray,
+    committed_station_strain: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """Integrate one stateless generalized section in source coordinates."""
+
+    reference = np.asarray(reference_nodes, dtype=float).reshape(3, 3)
+    frame = np.asarray(reference_frame, dtype=float).reshape(3, 3)
+    local = (reference - reference[0]) @ frame[:, :2]
+    _jacobian_matrix, _inverse, determinant = _jacobian(local)
+    section = np.asarray(constitutive, dtype=float).reshape(8, 8)
+    committed = np.asarray(committed_station_strain, dtype=float)
+    if committed.shape != (len(TRIANGLE_QUADRATURE), 8):
+        raise ValueError("native S3 generalized committed strain has an invalid shape")
+    delta, gradients, hessians = _native_station_kinematics(
+        current_nodes,
+        director_triads,
+        increment20,
+        reference,
+        frame,
+    )
+    total_strain = committed + delta
+    resultants = total_strain @ section.T
+    force = np.zeros(20, dtype=float)
+    tangent = np.zeros((20, 20), dtype=float)
+    for station, (_r, _s, weight) in enumerate(TRIANGLE_QUADRATURE):
+        integration_weight = abs(determinant) * float(weight)
+        gradient = gradients[station]
+        resultant = resultants[station]
+        force += integration_weight * (gradient.T @ resultant)
+        tangent += integration_weight * (
+            gradient.T @ section @ gradient
+            + np.einsum("a,aij->ij", resultant, hessians[station])
+        )
+    return force, tangent, {
+        "generalized_section": True,
+        "station_generalized_strain": total_strain.copy(),
+        "station_generalized_resultant": resultants.copy(),
+        "membrane_strain": total_strain[:, :3].copy(),
+        "curvature": total_strain[:, 3:6].copy(),
+        "transverse_shear_strain": total_strain[:, 6:].copy(),
+        "membrane_resultants": resultants[:, :3].copy(),
+        "bending_resultants": resultants[:, 3:6].copy(),
+        "transverse_shear_resultants": resultants[:, 6:].copy(),
+        "membrane_resultant_order": SHELL_MEMBRANE_VOIGT_ORDER,
+        "transverse_shear_resultant_order": SHELL_TRANSVERSE_SHEAR_ORDER,
+        "recovery_scope": "section_resultants_only",
+    }
+
+
+def _native_layered_uncondensed_response(
+    current_nodes: np.ndarray,
+    director_triads: np.ndarray,
+    increment20: np.ndarray,
+    reference_nodes: np.ndarray,
+    reference_frame: np.ndarray,
+    material: Any,
+    material_angle: float,
+    thickness: float,
+    state: Mapping[str, Any],
+    num_layers: int,
+) -> tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """Integrate the native seven-station layered physical response.
+
+    Geometry is incremental total Lagrangian, while the existing plane-stress
+    return maps retain their explicitly bounded large-rotation/small-material-
+    strain role.  Every call starts from the unchanged committed history in
+    ``state``; callers may therefore evaluate multiple bubble candidates
+    without chaining trial plasticity.
+    """
+
+    reference = np.asarray(reference_nodes, dtype=float).reshape(3, 3)
+    frame = np.asarray(reference_frame, dtype=float).reshape(3, 3)
+    local = (reference - reference[0]) @ frame[:, :2]
+    _jacobian_matrix, _inverse, determinant = _jacobian(local)
+    delta, gradients, hessians = _native_station_kinematics(
+        current_nodes,
+        director_triads,
+        increment20,
+        reference,
+        frame,
+    )
+    station_count = len(TRIANGLE_QUADRATURE)
+    try:
+        z_layers, layer_weights = qualified_s3_lobatto_layers(
+            num_layers,
+            thickness,
+        )
+    except S3CommittedStateError as exc:
+        raise ValueError(str(exc)) from exc
+    layer_count = int(z_layers.size)
+    total_points = station_count * layer_count
+
+    committed_kinematic = np.asarray(
+        state.get("kinematic_layer_strain", ()), dtype=float
+    )
+    if committed_kinematic.shape != (total_points, 3):
+        raise ValueError(
+            "native S3 committed kinematic_layer_strain has an invalid shape"
+        )
+    committed_station = np.asarray(
+        state.get("station_generalized_strain", ()), dtype=float
+    )
+    if committed_station.shape != (station_count, 8):
+        raise ValueError(
+            "native S3 committed station_generalized_strain has an invalid shape"
+        )
+    total_station = committed_station + delta
+    trial_kinematic = (
+        committed_kinematic.reshape(station_count, layer_count, 3)
+        + delta[:, None, :3]
+        + z_layers[None, :, None] * delta[:, None, 3:6]
+    )
+
+    symmetry = _elastic_symmetry(material)
+    curve = getattr(material, "hardening_curve", None)
+    hill_yield = getattr(material, "hill_yield", None)
+    if symmetry == "orthotropic" and curve is not None and hill_yield is None:
+        raise ValueError(
+            f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+            "requires hill_yield when hardening_curve is active."
+        )
+    hill_plasticity = symmetry == "orthotropic" and hill_yield is not None
+    constitutive_plasticity = curve is not None or hill_plasticity
+    elastic, shear_elastic, strain_to_material, stress_to_local = (
+        _shell_material_matrices(material, float(material_angle))
+    )
+    material_elastic, _material_shear, _identity_strain, _identity_stress = (
+        _shell_material_matrices(material, 0.0)
+    )
+
+    initial_state = _copy_state_fields(dict(state), _INITIAL_SHELL_STATE_KEYS)
+    zero_rows = np.zeros((station_count, 3), dtype=float)
+    membrane_stress = _shell_field_rows(
+        initial_state.get("initial_membrane_stress", zero_rows),
+        station_count,
+        "initial_membrane_stress",
+    )
+    bending_stress = _shell_field_rows(
+        initial_state.get("initial_bending_stress", zero_rows),
+        station_count,
+        "initial_bending_stress",
+    )
+    membrane_prestrain = _shell_field_rows(
+        initial_state.get("initial_membrane_prestrain", zero_rows),
+        station_count,
+        "initial_membrane_prestrain",
+    )
+    curvature_prestrain = _shell_field_rows(
+        initial_state.get("initial_curvature_prestrain", zero_rows),
+        station_count,
+        "initial_curvature_prestrain",
+    )
+    initial_stress = (
+        membrane_stress[:, None, :]
+        + (2.0 * z_layers[None, :, None] / float(thickness))
+        * bending_stress[:, None, :]
+    )
+    eigenstrain = (
+        membrane_prestrain[:, None, :]
+        + z_layers[None, :, None] * curvature_prestrain[:, None, :]
+    )
+    if symmetry == "orthotropic":
+        initial_stress_material = np.einsum(
+            "ij,glj->gli", np.linalg.inv(stress_to_local), initial_stress
+        )
+        kinematic_material = np.einsum(
+            "ij,glj->gli", strain_to_material, trial_kinematic
+        )
+        eigenstrain_material = np.einsum(
+            "ij,glj->gli", strain_to_material, eigenstrain
+        )
+        material_offset = np.einsum(
+            "ij,glj->gli",
+            np.linalg.inv(material_elastic),
+            initial_stress_material,
+        )
+        layer_strain_material = (
+            kinematic_material - eigenstrain_material + material_offset
+        ).reshape(total_points, 3)
+        local_offset = np.einsum(
+            "ij,glj->gli", np.linalg.inv(elastic), initial_stress
+        )
+        layer_strain = (
+            trial_kinematic - eigenstrain + local_offset
+        ).reshape(total_points, 3)
+    else:
+        local_offset = np.einsum(
+            "ij,glj->gli", np.linalg.inv(elastic), initial_stress
+        )
+        layer_strain = (
+            trial_kinematic - eigenstrain + local_offset
+        ).reshape(total_points, 3)
+        layer_strain_material = layer_strain.copy()
+
+    plastic_strain = np.asarray(state.get("plastic_strain", ()), dtype=float)
+    hardening = np.asarray(state.get("alpha", ()), dtype=float)
+    if plastic_strain.shape != (total_points, 3) or hardening.shape != (total_points,):
+        raise ValueError("native S3 committed plastic history has an invalid shape")
+    if not constitutive_plasticity:
+        if symmetry == "orthotropic":
+            stress_material = layer_strain_material @ material_elastic.T
+            stress = stress_material @ stress_to_local.T
+            tangent_material = np.broadcast_to(
+                material_elastic, (total_points, 3, 3)
+            )
+            tangent_local = np.einsum(
+                "ij,njk,kl->nil",
+                stress_to_local,
+                tangent_material,
+                strain_to_material,
+            )
+        else:
+            stress = layer_strain @ elastic.T
+            stress_material = stress.copy()
+            tangent_local = np.broadcast_to(
+                elastic, (total_points, 3, 3)
+            ).copy()
+        plastic_new = plastic_strain.copy()
+        hardening_new = hardening.copy()
+    elif hill_plasticity:
+        from .plasticity import hill48_plane_stress_return_map
+
+        stress_material, tangent_material, plastic_new, hardening_new = (
+            hill48_plane_stress_return_map(
+                layer_strain_material,
+                plastic_strain,
+                hardening,
+                material_elastic,
+                hill_yield,
+                curve,
+                compute_tangent=True,
+            )
+        )
+        stress = stress_material @ stress_to_local.T
+        tangent_local = np.einsum(
+            "ij,njk,kl->nil",
+            stress_to_local,
+            tangent_material,
+            strain_to_material,
+        )
+    else:
+        stress, tangent_local, plastic_new, hardening_new = plane_stress_return_map(
+            layer_strain,
+            plastic_strain,
+            hardening,
+            float(material.elastic_modulus),
+            float(material.poisson_ratio),
+            curve,
+            compute_tangent=True,
+        )
+        stress_material = stress.copy()
+
+    stress_layers = np.asarray(stress, dtype=float).reshape(
+        station_count, layer_count, 3
+    )
+    tangent_layers = np.asarray(tangent_local, dtype=float).reshape(
+        station_count, layer_count, 3, 3
+    )
+    membrane_resultants = np.einsum("l,gli->gi", layer_weights, stress_layers)
+    bending_resultants = np.einsum(
+        "l,l,gli->gi", layer_weights, z_layers, stress_layers
+    )
+    shear_stiffness = (5.0 / 6.0) * float(thickness) * shear_elastic
+    shear_resultants = total_station[:, 6:] @ shear_stiffness.T
+    station_resultants = np.concatenate(
+        (membrane_resultants, bending_resultants, shear_resultants), axis=1
+    )
+
+    force = np.zeros(20, dtype=float)
+    tangent = np.zeros((20, 20), dtype=float)
+    for station, (_r, _s, weight) in enumerate(TRIANGLE_QUADRATURE):
+        area_weight = abs(determinant) * float(weight)
+        for layer in range(layer_count):
+            gradient = (
+                gradients[station, :3]
+                + z_layers[layer] * gradients[station, 3:6]
+            )
+            hessian = (
+                hessians[station, :3]
+                + z_layers[layer] * hessians[station, 3:6]
+            )
+            layer_stress = stress_layers[station, layer]
+            layer_weight = area_weight * float(layer_weights[layer])
+            force += layer_weight * (gradient.T @ layer_stress)
+            tangent += layer_weight * (
+                gradient.T @ tangent_layers[station, layer] @ gradient
+                + np.einsum("a,aij->ij", layer_stress, hessian)
+            )
+        shear_gradient = gradients[station, 6:]
+        shear_hessian = hessians[station, 6:]
+        shear_resultant = shear_resultants[station]
+        force += area_weight * (shear_gradient.T @ shear_resultant)
+        tangent += area_weight * (
+            shear_gradient.T @ shear_stiffness @ shear_gradient
+            + np.einsum("a,aij->ij", shear_resultant, shear_hessian)
+        )
+
+    trial_state: Dict[str, Any] = {
+        "plastic_strain": np.asarray(plastic_new, dtype=float).copy(),
+        "alpha": np.asarray(hardening_new, dtype=float).copy(),
+        "layer_strain": np.asarray(layer_strain, dtype=float).copy(),
+        "layer_strain_material": np.asarray(
+            layer_strain_material, dtype=float
+        ).copy(),
+        "kinematic_layer_strain": trial_kinematic.reshape(
+            total_points, 3
+        ).copy(),
+        "layer_stress": np.asarray(stress, dtype=float).copy(),
+        "station_generalized_strain": total_station.copy(),
+        "station_generalized_resultant": station_resultants.copy(),
+        "membrane_strain": total_station[:, :3].copy(),
+        "curvature": total_station[:, 3:6].copy(),
+        "transverse_shear_strain": total_station[:, 6:].copy(),
+        "membrane_resultants": membrane_resultants.copy(),
+        "bending_resultants": bending_resultants.copy(),
+        "transverse_shear_resultants": shear_resultants.copy(),
+        "membrane_resultant_order": SHELL_MEMBRANE_VOIGT_ORDER,
+        "transverse_shear_resultant_order": SHELL_TRANSVERSE_SHEAR_ORDER,
+        **initial_state,
+    }
+    if symmetry == "orthotropic":
+        trial_state["layer_stress_material"] = np.asarray(
+            stress_material, dtype=float
+        ).copy()
+        trial_state["equivalent_stress_measure"] = (
+            "hill48" if hill_yield is not None else "von_mises"
+        )
+    else:
+        trial_state["layer_stress_material"] = np.asarray(
+            stress_material, dtype=float
+        ).copy()
+        trial_state["equivalent_stress_measure"] = "von_mises"
+    return force, tangent, trial_state
 
 
 class QualifiedE4PLS3ShellElement(ShellElement):
@@ -1761,26 +2810,41 @@ class QualifiedE4PLS3ShellElement(ShellElement):
 
 
 __all__ = [
-    "BUBBLE_CONVENTION",
     "ALGEBRAIC_COORDINATE_POLICY_ID",
+    "BUBBLE_CONVENTION",
+    "BUBBLE_CONDITION_LIMIT",
+    "BUBBLE_FORCE_CONDENSATION_ID",
+    "BUBBLE_LINE_SEARCH_MIN_FACTOR",
+    "BUBBLE_LINE_SEARCH_REDUCTION",
+    "BUBBLE_MAX_ITERATIONS",
     "BUBBLE_OFFSET_D",
+    "BUBBLE_RELATIVE_TOLERANCE",
+    "BUBBLE_STEP_TOLERANCE",
     "CAPABILITY_GAPS",
+    "DIRECTOR_GAUGE_ID",
     "DYNAMIC_REDUCTION_POLICY",
+    "EXTERNAL_ROTATION_MAP_ID",
     "FORMULATION_ID",
     "FORMULATION_SCHEMA",
     "GEOMETRIC_STIFFNESS_POLICY_ID",
     "HOMOGENEOUS_ELASTIC_STRESS_PROFILE_ID",
     "MITC3_PLUS_EQUATION_MAP",
+    "MITC3_PLUS_NONLINEAR_EQUATION_MAP",
+    "MITC3_PLUS_NONLINEAR_SOURCE_BYTES",
+    "MITC3_PLUS_NONLINEAR_SOURCE_SHA256",
+    "MITC3_PLUS_NONLINEAR_SOURCE_URL",
     "MITC3_PLUS_SOURCE_BYTES",
     "MITC3_PLUS_SOURCE_SHA256",
     "MITC3_PLUS_SOURCE_URL",
     "MASS_MOMENT_ID",
     "MINIMUM_OWNER_NORMAL_ALIGNMENT",
+    "NONLINEAR_POLICY_ID",
     "PHYSICAL_EXTERNAL_INDICES",
     "QUADRATURE_ID",
     "RECOVERY_POLICY_ID",
     "REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID",
     "RESULTANT_SUMMARY_POLICY_ID",
+    "S3BubbleEquilibriumError",
     "STATE_LAYOUT_ID",
     "TRIANGLE_QUADRATURE",
     "TYING_POINTS",

@@ -115,8 +115,8 @@
     "homogeneous_elastic_second_moment_default": "H=N*h^2/12_ONLY_WITH_FROZEN_PROFILE",
     "homogeneous_elastic_stress_profile": "HOMOGENEOUS_ELASTIC_LINEAR_THROUGH_THICKNESS_V1",
     "integration": "DUNAVANT_DEGREE_5_SEVEN_POINT",
-    "numerical_fields": "PL_AND_DRILL_EXCLUDED",
     "nonzero_state_authority": "EXPLICIT_REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_REQUIRED",
+    "numerical_fields": "PL_AND_DRILL_EXCLUDED",
     "policy_id": "TOTAL_LAGRANGIAN_MINDLIN_BUBBLE_SCHUR_INITIAL_STRESS_V1",
     "resultant_inputs": "COMPRESSION_POSITIVE_N_M_H",
     "resultant_second_moment": "EXPLICIT_H_OR_FROZEN_HOMOGENEOUS_PROFILE_REQUIRED_FOR_EVERY_NONZERO_N_OR_M",
@@ -127,8 +127,8 @@
     "maximum_angle_degrees": "150",
     "maximum_edge_ratio": "4",
     "minimum_angle_degrees": "30",
-    "minimum_owner_normal_alignment": "STRICTLY_GREATER_THAN_1E_MINUS_8",
     "minimum_normalized_area": "3/5",
+    "minimum_owner_normal_alignment": "STRICTLY_GREATER_THAN_1E_MINUS_8",
     "minimum_scaled_jacobian": "1/5",
     "signed_twice_area_over_max_edge_squared": "STRICTLY_GREATER_THAN_MAX_64_EPSILON_AND_1E_MINUS_14"
   },
@@ -160,6 +160,119 @@
     "definition": "ONE_HALF_MIN_GENERALIZED_EIGENVALUE_OF_P_TRANSPOSE_A_P_AGAINST_G",
     "material_state": "ELASTIC_MEMBRANE_SECTION_MATRIX_A",
     "required": "FINITE_STRICTLY_POSITIVE"
+  },
+  "native_nonlinear_kinematics": {
+    "bubble_equilibrium_policy": {
+      "condition_limit": 100000000000000.0,
+      "force_condensation_id": "FQ_MINUS_KQA_SOLVE_KAA_FA_V1",
+      "line_search_min_factor": 0.0078125,
+      "line_search_reduction": 0.5,
+      "max_iterations": 32,
+      "relative_tolerance": 5e-11,
+      "step_tolerance": 5e-13
+    },
+    "commit_rotation": "RODRIGUES_OF_A_EFFECTIVE_V1_PLUS_B_EFFECTIVE_V2_RETAINED_STEP_CONVENTION_WITH_O3_TARGET_DIRECTOR_DIFFERENCE",
+    "constitutive_integration_ids": {
+      "generalized_section": "STATELESS_TOTAL_GENERALIZED_STRAIN_V1",
+      "isotropic": "PLANE_STRESS_RETURN_MAP_CONSISTENT_V1",
+      "orthotropic": "HILL48_PLANE_STRESS_RETURN_MAP_CONSISTENT_V1"
+    },
+    "director_gauge": {
+      "fallback_axis_global": [
+        "0",
+        "0",
+        "1"
+      ],
+      "fallback_rule": "USE_FALLBACK_WHEN_NORM_PRIMARY_CROSS_VN_LE_1E_MINUS_12",
+      "id": "MITC3_PLUS_EQ11_GLOBAL_EY_WITH_EZ_PARALLEL_FALLBACK_V1",
+      "primary_axis_global": [
+        "0",
+        "1",
+        "0"
+      ],
+      "reconstruction": "V1=NORMALIZE(AXIS_CROSS_VN)_AND_V2=VN_CROSS_V1_AFTER_EVERY_COMMIT",
+      "validation": "STORED_TANGENTS_MUST_EQUAL_RECONSTRUCTION_WITH_ABSOLUTE_TOLERANCE_1E_MINUS_12"
+    },
+    "external_rotation_map": {
+      "a": "PHI_DOT_V1",
+      "a_effective": "a-(d*b)/2",
+      "b": "PHI_DOT_V2",
+      "b_effective": "b+(d*a)/2",
+      "d": "PHI_DOT_VN",
+      "id": "GLOBAL_ADDITIVE_ROTATION_TO_EQ14_MINIMAL_DIRECTOR_SECOND_ORDER_V1",
+      "mixed_drill_tilt": "RETAINED_SECOND_ORDER_DIRECTOR_COORDINATE_PULLBACK",
+      "pure_drill": "EXACT_PHYSICAL_NULL_WHEN_A_AND_B_ARE_ZERO"
+    },
+    "hierarchical_source_node": {
+      "first_order": "A4=MEAN_A_CORNER_PLUS_ALPHA1_AND_B4=MEAN_B_CORNER_PLUS_ALPHA2",
+      "physical_update": "SOURCE_NODE_4_USES_ITS_OWN_CURRENT_EQ11_GAUGE",
+      "second_order": "A4_SECOND=MEAN_A_CORNER_SECOND_AND_B4_SECOND=MEAN_B_CORNER_SECOND"
+    },
+    "incremental_director": "MINUS_A_EFFECTIVE_V2_PLUS_B_EFFECTIVE_V1_MINUS_HALF_(A_SQUARED_PLUS_B_SQUARED)_VN",
+    "policy_id": "TOTAL_LAGRANGIAN_MITC3_PLUS_QUADRATIC_DIRECTOR_SCHUR_V1",
+    "quadratic_square_rule": "SQUARE_ONLY_FIRST_ORDER_A_AND_B_NEVER_A_EFFECTIVE_OR_B_EFFECTIVE",
+    "reference_component_basis": "EXPLICIT_FROZEN_REFERENCE_NODES_AND_REFERENCE_FRAME_REQUIRED_NO_CURRENT_BASIS_FALLBACK",
+    "state": {
+      "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
+      "bubble_predictor_commit_policy_id": "RESET_TO_ZERO_AFTER_EVERY_ACCEPTED_STEP_V1",
+      "canonicalization_id": "RFC8259_SORTED_UTF8_COMPACT_LF_SIGNED_ZERO_NORMALIZED_V1",
+      "external_coordinate_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_V1",
+      "field_manifest_sha256": "4892D5860CD20BA6681C9FDABE8D211AF6B6B23F71F9F56C0478D6DB00389697",
+      "formulation_fingerprint_sha256": "1C782C5D15D0F5E3791BC20F7ABBF3D79D5A092C0A7EBFA35A7F472FFD98FD6D",
+      "formulation_mechanics_sha256": "9A2B67F074F179B9C18F35A65B9286CB84A81D6573751EFA450104989C1D1183",
+      "generalized_resultant_component_order": [
+        "membrane_force_xx",
+        "membrane_force_yy",
+        "membrane_force_xy_tensor",
+        "bending_moment_xx",
+        "bending_moment_yy",
+        "bending_moment_xy_tensor",
+        "transverse_shear_force_xz_tensor",
+        "transverse_shear_force_yz_tensor"
+      ],
+      "generalized_strain_component_order": [
+        "membrane_xx",
+        "membrane_yy",
+        "membrane_xy_engineering",
+        "curvature_xx",
+        "curvature_yy",
+        "curvature_xy_engineering",
+        "transverse_shear_xz_engineering",
+        "transverse_shear_yz_engineering"
+      ],
+      "layer_strain_component_order": [
+        "inplane_xx",
+        "inplane_yy",
+        "inplane_xy_engineering"
+      ],
+      "layer_stress_component_order": [
+        "inplane_xx",
+        "inplane_yy",
+        "inplane_xy_tensor"
+      ],
+      "layout_id": "S3_TL_Q18_TRIADS4_BUBBLE2_STATION7_LAYERED_V1",
+      "lobatto_table_sha256": "AFB165D4522DA2D285BF9149F6FF0044130D3824B075AED9D0048706838437E9",
+      "material_descriptor_validation_id": "REGISTERED_ANYMATERIAL_DATACLASS_COMPLIANCE_CROSSCHECK_V1",
+      "nonlinear_kinematics_id": "MITC3_PLUS_TOTAL_LAGRANGIAN_INCREMENTAL_DIRECTORS_EQ7_31_V1",
+      "quadrature_id": "dunavant_degree5_7point",
+      "recovery_policy_id": "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1",
+      "reference_geometry_validation_id": "QUALIFIED_ADMISSION_DERIVED_NUMBERED_FRAME_EXACT_IDENTITY_V1",
+      "schema": "anysolver.e4_pl_s3.committed_state.v1",
+      "state_array_layout_id": "S3_STATION_MAJOR_LAYER_BOTTOM_TO_TOP_MINOR_V1",
+      "state_integrity_id": "SHA256_CANONICAL_COMPLETE_STATE_EXCLUDING_DIGEST_V1",
+      "state_mode": "layered_material",
+      "state_redundancy_validation_id": "KINEMATIC_FROM_GENERALIZED_AND_INPLANE_RESULTANT_FROM_LAYER_STRESS_V1",
+      "stiffness_station_table_sha256": "262F420E3B1F2B01192E4D9F12E315A4E7587C1A469D60874B78528CBBFBBE62",
+      "supported_lobatto_layer_counts": [
+        3,
+        5,
+        7,
+        9,
+        11
+      ],
+      "thickness_coordinate_sign_id": "ZETA_MINUS_ONE_BOTTOM_OPPOSITE_DIRECTOR_TO_PLUS_ONE_TOP_ALONG_DIRECTOR_V1",
+      "thickness_quadrature_id": "GAUSS_LOBATTO_3_5_7_9_11_V1"
+    }
   },
   "pl_completion": {
     "condensed_operator": "kD*C_TRANSPOSE*M*C",
@@ -281,6 +394,7 @@
     "transverse_shear": "Q_OVER_H_EQUALS_FIVE_SIXTHS_G_GAMMA_REPEATED_AT_BOTH_SURFACES",
     "von_mises_measure": "MAX_TOP_BOTTOM_3D_EQUIVALENT_WITH_AVERAGE_TRANSVERSE_SHEAR"
   },
+  "schema": "anysolver.e4-pl-s3-formulation-contract-v1",
   "serialization_fingerprint": {
     "algebraic_coordinate_policy": "S3_NODAL_DRILL_ZERO_INERTIA_V1",
     "bubble_convention": "hierarchical_rotation_relative_to_corner_average",
@@ -293,7 +407,6 @@
     "recovery_policy_id": "S3_NATIVE_LINEAR_PHYSICAL_RECOVERY_V1",
     "state_layout_id": "S3_EXTERNAL18_BUBBLE2_PL3_LINEAR_V1"
   },
-  "schema": "anysolver.e4-pl-s3-formulation-contract-v1",
   "source_authority": {
     "modal": {
       "bytes": 2334731,
@@ -303,6 +416,13 @@
     },
     "nonlinear": {
       "bytes": 2312312,
+      "equation_map": {
+        "assumed_nonlinear_covariant_shear": "PDF_PAGE_9_EQUATIONS_29_TO_31",
+        "current_geometry_and_increment": "PDF_PAGES_4_TO_5_EQUATIONS_7_TO_9",
+        "director_update": "PDF_PAGES_5_TO_6_EQUATIONS_10_TO_15",
+        "incremental_green_lagrange": "PDF_PAGES_8_TO_9_EQUATIONS_22_TO_28",
+        "quadratic_director_increment": "PDF_PAGE_8_EQUATIONS_16_TO_21"
+      },
       "role": "FORMULATION_NATIVE_NONLINEAR_AUTHORITY",
       "sha256": "8006F7EBB9A8A3D72F29C356F6C9D76668A38CC5DC80A9B48D489FC2A87E082A",
       "url": "https://web.mit.edu/kjb/www/Principal_Publications/The_MITC3%2B_shell_element_in_geometric_nonlinear_analysis.pdf"
