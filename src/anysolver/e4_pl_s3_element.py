@@ -2590,6 +2590,35 @@ class QualifiedE4PLS3ShellElement(ShellElement):
     legacy_stiffness_batch_eligible = False
     legacy_nonlinear_batch_eligible = False
     recovery_errors_fail_closed = True
+    _plan_invalidating_attributes = frozenset(
+        {
+            "director_polarity",
+            "drilling_stabilization",
+            "formulation_id",
+            "hourglass_stabilization",
+            "legacy_nonlinear_batch_eligible",
+            "legacy_stiffness_batch_eligible",
+            "material_angle_deg",
+            "material_direction",
+            "material_name",
+            "node_ids",
+            "reduced_integration",
+            "reference_normal",
+            "reference_surface_offset",
+            "shell_section",
+            "thickness",
+        }
+    )
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        revision = self.__dict__.get("_qualified_plan_state_revision")
+        if revision is not None and name in self._plan_invalidating_attributes:
+            object.__setattr__(
+                self,
+                "_qualified_plan_state_revision",
+                int(revision) + 1,
+            )
+        super().__setattr__(name, value)
 
     def __init__(
         self,
@@ -2669,6 +2698,13 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         self.reference_surface_offset = 0.0 if offset == 0.0 else offset
         self._qualified_components: Optional[Dict[str, Any]] = None
         self._qualified_cache_key: Optional[tuple[Any, ...]] = None
+        # Vector-valued cache inputs cannot be mutated in place without
+        # bypassing ``__setattr__``.  Freeze the element-owned copies so every
+        # supported change advances the inexpensive plan-state revision.
+        self.reference_normal.setflags(write=False)
+        if isinstance(self.material_direction, np.ndarray):
+            self.material_direction.setflags(write=False)
+        self._qualified_plan_state_revision = 0
 
     @property
     def capability_gaps(self) -> frozenset[str]:

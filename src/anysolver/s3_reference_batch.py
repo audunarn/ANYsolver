@@ -1,17 +1,19 @@
 """Private bounded batches for the qualified S3 reference-elastic path.
 
 The qualified companion must never enter the legacy TRI3 or qualified-Q4
-kernels.  This module therefore provides a deliberately small optimization:
-translation-equivalent S3 elements share one formulation-native component
-construction while every element retains its own copied, revision-bound
-cache.  Recovery continues through the element's public native recovery
-routine, so its quality, rank, bubble and provenance guards remain the
-numerical authority.
+kernels.  This module therefore provides two deliberately narrow
+optimizations: translation-equivalent S3 elements share one formulation-native
+component construction, and a warm mesh-owned plan reuses each remaining
+element's own exact, revision-bound matrix.  The latter never rounds geometry
+or substitutes a neighbouring element's matrix.  Recovery continues through
+the element's public native recovery routine, so its quality, rank, bubble and
+provenance guards remain the numerical authority.
 
 Only homogeneous, isotropic, reference-elastic, zero-reference-offset,
 positive-winding candidates are admitted.  Generalized sections,
-anisotropy/Hill data, material history, nonzero reference-surface offsets,
-non-positive winding and small groups remain on the scalar path.
+anisotropy/Hill data, material history, nonzero reference-surface offsets and
+non-positive winding remain on the scalar path.  Cold small groups are scalar;
+their own exact formulation caches may be reused by later warm assemblies.
 """
 
 from __future__ import annotations
@@ -36,7 +38,7 @@ if TYPE_CHECKING:
 
 REFERENCE_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
 REFERENCE_S3_BATCH_POLICY_ID = (
-    "QUALIFIED_S3_REFERENCE_ELASTIC_EXACT_TRANSLATION_GROUP_V1"
+    "QUALIFIED_S3_REFERENCE_ELASTIC_EXACT_CACHE_PLAN_V2"
 )
 MIN_REFERENCE_S3_STIFFNESS_GROUP = 8
 MIN_REFERENCE_S3_RECOVERY_GROUP = 128
@@ -145,6 +147,85 @@ def _component_key(model: "FEModel", element: Any) -> Tuple[Any, ...]:
     return (*element._cache_key(model.mesh, material, coordinates), True)
 
 
+def _plan_validation_signature(
+    model: "FEModel",
+    items: Sequence[Tuple[int, Any]],
+) -> Tuple[Any, ...]:
+    """Bind every input that can change eligibility or the S3 component key.
+
+    The mesh revision catches supported topology/geometry/material mutations.
+    Exact node mutation revisions additionally catch direct node edits.
+    Qualified S3
+    attribute replacement advances the element-owned plan revision, while its
+    vector inputs are immutable.  Equality of this stronger preimage therefore
+    guarantees that both ``reference_s3_eligibility`` and ``_component_key``
+    have the same result as when the plan was built, without repeated frame
+    construction or centered-coordinate arithmetic.
+    """
+
+    from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+
+    referenced_node_ids: set[int] = set()
+    material_by_name: Dict[str, Any] = {}
+    reference_normals: list[Any] = []
+    rows: list[Tuple[int, int, int, Tuple[int, ...]]] = []
+    for raw_element_id, element in items:
+        if (
+            type(element) is not QualifiedE4PLS3ShellElement
+            or getattr(element, "formulation_id", None)
+            != REFERENCE_S3_FORMULATION_ID
+        ):
+            continue
+        material_name = str(element.material_name)
+        if material_name not in material_by_name:
+            material_by_name[material_name] = model.get_material(material_name)
+        node_ids = tuple(int(node_id) for node_id in element.node_ids)
+        referenced_node_ids.update(node_ids)
+        reference_normals.append(element.reference_normal)
+        rows.append(
+            (
+                int(raw_element_id),
+                id(element),
+                int(getattr(element, "_qualified_plan_state_revision", -1)),
+                node_ids,
+            )
+        )
+    ordered_node_ids = tuple(sorted(referenced_node_ids))
+    node_state = tuple(
+        (
+            node_id,
+            id(model.mesh.nodes[node_id]),
+            int(getattr(model.mesh.nodes[node_id], "_coordinate_revision", -1)),
+        )
+        for node_id in ordered_node_ids
+    )
+    reference_normal_state = np.ascontiguousarray(
+        np.asarray(reference_normals, dtype=float)
+    ).tobytes(order="C")
+    material_state = tuple(
+        (
+            material_name,
+            type(material).__module__,
+            type(material).__qualname__,
+            id(material),
+            str(getattr(material, "elastic_symmetry", "")),
+            bool(is_isotropic_material(material)),
+            getattr(material, "hill_yield", None) is None,
+            getattr(material, "hardening_curve", None) is None,
+        )
+        for material_name, material in sorted(material_by_name.items())
+    )
+    return (
+        id(model.mesh),
+        _revision_key(model),
+        ordered_node_ids,
+        node_state,
+        reference_normal_state,
+        material_state,
+        tuple(rows),
+    )
+
+
 def _copy_components(components: Mapping[str, Any]) -> Dict[str, Any]:
     copied: Dict[str, Any] = {}
     for name, value in components.items():
@@ -173,25 +254,40 @@ def _adopt_components(
 @dataclass(frozen=True)
 class PreparedReferenceS3Components:
     matrices: Mapping[int, np.ndarray]
+    element_cache_keys: Mapping[int, Tuple[Any, ...]]
+    element_component_objects: Mapping[int, Tuple[Mapping[str, Any], Any]]
     batched_element_ids: Tuple[int, ...]
+    cached_element_ids: Tuple[int, ...]
     group_element_ids: Tuple[Tuple[int, ...], ...]
     candidate_element_ids: Tuple[int, ...]
+    eligible_element_ids: Tuple[int, ...]
     fallback_reasons: Mapping[str, Tuple[int, ...]]
     component_evaluation_count: int
     revision_key: Tuple[int, int, int]
     minimum_group_size: int
+    validation_signature: Tuple[Any, ...]
 
     def diagnostics(self) -> Dict[str, Any]:
+        if self.batched_element_ids and self.cached_element_ids:
+            path = "formulation_native_shared_components_and_exact_cache_reuse"
+        elif self.cached_element_ids:
+            path = "formulation_native_exact_cache_reuse"
+        elif self.batched_element_ids:
+            path = "formulation_native_shared_components"
+        else:
+            path = "formulation_native_scalar_fallback"
         return {
             "policy_id": REFERENCE_S3_BATCH_POLICY_ID,
             "formulation_id": REFERENCE_S3_FORMULATION_ID,
             "scope": "reference_elastic_isotropic_positive_winding",
-            "path": "formulation_native_shared_components",
+            "path": path,
             "candidate_element_count": len(self.candidate_element_ids),
-            "element_count": len(self.batched_element_ids),
+            "element_count": len(self.matrices),
+            "translation_group_element_count": len(self.batched_element_ids),
+            "exact_element_cache_reuse_count": len(self.cached_element_ids),
             "exact_translation_group_count": len(self.group_element_ids),
             "component_evaluation_count": int(self.component_evaluation_count),
-            "element_ids": list(self.batched_element_ids),
+            "element_ids": list(self.matrices),
             "group_element_ids": [list(group) for group in self.group_element_ids],
             "fallback_reasons": {
                 reason: list(element_ids)
@@ -215,6 +311,7 @@ def prepare_reference_s3_components(
 
     minimum = max(1, int(minimum_group_size))
     candidate_ids: list[int] = []
+    eligible_ids: list[int] = []
     groups: Dict[Tuple[Any, ...], list[Tuple[int, Any]]] = {}
     fallback: Dict[str, list[int]] = {}
     for raw_element_id, element in items:
@@ -226,16 +323,47 @@ def prepare_reference_s3_components(
         if not eligible:
             fallback.setdefault(reason, []).append(element_id)
             continue
+        eligible_ids.append(element_id)
         groups.setdefault(_component_key(model, element), []).append(
             (element_id, element)
         )
 
     matrices: Dict[int, np.ndarray] = {}
+    element_cache_keys: Dict[int, Tuple[Any, ...]] = {}
     admitted_groups: list[Tuple[int, ...]] = []
+    cached_element_ids: list[int] = []
     evaluation_count = 0
     for cache_key, group in groups.items():
         ordered_group = tuple(int(element_id) for element_id, _element in group)
         if len(group) < minimum:
+            # A warm production assembly has already populated each element's
+            # formulation-native, exact cache.  Retain those exact matrices in
+            # the mesh-owned plan even when binary64 coordinate subtraction
+            # prevents nominally translated elements from forming a large
+            # byte-identical group.  No geometry is rounded and no matrix is
+            # shared between distinct cache keys.
+            cached_group: Dict[int, np.ndarray] = {}
+            for element_id, element in group:
+                current = getattr(element, "_qualified_components", None)
+                current_key = getattr(element, "_qualified_cache_key", None)
+                if (
+                    current is None
+                    or current_key != cache_key
+                    or current.get("formulation_id") != REFERENCE_S3_FORMULATION_ID
+                    or bool(current.get("legacy_fallback", True))
+                ):
+                    cached_group = {}
+                    break
+                cached_group[int(element_id)] = np.asarray(
+                    current["total"], dtype=float
+                )
+            if cached_group:
+                matrices.update(cached_group)
+                cached_element_ids.extend(cached_group)
+                element_cache_keys.update(
+                    {int(element_id): cache_key for element_id in cached_group}
+                )
+                continue
             fallback.setdefault("group_below_minimum_size", []).extend(ordered_group)
             continue
         first_id, first = group[0]
@@ -254,6 +382,7 @@ def prepare_reference_s3_components(
                 "qualified S3 reference batch component cache identity changed during evaluation"
             )
         matrices[int(first_id)] = np.asarray(components["total"], dtype=float)
+        element_cache_keys[int(first_id)] = cache_key
         for element_id, element in group[1:]:
             current = getattr(element, "_qualified_components", None)
             current_key = getattr(element, "_qualified_cache_key", None)
@@ -267,12 +396,33 @@ def prepare_reference_s3_components(
                     cache_key,
                     components,
                 )
+            element_cache_keys[int(element_id)] = cache_key
         admitted_groups.append(ordered_group)
 
     frozen_matrices = MappingProxyType(
         {
-            int(element_id): np.asarray(matrix, dtype=float)
+            int(element_id): _readonly(np.asarray(matrix, dtype=float).copy())
             for element_id, matrix in matrices.items()
+        }
+    )
+    frozen_element_cache_keys = MappingProxyType(
+        {
+            int(element_id): tuple(cache_key)
+            for element_id, cache_key in element_cache_keys.items()
+        }
+    )
+    elements_by_id = {
+        int(element_id): element for element_id, element in items
+    }
+    frozen_component_objects = MappingProxyType(
+        {
+            int(element_id): (
+                elements_by_id[int(element_id)]._qualified_components,
+                elements_by_id[int(element_id)]._qualified_components[
+                    "total"
+                ],
+            )
+            for element_id in matrices
         }
     )
     frozen_fallback = MappingProxyType(
@@ -281,20 +431,76 @@ def prepare_reference_s3_components(
             for reason, element_ids in sorted(fallback.items())
         }
     )
+    admitted_element_ids = {
+        int(element_id)
+        for admitted_group in admitted_groups
+        for element_id in admitted_group
+    }
+    cached_element_id_set = set(cached_element_ids)
     return PreparedReferenceS3Components(
         matrices=frozen_matrices,
+        element_cache_keys=frozen_element_cache_keys,
+        element_component_objects=frozen_component_objects,
         batched_element_ids=tuple(
             int(element_id)
             for element_id, _element in items
-            if int(element_id) in frozen_matrices
+            if int(element_id) in admitted_element_ids
+        ),
+        cached_element_ids=tuple(
+            int(element_id)
+            for element_id, _element in items
+            if int(element_id) in cached_element_id_set
         ),
         group_element_ids=tuple(admitted_groups),
         candidate_element_ids=tuple(candidate_ids),
+        eligible_element_ids=tuple(eligible_ids),
         fallback_reasons=frozen_fallback,
         component_evaluation_count=int(evaluation_count),
         revision_key=_revision_key(model),
         minimum_group_size=minimum,
+        validation_signature=_plan_validation_signature(model, items),
     )
+
+
+def _stiffness_plan_is_current(
+    model: "FEModel",
+    items: Sequence[Tuple[int, Any]],
+    cached: PreparedReferenceS3Components,
+) -> bool:
+    """Revalidate the exact key preimage, provenance, and retained matrices."""
+
+    try:
+        if _plan_validation_signature(model, items) != cached.validation_signature:
+            return False
+        # A cold scalar fallback populates its element cache after plan
+        # construction.  Rebuild once rather than perpetually omitting it.
+        if set(cached.eligible_element_ids) != set(cached.matrices):
+            return False
+        by_id = {int(element_id): element for element_id, element in items}
+        for element_id, expected_key in cached.element_cache_keys.items():
+            element = by_id.get(int(element_id))
+            if element is None:
+                return False
+            components = getattr(element, "_qualified_components", None)
+            if (
+                components is None
+                or getattr(element, "_qualified_cache_key", None) != expected_key
+                or components.get("formulation_id")
+                != REFERENCE_S3_FORMULATION_ID
+                or bool(components.get("legacy_fallback", True))
+            ):
+                return False
+            current_total = components.get("total")
+            expected_objects = cached.element_component_objects.get(element_id)
+            if (
+                expected_objects is None
+                or components is not expected_objects[0]
+                or current_total is not expected_objects[1]
+            ):
+                return False
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return False
+    return True
 
 
 def get_reference_s3_stiffness_components(
@@ -305,7 +511,11 @@ def get_reference_s3_stiffness_components(
 ) -> Tuple[PreparedReferenceS3Components, bool]:
     """Return a mesh-owned admitted plan and whether it was reused."""
 
-    candidate_ids = tuple(int(element_id) for element_id, _element in items)
+    candidate_ids = tuple(
+        int(element_id)
+        for element_id, element in items
+        if reference_s3_candidate(element)
+    )
     revision = _revision_key(model)
     minimum = max(1, int(minimum_group_size))
     cached = getattr(
@@ -318,7 +528,8 @@ def get_reference_s3_stiffness_components(
         and cached.revision_key == revision
         and cached.minimum_group_size == minimum
         and cached.candidate_element_ids == candidate_ids
-        and bool(cached.batched_element_ids)
+        and bool(cached.matrices)
+        and _stiffness_plan_is_current(model, items, cached)
     ):
         return cached, True
     prepared = prepare_reference_s3_components(
@@ -326,7 +537,7 @@ def get_reference_s3_stiffness_components(
         items,
         minimum_group_size=minimum,
     )
-    if prepared.batched_element_ids:
+    if prepared.matrices:
         model.mesh._qualified_s3_reference_stiffness_plan = prepared
     elif hasattr(model.mesh, "_qualified_s3_reference_stiffness_plan"):
         delattr(model.mesh, "_qualified_s3_reference_stiffness_plan")

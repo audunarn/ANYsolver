@@ -378,6 +378,24 @@ def _assemble_element_matrix(
                         "speedup_claimed": False,
                     }
                 )
+            if prepared_s3.cached_element_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(prepared_s3.cached_element_ids),
+                        "kernel": "qualified_s3_exact_element_cache_reuse",
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(
+                            {
+                                prepared_s3.element_cache_keys[element_id]
+                                for element_id in prepared_s3.cached_element_ids
+                            }
+                        ),
+                        "component_evaluation_count": 0,
+                        "formulation_id": s3_diagnostics["formulation_id"],
+                        "speedup_claimed": False,
+                    }
+                )
 
         if qualified_stiffness_items:
             shared_components = {}

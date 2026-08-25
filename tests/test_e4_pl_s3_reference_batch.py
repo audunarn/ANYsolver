@@ -200,6 +200,8 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
         "path": "formulation_native_shared_components",
         "candidate_element_count": 8,
         "element_count": 8,
+        "translation_group_element_count": 8,
+        "exact_element_cache_reuse_count": 0,
         "exact_translation_group_count": 1,
         "component_evaluation_count": 1,
         "element_ids": list(range(1, 9)),
@@ -290,11 +292,28 @@ def test_stiffness_batch_is_revision_bound_and_small_groups_fall_back() -> None:
         "qualified_s3_reference_elastic_stiffness"
     ]
     assert small_diagnostics["element_count"] == 0
+    assert small_diagnostics["translation_group_element_count"] == 0
+    assert small_diagnostics["exact_element_cache_reuse_count"] == 0
     assert small_diagnostics["component_evaluation_count"] == 0
     assert small_diagnostics["fallback_reasons"] == {
         "group_below_minimum_size": list(range(1, 8))
     }
     assert small_info["diagnostics"]["scalar_shell_element_count"] == 7
+
+    _warm_matrix, warm_info = assemble_stiffness_matrix(small)
+    warm_diagnostics = warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]
+    assert warm_diagnostics["path"] == "formulation_native_exact_cache_reuse"
+    assert warm_diagnostics["translation_group_element_count"] == 0
+    assert warm_diagnostics["exact_element_cache_reuse_count"] == 7
+    cache_groups = [
+        group
+        for group in warm_info["diagnostics"]["vectorized_shell_groups"]
+        if group["kernel"] == "qualified_s3_exact_element_cache_reuse"
+    ]
+    assert len(cache_groups) == 1
+    assert cache_groups[0]["unique_geometry_count"] == 1
 
     model = _build_model(8)
     _first, first_info = assemble_stiffness_matrix(model)
@@ -310,6 +329,178 @@ def test_stiffness_batch_is_revision_bound_and_small_groups_fall_back() -> None:
     assert second_diagnostics["element_count"] == 8
     assert second_diagnostics["component_evaluation_count"] == 1
     assert second_diagnostics["revision_key"] != first_revision
+
+
+def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _build_model(8)
+    # Decimal grid translations produce distinct binary64 centered-coordinate
+    # keys even though the triangles are nominally translated copies.  The
+    # cache plan must reuse each element's own exact matrix, never round the
+    # geometry or substitute a neighbouring element's matrix.
+    for node_id, node in tuple(model.mesh.nodes.items()):
+        model.set_node_coordinates(
+            node_id,
+            0.05 * float(node.x),
+            0.05 * float(node.y),
+            float(node.z),
+        )
+
+    calls = 0
+    original = QualifiedE4PLS3ShellElement.compute_stiffness_components
+
+    def counted(self, mesh, material):
+        nonlocal calls
+        calls += 1
+        return original(self, mesh, material)
+
+    monkeypatch.setattr(
+        QualifiedE4PLS3ShellElement,
+        "compute_stiffness_components",
+        counted,
+    )
+    first, first_info = assemble_stiffness_matrix(model)
+    assert calls == 8
+    first_diagnostics = first_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]
+    assert first_diagnostics["element_count"] == 0
+    assert first_diagnostics["fallback_reasons"] == {
+        "group_below_minimum_size": list(range(1, 9))
+    }
+
+    second, second_info = assemble_stiffness_matrix(model)
+    assert calls == 8
+    second_diagnostics = second_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]
+    assert second_diagnostics["path"].endswith("exact_cache_reuse")
+    assert second_diagnostics["element_count"] == 8
+    assert second_diagnostics["translation_group_element_count"] == 0
+    assert second_diagnostics["exact_element_cache_reuse_count"] == 8
+    assert second_diagnostics["component_evaluation_count"] == 0
+    assert second_diagnostics["fallback_reasons"] == {}
+    assert second_diagnostics["plan_reused"] is False
+
+    third, third_info = assemble_stiffness_matrix(model)
+    assert calls == 8
+    assert third_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    np.testing.assert_array_equal(first.toarray(), second.toarray())
+    np.testing.assert_array_equal(second.toarray(), third.toarray())
+
+    # Direct element-property edits do not advance the mesh revision.  The
+    # plan must therefore revalidate the formulation's complete cache key and
+    # must never serve the stale pre-edit matrix.
+    element = model.mesh.elements[1]
+    element.thickness *= 2.0
+    changed_thickness, thickness_info = assemble_stiffness_matrix(model)
+    assert calls == 9
+    assert thickness_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    assert not np.array_equal(third.toarray(), changed_thickness.toarray())
+
+    # The next pass may capture the newly populated exact element cache; only
+    # the following pass is a reusable, fully rebound plan.
+    rebound, rebound_info = assemble_stiffness_matrix(model)
+    assert calls == 9
+    assert rebound_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    reused, reused_info = assemble_stiffness_matrix(model)
+    assert calls == 9
+    assert reused_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    np.testing.assert_array_equal(changed_thickness.toarray(), rebound.toarray())
+    np.testing.assert_array_equal(rebound.toarray(), reused.toarray())
+
+    # Eligibility is also live state rather than a mesh revision.  Switching
+    # to an oriented material path must evict the element from this narrow
+    # isotropic reference plan before evaluation.
+    element.material_direction = np.asarray((1.0, 0.0, 0.0))
+    _oriented, oriented_info = assemble_stiffness_matrix(model)
+    oriented_diagnostics = oriented_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]
+    assert oriented_diagnostics["plan_reused"] is False
+    assert oriented_diagnostics["fallback_reasons"]["oriented_material"] == [1]
+
+    # Revision invalidation clears the exact element caches and the mesh-owned
+    # plan; the next assembly must evaluate every element again.
+    node = model.mesh.nodes[1]
+    model.set_node_coordinates(1, node.x - 1.0e-4, node.y, node.z)
+    _changed, changed_info = assemble_stiffness_matrix(model)
+    assert calls == 18
+    assert changed_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["element_count"] == 0
+
+
+def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _build_model(8)
+    calls = 0
+    original = QualifiedE4PLS3ShellElement.compute_stiffness_components
+
+    def counted(self, mesh, material):
+        nonlocal calls
+        calls += 1
+        return original(self, mesh, material)
+
+    monkeypatch.setattr(
+        QualifiedE4PLS3ShellElement,
+        "compute_stiffness_components",
+        counted,
+    )
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    assert calls == 1
+    _warm, warm_info = assemble_stiffness_matrix(model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    geometry_revision = model.mesh.revisions["geometry"]
+    coordinate_revision = model.mesh.nodes[1]._coordinate_revision
+    model.mesh.nodes[1].x -= 1.0e-4
+    changed, changed_info = assemble_stiffness_matrix(model)
+    assert model.mesh.revisions["geometry"] == geometry_revision
+    assert model.mesh.nodes[1]._coordinate_revision == coordinate_revision + 1
+    assert calls == 2
+    assert changed_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+    assert not np.array_equal(baseline.toarray(), changed.toarray())
+
+    element = model.mesh.elements[1]
+    with pytest.raises(ValueError, match="read-only"):
+        element.reference_normal[0] = 0.25
+
+
+def test_warm_plan_binds_reference_normal_bytes_even_if_writes_are_reenabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    repeated, repeated_info = assemble_stiffness_matrix(model)
+    np.testing.assert_array_equal(baseline.toarray(), repeated.toarray())
+    assert repeated_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    element = model.mesh.elements[1]
+    element.reference_normal.setflags(write=True)
+    element.reference_normal[:] = (0.0, 0.0, -1.0)
+    assert reference_s3_eligibility(model, element) == (
+        False,
+        "nonpositive_winding",
+    )
+    with pytest.raises(ValueError, match="winding opposes"):
+        assemble_stiffness_matrix(model)
 
 
 def test_generalized_orthotropic_history_and_winding_never_enter_batch() -> None:

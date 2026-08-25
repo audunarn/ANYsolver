@@ -122,6 +122,18 @@ class Node:
     z: float
     dofs: List[int] = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        # Keep direct coordinate assignments observable by narrow cache plans
+        # without changing the serialized dataclass fields.  Supported mesh
+        # mutations still advance the mesh-wide geometry revision as before.
+        object.__setattr__(self, "_coordinate_revision", 0)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        revision = self.__dict__.get("_coordinate_revision")
+        if revision is not None and name in {"x", "y", "z"}:
+            object.__setattr__(self, "_coordinate_revision", int(revision) + 1)
+        super().__setattr__(name, value)
+
     def coords(self) -> np.ndarray:
         """Return node coordinates as numpy array."""
         return np.array([self.x, self.y, self.z])
