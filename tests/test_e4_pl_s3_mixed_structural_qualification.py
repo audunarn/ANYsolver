@@ -504,9 +504,26 @@ def test_duplicate_noncanonical_and_candidate_mutations_fail_before_mechanics(
 
     exact_extent = [("A", relative) for relative in common.ALLOWED_EXECUTION_EXTENT]
     common._validate_execution_extent(exact_extent)
-    with pytest.raises(common.StructuralEvidenceError, match="execution extent"):
+    with pytest.raises(
+        common.StructuralEvidenceError,
+        match="nine-file research boundary",
+    ):
         common._validate_execution_extent(
-            exact_extent + [("M", "src/anysolver/elements.py")]
+            exact_extent + [("A", "docs/reference_cases/undeclared.py")]
+        )
+    with pytest.raises(
+        common.StructuralEvidenceError,
+        match="nine-file research boundary",
+    ):
+        common._validate_execution_extent(exact_extent[:-1])
+    changed_status = list(exact_extent)
+    changed_status[0] = ("M", changed_status[0][1])
+    with pytest.raises(
+        common.StructuralEvidenceError,
+        match="non-addition",
+    ):
+        common._validate_execution_extent(
+            changed_status
         )
 
     program_mutation = copy.deepcopy(json.loads(original))

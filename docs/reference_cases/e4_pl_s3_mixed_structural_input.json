@@ -6,9 +6,9 @@
       "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
     },
     "input_schema": {
-      "bytes": 9457,
+      "bytes": 9665,
       "path": "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
-      "sha256": "E61AD52751EE69E56DB5C785008C3D9D50CAE6C0A15F6BFE173145B7DCC90A7D"
+      "sha256": "31E01B70DB4AD0EF6218C484CB3F048040E305E8D0188DDB0C30BA8C0F211379"
     },
     "model_authority": {
       "bytes": 3585,
@@ -17,9 +17,9 @@
     },
     "programs": {
       "common": {
-        "bytes": 59785,
+        "bytes": 59977,
         "path": "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
-        "sha256": "B0C431DE88B71052D74FDFF961D3510F1CE1095574C2EFE63E4322FE09767D8A"
+        "sha256": "5F08AF199C46517D2489616EF865EB2AF0C14B2864C4A503DF72EC12C668163D"
       },
       "coordinator": {
         "bytes": 14227,
@@ -32,9 +32,9 @@
         "sha256": "6D255283FE9E38CA67543AD3D2DBBABAF4DCECD9D9BB269B2456B52F9869ED31"
       },
       "qualification_test": {
-        "bytes": 25005,
+        "bytes": 25498,
         "path": "tests/test_e4_pl_s3_mixed_structural_qualification.py",
-        "sha256": "1AD301090A5ED7B54F80CE3354FDA09C925656D8FDB653697E89BC44225D17A8"
+        "sha256": "CB54674637B26595318ABE66A377CA259DCD6EE716FDBD899BAA873F5C552336"
       }
     },
     "q4_mechanics": {
@@ -172,11 +172,14 @@
   },
   "execution": {
     "allowed_changed_paths": [
+      "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
+      "docs/reference_cases/e4_pl_s3_mixed_eigen_performance_input.json",
       "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
       "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
       "docs/reference_cases/e4_pl_s3_mixed_structural_input.json",
       "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
       "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+      "tests/test_e4_pl_s3_mixed_eigen_performance.py",
       "tests/test_e4_pl_s3_mixed_structural_qualification.py"
     ],
     "automatic_retry": false,

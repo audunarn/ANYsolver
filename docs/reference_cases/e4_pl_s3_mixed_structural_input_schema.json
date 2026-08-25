@@ -363,11 +363,14 @@
     "execution": {
       "const": {
         "allowed_changed_paths": [
+          "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
+          "docs/reference_cases/e4_pl_s3_mixed_eigen_performance_input.json",
           "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
           "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
           "docs/reference_cases/e4_pl_s3_mixed_structural_input.json",
           "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
           "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+          "tests/test_e4_pl_s3_mixed_eigen_performance.py",
           "tests/test_e4_pl_s3_mixed_structural_qualification.py"
         ],
         "automatic_retry": false,

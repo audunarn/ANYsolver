@@ -29,11 +29,14 @@ PROGRAM_PATHS = {
     "qualification_test": "tests/test_e4_pl_s3_mixed_structural_qualification.py",
 }
 ALLOWED_EXECUTION_EXTENT = (
+    "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
+    "docs/reference_cases/e4_pl_s3_mixed_eigen_performance_input.json",
     "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
     "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
     "docs/reference_cases/e4_pl_s3_mixed_structural_input.json",
     "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
     "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+    "tests/test_e4_pl_s3_mixed_eigen_performance.py",
     "tests/test_e4_pl_s3_mixed_structural_qualification.py",
 )
 
@@ -255,7 +258,7 @@ def _bound_file(
 
 
 def _validate_execution_extent(rows: Sequence[tuple[str, str]]) -> None:
-    """Require the clean successor to contain exactly the six research files."""
+    """Require the clean successor to contain exactly nine research additions."""
 
     normalized: list[str] = []
     for status, path in rows:
@@ -265,7 +268,7 @@ def _validate_execution_extent(rows: Sequence[tuple[str, str]]) -> None:
     if len(normalized) != len(set(normalized)):
         raise StructuralEvidenceError("execution extent contains duplicate paths")
     if tuple(sorted(normalized)) != tuple(sorted(ALLOWED_EXECUTION_EXTENT)):
-        raise StructuralEvidenceError("execution extent differs from the six-file research boundary")
+        raise StructuralEvidenceError("execution extent differs from the nine-file research boundary")
 
 
 def load_authorities(input_path: Path = DEFAULT_INPUT) -> Authorities:
