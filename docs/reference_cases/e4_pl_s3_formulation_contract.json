@@ -39,7 +39,7 @@
     "condensed_mass": "Gb_TRANSPOSE_M_FULL_Gb",
     "corner_bubble_moment": "3*A/20",
     "corner_corner_moment": "A/6_DIAGONAL_A/12_OFF_DIAGONAL",
-    "descriptor_bounded_coordinate_solver": "STATIC_CONDENSATION_THROUGH_REDUCED_DIMENSION_512",
+    "descriptor_bounded_coordinate_solver": "STATIC_CONDENSATION_THROUGH_REDUCED_DIMENSION_3072",
     "descriptor_coordinate_shear_limit": "256",
     "descriptor_large_system_policy": "SWAPPED_PENCIL_WITH_FAIL_CLOSED_COORDINATE_SHEAR",
     "descriptor_modal_policy": "SWAPPED_MASSLESS_ALGEBRAIC_PENCIL_V1",

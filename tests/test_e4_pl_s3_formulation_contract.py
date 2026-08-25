@@ -777,12 +777,12 @@ def test_contract_binds_physical_director_reversal_and_narrow_eigen_workflows() 
         DESCRIPTOR_SHIFT_RATIO
     )
     assert contract["dynamic_policy"]["descriptor_bounded_coordinate_solver"] == (
-        "STATIC_CONDENSATION_THROUGH_REDUCED_DIMENSION_512"
+        "STATIC_CONDENSATION_THROUGH_REDUCED_DIMENSION_3072"
     )
     assert int(contract["dynamic_policy"]["descriptor_coordinate_shear_limit"]) == (
         int(DESCRIPTOR_COORDINATE_SHEAR_LIMIT)
     )
-    assert DESCRIPTOR_DENSE_CONDENSATION_LIMIT == 512
+    assert DESCRIPTOR_DENSE_CONDENSATION_LIMIT == 3072
     assert contract["dynamic_policy"]["descriptor_large_system_policy"] == (
         "SWAPPED_PENCIL_WITH_FAIL_CLOSED_COORDINATE_SHEAR"
     )

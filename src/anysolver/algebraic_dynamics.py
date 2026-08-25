@@ -40,7 +40,7 @@ DESCRIPTOR_TRANSIENT_CONSTRAINED_POLICY_ID = (
 )
 DESCRIPTOR_SHIFT_RATIO = 1.0e-6
 DESCRIPTOR_COORDINATE_SHEAR_LIMIT = 256.0
-DESCRIPTOR_DENSE_CONDENSATION_LIMIT = 512
+DESCRIPTOR_DENSE_CONDENSATION_LIMIT = 3072
 
 
 class AlgebraicDynamicsError(ValueError):
@@ -2023,27 +2023,47 @@ def _dense_static_condensed_spectrum(
         dense_size_limit=finite_dimension,
         label="statically condensed K + descriptor_shift*M",
     )
-    try:
-        values, physical_vectors = linalg.eigh(
-            condensed_stiffness,
-            physical_mass,
-            check_finite=True,
-            driver="gvd",
-        )
-    except Exception as error:
-        raise AlgebraicDynamicsError(
-            "dense statically condensed descriptor eigensolver failed"
-        ) from error
     if target_shift is None:
         selected_count = min(
             max(int(num_modes) + 8, int(num_modes)),
             finite_dimension,
         )
+        try:
+            if finite_dimension <= 512:
+                values, physical_vectors = linalg.eigh(
+                    condensed_stiffness,
+                    physical_mass,
+                    check_finite=True,
+                    driver="gvd",
+                )
+            else:
+                values, physical_vectors = linalg.eigh(
+                    condensed_stiffness,
+                    physical_mass,
+                    subset_by_index=(0, selected_count - 1),
+                    check_finite=True,
+                    driver="gvx",
+                )
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "dense statically condensed descriptor eigensolver failed"
+            ) from error
         selected = np.argsort(values, kind="stable")[:selected_count]
     else:
         target = float(target_shift)
         if not np.isfinite(target):
             raise AlgebraicDynamicsError("descriptor target shift must be finite")
+        try:
+            values, physical_vectors = linalg.eigh(
+                condensed_stiffness,
+                physical_mass,
+                check_finite=True,
+                driver="gvd",
+            )
+        except Exception as error:
+            raise AlgebraicDynamicsError(
+                "dense statically condensed descriptor eigensolver failed"
+            ) from error
         selected = np.lexsort((values, np.abs(values - target)))[
             : min(int(num_modes), finite_dimension)
         ]
@@ -2090,6 +2110,7 @@ def solve_descriptor_spectrum(
     algebraic_basis: Optional[sparse.spmatrix] = None,
     target_shift: Optional[float] = None,
     factorization_cache: Optional[FactorizationCache] = None,
+    static_condensation_limit: Optional[int] = None,
 ) -> DescriptorSpectrum:
     """Return finite modal candidates for a symmetric index-one descriptor.
 
@@ -2106,6 +2127,16 @@ def solve_descriptor_spectrum(
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
     size = int(K_sym.shape[0])
+    if static_condensation_limit is None:
+        condensation_limit = DESCRIPTOR_DENSE_CONDENSATION_LIMIT
+    elif (
+        isinstance(static_condensation_limit, bool)
+        or not isinstance(static_condensation_limit, (int, np.integer))
+        or int(static_condensation_limit) < 1
+    ):
+        raise ValueError("static_condensation_limit must be a positive integer")
+    else:
+        condensation_limit = int(static_condensation_limit)
     nullity = int(algebraic_nullity)
     if nullity < 0 or nullity > size:
         raise AlgebraicDynamicsError("declared assembled algebraic nullity is incompatible")
@@ -2169,6 +2200,7 @@ def solve_descriptor_spectrum(
         "descriptor_shift": float(shift),
         "descriptor_shift_ratio": DESCRIPTOR_SHIFT_RATIO,
         "requested_modes": int(num_modes),
+        "static_condensation_limit": condensation_limit,
         "declared_assembled_algebraic_nullity": nullity,
         **scales,
     }
@@ -2181,7 +2213,7 @@ def solve_descriptor_spectrum(
         )
 
     coordinate_shear = float(scales["algebraic_static_correction_ratio"])
-    if nullity and size <= DESCRIPTOR_DENSE_CONDENSATION_LIMIT:
+    if nullity and size <= condensation_limit:
         assert resolved_algebraic_basis is not None
         condensed = _dense_static_condensed_spectrum(
             K_sym,

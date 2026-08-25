@@ -81,6 +81,7 @@ def _sparse_spectrum(
         algebraic_nullity=algebraic_nullity,
         algebraic_basis=algebraic_basis,
         target_shift=target_shift,
+        static_condensation_limit=512,
     )
 
 
@@ -484,6 +485,43 @@ def test_large_sparse_swapped_solver_returns_lowest_physical_modes() -> None:
     assert spectrum.diagnostics["sparse_mode"] == (
         "lowest_symmetric_swapped_block_lobpcg"
     )
+
+
+def test_default_bounded_descriptor_extent_uses_static_condensation() -> None:
+    stiffness, mass, basis = _large_sparse_diagonal_descriptor()
+
+    spectrum = solve_descriptor_spectrum(
+        stiffness,
+        mass,
+        num_modes=3,
+        dense_size_limit=1,
+        algebraic_nullity=2,
+        algebraic_basis=basis,
+    )
+
+    np.testing.assert_allclose(spectrum.eigenvalues[:3], (1.0, 2.0, 3.0))
+    assert spectrum.diagnostics["static_condensation_limit"] == 3072
+    assert spectrum.diagnostics["solver"] == (
+        "dense_algebraic_static_condensation_eigh"
+    )
+
+
+@pytest.mark.parametrize("limit", (0, -1, True, 1.5, "3072"))
+def test_static_condensation_extent_rejects_invalid_values(limit: object) -> None:
+    stiffness = sparse.diags((1.0, 2.0, 3.0), format="csr")
+    mass = sparse.diags((1.0, 1.0, 0.0), format="csr")
+    basis = sparse.csc_matrix(([1.0], ([2], [0])), shape=(3, 1))
+
+    with pytest.raises(ValueError, match="positive integer"):
+        solve_descriptor_spectrum(
+            stiffness,
+            mass,
+            num_modes=1,
+            dense_size_limit=1,
+            algebraic_nullity=1,
+            algebraic_basis=basis,
+            static_condensation_limit=limit,
+        )
 
 
 def test_large_sparse_swapped_solver_preserves_repeated_multiplicity_deterministically() -> None:
