@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "9f7e5a2bf25ba2ed94efd1c6fbf7caec98bda48124a43466a83447846040f7f0"
+CONTRACT_SHA256 = "c779a03ee08db6f9f8696a804cab31fa7da0d73bc6841e1fe483bd9c741de79c"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-5"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-6"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -76,6 +76,14 @@ FAILED_ATTEMPT_5_REQUEST_IDS = [
     "1353d866827648b88e718f2134a26fc5",
     "020582eaea1e4633a29abc853a2647dc",
     "15205bbf29a54b2abb4289a5fcb02379",
+]
+FAILED_ATTEMPT_6_REQUEST_IDS = [
+    "31973767658f492ea0b7f376d59399df",
+    "ec8740b65b9e45c5a803a718372b91c4",
+    "d07ea2cee1224e26bc8c1aa0c5215e64",
+    "0193fe79ba67489aa63af05cf6e23780",
+    "eb4ac0c0d9cf46a7be4be22a59faffa5",
+    "fdf28a8c7eda4d6faf6cb359561042a4",
 ]
 
 sys.path.insert(0, str(REFERENCE))
@@ -368,10 +376,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v6"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v7"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "e34f12398751a6315372bae68c089f8184a045fe",
+        "exact_parent": "a52994945721295686d9c1776a2bdb5a9a1c7ec3",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -671,6 +679,62 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
             "sha256": "2b28f2d0029cb5c0339d41e2978ee38e4628958c973dcd621c72b61d83e10962",
         },
     }
+    git_probe = contract["background_inputs"]["failed_git_probe_review_attempt"]
+    assert git_probe["attempt"] == 6
+    assert git_probe["authority_commit"] == {
+        "commit": "a52994945721295686d9c1776a2bdb5a9a1c7ec3",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "87d18d978d94035bc49c11a4610d2bcbc964157c",
+    }
+    assert git_probe["contract"] == {
+        "bytes": 274979,
+        "sha256": "9f7e5a2bf25ba2ed94efd1c6fbf7caec98bda48124a43466a83447846040f7f0",
+    }
+    assert git_probe["failure"] == {
+        "cause": "SANITIZED_GATE_GIT_POLICY_OMITTED_SAFE_DIRECTORY_AND_AUTOCRLF",
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+    }
+    assert git_probe["ledger_occurrences"] == 0
+    assert git_probe["preserved_ref"] == (
+        "codex/s3-e4-pl-final-burnin-rejected-v6-a529949"
+    )
+    assert git_probe["request_disposition"] == (
+        "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+    )
+    assert git_probe["request_ids"] == FAILED_ATTEMPT_6_REQUEST_IDS
+    assert git_probe["review_test_results"] == [
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v6-independent-authority-review-1-a5299494",
+        },
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v6-independent-authority-review-2-a529949",
+        },
+    ]
+    assert [review["verdict"] for review in git_probe["reviews"]] == [
+        "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+    ]
+    assert [
+        review["reviewer_independence"]["reviewer_id"]
+        for review in git_probe["reviews"]
+    ] == [
+        "codex-v6-independent-authority-review-1-a5299494",
+        "codex-v6-independent-authority-review-2-a529949",
+    ]
+    assert all(
+        review["findings"][0]["priority"] == "P1"
+        for review in git_probe["reviews"]
+    )
+    assert git_probe["role"] == "PRESERVED_REJECTED_AUTHORITY_ONLY"
+    assert git_probe["terminal"] == (
+        "BLOCKED_E4_PL_S3_Q4_BURN_IN_AUTHORITY_REVIEW"
+    )
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -836,15 +900,15 @@ def test_candidate_chain_and_authority_extent_are_exact() -> None:
         assert len(actual_paths) == row["path_count"]
         assert _canonical_list_hash(actual_paths) == row["path_inventory_sha256"]
     authority = contract["authority_commit"]
-    introduction = _git(
+    authority_commits = _git(
         "log",
+        "-1",
         "--format=%H",
-        "--diff-filter=A",
         "--",
         "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
     ).stdout.splitlines()
-    assert len(introduction) == 1
-    authority_commit = introduction[0]
+    assert len(authority_commits) == 1
+    authority_commit = authority_commits[0]
     authority_metadata = _git(
         "show", "-s", "--format=%P%n%s", authority_commit
     ).stdout.splitlines()
@@ -1036,6 +1100,30 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
         },
         "final_evidence_reserve_seconds": 90,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
+    }
+    assert contract["execution"]["gate_git_invocation_policy"] == {
+        "environment": "VALIDATOR_EQUIVALENT_SANITIZED_GIT_ENVIRONMENT",
+        "launcher": "FROZEN_EXECUTION_GIT",
+        "prefix_after_launcher": [
+            "--no-replace-objects",
+            "-c",
+            "safe.directory={repository}",
+            "-c",
+            "core.autocrlf=true",
+            "-c",
+            "core.attributesFile=NUL",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.quotepath=false",
+            "-c",
+            "core.untrackedCache=false",
+            "-c",
+            "status.showUntrackedFiles=all",
+            "-C",
+            "{repository}",
+        ],
+        "scope": "ALL_GATE_GIT_SUBPROCESSES",
     }
     assert contract["ci_policy"] == {
         "coordinator_wall_limit_seconds": 1200,
@@ -3005,6 +3093,88 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
     )
     if tools_available:
         assert burnin.validate_git_runtime(contract) == guard["git_runtime"]
+        gate_spec = importlib.util.spec_from_file_location(
+            "s3_q4_git_policy_probe",
+            ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+        )
+        assert gate_spec is not None and gate_spec.loader is not None
+        gate = importlib.util.module_from_spec(gate_spec)
+        gate_spec.loader.exec_module(gate)
+        crlf_repository = tmp_path / "crlf-repository"
+        crlf_repository.mkdir()
+        git = str(Path(guard["git"]["path"]))
+        monkeypatch.setenv("ANYSOLVER_FROZEN_GIT", git)
+        git_environment = gate._sanitized_git_environment()
+        initialized = subprocess.run(
+            [git, "init", str(crlf_repository)],
+            check=False,
+            capture_output=True,
+            env=git_environment,
+        )
+        assert initialized.returncode == 0
+        probe = crlf_repository / "probe.txt"
+        probe.write_bytes(b"registered\n")
+        prefix = gate._git_command_prefix(crlf_repository)
+        assert prefix == [
+            git,
+            "--no-replace-objects",
+            "-c",
+            f"safe.directory={crlf_repository}",
+            "-c",
+            "core.autocrlf=true",
+            "-c",
+            "core.attributesFile=NUL",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.quotepath=false",
+            "-c",
+            "core.untrackedCache=false",
+            "-c",
+            "status.showUntrackedFiles=all",
+            "-C",
+            str(crlf_repository),
+        ]
+        for command in (
+            [*prefix, "add", "probe.txt"],
+            [
+                *prefix,
+                "-c",
+                "user.name=Q1M Review",
+                "-c",
+                "user.email=q1m-review@example.invalid",
+                "commit",
+                "-m",
+                "fixture",
+            ],
+            [*prefix, "config", "core.autocrlf", "false"],
+        ):
+            completed = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                env=git_environment,
+            )
+            assert completed.returncode == 0
+        probe.unlink()
+        checkout = subprocess.run(
+            [*prefix, "checkout", "--", "probe.txt"],
+            check=False,
+            capture_output=True,
+            env=git_environment,
+        )
+        assert checkout.returncode == 0
+        assert probe.read_bytes() == b"registered\r\n"
+        assert gate._git(
+            crlf_repository,
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+        ) == ""
+        assert gate._functional_source_status(crlf_repository) == {
+            "bytes": 0,
+            "sha256": hashlib.sha256(b"").hexdigest(),
+        }
         manager = process_runner._manager_paths(contract)
         absent_request_id = "0" * 32
         assert not (manager["requests"] / f"{absent_request_id}.json").exists()

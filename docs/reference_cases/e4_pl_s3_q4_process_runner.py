@@ -36,8 +36,8 @@ LEDGER_SNAPSHOT_SCHEMA = "anysolver.e4-pl-s3-q4-resource-ledger-snapshot-v1"
 PENDING_MANIFEST_SCHEMA = "anysolver.e4-pl-s3-q4-pending-process-manifest-v1"
 MANAGER_RESERVATION_SCHEMA = "anysolver.e4-pl-s3-q4-manager-reservation-v1"
 WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
-_VALIDATOR_BYTES = 205629
-_VALIDATOR_SHA256 = "42a0d0b38df9cf1f42f7e596ad5dd3a16fa06cf3eddbc11a9c943e5d5d9c2aed"
+_VALIDATOR_BYTES = 215545
+_VALIDATOR_SHA256 = "8a8029f5f30d56681d429fe5e43c9eb39786e0bd37ca4c485f20a31822f143e5"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),
@@ -820,18 +820,7 @@ def _authority_commit(candidate: Path, contract: Mapping[str, Any]) -> tuple[str
             "validated execution authorization differs from candidate HEAD"
         )
     authority = contract["authority_commit"]
-    introductions = burnin._git(
-        candidate,
-        "log",
-        "--format=%H",
-        "--diff-filter=A",
-        "--",
-        "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
-        contract=contract,
-    ).splitlines()
-    if len(introductions) != 1:
-        raise burnin.EvidenceError("burn-in contract lacks a unique authority introduction")
-    authority_commit = introductions[0]
+    authority_commit = topology["authority_commit"]
     metadata = burnin._git(
         candidate,
         "show",
@@ -1546,7 +1535,7 @@ def _request_row(contract: Mapping[str, Any], request_id: str) -> dict[str, Any]
 def _reject_standalone_resource_execution(
     contract: Mapping[str, Any], request_id: str
 ) -> None:
-    """Reject every current v6 worker request outside its complete cycle.
+    """Reject every current v7 worker request outside its complete cycle.
 
     ``finalize-resource`` is intentionally separate: it can validate and
     publish an existing durable worker-completion checkpoint, but it cannot
@@ -1559,7 +1548,7 @@ def _reject_standalone_resource_execution(
     if row.get("lane") != lane:
         raise burnin.EvidenceError("standalone request lane authority mismatch")
     raise burnin.EvidenceError(
-        "standalone resource worker execution is forbidden for current v6 "
+        "standalone resource worker execution is forbidden for current v7 "
         f"request {request_id} ({lane}, cycle {cycle}); use cycle --cycle {cycle}"
     )
 
@@ -3949,9 +3938,9 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v6 worker execution; use cycle --cycle N",
+            help="reject standalone v7 worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v6 resource requests is disabled. "
+                "Standalone execution of current v7 resource requests is disabled. "
                 "Use cycle --cycle N so all three workers share one 1200-second watchdog."
             ),
         )

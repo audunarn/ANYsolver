@@ -38,6 +38,22 @@ PERFORMANCE_BASELINE_MARKER = b"Q1M_PERFORMANCE_BASELINE_JSON="
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_OBJECT_RE = re.compile(r"[0-9a-f]{40}\Z")
 REQUEST_ID_RE = re.compile(r"[0-9a-f]{32}\Z")
+V7_REQUEST_IDS = (
+    "43fd3902318c41bab21aa0ea851bbbb3",
+    "f8586b30ae12448498bfe104b3776f01",
+    "06a261a4e43549acb33449d6ef455644",
+    "435ffa6e24b84371ba9be0f41128c22e",
+    "535cb95402874b5b8dfe32a912db20e4",
+    "a024744a6f674ebba9a7d6028434e1d8",
+)
+V6_REJECTED_REQUEST_IDS = (
+    "31973767658f492ea0b7f376d59399df",
+    "ec8740b65b9e45c5a803a718372b91c4",
+    "d07ea2cee1224e26bc8c1aa0c5215e64",
+    "0193fe79ba67489aa63af05cf6e23780",
+    "eb4ac0c0d9cf46a7be4be22a59faffa5",
+    "fdf28a8c7eda4d6faf6cb359561042a4",
+)
 PROCESS_DIRECTORY_NAMES = {
     "common.quick.1": "quick",
     "common.package.1": "package",
@@ -551,6 +567,45 @@ def _validate_request_execution_policy(
         "idempotent_publication_recovery": "FINALIZE_COMMAND_ONLY",
         "scope": "ALL_SIX_CURRENT_REQUEST_IDS",
         "standalone_resource_command": "FORBIDDEN_FOR_CURRENT_REQUEST_IDS",
+    }
+    if policy != expected:
+        raise EvidenceError(f"{location} mismatch")
+    return policy
+
+
+def _validate_gate_git_invocation_policy(
+    value: Any, location: str
+) -> dict[str, Any]:
+    """Bind gate Git probes to the validator's hardened Windows prefix."""
+
+    policy = _exact_keys(
+        value,
+        {"environment", "launcher", "prefix_after_launcher", "scope"},
+        location,
+    )
+    expected = {
+        "environment": "VALIDATOR_EQUIVALENT_SANITIZED_GIT_ENVIRONMENT",
+        "launcher": "FROZEN_EXECUTION_GIT",
+        "prefix_after_launcher": [
+            "--no-replace-objects",
+            "-c",
+            "safe.directory={repository}",
+            "-c",
+            "core.autocrlf=true",
+            "-c",
+            "core.attributesFile=NUL",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.quotepath=false",
+            "-c",
+            "core.untrackedCache=false",
+            "-c",
+            "status.showUntrackedFiles=all",
+            "-C",
+            "{repository}",
+        ],
+        "scope": "ALL_GATE_GIT_SUBPROCESSES",
     }
     if policy != expected:
         raise EvidenceError(f"{location} mismatch")
@@ -2432,6 +2487,156 @@ def _validate_attempt_5_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_6_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the rejected v6 authority reviews without treating them as approval."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "contract",
+            "failure",
+            "ledger_occurrences",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "review_test_results",
+            "reviews",
+            "role",
+            "terminal",
+        },
+        location,
+    )
+    if incident["attempt"] != 6:
+        raise EvidenceError(f"{location}.attempt must be 6")
+    _validate_git_commit_record(
+        incident["authority_commit"],
+        f"{location}.authority_commit",
+        commit="a52994945721295686d9c1776a2bdb5a9a1c7ec3",
+        subject="docs: authorize corrected S3 Q4 burn-in cycles",
+        tree="87d18d978d94035bc49c11a4610d2bcbc964157c",
+    )
+    contract_record = _exact_keys(
+        incident["contract"], {"bytes", "sha256"}, f"{location}.contract"
+    )
+    _validate_hash_record(contract_record, f"{location}.contract")
+    if contract_record != {
+        "bytes": 274979,
+        "sha256": "9f7e5a2bf25ba2ed94efd1c6fbf7caec98bda48124a43466a83447846040f7f0",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+
+    reviewed_inputs = {
+        "attachment_sha256": (
+            "c76832af87afa4a8828ba6dbad0c582b79d69934233081f0bb640fb2d250240a"
+        ),
+        "authority_commit": "a52994945721295686d9c1776a2bdb5a9a1c7ec3",
+        "authority_tree": "87d18d978d94035bc49c11a4610d2bcbc964157c",
+        "base_commit": "e34f12398751a6315372bae68c089f8184a045fe",
+        "checkpoint_commit": "bfdadccfb35b7f62689acb77bb071192ad831c61",
+        "contract_sha256": (
+            "9f7e5a2bf25ba2ed94efd1c6fbf7caec98bda48124a43466a83447846040f7f0"
+        ),
+    }
+    expected_reviews = [
+        {
+            "findings": [
+                {
+                    "details": (
+                        "Sanitized Git probes omit the frozen safe.directory and "
+                        "core.autocrlf=true options. The exact probe fails with dubious "
+                        "ownership; with only safe.directory added it reports 91 false "
+                        "modified paths (3842 bytes), while core.autocrlf=true produces "
+                        "the required empty status. This blocks functional Cycle 1 "
+                        "before shard launch and can also reject package/CI repository "
+                        "identities."
+                    ),
+                    "locations": ["_git", "_functional_source_status"],
+                    "path": "scripts/run_e4_pl_burnin_gate.py",
+                    "priority": "P1",
+                    "title": "Pin canonical Windows Git options in every gate probe",
+                }
+            ],
+            "reviewed_inputs": reviewed_inputs,
+            "reviewer_independence": {
+                "did_not_author_candidate": True,
+                "did_not_execute_resource_lanes": True,
+                "independent_of_other_reviewer": True,
+                "reviewer_id": "codex-v6-independent-authority-review-1-a5299494",
+            },
+            "schema": "anysolver.e4-pl-s3-q4-authority-review-v1",
+            "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        },
+        {
+            "findings": [
+                {
+                    "evidence": (
+                        "With GIT_CONFIG_GLOBAL=NUL and GIT_CONFIG_NOSYSTEM=1, "
+                        "the gate-style status command reports 12980 bytes on this "
+                        "otherwise clean detached Windows checkout; the "
+                        "validator-equivalent command with core.autocrlf=true reports "
+                        "zero."
+                    ),
+                    "location": "scripts/run_e4_pl_burnin_gate.py:1086",
+                    "priority": "P1",
+                    "summary": (
+                        "Formal gate Git commands disable the user line-ending policy "
+                        "without pinning an equivalent core.autocrlf policy, so "
+                        "quick/package/functional CI can falsely classify the clean "
+                        "authority worktree as dirty before scientific execution."
+                    ),
+                }
+            ],
+            "reviewed_inputs": reviewed_inputs,
+            "reviewer_independence": {
+                "did_not_author_candidate": True,
+                "did_not_execute_resource_lanes": True,
+                "independent_of_other_reviewer": True,
+                "reviewer_id": "codex-v6-independent-authority-review-2-a529949",
+            },
+            "schema": "anysolver.e4-pl-s3-q4-authority-review-v1",
+            "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        },
+    ]
+    if incident["reviews"] != expected_reviews:
+        raise EvidenceError(f"{location}.reviews mismatch")
+    expected_test_results = [
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v6-independent-authority-review-1-a5299494",
+        },
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v6-independent-authority-review-2-a529949",
+        },
+    ]
+    if incident["review_test_results"] != expected_test_results:
+        raise EvidenceError(f"{location}.review_test_results mismatch")
+    expected_failure = {
+        "cause": "SANITIZED_GATE_GIT_POLICY_OMITTED_SAFE_DIRECTORY_AND_AUTOCRLF",
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    if incident["request_ids"] != list(V6_REJECTED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "ledger_occurrences": 0,
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v6-a529949",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+        "terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_AUTHORITY_REVIEW",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -2569,9 +2774,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v6"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v7"
     ):
         raise EvidenceError("burn-in study identity mismatch")
+    if not isinstance(contract["non_resource_commands"], dict) or contract[
+        "non_resource_commands"
+    ].get("output_root") != (
+        r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+        r"\s3-q4-final-freeze-correction-6"
+    ):
+        raise EvidenceError("v7 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -2581,6 +2793,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "cycle_wall_policy",
             "environment_guard",
             "fresh_external_logs",
+            "gate_git_invocation_policy",
             "global_resource_slot_required",
             "numerical_library_threads",
             "request_execution_policy",
@@ -2604,6 +2817,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         execution["request_execution_policy"],
         "$contract.execution.request_execution_policy",
     )
+    _validate_gate_git_invocation_policy(
+        execution["gate_git_invocation_policy"],
+        "$contract.execution.gate_git_invocation_policy",
+    )
     validate_functional_wave_contract(contract)
     _validate_ci_policy(contract["ci_policy"], contract, "$contract.ci_policy")
     background = _exact_keys(
@@ -2612,6 +2829,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "attachment",
             "base",
             "failed_common_preflight_attempt",
+            "failed_git_probe_review_attempt",
             "failed_preflight_attempt",
             "failed_resource_acquisition_attempt",
             "failed_resource_interruption_attempt",
@@ -2627,6 +2845,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     review_contamination = _validate_attempt_5_incident(
         background["failed_review_contamination_attempt"],
         "$contract.background_inputs.failed_review_contamination_attempt",
+    )
+    git_probe_review = _validate_attempt_6_incident(
+        background["failed_git_probe_review_attempt"],
+        "$contract.background_inputs.failed_git_probe_review_attempt",
     )
     requests = _exact_keys(
         contract["resource_requests"],
@@ -2649,12 +2871,15 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v6 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v7 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v6 resource request IDs are not unique")
+        raise EvidenceError("v7 resource request IDs are not unique")
+    if current_request_ids != list(V7_REQUEST_IDS):
+        raise EvidenceError("v7 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
+        *git_probe_review["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -2675,7 +2900,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v6 resource request IDs reuse historical authority")
+        raise EvidenceError("v7 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -2731,7 +2956,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "e34f12398751a6315372bae68c089f8184a045fe":
+    if authority["exact_parent"] != "a52994945721295686d9c1776a2bdb5a9a1c7ec3":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -4036,6 +4261,23 @@ def _ledger_entries(ledger: str, request_id: str, status: str) -> list[list[str]
     return entries
 
 
+def validate_superseded_request_ledger_absence(
+    ledger: str, *, contract: Mapping[str, Any] | None = None
+) -> None:
+    """Require the six rejected v6 request IDs to have no ledger row of any kind."""
+
+    contract = dict(contract or load_contract())
+    incident = contract["background_inputs"]["failed_git_probe_review_attempt"]
+    expected = _require_int(
+        incident["ledger_occurrences"],
+        "$contract.background_inputs.failed_git_probe_review_attempt.ledger_occurrences",
+        minimum=0,
+    )
+    occurrences = sum(ledger.count(request_id) for request_id in incident["request_ids"])
+    if occurrences != expected or expected != 0:
+        raise EvidenceError("rejected v6 request ID occurs in the resource ledger")
+
+
 def _require_successor_after_terminal(
     started_at: dt.datetime,
     previous_terminal: dt.datetime | None,
@@ -4058,18 +4300,18 @@ def validate_execution_authorization(
     contract = dict(contract or load_contract())
     candidate_path = candidate_path.resolve(strict=True)
     authority = contract["authority_commit"]
-    introductions = _git(
+    authority_commits = _git(
         candidate_path,
         "log",
+        "-1",
         "--format=%H",
-        "--diff-filter=A",
         "--",
         "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
         contract=contract,
     ).splitlines()
-    if len(introductions) != 1:
-        raise EvidenceError("burn-in contract does not have one authority introduction")
-    authority_commit = introductions[0]
+    if len(authority_commits) != 1:
+        raise EvidenceError("burn-in contract does not have one latest authority commit")
+    authority_commit = authority_commits[0]
     metadata = _git(
         candidate_path,
         "show",
@@ -4553,6 +4795,9 @@ def validate_external_bindings(
         or not requests_root.is_dir()
     ):
         raise EvidenceError("resource-manager ledger/requests may not be symlinks")
+    validate_superseded_request_ledger_absence(
+        ledger_path.read_text(encoding="utf-8"), contract=contract
+    )
     if (manager_root / manager["active_lock"]).exists():
         raise EvidenceError("resource-manager active lock remains after adjudication")
     candidate_path = candidate_path.resolve(strict=True)

@@ -461,6 +461,31 @@ def _git_executable() -> str:
     return str(Path(discovered).resolve(strict=True))
 
 
+def _git_command_prefix(repository: Path) -> list[str]:
+    """Return the single frozen Git command prefix used by the validator."""
+
+    return [
+        _git_executable(),
+        "--no-replace-objects",
+        "-c",
+        f"safe.directory={repository}",
+        "-c",
+        "core.autocrlf=true",
+        "-c",
+        "core.attributesFile=NUL",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.quotepath=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-c",
+        "status.showUntrackedFiles=all",
+        "-C",
+        str(repository),
+    ]
+
+
 def _exact_keys(value: Any, expected: set[str], location: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise EvidenceError(f"{location} must be an object")
@@ -1092,12 +1117,7 @@ def _git(
     try:
         completed = subprocess.run(
             [
-                _git_executable(),
-                "--no-replace-objects",
-                "-c",
-                "core.attributesFile=NUL",
-                "-C",
-                str(repository),
+                *_git_command_prefix(repository),
                 *args,
             ],
             check=False,
@@ -1854,12 +1874,7 @@ def _functional_source_status(
     repository: Path, *, absolute_deadline: float | None = None
 ) -> dict[str, Any]:
     command = [
-        _git_executable(),
-        "--no-replace-objects",
-        "-c",
-        "core.attributesFile=NUL",
-        "-C",
-        str(repository),
+        *_git_command_prefix(repository),
         "status",
         "--porcelain=v1",
         "-z",
@@ -2006,12 +2021,7 @@ def _create_functional_archive(
     _functional_deadline_check(absolute_deadline, "Git archive subprocess")
     process = _run_captured(
         [
-            _git_executable(),
-            "--no-replace-objects",
-            "-c",
-            "core.attributesFile=NUL",
-            "-C",
-            str(repository),
+            *_git_command_prefix(repository),
             "archive",
             "--format=tar",
             f"--output={archive}",
@@ -3905,12 +3915,7 @@ def _archive_head_snapshot(
     archive.parent.mkdir(parents=True, exist_ok=True)
     archive_log = _run_captured(
         [
-            _git_executable(),
-            "--no-replace-objects",
-            "-c",
-            "core.attributesFile=NUL",
-            "-C",
-            str(repository),
+            *_git_command_prefix(repository),
             "archive",
             "--format=zip",
             f"--output={archive}",
