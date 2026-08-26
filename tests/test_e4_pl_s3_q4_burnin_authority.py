@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "2301bcdeffc85f4e6c9c6242591eca9c81af1bcdebbd9da231cf329c908347e2"
+CONTRACT_SHA256 = "9cdea010543f4b6cd712310f713c199626018f1b135f492fca121d07ec31d6f4"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-7"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-8"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -92,6 +92,14 @@ FAILED_ATTEMPT_7_REQUEST_IDS = [
     "435ffa6e24b84371ba9be0f41128c22e",
     "535cb95402874b5b8dfe32a912db20e4",
     "a024744a6f674ebba9a7d6028434e1d8",
+]
+FAILED_ATTEMPT_8_REQUEST_IDS = [
+    "c2f3383ea7ab4702bb9107c010afa826",
+    "0a1f61046a4e4a8a8857f191b60b87f6",
+    "dc3c9442dfd547dda5cd86854a541253",
+    "8142bd76fe494f34886f5b0f8124efd0",
+    "570f8fba9c9544a9989ae71400688794",
+    "1dc0401d62b04e959d6cb9424db17a54",
 ]
 
 sys.path.insert(0, str(REFERENCE))
@@ -384,10 +392,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v8"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v9"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8",
+        "exact_parent": "0a893a39ffefeebbeab0dfe31f7ac84cd2c91b25",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -808,6 +816,93 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     assert ci_partition["terminal"] == (
         "BLOCKED_E4_PL_S3_Q4_BURN_IN_AUTHORITY_REVIEW"
     )
+    sibling_hygiene = contract["background_inputs"][
+        "failed_sibling_hygiene_preflight_attempt"
+    ]
+    assert sibling_hygiene["attempt"] == 8
+    assert sibling_hygiene["authority_commit"] == {
+        "commit": "880a75a672c9dd32b774aab819a08475af7ba05c",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "e2964ddfa4e1c5291c0f95ba8edc0df0f8fbf231",
+    }
+    assert sibling_hygiene["execution_authorization_commit"] == {
+        "commit": "da12d8264338ff80cfe54540aaa233565dcaaae0",
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "bece1cb5eeb0d49b46d50edff5faf10ed567c146",
+    }
+    assert sibling_hygiene["blocked_closeout"] == {
+        "commit": "0a893a39ffefeebbeab0dfe31f7ac84cd2c91b25",
+        "subject": "docs: record blocked corrected S3 Q4 burn-in",
+        "tree": "2b8b3d7ddb5991b056f03483d979d75d0445ec4b",
+    }
+    assert sibling_hygiene["contract"] == {
+        "bytes": 282481,
+        "sha256": "2301bcdeffc85f4e6c9c6242591eca9c81af1bcdebbd9da231cf329c908347e2",
+    }
+    assert sibling_hygiene["failure"] == {
+        "cause": "IGNORED_BYTECODE_CONTAMINATED_FROZEN_SIBLING_INPUT",
+        "clean_input_guard_rejected": True,
+        "coordinator_exit_code": 1,
+        "input_contamination": {
+            "complete_file_hashes_available": False,
+            "reported_paths": [
+                "src/anyfileio/__pycache__/__init__.cpython-313.pyc",
+                "src/anyfileio/__pycache__/_semantic_dependencies.cpython-313.pyc",
+                "src/anyfileio/__pycache__/cad.cpython-313.pyc",
+            ],
+            "repository": (
+                r"C:\Github\ANYsolver\.perf2-worktrees\s3-q4-anyfileio-9b1e5ad"
+            ),
+        },
+        "lane": "quick",
+        "phase": "COMMON_PREFLIGHT_AUTHORITY_CHECK",
+        "post_abort_hygiene": {
+            "all_six_frozen_repositories_clean_including_ignored": True,
+            "generated_bytecode_removed_only": True,
+        },
+        "quick_command_started": False,
+        "resource_commands_started": False,
+    }
+    assert sibling_hygiene["external_authority"] == {
+        "gate_result": {
+            "bytes": 4382,
+            "path": (
+                r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+                r"\s3-q4-final-freeze-correction-7\gate-result.json"
+            ),
+            "sha256": "a752ede1659f9abe57fe1bfc5a41d28134f36627d0a274695dea8fd91dae5c3f",
+        },
+        "output_root": (
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+            r"\s3-q4-final-freeze-correction-7"
+        ),
+    }
+    assert sibling_hygiene["preserved_branch"] == (
+        "codex/s3-e4-pl-final-burnin-blocked-attempt-8"
+    )
+    assert sibling_hygiene["preserved_repository_evidence"] == {
+        "result": {
+            "bytes": 4382,
+            "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json",
+            "sha256": "a752ede1659f9abe57fe1bfc5a41d28134f36627d0a274695dea8fd91dae5c3f",
+        },
+        "review": {
+            "bytes": 536,
+            "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json",
+            "sha256": "838a25cb80357c5d995fa40a48735cc2e0eff37d8886bcbb3031f427e94d3746",
+        },
+        "status": {
+            "bytes": 293,
+            "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json",
+            "sha256": "949bed07b708815a839f6f51e91b329ffb5292217186bc24329158c3d2076414",
+        },
+    }
+    assert sibling_hygiene["request_disposition"] == (
+        "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+    )
+    assert sibling_hygiene["request_ids"] == FAILED_ATTEMPT_8_REQUEST_IDS
+    assert sibling_hygiene["role"] == "PRESERVED_BLOCKED_PREDECESSOR_ONLY"
+    assert sibling_hygiene["terminal"] == "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE"
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -841,6 +936,7 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "failed_common_preflight_attempt",
         "failed_resource_interruption_attempt",
         "failed_review_contamination_attempt",
+        "failed_sibling_hygiene_preflight_attempt",
     ):
         incident = contract["background_inputs"][incident_name]
         blocked_commit = incident["blocked_closeout"]["commit"]
@@ -1767,6 +1863,7 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
     source = (ROOT / "scripts" / "run_e4_pl_burnin_gate.py").read_text(
         encoding="utf-8"
     )
+    assert "sys.dont_write_bytecode = True" in source
     ci_start = source.index("def _run_bounded_ci(")
     ci_end = source.index("\ndef _tracked_head_identity(", ci_start)
     ci_source = source[ci_start:ci_end]
@@ -2560,6 +2657,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_5_REQUEST_IDS,
             *FAILED_ATTEMPT_6_REQUEST_IDS,
             *FAILED_ATTEMPT_7_REQUEST_IDS,
+            *FAILED_ATTEMPT_8_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -2580,6 +2678,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_5_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_6_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_7_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_8_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert len(
         burnin._ledger_entries(

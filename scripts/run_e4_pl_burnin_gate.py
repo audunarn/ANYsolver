@@ -32,6 +32,10 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
 
 
+# A direct gate invocation must not contaminate any frozen source tree even if
+# its caller omitted the hash-bound child environment.
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[1]
 _GATE_SOURCE_ROOT = ROOT
 TESTS = ROOT / "tests"

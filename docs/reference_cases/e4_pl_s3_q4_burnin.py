@@ -38,7 +38,15 @@ PERFORMANCE_BASELINE_MARKER = b"Q1M_PERFORMANCE_BASELINE_JSON="
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_OBJECT_RE = re.compile(r"[0-9a-f]{40}\Z")
 REQUEST_ID_RE = re.compile(r"[0-9a-f]{32}\Z")
-V8_REQUEST_IDS = (
+V9_REQUEST_IDS = (
+    "99c2fcc3c6e84c7c99408023e5dc33a4",
+    "5c7e14b9ec54493eab0c07b65b9ea060",
+    "66beb32c09804696894ad948f6af1a03",
+    "34d8eebb21814cd68968940bbe8eb54c",
+    "227de96509e445f1acdbb70f531dee73",
+    "701c043879b0481180926b890ae1571d",
+)
+V8_SUPERSEDED_REQUEST_IDS = (
     "c2f3383ea7ab4702bb9107c010afa826",
     "0a1f61046a4e4a8a8857f191b60b87f6",
     "dc3c9442dfd547dda5cd86854a541253",
@@ -2779,6 +2787,150 @@ def _validate_attempt_7_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_8_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the frozen-sibling hygiene failure that blocked attempt 8."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "blocked_closeout",
+            "contract",
+            "execution_authorization_commit",
+            "external_authority",
+            "failure",
+            "preserved_branch",
+            "preserved_repository_evidence",
+            "request_disposition",
+            "request_ids",
+            "role",
+            "terminal",
+        },
+        location,
+    )
+    if incident["attempt"] != 8:
+        raise EvidenceError(f"{location}.attempt must be 8")
+    _validate_git_commit_record(
+        incident["authority_commit"],
+        f"{location}.authority_commit",
+        commit="880a75a672c9dd32b774aab819a08475af7ba05c",
+        subject="docs: authorize corrected S3 Q4 burn-in cycles",
+        tree="e2964ddfa4e1c5291c0f95ba8edc0df0f8fbf231",
+    )
+    _validate_git_commit_record(
+        incident["execution_authorization_commit"],
+        f"{location}.execution_authorization_commit",
+        commit="da12d8264338ff80cfe54540aaa233565dcaaae0",
+        subject="docs: reauthorize corrected S3 Q4 burn-in execution",
+        tree="bece1cb5eeb0d49b46d50edff5faf10ed567c146",
+    )
+    _validate_git_commit_record(
+        incident["blocked_closeout"],
+        f"{location}.blocked_closeout",
+        commit="0a893a39ffefeebbeab0dfe31f7ac84cd2c91b25",
+        subject="docs: record blocked corrected S3 Q4 burn-in",
+        tree="2b8b3d7ddb5991b056f03483d979d75d0445ec4b",
+    )
+    contract_record = _exact_keys(
+        incident["contract"], {"bytes", "sha256"}, f"{location}.contract"
+    )
+    _validate_hash_record(contract_record, f"{location}.contract")
+    if contract_record != {
+        "bytes": 282481,
+        "sha256": "2301bcdeffc85f4e6c9c6242591eca9c81af1bcdebbd9da231cf329c908347e2",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+
+    external = _exact_keys(
+        incident["external_authority"],
+        {"gate_result", "output_root"},
+        f"{location}.external_authority",
+    )
+    expected_output_root = (
+        r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+        r"\s3-q4-final-freeze-correction-7"
+    )
+    if external["output_root"] != expected_output_root:
+        raise EvidenceError(f"{location}.external_authority.output_root mismatch")
+    _validate_repository_evidence_record(
+        external["gate_result"],
+        f"{location}.external_authority.gate_result",
+        expected_path=str(Path(expected_output_root) / "gate-result.json"),
+        expected_bytes=4382,
+        expected_sha256="a752ede1659f9abe57fe1bfc5a41d28134f36627d0a274695dea8fd91dae5c3f",
+    )
+
+    expected_failure = {
+        "cause": "IGNORED_BYTECODE_CONTAMINATED_FROZEN_SIBLING_INPUT",
+        "clean_input_guard_rejected": True,
+        "coordinator_exit_code": 1,
+        "input_contamination": {
+            "complete_file_hashes_available": False,
+            "reported_paths": [
+                "src/anyfileio/__pycache__/__init__.cpython-313.pyc",
+                (
+                    "src/anyfileio/__pycache__/"
+                    "_semantic_dependencies.cpython-313.pyc"
+                ),
+                "src/anyfileio/__pycache__/cad.cpython-313.pyc",
+            ],
+            "repository": (
+                r"C:\Github\ANYsolver\.perf2-worktrees"
+                r"\s3-q4-anyfileio-9b1e5ad"
+            ),
+        },
+        "lane": "quick",
+        "phase": "COMMON_PREFLIGHT_AUTHORITY_CHECK",
+        "post_abort_hygiene": {
+            "all_six_frozen_repositories_clean_including_ignored": True,
+            "generated_bytecode_removed_only": True,
+        },
+        "quick_command_started": False,
+        "resource_commands_started": False,
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+
+    evidence = _exact_keys(
+        incident["preserved_repository_evidence"],
+        {"result", "review", "status"},
+        f"{location}.preserved_repository_evidence",
+    )
+    _validate_repository_evidence_record(
+        evidence["result"],
+        f"{location}.preserved_repository_evidence.result",
+        expected_path="docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json",
+        expected_bytes=4382,
+        expected_sha256="a752ede1659f9abe57fe1bfc5a41d28134f36627d0a274695dea8fd91dae5c3f",
+    )
+    _validate_repository_evidence_record(
+        evidence["review"],
+        f"{location}.preserved_repository_evidence.review",
+        expected_path="docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json",
+        expected_bytes=536,
+        expected_sha256="838a25cb80357c5d995fa40a48735cc2e0eff37d8886bcbb3031f427e94d3746",
+    )
+    _validate_repository_evidence_record(
+        evidence["status"],
+        f"{location}.preserved_repository_evidence.status",
+        expected_path="docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json",
+        expected_bytes=293,
+        expected_sha256="949bed07b708815a839f6f51e91b329ffb5292217186bc24329158c3d2076414",
+    )
+    if incident["request_ids"] != list(V8_SUPERSEDED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "preserved_branch": "codex/s3-e4-pl-final-burnin-blocked-attempt-8",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_BLOCKED_PREDECESSOR_ONLY",
+        "terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -2916,16 +3068,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v8"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v9"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-7"
+        r"\s3-q4-final-freeze-correction-8"
     ):
-        raise EvidenceError("v8 burn-in output root mismatch")
+        raise EvidenceError("v9 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -2977,6 +3129,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_resource_acquisition_attempt",
             "failed_resource_interruption_attempt",
             "failed_review_contamination_attempt",
+            "failed_sibling_hygiene_preflight_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -2996,6 +3149,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     ci_partition_review = _validate_attempt_7_incident(
         background["failed_ci_partition_review_attempt"],
         "$contract.background_inputs.failed_ci_partition_review_attempt",
+    )
+    sibling_hygiene_preflight = _validate_attempt_8_incident(
+        background["failed_sibling_hygiene_preflight_attempt"],
+        "$contract.background_inputs.failed_sibling_hygiene_preflight_attempt",
     )
     requests = _exact_keys(
         contract["resource_requests"],
@@ -3018,16 +3175,17 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v8 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v9 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v8 resource request IDs are not unique")
-    if current_request_ids != list(V8_REQUEST_IDS):
-        raise EvidenceError("v8 resource request IDs differ from frozen authority")
+        raise EvidenceError("v9 resource request IDs are not unique")
+    if current_request_ids != list(V9_REQUEST_IDS):
+        raise EvidenceError("v9 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
         *git_probe_review["request_ids"],
         *ci_partition_review["request_ids"],
+        *sibling_hygiene_preflight["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -3048,7 +3206,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v8 resource request IDs reuse historical authority")
+        raise EvidenceError("v9 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -3104,7 +3262,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8":
+    if authority["exact_parent"] != "0a893a39ffefeebbeab0dfe31f7ac84cd2c91b25":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -4432,6 +4590,11 @@ def validate_superseded_request_ledger_absence(
             raise EvidenceError(
                 f"rejected request ID from {incident_name} occurs in the resource ledger"
             )
+    sibling_incident = contract["background_inputs"][
+        "failed_sibling_hygiene_preflight_attempt"
+    ]
+    if any(request_id in ledger for request_id in sibling_incident["request_ids"]):
+        raise EvidenceError("superseded attempt-8 request ID occurs in the resource ledger")
 
 
 def _require_successor_after_terminal(
