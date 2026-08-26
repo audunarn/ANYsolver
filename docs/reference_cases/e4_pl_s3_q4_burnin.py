@@ -86,13 +86,21 @@ V15_SUPERSEDED_REQUEST_IDS = (
     "e935c56e9889470db4be917bfb50d134",
     "7fe9bc99e1aa453ebf6a380b85e883f0",
 )
-V16_REQUEST_IDS = (
+V16_SUPERSEDED_REQUEST_IDS = (
     "d0124e060a1844e9b1e5e971f08f491c",
     "5d2dac5aef07481082b9876d08f01e25",
     "2d41a434d055466d8ecfad03080d65c0",
     "48297fe1042f4fd69a2c6b43b566e35c",
     "4fb2b091709848498751effdfdf5abfa",
     "90a829891c6b4516b2436ea89d16fe9f",
+)
+V17_REQUEST_IDS = (
+    "e49b85cf72f34317888ef52c29e3decc",
+    "c31315ce7a734fcc85c2a5d61190736b",
+    "5923420f4a3c4a4f949c798e50159ba1",
+    "75af25eddb2649be94f4ffc3c9be0810",
+    "19cdc0dd22af48c4bcc275738a0e7781",
+    "e26b22079f0b4219a1c3d354b63b8ee3",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -579,6 +587,7 @@ def _validate_cycle_wall_policy(value: Any, location: str) -> dict[str, Any]:
             "cumulative_deadlines_seconds",
             "final_evidence_reserve_seconds",
             "scope",
+            "watchdog_termination_margin_seconds",
         },
         location,
     )
@@ -591,12 +600,13 @@ def _validate_cycle_wall_policy(value: Any, location: str) -> dict[str, Any]:
         "absolute_wall_limit_seconds": 1200,
         "clock": "time.monotonic",
         "cumulative_deadlines_seconds": {
-            "anyfem": 990,
-            "functional": 900,
-            "performance": 1110,
+            "anyfem": 950,
+            "functional": 860,
+            "performance": 1060,
         },
-        "final_evidence_reserve_seconds": 90,
+        "final_evidence_reserve_seconds": 130,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
+        "watchdog_termination_margin_seconds": 10,
     }
     if policy != expected:
         raise EvidenceError(f"{location} mismatch")
@@ -612,11 +622,60 @@ def _validate_cycle_wall_policy(value: Any, location: str) -> dict[str, Any]:
     ):
         raise EvidenceError(f"{location} cumulative deadlines are not strictly ordered")
     if (
-        deadlines["performance"] + policy["final_evidence_reserve_seconds"]
+        deadlines["performance"]
+        + policy["final_evidence_reserve_seconds"]
+        + policy["watchdog_termination_margin_seconds"]
         != policy["absolute_wall_limit_seconds"]
     ):
-        raise EvidenceError(f"{location} final evidence reserve does not close the wall limit")
+        raise EvidenceError(
+            f"{location} evidence reserve and watchdog margin do not close the wall limit"
+        )
     return policy
+
+
+def _validate_cycle_runtime_basis(value: Any, location: str) -> dict[str, Any]:
+    """Bind measured feasibility evidence for the serial bounded-cycle schedule."""
+
+    basis = _exact_keys(
+        value,
+        {
+            "accepted_q1m_elapsed_microseconds",
+            "accepted_q1m_historical_input",
+            "closest_full_s3_functional",
+            "confidence",
+            "current_functional",
+            "minimum_worker_windows_after_predecessor_deadline_seconds",
+            "performance_execution",
+        },
+        location,
+    )
+    expected = {
+        "accepted_q1m_elapsed_microseconds": {
+            "anyfem": 17535264,
+            "functional": 237449060,
+            "performance": 29476323,
+        },
+        "accepted_q1m_historical_input": "q1m_clean_gate_result",
+        "closest_full_s3_functional": {
+            "elapsed_microseconds": 459459596,
+            "historical_input": "rejected_resource_result",
+            "node_count": 1034,
+        },
+        "confidence": "MEDIUM_CURRENT_PARALLEL_WAVE_NOT_PREVIOUSLY_COMPLETED",
+        "current_functional": {
+            "internal_deadline_seconds": 780,
+            "node_count": 1036,
+            "parallel_shard_node_counts": [1, 362, 361, 312],
+        },
+        "minimum_worker_windows_after_predecessor_deadline_seconds": {
+            "anyfem": 50,
+            "performance": 70,
+        },
+        "performance_execution": "SERIAL_ISOLATED_AFTER_FUNCTIONAL_AND_ANYFEM",
+    }
+    if basis != expected:
+        raise EvidenceError(f"{location} mismatch")
+    return basis
 
 
 def _validate_request_execution_policy(
@@ -981,9 +1040,9 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
             f"{location}.execution.internal_deadline_seconds",
             minimum=1,
         )
-        != 830
+        != 780
     ):
-        raise EvidenceError(f"{location}.execution.internal_deadline_seconds must be 830")
+        raise EvidenceError(f"{location}.execution.internal_deadline_seconds must be 780")
     environment = _exact_keys(
         execution["environment"],
         {"NUMBA_NUM_THREADS", "scope"},
@@ -1594,7 +1653,7 @@ def _validate_functional_raw_shard(
         raise EvidenceError(f"{location}.attempts must be zero or one")
     if _require_int(
         shard["deadline_seconds"], f"{location}.deadline_seconds"
-    ) != 830:
+    ) != 780:
         raise EvidenceError(f"{location}.deadline_seconds mismatch")
     for key in ("duration_seconds",):
         duration = shard[key]
@@ -3649,6 +3708,108 @@ def _validate_attempt_15_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_16_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the rejected v16 cycle-efficiency authority and its corrections."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "authority_tests",
+            "contract",
+            "correction",
+            "failure",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 16:
+        raise EvidenceError(f"{location}.attempt must be 16")
+    authority = _exact_keys(
+        incident["authority_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.authority_commit",
+    )
+    if authority != {
+        "commit": "6a13b31b6d02bd7eb63aca428d7ed66cc7922376",
+        "parent": "1f6d57d9073a1e1ced951cbb4bf1b945f0e56210",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "a320643794ca40057c506d6a115c73d22b791a25",
+    }:
+        raise EvidenceError(f"{location}.authority_commit mismatch")
+    tests = _exact_keys(
+        incident["authority_tests"],
+        {"elapsed_seconds", "failed", "passed"},
+        f"{location}.authority_tests",
+    )
+    if tests != {"elapsed_seconds": 6.58, "failed": 0, "passed": 35}:
+        raise EvidenceError(f"{location}.authority_tests mismatch")
+    if _validate_hash_record(incident["contract"], f"{location}.contract") != {
+        "bytes": 300650,
+        "sha256": "be11cd2068fc710b58ee76cf9643fd98b3a7e96a4aa3cd6c734ae9940e5cdf9d",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    expected_correction = {
+        "functional_internal_deadline_seconds": 780,
+        "parallel_sandbox_extractions": 4,
+        "prelaunch_tail_terminalization": (
+            "PROVE_UNSTARTED_THEN_CANCEL_WITHOUT_RETRY"
+        ),
+        "serial_cumulative_deadlines_seconds": {
+            "anyfem": 950,
+            "functional": 860,
+            "performance": 1060,
+        },
+        "true_evidence_reserve_seconds": 130,
+        "watchdog_before_job_boundary": True,
+        "watchdog_termination_margin_seconds": 10,
+    }
+    if incident["correction"] != expected_correction:
+        raise EvidenceError(f"{location}.correction mismatch")
+    failure = _exact_keys(
+        incident["failure"],
+        {
+            "findings",
+            "formal_execution_started",
+            "resource_requests_approved",
+            "resource_requests_consumed",
+            "reviewer_id",
+            "verdict",
+        },
+        f"{location}.failure",
+    )
+    expected_findings = [
+        {"id": "SERIAL_LANE_WINDOWS_LACK_SUCCESS_FEASIBILITY_BASIS", "priority": "P1"},
+        {"id": "PRECONSUMPTION_CONTROL_FAILURE_CAN_STRAND_CYCLE", "priority": "P1"},
+        {"id": "EVIDENCE_RESERVE_EXCLUDES_WATCHDOG_TERMINATION_MARGIN", "priority": "P2"},
+        {"id": "FUNCTIONAL_SANDBOX_EXTRACTIONS_SERIAL", "priority": "P2"},
+        {"id": "WATCHDOG_CLOCK_STARTS_AFTER_JOB_BOUNDARY_SETUP", "priority": "P2"},
+    ]
+    if failure != {
+        "findings": expected_findings,
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+        "reviewer_id": "codex-v16-independent-cycle-efficiency-audit-6a13b31",
+        "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+    }:
+        raise EvidenceError(f"{location}.failure mismatch")
+    if incident["request_ids"] != list(V16_SUPERSEDED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v16-6a13b31",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -3786,16 +3947,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v16"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v17"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-15"
+        r"\s3-q4-final-freeze-correction-16"
     ):
-        raise EvidenceError("v16 burn-in output root mismatch")
+        raise EvidenceError("v17 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -3806,6 +3967,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "clean_status_scope",
             "common_preflight_before_resources",
             "coordinator_isolated_mode",
+            "cycle_runtime_basis",
             "cycle_wall_policy",
             "environment_guard",
             "fresh_external_logs",
@@ -3863,6 +4025,14 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     _validate_cycle_wall_policy(
         execution["cycle_wall_policy"], "$contract.execution.cycle_wall_policy"
     )
+    _validate_cycle_runtime_basis(
+        execution["cycle_runtime_basis"], "$contract.execution.cycle_runtime_basis"
+    )
+    if (
+        execution["cycle_wall_policy"]["watchdog_termination_margin_seconds"]
+        != execution["timeout_policy"]["termination_grace_seconds"]
+    ):
+        raise EvidenceError("cycle watchdog margin differs from termination grace")
     _validate_request_execution_policy(
         execution["request_execution_policy"],
         "$contract.execution.request_execution_policy",
@@ -3893,6 +4063,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v13_bootstrap_identity_preflight_attempt",
             "failed_v14_detached_bootstrap_review_attempt",
             "failed_v15_quick_cleanliness_mock_preflight_attempt",
+            "failed_v16_cycle_efficiency_authority_review_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -3945,6 +4116,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v15_quick_cleanliness_mock_preflight_attempt"],
         "$contract.background_inputs.failed_v15_quick_cleanliness_mock_preflight_attempt",
     )
+    v16_cycle_efficiency_authority_review = _validate_attempt_16_incident(
+        background["failed_v16_cycle_efficiency_authority_review_attempt"],
+        "$contract.background_inputs.failed_v16_cycle_efficiency_authority_review_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -3966,11 +4141,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v16 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v17 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v16 resource request IDs are not unique")
-    if current_request_ids != list(V16_REQUEST_IDS):
-        raise EvidenceError("v16 resource request IDs differ from frozen authority")
+        raise EvidenceError("v17 resource request IDs are not unique")
+    if current_request_ids != list(V17_REQUEST_IDS):
+        raise EvidenceError("v17 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -3984,6 +4159,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v13_bootstrap_identity_preflight["request_ids"],
         *v14_detached_bootstrap_review["request_ids"],
         *v15_quick_cleanliness_mock_preflight["request_ids"],
+        *v16_cycle_efficiency_authority_review["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -4004,7 +4180,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v16 resource request IDs reuse historical authority")
+        raise EvidenceError("v17 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -4060,7 +4236,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "1f6d57d9073a1e1ced951cbb4bf1b945f0e56210":
+    if authority["exact_parent"] != "6a13b31b6d02bd7eb63aca428d7ed66cc7922376":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -5444,6 +5620,7 @@ def validate_superseded_request_ledger_absence(
         "failed_v13_bootstrap_identity_preflight_attempt",
         "failed_v14_detached_bootstrap_review_attempt",
         "failed_v15_quick_cleanliness_mock_preflight_attempt",
+        "failed_v16_cycle_efficiency_authority_review_attempt",
     ):
         superseded = contract["background_inputs"][incident_name]
         if any(request_id in ledger for request_id in superseded["request_ids"]):

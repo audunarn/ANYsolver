@@ -43,7 +43,7 @@ CONTRACT_PATH = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.j
 S3_Q4_CONTRACT_PATH = (
     ROOT / "docs" / "reference_cases" / "e4_pl_s3_q4_burnin_contract.json"
 )
-S3_Q4_ACTIVE_AUTHORITY_GENERATION = "v16"
+S3_Q4_ACTIVE_AUTHORITY_GENERATION = "v17"
 
 FUNCTIONAL_WAVE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v2"
 FUNCTIONAL_SHARD_SCHEMA = "anysolver.e4-pl-s3-q4-functional-shard-v2"
@@ -133,7 +133,7 @@ CI_SHARD_NODE_AUTHORITIES = {
 
 # The parent watchdog includes import/argument handling, inventory discovery,
 # preparation, process launch/wait, tree termination, and cleanup.  Functional
-# execution starts termination at its frozen 830-second internal boundary and
+# execution starts termination at its frozen 780-second internal boundary and
 # still returns before the resource runner's later 860-second boundary.
 CI_COMMAND_WALL_LIMIT_SECONDS = 1200
 CI_COMMAND_TERMINATION_RESERVE_SECONDS = 30
@@ -1779,8 +1779,8 @@ def validate_functional_wave_contract(contract: Mapping[str, Any]) -> dict[str, 
         execution["internal_deadline_seconds"],
         "$contract.functional_wave.execution.internal_deadline_seconds",
         minimum=1,
-    ) != 830:
-        raise EvidenceError("functional internal deadline must be 830 seconds")
+    ) != 780:
+        raise EvidenceError("functional internal deadline must be 780 seconds")
     environment = _exact_keys(
         execution["environment"],
         {"NUMBA_NUM_THREADS", "scope"},
@@ -2426,7 +2426,7 @@ def _functional_wave_has_unproven_tree(shards: Sequence[Mapping[str, Any]]) -> b
 def _await_outer_resource_tree_termination() -> None:
     """Hold an uncertain child tree inside both enclosing watchdogs.
 
-    The gate-level parent starts complete-tree termination at 830 seconds and
+    The gate-level parent starts complete-tree termination at 780 seconds and
     the resource runner retains its independent 860-second invocation bound.
     Returning after an inner tree-kill failure could orphan descendants and
     falsely look like a normal resource exit, so this child remains alive only
@@ -3041,17 +3041,6 @@ def _run_functional_wave_unprotected(
         with expected_path.open("xb") as stream:
             stream.write(canonical_json_bytes(shard["node_ids"]))
         sandbox = shard_root / "cwd"
-        _functional_deadline_check(
-            absolute_deadline, f"{shard_id} sandbox extraction"
-        )
-        rows, summary = _extract_functional_tar(
-            archive_path, sandbox, absolute_deadline=absolute_deadline
-        )
-        _functional_deadline_check(
-            absolute_deadline, f"{shard_id} sandbox validation"
-        )
-        if rows != graph_rows or summary != graph_summary:
-            raise EvidenceError("functional source sandboxes have different initial graphs")
         prepared.append(
             {
                 "full_node_ids": wave["manifest"]["full_node_ids"],
@@ -3060,12 +3049,52 @@ def _run_functional_wave_unprotected(
                 "shard_root": shard_root,
             }
         )
-        print(
-            f"[functional-wave] prepared {shard_id} "
-            f"({shard['node_count']} nodes)",
-            file=sys.stderr,
-            flush=True,
+
+    def extract_and_verify_sandbox(item: Mapping[str, Any]) -> str:
+        shard_id = item["shard"]["shard_id"]
+        _functional_deadline_check(
+            absolute_deadline, f"{shard_id} sandbox extraction"
         )
+        rows, summary = _extract_functional_tar(
+            archive_path, item["sandbox"], absolute_deadline=absolute_deadline
+        )
+        _functional_deadline_check(
+            absolute_deadline, f"{shard_id} sandbox validation"
+        )
+        if rows != graph_rows or summary != graph_summary:
+            raise EvidenceError(
+                "functional source sandboxes have different initial graphs"
+            )
+        return shard_id
+
+    _functional_deadline_check(absolute_deadline, "sandbox extraction wave")
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=4,
+        thread_name_prefix="functional-extract",
+    ) as pool:
+        extraction_futures: list[concurrent.futures.Future[Any]] = []
+        for item in prepared:
+            shard_id = item["shard"]["shard_id"]
+            _functional_deadline_check(
+                absolute_deadline, f"{shard_id} sandbox extraction submission"
+            )
+            extraction_futures.append(
+                pool.submit(extract_and_verify_sandbox, item)
+            )
+        for item, future in zip(prepared, extraction_futures, strict=True):
+            shard = item["shard"]
+            shard_id = shard["shard_id"]
+            _functional_deadline_check(
+                absolute_deadline, f"{shard_id} sandbox extraction collection"
+            )
+            if future.result() != shard_id:
+                raise EvidenceError("functional sandbox extraction identity mismatch")
+            print(
+                f"[functional-wave] prepared {shard_id} "
+                f"({shard['node_count']} nodes)",
+                file=sys.stderr,
+                flush=True,
+            )
     graph_payload = {
         "files": graph_rows,
         "schema": wave["source"]["file_graph_schema"],

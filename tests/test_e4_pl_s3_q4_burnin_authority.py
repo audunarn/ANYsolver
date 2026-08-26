@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "be11cd2068fc710b58ee76cf9643fd98b3a7e96a4aa3cd6c734ae9940e5cdf9d"
+CONTRACT_SHA256 = "2e413a345bb6656a14198b5c57bf35060322fce1526cd0e86351b71b6fee8179"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-15"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-16"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -157,7 +157,7 @@ FAILED_ATTEMPT_15_REQUEST_IDS = [
     "e935c56e9889470db4be917bfb50d134",
     "7fe9bc99e1aa453ebf6a380b85e883f0",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_16_REQUEST_IDS = [
     "d0124e060a1844e9b1e5e971f08f491c",
     "5d2dac5aef07481082b9876d08f01e25",
     "2d41a434d055466d8ecfad03080d65c0",
@@ -165,30 +165,38 @@ CURRENT_REQUEST_IDS = [
     "4fb2b091709848498751effdfdf5abfa",
     "90a829891c6b4516b2436ea89d16fe9f",
 ]
+CURRENT_REQUEST_IDS = [
+    "e49b85cf72f34317888ef52c29e3decc",
+    "c31315ce7a734fcc85c2a5d61190736b",
+    "5923420f4a3c4a4f949c798e50159ba1",
+    "75af25eddb2649be94f4ffc3c9be0810",
+    "19cdc0dd22af48c4bcc275738a0e7781",
+    "e26b22079f0b4219a1c3d354b63b8ee3",
+]
 CURRENT_REQUEST_FILE_RECORDS = [
     {
         "bytes": 1358,
-        "sha256": "4323736472339afdc2019cf9f1838b27a67c8154e5c369386c28280c711cbb52",
+        "sha256": "9e040bbd9d529e0f0f09e42c9eb3c44098060f5b167cf54637d1f2823a16ca16",
     },
     {
-        "bytes": 1010,
-        "sha256": "3a0634db86f0c0eb7bb9a016e3fbd5086bd8597dbe8528ae7890b63ce9f8b68b",
+        "bytes": 1009,
+        "sha256": "b87e0ceb66d41a51c5e0613a6089219ca7b0df6a5273f4c4b942be3d5e2fb150",
     },
     {
-        "bytes": 1272,
-        "sha256": "86866369fce41b772c010e2672c28dd89527dff07bff5003f665b7368db25eac",
+        "bytes": 1269,
+        "sha256": "f4907f89ca098feda2828f4fdb9715cfe89a851c13626fcc2f14da79a6ed1fce",
     },
     {
         "bytes": 1358,
-        "sha256": "5e8214d68ccdf5d0c48007871f05c6e12f4ac89b92543d44318c855984b7c96d",
+        "sha256": "2ea3052506167cedd63496fbd845963ab2a60e6dcc37ec3c127d966542916229",
     },
     {
-        "bytes": 1010,
-        "sha256": "1fb9ea50efedde5160adfefcc9a4fd15de1908780b4022be4e57873beb463af4",
+        "bytes": 1009,
+        "sha256": "94f2c6ec549ba0db24eaa79f2c8d7b7300e2b4a476ae8f5e73ea60363dbdd0c7",
     },
     {
-        "bytes": 1272,
-        "sha256": "6bd3e27920671f4a9aa9fcf09ff2da3cde30a41a7223cc88e2c0957580f9cee3",
+        "bytes": 1269,
+        "sha256": "21af81942403b11346c63bf2e6bba9e9601d10709fa7b817c5064747b17a86c0",
     },
 ]
 
@@ -482,10 +490,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v16"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v17"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "1f6d57d9073a1e1ced951cbb4bf1b945f0e56210",
+        "exact_parent": "6a13b31b6d02bd7eb63aca428d7ed66cc7922376",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1340,6 +1348,71 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "request_ids": FAILED_ATTEMPT_15_REQUEST_IDS,
         "role": "PRESERVED_FAILED_PREFLIGHT_AUTHORITY_ONLY",
     }
+    v16_efficiency = contract["background_inputs"][
+        "failed_v16_cycle_efficiency_authority_review_attempt"
+    ]
+    assert v16_efficiency == {
+        "attempt": 16,
+        "authority_commit": {
+            "commit": "6a13b31b6d02bd7eb63aca428d7ed66cc7922376",
+            "parent": "1f6d57d9073a1e1ced951cbb4bf1b945f0e56210",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "a320643794ca40057c506d6a115c73d22b791a25",
+        },
+        "authority_tests": {"elapsed_seconds": 6.58, "failed": 0, "passed": 35},
+        "contract": {
+            "bytes": 300650,
+            "sha256": "be11cd2068fc710b58ee76cf9643fd98b3a7e96a4aa3cd6c734ae9940e5cdf9d",
+        },
+        "correction": {
+            "functional_internal_deadline_seconds": 780,
+            "parallel_sandbox_extractions": 4,
+            "prelaunch_tail_terminalization": (
+                "PROVE_UNSTARTED_THEN_CANCEL_WITHOUT_RETRY"
+            ),
+            "serial_cumulative_deadlines_seconds": {
+                "anyfem": 950,
+                "functional": 860,
+                "performance": 1060,
+            },
+            "true_evidence_reserve_seconds": 130,
+            "watchdog_before_job_boundary": True,
+            "watchdog_termination_margin_seconds": 10,
+        },
+        "failure": {
+            "findings": [
+                {
+                    "id": "SERIAL_LANE_WINDOWS_LACK_SUCCESS_FEASIBILITY_BASIS",
+                    "priority": "P1",
+                },
+                {
+                    "id": "PRECONSUMPTION_CONTROL_FAILURE_CAN_STRAND_CYCLE",
+                    "priority": "P1",
+                },
+                {
+                    "id": "EVIDENCE_RESERVE_EXCLUDES_WATCHDOG_TERMINATION_MARGIN",
+                    "priority": "P2",
+                },
+                {
+                    "id": "FUNCTIONAL_SANDBOX_EXTRACTIONS_SERIAL",
+                    "priority": "P2",
+                },
+                {
+                    "id": "WATCHDOG_CLOCK_STARTS_AFTER_JOB_BOUNDARY_SETUP",
+                    "priority": "P2",
+                },
+            ],
+            "formal_execution_started": False,
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+            "reviewer_id": "codex-v16-independent-cycle-efficiency-audit-6a13b31",
+            "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v16-6a13b31",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_16_REQUEST_IDS,
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -1593,7 +1666,7 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
     assert execution["max_workers"] == 4
     assert execution["numerical_library_threads"] == 1
     assert execution["automatic_retry"] is False
-    assert execution["internal_deadline_seconds"] == 830
+    assert execution["internal_deadline_seconds"] == 780
     assert execution["environment"] == {
         "NUMBA_NUM_THREADS": "1",
         "scope": "FUNCTIONAL_SHARDS_ONLY",
@@ -1703,12 +1776,37 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
         "absolute_wall_limit_seconds": 1200,
         "clock": "time.monotonic",
         "cumulative_deadlines_seconds": {
-            "anyfem": 990,
-            "functional": 900,
-            "performance": 1110,
+            "anyfem": 950,
+            "functional": 860,
+            "performance": 1060,
         },
-        "final_evidence_reserve_seconds": 90,
+        "final_evidence_reserve_seconds": 130,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
+        "watchdog_termination_margin_seconds": 10,
+    }
+    assert contract["execution"]["cycle_runtime_basis"] == {
+        "accepted_q1m_elapsed_microseconds": {
+            "anyfem": 17535264,
+            "functional": 237449060,
+            "performance": 29476323,
+        },
+        "accepted_q1m_historical_input": "q1m_clean_gate_result",
+        "closest_full_s3_functional": {
+            "elapsed_microseconds": 459459596,
+            "historical_input": "rejected_resource_result",
+            "node_count": 1034,
+        },
+        "confidence": "MEDIUM_CURRENT_PARALLEL_WAVE_NOT_PREVIOUSLY_COMPLETED",
+        "current_functional": {
+            "internal_deadline_seconds": 780,
+            "node_count": 1036,
+            "parallel_shard_node_counts": [1, 362, 361, 312],
+        },
+        "minimum_worker_windows_after_predecessor_deadline_seconds": {
+            "anyfem": 50,
+            "performance": 70,
+        },
+        "performance_execution": "SERIAL_ISOLATED_AFTER_FUNCTIONAL_AND_ANYFEM",
     }
     assert contract["execution"]["clean_status_args"] == [
         "status",
@@ -1773,12 +1871,12 @@ def test_timeout_and_functional_manifest_mutations_are_rejected() -> None:
     bounded_policy = process_runner._timeout_policy(contract)
     assert bounded_policy["wall_limit_seconds"] == 1200
     assert bounded_policy["worker_timeout_seconds"] == 1160
-    assert contract["functional_wave"]["execution"]["internal_deadline_seconds"] == 830
+    assert contract["functional_wave"]["execution"]["internal_deadline_seconds"] == 780
     assert (
         contract["execution"]["cycle_wall_policy"]["cumulative_deadlines_seconds"][
             "functional"
         ]
-        == 900
+        == 860
     )
     assert (
         bounded_policy["worker_timeout_seconds"]
@@ -1812,7 +1910,7 @@ def test_timeout_and_functional_manifest_mutations_are_rejected() -> None:
     with pytest.raises(burnin.EvidenceError):
         burnin.validate_functional_wave_contract(mutated)
 
-    for deadline in (829, 831):
+    for deadline in (779, 781):
         mutated = copy.deepcopy(contract)
         mutated["functional_wave"]["execution"]["internal_deadline_seconds"] = deadline
         with pytest.raises(burnin.EvidenceError):
@@ -1844,12 +1942,13 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         "absolute_wall_limit_seconds": 1200,
         "clock": "time.monotonic",
         "cumulative_deadlines_seconds": {
-            "anyfem": 990,
-            "functional": 900,
-            "performance": 1110,
+            "anyfem": 950,
+            "functional": 860,
+            "performance": 1060,
         },
-        "final_evidence_reserve_seconds": 90,
+        "final_evidence_reserve_seconds": 130,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
+        "watchdog_termination_margin_seconds": 10,
     }
     rows = contract["resource_requests"]["cycle_1"]
     monkeypatch.setattr(
@@ -1901,9 +2000,9 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         == 0
     )
     assert calls == [
-        (rows[0]["request_id"], 1900.0, False, True),
-        (rows[1]["request_id"], 1990.0, False, True),
-        (rows[2]["request_id"], 2110.0, False, True),
+        (rows[0]["request_id"], 1860.0, False, True),
+        (rows[1]["request_id"], 1950.0, False, True),
+        (rows[2]["request_id"], 2060.0, False, True),
     ]
     assert published == [1]
     assert emitted == [1]
@@ -1911,7 +2010,12 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     calls.clear()
     published.clear()
     emitted.clear()
-    cancelled: list[bool] = []
+    cancelled: list[tuple[int, str]] = []
+
+    def cancel_tail(
+        _contract: object, *, start_cycle: int, start_lane: str
+    ) -> None:
+        cancelled.append((start_cycle, start_lane))
 
     def fail_second(**kwargs: object) -> int:
         calls.append(
@@ -1927,7 +2031,7 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
 
     monkeypatch.setattr(process_runner, "_run_resource_bounded", fail_second)
     monkeypatch.setattr(
-        process_runner, "cancel_remaining", lambda: cancelled.append(True)
+        process_runner, "_cancel_proven_unstarted_tail", cancel_tail
     )
     assert (
         process_runner._run_cycle_bounded(
@@ -1942,18 +2046,78 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         rows[0]["request_id"],
         rows[1]["request_id"],
     ]
-    assert cancelled == [True]
-    assert published == []
+    assert cancelled == [(1, "performance")]
+    assert published == [1]
+    assert emitted == [1]
+
+    calls.clear()
+    published.clear()
+    emitted.clear()
+    cancelled.clear()
+
+    def reject_second_before_execution(**kwargs: object) -> int:
+        calls.append(
+            (
+                str(kwargs["request_id"]),
+                float(kwargs["invocation_deadline"]),
+                bool(kwargs["emit_manifest"]),
+                kwargs["cycle_execution_capability"]
+                is process_runner._CYCLE_RESOURCE_EXECUTION_CAPABILITY,
+            )
+        )
+        if len(calls) == 2:
+            raise burnin.EvidenceError("simulated lane-2 prelaunch rejection")
+        return 0
+
+    monkeypatch.setattr(
+        process_runner, "_run_resource_bounded", reject_second_before_execution
+    )
+    assert (
+        process_runner._run_cycle_bounded(
+            cycle=1,
+            contract=contract,
+            timeout_policy=timeout_policy,
+            invocation_deadline=2200.0,
+        )
+        == process_runner._CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
+    )
+    assert [request_id for request_id, _deadline, _emit, _capability in calls] == [
+        rows[0]["request_id"],
+        rows[1]["request_id"],
+    ]
+    assert cancelled == [(1, "anyfem")]
+    assert published == [1]
+    assert emitted == [1]
+
+    calls.clear()
+    published.clear()
+    emitted.clear()
+    cancelled.clear()
+    monkeypatch.setattr(process_runner, "_run_resource_bounded", pass_lane)
+    monkeypatch.setattr(process_runner.time, "monotonic", lambda: 1860.1)
+    assert (
+        process_runner._run_cycle_bounded(
+            cycle=1,
+            contract=contract,
+            timeout_policy=timeout_policy,
+            invocation_deadline=2200.0,
+        )
+        == process_runner._CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
+    )
+    assert calls == [(rows[0]["request_id"], 1860.0, False, True)]
+    assert cancelled == [(1, "anyfem")]
+    assert published == [1]
     assert emitted == [1]
 
     for path, bad in (
         (("absolute_wall_limit_seconds",), 1201),
         (("clock",), "time.time"),
-        (("final_evidence_reserve_seconds",), 89),
+        (("final_evidence_reserve_seconds",), 129),
         (("scope",), "PER_LANE"),
-        (("cumulative_deadlines_seconds", "functional"), 901),
-        (("cumulative_deadlines_seconds", "anyfem"), 991),
-        (("cumulative_deadlines_seconds", "performance"), 1111),
+        (("watchdog_termination_margin_seconds",), 9),
+        (("cumulative_deadlines_seconds", "functional"), 861),
+        (("cumulative_deadlines_seconds", "anyfem"), 951),
+        (("cumulative_deadlines_seconds", "performance"), 1061),
     ):
         hostile = copy.deepcopy(contract)
         target = hostile["execution"]["cycle_wall_policy"]
@@ -1974,6 +2138,228 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         hostile["execution"]["request_execution_policy"][key] = bad
         with pytest.raises(burnin.EvidenceError):
             process_runner._request_execution_policy(hostile)
+
+
+def test_proven_unstarted_tail_terminalizes_current_and_later_requests(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contract = _load_contract()
+    ordered_rows = [
+        row
+        for cycle in (1, 2)
+        for row in contract["resource_requests"][f"cycle_{cycle}"]
+    ]
+    expected_rows = ordered_rows[1:]
+    ledger = tmp_path / "ledger.md"
+    ledger.write_text("# isolated ledger\n", encoding="utf-8", newline="")
+    manager = {"active_lock": tmp_path / "active-lock", "ledger": ledger}
+    candidate = {"commit": "1" * 40, "tree": "2" * 40}
+    acquired: list[list[str]] = []
+    released: list[object] = []
+    appended: list[tuple[list[str], str]] = []
+
+    monkeypatch.setattr(process_runner, "_manager_paths", lambda _contract: manager)
+    monkeypatch.setattr(
+        process_runner,
+        "_load_approval_snapshot",
+        lambda _contract: ({"candidate": candidate}, {"bytes": 1, "sha256": "3" * 64}),
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_request_payload",
+        lambda _contract, request_id: (
+            next(row for row in ordered_rows if row["request_id"] == request_id),
+            {"request_id": request_id},
+            tmp_path / f"{request_id}.json",
+        ),
+    )
+    monkeypatch.setattr(
+        burnin,
+        "approval_ledger_fields",
+        lambda request, _authority, _candidate: [request["request_id"], "APPROVED"],
+    )
+    monkeypatch.setattr(
+        burnin,
+        "terminal_ledger_fields",
+        lambda request, _process, _manifest: [
+            request["request_id"],
+            "CANCELLED_NOT_RUN",
+        ],
+    )
+    monkeypatch.setattr(
+        burnin,
+        "_ledger_entries",
+        lambda _ledger, request_id, status: (
+            [["2026-08-26T12:00:00+02:00", request_id, "APPROVED"]]
+            if status == "APPROVED"
+            else []
+        ),
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_existing_process_directory",
+        lambda _contract, _prefix, *, required: None,
+    )
+
+    def acquire(
+        _manager: object,
+        *,
+        candidate: object,
+        request_order: list[str],
+        purpose: str,
+    ) -> object:
+        assert candidate == {"commit": "1" * 40, "tree": "2" * 40}
+        assert purpose == "CANCEL_S3_Q4_PROVEN_UNSTARTED_TAIL"
+        acquired.append(request_order)
+        return {"owner": "test"}
+
+    monkeypatch.setattr(process_runner, "_acquire_manager_reservation", acquire)
+    monkeypatch.setattr(
+        process_runner,
+        "_release_manager_reservation",
+        lambda _manager, owner: released.append(owner),
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_append_ledger_fields",
+        lambda _ledger, fields, *, timestamp: appended.append(
+            (list(fields), timestamp)
+        ),
+    )
+    monkeypatch.setattr(process_runner, "_now", lambda: "2026-08-26T12:01:00Z")
+    monkeypatch.setattr(process_runner, "_ACTIVE_JOB_HANDLES", set())
+    monkeypatch.setattr(process_runner, "_ACTIVE_SUSPENDED_WORKERS", {})
+    process_runner._RESOURCE_UNPROVEN_TREE.clear()
+
+    process_runner._cancel_proven_unstarted_tail(
+        contract, start_cycle=1, start_lane="anyfem"
+    )
+
+    expected_ids = [row["request_id"] for row in expected_rows]
+    assert acquired == [expected_ids]
+    assert [fields[0] for fields, _timestamp in appended] == expected_ids
+    assert all(fields[1] == "CANCELLED_NOT_RUN" for fields, _timestamp in appended)
+    assert all(
+        timestamp == "2026-08-26T12:01:00Z" for _fields, timestamp in appended
+    )
+    assert released == [{"owner": "test"}]
+
+
+def test_aggregate_accepts_cancelled_not_run_without_process_manifests(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contract = copy.deepcopy(_load_contract())
+    contract["non_resource_commands"]["output_root"] = str(tmp_path)
+    cycle_statuses = {
+        1: ("COMPLETED_PASS", "CANCELLED_NOT_RUN", "CANCELLED_NOT_RUN"),
+        2: ("CANCELLED_NOT_RUN",) * 3,
+    }
+    manifest_reads: list[str] = []
+    process_reads: list[str] = []
+    writes: list[Path] = []
+
+    monkeypatch.setattr(process_runner, "_bootstrap_authority", lambda: None)
+    monkeypatch.setattr(burnin, "load_contract", lambda: contract)
+    monkeypatch.setattr(
+        process_runner,
+        "_verify_repositories",
+        lambda _contract: (tmp_path, {}, "1" * 40, "2" * 40),
+    )
+    monkeypatch.setattr(process_runner, "_publish_completed_cycles", lambda _contract: None)
+    monkeypatch.setattr(
+        process_runner,
+        "_cycle_terminal_snapshot",
+        lambda _contract, cycle: {
+            "rows": [
+                {"terminal": {"fields": ["request-id", status]}}
+                for status in cycle_statuses[cycle]
+            ]
+        },
+    )
+
+    def process_record(_contract: object, prefix: str) -> dict[str, object]:
+        process_reads.append(prefix)
+        if prefix.startswith("common."):
+            return {"status": "PASS"}
+        if prefix == "cycle_1.functional":
+            return {
+                "request_id": contract["resource_requests"]["cycle_1"][0][
+                    "request_id"
+                ],
+                "status": "PASS",
+            }
+        raise AssertionError(f"cancelled lane unexpectedly read process data: {prefix}")
+
+    def load_manifest(
+        _contract: object, prefix: str, *, required: bool
+    ) -> dict[str, object]:
+        assert required is True
+        assert prefix == "cycle_1.functional"
+        manifest_reads.append(prefix)
+        return {}
+
+    monkeypatch.setattr(process_runner, "_process_record", process_record)
+    monkeypatch.setattr(process_runner, "_load_process_manifest", load_manifest)
+    monkeypatch.setattr(
+        process_runner, "_require_package_artifacts", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        burnin,
+        "optional_regular_file_record",
+        lambda _path, **_kwargs: {"bytes": 1, "sha256": "3" * 64},
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_approval_snapshot_path",
+        lambda _contract: tmp_path / "approval.json",
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_cycle_snapshot_path",
+        lambda _contract, cycle: tmp_path / f"cycle-{cycle}.json",
+    )
+
+    def load_snapshot(path: Path) -> dict[str, object]:
+        if path.name == "approval.json":
+            return {"kind": "APPROVAL"}
+        return {"cycle": int(path.stem[-1]), "kind": "CYCLE_TERMINAL"}
+
+    monkeypatch.setattr(process_runner, "_load_canonical_json", load_snapshot)
+    monkeypatch.setattr(
+        process_runner,
+        "_validate_ledger_snapshot",
+        lambda snapshot, *, contract: snapshot,
+    )
+    monkeypatch.setattr(
+        burnin,
+        "file_hash_record",
+        lambda _path: {"bytes": 1, "sha256": "4" * 64},
+    )
+    monkeypatch.setattr(
+        burnin, "validate_external_bindings", lambda *_args, **_kwargs: None
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_write_canonical_json_once",
+        lambda path, _value: writes.append(path),
+    )
+
+    result = process_runner.aggregate_result()
+
+    assert manifest_reads == ["cycle_1.functional"]
+    assert process_reads == [
+        "common.quick.1",
+        "common.package.1",
+        "common.additive.1",
+        "common.additive.2",
+        "common.additive.3",
+        "cycle_1.functional",
+    ]
+    assert result["cycles"][0]["status"] == "FAIL"
+    assert result["cycles"][0]["lanes"]["anyfem"]["status"] == "NOT_RUN"
+    assert result["cycles"][0]["lanes"]["performance"]["status"] == "NOT_RUN"
+    assert result["cycles"][1]["status"] == "NOT_RUN"
+    assert writes == [tmp_path / contract["adjudication"]["external_result_filename"]]
 
 
 def test_current_requests_reject_standalone_execution_before_side_effects(
@@ -2042,7 +2428,7 @@ def test_functional_wave_deadline_prevents_late_launch_and_binds_partial_extent(
             "shard_root": shard_root,
         },
         absolute_deadline=time.monotonic() - 1.0,
-        deadline_seconds=830,
+        deadline_seconds=780,
         timeout_policy=contract["execution"]["timeout_policy"],
     )
     assert canonical == {
@@ -2073,7 +2459,21 @@ def test_functional_wave_deadline_prevents_late_launch_and_binds_partial_extent(
         encoding="utf-8"
     )
     assert "absolute_deadline = wave_started + deadline" in source
-    assert "max_workers=int(wave[\"execution\"][\"max_workers\"])" in source
+    wave_start = source.index("def _run_functional_wave_unprotected(")
+    wave_end = source.index("\ndef _functional_artifact_extent(", wave_start)
+    wave_source = source[wave_start:wave_end]
+    extraction_start = wave_source.index("def extract_and_verify_sandbox(")
+    extraction_pool = wave_source.index(
+        'thread_name_prefix="functional-extract"', extraction_start
+    )
+    shard_launch = wave_source.index(
+        'thread_name_prefix="functional-wave"', extraction_pool
+    )
+    assert extraction_start < extraction_pool < shard_launch
+    assert "max_workers=4" in wave_source[extraction_start:shard_launch]
+    assert "pool.submit(extract_and_verify_sandbox, item)" in wave_source
+    assert "zip(prepared, extraction_futures, strict=True)" in wave_source
+    assert "max_workers=int(wave[\"execution\"][\"max_workers\"])" in wave_source
 
 
 def test_functional_selectors_preserve_split_module_ownership() -> None:
@@ -2511,7 +2911,7 @@ def test_inner_tree_termination_failure_is_held_for_outer_tree_kill(
             "shard_root": shard_root,
         },
         absolute_deadline=time.monotonic() + 60.0,
-        deadline_seconds=830,
+        deadline_seconds=780,
         timeout_policy=contract["execution"]["timeout_policy"],
     )
     assert canonical["status"] == "TIMEOUT_TREE_TERMINATION_FAILED"
@@ -3011,7 +3411,7 @@ def test_cli_dispatch_does_not_bootstrap_before_bounded_wrapper(
     with pytest.raises(RuntimeError, match="authority rejection"):
         process_runner.main(["local", "--lane", "quick"])
     assert stop.is_set()
-    assert events == ["job", "watchdog", "bootstrap", "join"]
+    assert events == ["watchdog", "job", "bootstrap", "join"]
 
 
 def test_job_assignment_failure_latches_unproven_suspended_child(
@@ -3190,6 +3590,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_13_REQUEST_IDS,
             *FAILED_ATTEMPT_14_REQUEST_IDS,
             *FAILED_ATTEMPT_15_REQUEST_IDS,
+            *FAILED_ATTEMPT_16_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -3217,6 +3618,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_13_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_14_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_15_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_16_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert [
         state
@@ -3784,8 +4186,8 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     assert "standalone v14" not in source
     assert "current v15" not in source
     assert "standalone v15" not in source
-    assert "current v16 worker request" in source
-    assert "standalone v16 worker execution" in source
+    assert "current v17 worker request" in source
+    assert "standalone v17 worker execution" in source
     validator_raw = VALIDATOR_PATH.read_bytes()
     assert process_runner._VALIDATOR_BYTES == len(validator_raw)
     assert process_runner._VALIDATOR_SHA256 == hashlib.sha256(validator_raw).hexdigest()
@@ -3811,7 +4213,7 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
             check=False,
         )
         assert bootstrap.returncode == 0, bootstrap.stderr
-        assert "standalone v16 worker execution" in bootstrap.stdout
+        assert "standalone v17 worker execution" in bootstrap.stdout
         assert not list(bootstrap_root.iterdir())
     else:
         assert os.environ.get("GITHUB_ACTIONS") == "true"

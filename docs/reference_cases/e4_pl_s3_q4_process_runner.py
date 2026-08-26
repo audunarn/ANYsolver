@@ -36,8 +36,8 @@ LEDGER_SNAPSHOT_SCHEMA = "anysolver.e4-pl-s3-q4-resource-ledger-snapshot-v1"
 PENDING_MANIFEST_SCHEMA = "anysolver.e4-pl-s3-q4-pending-process-manifest-v1"
 MANAGER_RESERVATION_SCHEMA = "anysolver.e4-pl-s3-q4-manager-reservation-v1"
 WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
-_VALIDATOR_BYTES = 264222
-_VALIDATOR_SHA256 = "25c764b364d40b4d7fc6b653e409e70a4705c5e4307d0a9f1fa9d4388eeeca62"
+_VALIDATOR_BYTES = 271166
+_VALIDATOR_SHA256 = "02056dbdcfd6bea4882de47babd45633d8662af23bf4124ea97a0faca8434fbc"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),
@@ -104,11 +104,14 @@ RESOURCE_ORDER = [
 ]
 _RESOURCE_LANES = ("functional", "anyfem", "performance")
 _CYCLE_LANE_CUMULATIVE_DEADLINES_SECONDS = {
-    "functional": 900,
-    "anyfem": 990,
-    "performance": 1110,
+    "functional": 860,
+    "anyfem": 950,
+    "performance": 1060,
 }
 _CYCLE_WALL_LIMIT_SECONDS = 1200
+_CYCLE_FINAL_EVIDENCE_RESERVE_SECONDS = 130
+_CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS = 10
+_CYCLE_PRELAUNCH_FAILURE_EXIT_CODE = 252
 
 
 def _now() -> str:
@@ -254,6 +257,7 @@ def _cycle_wall_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
             "cumulative_deadlines_seconds",
             "final_evidence_reserve_seconds",
             "scope",
+            "watchdog_termination_margin_seconds",
         },
         "$contract.execution.cycle_wall_policy",
     )
@@ -283,13 +287,31 @@ def _cycle_wall_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
         "$contract.execution.cycle_wall_policy.final_evidence_reserve_seconds",
         minimum=1,
     )
+    watchdog_margin = burnin._require_int(
+        policy["watchdog_termination_margin_seconds"],
+        (
+            "$contract.execution.cycle_wall_policy."
+            "watchdog_termination_margin_seconds"
+        ),
+        minimum=1,
+    )
+    timeout_grace = burnin._require_int(
+        contract["execution"]["timeout_policy"]["termination_grace_seconds"],
+        "$contract.execution.timeout_policy.termination_grace_seconds",
+        minimum=1,
+    )
     if (
         absolute_wall_limit != _CYCLE_WALL_LIMIT_SECONDS
         or deadlines != _CYCLE_LANE_CUMULATIVE_DEADLINES_SECONDS
-        or final_reserve != 90
+        or final_reserve != _CYCLE_FINAL_EVIDENCE_RESERVE_SECONDS
+        or watchdog_margin != _CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS
+        or watchdog_margin != timeout_grace
         or policy["clock"] != "time.monotonic"
         or policy["scope"] != "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES"
-        or deadlines["performance"] + final_reserve != absolute_wall_limit
+        or (
+            deadlines["performance"] + final_reserve + watchdog_margin
+            != absolute_wall_limit
+        )
     ):
         raise burnin.EvidenceError("complete-cycle wall policy mismatch")
     return {
@@ -298,6 +320,7 @@ def _cycle_wall_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
         "cumulative_deadlines_seconds": deadlines,
         "final_evidence_reserve_seconds": final_reserve,
         "scope": policy["scope"],
+        "watchdog_termination_margin_seconds": watchdog_margin,
     }
 
 
@@ -1548,7 +1571,7 @@ def _request_row(contract: Mapping[str, Any], request_id: str) -> dict[str, Any]
 def _reject_standalone_resource_execution(
     contract: Mapping[str, Any], request_id: str
 ) -> None:
-    """Reject every current v16 worker request outside its complete cycle.
+    """Reject every current v17 worker request outside its complete cycle.
 
     ``finalize-resource`` is intentionally separate: it can validate and
     publish an existing durable worker-completion checkpoint, but it cannot
@@ -1561,7 +1584,7 @@ def _reject_standalone_resource_execution(
     if row.get("lane") != lane:
         raise burnin.EvidenceError("standalone request lane authority mismatch")
     raise burnin.EvidenceError(
-        "standalone resource worker execution is forbidden for current v16 "
+        "standalone resource worker execution is forbidden for current v17 "
         f"request {request_id} ({lane}, cycle {cycle}); use cycle --cycle {cycle}"
     )
 
@@ -3266,6 +3289,109 @@ def _validate_cycle_request_rows(
     return validated
 
 
+def _cancel_proven_unstarted_tail(
+    contract: Mapping[str, Any], *, start_cycle: int, start_lane: str
+) -> None:
+    """Terminalize one unstarted request and every later request, without retry."""
+
+    try:
+        start_index = RESOURCE_ORDER.index((start_cycle, start_lane))
+    except ValueError as exc:
+        raise burnin.EvidenceError("cancellation start is outside resource order") from exc
+    tail = RESOURCE_ORDER[start_index:]
+    if not tail:
+        return
+    manager = _manager_paths(contract)
+    if manager["active_lock"].exists() or _RESOURCE_UNPROVEN_TREE.is_set():
+        raise burnin.EvidenceError(
+            "cannot cancel an unstarted tail while release/tree state is unproven"
+        )
+    with _ACTIVE_JOB_LOCK:
+        if _ACTIVE_JOB_HANDLES or _ACTIVE_SUSPENDED_WORKERS:
+            raise burnin.EvidenceError(
+                "cannot cancel an unstarted tail while a child remains registered"
+            )
+
+    approval, _approval_record = _load_approval_snapshot(contract)
+    candidate = burnin._exact_keys(
+        approval["candidate"], {"commit", "tree"}, "$.approval.candidate"
+    )
+    request_order = [
+        next(
+            row["request_id"]
+            for row in contract["resource_requests"][f"cycle_{cycle}"]
+            if row["lane"] == lane
+        )
+        for cycle, lane in tail
+    ]
+    owner = _acquire_manager_reservation(
+        manager,
+        candidate=candidate,
+        request_order=request_order,
+        purpose="CANCEL_S3_Q4_PROVEN_UNSTARTED_TAIL",
+    )
+    try:
+        ledger = manager["ledger"].read_text(encoding="utf-8")
+        prepared: list[tuple[Mapping[str, Any], list[str], bool]] = []
+        for cycle, lane in tail:
+            row = next(
+                item
+                for item in contract["resource_requests"][f"cycle_{cycle}"]
+                if item["lane"] == lane
+            )
+            authority, request, _request_path = _request_payload(
+                contract, row["request_id"]
+            )
+            expected_approval = burnin.approval_ledger_fields(
+                request, authority, candidate
+            )
+            approvals = burnin._ledger_entries(
+                ledger, row["request_id"], "APPROVED"
+            )
+            if len(approvals) != 1 or approvals[0][1:] != expected_approval:
+                raise burnin.EvidenceError(
+                    "unstarted-tail cancellation lacks exact approval"
+                )
+            if burnin._ledger_entries(
+                ledger, row["request_id"], "EXECUTION_STARTED"
+            ):
+                raise burnin.EvidenceError("a started request may not be cancelled")
+            prefix = f"cycle_{cycle}.{lane}"
+            if _existing_process_directory(contract, prefix, required=False) is not None:
+                raise burnin.EvidenceError(
+                    "a pending or completed request output may not be cancelled"
+                )
+            fields = burnin.terminal_ledger_fields(
+                request, {"request_id": row["request_id"], "status": "NOT_RUN"}, None
+            )
+            terminals = [
+                entry
+                for status in (
+                    "COMPLETED_PASS",
+                    "COMPLETED_FAIL",
+                    "CANCELLED_NOT_RUN",
+                )
+                for entry in burnin._ledger_entries(
+                    ledger, row["request_id"], status
+                )
+            ]
+            if terminals and (
+                len(terminals) != 1 or terminals[0][1:] != fields
+            ):
+                raise burnin.EvidenceError(
+                    "unstarted-tail request has a conflicting terminal row"
+                )
+            prepared.append((request, fields, bool(terminals)))
+
+        # All rows are proven safe before the first durable ledger mutation.
+        timestamp = _now()
+        for _request, fields, already_terminal in prepared:
+            if not already_terminal:
+                _append_ledger_fields(manager["ledger"], fields, timestamp=timestamp)
+    finally:
+        _release_manager_reservation(manager, owner)
+
+
 def _emit_cycle_terminal_snapshot(contract: Mapping[str, Any], cycle: int) -> None:
     snapshot = _cycle_terminal_snapshot(contract, cycle)
     if snapshot is None:
@@ -3304,32 +3430,66 @@ def _run_cycle_bounded(
         lane_deadline = invocation_started + deadlines[lane]
         if lane_deadline >= cycle_deadline:
             raise burnin.EvidenceError("resource lane consumes the final evidence reserve")
-        status = _run_resource_bounded(
-            request_id=row["request_id"],
-            contract=contract,
-            timeout_policy=timeout_policy,
-            invocation_deadline=lane_deadline,
-            emit_manifest=False,
-            cycle_execution_capability=_CYCLE_RESOURCE_EXECUTION_CAPABILITY,
-        )
+        try:
+            status = _run_resource_bounded(
+                request_id=row["request_id"],
+                contract=contract,
+                timeout_policy=timeout_policy,
+                invocation_deadline=lane_deadline,
+                emit_manifest=False,
+                cycle_execution_capability=_CYCLE_RESOURCE_EXECUTION_CAPABILITY,
+            )
+        except Exception as lane_error:
+            # Cancellation is permitted only when the helper independently proves
+            # that this request never started and left no pending/canonical output.
+            # If that proof fails, preserve the original exception and one-shot
+            # state; its chained cause records why terminalization was unsafe.
+            try:
+                _cancel_proven_unstarted_tail(
+                    contract, start_cycle=cycle, start_lane=lane
+                )
+            except Exception as terminalization_error:
+                raise lane_error from terminalization_error
+            _publish_completed_cycles(contract)
+            _emit_cycle_terminal_snapshot(contract, cycle)
+            return _CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
         if status != 0:
             # The failed request is already terminal and its lock has been
             # released.  Record every later approved request as not run; never
             # launch or retry it.
-            cancel_remaining()
+            failed_index = RESOURCE_ORDER.index((cycle, lane))
+            if failed_index + 1 < len(RESOURCE_ORDER):
+                next_cycle, next_lane = RESOURCE_ORDER[failed_index + 1]
+                _cancel_proven_unstarted_tail(
+                    contract, start_cycle=next_cycle, start_lane=next_lane
+                )
+            _publish_completed_cycles(contract)
             _emit_cycle_terminal_snapshot(contract, cycle)
             return status
         if time.monotonic() > lane_deadline:
-            raise burnin.EvidenceError(
-                f"{lane} completed after its cumulative cycle deadline"
-            )
+            # Preserve the completed PASS exactly.  Only still-unstarted
+            # successors may be terminalized after the control deadline miss.
+            completed_index = RESOURCE_ORDER.index((cycle, lane))
+            if completed_index + 1 < len(RESOURCE_ORDER):
+                next_cycle, next_lane = RESOURCE_ORDER[completed_index + 1]
+                _cancel_proven_unstarted_tail(
+                    contract, start_cycle=next_cycle, start_lane=next_lane
+                )
+            _publish_completed_cycles(contract)
+            _emit_cycle_terminal_snapshot(contract, cycle)
+            return _CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
 
-    # The performance lane must return by 1110 seconds.  Everything below is
-    # evidence validation/publication and remains covered by the same watchdog.
-    if time.monotonic() >= cycle_deadline:
+    # Normal evidence work owns the complete interval from second 1060 through
+    # second 1190; the final ten seconds belong solely to watchdog termination.
+    evidence_deadline = (
+        cycle_deadline - cycle_policy["watchdog_termination_margin_seconds"]
+    )
+    if time.monotonic() >= evidence_deadline:
         raise burnin.EvidenceError("complete cycle exhausted its evidence reserve")
     _publish_completed_cycles(contract)
     _emit_cycle_terminal_snapshot(contract, cycle)
+    if time.monotonic() >= evidence_deadline:
+        raise burnin.EvidenceError("cycle evidence publication exceeded its reserve")
     return 0
 
 
@@ -3372,6 +3532,9 @@ def _cycle_terminal_snapshot(
         if terminals[0][2] == "CANCELLED_NOT_RUN":
             if started:
                 raise burnin.EvidenceError("cancelled request has an execution-start row")
+            prefix = f"cycle_{cycle}.{authority['lane']}"
+            if _existing_process_directory(contract, prefix, required=False) is not None:
+                raise burnin.EvidenceError("cancelled request has process output")
             expected_terminal = burnin.terminal_ledger_fields(
                 request, {"request_id": request_id, "status": "NOT_RUN"}, None
             )
@@ -3791,23 +3954,49 @@ def aggregate_result() -> dict[str, Any]:
     all_common_passed = all(
         status == "PASS" for status in common_statuses.values()
     )
+    cycle_terminal_snapshots: dict[int, dict[str, Any]] = {}
     if all_common_passed:
         _publish_completed_cycles(contract)
+        for cycle in (1, 2):
+            snapshot = _cycle_terminal_snapshot(contract, cycle)
+            if snapshot is None:
+                raise burnin.EvidenceError(
+                    f"resource cycle {cycle} lacks complete terminal ledger state"
+                )
+            cycle_terminal_snapshots[cycle] = snapshot
     cycles: list[dict[str, Any]] = []
     encountered_failure = any(
         common_statuses[lane] != "PASS" for lane in ("quick", "package", "additive")
     )
     for cycle in (1, 2):
         lanes: dict[str, Any] = {}
-        for lane in ("functional", "anyfem", "performance"):
+        cycle_prelaunch_failure = False
+        for lane_index, lane in enumerate(("functional", "anyfem", "performance")):
             row = next(
                 item
                 for item in contract["resource_requests"][f"cycle_{cycle}"]
                 if item["lane"] == lane
             )
             prefix = f"cycle_{cycle}.{lane}"
-            if encountered_failure:
+            if not all_common_passed:
                 lanes[lane] = {"request_id": row["request_id"], "status": "NOT_RUN"}
+                continue
+            terminal_status = cycle_terminal_snapshots[cycle]["rows"][lane_index][
+                "terminal"
+            ]["fields"][1]
+            if encountered_failure:
+                if terminal_status != "CANCELLED_NOT_RUN":
+                    raise burnin.EvidenceError(
+                        "request after a failed predecessor was not cancelled"
+                    )
+                lanes[lane] = {"request_id": row["request_id"], "status": "NOT_RUN"}
+                continue
+            if terminal_status == "CANCELLED_NOT_RUN":
+                # A cancellation with no earlier failed process is the durable
+                # representation of a proven pre-launch cycle-control failure.
+                lanes[lane] = {"request_id": row["request_id"], "status": "NOT_RUN"}
+                encountered_failure = True
+                cycle_prelaunch_failure = True
                 continue
             manifest = _load_process_manifest(contract, prefix, required=True)
             assert manifest is not None
@@ -3818,6 +4007,8 @@ def aggregate_result() -> dict[str, Any]:
         cycle_status = (
             "PASS"
             if statuses == ["PASS", "PASS", "PASS"]
+            else "FAIL"
+            if cycle_prelaunch_failure
             else "NOT_RUN"
             if statuses == ["NOT_RUN", "NOT_RUN", "NOT_RUN"]
             else "FAIL"
@@ -3943,11 +4134,13 @@ def main(argv: list[str] | None = None) -> int:
         raise RuntimeError(
             "nested process coordinator execution from the active quick lane is forbidden"
         )
-    _arm_invocation_job_boundary()
+    # Start the monotonic invocation clock before Windows containment setup so
+    # that setup itself cannot escape the complete 20-minute boundary.
     invocation_deadline, watchdog_stop, watchdog_thread = (
         _start_resource_invocation_watchdog(_EARLY_RESOURCE_TIMEOUT_POLICY)
     )
     try:
+        _arm_invocation_job_boundary()
         _bootstrap_authority()
         parser = argparse.ArgumentParser()
         subparsers = parser.add_subparsers(dest="mode", required=True)
@@ -3958,9 +4151,9 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v16 worker execution; use cycle --cycle N",
+            help="reject standalone v17 worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v16 resource requests is disabled. "
+                "Standalone execution of current v17 resource requests is disabled. "
                 "Use cycle --cycle N so all three workers share one 1200-second watchdog."
             ),
         )
