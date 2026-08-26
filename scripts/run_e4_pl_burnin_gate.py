@@ -8,18 +8,24 @@ registered request.  This script deliberately does not mutate that manager.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import datetime as dt
 import hashlib
 import json
 import math
 import os
 import re
+import secrets
 import shutil
+import signal
 import stat
 import statistics
 import subprocess
 import sys
+import tarfile
 import tempfile
+import threading
+import time
 import tomllib
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -27,8 +33,113 @@ from typing import Any, Mapping, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
+_GATE_SOURCE_ROOT = ROOT
 TESTS = ROOT / "tests"
 CONTRACT_PATH = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.json"
+S3_Q4_CONTRACT_PATH = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_q4_burnin_contract.json"
+)
+
+FUNCTIONAL_WAVE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v2"
+FUNCTIONAL_SHARD_SCHEMA = "anysolver.e4-pl-s3-q4-functional-shard-v2"
+FUNCTIONAL_WAVE_AGGREGATE_SCHEMA = (
+    "anysolver.e4-pl-s3-q4-functional-wave-aggregate-v2"
+)
+FUNCTIONAL_WAVE_DIAGNOSTICS_SCHEMA = (
+    "anysolver.e4-pl-s3-q4-functional-wave-diagnostics-v2"
+)
+FUNCTIONAL_WAVE_ROUTING = {
+    "aggregate_filename": "functional-wave-aggregate.json",
+    "archive_filename": "functional-wave-source.tar",
+    "directory_name": "functional-wave",
+    "raw_diagnostics_filename": "functional-wave-raw-diagnostics.json",
+    "shard_directory_prefix": "shard-",
+    "source_directory_name": "source",
+}
+FUNCTIONAL_SHARD_DIRECTORIES = (
+    "cwd",
+    "basetemp",
+    "python_cache",
+    "numba_cache",
+    "temp",
+    "reports",
+    "logs",
+)
+FUNCTIONAL_COLLECTION_ARTIFACT = {
+    "bytes": 116046,
+    "sha256": "244132e6294f3dc37f5bf865bd800c7402d9ff6b3300af670ca954ad24bb5c15",
+}
+FUNCTIONAL_SHARD_AUTHORITIES = {
+    "P01": {
+        "node_count": 1,
+        "node_ids_sha256": "9a2ff93c333465e9815679ef6e9f971cbee782f2b833934c765447867a5a5704",
+    },
+    "P02": {
+        "node_count": 362,
+        "node_ids_sha256": "c6d005d0e69b2be5bbe1b197c71f22af598081ec2a1fc9e31cf217f7b5ef37ce",
+    },
+    "P03": {
+        "node_count": 361,
+        "node_ids_sha256": "c7dad7210a3bebcdd7a497db946b574e05c5d2a1694fa9426ee7b62da271b8b3",
+    },
+    "P04": {
+        "node_count": 312,
+        "node_ids_sha256": "38cb6d54b4c0e163308cdbcde38eff5a8372cc5a3c3702b1c0edbdf173b2118a",
+    },
+}
+_FUNCTIONAL_RESULT_ENV = "ANYSOLVER_FUNCTIONAL_SHARD_RESULT"
+_FUNCTIONAL_EXPECTED_ENV = "ANYSOLVER_FUNCTIONAL_EXPECTED_NODES"
+_FUNCTIONAL_PROGRESS_ENV = "ANYSOLVER_FUNCTIONAL_PROGRESS"
+_FUNCTIONAL_SHARD_ENV = "ANYSOLVER_FUNCTIONAL_SHARD_ID"
+_CI_CAPTURE_ENV = "ANYSOLVER_CI_CAPTURE_NODES"
+_CI_EXPECTED_ENV = "ANYSOLVER_CI_EXPECTED_NODES"
+_CI_SHARD_ENV = "ANYSOLVER_CI_SHARD_ID"
+_GATE_WATCHDOG_ENV = "ANYSOLVER_BURNIN_GATE_WATCHDOG_CHILD"
+_FUNCTIONAL_UNPROVEN_TREE = threading.Event()
+
+# These counts and hashes freeze the exact pytest node sets selected by the
+# complete quick/additive inventory plus each already-frozen functional shard.
+# The short collection-only pass is checked against these authorities before
+# any CI test worker starts, and the same ordered lists are enforced again by
+# the in-process pytest plugin in every worker.
+CI_NONFUNCTIONAL_NODE_AUTHORITY = {
+    "node_count": 871,
+    "node_ids_sha256": "7b5ea229272fcde6bae810c6ce0ae52a4d1cfe2c35efa65c681b24f278a015ff",
+}
+CI_SHARD_NODE_AUTHORITIES = {
+    "P01": {
+        "node_count": 93,
+        "node_ids_sha256": "f552d4067b0240557fba2356b4a32d140f474b6f88816fc25c0a3fa7f1e5d47f",
+    },
+    "P02": {
+        "node_count": 622,
+        "node_ids_sha256": "0c6be948f3565fedb9cd6eae45ee1b562c63b628c62be850540dc11ca19853d7",
+    },
+    "P03": {
+        "node_count": 589,
+        "node_ids_sha256": "32677a1b36da33bdc094b9ac4d83496a81e361f326618d0f920cf2ffbe20c11a",
+    },
+    "P04": {
+        "node_count": 603,
+        "node_ids_sha256": "196238dab804181c6e850a373f7cc9615635baa7606afdb1fdf34b000792a1fd",
+    },
+}
+
+# The parent watchdog includes import/argument handling, inventory discovery,
+# preparation, process launch/wait, tree termination, and cleanup.  Functional
+# execution starts termination at its frozen 830-second internal boundary and
+# still returns before the resource runner's later 860-second boundary.
+CI_COMMAND_WALL_LIMIT_SECONDS = 1200
+CI_COMMAND_TERMINATION_RESERVE_SECONDS = 30
+FUNCTIONAL_COMMAND_WALL_LIMIT_SECONDS = 840
+FUNCTIONAL_COMMAND_TERMINATION_RESERVE_SECONDS = 10
+_GATE_COMMAND_ENTRY = time.monotonic()
+_GATE_WATCHDOG_WINDOWS_TERMINATION = {
+    "arguments": ["/PID", "{pid}", "/T", "/F"],
+    "bytes": 118784,
+    "path": "C:\\Windows\\System32\\taskkill.exe",
+    "sha256": "1249717315fc8f4d2df17d5db9da0444795fdb9fb83dfb1f763c3f39282244f7",
+}
 
 QUICK = {
     "test_e4_pl_burnin.py",
@@ -85,6 +196,7 @@ EXTENDED_EXACT = {
 # performance lane even though its filename contains ``performance``.
 HISTORICAL_EXTENDED_EXACT = {
     "test_e4_pl_s3_mixed_eigen_performance.py",
+    "test_e4_pl_s3_mixed_structural_qualification.py",
 }
 
 # Successor element-family tests must run in pull requests without changing
@@ -149,6 +261,10 @@ PERFORMANCE_BASELINE_MARKER = b"Q1M_PERFORMANCE_BASELINE_JSON="
 
 class EvidenceError(ValueError):
     """Raised when a Q1M contract or gate record is not strict/canonical."""
+
+
+class FunctionalDeadlineExpired(EvidenceError):
+    """Raised when the frozen functional-wave internal deadline is exhausted."""
 
 
 def classify_test(path: Path) -> str:
@@ -269,8 +385,8 @@ def _sha256_bytes(value: bytes) -> str:
 def file_hash_record(path: Path) -> dict[str, Any]:
     """Return the canonical byte count/hash for a regular external artifact."""
 
-    if not path.is_file() or path.is_symlink():
-        raise EvidenceError(f"artifact must be a regular non-symlink file: {path}")
+    if not path.is_file() or path.is_symlink() or _is_reparse_point(path):
+        raise EvidenceError(f"artifact must be a regular non-reparse file: {path}")
     return {"bytes": path.stat().st_size, "sha256": _sha256_file(path)}
 
 
@@ -278,7 +394,71 @@ def wheel_hash_record(path: Path) -> dict[str, Any]:
     record = file_hash_record(path)
     if path.name != str(path.name) or not path.name.endswith(".whl"):
         raise EvidenceError("wheel artifact must have a .whl basename")
+    if record["bytes"] <= 0:
+        raise EvidenceError("wheel artifact must be nonempty")
     return {"bytes": record["bytes"], "filename": path.name, "sha256": record["sha256"]}
+
+
+def _is_reparse_point(path: Path) -> bool:
+    try:
+        attributes = path.lstat().st_file_attributes
+    except (AttributeError, FileNotFoundError, OSError):
+        return False
+    return bool(attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+
+
+def _sanitized_git_environment(environment: Mapping[str, str] | None = None) -> dict[str, str]:
+    result = dict(os.environ if environment is None else environment)
+    removed = {
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_CEILING_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG",
+        "GIT_CONFIG_SYSTEM",
+        "GIT_DIR",
+        "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        "GIT_EXEC_PATH",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_OPTIONAL_LOCKS",
+        "GIT_REPLACE_REF_BASE",
+        "GIT_SHALLOW_FILE",
+        "GIT_WORK_TREE",
+    }
+    for name in list(result):
+        if name in removed or name.startswith("GIT_CONFIG_"):
+            result.pop(name, None)
+    result.update(
+        {
+            "GIT_ATTR_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": "NUL",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_GRAFT_FILE": "NUL",
+            "GIT_NO_REPLACE_OBJECTS": "1",
+        }
+    )
+    return result
+
+
+def _git_executable() -> str:
+    """Use the coordinator-bound absolute Git launcher during formal execution."""
+
+    configured = os.environ.get("ANYSOLVER_FROZEN_GIT")
+    if configured is not None:
+        path = Path(configured)
+        if (
+            not path.is_absolute()
+            or not path.is_file()
+            or path.is_symlink()
+            or _is_reparse_point(path)
+        ):
+            raise EvidenceError("formal Git launcher is not a regular absolute file")
+        return str(path)
+    discovered = shutil.which("git")
+    if discovered is None:
+        raise EvidenceError("Git launcher is unavailable")
+    return str(Path(discovered).resolve(strict=True))
 
 
 def _exact_keys(value: Any, expected: set[str], location: str) -> dict[str, Any]:
@@ -903,14 +1083,32 @@ def validate_gate_result(
     return record
 
 
-def _git(repository: Path, *args: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(repository), *args],
-        check=False,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
+def _git(
+    repository: Path, *args: str, timeout_seconds: float | None = None
+) -> str:
+    timeout_options: dict[str, Any] = {}
+    if timeout_seconds is not None:
+        timeout_options["timeout"] = timeout_seconds
+    try:
+        completed = subprocess.run(
+            [
+                _git_executable(),
+                "--no-replace-objects",
+                "-c",
+                "core.attributesFile=NUL",
+                "-C",
+                str(repository),
+                *args,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=_sanitized_git_environment(),
+            **timeout_options,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise EvidenceError(f"Git identity check timed out for {repository}") from exc
     if completed.returncode:
         raise EvidenceError(f"Git identity check failed for {repository}")
     return completed.stdout.strip()
@@ -1226,23 +1424,1982 @@ def _pytest_environment(
     return environment
 
 
-def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
-    """Run one lane with an isolated workspace-local pytest temp root.
+def _functional_string(value: Any, location: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise EvidenceError(f"{location} must be a nonempty string")
+    return value
 
-    The user-global pytest root can be owned by another Windows security
-    context.  A fresh ignored directory under this worktree avoids that
-    cross-context ACL dependency while leaving the registered outer command
-    unchanged.  Cleanup is fail-closed and never follows a substituted link.
+
+def _functional_route_name(value: Any, location: str, *, prefix: bool = False) -> str:
+    name = _functional_string(value, location)
+    if (
+        name in {".", ".."}
+        or Path(name).name != name
+        or "/" in name
+        or "\\" in name
+        or (not prefix and name.endswith(("/", "\\")))
+    ):
+        raise EvidenceError(f"{location} must be a safe {'prefix' if prefix else 'basename'}")
+    return name
+
+
+def _functional_list_hash(values: Sequence[str]) -> str:
+    return _sha256_bytes(canonical_json_bytes(list(values)))
+
+
+def _functional_remaining_seconds(absolute_deadline: float, stage: str) -> float:
+    remaining = absolute_deadline - time.monotonic()
+    if remaining <= 0:
+        raise FunctionalDeadlineExpired(
+            f"functional internal deadline expired before {stage}"
+        )
+    return max(0.001, remaining)
+
+
+def _functional_deadline_check(absolute_deadline: float, stage: str) -> None:
+    _functional_remaining_seconds(absolute_deadline, stage)
+
+
+def _functional_bounded_hash_record(
+    path: Path, absolute_deadline: float, stage: str
+) -> dict[str, Any]:
+    if not path.is_file() or path.is_symlink() or _is_reparse_point(path):
+        raise EvidenceError(f"functional bounded artifact is not regular: {path}")
+    digest = hashlib.sha256()
+    byte_count = 0
+    with path.open("rb") as stream:
+        while True:
+            _functional_deadline_check(absolute_deadline, stage)
+            chunk = stream.read(1024 * 1024)
+            if not chunk:
+                break
+            digest.update(chunk)
+            byte_count += len(chunk)
+    return {"bytes": byte_count, "sha256": digest.hexdigest()}
+
+
+def _validate_functional_timeout_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
+    policy = _exact_keys(
+        contract["execution"]["timeout_policy"],
+        {
+            "automatic_retry",
+            "evidence_reserve_seconds",
+            "scope",
+            "termination_grace_seconds",
+            "timeout_exit_code",
+            "wall_limit_seconds",
+            "windows_job",
+            "windows_termination",
+        },
+        "$contract.execution.timeout_policy",
+    )
+    if policy["scope"] != "COMPLETE_RESOURCE_INVOCATION_AND_CHILD_PROCESS_TREE":
+        raise EvidenceError("functional timeout scope must cover the complete child tree")
+    if policy["windows_job"] != {
+        "assignment": "CREATE_SUSPENDED_ASSIGN_RESUME",
+        "limit": "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE",
+        "watchdog_termination_start_seconds": 1190,
+    }:
+        raise EvidenceError("functional Windows job-object policy mismatch")
+    if _require_bool(
+        policy["automatic_retry"],
+        "$contract.execution.timeout_policy.automatic_retry",
+    ):
+        raise EvidenceError("functional timeout policy forbids automatic retry")
+    if _require_int(
+        policy["evidence_reserve_seconds"],
+        "$contract.execution.timeout_policy.evidence_reserve_seconds",
+        minimum=1,
+    ) != 20:
+        raise EvidenceError("functional evidence reserve must be twenty seconds")
+    if _require_int(
+        policy["wall_limit_seconds"],
+        "$contract.execution.timeout_policy.wall_limit_seconds",
+        minimum=1,
+    ) != 1200:
+        raise EvidenceError("functional outer wall limit must be 1200 seconds")
+    if _require_int(
+        policy["timeout_exit_code"],
+        "$contract.execution.timeout_policy.timeout_exit_code",
+        minimum=1,
+    ) != 124:
+        raise EvidenceError("functional timeout exit code must be 124")
+    if _require_int(
+        policy["termination_grace_seconds"],
+        "$contract.execution.timeout_policy.termination_grace_seconds",
+        minimum=1,
+    ) != 10:
+        raise EvidenceError("functional termination grace must be ten seconds")
+    windows = _exact_keys(
+        policy["windows_termination"],
+        {"arguments", "bytes", "path", "sha256"},
+        "$contract.execution.timeout_policy.windows_termination",
+    )
+    path = Path(
+        _functional_string(
+            windows["path"], "$contract.execution.timeout_policy.windows_termination.path"
+        )
+    )
+    if not path.is_absolute():
+        raise EvidenceError("taskkill authority must be an absolute path")
+    _validate_hash_record(
+        {"bytes": windows["bytes"], "sha256": windows["sha256"]},
+        "$contract.execution.timeout_policy.windows_termination",
+        allow_empty=False,
+    )
+    if windows["arguments"] != ["/PID", "{pid}", "/T", "/F"]:
+        raise EvidenceError("taskkill arguments differ from frozen authority")
+    return policy
+
+
+def validate_functional_wave_contract(contract: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate the exact bounded functional-wave authority."""
+
+    wave = _exact_keys(
+        contract["functional_wave"],
+        {"aggregate", "execution", "manifest", "schema", "source"},
+        "$contract.functional_wave",
+    )
+    if wave["schema"] != FUNCTIONAL_WAVE_SCHEMA:
+        raise EvidenceError("functional-wave schema mismatch")
+
+    source = _exact_keys(
+        wave["source"],
+        {
+            "archive_filename",
+            "commit_role",
+            "file_graph_filename",
+            "file_graph_schema",
+            "tree_role",
+        },
+        "$contract.functional_wave.source",
+    )
+    if source["commit_role"] != "EXECUTION_AUTHORIZATION_COMMIT":
+        raise EvidenceError("functional source commit role mismatch")
+    if source["tree_role"] != "EXECUTION_AUTHORIZATION_TREE":
+        raise EvidenceError("functional source tree role mismatch")
+    for key in ("archive_filename", "file_graph_filename"):
+        _functional_route_name(
+            source[key], f"$contract.functional_wave.source.{key}"
+        )
+    _functional_string(
+        source["file_graph_schema"],
+        "$contract.functional_wave.source.file_graph_schema",
+    )
+    if source["archive_filename"] != "functional-wave-source.tar":
+        raise EvidenceError("functional source archive filename mismatch")
+    if source["file_graph_filename"] != "functional-wave-source-file-graph.json":
+        raise EvidenceError("functional source file-graph filename mismatch")
+    if (
+        source["file_graph_schema"]
+        != "anysolver.e4-pl-s3-q4-functional-wave-file-graph-v1"
+    ):
+        raise EvidenceError("functional source file-graph schema mismatch")
+
+    manifest = _exact_keys(
+        wave["manifest"],
+        {
+            "collection_artifact",
+            "full_node_ids",
+            "full_node_ids_sha256",
+            "module_count",
+            "modules",
+            "modules_sha256",
+            "node_count",
+            "shards",
+        },
+        "$contract.functional_wave.manifest",
+    )
+    modules = manifest["modules"]
+    if (
+        not isinstance(modules, list)
+        or not modules
+        or len(set(modules)) != len(modules)
+        or not all(
+            isinstance(item, str)
+            and item.startswith("tests/test_")
+            and item.endswith(".py")
+            and "\\" not in item
+            for item in modules
+        )
+    ):
+        raise EvidenceError("functional module manifest is malformed")
+    if _require_int(
+        manifest["module_count"],
+        "$contract.functional_wave.manifest.module_count",
+        minimum=1,
+    ) != len(modules):
+        raise EvidenceError("functional module count mismatch")
+    if len(modules) != 85:
+        raise EvidenceError("functional module authority must contain 85 modules")
+    if manifest["modules_sha256"] != _functional_list_hash(modules):
+        raise EvidenceError("functional module-list hash mismatch")
+    discovered_modules = inventory()["functional"]
+    if modules != discovered_modules:
+        raise EvidenceError("functional module manifest differs from current inventory")
+
+    full_nodes = manifest["full_node_ids"]
+    module_set = set(modules)
+    if (
+        not isinstance(full_nodes, list)
+        or not full_nodes
+        or len(set(full_nodes)) != len(full_nodes)
+        or not all(
+            isinstance(item, str)
+            and "\\" not in item
+            and item.partition("::")[0] in module_set
+            and bool(item.partition("::")[1])
+            for item in full_nodes
+        )
+    ):
+        raise EvidenceError("functional full-node manifest is malformed")
+    if _require_int(
+        manifest["node_count"],
+        "$contract.functional_wave.manifest.node_count",
+        minimum=1,
+    ) != len(full_nodes):
+        raise EvidenceError("functional node count mismatch")
+    if len(full_nodes) != 1036:
+        raise EvidenceError("functional node authority must contain 1036 nodes")
+    if manifest["full_node_ids_sha256"] != _functional_list_hash(full_nodes):
+        raise EvidenceError("functional full-node hash mismatch")
+    _validate_hash_record(
+        manifest["collection_artifact"],
+        "$contract.functional_wave.manifest.collection_artifact",
+        allow_empty=False,
+    )
+    if manifest["collection_artifact"] != FUNCTIONAL_COLLECTION_ARTIFACT:
+        raise EvidenceError("functional collection artifact identity mismatch")
+
+    shards = manifest["shards"]
+    if not isinstance(shards, list) or len(shards) != 4:
+        raise EvidenceError("functional wave requires exactly four shards")
+    global_order = {node_id: index for index, node_id in enumerate(full_nodes)}
+    assigned: list[str] = []
+    for index, raw_shard in enumerate(shards, start=1):
+        location = f"$contract.functional_wave.manifest.shards[{index - 1}]"
+        shard = _exact_keys(
+            raw_shard,
+            {"node_count", "node_ids", "node_ids_sha256", "shard_id"},
+            location,
+        )
+        expected_id = f"P{index:02d}"
+        if shard["shard_id"] != expected_id:
+            raise EvidenceError(f"functional shard order must be P01-P04: {location}")
+        nodes = shard["node_ids"]
+        if (
+            not isinstance(nodes, list)
+            or not nodes
+            or len(set(nodes)) != len(nodes)
+            or not all(isinstance(item, str) and item in global_order for item in nodes)
+        ):
+            raise EvidenceError(f"{location}.node_ids is malformed")
+        if _require_int(shard["node_count"], f"{location}.node_count", minimum=1) != len(nodes):
+            raise EvidenceError(f"{location}.node_count mismatch")
+        if shard["node_ids_sha256"] != _functional_list_hash(nodes):
+            raise EvidenceError(f"{location}.node_ids_sha256 mismatch")
+        if {
+            "node_count": shard["node_count"],
+            "node_ids_sha256": shard["node_ids_sha256"],
+        } != FUNCTIONAL_SHARD_AUTHORITIES[expected_id]:
+            raise EvidenceError(f"{location} differs from the frozen four-shard authority")
+        assigned.extend(nodes)
+    if len(assigned) != len(set(assigned)) or set(assigned) != set(full_nodes):
+        raise EvidenceError("functional shards are not a disjoint complete node partition")
+
+    execution = _exact_keys(
+        wave["execution"],
+        {
+            "artifact_routing",
+            "automatic_retry",
+            "environment",
+            "internal_deadline_seconds",
+            "max_workers",
+            "numerical_library_threads",
+            "raw_observability",
+            "selector_safety",
+            "source_mode",
+            "source_status_must_match",
+            "unproven_tree_action",
+        },
+        "$contract.functional_wave.execution",
+    )
+    if _require_int(execution["max_workers"], "$contract.functional_wave.execution.max_workers", minimum=1) != 4:
+        raise EvidenceError("functional max-workers authority must be four")
+    if _require_int(
+        execution["numerical_library_threads"],
+        "$contract.functional_wave.execution.numerical_library_threads",
+        minimum=1,
+    ) != 1:
+        raise EvidenceError("functional numerical-library thread count must be one")
+    if _require_bool(
+        execution["automatic_retry"],
+        "$contract.functional_wave.execution.automatic_retry",
+    ):
+        raise EvidenceError("functional automatic retry is forbidden")
+    if _require_int(
+        execution["internal_deadline_seconds"],
+        "$contract.functional_wave.execution.internal_deadline_seconds",
+        minimum=1,
+    ) != 830:
+        raise EvidenceError("functional internal deadline must be 830 seconds")
+    environment = _exact_keys(
+        execution["environment"],
+        {"NUMBA_NUM_THREADS", "scope"},
+        "$contract.functional_wave.execution.environment",
+    )
+    if environment != {
+        "NUMBA_NUM_THREADS": "1",
+        "scope": "FUNCTIONAL_SHARDS_ONLY",
+    }:
+        raise EvidenceError("functional shard-only environment authority mismatch")
+    selector_safety = _exact_keys(
+        execution["selector_safety"],
+        {
+            "extra_nodes",
+            "full_module_selector",
+            "missing_nodes",
+            "split_module_selector",
+        },
+        "$contract.functional_wave.execution.selector_safety",
+    )
+    if selector_safety != {
+        "extra_nodes": "REJECT",
+        "full_module_selector": "ONLY_WHEN_ALL_COLLECTED_MODULE_NODES_ARE_SHARD_OWNED",
+        "missing_nodes": "REJECT",
+        "split_module_selector": "EXACT_NODE_IDS_ONLY",
+    }:
+        raise EvidenceError("functional selector-safety authority mismatch")
+    raw_observability = _exact_keys(
+        execution["raw_observability"],
+        {"canonical_timings", "lifecycle_progress", "pytest_durations"},
+        "$contract.functional_wave.execution.raw_observability",
+    )
+    if raw_observability != {
+        "canonical_timings": False,
+        "lifecycle_progress": True,
+        "pytest_durations": True,
+    }:
+        raise EvidenceError("functional raw-observability authority mismatch")
+    if execution["source_mode"] != "GIT_ARCHIVE_HEAD":
+        raise EvidenceError("functional source mode must be Git archive HEAD")
+    if not _require_bool(
+        execution["source_status_must_match"],
+        "$contract.functional_wave.execution.source_status_must_match",
+    ):
+        raise EvidenceError("functional source pre/post status equality must be required")
+    if (
+        execution["unproven_tree_action"]
+        != "WAIT_FOR_OUTER_RESOURCE_TREE_TERMINATION"
+    ):
+        raise EvidenceError("functional unproven-tree action mismatch")
+    routing = _exact_keys(
+        execution["artifact_routing"],
+        {
+            "aggregate_filename",
+            "archive_filename",
+            "directory_name",
+            "raw_diagnostics_filename",
+            "shard_directory_prefix",
+            "source_directory_name",
+        },
+        "$contract.functional_wave.execution.artifact_routing",
+    )
+    for key in (
+        "aggregate_filename",
+        "archive_filename",
+        "directory_name",
+        "raw_diagnostics_filename",
+        "source_directory_name",
+    ):
+        _functional_route_name(
+            routing[key], f"$contract.functional_wave.execution.artifact_routing.{key}"
+        )
+    _functional_route_name(
+        routing["shard_directory_prefix"],
+        "$contract.functional_wave.execution.artifact_routing.shard_directory_prefix",
+        prefix=True,
+    )
+    if routing["archive_filename"] != source["archive_filename"]:
+        raise EvidenceError("functional source/routing archive filenames differ")
+    if routing != FUNCTIONAL_WAVE_ROUTING:
+        raise EvidenceError("functional-wave artifact routing mismatch")
+    reserved_names = {
+        routing["aggregate_filename"],
+        routing["archive_filename"],
+        routing["raw_diagnostics_filename"],
+        source["file_graph_filename"],
+    }
+    if len(reserved_names) != 4:
+        raise EvidenceError("functional routed artifact names must be distinct")
+
+    aggregate = _exact_keys(
+        wave["aggregate"],
+        {"blocked_terminal", "schema", "success_terminal"},
+        "$contract.functional_wave.aggregate",
+    )
+    for key in ("schema", "success_terminal", "blocked_terminal"):
+        _functional_string(aggregate[key], f"$contract.functional_wave.aggregate.{key}")
+    if aggregate != {
+        "blocked_terminal": "BLOCKED_E4_PL_S3_Q4_FUNCTIONAL_WAVE",
+        "schema": FUNCTIONAL_WAVE_AGGREGATE_SCHEMA,
+        "success_terminal": "PASS_E4_PL_S3_Q4_FUNCTIONAL_WAVE",
+    }:
+        raise EvidenceError("functional aggregate authority mismatch")
+    _validate_functional_timeout_policy(contract)
+    return wave
+
+
+def _functional_source_status(
+    repository: Path, *, absolute_deadline: float | None = None
+) -> dict[str, Any]:
+    command = [
+        _git_executable(),
+        "--no-replace-objects",
+        "-c",
+        "core.attributesFile=NUL",
+        "-C",
+        str(repository),
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--ignored=matching",
+    ]
+    timeout = (
+        None
+        if absolute_deadline is None
+        else _functional_remaining_seconds(
+            absolute_deadline, "functional source-status subprocess"
+        )
+    )
+    timeout_options: dict[str, Any] = {}
+    if timeout is not None:
+        timeout_options["timeout"] = timeout
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            env=_sanitized_git_environment(),
+            **timeout_options,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise EvidenceError("functional source status timed out") from exc
+    if completed.returncode:
+        raise EvidenceError("functional source status command failed")
+    return {
+        "bytes": len(completed.stdout),
+        "sha256": _sha256_bytes(completed.stdout),
+    }
+
+
+def _functional_file_graph(
+    root: Path, *, absolute_deadline: float
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    paths: list[Path] = []
+    for item in root.rglob("*"):
+        _functional_deadline_check(absolute_deadline, "source-graph enumeration")
+        if item.is_file():
+            paths.append(item)
+    for path in sorted(paths):
+        _functional_deadline_check(absolute_deadline, "source-graph hashing")
+        if path.is_symlink() or _is_reparse_point(path):
+            raise EvidenceError(f"functional source graph contains a reparse file: {path}")
+        record = _functional_bounded_hash_record(
+            path, absolute_deadline, "source-graph file hashing"
+        )
+        rows.append(
+            {
+                "bytes": record["bytes"],
+                "path": path.relative_to(root).as_posix(),
+                "sha256": record["sha256"],
+            }
+        )
+    if not rows:
+        raise EvidenceError("functional Git archive extracted no files")
+    return rows, {"files": len(rows), "sha256": _sha256_bytes(canonical_json_bytes(rows))}
+
+
+def _extract_functional_tar(
+    archive: Path, destination: Path, *, absolute_deadline: float
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    _functional_deadline_check(absolute_deadline, "tar extraction initialization")
+    try:
+        destination.mkdir()
+    except FileExistsError as exc:
+        raise EvidenceError(f"functional source sandbox already exists: {destination}") from exc
+    seen: set[str] = set()
+    with tarfile.open(archive, mode="r:") as source:
+        for member in source:
+            _functional_deadline_check(absolute_deadline, "tar member extraction")
+            name = member.name
+            relative = PurePosixPath(name)
+            if (
+                not name
+                or "\\" in name
+                or relative.is_absolute()
+                or any(part in {"", ".", ".."} for part in relative.parts)
+                or name in seen
+            ):
+                raise EvidenceError(f"unsafe or duplicate Git tar member: {name!r}")
+            seen.add(name)
+            if member.issym() or member.islnk():
+                raise EvidenceError(f"functional Git tar link is forbidden: {name}")
+            target = destination.joinpath(*relative.parts)
+            if member.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            if not member.isfile():
+                raise EvidenceError(f"unsupported functional Git tar member: {name}")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            extracted = source.extractfile(member)
+            if extracted is None:
+                raise EvidenceError(f"functional Git tar member has no data: {name}")
+            try:
+                with extracted, target.open("xb") as output_stream:
+                    while True:
+                        _functional_deadline_check(
+                            absolute_deadline, "tar member copy"
+                        )
+                        chunk = extracted.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        output_stream.write(chunk)
+            except FileExistsError as exc:
+                raise EvidenceError(f"duplicate functional Git tar target: {name}") from exc
+    _functional_deadline_check(absolute_deadline, "tar extraction completion")
+    return _functional_file_graph(
+        destination, absolute_deadline=absolute_deadline
+    )
+
+
+def _create_functional_archive(
+    repository: Path,
+    archive: Path,
+    *,
+    absolute_deadline: float,
+    environment: Mapping[str, str],
+) -> tuple[dict[str, str], dict[str, Any]]:
+    _functional_deadline_check(absolute_deadline, "archive identity preparation")
+    identity = _tracked_head_identity(
+        repository, absolute_deadline=absolute_deadline
+    )
+    attributes_path = Path(
+        _git(
+            repository,
+            "rev-parse",
+            "--git-path",
+            "info/attributes",
+            timeout_seconds=_functional_remaining_seconds(
+                absolute_deadline, "archive attribute-path query"
+            ),
+        )
+    )
+    if not attributes_path.is_absolute():
+        attributes_path = repository / attributes_path
+    if attributes_path.exists() or attributes_path.is_symlink() or _is_reparse_point(attributes_path):
+        raise EvidenceError("Git info attributes are forbidden during functional archiving")
+    if os.path.lexists(archive):
+        raise EvidenceError("functional source archive output is not exclusive")
+    _functional_deadline_check(absolute_deadline, "Git archive subprocess")
+    process = _run_captured(
+        [
+            _git_executable(),
+            "--no-replace-objects",
+            "-c",
+            "core.attributesFile=NUL",
+            "-C",
+            str(repository),
+            "archive",
+            "--format=tar",
+            f"--output={archive}",
+            "HEAD",
+        ],
+        cwd=archive.parent,
+        env=_sanitized_git_environment(environment),
+        timeout_seconds=_functional_remaining_seconds(
+            absolute_deadline, "Git archive subprocess"
+        ),
+    )
+    _functional_deadline_check(absolute_deadline, "Git archive validation")
+    if not archive.is_file() or archive.is_symlink() or _is_reparse_point(archive):
+        raise EvidenceError("functional Git archive is not a regular file")
+    if (
+        _tracked_head_identity(repository, absolute_deadline=absolute_deadline)
+        != identity
+    ):
+        raise EvidenceError("functional source identity changed during archiving")
+    return identity, process
+
+
+_FUNCTIONAL_PLUGIN_STATE: dict[str, Any] | None = None
+
+
+def _functional_progress_event(path: Path, event: str, **values: Any) -> None:
+    """Append one raw, noncanonical lifecycle/timing observation."""
+
+    payload = {
+        "event": event,
+        "recorded_at": dt.datetime.now(dt.timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z"),
+        **values,
+    }
+    with path.open("ab") as stream:
+        stream.write(canonical_json_bytes(payload))
+        stream.flush()
+
+
+def _functional_plugin_progress(
+    state: Mapping[str, Any], event: str, **values: Any
+) -> None:
+    payload = {
+        "event": event,
+        "recorded_at": dt.datetime.now(dt.timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z"),
+        **values,
+    }
+    stream = state["progress_stream"]
+    stream.write(canonical_json_bytes(payload))
+    stream.flush()
+
+
+def _functional_plugin_state() -> dict[str, Any] | None:
+    global _FUNCTIONAL_PLUGIN_STATE
+    ci_capture_path = os.environ.get(_CI_CAPTURE_ENV)
+    ci_expected_path = os.environ.get(_CI_EXPECTED_ENV)
+    ci_shard_id = os.environ.get(_CI_SHARD_ENV)
+    result_path = os.environ.get(_FUNCTIONAL_RESULT_ENV)
+    expected_path = os.environ.get(_FUNCTIONAL_EXPECTED_ENV)
+    progress_path = os.environ.get(_FUNCTIONAL_PROGRESS_ENV)
+    shard_id = os.environ.get(_FUNCTIONAL_SHARD_ENV)
+    if ci_capture_path:
+        if any(
+            value
+            for value in (
+                ci_expected_path,
+                ci_shard_id,
+                result_path,
+                expected_path,
+                progress_path,
+                shard_id,
+            )
+        ):
+            raise RuntimeError("CI collection-capture environment is ambiguous")
+        if _FUNCTIONAL_PLUGIN_STATE is None:
+            _FUNCTIONAL_PLUGIN_STATE = {
+                "capture_path": Path(ci_capture_path),
+                "mode": "ci-capture",
+            }
+        return _FUNCTIONAL_PLUGIN_STATE
+    if ci_expected_path or ci_shard_id:
+        if (
+            not ci_expected_path
+            or not ci_shard_id
+            or any(value for value in (result_path, expected_path, progress_path, shard_id))
+        ):
+            raise RuntimeError("CI expected-node environment is incomplete or ambiguous")
+        if _FUNCTIONAL_PLUGIN_STATE is None:
+            expected = strict_json_load(Path(ci_expected_path))
+            if (
+                not isinstance(expected, list)
+                or not expected
+                or len(set(expected)) != len(expected)
+                or not all(isinstance(item, str) and item for item in expected)
+            ):
+                raise RuntimeError("CI pytest expected-node file is malformed")
+            authority = CI_SHARD_NODE_AUTHORITIES.get(ci_shard_id)
+            if authority != {
+                "node_count": len(expected),
+                "node_ids_sha256": _functional_list_hash(expected),
+            }:
+                raise RuntimeError("CI pytest expected-node authority mismatch")
+            _FUNCTIONAL_PLUGIN_STATE = {
+                "collection_matches": False,
+                "expected": expected,
+                "expected_set": set(expected),
+                "mode": "ci-guard",
+                "shard_id": ci_shard_id,
+            }
+        return _FUNCTIONAL_PLUGIN_STATE
+    if not result_path and not expected_path and not progress_path and not shard_id:
+        return None
+    if not result_path or not expected_path or not progress_path or not shard_id:
+        raise RuntimeError("functional pytest plugin environment is incomplete")
+    if _FUNCTIONAL_PLUGIN_STATE is None:
+        expected = strict_json_load(Path(expected_path))
+        if (
+            not isinstance(expected, list)
+            or not expected
+            or len(set(expected)) != len(expected)
+            or not all(isinstance(item, str) and item for item in expected)
+        ):
+            raise RuntimeError("functional pytest expected-node file is malformed")
+        _FUNCTIONAL_PLUGIN_STATE = {
+            "collection_matches": False,
+            "expected": expected,
+            "expected_set": set(expected),
+            "durations": {},
+            "outcomes": {},
+            "progress_path": Path(progress_path),
+            "progress_stream": Path(progress_path).open("ab"),
+            "result_path": Path(result_path),
+            "shard_id": shard_id,
+            "mode": "functional",
+        }
+    return _FUNCTIONAL_PLUGIN_STATE
+
+
+def pytest_collection_modifyitems(session, config, items) -> None:  # pragma: no cover - child plugin
+    state = _functional_plugin_state()
+    if state is None:
+        return
+    mode = state.get("mode", "functional")
+    if mode == "ci-capture":
+        node_ids = [item.nodeid for item in items]
+        if len(node_ids) != len(set(node_ids)):
+            raise RuntimeError("CI collection contains duplicate node IDs")
+        capture_path = state["capture_path"]
+        capture_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with capture_path.open("xb") as stream:
+                stream.write(canonical_json_bytes(node_ids))
+        except FileExistsError as exc:
+            raise RuntimeError("CI collection capture path is not exclusive") from exc
+        return
+    by_id: dict[str, Any] = {}
+    duplicates: set[str] = set()
+    for item in items:
+        if item.nodeid in by_id:
+            duplicates.add(item.nodeid)
+        by_id[item.nodeid] = item
+    expected = state["expected"]
+    expected_ids = state["expected_set"]
+    missing = [node_id for node_id in expected if node_id not in by_id]
+    unexpected = [node_id for node_id in by_id if node_id not in expected_ids]
+    state["collection_matches"] = (
+        not missing
+        and not unexpected
+        and not duplicates
+        and len(items) == len(expected)
+    )
+    selected = [by_id[node_id] for node_id in expected if node_id in by_id]
+    deselected = [item for item in items if item.nodeid not in expected_ids]
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+    items[:] = selected
+    if mode == "functional":
+        _functional_plugin_progress(
+            state,
+            "COLLECTION_FINISHED",
+            collected_count=len(items) + len(deselected),
+            collection_matches=state["collection_matches"],
+            duplicate_count=len(duplicates),
+            expected_count=len(expected),
+            missing_count=len(missing),
+            selected_count=len(selected),
+            shard_id=state["shard_id"],
+            unexpected_count=len(unexpected),
+        )
+
+
+def pytest_runtest_logreport(report) -> None:  # pragma: no cover - child plugin
+    state = _functional_plugin_state()
+    if (
+        state is None
+        or state.get("mode", "functional") != "functional"
+        or report.nodeid not in state["expected_set"]
+    ):
+        return
+    durations = state["durations"]
+    durations[report.nodeid] = durations.get(report.nodeid, 0.0) + float(
+        report.duration
+    )
+    outcomes = state["outcomes"]
+    was_xfail = bool(getattr(report, "wasxfail", False))
+    if report.when == "setup":
+        if report.failed:
+            outcomes[report.nodeid] = "ERROR"
+        elif report.skipped:
+            outcomes[report.nodeid] = "XFAIL" if was_xfail else "SKIPPED"
+    elif report.when == "call":
+        if report.passed:
+            outcomes[report.nodeid] = "XPASS" if was_xfail else "PASSED"
+        elif report.skipped:
+            outcomes[report.nodeid] = "XFAIL" if was_xfail else "SKIPPED"
+        else:
+            outcomes[report.nodeid] = "XFAIL" if was_xfail else "FAILED"
+    elif report.when == "teardown" and report.failed:
+        outcomes[report.nodeid] = "ERROR"
+    if report.when == "teardown":
+        _functional_plugin_progress(
+            state,
+            "PYTEST_ITEM_FINISHED",
+            duration_seconds=durations[report.nodeid],
+            node_id=report.nodeid,
+            outcome=outcomes.get(report.nodeid, "NOT_RUN"),
+            shard_id=state["shard_id"],
+        )
+
+
+def pytest_sessionfinish(session, exitstatus) -> None:  # pragma: no cover - child plugin
+    state = _functional_plugin_state()
+    if state is None:
+        return
+    mode = state.get("mode", "functional")
+    if mode == "ci-capture":
+        return
+    if mode == "ci-guard":
+        if not state["collection_matches"]:
+            session.exitstatus = 3
+        return
+    _functional_plugin_progress(
+        state,
+        "SESSION_FINISHED",
+        exit_code=int(exitstatus),
+        node_count=len(state["expected"]),
+        shard_id=state["shard_id"],
+    )
+    payload = {
+        "collection_matches": state["collection_matches"],
+        "exit_code": int(exitstatus),
+        "nodes": [
+            {
+                "node_id": node_id,
+                "outcome": state["outcomes"].get(node_id, "NOT_RUN"),
+            }
+            for node_id in state["expected"]
+        ],
+        "schema": FUNCTIONAL_SHARD_SCHEMA,
+        "shard_id": state["shard_id"],
+    }
+    result_path = state["result_path"]
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with result_path.open("xb") as stream:
+            stream.write(canonical_json_bytes(payload))
+    except FileExistsError as exc:
+        raise RuntimeError("functional shard result path is not exclusive") from exc
+    finally:
+        state["progress_stream"].close()
+
+
+def _validate_functional_shard_result(
+    value: Any,
+    *,
+    shard: Mapping[str, Any],
+) -> dict[str, Any]:
+    value = _exact_keys(
+        value,
+        {"collection_matches", "exit_code", "nodes", "schema", "shard_id"},
+        "$functional_shard_result",
+    )
+    if value["schema"] != FUNCTIONAL_SHARD_SCHEMA or value["shard_id"] != shard["shard_id"]:
+        raise EvidenceError("functional shard result identity mismatch")
+    _require_bool(value["collection_matches"], "$functional_shard_result.collection_matches")
+    _require_int(value["exit_code"], "$functional_shard_result.exit_code")
+    nodes = value["nodes"]
+    if not isinstance(nodes, list) or len(nodes) != shard["node_count"]:
+        raise EvidenceError("functional shard result node count mismatch")
+    expected = shard["node_ids"]
+    allowed = {"ERROR", "FAILED", "NOT_RUN", "PASSED", "SKIPPED", "XFAIL", "XPASS"}
+    for index, row in enumerate(nodes):
+        row = _exact_keys(row, {"node_id", "outcome"}, f"$functional_shard_result.nodes[{index}]")
+        if row["node_id"] != expected[index] or row["outcome"] not in allowed:
+            raise EvidenceError("functional shard result node identity/outcome mismatch")
+    return value
+
+
+def _functional_taskkill_authority(policy: Mapping[str, Any]) -> Path:
+    authority = policy["windows_termination"]
+    path = Path(authority["path"])
+    if (
+        not path.is_file()
+        or path.is_symlink()
+        or _is_reparse_point(path)
+        or file_hash_record(path)
+        != {"bytes": authority["bytes"], "sha256": authority["sha256"]}
+    ):
+        raise EvidenceError("taskkill executable differs from frozen authority")
+    return path
+
+
+def _terminate_functional_process_tree(
+    worker: subprocess.Popen[bytes], policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    grace = int(policy["termination_grace_seconds"])
+    termination_deadline = time.monotonic() + grace
+
+    def remaining_termination_time() -> float:
+        return max(0.001, termination_deadline - time.monotonic())
+
+    if os.name != "nt":
+        try:
+            os.killpg(worker.pid, signal.SIGKILL)
+            worker.wait(timeout=remaining_termination_time())
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raw = str(exc).encode("utf-8", errors="replace")
+            return {
+                "bytes": len(raw),
+                "returncode": 259,
+                "sha256": _sha256_bytes(raw),
+            }
+        return {"bytes": 0, "returncode": 0, "sha256": _sha256_bytes(b"")}
+    taskkill = _functional_taskkill_authority(policy)
+    arguments = [str(worker.pid) if item == "{pid}" else item for item in policy["windows_termination"]["arguments"]]
+    try:
+        completed = subprocess.run(
+            [str(taskkill), *arguments],
+            capture_output=True,
+            check=False,
+            timeout=remaining_termination_time(),
+        )
+        raw = completed.stdout + completed.stderr
+        result = {
+            "bytes": len(raw),
+            "returncode": int(completed.returncode),
+            "sha256": _sha256_bytes(raw),
+        }
+    except subprocess.TimeoutExpired as exc:
+        raw = (exc.stdout or b"") + (exc.stderr or b"")
+        result = {
+            "bytes": len(raw),
+            "returncode": 258,
+            "sha256": _sha256_bytes(raw),
+        }
+    except OSError as exc:
+        raw = str(exc).encode("utf-8", errors="replace")
+        result = {
+            "bytes": len(raw),
+            "returncode": 257,
+            "sha256": _sha256_bytes(raw),
+        }
+    try:
+        worker.wait(timeout=remaining_termination_time())
+    except subprocess.TimeoutExpired:
+        try:
+            worker.kill()
+            worker.wait(timeout=remaining_termination_time())
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        result["returncode"] = 259
+    return result
+
+
+def _functional_wave_has_unproven_tree(shards: Sequence[Mapping[str, Any]]) -> bool:
+    return any(
+        shard["status"] == "TIMEOUT_TREE_TERMINATION_FAILED" for shard in shards
+    )
+
+
+def _await_outer_resource_tree_termination() -> None:
+    """Hold an uncertain child tree inside both enclosing watchdogs.
+
+    The gate-level parent starts complete-tree termination at 830 seconds and
+    the resource runner retains its independent 860-second invocation bound.
+    Returning after an inner tree-kill failure could orphan descendants and
+    falsely look like a normal resource exit, so this child remains alive only
+    until one of those bounded parents terminates the complete process tree.
     """
+
+    while True:
+        try:
+            time.sleep(1.0)
+        except BaseException:
+            # Only termination of the outer resource process tree may release
+            # this containment hold; an inner signal/exception is not proof.
+            continue
+
+
+def _functional_shard_environment(
+    *,
+    sandbox: Path,
+    shard_root: Path,
+    expected_path: Path,
+    progress_path: Path,
+    result_path: Path,
+    shard_id: str,
+) -> dict[str, str]:
+    roots = _local_roots()
+    roots["ANYsolver"] = sandbox
+    metadata = shard_root / "temp" / "metadata"
+    _write_source_metadata_overlay(roots, metadata)
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "NUMBA_CACHE_DIR": str(shard_root / "numba_cache"),
+            "NUMBA_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "PYTHONHASHSEED": "0",
+            "PYTHONNOUSERSITE": "1",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONPYCACHEPREFIX": str(shard_root / "python_cache"),
+            "PYTEST_ADDOPTS": "-p no:cacheprovider",
+            "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+            "TEMP": str(shard_root / "temp"),
+            "TMP": str(shard_root / "temp"),
+            "TMPDIR": str(shard_root / "temp"),
+            _FUNCTIONAL_EXPECTED_ENV: str(expected_path),
+            _FUNCTIONAL_PROGRESS_ENV: str(progress_path),
+            _FUNCTIONAL_RESULT_ENV: str(result_path),
+            _FUNCTIONAL_SHARD_ENV: shard_id,
+        }
+    )
+    routed_paths = [
+        metadata,
+        sandbox / "src",
+        roots["ANYmesh"] / "src",
+        roots["ANYgeometry"] / "src",
+        roots["ANYmaterial"] / "src",
+        roots["ANYfileIO"] / "src",
+    ]
+    for raw_path in os.environ.get("PYTHONPATH", "").split(os.pathsep):
+        if not raw_path:
+            continue
+        path = Path(raw_path)
+        try:
+            resolved = path.resolve()
+        except OSError:
+            continue
+        if resolved == (ROOT / "src").resolve() or resolved in {
+            item.resolve() for item in routed_paths
+        }:
+            continue
+        routed_paths.append(resolved)
+    environment["PYTHONPATH"] = os.pathsep.join(str(path) for path in routed_paths)
+    return environment
+
+
+def _functional_shard_selectors(
+    shard_nodes: Sequence[str], full_nodes: Sequence[str]
+) -> tuple[list[str], dict[str, Any]]:
+    """Select complete modules, but address every split module by exact node ID."""
+
+    full_by_module: dict[str, list[str]] = {}
+    for node_id in full_nodes:
+        full_by_module.setdefault(node_id.partition("::")[0], []).append(node_id)
+    shard_by_module: dict[str, list[str]] = {}
+    for node_id in shard_nodes:
+        shard_by_module.setdefault(node_id.partition("::")[0], []).append(node_id)
+
+    selectors: list[str] = []
+    full_module_count = 0
+    exact_node_count = 0
+    for module, nodes in shard_by_module.items():
+        if nodes == full_by_module.get(module):
+            selectors.append(module)
+            full_module_count += 1
+        else:
+            selectors.extend(nodes)
+            exact_node_count += len(nodes)
+
+    expanded: list[str] = []
+    for selector in selectors:
+        if "::" in selector:
+            expanded.append(selector)
+        else:
+            expanded.extend(full_by_module[selector])
+    if expanded != list(shard_nodes):
+        raise EvidenceError("functional shard selectors do not preserve exact node order")
+    return selectors, {
+        "exact_node_count": exact_node_count,
+        "full_module_count": full_module_count,
+        "selector_count": len(selectors),
+        "selectors_sha256": _functional_list_hash(selectors),
+    }
+
+
+def _run_functional_shard(
+    prepared: Mapping[str, Any],
+    *,
+    absolute_deadline: float,
+    deadline_seconds: int,
+    timeout_policy: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    deadline_expired_on_entry = time.monotonic() >= absolute_deadline
+    shard = prepared["shard"]
+    shard_root = prepared["shard_root"]
+    sandbox = prepared["sandbox"]
+    logs = shard_root / "logs"
+    expected_path = logs / "expected-nodes.json"
+    progress_path = logs / "progress.ndjson"
+    result_path = logs / "shard-result.json"
+    stdout_path = logs / "stdout.txt"
+    stderr_path = logs / "stderr.txt"
+    started_at = dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    started = time.perf_counter()
+
+    def artifact(path: Path) -> dict[str, Any] | None:
+        try:
+            if (
+                path.is_file()
+                and not path.is_symlink()
+                and not _is_reparse_point(path)
+            ):
+                return file_hash_record(path)
+        except OSError:
+            return None
+        return None
+
+    def failure(
+        status: str,
+        *,
+        error: BaseException | None,
+        command: Sequence[str],
+        selector_summary: Mapping[str, Any],
+        timed_out: bool,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        ended_at = dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+        raw: dict[str, Any] = {
+            "attempts": 0,
+            "command": list(command),
+            "command_sha256": _functional_list_hash(command),
+            "deadline_seconds": deadline_seconds,
+            "disposition": {
+                "PREPARATION_FAILED": "PREPARATION_FAILED_BEFORE_LAUNCH",
+                "START_FAILED": "PROCESS_START_FAILED_NO_CHILD",
+                "TIMED_OUT_NOT_STARTED": "DEADLINE_EXPIRED_NOT_STARTED",
+            }[status],
+            "duration_seconds": time.perf_counter() - started,
+            "ended_at": ended_at,
+            "pid": None,
+            "progress": artifact(progress_path),
+            "pytest_durations": {"enabled": True, "minimum_seconds": 0.0},
+            "returncode": (
+                int(timeout_policy["timeout_exit_code"]) if timed_out else 250
+            ),
+            "selector_summary": dict(selector_summary),
+            "shard_id": shard["shard_id"],
+            "started_at": started_at,
+            "stderr": artifact(stderr_path),
+            "stdout": artifact(stdout_path),
+            "termination": None,
+            "timed_out": timed_out,
+        }
+        if error is not None:
+            raw["error"] = repr(error)
+        return (
+            {
+                "exit_code": raw["returncode"],
+                "node_count": shard["node_count"],
+                "node_ids_sha256": shard["node_ids_sha256"],
+                "result": None,
+                "shard_id": shard["shard_id"],
+                "status": status,
+            },
+            raw,
+        )
+
+    command: list[str] = []
+    selector_summary: dict[str, Any] = {
+        "exact_node_count": 0,
+        "full_module_count": 0,
+        "selector_count": 0,
+        "selectors_sha256": _functional_list_hash([]),
+    }
+    if deadline_expired_on_entry:
+        try:
+            with (
+                stdout_path.open("xb"),
+                stderr_path.open("xb"),
+                progress_path.open("xb"),
+            ):
+                pass
+            _functional_progress_event(
+                progress_path,
+                "TIMED_OUT",
+                launched=False,
+                shard_id=shard["shard_id"],
+            )
+        except BaseException:
+            pass
+        return failure(
+            "TIMED_OUT_NOT_STARTED",
+            error=None,
+            command=command,
+            selector_summary=selector_summary,
+            timed_out=True,
+        )
+    try:
+        _functional_deadline_check(
+            absolute_deadline, f"{shard['shard_id']} selector preparation"
+        )
+        selectors, selector_summary = _functional_shard_selectors(
+            shard["node_ids"], prepared["full_node_ids"]
+        )
+        command = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "-p",
+            "scripts.run_e4_pl_burnin_gate",
+            "--durations=0",
+            "--durations-min=0.0",
+            f"--basetemp={shard_root / 'basetemp'}",
+            *selectors,
+        ]
+        _functional_deadline_check(
+            absolute_deadline, f"{shard['shard_id']} log preparation"
+        )
+        with stdout_path.open("xb"), stderr_path.open("xb"), progress_path.open("xb"):
+            pass
+        _functional_progress_event(
+            progress_path,
+            "PREPARATION_STARTED",
+            selector_count=len(selectors),
+            shard_id=shard["shard_id"],
+        )
+        _functional_deadline_check(
+            absolute_deadline, f"{shard['shard_id']} environment preparation"
+        )
+        environment = _functional_shard_environment(
+            sandbox=sandbox,
+            shard_root=shard_root,
+            expected_path=expected_path,
+            progress_path=progress_path,
+            result_path=result_path,
+            shard_id=shard["shard_id"],
+        )
+        _functional_deadline_check(
+            absolute_deadline, f"{shard['shard_id']} environment validation"
+        )
+    except BaseException as exc:
+        timed_out_during_preparation = time.monotonic() >= absolute_deadline
+        try:
+            if progress_path.exists():
+                _functional_progress_event(
+                    progress_path,
+                    (
+                        "TIMED_OUT"
+                        if timed_out_during_preparation
+                        else "PREPARATION_FAILED"
+                    ),
+                    error=repr(exc),
+                    launched=False,
+                    shard_id=shard["shard_id"],
+                )
+        except BaseException:
+            pass
+        return failure(
+            (
+                "TIMED_OUT_NOT_STARTED"
+                if timed_out_during_preparation
+                else "PREPARATION_FAILED"
+            ),
+            error=None if timed_out_during_preparation else exc,
+            command=command,
+            selector_summary=selector_summary,
+            timed_out=timed_out_during_preparation,
+        )
+
+    remaining = absolute_deadline - time.monotonic()
+    if remaining <= 0:
+        try:
+            _functional_progress_event(
+                progress_path,
+                "TIMED_OUT",
+                launched=False,
+                shard_id=shard["shard_id"],
+            )
+        except BaseException:
+            pass
+        return failure(
+            "TIMED_OUT_NOT_STARTED",
+            error=None,
+            command=command,
+            selector_summary=selector_summary,
+            timed_out=True,
+        )
+
+    timed_out = False
+    termination: dict[str, Any] | None = None
+    termination_error: str | None = None
+    process_error: str | None = None
+    pid: int | None = None
+    returncode = 250
+    start_error: BaseException | None = None
+    launch_deadline_expired = False
+    worker: subprocess.Popen[bytes] | None = None
+    with stdout_path.open("ab") as stdout_stream, stderr_path.open("ab") as stderr_stream:
+        options: dict[str, Any] = {}
+        if os.name == "nt":
+            options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            options["start_new_session"] = True
+        if time.monotonic() >= absolute_deadline:
+            launch_deadline_expired = True
+        else:
+            try:
+                worker = subprocess.Popen(
+                    command,
+                    cwd=sandbox,
+                    env=environment,
+                    stdout=stdout_stream,
+                    stderr=stderr_stream,
+                    **options,
+                )
+            except BaseException as exc:
+                start_error = exc
+        if worker is not None:
+            pid = worker.pid
+            child_exit_observed = False
+            try:
+                try:
+                    _functional_progress_event(
+                        progress_path,
+                        "STARTED",
+                        pid=pid,
+                        shard_id=shard["shard_id"],
+                    )
+                    returncode = int(
+                        worker.wait(
+                            timeout=max(0.001, absolute_deadline - time.monotonic())
+                        )
+                    )
+                    child_exit_observed = True
+                except subprocess.TimeoutExpired:
+                    timed_out = True
+                    returncode = int(timeout_policy["timeout_exit_code"])
+                except BaseException as exc:
+                    process_error = repr(exc)
+                    returncode = 250
+            finally:
+                if not child_exit_observed:
+                    try:
+                        termination = _terminate_functional_process_tree(
+                            worker, timeout_policy
+                        )
+                    except BaseException as exc:  # outer runner must contain this tree
+                        termination_error = repr(exc)
+                        error_raw = termination_error.encode(
+                            "utf-8", errors="replace"
+                        )
+                        termination = {
+                            "bytes": len(error_raw),
+                            "returncode": 260,
+                            "sha256": _sha256_bytes(error_raw),
+                        }
+                    if termination["returncode"] != 0:
+                        _FUNCTIONAL_UNPROVEN_TREE.set()
+        stdout_stream.flush()
+        stderr_stream.flush()
+        os.fsync(stdout_stream.fileno())
+        os.fsync(stderr_stream.fileno())
+    if launch_deadline_expired:
+        try:
+            _functional_progress_event(
+                progress_path,
+                "TIMED_OUT",
+                launched=False,
+                shard_id=shard["shard_id"],
+            )
+        except BaseException:
+            pass
+        return failure(
+            "TIMED_OUT_NOT_STARTED",
+            error=None,
+            command=command,
+            selector_summary=selector_summary,
+            timed_out=True,
+        )
+    if start_error is not None:
+        try:
+            _functional_progress_event(
+                progress_path,
+                "START_FAILED",
+                error=repr(start_error),
+                shard_id=shard["shard_id"],
+            )
+        except BaseException:
+            pass
+        return failure(
+            "START_FAILED",
+            error=start_error,
+            command=command,
+            selector_summary=selector_summary,
+            timed_out=False,
+        )
+    try:
+        _functional_progress_event(
+            progress_path,
+            "TIMED_OUT" if timed_out else "PROCESS_EXITED",
+            launched=True,
+            returncode=returncode,
+            shard_id=shard["shard_id"],
+            termination_returncode=(
+                None if termination is None else termination["returncode"]
+            ),
+        )
+    except BaseException as exc:
+        if process_error is None:
+            process_error = f"progress-finalization: {exc!r}"
+    ended_at = dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    raw: dict[str, Any] = {
+        "attempts": 1 if pid is not None else 0,
+        "command": command,
+        "command_sha256": _functional_list_hash(command),
+        "deadline_seconds": deadline_seconds,
+        "duration_seconds": time.perf_counter() - started,
+        "ended_at": ended_at,
+        "pid": pid,
+        "progress": file_hash_record(progress_path),
+        "pytest_durations": {"enabled": True, "minimum_seconds": 0.0},
+        "returncode": returncode,
+        "selector_summary": selector_summary,
+        "shard_id": shard["shard_id"],
+        "started_at": started_at,
+        "stderr": file_hash_record(stderr_path),
+        "stdout": file_hash_record(stdout_path),
+        "termination": termination,
+        "timed_out": timed_out,
+    }
+    if termination_error is not None:
+        raw["termination_error"] = termination_error
+    if process_error is not None:
+        raw["process_error"] = process_error
+    canonical: dict[str, Any] = {
+        "exit_code": returncode,
+        "node_count": shard["node_count"],
+        "node_ids_sha256": shard["node_ids_sha256"],
+        "result": None,
+        "shard_id": shard["shard_id"],
+        "status": (
+            "TIMEOUT_TREE_TERMINATION_FAILED"
+            if termination is not None and termination["returncode"] != 0
+            else "TIMED_OUT_NOT_STARTED"
+            if timed_out and pid is None
+            else "TIMED_OUT"
+            if timed_out
+            else "PROCESS_ERROR"
+            if process_error is not None
+            else "PROCESS_FAILED"
+        ),
+    }
+    result_is_regular = (
+        result_path.is_file()
+        and not result_path.is_symlink()
+        and not _is_reparse_point(result_path)
+    )
+    if result_is_regular:
+        # A timed-out pytest process can finish writing its session record just
+        # before tree termination.  Bind every such partial even though it may
+        # never be treated as a passing result.
+        canonical["result"] = file_hash_record(result_path)
+    if canonical["status"] == "PROCESS_FAILED" and result_is_regular:
+        try:
+            result = _validate_functional_shard_result(
+                strict_json_load(result_path), shard=shard
+            )
+        except (EvidenceError, OSError, UnicodeError) as exc:
+            raw["result_error"] = str(exc)
+            canonical["status"] = "MALFORMED_RESULT"
+        else:
+            outcomes = [row["outcome"] for row in result["nodes"]]
+            passed = (
+                returncode == 0
+                and result["exit_code"] == 0
+                and result["collection_matches"] is True
+                and all(outcome in {"PASSED", "SKIPPED", "XFAIL"} for outcome in outcomes)
+            )
+            canonical["status"] = "PASS" if passed else "TEST_FAILURE"
+    elif canonical["status"] == "PROCESS_FAILED":
+        canonical["status"] = "MISSING_RESULT"
+    return canonical, raw
+
+
+def _run_functional_wave_unprotected(
+    cycle: int,
+    *,
+    contract_path: Path = S3_Q4_CONTRACT_PATH,
+) -> int:
+    """Run the four frozen functional shards in one isolated concurrent wave."""
+
+    if cycle not in {1, 2}:
+        raise EvidenceError("functional-wave cycle must be 1 or 2")
+    wave_started = time.monotonic()
+    contract = strict_json_load(contract_path)
+    if not isinstance(contract, dict):
+        raise EvidenceError("S3/Q4 burn-in contract must be an object")
+    wave = validate_functional_wave_contract(contract)
+    deadline = int(wave["execution"]["internal_deadline_seconds"])
+    absolute_deadline = wave_started + deadline
+    _functional_deadline_check(absolute_deadline, "functional-wave routing")
+    routing = wave["execution"]["artifact_routing"]
+    external_root = Path(contract["non_resource_commands"]["output_root"])
+    if not external_root.is_absolute():
+        raise EvidenceError("functional-wave output authority must be absolute")
+    wave_parent = external_root / routing["directory_name"]
+    resolved_wave_parent = wave_parent.resolve()
+    resolved_repository = ROOT.resolve()
+    if (
+        resolved_wave_parent == resolved_repository
+        or resolved_repository in resolved_wave_parent.parents
+        or resolved_wave_parent in resolved_repository.parents
+    ):
+        raise EvidenceError("functional-wave output must be outside the repository")
+    _functional_deadline_check(absolute_deadline, "functional-wave parent creation")
+    wave_parent.mkdir(parents=True, exist_ok=True)
+    _functional_deadline_check(absolute_deadline, "functional-wave parent validation")
+    if wave_parent.is_symlink() or _is_reparse_point(wave_parent):
+        raise EvidenceError("functional-wave parent must not be a reparse point")
+    wave_root = wave_parent / f"cycle-{cycle}"
+    try:
+        _functional_deadline_check(absolute_deadline, "functional-wave cycle creation")
+        wave_root.mkdir()
+    except FileExistsError as exc:
+        raise EvidenceError("functional-wave cycle output is one-shot and already exists") from exc
+    if wave_root.is_symlink() or _is_reparse_point(wave_root):
+        raise EvidenceError("functional-wave cycle output must not be a reparse point")
+
+    _functional_deadline_check(absolute_deadline, "source-status preparation")
+    pre_status = _functional_source_status(
+        ROOT, absolute_deadline=absolute_deadline
+    )
+    _functional_deadline_check(absolute_deadline, "source-status validation")
+    if pre_status["bytes"] != 0:
+        raise EvidenceError("functional source repository is not completely clean")
+    timeout_policy = _validate_functional_timeout_policy(contract)
+    if os.name == "nt":
+        _functional_deadline_check(absolute_deadline, "taskkill authority check")
+        _functional_taskkill_authority(timeout_policy)
+        _functional_deadline_check(absolute_deadline, "taskkill authority validation")
+    archive_path = wave_root / routing["archive_filename"]
+    _functional_deadline_check(absolute_deadline, "source archive creation")
+    identity, archive_process = _create_functional_archive(
+        ROOT,
+        archive_path,
+        absolute_deadline=absolute_deadline,
+        environment=os.environ,
+    )
+    _functional_deadline_check(absolute_deadline, "source archive hashing")
+    archive_record = _functional_bounded_hash_record(
+        archive_path, absolute_deadline, "source archive hashing"
+    )
+
+    source_path = wave_root / routing["source_directory_name"]
+    _functional_deadline_check(absolute_deadline, "source extraction")
+    graph_rows, graph_summary = _extract_functional_tar(
+        archive_path, source_path, absolute_deadline=absolute_deadline
+    )
+    _functional_deadline_check(absolute_deadline, "source extraction validation")
+    prepared: list[dict[str, Any]] = []
+    for shard in wave["manifest"]["shards"]:
+        shard_id = shard["shard_id"]
+        _functional_deadline_check(
+            absolute_deadline, f"{shard_id} sandbox preparation"
+        )
+        shard_root = wave_root / f"{routing['shard_directory_prefix']}{shard_id}"
+        shard_root.mkdir()
+        for child in FUNCTIONAL_SHARD_DIRECTORIES:
+            _functional_deadline_check(
+                absolute_deadline, f"{shard_id} directory preparation"
+            )
+            if child == "cwd":
+                continue
+            (shard_root / child).mkdir()
+        expected_path = shard_root / "logs" / "expected-nodes.json"
+        _functional_deadline_check(
+            absolute_deadline, f"{shard_id} expected-node preparation"
+        )
+        with expected_path.open("xb") as stream:
+            stream.write(canonical_json_bytes(shard["node_ids"]))
+        sandbox = shard_root / "cwd"
+        _functional_deadline_check(
+            absolute_deadline, f"{shard_id} sandbox extraction"
+        )
+        rows, summary = _extract_functional_tar(
+            archive_path, sandbox, absolute_deadline=absolute_deadline
+        )
+        _functional_deadline_check(
+            absolute_deadline, f"{shard_id} sandbox validation"
+        )
+        if rows != graph_rows or summary != graph_summary:
+            raise EvidenceError("functional source sandboxes have different initial graphs")
+        prepared.append(
+            {
+                "full_node_ids": wave["manifest"]["full_node_ids"],
+                "sandbox": sandbox,
+                "shard": shard,
+                "shard_root": shard_root,
+            }
+        )
+        print(
+            f"[functional-wave] prepared {shard_id} "
+            f"({shard['node_count']} nodes)",
+            file=sys.stderr,
+            flush=True,
+        )
+    graph_payload = {
+        "files": graph_rows,
+        "schema": wave["source"]["file_graph_schema"],
+        "summary": graph_summary,
+    }
+    graph_path = wave_root / wave["source"]["file_graph_filename"]
+    _functional_deadline_check(absolute_deadline, "source-graph publication")
+    with graph_path.open("xb") as stream:
+        stream.write(canonical_json_bytes(graph_payload))
+    _functional_deadline_check(absolute_deadline, "functional shard launch wave")
+
+    canonical_by_id: dict[str, dict[str, Any]] = {}
+    raw_by_id: dict[str, dict[str, Any]] = {}
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=int(wave["execution"]["max_workers"]),
+        thread_name_prefix="functional-wave",
+    ) as pool:
+        futures: dict[concurrent.futures.Future[Any], str] = {}
+        for item in prepared:
+            shard_id = item["shard"]["shard_id"]
+            _functional_deadline_check(
+                absolute_deadline, f"{shard_id} launch submission"
+            )
+            future = pool.submit(
+                _run_functional_shard,
+                item,
+                absolute_deadline=absolute_deadline,
+                deadline_seconds=deadline,
+                timeout_policy=timeout_policy,
+            )
+            futures[future] = shard_id
+        for future in concurrent.futures.as_completed(futures):
+            shard_id = futures[future]
+            try:
+                canonical, raw = future.result()
+            except BaseException as exc:  # preserve all other shards; never retry
+                _FUNCTIONAL_UNPROVEN_TREE.set()
+                canonical = {
+                    "exit_code": 250,
+                    "node_count": next(
+                        row["node_count"]
+                        for row in wave["manifest"]["shards"]
+                        if row["shard_id"] == shard_id
+                    ),
+                    "node_ids_sha256": next(
+                        row["node_ids_sha256"]
+                        for row in wave["manifest"]["shards"]
+                        if row["shard_id"] == shard_id
+                    ),
+                    "result": None,
+                    "shard_id": shard_id,
+                    "status": "TIMEOUT_TREE_TERMINATION_FAILED",
+                }
+                raw = {"attempts": 1, "error": repr(exc), "shard_id": shard_id}
+            canonical_by_id[shard_id] = canonical
+            raw_by_id[shard_id] = raw
+            print(
+                f"[functional-wave] {shard_id} finished: {canonical['status']}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    _functional_deadline_check(absolute_deadline, "post-wave source status")
+    post_status = _functional_source_status(
+        ROOT, absolute_deadline=absolute_deadline
+    )
+    _functional_deadline_check(absolute_deadline, "post-wave source validation")
+    if post_status != pre_status:
+        raise EvidenceError("functional source repository status changed during the wave")
+    ordered_canonical = [
+        canonical_by_id[row["shard_id"]] for row in wave["manifest"]["shards"]
+    ]
+    if _functional_wave_has_unproven_tree(ordered_canonical):
+        _FUNCTIONAL_UNPROVEN_TREE.set()
+    success = all(row["status"] == "PASS" for row in ordered_canonical)
+    aggregate = {
+        "candidate": identity,
+        "manifest": {
+            "module_count": wave["manifest"]["module_count"],
+            "modules_sha256": wave["manifest"]["modules_sha256"],
+            "node_count": wave["manifest"]["node_count"],
+            "node_ids_sha256": wave["manifest"]["full_node_ids_sha256"],
+            "shard_count": len(wave["manifest"]["shards"]),
+        },
+        "schema": wave["aggregate"]["schema"],
+        "shards": ordered_canonical,
+        "source": {
+            "archive": archive_record,
+            "file_graph": _functional_bounded_hash_record(
+                graph_path, absolute_deadline, "source-graph final hashing"
+            ),
+            "file_graph_content": graph_summary,
+            "repository_status": pre_status,
+        },
+        "terminal": (
+            wave["aggregate"]["success_terminal"]
+            if success
+            else wave["aggregate"]["blocked_terminal"]
+        ),
+    }
+    aggregate_path = wave_root / routing["aggregate_filename"]
+    diagnostics_path = wave_root / routing["raw_diagnostics_filename"]
+    diagnostics = {
+        "archive_process": archive_process,
+        "artifact_extent": _functional_artifact_extent(
+            wave_root,
+            exclude={
+                routing["aggregate_filename"],
+                routing["raw_diagnostics_filename"],
+            },
+            absolute_deadline=absolute_deadline,
+        ),
+        "cycle": cycle,
+        "schema": FUNCTIONAL_WAVE_DIAGNOSTICS_SCHEMA,
+        "shards": [raw_by_id[row["shard_id"]] for row in wave["manifest"]["shards"]],
+        "source_status_after": post_status,
+        "source_status_before": pre_status,
+    }
+    _functional_deadline_check(absolute_deadline, "raw diagnostics serialization")
+    diagnostics_raw = canonical_json_bytes(diagnostics)
+    _functional_deadline_check(absolute_deadline, "raw diagnostics publication")
+    with diagnostics_path.open("xb") as stream:
+        stream.write(diagnostics_raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    _functional_deadline_check(absolute_deadline, "raw diagnostics hashing")
+    aggregate["diagnostics"] = _functional_bounded_hash_record(
+        diagnostics_path, absolute_deadline, "raw diagnostics hashing"
+    )
+    _functional_deadline_check(absolute_deadline, "aggregate serialization")
+    aggregate_raw = canonical_json_bytes(aggregate)
+    _functional_deadline_check(absolute_deadline, "aggregate publication")
+    with aggregate_path.open("xb") as stream:
+        stream.write(aggregate_raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    _functional_deadline_check(absolute_deadline, "aggregate stdout publication")
+    sys.stdout.buffer.write(aggregate_raw)
+    sys.stdout.buffer.flush()
+    _functional_deadline_check(absolute_deadline, "functional-wave completion")
+    return 0 if success else 1
+
+
+def _functional_artifact_extent(
+    root: Path,
+    *,
+    exclude: set[str],
+    absolute_deadline: float | None = None,
+) -> dict[str, Any]:
+    records: list[dict[str, Any]] = []
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        if absolute_deadline is not None:
+            _functional_deadline_check(
+                absolute_deadline, "functional artifact-extent enumeration"
+            )
+        relative = path.relative_to(root).as_posix()
+        if relative in exclude:
+            continue
+        if path.is_symlink() or _is_reparse_point(path):
+            raise EvidenceError(f"functional-wave artifact is a reparse file: {relative}")
+        if absolute_deadline is not None:
+            record = _functional_bounded_hash_record(
+                path, absolute_deadline, "functional artifact-extent hashing"
+            )
+        else:
+            record = file_hash_record(path)
+        records.append(
+            {
+                "bytes": record["bytes"],
+                "path": relative,
+                "sha256": record["sha256"],
+            }
+        )
+    return {
+        "files": len(records),
+        "records": records,
+        "sha256": _sha256_bytes(canonical_json_bytes(records)),
+    }
+
+
+def _record_functional_wave_failure(
+    cycle: int,
+    contract_path: Path,
+    error: Exception,
+) -> int:
+    """Bind every partial external artifact without retrying a failed wave."""
+
+    try:
+        contract = strict_json_load(contract_path)
+        wave = validate_functional_wave_contract(contract)
+        routing = wave["execution"]["artifact_routing"]
+        wave_root = (
+            Path(contract["non_resource_commands"]["output_root"])
+            / routing["directory_name"]
+            / f"cycle-{cycle}"
+        )
+    except Exception:
+        raise error
+    if not wave_root.is_dir() or wave_root.is_symlink() or _is_reparse_point(wave_root):
+        raise error
+    aggregate_path = wave_root / routing["aggregate_filename"]
+    diagnostics_path = wave_root / routing["raw_diagnostics_filename"]
+    if aggregate_path.exists():
+        aggregate_raw = aggregate_path.read_bytes()
+        existing_aggregate = strict_json_loads(aggregate_raw)
+        if (
+            not isinstance(existing_aggregate, dict)
+            or not diagnostics_path.is_file()
+            or existing_aggregate.get("diagnostics")
+            != file_hash_record(diagnostics_path)
+        ):
+            raise EvidenceError("existing functional aggregate lacks its diagnostics binding")
+    else:
+        try:
+            identity = {
+                "commit": _git(ROOT, "rev-parse", "HEAD"),
+                "tree": _git(ROOT, "rev-parse", "HEAD^{tree}"),
+            }
+        except Exception:
+            identity = {"commit": "0" * 40, "tree": "0" * 40}
+        try:
+            observed_status = _functional_source_status(ROOT)
+        except Exception:
+            observed_status = None
+        empty_status = {"bytes": 0, "sha256": _sha256_bytes(b"")}
+        status = observed_status if observed_status == empty_status else None
+        shards = []
+        for shard in wave["manifest"]["shards"]:
+            result_path = (
+                wave_root
+                / f"{routing['shard_directory_prefix']}{shard['shard_id']}"
+                / "logs"
+                / "shard-result.json"
+            )
+            result_record = (
+                file_hash_record(result_path)
+                if result_path.is_file()
+                and not result_path.is_symlink()
+                and not _is_reparse_point(result_path)
+                else None
+            )
+            shards.append(
+                {
+                    "exit_code": 250,
+                    "node_count": shard["node_count"],
+                    "node_ids_sha256": shard["node_ids_sha256"],
+                    "result": result_record,
+                    "shard_id": shard["shard_id"],
+                    "status": "NOT_STARTED_OR_UNBOUND_PARTIAL",
+                }
+            )
+        archive_path = wave_root / routing["archive_filename"]
+        graph_path = wave_root / wave["source"]["file_graph_filename"]
+        try:
+            graph_value = strict_json_load(graph_path)
+            graph_content = graph_value["summary"]
+        except Exception:
+            graph_content = None
+        aggregate = {
+            "candidate": identity,
+            "manifest": {
+                "module_count": wave["manifest"]["module_count"],
+                "modules_sha256": wave["manifest"]["modules_sha256"],
+                "node_count": wave["manifest"]["node_count"],
+                "node_ids_sha256": wave["manifest"]["full_node_ids_sha256"],
+                "shard_count": len(wave["manifest"]["shards"]),
+            },
+            "schema": wave["aggregate"]["schema"],
+            "shards": shards,
+            "source": {
+                "archive": (
+                    file_hash_record(archive_path)
+                    if archive_path.is_file() and not archive_path.is_symlink()
+                    else None
+                ),
+                "file_graph": (
+                    file_hash_record(graph_path)
+                    if graph_path.is_file() and not graph_path.is_symlink()
+                    else None
+                ),
+                "file_graph_content": graph_content,
+                "repository_status": status,
+            },
+            "terminal": wave["aggregate"]["blocked_terminal"],
+        }
+        if not diagnostics_path.exists():
+            diagnostics = {
+                "artifact_extent": _functional_artifact_extent(
+                    wave_root,
+                    exclude={
+                        routing["aggregate_filename"],
+                        routing["raw_diagnostics_filename"],
+                    },
+                ),
+                "cycle": cycle,
+                "failure": {
+                    "message": str(error),
+                    "repository_status": observed_status,
+                    "type": type(error).__name__,
+                },
+                "schema": FUNCTIONAL_WAVE_DIAGNOSTICS_SCHEMA,
+            }
+            with diagnostics_path.open("xb") as stream:
+                stream.write(canonical_json_bytes(diagnostics))
+        aggregate["diagnostics"] = file_hash_record(diagnostics_path)
+        aggregate_raw = canonical_json_bytes(aggregate)
+        with aggregate_path.open("xb") as stream:
+            stream.write(aggregate_raw)
+    sys.stdout.buffer.write(aggregate_raw)
+    sys.stdout.buffer.flush()
+    return 1
+
+
+def run_functional_wave(
+    cycle: int,
+    *,
+    contract_path: Path = S3_Q4_CONTRACT_PATH,
+) -> int:
+    _FUNCTIONAL_UNPROVEN_TREE.clear()
+    try:
+        try:
+            return _run_functional_wave_unprotected(cycle, contract_path=contract_path)
+        except FunctionalDeadlineExpired as exc:
+            # Deadline exhaustion is terminal and must not be followed by an
+            # unbounded evidence scan or canonical aggregate publication.
+            print(f"[functional-wave] {exc}", file=sys.stderr, flush=True)
+            return 124
+        except Exception as exc:
+            return _record_functional_wave_failure(cycle, contract_path, exc)
+    finally:
+        if _FUNCTIONAL_UNPROVEN_TREE.is_set():
+            _await_outer_resource_tree_termination()
+
+
+def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
+    """Run one lane with a fresh external pytest and metadata root."""
 
     if lane not in {"quick", "functional", "performance", "extended", "ci"}:
         raise EvidenceError(f"pytest lane does not support basetemp isolation: {lane}")
-    parent = ROOT / ".pytest_tmp_q1m_runtime"
-    if parent.exists() and parent.is_symlink():
-        raise EvidenceError("Q1M pytest temp parent must not be a symlink")
-    parent.mkdir(exist_ok=True)
-    if parent.resolve().parent != ROOT.resolve():
-        raise EvidenceError("Q1M pytest temp parent escaped the repository")
+    if ROOT != _GATE_SOURCE_ROOT:
+        # Existing unit tests replace ROOT with a temporary synthetic project.
+        # That seam never applies to a CLI execution from the real gate file.
+        parent = ROOT / ".pytest_tmp_q1m_runtime"
+    else:
+        contract = strict_json_load(S3_Q4_CONTRACT_PATH)
+        if not isinstance(contract, dict):
+            raise EvidenceError("S3/Q4 contract must be an object")
+        external_root = Path(contract["non_resource_commands"]["output_root"])
+        if not external_root.is_absolute():
+            raise EvidenceError("pytest runtime root authority must be absolute")
+        parent = external_root / "common-runtime"
+        resolved_parent = parent.resolve()
+        resolved_repository = ROOT.resolve()
+        if (
+            resolved_parent == resolved_repository
+            or resolved_repository in resolved_parent.parents
+            or resolved_parent in resolved_repository.parents
+        ):
+            raise EvidenceError("pytest runtime root must be outside the repository")
+    if parent.exists() and (parent.is_symlink() or _is_reparse_point(parent)):
+        raise EvidenceError("pytest runtime parent must not be a reparse point")
+    parent.mkdir(parents=True, exist_ok=True)
     basetemp: Path | None = None
     metadata_workspace: Path | None = None
     try:
@@ -1296,23 +3453,389 @@ def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
         try:
             parent.rmdir()
         except OSError:
-            # Another explicitly launched non-resource lane may share only the
-            # ignored parent; each randomized child remains isolated.
+            # Concurrent common commands may share only this external parent;
+            # every randomized child remains isolated.
             pass
 
 
-def _tracked_head_identity(repository: Path) -> dict[str, str]:
+def _validate_ci_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
+    policy = _exact_keys(
+        contract["ci_policy"],
+        {
+            "coordinator_wall_limit_seconds",
+            "extent",
+            "required_lanes",
+            "smoke_or_representative_only_forbidden",
+        },
+        "$contract.ci_policy",
+    )
+    if policy != {
+        "coordinator_wall_limit_seconds": 1200,
+        "extent": "COMPLETE_FROZEN_INVENTORIES",
+        "required_lanes": ["quick", "functional", "additive"],
+        "smoke_or_representative_only_forbidden": True,
+    }:
+        raise EvidenceError("bounded CI policy differs from the frozen authority")
+    return policy
+
+
+def _ci_deadline_check(absolute_deadline: float, stage: str) -> None:
+    if time.monotonic() >= absolute_deadline:
+        raise subprocess.TimeoutExpired(["bounded-ci", stage], 1200)
+
+
+def _terminate_ci_workers(
+    workers: Sequence[subprocess.Popen[bytes]],
+    timeout_policy: Mapping[str, Any],
+) -> bool:
+    """Terminate live CI trees and return whether absence was proven."""
+
+    live = [worker for worker in workers if worker.poll() is None]
+    if not live:
+        return True
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=len(live), thread_name_prefix="ci-tree-termination"
+    ) as pool:
+        results = list(
+            pool.map(
+                lambda worker: _terminate_functional_process_tree(
+                    worker, timeout_policy
+                ),
+                live,
+            )
+        )
+    return all(
+        result["returncode"] == 0 and worker.poll() is not None
+        for worker, result in zip(live, results, strict=True)
+    )
+
+
+def _collect_ci_nonfunctional_nodes(
+    selectors: Sequence[str],
+    *,
+    ci_root: Path,
+    roots: Mapping[str, Path],
+    absolute_deadline: float,
+    timeout_policy: Mapping[str, Any],
+) -> list[str]:
+    """Collect and bind the exact quick/additive node IDs before execution."""
+
+    capture_path = ci_root / "nonfunctional-node-ids.json"
+    metadata_overlay = ci_root / "collector-metadata"
+    _ci_deadline_check(absolute_deadline, "collection metadata preparation")
+    _write_source_metadata_overlay(roots, metadata_overlay)
+    environment = _pytest_environment(roots=roots, metadata_overlay=metadata_overlay)
+    environment.update(
+        {
+            _CI_CAPTURE_ENV: str(capture_path),
+            "PYTHONHASHSEED": "0",
+            "PYTHONNOUSERSITE": "1",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTEST_ADDOPTS": "-p no:cacheprovider",
+            "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        }
+    )
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "--collect-only",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.run_e4_pl_burnin_gate",
+        *selectors,
+    ]
+    options: dict[str, Any] = {}
+    if os.name == "nt":
+        options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        options["start_new_session"] = True
+    _ci_deadline_check(absolute_deadline, "collection process launch")
+    collector = subprocess.Popen(
+        command,
+        cwd=ROOT,
+        env=environment,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        **options,
+    )
+    try:
+        returncode = collector.wait(
+            timeout=max(0.001, absolute_deadline - time.monotonic())
+        )
+    except subprocess.TimeoutExpired:
+        if not _terminate_ci_workers([collector], timeout_policy):
+            _FUNCTIONAL_UNPROVEN_TREE.set()
+            _await_outer_resource_tree_termination()
+        raise
+    if returncode != 0:
+        raise EvidenceError(f"bounded CI collection failed with exit {returncode}")
+    _ci_deadline_check(absolute_deadline, "collection result validation")
+    nodes = strict_json_load(capture_path)
+    if (
+        not isinstance(nodes, list)
+        or not all(isinstance(node, str) and node for node in nodes)
+        or len(nodes) != len(set(nodes))
+        or {
+            "node_count": len(nodes),
+            "node_ids_sha256": _functional_list_hash(nodes),
+        }
+        != CI_NONFUNCTIONAL_NODE_AUTHORITY
+    ):
+        raise EvidenceError("bounded CI nonfunctional node set differs from authority")
+    return nodes
+
+
+def _run_bounded_ci(lanes: Mapping[str, Sequence[str]]) -> int:
+    """Run the complete CI extent in four processes under one 20-minute cap."""
+
+    coordinator_started = _GATE_COMMAND_ENTRY
+    contract = strict_json_load(S3_Q4_CONTRACT_PATH)
+    if not isinstance(contract, dict):
+        raise EvidenceError("S3/Q4 contract must be an object")
+    ci_policy = _validate_ci_policy(contract)
+    wave = validate_functional_wave_contract(contract)
+    timeout_policy = _validate_functional_timeout_policy(contract)
+    required_lanes = ci_policy["required_lanes"]
+    inventories = contract["lane_inventories"]
+    for lane in required_lanes:
+        selected = list(lanes[lane])
+        authority = inventories[lane]
+        if (
+            authority["count"] != len(selected)
+            or authority["sha256"] != _functional_list_hash(selected)
+        ):
+            raise EvidenceError(f"CI {lane} inventory differs from frozen authority")
+    selected_modules = [
+        module for lane in required_lanes for module in lanes[lane]
+    ]
+    if len(selected_modules) != len(set(selected_modules)):
+        raise EvidenceError("CI lane inventories overlap")
+
+    full_nodes = wave["manifest"]["full_node_ids"]
+    commands: list[list[str]] = []
+    nonfunctional = [*lanes["quick"], *lanes["additive"]]
+    nonfunctional_buckets = [
+        [],
+        [*lanes["quick"][0::3], *lanes["additive"][0::3]],
+        [*lanes["quick"][1::3], *lanes["additive"][1::3]],
+        [*lanes["quick"][2::3], *lanes["additive"][2::3]],
+    ]
+    assigned_nonfunctional: list[str] = []
+    selector_rows: list[list[str]] = []
+    for index, shard in enumerate(wave["manifest"]["shards"]):
+        functional_selectors, _summary = _functional_shard_selectors(
+            shard["node_ids"], full_nodes
+        )
+        extras = nonfunctional_buckets[index]
+        assigned_nonfunctional.extend(extras)
+        selector_rows.append([*functional_selectors, *extras])
+    if sorted(assigned_nonfunctional) != sorted(nonfunctional):
+        raise EvidenceError("bounded CI did not assign the complete nonfunctional extent")
+
+    if ROOT != _GATE_SOURCE_ROOT:
+        parent = ROOT / ".pytest_tmp_q1m_runtime"
+    else:
+        external_root = Path(contract["non_resource_commands"]["output_root"])
+        if not external_root.is_absolute():
+            raise EvidenceError("bounded CI runtime root authority must be absolute")
+        parent = external_root / "common-runtime"
+    parent.mkdir(parents=True, exist_ok=True)
+    if parent.is_symlink() or _is_reparse_point(parent):
+        raise EvidenceError("bounded CI runtime parent must not be a reparse point")
+    ci_root = Path(tempfile.mkdtemp(prefix="ci-bounded-", dir=parent))
+    roots = _local_roots()
+    workers: list[subprocess.Popen[bytes]] = []
+    cleanup_allowed = True
+    try:
+        wall_limit = int(ci_policy["coordinator_wall_limit_seconds"])
+        termination_grace = int(timeout_policy["termination_grace_seconds"])
+        absolute_deadline = coordinator_started + wall_limit
+        # Finish child-tree termination before the command-entry parent begins
+        # its final 30-second containment reserve.
+        termination_start = absolute_deadline - (
+            CI_COMMAND_TERMINATION_RESERVE_SECONDS + termination_grace
+        )
+        _ci_deadline_check(termination_start, "exact node collection")
+        captured_nonfunctional = _collect_ci_nonfunctional_nodes(
+            nonfunctional,
+            ci_root=ci_root,
+            roots=roots,
+            absolute_deadline=termination_start,
+            timeout_policy=timeout_policy,
+        )
+        expected_rows: list[list[str]] = []
+        for index, shard in enumerate(wave["manifest"]["shards"]):
+            extra_modules = set(nonfunctional_buckets[index])
+            expected = [
+                *shard["node_ids"],
+                *[
+                    node_id
+                    for node_id in captured_nonfunctional
+                    if node_id.partition("::")[0] in extra_modules
+                ],
+            ]
+            shard_id = shard["shard_id"]
+            if {
+                "node_count": len(expected),
+                "node_ids_sha256": _functional_list_hash(expected),
+            } != CI_SHARD_NODE_AUTHORITIES[shard_id]:
+                raise EvidenceError(f"bounded CI {shard_id} node set differs from authority")
+            expected_rows.append(expected)
+
+        environments: list[dict[str, str]] = []
+        for index, (selectors, expected) in enumerate(
+            zip(selector_rows, expected_rows, strict=True), start=1
+        ):
+            _ci_deadline_check(termination_start, f"P{index:02d} preparation")
+            shard_root = ci_root / f"P{index:02d}"
+            shard_root.mkdir()
+            basetemp = shard_root / "basetemp"
+            metadata_overlay = shard_root / "metadata"
+            expected_path = shard_root / "expected-nodes.json"
+            with expected_path.open("xb") as stream:
+                stream.write(canonical_json_bytes(expected))
+            _write_source_metadata_overlay(roots, metadata_overlay)
+            environment = _pytest_environment(
+                roots=roots, metadata_overlay=metadata_overlay
+            )
+            environment.update(
+                {
+                    "NUMBA_CACHE_DIR": str(shard_root / "numba-cache"),
+                    "NUMBA_NUM_THREADS": "1",
+                    "OMP_NUM_THREADS": "1",
+                    "OPENBLAS_NUM_THREADS": "1",
+                    "MKL_NUM_THREADS": "1",
+                    "NUMEXPR_NUM_THREADS": "1",
+                    "PYTHONHASHSEED": "0",
+                    "PYTHONNOUSERSITE": "1",
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                    "PYTHONPYCACHEPREFIX": str(shard_root / "python-cache"),
+                    "PYTEST_ADDOPTS": "-p no:cacheprovider",
+                    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+                    _CI_EXPECTED_ENV: str(expected_path),
+                    _CI_SHARD_ENV: f"P{index:02d}",
+                }
+            )
+            environments.append(environment)
+            commands.append(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "-p",
+                    "no:cacheprovider",
+                    "-p",
+                    "scripts.run_e4_pl_burnin_gate",
+                    "--durations=20",
+                    "--durations-min=0.0",
+                    f"--basetemp={basetemp}",
+                    *selectors,
+                ]
+            )
+
+        options: dict[str, Any] = {}
+        if os.name == "nt":
+            _functional_taskkill_authority(timeout_policy)
+            options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            options["start_new_session"] = True
+        for index, (command, environment) in enumerate(
+            zip(commands, environments, strict=True), start=1
+        ):
+            if time.monotonic() >= termination_start:
+                cleanup_allowed = False
+                raise subprocess.TimeoutExpired(command, wall_limit)
+            print(
+                f"[ci-bounded] starting P{index:02d}/P04",
+                file=sys.stderr,
+                flush=True,
+            )
+            workers.append(
+                subprocess.Popen(command, cwd=ROOT, env=environment, **options)
+            )
+
+        while any(worker.poll() is None for worker in workers):
+            if time.monotonic() >= termination_start:
+                cleanup_allowed = False
+                break
+            time.sleep(0.1)
+        if not cleanup_allowed:
+            if not _terminate_ci_workers(workers, timeout_policy):
+                _FUNCTIONAL_UNPROVEN_TREE.set()
+                _await_outer_resource_tree_termination()
+            print(
+                "[ci-bounded] 1200-second coordinator limit reached",
+                file=sys.stderr,
+                flush=True,
+            )
+            return int(timeout_policy["timeout_exit_code"])
+        returncodes = [int(worker.returncode) for worker in workers]
+        for index, returncode in enumerate(returncodes, start=1):
+            print(
+                f"[ci-bounded] P{index:02d} finished: exit {returncode}",
+                file=sys.stderr,
+                flush=True,
+            )
+        return next((code for code in returncodes if code != 0), 0)
+    except subprocess.TimeoutExpired:
+        cleanup_allowed = False
+        if not _terminate_ci_workers(workers, timeout_policy):
+            _FUNCTIONAL_UNPROVEN_TREE.set()
+            _await_outer_resource_tree_termination()
+        return int(timeout_policy["timeout_exit_code"])
+    except BaseException:
+        if not _terminate_ci_workers(workers, timeout_policy):
+            _FUNCTIONAL_UNPROVEN_TREE.set()
+            _await_outer_resource_tree_termination()
+        raise
+    finally:
+        if cleanup_allowed and ci_root.exists():
+            shutil.rmtree(ci_root, ignore_errors=True)
+        try:
+            parent.rmdir()
+        except OSError:
+            pass
+
+
+def _tracked_head_identity(
+    repository: Path, *, absolute_deadline: float | None = None
+) -> dict[str, str]:
     """Return HEAD authority after rejecting tracked/index modifications.
 
     Untracked paths are intentionally ignored: sibling repositories may carry
     unrelated work, and the package source is obtained exclusively from HEAD.
     """
 
-    if _git(repository, "status", "--porcelain", "--untracked-files=no"):
+    def remaining(stage: str) -> float | None:
+        if absolute_deadline is None:
+            return None
+        return _functional_remaining_seconds(absolute_deadline, stage)
+
+    if _git(
+        repository,
+        "status",
+        "--porcelain",
+        "--untracked-files=no",
+        timeout_seconds=remaining("tracked-status identity check"),
+    ):
         raise RuntimeError(f"tracked or index changes exist in {repository}")
     return {
-        "commit": _git(repository, "rev-parse", "HEAD"),
-        "tree": _git(repository, "rev-parse", "HEAD^{tree}"),
+        "commit": _git(
+            repository,
+            "rev-parse",
+            "HEAD",
+            timeout_seconds=remaining("commit identity check"),
+        ),
+        "tree": _git(
+            repository,
+            "rev-parse",
+            "HEAD^{tree}",
+            timeout_seconds=remaining("tree identity check"),
+        ),
     }
 
 
@@ -1371,11 +3894,21 @@ def _archive_head_snapshot(
 ) -> dict[str, Any]:
     """Materialize only committed HEAD and bind both archive and file graph."""
 
+    attributes_path = Path(
+        _git(repository, "rev-parse", "--git-path", "info/attributes")
+    )
+    if not attributes_path.is_absolute():
+        attributes_path = repository / attributes_path
+    if attributes_path.exists() or attributes_path.is_symlink() or _is_reparse_point(attributes_path):
+        raise RuntimeError("Git info attributes are forbidden during package archiving")
     before = _tracked_head_identity(repository)
     archive.parent.mkdir(parents=True, exist_ok=True)
     archive_log = _run_captured(
         [
-            "git",
+            _git_executable(),
+            "--no-replace-objects",
+            "-c",
+            "core.attributesFile=NUL",
             "-C",
             str(repository),
             "archive",
@@ -1384,9 +3917,9 @@ def _archive_head_snapshot(
             "HEAD",
         ],
         cwd=archive.parent,
-        env=environment,
+        env=_sanitized_git_environment(environment),
     )
-    if not archive.is_file() or archive.is_symlink():
+    if not archive.is_file() or archive.is_symlink() or _is_reparse_point(archive):
         raise RuntimeError("git archive did not create a regular file")
     content = _extract_git_archive(archive, destination)
     after = _tracked_head_identity(repository)
@@ -1401,9 +3934,23 @@ def _archive_head_snapshot(
     }
 
 
-def _run_captured(command: Sequence[str], *, cwd: Path, env: Mapping[str, str]) -> dict[str, Any]:
+def _run_captured(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    env: Mapping[str, str],
+    timeout_seconds: float | None = None,
+) -> dict[str, Any]:
+    timeout_options: dict[str, Any] = {}
+    if timeout_seconds is not None:
+        timeout_options["timeout"] = timeout_seconds
     completed = subprocess.run(
-        list(command), cwd=cwd, env=dict(env), check=False, capture_output=True
+        list(command),
+        cwd=cwd,
+        env=dict(env),
+        check=False,
+        capture_output=True,
+        **timeout_options,
     )
     combined = completed.stdout + completed.stderr
     result = {
@@ -1501,7 +4048,7 @@ def run_package_lane(
     """Build verified committed-HEAD archives and smoke an isolated target."""
 
     for artifact in (output, wheel_output):
-        if artifact is not None and artifact.exists():
+        if artifact is not None and os.path.lexists(artifact):
             raise EvidenceError(f"refusing to replace existing package artifact: {artifact}")
     if output is not None and wheel_output is not None and output.resolve() == wheel_output.resolve():
         raise EvidenceError("package result and wheel outputs must be distinct")
@@ -1562,8 +4109,10 @@ def run_package_lane(
             if len(created) != 1:
                 raise RuntimeError(f"expected one new wheel for {distribution_name}")
             wheel = created.pop()
-            if not wheel.is_file() or wheel.is_symlink():
+            if not wheel.is_file() or wheel.is_symlink() or _is_reparse_point(wheel):
                 raise RuntimeError(f"wheel for {distribution_name} is not a regular file")
+            if wheel.stat().st_size <= 0:
+                raise RuntimeError(f"wheel for {distribution_name} is empty")
             wheels[repository_name] = wheel
 
         install_log = _run_captured(
@@ -1652,10 +4201,17 @@ def run_package_lane(
             wheel_output.parent.mkdir(parents=True, exist_ok=True)
             with wheels["ANYsolver"].open("rb") as source, wheel_output.open("xb") as target_stream:
                 shutil.copyfileobj(source, target_stream)
+            if wheel_hash_record(wheel_output) != wheel_hash_record(wheels["ANYsolver"]):
+                raise EvidenceError("preserved wheel identity differs from built wheel")
         if output is not None:
             output.parent.mkdir(parents=True, exist_ok=True)
             with output.open("xb") as stream:
                 stream.write(payload)
+            if file_hash_record(output) != {
+                "bytes": len(payload),
+                "sha256": _sha256_bytes(payload),
+            }:
+                raise EvidenceError("preserved package result identity mismatch")
         sys.stdout.buffer.write(payload)
         sys.stdout.buffer.flush()
         return result
@@ -1671,7 +4227,319 @@ def _path_bindings(values: Sequence[str] | None, label: str) -> dict[str, Path]:
     return result
 
 
+def _create_gate_job() -> int | None:
+    """Create a Windows kill-on-close job for one watchdog child tree."""
+
+    if os.name != "nt":
+        return None
+    import ctypes
+    from ctypes import wintypes
+
+    class BasicLimitInformation(ctypes.Structure):
+        _fields_ = [
+            ("PerProcessUserTimeLimit", ctypes.c_longlong),
+            ("PerJobUserTimeLimit", ctypes.c_longlong),
+            ("LimitFlags", wintypes.DWORD),
+            ("MinimumWorkingSetSize", ctypes.c_size_t),
+            ("MaximumWorkingSetSize", ctypes.c_size_t),
+            ("ActiveProcessLimit", wintypes.DWORD),
+            ("Affinity", ctypes.c_size_t),
+            ("PriorityClass", wintypes.DWORD),
+            ("SchedulingClass", wintypes.DWORD),
+        ]
+
+    class IoCounters(ctypes.Structure):
+        _fields_ = [
+            ("ReadOperationCount", ctypes.c_ulonglong),
+            ("WriteOperationCount", ctypes.c_ulonglong),
+            ("OtherOperationCount", ctypes.c_ulonglong),
+            ("ReadTransferCount", ctypes.c_ulonglong),
+            ("WriteTransferCount", ctypes.c_ulonglong),
+            ("OtherTransferCount", ctypes.c_ulonglong),
+        ]
+
+    class ExtendedLimitInformation(ctypes.Structure):
+        _fields_ = [
+            ("BasicLimitInformation", BasicLimitInformation),
+            ("IoInfo", IoCounters),
+            ("ProcessMemoryLimit", ctypes.c_size_t),
+            ("JobMemoryLimit", ctypes.c_size_t),
+            ("PeakProcessMemoryUsed", ctypes.c_size_t),
+            ("PeakJobMemoryUsed", ctypes.c_size_t),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+    kernel32.CreateJobObjectW.restype = wintypes.HANDLE
+    kernel32.SetInformationJobObject.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+    ]
+    kernel32.SetInformationJobObject.restype = wintypes.BOOL
+    handle = kernel32.CreateJobObjectW(None, None)
+    if not handle:
+        raise OSError(ctypes.get_last_error(), "CreateJobObjectW failed")
+    information = ExtendedLimitInformation()
+    information.BasicLimitInformation.LimitFlags = 0x00002000
+    if not kernel32.SetInformationJobObject(
+        handle, 9, ctypes.byref(information), ctypes.sizeof(information)
+    ):
+        error = ctypes.get_last_error()
+        kernel32.CloseHandle(handle)
+        raise OSError(error, "SetInformationJobObject failed")
+    return int(handle)
+
+
+def _close_gate_job(handle: int | None) -> bool:
+    if handle is None:
+        return True
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    return bool(kernel32.CloseHandle(handle))
+
+
+def _launch_gate_watchdog_child(
+    command: Sequence[str], *, cwd: Path, env: Mapping[str, str]
+) -> tuple[subprocess.Popen[bytes], int | None]:
+    """Launch suspended, bind to the watchdog job, then resume on Windows."""
+
+    if os.name != "nt":
+        return (
+            subprocess.Popen(command, cwd=cwd, env=env, start_new_session=True),
+            None,
+        )
+    import ctypes
+    from ctypes import wintypes
+
+    job_handle = _create_gate_job()
+    assert job_handle is not None
+    worker: subprocess.Popen[bytes] | None = None
+    assigned = False
+    try:
+        worker = subprocess.Popen(
+            command, cwd=cwd, env=env, creationflags=0x00000004
+        )
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
+        process_handle = int(worker._handle)
+        if not kernel32.AssignProcessToJobObject(job_handle, process_handle):
+            raise OSError(ctypes.get_last_error(), "AssignProcessToJobObject failed")
+        assigned = True
+        ntdll = ctypes.WinDLL("ntdll")
+        ntdll.NtResumeProcess.argtypes = [wintypes.HANDLE]
+        ntdll.NtResumeProcess.restype = ctypes.c_long
+        status = int(ntdll.NtResumeProcess(process_handle))
+        if status != 0:
+            raise OSError(status, "NtResumeProcess failed")
+        return worker, job_handle
+    except BaseException:
+        if assigned:
+            _close_gate_job(job_handle)
+        else:
+            if worker is not None:
+                try:
+                    worker.kill()
+                    worker.wait(timeout=1.0)
+                except BaseException:
+                    pass
+            _close_gate_job(job_handle)
+        raise
+
+
+def _terminate_gate_posix_group(
+    worker: subprocess.Popen[bytes], *, absolute_deadline: float
+) -> bool:
+    """Kill and prove absence of the watchdog child's POSIX process group."""
+
+    try:
+        os.killpg(worker.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return True
+    except OSError:
+        return False
+    while time.monotonic() < absolute_deadline:
+        try:
+            os.killpg(worker.pid, 0)
+        except ProcessLookupError:
+            return True
+        except OSError:
+            return False
+        time.sleep(0.01)
+    return False
+
+
+def _run_gate_cli_watchdog(
+    lane: str,
+    *,
+    cycle: int | None,
+    command_started: float,
+) -> int:
+    """Run one long gate behind a command-entry complete-tree watchdog."""
+
+    if lane == "ci":
+        wall_limit = CI_COMMAND_WALL_LIMIT_SECONDS
+        reserve = CI_COMMAND_TERMINATION_RESERVE_SECONDS
+        child_arguments = ["ci"]
+    elif lane == "functional-wave" and cycle in {1, 2}:
+        wall_limit = FUNCTIONAL_COMMAND_WALL_LIMIT_SECONDS
+        reserve = FUNCTIONAL_COMMAND_TERMINATION_RESERVE_SECONDS
+        child_arguments = ["functional-wave", "--cycle", str(cycle)]
+    else:
+        raise EvidenceError("gate watchdog received an unsupported invocation")
+    absolute_deadline = command_started + wall_limit
+    termination_start = absolute_deadline - reserve
+    if time.monotonic() >= termination_start:
+        return 124
+    if os.environ.get(_GATE_WATCHDOG_ENV) is not None:
+        raise EvidenceError("preexisting gate watchdog context is forbidden")
+
+    watchdog_stop = threading.Event()
+    ownership_lock = threading.Lock()
+    ownership: dict[str, Any] = {
+        "job_handle": None,
+        "tree_close_result": None,
+        "worker": None,
+    }
+
+    def close_owned_tree() -> bool:
+        with ownership_lock:
+            if ownership["tree_close_result"] is not None:
+                return bool(ownership["tree_close_result"])
+            owned_worker = ownership["worker"]
+            owned_job = ownership["job_handle"]
+            if owned_worker is None:
+                result = True
+            elif os.name == "nt":
+                result = _close_gate_job(owned_job)
+            else:
+                result = _terminate_gate_posix_group(
+                    owned_worker, absolute_deadline=absolute_deadline
+                )
+            ownership["job_handle"] = None
+            ownership["tree_close_result"] = result
+            return result
+
+    def enforce_absolute_deadline() -> None:
+        if watchdog_stop.wait(
+            max(0.0, termination_start - time.monotonic())
+        ):
+            return
+        proven = close_owned_tree()
+        owned_worker = ownership["worker"]
+        if proven and owned_worker is not None:
+            try:
+                owned_worker.wait(
+                    timeout=max(0.001, absolute_deadline - time.monotonic())
+                )
+            except BaseException:
+                proven = False
+        # This independent thread bounds even a stuck inventory/preparation,
+        # Popen, wait, tree-termination, or cleanup operation in the parent.
+        os._exit(124 if proven else 250)
+
+    watchdog_thread = threading.Thread(
+        target=enforce_absolute_deadline,
+        name=f"{lane}-command-entry-watchdog",
+        daemon=True,
+    )
+    watchdog_thread.start()
+
+    token = secrets.token_hex(32)
+    parent_pid = os.getpid()
+    environment = os.environ.copy()
+    environment[_GATE_WATCHDOG_ENV] = f"{lane}:{parent_pid}:{token}"
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        *child_arguments,
+        "--_watchdog-token",
+        token,
+        "--_watchdog-parent",
+        str(parent_pid),
+    ]
+    worker: subprocess.Popen[bytes] | None = None
+    job_handle: int | None = None
+    try:
+        worker, job_handle = _launch_gate_watchdog_child(
+            command, cwd=ROOT, env=environment
+        )
+        with ownership_lock:
+            ownership["worker"] = worker
+            ownership["job_handle"] = job_handle
+        try:
+            returncode = int(
+                worker.wait(
+                    timeout=max(0.001, termination_start - time.monotonic())
+                )
+            )
+            tree_closed = close_owned_tree()
+            if not tree_closed:
+                print(
+                    f"[{lane}] command watchdog could not close its process-tree job",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                watchdog_stop.set()
+                return 250
+            watchdog_stop.set()
+            return returncode
+        except subprocess.TimeoutExpired:
+            pass
+    except BaseException:
+        if worker is None:
+            watchdog_stop.set()
+            raise
+
+    assert worker is not None
+    if os.name == "nt":
+        if not close_owned_tree():
+            print(
+                f"[{lane}] command watchdog could not close its process-tree job",
+                file=sys.stderr,
+                flush=True,
+            )
+            watchdog_stop.set()
+            return 250
+        try:
+            worker.wait(timeout=max(0.001, absolute_deadline - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            print(
+                f"[{lane}] command watchdog job closure did not terminate its child",
+                file=sys.stderr,
+                flush=True,
+            )
+            watchdog_stop.set()
+            return 250
+        proven = True
+    else:
+        proven = close_owned_tree()
+    if not proven:
+        print(
+            f"[{lane}] command watchdog tree termination is unproven",
+            file=sys.stderr,
+            flush=True,
+        )
+        watchdog_stop.set()
+        return 250
+    print(
+        f"[{lane}] command-entry wall limit reached; complete tree terminated",
+        file=sys.stderr,
+        flush=True,
+    )
+    watchdog_stop.set()
+    return 124
+
+
 def main(argv: list[str] | None = None) -> int:
+    global _GATE_COMMAND_ENTRY
+    _GATE_COMMAND_ENTRY = time.monotonic()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "lane",
@@ -1679,6 +4547,7 @@ def main(argv: list[str] | None = None) -> int:
             "quick",
             "package",
             "functional",
+            "functional-wave",
             "performance",
             "extended",
             "ci",
@@ -1695,8 +4564,50 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--package-result", type=Path)
     parser.add_argument("--wheel", type=Path)
     parser.add_argument("--wheel-output", type=Path)
+    parser.add_argument("--cycle", type=int, choices=(1, 2))
+    parser.add_argument("--_watchdog-token", help=argparse.SUPPRESS)
+    parser.add_argument("--_watchdog-parent", type=int, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    watchdog_context = os.environ.get(_GATE_WATCHDOG_ENV)
+    private_arguments_present = (
+        args._watchdog_token is not None or args._watchdog_parent is not None
+    )
+    if watchdog_context is None:
+        if private_arguments_present:
+            raise EvidenceError("gate watchdog private arguments lack parent context")
+        watchdog_child = False
+    else:
+        if not private_arguments_present:
+            raise EvidenceError("preexisting gate watchdog context is forbidden")
+        if (
+            args._watchdog_token is None
+            or not re.fullmatch(r"[0-9a-f]{64}", args._watchdog_token)
+            or args._watchdog_parent is None
+            or args._watchdog_parent != os.getppid()
+            or watchdog_context
+            != f"{args.lane}:{args._watchdog_parent}:{args._watchdog_token}"
+        ):
+            raise EvidenceError("gate watchdog child context is invalid")
+        watchdog_child = True
+    if watchdog_child and args.lane not in {"ci", "functional-wave"}:
+        raise EvidenceError("gate watchdog child context is invalid for this lane")
     if args.lane == "list":
+        if any(
+            value
+            for value in (
+                args.output,
+                args.evidence,
+                args.final,
+                args.repository,
+                args.request,
+                args.log,
+                args.package_result,
+                args.wheel,
+                args.wheel_output,
+                args.cycle,
+            )
+        ):
+            parser.error("list accepts no options")
         print(json.dumps(gate_inventories(), sort_keys=True, separators=(",", ":")))
         return 0
     if args.lane == "package":
@@ -1710,6 +4621,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.log,
                 args.package_result,
                 args.wheel,
+                args.cycle,
             )
         ):
             parser.error("validation options are invalid for the package lane")
@@ -1721,9 +4633,40 @@ def main(argv: list[str] | None = None) -> int:
             wheel_output = Path(os.environ["Q1M_PACKAGE_WHEEL_PATH"])
         run_package_lane(output=output, wheel_output=wheel_output)
         return 0
+    if args.lane == "functional-wave":
+        if args.cycle is None:
+            parser.error("functional-wave requires --cycle {1,2}")
+        if any(
+            value
+            for value in (
+                args.output,
+                args.evidence,
+                args.final,
+                args.repository,
+                args.request,
+                args.log,
+                args.package_result,
+                args.wheel,
+                args.wheel_output,
+            )
+        ):
+            parser.error("functional-wave accepts only --cycle")
+        if not watchdog_child:
+            return _run_gate_cli_watchdog(
+                "functional-wave",
+                cycle=args.cycle,
+                command_started=_GATE_COMMAND_ENTRY,
+            )
+        return run_functional_wave(args.cycle)
+    if args.lane == "functional":
+        parser.error(
+            "the monolithic functional lane is retired; use functional-wave --cycle {1,2}"
+        )
     if args.lane == "validate-evidence":
         if args.evidence is None:
             parser.error("validate-evidence requires --evidence")
+        if args.cycle is not None:
+            parser.error("validate-evidence does not accept --cycle")
         record = strict_json_load(args.evidence)
         if args.final:
             package_passed = record.get("lanes", {}).get("package", {}).get("status") == "PASS"
@@ -1750,6 +4693,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.wheel,
                     args.wheel_output,
                     args.output,
+                    args.cycle,
                 )
             ):
                 parser.error("external bindings require --final")
@@ -1767,16 +4711,17 @@ def main(argv: list[str] | None = None) -> int:
             args.package_result,
             args.wheel,
             args.wheel_output,
+            args.cycle,
         )
     ):
         parser.error("evidence/package options are invalid for this lane")
+    if args.lane == "ci" and not watchdog_child:
+        return _run_gate_cli_watchdog(
+            "ci", cycle=None, command_started=_GATE_COMMAND_ENTRY
+        )
     lanes = inventory()
     if args.lane == "ci":
-        # Pull requests exercise the non-resource production inventory while
-        # immutable historical studies and serialized performance stay out of
-        # the merge prerequisite. Additive successor tests run here without
-        # mutating Q1M's frozen gate inventories.
-        selected = [*lanes["quick"], *lanes["functional"], *lanes["additive"]]
+        return _run_bounded_ci(lanes)
     else:
         selected = lanes[args.lane]
     if not selected:
