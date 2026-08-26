@@ -18,9 +18,12 @@ from typing import Any, Iterable, Mapping
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = Path(__file__).with_name("e4_pl_s3_q4_burnin_contract.json")
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-contract-v4"
-RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-result-v3"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-contract-v5"
+RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-result-v4"
 PROCESS_RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-process-result-v3"
+CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
+    "anysolver.e4-pl-s3-q4-cycle-completion-certificate-v1"
+)
 LEDGER_SNAPSHOT_SCHEMA = "anysolver.e4-pl-s3-q4-resource-ledger-snapshot-v1"
 PENDING_MANIFEST_SCHEMA = "anysolver.e4-pl-s3-q4-pending-process-manifest-v1"
 FUNCTIONAL_WAVE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v2"
@@ -94,13 +97,21 @@ V16_SUPERSEDED_REQUEST_IDS = (
     "4fb2b091709848498751effdfdf5abfa",
     "90a829891c6b4516b2436ea89d16fe9f",
 )
-V17_REQUEST_IDS = (
+V17_SUPERSEDED_REQUEST_IDS = (
     "e49b85cf72f34317888ef52c29e3decc",
     "c31315ce7a734fcc85c2a5d61190736b",
     "5923420f4a3c4a4f949c798e50159ba1",
     "75af25eddb2649be94f4ffc3c9be0810",
     "19cdc0dd22af48c4bcc275738a0e7781",
     "e26b22079f0b4219a1c3d354b63b8ee3",
+)
+V18_REQUEST_IDS = (
+    "5c0d5b22f72444e3b0028621eb62d79b",
+    "143ea796d13e4a1ba757bb19fdf11f50",
+    "89caa1427849411cbd424757740b132b",
+    "64c5c924f6d24d299322ca8c4d98746e",
+    "1115d466d48e4049aab5dcf436901f19",
+    "d37fac3d568343109df0901667ec6726",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -3810,6 +3821,104 @@ def _validate_attempt_16_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_17_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the rejected v17 late-final-lane authority and its peer reviews."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "authority_tests",
+            "contract",
+            "failure",
+            "ledger_occurrences",
+            "peer_review",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 17:
+        raise EvidenceError(f"{location}.attempt must be 17")
+    authority = _exact_keys(
+        incident["authority_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.authority_commit",
+    )
+    if authority != {
+        "commit": "a6c316f18b003f336cfb079657ca5eeda6301c2d",
+        "parent": "6a13b31b6d02bd7eb63aca428d7ed66cc7922376",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "0cb15b29e867bf66abd1835cc358693395601f42",
+    }:
+        raise EvidenceError(f"{location}.authority_commit mismatch")
+    tests = _exact_keys(
+        incident["authority_tests"],
+        {"elapsed_seconds", "failed", "passed"},
+        f"{location}.authority_tests",
+    )
+    if tests != {"elapsed_seconds": 6.65, "failed": 0, "passed": 37}:
+        raise EvidenceError(f"{location}.authority_tests mismatch")
+    if _validate_hash_record(incident["contract"], f"{location}.contract") != {
+        "bytes": 303203,
+        "sha256": "2e413a345bb6656a14198b5c57bf35060322fce1526cd0e86351b71b6fee8179",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    failure = _exact_keys(
+        incident["failure"],
+        {
+            "findings",
+            "formal_execution_started",
+            "resource_requests_approved",
+            "resource_requests_consumed",
+            "reviewer_id",
+            "verdict",
+        },
+        f"{location}.failure",
+    )
+    if failure != {
+        "findings": [
+            {
+                "id": "LATE_FINAL_CYCLE_PASS_NOT_DURABLY_DISQUALIFIED",
+                "priority": "P1",
+            }
+        ],
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+        "reviewer_id": "codex-v17-independent-authority-review-1-a6c316f",
+        "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+    }:
+        raise EvidenceError(f"{location}.failure mismatch")
+    peer_review = _exact_keys(
+        incident["peer_review"],
+        {"bytes", "reviewer_id", "sha256", "verdict"},
+        f"{location}.peer_review",
+    )
+    if peer_review != {
+        "bytes": 759,
+        "reviewer_id": "codex-v17-independent-authority-review-2-a6c316f",
+        "sha256": "e0ecce9e4a6dfbd4656f6ca37bedc020ec63133270a23517a543afac83924d48",
+        "verdict": "ACCEPT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_NO_P0_P1",
+    }:
+        raise EvidenceError(f"{location}.peer_review mismatch")
+    if incident["ledger_occurrences"] != 0:
+        raise EvidenceError(f"{location}.ledger_occurrences mismatch")
+    if incident["request_ids"] != list(V17_SUPERSEDED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v17-a6c316f",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -3946,17 +4055,30 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     )
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
+    adjudication = contract["adjudication"]
+    if not isinstance(adjudication, dict):
+        raise EvidenceError("$contract.adjudication must be an object")
+    certificate_names = _exact_keys(
+        adjudication.get("cycle_completion_certificate_filenames"),
+        {"cycle_1", "cycle_2"},
+        "$contract.adjudication.cycle_completion_certificate_filenames",
+    )
+    if certificate_names != {
+        "cycle_1": "resource-cycle-1-completion-certificate.json",
+        "cycle_2": "resource-cycle-2-completion-certificate.json",
+    }:
+        raise EvidenceError("cycle completion certificate filenames mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v17"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v18"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-16"
+        r"\s3-q4-final-freeze-correction-17"
     ):
-        raise EvidenceError("v17 burn-in output root mismatch")
+        raise EvidenceError("v18 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -4064,6 +4186,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v14_detached_bootstrap_review_attempt",
             "failed_v15_quick_cleanliness_mock_preflight_attempt",
             "failed_v16_cycle_efficiency_authority_review_attempt",
+            "failed_v17_late_final_pass_authority_review_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -4120,6 +4243,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v16_cycle_efficiency_authority_review_attempt"],
         "$contract.background_inputs.failed_v16_cycle_efficiency_authority_review_attempt",
     )
+    v17_late_final_pass_authority_review = _validate_attempt_17_incident(
+        background["failed_v17_late_final_pass_authority_review_attempt"],
+        "$contract.background_inputs.failed_v17_late_final_pass_authority_review_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -4141,11 +4268,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v17 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v18 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v17 resource request IDs are not unique")
-    if current_request_ids != list(V17_REQUEST_IDS):
-        raise EvidenceError("v17 resource request IDs differ from frozen authority")
+        raise EvidenceError("v18 resource request IDs are not unique")
+    if current_request_ids != list(V18_REQUEST_IDS):
+        raise EvidenceError("v18 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -4160,6 +4287,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v14_detached_bootstrap_review["request_ids"],
         *v15_quick_cleanliness_mock_preflight["request_ids"],
         *v16_cycle_efficiency_authority_review["request_ids"],
+        *v17_late_final_pass_authority_review["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -4180,7 +4308,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v17 resource request IDs reuse historical authority")
+        raise EvidenceError("v18 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -4236,7 +4364,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "6a13b31b6d02bd7eb63aca428d7ed66cc7922376":
+    if authority["exact_parent"] != "a6c316f18b003f336cfb079657ca5eeda6301c2d":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -4675,6 +4803,87 @@ def _validate_common_lane(
     return processes
 
 
+def validate_cycle_completion_certificate(
+    value: Any,
+    *,
+    contract: Mapping[str, Any],
+    cycle: int,
+    snapshot: Mapping[str, Any],
+    terminal_snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    certificate = _exact_keys(
+        value,
+        {
+            "bounded_elapsed_microseconds",
+            "candidate",
+            "cycle",
+            "evidence_deadline_microseconds",
+            "request_order",
+            "schema",
+            "status",
+            "terminal_snapshot",
+        },
+        "$cycle_completion_certificate",
+    )
+    if certificate["schema"] != CYCLE_COMPLETION_CERTIFICATE_SCHEMA:
+        raise EvidenceError("cycle completion certificate schema mismatch")
+    if type(cycle) is not int or cycle not in (1, 2) or certificate["cycle"] != cycle:
+        raise EvidenceError("cycle completion certificate cycle mismatch")
+    if certificate["status"] != "COMPLETED_WITHIN_CYCLE_CONTROL_BOUNDS":
+        raise EvidenceError("cycle completion certificate status mismatch")
+    policy = contract["execution"]["cycle_wall_policy"]
+    evidence_deadline_microseconds = (
+        policy["absolute_wall_limit_seconds"]
+        - policy["watchdog_termination_margin_seconds"]
+    ) * 1_000_000
+    elapsed = certificate["bounded_elapsed_microseconds"]
+    if (
+        type(elapsed) is not int
+        or elapsed < 0
+        or elapsed >= evidence_deadline_microseconds
+        or certificate["evidence_deadline_microseconds"]
+        != evidence_deadline_microseconds
+    ):
+        raise EvidenceError("cycle completion certificate elapsed bound mismatch")
+    request_order = [
+        row["request_id"]
+        for row in contract["resource_requests"][f"cycle_{cycle}"]
+    ]
+    _validate_hash_record(terminal_snapshot, "$cycle_completion.terminal_snapshot")
+    if (
+        snapshot.get("cycle") != cycle
+        or snapshot.get("candidate") != certificate["candidate"]
+        or snapshot.get("request_order") != request_order
+        or certificate["request_order"] != request_order
+        or certificate["terminal_snapshot"] != dict(terminal_snapshot)
+    ):
+        raise EvidenceError("cycle completion certificate authority mismatch")
+    rows = snapshot.get("rows")
+    terminal_rows_are_complete_passes = isinstance(rows, list) and len(rows) == 3
+    if terminal_rows_are_complete_passes:
+        for request_id, row in zip(request_order, rows, strict=True):
+            if not isinstance(row, Mapping):
+                terminal_rows_are_complete_passes = False
+                break
+            terminal = row.get("terminal")
+            if not isinstance(terminal, Mapping):
+                terminal_rows_are_complete_passes = False
+                break
+            fields = terminal.get("fields")
+            if (
+                not isinstance(fields, list)
+                or len(fields) < 2
+                or fields[:2] != [request_id, "COMPLETED_PASS"]
+            ):
+                terminal_rows_are_complete_passes = False
+                break
+    if not terminal_rows_are_complete_passes:
+        raise EvidenceError(
+            "cycle completion certificate requires three passing terminal rows"
+        )
+    return certificate
+
+
 def _request_table(contract: Mapping[str, Any]) -> dict[tuple[int, str], dict[str, Any]]:
     result: dict[tuple[int, str], dict[str, Any]] = {}
     identifiers: set[str] = set()
@@ -5090,7 +5299,11 @@ def validate_result(
         raise EvidenceError("result must contain two cycles")
     cycle_processes: dict[tuple[int, str], dict[str, Any]] = {}
     for expected_cycle, cycle_value in enumerate(record["cycles"], start=1):
-        cycle = _exact_keys(cycle_value, {"cycle", "lanes", "status"}, f"$.cycles[{expected_cycle - 1}]")
+        cycle = _exact_keys(
+            cycle_value,
+            {"completion_certificate", "cycle", "lanes", "status"},
+            f"$.cycles[{expected_cycle - 1}]",
+        )
         if cycle["cycle"] != expected_cycle:
             raise EvidenceError("cycle ordering mismatch")
         lanes = _exact_keys(cycle["lanes"], {"anyfem", "functional", "performance"}, f"$.cycles[{expected_cycle - 1}].lanes")
@@ -5108,6 +5321,13 @@ def validate_result(
             processes.append(process)
         if cycle["status"] != _lane_status(processes):
             raise EvidenceError("cycle status does not match its lanes")
+        if cycle["status"] == "PASS":
+            _validate_hash_record(
+                cycle["completion_certificate"],
+                f"$.cycles[{expected_cycle - 1}].completion_certificate",
+            )
+        elif cycle["completion_certificate"] is not None:
+            raise EvidenceError("nonpassing cycle forbids a completion certificate")
     if record["resource_requests"] != contract["resource_requests"]:
         raise EvidenceError("result resource requests differ from the contract")
     if record["siblings"] != contract["sibling_authority"]:
@@ -5621,6 +5841,7 @@ def validate_superseded_request_ledger_absence(
         "failed_v14_detached_bootstrap_review_attempt",
         "failed_v15_quick_cleanliness_mock_preflight_attempt",
         "failed_v16_cycle_efficiency_authority_review_attempt",
+        "failed_v17_late_final_pass_authority_review_attempt",
     ):
         superseded = contract["background_inputs"][incident_name]
         if any(request_id in ledger for request_id in superseded["request_ids"]):
@@ -6224,6 +6445,48 @@ def validate_external_bindings(
     snapshot_values, snapshot_paths, ledger = load_bound_ledger_snapshots(
         validated, contract=contract
     )
+    certificate_names = _exact_keys(
+        contract["adjudication"]["cycle_completion_certificate_filenames"],
+        {"cycle_1", "cycle_2"},
+        "$contract.adjudication.cycle_completion_certificate_filenames",
+    )
+    completion_certificate_paths: dict[int, Path] = {}
+    for cycle in (1, 2):
+        filename = _require_string(
+            certificate_names[f"cycle_{cycle}"],
+            f"$contract.cycle_completion_certificate.cycle_{cycle}",
+        )
+        if Path(filename).name != filename:
+            raise EvidenceError("cycle completion certificate must be a basename")
+        certificate_path = output_root(contract) / filename
+        pending_path = certificate_path.with_name(f".{filename}.pending")
+        certificate_record = validated["cycles"][cycle - 1][
+            "completion_certificate"
+        ]
+        if certificate_record is None:
+            if any(
+                path.exists() or path.is_symlink() or is_reparse_point(path)
+                for path in (certificate_path, pending_path)
+            ):
+                raise EvidenceError(
+                    "nonpassing cycle left a completion certificate artifact"
+                )
+            continue
+        require_regular_file(certificate_path, nonempty=True)
+        if file_hash_record(certificate_path) != certificate_record:
+            raise EvidenceError("cycle completion certificate identity mismatch")
+        raw_certificate = certificate_path.read_bytes()
+        certificate = strict_json_loads(raw_certificate)
+        if raw_certificate != canonical_json_bytes(certificate):
+            raise EvidenceError("cycle completion certificate is not canonical JSON")
+        validate_cycle_completion_certificate(
+            certificate,
+            contract=contract,
+            cycle=cycle,
+            snapshot=snapshot_values[f"cycle_{cycle}"],
+            terminal_snapshot=file_hash_record(snapshot_paths[f"cycle_{cycle}"]),
+        )
+        completion_certificate_paths[cycle] = certificate_path
     process_by_request = {
         process["request_id"]: process
         for _prefix, process in _iter_processes(validated)
@@ -6568,6 +6831,8 @@ def validate_external_bindings(
         if path.exists() or path.is_symlink():
             allowed_children.add(path.name)
     for path in snapshot_paths.values():
+        allowed_children.add(path.name)
+    for path in completion_certificate_paths.values():
         allowed_children.add(path.name)
     if executed_functional_cycles:
         allowed_children.add(

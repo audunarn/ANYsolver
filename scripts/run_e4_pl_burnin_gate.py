@@ -43,7 +43,7 @@ CONTRACT_PATH = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.j
 S3_Q4_CONTRACT_PATH = (
     ROOT / "docs" / "reference_cases" / "e4_pl_s3_q4_burnin_contract.json"
 )
-S3_Q4_ACTIVE_AUTHORITY_GENERATION = "v17"
+S3_Q4_ACTIVE_AUTHORITY_GENERATION = "v18"
 
 FUNCTIONAL_WAVE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v2"
 FUNCTIONAL_SHARD_SCHEMA = "anysolver.e4-pl-s3-q4-functional-shard-v2"

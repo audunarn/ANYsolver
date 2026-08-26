@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "2e413a345bb6656a14198b5c57bf35060322fce1526cd0e86351b71b6fee8179"
+CONTRACT_SHA256 = "93028f57b90e7df79818f8041726560c3bcb195e5712bdfb0ae82546665fa2c2"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-16"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-17"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -165,7 +165,7 @@ FAILED_ATTEMPT_16_REQUEST_IDS = [
     "4fb2b091709848498751effdfdf5abfa",
     "90a829891c6b4516b2436ea89d16fe9f",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_17_REQUEST_IDS = [
     "e49b85cf72f34317888ef52c29e3decc",
     "c31315ce7a734fcc85c2a5d61190736b",
     "5923420f4a3c4a4f949c798e50159ba1",
@@ -173,30 +173,38 @@ CURRENT_REQUEST_IDS = [
     "19cdc0dd22af48c4bcc275738a0e7781",
     "e26b22079f0b4219a1c3d354b63b8ee3",
 ]
+CURRENT_REQUEST_IDS = [
+    "5c0d5b22f72444e3b0028621eb62d79b",
+    "143ea796d13e4a1ba757bb19fdf11f50",
+    "89caa1427849411cbd424757740b132b",
+    "64c5c924f6d24d299322ca8c4d98746e",
+    "1115d466d48e4049aab5dcf436901f19",
+    "d37fac3d568343109df0901667ec6726",
+]
 CURRENT_REQUEST_FILE_RECORDS = [
     {
         "bytes": 1358,
-        "sha256": "9e040bbd9d529e0f0f09e42c9eb3c44098060f5b167cf54637d1f2823a16ca16",
+        "sha256": "89f3c4dcf06e67cc217497dc15c1d2f9d812934d81d95a0436417aa1d6c40b6b",
     },
     {
         "bytes": 1009,
-        "sha256": "b87e0ceb66d41a51c5e0613a6089219ca7b0df6a5273f4c4b942be3d5e2fb150",
+        "sha256": "24e3c2e20c5b2d1fd34015770a6c87e568a444b514b70785d527c38b0fdbe7bb",
     },
     {
         "bytes": 1269,
-        "sha256": "f4907f89ca098feda2828f4fdb9715cfe89a851c13626fcc2f14da79a6ed1fce",
+        "sha256": "93705860e75ec532519980b75a763fc295712aa2d7df850c886ba38dbbef29b1",
     },
     {
         "bytes": 1358,
-        "sha256": "2ea3052506167cedd63496fbd845963ab2a60e6dcc37ec3c127d966542916229",
+        "sha256": "0299fcd9cac2573070986c49d3e683ce8ebe9791c5290fd20c7ea3f7b4384ffa",
     },
     {
         "bytes": 1009,
-        "sha256": "94f2c6ec549ba0db24eaa79f2c8d7b7300e2b4a476ae8f5e73ea60363dbdd0c7",
+        "sha256": "778d54af5fa2369603357a7995b2b6a458e1e06cc919e00a4a9b8ad97cfc4ebd",
     },
     {
         "bytes": 1269,
-        "sha256": "21af81942403b11346c63bf2e6bba9e9601d10709fa7b817c5064747b17a86c0",
+        "sha256": "5a635ada0d54f5a1562e314b01fb41b5b5533246623503607a603bb6734f67a4",
     },
 ]
 
@@ -414,7 +422,17 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
                 started_second=8 + (cycle_number - 1) * 6 + lane_index * 2,
             )
             lanes[lane] = process
-        cycles.append({"cycle": cycle_number, "lanes": lanes, "status": "PASS"})
+        cycles.append(
+            {
+                "completion_certificate": {
+                    "bytes": cycle_number,
+                    "sha256": str(cycle_number) * 64,
+                },
+                "cycle": cycle_number,
+                "lanes": lanes,
+                "status": "PASS",
+            }
+        )
     return {
         "candidate": {"clean": True, "commit": "1" * 40, "tree": "2" * 40},
         "common_lanes": {
@@ -490,10 +508,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v17"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v18"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "6a13b31b6d02bd7eb63aca428d7ed66cc7922376",
+        "exact_parent": "a6c316f18b003f336cfb079657ca5eeda6301c2d",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -503,6 +521,10 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         ],
         "path_count": 5,
         "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+    }
+    assert contract["adjudication"]["cycle_completion_certificate_filenames"] == {
+        "cycle_1": "resource-cycle-1-completion-certificate.json",
+        "cycle_2": "resource-cycle-2-completion-certificate.json",
     }
     assert contract["background_inputs"]["attachment"] == {
         "bytes": 14355,
@@ -1413,6 +1435,47 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "request_ids": FAILED_ATTEMPT_16_REQUEST_IDS,
         "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
     }
+    v17_late_final = contract["background_inputs"][
+        "failed_v17_late_final_pass_authority_review_attempt"
+    ]
+    assert v17_late_final == {
+        "attempt": 17,
+        "authority_commit": {
+            "commit": "a6c316f18b003f336cfb079657ca5eeda6301c2d",
+            "parent": "6a13b31b6d02bd7eb63aca428d7ed66cc7922376",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "0cb15b29e867bf66abd1835cc358693395601f42",
+        },
+        "authority_tests": {"elapsed_seconds": 6.65, "failed": 0, "passed": 37},
+        "contract": {
+            "bytes": 303203,
+            "sha256": "2e413a345bb6656a14198b5c57bf35060322fce1526cd0e86351b71b6fee8179",
+        },
+        "failure": {
+            "findings": [
+                {
+                    "id": "LATE_FINAL_CYCLE_PASS_NOT_DURABLY_DISQUALIFIED",
+                    "priority": "P1",
+                }
+            ],
+            "formal_execution_started": False,
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+            "reviewer_id": "codex-v17-independent-authority-review-1-a6c316f",
+            "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        },
+        "ledger_occurrences": 0,
+        "peer_review": {
+            "bytes": 759,
+            "reviewer_id": "codex-v17-independent-authority-review-2-a6c316f",
+            "sha256": "e0ecce9e4a6dfbd4656f6ca37bedc020ec63133270a23517a543afac83924d48",
+            "verdict": "ACCEPT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_NO_P0_P1",
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v17-a6c316f",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_17_REQUEST_IDS,
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -1979,6 +2042,7 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
 
     published: list[int] = []
     emitted: list[int] = []
+    certified: list[tuple[int, float, float]] = []
     monkeypatch.setattr(process_runner, "_run_resource_bounded", pass_lane)
     monkeypatch.setattr(
         process_runner,
@@ -1989,6 +2053,13 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         process_runner,
         "_emit_cycle_terminal_snapshot",
         lambda _contract, cycle: emitted.append(cycle),
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_write_cycle_completion_certificate",
+        lambda _contract, *, cycle, invocation_started, evidence_deadline: (
+            certified.append((cycle, invocation_started, evidence_deadline)) or {}
+        ),
     )
     assert (
         process_runner._run_cycle_bounded(
@@ -2006,10 +2077,12 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     ]
     assert published == [1]
     assert emitted == [1]
+    assert certified == [(1, 1000.0, 2190.0)]
 
     calls.clear()
     published.clear()
     emitted.clear()
+    certified.clear()
     cancelled: list[tuple[int, str]] = []
 
     def cancel_tail(
@@ -2049,10 +2122,12 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     assert cancelled == [(1, "performance")]
     assert published == [1]
     assert emitted == [1]
+    assert certified == []
 
     calls.clear()
     published.clear()
     emitted.clear()
+    certified.clear()
     cancelled.clear()
 
     def reject_second_before_execution(**kwargs: object) -> int:
@@ -2088,10 +2163,12 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     assert cancelled == [(1, "anyfem")]
     assert published == [1]
     assert emitted == [1]
+    assert certified == []
 
     calls.clear()
     published.clear()
     emitted.clear()
+    certified.clear()
     cancelled.clear()
     monkeypatch.setattr(process_runner, "_run_resource_bounded", pass_lane)
     monkeypatch.setattr(process_runner.time, "monotonic", lambda: 1860.1)
@@ -2108,6 +2185,41 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     assert cancelled == [(1, "anyfem")]
     assert published == [1]
     assert emitted == [1]
+    assert certified == []
+
+    calls.clear()
+    published.clear()
+    emitted.clear()
+    certified.clear()
+    cancelled.clear()
+    rows_cycle_2 = contract["resource_requests"]["cycle_2"]
+    monkeypatch.setattr(
+        process_runner,
+        "_validate_cycle_request_rows",
+        lambda _contract, _cycle: rows_cycle_2,
+    )
+    observed_times = iter((1000.0, 1000.0, 2060.1))
+    monkeypatch.setattr(
+        process_runner.time, "monotonic", lambda: next(observed_times)
+    )
+    assert (
+        process_runner._run_cycle_bounded(
+            cycle=2,
+            contract=contract,
+            timeout_policy=timeout_policy,
+            invocation_deadline=2200.0,
+        )
+        == process_runner._CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
+    )
+    assert calls == [
+        (rows_cycle_2[0]["request_id"], 1860.0, False, True),
+        (rows_cycle_2[1]["request_id"], 1950.0, False, True),
+        (rows_cycle_2[2]["request_id"], 2060.0, False, True),
+    ]
+    assert cancelled == []
+    assert published == [1]
+    assert emitted == [2]
+    assert certified == []
 
     for path, bad in (
         (("absolute_wall_limit_seconds",), 1201),
@@ -2356,10 +2468,236 @@ def test_aggregate_accepts_cancelled_not_run_without_process_manifests(
         "cycle_1.functional",
     ]
     assert result["cycles"][0]["status"] == "FAIL"
+    assert result["cycles"][0]["completion_certificate"] is None
     assert result["cycles"][0]["lanes"]["anyfem"]["status"] == "NOT_RUN"
     assert result["cycles"][0]["lanes"]["performance"]["status"] == "NOT_RUN"
     assert result["cycles"][1]["status"] == "NOT_RUN"
+    assert result["cycles"][1]["completion_certificate"] is None
     assert writes == [tmp_path / contract["adjudication"]["external_result_filename"]]
+
+
+def test_cycle_completion_certificate_is_exact_bounded_and_all_pass() -> None:
+    contract = _load_contract()
+    request_order = [
+        row["request_id"] for row in contract["resource_requests"]["cycle_1"]
+    ]
+    candidate = {"commit": "1" * 40, "tree": "2" * 40}
+    snapshot_record = {"bytes": 123, "sha256": "3" * 64}
+    snapshot = {
+        "candidate": candidate,
+        "cycle": 1,
+        "request_order": request_order,
+        "rows": [
+            {
+                "terminal": {
+                    "fields": [request_id, "COMPLETED_PASS"]
+                }
+            }
+            for request_id in request_order
+        ],
+    }
+    certificate = {
+        "bounded_elapsed_microseconds": 1_189_999_999,
+        "candidate": candidate,
+        "cycle": 1,
+        "evidence_deadline_microseconds": 1_190_000_000,
+        "request_order": request_order,
+        "schema": burnin.CYCLE_COMPLETION_CERTIFICATE_SCHEMA,
+        "status": "COMPLETED_WITHIN_CYCLE_CONTROL_BOUNDS",
+        "terminal_snapshot": snapshot_record,
+    }
+    assert (
+        burnin.validate_cycle_completion_certificate(
+            certificate,
+            contract=contract,
+            cycle=1,
+            snapshot=snapshot,
+            terminal_snapshot=snapshot_record,
+        )
+        == certificate
+    )
+
+    late = copy.deepcopy(certificate)
+    late["bounded_elapsed_microseconds"] = 1_190_000_000
+    with pytest.raises(burnin.EvidenceError, match="elapsed bound"):
+        burnin.validate_cycle_completion_certificate(
+            late,
+            contract=contract,
+            cycle=1,
+            snapshot=snapshot,
+            terminal_snapshot=snapshot_record,
+        )
+
+    failed_snapshot = copy.deepcopy(snapshot)
+    failed_snapshot["rows"][2]["terminal"]["fields"][1] = "COMPLETED_FAIL"
+    with pytest.raises(burnin.EvidenceError, match="three passing terminal rows"):
+        burnin.validate_cycle_completion_certificate(
+            certificate,
+            contract=contract,
+            cycle=1,
+            snapshot=failed_snapshot,
+            terminal_snapshot=snapshot_record,
+        )
+
+
+def test_cycle_completion_certificate_is_exclusive_and_post_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contract = copy.deepcopy(_load_contract())
+    contract["non_resource_commands"]["output_root"] = str(tmp_path)
+    request_order = [
+        row["request_id"] for row in contract["resource_requests"]["cycle_1"]
+    ]
+    snapshot = {
+        "candidate": {"commit": "1" * 40, "tree": "2" * 40},
+        "cycle": 1,
+        "request_order": request_order,
+        "rows": [
+            {
+                "terminal": {
+                    "fields": [request_id, "COMPLETED_PASS"]
+                }
+            }
+            for request_id in request_order
+        ],
+    }
+    snapshot_path = tmp_path / contract["adjudication"][
+        "cycle_terminal_snapshot_filenames"
+    ]["cycle_1"]
+    snapshot_path.write_bytes(burnin.canonical_json_bytes(snapshot))
+    monkeypatch.setattr(
+        process_runner,
+        "_validate_ledger_snapshot",
+        lambda value, *, contract: value,
+    )
+    observed_times = iter((1180.0, 1180.0, 1180.0))
+    monkeypatch.setattr(
+        process_runner.time, "monotonic", lambda: next(observed_times)
+    )
+
+    certificate = process_runner._write_cycle_completion_certificate(
+        contract,
+        cycle=1,
+        invocation_started=0.0,
+        evidence_deadline=1190.0,
+    )
+
+    certificate_path = tmp_path / contract["adjudication"][
+        "cycle_completion_certificate_filenames"
+    ]["cycle_1"]
+    assert process_runner._load_canonical_json(certificate_path) == certificate
+    assert certificate["bounded_elapsed_microseconds"] == 1_180_000_000
+    assert certificate["evidence_deadline_microseconds"] == 1_190_000_000
+    assert not certificate_path.with_name(f".{certificate_path.name}.pending").exists()
+    with pytest.raises(burnin.EvidenceError, match="already exists"):
+        process_runner._write_cycle_completion_certificate(
+            contract,
+            cycle=1,
+            invocation_started=0.0,
+            evidence_deadline=1190.0,
+        )
+
+
+def test_aggregate_rejects_all_pass_without_final_cycle_certificate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contract = copy.deepcopy(_load_contract())
+    contract["non_resource_commands"]["output_root"] = str(tmp_path)
+    monkeypatch.setattr(process_runner, "_bootstrap_authority", lambda: None)
+    monkeypatch.setattr(burnin, "load_contract", lambda: contract)
+    monkeypatch.setattr(
+        process_runner,
+        "_verify_repositories",
+        lambda _contract: (tmp_path, {}, "1" * 40, "2" * 40),
+    )
+    monkeypatch.setattr(process_runner, "_publish_completed_cycles", lambda _contract: None)
+    monkeypatch.setattr(
+        process_runner,
+        "_cycle_terminal_snapshot",
+        lambda _contract, _cycle: {
+            "rows": [
+                {"terminal": {"fields": ["request-id", "COMPLETED_PASS"]}}
+                for _lane in range(3)
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_load_process_manifest",
+        lambda _contract, _prefix, *, required: {},
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_process_record",
+        lambda _contract, _prefix: {"request_id": None, "status": "PASS"},
+    )
+    monkeypatch.setattr(
+        process_runner, "_require_package_artifacts", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        burnin,
+        "optional_regular_file_record",
+        lambda _path, **_kwargs: {"bytes": 1, "sha256": "4" * 64},
+    )
+    validated_cycles: list[int] = []
+    cycle_1_name = contract["adjudication"][
+        "cycle_completion_certificate_filenames"
+    ]["cycle_1"]
+    cycle_2_name = contract["adjudication"][
+        "cycle_completion_certificate_filenames"
+    ]["cycle_2"]
+
+    def load_artifact(path: Path) -> dict[str, object]:
+        if path.name == cycle_1_name:
+            return {"cycle": 1}
+        if path.name == cycle_2_name:
+            raise burnin.EvidenceError(
+                "canonical JSON artifact is unavailable: final cycle certificate"
+            )
+        if path.name == "approval.json":
+            return {"kind": "APPROVAL"}
+        return {"cycle": int(path.stem[-1]), "kind": "CYCLE_TERMINAL"}
+
+    monkeypatch.setattr(process_runner, "_load_canonical_json", load_artifact)
+    monkeypatch.setattr(
+        process_runner,
+        "_validate_cycle_completion_certificate",
+        lambda _value, *, contract, cycle: validated_cycles.append(cycle) or {},
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_approval_snapshot_path",
+        lambda _contract: tmp_path / "approval.json",
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_cycle_snapshot_path",
+        lambda _contract, cycle: tmp_path / f"cycle-{cycle}.json",
+    )
+    monkeypatch.setattr(
+        burnin,
+        "file_hash_record",
+        lambda _path: {"bytes": 1, "sha256": "5" * 64},
+    )
+
+    with pytest.raises(burnin.EvidenceError, match="final cycle certificate"):
+        process_runner.aggregate_result()
+    assert validated_cycles == [1]
+
+
+def test_cycle_two_requires_validated_cycle_one_completion_certificate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contract = copy.deepcopy(_load_contract())
+    contract["non_resource_commands"]["output_root"] = str(tmp_path)
+    monkeypatch.setattr(process_runner, "_verify_resource_order", lambda *_args: None)
+    monkeypatch.setattr(
+        process_runner,
+        "_verify_repositories",
+        lambda _contract: (tmp_path, {}, "1" * 40, "2" * 40),
+    )
+    with pytest.raises(burnin.EvidenceError, match="canonical JSON artifact is unavailable"):
+        process_runner._validate_cycle_request_rows(contract, 2)
 
 
 def test_current_requests_reject_standalone_execution_before_side_effects(
@@ -3591,6 +3929,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_14_REQUEST_IDS,
             *FAILED_ATTEMPT_15_REQUEST_IDS,
             *FAILED_ATTEMPT_16_REQUEST_IDS,
+            *FAILED_ATTEMPT_17_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -3619,6 +3958,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_14_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_15_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_16_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_17_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert [
         state
@@ -3690,6 +4030,10 @@ def test_success_and_blocked_result_schemas_are_strict_and_fail_fast() -> None:
     success = _valid_result(contract)
     assert burnin.validate_result(success, contract=contract) == success
     assert burnin.strict_json_loads(burnin.canonical_json_bytes(success)) == success
+    missing_certificate = copy.deepcopy(success)
+    missing_certificate["cycles"][1]["completion_certificate"] = None
+    with pytest.raises(burnin.EvidenceError, match="completion_certificate"):
+        burnin.validate_result(missing_certificate, contract=contract)
 
     blocked = copy.deepcopy(success)
     blocked["common_lanes"]["quick"]["processes"] = [
@@ -3718,6 +4062,7 @@ def test_success_and_blocked_result_schemas_are_strict_and_fail_fast() -> None:
             cycle["lanes"][lane] = _process(
                 "NOT_RUN", request_id=request["request_id"]
             )
+        cycle["completion_certificate"] = None
         cycle["status"] = "NOT_RUN"
     blocked["hard_gates"] = {
         key: "NOT_EVALUATED" for key in blocked["hard_gates"]
@@ -3795,6 +4140,7 @@ def test_success_and_blocked_result_schemas_are_strict_and_fail_fast() -> None:
             "NOT_RUN", request_id=row["request_id"]
         )
     cycle_two_failure["cycles"][1]["status"] = "FAIL"
+    cycle_two_failure["cycles"][1]["completion_certificate"] = None
     cycle_two_failure["hard_gates"] = {
         "batch_path_equality": "NOT_EVALUATED",
         "q4_numerical_parity": "NOT_EVALUATED",
@@ -4186,8 +4532,8 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     assert "standalone v14" not in source
     assert "current v15" not in source
     assert "standalone v15" not in source
-    assert "current v17 worker request" in source
-    assert "standalone v17 worker execution" in source
+    assert "current v18 worker request" in source
+    assert "standalone v18 worker execution" in source
     validator_raw = VALIDATOR_PATH.read_bytes()
     assert process_runner._VALIDATOR_BYTES == len(validator_raw)
     assert process_runner._VALIDATOR_SHA256 == hashlib.sha256(validator_raw).hexdigest()
@@ -4213,7 +4559,7 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
             check=False,
         )
         assert bootstrap.returncode == 0, bootstrap.stderr
-        assert "standalone v17 worker execution" in bootstrap.stdout
+        assert "standalone v18 worker execution" in bootstrap.stdout
         assert not list(bootstrap_root.iterdir())
     else:
         assert os.environ.get("GITHUB_ACTIONS") == "true"

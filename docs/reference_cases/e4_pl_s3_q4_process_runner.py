@@ -36,8 +36,11 @@ LEDGER_SNAPSHOT_SCHEMA = "anysolver.e4-pl-s3-q4-resource-ledger-snapshot-v1"
 PENDING_MANIFEST_SCHEMA = "anysolver.e4-pl-s3-q4-pending-process-manifest-v1"
 MANAGER_RESERVATION_SCHEMA = "anysolver.e4-pl-s3-q4-manager-reservation-v1"
 WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
-_VALIDATOR_BYTES = 271166
-_VALIDATOR_SHA256 = "02056dbdcfd6bea4882de47babd45633d8662af23bf4124ea97a0faca8434fbc"
+CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
+    "anysolver.e4-pl-s3-q4-cycle-completion-certificate-v1"
+)
+_VALIDATOR_BYTES = 282067
+_VALIDATOR_SHA256 = "5e722e202f114dde39da3d67eb3b6a4c5e158e50789c2bef169d7d823cf7e7bb"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),
@@ -92,6 +95,8 @@ def _bootstrap_authority() -> None:
     if (
         Path(module.__file__).resolve(strict=True) != _VALIDATOR_PATH
         or module.PROCESS_RESULT_SCHEMA != PROCESS_RESULT_SCHEMA
+        or module.CYCLE_COMPLETION_CERTIFICATE_SCHEMA
+        != CYCLE_COMPLETION_CERTIFICATE_SCHEMA
     ):
         raise RuntimeError("process runner loaded a noncanonical evidence validator")
     burnin = module
@@ -1571,7 +1576,7 @@ def _request_row(contract: Mapping[str, Any], request_id: str) -> dict[str, Any]
 def _reject_standalone_resource_execution(
     contract: Mapping[str, Any], request_id: str
 ) -> None:
-    """Reject every current v17 worker request outside its complete cycle.
+    """Reject every current v18 worker request outside its complete cycle.
 
     ``finalize-resource`` is intentionally separate: it can validate and
     publish an existing durable worker-completion checkpoint, but it cannot
@@ -1584,7 +1589,7 @@ def _reject_standalone_resource_execution(
     if row.get("lane") != lane:
         raise burnin.EvidenceError("standalone request lane authority mismatch")
     raise burnin.EvidenceError(
-        "standalone resource worker execution is forbidden for current v17 "
+        "standalone resource worker execution is forbidden for current v18 "
         f"request {request_id} ({lane}, cycle {cycle}); use cycle --cycle {cycle}"
     )
 
@@ -1711,6 +1716,24 @@ def _cycle_snapshot_path(contract: Mapping[str, Any], cycle: int) -> Path:
     return burnin.output_root(contract) / name
 
 
+def _cycle_completion_certificate_path(
+    contract: Mapping[str, Any], cycle: int
+) -> Path:
+    if type(cycle) is not int or cycle not in (1, 2):
+        raise burnin.EvidenceError("resource cycle must be exactly 1 or 2")
+    names = burnin._exact_keys(
+        contract["adjudication"]["cycle_completion_certificate_filenames"],
+        {"cycle_1", "cycle_2"},
+        "$contract.adjudication.cycle_completion_certificate_filenames",
+    )
+    name = names[f"cycle_{cycle}"]
+    if not isinstance(name, str) or Path(name).name != name:
+        raise burnin.EvidenceError(
+            "cycle completion certificate filename must be a basename"
+        )
+    return burnin.output_root(contract) / name
+
+
 def _load_canonical_json(path: Path) -> dict[str, Any]:
     if path.is_symlink() or burnin.is_reparse_point(path) or not path.is_file():
         raise burnin.EvidenceError(f"canonical JSON artifact is unavailable: {path}")
@@ -1743,6 +1766,82 @@ def _write_canonical_json_once(path: Path, value: Mapping[str, Any]) -> None:
         temporary.rename(path)
     except FileExistsError as exc:
         raise burnin.EvidenceError(f"canonical artifact appeared during publication: {path}") from exc
+
+
+def _validate_cycle_completion_certificate(
+    value: Mapping[str, Any], *, contract: Mapping[str, Any], cycle: int
+) -> dict[str, Any]:
+    _cycle_wall_policy(contract)
+    snapshot_path = _cycle_snapshot_path(contract, cycle)
+    snapshot = _validate_ledger_snapshot(
+        _load_canonical_json(snapshot_path), contract=contract
+    )
+    return burnin.validate_cycle_completion_certificate(
+        value,
+        contract=contract,
+        cycle=cycle,
+        snapshot=snapshot,
+        terminal_snapshot=burnin.file_hash_record(snapshot_path),
+    )
+
+
+def _write_cycle_completion_certificate(
+    contract: Mapping[str, Any],
+    *,
+    cycle: int,
+    invocation_started: float,
+    evidence_deadline: float,
+) -> dict[str, Any]:
+    """Exclusively certify one cycle only after its evidence is complete in time."""
+
+    observed = time.monotonic()
+    if observed >= evidence_deadline:
+        raise burnin.EvidenceError("cycle completion certificate missed its deadline")
+    snapshot_path = _cycle_snapshot_path(contract, cycle)
+    snapshot = _validate_ledger_snapshot(
+        _load_canonical_json(snapshot_path), contract=contract
+    )
+    cycle_policy = _cycle_wall_policy(contract)
+    certificate = {
+        "bounded_elapsed_microseconds": int(
+            (observed - invocation_started) * 1_000_000
+        ),
+        "candidate": snapshot["candidate"],
+        "cycle": cycle,
+        "evidence_deadline_microseconds": (
+            cycle_policy["absolute_wall_limit_seconds"]
+            - cycle_policy["watchdog_termination_margin_seconds"]
+        )
+        * 1_000_000,
+        "request_order": snapshot["request_order"],
+        "schema": CYCLE_COMPLETION_CERTIFICATE_SCHEMA,
+        "status": "COMPLETED_WITHIN_CYCLE_CONTROL_BOUNDS",
+        "terminal_snapshot": burnin.file_hash_record(snapshot_path),
+    }
+    _validate_cycle_completion_certificate(certificate, contract=contract, cycle=cycle)
+    path = _cycle_completion_certificate_path(contract, cycle)
+    temporary = path.with_name(f".{path.name}.pending")
+    if any(
+        candidate.exists()
+        or candidate.is_symlink()
+        or burnin.is_reparse_point(candidate)
+        for candidate in (path, temporary)
+    ):
+        raise burnin.EvidenceError("cycle completion certificate output already exists")
+    _write_exclusive(temporary, burnin.canonical_json_bytes(certificate))
+    if time.monotonic() >= evidence_deadline:
+        raise burnin.EvidenceError(
+            "cycle completion certificate staging exceeded its deadline"
+        )
+    try:
+        temporary.rename(path)
+    except FileExistsError as exc:
+        raise burnin.EvidenceError(
+            "cycle completion certificate appeared during publication"
+        ) from exc
+    if _load_canonical_json(path) != certificate:
+        raise burnin.EvidenceError("cycle completion certificate changed on publication")
+    return certificate
 
 
 def _validate_ledger_snapshot(
@@ -3247,6 +3346,16 @@ def _validate_cycle_request_rows(
     _verify_resource_order(contract, request_ids[0])
     candidate, _siblings, candidate_commit, candidate_tree = _verify_repositories(contract)
     candidate_record = {"commit": candidate_commit, "tree": candidate_tree}
+    if cycle == 2:
+        predecessor_certificate = _validate_cycle_completion_certificate(
+            _load_canonical_json(_cycle_completion_certificate_path(contract, 1)),
+            contract=contract,
+            cycle=1,
+        )
+        if predecessor_certificate["candidate"] != candidate_record:
+            raise burnin.EvidenceError(
+                "cycle 2 predecessor completion certificate candidate mismatch"
+            )
     approval_snapshot, _approval_record = _load_approval_snapshot(contract)
     if approval_snapshot["candidate"] != candidate_record:
         raise burnin.EvidenceError("cycle approval snapshot candidate mismatch")
@@ -3490,6 +3599,12 @@ def _run_cycle_bounded(
     _emit_cycle_terminal_snapshot(contract, cycle)
     if time.monotonic() >= evidence_deadline:
         raise burnin.EvidenceError("cycle evidence publication exceeded its reserve")
+    _write_cycle_completion_certificate(
+        contract,
+        cycle=cycle,
+        invocation_started=invocation_started,
+        evidence_deadline=evidence_deadline,
+    )
     return 0
 
 
@@ -4013,7 +4128,33 @@ def aggregate_result() -> dict[str, Any]:
             if statuses == ["NOT_RUN", "NOT_RUN", "NOT_RUN"]
             else "FAIL"
         )
-        cycles.append({"cycle": cycle, "lanes": lanes, "status": cycle_status})
+        certificate_path = _cycle_completion_certificate_path(contract, cycle)
+        pending_certificate = certificate_path.with_name(
+            f".{certificate_path.name}.pending"
+        )
+        certificate_record = None
+        if cycle_status == "PASS":
+            _validate_cycle_completion_certificate(
+                _load_canonical_json(certificate_path),
+                contract=contract,
+                cycle=cycle,
+            )
+            certificate_record = burnin.file_hash_record(certificate_path)
+        elif any(
+            path.exists() or path.is_symlink() or burnin.is_reparse_point(path)
+            for path in (certificate_path, pending_certificate)
+        ):
+            raise burnin.EvidenceError(
+                "nonpassing cycle has a completion certificate artifact"
+            )
+        cycles.append(
+            {
+                "completion_certificate": certificate_record,
+                "cycle": cycle,
+                "lanes": lanes,
+                "status": cycle_status,
+            }
+        )
     performance_passed = all(
         cycle["lanes"]["performance"]["status"] == "PASS" for cycle in cycles
     )
@@ -4151,9 +4292,9 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v17 worker execution; use cycle --cycle N",
+            help="reject standalone v18 worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v17 resource requests is disabled. "
+                "Standalone execution of current v18 resource requests is disabled. "
                 "Use cycle --cycle N so all three workers share one 1200-second watchdog."
             ),
         )
