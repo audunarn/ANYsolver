@@ -1153,10 +1153,13 @@ def _validate_repository_identities(
         repository_order = contract["execution"]["clean_status_scope"]
         if (
             not isinstance(repository_order, list)
+            or any(not isinstance(name, str) for name in repository_order)
             or len(repository_order) != len(set(repository_order))
             or set(repository_order) != expected_names
         ):
-            raise EvidenceError("clean-status repository scope is incomplete")
+            raise EvidenceError(
+                "clean-status repository scope is malformed, duplicated, or incomplete"
+            )
     else:
         # Historical Q1M contracts predate the named S3/Q4 clean-status policy.
         empty_status = {"bytes": 0, "sha256": _sha256_bytes(b"")}

@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "d33b307ba3b475d5e6f70f20323cbb1a99fdde0ee3438dac490ee36c0ab98527"
+CONTRACT_SHA256 = "3844238d002a1eddb12789e5639ad424f16fc86b2acbeba2e5090cae39216248"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-10"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-11"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -117,7 +117,7 @@ FAILED_ATTEMPT_10_REQUEST_IDS = [
     "98ff7f767fbd4c2da1d9f96d2d572a8d",
     "ce9f73f7f5194cbcb138c157e47f7964",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_11_REQUEST_IDS = [
     "332d8d4192e247859d73810dd4ef5bcb",
     "41092897ba884ef39e015cefc451de39",
     "48f2afd41cf946fb9671871e61402f3d",
@@ -125,30 +125,38 @@ CURRENT_REQUEST_IDS = [
     "f3f14c97691d494bae9e9834b112252b",
     "8238ffbc8b0f457f808ce3cef0e20eca",
 ]
+CURRENT_REQUEST_IDS = [
+    "062220faabc74d9eabad3ae56db5c9ab",
+    "195664d13fee4ab5ae386645e46b37ca",
+    "713c629d5a1a4e92a030e74184a2a66d",
+    "a349846593d54453b89ea4b6c2e69257",
+    "691f2796967d4bd7817d5448fa923d5e",
+    "376e1f947c0241969f47092778325b64",
+]
 CURRENT_REQUEST_FILE_RECORDS = [
     {
         "bytes": 1358,
-        "sha256": "c3ea8c0aeec8c0b4427261b677887b7e21bde568ce336ce83b1385287c8353be",
+        "sha256": "9456e35f234ca0eec4e013398332d12b5ea7d92742d87ec2d5dd132ef1f6e6ec",
     },
     {
         "bytes": 1010,
-        "sha256": "0051837077c684e3a0041233aa653c445ad1647762508609f657d42040e7e936",
+        "sha256": "ad0676911b6bbc47d6909d36a6982ab1f2e90532023d95178dd229a837a7a8f9",
     },
     {
         "bytes": 1272,
-        "sha256": "2ebca9c468834135e5c50e1d96d9b445ebbe623c471c818c93da6da3c5ba6d3f",
+        "sha256": "aac8d9fd644afe132adac12a76ffe492a44c7b7ede1f2d8a2f3c42d329cb69f9",
     },
     {
         "bytes": 1358,
-        "sha256": "ac5caaa14feba568afbe4badbdbebfcb14dc2f12f275a728ae5085ebb702c3b0",
+        "sha256": "ea373d4910d5827163e05662beff3dfa7feef77d8f9e7839357e35846c53207f",
     },
     {
         "bytes": 1010,
-        "sha256": "8ac8114f3e1247c3a3adef9362614f3e318a418819c29129dcd28b111a04de23",
+        "sha256": "dd576448f316db34cf07dca55d917ac439d8effeef727f3788ef07c19e074333",
     },
     {
         "bytes": 1272,
-        "sha256": "e66407de83d31556aa3b8972afeb50c01c534375e358a54d4241106b77a87276",
+        "sha256": "9022d53f09e9be53c31b075091532e0c9303abb69847599171d1ed392e9a1e65",
     },
 ]
 
@@ -442,10 +450,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v11"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v12"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "1e84bcacc539e90941bf718af443b8e34f283c63",
+        "exact_parent": "361ab28187e6abf857ae29cc199f86e84a0417b1",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1094,6 +1102,37 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     )
     assert functional_cleanliness["role"] == "PRESERVED_BLOCKED_PREDECESSOR_ONLY"
     assert functional_cleanliness["terminal"] == "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE"
+    assert contract["background_inputs"][
+        "failed_v11_repository_order_review_attempt"
+    ] == {
+        "attempt": 11,
+        "authority_commit": {
+            "commit": "361ab28187e6abf857ae29cc199f86e84a0417b1",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "9760eaac5269868c4b4af4f24971785cdc370d49",
+        },
+        "contract": {
+            "bytes": 293541,
+            "sha256": "d33b307ba3b475d5e6f70f20323cbb1a99fdde0ee3438dac490ee36c0ab98527",
+        },
+        "failure": {
+            "cause": "CANONICAL_JSON_REPOSITORY_ORDER_REJECTED_STRICT_SCOPE_COMPARISON",
+            "formal_execution_started": False,
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+            "review": {
+                "finding_count": 1,
+                "priority": "P1",
+                "reviewer_id": "codex-v11-independent-authority-review-2-361ab28",
+                "tests": {"failed": 0, "passed": 35},
+                "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+            },
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v11-361ab28",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_11_REQUEST_IDS,
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -2939,6 +2978,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_8_REQUEST_IDS,
             *FAILED_ATTEMPT_9_REQUEST_IDS,
             *FAILED_ATTEMPT_10_REQUEST_IDS,
+            *FAILED_ATTEMPT_11_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -2961,6 +3001,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_7_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_8_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_9_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_11_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert [
         state
@@ -3496,7 +3537,9 @@ def test_worker_checkpoint_can_publish_without_reexecuting(
     assert len(burnin._ledger_entries(ledger.read_text(encoding="utf-8"), row["request_id"], "COMPLETED_PASS")) == 1
 
 
-def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen() -> None:
+def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     contract = _load_contract()
     powershell = Path(contract["execution"]["environment_guard"]["powershell"]["path"])
     script = RESOURCE_MANAGER / "acquire-test.ps1"
@@ -3525,12 +3568,77 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen() -> Non
     verify_start = source.index("def _verify_repositories")
     verify_end = source.index("\ndef _run(", verify_start)
     verify_source = source[verify_start:verify_end]
-    scope_check = verify_source.index(
-        'list(repositories) != contract["execution"]["clean_status_scope"]'
+    scope_assignment = verify_source.index(
+        'scope = contract["execution"]["clean_status_scope"]'
     )
+    scope_check = verify_source.index("set(scope) != set(repositories)")
+    scope_iteration = verify_source.index("for name in scope:", scope_check)
+    named_repository = verify_source.index("repositories[name]", scope_iteration)
     complete_clean_probe = verify_source.index("burnin.strict_clean_status_record")
     candidate_authority = verify_source.index("_authority_commit(candidate, contract)")
-    assert scope_check < complete_clean_probe < candidate_authority
+    assert "not isinstance(scope, list)" in verify_source
+    assert "len(scope) != len(set(scope))" in verify_source
+    assert scope_assignment < scope_check < scope_iteration
+    assert scope_iteration < complete_clean_probe < named_repository < candidate_authority
+
+    # Canonical JSON sorts repository keys, while the frozen clean-status scope
+    # deliberately starts with ANYsolver. Runtime verification must therefore
+    # select repositories by scope name instead of trusting mapping insertion order.
+    scope = contract["execution"]["clean_status_scope"]
+    repository_root = tmp_path / "repositories"
+    canonical_repositories: dict[str, Path] = {}
+    for name in sorted(scope):
+        path = repository_root / name
+        path.mkdir(parents=True)
+        canonical_repositories[name] = path.resolve(strict=True)
+    assert list(canonical_repositories) == sorted(scope)
+    assert list(canonical_repositories) != scope
+
+    clean_probes: list[Path] = []
+    monkeypatch.setattr(process_runner, "ROOT", canonical_repositories["ANYsolver"])
+    monkeypatch.setattr(process_runner, "_verify_local_runner_inputs", lambda _contract: None)
+    monkeypatch.setattr(
+        process_runner.burnin,
+        "external_repository_paths",
+        lambda _contract: canonical_repositories,
+    )
+    monkeypatch.setattr(
+        process_runner.burnin, "validate_git_runtime", lambda _contract: {}
+    )
+    monkeypatch.setattr(
+        process_runner.burnin,
+        "strict_clean_status_record",
+        lambda path, *, contract: clean_probes.append(path) or contract["execution"][
+            "clean_status_empty"
+        ],
+    )
+    monkeypatch.setattr(
+        process_runner,
+        "_authority_commit",
+        lambda _candidate, _contract: ("c" * 40, "d" * 40),
+    )
+    monkeypatch.setattr(
+        process_runner.burnin,
+        "assert_clean_execution_repository",
+        lambda _path, *, contract: None,
+    )
+
+    def sibling_git(path: Path, *args: str, contract: dict[str, object]) -> str:
+        authority = contract["sibling_authority"][path.name]  # type: ignore[index]
+        if args == ("rev-parse", "HEAD"):
+            return authority["commit"]  # type: ignore[index,return-value]
+        if args == ("rev-parse", "HEAD^{tree}"):
+            return authority["tree"]  # type: ignore[index,return-value]
+        raise AssertionError(args)
+
+    monkeypatch.setattr(process_runner.burnin, "_git", sibling_git)
+    candidate, siblings, head, tree = process_runner._verify_repositories(contract)
+    assert candidate == canonical_repositories["ANYsolver"]
+    assert siblings == {
+        name: canonical_repositories[name] for name in contract["sibling_authority"]
+    }
+    assert (head, tree) == ("c" * 40, "d" * 40)
+    assert clean_probes == [canonical_repositories[name] for name in scope]
 
     local_start = source.index("def _run_local_bounded")
     local_clean = source.index("_verify_repositories(contract)", local_start)

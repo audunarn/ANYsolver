@@ -882,11 +882,17 @@ def _verify_repositories(
             raise burnin.EvidenceError(f"{name} path is not the exact frozen repository")
     # Complete, non-mutating cleanliness phase across the entire frozen graph.
     # No identity or topology probe may run until every repository passes.
-    if list(repositories) != contract["execution"]["clean_status_scope"]:
-        raise burnin.EvidenceError("strict clean-status scope order mismatch")
+    scope = contract["execution"]["clean_status_scope"]
+    if (
+        not isinstance(scope, list)
+        or any(not isinstance(name, str) for name in scope)
+        or len(scope) != len(set(scope))
+        or set(scope) != set(repositories)
+    ):
+        raise burnin.EvidenceError("strict clean-status scope mismatch")
     burnin.validate_git_runtime(contract)
-    for path in repositories.values():
-        burnin.strict_clean_status_record(path, contract=contract)
+    for name in scope:
+        burnin.strict_clean_status_record(repositories[name], contract=contract)
     head, tree = _authority_commit(candidate, contract)
     if set(siblings) != set(contract["sibling_authority"]):
         raise burnin.EvidenceError("sibling repository bindings are incomplete")
