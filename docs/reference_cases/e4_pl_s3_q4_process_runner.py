@@ -36,8 +36,8 @@ LEDGER_SNAPSHOT_SCHEMA = "anysolver.e4-pl-s3-q4-resource-ledger-snapshot-v1"
 PENDING_MANIFEST_SCHEMA = "anysolver.e4-pl-s3-q4-pending-process-manifest-v1"
 MANAGER_RESERVATION_SCHEMA = "anysolver.e4-pl-s3-q4-manager-reservation-v1"
 WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
-_VALIDATOR_BYTES = 233588
-_VALIDATOR_SHA256 = "801bd77b535d216e437a8c6b870862920d972f1d9e18eeb7b1cb03e7d1a985f4"
+_VALIDATOR_BYTES = 255945
+_VALIDATOR_SHA256 = "991e2979058f9f318f7bc5bdd701e0b0ebe7983fd2d704db87ec4744c5194502"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),
@@ -1548,7 +1548,7 @@ def _request_row(contract: Mapping[str, Any], request_id: str) -> dict[str, Any]
 def _reject_standalone_resource_execution(
     contract: Mapping[str, Any], request_id: str
 ) -> None:
-    """Reject every current v13 worker request outside its complete cycle.
+    """Reject every current v14 worker request outside its complete cycle.
 
     ``finalize-resource`` is intentionally separate: it can validate and
     publish an existing durable worker-completion checkpoint, but it cannot
@@ -1561,7 +1561,7 @@ def _reject_standalone_resource_execution(
     if row.get("lane") != lane:
         raise burnin.EvidenceError("standalone request lane authority mismatch")
     raise burnin.EvidenceError(
-        "standalone resource worker execution is forbidden for current v13 "
+        "standalone resource worker execution is forbidden for current v14 "
         f"request {request_id} ({lane}, cycle {cycle}); use cycle --cycle {cycle}"
     )
 
@@ -3958,9 +3958,9 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v13 worker execution; use cycle --cycle N",
+            help="reject standalone v14 worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v13 resource requests is disabled. "
+                "Standalone execution of current v14 resource requests is disabled. "
                 "Use cycle --cycle N so all three workers share one 1200-second watchdog."
             ),
         )
