@@ -556,21 +556,26 @@ def test_malformed_or_ambiguous_recognized_resultants_fail_closed(state) -> None
 
 
 def test_state_contract_is_validated_before_stiffness_evaluation(
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     nodes = np.asarray(((0.0, 0.0, 0.0), (1.4, 0.0, 0.0), (0.3, 1.1, 0.0)))
     element = _element()
-
-    def forbidden(*_args, **_kwargs):
-        raise AssertionError("stiffness evaluated before geometric state validation")
-
-    monkeypatch.setattr(element, "_compute_stiffness_components", forbidden)
+    derived_names = (
+        "_qualified_components",
+        "_qualified_cache_key",
+        "_qualified_component_guard",
+        "_stiffness_matrix",
+        "_internal_forces",
+    )
+    assert all(getattr(element, name) is None for name in derived_names)
+    plan_revision = element._qualified_plan_state_revision
     with pytest.raises(ValueError, match="finite"):
         element.compute_geometric_stiffness_matrix(
             _mesh(nodes),
             _material(),
             {"membrane_compression": [1.0, 2.0]},
         )
+    assert all(getattr(element, name) is None for name in derived_names)
+    assert element._qualified_plan_state_revision == plan_revision
 
 
 @pytest.mark.parametrize(

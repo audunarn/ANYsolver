@@ -21,18 +21,389 @@ import hashlib
 import json
 import math
 import re
-from types import MappingProxyType
-from typing import Any
+import sys
+from types import MappingProxyType, ModuleType
+from typing import Any, Callable, Optional
 
 import numpy as np
 
-from anymaterial import StructuralMaterial, elastic_compliance_matrix, material_symmetry
+from anymaterial import (
+    DNVC208MaterialCurve,
+    Hill48Yield,
+    IsotropicMaterial,
+    LinearHardeningCurve,
+    OrthotropicMaterial,
+    PiecewiseLinearCurve,
+    PowerLawHardeningCurve,
+    StructuralMaterial,
+    elastic_compliance_matrix,
+    material_symmetry,
+)
 
+from ._qualified_authority_epoch import make_authority_epoch_manager
 from .e4_pl_s3_initial_fields import (
     GENERALIZED_INITIAL_FIELD_POLICY_ID,
     integrate_generalized_initial_fields,
 )
 from .shell_sections import validate_generalized_shell_section
+
+
+_NUMPY_RUNTIME_ROOT_NAMES = (
+    "abs", "add", "all", "allclose", "any", "arange", "arccos", "arctan2",
+    "argmax", "argsort", "array", "array_equal", "asarray",
+    "ascontiguousarray", "average", "block", "broadcast_to", "ceil",
+    "clip", "column_stack", "concatenate", "cos", "count_nonzero",
+    "cross", "deg2rad", "degrees", "diag", "dot", "dtype", "einsum",
+    "empty", "empty_like", "errstate", "eye", "finfo", "flatnonzero",
+    "float64",
+    "frombuffer", "fromiter", "full", "interp", "isclose", "isfinite",
+    "inf", "int64", "int8", "intp", "isinf", "isnan", "issubdtype",
+    "ix_", "lexsort", "linspace",
+    "max", "maximum", "mean", "median", "meshgrid", "min", "moveaxis",
+    "nan", "newaxis", "nextafter", "number", "ones", "ones_like", "outer",
+    "pi", "power", "radians", "real",
+    "repeat", "sin", "sort", "sqrt", "sum", "swapaxes", "tile", "trace",
+    "unique", "vstack", "where", "zeros", "zeros_like", "ndarray", "generic",
+    "bool_", "integer", "floating",
+)
+_NUMPY_RUNTIME_LINALG_NAMES = (
+    "cholesky", "cond", "det", "eigh", "eigvalsh", "inv", "lstsq",
+    "norm", "pinv", "qr", "solve", "svd", "LinAlgError",
+)
+
+
+def _bind_exact_numpy_runtime_authority(
+    numpy_module: Any,
+    sys_module: Any,
+) -> tuple[Any, Any]:
+    """Capture the bounded NumPy operations used by qualified shell mechanics."""
+
+    root_names = _NUMPY_RUNTIME_ROOT_NAMES
+    linalg_names = _NUMPY_RUNTIME_LINALG_NAMES
+    linalg_module = numpy_module.linalg
+    numpy_name = str(numpy_module.__name__)
+    linalg_name = str(linalg_module.__name__)
+    sys_modules = sys_module.modules
+    root_bindings = tuple(
+        (name, vars(numpy_module)[name]) for name in root_names
+    )
+    linalg_bindings = tuple(
+        (name, vars(linalg_module)[name]) for name in linalg_names
+    )
+
+    def require_exact(*, context: str) -> None:
+        changed: list[str] = []
+        if sys_modules.get(numpy_name) is not numpy_module:
+            changed.append("numpy.__module__")
+        root_namespace = vars(numpy_module)
+        if root_namespace.get("__name__") != numpy_name:
+            changed.append("numpy.__name__")
+        if root_namespace.get("linalg") is not linalg_module:
+            changed.append("numpy.linalg")
+        changed.extend(
+            f"numpy.{name}"
+            for name, expected in root_bindings
+            if root_namespace.get(name) is not expected
+        )
+        if sys_modules.get(linalg_name) is not linalg_module:
+            changed.append("numpy.linalg.__module__")
+        linalg_namespace = vars(linalg_module)
+        if linalg_namespace.get("__name__") != linalg_name:
+            changed.append("numpy.linalg.__name__")
+        changed.extend(
+            f"numpy.linalg.{name}"
+            for name, expected in linalg_bindings
+            if linalg_namespace.get(name) is not expected
+        )
+        if changed:
+            raise ValueError(
+                f"{context} requires exact numerical runtime operations; changed "
+                + ", ".join(sorted(changed))
+            )
+
+    def require_module_identity(*, context: str) -> None:
+        """Check the unobservable ``sys.modules`` mapping every call."""
+
+        sys_namespace = vars(sys_module)
+        if (
+            sys_namespace.get("modules") is sys_modules
+            and sys_modules.get(numpy_name) is numpy_module
+            and sys_modules.get(linalg_name) is linalg_module
+        ):
+            return
+        changed: list[str] = []
+        if sys_namespace.get("modules") is not sys_modules:
+            changed.append("sys.modules")
+        if sys_modules.get(numpy_name) is not numpy_module:
+            changed.append("numpy.__module__")
+        if sys_modules.get(linalg_name) is not linalg_module:
+            changed.append("numpy.linalg.__module__")
+        if changed:
+            raise ValueError(
+                f"{context} requires exact numerical runtime modules; changed "
+                + ", ".join(sorted(changed))
+            )
+
+    manager = make_authority_epoch_manager(
+        "qualified NumPy runtime"
+    )
+    manager.watch_module(
+        numpy_module,
+        (*root_names, "__name__", "linalg"),
+    )
+    manager.watch_module(linalg_module, (*linalg_names, "__name__"))
+    epoch_guard = manager.bind_context(require_exact)
+
+    def require(*, context: str) -> None:
+        require_module_identity(context=context)
+        epoch_guard(context=context)
+
+    return require, require_module_identity
+
+
+(
+    require_exact_numpy_runtime_authority,
+    _require_exact_numpy_runtime_module_identity,
+) = _bind_exact_numpy_runtime_authority(np, sys)
+
+
+def _watch_exact_numpy_runtime_epoch(manager: Any) -> None:
+    """Subscribe one private manager to the frozen NumPy attribute surface."""
+
+    manager.watch_module(
+        np,
+        (*_NUMPY_RUNTIME_ROOT_NAMES, "__name__", "linalg"),
+    )
+    manager.watch_module(
+        np.linalg,
+        (*_NUMPY_RUNTIME_LINALG_NAMES, "__name__"),
+    )
+
+
+def _make_module_authority_signer(
+    numpy_module: Any,
+    mapping_proxy_type: type[Any],
+) -> Any:
+    """Capture signing dependencies so a guarded module cannot replace them."""
+
+    numpy_scalar_types = frozenset(
+        value
+        for value in numpy_module.sctypeDict.values()
+        if type(value) is type and issubclass(value, numpy_module.generic)
+    )
+
+    def signature(value: Any) -> tuple[Any, ...]:
+        """Return an immutable exact signature for frozen module authority data."""
+
+        if type(value) is numpy_module.ndarray:
+            array = numpy_module.asarray(value)
+            return (
+                "ndarray",
+                array.dtype.str,
+                tuple(int(size) for size in array.shape),
+                tuple(int(stride) for stride in array.strides),
+                bool(array.flags.c_contiguous),
+                bool(array.flags.writeable),
+                array.tobytes(order="A"),
+            )
+        if type(value) in numpy_scalar_types:
+            scalar = numpy_module.asarray(value)
+            return ("numpy_scalar", scalar.dtype.str, scalar.tobytes())
+        if type(value) in {dict, mapping_proxy_type}:
+            items = [
+                (signature(key), signature(item))
+                for key, item in value.items()
+            ]
+            items.sort(key=repr)
+            return (
+                "mapping",
+                type(value).__module__,
+                type(value).__qualname__,
+                tuple(items),
+            )
+        if type(value) in {tuple, list}:
+            return (
+                type(value).__name__,
+                tuple(signature(item) for item in value),
+            )
+        if type(value) in {set, frozenset}:
+            items = sorted((signature(item) for item in value), key=repr)
+            return (type(value).__name__, tuple(items))
+        if type(value) is bytes:
+            return ("bytes", value)
+        if value is None or type(value) in {bool, int, str}:
+            return (type(value).__name__, value)
+        if type(value) is float:
+            return (
+                "float",
+                numpy_module.asarray(
+                    value, dtype=numpy_module.float64
+                ).tobytes(),
+            )
+        return (
+            "identity",
+            type(value).__module__,
+            type(value).__qualname__,
+            id(value),
+        )
+
+    return signature
+
+
+_module_authority_signature = _make_module_authority_signer(
+    np, MappingProxyType
+)
+del _make_module_authority_signer
+
+
+def _require_immutable_authority_data(
+    value: Any,
+    *,
+    label: str,
+    _seen: set[int] | None = None,
+) -> None:
+    """Reject mutable leaves that an attribute epoch cannot observe."""
+
+    seen = set() if _seen is None else _seen
+    identity = id(value)
+    if identity in seen:
+        return
+    seen.add(identity)
+    if value is None or type(value) in {bool, int, float, str, bytes}:
+        return
+    if isinstance(value, np.generic):
+        return
+    if isinstance(value, re.Pattern):
+        return
+    if callable(value) or isinstance(
+        value,
+        (ModuleType, type, property, classmethod, staticmethod),
+    ):
+        return
+    if type(value) in {tuple, frozenset}:
+        for index, item in enumerate(value):
+            _require_immutable_authority_data(
+                item,
+                label=f"{label}[{index}]",
+                _seen=seen,
+            )
+        return
+    if type(value) is MappingProxyType:
+        for key, item in value.items():
+            _require_immutable_authority_data(
+                key,
+                label=f"{label}.key",
+                _seen=seen,
+            )
+            _require_immutable_authority_data(
+                item,
+                label=f"{label}[{key!r}]",
+                _seen=seen,
+            )
+        return
+    if type(value) is np.ndarray:
+        current: Any = value
+        while type(current) is np.ndarray:
+            if current.flags.writeable:
+                raise TypeError(f"{label} contains a writeable authority array")
+            current = current.base
+        if isinstance(current, memoryview):
+            if not current.readonly:
+                raise TypeError(
+                    f"{label} contains a writeable authority buffer"
+                )
+            return
+        if type(current) is bytes:
+            return
+        raise TypeError(
+            f"{label} authority array is not backed by immutable bytes"
+        )
+    raise TypeError(
+        f"{label} contains unsupported mutable authority data "
+        f"{type(value).__module__}.{type(value).__qualname__}"
+    )
+
+
+def _capture_authority_array_metadata(
+    *roots: Any,
+    _array_type: type[Any] = np.ndarray,
+    _mapping_proxy_type: type[Any] = MappingProxyType,
+) -> tuple[
+    tuple[Any, str, tuple[int, ...], tuple[int, ...], bool], ...
+]:
+    """Capture immutable ndarray identities and their mutable metadata."""
+
+    arrays: list[
+        tuple[Any, str, tuple[int, ...], tuple[int, ...], bool]
+    ] = []
+    seen: set[int] = set()
+
+    def visit(value: Any) -> None:
+        identity = id(value)
+        if identity in seen:
+            return
+        seen.add(identity)
+        if type(value) is _array_type:
+            arrays.append(
+                (
+                    value,
+                    value.dtype.str,
+                    tuple(int(size) for size in value.shape),
+                    tuple(int(stride) for stride in value.strides),
+                    bool(value.flags.c_contiguous),
+                )
+            )
+            return
+        if type(value) in {tuple, frozenset, list, set}:
+            for member in value:
+                visit(member)
+            return
+        if type(value) in {dict, _mapping_proxy_type}:
+            for key, member in value.items():
+                visit(key)
+                visit(member)
+
+    for root in roots:
+        visit(root)
+    return tuple(arrays)
+
+
+def _require_authority_array_metadata(
+    metadata: tuple[
+        tuple[Any, str, tuple[int, ...], tuple[int, ...], bool], ...
+    ],
+    *,
+    label: str,
+    _array_type: type[Any] = np.ndarray,
+    _memoryview_type: type[Any] = memoryview,
+) -> None:
+    """Reject in-place ndarray metadata/base changes on every boundary."""
+
+    try:
+        for array, dtype_string, shape, strides, c_contiguous in metadata:
+            if (
+                type(array) is not _array_type
+                or array.dtype.str != dtype_string
+                or array.shape != shape
+                or array.strides != strides
+                or bool(array.flags.c_contiguous) is not c_contiguous
+                or array.flags.writeable
+            ):
+                raise ValueError(f"{label} ndarray metadata changed")
+            current: Any = array
+            while type(current) is _array_type:
+                if current.flags.writeable:
+                    raise ValueError(f"{label} ndarray base is writeable")
+                current = current.base
+            if not (
+                type(current) is bytes
+                or isinstance(current, _memoryview_type) and current.readonly
+            ):
+                raise ValueError(f"{label} ndarray base changed")
+    except (AttributeError, TypeError, ValueError) as exc:
+        if isinstance(exc, ValueError) and str(exc).startswith(label):
+            raise
+        raise ValueError(f"{label} ndarray metadata changed") from exc
 
 
 FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
@@ -332,7 +703,24 @@ LOBATTO_NORMALIZED_TABLES = (
     ),
 )
 
-STATE_FIELD_MANIFEST = {
+def _freeze_authority_tree(value: Any) -> Any:
+    """Recursively freeze exact scientific mappings at module construction."""
+
+    if type(value) is dict:
+        return MappingProxyType(
+            {
+                key: _freeze_authority_tree(member)
+                for key, member in value.items()
+            }
+        )
+    if type(value) is tuple:
+        return tuple(_freeze_authority_tree(member) for member in value)
+    if type(value) is frozenset:
+        return frozenset(_freeze_authority_tree(member) for member in value)
+    return value
+
+
+STATE_FIELD_MANIFEST = _freeze_authority_tree({
     "reference_corner_directors": {
         "role": "immutable_element_owned_reference_with_strict_polarity",
         "component_frame": "global",
@@ -483,13 +871,13 @@ STATE_FIELD_MANIFEST = {
         "component_order": ("sorted_string_keys",),
         "point_order": "not_applicable",
     },
-}
+})
 
 # This manifest intentionally has no layer, ply-stress, plastic-strain, or
 # alpha entries.  The four public shell initial fields are authoritative
 # station inputs, while their analytically integrated generalized offsets are
 # redundant and strictly validated.  No manufacturing layers are reconstructed.
-GENERALIZED_STATE_FIELD_MANIFEST = {
+GENERALIZED_STATE_FIELD_MANIFEST = _freeze_authority_tree({
     "reference_corner_directors": STATE_FIELD_MANIFEST[
         "reference_corner_directors"
     ],
@@ -550,9 +938,9 @@ GENERALIZED_STATE_FIELD_MANIFEST = {
         "component_order": GENERALIZED_RESULTANT_COMPONENT_ORDER,
         "point_order": "ordered_surface_stations",
     },
-}
+})
 
-_ROOT_MATERIAL_FIELDS = {
+_ROOT_MATERIAL_FIELDS = _freeze_authority_tree({
     "anymaterial.isotropic.IsotropicMaterial": frozenset(
         {
             "name",
@@ -580,12 +968,12 @@ _ROOT_MATERIAL_FIELDS = {
             "hardening_curve",
         }
     ),
-}
-_MATERIAL_SYMMETRY_BY_TYPE = {
+})
+_MATERIAL_SYMMETRY_BY_TYPE = _freeze_authority_tree({
     "anymaterial.isotropic.IsotropicMaterial": "isotropic",
     "anymaterial.orthotropic.OrthotropicMaterial": "orthotropic",
-}
-_HARDENING_CURVE_FIELDS = {
+})
+_HARDENING_CURVE_FIELDS = _freeze_authority_tree({
     "anymaterial.curves.LinearHardeningCurve": frozenset(
         {"sigma_yield", "hardening_modulus_value"}
     ),
@@ -596,7 +984,7 @@ _HARDENING_CURVE_FIELDS = {
     "anymaterial.curves.DNVC208MaterialCurve": frozenset(
         {"sigma_prop", "sigma_yield", "sigma_yield_2", "eps_p_y1", "eps_p_y2", "K", "n"}
     ),
-}
+})
 _HILL48_TYPE_ID = "anymaterial.yield_criteria.Hill48Yield"
 _HILL48_FIELDS = frozenset({"X", "Y", "Z", "S12", "S13", "S23"})
 
@@ -622,7 +1010,7 @@ _IDENTITY_KEYS = frozenset(
         "equivalent_stress_measure",
     }
 )
-_ARRAY_SHAPES_FIXED = {
+_ARRAY_SHAPES_FIXED = _freeze_authority_tree({
     "reference_corner_directors": (3, 3),
     "committed_total_u": (18,),
     "committed_nodal_rotation_matrices": (3, 3, 3),
@@ -635,7 +1023,7 @@ _ARRAY_SHAPES_FIXED = {
     "station_generalized_strain": (NUM_INTEGRATION_STATIONS, GENERALIZED_COMPONENTS),
     "station_generalized_resultant": (NUM_INTEGRATION_STATIONS, GENERALIZED_COMPONENTS),
     **{name: (NUM_INTEGRATION_STATIONS, 3) for name in INITIAL_FIELD_NAMES},
-}
+})
 _LAYER_VECTOR_FIELDS = (
     "plastic_strain",
     "layer_strain",
@@ -737,7 +1125,7 @@ _GENERALIZED_IDENTITY_KEYS = frozenset(
         "state_mode",
     }
 )
-_GENERALIZED_ARRAY_SHAPES = {
+_GENERALIZED_ARRAY_SHAPES = _freeze_authority_tree({
     "reference_corner_directors": (3, 3),
     "committed_total_u": (18,),
     "committed_nodal_rotation_matrices": (3, 3, 3),
@@ -764,7 +1152,7 @@ _GENERALIZED_ARRAY_SHAPES = {
         GENERALIZED_COMPONENTS,
     ),
     **{name: (NUM_INTEGRATION_STATIONS, 3) for name in INITIAL_FIELD_NAMES},
-}
+})
 _GENERALIZED_STATE_KEYS = frozenset(
     {
         "state_schema",
@@ -886,6 +1274,62 @@ def canonical_json_bytes(value: Any) -> bytes:
         allow_nan=False,
     )
     return (text + "\n").encode("utf-8")
+
+
+def canonical_plain_data(value: Any) -> Any:
+    """Materialize one owned built-in JSON tree under the canonical rules.
+
+    Consumers must evaluate mechanics from this snapshot rather than retain a
+    caller-controlled ``Mapping`` whose ``items`` and ``get`` views can
+    disagree or change after evidence hashing.
+    """
+
+    return _canonical_value(value)
+
+
+def owned_plain_snapshot(value: Any, *, path: str = "$") -> Any:
+    """Detach a caller-owned tree without changing any scalar or array bits.
+
+    Unlike canonical evidence normalization, committed mechanics identities
+    may bind signed zero and other exact binary64 payloads.  This snapshot
+    consumes each mapping/sequence once, rejects duplicate keys, and copies
+    arrays into immutable byte-backed storage while preserving dtype, shape,
+    and bytes exactly.  Call :func:`canonical_json_bytes` separately to apply
+    the canonical schema/nonfinite checks.
+    """
+
+    if isinstance(value, np.ndarray):
+        made = np.ascontiguousarray(np.asarray(value))
+        return np.frombuffer(
+            made.tobytes(order="C"), dtype=made.dtype
+        ).reshape(made.shape)
+    if isinstance(value, np.generic):
+        return value.item()
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, Mapping):
+        result: dict[str, Any] = {}
+        for key, member in value.items():
+            if not isinstance(key, str):
+                raise S3CommittedStateError(
+                    f"non-string snapshot key at {path}"
+                )
+            if key in result:
+                raise S3CommittedStateError(
+                    f"duplicate snapshot key {key!r} at {path}"
+                )
+            result[key] = owned_plain_snapshot(member, path=f"{path}.{key}")
+        return result
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return [
+            owned_plain_snapshot(member, path=f"{path}[{index}]")
+            for index, member in enumerate(value)
+        ]
+    raise S3CommittedStateError(
+        f"unsupported snapshot value {type(value).__name__} at {path}"
+    )
 
 
 def canonical_sha256(value: Any) -> str:
@@ -1054,20 +1498,40 @@ def _closed_keys(value: Mapping[str, Any], expected: frozenset[str], label: str)
         )
 
 
-def _qualified_dataclass_descriptor(value: Any, *, path: str) -> Any:
+def _qualified_dataclass_descriptor(
+    value: Any,
+    *,
+    path: str,
+    _post_observation: Optional[Callable[[], None]] = None,
+) -> Any:
     """Return an exact structural descriptor without object stringification."""
 
     if value is None or isinstance(value, (str, bool, int, float, np.generic)):
-        return _canonical_value(value, path=path)
+        made = _canonical_value(value, path=path)
+        if _post_observation is not None:
+            _post_observation()
+        return made
     if isinstance(value, np.ndarray):
-        return _canonical_value(value, path=path)
+        made = _canonical_value(value, path=path)
+        if _post_observation is not None:
+            _post_observation()
+        return made
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        observed = tuple(value)
+        if _post_observation is not None:
+            _post_observation()
         return [
-            _qualified_dataclass_descriptor(member, path=f"{path}[{index}]")
-            for index, member in enumerate(value)
+            _qualified_dataclass_descriptor(
+                member,
+                path=f"{path}[{index}]",
+                _post_observation=_post_observation,
+            )
+            for index, member in enumerate(observed)
         ]
     if isinstance(value, Mapping):
         canonical = _canonical_value(value, path=path)
+        if _post_observation is not None:
+            _post_observation()
         assert isinstance(canonical, dict)
         return canonical
     if not is_dataclass(value) or isinstance(value, type):
@@ -1075,13 +1539,21 @@ def _qualified_dataclass_descriptor(value: Any, *, path: str) -> Any:
             f"unsupported state-bearing object {type(value).__module__}."
             f"{type(value).__qualname__} at {path}"
         )
-    type_id = f"{type(value).__module__}.{type(value).__qualname__}"
-    members = {
-        field.name: _qualified_dataclass_descriptor(
-            getattr(value, field.name), path=f"{path}.{field.name}"
+    fields = tuple(dataclass_fields(value))
+    if _post_observation is not None:
+        _post_observation()
+    value_type = type(value)
+    type_id = f"{value_type.__module__}.{value_type.__qualname__}"
+    members: dict[str, Any] = {}
+    for field in fields:
+        observed = getattr(value, field.name)
+        if _post_observation is not None:
+            _post_observation()
+        members[field.name] = _qualified_dataclass_descriptor(
+            observed,
+            path=f"{path}.{field.name}",
+            _post_observation=_post_observation,
         )
-        for field in dataclass_fields(value)
-    }
     return {"type_id": type_id, "fields": members}
 
 
@@ -1141,6 +1613,116 @@ def _validate_resolved_material_tree(value: Any) -> tuple[dict[str, Any], str, s
     return root, symmetry, measure
 
 
+def _owned_registered_hardening_curve(value: Any) -> Any:
+    """Rebuild one registered hardening law from canonical owned fields."""
+
+    if value is None:
+        return None
+    if type(value) is not dict:
+        raise S3CommittedStateError(
+            "hardening_curve must be a canonical registered descriptor"
+        )
+    type_id = value["type_id"]
+    fields_value = value["fields"]
+    if type(fields_value) is not dict:
+        raise S3CommittedStateError("hardening_curve fields must be canonical")
+    if type_id == "anymaterial.curves.LinearHardeningCurve":
+        return LinearHardeningCurve(
+            sigma_yield=float(fields_value["sigma_yield"]),
+            hardening_modulus_value=float(
+                fields_value["hardening_modulus_value"]
+            ),
+        )
+    if type_id == "anymaterial.curves.PiecewiseLinearCurve":
+        return PiecewiseLinearCurve(
+            plastic_strain=tuple(
+                float(member) for member in fields_value["plastic_strain"]
+            ),
+            flow_stress_values=tuple(
+                float(member) for member in fields_value["flow_stress_values"]
+            ),
+        )
+    if type_id == "anymaterial.curves.PowerLawHardeningCurve":
+        return PowerLawHardeningCurve(
+            K=float(fields_value["K"]),
+            n=float(fields_value["n"]),
+            eps_0=float(fields_value["eps_0"]),
+        )
+    if type_id == "anymaterial.curves.DNVC208MaterialCurve":
+        return DNVC208MaterialCurve(
+            sigma_prop=float(fields_value["sigma_prop"]),
+            sigma_yield=float(fields_value["sigma_yield"]),
+            sigma_yield_2=float(fields_value["sigma_yield_2"]),
+            eps_p_y1=float(fields_value["eps_p_y1"]),
+            eps_p_y2=float(fields_value["eps_p_y2"]),
+            K=float(fields_value["K"]),
+            n=float(fields_value["n"]),
+        )
+    raise S3CommittedStateError("unsupported hardening_curve type_id")
+
+
+def _owned_registered_hill_yield(value: Any) -> Any:
+    """Rebuild the optional Hill-48 authority from canonical owned fields."""
+
+    if value is None:
+        return None
+    if type(value) is not dict or type(value.get("fields")) is not dict:
+        raise S3CommittedStateError(
+            "hill_yield must be a canonical registered descriptor"
+        )
+    if value.get("type_id") != _HILL48_TYPE_ID:
+        raise S3CommittedStateError("unsupported hill_yield type_id")
+    fields_value = value["fields"]
+    return Hill48Yield(
+        X=float(fields_value["X"]),
+        Y=float(fields_value["Y"]),
+        Z=float(fields_value["Z"]),
+        S12=float(fields_value["S12"]),
+        S13=float(fields_value["S13"]),
+        S23=float(fields_value["S23"]),
+    )
+
+
+def _owned_material_from_resolved_descriptor(value: Any) -> StructuralMaterial:
+    """Rebuild a solver-owned registered material from its closed descriptor."""
+
+    resolved, _symmetry, _measure = _validate_resolved_material_tree(
+        copy.deepcopy(value)
+    )
+    type_id = resolved["type_id"]
+    fields_value = resolved["fields"]
+    assert type(fields_value) is dict
+    hardening_curve = _owned_registered_hardening_curve(
+        fields_value["hardening_curve"]
+    )
+    if type_id == "anymaterial.isotropic.IsotropicMaterial":
+        return IsotropicMaterial(
+            name=str(fields_value["name"]),
+            elastic_modulus=float(fields_value["elastic_modulus"]),
+            poisson_ratio=float(fields_value["poisson_ratio"]),
+            density=float(fields_value["density"]),
+            yield_stress=float(fields_value["yield_stress"]),
+            hardening_curve=hardening_curve,
+        )
+    if type_id == "anymaterial.orthotropic.OrthotropicMaterial":
+        return OrthotropicMaterial(
+            name=str(fields_value["name"]),
+            elastic_modulus_1=float(fields_value["elastic_modulus_1"]),
+            elastic_modulus_2=float(fields_value["elastic_modulus_2"]),
+            elastic_modulus_3=float(fields_value["elastic_modulus_3"]),
+            poisson_ratio_12=float(fields_value["poisson_ratio_12"]),
+            poisson_ratio_13=float(fields_value["poisson_ratio_13"]),
+            poisson_ratio_23=float(fields_value["poisson_ratio_23"]),
+            shear_modulus_12=float(fields_value["shear_modulus_12"]),
+            shear_modulus_13=float(fields_value["shear_modulus_13"]),
+            shear_modulus_23=float(fields_value["shear_modulus_23"]),
+            density=float(fields_value["density"]),
+            hill_yield=_owned_registered_hill_yield(fields_value["hill_yield"]),
+            hardening_curve=hardening_curve,
+        )
+    raise S3CommittedStateError("unsupported resolved material type_id")
+
+
 def _validated_compliance(value: Any) -> np.ndarray:
     matrix = _finite_array(
         value,
@@ -1197,7 +1779,11 @@ def _compliance_from_registered_fields(resolved: Mapping[str, Any]) -> np.ndarra
     return _validated_compliance(matrix)
 
 
-def resolved_material_descriptor(material: Any) -> dict[str, Any]:
+def resolved_material_descriptor(
+    material: Any,
+    *,
+    _post_observation: Optional[Callable[[], None]] = None,
+) -> dict[str, Any]:
     """Describe every dataclass field of one supported material exactly."""
 
     if (
@@ -1209,14 +1795,27 @@ def resolved_material_descriptor(material: Any) -> dict[str, Any]:
             "qualified S3 layered state requires a registered dataclass "
             "StructuralMaterial"
         )
-    descriptor = _qualified_dataclass_descriptor(material, path="$.material")
+    descriptor = _qualified_dataclass_descriptor(
+        material,
+        path="$.material",
+        _post_observation=_post_observation,
+    )
     assert isinstance(descriptor, dict)
     descriptor, registered_symmetry, measure = _validate_resolved_material_tree(
         descriptor
     )
     try:
         actual_symmetry = material_symmetry(material)
-        compliance = _validated_compliance(elastic_compliance_matrix(material))
+        if _post_observation is not None:
+            _post_observation()
+        owned_material = _owned_material_from_resolved_descriptor(descriptor)
+        if _post_observation is not None:
+            _post_observation()
+        compliance = _validated_compliance(
+            elastic_compliance_matrix(owned_material)
+        )
+        if _post_observation is not None:
+            _post_observation()
     except (TypeError, ValueError, FloatingPointError, np.linalg.LinAlgError) as exc:
         raise S3CommittedStateError(
             "qualified S3 material does not provide valid structural compliance"
@@ -3904,6 +4503,25 @@ def validate_committed_s3_state(
     return normalized
 
 
+def _publish_s3_state_public_signatures() -> None:
+    """Keep private observation hooks outside the stable public API."""
+
+    from inspect import signature
+
+    public = signature(resolved_material_descriptor)
+    resolved_material_descriptor.__signature__ = public.replace(
+        parameters=tuple(
+            parameter
+            for parameter in public.parameters.values()
+            if parameter.name != "_post_observation"
+        )
+    )
+
+
+_publish_s3_state_public_signatures()
+del _publish_s3_state_public_signatures
+
+
 __all__ = [
     "BUBBLE_CONVENTION",
     "BUBBLE_CONDITION_LIMIT",
@@ -4015,6 +4633,7 @@ __all__ = [
     "build_generalized_state_identity",
     "build_state_identity",
     "canonical_json_bytes",
+    "canonical_plain_data",
     "canonical_sha256",
     "element_configuration_fingerprint",
     "formulation_fingerprint",
@@ -4032,6 +4651,7 @@ __all__ = [
     "lobatto_table_fingerprint",
     "material_fingerprint",
     "node_order_fingerprint",
+    "owned_plain_snapshot",
     "reference_frame_fingerprint",
     "reference_corner_directors_fingerprint",
     "reference_geometry_fingerprint",

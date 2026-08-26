@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 from fractions import Fraction
 from pathlib import Path
@@ -8,6 +9,7 @@ import sys
 import numpy as np
 import pytest
 
+import anysolver.e4_pl_element as q4_element_module
 from anysolver.e4_pl_element import FORMULATION_ID, QualifiedE4PLShellElement, equation7_frame
 from anysolver.elements import ShellElement, create_element
 from anysolver.fe_core import FEMesh, Material
@@ -282,6 +284,288 @@ def test_element_is_serializable_default_and_has_explicit_legacy_rollback() -> N
         QualifiedE4PLShellElement(1, [1, 2, 3], "q1")
 
 
+def test_qualified_q4_connectivity_and_current_serialization_are_exact() -> None:
+    with pytest.raises(TypeError, match="exact non-boolean integers"):
+        QualifiedE4PLShellElement(1, [1.9, 2, 3, 4], "q1")
+    element = QualifiedE4PLShellElement(1, [1, 2, 3, 4], "q1")
+    with pytest.raises(TypeError, match="exact non-boolean integers"):
+        element.node_ids = (1, 2, 3, True)
+    for name, value in (
+        ("material_direction", (True, 0.0, 0.0)),
+        ("reference_normal", (0.0, 0.0, 0.0)),
+        ("hourglass_stabilization", -1.0),
+        ("pl_stabilization", -1.0),
+        ("planar_tolerance", -1.0),
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            setattr(element, name, value)
+    for value in (True, "0.02"):
+        with pytest.raises(TypeError):
+            QualifiedE4PLShellElement(1, [1, 2, 3, 4], "q1", thickness=value)
+    for keyword in (
+        "drilling_stabilization",
+        "hourglass_stabilization",
+        "material_angle_deg",
+        "pl_stabilization",
+        "planar_tolerance",
+    ):
+        with pytest.raises(TypeError):
+            QualifiedE4PLShellElement(
+                1,
+                [1, 2, 3, 4],
+                "q1",
+                **{keyword: True},
+            )
+    with pytest.raises(TypeError, match="legacy_warped_fallback"):
+        QualifiedE4PLShellElement(
+            1,
+            [1, 2, 3, 4],
+            "q1",
+            legacy_warped_fallback="false",
+        )
+
+    payload = json.loads(json.dumps(element.to_dict()))
+    malformed = (
+        dict(payload, element_id=1.9),
+        dict(payload, node_ids=[1.0, 2, 3, 4]),
+        dict(payload, material_name=123),
+        dict(payload, thickness=True),
+        dict(payload, thickness="0.01"),
+        dict(payload, thickness=-0.01),
+        dict(payload, reduced_integration="false"),
+        dict(payload, director_polarity=True),
+        dict(payload, director_polarity=1.9),
+        dict(payload, warped_formulation="REJECT"),
+        dict(payload, formulation_schema="foreign-family-marker"),
+        dict(payload, legacy_warped_fallback=True),
+    )
+    for record in malformed:
+        with pytest.raises(ValueError):
+            QualifiedE4PLShellElement.from_dict(record)
+
+    for key in (
+        "material_name",
+        "thickness",
+        "drilling_stabilization",
+        "reduced_integration",
+        "hourglass_stabilization",
+        "material_direction",
+        "material_angle_deg",
+        "pl_stabilization",
+        "planar_tolerance",
+        "warped_formulation",
+    ):
+        incomplete = dict(payload)
+        incomplete.pop(key)
+        with pytest.raises(ValueError, match="keys are incompatible"):
+            QualifiedE4PLShellElement.from_dict(incomplete)
+
+    with pytest.raises(ValueError, match="requires reference_normal"):
+        element.director_polarity = -1
+    element.reference_normal = (0.0, 0.0, 1.0)
+    element.director_polarity = -1
+    with pytest.raises(ValueError, match="requires reference_normal"):
+        element.reference_normal = None
+    directed_payload = json.loads(json.dumps(element.to_dict()))
+    with pytest.raises(ValueError, match="noncanonical types"):
+        QualifiedE4PLShellElement.from_dict(
+            dict(directed_payload, reference_normal=[0.0, 0.0, 2.0])
+        )
+    with pytest.raises(ValueError, match="formulation_id"):
+        QualifiedE4PLShellElement.from_dict(
+            dict(
+                directed_payload,
+                formulation_id=q4_element_module._PLANAR_FORMULATION_ID,
+            )
+        )
+
+    pre_policy = dict(payload)
+    for key in (
+        "implementation_id",
+        "recovery_policy_id",
+        "stationary_solve_policy_id",
+        "director_polarity_policy_id",
+        "director_reversal_transform_id",
+        "current_state_binding_schema_id",
+        "current_state_algorithmic_origin_schema_id",
+        "current_state_tangent_decomposition_policy_id",
+        "current_state_projection_policy_id",
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
+        "reference_normal",
+        "director_polarity",
+    ):
+        pre_policy.pop(key)
+    for changed in (
+        dict(pre_policy, thickness="0.01"),
+        dict(pre_policy, element_id=1.9),
+        dict(pre_policy, reduced_integration="false"),
+        dict(pre_policy, formulation_schema="foreign-family-marker"),
+    ):
+        with pytest.raises(ValueError):
+            QualifiedE4PLShellElement.from_dict(changed)
+    missing_pre_policy = dict(pre_policy)
+    missing_pre_policy.pop("pl_stabilization")
+    with pytest.raises(ValueError, match="keys are incompatible"):
+        QualifiedE4PLShellElement.from_dict(missing_pre_policy)
+
+
+def test_q4_deserialization_and_vector_callbacks_recheck_runtime_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = QualifiedE4PLShellElement(
+        1, [1, 2, 3, 4], "q1"
+    ).to_dict()
+    original_asarray = np.asarray
+    reached: list[str] = []
+
+    def changed_asarray(*args: object, **kwargs: object) -> np.ndarray:
+        reached.append("asarray")
+        return original_asarray(*args, **kwargs)
+
+    class MutatingMapping(Mapping[str, object]):
+        def __iter__(self):
+            monkeypatch.setattr(np, "asarray", changed_asarray)
+            return iter(payload)
+
+        def __len__(self) -> int:
+            return len(payload)
+
+        def __getitem__(self, key: str) -> object:
+            return payload[key]
+
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        QualifiedE4PLShellElement.from_dict(MutatingMapping())
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    original_all = np.all
+
+    def changed_all(*args: object, **kwargs: object) -> object:
+        reached.append("all")
+        return original_all(*args, **kwargs)
+
+    class MutatingVector:
+        def __array__(self, dtype=None, copy=None):
+            monkeypatch.setattr(np, "all", changed_all)
+            return original_asarray((0.0, 0.0, 1.0), dtype=dtype)
+
+    with pytest.raises(ValueError, match="numpy.all"):
+        QualifiedE4PLShellElement(
+            1,
+            [1, 2, 3, 4],
+            "q1",
+            reference_normal=MutatingVector(),
+        )
+    assert reached == []
+
+
+def test_q4_direct_mechanics_rejects_changed_formulation_helper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    element = QualifiedE4PLShellElement(1, [1, 2, 3, 4], "q1")
+    reached: list[str] = []
+
+    def changed_stationary(*_args: object, **_kwargs: object) -> object:
+        reached.append("stationary")
+        raise AssertionError("changed stationary helper reached mechanics")
+
+    monkeypatch.setattr(
+        q4_element_module,
+        "_stationary_blocks",
+        changed_stationary,
+    )
+    with pytest.raises(ValueError, match="_stationary_blocks"):
+        element.compute_stiffness_matrix(
+            _mesh(
+                [
+                    [0.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 1.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                ]
+            ),
+            _material(),
+        )
+    assert reached == []
+
+
+def test_q4_direct_callbacks_recheck_authority_before_cached_force_or_mechanics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mesh = _mesh(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ]
+    )
+    element = QualifiedE4PLShellElement(1, [1, 2, 3, 4], "q1")
+    material = _material()
+    element.compute_stiffness_matrix(mesh, material)
+    original_asarray = np.asarray
+    reached: list[str] = []
+
+    def changed_asarray(*args: object, **kwargs: object) -> np.ndarray:
+        reached.append("asarray")
+        return original_asarray(*args, **kwargs)
+
+    class MutatingDisplacement:
+        def __array__(self, dtype=None, copy=None):
+            monkeypatch.setattr(np, "asarray", changed_asarray)
+            return original_asarray(np.zeros(24), dtype=dtype)
+
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.numerical_internal_force(MutatingDisplacement())
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.compute_stresses(mesh, MutatingDisplacement(), material)
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.compute_nonlinear_response(
+            mesh,
+            material,
+            MutatingDisplacement(),
+        )
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.compute_committed_current_tangent_components(
+            mesh,
+            material,
+            MutatingDisplacement(),
+            {},
+        )
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    original_get_node = mesh.get_node
+
+    def changed_stationary(*_args: object, **_kwargs: object) -> object:
+        reached.append("stationary")
+        raise AssertionError("changed stationary helper reached mechanics")
+
+    def mutating_get_node(node_id: int):
+        monkeypatch.setattr(
+            q4_element_module,
+            "_stationary_blocks",
+            changed_stationary,
+        )
+        return original_get_node(node_id)
+
+    monkeypatch.setattr(mesh, "get_node", mutating_get_node)
+    with pytest.raises(ValueError, match="_stationary_blocks"):
+        element.compute_stiffness_matrix(mesh, material)
+    assert reached == []
+
 def test_geometry_and_material_revision_clear_all_candidate_caches() -> None:
     nodes = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     mesh = _mesh(nodes)
@@ -298,23 +582,24 @@ def test_geometry_and_material_revision_clear_all_candidate_caches() -> None:
     assert element._qualified_cache_key is None
 
 
-def test_warm_stiffness_reuses_components_until_authoritative_revision(monkeypatch) -> None:
+def test_warm_stiffness_reuses_components_until_authoritative_revision() -> None:
     nodes = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     mesh = _mesh(nodes)
     material = _material()
     element = QualifiedE4PLShellElement(1, [1, 2, 3, 4], "q1")
     mesh.add_element(1, element)
     first = element.compute_stiffness_matrix(mesh, material)
-
-    def _unexpected_recompute(*_args, **_kwargs):
-        raise AssertionError("warm E4-PL stiffness unexpectedly recomputed source fields")
-
-    monkeypatch.setattr("anysolver.e4_pl_element._source_fields", _unexpected_recompute)
+    first_components = element._qualified_components
     second = element.compute_stiffness_matrix(mesh, material)
-    assert second is first
+    assert second is not first
+    assert first.flags.writeable is False
+    assert second.flags.writeable is False
+    np.testing.assert_array_equal(second, first)
+    assert element._qualified_components is first_components
     mesh.bump_revision("material")
-    with pytest.raises(AssertionError, match="unexpectedly recomputed"):
-        element.compute_stiffness_matrix(mesh, material)
+    third = element.compute_stiffness_matrix(mesh, material)
+    assert third is not first
+    assert element._qualified_components is not first_components
 
 
 def test_orthotropic_elastic_and_plastic_state_paths_keep_qualified_tangent() -> None:

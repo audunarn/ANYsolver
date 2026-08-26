@@ -208,7 +208,10 @@ def test_generalized_zero_response_has_distinct_state_and_no_layer_fabrication()
         "PARITY_REPLACED"
     )
     assert element.capability_matrix()["mixed_current_state_buckling"] == (
-        "PARITY_GAP"
+        "PARITY_REPLACED"
+    )
+    assert element.capability_matrix()["mixed_current_state_modal"] == (
+        "PARITY_REPLACED"
     )
 
     repeated_force, no_tangent, repeated_state, _repeated_view = _response(

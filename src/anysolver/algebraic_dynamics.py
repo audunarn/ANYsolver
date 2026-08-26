@@ -16,6 +16,7 @@ asked to treat singular ``M`` as a positive-definite generalized metric.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import inspect
 import heapq
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
@@ -389,7 +390,9 @@ def declared_algebraic_mass_elements(model: "FEModel") -> Tuple[int, ...]:
     declared = []
     for element_id, element in sorted(model.mesh.elements.items()):
         try:
-            raw = getattr(element, "dynamic_algebraic_nullity", 0)
+            raw = inspect.getattr_static(
+                element, "dynamic_algebraic_nullity", 0
+            )
             value = int(raw)
         except Exception as error:
             raise AlgebraicDynamicsError(
@@ -429,7 +432,9 @@ def _local_declarations(
     by_node: dict[int, list[np.ndarray]] = {}
     for element_id in declared_ids:
         element = model.mesh.elements[element_id]
-        expected = int(getattr(element, "dynamic_algebraic_nullity", 0))
+        expected = int(
+            inspect.getattr_static(element, "dynamic_algebraic_nullity", 0)
+        )
         getter = getattr(element, "dynamic_algebraic_directions", None)
         if getter is None:
             raise AlgebraicDynamicsError(
@@ -467,10 +472,14 @@ def _local_declarations(
                 f"element {element_id} descriptor dynamics require positive "
                 "areal mass and rotary inertia"
             )
-        witness = str(getattr(element, "dynamic_algebraic_mass_witness", ""))
+        witness = str(
+            inspect.getattr_static(
+                element, "dynamic_algebraic_mass_witness", ""
+            )
+        )
         zero_indices = tuple(
             int(value)
-            for value in getattr(
+            for value in inspect.getattr_static(
                 element, "dynamic_algebraic_local_zero_indices", ()
             )
         )
@@ -529,11 +538,17 @@ def _local_declarations(
         records.append(
             {
                 "element_id": int(element_id),
-                "formulation_id": str(getattr(element, "formulation_id", "")),
+                "formulation_id": str(
+                    inspect.getattr_static(element, "formulation_id", "")
+                ),
                 "declared_nullity": expected,
                 "mass_rank": full_rank,
                 "null_residual": residual,
-                "policy": str(getattr(element, "dynamic_algebraic_policy", "")),
+                "policy": str(
+                    inspect.getattr_static(
+                        element, "dynamic_algebraic_policy", ""
+                    )
+                ),
             }
         )
     return records, by_node

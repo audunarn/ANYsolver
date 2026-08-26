@@ -33,6 +33,8 @@ _ELEMENT_LOCAL_CACHE_NAMES = (
     "_mass_matrix",
     "_internal_forces",
     "_nl_cache",
+    "_nl_cache_key",
+    "_qualified_component_guard",
     "_hourglass_stiffness_matrix",
     "_qualified_components",
     "_qualified_cache_key",
@@ -44,7 +46,11 @@ def _clear_element_local_caches(element: "Element") -> None:
 
     for name in _ELEMENT_LOCAL_CACHE_NAMES:
         if hasattr(element, name):
-            setattr(element, name, None)
+            # Derived caches are solver-owned.  Qualified element classes
+            # reject ordinary post-construction writes to these names so an
+            # external caller cannot inject stale mechanics; lifecycle
+            # invalidation therefore uses the explicit internal boundary.
+            object.__setattr__(element, name, None)
 
 
 def _freeze_qualified_element_vector_inputs(element: "Element") -> None:
@@ -61,6 +67,61 @@ def _freeze_qualified_element_vector_inputs(element: "Element") -> None:
             made.shape
         )
         object.__setattr__(element, name, frozen)
+
+
+class _QualifiedMutationEpoch(list[int]):
+    """One-cell monotonic epoch with the legacy list read interface.
+
+    Existing hot paths read ``token[0]`` and compare token identity.  A plain
+    list also allowed callers to rewind that value and make stale warm plans
+    appear current.  This private list subtype preserves those reads while
+    accepting only the single legitimate transition ``current -> current+1``.
+    Direct calls to ``list.__setitem__`` are interpreter-level bypasses and
+    remain outside the supported mutation surface.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, value: int = 0) -> None:
+        if type(value) is not int or value < 0:
+            raise ValueError("qualified mutation epoch must be nonnegative")
+        list.__init__(self, [value])
+
+    def __setitem__(self, index: Any, value: Any) -> None:
+        if (
+            type(index) is not int
+            or index not in {0, -1}
+            or type(value) is not int
+            or value != list.__getitem__(self, 0) + 1
+        ):
+            raise ValueError(
+                "qualified mutation epoch can only advance by one"
+            )
+        list.__setitem__(self, 0, value)
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "_QualifiedMutationEpoch":
+        made = type(self)(list.__getitem__(self, 0))
+        memo[id(self)] = made
+        return made
+
+    def __reduce_ex__(self, protocol: int) -> Tuple[Any, Tuple[int]]:
+        del protocol
+        return type(self), (list.__getitem__(self, 0),)
+
+    def _reject_resize(self, *_args: Any, **_kwargs: Any) -> None:
+        raise TypeError("qualified mutation epoch has fixed length")
+
+    __delitem__ = _reject_resize
+    __iadd__ = _reject_resize
+    __imul__ = _reject_resize
+    append = _reject_resize
+    clear = _reject_resize
+    extend = _reject_resize
+    insert = _reject_resize
+    pop = _reject_resize
+    remove = _reject_resize
+    reverse = _reject_resize
+    sort = _reject_resize
 
 
 def _bind_qualified_direct_state_token(value: Any, token: list[int]) -> None:
@@ -87,7 +148,9 @@ class _QualifiedStateMapping(dict):
         kind: str = "detached",
     ) -> None:
         dict.__init__(self)
-        self._qualified_token = [0] if token is None else token
+        self._qualified_token = (
+            _QualifiedMutationEpoch() if token is None else token
+        )
         self._qualified_kind = str(kind)
         entries = values.items() if isinstance(values, Mapping) else values
         for key, value in entries:
@@ -319,8 +382,24 @@ class FEMesh:
         "result_state": 0,
     })
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Keep wholesale public state-mapping replacements observable."""
+
+        token = self.__dict__.get("_qualified_direct_state_token")
+        kind = {"nodes": "node", "elements": "element"}.get(name)
+        if token is not None and kind is not None:
+            already_tracked = (
+                isinstance(value, _QualifiedStateMapping)
+                and value._qualified_token is token
+                and value._qualified_kind == kind
+            )
+            if not already_tracked:
+                value = _QualifiedStateMapping(dict(value), token, kind)
+                token[0] = int(token[0]) + 1
+        super().__setattr__(name, value)
+
     def __post_init__(self) -> None:
-        token = [0]
+        token = _QualifiedMutationEpoch()
         object.__setattr__(self, "_qualified_direct_state_token", token)
         _ensure_qualified_state_mappings(self)
 
@@ -358,7 +437,11 @@ class FEMesh:
     def __setstate__(self, state: Mapping[str, Any]) -> None:
         self.__dict__.update(state)
         if "_qualified_direct_state_token" not in self.__dict__:
-            object.__setattr__(self, "_qualified_direct_state_token", [0])
+            object.__setattr__(
+                self,
+                "_qualified_direct_state_token",
+                _QualifiedMutationEpoch(),
+            )
         _ensure_qualified_state_mappings(self)
 
     def _advance_revision(self, category: str) -> None:

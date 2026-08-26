@@ -15,6 +15,8 @@ from .element_capabilities import require_model_element_capabilities
 from .jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED, numba_thread_scope
 from .recovery_batches import (
     RecoveryPlanItem,
+    _get_recovery_batch_plan_under_lease,
+    _run_with_qualified_recovery_runtime_lease,
     build_recovery_chunks,
     clear_recovery_batch_plan,
     formulation_counts,
@@ -142,6 +144,97 @@ class ResourceConfig:
             "memory_limit_bytes": None if self.memory_limit_bytes is None else int(self.memory_limit_bytes),
             "metadata": dict(self.metadata),
         }
+
+
+def _owned_resource_config_snapshot(
+    value: Optional[ResourceConfig],
+    *,
+    post_observation: Any,
+) -> Optional[ResourceConfig]:
+    """Detach resource policy data before a solver decorator observes it.
+
+    Qualified operations pass a non-renewable authority check as
+    ``post_observation``.  Keeping that check immediately after every caller
+    protocol means a hostile-but-supported mapping or numeric conversion
+    cannot mutate and restore qualified mechanics while authoring the policy
+    subsequently consumed by :func:`resource_threaded`.
+    """
+
+    if value is None:
+        return None
+
+    def observed_attribute(name: str) -> Any:
+        observed = getattr(value, name)
+        post_observation()
+        return observed
+
+    def optional_int(name: str) -> Optional[int]:
+        observed = observed_attribute(name)
+        if observed is None:
+            return None
+        converted = int(observed)
+        post_observation()
+        return converted
+
+    def owned_plain(observed: Any) -> Any:
+        if observed is None or type(observed) in (bool, int, float, str, bytes):
+            return observed
+        if isinstance(observed, np.ndarray):
+            detached = np.array(observed, copy=True)
+            post_observation()
+            return detached
+        if isinstance(observed, Mapping):
+            iterator = iter(observed)
+            post_observation()
+            detached_mapping: Dict[Any, Any] = {}
+            while True:
+                try:
+                    key = next(iterator)
+                except StopIteration:
+                    post_observation()
+                    break
+                post_observation()
+                detached_key = owned_plain(key)
+                member = observed[key]
+                post_observation()
+                detached_member = owned_plain(member)
+                detached_mapping[detached_key] = detached_member
+                post_observation()
+            return detached_mapping
+        if isinstance(observed, Sequence):
+            iterator = iter(observed)
+            post_observation()
+            detached_sequence = []
+            while True:
+                try:
+                    member = next(iterator)
+                except StopIteration:
+                    post_observation()
+                    break
+                post_observation()
+                detached_sequence.append(owned_plain(member))
+            return tuple(detached_sequence)
+        detached = copy.deepcopy(observed)
+        post_observation()
+        return detached
+
+    deterministic_observed = observed_attribute("deterministic")
+    deterministic = bool(deterministic_observed)
+    post_observation()
+    metadata = owned_plain(observed_attribute("metadata"))
+    if not isinstance(metadata, Mapping):
+        raise ValueError("resource metadata must be a mapping")
+    owned = ResourceConfig(
+        solver_threads=optional_int("solver_threads"),
+        assembly_threads=optional_int("assembly_threads"),
+        recovery_threads=optional_int("recovery_threads"),
+        process_workers=optional_int("process_workers"),
+        deterministic=deterministic,
+        memory_limit_bytes=optional_int("memory_limit_bytes"),
+        metadata=metadata,
+    )
+    post_observation()
+    return owned
 
 
 class ResourcePolicyError(ValueError):
@@ -605,29 +698,48 @@ def _compute_recovery_chunk(
     )
 
 
-def recover_element_stresses_with_report(
+def _disabled_stress_recovery_result(
+    resource_config: Optional[ResourceConfig],
+) -> Tuple[Dict[int, Dict[str, np.ndarray]], RecoveryExecutionReport]:
+    """Return the historical no-op result without observing mechanics."""
+
+    report = RecoveryExecutionReport(
+        phase="element_stress_recovery",
+        item_count=0,
+        requested_workers=(
+            1
+            if resource_config is None
+            or resource_config.recovery_threads is None
+            else int(resource_config.recovery_threads)
+        ),
+        used_workers=0,
+        backend="disabled",
+        deterministic=(
+            True
+            if resource_config is None
+            else bool(resource_config.deterministic)
+        ),
+        elapsed_seconds=0.0,
+        reason="stress recovery disabled",
+    )
+    return {}, report
+
+
+def _recover_element_stresses_with_report_under_lease(
     model: "FEModel",
     displacements: np.ndarray,
     recovery_config: Optional[RecoveryConfig] = None,
     *,
     return_global: bool = False,
     resource_config: Optional[ResourceConfig] = None,
+    qualified_runtime_guard: Any,
 ) -> Tuple[Dict[int, Dict[str, np.ndarray]], RecoveryExecutionReport]:
     """Recover element stresses and return bounded execution diagnostics."""
 
+    qualified_runtime_guard(stage="configuration preflight")
     recovery = default_recovery_config(recovery_config)
     if not recovery.include_stresses:
-        report = RecoveryExecutionReport(
-            phase="element_stress_recovery",
-            item_count=0,
-            requested_workers=1 if resource_config is None or resource_config.recovery_threads is None else int(resource_config.recovery_threads),
-            used_workers=0,
-            backend="disabled",
-            deterministic=True if resource_config is None else bool(resource_config.deterministic),
-            elapsed_seconds=0.0,
-            reason="stress recovery disabled",
-        )
-        return {}, report
+        return _disabled_stress_recovery_result(resource_config)
 
     selected_ids = _ordered_element_ids(model, recovery.selected_element_ids(model))
     if return_global:
@@ -723,7 +835,10 @@ def recover_element_stresses_with_report(
         return stresses, report
 
     plan_lookup_start = time.perf_counter()
-    plan, plan_reused = get_recovery_batch_plan(model)
+    plan, plan_reused = _get_recovery_batch_plan_under_lease(
+        model,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     plan_lookup_seconds = time.perf_counter() - plan_lookup_start
     selected_items = plan.select(selected_ids)
     batch_counts = formulation_counts(selected_items)
@@ -974,6 +1089,36 @@ def recover_element_stresses_with_report(
         },
     )
     return stresses, report
+
+
+def recover_element_stresses_with_report(
+    model: "FEModel",
+    displacements: np.ndarray,
+    recovery_config: Optional[RecoveryConfig] = None,
+    *,
+    return_global: bool = False,
+    resource_config: Optional[ResourceConfig] = None,
+) -> Tuple[Dict[int, Dict[str, np.ndarray]], RecoveryExecutionReport]:
+    """Recover stresses under one complete-operation authority lease."""
+
+    recovery = default_recovery_config(recovery_config)
+    if not recovery.include_stresses:
+        # Disabled stress recovery is a true no-op.  Preserve that contract
+        # before inspecting qualified element mechanics or their authority;
+        # enabled recovery still enters the complete non-renewable lease.
+        return _disabled_stress_recovery_result(resource_config)
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="element stress recovery",
+        operation=lambda guard: _recover_element_stresses_with_report_under_lease(
+            model,
+            displacements,
+            recovery,
+            return_global=return_global,
+            resource_config=resource_config,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 def recover_element_stresses(

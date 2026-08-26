@@ -8,15 +8,52 @@ for the FE model.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+
+from .matrix_assembly import (
+    _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_LOAD_RUNTIME_LEASE,
+)
 
 if TYPE_CHECKING:
     from .fe_core import DOFManager, FEMesh, Material, Node
 
 
 _SMALL = 1.0e-12
+
+
+class _MeshLeaseModel:
+    """Closure-private adapter for direct mesh-level load operations."""
+
+    __slots__ = ("mesh",)
+
+    def __init__(self, mesh: "FEMesh") -> None:
+        self.mesh = mesh
+
+
+def _run_with_qualified_load_runtime_lease(
+    mesh: "FEMesh",
+    *,
+    context: str,
+    operation: Callable[[Callable[..., None]], Any],
+) -> Any:
+    proxy = _MeshLeaseModel(mesh)
+    lease = _CAPTURE_QUALIFIED_LOAD_RUNTIME_LEASE(
+        proxy,
+        context=f"{context} preflight",
+    )
+
+    def require(*, stage: str) -> None:
+        lease(proxy, context=f"{context} {stage}")
+
+    try:
+        result = operation(require)
+    except BaseException:
+        require(stage="exceptional output")
+        raise
+    require(stage="output")
+    return result
 
 
 class _GravityFallbackMaterial:
@@ -456,13 +493,15 @@ class LoadCase:
             acceleration[i * 6:i * 6 + 3] = self.gravity
         return np.asarray(mass_matrix @ acceleration, dtype=float).reshape(-1)
 
-    def get_load_vector(
+    def _get_load_vector_under_lease(
         self,
         mesh: "FEMesh",
         dof_manager: "DOFManager",
         material_getter: Optional[Callable[[str], "Material"]] = None,
         displacements: Optional[np.ndarray] = None,
         element_activity: Optional[object] = None,
+        *,
+        qualified_runtime_guard: Callable[..., None],
     ) -> np.ndarray:
         """Assemble the global load vector.
 
@@ -470,6 +509,7 @@ class LoadCase:
         :attr:`follower_pressure` is true.  Dead pressure, nodal, element and
         gravity loads retain their reference-configuration semantics.
         """
+        qualified_runtime_guard(stage="load-vector preflight")
         total_dofs = dof_manager.total_dofs
         F = np.zeros(total_dofs)
 
@@ -477,6 +517,7 @@ class LoadCase:
             if element_activity is None:
                 return 1.0
             values = element_activity.load_scales([int(element_id)])
+            qualified_runtime_guard(stage="load activity observation")
             return float(np.asarray(values, dtype=float).reshape(-1)[0])
 
         # Nodal loads.
@@ -523,7 +564,16 @@ class LoadCase:
                     material = _GravityFallbackMaterial()
                 else:
                     material = material_getter(element.material_name)
+                    qualified_runtime_guard(
+                        stage=(
+                            "load material observation for element "
+                            f"{element_id}"
+                        )
+                    )
                 f_elem = self._consistent_gravity_load(element, mesh, material)
+                qualified_runtime_guard(
+                    stage=f"gravity-load element observation for element {element_id}"
+                )
                 scale = activity_scale(int(element_id))
                 dof_mapping = element.get_dof_mapping(mesh)
                 for i, dof in enumerate(dof_mapping):
@@ -548,6 +598,29 @@ class LoadCase:
                     F[node.dofs[axis]] += float(mass) * acceleration[axis]
 
         return F
+
+    def get_load_vector(
+        self,
+        mesh: "FEMesh",
+        dof_manager: "DOFManager",
+        material_getter: Optional[Callable[[str], "Material"]] = None,
+        displacements: Optional[np.ndarray] = None,
+        element_activity: Optional[object] = None,
+    ) -> np.ndarray:
+        """Assemble a direct load vector under one mesh-family authority lease."""
+
+        return _run_with_qualified_load_runtime_lease(
+            mesh,
+            context="direct load-vector assembly",
+            operation=lambda guard: self._get_load_vector_under_lease(
+                mesh,
+                dof_manager,
+                material_getter,
+                displacements,
+                element_activity,
+                qualified_runtime_guard=guard,
+            ),
+        )
 
 
 @dataclass

@@ -9,6 +9,14 @@ from anysolver.e4_pl_element import (
     DIRECTOR_POLARITY_POLICY_ID,
     DIRECTOR_REVERSAL_TRANSFORM_ID,
     IMPLEMENTATION_ID,
+    Q4_ACTIVITY_DISPOSITION_SCHEMA_ID,
+    Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+    Q4_CURRENT_STATE_BINDING_SCHEMA_ID,
+    Q4_CURRENT_STATE_PROJECTION_POLICY_ID,
+    Q4_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID,
+    Q4_DELETED_FROZEN_POLICY_ID,
+    Q4_FAILED_STATE_POLICY_ID,
+    Q4_QUADRATURE_AUTHORITY_ID,
     RECOVERY_POLICY_ID,
     STATIONARY_SOLVE_POLICY_ID,
     QualifiedE4PLShellElement,
@@ -257,7 +265,7 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
         director_polarity=-1,
     )
     payload = element.to_dict()
-    assert IMPLEMENTATION_ID == "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V5"
+    assert IMPLEMENTATION_ID == "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V7"
     assert RECOVERY_POLICY_ID == (
         "Q4_HYBRID_PLANAR_STATIONARY_WARPED_VARYING_FRAME_"
         "PHYSICAL_DIRECTOR_RECOVERY_V3"
@@ -267,6 +275,24 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
     assert payload["stationary_solve_policy_id"] == STATIONARY_SOLVE_POLICY_ID
     assert payload["director_polarity_policy_id"] == DIRECTOR_POLARITY_POLICY_ID
     assert payload["director_reversal_transform_id"] == DIRECTOR_REVERSAL_TRANSFORM_ID
+    assert payload["current_state_binding_schema_id"] == (
+        Q4_CURRENT_STATE_BINDING_SCHEMA_ID
+    )
+    assert payload["current_state_algorithmic_origin_schema_id"] == (
+        Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+    )
+    assert payload["current_state_tangent_decomposition_policy_id"] == (
+        Q4_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID
+    )
+    assert payload["current_state_projection_policy_id"] == (
+        Q4_CURRENT_STATE_PROJECTION_POLICY_ID
+    )
+    assert payload["activity_disposition_schema_id"] == (
+        Q4_ACTIVITY_DISPOSITION_SCHEMA_ID
+    )
+    assert payload["deleted_frozen_policy_id"] == Q4_DELETED_FROZEN_POLICY_ID
+    assert payload["failed_state_policy_id"] == Q4_FAILED_STATE_POLICY_ID
+    assert payload["quadrature_authority_id"] == Q4_QUADRATURE_AUTHORITY_ID
     assert payload["reference_normal"] == [0.0, 0.0, 1.0]
     assert payload["director_polarity"] == -1
     rebuilt = QualifiedE4PLShellElement.from_dict(payload)
@@ -278,6 +304,46 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
     mutated = dict(payload, recovery_policy_id="WRONG")
     with pytest.raises(ValueError, match="recovery_policy_id"):
         QualifiedE4PLShellElement.from_dict(mutated)
+    for policy_name in (
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
+    ):
+        incompatible = dict(payload, **{policy_name: "WRONG"})
+        with pytest.raises(ValueError, match=policy_name):
+            QualifiedE4PLShellElement.from_dict(incompatible)
+
+    pre_activity = dict(payload)
+    for policy_name in (
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
+    ):
+        pre_activity.pop(policy_name)
+    with pytest.warns(QualifiedQ4MigrationWarning, match="activity-disposition"):
+        migrated_v7 = QualifiedE4PLShellElement.from_dict(pre_activity)
+    assert migrated_v7.to_dict() == payload
+    partial_activity = dict(payload)
+    partial_activity.pop("failed_state_policy_id")
+    with pytest.raises(ValueError, match="identity is incomplete"):
+        QualifiedE4PLShellElement.from_dict(partial_activity)
+
+    pre_quadrature = dict(payload)
+    pre_quadrature.pop("quadrature_authority_id")
+    with pytest.warns(
+        QualifiedQ4MigrationWarning,
+        match="immutable exact quadrature authority",
+    ):
+        migrated_quadrature = QualifiedE4PLShellElement.from_dict(pre_quadrature)
+    assert migrated_quadrature.to_dict() == payload
+    incompatible_quadrature = dict(
+        payload,
+        quadrature_authority_id="MUTATED_Q4_QUADRATURE",
+    )
+    with pytest.raises(ValueError, match="quadrature_authority_id"):
+        QualifiedE4PLShellElement.from_dict(incompatible_quadrature)
 
     for interim_name, interim_value in (
         (
@@ -300,6 +366,47 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
         with pytest.raises(ValueError, match="current director state is incomplete"):
             QualifiedE4PLShellElement.from_dict(incomplete)
 
+    previous = dict(payload)
+    previous["implementation_id"] = (
+        "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V5"
+    )
+    for key in (
+        "current_state_binding_schema_id",
+        "current_state_algorithmic_origin_schema_id",
+        "current_state_tangent_decomposition_policy_id",
+        "current_state_projection_policy_id",
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
+    ):
+        previous.pop(key)
+    with pytest.warns(QualifiedQ4MigrationWarning, match="exact qualified Q4 V5"):
+        migrated_v5 = QualifiedE4PLShellElement.from_dict(previous)
+    assert migrated_v5.to_dict() == payload
+
+    previous_v6 = dict(payload)
+    previous_v6["implementation_id"] = (
+        "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V6"
+    )
+    previous_v6.pop("current_state_algorithmic_origin_schema_id")
+    previous_v6["current_state_binding_schema_id"] = (
+        "E4_PL_Q4_COMMITTED_STATE_DISPLACEMENT_BINDING_V1"
+    )
+    previous_v6["current_state_tangent_decomposition_policy_id"] = (
+        "Q4_VON_KARMAN_ALGORITHMIC_MATERIAL_PLUS_MEMBRANE_STRESS_HESSIAN_V1"
+    )
+    for key in (
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
+    ):
+        previous_v6.pop(key)
+    with pytest.warns(QualifiedQ4MigrationWarning, match="exact qualified Q4 V6"):
+        migrated_v6 = QualifiedE4PLShellElement.from_dict(previous_v6)
+    assert migrated_v6.to_dict() == payload
+
     legacy_coupled = dict(payload)
     for key in (
         "implementation_id",
@@ -307,6 +414,14 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
         "stationary_solve_policy_id",
         "director_polarity_policy_id",
         "director_reversal_transform_id",
+        "current_state_binding_schema_id",
+        "current_state_algorithmic_origin_schema_id",
+        "current_state_tangent_decomposition_policy_id",
+        "current_state_projection_policy_id",
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
         "reference_normal",
         "director_polarity",
     ):
@@ -326,6 +441,14 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
         "stationary_solve_policy_id",
         "director_polarity_policy_id",
         "director_reversal_transform_id",
+        "current_state_binding_schema_id",
+        "current_state_algorithmic_origin_schema_id",
+        "current_state_tangent_decomposition_policy_id",
+        "current_state_projection_policy_id",
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
         "reference_normal",
         "director_polarity",
     ):
@@ -346,6 +469,14 @@ def test_b_coupled_section_requires_persistent_director_and_restart_identity() -
         "recovery_policy_id",
         "reference_normal",
         "stationary_solve_policy_id",
+        "current_state_binding_schema_id",
+        "current_state_algorithmic_origin_schema_id",
+        "current_state_tangent_decomposition_policy_id",
+        "current_state_projection_policy_id",
+        "activity_disposition_schema_id",
+        "deleted_frozen_policy_id",
+        "failed_state_policy_id",
+        "quadrature_authority_id",
     ),
 )
 def test_qualified_q4_fingerprint_cannot_downgrade_to_legacy_without_formulation_id(

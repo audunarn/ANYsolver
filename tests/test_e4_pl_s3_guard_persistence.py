@@ -40,11 +40,19 @@ class _DeclaredGuardGapS3(QualifiedE4PLS3ShellElement):
 
     @property
     def capability_gaps(self) -> frozenset[str]:
-        return super().capability_gaps | {
+        # The exact qualified S3 profile has no required gaps.  Do not call
+        # its now-protected property on this deliberately invalid descendant;
+        # this fixture exists only to expose the declared negative profile to
+        # consumer-side capability guards.
+        return frozenset({
             "initial_fields",
             "static_restart_history",
             "arc_length_restart_history",
-        }
+        })
+
+    @property
+    def capability_restrictions(self) -> dict[str, str]:
+        return {}
 
 
 def _mixed_model(
@@ -79,22 +87,24 @@ def _mixed_model(
         if generalized_s3
         else None
     )
-    element_type = (
-        _DeclaredGuardGapS3
-        if declared_guard_gaps
-        else QualifiedE4PLS3ShellElement
+    s3 = QualifiedE4PLS3ShellElement(
+        S3_ID,
+        [1, 2, 3],
+        "steel",
+        thickness=0.1,
+        reference_normal=OWNER_NORMAL,
+        shell_section=section,
+        material_direction=(1.0, 0.0, 0.0) if generalized_s3 else None,
     )
+    if declared_guard_gaps:
+        # Production construction correctly rejects descendants of the exact
+        # qualified class.  Inject the deliberately invalid runtime object
+        # only after exact construction so this negative workflow fixture
+        # continues to test the consumer-side fail-closed guard.
+        object.__setattr__(s3, "__class__", _DeclaredGuardGapS3)
     model.add_element(
         S3_ID,
-        element_type(
-            S3_ID,
-            [1, 2, 3],
-            "steel",
-            thickness=0.1,
-            reference_normal=OWNER_NORMAL,
-            shell_section=section,
-            material_direction=(1.0, 0.0, 0.0) if generalized_s3 else None,
-        ),
+        s3,
     )
     q4 = create_shell_element(
         Q4_ID,
@@ -196,7 +206,7 @@ def test_static_nonlinear_restart_gap_rejects_before_any_model_evaluation(
 
     with pytest.raises(
         ElementCapabilityError,
-        match="solve_static_nonlinear.*static_restart_history",
+        match="exact qualified component/lifecycle APIs.*FORMULATION_ID_CLASS_MISMATCH",
     ):
         nonlinear_static_module.solve_static_nonlinear(
             model,
@@ -214,7 +224,10 @@ def test_static_nonlinear_state_and_field_guards_are_id_scoped() -> None:
         declared_guard_gaps=True,
     )
 
-    with pytest.raises(ElementCapabilityError, match="initial_fields"):
+    with pytest.raises(
+        ElementCapabilityError,
+        match="exact qualified component/lifecycle APIs.*FORMULATION_ID_CLASS_MISMATCH",
+    ):
         nonlinear_static_module.solve_static_nonlinear(
             guarded_generalized_model,
             num_steps=1,
@@ -294,7 +307,7 @@ def test_arc_length_restart_gap_rejects_before_load_copy_boundary_or_stiffness(
 
     with pytest.raises(
         ElementCapabilityError,
-        match="solve_static_arc_length.*arc_length_restart_history",
+        match="exact qualified component/lifecycle APIs.*FORMULATION_ID_CLASS_MISMATCH",
     ):
         arc_length_module.solve_static_arc_length(
             model,
@@ -302,7 +315,10 @@ def test_arc_length_restart_gap_rejects_before_load_copy_boundary_or_stiffness(
             initial_element_states={S3_ID: {}},
         )
     assert calls == []
-    with pytest.raises(ElementCapabilityError, match="initial_fields"):
+    with pytest.raises(
+        ElementCapabilityError,
+        match="exact qualified component/lifecycle APIs.*FORMULATION_ID_CLASS_MISMATCH",
+    ):
         arc_length_module.solve_static_arc_length(
             model,
             None,
@@ -599,15 +615,19 @@ def test_assembly_global_s3_recovery_executes() -> None:
 
 
 def test_nonfinite_s3_recovery_rejects_before_mechanics(
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     model = _mixed_model()
     element = model.mesh.elements[S3_ID]
-
-    def forbidden(*_args, **_kwargs):
-        raise AssertionError("non-finite recovery evaluated mechanics")
-
-    monkeypatch.setattr(element, "_compute_stiffness_components", forbidden)
+    derived_names = (
+        "_qualified_components",
+        "_qualified_cache_key",
+        "_qualified_component_guard",
+        "_stiffness_matrix",
+        "_internal_forces",
+    )
+    assert all(getattr(element, name) is None for name in derived_names)
+    plan_revision = element._qualified_plan_state_revision
+    direct_revision = int(element._qualified_direct_state_token[0])
     displacement = np.zeros(18, dtype=float)
     displacement[0] = np.nan
     with pytest.raises(ValueError, match="recovery requires finite displacements"):
@@ -617,6 +637,9 @@ def test_nonfinite_s3_recovery_rejects_before_mechanics(
             model.get_material(element.material_name),
             return_global=True,
         )
+    assert all(getattr(element, name) is None for name in derived_names)
+    assert element._qualified_plan_state_revision == plan_revision
+    assert int(element._qualified_direct_state_token[0]) == direct_revision
 
 
 def test_public_recovery_propagates_qualified_s3_fail_closed_errors() -> None:
@@ -793,6 +816,7 @@ def test_explicit_legacy_and_qualified_records_do_not_emit_migration_warning() -
         "director_polarity",
         "director_polarity_policy_id",
         "director_reversal_transform_id",
+        "quadrature_authority_id",
         "reference_normal",
     ),
 )

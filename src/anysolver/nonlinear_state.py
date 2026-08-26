@@ -42,6 +42,11 @@ from ._native_rotation_state import (
 
 _CORE_FIELDS = ("plastic_strain", "alpha", "layer_strain")
 _FIELD_INDEX = {name: index for index, name in enumerate(_CORE_FIELDS)}
+_Q4_ALGORITHMIC_ORIGIN_KEY = "qualified_q4_algorithmic_origin"
+_Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID = (
+    "E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_V1"
+)
+_Q4_ALGORITHMIC_ORIGIN_KIND = "LAYERED_DISCRETE_RETURN_MAP_PARENT_STATE"
 _INITIAL_FIELD_KEYS = (
     "initial_membrane_stress",
     "initial_bending_stress",
@@ -339,7 +344,9 @@ def _fallback_reason(state: Any, layout: ShellStateLayout) -> Optional[str]:
     unsupported = sorted(
         str(key)
         for key in state
-        if str(key) not in _CORE_FIELDS and not _is_sidecar_key(str(key))
+        if str(key) not in _CORE_FIELDS
+        and str(key) != _Q4_ALGORITHMIC_ORIGIN_KEY
+        and not _is_sidecar_key(str(key))
     )
     if unsupported:
         return "unsupported_state_keys:" + ",".join(unsupported)
@@ -361,6 +368,38 @@ def _fallback_reason(state: Any, layout: ShellStateLayout) -> Optional[str]:
             return f"invalid_{key}_values"
         if actual != shape:
             return f"invalid_{key}_shape:{actual}"
+    if _Q4_ALGORITHMIC_ORIGIN_KEY in state:
+        origin = state[_Q4_ALGORITHMIC_ORIGIN_KEY]
+        if not isinstance(origin, Mapping):
+            return "invalid_q4_algorithmic_origin_mapping"
+        if set(origin) != {
+            "schema_id",
+            "kind",
+            "num_layers",
+            "parent_plastic_strain",
+            "parent_alpha",
+        }:
+            return "invalid_q4_algorithmic_origin_schema"
+        if (
+            origin.get("schema_id") != _Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID
+            or origin.get("kind") != _Q4_ALGORITHMIC_ORIGIN_KIND
+            or origin.get("num_layers") != layout.num_layers
+        ):
+            return "incompatible_q4_algorithmic_origin_identity"
+        try:
+            parent_plastic = np.asarray(
+                origin["parent_plastic_strain"], dtype=float
+            )
+            parent_alpha = np.asarray(origin["parent_alpha"], dtype=float)
+        except (TypeError, ValueError):
+            return "invalid_q4_algorithmic_origin_values"
+        if (
+            parent_plastic.shape != (points, 3)
+            or parent_alpha.shape != (points,)
+            or not np.all(np.isfinite(parent_plastic))
+            or not np.all(np.isfinite(parent_alpha))
+        ):
+            return "invalid_q4_algorithmic_origin_shape_or_values"
     return None
 
 
@@ -413,6 +452,21 @@ class ShellStateBatch(Mapping[int, Any]):
         self._fallback_committed: Dict[int, Any] = {}
         self._fallback_reasons: Dict[int, str] = {}
         self._trial_legacy: Dict[int, tuple[Any, str]] = {}
+        # Allocated lazily only for path-dependent qualified Q4 batches.  The
+        # two parent arrays are an exact replay descriptor for the accepted
+        # discrete return-map tangent; they are transactionally committed with
+        # the ordinary plastic/alpha/layer core without forcing dictionary
+        # fallback or inflating unrelated shell-state buffers.
+        self._q4_origin_committed_plastic: Optional[np.ndarray] = None
+        self._q4_origin_trial_plastic: Optional[np.ndarray] = None
+        self._q4_origin_committed_alpha: Optional[np.ndarray] = None
+        self._q4_origin_trial_alpha: Optional[np.ndarray] = None
+        self._q4_origin_present_committed = np.zeros(
+            layout.n_elements, dtype=bool
+        )
+        self._q4_origin_trial_stamps = np.zeros(
+            layout.n_elements, dtype=np.int64
+        )
         # Generation stamps avoid clearing an O(elements) boolean mask at begin.
         self._write_stamps = np.zeros((len(_CORE_FIELDS), layout.n_elements), dtype=np.int64)
         self._generation = 0
@@ -514,6 +568,29 @@ class ShellStateBatch(Mapping[int, Any]):
         layer = buffer[alpha_stop:].reshape(n_elements, points_per_element, 3)
         return ShellStateArrays(plastic, alpha, layer)
 
+    def _ensure_q4_algorithmic_origin_buffers(self) -> None:
+        if self._q4_origin_committed_plastic is not None:
+            return
+        shape_plastic = (
+            self.layout.n_elements,
+            self.layout.points_per_element,
+            3,
+        )
+        shape_alpha = (
+            self.layout.n_elements,
+            self.layout.points_per_element,
+        )
+        self._q4_origin_committed_plastic = np.zeros(
+            shape_plastic, dtype=np.float64
+        )
+        self._q4_origin_trial_plastic = np.empty(
+            shape_plastic, dtype=np.float64
+        )
+        self._q4_origin_committed_alpha = np.zeros(
+            shape_alpha, dtype=np.float64
+        )
+        self._q4_origin_trial_alpha = np.empty(shape_alpha, dtype=np.float64)
+
     def committed_arrays(self) -> ShellStateArrays:
         """Return read-only, zero-copy views for constitutive kernels."""
 
@@ -555,6 +632,19 @@ class ShellStateBatch(Mapping[int, Any]):
                 views.layer_strain[index] = np.asarray(
                     state["layer_strain"], dtype=float
                 ).reshape(points, 3)
+            if _Q4_ALGORITHMIC_ORIGIN_KEY in state:
+                origin = state[_Q4_ALGORITHMIC_ORIGIN_KEY]
+                assert isinstance(origin, Mapping)  # validated above
+                self._ensure_q4_algorithmic_origin_buffers()
+                assert self._q4_origin_committed_plastic is not None
+                assert self._q4_origin_committed_alpha is not None
+                self._q4_origin_committed_plastic[index] = np.asarray(
+                    origin["parent_plastic_strain"], dtype=float
+                ).reshape(points, 3)
+                self._q4_origin_committed_alpha[index] = np.asarray(
+                    origin["parent_alpha"], dtype=float
+                ).reshape(points)
+                self._q4_origin_present_committed[index] = True
         self._metrics["state_pack_seconds"] += time.perf_counter() - start
 
     def compatible_with(self, layout: ShellStateLayout) -> bool:
@@ -685,6 +775,44 @@ class ShellStateBatch(Mapping[int, Any]):
             )
             return int(active.size)
 
+    def update_q4_algorithmic_origin_trial(
+        self,
+        token: StateTrialToken,
+        *,
+        parent_plastic_strain: Any,
+        parent_alpha: Any,
+        element_ids: Sequence[int],
+    ) -> int:
+        """Atomically retain the parent history of accepted Q4 trial updates."""
+
+        with self._lock:
+            self._require_active(token)
+            indices = self._indices(element_ids)
+            if np.any(~self._packed_mask[indices]):
+                raise PersistentStateEligibilityError(
+                    "Q4 algorithmic origins require packed shell-state rows"
+                )
+            plastic = self._coerce_update(
+                "plastic_strain",
+                parent_plastic_strain,
+                int(indices.size),
+            )
+            alpha = self._coerce_update(
+                "alpha",
+                parent_alpha,
+                int(indices.size),
+            )
+            self._ensure_q4_algorithmic_origin_buffers()
+            assert self._q4_origin_trial_plastic is not None
+            assert self._q4_origin_trial_alpha is not None
+            active_in_input = ~self._deleted_mask[indices]
+            active = indices[active_in_input]
+            if active.size:
+                self._q4_origin_trial_plastic[active] = plastic[active_in_input]
+                self._q4_origin_trial_alpha[active] = alpha[active_in_input]
+                self._q4_origin_trial_stamps[active] = self._serial
+            return int(active.size)
+
     def _validate_or_merge_sidecar(self, index: int, state: Any) -> Any:
         if not isinstance(state, Mapping):
             if self._sidecars[index]:
@@ -743,6 +871,22 @@ class ShellStateBatch(Mapping[int, Any]):
             }
             if updates:
                 self.update_trial(token, element_ids=(int(element_id),), **updates)
+            if (
+                isinstance(owned_state, Mapping)
+                and _Q4_ALGORITHMIC_ORIGIN_KEY in owned_state
+            ):
+                origin = owned_state[_Q4_ALGORITHMIC_ORIGIN_KEY]
+                # _fallback_reason already established the exact closed shape
+                # before this packed branch was selected.
+                assert isinstance(origin, Mapping)
+                self.update_q4_algorithmic_origin_trial(
+                    token,
+                    parent_plastic_strain=origin[
+                        "parent_plastic_strain"
+                    ],
+                    parent_alpha=origin["parent_alpha"],
+                    element_ids=(int(element_id),),
+                )
 
     def freeze_deleted(self, element_ids: Sequence[int]) -> None:
         """Permanently freeze the qualified committed state of deleted elements."""
@@ -770,6 +914,37 @@ class ShellStateBatch(Mapping[int, Any]):
             result[field_name] = np.array(source[index], copy=True, order="C")
         for key, value in self._sidecars[index].items():
             result[key] = _thaw_value(value)
+        origin_is_trial = bool(
+            use_trial
+            and self._q4_origin_trial_stamps[index] == self._serial
+        )
+        origin_is_committed = bool(self._q4_origin_present_committed[index])
+        if origin_is_trial or origin_is_committed:
+            assert self._q4_origin_committed_plastic is not None
+            assert self._q4_origin_trial_plastic is not None
+            assert self._q4_origin_committed_alpha is not None
+            assert self._q4_origin_trial_alpha is not None
+            plastic_source = (
+                self._q4_origin_trial_plastic
+                if origin_is_trial
+                else self._q4_origin_committed_plastic
+            )
+            alpha_source = (
+                self._q4_origin_trial_alpha
+                if origin_is_trial
+                else self._q4_origin_committed_alpha
+            )
+            result[_Q4_ALGORITHMIC_ORIGIN_KEY] = {
+                "schema_id": _Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+                "kind": _Q4_ALGORITHMIC_ORIGIN_KIND,
+                "num_layers": self.layout.num_layers,
+                "parent_plastic_strain": np.asarray(
+                    plastic_source[index], dtype=np.float64
+                ).tolist(),
+                "parent_alpha": np.asarray(
+                    alpha_source[index], dtype=np.float64
+                ).tolist(),
+            }
         return result
 
     def _is_present(
@@ -872,6 +1047,42 @@ class ShellStateBatch(Mapping[int, Any]):
                 self._present_trial_stamps == self._serial,
             )
 
+            if self._q4_origin_committed_plastic is not None:
+                assert self._q4_origin_trial_plastic is not None
+                assert self._q4_origin_committed_alpha is not None
+                assert self._q4_origin_trial_alpha is not None
+                missing_origin = self._q4_origin_trial_stamps != self._serial
+                missing_origin = np.logical_or(
+                    missing_origin, self._deleted_mask
+                )
+                if converted_indices:
+                    missing_origin[list(converted_indices)] = True
+                if np.any(missing_origin):
+                    self._q4_origin_trial_plastic[missing_origin] = (
+                        self._q4_origin_committed_plastic[missing_origin]
+                    )
+                    self._q4_origin_trial_alpha[missing_origin] = (
+                        self._q4_origin_committed_alpha[missing_origin]
+                    )
+                self._q4_origin_present_committed = np.logical_or(
+                    self._q4_origin_present_committed,
+                    self._q4_origin_trial_stamps == self._serial,
+                )
+                (
+                    self._q4_origin_committed_plastic,
+                    self._q4_origin_trial_plastic,
+                ) = (
+                    self._q4_origin_trial_plastic,
+                    self._q4_origin_committed_plastic,
+                )
+                (
+                    self._q4_origin_committed_alpha,
+                    self._q4_origin_trial_alpha,
+                ) = (
+                    self._q4_origin_trial_alpha,
+                    self._q4_origin_committed_alpha,
+                )
+
             self._committed_buffer, self._trial_buffer = (
                 self._trial_buffer,
                 self._committed_buffer,
@@ -912,11 +1123,27 @@ class ShellStateBatch(Mapping[int, Any]):
                     fallback_reasons.setdefault(reason, []).append(int(element_id))
             for element_ids in fallback_reasons.values():
                 element_ids.sort()
+            q4_origin_bytes = 0
+            if self._q4_origin_committed_plastic is not None:
+                assert self._q4_origin_trial_plastic is not None
+                assert self._q4_origin_committed_alpha is not None
+                assert self._q4_origin_trial_alpha is not None
+                q4_origin_bytes = int(
+                    self._q4_origin_committed_plastic.nbytes
+                    + self._q4_origin_trial_plastic.nbytes
+                    + self._q4_origin_committed_alpha.nbytes
+                    + self._q4_origin_trial_alpha.nbytes
+                )
             return {
                 "state_batch_count": 1,
                 "state_point_count": int(self.layout.state_point_count),
                 "state_buffer_bytes": int(
                     self._committed_buffer.nbytes + self._trial_buffer.nbytes
+                    + q4_origin_bytes
+                ),
+                "q4_algorithmic_origin_buffer_bytes": q4_origin_bytes,
+                "q4_algorithmic_origin_element_count": int(
+                    np.count_nonzero(self._q4_origin_present_committed)
                 ),
                 "state_pack_seconds": float(self._metrics["state_pack_seconds"]),
                 "state_trial_update_seconds": float(
@@ -1632,6 +1859,14 @@ class NonlinearStateStore(Mapping[int, Any]):
                         element_id
                     ].state_consistency_required:
                         continue
+                    if element_id in self._deleted_fallback:
+                        # A deleted formulation-native element retains its
+                        # exact deletion-time material and kinematic state.
+                        # The model-wide node rotation history may advance for
+                        # surviving neighbours, but rebinding this frozen
+                        # payload to the accepted global u would falsely make
+                        # it an ACTIVE current-state record.
+                        continue
                     if element_id in self._element_to_batch:
                         raise NativeRotationValidationError(
                             f"Native element {element_id} cannot use a generic packed state batch"
@@ -2103,6 +2338,8 @@ def create_model_native_rotation_store(
     model: Any,
     committed_states: Mapping[int, Any],
     committed_full_displacement: Any,
+    *,
+    noncurrent_element_ids: Sequence[int] = (),
 ) -> Optional[NativeRotationStateStore]:
     """Reconstruct one node-shared native history from model-bound states.
 
@@ -2119,10 +2356,17 @@ def create_model_native_rotation_store(
         raise NativeRotationValidationError(
             "Native rotation setup requires explicit model element and node mappings"
         )
+    noncurrent = {int(value) for value in noncurrent_element_ids}
+    unknown_noncurrent = noncurrent.difference(int(value) for value in elements)
+    if unknown_noncurrent:
+        raise NativeRotationValidationError(
+            "Native noncurrent element IDs are not present in the model"
+        )
     native_elements = tuple(
         (int(element_id), element)
         for element_id, element in elements.items()
         if bool(getattr(element, "formulation_native_total_lagrangian", False))
+        and int(element_id) not in noncurrent
     )
     if not native_elements:
         return None

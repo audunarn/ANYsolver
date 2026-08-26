@@ -92,7 +92,6 @@ def test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle() -
 
 
 def test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry(
-    monkeypatch,
 ) -> None:
     model = generate_simple_panel_mesh(
         2.0,
@@ -108,18 +107,9 @@ def test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry(
             legacy.material_name,
             thickness=legacy.thickness,
         )
-    original = QualifiedE4PLShellElement.compute_stiffness_components
-    evaluations = 0
-
-    def counted_components(self, mesh, material):
-        nonlocal evaluations
-        evaluations += 1
-        return original(self, mesh, material)
-
-    monkeypatch.setattr(
-        QualifiedE4PLShellElement,
-        "compute_stiffness_components",
-        counted_components,
+    assert all(
+        element._qualified_components is None
+        for element in model.mesh.elements.values()
     )
     assembled, info = assemble_stiffness_matrix(model)
     assert assembled.nnz > 0
@@ -136,12 +126,21 @@ def test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry(
     assert components[0] is not components[1]
     assert components[0]["total"] is not components[1]["total"]
     np.testing.assert_array_equal(components[0]["total"], components[1]["total"])
-    assert evaluations == 1
+    assert (
+        model.mesh.elements[1]._qualified_cache_key
+        == model.mesh.elements[2]._qualified_cache_key
+    )
+    cold_component_ids = tuple(id(value) for value in components)
+    cold_total_ids = tuple(id(value["total"]) for value in components)
 
     warm, warm_info = assemble_stiffness_matrix(model)
     np.testing.assert_array_equal(warm.toarray(), assembled.toarray())
     assert warm_info["diagnostics"]["qualified_e4_pl_stiffness"] == diagnostic
-    assert evaluations == 1
+    warm_components = tuple(
+        element._qualified_components for element in model.mesh.elements.values()
+    )
+    assert tuple(id(value) for value in warm_components) == cold_component_ids
+    assert tuple(id(value["total"]) for value in warm_components) == cold_total_ids
 
 
 def test_candidate_runs_transient_and_buckling_solver_workflows() -> None:

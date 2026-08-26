@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+import anysolver.e4_pl_element as e4_pl_module
 from anysolver.e4_pl_element import QualifiedE4PLShellElement, equation7_frame
 from anysolver.elements import ShellElement
 from anysolver.fe_core import FEMesh, Material
@@ -107,6 +108,49 @@ def test_warped_varying_frame_has_exactly_six_rigid_modes_and_positive_quotient(
     quotient = 0.5 * (quotient + quotient.T)
     eigenvalues = np.linalg.eigvalsh(quotient)
     assert eigenvalues[0] > 1.0e-9 * max(float(eigenvalues[-1]), 1.0)
+
+
+@pytest.mark.parametrize("components_first", (True, False))
+def test_warped_component_and_matrix_cache_orders_preserve_public_contract(
+    components_first: bool,
+) -> None:
+    mesh = _mesh(WARPED_GEOMETRIES[1])
+    material = _material()
+    element = _element()
+
+    if components_first:
+        components = element.compute_stiffness_components(mesh, material)
+        stiffness = element.compute_stiffness_matrix(mesh, material)
+    else:
+        stiffness = element.compute_stiffness_matrix(mesh, material)
+        components = element.compute_stiffness_components(mesh, material)
+
+    total = components["total"]
+    assert element.compute_stiffness_components(mesh, material) is components
+    np.testing.assert_array_equal(stiffness, total)
+    assert not stiffness.flags.writeable
+    assert not total.flags.writeable
+    assert np.linalg.norm(stiffness - stiffness.T, ord=np.inf) <= 2.0e-12 * max(
+        np.linalg.norm(stiffness, ord=np.inf), 1.0
+    )
+
+    repeated = element.compute_stiffness_matrix(mesh, material)
+    assert repeated is not stiffness
+    assert not repeated.flags.writeable
+    np.testing.assert_array_equal(repeated, stiffness)
+
+    assembly_fast = e4_pl_module._try_q4_fast_assembly_cached_stiffness(
+        element,
+        mesh,
+        material,
+    )
+    if np.array_equal(total, total.T):
+        assert type(assembly_fast) is bytes
+    else:
+        # The total-only fast path requires bitwise symmetry.  A legitimate
+        # varying-frame total that differs only by binary64 accumulation
+        # roundoff remains on the fully guarded component route.
+        assert assembly_fast is None
 
 
 @pytest.mark.parametrize("nodes", WARPED_GEOMETRIES)

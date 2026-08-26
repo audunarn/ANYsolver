@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import threading
 
 import numpy as np
@@ -13,6 +14,7 @@ from anysolver import nonlinear_performance_batch_c
 from anysolver.material_curves import dnv_c208_steel_curve
 from anysolver.elements import QuadraticBeamElement, create_element
 from anysolver.fe_core import FEModel
+from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.nonlinear_performance_bootstrap import (
     MAX_NONLINEAR_LAYER_PLANS_PER_MODEL,
     clear_nonlinear_assembly_cache,
@@ -355,6 +357,84 @@ def test_plastic_shell_batch_matches_scalar_algorithmic_tangent() -> None:
         )
 
 
+def test_deleted_q4_initial_field_override_is_scaled_and_frozen_exactly() -> None:
+    nonlinear_static._ensure_nonlinear_acceleration()
+    model = FEModel("deleted-qualified-q4-initial-field")
+    model.add_material(
+        "steel",
+        210.0e9,
+        0.3,
+        hardening_curve=dnv_c208_steel_curve("S355", 0.01),
+    )
+    for node_id, coordinates in enumerate(
+        (
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.0, 0.2, 0.0),
+            (0.0, 0.2, 0.0),
+        ),
+        start=1,
+    ):
+        model.add_node(node_id, *coordinates)
+    model.add_element(
+        1,
+        QualifiedE4PLShellElement(
+            1,
+            [1, 2, 3, 4],
+            "steel",
+            thickness=0.01,
+            reference_normal=(0.0, 0.0, 1.0),
+        ),
+    )
+    committed, _provenance = _prepare_initial_states(
+        model,
+        None,
+        {
+            1: ShellInitialField(
+                membrane_stress=[50.0e6, 0.0, 0.0],
+            )
+        },
+        3,
+    )
+    displacement = np.linspace(
+        0.0,
+        1.0e-5,
+        model.mesh.dof_manager.total_dofs,
+        dtype=np.float64,
+    )
+    legacy = nonlinear_performance._ORIGINAL_ASSEMBLER
+    assert legacy is not None
+    arguments = {
+        "tangent": True,
+        "deleted_element_ids": (1,),
+        "residual_stiffness_fraction": 0.2,
+    }
+    force_reference, tangent_reference, states_reference = legacy(
+        model,
+        displacement,
+        committed,
+        3,
+        **arguments,
+    )
+    nonlinear_performance.clear_nonlinear_assembly_cache(model)
+    force_fast, tangent_fast, states_fast = (
+        nonlinear_performance._optimized_assemble_nonlinear_system(
+            model,
+            displacement,
+            committed,
+            3,
+            **arguments,
+        )
+    )
+
+    np.testing.assert_array_equal(force_fast, force_reference)
+    np.testing.assert_array_equal(
+        tangent_fast.toarray(), tangent_reference.toarray()
+    )
+    assert states_reference[1] is committed[1]
+    assert states_fast[1] is committed[1]
+
+
 def test_q8r_uses_scalar_nonlinear_path_with_hourglass_parity() -> None:
     nonlinear_static._ensure_nonlinear_acceleration()
     model = FEModel("q8r_nonlinear")
@@ -450,6 +530,103 @@ def test_plan_is_reused_until_model_revision_changes() -> None:
     model.mesh.set_node_coordinates(node.id, node.x, node.y, node.z + 1.0e-6)
     third = get_nonlinear_assembly_plan(model, 5)
     assert third is not first
+
+
+def test_qualified_q4_plan_rebinds_all_direct_mutable_inputs() -> None:
+    model = FEModel("qualified-q4-plan-inputs")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    for node_id, coordinates in enumerate(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)),
+        start=1,
+    ):
+        model.add_node(node_id, *coordinates)
+    element = QualifiedE4PLShellElement(
+        1,
+        [1, 2, 3, 4],
+        "steel",
+        thickness=0.02,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    model.add_element(1, element)
+    clear_nonlinear_assembly_cache(model)
+
+    plan = get_nonlinear_assembly_plan(model, 3)
+    assert get_nonlinear_assembly_plan(model, 3) is plan
+
+    model.mesh.nodes[2].x += 0.125
+    rebuilt_node = get_nonlinear_assembly_plan(model, 3)
+    assert rebuilt_node is not plan
+    assert get_nonlinear_assembly_plan(model, 3) is rebuilt_node
+
+    model.materials["steel"].elastic_modulus *= 0.95
+    rebuilt_material = get_nonlinear_assembly_plan(model, 3)
+    assert rebuilt_material is not rebuilt_node
+    assert get_nonlinear_assembly_plan(model, 3) is rebuilt_material
+
+    element.thickness *= 1.10
+    rebuilt_thickness = get_nonlinear_assembly_plan(model, 3)
+    assert rebuilt_thickness is not rebuilt_material
+    assert get_nonlinear_assembly_plan(model, 3) is rebuilt_thickness
+
+    element.director_polarity = -1
+    rebuilt_director = get_nonlinear_assembly_plan(model, 3)
+    assert rebuilt_director is not rebuilt_thickness
+    assert get_nonlinear_assembly_plan(model, 3) is rebuilt_director
+
+
+def test_qualified_q4_plan_rebinds_wholesale_mesh_mapping_replacements() -> None:
+    model = FEModel("qualified-q4-wholesale-mapping-inputs")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    for node_id, coordinates in enumerate(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)),
+        start=1,
+    ):
+        model.add_node(node_id, *coordinates)
+    element = QualifiedE4PLShellElement(
+        1,
+        [1, 2, 3, 4],
+        "steel",
+        thickness=0.01,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    model.add_element(1, element)
+    clear_nonlinear_assembly_cache(model)
+
+    original = get_nonlinear_assembly_plan(model, 3)
+    original_geometry = original.shell_batches[0].B_m.copy()
+    replacement_nodes = {
+        node_id: copy.deepcopy(node) for node_id, node in model.mesh.nodes.items()
+    }
+    replacement_nodes[2].x = 0.75
+    token_before_nodes = model.mesh._qualified_direct_state_token[0]
+    model.mesh.nodes = replacement_nodes
+    assert model.mesh._qualified_direct_state_token[0] == token_before_nodes + 1
+    assert replacement_nodes[2]._qualified_direct_state_token is (
+        model.mesh._qualified_direct_state_token
+    )
+
+    rebuilt_nodes = get_nonlinear_assembly_plan(model, 3)
+    assert rebuilt_nodes is not original
+    assert not np.array_equal(rebuilt_nodes.shell_batches[0].B_m, original_geometry)
+
+    replacement = QualifiedE4PLShellElement(
+        1,
+        [1, 2, 3, 4],
+        "steel",
+        thickness=0.04,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    token_before_elements = model.mesh._qualified_direct_state_token[0]
+    model.mesh.elements = {1: replacement}
+    assert model.mesh._qualified_direct_state_token[0] == token_before_elements + 1
+    assert replacement._qualified_direct_state_token is (
+        model.mesh._qualified_direct_state_token
+    )
+
+    rebuilt_elements = get_nonlinear_assembly_plan(model, 3)
+    assert rebuilt_elements is not rebuilt_nodes
+    assert rebuilt_elements.shell_batches[0].elements == (replacement,)
+    assert rebuilt_elements.shell_batches[0].thickness == 0.04
 
 
 def test_layer_plan_cache_is_bounded_lru_and_reports_evictions() -> None:

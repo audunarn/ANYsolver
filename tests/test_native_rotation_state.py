@@ -610,7 +610,7 @@ def test_parent_transaction_rejects_s3_state_disagreeing_with_native_view(
     discard_active_state_candidate(store)
 
 
-def test_committed_restart_materializes_exact_native_u_and_shared_q_for_frozen_s3() -> None:
+def test_committed_restart_preserves_exact_deletion_state_for_frozen_s3() -> None:
     model, store, initial, displacement = _qualified_s3_state_model(
         two_elements=True
     )
@@ -654,32 +654,38 @@ def test_committed_restart_materializes_exact_native_u_and_shared_q_for_frozen_s
         policy=StateMaterializationPolicy.RESTART,
     )
     material = model.get_material("steel")
-    for element_id in (1, 2):
-        element = model.mesh.elements[element_id]
-        mapping = element.get_dof_mapping(model.mesh)
-        np.testing.assert_array_equal(
-            restart[element_id]["committed_total_u"], displacement[mapping]
-        )
-        np.testing.assert_array_equal(
-            store[element_id]["committed_total_u"], displacement[mapping]
-        )
-        element.validate_model_bound_nonlinear_state(
-            model.mesh,
-            material,
-            restart[element_id],
-            3,
-            expected_committed_total_u=displacement[mapping],
-        )
-
-    # Node 2 is local index 1 in element 1 and local index 0 in element 2;
-    # node 3 is local index 2 in both.  These redundant restart copies must be
-    # byte-identical because they came from the same solver-owned Q history.
+    active = model.mesh.elements[1]
+    active_mapping = active.get_dof_mapping(model.mesh)
     np.testing.assert_array_equal(
-        restart[1]["committed_nodal_rotation_matrices"][1],
-        restart[2]["committed_nodal_rotation_matrices"][0],
+        restart[1]["committed_total_u"], displacement[active_mapping]
     )
     np.testing.assert_array_equal(
-        restart[1]["committed_nodal_rotation_matrices"][2],
-        restart[2]["committed_nodal_rotation_matrices"][2],
+        store[1]["committed_total_u"], displacement[active_mapping]
+    )
+    active.validate_model_bound_nonlinear_state(
+        model.mesh,
+        material,
+        restart[1],
+        3,
+        expected_committed_total_u=displacement[active_mapping],
+    )
+
+    # A deleted element is constitutively frozen at its last accepted active
+    # state.  Advancing a shared node and committing an active neighbour must
+    # not silently rebind that frozen history to the later global displacement
+    # or to the neighbour's newer nodal rotation matrices.
+    np.testing.assert_array_equal(
+        restart[2]["committed_total_u"], initial[2]["committed_total_u"]
+    )
+    np.testing.assert_array_equal(
+        store[2]["committed_total_u"], initial[2]["committed_total_u"]
+    )
+    np.testing.assert_array_equal(
+        restart[2]["committed_nodal_rotation_matrices"],
+        initial[2]["committed_nodal_rotation_matrices"],
+    )
+    np.testing.assert_array_equal(
+        store[2]["committed_nodal_rotation_matrices"],
+        initial[2]["committed_nodal_rotation_matrices"],
     )
     np.testing.assert_array_equal(restart[2]["alpha"], initial[2]["alpha"])

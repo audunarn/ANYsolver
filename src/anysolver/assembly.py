@@ -51,6 +51,7 @@ from .matrix_assembly import (
 )
 from .nonlinear_state import require_no_native_total_lagrangian_elements
 from .recovery import ResourceConfig
+from .recovery_batches import _run_with_qualified_recovery_runtime_lease
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
@@ -1273,21 +1274,47 @@ def solve_nonlinear(
     return u, solver_info
 
 
-def compute_internal_forces(model: "FEModel", displacements: np.ndarray) -> np.ndarray:
+def _compute_internal_forces_under_lease(
+    model: "FEModel",
+    displacements: np.ndarray,
+    *,
+    qualified_runtime_guard: Any,
+) -> np.ndarray:
     """Compute internal forces for all elements."""
+    qualified_runtime_guard(stage="internal-force preflight")
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
 
     for elem_id, element in mesh.elements.items():
         material = model.get_material(element.material_name)
+        qualified_runtime_guard(
+            stage=f"internal-force material observation for element {elem_id}"
+        )
         dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
         if dof_mapping.size == 0:
             continue
         u_elem = displacements[dof_mapping]
         F_elem = np.asarray(element.compute_internal_forces(mesh, u_elem, material), dtype=float)
+        qualified_runtime_guard(
+            stage=f"internal-force element observation for element {elem_id}"
+        )
         np.add.at(F_int, dof_mapping, F_elem)
     return F_int
+
+
+def compute_internal_forces(model: "FEModel", displacements: np.ndarray) -> np.ndarray:
+    """Compute all element forces under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="internal-force computation",
+        operation=lambda guard: _compute_internal_forces_under_lease(
+            model,
+            displacements,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 def _add_dof_force(force_map: Dict[int, np.ndarray], model: "FEModel", dof: int, value: float) -> None:
@@ -1308,12 +1335,13 @@ def _compact_force_map(force_map: Dict[int, np.ndarray], tolerance: float = 0.0)
     return compact
 
 
-def compute_constraint_force_diagnostics(
+def _compute_constraint_force_diagnostics_under_lease(
     model: "FEModel",
     displacements: np.ndarray,
     load_case: Optional["LoadCase"] = None,
     *,
     force_tolerance: float = 0.0,
+    qualified_runtime_guard: Any,
 ) -> Dict[str, Any]:
     """Return separated support, MPC and nullspace force diagnostics.
 
@@ -1328,6 +1356,7 @@ def compute_constraint_force_diagnostics(
     model.apply_boundary_conditions()
 
     K, _, _ = assemble_system(model)
+    qualified_runtime_guard(stage="constraint-force stiffness observation")
     if load_case is None:
         F_ext = np.zeros(dof_manager.total_dofs, dtype=float)
     else:
@@ -1337,8 +1366,12 @@ def compute_constraint_force_diagnostics(
             model.get_material,
             element_activity=getattr(mesh, "element_activity", None),
         )
+        qualified_runtime_guard(stage="constraint-force load-provider observation")
+        F_ext = np.asarray(F_ext, dtype=float)
+        qualified_runtime_guard(stage="constraint-force load-array observation")
 
     u = np.asarray(displacements, dtype=float).reshape(-1)
+    qualified_runtime_guard(stage="constraint-force displacement observation")
     if u.shape[0] != int(K.shape[0]):
         raise ValueError(f"Displacement vector length {u.shape[0]} does not match system size {K.shape[0]}")
 
@@ -1426,9 +1459,42 @@ def compute_constraint_force_diagnostics(
     }
 
 
-def compute_reactions(model: "FEModel", displacements: np.ndarray, load_case: "LoadCase") -> Dict[int, np.ndarray]:
+def compute_constraint_force_diagnostics(
+    model: "FEModel",
+    displacements: np.ndarray,
+    load_case: Optional["LoadCase"] = None,
+    *,
+    force_tolerance: float = 0.0,
+) -> Dict[str, Any]:
+    """Compute constraint forces under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="constraint-force diagnostics",
+        operation=lambda guard: _compute_constraint_force_diagnostics_under_lease(
+            model,
+            displacements,
+            load_case,
+            force_tolerance=force_tolerance,
+            qualified_runtime_guard=guard,
+        ),
+    )
+
+
+def _compute_reactions_under_lease(
+    model: "FEModel",
+    displacements: np.ndarray,
+    load_case: "LoadCase",
+    *,
+    qualified_runtime_guard: Any,
+) -> Dict[int, np.ndarray]:
     """Compute legacy combined reactions at fixed and MPC slave DOFs."""
-    diagnostics = compute_constraint_force_diagnostics(model, displacements, load_case)
+    diagnostics = _compute_constraint_force_diagnostics_under_lease(
+        model,
+        displacements,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     reactions: Dict[int, np.ndarray] = {}
     for bucket in ("support_reactions", "mpc_slave_forces"):
         for node_id, values in diagnostics[bucket].items():
@@ -1437,13 +1503,36 @@ def compute_reactions(model: "FEModel", displacements: np.ndarray, load_case: "L
     return _compact_force_map(reactions)
 
 
-def compute_stresses(
+def compute_reactions(
+    model: "FEModel",
+    displacements: np.ndarray,
+    load_case: "LoadCase",
+) -> Dict[int, np.ndarray]:
+    """Compute reactions under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="reaction computation",
+        operation=lambda guard: _compute_reactions_under_lease(
+            model,
+            displacements,
+            load_case,
+            qualified_runtime_guard=guard,
+        ),
+    )
+
+
+def _compute_stresses_under_lease(
     model: "FEModel",
     displacements: np.ndarray,
     return_global: bool = False,
     element_ids: Optional[Sequence[int]] = None,
+    *,
+    qualified_runtime_guard: Any,
 ) -> Dict[int, Dict[str, np.ndarray]]:
     """Compute stresses for all or selected elements."""
+    qualified_runtime_guard(stage="stress-recovery preflight")
+    qualified_runtime_guard(stage="constraint-force preflight")
     mesh = model.mesh
     stresses: Dict[int, Dict[str, np.ndarray]] = {}
     selected = None if element_ids is None else {int(element_id) for element_id in element_ids}
@@ -1464,6 +1553,9 @@ def compute_stresses(
         if selected is not None and int(elem_id) not in selected:
             continue
         material = model.get_material(element.material_name)
+        qualified_runtime_guard(
+            stage=f"stress material observation for element {elem_id}"
+        )
         dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
         if (
             dof_mapping.size == 0
@@ -1480,11 +1572,35 @@ def compute_stresses(
             stresses[elem_id] = element.compute_stresses(
                 mesh, displacements[dof_mapping], material, return_global=return_global
             )
+            qualified_runtime_guard(
+                stage=f"stress element observation for element {elem_id}"
+            )
         except (IndexError, ValueError):
             if bool(getattr(element, "recovery_errors_fail_closed", False)):
                 raise
             continue
     return stresses
+
+
+def compute_stresses(
+    model: "FEModel",
+    displacements: np.ndarray,
+    return_global: bool = False,
+    element_ids: Optional[Sequence[int]] = None,
+) -> Dict[int, Dict[str, np.ndarray]]:
+    """Compute stresses under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="stress computation",
+        operation=lambda guard: _compute_stresses_under_lease(
+            model,
+            displacements,
+            return_global,
+            element_ids,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 def extract_node_displacements(displacements: np.ndarray, mesh: "FEMesh") -> Dict[int, np.ndarray]:

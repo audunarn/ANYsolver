@@ -8,6 +8,7 @@ average-acceleration method by default.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 import math
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple, Union
@@ -31,10 +32,22 @@ from .assembly import build_constraint_transformation, reconstruct_full_solution
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
-from .element_capabilities import require_model_element_capabilities
+from .element_capabilities import ElementCapabilityError, require_model_element_capabilities
+from .e4_pl_s3_state import (
+    require_exact_numpy_runtime_authority as _EXACT_NUMERICAL_RUNTIME_GUARD,
+)
 from .linalg import MatrixClass, factorize
 from .boundary import LoadCase
-from .matrix_assembly import assemble_load_vector, assemble_mass_matrix, assemble_stiffness_matrix
+from .matrix_assembly import (
+    _run_with_qualified_assembly_runtime_lease,
+    assemble_load_vector,
+    assemble_mass_matrix,
+    assemble_stiffness_matrix,
+)
+from .modal import (
+    QUALIFIED_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID as _EXACT_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID,
+    _require_qualified_prestress_operator_authority as _EXACT_PRESTRESS_OPERATOR_AUTHORITY_GUARD,
+)
 from .recovery import RecoveryConfig, ResourceConfig, enforce_memory_limit, estimate_model_memory, recovery_metadata
 from .validation import load_vector_resultant
 from .threading_policy import resource_threaded
@@ -42,6 +55,246 @@ from .threading_policy import resource_threaded
 if TYPE_CHECKING:
     from .analysis_session import AnalysisSession
     from .fe_core import FEModel
+
+
+QUALIFIED_REFERENCE_TRANSIENT_AUTHORITY_POLICY_ID = (
+    "EXACT_Q4_S3_REFERENCE_OPERATORS_ACTIVE_STATE_ONLY_V1"
+)
+_QUALIFIED_Q4_FORMULATION_ID = "E4_PL_QUALIFIED_Q4_HYBRID_V2"
+_QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+
+
+def _bind_transient_numerical_guard(numerical_guard: Any) -> Any:
+    def require(*, context: str) -> None:
+        try:
+            numerical_guard(context=context)
+        except ValueError as exc:
+            raise ElementCapabilityError(str(exc)) from exc
+
+    return require
+
+
+_TRANSIENT_NUMERICAL_GUARD = _bind_transient_numerical_guard(
+    _EXACT_NUMERICAL_RUNTIME_GUARD
+)
+
+
+def _static_mro_attribute(owner: type[Any], name: str) -> Any:
+    """Return a class member without invoking a caller-controlled descriptor."""
+
+    for base in type.__getattribute__(owner, "__mro__"):
+        namespace = type.__getattribute__(base, "__dict__")
+        if name in namespace:
+            value = namespace[name]
+            if isinstance(value, (classmethod, staticmethod)):
+                return value.__func__
+            return value
+    return None
+
+
+def _static_formulation_id(element: Any) -> Optional[str]:
+    value = _static_mro_attribute(type(element), "formulation_id")
+    return value if type(value) is str else None
+
+
+def _require_qualified_reference_transient_authority(
+    model: "FEModel",
+    *,
+    _prestress_guard: Any = _EXACT_PRESTRESS_OPERATOR_AUTHORITY_GUARD,
+    _prestress_policy_id: str = _EXACT_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID,
+) -> Dict[str, Any]:
+    """Validate qualified reference operators and ACTIVE lifecycle pre-mechanics.
+
+    Linear Newmark advances the reference stiffness and consistent mass.  It
+    therefore rejects softened or hard-deleted model activity.  This route has
+    no element-state input and makes no claim about detached failed-result
+    records.  The exact operator guard is shared with the reference-prestress
+    modal/buckling paths; this wrapper adds only the full-activity condition.
+    """
+
+    from .activity import ElementActivity
+    from .e4_pl_element import (
+        IMPLEMENTATION_ID,
+        Q4_QUADRATURE_AUTHORITY_ID,
+        QualifiedE4PLShellElement,
+    )
+    from .e4_pl_s3_element import (
+        ALGEBRAIC_COORDINATE_POLICY_ID,
+        S3_QUADRATURE_AUTHORITY_ID,
+        QualifiedE4PLS3ShellElement,
+    )
+    qualified_ids: list[int] = []
+    q4_ids: list[int] = []
+    s3_ids: list[int] = []
+    for raw_element_id, element in sorted(model.mesh.elements.items()):
+        element_id = int(raw_element_id)
+        formulation_id = _static_formulation_id(element)
+        if (
+            type(element) is QualifiedE4PLShellElement
+            or formulation_id == _QUALIFIED_Q4_FORMULATION_ID
+        ):
+            qualified_ids.append(element_id)
+            q4_ids.append(element_id)
+        elif (
+            type(element) is QualifiedE4PLS3ShellElement
+            or formulation_id == _QUALIFIED_S3_FORMULATION_ID
+        ):
+            qualified_ids.append(element_id)
+            s3_ids.append(element_id)
+
+    if not qualified_ids:
+        return {
+            "policy_id": QUALIFIED_REFERENCE_TRANSIENT_AUTHORITY_POLICY_ID,
+            "active": False,
+            "qualified_element_ids": [],
+            "formulation_counts": {},
+            "activity_disposition": "NOT_APPLICABLE",
+        }
+
+    # ``None`` is the exact reference-elastic state for both qualified
+    # families.  The shared guard binds concrete type/formulation routing,
+    # stiffness and mass operators, inherited helpers, quadrature, S3
+    # algebraic-coordinate descriptors, and exact nodal DOF mapping.
+    reference_states = {
+        int(element_id): None for element_id in model.mesh.elements
+    }
+    _prestress_guard(
+        model,
+        reference_states,
+        include_mass_and_descriptor=True,
+    )
+
+    failures: list[tuple[int, str]] = []
+    descriptor_names = (
+        "dynamic_algebraic_nullity",
+        "dynamic_algebraic_policy",
+        "dynamic_algebraic_mass_witness",
+        "dynamic_algebraic_local_zero_indices",
+    )
+    for element_id in q4_ids:
+        element = model.mesh.elements[element_id]
+        if (
+            "formulation_id" in vars(element)
+            or "implementation_id" in vars(element)
+            or "quadrature_authority_id" in vars(element)
+            or _static_mro_attribute(type(element), "formulation_id")
+            != _QUALIFIED_Q4_FORMULATION_ID
+            or _static_mro_attribute(type(element), "implementation_id")
+            != IMPLEMENTATION_ID
+            or _static_mro_attribute(type(element), "quadrature_authority_id")
+            != Q4_QUADRATURE_AUTHORITY_ID
+        ):
+            failures.append((element_id, "qualified_q4:identity"))
+        if any(
+            name in vars(element)
+            or _static_mro_attribute(type(element), name) is not None
+            for name in descriptor_names
+        ):
+            failures.append(
+                (element_id, "qualified_q4:unexpected_algebraic_descriptor")
+            )
+    for element_id in s3_ids:
+        element = model.mesh.elements[element_id]
+        if (
+            "formulation_id" in vars(element)
+            or "quadrature_authority_id" in vars(element)
+            or _static_mro_attribute(type(element), "formulation_id")
+            != _QUALIFIED_S3_FORMULATION_ID
+            or _static_mro_attribute(type(element), "quadrature_authority_id")
+            != S3_QUADRATURE_AUTHORITY_ID
+        ):
+            failures.append((element_id, "qualified_s3:identity"))
+        class_namespace = vars(type(element))
+        dynamic_identity = (
+            class_namespace.get("dynamic_algebraic_nullity"),
+            class_namespace.get("dynamic_algebraic_policy"),
+            class_namespace.get("dynamic_algebraic_mass_witness"),
+            class_namespace.get("dynamic_algebraic_local_zero_indices"),
+        )
+        if dynamic_identity != (
+            3,
+            ALGEBRAIC_COORDINATE_POLICY_ID,
+            "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1",
+            (5, 11, 17),
+        ) or any(name in vars(element) for name in descriptor_names):
+            failures.append((element_id, "qualified_s3:algebraic_descriptor"))
+    if failures:
+        detail = "; ".join(
+            f"{element_id} ({reason})" for element_id, reason in failures[:8]
+        )
+        raise ElementCapabilityError(
+            "linear transient analysis requires exact qualified formulation "
+            f"identity and algebraic descriptors; incompatible element IDs {detail}"
+        )
+
+    activity = getattr(model.mesh, "element_activity", None)
+    activity_sequence = 0
+    if activity is not None:
+        if type(activity) is not ElementActivity:
+            raise ElementCapabilityError(
+                "linear transient analysis requires exact ElementActivity "
+                "ownership for qualified Q4/S3 elements"
+            )
+        raw_activity_ids = np.asarray(activity.element_ids)
+        model_ids = tuple(sorted(int(value) for value in model.mesh.elements))
+        if (
+            raw_activity_ids.ndim != 1
+            or raw_activity_ids.dtype.kind not in "iu"
+            or len(set(int(value) for value in raw_activity_ids))
+            != raw_activity_ids.size
+            or tuple(sorted(int(value) for value in raw_activity_ids)) != model_ids
+        ):
+            raise ElementCapabilityError(
+                "linear transient ElementActivity is not bound to the exact FE model"
+            )
+        values = np.asarray(activity.activity, dtype=np.float64)
+        hard_deleted = np.asarray(activity.hard_deleted_mask, dtype=bool)
+        if (
+            values.shape != raw_activity_ids.shape
+            or hard_deleted.shape != raw_activity_ids.shape
+            or not np.all(np.isfinite(values))
+        ):
+            raise ElementCapabilityError(
+                "linear transient ElementActivity state is malformed"
+            )
+        index = {
+            int(element_id): position
+            for position, element_id in enumerate(raw_activity_ids)
+        }
+        inactive = [
+            element_id
+            for element_id in qualified_ids
+            if values[index[element_id]] != 1.0
+            or bool(hard_deleted[index[element_id]])
+        ]
+        if inactive:
+            raise ElementCapabilityError(
+                "linear transient qualified Q4/S3 reference operators require "
+                "exact full model activity; softened or hard-deleted element "
+                "IDs "
+                + ", ".join(str(value) for value in inactive[:8])
+            )
+        activity_sequence = int(activity.sequence)
+
+    _prestress_guard(
+        model,
+        reference_states,
+        include_mass_and_descriptor=True,
+    )
+    return {
+        "policy_id": QUALIFIED_REFERENCE_TRANSIENT_AUTHORITY_POLICY_ID,
+        "active": True,
+        "qualified_element_ids": qualified_ids,
+        "formulation_counts": {
+            _QUALIFIED_Q4_FORMULATION_ID: len(q4_ids),
+            _QUALIFIED_S3_FORMULATION_ID: len(s3_ids),
+        },
+        "activity_disposition": "ACTIVE_REFERENCE_ONLY",
+        "activity_sequence": activity_sequence,
+        "operator_authority_policy_id": (
+            _prestress_policy_id
+        ),
+    }
 
 
 PressureTime = Union[float, int, Sequence[Tuple[float, float]], Callable[[float], float]]
@@ -58,17 +311,50 @@ def _as_axes(axes: Sequence[int]) -> Tuple[int, ...]:
 
 
 def _time_value(value: PressureTime, time: float) -> float:
+    numerical_guard = _TRANSIENT_NUMERICAL_GUARD
+    numerical_guard(context="transient pressure history")
     if callable(value):
-        return float(value(float(time)))
+        observed = value(float(time))
+        numerical_guard(context="transient pressure history callback")
+        return float(observed)
     if isinstance(value, (int, float, np.number)):
         return float(value)
 
-    table = np.asarray(list(value), dtype=float)
+    observed_rows = list(value)
+    numerical_guard(context="transient pressure history iterable")
+    owned_rows = [tuple(row) for row in observed_rows]
+    numerical_guard(context="transient pressure history rows")
+    table = np.asarray(owned_rows, dtype=float)
     if table.ndim != 2 or table.shape[1] != 2 or table.shape[0] == 0:
         raise ValueError("pressure_time table must contain (time, pressure) pairs")
     order = np.argsort(table[:, 0])
     table = table[order]
     return float(np.interp(float(time), table[:, 0], table[:, 1]))
+
+
+def _guarded_pressure_value(
+    model: "FEModel",
+    patch: "PressurePatch",
+    time: float,
+    operation_guard: Callable[["FEModel"], Any],
+) -> float:
+    """Evaluate one retained pressure callback and stop at its first mutation."""
+
+    pressure_time = patch.pressure_time
+    operation_guard(model)
+    if callable(pressure_time):
+        observed = pressure_time(float(time))
+        operation_guard(model)
+        magnitude = float(observed)
+        operation_guard(model)
+    else:
+        magnitude = _time_value(pressure_time, float(time))
+        operation_guard(model)
+    pressure_scale = patch.pressure_scale
+    operation_guard(model)
+    scale = float(pressure_scale)
+    operation_guard(model)
+    return scale * magnitude
 
 
 @dataclass(frozen=True)
@@ -146,47 +432,141 @@ class PressurePatch:
 
     def selected_element_ids(self, model: "FEModel") -> Tuple[int, ...]:
         """Return selected shell-like element ids in stable model order."""
-        if self.normal_mode != "element_normal":
-            raise NotImplementedError("PressurePatch v1 supports normal_mode='element_normal' only")
+        authority_guard = _require_qualified_reference_transient_authority
+        authority_guard(model)
 
-        explicit = None if self.element_ids is None else {int(element_id) for element_id in self.element_ids}
-        axes = _as_axes(self.axes)
-        center = None if self.center is None else np.asarray(self.center, dtype=float).reshape(-1)
-        if center is not None and center.size < 3:
-            padded = np.zeros(3, dtype=float)
-            padded[: center.size] = center
-            center = padded
-        box = None if self.box_size is None else np.asarray(self.box_size, dtype=float).reshape(-1)
-        if box is not None:
-            if box.size not in (len(axes), 3):
-                raise ValueError("box_size must have either len(axes) entries or 3 entries")
-            if np.any(box <= 0.0):
-                raise ValueError("box_size entries must be positive")
+        def operation(lease: Any) -> Tuple[int, ...]:
+            def combined_guard(observed_model: "FEModel") -> None:
+                authority_guard(observed_model)
+                lease(
+                    observed_model,
+                    context="pressure-patch selection observation",
+                )
 
-        selected = []
-        for element_id, element in model.mesh.elements.items():
-            if explicit is not None:
-                if int(element_id) in explicit:
-                    selected.append(int(element_id))
-                continue
-            if not hasattr(element, "get_node_coordinates") or not hasattr(element, "compute_shape_functions"):
-                continue
-            coords = element.get_node_coordinates(model.mesh)
-            centroid = np.mean(coords, axis=0)
-            include = True
-            if self.selector is not None:
-                include = bool(self.selector(int(element_id), element, centroid))
-            if include and center is not None and box is not None:
-                if box.size == 3:
-                    half_size = box[list(axes)] / 2.0
-                else:
-                    half_size = box / 2.0
-                include = bool(np.all(np.abs(centroid[list(axes)] - center[list(axes)]) <= half_size + 1.0e-12))
-            if include and center is not None and self.radius is not None:
-                include = float(np.linalg.norm(centroid[list(axes)] - center[list(axes)])) <= float(self.radius) + 1.0e-12
-            if include:
+            return _selected_pressure_patch_element_ids(
+                self,
+                model,
+                combined_guard,
+            )
+
+        return _run_with_qualified_assembly_runtime_lease(
+            model,
+            context="PressurePatch.selected_element_ids",
+            operation=operation,
+        )
+
+
+def _selected_pressure_patch_element_ids(
+    patch: PressurePatch,
+    model: "FEModel",
+    operation_guard: Callable[["FEModel"], Any],
+) -> Tuple[int, ...]:
+    """Select one patch while retaining its caller's operation generation."""
+
+    normal_mode = patch.normal_mode
+    operation_guard(model)
+    if normal_mode != "element_normal":
+        raise NotImplementedError(
+            "PressurePatch v1 supports normal_mode='element_normal' only"
+        )
+
+    element_ids = patch.element_ids
+    operation_guard(model)
+    explicit = (
+        None
+        if element_ids is None
+        else {int(element_id) for element_id in element_ids}
+    )
+    operation_guard(model)
+    axes = _as_axes(patch.axes)
+    operation_guard(model)
+    center_value = patch.center
+    operation_guard(model)
+    center = (
+        None
+        if center_value is None
+        else np.asarray(center_value, dtype=float)
+    )
+    operation_guard(model)
+    if center is not None:
+        center = center.reshape(-1)
+    if center is not None and center.size < 3:
+        padded = np.zeros(3, dtype=float)
+        padded[: center.size] = center
+        center = padded
+    box_value = patch.box_size
+    operation_guard(model)
+    box = (
+        None
+        if box_value is None
+        else np.asarray(box_value, dtype=float)
+    )
+    operation_guard(model)
+    if box is not None:
+        box = box.reshape(-1)
+        if box.size not in (len(axes), 3):
+            raise ValueError(
+                "box_size must have either len(axes) entries or 3 entries"
+            )
+        if np.any(box <= 0.0):
+            raise ValueError("box_size entries must be positive")
+    radius_value = patch.radius
+    operation_guard(model)
+    radius = None if radius_value is None else float(radius_value)
+    operation_guard(model)
+    selector = patch.selector
+    operation_guard(model)
+    element_items = tuple(model.mesh.elements.items())
+    operation_guard(model)
+
+    selected = []
+    for element_id, element in element_items:
+        if explicit is not None:
+            if int(element_id) in explicit:
                 selected.append(int(element_id))
-        return tuple(selected)
+            continue
+        coordinate_getter = getattr(element, "get_node_coordinates", None)
+        operation_guard(model)
+        shape_getter = getattr(element, "compute_shape_functions", None)
+        operation_guard(model)
+        if not callable(coordinate_getter) or not callable(shape_getter):
+            continue
+        observed_coords = coordinate_getter(model.mesh)
+        operation_guard(model)
+        coords = np.asarray(observed_coords, dtype=float)
+        operation_guard(model)
+        centroid = np.mean(coords, axis=0)
+        include = True
+        if selector is not None:
+            selected_by_callback = selector(int(element_id), element, centroid)
+            operation_guard(model)
+            include = bool(selected_by_callback)
+            operation_guard(model)
+        if include and center is not None and box is not None:
+            half_size = (
+                box[list(axes)] / 2.0
+                if box.size == 3
+                else box / 2.0
+            )
+            include = bool(
+                np.all(
+                    np.abs(centroid[list(axes)] - center[list(axes)])
+                    <= half_size + 1.0e-12
+                )
+            )
+        if include and center is not None and radius is not None:
+            include = (
+                float(
+                    np.linalg.norm(
+                        centroid[list(axes)] - center[list(axes)]
+                    )
+                )
+                <= radius + 1.0e-12
+            )
+        if include:
+            selected.append(int(element_id))
+    operation_guard(model)
+    return tuple(selected)
 
 
 @dataclass(frozen=True)
@@ -246,6 +626,453 @@ class TransientConfig:
         return alpha, float(self.beta), float(self.gamma)
 
 
+def _guarded_iterable_snapshot(
+    model: "FEModel",
+    value: Any,
+    operation_guard: Callable[["FEModel"], Any],
+) -> Tuple[Any, ...]:
+    """Own one iterable while checking after every caller observation."""
+
+    iterator = iter(value)
+    operation_guard(model)
+    owned: list[Any] = []
+    while True:
+        try:
+            member = next(iterator)
+        except StopIteration:
+            operation_guard(model)
+            break
+        operation_guard(model)
+        owned.append(member)
+    return tuple(owned)
+
+
+def _guarded_plain_snapshot(
+    model: "FEModel",
+    value: Any,
+    operation_guard: Callable[["FEModel"], Any],
+) -> Any:
+    """Recursively detach configuration metadata and sequence leaves."""
+
+    if value is None or type(value) in {str, bool, int, float}:
+        return value
+    if isinstance(value, np.ndarray):
+        observed = np.asarray(value)
+        operation_guard(model)
+        contiguous = np.ascontiguousarray(observed)
+        return np.frombuffer(
+            contiguous.tobytes(order="C"),
+            dtype=contiguous.dtype,
+        ).reshape(contiguous.shape)
+    if isinstance(value, np.generic):
+        observed = value.item()
+        operation_guard(model)
+        return observed
+    if isinstance(value, Mapping):
+        observed_items = value.items()
+        operation_guard(model)
+        items = _guarded_iterable_snapshot(
+            model,
+            observed_items,
+            operation_guard,
+        )
+        result: Dict[Any, Any] = {}
+        for observed_item in items:
+            pair = _guarded_iterable_snapshot(
+                model,
+                observed_item,
+                operation_guard,
+            )
+            if len(pair) != 2:
+                raise ValueError("configuration mapping item must contain two values")
+            raw_key, raw_value = pair
+            key = _guarded_plain_snapshot(model, raw_key, operation_guard)
+            member = _guarded_plain_snapshot(model, raw_value, operation_guard)
+            if key in result:
+                raise ValueError("configuration mapping contains duplicate keys")
+            result[key] = member
+        return result
+    if isinstance(value, Sequence) and not isinstance(
+        value,
+        (str, bytes, bytearray),
+    ):
+        return tuple(
+            _guarded_plain_snapshot(model, member, operation_guard)
+            for member in _guarded_iterable_snapshot(
+                model,
+                value,
+                operation_guard,
+            )
+        )
+    observed = copy.deepcopy(value)
+    operation_guard(model)
+    return observed
+
+
+def _guarded_attribute(
+    model: "FEModel",
+    owner: Any,
+    name: str,
+    operation_guard: Callable[["FEModel"], Any],
+) -> Any:
+    value = getattr(owner, name)
+    operation_guard(model)
+    return value
+
+
+def _guarded_convert(
+    model: "FEModel",
+    value: Any,
+    converter: Callable[[Any], Any],
+    operation_guard: Callable[["FEModel"], Any],
+) -> Any:
+    converted = converter(value)
+    operation_guard(model)
+    return converted
+
+
+def _guarded_optional_sequence(
+    model: "FEModel",
+    value: Any,
+    converter: Callable[[Any], Any],
+    operation_guard: Callable[["FEModel"], Any],
+) -> Optional[Tuple[Any, ...]]:
+    if value is None:
+        return None
+    return tuple(
+        _guarded_convert(model, member, converter, operation_guard)
+        for member in _guarded_iterable_snapshot(
+            model,
+            value,
+            operation_guard,
+        )
+    )
+
+
+def _owned_resource_config(
+    model: "FEModel",
+    value: Any,
+    operation_guard: Callable[["FEModel"], Any],
+) -> Optional[ResourceConfig]:
+    if value is None:
+        return None
+
+    def optional_int(name: str) -> Optional[int]:
+        raw = _guarded_attribute(model, value, name, operation_guard)
+        return (
+            None
+            if raw is None
+            else _guarded_convert(model, raw, int, operation_guard)
+        )
+
+    deterministic = _guarded_convert(
+        model,
+        _guarded_attribute(model, value, "deterministic", operation_guard),
+        bool,
+        operation_guard,
+    )
+    raw_metadata = _guarded_attribute(
+        model,
+        value,
+        "metadata",
+        operation_guard,
+    )
+    metadata = _guarded_plain_snapshot(model, raw_metadata, operation_guard)
+    owned = ResourceConfig(
+        solver_threads=optional_int("solver_threads"),
+        assembly_threads=optional_int("assembly_threads"),
+        recovery_threads=optional_int("recovery_threads"),
+        process_workers=optional_int("process_workers"),
+        deterministic=deterministic,
+        memory_limit_bytes=optional_int("memory_limit_bytes"),
+        metadata=metadata,
+    )
+    operation_guard(model)
+    return owned
+
+
+def _owned_recovery_config(
+    model: "FEModel",
+    value: Any,
+    operation_guard: Callable[["FEModel"], Any],
+) -> Optional[RecoveryConfig]:
+    if value is None:
+        return None
+    node_ids = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, value, "node_ids", operation_guard),
+        int,
+        operation_guard,
+    )
+    element_ids = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, value, "element_ids", operation_guard),
+        int,
+        operation_guard,
+    )
+    components = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, value, "components", operation_guard),
+        str,
+        operation_guard,
+    )
+    include_displacements = _guarded_convert(
+        model,
+        _guarded_attribute(
+            model,
+            value,
+            "include_displacements",
+            operation_guard,
+        ),
+        bool,
+        operation_guard,
+    )
+    include_stresses = _guarded_convert(
+        model,
+        _guarded_attribute(model, value, "include_stresses", operation_guard),
+        bool,
+        operation_guard,
+    )
+    include_reactions = _guarded_convert(
+        model,
+        _guarded_attribute(model, value, "include_reactions", operation_guard),
+        bool,
+        operation_guard,
+    )
+    history_mode = _guarded_convert(
+        model,
+        _guarded_attribute(model, value, "history_mode", operation_guard),
+        str,
+        operation_guard,
+    )
+    store_full_histories = _guarded_convert(
+        model,
+        _guarded_attribute(
+            model,
+            value,
+            "store_full_histories",
+            operation_guard,
+        ),
+        bool,
+        operation_guard,
+    )
+    metadata = _guarded_plain_snapshot(
+        model,
+        _guarded_attribute(model, value, "metadata", operation_guard),
+        operation_guard,
+    )
+    owned = RecoveryConfig(
+        node_ids=node_ids,
+        element_ids=element_ids,
+        components=components,
+        include_displacements=include_displacements,
+        include_stresses=include_stresses,
+        include_reactions=include_reactions,
+        history_mode=history_mode,
+        store_full_histories=store_full_histories,
+        metadata=metadata,
+    )
+    operation_guard(model)
+    return owned
+
+
+def _owned_pressure_time(
+    model: "FEModel",
+    value: Any,
+    operation_guard: Callable[["FEModel"], Any],
+) -> PressureTime:
+    if callable(value):
+        return value
+    if isinstance(value, (int, float, np.number)):
+        return _guarded_convert(model, value, float, operation_guard)
+    rows = _guarded_iterable_snapshot(model, value, operation_guard)
+    owned_rows = []
+    for raw_row in rows:
+        row = _guarded_iterable_snapshot(model, raw_row, operation_guard)
+        if len(row) != 2:
+            raise ValueError(
+                "pressure_time table must contain (time, pressure) pairs"
+            )
+        owned_rows.append(
+            tuple(
+                _guarded_convert(model, member, float, operation_guard)
+                for member in row
+            )
+        )
+    return tuple(owned_rows)
+
+
+def _owned_pressure_patch(
+    model: "FEModel",
+    patch: Any,
+    operation_guard: Callable[["FEModel"], Any],
+) -> PressurePatch:
+    name = _guarded_convert(
+        model,
+        _guarded_attribute(model, patch, "name", operation_guard),
+        str,
+        operation_guard,
+    )
+    pressure_time = _owned_pressure_time(
+        model,
+        _guarded_attribute(model, patch, "pressure_time", operation_guard),
+        operation_guard,
+    )
+    element_ids = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, patch, "element_ids", operation_guard),
+        int,
+        operation_guard,
+    )
+    selector = _guarded_attribute(model, patch, "selector", operation_guard)
+    center = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, patch, "center", operation_guard),
+        float,
+        operation_guard,
+    )
+    box_size = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, patch, "box_size", operation_guard),
+        float,
+        operation_guard,
+    )
+    raw_radius = _guarded_attribute(model, patch, "radius", operation_guard)
+    radius = (
+        None
+        if raw_radius is None
+        else _guarded_convert(model, raw_radius, float, operation_guard)
+    )
+    axes = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, patch, "axes", operation_guard),
+        int,
+        operation_guard,
+    )
+    pressure_scale = _guarded_convert(
+        model,
+        _guarded_attribute(model, patch, "pressure_scale", operation_guard),
+        float,
+        operation_guard,
+    )
+    normal_mode = _guarded_convert(
+        model,
+        _guarded_attribute(model, patch, "normal_mode", operation_guard),
+        str,
+        operation_guard,
+    )
+    metadata = _guarded_plain_snapshot(
+        model,
+        _guarded_attribute(model, patch, "metadata", operation_guard),
+        operation_guard,
+    )
+    owned = PressurePatch(
+        name=name,
+        pressure_time=pressure_time,
+        element_ids=element_ids,
+        selector=selector,
+        center=center,
+        box_size=box_size,
+        radius=radius,
+        axes=() if axes is None else axes,
+        pressure_scale=pressure_scale,
+        normal_mode=normal_mode,
+        metadata=metadata,
+    )
+    operation_guard(model)
+    return owned
+
+
+def _owned_transient_configuration(
+    model: "FEModel",
+    config: Any,
+    pressure_patches: Optional[Sequence[PressurePatch]],
+    operation_guard: Callable[["FEModel"], Any],
+) -> Tuple[TransientConfig, Tuple[float, float, float], Tuple[PressurePatch, ...]]:
+    """Own all transient configuration before matrix or element mechanics."""
+
+    def scalar(name: str, converter: Callable[[Any], Any]) -> Any:
+        return _guarded_convert(
+            model,
+            _guarded_attribute(model, config, name, operation_guard),
+            converter,
+            operation_guard,
+        )
+
+    output_nodes = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, config, "output_nodes", operation_guard),
+        int,
+        operation_guard,
+    )
+    output_elements = _guarded_optional_sequence(
+        model,
+        _guarded_attribute(model, config, "output_elements", operation_guard),
+        int,
+        operation_guard,
+    )
+
+    def owned_array(name: str) -> Optional[np.ndarray]:
+        raw = _guarded_attribute(model, config, name, operation_guard)
+        if raw is None:
+            return None
+        observed = np.asarray(raw, dtype=np.float64)
+        operation_guard(model)
+        contiguous = np.ascontiguousarray(observed, dtype=np.float64)
+        return np.frombuffer(
+            contiguous.tobytes(order="C"),
+            dtype=np.float64,
+        ).reshape(contiguous.shape)
+
+    recovery = _owned_recovery_config(
+        model,
+        _guarded_attribute(model, config, "recovery", operation_guard),
+        operation_guard,
+    )
+    resources = _owned_resource_config(
+        model,
+        _guarded_attribute(model, config, "resource_config", operation_guard),
+        operation_guard,
+    )
+    owned = TransientConfig(
+        dt=scalar("dt", float),
+        t_end=scalar("t_end", float),
+        beta=scalar("beta", float),
+        gamma=scalar("gamma", float),
+        hht_alpha=scalar("hht_alpha", float),
+        rayleigh_alpha=scalar("rayleigh_alpha", float),
+        rayleigh_beta=scalar("rayleigh_beta", float),
+        save_every=scalar("save_every", int),
+        output_nodes=output_nodes,
+        output_elements=output_elements,
+        initial_displacement=owned_array("initial_displacement"),
+        initial_velocity=owned_array("initial_velocity"),
+        include_stress_history=scalar("include_stress_history", bool),
+        recovery=recovery,
+        resource_config=resources,
+    )
+    operation_guard(model)
+    integration = tuple(float(value) for value in owned.integration_parameters())
+    operation_guard(model)
+    if len(integration) != 3 or not all(math.isfinite(value) for value in integration):
+        raise ValueError("transient integration parameters must be three finite values")
+    raw_patches = (
+        ()
+        if pressure_patches is None
+        else _guarded_iterable_snapshot(
+            model,
+            pressure_patches,
+            operation_guard,
+        )
+    )
+    patches = tuple(
+        _owned_pressure_patch(model, patch, operation_guard)
+        for patch in raw_patches
+    )
+    operation_guard(model)
+    return owned, integration, patches
+
+
 @dataclass(frozen=True)
 class TransientResult:
     """Saved transient response histories and diagnostics."""
@@ -298,10 +1125,18 @@ def _time_grid(config: TransientConfig) -> np.ndarray:
     return times
 
 
-def _full_initial_vector(value: Optional[np.ndarray], size: int) -> np.ndarray:
+def _full_initial_vector(
+    value: Optional[np.ndarray],
+    size: int,
+    *,
+    post_observation: Optional[Callable[[], Any]] = None,
+) -> np.ndarray:
     if value is None:
         return np.zeros(size, dtype=float)
-    vector = np.asarray(value, dtype=float).reshape(-1)
+    vector = np.asarray(value, dtype=float)
+    if post_observation is not None:
+        post_observation()
+    vector = vector.reshape(-1)
     if vector.shape != (size,):
         raise ValueError(f"initial vector has shape {vector.shape}; expected {(size,)}")
     return vector
@@ -410,30 +1245,97 @@ def _node_dof_indices(model: "FEModel", node_ids: Sequence[int]) -> np.ndarray:
     return np.asarray(indices, dtype=np.intp)
 
 
-def assemble_pressure_patch_load_vector(
-    model: "FEModel",
-    patch: PressurePatch,
-    pressure: float = 1.0,
-) -> Tuple[np.ndarray, Dict[str, Any]]:
-    """Assemble the consistent global load vector for a unit pressure patch."""
-    selected = patch.selected_element_ids(model)
-    load_case = LoadCase(name=f"pressure_patch:{patch.name}")
-    for element_id in selected:
-        load_case.add_pressure_load(element_id, float(pressure))
-    vector, info = assemble_load_vector(model, load_case)
-    resultant = load_vector_resultant(model, vector)
-    info.update(
-        {
-            "patch_name": patch.name,
-            "selected_element_ids": list(selected),
-            "num_selected_elements": len(selected),
-            "pressure": float(pressure),
-            "selection_mode": "explicit" if patch.element_ids is not None else "centroid",
-            "resultant_force": resultant.force.tolist(),
-            "resultant_moment": resultant.moment.tolist(),
-        }
-    )
-    return vector, info
+def _make_pressure_patch_load_assembler(
+    authority_guard: Callable[["FEModel"], Dict[str, Any]],
+) -> Callable[["FEModel", PressurePatch, float], Tuple[np.ndarray, Dict[str, Any]]]:
+    """Capture the exact guard across a caller-owned selector callback."""
+
+    def guarded_assembler(
+        model: "FEModel",
+        patch: PressurePatch,
+        pressure: float,
+        operation_guard: Callable[["FEModel"], Any],
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        observed_name = patch.name
+        operation_guard(model)
+        patch_name = str(observed_name)
+        operation_guard(model)
+        observed_element_ids = patch.element_ids
+        operation_guard(model)
+        selection_mode = (
+            "explicit" if observed_element_ids is not None else "centroid"
+        )
+        magnitude = float(pressure)
+        operation_guard(model)
+        selected = _selected_pressure_patch_element_ids(
+            patch,
+            model,
+            operation_guard,
+        )
+        # Selection may execute an application callback.  Re-establish the
+        # same non-renewable operation generation before constructing any
+        # pressure load or evaluating element shape mechanics.
+        operation_guard(model)
+        load_case = LoadCase(name=f"pressure_patch:{patch_name}")
+        for element_id in selected:
+            load_case.add_pressure_load(element_id, magnitude)
+        vector, info = assemble_load_vector(model, load_case)
+        operation_guard(model)
+        resultant = load_vector_resultant(model, vector)
+        operation_guard(model)
+        info.update(
+            {
+                "patch_name": patch_name,
+                "selected_element_ids": list(selected),
+                "num_selected_elements": len(selected),
+                "pressure": magnitude,
+                "selection_mode": selection_mode,
+                "resultant_force": resultant.force.tolist(),
+                "resultant_moment": resultant.moment.tolist(),
+            }
+        )
+        return vector, info
+
+    def assemble_pressure_patch_load_vector(
+        model: "FEModel",
+        patch: PressurePatch,
+        pressure: float = 1.0,
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """Assemble the consistent global load vector for a unit pressure patch."""
+
+        authority_guard(model)
+
+        def operation(lease: Any) -> Tuple[np.ndarray, Dict[str, Any]]:
+            def combined_guard(observed_model: "FEModel") -> None:
+                authority_guard(observed_model)
+                lease(
+                    observed_model,
+                    context="pressure-patch callback observation",
+                )
+
+            return guarded_assembler(
+                model,
+                patch,
+                pressure,
+                combined_guard,
+            )
+
+        return _run_with_qualified_assembly_runtime_lease(
+            model,
+            context="assemble_pressure_patch_load_vector",
+            operation=operation,
+        )
+
+    assemble_pressure_patch_load_vector._guarded_implementation = guarded_assembler
+    return assemble_pressure_patch_load_vector
+
+
+assemble_pressure_patch_load_vector = _make_pressure_patch_load_assembler(
+    _require_qualified_reference_transient_authority
+)
+_ASSEMBLE_PRESSURE_PATCH_LOAD_VECTOR_GUARDED = (
+    assemble_pressure_patch_load_vector._guarded_implementation
+)
 
 
 def _reduced_load(
@@ -472,7 +1374,7 @@ def _selected_stresses(
 
 
 @resource_threaded
-def solve_transient_newmark(
+def _solve_transient_newmark_under_lease(
     model: "FEModel",
     config: TransientConfig,
     pressure_patches: Optional[Sequence[PressurePatch]] = None,
@@ -481,6 +1383,11 @@ def solve_transient_newmark(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     session: Optional["AnalysisSession"] = None,
+    _owned_integration_parameters: Optional[
+        Tuple[float, float, float]
+    ] = None,
+    _start_cancellation_checked: bool = False,
+    _qualified_runtime_guard: Any = None,
 ) -> TransientResult:
     """Solve linear transient response with Newmark time integration.
 
@@ -492,34 +1399,77 @@ def solve_transient_newmark(
     the static solver.  ``C`` is Rayleigh damping
     ``alpha * M + beta * K``.
     """
-    cancellation_safe_point(cancellation_token, "transient.start")
+    raw_reference_authority_guard = (
+        _require_qualified_reference_transient_authority
+    )
+
+    def reference_authority_guard(
+        observed_model: "FEModel",
+    ) -> Dict[str, Any]:
+        result = raw_reference_authority_guard(observed_model)
+        _qualified_runtime_guard(
+            observed_model,
+            context="solve_transient_newmark runtime authority",
+        )
+        return result
+    if not _start_cancellation_checked:
+        cancellation_safe_point(cancellation_token, "transient.start")
+        reference_authority_guard(model)
+    if _owned_integration_parameters is None:
+        config, integration_parameters, patches = (
+            _owned_transient_configuration(
+                model,
+                config,
+                pressure_patches,
+                reference_authority_guard,
+            )
+        )
+        reference_authority_guard(model)
+    else:
+        integration_parameters = _owned_integration_parameters
+        patches = () if pressure_patches is None else tuple(pressure_patches)
+    if session is not None:
+        # Ownership and liveness must be established before boundary-condition
+        # application, load evaluation, or any matrix/cache access.
+        session._require_model(model)
+        reference_authority_guard(model)
+    qualified_reference_authority = reference_authority_guard(model)
     require_model_element_capabilities(
         model,
         "transient_algebraic_dynamics",
         context="linear transient analysis",
     )
     model.apply_boundary_conditions()
+    reference_authority_guard(model)
     total_dofs = model.mesh.dof_manager.total_dofs
     base_load, base_load_info = assemble_load_vector(model, base_load_case)
+    reference_authority_guard(model)
     if session is None:
         K, stiffness_info = assemble_stiffness_matrix(model)
+        reference_authority_guard(model)
         M, mass_info = assemble_mass_matrix(model)
+        reference_authority_guard(model)
         zero_load = np.zeros(total_dofs, dtype=float)
         K_red, _zero_red, T, u0, independent_dofs, constraint_info = (
             build_constraint_transformation(K, zero_load, model)
         )
+        reference_authority_guard(model)
         M_red = (T.T @ M @ T).tocsr()
         constraint_plan = None
     else:
         stiffness_plan = session.stiffness_plan(model)
+        reference_authority_guard(model)
         constraint_plan = session.constraint_plan(stiffness_plan, model)
+        reference_authority_guard(model)
         mass_plan = session.mass_plan(model)
+        reference_authority_guard(model)
         K = stiffness_plan.matrix
         M = mass_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
         mass_info = dict(mass_plan.info)
         K_red = constraint_plan.K_red
         M_red, _ = session.reduced_mass(constraint_plan, model)
+        reference_authority_guard(model)
         T = constraint_plan.T
         u0 = constraint_plan.u0
         independent_dofs = constraint_plan.independent_dofs
@@ -532,7 +1482,7 @@ def solve_transient_newmark(
         {
             "element_id": int(element_id),
             "formulation_id": str(
-                getattr(model.mesh.elements[element_id], "formulation_id", "")
+                _static_formulation_id(model.mesh.elements[element_id]) or ""
             ),
             "algebraic_coordinate_policy": str(
                 getattr(
@@ -589,24 +1539,62 @@ def solve_transient_newmark(
     if float(np.linalg.norm(M_dynamic.diagonal())) <= 0.0 and M_dynamic.nnz == 0:
         raise ValueError("Transient analysis requires a non-zero mass matrix; set material density values.")
 
-    patches = tuple(pressure_patches or ())
     patch_vectors = []
     patch_infos = []
     for patch in patches:
-        vector, info = assemble_pressure_patch_load_vector(model, patch, pressure=1.0)
+        vector, info = _ASSEMBLE_PRESSURE_PATCH_LOAD_VECTOR_GUARDED(
+            model,
+            patch,
+            1.0,
+            reference_authority_guard,
+        )
+        reference_authority_guard(model)
         patch_vectors.append(vector)
         patch_infos.append(info)
-
     base_load_red = _reduced_load(T, K, u0, base_load)
     patch_vectors_red = [
         np.asarray(T.T @ vector, dtype=float).reshape(-1)
         for vector in patch_vectors
     ]
+    times = _time_grid(config)
+    time_index = {
+        float(value).hex(): index for index, value in enumerate(times)
+    }
+    # Observe application callbacks into plain Python-owned rows first.  The
+    # captured guard must run before NumPy conversion or finite-value checks,
+    # because either operation is part of the exact numerical authority.
+    pressure_rows = []
+    for patch in patches:
+        row = []
+        for value in times:
+            row.append(
+                _guarded_pressure_value(
+                    model,
+                    patch,
+                    float(value),
+                    reference_authority_guard,
+                )
+            )
+        pressure_rows.append(row)
+    pressure_samples = np.asarray(pressure_rows, dtype=float).reshape(
+        len(patches), len(times)
+    )
+    if pressure_samples.size and not np.all(np.isfinite(pressure_samples)):
+        if descriptor_guarded:
+            raise AlgebraicDynamicsError(
+                "descriptor transient full load is non-finite"
+            )
+        raise ValueError("pressure history must contain only finite values")
+    def pressure_values_at(time: float) -> np.ndarray:
+        index = time_index.get(float(time).hex())
+        if index is None:
+            raise ValueError("transient load requested outside the owned time grid")
+        return pressure_samples[:, index]
 
     def full_load_at(time: float) -> np.ndarray:
         load = base_load.copy()
-        for patch, vector in zip(patches, patch_vectors):
-            load += patch.pressure_at(time) * vector
+        for pressure, vector in zip(pressure_values_at(time), patch_vectors):
+            load += float(pressure) * vector
         if descriptor_guarded and np.any(~np.isfinite(load)):
             raise AlgebraicDynamicsError(
                 "descriptor transient full load is non-finite"
@@ -615,24 +1603,98 @@ def solve_transient_newmark(
 
     def reduced_load_at(time: float) -> np.ndarray:
         load = base_load_red.copy()
-        for patch, vector in zip(patches, patch_vectors_red):
-            load += patch.pressure_at(time) * vector
+        for pressure, vector in zip(pressure_values_at(time), patch_vectors_red):
+            load += float(pressure) * vector
         if descriptor_guarded and np.any(~np.isfinite(load)):
             raise AlgebraicDynamicsError(
                 "descriptor transient reduced load is non-finite"
             )
         return load
 
-    times = _time_grid(config)
-    recovery = config.recovery
-    output_node_ids = tuple(int(node_id) for node_id in (config.output_nodes or ()))
+    observed_recovery = config.recovery
+    reference_authority_guard(model)
+    if observed_recovery is None:
+        recovery = None
+    else:
+        observed_recovery_node_ids = observed_recovery.node_ids
+        reference_authority_guard(model)
+        recovery_node_ids = (
+            None
+            if observed_recovery_node_ids is None
+            else tuple(int(node_id) for node_id in observed_recovery_node_ids)
+        )
+        reference_authority_guard(model)
+        observed_recovery_element_ids = observed_recovery.element_ids
+        reference_authority_guard(model)
+        recovery_element_ids = (
+            None
+            if observed_recovery_element_ids is None
+            else tuple(
+                int(element_id)
+                for element_id in observed_recovery_element_ids
+            )
+        )
+        reference_authority_guard(model)
+        observed_recovery_components = observed_recovery.components
+        reference_authority_guard(model)
+        recovery_components = (
+            None
+            if observed_recovery_components is None
+            else tuple(str(component) for component in observed_recovery_components)
+        )
+        reference_authority_guard(model)
+        observed_recovery_metadata = observed_recovery.metadata
+        reference_authority_guard(model)
+        owned_recovery_metadata = dict(observed_recovery_metadata)
+        reference_authority_guard(model)
+        recovery_include_displacements = bool(
+            observed_recovery.include_displacements
+        )
+        reference_authority_guard(model)
+        recovery_include_stresses = bool(observed_recovery.include_stresses)
+        reference_authority_guard(model)
+        recovery_include_reactions = bool(observed_recovery.include_reactions)
+        reference_authority_guard(model)
+        recovery_history_mode = str(observed_recovery.history_mode)
+        reference_authority_guard(model)
+        recovery_store_full_histories = bool(
+            observed_recovery.store_full_histories
+        )
+        reference_authority_guard(model)
+        recovery = RecoveryConfig(
+            node_ids=recovery_node_ids,
+            element_ids=recovery_element_ids,
+            components=recovery_components,
+            include_displacements=recovery_include_displacements,
+            include_stresses=recovery_include_stresses,
+            include_reactions=recovery_include_reactions,
+            history_mode=recovery_history_mode,
+            store_full_histories=recovery_store_full_histories,
+            metadata=owned_recovery_metadata,
+        )
+        reference_authority_guard(model)
+    configured_output_nodes = config.output_nodes
+    reference_authority_guard(model)
+    output_node_ids = (
+        ()
+        if configured_output_nodes is None
+        else tuple(int(node_id) for node_id in configured_output_nodes)
+    )
+    reference_authority_guard(model)
     if recovery is not None and not output_node_ids and recovery.node_ids is not None:
         output_node_ids = tuple(int(node_id) for node_id in recovery.node_ids)
+        reference_authority_guard(model)
     output_element_ids: Optional[Tuple[int, ...]]
-    if config.output_elements is not None:
-        output_element_ids = tuple(int(element_id) for element_id in config.output_elements)
+    configured_output_elements = config.output_elements
+    reference_authority_guard(model)
+    if configured_output_elements is not None:
+        output_element_ids = tuple(
+            int(element_id) for element_id in configured_output_elements
+        )
+        reference_authority_guard(model)
     elif recovery is not None and recovery.element_ids is not None:
         output_element_ids = tuple(int(element_id) for element_id in recovery.element_ids)
+        reference_authority_guard(model)
     else:
         output_element_ids = None
     include_stress_history = bool(config.include_stress_history)
@@ -649,6 +1711,8 @@ def solve_transient_newmark(
         if session is not None and history_dof_indices is not None
         else None
     )
+    if session is not None and history_dof_indices is not None:
+        reference_authority_guard(model)
     selected_T = (
         T[np.asarray(history_dof_indices, dtype=np.intp)].tocsr()
         if selected_output_plan is None and history_dof_indices is not None
@@ -673,6 +1737,8 @@ def solve_transient_newmark(
         if session is not None and peak_rows_required
         else None
     )
+    if session is not None and peak_rows_required:
+        reference_authority_guard(model)
     peak_T = (
         T[peak_flat_dofs].tocsr()
         if peak_output_plan is None and peak_rows_required
@@ -691,8 +1757,16 @@ def solve_transient_newmark(
         recovery_config=recovery,
     )
     enforce_memory_limit(preflight_memory, config.resource_config, context="solve_transient_newmark")
-    q = _full_initial_vector(config.initial_displacement, total_dofs)
-    v_full = _full_initial_vector(config.initial_velocity, total_dofs)
+    q = _full_initial_vector(
+        config.initial_displacement,
+        total_dofs,
+        post_observation=lambda: reference_authority_guard(model),
+    )
+    v_full = _full_initial_vector(
+        config.initial_velocity,
+        total_dofs,
+        post_observation=lambda: reference_authority_guard(model),
+    )
     q_red = np.asarray((q - u0)[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
     v_red = np.asarray(v_full[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
     if descriptor_guarded and (
@@ -963,6 +2037,7 @@ def solve_transient_newmark(
             selected_u = selected_output_plan.reconstruct(q_state)
             selected_v = selected_output_plan.reconstruct(v_state, affine=False)
             selected_a = selected_output_plan.reconstruct(a_state, affine=False)
+            reference_authority_guard(model)
             selected_output_reconstruction_count += 1
         elif selected_T is not None:
             selected_u = np.asarray(selected_T @ q_state, dtype=float).reshape(-1) + np.asarray(selected_u0, dtype=float)
@@ -1005,6 +2080,7 @@ def solve_transient_newmark(
         elif peak_node_ids.size:
             if peak_output_plan is not None:
                 translations = peak_output_plan.reconstruct(q_state).reshape(-1, 3)
+                reference_authority_guard(model)
             else:
                 assert peak_T is not None and peak_u0 is not None
                 translations = (
@@ -1038,6 +2114,7 @@ def solve_transient_newmark(
         if stress_history is not None:
             assert full_u is not None
             stresses = _selected_stresses(model, full_u, output_element_ids, recovery)
+            reference_authority_guard(model)
             stress_history.append(stresses)
             for element_stresses in stresses.values():
                 if "von_mises" in element_stresses:
@@ -1057,6 +2134,8 @@ def solve_transient_newmark(
         time_s=float(times[0]),
         saved=True,
     )
+    if progress_callback is not None:
+        reference_authority_guard(model)
     load_prev = full_load_at(float(times[0]))
     impulse = np.zeros(total_dofs, dtype=float)
 
@@ -1067,7 +2146,7 @@ def solve_transient_newmark(
     cached_solver = None
     cached_solver_diagnostics: Dict[str, Any] = {}
 
-    alpha_h, beta, gamma = config.integration_parameters()
+    alpha_h, beta, gamma = integration_parameters
     one_plus_alpha = 1.0 + alpha_h
     F_red_prev = F0_red
     descriptor_max_dae_residual = descriptor_initial_dae_residual
@@ -1110,6 +2189,7 @@ def solve_transient_newmark(
             cancellation_token,
             f"transient.step:{step_index}",
         )
+        reference_authority_guard(model)
         dt = float(times[step_index] - times[step_index - 1])
         if descriptor_guarded:
             final_step_index = len(times) - 1
@@ -1475,6 +2555,8 @@ def solve_transient_newmark(
             time_s=float(times[step_index]),
             saved=bool(step_index % int(config.save_every) == 0 or step_index == len(times) - 1),
         )
+        if progress_callback is not None:
+            reference_authority_guard(model)
 
     impulse_resultant = load_vector_resultant(model, impulse)
     total_energy = np.asarray(energy_kinetic, dtype=float) + np.asarray(energy_strain, dtype=float)
@@ -1544,6 +2626,9 @@ def solve_transient_newmark(
         "constraint_postcheck": constraint_residual_summary(
             model,
             np.asarray(T @ q_red + u0, dtype=float).reshape(-1),
+        ),
+        "qualified_reference_transient_authority": (
+            qualified_reference_authority
         ),
     }
     descriptor_transient_provenance: Optional[Dict[str, Any]] = None
@@ -1625,6 +2710,7 @@ def solve_transient_newmark(
         )
     if session is not None:
         diagnostics["analysis_session"] = session.diagnostics()
+        reference_authority_guard(model)
     assembly_info = {
         "stiffness": stiffness_info,
         "mass": mass_info,
@@ -1669,6 +2755,7 @@ def solve_transient_newmark(
         metadata=result_metadata,
     ).to_dict()
     diagnostics["result_case"] = result_case
+    reference_authority_guard(model)
     return TransientResult(
         times=np.asarray(saved_times, dtype=float),
         displacements=saved_u_array,
@@ -1690,4 +2777,57 @@ def solve_transient_newmark(
         displacement_envelope=displacement_envelope,
         velocity_envelope=velocity_envelope,
         acceleration_envelope=acceleration_envelope,
+    )
+
+
+def solve_transient_newmark(
+    model: "FEModel",
+    config: TransientConfig,
+    pressure_patches: Optional[Sequence[PressurePatch]] = None,
+    base_load_case: Optional[LoadCase] = None,
+    *,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
+) -> TransientResult:
+    """Solve Newmark dynamics under one qualified-family operation lease."""
+
+    raw_authority_guard = _require_qualified_reference_transient_authority
+    raw_authority_guard(model)
+
+    def operation(lease: Any) -> TransientResult:
+        def combined_guard(observed_model: "FEModel") -> None:
+            raw_authority_guard(observed_model)
+            lease(
+                observed_model,
+                context="solve_transient_newmark configuration observation",
+            )
+
+        cancellation_safe_point(cancellation_token, "transient.start")
+        combined_guard(model)
+        owned_config, integration_parameters, owned_patches = (
+            _owned_transient_configuration(
+                model,
+                config,
+                pressure_patches,
+                combined_guard,
+            )
+        )
+        return _solve_transient_newmark_under_lease(
+            model,
+            owned_config,
+            pressure_patches=owned_patches,
+            base_load_case=base_load_case,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            session=session,
+            _owned_integration_parameters=integration_parameters,
+            _start_cancellation_checked=True,
+            _qualified_runtime_guard=lease,
+        )
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="solve_transient_newmark",
+        operation=operation,
     )

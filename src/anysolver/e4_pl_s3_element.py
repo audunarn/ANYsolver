@@ -14,28 +14,63 @@ used for the equation map is bound below by byte count and SHA-256.
 from __future__ import annotations
 
 import copy
+import inspect
 import math
-from types import MappingProxyType
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence
+import sys
+import warnings
+import weakref
+from operator import is_ as _operator_is, itemgetter
+from types import MappingProxyType, ModuleType
+from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
 
 import numpy as np
 
+from . import e4_pl_s3_state as _s3_state_module
+from . import elements as _elements_module
+from . import fe_core as _fe_core_module
+from . import material_curves as _material_curves_module
+from . import materials as _materials_module
+from . import plasticity as _plasticity_module
+from . import shell_sections as _shell_sections_module
+from . import _native_rotation_state as _native_rotation_state_module
+from ._qualified_authority_epoch import (
+    AuthorityEpochMeta,
+    make_authority_epoch_manager,
+)
 from ._native_rotation_state import (
     NativeElementRotationView,
+    create_native_rotation_state_store,
     rotation_exponential,
 )
 from .elements import (
+    Element,
     ShellElement,
     _copy_state_fields,
     _elastic_symmetry,
+    _generalized_shell_section_cache_fingerprint,
+    _guarded_array,
+    _guarded_float,
+    _guarded_observe_attribute,
+    _guarded_observe_call,
+    _guarded_owned_generalized_shell_section,
+    _guarded_owned_mapping,
+    _guarded_owned_plain_value,
+    _shell_elastic_material_cache_fingerprint,
     _shell_field_rows,
     _shell_material_matrices,
 )
+from .fe_core import Node
 from .element_capabilities import (
     STATEFUL_MATERIAL_RESPONSE_MODE,
     STATELESS_FIXED_GENERALIZED_SECTION_RESPONSE_MODE,
 )
 from .e4_pl_s3_state import (
+    _capture_authority_array_metadata,
+    _module_authority_signature,
+    _require_authority_array_metadata,
+    _require_exact_numpy_runtime_module_identity,
+    _require_immutable_authority_data,
+    _watch_exact_numpy_runtime_epoch,
     BUBBLE_CONVENTION,
     BUBBLE_CONDITION_LIMIT,
     BUBBLE_FORCE_CONDENSATION_ID,
@@ -48,6 +83,7 @@ from .e4_pl_s3_state import (
     BUBBLE_STEP_TOLERANCE,
     INITIAL_FIELD_NAMES,
     canonical_json_bytes,
+    canonical_sha256,
     build_element_configuration_descriptor,
     build_generalized_element_configuration_descriptor,
     build_generalized_state_identity,
@@ -89,10 +125,12 @@ from .e4_pl_s3_state import (
     qualified_s3_lobatto_layers,
     qualified_s3_triangle_frame,
     reconstruct_director_triad,
+    require_exact_numpy_runtime_authority,
     require_qualified_s3_quality,
     initialize_zero_committed_s3_state,
     initialize_zero_committed_s3_generalized_state,
     resolved_material_descriptor,
+    _owned_material_from_resolved_descriptor,
     require_stateless_generalized_section,
     seal_committed_s3_state,
     validate_committed_s3_generalized_state,
@@ -101,14 +139,35 @@ from .e4_pl_s3_state import (
 from .material_curves import DNVC208MaterialCurve
 from .materials import (
     Hill48Yield,
-    elastic_compliance_matrix,
     is_isotropic_material,
-    material_symmetry,
 )
-from .plasticity import plane_stress_return_map
+from .plasticity import (
+    hill48_plane_stress_equivalent_stress,
+    hill48_plane_stress_return_map,
+    plane_stress_return_map,
+)
 from .shell_sections import (
+    GeneralizedShellSection,
     SHELL_MEMBRANE_VOIGT_ORDER,
     SHELL_TRANSVERSE_SHEAR_ORDER,
+)
+
+
+_QUALIFIED_S3_COORDINATE_SCALAR_TYPES = frozenset(
+    {
+        int,
+        float,
+        *(np.dtype(code).type for code in "bBhHiIlLqQefdg"),
+    }
+)
+_QUALIFIED_S3_PROTECTED_CACHE_NAMES = frozenset(
+    {
+        "_nl_cache",
+        "_nl_cache_key",
+        "_qualified_cache_key",
+        "_qualified_component_guard",
+        "_qualified_components",
+    }
 )
 
 
@@ -143,23 +202,135 @@ def _freeze_component_cache_value(
     return value
 
 
-def _elastic_material_cache_fingerprint(material: Any) -> tuple[Any, ...]:
-    """Return the exact elastic inputs consumed by the S3 stiffness path."""
+def _capture_s3_component_tree_authority(value: Any) -> tuple[Any, ...]:
+    """Capture exact identities for one recursively frozen component tree."""
 
-    if is_isotropic_material(material):
+    if type(value) is np.ndarray:
+        return ("array", value)
+    if type(value) is MappingProxyType:
         return (
-            "isotropic",
-            float(material.elastic_modulus),
-            float(material.poisson_ratio),
+            "mapping",
+            value,
+            tuple(
+                (
+                    key,
+                    member,
+                    _capture_s3_component_tree_authority(member),
+                )
+                for key, member in value.items()
+            ),
         )
-    compliance = np.ascontiguousarray(
-        np.asarray(elastic_compliance_matrix(material), dtype=np.float64)
-    )
-    return (
-        str(material_symmetry(material)),
-        compliance.shape,
-        compliance.tobytes(order="C"),
-    )
+    if type(value) is tuple:
+        return (
+            "tuple",
+            value,
+            tuple(
+                (member, _capture_s3_component_tree_authority(member))
+                for member in value
+            ),
+        )
+    return ("leaf", value)
+
+
+def _require_s3_component_tree_authority(
+    value: Any,
+    authority: tuple[Any, ...],
+) -> None:
+    """Reject replacement of any frozen cache container or member."""
+
+    kind = authority[0]
+    expected = authority[1]
+    if value is not expected:
+        raise RuntimeError(
+            "qualified S3 component cache mapping provenance changed"
+        )
+    if kind == "mapping":
+        if type(value) is not MappingProxyType:
+            raise RuntimeError(
+                "qualified S3 component cache mapping provenance changed"
+            )
+        actual_items = tuple(value.items())
+        expected_items = authority[2]
+        if len(actual_items) != len(expected_items):
+            raise RuntimeError(
+                "qualified S3 component cache mapping provenance changed"
+            )
+        for (actual_key, actual_value), (
+            expected_key,
+            expected_value,
+            child_authority,
+        ) in zip(actual_items, expected_items):
+            if actual_key is not expected_key or actual_value is not expected_value:
+                raise RuntimeError(
+                    "qualified S3 component cache mapping provenance changed"
+                )
+            _require_s3_component_tree_authority(
+                actual_value,
+                child_authority,
+            )
+        return
+    if kind == "tuple":
+        if type(value) is not tuple or len(value) != len(authority[2]):
+            raise RuntimeError(
+                "qualified S3 component cache tuple provenance changed"
+            )
+        for actual_value, (expected_value, child_authority) in zip(
+            value,
+            authority[2],
+        ):
+            if actual_value is not expected_value:
+                raise RuntimeError(
+                    "qualified S3 component cache tuple provenance changed"
+                )
+            _require_s3_component_tree_authority(
+                actual_value,
+                child_authority,
+            )
+
+
+def _s3_component_authority_member(
+    authority: tuple[Any, ...],
+    name: str,
+) -> tuple[Any, tuple[Any, ...]]:
+    if authority[0] != "mapping":
+        raise RuntimeError("qualified S3 component authority is not a mapping")
+    for key, member, child_authority in authority[2]:
+        if type(key) is str and key == name:
+            return member, child_authority
+    raise RuntimeError(f"qualified S3 component {name!r} is unavailable")
+
+
+def _snapshot_s3_float64_component(
+    value: Any,
+    expected: Any,
+    expected_shape: tuple[int, ...],
+    *,
+    label: str,
+) -> np.ndarray:
+    """Return a private exact-shape view backed by newly owned raw bytes."""
+
+    expected_bytes = math.prod(expected_shape) * 8
+    if value is not expected or type(value) is not np.ndarray:
+        raise RuntimeError(f"qualified S3 {label} component provenance changed")
+    if (
+        value.dtype != np.dtype(np.float64)
+        or value.shape != expected_shape
+        or value.nbytes != expected_bytes
+    ):
+        raise RuntimeError(
+            f"qualified S3 {label} component has invalid exact array metadata"
+        )
+    try:
+        raw = memoryview(value).cast("B").tobytes()
+    except (BufferError, TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"qualified S3 {label} component raw-byte snapshot failed"
+        ) from exc
+    if len(raw) != expected_bytes:
+        raise RuntimeError(
+            f"qualified S3 {label} component raw-byte snapshot is incomplete"
+        )
+    return np.frombuffer(raw, dtype=np.float64).reshape(expected_shape)
 
 
 DYNAMIC_REDUCTION_POLICY = "GUYAN_STATIC_BUBBLE_FULL_CONSISTENT_MASS_V1"
@@ -193,6 +364,20 @@ CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID = (
 CURRENT_STATE_BUBBLE_PROJECTION_POLICY_ID = (
     "TOTAL_KAA_KAQ_SENSITIVITY_PROJECTS_EACH_TANGENT_PIECE_V1"
 )
+S3_QUADRATURE_AUTHORITY_ID = (
+    "MITC3_PLUS_SEVEN_POINT_STIFFNESS_AND_SHEAR_IMMUTABLE_EXACT_V1"
+)
+S3_ACTIVITY_DISPOSITION_SCHEMA_ID = "E4_PL_S3_ACTIVITY_DISPOSITION_V1"
+S3_DELETED_FROZEN_POLICY_ID = (
+    "S3_DELETED_FROZEN_CONSTITUTIVE_HISTORY_RESIDUAL_OPERATOR_V1"
+)
+S3_FAILED_STATE_POLICY_ID = "S3_FAILED_NONAUTHORITATIVE_RESULT_STATE_V1"
+_S3_ACTIVITY_DISPOSITION_KEY = "qualified_s3_activity_disposition"
+_FOREIGN_Q4_ACTIVITY_DISPOSITION_KEY = "qualified_q4_activity_disposition"
+
+
+class QualifiedS3MigrationWarning(UserWarning):
+    """Warning emitted for an exact, mechanics-preserving S3 identity upgrade."""
 
 _INITIAL_SHELL_STATE_KEYS = (
     "initial_membrane_stress",
@@ -205,12 +390,608 @@ _BUBBLE_MAX_ITERATIONS = BUBBLE_MAX_ITERATIONS
 _BUBBLE_RELATIVE_TOLERANCE = BUBBLE_RELATIVE_TOLERANCE
 _BUBBLE_STEP_TOLERANCE = BUBBLE_STEP_TOLERANCE
 
+_S3_STIFFNESS_STATION_AUTHORITY = (
+    (1.0 / 3.0, 1.0 / 3.0, 0.1125),
+    (0.470142064105115, 0.470142064105115, 0.066197076394253),
+    (0.059715871789770, 0.470142064105115, 0.066197076394253),
+    (0.470142064105115, 0.059715871789770, 0.066197076394253),
+    (0.101286507323456, 0.101286507323456, 0.062969590272414),
+    (0.797426985353087, 0.101286507323456, 0.062969590272414),
+    (0.101286507323456, 0.797426985353087, 0.062969590272414),
+)
 TRIANGLE_QUADRATURE = STIFFNESS_STATION_TABLE
+_S3_QUADRATURE_POINTS_MADE = np.ascontiguousarray(
+    [(r, s) for r, s, _weight in _S3_STIFFNESS_STATION_AUTHORITY],
+    dtype=np.float64,
+)
+_S3_QUADRATURE_POINTS = np.frombuffer(
+    _S3_QUADRATURE_POINTS_MADE.tobytes(order="C"), dtype=np.float64
+).reshape(_S3_QUADRATURE_POINTS_MADE.shape)
+_S3_QUADRATURE_WEIGHTS_MADE = np.ascontiguousarray(
+    [weight for _r, _s, weight in _S3_STIFFNESS_STATION_AUTHORITY],
+    dtype=np.float64,
+)
+_S3_QUADRATURE_WEIGHTS = np.frombuffer(
+    _S3_QUADRATURE_WEIGHTS_MADE.tobytes(order="C"), dtype=np.float64
+).reshape(_S3_QUADRATURE_WEIGHTS_MADE.shape)
+del _S3_QUADRATURE_POINTS_MADE, _S3_QUADRATURE_WEIGHTS_MADE
 
-PHYSICAL_EXTERNAL_INDICES = np.asarray(
+def _s3_gauss_points_property(_element: Any) -> np.ndarray:
+    return _S3_QUADRATURE_POINTS
+
+
+def _s3_gauss_weights_property(_element: Any) -> np.ndarray:
+    return _S3_QUADRATURE_WEIGHTS
+
+
+def _s3_shear_gauss_points_property(_element: Any) -> np.ndarray:
+    return _S3_QUADRATURE_POINTS
+
+
+def _s3_shear_gauss_weights_property(_element: Any) -> np.ndarray:
+    return _S3_QUADRATURE_WEIGHTS
+
+
+_S3_QUADRATURE_PROPERTY_AUTHORITY = MappingProxyType(
+    {
+        "gauss_points": property(_s3_gauss_points_property),
+        "gauss_weights": property(_s3_gauss_weights_property),
+        "shear_gauss_points": property(_s3_shear_gauss_points_property),
+        "shear_gauss_weights": property(_s3_shear_gauss_weights_property),
+    }
+)
+_S3_BASE_SERIALIZATION_KERNEL = ShellElement.to_dict
+_S3_BASE_ELEMENT_SERIALIZATION_KERNEL = Element.to_dict
+_S3_BASE_NODE_COORDINATES_KERNEL = ShellElement.get_node_coordinates
+_S3_GENERALIZED_SECTION_NAMESPACE_AUTHORITY = MappingProxyType(
+    dict(type.__getattribute__(GeneralizedShellSection, "__dict__"))
+)
+_S3_SERIALIZATION_CLASS_IDENTITY = MappingProxyType(
+    {
+        "formulation_id": FORMULATION_ID,
+        "formulation_schema": FORMULATION_SCHEMA,
+        "bubble_convention": BUBBLE_CONVENTION,
+        "quadrature_id": QUADRATURE_ID,
+        "quadrature_authority_id": S3_QUADRATURE_AUTHORITY_ID,
+        "dynamic_reduction_policy": DYNAMIC_REDUCTION_POLICY,
+        "algebraic_coordinate_policy": ALGEBRAIC_COORDINATE_POLICY_ID,
+        "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
+        "mass_moment_id": MASS_MOMENT_ID,
+        "recovery_policy_id": RECOVERY_POLICY_ID,
+        "state_layout_id": STATE_LAYOUT_ID,
+        "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
+        "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+        "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+        "reference_surface_strain_transform_id": (
+            REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+        ),
+        "reference_surface_mass_shift_id": REFERENCE_SURFACE_MASS_SHIFT_ID,
+    }
+)
+_S3_SERIALIZATION_GLOBAL_IDENTITY = MappingProxyType(
+    {
+        "np": np,
+        "math": math,
+        "Element": Element,
+        "ShellElement": ShellElement,
+        "GeneralizedShellSection": GeneralizedShellSection,
+        "FORMULATION_ID": FORMULATION_ID,
+        "FORMULATION_SCHEMA": FORMULATION_SCHEMA,
+        "BUBBLE_CONVENTION": BUBBLE_CONVENTION,
+        "QUADRATURE_ID": QUADRATURE_ID,
+        "S3_QUADRATURE_AUTHORITY_ID": S3_QUADRATURE_AUTHORITY_ID,
+        "DYNAMIC_REDUCTION_POLICY": DYNAMIC_REDUCTION_POLICY,
+        "ALGEBRAIC_COORDINATE_POLICY_ID": ALGEBRAIC_COORDINATE_POLICY_ID,
+        "GEOMETRIC_STIFFNESS_POLICY_ID": GEOMETRIC_STIFFNESS_POLICY_ID,
+        "MASS_MOMENT_ID": MASS_MOMENT_ID,
+        "RECOVERY_POLICY_ID": RECOVERY_POLICY_ID,
+        "STATE_LAYOUT_ID": STATE_LAYOUT_ID,
+        "DIRECTOR_POLARITY_POLICY_ID": DIRECTOR_POLARITY_POLICY_ID,
+        "DIRECTOR_REVERSAL_TRANSFORM_ID": DIRECTOR_REVERSAL_TRANSFORM_ID,
+        "REFERENCE_SURFACE_OFFSET_POLICY_ID": (
+            REFERENCE_SURFACE_OFFSET_POLICY_ID
+        ),
+        "REFERENCE_SURFACE_STRAIN_TRANSFORM_ID": (
+            REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+        ),
+        "REFERENCE_SURFACE_MASS_SHIFT_ID": REFERENCE_SURFACE_MASS_SHIFT_ID,
+    }
+)
+
+
+def _static_mro_attribute(owner: type[Any], name: str) -> Any:
+    """Return a class member without invoking a mutable descriptor."""
+
+    for base in type.__getattribute__(owner, "__mro__"):
+        namespace = type.__getattribute__(base, "__dict__")
+        if name in namespace:
+            value = namespace[name]
+            if isinstance(value, (classmethod, staticmethod)):
+                return value.__func__
+            return value
+    return None
+
+
+def _require_s3_serialization_module_authority(
+    expected_class: type[Any],
+    *,
+    _global_identity: Mapping[str, Any] = _S3_SERIALIZATION_GLOBAL_IDENTITY,
+    _class_identity: Mapping[str, Any] = _S3_SERIALIZATION_CLASS_IDENTITY,
+    _base_serializer: Any = _S3_BASE_SERIALIZATION_KERNEL,
+    _base_element_serializer: Any = _S3_BASE_ELEMENT_SERIALIZATION_KERNEL,
+    _section_class: type[Any] = GeneralizedShellSection,
+    _section_namespace: Mapping[str, Any] = (
+        _S3_GENERALIZED_SECTION_NAMESPACE_AUTHORITY
+    ),
+    _static_lookup: Any = _static_mro_attribute,
+    _base_class: type[Any] = ShellElement,
+    _element_class: type[Any] = Element,
+) -> None:
+    if globals().get("QualifiedE4PLS3ShellElement") is not expected_class:
+        raise ValueError("qualified S3 serialization requires the exact class")
+    for name, expected in _global_identity.items():
+        actual = globals().get(name)
+        if type(actual) is not type(expected) or actual != expected:
+            raise ValueError(
+                f"qualified S3 serialization global {name} authority is incompatible"
+            )
+    for name, expected in _class_identity.items():
+        actual = _static_lookup(expected_class, name)
+        if type(actual) is not type(expected) or actual != expected:
+            raise ValueError(
+                f"qualified S3 serialization {name} authority is incompatible"
+            )
+    if _static_lookup(_base_class, "to_dict") is not _base_serializer:
+        raise ValueError(
+            "qualified S3 base serialization authority is incompatible"
+        )
+    if _static_lookup(_element_class, "to_dict") is not _base_element_serializer:
+        raise ValueError(
+            "qualified S3 root serialization authority is incompatible"
+        )
+    actual_section_namespace = type.__getattribute__(_section_class, "__dict__")
+    changed_section_members = set(actual_section_namespace).symmetric_difference(
+        _section_namespace
+    ) | {
+        name
+        for name, expected in _section_namespace.items()
+        if name in actual_section_namespace
+        and actual_section_namespace[name] is not expected
+    }
+    if changed_section_members:
+        raise ValueError(
+            "qualified S3 generalized-section serialization authority is incompatible"
+        )
+
+
+def _validate_s3_serialization_authority(
+    element: Any,
+    *,
+    expected_class: type[Any],
+    _global_identity: Mapping[str, Any] = _S3_SERIALIZATION_GLOBAL_IDENTITY,
+    _class_identity: Mapping[str, Any] = _S3_SERIALIZATION_CLASS_IDENTITY,
+    _base_serializer: Any = _S3_BASE_SERIALIZATION_KERNEL,
+    _base_element_serializer: Any = _S3_BASE_ELEMENT_SERIALIZATION_KERNEL,
+    _section_class: type[Any] = GeneralizedShellSection,
+    _section_namespace: Mapping[str, Any] = (
+        _S3_GENERALIZED_SECTION_NAMESPACE_AUTHORITY
+    ),
+    _module_guard: Any = _require_s3_serialization_module_authority,
+    _static_lookup: Any = _static_mro_attribute,
+    _numpy: Any = np,
+    _isfinite: Any = math.isfinite,
+) -> None:
+    """Reject identity laundering before S3 serialization or reconstruction."""
+
+    _module_guard(
+        expected_class,
+        _global_identity=_global_identity,
+        _class_identity=_class_identity,
+        _base_serializer=_base_serializer,
+        _base_element_serializer=_base_element_serializer,
+        _section_class=_section_class,
+        _section_namespace=_section_namespace,
+        _static_lookup=_static_lookup,
+    )
+    if type(element) is not expected_class:
+        raise ValueError("qualified S3 serialization requires the exact class")
+    namespace = object.__getattribute__(element, "__dict__")
+    # The final-class certificate binds the installed guarded
+    # ``__getattribute__`` descriptor exactly; it intentionally supersedes
+    # the pre-hardening direct ``object.__getattribute__`` slot.
+    _require_s3_final_class_authority()
+    for name in (
+        "element_id",
+        "node_ids",
+        "material_name",
+        "thickness",
+        "material_angle_deg",
+        "material_direction",
+        "shell_section",
+        "drilling_stabilization",
+        "reduced_integration",
+        "hourglass_stabilization",
+        "director_polarity",
+        "reference_normal",
+        "reference_surface_offset",
+    ):
+        if name not in namespace or _static_lookup(type(element), name) is not None:
+            raise ValueError(
+                f"qualified S3 serialization {name} authority is incompatible"
+            )
+    for name, expected in _class_identity.items():
+        actual = _static_lookup(type(element), name)
+        if (
+            name in namespace
+            or type(actual) is not type(expected)
+            or actual != expected
+        ):
+            raise ValueError(
+                f"qualified S3 serialization {name} authority is incompatible"
+            )
+    if (
+        type(namespace["element_id"]) is not int
+        or type(namespace["node_ids"]) is not tuple
+        or len(namespace["node_ids"]) != 3
+        or not all(type(value) is int for value in namespace["node_ids"])
+        or type(namespace["material_name"]) is not str
+        or type(namespace["thickness"]) is not float
+        or type(namespace["material_angle_deg"]) is not float
+        or type(namespace["drilling_stabilization"]) is not float
+        or type(namespace["reduced_integration"]) is not bool
+        or type(namespace["hourglass_stabilization"]) is not float
+        or type(namespace["director_polarity"]) is not int
+        or namespace["director_polarity"] not in {-1, 1}
+        or type(namespace["reference_surface_offset"]) is not float
+        or namespace["thickness"] <= 0.0
+        or namespace["drilling_stabilization"] != 0.0
+        or namespace["hourglass_stabilization"] != 0.0
+        or namespace["reduced_integration"] is not False
+        or namespace["reference_normal"] is None
+        or (
+            namespace["material_direction"] is None
+            and namespace["material_angle_deg"] != 0.0
+        )
+        or not all(
+            _isfinite(namespace[name])
+            for name in (
+                "thickness",
+                "material_angle_deg",
+                "drilling_stabilization",
+                "hourglass_stabilization",
+                "reference_surface_offset",
+            )
+        )
+        or (
+            namespace["shell_section"] is not None
+            and type(namespace["shell_section"]) is not _section_class
+        )
+    ):
+        raise ValueError(
+            "qualified S3 serialization instance-data authority is incompatible"
+        )
+    for name in ("material_direction", "reference_normal"):
+        vector = namespace[name]
+        if vector is None:
+            continue
+        if (
+            type(vector) is not _numpy.ndarray
+            or vector.dtype != _numpy.dtype(_numpy.float64)
+            or vector.shape != (3,)
+            or not vector.flags.c_contiguous
+            or vector.flags.writeable
+            or not _numpy.all(_numpy.isfinite(vector))
+        ):
+            raise ValueError(
+                f"qualified S3 serialization {name} authority is incompatible"
+            )
+        if name == "reference_normal":
+            norm = float(_numpy.linalg.norm(vector))
+            if norm <= 0.0 or not _numpy.array_equal(vector / norm, vector):
+                raise ValueError(
+                    "qualified S3 serialization reference_normal must be canonical"
+                )
+
+
+def _s3_serialized_output_boundary(method: Any) -> Any:
+    """Capture immutable S3 serialization guards without changing its API."""
+
+    serialization_guard = _validate_s3_serialization_authority
+    quadrature_guard = _validate_s3_quadrature_values
+    class_cell = dict(zip(method.__code__.co_freevars, method.__closure__ or ())).get(
+        "__class__"
+    )
+    if class_cell is None:
+        raise RuntimeError("qualified S3 serialization method lacks class authority")
+
+    def guarded(self: Any) -> Dict[str, Any]:
+        expected_class = class_cell.cell_contents
+        if type(self) is not expected_class:
+            raise ValueError("qualified S3 serialization requires the exact class")
+        serialization_guard(self, expected_class=expected_class)
+        quadrature_guard(self)
+        payload = method(self)
+        serialization_guard(self, expected_class=expected_class)
+        quadrature_guard(self)
+        return payload
+
+    guarded.__name__ = method.__name__
+    guarded.__qualname__ = method.__qualname__
+    guarded.__doc__ = method.__doc__
+    guarded.__annotations__ = dict(method.__annotations__)
+    return guarded
+
+
+def _s3_serialized_input_boundary(method: Any) -> Any:
+    """Guard S3 deserialization before parse and again before return."""
+
+    module_guard = _require_s3_serialization_module_authority
+    serialization_guard = _validate_s3_serialization_authority
+    quadrature_guard = _validate_s3_quadrature_values
+    numerical_guard = require_exact_numpy_runtime_authority
+    authority_signer = _module_authority_signature
+    class_cell = dict(zip(method.__code__.co_freevars, method.__closure__ or ())).get(
+        "__class__"
+    )
+    if class_cell is None:
+        raise RuntimeError("qualified S3 deserialization method lacks class authority")
+
+    def guarded(cls: type[Any], payload: Mapping[str, Any]) -> Any:
+        expected_class = class_cell.cell_contents
+        if cls is not expected_class:
+            raise ValueError("qualified S3 deserialization requires the exact class")
+        module_guard(expected_class)
+        numerical_guard(context="qualified S3 deserialization")
+        owned_payload = dict(payload)
+        module_guard(expected_class)
+        numerical_guard(context="qualified S3 deserialization")
+        candidate = method(cls, owned_payload)
+        serialization_guard(candidate, expected_class=expected_class)
+        quadrature_guard(candidate)
+        return candidate
+
+    guarded.__name__ = method.__name__
+    guarded.__qualname__ = method.__qualname__
+    guarded.__doc__ = method.__doc__
+    guarded.__annotations__ = dict(method.__annotations__)
+    return guarded
+
+
+def _require_exact_s3_quadrature_array(
+    label: str,
+    value: Any,
+    expected: np.ndarray,
+) -> None:
+    if type(value) is not np.ndarray:
+        raise ValueError(f"qualified S3 {label} must be an exact numpy array")
+    if (
+        value.dtype != np.dtype(np.float64)
+        or value.shape != expected.shape
+        or not value.flags.c_contiguous
+        or value.flags.writeable
+        or value.tobytes(order="C") != expected.tobytes(order="C")
+    ):
+        raise ValueError(f"qualified S3 {label} authority is incompatible")
+
+
+def _validate_s3_quadrature_values_exact(
+    element: Any,
+    _property_authority: Mapping[str, Any] = (
+        _S3_QUADRATURE_PROPERTY_AUTHORITY
+    ),
+    _station_authority: tuple[tuple[float, float, float], ...] = (
+        _S3_STIFFNESS_STATION_AUTHORITY
+    ),
+    _points_authority: np.ndarray = _S3_QUADRATURE_POINTS,
+    _weights_authority: np.ndarray = _S3_QUADRATURE_WEIGHTS,
+    _station_signature: tuple[Any, ...] = _module_authority_signature(
+        TRIANGLE_QUADRATURE
+    ),
+    _signature: Any = _module_authority_signature,
+    _array_checker: Any = _require_exact_s3_quadrature_array,
+    _static_lookup: Any = _static_mro_attribute,
+    _authority_id: str = S3_QUADRATURE_AUTHORITY_ID,
+) -> str:
+    namespace = object.__getattribute__(element, "__dict__")
+    property_values: Dict[str, Any] = {}
+    for name, expected in _property_authority.items():
+        if (
+            name in namespace
+            or _static_lookup(type(element), name) is not expected
+        ):
+            raise ValueError(
+                f"qualified S3 {name} property authority is incompatible"
+            )
+        property_values[name] = expected.__get__(element, type(element))
+    _array_checker(
+        "gauss_points", property_values["gauss_points"], _points_authority
+    )
+    _array_checker(
+        "gauss_weights", property_values["gauss_weights"], _weights_authority
+    )
+    _array_checker(
+        "shear_gauss_points",
+        property_values["shear_gauss_points"],
+        _points_authority,
+    )
+    _array_checker(
+        "shear_gauss_weights",
+        property_values["shear_gauss_weights"],
+        _weights_authority,
+    )
+    if (
+        _signature(globals().get("TRIANGLE_QUADRATURE"))
+        != _station_signature
+        or _signature(_station_authority) != _station_signature
+    ):
+        raise ValueError(
+            "qualified S3 stiffness station-table authority is incompatible"
+        )
+    return _authority_id
+
+
+def _require_s3_quadrature_instance_authority(
+    element: Any,
+    _property_authority: Mapping[str, Any] = _S3_QUADRATURE_PROPERTY_AUTHORITY,
+    _metadata_authority: Mapping[
+        str, tuple[np.ndarray, str, tuple[int, ...], tuple[int, ...]]
+    ] = MappingProxyType(
+        {
+            "gauss_points": (
+                _S3_QUADRATURE_POINTS,
+                _S3_QUADRATURE_POINTS.dtype.str,
+                tuple(_S3_QUADRATURE_POINTS.shape),
+                tuple(_S3_QUADRATURE_POINTS.strides),
+            ),
+            "gauss_weights": (
+                _S3_QUADRATURE_WEIGHTS,
+                _S3_QUADRATURE_WEIGHTS.dtype.str,
+                tuple(_S3_QUADRATURE_WEIGHTS.shape),
+                tuple(_S3_QUADRATURE_WEIGHTS.strides),
+            ),
+            "shear_gauss_points": (
+                _S3_QUADRATURE_POINTS,
+                _S3_QUADRATURE_POINTS.dtype.str,
+                tuple(_S3_QUADRATURE_POINTS.shape),
+                tuple(_S3_QUADRATURE_POINTS.strides),
+            ),
+            "shear_gauss_weights": (
+                _S3_QUADRATURE_WEIGHTS,
+                _S3_QUADRATURE_WEIGHTS.dtype.str,
+                tuple(_S3_QUADRATURE_WEIGHTS.shape),
+                tuple(_S3_QUADRATURE_WEIGHTS.strides),
+            ),
+        }
+    ),
+    _static_lookup: Any = _static_mro_attribute,
+) -> None:
+    """Check the element-specific S3 quadrature surface every invocation."""
+
+    namespace = object.__getattribute__(element, "__dict__")
+    if type(namespace) is not dict:
+        raise ValueError("qualified S3 instance namespace is incompatible")
+    if not all(type(name) is str for name in namespace):
+        raise ValueError("qualified S3 instance keys must be exact strings")
+    for name, expected in _property_authority.items():
+        if name in namespace or _static_lookup(type(element), name) is not expected:
+            raise ValueError(
+                f"qualified S3 {name} property authority is incompatible"
+            )
+        value = expected.__get__(element, type(element))
+        expected_value, dtype_string, shape, strides = _metadata_authority[name]
+        if (
+            value is not expected_value
+            or type(value) is not np.ndarray
+            or value.dtype.str != dtype_string
+            or value.shape != shape
+            or value.strides != strides
+            or not value.flags.c_contiguous
+            or value.flags.writeable
+        ):
+            raise ValueError(
+                f"qualified S3 {name} array metadata is incompatible"
+            )
+        current: Any = value
+        while type(current) is np.ndarray:
+            if current.flags.writeable:
+                raise ValueError(
+                    f"qualified S3 {name} array base is writeable"
+                )
+            current = current.base
+        if not (
+            type(current) is bytes
+            or isinstance(current, memoryview) and current.readonly
+        ):
+            raise ValueError(
+                f"qualified S3 {name} array base is incompatible"
+            )
+
+
+_s3_quadrature_epoch_manager = make_authority_epoch_manager(
+    "qualified S3 quadrature"
+)
+_s3_quadrature_epoch_manager.watch_module(
+    sys.modules[__name__],
+    (
+        "__name__",
+        "TRIANGLE_QUADRATURE",
+        "_S3_STIFFNESS_STATION_AUTHORITY",
+        "_S3_QUADRATURE_POINTS",
+        "_S3_QUADRATURE_WEIGHTS",
+        "_S3_QUADRATURE_PROPERTY_AUTHORITY",
+    ),
+)
+for _s3_quadrature_name, _s3_quadrature_value in (
+    ("TRIANGLE_QUADRATURE", TRIANGLE_QUADRATURE),
+    ("_S3_STIFFNESS_STATION_AUTHORITY", _S3_STIFFNESS_STATION_AUTHORITY),
+    ("_S3_QUADRATURE_POINTS", _S3_QUADRATURE_POINTS),
+    ("_S3_QUADRATURE_WEIGHTS", _S3_QUADRATURE_WEIGHTS),
+    ("_S3_QUADRATURE_PROPERTY_AUTHORITY", _S3_QUADRATURE_PROPERTY_AUTHORITY),
+):
+    _require_immutable_authority_data(
+        _s3_quadrature_value,
+        label=f"qualified S3 {_s3_quadrature_name}",
+    )
+del _s3_quadrature_name, _s3_quadrature_value
+_s3_quadrature_epoch_guard = _s3_quadrature_epoch_manager.bind_argument(
+    _validate_s3_quadrature_values_exact
+)
+
+
+def _validate_s3_quadrature_values(
+    element: Any,
+    *,
+    _property_authority: Mapping[str, Any] = _S3_QUADRATURE_PROPERTY_AUTHORITY,
+) -> str:
+    """Validate exact per-element facts plus dirty global quadrature state."""
+
+    if (
+        len(_property_authority) != len(_S3_QUADRATURE_PROPERTY_AUTHORITY)
+        or any(
+            name not in _property_authority
+            or _property_authority[name] is not expected
+            for name, expected in _S3_QUADRATURE_PROPERTY_AUTHORITY.items()
+        )
+    ):
+        raise ValueError("qualified S3 quadrature property authority changed")
+    _require_s3_quadrature_instance_authority(
+        element,
+        _property_authority=_property_authority,
+    )
+    _s3_quadrature_epoch_guard(element)
+    return S3_QUADRATURE_AUTHORITY_ID
+
+
+def _s3_binary64_vector_fingerprint(
+    value: Any,
+    shape: tuple[int, ...],
+    label: str,
+) -> str:
+    """Hash the exact ordered binary64 payload, including signed zero."""
+
+    array = np.asarray(value, dtype=np.float64)
+    if array.shape != shape or not np.all(np.isfinite(array)):
+        raise S3CommittedStateError(
+            f"qualified S3 {label} must have finite shape {shape}"
+        )
+    made = np.ascontiguousarray(array, dtype=np.float64)
+    return canonical_sha256(
+        {
+            "layout": "IEEE754_BINARY64_C_ORDER_V1",
+            "shape": list(shape),
+            "bytes_hex": made.tobytes(order="C").hex().upper(),
+        }
+    )
+
+_PHYSICAL_EXTERNAL_INDICES_MADE = np.asarray(
     [6 * node + component for node in range(3) for component in range(5)],
     dtype=np.intp,
 )
+PHYSICAL_EXTERNAL_INDICES = np.frombuffer(
+    _PHYSICAL_EXTERNAL_INDICES_MADE.tobytes(order="C"),
+    dtype=_PHYSICAL_EXTERNAL_INDICES_MADE.dtype,
+).reshape(_PHYSICAL_EXTERNAL_INDICES_MADE.shape)
+del _PHYSICAL_EXTERNAL_INDICES_MADE
 
 CAPABILITY_GAPS = frozenset(
     {
@@ -218,7 +999,6 @@ CAPABILITY_GAPS = frozenset(
         "contact_state",
         "initial_fields",
         "material_nonlinearity",
-        "mixed_current_state_buckling",
         "nonlinear_geometry",
         "patch_recovery",
         "physical_director_reversal",
@@ -2460,6 +3240,7 @@ def _native_layered_uncondensed_response_components(
     reference_surface_offset: float = 0.0,
     *,
     native_rotation_trial: NativeElementRotationView,
+    post_observation: Optional[Callable[[], None]] = None,
 ) -> tuple[
     np.ndarray,
     np.ndarray,
@@ -2525,21 +3306,41 @@ def _native_layered_uncondensed_response_components(
         + z_layers[None, :, None] * delta[:, None, 3:6]
     )
 
-    symmetry = _elastic_symmetry(material)
-    curve = getattr(material, "hardening_curve", None)
-    hill_yield = getattr(material, "hill_yield", None)
+    symmetry = _elastic_symmetry(material, post_observation)
+    curve = _guarded_observe_attribute(
+        material,
+        "hardening_curve",
+        default=None,
+        post_observation=post_observation,
+    )
+    hill_yield = _guarded_observe_attribute(
+        material,
+        "hill_yield",
+        default=None,
+        post_observation=post_observation,
+    )
     if symmetry == "orthotropic" and curve is not None and hill_yield is None:
+        material_name = _guarded_observe_attribute(
+            material,
+            "name",
+            default="<unnamed>",
+            post_observation=post_observation,
+        )
         raise ValueError(
-            f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
+            f"Orthotropic material {material_name!r} "
             "requires hill_yield when hardening_curve is active."
         )
     hill_plasticity = symmetry == "orthotropic" and hill_yield is not None
     constitutive_plasticity = curve is not None or hill_plasticity
     elastic, shear_elastic, strain_to_material, stress_to_local = (
-        _shell_material_matrices(material, float(material_angle))
+        _shell_material_matrices(
+            material,
+            float(material_angle),
+            post_observation,
+        )
     )
     material_elastic, _material_shear, _identity_strain, _identity_stress = (
-        _shell_material_matrices(material, 0.0)
+        _shell_material_matrices(material, 0.0, post_observation)
     )
 
     initial_state = _copy_state_fields(dict(state), _INITIAL_SHELL_STATE_KEYS)
@@ -2632,8 +3433,6 @@ def _native_layered_uncondensed_response_components(
         plastic_new = plastic_strain.copy()
         hardening_new = hardening.copy()
     elif hill_plasticity:
-        from .plasticity import hill48_plane_stress_return_map
-
         stress_material, tangent_material, plastic_new, hardening_new = (
             hill48_plane_stress_return_map(
                 layer_strain_material,
@@ -2659,8 +3458,22 @@ def _native_layered_uncondensed_response_components(
                     layer_strain,
                     plastic_strain,
                     hardening,
-                    float(material.elastic_modulus),
-                    float(material.poisson_ratio),
+                    _guarded_float(
+                        _guarded_observe_attribute(
+                            material,
+                            "elastic_modulus",
+                            post_observation=post_observation,
+                        ),
+                        post_observation=post_observation,
+                    ),
+                    _guarded_float(
+                        _guarded_observe_attribute(
+                            material,
+                            "poisson_ratio",
+                            post_observation=post_observation,
+                        ),
+                        post_observation=post_observation,
+                    ),
                     curve,
                     compute_tangent=True,
                 )
@@ -2674,16 +3487,24 @@ def _native_layered_uncondensed_response_components(
             # and alpha evolution are the same discrete equations as the
             # established isotropic return map under the exact rescaling
             # gamma=(2/3)*delta_lambda.
-            from .plasticity import hill48_plane_stress_return_map
-
-            flow_method = getattr(curve, "flow_stress", None)
+            flow_method = _guarded_observe_attribute(
+                curve,
+                "flow_stress",
+                default=None,
+                post_observation=post_observation,
+            )
             if not callable(flow_method):
                 raise TypeError(
                     "qualified S3 isotropic hardening curve must provide "
                     "flow_stress()"
                 )
-            initial_flow_values = np.asarray(
-                flow_method(np.zeros(1, dtype=np.float64)), dtype=np.float64
+            initial_flow_values = _guarded_array(
+                _guarded_observe_call(
+                    flow_method,
+                    np.zeros(1, dtype=np.float64),
+                    post_observation=post_observation,
+                ),
+                post_observation=post_observation,
             ).reshape(-1)
             if (
                 initial_flow_values.size != 1
@@ -2821,15 +3642,82 @@ def _native_layered_uncondensed_response(
     return force, tangent, trial_state
 
 
-class QualifiedE4PLS3ShellElement(ShellElement):
+class QualifiedE4PLS3ShellElement(
+    ShellElement,
+    metaclass=AuthorityEpochMeta,
+):
     """Opt-in three-node flat MITC3+ shell with three-mode PL completion."""
 
     formulation_id = FORMULATION_ID
+
+    def get_node_coordinates(
+        self,
+        mesh: Any,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> np.ndarray:
+        """Read mesh coordinates and recheck exact authority before mechanics."""
+
+        # Keep the provider and node observations separated by exact runtime
+        # checks.  In particular, never call a node ``coords`` method that a
+        # mesh callback could have replaced before returning the node.
+        post_observation = _qualified_runtime_post_observation
+        coordinates = np.empty((3, 3), dtype=np.float64)
+        for index, node_id in enumerate(self.node_ids):
+            node = mesh.get_node(node_id)
+            if post_observation is not None:
+                post_observation()
+            if node is None:
+                raise ValueError(f"Node {node_id} not found")
+            if type(node) is not Node:
+                raise ValueError(
+                    f"Node {node_id} is not an exact ANYsolver Node"
+                )
+            namespace = object.__getattribute__(node, "__dict__")
+            if type(namespace) is not dict or not all(
+                type(name) is str for name in namespace
+            ):
+                raise ValueError(f"Node {node_id} coordinate state is incompatible")
+            for component, name in enumerate(("x", "y", "z")):
+                if name not in namespace:
+                    raise ValueError(f"Node {node_id} lacks coordinate {name}")
+                value = dict.__getitem__(namespace, name)
+                if post_observation is not None:
+                    post_observation()
+                if type(value) not in _QUALIFIED_S3_COORDINATE_SCALAR_TYPES:
+                    raise ValueError(
+                        f"Node {node_id} coordinate {name} is not an exact real scalar"
+                    )
+                made_value = float(value)
+                if post_observation is not None:
+                    post_observation()
+                if not math.isfinite(made_value):
+                    raise ValueError(
+                        f"Node {node_id} coordinate {name} must be finite"
+                    )
+                coordinates[index, component] = made_value
+        return coordinates
+
+    formulation_schema = FORMULATION_SCHEMA
+    bubble_convention = BUBBLE_CONVENTION
+    quadrature_id = QUADRATURE_ID
+    dynamic_reduction_policy = DYNAMIC_REDUCTION_POLICY
+    algebraic_coordinate_policy = ALGEBRAIC_COORDINATE_POLICY_ID
+    geometric_stiffness_policy = GEOMETRIC_STIFFNESS_POLICY_ID
+    mass_moment_id = MASS_MOMENT_ID
+    recovery_policy_id = RECOVERY_POLICY_ID
+    state_layout_id = STATE_LAYOUT_ID
+    director_polarity_policy_id = DIRECTOR_POLARITY_POLICY_ID
+    director_reversal_transform_id = DIRECTOR_REVERSAL_TRANSFORM_ID
+    reference_surface_offset_policy_id = REFERENCE_SURFACE_OFFSET_POLICY_ID
+    reference_surface_strain_transform_id = REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+    reference_surface_mass_shift_id = REFERENCE_SURFACE_MASS_SHIFT_ID
     formulation_native_total_lagrangian = True
     dynamic_algebraic_nullity = 3
     dynamic_algebraic_policy = ALGEBRAIC_COORDINATE_POLICY_ID
     dynamic_algebraic_mass_witness = "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1"
     dynamic_algebraic_local_zero_indices = (5, 11, 17)
+    quadrature_authority_id = S3_QUADRATURE_AUTHORITY_ID
     legacy_stiffness_batch_eligible = False
     legacy_nonlinear_batch_eligible = False
     recovery_errors_fail_closed = True
@@ -2851,18 +3739,118 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "shell_section",
             "thickness",
             "_qualified_cache_key",
+            "_qualified_component_guard",
             "_qualified_components",
         }
     )
 
     def __setattr__(self, name: str, value: Any) -> None:
+        if (
+            self.__dict__.get("_qualified_plan_state_revision") is not None
+            and name in _QUALIFIED_S3_PROTECTED_CACHE_NAMES
+        ):
+            raise AttributeError(
+                f"qualified S3 derived cache {name} is internally managed"
+            )
         if name == "node_ids":
-            value = tuple(int(node_id) for node_id in value)
+            made_node_ids = tuple(value)
+            if not all(type(node_id) is int for node_id in made_node_ids):
+                raise TypeError(
+                    "qualified S3 node_ids must contain exact non-boolean integers"
+                )
+            value = made_node_ids
+        elif name == "reference_normal" and value is None:
+            if self.__dict__.get("_qualified_plan_state_revision") is not None:
+                raise ValueError(
+                    "qualified S3 requires an authoritative reference_normal"
+                )
+        elif name == "material_direction" and value is None:
+            if (
+                self.__dict__.get("_qualified_plan_state_revision") is not None
+                and self.__dict__.get("material_angle_deg", 0.0) != 0.0
+            ):
+                raise ValueError(
+                    "qualified S3 material_angle_deg requires material_direction"
+                )
         elif name in {"material_direction", "reference_normal"} and value is not None:
-            made = np.ascontiguousarray(np.asarray(value, dtype=float))
+            numerical_guard = require_exact_numpy_runtime_authority
+            numerical_guard(context=f"qualified S3 {name} assignment")
+            if type(value) in {list, tuple} and any(
+                isinstance(component, (bool, np.bool_))
+                or not isinstance(
+                    component, (int, float, np.integer, np.floating)
+                )
+                for component in value
+            ):
+                raise ValueError(
+                    f"qualified S3 {name} must be a finite real 3-vector"
+                )
+            observed = np.asarray(value)
+            numerical_guard(context=f"qualified S3 {name} assignment")
+            if (
+                observed.shape != (3,)
+                or observed.dtype.kind not in "fiu"
+                or observed.dtype.kind == "b"
+            ):
+                raise ValueError(
+                    f"qualified S3 {name} must be a finite real 3-vector"
+                )
+            made = np.ascontiguousarray(observed, dtype=float)
+            if not np.all(np.isfinite(made)):
+                raise ValueError(
+                    f"qualified S3 {name} must be a finite real 3-vector"
+                )
+            norm = float(np.linalg.norm(made))
+            if norm <= 0.0:
+                raise ValueError(f"qualified S3 {name} must be non-zero")
+            if name == "reference_normal":
+                made = np.ascontiguousarray(made / norm, dtype=float)
             value = np.frombuffer(made.tobytes(order="C"), dtype=float).reshape(
                 made.shape
             )
+        elif name == "shell_section" and value is not None:
+            if self.__dict__.get("_qualified_plan_state_revision") is None:
+                numerical_guard = require_exact_numpy_runtime_authority
+
+                def post_observation() -> None:
+                    numerical_guard(
+                        context="qualified S3 shell-section construction",
+                    )
+
+            else:
+                runtime_guard = _require_exact_s3_runtime_authority
+
+                def post_observation() -> None:
+                    runtime_guard(
+                        self,
+                        context="qualified S3 shell-section assignment",
+                    )
+
+            post_observation()
+            value = _guarded_owned_generalized_shell_section(
+                value,
+                post_observation=post_observation,
+            )
+        elif name == "material_angle_deg":
+            if isinstance(value, (bool, np.bool_)) or not isinstance(
+                value, (int, float, np.integer, np.floating)
+            ):
+                raise TypeError(
+                    "qualified S3 material_angle_deg must be a finite real scalar"
+                )
+            value = float(value)
+            if not math.isfinite(value):
+                raise ValueError(
+                    "qualified S3 material_angle_deg must be a finite real scalar"
+                )
+            if (
+                value != 0.0
+                and self.__dict__.get("_qualified_plan_state_revision") is not None
+                and self.__dict__.get("material_direction") is None
+            ):
+                raise ValueError(
+                    "qualified S3 material_angle_deg requires material_direction"
+                )
         revision = self.__dict__.get("_qualified_plan_state_revision")
         if revision is not None and name in self._plan_invalidating_attributes:
             object.__setattr__(
@@ -2876,7 +3864,18 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 tokens = () if token is None else (token,)
             for token in tokens:
                 token[0] = int(token[0]) + 1
+            _clear_s3_component_cache_provenance(self)
         super().__setattr__(name, value)
+
+    def __delattr__(self, name: str) -> None:
+        if (
+            self.__dict__.get("_qualified_plan_state_revision") is not None
+            and name in _QUALIFIED_S3_PROTECTED_CACHE_NAMES
+        ):
+            raise AttributeError(
+                f"qualified S3 derived cache {name} is internally managed"
+            )
+        super().__delattr__(name)
 
     def __deepcopy__(
         self,
@@ -2892,6 +3891,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "_mass_matrix",
             "_nl_cache",
             "_qualified_cache_key",
+            "_qualified_component_guard",
             "_qualified_components",
             "_stiffness_matrix",
         }
@@ -2926,6 +3926,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "_mass_matrix",
             "_nl_cache",
             "_qualified_cache_key",
+            "_qualified_component_guard",
             "_qualified_components",
             "_stiffness_matrix",
         }:
@@ -2933,7 +3934,27 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         return state
 
     def __setstate__(self, state: Mapping[str, Any]) -> None:
-        self.__dict__.update(state)
+        restored = dict(state)
+        node_ids = restored.get("node_ids")
+        if type(node_ids) in {list, tuple} and all(
+            type(value) is int for value in node_ids
+        ):
+            restored["node_ids"] = tuple(node_ids)
+        restored.setdefault("_qualified_plan_state_revision", 0)
+        if type(restored["_qualified_plan_state_revision"]) is not int:
+            restored["_qualified_plan_state_revision"] = 0
+        for name in {
+            "_hourglass_stiffness_matrix",
+            "_internal_forces",
+            "_mass_matrix",
+            "_nl_cache",
+            "_qualified_cache_key",
+            "_qualified_component_guard",
+            "_qualified_components",
+            "_stiffness_matrix",
+        }:
+            restored[name] = None
+        self.__dict__.update(restored)
         for name in ("material_direction", "reference_normal"):
             value = self.__dict__.get(name)
             if value is None:
@@ -2963,8 +3984,63 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         director_polarity: int = 1,
         reference_surface_offset: float = 0.0,
     ) -> None:
-        if len(node_ids) != 3:
+        numerical_guard = require_exact_numpy_runtime_authority
+        numerical_guard(context="qualified S3 construction")
+        owned_node_ids = tuple(node_ids)
+        numerical_guard(context="qualified S3 connectivity")
+        if len(owned_node_ids) != 3:
             raise ValueError("QualifiedE4PLS3ShellElement requires exactly three nodes")
+        if not all(type(node_id) is int for node_id in owned_node_ids):
+            raise TypeError(
+                "qualified S3 node_ids must contain exact non-boolean integers"
+            )
+        node_ids = owned_node_ids
+        if isinstance(thickness, (bool, np.bool_)) or not isinstance(
+            thickness, (int, float, np.integer, np.floating)
+        ):
+            raise TypeError(
+                "qualified S3 thickness must be a finite positive real scalar"
+            )
+        if not math.isfinite(float(thickness)) or float(thickness) <= 0.0:
+            raise ValueError(
+                "qualified S3 thickness must be a finite positive real scalar"
+            )
+        if isinstance(material_angle_deg, (bool, np.bool_)) or not isinstance(
+            material_angle_deg, (int, float, np.integer, np.floating)
+        ):
+            raise TypeError(
+                "qualified S3 material_angle_deg must be a finite real scalar"
+            )
+        if not math.isfinite(float(material_angle_deg)):
+            raise ValueError(
+                "qualified S3 material_angle_deg must be a finite real scalar"
+            )
+        if material_direction is not None:
+            if type(material_direction) in {list, tuple} and any(
+                isinstance(component, (bool, np.bool_))
+                or not isinstance(
+                    component, (int, float, np.integer, np.floating)
+                )
+                for component in material_direction
+            ):
+                raise ValueError(
+                    "qualified S3 material_direction must be a finite real 3-vector"
+                )
+            raw_direction = np.asarray(material_direction)
+            numerical_guard(context="qualified S3 material direction")
+            if (
+                raw_direction.shape != (3,)
+                or raw_direction.dtype.kind not in "fiu"
+                or raw_direction.dtype.kind == "b"
+            ):
+                raise ValueError(
+                    "qualified S3 material_direction must be a finite real 3-vector"
+                )
+            material_direction = np.asarray(raw_direction, dtype=float)
+            if not np.all(np.isfinite(material_direction)):
+                raise ValueError(
+                    "qualified S3 material_direction must be a finite real 3-vector"
+                )
         if material_direction is None and float(material_angle_deg) != 0.0:
             raise ValueError(
                 "qualified S3 material_angle_deg requires a physical material_direction"
@@ -3001,7 +4077,23 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "qualified S3 requires an authoritative reference_normal; "
                 "connectivity winding is not a physical director"
             )
-        normal = np.asarray(reference_normal, dtype=float).reshape(-1)
+        if type(reference_normal) in {list, tuple} and any(
+            isinstance(component, (bool, np.bool_))
+            or not isinstance(
+                component, (int, float, np.integer, np.floating)
+            )
+            for component in reference_normal
+        ):
+            raise ValueError(
+                "qualified S3 reference_normal must be a finite 3-vector"
+            )
+        normal = np.asarray(reference_normal)
+        numerical_guard(context="qualified S3 reference normal")
+        if normal.dtype.kind not in "fiu" or normal.dtype.kind == "b":
+            raise ValueError(
+                "qualified S3 reference_normal must be a finite 3-vector"
+            )
+        normal = np.asarray(normal, dtype=float).reshape(-1)
         if normal.size != 3 or not np.all(np.isfinite(normal)):
             raise ValueError("qualified S3 reference_normal must be a finite 3-vector")
         self.reference_normal = _normalize(normal, "reference normal")
@@ -3025,6 +4117,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         self.reference_surface_offset = 0.0 if offset == 0.0 else offset
         self._qualified_components: Optional[Mapping[str, Any]] = None
         self._qualified_cache_key: Optional[tuple[Any, ...]] = None
+        self._qualified_component_guard: Optional[tuple[Any, ...]] = None
         # ``__setattr__`` stores vector-valued cache inputs over immutable byte
         # buffers.  Connectivity is an immutable tuple.  Consequently every
         # supported change advances the inexpensive plan-state revision.
@@ -3061,21 +4154,39 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             return STATEFUL_MATERIAL_RESPONSE_MODE
         return STATELESS_FIXED_GENERALIZED_SECTION_RESPONSE_MODE
 
-    @property
-    def gauss_points(self) -> np.ndarray:
-        return np.asarray([(r, s) for r, s, _weight in TRIANGLE_QUADRATURE], dtype=float)
+    gauss_points = _S3_QUADRATURE_PROPERTY_AUTHORITY["gauss_points"]
+    gauss_weights = _S3_QUADRATURE_PROPERTY_AUTHORITY["gauss_weights"]
+    shear_gauss_points = _S3_QUADRATURE_PROPERTY_AUTHORITY[
+        "shear_gauss_points"
+    ]
+    shear_gauss_weights = _S3_QUADRATURE_PROPERTY_AUTHORITY[
+        "shear_gauss_weights"
+    ]
 
-    @property
-    def gauss_weights(self) -> np.ndarray:
-        return np.asarray([weight for _r, _s, weight in TRIANGLE_QUADRATURE], dtype=float)
+    def validate_quadrature_authority(
+        self,
+        _gauss_points_property: Any = gauss_points,
+        _gauss_weights_property: Any = gauss_weights,
+        _shear_gauss_points_property: Any = shear_gauss_points,
+        _shear_gauss_weights_property: Any = shear_gauss_weights,
+    ) -> str:
+        """Fail closed unless the published seven-point rule remains exact."""
 
-    @property
-    def shear_gauss_points(self) -> np.ndarray:
-        return self.gauss_points
-
-    @property
-    def shear_gauss_weights(self) -> np.ndarray:
-        return self.gauss_weights
+        property_authority = {
+            "gauss_points": _gauss_points_property,
+            "gauss_weights": _gauss_weights_property,
+            "shear_gauss_points": _shear_gauss_points_property,
+            "shear_gauss_weights": _shear_gauss_weights_property,
+        }
+        for name, expected in property_authority.items():
+            if expected is not _S3_QUADRATURE_PROPERTY_AUTHORITY[name]:
+                raise ValueError(
+                    f"qualified S3 {name} property authority is incompatible"
+                )
+        return _validate_s3_quadrature_values(
+            self,
+            _property_authority=property_authority,
+        )
 
     def capability_matrix(self) -> Dict[str, str]:
         return {
@@ -3091,7 +4202,9 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "reference_elastic_prestressed_modal": "PARITY_REPLACED",
             "reference_elastic_buckling": "PARITY_REPLACED",
             "current_state_modal": "PARITY_REPLACED",
+            "mixed_current_state_modal": "PARITY_REPLACED",
             "current_state_buckling_s3": "PARITY_REPLACED",
+            "mixed_current_state_buckling": "PARITY_REPLACED",
             "transient_algebraic_dynamics": "PARITY_REPLACED",
             "restart_history": RESTART_HISTORY_SCOPE,
             **dict(self.capability_restrictions),
@@ -3118,7 +4231,10 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             },
         }
 
+    @_s3_serialized_output_boundary
     def to_dict(self) -> Dict[str, Any]:
+        if type(self) is not __class__:
+            raise ValueError("qualified S3 serialization requires the exact class")
         payload = super().to_dict()
         payload.update(
             {
@@ -3127,6 +4243,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 "formulation_schema": FORMULATION_SCHEMA,
                 "bubble_convention": BUBBLE_CONVENTION,
                 "quadrature_id": QUADRATURE_ID,
+                "quadrature_authority_id": S3_QUADRATURE_AUTHORITY_ID,
                 "dynamic_reduction_policy": DYNAMIC_REDUCTION_POLICY,
                 "algebraic_coordinate_policy": ALGEBRAIC_COORDINATE_POLICY_ID,
                 "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
@@ -3156,7 +4273,10 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         return payload
 
     @classmethod
+    @_s3_serialized_input_boundary
     def from_dict(cls, payload: Mapping[str, Any]) -> "QualifiedE4PLS3ShellElement":
+        if cls is not __class__:
+            raise ValueError("qualified S3 deserialization requires the exact class")
         data = dict(payload)
         if data.get("formulation_id") != FORMULATION_ID:
             raise ValueError("serialized qualified S3 formulation_id is missing or incompatible")
@@ -3166,6 +4286,21 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError("serialized qualified S3 bubble convention is incompatible")
         if data.get("quadrature_id") != QUADRATURE_ID:
             raise ValueError("serialized qualified S3 quadrature identity is incompatible")
+        if (
+            "quadrature_authority_id" in data
+            and data.get("quadrature_authority_id") != S3_QUADRATURE_AUTHORITY_ID
+        ):
+            raise ValueError(
+                "serialized qualified S3 quadrature authority is incompatible"
+            )
+        if "quadrature_authority_id" not in data:
+            warnings.warn(
+                "Migrated an exact qualified S3 companion record to the "
+                "immutable exact quadrature authority; formulation mechanics "
+                "are unchanged.",
+                QualifiedS3MigrationWarning,
+                stacklevel=2,
+            )
         if data.get("dynamic_reduction_policy") != DYNAMIC_REDUCTION_POLICY:
             raise ValueError("serialized qualified S3 dynamic policy is incompatible")
         if data.get("algebraic_coordinate_policy") != ALGEBRAIC_COORDINATE_POLICY_ID:
@@ -3194,6 +4329,167 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError(
                 "serialized qualified S3 reference-surface mass shift is incompatible"
             )
+        current_identity = "quadrature_authority_id" in data
+        if data.get("formulation_id") == FORMULATION_ID:
+            if data.get("drilling_stabilization") not in {None, 0, 0.0}:
+                raise ValueError(
+                    "qualified S3 has no user drilling coefficient; "
+                    "use formulation='legacy-s3'"
+                )
+            if data.get("hourglass_stabilization") not in {None, 0, 0.0}:
+                raise ValueError(
+                    "qualified S3 has no hourglass coefficient; "
+                    "use formulation='legacy-s3'"
+                )
+            if data.get("reduced_integration") is True:
+                raise ValueError(
+                    "qualified S3 uses its frozen seven-point rule; "
+                    "use formulation='legacy-s3' for reduced_integration"
+                )
+            expected_current_keys = {
+                "algebraic_coordinate_policy",
+                "bubble_convention",
+                "director_polarity",
+                "director_polarity_policy_id",
+                "director_reversal_transform_id",
+                "dynamic_reduction_policy",
+                "element_id",
+                "formulation_id",
+                "formulation_schema",
+                "geometric_stiffness_policy",
+                "mass_moment_id",
+                "material_angle_deg",
+                "material_direction",
+                "material_name",
+                "node_ids",
+                "quadrature_authority_id",
+                "quadrature_id",
+                "recovery_policy_id",
+                "reference_normal",
+                "reference_surface_mass_shift_id",
+                "reference_surface_offset",
+                "reference_surface_offset_policy_id",
+                "reference_surface_strain_transform_id",
+                "shell_section",
+                "state_layout_id",
+                "thickness",
+                "type",
+            }
+            expected_closed_keys = (
+                expected_current_keys
+                if current_identity
+                else expected_current_keys - {"quadrature_authority_id"}
+            )
+            if set(data) != expected_closed_keys:
+                missing = sorted(expected_closed_keys - set(data))
+                extra = sorted(set(data) - expected_closed_keys)
+                raise ValueError(
+                    "serialized current qualified S3 keys are incompatible; "
+                    f"missing={missing}, extra={extra}"
+                )
+            raw_node_ids = data["node_ids"]
+            raw_direction = data["material_direction"]
+            raw_reference_normal = data["reference_normal"]
+            raw_section = data["shell_section"]
+            if raw_section is not None:
+                section_keys = {
+                    "A",
+                    "As",
+                    "B",
+                    "D",
+                    "mass_per_area",
+                    "name",
+                    "rotary_inertia_per_area",
+                }
+                if type(raw_section) is not dict or set(raw_section) != section_keys:
+                    raise ValueError(
+                        "serialized exact qualified S3 shell_section keys are incompatible"
+                    )
+                if type(raw_section["name"]) is not str:
+                    raise ValueError(
+                        "serialized exact qualified S3 shell_section name is incompatible"
+                    )
+                for matrix_name, shape in (
+                    ("A", (3, 3)),
+                    ("B", (3, 3)),
+                    ("D", (3, 3)),
+                    ("As", (2, 2)),
+                ):
+                    matrix = raw_section[matrix_name]
+                    if (
+                        type(matrix) not in {list, tuple}
+                        or len(matrix) != shape[0]
+                        or any(type(row) not in {list, tuple} for row in matrix)
+                        or any(len(row) != shape[1] for row in matrix)
+                        or any(
+                            type(component) is not float
+                            or not math.isfinite(component)
+                            for row in matrix
+                            for component in row
+                        )
+                    ):
+                        raise ValueError(
+                            "serialized exact qualified S3 shell_section matrix is incompatible"
+                        )
+                for mass_name in ("mass_per_area", "rotary_inertia_per_area"):
+                    mass = raw_section[mass_name]
+                    if mass is not None and (
+                        type(mass) is not float
+                        or not math.isfinite(mass)
+                    ):
+                        raise ValueError(
+                            "serialized exact qualified S3 shell_section mass is incompatible"
+                        )
+                for symmetric_name in ("A", "D", "As"):
+                    symmetric = raw_section[symmetric_name]
+                    if any(
+                        symmetric[row][column] != symmetric[column][row]
+                        for row in range(len(symmetric))
+                        for column in range(len(symmetric))
+                    ):
+                        raise ValueError(
+                            "serialized exact qualified S3 shell_section symmetry is incompatible"
+                        )
+            exact_vector = lambda value: (
+                type(value) in {list, tuple}
+                and len(value) == 3
+                and all(type(component) is float for component in value)
+                and all(math.isfinite(component) for component in value)
+            )
+            exact_unit_vector = lambda value: (
+                exact_vector(value)
+                and (norm := math.sqrt(sum(component * component for component in value)))
+                > 0.0
+                and tuple(component / norm for component in value) == tuple(value)
+            )
+            if (
+                type(data["element_id"]) is not int
+                or type(raw_node_ids) not in {list, tuple}
+                or len(raw_node_ids) != 3
+                or not all(type(value) is int for value in raw_node_ids)
+                or type(data["material_name"]) is not str
+                or type(data["thickness"]) is not float
+                or not math.isfinite(data["thickness"])
+                or data["thickness"] <= 0.0
+                or type(data["material_angle_deg"]) is not float
+                or not math.isfinite(data["material_angle_deg"])
+                or type(data["director_polarity"]) is not int
+                or data["director_polarity"] not in {-1, 1}
+                or type(data["reference_surface_offset"]) is not float
+                or not math.isfinite(data["reference_surface_offset"])
+                or (
+                    raw_direction is not None
+                    and not exact_vector(raw_direction)
+                )
+                or (
+                    raw_direction is None
+                    and data["material_angle_deg"] != 0.0
+                )
+                or not exact_unit_vector(raw_reference_normal)
+            ):
+                raise ValueError(
+                    "serialized current qualified S3 configuration uses noncanonical types"
+                )
         serialized_offset = data.get("reference_surface_offset")
         if isinstance(serialized_offset, (bool, np.bool_)) or not isinstance(
             serialized_offset,
@@ -3209,29 +4505,90 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise ValueError("serialized qualified S3 director_polarity is incompatible")
         if data.get("type") not in {cls.__name__, "e4-pl-s3", "qualified-s3"}:
             raise ValueError("serialized qualified S3 type is incompatible")
-        return cls(
-            element_id=int(data["element_id"]),
-            node_ids=[int(value) for value in data["node_ids"]],
-            material_name=str(data.get("material_name", "default")),
-            thickness=float(data.get("thickness", 0.01)),
+        if data.get("formulation_id") == FORMULATION_ID:
+            element_id = data["element_id"]
+            node_ids = list(data["node_ids"])
+            material_name = data["material_name"]
+            thickness = data["thickness"]
+            material_angle_deg = data["material_angle_deg"]
+            director_polarity = data["director_polarity"]
+            reference_surface_offset = data["reference_surface_offset"]
+        else:
+            element_id = int(data["element_id"])
+            node_ids = [int(value) for value in data["node_ids"]]
+            material_name = str(data.get("material_name", "default"))
+            thickness = float(data.get("thickness", 0.01))
+            material_angle_deg = float(data.get("material_angle_deg", 0.0))
+            director_polarity = int(serialized_polarity)
+            reference_surface_offset = float(serialized_offset)
+        candidate = cls(
+            element_id=element_id,
+            node_ids=node_ids,
+            material_name=material_name,
+            thickness=thickness,
             drilling_stabilization=data.get("drilling_stabilization"),
             reduced_integration=data.get("reduced_integration", False),
             hourglass_stabilization=data.get("hourglass_stabilization"),
             material_direction=data.get("material_direction"),
-            material_angle_deg=float(data.get("material_angle_deg", 0.0)),
+            material_angle_deg=material_angle_deg,
             shell_section=data.get("shell_section"),
             reference_normal=data.get("reference_normal"),
-            director_polarity=int(serialized_polarity),
-            reference_surface_offset=float(serialized_offset),
+            director_polarity=director_polarity,
+            reference_surface_offset=reference_surface_offset,
         )
+        return candidate
 
-    def _cache_key(self, mesh: Any, material: Any, coordinates: np.ndarray) -> tuple[Any, ...]:
-        revisions = getattr(mesh, "revision_signature", lambda: {})()
+    def _cache_key(
+        self,
+        mesh: Any,
+        material: Any,
+        coordinates: np.ndarray,
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
+    ) -> tuple[Any, ...]:
+        runtime_guard = _require_exact_s3_runtime_authority
+
+        def recheck() -> None:
+            if post_observation is not None:
+                post_observation()
+            else:
+                runtime_guard(
+                    self,
+                    context="qualified S3 cache input observation",
+                )
+
+        revision_reader = _guarded_observe_attribute(
+            mesh,
+            "revision_signature",
+            default=lambda: {},
+            post_observation=recheck,
+        )
+        revision_result = _guarded_observe_call(
+            revision_reader,
+            post_observation=recheck,
+        )
+        revisions = _guarded_owned_mapping(
+            revision_result,
+            label="qualified S3 mesh revision signature",
+            post_observation=recheck,
+        )
+        if any(type(value) is not int for value in revisions.values()):
+            raise TypeError(
+                "qualified S3 mesh revision values must be exact integers"
+            )
+        material_fingerprint = _shell_elastic_material_cache_fingerprint(
+            material,
+            recheck,
+        )
+        section_fingerprint = _generalized_shell_section_cache_fingerprint(
+            self.shell_section,
+            recheck,
+        )
         relative = coordinates - np.mean(coordinates, axis=0)
         return (
             id(mesh),
             id(material),
-            _elastic_material_cache_fingerprint(material),
+            material_fingerprint,
             int(revisions.get("geometry", 0)),
             int(revisions.get("material", 0)),
             np.ascontiguousarray(relative, dtype=float).tobytes(),
@@ -3240,13 +4597,254 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             None
             if self.material_direction is None
             else tuple(np.asarray(self.material_direction, dtype=float)),
-            id(self.shell_section),
+            section_fingerprint,
             None
             if self.reference_normal is None
             else tuple(np.asarray(self.reference_normal, dtype=float)),
             int(self.director_polarity),
             float(self.reference_surface_offset),
         )
+
+    def _bind_qualified_component_guard(
+        self,
+        mesh: Any,
+        material: Any,
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
+    ) -> None:
+        """Bind cached numerical components to their exact mutable inputs."""
+
+        runtime_guard = _require_exact_s3_runtime_authority
+
+        def recheck() -> None:
+            if post_observation is not None:
+                post_observation()
+            else:
+                runtime_guard(
+                    self,
+                    context="qualified S3 component binding observation",
+                )
+
+        token = _guarded_observe_attribute(
+            mesh,
+            "_qualified_direct_state_token",
+            default=None,
+            post_observation=recheck,
+        )
+        token_value = (
+            int(token[0])
+            if isinstance(token, list) and len(token) == 1
+            else None
+        )
+        components = self._qualified_components
+        cache_key = self._qualified_cache_key
+        previous_guard = self._qualified_component_guard
+        if (
+            type(previous_guard) is tuple
+            and len(previous_guard) == 12
+            and previous_guard[8] is components
+            and previous_guard[9] is cache_key
+        ):
+            component_authority = previous_guard[10]
+            component_array_metadata = previous_guard[11]
+            _require_s3_component_tree_authority(
+                components,
+                component_authority,
+            )
+            _require_authority_array_metadata(
+                component_array_metadata,
+                label="qualified S3 component cache authority",
+            )
+        else:
+            component_authority = _capture_s3_component_tree_authority(
+                components
+            )
+            component_array_metadata = _capture_authority_array_metadata(
+                components
+            )
+        guard = (
+            mesh,
+            int(self.__dict__.get("_qualified_plan_state_revision", 0)),
+            token,
+            token_value,
+            material,
+            _shell_elastic_material_cache_fingerprint(material, recheck),
+            _generalized_shell_section_cache_fingerprint(
+                self.shell_section,
+                recheck,
+            ),
+            S3_QUADRATURE_AUTHORITY_ID,
+            components,
+            cache_key,
+            component_authority,
+            component_array_metadata,
+        )
+        _require_s3_component_tree_authority(
+            components,
+            component_authority,
+        )
+        _require_authority_array_metadata(
+            component_array_metadata,
+            label="qualified S3 component cache authority",
+        )
+        # This is a derived-cache binding, not a model-input change.
+        object.__setattr__(self, "_qualified_component_guard", guard)
+        _bind_s3_component_cache_provenance(
+            self,
+            guard,
+            mesh,
+            material,
+        )
+
+    def _validate_qualified_component_cache_identity(self) -> tuple[Any, ...]:
+        guard = self._qualified_component_guard
+        if guard is None or type(guard) is not tuple or len(guard) != 12:
+            raise RuntimeError(
+                "qualified S3 component cache lacks its exact input guard"
+            )
+        if (
+            self._qualified_components is not guard[8]
+            or self._qualified_cache_key is not guard[9]
+            or type(self._qualified_cache_key) is not tuple
+        ):
+            raise RuntimeError(
+                "qualified S3 component cache provenance changed"
+            )
+        _require_s3_component_tree_authority(
+            self._qualified_components,
+            guard[10],
+        )
+        _require_authority_array_metadata(
+            guard[11],
+            label="qualified S3 component cache authority",
+        )
+        return guard
+
+    def _validate_qualified_component_guard(
+        self,
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
+    ) -> tuple[Any, ...]:
+        """Reject a cache-only operation after any supported input change."""
+
+        _validate_s3_quadrature_values(self)
+        guard = self._validate_qualified_component_cache_identity()
+        (
+            mesh,
+            element_revision,
+            token,
+            token_value,
+            material,
+            material_fingerprint,
+            section_fingerprint,
+            quadrature_id,
+            _components,
+            expected_cache_key,
+            _component_authority,
+            _component_array_metadata,
+        ) = guard
+        current_token_value = (
+            int(token[0])
+            if isinstance(token, list) and len(token) == 1
+            else None
+        )
+        coordinates = self.get_node_coordinates(mesh)
+        enforce_positive_winding = expected_cache_key[-1]
+        if type(enforce_positive_winding) is not bool:
+            raise RuntimeError(
+                "qualified S3 component cache winding authority changed"
+            )
+        current_cache_key = (
+            *self._cache_key(
+                mesh,
+                material,
+                coordinates,
+                post_observation=post_observation,
+            ),
+            enforce_positive_winding,
+        )
+        if (
+            int(self.__dict__.get("_qualified_plan_state_revision", 0))
+            != int(element_revision)
+            or current_token_value != token_value
+            or _shell_elastic_material_cache_fingerprint(
+                material,
+                post_observation,
+            )
+            != material_fingerprint
+            or _generalized_shell_section_cache_fingerprint(
+                self.shell_section,
+                post_observation,
+            )
+            != section_fingerprint
+            or quadrature_id != S3_QUADRATURE_AUTHORITY_ID
+            or current_cache_key != expected_cache_key
+        ):
+            raise RuntimeError(
+                "qualified S3 component cache is stale for current model inputs"
+            )
+        return guard
+
+    def _snapshot_qualified_component_arrays(
+        self,
+        specifications: tuple[
+            tuple[
+                str,
+                tuple[int, ...] | tuple[tuple[str, tuple[int, ...]], ...],
+            ],
+            ...,
+        ],
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
+    ) -> Dict[str, Any]:
+        """Snapshot requested mechanics arrays away from the shared cache."""
+
+        guard = self._validate_qualified_component_guard(
+            post_observation=post_observation,
+        )
+        components = dict.get(
+            object.__getattribute__(self, "__dict__"),
+            "_qualified_components",
+        )
+        authority = guard[10]
+        snapshots: Dict[str, Any] = {}
+        for name, specification in specifications:
+            expected, child_authority = _s3_component_authority_member(
+                authority,
+                name,
+            )
+            actual = components[name]
+            if specification and type(specification[0]) is tuple:
+                if actual is not expected or type(actual) is not MappingProxyType:
+                    raise RuntimeError(
+                        f"qualified S3 {name} component provenance changed"
+                    )
+                nested: Dict[str, np.ndarray] = {}
+                for child_name, child_shape in specification:
+                    child_expected, _nested_authority = (
+                        _s3_component_authority_member(
+                            child_authority,
+                            child_name,
+                        )
+                    )
+                    nested[child_name] = _snapshot_s3_float64_component(
+                        actual[child_name],
+                        child_expected,
+                        child_shape,
+                        label=f"{name}.{child_name}",
+                    )
+                snapshots[name] = nested
+            else:
+                snapshots[name] = _snapshot_s3_float64_component(
+                    actual,
+                    expected,
+                    specification,
+                    label=name,
+                )
+        self._validate_qualified_component_guard(
+            post_observation=post_observation,
+        )
+        return snapshots
 
     @property
     def physical_reference_director(self) -> np.ndarray:
@@ -3313,17 +4911,37 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                     ) from exc
         return mapped
 
-    def _constitutive(self, material: Any, frame: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _constitutive(
+        self,
+        material: Any,
+        frame: np.ndarray,
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        runtime_guard = _require_exact_s3_runtime_authority
+
+        def recheck() -> None:
+            if post_observation is not None:
+                post_observation()
+            else:
+                runtime_guard(
+                    self,
+                    context="qualified S3 constitutive observation",
+                )
+
         constitutive = np.zeros((8, 8), dtype=float)
         if self.shell_section is not None:
-            if self.material_direction is None and not _is_rotation_invariant_section(
+            rotation_invariant = _is_rotation_invariant_section(
                 self.shell_section
-            ):
+            )
+            recheck()
+            if self.material_direction is None and not rotation_invariant:
                 raise ValueError(
                     "qualified S3 anisotropic generalized sections require a physical "
                     "material_direction"
                 )
             section = self._generalized_section_in_frame(frame)
+            recheck()
             assert section is not None
             constitutive[:3, :3] = section.A
             constitutive[:3, 3:6] = section.B
@@ -3334,12 +4952,18 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             constitutive = reversal @ constitutive @ reversal
             membrane = np.asarray(section.A, dtype=float)
         else:
-            if self.material_direction is None and not is_isotropic_material(material):
+            isotropic = is_isotropic_material(material)
+            recheck()
+            if self.material_direction is None and not isotropic:
                 raise ValueError(
                     "qualified S3 anisotropic materials require a physical material_direction"
                 )
             membrane_material, shear, _strain_transform, _stress_transform = (
-                _shell_material_matrices(material, self._material_angle(frame))
+                _shell_material_matrices(
+                    material,
+                    self._material_angle(frame),
+                    recheck,
+                )
             )
             membrane = self.thickness * membrane_material
             constitutive[:3, :3] = membrane
@@ -3357,10 +4981,26 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         material: Any,
         *,
         enforce_positive_winding: bool,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> Mapping[str, Any]:
+        _validate_s3_quadrature_values(self)
         coordinates = self.get_node_coordinates(mesh)
-        cache_key = (*self._cache_key(mesh, material, coordinates), enforce_positive_winding)
+        cache_key = (
+            *self._cache_key(
+                mesh,
+                material,
+                coordinates,
+                post_observation=post_observation,
+            ),
+            enforce_positive_winding,
+        )
         if self._qualified_components is not None and self._qualified_cache_key == cache_key:
+            self._validate_qualified_component_cache_identity()
+            self._bind_qualified_component_guard(
+                mesh,
+                material,
+                post_observation=post_observation,
+            )
             return self._qualified_components
 
         frame, local, quality = triangle_frame(coordinates, self.reference_normal)
@@ -3492,19 +5132,37 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         object.__setattr__(self, "_qualified_cache_key", cache_key)
         self._hourglass_stiffness_matrix = frozen_result["hourglass"]
         self._stiffness_matrix = frozen_result["total"]
+        self._bind_qualified_component_guard(
+            mesh,
+            material,
+            post_observation=post_observation,
+        )
         return frozen_result
 
     def compute_stiffness_components(
-        self, mesh: Any, material: Any
+        self,
+        mesh: Any,
+        material: Any,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> Mapping[str, Any]:
         """Return the production-admitted linear component split."""
 
         return self._compute_stiffness_components(
-            mesh, material, enforce_positive_winding=True
+            mesh,
+            material,
+            enforce_positive_winding=True,
+            post_observation=_qualified_runtime_post_observation,
         )
 
     def compute_stiffness_matrix(self, mesh: Any, material: Any) -> np.ndarray:
-        return np.asarray(self.compute_stiffness_components(mesh, material)["total"])
+        self.compute_stiffness_components(mesh, material)
+        snapshot = self._snapshot_qualified_component_arrays(
+            (("total", (18, 18)),),
+        )
+        result = snapshot["total"]
+        self._validate_qualified_component_guard()
+        return result
 
     def compute_internal_forces(
         self,
@@ -3515,16 +5173,38 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         vector = self._get_element_displacements(mesh, displacements)
         return self.compute_stiffness_matrix(mesh, material) @ vector
 
-    def numerical_internal_force(self, displacement: np.ndarray) -> Dict[str, np.ndarray]:
+    def numerical_internal_force(
+        self,
+        displacement: np.ndarray,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> Dict[str, np.ndarray]:
         if self._qualified_components is None:
             raise RuntimeError("compute_stiffness_matrix must run before numerical force recovery")
-        vector = np.asarray(displacement, dtype=float).reshape(self.total_dofs)
-        pl = np.asarray(self._qualified_components["pl"]) @ vector
-        return {
+        self._validate_qualified_component_guard(
+            post_observation=_qualified_runtime_post_observation,
+        )
+        observed_vector = np.asarray(displacement, dtype=float)
+        if _qualified_runtime_post_observation is not None:
+            _qualified_runtime_post_observation()
+        self._validate_qualified_component_guard(
+            post_observation=_qualified_runtime_post_observation,
+        )
+        snapshot = self._snapshot_qualified_component_arrays(
+            (("pl", (18, 18)),),
+            post_observation=_qualified_runtime_post_observation,
+        )
+        vector = observed_vector.reshape(18)
+        pl = snapshot["pl"] @ vector
+        result = {
             "pl": pl,
             "hourglass": np.zeros_like(pl),
             "numerical": pl.copy(),
         }
+        self._validate_qualified_component_guard(
+            post_observation=_qualified_runtime_post_observation,
+        )
+        return result
 
     def _compute_stresses(
         self,
@@ -3534,6 +5214,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         *,
         return_global: bool,
         enforce_positive_winding: bool,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         """Recover native local/global physical fields at seven points.
 
@@ -3551,11 +5232,28 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             mesh,
             material,
             enforce_positive_winding=enforce_positive_winding,
+            post_observation=post_observation,
         )
-        frame = np.asarray(components["frame"], dtype=float)
+        component_arrays = self._snapshot_qualified_component_arrays(
+            (
+                ("frame", (3, 3)),
+                ("bubble_map", (2, 15)),
+                ("local_nodes", (3, 2)),
+                ("constitutive", (8, 8)),
+                (
+                    "assumed_shear_samples",
+                    tuple(
+                        (name, (2, 17))
+                        for name in ("A", "B", "C", "D", "E", "F")
+                    ),
+                ),
+            ),
+            post_observation=post_observation,
+        )
+        frame = component_arrays["frame"]
         local_external = self._local_dof_transform(frame) @ element_displacements
         physical_external = local_external[PHYSICAL_EXTERNAL_INDICES]
-        bubble = np.asarray(components["bubble_map"]) @ physical_external
+        bubble = component_arrays["bubble_map"] @ physical_external
         coordinates = np.concatenate((physical_external, bubble))
         strains = np.zeros((len(TRIANGLE_QUADRATURE), 8), dtype=float)
         resultants = np.zeros_like(strains)
@@ -3567,10 +5265,10 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             physical_reference_strain = (
                 director_generalized_transform
                 @ _kinematic_matrix(
-                    components["local_nodes"],
+                    component_arrays["local_nodes"],
                     r,
                     s,
-                    components["assumed_shear_samples"],
+                    component_arrays["assumed_shear_samples"],
                 )
                 @ coordinates
             )
@@ -3579,7 +5277,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 if self.reference_surface_offset == 0.0
                 else reference_surface_transform @ physical_reference_strain
             )
-            resultants[index] = np.asarray(components["constitutive"]) @ strains[index]
+            resultants[index] = component_arrays["constitutive"] @ strains[index]
         recovered: Dict[str, Any] = {
             "recovery_scope": (
                 "qualified_s3_local_and_global_physical"
@@ -3668,7 +5366,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             )
         if self.shell_section is None:
             membrane_material, shear, _strain_transform, stress_to_local = (
-                _shell_material_matrices(material, self._material_angle(components["frame"]))
+                _shell_material_matrices(
+                    material,
+                    self._material_angle(frame),
+                    post_observation,
+                )
             )
             membrane_stress = strains[:, :3] @ membrane_material.T
             moment = resultants[:, 3:6]
@@ -3705,8 +5407,6 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             recovered["hill_utilization"] = np.zeros(len(TRIANGLE_QUADRATURE), dtype=float)
             hill_yield = getattr(material, "hill_yield", None)
             if hill_yield is not None:
-                from .plasticity import hill48_plane_stress_equivalent_stress
-
                 top_material = np.linalg.solve(stress_to_local, top.T).T
                 bottom_material = np.linalg.solve(stress_to_local, bottom.T).T
                 hill_top = hill48_plane_stress_equivalent_stress(
@@ -3765,6 +5465,9 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 raise ValueError(
                     f"qualified S3 recovery produced non-finite field {name!r}"
                 )
+        self._validate_qualified_component_guard(
+            post_observation=post_observation,
+        )
         return recovered
 
     def compute_stresses(
@@ -3773,15 +5476,21 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         displacements: np.ndarray,
         material: Any,
         return_global: bool = False,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         """Recover production-admitted formulation-native physical fields."""
 
+        observed_displacements = np.asarray(displacements, dtype=float)
+        if _qualified_runtime_post_observation is not None:
+            _qualified_runtime_post_observation()
         return self._compute_stresses(
             mesh,
-            displacements,
+            observed_displacements,
             material,
             return_global=return_global,
             enforce_positive_winding=True,
+            post_observation=_qualified_runtime_post_observation,
         )
 
     @staticmethod
@@ -3799,30 +5508,71 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         material: Any,
         *,
         enforce_positive_winding: bool,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         """Build the analytic nodal-plus-bubble mass and Guyan reduction."""
 
+        _validate_s3_quadrature_values(self)
         stiffness = self._compute_stiffness_components(
             mesh,
             material,
             enforce_positive_winding=enforce_positive_winding,
+            post_observation=post_observation,
         )
-        local_nodes = np.asarray(stiffness["local_nodes"], dtype=float)
+        component_arrays = self._snapshot_qualified_component_arrays(
+            (
+                ("local_nodes", (3, 2)),
+                ("bubble_map", (2, 15)),
+                ("frame", (3, 3)),
+            ),
+            post_observation=post_observation,
+        )
+        local_nodes = component_arrays["local_nodes"]
         _jacobian_matrix, _inverse, determinant = _jacobian(local_nodes)
         area = 0.5 * abs(float(determinant))
         corner, corner_bubble, bubble = _analytic_mass_moments(area)
 
-        density = float(material.density)
+        raw_density = _guarded_observe_attribute(
+            material,
+            "density",
+            post_observation=post_observation,
+        )
+        density = _guarded_float(
+            raw_density,
+            post_observation=post_observation,
+        )
+        section_mass = (
+            None
+            if self.shell_section is None
+            else _guarded_observe_attribute(
+                self.shell_section,
+                "mass_per_area",
+                post_observation=post_observation,
+            )
+        )
         mass_per_area = (
-            float(self.shell_section.mass_per_area)
-            if self.shell_section is not None
-            and self.shell_section.mass_per_area is not None
+            _guarded_float(
+                section_mass,
+                post_observation=post_observation,
+            )
+            if section_mass is not None
             else density * float(self.thickness)
         )
+        section_rotary = (
+            None
+            if self.shell_section is None
+            else _guarded_observe_attribute(
+                self.shell_section,
+                "rotary_inertia_per_area",
+                post_observation=post_observation,
+            )
+        )
         section_rotary_inertia_per_area = (
-            float(self.shell_section.rotary_inertia_per_area)
-            if self.shell_section is not None
-            and self.shell_section.rotary_inertia_per_area is not None
+            _guarded_float(
+                section_rotary,
+                post_observation=post_observation,
+            )
+            if section_rotary is not None
             else density * float(self.thickness) ** 3 / 12.0
         )
         physical_first_mass_moment_per_area = (
@@ -3898,18 +5648,18 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             )
 
         bubble_map_18 = np.zeros((2, 18), dtype=float)
-        bubble_map_18[:, PHYSICAL_EXTERNAL_INDICES] = np.asarray(
-            stiffness["bubble_map"], dtype=float
-        )
+        bubble_map_18[:, PHYSICAL_EXTERNAL_INDICES] = component_arrays[
+            "bubble_map"
+        ]
         guyan = np.vstack((np.eye(18, dtype=float), bubble_map_18))
         condensed_local = guyan.T @ full_local @ guyan
         condensed_local = 0.5 * (condensed_local + condensed_local.T)
-        transform = self._local_dof_transform(np.asarray(stiffness["frame"], dtype=float))
+        transform = self._local_dof_transform(component_arrays["frame"])
         global_mass = transform.T @ condensed_local @ transform
         global_mass = 0.5 * (global_mass + global_mass.T)
         self._mass_matrix = global_mass
 
-        return {
+        result = {
             "area": area,
             "bubble_map_18": bubble_map_18,
             "condensed_local": condensed_local,
@@ -3935,32 +5685,58 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "formulation_id": FORMULATION_ID,
             "zero_drill_inertia": True,
         }
+        self._validate_qualified_component_guard(
+            post_observation=post_observation,
+        )
+        return result
 
-    def compute_mass_components(self, mesh: Any, material: Any) -> Dict[str, Any]:
+    def compute_mass_components(
+        self,
+        mesh: Any,
+        material: Any,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> Dict[str, Any]:
         """Return the admitted analytic mass and its Guyan audit blocks."""
 
         return self._compute_mass_components(
             mesh,
             material,
             enforce_positive_winding=True,
+            post_observation=_qualified_runtime_post_observation,
         )
 
     def dynamic_algebraic_directions(
-        self, mesh: Any, material: Any
+        self,
+        mesh: Any,
+        material: Any,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> np.ndarray:
         """Return the three global nodal rotations with exactly zero inertia."""
 
         components = self._compute_stiffness_components(
-            mesh, material, enforce_positive_winding=True
+            mesh,
+            material,
+            enforce_positive_winding=True,
+            post_observation=_qualified_runtime_post_observation,
+        )
+        component_arrays = self._snapshot_qualified_component_arrays(
+            (("frame", (3, 3)),),
+            post_observation=_qualified_runtime_post_observation,
         )
         local = np.zeros((18, 3), dtype=float)
         local[5, 0] = 1.0
         local[11, 1] = 1.0
         local[17, 2] = 1.0
         transform = self._local_dof_transform(
-            np.asarray(components["frame"], dtype=float)
+            component_arrays["frame"]
         )
-        return np.asarray(transform.T @ local, dtype=float)
+        result = np.asarray(transform.T @ local, dtype=float)
+        self._validate_qualified_component_guard(
+            post_observation=_qualified_runtime_post_observation,
+        )
+        return result
 
     def _compute_geometric_stiffness_components(
         self,
@@ -3969,6 +5745,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         state: Optional[Any],
         *,
         enforce_positive_winding: bool,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         """Build and condense the formulation-native initial-stress operator.
 
@@ -4320,12 +6097,22 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             )
         )
 
+        _validate_s3_quadrature_values(self)
         stiffness = self._compute_stiffness_components(
             mesh,
             material,
             enforce_positive_winding=enforce_positive_winding,
+            post_observation=post_observation,
         )
-        local_nodes = np.asarray(stiffness["local_nodes"], dtype=float)
+        component_arrays = self._snapshot_qualified_component_arrays(
+            (
+                ("local_nodes", (3, 2)),
+                ("bubble_map", (2, 15)),
+                ("frame", (3, 3)),
+            ),
+            post_observation=post_observation,
+        )
+        local_nodes = component_arrays["local_nodes"]
         _jacobian_matrix, inverse, determinant = _jacobian(local_nodes)
         full_local = np.zeros((20, 20), dtype=float)
         for point_index, (r, s, weight) in enumerate(TRIANGLE_QUADRATURE):
@@ -4408,23 +6195,22 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             full_local += abs(determinant) * float(weight) * point_operator
         full_local = 0.5 * (full_local + full_local.T)
         bubble_map_18 = np.zeros((2, 18), dtype=float)
-        bubble_map_18[:, PHYSICAL_EXTERNAL_INDICES] = np.asarray(
-            stiffness["bubble_map"],
-            dtype=float,
-        )
+        bubble_map_18[:, PHYSICAL_EXTERNAL_INDICES] = component_arrays[
+            "bubble_map"
+        ]
         bubble_schur_map = np.vstack((np.eye(18, dtype=float), bubble_map_18))
         condensed_local = bubble_schur_map.T @ full_local @ bubble_schur_map
         condensed_local = 0.5 * (condensed_local + condensed_local.T)
         transform = self._local_dof_transform(
-            np.asarray(stiffness["frame"], dtype=float)
+            component_arrays["frame"]
         )
         global_operator = transform.T @ condensed_local @ transform
         global_operator = 0.5 * (global_operator + global_operator.T)
-        return {
+        result = {
             "bubble_schur_map": bubble_schur_map,
             "condensed_local": condensed_local,
             "formulation_id": FORMULATION_ID,
-            "frame": np.asarray(stiffness["frame"], dtype=float),
+            "frame": component_arrays["frame"].copy(),
             "full_local": full_local,
             "global": global_operator,
             "membrane_compression": membrane_compression.copy(),
@@ -4457,20 +6243,34 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             "director_polarity": int(self.director_polarity),
             "bending_resultant_convention": "physical_director_first_moment",
         }
+        self._validate_qualified_component_guard(
+            post_observation=post_observation,
+        )
+        return result
 
     def compute_geometric_stiffness_components(
         self,
         mesh: Any,
         material: Any,
         state: Optional[Any] = None,
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         """Return auditable admitted initial-stress blocks and condensation."""
 
+        if state is not None:
+            if not isinstance(state, Mapping):
+                raise TypeError("qualified S3 geometric state must be a mapping")
+            observed_state_items = tuple(state.items())
+            if _qualified_runtime_post_observation is not None:
+                _qualified_runtime_post_observation()
+            state = dict(observed_state_items)
         return self._compute_geometric_stiffness_components(
             mesh,
             material,
             state,
             enforce_positive_winding=True,
+            post_observation=_qualified_runtime_post_observation,
         )
 
     def compute_geometric_stiffness_matrix(
@@ -4493,9 +6293,13 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         *,
         initial_fields: Optional[Mapping[str, Any]] = None,
         initial_field_provenance: Optional[Mapping[str, Any]] = None,
+        _qualified_runtime_post_observation: Optional[
+            Callable[[], None]
+        ] = None,
     ) -> Dict[str, Any]:
         """Create a complete qualified state bound to the current model."""
 
+        _validate_s3_quadrature_values(self)
         if self.shell_section is not None:
             if isinstance(num_layers, (bool, np.bool_)) or not isinstance(
                 num_layers, (int, np.integer)
@@ -4510,7 +6314,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 element_descriptor,
                 constitutive,
                 drilling_scale,
-            ) = self._model_bound_generalized_nonlinear_context(mesh, material)
+            ) = self._model_bound_generalized_nonlinear_context(
+                mesh,
+                material,
+                post_observation=_qualified_runtime_post_observation,
+            )
             return initialize_zero_committed_s3_generalized_state(
                 element_id=self.element_id,
                 node_ids=self.node_ids,
@@ -4532,7 +6340,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             frame,
             element_descriptor,
             material_descriptor,
-        ) = self._model_bound_nonlinear_context(mesh, material)
+        ) = self._model_bound_nonlinear_context(
+            mesh,
+            material,
+            post_observation=_qualified_runtime_post_observation,
+        )
         return initialize_zero_committed_s3_state(
             element_id=self.element_id,
             node_ids=self.node_ids,
@@ -4597,6 +6409,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         self,
         mesh: Any,
         material: Any,
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> tuple[np.ndarray, np.ndarray, Dict[str, Any], Dict[str, Any]]:
         if self.shell_section is not None:
             raise self._gap("material_nonlinearity")
@@ -4615,13 +6429,18 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             material_angle_deg=self.material_angle_deg,
             shell_section=None,
         )
-        material_descriptor = resolved_material_descriptor(material)
+        material_descriptor = resolved_material_descriptor(
+            material,
+            _post_observation=post_observation,
+        )
         return coordinates, frame, element_descriptor, material_descriptor
 
     def _model_bound_generalized_nonlinear_context(
         self,
         mesh: Any,
         material: Any,
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> tuple[np.ndarray, np.ndarray, Dict[str, Any], np.ndarray, float]:
         if self.shell_section is None:
             raise S3CommittedStateError(
@@ -4642,7 +6461,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             material_angle_deg=self.material_angle_deg,
             shell_section=self.shell_section,
         )
-        constitutive, membrane = self._constitutive(material, frame)
+        constitutive, membrane = self._constitutive(
+            material,
+            frame,
+            post_observation=post_observation,
+        )
         drilling_scale = invariant_drilling_scale(membrane)
         return (
             coordinates,
@@ -4652,7 +6475,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             drilling_scale,
         )
 
-    def validate_model_bound_nonlinear_state(
+    def _validate_model_bound_nonlinear_state_core(
         self,
         mesh: Any,
         material: Any,
@@ -4660,6 +6483,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         num_layers: int,
         *,
         expected_committed_total_u: Optional[Any] = None,
+        post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         """Validate a committed state against current element/model identity."""
 
@@ -4677,7 +6501,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 element_descriptor,
                 constitutive,
                 drilling_scale,
-            ) = self._model_bound_generalized_nonlinear_context(mesh, material)
+            ) = self._model_bound_generalized_nonlinear_context(
+                mesh,
+                material,
+                post_observation=post_observation,
+            )
             initial_fields = {
                 name: state[name]
                 for name in INITIAL_FIELD_NAMES
@@ -4719,7 +6547,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             frame,
             element_descriptor,
             material_descriptor,
-        ) = self._model_bound_nonlinear_context(mesh, material)
+        ) = self._model_bound_nonlinear_context(
+            mesh,
+            material,
+            post_observation=post_observation,
+        )
         initial_fields = {
             name: state[name]
             for name in INITIAL_FIELD_NAMES
@@ -4752,6 +6584,482 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             expected_committed_total_u=expected_committed_total_u,
         )
 
+    def _reject_noncurrent_activity_disposition(
+        self,
+        state: Mapping[str, Any],
+    ) -> None:
+        if _FOREIGN_Q4_ACTIVITY_DISPOSITION_KEY in state:
+            raise S3CommittedStateError(
+                "qualified S3 state carries a foreign Q4 activity disposition"
+            )
+        disposition = state.get(_S3_ACTIVITY_DISPOSITION_KEY)
+        if disposition is None:
+            return
+        status = (
+            str(disposition.get("status", "UNKNOWN"))
+            if isinstance(disposition, Mapping)
+            else "MALFORMED"
+        )
+        raise S3CommittedStateError(
+            "qualified S3 state is noncurrent and cannot supply ACTIVE "
+            f"current-state mechanics ({status})"
+        )
+
+    def validate_model_bound_nonlinear_state(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int,
+        *,
+        expected_committed_total_u: Optional[Any] = None,
+        _qualified_runtime_post_observation: Optional[
+            Callable[[], None]
+        ] = None,
+    ) -> Dict[str, Any]:
+        """Validate one ACTIVE committed state against the current model."""
+
+        if not isinstance(state, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 committed state must be a mapping"
+            )
+        self._reject_noncurrent_activity_disposition(state)
+        return self._validate_model_bound_nonlinear_state_core(
+            mesh,
+            material,
+            state,
+            num_layers,
+            expected_committed_total_u=expected_committed_total_u,
+            post_observation=_qualified_runtime_post_observation,
+        )
+
+    def _validated_activity_core(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int,
+        *,
+        expected_committed_total_u: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Recover and validate the ordinary S3 state beneath a disposition."""
+
+        if not isinstance(state, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 noncurrent state must be a mapping"
+            )
+        if _FOREIGN_Q4_ACTIVITY_DISPOSITION_KEY in state:
+            raise S3CommittedStateError(
+                "qualified S3 state carries a foreign Q4 activity disposition"
+            )
+        made = copy.deepcopy(dict(state))
+        made.pop(_S3_ACTIVITY_DISPOSITION_KEY, None)
+        made.pop("state_integrity_sha256", None)
+        core = seal_committed_s3_state(made)
+        return self._validate_model_bound_nonlinear_state_core(
+            mesh,
+            material,
+            core,
+            num_layers,
+            expected_committed_total_u=expected_committed_total_u,
+        )
+
+    def _activity_core_identity_payload(
+        self,
+        state: Mapping[str, Any],
+        num_layers: int,
+    ) -> Dict[str, Any]:
+        """Bind every stable S3/model identity needed by a disposition."""
+
+        mode = str(state.get("state_mode", ""))
+        if "material_fingerprint" in state:
+            constitutive_kind = "LAYERED_MATERIAL"
+            constitutive_fingerprint = str(state["material_fingerprint"])
+            formulation_fingerprint = str(state["formulation_fingerprint"])
+        elif "section_fingerprint" in state:
+            constitutive_kind = "GENERALIZED_SECTION"
+            constitutive_fingerprint = str(state["section_fingerprint"])
+            formulation_fingerprint = str(
+                state["generalized_formulation_fingerprint"]
+            )
+        else:
+            raise S3CommittedStateError(
+                "qualified S3 activity state lacks its constitutive identity"
+            )
+        return {
+            "formulation_id": FORMULATION_ID,
+            "formulation_schema": FORMULATION_SCHEMA,
+            "quadrature_id": QUADRATURE_ID,
+            "quadrature_authority_id": S3_QUADRATURE_AUTHORITY_ID,
+            "state_mode": mode,
+            "formulation_fingerprint": formulation_fingerprint,
+            "element_id": int(state["element_id"]),
+            "node_ids": [int(value) for value in state["node_ids"]],
+            "solver_num_layers": int(num_layers),
+            "element_configuration_fingerprint": str(
+                state["element_configuration_fingerprint"]
+            ),
+            "node_order_fingerprint": str(state["node_order_fingerprint"]),
+            "reference_geometry_fingerprint": str(
+                state["reference_geometry_fingerprint"]
+            ),
+            "reference_frame_fingerprint": str(
+                state["reference_frame_fingerprint"]
+            ),
+            "reference_corner_directors_fingerprint": str(
+                state["reference_corner_directors_fingerprint"]
+            ),
+            "constitutive_kind": constitutive_kind,
+            "material_or_section_fingerprint": constitutive_fingerprint,
+            "core_state_integrity_sha256": str(
+                state["state_integrity_sha256"]
+            ),
+            "core_committed_total_u_sha256": _s3_binary64_vector_fingerprint(
+                state["committed_total_u"],
+                (18,),
+                "core committed_total_u",
+            ),
+        }
+
+    def _deleted_frozen_disposition_payload(
+        self,
+        state: Mapping[str, Any],
+        accepted_local_u: Any,
+        num_layers: int,
+        *,
+        deletion_step_index: int,
+        deletion_load_factor: float,
+        residual_stiffness_fraction: float,
+        trigger_name: str,
+    ) -> Dict[str, Any]:
+        step = int(deletion_step_index)
+        load_factor = float(deletion_load_factor)
+        residual = float(residual_stiffness_fraction)
+        trigger = str(trigger_name)
+        displacement = np.asarray(accepted_local_u, dtype=np.float64)
+        displacement_digest = _s3_binary64_vector_fingerprint(
+            displacement,
+            (18,),
+            "deletion accepted_local_u",
+        )
+        if step <= 0 or not math.isfinite(load_factor):
+            raise S3CommittedStateError(
+                "qualified S3 deletion coordinates are invalid"
+            )
+        if not math.isfinite(residual) or not 0.0 <= residual <= 1.0:
+            raise S3CommittedStateError(
+                "qualified S3 deletion residual stiffness fraction is invalid"
+            )
+        if not trigger:
+            raise S3CommittedStateError(
+                "qualified S3 deletion trigger must not be empty"
+            )
+        identity = self._activity_core_identity_payload(state, num_layers)
+        if displacement_digest != identity["core_committed_total_u_sha256"]:
+            raise S3CommittedStateError(
+                "qualified S3 deletion displacement does not match frozen history"
+            )
+        payload = {
+            "schema_id": S3_ACTIVITY_DISPOSITION_SCHEMA_ID,
+            "policy_id": S3_DELETED_FROZEN_POLICY_ID,
+            "status": "DELETED_FROZEN_NONCURRENT",
+            **identity,
+            "deletion_step_index": step,
+            "deletion_load_factor": load_factor,
+            "accepted_local_u": displacement.tolist(),
+            "accepted_local_u_sha256": displacement_digest,
+            "residual_stiffness_fraction": residual,
+            "trigger_name": trigger,
+            "constitutive_history_semantics": (
+                "FROZEN_AT_DELETION_ACCEPTED_STATE"
+            ),
+            "residual_operator_semantics": (
+                "CURRENT_CONFIGURATION_FORCE_AND_TANGENT_SCALED_"
+                "WITHOUT_CONSTITUTIVE_STATE_UPDATE"
+            ),
+            "operator_semantics": (
+                "CONSTITUTIVE_HISTORY_FROZEN;"
+                "FORCE_AND_TANGENT_REEVALUATED_AT_CURRENT_U_THEN_SCALED"
+            ),
+        }
+        payload["disposition_sha256"] = canonical_sha256(payload)
+        return payload
+
+    def _failed_state_disposition_payload(
+        self,
+        state: Mapping[str, Any],
+        failed_local_u: Any,
+        num_layers: int,
+        *,
+        failure_reason: str,
+    ) -> Dict[str, Any]:
+        displacement = np.asarray(failed_local_u, dtype=np.float64)
+        displacement_digest = _s3_binary64_vector_fingerprint(
+            displacement,
+            (18,),
+            "failed_local_u",
+        )
+        reason = str(failure_reason)
+        if not reason:
+            raise S3CommittedStateError(
+                "qualified S3 failed disposition requires a failure reason"
+            )
+        payload = {
+            "schema_id": S3_ACTIVITY_DISPOSITION_SCHEMA_ID,
+            "policy_id": S3_FAILED_STATE_POLICY_ID,
+            "status": "FAILED_NONAUTHORITATIVE",
+            **self._activity_core_identity_payload(state, num_layers),
+            "failed_local_u": displacement.tolist(),
+            "failed_local_u_sha256": displacement_digest,
+            "failure_reason": reason,
+            "semantics": (
+                "MATERIALIZED_RESULT_ONLY_NOT_ACCEPTED_CURRENT_STATE_EVIDENCE"
+            ),
+        }
+        payload["disposition_sha256"] = canonical_sha256(payload)
+        return payload
+
+    def seal_noncurrent_deleted_state(
+        self,
+        mesh: Any,
+        material: Any,
+        accepted_local_u: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        deletion_step_index: int,
+        deletion_load_factor: float,
+        residual_stiffness_fraction: float,
+        trigger_name: str,
+    ) -> Dict[str, Any]:
+        """Bind frozen S3 history to its exact accepted deletion state."""
+
+        before = canonical_json_bytes(state)
+        displacement = np.asarray(accepted_local_u, dtype=np.float64)
+        core = self._validated_activity_core(
+            mesh,
+            material,
+            state,
+            int(num_layers),
+            expected_committed_total_u=displacement,
+        )
+        marker = self._deleted_frozen_disposition_payload(
+            core,
+            displacement,
+            int(num_layers),
+            deletion_step_index=deletion_step_index,
+            deletion_load_factor=deletion_load_factor,
+            residual_stiffness_fraction=residual_stiffness_fraction,
+            trigger_name=trigger_name,
+        )
+        made = copy.deepcopy(core)
+        made[_S3_ACTIVITY_DISPOSITION_KEY] = marker
+        sealed = seal_committed_s3_state(made)
+        if canonical_json_bytes(state) != before:
+            raise RuntimeError("qualified S3 deletion sealing mutated its input")
+        return sealed
+
+    def validate_noncurrent_deleted_state(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        expected_deletion_step_index: Optional[int] = None,
+        expected_deletion_load_factor: Optional[float] = None,
+        expected_residual_stiffness_fraction: Optional[float] = None,
+        expected_trigger_name: Optional[str] = None,
+    ) -> str:
+        """Validate a closed deletion marker and its underlying frozen state."""
+
+        if not isinstance(state, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 deleted state must be a mapping"
+            )
+        raw = state.get(_S3_ACTIVITY_DISPOSITION_KEY)
+        if not isinstance(raw, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 deleted state lacks its activity disposition"
+            )
+        try:
+            displacement = np.asarray(
+                raw.get("accepted_local_u", ()), dtype=np.float64
+            )
+            step = int(raw.get("deletion_step_index"))
+            load_factor = float(raw.get("deletion_load_factor"))
+            residual = float(raw.get("residual_stiffness_fraction"))
+            trigger = str(raw.get("trigger_name"))
+        except (TypeError, ValueError) as exc:
+            raise S3CommittedStateError(
+                "qualified S3 deleted disposition values are malformed"
+            ) from exc
+        core = self._validated_activity_core(
+            mesh,
+            material,
+            state,
+            int(num_layers),
+            expected_committed_total_u=displacement,
+        )
+        expected = self._deleted_frozen_disposition_payload(
+            core,
+            displacement,
+            int(num_layers),
+            deletion_step_index=step,
+            deletion_load_factor=load_factor,
+            residual_stiffness_fraction=residual,
+            trigger_name=trigger,
+        )
+        if canonical_json_bytes(raw) != canonical_json_bytes(expected):
+            raise S3CommittedStateError(
+                "qualified S3 deleted activity disposition is incompatible"
+            )
+        if expected_deletion_step_index is not None and step != int(
+            expected_deletion_step_index
+        ):
+            raise S3CommittedStateError(
+                "qualified S3 deletion step disagrees with checkpoint history"
+            )
+        if expected_deletion_load_factor is not None and load_factor != float(
+            expected_deletion_load_factor
+        ):
+            raise S3CommittedStateError(
+                "qualified S3 deletion load factor disagrees with checkpoint history"
+            )
+        if (
+            expected_residual_stiffness_fraction is not None
+            and residual != float(expected_residual_stiffness_fraction)
+        ):
+            raise S3CommittedStateError(
+                "qualified S3 residual fraction disagrees with checkpoint policy"
+            )
+        if expected_trigger_name is not None and trigger != str(
+            expected_trigger_name
+        ):
+            raise S3CommittedStateError(
+                "qualified S3 deletion trigger disagrees with checkpoint history"
+            )
+        rebuilt = copy.deepcopy(core)
+        rebuilt[_S3_ACTIVITY_DISPOSITION_KEY] = expected
+        rebuilt = seal_committed_s3_state(rebuilt)
+        if canonical_json_bytes(state) != canonical_json_bytes(rebuilt):
+            raise S3CommittedStateError(
+                "qualified S3 deleted state integrity is incompatible"
+            )
+        return str(rebuilt["state_integrity_sha256"])
+
+    def restore_noncurrent_deleted_state_for_internal_use(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        expected_deletion_step_index: Optional[int] = None,
+        expected_deletion_load_factor: Optional[float] = None,
+        expected_residual_stiffness_fraction: Optional[float] = None,
+        expected_trigger_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the validated frozen core used by residual assembly only."""
+
+        self.validate_noncurrent_deleted_state(
+            mesh,
+            material,
+            state,
+            int(num_layers),
+            expected_deletion_step_index=expected_deletion_step_index,
+            expected_deletion_load_factor=expected_deletion_load_factor,
+            expected_residual_stiffness_fraction=(
+                expected_residual_stiffness_fraction
+            ),
+            expected_trigger_name=expected_trigger_name,
+        )
+        raw = state[_S3_ACTIVITY_DISPOSITION_KEY]
+        return self._validated_activity_core(
+            mesh,
+            material,
+            state,
+            int(num_layers),
+            expected_committed_total_u=raw["accepted_local_u"],
+        )
+
+    def mark_noncurrent_failed_state(
+        self,
+        mesh: Any,
+        material: Any,
+        failed_local_u: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        failure_reason: str,
+    ) -> Dict[str, Any]:
+        """Return owned, closed failed output without ACTIVE authority."""
+
+        before = canonical_json_bytes(state)
+        core = self._validated_activity_core(
+            mesh,
+            material,
+            state,
+            int(num_layers),
+        )
+        marker = self._failed_state_disposition_payload(
+            core,
+            failed_local_u,
+            int(num_layers),
+            failure_reason=failure_reason,
+        )
+        made = copy.deepcopy(core)
+        made[_S3_ACTIVITY_DISPOSITION_KEY] = marker
+        sealed = seal_committed_s3_state(made)
+        if canonical_json_bytes(state) != before:
+            raise RuntimeError("qualified S3 failure marking mutated its input")
+        return sealed
+
+    def validate_noncurrent_failed_state(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+    ) -> str:
+        """Validate a nonauthoritative failure record without mechanics."""
+
+        if not isinstance(state, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 failed state must be a mapping"
+            )
+        raw = state.get(_S3_ACTIVITY_DISPOSITION_KEY)
+        if not isinstance(raw, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 failed state lacks its activity disposition"
+            )
+        displacement = np.asarray(raw.get("failed_local_u", ()), dtype=np.float64)
+        reason = str(raw.get("failure_reason", ""))
+        core = self._validated_activity_core(
+            mesh,
+            material,
+            state,
+            int(num_layers),
+        )
+        expected = self._failed_state_disposition_payload(
+            core,
+            displacement,
+            int(num_layers),
+            failure_reason=reason,
+        )
+        if canonical_json_bytes(raw) != canonical_json_bytes(expected):
+            raise S3CommittedStateError(
+                "qualified S3 failed activity disposition is incompatible"
+            )
+        rebuilt = copy.deepcopy(core)
+        rebuilt[_S3_ACTIVITY_DISPOSITION_KEY] = expected
+        rebuilt = seal_committed_s3_state(rebuilt)
+        if canonical_json_bytes(state) != canonical_json_bytes(rebuilt):
+            raise S3CommittedStateError(
+                "qualified S3 failed state integrity is incompatible"
+            )
+        return str(rebuilt["state_integrity_sha256"])
+
     def init_nonlinear_state(
         self,
         num_layers: int,
@@ -4761,6 +7069,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         initial_fields: Optional[Mapping[str, Any]] = None,
         initial_field_provenance: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
+        _validate_s3_quadrature_values(self)
         if mesh is None or material is None:
             raise ValueError(
                 "qualified S3 nonlinear state is model-bound; provide mesh and material"
@@ -4781,7 +7090,16 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         state: Optional[Mapping[str, Any]],
         num_layers: int,
         native_rotation_trial: NativeElementRotationView,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]]:
+        *,
+        post_observation: Optional[Callable[[], None]] = None,
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        Dict[str, Any],
+        NativeElementRotationView,
+        Any,
+    ]:
         """Bind one direct element call to the complete node-shared trial.
 
         Every redundant copy is compared bit-for-bit.  This makes the public
@@ -4790,21 +7108,63 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         multiplicative transaction.
         """
 
-        if not isinstance(native_rotation_trial, NativeElementRotationView):
+        if type(native_rotation_trial) is not NativeElementRotationView:
             raise TypeError(
                 "qualified S3 nonlinear response requires "
-                "NativeElementRotationView"
+                "an exact NativeElementRotationView"
             )
-        if native_rotation_trial.trial_serial is None:
+
+        element_id = _guarded_observe_attribute(
+            native_rotation_trial,
+            "element_id",
+            post_observation=post_observation,
+        )
+        node_ids = _guarded_observe_attribute(
+            native_rotation_trial,
+            "node_ids",
+            post_observation=post_observation,
+        )
+        generation = _guarded_observe_attribute(
+            native_rotation_trial,
+            "generation",
+            post_observation=post_observation,
+        )
+        trial_serial = _guarded_observe_attribute(
+            native_rotation_trial,
+            "trial_serial",
+            post_observation=post_observation,
+        )
+        if type(element_id) is not int:
+            raise TypeError(
+                "qualified S3 native rotation view element ID must be an exact int"
+            )
+        if (
+            type(node_ids) is not tuple
+            or any(type(node_id) is not int for node_id in node_ids)
+        ):
+            raise TypeError(
+                "qualified S3 native rotation view node IDs must be exact ints"
+            )
+        if type(generation) is not int or generation < 0:
+            raise TypeError(
+                "qualified S3 native rotation generation must be a nonnegative "
+                "exact int"
+            )
+        if trial_serial is None:
             raise ValueError(
                 "qualified S3 nonlinear response requires an active native "
                 "rotation trial"
             )
-        if native_rotation_trial.element_id != self.element_id:
+        if type(trial_serial) is not int or trial_serial < 0:
+            raise TypeError(
+                "qualified S3 native rotation trial serial must be a nonnegative "
+                "exact int"
+            )
+        if element_id != self.element_id:
             raise ValueError(
                 "qualified S3 native rotation view belongs to another element"
             )
-        if tuple(native_rotation_trial.node_ids) != tuple(self.node_ids):
+        if node_ids != tuple(self.node_ids):
             raise ValueError(
                 "qualified S3 native rotation view has incompatible connectivity"
             )
@@ -4820,8 +7180,17 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 reference_coordinates,
                 reference_frame,
                 _element_descriptor,
-                _material_descriptor,
-            ) = self._model_bound_nonlinear_context(mesh, material)
+                material_descriptor,
+            ) = self._model_bound_nonlinear_context(
+                mesh,
+                material,
+                post_observation=post_observation,
+            )
+            owned_material = _owned_material_from_resolved_descriptor(
+                material_descriptor["resolved_material"]
+            )
+            if post_observation is not None:
+                post_observation()
         else:
             (
                 reference_coordinates,
@@ -4829,7 +7198,12 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 _element_descriptor,
                 _constitutive,
                 _drilling_scale,
-            ) = self._model_bound_generalized_nonlinear_context(mesh, material)
+            ) = self._model_bound_generalized_nonlinear_context(
+                mesh,
+                material,
+                post_observation=post_observation,
+            )
+            owned_material = material
         reference_coordinates = np.asarray(
             reference_coordinates, dtype=np.float64
         ).reshape(3, 3)
@@ -4858,14 +7232,48 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         }
         view_arrays: Dict[str, np.ndarray] = {}
         for name, shape in view_shapes.items():
-            made = np.asarray(
-                getattr(native_rotation_trial, name), dtype=np.float64
+            raw = _guarded_observe_attribute(
+                native_rotation_trial,
+                name,
+                post_observation=post_observation,
             )
+            if type(raw) is not np.ndarray:
+                raise TypeError(
+                    f"qualified S3 native rotation view {name} must be an "
+                    "exact ndarray"
+                )
+            made = np.array(raw, dtype=np.float64, order="C", copy=True)
+            if post_observation is not None:
+                post_observation()
             if made.shape != shape or not np.all(np.isfinite(made)):
                 raise ValueError(
                     f"qualified S3 native rotation view {name} is incompatible"
                 )
             view_arrays[name] = made
+
+        native_rotation_trial = NativeElementRotationView(
+            element_id=element_id,
+            node_ids=node_ids,
+            committed_coordinates=view_arrays["committed_coordinates"],
+            trial_coordinates=view_arrays["trial_coordinates"],
+            coordinate_increment=view_arrays["coordinate_increment"],
+            committed_rotation_coordinates=(
+                view_arrays["committed_rotation_coordinates"]
+            ),
+            trial_rotation_coordinates=view_arrays["trial_rotation_coordinates"],
+            rotation_coordinate_increment=(
+                view_arrays["rotation_coordinate_increment"]
+            ),
+            committed_rotation_matrices=(
+                view_arrays["committed_rotation_matrices"]
+            ),
+            trial_rotation_matrices=view_arrays["trial_rotation_matrices"],
+            reference_directors=view_arrays["reference_directors"],
+            committed_directors=view_arrays["committed_directors"],
+            trial_directors=view_arrays["trial_directors"],
+            generation=generation,
+            trial_serial=trial_serial,
+        )
         if not np.array_equal(
             view_arrays["reference_directors"], expected_reference_directors
         ):
@@ -4934,7 +7342,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                 np.eye(3, dtype=np.float64)[None, :, :], 3, axis=0
             )
             unambiguous_zero = bool(
-                native_rotation_trial.generation == 0
+                generation == 0
                 and np.array_equal(
                     view_arrays["committed_coordinates"], reference_coordinates
                 )
@@ -5016,6 +7424,8 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             reference_coordinates,
             reference_frame,
             committed,
+            native_rotation_trial,
+            owned_material,
         )
 
     def compute_nonlinear_response(
@@ -5029,21 +7439,37 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         *,
         native_rotation_trial: NativeElementRotationView,
         _return_tangent_components: bool = False,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> Any:
         """Return one formulation-native layered or stateless-section trial."""
 
+        _validate_s3_quadrature_values(self)
+        observed_u = np.asarray(u_elem, dtype=np.float64)
+        if _qualified_runtime_post_observation is not None:
+            _qualified_runtime_post_observation()
+        if state is not None:
+            state = _guarded_owned_plain_value(
+                state,
+                label="qualified S3 nonlinear state",
+                post_observation=_qualified_runtime_post_observation,
+            )
+            if type(state) is not dict:
+                raise TypeError("qualified S3 nonlinear state must be a mapping")
         (
             total_u,
             reference_coordinates,
             reference_frame,
             committed,
+            native_rotation_trial,
+            owned_material,
         ) = self._validated_native_nonlinear_trial(
             mesh,
             material,
-            u_elem,
+            observed_u,
             state,
             num_layers,
             native_rotation_trial,
+            post_observation=_qualified_runtime_post_observation,
         )
         external_increment = np.empty(18, dtype=np.float64)
         external_by_node = external_increment.reshape(3, 6)
@@ -5071,18 +7497,21 @@ class QualifiedE4PLS3ShellElement(ShellElement):
                     increment20,
                     reference_coordinates,
                     reference_frame,
-                    material,
+                    owned_material,
                     material_angle,
                     float(self.thickness),
                     committed,
                     num_layers,
                     float(self.reference_surface_offset),
                     native_rotation_trial=native_rotation_trial,
+                    post_observation=_qualified_runtime_post_observation,
                 )
 
         else:
             constitutive, _membrane = self._constitutive(
-                material, reference_frame
+                owned_material,
+                reference_frame,
+                post_observation=_qualified_runtime_post_observation,
             )
 
             def physical_builder(
@@ -5162,7 +7591,11 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             )
         full_increment = np.concatenate((external_increment, bubble_increment))
 
-        _section, membrane = self._constitutive(material, reference_frame)
+        _section, membrane = self._constitutive(
+            owned_material,
+            reference_frame,
+            post_observation=_qualified_runtime_post_observation,
+        )
         drilling_scale = invariant_drilling_scale(membrane)
         pl_trial = _objective_pl_energy_response(
             reference_coordinates,
@@ -5366,6 +7799,7 @@ class QualifiedE4PLS3ShellElement(ShellElement):
             raise S3CommittedStateError(
                 "qualified S3 committed current tangent requires a state mapping"
             )
+        self._reject_noncurrent_activity_disposition(committed_state)
         displacement = np.asarray(committed_u_elem, dtype=np.float64)
         state_displacement = np.asarray(
             committed_state.get("committed_total_u", ()), dtype=np.float64
@@ -5482,6 +7916,1672 @@ class QualifiedE4PLS3ShellElement(ShellElement):
         readonly["relative_symmetry_error"] = relative_symmetry_error
         return MappingProxyType(readonly)
 
+    def compute_noncurrent_deleted_residual_operator(
+        self,
+        mesh: Any,
+        material: Any,
+        current_u_elem: Any,
+        frozen_state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        tangent: bool = True,
+    ) -> tuple[np.ndarray, Optional[np.ndarray]]:
+        """Evaluate the residual operator from deletion-time frozen history.
+
+        Deleted S3 history cannot participate in the model-wide native
+        rotation transaction after its deletion configuration.  Rebinding it
+        to a later displacement would falsely make it ACTIVE.  This isolated
+        formulation-native transaction instead starts from the exact frozen
+        committed Q/u pair, evaluates the current force/tangent once, and
+        deliberately discards the candidate material state.
+        """
+
+        if not isinstance(frozen_state, Mapping):
+            raise S3CommittedStateError(
+                "qualified S3 deleted residual operator requires frozen state"
+            )
+        self._reject_noncurrent_activity_disposition(frozen_state)
+        core = self._validate_model_bound_nonlinear_state_core(
+            mesh,
+            material,
+            frozen_state,
+            int(num_layers),
+        )
+        committed_u = np.asarray(
+            core["committed_total_u"], dtype=np.float64
+        ).reshape(18)
+        trial_u = np.asarray(current_u_elem, dtype=np.float64)
+        if trial_u.shape != (18,) or not np.all(np.isfinite(trial_u)):
+            raise S3CommittedStateError(
+                "qualified S3 deleted residual operator requires a finite 18-vector"
+            )
+        reference = np.asarray(
+            self.get_node_coordinates(mesh), dtype=np.float64
+        ).reshape(3, 3)
+        committed_nodes = committed_u.reshape(3, 6)
+        trial_nodes = trial_u.reshape(3, 6)
+        nodes = tuple(int(value) for value in self.node_ids)
+        store = create_native_rotation_state_store(
+            nodes,
+            rotational_dofs={
+                node_id: (6 * row + 3, 6 * row + 4, 6 * row + 5)
+                for row, node_id in enumerate(nodes)
+            },
+            coordinate_rows={node_id: row for row, node_id in enumerate(nodes)},
+            coordinate_node_ids=nodes,
+            committed_full_displacement=committed_u,
+            committed_full_coordinates=(
+                reference + committed_nodes[:, :3]
+            ),
+            committed_rotation_matrices={
+                node_id: np.asarray(
+                    core["committed_nodal_rotation_matrices"],
+                    dtype=np.float64,
+                )[row]
+                for row, node_id in enumerate(nodes)
+            },
+        )
+        if store is None:  # pragma: no cover - three S3 nodes are mandatory.
+            raise RuntimeError("qualified S3 deleted native store is missing")
+        token = store.begin_trial(
+            trial_u,
+            reference + trial_nodes[:, :3],
+        )
+        try:
+            view = store.element_view(
+                int(self.element_id),
+                nodes,
+                self.native_reference_directors(mesh),
+                trial_token=token,
+            )
+            force, matrix, _discarded_candidate = self.compute_nonlinear_response(
+                mesh,
+                material,
+                trial_u,
+                core,
+                int(num_layers),
+                bool(tangent),
+                native_rotation_trial=view,
+            )
+        finally:
+            store.discard_trial(token)
+        return (
+            np.asarray(force, dtype=np.float64).copy(),
+            None
+            if matrix is None
+            else np.asarray(matrix, dtype=np.float64).copy(),
+        )
+
+
+def _capture_s3_fast_array_authority(
+    metadata: tuple[
+        tuple[Any, str, tuple[int, ...], tuple[int, ...], bool], ...
+    ],
+) -> tuple[
+    tuple[
+        Any,
+        str,
+        tuple[int, ...],
+        tuple[int, ...],
+        bool,
+        tuple[Any, ...],
+    ], ...
+]:
+    """Capture exact ndarray metadata and every immutable base link."""
+
+    made = []
+    for array, dtype_string, shape, strides, c_contiguous in metadata:
+        bases = []
+        current: Any = array
+        while type(current) is np.ndarray:
+            current = current.base
+            bases.append(current)
+        made.append(
+            (
+                array,
+                dtype_string,
+                shape,
+                strides,
+                c_contiguous,
+                tuple(bases),
+            )
+        )
+    return tuple(made)
+
+
+def _require_s3_fast_array_authority(
+    authority: tuple[
+        tuple[
+            Any,
+            str,
+            tuple[int, ...],
+            tuple[int, ...],
+            bool,
+            tuple[Any, ...],
+        ], ...
+    ],
+    *,
+    label: str,
+) -> None:
+    """Require exact readonly metadata without evaluating array contents."""
+
+    for array, dtype_string, shape, strides, c_contiguous, bases in authority:
+        if (
+            type(array) is not np.ndarray
+            or array.dtype.str != dtype_string
+            or array.shape != shape
+            or array.strides != strides
+            or bool(array.flags.c_contiguous) is not c_contiguous
+            or array.flags.writeable
+        ):
+            raise ValueError(f"{label} ndarray metadata changed")
+        current: Any = array
+        for expected_base in bases:
+            if current.base is not expected_base:
+                raise ValueError(f"{label} ndarray base changed")
+            current = expected_base
+        if not (
+            type(current) is bytes
+            or isinstance(current, memoryview) and current.readonly
+        ):
+            raise ValueError(f"{label} ndarray base changed")
+
+
+_S3_FAST_MESH_TYPE = _fe_core_module.FEMesh
+_S3_FAST_NODE_TYPE = Node
+_S3_FAST_STATE_MAPPING_TYPE = _fe_core_module._QualifiedStateMapping
+_S3_FAST_TOKEN_TYPE = _fe_core_module._QualifiedMutationEpoch
+_S3_FAST_MATERIAL_TYPE = _fe_core_module.Material
+_S3_FAST_ELEMENT_INPUT_NAMES = (
+    "element_id",
+    "node_ids",
+    "material_name",
+    "thickness",
+    "drilling_stabilization",
+    "hourglass_stabilization",
+    "reduced_integration",
+    "_is_3node",
+    "_is_4node",
+    "_is_6node",
+    "_is_8node",
+    "_is_triangular",
+    "_is_quadrilateral",
+    "material_angle_deg",
+    "material_direction",
+    "shell_section",
+    "reference_normal",
+    "director_polarity",
+    "reference_surface_offset",
+    "_qualified_plan_state_revision",
+)
+_S3_FAST_MATERIAL_INPUT_NAMES = (
+    "name",
+    "elastic_modulus",
+    "poisson_ratio",
+    "density",
+    "yield_stress",
+    "hardening_curve",
+)
+_S3_FAST_ELEMENT_ITEMGETTER = itemgetter(*_S3_FAST_ELEMENT_INPUT_NAMES)
+_S3_FAST_MATERIAL_ITEMGETTER = itemgetter(*_S3_FAST_MATERIAL_INPUT_NAMES)
+_S3_FAST_NODE_ITEMGETTER = itemgetter(
+    "id",
+    "x",
+    "y",
+    "z",
+    "_coordinate_revision",
+)
+_S3_FAST_FORBIDDEN_INSTANCE_SHADOWS = frozenset(
+    {
+    "formulation_id",
+    "formulation_schema",
+    "native_s3_mechanics",
+    "legacy_stiffness_batch_eligible",
+    "legacy_nonlinear_batch_eligible",
+    "quadrature_authority_id",
+    "recovery_policy_id",
+    "compute_stiffness_components",
+    "compute_stiffness_matrix",
+    "get_node_coordinates",
+    "_cache_key",
+    "_constitutive",
+    "_director_generalized_transform",
+    "_local_dof_transform",
+    "_material_angle",
+    }
+)
+_S3_FAST_FORBIDDEN_MESH_SHADOWS = frozenset(
+    {
+    "get_node",
+    "revision_signature",
+    }
+)
+_S3_FAST_FORBIDDEN_MAPPING_SHADOWS = frozenset(
+    {
+        "get",
+        "items",
+        "values",
+    }
+)
+_S3_FAST_FORBIDDEN_MATERIAL_SHADOWS = frozenset(
+    {
+        "elastic_symmetry",
+        "shear_modulus",
+        "is_nonlinear",
+        "elastic_compliance_matrix",
+    }
+)
+
+
+def _make_s3_fast_base_authority_guard() -> tuple[Callable[[], None], Any]:
+    """Freeze a small exact class/data manifest for the warm total route."""
+
+    mesh_namespace = type.__getattribute__(_S3_FAST_MESH_TYPE, "__dict__")
+    node_namespace = type.__getattribute__(_S3_FAST_NODE_TYPE, "__dict__")
+    mapping_namespace = type.__getattribute__(
+        _S3_FAST_STATE_MAPPING_TYPE,
+        "__dict__",
+    )
+    material_namespace = type.__getattribute__(
+        _S3_FAST_MATERIAL_TYPE,
+        "__dict__",
+    )
+    mesh_get_node = mesh_namespace["get_node"]
+    mesh_revision_signature = mesh_namespace["revision_signature"]
+    node_coords = node_namespace["coords"]
+    material_elastic_symmetry = material_namespace["elastic_symmetry"]
+    material_shear_modulus = material_namespace["shear_modulus"]
+    material_is_nonlinear = material_namespace["is_nonlinear"]
+    material_compliance = material_namespace["elastic_compliance_matrix"]
+    scientific_array_authority = _capture_s3_fast_array_authority(
+        _capture_authority_array_metadata(
+            (
+                _S3_QUADRATURE_POINTS,
+                _S3_QUADRATURE_WEIGHTS,
+                PHYSICAL_EXTERNAL_INDICES,
+            )
+        )
+    )
+    def require() -> None:
+        if (
+            mesh_namespace.get("get_node") is not mesh_get_node
+            or mesh_namespace.get("revision_signature")
+            is not mesh_revision_signature
+            or node_namespace.get("coords") is not node_coords
+            or "get" in mapping_namespace
+            or "items" in mapping_namespace
+            or "values" in mapping_namespace
+            or material_namespace.get("elastic_symmetry")
+            is not material_elastic_symmetry
+            or material_namespace.get("shear_modulus")
+            is not material_shear_modulus
+            or material_namespace.get("is_nonlinear") is not material_is_nonlinear
+            or material_namespace.get("elastic_compliance_matrix")
+            is not material_compliance
+        ):
+            raise ValueError(
+                "qualified S3 cached stiffness class authority changed"
+            )
+
+    def combine_array_authority(*authorities: Any) -> Any:
+        return scientific_array_authority + tuple(
+            entry
+            for authority in authorities
+            for entry in authority
+        )
+
+    return require, combine_array_authority
+
+
+(
+    _require_s3_fast_base_authority,
+    _combine_s3_fast_array_authority,
+) = _make_s3_fast_base_authority_guard()
+
+
+class _S3FastInputSnapshot(NamedTuple):
+    element_namespace: dict[str, Any]
+    element_namespace_keys: tuple[str, ...]
+    element_values: tuple[Any, ...]
+    mesh: Any
+    mesh_namespace: dict[str, Any]
+    nodes: Any
+    nodes_namespace: dict[str, Any]
+    elements: Any
+    elements_namespace: dict[str, Any]
+    token: Any
+    token_value: int
+    nodes_snapshot: tuple[
+        tuple[
+            int,
+            Any,
+            dict[str, Any],
+            tuple[Any, ...],
+        ], ...
+    ]
+    material: Any
+    material_namespace: dict[str, Any]
+    material_namespace_keys: tuple[str, ...]
+    material_values: tuple[Any, ...]
+    vector_metadata: Any
+
+
+class _S3FastCacheRecord(NamedTuple):
+    reference: Any
+    components: Any
+    cache_key: Any
+    guard: Any
+    total: Any
+    total_bytes: bytes
+    array_metadata: Any
+    total_prevalidated: bool
+    inputs: Optional[_S3FastInputSnapshot]
+
+
+def _is_s3_fast_builtin_candidate(
+    element: Any,
+    mesh: Any,
+    material: Any,
+) -> bool:
+    if (
+        type(element) is not QualifiedE4PLS3ShellElement
+        or type(mesh) is not _S3_FAST_MESH_TYPE
+        or type(material) is not _S3_FAST_MATERIAL_TYPE
+    ):
+        return False
+    namespace = object.__getattribute__(element, "__dict__")
+    return type(namespace) is dict and dict.get(namespace, "shell_section") is None
+
+
+def _require_s3_fast_route_authority(
+    element: Any,
+    mesh: Any,
+    material: Any,
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    Any,
+    dict[str, Any],
+    Any,
+    dict[str, Any],
+    Any,
+]:
+    """Return callback-free owned namespaces for the exact builtin route."""
+
+    if not _is_s3_fast_builtin_candidate(element, mesh, material):
+        raise ValueError("qualified S3 cached stiffness route is not builtin")
+    element_namespace = object.__getattribute__(element, "__dict__")
+    mesh_namespace = object.__getattribute__(mesh, "__dict__")
+    material_namespace = object.__getattribute__(material, "__dict__")
+    nodes = dict.get(mesh_namespace, "nodes")
+    elements = dict.get(mesh_namespace, "elements")
+    token = dict.get(mesh_namespace, "_qualified_direct_state_token")
+    nodes_namespace = (
+        object.__getattribute__(nodes, "__dict__")
+        if type(nodes) is _S3_FAST_STATE_MAPPING_TYPE
+        else None
+    )
+    elements_namespace = (
+        object.__getattribute__(elements, "__dict__")
+        if type(elements) is _S3_FAST_STATE_MAPPING_TYPE
+        else None
+    )
+    if (
+        type(element_namespace) is not dict
+        or type(mesh_namespace) is not dict
+        or type(material_namespace) is not dict
+        or type(nodes_namespace) is not dict
+        or type(elements_namespace) is not dict
+        or not element_namespace.keys().isdisjoint(
+            _S3_FAST_FORBIDDEN_INSTANCE_SHADOWS
+        )
+        or not mesh_namespace.keys().isdisjoint(
+            _S3_FAST_FORBIDDEN_MESH_SHADOWS
+        )
+        or not material_namespace.keys().isdisjoint(
+            _S3_FAST_FORBIDDEN_MATERIAL_SHADOWS
+        )
+        or not nodes_namespace.keys().isdisjoint(
+            _S3_FAST_FORBIDDEN_MAPPING_SHADOWS
+        )
+        or not elements_namespace.keys().isdisjoint(
+            _S3_FAST_FORBIDDEN_MAPPING_SHADOWS
+        )
+        or type(token) is not _S3_FAST_TOKEN_TYPE
+        or len(token) != 1
+        or type(token[0]) is not int
+        or dict.get(nodes_namespace, "_qualified_token") is not token
+        or dict.get(nodes_namespace, "_qualified_kind") != "node"
+        or dict.get(elements_namespace, "_qualified_token") is not token
+        or dict.get(elements_namespace, "_qualified_kind") != "element"
+    ):
+        raise ValueError("qualified S3 cached stiffness route authority changed")
+    element_id = dict.get(element_namespace, "element_id")
+    subscriptions = dict.get(element_namespace, "_qualified_direct_state_tokens")
+    if (
+        type(element_id) is not int
+        or dict.get(elements, element_id) is not element
+        or dict.get(element_namespace, "_qualified_direct_state_token") is not token
+        or type(subscriptions) is not list
+        or len(subscriptions) != 1
+        or subscriptions[0] is not token
+    ):
+        raise ValueError("qualified S3 cached stiffness routing identity changed")
+    return (
+        element_namespace,
+        mesh_namespace,
+        material_namespace,
+        nodes,
+        nodes_namespace,
+        elements,
+        elements_namespace,
+        token,
+    )
+
+
+def _capture_s3_fast_input_snapshot(
+    element: Any,
+    mesh: Any,
+    material: Any,
+) -> Optional[_S3FastInputSnapshot]:
+    """Capture a callback-free snapshot for the exact builtin warm path."""
+
+    if not _is_s3_fast_builtin_candidate(element, mesh, material):
+        return None
+    try:
+        (
+            element_namespace,
+            mesh_namespace,
+            material_namespace,
+            nodes,
+            nodes_namespace,
+            elements,
+            elements_namespace,
+            token,
+        ) = _require_s3_fast_route_authority(element, mesh, material)
+    except ValueError:
+        return None
+    if not all(
+        type(name) is str
+        for namespace in (
+            element_namespace,
+            mesh_namespace,
+            material_namespace,
+            nodes_namespace,
+            elements_namespace,
+        )
+        for name in namespace
+    ):
+        return None
+    try:
+        element_values = _S3_FAST_ELEMENT_ITEMGETTER(element_namespace)
+    except KeyError:
+        return None
+    node_ids = dict.get(element_namespace, "node_ids")
+    expected_topology = (
+        True,
+        False,
+        False,
+        False,
+        True,
+        False,
+    )
+    if (
+        type(node_ids) is not tuple
+        or len(node_ids) != 3
+        or not all(type(node_id) is int for node_id in node_ids)
+        or len(set(node_ids)) != 3
+        or tuple(element_values[7:13]) != expected_topology
+        or type(element_values[0]) is not int
+        or type(element_values[2]) is not str
+        or any(type(value) is not float for value in element_values[3:6])
+        or type(element_values[6]) is not bool
+        or type(element_values[13]) is not float
+        or element_values[15] is not None
+        or type(element_values[17]) is not int
+        or element_values[17] not in {-1, 1}
+        or type(element_values[18]) is not float
+        or type(element_values[19]) is not int
+    ):
+        return None
+    node_records = []
+    for node_id in node_ids:
+        node = dict.get(nodes, node_id)
+        if type(node) is not _S3_FAST_NODE_TYPE:
+            return None
+        namespace = object.__getattribute__(node, "__dict__")
+        if (
+            type(namespace) is not dict
+            or not all(type(name) is str for name in namespace)
+            or "coords" in namespace
+        ):
+            return None
+        try:
+            values = _S3_FAST_NODE_ITEMGETTER(namespace)
+        except KeyError:
+            return None
+        if (
+            type(values[0]) is not int
+            or values[0] != node_id
+            or any(
+                type(value) not in _QUALIFIED_S3_COORDINATE_SCALAR_TYPES
+                for value in values[1:4]
+            )
+            or type(values[4]) is not int
+        ):
+            return None
+        node_records.append(
+            (
+                node_id,
+                node,
+                namespace,
+                values,
+            )
+        )
+    try:
+        material_values = _S3_FAST_MATERIAL_ITEMGETTER(material_namespace)
+    except KeyError:
+        return None
+    for name, value in zip(_S3_FAST_MATERIAL_INPUT_NAMES, material_values):
+        if name == "hardening_curve":
+            if value is not None:
+                return None
+        elif name == "name":
+            if type(value) is not str:
+                return None
+        elif type(value) not in {int, float} or type(value) is bool:
+            return None
+    vectors = tuple(
+        value
+        for name, value in zip(_S3_FAST_ELEMENT_INPUT_NAMES, element_values)
+        if name in {"material_direction", "reference_normal"}
+        and value is not None
+    )
+    try:
+        vector_metadata = _capture_s3_fast_array_authority(
+            _capture_authority_array_metadata(vectors)
+        )
+        _require_s3_fast_array_authority(
+            vector_metadata,
+            label="qualified S3 warm input authority",
+        )
+    except (TypeError, ValueError):
+        return None
+    return _S3FastInputSnapshot(
+        element_namespace=element_namespace,
+        element_namespace_keys=tuple(element_namespace),
+        element_values=element_values,
+        mesh=mesh,
+        mesh_namespace=mesh_namespace,
+        nodes=nodes,
+        nodes_namespace=nodes_namespace,
+        elements=elements,
+        elements_namespace=elements_namespace,
+        token=token,
+        token_value=int(token[0]),
+        nodes_snapshot=tuple(node_records),
+        material=material,
+        material_namespace=material_namespace,
+        material_namespace_keys=tuple(material_namespace),
+        material_values=material_values,
+        vector_metadata=vector_metadata,
+    )
+
+
+def _s3_fast_input_snapshot_matches(
+    element: Any,
+    mesh: Any,
+    material: Any,
+    snapshot: _S3FastInputSnapshot,
+) -> bool:
+    """Compare only raw owned builtin state; never invoke a descriptor."""
+
+    element_namespace = snapshot.element_namespace
+    mesh_namespace = snapshot.mesh_namespace
+    material_namespace = snapshot.material_namespace
+    nodes = snapshot.nodes
+    nodes_namespace = snapshot.nodes_namespace
+    elements = snapshot.elements
+    elements_namespace = snapshot.elements_namespace
+    token = snapshot.token
+    if (
+        "get_node" in mesh_namespace
+        or "revision_signature" in mesh_namespace
+        or "elastic_symmetry" in material_namespace
+        or "shear_modulus" in material_namespace
+        or "is_nonlinear" in material_namespace
+        or "elastic_compliance_matrix" in material_namespace
+        or "get" in nodes_namespace
+        or "items" in nodes_namespace
+        or "values" in nodes_namespace
+        or "get" in elements_namespace
+        or "items" in elements_namespace
+        or "values" in elements_namespace
+    ):
+        raise ValueError("qualified S3 cached stiffness route authority changed")
+    if (
+        dict.get(elements, dict.get(element_namespace, "element_id"))
+        is not element
+        or dict.get(element_namespace, "_qualified_direct_state_token") is not token
+    ):
+        raise ValueError("qualified S3 cached stiffness routing identity changed")
+    if (
+        type(element) is not QualifiedE4PLS3ShellElement
+        or type(mesh) is not _S3_FAST_MESH_TYPE
+        or type(material) is not _S3_FAST_MATERIAL_TYPE
+        or mesh is not snapshot.mesh
+        or material is not snapshot.material
+        or object.__getattribute__(element, "__dict__") is not element_namespace
+        or object.__getattribute__(mesh, "__dict__") is not mesh_namespace
+        or object.__getattribute__(material, "__dict__")
+        is not material_namespace
+        or len(element_namespace) != len(snapshot.element_namespace_keys)
+        or not all(
+            map(_operator_is, element_namespace, snapshot.element_namespace_keys)
+        )
+        or any(
+            name in mesh_namespace for name in _S3_FAST_FORBIDDEN_MESH_SHADOWS
+        )
+        or dict.get(mesh_namespace, "nodes") is not nodes
+        or dict.get(mesh_namespace, "elements") is not elements
+        or dict.get(mesh_namespace, "_qualified_direct_state_token") is not token
+        or type(nodes) is not _S3_FAST_STATE_MAPPING_TYPE
+        or object.__getattribute__(nodes, "__dict__") is not nodes_namespace
+        or type(elements) is not _S3_FAST_STATE_MAPPING_TYPE
+        or object.__getattribute__(elements, "__dict__")
+        is not elements_namespace
+        or len(material_namespace) != len(snapshot.material_namespace_keys)
+        or not all(
+            map(_operator_is, material_namespace, snapshot.material_namespace_keys)
+        )
+        or len(token) != 1
+        or type(token[0]) is not int
+        or int(token[0]) != snapshot.token_value
+        or dict.get(nodes_namespace, "_qualified_token") is not token
+        or dict.get(nodes_namespace, "_qualified_kind") != "node"
+        or dict.get(elements_namespace, "_qualified_token") is not token
+        or dict.get(elements_namespace, "_qualified_kind") != "element"
+    ):
+        return False
+    try:
+        current_element_values = _S3_FAST_ELEMENT_ITEMGETTER(element_namespace)
+    except KeyError:
+        return False
+    if not all(
+        map(_operator_is, current_element_values, snapshot.element_values)
+    ):
+        return False
+    for (
+        node_id,
+        node,
+        namespace,
+        values,
+    ) in snapshot.nodes_snapshot:
+        if (
+            type(node) is not _S3_FAST_NODE_TYPE
+            or object.__getattribute__(node, "__dict__") is not namespace
+            or dict.get(nodes, node_id) is not node
+        ):
+            return False
+        try:
+            current_values = _S3_FAST_NODE_ITEMGETTER(namespace)
+        except KeyError:
+            return False
+        if not all(map(_operator_is, current_values, values)):
+            return False
+    try:
+        current_material_values = _S3_FAST_MATERIAL_ITEMGETTER(material_namespace)
+    except KeyError:
+        return False
+    if not all(map(_operator_is, current_material_values, snapshot.material_values)):
+        return False
+    return True
+
+
+def _make_s3_component_cache_provenance() -> tuple[Any, Any, Any, Any]:
+    """Keep warm total provenance outside caller-reachable instances."""
+
+    records: Dict[int, _S3FastCacheRecord] = {}
+    public_array_constructor = np.ndarray
+
+    def bind(element: Any, guard: Any, mesh: Any, material: Any) -> None:
+        namespace = object.__getattribute__(element, "__dict__")
+        components = dict.get(namespace, "_qualified_components")
+        cache_key = dict.get(namespace, "_qualified_cache_key")
+        total = components.get("total") if type(components) is MappingProxyType else None
+        identity = id(element)
+        inputs = _capture_s3_fast_input_snapshot(element, mesh, material)
+        total_metadata = _capture_s3_fast_array_authority(
+            _capture_authority_array_metadata(total)
+        )
+
+        def discard(reference: Any, *, expected_identity: int = identity) -> None:
+            current = records.get(expected_identity)
+            if current is not None and current.reference is reference:
+                records.pop(expected_identity, None)
+
+        records[identity] = _S3FastCacheRecord(
+            reference=weakref.ref(element, discard),
+            components=components,
+            cache_key=cache_key,
+            guard=guard,
+            total=total,
+            total_bytes=(
+                np.ascontiguousarray(total, dtype=np.float64).tobytes(order="C")
+                if type(total) is np.ndarray and total.shape == (18, 18)
+                else b""
+            ),
+            array_metadata=_combine_s3_fast_array_authority(
+                total_metadata,
+                () if inputs is None else inputs.vector_metadata,
+            ),
+            total_prevalidated=bool(
+                type(total) is np.ndarray
+                and total.shape == (18, 18)
+                and total.dtype == np.dtype(np.float64)
+                and np.all(np.isfinite(total))
+                and np.array_equal(total, total.T)
+            ),
+            inputs=inputs,
+        )
+
+    def clear(element: Any) -> None:
+        records.pop(id(element), None)
+
+    def try_cached(
+        element: Any,
+        mesh: Any,
+        material: Any,
+    ) -> Optional[np.ndarray]:
+        if type(element) is not QualifiedE4PLS3ShellElement:
+            raise TypeError(
+                "qualified S3 cached stiffness requires the exact final class"
+            )
+        namespace = object.__getattribute__(element, "__dict__")
+        components = dict.get(namespace, "_qualified_components")
+        if components is None:
+            return None
+        cache_key = dict.get(namespace, "_qualified_cache_key")
+        guard = dict.get(namespace, "_qualified_component_guard")
+        record = records.get(id(element))
+        if record is None:
+            return None
+        if (
+            record.reference() is not element
+            or record.components is not components
+            or record.cache_key is not cache_key
+            or record.guard is not guard
+            or type(components) is not MappingProxyType
+            or type(cache_key) is not tuple
+            or type(guard) is not tuple
+            or components.get("total") is not record.total
+            or not record.total_prevalidated
+        ):
+            raise RuntimeError(
+                "qualified S3 cached stiffness closure provenance changed"
+            )
+        _require_s3_fast_array_authority(
+            record.array_metadata,
+            label="qualified S3 cached stiffness authority",
+        )
+        snapshot = record.inputs
+        if snapshot is None:
+            return None
+        _require_s3_fast_base_authority()
+        if type(record.total) is not np.ndarray:
+            raise RuntimeError("qualified S3 cached stiffness is not an exact array")
+        if not _s3_fast_input_snapshot_matches(
+            element,
+            mesh,
+            material,
+            snapshot,
+        ):
+            records.pop(id(element), None)
+            for name in (
+                "_hourglass_stiffness_matrix",
+                "_qualified_cache_key",
+                "_qualified_component_guard",
+                "_qualified_components",
+                "_stiffness_matrix",
+            ):
+                object.__setattr__(element, name, None)
+            return None
+        if len(record.total_bytes) != 18 * 18 * 8:
+            raise RuntimeError("qualified S3 cached stiffness bytes are incomplete")
+        return public_array_constructor(
+            (18, 18),
+            dtype=np.float64,
+            buffer=record.total_bytes,
+        )
+
+    def try_assembly_cached(
+        element: Any,
+        mesh: Any,
+        material: Any,
+    ) -> Optional[bytes]:
+        """Return closure-owned total bytes for an exact owned assembly lease.
+
+        The assembly route is responsible for one outer runtime-epoch and
+        builtin-provider lease.  This accessor retains per-element closure,
+        configuration, material, routing-token, and ndarray authority.
+        """
+
+        if type(element) is not QualifiedE4PLS3ShellElement:
+            return None
+        namespace = object.__getattribute__(element, "__dict__")
+        components = dict.get(namespace, "_qualified_components")
+        cache_key = dict.get(namespace, "_qualified_cache_key")
+        guard = dict.get(namespace, "_qualified_component_guard")
+        record = records.get(id(element))
+        snapshot = None if record is None else record.inputs
+        if (
+            record is None
+            or snapshot is None
+            or record.reference() is not element
+            or record.components is not components
+            or record.cache_key is not cache_key
+            or record.guard is not guard
+            or type(components) is not MappingProxyType
+            or type(cache_key) is not tuple
+            or type(guard) is not tuple
+            or components.get("total") is not record.total
+            or not record.total_prevalidated
+            or len(record.total_bytes) != 18 * 18 * 8
+        ):
+            return None
+        if not _s3_fast_input_snapshot_matches(
+            element,
+            mesh,
+            material,
+            snapshot,
+        ):
+            return None
+        _require_s3_fast_array_authority(
+            record.array_metadata,
+            label="qualified S3 assembly cached stiffness authority",
+        )
+        return record.total_bytes
+
+    return bind, clear, try_cached, try_assembly_cached
+
+
+(
+    _bind_s3_component_cache_provenance,
+    _clear_s3_component_cache_provenance,
+    _try_s3_fast_cached_stiffness,
+    _try_s3_fast_assembly_cached_stiffness,
+) = _make_s3_component_cache_provenance()
+
+
+def _make_s3_final_class_authority() -> tuple[Any, Any]:
+    authority: list[tuple[Any, ...]] = []
+
+    def initialize(owner: type[Any]) -> None:
+        if authority:
+            raise RuntimeError("qualified S3 class authority is already frozen")
+        authority.append(
+            (
+                owner,
+                type(owner),
+                type.__getattribute__(owner, "__name__"),
+                type.__getattribute__(owner, "__bases__"),
+                dict(type.__getattribute__(owner, "__dict__")),
+            )
+        )
+
+    def require() -> None:
+        if len(authority) != 1:
+            raise RuntimeError("qualified S3 class authority is not frozen")
+        owner, expected_type, expected_name, expected_bases, expected = authority[0]
+        actual = type.__getattribute__(owner, "__dict__")
+        if len(actual) != len(expected) or any(
+            name not in actual or actual[name] is not value
+            for name, value in expected.items()
+        ):
+            raise ValueError("qualified S3 concrete class authority changed")
+        actual_name = type.__getattribute__(owner, "__name__")
+        actual_bases = type.__getattribute__(owner, "__bases__")
+        if (
+            type(owner) is not expected_type
+            or type(actual_name) is not str
+            or actual_name != expected_name
+            or type(actual_bases) is not tuple
+            or len(actual_bases) != len(expected_bases)
+            or any(
+                actual_base is not expected_base
+                for actual_base, expected_base in zip(actual_bases, expected_bases)
+            )
+        ):
+            raise ValueError("qualified S3 concrete class identity changed")
+
+    return initialize, require
+
+
+(
+    _initialize_s3_final_class_authority,
+    _require_s3_final_class_authority,
+) = _make_s3_final_class_authority()
+
+
+def _make_s3_runtime_boundary_holder() -> tuple[Any, Any]:
+    authority: list[Any] = []
+
+    def install(guard: Any) -> None:
+        if authority:
+            raise RuntimeError("qualified S3 runtime boundary is already bound")
+        authority.append(guard)
+
+    def require(element: Any, *, context: str) -> None:
+        if len(authority) != 1:
+            raise RuntimeError("qualified S3 runtime boundary is not bound")
+        authority[0](element, context=context)
+
+    return install, require
+
+
+(
+    _install_s3_runtime_boundary,
+    _require_exact_s3_runtime_authority,
+) = _make_s3_runtime_boundary_holder()
+
+
+def _make_s3_cached_stiffness_epoch_holder() -> tuple[Any, Any]:
+    """Expose the closure-bound epoch check used by the warm S3 route."""
+
+    authority: list[Any] = []
+
+    def install(guard: Any) -> None:
+        if authority:
+            raise RuntimeError(
+                "qualified S3 cached-stiffness epoch guard is already bound"
+            )
+        authority.append(guard)
+
+    def require() -> None:
+        if len(authority) != 1:
+            raise RuntimeError(
+                "qualified S3 cached-stiffness epoch guard is not bound"
+            )
+        authority[0]()
+
+    return install, require
+
+
+(
+    _install_s3_cached_stiffness_runtime_epoch_authority,
+    _require_s3_cached_stiffness_runtime_epoch_authority,
+) = _make_s3_cached_stiffness_epoch_holder()
+
+
+_s3_runtime_epoch_manager = make_authority_epoch_manager(
+    "qualified S3 runtime"
+)
+
+
+def _invalidate_s3_guarded_call_caches(element: Any) -> None:
+    """Drop every derived cache after a rejected authority lease."""
+
+    namespace = object.__getattribute__(element, "__dict__")
+    if type(namespace) is not dict:
+        return
+    for name in (
+        "_hourglass_stiffness_matrix",
+        "_internal_forces",
+        "_mass_matrix",
+        "_nl_cache",
+        "_nl_cache_key",
+        "_qualified_cache_key",
+        "_qualified_component_guard",
+        "_qualified_components",
+        "_stiffness_matrix",
+    ):
+        if name in namespace:
+            object.__setattr__(element, name, None)
+    _clear_s3_component_cache_provenance(element)
+
+
+def _bind_s3_exact_quadrature_boundary(method: Any) -> Any:
+    """Bind immutable quadrature/numerical authority around an S3 operation."""
+
+    quadrature_guard = _validate_s3_quadrature_values
+    numerical_guard = require_exact_numpy_runtime_authority
+    numerical_module_guard = _require_exact_numpy_runtime_module_identity
+    authority_signer = _module_authority_signature
+    runtime_manager = _s3_runtime_epoch_manager
+    runtime_module = sys.modules[__name__]
+    module_bindings = tuple(
+        (name, value)
+        for name, value in tuple(globals().items())
+        if callable(value) or isinstance(value, ModuleType)
+    )
+    module_data = tuple(
+        (name, value, type(value), authority_signer(value))
+        for name, value in tuple(globals().items())
+        if name.lstrip("_").isupper()
+    )
+    ignored_dependency_class_cache_name = "__slotnames__"
+    dependency_namespaces = tuple(
+        (
+            owner,
+            {
+                name: value
+                for name, value in dict(
+                    type.__getattribute__(owner, "__dict__")
+                ).items()
+                if name != ignored_dependency_class_cache_name
+            },
+        )
+        for owner in (
+            Element,
+            ShellElement,
+            _fe_core_module.FEMesh,
+            _fe_core_module.Material,
+            GeneralizedShellSection,
+        )
+    )
+    def capture_dependency_namespace(module: ModuleType) -> dict[str, Any]:
+        captured: dict[str, Any] = {}
+        for name, value in tuple(vars(module).items()):
+            if callable(value) or isinstance(value, ModuleType):
+                captured[name] = value
+                continue
+            if not name.lstrip("_").isupper():
+                continue
+            try:
+                _require_immutable_authority_data(
+                    value,
+                    label=f"qualified S3 {module.__name__}.{name}",
+                )
+            except TypeError:
+                continue
+            captured[name] = value
+        return captured
+
+    dependency_modules = tuple(
+        (
+            module,
+            str(module.__name__),
+            capture_dependency_namespace(module),
+        )
+        for module in (
+            _s3_state_module,
+            _elements_module,
+            _fe_core_module,
+            _material_curves_module,
+            _materials_module,
+            _native_rotation_state_module,
+            _plasticity_module,
+            _shell_sections_module,
+        )
+    )
+    expected_class = QualifiedE4PLS3ShellElement
+    expected_formulation_id = FORMULATION_ID
+    class_data_names = frozenset().union(
+        *(
+            frozenset(type.__getattribute__(owner, "__dict__"))
+            for owner in type.__getattribute__(expected_class, "__mro__")
+        )
+    )
+    dependency_class_metadata = tuple(
+        (
+            owner,
+            type(owner),
+            owner.__name__,
+            owner.__qualname__,
+            owner.__module__,
+            type.__getattribute__(owner, "__bases__"),
+        )
+        for owner, _namespace in dependency_namespaces
+    )
+    method_signature = inspect.signature(method)
+    post_observation_name = "_qualified_runtime_post_observation"
+    accepts_post_observation = post_observation_name in method_signature.parameters
+    fast_cached_stiffness = _try_s3_fast_cached_stiffness
+    class_mutable_mappings = tuple(
+        (
+            f"{owner.__name__}.{name}",
+            value,
+            tuple(value.items()),
+        )
+        for owner, expected_namespace in dependency_namespaces
+        for name, value in expected_namespace.items()
+        if type(value) is dict
+    )
+    for label, mapping, _items in class_mutable_mappings:
+        if not all(type(key) is str for key in mapping):
+            raise TypeError(f"{label} authority keys must be exact strings")
+    authority_array_metadata = _capture_authority_array_metadata(
+        tuple(value for _name, value, _kind, _signature in module_data),
+        tuple(
+            tuple(expected_namespace.values())
+            for _module, _module_name, expected_namespace in dependency_modules
+        ),
+        tuple(
+            tuple(expected_namespace.values())
+            for _owner, expected_namespace in dependency_namespaces
+        ),
+    )
+
+    for name, value, _expected_type, _expected_signature in module_data:
+        if name == "_S3_GENERALIZED_SECTION_NAMESPACE_AUTHORITY":
+            continue
+        _require_immutable_authority_data(
+            value,
+            label=f"qualified S3 {name}",
+        )
+    for module, module_name, expected_namespace in dependency_modules:
+        for name, value in expected_namespace.items():
+            if not name.lstrip("_").isupper():
+                continue
+            _require_immutable_authority_data(
+                value,
+                label=f"qualified S3 {module_name}.{name}",
+            )
+
+    runtime_manager.watch_module(
+        runtime_module,
+        (
+            "__name__",
+            *(name for name, _expected in module_bindings),
+            *(name for name, *_expected in module_data),
+        ),
+    )
+    for dependency_module, _module_name, expected_namespace in dependency_modules:
+        runtime_manager.watch_module(
+            dependency_module,
+            ("__name__", *expected_namespace),
+        )
+    _watch_exact_numpy_runtime_epoch(runtime_manager)
+
+    def formulation_module_guard() -> None:
+        namespace = globals()
+        changed = [
+            name
+            for name, expected in module_bindings
+            if namespace.get(name) is not expected
+        ]
+        changed.extend(
+            name
+            for name, _value, expected_type, expected_signature in module_data
+            if type(namespace.get(name)) is not expected_type
+            or authority_signer(namespace.get(name))
+            != expected_signature
+        )
+        for module, module_name, expected_namespace in dependency_modules:
+            actual_namespace = vars(module)
+            changed.extend(
+                f"{module_name}.{name}"
+                for name, expected in expected_namespace.items()
+                if actual_namespace.get(name) is not expected
+            )
+        if changed:
+            raise ValueError(
+                "qualified S3 formulation runtime authority changed: "
+                + ", ".join(sorted(set(changed)))
+            )
+
+    def formulation_class_guard() -> None:
+        for (
+            owner,
+            expected_namespace,
+        ), metadata in zip(dependency_namespaces, dependency_class_metadata):
+            actual_namespace = type.__getattribute__(owner, "__dict__")
+            if (
+                len(actual_namespace)
+                - int(ignored_dependency_class_cache_name in actual_namespace)
+                != len(expected_namespace)
+                or any(
+                    name not in actual_namespace
+                    or actual_namespace[name] is not expected
+                    for name, expected in expected_namespace.items()
+                )
+            ):
+                raise ValueError(
+                    f"qualified S3 {metadata[2]} class namespace changed"
+                )
+        for (
+            owner,
+            expected_type,
+            expected_name,
+            _expected_qualname,
+            _expected_module,
+            expected_bases,
+        ) in dependency_class_metadata:
+            actual_name = type.__getattribute__(owner, "__name__")
+            actual_bases = type.__getattribute__(owner, "__bases__")
+            if (
+                type(owner) is not expected_type
+                or type(actual_name) is not str
+                or actual_name != expected_name
+                or type(actual_bases) is not tuple
+                or len(actual_bases) != len(expected_bases)
+                or any(
+                    actual_base is not expected_base
+                    for actual_base, expected_base in zip(
+                        actual_bases, expected_bases
+                    )
+                )
+            ):
+                raise ValueError(
+                    f"qualified S3 {expected_name} class identity changed"
+                )
+        for label, mapping, expected_items in class_mutable_mappings:
+            if (
+                type(mapping) is not dict
+                or not all(type(key) is str for key in mapping)
+                or len(mapping) != len(expected_items)
+                or any(
+                    name not in mapping or mapping[name] is not expected
+                    for name, expected in expected_items
+                )
+            ):
+                raise ValueError(
+                    f"qualified S3 {label} mutable class authority changed"
+                )
+        _require_authority_array_metadata(
+            authority_array_metadata,
+            label="qualified S3 runtime authority",
+        )
+
+    def slow_runtime_guard() -> None:
+        numerical_guard(context=f"qualified S3 {method.__name__}")
+        formulation_module_guard()
+        _require_s3_final_class_authority()
+
+    runtime_epoch_guard = runtime_manager.bind(slow_runtime_guard)
+    runtime_manager_type = type(runtime_manager)
+    fast_route_functions = (
+        ("cached stiffness", fast_cached_stiffness),
+        ("cached array authority", _require_s3_fast_array_authority),
+        ("cached base authority", _require_s3_fast_base_authority),
+        ("cached input snapshot", _s3_fast_input_snapshot_matches),
+        ("numpy module authority", numerical_module_guard),
+        ("runtime epoch", runtime_epoch_guard),
+        (
+            "runtime epoch steady reader",
+            type.__getattribute__(runtime_manager_type, "__dict__")["_steady"],
+        ),
+        (
+            "runtime epoch generation capture",
+            type.__getattribute__(runtime_manager_type, "__dict__")[
+                "capture_generation"
+            ],
+        ),
+        (
+            "runtime epoch generation check",
+            type.__getattribute__(runtime_manager_type, "__dict__")[
+                "require_generation"
+            ],
+        ),
+    )
+    if any(
+        function.__defaults__ is not None
+        or function.__kwdefaults__ is not None
+        for _label, function in fast_route_functions
+    ):
+        raise RuntimeError(
+            "qualified S3 warm-route helpers must not expose mutable defaults"
+        )
+    fast_route_function_authority = tuple(
+        (label, function, function.__code__)
+        for label, function in fast_route_functions
+    )
+
+    def require_fast_route_function_authority() -> None:
+        """Reject changed Python routing before cached mechanics."""
+
+        for label, function, expected_code in fast_route_function_authority:
+            if (
+                function.__code__ is not expected_code
+                or function.__defaults__ is not None
+                or function.__kwdefaults__ is not None
+            ):
+                raise ValueError(
+                    "qualified S3 warm runtime authority changed: " + label
+                )
+    if method.__name__ == "compute_stiffness_matrix":
+        _install_s3_cached_stiffness_runtime_epoch_authority(
+            runtime_epoch_guard
+        )
+
+    def runtime_guard() -> None:
+        numerical_module_guard(context=f"qualified S3 {method.__name__}")
+        runtime_epoch_guard()
+        formulation_class_guard()
+
+    def instance_guard(self: Any) -> None:
+        if type(self) is not expected_class:
+            raise ValueError("qualified S3 requires the exact element class")
+        namespace = object.__getattribute__(self, "__dict__")
+        if type(namespace) is not dict:
+            raise ValueError("qualified S3 instance namespace is incompatible")
+        if not all(type(name) is str for name in namespace):
+            raise ValueError("qualified S3 instance keys must be exact strings")
+        shadowed = class_data_names.intersection(namespace)
+        if shadowed:
+            raise ValueError(
+                "qualified S3 class authority has instance shadows: "
+                + ", ".join(sorted(shadowed))
+            )
+        if any(callable(value) for value in namespace.values()):
+            raise ValueError(
+                "qualified S3 instance contains a callable authority override"
+            )
+        element_id = namespace.get("element_id")
+        node_ids = namespace.get("node_ids")
+        material_name = namespace.get("material_name")
+        if (
+            type(element_id) is not int
+            or type(node_ids) is not tuple
+            or len(node_ids) != 3
+            or not all(type(node_id) is int for node_id in node_ids)
+            or len(set(node_ids)) != 3
+            or type(material_name) is not str
+            or _static_mro_attribute(type(self), "element_id") is not None
+            or _static_mro_attribute(type(self), "node_ids") is not None
+            or _static_mro_attribute(type(self), "material_name") is not None
+            or _static_mro_attribute(type(self), "formulation_id")
+            != expected_formulation_id
+        ):
+            raise ValueError(
+                "qualified S3 instance connectivity/material authority is incompatible"
+            )
+
+        for name in ("reference_normal", "material_direction"):
+            vector = dict.get(namespace, name)
+            if vector is None:
+                continue
+            if (
+                type(vector) is not np.ndarray
+                or vector.dtype != np.dtype(np.float64)
+                or vector.shape != (3,)
+                or vector.strides != (8,)
+                or not vector.flags.c_contiguous
+                or vector.flags.writeable
+            ):
+                raise ValueError(
+                    f"qualified S3 {name} vector authority is incompatible"
+                )
+            current: Any = vector
+            while type(current) is np.ndarray:
+                if current.flags.writeable:
+                    raise ValueError(
+                        f"qualified S3 {name} vector base is writeable"
+                    )
+                current = current.base
+            if not (
+                type(current) is bytes
+                or isinstance(current, memoryview) and current.readonly
+            ):
+                raise ValueError(
+                    f"qualified S3 {name} vector base is incompatible"
+                )
+
+    def boundary_guard(self: Any, *, context: str) -> None:
+        del context
+        runtime_guard()
+        instance_guard(self)
+        quadrature_guard(self)
+
+    if method.__name__ == "get_node_coordinates":
+        _install_s3_runtime_boundary(boundary_guard)
+
+    def guarded(self: Any, *args: Any, **kwargs: Any) -> Any:
+        if post_observation_name in kwargs:
+            raise TypeError(
+                f"{method.__name__} does not accept a caller-supplied runtime guard"
+            )
+        if method.__name__ == "__init__":
+            runtime_guard()
+            call_generation = runtime_manager.capture_generation()
+            completed = False
+            try:
+                result = method(self, *args, **kwargs)
+                completed = True
+                return result
+            finally:
+                try:
+                    runtime_guard()
+                    runtime_manager.require_generation(call_generation)
+                    if completed:
+                        instance_guard(self)
+                        quadrature_guard(self)
+                except BaseException:
+                    _invalidate_s3_guarded_call_caches(self)
+                    raise
+        if method.__name__ == "compute_stiffness_matrix":
+            mesh = None
+            material = None
+            fast_arguments_are_exact = False
+            if len(args) == 2 and not kwargs:
+                mesh, material = args
+                fast_arguments_are_exact = True
+            elif not args and set(kwargs) == {"mesh", "material"}:
+                mesh = kwargs["mesh"]
+                material = kwargs["material"]
+                fast_arguments_are_exact = True
+            if fast_arguments_are_exact:
+                require_fast_route_function_authority()
+                numerical_module_guard(
+                    context="qualified S3 cached stiffness"
+                )
+                runtime_epoch_guard()
+                call_generation = runtime_manager.capture_generation()
+                try:
+                    cached = fast_cached_stiffness(self, mesh, material)
+                    runtime_manager.require_generation(call_generation)
+                    require_fast_route_function_authority()
+                except BaseException:
+                    _invalidate_s3_guarded_call_caches(self)
+                    runtime_manager.require_generation(call_generation)
+                    require_fast_route_function_authority()
+                    raise
+                if cached is not None:
+                    return cached
+        boundary_guard(self, context=f"qualified S3 {method.__name__}")
+        call_generation = runtime_manager.capture_generation()
+
+        def post_observation_guard() -> None:
+            boundary_guard(self, context=f"qualified S3 {method.__name__}")
+            runtime_manager.require_generation(call_generation)
+
+        call_kwargs = dict(kwargs)
+        if accepts_post_observation:
+            call_kwargs[post_observation_name] = post_observation_guard
+
+        try:
+            return method(self, *args, **call_kwargs)
+        finally:
+            try:
+                boundary_guard(self, context=f"qualified S3 {method.__name__}")
+                runtime_manager.require_generation(call_generation)
+            except BaseException:
+                _invalidate_s3_guarded_call_caches(self)
+                raise
+
+    guarded.__name__ = method.__name__
+    guarded.__qualname__ = method.__qualname__
+    guarded.__doc__ = method.__doc__
+    guarded.__annotations__ = dict(method.__annotations__)
+    guarded.__signature__ = method_signature.replace(
+        parameters=[
+            parameter
+            for name, parameter in method_signature.parameters.items()
+            if name != post_observation_name
+        ]
+    )
+    return guarded
+
+
+def _install_s3_class_access_guard(names: Sequence[str]) -> None:
+    """Guard direct public descriptor/method lookup on the exact final class."""
+
+    # The final-class metaclass already protects the stiffness entry itself,
+    # and its wrapper performs the generation preflight before any mechanics.
+    # Avoid paying a second class-authority lookup on every warm matrix call.
+    exact_names = frozenset(str(name) for name in names) - {
+        "compute_stiffness_matrix"
+    }
+    class_epoch_guard = _s3_runtime_epoch_manager.bind(
+        _require_s3_final_class_authority
+    )
+    raw_getattribute = object.__getattribute__
+
+    def guarded_getattribute(self: Any, name: str) -> Any:
+        if type(name) is str and name in exact_names:
+            class_epoch_guard()
+        return raw_getattribute(self, name)
+
+    guarded_getattribute.__name__ = "__getattribute__"
+    guarded_getattribute.__qualname__ = (
+        "QualifiedE4PLS3ShellElement.__getattribute__"
+    )
+    setattr(
+        QualifiedE4PLS3ShellElement,
+        "__getattribute__",
+        guarded_getattribute,
+    )
+
+
+_s3_stiffness_inherited_shadow_sources = (
+    (Element, "total_dofs"),
+    (ShellElement, "num_nodes"),
+    (ShellElement, "dofs_per_node"),
+    (ShellElement, "_local_dof_transform"),
+    (ShellElement, "_material_angle"),
+    (ShellElement, "_generalized_section_in_frame"),
+)
+_s3_stiffness_inherited_shadow_names = tuple(
+    name for _owner, name in _s3_stiffness_inherited_shadow_sources
+)
+for _s3_shadow_owner, _s3_shadow_name in _s3_stiffness_inherited_shadow_sources:
+    setattr(
+        QualifiedE4PLS3ShellElement,
+        _s3_shadow_name,
+        type.__getattribute__(_s3_shadow_owner, "__dict__")[_s3_shadow_name],
+    )
+del _s3_shadow_owner, _s3_shadow_name
+
+
+_s3_guarded_public_names = (
+    "__init__",
+    "get_node_coordinates",
+    "capability_matrix",
+    "material_surface_offset_from_reference",
+    "compute_stiffness_components",
+    "compute_stiffness_matrix",
+    "compute_internal_forces",
+    "numerical_internal_force",
+    "compute_stresses",
+    "compute_mass_matrix",
+    "compute_mass_components",
+    "dynamic_algebraic_directions",
+    "compute_geometric_stiffness_components",
+    "compute_geometric_stiffness_matrix",
+    "init_model_bound_nonlinear_state",
+    "native_reference_directors",
+    "sheet_area_orientation_sign",
+    "validate_model_bound_nonlinear_state",
+    "init_nonlinear_state",
+    "compute_nonlinear_response",
+    "seal_noncurrent_deleted_state",
+    "validate_noncurrent_deleted_state",
+    "restore_noncurrent_deleted_state_for_internal_use",
+    "mark_noncurrent_failed_state",
+    "validate_noncurrent_failed_state",
+    "compute_committed_current_tangent_components",
+    "compute_noncurrent_deleted_residual_operator",
+)
+for _s3_public_name in _s3_guarded_public_names:
+    setattr(
+        QualifiedE4PLS3ShellElement,
+        _s3_public_name,
+        _bind_s3_exact_quadrature_boundary(
+            type.__getattribute__(QualifiedE4PLS3ShellElement, "__dict__")[
+                _s3_public_name
+            ]
+        ),
+    )
+del _s3_public_name
+
+_s3_guarded_property_names = (
+    "capability_gaps",
+    "capability_restrictions",
+    "nonlinear_material_response_mode",
+    "physical_reference_director",
+    "material_mid_surface_offset_from_reference",
+)
+for _s3_property_name in _s3_guarded_property_names:
+    _s3_property = type.__getattribute__(
+        QualifiedE4PLS3ShellElement,
+        "__dict__",
+    )[_s3_property_name]
+    setattr(
+        QualifiedE4PLS3ShellElement,
+        _s3_property_name,
+        property(
+            _bind_s3_exact_quadrature_boundary(_s3_property.fget),
+            _s3_property.fset,
+            _s3_property.fdel,
+            _s3_property.__doc__,
+        ),
+    )
+del _s3_property_name, _s3_property
+
+_install_s3_class_access_guard(
+    (
+        *_s3_guarded_public_names,
+        *_s3_guarded_property_names,
+        "from_dict",
+        "to_dict",
+        "validate_quadrature_authority",
+    )
+)
+
+_initialize_s3_final_class_authority(QualifiedE4PLS3ShellElement)
+_s3_runtime_epoch_manager.protect_type_entries(
+    QualifiedE4PLS3ShellElement,
+    (
+        *_s3_guarded_public_names,
+        *_s3_guarded_property_names,
+        "__setattr__",
+        "__delattr__",
+        "__getattribute__",
+        "from_dict",
+        "to_dict",
+        "validate_quadrature_authority",
+        *_s3_stiffness_inherited_shadow_names,
+    ),
+)
+_s3_runtime_epoch_manager.watch_type(QualifiedE4PLS3ShellElement, None)
+
+
+_QUALIFIED_S3_MODULE_FUNCTION_AUTHORITY = MappingProxyType(
+    {
+        name: value
+        for name, value in tuple(globals().items())
+        if callable(value) or isinstance(value, ModuleType)
+    }
+)
+_QUALIFIED_S3_CLASS_NAMESPACE_AUTHORITY = MappingProxyType(
+    {
+        owner: MappingProxyType(
+            dict(type.__getattribute__(owner, "__dict__"))
+        )
+        for owner in type.__getattribute__(
+            QualifiedE4PLS3ShellElement, "__mro__"
+        )
+    }
+)
+_QUALIFIED_S3_MODULE_DATA_AUTHORITY = MappingProxyType(
+    {
+        name: (type(value), _module_authority_signature(value))
+        for name, value in tuple(globals().items())
+        if name.lstrip("_").isupper()
+    }
+)
+
 
 __all__ = [
     "ALGEBRAIC_COORDINATE_POLICY_ID",
@@ -5524,6 +9624,10 @@ __all__ = [
     "RECOVERY_POLICY_ID",
     "REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID",
     "RESULTANT_SUMMARY_POLICY_ID",
+    "S3_ACTIVITY_DISPOSITION_SCHEMA_ID",
+    "S3_DELETED_FROZEN_POLICY_ID",
+    "S3_FAILED_STATE_POLICY_ID",
+    "S3_QUADRATURE_AUTHORITY_ID",
     "S3BubbleEquilibriumError",
     "STATE_LAYOUT_ID",
     "STATELESS_GENERALIZED_MATERIAL_DISPOSITION",
@@ -5531,6 +9635,7 @@ __all__ = [
     "TRIANGLE_QUADRATURE",
     "TYING_POINTS",
     "QualifiedE4PLS3ShellElement",
+    "QualifiedS3MigrationWarning",
     "invariant_drilling_scale",
     "triangle_frame",
 ]

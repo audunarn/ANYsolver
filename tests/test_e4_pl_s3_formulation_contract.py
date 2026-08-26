@@ -17,7 +17,23 @@ from anysolver.algebraic_dynamics import (
     DESCRIPTOR_TRANSIENT_POLICY_ID,
     DESCRIPTOR_TRANSIENT_STATIC_POLICY_ID,
 )
-from anysolver.buckling import CURRENT_STATE_BUCKLING_POLICY_ID
+from anysolver.buckling import (
+    CURRENT_STATE_BUCKLING_POLICY_ID,
+    QUALIFIED_Q4_S3_CURRENT_STATE_BUCKLING_POLICY_ID,
+)
+from anysolver.current_state_tangent import (
+    COMMITTED_CURRENT_TANGENT_ASSEMBLY_POLICY_ID,
+    COMMITTED_CURRENT_TANGENT_INPUT_OWNERSHIP_POLICY_ID,
+    COMMITTED_CURRENT_TANGENT_ROUTE_POLICY_ID,
+    CURRENT_STATE_EIGEN_ACTIVITY_POLICY_ID,
+)
+from anysolver.dynamics import QUALIFIED_REFERENCE_TRANSIENT_AUTHORITY_POLICY_ID
+from anysolver.e4_pl_element import (
+    Q4_ACTIVITY_DISPOSITION_SCHEMA_ID,
+    Q4_DELETED_FROZEN_POLICY_ID,
+    Q4_FAILED_STATE_POLICY_ID,
+    Q4_QUADRATURE_AUTHORITY_ID,
+)
 from anysolver.e4_pl_s3_element import (
     ALGEBRAIC_COORDINATE_POLICY_ID,
     BUBBLE_OFFSET_D,
@@ -38,6 +54,10 @@ from anysolver.e4_pl_s3_element import (
     REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
     RESTART_HISTORY_SCOPE,
     RESULTANT_SUMMARY_POLICY_ID,
+    S3_ACTIVITY_DISPOSITION_SCHEMA_ID,
+    S3_DELETED_FROZEN_POLICY_ID,
+    S3_FAILED_STATE_POLICY_ID,
+    S3_QUADRATURE_AUTHORITY_ID,
     TRIANGLE_QUADRATURE,
     TYING_POINTS,
     QualifiedE4PLS3ShellElement,
@@ -114,10 +134,15 @@ from anysolver.e4_pl_s3_state import (
     state_field_manifest_fingerprint,
     stiffness_station_table_fingerprint,
 )
+from anysolver.modal import (
+    CURRENT_STATE_MODAL_POLICY_ID,
+    QUALIFIED_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID,
+)
 from anysolver.nonlinear_restart import (
     NONLINEAR_CHECKPOINT_INTEGRITY_ID,
     NONLINEAR_CHECKPOINT_SCHEMA,
     NONLINEAR_CHECKPOINT_VERSION,
+    QUALIFIED_CHECKPOINT_LIFECYCLE_POLICY_ID,
 )
 
 
@@ -196,7 +221,8 @@ def test_runtime_capability_contract_has_exact_bounded_successor_scope() -> None
     )
     assert matrix["reference_elastic_buckling"] == "PARITY_REPLACED"
     assert matrix["current_state_buckling_s3"] == "PARITY_REPLACED"
-    assert matrix["mixed_current_state_buckling"] == "PARITY_GAP"
+    assert matrix["mixed_current_state_buckling"] == "PARITY_REPLACED"
+    assert matrix["mixed_current_state_modal"] == "PARITY_REPLACED"
     assert matrix["buckling"] == EXPLICIT_BUCKLING_PROFILE_DISPOSITION
     assert matrix["linearized_limit_point"] == (
         "UNSUPPORTED_OUTSIDE_ADMITTED_PROFILE"
@@ -560,6 +586,9 @@ def test_tying_points_and_quadrature_are_transcribed_without_aliases() -> None:
         (-1.0, 0.0),
         (0.0, 1.0),
     )
+    assert contract["quadrature"]["authority_id"] == (
+        S3_QUADRATURE_AUTHORITY_ID
+    )
     assert contract["quadrature"]["stiffness"]["id"].startswith("DUNAVANT_DEGREE_5")
     assert QUADRATURE_ID == "dunavant_degree5_7point"
     assert len(TRIANGLE_QUADRATURE) == 7
@@ -599,6 +628,7 @@ def test_pl_and_rank_contract_are_exactly_frozen() -> None:
         "formulation_schema": "anysolver.e4_pl_s3.linear.v1",
         "geometric_stiffness_policy": GEOMETRIC_STIFFNESS_POLICY_ID,
         "mass_moment_id": MASS_MOMENT_ID,
+        "quadrature_authority_id": S3_QUADRATURE_AUTHORITY_ID,
         "quadrature_id": "dunavant_degree5_7point",
         "reference_surface_mass_shift_id": REFERENCE_SURFACE_MASS_SHIFT_ID,
         "reference_surface_offset": "FINITE_SIGNED_LENGTH_DEFAULT_ZERO",
@@ -748,44 +778,127 @@ def test_contract_binds_physical_director_reversal_and_narrow_eigen_workflows() 
             "DIRECTOR_REEXPRESSION"
         ),
     }
+    assert contract["runtime_authority"] == {
+        "current_state_eigen_activity_policy": (
+            "ACTIVE_ONLY_REJECT_SOFTENED_FAILED_NONAUTHORITATIVE_AND_DELETED_"
+            "FROZEN_NONCURRENT_BEFORE_MECHANICS"
+        ),
+        "current_state_eigen_activity_policy_id": (
+            CURRENT_STATE_EIGEN_ACTIVITY_POLICY_ID
+        ),
+        "current_state_input_ownership_policy_id": (
+            COMMITTED_CURRENT_TANGENT_INPUT_OWNERSHIP_POLICY_ID
+        ),
+        "prestress_operator_authority_policy_id": (
+            QUALIFIED_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID
+        ),
+        "q4_activity_disposition_schema_id": Q4_ACTIVITY_DISPOSITION_SCHEMA_ID,
+        "q4_deleted_frozen_policy_id": Q4_DELETED_FROZEN_POLICY_ID,
+        "q4_failed_state_policy_id": Q4_FAILED_STATE_POLICY_ID,
+        "q4_quadrature_authority_id": Q4_QUADRATURE_AUTHORITY_ID,
+        "qualified_checkpoint_lifecycle_policy_id": (
+            QUALIFIED_CHECKPOINT_LIFECYCLE_POLICY_ID
+        ),
+        "reference_transient_activity_policy": (
+            "ACTIVE_REFERENCE_ONLY_REJECT_SOFTENED_OR_HARD_DELETED_MODEL_"
+            "ACTIVITY_BEFORE_MECHANICS"
+        ),
+        "reference_transient_policy_id": (
+            QUALIFIED_REFERENCE_TRANSIENT_AUTHORITY_POLICY_ID
+        ),
+        "s3_activity_disposition_schema_id": S3_ACTIVITY_DISPOSITION_SCHEMA_ID,
+        "s3_deleted_frozen_policy_id": S3_DELETED_FROZEN_POLICY_ID,
+        "s3_failed_state_policy_id": S3_FAILED_STATE_POLICY_ID,
+        "s3_quadrature_authority_id": S3_QUADRATURE_AUTHORITY_ID,
+    }
     assert contract["eigen_workflows"] == {
         "broad_buckling": (
-            "PARITY_GAP_BROAD_LAYERED_GENERALIZED_AND_MIXED_WORKFLOW_SCOPE_"
-            "NOT_FULLY_QUALIFIED"
+            "PARITY_GAP_UNTAGGED_OR_NONCOMMITTED_PRESTRESS_SCOPE_NOT_QUALIFIED"
         ),
         "current_state_buckling": {
+            "activity_policy": (
+                "ACTIVE_COMMITTED_LIFECYCLE_ONLY_FAILED_AND_DELETED_"
+                "NONCURRENT_STATES_REJECTED_BEFORE_MECHANICS"
+            ),
+            "activity_policy_id": CURRENT_STATE_EIGEN_ACTIVITY_POLICY_ID,
             "admitted_scope": (
-                "S3_ONLY_LAYERED_AND_STATELESS_FIXED_GENERALIZED_SECTION_"
-                "COMMITTED_STATES"
+                "QUALIFIED_Q4_ONLY_OR_QUALIFIED_S3_ONLY_OR_EXACT_MIXED_"
+                "QUALIFIED_Q4_S3_COMMITTED_STATES"
             ),
             "destabilizing_operator": (
                 "NEGATIVE_INTERNAL_TENSION_POSITIVE_STRESS_HESSIAN_"
                 "COMPRESSION_POSITIVE"
+            ),
+            "kinematic_scope": (
+                "Q4_ADDITIVE_ROTATION_VON_KARMAN_AND_S3_NATIVE_MULTIPLICATIVE_"
+                "TOTAL_LAGRANGIAN_WITHOUT_CROSS_FAMILY_OBJECTIVITY_CLAIM"
+            ),
+            "input_ownership_policy_id": (
+                COMMITTED_CURRENT_TANGENT_INPUT_OWNERSHIP_POLICY_ID
             ),
             "load_scaling": (
                 "DESTABILIZING_OPERATOR_SCALES_LINEARLY_AND_FACTORS_SCALE_"
                 "INVERSELY"
             ),
             "policy_id": CURRENT_STATE_BUCKLING_POLICY_ID,
+            "q4_or_mixed_policy_id": (
+                QUALIFIED_Q4_S3_CURRENT_STATE_BUCKLING_POLICY_ID
+            ),
+            "reference_surface_offset_scope": (
+                "Q4_ZERO_OFFSET_ONLY_AND_S3_NATIVE_SIGNED_OFFSET_WITH_NO_Q4_"
+                "OFFSET_PARITY_CLAIM"
+            ),
+            "route_policy_id": COMMITTED_CURRENT_TANGENT_ROUTE_POLICY_ID,
             "session_policy": (
                 "TRANSIENT_MATRICES_AND_FACTORS_NEVER_PERSISTED_OR_SESSION_"
                 "CACHED"
             ),
             "stabilizing_operator": (
-                "COMMITTED_CONSTITUTIVE_PLUS_OBJECTIVE_PL_MATERIAL_NUMERICAL_"
+                "PER_FORMULATION_COMMITTED_ALGORITHMIC_MATERIAL_AND_NUMERICAL_"
                 "TANGENT"
             ),
             "state_authority": (
-                "EXACT_MODEL_BOUND_COMMITTED_DISPLACEMENT_ROTATION_AND_"
-                "INTEGRITY_SEALED_ELEMENT_STATE"
+                "ALL_STATES_PREVALIDATED_BEFORE_COMPONENT_MECHANICS_Q4_"
+                "CONFIGURATION_AND_ACCEPTED_ALGORITHMIC_ORIGIN_SEAL_AND_S3_"
+                "MODEL_BOUND_ROTATION_INTEGRITY"
             ),
             "status": "PARITY_REPLACED",
         },
         "current_state_modal": {
-            "policy_id": (
-                "COMMITTED_NATIVE_TOTAL_TANGENT_WITH_REFERENCE_CONSISTENT_MASS_V1"
+            "activity_policy": (
+                "ACTIVE_COMMITTED_LIFECYCLE_ONLY_FAILED_AND_DELETED_"
+                "NONCURRENT_STATES_REJECTED_BEFORE_MECHANICS"
+            ),
+            "activity_policy_id": CURRENT_STATE_EIGEN_ACTIVITY_POLICY_ID,
+            "admitted_scope": (
+                "QUALIFIED_Q4_ONLY_OR_QUALIFIED_S3_ONLY_OR_EXACT_MIXED_"
+                "QUALIFIED_Q4_S3_COMMITTED_STATES"
+            ),
+            "component_assembly_policy_id": (
+                COMMITTED_CURRENT_TANGENT_ASSEMBLY_POLICY_ID
+            ),
+            "input_ownership_policy_id": (
+                COMMITTED_CURRENT_TANGENT_INPUT_OWNERSHIP_POLICY_ID
+            ),
+            "mass_policy": (
+                "FORMULATION_CONSISTENT_REFERENCE_MASS_WITH_DECLARED_ZERO_"
+                "INERTIA_ALGEBRAIC_COORDINATES"
+            ),
+            "policy_id": CURRENT_STATE_MODAL_POLICY_ID,
+            "route_policy_id": COMMITTED_CURRENT_TANGENT_ROUTE_POLICY_ID,
+            "session_policy": (
+                "TRANSIENT_MATRICES_AND_FACTORS_NEVER_PERSISTED_OR_SESSION_"
+                "CACHED"
+            ),
+            "state_authority": (
+                "ALL_STATES_PREVALIDATED_BEFORE_COMPONENT_MECHANICS_Q4_"
+                "CONFIGURATION_AND_ACCEPTED_ALGORITHMIC_ORIGIN_SEAL_AND_S3_"
+                "MODEL_BOUND_ROTATION_INTEGRITY"
             ),
             "status": "PARITY_REPLACED",
+            "tangent_source": (
+                "EXACT_COMMITTED_CURRENT_TANGENT_COMPONENT_ASSEMBLY_TOTAL"
+            ),
         },
         "reference_elastic_buckling": {
             "policy_id": (

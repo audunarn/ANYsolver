@@ -20,12 +20,22 @@ from __future__ import annotations
 
 import copy
 import math
+import weakref
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement,
+    _invalidate_s3_guarded_call_caches as _INVALIDATE_S3_GUARDED_CACHES,
+    _s3_runtime_epoch_manager as _S3_RUNTIME_EPOCH_MANAGER,
+    _require_exact_s3_runtime_authority as _EXACT_S3_RUNTIME_GUARD,
+)
+from .e4_pl_s3_state import (
+    require_exact_numpy_runtime_authority as _EXACT_NUMPY_RUNTIME_GUARD,
+)
 from .materials import is_isotropic_material
 from .shell_sections import (
     SHELL_MEMBRANE_VOIGT_ORDER,
@@ -42,6 +52,90 @@ REFERENCE_S3_BATCH_POLICY_ID = (
 )
 MIN_REFERENCE_S3_STIFFNESS_GROUP = 8
 MIN_REFERENCE_S3_RECOVERY_GROUP = 128
+
+
+def _bind_reference_s3_runtime_authority(
+    numerical_guard: Any,
+    element_guard: Any,
+    exact_type: type[Any],
+) -> Any:
+    def require(model: "FEModel", *, context: str) -> None:
+        numerical_guard(context=context)
+        exact_elements = tuple(
+            element
+            for element in tuple(model.mesh.elements.values())
+            if type(element) is exact_type
+        )
+        for element in exact_elements:
+            element_guard(element, context=context)
+
+    return require
+
+
+_REQUIRE_REFERENCE_S3_RUNTIME_AUTHORITY = _bind_reference_s3_runtime_authority(
+    _EXACT_NUMPY_RUNTIME_GUARD,
+    _EXACT_S3_RUNTIME_GUARD,
+    QualifiedE4PLS3ShellElement,
+)
+
+
+def _capture_reference_s3_runtime_lease(
+    model: "FEModel",
+    *,
+    context: str,
+) -> Any:
+    """Capture one non-renewable S3 generation for a direct batch call."""
+
+    runtime_guard = _REQUIRE_REFERENCE_S3_RUNTIME_AUTHORITY
+    generation = _S3_RUNTIME_EPOCH_MANAGER.capture_generation()
+    runtime_guard(model, context=context)
+    _S3_RUNTIME_EPOCH_MANAGER.require_generation(generation)
+    exact_elements = tuple(
+        element
+        for element in tuple(model.mesh.elements.values())
+        if type(element) is QualifiedE4PLS3ShellElement
+    )
+
+    def invalidate() -> None:
+        for element in exact_elements:
+            _INVALIDATE_S3_GUARDED_CACHES(element)
+        namespace = object.__getattribute__(model.mesh, "__dict__")
+        if type(namespace) is dict:
+            dict.pop(namespace, "_qualified_s3_reference_stiffness_plan", None)
+
+    def require(expected_model: "FEModel", *, context: str) -> None:
+        try:
+            if expected_model is not model:
+                raise ValueError("qualified S3 batch lease model changed")
+            _S3_RUNTIME_EPOCH_MANAGER.require_generation(generation)
+            runtime_guard(model, context=context)
+            _S3_RUNTIME_EPOCH_MANAGER.require_generation(generation)
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            invalidate()
+            raise
+
+    return require
+
+
+def _run_with_reference_s3_runtime_lease(
+    model: "FEModel",
+    *,
+    context: str,
+    operation: Any,
+) -> Any:
+    """Run a direct S3 batch operation under one immutable generation."""
+
+    lease = _capture_reference_s3_runtime_lease(
+        model,
+        context=f"{context} preflight",
+    )
+    try:
+        result = operation(lease)
+    except BaseException:
+        lease(model, context=f"{context} exceptional output")
+        raise
+    lease(model, context=f"{context} output")
+    return result
 
 
 def _readonly(values: np.ndarray) -> np.ndarray:
@@ -71,10 +165,6 @@ def _direct_state_key(model: "FEModel") -> Tuple[int, int, int, int]:
 
 
 def _is_exact_qualified_s3(element: Any) -> bool:
-    # Import lazily: the formulation imports ShellElement and must not become a
-    # dependency of generic model construction.
-    from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
-
     return (
         type(element) is QualifiedE4PLS3ShellElement
         and getattr(element, "formulation_id", None)
@@ -175,7 +265,7 @@ def _plan_validation_signature(
     construction or centered-coordinate arithmetic.
     """
 
-    from .e4_pl_s3_element import _elastic_material_cache_fingerprint
+    from .elements import _shell_elastic_material_cache_fingerprint
 
     material_by_name = {
         str(material_name): model.get_material(str(material_name))
@@ -189,7 +279,7 @@ def _plan_validation_signature(
             id(material),
             str(getattr(material, "elastic_symmetry", "")),
             bool(is_isotropic_material(material)),
-            _elastic_material_cache_fingerprint(material),
+            _shell_elastic_material_cache_fingerprint(material),
             getattr(material, "hill_yield", None) is None,
             getattr(material, "hardening_curve", None) is None,
         )
@@ -260,6 +350,8 @@ def _adopt_components(
     element: Any,
     cache_key: Tuple[Any, ...],
     components: Mapping[str, Any],
+    mesh: Any,
+    material: Any,
 ) -> np.ndarray:
     copied = _copy_components(components)
     # These assignments adopt derived caches produced from already-bound
@@ -270,6 +362,11 @@ def _adopt_components(
         copied["hourglass"], dtype=float
     )
     element._stiffness_matrix = np.asarray(copied["total"], dtype=float)
+    # Bind only after every derived cache member exists.  The exact warm-total
+    # provenance includes the complete owned instance namespace, so binding
+    # before the first hourglass assignment would make an adopted cache stale
+    # immediately even though its mechanics inputs were unchanged.
+    element._bind_qualified_component_guard(mesh, material)
     return element._stiffness_matrix
 
 
@@ -327,16 +424,179 @@ class PreparedReferenceS3Components:
         }
 
 
-def prepare_reference_s3_components(
+def _make_prepared_s3_matrix_authority() -> tuple[Any, Any]:
+    """Keep exact retained-matrix provenance outside the public plan object."""
+
+    records: Dict[int, tuple[Any, ...]] = {}
+    reference_factory = weakref.ref
+    float64_dtype = np.dtype(np.float64)
+
+    def array_authority(
+        matrix: Any,
+    ) -> tuple[Any, str, tuple[int, ...], tuple[int, ...], tuple[Any, ...], bytes] | None:
+        if (
+            type(matrix) is not np.ndarray
+            or matrix.dtype != float64_dtype
+            or matrix.shape != (18, 18)
+            or matrix.strides != (144, 8)
+            or not matrix.flags.c_contiguous
+            or matrix.flags.writeable
+        ):
+            return None
+        bases: list[Any] = []
+        current: Any = matrix
+        seen: set[int] = set()
+        while type(current) is np.ndarray:
+            if id(current) in seen or current.flags.writeable:
+                return None
+            seen.add(id(current))
+            base = current.base
+            if base is None:
+                return None
+            bases.append(base)
+            current = base
+        if not (
+            type(current) is bytes
+            or (
+                type(current) is memoryview
+                and current.readonly
+                and type(current.obj) is bytes
+            )
+        ):
+            return None
+        payload = memoryview(matrix).cast("B").tobytes()
+        if len(payload) != 18 * 18 * 8:
+            return None
+        return (
+            matrix,
+            matrix.dtype.str,
+            matrix.shape,
+            matrix.strides,
+            tuple(bases),
+            payload,
+        )
+
+    def bind(plan: PreparedReferenceS3Components) -> None:
+        if type(plan) is not PreparedReferenceS3Components:
+            return
+        namespace = object.__getattribute__(plan, "__dict__")
+        matrices = dict.get(namespace, "matrices")
+        if type(matrices) is not MappingProxyType:
+            return
+        made: list[tuple[Any, ...]] = []
+        for element_id, matrix in matrices.items():
+            authority = array_authority(matrix)
+            if type(element_id) is not int or authority is None:
+                return
+            made.append((element_id, *authority))
+        if not made or dict.get(namespace, "matrices_prevalidated") is not True:
+            return
+        identity = id(plan)
+
+        def discard(reference: Any, *, expected_identity: int = identity) -> None:
+            current = records.get(expected_identity)
+            if current is not None and current[0] is reference:
+                records.pop(expected_identity, None)
+
+        reference = reference_factory(plan, discard)
+        records[identity] = (
+            reference,
+            namespace,
+            matrices,
+            tuple(matrices.items()),
+            tuple(made),
+        )
+
+    def require(plan: PreparedReferenceS3Components) -> bool:
+        identity = id(plan)
+        record = records.get(identity)
+
+        def reject() -> bool:
+            records.pop(identity, None)
+            return False
+
+        if record is None or type(plan) is not PreparedReferenceS3Components:
+            return False
+        reference, namespace, matrices, matrix_items, authorities = record
+        if (
+            reference() is not plan
+            or object.__getattribute__(plan, "__dict__") is not namespace
+            or dict.get(namespace, "matrices") is not matrices
+            or dict.get(namespace, "matrices_prevalidated") is not True
+            or type(matrices) is not MappingProxyType
+        ):
+            return reject()
+        current_items = tuple(matrices.items())
+        if (
+            len(current_items) != len(matrix_items)
+            or any(
+                current_id != expected_id or current_matrix is not expected_matrix
+                for (current_id, current_matrix), (
+                    expected_id,
+                    expected_matrix,
+                ) in zip(current_items, matrix_items)
+            )
+        ):
+            return reject()
+        for (
+            element_id,
+            matrix,
+            dtype_string,
+            shape,
+            strides,
+            bases,
+            payload,
+        ) in authorities:
+            if (
+                matrices[element_id] is not matrix
+                or type(matrix) is not np.ndarray
+                or matrix.dtype.str != dtype_string
+                or matrix.shape != shape
+                or matrix.strides != strides
+                or not matrix.flags.c_contiguous
+                or matrix.flags.writeable
+            ):
+                return reject()
+            current: Any = matrix
+            for expected_base in bases:
+                if current.base is not expected_base:
+                    return reject()
+                current = expected_base
+            if not (
+                type(current) is bytes
+                or (
+                    type(current) is memoryview
+                    and current.readonly
+                    and type(current.obj) is bytes
+                )
+            ):
+                return reject()
+            if memoryview(matrix).cast("B").tobytes() != payload:
+                return reject()
+        return True
+
+    return bind, require
+
+
+(
+    _bind_prepared_s3_matrix_authority,
+    _require_prepared_s3_matrix_authority,
+) = _make_prepared_s3_matrix_authority()
+
+
+def _prepare_reference_s3_components_under_lease(
     model: "FEModel",
     items: Sequence[Tuple[int, Any]],
     *,
     minimum_group_size: int = MIN_REFERENCE_S3_STIFFNESS_GROUP,
     allow_exact_element_cache_reuse: bool = True,
+    _runtime_lease: Any,
 ) -> PreparedReferenceS3Components:
     """Prepare one validated component evaluation per exact cache-key group."""
 
     _bind_plan_state_sources(model, items)
+    runtime_guard = _runtime_lease
+    runtime_guard(model, context="qualified S3 reference batch state binding")
     minimum = max(1, int(minimum_group_size))
     candidate_ids: list[int] = []
     eligible_ids: list[int] = []
@@ -386,8 +646,13 @@ def prepare_reference_s3_components(
                     ):
                         cached_group = {}
                         break
+                    element._validate_qualified_component_cache_identity()
                     cached_group[int(element_id)] = np.asarray(
                         current["total"], dtype=float
+                    )
+                    element._bind_qualified_component_guard(
+                        model.mesh,
+                        model.get_material(element.material_name),
                     )
             if cached_group:
                 matrices.update(cached_group)
@@ -419,6 +684,11 @@ def prepare_reference_s3_components(
             current = getattr(element, "_qualified_components", None)
             current_key = getattr(element, "_qualified_cache_key", None)
             if current is not None and current_key == cache_key:
+                element._validate_qualified_component_cache_identity()
+                element._bind_qualified_component_guard(
+                    model.mesh,
+                    model.get_material(element.material_name),
+                )
                 matrices[int(element_id)] = np.asarray(
                     current["total"], dtype=float
                 )
@@ -427,6 +697,8 @@ def prepare_reference_s3_components(
                     element,
                     cache_key,
                     components,
+                    model.mesh,
+                    model.get_material(element.material_name),
                 )
             element_cache_keys[int(element_id)] = cache_key
         admitted_groups.append(ordered_group)
@@ -465,7 +737,19 @@ def prepare_reference_s3_components(
         for element_id in admitted_group
     }
     cached_element_id_set = set(cached_element_ids)
-    return PreparedReferenceS3Components(
+    runtime_guard(
+        model,
+        context="qualified S3 reference batch signature preflight",
+    )
+    validation_signature = _plan_validation_signature(
+        model,
+        tuple(sorted(candidate_material_names)),
+    )
+    runtime_guard(
+        model,
+        context="qualified S3 reference batch signature observation",
+    )
+    result = PreparedReferenceS3Components(
         matrices=frozen_matrices,
         element_cache_keys=frozen_element_cache_keys,
         batched_element_ids=tuple(
@@ -486,11 +770,34 @@ def prepare_reference_s3_components(
         revision_key=_revision_key(model),
         minimum_group_size=minimum,
         material_names=tuple(sorted(candidate_material_names)),
-        validation_signature=_plan_validation_signature(
-            model,
-            tuple(sorted(candidate_material_names)),
-        ),
+        validation_signature=validation_signature,
         matrices_prevalidated=matrices_prevalidated,
+    )
+    _bind_prepared_s3_matrix_authority(result)
+    runtime_guard(model, context="qualified S3 reference batch output")
+    return result
+
+
+def prepare_reference_s3_components(
+    model: "FEModel",
+    items: Sequence[Tuple[int, Any]],
+    *,
+    minimum_group_size: int = MIN_REFERENCE_S3_STIFFNESS_GROUP,
+    allow_exact_element_cache_reuse: bool = True,
+) -> PreparedReferenceS3Components:
+    """Prepare exact S3 components under one direct-call authority lease."""
+
+    frozen_items = tuple(items)
+    return _run_with_reference_s3_runtime_lease(
+        model,
+        context="qualified S3 reference batch",
+        operation=lambda lease: _prepare_reference_s3_components_under_lease(
+            model,
+            frozen_items,
+            minimum_group_size=minimum_group_size,
+            allow_exact_element_cache_reuse=allow_exact_element_cache_reuse,
+            _runtime_lease=lease,
+        ),
     )
 
 
@@ -501,9 +808,22 @@ def _stiffness_plan_is_current(
     """Revalidate the exact key preimage, provenance, and retained matrices."""
 
     try:
+        runtime_guard = _REQUIRE_REFERENCE_S3_RUNTIME_AUTHORITY
+        runtime_guard(
+            model,
+            context="qualified S3 stiffness signature preflight",
+        )
+        current_signature = _plan_validation_signature(
+            model,
+            cached.material_names,
+        )
+        runtime_guard(
+            model,
+            context="qualified S3 stiffness signature observation",
+        )
         if (
-            _plan_validation_signature(model, cached.material_names)
-            != cached.validation_signature
+            current_signature != cached.validation_signature
+            or not _require_prepared_s3_matrix_authority(cached)
         ):
             return False
         # A cold scalar fallback populates its element cache after plan
@@ -515,15 +835,17 @@ def _stiffness_plan_is_current(
     return True
 
 
-def get_reference_s3_stiffness_components(
+def _get_reference_s3_stiffness_components_under_lease(
     model: "FEModel",
     items: Sequence[Tuple[int, Any]],
     *,
     minimum_group_size: int = MIN_REFERENCE_S3_STIFFNESS_GROUP,
     complete_candidate_items: bool = False,
+    _runtime_lease: Any,
 ) -> Tuple[PreparedReferenceS3Components, bool]:
     """Return a mesh-owned plan; reuse requires the caller's complete set."""
 
+    runtime_guard = _runtime_lease
     revision = _revision_key(model)
     minimum = max(1, int(minimum_group_size))
     cached = getattr(
@@ -539,17 +861,43 @@ def get_reference_s3_stiffness_components(
         and bool(cached.matrices)
         and _stiffness_plan_is_current(model, cached)
     ):
+        runtime_guard(model, context="qualified S3 stiffness plan reuse")
         return cached, True
-    prepared = prepare_reference_s3_components(
+    prepared = _prepare_reference_s3_components_under_lease(
         model,
         items,
         minimum_group_size=minimum,
+        _runtime_lease=runtime_guard,
     )
     if prepared.matrices:
         model.mesh._qualified_s3_reference_stiffness_plan = prepared
     elif hasattr(model.mesh, "_qualified_s3_reference_stiffness_plan"):
         delattr(model.mesh, "_qualified_s3_reference_stiffness_plan")
+    runtime_guard(model, context="qualified S3 stiffness plan output")
     return prepared, False
+
+
+def get_reference_s3_stiffness_components(
+    model: "FEModel",
+    items: Sequence[Tuple[int, Any]],
+    *,
+    minimum_group_size: int = MIN_REFERENCE_S3_STIFFNESS_GROUP,
+    complete_candidate_items: bool = False,
+) -> Tuple[PreparedReferenceS3Components, bool]:
+    """Return a mesh-owned S3 plan under one direct-call authority lease."""
+
+    frozen_items = tuple(items)
+    return _run_with_reference_s3_runtime_lease(
+        model,
+        context="qualified S3 stiffness plan",
+        operation=lambda lease: _get_reference_s3_stiffness_components_under_lease(
+            model,
+            frozen_items,
+            minimum_group_size=minimum_group_size,
+            complete_candidate_items=complete_candidate_items,
+            _runtime_lease=lease,
+        ),
+    )
 
 
 @dataclass(frozen=True)
@@ -633,11 +981,12 @@ class ReferenceS3RecoveryBatch:
         }
 
 
-def build_reference_s3_recovery_batch(
+def _build_reference_s3_recovery_batch_under_lease(
     model: "FEModel",
     items: Sequence[Tuple[int, Any, np.ndarray]],
     *,
     minimum_group_size: int = MIN_REFERENCE_S3_RECOVERY_GROUP,
+    _runtime_lease: Any,
 ) -> Tuple[ReferenceS3RecoveryBatch | None, PreparedReferenceS3Components]:
     """Build an immutable recovery layout for admitted large S3 groups."""
 
@@ -645,10 +994,11 @@ def build_reference_s3_recovery_batch(
         (int(element_id), element)
         for element_id, element, _mapping in items
     )
-    prepared = prepare_reference_s3_components(
+    prepared = _prepare_reference_s3_components_under_lease(
         model,
         element_items,
         minimum_group_size=minimum_group_size,
+        _runtime_lease=_runtime_lease,
     )
     if not prepared.batched_element_ids:
         return None, prepared
@@ -726,6 +1076,27 @@ def build_reference_s3_recovery_batch(
         component_evaluation_count=prepared.component_evaluation_count,
     )
     return batch, prepared
+
+
+def build_reference_s3_recovery_batch(
+    model: "FEModel",
+    items: Sequence[Tuple[int, Any, np.ndarray]],
+    *,
+    minimum_group_size: int = MIN_REFERENCE_S3_RECOVERY_GROUP,
+) -> Tuple[ReferenceS3RecoveryBatch | None, PreparedReferenceS3Components]:
+    """Build a recovery batch under one direct-call authority lease."""
+
+    frozen_items = tuple(items)
+    return _run_with_reference_s3_runtime_lease(
+        model,
+        context="qualified S3 recovery batch",
+        operation=lambda lease: _build_reference_s3_recovery_batch_under_lease(
+            model,
+            frozen_items,
+            minimum_group_size=minimum_group_size,
+            _runtime_lease=lease,
+        ),
+    )
 
 
 def _recover_with_kernel(
@@ -904,18 +1275,21 @@ def _recover_with_kernel(
     return recovered
 
 
-def recover_reference_s3(
+def _recover_reference_s3_under_lease(
     model: "FEModel",
     batch: ReferenceS3RecoveryBatch,
     selected_indices: np.ndarray,
     displacements: np.ndarray,
     *,
     return_global: bool,
+    _runtime_lease: Any,
 ) -> Mapping[int, Dict[str, Any]]:
     """Recover selected S3 rows through the frozen formulation-native kernel."""
 
+    _runtime_lease(model, context="qualified S3 recovery validity preflight")
     if not batch.is_valid(model):
         raise ValueError("qualified S3 recovery batch is stale after a model revision")
+    _runtime_lease(model, context="qualified S3 recovery validity observation")
     vector = np.asarray(displacements, dtype=float).reshape(-1)
     indices = np.asarray(selected_indices, dtype=np.intp).reshape(-1)
     recovered: Dict[int, Dict[str, Any]] = {}
@@ -938,3 +1312,27 @@ def recover_reference_s3(
             return_global=bool(return_global),
         )
     return recovered
+
+
+def recover_reference_s3(
+    model: "FEModel",
+    batch: ReferenceS3RecoveryBatch,
+    selected_indices: np.ndarray,
+    displacements: np.ndarray,
+    *,
+    return_global: bool,
+) -> Mapping[int, Dict[str, Any]]:
+    """Recover S3 rows under one direct-call authority lease."""
+
+    return _run_with_reference_s3_runtime_lease(
+        model,
+        context="qualified S3 recovery",
+        operation=lambda lease: _recover_reference_s3_under_lease(
+            model,
+            batch,
+            selected_indices,
+            displacements,
+            return_global=return_global,
+            _runtime_lease=lease,
+        ),
+    )

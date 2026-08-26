@@ -14,7 +14,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Dict, Iterable, Mapping, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
 
 import numpy as np
 
@@ -26,6 +26,9 @@ from .elements import (
 )
 from .materials import is_isotropic_material
 from .materials import elastic_compliance_matrix, material_symmetry
+from .matrix_assembly import (
+    _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE,
+)
 from .s3_reference_batch import (
     MIN_REFERENCE_S3_RECOVERY_GROUP,
     ReferenceS3RecoveryBatch,
@@ -35,6 +38,41 @@ from .s3_reference_batch import (
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
+
+
+def _clear_recovery_plan_without_callbacks(model: "FEModel") -> None:
+    namespace = object.__getattribute__(model.mesh, "__dict__")
+    if type(namespace) is dict:
+        dict.pop(namespace, "_recovery_batch_plan", None)
+
+
+def _run_with_qualified_recovery_runtime_lease(
+    model: "FEModel",
+    *,
+    context: str,
+    operation: Callable[[Any], Any],
+) -> Any:
+    """Run plan/recovery work under one non-renewable family lease."""
+
+    lease = _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE(
+        model,
+        context=f"{context} preflight",
+    )
+
+    def require(*, stage: str) -> None:
+        try:
+            lease(model, context=f"{context} {stage}")
+        except BaseException:
+            _clear_recovery_plan_without_callbacks(model)
+            raise
+
+    try:
+        result = operation(require)
+    except BaseException:
+        require(stage="exceptional output")
+        raise
+    require(stage="output")
+    return result
 
 
 def _readonly(array: np.ndarray) -> np.ndarray:
@@ -266,15 +304,39 @@ class RecoveryBatchPlan:
         return tuple(item for item in self.items if item.element_id in wanted)
 
 
-def get_recovery_batch_plan(model: "FEModel") -> Tuple[RecoveryBatchPlan, bool]:
+def _get_recovery_batch_plan_under_lease(
+    model: "FEModel",
+    *,
+    qualified_runtime_guard: Any,
+) -> Tuple[RecoveryBatchPlan, bool]:
     """Return the mesh-owned plan and whether it was reused."""
 
+    qualified_runtime_guard(stage="plan lookup")
     cached = getattr(model.mesh, "_recovery_batch_plan", None)
-    if isinstance(cached, RecoveryBatchPlan) and cached.is_valid(model):
+    cached_is_current = False
+    if isinstance(cached, RecoveryBatchPlan):
+        cached_is_current = cached.is_valid(model)
+        qualified_runtime_guard(stage="plan validation observation")
+    if cached_is_current:
         return cached, True
     plan = RecoveryBatchPlan.build(model)
+    qualified_runtime_guard(stage="plan build observation")
     model.mesh._recovery_batch_plan = plan
+    qualified_runtime_guard(stage="plan publication")
     return plan, False
+
+
+def get_recovery_batch_plan(model: "FEModel") -> Tuple[RecoveryBatchPlan, bool]:
+    """Return the mesh-owned plan under one authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="recovery batch plan",
+        operation=lambda guard: _get_recovery_batch_plan_under_lease(
+            model,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 @dataclass(frozen=True)

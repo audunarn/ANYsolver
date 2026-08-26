@@ -15,7 +15,9 @@ from anysolver.fe_core import FEModel
 from anysolver.nonlinear_restart import (
     NonlinearCheckpointError,
     canonical_checkpoint_json_bytes,
+    create_nonlinear_checkpoint,
     load_nonlinear_checkpoint,
+    validate_nonlinear_checkpoint,
 )
 from anysolver.nonlinear_static import DisplacementControl, solve_static_nonlinear
 
@@ -90,6 +92,78 @@ def _static_kwargs() -> dict[str, object]:
         "tolerance": 1.0e-12,
         "convergence_settings": "legacy",
     }
+
+
+def test_generic_staged_hard_delete_is_not_fabricated_as_fracture_history() -> None:
+    model, _load = _model()
+    activity = ElementActivity([1])
+    activity.hard_delete([1], step=1, reason="staged")
+    model.set_element_activity(activity)
+
+    checkpoint = create_nonlinear_checkpoint(
+        analysis_kind="static",
+        model=model,
+        analysis_contract={"num_layers": 5},
+        displacements=np.zeros(model.mesh.dof_manager.total_dofs),
+        element_states={},
+        path_state={},
+        deleted_element_ids=(),
+    )
+
+    assert checkpoint["deleted_element_ids"] == []
+    assert checkpoint["activity_state"]["hard_deleted"] == [True]
+
+    incomplete = copy.deepcopy(checkpoint)
+    incomplete["activity_state"]["history"] = []
+    body = {
+        key: value
+        for key, value in incomplete.items()
+        if key != "checkpoint_sha256"
+    }
+    incomplete["checkpoint_sha256"] = hashlib.sha256(
+        canonical_checkpoint_json_bytes(body)
+    ).hexdigest().upper()
+    with pytest.raises(NonlinearCheckpointError, match="activity state is invalid"):
+        validate_nonlinear_checkpoint(
+            incomplete,
+            analysis_kind="static",
+            model=model,
+            analysis_contract={"num_layers": 5},
+            num_layers=5,
+        )
+
+
+def test_recorded_fracture_deletion_must_be_hard_deleted_in_activity() -> None:
+    model, _load = _model()
+    model.set_element_activity(ElementActivity([1]))
+    record = {
+        "element_id": 1,
+        "element_type": "shell",
+        "step_index": 1,
+        "load_factor": 0.5,
+        "trigger_name": "max_equivalent_plastic_strain",
+        "trigger_value": 0.01,
+        "threshold": 0.001,
+        "location": "alpha[0]",
+        "measure": 1.0,
+    }
+
+    with pytest.raises(NonlinearCheckpointError, match="not hard-deleted"):
+        create_nonlinear_checkpoint(
+            analysis_kind="static",
+            model=model,
+            analysis_contract={
+                "num_layers": 5,
+                "fracture_config": {
+                    "threshold": 0.001,
+                    "residual_stiffness_fraction": 0.1,
+                },
+            },
+            displacements=np.zeros(model.mesh.dof_manager.total_dofs),
+            element_states={1: {"alpha": [0.01]}},
+            path_state={"deletion_records": [record]},
+            deleted_element_ids=(1,),
+        )
 
 
 def test_force_static_checkpoint_round_trip_and_exact_split_continuation() -> None:

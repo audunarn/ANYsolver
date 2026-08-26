@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import copy
+import hashlib
+
 import numpy as np
 import pytest
 
@@ -14,6 +17,7 @@ from anysolver.fracture import (
 from anysolver.material_curves import DNVC208MaterialCurve
 from anysolver.matrix_assembly import assemble_load_vector
 from anysolver.nonlinear_static import _assemble_nonlinear_system, solve_static_nonlinear
+from anysolver.nonlinear_restart import canonical_checkpoint_json_bytes
 
 
 E = 210.0e9
@@ -30,15 +34,23 @@ CURVE = DNVC208MaterialCurve(
 )
 
 
-def _one_shell_model(curve=CURVE) -> FEModel:
+def _one_shell_model(curve=CURVE, *, formulation: str | None = None) -> FEModel:
     model = FEModel("fracture_panel")
     model.add_material("steel", E, NU, hardening_curve=curve)
     model.add_node(1, 0.0, 0.0, 0.0)
     model.add_node(2, 1.0, 0.0, 0.0)
     model.add_node(3, 1.0, 0.2, 0.0)
     model.add_node(4, 0.0, 0.2, 0.0)
+    kwargs = {} if formulation is None else {"formulation": formulation}
     model.add_element(
-        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.01)
+        1,
+        create_shell_element(
+            1,
+            [1, 2, 3, 4],
+            "steel",
+            thickness=0.01,
+            **kwargs,
+        ),
     )
     model.add_boundary_condition(BoundaryCondition("left_x", [1, 4], {"ux": 0.0}))
     model.add_boundary_condition(BoundaryCondition("plane", [1, 2, 3, 4], {"uz": 0.0, "rx": 0.0, "ry": 0.0}))
@@ -209,3 +221,153 @@ def test_fracture_deletion_history_survives_exact_checkpoint_continuation() -> N
     np.testing.assert_array_equal(uninterrupted.displacements, resumed.displacements)
     assert uninterrupted.info["fracture_summary"] == resumed.info["fracture_summary"]
     assert uninterrupted.restart_checkpoint_bytes() == resumed.restart_checkpoint_bytes()
+
+    state = resumed.element_states[1]
+    marker = state["qualified_q4_activity_disposition"]
+    assert marker["status"] == "DELETED_FROZEN_NONCURRENT"
+    assert marker["operator_semantics"] == (
+        "CONSTITUTIVE_HISTORY_FROZEN;"
+        "FORCE_AND_TANGENT_REEVALUATED_AT_CURRENT_U_THEN_SCALED"
+    )
+    deletion_u = np.asarray(marker["accepted_local_u"], dtype=np.float64)
+    np.testing.assert_array_equal(
+        state["qualified_q4_committed_binding"]["committed_total_u"],
+        deletion_u,
+    )
+    element = resumed_model.mesh.elements[1]
+    dofs = np.asarray(element.get_dof_mapping(resumed_model.mesh), dtype=np.intp)
+    assert not np.array_equal(deletion_u, resumed.displacements[dofs])
+    record = resumed.info["fracture_summary"]["records"][0]
+    element.validate_noncurrent_deleted_state(
+        resumed_model.mesh,
+        resumed_model.get_material(element.material_name),
+        state,
+        3,
+        expected_deletion_step_index=record["step_index"],
+        expected_deletion_load_factor=record["load_factor"],
+        expected_residual_stiffness_fraction=(
+            config.residual_stiffness_fraction
+        ),
+        expected_trigger_name=record["trigger_name"],
+    )
+    with pytest.raises(ValueError, match="noncurrent"):
+        element.compute_committed_current_tangent_components(
+            resumed_model.mesh,
+            resumed_model.get_material(element.material_name),
+            deletion_u,
+            state,
+            3,
+        )
+
+    for name, replacement in (
+        ("status", "ACTIVE"),
+        ("policy_id", "WRONG"),
+        ("residual_stiffness_fraction", 0.2),
+        ("trigger_name", "wrong-trigger"),
+    ):
+        mutated = copy.deepcopy(state)
+        mutated["qualified_q4_activity_disposition"][name] = replacement
+        with pytest.raises(ValueError, match="disposition|residual|trigger"):
+            element.validate_noncurrent_deleted_state(
+                resumed_model.mesh,
+                resumed_model.get_material(element.material_name),
+                mutated,
+                3,
+                expected_deletion_step_index=record["step_index"],
+                expected_deletion_load_factor=record["load_factor"],
+                expected_residual_stiffness_fraction=(
+                    config.residual_stiffness_fraction
+                ),
+                expected_trigger_name=record["trigger_name"],
+            )
+
+    mutated_u = copy.deepcopy(state)
+    mutated_u["qualified_q4_activity_disposition"]["accepted_local_u"][0] += (
+        1.0e-12
+    )
+    with pytest.raises(ValueError, match="disposition"):
+        element.validate_noncurrent_deleted_state(
+            resumed_model.mesh,
+            resumed_model.get_material(element.material_name),
+            mutated_u,
+            3,
+        )
+
+    # A direct ordinary restart has no deletion-record authority and therefore
+    # cannot silently reactivate a frozen marker.  Only the closed checkpoint
+    # path above may restore it.
+    rejected_model = _one_shell_model()
+    with pytest.raises(ValueError, match="disagrees with checkpoint deletion state"):
+        solve_static_nonlinear(
+            rejected_model,
+            _tension_load(rejected_model),
+            max_load_factor=0.1,
+            num_steps=1,
+            num_layers=3,
+            fracture_config=config,
+            initial_element_states=copy.deepcopy(resumed.element_states),
+            initial_displacements=resumed.displacements.copy(),
+            equilibrate_initial_state=False,
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement", "message"),
+    (
+        ("step_index", 999, "deletion step"),
+        ("load_factor", 999.0, "deletion load factor"),
+    ),
+)
+def test_legacy_fracture_checkpoint_binds_deletion_step_history_before_assembly(
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    replacement: object,
+    message: str,
+) -> None:
+    config = FractureConfig(
+        threshold=0.001,
+        residual_stiffness_fraction=0.1,
+        max_deleted_fraction=1.0,
+    )
+    model = _one_shell_model(formulation="legacy")
+    element = model.mesh.elements[1]
+    state = element.init_nonlinear_state(3)
+    state["alpha"][:] = 0.01
+    result = solve_static_nonlinear(
+        model,
+        _tension_load(model, stress=100.0e6),
+        num_steps=2,
+        num_layers=3,
+        initial_element_states={1: state},
+        fracture_config=config,
+        emit_restart_checkpoint=True,
+    )
+    assert result.restart_checkpoint is not None
+    checkpoint = copy.deepcopy(result.restart_checkpoint)
+    checkpoint["path_state"]["deletion_records"][0][field] = replacement
+    body = {
+        key: value
+        for key, value in checkpoint.items()
+        if key != "checkpoint_sha256"
+    }
+    checkpoint["checkpoint_sha256"] = hashlib.sha256(
+        canonical_checkpoint_json_bytes(body)
+    ).hexdigest().upper()
+
+    resumed_model = _one_shell_model(formulation="legacy")
+    monkeypatch.setattr(
+        resumed_model,
+        "apply_boundary_conditions",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("checkpoint mutation reached assembly")
+        ),
+    )
+    with pytest.raises(ValueError, match=message):
+        solve_static_nonlinear(
+            resumed_model,
+            _tension_load(resumed_model, stress=100.0e6),
+            num_steps=1,
+            num_layers=3,
+            fracture_config=config,
+            restart_checkpoint=checkpoint,
+        )

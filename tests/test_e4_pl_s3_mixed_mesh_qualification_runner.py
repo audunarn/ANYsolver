@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import copy
 import hashlib
 import importlib.util
@@ -108,16 +109,23 @@ def _subprocess_environment() -> dict[str, str]:
     environment["OMP_NUM_THREADS"] = "1"
     environment["OPENBLAS_NUM_THREADS"] = "1"
     environment["MKL_NUM_THREADS"] = "1"
+    environment["NUMEXPR_NUM_THREADS"] = "1"
     return environment
 
 
 @pytest.fixture(scope="module")
 def deterministic_smoke_outputs(tmp_path_factory: pytest.TempPathFactory) -> tuple[bytes, bytes, dict[str, Any], dict[str, Any]]:
-    directory = tmp_path_factory.mktemp("mixed_runner_cycles")
-    payloads: list[tuple[bytes, bytes]] = []
-    for cycle in (1, 2):
-        result = directory / f"result-{cycle}.json"
-        provenance = directory / f"provenance-{cycle}.json"
+    cycle_directories = {
+        cycle: tmp_path_factory.mktemp(f"mixed_runner_cycle_{cycle}")
+        for cycle in (1, 2)
+    }
+
+    def execute_cycle(
+        cycle: int,
+    ) -> tuple[subprocess.CompletedProcess[str], Path, Path]:
+        directory = cycle_directories[cycle]
+        result = directory / "result.json"
+        provenance = directory / "provenance.json"
         completed = subprocess.run(
             [
                 sys.executable,
@@ -134,8 +142,41 @@ def deterministic_smoke_outputs(tmp_path_factory: pytest.TempPathFactory) -> tup
             check=False,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=240,
         )
+        return completed, result, provenance
+
+    outcomes: list[
+        tuple[
+            int,
+            subprocess.CompletedProcess[str] | None,
+            Path | None,
+            Path | None,
+            Exception | None,
+        ]
+    ] = []
+    with ThreadPoolExecutor(
+        max_workers=2,
+        thread_name_prefix="mixed-smoke-cycle",
+    ) as executor:
+        futures = {
+            cycle: executor.submit(execute_cycle, cycle)
+            for cycle in (1, 2)
+        }
+        for cycle in (1, 2):
+            try:
+                completed, result, provenance = futures[cycle].result()
+            except Exception as exc:  # collect both cycle terminals before failing
+                outcomes.append((cycle, None, None, None, exc))
+            else:
+                outcomes.append((cycle, completed, result, provenance, None))
+
+    payloads: list[tuple[bytes, bytes]] = []
+    for cycle, completed, result, provenance, error in outcomes:
+        assert error is None, f"mixed smoke cycle {cycle} raised {error!r}"
+        assert completed is not None
+        assert result is not None
+        assert provenance is not None
         assert completed.returncode == 0, completed.stderr
         payloads.append((result.read_bytes(), provenance.read_bytes()))
     assert payloads[0] == payloads[1]

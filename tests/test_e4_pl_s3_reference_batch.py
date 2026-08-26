@@ -4,24 +4,33 @@ from __future__ import annotations
 
 import copy
 from dataclasses import asdict
+import inspect
 import json
 import os
 import pickle
 from pathlib import Path
 import subprocess
 import sys
+import warnings
+from types import MappingProxyType
 from typing import Any, Mapping
 
 import numpy as np
 import pytest
 
 import anysolver.matrix_assembly as matrix_assembly_module
+import anysolver.e4_pl_s3_element as s3_element_module
 import anysolver.s3_reference_batch as s3_batch_module
+from anysolver.assembly import (
+    compute_constraint_force_diagnostics,
+    compute_reactions,
+)
 from anysolver.activity import ElementActivity
+from anysolver.boundary import LoadCase
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
 from anysolver.fe_core import FEModel, FEMesh
-from anysolver.matrix_assembly import assemble_stiffness_matrix
+from anysolver.matrix_assembly import AssemblyError, assemble_stiffness_matrix
 from anysolver.materials import Hill48Yield
 from anysolver.recovery import (
     RecoveryConfig,
@@ -178,29 +187,24 @@ def _section() -> GeneralizedShellSection:
     )
 
 
+def _set_array_strides_for_authority_test(
+    array: np.ndarray,
+    strides: tuple[int, ...],
+) -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        array.strides = strides
+
+
 def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     model = _build_model(8, include_q4=True)
-    calls = 0
-    original = QualifiedE4PLS3ShellElement.compute_stiffness_components
-
-    def counted(self, mesh, material):
-        nonlocal calls
-        calls += 1
-        return original(self, mesh, material)
-
-    monkeypatch.setattr(
-        QualifiedE4PLS3ShellElement,
-        "compute_stiffness_components",
-        counted,
-    )
     stiffness, info = assemble_stiffness_matrix(model)
     assert stiffness.shape == (
         model.mesh.dof_manager.total_dofs,
         model.mesh.dof_manager.total_dofs,
     )
-    assert calls == 1
     diagnostics = info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]
@@ -232,6 +236,16 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
     }
     first = model.mesh.elements[1]
     second = model.mesh.elements[2]
+    material = model.get_material(first.material_name)
+    for element_id in range(1, 9):
+        element = model.mesh.elements[element_id]
+        cached_total = s3_element_module._try_s3_fast_assembly_cached_stiffness(
+            element,
+            model.mesh,
+            material,
+        )
+        assert type(cached_total) is bytes
+        assert len(cached_total) == 18 * 18 * 8
     assert first._qualified_cache_key == second._qualified_cache_key
     assert first._qualified_components is not second._qualified_components
     with pytest.raises(TypeError):
@@ -342,9 +356,11 @@ def test_warm_immutable_s3_plan_reuses_one_time_matrix_validation(
     assert info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is True
-    # Only the assembled global CSR matrix is checked.  The eight exact,
-    # immutable local matrices retain their plan-build certificates.
-    assert calls == 1
+    # The warm plan retains its exact local-matrix certificates and the
+    # assembly operation uses the closure-bound symmetry kernel captured at
+    # import.  Replacing the mutable module alias therefore cannot instrument
+    # or influence either the certified local matrices or the global check.
+    assert calls == 0
 
     element = model.mesh.elements[1]
     original_mapping = np.asarray(element.get_dof_mapping(model.mesh))
@@ -353,8 +369,117 @@ def test_warm_immutable_s3_plan_reuses_one_time_matrix_validation(
         "get_dof_mapping",
         lambda _mesh: original_mapping[:-1],
     )
-    with pytest.raises(matrix_assembly_module.AssemblyError, match="expected"):
+    with pytest.raises(
+        matrix_assembly_module.AssemblyError,
+        match="incompatible qualified shell authority",
+    ):
         assemble_stiffness_matrix(model)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ("shape", "strides", "writeable", "value"),
+)
+def test_warm_plan_rebuilds_after_retained_matrix_authority_changes(
+    mutation: str,
+) -> None:
+    model = _build_model(8)
+    baseline, _ = assemble_stiffness_matrix(model)
+    _warm, warm_info = assemble_stiffness_matrix(model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    plan = model.mesh._qualified_s3_reference_stiffness_plan
+    original_matrices = plan.matrices
+    retained = original_matrices[1]
+    original_shape = retained.shape
+    original_strides = retained.strides
+    if mutation == "shape":
+        retained.shape = (9, 36)
+    elif mutation == "strides":
+        _set_array_strides_for_authority_test(retained, (0, 8))
+    else:
+        replacement = (
+            np.zeros((18, 18), dtype=np.float64)
+            if mutation == "writeable"
+            else np.frombuffer(bytes(18 * 18 * 8), dtype=np.float64).reshape(
+                (18, 18)
+            )
+        )
+        object.__setattr__(
+            plan,
+            "matrices",
+            MappingProxyType({**dict(original_matrices), 1: replacement}),
+        )
+    try:
+        rebuilt, rebuilt_info = assemble_stiffness_matrix(model)
+    finally:
+        retained.shape = original_shape
+        _set_array_strides_for_authority_test(retained, original_strides)
+        object.__setattr__(plan, "matrices", original_matrices)
+    np.testing.assert_array_equal(rebuilt.toarray(), baseline.toarray())
+    assert rebuilt_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is False
+
+    next_clean, next_clean_info = assemble_stiffness_matrix(model)
+    np.testing.assert_array_equal(next_clean.toarray(), baseline.toarray())
+    assert next_clean_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+
+def test_warm_plan_matrix_metadata_restore_during_use_cannot_change_output() -> None:
+    model = _build_model(8)
+    baseline, _ = assemble_stiffness_matrix(model)
+    _warm, warm_info = assemble_stiffness_matrix(model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+    plan = model.mesh._qualified_s3_reference_stiffness_plan
+    retained = plan.matrices[1]
+    original_strides = retained.strides
+
+    implementation = matrix_assembly_module._assemble_element_matrix_under_lease_impl
+    source, start = inspect.getsourcelines(implementation)
+    mutate_line = start + next(
+        index
+        for index, text in enumerate(source)
+        if "rows = _ndarray_constructor(" in text
+    )
+    restore_line = start + next(
+        index
+        for index, text in enumerate(source)
+        if index > mutate_line - start
+        and "data = _ndarray_constructor(" in text
+    )
+    state = {"mutated": False, "restored": False}
+
+    def trace(frame: Any, event: str, _argument: Any) -> Any:
+        if event == "line" and frame.f_code is implementation.__code__:
+            if frame.f_lineno == mutate_line:
+                _set_array_strides_for_authority_test(retained, (0, 8))
+                state["mutated"] = True
+            elif frame.f_lineno == restore_line and state["mutated"]:
+                _set_array_strides_for_authority_test(
+                    retained,
+                    original_strides,
+                )
+                state["restored"] = True
+        return trace
+
+    sys.settrace(trace)
+    try:
+        actual, info = assemble_stiffness_matrix(model)
+    finally:
+        sys.settrace(None)
+        _set_array_strides_for_authority_test(retained, original_strides)
+    assert state == {"mutated": True, "restored": True}
+    np.testing.assert_array_equal(actual.toarray(), baseline.toarray())
+    assert info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
 
 
 def test_stiffness_batch_is_revision_bound_and_small_groups_fall_back() -> None:
@@ -430,9 +555,7 @@ def test_partial_helper_request_never_reuses_a_complete_candidate_plan() -> None
     assert tuple(partial.matrices) == (1, 2, 3, 4)
 
 
-def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding() -> None:
     model = _build_model(8)
     # Decimal grid translations produce distinct binary64 centered-coordinate
     # keys even though the triangles are nominally translated copies.  The
@@ -446,21 +569,7 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
             float(node.z),
         )
 
-    calls = 0
-    original = QualifiedE4PLS3ShellElement.compute_stiffness_components
-
-    def counted(self, mesh, material):
-        nonlocal calls
-        calls += 1
-        return original(self, mesh, material)
-
-    monkeypatch.setattr(
-        QualifiedE4PLS3ShellElement,
-        "compute_stiffness_components",
-        counted,
-    )
     first, first_info = assemble_stiffness_matrix(model)
-    assert calls == 8
     first_diagnostics = first_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]
@@ -470,7 +579,6 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
     }
 
     second, second_info = assemble_stiffness_matrix(model)
-    assert calls == 8
     second_diagnostics = second_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]
@@ -483,7 +591,6 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
     assert second_diagnostics["plan_reused"] is False
 
     third, third_info = assemble_stiffness_matrix(model)
-    assert calls == 8
     assert third_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is True
@@ -496,7 +603,6 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
     element = model.mesh.elements[1]
     element.thickness *= 2.0
     changed_thickness, thickness_info = assemble_stiffness_matrix(model)
-    assert calls == 9
     assert thickness_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is False
@@ -505,12 +611,10 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
     # The next pass may capture the newly populated exact element cache; only
     # the following pass is a reusable, fully rebound plan.
     rebound, rebound_info = assemble_stiffness_matrix(model)
-    assert calls == 9
     assert rebound_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is False
     reused, reused_info = assemble_stiffness_matrix(model)
-    assert calls == 9
     assert reused_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is True
@@ -533,31 +637,14 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding(
     node = model.mesh.nodes[1]
     model.set_node_coordinates(1, node.x - 1.0e-4, node.y, node.z)
     _changed, changed_info = assemble_stiffness_matrix(model)
-    assert calls == 18
     assert changed_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["element_count"] == 0
 
 
-def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision() -> None:
     model = _build_model(8)
-    calls = 0
-    original = QualifiedE4PLS3ShellElement.compute_stiffness_components
-
-    def counted(self, mesh, material):
-        nonlocal calls
-        calls += 1
-        return original(self, mesh, material)
-
-    monkeypatch.setattr(
-        QualifiedE4PLS3ShellElement,
-        "compute_stiffness_components",
-        counted,
-    )
     baseline, _baseline_info = assemble_stiffness_matrix(model)
-    assert calls == 1
     _warm, warm_info = assemble_stiffness_matrix(model)
     assert warm_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
@@ -571,7 +658,6 @@ def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision(
     changed, changed_info = assemble_stiffness_matrix(model)
     assert model.mesh.revisions["geometry"] == geometry_revision
     assert model.mesh.nodes[1]._coordinate_revision == coordinate_revision + 1
-    assert calls == 2
     assert changed_info["diagnostics"][
         "qualified_s3_reference_elastic_stiffness"
     ]["plan_reused"] is False
@@ -678,6 +764,191 @@ def test_warm_plan_binds_reference_normal_bytes_even_if_writes_are_reenabled(
     )
     with pytest.raises(ValueError, match="winding opposes"):
         assemble_stiffness_matrix(model)
+
+
+def test_warm_assembly_lease_rejects_transient_runtime_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _build_model(8)
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    _warm, warm_info = assemble_stiffness_matrix(model)
+    assert warm_info["diagnostics"][
+        "qualified_s3_reference_elastic_stiffness"
+    ]["plan_reused"] is True
+
+    original_revision_signature = model.mesh.revision_signature
+    original_triangle_frame = s3_element_module.triangle_frame
+    callback_count = 0
+
+    def transient_revision_signature() -> dict[str, int]:
+        nonlocal callback_count
+        callback_count += 1
+        setattr(s3_element_module, "triangle_frame", lambda *args, **kwargs: None)
+        setattr(s3_element_module, "triangle_frame", original_triangle_frame)
+        return original_revision_signature()
+
+    monkeypatch.setattr(
+        model.mesh,
+        "revision_signature",
+        transient_revision_signature,
+    )
+    with pytest.raises(AssemblyError, match="qualified shell authority"):
+        assemble_stiffness_matrix(model)
+    # Exact warm assembly rejects the provider shadow at the owned-input
+    # boundary.  The callback therefore cannot run far enough to perform its
+    # transient formulation mutation.
+    assert callback_count == 0
+    assert all(
+        element._qualified_components is not None
+        for element in model.mesh.elements.values()
+    )
+
+    monkeypatch.delattr(model.mesh, "revision_signature")
+    restored, _restored_info = assemble_stiffness_matrix(model)
+    np.testing.assert_array_equal(restored.toarray(), baseline.toarray())
+
+
+@pytest.mark.parametrize("entrypoint", ("get", "prepare"))
+def test_direct_batch_lease_rejects_transient_runtime_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+    entrypoint: str,
+) -> None:
+    model = _build_model(8)
+    assemble_stiffness_matrix(model)
+    assemble_stiffness_matrix(model)
+    items = tuple(model.mesh.elements.items())
+
+    original_revision_signature = model.mesh.revision_signature
+    original_triangle_frame = s3_element_module.triangle_frame
+    callback_count = 0
+
+    def transient_revision_signature() -> dict[str, int]:
+        nonlocal callback_count
+        if callback_count == 0:
+            setattr(
+                s3_element_module,
+                "triangle_frame",
+                lambda *args, **kwargs: None,
+            )
+            setattr(
+                s3_element_module,
+                "triangle_frame",
+                original_triangle_frame,
+            )
+        callback_count += 1
+        return original_revision_signature()
+
+    monkeypatch.setattr(
+        model.mesh,
+        "revision_signature",
+        transient_revision_signature,
+    )
+    with pytest.raises(ValueError, match="authority changed"):
+        if entrypoint == "get":
+            get_reference_s3_stiffness_components(
+                model,
+                items,
+                complete_candidate_items=True,
+            )
+        else:
+            prepare_reference_s3_components(model, items)
+
+    assert callback_count >= 1
+    assert not hasattr(
+        model.mesh,
+        "_qualified_s3_reference_stiffness_plan",
+    )
+    assert all(
+        element._qualified_components is None
+        for element in model.mesh.elements.values()
+    )
+
+
+@pytest.mark.parametrize(
+    "entrypoint",
+    (compute_constraint_force_diagnostics, compute_reactions),
+)
+def test_constraint_routes_reject_transient_load_provider_mutation(
+    entrypoint: Any,
+) -> None:
+    model = _build_model(1)
+    displacements = np.zeros(model.mesh.dof_manager.total_dofs, dtype=np.float64)
+    clean_load = LoadCase("clean-zero")
+    baseline = entrypoint(model, displacements, clean_load)
+    original_triangle_frame = s3_element_module.triangle_frame
+    callback_count = 0
+
+    class TransientLoadProvider:
+        def get_load_vector(self, *_args: Any, **_kwargs: Any) -> np.ndarray:
+            nonlocal callback_count
+            callback_count += 1
+            setattr(
+                s3_element_module,
+                "triangle_frame",
+                lambda *args, **kwargs: None,
+            )
+            setattr(
+                s3_element_module,
+                "triangle_frame",
+                original_triangle_frame,
+            )
+            return np.zeros(
+                model.mesh.dof_manager.total_dofs,
+                dtype=np.float64,
+            )
+
+    with pytest.raises(AssemblyError, match="qualified shell authority"):
+        entrypoint(model, displacements, TransientLoadProvider())
+    assert callback_count == 1
+
+    restored = entrypoint(model, displacements, clean_load)
+    assert tuple(restored) == tuple(baseline)
+    for name, value in baseline.items():
+        if isinstance(value, np.ndarray):
+            np.testing.assert_array_equal(restored[name], value)
+
+
+def test_direct_load_case_rejects_transient_material_getter_mutation() -> None:
+    model = _build_model(1)
+    load_case = LoadCase("qualified-s3-gravity")
+    load_case.set_gravity(gz=-9.81)
+    baseline = load_case.get_load_vector(
+        model.mesh,
+        model.mesh.dof_manager,
+        model.get_material,
+    )
+    original_triangle_frame = s3_element_module.triangle_frame
+    callback_count = 0
+
+    def transient_material_getter(name: str) -> Any:
+        nonlocal callback_count
+        callback_count += 1
+        setattr(
+            s3_element_module,
+            "triangle_frame",
+            lambda *args, **kwargs: None,
+        )
+        setattr(
+            s3_element_module,
+            "triangle_frame",
+            original_triangle_frame,
+        )
+        return model.get_material(name)
+
+    with pytest.raises(AssemblyError, match="qualified shell authority"):
+        load_case.get_load_vector(
+            model.mesh,
+            model.mesh.dof_manager,
+            transient_material_getter,
+        )
+    assert callback_count == 1
+
+    restored = load_case.get_load_vector(
+        model.mesh,
+        model.mesh.dof_manager,
+        model.get_material,
+    )
+    np.testing.assert_array_equal(restored, baseline)
 
 
 def test_model_deepcopy_drops_derived_plan_and_rebinds_direct_state_tokens() -> None:

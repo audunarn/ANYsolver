@@ -88,6 +88,9 @@ def _apply_initial_field_shell_overrides(
     committed_states: Mapping[int, Any],
     tangent: bool,
     trial_states: Dict[int, Any],
+    *,
+    deleted_element_ids: Sequence[int] = (),
+    residual_stiffness_fraction: float = 1.0,
 ) -> int:
     """Replace only initialized shell entries with the scalar exact response.
 
@@ -99,6 +102,8 @@ def _apply_initial_field_shell_overrides(
 
     model = plan.model
     displacement_array = np.asarray(displacements, dtype=float)
+    deleted = {int(element_id) for element_id in deleted_element_ids}
+    residual_fraction = float(residual_stiffness_fraction)
     override_count = 0
     for index, (element_id, element) in enumerate(zip(batch.element_ids, batch.elements)):
         element_key = int(element_id)
@@ -120,12 +125,24 @@ def _apply_initial_field_shell_overrides(
             plan.num_layers,
             tangent,
         )
+        if element_key in deleted:
+            # The vectorized batch has already applied deletion scaling, but
+            # this exact initial-field replacement is evaluated independently.
+            # Apply the same residual policy here and discard its constitutive
+            # candidate so deletion-time history remains frozen.
+            force = residual_fraction * np.asarray(force, dtype=float)
+            if tangent and stiffness is not None:
+                stiffness = residual_fraction * np.asarray(
+                    stiffness, dtype=float
+                )
         plan.force_values[batch.force_positions[index]] = np.asarray(force, dtype=float).reshape(-1)
         if tangent and stiffness is not None:
             plan.tangent_values[batch.tangent_positions[index]] = np.asarray(
                 stiffness, dtype=float
             ).reshape(-1)
-        if trial_state is not None:
+        if element_key in deleted and state is not None:
+            trial_states[element_key] = state
+        elif trial_state is not None:
             trial_states[element_key] = trial_state
         override_count += 1
     return override_count
@@ -148,9 +165,86 @@ def _revision_tuple(mesh: "FEMesh") -> Tuple[int, ...]:
     )
 
 
-def _sparsity_revision_tuple(mesh: "FEMesh") -> Tuple[int, int]:
+def _sparsity_revision_tuple(mesh: "FEMesh") -> Tuple[int, int, int]:
     revisions = getattr(mesh, "revision_signature", lambda: {})()
-    return int(revisions.get("topology", 0)), int(revisions.get("mpc", 0))
+    direct_token = getattr(mesh, "_qualified_direct_state_token", None)
+    direct_revision = (
+        int(direct_token[0])
+        if isinstance(direct_token, list) and len(direct_token) == 1
+        else -1
+    )
+    return (
+        int(revisions.get("topology", 0)),
+        int(revisions.get("mpc", 0)),
+        direct_revision,
+    )
+
+
+def _qualified_plan_input_signature(model: "FEModel") -> Tuple[Any, ...]:
+    """Bind exact mutable inputs snapshotted by qualified shell batches."""
+
+    from .e4_pl_s3_state import canonical_json_bytes, resolved_material_descriptor
+    from .elements import _generalized_shell_section_cache_fingerprint
+
+    mesh = model.mesh
+    token = getattr(mesh, "_qualified_direct_state_token", None)
+    direct_revision = (
+        int(token[0])
+        if isinstance(token, list) and len(token) == 1
+        else -1
+    )
+    records: List[Tuple[Any, ...]] = []
+    materials: Dict[int, Tuple[Any, ...]] = {}
+    sections: Dict[int, Tuple[Any, ...]] = {}
+    validated_families: set[str] = set()
+    for raw_element_id, element in sorted(mesh.elements.items()):
+        formulation_id = str(getattr(element, "formulation_id", ""))
+        if formulation_id not in {
+            "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+            "E4_PL_QUALIFIED_S3_COMPANION_V1",
+        }:
+            continue
+        if formulation_id not in validated_families:
+            validator = getattr(element, "validate_quadrature_authority", None)
+            if not callable(validator):
+                raise ValueError(
+                    "qualified nonlinear plan lacks exact quadrature authority"
+                )
+            validator()
+            validated_families.add(formulation_id)
+        material = model.get_material(element.material_name)
+        material_identity = id(material)
+        if material_identity not in materials:
+            materials[material_identity] = (
+                type(material).__module__,
+                type(material).__qualname__,
+                canonical_json_bytes(resolved_material_descriptor(material)),
+            )
+        section = getattr(element, "shell_section", None)
+        section_identity = id(section) if section is not None else 0
+        if section is not None and section_identity not in sections:
+            sections[section_identity] = (
+                _generalized_shell_section_cache_fingerprint(section)
+            )
+        records.append(
+            (
+                int(raw_element_id),
+                type(element).__module__,
+                type(element).__qualname__,
+                formulation_id,
+                tuple(int(value) for value in element.node_ids),
+                str(element.material_name),
+                material_identity,
+                section_identity,
+                int(element.__dict__.get("_qualified_plan_state_revision", -1)),
+            )
+        )
+    return (
+        direct_revision,
+        tuple(records),
+        tuple(sorted(materials.items())),
+        tuple(sorted(sections.items())),
+    )
 
 
 @dataclass
@@ -385,7 +479,9 @@ class _ShellBatchPlan:
         states: Dict[int, Any] = {}
         if self.has_plasticity:
             points_per_element = self.n_gp * self.num_layers
-            for index, element_id in enumerate(self.element_ids):
+            for index, (element_id, element) in enumerate(
+                zip(self.element_ids, self.elements)
+            ):
                 start_layer = index * points_per_element
                 stop_layer = start_layer + points_per_element
                 if int(element_id) in deleted:
@@ -399,11 +495,28 @@ class _ShellBatchPlan:
                             "layer_strain": layer_strain[start_layer:stop_layer].copy(),
                         }
                     continue
-                states[int(element_id)] = {
+                state = {
                     "plastic_strain": ep_new[index],
                     "alpha": alpha_new[index],
                     "layer_strain": layer_strain[start_layer:stop_layer].copy(),
                 }
+                attach_algorithmic_origin = getattr(
+                    element,
+                    "attach_current_tangent_algorithmic_origin",
+                    None,
+                )
+                if callable(attach_algorithmic_origin):
+                    state = attach_algorithmic_origin(
+                        self.material,
+                        {
+                            "plastic_strain": self.plastic_work[index],
+                            "alpha": self.alpha_work[index],
+                        },
+                        state,
+                        self.num_layers,
+                        tangent_evaluated=bool(tangent),
+                    )
+                states[int(element_id)] = state
         else:
             points_per_element = self.n_gp * self.num_layers
             for index, element_id in enumerate(self.element_ids):
@@ -520,6 +633,33 @@ class _ShellBatchPlan:
             alpha=alpha_new,
             layer_strain=layer_strain,
         )
+        if tangent:
+            q4_origin_indices = np.asarray(
+                [
+                    index
+                    for index, element in enumerate(self.elements)
+                    if str(
+                        getattr(
+                            element,
+                            "current_state_algorithmic_origin_schema_id",
+                            "",
+                        )
+                    ).startswith("E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_")
+                ],
+                dtype=np.intp,
+            )
+            if q4_origin_indices.size:
+                state_batch.update_q4_algorithmic_origin_trial(
+                    trial_token,
+                    parent_plastic_strain=committed.plastic_strain[
+                        q4_origin_indices
+                    ],
+                    parent_alpha=committed.alpha[q4_origin_indices],
+                    element_ids=tuple(
+                        int(self.element_ids[index])
+                        for index in q4_origin_indices
+                    ),
+                )
         if deleted:
             deleted_set = set(deleted)
             residual_fraction = float(residual_stiffness_fraction)
@@ -690,6 +830,7 @@ class NonlinearAssemblyPlan:
     model_ref: "weakref.ReferenceType[FEModel]"
     num_layers: int
     revision: Tuple[int, ...]
+    qualified_input_signature: Tuple[Any, ...]
     shell_batches: Tuple[_ShellBatchPlan, ...]
     quadratic_beam_batches: Tuple[_QuadraticBeamBatchPlan, ...]
     non_shell_elements: Tuple[_ElementScatter, ...]
@@ -867,6 +1008,7 @@ class NonlinearAssemblyPlan:
             model_ref=weakref.ref(model),
             num_layers=int(num_layers),
             revision=_revision_tuple(mesh),
+            qualified_input_signature=_qualified_plan_input_signature(model),
             shell_batches=shell_batches,
             quadratic_beam_batches=quadratic_beam_batches,
             non_shell_elements=tuple(non_shell),
@@ -884,6 +1026,8 @@ class NonlinearAssemblyPlan:
             self.model_ref() is model
             and int(num_layers) == self.num_layers
             and _revision_tuple(model.mesh) == self.revision
+            and _qualified_plan_input_signature(model)
+            == self.qualified_input_signature
         )
 
     def assemble(
@@ -914,6 +1058,9 @@ class NonlinearAssemblyPlan:
             trial_states: Dict[int, Any] = {}
             deleted = {int(element_id) for element_id in deleted_element_ids}
             residual_fraction = float(residual_stiffness_fraction)
+            freeze_deleted = getattr(committed_states, "freeze_deleted", None)
+            if deleted and callable(freeze_deleted):
+                freeze_deleted(tuple(sorted(deleted)))
 
             state_start = time.perf_counter()
             for batch in self.shell_batches:
@@ -962,6 +1109,8 @@ class NonlinearAssemblyPlan:
                         committed_states,
                         tangent,
                         trial_states,
+                        deleted_element_ids=tuple(deleted),
+                        residual_stiffness_fraction=residual_fraction,
                     )
                     self.timings.initial_field_override_seconds += time.perf_counter() - override_start
                     self.timings.initial_field_override_elements += override_count
@@ -1135,6 +1284,47 @@ def nonlinear_assembly_diagnostics(model: Optional["FEModel"] = None) -> Dict[st
         return result
 
 
+def _requires_deleted_qualified_s3_reference_assembly(
+    model: "FEModel",
+    committed_states: Mapping[int, Any],
+    deleted_element_ids: Sequence[int],
+) -> bool:
+    """Whether frozen native S3 history needs its isolated residual route."""
+
+    for raw_element_id in deleted_element_ids:
+        element_id = int(raw_element_id)
+        element = model.mesh.get_element(element_id)
+        if (
+            element is None
+            or str(getattr(element, "formulation_id", ""))
+            != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            or not callable(
+                getattr(
+                    element,
+                    "compute_noncurrent_deleted_residual_operator",
+                    None,
+                )
+            )
+        ):
+            continue
+        state = committed_states.get(element_id)
+        digest = (
+            state.get("state_integrity_sha256")
+            if isinstance(state, Mapping)
+            else None
+        )
+        if (
+            isinstance(state, Mapping)
+            and state.get("formulation_id")
+            == "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            and state.get("element_id") == element_id
+            and isinstance(digest, str)
+            and len(digest) == 64
+        ):
+            return True
+    return False
+
+
 def _optimized_assemble_nonlinear_system(
     model: "FEModel",
     displacements: np.ndarray,
@@ -1149,7 +1339,13 @@ def _optimized_assemble_nonlinear_system(
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    if extra or kinematics != "von_karman":
+    deleted = tuple(int(value) for value in (deleted_element_ids or ()))
+    deleted_s3_reference = _requires_deleted_qualified_s3_reference_assembly(
+        model,
+        committed_states,
+        deleted,
+    )
+    if extra or kinematics != "von_karman" or deleted_s3_reference:
         # The assembly plan encodes the von Karman element response; other
         # kinematics and per-element scale options use the scalar reference
         # assembler. Immutable initial fields are handled by exact per-element
@@ -1165,7 +1361,7 @@ def _optimized_assemble_nonlinear_system(
             committed_states,
             num_layers,
             tangent=tangent,
-            deleted_element_ids=tuple(deleted_element_ids or ()),
+            deleted_element_ids=deleted,
             residual_stiffness_fraction=float(residual_stiffness_fraction),
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
@@ -1178,7 +1374,7 @@ def _optimized_assemble_nonlinear_system(
             displacements,
             committed_states,
             tangent=tangent,
-            deleted_element_ids=tuple(deleted_element_ids or ()),
+            deleted_element_ids=deleted,
             residual_stiffness_fraction=float(residual_stiffness_fraction),
         )
         record_nonlinear_assembly_execution(
@@ -1255,12 +1451,19 @@ def _solve_static_displacement_control_block(
     initial_history=(),
     initial_total_iterations=0,
     restart_analysis_contract=None,
+    _exact_guard=None,
 ):
     """Displacement control using block elimination on the structural tangent."""
     from . import nonlinear_static as ns
     from .cases import make_result_case
     from .jit_compiler import numba_thread_scope
     from .linalg import MatrixClass, factorize
+
+    exact_guard = _exact_guard or ns._EXACT_QUALIFIED_LIFECYCLE_GUARD
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block preflight",
+    )
 
     checkpoint_path = (
         restart_analysis_contract is not None
@@ -1310,16 +1513,31 @@ def _solve_static_displacement_control_block(
             initial_history=initial_history,
             initial_total_iterations=initial_total_iterations,
             restart_analysis_contract=restart_analysis_contract,
+            _exact_guard=exact_guard,
         )
 
     follower_active = ns._has_follower_pressure(
-        load_case
-    ) or ns._has_follower_pressure(constant_load_case)
+        load_case,
+        model=model,
+        _exact_guard=exact_guard,
+    ) or ns._has_follower_pressure(
+        constant_load_case,
+        model=model,
+        _exact_guard=exact_guard,
+    )
     if load_program is not None:
         follower_active = follower_active or any(
-            ns._has_follower_pressure(stage.load_case)
+            ns._has_follower_pressure(
+                stage.load_case,
+                model=model,
+                _exact_guard=exact_guard,
+            )
             for stage in load_program.stages
         )
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block load observation",
+    )
     if str(kinematics) != "von_karman" or follower_active:
         # The block-elimination fast path encodes the von Karman assembly plan;
         # corotational displacement control uses the original solver.
@@ -1357,6 +1575,7 @@ def _solve_static_displacement_control_block(
             initial_history=initial_history,
             initial_total_iterations=initial_total_iterations,
             restart_analysis_contract=restart_analysis_contract,
+            _exact_guard=exact_guard,
         )
 
     if load_program is not None:
@@ -1399,6 +1618,10 @@ def _solve_static_displacement_control_block(
     reaction_force_reassembly_count = 0
 
     row_full = displacement_control.full_row(model)
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block row observation",
+    )
     row_red = np.asarray(row_full @ T, dtype=float).reshape(-1)
     row_u0 = float(row_full @ u0)
     if float(np.linalg.norm(row_red)) <= 0.0:
@@ -1422,6 +1645,10 @@ def _solve_static_displacement_control_block(
                 cancellation_token,
                 f"nonlinear_static.displacement.step:{step_index}",
             )
+            exact_guard(
+                model,
+                context="nonlinear displacement-control block step cancellation",
+            )
             q_step_start = q.copy()
             lam_step_start = float(lam)
             target = initial_control + target_increment * step_index / num_steps
@@ -1434,10 +1661,21 @@ def _solve_static_displacement_control_block(
                     cancellation_token,
                     f"nonlinear_static.displacement.step:{step_index}.iteration:{iteration}",
                 )
+                exact_guard(
+                    model,
+                    context=(
+                        "nonlinear displacement-control block iteration "
+                        "cancellation"
+                    ),
+                )
                 total_iterations += 1
                 u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
                 F_int, K_T, trial_states = ns._assemble_nonlinear_system(
                     model, u, committed_states, num_layers
+                )
+                exact_guard(
+                    model,
+                    context="nonlinear displacement-control block assembly",
                 )
                 residual = F_const_red + lam * F_prop_red - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
                 residual_norm = float(np.linalg.norm(residual))
@@ -1496,6 +1734,10 @@ def _solve_static_displacement_control_block(
                 model=model,
                 accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
             )
+            exact_guard(
+                model,
+                context="nonlinear displacement-control block commit",
+            )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
             # The converged Newton evaluation already contains the exact
@@ -1513,6 +1755,10 @@ def _solve_static_displacement_control_block(
                 F_int,
                 model.mesh.dof_manager.total_dofs,
             )
+            exact_guard(
+                model,
+                context="nonlinear displacement-control block reaction force",
+            )
             if reaction_internal is None:
                 reaction_internal, _unused, _reaction_states = (
                     ns._assemble_nonlinear_system(
@@ -1526,6 +1772,13 @@ def _solve_static_displacement_control_block(
                         require_full_coordinates=True,
                     )
                 )
+                exact_guard(
+                    model,
+                    context=(
+                        "nonlinear displacement-control block reaction "
+                        "assembly"
+                    ),
+                )
                 # Reaction recovery is diagnostic-only; do not leave its
                 # trial constitutive state active for the next increment.
                 ns._discard_nonlinear_state_candidate(committed_states)
@@ -1535,6 +1788,10 @@ def _solve_static_displacement_control_block(
             support_reactions = ns._support_reaction_resultants(
                 model,
                 reaction_internal - (F_const_dc + lam * F_prop_dc),
+            )
+            exact_guard(
+                model,
+                context="nonlinear displacement-control block reactions",
             )
             steps.append(
                 ns.NonlinearStaticStep(
@@ -1576,6 +1833,10 @@ def _solve_static_displacement_control_block(
                         control_value=current,
                     )
                 )
+                exact_guard(
+                    model,
+                    context="nonlinear displacement-control block snapshot",
+                )
             if progress_callback is not None:
                 ns.emit_progress(
                     progress_callback,
@@ -1597,11 +1858,19 @@ def _solve_static_displacement_control_block(
                         for name, values in support_reactions.items()
                     },
                 )
+                exact_guard(
+                    model,
+                    context="nonlinear displacement-control block progress",
+                )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
     committed_states = ns._materialize_final_nonlinear_states(
         committed_states,
         info,
+    )
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block materialization",
     )
     committed_states = ns._finalize_nonlinear_element_states(
         model,
@@ -1609,6 +1878,10 @@ def _solve_static_displacement_control_block(
         committed_states,
         num_layers,
         kinematics=kinematics,
+    )
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block finalization",
     )
     info["failure_reason"] = failure_reason
     info["stop_reason"] = (
@@ -1632,6 +1905,10 @@ def _solve_static_displacement_control_block(
     }
     info["solve_time"] = time.time() - start_time
     info["constraint_postcheck"] = ns.constraint_residual_summary(model, u_final)
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block constraint postcheck",
+    )
     info["result_case"] = make_result_case(
         name="nonlinear_static_displacement_control",
         analysis_type="nonlinear_static",
@@ -1648,7 +1925,7 @@ def _solve_static_displacement_control_block(
             "corotational_tangent": corotational_tangent,
         },
     ).to_dict()
-    return ns.NonlinearStaticResult(
+    result = ns.NonlinearStaticResult(
         steps,
         status,
         u_final,
@@ -1657,6 +1934,11 @@ def _solve_static_displacement_control_block(
         info,
         tuple(snapshots),
     )
+    exact_guard(
+        model,
+        context="nonlinear displacement-control block output",
+    )
+    return result
 
 
 def install_nonlinear_performance_optimizations() -> bool:

@@ -130,7 +130,24 @@ def test_generalized_shell_section_validates_and_accepts_structural_objects() ->
     section = _isotropic_section(name="laminate")
     assert section.name == "laminate"
     assert section.ABD.shape == (6, 6)
-    assert not section.A.flags.writeable
+    for matrix, shape in (
+        (section.A, (3, 3)),
+        (section.B, (3, 3)),
+        (section.D, (3, 3)),
+        (section.As, (2, 2)),
+    ):
+        assert type(matrix) is np.ndarray
+        assert matrix.dtype == np.dtype(np.float64)
+        assert matrix.shape == shape
+        assert matrix.flags.c_contiguous
+        assert not matrix.flags.writeable
+        base = matrix
+        while type(base) is np.ndarray:
+            assert not base.flags.writeable
+            base = base.base
+        assert type(base) is bytes
+        with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
+            matrix.setflags(write=True)
 
     @dataclass
     class ExternalSection:

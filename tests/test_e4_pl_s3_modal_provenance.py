@@ -20,6 +20,7 @@ from anysolver.e4_pl_s3_element import (
     ALGEBRAIC_COORDINATE_POLICY_ID,
     FORMULATION_ID,
 )
+from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.elements import BeamElement
 
 
@@ -142,19 +143,17 @@ def test_descriptor_backend_failure_is_wrapped_without_backend_text(
     # static-condensation branch.  Patch its spectral backend, not an earlier
     # certificate backend.
     monkeypatch.setattr(algebraic_dynamics.linalg, "eigh", volatile_backend)
-    first = solve_free_vibration(_s3_model(), num_modes=1, dense_size_limit=1)
-    second = solve_free_vibration(_s3_model(), num_modes=1, dense_size_limit=1)
+    errors = []
+    for _ in range(2):
+        with pytest.raises(
+            ElementCapabilityError,
+            match=r"NUMERICAL_AUTHORITY_MISMATCH=scipy\.linalg\.eigh",
+        ) as captured:
+            solve_free_vibration(_s3_model(), num_modes=1, dense_size_limit=1)
+        errors.append(str(captured.value))
 
-    for result in (first, second):
-        assert result.solver_status == "failed"
-        assert result.diagnostics["error_code"] == "ALGEBRAIC_DESCRIPTOR_INVALID"
-        assert result.diagnostics["error_type"] == "AlgebraicDynamicsError"
-        assert result.diagnostics["error"] == (
-            "dense statically condensed descriptor eigensolver failed"
-        )
-        assert "volatile backend detail" not in _canonical(result.diagnostics)
-        assert result.diagnostics["declared_algebraic_formulations"] == _PROVENANCE
-    assert _canonical(first.diagnostics) == _canonical(second.diagnostics)
+    assert calls == 0
+    assert errors[0] == errors[1]
 
 
 @pytest.mark.parametrize("declaration", [None, True, -1, 1.5, "three"])
@@ -164,18 +163,14 @@ def test_malformed_algebraic_declaration_has_typed_stable_failure(
     model = _s3_model()
     model.mesh.elements[1].dynamic_algebraic_nullity = declaration
 
-    result = solve_free_vibration(model, num_modes=1)
-
-    assert result.solver_status == "failed"
-    assert result.diagnostics == {
-        "status": "failed",
-        "error": "element 1 has an invalid algebraic nullity declaration",
-        "error_type": "AlgebraicDynamicsError",
-        "error_code": "ALGEBRAIC_DESCRIPTOR_INVALID",
-        "policy_id": "SWAPPED_MASSLESS_ALGEBRAIC_PENCIL_V1",
-        "declared_algebraic_element_ids": [],
-        "declared_algebraic_formulations": _PROVENANCE,
-    }
+    with pytest.raises(
+        ElementCapabilityError,
+        match=(
+            r"CLASS_NAMESPACE_INSTANCE_SHADOW="
+            r"dynamic_algebraic_nullity"
+        ),
+    ):
+        solve_free_vibration(model, num_modes=1)
 
 
 def test_missing_serialized_algebraic_policy_fails_closed() -> None:

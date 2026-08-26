@@ -20,11 +20,12 @@ outside this contract.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
+from types import MemberDescriptorType
 from typing import Any, Mapping, Optional, Protocol, Tuple, runtime_checkable
 
 import numpy as np
-
 
 SHELL_MEMBRANE_VOIGT_ORDER: Tuple[str, ...] = ("11", "22", "12")
 SHELL_TRANSVERSE_SHEAR_ORDER: Tuple[str, ...] = ("13", "23")
@@ -68,6 +69,21 @@ def _finite_matrix(value: Any, shape: Tuple[int, int], label: str) -> np.ndarray
     if not np.all(np.isfinite(matrix)):
         raise ValueError(f"Generalized shell section {label} must contain only finite values")
     return np.array(matrix, dtype=float, copy=True)
+
+
+def _immutable_float64_matrix(matrix: np.ndarray) -> np.ndarray:
+    """Own one matrix through an immutable bytes buffer.
+
+    ``setflags(write=False)`` is reversible for an owning NumPy array.  The
+    generalized-section contract is immutable, so retain its validated values
+    in a bytes-backed array whose write flag cannot subsequently be enabled.
+    """
+
+    contiguous = np.ascontiguousarray(matrix, dtype=np.float64)
+    return np.frombuffer(
+        contiguous.tobytes(order="C"),
+        dtype=np.float64,
+    ).reshape(contiguous.shape)
 
 
 def _require_symmetric(matrix: np.ndarray, label: str) -> np.ndarray:
@@ -187,6 +203,54 @@ class GeneralizedShellSection:
     mass_per_area: Optional[float] = None
     rotary_inertia_per_area: Optional[float] = None
 
+    def __deepcopy__(self, memo: dict[int, Any]) -> "GeneralizedShellSection":
+        """Return a namespace-neutral copy with independently frozen arrays.
+
+        Avoiding the generic ``copyreg`` reconstruction path is important:
+        that path may install ``__slotnames__`` on this authority-bound class.
+        The four constitutive arrays remain immutable bytes-backed values in
+        the copy rather than becoming writable NumPy owners.
+        """
+
+        source_id = id(self)
+        if source_id in memo:
+            return memo[source_id]
+
+        cls = type(self)
+        made = object.__new__(cls)
+        memo[source_id] = made
+
+        try:
+            source_namespace = object.__getattribute__(self, "__dict__")
+            target_namespace = object.__getattribute__(made, "__dict__")
+        except AttributeError:
+            source_namespace = None
+            target_namespace = None
+        if source_namespace is not None and target_namespace is not None:
+            for name, value in source_namespace.items():
+                if name in {"A", "B", "D", "As"} and type(value) is np.ndarray:
+                    value_id = id(value)
+                    if value_id in memo:
+                        copied = memo[value_id]
+                    else:
+                        copied = _immutable_float64_matrix(value)
+                        memo[value_id] = copied
+                else:
+                    copied = copy.deepcopy(value, memo)
+                target_namespace[name] = copied
+
+        for owner in type.__getattribute__(cls, "__mro__"):
+            namespace = type.__getattribute__(owner, "__dict__")
+            for slot_name, descriptor in namespace.items():
+                if type(descriptor) is not MemberDescriptorType:
+                    continue
+                try:
+                    value = object.__getattribute__(self, slot_name)
+                except AttributeError:
+                    continue
+                object.__setattr__(made, slot_name, copy.deepcopy(value, memo))
+        return made
+
     def __post_init__(self) -> None:
         A = _require_symmetric(_finite_matrix(self.A, (3, 3), "A"), "A")
         B = _finite_matrix(self.B, (3, 3), "B")
@@ -197,8 +261,9 @@ class GeneralizedShellSection:
         _require_positive_definite(abd, "ABD matrix")
         _require_positive_definite(As, "As matrix")
 
-        for matrix in (A, B, D, As):
-            matrix.setflags(write=False)
+        A, B, D, As = (
+            _immutable_float64_matrix(matrix) for matrix in (A, B, D, As)
+        )
         object.__setattr__(self, "A", A)
         object.__setattr__(self, "B", B)
         object.__setattr__(self, "D", D)

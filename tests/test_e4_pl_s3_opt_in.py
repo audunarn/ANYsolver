@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import itertools
 import json
 
 import numpy as np
 import pytest
 
+import anysolver.e4_pl_s3_element as s3_element_module
 from anysolver import (
     DEFAULT_Q4_FORMULATION,
     DEFAULT_S3_FORMULATION,
@@ -16,6 +18,7 @@ from anysolver import (
     LegacyShellElement,
     QualifiedE4PLS3ShellElement,
     QualifiedE4PLShellElement,
+    QualifiedS3MigrationWarning,
     apply_imperfection,
     create_element,
     create_shell_element,
@@ -28,6 +31,7 @@ from anysolver.e4_pl_s3_element import (
     MITC3_PLUS_SOURCE_BYTES,
     MITC3_PLUS_SOURCE_SHA256,
     PHYSICAL_EXTERNAL_INDICES,
+    S3_QUADRATURE_AUTHORITY_ID,
     TRIANGLE_QUADRATURE,
     TYING_POINTS,
     invariant_drilling_scale,
@@ -473,6 +477,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     )
     payload = json.loads(json.dumps(original.to_dict()))
     assert payload["formulation_id"] == FORMULATION_ID
+    assert payload["quadrature_authority_id"] == S3_QUADRATURE_AUTHORITY_ID
     rebuilt = shell_element_from_dict(payload)
     assert type(rebuilt) is QualifiedE4PLS3ShellElement
     assert rebuilt.to_dict() == payload
@@ -483,6 +488,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "formulation_schema",
         "bubble_convention",
         "quadrature_id",
+        "quadrature_authority_id",
         "dynamic_reduction_policy",
         "algebraic_coordinate_policy",
         "geometric_stiffness_policy",
@@ -514,6 +520,7 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         "geometric_stiffness_policy",
         "mass_moment_id",
         "quadrature_id",
+        "quadrature_authority_id",
         "reference_surface_mass_shift_id",
         "reference_surface_offset",
         "reference_surface_offset_policy_id",
@@ -544,6 +551,20 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     missing_mass_identity.pop("mass_moment_id")
     with pytest.raises(ValueError, match="mass moment identity"):
         shell_element_from_dict(missing_mass_identity)
+    pre_quadrature_authority = dict(payload)
+    pre_quadrature_authority.pop("quadrature_authority_id")
+    with pytest.warns(
+        QualifiedS3MigrationWarning,
+        match="immutable exact quadrature authority",
+    ):
+        migrated_authority = shell_element_from_dict(pre_quadrature_authority)
+    assert migrated_authority.to_dict() == payload
+    mutated_quadrature_authority = dict(
+        payload,
+        quadrature_authority_id="MUTATED_TRIANGLE_QUADRATURE",
+    )
+    with pytest.raises(ValueError, match="quadrature authority"):
+        shell_element_from_dict(mutated_quadrature_authority)
     mutated_descriptor = dict(payload, algebraic_coordinate_policy="INVENTED_DRILL_MASS")
     with pytest.raises(ValueError, match="algebraic coordinate policy"):
         shell_element_from_dict(mutated_descriptor)
@@ -565,6 +586,86 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
     )
     with pytest.raises(ValueError, match="recovery policy"):
         shell_element_from_dict(mutated_recovery_policy)
+
+
+def test_qualified_s3_connectivity_and_current_serialization_are_exact() -> None:
+    with pytest.raises(TypeError, match="exact non-boolean integers"):
+        QualifiedE4PLS3ShellElement(
+            1,
+            [1.9, 2, 3],
+            "steel",
+            reference_normal=(0.0, 0.0, 1.0),
+        )
+    element = QualifiedE4PLS3ShellElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    with pytest.raises(TypeError, match="exact non-boolean integers"):
+        element.node_ids = (1, 2, False)
+    with pytest.raises(ValueError, match="material_direction"):
+        element.material_direction = (True, 0.0, 0.0)
+    with pytest.raises(ValueError, match="reference_normal"):
+        element.reference_normal = (0.0, 0.0, 0.0)
+    element.reference_normal = (0.0, 0.0, 2.0)
+    assert np.array_equal(element.reference_normal, np.asarray((0.0, 0.0, 1.0)))
+    for value in (True, "0.02"):
+        with pytest.raises(TypeError):
+            QualifiedE4PLS3ShellElement(
+                1,
+                [1, 2, 3],
+                "steel",
+                thickness=value,
+                reference_normal=(0.0, 0.0, 1.0),
+            )
+    for value in (True, "12.0"):
+        with pytest.raises(TypeError, match="material_angle_deg"):
+            QualifiedE4PLS3ShellElement(
+                1,
+                [1, 2, 3],
+                "steel",
+                material_direction=(1.0, 0.0, 0.0),
+                material_angle_deg=value,
+                reference_normal=(0.0, 0.0, 1.0),
+            )
+    with pytest.raises(ValueError, match="material_direction"):
+        QualifiedE4PLS3ShellElement(
+            1,
+            [1, 2, 3],
+            "steel",
+            material_direction=(True, 0.0, 0.0),
+            reference_normal=(0.0, 0.0, 1.0),
+        )
+
+    payload = json.loads(json.dumps(element.to_dict()))
+    malformed = (
+        dict(payload, element_id=1.9),
+        dict(payload, node_ids=[1.0, 2, 3]),
+        dict(payload, material_name=123),
+        dict(payload, thickness=True),
+        dict(payload, thickness="0.01"),
+        dict(payload, thickness=-0.01),
+        dict(payload, material_angle_deg=True),
+        dict(payload, director_polarity=1.9),
+        dict(payload, reference_surface_offset=0),
+        dict(payload, implementation_id="FOREIGN_Q4"),
+        dict(payload, pl_stabilization=99.0),
+    )
+    for record in malformed:
+        with pytest.raises(ValueError):
+            shell_element_from_dict(record)
+
+    for key in (
+        "material_name",
+        "thickness",
+        "material_direction",
+        "material_angle_deg",
+    ):
+        incomplete = dict(payload)
+        incomplete.pop(key)
+        with pytest.raises(ValueError, match="keys are incompatible"):
+            shell_element_from_dict(incomplete)
     for key, value, message in (
         ("drilling_stabilization", 0.01, "no user drilling coefficient"),
         ("hourglass_stabilization", 0.01, "no hourglass coefficient"),
@@ -573,6 +674,179 @@ def test_serialization_is_identity_bound_and_legacy_missing_id_stays_legacy() ->
         with pytest.raises(ValueError, match=message):
             shell_element_from_dict(dict(payload, **{key: value}))
 
+    with pytest.raises(ValueError, match="authoritative reference_normal"):
+        element.reference_normal = None
+    with pytest.raises(ValueError, match="requires material_direction"):
+        element.material_angle_deg = 15.0
+    directional = QualifiedE4PLS3ShellElement(
+        2,
+        [1, 2, 3],
+        "steel",
+        material_direction=(1.0, 0.0, 0.0),
+        material_angle_deg=15.0,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    with pytest.raises(ValueError, match="requires material_direction"):
+        directional.material_direction = None
+    with pytest.raises(ValueError, match="noncanonical types"):
+        shell_element_from_dict(dict(payload, reference_normal=[0.0, 0.0, 2.0]))
+    with pytest.raises(ValueError, match="noncanonical types"):
+        shell_element_from_dict(
+            dict(payload, material_direction=None, material_angle_deg=1.0)
+        )
+
+
+def test_s3_deserialization_and_vector_callbacks_recheck_runtime_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = QualifiedE4PLS3ShellElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        reference_normal=(0.0, 0.0, 1.0),
+    ).to_dict()
+    original_asarray = np.asarray
+    reached: list[str] = []
+
+    def changed_asarray(*args: object, **kwargs: object) -> np.ndarray:
+        reached.append("asarray")
+        return original_asarray(*args, **kwargs)
+
+    class MutatingMapping(Mapping[str, object]):
+        def __iter__(self):
+            monkeypatch.setattr(np, "asarray", changed_asarray)
+            return iter(payload)
+
+        def __len__(self) -> int:
+            return len(payload)
+
+        def __getitem__(self, key: str) -> object:
+            return payload[key]
+
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        QualifiedE4PLS3ShellElement.from_dict(MutatingMapping())
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    original_all = np.all
+
+    def changed_all(*args: object, **kwargs: object) -> object:
+        reached.append("all")
+        return original_all(*args, **kwargs)
+
+    class MutatingVector:
+        def __array__(self, dtype=None, copy=None):
+            monkeypatch.setattr(np, "all", changed_all)
+            return original_asarray((0.0, 0.0, 1.0), dtype=dtype)
+
+    with pytest.raises(ValueError, match="numpy.all"):
+        QualifiedE4PLS3ShellElement(
+            1,
+            [1, 2, 3],
+            "steel",
+            reference_normal=MutatingVector(),
+        )
+    assert reached == []
+
+
+def test_s3_direct_mechanics_rejects_changed_formulation_helper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    element = QualifiedE4PLS3ShellElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    reached: list[str] = []
+
+    def changed_frame(*_args: object, **_kwargs: object) -> object:
+        reached.append("triangle_frame")
+        raise AssertionError("changed triangle frame reached mechanics")
+
+    monkeypatch.setattr(s3_element_module, "triangle_frame", changed_frame)
+    with pytest.raises(ValueError, match="triangle_frame"):
+        element.compute_stiffness_matrix(
+            _mesh(
+                np.asarray(
+                    (
+                        (0.0, 0.0, 0.0),
+                        (1.0, 0.0, 0.0),
+                        (0.2, 0.9, 0.0),
+                    )
+                )
+            ),
+            _material(),
+        )
+    assert reached == []
+
+
+def test_s3_direct_callbacks_recheck_authority_before_cached_force_or_mechanics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mesh = _mesh(
+        np.asarray(
+            (
+                (0.0, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+                (0.2, 0.9, 0.0),
+            )
+        )
+    )
+    element = QualifiedE4PLS3ShellElement(
+        1,
+        [1, 2, 3],
+        "steel",
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    material = _material()
+    element.compute_stiffness_matrix(mesh, material)
+    original_asarray = np.asarray
+    reached: list[str] = []
+
+    def changed_asarray(*args: object, **kwargs: object) -> np.ndarray:
+        reached.append("asarray")
+        return original_asarray(*args, **kwargs)
+
+    class MutatingDisplacement:
+        def __array__(self, dtype=None, copy=None):
+            monkeypatch.setattr(np, "asarray", changed_asarray)
+            return original_asarray(np.zeros(18), dtype=dtype)
+
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.numerical_internal_force(MutatingDisplacement())
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.compute_stresses(mesh, MutatingDisplacement(), material)
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    with pytest.raises(ValueError, match="numpy.asarray"):
+        element.compute_nonlinear_response(
+            mesh,
+            material,
+            MutatingDisplacement(),
+            native_rotation_trial=None,
+        )
+    assert reached == []
+
+    monkeypatch.setattr(np, "asarray", original_asarray)
+    original_get_node = mesh.get_node
+
+    def changed_frame(*_args: object, **_kwargs: object) -> object:
+        reached.append("triangle_frame")
+        raise AssertionError("changed triangle frame reached mechanics")
+
+    def mutating_get_node(node_id: int):
+        monkeypatch.setattr(s3_element_module, "triangle_frame", changed_frame)
+        return original_get_node(node_id)
+
+    monkeypatch.setattr(mesh, "get_node", mutating_get_node)
+    with pytest.raises(ValueError, match="triangle_frame"):
+        element.compute_stiffness_matrix(mesh, material)
+    assert reached == []
 
 def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> None:
     with pytest.raises(ValueError, match="physical material_direction"):
@@ -631,10 +905,14 @@ def test_legacy_controls_quality_and_unqualified_capabilities_fail_closed() -> N
         element.capability_matrix()[name] == "PARITY_REPLACED"
         for name in closed_layered_capabilities
     )
-    assert element.capability_gaps == frozenset(
-        {"mixed_current_state_buckling"}
-    )
+    assert element.capability_gaps == frozenset()
     assert element.capability_matrix()["current_state_buckling_s3"] == (
+        "PARITY_REPLACED"
+    )
+    assert element.capability_matrix()["mixed_current_state_buckling"] == (
+        "PARITY_REPLACED"
+    )
+    assert element.capability_matrix()["mixed_current_state_modal"] == (
         "PARITY_REPLACED"
     )
     assert element.capability_matrix()["restart_history"] == (

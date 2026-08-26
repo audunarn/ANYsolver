@@ -108,6 +108,7 @@ from .e4_pl_element import (
 from .e4_pl_s3_element import (
     FORMULATION_ID as QUALIFIED_S3_FORMULATION_ID,
     QualifiedE4PLS3ShellElement,
+    QualifiedS3MigrationWarning,
 )
 from .boundary import (
     BoundaryCondition,
@@ -537,6 +538,7 @@ __all__ = [
     "QuadraticBeamElement",
     "QualifiedE4PLShellElement",
     "QualifiedE4PLS3ShellElement",
+    "QualifiedS3MigrationWarning",
     "QUALIFIED_Q4_FORMULATION_ID",
     "QUALIFIED_S3_FORMULATION_ID",
     "ShellElement",
