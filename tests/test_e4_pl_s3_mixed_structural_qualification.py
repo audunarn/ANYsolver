@@ -253,6 +253,29 @@ def test_independent_mindlin_reference_is_positive_and_converges_to_kirchhoff(
     assert thin["center_displacement"] == pytest.approx(abs(classical), rel=1.0e-7)
 
 
+def test_navier_plate_boundaries_match_hard_simply_supported_series() -> None:
+    from anysolver.fe_core import FEModel
+
+    model = FEModel("navier_boundary_identity")
+    level = 2
+    for node_id in range(1, (level + 1) ** 2 + 1):
+        model.add_node(node_id, float((node_id - 1) % 3), float((node_id - 1) // 3), 0.0)
+
+    producer._plate_boundaries(model, level)
+
+    assert len(model.boundary_conditions) == 3
+    by_name = {condition.name: condition for condition in model.boundary_conditions}
+    translation = by_name["simply_supported_edge_translations"]
+    vertical = by_name["navier_vertical_edge_tangential_rotation"]
+    horizontal = by_name["navier_horizontal_edge_tangential_rotation"]
+    assert translation.node_ids == [1, 2, 3, 4, 6, 7, 8, 9]
+    assert translation.dof_constraints == {"ux": 0.0, "uy": 0.0, "uz": 0.0}
+    assert vertical.node_ids == [1, 3, 4, 6, 7, 9]
+    assert vertical.dof_constraints == {"rx": 0.0}
+    assert horizontal.node_ids == [1, 2, 3, 7, 8, 9]
+    assert horizontal.dof_constraints == {"ry": 0.0}
+
+
 def test_two_quick_cycles_overlap_are_byte_identical_and_fail_closed(
     deterministic_quick_cycles: tuple[bytes, dict[str, Any], Path],
 ) -> None:

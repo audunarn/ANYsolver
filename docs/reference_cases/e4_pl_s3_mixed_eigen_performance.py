@@ -7,7 +7,8 @@ assembly, modal, buckling, linear-solve, recovery-batch and stiffness-batch
 paths.  Raw timings and process measurements are external diagnostics; the
 cycle-common record contains only deterministic authority, coverage and gate
 dispositions so two independently executed cycles can be compared byte for
-byte.
+byte.  Assembly and solve gates use adjacent, position-balanced Q4/candidate
+pairs in one process; fresh topology-specific workers measure peak RSS only.
 
 This lane does not activate S3, change either element formulation, or turn a
 representative N=20 measurement into unexecuted full-campaign coverage.
@@ -63,19 +64,34 @@ HOT_PATH_DIAGNOSTIC_METRICS = (
     "s3_recovery_batch_ratio_to_scalar_fallback",
 )
 
+PAIRED_REPETITIONS = 12
+PAIRED_SCHEDULE = "BALANCED_ADJACENT_AB_BA_12_V1"
+PAIRED_COMPARISON = "MEDIAN_OF_ADJACENT_CANDIDATE_TO_Q4_RATIOS"
+PERFORMANCE_ROUTES = ("assembly", "production_end_to_end_solve")
+PERFORMANCE_FRACTIONS = (0, 10, 25)
+MIXED_FRACTIONS = (10, 25)
+
+LEGACY_PERFORMANCE_WORKER_IDS = (
+    "PERFORMANCE_ALL_Q4",
+    "PERFORMANCE_MIXED_10",
+    "PERFORMANCE_MIXED_25",
+)
+
 WORKER_IDS = (
     "MODAL_MIXED_10",
     "MODAL_MIXED_25",
     "BUCKLING_MIXED_10",
     "BUCKLING_MIXED_25",
-    "PERFORMANCE_ALL_Q4",
-    "PERFORMANCE_MIXED_10",
-    "PERFORMANCE_MIXED_25",
+    "PERFORMANCE_PAIRED",
+    "RSS_ALL_Q4",
+    "RSS_MIXED_10",
+    "RSS_MIXED_25",
     "BATCH_4096",
 )
 PARALLEL_WORKERS = WORKER_IDS[:4]
-SERIAL_PERFORMANCE_WORKERS = WORKER_IDS[4:7]
-SERIAL_BATCH_WORKERS = WORKER_IDS[7:]
+SERIAL_PERFORMANCE_WORKERS = WORKER_IDS[4:5]
+SERIAL_RSS_WORKERS = WORKER_IDS[5:8]
+SERIAL_BATCH_WORKERS = WORKER_IDS[8:]
 
 THREAD_ENVIRONMENT = {
     "OMP_NUM_THREADS": "1",
@@ -505,7 +521,9 @@ def _load_hot_path_baseline(value: object) -> tuple[dict[str, dict[str, Any]], .
             ("performance_mixed_25", "PERFORMANCE_MIXED_25"),
         ):
             record = validate_worker(
-                bound[f"cycle_{cycle}_{suffix}"][1], worker_id
+                bound[f"cycle_{cycle}_{suffix}"][1],
+                worker_id,
+                allowed_ids=(*LEGACY_PERFORMANCE_WORKER_IDS, "BATCH_4096"),
             )
             if record["authority_sha256"] != authority_sha:
                 raise EigenPerformanceError(
@@ -517,7 +535,7 @@ def _load_hot_path_baseline(value: object) -> tuple[dict[str, dict[str, Any]], .
                 "performance_measurement"
             )
             != PASS
-            for worker_id in WORKER_IDS[4:7]
+            for worker_id in LEGACY_PERFORMANCE_WORKER_IDS
         ):
             raise EigenPerformanceError(
                 f"prior cycle {cycle} performance measurement was not accepted"
@@ -710,7 +728,21 @@ def load_authorities(input_path: Path = DEFAULT_INPUT) -> Authorities:
     gates = contract_value["acceptance_gates"]
     modal = payload["coverage"]["modal"]
     buckling = payload["coverage"]["buckling"]
-    performance = payload["coverage"]["performance"]
+    performance = _object(
+        payload["coverage"]["performance"], "coverage.performance"
+    )
+    _exact_keys(
+        performance,
+        (
+            "comparison",
+            "mixed_fractions_percent",
+            "repetitions",
+            "rss_isolated_workers",
+            "schedule",
+            "warmups_per_route",
+        ),
+        "coverage.performance",
+    )
     batch = payload["coverage"]["batch"]
     hot_path_policy = _object(
         payload["coverage"]["candidate_hot_path_baseline"],
@@ -746,7 +778,15 @@ def load_authorities(input_path: Path = DEFAULT_INPUT) -> Authorities:
         modal["required_rigid_mode_count"] != gates["modal"]["exact_rigid_mode_count"]
         or modal["elastic_frequency_count"] != gates["modal"]["elastic_frequency_count"]
         or buckling["first_factor_count"] != gates["buckling"]["first_factor_count"]
-        or performance["repetitions"] != gates["performance"]["repetitions_minimum"]
+        or performance["mixed_fractions_percent"] != list(MIXED_FRACTIONS)
+        or performance["repetitions"] != PAIRED_REPETITIONS
+        or performance["repetitions"]
+        < gates["performance"]["repetitions_minimum"]
+        or performance["warmups_per_route"]
+        != gates["performance"]["warmup_count"]
+        or performance["comparison"] != PAIRED_COMPARISON
+        or performance["schedule"] != PAIRED_SCHEDULE
+        or performance["rss_isolated_workers"] is not True
         or batch["eligible_element_count"] != gates["batch"]["eligible_element_count"]
         or batch["repetitions"] != gates["performance"]["repetitions_minimum"]
     ):
@@ -837,20 +877,85 @@ def _apply_supported_boundary(model: Any) -> list[int]:
 
 
 def _summary(samples: Sequence[float]) -> dict[str, Any]:
-    values = sorted(float(value) for value in samples)
-    if not values or any(not math.isfinite(value) or value < 0.0 for value in values):
-        raise EigenPerformanceError("timing samples must be finite and nonnegative")
-    median = float(statistics.median(values))
-    position = 0.95 * (len(values) - 1)
+    chronological = [float(value) for value in samples]
+    if not chronological or any(
+        not math.isfinite(value) or value <= 0.0 for value in chronological
+    ):
+        raise EigenPerformanceError("timing samples must be finite and positive")
+    values = sorted(chronological)
+    median = float(statistics.median(chronological))
+    position = 0.95 * (len(chronological) - 1)
     lower = int(math.floor(position))
     upper = int(math.ceil(position))
     p95 = values[lower] + (position - lower) * (values[upper] - values[lower])
     return {
-        "mad_seconds": float(statistics.median(abs(value - median) for value in values)),
+        "mad_seconds": float(
+            statistics.median(abs(value - median) for value in chronological)
+        ),
         "median_seconds": median,
         "p95_seconds": float(p95),
-        "samples_seconds": values,
+        "samples_seconds": chronological,
     }
+
+
+def _ratio_summary(samples: Sequence[float]) -> dict[str, Any]:
+    chronological = [float(value) for value in samples]
+    if not chronological or any(
+        not math.isfinite(value) or value <= 0.0 for value in chronological
+    ):
+        raise EigenPerformanceError("paired ratios must be finite and positive")
+    values = sorted(chronological)
+    median = float(statistics.median(chronological))
+    position = 0.95 * (len(chronological) - 1)
+    lower = int(math.floor(position))
+    upper = int(math.ceil(position))
+    p95 = values[lower] + (position - lower) * (values[upper] - values[lower])
+    return {
+        "mad": float(
+            statistics.median(abs(value - median) for value in chronological)
+        ),
+        "median": median,
+        "p95": float(p95),
+        "samples": chronological,
+    }
+
+
+def _paired_schedule(repetitions: int) -> list[dict[str, Any]]:
+    """Return the frozen adjacent, position-balanced timing schedule."""
+    if repetitions != PAIRED_REPETITIONS:
+        raise EigenPerformanceError(
+            f"paired timing requires exactly {PAIRED_REPETITIONS} repetitions"
+        )
+    patterns = (
+        ((10, "REFERENCE_FIRST"), (25, "REFERENCE_FIRST")),
+        ((25, "CANDIDATE_FIRST"), (10, "CANDIDATE_FIRST")),
+        ((25, "REFERENCE_FIRST"), (10, "REFERENCE_FIRST")),
+        ((10, "CANDIDATE_FIRST"), (25, "CANDIDATE_FIRST")),
+    )
+    rows: list[dict[str, Any]] = []
+    for repetition in range(repetitions):
+        phase = repetition % len(patterns)
+        routes = (
+            PERFORMANCE_ROUTES
+            if phase in (0, 1)
+            else tuple(reversed(PERFORMANCE_ROUTES))
+        )
+        for route in routes:
+            for fraction, orientation in patterns[phase]:
+                order = (
+                    [0, fraction]
+                    if orientation == "REFERENCE_FIRST"
+                    else [fraction, 0]
+                )
+                rows.append(
+                    {
+                        "fraction_percent": fraction,
+                        "order": order,
+                        "repetition": repetition,
+                        "route": route,
+                    }
+                )
+    return rows
 
 
 def _peak_rss_bytes() -> int | None:
@@ -1346,72 +1451,177 @@ def _buckling_worker(authorities: Authorities, fraction: int) -> tuple[dict[str,
     }, diagnostics
 
 
-def _performance_worker(authorities: Authorities, fraction: int) -> tuple[dict[str, str], dict[str, Any]]:
+def _execute_performance_route(built: Any, route: str) -> None:
     from anysolver.assembly import solve_linear
     from anysolver.matrix_assembly import assemble_stiffness_matrix
 
-    spec = authorities.input["coverage"]["performance"]
-    repeats = int(spec["repetitions"])
-    warmups = int(spec["warmups_per_route"])
-    built = _build_case(authorities, fraction, auxiliary=True)
+    if route == "assembly":
+        assemble_stiffness_matrix(built.model)
+        return
+    if route != "production_end_to_end_solve":
+        raise EigenPerformanceError(f"unknown performance route {route!r}")
     if built.load_case is None:
         raise EigenPerformanceError("performance model has no production load case")
-    for _ in range(warmups):
-        assemble_stiffness_matrix(built.model)
-        displacement, info = solve_linear(
-            built.model,
-            built.load_case,
-            constraint_mode="transformation",
-        )
-        if (info.get("convergence_info") or {}).get("status") != "converged":
-            raise EigenPerformanceError("performance warmup solve did not converge")
-        if not all(math.isfinite(float(value)) for value in displacement):
-            raise EigenPerformanceError("performance warmup returned nonfinite displacement")
-    assembly_samples: list[float] = []
-    solve_samples: list[float] = []
-    solve_statuses: list[str] = []
-    for repetition in range(repeats):
-        routes: tuple[str, ...] = (
-            ("assembly", "solve")
-            if repetition % 2 == 0
-            else ("solve", "assembly")
-        )
-        for route in routes:
-            started = time.perf_counter()
-            if route == "assembly":
-                assemble_stiffness_matrix(built.model)
-                assembly_samples.append(float(time.perf_counter() - started))
-            else:
-                _displacement, info = solve_linear(
-                    built.model,
-                    built.load_case,
-                    constraint_mode="transformation",
-                )
-                solve_samples.append(float(time.perf_counter() - started))
-                solve_statuses.append(
-                    str((info.get("convergence_info") or {}).get("status"))
-                )
-    completed = bool(
-        len(assembly_samples) == repeats
-        and len(solve_samples) == repeats
-        and solve_statuses == ["converged"] * repeats
+    displacement, info = solve_linear(
+        built.model,
+        built.load_case,
+        constraint_mode="transformation",
     )
-    diagnostics = {
-        "assembly": _summary(assembly_samples),
+    if (info.get("convergence_info") or {}).get("status") != "converged":
+        raise EigenPerformanceError("performance solve did not converge")
+    if not all(math.isfinite(float(value)) for value in displacement):
+        raise EigenPerformanceError("performance solve returned nonfinite displacement")
+
+
+def _timed_performance_route(built: Any, route: str) -> tuple[int, int]:
+    wall_started = time.perf_counter_ns()
+    cpu_started = time.process_time_ns()
+    _execute_performance_route(built, route)
+    cpu_elapsed = time.process_time_ns() - cpu_started
+    wall_elapsed = time.perf_counter_ns() - wall_started
+    if wall_elapsed <= 0 or cpu_elapsed < 0:
+        raise EigenPerformanceError("performance timer returned an invalid duration")
+    return int(wall_elapsed), int(cpu_elapsed)
+
+
+def _paired_comparison(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    candidate_ns = [int(record["candidate_wall_ns"]) for record in records]
+    reference_ns = [int(record["reference_wall_ns"]) for record in records]
+    ratios = [
+        float(candidate) / float(reference)
+        for candidate, reference in zip(candidate_ns, reference_ns, strict=True)
+    ]
+    return {
+        "candidate": _summary([value * 1.0e-9 for value in candidate_ns]),
+        "paired_ratio": _ratio_summary(ratios),
+        "pairs": [dict(record) for record in records],
+        "reference": _summary([value * 1.0e-9 for value in reference_ns]),
+    }
+
+
+def _collect_paired_measurements(
+    built_by_fraction: Mapping[int, Any],
+    *,
+    repetitions: int,
+    warmups_per_route: int,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    if set(built_by_fraction) != set(PERFORMANCE_FRACTIONS):
+        raise EigenPerformanceError("paired timing topology coverage differs")
+    if warmups_per_route != 1:
+        raise EigenPerformanceError("paired timing requires one warmup per topology/route")
+    for fraction in PERFORMANCE_FRACTIONS:
+        for route in PERFORMANCE_ROUTES:
+            for _ in range(warmups_per_route):
+                _execute_performance_route(built_by_fraction[fraction], route)
+
+    collected: dict[str, dict[int, list[dict[str, Any]]]] = {
+        route: {fraction: [] for fraction in MIXED_FRACTIONS}
+        for route in PERFORMANCE_ROUTES
+    }
+    for row in _paired_schedule(repetitions):
+        route = str(row["route"])
+        fraction = int(row["fraction_percent"])
+        order = [int(value) for value in row["order"]]
+        measured: dict[int, tuple[int, int]] = {}
+        for topology_fraction in order:
+            measured[topology_fraction] = _timed_performance_route(
+                built_by_fraction[topology_fraction], route
+            )
+        reference_wall, reference_cpu = measured[0]
+        candidate_wall, candidate_cpu = measured[fraction]
+        collected[route][fraction].append(
+            {
+                "candidate_cpu_ns": candidate_cpu,
+                "candidate_wall_ns": candidate_wall,
+                "order": order,
+                "reference_cpu_ns": reference_cpu,
+                "reference_wall_ns": reference_wall,
+                "repetition": int(row["repetition"]),
+            }
+        )
+    return {
+        route: {
+            str(fraction): _paired_comparison(collected[route][fraction])
+            for fraction in MIXED_FRACTIONS
+        }
+        for route in PERFORMANCE_ROUTES
+    }
+
+
+def _topology_diagnostics(authorities: Authorities, built: Any, fraction: int) -> dict[str, Any]:
+    return {
         "element_counts": {
             "Q4": sum(kind == "Q4" for kind in built.element_kinds.values()),
             "S3": sum(kind == "S3" for kind in built.element_kinds.values()),
         },
         "fraction_percent": int(fraction),
         "node_count": int(built.model.mesh.num_nodes),
-        "peak_rss_bytes": _peak_rss_bytes(),
-        "production_end_to_end_solve": _summary(solve_samples),
-        "repetitions": repeats,
-        "solve_statuses": solve_statuses,
         "topology": _topology_rows(authorities.input)[fraction],
+    }
+
+
+def _paired_performance_worker(
+    authorities: Authorities,
+) -> tuple[dict[str, str], dict[str, Any]]:
+    spec = authorities.input["coverage"]["performance"]
+    repeats = int(spec["repetitions"])
+    warmups = int(spec["warmups_per_route"])
+    built_by_fraction = {
+        fraction: _build_case(authorities, fraction, auxiliary=True)
+        for fraction in PERFORMANCE_FRACTIONS
+    }
+    comparisons = _collect_paired_measurements(
+        built_by_fraction,
+        repetitions=repeats,
+        warmups_per_route=warmups,
+    )
+    diagnostics = {
+        "comparisons": comparisons,
+        "protocol": {
+            "comparison": PAIRED_COMPARISON,
+            "repetitions": repeats,
+            "schedule": PAIRED_SCHEDULE,
+            "warmups_per_topology_route": warmups,
+        },
+        "topologies": {
+            str(fraction): _topology_diagnostics(
+                authorities, built_by_fraction[fraction], fraction
+            )
+            for fraction in PERFORMANCE_FRACTIONS
+        },
+    }
+    return {"performance_measurement": PASS}, diagnostics
+
+
+def _rss_worker(
+    authorities: Authorities, fraction: int
+) -> tuple[dict[str, str], dict[str, Any]]:
+    spec = authorities.input["coverage"]["performance"]
+    repeats = int(spec["repetitions"])
+    warmups = int(spec["warmups_per_route"])
+    built = _build_case(authorities, fraction, auxiliary=True)
+    for route in PERFORMANCE_ROUTES:
+        for _ in range(warmups):
+            _execute_performance_route(built, route)
+    for repetition in range(repeats):
+        routes = (
+            PERFORMANCE_ROUTES
+            if repetition % 2 == 0
+            else tuple(reversed(PERFORMANCE_ROUTES))
+        )
+        for route in routes:
+            _execute_performance_route(built, route)
+    peak = _peak_rss_bytes()
+    diagnostics = {
+        **_topology_diagnostics(authorities, built, fraction),
+        "operations_per_route": repeats + warmups,
+        "peak_rss_bytes": peak,
+        "repetitions": repeats,
         "warmups_per_route": warmups,
     }
-    return {"performance_measurement": PASS if completed else BLOCKED}, diagnostics
+    return {
+        "rss_measurement": PASS if isinstance(peak, int) and peak > 0 else BLOCKED
+    }, diagnostics
 
 
 def _batch_worker(authorities: Authorities) -> tuple[dict[str, str], dict[str, Any]]:
@@ -1487,11 +1697,13 @@ def run_worker(authorities: Authorities, worker_id: str) -> dict[str, Any]:
             statuses, diagnostics = _buckling_worker(
                 authorities, int(worker_id.rsplit("_", 1)[1])
             )
-        elif worker_id.startswith("PERFORMANCE_"):
+        elif worker_id == "PERFORMANCE_PAIRED":
+            statuses, diagnostics = _paired_performance_worker(authorities)
+        elif worker_id.startswith("RSS_"):
             fraction = 0 if worker_id.endswith("ALL_Q4") else int(
                 worker_id.rsplit("_", 1)[1]
             )
-            statuses, diagnostics = _performance_worker(authorities, fraction)
+            statuses, diagnostics = _rss_worker(authorities, fraction)
         else:
             statuses, diagnostics = _batch_worker(authorities)
     except Exception as error:  # Worker records a terminal mechanics failure.
@@ -1521,7 +1733,12 @@ def run_worker(authorities: Authorities, worker_id: str) -> dict[str, Any]:
     return value
 
 
-def validate_worker(value: object, expected_id: str | None = None) -> dict[str, Any]:
+def validate_worker(
+    value: object,
+    expected_id: str | None = None,
+    *,
+    allowed_ids: Sequence[str] = WORKER_IDS,
+) -> dict[str, Any]:
     made = _object(value, "worker")
     _exact_keys(
         made,
@@ -1535,7 +1752,7 @@ def validate_worker(value: object, expected_id: str | None = None) -> dict[str, 
         ),
         "worker",
     )
-    if made["schema"] != WORKER_SCHEMA or made["worker_id"] not in WORKER_IDS:
+    if made["schema"] != WORKER_SCHEMA or made["worker_id"] not in allowed_ids:
         raise EigenPerformanceError("worker identity mismatch")
     if expected_id is not None and made["worker_id"] != expected_id:
         raise EigenPerformanceError("unexpected worker ID")
@@ -1772,6 +1989,98 @@ def _ratio_gate(value: float, maximum: float) -> str:
     return PASS if value <= maximum else FAIL
 
 
+def _validated_paired_metrics(
+    record: Mapping[str, Any],
+    *,
+    repetitions: int,
+    warmups_per_route: int,
+) -> dict[str, dict[int, float]]:
+    diagnostics = _object(record.get("diagnostic_payload"), "paired diagnostics")
+    protocol = _object(diagnostics.get("protocol"), "paired protocol")
+    expected_protocol = {
+        "comparison": PAIRED_COMPARISON,
+        "repetitions": repetitions,
+        "schedule": PAIRED_SCHEDULE,
+        "warmups_per_topology_route": warmups_per_route,
+    }
+    if protocol != expected_protocol:
+        raise EigenPerformanceError("paired timing protocol identity differs")
+    comparisons = _object(diagnostics.get("comparisons"), "paired comparisons")
+    _exact_keys(comparisons, PERFORMANCE_ROUTES, "paired comparisons")
+    result: dict[str, dict[int, float]] = {}
+    schedule = _paired_schedule(repetitions)
+    for route in PERFORMANCE_ROUTES:
+        route_value = _object(comparisons[route], f"paired comparisons.{route}")
+        _exact_keys(
+            route_value,
+            (str(fraction) for fraction in MIXED_FRACTIONS),
+            f"paired comparisons.{route}",
+        )
+        result[route] = {}
+        for fraction in MIXED_FRACTIONS:
+            label = f"paired comparisons.{route}.{fraction}"
+            comparison = _object(route_value[str(fraction)], label)
+            _exact_keys(
+                comparison,
+                ("candidate", "paired_ratio", "pairs", "reference"),
+                label,
+            )
+            records = _array(comparison["pairs"], f"{label}.pairs")
+            expected_rows = [
+                row
+                for row in schedule
+                if row["route"] == route
+                and row["fraction_percent"] == fraction
+            ]
+            if len(records) != repetitions or len(expected_rows) != repetitions:
+                raise EigenPerformanceError(f"{label} repetition coverage differs")
+            for index, (record_value, expected) in enumerate(
+                zip(records, expected_rows, strict=True)
+            ):
+                pair = _object(record_value, f"{label}.pairs[{index}]")
+                _exact_keys(
+                    pair,
+                    (
+                        "candidate_cpu_ns",
+                        "candidate_wall_ns",
+                        "order",
+                        "reference_cpu_ns",
+                        "reference_wall_ns",
+                        "repetition",
+                    ),
+                    f"{label}.pairs[{index}]",
+                )
+                if (
+                    pair["order"] != expected["order"]
+                    or pair["repetition"] != expected["repetition"]
+                ):
+                    raise EigenPerformanceError(f"{label} schedule differs")
+                _positive_integer(
+                    pair["candidate_wall_ns"], f"{label}.candidate_wall_ns"
+                )
+                _positive_integer(
+                    pair["reference_wall_ns"], f"{label}.reference_wall_ns"
+                )
+                for cpu_key in ("candidate_cpu_ns", "reference_cpu_ns"):
+                    cpu_value = pair[cpu_key]
+                    if (
+                        isinstance(cpu_value, bool)
+                        or not isinstance(cpu_value, int)
+                        or cpu_value < 0
+                    ):
+                        raise EigenPerformanceError(
+                            f"{label}.{cpu_key} must be a nonnegative integer"
+                        )
+            recomputed = _paired_comparison(records)
+            if comparison != recomputed:
+                raise EigenPerformanceError(f"{label} summary does not recompute")
+            result[route][fraction] = _positive_metric(
+                recomputed["paired_ratio"]["median"],
+                f"{label} median paired ratio",
+            )
+    return result
+
+
 def _positive_metric(value: object, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise EigenPerformanceError(f"{label} must be numeric")
@@ -1782,24 +2091,58 @@ def _positive_metric(value: object, label: str) -> float:
 
 
 def _hot_path_metrics(records: Mapping[str, dict[str, Any]]) -> dict[str, float]:
-    performance: dict[int, dict[str, Any]] = {}
-    for worker_id in WORKER_IDS[4:7]:
-        record = _object(records.get(worker_id), f"hot-path {worker_id}")
-        diagnostics = _object(
-            record.get("diagnostic_payload"), f"hot-path {worker_id} diagnostics"
+    paired_record = records.get("PERFORMANCE_PAIRED")
+    if paired_record is not None:
+        paired_diagnostics = _object(
+            paired_record.get("diagnostic_payload"), "hot-path paired diagnostics"
         )
-        fraction = diagnostics.get("fraction_percent")
-        if fraction not in (0, 10, 25) or fraction in performance:
-            raise EigenPerformanceError("hot-path performance fractions are invalid")
-        performance[int(fraction)] = diagnostics
-    if set(performance) != {0, 10, 25}:
-        raise EigenPerformanceError("hot-path performance coverage is incomplete")
-    reference_assembly = _positive_metric(
-        _object(performance[0].get("assembly"), "all-Q4 assembly").get(
-            "median_seconds"
-        ),
-        "all-Q4 assembly median",
-    )
+        protocol = _object(
+            paired_diagnostics.get("protocol"), "hot-path paired protocol"
+        )
+        paired_metrics = _validated_paired_metrics(
+            paired_record,
+            repetitions=_positive_integer(
+                protocol.get("repetitions"), "hot-path paired repetitions"
+            ),
+            warmups_per_route=_positive_integer(
+                protocol.get("warmups_per_topology_route"),
+                "hot-path paired warmups",
+            ),
+        )
+        assembly_ratios = paired_metrics["assembly"]
+    else:
+        performance: dict[int, dict[str, Any]] = {}
+        for worker_id in LEGACY_PERFORMANCE_WORKER_IDS:
+            record = _object(records.get(worker_id), f"hot-path {worker_id}")
+            diagnostics = _object(
+                record.get("diagnostic_payload"),
+                f"hot-path {worker_id} diagnostics",
+            )
+            fraction = diagnostics.get("fraction_percent")
+            if fraction not in PERFORMANCE_FRACTIONS or fraction in performance:
+                raise EigenPerformanceError(
+                    "hot-path performance fractions are invalid"
+                )
+            performance[int(fraction)] = diagnostics
+        if set(performance) != set(PERFORMANCE_FRACTIONS):
+            raise EigenPerformanceError("hot-path performance coverage is incomplete")
+        reference_assembly = _positive_metric(
+            _object(performance[0].get("assembly"), "all-Q4 assembly").get(
+                "median_seconds"
+            ),
+            "all-Q4 assembly median",
+        )
+        assembly_ratios = {
+            fraction: _positive_metric(
+                _object(
+                    performance[fraction].get("assembly"),
+                    f"mixed {fraction} assembly",
+                ).get("median_seconds"),
+                f"mixed {fraction} assembly median",
+            )
+            / reference_assembly
+            for fraction in MIXED_FRACTIONS
+        }
     batch_record = _object(records.get("BATCH_4096"), "hot-path BATCH_4096")
     benchmark = _object(
         _object(
@@ -1820,17 +2163,10 @@ def _hot_path_metrics(records: Mapping[str, dict[str, Any]]) -> dict[str, float]
             "stiffness batch median",
         )
     }
-    for fraction in (10, 25):
-        result[f"mixed_{fraction}_assembly_ratio_to_all_q4"] = (
-            _positive_metric(
-                _object(
-                    performance[fraction].get("assembly"),
-                    f"mixed {fraction} assembly",
-                ).get("median_seconds"),
-                f"mixed {fraction} assembly median",
-            )
-            / reference_assembly
-        )
+    for fraction in MIXED_FRACTIONS:
+        result[f"mixed_{fraction}_assembly_ratio_to_all_q4"] = assembly_ratios[
+            fraction
+        ]
     result["s3_stiffness_batch_ratio_to_q4"] = (
         result[HOT_PATH_PRIMARY_METRIC]
         / _positive_metric(
@@ -1876,7 +2212,11 @@ def _candidate_hot_path_gate(
     authorities: Authorities,
     records: Mapping[str, dict[str, Any]],
 ) -> tuple[str, dict[str, Any]]:
-    required_ids = (*WORKER_IDS[4:7], "BATCH_4096")
+    required_ids = (
+        ("PERFORMANCE_PAIRED", "BATCH_4096")
+        if "PERFORMANCE_PAIRED" in records
+        else (*LEGACY_PERFORMANCE_WORKER_IDS, "BATCH_4096")
+    )
     relevant_statuses: list[str] = []
     for worker_id in required_ids:
         record = records.get(worker_id)
@@ -2003,67 +2343,80 @@ def _aggregate(
         else PASS
     )
 
-    performance_records = [records.get(worker_id) for worker_id in WORKER_IDS[4:7]]
+    paired_record = records.get("PERFORMANCE_PAIRED")
+    rss_records = [records.get(worker_id) for worker_id in SERIAL_RSS_WORKERS]
     performance_complete = bool(
-        all(record is not None for record in performance_records)
+        paired_record is not None
+        and paired_record["common"]["gate_status"].get("performance_measurement")
+        == PASS
+        and all(record is not None for record in rss_records)
         and all(
-            record["common"]["gate_status"].get("performance_measurement") == PASS
-            for record in performance_records
+            record["common"]["gate_status"].get("rss_measurement") == PASS
+            for record in rss_records
             if record is not None
         )
     )
     performance_metrics: dict[str, Any] = {}
     if performance_complete:
-        by_fraction = {
-            int(record["diagnostic_payload"]["fraction_percent"]): record
-            for record in performance_records
-            if record is not None
-        }
-        reference = by_fraction[0]["diagnostic_payload"]
-        maximum = _fraction(
-            authorities.contract["acceptance_gates"]["performance"]
-            ["mixed_assembly_solve_rss_regression_maximum"],
-            "mixed performance maximum",
-        )
-        status_values: list[str] = []
-        for fraction in (10, 25):
-            candidate = by_fraction[fraction]["diagnostic_payload"]
-            assembly_ratio = (
-                candidate["assembly"]["median_seconds"]
-                / reference["assembly"]["median_seconds"]
+        try:
+            spec = authorities.input["coverage"]["performance"]
+            paired_metrics = _validated_paired_metrics(
+                paired_record,
+                repetitions=int(spec["repetitions"]),
+                warmups_per_route=int(spec["warmups_per_route"]),
             )
-            solve_ratio = (
-                candidate["production_end_to_end_solve"]["median_seconds"]
-                / reference["production_end_to_end_solve"]["median_seconds"]
-            )
-            reference_rss = reference.get("peak_rss_bytes")
-            candidate_rss = candidate.get("peak_rss_bytes")
-            rss_ratio = (
-                float(candidate_rss) / float(reference_rss)
-                if isinstance(candidate_rss, int)
-                and isinstance(reference_rss, int)
-                and reference_rss > 0
-                else None
-            )
-            statuses = {
-                "assembly": _ratio_gate(assembly_ratio, 1.0 + maximum),
-                "rss": BLOCKED if rss_ratio is None else _ratio_gate(rss_ratio, 1.0 + maximum),
-                "solve": _ratio_gate(solve_ratio, 1.0 + maximum),
+            rss_by_fraction = {
+                int(record["diagnostic_payload"]["fraction_percent"]): record[
+                    "diagnostic_payload"
+                ]
+                for record in rss_records
+                if record is not None
             }
-            status_values.extend(statuses.values())
-            performance_metrics[str(fraction)] = {
-                "assembly_ratio_to_all_q4": assembly_ratio,
-                "gate_status": statuses,
-                "rss_ratio_to_all_q4": rss_ratio,
-                "solve_ratio_to_all_q4": solve_ratio,
+            if set(rss_by_fraction) != set(PERFORMANCE_FRACTIONS):
+                raise EigenPerformanceError("isolated RSS coverage differs")
+            reference_rss = _positive_metric(
+                rss_by_fraction[0].get("peak_rss_bytes"), "all-Q4 peak RSS"
+            )
+            maximum = _fraction(
+                authorities.contract["acceptance_gates"]["performance"]
+                ["mixed_assembly_solve_rss_regression_maximum"],
+                "mixed performance maximum",
+            )
+            status_values: list[str] = []
+            for fraction in MIXED_FRACTIONS:
+                assembly_ratio = paired_metrics["assembly"][fraction]
+                solve_ratio = paired_metrics["production_end_to_end_solve"][
+                    fraction
+                ]
+                rss_ratio = _positive_metric(
+                    rss_by_fraction[fraction].get("peak_rss_bytes"),
+                    f"mixed {fraction} peak RSS",
+                ) / reference_rss
+                statuses = {
+                    "assembly": _ratio_gate(assembly_ratio, 1.0 + maximum),
+                    "rss": _ratio_gate(rss_ratio, 1.0 + maximum),
+                    "solve": _ratio_gate(solve_ratio, 1.0 + maximum),
+                }
+                status_values.extend(statuses.values())
+                performance_metrics[str(fraction)] = {
+                    "assembly_paired_median_ratio_to_all_q4": assembly_ratio,
+                    "gate_status": statuses,
+                    "rss_ratio_to_all_q4": rss_ratio,
+                    "solve_paired_median_ratio_to_all_q4": solve_ratio,
+                }
+            gate_status["mixed_performance"] = (
+                BLOCKED
+                if BLOCKED in status_values
+                else FAIL
+                if FAIL in status_values
+                else PASS
+            )
+        except (KeyError, TypeError, EigenPerformanceError) as error:
+            gate_status["mixed_performance"] = BLOCKED
+            performance_metrics["error"] = {
+                "message": str(error),
+                "type": type(error).__name__,
             }
-        gate_status["mixed_performance"] = (
-            BLOCKED
-            if BLOCKED in status_values
-            else FAIL
-            if FAIL in status_values
-            else PASS
-        )
     else:
         gate_status["mixed_performance"] = BLOCKED
 
@@ -2106,7 +2459,7 @@ def _aggregate(
             "level": 20,
             "modal_elastic_mode_count": 10,
             "buckling_factor_count": 5,
-            "performance_repetitions": 11,
+            "performance_repetitions": PAIRED_REPETITIONS,
             "registered_scope_only": True,
             "worker_ids": list(WORKER_IDS),
         },
@@ -2157,6 +2510,12 @@ def run_cycle(
         cycle_root=output_root,
         parallel=False,
     )
+    rss = _run_worker_set(
+        authorities,
+        SERIAL_RSS_WORKERS,
+        cycle_root=output_root,
+        parallel=False,
+    )
     batch = _run_worker_set(
         authorities,
         SERIAL_BATCH_WORKERS,
@@ -2165,7 +2524,7 @@ def run_cycle(
     )
     by_id = {
         row.worker_id: row
-        for row in (*parallel, *performance, *batch)
+        for row in (*parallel, *performance, *rss, *batch)
     }
     ordered = [by_id[worker_id] for worker_id in WORKER_IDS]
     common, diagnostics = _aggregate(authorities, cycle, ordered)

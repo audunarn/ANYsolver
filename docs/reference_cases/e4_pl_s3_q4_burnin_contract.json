@@ -1,0 +1,492 @@
+{
+  "adjudication": {
+    "accepted_blocked_verdict": "ACCEPT_E4_PL_S3_Q4_BLOCKED_BURN_IN_NO_P0_P1",
+    "accepted_success_verdict": "ACCEPT_E4_PL_S3_Q4_BURN_IN_NO_P0_P1",
+    "blocked_commit_subject": "docs: record blocked corrected S3 Q4 burn-in",
+    "blocked_paths": [
+      "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json",
+      "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json",
+      "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json"
+    ],
+    "blocked_terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE",
+    "clean_cycle_counter_policy": "RESET_TO_ZERO_ON_ANY_FAILURE",
+    "clean_cycles_required": 2,
+    "default_s3_activation_authorized": false,
+    "external_result_filename": "gate-result.json",
+    "ledger_snapshot_filename": "resource-ledger-snapshot.md",
+    "result_blocked_terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE",
+    "result_success_terminal": "PENDING_REVIEW_E4_PL_S3_COMPANION_OPT_IN_RELEASE",
+    "review_independence": {
+      "did_not_author_candidate": true,
+      "did_not_execute_resource_lanes": true,
+      "reviewed_frozen_evidence_only": true
+    },
+    "review_required_keys": [
+      "findings",
+      "reviewed_inputs",
+      "reviewer_independence",
+      "schema",
+      "verdict"
+    ],
+    "review_schema": "anysolver.e4-pl-s3-q4-independent-review-v1",
+    "reviewed_input_hashes": [
+      "contract_sha256",
+      "gate_result_sha256",
+      "status_sha256"
+    ],
+    "status_required_keys": [
+      "clean_cycles_recorded",
+      "gate_result_sha256",
+      "legacy_q4_removal_authorized",
+      "qualified_s3_default_activation_authorized",
+      "schema",
+      "terminal"
+    ],
+    "status_schema": "anysolver.e4-pl-s3-q4-status-v1",
+    "success_authority": "OPT_IN_S3_COMPANION_RELEASE_ONLY",
+    "success_commit_subject": "docs: record corrected S3 Q4 clean burn-in",
+    "success_paths": [
+      "docs/reference_cases/e4_pl_s3_q4_burnin_result.json",
+      "docs/reference_cases/e4_pl_s3_q4_burnin_status.json",
+      "docs/reference_cases/e4_pl_s3_q4_burnin_review.json"
+    ],
+    "success_terminal": "PROVISIONAL_GO_E4_PL_S3_COMPANION_OPT_IN_RELEASE"
+  },
+  "authority_commit": {
+    "exact_parent": "eb1f1af313d59ac81e80d8567741faa326615296",
+    "exact_paths": [
+      "docs/reference_cases/e4_pl_s3_q4_burnin.py",
+      "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
+      "docs/reference_cases/e4_pl_s3_q4_process_runner.py",
+      "scripts/run_e4_pl_burnin_gate.py",
+      "tests/test_e4_pl_s3_q4_burnin_authority.py"
+    ],
+    "path_count": 5,
+    "subject": "docs: authorize corrected S3 Q4 burn-in cycles"
+  },
+  "candidate_chain": {
+    "correction": {
+      "commit": "eb1f1af313d59ac81e80d8567741faa326615296",
+      "exact_parent": "fde0e205501d2d0d9cd209e71fc9685c7b278292",
+      "path_count": 7,
+      "path_inventory_sha256": "3373028d9ef3038492b02b0345a9d5d40a2d126a4f2975fe2dce86ffb803cf2b",
+      "subject": "fix: correct qualified shell burn-in regressions",
+      "tree": "684e4a496229d804c23d7ffbdbed633637923b1a"
+    },
+    "initial_freeze": {
+      "commit": "16cfc012d70ccda688079b1ad9f88659348b67b7",
+      "exact_parent": "0a0ae0d0baaae26779322a216c6f3a3dd5937c69",
+      "path_count": 69,
+      "path_inventory_sha256": "1871c5a3744eb27b5ce924abcafa32fe838eab796c0a0e5bd8ed7d734331df7a",
+      "subject": "feat: complete qualified E4 PL Q4 and S3 parity",
+      "tree": "de44a4fb2cc58fcb6e602e951904c44d58ceb236"
+    },
+    "rejected_resource_evidence": {
+      "commit": "fde0e205501d2d0d9cd209e71fc9685c7b278292",
+      "exact_parent": "16cfc012d70ccda688079b1ad9f88659348b67b7",
+      "path_count": 3,
+      "path_inventory_sha256": "ecbd4e29eaea6bdb6a5984623735cac77b9ae96b9add7ade72fcab03acf10107",
+      "subject": "docs: preserve rejected S3 Q4 resource cycle",
+      "tree": "7e9a28af9ad7e04f56172a9d3e979b77c909e22d"
+    }
+  },
+  "execution": {
+    "automatic_retry": false,
+    "common_preflight_before_resources": [
+      "quick",
+      "package",
+      "additive"
+    ],
+    "coordinator_isolated_mode": true,
+    "environment_guard": {
+      "fixed": {
+        "GIT_CONFIG_GLOBAL": "NUL",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_GRAFT_FILE": "NUL",
+        "GIT_NO_REPLACE_OBJECTS": "1",
+        "PYTEST_ADDOPTS": "-p no:cacheprovider",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONHASHSEED": "0",
+        "PYTHONNOUSERSITE": "1"
+      },
+      "git": {
+        "bytes": 46920,
+        "path": "C:\\Program Files\\Git\\cmd\\git.exe",
+        "sha256": "c470d205517c7a53ceca321df16a6e4549fcd52b576ab4d09536d36f26fda5a9"
+      },
+      "numba_cache_root": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\numba-cache",
+      "powershell": {
+        "bytes": 454656,
+        "path": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "sha256": "7600ffe12da441fe89d035b13801e8e91d064bc544a27b19a5cf49f6ab8b18f5"
+      },
+      "python": {
+        "bytes": 105816,
+        "path": "C:\\Python\\Python313\\python.exe",
+        "sha256": "08a64dc73ac3e3776b49f0097c6306bdb9c8f7990a037065213324d328467bf5"
+      },
+      "python_cache_root": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\python-cache",
+      "removed": [
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_CEILING_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG",
+        "GIT_DIR",
+        "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        "GIT_EXEC_PATH",
+        "GIT_GRAFT_FILE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_OPTIONAL_LOCKS",
+        "GIT_REPLACE_REF_BASE",
+        "GIT_SHALLOW_FILE",
+        "GIT_WORK_TREE",
+        "NUMBA_CACHE_DIR",
+        "PYTEST_ADDOPTS",
+        "PYTEST_PLUGINS"
+      ],
+      "removed_prefixes": [
+        "GIT_CONFIG_",
+        "NUMBA_",
+        "PYTEST_",
+        "PYTHON"
+      ]
+    },
+    "fresh_external_logs": true,
+    "global_resource_slot_required": true,
+    "numerical_library_threads": 1,
+    "resource_cycle_order": [
+      1,
+      2
+    ],
+    "resource_approval_authority": {
+      "delegation": "COORDINATOR_MAY_APPEND_APPROVED_ROWS_FOR_THE_EXACT_BOUND_REQUEST_IDS_AFTER_COMMON_PREFLIGHT",
+      "request_ids": [
+        "228852e559ba4adca2cfd8cffd2a98c0",
+        "0adced21fef64846b26a7aef9285c10c",
+        "7ae6f9be76d941909513f06adb250d2c",
+        "c3873e15cbb748c3839b5e383db72920",
+        "66ffe2ec6cee49cba3e804305e6f3808",
+        "1f2ce7ef17e94135b6be2f62d1980e5d"
+      ],
+      "source": "EXPLICIT_USER_APPROVAL_IN_THIS_CODEX_TASK",
+      "user_statement": "I approve. Also for future requests required to finish the job."
+    },
+    "resource_lane_order": [
+      "functional",
+      "anyfem",
+      "performance"
+    ],
+    "resource_lanes_serial": true,
+    "stored_commands_exact": true,
+    "unapproved_timeout_or_resource_wrappers": false
+  },
+  "external_authority": {
+    "repositories": {
+      "ANYfem": "C:\\Github\\ANYsolver\\.perf2-worktrees\\anyfem-e4-pl-default-routing",
+      "ANYfileIO": "C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad",
+      "ANYgeometry": "C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen",
+      "ANYmaterial": "C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9",
+      "ANYmesh": "C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen",
+      "ANYsolver": "C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-final-freeze"
+    },
+    "resource_manager": {
+      "acquire": {
+        "bytes": 1568,
+        "filename": "acquire-test.ps1",
+        "sha256": "29b82a91373526e73c9172239a828a395a7d7a96d469443c6f8a9e3dc78a1048"
+      },
+      "active_lock": "active-lock",
+      "ledger": "ledger.md",
+      "release": {
+        "bytes": 970,
+        "filename": "release-test.ps1",
+        "sha256": "7661b33b9363e20e7781b008ca30ade01c13a104a3ead46add4dc58f26da4a44"
+      },
+      "requests": "requests",
+      "root": "C:\\Github\\.resource-manager"
+    }
+  },
+  "hard_gate_authority": {
+    "performance": {
+      "baseline_schema": "anysolver.s4.e4-pl-q1m-performance-baseline-v1",
+      "evidence_nodes": {
+        "batch_path_equality": [
+          "tests/test_e4_pl_workflow_parity.py::test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle",
+          "tests/test_e4_pl_workflow_parity.py::test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry"
+        ],
+        "q4_numerical_parity": [
+          "tests/test_e4_pl_workflow_parity.py::test_global_assembly_uses_candidate_scalar_kernel_and_activity_lifecycle"
+        ],
+        "warm_cache_reuse": [
+          "tests/test_e4_pl_workflow_parity.py::test_structured_mesh_cold_assembly_reuses_translation_equivalent_geometry"
+        ]
+      },
+      "measurement_names": [
+        "qualified_q4_cached_tangent",
+        "qualified_q4_warm_global_assembly"
+      ],
+      "observation_schema": "anysolver.s4.e4-pl-q1m-performance-observation-v1",
+      "repetitions": 11,
+      "speed_claim": "GATE_1_BASELINE_ONLY_NO_SPEED_CLAIM",
+      "warmups": 1
+    },
+    "s3": {
+      "qualified_s3_opt_in": [
+        "tests/test_e4_pl_s3_opt_in.py::test_opt_in_dispatch_keeps_all_existing_defaults_unchanged"
+      ],
+      "s3_default_legacy": [
+        "tests/test_e4_pl_s3_opt_in.py::test_opt_in_dispatch_keeps_all_existing_defaults_unchanged"
+      ]
+    }
+  },
+  "historical_inputs": {
+    "q1m_clean_gate_result": {
+      "bytes": 9092,
+      "path": "docs/reference_cases/e4_pl_q1m_gate_result.json",
+      "sha256": "5c6c039aae5e684fcbb0601dd16ecd76f55a7ae11115cf3eadebe96579e3ed6c"
+    },
+    "q1m_contract": {
+      "bytes": 7147,
+      "path": "docs/reference_cases/e4_pl_q1m_burnin_contract.json",
+      "sha256": "0ed24bbb5a2eafac0b161a38910a6e924dfc22b67fb094f1343578b08f7c49eb"
+    },
+    "q1m_review": {
+      "bytes": 528,
+      "path": "docs/reference_cases/e4_pl_q1m_review.json",
+      "sha256": "e97ba5ca5cb836847e72b6fe88bb98ea3d4a7666ec2defa207a4e1a3dcb66060"
+    },
+    "q1m_status": {
+      "bytes": 233,
+      "path": "docs/reference_cases/e4_pl_q1m_status.json",
+      "sha256": "e12ca95381441d46c9b5f427c6f82ed990457efa6f3d365ce440ab53f9f2b4b5"
+    },
+    "rejected_resource_result": {
+      "bytes": 5064,
+      "path": "docs/reference_cases/e4_pl_s3_q4_cycle1_rejected_resource_result.json",
+      "sha256": "6c87ebfdcb0f6cb4f1278e49fa3f1ea30a5ae7ec0bb5123c7f902c8cbbe5839e"
+    },
+    "rejected_resource_review": {
+      "bytes": 573,
+      "path": "docs/reference_cases/e4_pl_s3_q4_cycle1_rejected_resource_review.json",
+      "sha256": "0af616ba5faa5bafb2f1bcfdcabc57451c7907e346baca2e56bc4ea62da1c350"
+    },
+    "rejected_resource_status": {
+      "bytes": 268,
+      "path": "docs/reference_cases/e4_pl_s3_q4_cycle1_rejected_resource_status.json",
+      "sha256": "eab9847c40f80bc274a532dcc1af9a29b360baf60191469ba3962ab947d65a65"
+    }
+  },
+  "lane_inventories": {
+    "additive": {
+      "count": 43,
+      "execution": "THREE_OR_FEWER_PARALLEL_PARTITIONS",
+      "sha256": "a304eaea654c4ad779cc067cef594f13d3c617a835a35a1d6ab31409bc59593a"
+    },
+    "anyfem": {
+      "count": 2,
+      "execution": "SERIAL_RESOURCE",
+      "sha256": "f0665ef5fd92da79b8f24691617574a7380bb1e93d2e520e480039df80f7b0c1"
+    },
+    "extended": {
+      "count": 104,
+      "execution": "EXCLUDED_OPTIONAL_HISTORICAL_DIAGNOSTICS",
+      "sha256": "9b912c4230a9e622f112cbacd8c5566d32e17b9f4e461d8d88b329a0be8605bf"
+    },
+    "functional": {
+      "count": 85,
+      "execution": "SERIAL_RESOURCE",
+      "sha256": "eb6228e05649d158d29c63725ca19a1a8f35cfcea71c6b1ce35d27215e9b6b6c"
+    },
+    "package": {
+      "count": 7,
+      "execution": "COMMON_NONRESOURCE_PREFLIGHT",
+      "sha256": "31c7624758906e5e7501e06a9d1d81b520924cd7ce87f291d8ce44613c82a7b3"
+    },
+    "performance": {
+      "count": 21,
+      "execution": "SERIAL_RESOURCE",
+      "sha256": "0f6b51790108adc744e77d1827c11ee46ff4609ea3d821588c1510984f9e67aa"
+    },
+    "quick": {
+      "count": 7,
+      "execution": "COMMON_NONRESOURCE_PREFLIGHT",
+      "sha256": "6798a1e7bf8d796c210b60cb2600ed0a161545ea9f239a3720975ae591800304"
+    }
+  },
+  "non_resource_commands": {
+    "additive": [
+      {
+        "command": "$env:PYTHONPATH='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-final-freeze\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad\\src'; $env:PYTHONNOUSERSITE='1'; $env:OMP_NUM_THREADS='1'; $env:OPENBLAS_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'; $env:NUMEXPR_NUM_THREADS='1'; python -m pytest -q tests/test_e4_pl_s3_assembly_fast_total.py tests/test_e4_pl_s3_contact_virtual_work.py tests/test_e4_pl_s3_descriptor_spectrum.py tests/test_e4_pl_s3_dynamic_guard.py tests/test_e4_pl_s3_formulation_contract.py tests/test_e4_pl_s3_geometric_stiffness.py tests/test_e4_pl_s3_mass.py tests/test_e4_pl_s3_modal.py tests/test_e4_pl_s3_native_tl_covariance.py tests/test_e4_pl_s3_native_tl_response.py tests/test_e4_pl_s3_opt_in.py tests/test_e4_pl_s3_physical_recovery.py tests/test_e4_pl_s3_reference_batch.py tests/test_e4_pl_s3_shared_rotation_kinematics.py tests/test_e4_pl_s3_transient_algebraic.py --basetemp='C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\pytest-additive-1'",
+        "command_sha256": "78bff21b95f1096f44d9f5e135e56a21bb00dcc27bcf4393683e6f5e4c0961da",
+        "count": 15,
+        "inventory_sha256": "40400dcb491f55c9efe745b9c484234664c840300ec5329461b9e1e6fc8100be",
+        "partition": 1
+      },
+      {
+        "command": "$env:PYTHONPATH='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-final-freeze\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad\\src'; $env:PYTHONNOUSERSITE='1'; $env:OMP_NUM_THREADS='1'; $env:OPENBLAS_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'; $env:NUMEXPR_NUM_THREADS='1'; python -m pytest -q tests/test_e4_pl_s3_bubble_policy.py tests/test_e4_pl_s3_current_tangent_buckling.py tests/test_e4_pl_s3_direct_nonlinear_response.py tests/test_e4_pl_s3_exact_oracle.py tests/test_e4_pl_s3_generalized_initial_fields.py tests/test_e4_pl_s3_guard_persistence.py tests/test_e4_pl_s3_mixed_mesh_manifest.py tests/test_e4_pl_s3_modal_provenance.py tests/test_e4_pl_s3_native_tl_full_d3.py tests/test_e4_pl_s3_nonlinear_workflows.py tests/test_e4_pl_s3_patch_recovery.py tests/test_e4_pl_s3_prestressed_modal_buckling.py tests/test_e4_pl_s3_reference_surface_offset.py tests/test_e4_pl_s3_state_lifecycle.py --basetemp='C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\pytest-additive-2'",
+        "command_sha256": "067cb98d2c97c43cf15b8c2700fa7ac81f20fc24c827bdf33a5537796aa11a4e",
+        "count": 14,
+        "inventory_sha256": "270b2ca721b706b228ed137413caf198ca46dd8e6430095a481376798ff376de",
+        "partition": 2
+      },
+      {
+        "command": "$env:PYTHONPATH='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-final-freeze\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad\\src'; $env:PYTHONNOUSERSITE='1'; $env:OMP_NUM_THREADS='1'; $env:OPENBLAS_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'; $env:NUMEXPR_NUM_THREADS='1'; python -m pytest -q tests/test_e4_pl_s3_committed_state.py tests/test_e4_pl_s3_descriptor_hardening.py tests/test_e4_pl_s3_domain_coercivity.py tests/test_e4_pl_s3_fast_total.py tests/test_e4_pl_s3_generalized_nonlinear.py tests/test_e4_pl_s3_independent_linear_reference.py tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py tests/test_e4_pl_s3_model_bound_nonlinear_hook.py tests/test_e4_pl_s3_native_tl_kernel.py tests/test_e4_pl_s3_objective_pl.py tests/test_e4_pl_s3_physical_director_reversal.py tests/test_e4_pl_s3_q4_burnin_authority.py tests/test_e4_pl_s3_restart_history.py tests/test_e4_pl_s3_state_schema_closure.py --basetemp='C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\pytest-additive-3'",
+        "command_sha256": "7cfb0c53c6c536b81419dfca51fafebe0cb64cfa8965e983576ff67373d27c06",
+        "count": 14,
+        "inventory_sha256": "5d8e4143c2d635fe7a1c739cd5af651d6d2724342a10ac88930f464b0f68138b",
+        "partition": 3
+      }
+    ],
+    "output_root": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze",
+    "package": {
+      "command": "$env:Q1M_ANYMESH_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen'; $env:Q1M_ANYGEOMETRY_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen'; $env:Q1M_ANYMATERIAL_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9'; $env:Q1M_ANYFILEIO_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad'; $env:PYTHONNOUSERSITE='1'; $env:OMP_NUM_THREADS='1'; $env:OPENBLAS_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'; $env:NUMEXPR_NUM_THREADS='1'; python scripts/run_e4_pl_burnin_gate.py package --output 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\package-result.json' --wheel-output 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-q4-final-freeze\\anysolver-0.3.1-py3-none-any.whl'",
+      "command_sha256": "57ea6d6e8318e865b813058530616157514c5c52f65e30f52ee5e736cf063dd9"
+    },
+    "quick": {
+      "command": "$env:Q1M_ANYMESH_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen'; $env:Q1M_ANYGEOMETRY_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen'; $env:Q1M_ANYMATERIAL_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9'; $env:Q1M_ANYFILEIO_ROOT='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad'; $env:PYTHONPATH='C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-final-freeze\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anymesh-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\q1m-anygeometry-frozen\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anymaterial-74100a9\\src;C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad\\src'; $env:PYTHONNOUSERSITE='1'; $env:OMP_NUM_THREADS='1'; $env:OPENBLAS_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'; $env:NUMEXPR_NUM_THREADS='1'; python scripts/run_e4_pl_burnin_gate.py quick",
+      "command_sha256": "7dc9d1015ea2588657b8b8e19de1e5a1d4d25ad5d0118a9099c4af1eb1eb66da"
+    }
+  },
+  "package": {
+    "exclusive_outputs": true,
+    "installed_wheel_origin_required": true,
+    "local_distributions": {
+      "ANYfileIO": "anyfileio",
+      "ANYgeometry": "anygeometry",
+      "ANYmaterial": "anymaterial",
+      "ANYmesh": "anymesher",
+      "ANYsolver": "anysolver"
+    },
+    "package_result_schema": "anysolver.s4.e4-pl-q1m-package-lane-v2",
+    "result_filename": "package-result.json",
+    "runs": 1,
+    "smoke": {
+      "diagnostics_schema": "anysolver.shell-formulation-diagnostics-v1",
+      "legacy_warning": "LegacyQ4DeprecationWarning",
+      "non_q4_types": [
+        "ShellElement",
+        "ShellElement",
+        "ShellElement",
+        "ShellElement"
+      ],
+      "q4_type": "QualifiedE4PLShellElement"
+    },
+    "source_paths_removed": true,
+    "wheel_filename": "anysolver-0.3.1-py3-none-any.whl",
+    "wheel_hash_required": true
+  },
+  "production_boundary": {
+    "legacy_q4_available": true,
+    "legacy_q4_removal_authorized": false,
+    "q4_default": "QUALIFIED_E4_PL_Q4",
+    "q4_formulation_mechanics_changed": false,
+    "s3_default": "LEGACY_S3",
+    "s3_qualified_aliases": [
+      "e4-pl-s3",
+      "qualified-s3"
+    ],
+    "s3_qualified_opt_in": true
+  },
+  "resource_requests": {
+    "cycle_1": [
+      {
+        "bytes": 1342,
+        "command_sha256": "576f98ef01081dabbbbebd1b89968f4a05ab828abf99b126013e664ac3dd16da",
+        "lane": "functional",
+        "request_id": "228852e559ba4adca2cfd8cffd2a98c0",
+        "request_sha256": "252816b659a1c51e65f6527ee366cf0a1d8d98bfb851b515400b62f471b210f4"
+      },
+      {
+        "bytes": 1007,
+        "command_sha256": "a568f3f6017b60ed084bfc4562b39dd94df8b31f5e67d1965aa776f3bb3014ee",
+        "lane": "anyfem",
+        "request_id": "0adced21fef64846b26a7aef9285c10c",
+        "request_sha256": "ee110611ddef7e3d1cbb14e752543246210ac38656cfc5bd6f947374ed158970"
+      },
+      {
+        "bytes": 1269,
+        "command_sha256": "f8cc6e460d2bb88f104d313aaa9f25fabd61c50ae536bbb5b1daa06e2a5d87a6",
+        "lane": "performance",
+        "request_id": "7ae6f9be76d941909513f06adb250d2c",
+        "request_sha256": "b05a0c202c278d8244cebe2d6a87320322740fda9ef5772e2553630c0abe4b1d"
+      }
+    ],
+    "cycle_2": [
+      {
+        "bytes": 1342,
+        "command_sha256": "576f98ef01081dabbbbebd1b89968f4a05ab828abf99b126013e664ac3dd16da",
+        "lane": "functional",
+        "request_id": "c3873e15cbb748c3839b5e383db72920",
+        "request_sha256": "68e1f23355dc530b7d784448b0bab4c8eee156f654df0c9907882cfc8bf356b0"
+      },
+      {
+        "bytes": 1007,
+        "command_sha256": "a568f3f6017b60ed084bfc4562b39dd94df8b31f5e67d1965aa776f3bb3014ee",
+        "lane": "anyfem",
+        "request_id": "66ffe2ec6cee49cba3e804305e6f3808",
+        "request_sha256": "942d7a3c776aa08c55c99501acf6c0c5ac3f9b7811a352a84d0b929a20580de8"
+      },
+      {
+        "bytes": 1269,
+        "command_sha256": "f8cc6e460d2bb88f104d313aaa9f25fabd61c50ae536bbb5b1daa06e2a5d87a6",
+        "lane": "performance",
+        "request_id": "1f2ce7ef17e94135b6be2f62d1980e5d",
+        "request_sha256": "5ac86ba9283fa9a5d4b5ad7760ac392fbe1561cce3090672f64b5f050f5ab829"
+      }
+    ]
+  },
+  "runner_inputs": {
+    "burnin_runner": {
+      "bytes": 75206,
+      "path": "scripts/run_e4_pl_burnin_gate.py",
+      "sha256": "d64f83439dd22b30296d1f3720d4a9b7e6200d991a98cdf7c14fa9ec3e74c8a1"
+    },
+    "evidence_validator": {
+      "bytes": 72670,
+      "path": "docs/reference_cases/e4_pl_s3_q4_burnin.py",
+      "sha256": "eaabb99792220953af9bc0646c611886dab1bc7458226984761545dfcef9868d"
+    },
+    "performance_measurement": {
+      "bytes": 7206,
+      "path": "scripts/measure_e4_pl_q1m_baseline.py",
+      "sha256": "587a4ce50769c3431e3b6b87f01d00cdf5022f19d52867e320c6a1e79d484479"
+    },
+    "process_runner": {
+      "bytes": 47079,
+      "path": "docs/reference_cases/e4_pl_s3_q4_process_runner.py",
+      "sha256": "9bab6f45b40a1c4c9357028fae56c784777cedf62cbab1012d7aa056983b5c9f"
+    }
+  },
+  "schema": "anysolver.e4-pl-s3-q4-burn-in-contract-v1",
+  "sibling_authority": {
+    "ANYfem": {
+      "clean": true,
+      "commit": "ba8b21b9cf2732168b099cfedc7508789bdcfbb3",
+      "tree": "49a150bcccece1fef92dd627ae54689a545e0e61"
+    },
+    "ANYfileIO": {
+      "clean": true,
+      "commit": "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+      "tree": "70b406be2574adceab4a7b688c0e489e0937df5d"
+    },
+    "ANYgeometry": {
+      "clean": true,
+      "commit": "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
+      "tree": "a563515df3ab24e7df388009b7412582e840e31e"
+    },
+    "ANYmaterial": {
+      "clean": true,
+      "commit": "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
+      "tree": "0d3c57eba577f243a3749b3f1102cbb94a3b51bf"
+    },
+    "ANYmesh": {
+      "clean": true,
+      "commit": "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
+      "tree": "d443f008173003d560fb55673b0d90bf92f65e03"
+    }
+  },
+  "study_id": "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v1"
+}

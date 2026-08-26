@@ -126,9 +126,9 @@
       "sha256": "091D6D63BF0950B8A5CBB298095E0787DEB78ECD4954E9F421741259F1E93FDD"
     },
     "runner": {
-      "bytes": 84832,
+      "bytes": 98423,
       "path": "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
-      "sha256": "1A004499A4E6A53465B88B856596F70EFDB23946AC241188FF63049E650CC2B8"
+      "sha256": "9464CE06672CA8BA5FCF3E7E9DA9DE92613E2D7B4B06168EDC7C1E84A8E7E69E"
     }
   },
   "coverage": {
@@ -217,11 +217,14 @@
       "shift": -0.001
     },
     "performance": {
+      "comparison": "MEDIAN_OF_ADJACENT_CANDIDATE_TO_Q4_RATIOS",
       "mixed_fractions_percent": [
         10,
         25
       ],
-      "repetitions": 11,
+      "repetitions": 12,
+      "rss_isolated_workers": true,
+      "schedule": "BALANCED_ADJACENT_AB_BA_12_V1",
       "warmups_per_route": 1
     },
     "support": {
@@ -246,9 +249,10 @@
       "MODAL_MIXED_25",
       "BUCKLING_MIXED_10",
       "BUCKLING_MIXED_25",
-      "PERFORMANCE_ALL_Q4",
-      "PERFORMANCE_MIXED_10",
-      "PERFORMANCE_MIXED_25",
+      "PERFORMANCE_PAIRED",
+      "RSS_ALL_Q4",
+      "RSS_MIXED_10",
+      "RSS_MIXED_25",
       "BATCH_4096"
     ]
   },

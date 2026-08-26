@@ -368,21 +368,43 @@ def _mindlin_moments(
 def _plate_boundaries(model: Any, level: int) -> None:
     from anysolver.boundary import BoundaryCondition
 
-    edge = [
-        node.id
-        for node in model.mesh.nodes.values()
-        if (
-            int(node.id) <= level + 1
-            or int(node.id) > level * (level + 1)
-            or (int(node.id) - 1) % (level + 1) in (0, level)
+    horizontal_edges: list[int] = []
+    vertical_edges: list[int] = []
+    edge: list[int] = []
+    for node in model.mesh.nodes.values():
+        node_id = int(node.id)
+        horizontal = (
+            node_id <= level + 1 or node_id > level * (level + 1)
         )
-    ]
+        vertical = (node_id - 1) % (level + 1) in (0, level)
+        if horizontal or vertical:
+            edge.append(node_id)
+        if horizontal:
+            horizontal_edges.append(node_id)
+        if vertical:
+            vertical_edges.append(node_id)
     model.boundary_conditions = [
         BoundaryCondition(
             "simply_supported_edge_translations",
-            [int(value) for value in edge],
+            edge,
             {"ux": 0.0, "uy": 0.0, "uz": 0.0},
-        )
+        ),
+        # The independent Navier series uses the hard simply-supported
+        # Reissner-Mindlin edge convention: theta_y=0 on x-constant edges and
+        # theta_x=0 on y-constant edges.  In ANYsolver's physical rotation
+        # convention theta_y=-rx and theta_x=ry.  Leaving both rotations free
+        # compares a soft-supported FE plate with a different continuum
+        # problem and caused the preserved all-Q4 baseline incident.
+        BoundaryCondition(
+            "navier_vertical_edge_tangential_rotation",
+            vertical_edges,
+            {"rx": 0.0},
+        ),
+        BoundaryCondition(
+            "navier_horizontal_edge_tangential_rotation",
+            horizontal_edges,
+            {"ry": 0.0},
+        ),
     ]
     model.constraint_equations = []
 

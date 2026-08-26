@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -88,6 +89,14 @@ def test_input_is_canonical_hash_bound_and_uses_the_frozen_candidate(
         "timeout_seconds_per_process": 600,
         "worker_concurrency": 3,
         "worker_ids": list(lane.WORKER_IDS),
+    }
+    assert authorities.input["coverage"]["performance"] == {
+        "comparison": lane.PAIRED_COMPARISON,
+        "mixed_fractions_percent": [10, 25],
+        "repetitions": 12,
+        "rss_isolated_workers": True,
+        "schedule": lane.PAIRED_SCHEDULE,
+        "warmups_per_route": 1,
     }
     assert authorities.contract["candidate"]["qualified_q4_mechanics_sha256"] == (
         "EE49BAE1C9439C41EC2D61798A8A8B88CBA9081DCAD2DFDC857FE313C6C0D4D1"
@@ -306,10 +315,311 @@ def _fake_worker(
     }
 
 
-def test_aggregate_is_deterministic_excludes_timings_and_closes_hot_path_gate(
-    lane: Any, authorities: Any, tmp_path: Path
+def _paired_diagnostics(
+    lane: Any,
+    *,
+    assembly_ratios: dict[int, float] | None = None,
+    solve_ratios: dict[int, float] | None = None,
+) -> dict[str, Any]:
+    ratios = {
+        "assembly": assembly_ratios or {10: 1.01, 25: 1.02},
+        "production_end_to_end_solve": solve_ratios or {10: 1.01, 25: 1.02},
+    }
+    records = {
+        route: {fraction: [] for fraction in lane.MIXED_FRACTIONS}
+        for route in lane.PERFORMANCE_ROUTES
+    }
+    for row in lane._paired_schedule(lane.PAIRED_REPETITIONS):
+        route = row["route"]
+        fraction = row["fraction_percent"]
+        reference_ns = 1_000_000_000 + 1_000_000 * int(row["repetition"])
+        candidate_ns = int(round(reference_ns * ratios[route][fraction]))
+        records[route][fraction].append(
+            {
+                "candidate_cpu_ns": candidate_ns,
+                "candidate_wall_ns": candidate_ns,
+                "order": list(row["order"]),
+                "reference_cpu_ns": reference_ns,
+                "reference_wall_ns": reference_ns,
+                "repetition": int(row["repetition"]),
+            }
+        )
+    return {
+        "comparisons": {
+            route: {
+                str(fraction): lane._paired_comparison(records[route][fraction])
+                for fraction in lane.MIXED_FRACTIONS
+            }
+            for route in lane.PERFORMANCE_ROUTES
+        },
+        "protocol": {
+            "comparison": lane.PAIRED_COMPARISON,
+            "repetitions": lane.PAIRED_REPETITIONS,
+            "schedule": lane.PAIRED_SCHEDULE,
+            "warmups_per_topology_route": 1,
+        },
+        "topologies": {},
+        "worker_elapsed_seconds": 1.0,
+    }
+
+
+def test_paired_schedule_is_adjacent_and_fully_position_balanced(lane: Any) -> None:
+    rows = lane._paired_schedule(lane.PAIRED_REPETITIONS)
+    assert len(rows) == lane.PAIRED_REPETITIONS * 4
+    for route in lane.PERFORMANCE_ROUTES:
+        for fraction in lane.MIXED_FRACTIONS:
+            selected = [
+                row
+                for row in rows
+                if row["route"] == route
+                and row["fraction_percent"] == fraction
+            ]
+            assert len(selected) == lane.PAIRED_REPETITIONS
+            assert sum(row["order"] == [0, fraction] for row in selected) == 6
+            assert sum(row["order"] == [fraction, 0] for row in selected) == 6
+    pair_positions = {route: {10: 0, 25: 0} for route in lane.PERFORMANCE_ROUTES}
+    route_positions = {route: 0 for route in lane.PERFORMANCE_ROUTES}
+    for repetition in range(lane.PAIRED_REPETITIONS):
+        repetition_rows = [row for row in rows if row["repetition"] == repetition]
+        route_order = list(dict.fromkeys(row["route"] for row in repetition_rows))
+        assert set(route_order) == set(lane.PERFORMANCE_ROUTES)
+        route_positions[route_order[0]] += 1
+        for route in lane.PERFORMANCE_ROUTES:
+            route_rows = [row for row in repetition_rows if row["route"] == route]
+            assert len(route_rows) == 2
+            pair_positions[route][route_rows[0]["fraction_percent"]] += 1
+    assert route_positions == {route: 6 for route in lane.PERFORMANCE_ROUTES}
+    assert pair_positions == {
+        route: {10: 6, 25: 6} for route in lane.PERFORMANCE_ROUTES
+    }
+
+
+def test_paired_collection_warms_each_topology_route_once_and_recomputes(
+    lane: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    built = {0: "q4", 10: "mixed10", 25: "mixed25"}
+    fraction_by_model = {model: fraction for fraction, model in built.items()}
+    warmups: list[tuple[str, str]] = []
+    measured: list[tuple[str, str]] = []
+
+    def execute(model: str, route: str) -> None:
+        warmups.append((model, route))
+
+    def timed(model: str, route: str) -> tuple[int, int]:
+        measured.append((model, route))
+        fraction = fraction_by_model[model]
+        wall = {0: 1_000_000_000, 10: 1_050_000_000, 25: 1_090_000_000}[
+            fraction
+        ]
+        return wall, wall
+
+    monkeypatch.setattr(lane, "_execute_performance_route", execute)
+    monkeypatch.setattr(lane, "_timed_performance_route", timed)
+    comparisons = lane._collect_paired_measurements(
+        built,
+        repetitions=lane.PAIRED_REPETITIONS,
+        warmups_per_route=1,
+    )
+    assert warmups == [
+        (built[fraction], route)
+        for fraction in lane.PERFORMANCE_FRACTIONS
+        for route in lane.PERFORMANCE_ROUTES
+    ]
+    assert len(measured) == lane.PAIRED_REPETITIONS * 8
+    record = {
+        "diagnostic_payload": {
+            "comparisons": comparisons,
+            "protocol": {
+                "comparison": lane.PAIRED_COMPARISON,
+                "repetitions": lane.PAIRED_REPETITIONS,
+                "schedule": lane.PAIRED_SCHEDULE,
+                "warmups_per_topology_route": 1,
+            },
+        }
+    }
+    metrics = lane._validated_paired_metrics(
+        record,
+        repetitions=lane.PAIRED_REPETITIONS,
+        warmups_per_route=1,
+    )
+    assert metrics == {
+        "assembly": {10: 1.05, 25: 1.09},
+        "production_end_to_end_solve": {10: 1.05, 25: 1.09},
+    }
+
+
+def test_paired_statistic_uses_adjacent_ratios_and_common_slow_epochs_cancel(
+    lane: Any,
+) -> None:
+    records = []
+    reference_values = [101, 1, 100]
+    candidate_values = [106, 2, 50]
+    for repetition, (reference, candidate) in enumerate(
+        zip(reference_values, candidate_values, strict=True)
+    ):
+        multiplier = 10 if repetition == 1 else 1
+        records.append(
+            {
+                "candidate_cpu_ns": candidate * multiplier,
+                "candidate_wall_ns": candidate * multiplier,
+                "order": [0, 10],
+                "reference_cpu_ns": reference * multiplier,
+                "reference_wall_ns": reference * multiplier,
+                "repetition": repetition,
+            }
+        )
+    comparison = lane._paired_comparison(records)
+    assert comparison["paired_ratio"]["median"] == pytest.approx(
+        106.0 / 101.0
+    )
+    assert comparison["reference"]["samples_seconds"] == pytest.approx(
+        [101.0e-9, 10.0e-9, 100.0e-9]
+    )
+    independent_ratio = (
+        comparison["candidate"]["median_seconds"]
+        / comparison["reference"]["median_seconds"]
+    )
+    assert independent_ratio != pytest.approx(
+        comparison["paired_ratio"]["median"]
+    )
+
+
+def test_paired_gate_accepts_exact_boundary_and_rejects_candidate_slowdown(
+    lane: Any,
+) -> None:
+    diagnostics = _paired_diagnostics(
+        lane,
+        assembly_ratios={10: 1.10, 25: 1.10},
+        solve_ratios={10: 1.10, 25: 1.1001},
+    )
+    metrics = lane._validated_paired_metrics(
+        {"diagnostic_payload": diagnostics},
+        repetitions=lane.PAIRED_REPETITIONS,
+        warmups_per_route=1,
+    )
+    assert lane._ratio_gate(metrics["assembly"][10], 1.10) == lane.PASS
+    assert lane._ratio_gate(metrics["production_end_to_end_solve"][10], 1.10) == (
+        lane.PASS
+    )
+    assert lane._ratio_gate(metrics["production_end_to_end_solve"][25], 1.10) == (
+        lane.FAIL
+    )
+
+
+@pytest.mark.parametrize("mutation", ["order", "summary", "zero"])
+def test_paired_record_mutations_block_recomputation(
+    lane: Any, mutation: str
+) -> None:
+    diagnostics = _paired_diagnostics(lane)
+    comparison = diagnostics["comparisons"]["assembly"]["10"]
+    if mutation == "order":
+        comparison["pairs"][0]["order"] = [10, 0]
+    elif mutation == "summary":
+        comparison["paired_ratio"]["median"] *= 2.0
+    else:
+        comparison["pairs"][0]["reference_wall_ns"] = 0
+    with pytest.raises(lane.EigenPerformanceError):
+        lane._validated_paired_metrics(
+            {"diagnostic_payload": diagnostics},
+            repetitions=lane.PAIRED_REPETITIONS,
+            warmups_per_route=1,
+        )
+
+
+def test_nonconverged_or_nonfinite_solve_is_not_a_timing_sample(
+    lane: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import anysolver.assembly as assembly
+
+    built = SimpleNamespace(model=object(), load_case=object())
+    monkeypatch.setattr(
+        assembly,
+        "solve_linear",
+        lambda *_args, **_kwargs: (
+            [0.0],
+            {"convergence_info": {"status": "failed"}},
+        ),
+    )
+    with pytest.raises(lane.EigenPerformanceError, match="did not converge"):
+        lane._execute_performance_route(built, "production_end_to_end_solve")
+
+    monkeypatch.setattr(
+        assembly,
+        "solve_linear",
+        lambda *_args, **_kwargs: (
+            [float("nan")],
+            {"convergence_info": {"status": "converged"}},
+        ),
+    )
+    with pytest.raises(lane.EigenPerformanceError, match="nonfinite"):
+        lane._execute_performance_route(built, "production_end_to_end_solve")
+
+
+def test_rss_worker_is_isolated_and_emits_no_timing_classification(
+    lane: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    authorities = SimpleNamespace(
+        input={
+            "coverage": {
+                "performance": {
+                    "repetitions": lane.PAIRED_REPETITIONS,
+                    "warmups_per_route": 1,
+                }
+            }
+        }
+    )
+    built = object()
+    calls: list[str] = []
+    monkeypatch.setattr(lane, "_build_case", lambda *_args, **_kwargs: built)
+    monkeypatch.setattr(
+        lane, "_execute_performance_route", lambda _built, route: calls.append(route)
+    )
+    monkeypatch.setattr(lane, "_peak_rss_bytes", lambda: 123456)
+    monkeypatch.setattr(
+        lane,
+        "_topology_diagnostics",
+        lambda *_args, **_kwargs: {"fraction_percent": 25},
+    )
+    statuses, diagnostics = lane._rss_worker(authorities, 25)
+    assert statuses == {"rss_measurement": lane.PASS}
+    assert diagnostics["peak_rss_bytes"] == 123456
+    assert "assembly" not in diagnostics
+    assert "production_end_to_end_solve" not in diagnostics
+    assert calls.count("assembly") == lane.PAIRED_REPETITIONS + 1
+    assert calls.count("production_end_to_end_solve") == (
+        lane.PAIRED_REPETITIONS + 1
+    )
+
+
+def test_aggregate_is_deterministic_excludes_timings_and_closes_hot_path_gate(
+    lane: Any, tmp_path: Path
+) -> None:
+    authorities = SimpleNamespace(
+        contract={
+            "acceptance_gates": {
+                "performance": {
+                    "mixed_assembly_solve_rss_regression_maximum": "0.10"
+                }
+            }
+        },
+        hot_path_baseline_cycles=(),
+        input={
+            "coverage": {
+                "candidate_hot_path_baseline": {
+                    "maximum_regression": "0.05",
+                    "reference_selection": "TEST_HASH_BOUND_ENVELOPE",
+                    "secondary_guard": "TEST_WARM_S3_VS_Q4",
+                },
+                "performance": {
+                    "repetitions": lane.PAIRED_REPETITIONS,
+                    "warmups_per_route": 1,
+                },
+            }
+        },
+        input_raw=b"paired-aggregate-authority\n",
+    )
     process_results = []
+    worker_records: dict[str, dict[str, Any]] = {}
     for index, worker_id in enumerate(lane.WORKER_IDS):
         directory = tmp_path / worker_id.lower()
         directory.mkdir()
@@ -327,18 +637,17 @@ def test_aggregate_is_deterministic_excludes_timings_and_closes_hot_path_gate(
                 "buckling_positive": lane.PASS,
             }
             diagnostics = {"worker_elapsed_seconds": 0.01 + index}
-        elif worker_id.startswith("PERFORMANCE_"):
+        elif worker_id == "PERFORMANCE_PAIRED":
+            statuses = {"performance_measurement": lane.PASS}
+            diagnostics = _paired_diagnostics(lane)
+        elif worker_id.startswith("RSS_"):
             fraction = 0 if worker_id.endswith("ALL_Q4") else int(
                 worker_id.rsplit("_", 1)[1]
             )
-            statuses = {"performance_measurement": lane.PASS}
+            statuses = {"rss_measurement": lane.PASS}
             diagnostics = {
-                "assembly": {"median_seconds": 1.0 + 0.01 * (fraction > 0)},
                 "fraction_percent": fraction,
-                "peak_rss_bytes": 1000 + (10 if fraction else 0),
-                "production_end_to_end_solve": {
-                    "median_seconds": 2.0 + 0.02 * (fraction > 0)
-                },
+                "peak_rss_bytes": 1000 + fraction,
                 "worker_elapsed_seconds": 10.0 + index,
             }
         else:
@@ -364,10 +673,11 @@ def test_aggregate_is_deterministic_excludes_timings_and_closes_hot_path_gate(
                 },
                 "worker_elapsed_seconds": 99.0,
             }
-        lane.write_exclusive(
-            directory / "record.json",
-            _fake_worker(lane, authorities, worker_id, statuses, diagnostics),
+        worker_record = _fake_worker(
+            lane, authorities, worker_id, statuses, diagnostics
         )
+        worker_records[worker_id] = worker_record
+        lane.write_exclusive(directory / "record.json", worker_record)
         (directory / "stdout.log").write_bytes(b"")
         (directory / "stderr.log").write_bytes(b"")
         process_results.append(
@@ -380,6 +690,7 @@ def test_aggregate_is_deterministic_excludes_timings_and_closes_hot_path_gate(
                 directory=directory,
             )
         )
+    authorities.hot_path_baseline_cycles = (worker_records, worker_records)
     first, first_diagnostics = lane._aggregate(authorities, 1, process_results)
     second, second_diagnostics = lane._aggregate(authorities, 2, process_results)
     assert lane.canonical_bytes(first) == lane.canonical_bytes(second)
@@ -391,8 +702,58 @@ def test_aggregate_is_deterministic_excludes_timings_and_closes_hot_path_gate(
     assert tuple(comparison["normalized_diagnostics"]) == (
         lane.HOT_PATH_DIAGNOSTIC_METRICS
     )
+    performance = first_diagnostics["performance_comparison"]
+    assert performance["10"]["assembly_paired_median_ratio_to_all_q4"] == (
+        pytest.approx(1.01)
+    )
+    assert performance["25"]["solve_paired_median_ratio_to_all_q4"] == (
+        pytest.approx(1.02)
+    )
     assert "seconds" not in lane.canonical_bytes(first).decode("ascii")
     assert first_diagnostics != second_diagnostics
+
+
+@pytest.mark.parametrize(
+    ("cycle_terminals", "expected_terminal"),
+    [
+        ((3, 3), 3),
+        ((1, 1), 1),
+        ((3, 1), 0),
+    ],
+)
+def test_two_cycle_precedence_never_averages_or_selects_a_cycle(
+    lane: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    cycle_terminals: tuple[int, int],
+    expected_terminal: int,
+) -> None:
+    cycle_values = [
+        {
+            "authority_sha256": "A" * 64,
+            "gate_status": {"mixed_performance": lane.PASS if index == 3 else lane.FAIL},
+            "production_restriction": lane.PRODUCTION_RESTRICTION,
+            "schema": lane.COMMON_SCHEMA,
+            "terminal": lane.TERMINALS[index],
+        }
+        for index in cycle_terminals
+    ]
+    calls = iter(cycle_values)
+
+    def fake_cycle(
+        _authorities: Any, _output: Path, *, cycle: int
+    ) -> tuple[bytes, dict[str, Any], dict[str, Any]]:
+        assert cycle in (1, 2)
+        value = next(calls)
+        return lane.canonical_bytes(value), value, {}
+
+    monkeypatch.setattr(lane, "run_cycle", fake_cycle)
+    result = lane.run_two_cycles(
+        SimpleNamespace(input_raw=b"paired-authority\n"),
+        tmp_path / "two-cycles",
+    )
+    assert result["terminal"] == lane.TERMINALS[expected_terminal]
+    assert result["cycles_byte_identical"] is (cycle_terminals[0] == cycle_terminals[1])
 
 
 def test_candidate_hot_path_gate_rejects_a_regressed_normalized_metric(

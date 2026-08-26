@@ -85,6 +85,7 @@ EXTENDED_EXACT = {
 # performance lane even though its filename contains ``performance``.
 HISTORICAL_EXTENDED_EXACT = {
     "test_e4_pl_s3_mixed_eigen_performance.py",
+    "test_e4_pl_s3_mixed_structural_qualification.py",
 }
 
 # Successor element-family tests must run in pull requests without changing
@@ -905,7 +906,7 @@ def validate_gate_result(
 
 def _git(repository: Path, *args: str) -> str:
     completed = subprocess.run(
-        ["git", "-C", str(repository), *args],
+        ["git", "--no-replace-objects", "-C", str(repository), *args],
         check=False,
         capture_output=True,
         text=True,
@@ -1371,11 +1372,21 @@ def _archive_head_snapshot(
 ) -> dict[str, Any]:
     """Materialize only committed HEAD and bind both archive and file graph."""
 
+    attributes_path = Path(
+        _git(repository, "rev-parse", "--git-path", "info/attributes")
+    )
+    if not attributes_path.is_absolute():
+        attributes_path = repository / attributes_path
+    if attributes_path.exists() or attributes_path.is_symlink():
+        raise RuntimeError("Git info attributes are forbidden during package archiving")
     before = _tracked_head_identity(repository)
     archive.parent.mkdir(parents=True, exist_ok=True)
     archive_log = _run_captured(
         [
             "git",
+            "--no-replace-objects",
+            "-c",
+            "core.attributesFile=NUL",
             "-C",
             str(repository),
             "archive",
