@@ -118,6 +118,10 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
             ): 1,
             (
                 "tests/test_production_validation.py",
+                "test_material_construction_fails_fast_and_validation_rejects_invalid_thickness",
+            ): 1,
+            (
+                "tests/test_production_validation.py",
                 "test_validate_production_model_reports_q8_midside_and_warp_warnings",
             ): 1,
             (
@@ -127,7 +131,7 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
         }
     )
     assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == 20
+    assert sum(calls["ShellElement"].values()) == 21
     expected_qualified_q4 = Counter(
         {
             (

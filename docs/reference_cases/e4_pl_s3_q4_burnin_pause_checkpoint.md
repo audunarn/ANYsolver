@@ -43,8 +43,9 @@ The six unconsumed request IDs remain:
 - `66ffe2ec6cee49cba3e804305e6f3808`
 - `1f2ce7ef17e94135b6be2f62d1980e5d`
 
-Resume from the clean companion commit
-`eb1f1af313d59ac81e80d8567741faa326615296`, reapply this checkpoint without
-committing, finish the findings, recompute the validator/runner/contract hashes,
-and repeat both independent pre-freeze reviews. Never merge this checkpoint as
-accepted burn-in evidence.
+This checkpoint branch now includes clean merged `main` commit
+`e34f12398751a6315372bae68c089f8184a045fe`. Resume directly on this branch,
+finish the findings, replace the stale draft authority parent with the eventual
+new freeze parent, recompute the validator/runner/contract hashes, and repeat
+both independent pre-freeze reviews. Never merge this checkpoint as accepted
+burn-in evidence.
