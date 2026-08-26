@@ -10,6 +10,7 @@ import pytest
 import anysolver.dynamics as dynamics
 import anysolver.e4_pl_element as q4_runtime
 import anysolver.e4_pl_s3_element as s3_runtime
+import anysolver.nonlinear_static as nonlinear_static_module
 import test_e4_pl_s3_current_tangent_buckling as current_fixture
 import test_e4_pl_s3_generalized_nonlinear as nonlinear_fixture
 import test_e4_pl_workflow_parity as workflow_fixture
@@ -846,6 +847,37 @@ def test_nonlinear_status_callback_is_not_truth_tested_and_keeps_lease() -> None
     assert clean.status == "completed"
     assert callback.truth_tests == 0
     assert callback.calls > 1
+
+
+def test_exact_qualified_newton_loop_uses_trusted_guard(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, load = nonlinear_fixture._constrained_model()
+    original = nonlinear_static_module._EXACT_QUALIFIED_LIFECYCLE_GUARD
+    contexts: list[str] = []
+
+    def counted_guard(observed_model: object, *, context: str) -> object:
+        contexts.append(context)
+        return original(observed_model, context=context)
+
+    monkeypatch.setattr(
+        nonlinear_static_module,
+        "_EXACT_QUALIFIED_LIFECYCLE_GUARD",
+        counted_guard,
+    )
+    result = solve_static_nonlinear(
+        model,
+        load,
+        num_steps=2,
+        num_layers=5,
+    )
+    assert result.status == "completed"
+    assert "solve_static_nonlinear preflight" in contexts
+    assert "nonlinear static constraint postcheck" in contexts
+    assert "nonlinear static force tangent assembly" not in contexts
+    assert "nonlinear static force external load" not in contexts
+    assert "nonlinear static force iteration cancellation" not in contexts
+    assert "nonlinear static step external load" not in contexts
 
 
 def test_nonlinear_load_program_is_owned_before_model_observation() -> None:

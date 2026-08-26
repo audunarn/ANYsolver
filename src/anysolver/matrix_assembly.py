@@ -3189,6 +3189,107 @@ def _bind_qualified_assembly_runtime_lease(
             require._qualified_owned_material_name = owned_material_name
             require._qualified_owned_mesh = qualified_input_plan["mesh"]
 
+            if len(q4_elements) + len(s3_elements) == len(elements):
+                trusted_plan = qualified_input_plan
+                trusted_token = trusted_plan["token"]
+                trusted_token_value = trusted_plan["token_value"]
+
+                def trusted_require(
+                    expected_model: "FEModel",
+                    *,
+                    context: str,
+                ) -> None:
+                    """Check a fully qualified trusted loop in constant time.
+
+                    The exact capture and every caller-controlled boundary use
+                    the complete lease.  Between those boundaries, monotonic
+                    authority generations and the mesh mutation token reject
+                    supported mutation, including mutate-then-restore ABA.
+                    """
+
+                    try:
+                        assembly_epoch_manager.require_generation(
+                            assembly_start_generation
+                        )
+                        if q4_generation is not None:
+                            q4_manager.require_generation(q4_generation)
+                        if s3_generation is not None:
+                            s3_manager.require_generation(s3_generation)
+                        if (
+                            expected_model is not model
+                            or type(model) is not exact_model_type
+                            or object.__getattribute__(model, "__dict__")
+                            is not trusted_plan["model_namespace"]
+                            or dict.get(
+                                trusted_plan["model_namespace"], "mesh"
+                            )
+                            is not trusted_plan["mesh"]
+                            or dict.get(
+                                trusted_plan["model_namespace"], "materials"
+                            )
+                            is not trusted_plan["materials"]
+                            or dict.get(
+                                trusted_plan["model_namespace"],
+                                "current_material",
+                            )
+                            != trusted_plan["current_material"]
+                            or type(trusted_plan["mesh"]) is not _FEMesh
+                            or object.__getattribute__(
+                                trusted_plan["mesh"], "__dict__"
+                            )
+                            is not trusted_plan["mesh_namespace"]
+                            or dict.get(
+                                trusted_plan["mesh_namespace"], "elements"
+                            )
+                            is not trusted_plan["mapping"]
+                            or dict.get(
+                                trusted_plan["mesh_namespace"],
+                                "_qualified_direct_state_token",
+                            )
+                            is not trusted_token
+                            or type(trusted_plan["mapping"])
+                            is not _QualifiedStateMapping
+                            or object.__getattribute__(
+                                trusted_plan["mapping"], "__dict__"
+                            )
+                            is not trusted_plan["mapping_namespace"]
+                            or dict.get(
+                                trusted_plan["mapping_namespace"],
+                                "_qualified_token",
+                            )
+                            is not trusted_token
+                            or dict.get(
+                                trusted_plan["mapping_namespace"],
+                                "_qualified_kind",
+                            )
+                            != "element"
+                            or type(trusted_token) is not _QualifiedMutationEpoch
+                            or len(trusted_token) != 1
+                            or int(list.__getitem__(trusted_token, 0))
+                            != trusted_token_value
+                        ):
+                            raise ValueError(
+                                "qualified trusted-loop inputs changed"
+                            )
+                        if q4_generation is not None:
+                            q4_manager.require_generation(q4_generation)
+                        if s3_generation is not None:
+                            s3_manager.require_generation(s3_generation)
+                        assembly_epoch_manager.require_generation(
+                            assembly_start_generation
+                        )
+                    except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+                        for element in q4_elements:
+                            invalidate_q4(element)
+                        for element in s3_elements:
+                            invalidate_s3(element)
+                        invalidate_s3_reference_plan()
+                        raise AssemblyError(
+                            f"{context} found incompatible qualified shell authority"
+                        ) from exc
+
+                require._qualified_trusted_require = trusted_require
+
         return require
 
     return capture
