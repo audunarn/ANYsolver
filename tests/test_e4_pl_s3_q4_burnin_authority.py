@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "d1105dfebd33b65cccc55416f8e36232955266d04d3008dac6af18e9307bf4ee"
+CONTRACT_SHA256 = "be11cd2068fc710b58ee76cf9643fd98b3a7e96a4aa3cd6c734ae9940e5cdf9d"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-14"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-15"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -149,7 +149,7 @@ FAILED_ATTEMPT_14_REQUEST_IDS = [
     "7b521f01cfb745cfb680d296d39d6f93",
     "6af27135be3c464aa6e473899553ed16",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_15_REQUEST_IDS = [
     "43f08fd80b7d4065911977501560addd",
     "978880868207460a84ab7420393f4457",
     "3c5cd9ee5a4c47a69c2f06fc788ede65",
@@ -157,30 +157,38 @@ CURRENT_REQUEST_IDS = [
     "e935c56e9889470db4be917bfb50d134",
     "7fe9bc99e1aa453ebf6a380b85e883f0",
 ]
+CURRENT_REQUEST_IDS = [
+    "d0124e060a1844e9b1e5e971f08f491c",
+    "5d2dac5aef07481082b9876d08f01e25",
+    "2d41a434d055466d8ecfad03080d65c0",
+    "48297fe1042f4fd69a2c6b43b566e35c",
+    "4fb2b091709848498751effdfdf5abfa",
+    "90a829891c6b4516b2436ea89d16fe9f",
+]
 CURRENT_REQUEST_FILE_RECORDS = [
     {
         "bytes": 1358,
-        "sha256": "8723a8c36003c3a8430dfedf3ea8089d75b9f5659c697214ae8dc5b6f49818a0",
+        "sha256": "4323736472339afdc2019cf9f1838b27a67c8154e5c369386c28280c711cbb52",
     },
     {
         "bytes": 1010,
-        "sha256": "41e1a9d0e2951bccab9e7b4773cd5de71992c57a83734259e90a067395352257",
+        "sha256": "3a0634db86f0c0eb7bb9a016e3fbd5086bd8597dbe8528ae7890b63ce9f8b68b",
     },
     {
         "bytes": 1272,
-        "sha256": "f4c5a6f6cae7d5e274c0c6574b6f2f503068aebc40974d12a8fbb8374bddb4e2",
+        "sha256": "86866369fce41b772c010e2672c28dd89527dff07bff5003f665b7368db25eac",
     },
     {
         "bytes": 1358,
-        "sha256": "4a4a341f58cb3f9a840a22e6431f15ce257d8dc89cc1201c2882ab430f8dfdd9",
+        "sha256": "5e8214d68ccdf5d0c48007871f05c6e12f4ac89b92543d44318c855984b7c96d",
     },
     {
         "bytes": 1010,
-        "sha256": "c0603015157c1c9088b136070098e6fc197fd6ad827949ab3fe1cc93ec7ab982",
+        "sha256": "1fb9ea50efedde5160adfefcc9a4fd15de1908780b4022be4e57873beb463af4",
     },
     {
         "bytes": 1272,
-        "sha256": "f0649f4f65bc8438b0f471b598a6a7444ae8b5585f81a5fdc523a2de9e33276b",
+        "sha256": "6bd3e27920671f4a9aa9fcf09ff2da3cde30a41a7223cc88e2c0957580f9cee3",
     },
 ]
 
@@ -474,10 +482,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v15"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v16"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "6b42c92dad27d3a5b2cbcef0faff5b964080e65a",
+        "exact_parent": "1f6d57d9073a1e1ced951cbb4bf1b945f0e56210",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1267,6 +1275,70 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
         "request_ids": FAILED_ATTEMPT_14_REQUEST_IDS,
         "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
+    assert contract["background_inputs"][
+        "failed_v15_quick_cleanliness_mock_preflight_attempt"
+    ] == {
+        "attempt": 15,
+        "authority_commit": {
+            "commit": "a2a1c1046424058fdf5b8aded6503d2b32123ec1",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "6da7e3913f0e9cf48b0c25e03941e4d0d3b72f74",
+        },
+        "contract": {
+            "bytes": 298544,
+            "sha256": "d1105dfebd33b65cccc55416f8e36232955266d04d3008dac6af18e9307bf4ee",
+        },
+        "execution_authorization_commit": {
+            "commit": "bc6d083f4193b1a48c628bf5826f8028341c2f4f",
+            "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+            "tree": "898f9c0841074e265d94373dc49e0ae535e5dfea",
+        },
+        "external": {
+            "output_root": (
+                r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+                r"\s3-q4-final-freeze-correction-14"
+            ),
+            "result": {
+                "bytes": 951,
+                "path": "quick/result.json",
+                "sha256": "662d9d89e5d6e663bb385722cb1780c602b73fb407082973891bab73617231e9",
+            },
+            "stderr": {
+                "bytes": 0,
+                "path": "quick/stderr.txt",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            },
+            "stdout": {
+                "bytes": 7826,
+                "path": "quick/stdout.txt",
+                "sha256": "8f2898cf59401fae4235b79a86e12524aaa414224d329656cc285233743bcde0",
+            },
+        },
+        "failure": {
+            "additive_started": False,
+            "cause": "LEGACY_Q1M_CLEANLINESS_TESTS_MOCKED_RETIRED_GIT_STATUS_PATH",
+            "correction": "MOCK_RAW_STATUS_HELPER_AND_ASSERT_ALL_SIX_ORDER",
+            "elapsed_seconds": 62.3178566,
+            "exit_code": 1,
+            "failed": 2,
+            "package_started": False,
+            "passed": 90,
+            "phase": "QUICK_PREFLIGHT",
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+        },
+        "implementation_correction": {
+            "commit": "1f6d57d9073a1e1ced951cbb4bf1b945f0e56210",
+            "parent": "bc6d083f4193b1a48c628bf5826f8028341c2f4f",
+            "paths": ["tests/test_e4_pl_burnin.py"],
+            "subject": "test: align burn-in cleanliness mocks with raw status guard",
+            "tree": "56e92a8e17a0f773a3ecdc0bc968daa78ad80e7b",
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-blocked-v15-bc6d083",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_15_REQUEST_IDS,
+        "role": "PRESERVED_FAILED_PREFLIGHT_AUTHORITY_ONLY",
     }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
@@ -3117,6 +3189,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_12_REQUEST_IDS,
             *FAILED_ATTEMPT_13_REQUEST_IDS,
             *FAILED_ATTEMPT_14_REQUEST_IDS,
+            *FAILED_ATTEMPT_15_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -3143,6 +3216,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_12_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_13_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_14_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_15_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert [
         state
@@ -3708,8 +3782,10 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     assert "standalone v13" not in source
     assert "current v14" not in source
     assert "standalone v14" not in source
-    assert "current v15 worker request" in source
-    assert "standalone v15 worker execution" in source
+    assert "current v15" not in source
+    assert "standalone v15" not in source
+    assert "current v16 worker request" in source
+    assert "standalone v16 worker execution" in source
     validator_raw = VALIDATOR_PATH.read_bytes()
     assert process_runner._VALIDATOR_BYTES == len(validator_raw)
     assert process_runner._VALIDATOR_SHA256 == hashlib.sha256(validator_raw).hexdigest()
@@ -3721,26 +3797,27 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     reference_runner = REFERENCE / "e4_pl_s3_q4_process_runner.py"
     literal_runner = FINAL_FREEZE / runner_record["path"]
     assert _file_record(reference_runner) == expected_runner_identity
-    assert _file_record(literal_runner) == expected_runner_identity
-    bootstrap_root = tmp_path / "literal-isolated-bootstrap-help"
-    bootstrap_root.mkdir()
-    bootstrap = subprocess.run(
-        [
-            sys.executable,
-            "-I",
-            str(literal_runner),
-            "--help",
-        ],
-        cwd=bootstrap_root,
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
-    )
-    assert bootstrap.returncode == 0, bootstrap.stderr
-    assert "standalone v15 worker execution" in bootstrap.stdout
-    assert not list(bootstrap_root.iterdir())
-    if reference_runner.resolve(strict=True) != literal_runner.resolve(strict=True):
+    literal_runner_available = literal_runner.is_file()
+    if literal_runner_available:
+        assert _file_record(literal_runner) == expected_runner_identity
+        bootstrap_root = tmp_path / "literal-isolated-bootstrap-help"
+        bootstrap_root.mkdir()
+        bootstrap = subprocess.run(
+            [sys.executable, "-I", str(literal_runner), "--help"],
+            cwd=bootstrap_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        assert bootstrap.returncode == 0, bootstrap.stderr
+        assert "standalone v16 worker execution" in bootstrap.stdout
+        assert not list(bootstrap_root.iterdir())
+    else:
+        assert os.environ.get("GITHUB_ACTIONS") == "true"
+    if not literal_runner_available or (
+        reference_runner.resolve(strict=True) != literal_runner.resolve(strict=True)
+    ):
         detached_root = tmp_path / "detached-isolated-bootstrap-help"
         detached_root.mkdir()
         detached = subprocess.run(
