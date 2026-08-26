@@ -70,13 +70,21 @@ V13_SUPERSEDED_REQUEST_IDS = (
     "9bfc671629a242caba03ba9feefe26d3",
     "a547f50f33504f888bbd39f2d6974dae",
 )
-V14_REQUEST_IDS = (
+V14_SUPERSEDED_REQUEST_IDS = (
     "c461eb4e070a4d8aac3b253ce2f8a77e",
     "a7d77bd062ce48b49c6b69574167622b",
     "e543205e054d422fa70cbca7bde60371",
     "5841a5e89507439081bc8f801d78a327",
     "7b521f01cfb745cfb680d296d39d6f93",
     "6af27135be3c464aa6e473899553ed16",
+)
+V15_REQUEST_IDS = (
+    "43f08fd80b7d4065911977501560addd",
+    "978880868207460a84ab7420393f4457",
+    "3c5cd9ee5a4c47a69c2f06fc788ede65",
+    "556c47d4171b464791f895fbedd076e5",
+    "e935c56e9889470db4be917bfb50d134",
+    "7fe9bc99e1aa453ebf6a380b85e883f0",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -3458,6 +3466,75 @@ def _validate_attempt_13_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_14_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the rejected v14 detached-review bootstrap authority."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "contract",
+            "failure",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 14:
+        raise EvidenceError(f"{location}.attempt must be 14")
+    _validate_git_commit_record(
+        incident["authority_commit"],
+        f"{location}.authority_commit",
+        commit="6b42c92dad27d3a5b2cbcef0faff5b964080e65a",
+        subject="docs: authorize corrected S3 Q4 burn-in cycles",
+        tree="38d191c0b6b5072db700236003426847dbf5702e",
+    )
+    contract_record = _validate_hash_record(
+        incident["contract"], f"{location}.contract"
+    )
+    if contract_record != {
+        "bytes": 297309,
+        "sha256": "373a23fcedddbbd4d0f742ca6014a4cc307197bdf131ae9bf07ad29387762102",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    expected_failure = {
+        "cause": "DETACHED_REVIEW_BOOTSTRAP_TEST_USED_NONLITERAL_RUNNER_PATH",
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+        "review": {
+            "failed": 1,
+            "passed": 34,
+            "priority": "P1",
+            "reviewer_id": "codex-v14-independent-authority-review-1-6b42c92",
+            "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        },
+        "literal_frozen_bootstrap": {
+            "exit_code": 0,
+            "output_root_present": False,
+        },
+        "detached_bootstrap": {
+            "exit_code": 1,
+            "required_path_rejection": True,
+        },
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    if incident["request_ids"] != list(V14_SUPERSEDED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v14-6b42c92",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -3595,16 +3672,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v14"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v15"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-13"
+        r"\s3-q4-final-freeze-correction-14"
     ):
-        raise EvidenceError("v14 burn-in output root mismatch")
+        raise EvidenceError("v15 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -3700,6 +3777,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v11_repository_order_review_attempt",
             "failed_v12_stale_generation_review_attempt",
             "failed_v13_bootstrap_identity_preflight_attempt",
+            "failed_v14_detached_bootstrap_review_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -3744,6 +3822,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v13_bootstrap_identity_preflight_attempt"],
         "$contract.background_inputs.failed_v13_bootstrap_identity_preflight_attempt",
     )
+    v14_detached_bootstrap_review = _validate_attempt_14_incident(
+        background["failed_v14_detached_bootstrap_review_attempt"],
+        "$contract.background_inputs.failed_v14_detached_bootstrap_review_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -3765,11 +3847,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v14 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v15 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v14 resource request IDs are not unique")
-    if current_request_ids != list(V14_REQUEST_IDS):
-        raise EvidenceError("v14 resource request IDs differ from frozen authority")
+        raise EvidenceError("v15 resource request IDs are not unique")
+    if current_request_ids != list(V15_REQUEST_IDS):
+        raise EvidenceError("v15 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -3781,6 +3863,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v11_repository_order_review["request_ids"],
         *v12_stale_generation_review["request_ids"],
         *v13_bootstrap_identity_preflight["request_ids"],
+        *v14_detached_bootstrap_review["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -3801,7 +3884,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v14 resource request IDs reuse historical authority")
+        raise EvidenceError("v15 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -3857,7 +3940,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "3fe4b8d793a42b2ceb0800a3c2a142610237fe48":
+    if authority["exact_parent"] != "6b42c92dad27d3a5b2cbcef0faff5b964080e65a":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -5239,6 +5322,7 @@ def validate_superseded_request_ledger_absence(
         "failed_v11_repository_order_review_attempt",
         "failed_v12_stale_generation_review_attempt",
         "failed_v13_bootstrap_identity_preflight_attempt",
+        "failed_v14_detached_bootstrap_review_attempt",
     ):
         superseded = contract["background_inputs"][incident_name]
         if any(request_id in ledger for request_id in superseded["request_ids"]):

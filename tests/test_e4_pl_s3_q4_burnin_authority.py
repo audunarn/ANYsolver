@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "373a23fcedddbbd4d0f742ca6014a4cc307197bdf131ae9bf07ad29387762102"
+CONTRACT_SHA256 = "d1105dfebd33b65cccc55416f8e36232955266d04d3008dac6af18e9307bf4ee"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-13"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-14"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -141,7 +141,7 @@ FAILED_ATTEMPT_13_REQUEST_IDS = [
     "9bfc671629a242caba03ba9feefe26d3",
     "a547f50f33504f888bbd39f2d6974dae",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_14_REQUEST_IDS = [
     "c461eb4e070a4d8aac3b253ce2f8a77e",
     "a7d77bd062ce48b49c6b69574167622b",
     "e543205e054d422fa70cbca7bde60371",
@@ -149,30 +149,38 @@ CURRENT_REQUEST_IDS = [
     "7b521f01cfb745cfb680d296d39d6f93",
     "6af27135be3c464aa6e473899553ed16",
 ]
+CURRENT_REQUEST_IDS = [
+    "43f08fd80b7d4065911977501560addd",
+    "978880868207460a84ab7420393f4457",
+    "3c5cd9ee5a4c47a69c2f06fc788ede65",
+    "556c47d4171b464791f895fbedd076e5",
+    "e935c56e9889470db4be917bfb50d134",
+    "7fe9bc99e1aa453ebf6a380b85e883f0",
+]
 CURRENT_REQUEST_FILE_RECORDS = [
     {
         "bytes": 1358,
-        "sha256": "c07a2f24003418a588568df726423df7ce1d639b5983577f68cd2af4b64621c2",
+        "sha256": "8723a8c36003c3a8430dfedf3ea8089d75b9f5659c697214ae8dc5b6f49818a0",
     },
     {
         "bytes": 1010,
-        "sha256": "c74c4ca7ec332f4ea5bf627e7255efff8ef716b6b4caedad1ef4387440c6cfef",
+        "sha256": "41e1a9d0e2951bccab9e7b4773cd5de71992c57a83734259e90a067395352257",
     },
     {
         "bytes": 1272,
-        "sha256": "eeadcc65793832cb4e204ed9d05f6871e9a50664e4a801f28346f6427e6fd726",
+        "sha256": "f4c5a6f6cae7d5e274c0c6574b6f2f503068aebc40974d12a8fbb8374bddb4e2",
     },
     {
         "bytes": 1358,
-        "sha256": "cfdef672427c8d0a6958c98f6dec983bf871c804ebe36f4e5508369fd7c2b783",
+        "sha256": "4a4a341f58cb3f9a840a22e6431f15ce257d8dc89cc1201c2882ab430f8dfdd9",
     },
     {
         "bytes": 1010,
-        "sha256": "faac5121f31b568812d9f87d3f00e2053e4003d4862843c2808263a1c625ec9c",
+        "sha256": "c0603015157c1c9088b136070098e6fc197fd6ad827949ab3fe1cc93ec7ab982",
     },
     {
         "bytes": 1272,
-        "sha256": "2b6f0d3ed14c27b848b51bbd677eb939c3292f82d5fb444fe61f81ca53950e93",
+        "sha256": "f0649f4f65bc8438b0f471b598a6a7444ae8b5585f81a5fdc523a2de9e33276b",
     },
 ]
 
@@ -466,10 +474,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v14"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v15"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "3fe4b8d793a42b2ceb0800a3c2a142610237fe48",
+        "exact_parent": "6b42c92dad27d3a5b2cbcef0faff5b964080e65a",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1220,6 +1228,45 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
         "request_ids": FAILED_ATTEMPT_13_REQUEST_IDS,
         "role": "PRESERVED_FAILED_PREFLIGHT_AUTHORITY_ONLY",
+    }
+    assert contract["background_inputs"][
+        "failed_v14_detached_bootstrap_review_attempt"
+    ] == {
+        "attempt": 14,
+        "authority_commit": {
+            "commit": "6b42c92dad27d3a5b2cbcef0faff5b964080e65a",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "38d191c0b6b5072db700236003426847dbf5702e",
+        },
+        "contract": {
+            "bytes": 297309,
+            "sha256": "373a23fcedddbbd4d0f742ca6014a4cc307197bdf131ae9bf07ad29387762102",
+        },
+        "failure": {
+            "cause": "DETACHED_REVIEW_BOOTSTRAP_TEST_USED_NONLITERAL_RUNNER_PATH",
+            "detached_bootstrap": {
+                "exit_code": 1,
+                "required_path_rejection": True,
+            },
+            "formal_execution_started": False,
+            "literal_frozen_bootstrap": {
+                "exit_code": 0,
+                "output_root_present": False,
+            },
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+            "review": {
+                "failed": 1,
+                "passed": 34,
+                "priority": "P1",
+                "reviewer_id": "codex-v14-independent-authority-review-1-6b42c92",
+                "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+            },
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v14-6b42c92",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_14_REQUEST_IDS,
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
     }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
@@ -3069,6 +3116,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_11_REQUEST_IDS,
             *FAILED_ATTEMPT_12_REQUEST_IDS,
             *FAILED_ATTEMPT_13_REQUEST_IDS,
+            *FAILED_ATTEMPT_14_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -3094,6 +3142,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_11_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_12_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_13_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_14_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert [
         state
@@ -3657,18 +3706,29 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     assert "standalone v11" not in source
     assert "current v13" not in source
     assert "standalone v13" not in source
-    assert "current v14 worker request" in source
-    assert "standalone v14 worker execution" in source
+    assert "current v14" not in source
+    assert "standalone v14" not in source
+    assert "current v15 worker request" in source
+    assert "standalone v15 worker execution" in source
     validator_raw = VALIDATOR_PATH.read_bytes()
     assert process_runner._VALIDATOR_BYTES == len(validator_raw)
     assert process_runner._VALIDATOR_SHA256 == hashlib.sha256(validator_raw).hexdigest()
-    bootstrap_root = tmp_path / "isolated-bootstrap-help"
+    runner_record = contract["runner_inputs"]["process_runner"]
+    expected_runner_identity = {
+        "bytes": runner_record["bytes"],
+        "sha256": runner_record["sha256"],
+    }
+    reference_runner = REFERENCE / "e4_pl_s3_q4_process_runner.py"
+    literal_runner = FINAL_FREEZE / runner_record["path"]
+    assert _file_record(reference_runner) == expected_runner_identity
+    assert _file_record(literal_runner) == expected_runner_identity
+    bootstrap_root = tmp_path / "literal-isolated-bootstrap-help"
     bootstrap_root.mkdir()
     bootstrap = subprocess.run(
         [
             sys.executable,
             "-I",
-            str(REFERENCE / "e4_pl_s3_q4_process_runner.py"),
+            str(literal_runner),
             "--help",
         ],
         cwd=bootstrap_root,
@@ -3678,8 +3738,24 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
         check=False,
     )
     assert bootstrap.returncode == 0, bootstrap.stderr
-    assert "standalone v14 worker execution" in bootstrap.stdout
+    assert "standalone v15 worker execution" in bootstrap.stdout
     assert not list(bootstrap_root.iterdir())
+    if reference_runner.resolve(strict=True) != literal_runner.resolve(strict=True):
+        detached_root = tmp_path / "detached-isolated-bootstrap-help"
+        detached_root.mkdir()
+        detached = subprocess.run(
+            [sys.executable, "-I", str(reference_runner), "--help"],
+            cwd=detached_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        assert detached.returncode == 1
+        assert "process runner is outside the literal frozen authority path" in (
+            detached.stderr
+        )
+        assert not list(detached_root.iterdir())
     assert source.count('"-File"') == 1
     assert source.count("_manager_script_args(") == 4
     assert "acquired, _acquire_termination = _run_bounded_control_command(" in source
