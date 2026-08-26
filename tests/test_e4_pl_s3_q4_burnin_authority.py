@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "3844238d002a1eddb12789e5639ad424f16fc86b2acbeba2e5090cae39216248"
+CONTRACT_SHA256 = "930d84bbde26ad8555623af333f7a1bd6736d5e2101c5fd6c345a0df2f074f53"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-11"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-12"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -125,7 +125,7 @@ FAILED_ATTEMPT_11_REQUEST_IDS = [
     "f3f14c97691d494bae9e9834b112252b",
     "8238ffbc8b0f457f808ce3cef0e20eca",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_12_REQUEST_IDS = [
     "062220faabc74d9eabad3ae56db5c9ab",
     "195664d13fee4ab5ae386645e46b37ca",
     "713c629d5a1a4e92a030e74184a2a66d",
@@ -133,30 +133,38 @@ CURRENT_REQUEST_IDS = [
     "691f2796967d4bd7817d5448fa923d5e",
     "376e1f947c0241969f47092778325b64",
 ]
+CURRENT_REQUEST_IDS = [
+    "2d6183d5534741d7a6468fa2e3cb68d2",
+    "0d572cc546804210af36de83b4df062c",
+    "59be5fd9daac40ef9c8256fe406a7ba4",
+    "63ae611aea904dcdaff4b5752ba8bb08",
+    "9bfc671629a242caba03ba9feefe26d3",
+    "a547f50f33504f888bbd39f2d6974dae",
+]
 CURRENT_REQUEST_FILE_RECORDS = [
     {
         "bytes": 1358,
-        "sha256": "9456e35f234ca0eec4e013398332d12b5ea7d92742d87ec2d5dd132ef1f6e6ec",
+        "sha256": "eea60216a5ed598c27a29fb842f7393921e33dd815d9c1acb12a06d6044168fc",
     },
     {
         "bytes": 1010,
-        "sha256": "ad0676911b6bbc47d6909d36a6982ab1f2e90532023d95178dd229a837a7a8f9",
+        "sha256": "a0c488ceefe2d77c634af95d6db6883290ec7673a5f5153a1f074dca59cf6abf",
     },
     {
         "bytes": 1272,
-        "sha256": "aac8d9fd644afe132adac12a76ffe492a44c7b7ede1f2d8a2f3c42d329cb69f9",
+        "sha256": "b8e2dd8bdcb18a1ee072ebca2cd7d54cd56e743fca2126c597c12efa6598c94b",
     },
     {
         "bytes": 1358,
-        "sha256": "ea373d4910d5827163e05662beff3dfa7feef77d8f9e7839357e35846c53207f",
+        "sha256": "69490fd58b68db5e02d4a32a537dc54550f10eddae4c710f05e896fc4def6a81",
     },
     {
         "bytes": 1010,
-        "sha256": "dd576448f316db34cf07dca55d917ac439d8effeef727f3788ef07c19e074333",
+        "sha256": "6ff583a8a284ca0f5730c129b73783bd573c27ad2fccd8330f976c94b98329ba",
     },
     {
         "bytes": 1272,
-        "sha256": "9022d53f09e9be53c31b075091532e0c9303abb69847599171d1ed392e9a1e65",
+        "sha256": "89983301eb5185663d7864af08bd6de5332b91fa344db6022dc8ab897e5a0204",
     },
 ]
 
@@ -450,10 +458,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v12"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v13"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "361ab28187e6abf857ae29cc199f86e84a0417b1",
+        "exact_parent": "8adf3eba3046dfc88c8967388369ce2cc20d821c",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1132,6 +1140,37 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
         "request_ids": FAILED_ATTEMPT_11_REQUEST_IDS,
         "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+    }
+    assert contract["background_inputs"][
+        "failed_v12_stale_generation_review_attempt"
+    ] == {
+        "attempt": 12,
+        "authority_commit": {
+            "commit": "8adf3eba3046dfc88c8967388369ce2cc20d821c",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "b3449de1d74d7c776083db4e2efea0e370994265",
+        },
+        "contract": {
+            "bytes": 294669,
+            "sha256": "3844238d002a1eddb12789e5639ad424f16fc86b2acbeba2e5090cae39216248",
+        },
+        "failure": {
+            "cause": "STALE_V11_OPERATOR_DIAGNOSTICS_IN_V12_AUTHORITY",
+            "formal_execution_started": False,
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+            "review": {
+                "finding_count": 1,
+                "priority": "P2",
+                "reviewer_id": "codex-v12-independent-authority-review-2-8adf3eb",
+                "tests": {"failed": 0, "passed": 35},
+                "verdict": "ACCEPT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_NO_P0_P1_WITH_P2",
+            },
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v12-8adf3eb",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_12_REQUEST_IDS,
+        "role": "PRESERVED_REVIEWED_AUTHORITY_WITH_UNRESOLVED_P2",
     }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
@@ -2979,6 +3018,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_9_REQUEST_IDS,
             *FAILED_ATTEMPT_10_REQUEST_IDS,
             *FAILED_ATTEMPT_11_REQUEST_IDS,
+            *FAILED_ATTEMPT_12_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -3002,6 +3042,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_8_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_9_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_11_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_12_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert [
         state
@@ -3561,6 +3602,10 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
             )
             assert f"cycle_{observed_cycle}.{lane}" == f"cycle_{cycle}.{row['lane']}"
     source = (REFERENCE / "e4_pl_s3_q4_process_runner.py").read_text(encoding="utf-8")
+    assert "current v11" not in source
+    assert "standalone v11" not in source
+    assert "current v13 worker request" in source
+    assert "standalone v13 worker execution" in source
     assert source.count('"-File"') == 1
     assert source.count("_manager_script_args(") == 4
     assert "acquired, _acquire_termination = _run_bounded_control_command(" in source

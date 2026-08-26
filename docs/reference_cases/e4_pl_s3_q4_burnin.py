@@ -54,13 +54,21 @@ V11_SUPERSEDED_REQUEST_IDS = (
     "f3f14c97691d494bae9e9834b112252b",
     "8238ffbc8b0f457f808ce3cef0e20eca",
 )
-V12_REQUEST_IDS = (
+V12_SUPERSEDED_REQUEST_IDS = (
     "062220faabc74d9eabad3ae56db5c9ab",
     "195664d13fee4ab5ae386645e46b37ca",
     "713c629d5a1a4e92a030e74184a2a66d",
     "a349846593d54453b89ea4b6c2e69257",
     "691f2796967d4bd7817d5448fa923d5e",
     "376e1f947c0241969f47092778325b64",
+)
+V13_REQUEST_IDS = (
+    "2d6183d5534741d7a6468fa2e3cb68d2",
+    "0d572cc546804210af36de83b4df062c",
+    "59be5fd9daac40ef9c8256fe406a7ba4",
+    "63ae611aea904dcdaff4b5752ba8bb08",
+    "9bfc671629a242caba03ba9feefe26d3",
+    "a547f50f33504f888bbd39f2d6974dae",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -3307,6 +3315,67 @@ def _validate_attempt_11_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_12_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the reviewed v12 authority with unresolved stale diagnostics."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "contract",
+            "failure",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 12:
+        raise EvidenceError(f"{location}.attempt must be 12")
+    _validate_git_commit_record(
+        incident["authority_commit"],
+        f"{location}.authority_commit",
+        commit="8adf3eba3046dfc88c8967388369ce2cc20d821c",
+        subject="docs: authorize corrected S3 Q4 burn-in cycles",
+        tree="b3449de1d74d7c776083db4e2efea0e370994265",
+    )
+    contract_record = _validate_hash_record(
+        incident["contract"], f"{location}.contract"
+    )
+    if contract_record != {
+        "bytes": 294669,
+        "sha256": "3844238d002a1eddb12789e5639ad424f16fc86b2acbeba2e5090cae39216248",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    expected_failure = {
+        "cause": "STALE_V11_OPERATOR_DIAGNOSTICS_IN_V12_AUTHORITY",
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+        "review": {
+            "finding_count": 1,
+            "priority": "P2",
+            "reviewer_id": "codex-v12-independent-authority-review-2-8adf3eb",
+            "tests": {"failed": 0, "passed": 35},
+            "verdict": "ACCEPT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_NO_P0_P1_WITH_P2",
+        },
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    if incident["request_ids"] != list(V12_SUPERSEDED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v12-8adf3eb",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_REVIEWED_AUTHORITY_WITH_UNRESOLVED_P2",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -3444,16 +3513,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v12"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v13"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-11"
+        r"\s3-q4-final-freeze-correction-12"
     ):
-        raise EvidenceError("v12 burn-in output root mismatch")
+        raise EvidenceError("v13 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -3547,6 +3616,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_sibling_hygiene_preflight_attempt",
             "failed_v10_functional_cleanliness_attempt",
             "failed_v11_repository_order_review_attempt",
+            "failed_v12_stale_generation_review_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -3583,6 +3653,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v11_repository_order_review_attempt"],
         "$contract.background_inputs.failed_v11_repository_order_review_attempt",
     )
+    v12_stale_generation_review = _validate_attempt_12_incident(
+        background["failed_v12_stale_generation_review_attempt"],
+        "$contract.background_inputs.failed_v12_stale_generation_review_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -3604,11 +3678,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v12 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v13 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v12 resource request IDs are not unique")
-    if current_request_ids != list(V12_REQUEST_IDS):
-        raise EvidenceError("v12 resource request IDs differ from frozen authority")
+        raise EvidenceError("v13 resource request IDs are not unique")
+    if current_request_ids != list(V13_REQUEST_IDS):
+        raise EvidenceError("v13 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -3618,6 +3692,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *recursive_ci_quick_preflight["request_ids"],
         *v10_functional_cleanliness["request_ids"],
         *v11_repository_order_review["request_ids"],
+        *v12_stale_generation_review["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -3638,7 +3713,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v12 resource request IDs reuse historical authority")
+        raise EvidenceError("v13 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -3694,7 +3769,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "361ab28187e6abf857ae29cc199f86e84a0417b1":
+    if authority["exact_parent"] != "8adf3eba3046dfc88c8967388369ce2cc20d821c":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -5074,6 +5149,7 @@ def validate_superseded_request_ledger_absence(
         "failed_sibling_hygiene_preflight_attempt",
         "failed_recursive_ci_quick_preflight_attempt",
         "failed_v11_repository_order_review_attempt",
+        "failed_v12_stale_generation_review_attempt",
     ):
         superseded = contract["background_inputs"][incident_name]
         if any(request_id in ledger for request_id in superseded["request_ids"]):

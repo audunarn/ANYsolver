@@ -43,6 +43,7 @@ CONTRACT_PATH = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.j
 S3_Q4_CONTRACT_PATH = (
     ROOT / "docs" / "reference_cases" / "e4_pl_s3_q4_burnin_contract.json"
 )
+S3_Q4_ACTIVE_AUTHORITY_GENERATION = "v13"
 
 FUNCTIONAL_WAVE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v2"
 FUNCTIONAL_SHARD_SCHEMA = "anysolver.e4-pl-s3-q4-functional-shard-v2"
@@ -1158,7 +1159,8 @@ def _validate_repository_identities(
             or set(repository_order) != expected_names
         ):
             raise EvidenceError(
-                "clean-status repository scope is malformed, duplicated, or incomplete"
+                f"{S3_Q4_ACTIVE_AUTHORITY_GENERATION} clean-status repository scope "
+                "is malformed, duplicated, or incomplete"
             )
     else:
         # Historical Q1M contracts predate the named S3/Q4 clean-status policy.
