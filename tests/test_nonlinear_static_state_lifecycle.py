@@ -42,7 +42,7 @@ def _trial_view(
 
 def _equilibrate(store: NonlinearStateStore, **kwargs: Any) -> Any:
     return nonlinear_static._equilibrate_initial_fields(
-        model=object(),
+        model=FEModel("initial_equilibration_state_lifecycle"),
         T=sparse.eye(1, format="csr"),
         u0=np.zeros(1, dtype=float),
         committed_states=store,

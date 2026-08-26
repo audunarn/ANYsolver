@@ -1721,10 +1721,16 @@ def _state_shell_stresses(
     stress_layers = layer_stress.reshape(n_gp, num_layers, 3)
     strain_layers = layer_strain.reshape(n_gp, num_layers, 3)
     thickness = max(abs(float(element.thickness)), np.finfo(float).tiny)
-    membrane_stress = np.einsum("l,gli->gi", layer_weights, stress_layers) / thickness
+    membrane_resultants = np.einsum(
+        "l,gli->gi", layer_weights, stress_layers
+    )
+    bending_resultants = np.einsum(
+        "l,l,gli->gi", layer_weights, z_layers, stress_layers
+    )
+    membrane_stress = membrane_resultants / thickness
     bending_stress = (
         6.0
-        * np.einsum("l,l,gli->gi", layer_weights, z_layers, stress_layers)
+        * bending_resultants
         / thickness**2
     )
     membrane_strain = np.einsum("l,gli->gi", layer_weights, strain_layers) / thickness
@@ -1782,6 +1788,8 @@ def _state_shell_stresses(
             "membrane_strain_xx": membrane_strain[:, 0].copy(),
             "membrane_strain_yy": membrane_strain[:, 1].copy(),
             "membrane_strain_xy": membrane_strain[:, 2].copy(),
+            "membrane_resultants": membrane_resultants.copy(),
+            "bending_resultants": bending_resultants.copy(),
             "membrane_xx": membrane_stress[:, 0].copy(),
             "membrane_yy": membrane_stress[:, 1].copy(),
             "membrane_xy": membrane_stress[:, 2].copy(),

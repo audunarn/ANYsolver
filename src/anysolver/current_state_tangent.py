@@ -92,6 +92,14 @@ CURRENT_STATE_EIGEN_ACTIVITY_POLICY_ID = (
     "Q4_S3_CURRENT_STATE_EIGEN_EXACT_ACTIVE_LIFECYCLE_ONLY_V1"
 )
 
+# ``copy.deepcopy`` asks ``copyreg`` for a class's slot layout.  CPython
+# memoizes that derived layout by adding exactly ``__slotnames__`` to the
+# class namespace, including an empty list for ordinary dataclasses.  The
+# cache is not executable mechanics authority and may appear at any point in
+# an otherwise read-only process, so exclude only that exact stdlib cache key
+# from both sides of every class-namespace comparison.
+_IGNORED_STDLIB_CLASS_CACHE_NAME = "__slotnames__"
+
 
 def _capture_numerical_module_authority(
     module: ModuleType,
@@ -188,7 +196,13 @@ def _capture_dependency_module_authority(module: ModuleType) -> Mapping[str, Any
     class_namespaces = MappingProxyType(
         {
             value: MappingProxyType(
-                dict(type.__getattribute__(value, "__dict__"))
+                {
+                    name: member
+                    for name, member in dict(
+                        type.__getattribute__(value, "__dict__")
+                    ).items()
+                    if name != _IGNORED_STDLIB_CLASS_CACHE_NAME
+                }
             )
             for value in tuple(namespace.values())
             if isinstance(value, type)
@@ -760,11 +774,18 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
             ].items():
                 actual_namespace = type.__getattribute__(owner, "__dict__")
                 owner_name = str(type.__getattribute__(owner, "__qualname__"))
+                actual_names = set(actual_namespace) - {
+                    _IGNORED_STDLIB_CLASS_CACHE_NAME
+                }
+                expected_names = set(expected_namespace) - {
+                    _IGNORED_STDLIB_CLASS_CACHE_NAME
+                }
                 changed_members = sorted(
-                    set(actual_namespace).symmetric_difference(expected_namespace)
+                    actual_names.symmetric_difference(expected_names)
                     | {
                         name
                         for name, expected in expected_namespace.items()
+                        if name != _IGNORED_STDLIB_CLASS_CACHE_NAME
                         if name in actual_namespace
                         and actual_namespace[name] is not expected
                     }
@@ -788,11 +809,18 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
         ].items():
             actual_namespace = type.__getattribute__(owner, "__dict__")
             owner_name = str(type.__getattribute__(owner, "__qualname__"))
+            actual_names = set(actual_namespace) - {
+                _IGNORED_STDLIB_CLASS_CACHE_NAME
+            }
+            expected_names = set(expected_namespace) - {
+                _IGNORED_STDLIB_CLASS_CACHE_NAME
+            }
             changed_members = sorted(
-                set(actual_namespace).symmetric_difference(expected_namespace)
+                actual_names.symmetric_difference(expected_names)
                 | {
                     name
                     for name, expected in expected_namespace.items()
+                    if name != _IGNORED_STDLIB_CLASS_CACHE_NAME
                     if name in actual_namespace
                     and actual_namespace[name] is not expected
                 }

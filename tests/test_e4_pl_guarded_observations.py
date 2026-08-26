@@ -6,14 +6,19 @@ from typing import Any
 import numpy as np
 import pytest
 
-from anymaterial import LinearHardeningCurve
+from anymaterial import DNVC208MaterialCurve, LinearHardeningCurve
 from anysolver import FEModel, QualifiedE4PLS3ShellElement, QualifiedE4PLShellElement
 from anysolver._native_rotation_state import (
     NativeElementRotationView,
     create_native_rotation_state_store,
 )
+from anysolver.current_state_tangent import (
+    require_exact_qualified_component_lifecycle_api,
+)
+from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.elements import Element
 from anysolver.fe_core import FEMesh
+from anysolver.material_curves import FiberSectionPlasticityConfig
 from anysolver.shell_sections import GeneralizedShellSection
 
 
@@ -99,6 +104,65 @@ def test_q4_material_deepcopy_slotnames_cache_is_benign_before_qualified_call(
             setattr(material_type, "__slotnames__", original_slotnames)
         elif "__slotnames__" in type.__getattribute__(material_type, "__dict__"):
             delattr(material_type, "__slotnames__")
+
+
+@pytest.mark.parametrize(
+    ("family", "dependency"),
+    (
+        (
+            "q4",
+            DNVC208MaterialCurve(
+                sigma_prop=320.0e6,
+                sigma_yield=357.0e6,
+                sigma_yield_2=363.3e6,
+                eps_p_y1=0.004,
+                eps_p_y2=0.015,
+                K=740.0e6,
+                n=0.166,
+            ),
+        ),
+        ("s3", FiberSectionPlasticityConfig()),
+    ),
+    ids=("q4-anymaterial-curve", "s3-solver-fiber-config"),
+)
+def test_model_guard_allows_only_the_stdlib_slotnames_dependency_cache(
+    family: str,
+    dependency: Any,
+) -> None:
+    model, _, _ = _qualified_case(family)
+    dependency_type = type(dependency)
+    namespace = type.__getattribute__(dependency_type, "__dict__")
+    had_slotnames = "__slotnames__" in namespace
+    original_slotnames = namespace.get("__slotnames__")
+    if had_slotnames:
+        delattr(dependency_type, "__slotnames__")
+
+    try:
+        copied = copy.deepcopy(dependency)
+        assert copied is not dependency
+        assert "__slotnames__" in type.__getattribute__(dependency_type, "__dict__")
+        result = require_exact_qualified_component_lifecycle_api(
+            model,
+            context="stdlib slotnames dependency cache regression",
+        )
+        assert result == {"qualified_element_ids": [1], "guarded": True}
+
+        setattr(dependency_type, "__slotnames___", ())
+        with pytest.raises(
+            ElementCapabilityError,
+            match="DEPENDENCY_AUTHORITY_MISMATCH=.*__slotnames___",
+        ):
+            require_exact_qualified_component_lifecycle_api(
+                model,
+                context="near-miss dependency cache mutation",
+            )
+    finally:
+        if "__slotnames___" in type.__getattribute__(dependency_type, "__dict__"):
+            delattr(dependency_type, "__slotnames___")
+        if had_slotnames:
+            setattr(dependency_type, "__slotnames__", original_slotnames)
+        elif "__slotnames__" in type.__getattribute__(dependency_type, "__dict__"):
+            delattr(dependency_type, "__slotnames__")
 
 
 def test_q4_cold_stiffness_rejects_femesh_provider_before_callback(

@@ -160,9 +160,14 @@ def bending_patch_metric(coords: Sequence[Sequence[float]]) -> Dict[str, Any]:
 def shear_patch_metric(coords: Sequence[Sequence[float]]) -> Dict[str, Any]:
     """Constant transverse shear patch on one S4 element.
 
-    Compared in the local shell frame.  MITC4 assumed transverse shear keeps a
-    small interpolation residual on distorted (non-affine) geometry; that is
-    expected element behavior rather than a stress-frame artifact.
+    The displacement field is prescribed in global x, so compare the recovered
+    global-x transverse-shear stress and require the orthogonal global-y stress
+    to vanish.  Comparing that field with local ``shear_xz`` is frame-inconsistent
+    on an affine skew quadrilateral whose qualified numbered frame is not aligned
+    with global x.
+    MITC4 assumed transverse shear keeps a small interpolation residual on
+    distorted (non-affine) geometry; that is expected element behavior rather
+    than a stress-frame artifact.
     """
     model = _single_s4_model(coords)
     element = model.mesh.get_element(1)
@@ -173,13 +178,36 @@ def shear_patch_metric(coords: Sequence[Sequence[float]]) -> Dict[str, Any]:
     for local_node_index, coord in enumerate(coords_array):
         x = coord[0]
         u[local_node_index * 6 + 2] = gamma_xz * x
-    stresses = element.compute_stresses(model.mesh, u, material)
+    stresses = element.compute_stresses(
+        model.mesh,
+        u,
+        material,
+        return_global=True,
+    )
     expected = material.shear_modulus * (5.0 / 6.0) * gamma_xz
-    values = np.asarray(stresses["shear_xz"], dtype=float)
+    global_xz = 0.5 * (
+        np.asarray(stresses["global_xz_top"], dtype=float)
+        + np.asarray(stresses["global_xz_bot"], dtype=float)
+    )
+    global_yz = 0.5 * (
+        np.asarray(stresses["global_yz_top"], dtype=float)
+        + np.asarray(stresses["global_yz_bot"], dtype=float)
+    )
+    scale = max(abs(expected), 1.0)
     return {
-        "relative_error": float(np.max(np.abs(values - expected)) / max(abs(expected), 1.0)),
-        "relative_spread": float((np.max(values) - np.min(values)) / max(abs(expected), 1.0)),
+        "relative_error": float(
+            max(
+                np.max(np.abs(global_xz - expected)),
+                np.max(np.abs(global_yz)),
+            )
+            / scale
+        ),
+        "relative_spread": float(
+            max(np.ptp(global_xz), np.ptp(global_yz)) / scale
+        ),
+        "orthogonal_relative_error": float(np.max(np.abs(global_yz)) / scale),
         "target_shear_pa": float(expected),
+        "stress_frame": "global",
     }
 
 

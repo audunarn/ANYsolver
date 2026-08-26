@@ -33,8 +33,14 @@ def test_material_construction_fails_fast_and_validation_rejects_invalid_thickne
         4: (0.0, 1.0, 0.0),
     }.items():
         model.add_node(node_id, *coords)
+    with pytest.raises(
+        ValueError,
+        match="qualified Q4 thickness must be strictly positive",
+    ):
+        create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.0)
     model.add_element(
-        1, create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.0)
+        1,
+        ShellElement(1, [1, 2, 3], "steel", thickness=0.0),
     )
 
     report = validate_production_model(model)
