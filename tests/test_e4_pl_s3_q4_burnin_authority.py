@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "ae13f921cd79bb2396a220434a3b7056de92a9b471f2d9d48db7f1832d9a1390"
+CONTRACT_SHA256 = "d33b307ba3b475d5e6f70f20323cbb1a99fdde0ee3438dac490ee36c0ab98527"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-9"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-10"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -108,6 +108,48 @@ FAILED_ATTEMPT_9_REQUEST_IDS = [
     "34d8eebb21814cd68968940bbe8eb54c",
     "227de96509e445f1acdbb70f531dee73",
     "701c043879b0481180926b890ae1571d",
+]
+FAILED_ATTEMPT_10_REQUEST_IDS = [
+    "7a0b6b26646d42f8b6a51787e47dc205",
+    "4585253af140476fae32c9953926519b",
+    "3bf2afed4d324947ad17a390a607bf00",
+    "1e1de0b84cb2408aae25426aa95e87fa",
+    "98ff7f767fbd4c2da1d9f96d2d572a8d",
+    "ce9f73f7f5194cbcb138c157e47f7964",
+]
+CURRENT_REQUEST_IDS = [
+    "332d8d4192e247859d73810dd4ef5bcb",
+    "41092897ba884ef39e015cefc451de39",
+    "48f2afd41cf946fb9671871e61402f3d",
+    "a8d35183b8b84d89b9d95103cf7c60d8",
+    "f3f14c97691d494bae9e9834b112252b",
+    "8238ffbc8b0f457f808ce3cef0e20eca",
+]
+CURRENT_REQUEST_FILE_RECORDS = [
+    {
+        "bytes": 1358,
+        "sha256": "c3ea8c0aeec8c0b4427261b677887b7e21bde568ce336ce83b1385287c8353be",
+    },
+    {
+        "bytes": 1010,
+        "sha256": "0051837077c684e3a0041233aa653c445ad1647762508609f657d42040e7e936",
+    },
+    {
+        "bytes": 1272,
+        "sha256": "2ebca9c468834135e5c50e1d96d9b445ebbe623c471c818c93da6da3c5ba6d3f",
+    },
+    {
+        "bytes": 1358,
+        "sha256": "ac5caaa14feba568afbe4badbdbebfcb14dc2f12f275a728ae5085ebb702c3b0",
+    },
+    {
+        "bytes": 1010,
+        "sha256": "8ac8114f3e1247c3a3adef9362614f3e318a418819c29129dcd28b111a04de23",
+    },
+    {
+        "bytes": 1272,
+        "sha256": "e66407de83d31556aa3b8972afeb50c01c534375e358a54d4241106b77a87276",
+    },
 ]
 
 sys.path.insert(0, str(REFERENCE))
@@ -400,10 +442,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v10"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v11"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "02a3b101aa5d1d7877eef7b15b6349210e0441cc",
+        "exact_parent": "1e84bcacc539e90941bf718af443b8e34f283c63",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -969,6 +1011,89 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     assert recursive_ci["request_ids"] == FAILED_ATTEMPT_9_REQUEST_IDS
     assert recursive_ci["role"] == "PRESERVED_BLOCKED_PREDECESSOR_ONLY"
     assert recursive_ci["terminal"] == "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE"
+    functional_cleanliness = contract["background_inputs"][
+        "failed_v10_functional_cleanliness_attempt"
+    ]
+    assert set(functional_cleanliness) == {
+        "attempt",
+        "authority_commit",
+        "blocked_closeout",
+        "contract",
+        "execution_authorization_commit",
+        "external_authority",
+        "failure",
+        "preserved_branch",
+        "preserved_repository_evidence",
+        "request_disposition",
+        "request_ids",
+        "role",
+        "terminal",
+    }
+    assert functional_cleanliness["attempt"] == 10
+    assert functional_cleanliness["authority_commit"] == {
+        "commit": "f2feeead59bc79471652bf562c3862533e213518",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "fcdfd4db6d5016430dd0ddbf3dc7f85c955d38e7",
+    }
+    assert functional_cleanliness["execution_authorization_commit"] == {
+        "commit": "5244822799feb8a73de636b076099e03a1d68e0b",
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "1079fa8d8703db821b3ab322a489e4b9c55dcf73",
+    }
+    assert functional_cleanliness["blocked_closeout"] == {
+        "commit": "1e84bcacc539e90941bf718af443b8e34f283c63",
+        "subject": "docs: record blocked corrected S3 Q4 burn-in",
+        "tree": "5c2c9c3256267882b432fc9173de24c131022cb2",
+    }
+    assert functional_cleanliness["failure"] == {
+        "cause": "IGNORED_EMPTY_SCRATCH_DIRECTORIES_ESCAPED_PREAPPROVAL_CLEAN_GUARD",
+        "clean_cycles_recorded": 0,
+        "failed_request": {
+            "execution_state": "EXECUTED_ONCE",
+            "request_id": FAILED_ATTEMPT_10_REQUEST_IDS[0],
+            "status": "COMPLETED_FAIL",
+        },
+        "other_requests": {
+            "acquired": False,
+            "request_ids": FAILED_ATTEMPT_10_REQUEST_IDS[1:],
+            "status": "CANCELLED_NOT_RUN",
+        },
+        "phase": "CYCLE_1_FUNCTIONAL_SOURCE_STATUS_BEFORE_SHARD_LAUNCH",
+        "recovered_cleanliness": {
+            "entries": [
+                ".pytest_tmp_beam_validity/",
+                ".pytest_tmp_capacity_workflow/",
+                ".pytest_tmp_element_qualification/",
+                ".pytest_tmp_fe_verification/",
+                ".pytest_tmp_fe_verification_family/",
+                ".pytest_tmp_mass_modal/",
+                ".pytest_tmp_plasticity_qualification/",
+                ".pytest_tmp_s4_validity/",
+                "reports/external_references/",
+            ],
+            "entries_verified_empty": True,
+            "entries_verified_non_reparse": True,
+            "post_status": {
+                "bytes": 0,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            },
+            "removal": "EXACT_EMPTY_LEAVES_NONRECURSIVE",
+        },
+        "shards_started": 0,
+        "source_status": {
+            "bytes": 301,
+            "sha256": "827045256df721e866640ffd7abde585f437a5a4f36b1575b57c15d7f3c1b124",
+        },
+    }
+    assert functional_cleanliness["request_ids"] == FAILED_ATTEMPT_10_REQUEST_IDS
+    assert functional_cleanliness["preserved_branch"] == (
+        "codex/s3-e4-pl-final-burnin-blocked-attempt-10"
+    )
+    assert functional_cleanliness["request_disposition"] == (
+        "ONE_COMPLETED_FAIL_FIVE_CANCELLED_NOT_RUN_SUPERSEDED"
+    )
+    assert functional_cleanliness["role"] == "PRESERVED_BLOCKED_PREDECESSOR_ONLY"
+    assert functional_cleanliness["terminal"] == "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE"
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -996,6 +1121,8 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "failed_resource_interruption_attempt"
     ]["external_authority"]["output_root"]
     assert all(attempt4_output_root + "\\" not in command for command in commands)
+    attempt10_output_root = functional_cleanliness["external_authority"]["output_root"]
+    assert all(attempt10_output_root + "\\" not in command for command in commands)
     for incident_name in (
         "failed_preflight_attempt",
         "failed_resource_acquisition_attempt",
@@ -1003,6 +1130,7 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "failed_resource_interruption_attempt",
         "failed_review_contamination_attempt",
         "failed_sibling_hygiene_preflight_attempt",
+        "failed_v10_functional_cleanliness_attempt",
     ):
         incident = contract["background_inputs"][incident_name]
         blocked_commit = incident["blocked_closeout"]["commit"]
@@ -1336,6 +1464,32 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
         "final_evidence_reserve_seconds": 90,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
     }
+    assert contract["execution"]["clean_status_args"] == [
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--ignored=matching",
+    ]
+    assert contract["execution"]["clean_status_empty"] == {
+        "bytes": 0,
+        "sha256": hashlib.sha256(b"").hexdigest(),
+    }
+    assert contract["execution"]["clean_status_phases"] == [
+        "BEFORE_LOCAL_PREFLIGHT_OUTPUT_RESERVATION",
+        "BEFORE_APPROVAL_LEDGER_MUTATION",
+        "BEFORE_RESOURCE_ACQUIRE_OR_EXECUTION_STARTED",
+        "POST_WORKER",
+        "FINAL_RESULT_VALIDATION",
+    ]
+    assert contract["execution"]["clean_status_scope"] == [
+        "ANYsolver",
+        "ANYfem",
+        "ANYfileIO",
+        "ANYgeometry",
+        "ANYmaterial",
+        "ANYmesh",
+    ]
     assert contract["execution"]["gate_git_invocation_policy"] == {
         "environment": "VALIDATOR_EQUIVALENT_SANITIZED_GIT_ENVIRONMENT",
         "launcher": "FROZEN_EXECUTION_GIT",
@@ -2769,6 +2923,10 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     ]
     assert len({row["request_id"] for row in rows}) == 6
     live_ids = [row["request_id"] for row in rows]
+    assert live_ids == CURRENT_REQUEST_IDS
+    assert [
+        {"bytes": row["bytes"], "sha256": row["request_sha256"]} for row in rows
+    ] == CURRENT_REQUEST_FILE_RECORDS
     assert set(live_ids).isdisjoint(
         {
             *FAILED_ATTEMPT_1_REQUEST_IDS,
@@ -2780,6 +2938,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_7_REQUEST_IDS,
             *FAILED_ATTEMPT_8_REQUEST_IDS,
             *FAILED_ATTEMPT_9_REQUEST_IDS,
+            *FAILED_ATTEMPT_10_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -2803,6 +2962,19 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_8_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_9_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
+    assert [
+        state
+        for state in ("APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL")
+        if burnin._ledger_entries(
+            ledger_text, FAILED_ATTEMPT_10_REQUEST_IDS[0], state
+        )
+    ] == ["APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL"]
+    for request_id in FAILED_ATTEMPT_10_REQUEST_IDS[1:]:
+        assert len(burnin._ledger_entries(ledger_text, request_id, "APPROVED")) == 1
+        assert len(
+            burnin._ledger_entries(ledger_text, request_id, "CANCELLED_NOT_RUN")
+        ) == 1
+        assert not burnin._ledger_entries(ledger_text, request_id, "EXECUTION_STARTED")
     assert len(
         burnin._ledger_entries(
             ledger_text, FAILED_ATTEMPT_4_REQUEST_IDS[0], "INTERRUPTED_INCOMPLETE"
@@ -3350,10 +3522,28 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen() -> Non
     assert source.count("_manager_script_args(") == 4
     assert "acquired, _acquire_termination = _run_bounded_control_command(" in source
     assert "released, _release_termination = _run_bounded_control_command(" in source
+    verify_start = source.index("def _verify_repositories")
+    verify_end = source.index("\ndef _run(", verify_start)
+    verify_source = source[verify_start:verify_end]
+    scope_check = verify_source.index(
+        'list(repositories) != contract["execution"]["clean_status_scope"]'
+    )
+    complete_clean_probe = verify_source.index("burnin.strict_clean_status_record")
+    candidate_authority = verify_source.index("_authority_commit(candidate, contract)")
+    assert scope_check < complete_clean_probe < candidate_authority
+
+    local_start = source.index("def _run_local_bounded")
+    local_clean = source.index("_verify_repositories(contract)", local_start)
+    local_reserve = source.index("_reserve_output(output_dir)", local_start)
+    local_worker = source.index("completed, started_at", local_start)
+    assert local_clean < local_reserve < local_worker
+
     run_start = source.index("def _run_resource_bounded")
+    resource_clean = source.index("_verify_repositories(contract)", run_start)
     acquire = source.index("acquired, _acquire_termination", run_start)
     reserve = source.index("_reserve_pending_output", acquire)
-    assert acquire < reserve
+    execution_started = source.index("_append_execution_started", run_start)
+    assert resource_clean < acquire < reserve < execution_started
     assert "_write_worker_completion(" in source[run_start:]
     publish_start = source.index("def _publish_resource_result")
     assert source.index("_append_terminal_ledger", publish_start) < source.index(
@@ -3363,6 +3553,9 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen() -> Non
     assert 'launch["candidate"] != pending["candidate"]' in validator_source
     assert 'ledger_process["candidate_commit"]' in validator_source
     approve_start = source.index("def approve_requests")
+    approval_clean = source.index("_verify_repositories(contract)", approve_start)
+    approval_mutation = source.index("_acquire_manager_reservation", approve_start)
+    assert approval_clean < approval_mutation
     assert source.index("_recover_manager_reservation", approve_start) < source.index(
         "_acquire_manager_reservation", approve_start
     )
@@ -3376,6 +3569,22 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen() -> Non
     assert source.index("_require_package_artifacts", publish_start) < source.index(
         "_append_terminal_ledger", publish_start
     )
+    gate_source = (ROOT / "scripts" / "run_e4_pl_burnin_gate.py").read_text(
+        encoding="utf-8"
+    )
+    final_identity_start = gate_source.index("def _validate_repository_identities")
+    final_identity_end = gate_source.index(
+        "\ndef validate_final_gate_result", final_identity_start
+    )
+    final_identity_source = gate_source[final_identity_start:final_identity_end]
+    assert 'empty_status = contract["execution"]["clean_status_empty"]' in (
+        final_identity_source
+    )
+    assert 'repository_order = contract["execution"]["clean_status_scope"]' in (
+        final_identity_source
+    )
+    assert "_functional_source_status(repository) != empty_status" in final_identity_source
+    assert '"--ignored=matching"' not in final_identity_source
 
 
 def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
@@ -3482,10 +3691,23 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
             "--porcelain=v1",
             "--untracked-files=all",
         ) == ""
-        assert gate._functional_source_status(crlf_repository) == {
+        clean_probe = subprocess.run(
+            [*prefix, *contract["execution"]["clean_status_args"]],
+            check=False,
+            capture_output=True,
+            env=git_environment,
+        )
+        assert clean_probe.returncode == 0
+        clean_status = {
             "bytes": 0,
             "sha256": hashlib.sha256(b"").hexdigest(),
         }
+        assert clean_probe.stdout == b""
+        assert clean_status == contract["execution"]["clean_status_empty"]
+        assert gate._functional_source_status(crlf_repository) == clean_status
+        assert burnin.strict_clean_status_record(
+            crlf_repository, contract=contract
+        ) == clean_status
         manager = process_runner._manager_paths(contract)
         absent_request_id = "0" * 32
         assert not (manager["requests"] / f"{absent_request_id}.json").exists()
@@ -3614,15 +3836,74 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
             )
         info_exclude = namespace_repo / ".git" / "info" / "exclude"
         with info_exclude.open("a", encoding="utf-8", newline="") as stream:
+            stream.write("ignored-empty/\n")
+        ignored_empty = namespace_repo / "ignored-empty"
+        ignored_empty.mkdir()
+        ignored_probe = subprocess.run(
+            [
+                *gate._git_command_prefix(namespace_repo),
+                *contract["execution"]["clean_status_args"],
+            ],
+            check=False,
+            capture_output=True,
+            env=git_environment,
+        )
+        assert ignored_probe.returncode == 0
+        ignored_status = {
+            "bytes": len(ignored_probe.stdout),
+            "sha256": hashlib.sha256(ignored_probe.stdout).hexdigest(),
+        }
+        assert ignored_status["bytes"] > 0
+        assert gate._functional_source_status(namespace_repo) == ignored_status
+        diagnostic_contract = copy.deepcopy(contract)
+        diagnostic_contract["execution"]["clean_status_empty"] = ignored_status
+        assert burnin.strict_clean_status_record(
+            namespace_repo, contract=diagnostic_contract
+        ) == ignored_status
+        with pytest.raises(burnin.EvidenceError, match="not completely clean"):
+            burnin.assert_clean_execution_repository(namespace_repo, contract=contract)
+        identity = {
+            "commit": gate._git(namespace_repo, "rev-parse", "HEAD"),
+            "tree": gate._git(namespace_repo, "rev-parse", "HEAD^{tree}"),
+        }
+        repository_record = {
+            "candidate": identity,
+            "siblings": {
+                name: identity for name in contract["execution"]["clean_status_scope"][1:]
+            },
+        }
+        repository_paths = {
+            name: namespace_repo for name in contract["execution"]["clean_status_scope"]
+        }
+        with pytest.raises(gate.EvidenceError, match="not completely clean"):
+            gate._validate_repository_identities(
+                repository_record, repository_paths, contract
+            )
+        ignored_empty.rmdir()
+        observed_repositories: list[Path] = []
+        original_source_status = gate._functional_source_status
+
+        def _record_source_status(repository: Path) -> dict[str, object]:
+            observed_repositories.append(repository)
+            return original_source_status(repository)
+
+        monkeypatch.setattr(gate, "_functional_source_status", _record_source_status)
+        gate._validate_repository_identities(
+            repository_record, repository_paths, contract
+        )
+        assert observed_repositories == [namespace_repo] * len(
+            contract["execution"]["clean_status_scope"]
+        )
+        with info_exclude.open("a", encoding="utf-8", newline="") as stream:
             stream.write("sitecustomize.py\n")
         (namespace_repo / "sitecustomize.py").write_text(
             "raise RuntimeError('must never execute')\n", encoding="utf-8"
         )
-        with pytest.raises(burnin.EvidenceError, match="untracked/ignored"):
+        with pytest.raises(burnin.EvidenceError, match="not completely clean"):
             burnin.assert_clean_execution_repository(namespace_repo, contract=contract)
         (namespace_repo / "sitecustomize.py").unlink()
         (namespace_repo / "fixture.json").write_text("{}\n", encoding="utf-8")
-        with pytest.raises(burnin.EvidenceError, match="untracked/ignored"):
+        with pytest.raises(burnin.EvidenceError, match="not completely clean"):
             burnin.assert_clean_execution_repository(namespace_repo, contract=contract)
         (namespace_repo / "fixture.json").unlink()
         with info_exclude.open("a", encoding="utf-8", newline="") as stream:
@@ -3630,7 +3911,7 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
         (namespace_repo / "pytest.ini").write_text(
             "[pytest]\naddopts = --collect-only\n", encoding="utf-8"
         )
-        with pytest.raises(burnin.EvidenceError, match="untracked/ignored"):
+        with pytest.raises(burnin.EvidenceError, match="not completely clean"):
             burnin.assert_clean_execution_repository(namespace_repo, contract=contract)
     else:
         assert os.environ.get("GITHUB_ACTIONS") == "true"

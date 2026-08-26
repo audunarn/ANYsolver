@@ -1046,7 +1046,7 @@ def validate_gate_result(
         raise EvidenceError("Q1M may not change qualified Q4 mechanics")
 
     if repository_paths is not None:
-        _validate_repository_identities(record, repository_paths)
+        _validate_repository_identities(record, repository_paths, contract)
     if lane_log_paths is not None:
         executed_lanes = {
             lane for lane in GATE_LANES if lanes[lane]["status"] != "NOT_RUN"
@@ -1140,23 +1140,31 @@ def _git(
 
 
 def _validate_repository_identities(
-    record: Mapping[str, Any], repository_paths: Mapping[str, Path]
+    record: Mapping[str, Any],
+    repository_paths: Mapping[str, Path],
+    contract: Mapping[str, Any],
 ) -> None:
     expected_names = {"ANYsolver", *SIBLING_NAMES}
     if set(repository_paths) != expected_names:
         raise EvidenceError("repository_paths must name the candidate and all siblings")
     identities = {"ANYsolver": record["candidate"], **record["siblings"]}
-    for name in sorted(expected_names):
-        repository = Path(repository_paths[name]).resolve()
-        untracked_policy = "all" if name in {"ANYsolver", "ANYfem"} else "no"
-        if _git(
-            repository,
-            "status",
-            "--porcelain",
-            f"--untracked-files={untracked_policy}",
+    if "execution" in contract:
+        empty_status = contract["execution"]["clean_status_empty"]
+        repository_order = contract["execution"]["clean_status_scope"]
+        if (
+            not isinstance(repository_order, list)
+            or len(repository_order) != len(set(repository_order))
+            or set(repository_order) != expected_names
         ):
-            detail = "any changes" if untracked_policy == "all" else "tracked or index changes"
-            raise EvidenceError(f"repository {name} has {detail}")
+            raise EvidenceError("clean-status repository scope is incomplete")
+    else:
+        # Historical Q1M contracts predate the named S3/Q4 clean-status policy.
+        empty_status = {"bytes": 0, "sha256": _sha256_bytes(b"")}
+        repository_order = sorted(expected_names)
+    for name in repository_order:
+        repository = Path(repository_paths[name]).resolve()
+        if _functional_source_status(repository) != empty_status:
+            raise EvidenceError(f"repository {name} is not completely clean")
         if _git(repository, "rev-parse", "HEAD") != identities[name]["commit"]:
             raise EvidenceError(f"repository {name} commit mismatch")
         if _git(repository, "rev-parse", "HEAD^{tree}") != identities[name]["tree"]:

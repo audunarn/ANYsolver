@@ -38,13 +38,21 @@ PERFORMANCE_BASELINE_MARKER = b"Q1M_PERFORMANCE_BASELINE_JSON="
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_OBJECT_RE = re.compile(r"[0-9a-f]{40}\Z")
 REQUEST_ID_RE = re.compile(r"[0-9a-f]{32}\Z")
-V10_REQUEST_IDS = (
+V10_SUPERSEDED_REQUEST_IDS = (
     "7a0b6b26646d42f8b6a51787e47dc205",
     "4585253af140476fae32c9953926519b",
     "3bf2afed4d324947ad17a390a607bf00",
     "1e1de0b84cb2408aae25426aa95e87fa",
     "98ff7f767fbd4c2da1d9f96d2d572a8d",
     "ce9f73f7f5194cbcb138c157e47f7964",
+)
+V11_REQUEST_IDS = (
+    "332d8d4192e247859d73810dd4ef5bcb",
+    "41092897ba884ef39e015cefc451de39",
+    "48f2afd41cf946fb9671871e61402f3d",
+    "a8d35183b8b84d89b9d95103cf7c60d8",
+    "f3f14c97691d494bae9e9834b112252b",
+    "8238ffbc8b0f457f808ce3cef0e20eca",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -3050,6 +3058,186 @@ def _validate_attempt_9_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_10_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the consumed v10 functional pre-launch cleanliness failure."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "blocked_closeout",
+            "contract",
+            "execution_authorization_commit",
+            "external_authority",
+            "failure",
+            "preserved_branch",
+            "preserved_repository_evidence",
+            "request_disposition",
+            "request_ids",
+            "role",
+            "terminal",
+        },
+        location,
+    )
+    if incident["attempt"] != 10:
+        raise EvidenceError(f"{location}.attempt must be 10")
+    _validate_git_commit_record(
+        incident["authority_commit"],
+        f"{location}.authority_commit",
+        commit="f2feeead59bc79471652bf562c3862533e213518",
+        subject="docs: authorize corrected S3 Q4 burn-in cycles",
+        tree="fcdfd4db6d5016430dd0ddbf3dc7f85c955d38e7",
+    )
+    _validate_git_commit_record(
+        incident["execution_authorization_commit"],
+        f"{location}.execution_authorization_commit",
+        commit="5244822799feb8a73de636b076099e03a1d68e0b",
+        subject="docs: reauthorize corrected S3 Q4 burn-in execution",
+        tree="1079fa8d8703db821b3ab322a489e4b9c55dcf73",
+    )
+    _validate_git_commit_record(
+        incident["blocked_closeout"],
+        f"{location}.blocked_closeout",
+        commit="1e84bcacc539e90941bf718af443b8e34f283c63",
+        subject="docs: record blocked corrected S3 Q4 burn-in",
+        tree="5c2c9c3256267882b432fc9173de24c131022cb2",
+    )
+    contract_record = _validate_hash_record(
+        incident["contract"], f"{location}.contract"
+    )
+    if contract_record != {
+        "bytes": 287240,
+        "sha256": "ae13f921cd79bb2396a220434a3b7056de92a9b471f2d9d48db7f1832d9a1390",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+
+    external = _exact_keys(
+        incident["external_authority"],
+        {
+            "approval_snapshot",
+            "cycle_1_terminal_snapshot",
+            "cycle_2_terminal_snapshot",
+            "functional",
+            "gate_result",
+            "output_root",
+        },
+        f"{location}.external_authority",
+    )
+    expected_root = (
+        r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+        r"\s3-q4-final-freeze-correction-9"
+    )
+    if external["output_root"] != expected_root:
+        raise EvidenceError(f"{location}.external_authority.output_root mismatch")
+    for name, filename, size, digest in (
+        ("gate_result", "gate-result.json", 10180, "07bb1ed2e8124533494966fa69581f3489e1e14a55213106618b088bdf208f13"),
+        ("approval_snapshot", "resource-ledger-approval-snapshot.json", 4420, "03f24368b37cdb1b4b381e1b89720665362e255bebbdb16da126b76e7bada106"),
+        ("cycle_1_terminal_snapshot", "resource-ledger-cycle-1-terminal-snapshot.json", 4834, "5de268e9b4817a5b0160839c1ecfc92b49a6129dbc6d690dddee6b469ae03cd9"),
+        ("cycle_2_terminal_snapshot", "resource-ledger-cycle-2-terminal-snapshot.json", 3716, "33dae588fb63f79580577efc36a6708a7f3ac95ecc91bfd05364fbb7df6089af"),
+    ):
+        _validate_repository_evidence_record(
+            external[name],
+            f"{location}.external_authority.{name}",
+            expected_path=str(Path(expected_root) / filename),
+            expected_bytes=size,
+            expected_sha256=digest,
+        )
+    functional = _exact_keys(
+        external["functional"],
+        {"aggregate", "diagnostics", "launch", "pending_manifest", "result", "stderr", "stdout"},
+        f"{location}.external_authority.functional",
+    )
+    functional_records = {
+        "launch": ("cycle-1-functional/launch.json", 731, "7e7090125e78e3029be861716ad4021211b8aa78639227ee168bfbba926ed2fc"),
+        "pending_manifest": ("cycle-1-functional/pending-manifest.json", 905, "76b033b7400c10f914cd1200aed06e7e33cb8400310fc98eb54d9b8a2366909d"),
+        "result": ("cycle-1-functional/result.json", 1130, "d09f9ce0b2b056af6c0ba74b14fe34c7b80b0ab18a73e584d28cac3ee9e672da"),
+        "stdout": ("cycle-1-functional/stdout.txt", 1443, "6089cf01578c572400e63bc022ff941a76ae7b8d1c4575760db81380de558658"),
+        "stderr": ("cycle-1-functional/stderr.txt", 0, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        "aggregate": ("functional-wave/cycle-1/functional-wave-aggregate.json", 1443, "6089cf01578c572400e63bc022ff941a76ae7b8d1c4575760db81380de558658"),
+        "diagnostics": ("functional-wave/cycle-1/functional-wave-raw-diagnostics.json", 405, "bc4589567408f6614627b6510c6b6c8f95df1d2e06ab463864303fe74fb2d764"),
+    }
+    for name, (relative, size, digest) in functional_records.items():
+        _validate_repository_evidence_record(
+            functional[name],
+            f"{location}.external_authority.functional.{name}",
+            expected_path=str(Path(expected_root) / Path(relative)),
+            expected_bytes=size,
+            expected_sha256=digest,
+        )
+
+    expected_failure = {
+        "cause": "IGNORED_EMPTY_SCRATCH_DIRECTORIES_ESCAPED_PREAPPROVAL_CLEAN_GUARD",
+        "clean_cycles_recorded": 0,
+        "failed_request": {
+            "execution_state": "EXECUTED_ONCE",
+            "request_id": V10_SUPERSEDED_REQUEST_IDS[0],
+            "status": "COMPLETED_FAIL",
+        },
+        "other_requests": {
+            "acquired": False,
+            "request_ids": list(V10_SUPERSEDED_REQUEST_IDS[1:]),
+            "status": "CANCELLED_NOT_RUN",
+        },
+        "phase": "CYCLE_1_FUNCTIONAL_SOURCE_STATUS_BEFORE_SHARD_LAUNCH",
+        "recovered_cleanliness": {
+            "entries": [
+                ".pytest_tmp_beam_validity/",
+                ".pytest_tmp_capacity_workflow/",
+                ".pytest_tmp_element_qualification/",
+                ".pytest_tmp_fe_verification/",
+                ".pytest_tmp_fe_verification_family/",
+                ".pytest_tmp_mass_modal/",
+                ".pytest_tmp_plasticity_qualification/",
+                ".pytest_tmp_s4_validity/",
+                "reports/external_references/",
+            ],
+            "entries_verified_empty": True,
+            "entries_verified_non_reparse": True,
+            "post_status": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            },
+            "removal": "EXACT_EMPTY_LEAVES_NONRECURSIVE",
+        },
+        "shards_started": 0,
+        "source_status": {
+            "bytes": 301,
+            "sha256": "827045256df721e866640ffd7abde585f437a5a4f36b1575b57c15d7f3c1b124",
+        },
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    evidence = _exact_keys(
+        incident["preserved_repository_evidence"],
+        {"result", "review", "status"},
+        f"{location}.preserved_repository_evidence",
+    )
+    for name, size, digest in (
+        ("result", 10180, "07bb1ed2e8124533494966fa69581f3489e1e14a55213106618b088bdf208f13"),
+        ("review", 536, "fe00aa210da1472272db5cbd2000bdd43b81eba990ef92bc16f12ca25da4b6ef"),
+        ("status", 293, "f621dd24cc9265844a1eaebe3c891302af9b997cdb33fe307e2d4751549d203a"),
+    ):
+        _validate_repository_evidence_record(
+            evidence[name],
+            f"{location}.preserved_repository_evidence.{name}",
+            expected_path=f"docs/reference_cases/e4_pl_s3_q4_blocked_burnin_{name}.json",
+            expected_bytes=size,
+            expected_sha256=digest,
+        )
+    if incident["request_ids"] != list(V10_SUPERSEDED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "preserved_branch": "codex/s3-e4-pl-final-burnin-blocked-attempt-10",
+        "request_disposition": "ONE_COMPLETED_FAIL_FIVE_CANCELLED_NOT_RUN_SUPERSEDED",
+        "role": "PRESERVED_BLOCKED_PREDECESSOR_ONLY",
+        "terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -3187,20 +3375,24 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v10"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v11"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-9"
+        r"\s3-q4-final-freeze-correction-10"
     ):
-        raise EvidenceError("v10 burn-in output root mismatch")
+        raise EvidenceError("v11 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
             "automatic_retry",
+            "clean_status_args",
+            "clean_status_empty",
+            "clean_status_phases",
+            "clean_status_scope",
             "common_preflight_before_resources",
             "coordinator_isolated_mode",
             "cycle_wall_policy",
@@ -3220,6 +3412,40 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         },
         "$contract.execution",
     )
+    expected_clean_status_args = [
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--ignored=matching",
+    ]
+    expected_clean_status_empty = {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    }
+    expected_clean_status_scope = [
+        "ANYsolver",
+        "ANYfem",
+        "ANYfileIO",
+        "ANYgeometry",
+        "ANYmaterial",
+        "ANYmesh",
+    ]
+    expected_clean_status_phases = [
+        "BEFORE_LOCAL_PREFLIGHT_OUTPUT_RESERVATION",
+        "BEFORE_APPROVAL_LEDGER_MUTATION",
+        "BEFORE_RESOURCE_ACQUIRE_OR_EXECUTION_STARTED",
+        "POST_WORKER",
+        "FINAL_RESULT_VALIDATION",
+    ]
+    if execution["clean_status_args"] != expected_clean_status_args:
+        raise EvidenceError("strict clean-status arguments mismatch")
+    if execution["clean_status_empty"] != expected_clean_status_empty:
+        raise EvidenceError("strict clean-status empty-record mismatch")
+    if execution["clean_status_scope"] != expected_clean_status_scope:
+        raise EvidenceError("strict clean-status repository scope mismatch")
+    if execution["clean_status_phases"] != expected_clean_status_phases:
+        raise EvidenceError("strict clean-status phase policy mismatch")
     _validate_timeout_policy(
         execution["timeout_policy"], "$contract.execution.timeout_policy"
     )
@@ -3250,6 +3476,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_review_contamination_attempt",
             "failed_recursive_ci_quick_preflight_attempt",
             "failed_sibling_hygiene_preflight_attempt",
+            "failed_v10_functional_cleanliness_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -3278,6 +3505,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_recursive_ci_quick_preflight_attempt"],
         "$contract.background_inputs.failed_recursive_ci_quick_preflight_attempt",
     )
+    v10_functional_cleanliness = _validate_attempt_10_incident(
+        background["failed_v10_functional_cleanliness_attempt"],
+        "$contract.background_inputs.failed_v10_functional_cleanliness_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -3299,11 +3530,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v10 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v11 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v10 resource request IDs are not unique")
-    if current_request_ids != list(V10_REQUEST_IDS):
-        raise EvidenceError("v10 resource request IDs differ from frozen authority")
+        raise EvidenceError("v11 resource request IDs are not unique")
+    if current_request_ids != list(V11_REQUEST_IDS):
+        raise EvidenceError("v11 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -3311,6 +3542,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *ci_partition_review["request_ids"],
         *sibling_hygiene_preflight["request_ids"],
         *recursive_ci_quick_preflight["request_ids"],
+        *v10_functional_cleanliness["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -3331,7 +3563,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v10 resource request IDs reuse historical authority")
+        raise EvidenceError("v11 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -3387,7 +3619,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "02a3b101aa5d1d7877eef7b15b6349210e0441cc":
+    if authority["exact_parent"] != "1e84bcacc539e90941bf718af443b8e34f283c63":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -4427,6 +4659,53 @@ def _git(path: Path, *args: str, contract: Mapping[str, Any]) -> str:
     return completed.stdout.strip()
 
 
+def strict_clean_status_record(
+    path: Path, *, contract: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Return and verify the frozen raw-byte complete Git cleanliness record."""
+
+    path = path.resolve(strict=True)
+    execution = contract["execution"]
+    arguments = execution["clean_status_args"]
+    expected = execution["clean_status_empty"]
+    git = execution_tool_path(contract, "git")
+    completed = subprocess.run(
+        [
+            str(git),
+            "--no-replace-objects",
+            "-c",
+            f"safe.directory={path}",
+            "-c",
+            "core.autocrlf=true",
+            "-c",
+            "core.attributesFile=NUL",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.quotepath=false",
+            "-c",
+            "core.untrackedCache=false",
+            "-c",
+            "status.showUntrackedFiles=all",
+            "-C",
+            str(path),
+            *arguments,
+        ],
+        capture_output=True,
+        env=sanitized_execution_environment(contract),
+        check=False,
+    )
+    if completed.returncode:
+        raise EvidenceError(f"strict clean-status Git probe failed for {path}")
+    observed = {
+        "bytes": len(completed.stdout),
+        "sha256": sha256_bytes(completed.stdout),
+    }
+    if observed != expected:
+        raise EvidenceError(f"execution repository is not completely clean: {path}")
+    return observed
+
+
 def assert_clean_execution_repository(path: Path, *, contract: Mapping[str, Any]) -> None:
     path = path.resolve(strict=True)
     validate_git_runtime(contract)
@@ -4444,6 +4723,7 @@ def assert_clean_execution_repository(path: Path, *, contract: Mapping[str, Any]
         or path in numba_cache.parents
     ):
         raise EvidenceError("external Python/Numba cache isolation is not frozen")
+    strict_clean_status_record(path, contract=contract)
     top = Path(_git(path, "rev-parse", "--show-toplevel", contract=contract)).resolve(
         strict=True
     )
@@ -4723,6 +5003,26 @@ def validate_superseded_request_ledger_absence(
         if any(request_id in ledger for request_id in superseded["request_ids"]):
             raise EvidenceError(
                 f"superseded request ID from {incident_name} occurs in the resource ledger"
+            )
+    v10 = contract["background_inputs"]["failed_v10_functional_cleanliness_attempt"]
+    expected_sequences = [
+        ["APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL"],
+        *([["APPROVED", "CANCELLED_NOT_RUN"]] * 5),
+    ]
+    for request_id, expected_sequence in zip(
+        v10["request_ids"], expected_sequences, strict=True
+    ):
+        observed_sequence: list[str] = []
+        for line in ledger.splitlines():
+            if not line.startswith("|") or not line.endswith("|"):
+                continue
+            fields = [field.strip() for field in line.split("|")[1:-1]]
+            if len(fields) == 8 and fields[1] == request_id:
+                _require_timestamp(fields[0], f"ledger {request_id} timestamp")
+                observed_sequence.append(fields[2])
+        if observed_sequence != expected_sequence:
+            raise EvidenceError(
+                "v10 superseded request terminal ledger disposition mismatch"
             )
 
 

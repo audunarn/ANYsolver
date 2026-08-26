@@ -880,6 +880,13 @@ def _verify_repositories(
     for name, path in repositories.items():
         if path.resolve(strict=True) != path:
             raise burnin.EvidenceError(f"{name} path is not the exact frozen repository")
+    # Complete, non-mutating cleanliness phase across the entire frozen graph.
+    # No identity or topology probe may run until every repository passes.
+    if list(repositories) != contract["execution"]["clean_status_scope"]:
+        raise burnin.EvidenceError("strict clean-status scope order mismatch")
+    burnin.validate_git_runtime(contract)
+    for path in repositories.values():
+        burnin.strict_clean_status_record(path, contract=contract)
     head, tree = _authority_commit(candidate, contract)
     if set(siblings) != set(contract["sibling_authority"]):
         raise burnin.EvidenceError("sibling repository bindings are incomplete")
@@ -1535,7 +1542,7 @@ def _request_row(contract: Mapping[str, Any], request_id: str) -> dict[str, Any]
 def _reject_standalone_resource_execution(
     contract: Mapping[str, Any], request_id: str
 ) -> None:
-    """Reject every current v10 worker request outside its complete cycle.
+    """Reject every current v11 worker request outside its complete cycle.
 
     ``finalize-resource`` is intentionally separate: it can validate and
     publish an existing durable worker-completion checkpoint, but it cannot
@@ -1548,7 +1555,7 @@ def _reject_standalone_resource_execution(
     if row.get("lane") != lane:
         raise burnin.EvidenceError("standalone request lane authority mismatch")
     raise burnin.EvidenceError(
-        "standalone resource worker execution is forbidden for current v10 "
+        "standalone resource worker execution is forbidden for current v11 "
         f"request {request_id} ({lane}, cycle {cycle}); use cycle --cycle {cycle}"
     )
 
@@ -3945,9 +3952,9 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v10 worker execution; use cycle --cycle N",
+            help="reject standalone v11 worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v10 resource requests is disabled. "
+                "Standalone execution of current v11 resource requests is disabled. "
                 "Use cycle --cycle N so all three workers share one 1200-second watchdog."
             ),
         )
