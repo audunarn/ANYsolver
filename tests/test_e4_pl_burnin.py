@@ -1033,11 +1033,12 @@ def test_repository_identity_validation_fails_closed_on_dirty_inputs(monkeypatch
     record = _prospective_gate_result(gate)
     paths = {name: Path(name) for name in ("ANYsolver", *gate.SIBLING_NAMES)}
 
-    def dirty_git(_repository: Path, *args: str) -> str:
-        return " M tracked.py" if args[0] == "status" else ""
+    def dirty_status(_repository: Path) -> dict[str, object]:
+        raw = b" M tracked.py\0"
+        return {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
 
-    monkeypatch.setattr(gate, "_git", dirty_git)
-    with pytest.raises(gate.EvidenceError, match="has any changes"):
+    monkeypatch.setattr(gate, "_functional_source_status", dirty_status)
+    with pytest.raises(gate.EvidenceError, match="not completely clean"):
         gate.validate_gate_result(record, repository_paths=paths)
 
 
@@ -1045,22 +1046,21 @@ def test_repository_cleanliness_policy_is_full_for_candidate_and_anyfem(monkeypa
     gate = _gate_module()
     record = _prospective_gate_result(gate)
     paths = {name: Path(name) for name in ("ANYsolver", *gate.SIBLING_NAMES)}
-    status_modes = {}
+    status_order = []
+
+    def clean_status(repository: Path) -> dict[str, object]:
+        status_order.append(repository.name)
+        return {"bytes": 0, "sha256": hashlib.sha256(b"").hexdigest()}
 
     def clean_git(repository: Path, *args: str) -> str:
         name = repository.name
-        if args[0] == "status":
-            status_modes[name] = args[-1]
-            return ""
         identity = record["candidate"] if name == "ANYsolver" else record["siblings"][name]
         return identity["tree"] if args[-1] == "HEAD^{tree}" else identity["commit"]
 
+    monkeypatch.setattr(gate, "_functional_source_status", clean_status)
     monkeypatch.setattr(gate, "_git", clean_git)
     gate.validate_gate_result(record, repository_paths=paths)
-    assert status_modes["ANYsolver"] == "--untracked-files=all"
-    assert status_modes["ANYfem"] == "--untracked-files=all"
-    for name in ("ANYmesh", "ANYgeometry", "ANYmaterial", "ANYfileIO"):
-        assert status_modes[name] == "--untracked-files=no"
+    assert status_order == sorted(("ANYsolver", *gate.SIBLING_NAMES))
 
 
 def test_complete_sibling_authority_is_fail_closed() -> None:
