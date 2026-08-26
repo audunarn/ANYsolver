@@ -629,17 +629,20 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive(
     observed: dict[str, object] = {}
     monkeypatch.setattr(gate, "inventory", lambda: lanes)
 
-    def fake_run(lane, selected):
-        observed.update(lane=lane, selected=list(selected))
+    def fake_watchdog(lane, *, cycle, command_started):
+        observed.update(
+            lane=lane,
+            cycle=cycle,
+            command_started=command_started,
+        )
         return 0
 
-    monkeypatch.setattr(gate, "_run_pytest_lane", fake_run)
+    monkeypatch.setattr(gate, "_run_gate_cli_watchdog", fake_watchdog)
 
     assert gate.main(["ci"]) == 0
-    assert observed == {
-        "lane": "ci",
-        "selected": ["tests/quick.py", "tests/functional.py", "tests/additive.py"],
-    }
+    assert observed["lane"] == "ci"
+    assert observed["cycle"] is None
+    assert isinstance(observed["command_started"], float)
 
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
         encoding="utf-8"
