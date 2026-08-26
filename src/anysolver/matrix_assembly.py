@@ -9,12 +9,64 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 import time
+from operator import itemgetter
+from types import FunctionType, MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
+from weakref import WeakKeyDictionary, ref
 
 import numpy as np
 from scipy import sparse
+from scipy.sparse._sparsetools import (
+    coo_tocsr as _SCIPY_COO_TO_CSR,
+    csr_has_canonical_format as _SCIPY_CSR_HAS_CANONICAL_FORMAT,
+    csr_has_sorted_indices as _SCIPY_CSR_HAS_SORTED_INDICES,
+    csr_sort_indices as _SCIPY_CSR_SORT_INDICES,
+    csr_sum_duplicates as _SCIPY_CSR_SUM_DUPLICATES,
+)
 
+from ._qualified_authority_epoch import make_authority_epoch_manager
+
+from .e4_pl_element import (
+    QualifiedE4PLShellElement as _QualifiedE4PLShellElement,
+    _invalidate_q4_guarded_call_caches as _INVALIDATE_Q4_GUARDED_CACHES,
+    _q4_runtime_epoch_manager as _Q4_RUNTIME_EPOCH_MANAGER,
+    _require_q4_fast_base_authority as _EXACT_Q4_FAST_BASE_AUTHORITY,
+    _require_q4_cached_stiffness_runtime_epoch_authority as _EXACT_Q4_CACHED_STIFFNESS_EPOCH_GUARD,
+    _require_exact_q4_runtime_authority as _EXACT_Q4_RUNTIME_GUARD,
+    _try_q4_fast_cached_stiffness as _TRY_Q4_FAST_CACHED_STIFFNESS,
+    _try_q4_fast_assembly_cached_stiffness as _TRY_Q4_FAST_ASSEMBLY_CACHED_STIFFNESS,
+    _validate_q4_quadrature_authority as _EXACT_Q4_QUADRATURE_GUARD,
+)
+from .fe_core import (
+    DOFManager as _DOFManager,
+    FEModel as _FEModel,
+    FEMesh as _FEMesh,
+    Material as _Material,
+    Node as _Node,
+    _QualifiedMutationEpoch as _QualifiedMutationEpoch,
+    _QualifiedStateMapping as _QualifiedStateMapping,
+)
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+    _invalidate_s3_guarded_call_caches as _INVALIDATE_S3_GUARDED_CACHES,
+    _s3_runtime_epoch_manager as _S3_RUNTIME_EPOCH_MANAGER,
+    _require_s3_cached_stiffness_runtime_epoch_authority as _EXACT_S3_CACHED_STIFFNESS_EPOCH_GUARD,
+    _require_exact_s3_runtime_authority as _EXACT_S3_RUNTIME_GUARD,
+    _require_s3_fast_base_authority as _EXACT_S3_FAST_BASE_AUTHORITY,
+    _try_s3_fast_assembly_cached_stiffness as _TRY_S3_FAST_ASSEMBLY_CACHED_STIFFNESS,
+    _validate_s3_quadrature_values as _EXACT_S3_QUADRATURE_GUARD,
+)
+from .e4_pl_s3_state import (
+    require_exact_numpy_runtime_authority as _EXACT_NUMPY_RUNTIME_GUARD,
+)
+from .s3_reference_batch import (
+    PreparedReferenceS3Components as _PreparedReferenceS3Components,
+    REFERENCE_S3_BATCH_POLICY_ID as _REFERENCE_S3_BATCH_POLICY_ID,
+    REFERENCE_S3_FORMULATION_ID as _REFERENCE_S3_FORMULATION_ID,
+)
+from .element_capabilities import ElementCapabilityError
 if TYPE_CHECKING:
     from .boundary import LoadCase
     from .fe_core import FEModel
@@ -22,6 +74,3192 @@ if TYPE_CHECKING:
 
 class AssemblyError(ValueError):
     """Raised when an element returns an invalid matrix or load contribution."""
+
+
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER = make_authority_epoch_manager(
+    "qualified sparse assembly runtime"
+)
+_ASSEMBLY_RUNTIME_MODULE = sys.modules[__name__]
+_ASSEMBLY_SPARSE_LINALG = sparse.linalg
+_ASSEMBLY_MODULE_ALIASES = {
+    "hashlib": hashlib,
+    "json": json,
+    "np": np,
+    "sparse": sparse,
+    "time": time,
+    "_DOFManager": _DOFManager,
+    "_FEModel": _FEModel,
+    "_FEMesh": _FEMesh,
+    "_Material": _Material,
+    "_Node": _Node,
+    "_PreparedReferenceS3Components": _PreparedReferenceS3Components,
+    "_QualifiedStateMapping": _QualifiedStateMapping,
+}
+_ASSEMBLY_SPARSE_ALIASES = {
+    name: vars(sparse)[name]
+    for name in ("coo_matrix", "csr_matrix", "diags", "issparse", "linalg")
+}
+_ASSEMBLY_SPARSE_LINALG_ALIASES = {
+    "norm": vars(_ASSEMBLY_SPARSE_LINALG)["norm"],
+}
+_EXACT_COO_TO_CSR = next(
+    type.__getattribute__(base, "__dict__")["tocsr"]
+    for base in type.__getattribute__(
+        _ASSEMBLY_SPARSE_ALIASES["coo_matrix"],
+        "__mro__",
+    )
+    if "tocsr" in type.__getattribute__(base, "__dict__")
+)
+_EXACT_COO_INIT = next(
+    type.__getattribute__(base, "__dict__")["__init__"]
+    for base in type.__getattribute__(
+        _ASSEMBLY_SPARSE_ALIASES["coo_matrix"],
+        "__mro__",
+    )
+    if "__init__" in type.__getattribute__(base, "__dict__")
+)
+_EXACT_CSR_ELIMINATE_ZEROS = next(
+    type.__getattribute__(base, "__dict__")["eliminate_zeros"]
+    for base in type.__getattribute__(
+        _ASSEMBLY_SPARSE_ALIASES["csr_matrix"],
+        "__mro__",
+    )
+    if "eliminate_zeros" in type.__getattribute__(base, "__dict__")
+)
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
+    _ASSEMBLY_RUNTIME_MODULE,
+    _ASSEMBLY_MODULE_ALIASES,
+)
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
+    sparse,
+    _ASSEMBLY_SPARSE_ALIASES,
+)
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
+    _ASSEMBLY_SPARSE_LINALG,
+    _ASSEMBLY_SPARSE_LINALG_ALIASES,
+)
+
+
+def _require_exact_assembly_numerical_authority() -> None:
+    for name, expected in _ASSEMBLY_MODULE_ALIASES.items():
+        if vars(_ASSEMBLY_RUNTIME_MODULE).get(name) is not expected:
+            raise ValueError(
+                f"qualified assembly module authority changed: {name}"
+            )
+    for name, expected in _ASSEMBLY_SPARSE_ALIASES.items():
+        if vars(sparse).get(name) is not expected:
+            raise ValueError(
+                f"qualified scipy.sparse authority changed: {name}"
+            )
+    for name, expected in _ASSEMBLY_SPARSE_LINALG_ALIASES.items():
+        if vars(_ASSEMBLY_SPARSE_LINALG).get(name) is not expected:
+            raise ValueError(
+                f"qualified scipy.sparse.linalg authority changed: {name}"
+            )
+    if (
+        _static_mro_attribute(
+            _ASSEMBLY_SPARSE_ALIASES["coo_matrix"],
+            "tocsr",
+        )
+        is not _EXACT_COO_TO_CSR
+    ):
+        raise ValueError("qualified scipy COO conversion authority changed")
+    if (
+        _static_mro_attribute(
+            _ASSEMBLY_SPARSE_ALIASES["csr_matrix"],
+            "eliminate_zeros",
+        )
+        is not _EXACT_CSR_ELIMINATE_ZEROS
+    ):
+        raise ValueError("qualified scipy CSR authority changed")
+
+
+_EXACT_ASSEMBLY_NUMERICAL_GUARD = _ASSEMBLY_NUMERICAL_EPOCH_MANAGER.bind(
+    _require_exact_assembly_numerical_authority
+)
+
+
+_EXACT_FE_MODEL_GET_MATERIAL = type.__getattribute__(
+    _FEModel,
+    "__dict__",
+)["get_material"]
+_EXACT_FE_MESH_REVISION_SIGNATURE = type.__getattribute__(
+    _FEMesh,
+    "__dict__",
+)["revision_signature"]
+_EXACT_FE_MESH_GET_NODE = type.__getattribute__(_FEMesh, "__dict__")["get_node"]
+_EXACT_FE_MESH_NUM_NODES = type.__getattribute__(_FEMesh, "__dict__")[
+    "num_nodes"
+]
+_EXACT_DOF_MANAGER_TOTAL_DOFS = type.__getattribute__(
+    _DOFManager,
+    "__dict__",
+)["total_dofs"]
+_EXACT_DOF_MANAGER_GET_NODE_DOFS = type.__getattribute__(
+    _DOFManager,
+    "__dict__",
+)["get_node_dofs"]
+_EXACT_PREPARED_S3_CLASS_NAMESPACE = tuple(
+    type.__getattribute__(_PreparedReferenceS3Components, "__dict__").items()
+)
+_Q4_WARM_ASSEMBLY_OWNED_MESH_CACHE_KEYS = frozenset(
+    {
+        "_sparsity_cache",
+        "_topology_signature_cache",
+        "_qualified_s3_reference_stiffness_plan",
+        "_recovery_batch_plan",
+    }
+)
+
+
+def _require_exact_prepared_s3_class_authority() -> None:
+    namespace = type.__getattribute__(_PreparedReferenceS3Components, "__dict__")
+    current = tuple(namespace.items())
+    if (
+        len(current) != len(_EXACT_PREPARED_S3_CLASS_NAMESPACE)
+        or any(
+            type(name) is not str
+            or name != expected_name
+            or value is not expected_value
+            for (name, value), (expected_name, expected_value) in zip(
+                current,
+                _EXACT_PREPARED_S3_CLASS_NAMESPACE,
+            )
+        )
+    ):
+        raise ValueError("qualified S3 reference-plan authority changed")
+
+
+def _exact_mapping_items(value: Any) -> tuple[tuple[Any, Any], ...] | None:
+    """Return callback-free exact-dict items for one canonical mapping."""
+
+    if type(value) not in {dict, _QualifiedStateMapping}:
+        return None
+    return tuple(dict.items(value))
+
+
+def _static_mro_attribute(owner: type[Any], name: str) -> Any:
+    """Resolve one descriptor without invoking user-controlled lookup."""
+
+    for base in type.__getattribute__(owner, "__mro__"):
+        namespace = type.__getattribute__(base, "__dict__")
+        if name in namespace:
+            return namespace[name]
+    return None
+
+
+def _bind_qualified_assembly_runtime_authority(
+    numerical_guard: Any,
+    q4_guard: Any,
+    s3_guard: Any,
+    q4_type: type[Any],
+    s3_type: type[Any],
+) -> Any:
+    """Bind exact runtime authority across warm and scalar shell routes."""
+
+    def require(model: "FEModel", *, context: str) -> None:
+        numerical_guard(context=context)
+        for element in tuple(model.mesh.elements.values()):
+            try:
+                if type(element) is q4_type:
+                    q4_guard(element, context=context)
+                elif type(element) is s3_type:
+                    s3_guard(element, context=context)
+            except (AttributeError, TypeError, ValueError) as exc:
+                raise AssemblyError(
+                    f"{context} found incompatible qualified shell authority"
+                ) from exc
+
+    return require
+
+
+_REQUIRE_QUALIFIED_ASSEMBLY_RUNTIME_AUTHORITY = (
+    _bind_qualified_assembly_runtime_authority(
+        _EXACT_NUMPY_RUNTIME_GUARD,
+        _EXACT_Q4_RUNTIME_GUARD,
+        _EXACT_S3_RUNTIME_GUARD,
+        _QualifiedE4PLShellElement,
+        _QualifiedE4PLS3ShellElement,
+    )
+)
+
+
+def _make_assembly_operation_authority_holder() -> tuple[Any, Any]:
+    """Keep the exact qualified assembly dispatcher outside module state."""
+
+    authority: list[Any] = []
+
+    def install(guard: Any) -> None:
+        if authority:
+            raise RuntimeError("qualified assembly operation is already bound")
+        authority.append(guard)
+
+    def require() -> None:
+        if len(authority) != 1:
+            raise RuntimeError("qualified assembly operation is not bound")
+        authority[0]()
+
+    return install, require
+
+
+(
+    _INSTALL_EXACT_ASSEMBLY_OPERATION_AUTHORITY,
+    _REQUIRE_EXACT_ASSEMBLY_OPERATION_AUTHORITY,
+) = _make_assembly_operation_authority_holder()
+
+
+def _make_assembly_execution_plan_registry() -> tuple[Any, Any]:
+    """Keep warm execution plans inaccessible from caller-facing leases."""
+
+    plans: WeakKeyDictionary[Any, Any] = WeakKeyDictionary()
+
+    def register(lease: Any, plan: Any) -> None:
+        if lease in plans:
+            raise RuntimeError("qualified assembly execution plan is already bound")
+        plans[lease] = plan
+
+    def lookup(lease: Any) -> Any:
+        return plans.get(lease)
+
+    return register, lookup
+
+
+(
+    _REGISTER_QUALIFIED_ASSEMBLY_EXECUTION_PLAN,
+    _LOOKUP_QUALIFIED_ASSEMBLY_EXECUTION_PLAN,
+) = _make_assembly_execution_plan_registry()
+
+
+def _bind_qualified_assembly_runtime_lease(
+    numerical_guard: Any,
+    q4_guard: Any,
+    s3_guard: Any,
+    q4_type: type[Any],
+    s3_type: type[Any],
+    q4_manager: Any,
+    s3_manager: Any,
+    invalidate_q4: Any,
+    invalidate_s3: Any,
+    q4_cached_epoch_guard: Any,
+    q4_fast_base_guard: Any,
+    q4_assembly_cached_stiffness: Any,
+    s3_cached_epoch_guard: Any,
+    s3_fast_base_guard: Any,
+    s3_assembly_cached_stiffness: Any,
+    assembly_epoch_manager: Any,
+    assembly_numerical_guard: Any,
+    assembly_operation_guard: Any,
+    exact_model_type: type[Any],
+    execution_plan_register: Any,
+) -> Any:
+    """Bind one immutable authority generation across a whole assembly call."""
+
+    cached_accessor_authority = tuple(
+        (
+            accessor,
+            accessor.__code__,
+            accessor.__defaults__,
+            accessor.__kwdefaults__,
+            (
+                ()
+                if accessor.__kwdefaults__ is None
+                else tuple(accessor.__kwdefaults__.items())
+            ),
+        )
+        for accessor in (
+            q4_assembly_cached_stiffness,
+            s3_assembly_cached_stiffness,
+        )
+    )
+    exact_execution_plan_register = FunctionType(
+        execution_plan_register.__code__,
+        execution_plan_register.__globals__,
+        execution_plan_register.__name__,
+        execution_plan_register.__defaults__,
+        execution_plan_register.__closure__,
+    )
+    owned_routing_by_mesh: dict[int, tuple[Any, dict[str, Any]]] = {}
+    prepared_s3_by_mesh: dict[int, tuple[Any, dict[str, Any]]] = {}
+    exact_bool = bool
+    exact_numpy_isfinite = np.isfinite
+    exact_numpy_coordinate_types = frozenset(
+        {
+            np.float16,
+            np.float32,
+            np.float64,
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.uint8,
+            np.uint16,
+            np.uint32,
+            np.uint64,
+            np.intp,
+            np.uintp,
+        }
+    )
+
+    class PreparedS3PlanDataChanged(ValueError):
+        """An owned plan changed and may be safely dropped before execution."""
+
+    class PreparedS3MaterialChanged(ValueError):
+        """A supported material edit invalidated a prepared plan preflight."""
+
+    class PreparedS3ExecutionChanged(ValueError):
+        """A valid derived component cache replaced a prepared execution record."""
+
+    def capture_coordinate_scalar(value: Any) -> tuple[Any, ...] | None:
+        """Capture one exact finite built-in or NumPy coordinate scalar."""
+
+        value_type = type(value)
+        if value_type is int:
+            return (int, value)
+        if value_type is float:
+            if not exact_bool(exact_numpy_isfinite(value)):
+                return None
+            return (float, value)
+        if value_type not in exact_numpy_coordinate_types:
+            return None
+        if not exact_bool(exact_numpy_isfinite(value)):
+            return None
+        dtype_text = value.dtype.str
+        payload = value.tobytes()
+        if type(dtype_text) is not str or type(payload) is not bytes:
+            return None
+        return (value_type, dtype_text, payload)
+
+    def coordinate_scalar_matches(
+        current: Any,
+        authority: tuple[Any, ...],
+    ) -> bool:
+        """Compare one coordinate without invoking foreign numeric protocols."""
+
+        expected_type = authority[0]
+        if type(current) is not expected_type:
+            return False
+        if expected_type is int:
+            return current == authority[1]
+        if expected_type is float:
+            return current == authority[1]
+        return (
+            current.dtype.str == authority[1]
+            and current.tobytes() == authority[2]
+        )
+
+    def discard_mesh_records(reference: Any, *, mesh_identity: int) -> None:
+        current_routing = owned_routing_by_mesh.get(mesh_identity)
+        if current_routing is not None and current_routing[0] is reference:
+            owned_routing_by_mesh.pop(mesh_identity, None)
+        current_s3 = prepared_s3_by_mesh.get(mesh_identity)
+        if current_s3 is not None and current_s3[0] is reference:
+            prepared_s3_by_mesh.pop(mesh_identity, None)
+
+    def mesh_reference(mesh: Any) -> Any:
+        identity = id(mesh)
+        return ref(
+            mesh,
+            lambda reference, *, mesh_identity=identity: discard_mesh_records(
+                reference,
+                mesh_identity=mesh_identity,
+            ),
+        )
+
+    def require_cached_accessor_authority() -> None:
+        for (
+            accessor,
+            expected_code,
+            expected_defaults,
+            expected_kwdefaults,
+            expected_kw_items,
+        ) in cached_accessor_authority:
+            current_kwdefaults = accessor.__kwdefaults__
+            if (
+                accessor.__code__ is not expected_code
+                or accessor.__defaults__ is not expected_defaults
+                or current_kwdefaults is not expected_kwdefaults
+                or (
+                    expected_kwdefaults is not None
+                    and (
+                        type(current_kwdefaults) is not dict
+                        or len(current_kwdefaults) != len(expected_kw_items)
+                        or any(
+                            name not in current_kwdefaults
+                            or current_kwdefaults[name] is not expected
+                            for name, expected in expected_kw_items
+                        )
+                    )
+                )
+            ):
+                raise ValueError(
+                    "qualified assembly cached-stiffness accessor authority changed"
+                )
+
+    def capture(
+        model: "FEModel",
+        *,
+        context: str,
+        allow_q4_cached_stiffness: bool = False,
+    ) -> Any:
+        # Both family generations precede every model/mesh observation.  A
+        # provider that mutates either authority while exposing the model can
+        # therefore never redefine the lease's starting generation.
+        assembly_start_generation = assembly_epoch_manager.capture_generation()
+        q4_start_generation = q4_manager.capture_generation()
+        s3_start_generation = s3_manager.capture_generation()
+        try:
+            numerical_guard(context=context)
+            assembly_numerical_guard()
+            assembly_operation_guard()
+            require_cached_accessor_authority()
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            raise AssemblyError(
+                f"{context} found incompatible qualified shell authority"
+            ) from exc
+        elements: tuple[Any, ...] = ()
+        q4_elements: tuple[Any, ...] = ()
+        s3_elements: tuple[Any, ...] = ()
+        q4_fast_records: tuple[tuple[Any, Any, bytes], ...] = ()
+        s3_fast_records: tuple[tuple[Any, Any, bytes], ...] = ()
+        s3_plan_fallback_records: tuple[
+            tuple[Any, Any, tuple[Any, ...], bytes], ...
+        ] = ()
+        s3_fast_reference_plan: Any = None
+        s3_fast_reference_snapshot: dict[str, Any] | None = None
+        s3_prepared_authority: dict[str, Any] | None = None
+        s3_fast_candidate_seen = False
+        q4_fast_mesh_token: tuple[Any, type[Any], int] | None = None
+        q4_fast_plan: dict[str, Any] | None = None
+        qualified_input_plan: dict[str, Any] | None = None
+        owned_execution_authority: dict[str, Any] | None = None
+
+        def invalidate_s3_reference_plan() -> None:
+            mesh = (
+                q4_fast_plan["mesh"]
+                if q4_fast_plan is not None
+                else qualified_input_plan["mesh"]
+                if qualified_input_plan is not None
+                else None
+            )
+            if type(mesh) is _FEMesh:
+                namespace = object.__getattribute__(mesh, "__dict__")
+                if type(namespace) is dict:
+                    dict.pop(
+                        namespace,
+                        "_qualified_s3_reference_stiffness_plan",
+                        None,
+                    )
+                prepared_s3_by_mesh.pop(id(mesh), None)
+
+        def canonical_q4_total_bytes(value: Any) -> bytes:
+            if type(value) is bytes:
+                if len(value) != 24 * 24 * 8:
+                    raise ValueError(
+                        "qualified Q4 cached assembly bytes are incompatible"
+                    )
+                return value
+            if (
+                type(value) is not np.ndarray
+                or value.dtype != np.dtype(np.float64)
+                or value.shape != (24, 24)
+                or value.strides != (192, 8)
+                or not value.flags.c_contiguous
+                or value.flags.writeable
+            ):
+                raise ValueError(
+                    "qualified Q4 cached assembly total is incompatible"
+                )
+            payload = memoryview(value).cast("B").tobytes()
+            if len(payload) != 24 * 24 * 8:
+                raise ValueError(
+                    "qualified Q4 cached assembly bytes are incompatible"
+                )
+            return payload
+
+        def canonical_s3_total_bytes(value: Any) -> bytes:
+            if type(value) is not bytes or len(value) != 18 * 18 * 8:
+                raise ValueError(
+                    "qualified S3 cached assembly bytes are incompatible"
+                )
+            return value
+
+        def capture_owned_routing(
+            mesh: Any,
+            mesh_namespace: dict[str, Any],
+            element_items: tuple[tuple[int, Any], ...],
+            token: Any,
+        ) -> dict[str, Any] | None:
+            """Capture callback-free node/DOF routing for an all-qualified mesh."""
+
+            if not element_items or not all(
+                type(element_id) is int
+                and type(element) in {q4_type, s3_type}
+                for element_id, element in element_items
+            ):
+                return None
+            mesh_identity = id(mesh)
+            cached_entry = owned_routing_by_mesh.get(mesh_identity)
+            if cached_entry is not None:
+                cached_reference, cached_routing = cached_entry
+                if cached_reference() is mesh:
+                    cached_plan = {
+                        "routing": cached_routing,
+                        "mesh_namespace": mesh_namespace,
+                        "token": token,
+                    }
+                    try:
+                        require_owned_routing(cached_plan)
+                        cached_elements = cached_routing["element_records"]
+                        if (
+                            len(element_items) != len(cached_elements)
+                            or any(
+                                current_id != expected[0]
+                                or current_element is not expected[1]
+                                for (current_id, current_element), expected in zip(
+                                    element_items,
+                                    cached_elements,
+                                )
+                            )
+                        ):
+                            raise ValueError(
+                                "qualified assembly element mapping changed"
+                            )
+                    except ValueError:
+                        if (
+                            token is cached_routing["token"]
+                            and type(token) is _QualifiedMutationEpoch
+                            and len(token) == 1
+                            and int(list.__getitem__(token, 0))
+                            == cached_routing["token_value"]
+                        ):
+                            # An unchanged monotonic token cannot authorize a
+                            # new baseline.  This is an untracked raw mutation,
+                            # so fail closed instead of normalizing it into the
+                            # persistent execution record.
+                            raise
+                        owned_routing_by_mesh.pop(mesh_identity, None)
+                        prepared_s3_by_mesh.pop(mesh_identity, None)
+                    else:
+                        return cached_routing
+                else:
+                    owned_routing_by_mesh.pop(mesh_identity, None)
+                    prepared_s3_by_mesh.pop(mesh_identity, None)
+            nodes = dict.get(mesh_namespace, "nodes")
+            dof_manager = dict.get(mesh_namespace, "dof_manager")
+            if (
+                type(nodes) is not _QualifiedStateMapping
+                or type(dof_manager) is not _DOFManager
+            ):
+                return None
+            nodes_namespace = object.__getattribute__(nodes, "__dict__")
+            dof_namespace = object.__getattribute__(dof_manager, "__dict__")
+            if (
+                type(nodes_namespace) is not dict
+                or not all(type(name) is str for name in nodes_namespace)
+                or any(name in nodes_namespace for name in ("get", "items", "values"))
+                or dict.get(nodes_namespace, "_qualified_token") is not token
+                or dict.get(nodes_namespace, "_qualified_kind") != "node"
+                or _static_mro_attribute(_QualifiedStateMapping, "get")
+                is not dict.get
+                or _static_mro_attribute(_QualifiedStateMapping, "items")
+                is not dict.items
+                or _static_mro_attribute(_QualifiedStateMapping, "values")
+                is not dict.values
+                or type(dof_namespace) is not dict
+                or not all(type(name) is str for name in dof_namespace)
+                or "total_dofs" in dof_namespace
+                or "get_node_dofs" in dof_namespace
+                or type.__getattribute__(_DOFManager, "__dict__").get(
+                    "total_dofs"
+                )
+                is not _EXACT_DOF_MANAGER_TOTAL_DOFS
+                or type.__getattribute__(_DOFManager, "__dict__").get(
+                    "get_node_dofs"
+                )
+                is not _EXACT_DOF_MANAGER_GET_NODE_DOFS
+            ):
+                return None
+
+            node_to_dof = dict.get(dof_namespace, "_node_to_dof")
+            dof_to_node = dict.get(dof_namespace, "_dof_to_node")
+            dof_to_local = dict.get(dof_namespace, "_dof_to_local")
+            total_dofs = dict.get(dof_namespace, "_total_dofs")
+            constrained_dofs = dict.get(dof_namespace, "_constrained_dofs")
+            if (
+                type(node_to_dof) is not dict
+                or type(dof_to_node) is not dict
+                or type(dof_to_local) is not dict
+                or type(total_dofs) is not int
+                or total_dofs < 0
+                or type(constrained_dofs) is not set
+            ):
+                return None
+
+            node_records: list[tuple[Any, ...]] = []
+            node_dofs: dict[int, tuple[int, ...]] = {}
+            node_items = tuple(dict.items(nodes))
+            for node_id, node in node_items:
+                if type(node_id) is not int or type(node) is not _Node:
+                    return None
+                namespace = object.__getattribute__(node, "__dict__")
+                if (
+                    type(namespace) is not dict
+                    or not all(type(name) is str for name in namespace)
+                    or "coords" in namespace
+                ):
+                    return None
+                stored_id = dict.get(namespace, "id")
+                x = dict.get(namespace, "x")
+                y = dict.get(namespace, "y")
+                z = dict.get(namespace, "z")
+                x_authority = capture_coordinate_scalar(x)
+                y_authority = capture_coordinate_scalar(y)
+                z_authority = capture_coordinate_scalar(z)
+                revision = dict.get(namespace, "_coordinate_revision")
+                dofs = dict.get(namespace, "dofs")
+                if (
+                    type(stored_id) is not int
+                    or stored_id != node_id
+                    or x_authority is None
+                    or y_authority is None
+                    or z_authority is None
+                    or type(revision) is not int
+                    or type(dofs) is not list
+                    or len(dofs) != 6
+                    or not all(type(dof) is int for dof in dofs)
+                ):
+                    return None
+                coordinates_are_builtin = (
+                    x_authority[0] in {int, float}
+                    and y_authority[0] in {int, float}
+                    and z_authority[0] in {int, float}
+                )
+                dof_values = tuple(dofs)
+                manager_dofs = dict.get(node_to_dof, node_id)
+                if (
+                    type(manager_dofs) is not list
+                    or len(manager_dofs) != len(dof_values)
+                    or tuple(manager_dofs) != dof_values
+                ):
+                    return None
+                node_dofs[node_id] = tuple(manager_dofs)
+                node_records.append(
+                    (
+                        node_id,
+                        node,
+                        namespace,
+                        tuple(namespace),
+                        stored_id,
+                        x_authority,
+                        y_authority,
+                        z_authority,
+                        coordinates_are_builtin,
+                        revision,
+                        dofs,
+                        dof_values,
+                    )
+                )
+
+            node_to_dof_items = tuple(
+                (node_id, dofs, tuple(dofs))
+                for node_id, dofs in dict.items(node_to_dof)
+                if type(node_id) is int and type(dofs) is list
+            )
+            if (
+                len(node_to_dof_items) != len(node_to_dof)
+                or tuple(node_dofs) != tuple(node_id for node_id, *_ in node_to_dof_items)
+                or any(node_dofs[node_id] != values for node_id, _dofs, values in node_to_dof_items)
+                or not all(
+                    type(dof) is int
+                    and type(node_id) is int
+                    and type(dict.get(dof_to_local, dof)) is int
+                    and dict.get(dof_to_node, dof) == node_id
+                    for node_id, values in node_dofs.items()
+                    for dof in values
+                )
+                or len(dof_to_node) != total_dofs
+                or len(dof_to_local) != total_dofs
+                or set(dof_to_node) != set(range(total_dofs))
+                or set(dof_to_local) != set(range(total_dofs))
+                or not all(type(dof) is int for dof in constrained_dofs)
+            ):
+                return None
+
+            element_records: list[tuple[Any, ...]] = []
+            rows: list[int] = []
+            cols: list[int] = []
+            signature_elements: list[dict[str, Any]] = []
+            for element_id, element in element_items:
+                namespace = object.__getattribute__(element, "__dict__")
+                if type(namespace) is not dict or not all(
+                    type(name) is str for name in namespace
+                ):
+                    return None
+                stored_id = dict.get(namespace, "element_id")
+                node_ids = dict.get(namespace, "node_ids")
+                material_name = dict.get(namespace, "material_name")
+                expected_nodes = 4 if type(element) is q4_type else 3
+                if (
+                    type(stored_id) is not int
+                    or stored_id != element_id
+                    or type(node_ids) is not tuple
+                    or len(node_ids) != expected_nodes
+                    or not all(type(node_id) is int for node_id in node_ids)
+                    or type(material_name) is not str
+                ):
+                    return None
+                node_id_values = tuple(node_ids)
+                if any(node_id not in node_dofs for node_id in node_id_values):
+                    return None
+                dof_values = tuple(
+                    dof
+                    for node_id in node_id_values
+                    for dof in node_dofs[node_id]
+                )
+                local_size = len(dof_values)
+                rows.extend(
+                    dof
+                    for dof in dof_values
+                    for _ in range(local_size)
+                )
+                cols.extend(dof_values * local_size)
+                element_records.append(
+                    (
+                        element_id,
+                        element,
+                        namespace,
+                        stored_id,
+                        node_ids,
+                        node_id_values,
+                        material_name,
+                        dof_values,
+                    )
+                )
+                signature_elements.append(
+                    {
+                        "id": element_id,
+                        "class": type(element).__name__,
+                        "node_ids": list(node_id_values),
+                        "dofs": list(dof_values),
+                    }
+                )
+
+            revisions = dict.get(mesh_namespace, "revisions")
+            if type(revisions) is not dict or not all(
+                type(name) is str and type(value) is int
+                for name, value in dict.items(revisions)
+            ):
+                return None
+            revision_items = tuple(dict.items(revisions))
+            signature_payload = {
+                "matrix_type": "stiffness",
+                "topology_revision": dict.get(revisions, "topology", 0),
+                "mpc_revision": dict.get(revisions, "mpc", 0),
+                "elements": signature_elements,
+            }
+            signature = hashlib.sha256(
+                json.dumps(
+                    signature_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+            rows_values = tuple(rows)
+            cols_values = tuple(cols)
+            routing = {
+                "token": token,
+                "token_value": int(list.__getitem__(token, 0)),
+                "nodes": nodes,
+                "nodes_namespace": nodes_namespace,
+                "nodes_mapping_keys": tuple(nodes_namespace),
+                "node_items": node_items,
+                "node_records": tuple(node_records),
+                "dof_manager": dof_manager,
+                "dof_namespace": dof_namespace,
+                "dof_keys": tuple(dof_namespace),
+                "node_to_dof": node_to_dof,
+                "node_to_dof_items": node_to_dof_items,
+                "dof_to_node": dof_to_node,
+                "dof_to_node_items": tuple(dict.items(dof_to_node)),
+                "dof_to_local": dof_to_local,
+                "dof_to_local_items": tuple(dict.items(dof_to_local)),
+                "constrained_dofs": constrained_dofs,
+                "constrained_values": frozenset(constrained_dofs),
+                "total_dofs": total_dofs,
+                "element_records": tuple(element_records),
+                "rows": rows_values,
+                "cols": cols_values,
+                "rows_bytes": np.asarray(
+                    rows_values,
+                    dtype=np.intp,
+                ).tobytes(order="C"),
+                "cols_bytes": np.asarray(
+                    cols_values,
+                    dtype=np.intp,
+                ).tobytes(order="C"),
+                "entry_count": len(rows_values),
+                "revisions": revisions,
+                "revision_items": revision_items,
+                "signature": signature,
+                "has_s3": any(
+                    type(element) is s3_type
+                    for _element_id, element in element_items
+                ),
+            }
+            owned_routing_by_mesh[mesh_identity] = (
+                mesh_reference(mesh),
+                routing,
+            )
+            return routing
+
+        def require_owned_routing(plan: dict[str, Any]) -> None:
+            routing = plan.get("routing")
+            if routing is None:
+                return
+            mesh_namespace = plan["mesh_namespace"]
+            nodes = routing["nodes"]
+            nodes_namespace = routing["nodes_namespace"]
+            dof_manager = routing["dof_manager"]
+            dof_namespace = routing["dof_namespace"]
+            if (
+                dict.get(mesh_namespace, "nodes") is not nodes
+                or type(nodes) is not _QualifiedStateMapping
+                or object.__getattribute__(nodes, "__dict__") is not nodes_namespace
+                or tuple(nodes_namespace) != routing["nodes_mapping_keys"]
+                or any(name in nodes_namespace for name in ("get", "items", "values"))
+                or dict.get(nodes_namespace, "_qualified_token") is not plan["token"]
+                or dict.get(nodes_namespace, "_qualified_kind") != "node"
+                or _static_mro_attribute(_QualifiedStateMapping, "get") is not dict.get
+                or _static_mro_attribute(_QualifiedStateMapping, "items") is not dict.items
+                or _static_mro_attribute(_QualifiedStateMapping, "values") is not dict.values
+                or dict.get(mesh_namespace, "dof_manager") is not dof_manager
+                or type(dof_manager) is not _DOFManager
+                or object.__getattribute__(dof_manager, "__dict__") is not dof_namespace
+                or tuple(dof_namespace) != routing["dof_keys"]
+                or "total_dofs" in dof_namespace
+                or "get_node_dofs" in dof_namespace
+                or type.__getattribute__(_DOFManager, "__dict__").get("total_dofs")
+                is not _EXACT_DOF_MANAGER_TOTAL_DOFS
+                or type.__getattribute__(_DOFManager, "__dict__").get("get_node_dofs")
+                is not _EXACT_DOF_MANAGER_GET_NODE_DOFS
+                or dict.get(dof_namespace, "_node_to_dof") is not routing["node_to_dof"]
+                or dict.get(dof_namespace, "_dof_to_node") is not routing["dof_to_node"]
+                or dict.get(dof_namespace, "_dof_to_local") is not routing["dof_to_local"]
+                or dict.get(dof_namespace, "_constrained_dofs") is not routing["constrained_dofs"]
+                or dict.get(dof_namespace, "_total_dofs") != routing["total_dofs"]
+            ):
+                raise ValueError("qualified assembly owned routing changed")
+            current_node_items = tuple(dict.items(nodes))
+            if (
+                len(current_node_items) != len(routing["node_items"])
+                or any(
+                    current_id != expected_id or current_node is not expected_node
+                    for (current_id, current_node), (expected_id, expected_node) in zip(
+                        current_node_items,
+                        routing["node_items"],
+                    )
+                )
+            ):
+                raise ValueError("qualified assembly node mapping changed")
+            for (
+                node_id,
+                node,
+                namespace,
+                namespace_keys,
+                stored_id,
+                x_authority,
+                y_authority,
+                z_authority,
+                coordinates_are_builtin,
+                revision,
+                dofs,
+                dof_values,
+            ) in routing["node_records"]:
+                current_x = dict.get(namespace, "x")
+                current_y = dict.get(namespace, "y")
+                current_z = dict.get(namespace, "z")
+                coordinates_match = (
+                    type(current_x) is x_authority[0]
+                    and current_x == x_authority[1]
+                    and type(current_y) is y_authority[0]
+                    and current_y == y_authority[1]
+                    and type(current_z) is z_authority[0]
+                    and current_z == z_authority[1]
+                    if coordinates_are_builtin
+                    else coordinate_scalar_matches(current_x, x_authority)
+                    and coordinate_scalar_matches(current_y, y_authority)
+                    and coordinate_scalar_matches(current_z, z_authority)
+                )
+                if (
+                    type(node) is not _Node
+                    or object.__getattribute__(node, "__dict__") is not namespace
+                    or tuple(namespace) != namespace_keys
+                    or dict.get(namespace, "id") != stored_id
+                    or stored_id != node_id
+                    or not coordinates_match
+                    or dict.get(namespace, "_coordinate_revision") != revision
+                    or dict.get(namespace, "dofs") is not dofs
+                    or tuple(dofs) != dof_values
+                ):
+                    raise ValueError("qualified assembly node routing changed")
+            if any(
+                dict.get(routing["node_to_dof"], node_id) is not dofs
+                or tuple(dofs) != values
+                for node_id, dofs, values in routing["node_to_dof_items"]
+            ):
+                raise ValueError("qualified assembly DOF routing changed")
+            for element_id, element, namespace, stored_id, node_ids, node_values, material_name, _dofs in routing["element_records"]:
+                if (
+                    type(element) not in {q4_type, s3_type}
+                    or object.__getattribute__(element, "__dict__") is not namespace
+                    or dict.get(namespace, "element_id") != stored_id
+                    or stored_id != element_id
+                    or dict.get(namespace, "node_ids") is not node_ids
+                    or tuple(node_ids) != node_values
+                    or dict.get(namespace, "material_name") != material_name
+                ):
+                    raise ValueError("qualified assembly element routing changed")
+
+        def capture_s3_reference_snapshot(
+            candidate: Any,
+            s3_ids: tuple[int, ...],
+        ) -> dict[str, Any] | None:
+            _require_exact_prepared_s3_class_authority()
+            if type(candidate) is not _PreparedReferenceS3Components:
+                return None
+            namespace = object.__getattribute__(candidate, "__dict__")
+            if type(namespace) is not dict or not all(
+                type(name) is str for name in namespace
+            ):
+                return None
+            matrices = dict.get(namespace, "matrices")
+            cache_keys = dict.get(namespace, "element_cache_keys")
+            batched_ids = dict.get(namespace, "batched_element_ids")
+            cached_ids = dict.get(namespace, "cached_element_ids")
+            group_ids = dict.get(namespace, "group_element_ids")
+            candidate_ids = dict.get(namespace, "candidate_element_ids")
+            complete = dict.get(namespace, "complete_eligible_coverage")
+            fallback = dict.get(namespace, "fallback_reasons")
+            evaluations = dict.get(namespace, "component_evaluation_count")
+            revision_key = dict.get(namespace, "revision_key")
+            prevalidated = dict.get(namespace, "matrices_prevalidated")
+            if (
+                type(matrices) is not MappingProxyType
+                or type(cache_keys) is not MappingProxyType
+                or type(batched_ids) is not tuple
+                or type(cached_ids) is not tuple
+                or type(group_ids) is not tuple
+                or type(candidate_ids) is not tuple
+                or candidate_ids != s3_ids
+                or complete is not True
+                or type(fallback) is not MappingProxyType
+                or type(evaluations) is not int
+                or type(revision_key) is not tuple
+                or type(prevalidated) is not bool
+                or not all(element_id in matrices for element_id in s3_ids)
+            ):
+                return None
+            matrix_items = tuple(matrices.items())
+            matrix_records: list[tuple[int, Any, bytes]] = []
+            for element_id, matrix in matrix_items:
+                if (
+                    type(element_id) is not int
+                    or type(matrix) is not np.ndarray
+                    or matrix.dtype.str != "<f8"
+                    or matrix.shape != (18, 18)
+                    or matrix.strides != (144, 8)
+                    or not matrix.flags.c_contiguous
+                    or matrix.flags.writeable
+                ):
+                    return None
+                base = matrix
+                seen: set[int] = set()
+                while type(base) is np.ndarray:
+                    if id(base) in seen or base.flags.writeable:
+                        return None
+                    seen.add(id(base))
+                    base = base.base
+                    if base is None:
+                        return None
+                if not (
+                    type(base) is bytes
+                    or (
+                        type(base) is memoryview
+                        and base.readonly
+                        and type(base.obj) is bytes
+                    )
+                ):
+                    return None
+                payload = memoryview(matrix).cast("B").tobytes()
+                if (
+                    len(payload) != 18 * 18 * 8
+                    or matrix.dtype.str != "<f8"
+                    or matrix.shape != (18, 18)
+                    or matrix.strides != (144, 8)
+                    or matrix.flags.writeable
+                ):
+                    return None
+                matrix_records.append((element_id, matrix, payload))
+            cache_key_items = tuple(cache_keys.items())
+            fallback_items = tuple(
+                (reason, tuple(element_ids))
+                for reason, element_ids in fallback.items()
+                if type(reason) is str and type(element_ids) is tuple
+            )
+            if len(fallback_items) != len(fallback):
+                return None
+            if batched_ids and cached_ids:
+                path = "formulation_native_shared_components_and_exact_cache_reuse"
+            elif cached_ids:
+                path = "formulation_native_exact_cache_reuse"
+            elif batched_ids:
+                path = "formulation_native_shared_components"
+            else:
+                path = "formulation_native_scalar_fallback"
+            diagnostics = (
+                ("policy_id", _REFERENCE_S3_BATCH_POLICY_ID),
+                ("formulation_id", _REFERENCE_S3_FORMULATION_ID),
+                ("scope", "reference_elastic_isotropic_positive_winding"),
+                ("path", path),
+                ("candidate_element_count", len(candidate_ids)),
+                ("element_count", len(matrix_items)),
+                ("translation_group_element_count", len(batched_ids)),
+                ("exact_element_cache_reuse_count", len(cached_ids)),
+                ("exact_translation_group_count", len(group_ids)),
+                ("component_evaluation_count", evaluations),
+                ("matrix_shape_finite_symmetry_prevalidated", prevalidated),
+                ("element_ids", tuple(element_id for element_id, _ in matrix_items)),
+                ("group_element_ids", tuple(tuple(group) for group in group_ids)),
+                ("fallback_reasons", fallback_items),
+                ("revision_key", tuple(revision_key)),
+                ("parallel_kernel", False),
+                ("legacy_stiffness_batch_eligible", False),
+                ("legacy_nonlinear_batch_eligible", False),
+                ("speedup_claimed", False),
+            )
+            return {
+                "candidate": candidate,
+                "namespace": namespace,
+                "namespace_keys": tuple(namespace),
+                "matrices": matrices,
+                "matrix_items": matrix_items,
+                "matrix_records": tuple(matrix_records),
+                "matrix_payloads": MappingProxyType(
+                    {
+                        element_id: payload
+                        for element_id, _matrix, payload in matrix_records
+                    }
+                ),
+                "cache_keys": cache_keys,
+                "cache_key_items": cache_key_items,
+                "batched_ids": batched_ids,
+                "cached_ids": cached_ids,
+                "group_ids": group_ids,
+                "candidate_ids": candidate_ids,
+                "complete": complete,
+                "fallback": fallback,
+                "fallback_items": fallback_items,
+                "evaluations": evaluations,
+                "revision_key": revision_key,
+                "prevalidated": prevalidated,
+                "diagnostics": diagnostics,
+            }
+
+        def require_s3_reference_snapshot(snapshot: dict[str, Any]) -> None:
+            _require_exact_prepared_s3_class_authority()
+            candidate = snapshot["candidate"]
+            namespace = snapshot["namespace"]
+            current_matrix_items = tuple(snapshot["matrices"].items())
+            current_cache_key_items = tuple(snapshot["cache_keys"].items())
+            matrix_items_changed = (
+                len(current_matrix_items) != len(snapshot["matrix_items"])
+                or any(
+                    current_id != expected_id or current_matrix is not expected_matrix
+                    for (current_id, current_matrix), (expected_id, expected_matrix) in zip(
+                        current_matrix_items,
+                        snapshot["matrix_items"],
+                    )
+                )
+            )
+            cache_key_items_changed = (
+                len(current_cache_key_items) != len(snapshot["cache_key_items"])
+                or any(
+                    current_id != expected_id or current_key is not expected_key
+                    for (current_id, current_key), (expected_id, expected_key) in zip(
+                        current_cache_key_items,
+                        snapshot["cache_key_items"],
+                    )
+                )
+            )
+            if (
+                type(candidate) is not _PreparedReferenceS3Components
+                or object.__getattribute__(candidate, "__dict__") is not namespace
+                or tuple(namespace) != snapshot["namespace_keys"]
+                or dict.get(namespace, "matrices") is not snapshot["matrices"]
+                or matrix_items_changed
+                or any(
+                    type(current) is not np.ndarray
+                    or current is not expected
+                    or current.dtype.str != "<f8"
+                    or current.shape != (18, 18)
+                    or current.strides != (144, 8)
+                    or not current.flags.c_contiguous
+                    or current.flags.writeable
+                    or memoryview(current).cast("B").tobytes() != payload
+                    for _element_id, expected, payload in snapshot[
+                        "matrix_records"
+                    ]
+                    for current in (expected,)
+                )
+                or dict.get(namespace, "element_cache_keys") is not snapshot["cache_keys"]
+                or cache_key_items_changed
+                or dict.get(namespace, "batched_element_ids") is not snapshot["batched_ids"]
+                or dict.get(namespace, "cached_element_ids") is not snapshot["cached_ids"]
+                or dict.get(namespace, "group_element_ids") is not snapshot["group_ids"]
+                or dict.get(namespace, "candidate_element_ids") is not snapshot["candidate_ids"]
+                or dict.get(namespace, "complete_eligible_coverage") is not snapshot["complete"]
+                or dict.get(namespace, "fallback_reasons") is not snapshot["fallback"]
+                or tuple(
+                    (reason, tuple(element_ids))
+                    for reason, element_ids in snapshot["fallback"].items()
+                )
+                != snapshot["fallback_items"]
+                or dict.get(namespace, "component_evaluation_count") != snapshot["evaluations"]
+                or dict.get(namespace, "revision_key") is not snapshot["revision_key"]
+                or dict.get(namespace, "matrices_prevalidated") is not snapshot["prevalidated"]
+            ):
+                raise ValueError("qualified S3 reference-plan state changed")
+
+        s3_plan_input_names = (
+            "element_id",
+            "node_ids",
+            "material_name",
+            "thickness",
+            "drilling_stabilization",
+            "hourglass_stabilization",
+            "reduced_integration",
+            "_is_3node",
+            "_is_4node",
+            "_is_6node",
+            "_is_8node",
+            "_is_triangular",
+            "_is_quadrilateral",
+            "material_angle_deg",
+            "material_direction",
+            "shell_section",
+            "reference_normal",
+            "director_polarity",
+            "reference_surface_offset",
+            "_qualified_plan_state_revision",
+        )
+
+        def capture_s3_plan_value(value: Any) -> tuple[Any, ...] | None:
+            if type(value) is np.ndarray:
+                if (
+                    value.dtype.str != "<f8"
+                    or not value.flags.c_contiguous
+                    or value.flags.writeable
+                ):
+                    return None
+                payload = memoryview(value).cast("B").tobytes()
+                return (
+                    "array",
+                    value,
+                    value.dtype.str,
+                    value.shape,
+                    value.strides,
+                    payload,
+                )
+            if type(value) in {type(None), bool, int, float, str, tuple}:
+                if type(value) is tuple and not all(
+                    type(member) is int for member in value
+                ):
+                    return None
+                return ("value", type(value), value)
+            return None
+
+        def capture_s3_plan_element_authority(
+            element_items: tuple[tuple[int, Any], ...],
+        ) -> tuple[tuple[Any, ...], ...] | None:
+            records: list[tuple[Any, ...]] = []
+            for element_id, element in element_items:
+                if type(element) is not s3_type:
+                    continue
+                namespace = object.__getattribute__(element, "__dict__")
+                if type(namespace) is not dict or not all(
+                    type(name) is str for name in namespace
+                ):
+                    return None
+                values: list[tuple[str, tuple[Any, ...]]] = []
+                for name in s3_plan_input_names:
+                    if name not in namespace:
+                        return None
+                    authority = capture_s3_plan_value(dict.get(namespace, name))
+                    if authority is None:
+                        return None
+                    values.append((name, authority))
+                records.append(
+                    (
+                        element_id,
+                        element,
+                        namespace,
+                        tuple(namespace),
+                        tuple(values),
+                    )
+                )
+            return tuple(records)
+
+        def require_s3_plan_element_authority(
+            records: tuple[tuple[Any, ...], ...],
+        ) -> None:
+            for element_id, element, namespace, namespace_keys, values in records:
+                if (
+                    type(element_id) is not int
+                    or type(element) is not s3_type
+                    or object.__getattribute__(element, "__dict__") is not namespace
+                    or tuple(namespace) != namespace_keys
+                    or dict.get(namespace, "element_id") != element_id
+                ):
+                    raise ValueError("qualified S3 prepared-plan input changed")
+                for name, authority in values:
+                    current = dict.get(namespace, name)
+                    if authority[0] == "array":
+                        (
+                            _kind,
+                            expected,
+                            dtype,
+                            shape,
+                            strides,
+                            payload,
+                        ) = authority
+                        if (
+                            type(current) is not np.ndarray
+                            or current.dtype.str != dtype
+                            or current.shape != shape
+                            or current.strides != strides
+                            or not current.flags.c_contiguous
+                            or current.flags.writeable
+                            or memoryview(current).cast("B").tobytes() != payload
+                        ):
+                            raise ValueError(
+                                "qualified S3 prepared-plan vector input changed"
+                            )
+                    else:
+                        _kind, expected_type, expected = authority
+                        if type(current) is not expected_type or current != expected:
+                            raise ValueError(
+                                "qualified S3 prepared-plan scalar input changed"
+                            )
+
+        q4_execution_input_names = (
+            "element_id",
+            "node_ids",
+            "material_name",
+            "thickness",
+            "drilling_stabilization",
+            "hourglass_stabilization",
+            "reduced_integration",
+            "_is_3node",
+            "_is_4node",
+            "_is_6node",
+            "_is_8node",
+            "_is_triangular",
+            "_is_quadrilateral",
+            "material_angle_deg",
+            "material_direction",
+            "shell_section",
+            "reference_normal",
+            "director_polarity",
+            "pl_stabilization",
+            "planar_tolerance",
+            "warped_formulation",
+            "_qualified_plan_state_revision",
+        )
+        material_execution_input_names = (
+            "name",
+            "elastic_modulus",
+            "poisson_ratio",
+            "density",
+            "yield_stress",
+            "hardening_curve",
+        )
+        s3_execution_scalar_names = tuple(
+            name
+            for name in s3_plan_input_names
+            if name
+            not in {
+                "element_id",
+                "node_ids",
+                "material_name",
+                "reference_normal",
+            }
+        )
+        s3_execution_scalar_getter = itemgetter(*s3_execution_scalar_names)
+        material_execution_getter = itemgetter(
+            *material_execution_input_names
+        )
+
+        def execution_scalar_is_owned(value: Any) -> bool:
+            if type(value) in {type(None), bool, int, float, str}:
+                return True
+            return type(value) is tuple and all(
+                execution_scalar_is_owned(member) for member in value
+            )
+
+        def owned_immutable_values_match(current: Any, expected: Any) -> bool:
+            """Compare exact cache fingerprints without foreign equality hooks."""
+
+            current_type = type(current)
+            if current_type is not type(expected):
+                return False
+            if current_type in {type(None), bool, int, float, str, bytes}:
+                return current == expected
+            if current_type is tuple:
+                return len(current) == len(expected) and all(
+                    owned_immutable_values_match(member, expected_member)
+                    for member, expected_member in zip(current, expected)
+                )
+            return current is expected
+
+        def component_guards_match(current: Any, expected: Any) -> bool:
+            """Accept a freshly sealed, value-equal exact S3 guard tuple."""
+
+            if current is expected:
+                return True
+            return bool(
+                type(current) is tuple
+                and type(expected) is tuple
+                and len(current) == len(expected) == 12
+                and current[0] is expected[0]
+                and type(current[1]) is type(expected[1]) is int
+                and current[1] == expected[1]
+                and current[2] is expected[2]
+                and type(current[3]) is type(expected[3])
+                and current[3] == expected[3]
+                and current[4] is expected[4]
+                and owned_immutable_values_match(current[5], expected[5])
+                and owned_immutable_values_match(current[6], expected[6])
+                and owned_immutable_values_match(current[7], expected[7])
+                and current[8] is expected[8]
+                and current[9] is expected[9]
+                and current[10] is expected[10]
+                and current[11] is expected[11]
+            )
+
+        def capture_execution_array(value: Any) -> tuple[Any, ...] | None:
+            if (
+                type(value) is not np.ndarray
+                or value.dtype.str != "<f8"
+                or not value.flags.c_contiguous
+                or value.flags.writeable
+            ):
+                return None
+            base = value
+            bases: list[Any] = []
+            seen: set[int] = set()
+            while type(base) is np.ndarray:
+                if id(base) in seen or base.flags.writeable:
+                    return None
+                seen.add(id(base))
+                base = base.base
+                if base is None:
+                    return None
+                bases.append(base)
+            if not (
+                type(base) is bytes
+                or (
+                    type(base) is memoryview
+                    and base.readonly
+                    and type(base.obj) is bytes
+                )
+            ):
+                return None
+            return (
+                value,
+                value.dtype.str,
+                value.shape,
+                value.strides,
+                tuple(bases),
+                base,
+            )
+
+        def require_execution_array(
+            current: Any,
+            authority: tuple[Any, ...],
+            *,
+            payload: bytes | None = None,
+        ) -> None:
+            expected, dtype, shape, strides, bases, terminal_base = authority
+            if (
+                type(current) is not np.ndarray
+                or current is not expected
+                or current.dtype.str != dtype
+                or current.shape != shape
+                or current.strides != strides
+                or not current.flags.c_contiguous
+                or current.flags.writeable
+            ):
+                raise ValueError("qualified cached execution array changed")
+            base: Any = current
+            for expected_base in bases:
+                if (
+                    base.base is not expected_base
+                    or (
+                        type(expected_base) is np.ndarray
+                        and expected_base.flags.writeable
+                    )
+                ):
+                    raise ValueError(
+                        "qualified cached execution array base changed"
+                    )
+                base = expected_base
+            if base is not terminal_base:
+                raise ValueError("qualified cached execution array base changed")
+            if payload is not None and memoryview(current).cast("B").tobytes() != payload:
+                raise ValueError("qualified cached execution array bytes changed")
+
+        def capture_execution_authority(
+            records: tuple[tuple[Any, Any, bytes], ...],
+            *,
+            family: str,
+        ) -> tuple[tuple[Any, ...], ...]:
+            if family != "s3":
+                raise ValueError("prepared execution authority is S3-only")
+            captured: list[tuple[Any, ...]] = []
+            for element, material, expected_bytes in records:
+                if type(element) is not s3_type or type(material) is not _Material:
+                    raise ValueError("qualified cached execution type changed")
+                namespace = object.__getattribute__(element, "__dict__")
+                material_namespace = object.__getattribute__(material, "__dict__")
+                if (
+                    type(namespace) is not dict
+                    or type(material_namespace) is not dict
+                    or not all(type(name) is str for name in namespace)
+                    or not all(type(name) is str for name in material_namespace)
+                ):
+                    raise ValueError("qualified cached execution namespace changed")
+                if any(
+                    name not in namespace
+                    for name in s3_execution_scalar_names
+                ) or "reference_normal" not in namespace:
+                    raise ValueError("qualified cached execution input is absent")
+                scalar_values = s3_execution_scalar_getter(namespace)
+                if not all(
+                    execution_scalar_is_owned(value)
+                    for value in scalar_values
+                ):
+                    raise ValueError(
+                        "qualified cached execution input is mutable"
+                    )
+                scalar_types = tuple(map(type, scalar_values))
+                normal_authority = capture_execution_array(
+                    dict.get(namespace, "reference_normal")
+                )
+                if normal_authority is None:
+                    raise ValueError(
+                        "qualified cached execution normal is mutable"
+                    )
+                normal_payload = memoryview(normal_authority[0]).cast(
+                    "B"
+                ).tobytes()
+                if any(
+                    name not in material_namespace
+                    for name in material_execution_input_names
+                ):
+                    raise ValueError("qualified cached material input is absent")
+                material_values = material_execution_getter(
+                    material_namespace
+                )
+                if not all(
+                    execution_scalar_is_owned(value)
+                    for value in material_values
+                ):
+                    raise ValueError("qualified cached material input is mutable")
+                components = dict.get(namespace, "_qualified_components")
+                cache_key = dict.get(namespace, "_qualified_cache_key")
+                guard = dict.get(namespace, "_qualified_component_guard")
+                total = (
+                    components.get("total")
+                    if type(components) is MappingProxyType
+                    else None
+                )
+                if (
+                    type(cache_key) is not tuple
+                    or type(guard) is not tuple
+                    or type(total) is not np.ndarray
+                    or total.dtype.str != "<f8"
+                    or total.shape != (18, 18)
+                    or total.strides != (144, 8)
+                    or not total.flags.c_contiguous
+                    or total.flags.writeable
+                    or memoryview(total).cast("B").tobytes() != expected_bytes
+                ):
+                    raise ValueError("qualified cached execution total changed")
+                total_authority = capture_execution_array(total)
+                if total_authority is None:
+                    raise ValueError("qualified cached execution total changed")
+                captured.append(
+                    (
+                        element,
+                        namespace,
+                        frozenset(namespace),
+                        scalar_values,
+                        scalar_types,
+                        normal_authority,
+                        normal_payload,
+                        components,
+                        cache_key,
+                        guard,
+                        total_authority,
+                        expected_bytes,
+                        material,
+                        material_namespace,
+                        frozenset(material_namespace),
+                        material_values,
+                        tuple(map(type, material_values)),
+                    )
+                )
+            return tuple(captured)
+
+        def require_execution_authority(
+            authority: tuple[tuple[Any, ...], ...],
+            *,
+            allow_equivalent_guard_rebind: bool = False,
+        ) -> tuple[tuple[Any, ...], ...]:
+            rebound: list[tuple[Any, ...]] | None = None
+            for record_index, record in enumerate(authority):
+                (
+                element,
+                namespace,
+                namespace_keys,
+                scalar_values,
+                scalar_types,
+                normal_authority,
+                normal_payload,
+                components,
+                cache_key,
+                guard,
+                total_authority,
+                expected_bytes,
+                material,
+                material_namespace,
+                material_namespace_keys,
+                material_values,
+                material_types,
+                ) = record
+                subscriptions = dict.get(
+                    namespace,
+                    "_qualified_direct_state_tokens",
+                )
+                has_multiple_owners = (
+                    type(subscriptions) is list
+                    and len(subscriptions) > 1
+                    and all(
+                        type(token) is _QualifiedMutationEpoch
+                        and len(token) == 1
+                        and type(list.__getitem__(token, 0)) is int
+                        for token in subscriptions
+                    )
+                    and len({id(token) for token in subscriptions})
+                    == len(subscriptions)
+                )
+                if (
+                    type(element) is not s3_type
+                    or object.__getattribute__(element, "__dict__") is not namespace
+                    or namespace.keys() != namespace_keys
+                    or type(material) is not _Material
+                    or object.__getattribute__(material, "__dict__")
+                    is not material_namespace
+                    or material_namespace.keys() != material_namespace_keys
+                ):
+                    raise ValueError("qualified cached execution authority changed")
+                if not has_multiple_owners:
+                    current_components = dict.get(
+                        namespace,
+                        "_qualified_components",
+                    )
+                    current_cache_key = dict.get(
+                        namespace,
+                        "_qualified_cache_key",
+                    )
+                    current_guard = dict.get(
+                        namespace,
+                        "_qualified_component_guard",
+                    )
+                    guard_matches = component_guards_match(current_guard, guard)
+                    if (
+                        current_components is not components
+                        or current_cache_key is not cache_key
+                        or not guard_matches
+                        or type(components) is not MappingProxyType
+                        or components.get("total") is not total_authority[0]
+                    ):
+                        raise PreparedS3ExecutionChanged(
+                            "qualified cached execution cache changed"
+                        )
+                    if current_guard is not guard:
+                        if not allow_equivalent_guard_rebind:
+                            raise ValueError(
+                                "qualified cached execution guard changed"
+                            )
+                        if rebound is None:
+                            rebound = list(authority)
+                        updated = list(record)
+                        updated[9] = current_guard
+                        rebound[record_index] = tuple(updated)
+                current_scalars = s3_execution_scalar_getter(namespace)
+                if (
+                    tuple(map(type, current_scalars)) != scalar_types
+                    or current_scalars != scalar_values
+                ):
+                    raise ValueError(
+                        "qualified cached execution scalar changed"
+                    )
+                current_normal = dict.get(namespace, "reference_normal")
+                if has_multiple_owners:
+                    current_normal_authority = capture_execution_array(
+                        current_normal
+                    )
+                    if (
+                        current_normal_authority is None
+                        or current_normal_authority[1:4]
+                        != normal_authority[1:4]
+                        or memoryview(current_normal).cast("B").tobytes()
+                        != normal_payload
+                    ):
+                        raise ValueError(
+                            "qualified cached execution normal changed"
+                        )
+                else:
+                    require_execution_array(
+                        current_normal,
+                        normal_authority,
+                    )
+                if not has_multiple_owners:
+                    require_execution_array(
+                        total_authority[0],
+                        total_authority,
+                    )
+                current_material_values = material_execution_getter(
+                    material_namespace
+                )
+                if (
+                    tuple(map(type, current_material_values))
+                    != material_types
+                    or current_material_values != material_values
+                ):
+                    raise PreparedS3MaterialChanged(
+                        "qualified cached material input changed"
+                    )
+            return authority if rebound is None else tuple(rebound)
+
+        def require_execution_node_authority(routing: dict[str, Any]) -> None:
+            for (
+                node_id,
+                node,
+                namespace,
+                _namespace_keys,
+                stored_id,
+                x_authority,
+                y_authority,
+                z_authority,
+                coordinates_are_builtin,
+                revision,
+                _dofs,
+                _dof_values,
+            ) in routing["node_records"]:
+                current_x = dict.get(namespace, "x")
+                current_y = dict.get(namespace, "y")
+                current_z = dict.get(namespace, "z")
+                coordinates_match = (
+                    type(current_x) is x_authority[0]
+                    and current_x == x_authority[1]
+                    and type(current_y) is y_authority[0]
+                    and current_y == y_authority[1]
+                    and type(current_z) is z_authority[0]
+                    and current_z == z_authority[1]
+                    if coordinates_are_builtin
+                    else coordinate_scalar_matches(current_x, x_authority)
+                    and coordinate_scalar_matches(current_y, y_authority)
+                    and coordinate_scalar_matches(current_z, z_authority)
+                )
+                if (
+                    type(node) is not _Node
+                    or object.__getattribute__(node, "__dict__") is not namespace
+                    or dict.get(namespace, "id") != stored_id
+                    or stored_id != node_id
+                    or not coordinates_match
+                    or dict.get(namespace, "_coordinate_revision") != revision
+                ):
+                    raise ValueError("qualified cached execution node input changed")
+
+        def bind_prepared_s3_snapshot(
+            mesh: Any,
+            candidate: Any,
+            snapshot: dict[str, Any],
+            token: Any,
+            element_items: tuple[tuple[int, Any], ...],
+        ) -> None:
+            element_authority = capture_s3_plan_element_authority(element_items)
+            plan = q4_fast_plan
+            routing = None if plan is None else plan.get("routing")
+            execution_records: list[tuple[Any, Any, bytes]] = []
+            fallback_records: list[tuple[Any, Any, tuple[Any, ...], bytes]] = []
+            cache_keys = snapshot["cache_keys"]
+            payloads = snapshot["matrix_payloads"]
+            for element_id, element in element_items:
+                if type(element) is not s3_type:
+                    continue
+                material = builtin_material(element)
+                expected_key = cache_keys.get(element_id)
+                payload = payloads.get(element_id)
+                if (
+                    material is None
+                    or type(expected_key) is not tuple
+                    or type(payload) is not bytes
+                ):
+                    execution_records = []
+                    break
+                execution_records.append((element, material, payload))
+                fallback_records.append(
+                    (element, material, expected_key, payload)
+                )
+            if (
+                element_authority is None
+                or routing is None
+                or len(execution_records) != len(snapshot["candidate_ids"])
+            ):
+                prepared_s3_by_mesh.pop(id(mesh), None)
+                return
+            execution_authority = capture_execution_authority(
+                tuple(execution_records),
+                family="s3",
+            )
+            mesh_identity = id(mesh)
+            prepared_s3_by_mesh[mesh_identity] = (
+                mesh_reference(mesh),
+                {
+                    "candidate": candidate,
+                    "snapshot": snapshot,
+                    "token": token,
+                    "token_value": int(list.__getitem__(token, 0)),
+                    "element_authority": element_authority,
+                    "routing": routing,
+                    "execution_records": tuple(execution_records),
+                    "fallback_records": tuple(fallback_records),
+                    "execution_authority": execution_authority,
+                },
+            )
+
+        def lookup_prepared_s3_authority(
+            mesh: Any,
+            candidate: Any,
+            token: Any,
+            *,
+            routing_prevalidated: bool = False,
+            preflight: bool = False,
+        ) -> dict[str, Any] | None:
+            record = prepared_s3_by_mesh.get(id(mesh))
+            if record is None:
+                return None
+            reference, authority = record
+            if reference() is not mesh:
+                prepared_s3_by_mesh.pop(id(mesh), None)
+                return None
+            if (
+                candidate is not authority["candidate"]
+                or token is not authority["token"]
+                or type(token) is not _QualifiedMutationEpoch
+                or len(token) != 1
+                or int(list.__getitem__(token, 0)) != authority["token_value"]
+            ):
+                return None
+            snapshot = authority["snapshot"]
+            try:
+                require_s3_reference_snapshot(snapshot)
+            except ValueError as exc:
+                raise PreparedS3PlanDataChanged(
+                    "qualified S3 prepared matrix authority changed"
+                ) from exc
+            if q4_fast_plan is None or q4_fast_plan.get("routing") is not authority["routing"]:
+                raise ValueError("qualified S3 prepared routing changed")
+            if not routing_prevalidated:
+                require_owned_routing(q4_fast_plan)
+            current_execution_authority = require_execution_authority(
+                authority["execution_authority"],
+                allow_equivalent_guard_rebind=preflight,
+            )
+            if current_execution_authority is not authority["execution_authority"]:
+                authority["execution_authority"] = current_execution_authority
+            return authority
+
+        def lookup_prepared_s3_snapshot(
+            mesh: Any,
+            candidate: Any,
+            token: Any,
+            *,
+            routing_prevalidated: bool = False,
+        ) -> dict[str, Any] | None:
+            authority = lookup_prepared_s3_authority(
+                mesh,
+                candidate,
+                token,
+                routing_prevalidated=routing_prevalidated,
+            )
+            return None if authority is None else authority["snapshot"]
+
+        def prepared_s3_snapshot_is_current(
+            mesh: Any,
+            candidate: Any,
+            token: Any,
+        ) -> bool:
+            record = prepared_s3_by_mesh.get(id(mesh))
+            if record is None:
+                return False
+            reference, authority = record
+            return bool(
+                reference() is mesh
+                and candidate is authority["candidate"]
+                and token is authority["token"]
+                and type(token) is _QualifiedMutationEpoch
+                and len(token) == 1
+                and int(list.__getitem__(token, 0))
+                == authority["token_value"]
+            )
+
+        def qualified_builtin_inputs() -> dict[str, Any] | None:
+            """Capture callback-free inputs for an exact qualified model.
+
+            Exact FEModel/FEMesh instances remain supported with the ordinary
+            providers defined by their classes.  Once a qualified element is
+            present, however, an instance or class provider replacement must
+            fail closed; falling back through the changed provider would let
+            routing differ between qualification discovery and assembly.
+            """
+
+            if type(model) is not exact_model_type:
+                return None
+            model_namespace = object.__getattribute__(model, "__dict__")
+            if type(model_namespace) is not dict or not all(
+                type(name) is str for name in model_namespace
+            ):
+                return None
+            mesh = dict.get(model_namespace, "mesh")
+            if type(mesh) is not _FEMesh:
+                return None
+            mesh_namespace = object.__getattribute__(mesh, "__dict__")
+            if type(mesh_namespace) is not dict or not all(
+                type(name) is str for name in mesh_namespace
+            ):
+                return None
+            mapping = dict.get(mesh_namespace, "elements")
+            if type(mapping) is not _QualifiedStateMapping:
+                return None
+            mapping_namespace = object.__getattribute__(mapping, "__dict__")
+            if type(mapping_namespace) is not dict or not all(
+                type(name) is str for name in mapping_namespace
+            ):
+                return None
+            element_items = tuple(dict.items(mapping))
+            if not all(
+                type(element_id) is int
+                for element_id, _element in element_items
+            ):
+                return None
+            qualified_elements = tuple(
+                element
+                for _element_id, element in element_items
+                if type(element) in {q4_type, s3_type}
+            )
+            if not qualified_elements:
+                return None
+
+            materials = dict.get(model_namespace, "materials")
+            current_material = dict.get(model_namespace, "current_material")
+            token = dict.get(mesh_namespace, "_qualified_direct_state_token")
+            provider_changed = (
+                "get_material" in model_namespace
+                or type.__getattribute__(exact_model_type, "__dict__").get(
+                    "get_material"
+                )
+                is not _EXACT_FE_MODEL_GET_MATERIAL
+                or any(
+                    name in mesh_namespace
+                    for name in ("get_node", "revision_signature", "num_nodes")
+                )
+                or type.__getattribute__(_FEMesh, "__dict__").get("get_node")
+                is not _EXACT_FE_MESH_GET_NODE
+                or type.__getattribute__(_FEMesh, "__dict__").get(
+                    "revision_signature"
+                )
+                is not _EXACT_FE_MESH_REVISION_SIGNATURE
+                or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
+                is not _EXACT_FE_MESH_NUM_NODES
+                or any(
+                    name in mapping_namespace
+                    for name in ("get", "items", "values")
+                )
+                or _static_mro_attribute(_QualifiedStateMapping, "get")
+                is not dict.get
+                or _static_mro_attribute(_QualifiedStateMapping, "items")
+                is not dict.items
+                or _static_mro_attribute(_QualifiedStateMapping, "values")
+                is not dict.values
+            )
+            if provider_changed:
+                raise ValueError(
+                    "qualified assembly input-provider authority changed"
+                )
+            if (
+                type(materials) is not dict
+                or not all(type(name) is str for name in materials)
+                or type(current_material) is not str
+                or "default" not in materials
+                or type(token) is not _QualifiedMutationEpoch
+                or len(token) != 1
+                or type(list.__getitem__(token, 0)) is not int
+                or dict.get(mapping_namespace, "_qualified_token") is not token
+                or dict.get(mapping_namespace, "_qualified_kind") != "element"
+            ):
+                raise ValueError("qualified assembly owned inputs are invalid")
+
+            material_items = tuple(dict.items(materials))
+            material_by_element: dict[int, tuple[Any, Any]] = {}
+            for element in qualified_elements:
+                element_namespace = object.__getattribute__(element, "__dict__")
+                if type(element_namespace) is not dict:
+                    raise ValueError(
+                        "qualified assembly element namespace is invalid"
+                    )
+                material_name = dict.get(element_namespace, "material_name")
+                if type(material_name) is not str:
+                    raise ValueError(
+                        "qualified assembly material name is invalid"
+                    )
+                resolved_name = material_name or current_material
+                default = dict.get(materials, "default")
+                material = dict.get(materials, resolved_name, default)
+                if material is None:
+                    raise ValueError(
+                        "qualified assembly material authority is absent"
+                    )
+                material_by_element[id(element)] = (element, material)
+
+            return {
+                "model_namespace": model_namespace,
+                "mesh": mesh,
+                "mesh_namespace": mesh_namespace,
+                "mapping": mapping,
+                "mapping_namespace": mapping_namespace,
+                "element_items": element_items,
+                "materials": materials,
+                "material_items": material_items,
+                "current_material": current_material,
+                "material_by_element": material_by_element,
+                "token": token,
+                "token_value": int(list.__getitem__(token, 0)),
+            }
+
+        def require_qualified_builtin_inputs() -> None:
+            plan = qualified_input_plan
+            if plan is None:
+                return
+            model_namespace = plan["model_namespace"]
+            mesh = plan["mesh"]
+            mesh_namespace = plan["mesh_namespace"]
+            mapping = plan["mapping"]
+            mapping_namespace = plan["mapping_namespace"]
+            current_items = tuple(dict.items(mapping))
+            current_material_items = tuple(dict.items(plan["materials"]))
+            if (
+                type(model) is not exact_model_type
+                or object.__getattribute__(model, "__dict__")
+                is not model_namespace
+                or "get_material" in model_namespace
+                or type.__getattribute__(exact_model_type, "__dict__").get(
+                    "get_material"
+                )
+                is not _EXACT_FE_MODEL_GET_MATERIAL
+                or dict.get(model_namespace, "mesh") is not mesh
+                or dict.get(model_namespace, "materials")
+                is not plan["materials"]
+                or dict.get(model_namespace, "current_material")
+                != plan["current_material"]
+                or type(mesh) is not _FEMesh
+                or object.__getattribute__(mesh, "__dict__") is not mesh_namespace
+                or any(
+                    name in mesh_namespace
+                    for name in ("get_node", "revision_signature", "num_nodes")
+                )
+                or type.__getattribute__(_FEMesh, "__dict__").get("get_node")
+                is not _EXACT_FE_MESH_GET_NODE
+                or type.__getattribute__(_FEMesh, "__dict__").get(
+                    "revision_signature"
+                )
+                is not _EXACT_FE_MESH_REVISION_SIGNATURE
+                or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
+                is not _EXACT_FE_MESH_NUM_NODES
+                or dict.get(mesh_namespace, "elements") is not mapping
+                or dict.get(mesh_namespace, "_qualified_direct_state_token")
+                is not plan["token"]
+                or type(mapping) is not _QualifiedStateMapping
+                or object.__getattribute__(mapping, "__dict__")
+                is not mapping_namespace
+                or any(
+                    name in mapping_namespace
+                    for name in ("get", "items", "values")
+                )
+                or _static_mro_attribute(_QualifiedStateMapping, "get")
+                is not dict.get
+                or _static_mro_attribute(_QualifiedStateMapping, "items")
+                is not dict.items
+                or _static_mro_attribute(_QualifiedStateMapping, "values")
+                is not dict.values
+                or dict.get(mapping_namespace, "_qualified_token")
+                is not plan["token"]
+                or dict.get(mapping_namespace, "_qualified_kind") != "element"
+                or int(list.__getitem__(plan["token"], 0))
+                != plan["token_value"]
+                or len(current_items) != len(plan["element_items"])
+                or any(
+                    current_id != expected_id
+                    or current_element is not expected_element
+                    for (current_id, current_element), (
+                        expected_id,
+                        expected_element,
+                    ) in zip(current_items, plan["element_items"])
+                )
+                or len(current_material_items) != len(plan["material_items"])
+                or any(
+                    current_name != expected_name
+                    or current_material is not expected_material
+                    for (current_name, current_material), (
+                        expected_name,
+                        expected_material,
+                    ) in zip(current_material_items, plan["material_items"])
+                )
+            ):
+                raise ValueError("qualified assembly owned inputs changed")
+
+        def raw_plan_candidate() -> dict[str, Any] | None:
+            """Capture provider-free exact builtin model state for Q4 reuse."""
+
+            if type(model) is not exact_model_type:
+                return None
+            model_namespace = object.__getattribute__(model, "__dict__")
+            if (
+                type(model_namespace) is not dict
+                or not all(type(name) is str for name in model_namespace)
+                or "get_material" in model_namespace
+                or type.__getattribute__(exact_model_type, "__dict__").get(
+                    "get_material"
+                )
+                is not _EXACT_FE_MODEL_GET_MATERIAL
+            ):
+                return None
+            mesh = dict.get(model_namespace, "mesh")
+            materials = dict.get(model_namespace, "materials")
+            current_material = dict.get(model_namespace, "current_material")
+            if (
+                type(mesh) is not _FEMesh
+                or type(materials) is not dict
+                or not all(type(name) is str for name in materials)
+                or type(current_material) is not str
+                or "default" not in materials
+            ):
+                return None
+            mesh_namespace = object.__getattribute__(mesh, "__dict__")
+            if (
+                type(mesh_namespace) is not dict
+                or not all(type(name) is str for name in mesh_namespace)
+                or any(
+                    name in mesh_namespace
+                    for name in ("get_node", "revision_signature", "num_nodes")
+                )
+                or (
+                    dict.get(mesh_namespace, "_sparsity_cache") is not None
+                    and type(dict.get(mesh_namespace, "_sparsity_cache")) is not dict
+                )
+                or (
+                    dict.get(mesh_namespace, "_topology_signature_cache") is not None
+                    and type(
+                        dict.get(mesh_namespace, "_topology_signature_cache")
+                    )
+                    is not dict
+                )
+                or type.__getattribute__(_FEMesh, "__dict__").get("get_node")
+                is not _EXACT_FE_MESH_GET_NODE
+                or type.__getattribute__(_FEMesh, "__dict__").get(
+                    "revision_signature"
+                )
+                is not _EXACT_FE_MESH_REVISION_SIGNATURE
+                or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
+                is not _EXACT_FE_MESH_NUM_NODES
+            ):
+                return None
+            element_mapping = dict.get(mesh_namespace, "elements")
+            token = dict.get(mesh_namespace, "_qualified_direct_state_token")
+            mapping_namespace = (
+                object.__getattribute__(element_mapping, "__dict__")
+                if type(element_mapping) is _QualifiedStateMapping
+                else None
+            )
+            if (
+                type(element_mapping) is not _QualifiedStateMapping
+                or type(mapping_namespace) is not dict
+                or not all(type(name) is str for name in mapping_namespace)
+                or any(
+                    name in mapping_namespace
+                    for name in ("get", "items", "values")
+                )
+                or _static_mro_attribute(_QualifiedStateMapping, "get")
+                is not dict.get
+                or _static_mro_attribute(_QualifiedStateMapping, "items")
+                is not dict.items
+                or _static_mro_attribute(_QualifiedStateMapping, "values")
+                is not dict.values
+                or type(token) is not _QualifiedMutationEpoch
+                or len(token) != 1
+                or type(list.__getitem__(token, 0)) is not int
+                or dict.get(mapping_namespace, "_qualified_token") is not token
+                or dict.get(mapping_namespace, "_qualified_kind") != "element"
+            ):
+                return None
+            element_items = tuple(dict.items(element_mapping))
+            if not all(
+                type(element_id) is int
+                for element_id, _element in element_items
+            ):
+                return None
+            material_items = tuple(dict.items(materials))
+            if not all(
+                type(name) is str for name, _material in material_items
+            ):
+                return None
+            routing = capture_owned_routing(
+                mesh,
+                mesh_namespace,
+                element_items,
+                token,
+            )
+            if (
+                element_items
+                and all(
+                    type(element) in {q4_type, s3_type}
+                    for _element_id, element in element_items
+                )
+                and routing is None
+            ):
+                raise ValueError(
+                    "qualified assembly node/DOF routing is incompatible"
+                )
+            return {
+                "model_namespace": model_namespace,
+                "model_keys": tuple(model_namespace),
+                "model_key_types": tuple(map(type, model_namespace)),
+                "mesh": mesh,
+                "mesh_namespace": mesh_namespace,
+                "mesh_keys": tuple(
+                    name
+                    for name in mesh_namespace
+                    if name not in _Q4_WARM_ASSEMBLY_OWNED_MESH_CACHE_KEYS
+                ),
+                "mesh_key_types": tuple(
+                    type(name)
+                    for name in mesh_namespace
+                    if name not in _Q4_WARM_ASSEMBLY_OWNED_MESH_CACHE_KEYS
+                ),
+                "sparsity_cache": dict.get(mesh_namespace, "_sparsity_cache"),
+                "topology_cache": dict.get(
+                    mesh_namespace,
+                    "_topology_signature_cache",
+                ),
+                "element_mapping": element_mapping,
+                "mapping_namespace": mapping_namespace,
+                "mapping_keys": tuple(mapping_namespace),
+                "mapping_key_types": tuple(map(type, mapping_namespace)),
+                "element_items": element_items,
+                "materials": materials,
+                "material_items": material_items,
+                "current_material": current_material,
+                "token": token,
+                "token_type": type(token),
+                "token_value": int(list.__getitem__(token, 0)),
+                "routing": routing,
+            }
+
+        def builtin_material(element: Any) -> Any:
+            plan = q4_fast_plan
+            if plan is None:
+                return None
+            element_namespace = object.__getattribute__(element, "__dict__")
+            if type(element_namespace) is not dict:
+                return None
+            material_name = dict.get(element_namespace, "material_name")
+            if type(material_name) is not str:
+                return None
+            if not material_name:
+                material_name = plan["current_material"]
+            materials = plan["materials"]
+            default = dict.get(materials, "default")
+            if default is None:
+                return None
+            return dict.get(materials, material_name, default)
+
+        def s3_prepared_cache_key_matches(
+            element: Any,
+            material: Any,
+            expected_key: Any,
+        ) -> bool:
+            """Reconstruct the exact S3 plan preimage without providers."""
+
+            plan = q4_fast_plan
+            if (
+                plan is None
+                or type(element) is not s3_type
+                or type(material) is not _Material
+                or type(expected_key) is not tuple
+                or len(expected_key) != 14
+            ):
+                return False
+            element_namespace = object.__getattribute__(element, "__dict__")
+            material_namespace = object.__getattribute__(material, "__dict__")
+            if (
+                type(element_namespace) is not dict
+                or type(material_namespace) is not dict
+                or any(
+                    name in material_namespace
+                    for name in (
+                        "elastic_symmetry",
+                        "shear_modulus",
+                        "is_nonlinear",
+                        "elastic_compliance_matrix",
+                    )
+                )
+            ):
+                return False
+            node_ids = dict.get(element_namespace, "node_ids")
+            if (
+                type(node_ids) is not tuple
+                or len(node_ids) != 3
+                or not all(type(node_id) is int for node_id in node_ids)
+            ):
+                return False
+            nodes = dict.get(plan["mesh_namespace"], "nodes")
+            coordinate_rows: list[tuple[float, float, float]] = []
+            for node_id in node_ids:
+                node = dict.get(nodes, node_id)
+                if type(node) is not _Node:
+                    return False
+                namespace = object.__getattribute__(node, "__dict__")
+                if type(namespace) is not dict:
+                    return False
+                x = dict.get(namespace, "x")
+                y = dict.get(namespace, "y")
+                z = dict.get(namespace, "z")
+                if any(type(value) not in {int, float} for value in (x, y, z)):
+                    return False
+                coordinate_rows.append((float(x), float(y), float(z)))
+            coordinates = np.asarray(coordinate_rows, dtype=np.float64)
+            relative_bytes = np.ascontiguousarray(
+                coordinates - np.mean(coordinates, axis=0),
+                dtype=np.float64,
+            ).tobytes(order="C")
+
+            elastic_modulus = dict.get(material_namespace, "elastic_modulus")
+            poisson_ratio = dict.get(material_namespace, "poisson_ratio")
+            hardening_curve = dict.get(material_namespace, "hardening_curve")
+            if (
+                type(elastic_modulus) not in {int, float}
+                or type(poisson_ratio) not in {int, float}
+                or hardening_curve is not None
+            ):
+                return False
+            elastic_modulus = float(elastic_modulus)
+            poisson_ratio = float(poisson_ratio)
+            material_fingerprint = (
+                "isotropic_scalar_path",
+                elastic_modulus,
+                poisson_ratio,
+                elastic_modulus / (2.0 * (1.0 + poisson_ratio)),
+            )
+            revisions = dict.get(plan["mesh_namespace"], "revisions")
+            if type(revisions) is not dict:
+                return False
+            normal = dict.get(element_namespace, "reference_normal")
+            if (
+                type(normal) is not np.ndarray
+                or normal.dtype.str != "<f8"
+                or normal.shape != (3,)
+                or normal.strides != (8,)
+                or normal.flags.writeable
+            ):
+                return False
+            direction = dict.get(element_namespace, "material_direction")
+            section = dict.get(element_namespace, "shell_section")
+            if direction is not None or section is not None:
+                return False
+            thickness = dict.get(element_namespace, "thickness")
+            angle = dict.get(element_namespace, "material_angle_deg")
+            polarity = dict.get(element_namespace, "director_polarity")
+            offset = dict.get(element_namespace, "reference_surface_offset")
+            if (
+                type(thickness) not in {int, float}
+                or type(angle) not in {int, float}
+                or type(polarity) is not int
+                or type(offset) not in {int, float}
+            ):
+                return False
+            current_key = (
+                id(plan["mesh"]),
+                id(material),
+                material_fingerprint,
+                int(dict.get(revisions, "geometry", 0)),
+                int(dict.get(revisions, "material", 0)),
+                relative_bytes,
+                float(thickness),
+                float(angle),
+                None,
+                None,
+                tuple(normal),
+                int(polarity),
+                float(offset),
+                True,
+            )
+            return current_key == expected_key
+
+        def require_raw_plan() -> None:
+            plan = q4_fast_plan
+            if plan is None:
+                raise ValueError("qualified Q4 warm assembly plan is absent")
+            model_namespace = plan["model_namespace"]
+            mesh = plan["mesh"]
+            mesh_namespace = plan["mesh_namespace"]
+            mapping = plan["element_mapping"]
+            mapping_namespace = plan["mapping_namespace"]
+            current_mesh_keys = tuple(
+                name
+                for name in mesh_namespace
+                if name not in _Q4_WARM_ASSEMBLY_OWNED_MESH_CACHE_KEYS
+            )
+            current_items = tuple(dict.items(mapping))
+            current_material_items = tuple(dict.items(plan["materials"]))
+            if (
+                type(model) is not exact_model_type
+                or object.__getattribute__(model, "__dict__")
+                is not model_namespace
+                or tuple(model_namespace) != plan["model_keys"]
+                or tuple(map(type, model_namespace)) != plan["model_key_types"]
+                or "get_material" in model_namespace
+                or type.__getattribute__(exact_model_type, "__dict__").get(
+                    "get_material"
+                )
+                is not _EXACT_FE_MODEL_GET_MATERIAL
+                or dict.get(model_namespace, "mesh") is not mesh
+                or dict.get(model_namespace, "materials") is not plan["materials"]
+                or dict.get(model_namespace, "current_material")
+                != plan["current_material"]
+                or type(mesh) is not _FEMesh
+                or object.__getattribute__(mesh, "__dict__") is not mesh_namespace
+                or current_mesh_keys != plan["mesh_keys"]
+                or tuple(map(type, current_mesh_keys)) != plan["mesh_key_types"]
+                or any(
+                    name in mesh_namespace
+                    for name in ("get_node", "revision_signature", "num_nodes")
+                )
+                or type.__getattribute__(_FEMesh, "__dict__").get("get_node")
+                is not _EXACT_FE_MESH_GET_NODE
+                or type.__getattribute__(_FEMesh, "__dict__").get(
+                    "revision_signature"
+                )
+                is not _EXACT_FE_MESH_REVISION_SIGNATURE
+                or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
+                is not _EXACT_FE_MESH_NUM_NODES
+                or dict.get(mesh_namespace, "elements") is not mapping
+                or dict.get(mesh_namespace, "_sparsity_cache")
+                is not plan["sparsity_cache"]
+                or dict.get(mesh_namespace, "_topology_signature_cache")
+                is not plan["topology_cache"]
+                or dict.get(mesh_namespace, "_qualified_direct_state_token")
+                is not plan["token"]
+                or type(mapping) is not _QualifiedStateMapping
+                or object.__getattribute__(mapping, "__dict__")
+                is not mapping_namespace
+                or tuple(mapping_namespace) != plan["mapping_keys"]
+                or tuple(map(type, mapping_namespace))
+                != plan["mapping_key_types"]
+                or any(
+                    name in mapping_namespace
+                    for name in ("get", "items", "values")
+                )
+                or dict.get(mapping_namespace, "_qualified_token")
+                is not plan["token"]
+                or dict.get(mapping_namespace, "_qualified_kind") != "element"
+                or type(plan["token"]) is not plan["token_type"]
+                or int(list.__getitem__(plan["token"], 0))
+                != plan["token_value"]
+                or len(current_items) != len(plan["element_items"])
+                or any(
+                    current_id != expected_id
+                    or current_element is not expected_element
+                    for (current_id, current_element), (
+                        expected_id,
+                        expected_element,
+                    ) in zip(current_items, plan["element_items"])
+                )
+                or len(current_material_items) != len(plan["material_items"])
+                or any(
+                    current_name != expected_name
+                    or current_material is not expected_material
+                    for (current_name, current_material), (
+                        expected_name,
+                        expected_material,
+                    ) in zip(current_material_items, plan["material_items"])
+                )
+            ):
+                raise ValueError("qualified Q4 warm assembly raw inputs changed")
+            require_owned_routing(plan)
+
+        def require_raw_token() -> None:
+            """Check only state that can influence the provider-free body."""
+
+            plan = q4_fast_plan
+            if (
+                plan is None
+                or type(model) is not exact_model_type
+                or object.__getattribute__(model, "__dict__")
+                is not plan["model_namespace"]
+                or dict.get(plan["model_namespace"], "mesh") is not plan["mesh"]
+                or type(plan["mesh"]) is not _FEMesh
+                or object.__getattribute__(plan["mesh"], "__dict__")
+                is not plan["mesh_namespace"]
+                or dict.get(
+                    plan["mesh_namespace"],
+                    "_qualified_direct_state_token",
+                )
+                is not plan["token"]
+                or type(plan["token"]) is not plan["token_type"]
+                or int(list.__getitem__(plan["token"], 0))
+                != plan["token_value"]
+            ):
+                raise ValueError("qualified Q4 warm assembly inputs changed")
+            require_owned_routing(plan)
+
+        try:
+            if allow_q4_cached_stiffness:
+                q4_fast_plan = raw_plan_candidate()
+            if q4_fast_plan is None:
+                qualified_input_plan = qualified_builtin_inputs()
+            if q4_fast_plan is not None:
+                elements = tuple(
+                    element
+                    for _element_id, element in q4_fast_plan["element_items"]
+                )
+            elif qualified_input_plan is not None:
+                elements = tuple(
+                    element
+                    for _element_id, element in qualified_input_plan[
+                        "element_items"
+                    ]
+                )
+            else:
+                elements = tuple(model.mesh.elements.values())
+            q4_elements = tuple(
+                element for element in elements if type(element) is q4_type
+            )
+            s3_elements = tuple(
+                element for element in elements if type(element) is s3_type
+            )
+            # Capture first, then validate the exact state, then require the
+            # same generation.  Capturing after validation would allow a
+            # concurrent persistent mutation in the narrow return-to-capture
+            # window to become the lease's starting authority.
+            q4_generation = q4_start_generation if q4_elements else None
+            s3_generation = s3_start_generation if s3_elements else None
+            numerical_guard(context=context)
+            assembly_numerical_guard()
+            assembly_operation_guard()
+            require_cached_accessor_authority()
+            if q4_elements and allow_q4_cached_stiffness:
+                q4_cached_epoch_guard()
+                q4_fast_base_guard()
+                provisional = []
+                for element in q4_elements:
+                    material = builtin_material(element)
+                    cached = (
+                        None
+                        if material is None
+                        else q4_assembly_cached_stiffness(
+                            element,
+                            q4_fast_plan["mesh"],
+                            material,
+                        )
+                    )
+                    if cached is None:
+                        provisional = []
+                        break
+                    provisional.append(
+                        (
+                            element,
+                            material,
+                            canonical_q4_total_bytes(cached),
+                        )
+                    )
+                q4_fast_records = tuple(provisional)
+                if len(q4_fast_records) == len(q4_elements):
+                    if q4_fast_plan is None:
+                        q4_fast_records = ()
+                    else:
+                        token = q4_fast_plan["token"]
+                        q4_fast_mesh_token = (
+                            token,
+                            type(token),
+                            int(list.__getitem__(token, 0)),
+                        )
+            if len(q4_fast_records) != len(q4_elements):
+                if qualified_input_plan is None:
+                    qualified_input_plan = qualified_builtin_inputs()
+                for element in q4_elements:
+                    q4_guard(element, context=context)
+            if s3_elements and allow_q4_cached_stiffness:
+                s3_cached_epoch_guard()
+                s3_fast_base_guard()
+                # A changed prepared-plan class is an authority violation,
+                # not a cache miss.  Reject it before observing any candidate
+                # fields or falling through to the generic reference-batch
+                # route, where a replaced descriptor/method could run.
+                _require_exact_prepared_s3_class_authority()
+                candidate_plan = (
+                    None
+                    if q4_fast_plan is None
+                    else dict.get(
+                        q4_fast_plan["mesh_namespace"],
+                        "_qualified_s3_reference_stiffness_plan",
+                    )
+                )
+                s3_ids = tuple(
+                    int(element_id)
+                    for element_id, element in (
+                        ()
+                        if q4_fast_plan is None
+                        else q4_fast_plan["element_items"]
+                    )
+                    if type(element) is s3_type
+                )
+                candidate_rejected = False
+                try:
+                    prior_candidate_authority = lookup_prepared_s3_authority(
+                        q4_fast_plan["mesh"],
+                        candidate_plan,
+                        q4_fast_plan["token"],
+                        routing_prevalidated=True,
+                        preflight=True,
+                    )
+                except (
+                    PreparedS3PlanDataChanged,
+                    PreparedS3MaterialChanged,
+                    PreparedS3ExecutionChanged,
+                ):
+                    prior_candidate_authority = None
+                    candidate_rejected = True
+                prior_candidate_snapshot = (
+                    None
+                    if prior_candidate_authority is None
+                    else prior_candidate_authority["snapshot"]
+                )
+                candidate_snapshot = (
+                    None
+                    if candidate_rejected
+                    else prior_candidate_snapshot
+                    if prior_candidate_snapshot is not None
+                    else capture_s3_reference_snapshot(
+                        candidate_plan,
+                        s3_ids,
+                    )
+                )
+                if (
+                    type(candidate_plan) is _PreparedReferenceS3Components
+                    and candidate_snapshot is None
+                ):
+                    # A known prepared plan that fails the stronger exact
+                    # snapshot must never fall through to a weaker plan-reuse
+                    # predicate in the generic reference-batch path.
+                    s3_fast_candidate_seen = True
+                if candidate_snapshot is not None:
+                    s3_fast_candidate_seen = True
+                    provisional_s3 = (
+                        []
+                        if prior_candidate_authority is None
+                        else list(
+                            prior_candidate_authority["execution_records"]
+                        )
+                    )
+                    provisional_fallback = (
+                        []
+                        if prior_candidate_authority is None
+                        else list(
+                            prior_candidate_authority["fallback_records"]
+                        )
+                    )
+                    prepared_snapshot: dict[str, Any] | None = None
+                    prepared_checked = False
+                    s3_items = tuple(
+                        (int(element_id), element)
+                        for element_id, element in q4_fast_plan["element_items"]
+                        if type(element) is s3_type
+                    )
+                    if prior_candidate_authority is None:
+                        for element_id, element in s3_items:
+                            material = builtin_material(element)
+                            cached = (
+                                None
+                                if material is None
+                                else s3_assembly_cached_stiffness(
+                                    element,
+                                    q4_fast_plan["mesh"],
+                                    material,
+                                )
+                            )
+                            if cached is None:
+                                if not prepared_checked:
+                                    prepared_snapshot = lookup_prepared_s3_snapshot(
+                                        q4_fast_plan["mesh"],
+                                        candidate_plan,
+                                        q4_fast_plan["token"],
+                                        routing_prevalidated=True,
+                                    )
+                                    prepared_checked = True
+                                expected_key = None
+                                if prepared_snapshot is not None:
+                                    expected_key = next(
+                                        (
+                                            key
+                                            for current_id, key in prepared_snapshot[
+                                                "cache_key_items"
+                                            ]
+                                            if current_id == element_id
+                                        ),
+                                        None,
+                                    )
+                                payload = (
+                                    None
+                                    if prepared_snapshot is None
+                                    else prepared_snapshot["matrix_payloads"].get(
+                                        element_id
+                                    )
+                                )
+                                if (
+                                    material is None
+                                    or type(expected_key) is not tuple
+                                    or type(payload) is not bytes
+                                    or not s3_prepared_cache_key_matches(
+                                        element,
+                                        material,
+                                        expected_key,
+                                    )
+                                ):
+                                    provisional_s3 = []
+                                    provisional_fallback = []
+                                    break
+                                cached = payload
+                                provisional_fallback.append(
+                                    (element, material, expected_key, payload)
+                                )
+                            provisional_s3.append(
+                                (
+                                    element,
+                                    material,
+                                    canonical_s3_total_bytes(cached),
+                                )
+                            )
+                    s3_fast_records = tuple(provisional_s3)
+                    s3_plan_fallback_records = tuple(provisional_fallback)
+                    if len(s3_fast_records) == len(s3_elements):
+                        s3_fast_reference_plan = candidate_plan
+                        s3_fast_reference_snapshot = candidate_snapshot
+                        s3_prepared_authority = prior_candidate_authority
+            if len(s3_fast_records) != len(s3_elements):
+                if s3_elements and allow_q4_cached_stiffness and s3_fast_candidate_seen:
+                    invalidate_s3_reference_plan()
+                if s3_elements and qualified_input_plan is None:
+                    qualified_input_plan = qualified_builtin_inputs()
+                for element in s3_elements:
+                    s3_guard(element, context=context)
+            require_qualified_builtin_inputs()
+            if q4_generation is not None:
+                q4_manager.require_generation(q4_generation)
+            if s3_generation is not None:
+                s3_manager.require_generation(s3_generation)
+            assembly_epoch_manager.require_generation(
+                assembly_start_generation
+            )
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            for element in q4_elements:
+                invalidate_q4(element)
+            for element in s3_elements:
+                invalidate_s3(element)
+            invalidate_s3_reference_plan()
+            raise AssemblyError(
+                f"{context} found incompatible qualified shell authority"
+            ) from exc
+
+        def require(
+            expected_model: "FEModel",
+            *,
+            context: str,
+            final: bool = False,
+        ) -> None:
+            try:
+                if expected_model is not model:
+                    raise ValueError("qualified assembly lease model changed")
+                assembly_epoch_manager.require_generation(
+                    assembly_start_generation
+                )
+                if q4_generation is not None:
+                    q4_manager.require_generation(q4_generation)
+                if s3_generation is not None:
+                    s3_manager.require_generation(s3_generation)
+                numerical_guard(context=context)
+                assembly_numerical_guard()
+                assembly_operation_guard()
+                require_cached_accessor_authority()
+                require_qualified_builtin_inputs()
+                if q4_fast_records:
+                    q4_cached_epoch_guard()
+                    if final:
+                        require_raw_plan()
+                    else:
+                        require_raw_token()
+                    if q4_fast_mesh_token is None:
+                        raise ValueError(
+                            "qualified Q4 warm assembly token is absent"
+                        )
+                    token, token_type, token_value = q4_fast_mesh_token
+                    if (
+                        type(token) is not token_type
+                        or int(list.__getitem__(token, 0)) != token_value
+                    ):
+                        raise ValueError(
+                            "qualified Q4 warm assembly inputs changed"
+                        )
+                    if final:
+                        for element, material, expected_bytes in q4_fast_records:
+                            current_total_bytes = q4_assembly_cached_stiffness(
+                                element,
+                                q4_fast_plan["mesh"],
+                                material,
+                            )
+                            if (
+                                builtin_material(element) is not material
+                                or current_total_bytes is None
+                                or canonical_q4_total_bytes(current_total_bytes)
+                                != expected_bytes
+                            ):
+                                raise ValueError(
+                                    "qualified Q4 warm assembly authority changed"
+                                )
+                else:
+                    for element in q4_elements:
+                        q4_guard(element, context=context)
+                if s3_fast_records:
+                    s3_cached_epoch_guard()
+                    if final:
+                        require_raw_plan()
+                    else:
+                        require_raw_token()
+                    if (
+                        q4_fast_plan is None
+                        or s3_fast_reference_snapshot is None
+                        or dict.get(
+                            q4_fast_plan["mesh_namespace"],
+                            "_qualified_s3_reference_stiffness_plan",
+                        )
+                        is not s3_fast_reference_plan
+                    ):
+                        raise ValueError(
+                            "qualified S3 warm assembly plan changed"
+                        )
+                    if final and s3_prepared_authority is not None:
+                        current_authority = lookup_prepared_s3_authority(
+                            q4_fast_plan["mesh"],
+                            s3_fast_reference_plan,
+                            q4_fast_plan["token"],
+                            routing_prevalidated=True,
+                        )
+                        if current_authority is not s3_prepared_authority:
+                            raise ValueError(
+                                "qualified S3 prepared execution authority changed"
+                            )
+                    else:
+                        require_s3_reference_snapshot(
+                            s3_fast_reference_snapshot
+                        )
+                    if final and s3_prepared_authority is None:
+                        for element, material, expected_bytes in s3_fast_records:
+                            fallback_record = next(
+                                (
+                                    record
+                                    for record in s3_plan_fallback_records
+                                    if record[0] is element
+                                ),
+                                None,
+                            )
+                            if fallback_record is None:
+                                current_total_bytes = s3_assembly_cached_stiffness(
+                                    element,
+                                    q4_fast_plan["mesh"],
+                                    material,
+                                )
+                                valid = (
+                                    current_total_bytes is not None
+                                    and canonical_s3_total_bytes(
+                                        current_total_bytes
+                                    )
+                                    == expected_bytes
+                                )
+                            else:
+                                (
+                                    _fallback_element,
+                                    _fallback_material,
+                                    expected_key,
+                                    fallback_bytes,
+                                ) = fallback_record
+                                persistent = lookup_prepared_s3_snapshot(
+                                    q4_fast_plan["mesh"],
+                                    s3_fast_reference_plan,
+                                    q4_fast_plan["token"],
+                                    routing_prevalidated=True,
+                                )
+                                valid = (
+                                    persistent is not None
+                                    and persistent["matrix_payloads"].get(
+                                        int(
+                                            dict.get(
+                                                object.__getattribute__(
+                                                    element,
+                                                    "__dict__",
+                                                ),
+                                                "element_id",
+                                            )
+                                        )
+                                    )
+                                    == fallback_bytes
+                                    and fallback_bytes == expected_bytes
+                                    and s3_prepared_cache_key_matches(
+                                        element,
+                                        material,
+                                        expected_key,
+                                    )
+                                )
+                            if builtin_material(element) is not material or not valid:
+                                raise ValueError(
+                                    "qualified S3 warm assembly authority changed"
+                                )
+                else:
+                    for element in s3_elements:
+                        s3_guard(element, context=context)
+                if final and s3_elements and q4_fast_plan is not None:
+                    current_candidate = dict.get(
+                        q4_fast_plan["mesh_namespace"],
+                        "_qualified_s3_reference_stiffness_plan",
+                    )
+                    if not prepared_s3_snapshot_is_current(
+                        q4_fast_plan["mesh"],
+                        current_candidate,
+                        q4_fast_plan["token"],
+                    ):
+                        current_s3_ids = tuple(
+                            int(element_id)
+                            for element_id, element in q4_fast_plan[
+                                "element_items"
+                            ]
+                            if type(element) is s3_type
+                        )
+                        current_snapshot = capture_s3_reference_snapshot(
+                            current_candidate,
+                            current_s3_ids,
+                        )
+                        if current_snapshot is None:
+                            prepared_s3_by_mesh.pop(
+                                id(q4_fast_plan["mesh"]),
+                                None,
+                            )
+                        else:
+                            require_owned_routing(q4_fast_plan)
+                            bind_prepared_s3_snapshot(
+                                q4_fast_plan["mesh"],
+                                current_candidate,
+                                current_snapshot,
+                                q4_fast_plan["token"],
+                                q4_fast_plan["element_items"],
+                            )
+                if q4_generation is not None:
+                    q4_manager.require_generation(q4_generation)
+                if s3_generation is not None:
+                    s3_manager.require_generation(s3_generation)
+                assembly_epoch_manager.require_generation(
+                    assembly_start_generation
+                )
+                assembly_operation_guard()
+                require_cached_accessor_authority()
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+                for element in q4_elements:
+                    invalidate_q4(element)
+                for element in s3_elements:
+                    invalidate_s3(element)
+                invalidate_s3_reference_plan()
+                raise AssemblyError(
+                    f"{context} found incompatible qualified shell authority"
+                ) from exc
+
+        if q4_fast_records and q4_fast_plan is not None:
+            fast_by_identity = {
+                id(element): (element, material, total_bytes)
+                for element, material, total_bytes in q4_fast_records
+            }
+
+            def raw_items() -> tuple[tuple[int, Any], ...]:
+                return q4_fast_plan["element_items"]
+
+            def raw_material(element: Any) -> Any:
+                record = fast_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return record[1]
+
+            def raw_total(element: Any) -> Any:
+                record = fast_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return np.frombuffer(record[2], dtype=np.float64).reshape(
+                    (24, 24)
+                )
+
+            require._qualified_q4_raw_element_items = raw_items
+            require._qualified_q4_raw_material = raw_material
+            require._qualified_q4_cached_total = raw_total
+            require._qualified_q4_raw_mesh = q4_fast_plan["mesh"]
+            require._qualified_q4_only = len(q4_elements) == len(elements)
+
+        if s3_fast_records and q4_fast_plan is not None:
+            s3_fast_by_identity = {
+                id(element): (element, material, total_bytes)
+                for element, material, total_bytes in s3_fast_records
+            }
+
+            def s3_raw_items() -> tuple[tuple[int, Any], ...]:
+                return q4_fast_plan["element_items"]
+
+            def s3_raw_material(element: Any) -> Any:
+                record = s3_fast_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return record[1]
+
+            def s3_raw_total(element: Any) -> Any:
+                record = s3_fast_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return np.ndarray(
+                    (18, 18),
+                    dtype=np.float64,
+                    buffer=record[2],
+                )
+
+            require._qualified_fast_element_items = s3_raw_items
+            require._qualified_s3_raw_material = s3_raw_material
+            require._qualified_s3_cached_total = s3_raw_total
+            require._qualified_s3_reference_plan = s3_fast_reference_plan
+            require._qualified_s3_only = len(s3_elements) == len(elements)
+
+        if (
+            q4_fast_plan is not None
+            and (q4_fast_records or s3_fast_records)
+            and len(q4_fast_records) + len(s3_fast_records) == len(elements)
+            and q4_fast_plan["routing"] is not None
+            and dict.get(q4_fast_plan["mesh_namespace"], "element_activity")
+            is None
+        ):
+            def exact_cached_items() -> tuple[tuple[int, Any], ...]:
+                return q4_fast_plan["element_items"]
+
+            require._qualified_fast_element_items = exact_cached_items
+            require._qualified_exact_cached_stiffness_only = True
+            q4_by_identity = {
+                id(element): (element, material, total_bytes)
+                for element, material, total_bytes in q4_fast_records
+            }
+            s3_by_identity = {
+                id(element): (element, material, total_bytes)
+                for element, material, total_bytes in s3_fast_records
+            }
+            execution_records: list[tuple[Any, ...]] = []
+            for element_id, element in q4_fast_plan["element_items"]:
+                family = "q4" if type(element) is q4_type else "s3"
+                record = (
+                    q4_by_identity.get(id(element))
+                    if family == "q4"
+                    else s3_by_identity.get(id(element))
+                )
+                if record is None or record[0] is not element:
+                    raise AssemblyError(
+                        f"{context} could not bind exact cached assembly data"
+                    )
+                execution_records.append(
+                    (
+                        int(element_id),
+                        element,
+                        record[1],
+                        record[2],
+                        family,
+                    )
+                )
+            routing = q4_fast_plan["routing"]
+            s3_snapshot = s3_fast_reference_snapshot
+            data_bytes = b"".join(
+                record[3] for record in execution_records
+            )
+            if len(data_bytes) != routing["entry_count"] * 8:
+                raise AssemblyError(
+                    f"{context} found incompatible cached assembly payloads"
+                )
+            execution_plan = MappingProxyType(
+                {
+                    "mesh": q4_fast_plan["mesh"],
+                    "element_items": q4_fast_plan["element_items"],
+                    "records": tuple(execution_records),
+                    "rows_bytes": routing["rows_bytes"],
+                    "cols_bytes": routing["cols_bytes"],
+                    "data_bytes": data_bytes,
+                    "entry_count": routing["entry_count"],
+                    "total_dofs": routing["total_dofs"],
+                    "num_nodes": len(routing["node_records"]),
+                    "revision_signature": routing["revision_items"],
+                    "sparsity_signature": routing["signature"],
+                    "s3_diagnostics": (
+                        None if s3_snapshot is None else s3_snapshot["diagnostics"]
+                    ),
+                    "s3_batched_ids": (
+                        () if s3_snapshot is None else s3_snapshot["batched_ids"]
+                    ),
+                    "s3_cached_ids": (
+                        () if s3_snapshot is None else s3_snapshot["cached_ids"]
+                    ),
+                    "s3_group_ids": (
+                        () if s3_snapshot is None else s3_snapshot["group_ids"]
+                    ),
+                    "s3_cache_key_items": (
+                        () if s3_snapshot is None else s3_snapshot["cache_key_items"]
+                    ),
+                    "s3_evaluations": (
+                        0 if s3_snapshot is None else s3_snapshot["evaluations"]
+                    ),
+                }
+            )
+            exact_execution_plan_register(
+                require,
+                execution_plan,
+            )
+
+        if qualified_input_plan is not None:
+            bound_by_identity = qualified_input_plan["material_by_element"]
+
+            def owned_items() -> tuple[tuple[int, Any], ...]:
+                return qualified_input_plan["element_items"]
+
+            def owned_material(element: Any) -> Any:
+                record = bound_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return record[1]
+
+            def owned_material_name(name: Any) -> Any:
+                if name is not None and type(name) is not str:
+                    return None
+                resolved_name = name or qualified_input_plan["current_material"]
+                materials = qualified_input_plan["materials"]
+                return dict.get(
+                    materials,
+                    resolved_name,
+                    dict.get(materials, "default"),
+                )
+
+            require._qualified_owned_element_items = owned_items
+            require._qualified_owned_material = owned_material
+            require._qualified_owned_material_name = owned_material_name
+            require._qualified_owned_mesh = qualified_input_plan["mesh"]
+
+        return require
+
+    return capture
+
+
+_CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE = (
+    _bind_qualified_assembly_runtime_lease(
+        _EXACT_NUMPY_RUNTIME_GUARD,
+        _EXACT_Q4_RUNTIME_GUARD,
+        _EXACT_S3_RUNTIME_GUARD,
+        _QualifiedE4PLShellElement,
+        _QualifiedE4PLS3ShellElement,
+        _Q4_RUNTIME_EPOCH_MANAGER,
+        _S3_RUNTIME_EPOCH_MANAGER,
+        _INVALIDATE_Q4_GUARDED_CACHES,
+        _INVALIDATE_S3_GUARDED_CACHES,
+        _EXACT_Q4_CACHED_STIFFNESS_EPOCH_GUARD,
+        _EXACT_Q4_FAST_BASE_AUTHORITY,
+        _TRY_Q4_FAST_ASSEMBLY_CACHED_STIFFNESS,
+        _EXACT_S3_CACHED_STIFFNESS_EPOCH_GUARD,
+        _EXACT_S3_FAST_BASE_AUTHORITY,
+        _TRY_S3_FAST_ASSEMBLY_CACHED_STIFFNESS,
+        _ASSEMBLY_NUMERICAL_EPOCH_MANAGER,
+        _EXACT_ASSEMBLY_NUMERICAL_GUARD,
+        _REQUIRE_EXACT_ASSEMBLY_OPERATION_AUTHORITY,
+        _FEModel,
+        _REGISTER_QUALIFIED_ASSEMBLY_EXECUTION_PLAN,
+    )
+)
+
+
+def _run_with_qualified_assembly_runtime_lease(
+    model: "FEModel",
+    *,
+    context: str,
+    operation: Callable[[Any], Any],
+    allow_q4_cached_stiffness: bool = False,
+) -> Any:
+    """Run an assembly operation under one non-renewable runtime lease."""
+
+    lease = _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        model,
+        context=f"{context} preflight",
+        allow_q4_cached_stiffness=allow_q4_cached_stiffness,
+    )
+    try:
+        result = operation(lease)
+    except BaseException as operation_error:
+        # A mutation followed by restoration must invalidate the failed call
+        # and every derived qualified cache written while it was in flight.
+        lease_error: BaseException | None = None
+        try:
+            lease(
+                model,
+                context=f"{context} exceptional output",
+                final=True,
+            )
+        except BaseException as exc:
+            lease_error = exc
+        if isinstance(operation_error, ElementCapabilityError):
+            if lease_error is not None and hasattr(operation_error, "add_note"):
+                operation_error.add_note(
+                    "qualified assembly lease also rejected exceptional output: "
+                    f"{type(lease_error).__name__}: {lease_error}"
+                )
+            raise
+        if lease_error is not None:
+            raise lease_error from operation_error
+        raise
+    lease(model, context=f"{context} output", final=True)
+    return result
 
 
 def _element_activity(model: "FEModel") -> Any | None:
@@ -34,15 +3272,34 @@ def _activity_scales(
     activity = _element_activity(model)
     if activity is None:
         return None, {}, None
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
+    exact_guard = require_exact_qualified_component_lifecycle_api
+    exact_guard(model, context=f"{quantity} activity-scale preflight")
     element_ids = tuple(int(element_id) for element_id in model.mesh.elements)
     try:
-        values = np.asarray(
-            activity.scales(quantity, element_ids), dtype=float
-        ).reshape(-1)
+        observed_values = activity.scales(quantity, element_ids)
     except Exception as error:
         raise AssemblyError(
             f"element activity cannot provide {quantity} scales for the FE mesh: {error}"
         ) from error
+    exact_guard(
+        model,
+        context=f"{quantity} activity-scale provider observation",
+    )
+    try:
+        values = np.asarray(observed_values, dtype=float)
+    except Exception as error:
+        raise AssemblyError(
+            f"element activity cannot provide {quantity} scales for the FE mesh: {error}"
+        ) from error
+    exact_guard(
+        model,
+        context=f"{quantity} activity-scale array observation",
+    )
+    values = values.reshape(-1)
     if values.shape != (len(element_ids),) or not np.all(np.isfinite(values)):
         raise AssemblyError(f"element activity returned invalid {quantity} scales")
     scales = dict(zip(element_ids, (float(value) for value in values)))
@@ -85,31 +3342,73 @@ def _check_element_matrix_shape(element_id: int, matrix_name: str, matrix: np.nd
     return matrix
 
 
-def _relative_symmetry_error(matrix: sparse.spmatrix | np.ndarray) -> float:
-    if sparse.issparse(matrix):
+def _relative_symmetry_error(
+    matrix: sparse.spmatrix | np.ndarray,
+    _issparse: Any = _ASSEMBLY_SPARSE_ALIASES["issparse"],
+    _sparse_norm: Any = _ASSEMBLY_SPARSE_LINALG_ALIASES["norm"],
+) -> float:
+    if _issparse(matrix):
         diff = matrix - matrix.T
-        numerator = float(sparse.linalg.norm(diff))
-        denominator = max(float(sparse.linalg.norm(matrix)), 1.0)
+        numerator = float(_sparse_norm(diff))
+        denominator = max(float(_sparse_norm(matrix)), 1.0)
         return numerator / denominator
     dense = np.asarray(matrix, dtype=float)
     return float(np.linalg.norm(dense - dense.T) / max(np.linalg.norm(dense), 1.0))
 
 
-def _topology_signature(mesh: Any, matrix_type: str) -> str:
-    revisions = getattr(mesh, "revision_signature", lambda: {})()
+def _topology_signature(
+    mesh: Any,
+    matrix_type: str,
+    *,
+    element_items: tuple[tuple[Any, Any], ...] | None = None,
+) -> str:
+    exact_mesh = type(mesh) is _FEMesh
+    mesh_namespace = (
+        object.__getattribute__(mesh, "__dict__") if exact_mesh else None
+    )
+    revisions = (
+        _EXACT_FE_MESH_REVISION_SIGNATURE(mesh)
+        if exact_mesh
+        and type(mesh_namespace) is dict
+        and "revision_signature" not in mesh_namespace
+        else getattr(mesh, "revision_signature", lambda: {})()
+    )
+    direct_token = (
+        dict.get(mesh_namespace, "_qualified_direct_state_token")
+        if exact_mesh and type(mesh_namespace) is dict
+        else getattr(mesh, "_qualified_direct_state_token", None)
+    )
+    direct_revision = (
+        int(direct_token[0])
+        if isinstance(direct_token, list) and len(direct_token) == 1
+        else -1
+    )
     cache_key = (
         str(matrix_type),
         int(revisions.get("topology", 0)),
         int(revisions.get("mpc", 0)),
+        direct_revision,
     )
-    cache = getattr(mesh, "_topology_signature_cache", None)
+    cache = (
+        dict.get(mesh_namespace, "_topology_signature_cache")
+        if exact_mesh and type(mesh_namespace) is dict
+        else getattr(mesh, "_topology_signature_cache", None)
+    )
     if cache is None:
         cache = {}
-        mesh._topology_signature_cache = cache
+        if exact_mesh:
+            object.__setattr__(mesh, "_topology_signature_cache", cache)
+        else:
+            mesh._topology_signature_cache = cache
     cached = cache.get(cache_key)
     if cached is not None:
         return str(cached)
 
+    owned_element_items = (
+        element_items
+        if element_items is not None
+        else tuple(mesh.elements.items())
+    )
     payload = {
         "matrix_type": matrix_type,
         "topology_revision": revisions.get("topology", 0),
@@ -121,11 +3420,14 @@ def _topology_signature(mesh: Any, matrix_type: str) -> str:
                 "node_ids": [int(node_id) for node_id in getattr(element, "node_ids", [])],
                 "dofs": [int(dof) for dof in element.get_dof_mapping(mesh)],
             }
-            for elem_id, element in mesh.elements.items()
+            for elem_id, element in owned_element_items
         ],
     }
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     signature = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    for stale_key in tuple(cache):
+        if stale_key != cache_key and stale_key[0] == str(matrix_type):
+            cache.pop(stale_key, None)
     cache[cache_key] = signature
     return signature
 
@@ -148,33 +3450,70 @@ def _scatter_element_matrix(
     data.append(values[mask])
 
 
-def _triplets_to_csr(rows: list, cols: list, data: list, total_dofs: int) -> sparse.csr_matrix:
+def _triplets_to_csr(
+    rows: list,
+    cols: list,
+    data: list,
+    total_dofs: int,
+    _coo_constructor: Any = _ASSEMBLY_SPARSE_ALIASES["coo_matrix"],
+    _csr_constructor: Any = _ASSEMBLY_SPARSE_ALIASES["csr_matrix"],
+    _coo_to_csr: Any = _EXACT_COO_TO_CSR,
+    _eliminate_zeros: Any = _EXACT_CSR_ELIMINATE_ZEROS,
+) -> sparse.csr_matrix:
     """Build a CSR matrix from COO triplet buffers; duplicates are summed."""
     if not data:
-        return sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
-    coo = sparse.coo_matrix(
+        return _csr_constructor((total_dofs, total_dofs), dtype=float)
+    coo = _coo_constructor(
         (np.concatenate(data), (np.concatenate(rows), np.concatenate(cols))),
         shape=(total_dofs, total_dofs),
         dtype=float,
     )
-    return coo.tocsr()
+    return _coo_to_csr(coo)
 
 
-def _get_cached_sparsity_pattern(mesh: "FEMesh", matrix_type: str) -> Tuple[np.ndarray, np.ndarray]:
+def _get_cached_sparsity_pattern(
+    mesh: "FEMesh",
+    matrix_type: str,
+    *,
+    element_items: tuple[tuple[Any, Any], ...] | None = None,
+    _topology_signature_kernel: Any = _topology_signature,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Retrieve or build the cached row and column indices for global matrix COO assembly."""
-    if not hasattr(mesh, "_sparsity_cache"):
-        mesh._sparsity_cache = {}
+    exact_mesh = type(mesh) is _FEMesh
+    mesh_namespace = (
+        object.__getattribute__(mesh, "__dict__") if exact_mesh else None
+    )
+    cache = (
+        dict.get(mesh_namespace, "_sparsity_cache")
+        if exact_mesh and type(mesh_namespace) is dict
+        else getattr(mesh, "_sparsity_cache", None)
+    )
+    if cache is None:
+        cache = {}
+        if exact_mesh:
+            object.__setattr__(mesh, "_sparsity_cache", cache)
+        else:
+            mesh._sparsity_cache = cache
 
-    signature = _topology_signature(mesh, matrix_type)
+    signature = _topology_signature_kernel(
+        mesh,
+        matrix_type,
+        element_items=element_items,
+    )
 
-    if matrix_type in mesh._sparsity_cache:
-        cached = mesh._sparsity_cache[matrix_type]
+    if matrix_type in cache:
+        cached = cache[matrix_type]
         if cached.get("signature") == signature:
             return cached["rows"], cached["cols"]
 
     rows_list = []
     cols_list = []
-    for _, element in mesh.elements.items():
+    owned_element_items = (
+        element_items
+        if element_items is not None
+        else tuple(mesh.elements.items())
+    )
+    for _, element in owned_element_items:
         dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
         if dof_mapping.size == 0:
             continue
@@ -185,7 +3524,7 @@ def _get_cached_sparsity_pattern(mesh: "FEMesh", matrix_type: str) -> Tuple[np.n
     rows_concat = np.concatenate(rows_list) if rows_list else np.empty(0, dtype=np.intp)
     cols_concat = np.concatenate(cols_list) if cols_list else np.empty(0, dtype=np.intp)
 
-    mesh._sparsity_cache[matrix_type] = {
+    cache[matrix_type] = {
         "rows": rows_concat,
         "cols": cols_concat,
         "signature": signature,
@@ -193,29 +3532,467 @@ def _get_cached_sparsity_pattern(mesh: "FEMesh", matrix_type: str) -> Tuple[np.n
     return rows_concat, cols_concat
 
 
-def _assemble_element_matrix(
+def _exact_quadrature_array_identity(value: Any) -> tuple[str, tuple[int, ...], bytes]:
+    """Return the dtype-, shape-, and byte-exact identity of one rule array."""
+
+    array = np.ascontiguousarray(np.asarray(value))
+    return (
+        array.dtype.str,
+        tuple(int(size) for size in array.shape),
+        array.tobytes(order="C"),
+    )
+
+
+def _shell_quadrature_batch_identity(
+    element: Any,
+    *,
+    include_shear: bool,
+) -> tuple[Any, ...]:
+    """Bind every quadrature input consumed by one legacy batch kernel.
+
+    A concrete shell class may legally expose a formulation-specific rule,
+    and two instances of the same custom class may expose different rules.
+    Batch grouping must therefore retain the exact arrays rather than infer
+    compatibility from topology and material inputs alone.
+    """
+
+    identity: tuple[Any, ...] = (
+        _exact_quadrature_array_identity(element.gauss_points),
+        _exact_quadrature_array_identity(element.gauss_weights),
+    )
+    if include_shear:
+        identity += (
+            _exact_quadrature_array_identity(element.shear_gauss_points),
+            _exact_quadrature_array_identity(element.shear_gauss_weights),
+        )
+    return identity
+
+
+def _assemble_element_matrix_under_lease_impl(
     model: "FEModel",
     matrix_type: str,
     element_matrix_getter: Callable[[Any, Any, Any], np.ndarray],
+    qualified_runtime_guard: Any,
+    _owned_execution_plan: Any,
     *,
     activity_quantity: str | None = None,
+    _activity_scales_kernel: Any = _activity_scales,
+    _base_info_kernel: Any = _base_info,
+    _check_matrix_kernel: Any = _check_element_matrix_shape,
+    _relative_symmetry_kernel: Any = _relative_symmetry_error,
+    _sparsity_kernel: Any = _get_cached_sparsity_pattern,
+    _topology_signature_kernel: Any = _topology_signature,
+    _coo_constructor: Any = _ASSEMBLY_SPARSE_ALIASES["coo_matrix"],
+    _csr_constructor: Any = _ASSEMBLY_SPARSE_ALIASES["csr_matrix"],
+    _coo_to_csr: Any = _EXACT_COO_TO_CSR,
+    _eliminate_zeros: Any = _EXACT_CSR_ELIMINATE_ZEROS,
+    _object_new: Any = object.__new__,
+    _object_setattr: Any = object.__setattr__,
+    _object_getattribute: Any = object.__getattribute__,
+    _ndarray_constructor: Any = np.ndarray,
+    _empty_constructor: Any = np.empty,
+    _intp_dtype: Any = np.dtype(np.intp),
+    _float64_dtype: Any = np.dtype(np.float64),
+    _coo_to_csr_kernel: Any = _SCIPY_COO_TO_CSR,
+    _csr_sort_indices_kernel: Any = _SCIPY_CSR_SORT_INDICES,
+    _csr_sum_duplicates_kernel: Any = _SCIPY_CSR_SUM_DUPLICATES,
+    _csr_has_sorted_indices_kernel: Any = _SCIPY_CSR_HAS_SORTED_INDICES,
+    _csr_has_canonical_format_kernel: Any = _SCIPY_CSR_HAS_CANONICAL_FORMAT,
+    _isfinite_kernel: Any = np.isfinite,
+    _all_kernel: Any = np.all,
+    _exact_type: Any = type,
+    _exact_len: Any = len,
+    _exact_tuple: Any = tuple,
+    _exact_dict: Any = dict,
+    _exact_list: Any = list,
+    _exact_int: Any = int,
+    _float_type: Any = float,
+    _mapping_proxy_type: Any = MappingProxyType,
+    _assembly_error_type: Any = AssemblyError,
+    _clock: Any = time.perf_counter,
+    _reference_s3_formulation_id: Any = _REFERENCE_S3_FORMULATION_ID,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
-    mesh = model.mesh
+    if _owned_execution_plan is not None:
+        qualified_runtime_guard(
+            model,
+            context="qualified cached stiffness assembly mechanics",
+        )
+        if _exact_type(_owned_execution_plan) is not _mapping_proxy_type:
+            raise _assembly_error_type(
+                "qualified assembly execution plan is incompatible"
+            )
+        if matrix_type != "stiffness":
+            raise _assembly_error_type(
+                "qualified cached execution plans are stiffness-only"
+            )
+        start_time = _clock()
+        mesh = _owned_execution_plan["mesh"]
+        records = _owned_execution_plan["records"]
+        total_dofs = _owned_execution_plan["total_dofs"]
+        entry_count = _owned_execution_plan["entry_count"]
+        rows = _ndarray_constructor(
+            (entry_count,),
+            dtype=_intp_dtype,
+            buffer=_owned_execution_plan["rows_bytes"],
+        )
+        cols = _ndarray_constructor(
+            (entry_count,),
+            dtype=_intp_dtype,
+            buffer=_owned_execution_plan["cols_bytes"],
+        )
+        data = _ndarray_constructor(
+            (entry_count,),
+            dtype=_float64_dtype,
+            buffer=_owned_execution_plan["data_bytes"],
+        )
+        if rows.size != data.size or cols.size != data.size:
+            raise _assembly_error_type(
+                "qualified owned sparsity does not match matrices"
+            )
+        matrix_indptr = _empty_constructor(
+            (total_dofs + 1,),
+            dtype=_intp_dtype,
+        )
+        unsummed_indices = _empty_constructor(
+            (entry_count,),
+            dtype=_intp_dtype,
+        )
+        unsummed_data = _empty_constructor(
+            (entry_count,),
+            dtype=_float64_dtype,
+        )
+        _coo_to_csr_kernel(
+            total_dofs,
+            total_dofs,
+            entry_count,
+            rows,
+            cols,
+            data,
+            matrix_indptr,
+            unsummed_indices,
+            unsummed_data,
+        )
+        _csr_sort_indices_kernel(
+            total_dofs,
+            matrix_indptr,
+            unsummed_indices,
+            unsummed_data,
+        )
+        _csr_sum_duplicates_kernel(
+            total_dofs,
+            total_dofs,
+            matrix_indptr,
+            unsummed_indices,
+            unsummed_data,
+        )
+        unique_count = _exact_int(matrix_indptr[-1])
+        matrix_indices = unsummed_indices[:unique_count]
+        matrix_data = unsummed_data[:unique_count]
+        if (
+            not _csr_has_sorted_indices_kernel(
+                total_dofs,
+                matrix_indptr,
+                matrix_indices,
+            )
+            or not _csr_has_canonical_format_kernel(
+                total_dofs,
+                matrix_indptr,
+                matrix_indices,
+            )
+        ):
+            raise _assembly_error_type(
+                "qualified sparse assembly output is not canonical"
+            )
+        matrix = _object_new(_csr_constructor)
+        _object_setattr(matrix, "_shape", (total_dofs, total_dofs))
+        _object_setattr(matrix, "maxprint", 50)
+        _object_setattr(matrix, "indptr", matrix_indptr)
+        _object_setattr(matrix, "indices", matrix_indices)
+        _object_setattr(matrix, "data", matrix_data)
+        _object_setattr(matrix, "_has_canonical_format", True)
+        _object_setattr(matrix, "_has_sorted_indices", True)
+        matrix_namespace = _object_getattribute(matrix, "__dict__")
+        matrix_data = _exact_dict.get(matrix_namespace, "data")
+        matrix_indices = _exact_dict.get(matrix_namespace, "indices")
+        matrix_indptr = _exact_dict.get(matrix_namespace, "indptr")
+        if (
+            _exact_type(matrix) is not _csr_constructor
+            or _exact_type(matrix_namespace) is not _exact_dict
+            or _exact_dict.get(matrix_namespace, "_shape")
+            != (total_dofs, total_dofs)
+            or _exact_type(matrix_data) is not _ndarray_constructor
+            or matrix_data.dtype != _float64_dtype
+            or matrix_data.ndim != 1
+            or not matrix_data.flags.c_contiguous
+            or not _all_kernel(_isfinite_kernel(matrix_data))
+            or _exact_type(matrix_indices) is not _ndarray_constructor
+            or matrix_indices.ndim != 1
+            or matrix_indices.dtype.kind != "i"
+            or matrix_indices.dtype.itemsize not in (4, 8)
+            or not matrix_indices.flags.c_contiguous
+            or matrix_indices.size != matrix_data.size
+            or (
+                matrix_indices.size
+                and (
+                    not _all_kernel(matrix_indices >= 0)
+                    or not _all_kernel(matrix_indices < total_dofs)
+                )
+            )
+            or _exact_type(matrix_indptr) is not _ndarray_constructor
+            or matrix_indptr.ndim != 1
+            or matrix_indptr.dtype.kind != "i"
+            or matrix_indptr.dtype.itemsize not in (4, 8)
+            or not matrix_indptr.flags.c_contiguous
+            or matrix_indptr.size != total_dofs + 1
+            or matrix_indptr[0] != 0
+            or matrix_indptr[-1] != matrix_data.size
+            or not _all_kernel(matrix_indptr[1:] >= matrix_indptr[:-1])
+            or _exact_dict.get(
+                matrix_namespace,
+                "_has_canonical_format",
+            )
+            is not True
+            or _exact_dict.get(
+                matrix_namespace,
+                "_has_sorted_indices",
+            )
+            is not True
+        ):
+            raise _assembly_error_type(
+                "qualified sparse assembly output is incompatible"
+            )
+        s3_records = _exact_tuple(
+            record for record in records if record[4] == "s3"
+        )
+        q4_records = _exact_tuple(
+            record for record in records if record[4] == "q4"
+        )
+        vectorized_shell_groups: list[dict[str, Any]] = []
+        diagnostics: dict[str, Any] = {
+            "assembled_symmetry_error": 0.0,
+        }
+        owned_s3_diagnostics = _owned_execution_plan["s3_diagnostics"]
+        if owned_s3_diagnostics is not None:
+            s3_diagnostics = _exact_dict(owned_s3_diagnostics)
+            s3_diagnostics["element_ids"] = _exact_list(
+                s3_diagnostics["element_ids"]
+            )
+            s3_diagnostics["group_element_ids"] = [
+                _exact_list(group)
+                for group in s3_diagnostics["group_element_ids"]
+            ]
+            s3_diagnostics["fallback_reasons"] = {
+                reason: _exact_list(element_ids)
+                for reason, element_ids in s3_diagnostics["fallback_reasons"]
+            }
+            s3_diagnostics["revision_key"] = _exact_list(
+                s3_diagnostics["revision_key"]
+            )
+            s3_diagnostics["plan_reused"] = True
+            diagnostics["qualified_s3_reference_elastic_stiffness"] = (
+                s3_diagnostics
+            )
+            batched_ids = _owned_execution_plan["s3_batched_ids"]
+            cached_ids = _owned_execution_plan["s3_cached_ids"]
+            group_ids = _owned_execution_plan["s3_group_ids"]
+            if batched_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": _exact_len(batched_ids),
+                        "kernel": "qualified_s3_reference_elastic_shared_components",
+                        "parallel_kernel": False,
+                        "unique_geometry_count": _exact_len(group_ids),
+                        "component_evaluation_count": _owned_execution_plan[
+                            "s3_evaluations"
+                        ],
+                        "formulation_id": _reference_s3_formulation_id,
+                        "speedup_claimed": False,
+                    }
+                )
+            if cached_ids:
+                cache_key_by_id = _exact_dict(
+                    _owned_execution_plan["s3_cache_key_items"]
+                )
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": _exact_len(cached_ids),
+                        "kernel": "qualified_s3_exact_element_cache_reuse",
+                        "parallel_kernel": False,
+                        "unique_geometry_count": _exact_len(
+                            {cache_key_by_id[element_id] for element_id in cached_ids}
+                        ),
+                        "component_evaluation_count": 0,
+                        "formulation_id": _reference_s3_formulation_id,
+                        "speedup_claimed": False,
+                    }
+                )
+        if q4_records:
+            unique_q4 = _exact_len({record[3] for record in q4_records})
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S4",
+                    "num_elements": len(q4_records),
+                    "kernel": "e4_pl_shared_geometry_cache",
+                    "parallel_kernel": False,
+                    "unique_geometry_count": unique_q4,
+                }
+            )
+            diagnostics["qualified_e4_pl_stiffness"] = {
+                "path": "shared_geometry_cache",
+                "element_count": _exact_len(q4_records),
+                "unique_geometry_count": unique_q4,
+            }
+        diagnostics["vectorized_shell_groups"] = vectorized_shell_groups
+        diagnostics["vectorized_shell_element_count"] = _exact_len(records)
+        diagnostics["scalar_shell_element_count"] = 0
+        info = {
+            "matrix_type": matrix_type,
+            "num_elements": _exact_len(records),
+            "num_nodes": _owned_execution_plan["num_nodes"],
+            "total_dofs": total_dofs,
+            "assembly_time": _clock() - start_time,
+            "element_times": {record[0]: 0.0 for record in records},
+            "skipped_elements": [],
+            "diagnostics": diagnostics,
+            "revision_signature": _exact_dict(
+                _owned_execution_plan["revision_signature"]
+            ),
+            "sparsity_signature": _owned_execution_plan["sparsity_signature"],
+        }
+        return matrix, info
+
+    owned_mesh = getattr(qualified_runtime_guard, "_qualified_owned_mesh", None)
+    raw_mesh = getattr(qualified_runtime_guard, "_qualified_q4_raw_mesh", None)
+    mesh = (
+        raw_mesh
+        if raw_mesh is not None
+        else owned_mesh
+        if owned_mesh is not None
+        else model.mesh
+    )
+    owned_items_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_owned_element_items",
+        None,
+    )
+    owned_material_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_owned_material",
+        None,
+    )
+    owned_material_name_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_owned_material_name",
+        None,
+    )
+    fast_items_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_fast_element_items",
+        None,
+    )
+    raw_items_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_q4_raw_element_items",
+        None,
+    )
+    raw_material_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_q4_raw_material",
+        None,
+    )
+    raw_total_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_q4_cached_total",
+        None,
+    )
+    raw_s3_material_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_s3_raw_material",
+        None,
+    )
+    raw_s3_total_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_s3_cached_total",
+        None,
+    )
+    raw_s3_reference_plan = getattr(
+        qualified_runtime_guard,
+        "_qualified_s3_reference_plan",
+        None,
+    )
+    raw_q4_only = bool(
+        getattr(qualified_runtime_guard, "_qualified_q4_only", False)
+    )
+    raw_exact_cached_only = bool(
+        getattr(
+            qualified_runtime_guard,
+            "_qualified_exact_cached_stiffness_only",
+            False,
+        )
+    )
+    element_items = (
+        fast_items_provider()
+        if callable(fast_items_provider)
+        else raw_items_provider()
+        if callable(raw_items_provider)
+        else owned_items_provider()
+        if callable(owned_items_provider)
+        else tuple(mesh.elements.items())
+    )
+
+    def observed_material(name: Any, *, context: str) -> Any:
+        if callable(owned_material_name_provider):
+            material = owned_material_name_provider(name)
+            if material is None:
+                raise AssemblyError(
+                    f"{context} found no exact material authority"
+                )
+            return material
+        material = model.get_material(name)
+        qualified_runtime_guard(model, context=context)
+        return material
+
     total_dofs = mesh.dof_manager.total_dofs
-    info = _base_info(model, matrix_type)
+    info = _base_info_kernel(model, matrix_type)
     start_time = time.time()
     quantity = activity_quantity or (
         "stiffness" if matrix_type == "geometric_stiffness" else matrix_type
     )
-    _activity, activity_scales, activity_info = _activity_scales(model, quantity)
+    raw_mesh_namespace = (
+        object.__getattribute__(mesh, "__dict__")
+        if raw_exact_cached_only
+        else None
+    )
+    if (
+        raw_exact_cached_only
+        and type(raw_mesh_namespace) is dict
+        and dict.get(raw_mesh_namespace, "element_activity") is None
+    ):
+        _activity, activity_scales, activity_info = None, {}, None
+    else:
+        _activity, activity_scales, activity_info = _activity_scales_kernel(
+            model,
+            quantity,
+        )
+        qualified_runtime_guard(
+            model,
+            context=f"{matrix_type} assembly activity",
+        )
     if activity_info is not None:
         info["diagnostics"]["element_activity"] = activity_info
 
     # Precompute shell matrices in a JIT-compiled batch for stiffness and mass assembly
     precomputed = {}
+    prevalidated_element_ids: set[int] = set()
     vectorized_shell_groups = []
     if matrix_type in {"stiffness", "mass"}:
         from .elements import ShellElement
+        from .e4_pl_element import (
+            FORMULATION_ID as QUALIFIED_Q4_FORMULATION_ID,
+            QualifiedE4PLShellElement,
+        )
         from .jit_compiler import JIT_ENABLED, JIT_DISABLED_REASON, jit_diagnostics
         from .materials import is_isotropic_material
         from .vectorized_stiffness import compute_shell_mass_matrices_jit, compute_shell_stiffness_matrices_jit
@@ -223,16 +4000,73 @@ def _assemble_element_matrix(
             prepare_s4_generalized_stiffness_batch,
             prepare_s4_section_mass_batch,
         )
+        from .s3_reference_batch import (
+            get_reference_s3_stiffness_components,
+            reference_s3_candidate,
+        )
 
         groups = {}
+        reference_s3_items = []
+        cached_s3_stiffness_items = []
         qualified_stiffness_items = []
         advanced_stiffness_items = []
         section_mass_items = []
         constitutive_fallback_ids = []
         generalized_section_fallback_ids = []
         generalized_mass_fallback_ids = []
-        for elem_id, element in mesh.elements.items():
-            material = model.get_material(element.material_name)
+        for elem_id, element in element_items:
+            if (
+                matrix_type == "stiffness"
+                and type(element) is _QualifiedE4PLS3ShellElement
+                and callable(raw_s3_total_provider)
+            ):
+                cached_s3_total = raw_s3_total_provider(element)
+                if cached_s3_total is not None:
+                    cached_s3_stiffness_items.append((int(elem_id), element))
+                    precomputed[int(elem_id)] = cached_s3_total
+                    prevalidated_element_ids.add(int(elem_id))
+                    continue
+            if (
+                matrix_type == "stiffness"
+                and type(element) is QualifiedE4PLShellElement
+                and callable(raw_total_provider)
+                and raw_total_provider(element) is not None
+            ):
+                # The outer lease already bound exact routing, material,
+                # quadrature, total bytes and the full model input snapshot.
+                # Do not re-enter public descriptors while classifying this
+                # provider-free warm record.
+                qualified_stiffness_items.append((int(elem_id), element))
+                continue
+            formulation_id = str(getattr(element, "formulation_id", ""))
+            if (
+                type(element) is QualifiedE4PLShellElement
+                or formulation_id == QUALIFIED_Q4_FORMULATION_ID
+            ):
+                if (
+                    type(element) is not QualifiedE4PLShellElement
+                    or formulation_id != QUALIFIED_Q4_FORMULATION_ID
+                ):
+                    raise AssemblyError(
+                        f"Element {elem_id} has incompatible qualified Q4 authority"
+                    )
+            material = (
+                raw_material_provider(element)
+                if callable(raw_material_provider)
+                and type(element) is QualifiedE4PLShellElement
+                else owned_material_provider(element)
+                if callable(owned_material_provider)
+                and type(element)
+                in {QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement}
+                else observed_material(
+                    element.material_name,
+                    context=f"{matrix_type} assembly material observation",
+                )
+            )
+            if material is None:
+                raise AssemblyError(
+                    f"Element {elem_id} has no exact material authority"
+                )
             shell_section = getattr(element, "shell_section", None)
             has_section_mass = bool(
                 shell_section is not None
@@ -241,6 +4075,15 @@ def _assemble_element_matrix(
                     or getattr(shell_section, "rotary_inertia_per_area", None) is not None
                 )
             )
+            if (
+                matrix_type == "stiffness"
+                and reference_s3_candidate(element)
+            ):
+                # Qualified S3 has a formulation-native reference-elastic
+                # batch.  It must never enter either the legacy TRI3 or the
+                # qualified-Q4 kernels below, including on scalar fallback.
+                reference_s3_items.append((int(elem_id), element))
+                continue
             if (
                 matrix_type == "stiffness"
                 and isinstance(element, ShellElement)
@@ -284,6 +4127,10 @@ def _assemble_element_matrix(
                     )
                 )
             ):
+                primary_quadrature = _shell_quadrature_batch_identity(
+                    element,
+                    include_shear=matrix_type == "stiffness",
+                )
                 key = (
                     element.num_nodes,
                     element.thickness,
@@ -291,6 +4138,9 @@ def _assemble_element_matrix(
                     element.reduced_integration,
                     element.hourglass_stabilization,
                     element.material_name,
+                    type(element),
+                    str(getattr(element, "formulation_id", "")),
+                    primary_quadrature,
                 )
                 if key not in groups:
                     groups[key] = []
@@ -334,17 +4184,153 @@ def _assemble_element_matrix(
                 "element_ids": sorted(generalized_mass_fallback_ids),
             }
 
+        if cached_s3_stiffness_items:
+            prepared_s3 = raw_s3_reference_plan
+            s3_diagnostics = prepared_s3.diagnostics()
+            s3_diagnostics["plan_reused"] = True
+            info["diagnostics"]["qualified_s3_reference_elastic_stiffness"] = (
+                s3_diagnostics
+            )
+            if prepared_s3.batched_element_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(prepared_s3.batched_element_ids),
+                        "kernel": (
+                            "qualified_s3_reference_elastic_shared_components"
+                        ),
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(
+                            prepared_s3.group_element_ids
+                        ),
+                        "component_evaluation_count": (
+                            prepared_s3.component_evaluation_count
+                        ),
+                        "formulation_id": s3_diagnostics["formulation_id"],
+                        "speedup_claimed": False,
+                    }
+                )
+            if prepared_s3.cached_element_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(prepared_s3.cached_element_ids),
+                        "kernel": "qualified_s3_exact_element_cache_reuse",
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(
+                            {
+                                prepared_s3.element_cache_keys[element_id]
+                                for element_id in prepared_s3.cached_element_ids
+                            }
+                        ),
+                        "component_evaluation_count": 0,
+                        "formulation_id": s3_diagnostics["formulation_id"],
+                        "speedup_claimed": False,
+                    }
+                )
+
+        if reference_s3_items:
+            prepared_s3, s3_plan_reused = get_reference_s3_stiffness_components(
+                model,
+                reference_s3_items,
+                complete_candidate_items=True,
+            )
+            precomputed.update(prepared_s3.matrices)
+            if prepared_s3.matrices_prevalidated:
+                # The plan owns bytes-backed immutable matrices and binds the
+                # complete S3 eligibility/component-key preimage.  Shape,
+                # finiteness and symmetry were checked once when those exact
+                # arrays entered the plan, so warm assembly need not repeat
+                # three dense validations for every unchanged element.
+                prevalidated_element_ids.update(prepared_s3.matrices)
+            s3_diagnostics = prepared_s3.diagnostics()
+            s3_diagnostics["plan_reused"] = bool(s3_plan_reused)
+            info["diagnostics"]["qualified_s3_reference_elastic_stiffness"] = (
+                s3_diagnostics
+            )
+            if prepared_s3.batched_element_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(prepared_s3.batched_element_ids),
+                        "kernel": (
+                            "qualified_s3_reference_elastic_shared_components"
+                        ),
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(
+                            prepared_s3.group_element_ids
+                        ),
+                        "component_evaluation_count": (
+                            prepared_s3.component_evaluation_count
+                        ),
+                        "formulation_id": s3_diagnostics["formulation_id"],
+                        "speedup_claimed": False,
+                    }
+                )
+            if prepared_s3.cached_element_ids:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(prepared_s3.cached_element_ids),
+                        "kernel": "qualified_s3_exact_element_cache_reuse",
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(
+                            {
+                                prepared_s3.element_cache_keys[element_id]
+                                for element_id in prepared_s3.cached_element_ids
+                            }
+                        ),
+                        "component_evaluation_count": 0,
+                        "formulation_id": s3_diagnostics["formulation_id"],
+                        "speedup_claimed": False,
+                    }
+                )
+
         if qualified_stiffness_items:
             shared_components = {}
             for element_id, element in qualified_stiffness_items:
-                material = model.get_material(element.material_name)
+                material = (
+                    raw_material_provider(element)
+                    if callable(raw_material_provider)
+                    else owned_material_provider(element)
+                    if callable(owned_material_provider)
+                    else observed_material(
+                        element.material_name,
+                        context=(
+                            f"{matrix_type} assembly qualified material "
+                            "observation"
+                        ),
+                    )
+                )
+                cached_total = (
+                    raw_total_provider(element)
+                    if callable(raw_total_provider)
+                    else _TRY_Q4_FAST_CACHED_STIFFNESS(
+                        element,
+                        mesh,
+                        material,
+                    )
+                )
+                if cached_total is not None:
+                    namespace = object.__getattribute__(element, "__dict__")
+                    cache_key = dict.get(namespace, "_qualified_cache_key")
+                    current_components = dict.get(
+                        namespace,
+                        "_qualified_components",
+                    )
+                    shared_components.setdefault(cache_key, current_components)
+                    precomputed[element_id] = cached_total
+                    prevalidated_element_ids.add(int(element_id))
+                    continue
                 cache_key = element._qualified_stiffness_cache_key(mesh, material)
                 current_components = getattr(element, "_qualified_components", None)
                 if (
                     current_components is not None
                     and getattr(element, "_qualified_cache_key", None) == cache_key
                 ):
+                    element._validate_qualified_component_cache_identity()
                     shared_components.setdefault(cache_key, current_components)
+                    element._bind_qualified_component_guard(mesh, material)
                     precomputed[element_id] = np.asarray(
                         current_components["total"], dtype=float
                     )
@@ -364,6 +4350,8 @@ def _assemble_element_matrix(
                     precomputed[element_id] = element._adopt_qualified_components(
                         cache_key,
                         components,
+                        mesh,
+                        material,
                     )
             vectorized_shell_groups.append(
                 {
@@ -380,9 +4368,28 @@ def _assemble_element_matrix(
                 "unique_geometry_count": int(len(shared_components)),
             }
 
+        if not raw_exact_cached_only:
+            qualified_runtime_guard(
+                model,
+                context=f"{matrix_type} assembly prepared operators",
+            )
+
         for key, elem_list in groups.items():
-            num_nodes, thickness, drilling_stabilization, _reduced_integration, _hourglass_stabilization, material_name = key
-            material = model.get_material(material_name)
+            (
+                num_nodes,
+                thickness,
+                drilling_stabilization,
+                _reduced_integration,
+                _hourglass_stabilization,
+                material_name,
+                _concrete_type,
+                _formulation_id,
+                _quadrature_identity,
+            ) = key
+            material = observed_material(
+                material_name,
+                context=f"{matrix_type} assembly batch material observation",
+            )
 
             n_elem = len(elem_list)
             coords_all = np.zeros((n_elem, num_nodes, 3))
@@ -449,78 +4456,187 @@ def _assemble_element_matrix(
             )
 
         if advanced_stiffness_items:
-            advanced_start = time.perf_counter()
-            advanced_matrices, advanced_counts = (
-                prepare_s4_generalized_stiffness_batch(
-                    model,
-                    [element for _element_id, element in advanced_stiffness_items],
+            advanced_groups: Dict[tuple[Any, ...], list[tuple[int, Any]]] = {}
+            for element_id, element in advanced_stiffness_items:
+                key = (
+                    type(element),
+                    str(getattr(element, "formulation_id", "")),
+                    _shell_quadrature_batch_identity(
+                        element,
+                        include_shear=True,
+                    ),
                 )
-            )
-            advanced_seconds = time.perf_counter() - advanced_start
-            for index, (element_id, _element) in enumerate(
-                advanced_stiffness_items
-            ):
-                precomputed[element_id] = advanced_matrices[index]
+                advanced_groups.setdefault(key, []).append(
+                    (int(element_id), element)
+                )
+            advanced_group_records: list[tuple[int, float, Dict[str, int]]] = []
+            advanced_counts: Dict[str, int] = {
+                "orthotropic_element_count": 0,
+                "generalized_element_count": 0,
+            }
+            for advanced_group in advanced_groups.values():
+                group_start = time.perf_counter()
+                advanced_matrices, group_counts = (
+                    prepare_s4_generalized_stiffness_batch(
+                        model,
+                        [
+                            element
+                            for _element_id, element in advanced_group
+                        ],
+                    )
+                )
+                group_seconds = time.perf_counter() - group_start
+                for index, (element_id, _element) in enumerate(advanced_group):
+                    precomputed[element_id] = advanced_matrices[index]
+                for name, value in group_counts.items():
+                    advanced_counts[name] = advanced_counts.get(name, 0) + int(
+                        value
+                    )
+                advanced_group_records.append(
+                    (len(advanced_group), group_seconds, group_counts)
+                )
             jit_info = jit_diagnostics()
-            vectorized_shell_groups.append(
-                {
-                    "shell_order": "S4",
-                    "num_elements": int(len(advanced_stiffness_items)),
-                    "jit_enabled": bool(JIT_ENABLED),
-                    "jit_disabled_reason": JIT_DISABLED_REASON,
-                    "kernel": "compute_s4_generalized_stiffness_matrices_jit",
-                    "parallel_kernel": True,
-                    "parallel_threads": jit_info.get("num_threads"),
-                    "backend": jit_info.get("backend"),
-                    "kernel_seconds": float(advanced_seconds),
-                    **advanced_counts,
-                }
-            )
+            for group_size, group_seconds, group_counts in advanced_group_records:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S4",
+                        "num_elements": int(group_size),
+                        "jit_enabled": bool(JIT_ENABLED),
+                        "jit_disabled_reason": JIT_DISABLED_REASON,
+                        "kernel": "compute_s4_generalized_stiffness_matrices_jit",
+                        "parallel_kernel": True,
+                        "parallel_threads": jit_info.get("num_threads"),
+                        "backend": jit_info.get("backend"),
+                        "kernel_seconds": float(group_seconds),
+                        **group_counts,
+                    }
+                )
             info["diagnostics"]["advanced_s4_stiffness"] = {
                 "path": "compiled_batch",
                 **advanced_counts,
             }
 
         if section_mass_items:
-            section_mass_start = time.perf_counter()
-            section_mass_matrices = prepare_s4_section_mass_batch(
-                model,
-                [element for _element_id, element in section_mass_items],
-            )
-            section_mass_seconds = time.perf_counter() - section_mass_start
-            for index, (element_id, _element) in enumerate(section_mass_items):
-                precomputed[element_id] = section_mass_matrices[index]
-            jit_info = jit_diagnostics()
-            vectorized_shell_groups.append(
-                {
-                    "shell_order": "S4",
-                    "num_elements": int(len(section_mass_items)),
-                    "jit_enabled": bool(JIT_ENABLED),
-                    "jit_disabled_reason": JIT_DISABLED_REASON,
-                    "kernel": "compute_s4_section_mass_matrices_jit",
-                    "parallel_kernel": True,
-                    "parallel_threads": jit_info.get("num_threads"),
-                    "backend": jit_info.get("backend"),
-                    "kernel_seconds": float(section_mass_seconds),
-                    "generalized_section_mass_element_count": int(
-                        len(section_mass_items)
+            section_mass_groups: Dict[tuple[Any, ...], list[tuple[int, Any]]] = {}
+            for element_id, element in section_mass_items:
+                key = (
+                    type(element),
+                    str(getattr(element, "formulation_id", "")),
+                    _shell_quadrature_batch_identity(
+                        element,
+                        include_shear=False,
                     ),
-                }
-            )
+                )
+                section_mass_groups.setdefault(key, []).append(
+                    (int(element_id), element)
+                )
+            section_mass_group_records: list[tuple[int, float]] = []
+            for section_mass_group in section_mass_groups.values():
+                group_start = time.perf_counter()
+                section_mass_matrices = prepare_s4_section_mass_batch(
+                    model,
+                    [
+                        element
+                        for _element_id, element in section_mass_group
+                    ],
+                )
+                for index, (element_id, _element) in enumerate(
+                    section_mass_group
+                ):
+                    precomputed[element_id] = section_mass_matrices[index]
+                section_mass_group_records.append(
+                    (
+                        len(section_mass_group),
+                        time.perf_counter() - group_start,
+                    )
+                )
+            jit_info = jit_diagnostics()
+            for group_size, group_seconds in section_mass_group_records:
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S4",
+                        "num_elements": int(group_size),
+                        "jit_enabled": bool(JIT_ENABLED),
+                        "jit_disabled_reason": JIT_DISABLED_REASON,
+                        "kernel": "compute_s4_section_mass_matrices_jit",
+                        "parallel_kernel": True,
+                        "parallel_threads": jit_info.get("num_threads"),
+                        "backend": jit_info.get("backend"),
+                        "kernel_seconds": float(group_seconds),
+                        "generalized_section_mass_element_count": int(
+                            group_size
+                        ),
+                    }
+                )
             info["diagnostics"]["generalized_s4_section_mass"] = {
                 "path": "compiled_batch",
                 "element_count": int(len(section_mass_items)),
             }
 
     # Retrieve or build cached sparsity pattern
-    rows_concat, cols_concat = _get_cached_sparsity_pattern(mesh, matrix_type)
+    rows_concat, cols_concat = _sparsity_kernel(
+        mesh,
+        matrix_type,
+        element_items=element_items,
+    )
 
     data_list = []
-    for elem_id, element in mesh.elements.items():
+    for elem_id, element in element_items:
         elem_start = time.time()
-        material = model.get_material(element.material_name)
-        dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
-        if dof_mapping.size == 0:
+        raw_q4_material = (
+            raw_material_provider(element)
+            if callable(raw_material_provider)
+            and type(element) is _QualifiedE4PLShellElement
+            else None
+        )
+        raw_s3_material = (
+            raw_s3_material_provider(element)
+            if callable(raw_s3_material_provider)
+            and type(element) is _QualifiedE4PLS3ShellElement
+            else None
+        )
+        owned_qualified_material = (
+            owned_material_provider(element)
+            if callable(owned_material_provider)
+            and type(element)
+            in {_QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement}
+            else None
+        )
+        material = (
+            raw_q4_material
+            if raw_q4_material is not None
+            else raw_s3_material
+            if raw_s3_material is not None
+            else owned_qualified_material
+            if owned_qualified_material is not None
+            else observed_material(
+                element.material_name,
+                context=f"{matrix_type} assembly element material observation",
+            )
+        )
+        raw_q4_prevalidated = (
+            raw_q4_material is not None
+            and int(elem_id) in prevalidated_element_ids
+            and callable(raw_total_provider)
+        )
+        raw_s3_prevalidated = (
+            raw_s3_material is not None
+            and int(elem_id) in prevalidated_element_ids
+            and callable(raw_s3_total_provider)
+        )
+        dof_mapping = (
+            None
+            if raw_q4_prevalidated or raw_s3_prevalidated
+            else np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
+        )
+        dof_size = (
+            24
+            if raw_q4_prevalidated
+            else 18
+            if raw_s3_prevalidated
+            else int(dof_mapping.size)
+        )
+        if dof_size == 0:
             info["skipped_elements"].append(int(elem_id))
             continue
 
@@ -529,14 +4645,22 @@ def _assemble_element_matrix(
         else:
             element_matrix = element_matrix_getter(element, mesh, material)
 
-        element_matrix = _check_element_matrix_shape(
-            int(elem_id),
-            matrix_type,
-            element_matrix,
-            int(dof_mapping.size),
+        matrix_prevalidated = (
+            int(elem_id) in prevalidated_element_ids
+            and dof_size in {18, 24}
         )
-        if matrix_type in {"stiffness", "mass", "geometric_stiffness"}:
-            local_symmetry = _relative_symmetry_error(element_matrix)
+        if not matrix_prevalidated:
+            element_matrix = _check_matrix_kernel(
+                int(elem_id),
+                matrix_type,
+                element_matrix,
+                dof_size,
+            )
+        if (
+            matrix_type in {"stiffness", "mass", "geometric_stiffness"}
+            and not matrix_prevalidated
+        ):
+            local_symmetry = _relative_symmetry_kernel(element_matrix)
             if local_symmetry > 1.0e-8:
                 raise AssemblyError(
                     f"Element {elem_id} returned nonsymmetric {matrix_type}; "
@@ -550,30 +4674,304 @@ def _assemble_element_matrix(
         info["element_times"][int(elem_id)] = time.time() - elem_start
         info["num_elements"] += 1
 
+    if not raw_exact_cached_only:
+        qualified_runtime_guard(
+            model,
+            context=f"{matrix_type} assembly completed elements",
+        )
+
     if not data_list:
-        matrix = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
+        matrix = _csr_constructor((total_dofs, total_dofs), dtype=float)
         info["diagnostics"]["assembled_symmetry_error"] = 0.0
-        info["sparsity_signature"] = _topology_signature(mesh, matrix_type)
+        info["sparsity_signature"] = _topology_signature_kernel(
+            mesh,
+            matrix_type,
+            element_items=element_items,
+        )
         info["assembly_time"] = time.time() - start_time
         return matrix, info
 
     data_concat = np.concatenate(data_list)
-    coo = sparse.coo_matrix(
+    coo = _coo_constructor(
         (data_concat, (rows_concat, cols_concat)),
         shape=(total_dofs, total_dofs),
         dtype=float,
     )
-    matrix = coo.tocsr()
+    matrix = _coo_to_csr(coo)
     if activity_info is not None and activity_info["zero_contribution_count"]:
-        matrix.eliminate_zeros()
-    info["diagnostics"]["assembled_symmetry_error"] = _relative_symmetry_error(matrix)
+        _eliminate_zeros(matrix)
+    info["diagnostics"]["assembled_symmetry_error"] = _relative_symmetry_kernel(matrix)
     if matrix_type in {"stiffness", "mass"}:
         info["diagnostics"]["vectorized_shell_groups"] = vectorized_shell_groups
         info["diagnostics"]["vectorized_shell_element_count"] = int(len(precomputed))
         info["diagnostics"]["scalar_shell_element_count"] = int(info["num_elements"] - len(precomputed))
-    info["sparsity_signature"] = _topology_signature(mesh, matrix_type)
+    info["sparsity_signature"] = _topology_signature_kernel(
+        mesh,
+        matrix_type,
+        element_items=element_items,
+    )
     info["assembly_time"] = time.time() - start_time
     return matrix, info
+
+
+def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
+    """Bind kernel routing in a closure, not mutable function defaults.
+
+    The published implementation object remains inspectable for diagnostics,
+    but qualified calls execute a fresh private function made from the exact
+    captured code and receive every kernel explicitly.  Mutating ``__code__``,
+    ``__defaults__`` or ``__kwdefaults__`` can therefore neither dispatch an
+    attacker nor silently redefine an already-authorized assembly.
+    """
+
+    expected_code = implementation.__code__
+    expected_defaults = implementation.__defaults__
+    expected_kwdefaults = implementation.__kwdefaults__
+    if type(expected_kwdefaults) is not dict:
+        raise TypeError("qualified assembly implementation defaults are absent")
+    expected_kw_items = tuple(expected_kwdefaults.items())
+    exact_globals = dict(implementation.__globals__)
+    exact_globals["__builtins__"] = dict(implementation.__builtins__)
+    exact_name = implementation.__name__
+    function_type = FunctionType
+    plan_lookup = _LOOKUP_QUALIFIED_ASSEMBLY_EXECUTION_PLAN
+    plan_lookup_code = plan_lookup.__code__
+    plan_lookup_globals = dict(plan_lookup.__globals__)
+    plan_lookup_globals["__builtins__"] = dict(plan_lookup.__builtins__)
+    plan_lookup_name = plan_lookup.__name__
+    plan_lookup_defaults = plan_lookup.__defaults__
+    plan_lookup_closure = plan_lookup.__closure__
+    runtime_module = sys.modules[__name__]
+    published: list[Any] = []
+
+    def private_function(function: Any) -> Any:
+        if type(function) is not function_type:
+            return function
+        private_globals = dict(function.__globals__)
+        private_globals["__builtins__"] = dict(function.__builtins__)
+        clone = function_type(
+            function.__code__,
+            private_globals,
+            function.__name__,
+            function.__defaults__,
+            function.__closure__,
+        )
+        clone.__kwdefaults__ = (
+            None
+            if function.__kwdefaults__ is None
+            else dict(function.__kwdefaults__)
+        )
+        return clone
+
+    exact_activity_scales = private_function(
+        expected_kwdefaults["_activity_scales_kernel"]
+    )
+    exact_base_info = private_function(expected_kwdefaults["_base_info_kernel"])
+    exact_check_matrix = private_function(
+        expected_kwdefaults["_check_matrix_kernel"]
+    )
+    exact_relative_symmetry = private_function(
+        expected_kwdefaults["_relative_symmetry_kernel"]
+    )
+    exact_sparsity = private_function(expected_kwdefaults["_sparsity_kernel"])
+    exact_topology_signature = private_function(
+        expected_kwdefaults["_topology_signature_kernel"]
+    )
+    exact_coo_constructor = expected_kwdefaults["_coo_constructor"]
+    exact_csr_constructor = expected_kwdefaults["_csr_constructor"]
+    exact_coo_to_csr = private_function(expected_kwdefaults["_coo_to_csr"])
+    exact_eliminate_zeros = private_function(
+        expected_kwdefaults["_eliminate_zeros"]
+    )
+    exact_object_new = expected_kwdefaults["_object_new"]
+    exact_object_setattr = expected_kwdefaults["_object_setattr"]
+    exact_object_getattribute = expected_kwdefaults["_object_getattribute"]
+    exact_ndarray_constructor = expected_kwdefaults["_ndarray_constructor"]
+    exact_empty_constructor = expected_kwdefaults["_empty_constructor"]
+    exact_intp_dtype = expected_kwdefaults["_intp_dtype"]
+    exact_float64_dtype = expected_kwdefaults["_float64_dtype"]
+    exact_coo_to_csr_kernel = expected_kwdefaults["_coo_to_csr_kernel"]
+    exact_csr_sort_indices_kernel = expected_kwdefaults[
+        "_csr_sort_indices_kernel"
+    ]
+    exact_csr_sum_duplicates_kernel = expected_kwdefaults[
+        "_csr_sum_duplicates_kernel"
+    ]
+    exact_csr_has_sorted_indices_kernel = expected_kwdefaults[
+        "_csr_has_sorted_indices_kernel"
+    ]
+    exact_csr_has_canonical_format_kernel = expected_kwdefaults[
+        "_csr_has_canonical_format_kernel"
+    ]
+    exact_isfinite = expected_kwdefaults["_isfinite_kernel"]
+    exact_all = expected_kwdefaults["_all_kernel"]
+    exact_type = expected_kwdefaults["_exact_type"]
+    exact_len = expected_kwdefaults["_exact_len"]
+    exact_tuple = expected_kwdefaults["_exact_tuple"]
+    exact_dict = expected_kwdefaults["_exact_dict"]
+    exact_list = expected_kwdefaults["_exact_list"]
+    exact_int = expected_kwdefaults["_exact_int"]
+    exact_float_type = expected_kwdefaults["_float_type"]
+    exact_mapping_proxy_type = expected_kwdefaults["_mapping_proxy_type"]
+    exact_assembly_error = expected_kwdefaults["_assembly_error_type"]
+    exact_clock = expected_kwdefaults["_clock"]
+    exact_reference_s3_formulation_id = expected_kwdefaults[
+        "_reference_s3_formulation_id"
+    ]
+
+    def require() -> None:
+        current_kwdefaults = implementation.__kwdefaults__
+        if len(published) != 1:
+            raise ValueError("qualified assembly operation authority changed")
+        (
+            published_call,
+            published_code,
+            published_defaults,
+            published_kwdefaults,
+            published_kw_items,
+        ) = published[0]
+        current_published_kwdefaults = published_call.__kwdefaults__
+        if (
+            implementation.__code__ is not expected_code
+            or implementation.__defaults__ is not expected_defaults
+            or current_kwdefaults is not expected_kwdefaults
+            or len(current_kwdefaults) != len(expected_kw_items)
+            or any(
+                name not in current_kwdefaults
+                or current_kwdefaults[name] is not expected
+                for name, expected in expected_kw_items
+            )
+            or published_call.__code__ is not published_code
+            or published_call.__defaults__ is not published_defaults
+            or current_published_kwdefaults is not published_kwdefaults
+            or type(current_published_kwdefaults) is not dict
+            or len(current_published_kwdefaults) != len(published_kw_items)
+            or any(
+                name not in current_published_kwdefaults
+                or current_published_kwdefaults[name] is not expected
+                for name, expected in published_kw_items
+            )
+            or vars(runtime_module).get("_assemble_element_matrix_under_lease")
+            is not published_call
+        ):
+            raise ValueError("qualified assembly operation authority changed")
+
+    def call(
+        model: "FEModel",
+        matrix_type: str,
+        element_matrix_getter: Callable[[Any, Any, Any], np.ndarray],
+        qualified_runtime_guard: Any,
+        *,
+        activity_quantity: str | None = None,
+    ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+        require()
+        exact_function = function_type(
+            expected_code,
+            exact_globals,
+            exact_name,
+            expected_defaults,
+        )
+        exact_plan_lookup = function_type(
+            plan_lookup_code,
+            plan_lookup_globals,
+            plan_lookup_name,
+            plan_lookup_defaults,
+            plan_lookup_closure,
+        )
+        owned_execution_plan = exact_plan_lookup(qualified_runtime_guard)
+        return exact_function(
+            model,
+            matrix_type,
+            element_matrix_getter,
+            qualified_runtime_guard,
+            owned_execution_plan,
+            activity_quantity=activity_quantity,
+            _activity_scales_kernel=exact_activity_scales,
+            _base_info_kernel=exact_base_info,
+            _check_matrix_kernel=exact_check_matrix,
+            _relative_symmetry_kernel=exact_relative_symmetry,
+            _sparsity_kernel=exact_sparsity,
+            _topology_signature_kernel=exact_topology_signature,
+            _coo_constructor=exact_coo_constructor,
+            _csr_constructor=exact_csr_constructor,
+            _coo_to_csr=exact_coo_to_csr,
+            _eliminate_zeros=exact_eliminate_zeros,
+            _object_new=exact_object_new,
+            _object_setattr=exact_object_setattr,
+            _object_getattribute=exact_object_getattribute,
+            _ndarray_constructor=exact_ndarray_constructor,
+            _empty_constructor=exact_empty_constructor,
+            _intp_dtype=exact_intp_dtype,
+            _float64_dtype=exact_float64_dtype,
+            _coo_to_csr_kernel=exact_coo_to_csr_kernel,
+            _csr_sort_indices_kernel=exact_csr_sort_indices_kernel,
+            _csr_sum_duplicates_kernel=exact_csr_sum_duplicates_kernel,
+            _csr_has_sorted_indices_kernel=exact_csr_has_sorted_indices_kernel,
+            _csr_has_canonical_format_kernel=exact_csr_has_canonical_format_kernel,
+            _isfinite_kernel=exact_isfinite,
+            _all_kernel=exact_all,
+            _exact_type=exact_type,
+            _exact_len=exact_len,
+            _exact_tuple=exact_tuple,
+            _exact_dict=exact_dict,
+            _exact_list=exact_list,
+            _exact_int=exact_int,
+            _float_type=exact_float_type,
+            _mapping_proxy_type=exact_mapping_proxy_type,
+            _assembly_error_type=exact_assembly_error,
+            _clock=exact_clock,
+            _reference_s3_formulation_id=exact_reference_s3_formulation_id,
+        )
+
+    call_kwdefaults = call.__kwdefaults__
+    if type(call_kwdefaults) is not dict:
+        raise TypeError("qualified assembly dispatcher defaults are absent")
+    published.append(
+        (
+            call,
+            call.__code__,
+            call.__defaults__,
+            call_kwdefaults,
+            tuple(call_kwdefaults.items()),
+        )
+    )
+    return call, require
+
+
+(
+    _assemble_element_matrix_under_lease,
+    _require_exact_assembly_operation_metadata,
+) = _make_exact_assembly_operation(_assemble_element_matrix_under_lease_impl)
+_INSTALL_EXACT_ASSEMBLY_OPERATION_AUTHORITY(
+    _require_exact_assembly_operation_metadata
+)
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
+    _ASSEMBLY_RUNTIME_MODULE,
+    ("_assemble_element_matrix_under_lease",),
+)
+del _REGISTER_QUALIFIED_ASSEMBLY_EXECUTION_PLAN
+del _LOOKUP_QUALIFIED_ASSEMBLY_EXECUTION_PLAN
+
+
+def _assemble_element_matrix(
+    model: "FEModel",
+    matrix_type: str,
+    element_matrix_getter: Callable[[Any, Any, Any], np.ndarray],
+    *,
+    activity_quantity: str | None = None,
+) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context=f"{matrix_type} assembly",
+        operation=lambda lease: _assemble_element_matrix_under_lease(
+            model,
+            matrix_type,
+            element_matrix_getter,
+            lease,
+            activity_quantity=activity_quantity,
+        ),
+        allow_q4_cached_stiffness=matrix_type == "stiffness",
+    )
 
 
 def assemble_stiffness_matrix(model: "FEModel") -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
@@ -587,14 +4985,26 @@ def assemble_stiffness_matrix(model: "FEModel") -> Tuple[sparse.csr_matrix, Dict
 
 def assemble_mass_matrix(model: "FEModel") -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble the global mass matrix M only, including any added point masses."""
-    matrix, info = _assemble_element_matrix(
+    def assemble(lease: Any) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+        matrix, info = _assemble_element_matrix_under_lease(
+            model,
+            "mass",
+            lambda element, mesh, material: element.compute_mass_matrix(
+                mesh, material
+            ),
+            lease,
+        )
+        matrix = _add_point_masses_to_matrix(model, matrix)
+        info["diagnostics"]["point_mass_count"] = int(
+            len(getattr(model.mesh, "point_masses", {}) or {})
+        )
+        return matrix, info
+
+    return _run_with_qualified_assembly_runtime_lease(
         model,
-        "mass",
-        lambda element, mesh, material: element.compute_mass_matrix(mesh, material),
+        context="mass assembly",
+        operation=assemble,
     )
-    matrix = _add_point_masses_to_matrix(model, matrix)
-    info["diagnostics"]["point_mass_count"] = int(len(getattr(model.mesh, "point_masses", {}) or {}))
-    return matrix, info
 
 
 def _add_point_masses_to_matrix(model: "FEModel", matrix: sparse.csr_matrix) -> sparse.csr_matrix:
@@ -615,26 +5025,117 @@ def _add_point_masses_to_matrix(model: "FEModel", matrix: sparse.csr_matrix) -> 
     return (matrix + sparse.diags(diagonal, 0, shape=(total_dofs, total_dofs), format="csr")).tocsr()
 
 
-def _get_element_state(element_states: Optional[Any], element_id: int, element: Any) -> Any:
+def _get_element_state(
+    element_states: Optional[Any],
+    element_id: int,
+    element: Any,
+    *,
+    _post_observation: Optional[Callable[[str], None]] = None,
+) -> Any:
+    def observed(label: str) -> None:
+        if _post_observation is not None:
+            _post_observation(label)
+
     if element_states is None:
         return None
     if callable(element_states):
         try:
-            return element_states(element_id, element)
+            state = element_states(element_id, element)
         except TypeError:
-            return element_states(element_id)
+            observed("provider signature fallback")
+            state = element_states(element_id)
+        observed("provider return")
+        return state
     if isinstance(element_states, Mapping):
-        if element_id in element_states:
-            return element_states[element_id]
+        has_numeric_id = element_id in element_states
+        observed("mapping numeric-ID lookup")
+        if has_numeric_id:
+            state = element_states[element_id]
+            observed("mapping numeric-ID value")
+            return state
         element_id_text = str(element_id)
-        if element_id_text in element_states:
-            return element_states[element_id_text]
+        has_text_id = element_id_text in element_states
+        observed("mapping text-ID lookup")
+        if has_text_id:
+            state = element_states[element_id_text]
+            observed("mapping text-ID value")
+            return state
     return None
 
 
-def assemble_geometric_stiffness_matrix(
+def _guarded_geometric_state_snapshot(
+    model: "FEModel",
+    state: Any,
+    *,
+    element_id: int,
+    _exact_guard: Any,
+    path: str = "state",
+) -> Any:
+    """Detach qualified prestress data before an element helper consumes it."""
+
+    context = f"geometric state observation for element {element_id} at {path}"
+    if isinstance(state, np.ndarray):
+        observed = np.asarray(state)
+        _exact_guard(model, context=context)
+        return np.frombuffer(
+            np.ascontiguousarray(observed).tobytes(order="C"),
+            dtype=observed.dtype,
+        ).reshape(observed.shape)
+    if isinstance(state, np.generic):
+        observed = state.item()
+        _exact_guard(model, context=context)
+        return observed
+    if state is None or type(state) in {str, bool, int, float}:
+        return state
+    if isinstance(state, Mapping):
+        observed_items = tuple(state.items())
+        _exact_guard(model, context=context)
+        result: Dict[str, Any] = {}
+        for key, member in observed_items:
+            if type(key) is not str:
+                raise AssemblyError(
+                    f"qualified geometric state for element {element_id} "
+                    f"contains a non-string key at {path}"
+                )
+            if key in result:
+                raise AssemblyError(
+                    f"qualified geometric state for element {element_id} "
+                    f"contains duplicate key {key!r} at {path}"
+                )
+            result[key] = _guarded_geometric_state_snapshot(
+                model,
+                member,
+                element_id=element_id,
+                _exact_guard=_exact_guard,
+                path=f"{path}.{key}",
+            )
+        return result
+    if isinstance(state, Sequence) and not isinstance(
+        state, (str, bytes, bytearray)
+    ):
+        observed_members = tuple(state)
+        _exact_guard(model, context=context)
+        return [
+            _guarded_geometric_state_snapshot(
+                model,
+                member,
+                element_id=element_id,
+                _exact_guard=_exact_guard,
+                path=f"{path}[{index}]",
+            )
+            for index, member in enumerate(observed_members)
+        ]
+    raise AssemblyError(
+        f"qualified geometric state for element {element_id} has unsupported "
+        f"type {type(state).__name__} at {path}"
+    )
+
+
+def _assemble_geometric_stiffness_matrix_under_lease(
     model: "FEModel",
     element_states: Optional[Any] = None,
+    *,
+    qualified_runtime_guard: Any,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble the global geometric stiffness matrix KG only.
 
@@ -644,12 +5145,34 @@ def assemble_geometric_stiffness_matrix(
     through the Mindlin field ``[u+z*ry, v-z*rx, w]``; drilling rotation and
     stress components normal to the midsurface are outside this operator.
     """
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
+    def exact_qualified_guard(
+        expected_model: "FEModel",
+        *,
+        context: str,
+    ) -> None:
+        lifecycle_guard(expected_model, context=context)
+        qualified_runtime_guard(expected_model, context=context)
+
+    exact_qualified_guard(
+        model,
+        context="geometric stiffness assembly exact preflight",
+    )
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     info = _base_info(model, "geometric_stiffness")
     start_time = time.time()
     _activity, activity_scales, activity_info = _activity_scales(
         model, "stiffness"
+    )
+    qualified_runtime_guard(
+        model,
+        context="geometric stiffness assembly activity",
     )
     if activity_info is not None:
         info["diagnostics"]["element_activity"] = activity_info
@@ -663,6 +5186,10 @@ def assemble_geometric_stiffness_matrix(
     # sampling in the element contract, but evaluate the common matrix
     # operator in one compiled batch and cache its immutable geometry.
     from .elements import ShellElement
+    from .e4_pl_element import (
+        FORMULATION_ID as QUALIFIED_Q4_FORMULATION_ID,
+        QualifiedE4PLShellElement,
+    )
     from .jit_compiler import JIT_ENABLED, JIT_DISABLED_REASON, jit_diagnostics
     from .vectorized_stiffness import (
         compute_s4_geometric_stiffness_matrices_jit,
@@ -672,6 +5199,24 @@ def assemble_geometric_stiffness_matrix(
     eligible_groups: Dict[Tuple[bytes, bytes], list[Tuple[int, Any]]] = {}
     for elem_id, element in mesh.elements.items():
         if isinstance(element, ShellElement) and bool(getattr(element, "_is_4node", False)):
+            formulation_id = str(getattr(element, "formulation_id", ""))
+            if (
+                type(element) is QualifiedE4PLShellElement
+                or formulation_id == QUALIFIED_Q4_FORMULATION_ID
+            ):
+                if (
+                    type(element) is not QualifiedE4PLShellElement
+                    or formulation_id != QUALIFIED_Q4_FORMULATION_ID
+                ):
+                    raise AssemblyError(
+                        f"Element {elem_id} has incompatible qualified Q4 authority"
+                    )
+                try:
+                    _EXACT_Q4_QUADRATURE_GUARD(element)
+                except (AttributeError, TypeError, ValueError) as exc:
+                    raise AssemblyError(
+                        f"Element {elem_id} has incompatible qualified Q4 quadrature authority"
+                    ) from exc
             points = np.ascontiguousarray(element.gauss_points, dtype=float)
             weights = np.ascontiguousarray(element.gauss_weights, dtype=float)
             key = (points.tobytes(), weights.tobytes())
@@ -683,9 +5228,16 @@ def assemble_geometric_stiffness_matrix(
         geometry_cache = {}
         mesh._s4_geometric_kinematics_cache = geometry_cache
     revisions = getattr(mesh, "revision_signature", lambda: {})()
+    direct_token = getattr(mesh, "_qualified_direct_state_token", None)
+    direct_revision = (
+        int(direct_token[0])
+        if isinstance(direct_token, list) and len(direct_token) == 1
+        else -1
+    )
     geometry_revision = (
         int(revisions.get("topology", 0)),
         int(revisions.get("geometry", 0)),
+        direct_revision,
     )
     stale_geometry_keys = [
         key for key in geometry_cache if not key or key[0] != geometry_revision
@@ -701,13 +5253,19 @@ def assemble_geometric_stiffness_matrix(
         points = np.ascontiguousarray(first.gauss_points, dtype=float)
         weights = np.ascontiguousarray(first.gauss_weights, dtype=float)
         element_ids = tuple(elem_id for elem_id, _element in elem_list)
-        cache_key = (geometry_revision, element_ids, points.tobytes(), weights.tobytes())
+        coords = np.ascontiguousarray(
+            [element.get_node_coordinates(mesh) for _elem_id, element in elem_list],
+            dtype=float,
+        )
+        cache_key = (
+            geometry_revision,
+            element_ids,
+            coords.tobytes(order="C"),
+            points.tobytes(order="C"),
+            weights.tobytes(order="C"),
+        )
         geometry = geometry_cache.get(cache_key)
         if geometry is None:
-            coords = np.ascontiguousarray(
-                [element.get_node_coordinates(mesh) for _elem_id, element in elem_list],
-                dtype=float,
-            )
             geometry_start = time.perf_counter()
             geometry = prepare_s4_geometric_kinematics_jit(coords, points, weights)
             geometry_setup_seconds += time.perf_counter() - geometry_start
@@ -721,7 +5279,24 @@ def assemble_geometric_stiffness_matrix(
         bending = np.zeros_like(membrane)
         second_moment = np.zeros_like(membrane)
         for index, (elem_id, element) in enumerate(elem_list):
-            state = _get_element_state(element_states, elem_id, element)
+            state = _get_element_state(
+                element_states,
+                elem_id,
+                element,
+                _post_observation=lambda label, _elem_id=elem_id: exact_qualified_guard(
+                    model,
+                    context=(
+                        "geometric stiffness assembly state "
+                        f"{label} for element {_elem_id}"
+                    ),
+                ),
+            )
+            state = _guarded_geometric_state_snapshot(
+                model,
+                state,
+                element_id=elem_id,
+                _exact_guard=exact_qualified_guard,
+            )
             membrane[index] = element._membrane_compression_samples(state, gp_count)
             bending[index] = element._bending_compression_samples(state, gp_count)
             second_moment[index] = element._stress_second_moment_samples(
@@ -753,6 +5328,10 @@ def assemble_geometric_stiffness_matrix(
         "jit_disabled_reason": JIT_DISABLED_REASON,
         "jit": jit_diagnostics(),
     }
+    qualified_runtime_guard(
+        model,
+        context="geometric stiffness assembly prepared operators",
+    )
 
     data_list = []
     for elem_id, element in mesh.elements.items():
@@ -766,7 +5345,28 @@ def assemble_geometric_stiffness_matrix(
         if int(elem_id) in precomputed:
             element_matrix = precomputed[int(elem_id)]
         else:
-            state = _get_element_state(element_states, int(elem_id), element)
+            state = _get_element_state(
+                element_states,
+                int(elem_id),
+                element,
+                _post_observation=lambda label, _elem_id=int(elem_id): exact_qualified_guard(
+                    model,
+                    context=(
+                        "geometric stiffness assembly state "
+                        f"{label} for element {_elem_id}"
+                    ),
+                ),
+            )
+            if type(element) in {
+                _QualifiedE4PLShellElement,
+                _QualifiedE4PLS3ShellElement,
+            }:
+                state = _guarded_geometric_state_snapshot(
+                    model,
+                    state,
+                    element_id=int(elem_id),
+                    _exact_guard=exact_qualified_guard,
+                )
             getter = getattr(element, "compute_geometric_stiffness_matrix", None)
             if getter is None:
                 element_matrix = np.zeros((dof_mapping.size, dof_mapping.size), dtype=float)
@@ -785,6 +5385,15 @@ def assemble_geometric_stiffness_matrix(
 
         info["element_times"][int(elem_id)] = time.time() - elem_start
         info["num_elements"] += 1
+
+    qualified_runtime_guard(
+        model,
+        context="geometric stiffness assembly completed elements",
+    )
+    exact_qualified_guard(
+        model,
+        context="geometric stiffness assembly exact output",
+    )
 
     info["state_source"] = "none" if element_states is None else type(element_states).__name__
     info["diagnostics"]["scalar_element_count"] = int(info["num_elements"] - len(batched_ids))
@@ -814,21 +5423,138 @@ def assemble_geometric_stiffness_matrix(
     return matrix, info
 
 
-def assemble_load_vector(
+def assemble_geometric_stiffness_matrix(
+    model: "FEModel",
+    element_states: Optional[Any] = None,
+) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+    """Assemble global geometric stiffness under one authority lease."""
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="geometric stiffness assembly",
+        operation=lambda lease: _assemble_geometric_stiffness_matrix_under_lease(
+            model,
+            element_states,
+            qualified_runtime_guard=lease,
+        ),
+    )
+
+
+def _qualified_s3_pressure_surface_records(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+) -> list[Dict[str, Any]]:
+    """Identify the exact surface carrying qualified-S3 pressure work.
+
+    The S3 section origin may be offset from its nodal interpolation surface.
+    Pressure is intentionally conjugate to the latter; reporting that choice
+    prevents force/reaction post-processing from silently treating the material
+    midsurface as the pressure surface.  Other shell formulations retain their
+    existing diagnostics unchanged.
+    """
+
+    if load_case is None:
+        return []
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
+    exact_qualified_guard = require_exact_qualified_component_lifecycle_api
+    pressure_ids = tuple(getattr(load_case, "pressure_loads", {}))
+    exact_qualified_guard(
+        model,
+        context="qualified S3 pressure-surface mapping observation",
+    )
+    records: list[Dict[str, Any]] = []
+    for raw_element_id in pressure_ids:
+        element_id = int(raw_element_id)
+        element = model.mesh.get_element(element_id)
+        if (
+            element is None
+            or str(getattr(element, "formulation_id", ""))
+            != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+        ):
+            continue
+        offset = float(getattr(element, "reference_surface_offset", 0.0))
+        exact_qualified_guard(
+            model,
+            context=(
+                "qualified S3 pressure-surface offset observation for "
+                f"element {element_id}"
+            ),
+        )
+        if not np.isfinite(offset):
+            raise AssemblyError(
+                f"Qualified S3 element {element_id} has a non-finite reference-surface offset."
+            )
+        records.append(
+            {
+                "element_id": element_id,
+                "pressure_surface_id": "ELEMENT_NODAL_REFERENCE_SURFACE_V1",
+                "reference_surface_offset": offset,
+                "resultant_and_reaction_reference": (
+                    "GLOBAL_NODAL_REFERENCE_COORDINATES"
+                ),
+                "section_origin_offset_from_reference": -offset,
+                "virtual_work": "TRANSLATIONAL_NODAL_REFERENCE_SURFACE_ONLY",
+            }
+        )
+    return records
+
+
+def _assemble_load_vector_under_lease(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
     displacements: Optional[np.ndarray] = None,
+    *,
+    qualified_runtime_guard: Any,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Assemble the global external load vector ``F_external``.
 
     ``displacements`` is ignored by ordinary dead loads.  A load case with
     ``follower_pressure=True`` uses it to evaluate pressure on the current
-    shell midsurface.
+    shell nodal interpolation surface.
     """
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
+    def exact_qualified_guard(
+        expected_model: "FEModel",
+        *,
+        context: str,
+    ) -> None:
+        lifecycle_guard(expected_model, context=context)
+        qualified_runtime_guard(expected_model, context=context)
+
+    exact_qualified_guard(model, context="load-vector assembly preflight")
     total_dofs = model.mesh.dof_manager.total_dofs
     start_time = time.time()
+    if load_case is None:
+        load_name = None
+        follower_pressure = False
+    else:
+        load_name = load_case.name
+        exact_qualified_guard(
+            model,
+            context="load-vector LoadCase name observation",
+        )
+        follower_pressure = bool(
+            getattr(load_case, "follower_pressure", False)
+        )
+        exact_qualified_guard(
+            model,
+            context="load-vector LoadCase pressure-policy observation",
+        )
     if displacements is not None:
-        displacements = np.asarray(displacements, dtype=float).reshape(-1)
+        displacements = np.asarray(displacements, dtype=float)
+        exact_qualified_guard(
+            model,
+            context="load-vector displacement observation",
+        )
+        displacements = displacements.reshape(-1)
         if displacements.shape != (total_dofs,):
             raise AssemblyError(
                 f"Displacement vector shape {displacements.shape} does not match total DOFs {(total_dofs,)}."
@@ -837,7 +5563,6 @@ def assemble_load_vector(
             raise AssemblyError("Displacement vector contains non-finite values.")
     if load_case is None:
         load_vector = np.zeros(total_dofs, dtype=float)
-        load_name = None
     else:
         load_vector = load_case.get_load_vector(
             model.mesh,
@@ -846,8 +5571,16 @@ def assemble_load_vector(
             displacements=displacements,
             element_activity=_element_activity(model),
         )
-        load_vector = np.asarray(load_vector, dtype=float).reshape(-1)
-        load_name = load_case.name
+        exact_qualified_guard(
+            model,
+            context="load-vector LoadCase observation",
+        )
+        load_vector = np.asarray(load_vector, dtype=float)
+        exact_qualified_guard(
+            model,
+            context="load-vector array observation",
+        )
+        load_vector = load_vector.reshape(-1)
 
     if load_vector.shape != (total_dofs,):
         raise AssemblyError(f"Load vector shape {load_vector.shape} does not match total DOFs {(total_dofs,)}.")
@@ -855,7 +5588,7 @@ def assemble_load_vector(
         raise AssemblyError(f"Load case {load_name!r} produced non-finite load vector values.")
 
     activity = _element_activity(model)
-    return load_vector, {
+    info = {
         "vector_type": "load",
         "load_case": load_name,
         "num_nodes": model.mesh.num_nodes,
@@ -864,7 +5597,7 @@ def assemble_load_vector(
         "load_norm": float(np.linalg.norm(load_vector)),
         "pressure_configuration": (
             "current"
-            if load_case is not None and bool(getattr(load_case, "follower_pressure", False))
+            if follower_pressure
             else "reference"
         ),
         "element_activity": (
@@ -876,12 +5609,38 @@ def assemble_load_vector(
             }
         ),
     }
+    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    if pressure_surfaces:
+        info["qualified_s3_pressure_surfaces"] = pressure_surfaces
+    exact_qualified_guard(model, context="load-vector assembly output")
+    return load_vector, info
 
 
-def assemble_external_load_tangent(
+def assemble_load_vector(
+    model: "FEModel",
+    load_case: Optional["LoadCase"] = None,
+    displacements: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """Assemble the external load vector under one authority lease."""
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="load-vector assembly",
+        operation=lambda lease: _assemble_load_vector_under_lease(
+            model,
+            load_case,
+            displacements,
+            qualified_runtime_guard=lease,
+        ),
+    )
+
+
+def _assemble_external_load_tangent_under_lease(
     model: "FEModel",
     load_case: Optional["LoadCase"],
     displacements: Optional[np.ndarray] = None,
+    *,
+    qualified_runtime_guard: Any,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble ``dF_external / du`` for current-area follower pressure.
 
@@ -889,9 +5648,51 @@ def assemble_external_load_tangent(
     nonsymmetric for an open pressure patch; callers must therefore use a
     general sparse factorization for ``K_internal - K_external``.
     """
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
+    def exact_qualified_guard(
+        expected_model: "FEModel",
+        *,
+        context: str,
+    ) -> None:
+        lifecycle_guard(expected_model, context=context)
+        qualified_runtime_guard(expected_model, context=context)
+
+    exact_qualified_guard(
+        model,
+        context="external-load tangent assembly preflight",
+    )
     total_dofs = model.mesh.dof_manager.total_dofs
     start_time = time.time()
-    u = np.zeros(total_dofs, dtype=float) if displacements is None else np.asarray(displacements, dtype=float).reshape(-1)
+    if load_case is None:
+        load_name = None
+        follower_pressure = False
+    else:
+        load_name = load_case.name
+        exact_qualified_guard(
+            model,
+            context="external-load tangent LoadCase name observation",
+        )
+        follower_pressure = bool(
+            getattr(load_case, "follower_pressure", False)
+        )
+        exact_qualified_guard(
+            model,
+            context="external-load tangent pressure-policy observation",
+        )
+    if displacements is None:
+        u = np.zeros(total_dofs, dtype=float)
+    else:
+        u = np.asarray(displacements, dtype=float)
+        exact_qualified_guard(
+            model,
+            context="external-load tangent displacement observation",
+        )
+        u = u.reshape(-1)
     if u.shape != (total_dofs,):
         raise AssemblyError(f"Displacement vector shape {u.shape} does not match total DOFs {(total_dofs,)}.")
     if not np.all(np.isfinite(u)):
@@ -902,8 +5703,15 @@ def assemble_external_load_tangent(
     data: list[np.ndarray] = []
     element_ids: list[int] = []
     _activity, activity_scales, activity_info = _activity_scales(model, "load")
-    if load_case is not None and bool(getattr(load_case, "follower_pressure", False)):
-        for raw_element_id, pressure in getattr(load_case, "pressure_loads", {}).items():
+    if load_case is not None and follower_pressure:
+        pressure_items = tuple(
+            getattr(load_case, "pressure_loads", {}).items()
+        )
+        exact_qualified_guard(
+            model,
+            context="external-load tangent pressure mapping observation",
+        )
+        for raw_element_id, pressure in pressure_items:
             element_id = int(raw_element_id)
             element = model.mesh.get_element(element_id)
             if element is None:
@@ -912,6 +5720,13 @@ def assemble_external_load_tangent(
                 raise AssemblyError(f"Follower pressure element {element_id} has no nodal interpolation.")
             dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
             coords = load_case._current_element_coordinates(element, model.mesh, u)
+            exact_qualified_guard(
+                model,
+                context=(
+                    "external-load tangent current-coordinate observation for "
+                    f"element {element_id}"
+                ),
+            )
             try:
                 element_tangent = load_case._consistent_pressure_tangent(
                     element,
@@ -921,6 +5736,13 @@ def assemble_external_load_tangent(
                 )
             except ValueError as exc:
                 raise AssemblyError(str(exc)) from exc
+            exact_qualified_guard(
+                model,
+                context=(
+                    "external-load tangent pressure-kernel observation for "
+                    f"element {element_id}"
+                ),
+            )
             element_tangent = _check_element_matrix_shape(
                 element_id,
                 "external_load_tangent",
@@ -946,15 +5768,15 @@ def assemble_external_load_tangent(
     else:
         tangent = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
 
-    return tangent, {
+    info = {
         "matrix_type": "external_load_tangent",
-        "load_case": None if load_case is None else load_case.name,
+        "load_case": load_name,
         "total_dofs": total_dofs,
         "num_pressure_elements": len(element_ids),
         "pressure_element_ids": element_ids,
         "pressure_configuration": (
             "current"
-            if load_case is not None and bool(getattr(load_case, "follower_pressure", False))
+            if follower_pressure
             else "reference"
         ),
         "diagnostics": {
@@ -963,6 +5785,61 @@ def assemble_external_load_tangent(
         },
         "assembly_time": time.time() - start_time,
     }
+    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    if pressure_surfaces:
+        info["qualified_s3_pressure_surfaces"] = pressure_surfaces
+    exact_qualified_guard(
+        model,
+        context="external-load tangent assembly output",
+    )
+    return tangent, info
+
+
+def assemble_external_load_tangent(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    displacements: Optional[np.ndarray] = None,
+) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+    """Assemble the external-load tangent under one authority lease."""
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="external-load tangent assembly",
+        operation=lambda lease: _assemble_external_load_tangent_under_lease(
+            model,
+            load_case,
+            displacements,
+            qualified_runtime_guard=lease,
+        ),
+    )
+
+
+def _assemble_external_load_system_under_lease(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    displacements: Optional[np.ndarray] = None,
+    *,
+    tangent: bool = True,
+    qualified_runtime_guard: Any,
+) -> Tuple[np.ndarray, Optional[sparse.csr_matrix], Dict[str, Any]]:
+    """Assemble external force and, optionally, its configuration tangent."""
+    vector, vector_info = _assemble_load_vector_under_lease(
+        model,
+        load_case,
+        displacements,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
+    if tangent:
+        load_tangent, tangent_info = _assemble_external_load_tangent_under_lease(
+            model,
+            load_case,
+            displacements,
+            qualified_runtime_guard=qualified_runtime_guard,
+        )
+    else:
+        load_tangent = None
+        tangent_info = None
+    return vector, load_tangent, {"load": vector_info, "external_load_tangent": tangent_info}
 
 
 def assemble_external_load_system(
@@ -972,19 +5849,26 @@ def assemble_external_load_system(
     *,
     tangent: bool = True,
 ) -> Tuple[np.ndarray, Optional[sparse.csr_matrix], Dict[str, Any]]:
-    """Assemble external force and, optionally, its configuration tangent."""
-    vector, vector_info = assemble_load_vector(model, load_case, displacements)
-    if tangent:
-        load_tangent, tangent_info = assemble_external_load_tangent(model, load_case, displacements)
-    else:
-        load_tangent = None
-        tangent_info = None
-    return vector, load_tangent, {"load": vector_info, "external_load_tangent": tangent_info}
+    """Assemble the complete external-load system under one authority lease."""
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="external-load system assembly",
+        operation=lambda lease: _assemble_external_load_system_under_lease(
+            model,
+            load_case,
+            displacements,
+            tangent=tangent,
+            qualified_runtime_guard=lease,
+        ),
+    )
 
 
-def assemble_load_matrix(
+def _assemble_load_matrix_under_lease(
     model: "FEModel",
     load_cases: Sequence[Optional["LoadCase"]],
+    *,
+    qualified_runtime_guard: Any,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Assemble a dense load matrix with one column per load case."""
     start = time.time()
@@ -992,7 +5876,11 @@ def assemble_load_matrix(
     infos = []
     names = []
     for load_case in load_cases:
-        vector, info = assemble_load_vector(model, load_case)
+        vector, info = _assemble_load_vector_under_lease(
+            model,
+            load_case,
+            qualified_runtime_guard=qualified_runtime_guard,
+        )
         vectors.append(vector)
         infos.append(info)
         names.append(None if load_case is None else load_case.name)
@@ -1010,32 +5898,72 @@ def assemble_load_matrix(
     }
 
 
-def assemble_damping_matrix(
+def assemble_load_matrix(
+    model: "FEModel",
+    load_cases: Sequence[Optional["LoadCase"]],
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """Assemble all load columns under one authority lease."""
+
+    frozen_load_cases = tuple(load_cases)
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="load-matrix assembly",
+        operation=lambda lease: _assemble_load_matrix_under_lease(
+            model,
+            frozen_load_cases,
+            qualified_runtime_guard=lease,
+        ),
+    )
+
+
+def _assemble_damping_matrix_under_lease(
     model: "FEModel",
     rayleigh_alpha: float = 0.0,
     rayleigh_beta: float = 0.0,
+    *,
+    qualified_runtime_guard: Any,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble Rayleigh damping C = alpha M + beta K."""
     start = time.time()
     if _element_activity(model) is None:
-        M, mass_info = assemble_mass_matrix(model)
-        K, stiffness_info = assemble_stiffness_matrix(model)
-    else:
-        M, mass_info = _assemble_element_matrix(
+        M, mass_info = _assemble_element_matrix_under_lease(
             model,
             "mass",
             lambda element, mesh, material: element.compute_mass_matrix(
                 mesh, material
             ),
-            activity_quantity="damping",
+            qualified_runtime_guard,
         )
         M = _add_point_masses_to_matrix(model, M)
-        K, stiffness_info = _assemble_element_matrix(
+        mass_info["diagnostics"]["point_mass_count"] = int(
+            len(getattr(model.mesh, "point_masses", {}) or {})
+        )
+        K, stiffness_info = _assemble_element_matrix_under_lease(
             model,
             "stiffness",
             lambda element, mesh, material: element.compute_stiffness_matrix(
                 mesh, material
             ),
+            qualified_runtime_guard,
+        )
+    else:
+        M, mass_info = _assemble_element_matrix_under_lease(
+            model,
+            "mass",
+            lambda element, mesh, material: element.compute_mass_matrix(
+                mesh, material
+            ),
+            qualified_runtime_guard,
+            activity_quantity="damping",
+        )
+        M = _add_point_masses_to_matrix(model, M)
+        K, stiffness_info = _assemble_element_matrix_under_lease(
+            model,
+            "stiffness",
+            lambda element, mesh, material: element.compute_stiffness_matrix(
+                mesh, material
+            ),
+            qualified_runtime_guard,
             activity_quantity="damping",
         )
     C = (float(rayleigh_alpha) * M + float(rayleigh_beta) * K).tocsr()
@@ -1051,10 +5979,31 @@ def assemble_damping_matrix(
     }
 
 
-def assemble_system(
+def assemble_damping_matrix(
+    model: "FEModel",
+    rayleigh_alpha: float = 0.0,
+    rayleigh_beta: float = 0.0,
+) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
+    """Assemble Rayleigh damping under one authority lease."""
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="damping assembly",
+        operation=lambda lease: _assemble_damping_matrix_under_lease(
+            model,
+            rayleigh_alpha,
+            rayleigh_beta,
+            qualified_runtime_guard=lease,
+        ),
+    )
+
+
+def _assemble_system_under_lease(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
     include_mass: bool = False,
+    *,
+    qualified_runtime_guard: Any,
 ) -> Tuple[sparse.csr_matrix, np.ndarray, Dict[str, Any]]:
     """Compatibility wrapper returning K, F and assembly metadata.
 
@@ -1062,8 +6011,19 @@ def assemble_system(
     only when include_mass is true.  It is never added to stiffness.
     """
     start_time = time.time()
-    K, stiffness_info = assemble_stiffness_matrix(model)
-    F, load_info = assemble_load_vector(model, load_case)
+    K, stiffness_info = _assemble_element_matrix_under_lease(
+        model,
+        "stiffness",
+        lambda element, mesh, material: element.compute_stiffness_matrix(
+            mesh, material
+        ),
+        qualified_runtime_guard,
+    )
+    F, load_info = _assemble_load_vector_under_lease(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
 
     info: Dict[str, Any] = {
         "num_elements": stiffness_info["num_elements"],
@@ -1078,9 +6038,39 @@ def assemble_system(
     }
 
     if include_mass:
-        M, mass_info = assemble_mass_matrix(model)
+        M, mass_info = _assemble_element_matrix_under_lease(
+            model,
+            "mass",
+            lambda element, mesh, material: element.compute_mass_matrix(
+                mesh, material
+            ),
+            qualified_runtime_guard,
+        )
+        M = _add_point_masses_to_matrix(model, M)
+        mass_info["diagnostics"]["point_mass_count"] = int(
+            len(getattr(model.mesh, "point_masses", {}) or {})
+        )
         info["mass_matrix"] = M
         info["mass"] = mass_info
 
     info["assembly_time"] = time.time() - start_time
     return K, F, info
+
+
+def assemble_system(
+    model: "FEModel",
+    load_case: Optional["LoadCase"] = None,
+    include_mass: bool = False,
+) -> Tuple[sparse.csr_matrix, np.ndarray, Dict[str, Any]]:
+    """Assemble the compatibility system under one authority lease."""
+
+    return _run_with_qualified_assembly_runtime_lease(
+        model,
+        context="system assembly",
+        operation=lambda lease: _assemble_system_under_lease(
+            model,
+            load_case,
+            include_mass,
+            qualified_runtime_guard=lease,
+        ),
+    )

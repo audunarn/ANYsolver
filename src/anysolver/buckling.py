@@ -12,7 +12,9 @@ reference compression state.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+import math
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -24,19 +26,101 @@ from .assembly import build_constraint_transformation, build_reduced_rigid_body_
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .current_state_tangent import (
+    _assemble_committed_current_tangent_components_implementation as _EXACT_CURRENT_STATE_COMPONENT_ASSEMBLER,
+    _snapshot_committed_current_tangent_inputs as _EXACT_CURRENT_STATE_INPUT_SNAPSHOT,
+    _validate_committed_current_tangent_inputs_implementation as _EXACT_CURRENT_STATE_INPUT_VALIDATOR,
+    require_active_current_state_eigen_lifecycle as _EXACT_ACTIVE_CURRENT_STATE_LIFECYCLE_GUARD,
+    require_committed_tangent_component_api as _EXACT_COMMITTED_TANGENT_ROUTE_GUARD,
+    require_exact_qualified_component_lifecycle_api as _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD,
+)
+from .element_capabilities import require_model_element_capabilities
+from .e4_pl_element import QualifiedE4PLShellElement
+from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
+    _run_with_qualified_assembly_runtime_lease,
     assemble_external_load_tangent,
     assemble_geometric_stiffness_matrix,
     assemble_stiffness_matrix,
 )
-from .recovery import ResourceConfig
+from .recovery import ResourceConfig, _owned_resource_config_snapshot
 from .threading_policy import resource_threaded
 
 if TYPE_CHECKING:
     from .analysis_session import AnalysisSession
     from .boundary import LoadCase
     from .fe_core import FEModel
+
+
+REFERENCE_ELASTIC_BUCKLING_POLICY_ID = (
+    "REFERENCE_ELASTIC_BUBBLE_CONDENSED_INITIAL_STRESS_V1"
+)
+from .modal import (
+    QUALIFIED_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID as _QUALIFIED_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID,
+    _normalize_prestress_states as _normalize_reference_prestress_states,
+    _require_exact_eigen_runtime_owners,
+    _require_qualified_prestress_operator_authority as _require_reference_prestress_authority,
+)
+CURRENT_STATE_BUCKLING_POLICY_ID = (
+    "COMMITTED_MATERIAL_VS_NEGATIVE_STRESS_HESSIAN_V1"
+)
+QUALIFIED_Q4_S3_CURRENT_STATE_BUCKLING_POLICY_ID = (
+    "Q4_ADDITIVE_VON_KARMAN_S3_NATIVE_TL_COMMITTED_PENCIL_V2"
+)
+_QUALIFIED_Q4_FORMULATION_ID = "E4_PL_QUALIFIED_Q4_HYBRID_V2"
+_QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+_REFERENCE_ELASTIC_BUBBLE_POLICY_ID = (
+    "REFERENCE_ELASTIC_BUBBLE_SCHUR_DERIVATIVE_V1"
+)
+
+
+def _static_formulation_id(element: Any) -> Optional[str]:
+    """Read the class formulation declaration without descriptor execution."""
+
+    owner = type(element)
+    for base in type.__getattribute__(owner, "__mro__"):
+        namespace = type.__getattribute__(base, "__dict__")
+        if "formulation_id" in namespace:
+            value = namespace["formulation_id"]
+            return value if type(value) is str else None
+    return None
+
+
+def _require_reference_elastic_s3_states(
+    model: "FEModel",
+    element_states: Any,
+) -> None:
+    """Validate the narrow S3 reference-elastic buckling authority boundary."""
+
+    s3_ids = tuple(
+        int(element_id)
+        for element_id, element in sorted(model.mesh.elements.items())
+        if _static_formulation_id(element) == _QUALIFIED_S3_FORMULATION_ID
+    )
+    if not s3_ids:
+        return
+    if not isinstance(element_states, Mapping):
+        raise ValueError(
+            "reference-elastic qualified S3 buckling requires an explicit "
+            "element-state mapping"
+        )
+    for element_id in s3_ids:
+        state = element_states.get(element_id)
+        if not isinstance(state, Mapping):
+            raise ValueError(
+                "reference-elastic qualified S3 buckling requires a state "
+                f"mapping for element {element_id}"
+            )
+        if (
+            state.get("bubble_linearization_policy")
+            != _REFERENCE_ELASTIC_BUBBLE_POLICY_ID
+        ):
+            raise ValueError(
+                "reference-elastic qualified S3 buckling requires "
+                "bubble_linearization_policy="
+                f"{_REFERENCE_ELASTIC_BUBBLE_POLICY_ID} for element {element_id}"
+            )
 
 
 @dataclass
@@ -262,8 +346,149 @@ def _assign_repeated_groups(modes: List[BucklingMode], tolerance: float) -> List
     return groups
 
 
+@dataclass(frozen=True)
+class _BucklingOperationConfig:
+    num_modes: int
+    eigen_tolerance: float
+    dense_size_limit: int
+    shift_load_factor: Optional[float]
+    load_factor_range: Optional[Tuple[Optional[float], Optional[float]]]
+    search_factor: int
+    repeated_tolerance: float
+    allow_dense_fallback: bool
+    allow_free_mechanisms: bool
+    follower_symmetry_tolerance: float
+    reference_elastic_only: bool
+    current_state_num_layers: int
+    current_state_load_scale: float
+
+
+def _owned_buckling_operation_config(
+    model: "FEModel",
+    *,
+    num_modes: Any,
+    eigen_tolerance: Any,
+    dense_size_limit: Any,
+    shift_load_factor: Any,
+    load_factor_range: Any,
+    search_factor: Any,
+    repeated_tolerance: Any,
+    allow_dense_fallback: Any,
+    allow_free_mechanisms: Any,
+    follower_symmetry_tolerance: Any,
+    reference_elastic_only: Any,
+    current_state_num_layers: Any,
+    current_state_load_scale: Any,
+    _exact_guard: Any,
+) -> _BucklingOperationConfig:
+    """Detach all scalar/range policy before any eigensolver mechanics."""
+
+    def converted(value: Any, converter: Any, name: str) -> Any:
+        made = converter(value)
+        _exact_guard(model, context=f"buckling {name} conversion")
+        return made
+
+    def canonical_int(value: Any, name: str) -> int:
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+            value,
+            (int, np.integer),
+        ):
+            raise ValueError(f"{name} must be an integer")
+        return converted(value, int, name)
+
+    shift = (
+        None
+        if shift_load_factor is None
+        else converted(shift_load_factor, float, "shift_load_factor")
+    )
+    if shift is not None and not math.isfinite(shift):
+        raise ValueError("shift_load_factor must be finite when supplied")
+    owned_range: Optional[Tuple[Optional[float], Optional[float]]]
+    if load_factor_range is None:
+        owned_range = None
+    else:
+        iterator = iter(load_factor_range)
+        _exact_guard(model, context="buckling load_factor_range iterator")
+        observed: list[Any] = []
+        while True:
+            try:
+                member = next(iterator)
+            except StopIteration:
+                _exact_guard(model, context="buckling load_factor_range end")
+                break
+            _exact_guard(model, context="buckling load_factor_range observation")
+            observed.append(member)
+        if len(observed) != 2:
+            raise ValueError("load_factor_range must contain exactly two bounds")
+        bounds: list[Optional[float]] = []
+        for index, member in enumerate(observed):
+            if member is None:
+                bounds.append(None)
+                continue
+            bound = converted(
+                member,
+                float,
+                f"load_factor_range[{index}]",
+            )
+            if not math.isfinite(bound):
+                raise ValueError("load_factor_range bounds must be finite")
+            bounds.append(bound)
+        owned_range = (bounds[0], bounds[1])
+    owned = _BucklingOperationConfig(
+        num_modes=canonical_int(num_modes, "num_modes"),
+        eigen_tolerance=converted(
+            eigen_tolerance,
+            float,
+            "eigen_tolerance",
+        ),
+        dense_size_limit=canonical_int(
+            dense_size_limit,
+            "dense_size_limit",
+        ),
+        shift_load_factor=shift,
+        load_factor_range=owned_range,
+        search_factor=canonical_int(search_factor, "search_factor"),
+        repeated_tolerance=converted(
+            repeated_tolerance,
+            float,
+            "repeated_tolerance",
+        ),
+        allow_dense_fallback=converted(
+            allow_dense_fallback,
+            bool,
+            "allow_dense_fallback",
+        ),
+        allow_free_mechanisms=converted(
+            allow_free_mechanisms,
+            bool,
+            "allow_free_mechanisms",
+        ),
+        follower_symmetry_tolerance=converted(
+            follower_symmetry_tolerance,
+            float,
+            "follower_symmetry_tolerance",
+        ),
+        reference_elastic_only=converted(
+            reference_elastic_only,
+            bool,
+            "reference_elastic_only",
+        ),
+        current_state_num_layers=canonical_int(
+            current_state_num_layers,
+            "current_state_num_layers",
+        ),
+        current_state_load_scale=converted(
+            current_state_load_scale,
+            float,
+            "current_state_load_scale",
+        ),
+    )
+    _exact_guard(model, context="buckling owned configuration")
+    return owned
+
+
 @resource_threaded
-def solve_eigenvalue_buckling(
+def _solve_eigenvalue_buckling_under_lease(
     model: "FEModel",
     element_states: Optional[Any] = None,
     num_modes: int = 3,
@@ -283,6 +508,12 @@ def solve_eigenvalue_buckling(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     session: Optional["AnalysisSession"] = None,
+    reference_elastic_only: bool = False,
+    current_state_displacements: Optional[Any] = None,
+    current_state_element_states: Optional[Any] = None,
+    current_state_num_layers: int = 5,
+    current_state_load_scale: float = 1.0,
+    _qualified_runtime_guard: Any = None,
 ) -> BucklingResult:
     """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
@@ -301,39 +532,372 @@ def solve_eigenvalue_buckling(
     nonconservative pressure patches require a general complex eigenanalysis
     and return an explicit unsupported status.
     """
+    raw_exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
+
+    def exact_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Dict[str, Any]:
+        result = raw_exact_guard(observed_model, context=context)
+        _qualified_runtime_guard(observed_model, context=context)
+        return result
+    normalize_reference_states = _normalize_reference_prestress_states
+    reference_authority_guard = _require_reference_prestress_authority
+    reference_authority_policy_id = (
+        _QUALIFIED_PRESTRESS_OPERATOR_AUTHORITY_POLICY_ID
+    )
+    snapshot_current_state = _EXACT_CURRENT_STATE_INPUT_SNAPSHOT
+    current_state_route_guard = _EXACT_COMMITTED_TANGENT_ROUTE_GUARD
+    current_state_activity_guard = _EXACT_ACTIVE_CURRENT_STATE_LIFECYCLE_GUARD
+    current_state_input_validator = _EXACT_CURRENT_STATE_INPUT_VALIDATOR
+    current_state_assembler = _EXACT_CURRENT_STATE_COMPONENT_ASSEMBLER
+    qualified_lifecycle_authority = exact_guard(
+        model,
+        context="solve_eigenvalue_buckling preflight",
+    )
     cancellation_safe_point(cancellation_token, "buckling.start")
+    exact_guard(model, context="solve_eigenvalue_buckling cancellation start")
+    owned_config = _owned_buckling_operation_config(
+        model,
+        num_modes=num_modes,
+        eigen_tolerance=eigen_tolerance,
+        dense_size_limit=dense_size_limit,
+        shift_load_factor=shift_load_factor,
+        load_factor_range=load_factor_range,
+        search_factor=search_factor,
+        repeated_tolerance=repeated_tolerance,
+        allow_dense_fallback=allow_dense_fallback,
+        allow_free_mechanisms=allow_free_mechanisms,
+        follower_symmetry_tolerance=follower_symmetry_tolerance,
+        reference_elastic_only=reference_elastic_only,
+        current_state_num_layers=current_state_num_layers,
+        current_state_load_scale=current_state_load_scale,
+        _exact_guard=exact_guard,
+    )
+    num_modes = owned_config.num_modes
+    eigen_tolerance = owned_config.eigen_tolerance
+    dense_size_limit = owned_config.dense_size_limit
+    shift_load_factor = owned_config.shift_load_factor
+    load_factor_range = owned_config.load_factor_range
+    search_factor = owned_config.search_factor
+    repeated_tolerance = owned_config.repeated_tolerance
+    allow_dense_fallback = owned_config.allow_dense_fallback
+    allow_free_mechanisms = owned_config.allow_free_mechanisms
+    follower_symmetry_tolerance = owned_config.follower_symmetry_tolerance
+    reference_elastic_only = owned_config.reference_elastic_only
+    current_state_num_layers = owned_config.current_state_num_layers
+    current_state_load_scale = owned_config.current_state_load_scale
+    _require_exact_eigen_runtime_owners(
+        qualified_element_ids=qualified_lifecycle_authority[
+            "qualified_element_ids"
+        ],
+        session=session,
+        factorization_cache=factorization_cache,
+        context="solve_eigenvalue_buckling",
+    )
     if num_modes <= 0:
         raise ValueError("num_modes must be positive")
+    if session is not None:
+        session._require_model(model)
+    if session is not None:
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling session ownership",
+        )
     if follower_symmetry_tolerance < 0.0:
         raise ValueError("follower_symmetry_tolerance must be non-negative")
+    current_state = (
+        current_state_displacements is not None
+        or current_state_element_states is not None
+    )
+    qualified_reference_family_present = any(
+        type(element)
+        in {QualifiedE4PLShellElement, QualifiedE4PLS3ShellElement}
+        or _static_formulation_id(element)
+        in {_QUALIFIED_Q4_FORMULATION_ID, _QUALIFIED_S3_FORMULATION_ID}
+        for element in model.mesh.elements.values()
+    )
+    qualified_reference_state = bool(
+        not current_state
+        and element_states is not None
+        and qualified_reference_family_present
+    )
+    if (current_state_displacements is None) != (
+        current_state_element_states is None
+    ):
+        raise ValueError(
+            "current-state buckling requires both committed displacements and "
+            "element states"
+        )
+    if current_state and element_states is not None:
+        raise ValueError(
+            "current-state buckling and reference element_states are mutually "
+            "exclusive"
+        )
+    if current_state and bool(reference_elastic_only):
+        raise ValueError(
+            "current-state buckling and reference_elastic_only are mutually "
+            "exclusive"
+        )
+    if current_state and (
+        reference_load_case is not None or reference_displacements is not None
+    ):
+        raise ValueError(
+            "current-state buckling and reference follower-load inputs are "
+            "mutually exclusive"
+        )
+    if current_state and factorization_cache is not None:
+        raise ValueError(
+            "current-state buckling and a persistent factorization_cache are "
+            "mutually exclusive"
+        )
+    if qualified_reference_state and factorization_cache is not None:
+        raise ValueError(
+            "qualified reference-prestress buckling and a persistent "
+            "factorization_cache are mutually exclusive"
+        )
+    if isinstance(current_state_load_scale, (bool, np.bool_)):
+        raise ValueError("current_state_load_scale must be finite and positive")
+    load_scale = float(current_state_load_scale)
+    if not math.isfinite(load_scale) or load_scale <= 0.0:
+        raise ValueError("current_state_load_scale must be finite and positive")
+    if not current_state and load_scale != 1.0:
+        raise ValueError(
+            "current_state_load_scale is available only with committed "
+            "current-state inputs"
+        )
+    if not current_state and (
+        isinstance(current_state_num_layers, (bool, np.bool_))
+        or not isinstance(current_state_num_layers, (int, np.integer))
+        or int(current_state_num_layers) != 5
+    ):
+        raise ValueError(
+            "current_state_num_layers is available only with committed "
+            "current-state inputs"
+        )
+
+    current_state_route: Optional[Dict[str, Any]] = None
+    current_state_activity_authority: Optional[Dict[str, Any]] = None
+    current_state_capability_profiles: list[tuple[str, tuple[int, ...]]] = []
+    active_current_state_policy_id = CURRENT_STATE_BUCKLING_POLICY_ID
+    if current_state:
+        current_state_route = current_state_route_guard(
+            model,
+            context="solve_eigenvalue_buckling current-state path",
+        )
+        current_state_activity_authority = (
+            current_state_activity_guard(
+                model,
+                current_state_route,
+                context="current-state buckling analysis",
+            )
+        )
+        if str(current_state_route["route"]) != "qualified_s3":
+            active_current_state_policy_id = (
+                QUALIFIED_Q4_S3_CURRENT_STATE_BUCKLING_POLICY_ID
+            )
+        qualified_q4_ids = tuple(
+            int(element_id)
+            for element_id, profile in sorted(
+                current_state_route["element_profiles"].items()
+            )
+            if str(profile["family"]) == "qualified_q4"
+        )
+        qualified_s3_ids = tuple(
+            int(element_id)
+            for element_id, profile in sorted(
+                current_state_route["element_profiles"].items()
+            )
+            if str(profile["family"]) == "qualified_s3"
+        )
+        if qualified_q4_ids:
+            current_state_capability_profiles.append(
+                ("current_state_buckling", qualified_q4_ids)
+            )
+        if qualified_s3_ids:
+            current_state_capability_profiles.append(
+                ("current_state_buckling_s3", qualified_s3_ids)
+            )
+        if str(current_state_route["route"]) == "mixed_qualified_q4_s3":
+            current_state_capability_profiles.append(
+                (
+                    "mixed_current_state_buckling",
+                    tuple(sorted((*qualified_q4_ids, *qualified_s3_ids))),
+                )
+            )
+        required_capability = None
+    elif bool(reference_elastic_only):
+        required_capability = "reference_elastic_buckling"
+    else:
+        required_capability = "buckling"
+    if current_state:
+        for capability, element_ids in current_state_capability_profiles:
+            require_model_element_capabilities(
+                model,
+                capability,
+                context="solve_eigenvalue_buckling",
+                element_ids=element_ids,
+            )
+        (
+            current_state_displacements,
+            current_state_element_states,
+        ) = snapshot_current_state(
+            model,
+            current_state_displacements,
+            current_state_element_states,
+            _exact_guard=exact_guard,
+        )
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling current-state snapshot",
+        )
+        current_state_input_validator(
+            model,
+            current_state_displacements,
+            current_state_element_states,
+            current_state_num_layers,
+            context="solve_eigenvalue_buckling current-state inputs",
+            _exact_guard=exact_guard,
+        )
+    else:
+        assert required_capability is not None
+        require_model_element_capabilities(
+            model,
+            required_capability,
+            context="solve_eigenvalue_buckling",
+        )
+
+    reference_state_input_info: Optional[Dict[str, Any]] = None
+    reference_operator_authority_policy_id: Optional[str] = None
+    qualified_reference_operator = any(
+        type(element)
+        in {QualifiedE4PLShellElement, QualifiedE4PLS3ShellElement}
+        or _static_formulation_id(element)
+        in {_QUALIFIED_Q4_FORMULATION_ID, _QUALIFIED_S3_FORMULATION_ID}
+        for element in model.mesh.elements.values()
+    )
+    if not current_state and element_states is not None:
+        element_states, reference_state_input_info = normalize_reference_states(
+            model,
+            element_states,
+            _exact_guard=exact_guard,
+        )
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling reference-state snapshot",
+        )
+        reference_authority_guard(
+            model,
+            element_states,
+            include_mass_and_descriptor=False,
+        )
+        reference_operator_authority_policy_id = (
+            reference_authority_policy_id
+        )
+    elif not current_state and qualified_reference_operator:
+        reference_authority_guard(
+            model,
+            {int(element_id): None for element_id in model.mesh.elements},
+            include_mass_and_descriptor=False,
+        )
+        reference_operator_authority_policy_id = (
+            reference_authority_policy_id
+        )
+    if not current_state and bool(reference_elastic_only):
+        _require_reference_elastic_s3_states(model, element_states)
 
     # Make the solve independent of whether a caller happened to run another
     # constrained analysis first.  Rigid-mode filtering reads the active DOF
     # constraints, so boundary conditions must be applied here explicitly.
     model.apply_boundary_conditions()
-    if session is None:
-        K, stiffness_info = assemble_stiffness_matrix(model)
+    exact_guard(
+        model,
+        context="solve_eigenvalue_buckling boundary conditions",
+    )
+    current_state_info = None
+    if current_state:
+        K, internal_geometric, current_total, current_state_info = (
+            current_state_assembler(
+                model,
+                current_state_displacements,
+                current_state_element_states,
+                current_state_num_layers,
+                _exact_guard=exact_guard,
+            )
+        )
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling current-state assembly",
+        )
+        KG = (-load_scale * internal_geometric).tocsr()
+        stiffness_info = {
+            "matrix_type": "committed_current_material_tangent",
+            "policy_id": active_current_state_policy_id,
+            "relative_symmetry_error": current_state_info[
+                "relative_symmetry_error"
+            ],
+            "matrix_persistence": "none",
+        }
+        geometric_info = {
+            "matrix_type": "negative_committed_stress_hessian",
+            "policy_id": active_current_state_policy_id,
+            "sign_convention": "compression_positive_equals_negative_internal_geometric",
+            "load_scale": load_scale,
+            "relative_symmetry_error": current_state_info[
+                "relative_symmetry_error"
+            ],
+            "matrix_persistence": "none",
+        }
+        total_closure = current_total - K - internal_geometric
+        current_state_info = dict(current_state_info)
+        current_state_info["buckling_total_closure_relative_error"] = float(
+            sparse_linalg.norm(total_closure)
+            / max(float(sparse_linalg.norm(current_total)), 1.0)
+        )
         stiffness_plan = None
+    elif session is None:
+        K, stiffness_info = assemble_stiffness_matrix(model)
+        exact_guard(model, context="solve_eigenvalue_buckling stiffness assembly")
+        stiffness_plan = None
+        KG, geometric_info = assemble_geometric_stiffness_matrix(
+            model, element_states
+        )
+        exact_guard(model, context="solve_eigenvalue_buckling geometric assembly")
     else:
         stiffness_plan = session.stiffness_plan(model)
+        exact_guard(model, context="solve_eigenvalue_buckling session stiffness plan")
         K = stiffness_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
-    KG, geometric_info = assemble_geometric_stiffness_matrix(model, element_states)
+        KG, geometric_info = assemble_geometric_stiffness_matrix(
+            model, element_states
+        )
+        exact_guard(model, context="solve_eigenvalue_buckling geometric assembly")
     K_load, load_tangent_info = assemble_external_load_tangent(
         model,
         reference_load_case,
         reference_displacements,
     )
+    exact_guard(model, context="solve_eigenvalue_buckling external-load tangent")
     cancellation_safe_point(cancellation_token, "buckling.after_assembly")
+    exact_guard(
+        model,
+        context="solve_eigenvalue_buckling cancellation after assembly",
+    )
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
-    if session is None:
+    if session is None or current_state:
         K_red, _, T, _, independent_dofs, constraint_info = (
             build_constraint_transformation(K, zero_load, model)
+        )
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling constraint transformation",
         )
         constraint_plan = None
     else:
         constraint_plan = session.constraint_plan(stiffness_plan, model)
+        exact_guard(model, context="solve_eigenvalue_buckling session constraint plan")
         K_red = constraint_plan.K_red
         T = constraint_plan.T
         independent_dofs = constraint_plan.independent_dofs
@@ -353,8 +917,57 @@ def solve_eigenvalue_buckling(
         "total_dofs": model.mesh.dof_manager.total_dofs,
         "reduced_dofs": int(K_red.shape[0]),
     }
+    if reference_state_input_info is not None:
+        assembly_info["reference_prestress_input"] = reference_state_input_info
+        if session is not None and qualified_reference_state:
+            assembly_info["analysis_session_state_dependent_bypass_reason"] = (
+                "qualified_reference_prestress_matrices_and_factors_are_not_cacheable"
+            )
+    if reference_operator_authority_policy_id is not None:
+        assembly_info["reference_operator_authority_policy_id"] = (
+            reference_operator_authority_policy_id
+        )
+        if reference_state_input_info is not None:
+            assembly_info["prestress_operator_authority_policy_id"] = (
+                reference_operator_authority_policy_id
+            )
+    if current_state_info is not None:
+        assembly_info["current_state_tangent_components"] = current_state_info
+        assembly_info["current_state_buckling_policy_id"] = (
+            active_current_state_policy_id
+        )
+        assembly_info["current_state_activity_authority"] = (
+            current_state_activity_authority
+        )
+        if current_state_route is not None:
+            assembly_info["current_state_route"] = {
+                "route": str(current_state_route["route"]),
+                "route_policy_id": str(current_state_route["route_policy_id"]),
+                "families": list(current_state_route["families"]),
+                "formulation_counts": dict(
+                    current_state_route["formulation_counts"]
+                ),
+                "native_rotation_required": bool(
+                    current_state_route["native_rotation_required"]
+                ),
+                "kinematic_scope": dict(
+                    sorted(current_state_route["kinematic_scope"].items())
+                ),
+                "reference_surface_offset_scope": dict(
+                    sorted(
+                        current_state_route[
+                            "reference_surface_offset_scope"
+                        ].items()
+                    )
+                ),
+            }
+        if session is not None:
+            assembly_info["analysis_session_bypass_reason"] = (
+                "committed_current_state_matrices_and_factors_are_not_cacheable"
+            )
     if session is not None:
         assembly_info["analysis_session"] = session.diagnostics()
+        exact_guard(model, context="solve_eigenvalue_buckling session diagnostics")
 
     settings = {
         "num_modes": num_modes,
@@ -367,7 +980,11 @@ def solve_eigenvalue_buckling(
         "allow_dense_fallback": allow_dense_fallback,
         "allow_free_mechanisms": allow_free_mechanisms,
         "factorization_cache": (
-            (session.factorization_cache.name if session is not None else None)
+            (
+                None
+                if current_state or qualified_reference_state
+                else (session.factorization_cache.name if session is not None else None)
+            )
             if factorization_cache is None
             else factorization_cache.name
         ),
@@ -375,6 +992,49 @@ def solve_eigenvalue_buckling(
         "follower_symmetry_tolerance": float(follower_symmetry_tolerance),
         "resource_config": None if resource_config is None else resource_config.to_dict(),
     }
+    if bool(reference_elastic_only):
+        settings["reference_elastic_buckling_policy_id"] = (
+            REFERENCE_ELASTIC_BUCKLING_POLICY_ID
+        )
+        assembly_info["reference_elastic_buckling_policy_id"] = (
+            REFERENCE_ELASTIC_BUCKLING_POLICY_ID
+        )
+    if qualified_reference_state and reference_state_input_info is not None:
+        settings["reference_prestress_input_schema_id"] = (
+            reference_state_input_info["schema_id"]
+        )
+        settings["reference_prestress_matrix_persistence"] = "none"
+        settings["reference_prestress_factorization_persistence"] = "none"
+    if current_state:
+        settings.update(
+            {
+                "current_state_buckling_policy_id": (
+                    active_current_state_policy_id
+                ),
+                "current_state_num_layers": int(current_state_num_layers),
+                "current_state_load_scale": load_scale,
+                "current_state_matrix_persistence": "none",
+                "current_state_factorization_persistence": "none",
+                "current_state_route": (
+                    None
+                    if current_state_route is None
+                    else str(current_state_route["route"])
+                ),
+            }
+        )
+    prestress_state_source = (
+        type(current_state_element_states).__name__
+        if current_state
+        else (
+            "none"
+            if element_states is None
+            else (
+                str(reference_state_input_info["source_kind"])
+                if reference_state_input_info is not None
+                else type(element_states).__name__
+            )
+        )
+    )
 
     if follower_symmetry_error > float(follower_symmetry_tolerance):
         diagnostics = {
@@ -394,8 +1054,9 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
+        exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult(
             [],
             num_modes,
@@ -415,8 +1076,9 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
+        exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult([], num_modes, "empty_reduced_system", constraint_info, assembly_info, result_case, diagnostics)
     if KG_red.nnz == 0:
         diagnostics = {"status": "zero_geometric_stiffness"}
@@ -427,19 +1089,25 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
+        exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult([], num_modes, "zero_geometric_stiffness", constraint_info, assembly_info, result_case, diagnostics)
 
-    if session is None:
+    if session is None or current_state:
         Q_rigid, nullspace_info = build_reduced_rigid_body_modes(
             model,
             independent_dofs,
             int(K.shape[0]),
             transformation=T,
         )
+        exact_guard(model, context="solve_eigenvalue_buckling rigid-body basis")
     else:
         Q_rigid, nullspace_info = session.rigid_body_modes(constraint_plan, model)
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling session rigid-body basis",
+        )
     assembly_info["nullspace"] = nullspace_info
 
     # Work with the inverted symmetric pencil KG phi = mu K phi.  Constrained
@@ -483,8 +1151,9 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes, "num_modes_returned": 0},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
+        exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult(
             [],
             num_modes,
@@ -707,13 +1376,34 @@ def solve_eigenvalue_buckling(
                 shift_matrix = (KG_sym - sigma * K_sym).tocsc()
                 cache = (
                     factorization_cache
-                    or (session.factorization_cache if session is not None else None)
-                    or FactorizationCache(name="buckling_shift_invert", max_entries=2)
+                    or (
+                        session.factorization_cache
+                        if session is not None
+                        and not current_state
+                        and not qualified_reference_state
+                        else None
+                    )
+                    or FactorizationCache(
+                        name=(
+                            "buckling_current_state_transient"
+                            if current_state
+                            else (
+                                "buckling_qualified_prestress_transient"
+                                if qualified_reference_state
+                                else "buckling_shift_invert"
+                            )
+                        ),
+                        max_entries=2,
+                    )
                 )
                 operator, handle = cached_inverse_operator(
                     shift_matrix,
                     MatrixClass.SYMMETRIC_INDEFINITE,
                     cache=cache,
+                )
+                exact_guard(
+                    model,
+                    context="solve_eigenvalue_buckling shift factorization",
                 )
                 _, eigenvectors = sparse_linalg.eigsh(
                     KG_sym.tocsc(),
@@ -758,11 +1448,16 @@ def solve_eigenvalue_buckling(
             solver_info={"convergence_info": diagnostics},
             recovery={"modes": num_modes},
             settings=settings,
-            metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+            metadata={"prestress_state_source": prestress_state_source},
         ).to_dict()
+        exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult([], num_modes, "failed", constraint_info, assembly_info, result_case, diagnostics)
 
     cancellation_safe_point(cancellation_token, "buckling.after_eigensolve")
+    exact_guard(
+        model,
+        context="solve_eigenvalue_buckling cancellation after eigensolve",
+    )
 
     candidates: List[tuple[float, np.ndarray, float, float, float, float]] = []
     rejected: List[Dict[str, Any]] = []
@@ -770,6 +1465,10 @@ def solve_eigenvalue_buckling(
         cancellation_safe_point(
             cancellation_token,
             f"buckling.root:{i + 1}",
+        )
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling cancellation during recovery",
         )
         reduced_mode = np.asarray(np.real(eigenvectors[:, i]), dtype=float)
         mode_norm = float(np.linalg.norm(reduced_mode))
@@ -883,6 +1582,7 @@ def solve_eigenvalue_buckling(
         diagnostics["rigid_projection"] = projection_diagnostics
     if session is not None:
         diagnostics["analysis_session"] = session.diagnostics()
+        exact_guard(model, context="solve_eigenvalue_buckling session diagnostics")
     result_case = make_result_case(
         name="linear_buckling",
         analysis_type="linear_buckling",
@@ -891,7 +1591,7 @@ def solve_eigenvalue_buckling(
         solver_info={"convergence_info": diagnostics},
         recovery={"modes": num_modes, "num_modes_returned": len(modes)},
         settings=settings,
-        metadata={"prestress_state_source": "none" if element_states is None else type(element_states).__name__},
+        metadata={"prestress_state_source": prestress_state_source},
     ).to_dict()
     emit_progress(
         progress_callback,
@@ -902,4 +1602,92 @@ def solve_eigenvalue_buckling(
         status=status,
         num_modes_returned=len(modes),
     )
+    exact_guard(model, context="solve_eigenvalue_buckling output")
     return BucklingResult(modes, num_modes, status, constraint_info, assembly_info, result_case, diagnostics)
+
+
+def solve_eigenvalue_buckling(
+    model: "FEModel",
+    element_states: Optional[Any] = None,
+    num_modes: int = 3,
+    eigen_tolerance: float = 1.0e-8,
+    dense_size_limit: int = 200,
+    shift_load_factor: Optional[float] = None,
+    load_factor_range: Optional[Tuple[Optional[float], Optional[float]]] = None,
+    search_factor: int = 4,
+    repeated_tolerance: float = 1.0e-3,
+    allow_dense_fallback: bool = False,
+    allow_free_mechanisms: bool = False,
+    factorization_cache: Optional[FactorizationCache] = None,
+    reference_load_case: Optional["LoadCase"] = None,
+    reference_displacements: Optional[np.ndarray] = None,
+    follower_symmetry_tolerance: float = 1.0e-10,
+    resource_config: Optional[ResourceConfig] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+    session: Optional["AnalysisSession"] = None,
+    reference_elastic_only: bool = False,
+    current_state_displacements: Optional[Any] = None,
+    current_state_element_states: Optional[Any] = None,
+    current_state_num_layers: int = 5,
+    current_state_load_scale: float = 1.0,
+) -> BucklingResult:
+    """Solve buckling under one non-renewable qualified-family lease."""
+
+    exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
+    run_under_lease = _run_with_qualified_assembly_runtime_lease
+    own_resource_config = _owned_resource_config_snapshot
+    solve_under_lease = _solve_eigenvalue_buckling_under_lease
+    exact_guard(
+        model,
+        context="solve_eigenvalue_buckling preflight",
+    )
+
+    def operation(lease: Any) -> BucklingResult:
+        def post_observation() -> None:
+            exact_guard(
+                model,
+                context="solve_eigenvalue_buckling resource configuration",
+            )
+            lease(
+                model,
+                context="solve_eigenvalue_buckling resource configuration",
+            )
+
+        owned_resource_config = own_resource_config(
+            resource_config,
+            post_observation=post_observation,
+        )
+        return solve_under_lease(
+            model,
+            element_states=element_states,
+            num_modes=num_modes,
+            eigen_tolerance=eigen_tolerance,
+            dense_size_limit=dense_size_limit,
+            shift_load_factor=shift_load_factor,
+            load_factor_range=load_factor_range,
+            search_factor=search_factor,
+            repeated_tolerance=repeated_tolerance,
+            allow_dense_fallback=allow_dense_fallback,
+            allow_free_mechanisms=allow_free_mechanisms,
+            factorization_cache=factorization_cache,
+            reference_load_case=reference_load_case,
+            reference_displacements=reference_displacements,
+            follower_symmetry_tolerance=follower_symmetry_tolerance,
+            resource_config=owned_resource_config,
+            cancellation_token=cancellation_token,
+            progress_callback=progress_callback,
+            session=session,
+            reference_elastic_only=reference_elastic_only,
+            current_state_displacements=current_state_displacements,
+            current_state_element_states=current_state_element_states,
+            current_state_num_layers=current_state_num_layers,
+            current_state_load_scale=current_state_load_scale,
+            _qualified_runtime_guard=lease,
+        )
+
+    return run_under_lease(
+        model,
+        context="solve_eigenvalue_buckling",
+        operation=operation,
+    )

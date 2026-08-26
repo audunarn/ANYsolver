@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from .nonlinear_element_evaluation import evaluate_nonlinear_element
 from .nonlinear_state import (
     NonlinearStateStore,
     begin_state_evaluation,
@@ -704,13 +705,17 @@ def _evaluate_local_responses(
             record.dof_mapping
         ]
         force_element, tangent_element, trial_state = (
-            record.element.compute_nonlinear_response(
+            evaluate_nonlinear_element(
+                record.element,
                 mesh,
                 material,
                 element_displacement,
                 committed_states.get(record.element_id),
                 nonlinear_plan.num_layers,
                 tangent,
+                committed_states=committed_states,
+                state_token=state_token,
+                element_id=record.element_id,
             )
         )
         nonlinear_plan.force_values[record.force_positions] = np.asarray(
@@ -736,7 +741,11 @@ def assemble_reduced_system(
     """Assemble reduced internal force and tangent directly from local buffers."""
 
     with nonlinear_plan._lock:
-        state_token = begin_state_evaluation(committed_states)
+        state_token = begin_state_evaluation(
+            committed_states,
+            model=nonlinear_plan.model,
+            displacements=displacements,
+        )
         start_total = time.perf_counter()
         nonlinear_plan.timings.calls += 1
         reduced_plan.timings.assemblies += 1

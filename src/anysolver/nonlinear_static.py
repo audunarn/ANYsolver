@@ -45,6 +45,14 @@ from .control import (
     cancellation_safe_point,
     emit_progress,
 )
+from .current_state_tangent import (
+    _guarded_owned_input_snapshot as _guarded_owned_nonlinear_snapshot,
+    require_exact_qualified_component_lifecycle_api as _EXACT_QUALIFIED_LIFECYCLE_GUARD,
+)
+from .element_capabilities import (
+    require_model_element_capabilities,
+    require_model_nonlinear_workflow_capabilities,
+)
 from .fracture import (
     DeletedElementRecord,
     FractureConfig,
@@ -56,8 +64,10 @@ from .fracture import (
     mpc_warning_for_deleted_shells,
 )
 from .linalg import MatrixClass, factorize
+from .initial_field_state import state_has_active_initial_fields
 from .jit_compiler import numba_thread_scope
 from .matrix_assembly import (
+    _run_with_qualified_assembly_runtime_lease,
     _scatter_element_matrix,
     _triplets_to_csr,
     assemble_external_load_system,
@@ -71,11 +81,19 @@ from .nonlinear_analysis_diagnostics import (
 from .nonlinear_state import (
     NonlinearStateStore,
     StateMaterializationPolicy,
+    StateTransactionError,
     commit_state_candidate,
     discard_active_state_candidate,
     materialize_state_mapping,
 )
-from .recovery import ResourceConfig
+from .nonlinear_restart import (
+    canonical_checkpoint_json_bytes,
+    create_nonlinear_checkpoint,
+    load_case_descriptor,
+    load_nonlinear_checkpoint,
+    validate_nonlinear_checkpoint,
+)
+from .recovery import ResourceConfig, _owned_resource_config_snapshot
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
@@ -94,6 +112,16 @@ _INITIAL_FIELD_STATE_KEYS = (
     "initial_curvature_prestrain",
     "initial_fiber_stress",
     "initial_fiber_prestrain",
+)
+_Q4_COMMITTED_BINDING_KEY = "qualified_q4_committed_binding"
+_Q4_COMMITTED_INTEGRITY_KEY = "state_integrity_sha256"
+_Q4_ACTIVITY_DISPOSITION_KEY = "qualified_q4_activity_disposition"
+_Q4_COMMITTED_STATE_LIFECYCLE_SCHEMA = (
+    "ANYSOLVER_Q4_COMMITTED_STATE_LIFECYCLE_V1"
+)
+_S3_ACTIVITY_DISPOSITION_KEY = "qualified_s3_activity_disposition"
+_S3_COMMITTED_STATE_LIFECYCLE_SCHEMA = (
+    "ANYSOLVER_S3_COMMITTED_STATE_LIFECYCLE_V1"
 )
 
 
@@ -402,19 +430,37 @@ class NonlinearConvergenceSettings:
         }
 
 
-def _coerce_convergence_settings(value: Optional[Union[str, Mapping[str, Any], NonlinearConvergenceSettings]]) -> NonlinearConvergenceSettings:
+def _coerce_convergence_settings(
+    value: Optional[
+        Union[str, Mapping[str, Any], NonlinearConvergenceSettings]
+    ],
+    *,
+    _post_observation: Optional[Callable[[], Any]] = None,
+) -> NonlinearConvergenceSettings:
+    def observed() -> None:
+        if _post_observation is not None:
+            _post_observation()
+
     if value is None:
         return NonlinearConvergenceSettings.for_profile("auto")
     if isinstance(value, NonlinearConvergenceSettings):
+        observed()
         return value
     if isinstance(value, str):
-        return NonlinearConvergenceSettings.for_profile(value)
+        result = NonlinearConvergenceSettings.for_profile(value)
+        observed()
+        return result
     if isinstance(value, Mapping):
         data = dict(value)
+        observed()
         profile = str(data.pop("profile", "auto")).lower()
+        observed()
         base = NonlinearConvergenceSettings.for_profile(profile).to_dict()
         base.update(data)
-        return NonlinearConvergenceSettings(**base)
+        observed()
+        result = NonlinearConvergenceSettings(**base)
+        observed()
+        return result
     raise TypeError("convergence_settings must be None, a profile string, a mapping, or NonlinearConvergenceSettings")
 
 
@@ -520,6 +566,7 @@ class NonlinearStaticResult:
     element_states: Dict[int, Any] = field(default_factory=dict)
     info: Dict[str, Any] = field(default_factory=dict)
     snapshots: Tuple[NonlinearIncrementSnapshot, ...] = field(default_factory=tuple)
+    restart_checkpoint: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     @property
     def converged(self) -> bool:
@@ -551,7 +598,7 @@ class NonlinearStaticResult:
         return self.info.get("stop_reason", self.failure_reason)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "status": self.status,
             "status_category": self.status_category,
             "converged": self.converged,
@@ -564,12 +611,345 @@ class NonlinearStaticResult:
             "steps": [step.to_dict() for step in self.steps],
             "snapshots": [snapshot.to_dict() for snapshot in self.snapshots],
         }
+        if self.restart_checkpoint is not None:
+            payload["restart_checkpoint"] = {
+                "schema": self.restart_checkpoint["schema"],
+                "version": self.restart_checkpoint["version"],
+                "analysis_kind": self.restart_checkpoint["analysis_kind"],
+                "checkpoint_sha256": self.restart_checkpoint["checkpoint_sha256"],
+            }
+        return payload
+
+    def to_restart_checkpoint(self) -> Dict[str, Any]:
+        """Return an owned complete checkpoint of the last committed step."""
+
+        if self.restart_checkpoint is None:
+            raise ValueError("this result does not contain a nonlinear restart checkpoint")
+        return copy.deepcopy(self.restart_checkpoint)
+
+    def restart_checkpoint_bytes(self) -> bytes:
+        """Return the complete checkpoint as strict canonical JSON."""
+
+        return canonical_checkpoint_json_bytes(self.to_restart_checkpoint())
 
     @property
     def quantity_metadata(self) -> Tuple[Any, ...]:
         from .quantities import describe_result_quantities
 
         return describe_result_quantities(self)
+
+
+def _static_restart_analysis_contract(
+    *,
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    constant_load_case: Optional["LoadCase"],
+    load_program: Optional[NonlinearLoadProgram],
+    control_name: str,
+    displacement_control: Optional[DisplacementControl],
+    num_layers: int,
+    max_iterations: int,
+    tolerance: float,
+    effective_min_step_fraction: float,
+    settings: NonlinearConvergenceSettings,
+    fracture_config: Optional[FractureConfig],
+    resource_config: Optional[ResourceConfig],
+    kinematics: str,
+    resolved_corotational_tangent: str,
+) -> Dict[str, Any]:
+    """Return invariant inputs required to continue the same static path.
+
+    Target load/displacement and the number of additional increments are
+    intentionally excluded.  The checkpoint owns the accepted path position
+    and adaptive increment state; a resumed call may extend that same path.
+    """
+
+    if load_program is None:
+        stages: List[Dict[str, Any]] = []
+    else:
+        stages = [
+            {
+                "name": stage.name,
+                "target_factor": float(stage.target_factor),
+                "load_case": load_case_descriptor(stage.load_case),
+            }
+            for stage in load_program.stages
+        ]
+    control_descriptor: Optional[Dict[str, Any]] = None
+    if control_name == "displacement":
+        if displacement_control is None:
+            raise ValueError("displacement_control is required when control='displacement'")
+        control_descriptor = {
+            # The row defines the physical continuation coordinate.  Its new
+            # target is deliberately not part of the invariant contract.
+            "full_row": displacement_control.full_row(model).tolist(),
+        }
+    return {
+        "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V1",
+        "control": control_name,
+        "load_case": load_case_descriptor(load_case),
+        "constant_load_case": load_case_descriptor(constant_load_case),
+        "load_program": stages,
+        "displacement_control": control_descriptor,
+        "num_layers": int(num_layers),
+        "max_iterations": int(max_iterations),
+        "tolerance": float(tolerance),
+        "effective_min_step_fraction": float(effective_min_step_fraction),
+        "convergence_settings": settings.to_dict(),
+        "fracture_config": (
+            None if fracture_config is None else fracture_config.to_dict()
+        ),
+        "resource_config": (
+            None if resource_config is None else resource_config.to_dict()
+        ),
+        "kinematics": str(kinematics),
+        "corotational_tangent": str(resolved_corotational_tangent),
+    }
+
+
+def _static_step_from_restart(value: Any) -> NonlinearStaticStep:
+    if not isinstance(value, Mapping):
+        raise ValueError("checkpoint static step must be a mapping")
+    expected = {
+        "step_index",
+        "load_factor",
+        "iterations",
+        "residual_norm",
+        "displacement_norm",
+        "max_equivalent_plastic_strain",
+        "control_value",
+        "active_stage",
+        "deleted_element_count",
+        "max_fracture_utilization",
+        "support_reactions",
+    }
+    if set(value) != expected:
+        raise ValueError("checkpoint static step schema is incompatible")
+    reactions = value["support_reactions"]
+    if not isinstance(reactions, Mapping):
+        raise ValueError("checkpoint static step reactions must be a mapping")
+    return NonlinearStaticStep(
+        step_index=int(value["step_index"]),
+        load_factor=float(value["load_factor"]),
+        iterations=int(value["iterations"]),
+        residual_norm=float(value["residual_norm"]),
+        displacement_norm=float(value["displacement_norm"]),
+        max_equivalent_plastic_strain=float(value["max_equivalent_plastic_strain"]),
+        control_value=(
+            None if value["control_value"] is None else float(value["control_value"])
+        ),
+        active_stage=(
+            None if value["active_stage"] is None else str(value["active_stage"])
+        ),
+        deleted_element_count=int(value["deleted_element_count"]),
+        max_fracture_utilization=float(value["max_fracture_utilization"]),
+        support_reactions={
+            str(name): tuple(float(item) for item in components)
+            for name, components in reactions.items()
+        },
+    )
+
+
+def _restore_static_path_state(
+    value: Mapping[str, Any],
+    *,
+    control_name: str,
+    n_red: Optional[int] = None,
+    total_dofs: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Validate static continuation state before solver assembly."""
+
+    if not isinstance(value, Mapping):
+        raise ValueError("static checkpoint path_state must be a mapping")
+    common = {
+        "mode",
+        "load_factor",
+        "step_index",
+        "total_iterations",
+        "steps",
+        "force_displacement_history",
+        "reduced_coordinates",
+        "terminal_status",
+        "failure_reason",
+    }
+    expected = (
+        common
+        | {
+            "base_step",
+            "minimum_step",
+            "maximum_step",
+            "next_step_size",
+            "force_line_search_next",
+            "convergence_adaptation",
+            "deletion_records",
+            "fracture_warnings",
+            "max_fracture_utilization",
+            "affine_path_mode",
+            "exact_base_offset",
+        }
+        if control_name == "force"
+        else common
+    )
+    legacy_expected = (
+        expected - {"affine_path_mode", "exact_base_offset"}
+        if control_name == "force"
+        else expected
+    )
+    if frozenset(value) not in {
+        frozenset(expected),
+        frozenset(legacy_expected),
+    } or value.get("mode") != control_name:
+        raise ValueError("static checkpoint path schema is incompatible")
+    steps_raw = value["steps"]
+    history = value["force_displacement_history"]
+    if not isinstance(steps_raw, list) or not isinstance(history, list):
+        raise ValueError("static checkpoint histories must be lists")
+    steps = [_static_step_from_restart(item) for item in steps_raw]
+    step_index = int(value["step_index"])
+    if step_index < 0 or len(steps) != step_index:
+        raise ValueError("static checkpoint step count is inconsistent")
+    if len(history) != step_index:
+        raise ValueError("static checkpoint force/displacement history is incomplete")
+    if [step.step_index for step in steps] != list(range(1, step_index + 1)):
+        raise ValueError("static checkpoint step ordering is inconsistent")
+    load_factor = float(value["load_factor"])
+    if steps and steps[-1].load_factor != load_factor:
+        raise ValueError("static checkpoint load factor differs from its last step")
+    restored: Dict[str, Any] = {
+        "mode": control_name,
+        "load_factor": load_factor,
+        "step_index": step_index,
+        "total_iterations": int(value["total_iterations"]),
+        "steps": steps,
+        "force_displacement_history": copy.deepcopy(history),
+        "terminal_status": str(value["terminal_status"]),
+        "failure_reason": (
+            None if value["failure_reason"] is None else str(value["failure_reason"])
+        ),
+    }
+    reduced_coordinates = np.asarray(value["reduced_coordinates"], dtype=float)
+    if (
+        reduced_coordinates.ndim != 1
+        or not np.all(np.isfinite(reduced_coordinates))
+        or (n_red is not None and reduced_coordinates.shape != (int(n_red),))
+    ):
+        raise ValueError("static checkpoint reduced coordinates are incompatible")
+    restored["reduced_coordinates"] = reduced_coordinates.copy()
+    if restored["total_iterations"] < 0:
+        raise ValueError("static checkpoint iteration count is invalid")
+    if control_name == "force":
+        from .fracture import DeletedElementRecord
+
+        deletion_records_raw = value["deletion_records"]
+        if not isinstance(deletion_records_raw, list):
+            raise ValueError("static checkpoint deletion records must be a list")
+        deletion_records = [
+            DeletedElementRecord(**record) for record in deletion_records_raw
+        ]
+        deletion_ids = [int(record.element_id) for record in deletion_records]
+        if len(deletion_ids) != len(set(deletion_ids)):
+            raise ValueError("static checkpoint deletion records contain duplicate IDs")
+        for record in deletion_records:
+            record_step = int(record.step_index)
+            if record_step < 1 or record_step > len(steps):
+                raise ValueError(
+                    "static checkpoint deletion step lies outside its history"
+                )
+            if float(record.load_factor) != float(
+                steps[record_step - 1].load_factor
+            ):
+                raise ValueError(
+                    "static checkpoint deletion load factor differs from its step"
+                )
+        for step in steps:
+            cumulative_deleted = sum(
+                int(record.step_index) <= int(step.step_index)
+                for record in deletion_records
+            )
+            if int(step.deleted_element_count) != cumulative_deleted:
+                raise ValueError(
+                    "static checkpoint cumulative deletion history is inconsistent"
+                )
+        if steps and steps[-1].deleted_element_count != len(deletion_ids):
+            raise ValueError("static checkpoint deletion count differs from its last step")
+        restored.update(
+            {
+                "base_step": float(value["base_step"]),
+                "minimum_step": float(value["minimum_step"]),
+                "maximum_step": float(value["maximum_step"]),
+                "next_step_size": float(value["next_step_size"]),
+                "force_line_search_next": bool(value["force_line_search_next"]),
+                "convergence_adaptation": copy.deepcopy(value["convergence_adaptation"]),
+                "deletion_records": deletion_records,
+                "fracture_warnings": [str(item) for item in value["fracture_warnings"]],
+                "max_fracture_utilization": float(value["max_fracture_utilization"]),
+                "affine_path_mode": value.get("affine_path_mode"),
+                "exact_base_offset": (
+                    None
+                    if value.get("exact_base_offset") is None
+                    else np.asarray(
+                        value["exact_base_offset"], dtype=np.float64
+                    ).copy()
+                ),
+            }
+        )
+        affine_mode = restored["affine_path_mode"]
+        exact_base = restored["exact_base_offset"]
+        if affine_mode is not None and affine_mode not in {
+            "PROPORTIONAL_PRESCRIBED_FIELD",
+            "FIXED_RESTART_AFFINE_STATE",
+        }:
+            raise ValueError("static checkpoint affine path mode is incompatible")
+        if exact_base is not None and (
+            exact_base.ndim != 1
+            or not np.all(np.isfinite(exact_base))
+            or (
+                total_dofs is not None
+                and exact_base.shape != (int(total_dofs),)
+            )
+        ):
+            raise ValueError("static checkpoint exact base offset is incompatible")
+        if (affine_mode is None) != (exact_base is None):
+            raise ValueError("static checkpoint affine path state is incomplete")
+        positive_names = ("base_step", "minimum_step", "maximum_step", "next_step_size")
+        if any(restored[name] <= 0.0 for name in positive_names):
+            raise ValueError("static checkpoint adaptive step sizes must be positive")
+        if restored["minimum_step"] > restored["maximum_step"]:
+            raise ValueError("static checkpoint adaptive step bounds are inconsistent")
+        if not isinstance(restored["convergence_adaptation"], list):
+            raise ValueError("static checkpoint convergence history must be a list")
+    return restored
+
+
+def _static_restart_path_payload(
+    *,
+    control_name: str,
+    load_factor: float,
+    step_index: int,
+    total_iterations: int,
+    steps: Sequence[NonlinearStaticStep],
+    force_displacement_history: Sequence[Mapping[str, Any]],
+    reduced_coordinates: np.ndarray,
+    terminal_status: str,
+    failure_reason: Optional[str],
+    **force_values: Any,
+) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "mode": str(control_name),
+        "load_factor": float(load_factor),
+        "step_index": int(step_index),
+        "total_iterations": int(total_iterations),
+        "steps": [step.to_dict() for step in steps],
+        "force_displacement_history": copy.deepcopy(list(force_displacement_history)),
+        "reduced_coordinates": np.asarray(
+            reduced_coordinates, dtype=float
+        ).reshape(-1).tolist(),
+        "terminal_status": str(terminal_status),
+        "failure_reason": None if failure_reason is None else str(failure_reason),
+    }
+    if control_name == "force":
+        payload.update(force_values)
+    return payload
 
 
 def _local_dof_index(dof: Union[str, int]) -> int:
@@ -584,13 +964,37 @@ def _local_dof_index(dof: Union[str, int]) -> int:
     return index
 
 
-def _has_follower_pressure(load_case: Optional["LoadCase"]) -> bool:
-    """Whether a load case contains current-area pressure."""
-    return bool(
-        load_case is not None
-        and getattr(load_case, "pressure_loads", None)
-        and getattr(load_case, "follower_pressure", False)
-    )
+def _has_follower_pressure(
+    load_case: Optional["LoadCase"],
+    *,
+    model: Optional["FEModel"] = None,
+    _exact_guard: Any = None,
+) -> bool:
+    """Whether a load case contains current-area pressure.
+
+    A custom mapping or descriptor may execute caller code while the policy is
+    observed.  Qualified orchestration passes its original non-renewable guard
+    so no subsequent load-case or model observation can occur after a
+    transient authority mutation.
+    """
+
+    def observed(context: str) -> None:
+        if _exact_guard is not None and model is not None:
+            _exact_guard(model, context=context)
+
+    if load_case is None:
+        return False
+    pressure_loads = getattr(load_case, "pressure_loads", None)
+    observed("nonlinear follower-pressure mapping observation")
+    has_pressure = bool(pressure_loads)
+    observed("nonlinear follower-pressure mapping disposition")
+    if not has_pressure:
+        return False
+    follower_pressure = getattr(load_case, "follower_pressure", False)
+    observed("nonlinear follower-pressure policy observation")
+    result = bool(follower_pressure)
+    observed("nonlinear follower-pressure policy disposition")
+    return result
 
 
 def _weighted_external_load_system(
@@ -620,7 +1024,7 @@ def _weighted_external_load_system(
     return force, load_tangent
 
 
-def _assemble_nonlinear_system(
+def _assemble_nonlinear_system_unchecked(
     model: "FEModel",
     displacements: np.ndarray,
     committed_states: Dict[int, Any],
@@ -654,7 +1058,11 @@ def _assemble_nonlinear_system(
     del require_full_coordinates  # consumed by the direct-reduction adapter
     from .nonlinear_state import begin_state_evaluation, finish_state_evaluation
 
-    state_token = begin_state_evaluation(committed_states)
+    state_token = begin_state_evaluation(
+        committed_states,
+        model=model,
+        displacements=displacements,
+    )
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
@@ -662,6 +1070,9 @@ def _assemble_nonlinear_system(
     trial_states: Dict[int, Any] = {}
     deleted_set = {int(element_id) for element_id in (deleted_element_ids or ())}
     residual_fraction = float(residual_stiffness_fraction)
+    freeze_deleted = getattr(committed_states, "freeze_deleted", None)
+    if deleted_set and callable(freeze_deleted):
+        freeze_deleted(tuple(sorted(deleted_set)))
     element_scales = {
         int(element_id): min(max(float(scale), 0.0), 1.0)
         for element_id, scale in (element_stiffness_scales or {}).items()
@@ -673,6 +1084,7 @@ def _assemble_nonlinear_system(
 
     from .elements import ShellElement
     from .materials import is_isotropic_material
+    from .nonlinear_element_evaluation import evaluate_nonlinear_element
     from .vectorized_nonlinear import batch_shell_nonlinear_response, shell_nonlinear_batch_eligible
 
     groups = {}
@@ -812,6 +1224,22 @@ def _assemble_nonlinear_system(
                 "alpha": alpha_new[idx],
                 "layer_strain": layer_strain_batch[idx * n_gp * num_layers : (idx + 1) * n_gp * num_layers].copy(),
             }
+            attach_algorithmic_origin = getattr(
+                element,
+                "attach_current_tangent_algorithmic_origin",
+                None,
+            )
+            if callable(attach_algorithmic_origin):
+                trial_state = attach_algorithmic_origin(
+                    material,
+                    {
+                        "plastic_strain": plastic_strain_batch[idx],
+                        "alpha": alpha_batch[idx],
+                    },
+                    trial_state,
+                    int(num_layers),
+                    tangent_evaluated=bool(tangent),
+                )
             if curve is not None:
                 # We need layer_stress for outputs if people use it, let's keep it simple: we can omit it if not strictly required,
                 # but let's see if elements.py returned it. We didn't return it from batch_shell_nonlinear_response.
@@ -824,6 +1252,7 @@ def _assemble_nonlinear_system(
         dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
         if dof_mapping.size == 0:
             continue
+        evaluated_deleted_noncurrent = False
 
         if elem_id in precomputed_F:
             f_elem = precomputed_F[elem_id]
@@ -850,17 +1279,49 @@ def _assemble_nonlinear_system(
             if f_elem is None:
                 material = model.get_material(element.material_name)
                 u_elem = displacements[dof_mapping]
-                f_elem, k_elem, trial_state = element.compute_nonlinear_response(
-                    mesh, material, u_elem, committed_states.get(elem_id), num_layers, tangent
+                deleted_operator = (
+                    getattr(
+                        element,
+                        "compute_noncurrent_deleted_residual_operator",
+                        None,
+                    )
+                    if elem_id in deleted_set
+                    else None
                 )
-                if trial_state is not None:
-                    trial_states[elem_id] = trial_state
+                if callable(deleted_operator):
+                    f_elem, k_elem = deleted_operator(
+                        mesh,
+                        material,
+                        u_elem,
+                        committed_states.get(elem_id),
+                        int(num_layers),
+                        tangent=bool(tangent),
+                    )
+                    evaluated_deleted_noncurrent = True
+                else:
+                    f_elem, k_elem, trial_state = evaluate_nonlinear_element(
+                        element,
+                        mesh,
+                        material,
+                        u_elem,
+                        committed_states.get(elem_id),
+                        num_layers,
+                        tangent,
+                        committed_states=committed_states,
+                        state_token=state_token,
+                        element_id=elem_id,
+                    )
+                    if trial_state is not None:
+                        trial_states[elem_id] = trial_state
 
         if elem_id in deleted_set:
             f_elem = residual_fraction * np.asarray(f_elem, dtype=float)
             if tangent and k_elem is not None:
                 k_elem = residual_fraction * np.asarray(k_elem, dtype=float)
-            if elem_id in committed_states:
+            if elem_id in committed_states and (
+                not evaluated_deleted_noncurrent
+                or not isinstance(committed_states, NonlinearStateStore)
+            ):
                 trial_states[elem_id] = committed_states[elem_id]
         elif elem_id in element_scales:
             scale = float(element_scales[elem_id])
@@ -896,6 +1357,46 @@ def _assemble_nonlinear_system(
         fallback_reason=assembly_fallback_reason,
     )
     return F_int, K_T, state_payload
+
+
+def _assemble_nonlinear_system(
+    model: "FEModel",
+    displacements: np.ndarray,
+    committed_states: Dict[int, Any],
+    num_layers: int,
+    tangent: bool = True,
+    deleted_element_ids: Optional[Sequence[int]] = None,
+    residual_stiffness_fraction: float = 1.0,
+    element_stiffness_scales: Optional[Mapping[int, float]] = None,
+    kinematics: str = "von_karman",
+    corotational_tangent: str = "rotated",
+    require_full_coordinates: bool = False,
+) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
+    """Run one reference assembly as an all-or-nothing state evaluation.
+
+    The reference assembler opens a persistent trial transaction before it
+    invokes any element.  An element exception must not strand that token:
+    retries, cutbacks, and cancellation cleanup all require the committed
+    state to be immediately reusable.
+    """
+
+    try:
+        return _assemble_nonlinear_system_unchecked(
+            model,
+            displacements,
+            committed_states,
+            num_layers,
+            tangent=tangent,
+            deleted_element_ids=deleted_element_ids,
+            residual_stiffness_fraction=residual_stiffness_fraction,
+            element_stiffness_scales=element_stiffness_scales,
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
+            require_full_coordinates=require_full_coordinates,
+        )
+    except BaseException:
+        _discard_nonlinear_state_candidate(committed_states)
+        raise
 
 
 def _support_reaction_dof_plan(
@@ -1226,12 +1727,884 @@ def _nonlinear_state_summary(states: Dict[int, Any]) -> Dict[str, Any]:
     }
 
 
+def _owned_initial_element_states(
+    model: "FEModel",
+    initial_element_states: Optional[Mapping[int, Any]],
+    *,
+    _exact_guard: Any,
+) -> Optional[Dict[int, Any]]:
+    """Detach caller restart states before any model/mechanics observation."""
+
+    if initial_element_states is None:
+        return None
+    if not isinstance(initial_element_states, Mapping):
+        raise TypeError("initial_element_states must be a mapping or None")
+    observed_items = tuple(initial_element_states.items())
+    _exact_guard(model, context="nonlinear static initial-state mapping observation")
+    owned: Dict[int, Any] = {}
+    for raw_element_id, state in observed_items:
+        if isinstance(raw_element_id, (bool, np.bool_)):
+            raise ValueError("initial_element_states IDs must be canonical integers")
+        element_id = int(raw_element_id)
+        _exact_guard(model, context="nonlinear static initial-state ID observation")
+        if element_id in owned:
+            raise ValueError("initial_element_states contains duplicate element IDs")
+        owned[element_id] = _guarded_owned_nonlinear_snapshot(
+            model,
+            state,
+            path=f"initial_element_states[{element_id}]",
+            _exact_guard=_exact_guard,
+        )
+    return owned
+
+
+def _owned_initial_displacements(
+    model: "FEModel",
+    initial_displacements: Any,
+    *,
+    _exact_guard: Any,
+) -> Optional[np.ndarray]:
+    """Capture a bit-exact caller displacement vector under the operation lease."""
+
+    if initial_displacements is None:
+        return None
+    observed = np.asarray(initial_displacements, dtype=np.float64)
+    _exact_guard(model, context="nonlinear static initial-displacement observation")
+    contiguous = np.ascontiguousarray(observed, dtype=np.float64)
+    return np.frombuffer(
+        contiguous.tobytes(order="C"),
+        dtype=np.float64,
+    ).reshape(contiguous.shape)
+
+
 def _copy_initial_states(initial_element_states: Optional[Mapping[int, Any]]) -> Dict[int, Any]:
     return copy.deepcopy(dict(initial_element_states or {}))
 
 
+def _qualified_q4_committed_state_hooks(element: Any) -> Optional[Tuple[Any, Any]]:
+    """Return the closed Q4 state hooks without importing formulation code.
+
+    The nonlinear driver deliberately discovers this private, formulation-
+    versioned protocol from the element.  That keeps legacy Q4 and qualified
+    S3 state lifecycles unchanged and avoids putting changing displacement
+    seals into Newton's packed constitutive-state buffers.
+    """
+
+    schema = str(getattr(element, "current_state_binding_schema_id", ""))
+    seal = getattr(element, "seal_committed_current_tangent_state", None)
+    validate = getattr(element, "validate_committed_current_tangent_state", None)
+    if (
+        schema.startswith("E4_PL_Q4_COMMITTED_STATE_")
+        and callable(seal)
+        and callable(validate)
+    ):
+        return seal, validate
+    return None
+
+
+def _qualified_s3_committed_state_validator(element: Any) -> Optional[Any]:
+    """Return the formulation-owned S3 committed-state validator."""
+
+    formulation = str(getattr(element, "formulation_id", ""))
+    validator = getattr(element, "validate_model_bound_nonlinear_state", None)
+    if (
+        formulation == "E4_PL_QUALIFIED_S3_COMPANION_V1"
+        and callable(validator)
+    ):
+        return validator
+    return None
+
+
+def _is_explicit_q4_initial_material_seed(state: Mapping[str, Any]) -> bool:
+    """Whether an unbound payload is a material seed rather than a restart.
+
+    The public virgin layered state consists only of plastic history arrays;
+    callers have historically been allowed to seed those arrays before a
+    zero-displacement analysis.  Recovery/kinematic/origin fields identify a
+    previously evaluated committed result and therefore still require an
+    exact displacement binding.
+    """
+
+    allowed = {
+        "plastic_strain",
+        "alpha",
+        *_INITIAL_FIELD_STATE_KEYS,
+        "initial_field_provenance",
+    }
+    keys = {str(key) for key in state}
+    return {"plastic_strain", "alpha"}.issubset(keys) and keys <= allowed
+
+
+def _prepare_qualified_q4_states_for_nonlinear_solve(
+    model: "FEModel",
+    displacements: np.ndarray,
+    element_states: Mapping[int, Any],
+    num_layers: int,
+    info: Dict[str, Any],
+    *,
+    supplied_element_ids: Sequence[int],
+    ordinary_restart: bool,
+    allow_explicit_initial_material_states: bool = False,
+    expected_deleted_element_ids: Sequence[int] = (),
+    deletion_records: Sequence[Any] = (),
+    residual_stiffness_fraction: Optional[float] = None,
+    deleted_dispositions: Optional[Dict[int, Any]] = None,
+) -> Dict[int, Any]:
+    """Validate supplied Q4 seals, then remove them from an owned copy.
+
+    A Q4 seal binds a *committed* constitutive payload to one exact global
+    displacement/configuration.  It must therefore be checked before the
+    first nonlinear element evaluation, but it must not travel through the
+    packed trial-state machinery.  Historical Q4 states that predate the seal
+    are accepted only on the ordinary restart path where an exact committed
+    displacement is supplied.  They are identified explicitly and receive a
+    fresh seal on the returned final state.
+    """
+
+    full = np.asarray(displacements, dtype=np.float64)
+    if (
+        full.ndim != 1
+        or full.size != int(model.mesh.dof_manager.total_dofs)
+        or not np.all(np.isfinite(full))
+    ):
+        raise ValueError(
+            "qualified Q4 state preflight requires the complete finite "
+            "committed displacement"
+        )
+    supplied = {int(value) for value in supplied_element_ids}
+    expected_deleted = {int(value) for value in expected_deleted_element_ids}
+    records_by_id = {
+        int(record.element_id): record
+        for record in deletion_records
+    }
+    if set(records_by_id) != expected_deleted:
+        raise ValueError(
+            "qualified Q4 deleted IDs and deletion records are inconsistent"
+        )
+    # This second deep copy is intentional.  _prepare_initial_states currently
+    # owns its result too, but the binding boundary must remain safe if that
+    # implementation changes or a future state-store adapter calls us directly.
+    prepared = copy.deepcopy(dict(element_states))
+    validated: List[int] = []
+    migrated: List[int] = []
+    stripped: List[int] = []
+    fresh: List[int] = []
+    explicit_seeds: List[int] = []
+    restored_deleted: List[int] = []
+
+    for raw_element_id, element in sorted(
+        model.mesh.elements.items(), key=lambda item: int(item[0])
+    ):
+        hooks = _qualified_q4_committed_state_hooks(element)
+        if hooks is None:
+            continue
+        element_id = int(raw_element_id)
+        if element_id not in prepared:
+            continue
+        state = prepared[element_id]
+        if state is None:
+            # A caller-supplied None is a virgin state, not historical material
+            # history.  The final materializer will create and seal it.
+            continue
+        if not isinstance(state, Mapping):
+            raise TypeError(
+                f"qualified Q4 state for element {element_id} must be a mapping"
+            )
+        has_binding = _Q4_COMMITTED_BINDING_KEY in state
+        has_integrity = _Q4_COMMITTED_INTEGRITY_KEY in state
+        has_disposition = _Q4_ACTIVITY_DISPOSITION_KEY in state
+        if has_binding != has_integrity:
+            raise ValueError(
+                f"qualified Q4 state for element {element_id} has a partial "
+                "committed-state binding"
+            )
+
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        if dofs.shape != (24,):
+            raise ValueError(
+                f"qualified Q4 element {element_id} must map exactly 24 DOFs"
+            )
+        local_u = np.asarray(full[dofs], dtype=np.float64)
+        if has_disposition:
+            if not has_binding or element_id not in expected_deleted:
+                raise ValueError(
+                    f"qualified Q4 noncurrent disposition for element "
+                    f"{element_id} disagrees with checkpoint deletion state"
+                )
+            validate_deleted = getattr(
+                element,
+                "validate_noncurrent_deleted_state",
+                None,
+            )
+            if not callable(validate_deleted):
+                raise ValueError(
+                    f"qualified Q4 element {element_id} cannot validate its "
+                    "deleted/frozen disposition"
+                )
+            record = records_by_id[element_id]
+            validate_deleted(
+                model.mesh,
+                model.get_material(element.material_name),
+                state,
+                int(num_layers),
+                expected_deletion_step_index=int(record.step_index),
+                expected_deletion_load_factor=float(record.load_factor),
+                expected_residual_stiffness_fraction=(
+                    residual_stiffness_fraction
+                ),
+                expected_trigger_name=str(record.trigger_name),
+            )
+            if deleted_dispositions is not None:
+                deleted_dispositions[element_id] = copy.deepcopy(
+                    state[_Q4_ACTIVITY_DISPOSITION_KEY]
+                )
+            restored_deleted.append(element_id)
+        elif element_id in expected_deleted:
+            raise ValueError(
+                f"deleted qualified Q4 element {element_id} lacks its "
+                "frozen noncurrent disposition"
+            )
+        elif has_binding:
+            _seal, validate = hooks
+            validate(
+                model.mesh,
+                model.get_material(element.material_name),
+                local_u,
+                state,
+                int(num_layers),
+            )
+            validated.append(element_id)
+        elif element_id in supplied:
+            if (
+                allow_explicit_initial_material_states
+                and _is_explicit_q4_initial_material_seed(state)
+            ):
+                explicit_seeds.append(element_id)
+            elif not ordinary_restart:
+                raise ValueError(
+                    f"historical unbound qualified Q4 state for element "
+                    f"{element_id} requires an exact ordinary-restart "
+                    "displacement and equilibrate_initial_state=False"
+                )
+            else:
+                migrated.append(element_id)
+        else:
+            # State freshly constructed from an initial-field declaration.
+            fresh.append(element_id)
+
+        owned_state = copy.deepcopy(dict(state))
+        if has_binding:
+            owned_state.pop(_Q4_COMMITTED_BINDING_KEY, None)
+            owned_state.pop(_Q4_COMMITTED_INTEGRITY_KEY, None)
+            stripped.append(element_id)
+        owned_state.pop(_Q4_ACTIVITY_DISPOSITION_KEY, None)
+        # Older experimental records sometimes mirrored the whole-state
+        # digest under this cache name.  It is never trial-state input, even
+        # when the two closed binding fields are absent during migration.
+        owned_state.pop("state_digest", None)
+        prepared[element_id] = owned_state
+
+    s3_validated: List[int] = []
+    s3_restored_deleted: List[int] = []
+    s3_elements_present = False
+    for raw_element_id, element in sorted(
+        model.mesh.elements.items(), key=lambda item: int(item[0])
+    ):
+        validate_active = _qualified_s3_committed_state_validator(element)
+        if validate_active is None:
+            continue
+        s3_elements_present = True
+        element_id = int(raw_element_id)
+        if element_id not in prepared:
+            if element_id in expected_deleted:
+                raise ValueError(
+                    f"deleted qualified S3 element {element_id} lacks its "
+                    "frozen noncurrent state"
+                )
+            continue
+        state = prepared[element_id]
+        if not isinstance(state, Mapping):
+            raise TypeError(
+                f"qualified S3 state for element {element_id} must be a mapping"
+            )
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        if dofs.shape != (18,):
+            raise ValueError(
+                f"qualified S3 element {element_id} must map exactly 18 DOFs"
+            )
+        local_u = np.asarray(full[dofs], dtype=np.float64)
+        has_disposition = _S3_ACTIVITY_DISPOSITION_KEY in state
+        if has_disposition:
+            if element_id not in expected_deleted:
+                raise ValueError(
+                    f"qualified S3 noncurrent disposition for element "
+                    f"{element_id} disagrees with checkpoint deletion state"
+                )
+            record = records_by_id[element_id]
+            validate_deleted = getattr(
+                element, "validate_noncurrent_deleted_state", None
+            )
+            restore_deleted = getattr(
+                element,
+                "restore_noncurrent_deleted_state_for_internal_use",
+                None,
+            )
+            if not callable(validate_deleted) or not callable(restore_deleted):
+                raise ValueError(
+                    f"qualified S3 element {element_id} cannot restore its "
+                    "deleted/frozen state"
+                )
+            material = model.get_material(element.material_name)
+            expected_keywords = {
+                "expected_deletion_step_index": int(record.step_index),
+                "expected_deletion_load_factor": float(record.load_factor),
+                "expected_residual_stiffness_fraction": (
+                    residual_stiffness_fraction
+                ),
+                "expected_trigger_name": str(record.trigger_name),
+            }
+            validate_deleted(
+                model.mesh,
+                material,
+                state,
+                int(num_layers),
+                **expected_keywords,
+            )
+            if deleted_dispositions is not None:
+                deleted_dispositions[element_id] = copy.deepcopy(
+                    state[_S3_ACTIVITY_DISPOSITION_KEY]
+                )
+            prepared[element_id] = restore_deleted(
+                model.mesh,
+                material,
+                state,
+                int(num_layers),
+                **expected_keywords,
+            )
+            s3_restored_deleted.append(element_id)
+        elif element_id in expected_deleted:
+            raise ValueError(
+                f"deleted qualified S3 element {element_id} lacks its "
+                "frozen noncurrent disposition"
+            )
+        else:
+            validate_active(
+                model.mesh,
+                model.get_material(element.material_name),
+                state,
+                int(num_layers),
+                expected_committed_total_u=local_u,
+            )
+            s3_validated.append(element_id)
+
+    previous = info.get("qualified_q4_committed_state_lifecycle", {})
+
+    def cumulative_ids(name: str, values: Sequence[int]) -> List[int]:
+        prior = previous.get(name, ()) if isinstance(previous, Mapping) else ()
+        return sorted({int(value) for value in (*prior, *values)})
+
+    info["qualified_q4_committed_state_lifecycle"] = {
+        "schema": _Q4_COMMITTED_STATE_LIFECYCLE_SCHEMA,
+        "ordinary_restart": bool(ordinary_restart),
+        "preflight_count": int(previous.get("preflight_count", 0)) + 1
+        if isinstance(previous, Mapping)
+        else 1,
+        "validated_bound_element_ids": cumulative_ids(
+            "validated_bound_element_ids", validated
+        ),
+        "migrated_historical_unbound_element_ids": cumulative_ids(
+            "migrated_historical_unbound_element_ids", migrated
+        ),
+        "stripped_internal_binding_element_ids": cumulative_ids(
+            "stripped_internal_binding_element_ids", stripped
+        ),
+        "fresh_unbound_element_ids": cumulative_ids(
+            "fresh_unbound_element_ids", fresh
+        ),
+        "explicit_initial_material_state_element_ids": cumulative_ids(
+            "explicit_initial_material_state_element_ids", explicit_seeds
+        ),
+        "restored_deleted_frozen_element_ids": cumulative_ids(
+            "restored_deleted_frozen_element_ids", restored_deleted
+        ),
+        "input_states_deep_copied": True,
+        "final_state_policy": "DETERMINISTIC_RESEAL_AFTER_MATERIALIZATION",
+    }
+    if s3_elements_present:
+        previous_s3 = info.get("qualified_s3_committed_state_lifecycle", {})
+
+        def cumulative_s3_ids(name: str, values: Sequence[int]) -> List[int]:
+            prior = (
+                previous_s3.get(name, ())
+                if isinstance(previous_s3, Mapping)
+                else ()
+            )
+            return sorted({int(value) for value in (*prior, *values)})
+
+        info["qualified_s3_committed_state_lifecycle"] = {
+            "schema": _S3_COMMITTED_STATE_LIFECYCLE_SCHEMA,
+            "ordinary_restart": bool(ordinary_restart),
+            "preflight_count": int(previous_s3.get("preflight_count", 0)) + 1
+            if isinstance(previous_s3, Mapping)
+            else 1,
+            "validated_active_element_ids": cumulative_s3_ids(
+                "validated_active_element_ids", s3_validated
+            ),
+            "restored_deleted_frozen_element_ids": cumulative_s3_ids(
+                "restored_deleted_frozen_element_ids", s3_restored_deleted
+            ),
+            "input_states_deep_copied": True,
+            "final_state_policy": (
+                "ACTIVE_ONLY_OR_EXPLICIT_NONCURRENT_DISPOSITION"
+            ),
+        }
+    return prepared
+
+
+def _seal_final_qualified_q4_states(
+    model: "FEModel",
+    displacements: np.ndarray,
+    element_states: Mapping[int, Any],
+    num_layers: int,
+    info: Optional[Dict[str, Any]] = None,
+    *,
+    kinematics: str = "von_karman",
+    deleted_element_ids: Sequence[int] = (),
+    deleted_dispositions: Optional[Mapping[int, Any]] = None,
+    deletion_records: Sequence[Any] = (),
+    residual_stiffness_fraction: Optional[float] = None,
+) -> Dict[int, Any]:
+    """Materialize and seal every finalized additive-von-Karman Q4 state."""
+
+    states = dict(element_states)
+    if str(kinematics) != "von_karman":
+        return states
+    full = np.asarray(displacements, dtype=np.float64)
+    if (
+        full.ndim != 1
+        or full.size != int(model.mesh.dof_manager.total_dofs)
+        or not np.all(np.isfinite(full))
+    ):
+        raise ValueError(
+            "qualified Q4 finalization requires the complete finite displacement"
+        )
+    sealed_ids: List[int] = []
+    deleted_sealed_ids: List[int] = []
+    origin_materialized_ids: List[int] = []
+    digests: List[Dict[str, Any]] = []
+    s3_sealed_ids: List[int] = []
+    s3_deleted_sealed_ids: List[int] = []
+    s3_digests: List[Dict[str, Any]] = []
+    s3_elements_present = False
+    deleted = {int(value) for value in deleted_element_ids}
+    disposition_by_id = {
+        int(key): copy.deepcopy(value)
+        for key, value in (deleted_dispositions or {}).items()
+    }
+    record_by_id = {int(record.element_id): record for record in deletion_records}
+    for raw_element_id, element in sorted(
+        model.mesh.elements.items(), key=lambda item: int(item[0])
+    ):
+        hooks = _qualified_q4_committed_state_hooks(element)
+        if hooks is None:
+            continue
+        element_id = int(raw_element_id)
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        if dofs.shape != (24,):
+            raise ValueError(
+                f"qualified Q4 element {element_id} must map exactly 24 DOFs"
+            )
+        local_u = np.asarray(full[dofs], dtype=np.float64)
+        state = states.get(element_id)
+        if element_id in deleted:
+            if state is None or element_id not in disposition_by_id:
+                raise ValueError(
+                    f"deleted qualified Q4 element {element_id} lacks its "
+                    "frozen-state lifecycle record"
+                )
+            record = record_by_id.get(element_id)
+            if record is None:
+                raise ValueError(
+                    f"deleted qualified Q4 element {element_id} lacks its "
+                    "deletion authority record"
+                )
+            disposition = disposition_by_id[element_id]
+            deletion_u = np.asarray(
+                disposition.get("accepted_local_u", ()), dtype=np.float64
+            )
+            seal_deleted = getattr(element, "seal_noncurrent_deleted_state", None)
+            validate_deleted = getattr(
+                element, "validate_noncurrent_deleted_state", None
+            )
+            if not callable(seal_deleted) or not callable(validate_deleted):
+                raise ValueError(
+                    f"qualified Q4 element {element_id} lacks deleted-state hooks"
+                )
+            material = model.get_material(element.material_name)
+            sealed = seal_deleted(
+                model.mesh,
+                material,
+                deletion_u,
+                state,
+                int(num_layers),
+                deletion_step_index=int(record.step_index),
+                deletion_load_factor=float(record.load_factor),
+                residual_stiffness_fraction=float(
+                    residual_stiffness_fraction
+                ),
+                trigger_name=str(record.trigger_name),
+            )
+            digest = validate_deleted(
+                model.mesh,
+                material,
+                sealed,
+                int(num_layers),
+                expected_deletion_step_index=int(record.step_index),
+                expected_deletion_load_factor=float(record.load_factor),
+                expected_residual_stiffness_fraction=float(
+                    residual_stiffness_fraction
+                ),
+                expected_trigger_name=str(record.trigger_name),
+            )
+            states[element_id] = sealed
+            deleted_sealed_ids.append(element_id)
+            digests.append(
+                {"element_id": element_id, "state_integrity_sha256": digest}
+            )
+            continue
+        if state is None:
+            # Fully constrained and zero-step/stopped solves can legitimately
+            # have no Newton candidate.  Recover their result state once at
+            # the accepted displacement; this is outside the iteration path.
+            # Request the tangent too so plastic-capable Q4 records the virgin
+            # discrete-update origin required by the committed-state seal.
+            material = model.get_material(element.material_name)
+            _force, _tangent, recovered = element.compute_nonlinear_response(
+                model.mesh,
+                material,
+                local_u,
+                None,
+                int(num_layers),
+                True,
+            )
+            state = recovered
+        if not isinstance(state, Mapping):
+            raise TypeError(
+                f"qualified Q4 finalized state for element {element_id} "
+                "must be a mapping"
+            )
+        seal, validate = hooks
+        material = model.get_material(element.material_name)
+        requires_origin = getattr(
+            element, "_requires_algorithmic_return_map_origin", None
+        )
+        if (
+            "qualified_q4_algorithmic_origin" not in state
+            and callable(requires_origin)
+            and bool(requires_origin(material))
+        ):
+            if not _is_explicit_q4_initial_material_seed(state):
+                raise ValueError(
+                    f"qualified Q4 finalized plastic state for element "
+                    f"{element_id} lacks its accepted algorithmic origin and "
+                    "is not an unevaluated initial material parent"
+                )
+            # The only safe reconstruction is from an unevaluated explicit
+            # parent.  A residual-only output contains derived/recovery fields
+            # and is deliberately rejected above: replaying from that output
+            # would perform a second return map from converged history.
+            _force, tangent_matrix, tangent_state = (
+                element.compute_nonlinear_response(
+                    model.mesh,
+                    material,
+                    local_u,
+                    state,
+                    int(num_layers),
+                    True,
+                )
+            )
+            if tangent_matrix is None or not isinstance(tangent_state, Mapping):
+                raise ValueError(
+                    f"qualified Q4 initial material parent for element "
+                    f"{element_id} did not produce a tangent-evaluated state"
+                )
+            state = tangent_state
+            origin_materialized_ids.append(element_id)
+        sealed = seal(
+            model.mesh,
+            material,
+            local_u,
+            state,
+            int(num_layers),
+        )
+        digest = validate(
+            model.mesh,
+            material,
+            local_u,
+            sealed,
+            int(num_layers),
+        )
+        states[element_id] = sealed
+        sealed_ids.append(element_id)
+        digests.append({"element_id": element_id, "state_integrity_sha256": digest})
+
+    for raw_element_id, element in sorted(
+        model.mesh.elements.items(), key=lambda item: int(item[0])
+    ):
+        validate_active = _qualified_s3_committed_state_validator(element)
+        if validate_active is None:
+            continue
+        s3_elements_present = True
+        element_id = int(raw_element_id)
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        if dofs.shape != (18,):
+            raise ValueError(
+                f"qualified S3 element {element_id} must map exactly 18 DOFs"
+            )
+        local_u = np.asarray(full[dofs], dtype=np.float64)
+        state = states.get(element_id)
+        material = model.get_material(element.material_name)
+        if element_id in deleted:
+            if state is None or element_id not in disposition_by_id:
+                raise ValueError(
+                    f"deleted qualified S3 element {element_id} lacks its "
+                    "frozen-state lifecycle record"
+                )
+            record = record_by_id.get(element_id)
+            if record is None:
+                raise ValueError(
+                    f"deleted qualified S3 element {element_id} lacks its "
+                    "deletion authority record"
+                )
+            disposition = disposition_by_id[element_id]
+            deletion_u = np.asarray(
+                disposition.get("accepted_local_u", ()), dtype=np.float64
+            )
+            seal_deleted = getattr(element, "seal_noncurrent_deleted_state", None)
+            validate_deleted = getattr(
+                element, "validate_noncurrent_deleted_state", None
+            )
+            if not callable(seal_deleted) or not callable(validate_deleted):
+                raise ValueError(
+                    f"qualified S3 element {element_id} lacks deleted-state hooks"
+                )
+            sealed = seal_deleted(
+                model.mesh,
+                material,
+                deletion_u,
+                state,
+                int(num_layers),
+                deletion_step_index=int(record.step_index),
+                deletion_load_factor=float(record.load_factor),
+                residual_stiffness_fraction=float(
+                    residual_stiffness_fraction
+                ),
+                trigger_name=str(record.trigger_name),
+            )
+            digest = validate_deleted(
+                model.mesh,
+                material,
+                sealed,
+                int(num_layers),
+                expected_deletion_step_index=int(record.step_index),
+                expected_deletion_load_factor=float(record.load_factor),
+                expected_residual_stiffness_fraction=float(
+                    residual_stiffness_fraction
+                ),
+                expected_trigger_name=str(record.trigger_name),
+            )
+            states[element_id] = sealed
+            s3_deleted_sealed_ids.append(element_id)
+            s3_digests.append(
+                {"element_id": element_id, "state_integrity_sha256": digest}
+            )
+            continue
+        if not isinstance(state, Mapping):
+            raise TypeError(
+                f"qualified S3 finalized state for element {element_id} "
+                "must be a mapping"
+            )
+        validated = validate_active(
+            model.mesh,
+            material,
+            state,
+            int(num_layers),
+            expected_committed_total_u=local_u,
+        )
+        states[element_id] = validated
+        s3_sealed_ids.append(element_id)
+        s3_digests.append(
+            {
+                "element_id": element_id,
+                "state_integrity_sha256": str(
+                    validated["state_integrity_sha256"]
+                ),
+            }
+        )
+
+    if info is not None:
+        lifecycle = dict(
+            info.get(
+                "qualified_q4_committed_state_lifecycle",
+                {
+                    "schema": _Q4_COMMITTED_STATE_LIFECYCLE_SCHEMA,
+                    "ordinary_restart": False,
+                    "preflight_count": 0,
+                    "validated_bound_element_ids": [],
+                    "migrated_historical_unbound_element_ids": [],
+                    "stripped_internal_binding_element_ids": [],
+                    "fresh_unbound_element_ids": [],
+                    "input_states_deep_copied": True,
+                    "final_state_policy": (
+                        "DETERMINISTIC_RESEAL_AFTER_MATERIALIZATION"
+                    ),
+                },
+            )
+        )
+        lifecycle["sealed_final_element_ids"] = sealed_ids
+        lifecycle["sealed_deleted_frozen_element_ids"] = deleted_sealed_ids
+        lifecycle[
+            "origin_materialized_from_unevaluated_parent_element_ids"
+        ] = origin_materialized_ids
+        lifecycle["sealed_final_state_digests"] = digests
+        info["qualified_q4_committed_state_lifecycle"] = lifecycle
+        if s3_elements_present:
+            s3_lifecycle = dict(
+                info.get(
+                    "qualified_s3_committed_state_lifecycle",
+                    {
+                        "schema": _S3_COMMITTED_STATE_LIFECYCLE_SCHEMA,
+                        "ordinary_restart": False,
+                        "preflight_count": 0,
+                        "validated_active_element_ids": [],
+                        "restored_deleted_frozen_element_ids": [],
+                        "input_states_deep_copied": True,
+                        "final_state_policy": (
+                            "ACTIVE_ONLY_OR_EXPLICIT_NONCURRENT_DISPOSITION"
+                        ),
+                    },
+                )
+            )
+            s3_lifecycle["sealed_active_element_ids"] = s3_sealed_ids
+            s3_lifecycle[
+                "sealed_deleted_frozen_element_ids"
+            ] = s3_deleted_sealed_ids
+            s3_lifecycle["sealed_final_state_digests"] = s3_digests
+            info["qualified_s3_committed_state_lifecycle"] = s3_lifecycle
+    return states
+
+
+def _mark_failed_qualified_q4_states(
+    model: "FEModel",
+    displacements: np.ndarray,
+    element_states: Mapping[int, Any],
+    num_layers: int,
+    info: Dict[str, Any],
+    *,
+    failure_reason: str,
+    kinematics: str,
+) -> Dict[int, Any]:
+    """Own failed Q4 output while denying it ACTIVE current-state authority."""
+
+    states = dict(element_states)
+    if str(kinematics) != "von_karman":
+        return states
+    full = np.asarray(displacements, dtype=np.float64)
+    marked_ids: List[int] = []
+    s3_marked_ids: List[int] = []
+    for raw_element_id, element in sorted(
+        model.mesh.elements.items(), key=lambda item: int(item[0])
+    ):
+        if _qualified_q4_committed_state_hooks(element) is None:
+            continue
+        element_id = int(raw_element_id)
+        state = states.get(element_id)
+        if state is None:
+            initializer = getattr(element, "init_nonlinear_state", None)
+            if callable(initializer):
+                state = initializer(int(num_layers))
+        if not isinstance(state, Mapping):
+            continue
+        marker = getattr(element, "mark_noncurrent_failed_state", None)
+        if not callable(marker):
+            raise ValueError(
+                f"qualified Q4 element {element_id} lacks failed-state lifecycle"
+            )
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        states[element_id] = marker(
+            model.mesh,
+            model.get_material(element.material_name),
+            np.asarray(full[dofs], dtype=np.float64),
+            state,
+            int(num_layers),
+            failure_reason=str(failure_reason),
+        )
+        marked_ids.append(element_id)
+    for raw_element_id, element in sorted(
+        model.mesh.elements.items(), key=lambda item: int(item[0])
+    ):
+        if _qualified_s3_committed_state_validator(element) is None:
+            continue
+        element_id = int(raw_element_id)
+        material = model.get_material(element.material_name)
+        state = states.get(element_id)
+        if state is None:
+            initializer = getattr(
+                element, "init_model_bound_nonlinear_state", None
+            )
+            if callable(initializer):
+                state = initializer(
+                    model.mesh,
+                    material,
+                    int(num_layers),
+                )
+        if not isinstance(state, Mapping):
+            continue
+        marker = getattr(element, "mark_noncurrent_failed_state", None)
+        if not callable(marker):
+            raise ValueError(
+                f"qualified S3 element {element_id} lacks failed-state lifecycle"
+            )
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        if dofs.shape != (18,):
+            raise ValueError(
+                f"qualified S3 element {element_id} must map exactly 18 DOFs"
+            )
+        states[element_id] = marker(
+            model.mesh,
+            material,
+            np.asarray(full[dofs], dtype=np.float64),
+            state,
+            int(num_layers),
+            failure_reason=str(failure_reason),
+        )
+        s3_marked_ids.append(element_id)
+    lifecycle = dict(
+        info.get(
+            "qualified_q4_committed_state_lifecycle",
+            {"schema": _Q4_COMMITTED_STATE_LIFECYCLE_SCHEMA},
+        )
+    )
+    lifecycle["failed_nonauthoritative_element_ids"] = marked_ids
+    lifecycle["final_state_policy"] = "FAILED_NONAUTHORITATIVE_NO_ACTIVE_SEAL"
+    info["qualified_q4_committed_state_lifecycle"] = lifecycle
+    if s3_marked_ids:
+        s3_lifecycle = dict(
+            info.get(
+                "qualified_s3_committed_state_lifecycle",
+                {"schema": _S3_COMMITTED_STATE_LIFECYCLE_SCHEMA},
+            )
+        )
+        s3_lifecycle["failed_nonauthoritative_element_ids"] = s3_marked_ids
+        s3_lifecycle[
+            "final_state_policy"
+        ] = "FAILED_NONAUTHORITATIVE_NO_ACTIVE_SEAL"
+        info["qualified_s3_committed_state_lifecycle"] = s3_lifecycle
+    return states
+
+
 def _state_has_initial_field(state: Any) -> bool:
-    return isinstance(state, Mapping) and any(key in state for key in _INITIAL_FIELD_STATE_KEYS)
+    return state_has_active_initial_fields(state, _INITIAL_FIELD_STATE_KEYS)
 
 
 def _initial_value_summary(value: Any) -> Dict[str, Any]:
@@ -1260,6 +2633,52 @@ def _coerce_initial_field(value: Any) -> Union[ShellInitialField, BeamInitialFie
     raise ValueError(
         "Initial-field mapping requires kind='shell' or kind='beam', or unambiguous field names"
     )
+
+
+def _initialize_missing_model_bound_states(
+    model: "FEModel",
+    states: Dict[int, Any],
+    num_layers: int,
+) -> None:
+    """Materialize virgin native states before the shared-SO(3) store.
+
+    Legacy elements deliberately retain their established lazy ``state=None``
+    path.  A formulation-native element whose state is model-bound cannot do
+    that: the node-shared rotation store must bind its reference directors and
+    identity before the first trial begins.
+    """
+
+    for raw_element_id, element in model.mesh.elements.items():
+        element_id = int(raw_element_id)
+        if element_id in states:
+            continue
+        initializer = getattr(
+            element,
+            "init_model_bound_nonlinear_state",
+            None,
+        )
+        if not (
+            bool(
+                getattr(
+                    element,
+                    "formulation_native_total_lagrangian",
+                    False,
+                )
+            )
+            and callable(initializer)
+        ):
+            continue
+        initialized = initializer(
+            model.mesh,
+            model.get_material(element.material_name),
+            num_layers,
+        )
+        if not isinstance(initialized, Mapping):
+            raise TypeError(
+                f"Model-bound initializer for element {element_id} must "
+                "return a mapping"
+            )
+        states[element_id] = initialized
 
 
 def _prepare_initial_states(
@@ -1296,6 +2715,7 @@ def _prepare_initial_states(
             }
         )
     if not initial_fields:
+        _initialize_missing_model_bound_states(model, states, num_layers)
         return states, provenance
 
     from .elements import (
@@ -1340,11 +2760,8 @@ def _prepare_initial_states(
             if not isinstance(element, ShellElement):
                 raise TypeError(f"ShellInitialField requires a shell element; {element_id} is {type(element).__name__}")
             state = states.get(element_id)
-            if state is None:
-                state = element.init_nonlinear_state(num_layers)
-            elif not isinstance(state, Mapping):
+            if state is not None and not isinstance(state, Mapping):
                 raise TypeError(f"Initial state for shell element {element_id} must be a mapping")
-            state = copy.deepcopy(dict(state))
             values = field_value.state_values()
             field_type = "shell"
         else:
@@ -1362,21 +2779,60 @@ def _prepare_initial_states(
             state = copy.deepcopy(dict(state))
             values = field_value.state_values()
             field_type = "beam"
-        # Supplying a field for an element replaces its complete prior field
-        # definition. Mixing old components with a new source would make both
-        # the constitutive input and its provenance ambiguous; callers that
-        # want multiple components must provide them together in one field.
-        for key in (*_INITIAL_FIELD_STATE_KEYS, "initial_field_provenance"):
-            state.pop(key, None)
-        for key, array in values.items():
-            if array.size == 0 or np.any(~np.isfinite(array)):
-                raise ValueError(f"{key} for element {element_id} must contain finite values")
-            state[key] = array
-        state["initial_field_provenance"] = {
+        field_provenance = {
             "kind": field_type,
             "source": field_value.source,
             "components": sorted(values),
         }
+        for key, array in values.items():
+            if array.size == 0 or np.any(~np.isfinite(array)):
+                raise ValueError(
+                    f"{key} for element {element_id} must contain finite values"
+                )
+        initialized_atomically = False
+        if isinstance(field_value, ShellInitialField):
+            model_bound_initializer = getattr(
+                element,
+                "init_model_bound_nonlinear_state",
+                None,
+            )
+            if callable(model_bound_initializer):
+                if state is not None:
+                    raise ValueError(
+                        "Cannot replace qualified model-bound initial fields on an "
+                        f"existing state for element {element_id}; rebuild the virgin "
+                        "state atomically or continue the stored restart history."
+                    )
+                state = model_bound_initializer(
+                    model.mesh,
+                    model.get_material(element.material_name),
+                    num_layers,
+                    initial_fields=values,
+                    initial_field_provenance=field_provenance,
+                )
+                if not isinstance(state, Mapping):
+                    raise TypeError(
+                        f"Model-bound initializer for element {element_id} must return a mapping"
+                    )
+                initialized_atomically = True
+            elif state is None:
+                state = element.init_nonlinear_state(num_layers)
+        if not isinstance(state, Mapping):
+            raise TypeError(
+                f"Initial state for element {element_id} must be a mapping"
+            )
+        if not initialized_atomically:
+            state = copy.deepcopy(dict(state))
+        # Supplying a field for an element replaces its complete prior field
+        # definition. Mixing old components with a new source would make both
+        # the constitutive input and its provenance ambiguous; callers that
+        # want multiple components must provide them together in one field.
+        if not initialized_atomically:
+            for key in (*_INITIAL_FIELD_STATE_KEYS, "initial_field_provenance"):
+                state.pop(key, None)
+            for key, array in values.items():
+                state[key] = array
+            state["initial_field_provenance"] = field_provenance
         validate_initial_field_state(
             element,
             model.get_material(element.material_name),
@@ -1396,6 +2852,7 @@ def _prepare_initial_states(
                 },
             }
         )
+    _initialize_missing_model_bound_states(model, states, num_layers)
     return states, provenance
 
 
@@ -1425,44 +2882,116 @@ def _activate_nonlinear_state_storage(
     info: Dict[str, Any],
     *,
     kinematics: str,
+    committed_displacements: Optional[np.ndarray] = None,
+    noncurrent_native_element_ids: Sequence[int] = (),
 ) -> Mapping[int, Any]:
-    """Pack qualified plastic shell batches once for one solver lifecycle."""
+    """Create one solver-owned material/native-rotation transaction store."""
 
+    previous_diagnostic = info.get("nonlinear_state_storage")
+    noncurrent_native = {
+        int(value) for value in noncurrent_native_element_ids
+    }
+    native_required = any(
+        bool(getattr(element, "formulation_native_total_lagrangian", False))
+        and int(element_id) not in noncurrent_native
+        for element_id, element in model.mesh.elements.items()
+    )
+    if native_required and not isinstance(committed_states, NonlinearStateStore):
+        initialized_states = copy.deepcopy(dict(committed_states))
+        _initialize_missing_model_bound_states(
+            model,
+            initialized_states,
+            num_layers,
+        )
+        committed_states = initialized_states
     diagnostic: Dict[str, Any] = {
         "activated": False,
         "eligible_batch_count": 0,
         "fallback_reason": None,
     }
+    if native_required:
+        diagnostic.update(
+            {
+                "native_rotation_required": True,
+                "native_rotation_activated": False,
+                "noncurrent_native_element_ids": sorted(noncurrent_native),
+            }
+        )
     info["nonlinear_state_storage"] = diagnostic
+    if isinstance(committed_states, NonlinearStateStore):
+        if isinstance(previous_diagnostic, Mapping):
+            for key in (
+                "eligible_batch_count",
+                "batch_eligibility",
+                "array_batch_fallback_reason",
+            ):
+                if key in previous_diagnostic:
+                    diagnostic[key] = copy.deepcopy(previous_diagnostic[key])
+        if native_required and not committed_states.has_native_rotations:
+            if committed_displacements is None:
+                raise StateTransactionError(
+                    "Native state storage requires committed displacements"
+                )
+            from .nonlinear_state import create_model_native_rotation_store
+
+            rotation_store = create_model_native_rotation_store(
+                model,
+                committed_states,
+                committed_displacements,
+                noncurrent_element_ids=tuple(sorted(noncurrent_native)),
+            )
+            if rotation_store is None:
+                raise StateTransactionError(
+                    "Native elements were present but no rotation store was created"
+                )
+            committed_states.attach_native_rotation_store(rotation_store)
+        diagnostic["activated"] = True
+        if native_required:
+            diagnostic["native_rotation_activated"] = (
+                committed_states.has_native_rotations
+            )
+        diagnostic.update(committed_states.diagnostics())
+        return committed_states
     if str(kinematics) != "von_karman":
+        if native_required:
+            raise NotImplementedError(
+                "Formulation-native total-Lagrangian elements cannot use the "
+                f"generic {kinematics!r} nonlinear kinematics path"
+            )
         diagnostic["fallback_reason"] = "kinematics_not_von_karman"
         return committed_states
-    if os.environ.get("FE_SOLVER_DISABLE_PERSISTENT_STATE", "").strip().lower() in {
+    persistent_disabled = os.environ.get(
+        "FE_SOLVER_DISABLE_PERSISTENT_STATE", ""
+    ).strip().lower() in {
         "1",
         "true",
         "yes",
         "on",
-    }:
+    }
+    acceleration_disabled = os.environ.get(
+        "FE_SOLVER_DISABLE_FAST_NL", ""
+    ).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    allow_array_batches = not persistent_disabled and not acceleration_disabled
+    if not native_required and persistent_disabled:
         diagnostic["fallback_reason"] = "persistent_state_storage_disabled"
         return committed_states
-    if os.environ.get("FE_SOLVER_DISABLE_FAST_NL", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
+    if not native_required and acceleration_disabled:
         diagnostic["fallback_reason"] = "nonlinear_acceleration_disabled"
         return committed_states
     try:
-        from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
+        plastic_batches: tuple[Any, ...] = ()
+        if allow_array_batches:
+            from .nonlinear_performance_bootstrap import get_nonlinear_assembly_plan
 
-        plan = get_nonlinear_assembly_plan(model, int(num_layers))
-        plastic_batches = tuple(
-            batch for batch in plan.shell_batches if batch.has_plasticity
-        )
-        if not plastic_batches:
-            diagnostic["fallback_reason"] = "no_plastic_shell_batch"
-            return committed_states
+            plan = get_nonlinear_assembly_plan(model, int(num_layers))
+            plastic_batches = tuple(
+                batch for batch in plan.shell_batches if batch.has_plasticity
+            )
         store = NonlinearStateStore.from_shell_layouts(
             tuple(batch.state_layout for batch in plastic_batches),
             committed_states,
@@ -1485,13 +3014,50 @@ def _activate_nonlinear_state_storage(
                 "batch_eligibility": eligibility,
             }
         )
-        if eligible_count == 0:
-            diagnostic["fallback_reason"] = "no_persistent_state_batch_eligible"
+        if not native_required and eligible_count == 0:
+            if persistent_disabled:
+                diagnostic["fallback_reason"] = "persistent_state_storage_disabled"
+            elif acceleration_disabled:
+                diagnostic["fallback_reason"] = "nonlinear_acceleration_disabled"
+            elif not plastic_batches:
+                diagnostic["fallback_reason"] = "no_plastic_shell_batch"
+            else:
+                diagnostic["fallback_reason"] = "no_persistent_state_batch_eligible"
             return committed_states
+        if native_required:
+            if committed_displacements is None:
+                raise StateTransactionError(
+                    "Native state storage requires committed displacements"
+                )
+            from .nonlinear_state import create_model_native_rotation_store
+
+            rotation_store = create_model_native_rotation_store(
+                model,
+                committed_states,
+                committed_displacements,
+                noncurrent_element_ids=tuple(sorted(noncurrent_native)),
+            )
+            if rotation_store is None:
+                raise StateTransactionError(
+                    "Native elements were present but no rotation store was created"
+                )
+            store.attach_native_rotation_store(rotation_store)
+            diagnostic["native_rotation_activated"] = True
+            if not allow_array_batches:
+                diagnostic["array_batch_fallback_reason"] = (
+                    "persistent_state_storage_disabled"
+                    if persistent_disabled
+                    else "nonlinear_acceleration_disabled"
+                )
         diagnostic["activated"] = True
         diagnostic.update(store.diagnostics())
         return store
     except Exception as exc:
+        if native_required:
+            diagnostic["fallback_reason"] = (
+                f"native_state_store_setup_failed:{type(exc).__name__}:{exc}"
+            )
+            raise
         diagnostic["fallback_reason"] = (
             f"state_store_setup_failed:{type(exc).__name__}:{exc}"
         )
@@ -1501,8 +3067,16 @@ def _activate_nonlinear_state_storage(
 def _commit_nonlinear_state_candidate(
     committed_states: Mapping[int, Any],
     candidate_states: Mapping[int, Any],
+    *,
+    model: Any = None,
+    accepted_displacements: Any = None,
 ) -> Mapping[int, Any]:
-    return commit_state_candidate(committed_states, candidate_states)
+    return commit_state_candidate(
+        committed_states,
+        candidate_states,
+        model=model,
+        accepted_full_displacement=accepted_displacements,
+    )
 
 
 def _discard_nonlinear_state_candidate(
@@ -1549,7 +3123,7 @@ def _nonlinear_status_category(status: str, failure_reason: Optional[str]) -> st
     return "failed"
 
 
-def _equilibrate_initial_fields(
+def _equilibrate_initial_fields_candidate(
     *,
     model: "FEModel",
     T: sparse.csr_matrix,
@@ -1563,6 +3137,7 @@ def _equilibrate_initial_fields(
     general_tangent: bool,
     initial_reduced_displacements: Optional[np.ndarray] = None,
     cancellation_token: Optional[CancellationToken] = None,
+    _exact_guard: Any = None,
 ) -> Tuple[np.ndarray, Dict[int, Any], List[Dict[str, Any]], Optional[str]]:
     """Equilibrate prescribed residual fields before any external load.
 
@@ -1572,11 +3147,20 @@ def _equilibrate_initial_fields(
     permanent/environmental loading cannot silently absorb an unbalanced
     manufacturing field in its first increment.
     """
+    exact_guard = _exact_guard or _EXACT_QUALIFIED_LIFECYCLE_GUARD
+    exact_guard(
+        model,
+        context="nonlinear static initial equilibration preflight",
+    )
     n_red = int(T.shape[1])
     if initial_reduced_displacements is None:
         q = np.zeros(n_red, dtype=float)
     else:
         q = np.asarray(initial_reduced_displacements, dtype=float).reshape(-1).copy()
+        exact_guard(
+            model,
+            context="nonlinear static initial displacement observation",
+        )
         if q.size != n_red:
             raise ValueError(
                 f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
@@ -1589,6 +3173,10 @@ def _equilibrate_initial_fields(
             cancellation_token,
             f"nonlinear_static.initial_equilibration.iteration:{iteration}",
         )
+        exact_guard(
+            model,
+            context="nonlinear static initial equilibration cancellation",
+        )
         u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
         F_int, K_T, trial_states = _assemble_nonlinear_system(
             model,
@@ -1598,6 +3186,10 @@ def _equilibrate_initial_fields(
             tangent=True,
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
+        )
+        exact_guard(
+            model,
+            context="nonlinear static initial equilibration assembly",
         )
         residual = -np.asarray(T.T @ F_int, dtype=float).reshape(-1)
         residual_norm = float(np.linalg.norm(residual))
@@ -1644,6 +3236,10 @@ def _equilibrate_initial_fields(
                 kinematics=kinematics,
                 corotational_tangent=corotational_tangent,
             )
+            exact_guard(
+                model,
+                context="nonlinear static initial equilibration trial assembly",
+            )
             candidate_norm = float(
                 np.linalg.norm(-np.asarray(T.T @ F_candidate, dtype=float).reshape(-1))
             )
@@ -1655,6 +3251,59 @@ def _equilibrate_initial_fields(
         if not accepted:
             return committed_q, committed_states, history, "initial_state_line_search_failed"
     return committed_q, committed_states, history, "maximum_initial_state_iterations_reached"
+
+
+def _equilibrate_initial_fields(
+    *,
+    model: "FEModel",
+    T: sparse.csr_matrix,
+    u0: np.ndarray,
+    committed_states: Dict[int, Any],
+    num_layers: int,
+    max_iterations: int,
+    tolerance: float,
+    kinematics: str,
+    corotational_tangent: str,
+    general_tangent: bool,
+    initial_reduced_displacements: Optional[np.ndarray] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    _exact_guard: Any = None,
+) -> Tuple[np.ndarray, Dict[int, Any], List[Dict[str, Any]], Optional[str]]:
+    """Commit exactly one accepted zero-load state and discard every other trial."""
+
+    try:
+        q, candidate_states, history, failure = (
+            _equilibrate_initial_fields_candidate(
+                model=model,
+                T=T,
+                u0=u0,
+                committed_states=committed_states,
+                num_layers=num_layers,
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+                general_tangent=general_tangent,
+                initial_reduced_displacements=initial_reduced_displacements,
+                cancellation_token=cancellation_token,
+                _exact_guard=_exact_guard,
+            )
+        )
+        if failure is not None:
+            return q, committed_states, history, failure
+        accepted_states = _commit_nonlinear_state_candidate(
+            committed_states,
+            candidate_states,
+            model=model,
+            accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
+        )
+        return q, accepted_states, history, None
+    finally:
+        # This is a no-op after a successful persistent commit and for legacy
+        # dictionaries.  Every failure return, cancellation, and exception
+        # therefore leaves the input state reusable without duplicating
+        # cleanup at each exit site in the Newton/backtracking implementation.
+        _discard_nonlinear_state_candidate(committed_states)
 
 
 def _reduced_coordinates(
@@ -1750,6 +3399,36 @@ def _reduced_coordinates_with_affine_scale(
     return q, affine_scale
 
 
+def _exact_binary64_additive_offset(
+    target: np.ndarray,
+    projected: np.ndarray,
+    *,
+    context: str,
+) -> np.ndarray:
+    """Return an offset whose binary64 addition reconstructs ``target``.
+
+    The reduced-coordinate solve is a compatibility proof, not serialization
+    authority: sparse projections may differ from the caller/checkpoint vector
+    by a few ulps.  Retaining the exact additive residual keeps the public
+    committed displacement bit-identical without changing the established
+    reduced coordinates or projecting the state a second time.
+    """
+
+    expected = np.asarray(target, dtype=np.float64).reshape(-1)
+    base = np.asarray(projected, dtype=np.float64).reshape(-1)
+    if expected.shape != base.shape or not (
+        np.all(np.isfinite(expected)) and np.all(np.isfinite(base))
+    ):
+        raise ValueError(f"{context} requires compatible finite vectors")
+    offset = expected - base
+    for _pass in range(4):
+        reconstructed = base + offset
+        if np.array_equal(reconstructed, expected):
+            return offset
+        offset += expected - reconstructed
+    raise ValueError(f"{context} cannot be reconstructed bit-exactly")
+
+
 def _solve_static_displacement_control(
     *,
     model: "FEModel",
@@ -1776,8 +3455,20 @@ def _solve_static_displacement_control(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     record_increment_snapshots: bool = False,
+    initial_load_factor: float = 0.0,
+    step_index_offset: int = 0,
+    initial_steps: Sequence[NonlinearStaticStep] = (),
+    initial_history: Sequence[Mapping[str, Any]] = (),
+    initial_total_iterations: int = 0,
+    restart_analysis_contract: Optional[Mapping[str, Any]] = None,
+    _exact_guard: Any = None,
 ) -> NonlinearStaticResult:
     """Displacement-control Newton solve with load factor as an unknown."""
+    exact_guard = _exact_guard or _EXACT_QUALIFIED_LIFECYCLE_GUARD
+    exact_guard(
+        model,
+        context="nonlinear static displacement-control preflight",
+    )
     if load_program is not None:
         if len(load_program.stages) == 1:
             constant_terms = [(constant_load_case, 1.0)]
@@ -1822,22 +3513,30 @@ def _solve_static_displacement_control(
             raise ValueError(
                 f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
             )
-    lam = 0.0
-    steps: List[NonlinearStaticStep] = []
+    lam = float(initial_load_factor)
+    steps: List[NonlinearStaticStep] = list(initial_steps)
     snapshots: List[NonlinearIncrementSnapshot] = []
-    history: List[Dict[str, Any]] = []
+    history: List[Dict[str, Any]] = copy.deepcopy(list(initial_history))
     status = "completed"
     failure_reason: Optional[str] = None
-    total_iterations = 0
+    total_iterations = int(initial_total_iterations)
 
     row_full = displacement_control.full_row(model)
+    exact_guard(model, context="nonlinear static displacement-control row")
     row_red = np.asarray(row_full @ T, dtype=float).reshape(-1)
     row_u0 = float(row_full @ u0)
     if float(np.linalg.norm(row_red)) <= 0.0:
         raise ValueError("Displacement control target is fixed or dependent and cannot be used as an unknown")
 
     initial_u = np.asarray(u0, dtype=float).reshape(-1)
-    follower_active = any(_has_follower_pressure(case) for case, _factor in [*constant_terms, proportional_term])
+    follower_active = any(
+        _has_follower_pressure(
+            case,
+            model=model,
+            _exact_guard=exact_guard,
+        )
+        for case, _factor in [*constant_terms, proportional_term]
+    )
     general_tangent = follower_active or (
         str(kinematics) == "corotational"
         and str(corotational_tangent) == "consistent"
@@ -1848,6 +3547,10 @@ def _solve_static_displacement_control(
             [proportional_term],
             initial_u,
             tangent=False,
+        )
+        exact_guard(
+            model,
+            context="nonlinear static displacement-control initial load",
         )
     else:
         F_prop_initial = F_prop_static
@@ -1867,14 +3570,19 @@ def _solve_static_displacement_control(
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
-        for step_index in range(1, num_steps + 1):
+        for local_step_index in range(1, num_steps + 1):
+            step_index = int(step_index_offset) + local_step_index
             cancellation_safe_point(
                 cancellation_token,
                 f"nonlinear_static.displacement.step:{step_index}",
             )
+            exact_guard(
+                model,
+                context="nonlinear static displacement-control step cancellation",
+            )
             q_step_start = q.copy()
             lam_step_start = float(lam)
-            target = initial_control + target_increment * step_index / num_steps
+            target = initial_control + target_increment * local_step_index / num_steps
             residual_norm = float("inf")
             constraint_error = float("inf")
             states_new = committed_states
@@ -1883,6 +3591,12 @@ def _solve_static_displacement_control(
                 cancellation_safe_point(
                     cancellation_token,
                     f"nonlinear_static.displacement.step:{step_index}.iteration:{iteration}",
+                )
+                exact_guard(
+                    model,
+                    context=(
+                        "nonlinear static displacement-control iteration cancellation"
+                    ),
                 )
                 total_iterations += 1
                 u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
@@ -1893,6 +3607,10 @@ def _solve_static_displacement_control(
                     num_layers,
                     kinematics=kinematics,
                     corotational_tangent=corotational_tangent,
+                )
+                exact_guard(
+                    model,
+                    context="nonlinear static displacement-control assembly",
                 )
                 if follower_active:
                     F_const_current, K_const = _weighted_external_load_system(
@@ -1906,6 +3624,10 @@ def _solve_static_displacement_control(
                         [proportional_term],
                         u,
                         tangent=True,
+                    )
+                    exact_guard(
+                        model,
+                        context="nonlinear static displacement-control loads",
                     )
                 else:
                     F_const_current, F_prop_current = F_const_static, F_prop_static
@@ -1982,6 +3704,8 @@ def _solve_static_displacement_control(
             committed_states = _commit_nonlinear_state_candidate(
                 committed_states,
                 states_new,
+                model=model,
+                accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
             )
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
@@ -1995,6 +3719,10 @@ def _solve_static_displacement_control(
                 corotational_tangent=corotational_tangent,
                 require_full_coordinates=True,
             )
+            exact_guard(
+                model,
+                context="nonlinear static displacement-control reaction assembly",
+            )
             # Reaction recovery is diagnostic-only; do not leave its trial
             # constitutive state active for the next accepted increment.
             _discard_nonlinear_state_candidate(committed_states)
@@ -2004,6 +3732,10 @@ def _solve_static_displacement_control(
                 )
                 reaction_proportional, _unused = _weighted_external_load_system(
                     model, [proportional_term], u, tangent=False
+                )
+                exact_guard(
+                    model,
+                    context="nonlinear static displacement-control reaction loads",
                 )
             else:
                 reaction_constant = F_const_static
@@ -2057,7 +3789,7 @@ def _solve_static_displacement_control(
                     progress_callback,
                     "nonlinear_static_step",
                     "nonlinear_static.displacement",
-                    completed=step_index,
+                    completed=local_step_index,
                     total=num_steps,
                     iteration=iteration,
                     control="displacement",
@@ -2071,6 +3803,10 @@ def _solve_static_displacement_control(
                         for name, values in support_reactions.items()
                     },
                 )
+                exact_guard(
+                    model,
+                    context="nonlinear static displacement-control progress callback",
+                )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
     committed_states = _materialize_final_nonlinear_states(committed_states, info)
@@ -2079,6 +3815,14 @@ def _solve_static_displacement_control(
         u_final,
         committed_states,
         num_layers,
+        kinematics=kinematics,
+    )
+    committed_states = _seal_final_qualified_q4_states(
+        model,
+        u_final,
+        committed_states,
+        num_layers,
+        info,
         kinematics=kinematics,
     )
     info["failure_reason"] = failure_reason
@@ -2091,6 +3835,10 @@ def _solve_static_displacement_control(
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
     info["constraint_postcheck"] = constraint_residual_summary(model, u_final)
+    exact_guard(
+        model,
+        context="nonlinear static displacement-control constraint postcheck",
+    )
     info["result_case"] = make_result_case(
         name="nonlinear_static_displacement_control",
         analysis_type="nonlinear_static",
@@ -2106,6 +3854,31 @@ def _solve_static_displacement_control(
             "corotational_tangent": corotational_tangent,
         },
     ).to_dict()
+    restart_payload = None
+    if restart_analysis_contract is not None:
+        restart_payload = create_nonlinear_checkpoint(
+            analysis_kind="static",
+            model=model,
+            analysis_contract=restart_analysis_contract,
+            displacements=u_final,
+            element_states=committed_states,
+            deleted_element_ids=(),
+            path_state=_static_restart_path_payload(
+                control_name="displacement",
+                load_factor=float(lam),
+                step_index=len(steps),
+                total_iterations=total_iterations,
+                steps=steps,
+                force_displacement_history=history,
+                reduced_coordinates=q,
+                terminal_status=status,
+                failure_reason=failure_reason,
+            ),
+        )
+        exact_guard(
+            model,
+            context="nonlinear static displacement-control checkpoint output",
+        )
     return NonlinearStaticResult(
         steps,
         status,
@@ -2114,12 +3887,506 @@ def _solve_static_displacement_control(
         committed_states,
         info,
         tuple(snapshots),
+        restart_payload,
     )
+
+
+@dataclass(frozen=True)
+class _NonlinearStaticOperationConfig:
+    max_load_factor: float
+    num_steps: int
+    max_iterations: int
+    tolerance: float
+    num_layers: int
+    min_step_fraction: float
+    control: str
+    kinematics: str
+    corotational_tangent: str
+    equilibrate_initial_state: Optional[bool]
+    record_increment_snapshots: bool
+    emit_restart_checkpoint: bool
+
+
+def _owned_nonlinear_static_operation_config(
+    model: "FEModel",
+    *,
+    max_load_factor: Any,
+    num_steps: Any,
+    max_iterations: Any,
+    tolerance: Any,
+    num_layers: Any,
+    min_step_fraction: Any,
+    control: Any,
+    kinematics: Any,
+    corotational_tangent: Any,
+    equilibrate_initial_state: Any,
+    record_increment_snapshots: Any,
+    emit_restart_checkpoint: Any,
+    _exact_guard: Any,
+) -> _NonlinearStaticOperationConfig:
+    """Own scalar nonlinear policy before model/capability observation."""
+
+    def converted(value: Any, converter: Any, name: str) -> Any:
+        made = converter(value)
+        _exact_guard(model, context=f"nonlinear static {name} conversion")
+        return made
+
+    def canonical_int(value: Any, name: str) -> int:
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+            value,
+            (int, np.integer),
+        ):
+            raise ValueError(f"{name} must be an integer")
+        return converted(value, int, name)
+
+    owned_equilibrate = (
+        None
+        if equilibrate_initial_state is None
+        else converted(
+            equilibrate_initial_state,
+            bool,
+            "equilibrate_initial_state",
+        )
+    )
+    owned = _NonlinearStaticOperationConfig(
+        max_load_factor=converted(
+            max_load_factor,
+            float,
+            "max_load_factor",
+        ),
+        num_steps=canonical_int(num_steps, "num_steps"),
+        max_iterations=canonical_int(max_iterations, "max_iterations"),
+        tolerance=converted(tolerance, float, "tolerance"),
+        num_layers=canonical_int(num_layers, "num_layers"),
+        min_step_fraction=converted(
+            min_step_fraction,
+            float,
+            "min_step_fraction",
+        ),
+        control=converted(control, str, "control").lower(),
+        kinematics=converted(kinematics, str, "kinematics").lower(),
+        corotational_tangent=converted(
+            corotational_tangent,
+            str,
+            "corotational_tangent",
+        ),
+        equilibrate_initial_state=owned_equilibrate,
+        record_increment_snapshots=converted(
+            record_increment_snapshots,
+            bool,
+            "record_increment_snapshots",
+        ),
+        emit_restart_checkpoint=converted(
+            emit_restart_checkpoint,
+            bool,
+            "emit_restart_checkpoint",
+        ),
+    )
+    _exact_guard(model, context="nonlinear static owned configuration")
+    return owned
+
+
+def _guarded_config_sequence(
+    model: "FEModel",
+    value: Any,
+    *,
+    context: str,
+    _exact_guard: Any,
+) -> Tuple[Any, ...]:
+    iterator = iter(value)
+    _exact_guard(model, context=f"{context} iterator")
+    observed = []
+    while True:
+        try:
+            member = next(iterator)
+        except StopIteration:
+            _exact_guard(model, context=f"{context} end")
+            break
+        _exact_guard(model, context=f"{context} member")
+        observed.append(member)
+    return tuple(observed)
+
+
+def _guarded_plain_config_snapshot(
+    model: "FEModel",
+    value: Any,
+    *,
+    context: str,
+    _exact_guard: Any,
+) -> Any:
+    if value is None or type(value) in {bool, int, float, str, bytes}:
+        return value
+    if isinstance(value, np.ndarray):
+        detached = np.array(value, copy=True)
+        _exact_guard(model, context=f"{context} array observation")
+        return detached
+    if isinstance(value, np.generic):
+        detached = value.item()
+        _exact_guard(model, context=f"{context} scalar observation")
+        return detached
+    if isinstance(value, Mapping):
+        iterator = iter(value)
+        _exact_guard(model, context=f"{context} mapping iterator")
+        detached_mapping: Dict[Any, Any] = {}
+        while True:
+            try:
+                key = next(iterator)
+            except StopIteration:
+                _exact_guard(model, context=f"{context} mapping end")
+                break
+            _exact_guard(model, context=f"{context} mapping key")
+            detached_key = _guarded_plain_config_snapshot(
+                model,
+                key,
+                context=f"{context}.key",
+                _exact_guard=_exact_guard,
+            )
+            member = value[key]
+            _exact_guard(model, context=f"{context} mapping value")
+            detached_member = _guarded_plain_config_snapshot(
+                model,
+                member,
+                context=f"{context}[{key!r}]",
+                _exact_guard=_exact_guard,
+            )
+            detached_mapping[detached_key] = detached_member
+            _exact_guard(model, context=f"{context} mapping insertion")
+        return detached_mapping
+    if isinstance(value, Sequence) and not isinstance(
+        value,
+        (str, bytes, bytearray),
+    ):
+        return tuple(
+            _guarded_plain_config_snapshot(
+                model,
+                member,
+                context=f"{context}[{index}]",
+                _exact_guard=_exact_guard,
+            )
+            for index, member in enumerate(
+                _guarded_config_sequence(
+                    model,
+                    value,
+                    context=context,
+                    _exact_guard=_exact_guard,
+                )
+            )
+        )
+    detached = copy.deepcopy(value)
+    _exact_guard(model, context=f"{context} copy observation")
+    return detached
+
+
+def _owned_nonlinear_load_program(
+    model: "FEModel",
+    value: Any,
+    *,
+    _exact_guard: Any,
+) -> Optional[NonlinearLoadProgram]:
+    if value is None:
+        return None
+    raw_stages = getattr(value, "stages")
+    _exact_guard(model, context="nonlinear load-program stages observation")
+    stages = []
+    for index, raw_stage in enumerate(
+        _guarded_config_sequence(
+            model,
+            raw_stages,
+            context="nonlinear load-program stages",
+            _exact_guard=_exact_guard,
+        )
+    ):
+        raw_name = getattr(raw_stage, "name")
+        _exact_guard(
+            model,
+            context=f"nonlinear load-program stage {index} name observation",
+        )
+        name = str(raw_name)
+        _exact_guard(
+            model,
+            context=f"nonlinear load-program stage {index} name conversion",
+        )
+        load_case = getattr(raw_stage, "load_case")
+        _exact_guard(
+            model,
+            context=f"nonlinear load-program stage {index} load-case observation",
+        )
+        raw_factor = getattr(raw_stage, "target_factor")
+        _exact_guard(
+            model,
+            context=f"nonlinear load-program stage {index} factor observation",
+        )
+        target_factor = float(raw_factor)
+        _exact_guard(
+            model,
+            context=f"nonlinear load-program stage {index} factor conversion",
+        )
+        stages.append(
+            NonlinearLoadStage(
+                name=name,
+                load_case=load_case,
+                target_factor=target_factor,
+            )
+        )
+        _exact_guard(
+            model,
+            context=f"nonlinear load-program stage {index} construction",
+        )
+    owned = NonlinearLoadProgram(tuple(stages))
+    _exact_guard(model, context="nonlinear load-program construction")
+    return owned
+
+
+def _owned_displacement_control(
+    model: "FEModel",
+    value: Any,
+    *,
+    _exact_guard: Any,
+) -> Optional[DisplacementControl]:
+    if value is None:
+        return None
+
+    def observed(name: str) -> Any:
+        member = getattr(value, name)
+        _exact_guard(
+            model,
+            context=f"nonlinear displacement control {name} observation",
+        )
+        return member
+
+    raw_node_id = observed("node_id")
+    node_id = None if raw_node_id is None else int(raw_node_id)
+    if raw_node_id is not None:
+        _exact_guard(
+            model,
+            context="nonlinear displacement control node_id conversion",
+        )
+    raw_dof = observed("dof")
+    if raw_dof is None:
+        dof: Optional[Union[str, int]] = None
+    elif isinstance(raw_dof, str):
+        dof = str(raw_dof)
+        _exact_guard(
+            model,
+            context="nonlinear displacement control dof conversion",
+        )
+    else:
+        dof = int(raw_dof)
+        _exact_guard(
+            model,
+            context="nonlinear displacement control dof conversion",
+        )
+    target = float(observed("target_displacement"))
+    _exact_guard(
+        model,
+        context="nonlinear displacement control target conversion",
+    )
+    raw_weighted = observed("weighted_dofs")
+    weighted: Optional[Dict[Any, float]] = None
+    if raw_weighted is not None:
+        if not isinstance(raw_weighted, Mapping):
+            raise TypeError("weighted_dofs must be a mapping when supplied")
+        weighted = {}
+        iterator = iter(raw_weighted)
+        _exact_guard(
+            model,
+            context="nonlinear displacement control weights iterator",
+        )
+        while True:
+            try:
+                raw_key = next(iterator)
+            except StopIteration:
+                _exact_guard(
+                    model,
+                    context="nonlinear displacement control weights end",
+                )
+                break
+            _exact_guard(
+                model,
+                context="nonlinear displacement control weight key observation",
+            )
+            raw_weight = raw_weighted[raw_key]
+            _exact_guard(
+                model,
+                context="nonlinear displacement control weight observation",
+            )
+            if isinstance(raw_key, tuple):
+                if len(raw_key) != 2:
+                    raise ValueError(
+                        "weighted displacement-control node keys must have two members"
+                    )
+                owned_node = int(raw_key[0])
+                _exact_guard(
+                    model,
+                    context="nonlinear displacement control weight node conversion",
+                )
+                raw_key_dof = raw_key[1]
+                owned_dof = (
+                    str(raw_key_dof)
+                    if isinstance(raw_key_dof, str)
+                    else int(raw_key_dof)
+                )
+                _exact_guard(
+                    model,
+                    context="nonlinear displacement control weight dof conversion",
+                )
+                key: Any = (owned_node, owned_dof)
+            else:
+                key = int(raw_key)
+                _exact_guard(
+                    model,
+                    context="nonlinear displacement control weight key conversion",
+                )
+            weight = float(raw_weight)
+            _exact_guard(
+                model,
+                context="nonlinear displacement control weight conversion",
+            )
+            weighted[key] = weight
+            _exact_guard(
+                model,
+                context="nonlinear displacement control weight insertion",
+            )
+    owned = DisplacementControl(
+        node_id=node_id,
+        dof=dof,
+        target_displacement=target,
+        weighted_dofs=weighted,
+    )
+    _exact_guard(model, context="nonlinear displacement control construction")
+    return owned
+
+
+def _owned_fracture_config(
+    model: "FEModel",
+    value: Any,
+    *,
+    _exact_guard: Any,
+) -> Optional[FractureConfig]:
+    if value is None:
+        return None
+    if not isinstance(value, FractureConfig):
+        raise TypeError("fracture_config must be a FractureConfig or None")
+
+    def observed(name: str) -> Any:
+        member = getattr(value, name)
+        _exact_guard(model, context=f"fracture config {name} observation")
+        return member
+
+    def converted(name: str, converter: Any) -> Any:
+        made = converter(observed(name))
+        _exact_guard(model, context=f"fracture config {name} conversion")
+        return made
+
+    raw_scope = observed("element_scope")
+    scope = tuple(
+        str(member)
+        for member in _guarded_config_sequence(
+            model,
+            raw_scope,
+            context="fracture config element_scope",
+            _exact_guard=_exact_guard,
+        )
+    )
+    _exact_guard(model, context="fracture config element_scope conversion")
+    owned = FractureConfig(
+        threshold=converted("threshold", float),
+        residual_stiffness_fraction=converted(
+            "residual_stiffness_fraction",
+            float,
+        ),
+        max_deleted_fraction=converted("max_deleted_fraction", float),
+        min_load_factor=converted("min_load_factor", float),
+        element_scope=scope,
+        delete_after_converged_increment=converted(
+            "delete_after_converged_increment",
+            bool,
+        ),
+        record_history=converted("record_history", bool),
+    )
+    _exact_guard(model, context="fracture config construction")
+    return owned
+
+
+def _owned_imperfection_input(
+    model: "FEModel",
+    value: Any,
+    *,
+    _exact_guard: Any,
+) -> Any:
+    if value is None:
+        return None
+    from .imperfections import ImperfectionField
+
+    candidate = value
+    if not isinstance(candidate, (ImperfectionField, Mapping)):
+        converter = getattr(candidate, "to_field", None)
+        _exact_guard(model, context="imperfection converter observation")
+        if converter is None:
+            raise TypeError(
+                f"Cannot convert {type(candidate).__name__} to ImperfectionField"
+            )
+        candidate = converter(model)
+        _exact_guard(model, context="imperfection converter callback")
+
+    if isinstance(candidate, Mapping):
+        raw_offsets = candidate
+        raw_name: Any = "imperfection"
+        raw_metadata: Any = {}
+    elif isinstance(candidate, ImperfectionField):
+        raw_offsets = getattr(candidate, "offsets")
+        _exact_guard(model, context="imperfection offsets observation")
+        raw_name = getattr(candidate, "name")
+        _exact_guard(model, context="imperfection name observation")
+        raw_metadata = getattr(candidate, "metadata")
+        _exact_guard(model, context="imperfection metadata observation")
+    else:
+        arrays_provider = getattr(candidate, "as_arrays")
+        _exact_guard(model, context="imperfection array provider observation")
+        raw_offsets = arrays_provider()
+        _exact_guard(model, context="imperfection array provider callback")
+        raw_name = getattr(candidate, "name", "imperfection")
+        _exact_guard(model, context="imperfection name observation")
+        raw_metadata = getattr(candidate, "metadata", {})
+        _exact_guard(model, context="imperfection metadata observation")
+
+    if not isinstance(raw_offsets, Mapping):
+        raise TypeError("imperfection offsets must be a mapping")
+    offsets: Dict[int, np.ndarray] = {}
+    iterator = iter(raw_offsets)
+    _exact_guard(model, context="imperfection offsets iterator")
+    while True:
+        try:
+            raw_node_id = next(iterator)
+        except StopIteration:
+            _exact_guard(model, context="imperfection offsets end")
+            break
+        _exact_guard(model, context="imperfection node observation")
+        node_id = int(raw_node_id)
+        _exact_guard(model, context="imperfection node conversion")
+        raw_offset = raw_offsets[raw_node_id]
+        _exact_guard(model, context="imperfection offset observation")
+        offset = np.asarray(raw_offset, dtype=np.float64).reshape(-1).copy()
+        _exact_guard(model, context="imperfection offset conversion")
+        offsets[node_id] = offset
+    name = str(raw_name)
+    _exact_guard(model, context="imperfection name conversion")
+    metadata = _guarded_plain_config_snapshot(
+        model,
+        raw_metadata,
+        context="imperfection metadata",
+        _exact_guard=_exact_guard,
+    )
+    if not isinstance(metadata, Mapping):
+        raise TypeError("imperfection metadata must be a mapping")
+    owned = ImperfectionField(offsets, name=name, metadata=metadata)
+    _exact_guard(model, context="imperfection construction")
+    return owned
 
 
 @resource_threaded
 @capture_nonlinear_analysis_diagnostics
-def solve_static_nonlinear(
+def _solve_static_nonlinear_under_lease(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
     constant_load_case: Optional["LoadCase"] = None,
@@ -2146,6 +4413,9 @@ def solve_static_nonlinear(
     equilibrate_initial_state: Optional[bool] = None,
     cancellation_token: Optional[CancellationToken] = None,
     record_increment_snapshots: bool = False,
+    restart_checkpoint: Optional[Any] = None,
+    emit_restart_checkpoint: bool = False,
+    _qualified_runtime_guard: Any = None,
 ) -> NonlinearStaticResult:
     """Incremental nonlinear static solve with adaptive load stepping.
 
@@ -2168,16 +4438,157 @@ def solve_static_nonlinear(
     ``initial_displacements``; alternatively pass
     ``equilibrate_initial_state=True`` to deliberately re-equilibrate the
     restored field from the supplied (or zero) displacement state.
+
+    ``restart_checkpoint`` resumes the last committed solver transaction.  It
+    is mutually exclusive with the lower-level initial-state arguments and is
+    fingerprint-validated before stiffness or load assembly.
     """
+    raw_exact_guard = _EXACT_QUALIFIED_LIFECYCLE_GUARD
+    lease_model = model
+
+    def exact_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Dict[str, Any]:
+        result = raw_exact_guard(observed_model, context=context)
+        # Imperfection handling may replace ``model`` with a solver-owned
+        # copy.  The non-renewable lease remains bound to the caller's model
+        # and global authority generation, while the exact lifecycle guard
+        # validates whichever owned model is being observed.
+        _qualified_runtime_guard(lease_model, context=context)
+        return result
+
+    exact_guard(model, context="nonlinear static solve preflight")
     cancellation_safe_point(cancellation_token, "nonlinear_static.start")
+    exact_guard(model, context="nonlinear static start cancellation")
+    owned_config = _owned_nonlinear_static_operation_config(
+        model,
+        max_load_factor=max_load_factor,
+        num_steps=num_steps,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
+        num_layers=num_layers,
+        min_step_fraction=min_step_fraction,
+        control=control,
+        kinematics=kinematics,
+        corotational_tangent=corotational_tangent,
+        equilibrate_initial_state=equilibrate_initial_state,
+        record_increment_snapshots=record_increment_snapshots,
+        emit_restart_checkpoint=emit_restart_checkpoint,
+        _exact_guard=exact_guard,
+    )
+    max_load_factor = owned_config.max_load_factor
+    num_steps = owned_config.num_steps
+    max_iterations = owned_config.max_iterations
+    tolerance = owned_config.tolerance
+    num_layers = owned_config.num_layers
+    min_step_fraction = owned_config.min_step_fraction
+    control = owned_config.control
+    kinematics = owned_config.kinematics
+    corotational_tangent = owned_config.corotational_tangent
+    equilibrate_initial_state = owned_config.equilibrate_initial_state
+    record_increment_snapshots = owned_config.record_increment_snapshots
+    emit_restart_checkpoint = owned_config.emit_restart_checkpoint
+    load_program = _owned_nonlinear_load_program(
+        model,
+        load_program,
+        _exact_guard=exact_guard,
+    )
+    displacement_control = _owned_displacement_control(
+        model,
+        displacement_control,
+        _exact_guard=exact_guard,
+    )
+    fracture_config = _owned_fracture_config(
+        model,
+        fracture_config,
+        _exact_guard=exact_guard,
+    )
+    imperfection = _owned_imperfection_input(
+        model,
+        imperfection,
+        _exact_guard=exact_guard,
+    )
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
-    control_name = str(control).lower()
+    control_name = control
     if control_name not in {"force", "displacement"}:
         raise ValueError("control must be 'force' or 'displacement'")
-    kinematics = str(kinematics).lower()
     if kinematics not in {"von_karman", "corotational"}:
         raise ValueError("kinematics must be 'von_karman' or 'corotational'")
+    parsed_restart_checkpoint: Optional[Dict[str, Any]] = None
+    if restart_checkpoint is not None:
+        emit_restart_checkpoint = True
+        if initial_element_states is not None:
+            raise ValueError(
+                "restart_checkpoint cannot be combined with initial_element_states"
+            )
+        if initial_displacements is not None:
+            raise ValueError(
+                "restart_checkpoint cannot be combined with initial_displacements"
+            )
+        if initial_fields is not None:
+            raise ValueError("restart_checkpoint cannot be combined with initial_fields")
+        if equilibrate_initial_state not in {None, False}:
+            raise ValueError(
+                "restart_checkpoint cannot request initial-state re-equilibration"
+            )
+        parsed_restart_checkpoint = load_nonlinear_checkpoint(
+            restart_checkpoint,
+            _exact_guard=exact_guard,
+            _guard_model=model,
+        )
+        require_model_element_capabilities(
+            model,
+            "static_restart_history",
+            context="solve_static_nonlinear",
+        )
+    elif emit_restart_checkpoint:
+        require_model_element_capabilities(
+            model,
+            "static_restart_history",
+            context="solve_static_nonlinear",
+        )
+    initial_element_states = _owned_initial_element_states(
+        model,
+        initial_element_states,
+        _exact_guard=exact_guard,
+    )
+    initial_displacements = _owned_initial_displacements(
+        model,
+        initial_displacements,
+        _exact_guard=exact_guard,
+    )
+    if initial_fields is not None:
+        initial_fields = dict(initial_fields)
+        exact_guard(model, context="nonlinear static initial-fields ownership")
+    initial_fields_present = initial_fields is not None and len(initial_fields) > 0
+    exact_guard(model, context="nonlinear static initial-fields disposition")
+    if imperfection is not None:
+        require_model_element_capabilities(
+            model,
+            "initial_fields",
+            context="solve_static_nonlinear",
+        )
+    elif initial_fields_present:
+        require_model_element_capabilities(
+            model,
+            "initial_fields",
+            context="solve_static_nonlinear",
+            element_ids=initial_fields,
+        )
+    if initial_element_states is not None:
+        require_model_element_capabilities(
+            model,
+            "static_restart_history",
+            context="solve_static_nonlinear",
+            element_ids=initial_element_states,
+        )
+    require_model_nonlinear_workflow_capabilities(
+        model,
+        context="solve_static_nonlinear",
+    )
     specified_load_cases = [
         case
         for case in (
@@ -2186,7 +4597,14 @@ def solve_static_nonlinear(
         )
         if case is not None
     ]
-    follower_active = any(_has_follower_pressure(case) for case in specified_load_cases)
+    follower_active = any(
+        _has_follower_pressure(
+            case,
+            model=model,
+            _exact_guard=exact_guard,
+        )
+        for case in specified_load_cases
+    )
     from .corotational import resolve_corotational_tangent_mode
 
     resolved_corotational_tangent = resolve_corotational_tangent_mode(
@@ -2207,9 +4625,14 @@ def solve_static_nonlinear(
             )
     if max_load_factor <= 0.0:
         raise ValueError("max_load_factor must be positive")
-    if fracture_config is not None and not isinstance(fracture_config, FractureConfig):
-        raise TypeError("fracture_config must be a FractureConfig or None")
-    settings = _coerce_convergence_settings(convergence_settings)
+    settings = _coerce_convergence_settings(
+        convergence_settings,
+        _post_observation=lambda: exact_guard(
+            model,
+            context="nonlinear static convergence-settings observation",
+        ),
+    )
+    exact_guard(model, context="nonlinear static convergence settings")
     if kinematics == "corotational" and settings.line_search in {"auto", "rescue"}:
         # Corotational Newton necessarily passes through a large intermediate
         # residual while the element frames rotate toward the new state;
@@ -2223,31 +4646,109 @@ def solve_static_nonlinear(
         from .imperfections import apply_imperfection
 
         model = apply_imperfection(model, imperfection, copy_model=True)
+        exact_guard(model, context="nonlinear static imperfection observation")
+    restart_analysis_contract = _static_restart_analysis_contract(
+        model=model,
+        load_case=load_case,
+        constant_load_case=constant_load_case,
+        load_program=load_program,
+        control_name=control_name,
+        displacement_control=displacement_control,
+        num_layers=num_layers,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
+        effective_min_step_fraction=effective_min_step_fraction,
+        settings=settings,
+        fracture_config=fracture_config,
+        resource_config=resource_config,
+        kinematics=kinematics,
+        resolved_corotational_tangent=resolved_corotational_tangent,
+    )
+    restored_static_path: Optional[Dict[str, Any]] = None
+    validated_restart = None
+    if parsed_restart_checkpoint is not None:
+        validated_restart = validate_nonlinear_checkpoint(
+            parsed_restart_checkpoint,
+            analysis_kind="static",
+            model=model,
+            analysis_contract=restart_analysis_contract,
+            num_layers=num_layers,
+        )
+        exact_guard(model, context="nonlinear static checkpoint validation")
+        restored_static_path = _restore_static_path_state(
+            validated_restart.path_state,
+            control_name=control_name,
+            total_dofs=int(model.mesh.dof_manager.total_dofs),
+        )
+        if restored_static_path["terminal_status"] != "completed":
+            raise ValueError(
+                "restart checkpoint does not end at a continuable completed static target"
+            )
+        if control_name == "force":
+            requested_target = (
+                load_program.total_factor
+                if load_program is not None and max_load_factor == 1.0
+                else float(max_load_factor)
+            )
+            if restored_static_path["load_factor"] > requested_target + 1.0e-12:
+                raise ValueError(
+                    "restart checkpoint is beyond the requested maximum load factor"
+                )
+            recorded_deleted = {
+                int(record.element_id)
+                for record in restored_static_path["deletion_records"]
+            }
+            if recorded_deleted != validated_restart.deleted_element_ids:
+                raise ValueError(
+                    "restart checkpoint deletion records and deleted IDs disagree"
+                )
+            if fracture_config is None and recorded_deleted:
+                raise ValueError(
+                    "restart checkpoint contains fracture history without fracture_config"
+                )
+        if validated_restart.activity is not None:
+            model.set_element_activity(validated_restart.activity)
+        initial_element_states = validated_restart.element_states
+        initial_displacements = validated_restart.displacements
+        equilibrate_initial_state = False
     _ensure_nonlinear_acceleration()
     model.apply_boundary_conditions()
+    exact_guard(model, context="nonlinear static boundary conditions")
 
     # The constraint transformation only depends on supports/MPCs; the
     # elastic stiffness is assembled once to build it (and warms the element
     # caches used by the nonlinear kernels).
     K0, stiffness_info = assemble_stiffness_matrix(model)
+    exact_guard(model, context="nonlinear static stiffness assembly")
     stage_vectors: List[np.ndarray] = []
     stage_infos: List[Dict[str, Any]] = []
     if load_program is not None:
         for stage in load_program.stages:
             vector, stage_info = assemble_load_vector(model, stage.load_case)
+            exact_guard(model, context="nonlinear static stage-load assembly")
             stage_vectors.append(vector)
             stage_infos.append({"name": stage.name, "target_factor": stage.target_factor, **stage_info})
         F_prop = np.sum(np.vstack(stage_vectors), axis=0) if stage_vectors else np.zeros(K0.shape[0], dtype=float)
         load_info = {"vector_type": "load_program", "stages": stage_infos}
     else:
         F_prop, load_info = assemble_load_vector(model, load_case)
+        exact_guard(model, context="nonlinear static proportional-load assembly")
 
     if constant_load_case is not None:
         F_const, constant_load_info = assemble_load_vector(model, constant_load_case)
+        exact_guard(model, context="nonlinear static constant-load assembly")
     else:
         F_const = np.zeros_like(F_prop)
         constant_load_info = None
     _, _, T, u0, _, constraint_info = build_constraint_transformation(K0, F_prop, model)
+    exact_guard(model, context="nonlinear static constraint transformation")
+    if restored_static_path is not None:
+        restored_static_path = _restore_static_path_state(
+            validated_restart.path_state,
+            control_name=control_name,
+            n_red=int(T.shape[1]),
+            total_dofs=int(model.mesh.dof_manager.total_dofs),
+        )
 
     info: Dict[str, Any] = {
         "stiffness": stiffness_info,
@@ -2267,6 +4768,13 @@ def solve_static_nonlinear(
         "resource_config": None if resource_config is None else resource_config.to_dict(),
         "thread_policy": thread_policy_diagnostics(resource_config),
     }
+    if validated_restart is not None:
+        info["restart"] = {
+            "schema": validated_restart.payload["schema"],
+            "checkpoint_sha256": validated_restart.payload["checkpoint_sha256"],
+            "resumed_load_factor": float(restored_static_path["load_factor"]),
+            "resumed_step_index": int(restored_static_path["step_index"]),
+        }
     general_tangent = follower_active or (
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
@@ -2302,22 +4810,183 @@ def solve_static_nonlinear(
         raise ValueError("fracture_config is currently supported only with force control")
 
     n_red = int(T.shape[1])
-    force_restart = control_name == "force" and initial_displacements is not None
-    if control_name == "force":
+    checkpoint_resume = validated_restart is not None
+    force_restart = (
+        control_name == "force"
+        and initial_displacements is not None
+        and not checkpoint_resume
+    )
+    if control_name == "force" and checkpoint_resume:
+        resumed_lam = float(restored_static_path["load_factor"])
+        q = np.asarray(
+            restored_static_path["reduced_coordinates"], dtype=float
+        ).copy()
+        supplied_full = np.asarray(
+            initial_displacements, dtype=np.float64
+        ).reshape(-1)
+        restored_mode = restored_static_path.get("affine_path_mode")
+        restored_base = restored_static_path.get("exact_base_offset")
+        projected_free = np.asarray(T @ q, dtype=np.float64).reshape(-1)
+        proportional_affine = np.asarray(
+            resumed_lam * np.asarray(u0, dtype=np.float64).reshape(-1),
+            dtype=np.float64,
+        )
+        if restored_mode is None:
+            # Pre-schema checkpoints are migrated from their independently
+            # hash-bound committed displacement.  Exact equality identifies
+            # the proportional path; every other compatible legacy state is
+            # retained as a fixed affine restart rather than projected onto a
+            # different path.
+            proportional_projection = projected_free + proportional_affine
+            if np.array_equal(proportional_projection, supplied_full):
+                force_affine_path_mode = "PROPORTIONAL_PRESCRIBED_FIELD"
+                force_exact_base_offset = np.zeros_like(supplied_full)
+            else:
+                force_affine_path_mode = "FIXED_RESTART_AFFINE_STATE"
+                force_exact_base_offset = _exact_binary64_additive_offset(
+                    supplied_full,
+                    projected_free,
+                    context="legacy static restart affine state",
+                )
+            info_migration = "MIGRATED_FROM_BOUND_COMMITTED_DISPLACEMENT"
+        else:
+            force_affine_path_mode = str(restored_mode)
+            force_exact_base_offset = np.asarray(
+                restored_base, dtype=np.float64
+            ).reshape(-1).copy()
+            info_migration = "CURRENT_EXACT_BASE_SCHEMA"
+        path_projection = projected_free.copy()
+        if force_affine_path_mode == "PROPORTIONAL_PRESCRIBED_FIELD":
+            path_projection = path_projection + proportional_affine
+            initial_affine_scale = resumed_lam
+        else:
+            # The scale is diagnostic-only for constraint reporting.  The
+            # exact fixed base below remains the sole reconstruction authority.
+            _unused_q, initial_affine_scale = (
+                _reduced_coordinates_with_affine_scale(T, u0, supplied_full)
+            )
+        initial_affine_offset = force_exact_base_offset
+        initial_committed_displacement = np.asarray(
+            path_projection + force_exact_base_offset, dtype=np.float64
+        ).reshape(-1)
+        if not np.array_equal(initial_committed_displacement, supplied_full):
+            raise ValueError(
+                "restart checkpoint affine path does not exactly reconstruct "
+                "its committed displacement"
+            )
+    elif control_name == "force":
         q, initial_affine_scale = _reduced_coordinates_with_affine_scale(
             T,
             u0,
             initial_displacements,
         )
-        initial_affine_offset = (
-            float(initial_affine_scale) * np.asarray(u0, dtype=float).reshape(-1)
-        )
+        if initial_displacements is None:
+            force_affine_path_mode = "PROPORTIONAL_PRESCRIBED_FIELD"
+            force_exact_base_offset = np.zeros(int(T.shape[0]), dtype=float)
+            initial_affine_offset = force_exact_base_offset
+            initial_committed_displacement = np.asarray(
+                T @ q, dtype=np.float64
+            ).reshape(-1)
+            info_migration = "NOT_A_RESTART"
+        else:
+            # Retain the supplied committed vector bit for bit.  LSQR proves
+            # compatibility but its reconstructed affine scale can differ by
+            # a few ulps; binding a state to that rounded projection would
+            # reject a checkpoint/result produced by this same solver.  The
+            # exact residual is a constant restart offset, so
+            # ``T @ q + offset`` reconstructs the supplied state exactly while
+            # keeping the established fixed-affine restart path.
+            supplied_full = np.asarray(
+                initial_displacements, dtype=np.float64
+            ).reshape(-1)
+            projected_free = np.asarray(T @ q, dtype=np.float64).reshape(-1)
+            force_affine_path_mode = "FIXED_RESTART_AFFINE_STATE"
+            force_exact_base_offset = _exact_binary64_additive_offset(
+                supplied_full,
+                projected_free,
+                context="initial_displacements fixed-affine restart path",
+            )
+            initial_affine_offset = force_exact_base_offset
+            initial_committed_displacement = np.asarray(
+                projected_free + force_exact_base_offset,
+                dtype=np.float64,
+            ).reshape(-1)
+            info_migration = "DIRECT_EXACT_INITIAL_DISPLACEMENT"
     else:
-        q = _reduced_coordinates(T, u0, initial_displacements)
+        q = (
+            np.asarray(restored_static_path["reduced_coordinates"], dtype=float).copy()
+            if checkpoint_resume
+            else _reduced_coordinates(T, u0, initial_displacements)
+        )
         initial_affine_scale = 1.0
         initial_affine_offset = np.asarray(u0, dtype=float).reshape(-1)
+        initial_committed_displacement = np.asarray(
+            T @ q + np.asarray(u0, dtype=float).reshape(-1),
+            dtype=float,
+        ).reshape(-1)
+    if checkpoint_resume and not np.array_equal(
+        initial_committed_displacement,
+        np.asarray(initial_displacements, dtype=float).reshape(-1),
+    ):
+        raise ValueError(
+            "restart checkpoint reduced coordinates do not exactly reconstruct "
+            "its committed displacement"
+        )
+    supplied_state_ids = tuple(
+        sorted(int(value) for value in (initial_element_states or {}))
+    )
+    preflight_deleted_ids = (
+        tuple(sorted(int(value) for value in validated_restart.deleted_element_ids))
+        if validated_restart is not None
+        else ()
+    )
+    preflight_deletion_records = (
+        tuple(restored_static_path["deletion_records"])
+        if restored_static_path is not None and control_name == "force"
+        else ()
+    )
+    deleted_qualified_dispositions: Dict[int, Any] = {}
+    committed_states = _prepare_qualified_q4_states_for_nonlinear_solve(
+        model,
+        initial_committed_displacement,
+        committed_states,
+        num_layers,
+        info,
+        supplied_element_ids=supplied_state_ids,
+        ordinary_restart=bool(
+            initial_element_states is not None
+            and initial_displacements is not None
+            and equilibrate_initial_state is not True
+        ),
+        allow_explicit_initial_material_states=bool(
+            validated_restart is None
+            and initial_element_states is not None
+            and initial_displacements is None
+        ),
+        expected_deleted_element_ids=preflight_deleted_ids,
+        deletion_records=preflight_deletion_records,
+        residual_stiffness_fraction=(
+            None
+            if fracture_config is None
+            else float(fracture_config.residual_stiffness_fraction)
+        ),
+        deleted_dispositions=deleted_qualified_dispositions,
+    )
+    # Native multiplicative rotations are solver-owned and must exist before
+    # the first possible constitutive evaluation (initial-field equilibrium or
+    # a fully constrained prescribed state).  Q4-only models retain the prior
+    # dictionary/array activation behavior.
+    committed_states = _activate_nonlinear_state_storage(
+        model,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+        committed_displacements=initial_committed_displacement,
+        noncurrent_native_element_ids=preflight_deleted_ids,
+    )
     if (
-        initial_fields
+        initial_fields_present
         and initial_displacements is not None
         and equilibrate_initial_state is not False
     ):
@@ -2328,15 +4997,29 @@ def solve_static_nonlinear(
         )
     if n_red == 0:
         fully_constrained_displacement = (
-            initial_affine_offset
-            if force_restart
-            else np.asarray(u0, dtype=float).reshape(-1)
+            initial_committed_displacement.copy()
+            if checkpoint_resume
+            else (
+                initial_affine_offset
+                if force_restart
+                else np.asarray(u0, dtype=float).reshape(-1)
+            )
         )
         has_initial_fields = any(
             _state_has_initial_field(state) for state in committed_states.values()
         )
+        requires_native_tl_evaluation = any(
+            bool(
+                getattr(
+                    element,
+                    "formulation_native_total_lagrangian",
+                    False,
+                )
+            )
+            for element in model.mesh.elements.values()
+        )
         requested_equilibration = (
-            bool(initial_fields)
+            initial_fields_present
             if equilibrate_initial_state is None
             else bool(equilibrate_initial_state)
         )
@@ -2349,26 +5032,42 @@ def solve_static_nonlinear(
             "free_dof_residual_norm": 0.0,
             "fully_constrained": True,
         }
-        if has_initial_fields:
+        if has_initial_fields or requires_native_tl_evaluation:
             # There are no admissible displacement corrections, so the
-            # prescribed field is already equilibrated in the free-DOF
-            # sense; its imbalance is carried entirely by reactions. Retain
-            # the evaluated constitutive state and provenance in the result.
+            # prescribed field/native kinematics are already equilibrated in
+            # the free-DOF sense; any imbalance is carried by reactions.
+            # Native-TL elements still require one real evaluation so their
+            # accepted element-owned kinematic state is not silently omitted.
             internal_force, _unused_tangent, trial_states = (
                 _assemble_nonlinear_system(
                     model,
                     fully_constrained_displacement,
                     committed_states,
                     num_layers,
-                    tangent=False,
+                    # A fully constrained plastic Q4 still needs the exact
+                    # accepted return-map parent for its committed tangent.
+                    # Evaluate that one accepted candidate with its tangent;
+                    # never promote an origin-less residual-only output.
+                    tangent=True,
                     kinematics=kinematics,
                     corotational_tangent=resolved_corotational_tangent,
                 )
             )
-            committed_states = trial_states
+            exact_guard(
+                model,
+                context="nonlinear static fully-constrained assembly",
+            )
+            committed_states = _commit_nonlinear_state_candidate(
+                committed_states,
+                trial_states,
+                model=model,
+                accepted_displacements=fully_constrained_displacement,
+            )
             info["initial_state_equilibration"][
                 "constrained_internal_force_norm"
             ] = float(np.linalg.norm(internal_force))
+            if requires_native_tl_evaluation:
+                info["initial_state_equilibration"]["native_tl_evaluated"] = True
             info["strain_summary"] = _nonlinear_state_summary(committed_states)
         info["failure_reason"] = "empty_reduced_system"
         info["stop_reason"] = "empty_reduced_system"
@@ -2388,17 +5087,36 @@ def solve_static_nonlinear(
                 "corotational_tangent": resolved_corotational_tangent,
             },
         ).to_dict()
+        final_committed_states = _materialize_final_nonlinear_states(
+            committed_states,
+            info,
+        )
+        final_committed_states = _finalize_nonlinear_element_states(
+            model,
+            fully_constrained_displacement,
+            final_committed_states,
+            num_layers,
+            kinematics=kinematics,
+        )
+        final_committed_states = _seal_final_qualified_q4_states(
+            model,
+            fully_constrained_displacement,
+            final_committed_states,
+            num_layers,
+            info,
+            kinematics=kinematics,
+        )
         return NonlinearStaticResult(
             [],
             "empty_reduced_system",
             fully_constrained_displacement.copy(),
             0.0,
-            committed_states,
+            final_committed_states,
             info,
         )
 
     has_initial_fields = any(_state_has_initial_field(state) for state in committed_states.values())
-    restored_initial_fields = has_initial_fields and not bool(initial_fields)
+    restored_initial_fields = has_initial_fields and not initial_fields_present
     if (
         restored_initial_fields
         and initial_displacements is None
@@ -2410,7 +5128,11 @@ def solve_static_nonlinear(
             "equilibrate_initial_state=True only when re-equilibration from "
             "zero displacement is intended."
         )
-    should_equilibrate = bool(initial_fields) if equilibrate_initial_state is None else bool(equilibrate_initial_state)
+    should_equilibrate = (
+        initial_fields_present
+        if equilibrate_initial_state is None
+        else bool(equilibrate_initial_state)
+    )
     if should_equilibrate and has_initial_fields:
         q, committed_states, initialization_history, initialization_failure = _equilibrate_initial_fields(
             model=model,
@@ -2425,7 +5147,9 @@ def solve_static_nonlinear(
             general_tangent=general_tangent,
             initial_reduced_displacements=q,
             cancellation_token=cancellation_token,
+            _exact_guard=exact_guard,
         )
+        exact_guard(model, context="nonlinear static initial equilibration")
         info["initial_state_equilibration"] = {
             "requested": True,
             "converged": initialization_failure is None,
@@ -2441,6 +5165,23 @@ def solve_static_nonlinear(
             info["failure_reason"] = initialization_failure
             info["stop_reason"] = initialization_failure
             info["status_category"] = _nonlinear_status_category("diverged", initialization_failure)
+            committed_states = _materialize_final_nonlinear_states(
+                committed_states,
+                info,
+            )
+            # The installed result-recovery finalizer may evaluate mechanics
+            # and add displacement-derived fields.  No candidate was accepted
+            # on this failure path, so the last committed materialized pair is
+            # the only honest output and is marked nonauthoritative below.
+            committed_states = _mark_failed_qualified_q4_states(
+                model,
+                u_failed,
+                committed_states,
+                num_layers,
+                info,
+                failure_reason=initialization_failure,
+                kinematics=kinematics,
+            )
             info["strain_summary"] = _nonlinear_state_summary(committed_states)
             info["solve_time"] = time.time() - start_time
             return NonlinearStaticResult([], "diverged", u_failed, 0.0, committed_states, info)
@@ -2452,12 +5193,32 @@ def solve_static_nonlinear(
             "history": [],
             "failure_reason": None,
         }
-    steps: List[NonlinearStaticStep] = []
+    steps: List[NonlinearStaticStep] = (
+        list(restored_static_path["steps"])
+        if restored_static_path is not None
+        else []
+    )
     status = "completed"
-    deleted_element_ids: set[int] = set()
-    deletion_records: List[DeletedElementRecord] = []
-    fracture_warnings: List[str] = []
-    max_fracture_utilization = 0.0
+    deleted_element_ids: set[int] = (
+        set(validated_restart.deleted_element_ids)
+        if validated_restart is not None
+        else set()
+    )
+    deletion_records: List[DeletedElementRecord] = (
+        list(restored_static_path["deletion_records"])
+        if restored_static_path is not None and control_name == "force"
+        else []
+    )
+    fracture_warnings: List[str] = (
+        list(restored_static_path["fracture_warnings"])
+        if restored_static_path is not None and control_name == "force"
+        else []
+    )
+    max_fracture_utilization = (
+        float(restored_static_path["max_fracture_utilization"])
+        if restored_static_path is not None and control_name == "force"
+        else 0.0
+    )
 
     if load_program is not None and max_load_factor == 1.0:
         target_load_factor = load_program.total_factor
@@ -2519,13 +5280,17 @@ def solve_static_nonlinear(
         if displacement_control is None:
             raise ValueError("displacement_control is required when control='displacement'")
         preload_result: Optional[NonlinearStaticResult] = None
-        if load_program is not None and len(load_program.stages) > 1:
+        if (
+            load_program is not None
+            and len(load_program.stages) > 1
+            and not checkpoint_resume
+        ):
             # Each permanent stage is first solved by force control and its
             # displacement/material state committed.  The final stage then
             # starts from that exact checkpoint under displacement control;
             # the earlier loads remain constant in the controlled equilibrium.
             preload_program = NonlinearLoadProgram(tuple(load_program.stages[:-1]))
-            preload_result = solve_static_nonlinear(
+            preload_result = _solve_static_nonlinear_under_lease(
                 model,
                 constant_load_case=constant_load_case,
                 max_load_factor=preload_program.total_factor,
@@ -2549,7 +5314,9 @@ def solve_static_nonlinear(
                 progress_callback=progress_callback,
                 cancellation_token=cancellation_token,
                 record_increment_snapshots=record_increment_snapshots,
+                _qualified_runtime_guard=_qualified_runtime_guard,
             )
+            exact_guard(model, context="nonlinear static preload result")
             if not preload_result.converged or (
                 preload_result.load_factor < preload_program.total_factor - 1.0e-10
             ):
@@ -2561,6 +5328,15 @@ def solve_static_nonlinear(
                 return preload_result
             committed_states = _copy_initial_states(preload_result.element_states)
             q = _reduced_coordinates(T, u0, preload_result.displacements)
+            committed_states = _prepare_qualified_q4_states_for_nonlinear_solve(
+                model,
+                np.asarray(preload_result.displacements, dtype=float).reshape(-1),
+                committed_states,
+                num_layers,
+                info,
+                supplied_element_ids=tuple(sorted(int(value) for value in committed_states)),
+                ordinary_restart=True,
+            )
             info["load_program_preload"] = {
                 "status": preload_result.status,
                 "load_factor": preload_result.load_factor,
@@ -2581,6 +5357,7 @@ def solve_static_nonlinear(
             num_layers,
             info,
             kinematics=kinematics,
+            committed_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
         )
         controlled_result = _solve_static_displacement_control(
             model=model,
@@ -2607,7 +5384,63 @@ def solve_static_nonlinear(
             cancellation_token=cancellation_token,
             progress_callback=progress_callback,
             record_increment_snapshots=record_increment_snapshots,
+            initial_load_factor=(
+                float(restored_static_path["load_factor"])
+                if restored_static_path is not None
+                else 0.0
+            ),
+            step_index_offset=(
+                int(restored_static_path["step_index"])
+                if restored_static_path is not None
+                else 0
+            ),
+            initial_steps=(
+                restored_static_path["steps"]
+                if restored_static_path is not None
+                else ()
+            ),
+            initial_history=(
+                restored_static_path["force_displacement_history"]
+                if restored_static_path is not None
+                else ()
+            ),
+            initial_total_iterations=(
+                int(restored_static_path["total_iterations"])
+                if restored_static_path is not None
+                else 0
+            ),
+            restart_analysis_contract=(
+                restart_analysis_contract if emit_restart_checkpoint else None
+            ),
+            _exact_guard=exact_guard,
         )
+        exact_guard(model, context="nonlinear static displacement-control result")
+        controlled_result.element_states = _seal_final_qualified_q4_states(
+            model,
+            controlled_result.displacements,
+            controlled_result.element_states,
+            num_layers,
+            controlled_result.info,
+            kinematics=kinematics,
+        )
+        if controlled_result.restart_checkpoint is not None:
+            # An accelerated displacement-control implementation may have
+            # built its checkpoint immediately before the public lifecycle
+            # seam. Recreate it over the sealed states without changing its
+            # already canonical path transaction.
+            prior_checkpoint = controlled_result.restart_checkpoint
+            controlled_result.restart_checkpoint = create_nonlinear_checkpoint(
+                analysis_kind="static",
+                model=model,
+                analysis_contract=restart_analysis_contract,
+                displacements=controlled_result.displacements,
+                element_states=controlled_result.element_states,
+                deleted_element_ids=tuple(
+                    int(value)
+                    for value in prior_checkpoint.get("deleted_element_ids", ())
+                ),
+                path_state=prior_checkpoint["path_state"],
+            )
         if load_program is not None:
             stage_factors = {
                 stage.name: stage.target_factor
@@ -2640,6 +5473,44 @@ def solve_static_nonlinear(
             controlled_result.info["total_newton_iterations"] = int(
                 controlled_result.info.get("total_newton_iterations", 0)
             ) + int(preload_result.info.get("total_newton_iterations", 0))
+            if emit_restart_checkpoint:
+                checkpoint_history = copy.deepcopy(
+                    preload_result.info.get("force_displacement_history", [])
+                ) + copy.deepcopy(
+                    controlled_result.info.get("force_displacement_history", [])
+                )
+                for index, item in enumerate(checkpoint_history, start=1):
+                    if isinstance(item, dict):
+                        item["step_index"] = index
+                controlled_result.info[
+                    "force_displacement_history"
+                ] = checkpoint_history
+                controlled_result.restart_checkpoint = create_nonlinear_checkpoint(
+                    analysis_kind="static",
+                    model=model,
+                    analysis_contract=restart_analysis_contract,
+                    displacements=controlled_result.displacements,
+                    element_states=controlled_result.element_states,
+                    deleted_element_ids=(),
+                    path_state=_static_restart_path_payload(
+                        control_name="displacement",
+                        load_factor=controlled_result.load_factor,
+                        step_index=len(controlled_result.steps),
+                        total_iterations=int(
+                            controlled_result.info.get("total_newton_iterations", 0)
+                        ),
+                        steps=controlled_result.steps,
+                        force_displacement_history=checkpoint_history,
+                        reduced_coordinates=np.asarray(
+                            controlled_result.restart_checkpoint["path_state"][
+                                "reduced_coordinates"
+                            ],
+                            dtype=float,
+                        ),
+                        terminal_status=controlled_result.status,
+                        failure_reason=controlled_result.failure_reason,
+                    ),
+                )
         return controlled_result
 
     committed_states = _activate_nonlinear_state_storage(
@@ -2648,14 +5519,25 @@ def solve_static_nonlinear(
         num_layers,
         info,
         kinematics=kinematics,
+        committed_displacements=initial_committed_displacement,
+        noncurrent_native_element_ids=preflight_deleted_ids,
     )
-    base_step = target_load_factor / num_steps
-    min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
-    max_step = max(base_step * settings.max_step_factor, min_step)
-    step_size = base_step
-    lam = 0.0
-    step_index = 0
-    total_iterations = 0
+    if restored_static_path is not None:
+        base_step = float(restored_static_path["base_step"])
+        min_step = float(restored_static_path["minimum_step"])
+        max_step = float(restored_static_path["maximum_step"])
+        step_size = float(restored_static_path["next_step_size"])
+        lam = float(restored_static_path["load_factor"])
+        step_index = int(restored_static_path["step_index"])
+        total_iterations = int(restored_static_path["total_iterations"])
+    else:
+        base_step = target_load_factor / num_steps
+        min_step = max(float(effective_min_step_fraction) * base_step, 1.0e-12)
+        max_step = max(base_step * settings.max_step_factor, min_step)
+        step_size = base_step
+        lam = 0.0
+        step_index = 0
+        total_iterations = 0
     stage_boundaries = (
         np.cumsum([stage.target_factor for stage in load_program.stages], dtype=float)
         if load_program is not None
@@ -2663,24 +5545,28 @@ def solve_static_nonlinear(
     )
 
     prescribed_offset = np.asarray(u0, dtype=float).reshape(-1)
-    prescribed_base = (
-        initial_affine_offset
-        if force_restart
-        else np.zeros_like(prescribed_offset)
-    )
+    prescribed_base = np.asarray(
+        force_exact_base_offset, dtype=np.float64
+    ).reshape(-1).copy()
     prescribed_slope = (
-        np.zeros_like(prescribed_offset)
-        if force_restart
-        else prescribed_offset
+        prescribed_offset
+        if force_affine_path_mode == "PROPORTIONAL_PRESCRIBED_FIELD"
+        else np.zeros_like(prescribed_offset)
     )
     info["prescribed_displacement_path"] = {
         "mode": (
-            "restart_fixed_affine_state"
-            if force_restart
-            else "proportional_to_load_factor"
+            "proportional_to_load_factor"
+            if force_affine_path_mode == "PROPORTIONAL_PRESCRIBED_FIELD"
+            else "restart_fixed_affine_state"
         ),
+        "schema_mode": force_affine_path_mode,
+        "restart_schema_disposition": info_migration,
         "initial_affine_scale": float(initial_affine_scale),
-        "affine_scale_slope": 0.0 if force_restart else 1.0,
+        "affine_scale_slope": (
+            1.0
+            if force_affine_path_mode == "PROPORTIONAL_PRESCRIBED_FIELD"
+            else 0.0
+        ),
         "target_max_abs": float(np.max(np.abs(prescribed_offset)))
         if prescribed_offset.size
         else 0.0,
@@ -2703,6 +5589,10 @@ def solve_static_nonlinear(
             cancellation_token,
             f"nonlinear_static.force.step:{step_index}.start",
         )
+        exact_guard(
+            model,
+            context="nonlinear static force increment cancellation",
+        )
         q_trial = q_start.copy()
         u = full_displacement(q_trial, path_factor)
         F_int, K_T, trial_states = _assemble_nonlinear_system(
@@ -2717,11 +5607,13 @@ def solve_static_nonlinear(
                 fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
             ),
         )
+        exact_guard(model, context="nonlinear static force tangent assembly")
         F_ext, K_ext, _stage_factors, _active_stage = external_load_at(
             path_factor,
             u,
             tangent=True,
         )
+        exact_guard(model, context="nonlinear static force external load")
         residual = (
             np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
             - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
@@ -2733,7 +5625,11 @@ def solve_static_nonlinear(
                 cancellation_token,
                 f"nonlinear_static.force.step:{step_index}.iteration:{iteration}",
             )
-            if status_callback:
+            exact_guard(
+                model,
+                context="nonlinear static force iteration cancellation",
+            )
+            if status_callback is not None:
                 # ``num_steps`` defines the initial load partition, not a hard
                 # count: adaptive cutbacks/growth may produce far more or
                 # fewer converged increments.  A fraction such as 1459/10 was
@@ -2743,6 +5639,10 @@ def solve_static_nonlinear(
                     f"load factor {path_factor:.6g} / {target_load_factor:.6g} | "
                     f"increment {path_factor - lam:.3g} | "
                     f"Newton iteration {iteration} | residual {residual_norm:.3e}"
+                )
+                exact_guard(
+                    model,
+                    context="nonlinear static status callback",
                 )
             total_iterations += 1
             if residual_norm <= tolerance * reference:
@@ -2781,11 +5681,13 @@ def solve_static_nonlinear(
                         fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
                     ),
                 )
+                exact_guard(model, context="nonlinear static force tangent assembly")
                 F_ext, K_ext, _stage_factors, _active_stage = external_load_at(
                     path_factor,
                     u,
                     tangent=True,
                 )
+                exact_guard(model, context="nonlinear static force external load")
                 residual = (
                     np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
                     - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
@@ -2807,6 +5709,10 @@ def solve_static_nonlinear(
                     cancellation_token,
                     f"nonlinear_static.force.step:{step_index}.line_search:{trial + 1}",
                 )
+                exact_guard(
+                    model,
+                    context="nonlinear static line-search cancellation",
+                )
                 q_candidate = q_trial + scale * dq
                 u = full_displacement(q_candidate, path_factor)
                 with_tangent = trial == 0
@@ -2823,11 +5729,13 @@ def solve_static_nonlinear(
                         fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
                     ),
                 )
+                exact_guard(model, context="nonlinear static line-search assembly")
                 F_ext_c, K_ext_c, _stage_factors, _active_stage = external_load_at(
                     path_factor,
                     u,
                     tangent=with_tangent,
                 )
+                exact_guard(model, context="nonlinear static line-search load")
                 r_c = (
                     np.asarray(T.T @ F_ext_c, dtype=float).reshape(-1)
                     - np.asarray(T.T @ F_c, dtype=float).reshape(-1)
@@ -2848,10 +5756,18 @@ def solve_static_nonlinear(
                                 fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
                             ),
                         )
+                        exact_guard(
+                            model,
+                            context="nonlinear static accepted line-search assembly",
+                        )
                         F_ext_c, K_ext_c, _stage_factors, _active_stage = external_load_at(
                             path_factor,
                             u,
                             tangent=True,
+                        )
+                        exact_guard(
+                            model,
+                            context="nonlinear static accepted line-search load",
                         )
                         r_c = (
                             np.asarray(T.T @ F_ext_c, dtype=float).reshape(-1)
@@ -2870,10 +5786,22 @@ def solve_static_nonlinear(
 
         return False, q_start, committed_states, residual_norm, max_iterations, "maximum_iterations_reached"
 
-    force_displacement_history: List[Dict[str, Any]] = []
-    convergence_adaptation: List[Dict[str, Any]] = []
+    force_displacement_history: List[Dict[str, Any]] = (
+        copy.deepcopy(restored_static_path["force_displacement_history"])
+        if restored_static_path is not None
+        else []
+    )
+    convergence_adaptation: List[Dict[str, Any]] = (
+        copy.deepcopy(restored_static_path["convergence_adaptation"])
+        if restored_static_path is not None
+        else []
+    )
     snapshots: List[NonlinearIncrementSnapshot] = []
-    force_line_search_next = False
+    force_line_search_next = (
+        bool(restored_static_path["force_line_search_next"])
+        if restored_static_path is not None
+        else False
+    )
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
@@ -2881,6 +5809,10 @@ def solve_static_nonlinear(
             cancellation_safe_point(
                 cancellation_token,
                 f"nonlinear_static.force.step:{step_index + 1}",
+            )
+            exact_guard(
+                model,
+                context="nonlinear static force step cancellation",
             )
             step_size = min(step_size, max(target_load_factor - lam, min_step))
             next_stage_boundary = target_load_factor
@@ -2899,6 +5831,7 @@ def solve_static_nonlinear(
                 u_start,
                 tangent=False,
             )
+            exact_guard(model, context="nonlinear static step external load")
             F_ext_red = np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
             reference = max(float(np.linalg.norm(F_ext_red)), 1.0)
 
@@ -2925,6 +5858,12 @@ def solve_static_nonlinear(
                 committed_states = _commit_nonlinear_state_candidate(
                     committed_states,
                     states_new,
+                    model=model,
+                    accepted_displacements=full_displacement(q_new, lam_trial),
+                )
+                exact_guard(
+                    model,
+                    context="nonlinear static committed-state observation",
                 )
                 force_line_search_next = False
                 step_index += 1
@@ -2945,15 +5884,18 @@ def solve_static_nonlinear(
                     corotational_tangent=resolved_corotational_tangent,
                     require_full_coordinates=True,
                 )
+                exact_guard(model, context="nonlinear static reaction assembly")
                 # Reaction recovery is diagnostic-only; do not leave its trial
                 # constitutive state active for the next accepted increment.
                 _discard_nonlinear_state_candidate(committed_states)
                 reaction_external, _unused_tangent, _unused_factors, _unused_stage = (
                     external_load_at(lam, u, tangent=False)
                 )
+                exact_guard(model, context="nonlinear static reaction load")
                 support_reactions = _support_reaction_resultants(
                     model, reaction_internal - reaction_external
                 )
+                exact_guard(model, context="nonlinear static support reactions")
                 new_records: Tuple[DeletedElementRecord, ...] = ()
                 if fracture_config is not None:
                     new_records, step_fracture_utilization = detect_new_deletions(
@@ -2964,8 +5906,45 @@ def solve_static_nonlinear(
                         step_index=step_index,
                         load_factor=float(lam),
                     )
+                    exact_guard(
+                        model,
+                        context="nonlinear static fracture observation",
+                    )
                     max_fracture_utilization = max(max_fracture_utilization, step_fracture_utilization)
                     if new_records:
+                        for record in new_records:
+                            deleted_element = model.mesh.get_element(
+                                int(record.element_id)
+                            )
+                            if (
+                                deleted_element is None
+                                or (
+                                    _qualified_q4_committed_state_hooks(
+                                        deleted_element
+                                    )
+                                    is None
+                                    and _qualified_s3_committed_state_validator(
+                                        deleted_element
+                                    )
+                                    is None
+                                )
+                            ):
+                                continue
+                            deleted_dofs = np.asarray(
+                                deleted_element.get_dof_mapping(model.mesh),
+                                dtype=np.intp,
+                            )
+                            deleted_qualified_dispositions[int(record.element_id)] = {
+                                "accepted_local_u": np.asarray(
+                                    u[deleted_dofs], dtype=np.float64
+                                ).tolist(),
+                                "deletion_step_index": int(record.step_index),
+                                "deletion_load_factor": float(record.load_factor),
+                                "residual_stiffness_fraction": float(
+                                    fracture_config.residual_stiffness_fraction
+                                ),
+                                "trigger_name": str(record.trigger_name),
+                            }
                         deletion_records.extend(new_records)
                         deleted_element_ids.update(record.element_id for record in new_records)
                         warning = mpc_warning_for_deleted_shells(model, (record.element_id for record in new_records))
@@ -3045,6 +6024,10 @@ def solve_static_nonlinear(
                             control_value=control_value,
                         )
                     )
+                    exact_guard(
+                        model,
+                        context="nonlinear static increment snapshot",
+                    )
                 if progress_callback is not None:
                     max_translation = 0.0
                     size = int(u.size)
@@ -3055,6 +6038,10 @@ def solve_static_nonlinear(
                         value = float(np.linalg.norm(u[dofs]))
                         if value > max_translation:
                             max_translation = value
+                    exact_guard(
+                        model,
+                        context="nonlinear static progress-state observation",
+                    )
                     emit_progress(
                         progress_callback,
                         "nonlinear_static_step",
@@ -3075,6 +6062,10 @@ def solve_static_nonlinear(
                             name: list(values)
                             for name, values in support_reactions.items()
                         },
+                    )
+                    exact_guard(
+                        model,
+                        context="nonlinear static progress callback",
                     )
                 if fracture_config is not None and deleted_element_ids:
                     scoped_total = sum(
@@ -3156,6 +6147,23 @@ def solve_static_nonlinear(
         num_layers,
         kinematics=kinematics,
     )
+    committed_states = _seal_final_qualified_q4_states(
+        model,
+        u_final,
+        committed_states,
+        num_layers,
+        info,
+        kinematics=kinematics,
+        deleted_element_ids=tuple(sorted(deleted_element_ids)),
+        deleted_dispositions=deleted_qualified_dispositions,
+        deletion_records=deletion_records,
+        residual_stiffness_fraction=(
+            None
+            if fracture_config is None
+            else float(fracture_config.residual_stiffness_fraction)
+        ),
+    )
+    exact_guard(model, context="nonlinear static final state recovery")
     if "failure_reason" not in info and status == "completed":
         info["failure_reason"] = None
     failure_reason = info.get("failure_reason")
@@ -3175,20 +6183,23 @@ def solve_static_nonlinear(
             max_utilization=max_fracture_utilization,
             warnings=fracture_warnings,
         )
+        exact_guard(model, context="nonlinear static fracture summary")
     if load_program is not None:
         info["load_program_stage_factors"] = load_program.stage_factors(lam)
+        exact_guard(model, context="nonlinear static load-program output")
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
     final_affine_scale = (
-        float(initial_affine_scale)
-        if force_restart
-        else float(lam)
+        float(lam)
+        if force_affine_path_mode == "PROPORTIONAL_PRESCRIBED_FIELD"
+        else float(initial_affine_scale)
     )
     info["constraint_postcheck"] = constraint_residual_summary(
         model,
         u_final,
         affine_scale=final_affine_scale,
     )
+    exact_guard(model, context="nonlinear static constraint postcheck")
     info["result_case"] = make_result_case(
         name="nonlinear_static",
         analysis_type="nonlinear_static",
@@ -3207,6 +6218,41 @@ def solve_static_nonlinear(
             "fracture": None if fracture_config is None else fracture_config.to_dict(),
         },
     ).to_dict()
+    restart_payload = None
+    if emit_restart_checkpoint:
+        restart_payload = create_nonlinear_checkpoint(
+            analysis_kind="static",
+            model=model,
+            analysis_contract=restart_analysis_contract,
+            displacements=u_final,
+            element_states=committed_states,
+            deleted_element_ids=tuple(sorted(deleted_element_ids)),
+            path_state=_static_restart_path_payload(
+                control_name="force",
+                load_factor=float(lam),
+                step_index=int(step_index),
+                total_iterations=int(total_iterations),
+                steps=steps,
+                force_displacement_history=force_displacement_history,
+                reduced_coordinates=q,
+                terminal_status=status,
+                failure_reason=failure_reason,
+                base_step=float(base_step),
+                minimum_step=float(min_step),
+                maximum_step=float(max_step),
+                next_step_size=float(step_size),
+                force_line_search_next=bool(force_line_search_next),
+                convergence_adaptation=convergence_adaptation,
+                deletion_records=[record.to_dict() for record in deletion_records],
+                fracture_warnings=list(fracture_warnings),
+                max_fracture_utilization=float(max_fracture_utilization),
+                affine_path_mode=force_affine_path_mode,
+                exact_base_offset=np.asarray(
+                    prescribed_base, dtype=np.float64
+                ).reshape(-1).tolist(),
+            ),
+        )
+        exact_guard(model, context="nonlinear static checkpoint output")
     return NonlinearStaticResult(
         steps,
         status,
@@ -3215,4 +6261,102 @@ def solve_static_nonlinear(
         committed_states,
         info,
         tuple(snapshots),
+        restart_payload,
+    )
+
+
+def solve_static_nonlinear(
+    model: "FEModel",
+    load_case: Optional["LoadCase"] = None,
+    constant_load_case: Optional["LoadCase"] = None,
+    max_load_factor: float = 1.0,
+    num_steps: int = 10,
+    max_iterations: int = 25,
+    tolerance: float = 1.0e-6,
+    num_layers: int = 5,
+    min_step_fraction: float = 1.0 / 1024.0,
+    imperfection: Optional[Any] = None,
+    load_program: Optional[NonlinearLoadProgram] = None,
+    control: str = "force",
+    displacement_control: Optional[DisplacementControl] = None,
+    initial_element_states: Optional[Mapping[int, Any]] = None,
+    convergence_settings: Optional[
+        Union[str, Mapping[str, Any], NonlinearConvergenceSettings]
+    ] = None,
+    resource_config: Optional[ResourceConfig] = None,
+    fracture_config: Optional[FractureConfig] = None,
+    kinematics: str = "von_karman",
+    corotational_tangent: str = "auto",
+    status_callback: Optional[Callable[[str], None]] = None,
+    progress_callback: Optional[ProgressCallback] = None,
+    initial_fields: Optional[Mapping[int, Any]] = None,
+    initial_displacements: Optional[np.ndarray] = None,
+    equilibrate_initial_state: Optional[bool] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    record_increment_snapshots: bool = False,
+    restart_checkpoint: Optional[Any] = None,
+    emit_restart_checkpoint: bool = False,
+) -> NonlinearStaticResult:
+    """Run nonlinear static analysis under one non-renewable family lease."""
+
+    exact_guard = _EXACT_QUALIFIED_LIFECYCLE_GUARD
+    run_under_lease = _run_with_qualified_assembly_runtime_lease
+    own_resource_config = _owned_resource_config_snapshot
+    solve_under_lease = _solve_static_nonlinear_under_lease
+    exact_guard(
+        model,
+        context="solve_static_nonlinear preflight",
+    )
+
+    def operation(lease: Any) -> NonlinearStaticResult:
+        def post_observation() -> None:
+            exact_guard(
+                model,
+                context="solve_static_nonlinear resource configuration",
+            )
+            lease(
+                model,
+                context="solve_static_nonlinear resource configuration",
+            )
+
+        owned_resource_config = own_resource_config(
+            resource_config,
+            post_observation=post_observation,
+        )
+        return solve_under_lease(
+            model,
+            load_case=load_case,
+            constant_load_case=constant_load_case,
+            max_load_factor=max_load_factor,
+            num_steps=num_steps,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+            num_layers=num_layers,
+            min_step_fraction=min_step_fraction,
+            imperfection=imperfection,
+            load_program=load_program,
+            control=control,
+            displacement_control=displacement_control,
+            initial_element_states=initial_element_states,
+            convergence_settings=convergence_settings,
+            resource_config=owned_resource_config,
+            fracture_config=fracture_config,
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
+            status_callback=status_callback,
+            progress_callback=progress_callback,
+            initial_fields=initial_fields,
+            initial_displacements=initial_displacements,
+            equilibrate_initial_state=equilibrate_initial_state,
+            cancellation_token=cancellation_token,
+            record_increment_snapshots=record_increment_snapshots,
+            restart_checkpoint=restart_checkpoint,
+            emit_restart_checkpoint=emit_restart_checkpoint,
+            _qualified_runtime_guard=lease,
+        )
+
+    return run_under_lease(
+        model,
+        context="solve_static_nonlinear",
+        operation=operation,
     )

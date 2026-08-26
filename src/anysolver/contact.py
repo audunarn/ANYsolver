@@ -285,9 +285,10 @@ class SphereContactRecord:
     structure_force: np.ndarray
     contact_classification: str = "face"
     nodal_forces: Mapping[int, np.ndarray] = field(default_factory=dict)
+    nodal_moments: Mapping[int, np.ndarray] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "element_id": int(self.element_id),
             "local_coordinates": [float(self.local_coordinates[0]), float(self.local_coordinates[1])],
             "contact_point": self.contact_point.tolist(),
@@ -299,6 +300,12 @@ class SphereContactRecord:
             "contact_classification": self.contact_classification,
             "nodal_forces": {int(node_id): value.tolist() for node_id, value in self.nodal_forces.items()},
         }
+        if self.nodal_moments:
+            payload["nodal_moments"] = {
+                int(node_id): value.tolist()
+                for node_id, value in self.nodal_moments.items()
+            }
+        return payload
 
 
 @dataclass(frozen=True)
@@ -382,6 +389,90 @@ def _project_local_coordinates(
     return local, N, dN_dxi, dN_deta, surface_point
 
 
+def _project_qualified_s3_contact_coordinates(
+    element: ShellElement,
+    coordinates: np.ndarray,
+    point: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return the numbering-invariant closest point on a three-corner facet.
+
+    The generic contact projector clips the two natural coordinates after
+    each Newton correction.  That box/simplex clipping path depends on which
+    physical corner happens to own each natural coordinate and therefore is
+    not D3 covariant for edge and corner contact.  A flat qualified S3 facet
+    permits a compact exact active-set solve: test the plane projection and
+    all three edge projections, then select the physical closest point.
+    """
+
+    vertices = np.asarray(coordinates, dtype=float)
+    target = np.asarray(point, dtype=float).reshape(3)
+    if vertices.shape != (3, 3) or not np.all(np.isfinite(vertices)):
+        raise ValueError("Qualified S3 contact coordinates must have shape (3, 3)")
+    candidates: list[tuple[float, np.ndarray, np.ndarray]] = []
+    edge_01 = vertices[1] - vertices[0]
+    edge_02 = vertices[2] - vertices[0]
+    gram = np.asarray(
+        (
+            (float(edge_01 @ edge_01), float(edge_01 @ edge_02)),
+            (float(edge_01 @ edge_02), float(edge_02 @ edge_02)),
+        ),
+        dtype=float,
+    )
+    determinant = float(np.linalg.det(gram))
+    if determinant <= np.finfo(float).tiny:
+        raise ValueError("Qualified S3 contact facet is singular")
+    natural = np.linalg.solve(
+        gram,
+        np.asarray(
+            (
+                float(edge_01 @ (target - vertices[0])),
+                float(edge_02 @ (target - vertices[0])),
+            ),
+            dtype=float,
+        ),
+    )
+    plane_weights = np.asarray(
+        (1.0 - natural[0] - natural[1], natural[0], natural[1]), dtype=float
+    )
+    if float(np.min(plane_weights)) >= -64.0 * np.finfo(float).eps:
+        plane_weights = np.maximum(plane_weights, 0.0)
+        plane_weights /= float(np.sum(plane_weights))
+        projected = plane_weights @ vertices
+        candidates.append(
+            (float((target - projected) @ (target - projected)), plane_weights, projected)
+        )
+    for first, second in ((0, 1), (1, 2), (2, 0)):
+        edge = vertices[second] - vertices[first]
+        length_squared = float(edge @ edge)
+        if length_squared <= np.finfo(float).tiny:
+            raise ValueError("Qualified S3 contact facet has a zero-length edge")
+        parameter = min(
+            max(float((target - vertices[first]) @ edge) / length_squared, 0.0),
+            1.0,
+        )
+        weights = np.zeros(3, dtype=float)
+        weights[first] = 1.0 - parameter
+        weights[second] = parameter
+        projected = weights @ vertices
+        candidates.append(
+            (float((target - projected) @ (target - projected)), weights, projected)
+        )
+    _distance_squared, selected_weights, surface_point = min(
+        candidates,
+        key=lambda item: (
+            item[0],
+            float(item[2][0]),
+            float(item[2][1]),
+            float(item[2][2]),
+        ),
+    )
+    local = np.asarray((selected_weights[1], selected_weights[2]), dtype=float)
+    N, dN_dxi, dN_deta = element.compute_shape_functions(
+        float(local[0]), float(local[1])
+    )
+    return local, N, dN_dxi, dN_deta, np.asarray(surface_point, dtype=float)
+
+
 def _contact_classification(element: ShellElement, local: np.ndarray, tol: float = 1.0e-7) -> str:
     if element.num_nodes in (3, 6):
         bary = (float(local[0]), float(local[1]), float(1.0 - local[0] - local[1]))
@@ -402,13 +493,131 @@ def _contact_classification(element: ShellElement, local: np.ndarray, tol: float
 
 def _surface_offset(element: ShellElement, config: SphereContactConfig) -> float:
     thickness = float(getattr(element, "thickness", 0.0) or 0.0)
+    normalized_coordinate = 0.0
     if config.contact_surface == "top":
-        return 0.5 * thickness
-    if config.contact_surface == "bottom":
-        return -0.5 * thickness
-    if config.contact_surface == "signed":
-        return float(config.signed_surface_offset) * 0.5 * thickness
-    return 0.0
+        normalized_coordinate = 1.0
+    elif config.contact_surface == "bottom":
+        normalized_coordinate = -1.0
+    elif config.contact_surface == "signed":
+        normalized_coordinate = float(config.signed_surface_offset)
+    if _is_qualified_s3_contact_target(element):
+        provider = getattr(element, "material_surface_offset_from_reference", None)
+        if not callable(provider):
+            raise TypeError(
+                "Qualified S3 contact target does not expose its material "
+                "surface/reference-surface offset policy"
+            )
+        return float(provider(normalized_coordinate))
+    return normalized_coordinate * 0.5 * thickness
+
+
+_QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+
+
+def _is_qualified_s3_contact_target(element: ShellElement) -> bool:
+    """Return whether ``element`` uses the formulation-native S3 contract."""
+
+    return bool(
+        int(getattr(element, "num_nodes", 0)) == 3
+        and str(getattr(element, "formulation_id", ""))
+        == _QUALIFIED_S3_FORMULATION_ID
+    )
+
+
+def _qualified_s3_reference_directors(
+    model: "FEModel", element: ShellElement
+) -> np.ndarray:
+    """Return the element-owned physical reference directors.
+
+    ``reference_normal`` is an owner-orientation hint and need not itself be
+    perpendicular to the facet.  The formulation's model-bound API resolves
+    the actual facet directors, including that orientation, and is therefore
+    the sole linear-contact authority.
+    """
+
+    provider = getattr(element, "native_reference_directors", None)
+    if not callable(provider):
+        raise TypeError(
+            "Qualified S3 contact target does not expose its model-bound "
+            "reference directors"
+        )
+    directors = np.asarray(provider(model.mesh), dtype=float)
+    if directors.shape != (3, 3) or not np.all(np.isfinite(directors)):
+        raise ValueError(
+            "Qualified S3 contact requires three finite physical reference "
+            "directors"
+        )
+    norms = np.linalg.norm(directors, axis=1)
+    if not np.allclose(norms, 1.0, rtol=0.0, atol=1.0e-12):
+        raise ValueError(
+            "Qualified S3 contact requires unit physical reference directors"
+        )
+    return directors.copy()
+
+
+def _qualified_s3_contact_directors(
+    model: "FEModel",
+    element: ShellElement,
+    current_coordinates: np.ndarray,
+    native_rotation_context: Optional[Any],
+) -> np.ndarray:
+    """Resolve authoritative qualified-S3 directors for contact kinematics.
+
+    A missing context denotes the linear/reference configuration.  A supplied
+    context must be the active solver-owned nonlinear state transaction.  Its
+    generation-checked native view is consumed directly, and the view must be
+    bound to the exact translational configuration used by contact.  Contact
+    never reconstructs multiplicative rotations from element DOFs.
+    """
+
+    reference = _qualified_s3_reference_directors(model, element)
+    if native_rotation_context is None:
+        return reference
+    bound_reference = reference
+    active_token_provider = getattr(
+        native_rotation_context, "active_trial_token", None
+    )
+    view_provider = getattr(
+        native_rotation_context, "native_element_rotation_view", None
+    )
+    if not callable(active_token_provider) or not callable(view_provider):
+        raise TypeError(
+            "Qualified S3 nonlinear contact requires an active solver-owned "
+            "NonlinearStateStore context"
+        )
+    token = active_token_provider()
+    view = view_provider(
+        token,
+        int(element.element_id),
+        tuple(int(node_id) for node_id in element.node_ids),
+        bound_reference,
+    )
+    view_nodes = tuple(int(node_id) for node_id in getattr(view, "node_ids", ()))
+    expected_nodes = tuple(int(node_id) for node_id in element.node_ids)
+    view_coordinates = np.asarray(
+        getattr(view, "trial_coordinates", ()), dtype=float
+    )
+    coordinates = np.asarray(current_coordinates, dtype=float)
+    if view_nodes != expected_nodes or (
+        view_coordinates.shape != coordinates.shape
+        or not np.all(np.isfinite(view_coordinates))
+        or not np.array_equal(view_coordinates, coordinates)
+    ):
+        raise ValueError(
+            "Qualified S3 contact coordinates disagree with the active "
+            "solver-owned native trial"
+        )
+    directors = np.asarray(getattr(view, "trial_directors", ()), dtype=float)
+    if directors.shape != (3, 3) or not np.all(np.isfinite(directors)):
+        raise ValueError(
+            "Qualified S3 native contact view has incompatible trial directors"
+        )
+    norms = np.linalg.norm(directors, axis=1)
+    if not np.allclose(norms, 1.0, rtol=0.0, atol=1.0e-10):
+        raise ValueError(
+            "Qualified S3 native contact view has non-unit trial directors"
+        )
+    return directors.copy()
 
 
 def _shell_contact_candidates(model: "FEModel") -> List[ShellElement]:
@@ -448,10 +657,12 @@ class _ContactGeometry:
     __slots__ = (
         "elements",
         "element_ids",
+        "qualified_s3_mask",
         "node_ids",
         "node_id_to_slot",
         "node_base",
         "node_dofs",
+        "node_rotational_dofs",
         "element_node_slots",
         "element_node_counts",
         "node_mask",
@@ -467,6 +678,10 @@ class _ContactGeometry:
         beams = _beam_contact_candidates(model)
         self.elements = elements
         self.element_ids = np.asarray([int(element.element_id) for element in elements], dtype=np.int64)
+        self.qualified_s3_mask = np.asarray(
+            [_is_qualified_s3_contact_target(element) for element in elements],
+            dtype=bool,
+        )
         node_id_to_slot: Dict[int, int] = {}
         for element in elements:
             for node_id in element.node_ids:
@@ -479,10 +694,14 @@ class _ContactGeometry:
         n_nodes = len(node_id_to_slot)
         self.node_base = np.zeros((max(n_nodes, 1), 3), dtype=float)
         self.node_dofs = np.zeros((max(n_nodes, 1), 3), dtype=np.intp)
+        self.node_rotational_dofs = np.zeros((max(n_nodes, 1), 3), dtype=np.intp)
         for node_id, slot in node_id_to_slot.items():
             node = model.mesh.get_node(node_id)
             self.node_base[slot] = (node.x, node.y, node.z)
             self.node_dofs[slot] = np.asarray(node.dofs[:3], dtype=np.intp)
+            self.node_rotational_dofs[slot] = np.asarray(
+                node.dofs[3:6], dtype=np.intp
+            )
         n_elem = len(elements)
         max_nodes = max((element.num_nodes for element in elements), default=1)
         self.element_node_slots = np.zeros((max(n_elem, 1), max_nodes), dtype=np.intp)
@@ -850,6 +1069,7 @@ def _assemble_sphere_contact_work_buffer(
     preferred_element_ids: Sequence[int] = (),
     work_buffer: Optional[ContactWorkBuffer] = None,
     work_counters: Optional[ContactWorkCounters] = None,
+    native_rotation_context: Optional[Any] = None,
 ) -> ContactWorkBuffer:
     """Assemble contact into reusable compact work storage.
 
@@ -898,6 +1118,7 @@ def _assemble_sphere_contact_work_buffer(
             max_active_contacts=int(contact_config.max_active_contacts),
             preferred_element_ids=preferred_element_ids,
             node_dofs=geometry.node_dofs,
+            node_rotational_dofs=geometry.node_rotational_dofs,
         )
         return contact_work
     node_positions = geometry.deformed_node_positions(u)
@@ -906,8 +1127,23 @@ def _assemble_sphere_contact_work_buffer(
     if geometry.element_ids.shape[0] == 0:
         near_mask = np.zeros(0, dtype=bool)
     else:
+        qualified_s3_offset_allowance: float | np.ndarray = 0.0
+        if np.any(geometry.qualified_s3_mask):
+            qualified_s3_offset_allowance = np.zeros_like(radii)
+            qualified_indices = np.flatnonzero(geometry.qualified_s3_mask)
+            qualified_s3_offset_allowance[qualified_indices] = np.asarray(
+                [
+                    abs(_surface_offset(geometry.elements[index], contact_config))
+                    for index in qualified_indices
+                ],
+                dtype=float,
+            )
         near_mask = active_mask & (
-            np.linalg.norm(centroids - center[None, :], axis=1) <= sphere.radius + radii + contact_config.search_margin
+            np.linalg.norm(centroids - center[None, :], axis=1)
+            <= sphere.radius
+            + radii
+            + contact_config.search_margin
+            + qualified_s3_offset_allowance
         )
 
     for element_index in np.flatnonzero(near_mask):
@@ -918,20 +1154,58 @@ def _assemble_sphere_contact_work_buffer(
         node_count = int(geometry.element_node_counts[element_index])
         element_slots = geometry.element_node_slots[element_index, :node_count]
         coords = element_nodes[element_index, :node_count]
-        local, N, dN_dxi, dN_deta, surface_point = _project_local_coordinates(element, coords, center)
+        offset = _surface_offset(element, contact_config)
+        qualified_s3 = _is_qualified_s3_contact_target(element)
+        qualified_s3_directors: Optional[np.ndarray] = None
+        projection_coordinates = coords
+        if qualified_s3:
+            qualified_s3_directors = _qualified_s3_contact_directors(
+                model,
+                element,
+                coords,
+                native_rotation_context,
+            )
+            if offset != 0.0:
+                # The MITC3+ physical surface is interpolated from the three
+                # offset corner positions.  Keeping the director
+                # interpolation unnormalised makes its variation exactly
+                # conjugate to the nodal rotational moments scattered below.
+                projection_coordinates = (
+                    coords + offset * qualified_s3_directors
+                )
+        if qualified_s3:
+            local, N, dN_dxi, dN_deta, surface_point = (
+                _project_qualified_s3_contact_coordinates(
+                    element, projection_coordinates, center
+                )
+            )
+        else:
+            local, N, dN_dxi, dN_deta, surface_point = (
+                _project_local_coordinates(element, projection_coordinates, center)
+            )
         gap_vector = center - surface_point
         distance = float(np.linalg.norm(gap_vector))
         if distance > sphere.radius + contact_config.search_margin:
             continue
-        tangent_xi = dN_dxi @ coords
-        tangent_eta = dN_deta @ coords
+        tangent_xi = dN_dxi @ projection_coordinates
+        tangent_eta = dN_deta @ projection_coordinates
         fallback_normal = np.cross(tangent_xi, tangent_eta)
         fallback_norm = float(np.linalg.norm(fallback_normal))
         if fallback_norm <= 1.0e-14:
             continue
         surface_normal = fallback_normal / fallback_norm
-        offset = _surface_offset(element, contact_config)
-        if offset != 0.0:
+        if qualified_s3:
+            assert qualified_s3_directors is not None
+            physical_director = np.asarray(N, dtype=float) @ qualified_s3_directors
+            physical_director_norm = float(np.linalg.norm(physical_director))
+            if physical_director_norm <= 1.0e-14:
+                raise ValueError(
+                    "Qualified S3 contact has a singular interpolated physical director"
+                )
+            physical_director /= physical_director_norm
+            if float(surface_normal @ physical_director) < 0.0:
+                surface_normal = -surface_normal
+        if offset != 0.0 and not qualified_s3:
             surface_point = surface_point + offset * surface_normal
             gap_vector = center - surface_point
             distance = float(np.linalg.norm(gap_vector))
@@ -946,7 +1220,20 @@ def _assemble_sphere_contact_work_buffer(
         penetration = max(float(sphere.radius - distance), 0.0)
         if penetration <= 0.0:
             continue
-        surface_velocity = np.asarray(N, dtype=float) @ v[geometry.node_dofs[element_slots]]
+        surface_velocity = (
+            np.asarray(N, dtype=float)
+            @ v[geometry.node_dofs[element_slots]]
+        )
+        if qualified_s3 and offset != 0.0:
+            assert qualified_s3_directors is not None
+            angular_velocities = v[
+                geometry.node_rotational_dofs[element_slots]
+            ]
+            surface_velocity = surface_velocity + offset * np.sum(
+                np.asarray(N, dtype=float)[:, None]
+                * np.cross(angular_velocities, qualified_s3_directors),
+                axis=0,
+            )
         relative_normal_velocity = float(np.dot(velocity - surface_velocity, normal))
         normal_force = max(
             float(contact_config.penalty_stiffness) * penetration - float(contact_config.contact_damping) * relative_normal_velocity,
@@ -957,24 +1244,48 @@ def _assemble_sphere_contact_work_buffer(
             continue
         sphere_force = normal_force * normal
         structure_force = -sphere_force
-        patch_weights = _contact_patch_nodal_weights(
-            geometry,
-            node_positions,
-            centroids,
-            radii,
-            active_mask,
-            surface_point,
-            contact_config,
-            sphere,
-            penetration,
-        )
-        if not patch_weights:
+        if qualified_s3:
             patch_weights = {int(slot): float(N[local_index]) for local_index, slot in enumerate(element_slots)}
+        else:
+            patch_weights = _contact_patch_nodal_weights(
+                geometry,
+                node_positions,
+                centroids,
+                radii,
+                active_mask,
+                surface_point,
+                contact_config,
+                sphere,
+                penetration,
+            )
+            if not patch_weights:
+                patch_weights = {
+                    int(slot): float(N[local_index])
+                    for local_index, slot in enumerate(element_slots)
+                }
         nodal_slots = tuple(int(slot) for slot in patch_weights)
         nodal_forces = np.asarray(
             [float(patch_weights[slot]) * structure_force for slot in nodal_slots],
             dtype=float,
         )
+        nodal_moments = np.zeros_like(nodal_forces)
+        if qualified_s3 and offset != 0.0:
+            assert qualified_s3_directors is not None
+            local_index_by_slot = {
+                int(slot): int(local_index)
+                for local_index, slot in enumerate(element_slots)
+            }
+            nodal_moments = np.asarray(
+                [
+                    offset
+                    * np.cross(
+                        qualified_s3_directors[local_index_by_slot[slot]],
+                        nodal_forces[index],
+                    )
+                    for index, slot in enumerate(nodal_slots)
+                ],
+                dtype=float,
+            )
         contact_work.append(
             element_id=int(element.element_id),
             local_coordinates=(float(local[0]), float(local[1])),
@@ -987,6 +1298,7 @@ def _assemble_sphere_contact_work_buffer(
             contact_classification=_contact_classification(element, local),
             nodal_slots=nodal_slots,
             nodal_forces=nodal_forces,
+            nodal_moments=nodal_moments,
         )
 
     if bool(contact_config.beam_contact) and geometry.beam_segment_slots.shape[0]:
@@ -1051,6 +1363,7 @@ def _assemble_sphere_contact_work_buffer(
         max_active_contacts=int(contact_config.max_active_contacts),
         preferred_element_ids=preferred_element_ids,
         node_dofs=geometry.node_dofs,
+        node_rotational_dofs=geometry.node_rotational_dofs,
     )
     return contact_work
 
@@ -1066,8 +1379,15 @@ def assemble_sphere_contact_load_vector(
     deleted_element_ids: Sequence[int] = (),
     contact_scale_by_element: Optional[Mapping[int, float]] = None,
     preferred_element_ids: Sequence[int] = (),
+    native_rotation_context: Optional[Any] = None,
 ) -> Tuple[np.ndarray, np.ndarray, Tuple[SphereContactRecord, ...]]:
-    """Assemble contact loads and materialize the stable public records."""
+    """Assemble contact loads and materialize the stable public records.
+
+    ``native_rotation_context`` is reserved for a currently active
+    solver-owned nonlinear-state transaction.  Omitting it selects linear
+    reference-director kinematics; passing any element-owned or stale
+    rotation surrogate is rejected by the qualified-S3 resolver.
+    """
 
     geometry = _contact_geometry(model)
     public_work_buffer = getattr(geometry.contact_work_local, "buffer", None)
@@ -1086,6 +1406,7 @@ def assemble_sphere_contact_load_vector(
         contact_scale_by_element=contact_scale_by_element,
         preferred_element_ids=preferred_element_ids,
         work_buffer=public_work_buffer,
+        native_rotation_context=native_rotation_context,
     )
     records = contact_work.materialize_records(SphereContactRecord, geometry.node_ids)
     return contact_work.load.copy(), contact_work.sphere_force.copy(), records
@@ -1889,17 +2210,34 @@ def _solve_transient_sphere_impact_nonlinear(
     cancellation_token: Optional[CancellationToken] = None,
 ) -> SphereImpactResult:
     """Implicit Newmark nonlinear impact with material/geometric element response."""
-    from .nonlinear_static import _assemble_nonlinear_system, _nonlinear_state_summary, states_von_mises_map
+    from .algebraic_dynamics import (
+        AlgebraicDynamicsError,
+        build_algebraic_static_reduction,
+        build_declared_algebraic_basis,
+        declared_algebraic_mass_elements,
+    )
+    from .nonlinear_static import (
+        _activate_nonlinear_state_storage,
+        _assemble_nonlinear_system,
+        _nonlinear_state_summary,
+        states_von_mises_map,
+    )
+    from .nonlinear_state import (
+        begin_state_evaluation,
+        commit_state_candidate,
+        discard_active_state_candidate,
+        materialize_state_mapping,
+    )
 
     full_coordinate_assembly_count = 0
 
     def assemble_nonlinear(
         displacements: np.ndarray,
-        states: Dict[int, Any],
+        states: Mapping[int, Any],
         *,
         tangent: bool,
         scales: Optional[Mapping[int, float]] = None,
-    ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
+    ) -> Tuple[np.ndarray, Any, Mapping[int, Any]]:
         nonlocal full_coordinate_assembly_count
         kwargs = {
             "deleted_element_ids": tuple(deleted_element_ids),
@@ -1957,6 +2295,24 @@ def _solve_transient_sphere_impact_nonlinear(
     K_energy_red = K_red0 if needs_linear_stiffness else None
     M_red = (T.T @ M @ T).tocsr()
     C_red = (transient_config.rayleigh_alpha * M_red + transient_config.rayleigh_beta * K_red0).tocsr()
+    descriptor_elements = declared_algebraic_mass_elements(model)
+    descriptor_basis = None
+    descriptor_reduction = None
+    descriptor_partition_operator = None
+    descriptor_certificate: Dict[str, Any] = {
+        "enabled": bool(descriptor_elements),
+        "element_ids": [int(value) for value in descriptor_elements],
+    }
+    if descriptor_elements:
+        descriptor_basis = build_declared_algebraic_basis(
+            model,
+            M,
+            M_red,
+            T,
+            independent_dofs,
+            dense_size_limit=512,
+        )
+        descriptor_certificate["mass_basis"] = descriptor_basis.diagnostics
     if float(np.linalg.norm(M_red.diagonal())) <= 0.0 and M_red.nnz == 0:
         raise ValueError("Nonlinear sphere impact requires a non-zero structural mass matrix; set material density values.")
 
@@ -1996,7 +2352,16 @@ def _solve_transient_sphere_impact_nonlinear(
     v_red = np.asarray(v_full[np.asarray(independent_dofs, dtype=int)], dtype=float).reshape(-1)
     impact_energy_reference = max(0.5 * float(sphere.mass) * float(sphere.speed) ** 2, 1.0)
     base_load_equilibrated = False
-    committed_states: Dict[int, Any] = {}
+    committed_states: Mapping[int, Any] = {}
+    state_storage_info: Dict[str, Any] = {}
+    committed_states = _activate_nonlinear_state_storage(
+        model,
+        committed_states,
+        int(nl.num_layers),
+        state_storage_info,
+        kinematics=str(nl.kinematics),
+        committed_displacements=reconstruct_full_solution(T, q_red, u0),
+    )
     deleted_element_ids: set[int] = set()
     damage_deleted_element_ids: set[int] = set()
     plastic_damage_records: List[DeletedElementRecord] = []
@@ -2025,7 +2390,9 @@ def _solve_transient_sphere_impact_nonlinear(
                     f"sphere_impact.nonlinear.preload:{static_iteration + 1}",
                 )
                 F_int_static, K_static, _trial_unused = assemble_nonlinear(
-                    reconstruct_full_solution(T, q_static, u0), {}, tangent=True
+                    reconstruct_full_solution(T, q_static, u0),
+                    committed_states,
+                    tangent=True,
                 )
                 residual_static = np.asarray(T.T @ (base_load - F_int_static), dtype=float).reshape(-1)
                 residual_static_norm = float(np.linalg.norm(residual_static))
@@ -2046,7 +2413,9 @@ def _solve_transient_sphere_impact_nonlinear(
                 for _backtrack in range(8):
                     q_candidate = q_static + step_factor * dq_static
                     F_candidate, _K_unused, _states_unused = assemble_nonlinear(
-                        reconstruct_full_solution(T, q_candidate, u0), {}, tangent=False
+                        reconstruct_full_solution(T, q_candidate, u0),
+                        committed_states,
+                        tangent=False,
                     )
                     candidate_norm = float(
                         np.linalg.norm(np.asarray(T.T @ (base_load - F_candidate), dtype=float))
@@ -2062,12 +2431,121 @@ def _solve_transient_sphere_impact_nonlinear(
             base_load_equilibrated = False
         if base_load_equilibrated:
             q_red = q_static
-    F_int0, _K_dummy, trial0 = assemble_nonlinear(
-        reconstruct_full_solution(T, q_red, u0),
-        committed_states,
-        tangent=False,
+    descriptor_active = bool(
+        descriptor_basis is not None
+        and descriptor_basis.reduced_basis.shape[1] > 0
     )
-    committed_states = trial0
+    initial_algebraic_iterations = 0
+    initial_algebraic_relative_residual = 0.0
+    F_int0 = np.zeros(total_dofs, dtype=float)
+    K_initial = None
+    trial0: Mapping[int, Any] = committed_states
+    try:
+        for algebraic_iteration in range(1, 6 if descriptor_active else 2):
+            initial_algebraic_iterations = algebraic_iteration
+            initial_full_u = reconstruct_full_solution(T, q_red, u0)
+            F_int0, K_initial, trial0 = assemble_nonlinear(
+                initial_full_u,
+                committed_states,
+                tangent=descriptor_active,
+            )
+            if not descriptor_active:
+                break
+            assert descriptor_basis is not None and K_initial is not None
+            K_initial_red = (T.T @ K_initial @ T).tocsr()
+            descriptor_reduction = build_algebraic_static_reduction(
+                K_initial_red,
+                M_red,
+                descriptor_basis.reduced_basis,
+                dense_size_limit=512,
+            )
+            physical_velocity, _supplied_algebraic_velocity = (
+                descriptor_reduction.split_k_orthogonal_state(v_red)
+            )
+            v_red = descriptor_reduction.reconstruct_k_orthogonal_state(
+                physical_velocity,
+                np.zeros(descriptor_reduction.algebraic_dimension, dtype=float),
+            )
+            initial_residual_red = np.asarray(
+                T.T @ (base_load - F_int0), dtype=float
+            ).reshape(-1) - np.asarray(C_red @ v_red, dtype=float).reshape(-1)
+            algebraic_residual = np.asarray(
+                descriptor_reduction.basis.T @ initial_residual_red,
+                dtype=float,
+            ).reshape(-1)
+            algebraic_scale = np.asarray(
+                abs(descriptor_reduction.basis.T)
+                @ (
+                    np.abs(np.asarray(T.T @ base_load, dtype=float).reshape(-1))
+                    + np.abs(np.asarray(T.T @ F_int0, dtype=float).reshape(-1))
+                    + np.abs(np.asarray(C_red @ v_red, dtype=float).reshape(-1))
+                ),
+                dtype=float,
+            ).reshape(-1)
+            initial_algebraic_relative_residual = float(
+                np.linalg.norm(algebraic_residual)
+                / max(np.linalg.norm(algebraic_scale), 1.0)
+            )
+            if initial_algebraic_relative_residual <= 2.0e-10:
+                break
+            algebraic_correction = descriptor_reduction.solve_algebraic(
+                algebraic_residual
+            )
+            q_red = q_red + np.asarray(
+                descriptor_reduction.basis @ algebraic_correction,
+                dtype=float,
+            ).reshape(-1)
+        else:
+            raise AlgebraicDynamicsError(
+                "nonlinear impact initial algebraic equilibrium did not converge"
+            )
+        if descriptor_active and initial_algebraic_relative_residual > 2.0e-10:
+            raise AlgebraicDynamicsError(
+                "nonlinear impact initial algebraic equilibrium is unresolved"
+            )
+        accepted_initial_full_u = reconstruct_full_solution(T, q_red, u0)
+        committed_states = commit_state_candidate(
+            committed_states,
+            trial0,
+            accepted_full_displacement=accepted_initial_full_u,
+            model=model,
+        )
+    except BaseException:
+        discard_active_state_candidate(committed_states)
+        raise
+    if descriptor_reduction is not None:
+        physical_rows = np.asarray(
+            descriptor_reduction.physical_rows, dtype=np.intp
+        )
+        physical_selector = sparse.csc_matrix(
+            (
+                np.ones(physical_rows.size, dtype=float),
+                (physical_rows, np.arange(physical_rows.size, dtype=np.intp)),
+            ),
+            shape=(M_red.shape[0], physical_rows.size),
+        )
+        descriptor_partition_operator = sparse.hstack(
+            (physical_selector, descriptor_reduction.basis),
+            format="csc",
+        )
+        if descriptor_partition_operator.shape != M_red.shape:
+            raise AlgebraicDynamicsError(
+                "nonlinear impact algebraic partition is not square"
+            )
+        descriptor_certificate["static_reduction"] = (
+            descriptor_reduction.diagnostics
+        )
+        descriptor_certificate["initial_algebraic_iterations"] = int(
+            initial_algebraic_iterations
+        )
+        descriptor_certificate["initial_algebraic_relative_residual"] = float(
+            initial_algebraic_relative_residual
+        )
+        descriptor_certificate["partition_dimension"] = int(
+            descriptor_partition_operator.shape[0]
+        )
+    elif descriptor_elements:
+        descriptor_certificate["constrained_algebraic_dimension"] = 0
     F_int_prev = np.asarray(F_int0, dtype=float).copy()
     F0_red = np.asarray(T.T @ (base_load - F_int0), dtype=float).reshape(-1)
     from .impact_reduced_assembly import prepare_impact_reduced_assembly
@@ -2084,8 +2562,38 @@ def _solve_transient_sphere_impact_nonlinear(
     )
     base_load_red = np.asarray(T.T @ base_load, dtype=float).reshape(-1)
     F_int_prev_red = np.asarray(T.T @ F_int_prev, dtype=float).reshape(-1)
-    mass_handle = factorize(M_red, MatrixClass.SYMMETRIC_SEMIDEFINITE, signature="sphere_impact.nl.initial_mass")
-    a_red = np.asarray(mass_handle.solve(F0_red - C_red @ v_red), dtype=float).reshape(-1)
+    initial_inertial_rhs = np.asarray(
+        F0_red - C_red @ v_red, dtype=float
+    ).reshape(-1)
+    if descriptor_reduction is None:
+        mass_handle = factorize(
+            M_red,
+            MatrixClass.SYMMETRIC_SEMIDEFINITE,
+            signature="sphere_impact.nl.initial_mass",
+        )
+        a_red = np.asarray(
+            mass_handle.solve(initial_inertial_rhs), dtype=float
+        ).reshape(-1)
+    else:
+        mass_handle = factorize(
+            descriptor_reduction.mass_physical,
+            MatrixClass.SPD,
+            signature="sphere_impact.nl.initial_descriptor_physical_mass",
+        )
+        if mass_handle.status != "ok":
+            raise AlgebraicDynamicsError(
+                "nonlinear impact descriptor physical mass factorization failed"
+            )
+        physical_acceleration = np.asarray(
+            mass_handle.solve(
+                initial_inertial_rhs[descriptor_reduction.physical_rows]
+            ),
+            dtype=float,
+        ).reshape(-1)
+        a_red = descriptor_reduction.reconstruct_k_orthogonal_state(
+            physical_acceleration,
+            np.zeros(descriptor_reduction.algebraic_dimension, dtype=float),
+        )
 
     sphere_position = sphere.initial_position
     sphere_velocity = sphere.travel_velocity if float(times[0]) >= sphere.t_start else np.zeros(3, dtype=float)
@@ -2206,18 +2714,40 @@ def _solve_transient_sphere_impact_nonlinear(
     contact_work_counters = ContactWorkCounters()
     contact_work_buffer = ContactWorkBuffer(total_dofs, counters=contact_work_counters)
     contact_geometry = _contact_geometry(model)
-    initial_contact_work = _assemble_sphere_contact_work_buffer(
-        model,
-        sphere,
-        config,
-        sphere_position,
-        sphere_velocity,
-        structural_displacement=reconstruct_full_solution(T, q_red, u0),
-        structural_velocity=np.asarray(T @ v_red, dtype=float).reshape(-1),
-        deleted_element_ids=tuple(deleted_element_ids),
-        contact_scale_by_element=damage_scale_by_element,
-        work_buffer=contact_work_buffer,
+    native_contact_state = bool(
+        getattr(committed_states, "has_native_rotations", False)
     )
+    initial_full_u = reconstruct_full_solution(T, q_red, u0)
+    try:
+        if native_contact_state:
+            # Contact consumes the same generation-checked native view as the
+            # element response.  Open an exact candidate for the already
+            # committed initial configuration, then reject it after contact has
+            # copied the required kinematics; no material or rotation history is
+            # advanced by a contact search.
+            begin_state_evaluation(
+                committed_states,
+                model=model,
+                displacements=initial_full_u,
+            )
+        initial_contact_work = _assemble_sphere_contact_work_buffer(
+            model,
+            sphere,
+            config,
+            sphere_position,
+            sphere_velocity,
+            structural_displacement=initial_full_u,
+            structural_velocity=np.asarray(T @ v_red, dtype=float).reshape(-1),
+            deleted_element_ids=tuple(deleted_element_ids),
+            contact_scale_by_element=damage_scale_by_element,
+            work_buffer=contact_work_buffer,
+            native_rotation_context=(
+                committed_states if native_contact_state else None
+            ),
+        )
+    finally:
+        if native_contact_state:
+            discard_active_state_candidate(committed_states)
     initial_load = initial_contact_work.load.copy()
     initial_sphere_force = initial_contact_work.sphere_force.copy()
     initial_records = initial_contact_work.materialize_records(
@@ -2300,7 +2830,7 @@ def _solve_transient_sphere_impact_nonlinear(
             sphere_position.copy(),
             sphere_velocity.copy(),
             sphere_acceleration.copy(),
-            dict(committed_states),
+            committed_states,
             set(deleted_element_ids),
             dict(plastic_damage_states),
             dict(damage_scale_by_element),
@@ -2331,7 +2861,7 @@ def _solve_transient_sphere_impact_nonlinear(
         contact_change = float("inf")
         reference = 1.0
         contact_scale = 1.0
-        trial_states: Dict[int, Any] = committed_states
+        trial_states: Mapping[int, Any] = committed_states
         q_next = q_red.copy()
         v_next = v_red.copy()
         a_next = a_red.copy()
@@ -2340,7 +2870,8 @@ def _solve_transient_sphere_impact_nonlinear(
         sphere_a_next = sphere_acceleration.copy()
         factor_diagnostics: Dict[str, Any] = {}
         convergence_reason = "standard"
-        for iteration in range(1, int(nl.max_iterations) + 1):
+        max_newton_corrections = int(nl.max_iterations)
+        for iteration in range(1, max_newton_corrections + 2):
             cancellation_safe_point(
                 cancellation_token,
                 f"sphere_impact.nonlinear.time:{sub_time:.16g}.iteration:{iteration}",
@@ -2429,20 +2960,148 @@ def _solve_transient_sphere_impact_nonlinear(
                 refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
             elif refresh_tangent and trial_refresh_reasons:
                 refresh_reasons = tuple(sorted(set(refresh_reasons).union(trial_refresh_reasons)))
+
+            # Convergence belongs to the configuration that was just
+            # assembled.  The previous implementation tested the residual
+            # at ``q_trial`` only after advancing to ``q_next``, then stored
+            # the old trial material state while accepting the new
+            # displacement.  Apart from corrupting path-dependent history,
+            # that is incompatible with solver-owned multiplicative nodal
+            # rotations, whose commit is bound to the exact accepted global
+            # vector.  Use the previous correction/contact changes as the
+            # fixed-point measures and accept only this evaluated iterate.
+            displacement_limit = float(nl.displacement_tolerance) * max(
+                float(np.linalg.norm(q_trial)), 1.0
+            )
+            residual_limit = float(nl.residual_tolerance) * reference
+            force_limit = max(
+                float(nl.contact_force_tolerance) * contact_scale,
+                float(config.force_tolerance),
+            )
+            completed_corrections = iteration - 1
+            standard_converged = (
+                completed_corrections > 0
+                and residual_norm <= residual_limit
+                and displacement_increment <= displacement_limit
+                and contact_change <= force_limit
+            )
+            contact_stall_converged = (
+                completed_corrections >= max(3, int(nl.max_iterations) // 2)
+                and residual_norm <= 1.0e-2 * reference
+                and displacement_increment
+                <= max(10.0 * displacement_limit, 1.0e-6)
+                and contact_change
+                <= max(
+                    5.0e-3 * contact_scale,
+                    10.0 * float(config.force_tolerance),
+                )
+            )
+            stagnation_converged = (
+                float(nl.stagnation_energy_tolerance) > 0.0
+                and completed_corrections >= 5
+                and displacement_increment <= displacement_limit
+                and contact_change <= force_limit
+                and residual_energy_increment
+                <= float(nl.stagnation_energy_tolerance)
+                * impact_energy_reference
+            )
+            if standard_converged or contact_stall_converged or stagnation_converged:
+                converged = True
+                q_next = q_trial.copy()
+                v_next = np.asarray(v_trial, dtype=float).copy()
+                a_next = np.asarray(a_trial, dtype=float).copy()
+                # The accepted acceleration is conjugate to the contact
+                # force evaluated at the accepted sphere configuration.
+                sphere_a_next = np.asarray(
+                    sphere_force / float(sphere.mass), dtype=float
+                ).copy()
+                if standard_converged:
+                    convergence_reason = "standard"
+                elif contact_stall_converged:
+                    convergence_reason = "contact_stall"
+                else:
+                    convergence_reason = "stagnation_energy"
+                iteration_counts.append(completed_corrections)
+                if completed_corrections <= max(4, int(nl.max_iterations) // 3):
+                    distress_halvings = max(distress_halvings - 1, 0)
+                elif completed_corrections >= int(nl.max_iterations) - 2:
+                    distress_halvings = min(distress_halvings + 1, 2)
+                break
+            if completed_corrections >= max_newton_corrections:
+                # The final response evaluation is a confirmation only; the
+                # configured limit counts Newton corrections, not a hidden
+                # unevaluated candidate beyond that limit.
+                break
             try:
                 if refresh_tangent:
                     if impact_reduced_assembly.active:
+                        if descriptor_reduction is not None:
+                            raise AlgebraicDynamicsError(
+                                "nonlinear impact direct reduction cannot bypass "
+                                "declared algebraic coordinates"
+                            )
                         K_eff = (one_plus_alpha * K_T_red + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
                     else:
-                        K_eff = (one_plus_alpha * (T.T @ K_T @ T) + a0 * M_red + one_plus_alpha * a1 * C_red).tocsr()
+                        K_tangent_red = (T.T @ K_T @ T).tocsr()
+                        K_eff = (
+                            one_plus_alpha * K_tangent_red
+                            + a0 * M_red
+                            + one_plus_alpha * a1 * C_red
+                        ).tocsr()
+                        if descriptor_reduction is not None:
+                            assert descriptor_basis is not None
+                            current_descriptor_reduction = (
+                                build_algebraic_static_reduction(
+                                    K_tangent_red,
+                                    M_red,
+                                    descriptor_basis.reduced_basis,
+                                    dense_size_limit=512,
+                                )
+                            )
+                            if not np.array_equal(
+                                current_descriptor_reduction.physical_rows,
+                                descriptor_reduction.physical_rows,
+                            ):
+                                raise AlgebraicDynamicsError(
+                                    "nonlinear impact algebraic partition changed "
+                                    "during Newton iteration"
+                                )
+                            assert descriptor_partition_operator is not None
+                            K_eff = (
+                                descriptor_partition_operator.T
+                                @ K_eff
+                                @ descriptor_partition_operator
+                            ).tocsr()
                     tangent_reuse.record_tangent_assembly(refresh_reasons)
-                    handle = factorize(K_eff, MatrixClass.SYMMETRIC_INDEFINITE, signature=f"sphere_impact.nl.effective:{dt:.16g}:{iteration}")
+                    handle = factorize(
+                        K_eff,
+                        MatrixClass.SYMMETRIC_INDEFINITE,
+                        signature=(
+                            f"sphere_impact.nl.effective:{dt:.16g}:{iteration}:"
+                            f"descriptor={descriptor_reduction is not None}"
+                        ),
+                    )
                 else:
                     handle = tangent_reuse.cached_handle
                     if handle is None:  # defensive; refresh_decision guards this
                         raise RuntimeError("impact tangent reuse cache is unexpectedly empty")
                 factor_diagnostics = handle.diagnostics()
-                delta = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
+                solve_rhs = (
+                    descriptor_reduction.effective_rhs(residual)
+                    if descriptor_reduction is not None
+                    else residual
+                )
+                solved_delta = np.asarray(
+                    handle.solve(solve_rhs), dtype=float
+                ).reshape(-1)
+                delta = (
+                    descriptor_reduction.reconstruct_partition_state(
+                        solved_delta[: descriptor_reduction.physical_dimension],
+                        solved_delta[descriptor_reduction.physical_dimension :],
+                    )
+                    if descriptor_reduction is not None
+                    else solved_delta
+                )
                 if refresh_tangent:
                     tangent_reuse.record_factorization(handle)
                     factorization_count += 1
@@ -2475,19 +3134,38 @@ def _solve_transient_sphere_impact_nonlinear(
             sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
             full_u_next = reconstruct_full_solution(T, q_next, u0)
             full_v_next = np.asarray(T @ v_next, dtype=float).reshape(-1)
-            last_contact_work = _assemble_sphere_contact_work_buffer(
-                model,
-                sphere,
-                config,
-                sphere_x_next,
-                sphere_v_next,
-                structural_displacement=full_u_next,
-                structural_velocity=full_v_next,
-                deleted_element_ids=tuple(deleted_element_ids),
-                contact_scale_by_element=damage_scale_by_element,
-                preferred_element_ids=sticky_contact_ids,
-                work_buffer=contact_work_buffer,
-            )
+            try:
+                if native_contact_state:
+                    # The internal response above owns a trial for ``q_trial``;
+                    # contact is evaluated at ``q_next``.  Replace it with an
+                    # exact q_next candidate before resolving the native
+                    # directors.  This candidate is contact-only and is always
+                    # discarded; the next Newton residual re-evaluates q_next and
+                    # owns the sole candidate that may be committed.
+                    begin_state_evaluation(
+                        committed_states,
+                        model=model,
+                        displacements=full_u_next,
+                    )
+                last_contact_work = _assemble_sphere_contact_work_buffer(
+                    model,
+                    sphere,
+                    config,
+                    sphere_x_next,
+                    sphere_v_next,
+                    structural_displacement=full_u_next,
+                    structural_velocity=full_v_next,
+                    deleted_element_ids=tuple(deleted_element_ids),
+                    contact_scale_by_element=damage_scale_by_element,
+                    preferred_element_ids=sticky_contact_ids,
+                    work_buffer=contact_work_buffer,
+                    native_rotation_context=(
+                        committed_states if native_contact_state else None
+                    ),
+                )
+            finally:
+                if native_contact_state:
+                    discard_active_state_candidate(committed_states)
             if last_contact_work.selected_indices.size:
                 sticky_contact_ids = last_contact_work.active_element_ids
             contact_scale = max(float(np.linalg.norm(last_contact_work.sphere_force)), 1.0)
@@ -2503,49 +3181,6 @@ def _solve_transient_sphere_impact_nonlinear(
                 )
             )
             q_trial = q_next
-            displacement_limit = float(nl.displacement_tolerance) * max(float(np.linalg.norm(q_next)), 1.0)
-            residual_limit = float(nl.residual_tolerance) * reference
-            force_limit = max(float(nl.contact_force_tolerance) * contact_scale, float(config.force_tolerance))
-            standard_converged = (
-                residual_norm <= residual_limit
-                and displacement_increment <= displacement_limit
-                and contact_change <= force_limit
-            )
-            contact_stall_converged = (
-                iteration >= max(3, int(nl.max_iterations) // 2)
-                and residual_norm <= 1.0e-2 * reference
-                and displacement_increment <= max(10.0 * displacement_limit, 1.0e-6)
-                and contact_change <= max(5.0e-3 * contact_scale, 10.0 * float(config.force_tolerance))
-            )
-            # Stagnation acceptance: the iterate is a fixed point (nanometre
-            # displacement increments, settled contact) and the residual's
-            # energy content is a negligible fraction of the impact energy.
-            # Cutting dt cannot reduce such a residual (it is a force/tangent
-            # noise floor, typically on rotational equations), so the step is
-            # accepted rather than exhausting the cutback budget.
-            stagnation_converged = (
-                float(nl.stagnation_energy_tolerance) > 0.0
-                and iteration >= 5
-                and displacement_increment <= displacement_limit
-                and contact_change <= force_limit
-                and residual_energy_increment <= float(nl.stagnation_energy_tolerance) * impact_energy_reference
-            )
-            if standard_converged or contact_stall_converged or stagnation_converged:
-                converged = True
-                if standard_converged:
-                    convergence_reason = "standard"
-                elif contact_stall_converged:
-                    convergence_reason = "contact_stall"
-                else:
-                    convergence_reason = "stagnation_energy"
-                iteration_counts.append(iteration)
-                # Newton recovered comfortably: relax the distress carryover so
-                # the base time step is restored once the difficult phase ends.
-                if iteration <= max(4, int(nl.max_iterations) // 3):
-                    distress_halvings = max(distress_halvings - 1, 0)
-                elif iteration >= int(nl.max_iterations) - 2:
-                    distress_halvings = min(distress_halvings + 1, 2)
-                break
         if last_contact_work is not None:
             records = last_contact_work.materialize_records(
                 SphereContactRecord,
@@ -2555,6 +3190,7 @@ def _solve_transient_sphere_impact_nonlinear(
             if status in {"nonlinear_tangent_failed", "nonlinear_iteration_failed"}:
                 pass
             elif cutback_count < int(nl.max_cutbacks) and dt * 0.5 >= float(nl.min_dt):
+                discard_active_state_candidate(committed_states)
                 (
                     q_red,
                     v_red,
@@ -2656,9 +3292,20 @@ def _solve_transient_sphere_impact_nonlinear(
                 }
             if not iteration_counts:
                 iteration_counts.append(int(nl.max_iterations))
+            discard_active_state_candidate(committed_states)
             break
 
-        committed_states = trial_states
+        accepted_full_u = reconstruct_full_solution(T, q_next, u0)
+        try:
+            committed_states = commit_state_candidate(
+                committed_states,
+                trial_states,
+                accepted_full_displacement=accepted_full_u,
+                model=model,
+            )
+        except BaseException:
+            discard_active_state_candidate(committed_states)
+            raise
         contact_norm = float(np.linalg.norm(sphere_force))
         if contact_norm > 0.0:
             contact_step_count += 1
@@ -2868,6 +3515,7 @@ def _solve_transient_sphere_impact_nonlinear(
     impact_reduced_diagnostics["full_coordinate_assembly_count"] = int(
         full_coordinate_assembly_count
     )
+    public_committed_states = materialize_state_mapping(committed_states)
     diagnostics = {
         "method": "nonlinear_newmark_sphere_penalty_contact",
         "solution_control": "implicit_newmark_time_domain",
@@ -2882,6 +3530,12 @@ def _solve_transient_sphere_impact_nonlinear(
         "cutback_count": int(cutback_count),
         "num_saved_steps": len(saved_times),
         "num_reduced_dofs": int(M_red.shape[0]),
+        "num_dynamic_physical_dofs": int(
+            M_red.shape[0]
+            if descriptor_reduction is None
+            else descriptor_reduction.physical_dimension
+        ),
+        "declared_algebraic_contact_dynamics": descriptor_certificate,
         "contact_step_count": int(contact_step_count),
         "active_contact_duration": float(contact_duration),
         "separation_stop_time": float(separation_stop_time),
@@ -2931,8 +3585,11 @@ def _solve_transient_sphere_impact_nonlinear(
         "contact_config": config.to_dict(),
         "nonlinear_config": nl.to_dict(),
         "base_load_equilibrated": bool(base_load_equilibrated),
-        "strain_summary": _nonlinear_state_summary(committed_states),
-        "element_states": committed_states,
+        "strain_summary": _nonlinear_state_summary(public_committed_states),
+        "element_states": public_committed_states,
+        "nonlinear_state_storage": state_storage_info.get(
+            "nonlinear_state_storage", {}
+        ),
         "element_state_history": element_state_history,
         "state_von_mises_history": tuple(state_von_mises_history),
         "plastic_impact_damage_summary": plastic_damage_summary,
@@ -2993,6 +3650,13 @@ def solve_transient_sphere_impact(
     """Solve a limited rigid-sphere-to-shell impact transient."""
 
     cancellation_safe_point(cancellation_token, "sphere_impact.start")
+    from .element_capabilities import require_model_element_capabilities
+
+    require_model_element_capabilities(
+        model,
+        ("contact_state", "transient_algebraic_dynamics", "nonlinear_geometry"),
+        context="sphere-impact analysis",
+    )
     config = _resolved_contact_config(model, sphere, contact_config)
     if fracture_config is not None and not isinstance(fracture_config, ImpactFractureConfig):
         raise TypeError("fracture_config must be an ImpactFractureConfig or None")

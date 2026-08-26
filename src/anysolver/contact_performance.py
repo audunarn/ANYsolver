@@ -71,6 +71,7 @@ class ContactWorkBuffer:
         self.nodal_offsets = np.empty(contact_capacity + 1, dtype=np.intp)
         self.nodal_slots = np.empty(nodal_capacity, dtype=np.intp)
         self.nodal_forces = np.empty((nodal_capacity, 3), dtype=float)
+        self.nodal_moments = np.empty((nodal_capacity, 3), dtype=float)
         self.load = np.zeros(max(int(total_dofs), 0), dtype=float)
         self.sphere_force = np.zeros(3, dtype=float)
         self.selected_indices = np.empty(0, dtype=np.intp)
@@ -109,10 +110,13 @@ class ContactWorkBuffer:
         capacity = max(required, current * 2)
         slots = np.empty(capacity, dtype=self.nodal_slots.dtype)
         forces = np.empty((capacity, 3), dtype=float)
+        moments = np.empty((capacity, 3), dtype=float)
         slots[: self.nodal_count] = self.nodal_slots[: self.nodal_count]
         forces[: self.nodal_count] = self.nodal_forces[: self.nodal_count]
+        moments[: self.nodal_count] = self.nodal_moments[: self.nodal_count]
         self.nodal_slots = slots
         self.nodal_forces = forces
+        self.nodal_moments = moments
         self.counters.nodal_buffer_growth_count += 1
 
     def reset(self, total_dofs: int) -> None:
@@ -141,12 +145,22 @@ class ContactWorkBuffer:
         contact_classification: str,
         nodal_slots: Sequence[int],
         nodal_forces: np.ndarray,
+        nodal_moments: np.ndarray | None = None,
     ) -> None:
         index = int(self.count)
         slot_array = np.asarray(nodal_slots, dtype=np.intp).reshape(-1)
         force_array = np.asarray(nodal_forces, dtype=float).reshape(-1, 3)
         if slot_array.size != force_array.shape[0]:
             raise ValueError("nodal_slots and nodal_forces must contain the same number of entries")
+        moment_array = (
+            np.zeros_like(force_array)
+            if nodal_moments is None
+            else np.asarray(nodal_moments, dtype=float).reshape(-1, 3)
+        )
+        if slot_array.size != moment_array.shape[0]:
+            raise ValueError(
+                "nodal_slots and nodal_moments must contain the same number of entries"
+            )
         self._grow_contacts(index + 1)
         self._grow_nodal(self.nodal_count + int(slot_array.size))
         self.element_ids[index] = int(element_id)
@@ -162,6 +176,7 @@ class ContactWorkBuffer:
         stop = start + int(slot_array.size)
         self.nodal_slots[start:stop] = slot_array
         self.nodal_forces[start:stop] = force_array
+        self.nodal_moments[start:stop] = moment_array
         self.nodal_count = stop
         self.nodal_offsets[index + 1] = stop
         self.count = index + 1
@@ -173,6 +188,7 @@ class ContactWorkBuffer:
         max_active_contacts: int,
         preferred_element_ids: Iterable[int],
         node_dofs: np.ndarray,
+        node_rotational_dofs: np.ndarray | None = None,
     ) -> None:
         limit = int(max_active_contacts)
         if self.count <= limit:
@@ -202,6 +218,10 @@ class ContactWorkBuffer:
             scatter_entries += stop - start
             for entry in range(start, stop):
                 self.load[node_dofs[self.nodal_slots[entry]]] += self.nodal_forces[entry]
+                if node_rotational_dofs is not None:
+                    self.load[node_rotational_dofs[self.nodal_slots[entry]]] += (
+                        self.nodal_moments[entry]
+                    )
         self.counters.selected_contacts += len(selected)
         self.counters.direct_full_scatter_count += 1
         self.counters.full_scatter_nodal_entries += scatter_entries
@@ -245,6 +265,16 @@ class ContactWorkBuffer:
                 int(node_ids[self.nodal_slots[entry]]): self.nodal_forces[entry].copy()
                 for entry in range(start, stop)
             }
+            moment_mapping = (
+                {
+                    int(node_ids[self.nodal_slots[entry]]): self.nodal_moments[
+                        entry
+                    ].copy()
+                    for entry in range(start, stop)
+                }
+                if np.any(self.nodal_moments[start:stop] != 0.0)
+                else {}
+            )
             records.append(
                 record_type(
                     element_id=int(self.element_ids[index]),
@@ -262,6 +292,7 @@ class ContactWorkBuffer:
                         int(self.classification_codes[index])
                     ],
                     nodal_forces=nodal_mapping,
+                    nodal_moments=moment_mapping,
                 )
             )
         self.counters.public_materialization_count += 1

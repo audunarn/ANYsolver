@@ -130,6 +130,8 @@ def test_force_control_restart_holds_supplied_prescribed_state() -> None:
     assert restarted.converged
     assert restarted.info["prescribed_displacement_path"] == {
         "mode": "restart_fixed_affine_state",
+        "schema_mode": "FIXED_RESTART_AFFINE_STATE",
+        "restart_schema_disposition": "DIRECT_EXACT_INITIAL_DISPLACEMENT",
         "initial_affine_scale": pytest.approx(1.0),
         "affine_scale_slope": 0.0,
         "target_max_abs": pytest.approx(target),

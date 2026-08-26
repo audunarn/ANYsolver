@@ -104,6 +104,11 @@ def _shell_model(kind: str, *, with_mass: bool = False) -> FEModel:
                 material_direction=np.array([1.0, 0.35, 0.22]),
                 material_angle_deg=15.0 * element_index,
                 shell_section=section,
+                reference_normal=(
+                    np.array([0.0, 0.0, 1.0])
+                    if section is not None
+                    else None
+                ),
             ),
         )
     return model

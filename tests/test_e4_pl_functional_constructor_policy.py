@@ -118,6 +118,10 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
             ): 1,
             (
                 "tests/test_production_validation.py",
+                "test_material_construction_fails_fast_and_validation_rejects_invalid_thickness",
+            ): 1,
+            (
+                "tests/test_production_validation.py",
                 "test_validate_production_model_reports_q8_midside_and_warp_warnings",
             ): 1,
             (
@@ -127,8 +131,161 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
         }
     )
     assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == 20
-    assert calls["QualifiedE4PLShellElement"] == Counter()
+    assert sum(calls["ShellElement"].values()) == 21
+    expected_qualified_q4 = Counter(
+        {
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_b_coupled_section_requires_persistent_director_and_restart_identity",
+            ): 3,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_recovery_is_d4_and_proper_global_covariant_with_physical_material_direction",
+            ): 3,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_numerical_fields_and_nonfinite_values_cannot_enter_planar_recovery",
+            ): 2,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_authoritative_director_keeps_isotropic_top_and_bottom_physical",
+            ): 2,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_stationary_equilibrium_and_recovered_resultants_close_virtual_work",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_combined_patch_recovery_is_exact_at_gauss_and_arbitrary_common_points",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_generalized_section_keeps_resultants_only_schema_with_mixed_fields",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_reflected_abd_congruence_uses_exact_engineering_field_maps",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "make",
+            ): 1,
+            (
+                "tests/test_e4_pl_planar_physical_recovery.py",
+                "test_qualified_q4_fingerprint_cannot_downgrade_to_legacy_without_formulation_id",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_stationary_conditioning.py",
+                "_stationary_case",
+            ): 1,
+            (
+                "tests/test_e4_pl_component_snapshot_integrity.py",
+                "_q4_case",
+            ): 1,
+            (
+                "tests/test_e4_pl_guarded_observations.py",
+                "_qualified_case",
+            ): 1,
+            (
+                "tests/test_e4_pl_guarded_observations.py",
+                "test_exact_generalized_section_constructor_remains_supported",
+            ): 1,
+            (
+                "tests/test_e4_pl_current_state_input_ownership.py",
+                "_model_and_zero_state",
+            ): 1,
+            (
+                "tests/test_e4_pl_mixed_current_state_route.py",
+                "_mixed_model",
+            ): 1,
+            (
+                "tests/test_e4_pl_mixed_current_state_route.py",
+                "test_route_and_state_binding_mutations_fail_before_component_mechanics",
+            ): 1,
+            (
+                "tests/test_e4_pl_orchestrator_operation_lease.py",
+                "_two_q4_transient_model",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_q4_binding_rejects_every_configuration_and_state_mismatch",
+            ): 2,
+            ("tests/test_e4_pl_q4_current_tangent.py", "evaluate"): 2,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_layered_q4_components_are_independent_read_only_and_newton_exact",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_zero_state_has_exact_zero_stress_hessian_and_correction_is_material_only",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_q4_stress_hessian_matches_direct_gw_n_gw_and_reverses_with_stress",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_plastic_q4_origin_is_required_and_reproduces_the_accepted_core",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_q4_layered_state_boundaries_reject_unsupported_lobatto_counts",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_q4_admits_exact_supported_lobatto_layer_set",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_layered_plastic_q4_component_split_uses_algorithmic_material_tangent",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_isotropic_initial_field_and_orthotropic_hill_updates_retain_exact_tangent",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_residual_only_plastic_candidate_cannot_masquerade_as_accepted_tangent",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_q4_seal_rejects_stored_generalized_kinematics_from_another_state",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly",
+            ): 1,
+            ("tests/test_e4_pl_q4_state_lifecycle.py", "_loaded_q4_model"): 1,
+            (
+                "tests/test_e4_pl_q4_state_lifecycle.py",
+                "test_fully_constrained_generalized_q4_is_materialized_and_sealed",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_state_lifecycle.py",
+                "test_fully_constrained_arc_q4_is_materialized_and_exactly_sealed",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_state_lifecycle.py",
+                "test_unknown_id_q4_descendant_cannot_downgrade_checkpoint_authority",
+            ): 1,
+            ("tests/test_e4_pl_q4_state_lifecycle.py", "model"): 1,
+            (
+                "tests/test_e4_pl_transient_authority.py",
+                "_qualified_q4_model",
+            ): 1,
+            (
+                "tests/test_mixed_shell_quadrature_grouping.py",
+                "test_direct_qualified_q4_connectivity_change_invalidates_warm_sparsity",
+            ): 1,
+            (
+                "tests/test_mixed_shell_quadrature_grouping.py",
+                "_mixed_model",
+            ): 1,
+            ("tests/test_qualified_q4_assembly_authority.py", "_model"): 1,
+        }
+    )
+    assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
+    assert sum(calls["QualifiedE4PLShellElement"].values()) == 48
 
 
 def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None:

@@ -64,6 +64,7 @@ def _shell_model() -> tuple[FEModel, ShellElement]:
         "dummy",
         thickness=0.02,
         shell_section=section,
+        reference_normal=(0.0, 0.0, 1.0),
     )
     model.add_element(1, element)
     return model, element

@@ -65,8 +65,10 @@ The assembly solver eliminates these slave beam DOFs through a transformation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import copy
+from types import MemberDescriptorType
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -109,6 +111,234 @@ _INITIAL_BEAM_STATE_KEYS = (
     "initial_fiber_prestrain",
     "initial_field_provenance",
 )
+
+
+_OBSERVATION_MISSING = object()
+_NO_ATTRIBUTE_DEFAULT = object()
+
+
+def _run_post_observation_guard(
+    post_observation: Optional[Callable[[], None]],
+) -> None:
+    """Recheck a caller-supplied exact authority lease after one observation."""
+
+    if post_observation is not None:
+        post_observation()
+
+
+def _guarded_observe_attribute(
+    owner: Any,
+    name: str,
+    *,
+    default: Any = _NO_ATTRIBUTE_DEFAULT,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> Any:
+    """Read one external attribute and recheck before consuming its value."""
+
+    if default is _NO_ATTRIBUTE_DEFAULT:
+        value = getattr(owner, name)
+    else:
+        value = getattr(owner, name, default)
+    _run_post_observation_guard(post_observation)
+    return value
+
+
+def _guarded_observe_call(
+    provider: Any,
+    *args: Any,
+    post_observation: Optional[Callable[[], None]] = None,
+    **kwargs: Any,
+) -> Any:
+    """Invoke one external provider and recheck before consuming its result."""
+
+    value = provider(*args, **kwargs)
+    _run_post_observation_guard(post_observation)
+    return value
+
+
+def _guarded_float(
+    value: Any,
+    *,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> float:
+    made = float(value)
+    _run_post_observation_guard(post_observation)
+    return made
+
+
+def _guarded_array(
+    value: Any,
+    *,
+    dtype: Any = np.float64,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> np.ndarray:
+    made = np.asarray(value, dtype=dtype)
+    _run_post_observation_guard(post_observation)
+    owned = np.array(made, dtype=dtype, order="C", copy=True)
+    _run_post_observation_guard(post_observation)
+    return owned
+
+
+def _guarded_owned_mapping(
+    value: Any,
+    *,
+    label: str,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> Dict[str, Any]:
+    """Detach a string-keyed external mapping before later evaluation."""
+
+    items_provider = _guarded_observe_attribute(
+        value,
+        "items",
+        post_observation=post_observation,
+    )
+    observed_items = _guarded_observe_call(
+        items_provider,
+        post_observation=post_observation,
+    )
+    items = tuple(observed_items)
+    _run_post_observation_guard(post_observation)
+    owned: Dict[str, Any] = {}
+    for item in items:
+        if type(item) is not tuple or len(item) != 2 or type(item[0]) is not str:
+            raise TypeError(f"{label} must contain exact string keys")
+        key, member = item
+        if key in owned:
+            raise ValueError(f"{label} contains duplicate key {key!r}")
+        owned[key] = member
+    return owned
+
+
+def _guarded_owned_plain_value(
+    value: Any,
+    *,
+    label: str,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> Any:
+    """Recursively detach caller-owned state before formulation mechanics."""
+
+    if value is None or type(value) in {bool, int, float, str, bytes}:
+        return value
+    if type(value) is np.ndarray:
+        return _guarded_array(
+            value,
+            dtype=value.dtype,
+            post_observation=post_observation,
+        )
+    if isinstance(value, Mapping):
+        observed = _guarded_owned_mapping(
+            value,
+            label=label,
+            post_observation=post_observation,
+        )
+        return {
+            key: _guarded_owned_plain_value(
+                member,
+                label=f"{label}.{key}",
+                post_observation=post_observation,
+            )
+            for key, member in observed.items()
+        }
+    if type(value) in {list, tuple}:
+        observed = tuple(value)
+        _run_post_observation_guard(post_observation)
+        made = [
+            _guarded_owned_plain_value(
+                member,
+                label=f"{label}[{index}]",
+                post_observation=post_observation,
+            )
+            for index, member in enumerate(observed)
+        ]
+        return made if type(value) is list else tuple(made)
+    try:
+        return _guarded_array(
+            value,
+            post_observation=post_observation,
+        )
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{label} contains an unsupported external value") from exc
+
+
+def _guarded_owned_generalized_shell_section(
+    section: Any,
+    *,
+    post_observation: Optional[Callable[[], None]] = None,
+    _section_class: type[GeneralizedShellSection] = GeneralizedShellSection,
+) -> Optional[GeneralizedShellSection]:
+    """Coerce one section protocol to an exact solver-owned section."""
+
+    if section is None:
+        return None
+    if type(section) is _section_class:
+        return section
+    if isinstance(section, Mapping):
+        source = _guarded_owned_mapping(
+            section,
+            label="generalized shell section",
+            post_observation=post_observation,
+        )
+
+        def read(label: str, default: Any = None) -> Any:
+            return source[label] if label in source else default
+
+    else:
+
+        def read(label: str, default: Any = None) -> Any:
+            return _guarded_observe_attribute(
+                section,
+                label,
+                default=default,
+                post_observation=post_observation,
+            )
+
+    matrices: Dict[str, np.ndarray] = {}
+    for name in ("A", "B", "D", "As"):
+        raw = read(name, _OBSERVATION_MISSING)
+        if raw is _OBSERVATION_MISSING or raw is None:
+            raise TypeError(
+                "Generalized shell section must provide A, B, D and As; "
+                f"missing {name}"
+            )
+        matrices[name] = _guarded_array(
+            raw,
+            post_observation=post_observation,
+        )
+    raw_name = read("name", "")
+    name = str(raw_name)
+    _run_post_observation_guard(post_observation)
+    masses: Dict[str, Optional[float]] = {}
+    for field in ("mass_per_area", "rotary_inertia_per_area"):
+        raw = read(field, None)
+        masses[field] = (
+            None
+            if raw is None
+            else _guarded_float(raw, post_observation=post_observation)
+        )
+    return _section_class(
+        A=matrices["A"],
+        B=matrices["B"],
+        D=matrices["D"],
+        As=matrices["As"],
+        name=name,
+        mass_per_area=masses["mass_per_area"],
+        rotary_inertia_per_area=masses["rotary_inertia_per_area"],
+    )
+
+
+def _immutable_float64_array(value: Any) -> np.ndarray:
+    """Return a C-contiguous float64 array backed by immutable bytes.
+
+    Shell quadrature tables are process-wide formulation inputs.  A normal
+    ``setflags(write=False)`` array can be made writable again when it owns its
+    storage; a bytes-backed view cannot.  This prevents one element or test
+    from silently changing the rule used by every other shell element.
+    """
+
+    contiguous = np.ascontiguousarray(value, dtype=np.float64)
+    return np.frombuffer(
+        contiguous.tobytes(order="C"), dtype=np.float64
+    ).reshape(contiguous.shape)
 
 
 def _copy_state_fields(state: Any, keys: Tuple[str, ...]) -> Dict[str, Any]:
@@ -215,10 +445,14 @@ def _beam_rotation_matrix(e1: np.ndarray, orientation: Optional[np.ndarray]) -> 
     return np.column_stack((e1, e2, e3))
 
 
-def _elastic_symmetry(material: Any) -> str:
+def _elastic_symmetry(
+    material: Any,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> str:
     """Return the normalized elastic symmetry without inventing isotropic aliases."""
 
     symmetry = _canonical_material_symmetry(material)
+    _run_post_observation_guard(post_observation)
     if symmetry not in {"isotropic", "orthotropic"}:
         raise ValueError(
             f"Unsupported elastic symmetry {symmetry!r}; ANYsolver currently supports "
@@ -227,15 +461,206 @@ def _elastic_symmetry(material: Any) -> str:
     return symmetry
 
 
-def _elastic_compliance(material: Any) -> np.ndarray:
+def _elastic_compliance(
+    material: Any,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> np.ndarray:
     """Engineering compliance in [11,22,33,23,13,12] order."""
 
-    compliance = np.asarray(_canonical_elastic_compliance(material), dtype=float)
+    if post_observation is None:
+        raw_compliance = _canonical_elastic_compliance(material)
+    else:
+        provider = _guarded_observe_attribute(
+            material,
+            "elastic_compliance_matrix",
+            default=None,
+            post_observation=post_observation,
+        )
+        if callable(provider):
+            raw_compliance = _guarded_observe_call(
+                provider,
+                post_observation=post_observation,
+            )
+        elif _elastic_symmetry(material, post_observation) == "isotropic":
+            elastic_modulus = _guarded_float(
+                _guarded_observe_attribute(
+                    material,
+                    "elastic_modulus",
+                    post_observation=post_observation,
+                ),
+                post_observation=post_observation,
+            )
+            poisson_ratio = _guarded_float(
+                _guarded_observe_attribute(
+                    material,
+                    "poisson_ratio",
+                    post_observation=post_observation,
+                ),
+                post_observation=post_observation,
+            )
+            shear_modulus = elastic_modulus / (2.0 * (1.0 + poisson_ratio))
+            raw_compliance = np.array(
+                [
+                    [
+                        1.0 / elastic_modulus,
+                        -poisson_ratio / elastic_modulus,
+                        -poisson_ratio / elastic_modulus,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [
+                        -poisson_ratio / elastic_modulus,
+                        1.0 / elastic_modulus,
+                        -poisson_ratio / elastic_modulus,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [
+                        -poisson_ratio / elastic_modulus,
+                        -poisson_ratio / elastic_modulus,
+                        1.0 / elastic_modulus,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [0.0, 0.0, 0.0, 1.0 / shear_modulus, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 1.0 / shear_modulus, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / shear_modulus],
+                ],
+                dtype=float,
+            )
+        else:
+            raise ValueError(
+                "Structural material must provide elastic_compliance_matrix()"
+            )
+    compliance = np.asarray(raw_compliance, dtype=float)
+    _run_post_observation_guard(post_observation)
     if compliance.shape != (6, 6) or not np.all(np.isfinite(compliance)):
         raise ValueError("elastic_compliance_matrix() must return a finite 6x6 matrix")
     if not np.allclose(compliance, compliance.T, rtol=1.0e-10, atol=1.0e-18):
         raise ValueError("elastic compliance matrix must be symmetric")
     return 0.5 * (compliance + compliance.T)
+
+
+def _shell_elastic_material_cache_fingerprint(
+    material: Any,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> Tuple[Any, ...]:
+    """Bind every elastic input consumed by ``_shell_material_matrices``.
+
+    Material objects are intentionally public and may be edited in place.  A
+    cache key based only on object identity therefore admits stale shell
+    mechanics.  Keep the isotropic branch bit-for-bit aligned with the actual
+    scalar path, including an explicitly supplied shear modulus; use the
+    canonical compliance bytes for every other supported material protocol.
+    """
+
+    symmetry = _elastic_symmetry(material, post_observation)
+    raw_elastic_modulus = _guarded_observe_attribute(
+        material,
+        "elastic_modulus",
+        default=_OBSERVATION_MISSING,
+        post_observation=post_observation,
+    )
+    raw_poisson_ratio = _guarded_observe_attribute(
+        material,
+        "poisson_ratio",
+        default=_OBSERVATION_MISSING,
+        post_observation=post_observation,
+    )
+    if (
+        symmetry == "isotropic"
+        and raw_elastic_modulus is not _OBSERVATION_MISSING
+        and raw_poisson_ratio is not _OBSERVATION_MISSING
+    ):
+        elastic_modulus = _guarded_float(
+            raw_elastic_modulus,
+            post_observation=post_observation,
+        )
+        poisson_ratio = _guarded_float(
+            raw_poisson_ratio,
+            post_observation=post_observation,
+        )
+        raw_shear_modulus = _guarded_observe_attribute(
+            material,
+            "shear_modulus",
+            default=elastic_modulus / (2.0 * (1.0 + poisson_ratio)),
+            post_observation=post_observation,
+        )
+        shear_modulus = _guarded_float(
+            raw_shear_modulus,
+            post_observation=post_observation,
+        )
+        return (
+            "isotropic_scalar_path",
+            elastic_modulus,
+            poisson_ratio,
+            shear_modulus,
+        )
+    compliance = np.ascontiguousarray(
+        _elastic_compliance(material, post_observation),
+        dtype=np.float64,
+    )
+    _run_post_observation_guard(post_observation)
+    return (
+        symmetry,
+        compliance.shape,
+        compliance.tobytes(order="C"),
+    )
+
+
+def _generalized_shell_section_cache_fingerprint(
+    section: Any,
+    post_observation: Optional[Callable[[], None]] = None,
+) -> Optional[Tuple[Any, ...]]:
+    """Return the complete stiffness/mass identity of a generalized section."""
+
+    if section is None:
+        return None
+    matrices = []
+    for name, shape in (("A", (3, 3)), ("B", (3, 3)), ("D", (3, 3)), ("As", (2, 2))):
+        raw = _guarded_observe_attribute(
+            section,
+            name,
+            post_observation=post_observation,
+        )
+        value = _guarded_array(
+            raw,
+            post_observation=post_observation,
+        )
+        if value.shape != shape or not np.all(np.isfinite(value)):
+            raise ValueError(
+                f"Generalized shell section {name} must remain a finite {shape} matrix"
+            )
+        matrices.append((name, shape, value.tobytes(order="C")))
+    raw_name = _guarded_observe_attribute(
+        section,
+        "name",
+        default="",
+        post_observation=post_observation,
+    )
+    name = str(raw_name)
+    _run_post_observation_guard(post_observation)
+    mass_values = []
+    for field in ("mass_per_area", "rotary_inertia_per_area"):
+        raw = _guarded_observe_attribute(
+            section,
+            field,
+            default=None,
+            post_observation=post_observation,
+        )
+        mass_values.append(
+            None
+            if raw is None
+            else _guarded_float(raw, post_observation=post_observation)
+        )
+    return (
+        tuple(matrices),
+        name,
+        *mass_values,
+    )
 
 
 def _in_plane_transform_matrices(angle_rad: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -287,28 +712,50 @@ def _in_plane_transform_matrices(angle_rad: float) -> Tuple[np.ndarray, np.ndarr
 def _shell_material_matrices(
     material: Any,
     angle_rad: float,
+    post_observation: Optional[Callable[[], None]] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Return local plane-stress/shear matrices and material-axis transforms."""
 
-    symmetry = _elastic_symmetry(material)
+    symmetry = _elastic_symmetry(material, post_observation)
     # Preserve the legacy isotropic arithmetic exactly.  Forming and reducing
     # the 3-D compliance is mathematically equivalent, but its final-bit
     # roundoff can perturb tightly qualified eigenvalue thresholds.  External
     # protocol objects without the historical scalar fields still use the
     # compliance path below.
+    raw_elastic_modulus = _guarded_observe_attribute(
+        material,
+        "elastic_modulus",
+        default=_OBSERVATION_MISSING,
+        post_observation=post_observation,
+    )
+    raw_poisson_ratio = _guarded_observe_attribute(
+        material,
+        "poisson_ratio",
+        default=_OBSERVATION_MISSING,
+        post_observation=post_observation,
+    )
     if (
         symmetry == "isotropic"
-        and hasattr(material, "elastic_modulus")
-        and hasattr(material, "poisson_ratio")
+        and raw_elastic_modulus is not _OBSERVATION_MISSING
+        and raw_poisson_ratio is not _OBSERVATION_MISSING
     ):
-        E = float(material.elastic_modulus)
-        nu = float(material.poisson_ratio)
-        G = float(
-            getattr(
-                material,
-                "shear_modulus",
-                E / (2.0 * (1.0 + nu)),
-            )
+        E = _guarded_float(
+            raw_elastic_modulus,
+            post_observation=post_observation,
+        )
+        nu = _guarded_float(
+            raw_poisson_ratio,
+            post_observation=post_observation,
+        )
+        raw_shear_modulus = _guarded_observe_attribute(
+            material,
+            "shear_modulus",
+            default=E / (2.0 * (1.0 + nu)),
+            post_observation=post_observation,
+        )
+        G = _guarded_float(
+            raw_shear_modulus,
+            post_observation=post_observation,
         )
         Q_material = E / (1.0 - nu**2) * np.array(
             [
@@ -325,7 +772,7 @@ def _shell_material_matrices(
             np.eye(3, dtype=float),
         )
 
-    compliance = _elastic_compliance(material)
+    compliance = _elastic_compliance(material, post_observation)
     membrane_indices = np.array([0, 1, 5], dtype=np.intp)
     shear_indices = np.array([4, 3], dtype=np.intp)  # [13, 23]
     Q_material = np.linalg.inv(compliance[np.ix_(membrane_indices, membrane_indices)])
@@ -596,6 +1043,47 @@ class Element(ABC):
         self._stiffness_matrix: Optional[np.ndarray] = None
         self._mass_matrix: Optional[np.ndarray] = None
         self._internal_forces: Optional[np.ndarray] = None
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "Element":
+        """Copy instance state without asking ``copyreg`` about the class.
+
+        The generic ``copy.deepcopy`` reconstruction path may lazily add a
+        ``__slotnames__`` cache to a class.  Element class namespaces are part
+        of the qualified Q4/S3 runtime authority, so even copying a legacy
+        element must not mutate them.  Build the uninitialised instance
+        directly, copy its instance dictionary, and explicitly copy any slots
+        declared anywhere in a concrete subclass hierarchy.
+        """
+
+        source_id = id(self)
+        if source_id in memo:
+            return memo[source_id]
+
+        cls = type(self)
+        made = object.__new__(cls)
+        memo[source_id] = made
+
+        try:
+            source_namespace = object.__getattribute__(self, "__dict__")
+            target_namespace = object.__getattribute__(made, "__dict__")
+        except AttributeError:
+            source_namespace = None
+            target_namespace = None
+        if source_namespace is not None and target_namespace is not None:
+            for name, value in source_namespace.items():
+                target_namespace[name] = copy.deepcopy(value, memo)
+
+        for owner in type.__getattribute__(cls, "__mro__"):
+            namespace = type.__getattribute__(owner, "__dict__")
+            for slot_name, descriptor in namespace.items():
+                if type(descriptor) is not MemberDescriptorType:
+                    continue
+                try:
+                    value = object.__getattribute__(self, slot_name)
+                except AttributeError:
+                    continue
+                object.__setattr__(made, slot_name, copy.deepcopy(value, memo))
+        return made
 
     @property
     @abstractmethod
@@ -968,23 +1456,105 @@ def _jit_integrate_nonlinear_response(
     return F_loc, K_loc
 
 
+def _integrate_nonlinear_tangent_components(
+    u_loc: np.ndarray,
+    N_res: np.ndarray,
+    M_res: np.ndarray,
+    C0: np.ndarray,
+    C1: np.ndarray,
+    C2: np.ndarray,
+    B_m_all: np.ndarray,
+    B_b_all: np.ndarray,
+    B_d_all: np.ndarray,
+    Gw_all: np.ndarray,
+    detw_all: np.ndarray,
+    B_s_all: np.ndarray,
+    detw_shear_all: np.ndarray,
+    D_shear: np.ndarray,
+    drilling_stiffness: float,
+    has_membrane_bending_coupling: bool,
+    n_dof: int,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Integrate constitutive and stress-Hessian tangents independently.
+
+    The two calls deliberately reuse :func:`_jit_integrate_nonlinear_response`
+    rather than recovering one component as ``total - other``.  The material
+    call carries the exact current algorithmic moduli, transverse shear and
+    drilling terms with zero resultants.  The geometric call carries the exact
+    tension-positive membrane resultants with every constitutive/numerical
+    modulus set to zero.  Consequently both pieces use the same Gauss order,
+    von-Karman ``B_eff`` construction and arithmetic kernel as the ordinary
+    nonlinear tangent.
+    """
+
+    zero_resultants = np.zeros_like(np.asarray(N_res, dtype=float))
+    _unused_force, material = _jit_integrate_nonlinear_response(
+        np.asarray(u_loc, dtype=float),
+        zero_resultants,
+        np.zeros_like(np.asarray(M_res, dtype=float)),
+        np.asarray(C0, dtype=float),
+        np.asarray(C1, dtype=float),
+        np.asarray(C2, dtype=float),
+        np.asarray(B_m_all, dtype=float),
+        np.asarray(B_b_all, dtype=float),
+        np.asarray(B_d_all, dtype=float),
+        np.asarray(Gw_all, dtype=float),
+        np.asarray(detw_all, dtype=float),
+        np.asarray(B_s_all, dtype=float),
+        np.asarray(detw_shear_all, dtype=float),
+        np.asarray(D_shear, dtype=float),
+        float(drilling_stiffness),
+        True,
+        bool(has_membrane_bending_coupling),
+        int(n_dof),
+    )
+    zero_C0 = np.zeros_like(np.asarray(C0, dtype=float))
+    zero_C1 = np.zeros_like(np.asarray(C1, dtype=float))
+    zero_C2 = np.zeros_like(np.asarray(C2, dtype=float))
+    zero_shear = np.zeros_like(np.asarray(D_shear, dtype=float))
+    _unused_force, geometric = _jit_integrate_nonlinear_response(
+        np.asarray(u_loc, dtype=float),
+        np.asarray(N_res, dtype=float),
+        np.asarray(M_res, dtype=float),
+        zero_C0,
+        zero_C1,
+        zero_C2,
+        np.asarray(B_m_all, dtype=float),
+        np.asarray(B_b_all, dtype=float),
+        np.asarray(B_d_all, dtype=float),
+        np.asarray(Gw_all, dtype=float),
+        np.asarray(detw_all, dtype=float),
+        np.asarray(B_s_all, dtype=float),
+        np.asarray(detw_shear_all, dtype=float),
+        zero_shear,
+        0.0,
+        True,
+        False,
+        int(n_dof),
+    )
+    return material, geometric
+
+
 class ShellElement(Element):
     """3/6-node triangular and 4/8-node quadrilateral Mindlin-Reissner shell element."""
 
-    TRI_GAUSS_POINTS_1 = np.array([[1.0 / 3.0, 1.0 / 3.0]], dtype=float)
-    TRI_GAUSS_WEIGHTS_1 = np.array([0.5], dtype=float)
-
-    TRI_GAUSS_POINTS_3 = np.array(
-        [[1.0 / 6.0, 1.0 / 6.0], [2.0 / 3.0, 1.0 / 6.0], [1.0 / 6.0, 2.0 / 3.0]],
-        dtype=float,
+    TRI_GAUSS_POINTS_1 = _immutable_float64_array(
+        [[1.0 / 3.0, 1.0 / 3.0]]
     )
-    TRI_GAUSS_WEIGHTS_3 = np.array([1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0], dtype=float)
+    TRI_GAUSS_WEIGHTS_1 = _immutable_float64_array([0.5])
+
+    TRI_GAUSS_POINTS_3 = _immutable_float64_array(
+        [[1.0 / 6.0, 1.0 / 6.0], [2.0 / 3.0, 1.0 / 6.0], [1.0 / 6.0, 2.0 / 3.0]],
+    )
+    TRI_GAUSS_WEIGHTS_3 = _immutable_float64_array(
+        [1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0]
+    )
 
     _DUNAVANT_A1 = 0.059715871789770
     _DUNAVANT_B1 = 0.470142064105115
     _DUNAVANT_A2 = 0.797426985353087
     _DUNAVANT_B2 = 0.101286507323456
-    TRI_GAUSS_POINTS_7 = np.array(
+    TRI_GAUSS_POINTS_7 = _immutable_float64_array(
         [
             [1.0 / 3.0, 1.0 / 3.0],
             [_DUNAVANT_B1, _DUNAVANT_B1],
@@ -994,9 +1564,8 @@ class ShellElement(Element):
             [_DUNAVANT_A2, _DUNAVANT_B2],
             [_DUNAVANT_B2, _DUNAVANT_A2],
         ],
-        dtype=float,
     )
-    TRI_GAUSS_WEIGHTS_7 = np.array(
+    TRI_GAUSS_WEIGHTS_7 = _immutable_float64_array(
         [
             0.1125,
             0.066197076394253,
@@ -1006,18 +1575,21 @@ class ShellElement(Element):
             0.062969590272414,
             0.062969590272414,
         ],
-        dtype=float,
     )
 
-    GAUSS_POINTS_1x1 = np.array([[0.0, 0.0]], dtype=float)
-    GAUSS_WEIGHTS_1x1 = np.array([4.0], dtype=float)
+    GAUSS_POINTS_1x1 = _immutable_float64_array([[0.0, 0.0]])
+    GAUSS_WEIGHTS_1x1 = _immutable_float64_array([4.0])
 
-    GAUSS_POINTS_2x2 = np.array(
-        [[-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0], [1.0, 1.0]], dtype=float
-    ) / np.sqrt(3.0)
-    GAUSS_WEIGHTS_2x2 = np.ones(4, dtype=float)
+    GAUSS_POINTS_2x2 = _immutable_float64_array(
+        np.asarray(
+            [[-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0], [1.0, 1.0]],
+            dtype=np.float64,
+        )
+        / np.sqrt(3.0)
+    )
+    GAUSS_WEIGHTS_2x2 = _immutable_float64_array(np.ones(4, dtype=np.float64))
 
-    GAUSS_POINTS_3x3 = np.array(
+    GAUSS_POINTS_3x3 = _immutable_float64_array(
         [
             [-np.sqrt(3.0 / 5.0), -np.sqrt(3.0 / 5.0)],
             [0.0, -np.sqrt(3.0 / 5.0)],
@@ -1029,9 +1601,8 @@ class ShellElement(Element):
             [0.0, np.sqrt(3.0 / 5.0)],
             [np.sqrt(3.0 / 5.0), np.sqrt(3.0 / 5.0)],
         ],
-        dtype=float,
     )
-    GAUSS_WEIGHTS_3x3 = np.array(
+    GAUSS_WEIGHTS_3x3 = _immutable_float64_array(
         [
             25.0 / 81.0,
             40.0 / 81.0,
@@ -1043,7 +1614,6 @@ class ShellElement(Element):
             40.0 / 81.0,
             25.0 / 81.0,
         ],
-        dtype=float,
     )
 
     def __init__(
@@ -1617,21 +2187,57 @@ class ShellElement(Element):
         self._stiffness_matrix = K
         return K
 
-    def compute_mass_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
+    def compute_mass_matrix(
+        self,
+        mesh: "FEMesh",
+        material: "Material",
+        *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> np.ndarray:
         coords = self.get_node_coordinates(mesh)
-        rho = material.density
+        raw_density = _guarded_observe_attribute(
+            material,
+            "density",
+            post_observation=_qualified_runtime_post_observation,
+        )
+        rho = _guarded_float(
+            raw_density,
+            post_observation=_qualified_runtime_post_observation,
+        )
         h = self.thickness
+        section_mass = (
+            None
+            if self.shell_section is None
+            else _guarded_observe_attribute(
+                self.shell_section,
+                "mass_per_area",
+                post_observation=_qualified_runtime_post_observation,
+            )
+        )
         mass_per_area = (
-            float(self.shell_section.mass_per_area)
-            if self.shell_section is not None
-            and self.shell_section.mass_per_area is not None
-            else float(rho) * h
+            _guarded_float(
+                section_mass,
+                post_observation=_qualified_runtime_post_observation,
+            )
+            if section_mass is not None
+            else rho * h
+        )
+        section_rotary_inertia = (
+            None
+            if self.shell_section is None
+            else _guarded_observe_attribute(
+                self.shell_section,
+                "rotary_inertia_per_area",
+                post_observation=_qualified_runtime_post_observation,
+            )
         )
         rotary_inertia_per_area = (
-            float(self.shell_section.rotary_inertia_per_area)
-            if self.shell_section is not None
-            and self.shell_section.rotary_inertia_per_area is not None
-            else float(rho) * h**3 / 12.0
+            _guarded_float(
+                section_rotary_inertia,
+                post_observation=_qualified_runtime_post_observation,
+            )
+            if section_rotary_inertia is not None
+            else rho * h**3 / 12.0
         )
         M = np.zeros((self.total_dofs, self.total_dofs), dtype=float)
         if self._is_8node and self.reduced_integration:
@@ -2002,7 +2608,10 @@ class ShellElement(Element):
             "B_s_all": B_s_all,
             "detw_shear_all": detw_shear_all,
         }
-        self._nl_cache = cache
+        # This is a solver-owned derived cache.  Qualified subclasses reserve
+        # the public assignment surface so callers cannot replace a warm
+        # nonlinear operator while preserving its cache key.
+        object.__setattr__(self, "_nl_cache", cache)
         return cache
 
     def init_nonlinear_state(self, num_layers: int) -> Dict[str, Any]:
@@ -2021,7 +2630,9 @@ class ShellElement(Element):
         u_elem: np.ndarray,
         state: Optional[Any],
         tangent: bool,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[str, Any]]:
+        *,
+        _return_tangent_components: bool = False,
+    ) -> Any:
         """Geometrically nonlinear response for a linear generalized section."""
 
         if getattr(material, "hardening_curve", None) is not None or getattr(
@@ -2143,6 +2754,40 @@ class ShellElement(Element):
             ),
             "recovery_scope": "section_resultants_only",
         }
+        if _return_tangent_components:
+            if K_global is None:
+                raise ValueError(
+                    "nonlinear tangent components require tangent=True"
+                )
+            material_local, geometric_local = (
+                _integrate_nonlinear_tangent_components(
+                    u_loc,
+                    membrane_resultants,
+                    bending_resultants,
+                    C0,
+                    C1,
+                    C2,
+                    cache["B_m_all"],
+                    cache["B_b_all"],
+                    cache["B_d_all"],
+                    cache["Gw_all"],
+                    cache["detw_all"],
+                    cache["B_s_all"],
+                    cache["detw_shear_all"],
+                    section.As,
+                    drilling_stiffness,
+                    True,
+                    self.total_dofs,
+                )
+            )
+            material_global = T0.T @ material_local @ T0
+            geometric_global = T0.T @ geometric_local @ T0
+            if K_hg is not None:
+                material_global = material_global + K_hg
+            return F_global, K_global, trial_state, {
+                "material": material_global,
+                "geometric": geometric_global,
+            }
         return F_global, K_global, trial_state
 
     def compute_nonlinear_response(
@@ -2153,7 +2798,12 @@ class ShellElement(Element):
         state: Optional[Any] = None,
         num_layers: int = 5,
         tangent: bool = True,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
+        *,
+        _return_tangent_components: bool = False,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> Any:
+        if _return_tangent_components and not tangent:
+            raise ValueError("nonlinear tangent components require tangent=True")
         if self.shell_section is not None:
             return self._generalized_section_nonlinear_response(
                 mesh,
@@ -2161,30 +2811,54 @@ class ShellElement(Element):
                 u_elem,
                 state,
                 tangent,
+                _return_tangent_components=_return_tangent_components,
             )
         cache = self._nonlinear_geometry(mesh)
         R0 = cache["R0"]
         T0 = cache["T0"]
         u_loc = T0 @ np.asarray(u_elem, dtype=float)
 
-        symmetry = _elastic_symmetry(material)
+        symmetry = _elastic_symmetry(
+            material,
+            _qualified_runtime_post_observation,
+        )
         h = self.thickness
-        curve = getattr(material, "hardening_curve", None)
+        curve = _guarded_observe_attribute(
+            material,
+            "hardening_curve",
+            default=None,
+            post_observation=_qualified_runtime_post_observation,
+        )
         C_el, shear_elastic, strain_to_material, stress_to_local = _shell_material_matrices(
             material,
             self._material_angle(R0),
+            _qualified_runtime_post_observation,
         )
         C_material, _shear_material, _identity_strain, _identity_stress = (
-            _shell_material_matrices(material, 0.0)
+            _shell_material_matrices(
+                material,
+                0.0,
+                _qualified_runtime_post_observation,
+            )
         )
-        drilling_modulus = 1.0 / float(_elastic_compliance(material)[5, 5])
+        drilling_modulus = 1.0 / float(
+            _elastic_compliance(
+                material,
+                _qualified_runtime_post_observation,
+            )[5, 5]
+        )
         D_shear = shear_elastic * (5.0 / 6.0) * h
         drilling_stiffness = (
             drilling_modulus
             * h
             * getattr(self, "drilling_stabilization", 1.0e-3)
         )
-        hill_yield = getattr(material, "hill_yield", None)
+        hill_yield = _guarded_observe_attribute(
+            material,
+            "hill_yield",
+            default=None,
+            post_observation=_qualified_runtime_post_observation,
+        )
         if symmetry == "orthotropic" and curve is not None and hill_yield is None:
             raise ValueError(
                 f"Orthotropic material {getattr(material, 'name', '<unnamed>')!r} "
@@ -2352,8 +3026,22 @@ class ShellElement(Element):
                     layer_strain,
                     state["plastic_strain"],
                     state["alpha"],
-                    float(material.elastic_modulus),
-                    float(material.poisson_ratio),
+                    _guarded_float(
+                        _guarded_observe_attribute(
+                            material,
+                            "elastic_modulus",
+                            post_observation=_qualified_runtime_post_observation,
+                        ),
+                        post_observation=_qualified_runtime_post_observation,
+                    ),
+                    _guarded_float(
+                        _guarded_observe_attribute(
+                            material,
+                            "poisson_ratio",
+                            post_observation=_qualified_runtime_post_observation,
+                        ),
+                        post_observation=_qualified_runtime_post_observation,
+                    ),
                     curve,
                     compute_tangent=tangent,
                 )
@@ -2424,6 +3112,36 @@ class ShellElement(Element):
         K_global = T0.T @ K_loc @ T0
         if K_hg is not None:
             K_global = K_global + K_hg
+        if _return_tangent_components:
+            material_local, geometric_local = (
+                _integrate_nonlinear_tangent_components(
+                    u_loc,
+                    N_res,
+                    M_res,
+                    C0,
+                    C1,
+                    C2,
+                    cache["B_m_all"],
+                    cache["B_b_all"],
+                    cache["B_d_all"],
+                    cache["Gw_all"],
+                    cache["detw_all"],
+                    cache["B_s_all"],
+                    cache["detw_shear_all"],
+                    D_shear,
+                    drilling_stiffness,
+                    constitutive_plasticity,
+                    n_dof,
+                )
+            )
+            material_global = T0.T @ material_local @ T0
+            geometric_global = T0.T @ geometric_local @ T0
+            if K_hg is not None:
+                material_global = material_global + K_hg
+            return F_global, K_global, trial_state, {
+                "material": material_global,
+                "geometric": geometric_global,
+            }
         return F_global, K_global, trial_state
 
     def _compute_generalized_section_results(
@@ -2779,6 +3497,43 @@ class ShellElement(Element):
                 stresses["global_xz_bot"][idx] = sigma_glob_bot[0, 2]
                 stresses["global_yz_bot"][idx] = sigma_glob_bot[1, 2]
         return stresses
+
+
+def _publish_shell_element_public_signatures() -> None:
+    """Hide private runtime-guard hooks from the stable public API surface."""
+
+    from inspect import signature
+
+    mass_signature = signature(ShellElement.compute_mass_matrix)
+    ShellElement.compute_mass_matrix.__signature__ = mass_signature.replace(
+        parameters=tuple(
+            parameter
+            for parameter in mass_signature.parameters.values()
+            if parameter.name != "_qualified_runtime_post_observation"
+        )
+    )
+    nonlinear_signature = signature(ShellElement.compute_nonlinear_response)
+    public_nonlinear_return = signature(
+        Element.compute_nonlinear_response
+    ).return_annotation
+    ShellElement.compute_nonlinear_response.__signature__ = (
+        nonlinear_signature.replace(
+            parameters=tuple(
+                parameter
+                for parameter in nonlinear_signature.parameters.values()
+                if parameter.name
+                not in {
+                    "_return_tangent_components",
+                    "_qualified_runtime_post_observation",
+                }
+            ),
+            return_annotation=public_nonlinear_return,
+        )
+    )
+
+
+_publish_shell_element_public_signatures()
+del _publish_shell_element_public_signatures
 
 
 class BeamElement(Element):
@@ -4629,12 +5384,20 @@ ELEMENT_TYPES = {
 
 
 DEFAULT_Q4_FORMULATION = "e4-pl"
+# S3 remains legacy-by-default during the additive qualification release.
+# The qualified companion is available only through an explicit formulation
+# request until its parity and mixed-mesh gates are closed.
+DEFAULT_S3_FORMULATION = "legacy-s3"
 LEGACY_Q4_AVAILABLE_THROUGH = "0.4.x"
 LEGACY_Q4_REMOVAL_TARGET = "0.5.0"
 
 
 class LegacyQ4DeprecationWarning(DeprecationWarning):
     """Warning emitted when the temporary legacy four-node rollback is used."""
+
+
+class LegacyS3MigrationWarning(UserWarning):
+    """Warning emitted when a missing-ID historical TRI3 loads as legacy."""
 
 
 LegacyShellElement = ShellElement
@@ -4644,16 +5407,42 @@ def _normalized_shell_formulation(
     node_count: int,
     formulation: Optional[str],
 ) -> str:
-    resolved = DEFAULT_Q4_FORMULATION if formulation is None else str(formulation)
+    if formulation is None:
+        resolved = (
+            DEFAULT_Q4_FORMULATION
+            if node_count == 4
+            else DEFAULT_S3_FORMULATION
+            if node_count == 3
+            else "legacy"
+        )
+    else:
+        resolved = str(formulation)
     resolved = resolved.strip().lower().replace("_", "-")
-    e4_aliases = {"e4-pl", "qualified-s4", "default"}
+    if resolved == "default":
+        resolved = (
+            DEFAULT_Q4_FORMULATION
+            if node_count == 4
+            else DEFAULT_S3_FORMULATION
+            if node_count == 3
+            else "legacy"
+        )
+    e4_aliases = {"e4-pl", "qualified-s4"}
+    s3_aliases = {"e4-pl-s3", "qualified-s3"}
     legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
     if node_count == 4 and resolved in e4_aliases:
         return "e4-pl"
-    if resolved in legacy_aliases or (formulation is None and node_count != 4):
+    if node_count == 3 and resolved in s3_aliases:
+        return "e4-pl-s3"
+    if resolved == "legacy-s3":
+        if node_count != 3:
+            raise ValueError("legacy-s3 is available only for three-node shell topology")
+        return "legacy-s3"
+    if resolved in legacy_aliases:
         return "legacy"
     if resolved in e4_aliases:
         raise ValueError("E4-PL is available only for four-node shell topology")
+    if resolved in s3_aliases:
+        raise ValueError("qualified E4-PL S3 is available only for three-node shell topology")
     raise ValueError(f"Unknown shell formulation: {formulation}")
 
 
@@ -4689,7 +5478,11 @@ def shell_formulation_diagnostics(
             else (
                 "DEPRECATED_LEGACY_Q4_ROLLBACK"
                 if count == 4
-                else "PRESERVED_LEGACY_NON_Q4"
+                else (
+                    "QUALIFIED_E4_PL_S3_OPT_IN"
+                    if count == 3 and selected == "e4-pl-s3"
+                    else "PRESERVED_LEGACY_NON_Q4"
+                )
             )
         ),
         "legacy_q4": {
@@ -4710,10 +5503,11 @@ def create_shell_element(
     formulation: Optional[str] = None,
     **kwargs: Any,
 ) -> ShellElement:
-    """Create the production-default shell while retaining an explicit rollback.
+    """Create a topology-selected shell while retaining explicit rollbacks.
 
     Four-node shells select the qualified E4-PL implementation by default.
-    Other supported shell topologies retain :class:`LegacyShellElement`.
+    Other supported shell topologies retain :class:`LegacyShellElement`;
+    qualified S3 is available through ``formulation="e4-pl-s3"`` only.
     Passing ``formulation="legacy"`` is the documented rollback/compatibility
     route; an explicit E4-PL request rejects non-Q4 topology.
     """
@@ -4728,9 +5522,137 @@ def create_shell_element(
             material_name,
             **kwargs,
         )
-    if resolved == "legacy":
+    if resolved == "e4-pl-s3":
+        from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+
+        return QualifiedE4PLS3ShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
+    if resolved in {"legacy", "legacy-s3"}:
         return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
     raise AssertionError(f"unreachable shell formulation selection: {resolved}")
+
+
+def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
+    """Deserialize a shell without guessing a qualified formulation.
+
+    Historical three-node records without ``formulation_id`` remain legacy.
+    Qualified records are dispatched by their exact identity and unknown
+    identities fail closed.
+    """
+
+    if not isinstance(payload, Mapping):
+        raise TypeError("serialized shell element must be a mapping")
+    data = dict(payload)
+    node_ids = [int(value) for value in data.get("node_ids", ())]
+    formulation_id = data.get("formulation_id")
+    if formulation_id is not None:
+        from .e4_pl_element import (
+            FORMULATION_ID as Q4_FORMULATION_ID,
+            QualifiedE4PLShellElement,
+            _PLANAR_FORMULATION_ID,
+        )
+        from .e4_pl_s3_element import (
+            FORMULATION_ID as S3_FORMULATION_ID,
+            QualifiedE4PLS3ShellElement,
+        )
+
+        if formulation_id in {Q4_FORMULATION_ID, _PLANAR_FORMULATION_ID}:
+            return QualifiedE4PLShellElement.from_dict(data)
+        if formulation_id == S3_FORMULATION_ID:
+            return QualifiedE4PLS3ShellElement.from_dict(data)
+        raise ValueError(f"unknown serialized shell formulation_id: {formulation_id}")
+    if str(data.get("type", "")) in {
+        "QualifiedE4PLShellElement",
+        "QualifiedE4PLS3ShellElement",
+        "e4-pl",
+        "e4-pl-s3",
+        "qualified-s3",
+    }:
+        raise ValueError("serialized qualified shell is missing formulation_id")
+    qualified_s3_markers = frozenset(
+        {
+            "algebraic_coordinate_policy",
+            "bubble_convention",
+            "dynamic_reduction_policy",
+            "director_polarity",
+            "director_polarity_policy_id",
+            "director_reversal_transform_id",
+            "formulation_schema",
+            "geometric_stiffness_policy",
+            "mass_moment_id",
+            "quadrature_id",
+            "quadrature_authority_id",
+            "reference_normal",
+            "reference_surface_offset",
+            "reference_surface_offset_policy_id",
+            "reference_surface_strain_transform_id",
+            "reference_surface_mass_shift_id",
+            "recovery_policy_id",
+            "state_layout_id",
+        }
+    )
+    qualified_q4_markers = frozenset(
+        {
+            "activity_disposition_schema_id",
+            "current_state_binding_schema_id",
+            "current_state_algorithmic_origin_schema_id",
+            "current_state_projection_policy_id",
+            "current_state_tangent_decomposition_policy_id",
+            "deleted_frozen_policy_id",
+            "director_polarity",
+            "director_polarity_policy_id",
+            "director_reversal_transform_id",
+            "implementation_id",
+            "quadrature_authority_id",
+            "failed_state_policy_id",
+            "recovery_policy_id",
+            "reference_normal",
+            "stationary_solve_policy_id",
+        }
+    )
+    retained_s3_markers = tuple(sorted(qualified_s3_markers & data.keys()))
+    if len(node_ids) == 3 and retained_s3_markers:
+        raise ValueError(
+            "serialized three-node shell retains qualified S3 fingerprint "
+            "markers but is missing formulation_id: "
+            + ", ".join(retained_s3_markers)
+        )
+    retained_q4_markers = tuple(sorted(qualified_q4_markers & data.keys()))
+    if len(node_ids) == 4 and retained_q4_markers:
+        raise ValueError(
+            "serialized four-node shell retains qualified Q4 fingerprint "
+            "markers but is missing formulation_id: "
+            + ", ".join(retained_q4_markers)
+        )
+    if len(node_ids) not in {3, 4, 6, 8}:
+        raise ValueError("serialized legacy shell requires 3, 4, 6 or 8 nodes")
+    element = create_shell_element(
+        element_id=int(data["element_id"]),
+        node_ids=node_ids,
+        material_name=str(data.get("material_name", "default")),
+        formulation="legacy-s3" if len(node_ids) == 3 else "legacy",
+        thickness=float(data.get("thickness", 0.01)),
+        drilling_stabilization=float(data.get("drilling_stabilization", 1.0e-3)),
+        reduced_integration=bool(data.get("reduced_integration", False)),
+        hourglass_stabilization=float(data.get("hourglass_stabilization", 1.0e-8)),
+        material_direction=data.get("material_direction"),
+        material_angle_deg=float(data.get("material_angle_deg", 0.0)),
+        shell_section=data.get("shell_section"),
+    )
+    if len(node_ids) == 3:
+        warnings.warn(
+            "LEGACY_S3_MISSING_FORMULATION_ID: historical three-node shell "
+            "record loaded as legacy-s3; qualified-s3 was not inferred; "
+            "qualified-s3 hot restart is forbidden without full load-history "
+            "replay",
+            LegacyS3MigrationWarning,
+            stacklevel=2,
+        )
+    return element
 
 
 def create_element(
@@ -4741,6 +5663,22 @@ def create_element(
     **kwargs: Any,
 ) -> Element:
     normalized_type = str(element_type).lower()
+    if normalized_type in {"e4-pl-s3", "e4_pl_s3", "qualified-s3", "qualified_s3"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3",
+            **kwargs,
+        )
+    if normalized_type in {"legacy-s3", "legacy_s3"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="legacy-s3",
+            **kwargs,
+        )
     if normalized_type in {"e4-pl", "e4_pl", "qualified_s4"}:
         return create_shell_element(
             element_id,
@@ -4759,6 +5697,15 @@ def create_element(
         )
     if normalized_type == "shell":
         formulation = kwargs.pop("formulation", None)
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation=formulation,
+            **kwargs,
+        )
+    if normalized_type in {"shell3", "tri3", "tria3", "t3", "s3"}:
+        formulation = kwargs.pop("formulation", "legacy-s3")
         return create_shell_element(
             element_id,
             node_ids,

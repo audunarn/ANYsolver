@@ -111,6 +111,17 @@ def _has_unqualified_beam_fiber_history(model: Any) -> bool:
     return False
 
 
+def _has_native_total_lagrangian_elements(model: Any) -> bool:
+    elements = getattr(getattr(model, "mesh", None), "elements", None)
+    return bool(
+        isinstance(elements, Mapping)
+        and any(
+            bool(getattr(element, "formulation_native_total_lagrangian", False))
+            for element in elements.values()
+        )
+    )
+
+
 @dataclass
 class ImpactReducedAssemblyController:
     """Prepared direct-reduction path plus stable diagnostics and counters."""
@@ -208,6 +219,8 @@ def prepare_impact_reduced_assembly(
         exclusions.append("plastic_material_history_unqualified")
     if _has_unqualified_beam_fiber_history(model):
         exclusions.append("beam_fiber_plasticity_unqualified")
+    if _has_native_total_lagrangian_elements(model):
+        exclusions.append("native_total_lagrangian_state_requires_full_coordinates")
     if np.any(np.asarray(affine_offset, dtype=float) != 0.0):
         exclusions.append("affine_constraint_offset_nonzero")
     if transformation.shape[1] == 0:

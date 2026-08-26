@@ -59,12 +59,31 @@ def test_unified_recovery_uses_committed_shell_history_and_owns_snapshot() -> No
     assert recovered.provenance.mode == "material_history"
     assert recovered.provenance.per_element_source[1] == "committed_shell_layer_state"
     np.testing.assert_allclose(recovered.element_stresses[1]["von_mises"], expected_vm)
+    recovered_shell = recovered.element_stresses[1]
+    expected_membrane_resultants = np.broadcast_to(
+        np.asarray((250.0, 50.0, 10.0)) * float(element.thickness),
+        recovered_shell["membrane_resultants"].shape,
+    )
+    np.testing.assert_allclose(
+        recovered_shell["membrane_resultants"],
+        expected_membrane_resultants,
+    )
+    np.testing.assert_allclose(
+        recovered_shell["bending_resultants"],
+        np.zeros_like(recovered_shell["bending_resultants"]),
+        atol=1.0e-15,
+    )
     # Zero displacement would produce zero elastic stress, proving the state
-    # rather than displacement reconstruction supplied the reported stress.
+    # rather than displacement reconstruction supplied the reported stress and
+    # resultants.
     assert np.max(recovered.element_stresses[1]["von_mises"]) > 0.0
 
     state["layer_stress"][0, 0] = -9999.0
     assert recovered.committed_element_states[1]["layer_stress"][0, 0] == 250.0
+    np.testing.assert_allclose(
+        recovered.element_stresses[1]["membrane_resultants"],
+        expected_membrane_resultants,
+    )
 
 
 def test_shell_history_von_mises_excludes_elastic_transverse_shear() -> None:

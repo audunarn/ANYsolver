@@ -42,19 +42,29 @@ from scipy.sparse.linalg import bicgstab, gmres, minres
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary, require_valid_constraints
 from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .element_capabilities import require_model_element_capabilities
 from .linalg import FactorizationCache, MatrixClass, factorize, factorize_cached
 from .matrix_assembly import (
     assemble_load_matrix,
     assemble_mass_matrix as _canonical_assemble_mass_matrix,
     assemble_system as _canonical_assemble_system,
 )
+from .nonlinear_state import require_no_native_total_lagrangian_elements
 from .recovery import ResourceConfig
+from .recovery_batches import _run_with_qualified_recovery_runtime_lease
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
     from .analysis_session import AnalysisSession
     from .boundary import LoadCase
     from .fe_core import FEModel, FEMesh
+
+
+_SYMMETRIC_DIAGONAL_EQUILIBRATION_ID = (
+    "SYMMETRIC_DIAGONAL_CONGRUENCE_Q1C_V1"
+)
+_SYMMETRIC_DIAGONAL_FLOOR_RATIO = 1.0e-30
+_LINEAR_STATIC_BACKWARD_ERROR_LIMIT = 1.0e-10
 
 
 def assemble_system(
@@ -486,6 +496,147 @@ def apply_boundary_conditions(K: sparse.csr_matrix, F: np.ndarray, dof_manager: 
     return K_modified.tocsr(), F_modified
 
 
+def _equilibrate_supported_stiffness(
+    matrix: sparse.csr_matrix,
+) -> Tuple[sparse.csr_matrix, np.ndarray, Dict[str, Any]]:
+    """Return a symmetric diagonal congruence of a supported stiffness.
+
+    Shell systems legitimately mix membrane/shear terms of order ``t`` with
+    bending terms of order ``t**3``.  Factoring the raw reduced matrix makes
+    that physical unit disparity an avoidable source of binary64 error.  The
+    Q1C/Q1D qualification chain used the same diagonal congruence before its
+    independently checked solve.  Applying it here changes coordinates only::
+
+        K_eq = D K D,  f_eq = D f,  q = D q_eq.
+
+    No stiffness coefficient, constraint, load, or formulation is changed.
+    The floor is relative to the largest supported diagonal and exists only to
+    keep a singular/near-mechanism diagnostic finite; the subsequent
+    factorization and backward-error check still fail closed.
+    """
+
+    made = sparse.csr_matrix(matrix, dtype=float)
+    if made.shape[0] != made.shape[1]:
+        raise ValueError("reduced stiffness matrix must be square")
+    if np.any(~np.isfinite(made.data)):
+        raise ValueError("reduced stiffness matrix contains NaN/Inf")
+    diagonal = np.abs(np.asarray(made.diagonal(), dtype=float))
+    if diagonal.size == 0:
+        return made.copy(), np.ones(0, dtype=float), {
+            "id": _SYMMETRIC_DIAGONAL_EQUILIBRATION_ID,
+            "applied": False,
+            "diagonal_floor": 0.0,
+            "diagonal_ratio": 1.0,
+            "scaled_diagonal_ratio": 1.0,
+            "disposition": "EMPTY_SYSTEM",
+        }
+    if np.any(~np.isfinite(diagonal)):
+        raise ValueError("reduced stiffness diagonal contains NaN/Inf")
+    largest = float(np.max(diagonal))
+    if largest <= 0.0:
+        # Preserve the singular matrix for the backend's normal failure path.
+        return made.copy(), np.ones(made.shape[0], dtype=float), {
+            "id": _SYMMETRIC_DIAGONAL_EQUILIBRATION_ID,
+            "applied": False,
+            "diagonal_floor": 0.0,
+            "diagonal_ratio": None,
+            "scaled_diagonal_ratio": None,
+            "disposition": "NO_POSITIVE_DIAGONAL",
+        }
+    floor = max(
+        largest * _SYMMETRIC_DIAGONAL_FLOOR_RATIO,
+        np.finfo(float).tiny,
+    )
+    protected = np.maximum(diagonal, floor)
+    scaling = 1.0 / np.sqrt(protected)
+    if np.any(~np.isfinite(scaling)) or np.any(scaling <= 0.0):
+        raise ValueError("reduced stiffness equilibration scale is non-finite")
+    diagonal_operator = sparse.diags(scaling, format="csr")
+    equilibrated = sparse.csr_matrix(diagonal_operator @ made @ diagonal_operator)
+    equilibrated.sort_indices()
+    scaled_diagonal = np.abs(np.asarray(equilibrated.diagonal(), dtype=float))
+    positive = diagonal[diagonal > 0.0]
+    scaled_positive = scaled_diagonal[scaled_diagonal > 0.0]
+    diagonal_ratio = (
+        float(largest / float(np.min(positive))) if positive.size else None
+    )
+    if diagonal_ratio is not None and not np.isfinite(diagonal_ratio):
+        diagonal_ratio = None
+    scaled_diagonal_ratio = (
+        float(np.max(scaled_positive) / np.min(scaled_positive))
+        if scaled_positive.size
+        else None
+    )
+    if scaled_diagonal_ratio is not None and not np.isfinite(scaled_diagonal_ratio):
+        scaled_diagonal_ratio = None
+    return equilibrated, scaling, {
+        "id": _SYMMETRIC_DIAGONAL_EQUILIBRATION_ID,
+        "applied": True,
+        "diagonal_floor": floor,
+        "diagonal_ratio": diagonal_ratio,
+        "scaled_diagonal_ratio": scaled_diagonal_ratio,
+        "disposition": "EQUILIBRATED",
+    }
+
+
+def _backward_error(
+    matrix: sparse.csr_matrix,
+    solution: np.ndarray,
+    rhs: np.ndarray,
+) -> float:
+    """Return the normwise relative backward error of one or many solves."""
+
+    made_matrix = sparse.csr_matrix(matrix, dtype=float)
+    made_solution = np.asarray(solution, dtype=float)
+    made_rhs = np.asarray(rhs, dtype=float)
+    if (
+        np.any(~np.isfinite(made_matrix.data))
+        or np.any(~np.isfinite(made_solution))
+        or np.any(~np.isfinite(made_rhs))
+    ):
+        return float("inf")
+    with np.errstate(over="ignore", invalid="ignore"):
+        residual = np.asarray(made_matrix @ made_solution - made_rhs, dtype=float)
+        row_sums = np.asarray(np.abs(made_matrix).sum(axis=1), dtype=float).reshape(-1)
+    if np.any(~np.isfinite(residual)) or np.any(~np.isfinite(row_sums)):
+        return float("inf")
+    matrix_norm = float(np.max(row_sums)) if row_sums.size else 0.0
+    if not np.isfinite(matrix_norm):
+        return float("inf")
+    if made_solution.ndim == 1:
+        solution_norm = float(np.linalg.norm(made_solution, ord=np.inf))
+        rhs_norm = float(np.linalg.norm(made_rhs, ord=np.inf))
+        residual_norm = float(np.linalg.norm(residual, ord=np.inf))
+        denominator = matrix_norm * solution_norm + rhs_norm
+        if not all(
+            np.isfinite(value)
+            for value in (solution_norm, rhs_norm, residual_norm, denominator)
+        ):
+            return float("inf")
+        if denominator <= 0.0:
+            return 0.0 if residual_norm == 0.0 else float("inf")
+        return residual_norm / denominator
+    solution_norm = np.max(np.abs(made_solution), axis=0)
+    rhs_norm = np.max(np.abs(made_rhs), axis=0)
+    residual_norm = np.max(np.abs(residual), axis=0)
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        denominator = matrix_norm * solution_norm + rhs_norm
+        values = np.where(
+            denominator > 0.0,
+            residual_norm / denominator,
+            np.where(residual_norm == 0.0, 0.0, np.inf),
+        )
+    if (
+        np.any(~np.isfinite(solution_norm))
+        or np.any(~np.isfinite(rhs_norm))
+        or np.any(~np.isfinite(residual_norm))
+        or np.any(~np.isfinite(denominator))
+        or np.any(~np.isfinite(values))
+    ):
+        return float("inf")
+    return float(np.max(values)) if values.size else 0.0
+
+
 def _solve_reduced_system(
     K_red: sparse.csr_matrix,
     F_red: np.ndarray,
@@ -499,23 +650,77 @@ def _solve_reduced_system(
 
     if solver_type == "direct":
         try:
+            equilibrated, scaling, equilibration_info = (
+                _equilibrate_supported_stiffness(K_red)
+            )
+            scaled_rhs = scaling * np.asarray(F_red, dtype=float)
+            cache_signature = (
+                None
+                if factorization_signature is None
+                else (
+                    f"{factorization_signature}:"
+                    f"{_SYMMETRIC_DIAGONAL_EQUILIBRATION_ID}"
+                )
+            )
             if factorization_cache is None:
-                handle = factorize(K_red, MatrixClass.SYMMETRIC_INDEFINITE)
+                handle = factorize(
+                    equilibrated,
+                    MatrixClass.SYMMETRIC_INDEFINITE,
+                    signature=cache_signature,
+                )
             else:
                 handle = factorize_cached(
-                    K_red,
+                    equilibrated,
                     MatrixClass.SYMMETRIC_INDEFINITE,
                     cache=factorization_cache,
-                    signature=factorization_signature,
+                    signature=cache_signature,
                 )
             if handle.status != "ok":
                 return np.zeros(K_red.shape[0]), {
                     "status": "failed",
                     "error": handle.failure_reason,
                     "backend": handle.diagnostics(),
+                    "equilibration": equilibration_info,
                 }
-            q = handle.solve(F_red)
-            return q, {"status": "converged", "backend": handle.diagnostics()}
+            q = scaling * handle.solve(scaled_rhs)
+            backward_error = _backward_error(K_red, q, F_red)
+            if (
+                not np.isfinite(backward_error)
+                or backward_error > _LINEAR_STATIC_BACKWARD_ERROR_LIMIT
+            ):
+                backward_error_disposition = (
+                    "NONFINITE_OR_OVERFLOW"
+                    if not np.isfinite(backward_error)
+                    else "LIMIT_EXCEEDED"
+                )
+                return q, {
+                    "status": "failed",
+                    "error": (
+                        "linear static solve exceeded the certified relative "
+                        "backward-error limit"
+                    ),
+                    "backend": handle.diagnostics(),
+                    "equilibration": equilibration_info,
+                    "relative_backward_error": (
+                        backward_error if np.isfinite(backward_error) else None
+                    ),
+                    "relative_backward_error_disposition": (
+                        backward_error_disposition
+                    ),
+                    "relative_backward_error_limit": (
+                        _LINEAR_STATIC_BACKWARD_ERROR_LIMIT
+                    ),
+                }
+            return q, {
+                "status": "converged",
+                "backend": handle.diagnostics(),
+                "equilibration": equilibration_info,
+                "relative_backward_error": backward_error,
+                "relative_backward_error_disposition": "CERTIFIED",
+                "relative_backward_error_limit": (
+                    _LINEAR_STATIC_BACKWARD_ERROR_LIMIT
+                ),
+            }
         except Exception as exc:
             return np.zeros(K_red.shape[0]), {"status": "failed", "error": str(exc)}
 
@@ -841,11 +1046,15 @@ def solve_linear_many(
             "linear_static_many",
             constraint_plan,
         )
+    equilibrated, scaling, equilibration_info = _equilibrate_supported_stiffness(K_red)
+    equilibrated_signature = (
+        f"{stiffness_signature}:{_SYMMETRIC_DIAGONAL_EQUILIBRATION_ID}"
+    )
     handle = factorize_cached(
-        K_red,
+        equilibrated,
         MatrixClass.SYMMETRIC_INDEFINITE,
         cache=local_cache,
-        signature=stiffness_signature,
+        signature=equilibrated_signature,
     )
     cancellation_safe_point(cancellation_token, "linear_static_many.after_factorization")
     if handle.status != "ok":
@@ -857,6 +1066,7 @@ def solve_linear_many(
             "constraint_info": constraint_info,
             "nullspace_info": nullspace_info,
             "backend": handle.diagnostics(),
+            "equilibration": equilibration_info,
             "factorization_cache": local_cache.diagnostics(),
             "solve_time": time.time() - start,
             "thread_policy": thread_policy_diagnostics(resource_config),
@@ -875,8 +1085,65 @@ def solve_linear_many(
             settings={"constraint_mode": mode, "num_load_cases": len(load_cases)},
         ).to_dict()
         return displacement, info
-    q_matrix = handle.solve_many(F_red)
+    scaled_rhs = scaling[:, None] * F_red
+    q_matrix = scaling[:, None] * handle.solve_many(scaled_rhs)
+    backward_error = _backward_error(K_red, q_matrix, F_red)
     cancellation_safe_point(cancellation_token, "linear_static_many.after_solve")
+    if (
+        not np.isfinite(backward_error)
+        or backward_error > _LINEAR_STATIC_BACKWARD_ERROR_LIMIT
+    ):
+        backward_error_disposition = (
+            "NONFINITE_OR_OVERFLOW"
+            if not np.isfinite(backward_error)
+            else "LIMIT_EXCEEDED"
+        )
+        info = {
+            "status": "failed",
+            "error": (
+                "linear static many solve exceeded the certified relative "
+                "backward-error limit"
+            ),
+            "assembly": assembly_info,
+            "load_matrix": load_matrix_info,
+            "constraint_info": constraint_info,
+            "nullspace_info": nullspace_info,
+            "backend": handle.diagnostics(),
+            "equilibration": equilibration_info,
+            "factorization_cache": local_cache.diagnostics(),
+            "relative_backward_error": (
+                backward_error if np.isfinite(backward_error) else None
+            ),
+            "relative_backward_error_disposition": backward_error_disposition,
+            "relative_backward_error_limit": _LINEAR_STATIC_BACKWARD_ERROR_LIMIT,
+            "solve_time": time.time() - start,
+            "thread_policy": thread_policy_diagnostics(resource_config),
+        }
+        if session is not None:
+            info["analysis_session"] = session.diagnostics()
+        displacement = np.tile(u0.reshape(-1, 1), (1, len(load_cases)))
+        info["constraint_postcheck"] = constraint_residual_summary(
+            model, displacement
+        )
+        info["result_case"] = make_result_case(
+            name="linear_static_many",
+            analysis_type="linear_static_many",
+            load_cases=tuple(
+                load_case for load_case in load_cases if load_case is not None
+            ),
+            assembly_info={**assembly_info, "load_matrix": load_matrix_info},
+            solver_info=info,
+            recovery={
+                "displacements": True,
+                "stresses": "on_demand",
+                "reactions": "on_demand",
+            },
+            settings={
+                "constraint_mode": mode,
+                "num_load_cases": len(load_cases),
+            },
+        ).to_dict()
+        return displacement, info
     full = np.asarray(T @ q_matrix + u0[:, None], dtype=float)
     info = {
         "status": "converged",
@@ -885,7 +1152,11 @@ def solve_linear_many(
         "constraint_info": constraint_info,
         "nullspace_info": nullspace_info,
         "backend": handle.diagnostics(),
+        "equilibration": equilibration_info,
         "factorization_cache": local_cache.diagnostics(),
+        "relative_backward_error": backward_error,
+        "relative_backward_error_disposition": "CERTIFIED",
+        "relative_backward_error_limit": _LINEAR_STATIC_BACKWARD_ERROR_LIMIT,
         "solve_time": time.time() - start,
         "num_result_cases": len(load_cases),
         "thread_policy": thread_policy_diagnostics(resource_config),
@@ -933,6 +1204,10 @@ def solve_nonlinear(
         "solve_nonlinear() is a deprecated prototype; use solve_static_nonlinear()",
         DeprecationWarning,
         stacklevel=2,
+    )
+    require_no_native_total_lagrangian_elements(
+        model,
+        context="deprecated solve_nonlinear",
     )
     mesh = model.mesh
     dof_manager = mesh.dof_manager
@@ -999,21 +1274,47 @@ def solve_nonlinear(
     return u, solver_info
 
 
-def compute_internal_forces(model: "FEModel", displacements: np.ndarray) -> np.ndarray:
+def _compute_internal_forces_under_lease(
+    model: "FEModel",
+    displacements: np.ndarray,
+    *,
+    qualified_runtime_guard: Any,
+) -> np.ndarray:
     """Compute internal forces for all elements."""
+    qualified_runtime_guard(stage="internal-force preflight")
     mesh = model.mesh
     total_dofs = mesh.dof_manager.total_dofs
     F_int = np.zeros(total_dofs, dtype=float)
 
     for elem_id, element in mesh.elements.items():
         material = model.get_material(element.material_name)
+        qualified_runtime_guard(
+            stage=f"internal-force material observation for element {elem_id}"
+        )
         dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
         if dof_mapping.size == 0:
             continue
         u_elem = displacements[dof_mapping]
         F_elem = np.asarray(element.compute_internal_forces(mesh, u_elem, material), dtype=float)
+        qualified_runtime_guard(
+            stage=f"internal-force element observation for element {elem_id}"
+        )
         np.add.at(F_int, dof_mapping, F_elem)
     return F_int
+
+
+def compute_internal_forces(model: "FEModel", displacements: np.ndarray) -> np.ndarray:
+    """Compute all element forces under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="internal-force computation",
+        operation=lambda guard: _compute_internal_forces_under_lease(
+            model,
+            displacements,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 def _add_dof_force(force_map: Dict[int, np.ndarray], model: "FEModel", dof: int, value: float) -> None:
@@ -1034,12 +1335,13 @@ def _compact_force_map(force_map: Dict[int, np.ndarray], tolerance: float = 0.0)
     return compact
 
 
-def compute_constraint_force_diagnostics(
+def _compute_constraint_force_diagnostics_under_lease(
     model: "FEModel",
     displacements: np.ndarray,
     load_case: Optional["LoadCase"] = None,
     *,
     force_tolerance: float = 0.0,
+    qualified_runtime_guard: Any,
 ) -> Dict[str, Any]:
     """Return separated support, MPC and nullspace force diagnostics.
 
@@ -1054,6 +1356,7 @@ def compute_constraint_force_diagnostics(
     model.apply_boundary_conditions()
 
     K, _, _ = assemble_system(model)
+    qualified_runtime_guard(stage="constraint-force stiffness observation")
     if load_case is None:
         F_ext = np.zeros(dof_manager.total_dofs, dtype=float)
     else:
@@ -1063,8 +1366,12 @@ def compute_constraint_force_diagnostics(
             model.get_material,
             element_activity=getattr(mesh, "element_activity", None),
         )
+        qualified_runtime_guard(stage="constraint-force load-provider observation")
+        F_ext = np.asarray(F_ext, dtype=float)
+        qualified_runtime_guard(stage="constraint-force load-array observation")
 
     u = np.asarray(displacements, dtype=float).reshape(-1)
+    qualified_runtime_guard(stage="constraint-force displacement observation")
     if u.shape[0] != int(K.shape[0]):
         raise ValueError(f"Displacement vector length {u.shape[0]} does not match system size {K.shape[0]}")
 
@@ -1152,9 +1459,42 @@ def compute_constraint_force_diagnostics(
     }
 
 
-def compute_reactions(model: "FEModel", displacements: np.ndarray, load_case: "LoadCase") -> Dict[int, np.ndarray]:
+def compute_constraint_force_diagnostics(
+    model: "FEModel",
+    displacements: np.ndarray,
+    load_case: Optional["LoadCase"] = None,
+    *,
+    force_tolerance: float = 0.0,
+) -> Dict[str, Any]:
+    """Compute constraint forces under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="constraint-force diagnostics",
+        operation=lambda guard: _compute_constraint_force_diagnostics_under_lease(
+            model,
+            displacements,
+            load_case,
+            force_tolerance=force_tolerance,
+            qualified_runtime_guard=guard,
+        ),
+    )
+
+
+def _compute_reactions_under_lease(
+    model: "FEModel",
+    displacements: np.ndarray,
+    load_case: "LoadCase",
+    *,
+    qualified_runtime_guard: Any,
+) -> Dict[int, np.ndarray]:
     """Compute legacy combined reactions at fixed and MPC slave DOFs."""
-    diagnostics = compute_constraint_force_diagnostics(model, displacements, load_case)
+    diagnostics = _compute_constraint_force_diagnostics_under_lease(
+        model,
+        displacements,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     reactions: Dict[int, np.ndarray] = {}
     for bucket in ("support_reactions", "mpc_slave_forces"):
         for node_id, values in diagnostics[bucket].items():
@@ -1163,31 +1503,104 @@ def compute_reactions(model: "FEModel", displacements: np.ndarray, load_case: "L
     return _compact_force_map(reactions)
 
 
+def compute_reactions(
+    model: "FEModel",
+    displacements: np.ndarray,
+    load_case: "LoadCase",
+) -> Dict[int, np.ndarray]:
+    """Compute reactions under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="reaction computation",
+        operation=lambda guard: _compute_reactions_under_lease(
+            model,
+            displacements,
+            load_case,
+            qualified_runtime_guard=guard,
+        ),
+    )
+
+
+def _compute_stresses_under_lease(
+    model: "FEModel",
+    displacements: np.ndarray,
+    return_global: bool = False,
+    element_ids: Optional[Sequence[int]] = None,
+    *,
+    qualified_runtime_guard: Any,
+) -> Dict[int, Dict[str, np.ndarray]]:
+    """Compute stresses for all or selected elements."""
+    qualified_runtime_guard(stage="stress-recovery preflight")
+    qualified_runtime_guard(stage="constraint-force preflight")
+    mesh = model.mesh
+    stresses: Dict[int, Dict[str, np.ndarray]] = {}
+    selected = None if element_ids is None else {int(element_id) for element_id in element_ids}
+    selected_ids = (
+        tuple(int(element_id) for element_id in mesh.elements)
+        if selected is None
+        else tuple(sorted(selected))
+    )
+    if return_global:
+        require_model_element_capabilities(
+            model,
+            "global_recovery",
+            context="compute_stresses",
+            element_ids=selected_ids,
+        )
+    displacements = np.asarray(displacements, dtype=float)
+    for elem_id, element in mesh.elements.items():
+        if selected is not None and int(elem_id) not in selected:
+            continue
+        material = model.get_material(element.material_name)
+        qualified_runtime_guard(
+            stage=f"stress material observation for element {elem_id}"
+        )
+        dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
+        if (
+            dof_mapping.size == 0
+            or int(dof_mapping.min()) < 0
+            or int(dof_mapping.max()) >= displacements.size
+        ):
+            if bool(getattr(element, "recovery_errors_fail_closed", False)):
+                raise ValueError(
+                    "fail-closed element recovery requires a complete in-range "
+                    "DOF mapping"
+                )
+            continue
+        try:
+            stresses[elem_id] = element.compute_stresses(
+                mesh, displacements[dof_mapping], material, return_global=return_global
+            )
+            qualified_runtime_guard(
+                stage=f"stress element observation for element {elem_id}"
+            )
+        except (IndexError, ValueError):
+            if bool(getattr(element, "recovery_errors_fail_closed", False)):
+                raise
+            continue
+    return stresses
+
+
 def compute_stresses(
     model: "FEModel",
     displacements: np.ndarray,
     return_global: bool = False,
     element_ids: Optional[Sequence[int]] = None,
 ) -> Dict[int, Dict[str, np.ndarray]]:
-    """Compute stresses for all or selected elements."""
-    mesh = model.mesh
-    stresses: Dict[int, Dict[str, np.ndarray]] = {}
-    displacements = np.asarray(displacements, dtype=float)
-    selected = None if element_ids is None else {int(element_id) for element_id in element_ids}
-    for elem_id, element in mesh.elements.items():
-        if selected is not None and int(elem_id) not in selected:
-            continue
-        material = model.get_material(element.material_name)
-        dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
-        if dof_mapping.size == 0 or int(dof_mapping.max()) >= displacements.size:
-            continue
-        try:
-            stresses[elem_id] = element.compute_stresses(
-                mesh, displacements[dof_mapping], material, return_global=return_global
-            )
-        except (IndexError, ValueError):
-            continue
-    return stresses
+    """Compute stresses under one operation-wide authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="stress computation",
+        operation=lambda guard: _compute_stresses_under_lease(
+            model,
+            displacements,
+            return_global,
+            element_ids,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 def extract_node_displacements(displacements: np.ndarray, mesh: "FEMesh") -> Dict[int, np.ndarray]:

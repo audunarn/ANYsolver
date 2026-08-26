@@ -80,6 +80,20 @@ EXTENDED_EXACT = {
     "test_s4_drill_constraint_derivation.py",
 }
 
+# This preserved mixed-eigen study carries historical external evidence and is
+# never a merge or serialized burn-in prerequisite.  Keep it out of the
+# performance lane even though its filename contains ``performance``.
+HISTORICAL_EXTENDED_EXACT = {
+    "test_e4_pl_s3_mixed_eigen_performance.py",
+}
+
+# Successor element-family tests must run in pull requests without changing
+# the immutable Q1M gate inventories recorded before those files existed.
+ADDITIVE_CI_PREFIXES = ("test_e4_pl_s3_",)
+# This reference-batch file carries correctness and authority checks despite
+# its performance-shaped name, so exercise this exact file in pull requests.
+ADDITIVE_CI_EXACT = {"test_e4_pl_s3_reference_batch.py"}
+
 PACKAGE_CHECKS = (
     "BUILD_LOCAL_WHEELS_WITHOUT_ISOLATION",
     "INSTALL_FRESH_TARGET_WITHOUT_DEPENDENCY_RESOLUTION",
@@ -92,6 +106,27 @@ PACKAGE_CHECKS = (
 
 GATE_LANES = ("quick", "package", "functional", "anyfem", "performance")
 SIBLING_NAMES = ("ANYfem", "ANYmesh", "ANYgeometry", "ANYmaterial", "ANYfileIO")
+# The five blocked contracts are immutable authorities from earlier Q1M
+# correction cycles.  Their inventories predate additive lifecycle tests, so
+# validating them against today's discovery would rewrite their meaning.  Bind
+# each semantic contract identity to the lane inventories frozen in those
+# accepted records instead.
+_HISTORICAL_CONTRACT_IDENTITIES = frozenset(
+    {
+        "bdf622aaa4c370e078d947fdd38b194279d2bc757862ef9b2ed6f1f09bce9efe",
+        "b74c6a41d67dd123ba7d8c35bf68f6a25975b63fe2a5a8d93b5eef00dec8d661",
+        "f8f03f3db1e163784e6d948b5832a9cb1f22a04d7d8d14c45b2166ace1db74f6",
+        "3e9bc597585a9ed48fc149197a27eb31641521ae5958e79396dfbb46242a3f7a",
+        "3059b8aabb0518b188a8b29bf5d21248ea439a32f88603bf70a2072b7b6a4293",
+    }
+)
+_HISTORICAL_INVENTORY_IDENTITIES = {
+    "anyfem": "f0665ef5fd92da79b8f24691617574a7380bb1e93d2e520e480039df80f7b0c1",
+    "functional": "6d3c46bfeb207d66417cda61129d5ae104f6fee93b1cb084c068c3c88c041860",
+    "package": "31c7624758906e5e7501e06a9d1d81b520924cd7ce87f291d8ce44613c82a7b3",
+    "performance": "0f6b51790108adc744e77d1827c11ee46ff4609ea3d821588c1510984f9e67aa",
+    "quick": "6798a1e7bf8d796c210b60cb2600ed0a161545ea9f239a3720975ae591800304",
+}
 LOCAL_DISTRIBUTIONS = (
     ("ANYgeometry", "ANYgeometry", "anygeometry"),
     ("ANYmaterial", "ANYmaterial", "anymaterial"),
@@ -122,15 +157,24 @@ def classify_test(path: Path) -> str:
     name = path.name
     if name in QUICK:
         return "quick"
+    if name in ADDITIVE_CI_EXACT:
+        return "additive"
+    if name in HISTORICAL_EXTENDED_EXACT:
+        return "extended"
     if name in PERFORMANCE_EXACT or any(token in name for token in PERFORMANCE_TOKENS):
         return "performance"
     if name in EXTENDED_EXACT or name.startswith(EXTENDED_PREFIXES):
         return "extended"
+    if name.startswith(ADDITIVE_CI_PREFIXES):
+        return "additive"
     return "functional"
 
 
 def inventory() -> dict[str, list[str]]:
-    result = {lane: [] for lane in ("quick", "functional", "performance", "extended")}
+    result = {
+        lane: []
+        for lane in ("quick", "functional", "performance", "extended", "additive")
+    }
     for path in sorted(TESTS.glob("test_*.py")):
         result[classify_test(path)].append(path.relative_to(ROOT).as_posix())
     return result
@@ -646,7 +690,15 @@ def validate_gate_result(
         raise EvidenceError("resource request lanes are incomplete")
 
     lanes = _exact_keys(record["lanes"], set(GATE_LANES), "$.lanes")
-    expected_inventories = gate_inventories()
+    contract_identity = _sha256_bytes(canonical_json_bytes(contract))
+    historical_inventory_authority = (
+        _HISTORICAL_INVENTORY_IDENTITIES
+        if contract_identity in _HISTORICAL_CONTRACT_IDENTITIES
+        else None
+    )
+    expected_inventories = (
+        None if historical_inventory_authority is not None else gate_inventories()
+    )
     all_pass = True
     statuses: list[str] = []
     for lane in GATE_LANES:
@@ -695,7 +747,15 @@ def validate_gate_result(
         )
         if result["command_sha256"] != expected_command_sha256:
             raise EvidenceError(f"$.lanes.{lane}.command_sha256 does not match authority")
-        if result["inventory"] != expected_inventories[lane]:
+        if historical_inventory_authority is not None:
+            inventory_identity = _sha256_bytes(
+                canonical_json_bytes(result["inventory"])
+            )
+            if inventory_identity != historical_inventory_authority[lane]:
+                raise EvidenceError(
+                    f"{location}.inventory does not match historical authority"
+                )
+        elif result["inventory"] != expected_inventories[lane]:
             raise EvidenceError(f"{location}.inventory does not match discovery")
         expected_id = None if lane in {"quick", "package"} else expected_requests[lane]["request_id"]
         if result["resource_request_id"] != expected_id:
@@ -1714,8 +1774,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.lane == "ci":
         # Pull requests exercise the non-resource production inventory while
         # immutable historical studies and serialized performance stay out of
-        # the merge prerequisite.
-        selected = [*lanes["quick"], *lanes["functional"]]
+        # the merge prerequisite. Additive successor tests run here without
+        # mutating Q1M's frozen gate inventories.
+        selected = [*lanes["quick"], *lanes["functional"], *lanes["additive"]]
     else:
         selected = lanes[args.lane]
     if not selected:

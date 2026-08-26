@@ -8,8 +8,9 @@ This module contains the fundamental classes for FE analysis:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, List, Dict, Tuple, Optional, Union
+import copy
+from dataclasses import dataclass, field, fields
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple, Union
 import numpy as np
 
 from anymaterial import IsotropicMaterial as Material
@@ -32,6 +33,8 @@ _ELEMENT_LOCAL_CACHE_NAMES = (
     "_mass_matrix",
     "_internal_forces",
     "_nl_cache",
+    "_nl_cache_key",
+    "_qualified_component_guard",
     "_hourglass_stiffness_matrix",
     "_qualified_components",
     "_qualified_cache_key",
@@ -43,7 +46,206 @@ def _clear_element_local_caches(element: "Element") -> None:
 
     for name in _ELEMENT_LOCAL_CACHE_NAMES:
         if hasattr(element, name):
-            setattr(element, name, None)
+            # Derived caches are solver-owned.  Qualified element classes
+            # reject ordinary post-construction writes to these names so an
+            # external caller cannot inject stale mechanics; lifecycle
+            # invalidation therefore uses the explicit internal boundary.
+            object.__setattr__(element, name, None)
+
+
+def _freeze_qualified_element_vector_inputs(element: "Element") -> None:
+    """Restore immutable vector inputs for qualified cache-aware elements."""
+
+    if not hasattr(element, "_qualified_plan_state_revision"):
+        return
+    for name in ("material_direction", "reference_normal"):
+        value = getattr(element, name, None)
+        if value is None:
+            continue
+        made = np.ascontiguousarray(np.asarray(value, dtype=float))
+        frozen = np.frombuffer(made.tobytes(order="C"), dtype=float).reshape(
+            made.shape
+        )
+        object.__setattr__(element, name, frozen)
+
+
+class _QualifiedMutationEpoch(list[int]):
+    """One-cell monotonic epoch with the legacy list read interface.
+
+    Existing hot paths read ``token[0]`` and compare token identity.  A plain
+    list also allowed callers to rewind that value and make stale warm plans
+    appear current.  This private list subtype preserves those reads while
+    accepting only the single legitimate transition ``current -> current+1``.
+    Direct calls to ``list.__setitem__`` are interpreter-level bypasses and
+    remain outside the supported mutation surface.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, value: int = 0) -> None:
+        if type(value) is not int or value < 0:
+            raise ValueError("qualified mutation epoch must be nonnegative")
+        list.__init__(self, [value])
+
+    def __setitem__(self, index: Any, value: Any) -> None:
+        if (
+            type(index) is not int
+            or index not in {0, -1}
+            or type(value) is not int
+            or value != list.__getitem__(self, 0) + 1
+        ):
+            raise ValueError(
+                "qualified mutation epoch can only advance by one"
+            )
+        list.__setitem__(self, 0, value)
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "_QualifiedMutationEpoch":
+        made = type(self)(list.__getitem__(self, 0))
+        memo[id(self)] = made
+        return made
+
+    def __reduce_ex__(self, protocol: int) -> Tuple[Any, Tuple[int]]:
+        del protocol
+        return type(self), (list.__getitem__(self, 0),)
+
+    def _reject_resize(self, *_args: Any, **_kwargs: Any) -> None:
+        raise TypeError("qualified mutation epoch has fixed length")
+
+    __delitem__ = _reject_resize
+    __iadd__ = _reject_resize
+    __imul__ = _reject_resize
+    append = _reject_resize
+    clear = _reject_resize
+    extend = _reject_resize
+    insert = _reject_resize
+    pop = _reject_resize
+    remove = _reject_resize
+    reverse = _reject_resize
+    sort = _reject_resize
+
+
+def _bind_qualified_direct_state_token(value: Any, token: list[int]) -> None:
+    """Subscribe shared model objects to every owning mesh mutation epoch."""
+
+    subscriptions = value.__dict__.get("_qualified_direct_state_tokens")
+    if subscriptions is None:
+        subscriptions = []
+        object.__setattr__(value, "_qualified_direct_state_tokens", subscriptions)
+    if not any(bound is token for bound in subscriptions):
+        subscriptions.append(token)
+    # Preserve the singular attribute as the most recent owner for concise
+    # diagnostics and backward-compatible introspection.
+    object.__setattr__(value, "_qualified_direct_state_token", token)
+
+
+class _QualifiedStateMapping(dict):
+    """A public-dict-compatible mapping that advances one shared epoch."""
+
+    def __init__(
+        self,
+        values: Any = (),
+        token: Optional[list[int]] = None,
+        kind: str = "detached",
+    ) -> None:
+        dict.__init__(self)
+        self._qualified_token = (
+            _QualifiedMutationEpoch() if token is None else token
+        )
+        self._qualified_kind = str(kind)
+        entries = values.items() if isinstance(values, Mapping) else values
+        for key, value in entries:
+            if token is None:
+                dict.__setitem__(self, key, value)
+                continue
+            self._prepare(value)
+            dict.__setitem__(self, key, value)
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "_QualifiedStateMapping":
+        token = copy.deepcopy(self._qualified_token, memo)
+        values = {
+            copy.deepcopy(key, memo): copy.deepcopy(value, memo)
+            for key, value in self.items()
+        }
+        made = type(self)(values, token, self._qualified_kind)
+        memo[id(self)] = made
+        return made
+
+    def __reduce_ex__(self, protocol: int) -> Tuple[Any, Tuple[Any, ...]]:
+        del protocol
+        return (
+            type(self),
+            (dict(self), self._qualified_token, self._qualified_kind),
+        )
+
+    def _prepare(self, value: Any) -> None:
+        if self._qualified_kind == "detached":
+            return
+        if self._qualified_kind == "element":
+            _freeze_qualified_element_vector_inputs(value)
+        _bind_qualified_direct_state_token(value, self._qualified_token)
+
+    def _advance(self) -> None:
+        self._qualified_token[0] = int(self._qualified_token[0]) + 1
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        self._prepare(value)
+        dict.__setitem__(self, key, value)
+        self._advance()
+
+    def __delitem__(self, key: Any) -> None:
+        dict.__delitem__(self, key)
+        self._advance()
+
+    def clear(self) -> None:
+        if self:
+            dict.clear(self)
+            self._advance()
+
+    def pop(self, key: Any, *default: Any) -> Any:
+        existed = key in self
+        value = dict.pop(self, key, *default)
+        if existed:
+            self._advance()
+        return value
+
+    def popitem(self) -> Tuple[Any, Any]:
+        value = dict.popitem(self)
+        self._advance()
+        return value
+
+    def setdefault(self, key: Any, default: Any = None) -> Any:
+        if key in self:
+            return dict.__getitem__(self, key)
+        self[key] = default
+        return default
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        values = dict(*args, **kwargs)
+        for key, value in values.items():
+            self[key] = value
+
+    def __ior__(self, other: Any) -> "_QualifiedStateMapping":
+        self.update(other)
+        return self
+
+
+def _ensure_qualified_state_mappings(mesh: "FEMesh") -> None:
+    """Install tracked public mappings, including after wholesale replacement."""
+
+    token = mesh._qualified_direct_state_token
+    for name, kind in (("nodes", "node"), ("elements", "element")):
+        current = getattr(mesh, name)
+        if (
+            isinstance(current, _QualifiedStateMapping)
+            and current._qualified_token is token
+            and current._qualified_kind == kind
+        ):
+            continue
+        object.__setattr__(
+            mesh,
+            name,
+            _QualifiedStateMapping(dict(current), token, kind),
+        )
 
 
 class DOFManager:
@@ -122,6 +324,36 @@ class Node:
     z: float
     dofs: List[int] = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        # Keep direct coordinate assignments observable by narrow cache plans
+        # without changing the serialized dataclass fields.  Supported mesh
+        # mutations still advance the mesh-wide geometry revision as before.
+        object.__setattr__(self, "_coordinate_revision", 0)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        revision = self.__dict__.get("_coordinate_revision")
+        if revision is not None and name in {"x", "y", "z"}:
+            object.__setattr__(self, "_coordinate_revision", int(revision) + 1)
+            tokens = self.__dict__.get("_qualified_direct_state_tokens")
+            if tokens is None:
+                token = self.__dict__.get("_qualified_direct_state_token")
+                tokens = () if token is None else (token,)
+            for token in tokens:
+                token[0] = int(token[0]) + 1
+        super().__setattr__(name, value)
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "Node":
+        made = type(self).__new__(type(self))
+        memo[id(self)] = made
+        for name, value in self.__dict__.items():
+            if name in {
+                "_qualified_direct_state_token",
+                "_qualified_direct_state_tokens",
+            }:
+                continue
+            object.__setattr__(made, name, copy.deepcopy(value, memo))
+        return made
+
     def coords(self) -> np.ndarray:
         """Return node coordinates as numpy array."""
         return np.array([self.x, self.y, self.z])
@@ -149,6 +381,68 @@ class FEMesh:
         "mpc": 0,
         "result_state": 0,
     })
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Keep wholesale public state-mapping replacements observable."""
+
+        token = self.__dict__.get("_qualified_direct_state_token")
+        kind = {"nodes": "node", "elements": "element"}.get(name)
+        if token is not None and kind is not None:
+            already_tracked = (
+                isinstance(value, _QualifiedStateMapping)
+                and value._qualified_token is token
+                and value._qualified_kind == kind
+            )
+            if not already_tracked:
+                value = _QualifiedStateMapping(dict(value), token, kind)
+                token[0] = int(token[0]) + 1
+        super().__setattr__(name, value)
+
+    def __post_init__(self) -> None:
+        token = _QualifiedMutationEpoch()
+        object.__setattr__(self, "_qualified_direct_state_token", token)
+        _ensure_qualified_state_mappings(self)
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "FEMesh":
+        """Copy owned model state while intentionally dropping derived caches."""
+
+        made = type(self).__new__(type(self))
+        memo[id(self)] = made
+        for definition in fields(self):
+            object.__setattr__(
+                made,
+                definition.name,
+                copy.deepcopy(getattr(self, definition.name), memo),
+            )
+        for element in made.elements.values():
+            _clear_element_local_caches(element)
+            # NumPy deepcopy normally turns arrays backed by immutable bytes
+            # into writable owners.  Qualified element deepcopy and this
+            # mesh-level backstop both restore the cache-input invariant.
+            _freeze_qualified_element_vector_inputs(element)
+        for value in tuple(made.nodes.values()) + tuple(made.elements.values()):
+            value.__dict__.pop("_qualified_direct_state_token", None)
+            value.__dict__.pop("_qualified_direct_state_tokens", None)
+        made.__post_init__()
+        return made
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Exclude bounded derived plans from Python serialization."""
+
+        state = dict(self.__dict__)
+        state.pop("_qualified_s3_reference_stiffness_plan", None)
+        state.pop("_recovery_batch_plan", None)
+        return state
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        self.__dict__.update(state)
+        if "_qualified_direct_state_token" not in self.__dict__:
+            object.__setattr__(
+                self,
+                "_qualified_direct_state_token",
+                _QualifiedMutationEpoch(),
+            )
+        _ensure_qualified_state_mappings(self)
 
     def _advance_revision(self, category: str) -> None:
         """Increment one revision without applying invalidation policy."""
@@ -184,6 +478,9 @@ class FEMesh:
         if node_id in self.nodes:
             raise ValueError(f"Node {node_id} already exists")
         node = Node(id=node_id, x=x, y=y, z=z)
+        _bind_qualified_direct_state_token(
+            node, self._qualified_direct_state_token
+        )
         node.dofs = self.dof_manager.add_node(node_id)
         self.nodes[node_id] = node
         self.bump_revision("topology")
@@ -199,6 +496,10 @@ class FEMesh:
         # another mesh).  Clear only the incoming element; revisiting every
         # existing element would turn construction into O(E**2).
         _clear_element_local_caches(element)
+        _freeze_qualified_element_vector_inputs(element)
+        _bind_qualified_direct_state_token(
+            element, self._qualified_direct_state_token
+        )
         self.elements[element_id] = element
         self.bump_revision("topology")
         self.bump_revision("mpc")

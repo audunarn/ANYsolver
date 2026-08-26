@@ -577,19 +577,54 @@ def test_every_test_file_has_one_burn_in_lane_and_heavy_files_are_serialized() -
     assert "tests/test_e4_pl_burnin.py" in lanes["quick"]
     assert "tests/test_fe_solver_shell_verification.py" in lanes["functional"]
     assert "tests/test_nonlinear_performance.py" in lanes["performance"]
+    assert "tests/test_e4_pl_s3_mixed_eigen_performance.py" in lanes["extended"]
+    assert "tests/test_e4_pl_s3_mixed_eigen_performance.py" not in lanes[
+        "performance"
+    ]
     assert "tests/test_e4_pl_q1v_contract.py" in lanes["extended"]
+    assert "tests/test_e4_pl_s3_opt_in.py" in lanes["additive"]
+    assert "tests/test_e4_pl_s3_reference_batch.py" in lanes["additive"]
+    assert "tests/test_e4_pl_s3_mixed_eigen_performance.py" not in (
+        lanes["quick"] + lanes["functional"] + lanes["additive"]
+    )
     assert all("performance" not in Path(path).name for path in lanes["functional"])
 
 
-def test_ci_lane_is_exactly_quick_plus_functional(
+def test_reference_batch_additive_override_preserves_optional_performance() -> None:
+    gate = _gate_module()
+    assert gate.classify_test(Path("tests/test_e4_pl_s3_reference_batch.py")) == (
+        "additive"
+    )
+    assert gate.classify_test(
+        Path("tests/test_e4_pl_s3_mixed_eigen_performance.py")
+    ) == "extended"
+    assert gate.classify_test(Path("tests/test_nonlinear_performance.py")) == (
+        "performance"
+    )
+
+
+def test_ci_lane_is_exactly_quick_plus_functional_plus_additive(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     gate = _gate_module()
+    real_lanes = gate.inventory()
+    real_ci_selection = {
+        *real_lanes["quick"],
+        *real_lanes["functional"],
+        *real_lanes["additive"],
+    }
+    assert "tests/test_e4_pl_s3_reference_batch.py" in real_ci_selection
+    assert (
+        "tests/test_e4_pl_s3_mixed_eigen_performance.py"
+        not in real_ci_selection
+    )
+    assert "tests/test_nonlinear_performance.py" not in real_ci_selection
     lanes = {
         "quick": ["tests/quick.py"],
         "functional": ["tests/functional.py"],
         "performance": ["tests/performance.py"],
         "extended": ["tests/extended.py"],
+        "additive": ["tests/additive.py"],
     }
     observed: dict[str, object] = {}
     monkeypatch.setattr(gate, "inventory", lambda: lanes)
@@ -603,7 +638,7 @@ def test_ci_lane_is_exactly_quick_plus_functional(
     assert gate.main(["ci"]) == 0
     assert observed == {
         "lane": "ci",
-        "selected": ["tests/quick.py", "tests/functional.py"],
+        "selected": ["tests/quick.py", "tests/functional.py", "tests/additive.py"],
     }
 
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
@@ -1107,13 +1142,14 @@ def test_pytest_source_metadata_overlay_binds_the_frozen_source_graph(
 
     versions = gate._write_source_metadata_overlay(roots, overlay)
 
-    assert versions == {
-        "ANYfileio": "0.2.0",
-        "ANYgeometry": "0.2.4",
-        "ANYmaterial": "0.1.1",
-        "ANYmesher": "0.2.5",
-        "ANYsolver": "0.3.0",
-    }
+    expected_versions = {}
+    for repository, distribution, _module in gate.LOCAL_DISTRIBUTIONS:
+        metadata = gate.tomllib.loads(
+            (roots[repository] / "pyproject.toml").read_text(encoding="utf-8")
+        )["project"]
+        assert metadata["name"] == distribution
+        expected_versions[distribution] = metadata["version"]
+    assert versions == expected_versions
     environment = gate._pytest_environment(
         roots=roots,
         metadata_overlay=overlay,
@@ -1126,8 +1162,8 @@ def test_pytest_source_metadata_overlay_binds_the_frozen_source_graph(
                 "from importlib import metadata; "
                 "print(metadata.version('ANYmesher')); "
                 "print(metadata.version('ANYmaterial')); "
-                "from anyfileio._semantic_dependencies import require_semantics; "
-                "print(require_semantics().Mesh.__name__)"
+                "from anymesher import Mesh; "
+                "print(Mesh.__name__)"
             ),
         ],
         cwd=ROOT,
@@ -1138,7 +1174,11 @@ def test_pytest_source_metadata_overlay_binds_the_frozen_source_graph(
         encoding="utf-8",
     )
     assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.splitlines() == ["0.2.5", "0.1.1", "Mesh"]
+    assert completed.stdout.splitlines() == [
+        expected_versions["ANYmesher"],
+        expected_versions["ANYmaterial"],
+        "Mesh",
+    ]
 
 
 def test_source_metadata_overlay_rejects_a_mismatched_project(

@@ -1,0 +1,256 @@
+{
+  "authority": {
+    "batch_benchmark": {
+      "bytes": 15933,
+      "path": "scripts/benchmark_e4_pl_s3_reference_batch.py",
+      "sha256": "F841EFC07DD00E42AA3B7C6E5B751833BDB34F92BFE8339921FD3DDED87FB02F"
+    },
+    "candidate": {
+      "allowed_successor_paths": [
+        "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
+        "docs/reference_cases/e4_pl_s3_mixed_eigen_performance_input.json",
+        "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
+        "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
+        "docs/reference_cases/e4_pl_s3_mixed_structural_input.json",
+        "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
+        "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+        "tests/test_e4_pl_s3_mixed_eigen_performance.py",
+        "tests/test_e4_pl_s3_mixed_structural_qualification.py"
+      ],
+      "changed_paths": [
+        "src/anysolver/matrix_assembly.py",
+        "src/anysolver/s3_reference_batch.py",
+        "tests/test_e4_pl_s3_reference_batch.py"
+      ],
+      "commit": "4e5b5976d4286ffd0cda5b8424d154132f3f8da0",
+      "parent": "7d85ecef35daa6ebe11f11536a7ede4d288e0aa3",
+      "subject": "perf: amortize immutable S3 matrix validation",
+      "tree": "96f60dcdd61a78111091ce4f93d7170cf7d0878a"
+    },
+    "connectivity_manifest": {
+      "bytes": 110005,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+      "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    },
+    "model_authority": {
+      "bytes": 3585,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_smoke_input.json",
+      "sha256": "C9131CE2C588FDA9D1EDE8C71A4F76BA326D00FFB5DA9EDDCE0A90132BA0CC56"
+    },
+    "prior_hot_path_baseline": {
+      "authority_sha256": "0CA57CBD936421AD5442EE67D75418E43CDAB55EE383DC0C7A1F6FA730858D42",
+      "files": {
+        "cycle_1_batch": {
+          "bytes": 3491,
+          "path": "cycle-1/workers/batch_4096/record.json",
+          "sha256": "A9CEF75386194BEEC5E71226C5D52E6C107DE2F95C83DF048D52E99C178264D3"
+        },
+        "cycle_1_common": {
+          "bytes": 967,
+          "path": "cycle-1/common.json",
+          "sha256": "80EBEA7D6207327EEFF6E2018F32A30333807658F4227AB946723EA1A10499E0"
+        },
+        "cycle_1_performance_all_q4": {
+          "bytes": 1804,
+          "path": "cycle-1/workers/performance_all_q4/record.json",
+          "sha256": "D97E475E953A07C40440AE2C91A6490F41C0E819C847FCCBCACF702FD00889D5"
+        },
+        "cycle_1_performance_mixed_10": {
+          "bytes": 1812,
+          "path": "cycle-1/workers/performance_mixed_10/record.json",
+          "sha256": "1E495B377A7509B32EF53EDC5EE4458F2486B07950F12AC0DA8C93DF85D952C7"
+        },
+        "cycle_1_performance_mixed_25": {
+          "bytes": 1813,
+          "path": "cycle-1/workers/performance_mixed_25/record.json",
+          "sha256": "6F17EB29063A872020FC901863646CA5FB43EB12F4DA862DD95A39271F0ACD6C"
+        },
+        "cycle_2_batch": {
+          "bytes": 3475,
+          "path": "cycle-2/workers/batch_4096/record.json",
+          "sha256": "0945927466E8EC8B11AC582724AE0C95279A6035A4C4FFA961301F934B6ACADF"
+        },
+        "cycle_2_common": {
+          "bytes": 967,
+          "path": "cycle-2/common.json",
+          "sha256": "80EBEA7D6207327EEFF6E2018F32A30333807658F4227AB946723EA1A10499E0"
+        },
+        "cycle_2_performance_all_q4": {
+          "bytes": 1804,
+          "path": "cycle-2/workers/performance_all_q4/record.json",
+          "sha256": "792BF181E9CEF6EC5946750640A1586727651D9F9157B38DD89D13E9421DF5BD"
+        },
+        "cycle_2_performance_mixed_10": {
+          "bytes": 1813,
+          "path": "cycle-2/workers/performance_mixed_10/record.json",
+          "sha256": "707AFDE251E217F2E5AEC3317101BEDA65F5F42B959464253C8D5CD6904C55A0"
+        },
+        "cycle_2_performance_mixed_25": {
+          "bytes": 1811,
+          "path": "cycle-2/workers/performance_mixed_25/record.json",
+          "sha256": "1D33F8A7E76A62328E0ABE1721E304D3DE1B2BEA8FBCE2902ECC716F55C449AC"
+        },
+        "two_cycle_common": {
+          "bytes": 422,
+          "path": "two-cycle-common.json",
+          "sha256": "E95C28C42EF4182FD5FB0926CC4C5561E61CC1ED23DF57F1FDA2946F91E8F1BA"
+        }
+      },
+      "root": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-eigen-performance-20260825-2b169855"
+    },
+    "production_boundary": {
+      "default_selector": {
+        "bytes": 206377,
+        "path": "src/anysolver/elements.py",
+        "sha256": "3CE41EDFD156E8F5CB04A0C3815A91AD2E33DCA4C6335600D041A34AF9627147"
+      },
+      "production_readiness": {
+        "bytes": 16838,
+        "path": "src/anysolver/production_readiness.py",
+        "sha256": "2366745459B737F7F415EABAA4A3E0058409AEE5D55CBB8663B72D645D09A70B"
+      },
+      "public_exports": {
+        "bytes": 27331,
+        "path": "src/anysolver/__init__.py",
+        "sha256": "9CF9EA599651A449BF29940DED34ACFD9E09EB13FC72BA012C7FAEF1807D1BAA"
+      },
+      "q4_mechanics": {
+        "bytes": 28104,
+        "path": "src/anysolver/e4_pl_element.py",
+        "sha256": "EE49BAE1C9439C41EC2D61798A8A8B88CBA9081DCAD2DFDC857FE313C6C0D4D1"
+      }
+    },
+    "qualification_contract": {
+      "bytes": 5489,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_qualification_contract.json",
+      "sha256": "091D6D63BF0950B8A5CBB298095E0787DEB78ECD4954E9F421741259F1E93FDD"
+    },
+    "runner": {
+      "bytes": 84832,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
+      "sha256": "1A004499A4E6A53465B88B856596F70EFDB23946AC241188FF63049E650CC2B8"
+    }
+  },
+  "coverage": {
+    "batch": {
+      "eligible_element_count": 4096,
+      "include_q4_comparator": true,
+      "repetitions": 11,
+      "scalar_fallback_required": true,
+      "warmups_per_route": 1
+    },
+    "buckling": {
+      "cluster_relative_tolerance": "1e-3",
+      "first_factor_count": 5,
+      "mixed_fractions_percent": [
+        10,
+        25
+      ],
+      "physical_global_membrane_compression_tensor": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_elastic_only": true,
+      "search_factor": 4
+    },
+    "candidate_hot_path_baseline": {
+      "maximum_regression": "0.05",
+      "normalized_diagnostic_metrics": [
+        "mixed_10_assembly_ratio_to_all_q4",
+        "mixed_25_assembly_ratio_to_all_q4",
+        "s3_stiffness_batch_ratio_to_q4",
+        "s3_stiffness_batch_ratio_to_scalar_fallback",
+        "s3_recovery_batch_ratio_to_scalar_fallback"
+      ],
+      "primary_metric": "s3_stiffness_batch_median_seconds",
+      "reference_selection": "MAXIMUM_RAW_S3_STIFFNESS_MEDIAN_ACROSS_TWO_HASH_BOUND_FORMAL_CYCLES",
+      "secondary_guard": "WARM_S3_NO_SLOWER_THAN_Q4_EXISTING_BATCH_GATE"
+    },
+    "matched_topologies": {
+      "all_q4": {
+        "connectivity_sha256": "89E4B78664790C1AE5FE75734C7FF8FF2FBB84883DBB522A4E2F9274EF3E5673",
+        "diagonal": "alternating",
+        "level": 20,
+        "mask": "none",
+        "s3_area_fraction_percent": 0,
+        "split_base_cell_count": 0
+      },
+      "mixed_10_percent": {
+        "connectivity_sha256": "2ACD17252660C64149124464455AE2C2BAD25E02232AF0CA5C02A3B206AE418F",
+        "diagonal": "alternating",
+        "level": 20,
+        "mask": "dispersed",
+        "s3_area_fraction_percent": 10,
+        "split_base_cell_count": 40
+      },
+      "mixed_25_percent": {
+        "connectivity_sha256": "52E0A70AD4500C4B3E9DAF581D280EE414A5851CC0BEF579045FC88A2F82F87A",
+        "diagonal": "alternating",
+        "level": 20,
+        "mask": "dispersed",
+        "s3_area_fraction_percent": 25,
+        "split_base_cell_count": 100
+      }
+    },
+    "modal": {
+      "cluster_relative_tolerance": "1e-4",
+      "elastic_frequency_count": 10,
+      "free_scaled_spectrum_root_count": 10,
+      "mixed_fractions_percent": [
+        10,
+        25
+      ],
+      "required_rigid_mode_count": 6,
+      "shift": -0.001
+    },
+    "performance": {
+      "mixed_fractions_percent": [
+        10,
+        25
+      ],
+      "repetitions": 11,
+      "warmups_per_route": 1
+    },
+    "support": {
+      "dofs": [
+        "ux",
+        "uy",
+        "uz"
+      ],
+      "identity": "ALL_BOUNDARY_NODES_TRANSLATIONALLY_SIMPLY_SUPPORTED_V1"
+    }
+  },
+  "execution": {
+    "automatic_retry": false,
+    "canonical_cycles": 2,
+    "memory_limit_gib_per_process": 24,
+    "numerical_library_threads_per_process": 1,
+    "performance_workers_are_serial": true,
+    "timeout_seconds_per_process": 600,
+    "worker_concurrency": 3,
+    "worker_ids": [
+      "MODAL_MIXED_10",
+      "MODAL_MIXED_25",
+      "BUCKLING_MIXED_10",
+      "BUCKLING_MIXED_25",
+      "PERFORMANCE_ALL_Q4",
+      "PERFORMANCE_MIXED_10",
+      "PERFORMANCE_MIXED_25",
+      "BATCH_4096"
+    ]
+  },
+  "schema": "anysolver.e4-pl-s3-mixed-eigen-performance-input-v1"
+}

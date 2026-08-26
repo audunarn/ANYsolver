@@ -1,0 +1,198 @@
+{
+  "authority": {
+    "connectivity_manifest": {
+      "bytes": 110005,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+      "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    },
+    "input_schema": {
+      "bytes": 9665,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
+      "sha256": "31E01B70DB4AD0EF6218C484CB3F048040E305E8D0188DDB0C30BA8C0F211379"
+    },
+    "model_authority": {
+      "bytes": 3585,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_smoke_input.json",
+      "sha256": "C9131CE2C588FDA9D1EDE8C71A4F76BA326D00FFB5DA9EDDCE0A90132BA0CC56"
+    },
+    "programs": {
+      "common": {
+        "bytes": 59977,
+        "path": "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
+        "sha256": "5F08AF199C46517D2489616EF865EB2AF0C14B2864C4A503DF72EC12C668163D"
+      },
+      "coordinator": {
+        "bytes": 14227,
+        "path": "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
+        "sha256": "22E79A9AC370ADD821A8B10817071ECD13A7E707EEBB2EE3715C0BCB22DEF711"
+      },
+      "producer": {
+        "bytes": 41981,
+        "path": "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+        "sha256": "6D255283FE9E38CA67543AD3D2DBBABAF4DCECD9D9BB269B2456B52F9869ED31"
+      },
+      "qualification_test": {
+        "bytes": 25498,
+        "path": "tests/test_e4_pl_s3_mixed_structural_qualification.py",
+        "sha256": "CB54674637B26595318ABE66A377CA259DCD6EE716FDBD899BAA873F5C552336"
+      }
+    },
+    "q4_mechanics": {
+      "bytes": 28104,
+      "path": "src/anysolver/e4_pl_element.py",
+      "sha256": "EE49BAE1C9439C41EC2D61798A8A8B88CBA9081DCAD2DFDC857FE313C6C0D4D1"
+    },
+    "qualification_contract": {
+      "bytes": 5489,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_qualification_contract.json",
+      "sha256": "091D6D63BF0950B8A5CBB298095E0787DEB78ECD4954E9F421741259F1E93FDD"
+    }
+  },
+  "candidate": {
+    "commit": "4e5b5976d4286ffd0cda5b8424d154132f3f8da0",
+    "parent": "7d85ecef35daa6ebe11f11536a7ede4d288e0aa3",
+    "qualified_q4_formulation_id": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+    "qualified_s3_formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+    "subject": "perf: amortize immutable S3 matrix validation",
+    "tree": "96f60dcdd61a78111091ce4f93d7170cf7d0878a"
+  },
+  "coverage": {
+    "convergence_reference": {
+      "interface_series_max_odd_index": 31,
+      "length": 1.0,
+      "pressure": 1000.0,
+      "series_max_odd_index": 99,
+      "shear_correction": "5/6",
+      "theory": "INDEPENDENT_NAVIER_REISSNER_MINDLIN_UNIFORM_PRESSURE_V1",
+      "thickness": 0.01,
+      "width": 1.0
+    },
+    "convergence_sequences": [
+      {
+        "diagonal": "alternating",
+        "fraction_percent": 0,
+        "mask": "none"
+      },
+      {
+        "diagonal": "slash",
+        "fraction_percent": 1,
+        "mask": "dispersed"
+      },
+      {
+        "diagonal": "backslash",
+        "fraction_percent": 5,
+        "mask": "chain"
+      },
+      {
+        "diagonal": "alternating",
+        "fraction_percent": 10,
+        "mask": "boundary_band"
+      },
+      {
+        "diagonal": "alternating",
+        "fraction_percent": 25,
+        "mask": "hole_band"
+      }
+    ],
+    "locking_fixture": {
+      "diagonal": "alternating",
+      "fractions_percent": [
+        0,
+        10,
+        25
+      ],
+      "length": 1.0,
+      "longitudinal_divisions": 160,
+      "mask": "DETERMINISTIC_STRIP_DISPERSED_V1",
+      "tip_force": 1.0,
+      "transverse_divisions": 16,
+      "width": 0.1
+    },
+    "patch_basis_cases": [
+      {
+        "diagonal": "slash",
+        "fraction_percent": 0,
+        "level": 20,
+        "mask": "none"
+      },
+      {
+        "diagonal": "slash",
+        "fraction_percent": 25,
+        "level": 20,
+        "mask": "compact_cluster"
+      },
+      {
+        "diagonal": "backslash",
+        "fraction_percent": 25,
+        "level": 20,
+        "mask": "compact_cluster"
+      },
+      {
+        "diagonal": "alternating",
+        "fraction_percent": 25,
+        "level": 20,
+        "mask": "compact_cluster"
+      }
+    ],
+    "required_diagonals": [
+      "slash",
+      "backslash",
+      "alternating"
+    ],
+    "required_fractions_percent": [
+      0,
+      1,
+      5,
+      10,
+      25
+    ],
+    "required_levels": [
+      20,
+      40,
+      80,
+      160
+    ],
+    "required_masks": [
+      "dispersed",
+      "chain",
+      "compact_cluster",
+      "boundary_band",
+      "hole_band"
+    ],
+    "special_fixtures": [
+      "ISOLATED_S3",
+      "PAIRED_S3",
+      "Q4_S3_Q4_CHAIN",
+      "DISTORTED_Q4_INTERFACE",
+      "ALL_SIX_D3_NUMBERINGS",
+      "PHYSICAL_DIRECTOR_REVERSAL",
+      "PUBLISHED_MESH_A",
+      "PUBLISHED_MESH_B"
+    ]
+  },
+  "execution": {
+    "allowed_changed_paths": [
+      "docs/reference_cases/e4_pl_s3_mixed_eigen_performance.py",
+      "docs/reference_cases/e4_pl_s3_mixed_eigen_performance_input.json",
+      "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
+      "docs/reference_cases/e4_pl_s3_mixed_structural_coordinator.py",
+      "docs/reference_cases/e4_pl_s3_mixed_structural_input.json",
+      "docs/reference_cases/e4_pl_s3_mixed_structural_input_schema.json",
+      "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
+      "tests/test_e4_pl_s3_mixed_eigen_performance.py",
+      "tests/test_e4_pl_s3_mixed_structural_qualification.py"
+    ],
+    "automatic_retry": false,
+    "canonical_cycles": 2,
+    "memory_limit_gib_per_process": 24,
+    "numerical_threads_per_process": 1,
+    "shards": [
+      "PATCH_EQUILIBRIUM_COVARIANCE",
+      "CONVERGENCE_INTERFACE_PARTICIPATION",
+      "LOCKING_AND_SPECIAL_FIXTURES"
+    ],
+    "timeout_seconds_per_process": 600,
+    "workers": 3
+  },
+  "schema": "anysolver.e4-pl-s3-mixed-structural-input-v1"
+}

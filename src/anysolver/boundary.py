@@ -8,15 +8,52 @@ for the FE model.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+
+from .matrix_assembly import (
+    _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_LOAD_RUNTIME_LEASE,
+)
 
 if TYPE_CHECKING:
     from .fe_core import DOFManager, FEMesh, Material, Node
 
 
 _SMALL = 1.0e-12
+
+
+class _MeshLeaseModel:
+    """Closure-private adapter for direct mesh-level load operations."""
+
+    __slots__ = ("mesh",)
+
+    def __init__(self, mesh: "FEMesh") -> None:
+        self.mesh = mesh
+
+
+def _run_with_qualified_load_runtime_lease(
+    mesh: "FEMesh",
+    *,
+    context: str,
+    operation: Callable[[Callable[..., None]], Any],
+) -> Any:
+    proxy = _MeshLeaseModel(mesh)
+    lease = _CAPTURE_QUALIFIED_LOAD_RUNTIME_LEASE(
+        proxy,
+        context=f"{context} preflight",
+    )
+
+    def require(*, stage: str) -> None:
+        lease(proxy, context=f"{context} {stage}")
+
+    try:
+        result = operation(require)
+    except BaseException:
+        require(stage="exceptional output")
+        raise
+    require(stage="output")
+    return result
 
 
 class _GravityFallbackMaterial:
@@ -189,7 +226,8 @@ class LoadCase:
         node ordering and natural-coordinate surface Jacobian.
 
         Pressure is a dead load by default.  Set ``follower_pressure=True`` on
-        the load case to integrate it over the current midsurface during a
+        the load case to integrate it over the current nodal interpolation
+        surface during a
         nonlinear solve.  The flag is load-case-wide so one proportional load
         pattern cannot accidentally mix reference- and current-configuration
         pressure semantics.
@@ -306,7 +344,7 @@ class LoadCase:
         mesh: "FEMesh",
         displacements: Optional[np.ndarray],
     ) -> np.ndarray:
-        """Return midsurface coordinates after nodal translations."""
+        """Return nodal interpolation-surface coordinates after translations."""
         coords = np.asarray(element.get_node_coordinates(mesh), dtype=float).copy()
         if displacements is None:
             return coords
@@ -335,9 +373,9 @@ class LoadCase:
 
             f_i = integral_A N_i * p * n dA
 
-        When ``coords`` are current midsurface coordinates this is a follower
+        When ``coords`` are current nodal interpolation-surface coordinates this is a follower
         load.  No independent rotational pressure moments are introduced:
-        pressure virtual work is conjugate to midsurface translations.
+        pressure virtual work is conjugate to interpolation-surface translations.
         """
         if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
             return self._fallback_lumped_pressure_load(element, mesh, pressure, coords)
@@ -349,12 +387,22 @@ class LoadCase:
         f_elem = np.zeros(num_nodes * 6)
         gauss_points = getattr(element, "gauss_points")
         gauss_weights = getattr(element, "gauss_weights")
+        orientation_provider = getattr(
+            element, "sheet_area_orientation_sign", None
+        )
+        orientation_sign = (
+            float(orientation_provider(mesh))
+            if callable(orientation_provider)
+            else 1.0
+        )
+        if orientation_sign not in (-1.0, 1.0):
+            raise ValueError("shell sheet area orientation sign must be -1 or +1")
 
         for (xi, eta), weight in zip(gauss_points, gauss_weights):
             N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
             tangent_xi = coords.T @ dN_dxi
             tangent_eta = coords.T @ dN_deta
-            area_vector = np.cross(tangent_xi, tangent_eta)
+            area_vector = orientation_sign * np.cross(tangent_xi, tangent_eta)
             if float(np.linalg.norm(area_vector)) < _SMALL:
                 continue
             for i in range(num_nodes):
@@ -392,6 +440,16 @@ class LoadCase:
         tangent = np.zeros((num_nodes * 6, num_nodes * 6), dtype=float)
         gauss_points = getattr(element, "gauss_points")
         gauss_weights = getattr(element, "gauss_weights")
+        orientation_provider = getattr(
+            element, "sheet_area_orientation_sign", None
+        )
+        orientation_sign = (
+            float(orientation_provider(mesh))
+            if callable(orientation_provider)
+            else 1.0
+        )
+        if orientation_sign not in (-1.0, 1.0):
+            raise ValueError("shell sheet area orientation sign must be -1 or +1")
 
         for (xi, eta), weight in zip(gauss_points, gauss_weights):
             N, dN_dxi, dN_deta = element.compute_shape_functions(float(xi), float(eta))
@@ -401,7 +459,7 @@ class LoadCase:
                 continue
             skew_xi = self._skew(tangent_xi)
             skew_eta = self._skew(tangent_eta)
-            scale = float(pressure) * float(weight)
+            scale = orientation_sign * float(pressure) * float(weight)
             for i in range(num_nodes):
                 row = slice(6 * i, 6 * i + 3)
                 for j in range(num_nodes):
@@ -435,13 +493,15 @@ class LoadCase:
             acceleration[i * 6:i * 6 + 3] = self.gravity
         return np.asarray(mass_matrix @ acceleration, dtype=float).reshape(-1)
 
-    def get_load_vector(
+    def _get_load_vector_under_lease(
         self,
         mesh: "FEMesh",
         dof_manager: "DOFManager",
         material_getter: Optional[Callable[[str], "Material"]] = None,
         displacements: Optional[np.ndarray] = None,
         element_activity: Optional[object] = None,
+        *,
+        qualified_runtime_guard: Callable[..., None],
     ) -> np.ndarray:
         """Assemble the global load vector.
 
@@ -449,6 +509,7 @@ class LoadCase:
         :attr:`follower_pressure` is true.  Dead pressure, nodal, element and
         gravity loads retain their reference-configuration semantics.
         """
+        qualified_runtime_guard(stage="load-vector preflight")
         total_dofs = dof_manager.total_dofs
         F = np.zeros(total_dofs)
 
@@ -456,6 +517,7 @@ class LoadCase:
             if element_activity is None:
                 return 1.0
             values = element_activity.load_scales([int(element_id)])
+            qualified_runtime_guard(stage="load activity observation")
             return float(np.asarray(values, dtype=float).reshape(-1)[0])
 
         # Nodal loads.
@@ -502,7 +564,16 @@ class LoadCase:
                     material = _GravityFallbackMaterial()
                 else:
                     material = material_getter(element.material_name)
+                    qualified_runtime_guard(
+                        stage=(
+                            "load material observation for element "
+                            f"{element_id}"
+                        )
+                    )
                 f_elem = self._consistent_gravity_load(element, mesh, material)
+                qualified_runtime_guard(
+                    stage=f"gravity-load element observation for element {element_id}"
+                )
                 scale = activity_scale(int(element_id))
                 dof_mapping = element.get_dof_mapping(mesh)
                 for i, dof in enumerate(dof_mapping):
@@ -527,6 +598,29 @@ class LoadCase:
                     F[node.dofs[axis]] += float(mass) * acceleration[axis]
 
         return F
+
+    def get_load_vector(
+        self,
+        mesh: "FEMesh",
+        dof_manager: "DOFManager",
+        material_getter: Optional[Callable[[str], "Material"]] = None,
+        displacements: Optional[np.ndarray] = None,
+        element_activity: Optional[object] = None,
+    ) -> np.ndarray:
+        """Assemble a direct load vector under one mesh-family authority lease."""
+
+        return _run_with_qualified_load_runtime_lease(
+            mesh,
+            context="direct load-vector assembly",
+            operation=lambda guard: self._get_load_vector_under_lease(
+                mesh,
+                dof_manager,
+                material_getter,
+                displacements,
+                element_activity,
+                qualified_runtime_guard=guard,
+            ),
+        )
 
 
 @dataclass

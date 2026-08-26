@@ -14,7 +14,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Dict, Iterable, Mapping, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
 
 import numpy as np
 
@@ -25,15 +25,61 @@ from .elements import (
     _shell_material_matrices,
 )
 from .materials import is_isotropic_material
+from .materials import elastic_compliance_matrix, material_symmetry
+from .matrix_assembly import (
+    _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE,
+)
+from .s3_reference_batch import (
+    MIN_REFERENCE_S3_RECOVERY_GROUP,
+    ReferenceS3RecoveryBatch,
+    build_reference_s3_recovery_batch,
+    reference_s3_candidate,
+)
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
 
 
+def _clear_recovery_plan_without_callbacks(model: "FEModel") -> None:
+    namespace = object.__getattribute__(model.mesh, "__dict__")
+    if type(namespace) is dict:
+        dict.pop(namespace, "_recovery_batch_plan", None)
+
+
+def _run_with_qualified_recovery_runtime_lease(
+    model: "FEModel",
+    *,
+    context: str,
+    operation: Callable[[Any], Any],
+) -> Any:
+    """Run plan/recovery work under one non-renewable family lease."""
+
+    lease = _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE(
+        model,
+        context=f"{context} preflight",
+    )
+
+    def require(*, stage: str) -> None:
+        try:
+            lease(model, context=f"{context} {stage}")
+        except BaseException:
+            _clear_recovery_plan_without_callbacks(model)
+            raise
+
+    try:
+        result = operation(require)
+    except BaseException:
+        require(stage="exceptional output")
+        raise
+    require(stage="output")
+    return result
+
+
 def _readonly(array: np.ndarray) -> np.ndarray:
     result = np.ascontiguousarray(array)
-    result.setflags(write=False)
-    return result
+    return np.frombuffer(
+        result.tobytes(order="C"), dtype=result.dtype
+    ).reshape(result.shape)
 
 
 def _revision_key(model: "FEModel") -> Tuple[int, int, int]:
@@ -43,6 +89,55 @@ def _revision_key(model: "FEModel") -> Tuple[int, int, int]:
         int(revisions.get("geometry", 0)),
         int(revisions.get("material", 0)),
     )
+
+
+def _direct_state_key(model: "FEModel") -> Tuple[int, int, int, int]:
+    token = getattr(model.mesh, "_qualified_direct_state_token", (-1,))
+    return (
+        id(model.mesh.nodes),
+        id(model.mesh.elements),
+        id(token),
+        int(token[0]),
+    )
+
+
+def _material_state_key(model: "FEModel") -> Tuple[Tuple[object, ...], ...]:
+    names = sorted(str(name) for name in model.materials)
+    rows = []
+    for name in names:
+        material = model.get_material(name)
+        if is_isotropic_material(material):
+            elastic = (
+                "isotropic",
+                float(material.elastic_modulus),
+                float(material.poisson_ratio),
+            )
+        else:
+            compliance = np.ascontiguousarray(
+                np.asarray(elastic_compliance_matrix(material), dtype=np.float64)
+            )
+            elastic = (
+                str(material_symmetry(material)),
+                compliance.shape,
+                compliance.tobytes(order="C"),
+            )
+        hill = getattr(material, "hill_yield", None)
+        hardening = getattr(material, "hardening_curve", None)
+        rows.append(
+            (
+                name,
+                type(material).__module__,
+                type(material).__qualname__,
+                id(material),
+                bool(is_isotropic_material(material)),
+                elastic,
+                hill is None,
+                id(hill),
+                hardening is None,
+                id(hardening),
+            )
+        )
+    return tuple(rows)
 
 
 def _formulation_name(model: "FEModel", element: object) -> str:
@@ -85,14 +180,25 @@ class RecoveryBatchPlan:
     """Immutable layout shared by repeated recovery calls for one mesh."""
 
     revision_key: Tuple[int, int, int]
+    direct_state_key: Tuple[int, int, int, int]
+    material_state_key: Tuple[Tuple[object, ...], ...]
     items: Tuple[RecoveryPlanItem, ...]
     item_by_id: Mapping[int, RecoveryPlanItem]
     setup_seconds: float
     retained_bytes: int
     isotropic_s4: "RecoveryS4Batch | None"
+    reference_s3: "ReferenceS3RecoveryBatch | None"
+    reference_s3_candidate_ids: Tuple[int, ...]
+    reference_s3_fallback_reasons: Mapping[str, Tuple[int, ...]]
 
     @classmethod
     def build(cls, model: "FEModel") -> "RecoveryBatchPlan":
+        from .fe_core import _ensure_qualified_state_mappings
+
+        # A wholesale public mapping replacement invalidates the prior plan
+        # by identity.  Normalize the replacement before capturing a new key
+        # so subsequent direct node/element mutations remain observable.
+        _ensure_qualified_state_mappings(model.mesh)
         start = time.perf_counter()
         items = []
         s4_element_ids = []
@@ -101,13 +207,14 @@ class RecoveryBatchPlan:
         s4_q_local = []
         s4_g_local = []
         s4_thickness = []
+        reference_s3_items = []
         retained_bytes = 0
         for element_id, element in model.mesh.elements.items():
-            mapping = np.asarray(
-                element.get_dof_mapping(model.mesh), dtype=np.intp
-            ).reshape(-1)
-            mapping = np.ascontiguousarray(mapping)
-            mapping.setflags(write=False)
+            mapping = _readonly(
+                np.asarray(
+                    element.get_dof_mapping(model.mesh), dtype=np.intp
+                ).reshape(-1)
+            )
             retained_bytes += int(mapping.nbytes)
             items.append(
                 RecoveryPlanItem(
@@ -116,6 +223,10 @@ class RecoveryBatchPlan:
                     dof_mapping=mapping,
                 )
             )
+            if reference_s3_candidate(element):
+                reference_s3_items.append(
+                    (int(element_id), element, mapping)
+                )
             if items[-1].formulation in {"shell_s4_isotropic", "shell_s4r_isotropic"}:
                 material = model.get_material(element.material_name)
                 q_local, g_local, _strain_transform, _stress_transform = (
@@ -148,8 +259,27 @@ class RecoveryBatchPlan:
                 ),
             )
             retained_bytes += isotropic_s4.retained_bytes
+        reference_s3 = None
+        reference_s3_candidate_ids: Tuple[int, ...] = ()
+        reference_s3_fallback_reasons: Mapping[str, Tuple[int, ...]] = (
+            MappingProxyType({})
+        )
+        # Keep small selections on the existing scalar oracle with no retained
+        # batch state.  This is intentionally checked before component
+        # preparation so ordinary small models pay no S3 batch setup cost.
+        if len(reference_s3_items) >= MIN_REFERENCE_S3_RECOVERY_GROUP:
+            reference_s3, prepared_s3 = build_reference_s3_recovery_batch(
+                model,
+                reference_s3_items,
+            )
+            reference_s3_candidate_ids = prepared_s3.candidate_element_ids
+            reference_s3_fallback_reasons = prepared_s3.fallback_reasons
+            if reference_s3 is not None:
+                retained_bytes += reference_s3.retained_bytes
         return cls(
             revision_key=_revision_key(model),
+            direct_state_key=_direct_state_key(model),
+            material_state_key=_material_state_key(model),
             items=item_tuple,
             item_by_id=MappingProxyType(
                 {item.element_id: item for item in item_tuple}
@@ -157,25 +287,56 @@ class RecoveryBatchPlan:
             setup_seconds=float(time.perf_counter() - start),
             retained_bytes=int(retained_bytes),
             isotropic_s4=isotropic_s4,
+            reference_s3=reference_s3,
+            reference_s3_candidate_ids=reference_s3_candidate_ids,
+            reference_s3_fallback_reasons=reference_s3_fallback_reasons,
         )
 
     def is_valid(self, model: "FEModel") -> bool:
-        return self.revision_key == _revision_key(model)
+        return (
+            self.revision_key == _revision_key(model)
+            and self.direct_state_key == _direct_state_key(model)
+            and self.material_state_key == _material_state_key(model)
+        )
 
     def select(self, element_ids: Iterable[int]) -> Tuple[RecoveryPlanItem, ...]:
         wanted = {int(element_id) for element_id in element_ids}
         return tuple(item for item in self.items if item.element_id in wanted)
 
 
-def get_recovery_batch_plan(model: "FEModel") -> Tuple[RecoveryBatchPlan, bool]:
+def _get_recovery_batch_plan_under_lease(
+    model: "FEModel",
+    *,
+    qualified_runtime_guard: Any,
+) -> Tuple[RecoveryBatchPlan, bool]:
     """Return the mesh-owned plan and whether it was reused."""
 
+    qualified_runtime_guard(stage="plan lookup")
     cached = getattr(model.mesh, "_recovery_batch_plan", None)
-    if isinstance(cached, RecoveryBatchPlan) and cached.is_valid(model):
+    cached_is_current = False
+    if isinstance(cached, RecoveryBatchPlan):
+        cached_is_current = cached.is_valid(model)
+        qualified_runtime_guard(stage="plan validation observation")
+    if cached_is_current:
         return cached, True
     plan = RecoveryBatchPlan.build(model)
+    qualified_runtime_guard(stage="plan build observation")
     model.mesh._recovery_batch_plan = plan
+    qualified_runtime_guard(stage="plan publication")
     return plan, False
+
+
+def get_recovery_batch_plan(model: "FEModel") -> Tuple[RecoveryBatchPlan, bool]:
+    """Return the mesh-owned plan under one authority lease."""
+
+    return _run_with_qualified_recovery_runtime_lease(
+        model,
+        context="recovery batch plan",
+        operation=lambda guard: _get_recovery_batch_plan_under_lease(
+            model,
+            qualified_runtime_guard=guard,
+        ),
+    )
 
 
 @dataclass(frozen=True)
