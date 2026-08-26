@@ -38,7 +38,15 @@ PERFORMANCE_BASELINE_MARKER = b"Q1M_PERFORMANCE_BASELINE_JSON="
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_OBJECT_RE = re.compile(r"[0-9a-f]{40}\Z")
 REQUEST_ID_RE = re.compile(r"[0-9a-f]{32}\Z")
-V7_REQUEST_IDS = (
+V8_REQUEST_IDS = (
+    "c2f3383ea7ab4702bb9107c010afa826",
+    "0a1f61046a4e4a8a8857f191b60b87f6",
+    "dc3c9442dfd547dda5cd86854a541253",
+    "8142bd76fe494f34886f5b0f8124efd0",
+    "570f8fba9c9544a9989ae71400688794",
+    "1dc0401d62b04e959d6cb9424db17a54",
+)
+V7_REJECTED_REQUEST_IDS = (
     "43fd3902318c41bab21aa0ea851bbbb3",
     "f8586b30ae12448498bfe104b3776f01",
     "06a261a4e43549acb33449d6ef455644",
@@ -2637,6 +2645,140 @@ def _validate_attempt_6_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_7_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the rejected v7 CI-partition review without granting execution."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "contract",
+            "failure",
+            "ledger_occurrences",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "review_test_results",
+            "reviews",
+            "role",
+            "terminal",
+        },
+        location,
+    )
+    if incident["attempt"] != 7:
+        raise EvidenceError(f"{location}.attempt must be 7")
+    _validate_git_commit_record(
+        incident["authority_commit"],
+        f"{location}.authority_commit",
+        commit="f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8",
+        subject="docs: authorize corrected S3 Q4 burn-in cycles",
+        tree="3942ae13d497ce3353d900b4d46502167d8b68c0",
+    )
+    contract_record = _exact_keys(
+        incident["contract"], {"bytes", "sha256"}, f"{location}.contract"
+    )
+    _validate_hash_record(contract_record, f"{location}.contract")
+    if contract_record != {
+        "bytes": 279259,
+        "sha256": "c779a03ee08db6f9f8696a804cab31fa7da0d73bc6841e1fe483bd9c741de79c",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+
+    reviewed_inputs = {
+        "attachment_sha256": (
+            "c76832af87afa4a8828ba6dbad0c582b79d69934233081f0bb640fb2d250240a"
+        ),
+        "authority_commit": "f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8",
+        "authority_tree": "3942ae13d497ce3353d900b4d46502167d8b68c0",
+        "base_commit": "e34f12398751a6315372bae68c089f8184a045fe",
+        "checkpoint_commit": "bfdadccfb35b7f62689acb77bb071192ad831c61",
+        "contract_sha256": (
+            "c779a03ee08db6f9f8696a804cab31fa7da0d73bc6841e1fe483bd9c741de79c"
+        ),
+    }
+    expected_reviews = [
+        {
+            "findings": [],
+            "reviewed_inputs": reviewed_inputs,
+            "reviewer_independence": {
+                "did_not_author_candidate": True,
+                "did_not_execute_resource_lanes": True,
+                "independent_of_other_reviewer": True,
+                "reviewer_id": "codex-v7-independent-authority-review-1-f9fa288",
+            },
+            "schema": "anysolver.e4-pl-s3-q4-authority-review-v1",
+            "verdict": "ACCEPT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_NO_P0_P1",
+        },
+        {
+            "findings": [
+                {
+                    "evidence": (
+                        "The independently collected current extent is 1,036 "
+                        "functional plus 871 nonfunctional nodes, totaling 1,907. "
+                        "However, nonfunctional_buckets[0] is empty, so P01 contains "
+                        "only its one functional node, while "
+                        "CI_SHARD_NODE_AUTHORITIES requires P01 to contain 93 nodes. "
+                        "_run_bounded_ci therefore deterministically raises before "
+                        "launching any CI worker."
+                    ),
+                    "location": "scripts/run_e4_pl_burnin_gate.py:3630",
+                    "priority": "P1",
+                    "summary": (
+                        "The bounded CI shard assignment cannot satisfy its frozen "
+                        "P01 authority."
+                    ),
+                }
+            ],
+            "reviewed_inputs": reviewed_inputs,
+            "reviewer_independence": {
+                "did_not_author_candidate": True,
+                "did_not_execute_resource_lanes": True,
+                "independent_of_other_reviewer": True,
+                "reviewer_id": "codex-v7-independent-authority-review-2-f9fa288",
+            },
+            "schema": "anysolver.e4-pl-s3-q4-authority-review-v1",
+            "verdict": "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+        },
+    ]
+    if incident["reviews"] != expected_reviews:
+        raise EvidenceError(f"{location}.reviews mismatch")
+    expected_test_results = [
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v7-independent-authority-review-1-f9fa288",
+        },
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v7-independent-authority-review-2-f9fa288",
+        },
+    ]
+    if incident["review_test_results"] != expected_test_results:
+        raise EvidenceError(f"{location}.review_test_results mismatch")
+    expected_failure = {
+        "cause": "BOUNDED_CI_P01_NONFUNCTIONAL_PARTITION_EMPTY",
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    if incident["request_ids"] != list(V7_REJECTED_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected_disposition = {
+        "ledger_occurrences": 0,
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v7-f9fa288",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
+        "terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_AUTHORITY_REVIEW",
+    }
+    if any(incident[key] != expected for key, expected in expected_disposition.items()):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -2774,16 +2916,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     if contract["schema"] != CONTRACT_SCHEMA:
         raise EvidenceError("burn-in contract schema mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v7"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v8"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-6"
+        r"\s3-q4-final-freeze-correction-7"
     ):
-        raise EvidenceError("v7 burn-in output root mismatch")
+        raise EvidenceError("v8 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -2828,6 +2970,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {
             "attachment",
             "base",
+            "failed_ci_partition_review_attempt",
             "failed_common_preflight_attempt",
             "failed_git_probe_review_attempt",
             "failed_preflight_attempt",
@@ -2850,6 +2993,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_git_probe_review_attempt"],
         "$contract.background_inputs.failed_git_probe_review_attempt",
     )
+    ci_partition_review = _validate_attempt_7_incident(
+        background["failed_ci_partition_review_attempt"],
+        "$contract.background_inputs.failed_ci_partition_review_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -2871,15 +3018,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v7 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v8 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v7 resource request IDs are not unique")
-    if current_request_ids != list(V7_REQUEST_IDS):
-        raise EvidenceError("v7 resource request IDs differ from frozen authority")
+        raise EvidenceError("v8 resource request IDs are not unique")
+    if current_request_ids != list(V8_REQUEST_IDS):
+        raise EvidenceError("v8 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
         *git_probe_review["request_ids"],
+        *ci_partition_review["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -2900,7 +3048,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v7 resource request IDs reuse historical authority")
+        raise EvidenceError("v8 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -2956,7 +3104,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "a52994945721295686d9c1776a2bdb5a9a1c7ec3":
+    if authority["exact_parent"] != "f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -4264,18 +4412,26 @@ def _ledger_entries(ledger: str, request_id: str, status: str) -> list[list[str]
 def validate_superseded_request_ledger_absence(
     ledger: str, *, contract: Mapping[str, Any] | None = None
 ) -> None:
-    """Require the six rejected v6 request IDs to have no ledger row of any kind."""
+    """Require rejected review-only request IDs to have no ledger row of any kind."""
 
     contract = dict(contract or load_contract())
-    incident = contract["background_inputs"]["failed_git_probe_review_attempt"]
-    expected = _require_int(
-        incident["ledger_occurrences"],
-        "$contract.background_inputs.failed_git_probe_review_attempt.ledger_occurrences",
-        minimum=0,
-    )
-    occurrences = sum(ledger.count(request_id) for request_id in incident["request_ids"])
-    if occurrences != expected or expected != 0:
-        raise EvidenceError("rejected v6 request ID occurs in the resource ledger")
+    for incident_name in (
+        "failed_git_probe_review_attempt",
+        "failed_ci_partition_review_attempt",
+    ):
+        incident = contract["background_inputs"][incident_name]
+        expected = _require_int(
+            incident["ledger_occurrences"],
+            f"$contract.background_inputs.{incident_name}.ledger_occurrences",
+            minimum=0,
+        )
+        occurrences = sum(
+            ledger.count(request_id) for request_id in incident["request_ids"]
+        )
+        if occurrences != expected or expected != 0:
+            raise EvidenceError(
+                f"rejected request ID from {incident_name} occurs in the resource ledger"
+            )
 
 
 def _require_successor_after_terminal(

@@ -3598,6 +3598,16 @@ def _collect_ci_nonfunctional_nodes(
     return nodes
 
 
+def _ci_nonfunctional_module_buckets(
+    lanes: Mapping[str, Sequence[str]],
+) -> list[list[str]]:
+    """Return the frozen complete quick/additive assignment for P01--P04."""
+
+    quick = list(lanes["quick"])
+    additive = list(lanes["additive"])
+    return [quick, additive[0::3], additive[1::3], additive[2::3]]
+
+
 def _run_bounded_ci(lanes: Mapping[str, Sequence[str]]) -> int:
     """Run the complete CI extent in four processes under one 20-minute cap."""
 
@@ -3627,12 +3637,11 @@ def _run_bounded_ci(lanes: Mapping[str, Sequence[str]]) -> int:
     full_nodes = wave["manifest"]["full_node_ids"]
     commands: list[list[str]] = []
     nonfunctional = [*lanes["quick"], *lanes["additive"]]
-    nonfunctional_buckets = [
-        [],
-        [*lanes["quick"][0::3], *lanes["additive"][0::3]],
-        [*lanes["quick"][1::3], *lanes["additive"][1::3]],
-        [*lanes["quick"][2::3], *lanes["additive"][2::3]],
-    ]
+    # Keep the slow nonlinear pure-bending functional node isolated in P01
+    # while using its otherwise-light shard for the complete quick lane.  The
+    # additive modules are deterministically striped across P02--P04.  This is
+    # the partition bound by CI_SHARD_NODE_AUTHORITIES (93/622/589/603).
+    nonfunctional_buckets = _ci_nonfunctional_module_buckets(lanes)
     assigned_nonfunctional: list[str] = []
     selector_rows: list[list[str]] = []
     for index, shard in enumerate(wave["manifest"]["shards"]):

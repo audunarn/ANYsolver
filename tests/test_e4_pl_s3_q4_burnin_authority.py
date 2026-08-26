@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "c779a03ee08db6f9f8696a804cab31fa7da0d73bc6841e1fe483bd9c741de79c"
+CONTRACT_SHA256 = "2301bcdeffc85f4e6c9c6242591eca9c81af1bcdebbd9da231cf329c908347e2"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-6"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-7"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -84,6 +84,14 @@ FAILED_ATTEMPT_6_REQUEST_IDS = [
     "0193fe79ba67489aa63af05cf6e23780",
     "eb4ac0c0d9cf46a7be4be22a59faffa5",
     "fdf28a8c7eda4d6faf6cb359561042a4",
+]
+FAILED_ATTEMPT_7_REQUEST_IDS = [
+    "43fd3902318c41bab21aa0ea851bbbb3",
+    "f8586b30ae12448498bfe104b3776f01",
+    "06a261a4e43549acb33449d6ef455644",
+    "435ffa6e24b84371ba9be0f41128c22e",
+    "535cb95402874b5b8dfe32a912db20e4",
+    "a024744a6f674ebba9a7d6028434e1d8",
 ]
 
 sys.path.insert(0, str(REFERENCE))
@@ -376,10 +384,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v7"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v8"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "a52994945721295686d9c1776a2bdb5a9a1c7ec3",
+        "exact_parent": "f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -733,6 +741,71 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     )
     assert git_probe["role"] == "PRESERVED_REJECTED_AUTHORITY_ONLY"
     assert git_probe["terminal"] == (
+        "BLOCKED_E4_PL_S3_Q4_BURN_IN_AUTHORITY_REVIEW"
+    )
+    ci_partition = contract["background_inputs"][
+        "failed_ci_partition_review_attempt"
+    ]
+    assert ci_partition["attempt"] == 7
+    assert ci_partition["authority_commit"] == {
+        "commit": "f9fa288a0b19b63f3d51d1e5e0eaab64790b14d8",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "3942ae13d497ce3353d900b4d46502167d8b68c0",
+    }
+    assert ci_partition["contract"] == {
+        "bytes": 279259,
+        "sha256": "c779a03ee08db6f9f8696a804cab31fa7da0d73bc6841e1fe483bd9c741de79c",
+    }
+    assert ci_partition["failure"] == {
+        "cause": "BOUNDED_CI_P01_NONFUNCTIONAL_PARTITION_EMPTY",
+        "formal_execution_started": False,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+    }
+    assert ci_partition["ledger_occurrences"] == 0
+    assert ci_partition["preserved_ref"] == (
+        "codex/s3-e4-pl-final-burnin-rejected-v7-f9fa288"
+    )
+    assert ci_partition["request_disposition"] == (
+        "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+    )
+    assert ci_partition["request_ids"] == FAILED_ATTEMPT_7_REQUEST_IDS
+    assert ci_partition["review_test_results"] == [
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v7-independent-authority-review-1-f9fa288",
+        },
+        {
+            "failed": 0,
+            "passed": 35,
+            "reviewer_id": "codex-v7-independent-authority-review-2-f9fa288",
+        },
+    ]
+    assert [review["verdict"] for review in ci_partition["reviews"]] == [
+        "ACCEPT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_NO_P0_P1",
+        "REJECT_E4_PL_S3_Q4_BURN_IN_AUTHORITY_P1",
+    ]
+    assert ci_partition["reviews"][0]["findings"] == []
+    assert ci_partition["reviews"][1]["findings"] == [
+        {
+            "evidence": (
+                "The independently collected current extent is 1,036 functional plus "
+                "871 nonfunctional nodes, totaling 1,907. However, "
+                "nonfunctional_buckets[0] is empty, so P01 contains only its one "
+                "functional node, while CI_SHARD_NODE_AUTHORITIES requires P01 to "
+                "contain 93 nodes. _run_bounded_ci therefore deterministically raises "
+                "before launching any CI worker."
+            ),
+            "location": "scripts/run_e4_pl_burnin_gate.py:3630",
+            "priority": "P1",
+            "summary": (
+                "The bounded CI shard assignment cannot satisfy its frozen P01 authority."
+            ),
+        }
+    ]
+    assert ci_partition["role"] == "PRESERVED_REJECTED_AUTHORITY_ONLY"
+    assert ci_partition["terminal"] == (
         "BLOCKED_E4_PL_S3_Q4_BURN_IN_AUTHORITY_REVIEW"
     )
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
@@ -1643,6 +1716,16 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
         authority["node_count"]
         for authority in gate.CI_SHARD_NODE_AUTHORITIES.values()
     ) == 1907
+    synthetic_lanes = {
+        "quick": ["quick_a", "quick_b"],
+        "additive": ["add_0", "add_1", "add_2", "add_3", "add_4"],
+    }
+    assert gate._ci_nonfunctional_module_buckets(synthetic_lanes) == [
+        ["quick_a", "quick_b"],
+        ["add_0", "add_3"],
+        ["add_1", "add_4"],
+        ["add_2"],
+    ]
 
     class Item:
         def __init__(self, nodeid: str) -> None:
@@ -1688,6 +1771,7 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
     ci_end = source.index("\ndef _tracked_head_identity(", ci_start)
     ci_source = source[ci_start:ci_end]
     assert "_collect_ci_nonfunctional_nodes(" in ci_source
+    assert "_ci_nonfunctional_module_buckets(lanes)" in ci_source
     assert "CI_SHARD_NODE_AUTHORITIES[shard_id]" in ci_source
     assert "_CI_EXPECTED_ENV" in ci_source and "_CI_SHARD_ENV" in ci_source
     assert '"scripts.run_e4_pl_burnin_gate"' in ci_source
@@ -2474,6 +2558,8 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_3_REQUEST_IDS,
             *FAILED_ATTEMPT_4_REQUEST_IDS,
             *FAILED_ATTEMPT_5_REQUEST_IDS,
+            *FAILED_ATTEMPT_6_REQUEST_IDS,
+            *FAILED_ATTEMPT_7_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -2492,6 +2578,8 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_1_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_3_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_5_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_6_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_7_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert len(
         burnin._ledger_entries(
