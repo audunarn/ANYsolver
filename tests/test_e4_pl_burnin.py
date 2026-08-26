@@ -603,9 +603,7 @@ def test_reference_batch_additive_override_preserves_optional_performance() -> N
     )
 
 
-def test_ci_lane_is_exactly_quick_plus_functional_plus_additive(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
     gate = _gate_module()
     real_lanes = gate.inventory()
     real_ci_selection = {
@@ -619,30 +617,12 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive(
         not in real_ci_selection
     )
     assert "tests/test_nonlinear_performance.py" not in real_ci_selection
-    lanes = {
-        "quick": ["tests/quick.py"],
-        "functional": ["tests/functional.py"],
-        "performance": ["tests/performance.py"],
-        "extended": ["tests/extended.py"],
-        "additive": ["tests/additive.py"],
-    }
-    observed: dict[str, object] = {}
-    monkeypatch.setattr(gate, "inventory", lambda: lanes)
-
-    def fake_watchdog(lane, *, cycle, command_started):
-        observed.update(
-            lane=lane,
-            cycle=cycle,
-            command_started=command_started,
-        )
-        return 0
-
-    monkeypatch.setattr(gate, "_run_gate_cli_watchdog", fake_watchdog)
-
-    assert gate.main(["ci"]) == 0
-    assert observed["lane"] == "ci"
-    assert observed["cycle"] is None
-    assert isinstance(observed["command_started"], float)
+    policy = gate._validate_ci_policy(
+        gate.strict_json_load(gate.S3_Q4_CONTRACT_PATH)
+    )
+    assert policy["required_lanes"] == ["quick", "functional", "additive"]
+    assert policy["extent"] == "COMPLETE_FROZEN_INVENTORIES"
+    assert policy["smoke_or_representative_only_forbidden"] is True
 
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
         encoding="utf-8"
