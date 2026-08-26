@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "9cdea010543f4b6cd712310f713c199626018f1b135f492fca121d07ec31d6f4"
+CONTRACT_SHA256 = "ae13f921cd79bb2396a220434a3b7056de92a9b471f2d9d48db7f1832d9a1390"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +35,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-8"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-9"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -100,6 +100,14 @@ FAILED_ATTEMPT_8_REQUEST_IDS = [
     "8142bd76fe494f34886f5b0f8124efd0",
     "570f8fba9c9544a9989ae71400688794",
     "1dc0401d62b04e959d6cb9424db17a54",
+]
+FAILED_ATTEMPT_9_REQUEST_IDS = [
+    "99c2fcc3c6e84c7c99408023e5dc33a4",
+    "5c7e14b9ec54493eab0c07b65b9ea060",
+    "66beb32c09804696894ad948f6af1a03",
+    "34d8eebb21814cd68968940bbe8eb54c",
+    "227de96509e445f1acdbb70f531dee73",
+    "701c043879b0481180926b890ae1571d",
 ]
 
 sys.path.insert(0, str(REFERENCE))
@@ -392,10 +400,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v9"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v10"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "0a893a39ffefeebbeab0dfe31f7ac84cd2c91b25",
+        "exact_parent": "02a3b101aa5d1d7877eef7b15b6349210e0441cc",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -903,6 +911,64 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     assert sibling_hygiene["request_ids"] == FAILED_ATTEMPT_8_REQUEST_IDS
     assert sibling_hygiene["role"] == "PRESERVED_BLOCKED_PREDECESSOR_ONLY"
     assert sibling_hygiene["terminal"] == "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE"
+    recursive_ci = contract["background_inputs"][
+        "failed_recursive_ci_quick_preflight_attempt"
+    ]
+    assert recursive_ci["attempt"] == 9
+    assert recursive_ci["authority_commit"] == {
+        "commit": "9109a820dd45d35839c50f27d75593fd9caadadb",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "34c299b47dda6215e0d0022efda7b005946c22c7",
+    }
+    assert recursive_ci["execution_authorization_commit"] == {
+        "commit": "06182d7bcfae40a0b0fad827f3b494b53eec0f0a",
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "3eed0a4a527364177e6f7a6df108980e26a7903c",
+    }
+    assert recursive_ci["correction_commit"] == {
+        "commit": "02a3b101aa5d1d7877eef7b15b6349210e0441cc",
+        "subject": "test: make S3 Q4 CI extent check process-free",
+        "tree": "df3af43a29321a49a119e1bcc1386d1ef92d7bb7",
+    }
+    assert recursive_ci["contract"] == {
+        "bytes": 285245,
+        "sha256": "9cdea010543f4b6cd712310f713c199626018f1b135f492fca121d07ec31d6f4",
+    }
+    assert recursive_ci["external_authority"] == {
+        "output_root": (
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+            r"\s3-q4-final-freeze-correction-8"
+        ),
+        "partial_tree": {
+            "captured_at": "2026-08-26T19:13:19.8920987+02:00",
+            "file_count": 185,
+            "file_graph_bytes": 40223,
+            "file_graph_sha256": (
+                "b4e823d8c705834aa36000f265eec03700976cdd6a1c3ad1b77a3ff980fa51f1"
+            ),
+            "quick_output_file_count": 0,
+            "quick_output_reserved": True,
+            "started_at": "2026-08-26T18:58:15.9476579+02:00",
+            "total_bytes": 14418287,
+        },
+    }
+    assert recursive_ci["failure"] == {
+        "canonical_process_manifest_created": False,
+        "cause": "OUTDATED_QUICK_TEST_PATCH_LAUNCHED_RECURSIVE_COMPLETE_CI_WAVE",
+        "formal_cycle_started": False,
+        "phase": "COMMON_QUICK_PREFLIGHT",
+        "quick_command_started": True,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+        "termination": "USER_DIRECTED_EFFICIENCY_ABORT_AFTER_ROOT_CAUSE_CONFIRMED",
+        "worker_tree_confirmed_absent": True,
+    }
+    assert recursive_ci["request_disposition"] == (
+        "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+    )
+    assert recursive_ci["request_ids"] == FAILED_ATTEMPT_9_REQUEST_IDS
+    assert recursive_ci["role"] == "PRESERVED_BLOCKED_PREDECESSOR_ONLY"
+    assert recursive_ci["terminal"] == "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE"
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -1874,6 +1940,61 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
     assert '"scripts.run_e4_pl_burnin_gate"' in ci_source
     assert "if not _terminate_ci_workers(" in ci_source
     assert "_await_outer_resource_tree_termination()" in ci_source
+    assert '_ACTIVE_TEST_LANE_ENV = "ANYSOLVER_BURNIN_ACTIVE_TEST_LANE"' in source
+    assert 'environment[_ACTIVE_TEST_LANE_ENV] = "quick"' in source
+
+    forbidden_calls: list[str] = []
+    dangerous_lanes = {"ci", "functional-wave", "package", "performance"}
+    for module_name in gate.inventory()["quick"]:
+        module_path = ROOT / module_name
+        tree = ast.parse(module_path.read_text(encoding="utf-8"), filename=module_name)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if isinstance(node.func, ast.Attribute):
+                callable_name = node.func.attr
+            elif isinstance(node.func, ast.Name):
+                callable_name = node.func.id
+            else:
+                callable_name = ""
+            literals = {
+                child.value
+                for child in ast.walk(node)
+                if isinstance(child, ast.Constant) and isinstance(child.value, str)
+            }
+            if callable_name in {
+                "_run_bounded_ci",
+                "run_functional_wave",
+                "_run_gate_cli_watchdog",
+            }:
+                forbidden_calls.append(f"{module_name}:{node.lineno}:{callable_name}")
+            if callable_name == "main" and literals & dangerous_lanes:
+                forbidden_calls.append(f"{module_name}:{node.lineno}:main")
+            if callable_name in {"run", "Popen"} and any(
+                "run_e4_pl_burnin_gate.py" in literal
+                or "e4_pl_s3_q4_process_runner.py" in literal
+                for literal in literals
+            ):
+                forbidden_calls.append(f"{module_name}:{node.lineno}:subprocess")
+    assert forbidden_calls == []
+
+    nested_dispatch: list[str] = []
+    monkeypatch.setenv(gate._ACTIVE_TEST_LANE_ENV, "quick")
+    monkeypatch.setattr(
+        gate,
+        "_run_gate_cli_watchdog",
+        lambda *_args, **_kwargs: nested_dispatch.append("gate") or 0,
+    )
+    with pytest.raises(gate.EvidenceError, match="nested burn-in execution"):
+        gate.main(["ci"])
+    monkeypatch.setattr(
+        process_runner,
+        "_arm_invocation_job_boundary",
+        lambda: nested_dispatch.append("process-runner"),
+    )
+    with pytest.raises(RuntimeError, match="nested process coordinator"):
+        process_runner.main(["aggregate"])
+    assert nested_dispatch == []
 
 
 def test_gate_watchdog_authenticates_child_and_owns_timeout_tree(
@@ -2658,6 +2779,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_6_REQUEST_IDS,
             *FAILED_ATTEMPT_7_REQUEST_IDS,
             *FAILED_ATTEMPT_8_REQUEST_IDS,
+            *FAILED_ATTEMPT_9_REQUEST_IDS,
         }
     )
     approval = burnin.validate_resource_approval_authority(contract)
@@ -2679,6 +2801,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_6_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_7_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_8_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_9_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert len(
         burnin._ledger_entries(
@@ -3274,6 +3397,7 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
     monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
     monkeypatch.setenv("PYTHONWARNINGS", "error")
     monkeypatch.setenv("PYTHONINSPECT", "1")
+    monkeypatch.setenv("ANYSOLVER_BURNIN_ACTIVE_TEST_LANE", "quick")
     tools_available = all(
         Path(guard[name]["path"]).is_file()
         for name in ("git", "git_engine", "powershell", "python")
@@ -3397,6 +3521,7 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
             "PYTEST_PLUGINS",
             "PYTHONINSPECT",
             "PYTHONWARNINGS",
+            "ANYSOLVER_BURNIN_ACTIVE_TEST_LANE",
         ):
             assert name not in environment
         for name, value in guard["fixed"].items():

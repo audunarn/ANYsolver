@@ -98,6 +98,7 @@ _FUNCTIONAL_SHARD_ENV = "ANYSOLVER_FUNCTIONAL_SHARD_ID"
 _CI_CAPTURE_ENV = "ANYSOLVER_CI_CAPTURE_NODES"
 _CI_EXPECTED_ENV = "ANYSOLVER_CI_EXPECTED_NODES"
 _CI_SHARD_ENV = "ANYSOLVER_CI_SHARD_ID"
+_ACTIVE_TEST_LANE_ENV = "ANYSOLVER_BURNIN_ACTIVE_TEST_LANE"
 _GATE_WATCHDOG_ENV = "ANYSOLVER_BURNIN_GATE_WATCHDOG_CHILD"
 _FUNCTIONAL_UNPROVEN_TREE = threading.Event()
 
@@ -3432,6 +3433,8 @@ def _run_pytest_lane(lane: str, selected: Sequence[str]) -> int:
             roots=roots,
             metadata_overlay=metadata_overlay,
         )
+        if lane == "quick":
+            environment[_ACTIVE_TEST_LANE_ENV] = "quick"
         completed = subprocess.run(
             [
                 sys.executable,
@@ -4586,6 +4589,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--_watchdog-token", help=argparse.SUPPRESS)
     parser.add_argument("--_watchdog-parent", type=int, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    active_test_lane = os.environ.get(_ACTIVE_TEST_LANE_ENV)
+    if active_test_lane is not None:
+        if active_test_lane != "quick":
+            raise EvidenceError("active burn-in test lane marker is invalid")
+        if args.lane not in {"list", "validate-evidence"}:
+            raise EvidenceError(
+                "nested burn-in execution from the quick pytest lane is forbidden"
+            )
     watchdog_context = os.environ.get(_GATE_WATCHDOG_ENV)
     private_arguments_present = (
         args._watchdog_token is not None or args._watchdog_parent is not None
