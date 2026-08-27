@@ -51,7 +51,10 @@ from .matrix_assembly import (
 )
 from .nonlinear_state import require_no_native_total_lagrangian_elements
 from .recovery import ResourceConfig
-from .recovery_batches import _run_with_qualified_recovery_runtime_lease
+from .recovery_batches import (
+    _qualified_recovery_observation_guard,
+    _run_with_qualified_recovery_runtime_lease,
+)
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
 if TYPE_CHECKING:
@@ -1533,6 +1536,38 @@ def _compute_stresses_under_lease(
     """Compute stresses for all or selected elements."""
     qualified_runtime_guard(stage="stress-recovery preflight")
     qualified_runtime_guard(stage="constraint-force preflight")
+    observation_guard = _qualified_recovery_observation_guard(
+        qualified_runtime_guard
+    )
+    observation_namespace = getattr(observation_guard, "__dict__", {})
+    runtime_namespace = getattr(qualified_runtime_guard, "__dict__", {})
+    exact_beam_candidate = (
+        dict.get(
+            observation_namespace,
+            "_qualified_exact_builtin_beam_candidate",
+        )
+        if type(observation_namespace) is dict
+        else None
+    )
+    trusted_segment_candidate = (
+        dict.get(
+            observation_namespace,
+            "_qualified_recovery_trusted_segment_candidate",
+        )
+        if type(observation_namespace) is dict
+        else None
+    )
+    exact_beam_batch_open = False
+    captured_beam_dof_mapping = (
+        dict.get(runtime_namespace, "_qualified_captured_beam_dof_mapping")
+        if type(runtime_namespace) is dict
+        else None
+    )
+    recover_captured_beam = (
+        dict.get(runtime_namespace, "_qualified_recover_captured_beam")
+        if type(runtime_namespace) is dict
+        else None
+    )
     mesh = model.mesh
     stresses: Dict[int, Dict[str, np.ndarray]] = {}
     selected = None if element_ids is None else {int(element_id) for element_id in element_ids}
@@ -1552,11 +1587,35 @@ def _compute_stresses_under_lease(
     for elem_id, element in mesh.elements.items():
         if selected is not None and int(elem_id) not in selected:
             continue
-        material = model.get_material(element.material_name)
-        qualified_runtime_guard(
-            stage=f"stress material observation for element {elem_id}"
+        exact_beam = bool(
+            callable(exact_beam_candidate)
+            and exact_beam_candidate(element)
         )
-        dof_mapping = np.asarray(element.get_dof_mapping(mesh), dtype=np.intp)
+        trusted_segment_element = bool(
+            callable(trusted_segment_candidate)
+            and trusted_segment_candidate(element)
+        )
+        if exact_beam and not exact_beam_batch_open:
+            qualified_runtime_guard(
+                stage="exact built-in beam recovery batch preflight"
+            )
+            exact_beam_batch_open = True
+        elif not trusted_segment_element and exact_beam_batch_open:
+            qualified_runtime_guard(
+                stage="exact built-in beam recovery batch output"
+            )
+            exact_beam_batch_open = False
+        material = model.get_material(element.material_name)
+        observation_guard(
+            stage=f"stress material observation for element {elem_id}",
+            element=element,
+            material=material,
+        )
+        if exact_beam and callable(captured_beam_dof_mapping):
+            raw_dof_mapping = captured_beam_dof_mapping(element, material)
+        else:
+            raw_dof_mapping = element.get_dof_mapping(mesh)
+        dof_mapping = np.asarray(raw_dof_mapping, dtype=np.intp)
         if (
             dof_mapping.size == 0
             or int(dof_mapping.min()) < 0
@@ -1569,16 +1628,34 @@ def _compute_stresses_under_lease(
                 )
             continue
         try:
-            stresses[elem_id] = element.compute_stresses(
-                mesh, displacements[dof_mapping], material, return_global=return_global
-            )
-            qualified_runtime_guard(
-                stage=f"stress element observation for element {elem_id}"
+            if exact_beam and callable(recover_captured_beam):
+                stresses[elem_id] = recover_captured_beam(
+                    element,
+                    mesh,
+                    displacements[dof_mapping],
+                    material,
+                    return_global,
+                )
+            else:
+                stresses[elem_id] = element.compute_stresses(
+                    mesh,
+                    displacements[dof_mapping],
+                    material,
+                    return_global=return_global,
+                )
+            observation_guard(
+                stage=f"stress element observation for element {elem_id}",
+                element=element,
+                material=material,
             )
         except (IndexError, ValueError):
             if bool(getattr(element, "recovery_errors_fail_closed", False)):
                 raise
             continue
+    if exact_beam_batch_open:
+        qualified_runtime_guard(
+            stage="exact built-in beam recovery batch output"
+        )
     return stresses
 
 
