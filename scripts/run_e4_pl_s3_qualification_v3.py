@@ -305,12 +305,19 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
         if generator._verify_preflight(name, candidates[name], entry["result"]) != entry:
             raise QualificationError(f"{name} candidate preflight differs")
     policy = binding["anysolver_policy"]
-    if (
-        not isinstance(policy, dict)
-        or policy.get("q4_mechanics_git_blob")
-        != "59ceb9534dfd22e05ea69296f92abeb0511f14cf"
-    ):
-        raise QualificationError("qualified Q4 mechanics identity differs")
+    try:
+        if (
+            generator._reverify_bound_anysolver_policy(
+                policy,
+                candidates["ANYsolver"],
+            )
+            != policy
+        ):
+            raise QualificationError("qualified Q4 guard-only identity differs")
+    except generator.BindingError as exc:
+        raise QualificationError(
+            "qualified Q4 guard-only identity differs"
+        ) from exc
     target = Path(str(binding["execution_target"])).resolve(strict=True)
     authorization_raw, authorization = read_json(authorization_path)
     if set(authorization) != {

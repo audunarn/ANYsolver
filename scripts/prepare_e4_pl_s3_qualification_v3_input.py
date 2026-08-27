@@ -106,6 +106,64 @@ PREFLIGHT_GATE_IDS = {
 }
 HEX40 = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9A-F]{64}")
+Q4_BASE_IDENTITY = {
+    "commit": "62464bea649229aa2c9f89ba7cbe431bf6a9282a",
+    "parent": "19d7726ad09a4969c187af1816bab08596db7590",
+    "subject": "docs: record bounded S3 activation forecast",
+    "tree": "c5cc24fa60a3ce1cdc3a1910bd45fe0efe7ec620",
+}
+Q4_GUARD_SOURCE_IDENTITY = {
+    "commit": "04ec1d5cbb5725913aec35ec62ba1de754881360",
+    "parent": Q4_BASE_IDENTITY["commit"],
+    "subject": "fix: bind Q4 vector state sealing to producer origin",
+    "tree": "310f9cc18b3dd0fe439a96f8adcc0e36bafe94fb",
+}
+Q4_GUARD_IMPORT_IDENTITY = {
+    "commit": "eeec9ebd430c65d0af5ac29f0f4ba0c1fe5ddbbc",
+    "parent": "084f6da03d573ea0dedd46c0ecb45ebd487fad08",
+    "subject": Q4_GUARD_SOURCE_IDENTITY["subject"],
+    "tree": "60a01afc1cfe7521bb62c4a928632e4d7f4f2555",
+}
+Q4_GUARD_PATH_BLOBS = (
+    (
+        "docs/reference_cases/e4_pl_q4_state_seal_guard_v2_incident.md",
+        "dbb69ff168d2ed938eec87f3d86143aa3c0ec92d",
+    ),
+    (
+        "src/anysolver/e4_pl_element.py",
+        "031da1cde23e7983c0f94d837f5610a24737920b",
+    ),
+    (
+        "src/anysolver/nonlinear_performance.py",
+        "80e7bc75c897aa83617ae1d35b47631b894d5481",
+    ),
+    (
+        "src/anysolver/nonlinear_state.py",
+        "9b578d2d8ed55c3ab8e14f11c24737361d2a785e",
+    ),
+    (
+        "src/anysolver/nonlinear_static.py",
+        "645fcee0d5dd6ccf7ca89ea80870b2b0e22ba974",
+    ),
+    (
+        "tests/test_e4_pl_q4_current_tangent.py",
+        "ac4a695088aeb79dc6392163446f6acb2f662247",
+    ),
+)
+Q4_GUARD_SOURCE_PATHS = tuple(
+    path for path, _blob in Q4_GUARD_PATH_BLOBS if path.startswith("src/")
+)
+Q4_NONMECHANICS_INTEGRATION_PATHS = (
+    "src/anysolver/anystructure_fem_mode.py",
+    "src/anysolver/production_readiness.py",
+)
+Q4_FROZEN_SOURCE_EXCLUSIONS = tuple(
+    sorted((*Q4_GUARD_SOURCE_PATHS, *Q4_NONMECHANICS_INTEGRATION_PATHS))
+)
+Q4_FROZEN_SOURCE_FILE_COUNT = 104
+Q4_FROZEN_SOURCE_ROWS_SHA256 = (
+    "1D9750A40548B268C78BFB017F60C290E2554E8018D806F0C1185BB30C6BF365"
+)
 
 
 class BindingError(ValueError):
@@ -191,6 +249,173 @@ def _git(root: Path, *arguments: str) -> str:
     if result.returncode != 0:
         raise BindingError(f"Git identity check failed for {root}")
     return result.stdout.rstrip("\r\n")
+
+
+def _commit_identity(root: Path, commit: str) -> dict[str, str]:
+    fields = _git(
+        root,
+        "show",
+        "-s",
+        "--format=%H%x00%T%x00%P%x00%s",
+        commit,
+    ).split("\x00")
+    if len(fields) != 4 or " " in fields[2]:
+        raise BindingError(f"Git commit identity differs for {commit}")
+    return {
+        "commit": fields[0],
+        "tree": fields[1],
+        "parent": fields[2],
+        "subject": fields[3],
+    }
+
+
+def _changed_paths(root: Path, parent: str, commit: str) -> list[str]:
+    value = _git(root, "diff", "--name-only", parent, commit)
+    return value.splitlines() if value else []
+
+
+def _blob(root: Path, commit: str, path: str) -> str:
+    return _git(root, "rev-parse", f"{commit}:{path}")
+
+
+def _frozen_source_rows(root: Path, commit: str) -> list[dict[str, str]]:
+    output = _git(root, "ls-tree", "-r", commit, "--", "src/anysolver")
+    rows: list[dict[str, str]] = []
+    for line in output.splitlines():
+        metadata, separator, path = line.partition("\t")
+        fields = metadata.split()
+        if (
+            separator != "\t"
+            or len(fields) != 3
+            or fields[1] != "blob"
+            or HEX40.fullmatch(fields[2]) is None
+            or not path.startswith("src/anysolver/")
+        ):
+            raise BindingError("frozen Q4 source tree entry is malformed")
+        if path not in Q4_FROZEN_SOURCE_EXCLUSIONS:
+            rows.append({"git_blob": fields[2], "path": path})
+    if [row["path"] for row in rows] != sorted(row["path"] for row in rows):
+        raise BindingError("frozen Q4 source tree order differs")
+    return rows
+
+
+def _verify_anysolver_policy(
+    value: object,
+    solver: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind the reviewed guard correction and a base-identical source superset."""
+
+    if not isinstance(value, dict) or set(value) != {
+        "base_commit",
+        "changed_paths",
+        "q4_guard_import_commit",
+    }:
+        raise BindingError("ANYsolver policy fields differ")
+    base_commit = value["base_commit"]
+    changed_paths = value["changed_paths"]
+    guard_import_commit = value["q4_guard_import_commit"]
+    if (
+        base_commit != Q4_BASE_IDENTITY["commit"]
+        or guard_import_commit != Q4_GUARD_IMPORT_IDENTITY["commit"]
+        or not isinstance(changed_paths, list)
+        or any(type(path) is not str or not path for path in changed_paths)
+        or changed_paths != sorted(set(changed_paths))
+    ):
+        raise BindingError("ANYsolver policy is malformed")
+    solver_root = Path(str(solver["root"])).resolve(strict=True)
+    candidate_commit = str(solver["commit"])
+    if _commit_identity(solver_root, base_commit) != Q4_BASE_IDENTITY:
+        raise BindingError("frozen Q4 base identity differs")
+    if (
+        _commit_identity(solver_root, Q4_GUARD_SOURCE_IDENTITY["commit"])
+        != Q4_GUARD_SOURCE_IDENTITY
+    ):
+        raise BindingError("reviewed Q4 guard source identity differs")
+    if (
+        _commit_identity(solver_root, guard_import_commit)
+        != Q4_GUARD_IMPORT_IDENTITY
+    ):
+        raise BindingError("imported Q4 guard identity differs")
+    if _changed_paths(
+        solver_root,
+        Q4_GUARD_SOURCE_IDENTITY["parent"],
+        Q4_GUARD_SOURCE_IDENTITY["commit"],
+    ) != [path for path, _blob_id in Q4_GUARD_PATH_BLOBS]:
+        raise BindingError("reviewed Q4 guard path set differs")
+    if _changed_paths(
+        solver_root,
+        Q4_GUARD_IMPORT_IDENTITY["parent"],
+        Q4_GUARD_IMPORT_IDENTITY["commit"],
+    ) != [path for path, _blob_id in Q4_GUARD_PATH_BLOBS]:
+        raise BindingError("imported Q4 guard path set differs")
+    for path, expected_blob in Q4_GUARD_PATH_BLOBS:
+        observed = {
+            _blob(solver_root, Q4_GUARD_SOURCE_IDENTITY["commit"], path),
+            _blob(solver_root, guard_import_commit, path),
+            _blob(solver_root, candidate_commit, path),
+        }
+        if observed != {expected_blob}:
+            raise BindingError(f"reviewed Q4 guard blob differs: {path}")
+    _git(solver_root, "merge-base", "--is-ancestor", guard_import_commit, candidate_commit)
+    observed_paths = _changed_paths(solver_root, base_commit, candidate_commit)
+    if observed_paths != changed_paths:
+        raise BindingError("ANYsolver changed paths differ")
+    base_rows = _frozen_source_rows(solver_root, base_commit)
+    candidate_rows = _frozen_source_rows(solver_root, candidate_commit)
+    rows_sha256 = hashlib.sha256(canonical_bytes(base_rows)).hexdigest().upper()
+    if (
+        base_rows != candidate_rows
+        or len(base_rows) != Q4_FROZEN_SOURCE_FILE_COUNT
+        or rows_sha256 != Q4_FROZEN_SOURCE_ROWS_SHA256
+    ):
+        raise BindingError("frozen Q4 mechanics/source identity differs")
+    return {
+        "base": dict(Q4_BASE_IDENTITY),
+        "candidate": {
+            "commit": candidate_commit,
+            "tree": str(solver["tree"]),
+        },
+        "changed_paths": changed_paths,
+        "frozen_q4_source_identity": {
+            "excluded_authorized_guard_paths": list(Q4_GUARD_SOURCE_PATHS),
+            "excluded_nonmechanics_integration_paths": list(
+                Q4_NONMECHANICS_INTEGRATION_PATHS
+            ),
+            "file_count": len(base_rows),
+            "rows_sha256": rows_sha256,
+            "scope": (
+                "ALL_TRACKED_SRC_ANYSOLVER_FILES_EXCEPT_EXACT_GUARD_AND_"
+                "NON_Q4_INTEGRATION_PATHS"
+            ),
+        },
+        "guard_correction": {
+            "authorized_paths": [
+                {"git_blob": blob_id, "path": path}
+                for path, blob_id in Q4_GUARD_PATH_BLOBS
+            ],
+            "imported": dict(Q4_GUARD_IMPORT_IDENTITY),
+            "reviewed_source": dict(Q4_GUARD_SOURCE_IDENTITY),
+            "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY",
+        },
+        "q4_mechanics_change": "NONE",
+    }
+
+
+def _reverify_bound_anysolver_policy(
+    value: object,
+    solver: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise BindingError("bound ANYsolver policy is malformed")
+    input_policy = {
+        "base_commit": Q4_BASE_IDENTITY["commit"],
+        "changed_paths": value.get("changed_paths"),
+        "q4_guard_import_commit": Q4_GUARD_IMPORT_IDENTITY["commit"],
+    }
+    expected = _verify_anysolver_policy(input_policy, solver)
+    if value != expected:
+        raise BindingError("bound ANYsolver guard-only identity differs")
+    return expected
 
 
 def _verify_candidate(name: str, value: object) -> dict[str, Any]:
@@ -403,42 +628,8 @@ def build_binding(graph_path: Path) -> dict[str, Any]:
         "successor": _file_binding(SUCCESSOR),
         "test": _file_binding(TEST),
     }
-    policy = graph["anysolver_policy"]
-    if not isinstance(policy, dict) or set(policy) != {
-        "base_commit",
-        "changed_paths",
-        "q4_mechanics_git_blob",
-    }:
-        raise BindingError("ANYsolver policy fields differ")
-    base_commit = policy["base_commit"]
-    changed_paths = policy["changed_paths"]
-    q4_blob = policy["q4_mechanics_git_blob"]
     solver = verified_candidates["ANYsolver"]
-    solver_root = Path(str(solver["root"])).resolve(strict=True)
-    if (
-        type(base_commit) is not str
-        or HEX40.fullmatch(base_commit) is None
-        or type(q4_blob) is not str
-        or HEX40.fullmatch(q4_blob) is None
-        or not isinstance(changed_paths, list)
-        or any(type(path) is not str or not path for path in changed_paths)
-        or changed_paths != sorted(set(changed_paths))
-    ):
-        raise BindingError("ANYsolver policy is malformed")
-    observed_paths = _git(
-        solver_root,
-        "diff",
-        "--name-only",
-        base_commit,
-        str(solver["commit"]),
-    ).splitlines()
-    observed_q4 = _git(
-        solver_root,
-        "rev-parse",
-        f"{solver['commit']}:src/anysolver/e4_pl_element.py",
-    )
-    if observed_paths != changed_paths or observed_q4 != q4_blob:
-        raise BindingError("ANYsolver changed paths or Q4 mechanics differ")
+    policy = _verify_anysolver_policy(graph["anysolver_policy"], solver)
     return {
         "anysolver_policy": policy,
         "candidate_graph": {

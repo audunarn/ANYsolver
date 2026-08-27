@@ -640,12 +640,12 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
     assert "--timeout-seconds" not in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
     # The immutable burn-in contract retains its historical sibling graph.
-    # Current candidate CI must instead fail closed until the coordinated
-    # 0.4.0 graph's four exact remote refs are rebound.
-    assert "REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT" in workflow
-    assert "REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT" in workflow
-    assert "REBIND_FINAL_ANYMESH_0_3_2_COMMIT" in workflow
-    assert "REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT" in workflow
+    # Current candidate CI uses the four separately reviewed stable refs.
+    assert "2b6431c291c8f571803484f69d08807875996b72" in workflow
+    assert "97b06b0cfc72179c4f6522f9077d8a1d91911d61" in workflow
+    assert "c06c8fa9ca58f282941a921548bf8303a8ddd084" in workflow
+    assert "07124405ce0160437928e9b0c3c7a0d530c1f5de" in workflow
+    assert "RE" + "BIND_FINAL" not in workflow
 
 
 def test_portable_ci_inventory_is_unique_and_excludes_long_lanes() -> None:

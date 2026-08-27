@@ -15,6 +15,18 @@
       "commit": "e7060294a10b2ee8c18b4001e9194f608986d53e",
       "subject": "perf: harden qualified S3 activation lease paths",
       "tree": "049c663c52e05231e186771b8a51f24f8492aafe"
+    },
+    "q4_guard_correction_import": {
+      "commit": "eeec9ebd430c65d0af5ac29f0f4ba0c1fe5ddbbc",
+      "parent": "084f6da03d573ea0dedd46c0ecb45ebd487fad08",
+      "subject": "fix: bind Q4 vector state sealing to producer origin",
+      "tree": "60a01afc1cfe7521bb62c4a928632e4d7f4f2555"
+    },
+    "stable_ci_sibling_refs": {
+      "ANYfileIO": "07124405ce0160437928e9b0c3c7a0d530c1f5de",
+      "ANYgeometry": "97b06b0cfc72179c4f6522f9077d8a1d91911d61",
+      "ANYmaterial": "2b6431c291c8f571803484f69d08807875996b72",
+      "ANYmesh": "c06c8fa9ca58f282941a921548bf8303a8ddd084"
     }
   },
   "execution_policy": {
@@ -66,7 +78,6 @@
     "isolated_execution_target",
     "candidate_dependency_graph",
     "candidate_preflight_results_and_log_hashes",
-    "ci_candidate_remote_refs",
     "coordinator.bytes_and_sha256",
     "formal_full_coverage_runner.bytes_and_sha256",
     "candidate_binding_generator.bytes_and_sha256",
@@ -161,7 +172,73 @@
     "assembly_change": "ONE_NONRENEWABLE_QUALIFIED_ASSEMBLY_LEASE_PER_PLATE_RECORD",
     "connectivity_change": "NONE",
     "manifest_generation_change": "COORDINATOR_SELECTS_ONE_STORED_HASH_BOUND_ROW_WITHOUT_CHILD_REGENERATION",
-    "q4_mechanics_git_blob": "59ceb9534dfd22e05ea69296f92abeb0511f14cf",
+    "q4_base_mechanics_git_blob": "59ceb9534dfd22e05ea69296f92abeb0511f14cf",
+    "q4_guard_corrected_git_blob": "031da1cde23e7983c0f94d837f5610a24737920b",
+    "q4_guard_only_identity": {
+      "base": {
+        "commit": "62464bea649229aa2c9f89ba7cbe431bf6a9282a",
+        "parent": "19d7726ad09a4969c187af1816bab08596db7590",
+        "subject": "docs: record bounded S3 activation forecast",
+        "tree": "c5cc24fa60a3ce1cdc3a1910bd45fe0efe7ec620"
+      },
+      "frozen_q4_source_identity": {
+        "excluded_authorized_guard_paths": [
+          "src/anysolver/e4_pl_element.py",
+          "src/anysolver/nonlinear_performance.py",
+          "src/anysolver/nonlinear_state.py",
+          "src/anysolver/nonlinear_static.py"
+        ],
+        "excluded_nonmechanics_integration_paths": [
+          "src/anysolver/anystructure_fem_mode.py",
+          "src/anysolver/production_readiness.py"
+        ],
+        "file_count": 104,
+        "rows_sha256": "1D9750A40548B268C78BFB017F60C290E2554E8018D806F0C1185BB30C6BF365",
+        "scope": "ALL_TRACKED_SRC_ANYSOLVER_FILES_EXCEPT_EXACT_GUARD_AND_NON_Q4_INTEGRATION_PATHS"
+      },
+      "guard_correction": {
+        "authorized_paths": [
+          {
+            "git_blob": "dbb69ff168d2ed938eec87f3d86143aa3c0ec92d",
+            "path": "docs/reference_cases/e4_pl_q4_state_seal_guard_v2_incident.md"
+          },
+          {
+            "git_blob": "031da1cde23e7983c0f94d837f5610a24737920b",
+            "path": "src/anysolver/e4_pl_element.py"
+          },
+          {
+            "git_blob": "80e7bc75c897aa83617ae1d35b47631b894d5481",
+            "path": "src/anysolver/nonlinear_performance.py"
+          },
+          {
+            "git_blob": "9b578d2d8ed55c3ab8e14f11c24737361d2a785e",
+            "path": "src/anysolver/nonlinear_state.py"
+          },
+          {
+            "git_blob": "645fcee0d5dd6ccf7ca89ea80870b2b0e22ba974",
+            "path": "src/anysolver/nonlinear_static.py"
+          },
+          {
+            "git_blob": "ac4a695088aeb79dc6392163446f6acb2f662247",
+            "path": "tests/test_e4_pl_q4_current_tangent.py"
+          }
+        ],
+        "imported": {
+          "commit": "eeec9ebd430c65d0af5ac29f0f4ba0c1fe5ddbbc",
+          "parent": "084f6da03d573ea0dedd46c0ecb45ebd487fad08",
+          "subject": "fix: bind Q4 vector state sealing to producer origin",
+          "tree": "60a01afc1cfe7521bb62c4a928632e4d7f4f2555"
+        },
+        "reviewed_source": {
+          "commit": "04ec1d5cbb5725913aec35ec62ba1de754881360",
+          "parent": "62464bea649229aa2c9f89ba7cbe431bf6a9282a",
+          "subject": "fix: bind Q4 vector state sealing to producer origin",
+          "tree": "310f9cc18b3dd0fe439a96f8adcc0e36bafe94fb"
+        },
+        "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY"
+      },
+      "q4_mechanics_change": "NONE"
+    },
     "q4_mechanics_unchanged": true,
     "s3_mechanics_git_blob": "823b5b0cdc450f7c7f2f2861aefcf4dd2062b99e",
     "scientific_formula_change": "NONE"

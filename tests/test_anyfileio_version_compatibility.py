@@ -401,9 +401,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     ci_header, ci_jobs = ci.split("jobs:\n", maxsplit=1)
     assert ci_header == (
         "name: Tests\n\non:\n  push:\n  pull_request:\n\n"
-        "# DRAFT: the REBIND_FINAL_* values are deliberately invalid Git refs.  Final\n"
-        "# activation authorization must replace all four from the reviewed candidate\n"
-        "# graph; until then ordinary CI fails closed during sibling checkout.\n\n"
+        "# Sibling repositories are pinned to the reviewed stable candidate commits.\n"
+        "# The final activation authority still binds their exact trees and wheels.\n\n"
     )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
         "pytest",
@@ -426,18 +425,18 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "pypi",
     ]
 
+    sibling_refs = {
+        "07124405ce0160437928e9b0c3c7a0d530c1f5de",
+        "2b6431c291c8f571803484f69d08807875996b72",
+        "97b06b0cfc72179c4f6522f9077d8a1d91911d61",
+        "c06c8fa9ca58f282941a921548bf8303a8ddd084",
+    }
     ci_hashes = set(re.findall(r"\b[0-9a-f]{40}\b", ci))
     assert ci_hashes == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
-    }
-    placeholders = {
-        "REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT",
-        "REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
-        "REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
-        "REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
-    }
-    assert set(re.findall(r"REBIND_FINAL_[A-Z0-9_]+_COMMIT", ci)) == placeholders
+    } | sibling_refs
+    assert "RE" + "BIND_FINAL" not in ci
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
@@ -504,22 +503,22 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     current_checkouts = [
         (
             "audunarn/ANYmaterial",
-            "REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT",
+            "2b6431c291c8f571803484f69d08807875996b72",
             ".ecosystem/ANYmaterial",
         ),
         (
             "audunarn/ANYgeometry",
-            "REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
+            "97b06b0cfc72179c4f6522f9077d8a1d91911d61",
             ".ecosystem/ANYgeometry",
         ),
         (
             "audunarn/ANYmesh",
-            "REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
+            "c06c8fa9ca58f282941a921548bf8303a8ddd084",
             ".ecosystem/ANYmesh",
         ),
         (
             "audunarn/ANYfileIO",
-            "REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
+            "07124405ce0160437928e9b0c3c7a0d530c1f5de",
             ".ecosystem/ANYfileIO",
         ),
     ]
@@ -631,23 +630,23 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert matrix_rows(mesh_job) == "\n".join(
         (
             '          - anymesher-version: "0.3.2"',
-            "            anymesher-ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
+            "            anymesher-ref: c06c8fa9ca58f282941a921548bf8303a8ddd084",
             '            anygeometry-version: "0.4.1"',
-            "            anygeometry-ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
+            "            anygeometry-ref: 97b06b0cfc72179c4f6522f9077d8a1d91911d61",
             '            anyfileio-version: "0.2.1"',
-            "            anyfileio-ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
+            "            anyfileio-ref: 07124405ce0160437928e9b0c3c7a0d530c1f5de",
             "            anyfileio-install: .ecosystem/ANYfileIO[semantics]",
         )
     )
     assert matrix_rows(fileio_job) == "\n".join(
         (
             '          - anyfileio-version: "0.2.1"',
-            "            anyfileio-ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
+            "            anyfileio-ref: 07124405ce0160437928e9b0c3c7a0d530c1f5de",
             "            anyfileio-install: .ecosystem/ANYfileIO[semantics]",
             '            anymesher-version: "0.3.2"',
-            "            anymesher-ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
+            "            anymesher-ref: c06c8fa9ca58f282941a921548bf8303a8ddd084",
             '            anygeometry-version: "0.4.1"',
-            "            anygeometry-ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
+            "            anygeometry-ref: 97b06b0cfc72179c4f6522f9077d8a1d91911d61",
         )
     )
 
@@ -684,7 +683,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             "",
         )
     )
-    for value in placeholders:
+    for value in sibling_refs:
         assert mesh_job.count(value) == 1
         assert fileio_job.count(value) == 1
     assert mesh_job.count("          - anymesher-version:") == 1

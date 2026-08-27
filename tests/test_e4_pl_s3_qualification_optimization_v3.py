@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import copy
 from dataclasses import dataclass
 import hashlib
 import importlib.util
@@ -208,7 +209,8 @@ def test_successor_skips_manifest_rebuild_and_amortizes_assembly_lease() -> None
     assert "timeout=" not in source
 
 
-def test_contract_is_draft_regenerable_and_preserves_q4_blob() -> None:
+def test_contract_is_draft_regenerable_and_preserves_strict_q4_guard_identity() -> None:
+    generator = _load("_s3_v3_generator_contract", GENERATOR)
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     assert contract["authority_state"] == "DRAFT_REQUIRES_FINAL_CANDIDATE_REBIND"
     assert contract["formal_qualification_authority"] is False
@@ -216,17 +218,55 @@ def test_contract_is_draft_regenerable_and_preserves_q4_blob() -> None:
     assert contract["formal_runner"]["exact_special_fixture_count"] == 8
     assert contract["execution_policy"]["total_runtime_limit_seconds"] is None
     assert contract["execution_policy"]["runtime_classification"] is False
-    assert contract["mechanics_equivalence"]["q4_mechanics_git_blob"] == (
+    mechanics = contract["mechanics_equivalence"]
+    assert mechanics["q4_base_mechanics_git_blob"] == (
         "59ceb9534dfd22e05ea69296f92abeb0511f14cf"
     )
-    observed = subprocess.run(
-        ["git", "hash-object", "src/anysolver/e4_pl_element.py"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    assert observed == contract["mechanics_equivalence"]["q4_mechanics_git_blob"]
+    assert mechanics["q4_guard_corrected_git_blob"] == (
+        "031da1cde23e7983c0f94d837f5610a24737920b"
+    )
+    identity = mechanics["q4_guard_only_identity"]
+    assert identity["base"] == generator.Q4_BASE_IDENTITY
+    assert identity["guard_correction"] == {
+        "authorized_paths": [
+            {"git_blob": blob, "path": path}
+            for path, blob in generator.Q4_GUARD_PATH_BLOBS
+        ],
+        "imported": generator.Q4_GUARD_IMPORT_IDENTITY,
+        "reviewed_source": generator.Q4_GUARD_SOURCE_IDENTITY,
+        "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY",
+    }
+    frozen = identity["frozen_q4_source_identity"]
+    assert frozen == {
+        "excluded_authorized_guard_paths": list(generator.Q4_GUARD_SOURCE_PATHS),
+        "excluded_nonmechanics_integration_paths": list(
+            generator.Q4_NONMECHANICS_INTEGRATION_PATHS
+        ),
+        "file_count": generator.Q4_FROZEN_SOURCE_FILE_COUNT,
+        "rows_sha256": generator.Q4_FROZEN_SOURCE_ROWS_SHA256,
+        "scope": (
+            "ALL_TRACKED_SRC_ANYSOLVER_FILES_EXCEPT_EXACT_GUARD_AND_"
+            "NON_Q4_INTEGRATION_PATHS"
+        ),
+    }
+    assert generator._frozen_source_rows(
+        ROOT, generator.Q4_BASE_IDENTITY["commit"]
+    ) == generator._frozen_source_rows(ROOT, "HEAD")
+    assert contract["candidate_provenance"]["stable_ci_sibling_refs"] == {
+        "ANYfileIO": "07124405ce0160437928e9b0c3c7a0d530c1f5de",
+        "ANYgeometry": "97b06b0cfc72179c4f6522f9077d8a1d91911d61",
+        "ANYmaterial": "2b6431c291c8f571803484f69d08807875996b72",
+        "ANYmesh": "c06c8fa9ca58f282941a921548bf8303a8ddd084",
+    }
+    for path, expected_blob in generator.Q4_GUARD_PATH_BLOBS:
+        observed = subprocess.run(
+            ["git", "rev-parse", f"HEAD:{path}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        assert observed == expected_blob
     required = set(contract["final_rebind_required"])
     assert {
         "formal_full_coverage_runner.bytes_and_sha256",
@@ -235,8 +275,8 @@ def test_contract_is_draft_regenerable_and_preserves_q4_blob() -> None:
         "ANYmaterial.commit_tree_subject_root_and_wheel",
         "ANYgeometry.commit_tree_subject_root_and_wheel",
         "candidate_preflight_results_and_log_hashes",
-        "ci_candidate_remote_refs",
     } <= required
+    assert "ci_candidate_remote_refs" not in required
 
 
 def test_nonclassifying_n20_n40_evidence_binds_all_efficiency_metrics() -> None:
@@ -251,6 +291,20 @@ def test_nonclassifying_n20_n40_evidence_binds_all_efficiency_metrics() -> None:
         "scientific_payload_sha256"
     ]
     assert evidence["comparison"]["scientific_payloads_byte_identical"] is True
+    archive_root = Path(r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease") / (
+        "s3-qualification-v3/optimization-evidence"
+    )
+    for name in ("before", "after"):
+        path = Path(evidence[name]["external_path"])
+        assert archive_root in path.parents
+        assert ".perf2-artifacts" not in str(path)
+        if path.exists():
+            raw_summary = path.read_bytes()
+            assert len(raw_summary) == evidence[name]["summary_bytes"]
+            assert (
+                hashlib.sha256(raw_summary).hexdigest().upper()
+                == evidence[name]["summary_sha256"]
+            )
     assert len(evidence["processes"]) == 6
     for row in evidence["processes"]:
         assert row["before"]["elapsed_ms"] > 0
@@ -281,6 +335,9 @@ def test_binding_generator_requires_all_exact_local_wheels() -> None:
     assert "formal_execution_authorized\": False" in source
     assert "candidate root is dirty" in source
     assert "wheel bytes differ" in source
+    assert "q4_mechanics_git_blob" not in source
+    assert "reviewed Q4 guard blob differs" in source
+    assert "frozen Q4 mechanics/source identity differs" in source
     assert "timeout=30" not in source
     canonical = generator.canonical_bytes(
         {"candidates": {name: {} for name in generator.CANDIDATES}}
@@ -292,6 +349,78 @@ def test_binding_generator_requires_all_exact_local_wheels() -> None:
         tuple(sorted(set(gates))) == gates
         for gates in generator.PREFLIGHT_GATE_IDS.values()
     )
+
+
+def _live_solver_policy(generator: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    def git(*arguments: str) -> str:
+        return subprocess.run(
+            ["git", *arguments],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.rstrip("\r\n")
+
+    commit = git("rev-parse", "HEAD")
+    solver = {
+        "commit": commit,
+        "root": str(ROOT),
+        "subject": git("show", "-s", "--format=%s", commit),
+        "tree": git("rev-parse", f"{commit}^{{tree}}"),
+        "wheel": None,
+    }
+    changed = git(
+        "diff",
+        "--name-only",
+        generator.Q4_BASE_IDENTITY["commit"],
+        commit,
+    )
+    policy = {
+        "base_commit": generator.Q4_BASE_IDENTITY["commit"],
+        "changed_paths": changed.splitlines() if changed else [],
+        "q4_guard_import_commit": generator.Q4_GUARD_IMPORT_IDENTITY["commit"],
+    }
+    return policy, solver
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ("guard_blob", "guard_commit", "frozen_hash", "candidate_tree"),
+)
+def test_bound_q4_guard_only_identity_mutations_fail_closed(mutation: str) -> None:
+    generator = _load(f"_s3_v3_q4_guard_{mutation}", GENERATOR)
+    policy, solver = _live_solver_policy(generator)
+    bound = generator._verify_anysolver_policy(policy, solver)
+    mutated = copy.deepcopy(bound)
+    if mutation == "guard_blob":
+        mutated["guard_correction"]["authorized_paths"][0]["git_blob"] = "0" * 40
+    elif mutation == "guard_commit":
+        mutated["guard_correction"]["imported"]["commit"] = "0" * 40
+    elif mutation == "frozen_hash":
+        mutated["frozen_q4_source_identity"]["rows_sha256"] = "0" * 64
+    else:
+        mutated["candidate"]["tree"] = "0" * 40
+    with pytest.raises(generator.BindingError, match="guard-only identity"):
+        generator._reverify_bound_anysolver_policy(mutated, solver)
+
+
+def test_q4_frozen_source_mutation_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generator = _load("_s3_v3_q4_frozen_mutation", GENERATOR)
+    policy, solver = _live_solver_policy(generator)
+    original = generator._frozen_source_rows
+
+    def mutated_rows(root: Path, commit: str) -> list[dict[str, str]]:
+        rows = original(root, commit)
+        if commit == solver["commit"]:
+            rows = copy.deepcopy(rows)
+            rows[0]["git_blob"] = "0" * 40
+        return rows
+
+    monkeypatch.setattr(generator, "_frozen_source_rows", mutated_rows)
+    with pytest.raises(generator.BindingError, match="frozen Q4"):
+        generator._verify_anysolver_policy(policy, solver)
 
 
 def _preflight_binding(

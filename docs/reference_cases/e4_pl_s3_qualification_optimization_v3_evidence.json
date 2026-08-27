@@ -1,7 +1,7 @@
 {
   "after": {
     "elapsed_ms": 19295,
-    "external_path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-v3-evidence-final-optimized-n20n40-20260827\\summary.json",
+    "external_path": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-qualification-v3\\optimization-evidence\\s3-v3-evidence-final-optimized-n20n40-20260827\\summary.json",
     "partial_forecast_lower_bound_seconds": 562.5625,
     "scientific_payload_sha256": "5143F0376BAB3EE432EEE7F946BC5C0B00B6D2F5AB29F1A8161E6BC723621AC7",
     "summary_bytes": 6426,
@@ -10,7 +10,7 @@
   },
   "before": {
     "elapsed_ms": 23691,
-    "external_path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-v3-evidence-final-baseline-n20n40-20260827\\summary.json",
+    "external_path": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-qualification-v3\\optimization-evidence\\s3-v3-evidence-final-baseline-n20n40-20260827\\summary.json",
     "partial_forecast_lower_bound_seconds": 679.2112499999998,
     "scientific_payload_sha256": "5143F0376BAB3EE432EEE7F946BC5C0B00B6D2F5AB29F1A8161E6BC723621AC7",
     "summary_bytes": 6422,
