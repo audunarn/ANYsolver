@@ -281,11 +281,31 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "tests/test_mixed_shell_quadrature_grouping.py",
                 "_mixed_model",
             ): 1,
+            (
+                "tests/test_qualified_mutation_epoch.py",
+                "_qualified_q4_model",
+            ): 1,
+            (
+                "tests/test_qualified_mutation_epoch.py",
+                "test_stress_recovery_uses_three_full_boundaries_not_two_per_element",
+            ): 1,
+            (
+                "tests/test_qualified_mutation_epoch.py",
+                "test_mixed_stress_recovery_bounds_qualified_checks_and_keeps_generic_boundary",
+            ): 1,
+            (
+                "tests/test_qualified_mutation_epoch.py",
+                "test_alternating_q4_beam_recovery_keeps_one_bracket_and_rejects_mutation",
+            ): 1,
+            (
+                "tests/test_qualified_mutation_epoch.py",
+                "test_large_alternating_q4_beam_recovery_has_constant_full_guard_count",
+            ): 1,
             ("tests/test_qualified_q4_assembly_authority.py", "_model"): 1,
         }
     )
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
-    assert sum(calls["QualifiedE4PLShellElement"].values()) == 48
+    assert sum(calls["QualifiedE4PLShellElement"].values()) == 53
 
 
 def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None:
