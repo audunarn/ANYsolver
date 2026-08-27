@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import concurrent.futures
 import copy
 import datetime as dt
 import hashlib
@@ -25,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "93028f57b90e7df79818f8041726560c3bcb195e5712bdfb0ae82546665fa2c2"
+CONTRACT_SHA256 = "d3622402d47b8d59627b2266a6833d9570bae9603338164deae81fa327106697"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -35,7 +36,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-17"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-18"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -173,7 +174,7 @@ FAILED_ATTEMPT_17_REQUEST_IDS = [
     "19cdc0dd22af48c4bcc275738a0e7781",
     "e26b22079f0b4219a1c3d354b63b8ee3",
 ]
-CURRENT_REQUEST_IDS = [
+FAILED_ATTEMPT_18_REQUEST_IDS = [
     "5c0d5b22f72444e3b0028621eb62d79b",
     "143ea796d13e4a1ba757bb19fdf11f50",
     "89caa1427849411cbd424757740b132b",
@@ -181,31 +182,16 @@ CURRENT_REQUEST_IDS = [
     "1115d466d48e4049aab5dcf436901f19",
     "d37fac3d568343109df0901667ec6726",
 ]
+_ACTIVE_CONTRACT_BOOTSTRAP = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+_ACTIVE_REQUEST_ROWS = [
+    row
+    for cycle in ("cycle_1", "cycle_2")
+    for row in _ACTIVE_CONTRACT_BOOTSTRAP["resource_requests"][cycle]
+]
+CURRENT_REQUEST_IDS = [row["request_id"] for row in _ACTIVE_REQUEST_ROWS]
 CURRENT_REQUEST_FILE_RECORDS = [
-    {
-        "bytes": 1358,
-        "sha256": "89f3c4dcf06e67cc217497dc15c1d2f9d812934d81d95a0436417aa1d6c40b6b",
-    },
-    {
-        "bytes": 1009,
-        "sha256": "24e3c2e20c5b2d1fd34015770a6c87e568a444b514b70785d527c38b0fdbe7bb",
-    },
-    {
-        "bytes": 1269,
-        "sha256": "93705860e75ec532519980b75a763fc295712aa2d7df850c886ba38dbbef29b1",
-    },
-    {
-        "bytes": 1358,
-        "sha256": "0299fcd9cac2573070986c49d3e683ce8ebe9791c5290fd20c7ea3f7b4384ffa",
-    },
-    {
-        "bytes": 1009,
-        "sha256": "778d54af5fa2369603357a7995b2b6a458e1e06cc919e00a4a9b8ad97cfc4ebd",
-    },
-    {
-        "bytes": 1269,
-        "sha256": "5a635ada0d54f5a1562e314b01fb41b5b5533246623503607a603bb6734f67a4",
-    },
+    {"bytes": row["bytes"], "sha256": row["request_sha256"]}
+    for row in _ACTIVE_REQUEST_ROWS
 ]
 
 sys.path.insert(0, str(REFERENCE))
@@ -300,6 +286,12 @@ CORRECTION_PATHS = [
     "tests/test_nonlinear_static_state_lifecycle.py",
     "tests/test_production_validation.py",
 ]
+RUNTIME_EFFICIENCY_CORRECTION_PATHS = [
+    "src/anysolver/matrix_assembly.py",
+    "src/anysolver/nonlinear_static.py",
+    "tests/test_e4_pl_orchestrator_operation_lease.py",
+    "tests/test_qualified_mutation_epoch.py",
+]
 
 
 def _git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -320,6 +312,67 @@ def _canonical_list_hash(values: list[str]) -> str:
 def _file_record(path: Path) -> dict[str, object]:
     raw = path.read_bytes()
     return {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+
+
+def _functional_ready_barrier_rows(
+    module: object,
+    authorities: dict[str, dict[str, object]],
+    *,
+    pid_base: int,
+) -> dict[str, dict[str, object]]:
+    shard_ids = tuple(module.FUNCTIONAL_V19_SHARD_IDS)
+    barrier_id = "b" * 64
+    rows: dict[str, dict[str, object]] = {}
+    ready_artifacts: dict[str, dict[str, object]] = {}
+    ready_records: dict[str, dict[str, object]] = {}
+    for index, shard_id in enumerate(shard_ids):
+        authority = authorities[shard_id]
+        ready = {
+            "barrier_id": barrier_id,
+            "node_count": authority["node_count"],
+            "node_ids_sha256": authority["node_ids_sha256"],
+            "pid": pid_base + index,
+            "ready_nonce": hashlib.sha256(shard_id.encode("ascii")).hexdigest(),
+            "schema": module.FUNCTIONAL_READY_SCHEMA,
+            "shard_id": shard_id,
+        }
+        raw = module.canonical_json_bytes(ready)
+        ready_records[shard_id] = ready
+        ready_artifacts[shard_id] = {
+            "bytes": len(raw),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+        }
+    release = {
+        "barrier_id": barrier_id,
+        "liveness": "ALL_REGISTERED_CHILDREN_LIVE",
+        "ready_records": [
+            {"ready": ready_artifacts[shard_id], "shard_id": shard_id}
+            for shard_id in shard_ids
+        ],
+        "schema": module.FUNCTIONAL_RELEASE_SCHEMA,
+    }
+    release_raw = module.canonical_json_bytes(release)
+    release_artifact = {
+        "bytes": len(release_raw),
+        "sha256": hashlib.sha256(release_raw).hexdigest(),
+    }
+    for index, shard_id in enumerate(shard_ids):
+        rows[shard_id] = {
+            "attempts": 1,
+            "barrier": {
+                "barrier_id": barrier_id,
+                "ready_artifact": ready_artifacts[shard_id],
+                "ready_record": ready_records[shard_id],
+                "release_artifact": release_artifact,
+                "release_record": release,
+                "state": "RELEASED",
+            },
+            "pid": pid_base + index,
+            "process_ended_monotonic_ns": 200 + index,
+            "process_started_monotonic_ns": 100 + index,
+            "shard_id": shard_id,
+        }
+    return rows
 
 
 def _load_contract() -> dict[str, object]:
@@ -375,7 +428,7 @@ def _process(
             "disposition": "NORMAL_EXIT",
             "tree_kill_attempted": False,
             "tree_kill_exit_code": None,
-            "wall_limit_seconds": 1200,
+            "wall_limit_seconds": 900,
         },
     }
 
@@ -508,10 +561,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v18"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v19"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "a6c316f18b003f336cfb079657ca5eeda6301c2d",
+        "exact_parent": "f8274739b6bb3487cf52b2426bf2bdc13c1f08a9",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1476,6 +1529,104 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         "request_ids": FAILED_ATTEMPT_17_REQUEST_IDS,
         "role": "PRESERVED_REJECTED_AUTHORITY_ONLY",
     }
+    assert contract["background_inputs"][
+        "failed_v18_incomplete_terminalization_attempt"
+    ] == {
+        "attempt": 18,
+        "authority_commit": {
+            "commit": "1228564e5e0aa9dddf0d96d23638c5c429c2891b",
+            "parent": "a6c316f18b003f336cfb079657ca5eeda6301c2d",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "786abbe222fe20bf9cd906cad10ad363c9a0d2ff",
+        },
+        "blocked_closeout": {
+            "commit": "e0b974c86cf86908f927c5b04153c3bc7678e60a",
+            "parent": "9969b04858985801247c2b5b4ada14c314c0b0f2",
+            "subject": "docs: record blocked corrected S3 Q4 burn-in",
+        },
+        "contract": {
+            "bytes": 304797,
+            "sha256": "93028f57b90e7df79818f8041726560c3bcb195e5712bdfb0ae82546665fa2c2",
+        },
+        "execution_authorization_commit": {
+            "commit": "9969b04858985801247c2b5b4ada14c314c0b0f2",
+            "parent": "1228564e5e0aa9dddf0d96d23638c5c429c2891b",
+            "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+            "tree": "67a4292bcfe8d8f9edc60e0a7416bec1a43e33a7",
+        },
+        "failure": {
+            "cause": (
+                "COUNT_BALANCED_SHARDING_CONCENTRATED_UNBOUNDED_SYSTEM_TESTS_"
+                "AND_MISSED_TERMINALIZATION_RESERVE"
+            ),
+            "cycle": 1,
+            "elapsed_microseconds": 784561392,
+            "failed_request_id": "5c0d5b22f72444e3b0028621eb62d79b",
+            "formal_process_state": (
+                "COMPLETED_FAIL_WITH_INCOMPLETE_FUNCTIONAL_WAVE_TERMINAL_EVIDENCE"
+            ),
+            "observed_shards": [
+                {
+                    "completed_nodes": 0,
+                    "expected_nodes": 1,
+                    "shard_id": "P01",
+                    "status": "TIMED_OUT",
+                },
+                {
+                    "completed_nodes": 362,
+                    "expected_nodes": 362,
+                    "shard_id": "P02",
+                    "status": "PASS",
+                },
+                {
+                    "completed_nodes": 361,
+                    "expected_nodes": 361,
+                    "shard_id": "P03",
+                    "status": "PASS",
+                },
+                {
+                    "completed_nodes": 130,
+                    "expected_nodes": 312,
+                    "shard_id": "P04",
+                    "status": "TIMED_OUT",
+                },
+            ],
+            "resource_lock_released": True,
+            "terminal_evidence_fabricated": False,
+            "user_absolute_wall_limit_seconds": 1200,
+        },
+        "incident_evidence": {
+            "result": {
+                "bytes": 6814,
+                "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json",
+                "sha256": "7c96759bc5eb39900184c60e4fab58448d992aafe8b5dead605e18d4d860dc77",
+            },
+            "review": {
+                "bytes": 727,
+                "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json",
+                "sha256": "0b257ddc9ff61eb144ed3e016d5615708cdba01887dd627fc8f565d847938648",
+            },
+            "status": {
+                "bytes": 293,
+                "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json",
+                "sha256": "d9c4caebfc00dd53d3fa726a71d909391e77c8b149b277d4e4461d31aae91f43",
+            },
+        },
+        "preserved_refs": [
+            "codex/s3-e4-pl-final-burnin-blocked-v18-9969b04",
+            "codex/s3-e4-pl-final-burnin-blocked-v18-closeout-e0b974c",
+        ],
+        "request_dispositions": [
+            "COMPLETED_FAIL_EXECUTED_ONCE_DO_NOT_REUSE",
+            "CANCELLED_NOT_RUN_DO_NOT_REUSE",
+            "CANCELLED_NOT_RUN_DO_NOT_REUSE",
+            "CANCELLED_NOT_RUN_DO_NOT_REUSE",
+            "CANCELLED_NOT_RUN_DO_NOT_REUSE",
+            "CANCELLED_NOT_RUN_DO_NOT_REUSE",
+        ],
+        "request_ids": FAILED_ATTEMPT_18_REQUEST_IDS,
+        "role": "PRESERVED_BLOCKED_NONCANONICAL_INCIDENT_ONLY",
+    }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -1621,6 +1772,44 @@ def test_candidate_chain_and_authority_extent_are_exact() -> None:
         (contract["candidate_chain"]["initial_freeze"], INITIAL_PATHS),
         (contract["candidate_chain"]["rejected_resource_evidence"], REJECTED_PATHS),
         (contract["candidate_chain"]["correction"], CORRECTION_PATHS),
+        (
+            contract["candidate_chain"]["runtime_efficiency_correction"],
+            RUNTIME_EFFICIENCY_CORRECTION_PATHS,
+        ),
+        (
+            contract["candidate_chain"]["local_patch_bound"],
+            ["tests/test_local_patch_transition.py"],
+        ),
+        (
+            contract["candidate_chain"]["recovery_efficiency_correction"],
+            [
+                "src/anysolver/assembly.py",
+                "src/anysolver/matrix_assembly.py",
+                "src/anysolver/recovery_batches.py",
+                "tests/test_qualified_mutation_epoch.py",
+            ],
+        ),
+        (
+            contract["candidate_chain"]["mixed_style_parallelization"],
+            ["tests/test_local_patch_transition.py"],
+        ),
+        (
+            contract["candidate_chain"]["prestress_efficiency_correction"],
+            [
+                "src/anysolver/buckling.py",
+                "src/anysolver/matrix_assembly.py",
+                "src/anysolver/modal.py",
+                "tests/test_e4_pl_s3_prestressed_modal_buckling.py",
+            ],
+        ),
+        (
+            contract["candidate_chain"]["mixed_prestress_efficiency_correction"],
+            [
+                "src/anysolver/matrix_assembly.py",
+                "src/anysolver/modal.py",
+                "tests/test_e4_pl_s3_prestressed_modal_buckling.py",
+            ],
+        ),
     )
     if any(
         _git("cat-file", "-e", f"{row['commit']}^{{commit}}", check=False).returncode
@@ -1645,6 +1834,30 @@ def test_candidate_chain_and_authority_extent_are_exact() -> None:
         assert len(actual_paths) == row["path_count"]
         assert _canonical_list_hash(actual_paths) == row["path_inventory_sha256"]
     authority = contract["authority_commit"]
+    head = _git("rev-parse", "HEAD").stdout.strip()
+    contract_is_uncommitted = _git(
+        "diff",
+        "--quiet",
+        "HEAD",
+        "--",
+        "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
+        check=False,
+    ).returncode != 0
+    if contract_is_uncommitted:
+        # During construction, the successor authority is intentionally
+        # uncommitted.  Its declared parent must be the clean correction HEAD;
+        # the exact commit/path assertions below become mandatory immediately
+        # after the five-path authority commit exists.
+        assert head == authority["exact_parent"]
+        assert authority["exact_paths"] == [
+            "docs/reference_cases/e4_pl_s3_q4_burnin.py",
+            "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
+            "docs/reference_cases/e4_pl_s3_q4_process_runner.py",
+            "scripts/run_e4_pl_burnin_gate.py",
+            "tests/test_e4_pl_s3_q4_burnin_authority.py",
+        ]
+        assert authority["path_count"] == 5
+        return
     authority_commits = _git(
         "log",
         "-1",
@@ -1687,6 +1900,9 @@ def test_lane_inventory_hashes_are_current_and_extended_is_excluded() -> None:
     assert contract["lane_inventories"]["extended"]["execution"] == (
         "EXCLUDED_OPTIONAL_HISTORICAL_DIAGNOSTICS"
     )
+    assert contract["lane_inventories"]["functional"]["execution"] == (
+        "BOUNDED_CONCURRENT_ONE_EXACT_SPLIT_H01_V01_G01_B01_B02_B03_D01_MAX_7"
+    )
     for protected in (
         "tests/test_e4_pl_s3_mixed_eigen_performance.py",
         "tests/test_e4_pl_s3_mixed_structural_qualification.py",
@@ -1712,10 +1928,26 @@ def test_lane_inventory_hashes_are_current_and_extended_is_excluded() -> None:
     )
 
 
-def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
+def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
     contract = _load_contract()
     wave = contract["functional_wave"]
-    assert wave["schema"] == "anysolver.e4-pl-s3-q4-functional-wave-v2"
+    assert wave["schema"] == "anysolver.e4-pl-s3-q4-functional-wave-v3"
+    assert wave["functional_wave_schema_version"] == 3
+    assert wave["deferred_activation"] == {
+        "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
+        "node_count": 1,
+        "node_ids": [
+            "tests/test_local_patch_transition.py::"
+            "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
+        ],
+        "node_ids_sha256": (
+            "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc"
+        ),
+        "reason": (
+            "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_"
+            "BEFORE_DEFAULT_ACTIVATION"
+        ),
+    }
     assert wave["source"] == {
         "archive_filename": "functional-wave-source.tar",
         "commit_role": "EXECUTION_AUTHORIZATION_COMMIT",
@@ -1725,11 +1957,80 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
         ),
         "tree_role": "EXECUTION_AUTHORIZATION_TREE",
     }
+    assert wave["aggregate"] == {
+        "blocked_terminal": "BLOCKED_E4_PL_S3_Q4_FUNCTIONAL_WAVE",
+        "schema": "anysolver.e4-pl-s3-q4-functional-wave-aggregate-v3",
+        "success_terminal": "PASS_E4_PL_S3_Q4_FUNCTIONAL_WAVE",
+    }
     execution = wave["execution"]
-    assert execution["max_workers"] == 4
-    assert execution["numerical_library_threads"] == 1
-    assert execution["automatic_retry"] is False
-    assert execution["internal_deadline_seconds"] == 780
+    assert execution == {
+        "artifact_routing": {
+            "aggregate_filename": "functional-wave-aggregate.json",
+            "archive_filename": "functional-wave-source.tar",
+            "directory_name": "functional-wave",
+            "raw_diagnostics_filename": "functional-wave-raw-diagnostics.json",
+            "shard_directory_prefix": "shard-",
+            "source_directory_name": "source",
+        },
+        "automatic_retry": False,
+        "environment": {
+            "NUMBA_NUM_THREADS": "1",
+            "scope": "FUNCTIONAL_SHARDS_ONLY",
+        },
+        "command_watchdog_cutoff_seconds": 510,
+        "emergency_publication_cutoff_seconds": 480,
+        "execution_mode": "concurrent_seven_shards_no_inner_style_wave",
+        "inner_wave_policy": {
+            "cleanup_cutoff_seconds": 385,
+            "cleanup_deadline_environment": (
+                "ANYSOLVER_BURNIN_S3_Q4_STYLE_CLEANUP_DEADLINE"
+            ),
+            "default_mode": "SEQUENTIAL",
+            "disposition": "DEFERRED_ACTIVATION_DIAGNOSTIC_ONLY",
+            "enabled": False,
+            "enabled_shard_id": "H01",
+            "max_concurrent_workers": 3,
+            "opt_in_environment": "ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE",
+            "opt_in_value": "1",
+            "result_cutoff_seconds": 370,
+            "result_deadline_environment": (
+                "ANYSOLVER_BURNIN_S3_Q4_STYLE_RESULT_DEADLINE"
+            ),
+            "worker_wall_limit_seconds": 360,
+        },
+        "max_concurrent_workers": 7,
+        "normal_evidence_cutoff_seconds": 460,
+        "numerical_library_threads": 1,
+        "preparation_cutoff_seconds": 50,
+        "raw_observability": {
+            "canonical_timings": False,
+            "lifecycle_progress": True,
+            "pytest_durations": True,
+        },
+        "ready_barrier_cutoff_seconds": 90,
+        "selector_safety": {
+            "extra_nodes": "REJECT",
+            "full_module_selector": (
+                "ONLY_WHEN_ALL_COLLECTED_MODULE_NODES_ARE_SHARD_OWNED"
+            ),
+            "missing_nodes": "REJECT",
+            "split_module_selector": "EXACT_NODE_IDS_ONLY",
+        },
+        "source_mode": "GIT_ARCHIVE_HEAD",
+        "source_status_must_match": True,
+        "shard_execution_cutoff_seconds": 430,
+        "shard_execution_ids": [
+            "H01",
+            "V01",
+            "G01",
+            "B01",
+            "B02",
+            "B03",
+            "D01",
+        ],
+        "unproven_tree_action": "WAIT_FOR_OUTER_RESOURCE_TREE_TERMINATION",
+        "watchdog_termination_start_cutoff_seconds": 500,
+    }
     assert execution["environment"] == {
         "NUMBA_NUM_THREADS": "1",
         "scope": "FUNCTIONAL_SHARDS_ONLY",
@@ -1753,21 +2054,12 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
     )
     assert execution["source_mode"] == "GIT_ARCHIVE_HEAD"
     assert execution["source_status_must_match"] is True
-    assert execution["artifact_routing"] == {
-        "aggregate_filename": "functional-wave-aggregate.json",
-        "archive_filename": "functional-wave-source.tar",
-        "directory_name": "functional-wave",
-        "raw_diagnostics_filename": "functional-wave-raw-diagnostics.json",
-        "shard_directory_prefix": "shard-",
-        "source_directory_name": "source",
-    }
-
     manifest = wave["manifest"]
     assert manifest["module_count"] == 85
-    assert manifest["node_count"] == 1036
+    assert manifest["node_count"] == 1066
     assert manifest["collection_artifact"] == {
-        "bytes": 116046,
-        "sha256": "244132e6294f3dc37f5bf865bd800c7402d9ff6b3300af670ca954ad24bb5c15",
+        "bytes": 119426,
+        "sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
     }
     spec = importlib.util.spec_from_file_location(
         "s3_q4_wave_inventory", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
@@ -1775,6 +2067,58 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
     assert spec is not None and spec.loader is not None
     gate = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gate)
+    gate_source = (ROOT / "scripts" / "run_e4_pl_burnin_gate.py").read_text(
+        encoding="utf-8"
+    )
+    overlap_start = gate_source.index("def _functional_v19_workers_overlapped(")
+    overlap_end = gate_source.index("\ndef _functional_v19_schedule(", overlap_start)
+    overlap_source = gate_source[overlap_start:overlap_end]
+    assert "ready_record" in overlap_source
+    assert "release_record" in overlap_source
+    assert "process_started_monotonic_ns" not in overlap_source
+    assert "process_ended_monotonic_ns" not in overlap_source
+    assert 'with ready_path.open("xb") as stream:' in gate_source
+    assert 'with barrier["release_path"].open("xb") as stream:' in gate_source
+    assert "os.fsync(stream.fileno())" in gate_source
+    assert 'workers[shard_id].poll() is not None' in gate_source
+    assert gate.FUNCTIONAL_V19_STAGE_POLICY == {
+        "command_watchdog_cutoff_seconds": 510,
+        "emergency_publication_cutoff_seconds": 480,
+        "execution_mode": "concurrent_seven_shards_no_inner_style_wave",
+        "inner_wave_policy": gate.FUNCTIONAL_V20_INNER_WAVE_POLICY,
+        "max_concurrent_workers": 7,
+        "normal_evidence_cutoff_seconds": 460,
+        "preparation_cutoff_seconds": 50,
+        "ready_barrier_cutoff_seconds": 90,
+        "shard_execution_cutoff_seconds": 430,
+        "shard_execution_ids": [
+            "H01",
+            "V01",
+            "G01",
+            "B01",
+            "B02",
+            "B03",
+            "D01",
+        ],
+        "watchdog_termination_start_cutoff_seconds": 500,
+    }
+    assert burnin.FUNCTIONAL_V19_STAGE_POLICY == gate.FUNCTIONAL_V19_STAGE_POLICY
+    assert burnin.FUNCTIONAL_V19_FULL_MODULES == gate.FUNCTIONAL_V19_FULL_MODULES
+    assert (
+        burnin.FUNCTIONAL_V19_SPLIT_NODE_IDS
+        == gate.FUNCTIONAL_V19_SPLIT_NODE_IDS
+    )
+    assert gate.FUNCTIONAL_V19_SHARD_IDS == (
+        "H01",
+        "V01",
+        "G01",
+        "B01",
+        "B02",
+        "B03",
+        "D01",
+    )
+    assert gate.FUNCTIONAL_V19_COMMAND_WALL_LIMIT_SECONDS == 510
+    assert gate.FUNCTIONAL_V19_WATCHDOG_TERMINATION_START_SECONDS == 500
     modules = gate.inventory()["functional"]
     assert manifest["modules"] == modules
     assert manifest["modules_sha256"] == _canonical_list_hash(modules)
@@ -1784,17 +2128,31 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
     assert all(node.split("::", 1)[0] in modules for node in full_nodes)
     shards = manifest["shards"]
     assert [shard["shard_id"] for shard in shards] == [
-        "P01",
-        "P02",
-        "P03",
-        "P04",
+        "H01",
+        "V01",
+        "G01",
+        "B01",
+        "B02",
+        "B03",
+        "D01",
     ]
-    assert [shard["node_count"] for shard in shards] == [1, 362, 361, 312]
+    assert [shard["node_count"] for shard in shards] == [
+        10,
+        8,
+        6,
+        262,
+        293,
+        238,
+        249,
+    ]
     assert [shard["node_ids_sha256"] for shard in shards] == [
-        "9a2ff93c333465e9815679ef6e9f971cbee782f2b833934c765447867a5a5704",
-        "c6d005d0e69b2be5bbe1b197c71f22af598081ec2a1fc9e31cf217f7b5ef37ce",
-        "c7dad7210a3bebcdd7a497db946b574e05c5d2a1694fa9426ee7b62da271b8b3",
-        "38cb6d54b4c0e163308cdbcde38eff5a8372cc5a3c3702b1c0edbdf173b2118a",
+        "3fef0dace7e7d5ace263ab29ae016e3d18864f27ac92b258b216efed489c05a5",
+        "bb78a167e46dba569a001002e6b37aacc9e737fb73ff04d45f9d3784c7cf6a8f",
+        "cb9326084e3d7cb531fbc4cc7bf123e045c28cd6b455d508e1afaf1a53604221",
+        "7330ad1a643c0811f026c3e632cc3265daf7768271b9ea0b7c05f31ca6968c67",
+        "58f2d35842bf7e0f032a4cd8be7b396ef064d93ff8c83e4aa21837a115f41860",
+        "ae1330121594e6b9d5993b389256e2c2eb8c9d6e645764e3aeb7a1792ec7a3e4",
+        "f87ca0b65519aedb3427c75dc019a8a06166da8f4e71d9cf0ba0a4a6ec703a17",
     ]
     assigned = [node for shard in shards for node in shard["node_ids"]]
     assert len(assigned) == len(set(assigned)) == len(full_nodes)
@@ -1802,23 +2160,51 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
     for shard in shards:
         assert shard["node_count"] == len(shard["node_ids"])
         assert shard["node_ids_sha256"] == _canonical_list_hash(shard["node_ids"])
-    assert shards[0]["node_ids"] == [
-        "tests/test_fe_solver_nonlinear_static.py::"
-        "test_pure_bending_reaches_plastic_moment"
+    assert all(
+        node.startswith("tests/test_fe_solver_nonlinear_static.py::")
+        for node in shards[0]["node_ids"]
+    )
+    module_sets = [
+        list(dict.fromkeys(node.split("::", 1)[0] for node in shard["node_ids"]))
+        for shard in shards
     ]
+    assert [len(modules) for modules in module_sets] == [1, 1, 2, 22, 22, 19, 21]
+    assert [_canonical_list_hash(modules) for modules in module_sets] == [
+        "98849593ac93845b998d2dfdb64be01d31e2752ce61b562038a4f66807e24c22",
+        "5f0064fb99008360515a758066fc35b60c2c03225460e26d7bafe9e4c8cb14ad",
+        "41551e23750c140ac0bfb0cef159bc8b739e47cc4a5a0657ecc6ee72fee07ba5",
+        "a67f8bfad4c6ab582d1b51ac240be5362497b48bccd852a6377bfcc1973e29bb",
+        "34e1f2ed3b35f29022cba7fb815832ae4cce4bcce8418a8f045881ff41930447",
+        "e9c3bbcfec8bb681ea60c4bb7e60ab08de3b59e826a8da12543bb27ab35a4594",
+        "19102d408e3d38fd13198a68636847c8ea304d9c60f7853967e28a15016e3a1f",
+    ]
+    for index, modules in enumerate(module_sets):
+        for peer_modules in module_sets[index + 1 :]:
+            assert (set(modules) - {gate.FUNCTIONAL_V19_SPLIT_MODULE}).isdisjoint(
+                set(peer_modules) - {gate.FUNCTIONAL_V19_SPLIT_MODULE}
+            )
+    nodes_by_shard = {
+        shard["shard_id"]: shard["node_ids"] for shard in shards
+    }
+    for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS:
+        assert tuple(
+            node
+            for node in nodes_by_shard[shard_id]
+            if node.split("::", 1)[0] == gate.FUNCTIONAL_V19_SPLIT_MODULE
+        ) == gate.FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]
 
     timeout = contract["execution"]["timeout_policy"]
     assert timeout == {
         "automatic_retry": False,
-        "evidence_reserve_seconds": 20,
+        "evidence_reserve_seconds": 10,
         "scope": "COMPLETE_RESOURCE_INVOCATION_AND_CHILD_PROCESS_TREE",
         "termination_grace_seconds": 10,
         "timeout_exit_code": 124,
-        "wall_limit_seconds": 1200,
+        "wall_limit_seconds": 900,
         "windows_job": {
             "assignment": "CREATE_SUSPENDED_ASSIGN_RESUME",
             "limit": "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE",
-            "watchdog_termination_start_seconds": 1190,
+            "watchdog_termination_start_seconds": 890,
         },
         "windows_termination": {
             "arguments": ["/PID", "{pid}", "/T", "/F"],
@@ -1836,14 +2222,14 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
             "sha256": timeout["windows_termination"]["sha256"],
         }
     assert contract["execution"]["cycle_wall_policy"] == {
-        "absolute_wall_limit_seconds": 1200,
+        "absolute_wall_limit_seconds": 900,
         "clock": "time.monotonic",
         "cumulative_deadlines_seconds": {
-            "anyfem": 950,
-            "functional": 860,
-            "performance": 1060,
+            "anyfem": 720,
+            "functional": 650,
+            "performance": 830,
         },
-        "final_evidence_reserve_seconds": 130,
+        "final_evidence_reserve_seconds": 60,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
         "watchdog_termination_margin_seconds": 10,
     }
@@ -1859,15 +2245,23 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
             "historical_input": "rejected_resource_result",
             "node_count": 1034,
         },
-        "confidence": "MEDIUM_CURRENT_PARALLEL_WAVE_NOT_PREVIOUSLY_COMPLETED",
+        "confidence": "HIGH_ALL_SEVEN_SHARDS_COMMISSIONING_REQUIRED_BEFORE_FREEZE",
         "current_functional": {
-            "internal_deadline_seconds": 780,
-            "node_count": 1036,
-            "parallel_shard_node_counts": [1, 362, 361, 312],
+            "command_watchdog_cutoff_seconds": 510,
+            "emergency_publication_cutoff_seconds": 480,
+            "inner_wave_cleanup_cutoff_seconds": 385,
+            "inner_wave_result_cutoff_seconds": 370,
+            "max_concurrent_workers": 7,
+            "node_count": 1066,
+            "normal_evidence_cutoff_seconds": 460,
+            "parallel_shard_node_counts": [10, 8, 6, 262, 293, 238, 249],
+            "ready_barrier_cutoff_seconds": 90,
+            "shard_execution_cutoff_seconds": 430,
+            "watchdog_termination_start_cutoff_seconds": 500,
         },
         "minimum_worker_windows_after_predecessor_deadline_seconds": {
-            "anyfem": 50,
-            "performance": 70,
+            "anyfem": 70,
+            "performance": 110,
         },
         "performance_execution": "SERIAL_ISOLATED_AFTER_FUNCTIONAL_AND_ANYFEM",
     }
@@ -1932,14 +2326,19 @@ def test_functional_wave_is_exact_parallel_and_hard_bounded() -> None:
 def test_timeout_and_functional_manifest_mutations_are_rejected() -> None:
     contract = _load_contract()
     bounded_policy = process_runner._timeout_policy(contract)
-    assert bounded_policy["wall_limit_seconds"] == 1200
-    assert bounded_policy["worker_timeout_seconds"] == 1160
-    assert contract["functional_wave"]["execution"]["internal_deadline_seconds"] == 780
+    assert bounded_policy["wall_limit_seconds"] == 900
+    assert bounded_policy["worker_timeout_seconds"] == 870
+    assert (
+        contract["functional_wave"]["execution"][
+            "emergency_publication_cutoff_seconds"
+        ]
+        == 480
+    )
     assert (
         contract["execution"]["cycle_wall_policy"]["cumulative_deadlines_seconds"][
             "functional"
         ]
-        == 860
+        == 650
     )
     assert (
         bounded_policy["worker_timeout_seconds"]
@@ -1949,7 +2348,7 @@ def test_timeout_and_functional_manifest_mutations_are_rejected() -> None:
         == bounded_policy["wall_limit_seconds"]
     )
     for key, bad in (
-        ("wall_limit_seconds", 1201),
+        ("wall_limit_seconds", 901),
         ("timeout_exit_code", 0),
         ("termination_grace_seconds", 0),
         ("evidence_reserve_seconds", 0),
@@ -1969,15 +2368,73 @@ def test_timeout_and_functional_manifest_mutations_are_rejected() -> None:
         burnin.validate_functional_wave_contract(mutated)
 
     mutated = copy.deepcopy(contract)
-    mutated["functional_wave"]["execution"]["max_workers"] = 3
+    mutated["functional_wave"]["execution"]["max_concurrent_workers"] = 2
     with pytest.raises(burnin.EvidenceError):
         burnin.validate_functional_wave_contract(mutated)
 
-    for deadline in (779, 781):
+    for deadline in (479, 481):
         mutated = copy.deepcopy(contract)
-        mutated["functional_wave"]["execution"]["internal_deadline_seconds"] = deadline
+        mutated["functional_wave"]["execution"][
+            "emergency_publication_cutoff_seconds"
+        ] = deadline
         with pytest.raises(burnin.EvidenceError):
             burnin.validate_functional_wave_contract(mutated)
+    for retired_key, value in (
+        ("functional_wave_deadline_seconds", 600),
+        ("phase_1_timeout_seconds", 180),
+        ("phase_2_timeout_seconds", 300),
+        ("worker_timeout_seconds", 300),
+        ("hot_prerequisite_shard_id", "H01"),
+        ("hot_prerequisite_cutoff_seconds", 220),
+        ("phase_2_shard_ids", ["B01", "B02", "B03", "D01"]),
+        ("phase_2_cutoff_seconds", 520),
+    ):
+        mutated = copy.deepcopy(contract)
+        mutated["functional_wave"]["execution"][retired_key] = value
+        with pytest.raises(burnin.EvidenceError, match="keys mismatch"):
+            burnin.validate_functional_wave_contract(mutated)
+    mutated = copy.deepcopy(contract)
+    mutated["functional_wave"]["execution"]["normal_evidence_cutoff_seconds"] = 430
+    with pytest.raises(burnin.EvidenceError):
+        burnin.validate_functional_wave_contract(mutated)
+    for key, bad in (
+        ("preparation_cutoff_seconds", 51),
+        ("ready_barrier_cutoff_seconds", 91),
+        ("shard_execution_cutoff_seconds", 431),
+        ("normal_evidence_cutoff_seconds", 461),
+        ("watchdog_termination_start_cutoff_seconds", 501),
+        ("command_watchdog_cutoff_seconds", 511),
+    ):
+        mutated = copy.deepcopy(contract)
+        mutated["functional_wave"]["execution"][key] = bad
+        with pytest.raises(burnin.EvidenceError):
+            burnin.validate_functional_wave_contract(mutated)
+    mutated = copy.deepcopy(contract)
+    mutated["functional_wave"]["execution"]["shard_execution_ids"] = [
+        "D01",
+        "B03",
+        "B02",
+        "B01",
+        "G01",
+        "V01",
+        "H01",
+    ]
+    with pytest.raises(burnin.EvidenceError):
+        burnin.validate_functional_wave_contract(mutated)
+    mutated = copy.deepcopy(contract)
+    retired_five = {"H01", "B01", "B02", "B03", "D01"}
+    mutated["functional_wave"]["execution"]["shard_execution_ids"] = [
+        shard_id
+        for shard_id in burnin.FUNCTIONAL_V19_SHARD_IDS
+        if shard_id in retired_five
+    ]
+    mutated["functional_wave"]["manifest"]["shards"] = [
+        row
+        for row in mutated["functional_wave"]["manifest"]["shards"]
+        if row["shard_id"] in retired_five
+    ]
+    with pytest.raises(burnin.EvidenceError):
+        burnin.validate_functional_wave_contract(mutated)
     mutated = copy.deepcopy(contract)
     mutated["functional_wave"]["execution"]["unproven_tree_action"] = "RETURN"
     with pytest.raises(burnin.EvidenceError):
@@ -2002,14 +2459,14 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     contract = _load_contract()
     timeout_policy = process_runner._timeout_policy(contract)
     assert process_runner._cycle_wall_policy(contract) == {
-        "absolute_wall_limit_seconds": 1200,
+        "absolute_wall_limit_seconds": 900,
         "clock": "time.monotonic",
         "cumulative_deadlines_seconds": {
-            "anyfem": 950,
-            "functional": 860,
-            "performance": 1060,
+            "anyfem": 720,
+            "functional": 650,
+            "performance": 830,
         },
-        "final_evidence_reserve_seconds": 130,
+        "final_evidence_reserve_seconds": 60,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
         "watchdog_termination_margin_seconds": 10,
     }
@@ -2071,13 +2528,13 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         == 0
     )
     assert calls == [
-        (rows[0]["request_id"], 1860.0, False, True),
-        (rows[1]["request_id"], 1950.0, False, True),
-        (rows[2]["request_id"], 2060.0, False, True),
+        (rows[0]["request_id"], 1950.0, False, True),
+        (rows[1]["request_id"], 2020.0, False, True),
+        (rows[2]["request_id"], 2130.0, False, True),
     ]
     assert published == [1]
     assert emitted == [1]
-    assert certified == [(1, 1000.0, 2190.0)]
+    assert certified == [(1, 1300.0, 2190.0)]
 
     calls.clear()
     published.clear()
@@ -2171,7 +2628,7 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     certified.clear()
     cancelled.clear()
     monkeypatch.setattr(process_runner, "_run_resource_bounded", pass_lane)
-    monkeypatch.setattr(process_runner.time, "monotonic", lambda: 1860.1)
+    monkeypatch.setattr(process_runner.time, "monotonic", lambda: 1950.1)
     assert (
         process_runner._run_cycle_bounded(
             cycle=1,
@@ -2181,7 +2638,7 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         )
         == process_runner._CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
     )
-    assert calls == [(rows[0]["request_id"], 1860.0, False, True)]
+    assert calls == [(rows[0]["request_id"], 1950.0, False, True)]
     assert cancelled == [(1, "anyfem")]
     assert published == [1]
     assert emitted == [1]
@@ -2198,7 +2655,7 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         "_validate_cycle_request_rows",
         lambda _contract, _cycle: rows_cycle_2,
     )
-    observed_times = iter((1000.0, 1000.0, 2060.1))
+    observed_times = iter((1000.0, 1000.0, 2130.1))
     monkeypatch.setattr(
         process_runner.time, "monotonic", lambda: next(observed_times)
     )
@@ -2212,9 +2669,9 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
         == process_runner._CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
     )
     assert calls == [
-        (rows_cycle_2[0]["request_id"], 1860.0, False, True),
-        (rows_cycle_2[1]["request_id"], 1950.0, False, True),
-        (rows_cycle_2[2]["request_id"], 2060.0, False, True),
+        (rows_cycle_2[0]["request_id"], 1950.0, False, True),
+        (rows_cycle_2[1]["request_id"], 2020.0, False, True),
+        (rows_cycle_2[2]["request_id"], 2130.0, False, True),
     ]
     assert cancelled == []
     assert published == [1]
@@ -2222,14 +2679,14 @@ def test_complete_cycle_uses_one_absolute_clock_and_stops_after_failure(
     assert certified == []
 
     for path, bad in (
-        (("absolute_wall_limit_seconds",), 1201),
+        (("absolute_wall_limit_seconds",), 901),
         (("clock",), "time.time"),
-        (("final_evidence_reserve_seconds",), 129),
+        (("final_evidence_reserve_seconds",), 59),
         (("scope",), "PER_LANE"),
         (("watchdog_termination_margin_seconds",), 9),
-        (("cumulative_deadlines_seconds", "functional"), 861),
-        (("cumulative_deadlines_seconds", "anyfem"), 951),
-        (("cumulative_deadlines_seconds", "performance"), 1061),
+        (("cumulative_deadlines_seconds", "functional"), 651),
+        (("cumulative_deadlines_seconds", "anyfem"), 721),
+        (("cumulative_deadlines_seconds", "performance"), 831),
     ):
         hostile = copy.deepcopy(contract)
         target = hostile["execution"]["cycle_wall_policy"]
@@ -2497,10 +2954,10 @@ def test_cycle_completion_certificate_is_exact_bounded_and_all_pass() -> None:
         ],
     }
     certificate = {
-        "bounded_elapsed_microseconds": 1_189_999_999,
+        "bounded_elapsed_microseconds": 889_999_999,
         "candidate": candidate,
         "cycle": 1,
-        "evidence_deadline_microseconds": 1_190_000_000,
+        "evidence_deadline_microseconds": 890_000_000,
         "request_order": request_order,
         "schema": burnin.CYCLE_COMPLETION_CERTIFICATE_SCHEMA,
         "status": "COMPLETED_WITHIN_CYCLE_CONTROL_BOUNDS",
@@ -2518,7 +2975,7 @@ def test_cycle_completion_certificate_is_exact_bounded_and_all_pass() -> None:
     )
 
     late = copy.deepcopy(certificate)
-    late["bounded_elapsed_microseconds"] = 1_190_000_000
+    late["bounded_elapsed_microseconds"] = 890_000_000
     with pytest.raises(burnin.EvidenceError, match="elapsed bound"):
         burnin.validate_cycle_completion_certificate(
             late,
@@ -2570,31 +3027,28 @@ def test_cycle_completion_certificate_is_exclusive_and_post_snapshot(
         "_validate_ledger_snapshot",
         lambda value, *, contract: value,
     )
-    observed_times = iter((1180.0, 1180.0, 1180.0))
-    monkeypatch.setattr(
-        process_runner.time, "monotonic", lambda: next(observed_times)
-    )
+    monkeypatch.setattr(process_runner.time, "monotonic", lambda: 880.0)
 
     certificate = process_runner._write_cycle_completion_certificate(
         contract,
         cycle=1,
         invocation_started=0.0,
-        evidence_deadline=1190.0,
+        evidence_deadline=890.0,
     )
 
     certificate_path = tmp_path / contract["adjudication"][
         "cycle_completion_certificate_filenames"
     ]["cycle_1"]
     assert process_runner._load_canonical_json(certificate_path) == certificate
-    assert certificate["bounded_elapsed_microseconds"] == 1_180_000_000
-    assert certificate["evidence_deadline_microseconds"] == 1_190_000_000
+    assert certificate["bounded_elapsed_microseconds"] == 880_000_000
+    assert certificate["evidence_deadline_microseconds"] == 890_000_000
     assert not certificate_path.with_name(f".{certificate_path.name}.pending").exists()
     with pytest.raises(burnin.EvidenceError, match="already exists"):
         process_runner._write_cycle_completion_certificate(
             contract,
             cycle=1,
             invocation_started=0.0,
-            evidence_deadline=1190.0,
+            evidence_deadline=890.0,
         )
 
 
@@ -2735,7 +3189,7 @@ def test_current_requests_reject_standalone_execution_before_side_effects(
                     request_id=request_id,
                     contract=contract,
                     timeout_policy=timeout_policy,
-                    invocation_deadline=time.monotonic() + 1200.0,
+                    invocation_deadline=time.monotonic() + 900.0,
                     cycle_execution_capability=capability,
                 )
 
@@ -2751,7 +3205,7 @@ def test_functional_wave_deadline_prevents_late_launch_and_binds_partial_extent(
     gate = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gate)
 
-    shard_root = tmp_path / "shard-P01"
+    shard_root = tmp_path / "shard-H01"
     sandbox = shard_root / "cwd"
     logs = shard_root / "logs"
     sandbox.mkdir(parents=True)
@@ -2764,23 +3218,31 @@ def test_functional_wave_deadline_prevents_late_launch_and_binds_partial_extent(
             "sandbox": sandbox,
             "shard": shard,
             "shard_root": shard_root,
+            "v19": True,
         },
         absolute_deadline=time.monotonic() - 1.0,
-        deadline_seconds=780,
+        deadline_seconds=520,
         timeout_policy=contract["execution"]["timeout_policy"],
     )
     assert canonical == {
+        "descendant_tree_cleanup": "NOT_LAUNCHED",
         "exit_code": 124,
         "node_count": shard["node_count"],
         "node_ids_sha256": shard["node_ids_sha256"],
         "result": None,
-        "shard_id": "P01",
+        "shard_id": "H01",
         "status": "TIMED_OUT_NOT_STARTED",
     }
     assert raw["attempts"] == 0
     assert raw["disposition"] == "DEADLINE_EXPIRED_NOT_STARTED"
     assert raw["termination"] is None
     assert raw["timed_out"] is True
+    assert raw["deadline_seconds"] == 520
+    assert raw["pid"] is None
+    assert raw["process_started_at"] is None
+    assert raw["process_ended_at"] is None
+    assert raw["process_started_monotonic_ns"] is None
+    assert raw["process_ended_monotonic_ns"] is None
 
     extra = tmp_path / "source.bin"
     extra.write_bytes(b"partial\n")
@@ -2796,25 +3258,143 @@ def test_functional_wave_deadline_prevents_late_launch_and_binds_partial_extent(
     source = (ROOT / "scripts" / "run_e4_pl_burnin_gate.py").read_text(
         encoding="utf-8"
     )
-    assert "absolute_deadline = wave_started + deadline" in source
     wave_start = source.index("def _run_functional_wave_unprotected(")
     wave_end = source.index("\ndef _functional_artifact_extent(", wave_start)
     wave_source = source[wave_start:wave_end]
+    for cutoff in (
+        "preparation_cutoff_seconds",
+        "ready_barrier_cutoff_seconds",
+        "shard_execution_cutoff_seconds",
+        "normal_evidence_cutoff_seconds",
+        "emergency_publication_cutoff_seconds",
+    ):
+        assert f'execution["{cutoff}"]' in wave_source
     extraction_start = wave_source.index("def extract_and_verify_sandbox(")
     extraction_pool = wave_source.index(
         'thread_name_prefix="functional-extract"', extraction_start
     )
-    shard_launch = wave_source.index(
-        'thread_name_prefix="functional-wave"', extraction_pool
+    concurrent_launch = wave_source.index(
+        'thread_name_prefix="functional-bounded-concurrent"', extraction_pool
     )
-    assert extraction_start < extraction_pool < shard_launch
-    assert "max_workers=4" in wave_source[extraction_start:shard_launch]
+    concurrent_pool = wave_source.rindex(
+        "with concurrent.futures.ThreadPoolExecutor(",
+        extraction_pool,
+        concurrent_launch,
+    )
+    submit_loop = wave_source.index("for shard_id in shard_ids:", concurrent_launch)
+    submit_call = wave_source.index("future = pool.submit(", submit_loop)
+    collect_loop = wave_source.index(
+        "for future in concurrent.futures.as_completed(futures):", submit_call
+    )
+    assert extraction_start < extraction_pool < concurrent_pool < submit_loop
+    assert submit_loop < submit_call < collect_loop
+    assert 'int(wave["execution"]["max_concurrent_workers"])' in wave_source[
+        extraction_start:concurrent_pool
+    ]
     assert "pool.submit(extract_and_verify_sandbox, item)" in wave_source
     assert "zip(prepared, extraction_futures, strict=True)" in wave_source
-    assert "max_workers=int(wave[\"execution\"][\"max_workers\"])" in wave_source
+    assert (
+        'max_workers=int(execution["max_concurrent_workers"])'
+        in wave_source[concurrent_pool:collect_loop]
+    )
+    assert 'execution["ready_barrier_cutoff_seconds"]' in wave_source
+    assert 'execution["shard_execution_cutoff_seconds"]' in wave_source
+    assert 'execution["shard_execution_ids"]' in wave_source
+    assert 'prepared_by_id[inner_shard_id]["inner_wave_environment"]' in wave_source
+    assert 'inner_policy["result_cutoff_seconds"]' in wave_source
+    assert 'inner_policy["cleanup_cutoff_seconds"]' in wave_source
+    assert ".cancel(" not in wave_source[concurrent_launch:]
+    assert '"attempts": 0 if tree_state == "NOT_LAUNCHED" else 1' in wave_source
+    assert "record_prerequisite_not_started" not in wave_source
+    assert "PREREQUISITE_FAILED_NOT_STARTED" not in wave_source
+    assert "hot_prerequisite" not in wave_source
+    assert "phase_2" not in wave_source
+    assert "_functional_v19_schedule(canonical_by_id, raw_by_id)" in wave_source
+    assert "_publish_functional_evidence_atomically(" in wave_source
+    assert "decision_deadline=normal_evidence_deadline" in wave_source
+    assert "publication_deadline=emergency_publication_deadline" in wave_source
 
 
-def test_functional_selectors_preserve_split_module_ownership() -> None:
+def test_v20_seven_shard_source_policy_is_disjoint_and_hard_bounded() -> None:
+    """Exercise the changing source policy without requiring contract regeneration."""
+
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_v20_source_policy_probe",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    assert gate.FUNCTIONAL_V19_SHARD_IDS == (
+        "H01",
+        "V01",
+        "G01",
+        "B01",
+        "B02",
+        "B03",
+        "D01",
+    )
+    for name in (
+        "FUNCTIONAL_V19_SHARD_IDS",
+        "FUNCTIONAL_V19_SHARD_AUTHORITIES",
+        "FUNCTIONAL_V19_SHARD_MODULE_AUTHORITIES",
+        "FUNCTIONAL_V19_FULL_MODULES",
+        "FUNCTIONAL_V19_SPLIT_MODULE",
+        "FUNCTIONAL_V19_SPLIT_NODE_IDS",
+        "FUNCTIONAL_V19_STAGE_POLICY",
+        "FUNCTIONAL_V20_INNER_WAVE_POLICY",
+    ):
+        assert getattr(gate, name) == getattr(burnin, name)
+
+    full_modules = [
+        module
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+        for module in gate.FUNCTIONAL_V19_FULL_MODULES[shard_id]
+    ]
+    assert len(full_modules) == len(set(full_modules)) == 84
+    assert set(full_modules) | {gate.FUNCTIONAL_V19_SPLIT_MODULE} == set(
+        gate.inventory()["functional"]
+    )
+    assert gate.FUNCTIONAL_V19_FULL_MODULES["V01"] == (
+        "tests/test_beam_shell_verification.py",
+    )
+    assert gate.FUNCTIONAL_V19_FULL_MODULES["G01"] == (
+        "tests/test_geometry_panel.py",
+    )
+
+    split_nodes = [
+        node
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+        for node in gate.FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]
+    ]
+    assert len(split_nodes) == len(set(split_nodes)) == 10
+    assert all(
+        node.startswith(f"{gate.FUNCTIONAL_V19_SPLIT_MODULE}::")
+        for node in split_nodes
+    )
+    assert sum(
+        row["node_count"]
+        for row in gate.FUNCTIONAL_V19_SHARD_AUTHORITIES.values()
+    ) == gate.FUNCTIONAL_V19_FULL_NODE_AUTHORITY["node_count"] == 1066
+
+    stage = gate.FUNCTIONAL_V19_STAGE_POLICY
+    assert stage["max_concurrent_workers"] == len(gate.FUNCTIONAL_V19_SHARD_IDS) == 7
+    assert stage["shard_execution_ids"] == list(gate.FUNCTIONAL_V19_SHARD_IDS)
+    assert [
+        stage["preparation_cutoff_seconds"],
+        stage["ready_barrier_cutoff_seconds"],
+        stage["shard_execution_cutoff_seconds"],
+        stage["normal_evidence_cutoff_seconds"],
+        stage["emergency_publication_cutoff_seconds"],
+        stage["watchdog_termination_start_cutoff_seconds"],
+        stage["command_watchdog_cutoff_seconds"],
+    ] == [50, 90, 430, 460, 480, 500, 510]
+    assert gate.FUNCTIONAL_V19_COMMAND_WALL_LIMIT_SECONDS == 510
+    assert gate.FUNCTIONAL_V19_WATCHDOG_TERMINATION_START_SECONDS == 500
+
+
+def test_functional_selectors_preserve_one_exact_split_module() -> None:
     contract = _load_contract()
     spec = importlib.util.spec_from_file_location(
         "s3_q4_selector_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
@@ -2825,30 +3405,35 @@ def test_functional_selectors_preserve_split_module_ownership() -> None:
     manifest = contract["functional_wave"]["manifest"]
     full_nodes = manifest["full_node_ids"]
     shards = {row["shard_id"]: row for row in manifest["shards"]}
-    pure_bending = (
-        "tests/test_fe_solver_nonlinear_static.py::"
-        "test_pure_bending_reaches_plastic_moment"
-    )
-
     selectors, summary = gate._functional_shard_selectors(
-        shards["P01"]["node_ids"], full_nodes
+        shards["H01"]["node_ids"], full_nodes
     )
-    assert selectors == [pure_bending]
-    assert summary["exact_node_count"] == 1
-    assert summary["full_module_count"] == 0
+    assert selectors == ["tests/test_fe_solver_nonlinear_static.py"]
+    assert summary["exact_node_count"] == 0
+    assert summary["full_module_count"] == 1
 
-    selectors, summary = gate._functional_shard_selectors(
-        shards["P04"]["node_ids"], full_nodes
-    )
-    nonlinear_selectors = [
-        selector
-        for selector in selectors
-        if selector.startswith("tests/test_fe_solver_nonlinear_static.py")
-    ]
-    assert len(nonlinear_selectors) == 9
-    assert all("::" in selector for selector in nonlinear_selectors)
-    assert pure_bending not in nonlinear_selectors
-    assert summary["exact_node_count"] == 9
+    for shard_id, expected_full_modules, expected_exact_nodes in (
+        ("V01", 1, 0),
+        ("G01", 1, 1),
+        ("B01", 21, 1),
+        ("B02", 21, 1),
+        ("B03", 18, 7),
+        ("D01", 21, 0),
+    ):
+        selectors, summary = gate._functional_shard_selectors(
+            shards[shard_id]["node_ids"], full_nodes
+        )
+        exact_selectors = [selector for selector in selectors if "::" in selector]
+        full_module_selectors = [
+            selector for selector in selectors if "::" not in selector
+        ]
+        assert tuple(full_module_selectors) == gate.FUNCTIONAL_V19_FULL_MODULES[
+            shard_id
+        ]
+        assert tuple(exact_selectors) == gate.FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]
+        assert summary["exact_node_count"] == expected_exact_nodes
+        assert summary["full_module_count"] == expected_full_modules
+        assert summary["selector_count"] == expected_full_modules + expected_exact_nodes
 
     source = (ROOT / "scripts" / "run_e4_pl_burnin_gate.py").read_text(
         encoding="utf-8"
@@ -2857,6 +3442,985 @@ def test_functional_selectors_preserve_split_module_ownership() -> None:
     assert '"--durations=0"' in source
     assert '"PREPARATION_FAILED"' in source
     assert '"START_FAILED"' in source
+
+
+def test_v20_exact_functional_lists_reconstruct_all_seven_authorities() -> None:
+    contract = _load_contract()
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_v20_partition_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    full_nodes = contract["functional_wave"]["manifest"]["full_node_ids"]
+    assigned: list[str] = []
+    full_modules: list[str] = []
+    for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS:
+        owned_modules = gate.FUNCTIONAL_V19_FULL_MODULES[shard_id]
+        owned_exact_nodes = gate.FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]
+        nodes = [
+            node
+            for node in full_nodes
+            if node.split("::", 1)[0] in set(owned_modules)
+            or node in set(owned_exact_nodes)
+        ]
+        assert {
+            "node_count": len(nodes),
+            "node_ids_sha256": _canonical_list_hash(nodes),
+        } == gate.FUNCTIONAL_V19_SHARD_AUTHORITIES[shard_id]
+        represented_modules = list(
+            dict.fromkeys(node.split("::", 1)[0] for node in nodes)
+        )
+        assert {
+            "module_count": len(represented_modules),
+            "modules_sha256": _canonical_list_hash(represented_modules),
+        } == gate.FUNCTIONAL_V19_SHARD_MODULE_AUTHORITIES[shard_id]
+        selectors, summary = gate._functional_shard_selectors(nodes, full_nodes)
+        assert tuple(selector for selector in selectors if "::" not in selector) == (
+            owned_modules
+        )
+        assert tuple(selector for selector in selectors if "::" in selector) == (
+            owned_exact_nodes
+        )
+        assert summary["full_module_count"] == len(owned_modules)
+        assert summary["exact_node_count"] == len(owned_exact_nodes)
+        assigned.extend(nodes)
+        full_modules.extend(owned_modules)
+    assert len(assigned) == len(set(assigned)) == len(full_nodes) == 1066
+    assert set(assigned) == set(full_nodes)
+    assert len(full_modules) == len(set(full_modules)) == 84
+    assert set(full_modules) | {gate.FUNCTIONAL_V19_SPLIT_MODULE} == set(
+        gate.inventory()["functional"]
+    )
+
+
+def test_v20_schedule_requires_all_seven_workers_to_overlap() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_v19_schedule_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    def canonical(
+        shard_id: str,
+        status: str,
+        cleanup: str,
+    ) -> dict[str, object]:
+        return {
+            "descendant_tree_cleanup": cleanup,
+            "exit_code": 0 if status == "PASS" else 1,
+            "node_count": 1,
+            "node_ids_sha256": "a" * 64,
+            "result": None,
+            "shard_id": shard_id,
+            "status": status,
+        }
+
+    all_terminal = {
+        "H01": canonical("H01", "PASS", "CHILD_EXIT_AND_TREE_CLOSED"),
+        "V01": canonical("V01", "PASS", "CHILD_EXIT_AND_TREE_CLOSED"),
+        "G01": canonical("G01", "PASS", "CHILD_EXIT_AND_TREE_CLOSED"),
+        "B01": canonical("B01", "TEST_FAILURE", "CHILD_EXIT_AND_TREE_CLOSED"),
+        "B02": canonical("B02", "PASS", "CHILD_EXIT_AND_TREE_CLOSED"),
+        "B03": canonical("B03", "PASS", "CHILD_EXIT_AND_TREE_CLOSED"),
+        "D01": canonical("D01", "PASS", "CHILD_EXIT_AND_TREE_CLOSED"),
+    }
+    authorities = {
+        shard_id: {
+            "node_count": 1,
+            "node_ids_sha256": "a" * 64,
+            "shard_id": shard_id,
+        }
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+    }
+    overlapped_raw = _functional_ready_barrier_rows(
+        gate, authorities, pid_base=4100
+    )
+    expected_concurrent_schedule = {
+        "all_workers_overlapped": True,
+        "launch": "ALL_LAUNCHED",
+        "terminal": "ALL_TERMINAL",
+    }
+    assert (
+        gate._functional_v19_schedule(all_terminal, overlapped_raw)
+        == expected_concurrent_schedule
+    )
+    assert (
+        burnin._functional_v19_expected_schedule(all_terminal, overlapped_raw)
+        == expected_concurrent_schedule
+    )
+    disjoint_parent_timestamps = copy.deepcopy(overlapped_raw)
+    disjoint_parent_timestamps["D01"]["process_started_monotonic_ns"] = 900
+    disjoint_parent_timestamps["D01"]["process_ended_monotonic_ns"] = 1000
+    assert gate._functional_v19_workers_overlapped(disjoint_parent_timestamps) is True
+    assert burnin._functional_v19_workers_overlapped(disjoint_parent_timestamps) is True
+
+    incomplete = copy.deepcopy(overlapped_raw)
+    incomplete["B01"]["attempts"] = 0
+    assert gate._functional_v19_workers_overlapped(incomplete) is False
+    assert burnin._functional_v19_workers_overlapped(incomplete) is False
+
+    missing_ready = copy.deepcopy(overlapped_raw)
+    missing_ready["B01"]["barrier"]["state"] = "NOT_READY"
+    assert gate._functional_v19_workers_overlapped(missing_ready) is False
+    assert burnin._functional_v19_workers_overlapped(missing_ready) is False
+
+    early_exit = copy.deepcopy(overlapped_raw)
+    early_exit["B02"]["barrier"]["state"] = "READY_NOT_RELEASED"
+    early_exit["B02"]["barrier"]["release_artifact"] = None
+    early_exit["B02"]["barrier"]["release_record"] = None
+    assert gate._functional_v19_workers_overlapped(early_exit) is False
+    assert burnin._functional_v19_workers_overlapped(early_exit) is False
+
+    forged_pid = copy.deepcopy(overlapped_raw)
+    forged_pid["B03"]["barrier"]["ready_record"]["pid"] = 9999
+    with pytest.raises((gate.EvidenceError, burnin.EvidenceError)):
+        gate._functional_v19_workers_overlapped(forged_pid)
+    with pytest.raises(burnin.EvidenceError):
+        burnin._functional_v19_workers_overlapped(forged_pid)
+
+    mismatched_release = copy.deepcopy(overlapped_raw)
+    mismatched_release["D01"]["barrier"]["release_record"]["barrier_id"] = "c" * 64
+    with pytest.raises(gate.EvidenceError):
+        gate._functional_v19_workers_overlapped(mismatched_release)
+    with pytest.raises(burnin.EvidenceError):
+        burnin._functional_v19_workers_overlapped(mismatched_release)
+
+    same_pid = copy.deepcopy(overlapped_raw)
+    same_pid["D01"]["pid"] = same_pid["B01"]["pid"]
+    with pytest.raises(gate.EvidenceError):
+        gate._functional_v19_workers_overlapped(same_pid)
+    with pytest.raises(burnin.EvidenceError):
+        burnin._functional_v19_workers_overlapped(same_pid)
+
+    duplicate_nonce = copy.deepcopy(overlapped_raw)
+    duplicate_nonce["H01"]["barrier"]["ready_record"]["ready_nonce"] = (
+        duplicate_nonce["B01"]["barrier"]["ready_record"]["ready_nonce"]
+    )
+    duplicate_ready_raw = gate.canonical_json_bytes(
+        duplicate_nonce["H01"]["barrier"]["ready_record"]
+    )
+    duplicate_nonce["H01"]["barrier"]["ready_artifact"] = {
+        "bytes": len(duplicate_ready_raw),
+        "sha256": hashlib.sha256(duplicate_ready_raw).hexdigest(),
+    }
+    with pytest.raises(gate.EvidenceError):
+        gate._functional_v19_workers_overlapped(duplicate_nonce)
+    with pytest.raises(burnin.EvidenceError):
+        burnin._functional_v19_workers_overlapped(duplicate_nonce)
+
+    partial_canonical = copy.deepcopy(all_terminal)
+    partial_canonical["B01"] = canonical("B01", "START_FAILED", "NOT_LAUNCHED")
+    partial_raw = copy.deepcopy(overlapped_raw)
+    partial_raw["B01"] = {"attempts": 0}
+    expected_partial = {
+        "all_workers_overlapped": False,
+        "launch": "PARTIALLY_LAUNCHED",
+        "terminal": "ALL_TERMINAL",
+    }
+    assert gate._functional_v19_schedule(partial_canonical, partial_raw) == expected_partial
+    assert (
+        burnin._functional_v19_expected_schedule(partial_canonical, partial_raw)
+        == expected_partial
+    )
+
+    none_canonical = {
+        shard_id: canonical(shard_id, "START_FAILED", "NOT_LAUNCHED")
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+    }
+    none_raw = {
+        shard_id: {"attempts": 0}
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+    }
+    expected_none = {
+        "all_workers_overlapped": False,
+        "launch": "NOT_LAUNCHED",
+        "terminal": "NOT_LAUNCHED",
+    }
+    assert gate._functional_v19_schedule(none_canonical, none_raw) == expected_none
+    assert (
+        burnin._functional_v19_expected_schedule(none_canonical, none_raw)
+        == expected_none
+    )
+
+
+def test_functional_ready_release_requires_seven_live_identity_bound_children(
+    tmp_path: Path,
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_ready_release_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    class Worker:
+        def __init__(self, pid: int, returncode: int | None = None) -> None:
+            self.pid = pid
+            self.returncode = returncode
+
+        def poll(self) -> int | None:
+            return self.returncode
+
+    def fixture(name: str) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+        prepared: dict[str, dict[str, object]] = {}
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS:
+            shard_root = tmp_path / name / f"shard-{shard_id}"
+            (shard_root / "logs").mkdir(parents=True)
+            prepared[shard_id] = {
+                "shard": {
+                    **gate.FUNCTIONAL_V19_SHARD_AUTHORITIES[shard_id],
+                    "shard_id": shard_id,
+                },
+                "shard_root": shard_root,
+            }
+        barrier = gate._new_functional_ready_barrier(
+            prepared, deadline=time.monotonic() + 1.0
+        )
+        futures = {
+            shard_id: concurrent.futures.Future()
+            for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+        }
+        for index, shard_id in enumerate(gate.FUNCTIONAL_V19_SHARD_IDS):
+            worker = Worker(6100 + index)
+            barrier["workers"][shard_id] = worker
+            authority = prepared[shard_id]["shard"]
+            ready = {
+                "barrier_id": barrier["barrier_id"],
+                "node_count": authority["node_count"],
+                "node_ids_sha256": authority["node_ids_sha256"],
+                "pid": worker.pid,
+                "ready_nonce": barrier["ready_nonces"][shard_id],
+                "schema": gate.FUNCTIONAL_READY_SCHEMA,
+                "shard_id": shard_id,
+            }
+            barrier["ready_paths"][shard_id].write_bytes(
+                gate.canonical_json_bytes(ready)
+            )
+        return barrier, futures, prepared
+
+    barrier, futures, prepared = fixture("valid")
+    release = gate._publish_functional_ready_release(
+        barrier, futures_by_id=futures, prepared_by_id=prepared
+    )
+    assert release["liveness"] == "ALL_REGISTERED_CHILDREN_LIVE"
+    assert barrier["release_path"].read_bytes() == gate.canonical_json_bytes(release)
+
+    forged, futures, prepared = fixture("forged")
+    forged_id = gate.FUNCTIONAL_V19_SHARD_IDS[2]
+    forged_record = gate.strict_json_load(forged["ready_paths"][forged_id])
+    forged_record["pid"] += 100
+    forged["ready_paths"][forged_id].write_bytes(
+        gate.canonical_json_bytes(forged_record)
+    )
+    with pytest.raises(gate.EvidenceError, match="pid mismatch"):
+        gate._publish_functional_ready_release(
+            forged, futures_by_id=futures, prepared_by_id=prepared
+        )
+
+    mismatched, futures, prepared = fixture("mismatched")
+    mismatched_id = gate.FUNCTIONAL_V19_SHARD_IDS[3]
+    mismatched_record = gate.strict_json_load(
+        mismatched["ready_paths"][mismatched_id]
+    )
+    mismatched_record["barrier_id"] = "c" * 64
+    mismatched["ready_paths"][mismatched_id].write_bytes(
+        gate.canonical_json_bytes(mismatched_record)
+    )
+    with pytest.raises(gate.EvidenceError, match="barrier_id mismatch"):
+        gate._publish_functional_ready_release(
+            mismatched, futures_by_id=futures, prepared_by_id=prepared
+        )
+
+    early_exit, futures, prepared = fixture("early-exit")
+    early_exit["workers"]["B01"].returncode = 3
+    with pytest.raises(gate.EvidenceError, match="exited before common release"):
+        gate._publish_functional_ready_release(
+            early_exit, futures_by_id=futures, prepared_by_id=prepared
+        )
+
+    missing, futures, prepared = fixture("missing")
+    missing["ready_paths"]["D01"].unlink()
+    missing["deadline"] = time.monotonic() + 0.03
+    with pytest.raises(gate.FunctionalDeadlineExpired):
+        gate._publish_functional_ready_release(
+            missing, futures_by_id=futures, prepared_by_id=prepared
+        )
+
+
+def test_v19_publication_and_recovery_reads_obey_the_absolute_deadline(
+    tmp_path: Path,
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_bounded_publication_probe",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    routing = {
+        "aggregate_filename": "aggregate.json",
+        "raw_diagnostics_filename": "diagnostics.json",
+    }
+    wave = {
+        "aggregate": {
+            "blocked_terminal": "BLOCKED",
+            "success_terminal": "PASS",
+        }
+    }
+
+    normal = tmp_path / "normal"
+    normal.mkdir()
+    with pytest.raises(gate.FunctionalDeadlineExpired):
+        gate._publish_functional_evidence_atomically(
+            normal,
+            routing=routing,
+            wave=wave,
+            cycle=1,
+            diagnostics={"probe": True},
+            aggregate={"terminal": "BLOCKED"},
+            decision_deadline=None,
+            publication_deadline=time.monotonic() - 1.0,
+        )
+    assert not (normal / "aggregate.json").exists()
+    assert not (normal / "diagnostics.json").exists()
+    assert gate._functional_pending_path(normal / "aggregate.json").is_file()
+    assert gate._functional_pending_path(normal / "diagnostics.json").is_file()
+
+    recovery = tmp_path / "recovery"
+    recovery.mkdir()
+    (recovery / "diagnostics.json").write_bytes(gate.canonical_json_bytes({}))
+    gate._functional_pending_path(recovery / "aggregate.json").write_bytes(
+        gate.canonical_json_bytes({"terminal": "BLOCKED"})
+    )
+    with pytest.raises(gate.FunctionalDeadlineExpired):
+        gate._recover_functional_diagnostics_first_publication(
+            recovery,
+            routing=routing,
+            wave=wave,
+            cycle=1,
+            publication_deadline=time.monotonic() - 1.0,
+        )
+    assert not (recovery / "aggregate.json").exists()
+
+
+def test_v19_bounded_hash_rechecks_deadline_after_eof(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_bounded_hash_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    artifact = tmp_path / "empty.bin"
+    artifact.write_bytes(b"")
+    clock = iter((10.0, 11.0))
+    monkeypatch.setattr(gate.time, "monotonic", lambda: next(clock))
+    with pytest.raises(gate.FunctionalDeadlineExpired, match="probe completion"):
+        gate._functional_bounded_hash_record(artifact, 10.5, "probe")
+
+
+def test_v18_shard_environment_discards_barrier_and_inner_wave_controls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_v18_environment_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    barrier_names = (
+        gate._FUNCTIONAL_BARRIER_DEADLINE_ENV,
+        gate._FUNCTIONAL_BARRIER_ID_ENV,
+        gate._FUNCTIONAL_READY_ENV,
+        gate._FUNCTIONAL_READY_NONCE_ENV,
+        gate._FUNCTIONAL_RELEASE_ENV,
+        *gate._S3_Q4_STYLE_WAVE_ENVIRONMENT,
+    )
+    for name in barrier_names:
+        monkeypatch.setenv(name, f"inherited-{name}")
+    monkeypatch.setenv("PYTHONPATH", "")
+    roots = {
+        name: tmp_path / name
+        for name in ("ANYmesh", "ANYgeometry", "ANYmaterial", "ANYfileIO", "ANYsolver")
+    }
+    monkeypatch.setattr(gate, "_local_roots", lambda: dict(roots))
+    monkeypatch.setattr(gate, "_write_source_metadata_overlay", lambda *_args: None)
+
+    environment = gate._functional_shard_environment(
+        sandbox=tmp_path / "sandbox",
+        shard_root=tmp_path / "shard",
+        expected_path=tmp_path / "expected.json",
+        progress_path=tmp_path / "progress.jsonl",
+        result_path=tmp_path / "result.json",
+        shard_id="P01",
+        barrier=None,
+    )
+    assert all(name not in environment for name in barrier_names)
+
+    metadata = tmp_path / "metadata"
+    ordinary = gate._pytest_environment(roots=roots, metadata_overlay=metadata)
+    assert all(
+        name not in ordinary for name in gate._S3_Q4_STYLE_WAVE_ENVIRONMENT
+    )
+
+    for shard_id in ("H01", "B01"):
+        with pytest.raises(gate.EvidenceError, match="disabled for opt-in burn-in"):
+            gate._functional_shard_environment(
+                sandbox=tmp_path / "sandbox",
+                shard_root=tmp_path / "shard",
+                expected_path=tmp_path / "expected.json",
+                progress_path=tmp_path / "progress.jsonl",
+                result_path=tmp_path / "result.json",
+                shard_id=shard_id,
+                barrier=None,
+                inner_wave_environment={
+                    gate._S3_Q4_STYLE_WAVE_ENV: "1",
+                    gate._S3_Q4_STYLE_RESULT_DEADLINE_ENV: "1470.0",
+                    gate._S3_Q4_STYLE_CLEANUP_DEADLINE_ENV: "1485.0",
+                },
+            )
+
+
+def test_deferred_mixed_transition_node_is_bound_outside_opt_in_burnin() -> None:
+    contract = burnin.strict_json_load(CONTRACT_PATH)
+    wave = contract["functional_wave"]
+    expected_node = (
+        "tests/test_local_patch_transition.py::"
+        "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
+    )
+    assert wave["deferred_activation"] == {
+        "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
+        "node_count": 1,
+        "node_ids": [expected_node],
+        "node_ids_sha256": "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc",
+        "reason": "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_BEFORE_DEFAULT_ACTIVATION",
+    }
+    manifest_nodes = {
+        node
+        for shard in wave["manifest"]["shards"]
+        for node in shard["node_ids"]
+    }
+    assert expected_node not in manifest_nodes
+    assert "def test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams(" in (
+        ROOT / "tests" / "test_local_patch_transition.py"
+    ).read_text(encoding="utf-8")
+
+    contaminated = copy.deepcopy(contract)
+    contaminated["functional_wave"]["deferred_activation"]["node_ids"] = []
+    with pytest.raises(burnin.EvidenceError, match="deferred_activation"):
+        burnin.validate_functional_wave_contract(contaminated)
+
+    contaminated = copy.deepcopy(contract)
+    contaminated["functional_wave"]["execution"]["inner_wave_policy"][
+        "enabled"
+    ] = True
+    with pytest.raises(burnin.EvidenceError, match="inner_wave_policy"):
+        burnin.validate_functional_wave_contract(contaminated)
+
+
+def test_disabled_inner_mesh_style_policy_is_bound_consistently() -> None:
+    gate_spec = importlib.util.spec_from_file_location(
+        "s3_q4_inner_wall_gate_probe",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert gate_spec is not None and gate_spec.loader is not None
+    gate = importlib.util.module_from_spec(gate_spec)
+    gate_spec.loader.exec_module(gate)
+
+    contract = burnin.strict_json_load(CONTRACT_PATH)
+    policy = contract["functional_wave"]["execution"]["inner_wave_policy"]
+    assert policy == gate.FUNCTIONAL_V20_INNER_WAVE_POLICY
+    assert policy == burnin.FUNCTIONAL_V20_INNER_WAVE_POLICY
+    assert policy["enabled"] is False
+    assert policy["disposition"] == "DEFERRED_ACTIVATION_DIAGNOSTIC_ONLY"
+
+
+def _activation_stage_mesh_style_wave_lifecycle_excluded_from_opt_in_burnin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_mesh_style_lifecycle_probe",
+        ROOT / "tests" / "test_local_patch_transition.py",
+    )
+    assert spec is not None and spec.loader is not None
+    fixture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture)
+
+    cases = (("uniform", {}), ("graded", {}), ("local", {}))
+
+    def success(case):
+        label, _overrides = case
+        offset = float(("uniform", "graded", "local").index(label))
+        return label, {"lf": 3.0 + offset, "uz": 2.0 + offset, "vm_p50": 1.0 + offset}
+
+    for name in (
+        fixture._MESH_STYLE_WAVE_ENV,
+        fixture._MESH_STYLE_RESULT_DEADLINE_ENV,
+        fixture._MESH_STYLE_CLEANUP_DEADLINE_ENV,
+    ):
+        monkeypatch.delenv(name, raising=False)
+    sequential = fixture._run_mesh_styles(success, cases)
+    assert list(sequential) == ["uniform", "graded", "local"]
+
+    class FakeQueue:
+        def __init__(self) -> None:
+            import queue as queue_module
+
+            self._queue = queue_module.Queue()
+
+        def put(self, value) -> None:
+            self._queue.put(value)
+
+        def get(self, timeout):
+            return self._queue.get(timeout=timeout)
+
+        def cancel_join_thread(self) -> None:
+            pass
+
+        def close(self) -> None:
+            pass
+
+    class FakeProcess:
+        def __init__(self, context, target, args, name) -> None:
+            self._context = context
+            self._target = target
+            self._args = args
+            self.name = name
+            self.index = int(args[0])
+            self.exitcode = None
+            self.closed = False
+
+        def start(self) -> None:
+            if self.index == self._context.start_failure_index:
+                raise RuntimeError(f"start failed for {self.index}")
+            self._target(*self._args)
+            self.exitcode = self._context.exit_codes.get(self.index, 0)
+
+        def is_alive(self) -> bool:
+            return False
+
+        def join(self, timeout=None) -> None:
+            pass
+
+        def terminate(self) -> None:
+            self.exitcode = -15
+
+        def kill(self) -> None:
+            self.exitcode = -9
+
+        def close(self) -> None:
+            self.closed = True
+
+    class FakeContext:
+        def __init__(self, *, exit_codes=None, start_failure_index=-1) -> None:
+            self.exit_codes = dict(exit_codes or {})
+            self.start_failure_index = start_failure_index
+            self.processes = []
+
+        def Queue(self):
+            return FakeQueue()
+
+        def Process(self, *, target, args, name):
+            process = FakeProcess(self, target, args, name)
+            self.processes.append(process)
+            return process
+
+    def activate() -> None:
+        result_deadline = time.monotonic() + 60.0
+        monkeypatch.setenv(fixture._MESH_STYLE_WAVE_ENV, "1")
+        monkeypatch.setenv(
+            fixture._MESH_STYLE_RESULT_DEADLINE_ENV,
+            repr(result_deadline),
+        )
+        monkeypatch.setenv(
+            fixture._MESH_STYLE_CLEANUP_DEADLINE_ENV,
+            repr(result_deadline + 15.0),
+        )
+
+    activate()
+    context = FakeContext()
+    monkeypatch.setattr(fixture.multiprocessing, "get_context", lambda _mode: context)
+    parallel = fixture._run_mesh_styles(success, cases)
+    assert parallel == sequential
+    assert all(process.closed for process in context.processes)
+
+    def child_error(_case):
+        raise RuntimeError("child failure sentinel")
+
+    activate()
+    context = FakeContext()
+    monkeypatch.setattr(fixture.multiprocessing, "get_context", lambda _mode: context)
+    with pytest.raises(pytest.fail.Exception, match="child failure sentinel"):
+        fixture._run_mesh_styles(child_error, cases)
+    assert all(process.closed for process in context.processes)
+
+    activate()
+    context = FakeContext(exit_codes={1: 7})
+    monkeypatch.setattr(fixture.multiprocessing, "get_context", lambda _mode: context)
+    with pytest.raises(pytest.fail.Exception, match="worker exit code was 7"):
+        fixture._run_mesh_styles(success, cases)
+    assert all(process.closed for process in context.processes)
+
+    def malformed(case):
+        label, _overrides = case
+        return label, {"lf": 1.0}
+
+    activate()
+    context = FakeContext()
+    monkeypatch.setattr(fixture.multiprocessing, "get_context", lambda _mode: context)
+    with pytest.raises(pytest.fail.Exception, match="malformed value keys"):
+        fixture._run_mesh_styles(malformed, cases)
+    assert all(process.closed for process in context.processes)
+
+    activate()
+    context = FakeContext(start_failure_index=1)
+    monkeypatch.setattr(fixture.multiprocessing, "get_context", lambda _mode: context)
+    with pytest.raises(RuntimeError, match="start failed for 1"):
+        fixture._run_mesh_styles(success, cases)
+    assert context.processes[0].closed is True
+
+
+def _activation_stage_h01_inner_wall_cap_excluded_from_opt_in_burnin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    gate_spec = importlib.util.spec_from_file_location(
+        "s3_q4_inner_wall_gate_probe",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert gate_spec is not None and gate_spec.loader is not None
+    gate = importlib.util.module_from_spec(gate_spec)
+    gate_spec.loader.exec_module(gate)
+    fixture_spec = importlib.util.spec_from_file_location(
+        "s3_q4_inner_wall_fixture_probe",
+        ROOT / "tests" / "test_local_patch_transition.py",
+    )
+    assert fixture_spec is not None and fixture_spec.loader is not None
+    fixture = importlib.util.module_from_spec(fixture_spec)
+    fixture_spec.loader.exec_module(fixture)
+
+    contract = burnin.strict_json_load(CONTRACT_PATH)
+    contract_cap = contract["functional_wave"]["execution"]["inner_wave_policy"][
+        "worker_wall_limit_seconds"
+    ]
+    source_cap = gate.FUNCTIONAL_V20_INNER_WAVE_POLICY["worker_wall_limit_seconds"]
+    assert (
+        source_cap
+        == burnin.FUNCTIONAL_V20_INNER_WAVE_POLICY["worker_wall_limit_seconds"]
+        == fixture._MESH_STYLE_WORKER_WALL_SECONDS
+        == 360
+    )
+    if contract_cap != source_cap:
+        with pytest.raises(burnin.EvidenceError):
+            burnin.validate_functional_wave_contract(contract)
+    else:
+        assert contract_cap == 360
+
+    monkeypatch.setenv(fixture._MESH_STYLE_WAVE_ENV, "1")
+    monkeypatch.setenv(fixture._MESH_STYLE_RESULT_DEADLINE_ENV, "1000.0")
+    monkeypatch.setenv(fixture._MESH_STYLE_CLEANUP_DEADLINE_ENV, "1015.0")
+    monkeypatch.setattr(fixture.time, "monotonic", lambda: 100.0)
+    assert fixture._parallel_mesh_style_deadlines() == (460.0, 1015.0)
+
+
+def test_emergency_identity_queries_use_v19_deadline_without_changing_v18(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_emergency_identity_probe",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    class StopProbe(BaseException):
+        pass
+
+    routing = {
+        "aggregate_filename": "aggregate.json",
+        "directory_name": "functional-wave",
+        "raw_diagnostics_filename": "diagnostics.json",
+    }
+    contract_path = tmp_path / "contract.json"
+    contract_path.write_text(
+        json.dumps(
+            {"non_resource_commands": {"output_root": str(tmp_path / "output")}}
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        gate,
+        "_recover_functional_diagnostics_first_publication",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        gate, "_discard_functional_pending_evidence", lambda *_args, **_kwargs: None
+    )
+
+    def stop_after_identity(*_args: object, **_kwargs: object) -> object:
+        raise StopProbe
+
+    monkeypatch.setattr(gate, "_functional_source_status", stop_after_identity)
+
+    for schema, publication_deadline in (
+        (gate.FUNCTIONAL_WAVE_V19_SCHEMA, time.monotonic() + 10.0),
+        (gate.FUNCTIONAL_WAVE_SCHEMA, None),
+    ):
+        wave = {
+            "execution": {"artifact_routing": routing},
+            "schema": schema,
+        }
+        monkeypatch.setattr(
+            gate,
+            "validate_functional_wave_contract",
+            lambda _value, wave=wave: wave,
+        )
+        wave_root = tmp_path / "output" / routing["directory_name"] / "cycle-1"
+        wave_root.mkdir(parents=True, exist_ok=True)
+        calls: list[tuple[tuple[str, ...], float | None]] = []
+
+        def fake_git(
+            _repository: Path,
+            *args: str,
+            timeout_seconds: float | None = None,
+        ) -> str:
+            calls.append((args, timeout_seconds))
+            return ("a" if args[-1] == "HEAD" else "b") * 40
+
+        monkeypatch.setattr(gate, "_git", fake_git)
+        with pytest.raises(StopProbe):
+            gate._record_functional_wave_failure(
+                1,
+                contract_path,
+                RuntimeError("probe"),
+                publication_deadline=publication_deadline,
+            )
+        assert [args for args, _timeout in calls] == [
+            ("rev-parse", "HEAD"),
+            ("rev-parse", "HEAD^{tree}"),
+        ]
+        if schema == gate.FUNCTIONAL_WAVE_V19_SCHEMA:
+            assert all(
+                isinstance(timeout, float) and 0.0 < timeout <= 10.0
+                for _args, timeout in calls
+            )
+        else:
+            assert all(timeout is None for _args, timeout in calls)
+
+
+def test_v19_staged_evidence_is_validated_before_atomic_promotion(
+    tmp_path: Path,
+) -> None:
+    contract = _load_contract()
+    wave = contract["functional_wave"]
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_v19_publication_probe", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    authorities = {
+        row["shard_id"]: row for row in wave["manifest"]["shards"]
+    }
+
+    def canonical(
+        shard_id: str,
+        status: str,
+        cleanup: str,
+    ) -> dict[str, object]:
+        authority = authorities[shard_id]
+        return {
+            "descendant_tree_cleanup": cleanup,
+            "exit_code": 0 if status == "PASS" else 250,
+            "node_count": authority["node_count"],
+            "node_ids_sha256": authority["node_ids_sha256"],
+            "result": (
+                {"bytes": 1, "sha256": shard_id.lower().encode().hex().ljust(64, "0")}
+                if status == "PASS"
+                else None
+            ),
+            "shard_id": shard_id,
+            "status": status,
+        }
+
+    canonical_by_id = {
+        shard_id: canonical(shard_id, "PASS", "CHILD_EXIT_AND_TREE_CLOSED")
+        for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+    }
+    canonical_by_id["H01"] = canonical(
+        "H01", "TEST_FAILURE", "CHILD_EXIT_AND_TREE_CLOSED"
+    )
+    raw_by_id = _functional_ready_barrier_rows(
+        gate, authorities, pid_base=5100
+    )
+    diagnostics = {
+        "archive_process": {},
+        "artifact_extent": {},
+        "cycle": 1,
+        "schema": gate.FUNCTIONAL_WAVE_V19_DIAGNOSTICS_SCHEMA,
+        "shards": [
+            raw_by_id[shard_id] for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+        ],
+        "source_status_after": {},
+        "source_status_before": {},
+    }
+    aggregate = {
+        "candidate": {},
+        "diagnostics": None,
+        "manifest": {},
+        "schedule": gate._functional_v19_schedule(canonical_by_id, raw_by_id),
+        "schema": gate.FUNCTIONAL_WAVE_V19_AGGREGATE_SCHEMA,
+        "shards": [
+            canonical_by_id[shard_id]
+            for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
+        ],
+        "source": {},
+        "terminal": wave["aggregate"]["blocked_terminal"],
+    }
+    routing = wave["execution"]["artifact_routing"]
+    wave_root = tmp_path / "valid"
+    wave_root.mkdir()
+    aggregate_raw = gate._publish_functional_evidence_atomically(
+        wave_root,
+        routing=routing,
+        wave=wave,
+        cycle=1,
+        diagnostics=diagnostics,
+        aggregate=aggregate,
+        decision_deadline=time.monotonic() + 10.0,
+        publication_deadline=time.monotonic() + 10.0,
+    )
+    diagnostics_path = wave_root / routing["raw_diagnostics_filename"]
+    aggregate_path = wave_root / routing["aggregate_filename"]
+    assert aggregate_path.read_bytes() == aggregate_raw
+    assert gate.strict_json_loads(aggregate_raw)["diagnostics"] == gate.file_hash_record(
+        diagnostics_path
+    )
+    assert not gate._functional_pending_path(aggregate_path).exists()
+    assert not gate._functional_pending_path(diagnostics_path).exists()
+
+    # A crash between the two atomic renames leaves canonical diagnostics and
+    # the already-decided aggregate in its exclusive pending path.  Recovery
+    # must promote those exact bytes without executing any worker again.
+    recovery_root = tmp_path / "diagnostics-first-recovery"
+    recovery_root.mkdir()
+    recovery_diagnostics_path = (
+        recovery_root / routing["raw_diagnostics_filename"]
+    )
+    recovery_aggregate_path = recovery_root / routing["aggregate_filename"]
+    diagnostics_raw = gate.canonical_json_bytes(diagnostics)
+    recovery_diagnostics_path.write_bytes(diagnostics_raw)
+    recovery_pending = gate._functional_pending_path(recovery_aggregate_path)
+    recovery_pending.write_bytes(aggregate_raw)
+    recovered_raw = gate._recover_functional_diagnostics_first_publication(
+        recovery_root,
+        routing=routing,
+        wave=wave,
+        cycle=1,
+        publication_deadline=time.monotonic() + 10.0,
+    )
+    assert recovered_raw == aggregate_raw
+    assert recovery_aggregate_path.read_bytes() == aggregate_raw
+    assert recovery_diagnostics_path.read_bytes() == diagnostics_raw
+    assert not recovery_pending.exists()
+
+    hostile_recovery_root = tmp_path / "hostile-diagnostics-first-recovery"
+    hostile_recovery_root.mkdir()
+    hostile_diagnostics_path = (
+        hostile_recovery_root / routing["raw_diagnostics_filename"]
+    )
+    hostile_aggregate_path = hostile_recovery_root / routing["aggregate_filename"]
+    hostile_diagnostics_path.write_bytes(diagnostics_raw)
+    hostile_pending = gate._functional_pending_path(hostile_aggregate_path)
+    hostile_aggregate = gate.strict_json_loads(aggregate_raw)
+    hostile_aggregate["schedule"]["all_workers_overlapped"] = False
+    hostile_pending.write_bytes(gate.canonical_json_bytes(hostile_aggregate))
+    with pytest.raises(gate.EvidenceError, match="schedule disagrees"):
+        gate._recover_functional_diagnostics_first_publication(
+            hostile_recovery_root,
+            routing=routing,
+            wave=wave,
+            cycle=1,
+            publication_deadline=time.monotonic() + 10.0,
+        )
+    assert not hostile_aggregate_path.exists()
+    assert hostile_diagnostics_path.read_bytes() == diagnostics_raw
+    assert hostile_pending.exists()
+
+    invalid_root = tmp_path / "invalid"
+    invalid_root.mkdir()
+    invalid = copy.deepcopy(aggregate)
+    invalid["schedule"]["all_workers_overlapped"] = False
+    with pytest.raises(gate.EvidenceError, match="schedule disagrees"):
+        gate._publish_functional_evidence_atomically(
+            invalid_root,
+            routing=routing,
+            wave=wave,
+            cycle=1,
+            diagnostics=diagnostics,
+            aggregate=invalid,
+            decision_deadline=time.monotonic() + 10.0,
+            publication_deadline=time.monotonic() + 10.0,
+        )
+    assert not (invalid_root / routing["aggregate_filename"]).exists()
+    assert not (invalid_root / routing["raw_diagnostics_filename"]).exists()
+    gate._discard_functional_pending_evidence(invalid_root, routing=routing)
+    assert list(invalid_root.iterdir()) == []
+
+    expired_root = tmp_path / "expired"
+    expired_root.mkdir()
+    with pytest.raises(gate.FunctionalDeadlineExpired):
+        gate._publish_functional_evidence_atomically(
+            expired_root,
+            routing=routing,
+            wave=wave,
+            cycle=1,
+            diagnostics=diagnostics,
+            aggregate=aggregate,
+            decision_deadline=None,
+            publication_deadline=time.monotonic() - 1.0,
+        )
+    assert not (expired_root / routing["aggregate_filename"]).exists()
+    assert not (expired_root / routing["raw_diagnostics_filename"]).exists()
+
+
+def test_v19_pre_cycle_root_failure_is_owned_by_the_enclosing_resource_result(
+    tmp_path: Path,
+) -> None:
+    contract = _load_contract()
+    spec = importlib.util.spec_from_file_location(
+        "s3_q4_v19_pre_cycle_failure_probe",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    absent_output_root = tmp_path / "pre-cycle-output"
+    local_contract = copy.deepcopy(contract)
+    local_contract["non_resource_commands"]["output_root"] = str(absent_output_root)
+    contract_path = tmp_path / "pre-cycle-contract.json"
+    contract_path.write_bytes(gate.canonical_json_bytes(local_contract))
+    original_error = gate.EvidenceError("failure before the cycle root exists")
+
+    with pytest.raises(
+        gate.EvidenceError,
+        match="failure before the cycle root exists",
+    ) as caught:
+        gate._record_functional_wave_failure(
+            1,
+            contract_path,
+            original_error,
+            publication_deadline=time.monotonic() + 10.0,
+        )
+    assert caught.value is original_error
+    assert not absent_output_root.exists()
 
 
 def test_functional_shard_results_are_independently_recomputed_and_mutation_safe(
@@ -2979,7 +4543,7 @@ def test_functional_plugin_rejects_unregistered_collected_nodes(
         "outcomes": {},
         "progress_stream": io.BytesIO(),
         "result_path": Path("unused.json"),
-        "shard_id": "P01",
+        "shard_id": "H01",
     }
     monkeypatch.setattr(gate, "_functional_plugin_state", lambda: state)
     items = [Item(expected[0]), Item("tests/test_unregistered.py::test_extra")]
@@ -3003,19 +4567,28 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
     spec.loader.exec_module(gate)
 
     assert gate.CI_NONFUNCTIONAL_NODE_AUTHORITY == {
-        "node_count": 871,
+        "node_count": 908,
         "node_ids_sha256": (
-            "7b5ea229272fcde6bae810c6ce0ae52a4d1cfe2c35efa65c681b24f278a015ff"
+            "6451af9564361a97dd803b877f6f8ad19874b3f441d5a08c2c30dc8ccf3e764b"
         ),
     }
     assert {
         shard_id: authority["node_count"]
         for shard_id, authority in gate.CI_SHARD_NODE_AUTHORITIES.items()
-    } == {"P01": 93, "P02": 622, "P03": 589, "P04": 603}
+    } == {"P01": 273, "P02": 496, "P03": 613, "P04": 594}
     assert sum(
         authority["node_count"]
         for authority in gate.CI_SHARD_NODE_AUTHORITIES.values()
-    ) == 1907
+    ) == 1976
+    contract = _load_contract()
+    full_nodes = contract["functional_wave"]["manifest"]["full_node_ids"]
+    partitions = gate._ci_functional_node_partitions(
+        gate.inventory()["functional"], full_nodes
+    )
+    assert list(partitions) == list(gate.CI_SHARD_IDS)
+    assigned = [node for shard_id in gate.CI_SHARD_IDS for node in partitions[shard_id]]
+    assert len(assigned) == len(set(assigned)) == len(full_nodes)
+    assert set(assigned) == set(full_nodes)
     synthetic_lanes = {
         "quick": ["quick_a", "quick_b"],
         "additive": ["add_0", "add_1", "add_2", "add_3", "add_4"],
@@ -3073,6 +4646,9 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
     ci_source = source[ci_start:ci_end]
     assert "_collect_ci_nonfunctional_nodes(" in ci_source
     assert "_ci_nonfunctional_module_buckets(lanes)" in ci_source
+    assert "_ci_functional_node_partitions(" in ci_source
+    assert "for index, shard_id in enumerate(CI_SHARD_IDS)" in ci_source
+    assert 'wave["manifest"]["shards"]' not in ci_source
     assert "CI_SHARD_NODE_AUTHORITIES[shard_id]" in ci_source
     assert "_CI_EXPECTED_ENV" in ci_source and "_CI_SHARD_ENV" in ci_source
     assert '"scripts.run_e4_pl_burnin_gate"' in ci_source
@@ -3145,7 +4721,10 @@ def test_gate_watchdog_authenticates_child_and_owns_timeout_tree(
     gate = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gate)
     monkeypatch.delenv(gate._GATE_WATCHDOG_ENV, raising=False)
-    monkeypatch.setattr(gate, "FUNCTIONAL_COMMAND_WALL_LIMIT_SECONDS", 2)
+    monkeypatch.setattr(gate, "FUNCTIONAL_V19_COMMAND_WALL_LIMIT_SECONDS", 2)
+    monkeypatch.setattr(
+        gate, "FUNCTIONAL_V19_WATCHDOG_TERMINATION_START_SECONDS", 1
+    )
     monkeypatch.setattr(gate, "FUNCTIONAL_COMMAND_TERMINATION_RESERVE_SECONDS", 1)
 
     class TimedOutWorker:
@@ -3219,7 +4798,7 @@ def test_inner_tree_termination_failure_is_held_for_outer_tree_kill(
     gate = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gate)
     shard = contract["functional_wave"]["manifest"]["shards"][0]
-    shard_root = tmp_path / "shard-P01"
+    shard_root = tmp_path / "shard-H01"
     sandbox = shard_root / "cwd"
     (shard_root / "logs").mkdir(parents=True)
     sandbox.mkdir()
@@ -3231,15 +4810,22 @@ def test_inner_tree_termination_failure_is_held_for_outer_tree_kill(
             raise OSError(f"simulated wait failure after launch ({timeout})")
 
     monkeypatch.setattr(gate, "_functional_shard_environment", lambda **_kwargs: {})
-    monkeypatch.setattr(gate.subprocess, "Popen", lambda *_args, **_kwargs: UncertainWorker())
     monkeypatch.setattr(
         gate,
-        "_terminate_functional_process_tree",
-        lambda *_args, **_kwargs: {
-            "bytes": 0,
-            "returncode": 259,
-            "sha256": hashlib.sha256(b"").hexdigest(),
-        },
+        "_launch_functional_process",
+        lambda *_args, **_kwargs: (UncertainWorker(), None),
+    )
+    monkeypatch.setattr(
+        gate,
+        "_close_functional_process_tree",
+        lambda *_args, **_kwargs: (
+            {
+                "bytes": 0,
+                "returncode": 259,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            },
+            "TREE_TERMINATION_FAILED",
+        ),
     )
     canonical, raw = gate._run_functional_shard(
         {
@@ -3247,9 +4833,10 @@ def test_inner_tree_termination_failure_is_held_for_outer_tree_kill(
             "sandbox": sandbox,
             "shard": shard,
             "shard_root": shard_root,
+            "v19": True,
         },
         absolute_deadline=time.monotonic() + 60.0,
-        deadline_seconds=780,
+        deadline_seconds=520,
         timeout_policy=contract["execution"]["timeout_policy"],
     )
     assert canonical["status"] == "TIMEOUT_TREE_TERMINATION_FAILED"
@@ -3265,7 +4852,9 @@ def test_inner_tree_termination_failure_is_held_for_outer_tree_kill(
         raise OSError("simulated aggregate publication failure")
 
     monkeypatch.setattr(gate, "_run_functional_wave_unprotected", fail_after_unproven_tree)
-    monkeypatch.setattr(gate, "_record_functional_wave_failure", lambda *_args: 1)
+    monkeypatch.setattr(
+        gate, "_record_functional_wave_failure", lambda *_args, **_kwargs: 1
+    )
     monkeypatch.setattr(
         gate, "_await_outer_resource_tree_termination", lambda: held.append(True)
     )
@@ -3460,7 +5049,7 @@ def test_failed_job_close_prevents_local_publication(
     ):
         process_runner._run_local_bounded(
             contract=contract,
-            invocation_deadline=time.monotonic() + 1200.0,
+            invocation_deadline=time.monotonic() + 900.0,
             lane="quick",
             partition=None,
             timeout_policy=policy,
@@ -3573,7 +5162,7 @@ def test_failed_acquisition_job_close_prevents_request_consumption(
             request_id=request_id,
             contract=contract,
             timeout_policy=policy,
-            invocation_deadline=time.monotonic() + 1200.0,
+            invocation_deadline=time.monotonic() + 900.0,
             cycle_execution_capability=(
                 process_runner._CYCLE_RESOURCE_EXECUTION_CAPABILITY
             ),
@@ -3680,7 +5269,7 @@ def test_failed_finalizer_job_close_prevents_publication(
     ):
         process_runner.finalize_resource(
             request_id=request_id,
-            invocation_deadline=time.monotonic() + 1200.0,
+            invocation_deadline=time.monotonic() + 900.0,
         )
     assert published == []
     process_runner._RESOURCE_UNPROVEN_TREE.clear()
@@ -3704,7 +5293,7 @@ def test_resource_watchdog_uses_one_absolute_invocation_deadline(
     monkeypatch.setattr(process_runner.time, "monotonic", lambda: 100.0)
     monkeypatch.setattr(process_runner.threading, "Thread", FakeThread)
     deadline, stop, _thread = process_runner._start_resource_invocation_watchdog(policy)
-    assert deadline == 1300.0
+    assert deadline == 1000.0
     assert started == [True]
     assert not stop.is_set()
     stop.set()
@@ -3729,7 +5318,7 @@ def test_cli_dispatch_does_not_bootstrap_before_bounded_wrapper(
 
     def start_watchdog(_policy: object) -> tuple[float, threading.Event, FakeThread]:
         events.append("watchdog")
-        return 1300.0, stop, FakeThread()
+        return 1000.0, stop, FakeThread()
 
     monkeypatch.setattr(
         process_runner,
@@ -3930,14 +5519,18 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_15_REQUEST_IDS,
             *FAILED_ATTEMPT_16_REQUEST_IDS,
             *FAILED_ATTEMPT_17_REQUEST_IDS,
+            *FAILED_ATTEMPT_18_REQUEST_IDS,
         }
     )
-    approval = burnin.validate_resource_approval_authority(contract)
-    assert approval["request_ids"] == live_ids
     assert [row["lane"] for row in rows[:3]] == ["functional", "anyfem", "performance"]
+    if any(row["request_sha256"] == "0" * 64 for row in rows):
+        assert all(row["request_sha256"] == "0" * 64 for row in rows)
+        pytest.skip("v19 resource request files await the final authority freeze")
     assert rows[0]["command_sha256"] != rows[3]["command_sha256"]
     assert rows[1]["command_sha256"] == rows[4]["command_sha256"]
     assert rows[2]["command_sha256"] == rows[5]["command_sha256"]
+    approval = burnin.validate_resource_approval_authority(contract)
+    assert approval["request_ids"] == live_ids
     requests_root = RESOURCE_MANAGER / "requests"
     if not requests_root.is_dir():
         assert os.environ.get("GITHUB_ACTIONS") == "true"
@@ -3960,6 +5553,19 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_16_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_17_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
+    assert [
+        state
+        for state in ("APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL")
+        if burnin._ledger_entries(
+            ledger_text, FAILED_ATTEMPT_18_REQUEST_IDS[0], state
+        )
+    ] == ["APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL"]
+    for request_id in FAILED_ATTEMPT_18_REQUEST_IDS[1:]:
+        assert len(burnin._ledger_entries(ledger_text, request_id, "APPROVED")) == 1
+        assert len(
+            burnin._ledger_entries(ledger_text, request_id, "CANCELLED_NOT_RUN")
+        ) == 1
+        assert not burnin._ledger_entries(ledger_text, request_id, "EXECUTION_STARTED")
     assert [
         state
         for state in ("APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL")
@@ -4173,7 +5779,12 @@ def test_duplicate_nonfinite_hash_and_request_reuse_mutations_are_rejected() -> 
         burnin.validate_result(_valid_result(mutation), contract=mutation)
 
     result = _valid_result(contract)
-    result["cycles"][0]["lanes"]["functional"]["command_sha256"] = "0" * 64
+    bound_command_sha256 = result["cycles"][0]["lanes"]["functional"][
+        "command_sha256"
+    ]
+    result["cycles"][0]["lanes"]["functional"]["command_sha256"] = (
+        "1" * 64 if bound_command_sha256 != "1" * 64 else "2" * 64
+    )
     with pytest.raises(burnin.EvidenceError, match="command_sha256 mismatch"):
         burnin.validate_result(result, contract=contract)
 
@@ -4441,7 +6052,7 @@ def test_worker_checkpoint_can_publish_without_reexecuting(
             "disposition": "NORMAL_EXIT",
             "tree_kill_attempted": False,
             "tree_kill_exit_code": None,
-            "wall_limit_seconds": 1200,
+            "wall_limit_seconds": 900,
         },
     )
     completion_path = output_dir / "worker-completion.json"
@@ -4532,8 +6143,8 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     assert "standalone v14" not in source
     assert "current v15" not in source
     assert "standalone v15" not in source
-    assert "current v18 worker request" in source
-    assert "standalone v18 worker execution" in source
+    assert "current v19 worker request" in source
+    assert "standalone v19 worker execution" in source
     validator_raw = VALIDATOR_PATH.read_bytes()
     assert process_runner._VALIDATOR_BYTES == len(validator_raw)
     assert process_runner._VALIDATOR_SHA256 == hashlib.sha256(validator_raw).hexdigest()
@@ -4559,7 +6170,7 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
             check=False,
         )
         assert bootstrap.returncode == 0, bootstrap.stderr
-        assert "standalone v18 worker execution" in bootstrap.stdout
+        assert "standalone v19 worker execution" in bootstrap.stdout
         assert not list(bootstrap_root.iterdir())
     else:
         assert os.environ.get("GITHUB_ACTIONS") == "true"
@@ -4735,6 +6346,21 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
     monkeypatch.setenv("PYTHONWARNINGS", "error")
     monkeypatch.setenv("PYTHONINSPECT", "1")
     monkeypatch.setenv("ANYSOLVER_BURNIN_ACTIVE_TEST_LANE", "quick")
+    monkeypatch.setenv("ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE", "1")
+    monkeypatch.setenv("ANYSOLVER_BURNIN_S3_Q4_STYLE_RESULT_DEADLINE", "10.0")
+    monkeypatch.setenv("ANYSOLVER_BURNIN_S3_Q4_STYLE_CLEANUP_DEADLINE", "25.0")
+    for name in (
+        "ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE",
+        "ANYSOLVER_BURNIN_S3_Q4_STYLE_RESULT_DEADLINE",
+        "ANYSOLVER_BURNIN_S3_Q4_STYLE_CLEANUP_DEADLINE",
+    ):
+        assert name in guard["removed"]
+    missing_inner_control = copy.deepcopy(contract)
+    missing_inner_control["execution"]["environment_guard"]["removed"].remove(
+        "ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE"
+    )
+    with pytest.raises(burnin.EvidenceError, match="inner-wave controls"):
+        burnin.sanitized_execution_environment(missing_inner_control)
     tools_available = all(
         Path(guard[name]["path"]).is_file()
         for name in ("git", "git_engine", "powershell", "python")
@@ -4872,6 +6498,9 @@ def test_process_runner_sanitizes_pytest_controls_and_reserves_exact_outputs(
             "PYTHONINSPECT",
             "PYTHONWARNINGS",
             "ANYSOLVER_BURNIN_ACTIVE_TEST_LANE",
+            "ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE",
+            "ANYSOLVER_BURNIN_S3_Q4_STYLE_RESULT_DEADLINE",
+            "ANYSOLVER_BURNIN_S3_Q4_STYLE_CLEANUP_DEADLINE",
         ):
             assert name not in environment
         for name, value in guard["fixed"].items():

@@ -14,7 +14,10 @@ if __name__ == "__main__" and not sys.flags.isolated:
 sys.dont_write_bytecode = True
 
 import argparse
+from contextlib import contextmanager
 import datetime as dt
+import functools
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -39,21 +42,22 @@ WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
 CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
     "anysolver.e4-pl-s3-q4-cycle-completion-certificate-v1"
 )
-_VALIDATOR_BYTES = 282067
-_VALIDATOR_SHA256 = "5e722e202f114dde39da3d67eb3b6a4c5e158e50789c2bef169d7d823cf7e7bb"
+_VALIDATOR_BYTES = 332206
+_VALIDATOR_SHA256 = "4a3898a86d50b5aa6031196d161e510ececcee0b1f37bfdc0d88fd0cbd246981"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),
     "taskkill_arguments": ["/PID", "{pid}", "/T", "/F"],
     "termination_grace_seconds": 10,
     "timeout_exit_code": 124,
-    "wall_limit_seconds": 1200,
+    "wall_limit_seconds": 900,
 }
 _ACTIVE_JOB_HANDLES: set[int] = set()
 _ACTIVE_JOB_LOCK = threading.Lock()
 _ACTIVE_SUSPENDED_WORKERS: dict[int, Any] = {}
 _INVOCATION_JOB_HANDLE: int | None = None
 _CYCLE_RESOURCE_EXECUTION_CAPABILITY = object()
+_ACTIVE_OPERATION_DEADLINE = threading.local()
 
 
 def _load_source_module(path: Path, *, expected_bytes: int, expected_sha256: str) -> Any:
@@ -109,12 +113,17 @@ RESOURCE_ORDER = [
 ]
 _RESOURCE_LANES = ("functional", "anyfem", "performance")
 _CYCLE_LANE_CUMULATIVE_DEADLINES_SECONDS = {
-    "functional": 860,
-    "anyfem": 950,
-    "performance": 1060,
+    "functional": 650,
+    "anyfem": 720,
+    "performance": 830,
 }
-_CYCLE_WALL_LIMIT_SECONDS = 1200
-_CYCLE_FINAL_EVIDENCE_RESERVE_SECONDS = 130
+_CYCLE_LANE_CHILD_EXECUTION_CUTOFFS_SECONDS = {
+    "functional": 620,
+    "anyfem": 690,
+    "performance": 800,
+}
+_CYCLE_WALL_LIMIT_SECONDS = 900
+_CYCLE_FINAL_EVIDENCE_RESERVE_SECONDS = 60
 _CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS = 10
 _CYCLE_PRELAUNCH_FAILURE_EXIT_CODE = 252
 
@@ -195,10 +204,10 @@ def _timeout_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
         minimum=1,
     )
     if (
-        wall_limit != 1200
+        wall_limit != 900
         or timeout_exit_code != 124
         or grace != 10
-        or evidence_reserve != 20
+        or evidence_reserve != 10
         or policy["automatic_retry"] is not False
         or policy["scope"] != "COMPLETE_RESOURCE_INVOCATION_AND_CHILD_PROCESS_TREE"
     ):
@@ -206,11 +215,11 @@ def _timeout_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
     if policy["windows_job"] != {
         "assignment": "CREATE_SUSPENDED_ASSIGN_RESUME",
         "limit": "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE",
-        "watchdog_termination_start_seconds": 1190,
+        "watchdog_termination_start_seconds": 890,
     }:
         raise burnin.EvidenceError("resource Windows job-object policy mismatch")
     worker_timeout = wall_limit - (2 * grace) - evidence_reserve
-    if worker_timeout != 1160:
+    if worker_timeout != 870:
         raise burnin.EvidenceError("resource worker deadline does not preserve termination/evidence time")
     windows = burnin._exact_keys(
         policy["windows_termination"],
@@ -230,7 +239,7 @@ def _timeout_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
         or taskkill.resolve(strict=True) != taskkill
         or taskkill.is_symlink()
         or burnin.is_reparse_point(taskkill)
-        or burnin.file_hash_record(taskkill)
+        or _file_hash_record(taskkill)
         != {
             "bytes": windows["bytes"],
             "sha256": windows["sha256"],
@@ -305,9 +314,20 @@ def _cycle_wall_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
         "$contract.execution.timeout_policy.termination_grace_seconds",
         minimum=1,
     )
+    timeout_evidence_reserve = burnin._require_int(
+        contract["execution"]["timeout_policy"]["evidence_reserve_seconds"],
+        "$contract.execution.timeout_policy.evidence_reserve_seconds",
+        minimum=1,
+    )
     if (
         absolute_wall_limit != _CYCLE_WALL_LIMIT_SECONDS
         or deadlines != _CYCLE_LANE_CUMULATIVE_DEADLINES_SECONDS
+        or {
+            lane: deadline
+            - (2 * timeout_grace + timeout_evidence_reserve)
+            for lane, deadline in deadlines.items()
+        }
+        != _CYCLE_LANE_CHILD_EXECUTION_CUTOFFS_SECONDS
         or final_reserve != _CYCLE_FINAL_EVIDENCE_RESERVE_SECONDS
         or watchdog_margin != _CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS
         or watchdog_margin != timeout_grace
@@ -366,8 +386,120 @@ def _request_execution_policy(contract: Mapping[str, Any]) -> dict[str, Any]:
     return policy
 
 
+def _effective_operation_deadline(explicit_deadline: float | None = None) -> float | None:
+    active = getattr(_ACTIVE_OPERATION_DEADLINE, "value", None)
+    if explicit_deadline is None:
+        return active
+    if active is None:
+        return explicit_deadline
+    return min(active, explicit_deadline)
+
+
+def _require_remaining_budget(
+    stage: str, *, explicit_deadline: float | None = None
+) -> float | None:
+    deadline = _effective_operation_deadline(explicit_deadline)
+    if deadline is None:
+        return None
+    remaining = deadline - time.monotonic()
+    if remaining <= 0.0:
+        raise burnin.EvidenceError(f"{stage} exceeded its absolute deadline")
+    return remaining
+
+
+@contextmanager
+def _bounded_operation_deadline(deadline: float):
+    previous = getattr(_ACTIVE_OPERATION_DEADLINE, "value", None)
+    _ACTIVE_OPERATION_DEADLINE.value = (
+        deadline if previous is None else min(previous, deadline)
+    )
+    try:
+        yield
+    finally:
+        if previous is None:
+            del _ACTIVE_OPERATION_DEADLINE.value
+        else:
+            _ACTIVE_OPERATION_DEADLINE.value = previous
+
+
+def _bind_invocation_deadline(*, reserve_seconds: int = 0):
+    """Apply a monotonic absolute deadline without changing callable signatures."""
+
+    def decorate(function: Any) -> Any:
+        @functools.wraps(function)
+        def bounded(*args: Any, **kwargs: Any) -> Any:
+            invocation_deadline = kwargs.get("invocation_deadline")
+            if not isinstance(invocation_deadline, (int, float)) or isinstance(
+                invocation_deadline, bool
+            ):
+                raise burnin.EvidenceError("bounded invocation deadline is invalid")
+            deadline = float(invocation_deadline) - reserve_seconds
+            with _bounded_operation_deadline(deadline):
+                return function(*args, **kwargs)
+
+        return bounded
+
+    return decorate
+
+
 def _remaining_budget(deadline: float) -> float:
-    return max(0.001, deadline - time.monotonic())
+    remaining = _require_remaining_budget(
+        "bounded subprocess", explicit_deadline=deadline
+    )
+    assert remaining is not None
+    return remaining
+
+
+def _read_bytes_bounded(path: Path, *, stage: str) -> bytes:
+    """Read an artifact in checked chunks under the active monotonic deadline."""
+
+    _require_remaining_budget(f"{stage} read")
+    chunks: list[bytes] = []
+    with path.open("rb") as stream:
+        while True:
+            _require_remaining_budget(f"{stage} read")
+            chunk = stream.read(1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    _require_remaining_budget(f"{stage} readback")
+    return b"".join(chunks)
+
+
+def _read_text_bounded(
+    path: Path, *, encoding: str = "utf-8", stage: str
+) -> str:
+    return _read_bytes_bounded(path, stage=stage).decode(encoding)
+
+
+def _read_stream_bounded(stream: Any, *, stage: str) -> bytes:
+    chunks: list[bytes] = []
+    while True:
+        _require_remaining_budget(f"{stage} read")
+        chunk = stream.read(1024 * 1024)
+        if not chunk:
+            break
+        chunks.append(chunk)
+    _require_remaining_budget(f"{stage} readback")
+    return b"".join(chunks)
+
+
+def _file_hash_record(path: Path) -> dict[str, Any]:
+    if _effective_operation_deadline() is None:
+        return burnin.file_hash_record(path)
+    digest = hashlib.sha256()
+    byte_count = 0
+    _require_remaining_budget("artifact hash")
+    with path.open("rb") as stream:
+        while True:
+            _require_remaining_budget("artifact hash")
+            chunk = stream.read(1024 * 1024)
+            if not chunk:
+                break
+            byte_count += len(chunk)
+            digest.update(chunk)
+    _require_remaining_budget("artifact hash validation")
+    return {"bytes": byte_count, "sha256": digest.hexdigest()}
 
 
 def _validate_early_watchdog_policy(policy: Mapping[str, Any]) -> None:
@@ -567,7 +699,7 @@ def _close_all_active_jobs() -> None:
 def _start_resource_invocation_watchdog(
     policy: Mapping[str, Any],
 ) -> tuple[float, threading.Event, threading.Thread]:
-    """Arm the absolute 20-minute fail-safe for one resource invocation."""
+    """Arm the absolute 15-minute fail-safe for one resource invocation."""
 
     deadline = time.monotonic() + policy["wall_limit_seconds"]
     termination_start = deadline - policy["termination_grace_seconds"]
@@ -742,7 +874,7 @@ def _verify_local_runner_inputs(contract: Mapping[str, Any]) -> None:
         )
         if record["path"] != path.relative_to(ROOT).as_posix():
             raise burnin.EvidenceError(f"{name} canonical path mismatch")
-        if path.is_symlink() or burnin.file_hash_record(path) != {
+        if path.is_symlink() or _file_hash_record(path) != {
             "bytes": record["bytes"],
             "sha256": record["sha256"],
         }:
@@ -750,7 +882,9 @@ def _verify_local_runner_inputs(contract: Mapping[str, Any]) -> None:
 
 
 def _write_exclusive(path: Path, payload: bytes) -> None:
+    _require_remaining_budget("exclusive output preparation")
     path.parent.mkdir(parents=True, exist_ok=True)
+    _require_remaining_budget("exclusive output preparation")
     if (
         not path.parent.is_dir()
         or path.parent.is_symlink()
@@ -761,9 +895,14 @@ def _write_exclusive(path: Path, payload: bytes) -> None:
         raise burnin.EvidenceError(f"exclusive output path is noncanonical: {path}")
     try:
         with path.open("xb") as stream:
-            stream.write(payload)
+            view = memoryview(payload)
+            for offset in range(0, len(payload), 1024 * 1024):
+                _require_remaining_budget("exclusive output write")
+                stream.write(view[offset : offset + 1024 * 1024])
             stream.flush()
+            _require_remaining_budget("exclusive output synchronization")
             os.fsync(stream.fileno())
+            _require_remaining_budget("exclusive output synchronization")
     except FileExistsError as exc:
         raise burnin.EvidenceError(f"refusing to replace process artifact: {path}") from exc
 
@@ -793,6 +932,7 @@ def _pending_output_directory(contract: Mapping[str, Any], prefix: str) -> Path:
 
 
 def _reserve_pending_output(contract: Mapping[str, Any], prefix: str) -> Path:
+    _require_remaining_budget("pending output reservation")
     final = burnin.process_output_directory(contract, prefix)
     pending = _pending_output_directory(contract, prefix)
     root = burnin.output_root(contract)
@@ -815,10 +955,12 @@ def _reserve_pending_output(contract: Mapping[str, Any], prefix: str) -> Path:
         or burnin.is_reparse_point(root)
     ):
         raise burnin.EvidenceError("pending output directory is noncanonical")
+    _require_remaining_budget("pending output reservation verification")
     return pending
 
 
 def _atomic_promote_directory(pending: Path, final: Path) -> None:
+    _require_remaining_budget("atomic directory promotion validation")
     if pending.parent != final.parent:
         raise burnin.EvidenceError("pending promotion crosses output volumes")
     if final.exists() or final.is_symlink() or burnin.is_reparse_point(final):
@@ -826,6 +968,7 @@ def _atomic_promote_directory(pending: Path, final: Path) -> None:
     if not pending.is_dir() or pending.is_symlink() or burnin.is_reparse_point(pending):
         raise burnin.EvidenceError(f"pending output is not canonical: {pending}")
     try:
+        _require_remaining_budget("atomic directory promotion")
         pending.rename(final)
     except FileExistsError as exc:
         raise burnin.EvidenceError(f"canonical output appeared during promotion: {final}") from exc
@@ -835,6 +978,7 @@ def _atomic_promote_directory(pending: Path, final: Path) -> None:
         or burnin.is_reparse_point(final)
     ):
         raise burnin.EvidenceError(f"promoted output is noncanonical: {final}")
+    _require_remaining_budget("atomic directory promotion verification")
 
 
 def _authority_commit(candidate: Path, contract: Mapping[str, Any]) -> tuple[str, str]:
@@ -1044,13 +1188,18 @@ def _run(
                     )
         stdout_stream.flush()
         stderr_stream.flush()
+        _require_remaining_budget("resource-control output readback")
         stdout_stream.seek(0)
         stderr_stream.seek(0)
         completed = subprocess.CompletedProcess(
             args=args,
             returncode=returncode,
-            stdout=stdout_stream.read(),
-            stderr=stderr_stream.read(),
+            stdout=_read_stream_bounded(
+                stdout_stream, stage="resource-control stdout"
+            ),
+            stderr=_read_stream_bounded(
+                stderr_stream, stage="resource-control stderr"
+            ),
         )
     _validate_termination_metadata(
         termination, policy=policy, location="$local_process.termination"
@@ -1076,7 +1225,7 @@ def _process_manifest(
     approval_snapshot: Mapping[str, Any] | None,
     termination: Mapping[str, Any],
 ) -> dict[str, Any]:
-    producer_sha256 = burnin.file_hash_record(_RUNNER_PATH)["sha256"]
+    producer_sha256 = _file_hash_record(_RUNNER_PATH)["sha256"]
     return {
         "approval_snapshot": None if approval_snapshot is None else dict(approval_snapshot),
         "candidate_commit": candidate_commit,
@@ -1165,7 +1314,7 @@ def _load_process_manifest(
         return None
     if result_path.is_symlink() or burnin.is_reparse_point(result_path):
         raise burnin.EvidenceError(f"process manifest is noncanonical: {prefix}")
-    raw = result_path.read_bytes()
+    raw = _read_bytes_bounded(result_path, stage=f"process manifest {prefix}")
     manifest = burnin.strict_json_loads(raw)
     if raw != burnin.canonical_json_bytes(manifest):
         raise burnin.EvidenceError(f"process manifest is not canonical: {prefix}")
@@ -1233,11 +1382,11 @@ def _load_process_manifest(
     process.update(
         {
             "pending_manifest_sha256": (
-                burnin.file_hash_record(directory / "pending-manifest.json")["sha256"]
+                _file_hash_record(directory / "pending-manifest.json")["sha256"]
                 if is_resource and (directory / "pending-manifest.json").is_file()
                 else None
             ),
-            "result": burnin.file_hash_record(result_path),
+            "result": _file_hash_record(result_path),
             "status": status,
         }
     )
@@ -1253,7 +1402,7 @@ def _load_process_manifest(
         if (
             path.is_symlink()
             or burnin.is_reparse_point(path)
-            or burnin.file_hash_record(path) != manifest[name]
+            or _file_hash_record(path) != manifest[name]
         ):
             raise burnin.EvidenceError(f"process {name} identity mismatch: {prefix}")
     burnin._validate_process_result_artifact(
@@ -1306,7 +1455,7 @@ def _validate_package_artifacts(
         raise burnin.EvidenceError("preserved wheel filename mismatch")
 
     raw = burnin.require_package_process_result_identity(contract=contract)
-    if stdout_path.read_bytes() != raw:
+    if _read_bytes_bounded(stdout_path, stage="package stdout") != raw:
         raise burnin.EvidenceError("package-process stdout changed during validation")
     package = burnin.strict_json_loads(raw)
     if raw != burnin.canonical_json_bytes(package):
@@ -1330,7 +1479,7 @@ def _validate_package_artifacts(
             raise burnin.EvidenceError(f"package source authority mismatch: {name}")
 
     observed_wheel = {
-        **burnin.file_hash_record(wheel_path),
+        **_file_hash_record(wheel_path),
         "filename": wheel_path.name,
     }
     if package["wheels"]["ANYsolver"] != observed_wheel:
@@ -1455,6 +1604,7 @@ def _verify_resource_order(
     return lane, cycle, ordered_prefixes[index]
 
 
+@_bind_invocation_deadline(reserve_seconds=_CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS)
 def _run_local_bounded(
     *,
     contract: Mapping[str, Any],
@@ -1576,7 +1726,7 @@ def _request_row(contract: Mapping[str, Any], request_id: str) -> dict[str, Any]
 def _reject_standalone_resource_execution(
     contract: Mapping[str, Any], request_id: str
 ) -> None:
-    """Reject every current v18 worker request outside its complete cycle.
+    """Reject every current v19 worker request outside its complete cycle.
 
     ``finalize-resource`` is intentionally separate: it can validate and
     publish an existing durable worker-completion checkpoint, but it cannot
@@ -1589,7 +1739,7 @@ def _reject_standalone_resource_execution(
     if row.get("lane") != lane:
         raise burnin.EvidenceError("standalone request lane authority mismatch")
     raise burnin.EvidenceError(
-        "standalone resource worker execution is forbidden for current v18 "
+        "standalone resource worker execution is forbidden for current v19 "
         f"request {request_id} ({lane}, cycle {cycle}); use cycle --cycle {cycle}"
     )
 
@@ -1613,7 +1763,7 @@ def _manager_paths(contract: Mapping[str, Any]) -> dict[str, Path]:
     for key in ("acquire", "release"):
         record = authority[key]
         path = root / record["filename"]
-        if path.is_symlink() or burnin.is_reparse_point(path) or burnin.file_hash_record(path) != {
+        if path.is_symlink() or burnin.is_reparse_point(path) or _file_hash_record(path) != {
             "bytes": record["bytes"],
             "sha256": record["sha256"],
         }:
@@ -1645,12 +1795,14 @@ def _request_payload(
         or burnin.is_reparse_point(request_path)
     ):
         raise burnin.EvidenceError("resource request path mismatch")
-    if burnin.file_hash_record(request_path) != {
+    if _file_hash_record(request_path) != {
         "bytes": row["bytes"],
         "sha256": row["request_sha256"],
     }:
         raise burnin.EvidenceError("resource request identity mismatch")
-    request = burnin.strict_json_load(request_path)
+    request = burnin.strict_json_loads(
+        _read_bytes_bounded(request_path, stage="resource request")
+    )
     if request.get("request_id") != request_id or request.get("status") != "PENDING":
         raise burnin.EvidenceError("resource request payload identity mismatch")
     command = request.get("command")
@@ -1672,6 +1824,7 @@ def _ledger_rows(ledger: str, request_id: str, status: str) -> list[str]:
 def _append_ledger_fields(
     ledger_path: Path, fields: list[str], *, timestamp: str | None = None
 ) -> list[str]:
+    _require_remaining_budget("resource ledger append")
     if len(fields) != 7 or any(
         not isinstance(field, str)
         or "|" in field
@@ -1686,9 +1839,13 @@ def _append_ledger_fields(
     with ledger_path.open("a", encoding="utf-8", newline="") as stream:
         stream.write(row)
         stream.flush()
+        _require_remaining_budget("resource ledger synchronization")
         os.fsync(stream.fileno())
+        _require_remaining_budget("resource ledger synchronization")
     entries = burnin._ledger_entries(
-        ledger_path.read_text(encoding="utf-8"), fields[0], fields[1]
+        _read_text_bounded(ledger_path, stage="resource ledger append"),
+        fields[0],
+        fields[1],
     )
     matching = [entry for entry in entries if entry == [timestamp, *fields]]
     if len(matching) != 1:
@@ -1735,16 +1892,19 @@ def _cycle_completion_certificate_path(
 
 
 def _load_canonical_json(path: Path) -> dict[str, Any]:
+    _require_remaining_budget("canonical JSON validation")
     if path.is_symlink() or burnin.is_reparse_point(path) or not path.is_file():
         raise burnin.EvidenceError(f"canonical JSON artifact is unavailable: {path}")
-    raw = path.read_bytes()
+    raw = _read_bytes_bounded(path, stage="canonical JSON")
     value = burnin.strict_json_loads(raw)
     if not isinstance(value, dict) or raw != burnin.canonical_json_bytes(value):
         raise burnin.EvidenceError(f"artifact is not canonical JSON: {path}")
+    _require_remaining_budget("canonical JSON validation")
     return value
 
 
 def _write_canonical_json_once(path: Path, value: Mapping[str, Any]) -> None:
+    _require_remaining_budget("canonical JSON publication")
     payload = burnin.canonical_json_bytes(dict(value))
     if path.exists() or path.is_symlink() or burnin.is_reparse_point(path):
         if _load_canonical_json(path) != dict(value):
@@ -1755,7 +1915,7 @@ def _write_canonical_json_once(path: Path, value: Mapping[str, Any]) -> None:
         if (
             temporary.is_symlink()
             or burnin.is_reparse_point(temporary)
-            or temporary.read_bytes() != payload
+            or _read_bytes_bounded(temporary, stage="pending canonical JSON") != payload
         ):
             raise burnin.EvidenceError(f"incomplete canonical publication exists: {temporary}")
     else:
@@ -1763,26 +1923,33 @@ def _write_canonical_json_once(path: Path, value: Mapping[str, Any]) -> None:
     if path.exists() or path.is_symlink() or burnin.is_reparse_point(path):
         raise burnin.EvidenceError(f"canonical artifact appeared during publication: {path}")
     try:
+        _require_remaining_budget("canonical JSON atomic publication")
         temporary.rename(path)
     except FileExistsError as exc:
         raise burnin.EvidenceError(f"canonical artifact appeared during publication: {path}") from exc
+    if _load_canonical_json(path) != dict(value):
+        raise burnin.EvidenceError(f"canonical artifact changed during publication: {path}")
+    _require_remaining_budget("canonical JSON publication verification")
 
 
 def _validate_cycle_completion_certificate(
     value: Mapping[str, Any], *, contract: Mapping[str, Any], cycle: int
 ) -> dict[str, Any]:
+    _require_remaining_budget("cycle completion certificate validation")
     _cycle_wall_policy(contract)
     snapshot_path = _cycle_snapshot_path(contract, cycle)
     snapshot = _validate_ledger_snapshot(
         _load_canonical_json(snapshot_path), contract=contract
     )
-    return burnin.validate_cycle_completion_certificate(
+    validated = burnin.validate_cycle_completion_certificate(
         value,
         contract=contract,
         cycle=cycle,
         snapshot=snapshot,
-        terminal_snapshot=burnin.file_hash_record(snapshot_path),
+        terminal_snapshot=_file_hash_record(snapshot_path),
     )
+    _require_remaining_budget("cycle completion certificate validation")
+    return validated
 
 
 def _write_cycle_completion_certificate(
@@ -1794,14 +1961,14 @@ def _write_cycle_completion_certificate(
 ) -> dict[str, Any]:
     """Exclusively certify one cycle only after its evidence is complete in time."""
 
-    observed = time.monotonic()
-    if observed >= evidence_deadline:
-        raise burnin.EvidenceError("cycle completion certificate missed its deadline")
     snapshot_path = _cycle_snapshot_path(contract, cycle)
     snapshot = _validate_ledger_snapshot(
         _load_canonical_json(snapshot_path), contract=contract
     )
     cycle_policy = _cycle_wall_policy(contract)
+    observed = time.monotonic()
+    if observed >= evidence_deadline:
+        raise burnin.EvidenceError("cycle completion certificate missed its deadline")
     certificate = {
         "bounded_elapsed_microseconds": int(
             (observed - invocation_started) * 1_000_000
@@ -1816,7 +1983,7 @@ def _write_cycle_completion_certificate(
         "request_order": snapshot["request_order"],
         "schema": CYCLE_COMPLETION_CERTIFICATE_SCHEMA,
         "status": "COMPLETED_WITHIN_CYCLE_CONTROL_BOUNDS",
-        "terminal_snapshot": burnin.file_hash_record(snapshot_path),
+        "terminal_snapshot": _file_hash_record(snapshot_path),
     }
     _validate_cycle_completion_certificate(certificate, contract=contract, cycle=cycle)
     path = _cycle_completion_certificate_path(contract, cycle)
@@ -1829,18 +1996,28 @@ def _write_cycle_completion_certificate(
     ):
         raise burnin.EvidenceError("cycle completion certificate output already exists")
     _write_exclusive(temporary, burnin.canonical_json_bytes(certificate))
+    if _load_canonical_json(temporary) != certificate:
+        raise burnin.EvidenceError(
+            "staged cycle completion certificate changed before publication"
+        )
     if time.monotonic() >= evidence_deadline:
         raise burnin.EvidenceError(
             "cycle completion certificate staging exceeded its deadline"
         )
     try:
+        _require_remaining_budget(
+            "cycle completion certificate publication",
+            explicit_deadline=evidence_deadline,
+        )
         temporary.rename(path)
     except FileExistsError as exc:
         raise burnin.EvidenceError(
             "cycle completion certificate appeared during publication"
         ) from exc
     if _load_canonical_json(path) != certificate:
-        raise burnin.EvidenceError("cycle completion certificate changed on publication")
+        raise burnin.EvidenceError(
+            "cycle completion certificate changed during atomic publication"
+        )
     return certificate
 
 
@@ -1853,7 +2030,7 @@ def _validate_ledger_snapshot(
 def _require_snapshot_rows_in_ledger(
     snapshot: Mapping[str, Any], ledger_path: Path
 ) -> None:
-    ledger = ledger_path.read_text(encoding="utf-8")
+    ledger = _read_text_bounded(ledger_path, stage="snapshot ledger")
     for row in snapshot["rows"]:
         entry = [row["timestamp"], *row["fields"]]
         matches = burnin._ledger_entries(ledger, row["fields"][0], row["fields"][1])
@@ -1866,7 +2043,7 @@ def _load_approval_snapshot(contract: Mapping[str, Any]) -> tuple[dict[str, Any]
     snapshot = _validate_ledger_snapshot(_load_canonical_json(path), contract=contract)
     if snapshot.get("kind") != "APPROVAL":
         raise burnin.EvidenceError("resource approval snapshot kind mismatch")
-    return snapshot, burnin.file_hash_record(path)
+    return snapshot, _file_hash_record(path)
 
 
 def _acquire_manager_reservation(
@@ -1878,6 +2055,7 @@ def _acquire_manager_reservation(
 ) -> dict[str, Any]:
     """Exclusively reserve the global resource-manager writer slot."""
 
+    _require_remaining_budget("manager reservation acquisition")
     active_lock = manager["active_lock"]
     root = manager.get("root", active_lock.parent)
     _cleanup_prepared_manager_reservations(manager)
@@ -1904,6 +2082,7 @@ def _acquire_manager_reservation(
             raise burnin.EvidenceError("approval reservation is noncanonical")
         _write_exclusive(owner_path, burnin.canonical_json_bytes(owner))
         try:
+            _require_remaining_budget("manager reservation atomic acquisition")
             staging.rename(active_lock)
         except OSError as exc:
             if active_lock.exists() or active_lock.is_symlink() or burnin.is_reparse_point(
@@ -1919,6 +2098,7 @@ def _acquire_manager_reservation(
         except OSError:
             pass
         raise
+    _require_remaining_budget("manager reservation acquisition verification")
     return owner
 
 
@@ -1959,6 +2139,7 @@ def _cleanup_prepared_manager_reservations(manager: Mapping[str, Path]) -> None:
 def _release_manager_reservation(
     manager: Mapping[str, Path], owner: Mapping[str, Any]
 ) -> None:
+    _require_remaining_budget("manager reservation release")
     active_lock = manager["active_lock"]
     owner_path = active_lock / "owner.json"
     if (
@@ -1973,6 +2154,7 @@ def _release_manager_reservation(
         raise burnin.EvidenceError("approval reservation ownership mismatch")
     owner_path.unlink()
     active_lock.rmdir()
+    _require_remaining_budget("manager reservation release verification")
 
 
 def _load_manager_reservation(manager: Mapping[str, Path]) -> dict[str, Any]:
@@ -2104,7 +2286,7 @@ def _append_execution_started(
     lane: str,
     launch: Mapping[str, Any],
 ) -> list[str]:
-    ledger = ledger_path.read_text(encoding="utf-8")
+    ledger = _read_text_bounded(ledger_path, stage="execution-start ledger")
     request_id = request["request_id"]
     if any(
         burnin._ledger_entries(ledger, request_id, status)
@@ -2147,16 +2329,16 @@ def _pending_manifest(
         "candidate": dict(candidate),
         "cycle": cycle,
         "lane": lane,
-        "launch": burnin.file_hash_record(directory / "launch.json"),
+        "launch": _file_hash_record(directory / "launch.json"),
         "request": {
             "bytes": request_row["bytes"],
             "request_id": request_row["request_id"],
             "sha256": request_row["request_sha256"],
         },
-        "result": burnin.file_hash_record(directory / "result.json"),
+        "result": _file_hash_record(directory / "result.json"),
         "schema": PENDING_MANIFEST_SCHEMA,
-        "stderr": burnin.file_hash_record(directory / "stderr.txt"),
-        "stdout": burnin.file_hash_record(directory / "stdout.txt"),
+        "stderr": _file_hash_record(directory / "stderr.txt"),
+        "stdout": _file_hash_record(directory / "stdout.txt"),
         "target_directory": final.name,
     }
 
@@ -2189,9 +2371,9 @@ def _validate_pending_manifest(
         ("stderr", "stderr.txt"),
         ("stdout", "stdout.txt"),
     ):
-        if burnin.file_hash_record(directory / filename) != manifest.get(key):
+        if _file_hash_record(directory / filename) != manifest.get(key):
             raise burnin.EvidenceError(f"pending process manifest {key} mismatch")
-    return manifest, burnin.file_hash_record(path)
+    return manifest, _file_hash_record(path)
 
 
 def _append_terminal_ledger(
@@ -2201,17 +2383,19 @@ def _append_terminal_ledger(
     pending_manifest_path: Path,
     request: Mapping[str, Any],
 ) -> list[str]:
-    manifest = burnin.strict_json_load(manifest_path)
-    result = burnin.file_hash_record(manifest_path)
+    manifest = burnin.strict_json_loads(
+        _read_bytes_bounded(manifest_path, stage="terminal resource manifest")
+    )
+    result = _file_hash_record(manifest_path)
     launch_path = manifest_path.parent / "launch.json"
     launch = _load_canonical_json(launch_path)
     burnin.validate_resource_launch(launch, contract=burnin.load_contract())
-    ledger = ledger_path.read_text(encoding="utf-8")
+    ledger = _read_text_bounded(ledger_path, stage="terminal resource ledger")
     started = burnin._ledger_entries(
         ledger, request["request_id"], "EXECUTION_STARTED"
     )
     expected_started = burnin.execution_started_ledger_fields(
-        request, launch, burnin.file_hash_record(launch_path)
+        request, launch, _file_hash_record(launch_path)
     )
     if len(started) != 1 or started[0][1:] != expected_started:
         raise burnin.EvidenceError(
@@ -2225,7 +2409,7 @@ def _append_terminal_ledger(
         and process["resource_lock_released"] is True
         else "FAIL"
     )
-    process["pending_manifest_sha256"] = burnin.file_hash_record(pending_manifest_path)[
+    process["pending_manifest_sha256"] = _file_hash_record(pending_manifest_path)[
         "sha256"
     ]
     fields = burnin.terminal_ledger_fields(request, process, result)
@@ -2252,18 +2436,18 @@ def _require_resource_terminal(
     request_id = manifest["request_id"]
     row, request, _path = _request_payload(contract, request_id)
     manager = _manager_paths(contract)
-    ledger = manager["ledger"].read_text(encoding="utf-8")
+    ledger = _read_text_bounded(manager["ledger"], stage="approval ledger")
     ledger_status = "COMPLETED_PASS" if expected_status == "PASS" else "COMPLETED_FAIL"
     entries = burnin._ledger_entries(ledger, request_id, ledger_status)
     process = dict(manifest)
     process["status"] = expected_status
     directory = _existing_process_directory(contract, prefix, required=True)
     assert directory is not None
-    result_record = burnin.file_hash_record(directory / "result.json")
+    result_record = _file_hash_record(directory / "result.json")
     pending_path = directory / "pending-manifest.json"
     if not pending_path.is_file() or pending_path.is_symlink():
         raise burnin.EvidenceError("resource predecessor lacks its pending manifest")
-    process["pending_manifest_sha256"] = burnin.file_hash_record(pending_path)["sha256"]
+    process["pending_manifest_sha256"] = _file_hash_record(pending_path)["sha256"]
     expected = burnin.terminal_ledger_fields(request, process, result_record)
     if len(entries) != 1 or entries[0][1:] != expected:
         raise burnin.EvidenceError(f"predecessor terminal ledger mismatch: {request_id}")
@@ -2366,7 +2550,9 @@ def approve_requests() -> None:
             )
             _authority, request, _path = _request_payload(contract, row["request_id"])
             fields = burnin.approval_ledger_fields(request, row, candidate_record)
-            ledger = manager["ledger"].read_text(encoding="utf-8")
+            ledger = _read_text_bounded(
+                manager["ledger"], stage="approval recovery ledger"
+            )
             if any(
                 burnin._ledger_entries(ledger, row["request_id"], status)
                 for status in (
@@ -2389,7 +2575,7 @@ def approve_requests() -> None:
                     f"request approval row conflicts: {row['request_id']}"
                 )
             approval_entries.append(entry)
-        ledger_raw = manager["ledger"].read_bytes()
+        ledger_raw = _read_bytes_bounded(manager["ledger"], stage="approval ledger")
         snapshot = {
             "candidate": candidate_record,
             "kind": "APPROVAL",
@@ -2411,7 +2597,11 @@ def _lock_owner(manager: Mapping[str, Path], request: Mapping[str, Any]) -> None
     owner_path = manager["active_lock"] / "owner.json"
     if not owner_path.is_file() or owner_path.is_symlink():
         raise burnin.EvidenceError("resource lock owner record is missing")
-    owner = burnin.strict_json_loads(owner_path.read_text(encoding="utf-8-sig"))
+    owner = burnin.strict_json_loads(
+        _read_text_bounded(
+            owner_path, encoding="utf-8-sig", stage="resource lock owner"
+        )
+    )
     burnin._exact_keys(
         owner,
         {"acquired_at", "command", "process_id", "repository", "request_id", "task"},
@@ -2449,6 +2639,9 @@ def _terminate_worker_tree(
         )
 
     termination_deadline = time.monotonic() + policy["termination_grace_seconds"]
+    active_deadline = _effective_operation_deadline()
+    if active_deadline is not None:
+        termination_deadline = min(termination_deadline, active_deadline)
 
     def remaining_termination_time() -> float:
         return max(0.001, termination_deadline - time.monotonic())
@@ -2737,8 +2930,10 @@ def _run_resource_command(
                         )
             stdout_stream.flush()
             stderr_stream.flush()
+            _require_remaining_budget("resource log synchronization")
             os.fsync(stdout_stream.fileno())
             os.fsync(stderr_stream.fileno())
+            _require_remaining_budget("resource log synchronization")
     except FileExistsError as exc:
         raise burnin.EvidenceError("resource log output was not exclusive") from exc
     _validate_termination_metadata(
@@ -2748,8 +2943,8 @@ def _run_resource_command(
         subprocess.CompletedProcess(
             args=args,
             returncode=returncode,
-            stdout=stdout_path.read_bytes(),
-            stderr=stderr_path.read_bytes(),
+            stdout=_read_bytes_bounded(stdout_path, stage="resource stdout"),
+            stderr=_read_bytes_bounded(stderr_path, stage="resource stderr"),
         ),
         execution_state,
         termination,
@@ -2763,7 +2958,9 @@ def _replace_resource_logs(
         path = output_dir / f"{name}.txt"
         if path.is_symlink() or burnin.is_reparse_point(path):
             raise burnin.EvidenceError("resource log path is noncanonical")
-        if path.is_file() and path.read_bytes() == payload:
+        if path.is_file() and _read_bytes_bounded(
+            path, stage=f"resource {name} log"
+        ) == payload:
             continue
         replacement = path.with_name(f".{path.name}.replacement")
         if replacement.exists() or replacement.is_symlink() or burnin.is_reparse_point(
@@ -2771,10 +2968,17 @@ def _replace_resource_logs(
         ):
             raise burnin.EvidenceError("resource log replacement path already exists")
         with replacement.open("xb") as stream:
-            stream.write(payload)
+            view = memoryview(payload)
+            for offset in range(0, len(payload), 1024 * 1024):
+                _require_remaining_budget("resource log replacement")
+                stream.write(view[offset : offset + 1024 * 1024])
             stream.flush()
+            _require_remaining_budget("resource log replacement synchronization")
             os.fsync(stream.fileno())
+            _require_remaining_budget("resource log replacement synchronization")
+        _require_remaining_budget("resource log atomic replacement")
         os.replace(replacement, path)
+        _require_remaining_budget("resource log replacement verification")
 
 
 def _discard_unconsumed_pending(output_dir: Path | None) -> None:
@@ -2834,7 +3038,7 @@ def _write_worker_completion(
     value.pop("resource_lock_released")
     value["schema"] = WORKER_COMPLETION_SCHEMA
     for name in ("stdout", "stderr"):
-        if burnin.file_hash_record(output_dir / f"{name}.txt") != value[name]:
+        if _file_hash_record(output_dir / f"{name}.txt") != value[name]:
             raise burnin.EvidenceError(f"worker completion {name} identity mismatch")
     _write_exclusive(
         output_dir / "worker-completion.json", burnin.canonical_json_bytes(value)
@@ -2906,7 +3110,7 @@ def _load_worker_completion(
         if (
             path.is_symlink()
             or burnin.is_reparse_point(path)
-            or burnin.file_hash_record(path) != value[name]
+            or _file_hash_record(path) != value[name]
         ):
             raise burnin.EvidenceError(f"worker completion {name} mismatch")
     return value
@@ -3012,6 +3216,7 @@ def _publish_resource_result(
     return result
 
 
+@_bind_invocation_deadline()
 def _run_resource_bounded(
     *,
     request_id: str,
@@ -3050,7 +3255,7 @@ def _run_resource_bounded(
         "tree": candidate_tree,
     }:
         raise burnin.EvidenceError("approval snapshot candidate mismatch")
-    ledger = manager["ledger"].read_text(encoding="utf-8")
+    ledger = _read_text_bounded(manager["ledger"], stage="resource approval ledger")
     expected_approval = burnin.approval_ledger_fields(
         request, row, {"commit": candidate_commit, "tree": candidate_tree}
     )
@@ -3127,7 +3332,7 @@ def _run_resource_bounded(
             "command_sha256": row["command_sha256"],
             "cycle": cycle,
             "lane": lane,
-            "lock_owner": burnin.file_hash_record(owner_path),
+            "lock_owner": _file_hash_record(owner_path),
             "request": {
                 "bytes": row["bytes"],
                 "request_id": request_id,
@@ -3139,7 +3344,7 @@ def _run_resource_bounded(
         }
         burnin.validate_resource_launch(launch, contract=contract)
         _write_exclusive(output_dir / "launch.json", burnin.canonical_json_bytes(launch))
-        launch_record = burnin.file_hash_record(output_dir / "launch.json")
+        launch_record = _file_hash_record(output_dir / "launch.json")
         try:
             _append_execution_started(
                 manager["ledger"],
@@ -3155,7 +3360,9 @@ def _run_resource_bounded(
                 request, launch, launch_record
             )
             started_rows = burnin._ledger_entries(
-                manager["ledger"].read_text(encoding="utf-8"),
+                _read_text_bounded(
+                    manager["ledger"], stage="execution-start recovery ledger"
+                ),
                 request_id,
                 "EXECUTION_STARTED",
             )
@@ -3362,7 +3569,7 @@ def _validate_cycle_request_rows(
     manager = _manager_paths(contract)
     if manager["active_lock"].exists():
         raise burnin.EvidenceError("global resource slot is occupied")
-    ledger = manager["ledger"].read_text(encoding="utf-8")
+    ledger = _read_text_bounded(manager["ledger"], stage="cycle preflight ledger")
     repositories = burnin.external_repository_paths(contract)
 
     validated: list[dict[str, Any]] = []
@@ -3440,7 +3647,7 @@ def _cancel_proven_unstarted_tail(
         purpose="CANCEL_S3_Q4_PROVEN_UNSTARTED_TAIL",
     )
     try:
-        ledger = manager["ledger"].read_text(encoding="utf-8")
+        ledger = _read_text_bounded(manager["ledger"], stage="cancellation ledger")
         prepared: list[tuple[Mapping[str, Any], list[str], bool]] = []
         for cycle, lane in tail:
             row = next(
@@ -3509,6 +3716,7 @@ def _emit_cycle_terminal_snapshot(contract: Mapping[str, Any], cycle: int) -> No
     sys.stdout.buffer.flush()
 
 
+@_bind_invocation_deadline(reserve_seconds=_CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS)
 def _run_cycle_bounded(
     *,
     cycle: int,
@@ -3516,7 +3724,7 @@ def _run_cycle_bounded(
     timeout_policy: Mapping[str, Any],
     invocation_deadline: float,
 ) -> int:
-    """Run one three-request cycle against one absolute 20-minute clock."""
+    """Run one three-request cycle against one absolute 15-minute clock."""
 
     _request_execution_policy(contract)
     cycle_policy = _cycle_wall_policy(contract)
@@ -3588,8 +3796,8 @@ def _run_cycle_bounded(
             _emit_cycle_terminal_snapshot(contract, cycle)
             return _CYCLE_PRELAUNCH_FAILURE_EXIT_CODE
 
-    # Normal evidence work owns the complete interval from second 1060 through
-    # second 1190; the final ten seconds belong solely to watchdog termination.
+    # Normal evidence work owns the complete interval from second 830 through
+    # second 890; the final ten seconds belong solely to watchdog termination.
     evidence_deadline = (
         cycle_deadline - cycle_policy["watchdog_termination_margin_seconds"]
     )
@@ -3612,7 +3820,7 @@ def _cycle_terminal_snapshot(
     contract: Mapping[str, Any], cycle: int
 ) -> dict[str, Any] | None:
     manager = _manager_paths(contract)
-    ledger_raw = manager["ledger"].read_bytes()
+    ledger_raw = _read_bytes_bounded(manager["ledger"], stage="cycle terminal ledger")
     ledger = ledger_raw.decode("utf-8")
     candidate = burnin.external_repository_paths(contract)["ANYsolver"]
     candidate_record = {
@@ -3665,7 +3873,7 @@ def _cycle_terminal_snapshot(
             launch = _load_canonical_json(launch_path)
             burnin.validate_resource_launch(launch, contract=contract)
             expected_started = burnin.execution_started_ledger_fields(
-                request, launch, burnin.file_hash_record(launch_path)
+                request, launch, _file_hash_record(launch_path)
             )
             if started[0][1:] != expected_started:
                 raise burnin.EvidenceError("execution-start ledger row mismatch")
@@ -3703,7 +3911,7 @@ def _cycle_terminal_snapshot(
             or burnin.is_reparse_point(predecessor_path)
         ):
             return None
-        predecessor = burnin.file_hash_record(predecessor_path)
+        predecessor = _file_hash_record(predecessor_path)
     return {
         "candidate": candidate_record,
         "cycle": cycle,
@@ -3802,6 +4010,7 @@ def _publish_completed_cycles(contract: Mapping[str, Any]) -> None:
         _release_manager_reservation(manager, owner)
 
 
+@_bind_invocation_deadline(reserve_seconds=_CYCLE_WATCHDOG_TERMINATION_MARGIN_SECONDS)
 def finalize_resource(*, request_id: str, invocation_deadline: float) -> int:
     """Finish evidence publication for one consumed request without launching it."""
 
@@ -3971,7 +4180,7 @@ def cancel_remaining() -> None:
                 if item["lane"] == lane
             )
             authority, request, _path = _request_payload(contract, row["request_id"])
-            ledger = manager["ledger"].read_text(encoding="utf-8")
+            ledger = _read_text_bounded(manager["ledger"], stage="finalizer ledger")
             approvals = burnin._ledger_entries(ledger, row["request_id"], "APPROVED")
             expected_approval = burnin.approval_ledger_fields(
                 request,
@@ -4019,17 +4228,17 @@ def _process_record(contract: Mapping[str, Any], prefix: str) -> dict[str, Any]:
         "exit_code": manifest["exit_code"],
         "producer_sha256": manifest["producer_sha256"],
         "pending_manifest_sha256": (
-            burnin.file_hash_record(directory / "pending-manifest.json")["sha256"]
+            _file_hash_record(directory / "pending-manifest.json")["sha256"]
             if is_resource
             else None
         ),
         "request_id": manifest["request_id"],
         "resource_lock_released": manifest["resource_lock_released"],
-        "result": burnin.file_hash_record(directory / "result.json"),
+        "result": _file_hash_record(directory / "result.json"),
         "started_at": manifest["started_at"],
         "status": status,
-        "stderr": burnin.file_hash_record(directory / "stderr.txt"),
-        "stdout": burnin.file_hash_record(directory / "stdout.txt"),
+        "stderr": _file_hash_record(directory / "stderr.txt"),
+        "stdout": _file_hash_record(directory / "stdout.txt"),
         "termination": manifest["termination"],
     }
 
@@ -4139,7 +4348,7 @@ def aggregate_result() -> dict[str, Any]:
                 contract=contract,
                 cycle=cycle,
             )
-            certificate_record = burnin.file_hash_record(certificate_path)
+            certificate_record = _file_hash_record(certificate_path)
         elif any(
             path.exists() or path.is_symlink() or burnin.is_reparse_point(path)
             for path in (certificate_path, pending_certificate)
@@ -4209,7 +4418,7 @@ def aggregate_result() -> dict[str, Any]:
                 raise burnin.EvidenceError("approval ledger snapshot mismatch")
             if name.startswith("cycle_") and snapshot.get("cycle") != int(name[-1]):
                 raise burnin.EvidenceError("cycle ledger snapshot mismatch")
-            ledger_snapshots[name] = burnin.file_hash_record(path)
+            ledger_snapshots[name] = _file_hash_record(path)
     else:
         ledger_snapshots = {"approval": None, "cycle_1": None, "cycle_2": None}
     result = {
@@ -4276,7 +4485,7 @@ def main(argv: list[str] | None = None) -> int:
             "nested process coordinator execution from the active quick lane is forbidden"
         )
     # Start the monotonic invocation clock before Windows containment setup so
-    # that setup itself cannot escape the complete 20-minute boundary.
+    # that setup itself cannot escape the complete 15-minute boundary.
     invocation_deadline, watchdog_stop, watchdog_thread = (
         _start_resource_invocation_watchdog(_EARLY_RESOURCE_TIMEOUT_POLICY)
     )
@@ -4292,16 +4501,16 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v18 worker execution; use cycle --cycle N",
+            help="reject standalone v19 worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v18 resource requests is disabled. "
-                "Use cycle --cycle N so all three workers share one 1200-second watchdog."
+                "Standalone execution of current v19 resource requests is disabled. "
+                "Use cycle --cycle N so all three workers share one 900-second watchdog."
             ),
         )
         resource.add_argument("--request-id", required=True)
         cycle = subparsers.add_parser(
             "cycle",
-            help="run all three registered requests under one 1200-second watchdog",
+            help="run all three registered requests under one 900-second watchdog",
         )
         cycle.add_argument("--cycle", choices=(1, 2), required=True, type=int)
         finalize = subparsers.add_parser(

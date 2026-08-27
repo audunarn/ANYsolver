@@ -18,7 +18,7 @@ from typing import Any, Iterable, Mapping
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = Path(__file__).with_name("e4_pl_s3_q4_burnin_contract.json")
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-contract-v5"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-contract-v6"
 RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-result-v4"
 PROCESS_RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-process-result-v3"
 CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
@@ -27,16 +27,25 @@ CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
 LEDGER_SNAPSHOT_SCHEMA = "anysolver.e4-pl-s3-q4-resource-ledger-snapshot-v1"
 PENDING_MANIFEST_SCHEMA = "anysolver.e4-pl-s3-q4-pending-process-manifest-v1"
 FUNCTIONAL_WAVE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v2"
+FUNCTIONAL_WAVE_V19_SCHEMA = "anysolver.e4-pl-s3-q4-functional-wave-v3"
 FUNCTIONAL_WAVE_FILE_GRAPH_SCHEMA = (
     "anysolver.e4-pl-s3-q4-functional-wave-file-graph-v1"
 )
 FUNCTIONAL_WAVE_AGGREGATE_SCHEMA = (
     "anysolver.e4-pl-s3-q4-functional-wave-aggregate-v2"
 )
+FUNCTIONAL_WAVE_V19_AGGREGATE_SCHEMA = (
+    "anysolver.e4-pl-s3-q4-functional-wave-aggregate-v3"
+)
 FUNCTIONAL_WAVE_DIAGNOSTICS_SCHEMA = (
     "anysolver.e4-pl-s3-q4-functional-wave-diagnostics-v2"
 )
+FUNCTIONAL_WAVE_V19_DIAGNOSTICS_SCHEMA = (
+    "anysolver.e4-pl-s3-q4-functional-wave-diagnostics-v3"
+)
 FUNCTIONAL_SHARD_SCHEMA = "anysolver.e4-pl-s3-q4-functional-shard-v2"
+FUNCTIONAL_READY_SCHEMA = "anysolver.e4-pl-s3-q4-functional-ready-v1"
+FUNCTIONAL_RELEASE_SCHEMA = "anysolver.e4-pl-s3-q4-functional-release-v1"
 PERFORMANCE_BASELINE_MARKER = b"Q1M_PERFORMANCE_BASELINE_JSON="
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_OBJECT_RE = re.compile(r"[0-9a-f]{40}\Z")
@@ -112,6 +121,14 @@ V18_REQUEST_IDS = (
     "64c5c924f6d24d299322ca8c4d98746e",
     "1115d466d48e4049aab5dcf436901f19",
     "d37fac3d568343109df0901667ec6726",
+)
+V19_REQUEST_IDS = (
+    "a8741f6fdc804d80ba87850cccfa8e08",
+    "8006b6a4ea1948fc87180e5d58e243c5",
+    "4f9ca59704e842e39585500e833152c0",
+    "4906266d55aa4aeeb13061e30491e8b5",
+    "956dfa9ebc8548bb8ecf55f46329aa9b",
+    "fa7c1d229d6a46b093e144c71890c0c3",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -192,6 +209,261 @@ FUNCTIONAL_WAVE_TAIL_NODE = (
 FUNCTIONAL_WAVE_COLLECTION_ARTIFACT = {
     "bytes": 116046,
     "sha256": "244132e6294f3dc37f5bf865bd800c7402d9ff6b3300af670ca954ad24bb5c15",
+}
+FUNCTIONAL_V19_COLLECTION_ARTIFACT = {
+    "bytes": 119426,
+    "sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+}
+FUNCTIONAL_V19_FULL_NODE_AUTHORITY = {
+    "node_count": 1066,
+    "node_ids_sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+}
+FUNCTIONAL_V19_SHARD_IDS = (
+    "H01",
+    "V01",
+    "G01",
+    "B01",
+    "B02",
+    "B03",
+    "D01",
+)
+FUNCTIONAL_V19_SHARD_AUTHORITIES = {
+    "H01": {
+        "node_count": 10,
+        "node_ids_sha256": "3fef0dace7e7d5ace263ab29ae016e3d18864f27ac92b258b216efed489c05a5",
+    },
+    "V01": {
+        "node_count": 8,
+        "node_ids_sha256": "bb78a167e46dba569a001002e6b37aacc9e737fb73ff04d45f9d3784c7cf6a8f",
+    },
+    "G01": {
+        "node_count": 6,
+        "node_ids_sha256": "cb9326084e3d7cb531fbc4cc7bf123e045c28cd6b455d508e1afaf1a53604221",
+    },
+    "B01": {
+        "node_count": 262,
+        "node_ids_sha256": "7330ad1a643c0811f026c3e632cc3265daf7768271b9ea0b7c05f31ca6968c67",
+    },
+    "B02": {
+        "node_count": 293,
+        "node_ids_sha256": "58f2d35842bf7e0f032a4cd8be7b396ef064d93ff8c83e4aa21837a115f41860",
+    },
+    "B03": {
+        "node_count": 238,
+        "node_ids_sha256": "ae1330121594e6b9d5993b389256e2c2eb8c9d6e645764e3aeb7a1792ec7a3e4",
+    },
+    "D01": {
+        "node_count": 249,
+        "node_ids_sha256": "f87ca0b65519aedb3427c75dc019a8a06166da8f4e71d9cf0ba0a4a6ec703a17",
+    },
+}
+FUNCTIONAL_V19_SHARD_MODULE_AUTHORITIES = {
+    "H01": {
+        "module_count": 1,
+        "modules_sha256": "98849593ac93845b998d2dfdb64be01d31e2752ce61b562038a4f66807e24c22",
+    },
+    "V01": {
+        "module_count": 1,
+        "modules_sha256": "5f0064fb99008360515a758066fc35b60c2c03225460e26d7bafe9e4c8cb14ad",
+    },
+    "G01": {
+        "module_count": 2,
+        "modules_sha256": "41551e23750c140ac0bfb0cef159bc8b739e47cc4a5a0657ecc6ee72fee07ba5",
+    },
+    "B01": {
+        "module_count": 22,
+        "modules_sha256": "a67f8bfad4c6ab582d1b51ac240be5362497b48bccd852a6377bfcc1973e29bb",
+    },
+    "B02": {
+        "module_count": 22,
+        "modules_sha256": "34e1f2ed3b35f29022cba7fb815832ae4cce4bcce8418a8f045881ff41930447",
+    },
+    "B03": {
+        "module_count": 19,
+        "modules_sha256": "e9c3bbcfec8bb681ea60c4bb7e60ab08de3b59e826a8da12543bb27ab35a4594",
+    },
+    "D01": {
+        "module_count": 21,
+        "modules_sha256": "19102d408e3d38fd13198a68636847c8ea304d9c60f7853967e28a15016e3a1f",
+    },
+}
+FUNCTIONAL_V19_FULL_MODULES = {
+    "H01": ("tests/test_fe_solver_nonlinear_static.py",),
+    "V01": ("tests/test_beam_shell_verification.py",),
+    "G01": ("tests/test_geometry_panel.py",),
+    "B01": (
+        "tests/test_anyfileio_version_compatibility.py",
+        "tests/test_constraint_audit.py",
+        "tests/test_corotational.py",
+        "tests/test_e4_pl_orchestrator_operation_lease.py",
+        "tests/test_e4_pl_q4_stationary_conditioning.py",
+        "tests/test_external_references.py",
+        "tests/test_fe_solver_buckling.py",
+        "tests/test_fe_solver_corotational_beam.py",
+        "tests/test_fe_solver_cylinder_benchmarks.py",
+        "tests/test_fe_solver_infrastructure.py",
+        "tests/test_fe_solver_nonlinear_dnv.py",
+        "tests/test_fe_solver_nonlinear_limit_point.py",
+        "tests/test_fe_solver_shell_verification.py",
+        "tests/test_fe_solver_triangular_shell_backend.py",
+        "tests/test_generalized_section_mass_properties.py",
+        "tests/test_material_history_recovery.py",
+        "tests/test_nodal_stress_recovery.py",
+        "tests/test_nonlinear_analysis_diagnostics.py",
+        "tests/test_nonlinear_impact_plasticity.py",
+        "tests/test_orthotropic_workflow_integration.py",
+        "tests/test_qualified_assembly_exception_precedence.py",
+    ),
+    "B02": (
+        "tests/test_beam_axis_conventions.py",
+        "tests/test_e4_pl_current_state_input_ownership.py",
+        "tests/test_e4_pl_mixed_current_state_route.py",
+        "tests/test_element_activity_integration.py",
+        "tests/test_fe_solver_contact.py",
+        "tests/test_fe_solver_fracture.py",
+        "tests/test_fe_solver_recovery_policy.py",
+        "tests/test_fe_solver_reference_cases.py",
+        "tests/test_fe_solver_theory.py",
+        "tests/test_follower_pressure.py",
+        "tests/test_hht_alpha.py",
+        "tests/test_hill48_plane_stress_plasticity.py",
+        "tests/test_mesh_load_bc_verification.py",
+        "tests/test_namespace_neutral_deepcopy.py",
+        "tests/test_nonlinear_restart_checkpoint.py",
+        "tests/test_orthotropic_material_contract.py",
+        "tests/test_production_readiness.py",
+        "tests/test_qualified_q4_assembly_authority.py",
+        "tests/test_runtime_api.py",
+        "tests/test_s4_director_field.py",
+        "tests/test_sesam_fem.py",
+    ),
+    "B03": (
+        "tests/test_arc_length.py",
+        "tests/test_e4_pl_component_snapshot_integrity.py",
+        "tests/test_e4_pl_guarded_observations.py",
+        "tests/test_e4_pl_q4_current_tangent.py",
+        "tests/test_e4_pl_transient_authority.py",
+        "tests/test_fe_solver_anystructure_fem_mode.py",
+        "tests/test_fe_solver_architecture.py",
+        "tests/test_fe_solver_mass_modal.py",
+        "tests/test_fe_solver_triangular_shell.py",
+        "tests/test_generalized_section_api_workflows.py",
+        "tests/test_generalized_shell_sections.py",
+        "tests/test_mesher_improvements.py",
+        "tests/test_mixed_shell_quadrature_grouping.py",
+        "tests/test_nonlinear_static_state_lifecycle.py",
+        "tests/test_phase2.py",
+        "tests/test_quadratic_beam_nonlinear.py",
+        "tests/test_qualified_mutation_epoch.py",
+        "tests/test_transient_reduced_output.py",
+    ),
+    "D01": (
+        "tests/test_anymesher_version_compatibility.py",
+        "tests/test_e4_pl_planar_physical_recovery.py",
+        "tests/test_e4_pl_q4_state_lifecycle.py",
+        "tests/test_element_activity.py",
+        "tests/test_extracted_package_wiring.py",
+        "tests/test_fe_solver_capacity_workflow.py",
+        "tests/test_fe_solver_dynamics.py",
+        "tests/test_fe_solver_element_qualification.py",
+        "tests/test_fe_solver_element_quality.py",
+        "tests/test_fe_solver_plasticity_qualification.py",
+        "tests/test_fe_solver_s4_validity.py",
+        "tests/test_generalized_beam_sections.py",
+        "tests/test_generalized_state_recovery.py",
+        "tests/test_initial_fields_and_staged_history.py",
+        "tests/test_native_rotation_state.py",
+        "tests/test_nonlinear_state_lifecycle.py",
+        "tests/test_orthotropic_elements.py",
+        "tests/test_plane_stress_analytical_tangent.py",
+        "tests/test_production_validation.py",
+        "tests/test_recovery_qualification.py",
+        "tests/test_solver_control_contracts.py",
+    ),
+}
+FUNCTIONAL_V19_SPLIT_MODULE = "tests/test_local_patch_transition.py"
+FUNCTIONAL_V19_SPLIT_NODE_IDS = {
+    "H01": (),
+    "V01": (),
+    "G01": (
+        "tests/test_local_patch_transition.py::"
+        "test_axial_cylinder_stress_is_mesh_style_invariant",
+    ),
+    "B01": (
+        "tests/test_local_patch_transition.py::"
+        "test_axial_flat_plate_stress_is_mesh_style_invariant",
+    ),
+    "B02": (
+        "tests/test_local_patch_transition.py::"
+        "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
+    ),
+    "B03": (
+        "tests/test_local_patch_transition.py::test_flat_local_patch_is_conforming_and_local",
+        "tests/test_local_patch_transition.py::test_cylinder_local_patch_quality_beats_graded",
+        "tests/test_local_patch_transition.py::test_cylinder_local_patch_window_on_seam_is_conforming",
+        "tests/test_local_patch_transition.py::test_cylinder_local_patch_keeps_normal_winding",
+        "tests/test_local_patch_transition.py::test_local_patch_falls_back_for_shell_web_members",
+        "tests/test_local_patch_transition.py::test_local_patch_model_solves_with_collision",
+        "tests/test_local_patch_transition.py::test_point_refinement_uses_local_patch_when_selected",
+    ),
+    "D01": (),
+}
+FUNCTIONAL_V20_DEFERRED_ACTIVATION_NODES = (
+    "tests/test_local_patch_transition.py::"
+    "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams",
+)
+FUNCTIONAL_V20_DEFERRED_ACTIVATION_AUTHORITY = {
+    "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
+    "node_count": 1,
+    "node_ids_sha256": "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc",
+    "reason": "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_BEFORE_DEFAULT_ACTIVATION",
+}
+FUNCTIONAL_V20_INNER_WAVE_POLICY = {
+    "cleanup_cutoff_seconds": 385,
+    "cleanup_deadline_environment": (
+        "ANYSOLVER_BURNIN_S3_Q4_STYLE_CLEANUP_DEADLINE"
+    ),
+    "default_mode": "SEQUENTIAL",
+    "disposition": "DEFERRED_ACTIVATION_DIAGNOSTIC_ONLY",
+    "enabled": False,
+    "enabled_shard_id": "H01",
+    "max_concurrent_workers": 3,
+    "opt_in_environment": "ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE",
+    "opt_in_value": "1",
+    "result_cutoff_seconds": 370,
+    "result_deadline_environment": (
+        "ANYSOLVER_BURNIN_S3_Q4_STYLE_RESULT_DEADLINE"
+    ),
+    "worker_wall_limit_seconds": 360,
+}
+FUNCTIONAL_V19_STAGE_POLICY = {
+    "command_watchdog_cutoff_seconds": 510,
+    "emergency_publication_cutoff_seconds": 480,
+    "execution_mode": "concurrent_seven_shards_no_inner_style_wave",
+    "inner_wave_policy": FUNCTIONAL_V20_INNER_WAVE_POLICY,
+    "max_concurrent_workers": 7,
+    "normal_evidence_cutoff_seconds": 460,
+    "preparation_cutoff_seconds": 50,
+    "ready_barrier_cutoff_seconds": 90,
+    "shard_execution_cutoff_seconds": 430,
+    "shard_execution_ids": ["H01", "V01", "G01", "B01", "B02", "B03", "D01"],
+    "watchdog_termination_start_cutoff_seconds": 500,
+}
+FUNCTIONAL_V19_TREE_CLEANUP_STATES = {
+    "CHILD_EXIT_AND_TREE_CLOSED",
+    "NOT_LAUNCHED",
+    "TREE_TERMINATION_FAILED",
+    "TREE_TERMINATION_PROVEN",
+}
+FUNCTIONAL_V19_LAUNCH_STATES = {
+    "ALL_LAUNCHED",
+    "NOT_LAUNCHED",
+    "PARTIALLY_LAUNCHED",
+}
+FUNCTIONAL_V19_TERMINAL_STATES = {
+    "ALL_TERMINAL",
+    "NOT_LAUNCHED",
+    "UNPROVEN_DESCENDANT_TREE",
 }
 FUNCTIONAL_WAVE_ROUTING = {
     "aggregate_filename": "functional-wave-aggregate.json",
@@ -535,18 +807,18 @@ def _validate_timeout_policy(value: Any, location: str) -> dict[str, Any]:
             f"{location}.evidence_reserve_seconds",
             minimum=1,
         )
-        != 20
+        != 10
     ):
-        raise EvidenceError(f"{location}.evidence_reserve_seconds must be 20")
+        raise EvidenceError(f"{location}.evidence_reserve_seconds must be 10")
     if (
         _require_int(
             policy["wall_limit_seconds"],
             f"{location}.wall_limit_seconds",
             minimum=1,
         )
-        != 1200
+        != 900
     ):
-        raise EvidenceError(f"{location}.wall_limit_seconds must be 1200")
+        raise EvidenceError(f"{location}.wall_limit_seconds must be 900")
     if _require_int(policy["timeout_exit_code"], f"{location}.timeout_exit_code") != 124:
         raise EvidenceError(f"{location}.timeout_exit_code must be 124")
     if (
@@ -563,7 +835,7 @@ def _validate_timeout_policy(value: Any, location: str) -> dict[str, Any]:
     if policy["windows_job"] != {
         "assignment": "CREATE_SUSPENDED_ASSIGN_RESUME",
         "limit": "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE",
-        "watchdog_termination_start_seconds": 1190,
+        "watchdog_termination_start_seconds": 890,
     }:
         raise EvidenceError(f"{location}.windows_job mismatch")
     windows = _exact_keys(
@@ -608,14 +880,14 @@ def _validate_cycle_wall_policy(value: Any, location: str) -> dict[str, Any]:
         f"{location}.cumulative_deadlines_seconds",
     )
     expected = {
-        "absolute_wall_limit_seconds": 1200,
+        "absolute_wall_limit_seconds": 900,
         "clock": "time.monotonic",
         "cumulative_deadlines_seconds": {
-            "anyfem": 950,
-            "functional": 860,
-            "performance": 1060,
+            "anyfem": 720,
+            "functional": 650,
+            "performance": 830,
         },
-        "final_evidence_reserve_seconds": 130,
+        "final_evidence_reserve_seconds": 60,
         "scope": "COMPLETE_CYCLE_AND_ALL_CHILD_PROCESS_TREES",
         "watchdog_termination_margin_seconds": 10,
     }
@@ -672,15 +944,23 @@ def _validate_cycle_runtime_basis(value: Any, location: str) -> dict[str, Any]:
             "historical_input": "rejected_resource_result",
             "node_count": 1034,
         },
-        "confidence": "MEDIUM_CURRENT_PARALLEL_WAVE_NOT_PREVIOUSLY_COMPLETED",
+        "confidence": "HIGH_ALL_SEVEN_SHARDS_COMMISSIONING_REQUIRED_BEFORE_FREEZE",
         "current_functional": {
-            "internal_deadline_seconds": 780,
-            "node_count": 1036,
-            "parallel_shard_node_counts": [1, 362, 361, 312],
+            "command_watchdog_cutoff_seconds": 510,
+            "emergency_publication_cutoff_seconds": 480,
+            "inner_wave_cleanup_cutoff_seconds": 385,
+            "inner_wave_result_cutoff_seconds": 370,
+            "max_concurrent_workers": 7,
+            "node_count": 1066,
+            "normal_evidence_cutoff_seconds": 460,
+            "parallel_shard_node_counts": [10, 8, 6, 262, 293, 238, 249],
+            "ready_barrier_cutoff_seconds": 90,
+            "shard_execution_cutoff_seconds": 430,
+            "watchdog_termination_start_cutoff_seconds": 500,
         },
         "minimum_worker_windows_after_predecessor_deadline_seconds": {
-            "anyfem": 50,
-            "performance": 70,
+            "anyfem": 70,
+            "performance": 110,
         },
         "performance_execution": "SERIAL_ISOLATED_AFTER_FUNCTIONAL_AND_ANYFEM",
     }
@@ -801,7 +1081,10 @@ def _validate_ci_policy(
         },
         "functional": {
             "count": 85,
-            "execution": "BOUNDED_PARALLEL_WAVE_4_SHARDS_MAX_4",
+            "execution": (
+                "BOUNDED_CONCURRENT_ONE_EXACT_SPLIT_"
+                "H01_V01_G01_B01_B02_B03_D01_MAX_7"
+            ),
             "sha256": (
                 "eb6228e05649d158d29c63725ca19a1a8f35cfcea71c6b1ce35d27215e9b6b6c"
             ),
@@ -846,7 +1129,22 @@ def timeout_termination_tool(contract: Mapping[str, Any]) -> Path:
     return path
 
 
-def _validate_artifact_routing(value: Any, location: str) -> dict[str, Any]:
+def _functional_wave_shard_ids(wave: Mapping[str, Any]) -> tuple[str, ...]:
+    """Return the schema-bound shard order without weakening v18 authority."""
+
+    return (
+        FUNCTIONAL_V19_SHARD_IDS
+        if wave.get("schema") == FUNCTIONAL_WAVE_V19_SCHEMA
+        else FUNCTIONAL_WAVE_SHARD_IDS
+    )
+
+
+def _validate_artifact_routing(
+    value: Any,
+    location: str,
+    *,
+    shard_ids: tuple[str, ...] = FUNCTIONAL_WAVE_SHARD_IDS,
+) -> dict[str, Any]:
     routing = _exact_keys(value, set(FUNCTIONAL_WAVE_ROUTING), location)
     for key, expected in FUNCTIONAL_WAVE_ROUTING.items():
         observed = _require_string(routing[key], f"{location}.{key}")
@@ -868,21 +1166,78 @@ def _validate_artifact_routing(value: Any, location: str) -> dict[str, Any]:
         routing["source_directory_name"],
         routing["aggregate_filename"],
         routing["raw_diagnostics_filename"],
-        *(f"{prefix}{shard_id}" for shard_id in FUNCTIONAL_WAVE_SHARD_IDS),
+        *(f"{prefix}{shard_id}" for shard_id in shard_ids),
     }
-    if len(routed_names) != 8:
+    if len(routed_names) != 4 + len(shard_ids):
         raise EvidenceError(f"{location} routes collide")
     return routing
 
 
 def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise EvidenceError(f"{location} must be an object")
+    schema = value.get("schema")
+    v19 = schema == FUNCTIONAL_WAVE_V19_SCHEMA
     wave = _exact_keys(
         value,
-        {"aggregate", "execution", "manifest", "schema", "source"},
+        (
+            {
+                "aggregate",
+                "deferred_activation",
+                "execution",
+                "functional_wave_schema_version",
+                "manifest",
+                "schema",
+                "source",
+            }
+            if v19
+            else {"aggregate", "execution", "manifest", "schema", "source"}
+        ),
         location,
     )
-    if wave["schema"] != FUNCTIONAL_WAVE_SCHEMA:
+    if wave["schema"] not in {FUNCTIONAL_WAVE_SCHEMA, FUNCTIONAL_WAVE_V19_SCHEMA}:
         raise EvidenceError(f"{location}.schema mismatch")
+    if v19 and _require_int(
+        wave["functional_wave_schema_version"],
+        f"{location}.functional_wave_schema_version",
+        minimum=1,
+    ) != 3:
+        raise EvidenceError(f"{location}.functional_wave_schema_version must be 3")
+
+    deferred_activation: dict[str, Any] | None = None
+    if v19:
+        deferred_activation = _exact_keys(
+            wave["deferred_activation"],
+            {"disposition", "node_count", "node_ids", "node_ids_sha256", "reason"},
+            f"{location}.deferred_activation",
+        )
+        deferred_nodes = deferred_activation["node_ids"]
+        if (
+            not isinstance(deferred_nodes, list)
+            or deferred_nodes != list(FUNCTIONAL_V20_DEFERRED_ACTIVATION_NODES)
+            or len(set(deferred_nodes)) != len(deferred_nodes)
+        ):
+            raise EvidenceError(f"{location}.deferred_activation node authority mismatch")
+        observed_deferred_authority = {
+            "disposition": deferred_activation["disposition"],
+            "node_count": _require_int(
+                deferred_activation["node_count"],
+                f"{location}.deferred_activation.node_count",
+                minimum=1,
+            ),
+            "node_ids_sha256": deferred_activation["node_ids_sha256"],
+            "reason": deferred_activation["reason"],
+        }
+        _require_canonical_list_hash(
+            deferred_nodes,
+            deferred_activation["node_ids_sha256"],
+            f"{location}.deferred_activation.node_ids_sha256",
+        )
+        if (
+            observed_deferred_authority
+            != FUNCTIONAL_V20_DEFERRED_ACTIVATION_AUTHORITY
+        ):
+            raise EvidenceError(f"{location}.deferred_activation disposition mismatch")
 
     source = _exact_keys(
         wave["source"],
@@ -942,12 +1297,18 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
         manifest["modules_sha256"],
         f"{location}.manifest.modules_sha256",
     )
-    if _require_int(manifest["node_count"], f"{location}.manifest.node_count") != 1036:
-        raise EvidenceError(f"{location}.manifest.node_count must be 1036")
+    expected_node_count = 1066 if v19 else 1036
+    if (
+        _require_int(manifest["node_count"], f"{location}.manifest.node_count")
+        != expected_node_count
+    ):
+        raise EvidenceError(
+            f"{location}.manifest.node_count must be {expected_node_count}"
+        )
     full_node_ids = _require_ordered_unique_strings(
         manifest["full_node_ids"],
         f"{location}.manifest.full_node_ids",
-        expected_count=1036,
+        expected_count=expected_node_count,
     )
     for index, node_id in enumerate(full_node_ids):
         if (
@@ -958,27 +1319,60 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
             raise EvidenceError(
                 f"{location}.manifest.full_node_ids[{index}] is not a pytest node ID"
             )
-    _require_canonical_list_hash(
+    if v19 and deferred_activation is not None:
+        deferred_nodes = deferred_activation["node_ids"]
+        if set(full_node_ids).intersection(deferred_nodes):
+            raise EvidenceError(
+                f"{location}.deferred_activation overlaps the opt-in manifest"
+            )
+        if not all(node.partition("::")[0] in set(modules) for node in deferred_nodes):
+            raise EvidenceError(
+                f"{location}.deferred_activation is outside the functional inventory"
+            )
+    derived_modules = list(dict.fromkeys(node_id.split("::", 1)[0] for node_id in full_node_ids))
+    if modules != derived_modules:
+        raise EvidenceError(f"{location}.manifest.modules do not match node collection order")
+    full_node_ids_sha256 = _require_canonical_list_hash(
         full_node_ids,
         manifest["full_node_ids_sha256"],
         f"{location}.manifest.full_node_ids_sha256",
     )
-    derived_modules = list(dict.fromkeys(node_id.split("::", 1)[0] for node_id in full_node_ids))
-    if modules != derived_modules:
-        raise EvidenceError(f"{location}.manifest.modules do not match node collection order")
+    if v19 and {
+        "node_count": len(full_node_ids),
+        "node_ids_sha256": full_node_ids_sha256,
+    } != FUNCTIONAL_V19_FULL_NODE_AUTHORITY:
+        raise EvidenceError(f"{location}.manifest full-node authority mismatch")
     collection_artifact = _validate_hash_record(
         manifest["collection_artifact"],
         f"{location}.manifest.collection_artifact",
     )
-    if collection_artifact != FUNCTIONAL_WAVE_COLLECTION_ARTIFACT:
+    if v19:
+        canonical_node_inventory = canonical_json_bytes(full_node_ids)
+        recomputed_collection_artifact = {
+            "bytes": len(canonical_node_inventory),
+            "sha256": sha256_bytes(canonical_node_inventory),
+        }
+        if collection_artifact != recomputed_collection_artifact:
+            raise EvidenceError(
+                f"{location}.manifest.collection_artifact is not the canonical node inventory"
+            )
+    expected_collection_artifact = (
+        FUNCTIONAL_V19_COLLECTION_ARTIFACT
+        if v19
+        else FUNCTIONAL_WAVE_COLLECTION_ARTIFACT
+    )
+    if collection_artifact != expected_collection_artifact:
         raise EvidenceError(f"{location}.manifest.collection_artifact mismatch")
 
     shards = manifest["shards"]
-    if not isinstance(shards, list) or len(shards) != len(FUNCTIONAL_WAVE_SHARD_IDS):
-        raise EvidenceError(f"{location}.manifest.shards must contain P01 through P04")
+    shard_ids = _functional_wave_shard_ids(wave)
+    if not isinstance(shards, list) or len(shards) != len(shard_ids):
+        raise EvidenceError(
+            f"{location}.manifest.shards must contain " + "/".join(shard_ids)
+        )
     assigned: list[str] = []
     global_nodes = set(full_node_ids)
-    for index, expected_shard_id in enumerate(FUNCTIONAL_WAVE_SHARD_IDS):
+    for index, expected_shard_id in enumerate(shard_ids):
         shard_location = f"{location}.manifest.shards[{index}]"
         shard = _exact_keys(
             shards[index],
@@ -1001,7 +1395,11 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
             shard["node_ids_sha256"],
             f"{shard_location}.node_ids_sha256",
         )
-        expected_authority = FUNCTIONAL_WAVE_SHARD_AUTHORITIES[expected_shard_id]
+        expected_authority = (
+            FUNCTIONAL_V19_SHARD_AUTHORITIES[expected_shard_id]
+            if v19
+            else FUNCTIONAL_WAVE_SHARD_AUTHORITIES[expected_shard_id]
+        )
         if {
             "node_count": len(node_ids),
             "node_ids_sha256": node_ids_sha256,
@@ -1012,27 +1410,177 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
         raise EvidenceError(f"{location}.manifest.shards overlap")
     if set(assigned) != set(full_node_ids):
         raise EvidenceError(f"{location}.manifest.shards omit or add node IDs")
-    if shards[0]["node_ids"] != [FUNCTIONAL_WAVE_TAIL_NODE]:
+    if v19:
+        nodes_by_shard = {
+            shard["shard_id"]: list(shard["node_ids"]) for shard in shards
+        }
+        hot_module = "tests/test_fe_solver_nonlinear_static.py"
+        hot_nodes = [
+            node_id
+            for node_id in full_node_ids
+            if node_id.partition("::")[0] == hot_module
+        ]
+        expected_h01 = hot_nodes + list(FUNCTIONAL_V19_SPLIT_NODE_IDS["H01"])
+        if nodes_by_shard["H01"] != expected_h01 or len(hot_nodes) != 10:
+            raise EvidenceError(
+                f"{location}.manifest H01 must own the nonlinear module only"
+            )
+        module_owner: dict[str, str] = {}
+        observed_split_nodes: list[str] = []
+        for shard_id in shard_ids:
+            shard_nodes = nodes_by_shard[shard_id]
+            shard_modules = list(
+                dict.fromkeys(
+                    node_id.partition("::")[0]
+                    for node_id in shard_nodes
+                )
+            )
+            if {
+                "module_count": len(shard_modules),
+                "modules_sha256": sha256_bytes(canonical_json_bytes(shard_modules)),
+            } != FUNCTIONAL_V19_SHARD_MODULE_AUTHORITIES[shard_id]:
+                raise EvidenceError(
+                    f"{location}.manifest {shard_id} module authority mismatch"
+                )
+            full_modules = tuple(
+                module
+                for module in shard_modules
+                if module != FUNCTIONAL_V19_SPLIT_MODULE
+            )
+            if full_modules != FUNCTIONAL_V19_FULL_MODULES[shard_id]:
+                raise EvidenceError(
+                    f"{location}.manifest {shard_id} full-module authority mismatch"
+                )
+            split_nodes = tuple(
+                node_id
+                for node_id in shard_nodes
+                if node_id.partition("::")[0] == FUNCTIONAL_V19_SPLIT_MODULE
+            )
+            if split_nodes != FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]:
+                raise EvidenceError(
+                    f"{location}.manifest {shard_id} split-module authority mismatch"
+                )
+            selectors, selector_summary = _functional_shard_selectors(
+                shard_nodes, full_node_ids
+            )
+            if (
+                tuple(selector for selector in selectors if "::" not in selector)
+                != FUNCTIONAL_V19_FULL_MODULES[shard_id]
+                or tuple(selector for selector in selectors if "::" in selector)
+                != FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]
+                or selector_summary["full_module_count"] != len(full_modules)
+                or selector_summary["exact_node_count"] != len(split_nodes)
+            ):
+                raise EvidenceError(
+                    f"{location}.manifest {shard_id} selector authority mismatch"
+                )
+            observed_split_nodes.extend(split_nodes)
+            for module in shard_modules:
+                if module == FUNCTIONAL_V19_SPLIT_MODULE:
+                    continue
+                owner = module_owner.setdefault(module, shard_id)
+                if owner != shard_id:
+                    raise EvidenceError(
+                        f"{location}.manifest v19 shards split an unapproved test module"
+                    )
+        full_split_nodes = [
+            node_id
+            for node_id in full_node_ids
+            if node_id.partition("::")[0] == FUNCTIONAL_V19_SPLIT_MODULE
+        ]
+        if (
+            len(observed_split_nodes) != len(set(observed_split_nodes))
+            or set(observed_split_nodes) != set(full_split_nodes)
+            or len(full_split_nodes) != 10
+        ):
+            raise EvidenceError(
+                f"{location}.manifest split-module assignments must partition twelve nodes"
+            )
+    elif shards[0]["node_ids"] != [FUNCTIONAL_WAVE_TAIL_NODE]:
         raise EvidenceError(f"{location}.manifest.shards[0] must isolate the tail-risk node")
 
     execution = _exact_keys(
         wave["execution"],
-        {
-            "artifact_routing",
-            "automatic_retry",
-            "environment",
-            "internal_deadline_seconds",
-            "max_workers",
-            "numerical_library_threads",
-            "raw_observability",
-            "selector_safety",
-            "source_mode",
-            "source_status_must_match",
-            "unproven_tree_action",
-        },
+        (
+            {
+                "artifact_routing",
+                "automatic_retry",
+                "command_watchdog_cutoff_seconds",
+                "emergency_publication_cutoff_seconds",
+                "environment",
+                "execution_mode",
+                "inner_wave_policy",
+                "max_concurrent_workers",
+                "normal_evidence_cutoff_seconds",
+                "numerical_library_threads",
+                "preparation_cutoff_seconds",
+                "raw_observability",
+                "ready_barrier_cutoff_seconds",
+                "selector_safety",
+                "shard_execution_cutoff_seconds",
+                "shard_execution_ids",
+                "source_mode",
+                "source_status_must_match",
+                "unproven_tree_action",
+                "watchdog_termination_start_cutoff_seconds",
+            }
+            if v19
+            else {
+                "artifact_routing",
+                "automatic_retry",
+                "environment",
+                "internal_deadline_seconds",
+                "max_workers",
+                "numerical_library_threads",
+                "raw_observability",
+                "selector_safety",
+                "source_mode",
+                "source_status_must_match",
+                "unproven_tree_action",
+            }
+        ),
         f"{location}.execution",
     )
-    if _require_int(execution["max_workers"], f"{location}.execution.max_workers", minimum=1) != 4:
+    if v19:
+        for key in (
+            "command_watchdog_cutoff_seconds",
+            "emergency_publication_cutoff_seconds",
+            "max_concurrent_workers",
+            "normal_evidence_cutoff_seconds",
+            "preparation_cutoff_seconds",
+            "ready_barrier_cutoff_seconds",
+            "shard_execution_cutoff_seconds",
+            "watchdog_termination_start_cutoff_seconds",
+        ):
+            _require_int(execution[key], f"{location}.execution.{key}", minimum=1)
+        for key, expected in FUNCTIONAL_V19_STAGE_POLICY.items():
+            if execution[key] != expected:
+                raise EvidenceError(f"{location}.execution.{key} mismatch")
+        absolute_cutoffs = [
+            execution["preparation_cutoff_seconds"],
+            execution["ready_barrier_cutoff_seconds"],
+            execution["inner_wave_policy"]["result_cutoff_seconds"],
+            execution["inner_wave_policy"]["cleanup_cutoff_seconds"],
+            execution["shard_execution_cutoff_seconds"],
+            execution["normal_evidence_cutoff_seconds"],
+            execution["emergency_publication_cutoff_seconds"],
+            execution["watchdog_termination_start_cutoff_seconds"],
+            execution["command_watchdog_cutoff_seconds"],
+        ]
+        if absolute_cutoffs != sorted(absolute_cutoffs) or len(
+            set(absolute_cutoffs)
+        ) != len(absolute_cutoffs):
+            raise EvidenceError(
+                f"{location}.execution v20 cutoffs must be strictly increasing"
+            )
+    elif (
+        _require_int(
+            execution["max_workers"],
+            f"{location}.execution.max_workers",
+            minimum=1,
+        )
+        != 4
+    ):
         raise EvidenceError(f"{location}.execution.max_workers must be 4")
     if (
         _require_int(
@@ -1045,7 +1593,7 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
         raise EvidenceError(f"{location}.execution.numerical_library_threads must be 1")
     if execution["automatic_retry"] is not False:
         raise EvidenceError(f"{location}.execution.automatic_retry must be false")
-    if (
+    if not v19 and (
         _require_int(
             execution["internal_deadline_seconds"],
             f"{location}.execution.internal_deadline_seconds",
@@ -1104,7 +1652,9 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
     ):
         raise EvidenceError(f"{location}.execution.unproven_tree_action mismatch")
     routing = _validate_artifact_routing(
-        execution["artifact_routing"], f"{location}.execution.artifact_routing"
+        execution["artifact_routing"],
+        f"{location}.execution.artifact_routing",
+        shard_ids=shard_ids,
     )
     if routing["archive_filename"] != source["archive_filename"]:
         raise EvidenceError(f"{location} source/archive routing mismatch")
@@ -1116,7 +1666,11 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
     )
     expected_aggregate = {
         "blocked_terminal": "BLOCKED_E4_PL_S3_Q4_FUNCTIONAL_WAVE",
-        "schema": FUNCTIONAL_WAVE_AGGREGATE_SCHEMA,
+        "schema": (
+            FUNCTIONAL_WAVE_V19_AGGREGATE_SCHEMA
+            if v19
+            else FUNCTIONAL_WAVE_AGGREGATE_SCHEMA
+        ),
         "success_terminal": "PASS_E4_PL_S3_Q4_FUNCTIONAL_WAVE",
     }
     if aggregate != expected_aggregate:
@@ -1142,6 +1696,7 @@ def functional_wave_artifact_paths(
     if not isinstance(cycle, int) or isinstance(cycle, bool) or cycle not in {1, 2}:
         raise EvidenceError("functional-wave cycle must be 1 or 2")
     wave = validate_functional_wave_contract(contract)
+    shard_ids = _functional_wave_shard_ids(wave)
     routing = wave["execution"]["artifact_routing"]
     external_root = output_root(contract).resolve()
     cycle_root = (
@@ -1158,7 +1713,7 @@ def functional_wave_artifact_paths(
         "shards": {
             shard_id: cycle_root
             / f"{routing['shard_directory_prefix']}{shard_id}"
-            for shard_id in FUNCTIONAL_WAVE_SHARD_IDS
+            for shard_id in shard_ids
         },
     }
     routed = [
@@ -1180,8 +1735,12 @@ def functional_wave_shard_artifact_paths(
 ) -> dict[str, Path]:
     """Return the isolated directories reserved for one functional shard."""
 
-    if shard_id not in FUNCTIONAL_WAVE_SHARD_IDS:
-        raise EvidenceError("functional-wave shard ID must be P01 through P04")
+    wave = validate_functional_wave_contract(contract)
+    shard_ids = _functional_wave_shard_ids(wave)
+    if shard_id not in shard_ids:
+        raise EvidenceError(
+            "functional-wave shard ID must be one of " + "/".join(shard_ids)
+        )
     paths = functional_wave_artifact_paths(contract, cycle)
     shard_root = paths["shards"][shard_id]
     routed = {
@@ -1206,6 +1765,8 @@ def validate_functional_wave_artifact_state(
 ) -> dict[str, Any]:
     """Reject repository-local, colliding, or reparse-point artifact routing."""
 
+    wave = validate_functional_wave_contract(contract)
+    shard_ids = _functional_wave_shard_ids(wave)
     paths = functional_wave_artifact_paths(contract, cycle)
     external_root = output_root(contract)
     repository_root = ROOT.resolve()
@@ -1221,7 +1782,7 @@ def validate_functional_wave_artifact_state(
         paths["raw_diagnostics"],
         paths["source"],
     ]
-    for shard_id in FUNCTIONAL_WAVE_SHARD_IDS:
+    for shard_id in shard_ids:
         all_paths.extend(
             functional_wave_shard_artifact_paths(
                 contract, cycle, shard_id
@@ -1410,6 +1971,7 @@ def _validate_functional_progress(
     authority: Mapping[str, Any],
     raw_shard: Mapping[str, Any],
     location: str,
+    v19: bool,
 ) -> list[dict[str, Any]]:
     """Validate one noncanonical NDJSON timing stream without promoting timings."""
 
@@ -1569,6 +2131,12 @@ def _validate_functional_progress(
         events.append(dict(event))
 
     event_names = [event["event"] for event in events]
+    if event_names == ["NOT_STARTED"]:
+        if not v19 or raw_shard["attempts"] != 0:
+            raise EvidenceError(f"{location} has an unauthorized not-started event")
+        return events
+    if "NOT_STARTED" in event_names:
+        raise EvidenceError(f"{location} mixes not-started and process events")
     if not event_names or event_names[0] != "PREPARATION_STARTED":
         raise EvidenceError(f"{location} does not begin with preparation")
     if raw_shard["attempts"] == 1:
@@ -1605,6 +2173,209 @@ def _validate_functional_progress(
     return events
 
 
+def _validate_ready_payload(
+    value: Any,
+    *,
+    authority: Mapping[str, Any],
+    barrier_id: str,
+    pid: int,
+    location: str,
+) -> dict[str, Any]:
+    ready = _exact_keys(
+        value,
+        {
+            "barrier_id",
+            "node_count",
+            "node_ids_sha256",
+            "pid",
+            "ready_nonce",
+            "schema",
+            "shard_id",
+        },
+        location,
+    )
+    if ready["schema"] != FUNCTIONAL_READY_SCHEMA:
+        raise EvidenceError(f"{location}.schema mismatch")
+    if ready["barrier_id"] != barrier_id:
+        raise EvidenceError(f"{location}.barrier_id mismatch")
+    if ready["shard_id"] != authority["shard_id"] or ready["pid"] != pid:
+        raise EvidenceError(f"{location} child identity mismatch")
+    if (
+        ready["node_count"] != authority["node_count"]
+        or ready["node_ids_sha256"] != authority["node_ids_sha256"]
+    ):
+        raise EvidenceError(f"{location} node authority mismatch")
+    _require_hash(ready["ready_nonce"], f"{location}.ready_nonce")
+    return dict(ready)
+
+
+def _validate_release_payload(value: Any, *, location: str) -> dict[str, Any]:
+    release = _exact_keys(
+        value,
+        {"barrier_id", "liveness", "ready_records", "schema"},
+        location,
+    )
+    if release["schema"] != FUNCTIONAL_RELEASE_SCHEMA:
+        raise EvidenceError(f"{location}.schema mismatch")
+    _require_hash(release["barrier_id"], f"{location}.barrier_id")
+    if release["liveness"] != "ALL_REGISTERED_CHILDREN_LIVE":
+        raise EvidenceError(f"{location}.liveness mismatch")
+    rows = release["ready_records"]
+    if not isinstance(rows, list) or len(rows) != len(FUNCTIONAL_V19_SHARD_IDS):
+        raise EvidenceError(f"{location}.ready_records extent mismatch")
+    checked: list[dict[str, Any]] = []
+    for index, expected_id in enumerate(FUNCTIONAL_V19_SHARD_IDS):
+        row_location = f"{location}.ready_records[{index}]"
+        row = _exact_keys(rows[index], {"ready", "shard_id"}, row_location)
+        if row["shard_id"] != expected_id:
+            raise EvidenceError(f"{row_location}.shard_id order mismatch")
+        checked.append(
+            {
+                "ready": _validate_hash_record(
+                    row["ready"], f"{row_location}.ready"
+                ),
+                "shard_id": expected_id,
+            }
+        )
+    return {
+        "barrier_id": release["barrier_id"],
+        "liveness": release["liveness"],
+        "ready_records": checked,
+        "schema": release["schema"],
+    }
+
+
+def _validate_raw_ready_barrier(
+    value: Any,
+    *,
+    authority: Mapping[str, Any],
+    contract: Mapping[str, Any],
+    cycle: int,
+    attempts: int,
+    pid: int | None,
+    location: str,
+) -> dict[str, Any]:
+    barrier = _exact_keys(
+        value,
+        {
+            "barrier_id",
+            "ready_artifact",
+            "ready_record",
+            "release_artifact",
+            "release_record",
+            "state",
+        },
+        location,
+    )
+    barrier_id = _require_hash(barrier["barrier_id"], f"{location}.barrier_id")
+    state = barrier["state"]
+    allowed_states = {
+        "INVALID",
+        "NOT_LAUNCHED",
+        "NOT_READY",
+        "READY_NOT_RELEASED",
+        "RELEASED",
+    }
+    if state not in allowed_states:
+        raise EvidenceError(f"{location}.state is invalid")
+    shard_paths = functional_wave_shard_artifact_paths(
+        contract, cycle, authority["shard_id"]
+    )
+    ready_path = shard_paths["logs"] / "barrier-ready.json"
+    release_path = (
+        functional_wave_shard_artifact_paths(
+            contract, cycle, FUNCTIONAL_V19_SHARD_IDS[0]
+        )["logs"]
+        / "barrier-release.json"
+    )
+
+    def bound_record(
+        *, artifact_key: str, record_key: str, path: Path, validator: Any
+    ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+        artifact_value = barrier[artifact_key]
+        record_value = barrier[record_key]
+        exists = path.exists() or path.is_symlink()
+        if artifact_value is None:
+            if record_value is not None or exists:
+                raise EvidenceError(f"{location}.{artifact_key} omits an artifact")
+            return None, None
+        artifact = _validate_hash_record(
+            artifact_value, f"{location}.{artifact_key}"
+        )
+        file_path = require_regular_file(path)
+        raw = file_path.read_bytes()
+        if file_hash_record(file_path) != artifact:
+            raise EvidenceError(f"{location}.{artifact_key} file mismatch")
+        if record_value is None:
+            if state != "INVALID":
+                raise EvidenceError(f"{location}.{record_key} is unexpectedly null")
+            return artifact, None
+        record = validator(record_value)
+        if raw != canonical_json_bytes(record):
+            raise EvidenceError(f"{location}.{record_key} content mismatch")
+        return artifact, record
+
+    ready_artifact, ready_record = bound_record(
+        artifact_key="ready_artifact",
+        record_key="ready_record",
+        path=ready_path,
+        validator=lambda item: _validate_ready_payload(
+            item,
+            authority=authority,
+            barrier_id=barrier_id,
+            pid=_require_int(pid, f"{location}.pid", minimum=1),
+            location=f"{location}.ready_record",
+        ),
+    )
+    release_artifact, release_record = bound_record(
+        artifact_key="release_artifact",
+        record_key="release_record",
+        path=release_path,
+        validator=lambda item: _validate_release_payload(
+            item, location=f"{location}.release_record"
+        ),
+    )
+    if attempts == 0:
+        if state != "NOT_LAUNCHED" or any(
+            item is not None
+            for item in (
+                ready_artifact,
+                ready_record,
+                release_artifact,
+                release_record,
+            )
+        ):
+            raise EvidenceError(f"{location} falsely binds an unlaunched child")
+    elif state == "RELEASED":
+        if any(
+            item is None
+            for item in (
+                ready_artifact,
+                ready_record,
+                release_artifact,
+                release_record,
+            )
+        ):
+            raise EvidenceError(f"{location} RELEASED proof is incomplete")
+        if (
+            release_record["barrier_id"] != barrier_id
+            or release_record["ready_records"][
+                FUNCTIONAL_V19_SHARD_IDS.index(authority["shard_id"])
+            ]["ready"]
+            != ready_artifact
+        ):
+            raise EvidenceError(f"{location} common release omits this READY")
+    elif state == "READY_NOT_RELEASED" and (
+        ready_record is None or release_artifact is not None
+    ):
+        raise EvidenceError(f"{location} READY_NOT_RELEASED disposition mismatch")
+    elif state == "NOT_READY" and (
+        ready_artifact is not None or release_artifact is not None
+    ):
+        raise EvidenceError(f"{location} NOT_READY disposition mismatch")
+    return dict(barrier)
+
+
 def _validate_functional_raw_shard(
     value: Any,
     *,
@@ -1615,6 +2386,7 @@ def _validate_functional_raw_shard(
 ) -> dict[str, Any]:
     """Validate raw timing/progress diagnostics without admitting them to evidence."""
 
+    v19 = contract["functional_wave"].get("schema") == FUNCTIONAL_WAVE_V19_SCHEMA
     required_keys = {
         "attempts",
         "command",
@@ -1634,6 +2406,16 @@ def _validate_functional_raw_shard(
         "termination",
         "timed_out",
     }
+    if v19:
+        required_keys.update(
+            {
+                "barrier",
+                "process_ended_at",
+                "process_ended_monotonic_ns",
+                "process_started_at",
+                "process_started_monotonic_ns",
+            }
+        )
     optional_keys = {
         "disposition",
         "error",
@@ -1645,9 +2427,12 @@ def _validate_functional_raw_shard(
         raise EvidenceError(f"{location} must be an object")
     if set(value) == {"attempts", "error", "shard_id"}:
         emergency = dict(value)
+        attempts = emergency["attempts"]
         if (
             emergency["shard_id"] != authority["shard_id"]
-            or emergency["attempts"] != 1
+            or not isinstance(attempts, int)
+            or isinstance(attempts, bool)
+            or attempts not in {0, 1}
         ):
             raise EvidenceError(f"{location} emergency diagnostics mismatch")
         _require_string(emergency["error"], f"{location}.error")
@@ -1662,9 +2447,14 @@ def _validate_functional_raw_shard(
     attempts = _require_int(shard["attempts"], f"{location}.attempts")
     if attempts not in {0, 1}:
         raise EvidenceError(f"{location}.attempts must be zero or one")
+    expected_deadline = (
+        FUNCTIONAL_V19_STAGE_POLICY["shard_execution_cutoff_seconds"]
+        if v19
+        else 780
+    )
     if _require_int(
         shard["deadline_seconds"], f"{location}.deadline_seconds"
-    ) != 780:
+    ) != expected_deadline:
         raise EvidenceError(f"{location}.deadline_seconds mismatch")
     for key in ("duration_seconds",):
         duration = shard[key]
@@ -1695,6 +2485,61 @@ def _validate_functional_raw_shard(
         _require_int(pid, f"{location}.pid", minimum=1)
     elif pid is not None:
         raise EvidenceError(f"{location}.pid must be null when no process started")
+    if v19:
+        process_started_raw = shard["process_started_at"]
+        process_ended_raw = shard["process_ended_at"]
+        process_started_monotonic_raw = shard["process_started_monotonic_ns"]
+        process_ended_monotonic_raw = shard["process_ended_monotonic_ns"]
+        if attempts == 1:
+            process_started = dt.datetime.fromisoformat(
+                _require_timestamp(
+                    process_started_raw, f"{location}.process_started_at"
+                ).replace("Z", "+00:00")
+            )
+            process_ended = dt.datetime.fromisoformat(
+                _require_timestamp(
+                    process_ended_raw, f"{location}.process_ended_at"
+                ).replace("Z", "+00:00")
+            )
+            if not (started <= process_started < process_ended <= ended):
+                raise EvidenceError(
+                    f"{location} process interval is outside its shard interval"
+                )
+            process_started_monotonic = _require_int(
+                process_started_monotonic_raw,
+                f"{location}.process_started_monotonic_ns",
+                minimum=1,
+            )
+            process_ended_monotonic = _require_int(
+                process_ended_monotonic_raw,
+                f"{location}.process_ended_monotonic_ns",
+                minimum=1,
+            )
+            if process_ended_monotonic <= process_started_monotonic:
+                raise EvidenceError(
+                    f"{location} monotonic process interval is not positive"
+                )
+        elif any(
+            value is not None
+            for value in (
+                process_started_raw,
+                process_ended_raw,
+                process_started_monotonic_raw,
+                process_ended_monotonic_raw,
+            )
+        ):
+            raise EvidenceError(
+                f"{location} process interval must be null when no process started"
+            )
+        _validate_raw_ready_barrier(
+            shard["barrier"],
+            authority=authority,
+            contract=contract,
+            cycle=cycle,
+            attempts=attempts,
+            pid=pid,
+            location=f"{location}.barrier",
+        )
     if shard["pytest_durations"] != {
         "enabled": True,
         "minimum_seconds": 0.0,
@@ -1773,6 +2618,7 @@ def _validate_functional_raw_shard(
             authority=authority,
             raw_shard=shard,
             location=f"{location}.progress_events",
+            v19=v19,
         )
     termination = shard["termination"]
     if termination is not None:
@@ -1821,6 +2667,9 @@ def _validate_functional_wave_diagnostics(
     cycle: int,
     routing: Mapping[str, str],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    wave = validate_functional_wave_contract(contract)
+    v19 = wave["schema"] == FUNCTIONAL_WAVE_V19_SCHEMA
+    shard_ids = _functional_wave_shard_ids(wave)
     raw = require_regular_file(path, nonempty=True).read_bytes()
     diagnostics = strict_json_loads(raw)
     if raw != canonical_json_bytes(diagnostics):
@@ -1843,7 +2692,12 @@ def _validate_functional_wave_diagnostics(
         kind = "FAILURE_SHAPE"
     else:
         raise EvidenceError("functional-wave diagnostics keys mismatch")
-    if diagnostics["schema"] != FUNCTIONAL_WAVE_DIAGNOSTICS_SCHEMA:
+    expected_schema = (
+        FUNCTIONAL_WAVE_V19_DIAGNOSTICS_SCHEMA
+        if v19
+        else FUNCTIONAL_WAVE_DIAGNOSTICS_SCHEMA
+    )
+    if diagnostics["schema"] != expected_schema:
         raise EvidenceError("functional-wave diagnostics schema mismatch")
     if diagnostics["cycle"] != cycle:
         raise EvidenceError("functional-wave diagnostics cycle mismatch")
@@ -1860,24 +2714,25 @@ def _validate_functional_wave_diagnostics(
         if not isinstance(diagnostics["archive_process"], dict):
             raise EvidenceError("functional-wave archive diagnostics are malformed")
         shards = diagnostics["shards"]
-        if not isinstance(shards, list) or len(shards) != len(
-            FUNCTIONAL_WAVE_SHARD_IDS
-        ):
+        if not isinstance(shards, list) or len(shards) != len(shard_ids):
             raise EvidenceError("functional-wave raw shard diagnostics are incomplete")
         if [row.get("shard_id") for row in shards if isinstance(row, dict)] != list(
-            FUNCTIONAL_WAVE_SHARD_IDS
+            shard_ids
         ):
             raise EvidenceError("functional-wave raw shard diagnostics are misordered")
         authorities = contract["functional_wave"]["manifest"]["shards"]
+        validated_shards: list[dict[str, Any]] = []
         for index, (shard, authority) in enumerate(
             zip(shards, authorities, strict=True)
         ):
-            _validate_functional_raw_shard(
-                shard,
-                authority=authority,
-                contract=contract,
-                cycle=cycle,
-                location=f"$functional_wave_diagnostics.shards[{index}]",
+            validated_shards.append(
+                _validate_functional_raw_shard(
+                    shard,
+                    authority=authority,
+                    contract=contract,
+                    cycle=cycle,
+                    location=f"$functional_wave_diagnostics.shards[{index}]",
+                )
             )
         before = _validate_hash_record(
             diagnostics["source_status_before"],
@@ -1894,7 +2749,26 @@ def _validate_functional_wave_diagnostics(
             raise EvidenceError("functional-wave source status changed or was dirty")
     else:
         failure = diagnostics["failure"]
-        if not isinstance(failure, (dict, str)) or not failure:
+        if v19:
+            failure = _exact_keys(
+                failure,
+                {"message", "repository_status", "type"},
+                "$functional_wave_diagnostics.failure",
+            )
+            if not isinstance(failure["message"], str):
+                raise EvidenceError(
+                    "$functional_wave_diagnostics.failure.message must be a string"
+                )
+            _require_string(
+                failure["type"], "$functional_wave_diagnostics.failure.type"
+            )
+            repository_status = failure["repository_status"]
+            if repository_status is not None:
+                _validate_hash_record(
+                    repository_status,
+                    "$functional_wave_diagnostics.failure.repository_status",
+                )
+        elif not isinstance(failure, (dict, str)) or not failure:
             raise EvidenceError("functional-wave failure diagnostics are malformed")
     return diagnostics, {"bytes": len(raw), "sha256": sha256_bytes(raw)}
 
@@ -1957,30 +2831,198 @@ def _validate_functional_shard_result(
     return result, passed
 
 
+def _functional_v19_workers_overlapped(
+    raw_by_id: Mapping[str, Mapping[str, Any]],
+    canonical_by_id: Mapping[str, Mapping[str, Any]] | None = None,
+) -> bool:
+    """Independently prove overlap through one seven-child READY release."""
+
+    pids: list[int] = []
+    nonces: set[str] = set()
+    barrier_ids: set[str] = set()
+    ready_bindings: list[dict[str, Any]] = []
+    common_release: dict[str, Any] | None = None
+    common_release_hash: dict[str, Any] | None = None
+    for shard_id in FUNCTIONAL_V19_SHARD_IDS:
+        row = raw_by_id.get(shard_id)
+        if not isinstance(row, Mapping) or row.get("attempts") != 1:
+            return False
+        pid = _require_int(row.get("pid"), f"$raw.{shard_id}.pid", minimum=1)
+        proof = _exact_keys(
+            row.get("barrier"),
+            {
+                "barrier_id",
+                "ready_artifact",
+                "ready_record",
+                "release_artifact",
+                "release_record",
+                "state",
+            },
+            f"$raw.{shard_id}.barrier",
+        )
+        if proof["state"] != "RELEASED":
+            return False
+        barrier_id = _require_hash(
+            proof["barrier_id"], f"$raw.{shard_id}.barrier.barrier_id"
+        )
+        ready_artifact = _validate_hash_record(
+            proof["ready_artifact"],
+            f"$raw.{shard_id}.barrier.ready_artifact",
+        )
+        ready = _exact_keys(
+            proof["ready_record"],
+            {
+                "barrier_id",
+                "node_count",
+                "node_ids_sha256",
+                "pid",
+                "ready_nonce",
+                "schema",
+                "shard_id",
+            },
+            f"$raw.{shard_id}.barrier.ready_record",
+        )
+        if (
+            ready["schema"] != FUNCTIONAL_READY_SCHEMA
+            or ready["barrier_id"] != barrier_id
+            or ready["shard_id"] != shard_id
+            or ready["pid"] != pid
+        ):
+            raise EvidenceError("v19 READY child identity mismatch")
+        if canonical_by_id is not None and (
+            ready["node_count"] != canonical_by_id[shard_id]["node_count"]
+            or ready["node_ids_sha256"]
+            != canonical_by_id[shard_id]["node_ids_sha256"]
+        ):
+            raise EvidenceError("v19 READY canonical node authority mismatch")
+        nonce = _require_hash(
+            ready["ready_nonce"], f"$raw.{shard_id}.barrier.ready_nonce"
+        )
+        if canonical_json_bytes(ready) != canonical_json_bytes(proof["ready_record"]):
+            raise EvidenceError("v19 READY representation is noncanonical")
+        ready_raw = canonical_json_bytes(ready)
+        if ready_artifact != {
+            "bytes": len(ready_raw),
+            "sha256": sha256_bytes(ready_raw),
+        }:
+            raise EvidenceError("v19 READY content/hash mismatch")
+        release_artifact = _validate_hash_record(
+            proof["release_artifact"],
+            f"$raw.{shard_id}.barrier.release_artifact",
+        )
+        release = _validate_release_payload(
+            proof["release_record"],
+            location=f"$raw.{shard_id}.barrier.release_record",
+        )
+        release_raw = canonical_json_bytes(release)
+        if release_artifact != {
+            "bytes": len(release_raw),
+            "sha256": sha256_bytes(release_raw),
+        }:
+            raise EvidenceError("v19 release content/hash mismatch")
+        if common_release is None:
+            common_release = release
+            common_release_hash = release_artifact
+        elif release != common_release or release_artifact != common_release_hash:
+            raise EvidenceError("v19 children do not bind one common release")
+        if nonce in nonces:
+            raise EvidenceError("v19 READY nonces must be distinct")
+        nonces.add(nonce)
+        barrier_ids.add(barrier_id)
+        pids.append(pid)
+        ready_bindings.append({"ready": ready_artifact, "shard_id": shard_id})
+    if len(set(pids)) != len(pids):
+        raise EvidenceError("v19 worker process IDs must be distinct")
+    if len(barrier_ids) != 1 or common_release is None:
+        raise EvidenceError("v19 READY barrier identities disagree")
+    if (
+        common_release["barrier_id"] not in barrier_ids
+        or common_release["ready_records"] != ready_bindings
+        or common_release["liveness"] != "ALL_REGISTERED_CHILDREN_LIVE"
+    ):
+        raise EvidenceError("v19 release does not bind the complete live READY set")
+    return True
+
+
+def _functional_v19_expected_schedule(
+    canonical_by_id: Mapping[str, Mapping[str, Any]],
+    raw_by_id: Mapping[str, Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Recompute the timing-free schedule without trusting the producer."""
+
+    if set(canonical_by_id) != set(FUNCTIONAL_V19_SHARD_IDS):
+        raise EvidenceError("v19 canonical schedule extent mismatch")
+
+    cleanup_by_id: dict[str, str] = {}
+    for shard_id in FUNCTIONAL_V19_SHARD_IDS:
+        cleanup = canonical_by_id[shard_id].get("descendant_tree_cleanup")
+        if cleanup not in FUNCTIONAL_V19_TREE_CLEANUP_STATES:
+            raise EvidenceError(f"v19 {shard_id} tree-cleanup state is invalid")
+        cleanup_by_id[shard_id] = str(cleanup)
+
+    def launched(shard_id: str) -> bool:
+        if raw_by_id is not None:
+            row = raw_by_id.get(shard_id)
+            if isinstance(row, Mapping) and row.get("attempts") in {0, 1}:
+                return row["attempts"] == 1
+        return cleanup_by_id[shard_id] != "NOT_LAUNCHED"
+
+    launched_count = sum(launched(shard_id) for shard_id in FUNCTIONAL_V19_SHARD_IDS)
+    launch = (
+        "ALL_LAUNCHED"
+        if launched_count == len(FUNCTIONAL_V19_SHARD_IDS)
+        else "NOT_LAUNCHED"
+        if launched_count == 0
+        else "PARTIALLY_LAUNCHED"
+    )
+    if any(
+        cleanup_by_id[shard_id] == "TREE_TERMINATION_FAILED"
+        for shard_id in FUNCTIONAL_V19_SHARD_IDS
+    ):
+        terminal = "UNPROVEN_DESCENDANT_TREE"
+    elif launched_count == 0:
+        terminal = "NOT_LAUNCHED"
+    else:
+        terminal = "ALL_TERMINAL"
+
+    overlap = (
+        _functional_v19_workers_overlapped(raw_by_id, canonical_by_id)
+        if raw_by_id is not None and launch == "ALL_LAUNCHED"
+        else False
+    )
+    return {
+        "all_workers_overlapped": overlap,
+        "launch": launch,
+        "terminal": terminal,
+    }
+
+
 def _validate_functional_wave_aggregate(
     value: Any,
     *,
     contract: Mapping[str, Any],
     cycle: int,
     candidate: Mapping[str, Any],
+    diagnostics: Mapping[str, Any],
     paths: Mapping[str, Any],
     diagnostics_record: Mapping[str, Any],
     expect_success: bool,
 ) -> dict[str, Any]:
     wave = validate_functional_wave_contract(contract)
-    aggregate = _exact_keys(
-        value,
-        {
-            "candidate",
-            "diagnostics",
-            "manifest",
-            "schema",
-            "shards",
-            "source",
-            "terminal",
-        },
-        "$functional_wave_aggregate",
-    )
+    v19 = wave["schema"] == FUNCTIONAL_WAVE_V19_SCHEMA
+    shard_ids = _functional_wave_shard_ids(wave)
+    aggregate_keys = {
+        "candidate",
+        "diagnostics",
+        "manifest",
+        "schema",
+        "shards",
+        "source",
+        "terminal",
+    }
+    if v19:
+        aggregate_keys.add("schedule")
+    aggregate = _exact_keys(value, aggregate_keys, "$functional_wave_aggregate")
     if aggregate["schema"] != wave["aggregate"]["schema"]:
         raise EvidenceError("functional-wave aggregate schema mismatch")
     expected_terminal = wave["aggregate"][
@@ -1988,10 +3030,10 @@ def _validate_functional_wave_aggregate(
     ]
     if aggregate["terminal"] != expected_terminal:
         raise EvidenceError("functional-wave aggregate terminal mismatch")
-    diagnostics = _validate_hash_record(
+    diagnostics_binding = _validate_hash_record(
         aggregate["diagnostics"], "$functional_wave_aggregate.diagnostics"
     )
-    if diagnostics != diagnostics_record:
+    if diagnostics_binding != diagnostics_record:
         raise EvidenceError("functional-wave aggregate diagnostics binding mismatch")
     expected_candidate = {
         "commit": candidate["commit"],
@@ -2018,12 +3060,12 @@ def _validate_functional_wave_aggregate(
         "modules_sha256": wave["manifest"]["modules_sha256"],
         "node_count": wave["manifest"]["node_count"],
         "node_ids_sha256": wave["manifest"]["full_node_ids_sha256"],
-        "shard_count": len(FUNCTIONAL_WAVE_SHARD_IDS),
+        "shard_count": len(shard_ids),
     }
     if manifest != expected_manifest:
         raise EvidenceError("functional-wave aggregate manifest mismatch")
     shards = aggregate["shards"]
-    if not isinstance(shards, list) or len(shards) != len(FUNCTIONAL_WAVE_SHARD_IDS):
+    if not isinstance(shards, list) or len(shards) != len(shard_ids):
         raise EvidenceError("functional-wave aggregate shard count mismatch")
     all_pass = True
     allowed_statuses = {
@@ -2040,15 +3082,22 @@ def _validate_functional_wave_aggregate(
         "TIMEOUT_TREE_TERMINATION_FAILED",
         "NOT_STARTED_OR_UNBOUND_PARTIAL",
     }
+    validated_shards: list[dict[str, Any]] = []
     for index, (shard, authority) in enumerate(
         zip(shards, wave["manifest"]["shards"], strict=True)
     ):
         location = f"$functional_wave_aggregate.shards[{index}]"
-        shard = _exact_keys(
-            shard,
-            {"exit_code", "node_count", "node_ids_sha256", "result", "shard_id", "status"},
-            location,
-        )
+        shard_keys = {
+            "exit_code",
+            "node_count",
+            "node_ids_sha256",
+            "result",
+            "shard_id",
+            "status",
+        }
+        if v19:
+            shard_keys.add("descendant_tree_cleanup")
+        shard = _exact_keys(shard, shard_keys, location)
         if (
             shard["shard_id"] != authority["shard_id"]
             or shard["node_count"] != authority["node_count"]
@@ -2061,7 +3110,22 @@ def _validate_functional_wave_aggregate(
             shard["exit_code"], bool
         ):
             raise EvidenceError(f"{location}.exit_code must be an integer")
-        shard_passed = shard["status"] == "PASS" and shard["exit_code"] == 0
+        cleanup = shard.get("descendant_tree_cleanup")
+        if v19 and cleanup not in FUNCTIONAL_V19_TREE_CLEANUP_STATES:
+            raise EvidenceError(f"{location}.descendant_tree_cleanup is invalid")
+        shard_passed = (
+            shard["status"] == "PASS"
+            and shard["exit_code"] == 0
+            and (not v19 or cleanup == "CHILD_EXIT_AND_TREE_CLOSED")
+        )
+        if shard["status"] == "PASS" and not shard_passed:
+            raise EvidenceError(f"{location} passing status has a nonzero exit code")
+        if (
+            v19
+            and shard["status"] == "NOT_STARTED_OR_UNBOUND_PARTIAL"
+            and shard["exit_code"] != 250
+        ):
+            raise EvidenceError(f"{location} unbound-partial exit code mismatch")
         all_pass = all_pass and shard_passed
         result_path = (
             paths["shards"][authority["shard_id"]]
@@ -2077,7 +3141,13 @@ def _validate_functional_wave_aggregate(
             result_record = _validate_hash_record(
                 shard["result"], f"{location}.result"
             )
-            if file_hash_record(require_regular_file(result_path, nonempty=True)) != result_record:
+            result_file = require_regular_file(
+                result_path,
+                nonempty=(
+                    not v19 or shard["status"] in {"PASS", "TEST_FAILURE"}
+                ),
+            )
+            if file_hash_record(result_file) != result_record:
                 raise EvidenceError(f"{location}.result identity mismatch")
             try:
                 shard_result, result_passed = _validate_functional_shard_result(
@@ -2097,8 +3167,57 @@ def _validate_functional_wave_aggregate(
                         raise EvidenceError(f"{location} status disagrees with exact node outcomes")
                     if shard["exit_code"] != shard_result["exit_code"]:
                         raise EvidenceError(f"{location}.exit_code differs from shard result")
+        validated_shards.append(dict(shard))
+    if v19:
+        canonical_by_id = {row["shard_id"]: row for row in validated_shards}
+        raw_by_id = (
+            {row["shard_id"]: row for row in diagnostics["shards"]}
+            if "shards" in diagnostics
+            else None
+        )
+        if raw_by_id is not None:
+            for shard_id in FUNCTIONAL_V19_SHARD_IDS:
+                attempts = raw_by_id[shard_id]["attempts"]
+                cleanup = canonical_by_id[shard_id]["descendant_tree_cleanup"]
+                if attempts == 0 and cleanup != "NOT_LAUNCHED":
+                    raise EvidenceError(
+                        f"v19 {shard_id} claims cleanup for an unlaunched process"
+                    )
+                if attempts == 1 and cleanup == "NOT_LAUNCHED":
+                    raise EvidenceError(
+                        f"v19 {shard_id} omits cleanup for a launched process"
+                    )
+        fallback = [
+            row["status"] == "NOT_STARTED_OR_UNBOUND_PARTIAL"
+            for row in validated_shards
+        ]
+        if any(fallback):
+            if not all(fallback) or "failure" not in diagnostics:
+                raise EvidenceError(
+                    "v19 unbound-partial fallback must cover all shards and bind failure diagnostics"
+                )
+        schedule = _exact_keys(
+            aggregate["schedule"],
+            {"all_workers_overlapped", "launch", "terminal"},
+            "$functional_wave_aggregate.schedule",
+        )
+        if schedule["launch"] not in FUNCTIONAL_V19_LAUNCH_STATES:
+            raise EvidenceError("v19 launch enum is invalid")
+        if schedule["terminal"] not in FUNCTIONAL_V19_TERMINAL_STATES:
+            raise EvidenceError("v19 terminal enum is invalid")
+        if not isinstance(schedule["all_workers_overlapped"], bool):
+            raise EvidenceError("v19 overlap disposition must be boolean")
+        expected_schedule = _functional_v19_expected_schedule(
+            canonical_by_id, raw_by_id
+        )
+        if schedule != expected_schedule:
+            raise EvidenceError(
+                "v19 canonical schedule disagrees with raw process evidence"
+            )
+        all_pass = all_pass and schedule["all_workers_overlapped"] is True
     if all_pass != expect_success:
         raise EvidenceError("functional-wave terminal does not follow shard outcomes")
+    allow_partial_source = v19 and "failure" in diagnostics
     source = _exact_keys(
         aggregate["source"],
         {"archive", "file_graph", "file_graph_content", "repository_status"},
@@ -2113,7 +3232,11 @@ def _validate_functional_wave_aggregate(
             source["archive"], "$functional_wave_aggregate.source.archive"
         )
         if (
-            file_hash_record(require_regular_file(paths["archive"], nonempty=True))
+            file_hash_record(
+                require_regular_file(
+                    paths["archive"], nonempty=not allow_partial_source
+                )
+            )
             != archive_record
         ):
             raise EvidenceError("functional-wave archive identity mismatch")
@@ -2126,15 +3249,19 @@ def _validate_functional_wave_aggregate(
         graph_record = _validate_hash_record(
             source["file_graph"], "$functional_wave_aggregate.source.file_graph"
         )
-        if file_hash_record(require_regular_file(graph_path, nonempty=True)) != graph_record:
-            raise EvidenceError("functional-wave file-graph identity mismatch")
-        graph = _validate_functional_file_graph(
-            graph_path,
-            source_root=paths["source"],
-            schema=wave["source"]["file_graph_schema"],
+        graph_file = require_regular_file(
+            graph_path, nonempty=not allow_partial_source
         )
-        if source["file_graph_content"] != graph["summary"]:
-            raise EvidenceError("functional-wave file-graph content mismatch")
+        if file_hash_record(graph_file) != graph_record:
+            raise EvidenceError("functional-wave file-graph identity mismatch")
+        if not allow_partial_source or source["file_graph_content"] is not None:
+            graph = _validate_functional_file_graph(
+                graph_path,
+                source_root=paths["source"],
+                schema=wave["source"]["file_graph_schema"],
+            )
+            if source["file_graph_content"] != graph["summary"]:
+                raise EvidenceError("functional-wave file-graph content mismatch")
     empty_status = {
         "bytes": 0,
         "sha256": sha256_bytes(b""),
@@ -2160,6 +3287,7 @@ def validate_functional_wave_external_evidence(
     if process["status"] == "NOT_RUN":
         raise EvidenceError("not-run functional process has no wave evidence")
     wave = validate_functional_wave_contract(contract)
+    shard_ids = _functional_wave_shard_ids(wave)
     paths = validate_functional_wave_artifact_state(
         contract, cycle, require_fresh=False
     )
@@ -2179,7 +3307,7 @@ def validate_functional_wave_external_evidence(
         wave["source"]["file_graph_filename"],
         *(
             f"{routing['shard_directory_prefix']}{shard_id}"
-            for shard_id in FUNCTIONAL_WAVE_SHARD_IDS
+            for shard_id in shard_ids
         ),
     }
     observed_top_level = {path.name for path in cycle_root.iterdir()}
@@ -2213,6 +3341,7 @@ def validate_functional_wave_external_evidence(
         contract=contract,
         cycle=cycle,
         candidate=candidate,
+        diagnostics=diagnostics,
         paths=paths,
         diagnostics_record=diagnostics_record,
         expect_success=process["status"] == "PASS",
@@ -3919,6 +5048,135 @@ def _validate_attempt_17_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_18_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the executed v18 timeout and its reviewed noncanonical evidence."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "blocked_closeout",
+            "contract",
+            "execution_authorization_commit",
+            "failure",
+            "incident_evidence",
+            "preserved_refs",
+            "request_dispositions",
+            "request_ids",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 18:
+        raise EvidenceError(f"{location}.attempt must be 18")
+    authority = _exact_keys(
+        incident["authority_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.authority_commit",
+    )
+    if authority != {
+        "commit": "1228564e5e0aa9dddf0d96d23638c5c429c2891b",
+        "parent": "a6c316f18b003f336cfb079657ca5eeda6301c2d",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "786abbe222fe20bf9cd906cad10ad363c9a0d2ff",
+    }:
+        raise EvidenceError(f"{location}.authority_commit mismatch")
+    authorization = _exact_keys(
+        incident["execution_authorization_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.execution_authorization_commit",
+    )
+    if authorization != {
+        "commit": "9969b04858985801247c2b5b4ada14c314c0b0f2",
+        "parent": authority["commit"],
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "67a4292bcfe8d8f9edc60e0a7416bec1a43e33a7",
+    }:
+        raise EvidenceError(f"{location}.execution_authorization_commit mismatch")
+    closeout = _exact_keys(
+        incident["blocked_closeout"],
+        {"commit", "parent", "subject"},
+        f"{location}.blocked_closeout",
+    )
+    if closeout != {
+        "commit": "e0b974c86cf86908f927c5b04153c3bc7678e60a",
+        "parent": authorization["commit"],
+        "subject": "docs: record blocked corrected S3 Q4 burn-in",
+    }:
+        raise EvidenceError(f"{location}.blocked_closeout mismatch")
+    if _validate_hash_record(incident["contract"], f"{location}.contract") != {
+        "bytes": 304797,
+        "sha256": "93028f57b90e7df79818f8041726560c3bcb195e5712bdfb0ae82546665fa2c2",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    expected_failure = {
+        "cause": "COUNT_BALANCED_SHARDING_CONCENTRATED_UNBOUNDED_SYSTEM_TESTS_AND_MISSED_TERMINALIZATION_RESERVE",
+        "cycle": 1,
+        "elapsed_microseconds": 784561392,
+        "failed_request_id": V18_REQUEST_IDS[0],
+        "formal_process_state": "COMPLETED_FAIL_WITH_INCOMPLETE_FUNCTIONAL_WAVE_TERMINAL_EVIDENCE",
+        "observed_shards": [
+            {"completed_nodes": 0, "expected_nodes": 1, "shard_id": "P01", "status": "TIMED_OUT"},
+            {"completed_nodes": 362, "expected_nodes": 362, "shard_id": "P02", "status": "PASS"},
+            {"completed_nodes": 361, "expected_nodes": 361, "shard_id": "P03", "status": "PASS"},
+            {"completed_nodes": 130, "expected_nodes": 312, "shard_id": "P04", "status": "TIMED_OUT"},
+        ],
+        "resource_lock_released": True,
+        "terminal_evidence_fabricated": False,
+        "user_absolute_wall_limit_seconds": 1200,
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    evidence = _exact_keys(
+        incident["incident_evidence"],
+        {"result", "review", "status"},
+        f"{location}.incident_evidence",
+    )
+    for name, path, size, digest in (
+        (
+            "result",
+            "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json",
+            6814,
+            "7c96759bc5eb39900184c60e4fab58448d992aafe8b5dead605e18d4d860dc77",
+        ),
+        (
+            "review",
+            "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json",
+            727,
+            "0b257ddc9ff61eb144ed3e016d5615708cdba01887dd627fc8f565d847938648",
+        ),
+        (
+            "status",
+            "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json",
+            293,
+            "d9c4caebfc00dd53d3fa726a71d909391e77c8b149b277d4e4461d31aae91f43",
+        ),
+    ):
+        _validate_repository_evidence_record(
+            evidence[name],
+            f"{location}.incident_evidence.{name}",
+            expected_path=path,
+            expected_bytes=size,
+            expected_sha256=digest,
+        )
+    if incident["request_ids"] != list(V18_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    if incident["request_dispositions"] != [
+        "COMPLETED_FAIL_EXECUTED_ONCE_DO_NOT_REUSE",
+        *(["CANCELLED_NOT_RUN_DO_NOT_REUSE"] * 5),
+    ]:
+        raise EvidenceError(f"{location}.request_dispositions mismatch")
+    if incident["preserved_refs"] != [
+        "codex/s3-e4-pl-final-burnin-blocked-v18-9969b04",
+        "codex/s3-e4-pl-final-burnin-blocked-v18-closeout-e0b974c",
+    ]:
+        raise EvidenceError(f"{location}.preserved_refs mismatch")
+    if incident["role"] != "PRESERVED_BLOCKED_NONCANONICAL_INCIDENT_ONLY":
+        raise EvidenceError(f"{location}.role mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -3981,9 +5239,9 @@ def _validate_termination_metadata(
             f"{location}.wall_limit_seconds",
             minimum=1,
         )
-        != 1200
+        != 900
     ):
-        raise EvidenceError(f"{location}.wall_limit_seconds must be 1200")
+        raise EvidenceError(f"{location}.wall_limit_seconds must be 900")
     for key in ("child_exit_observed", "tree_kill_attempted"):
         if not isinstance(termination[key], bool):
             raise EvidenceError(f"{location}.{key} must be boolean")
@@ -4069,16 +5327,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     }:
         raise EvidenceError("cycle completion certificate filenames mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v18"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v19"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-17"
+        r"\s3-q4-final-freeze-correction-18"
     ):
-        raise EvidenceError("v18 burn-in output root mismatch")
+        raise EvidenceError("v19 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -4187,6 +5445,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v15_quick_cleanliness_mock_preflight_attempt",
             "failed_v16_cycle_efficiency_authority_review_attempt",
             "failed_v17_late_final_pass_authority_review_attempt",
+            "failed_v18_incomplete_terminalization_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -4247,6 +5506,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v17_late_final_pass_authority_review_attempt"],
         "$contract.background_inputs.failed_v17_late_final_pass_authority_review_attempt",
     )
+    v18_incomplete_terminalization = _validate_attempt_18_incident(
+        background["failed_v18_incomplete_terminalization_attempt"],
+        "$contract.background_inputs.failed_v18_incomplete_terminalization_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -4268,11 +5531,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v18 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v19 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v18 resource request IDs are not unique")
-    if current_request_ids != list(V18_REQUEST_IDS):
-        raise EvidenceError("v18 resource request IDs differ from frozen authority")
+        raise EvidenceError("v19 resource request IDs are not unique")
+    if current_request_ids != list(V19_REQUEST_IDS):
+        raise EvidenceError("v19 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -4288,6 +5551,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v15_quick_cleanliness_mock_preflight["request_ids"],
         *v16_cycle_efficiency_authority_review["request_ids"],
         *v17_late_final_pass_authority_review["request_ids"],
+        *v18_incomplete_terminalization["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -4308,7 +5572,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v18 resource request IDs reuse historical authority")
+        raise EvidenceError("v19 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -4364,7 +5628,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "a6c316f18b003f336cfb079657ca5eeda6301c2d":
+    if authority["exact_parent"] != "f8274739b6bb3487cf52b2426bf2bdc13c1f08a9":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
@@ -4504,10 +5768,16 @@ def sanitized_execution_environment(contract: Mapping[str, Any]) -> dict[str, st
     removed = guard["removed"]
     prefixes = guard["removed_prefixes"]
     fixed = guard["fixed"]
+    required_inner_wave_removals = {
+        FUNCTIONAL_V20_INNER_WAVE_POLICY["opt_in_environment"],
+        FUNCTIONAL_V20_INNER_WAVE_POLICY["result_deadline_environment"],
+        FUNCTIONAL_V20_INNER_WAVE_POLICY["cleanup_deadline_environment"],
+    }
     if (
         not isinstance(removed, list)
         or len(set(removed)) != len(removed)
         or not all(isinstance(name, str) and name for name in removed)
+        or not required_inner_wave_removals.issubset(set(removed))
         or not isinstance(prefixes, list)
         or len(set(prefixes)) != len(prefixes)
         or not all(isinstance(prefix, str) and prefix for prefix in prefixes)
@@ -4519,7 +5789,10 @@ def sanitized_execution_environment(contract: Mapping[str, Any]) -> dict[str, st
             for name, value in fixed.items()
         )
     ):
-        raise EvidenceError("execution environment guard is malformed")
+        raise EvidenceError(
+            "execution environment guard is malformed or does not scrub the "
+            "v20 inner-wave controls"
+        )
     environment = dict(os.environ)
     for name in list(environment):
         if name in removed or any(name.startswith(prefix) for prefix in prefixes):
