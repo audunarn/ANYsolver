@@ -18,7 +18,7 @@ from typing import Any, Iterable, Mapping
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = Path(__file__).with_name("e4_pl_s3_q4_burnin_contract.json")
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-contract-v6"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-contract-v7"
 RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-burn-in-result-v4"
 PROCESS_RESULT_SCHEMA = "anysolver.e4-pl-s3-q4-process-result-v3"
 CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
@@ -129,6 +129,14 @@ V19_REQUEST_IDS = (
     "4906266d55aa4aeeb13061e30491e8b5",
     "956dfa9ebc8548bb8ecf55f46329aa9b",
     "fa7c1d229d6a46b093e144c71890c0c3",
+)
+V20_REQUEST_IDS = (
+    "c2074aa3e6e64cc38e442d6362ed279d",
+    "4c80bdc7e4ef405e80ec507fc60ea862",
+    "6df95187d9ab43bf8067849dab7e196a",
+    "4e36e652152d449a9b2b3bb35584925f",
+    "a95aae82621b47a7a9cd0c39c15953bb",
+    "703801b6572a454f9fa64b697201d723",
 )
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
@@ -5177,6 +5185,113 @@ def _validate_attempt_18_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_19_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the unconsumed v19 quick-preflight classification failure."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "contract",
+            "correction_commit",
+            "execution_authorization_commit",
+            "failure",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "request_records",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 19:
+        raise EvidenceError(f"{location}.attempt must be 19")
+    authority = _exact_keys(
+        incident["authority_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.authority_commit",
+    )
+    if authority != {
+        "commit": "3daa32ef4412c28dd95dd935eb22a360b09ca7d7",
+        "parent": "f8274739b6bb3487cf52b2426bf2bdc13c1f08a9",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "5014e20f243f552aa013976c991cada2d2a6bd6a",
+    }:
+        raise EvidenceError(f"{location}.authority_commit mismatch")
+    authorization = _exact_keys(
+        incident["execution_authorization_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.execution_authorization_commit",
+    )
+    if authorization != {
+        "commit": "9ebf8f871359b90f21a41ea4a66aa3ed44e9d9fd",
+        "parent": authority["commit"],
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "6806527ff42fcbc1f170f0801b4579229cc0f633",
+    }:
+        raise EvidenceError(f"{location}.execution_authorization_commit mismatch")
+    correction = _exact_keys(
+        incident["correction_commit"],
+        {"commit", "parent", "paths", "subject", "tree"},
+        f"{location}.correction_commit",
+    )
+    if correction != {
+        "commit": "79572d92fcdaa38135f79b87a4b8ba0d52833f57",
+        "parent": authorization["commit"],
+        "paths": ["tests/test_e4_pl_functional_constructor_policy.py"],
+        "subject": "test: close S3 burn-in constructor classification",
+        "tree": "a197274cb6d833ea93b2ce035049e848d07dcfeb",
+    }:
+        raise EvidenceError(f"{location}.correction_commit mismatch")
+    if _validate_hash_record(incident["contract"], f"{location}.contract") != {
+        "bytes": 318692,
+        "sha256": "d3622402d47b8d59627b2266a6833d9570bae9603338164deae81fa327106697",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    if incident["failure"] != {
+        "actual_qualified_q4_constructor_count": 53,
+        "canonical_result_created": False,
+        "cause": "CLOSED_WORLD_QUALIFIED_Q4_CONSTRUCTOR_CLASSIFICATION_STALE",
+        "expected_qualified_q4_constructor_count": 48,
+        "failed_node": "tests/test_e4_pl_functional_constructor_policy.py::test_functional_lane_direct_shell_calls_are_provably_non_q4",
+        "phase": "QUICK_PREFLIGHT",
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+    }:
+        raise EvidenceError(f"{location}.failure mismatch")
+    if incident["request_ids"] != list(V19_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    records = incident["request_records"]
+    if not isinstance(records, list) or len(records) != 6:
+        raise EvidenceError(f"{location}.request_records mismatch")
+    for index, record in enumerate(records):
+        row = _exact_keys(
+            record,
+            {"bytes", "command_sha256", "request_id", "request_sha256"},
+            f"{location}.request_records[{index}]",
+        )
+        if row["request_id"] != V19_REQUEST_IDS[index]:
+            raise EvidenceError(f"{location}.request_records ordering mismatch")
+        _validate_hash_record(
+            {"bytes": row["bytes"], "sha256": row["request_sha256"]},
+            f"{location}.request_records[{index}]",
+        )
+        _require_hash(
+            row["command_sha256"],
+            f"{location}.request_records[{index}].command_sha256",
+        )
+    if (
+        incident["preserved_ref"]
+        != "codex/s3-e4-pl-final-burnin-rejected-v19-9ebf8f8"
+        or incident["request_disposition"]
+        != "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+        or incident["role"] != "PRESERVED_FAILED_QUICK_PREFLIGHT_ONLY"
+    ):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -5327,16 +5442,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     }:
         raise EvidenceError("cycle completion certificate filenames mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v19"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v20"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-18"
+        r"\s3-q4-final-freeze-correction-19"
     ):
-        raise EvidenceError("v19 burn-in output root mismatch")
+        raise EvidenceError("v20 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -5446,6 +5561,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v16_cycle_efficiency_authority_review_attempt",
             "failed_v17_late_final_pass_authority_review_attempt",
             "failed_v18_incomplete_terminalization_attempt",
+            "failed_v19_quick_preflight_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -5510,6 +5626,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v18_incomplete_terminalization_attempt"],
         "$contract.background_inputs.failed_v18_incomplete_terminalization_attempt",
     )
+    v19_quick_preflight = _validate_attempt_19_incident(
+        background["failed_v19_quick_preflight_attempt"],
+        "$contract.background_inputs.failed_v19_quick_preflight_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -5531,11 +5651,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v19 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v20 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v19 resource request IDs are not unique")
-    if current_request_ids != list(V19_REQUEST_IDS):
-        raise EvidenceError("v19 resource request IDs differ from frozen authority")
+        raise EvidenceError("v20 resource request IDs are not unique")
+    if current_request_ids != list(V20_REQUEST_IDS):
+        raise EvidenceError("v20 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -5552,6 +5672,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v16_cycle_efficiency_authority_review["request_ids"],
         *v17_late_final_pass_authority_review["request_ids"],
         *v18_incomplete_terminalization["request_ids"],
+        *v19_quick_preflight["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -5572,7 +5693,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v19 resource request IDs reuse historical authority")
+        raise EvidenceError("v20 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -5628,7 +5749,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "f8274739b6bb3487cf52b2426bf2bdc13c1f08a9":
+    if authority["exact_parent"] != "79572d92fcdaa38135f79b87a4b8ba0d52833f57":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
