@@ -5874,6 +5874,15 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     if not requests_root.is_dir():
         assert os.environ.get("GITHUB_ACTIONS") == "true"
         return
+    accepted_status_path = (
+        ROOT / "docs" / "reference_cases" / "e4_pl_s3_q4_burnin_status.json"
+    )
+    if accepted_status_path.is_file():
+        accepted_status = burnin.strict_json_load(accepted_status_path)
+        if accepted_status.get("terminal") == (
+            "PROVISIONAL_GO_E4_PL_S3_COMPANION_OPT_IN_RELEASE"
+        ):
+            pytest.skip("pre-execution request-absence assertion after accepted closeout")
     ledger = RESOURCE_MANAGER / "ledger.md"
     assert ledger.is_file()
     ledger_text = ledger.read_text(encoding="utf-8")
