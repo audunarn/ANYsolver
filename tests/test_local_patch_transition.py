@@ -7,7 +7,14 @@ nodes), locality (uniform far field), element quality and the graded fallback.
 """
 
 import math
+import multiprocessing
+import os
+import queue
+import time
+import traceback
 from collections import Counter
+from collections.abc import Callable, Sequence
+from typing import Any
 
 import numpy as np
 import pytest
@@ -38,6 +45,249 @@ CYLINDER = {
     "stiffener_spacing_m": 0.75,
     "girder_spacing_m": 3.5,
 }
+
+_MESH_STYLE_WORKER_WALL_SECONDS = 360.0
+_MESH_STYLE_CLEANUP_SECONDS = 15.0
+_MESH_STYLE_WAVE_ENV = "ANYSOLVER_BURNIN_S3_Q4_STYLE_WAVE"
+_MESH_STYLE_RESULT_DEADLINE_ENV = (
+    "ANYSOLVER_BURNIN_S3_Q4_STYLE_RESULT_DEADLINE"
+)
+_MESH_STYLE_CLEANUP_DEADLINE_ENV = (
+    "ANYSOLVER_BURNIN_S3_Q4_STYLE_CLEANUP_DEADLINE"
+)
+_MESH_STYLE_RESULT_KEYS = frozenset({"lf", "uz", "vm_p50"})
+_NUMERICAL_THREAD_ENVIRONMENT = (
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+    "NUMBA_NUM_THREADS",
+)
+
+
+def _mesh_style_worker_entry(
+    index: int,
+    worker: Callable[[tuple[str, dict[str, Any]]], tuple[str, dict[str, float]]],
+    case: tuple[str, dict[str, Any]],
+    result_queue: Any,
+) -> None:
+    """Run one independent mesh style and return only canonical scalars."""
+
+    try:
+        inherited_policy = {
+            name: os.environ.get(name) for name in _NUMERICAL_THREAD_ENVIRONMENT
+        }
+        if set(inherited_policy.values()) != {"1"}:
+            raise RuntimeError(
+                f"mesh-style worker did not inherit the one-thread policy: {inherited_policy}"
+            )
+        result_queue.put((index, True, worker(case)))
+    except BaseException:  # pragma: no cover - exercised by real child failures
+        result_queue.put((index, False, traceback.format_exc()))
+
+
+def _validated_mesh_style_outcome(
+    payload: Any,
+    expected_label: str,
+) -> dict[str, float]:
+    if type(payload) is not tuple or len(payload) != 2:
+        pytest.fail(f"mesh-style {expected_label!r} returned a malformed tuple")
+    label, values = payload
+    if type(label) is not str or label != expected_label:
+        pytest.fail(f"mesh-style worker order mismatch: {label!r} != {expected_label!r}")
+    if type(values) is not dict or set(values) != _MESH_STYLE_RESULT_KEYS:
+        pytest.fail(f"mesh-style {expected_label!r} returned malformed value keys")
+    validated: dict[str, float] = {}
+    for key in sorted(_MESH_STYLE_RESULT_KEYS):
+        value = values[key]
+        if type(value) is not float or not math.isfinite(value):
+            pytest.fail(f"mesh-style {expected_label!r} returned invalid {key}: {value!r}")
+        validated[key] = value
+    return validated
+
+
+def _parallel_mesh_style_deadlines() -> tuple[float, float] | None:
+    if os.environ.get(_MESH_STYLE_WAVE_ENV) != "1":
+        return None
+    raw_result = os.environ.get(_MESH_STYLE_RESULT_DEADLINE_ENV)
+    raw_cleanup = os.environ.get(_MESH_STYLE_CLEANUP_DEADLINE_ENV)
+    if raw_result is None or raw_cleanup is None:
+        pytest.fail("mesh-style wave opt-in requires both absolute deadlines")
+    try:
+        supplied_result = float(raw_result)
+        supplied_cleanup = float(raw_cleanup)
+    except ValueError:
+        pytest.fail("mesh-style wave deadlines must be finite monotonic seconds")
+    if not math.isfinite(supplied_result) or not math.isfinite(supplied_cleanup):
+        pytest.fail("mesh-style wave deadlines must be finite monotonic seconds")
+    if supplied_cleanup <= supplied_result:
+        pytest.fail("mesh-style cleanup deadline must follow its result deadline")
+    if supplied_cleanup - supplied_result > _MESH_STYLE_CLEANUP_SECONDS:
+        pytest.fail("mesh-style cleanup authority exceeds fifteen seconds")
+    started = time.monotonic()
+    result_deadline = min(
+        started + _MESH_STYLE_WORKER_WALL_SECONDS,
+        supplied_result,
+    )
+    if result_deadline <= started:
+        pytest.fail("mesh-style result deadline was already exhausted")
+    return result_deadline, supplied_cleanup
+
+
+def _run_mesh_styles(
+    worker: Callable[[tuple[str, dict[str, Any]]], tuple[str, dict[str, float]]],
+    cases: Sequence[tuple[str, dict[str, Any]]],
+) -> dict[str, dict[str, float]]:
+    """Run independent style calculations concurrently, with ordered results.
+
+    ``spawn`` gives every style an isolated runtime module and solver state.  A
+    common deadline is deliberately shorter than the enclosing 520-second
+    functional-shard cutoff, leaving that shard time to serialize its normal
+    evidence.  There is no retry: every launched process contributes exactly
+    one terminal record or the test fails.
+    """
+
+    if not cases:
+        return {}
+    deadlines = _parallel_mesh_style_deadlines()
+    if deadlines is None:
+        ordered: dict[str, dict[str, float]] = {}
+        for expected_label, overrides in cases:
+            ordered[expected_label] = _validated_mesh_style_outcome(
+                worker((expected_label, overrides)),
+                expected_label,
+            )
+        return ordered
+
+    labels = tuple(case[0] for case in cases)
+    if (
+        len(cases) != 3
+        or any(type(label) is not str or not label for label in labels)
+        or len(set(labels)) != 3
+    ):
+        pytest.fail("mesh-style wave requires exactly three unique ordered labels")
+
+    result_deadline, supplied_cleanup_deadline = deadlines
+    context = multiprocessing.get_context("spawn")
+    result_queue = context.Queue()
+    old_environment = {name: os.environ.get(name) for name in _NUMERICAL_THREAD_ENVIRONMENT}
+    processes = []
+    messages: dict[int, tuple[bool, Any]] = {}
+    collection_complete = False
+    pending_error: BaseException | None = None
+    pending_traceback = None
+    try:
+        try:
+            for name in _NUMERICAL_THREAD_ENVIRONMENT:
+                os.environ[name] = "1"
+            for index, case in enumerate(cases):
+                process = context.Process(
+                    target=_mesh_style_worker_entry,
+                    args=(index, worker, case, result_queue),
+                    name=f"mesh-style-{index}-{case[0]}",
+                )
+                process.start()
+                processes.append(process)
+        finally:
+            for name, value in old_environment.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+
+        while len(messages) < len(processes):
+            remaining = result_deadline - time.monotonic()
+            if remaining <= 0.0:
+                break
+            try:
+                message = result_queue.get(timeout=min(remaining, 1.0))
+            except queue.Empty:
+                if all(not process.is_alive() for process in processes):
+                    break
+                continue
+            if type(message) is not tuple or len(message) != 3:
+                pytest.fail("mesh-style worker emitted a malformed result record")
+            index, passed, payload = message
+            if type(index) is not int or not 0 <= index < len(processes):
+                pytest.fail(f"mesh-style worker emitted an invalid index: {index!r}")
+            if type(passed) is not bool:
+                pytest.fail(f"mesh-style worker {index} emitted a non-boolean status")
+            if index in messages:
+                pytest.fail(f"mesh-style worker {index} emitted duplicate results")
+            if passed:
+                _validated_mesh_style_outcome(payload, cases[index][0])
+            elif type(payload) is not str or not payload:
+                pytest.fail(f"mesh-style worker {index} emitted a malformed failure")
+            messages[index] = (passed, payload)
+        collection_complete = len(messages) == len(processes)
+    except BaseException as exc:
+        pending_error = exc
+        pending_traceback = exc.__traceback__
+    finally:
+        cleanup_started = time.monotonic()
+        cleanup_hard_deadline = min(
+            supplied_cleanup_deadline,
+            cleanup_started + _MESH_STYLE_CLEANUP_SECONDS,
+        )
+        cleanup_soft_deadline = min(cleanup_hard_deadline, cleanup_started + 10.0)
+        if not collection_complete:
+            for process in processes:
+                if process.is_alive():
+                    process.terminate()
+        while any(process.is_alive() for process in processes):
+            remaining = cleanup_soft_deadline - time.monotonic()
+            if remaining <= 0.0:
+                break
+            for process in processes:
+                process.join(timeout=min(0.1, max(0.0, remaining)))
+        for process in processes:
+            if process.is_alive():
+                process.kill()
+        while any(process.is_alive() for process in processes):
+            remaining = cleanup_hard_deadline - time.monotonic()
+            if remaining <= 0.0:
+                break
+            for process in processes:
+                process.join(timeout=min(0.1, max(0.0, remaining)))
+        for process in processes:
+            if process.is_alive():
+                process.terminate()
+        result_queue.cancel_join_thread()
+        result_queue.close()
+
+    if any(process.is_alive() for process in processes):
+        # Only the burn-in gate can opt into this path.  Immediate exit lets
+        # its enclosing Windows Job close the otherwise unproven child tree.
+        os._exit(125)
+    exit_codes = tuple(process.exitcode for process in processes)
+    for process in processes:
+        process.close()
+    if pending_error is not None:
+        raise pending_error.with_traceback(pending_traceback)
+
+    if len(messages) != len(processes):
+        missing = [index for index in range(len(processes)) if index not in messages]
+        pytest.fail(f"mesh-style workers did not return before the common deadline: {missing}")
+
+    ordered: dict[str, dict[str, float]] = {}
+    failures = []
+    for index, (expected_label, _overrides) in enumerate(cases):
+        passed, payload = messages[index]
+        if exit_codes[index] != 0:
+            failures.append(
+                (expected_label, f"worker exit code was {exit_codes[index]!r}")
+            )
+            continue
+        if not passed:
+            failures.append((expected_label, payload))
+            continue
+        ordered[expected_label] = _validated_mesh_style_outcome(
+            payload,
+            expected_label,
+        )
+    if failures:
+        pytest.fail("mesh-style worker failure(s):\n" + "\n".join(f"{label}:\n{error}" for label, error in failures))
+    return ordered
 
 
 def _impact_config(**overrides) -> LightweightFEMConfig:
@@ -531,12 +781,11 @@ def test_axial_flat_plate_stress_is_mesh_style_invariant() -> None:
         fs._backend_solve_linear = original
 
 
-def test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams() -> None:
-    """Beams must not reintroduce the release-blocker artifacts: stiffener-
-    forced ring breaks interact with the tributary end-load weighting, beam
-    segments are split inside blended patches, and the curvature floor is
-    raised to a stiffener-count multiple.  Statics and buckling must stay
-    mesh-style invariant on the stiffened cylinder."""
+def _stiffened_cylinder_style_outcome(
+    case: tuple[str, dict[str, Any]],
+) -> tuple[str, dict[str, float]]:
+    """Construct and solve one unchanged stiffened-cylinder mesh style."""
+
     from anysolver import runtime as fs
 
     captured = {}
@@ -558,6 +807,50 @@ def test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams() -> None:
         "stiffener_spacing_m": 0.785,
         "girder_spacing_m": 3.0,
     }
+    label, overrides = case
+    fs._backend_solve_linear = wrapper
+    try:
+        config = fs.LightweightFEMConfig(
+            mesh_fidelity="coarse",
+            boundary_condition="auto",
+            include_end_lids=True,
+            axial_force_n=50.0e6,
+            pressure_pa=0.0,
+            num_buckling_modes=2,
+            **overrides,
+        )
+        result = fs.run_production_fem(cylinder, config)
+        assert result.status == "ok", (label, result.status)
+        model, disp = captured["model"], captured["disp"]
+        stresses = fs._backend_compute_stresses(model, disp)
+        vm_values = []
+        for element_id, stress in stresses.items():
+            element = model.mesh.elements.get(element_id)
+            if element is None or not hasattr(element, "thickness"):
+                continue
+            values = np.asarray(stress.get("von_mises", ()), dtype=float).reshape(-1)
+            if values.size:
+                vm_values.append(float(np.max(values)))
+        uz_peak = 0.0
+        for node in model.mesh.nodes.values():
+            dofs = np.asarray(node.dofs[:3], dtype=np.intp)
+            if dofs.size == 3 and int(dofs.max()) < disp.size:
+                uz_peak = max(uz_peak, abs(float(disp[dofs[2]])))
+        return label, {
+            "vm_p50": float(np.percentile(np.asarray(vm_values), 50)),
+            "uz": uz_peak,
+            "lf": min((float(v) for v in result.buckling_factors), default=0.0),
+        }
+    finally:
+        fs._backend_solve_linear = original
+
+
+def test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams() -> None:
+    """Beams must not reintroduce the release-blocker artifacts: stiffener-
+    forced ring breaks interact with the tributary end-load weighting, beam
+    segments are split inside blended patches, and the curvature floor is
+    raised to a stiffener-count multiple.  Statics and buckling must stay
+    mesh-style invariant on the stiffened cylinder."""
     refine = dict(
         point_refinement_enabled=True,
         point_refinement_x_m=5.0,
@@ -565,49 +858,18 @@ def test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams() -> None:
         point_refinement_extent_m=1.0,
         point_refinement_growth_factor=1.35,
     )
-    styles = {
-        "uniform": {},
-        "graded grid": dict(detail_transition_style="graded grid", **refine),
-        "local patch (quad+tri)": dict(detail_transition_style="local patch (quad+tri)", **refine),
-    }
-
-    outcomes = {}
-    fs._backend_solve_linear = wrapper
-    try:
-        for label, overrides in styles.items():
-            config = fs.LightweightFEMConfig(
-                mesh_fidelity="coarse",
-                boundary_condition="auto",
-                include_end_lids=True,
-                axial_force_n=50.0e6,
-                pressure_pa=0.0,
-                num_buckling_modes=2,
-                **overrides,
-            )
-            result = fs.run_production_fem(cylinder, config)
-            assert result.status == "ok", (label, result.status)
-            model, disp = captured["model"], captured["disp"]
-            stresses = fs._backend_compute_stresses(model, disp)
-            vm_values = []
-            for element_id, stress in stresses.items():
-                element = model.mesh.elements.get(element_id)
-                if element is None or not hasattr(element, "thickness"):
-                    continue
-                values = np.asarray(stress.get("von_mises", ()), dtype=float).reshape(-1)
-                if values.size:
-                    vm_values.append(float(np.max(values)))
-            uz_peak = 0.0
-            for node in model.mesh.nodes.values():
-                dofs = np.asarray(node.dofs[:3], dtype=np.intp)
-                if dofs.size == 3 and int(dofs.max()) < disp.size:
-                    uz_peak = max(uz_peak, abs(float(disp[dofs[2]])))
-            outcomes[label] = {
-                "vm_p50": float(np.percentile(np.asarray(vm_values), 50)),
-                "uz": uz_peak,
-                "lf": min((float(v) for v in result.buckling_factors), default=0.0),
-            }
-    finally:
-        fs._backend_solve_linear = original
+    cases = (
+        ("uniform", {}),
+        ("graded grid", dict(detail_transition_style="graded grid", **refine)),
+        (
+            "local patch (quad+tri)",
+            dict(detail_transition_style="local patch (quad+tri)", **refine),
+        ),
+    )
+    outcomes = _run_mesh_styles(
+        _stiffened_cylinder_style_outcome,
+        cases,
+    )
 
     baseline = outcomes["uniform"]
     for label in ("graded grid", "local patch (quad+tri)"):
