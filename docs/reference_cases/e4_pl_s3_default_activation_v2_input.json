@@ -1,0 +1,120 @@
+{
+  "candidates": {
+    "ANYfem": {
+      "commit": "a3302d9c33be0d9f94d315cfadbab6e0a0022e64",
+      "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\anyfem-s3-default-activation-v2",
+      "subject": "fix: preserve adaptive solver progress semantics",
+      "tree": "02a194e74e6a50a62a82a40423b93b7de7ea4395",
+      "wheel": {
+        "bytes": 466516,
+        "filename": "anyfem-0.4.0-py3-none-any.whl",
+        "path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-default-activation-ab1139d\\ANYfem-wheel\\anyfem-0.4.0-py3-none-any.whl",
+        "sha256": "B6E92108985932EA1781D64C95CDEA0136283229AA47B36D37D3D24B50BB3ABA"
+      }
+    },
+    "ANYfileIO": {
+      "commit": "38102df2744fd0da72977a7cf10e7c93bb422cfa",
+      "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-q4-anyfileio-9b1e5ad",
+      "subject": "fix: admit coordinated ANYmesher 0.3 candidate",
+      "tree": "5449ccf0edc911aa200ab6111e8534342b6bedc6",
+      "wheel": {
+        "bytes": 106817,
+        "filename": "anyfileio-0.2.0-py3-none-any.whl",
+        "path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-default-activation-ab1139d\\ANYfileIO-wheel\\anyfileio-0.2.0-py3-none-any.whl",
+        "sha256": "70149D233DC60B42B2AC441EFBED63F33016FD52AB066C6981FC10ED0B9461C3"
+      }
+    },
+    "ANYintelligent": {
+      "commit": "ba34973e0f4c093bbba7d60647f767e68ceb0087",
+      "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\anyintelligent-s3-external-adapter",
+      "subject": "chore: bump embedded backend version",
+      "tree": "d5dcfd12c6c754750eb8912e0a0a6f21c53eb6f5",
+      "wheel": null
+    },
+    "ANYmesh": {
+      "commit": "c1af6d5fab9a0ae301d14d9d5877b75362e7c6d1",
+      "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\anymesh-s3-default-activation-v2",
+      "subject": "test: model pre-imprinted transverse junction",
+      "tree": "1823b08af1362df6ba734fc85c0c6589840fb57e",
+      "wheel": {
+        "bytes": 280811,
+        "filename": "anymesher-0.3.1-cp313-cp313-win_amd64.whl",
+        "path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-default-activation-ab1139d\\ANYmesh-wheel\\anymesher-0.3.1-cp313-cp313-win_amd64.whl",
+        "sha256": "9AB741D67AC83CBC5B436E52C6EEA3FC52ECAD1B60A3B60D0CFAFAAFFC3C7571"
+      }
+    },
+    "ANYsolver": {
+      "commit": "ab1139dfef497d19549f9153b95439764daa5a90",
+      "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-default-activation",
+      "subject": "perf: shard qualified S3 batch gate",
+      "tree": "2db3b5b45cb1c2dbae44b96050ad8506bd398194",
+      "wheel": {
+        "bytes": 1116356,
+        "filename": "anysolver-0.4.0-py3-none-any.whl",
+        "path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-default-activation-ab1139d\\ANYsolver-wheel\\anysolver-0.4.0-py3-none-any.whl",
+        "sha256": "1FE3B4FD6DCE382E72748A20473ECA8B86675864F28C7833BBF77B36296A7CB4"
+      }
+    },
+    "ANYstructure": {
+      "commit": "830d1f2426f7fd9cf86485be6cea28a06f266ab5",
+      "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\anystructure-s3-runtime-state-v2",
+      "subject": "feat: bind S3 runtime formulation authority",
+      "tree": "6b8b7c020925c9340b64cf59ece672c132ed8e09",
+      "wheel": null
+    }
+  },
+  "contract": {
+    "bytes": 12044,
+    "path": "docs/reference_cases/e4_pl_s3_default_activation_v2_contract.json",
+    "sha256": "4C6EC1DB8DCFF3C4BA1A8C280E9D8E3DE9E57A4CE8CB1F4BC5631E5A86E17302"
+  },
+  "evidence": {
+    "connectivity_manifest": {
+      "bytes": 110005,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+      "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    },
+    "opt_in_burnin": {
+      "bytes": 309,
+      "path": "docs/reference_cases/e4_pl_s3_q4_burnin_status.json",
+      "sha256": "9446D0971A761126996C065F8778CCFD4F43E1EE8814BCF8621D0A22C1FEE12E"
+    },
+    "prior_eigen": {
+      "bytes": 442,
+      "path": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-eigen-performance-20260825-49d256f\\two-cycle-common.json",
+      "sha256": "D5F03AE52AE44EC763E86ABFE2DEA302B74BA617363E93C025D562C06D6F0543"
+    },
+    "prior_structural": {
+      "bytes": 4064,
+      "path": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\s3-mixed-structural-20260825-49d256f\\aggregate.json",
+      "sha256": "A088F392D42D973C922C264F55B62C76C5DC279B26923FDAC9AF19CF9D9B8E2D"
+    }
+  },
+  "execution": {
+    "canonical_cycles": 2,
+    "memory_limit_gib_per_process": 24,
+    "numerical_threads_per_process": 1,
+    "target": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-default-activation-ab1139d\\isolated-target",
+    "timeout_seconds_per_process": 540,
+    "total_command_limit_seconds": 1200,
+    "workers": 3
+  },
+  "programs": {
+    "batch_benchmark": {
+      "bytes": 18255,
+      "path": "scripts/benchmark_e4_pl_s3_reference_batch.py",
+      "sha256": "A60975ACCD3185762CAF5C421084CD3731532007150AA2B936C23D4B8627F323"
+    },
+    "runner": {
+      "bytes": 63308,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
+      "sha256": "0353FAE7E44F1BE3E95F789CB97E759E70059090D84E65C42CDACA74A67F2F1E"
+    },
+    "test": {
+      "bytes": 4585,
+      "path": "tests/test_e4_pl_s3_default_activation_v2.py",
+      "sha256": "53EDF7C7E96EDC8B93B5533651CCA865D96FC5F846ED403C00692C996829E287"
+    }
+  },
+  "schema": "anysolver.e4-pl-s3-default-activation-input-v2"
+}
