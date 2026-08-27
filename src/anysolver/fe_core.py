@@ -62,6 +62,23 @@ def _freeze_qualified_element_vector_inputs(element: "Element") -> None:
         value = getattr(element, name, None)
         if value is None:
             continue
+        if (
+            type(value) is np.ndarray
+            and value.dtype == np.dtype(np.float64)
+            and value.shape == (3,)
+            and value.strides == (8,)
+            and value.flags.c_contiguous
+            and not value.flags.writeable
+        ):
+            terminal: Any = value
+            while type(terminal) is np.ndarray:
+                if terminal.flags.writeable:
+                    break
+                terminal = terminal.base
+            if type(terminal) is bytes or (
+                type(terminal) is memoryview and terminal.readonly
+            ):
+                continue
         made = np.ascontiguousarray(np.asarray(value, dtype=float))
         frozen = np.frombuffer(made.tobytes(order="C"), dtype=float).reshape(
             made.shape

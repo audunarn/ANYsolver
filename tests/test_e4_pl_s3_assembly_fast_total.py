@@ -16,6 +16,11 @@ from anysolver import (
 )
 from anysolver.matrix_assembly import AssemblyError
 import anysolver.matrix_assembly as matrix_module
+from anysolver.recovery import (
+    RecoveryConfig,
+    ResourceConfig,
+    recover_element_stresses_with_report,
+)
 
 
 def _model(*, s3_count: int = 4, include_q4: bool = False) -> FEModel:
@@ -275,6 +280,40 @@ def test_shared_node_mixed_compiled_csr_stays_canonical_and_exact() -> None:
             start = int(current.indptr[row])
             stop = int(current.indptr[row + 1])
             assert np.all(np.diff(current.indices[start:stop]) > 0)
+
+
+def test_cold_mixed_assembly_can_create_owned_mesh_caches_after_warm_plan_capture() -> None:
+    model = _model(s3_count=2, include_q4=True)
+    material = model.materials["steel"]
+    for element in model.mesh.elements.values():
+        element.compute_stiffness_components(model.mesh, material)
+    assert "_sparsity_cache" not in model.mesh.__dict__
+    assert "_topology_signature_cache" not in model.mesh.__dict__
+
+    first, _ = assemble_stiffness_matrix(model)
+    second, _ = assemble_stiffness_matrix(model)
+
+    np.testing.assert_array_equal(first.toarray(), second.toarray())
+    assert type(model.mesh.__dict__["_sparsity_cache"]) is dict
+    assert type(model.mesh.__dict__["_topology_signature_cache"]) is dict
+
+
+def test_recovery_batch_preserves_warm_stiffness_vector_authority() -> None:
+    model = _model(s3_count=128)
+    first, _ = assemble_stiffness_matrix(model)
+    normal = model.mesh.elements[1].reference_normal
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
+
+    recover_element_stresses_with_report(
+        model,
+        displacement,
+        RecoveryConfig(),
+        resource_config=ResourceConfig(recovery_threads=1),
+    )
+    second, _ = assemble_stiffness_matrix(model)
+
+    assert model.mesh.elements[1].reference_normal is normal
+    np.testing.assert_array_equal(first.toarray(), second.toarray())
 
 
 def test_warm_s3_assembly_consumes_closure_total_without_batch_reentry(

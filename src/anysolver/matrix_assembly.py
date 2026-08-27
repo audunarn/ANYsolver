@@ -2551,10 +2551,13 @@ def _bind_qualified_assembly_runtime_lease(
                 or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
                 is not _EXACT_FE_MESH_NUM_NODES
                 or dict.get(mesh_namespace, "elements") is not mapping
-                or dict.get(mesh_namespace, "_sparsity_cache")
-                is not plan["sparsity_cache"]
-                or dict.get(mesh_namespace, "_topology_signature_cache")
-                is not plan["topology_cache"]
+                # Sparsity and topology caches are assembly-owned outputs.
+                # A cold mixed Q4/S3 model may acquire both after the warm
+                # element plan is captured, so their identities are not
+                # frozen as caller-controlled inputs.  Their keys are already
+                # excluded from ``mesh_keys`` above; all physical routing,
+                # topology epochs, element identities, and cached element
+                # totals remain bound independently below.
                 or dict.get(mesh_namespace, "_qualified_direct_state_token")
                 is not plan["token"]
                 or type(mapping) is not _QualifiedStateMapping
