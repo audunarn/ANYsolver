@@ -143,7 +143,27 @@ def build_fe_model_from_sesam_document(
                     element_id,
                     list(node_ids),
                     material_name=material_name,
+                    formulation="legacy-s3",
                     thickness=semantics.thickness_of_element[element_id],
+                )
+                setattr(
+                    solver_element,
+                    "sesam_formulation_id",
+                    "LEGACY_SHELL_ELEMENT_TRI3",
+                )
+                diagnostics.append(
+                    FemDiagnostic(
+                        "FEM132",
+                        "historical SESAM TRI3 record has no qualified formulation "
+                        "or physical-normal authority and was migrated explicitly "
+                        "to legacy-s3",
+                        severity="warning",
+                        context={
+                            "element_id": element_id,
+                            "formulation": "legacy-s3",
+                            "formulation_id": "LEGACY_SHELL_ELEMENT_TRI3",
+                        },
+                    )
                 )
             elif element_id in semantics.mesh.beams:
                 node_ids = semantics.mesh.beams[element_id]

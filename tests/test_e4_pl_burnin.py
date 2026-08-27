@@ -20,6 +20,7 @@ from anysolver import (
     LEGACY_Q4_AVAILABLE_THROUGH,
     LEGACY_Q4_REMOVAL_TARGET,
     LegacyQ4DeprecationWarning,
+    QualifiedE4PLS3ShellElement,
     QualifiedE4PLShellElement,
     ShellElement,
     create_element,
@@ -444,19 +445,24 @@ def test_legacy_q4_factory_and_direct_class_emit_dedicated_warning() -> None:
     assert type(direct) is ShellElement
 
 
-def test_default_q4_and_preserved_non_q4_topologies_do_not_warn() -> None:
+def test_qualified_q4_s3_defaults_and_preserved_higher_topologies_do_not_warn() -> None:
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         default = create_shell_element(1, [1, 2, 3, 4], "steel")
-        tri3 = create_shell_element(2, [1, 2, 3], "steel")
+        tri3 = create_shell_element(
+            2, [1, 2, 3], "steel", reference_normal=(0.0, 0.0, 1.0)
+        )
         tri6 = create_shell_element(3, list(range(1, 7)), "steel")
         q8 = create_shell_element(4, list(range(1, 9)), "steel")
     assert type(default) is QualifiedE4PLShellElement
-    assert type(tri3) is ShellElement
+    assert type(tri3) is QualifiedE4PLS3ShellElement
     assert type(tri6) is ShellElement
     assert type(q8) is ShellElement
     assert [item for item in caught if item.category is LegacyQ4DeprecationWarning] == []
-    for count in (3, 6, 8):
+    assert shell_formulation_diagnostics(node_count=3)["topology_policy"] == (
+        "QUALIFIED_E4_PL_S3_DEFAULT"
+    )
+    for count in (6, 8):
         diagnostic = shell_formulation_diagnostics(node_count=count)
         assert diagnostic["topology_policy"] == "PRESERVED_LEGACY_NON_Q4"
 

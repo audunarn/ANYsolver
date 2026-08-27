@@ -47,6 +47,9 @@ StatusCallback: TypeAlias = Callable[[str], None]
 NormalizedGeometry: TypeAlias = Mapping[str, object]
 GeneratedGeometry: TypeAlias = dict[str, object]
 
+_QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+_GENERATED_SHELL_POLICY_SCHEMA = "anysolver.generated-shell-authority-v1"
+
 __all__ = [
     "GeneratedGeometry",
     "LightweightFEMConfig",
@@ -1688,8 +1691,270 @@ def _refined_midpoint_breaks(values: list[float]) -> list[float]:
     return sorted(set(round(float(value), 12) for value in refined))
 
 
+def _s3_quality_balanced_breaks(
+    first: list[float],
+    second: list[float],
+    *,
+    maximum_breaks_per_axis: int = 2_049,
+) -> tuple[list[float], list[float]]:
+    """Deterministically refine a tensor grid so its diagonal T3s are admitted.
+
+    A right triangle has minimum angle at least 30 degrees when the ratio of
+    its orthogonal legs is at most ``sqrt(3)``.  The 1.70 margin avoids a
+    binary64 boundary classification.  Existing authored breakpoints are never
+    removed or moved.
+    """
+
+    def intervals(values: list[float]) -> list[float]:
+        return [float(end) - float(start) for start, end in zip(values, values[1:])]
+
+    def refine(values: list[float], limit: float) -> list[float]:
+        made = [float(values[0])]
+        for start, end in zip(values, values[1:]):
+            width = float(end) - float(start)
+            pieces = max(1, int(math.ceil(width / max(limit, 1.0e-15))))
+            made.extend(
+                float(start) + width * index / pieces
+                for index in range(1, pieces + 1)
+            )
+        result = sorted(set(round(value, 12) for value in made))
+        if len(result) > maximum_breaks_per_axis:
+            raise ValueError(
+                "qualified S3 tensor-grid admission would exceed the bounded "
+                f"{maximum_breaks_per_axis}-break axis limit"
+            )
+        return result
+
+    made_first = list(first)
+    made_second = list(second)
+    if len(made_first) < 2 or len(made_second) < 2:
+        raise ValueError("qualified S3 tensor-grid admission requires two axes")
+    for _iteration in range(8):
+        first_intervals = intervals(made_first)
+        second_intervals = intervals(made_second)
+        if min(first_intervals + second_intervals) <= 0.0:
+            raise ValueError("qualified S3 tensor-grid breaks must be increasing")
+        updated_first = refine(made_first, 1.70 * min(second_intervals))
+        updated_second = refine(made_second, 1.70 * min(first_intervals))
+        if updated_first == made_first and updated_second == made_second:
+            return made_first, made_second
+        made_first, made_second = updated_first, updated_second
+    raise ValueError("qualified S3 tensor-grid admission did not converge")
+
+
+def _local_patch_s3_balanced_breaks(
+    first: list[float],
+    second: list[float],
+    windows: Sequence[Mapping[str, object]],
+    *,
+    periodic_second: bool = False,
+    second_span: float | None = None,
+    maximum_breaks_per_axis: int = 2_049,
+) -> tuple[list[float], list[float], int]:
+    """Balance only tensor bands that can emit local-patch transition T3s.
+
+    A conforming split on one tensor-grid edge propagates across its row or
+    column.  Restricting those extra breakpoints to the transition window plus
+    one original cell preserves the far field while ensuring the odd-sided
+    hanging-node templates never need a triangle below the 30-degree S3
+    admission floor.
+    """
+
+    made_first = [float(value) for value in first]
+    made_second = [float(value) for value in second]
+    if len(made_first) < 2 or len(made_second) < 2:
+        raise ValueError("qualified S3 local-patch balancing requires two axes")
+    if not windows:
+        return made_first, made_second, 0
+    if periodic_second:
+        if second_span is None or not math.isfinite(float(second_span)) or float(second_span) <= 0.0:
+            raise ValueError("periodic qualified S3 balancing requires a positive span")
+        period = float(second_span)
+    else:
+        period = 0.0
+
+    original_total = len(made_first) + len(made_second)
+
+    def widths(values: list[float]) -> list[float]:
+        made = [float(end) - float(start) for start, end in zip(values, values[1:])]
+        if not made or min(made) <= 0.0:
+            raise ValueError("qualified S3 local-patch breaks must be increasing")
+        return made
+
+    def active_intervals(
+        values: list[float],
+        *,
+        low_key: str,
+        high_key: str,
+        expansion: float,
+        periodic: bool,
+    ) -> list[bool]:
+        result = []
+        offsets = (-period, 0.0, period) if periodic else (0.0,)
+        for start, end in zip(values, values[1:]):
+            selected = False
+            for window in windows:
+                low = float(window[low_key]) - expansion
+                high = float(window[high_key]) + expansion
+                if any(float(start) < high + offset and float(end) > low + offset for offset in offsets):
+                    selected = True
+                    break
+            result.append(selected)
+        return result
+
+    def refine(
+        values: list[float],
+        selected: Sequence[bool],
+        limit: float,
+    ) -> list[float]:
+        result = [float(values[0])]
+        for is_selected, start, end in zip(selected, values, values[1:]):
+            width = float(end) - float(start)
+            pieces = (
+                max(1, int(math.ceil(width / max(limit, 1.0e-15))))
+                if is_selected
+                else 1
+            )
+            result.extend(
+                float(start) + width * index / pieces
+                for index in range(1, pieces + 1)
+            )
+        made = sorted(set(round(value, 12) for value in result))
+        if len(made) > maximum_breaks_per_axis:
+            raise ValueError(
+                "qualified S3 local-patch balancing would exceed the bounded "
+                f"{maximum_breaks_per_axis}-break axis limit"
+            )
+        return made
+
+    first_expansion = max(widths(made_first))
+    second_expansion = max(widths(made_second))
+    for _iteration in range(8):
+        first_widths = widths(made_first)
+        second_widths = widths(made_second)
+        active_first = active_intervals(
+            made_first,
+            low_key="u0",
+            high_key="u1",
+            expansion=first_expansion,
+            periodic=False,
+        )
+        active_second = active_intervals(
+            made_second,
+            low_key="v0",
+            high_key="v1",
+            expansion=second_expansion,
+            periodic=periodic_second,
+        )
+        selected_first_widths = [
+            value for value, selected in zip(first_widths, active_first) if selected
+        ]
+        selected_second_widths = [
+            value for value, selected in zip(second_widths, active_second) if selected
+        ]
+        if not selected_first_widths or not selected_second_widths:
+            raise ValueError("qualified S3 local-patch window does not intersect the grid")
+        updated_first = refine(
+            made_first,
+            active_first,
+            1.70 * min(selected_second_widths),
+        )
+        updated_second = refine(
+            made_second,
+            active_second,
+            1.70 * min(selected_first_widths),
+        )
+        if updated_first == made_first and updated_second == made_second:
+            added = len(made_first) + len(made_second) - original_total
+            return made_first, made_second, int(added)
+        made_first, made_second = updated_first, updated_second
+    raise ValueError("qualified S3 local-patch balancing did not converge")
+
+
 def _node_lookup(nodes: list[dict[str, object]]) -> dict[int, np.ndarray]:
     return {int(node["id"]): np.asarray(node["coords"], dtype=float) for node in nodes}
+
+
+def _unit_generated_owner_normal(
+    shell: Mapping[str, object],
+    coordinates: Mapping[int, np.ndarray],
+    *,
+    cylinder_radius: float,
+) -> tuple[float, float, float]:
+    """Return the physical surface normal authored by the mesh generator."""
+
+    supplied = shell.get("reference_normal")
+    if supplied is not None:
+        normal = np.asarray(supplied, dtype=float).reshape(-1)
+    else:
+        node_ids = [int(value) for value in shell.get("node_ids", ())]
+        if len(node_ids) < 3 or any(node_id not in coordinates for node_id in node_ids[:3]):
+            raise ValueError("generated S3 owner-normal authority lacks three nodes")
+        points = [coordinates[node_id] for node_id in node_ids[:3]]
+        role = str(shell.get("role", "skin") or "skin").strip().lower()
+        if cylinder_radius > 0.0 and role in {"", "skin"}:
+            centroid = sum(points) / 3.0
+            normal = np.asarray((centroid[0], centroid[1], 0.0), dtype=float)
+        else:
+            normal = np.cross(points[1] - points[0], points[2] - points[0])
+    if normal.shape != (3,) or not np.all(np.isfinite(normal)):
+        raise ValueError("generated S3 owner-normal authority must be a finite 3-vector")
+    magnitude = float(np.linalg.norm(normal))
+    if magnitude <= 0.0:
+        raise ValueError("generated S3 owner-normal authority must be nonzero")
+    unit = normal / magnitude
+    return tuple(float(value) for value in unit)
+
+
+def _bind_generated_shell_authority(
+    generated: GeneratedGeometry,
+) -> GeneratedGeometry:
+    """Bind topology policy and physical owner normals to generated S3 rows.
+
+    This is a serialization/provenance adapter only; it does not evaluate or
+    alter element mechanics.  Pre-existing external records are handled by
+    their own migration policy rather than silently passing through here.
+    """
+
+    raw_nodes = generated.get("nodes", ()) or ()
+    nodes = [dict(node) for node in raw_nodes if isinstance(node, Mapping)]
+    coordinates = _node_lookup(nodes)
+    cylinder_radius = float(generated.get("radius_m", 0.0) or 0.0)
+    raw_shells = generated.get("shells", ()) or ()
+    for raw_shell in raw_shells:
+        if not isinstance(raw_shell, dict):
+            raise TypeError("generated shell records must be mutable mappings")
+        node_ids = tuple(int(value) for value in raw_shell.get("node_ids", ()))
+        if len(node_ids) != 3:
+            continue
+        requested = str(raw_shell.get("formulation", "e4-pl-s3"))
+        normalized = requested.strip().lower().replace("_", "-")
+        if normalized in {"legacy", "legacy-s3"}:
+            raw_shell["formulation"] = "legacy-s3"
+            raw_shell["formulation_id"] = "LEGACY_SHELL_ELEMENT_TRI3"
+            raw_shell["owner_normal_authority"] = "NOT_APPLICABLE_LEGACY_S3"
+            continue
+        if normalized not in {"e4-pl-s3", "qualified-s3"}:
+            raise ValueError(f"unsupported generated S3 formulation {requested!r}")
+        raw_shell["formulation"] = "e4-pl-s3"
+        raw_shell["formulation_id"] = _QUALIFIED_S3_FORMULATION_ID
+        raw_shell["reference_normal"] = list(
+            _unit_generated_owner_normal(
+                raw_shell,
+                coordinates,
+                cylinder_radius=cylinder_radius,
+            )
+        )
+        raw_shell["owner_normal_authority"] = "PHYSICAL_SURFACE_OWNER_NORMAL_V1"
+    generated["shell_formulation_policy"] = {
+        "schema": _GENERATED_SHELL_POLICY_SCHEMA,
+        "q4_default": "e4-pl",
+        "s3_default": "e4-pl-s3",
+        "s3_formulation_id": _QUALIFIED_S3_FORMULATION_ID,
+        "qualified_s3_owner_normal": "REQUIRED",
+        "missing_authority_disposition": "FAIL_OR_EXPLICIT_LEGACY_MIGRATION",
+    }
+    return generated
 
 
 def _project_cylinder_midpoint(a: np.ndarray, b: np.ndarray, radius: float) -> np.ndarray:
@@ -3046,6 +3311,29 @@ def _flat_generated_geometry(geometry: dict, config: LightweightFEMConfig) -> di
         if girder_positions:
             y_breaks = _refined_midpoint_breaks(y_breaks)
 
+    if use_local_patch:
+        balancing_windows = _local_patch_detail_windows(
+            config,
+            length,
+            width,
+            min(global_base_x, global_base_y),
+            thickness,
+        )
+        if balancing_windows:
+            x_breaks, y_breaks, added_breaks = _local_patch_s3_balanced_breaks(
+                x_breaks,
+                y_breaks,
+                balancing_windows,
+            )
+            mesh_generation["qualified_s3_local_patch_balance"] = {
+                "added_breaks": int(added_breaks),
+                "scope": "TRANSITION_WINDOWS_PLUS_ONE_BASE_CELL",
+            }
+
+    if _wants_s3(config):
+        x_breaks, y_breaks = _s3_quality_balanced_breaks(x_breaks, y_breaks)
+        mesh_generation["qualified_s3_grid_admission"] = "30_DEGREE_BALANCED"
+
     rows = len(x_breaks)
     cols = len(y_breaks)
 
@@ -3388,6 +3676,14 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
 
     thickness = _positive(geometry.get("thickness_m", 0.01), 0.01)
     circumference = 2.0 * math.pi * radius
+    use_local_patch_grid = (
+        _wants_local_patch_transition(config)
+        and not is_cone
+        and not _member_webs_as_shells(config)
+        and not _wants_b3(config)
+        and not _wants_s6(config)
+        and not _wants_s8(config)
+    )
     stiffener_spacing = _positive_spacing(geometry.get("stiffener_spacing_m", 0.0))
     active_stiffener_spacing = (
         stiffener_spacing
@@ -3489,6 +3785,32 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
     # QuadraticBeamElement formulation.
     if _wants_b3(config) and config.include_stiffeners and geometry.get("has_stiffener"):
         z_breaks = _refined_midpoint_breaks(z_breaks)
+    if use_local_patch_grid:
+        base_z_size = max(np.diff(np.asarray(z_breaks, dtype=float)))
+        base_arc_size = max(np.diff(np.asarray(arc_breaks, dtype=float)))
+        balancing_windows = _local_patch_detail_windows(
+            config,
+            length,
+            circumference,
+            min(float(base_z_size), float(base_arc_size)),
+            thickness,
+            radius=radius,
+        )
+        if balancing_windows:
+            z_breaks, arc_breaks, added_breaks = _local_patch_s3_balanced_breaks(
+                z_breaks,
+                arc_breaks,
+                balancing_windows,
+                periodic_second=True,
+                second_span=circumference,
+            )
+            mesh_generation["qualified_s3_local_patch_balance"] = {
+                "added_breaks": int(added_breaks),
+                "scope": "TRANSITION_WINDOWS_PLUS_ONE_BASE_CELL",
+            }
+    if _wants_s3(config):
+        z_breaks, arc_breaks = _s3_quality_balanced_breaks(z_breaks, arc_breaks)
+        mesh_generation["qualified_s3_grid_admission"] = "30_DEGREE_BALANCED"
     rows = len(z_breaks)
     axial_div = rows - 1
     cols = max(len(arc_breaks) - 1, 1)
@@ -3681,14 +4003,7 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
                 beam_id += 1
 
     local_patch_info: dict[str, object] | None = None
-    use_local_patch = (
-        _wants_local_patch_transition(config)
-        and not is_cone
-        and not _member_webs_as_shells(config)
-        and not _wants_b3(config)
-        and not _wants_s6(config)
-        and not _wants_s8(config)
-    )
+    use_local_patch = use_local_patch_grid
     if use_local_patch:
         base_z_size = length / max(len(z_breaks) - 1, 1)
         base_arc_size = circumference / max(len(arc_breaks) - 1, 1)
@@ -3846,8 +4161,10 @@ def build_generated_geometry(geometry: NormalizedGeometry, config: LightweightFE
     """Build the deterministic full shell/beam mesh consumed by the FE backend."""
 
     if geometry.get("geometry") == "cylinder":
-        return _cylinder_generated_geometry(geometry, config)
-    return _flat_generated_geometry(geometry, config)
+        generated = _cylinder_generated_geometry(geometry, config)
+    else:
+        generated = _flat_generated_geometry(geometry, config)
+    return _bind_generated_shell_authority(generated)
 
 
 def _nodal_scalar_fields(model, stresses_by_element: dict[int, object]) -> dict[str, dict[int, float]]:
@@ -8780,6 +9097,35 @@ def run_production_fem(
     if geometry.get("geometry") == "cylinder" and config.include_end_lids and _add_cylinder_buckling_gauge(model, generated_geometry):
         diagnostics.append("Applied buckling-only rigid-body gauge constraints to the lid center nodes.")
     buckling_kwargs = _buckling_solver_kwargs(config)
+    has_qualified_s3 = any(
+        str(getattr(element, "formulation_id", ""))
+        == _QUALIFIED_S3_FORMULATION_ID
+        for element in model.mesh.elements.values()
+    )
+    if has_qualified_s3 and capacity_workflow_result is None:
+        if (
+            nonlinear_static_result is not None
+            and bool(getattr(nonlinear_static_result, "converged", False))
+            and isinstance(getattr(nonlinear_static_result, "element_states", None), Mapping)
+        ):
+            buckling_kwargs.update(
+                {
+                    "current_state_displacements": np.asarray(
+                        nonlinear_static_result.displacements, dtype=float
+                    ),
+                    "current_state_element_states": nonlinear_static_result.element_states,
+                    "current_state_num_layers": int(config.nonlinear_layers),
+                    "current_state_load_scale": 1.0,
+                }
+            )
+            diagnostics.append(
+                "Qualified S3 buckling uses the committed current-state authority."
+            )
+        else:
+            buckling_kwargs["reference_elastic_only"] = True
+            diagnostics.append(
+                "Qualified S3 buckling uses explicit reference-elastic authority."
+            )
     if capacity_workflow_result is not None:
         buckling_result = capacity_workflow_result.buckling_result
     elif _wants_eigenvalue_buckling(config):

@@ -86,12 +86,27 @@ def test_published_identity_and_seven_point_rule_are_frozen() -> None:
     assert sum(weight for _r, _s, weight in TRIANGLE_QUADRATURE) == pytest.approx(0.5)
 
 
-def test_opt_in_dispatch_keeps_all_existing_defaults_unchanged() -> None:
+def test_activation_dispatch_preserves_explicit_legacy_rollback() -> None:
     assert DEFAULT_Q4_FORMULATION == "e4-pl"
-    assert DEFAULT_S3_FORMULATION == "legacy-s3"
-    assert type(create_shell_element(1, [1, 2, 3], "steel")) is LegacyShellElement
-    assert type(create_element("s3", 2, [1, 2, 3], "steel")) is LegacyShellElement
-    assert type(create_element("tria3", 3, [1, 2, 3], "steel")) is LegacyShellElement
+    assert DEFAULT_S3_FORMULATION == "e4-pl-s3"
+    assert type(
+        create_shell_element(
+            1, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
+        )
+    ) is QualifiedE4PLS3ShellElement
+    assert type(
+        create_element(
+            "s3", 2, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
+        )
+    ) is QualifiedE4PLS3ShellElement
+    assert type(
+        create_element(
+            "tria3", 3, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
+        )
+    ) is QualifiedE4PLS3ShellElement
+    assert type(
+        create_element("legacy-s3", 30, [1, 2, 3], "steel")
+    ) is LegacyShellElement
     assert type(
         create_element(
             "tria3",

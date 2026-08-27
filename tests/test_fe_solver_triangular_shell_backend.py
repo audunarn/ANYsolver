@@ -202,7 +202,14 @@ def test_triangular_pressure_reverses_with_winding() -> None:
 
 
 def test_triangular_aliases_and_mixed_q4_t3_assembly() -> None:
-    tri3 = create_element("TRIA3", 1, [1, 2, 3], "steel", thickness=0.01)
+    tri3 = create_element(
+        "TRIA3",
+        1,
+        [1, 2, 3],
+        "steel",
+        thickness=0.01,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
     tri6 = create_element("t6", 2, [1, 2, 3, 4, 5, 6], "steel", thickness=0.01)
     assert isinstance(tri3, ShellElement)
     assert isinstance(tri6, ShellElement)
@@ -264,7 +271,15 @@ def test_generated_geometry_accepts_triangular_shell_topology() -> None:
             {"id": 2, "coords": [1.0, 0.0, 0.0]},
             {"id": 3, "coords": [0.0, 1.0, 0.0]},
         ],
-        "shells": [{"id": 10, "node_ids": [1, 2, 3], "thickness": 0.01}],
+        "shells": [
+            {
+                "id": 10,
+                "node_ids": [1, 2, 3],
+                "thickness": 0.01,
+                "formulation": "legacy-s3",
+                "formulation_id": "LEGACY_SHELL_ELEMENT_TRI3",
+            }
+        ],
     }
     model = build_fe_model_from_generated_geometry(generated, AnyStructureFEMConfig(include_beams=False))
     element = model.mesh.elements[10]
@@ -291,9 +306,23 @@ def test_anystructure_runtime_geometry_can_emit_triangular_shells(order: str, no
         runtime_fe_solver.LightweightFEMConfig(mesh_fidelity="coarse", shell_element_order=order),
     )
 
-    assert len(generated["shells"]) == 2 * len(baseline["shells"])
+    if node_count == 3:
+        assert len(generated["shells"]) >= 2 * len(baseline["shells"])
+    else:
+        assert len(generated["shells"]) == 2 * len(baseline["shells"])
     assert {str(shell["type"]) for shell in generated["shells"]} == {shell_type}
     assert {len(shell["node_ids"]) for shell in generated["shells"]} == {node_count}
+    if node_count == 3:
+        assert {shell["formulation"] for shell in generated["shells"]} == {
+            "e4-pl-s3"
+        }
+        assert {shell["formulation_id"] for shell in generated["shells"]} == {
+            "E4_PL_QUALIFIED_S3_COMPANION_V1"
+        }
+        assert {
+            shell["owner_normal_authority"] for shell in generated["shells"]
+        } == {"PHYSICAL_SURFACE_OWNER_NORMAL_V1"}
+        assert all("reference_normal" in shell for shell in generated["shells"])
 
     model = build_fe_model_from_generated_geometry(generated, AnyStructureFEMConfig(include_beams=False))
     K, _ = assemble_stiffness_matrix(model)
@@ -320,6 +349,12 @@ def test_anystructure_runtime_cylinder_can_emit_triangular_shells(order: str, no
 
     assert {str(shell["type"]) for shell in generated["shells"]} == {shell_type}
     assert {len(shell["node_ids"]) for shell in generated["shells"]} == {node_count}
+    if node_count == 3:
+        assert all(shell["formulation"] == "e4-pl-s3" for shell in generated["shells"])
+        assert all(
+            shell["owner_normal_authority"] == "PHYSICAL_SURFACE_OWNER_NORMAL_V1"
+            for shell in generated["shells"]
+        )
     if order == "S6":
         coords = {int(node["id"]): np.asarray(node["coords"], dtype=float) for node in generated["nodes"]}
         used_node_ids = {int(node_id) for shell in generated["shells"] for node_id in shell["node_ids"]}
@@ -348,7 +383,16 @@ def test_anystructure_visualization_preserves_mixed_skin_shell_topology() -> Non
         ],
         "shells": [
             {"id": 1, "node_ids": [1, 2, 5, 4], "type": "S4", "thickness": 0.01},
-            {"id": 2, "node_ids": [2, 6, 5], "type": "S3", "thickness": 0.01},
+            {
+                "id": 2,
+                "node_ids": [2, 6, 5],
+                "type": "S3",
+                "thickness": 0.01,
+                "formulation": "e4-pl-s3",
+                "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+                "reference_normal": [0.0, 0.0, 1.0],
+                "owner_normal_authority": "PHYSICAL_SURFACE_OWNER_NORMAL_V1",
+            },
             {"id": 3, "node_ids": [2, 3, 6, 7, 8, 9], "type": "S6", "thickness": 0.01},
         ],
         "plot_grid": [[1, 2, 3], [4, 5, 6]],

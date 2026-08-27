@@ -537,7 +537,28 @@ def _shell_formulation_policy(
             raise ValueError("conflicting-shell-formulation-fields")
     request = formulation if formulation is not None else shell_formulation
     requested = None if request is None else str(request)
-    return requested, _normalized_shell_formulation(int(node_count), requested)
+    selected = _normalized_shell_formulation(int(node_count), requested)
+    supplied_id = _value(shell, "formulation_id", default=None)
+    expected_ids = {
+        "e4-pl": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+        "e4-pl-s3": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+        "legacy-s3": "LEGACY_SHELL_ELEMENT_TRI3",
+        "legacy": "LEGACY_SHELL_ELEMENT",
+    }
+    if supplied_id is not None and str(supplied_id) != expected_ids[selected]:
+        raise ValueError("shell-formulation-id-does-not-match-selected-policy")
+    if selected == "e4-pl-s3":
+        if supplied_id is None:
+            raise ValueError("qualified-s3-generated-record-requires-formulation-id")
+        if _value(shell, "reference_normal", default=None) is None:
+            raise ValueError("qualified-s3-generated-record-requires-owner-normal")
+        if _value(shell, "owner_normal_authority", default=None) != (
+            "PHYSICAL_SURFACE_OWNER_NORMAL_V1"
+        ):
+            raise ValueError(
+                "qualified-s3-generated-record-requires-physical-owner-normal-authority"
+            )
+    return requested, selected
 
 
 def _shell_director_kwargs(

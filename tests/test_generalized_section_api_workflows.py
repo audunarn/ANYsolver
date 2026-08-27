@@ -161,7 +161,9 @@ def test_generated_geometry_routes_explicit_qualified_s3_with_director_authority
             "thickness": 0.02,
             "shell_section": "laminate",
             "shell_formulation": "qualified-s3",
+            "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
             "reference_normal": [0.0, 0.0, 1.0],
+            "owner_normal_authority": "PHYSICAL_SURFACE_OWNER_NORMAL_V1",
         }
     ]
 
@@ -172,13 +174,15 @@ def test_generated_geometry_routes_explicit_qualified_s3_with_director_authority
     np.testing.assert_array_equal(shell.reference_normal, (0.0, 0.0, 1.0))
 
 
-def test_generated_geometry_preserves_legacy_s3_default_and_rejects_director_state() -> None:
+def test_generated_geometry_preserves_explicit_legacy_s3_and_rejects_director_state() -> None:
     geometry = _generated_geometry()
     geometry["shells"] = [
         {
             "id": 1,
             "node_ids": [1, 2, 4],
             "thickness": 0.02,
+            "formulation": "legacy-s3",
+            "formulation_id": "LEGACY_SHELL_ELEMENT_TRI3",
         }
     ]
     model = build_fe_model_from_generated_geometry(geometry)
@@ -186,7 +190,6 @@ def test_generated_geometry_preserves_legacy_s3_default_and_rejects_director_sta
 
     geometry["shells"][0].update(
         {
-            "formulation": "legacy-s3",
             "reference_normal": [0.0, 0.0, 1.0],
         }
     )

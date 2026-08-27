@@ -32,6 +32,7 @@ from scripts.run_e4_pl_burnin_gate import inventory  # noqa: E402
 
 MERGE_LANES = ("quick", "additive", "functional")
 POST_CLOSEOUT_HISTORICAL_MODULES = (
+    "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py",
     "tests/test_e4_pl_s3_q4_burnin_authority.py",
 )
 DEDICATED_LANE_NODES = (

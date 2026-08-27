@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from anysolver.elements import ShellElement
+from anysolver.elements import LegacyShellElement, ShellElement
 from anysolver.sesam_fem import import_sesam_fem
 
 
@@ -97,8 +97,15 @@ def test_import_sesam_fem_builds_native_shell_model() -> None:
     assert result.model.mesh.num_nodes == 4
     assert result.model.mesh.num_elements == 2
     assert result.element_count_by_type == {25: 1, 24: 1}
-    assert isinstance(result.model.mesh.elements[100], ShellElement)
+    assert type(result.model.mesh.elements[100]) is LegacyShellElement
     assert result.model.mesh.elements[100].thickness == pytest.approx(0.02)
+    assert result.model.mesh.elements[100].sesam_formulation_id == (
+        "LEGACY_SHELL_ELEMENT_TRI3"
+    )
+    assert any(
+        diagnostic.code == "FEM132" and diagnostic.severity == "warning"
+        for diagnostic in result.diagnostics
+    )
     assert len(result.model.boundary_conditions) == 1
 
 

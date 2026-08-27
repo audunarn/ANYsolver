@@ -128,10 +128,14 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "tests/test_recovery_qualification.py",
                 "test_patch_rejects_reduced_q8_and_warped_q4_outside_qualified_scope",
             ): 1,
+            (
+                "tests/test_s3_default_activation.py",
+                "test_direct_shell_element_and_explicit_legacy_s3_remain_legacy",
+            ): 1,
         }
     )
     assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == 21
+    assert sum(calls["ShellElement"].values()) == 22
     expected_qualified_q4 = Counter(
         {
             (

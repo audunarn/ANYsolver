@@ -323,6 +323,27 @@ def _edge_counts(shells: list[dict]) -> Counter:
     return edges
 
 
+def _minimum_transition_triangle_angle(generated: dict) -> float:
+    coordinates = {
+        int(node["id"]): np.asarray(node["coords"], dtype=float)
+        for node in generated["nodes"]
+    }
+    angles = []
+    for shell in _skin_shells(generated):
+        if len(shell["node_ids"]) != 3:
+            continue
+        points = [coordinates[int(node_id)] for node_id in shell["node_ids"]]
+        for position in range(3):
+            first = points[(position + 1) % 3] - points[position]
+            second = points[(position - 1) % 3] - points[position]
+            cosine = float(np.dot(first, second)) / float(
+                np.linalg.norm(first) * np.linalg.norm(second)
+            )
+            angles.append(math.degrees(math.acos(np.clip(cosine, -1.0, 1.0))))
+    assert angles
+    return min(angles)
+
+
 def _assert_conforming(generated: dict, outline_check) -> None:
     """Interior skin edges shared by exactly 2 elements; count-1 edges on the outline."""
     nodes = {int(n["id"]): np.asarray([float(c) for c in n["coords"]]) for n in generated["nodes"]}
@@ -392,6 +413,11 @@ def test_cylinder_local_patch_quality_beats_graded() -> None:
         )
 
     _assert_conforming(patched, on_end_ring)
+    assert _minimum_transition_triangle_angle(patched) >= 30.0
+    balance = patched["mesh_generation"]["qualified_s3_local_patch_balance"]
+    assert set(balance) == {"added_breaks", "scope"}
+    assert balance["scope"] == "TRANSITION_WINDOWS_PLUS_ONE_BASE_CELL"
+    assert int(balance["added_breaks"]) > 0
 
     def worst_aspect(generated: dict) -> float:
         nodes = {int(n["id"]): np.asarray([float(c) for c in n["coords"]]) for n in generated["nodes"]}
