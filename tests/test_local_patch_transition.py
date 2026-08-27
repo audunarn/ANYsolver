@@ -247,17 +247,52 @@ def test_local_patch_falls_back_for_shell_web_members() -> None:
 
 
 def test_local_patch_model_solves_with_collision() -> None:
+    # This is the bounded end-to-end collision smoke.  The larger FLAT fixture
+    # above pins dense-patch conformity, locality, and quality.  A coarser
+    # adaptive patch and short positive approach retain mixed Q4/S3 topology,
+    # member splitting, automatic time control, contact, and damage without
+    # spending hundreds of transient steps before the sphere reaches the panel.
+    config = _impact_config(
+        collision_adaptive_fine_size_m=0.35,
+        collision_start_z_m=0.18,
+        collision_result_interval_s=0.005,
+        pressure_pa=100000.0,
+        boundary_condition="clamped",
+        collision_mass_kg=100.0,
+        collision_speed_mps=3.0,
+    )
+    generated = build_generated_geometry(FLAT, config)
+    skin = _skin_shells(generated)
+    adaptive = generated["adaptive_mesh"]
+    assert adaptive["enabled"] is True
+    assert adaptive["transition"] == "local patch (quad+tri)"
+    assert adaptive["max_level"] >= 1
+    assert adaptive["fine_element_size_m"] < adaptive["coarse_element_size_m"]
+    assert adaptive["refined_cells"] > 0
+    assert adaptive["tri_count"] > 0
+    assert adaptive["beam_splits"] > 0
+    assert any(len(shell["node_ids"]) == 3 for shell in skin)
+    assert any(len(shell["node_ids"]) == 4 for shell in skin)
+
     result = run_production_fem(
         FLAT,
-        _impact_config(
-            pressure_pa=100000.0,
-            boundary_condition="clamped",
-            collision_mass_kg=100.0,
-            collision_speed_mps=3.0,
-        ),
+        config,
     )
+    summary = result.prestress_summary
     assert result.status == "ok"
+    assert math.isfinite(result.displacement_max_m)
     assert result.displacement_max_m > 0.0
+    assert summary["collision_status"] == "completed"
+    assert summary["collision_time_mode"] == "auto"
+    assert math.isfinite(float(summary["collision_peak_contact_force_n"]))
+    assert float(summary["collision_peak_contact_force_n"]) > 0.0
+    assert math.isfinite(float(summary["collision_contact_duration_s"]))
+    assert float(summary["collision_contact_duration_s"]) > 0.0
+    assert float(summary["collision_saved_steps"]) > 1.0
+    assert float(summary["collision_resolved_dt_s"]) > 0.0
+    assert float(summary["collision_resolved_total_time_s"]) > float(
+        summary["collision_estimated_arrival_time_s"]
+    )
     assert any("Local patch transition" in str(d) for d in result.diagnostics)
     assert any("collision transient: completed" in str(d) for d in result.diagnostics)
 
@@ -313,7 +348,8 @@ def test_axial_cylinder_stress_is_mesh_style_invariant() -> None:
         point_refinement_enabled=True,
         point_refinement_x_m=5.0,
         point_refinement_y_m=5.694,
-        point_refinement_extent_m=1.0,
+        point_refinement_fine_size_m=0.30,
+        point_refinement_extent_m=0.30,
         point_refinement_growth_factor=1.35,
     )
     styles = {
@@ -329,14 +365,27 @@ def test_axial_cylinder_stress_is_mesh_style_invariant() -> None:
         for label, overrides in styles.items():
             config = fs.LightweightFEMConfig(
                 mesh_fidelity="coarse",
+                mesh_size_m=1.0,
                 boundary_condition="auto",
                 include_end_lids=True,
                 axial_force_n=50.0e6,
                 pressure_pa=0.0,
+                runtime_solver="static only",
+                analysis_type="linear",
+                num_buckling_modes=0,
                 **overrides,
             )
+            generated = fs.build_generated_geometry(cylinder, config)
+            if label != "uniform":
+                assert generated["adaptive_mesh"]["enabled"] is True
+            if label == "local patch (quad+tri)":
+                adaptive = generated["adaptive_mesh"]
+                assert adaptive["transition"] == "local patch (quad+tri)"
+                assert adaptive["refined_cells"] > 0
+                assert adaptive["tri_count"] > 0
             result = fs.run_production_fem(cylinder, config)
             assert result.status == "ok", (label, result.status)
+            assert result.buckling_factors == (), label
             model, disp = captured["model"], captured["disp"]
             stresses = fs._backend_compute_stresses(model, disp)
             vm_values = []
@@ -451,6 +500,9 @@ def test_axial_flat_plate_stress_is_mesh_style_invariant() -> None:
                 boundary_condition="auto",
                 axial_force_n=10.0e6,
                 pressure_pa=0.0,
+                runtime_solver="static only",
+                analysis_type="linear",
+                num_buckling_modes=0,
                 **overrides,
             )
             generated = build_generated_geometry(flat, config)
@@ -459,6 +511,7 @@ def test_axial_flat_plate_stress_is_mesh_style_invariant() -> None:
 
             result = fs.run_production_fem(flat, config)
             assert result.status == "ok", (label, result.status)
+            assert result.buckling_factors == (), label
             model, disp = captured["model"], captured["disp"]
             stresses = fs._backend_compute_stresses(model, disp)
             vm_values = []
