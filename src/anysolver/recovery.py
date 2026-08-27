@@ -4,15 +4,24 @@ from __future__ import annotations
 
 import copy
 import math
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
+from types import FunctionType, MappingProxyType
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
 from .element_capabilities import require_model_element_capabilities
+from . import e4_pl_element as _q4_native_recovery
+from . import e4_pl_s3_element as _s3_native_recovery
+from .e4_pl_element import QualifiedE4PLShellElement as _QualifiedE4PLShellElement
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+)
 from .jit_compiler import JIT_DISABLED_REASON, JIT_ENABLED, numba_thread_scope
+from .matrix_assembly import AssemblyError as _AssemblyError
 from .recovery_batches import (
     RecoveryPlanItem,
     _get_recovery_batch_plan_under_lease,
@@ -696,6 +705,865 @@ def _compute_recovery_chunk(
         )
         for item in items
     )
+
+
+def _bind_qualified_narrow_interface_recovery() -> Any:
+    """Bind exact private mechanics used by the activation-only hot path."""
+
+    exact_q4_class = _QualifiedE4PLShellElement
+    exact_s3_class = _QualifiedE4PLS3ShellElement
+    exact_q4_module = _q4_native_recovery
+    exact_s3_module = _s3_native_recovery
+    exact_q4_module_namespace = vars(exact_q4_module)
+    exact_s3_module_namespace = vars(exact_s3_module)
+    exact_q4_class_namespace = type.__getattribute__(exact_q4_class, "__dict__")
+    exact_s3_class_namespace = type.__getattribute__(exact_s3_class, "__dict__")
+    q4_methods = {
+        name: exact_q4_class_namespace[name]
+        for name in (
+            "_constitutive_and_drill_stiffness",
+            "_physical_director_context",
+        )
+    }
+    s3_methods = {
+        name: exact_s3_class_namespace[name]
+        for name in (
+            "_director_generalized_transform",
+        )
+    }
+    q4_functions = {
+        name: exact_q4_module_namespace[name]
+        for name in (
+            "_GAUSS",
+            "_coefficients",
+            "_global_transform",
+            "_solve_stationary_system",
+            "_source_fields",
+            "_stationary_blocks",
+            "equation7_frame",
+        )
+    }
+    s3_functions = {
+        name: exact_s3_module_namespace[name]
+        for name in (
+            "PHYSICAL_EXTERNAL_INDICES",
+            "TRIANGLE_QUADRATURE",
+            "_kinematic_matrix",
+            "_reference_surface_strain_transform",
+            "_shell_material_matrices",
+        )
+    }
+    exact_array = np.asarray
+    exact_array_all = np.all
+    exact_column_stack = np.column_stack
+    exact_concatenate = np.concatenate
+    exact_float = float
+    exact_isfinite = np.isfinite
+    exact_zeros = np.zeros
+    exact_type = type
+    exact_type_getattribute = type.__getattribute__
+    exact_assembly_error = _AssemblyError
+
+    class NarrowRecoveryUnsupported(Exception):
+        pass
+
+    def require_authority() -> None:
+        q4_namespace = exact_type_getattribute(exact_q4_class, "__dict__")
+        s3_namespace = exact_type_getattribute(exact_s3_class, "__dict__")
+        if any(q4_namespace[name] is not value for name, value in q4_methods.items()):
+            raise exact_assembly_error(
+                "qualified Q4 narrow interface-recovery authority changed"
+            )
+        if any(s3_namespace[name] is not value for name, value in s3_methods.items()):
+            raise exact_assembly_error(
+                "qualified S3 narrow interface-recovery authority changed"
+            )
+        if any(
+            vars(exact_q4_module).get(name) is not value
+            for name, value in q4_functions.items()
+        ):
+            raise exact_assembly_error(
+                "qualified Q4 narrow interface-recovery module authority changed"
+            )
+        if any(
+            vars(exact_s3_module).get(name) is not value
+            for name, value in s3_functions.items()
+        ):
+            raise exact_assembly_error(
+                "qualified S3 narrow interface-recovery module authority changed"
+            )
+
+    def surface_fields(
+        frame: np.ndarray,
+        top: np.ndarray,
+        bottom: np.ndarray,
+        transverse: np.ndarray,
+        *,
+        shear_sign: float,
+    ) -> Dict[str, np.ndarray]:
+        fields: Dict[str, np.ndarray] = {}
+        for surface, values in (("top", top), ("bot", bottom)):
+            local_tensors = exact_zeros(
+                (len(values), 3, 3),
+                dtype=float,
+            )
+            local_tensors[:, 0, 0] = values[:, 0]
+            local_tensors[:, 1, 1] = values[:, 1]
+            local_tensors[:, 0, 1] = values[:, 2]
+            local_tensors[:, 1, 0] = values[:, 2]
+            owner_shear = shear_sign * transverse
+            local_tensors[:, 0, 2] = owner_shear[:, 0]
+            local_tensors[:, 2, 0] = owner_shear[:, 0]
+            local_tensors[:, 1, 2] = owner_shear[:, 1]
+            local_tensors[:, 2, 1] = owner_shear[:, 1]
+            global_tensors = exact_array(
+                [frame @ tensor @ frame.T for tensor in local_tensors],
+                dtype=float,
+            )
+            for first, second, label in (
+                (0, 0, "xx"),
+                (1, 1, "yy"),
+                (0, 1, "xy"),
+            ):
+                fields[f"global_{label}_{surface}"] = global_tensors[
+                    :, first, second
+                ].copy()
+        return fields
+
+    def q4_setup(
+        element: Any,
+        mesh: Any,
+        material: Any,
+        post_observation: Any,
+    ) -> Any:
+        require_authority()
+        if exact_type(element) is not exact_q4_class:
+            raise NarrowRecoveryUnsupported
+        coordinates = element.get_node_coordinates(mesh)
+        frame, local_nodes, warpage = q4_functions["equation7_frame"](
+            coordinates
+        )
+        if warpage > element.planar_tolerance or element.shell_section is not None:
+            raise NarrowRecoveryUnsupported
+        coefficients = q4_functions["_coefficients"](local_nodes)
+        constitutive = q4_methods["_constitutive_and_drill_stiffness"](
+            element,
+            material,
+            frame,
+            post_observation=post_observation,
+        )[0]
+        stationary, coupling, _gram = q4_functions["_stationary_blocks"](
+            local_nodes,
+            coefficients,
+            constitutive,
+        )
+        solution, _diagnostics = q4_functions["_solve_stationary_system"](
+            stationary,
+            coupling,
+        )
+        source_fields = tuple(
+            q4_functions["_source_fields"](coefficients, r, s)[0]
+            for r, s in q4_functions["_GAUSS"]
+        )
+        physical_frame, membrane_map, curvature_map, shear_map, _sign = (
+            q4_methods["_physical_director_context"](element, frame)
+        )
+        return {
+            "solution": solution,
+            "source_fields": source_fields,
+            "transform": q4_functions["_global_transform"](frame),
+            "frame": physical_frame,
+            "membrane_map": membrane_map,
+            "curvature_map": curvature_map,
+            "shear_map": shear_map,
+            "thickness": exact_float(element.thickness),
+        }
+
+    def q4_recover(setup: Mapping[str, Any], local: np.ndarray) -> Any:
+        element_displacements = exact_array(local, dtype=float).copy()
+        local_displacement = setup["transform"].T @ element_displacements
+        stationary_parameters = -setup["solution"] @ local_displacement
+        stress_parameters = stationary_parameters[:14]
+        numbered_resultants = exact_zeros(
+            (len(setup["source_fields"]), 8),
+            dtype=float,
+        )
+        for index, source in enumerate(setup["source_fields"]):
+            numbered_resultants[index] = source @ stress_parameters
+        resultants = exact_column_stack(
+            (
+                numbered_resultants[:, :3] @ setup["membrane_map"].T,
+                numbered_resultants[:, 3:6] @ setup["curvature_map"].T,
+                numbered_resultants[:, 6:] @ setup["shear_map"].T,
+            )
+        )
+        thickness = setup["thickness"]
+        membrane_stress = resultants[:, :3] / thickness
+        bending_stress = 6.0 * resultants[:, 3:6] / (
+            thickness * thickness
+        )
+        transverse = resultants[:, 6:] / thickness
+        fields = surface_fields(
+            setup["frame"],
+            membrane_stress + bending_stress,
+            membrane_stress - bending_stress,
+            transverse,
+            shear_sign=1.0,
+        )
+        if not all(
+            bool(exact_array_all(exact_isfinite(value)))
+            for value in fields.values()
+        ):
+            raise ValueError(
+                "qualified Q4 narrow interface recovery produced non-finite fields"
+            )
+        return fields
+
+    def s3_setup(
+        element: Any,
+        material: Any,
+        components: Mapping[str, Any],
+        post_observation: Any,
+    ) -> Any:
+        require_authority()
+        if (
+            exact_type(element) is not exact_s3_class
+            or element.shell_section is not None
+        ):
+            raise NarrowRecoveryUnsupported
+        frame = components["frame"]
+        local_nodes = components["local_nodes"]
+        assumed_shear_samples = components["assumed_shear_samples"]
+        director_transform = s3_methods["_director_generalized_transform"](
+            element
+        )
+        kinematic_operators = tuple(
+            director_transform
+            @ s3_functions["_kinematic_matrix"](
+                local_nodes,
+                r,
+                s,
+                assumed_shear_samples,
+            )
+            for r, s, _weight in s3_functions["TRIANGLE_QUADRATURE"]
+        )
+        reference_transform = s3_functions[
+            "_reference_surface_strain_transform"
+        ](element.reference_surface_offset)
+        membrane_material, shear, _strain_transform, _stress_transform = (
+            s3_functions["_shell_material_matrices"](
+                material,
+                element._material_angle(frame),
+                post_observation,
+            )
+        )
+        return {
+            "frame": frame,
+            "transform": element._local_dof_transform(frame),
+            "physical_indices": s3_functions["PHYSICAL_EXTERNAL_INDICES"],
+            "bubble_map": components["bubble_map"],
+            "constitutive": components["constitutive"],
+            "kinematic_operators": kinematic_operators,
+            "reference_transform": reference_transform,
+            "reference_offset": exact_float(element.reference_surface_offset),
+            "membrane_material": membrane_material,
+            "shear": shear,
+            "thickness": exact_float(element.thickness),
+            "director_polarity": exact_float(element.director_polarity),
+        }
+
+    def s3_recover(setup: Mapping[str, Any], local: np.ndarray) -> Any:
+        element_displacements = exact_array(local, dtype=float).copy()
+        local_external = setup["transform"] @ element_displacements
+        physical_external = local_external[setup["physical_indices"]]
+        bubble = setup["bubble_map"] @ physical_external
+        coordinates = exact_concatenate((physical_external, bubble))
+        strains = exact_zeros(
+            (len(setup["kinematic_operators"]), 8),
+            dtype=float,
+        )
+        resultants = exact_zeros(strains.shape, dtype=float)
+        for index, operator in enumerate(setup["kinematic_operators"]):
+            physical_reference_strain = operator @ coordinates
+            strains[index] = (
+                physical_reference_strain
+                if setup["reference_offset"] == 0.0
+                else setup["reference_transform"] @ physical_reference_strain
+            )
+            resultants[index] = setup["constitutive"] @ strains[index]
+        membrane_stress = strains[:, :3] @ setup["membrane_material"].T
+        moment = resultants[:, 3:6]
+        thickness = setup["thickness"]
+        bending_stress = 6.0 * moment / (thickness * thickness)
+        transverse = strains[:, 6:] @ ((5.0 / 6.0) * setup["shear"]).T
+        fields = surface_fields(
+            setup["frame"],
+            membrane_stress + bending_stress,
+            membrane_stress - bending_stress,
+            transverse,
+            shear_sign=setup["director_polarity"],
+        )
+        if not all(
+            bool(exact_array_all(exact_isfinite(value)))
+            for value in fields.values()
+        ):
+            raise ValueError(
+                "qualified S3 narrow interface recovery produced non-finite fields"
+            )
+        return fields
+
+    return (
+        NarrowRecoveryUnsupported,
+        q4_setup,
+        q4_recover,
+        s3_setup,
+        s3_recover,
+    )
+
+
+_BOUND_QUALIFIED_NARROW_INTERFACE_RECOVERY = (
+    _bind_qualified_narrow_interface_recovery()
+)
+
+
+def _recover_qualified_interface_fields_under_lease_impl(
+    model: "FEModel",
+    displacements: np.ndarray,
+    element_ids: Sequence[int],
+    qualified_narrow_recovery: Any,
+    *,
+    return_global: bool,
+    qualified_runtime_guard: Any,
+) -> Dict[int, Dict[str, np.ndarray]]:
+    """Recover an owned interface selection with exact element mechanics.
+
+    This is deliberately narrower than the public recovery planner.  It is a
+    closure-only qualification path for sparse interface selections where the
+    compiled/general reference kernels are not numerically interchangeable
+    with the formulation-native qualified result.  Qualified elements use the
+    material and routing captured by the one outer recovery lease.  Everything
+    else retains the established scalar recovery fallback.
+    """
+
+    qualified_runtime_guard(stage="interface configuration preflight")
+    converted = np.asarray(displacements, dtype=float)
+    if converted.ndim != 1 or not bool(np.all(np.isfinite(converted))):
+        raise ValueError(
+            "qualified interface recovery displacements must be a finite vector"
+        )
+    # Never retain a caller-owned ndarray view across element observations.
+    # The one immutable operation snapshot prevents persistent or ABA edits of
+    # the external vector from mixing displacement generations within a batch.
+    vector = converted.copy()
+    requested = tuple(int(element_id) for element_id in element_ids)
+    qualified_runtime_guard(stage="interface input conversion")
+
+    guard_namespace = getattr(qualified_runtime_guard, "__dict__", {})
+    item_provider = (
+        dict.get(
+            guard_namespace,
+            "_qualified_owned_recovery_element_items",
+        )
+        if type(guard_namespace) is dict
+        else None
+    )
+    material_provider = (
+        dict.get(
+            guard_namespace,
+            "_qualified_owned_recovery_material",
+        )
+        if type(guard_namespace) is dict
+        else None
+    )
+    owned_mesh = (
+        dict.get(guard_namespace, "_qualified_owned_recovery_mesh")
+        if type(guard_namespace) is dict
+        else None
+    )
+    trusted_element_require = (
+        dict.get(
+            guard_namespace,
+            "_qualified_trusted_recovery_element_require",
+        )
+        if type(guard_namespace) is dict
+        else None
+    )
+
+    wanted = set(requested)
+    ordered_items = (
+        tuple(item_provider())
+        if callable(item_provider)
+        else tuple(model.mesh.elements.items())
+    )
+    available = {int(element_id) for element_id, _element in ordered_items}
+    missing = tuple(element_id for element_id in requested if element_id not in available)
+    if missing:
+        raise ValueError(f"Requested recovery element ids not found: {list(missing)}")
+    qualified_runtime_guard(stage="interface selection observation")
+
+    recovered: Dict[int, Dict[str, np.ndarray]] = {}
+    mesh = owned_mesh if owned_mesh is not None else model.mesh
+    narrow_unsupported, q4_setup, q4_recover, s3_setup, s3_recover = (
+        qualified_narrow_recovery
+    )
+    qualified_groups: Dict[
+        tuple[type[Any], tuple[Any, ...]],
+        list[tuple[int, Any, Any, np.ndarray]],
+    ] = {}
+    scalar_records: list[tuple[int, Any]] = []
+    for observed_id, element in ordered_items:
+        element_id = int(observed_id)
+        if element_id not in wanted:
+            continue
+        material = (
+            material_provider(element)
+            if callable(material_provider)
+            else None
+        )
+        is_owned_qualified = bool(
+            material is not None and callable(trusted_element_require)
+        )
+        if not is_owned_qualified:
+            scalar_records.append((element_id, element))
+            continue
+
+        trusted_element_require(
+            element,
+            material,
+            stage=f"interface element {element_id} routing preflight",
+        )
+        dof_mapping = np.asarray(
+            element.get_dof_mapping(mesh),
+            dtype=np.intp,
+        )
+        trusted_element_require(
+            element,
+            material,
+            stage=f"interface element {element_id} routing observation",
+        )
+        if (
+            dof_mapping.size == 0
+            or int(dof_mapping.min()) < 0
+            or int(dof_mapping.max()) >= vector.size
+        ):
+            if bool(getattr(element, "recovery_errors_fail_closed", False)):
+                raise ValueError(
+                    "fail-closed element recovery requires a complete in-range "
+                    "DOF mapping"
+                )
+            continue
+        local = vector[dof_mapping]
+        trusted_element_require(
+            element,
+            material,
+            stage=f"interface element {element_id} displacement observation",
+        )
+        namespace = object.__getattribute__(element, "__dict__")
+        cache_key = (
+            dict.get(namespace, "_qualified_cache_key")
+            if type(namespace) is dict
+            else None
+        )
+        components = (
+            dict.get(namespace, "_qualified_components")
+            if type(namespace) is dict
+            else None
+        )
+        narrow_candidate = bool(
+            return_global
+            and type(element)
+            in {_QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement}
+            and type(cache_key) is tuple
+            and type(components) is MappingProxyType
+            and dict.get(namespace, "shell_section") is None
+        )
+        if not narrow_candidate:
+            scalar_records.append((element_id, element))
+            continue
+
+        def observe_owned(
+            *,
+            expected_element: Any = element,
+            expected_material: Any = material,
+            expected_id: int = element_id,
+        ) -> None:
+            trusted_element_require(
+                expected_element,
+                expected_material,
+                stage=(
+                    f"interface element {expected_id} component observation"
+                ),
+            )
+
+        element._validate_qualified_component_guard(
+            post_observation=observe_owned,
+        )
+        qualified_groups.setdefault(
+            (type(element), cache_key),
+            [],
+        ).append((element_id, element, material, local))
+
+    for (_family, _cache_key), records in qualified_groups.items():
+        first_id, first_element, first_material, _first_local = records[0]
+
+        def observe_group() -> None:
+            trusted_element_require(
+                first_element,
+                first_material,
+                stage=f"interface geometry group {first_id} observation",
+            )
+
+        first_namespace = object.__getattribute__(first_element, "__dict__")
+        first_components = dict.get(first_namespace, "_qualified_components")
+        try:
+            if type(first_element) is _QualifiedE4PLShellElement:
+                setup = q4_setup(
+                    first_element,
+                    mesh,
+                    first_material,
+                    observe_group,
+                )
+                recover_one = q4_recover
+            else:
+                setup = s3_setup(
+                    first_element,
+                    first_material,
+                    first_components,
+                    observe_group,
+                )
+                recover_one = s3_recover
+        except narrow_unsupported:
+            scalar_records.extend(
+                (element_id, element)
+                for element_id, element, _material, _local in records
+            )
+            continue
+
+        for element_id, element, material, local in records:
+            trusted_element_require(
+                element,
+                material,
+                stage=f"interface element {element_id} narrow preflight",
+            )
+            recovered[element_id] = recover_one(setup, local)
+            element._validate_qualified_component_guard(
+                post_observation=lambda current_element=element,
+                current_material=material,
+                current_id=element_id: trusted_element_require(
+                    current_element,
+                    current_material,
+                    stage=(
+                        f"interface element {current_id} narrow output"
+                    ),
+                )
+            )
+
+    for element_id, _element in scalar_records:
+        qualified_runtime_guard(
+            stage=f"interface scalar fallback {element_id} preflight"
+        )
+        item = _compute_one_element_stress(
+            model,
+            vector,
+            element_id,
+            return_global=return_global,
+        )
+        qualified_runtime_guard(
+            stage=f"interface scalar fallback {element_id} observation"
+        )
+        if item is not None:
+            recovered[item[0]] = item[1]
+
+    return {
+        int(element_id): recovered[int(element_id)]
+        for element_id, _element in ordered_items
+        if int(element_id) in wanted and int(element_id) in recovered
+    }
+
+
+def _make_exact_qualified_interface_recovery_operation(
+    implementation: Any,
+    qualified_narrow_recovery: Any,
+) -> tuple[Any, Any]:
+    """Bind interface recovery routing outside mutable function defaults.
+
+    The published dispatcher remains inspectable, but every qualified call
+    executes a private function built from the captured implementation code,
+    globals, and narrow formulation kernels.  Metadata or module-name
+    replacement is rejected before any recovered field is observed.
+    """
+
+    expected_code = implementation.__code__
+    expected_defaults = implementation.__defaults__
+    expected_kwdefaults = implementation.__kwdefaults__
+    expected_kw_items = (
+        ()
+        if expected_kwdefaults is None
+        else tuple(expected_kwdefaults.items())
+    )
+    expected_globals = implementation.__globals__
+    exact_globals = dict(expected_globals)
+    exact_globals["__builtins__"] = dict(implementation.__builtins__)
+    exact_name = implementation.__name__
+    expected_module_name = implementation.__module__
+    expected_qualname = implementation.__qualname__
+    runtime_module = sys.modules[__name__]
+    exact_function_type = FunctionType
+    exact_narrow_recovery = tuple(qualified_narrow_recovery)
+    expected_global_items = tuple(
+        (name, expected_globals[name])
+        for name in expected_code.co_names
+        if name in expected_globals
+    )
+    narrow_authority = tuple(
+        (
+            function,
+            function.__code__,
+            function.__defaults__,
+            function.__kwdefaults__,
+            (
+                ()
+                if function.__kwdefaults__ is None
+                else tuple(function.__kwdefaults__.items())
+            ),
+            function.__module__,
+            function.__name__,
+            function.__qualname__,
+        )
+        for function in exact_narrow_recovery[1:]
+    )
+    published: list[Any] = []
+
+    def require() -> None:
+        if len(published) != 1:
+            raise _AssemblyError(
+                "qualified interface-recovery operation authority changed"
+            )
+        (
+            published_call,
+            published_code,
+            published_defaults,
+            published_kwdefaults,
+            published_kw_items,
+            published_module,
+            published_name,
+            published_qualname,
+        ) = published[0]
+        current_kwdefaults = implementation.__kwdefaults__
+        current_published_kwdefaults = published_call.__kwdefaults__
+        module_namespace = vars(runtime_module)
+        if (
+            implementation.__code__ is not expected_code
+            or implementation.__defaults__ is not expected_defaults
+            or current_kwdefaults is not expected_kwdefaults
+            or (
+                expected_kwdefaults is not None
+                and (
+                    type(current_kwdefaults) is not dict
+                    or len(current_kwdefaults) != len(expected_kw_items)
+                    or any(
+                        name not in current_kwdefaults
+                        or current_kwdefaults[name] is not expected
+                        for name, expected in expected_kw_items
+                    )
+                )
+            )
+            or implementation.__globals__ is not expected_globals
+            or implementation.__module__ != expected_module_name
+            or implementation.__name__ != exact_name
+            or implementation.__qualname__ != expected_qualname
+            or module_namespace.get("__name__") != expected_module_name
+            or module_namespace.get(
+                "_recover_qualified_interface_fields_under_lease_impl"
+            )
+            is not implementation
+            or any(
+                expected_globals.get(name) is not expected
+                for name, expected in expected_global_items
+            )
+            or published_call.__code__ is not published_code
+            or published_call.__defaults__ is not published_defaults
+            or current_published_kwdefaults is not published_kwdefaults
+            or (
+                published_kwdefaults is not None
+                and (
+                    type(current_published_kwdefaults) is not dict
+                    or len(current_published_kwdefaults)
+                    != len(published_kw_items)
+                    or any(
+                        name not in current_published_kwdefaults
+                        or current_published_kwdefaults[name] is not expected
+                        for name, expected in published_kw_items
+                    )
+                )
+            )
+            or published_call.__module__ != published_module
+            or published_call.__name__ != published_name
+            or published_call.__qualname__ != published_qualname
+            or module_namespace.get(
+                "_recover_qualified_interface_fields_under_lease"
+            )
+            is not published_call
+        ):
+            raise _AssemblyError(
+                "qualified interface-recovery operation authority changed"
+            )
+        for (
+            function,
+            code,
+            defaults,
+            kwdefaults,
+            kw_items,
+            module_name,
+            name,
+            qualname,
+        ) in narrow_authority:
+            current = function.__kwdefaults__
+            if (
+                function.__code__ is not code
+                or function.__defaults__ is not defaults
+                or current is not kwdefaults
+                or (
+                    kwdefaults is not None
+                    and (
+                        type(current) is not dict
+                        or len(current) != len(kw_items)
+                        or any(
+                            key not in current or current[key] is not value
+                            for key, value in kw_items
+                        )
+                    )
+                )
+                or function.__module__ != module_name
+                or function.__name__ != name
+                or function.__qualname__ != qualname
+            ):
+                raise _AssemblyError(
+                    "qualified interface-recovery kernel authority changed"
+                )
+
+    def invoke(
+        model: "FEModel",
+        displacements: np.ndarray,
+        element_ids: Sequence[int],
+        *,
+        return_global: bool,
+        qualified_runtime_guard: Any,
+    ) -> Dict[int, Dict[str, np.ndarray]]:
+        require()
+        exact_function = exact_function_type(
+            expected_code,
+            exact_globals,
+            exact_name,
+            expected_defaults,
+        )
+        exact_function.__kwdefaults__ = (
+            None
+            if expected_kwdefaults is None
+            else dict(expected_kwdefaults)
+        )
+        return exact_function(
+            model,
+            displacements,
+            element_ids,
+            exact_narrow_recovery,
+            return_global=return_global,
+            qualified_runtime_guard=qualified_runtime_guard,
+        )
+
+    def call(
+        model: "FEModel",
+        displacements: np.ndarray,
+        element_ids: Sequence[int],
+        *,
+        return_global: bool,
+        qualified_runtime_guard: Any,
+    ) -> Dict[int, Dict[str, np.ndarray]]:
+        return invoke(
+            model,
+            displacements,
+            element_ids,
+            return_global=return_global,
+            qualified_runtime_guard=qualified_runtime_guard,
+        )
+
+    published.append(
+        (
+            call,
+            call.__code__,
+            call.__defaults__,
+            call.__kwdefaults__,
+            (
+                ()
+                if call.__kwdefaults__ is None
+                else tuple(call.__kwdefaults__.items())
+            ),
+            call.__module__,
+            call.__name__,
+            call.__qualname__,
+        )
+    )
+    return call, invoke
+
+
+(
+    _recover_qualified_interface_fields_under_lease,
+    _invoke_exact_qualified_interface_recovery_operation,
+) = _make_exact_qualified_interface_recovery_operation(
+    _recover_qualified_interface_fields_under_lease_impl,
+    _BOUND_QUALIFIED_NARROW_INTERFACE_RECOVERY,
+)
+
+
+del _BOUND_QUALIFIED_NARROW_INTERFACE_RECOVERY
+del _bind_qualified_narrow_interface_recovery
+del _make_exact_qualified_interface_recovery_operation
+
+
+def _bind_qualified_interface_recovery_entrypoint(
+    lease_runner: Any,
+    exact_operation: Any,
+) -> Any:
+    """Keep the validated dispatcher out of mutable module lookup state.
+
+    As with the existing assembly entry point, wholesale replacement of this
+    caller-facing function before invocation is covered by the frozen program
+    hash, rather than by impossible self-attestation of attacker-supplied code.
+    Once this authentic entry point is invoked, its closure enters the exact
+    outer lease and validates implementation/dispatcher metadata before any
+    formulation or scalar recovery callback can run.
+    """
+
+    def call(
+        model: "FEModel",
+        displacements: np.ndarray,
+        element_ids: Sequence[int],
+        *,
+        return_global: bool = True,
+    ) -> Dict[int, Dict[str, np.ndarray]]:
+        """Return exact qualified interface fields under one runtime lease."""
+
+        return lease_runner(
+            model,
+            context="qualified interface recovery",
+            operation=lambda guard: exact_operation(
+                model,
+                displacements,
+                element_ids,
+                return_global=return_global,
+                qualified_runtime_guard=guard,
+            ),
+        )
+
+    return call
+
+
+_recover_qualified_interface_fields = _bind_qualified_interface_recovery_entrypoint(
+    _run_with_qualified_recovery_runtime_lease,
+    _invoke_exact_qualified_interface_recovery_operation,
+)
+del _invoke_exact_qualified_interface_recovery_operation
+del _bind_qualified_interface_recovery_entrypoint
 
 
 def _disabled_stress_recovery_result(

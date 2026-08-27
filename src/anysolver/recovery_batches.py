@@ -1227,6 +1227,30 @@ def _run_with_qualified_recovery_runtime_lease(
         if type(lease_namespace) is dict
         else None
     )
+    owned_element_items_provider = (
+        dict.get(lease_namespace, "_qualified_owned_element_items")
+        if type(lease_namespace) is dict
+        else None
+    )
+    owned_mesh = (
+        dict.get(lease_namespace, "_qualified_owned_mesh")
+        if type(lease_namespace) is dict
+        else None
+    )
+    if (
+        callable(owned_element_items_provider)
+        and callable(owned_material_provider)
+        and type(owned_mesh) is _FEMesh
+    ):
+        # Closure-private consumers may traverse the exact element order and
+        # resolve already-bound qualified materials without re-entering public
+        # model providers.  These capabilities never escape this complete,
+        # non-renewable recovery lease.
+        require._qualified_owned_recovery_element_items = (
+            owned_element_items_provider
+        )
+        require._qualified_owned_recovery_material = owned_material_provider
+        require._qualified_owned_recovery_mesh = owned_mesh
     if callable(owned_material_provider):
         def exact_qualified_element_candidate(element: Any) -> bool:
             return owned_material_provider(element) is not None

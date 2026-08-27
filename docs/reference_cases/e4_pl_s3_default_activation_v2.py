@@ -545,6 +545,333 @@ def _reference_nodal_field(
     return values
 
 
+def _solve_hard_navier_plate_v2(
+    model: Any,
+    load: Any,
+) -> tuple[Any, dict[str, Any], Any]:
+    """Solve the frozen flat-plate system through its exact flexural block.
+
+    The protocol-v2 convergence fixture is a flat, symmetric-section plate
+    with zero membrane/drill loading.  Its ``(w, rx, ry)`` block is exactly
+    uncoupled from ``(u, v, rz)``.  Prove those conditions on the assembled
+    production operator before reducing; an altered fixture or formulation
+    therefore fails closed instead of silently taking this bounded route.
+    """
+
+    import numpy as np
+    from scipy import sparse
+    from anysolver.assembly import _solve_reduced_system
+    from anysolver.boundary import BoundaryCondition, LoadCase
+    from anysolver.constraint_audit import constraint_residual_summary
+    from anysolver.fe_core import FEModel
+    from anysolver.matrix_assembly import assemble_system
+
+    if type(model) is not FEModel or type(load) is not LoadCase:
+        raise QualificationError("bounded plate solve requires exact model/load types")
+    expected_supports = (
+        (
+            "hard-navier-translations",
+            {"ux": 0.0, "uy": 0.0, "uz": 0.0},
+        ),
+        ("hard-navier-x-edge-tangent-rotation", {"rx": 0.0}),
+        ("hard-navier-y-edge-tangent-rotation", {"ry": 0.0}),
+    )
+    supports = tuple(model.boundary_conditions)
+    if (
+        len(supports) != len(expected_supports)
+        or type(model.constraint_equations) is not list
+        or model.constraint_equations
+    ):
+        raise QualificationError("bounded plate support protocol changed")
+    for support, (name, constraints) in zip(supports, expected_supports):
+        if (
+            type(support) is not BoundaryCondition
+            or support.name != name
+            or type(support.node_ids) is not list
+            or type(support.dof_constraints) is not dict
+            or support.dof_constraints != constraints
+            or any(type(node_id) is not int for node_id in support.node_ids)
+        ):
+            raise QualificationError("bounded plate support authority changed")
+
+    model.apply_boundary_conditions()
+    stiffness, force, assembly_info = assemble_system(model, load)
+    if (
+        not sparse.isspmatrix_csr(stiffness)
+        or stiffness.shape[0] != stiffness.shape[1]
+        or force.shape != (stiffness.shape[0],)
+        or not np.all(np.isfinite(force))
+        or not np.all(np.isfinite(stiffness.data))
+    ):
+        raise QualificationError("bounded plate assembly is malformed")
+
+    active_all = np.asarray(
+        [
+            dof
+            for _node_id, node in sorted(model.mesh.nodes.items())
+            for dof in (node.dofs[2], node.dofs[3], node.dofs[4])
+        ],
+        dtype=np.intp,
+    )
+    free_all = np.asarray(model.mesh.dof_manager.get_free_dofs(), dtype=np.intp)
+    active_mask = np.zeros(stiffness.shape[0], dtype=bool)
+    active_mask[active_all] = True
+    active = free_all[active_mask[free_all]]
+    inactive = free_all[~active_mask[free_all]]
+    if active.size == 0 or active.size + inactive.size != free_all.size:
+        raise QualificationError("bounded plate coordinate partition is incomplete")
+    if inactive.size and np.any(force[inactive] != 0.0):
+        raise QualificationError("bounded plate inactive coordinates carry load")
+
+    # Sparse products may retain explicitly stored zeros, so remove them
+    # before requiring exact algebraic decoupling in both directions.
+    inactive_active = stiffness[inactive, :][:, active].tocsr()
+    active_inactive = stiffness[active, :][:, inactive].tocsr()
+    inactive_active.eliminate_zeros()
+    active_inactive.eliminate_zeros()
+    if inactive_active.nnz or active_inactive.nnz:
+        raise QualificationError(
+            "bounded plate membrane/drill and flexural blocks are coupled"
+        )
+
+    reduced = stiffness[active, :][:, active].tocsr()
+    solution, convergence = _solve_reduced_system(
+        reduced,
+        np.asarray(force[active], dtype=float),
+        "direct",
+    )
+    displacement = np.zeros(stiffness.shape[0], dtype=float)
+    displacement[active] = solution
+    if convergence.get("status") == "converged":
+        residual = np.asarray(
+            stiffness[free_all, :] @ displacement - force[free_all],
+            dtype=float,
+        ).reshape(-1)
+        denominator = max(
+            float(np.max(np.abs(force[free_all]), initial=0.0)),
+            np.finfo(float).tiny,
+        )
+        relative_residual = float(
+            np.max(np.abs(residual), initial=0.0) / denominator
+        )
+        if not math.isfinite(relative_residual) or relative_residual > 1.0e-8:
+            raise QualificationError(
+                "bounded plate full-system residual exceeds its frozen limit"
+            )
+    constraint_report = constraint_residual_summary(model, displacement)
+    if constraint_report.get("status") != "passed":
+        raise QualificationError("bounded plate support postcheck failed")
+    return (
+        displacement,
+        {
+            "assembly": assembly_info,
+            "bounded_exact_block_reduction": {
+                "active_coordinates": int(active.size),
+                "inactive_coordinates": int(inactive.size),
+            },
+            "constraint_postcheck": constraint_report,
+            "convergence_info": convergence,
+        },
+        stiffness,
+    )
+
+
+def _run_finalized_plate_observation(
+    model: Any,
+    observation_lease: Any,
+    operation: Any,
+) -> Any:
+    """Run one admitted observation and always close its exact lease."""
+
+    try:
+        result = operation()
+    except BaseException as operation_error:
+        try:
+            observation_lease(
+                model,
+                context="activation-v2 plate observation exceptional output",
+                final=True,
+            )
+        except BaseException as lease_error:
+            raise lease_error from operation_error
+        raise
+    observation_lease(
+        model,
+        context="activation-v2 plate observation output",
+        final=True,
+    )
+    return result
+
+
+def _observe_plate_case_v2(
+    *,
+    built: Any,
+    displacement: Any,
+    reference_vector: Any,
+    stiffness: Any,
+    producer: Any,
+    authorities: Any,
+    level: int,
+    record: Mapping[str, Any],
+    recover_interface: bool,
+    smoke: Any,
+    thickness: float,
+    pressure: float,
+    length: float,
+    width: float,
+    material_spec: Mapping[str, Any],
+    moment_modes: Any,
+    recover_fields: Any,
+    assemble_stiffness: Any,
+    np_module: Any,
+) -> tuple[dict[str, float], float, float, dict[tuple[int, int], list[float]]]:
+    """Observe component/recovery facts inside one caller-owned lease."""
+
+    np = np_module
+    # Preserve the original material lookup as an admitted observation even
+    # though the warm immutable component maps now carry the needed operators.
+    built.model.get_material(str(material_spec["name"]))
+    error_vector = displacement - reference_vector
+    energies = {
+        "Q4_PL": 0.0,
+        "Q4_RESIDUAL_HOURGLASS": 0.0,
+        "S3_PL": 0.0,
+        "TOTAL": 0.5 * float(displacement @ stiffness @ displacement),
+    }
+    error_energy = max(float(error_vector @ stiffness @ error_vector), 0.0)
+    reference_energy = max(
+        float(reference_vector @ stiffness @ reference_vector), 0.0
+    )
+    cell_errors: dict[tuple[int, int], list[float]] = {}
+    split, band = producer._interface_cells(
+        authorities.manifest_generator,
+        level=level,
+        mask=str(record["mask"]),
+        split_count=int(record["split_base_cell_count"]),
+    )
+    if recover_interface and not split:
+        band = {(i, j) for j in range(level) for i in range(level)}
+    element_id = 0
+    recovery_cells: dict[int, tuple[int, int]] = {}
+    recovery_centroids: dict[int, tuple[float, float]] = {}
+    for j in range(level):
+        for i in range(level):
+            connectivities = smoke._cell_connectivity(
+                i,
+                j,
+                level,
+                split=(i, j) in split,
+                diagonal=str(record["diagonal"]),
+            )
+            for kind, _nodes in connectivities:
+                element_id += 1
+                element = built.model.mesh.elements[element_id]
+                namespace = object.__getattribute__(element, "__dict__")
+                node_ids = dict.get(namespace, "node_ids")
+                if (
+                    type(namespace) is not dict
+                    or type(node_ids) is not tuple
+                    or len(node_ids) not in {3, 4}
+                ):
+                    raise QualificationError(
+                        f"plate element {element_id} has incompatible owned routing"
+                    )
+                mapping = np.asarray(
+                    [
+                        dof
+                        for node_id in node_ids
+                        for dof in built.model.mesh.nodes[int(node_id)].dofs
+                    ],
+                    dtype=np.intp,
+                )
+                local = displacement[mapping]
+                components = dict.get(namespace, "_qualified_components")
+                if components is None:
+                    raise QualificationError(
+                        f"plate element {element_id} lacks its warm component cache"
+                    )
+                if kind == "S3":
+                    energies["S3_PL"] += 0.5 * float(
+                        local @ components["pl"] @ local
+                    )
+                else:
+                    energies["Q4_PL"] += 0.5 * float(
+                        local @ components["pl"] @ local
+                    )
+                    energies["Q4_RESIDUAL_HOURGLASS"] += 0.5 * float(
+                        local @ components["hourglass"] @ local
+                    )
+                if recover_interface and (i, j) in band:
+                    coordinates = np.asarray(
+                        [
+                            built.model.mesh.nodes[int(node_id)].coords()
+                            for node_id in node_ids
+                        ],
+                        dtype=float,
+                    )
+                    centroid = np.mean(coordinates, axis=0)
+                    recovery_cells[element_id] = (i, j)
+                    recovery_centroids[element_id] = (
+                        float(centroid[0]),
+                        float(centroid[1]),
+                    )
+
+    if recovery_cells:
+        recovered = recover_fields(
+            built.model,
+            displacement,
+            tuple(recovery_cells),
+            return_global=True,
+        )
+        if set(recovered) != set(recovery_cells):
+            raise QualificationError(
+                "qualified interface recovery did not cover every selected element"
+            )
+        for recovered_id, recovery in recovered.items():
+            moments = []
+            for component in ("xx", "yy", "xy"):
+                top = np.asarray(
+                    recovery[f"global_{component}_top"], dtype=float
+                )
+                bottom = np.asarray(
+                    recovery[f"global_{component}_bot"], dtype=float
+                )
+                moments.append(
+                    float(np.mean(top - bottom)) * thickness**2 / 12.0
+                )
+            centroid_x, centroid_y = recovery_centroids[int(recovered_id)]
+            expected = producer._mindlin_moments(
+                centroid_x,
+                centroid_y,
+                length=length,
+                width=width,
+                thickness=thickness,
+                elastic_modulus=float(material_spec["elastic_modulus"]),
+                poisson_ratio=float(material_spec["poisson_ratio"]),
+                modes=moment_modes,
+            )
+            scale = max(float(np.linalg.norm(expected)), pressure * 1.0e-12)
+            error = float(
+                np.linalg.norm(np.asarray(moments) - expected) / scale
+            )
+            cell_errors.setdefault(recovery_cells[int(recovered_id)], []).append(
+                error
+            )
+    # Close the bracket around the direct reads of immutable component cache
+    # arrays.  The second warm assembly rejects any changed global operator;
+    # the caller's final lease additionally rejects ABA changes.
+    post_matrix, post_info = assemble_stiffness(built.model)
+    if (
+        int(post_info.get("num_elements", -1)) != len(built.model.mesh.elements)
+        or post_matrix.shape != stiffness.shape
+        or (post_matrix != stiffness).nnz != 0
+    ):
+        raise QualificationError(
+            "plate component observation changed the qualified stiffness"
+        )
+    return energies, error_energy, reference_energy, cell_errors
+
+
 def _plate_case_v2(
     bundle: MechanicsBundle,
     authorities: Any,
@@ -561,8 +888,12 @@ def _plate_case_v2(
     """
 
     import numpy as np
-    from anysolver.assembly import solve_linear
     from anysolver.boundary import LoadCase
+    from anysolver.matrix_assembly import (
+        _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE,
+        assemble_stiffness_matrix,
+    )
+    from anysolver.recovery import _recover_qualified_interface_fields
 
     producer = bundle.structural_producer
     smoke = authorities.smoke_runner
@@ -580,10 +911,8 @@ def _plate_case_v2(
     for element_id in built.model.mesh.elements:
         load.add_pressure_load(int(element_id), pressure)
     built.model.load_cases = [load]
-    displacement, solver_info = solve_linear(
-        built.model,
-        load,
-        constraint_mode="transformation",
+    displacement, solver_info, stiffness = _solve_hard_navier_plate_v2(
+        built.model, load
     )
     solver_status = str(
         (solver_info.get("convergence_info") or {}).get("status", "unknown")
@@ -631,102 +960,49 @@ def _plate_case_v2(
         length=length,
         width=width,
     )
-    material = built.model.get_material(str(material_spec["name"]))
-    energies = {
-        "Q4_PL": 0.0,
-        "Q4_RESIDUAL_HOURGLASS": 0.0,
-        "S3_PL": 0.0,
-        "TOTAL": 0.0,
-    }
-    error_energy = 0.0
-    reference_energy = 0.0
-    cell_errors: dict[tuple[int, int], list[float]] = {}
-    split, band = producer._interface_cells(
-        authorities.manifest_generator,
-        level=level,
-        mask=str(record["mask"]),
-        split_count=int(record["split_base_cell_count"]),
+    # The solve has populated the formulation-native immutable component
+    # caches.  Re-enter the exact warm assembly lease once and use its global
+    # operator for the three total-energy quadratic forms.  This is exactly
+    # the elementwise sum below, without 25,600 repeated public guard entries
+    # at N=160.
+    if int((solver_info.get("assembly") or {}).get("num_elements", -1)) != len(
+        built.model.mesh.elements
+    ):
+        raise QualificationError(
+            "bounded stiffness assembly did not cover every plate element"
+        )
+    observation_lease = _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        built.model,
+        context="activation-v2 plate observation preflight",
+        allow_q4_cached_stiffness=True,
     )
-    if recover_interface and not split:
-        band = {(i, j) for j in range(level) for i in range(level)}
-    element_id = 0
-    for j in range(level):
-        for i in range(level):
-            connectivities = smoke._cell_connectivity(
-                i,
-                j,
-                level,
-                split=(i, j) in split,
-                diagonal=str(record["diagonal"]),
-            )
-            for kind, _nodes in connectivities:
-                element_id += 1
-                element = built.model.mesh.elements[element_id]
-                mapping = np.asarray(
-                    element.get_dof_mapping(built.model.mesh), dtype=np.intp
-                )
-                local = displacement[mapping]
-                local_reference = reference_vector[mapping]
-                components = element.compute_stiffness_components(
-                    built.model.mesh, material
-                )
-                tangent = np.asarray(components["total"], dtype=float)
-                energies["TOTAL"] += 0.5 * float(local @ tangent @ local)
-                local_error = local - local_reference
-                error_energy += max(float(local_error @ tangent @ local_error), 0.0)
-                reference_energy += max(
-                    float(local_reference @ tangent @ local_reference), 0.0
-                )
-                if kind == "S3":
-                    energies["S3_PL"] += 0.5 * float(
-                        local @ components["pl"] @ local
-                    )
-                else:
-                    energies["Q4_PL"] += 0.5 * float(
-                        local @ components["pl"] @ local
-                    )
-                    energies["Q4_RESIDUAL_HOURGLASS"] += 0.5 * float(
-                        local @ components["hourglass"] @ local
-                    )
-                if recover_interface and (i, j) in band:
-                    recovery = element.compute_stresses(
-                        built.model.mesh,
-                        local,
-                        material,
-                        return_global=True,
-                    )
-                    moments = []
-                    for component in ("xx", "yy", "xy"):
-                        top = np.asarray(
-                            recovery[f"global_{component}_top"], dtype=float
-                        )
-                        bottom = np.asarray(
-                            recovery[f"global_{component}_bot"], dtype=float
-                        )
-                        moments.append(
-                            float(np.mean(top - bottom)) * thickness**2 / 12.0
-                        )
-                    coordinates = np.asarray(
-                        element.get_node_coordinates(built.model.mesh), dtype=float
-                    )
-                    centroid = np.mean(coordinates, axis=0)
-                    expected = producer._mindlin_moments(
-                        float(centroid[0]),
-                        float(centroid[1]),
-                        length=length,
-                        width=width,
-                        thickness=thickness,
-                        elastic_modulus=float(material_spec["elastic_modulus"]),
-                        poisson_ratio=float(material_spec["poisson_ratio"]),
-                        modes=moment_modes,
-                    )
-                    scale = max(
-                        float(np.linalg.norm(expected)), pressure * 1.0e-12
-                    )
-                    error = float(
-                        np.linalg.norm(np.asarray(moments) - expected) / scale
-                    )
-                    cell_errors.setdefault((i, j), []).append(error)
+    energies, error_energy, reference_energy, cell_errors = (
+        _run_finalized_plate_observation(
+            built.model,
+            observation_lease,
+            lambda: _observe_plate_case_v2(
+                built=built,
+                displacement=displacement,
+                reference_vector=reference_vector,
+                stiffness=stiffness,
+                producer=producer,
+                authorities=authorities,
+                level=level,
+                record=record,
+                recover_interface=recover_interface,
+                smoke=smoke,
+                thickness=thickness,
+                pressure=pressure,
+                length=length,
+                width=width,
+                material_spec=material_spec,
+                moment_modes=moment_modes,
+                recover_fields=_recover_qualified_interface_fields,
+                assemble_stiffness=assemble_stiffness_matrix,
+                np_module=np,
+            ),
+        )
+    )
     energy = energies["TOTAL"]
     energy_defect = abs(energy - reference["strain_energy"]) / max(
         abs(reference["strain_energy"]), np.finfo(float).tiny

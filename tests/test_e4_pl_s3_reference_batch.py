@@ -277,8 +277,11 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
 
     scalar_model = _build_model(8, include_q4=True)
     original_get = s3_batch_module.get_reference_s3_stiffness_components
+    forged_provider_calls = 0
 
     def force_scalar(candidate_model, items, **_kwargs):
+        nonlocal forged_provider_calls
+        forged_provider_calls += 1
         return (
             prepare_reference_s3_components(
                 candidate_model,
@@ -293,16 +296,33 @@ def test_stiffness_batch_uses_one_native_component_evaluation_and_copied_caches(
         "get_reference_s3_stiffness_components",
         force_scalar,
     )
-    scalar_stiffness, scalar_info = assemble_stiffness_matrix(scalar_model)
-    np.testing.assert_array_equal(stiffness.toarray(), scalar_stiffness.toarray())
-    assert scalar_info["diagnostics"][
-        "qualified_s3_reference_elastic_stiffness"
-    ]["element_count"] == 0
+    with pytest.raises(
+        AssemblyError,
+        match="qualified S3 reference-provider authority changed",
+    ):
+        assemble_stiffness_matrix(scalar_model)
+    assert forged_provider_calls == 0
     monkeypatch.setattr(
         s3_batch_module,
         "get_reference_s3_stiffness_components",
         original_get,
     )
+
+    # Retain the original scalar-parity assertion without replacing an
+    # authority-bound provider.  The elements are disjoint, so this direct
+    # assembly has the same deterministic accumulation order as the public
+    # sparse assembler.
+    scalar_model = _build_model(8, include_q4=True)
+    scalar_stiffness = np.zeros(stiffness.shape, dtype=np.float64)
+    for element in scalar_model.mesh.elements.values():
+        material = scalar_model.get_material(element.material_name)
+        element_matrix = element.compute_stiffness_matrix(
+            scalar_model.mesh,
+            material,
+        )
+        dofs = np.asarray(element.get_dof_mapping(scalar_model.mesh))
+        scalar_stiffness[np.ix_(dofs, dofs)] += element_matrix
+    np.testing.assert_array_equal(stiffness.toarray(), scalar_stiffness)
 
     # Activity/deletion is applied after the native matrices are prepared.
     activity = ElementActivity(range(1, 10))

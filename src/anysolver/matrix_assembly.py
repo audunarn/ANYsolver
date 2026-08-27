@@ -65,7 +65,11 @@ from .s3_reference_batch import (
     PreparedReferenceS3Components as _PreparedReferenceS3Components,
     REFERENCE_S3_BATCH_POLICY_ID as _REFERENCE_S3_BATCH_POLICY_ID,
     REFERENCE_S3_FORMULATION_ID as _REFERENCE_S3_FORMULATION_ID,
+    _require_prepared_s3_matrix_authority as _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY,
+    get_reference_s3_stiffness_components as _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS,
+    reference_s3_candidate as _EXACT_REFERENCE_S3_CANDIDATE,
 )
+from . import s3_reference_batch as _S3_REFERENCE_BATCH_MODULE
 from .element_capabilities import ElementCapabilityError
 from .elements import BeamElement as _BeamElement, Element as _Element
 if TYPE_CHECKING:
@@ -94,6 +98,14 @@ _ASSEMBLY_MODULE_ALIASES = {
     "_Material": _Material,
     "_Node": _Node,
     "_PreparedReferenceS3Components": _PreparedReferenceS3Components,
+    "_S3_REFERENCE_BATCH_MODULE": _S3_REFERENCE_BATCH_MODULE,
+    "_EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS": (
+        _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS
+    ),
+    "_EXACT_REFERENCE_S3_CANDIDATE": _EXACT_REFERENCE_S3_CANDIDATE,
+    "_EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY": (
+        _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY
+    ),
     "_QualifiedStateMapping": _QualifiedStateMapping,
     "_BeamElement": _BeamElement,
     "_Element": _Element,
@@ -138,6 +150,15 @@ _ASSEMBLY_SPARSE_ALIASES = {
 _ASSEMBLY_SPARSE_LINALG_ALIASES = {
     "norm": vars(_ASSEMBLY_SPARSE_LINALG)["norm"],
 }
+_ASSEMBLY_S3_REFERENCE_ALIASES = {
+    "get_reference_s3_stiffness_components": (
+        _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS
+    ),
+    "reference_s3_candidate": _EXACT_REFERENCE_S3_CANDIDATE,
+    "_require_prepared_s3_matrix_authority": (
+        _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY
+    ),
+}
 _EXACT_COO_TO_CSR = next(
     type.__getattribute__(base, "__dict__")["tocsr"]
     for base in type.__getattribute__(
@@ -173,6 +194,10 @@ _ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
 _ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
     _ASSEMBLY_SPARSE_LINALG,
     _ASSEMBLY_SPARSE_LINALG_ALIASES,
+)
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
+    _S3_REFERENCE_BATCH_MODULE,
+    _ASSEMBLY_S3_REFERENCE_ALIASES,
 )
 
 
@@ -366,6 +391,206 @@ def _make_assembly_execution_plan_registry() -> tuple[Any, Any]:
 ) = _make_assembly_execution_plan_registry()
 
 
+def _make_assembly_cold_plan_registry() -> tuple[Any, Any]:
+    """Keep cold qualified input snapshots outside caller-facing leases."""
+
+    plans: WeakKeyDictionary[Any, Any] = WeakKeyDictionary()
+
+    def register(lease: Any, plan: Any) -> None:
+        if lease in plans:
+            raise RuntimeError("qualified cold assembly plan is already bound")
+        plans[lease] = plan
+
+    def lookup(lease: Any) -> Any:
+        return plans.get(lease)
+
+    return register, lookup
+
+
+(
+    _REGISTER_QUALIFIED_ASSEMBLY_COLD_PLAN,
+    _LOOKUP_QUALIFIED_ASSEMBLY_COLD_PLAN,
+) = _make_assembly_cold_plan_registry()
+
+
+def _bind_qualified_s3_pressure_surface_cold_records(plan_lookup: Any) -> Any:
+    """Bind a non-disclosing pressure-record consumer to the hidden plan."""
+
+    exact_lookup = plan_lookup
+    exact_s3_type = _QualifiedE4PLS3ShellElement
+    exact_error = AssemblyError
+    exact_type = type
+    exact_int = int
+    exact_len = len
+    exact_list_getitem = list.__getitem__
+    exact_dict_get = dict.get
+    exact_dict_items = dict.items
+
+    def attempt(
+        lease: Any,
+        model: "FEModel",
+        load_case: "LoadCase",
+    ) -> tuple[bool, list[Dict[str, Any]]]:
+        cold_plan = exact_lookup(lease)
+        if cold_plan is None:
+            return False, []
+        load_namespace = object.__getattribute__(load_case, "__dict__")
+        pressure_loads = (
+            exact_dict_get(load_namespace, "pressure_loads")
+            if exact_type(load_namespace) is dict
+            else None
+        )
+        pressure_namespace = (
+            object.__getattribute__(pressure_loads, "__dict__")
+            if exact_type(pressure_loads) is _QualifiedStateMapping
+            else None
+        )
+        load_state_token = (
+            exact_dict_get(load_namespace, "_qualified_load_state_token")
+            if exact_type(load_namespace) is dict
+            else None
+        )
+        load_state_value = (
+            exact_int(exact_list_getitem(load_state_token, 0))
+            if exact_type(load_state_token) is _QualifiedMutationEpoch
+            and exact_len(load_state_token) == 1
+            else None
+        )
+        pressure_items = (
+            tuple(exact_dict_items(pressure_loads))
+            if exact_type(pressure_loads) is _QualifiedStateMapping
+            else ()
+        )
+        captured_records = cold_plan["pressure_surface_records"]
+        admitted = bool(
+            cold_plan["mesh"] is model.mesh
+            and captured_records is not None
+            and exact_type(captured_records) is tuple
+            and exact_type(load_namespace) is dict
+            and exact_type(pressure_loads) is _QualifiedStateMapping
+            and exact_type(pressure_namespace) is dict
+            and exact_dict_get(pressure_namespace, "_qualified_token")
+            is load_state_token
+            and exact_dict_get(pressure_namespace, "_qualified_kind")
+            == "detached"
+            and load_state_value is not None
+            and all(
+                exact_type(element_id) is int
+                and exact_type(pressure) in {int, float}
+                and exact_type(pressure) is not bool
+                and np.isfinite(float(pressure))
+                for element_id, pressure in pressure_items
+            )
+        )
+        if not admitted:
+            return False, []
+
+        trusted_element_require = cold_plan["trusted_element_require"]
+        record_by_id: dict[int, tuple[Any, ...]] = {}
+        for record in captured_records:
+            if (
+                exact_type(record) is not tuple
+                or len(record) != 7
+                or exact_type(record[0]) is not int
+                or exact_type(record[1]) is not exact_s3_type
+                or exact_type(record[3]) is not tuple
+                or len(record[3]) != 3
+                or not all(exact_type(node_id) is int for node_id in record[3])
+                or exact_type(record[4]) is not bytes
+                or len(record[4]) != 3 * 3 * 8
+                or exact_type(record[5]) is not bytes
+                or len(record[5]) != 3 * 8
+                or exact_type(record[6]) is not float
+                or not np.isfinite(record[6])
+                or record[0] in record_by_id
+            ):
+                raise exact_error(
+                    "qualified S3 pressure-surface cold authority is incompatible"
+                )
+            record_by_id[record[0]] = record
+
+        records: list[Dict[str, Any]] = []
+        for element_id, _pressure in pressure_items:
+            record = record_by_id.get(element_id)
+            if record is None:
+                continue
+            element = record[1]
+            material = record[2]
+            trusted_element_require(
+                model,
+                element,
+                material,
+                context=(
+                    "qualified S3 pressure-surface cold observation for "
+                    f"element {element_id}"
+                ),
+            )
+            coordinates = np.ndarray((3, 3), dtype=np.float64, buffer=record[4])
+            owner_normal = np.ndarray((3,), dtype=np.float64, buffer=record[5])
+            raw_normal = np.cross(
+                coordinates[1] - coordinates[0],
+                coordinates[2] - coordinates[0],
+            )
+            signed_area = float(raw_normal @ owner_normal)
+            normal_scale = float(np.linalg.norm(raw_normal))
+            if (
+                not np.isfinite(signed_area)
+                or not np.isfinite(normal_scale)
+                or normal_scale <= np.finfo(float).tiny
+                or signed_area == 0.0
+            ):
+                raise exact_error(
+                    f"Qualified S3 element {element_id} has incompatible pressure-surface authority."
+                )
+            offset = record[6]
+            records.append(
+                {
+                    "element_id": element_id,
+                    "pressure_surface_id": "ELEMENT_NODAL_REFERENCE_SURFACE_V1",
+                    "reference_surface_offset": offset,
+                    "resultant_and_reaction_reference": (
+                        "GLOBAL_NODAL_REFERENCE_COORDINATES"
+                    ),
+                    "section_origin_offset_from_reference": -offset,
+                    "virtual_work": "TRANSLATIONAL_NODAL_REFERENCE_SURFACE_ONLY",
+                }
+            )
+            trusted_element_require(
+                model,
+                element,
+                material,
+                context=(
+                    "qualified S3 pressure-surface cold return for "
+                    f"element {element_id}"
+                ),
+            )
+        if (
+            object.__getattribute__(load_case, "__dict__") is not load_namespace
+            or exact_dict_get(load_namespace, "pressure_loads") is not pressure_loads
+            or object.__getattribute__(pressure_loads, "__dict__")
+            is not pressure_namespace
+            or exact_dict_get(load_namespace, "_qualified_load_state_token")
+            is not load_state_token
+            or exact_type(load_state_token) is not _QualifiedMutationEpoch
+            or exact_len(load_state_token) != 1
+            or exact_int(exact_list_getitem(load_state_token, 0))
+            != load_state_value
+            or tuple(exact_dict_items(pressure_loads)) != pressure_items
+        ):
+            raise exact_error("qualified S3 pressure-surface load authority changed")
+        return True, records
+
+    return attempt
+
+
+_TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS = (
+    _bind_qualified_s3_pressure_surface_cold_records(
+        _LOOKUP_QUALIFIED_ASSEMBLY_COLD_PLAN
+    )
+)
+del _bind_qualified_s3_pressure_surface_cold_records
+
+
 def _bind_qualified_assembly_runtime_lease(
     numerical_guard: Any,
     q4_guard: Any,
@@ -387,6 +612,7 @@ def _bind_qualified_assembly_runtime_lease(
     assembly_operation_guard: Any,
     exact_model_type: type[Any],
     execution_plan_register: Any,
+    cold_plan_register: Any,
 ) -> Any:
     """Bind one immutable authority generation across a whole assembly call."""
 
@@ -413,6 +639,13 @@ def _bind_qualified_assembly_runtime_lease(
         execution_plan_register.__name__,
         execution_plan_register.__defaults__,
         execution_plan_register.__closure__,
+    )
+    exact_cold_plan_register = FunctionType(
+        cold_plan_register.__code__,
+        cold_plan_register.__globals__,
+        cold_plan_register.__name__,
+        cold_plan_register.__defaults__,
+        cold_plan_register.__closure__,
     )
     owned_routing_by_mesh: dict[int, tuple[Any, dict[str, Any]]] = {}
     prepared_s3_by_mesh: dict[int, tuple[Any, dict[str, Any]]] = {}
@@ -3539,6 +3772,127 @@ def _bind_qualified_assembly_runtime_lease(
 
                 require._qualified_trusted_require = trusted_require
 
+                if (
+                    q4_fast_plan is not None
+                    and q4_fast_plan["routing"] is not None
+                    and len(elements) >= 64
+                ):
+                    routing = q4_fast_plan["routing"]
+                    node_coordinates: dict[int, bytes] = {}
+                    for node_record in routing["node_records"]:
+                        node_id = node_record[0]
+                        node_namespace = node_record[2]
+                        coordinates = np.asarray(
+                            (
+                                dict.get(node_namespace, "x"),
+                                dict.get(node_namespace, "y"),
+                                dict.get(node_namespace, "z"),
+                            ),
+                            dtype=np.float64,
+                        )
+                        if (
+                            coordinates.shape != (3,)
+                            or not coordinates.flags.c_contiguous
+                            or not bool(np.all(np.isfinite(coordinates)))
+                        ):
+                            raise exact_assembly_error(
+                                "qualified cold assembly coordinates are incompatible"
+                            )
+                        node_coordinates[node_id] = coordinates.tobytes(order="C")
+                    cold_records: list[tuple[Any, ...]] = []
+                    pressure_surface_records: list[tuple[Any, ...]] | None = []
+                    for element_record in routing["element_records"]:
+                        element_id = element_record[0]
+                        element = element_record[1]
+                        element_namespace = element_record[2]
+                        node_ids = element_record[5]
+                        material_record = exact_dict_get(
+                            bound_by_identity,
+                            exact_id(element),
+                        )
+                        if (
+                            material_record is None
+                            or material_record[0] is not element
+                            or exact_type(material_record[1]) is not _Material
+                        ):
+                            cold_records = []
+                            break
+                        coordinate_payload = b"".join(
+                            node_coordinates[node_id] for node_id in node_ids
+                        )
+                        expected_bytes = (4 if exact_type(element) is q4_type else 3) * 3 * 8
+                        if len(coordinate_payload) != expected_bytes:
+                            cold_records = []
+                            break
+                        cold_records.append(
+                            (
+                                element_id,
+                                element,
+                                material_record[1],
+                                coordinate_payload,
+                                "q4" if exact_type(element) is q4_type else "s3",
+                            )
+                        )
+                        if (
+                            exact_type(element) is s3_type
+                            and pressure_surface_records is not None
+                        ):
+                            owner_normal = exact_dict_get(
+                                element_namespace,
+                                "reference_normal",
+                            )
+                            reference_surface_offset = exact_dict_get(
+                                element_namespace,
+                                "reference_surface_offset",
+                            )
+                            if (
+                                exact_type(owner_normal) is not np.ndarray
+                                or owner_normal.dtype != np.dtype(np.float64)
+                                or owner_normal.shape != (3,)
+                                or not owner_normal.flags.c_contiguous
+                                or not bool(np.all(np.isfinite(owner_normal)))
+                                or exact_type(reference_surface_offset) is not float
+                                or not np.isfinite(reference_surface_offset)
+                            ):
+                                # Cold stiffness remains valid; pressure
+                                # metadata retains its established scalar path.
+                                pressure_surface_records = None
+                            else:
+                                pressure_surface_records.append(
+                                    (
+                                        element_id,
+                                        element,
+                                        material_record[1],
+                                        node_ids,
+                                        coordinate_payload,
+                                        owner_normal.tobytes(order="C"),
+                                        reference_surface_offset,
+                                    )
+                                )
+                    if len(cold_records) == len(elements):
+                        trusted_require(
+                            model,
+                            context="qualified cold assembly plan",
+                        )
+                        exact_cold_plan_register(
+                            require,
+                            MappingProxyType(
+                                {
+                                    "mesh": q4_fast_plan["mesh"],
+                                    "pressure_surface_records": (
+                                        None
+                                        if pressure_surface_records is None
+                                        else tuple(pressure_surface_records)
+                                    ),
+                                    "records": tuple(cold_records),
+                                    "revision_items": routing["revision_items"],
+                                    "token": q4_fast_plan["token"],
+                                    "trusted_element_require": trusted_element_require,
+                                    "trusted_require": trusted_require,
+                                }
+                            ),
+                        )
+
         return require
 
     return capture
@@ -3566,6 +3920,7 @@ _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE = (
         _REQUIRE_EXACT_ASSEMBLY_OPERATION_AUTHORITY,
         _FEModel,
         _REGISTER_QUALIFIED_ASSEMBLY_EXECUTION_PLAN,
+        _REGISTER_QUALIFIED_ASSEMBLY_COLD_PLAN,
     )
 )
 
@@ -3924,6 +4279,7 @@ def _assemble_element_matrix_under_lease_impl(
     element_matrix_getter: Callable[[Any, Any, Any], np.ndarray],
     qualified_runtime_guard: Any,
     _owned_execution_plan: Any,
+    _owned_cold_plan: Any,
     *,
     activity_quantity: str | None = None,
     _activity_scales_kernel: Any = _activity_scales,
@@ -3961,6 +4317,9 @@ def _assemble_element_matrix_under_lease_impl(
     _assembly_error_type: Any = AssemblyError,
     _clock: Any = time.perf_counter,
     _reference_s3_formulation_id: Any = _REFERENCE_S3_FORMULATION_ID,
+    _s3_reference_provider: Any = _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS,
+    _s3_reference_candidate: Any = _EXACT_REFERENCE_S3_CANDIDATE,
+    _s3_prepared_authority: Any = _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     if _owned_execution_plan is not None:
         qualified_runtime_guard(
@@ -4291,6 +4650,43 @@ def _assemble_element_matrix_under_lease_impl(
         if callable(owned_items_provider)
         else tuple(mesh.elements.items())
     )
+    cold_records_by_identity: dict[int, tuple[Any, ...]] = {}
+    cold_trusted_element_require: Any = None
+    if (
+        matrix_type == "stiffness"
+        and _owned_cold_plan is not None
+        and _exact_type(_owned_cold_plan) is _mapping_proxy_type
+        and _owned_cold_plan["mesh"] is mesh
+    ):
+        cold_trusted_require = _owned_cold_plan["trusted_require"]
+        cold_trusted_element_require = _owned_cold_plan[
+            "trusted_element_require"
+        ]
+        cold_trusted_require(
+            model,
+            context="qualified cold stiffness mechanics preflight",
+        )
+        cold_records = _owned_cold_plan["records"]
+        if (
+            _exact_type(cold_records) is not _exact_tuple
+            or _exact_len(cold_records) != _exact_len(element_items)
+        ):
+            raise _assembly_error_type(
+                "qualified cold assembly plan is incompatible"
+            )
+        for cold_record, current_item in zip(cold_records, element_items):
+            if (
+                _exact_type(cold_record) is not _exact_tuple
+                or _exact_len(cold_record) != 5
+                or cold_record[0] != current_item[0]
+                or cold_record[1] is not current_item[1]
+                or _exact_type(cold_record[3]) is not bytes
+                or cold_record[4] not in {"q4", "s3"}
+            ):
+                raise _assembly_error_type(
+                    "qualified cold assembly record is incompatible"
+                )
+            cold_records_by_identity[id(cold_record[1])] = cold_record
 
     def observed_material(name: Any, *, context: str) -> Any:
         if callable(owned_material_name_provider):
@@ -4350,13 +4746,9 @@ def _assemble_element_matrix_under_lease_impl(
             prepare_s4_generalized_stiffness_batch,
             prepare_s4_section_mass_batch,
         )
-        from .s3_reference_batch import (
-            get_reference_s3_stiffness_components,
-            reference_s3_candidate,
-        )
-
         groups = {}
         reference_s3_items = []
+        cold_reference_s3_items = []
         cached_s3_stiffness_items = []
         qualified_stiffness_items = []
         advanced_stiffness_items = []
@@ -4427,12 +4819,21 @@ def _assemble_element_matrix_under_lease_impl(
             )
             if (
                 matrix_type == "stiffness"
-                and reference_s3_candidate(element)
+                and _s3_reference_candidate(element)
             ):
                 # Qualified S3 has a formulation-native reference-elastic
                 # batch.  It must never enter either the legacy TRI3 or the
                 # qualified-Q4 kernels below, including on scalar fallback.
-                reference_s3_items.append((int(elem_id), element))
+                cold_record = cold_records_by_identity.get(id(element))
+                if (
+                    cold_record is not None
+                    and cold_record[1] is element
+                    and cold_record[4] == "s3"
+                    and callable(cold_trusted_element_require)
+                ):
+                    cold_reference_s3_items.append((int(elem_id), element))
+                else:
+                    reference_s3_items.append((int(elem_id), element))
                 continue
             if (
                 matrix_type == "stiffness"
@@ -4534,6 +4935,253 @@ def _assemble_element_matrix_under_lease_impl(
                 "element_ids": sorted(generalized_mass_fallback_ids),
             }
 
+        if cold_reference_s3_items:
+            cold_s3_groups: Dict[
+                tuple[Any, ...],
+                list[tuple[int, Any, Any, np.ndarray, Any]],
+            ] = {}
+            cold_s3_eligible = True
+
+            def cold_element_recheck(
+                expected_element: Any,
+                expected_material: Any,
+                *,
+                stage: str,
+            ) -> Any:
+                def recheck() -> None:
+                    cold_trusted_element_require(
+                        model,
+                        expected_element,
+                        expected_material,
+                        context=stage,
+                    )
+
+                return recheck
+
+            for element_id, element in cold_reference_s3_items:
+                cold_record = cold_records_by_identity[id(element)]
+                material = cold_record[2]
+                coordinates = np.ndarray(
+                    (3, 3),
+                    dtype=np.float64,
+                    buffer=cold_record[3],
+                )
+                recheck = cold_element_recheck(
+                    element,
+                    material,
+                    stage="qualified cold S3 stiffness",
+                )
+                recheck()
+                namespace = object.__getattribute__(element, "__dict__")
+                material_namespace = object.__getattribute__(material, "__dict__")
+                reference_normal = dict.get(namespace, "reference_normal")
+                reference_surface_offset = dict.get(
+                    namespace,
+                    "reference_surface_offset",
+                )
+                thickness = dict.get(namespace, "thickness")
+                if (
+                    type(namespace) is not dict
+                    or type(material_namespace) is not dict
+                    or dict.get(namespace, "shell_section") is not None
+                    or dict.get(namespace, "material_direction") is not None
+                    or dict.get(namespace, "material_angle_deg") != 0.0
+                    or type(reference_surface_offset) is not float
+                    or not np.isfinite(reference_surface_offset)
+                    or reference_surface_offset != 0.0
+                    or type(thickness) is not float
+                    or not np.isfinite(thickness)
+                    or thickness <= 0.0
+                    or dict.get(material_namespace, "hill_yield") is not None
+                    or dict.get(material_namespace, "hardening_curve") is not None
+                    or not is_isotropic_material(material)
+                    or type(reference_normal) is not np.ndarray
+                    or reference_normal.shape != (3,)
+                    or not bool(np.all(np.isfinite(reference_normal)))
+                    or not bool(np.all(np.isfinite(coordinates)))
+                    or float(
+                        np.dot(
+                            np.cross(
+                                coordinates[1] - coordinates[0],
+                                coordinates[2] - coordinates[0],
+                            ),
+                            reference_normal,
+                        )
+                    )
+                    <= 0.0
+                ):
+                    cold_s3_eligible = False
+                    break
+                cache_key = (
+                    *element._cache_key(
+                        mesh,
+                        material,
+                        coordinates,
+                        post_observation=recheck,
+                    ),
+                    True,
+                )
+                recheck()
+                cold_s3_groups.setdefault(cache_key, []).append(
+                    (element_id, element, material, coordinates, recheck)
+                )
+
+            if not cold_s3_eligible:
+                reference_s3_items.extend(cold_reference_s3_items)
+                cold_s3_groups = {}
+            elif cold_s3_groups:
+                cold_s3_matrices: dict[int, np.ndarray] = {}
+                cold_s3_keys: dict[int, tuple[Any, ...]] = {}
+                cold_s3_group_ids: list[tuple[int, ...]] = []
+                for cache_key, group in cold_s3_groups.items():
+                    (
+                        first_id,
+                        first,
+                        first_material,
+                        first_coordinates,
+                        first_recheck,
+                    ) = group[0]
+                    first_recheck()
+                    components = first._compute_stiffness_components(
+                        mesh,
+                        first_material,
+                        enforce_positive_winding=True,
+                        post_observation=first_recheck,
+                    )
+                    first_recheck()
+                    if tuple(first._qualified_cache_key) != tuple(cache_key):
+                        raise AssemblyError(
+                            "qualified cold S3 component cache identity changed"
+                        )
+                    group_ids: list[int] = []
+                    for (
+                        element_id,
+                        element,
+                        material,
+                        _coordinates,
+                        recheck,
+                    ) in group:
+                        recheck()
+                        object.__setattr__(
+                            element,
+                            "_qualified_components",
+                            components,
+                        )
+                        object.__setattr__(
+                            element,
+                            "_qualified_cache_key",
+                            cache_key,
+                        )
+                        object.__setattr__(
+                            element,
+                            "_hourglass_stiffness_matrix",
+                            components["hourglass"],
+                        )
+                        object.__setattr__(
+                            element,
+                            "_stiffness_matrix",
+                            components["total"],
+                        )
+                        element._bind_qualified_component_guard(
+                            mesh,
+                            material,
+                            post_observation=recheck,
+                        )
+                        recheck()
+                        matrix = components["total"]
+                        matrix = np.asarray(matrix, dtype=float)
+                        if (
+                            matrix.shape != (18, 18)
+                            or not bool(np.all(np.isfinite(matrix)))
+                            or _relative_symmetry_kernel(matrix) > 1.0e-8
+                        ):
+                            raise AssemblyError(
+                                "qualified cold S3 stiffness is incompatible"
+                            )
+                        cold_s3_matrices[element_id] = matrix
+                        cold_s3_keys[element_id] = cache_key
+                        precomputed[element_id] = matrix
+                        prevalidated_element_ids.add(element_id)
+                        group_ids.append(element_id)
+                    cold_s3_group_ids.append(tuple(group_ids))
+
+                frozen_s3_matrices = MappingProxyType(
+                    {
+                        element_id: np.ndarray(
+                            (18, 18),
+                            dtype=np.float64,
+                            buffer=np.asarray(matrix, dtype=np.float64).tobytes(
+                                order="C"
+                            ),
+                        )
+                        for element_id, matrix in cold_s3_matrices.items()
+                    }
+                )
+                revision_values = dict(_owned_cold_plan["revision_items"])
+                prepared_s3 = _PreparedReferenceS3Components(
+                    matrices=frozen_s3_matrices,
+                    element_cache_keys=MappingProxyType(dict(cold_s3_keys)),
+                    batched_element_ids=tuple(cold_s3_matrices),
+                    cached_element_ids=(),
+                    group_element_ids=tuple(cold_s3_group_ids),
+                    candidate_element_ids=tuple(
+                        element_id for element_id, _element in cold_reference_s3_items
+                    ),
+                    complete_eligible_coverage=True,
+                    fallback_reasons=MappingProxyType({}),
+                    component_evaluation_count=len(cold_s3_groups),
+                    revision_key=(
+                        int(revision_values.get("topology", 0)),
+                        int(revision_values.get("geometry", 0)),
+                        int(revision_values.get("material", 0)),
+                    ),
+                    minimum_group_size=1,
+                    material_names=tuple(
+                        sorted(
+                            {
+                                str(
+                                    dict.get(
+                                        object.__getattribute__(element, "__dict__"),
+                                        "material_name",
+                                    )
+                                )
+                                for _element_id, element in cold_reference_s3_items
+                            }
+                        )
+                    ),
+                    validation_signature=(
+                        id(mesh),
+                        id(_owned_cold_plan["token"]),
+                        int(_owned_cold_plan["token"][0]),
+                    ),
+                    matrices_prevalidated=True,
+                )
+                object.__setattr__(
+                    mesh,
+                    "_qualified_s3_reference_stiffness_plan",
+                    prepared_s3,
+                )
+                s3_diagnostics = prepared_s3.diagnostics()
+                s3_diagnostics["plan_reused"] = False
+                s3_diagnostics["path"] = (
+                    "formulation_native_trusted_cold_components"
+                )
+                info["diagnostics"][
+                    "qualified_s3_reference_elastic_stiffness"
+                ] = s3_diagnostics
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "S3",
+                        "num_elements": len(cold_s3_matrices),
+                        "kernel": "qualified_s3_trusted_cold_components",
+                        "parallel_kernel": False,
+                        "unique_geometry_count": len(cold_s3_groups),
+                        "component_evaluation_count": len(cold_s3_groups),
+                        "formulation_id": _REFERENCE_S3_FORMULATION_ID,
+                        "speedup_claimed": False,
+                    }
+                )
+
         if cached_s3_stiffness_items:
             prepared_s3 = raw_s3_reference_plan
             s3_diagnostics = prepared_s3.diagnostics()
@@ -4580,11 +5228,83 @@ def _assemble_element_matrix_under_lease_impl(
                 )
 
         if reference_s3_items:
-            prepared_s3, s3_plan_reused = get_reference_s3_stiffness_components(
+            s3_provider_namespace = vars(_S3_REFERENCE_BATCH_MODULE)
+            if (
+                s3_provider_namespace.get(
+                    "get_reference_s3_stiffness_components"
+                )
+                is not _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS
+                or s3_provider_namespace.get("reference_s3_candidate")
+                is not _EXACT_REFERENCE_S3_CANDIDATE
+                or s3_provider_namespace.get(
+                    "_require_prepared_s3_matrix_authority"
+                )
+                is not _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY
+            ):
+                raise _assembly_error_type(
+                    "qualified S3 reference-provider authority changed"
+                )
+            qualified_runtime_guard(
+                model,
+                context="qualified S3 reference-provider preflight",
+            )
+            prepared_s3, s3_plan_reused = _s3_reference_provider(
                 model,
                 reference_s3_items,
                 complete_candidate_items=True,
             )
+            qualified_runtime_guard(
+                model,
+                context="qualified S3 reference-provider output",
+            )
+            if (
+                vars(_S3_REFERENCE_BATCH_MODULE).get(
+                    "get_reference_s3_stiffness_components"
+                )
+                is not _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS
+                or vars(_S3_REFERENCE_BATCH_MODULE).get(
+                    "reference_s3_candidate"
+                )
+                is not _EXACT_REFERENCE_S3_CANDIDATE
+                or vars(_S3_REFERENCE_BATCH_MODULE).get(
+                    "_require_prepared_s3_matrix_authority"
+                )
+                is not _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY
+            ):
+                raise _assembly_error_type(
+                    "qualified S3 reference-provider authority changed"
+                )
+            prepared_namespace = (
+                _object_getattribute(prepared_s3, "__dict__")
+                if _exact_type(prepared_s3) is _PreparedReferenceS3Components
+                else None
+            )
+            prepared_matrices = (
+                _exact_dict.get(prepared_namespace, "matrices")
+                if _exact_type(prepared_namespace) is _exact_dict
+                else None
+            )
+            if (
+                _exact_type(prepared_s3)
+                is not _PreparedReferenceS3Components
+                or _exact_type(prepared_namespace) is not _exact_dict
+                or _exact_type(prepared_matrices) is not _mapping_proxy_type
+                or (
+                    bool(prepared_matrices)
+                    and not bool(_s3_prepared_authority(prepared_s3))
+                )
+                or (
+                    not prepared_matrices
+                    and _exact_dict.get(
+                        prepared_namespace,
+                        "matrices_prevalidated",
+                    )
+                    is not False
+                )
+            ):
+                raise _assembly_error_type(
+                    "qualified S3 reference-plan provenance is incompatible"
+                )
             precomputed.update(prepared_s3.matrices)
             if prepared_s3.matrices_prevalidated:
                 # The plan owns bytes-backed immutable matrices and binds the
@@ -4638,6 +5358,7 @@ def _assemble_element_matrix_under_lease_impl(
 
         if qualified_stiffness_items:
             shared_components = {}
+            trusted_cold_q4_count = 0
             for element_id, element in qualified_stiffness_items:
                 material = (
                     raw_material_provider(element)
@@ -4672,7 +5393,65 @@ def _assemble_element_matrix_under_lease_impl(
                     precomputed[element_id] = cached_total
                     prevalidated_element_ids.add(int(element_id))
                     continue
-                cache_key = element._qualified_stiffness_cache_key(mesh, material)
+                cold_record = cold_records_by_identity.get(id(element))
+                cold_q4 = bool(
+                    type(element) is QualifiedE4PLShellElement
+                    and cold_record is not None
+                    and cold_record[1] is element
+                    and cold_record[2] is material
+                    and cold_record[4] == "q4"
+                    and callable(cold_trusted_element_require)
+                )
+                cold_coordinates = None
+                cold_recheck = None
+                if cold_q4:
+                    cold_coordinates = np.ndarray(
+                        (4, 3),
+                        dtype=np.float64,
+                        buffer=cold_record[3],
+                    )
+
+                    def cold_recheck(
+                        expected_element: Any = element,
+                        expected_material: Any = material,
+                    ) -> None:
+                        cold_trusted_element_require(
+                            model,
+                            expected_element,
+                            expected_material,
+                            context="qualified cold Q4 stiffness",
+                        )
+
+                    cold_recheck()
+                    namespace = object.__getattribute__(element, "__dict__")
+                    cold_q4 = bool(
+                        type(namespace) is dict
+                        and dict.get(namespace, "shell_section") is None
+                        and dict.get(namespace, "material_direction") is None
+                        and dict.get(namespace, "material_angle_deg") == 0.0
+                        and bool(is_isotropic_material(material))
+                        and bool(np.all(np.isfinite(cold_coordinates)))
+                        and bool(
+                            np.all(
+                                cold_coordinates[:, 2]
+                                == cold_coordinates[0, 2]
+                            )
+                        )
+                    )
+                    if not cold_q4:
+                        # The captured record remains valid authority, but its
+                        # formulation inputs are outside the narrow flat,
+                        # isotropic cold mechanic.  Discard both trusted cold
+                        # handles so the established guarded component route
+                        # owns every subsequent observation.
+                        cold_coordinates = None
+                        cold_recheck = None
+                cache_key = element._qualified_stiffness_cache_key(
+                    mesh,
+                    material,
+                    coordinates=cold_coordinates,
+                    post_observation=cold_recheck,
+                )
                 current_components = getattr(element, "_qualified_components", None)
                 if (
                     current_components is not None
@@ -4680,17 +5459,46 @@ def _assemble_element_matrix_under_lease_impl(
                 ):
                     element._validate_qualified_component_cache_identity()
                     shared_components.setdefault(cache_key, current_components)
-                    element._bind_qualified_component_guard(mesh, material)
+                    element._bind_qualified_component_guard(
+                        mesh,
+                        material,
+                        post_observation=cold_recheck,
+                    )
                     precomputed[element_id] = np.asarray(
                         current_components["total"], dtype=float
                     )
+                    if cold_q4:
+                        cold_recheck()
+                        prevalidated_element_ids.add(int(element_id))
+                        trusted_cold_q4_count += 1
                     continue
                 components = shared_components.get(cache_key)
                 if components is None:
-                    precomputed[element_id] = element.compute_stiffness_matrix(
-                        mesh, material
-                    )
-                    components = element._qualified_components
+                    if cold_q4:
+                        components = element.compute_stiffness_components(
+                            mesh,
+                            material,
+                        )
+                        cold_recheck()
+                        if tuple(element._qualified_cache_key) != tuple(cache_key):
+                            raise AssemblyError(
+                                "qualified cold Q4 component cache identity changed"
+                            )
+                        precomputed[element_id] = element._adopt_qualified_components(
+                            cache_key,
+                            components,
+                        )
+                        element._bind_qualified_component_guard(
+                            mesh,
+                            material,
+                            post_observation=cold_recheck,
+                        )
+                        components = element._qualified_components
+                    else:
+                        precomputed[element_id] = element.compute_stiffness_matrix(
+                            mesh, material
+                        )
+                        components = element._qualified_components
                     if components is None:
                         raise RuntimeError(
                             "Qualified E4-PL stiffness did not populate its component cache"
@@ -4700,9 +5508,25 @@ def _assemble_element_matrix_under_lease_impl(
                     precomputed[element_id] = element._adopt_qualified_components(
                         cache_key,
                         components,
+                    )
+                    element._bind_qualified_component_guard(
                         mesh,
                         material,
+                        post_observation=cold_recheck,
                     )
+                if cold_q4:
+                    cold_recheck()
+                    cold_matrix = np.asarray(precomputed[element_id], dtype=float)
+                    if (
+                        cold_matrix.shape != (24, 24)
+                        or not bool(np.all(np.isfinite(cold_matrix)))
+                        or _relative_symmetry_kernel(cold_matrix) > 1.0e-8
+                    ):
+                        raise AssemblyError(
+                            "qualified cold Q4 stiffness is incompatible"
+                        )
+                    prevalidated_element_ids.add(int(element_id))
+                    trusted_cold_q4_count += 1
             vectorized_shell_groups.append(
                 {
                     "shell_order": "S4",
@@ -4713,9 +5537,18 @@ def _assemble_element_matrix_under_lease_impl(
                 }
             )
             info["diagnostics"]["qualified_e4_pl_stiffness"] = {
-                "path": "shared_geometry_cache",
+                "path": (
+                    "trusted_cold_shared_geometry_cache"
+                    if trusted_cold_q4_count
+                    else "shared_geometry_cache"
+                ),
                 "element_count": int(len(qualified_stiffness_items)),
                 "unique_geometry_count": int(len(shared_components)),
+                **(
+                    {"trusted_cold_element_count": int(trusted_cold_q4_count)}
+                    if trusted_cold_q4_count
+                    else {}
+                ),
             }
 
         if not raw_exact_cached_only:
@@ -5080,6 +5913,24 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
     if type(expected_kwdefaults) is not dict:
         raise TypeError("qualified assembly implementation defaults are absent")
     expected_kw_items = tuple(expected_kwdefaults.items())
+    s3_provider_authority = tuple(
+        (
+            provider,
+            provider.__code__,
+            provider.__defaults__,
+            provider.__kwdefaults__,
+            (
+                ()
+                if provider.__kwdefaults__ is None
+                else tuple(provider.__kwdefaults__.items())
+            ),
+        )
+        for provider in (
+            expected_kwdefaults["_s3_reference_provider"],
+            expected_kwdefaults["_s3_reference_candidate"],
+            expected_kwdefaults["_s3_prepared_authority"],
+        )
+    )
     exact_globals = dict(implementation.__globals__)
     exact_globals["__builtins__"] = dict(implementation.__builtins__)
     exact_name = implementation.__name__
@@ -5091,6 +5942,13 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
     plan_lookup_name = plan_lookup.__name__
     plan_lookup_defaults = plan_lookup.__defaults__
     plan_lookup_closure = plan_lookup.__closure__
+    cold_plan_lookup = _LOOKUP_QUALIFIED_ASSEMBLY_COLD_PLAN
+    cold_plan_lookup_code = cold_plan_lookup.__code__
+    cold_plan_lookup_globals = dict(cold_plan_lookup.__globals__)
+    cold_plan_lookup_globals["__builtins__"] = dict(cold_plan_lookup.__builtins__)
+    cold_plan_lookup_name = cold_plan_lookup.__name__
+    cold_plan_lookup_defaults = cold_plan_lookup.__defaults__
+    cold_plan_lookup_closure = cold_plan_lookup.__closure__
     runtime_module = sys.modules[__name__]
     published: list[Any] = []
 
@@ -5168,6 +6026,15 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
     exact_reference_s3_formulation_id = expected_kwdefaults[
         "_reference_s3_formulation_id"
     ]
+    exact_s3_reference_provider = private_function(
+        expected_kwdefaults["_s3_reference_provider"]
+    )
+    exact_s3_reference_candidate = private_function(
+        expected_kwdefaults["_s3_reference_candidate"]
+    )
+    exact_s3_prepared_authority = private_function(
+        expected_kwdefaults["_s3_prepared_authority"]
+    )
 
     def require() -> None:
         current_kwdefaults = implementation.__kwdefaults__
@@ -5181,6 +6048,26 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
             published_kw_items,
         ) = published[0]
         current_published_kwdefaults = published_call.__kwdefaults__
+        providers_changed = any(
+            provider.__code__ is not code
+            or provider.__defaults__ is not defaults
+            or provider.__kwdefaults__ is not kwdefaults
+            or (
+                kwdefaults is not None
+                and (
+                    type(provider.__kwdefaults__) is not dict
+                    or len(provider.__kwdefaults__) != len(kw_items)
+                    or any(
+                        name not in provider.__kwdefaults__
+                        or provider.__kwdefaults__[name] is not expected
+                        for name, expected in kw_items
+                    )
+                )
+            )
+            for provider, code, defaults, kwdefaults, kw_items in (
+                s3_provider_authority
+            )
+        )
         if (
             implementation.__code__ is not expected_code
             or implementation.__defaults__ is not expected_defaults
@@ -5203,6 +6090,7 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
             )
             or vars(runtime_module).get("_assemble_element_matrix_under_lease")
             is not published_call
+            or providers_changed
         ):
             raise ValueError("qualified assembly operation authority changed")
 
@@ -5228,13 +6116,22 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
             plan_lookup_defaults,
             plan_lookup_closure,
         )
+        exact_cold_plan_lookup = function_type(
+            cold_plan_lookup_code,
+            cold_plan_lookup_globals,
+            cold_plan_lookup_name,
+            cold_plan_lookup_defaults,
+            cold_plan_lookup_closure,
+        )
         owned_execution_plan = exact_plan_lookup(qualified_runtime_guard)
-        return exact_function(
+        owned_cold_plan = exact_cold_plan_lookup(qualified_runtime_guard)
+        result = exact_function(
             model,
             matrix_type,
             element_matrix_getter,
             qualified_runtime_guard,
             owned_execution_plan,
+            owned_cold_plan,
             activity_quantity=activity_quantity,
             _activity_scales_kernel=exact_activity_scales,
             _base_info_kernel=exact_base_info,
@@ -5271,7 +6168,12 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
             _assembly_error_type=exact_assembly_error,
             _clock=exact_clock,
             _reference_s3_formulation_id=exact_reference_s3_formulation_id,
+            _s3_reference_provider=exact_s3_reference_provider,
+            _s3_reference_candidate=exact_s3_reference_candidate,
+            _s3_prepared_authority=exact_s3_prepared_authority,
         )
+        require()
+        return result
 
     call_kwdefaults = call.__kwdefaults__
     if type(call_kwdefaults) is not dict:
@@ -5301,6 +6203,8 @@ _ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
 )
 del _REGISTER_QUALIFIED_ASSEMBLY_EXECUTION_PLAN
 del _LOOKUP_QUALIFIED_ASSEMBLY_EXECUTION_PLAN
+del _REGISTER_QUALIFIED_ASSEMBLY_COLD_PLAN
+del _LOOKUP_QUALIFIED_ASSEMBLY_COLD_PLAN
 
 
 def _assemble_element_matrix(
@@ -6188,9 +7092,12 @@ def assemble_geometric_stiffness_matrix(
     )
 
 
-def _qualified_s3_pressure_surface_records(
+def _qualified_s3_pressure_surface_records_impl(
     model: "FEModel",
     load_case: Optional["LoadCase"],
+    *,
+    qualified_runtime_guard: Any,
+    _cold_attempt: Any = _TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS,
 ) -> list[Dict[str, Any]]:
     """Identify the exact surface carrying qualified-S3 pressure work.
 
@@ -6207,11 +7114,28 @@ def _qualified_s3_pressure_surface_records(
         require_exact_qualified_component_lifecycle_api,
     )
 
-    exact_qualified_guard = require_exact_qualified_component_lifecycle_api
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
+    def full_guard(*, context: str) -> None:
+        lifecycle_guard(model, context=context)
+        qualified_runtime_guard(model, context=context)
+
+    full_guard(context="qualified S3 pressure-surface mapping preflight")
+    fast_admitted, fast_records = (
+        _cold_attempt(
+            qualified_runtime_guard,
+            model,
+            load_case,
+        )
+    )
+    if fast_admitted:
+        full_guard(context="qualified S3 pressure-surface mapping output")
+        return fast_records
+
     pressure_ids = tuple(getattr(load_case, "pressure_loads", {}))
-    exact_qualified_guard(
+    lifecycle_guard(
         model,
-        context="qualified S3 pressure-surface mapping observation",
+        context="qualified S3 pressure-surface scalar observation",
     )
     records: list[Dict[str, Any]] = []
     for raw_element_id in pressure_ids:
@@ -6224,12 +7148,12 @@ def _qualified_s3_pressure_surface_records(
         ):
             continue
         offset = float(getattr(element, "reference_surface_offset", 0.0))
-        exact_qualified_guard(
+        lifecycle_guard(
             model,
             context=(
                 "qualified S3 pressure-surface offset observation for "
                 f"element {element_id}"
-            ),
+            )
         )
         if not np.isfinite(offset):
             raise AssemblyError(
@@ -6247,7 +7171,171 @@ def _qualified_s3_pressure_surface_records(
                 "virtual_work": "TRANSLATIONAL_NODAL_REFERENCE_SURFACE_ONLY",
             }
         )
+    full_guard(context="qualified S3 pressure-surface scalar output")
     return records
+
+
+def _bind_exact_qualified_s3_pressure_surface_records(
+    implementation: Any,
+    cold_attempt: Any,
+) -> Any:
+    """Keep pressure metadata routing outside mutable module providers."""
+
+    function_type = FunctionType
+    runtime_module = sys.modules[__name__]
+    implementation_code = implementation.__code__
+    implementation_defaults = implementation.__defaults__
+    implementation_kwdefaults = implementation.__kwdefaults__
+    if type(implementation_kwdefaults) is not dict:
+        raise TypeError("qualified pressure metadata defaults are absent")
+    implementation_kw_items = tuple(implementation_kwdefaults.items())
+    cold_code = cold_attempt.__code__
+    cold_defaults = cold_attempt.__defaults__
+    cold_kwdefaults = cold_attempt.__kwdefaults__
+    cold_kw_items = (
+        ()
+        if cold_kwdefaults is None
+        else tuple(cold_kwdefaults.items())
+    )
+
+    cold_globals = dict(cold_attempt.__globals__)
+    cold_globals["__builtins__"] = dict(cold_attempt.__builtins__)
+    exact_cold_attempt = function_type(
+        cold_code,
+        cold_globals,
+        cold_attempt.__name__,
+        cold_defaults,
+        cold_attempt.__closure__,
+    )
+    exact_cold_attempt.__kwdefaults__ = (
+        None if cold_kwdefaults is None else dict(cold_kwdefaults)
+    )
+
+    implementation_globals = dict(implementation.__globals__)
+    implementation_globals["__builtins__"] = dict(
+        implementation.__builtins__
+    )
+    implementation_globals[
+        "_TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS"
+    ] = exact_cold_attempt
+    exact_implementation = function_type(
+        implementation_code,
+        implementation_globals,
+        implementation.__name__,
+        implementation_defaults,
+        implementation.__closure__,
+    )
+    exact_implementation.__kwdefaults__ = {
+        **implementation_kwdefaults,
+        "_cold_attempt": exact_cold_attempt,
+    }
+    published: list[Any] = []
+
+    def require() -> None:
+        current_implementation_kwdefaults = implementation.__kwdefaults__
+        current_cold_kwdefaults = cold_attempt.__kwdefaults__
+        if len(published) != 1:
+            raise ValueError("qualified pressure metadata authority changed")
+        (
+            call,
+            call_code,
+            call_defaults,
+            call_kwdefaults,
+        ) = published[0]
+        if (
+            implementation.__code__ is not implementation_code
+            or implementation.__defaults__ is not implementation_defaults
+            or current_implementation_kwdefaults
+            is not implementation_kwdefaults
+            or type(current_implementation_kwdefaults) is not dict
+            or len(current_implementation_kwdefaults)
+            != len(implementation_kw_items)
+            or any(
+                name not in current_implementation_kwdefaults
+                or current_implementation_kwdefaults[name] is not expected
+                for name, expected in implementation_kw_items
+            )
+            or cold_attempt.__code__ is not cold_code
+            or cold_attempt.__defaults__ is not cold_defaults
+            or current_cold_kwdefaults is not cold_kwdefaults
+            or (
+                cold_kwdefaults is not None
+                and (
+                    type(current_cold_kwdefaults) is not dict
+                    or len(current_cold_kwdefaults) != len(cold_kw_items)
+                    or any(
+                        name not in current_cold_kwdefaults
+                        or current_cold_kwdefaults[name] is not expected
+                        for name, expected in cold_kw_items
+                    )
+                )
+            )
+            or call.__code__ is not call_code
+            or call.__defaults__ is not call_defaults
+            or call.__kwdefaults__ is not call_kwdefaults
+            or vars(runtime_module).get(
+                "_TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS"
+            )
+            is not cold_attempt
+            or vars(runtime_module).get(
+                "_qualified_s3_pressure_surface_records"
+            )
+            is not call
+        ):
+            raise ValueError("qualified pressure metadata authority changed")
+
+    def call(
+        model: "FEModel",
+        load_case: Optional["LoadCase"],
+        *,
+        qualified_runtime_guard: Any,
+    ) -> list[Dict[str, Any]]:
+        require()
+        result = exact_implementation(
+            model,
+            load_case,
+            qualified_runtime_guard=qualified_runtime_guard,
+            _cold_attempt=exact_cold_attempt,
+        )
+        require()
+        return result
+
+    published.append(
+        (
+            call,
+            call.__code__,
+            call.__defaults__,
+            call.__kwdefaults__,
+        )
+    )
+    return call
+
+
+_qualified_s3_pressure_surface_records = (
+    _bind_exact_qualified_s3_pressure_surface_records(
+        _qualified_s3_pressure_surface_records_impl,
+        _TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS,
+    )
+)
+_ASSEMBLY_MODULE_ALIASES.update(
+    {
+        "_TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS": (
+            _TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS
+        ),
+        "_qualified_s3_pressure_surface_records": (
+            _qualified_s3_pressure_surface_records
+        ),
+    }
+)
+_ASSEMBLY_NUMERICAL_EPOCH_MANAGER.watch_module(
+    _ASSEMBLY_RUNTIME_MODULE,
+    (
+        "_TRY_QUALIFIED_S3_PRESSURE_SURFACE_COLD_RECORDS",
+        "_qualified_s3_pressure_surface_records",
+    ),
+)
+del _bind_exact_qualified_s3_pressure_surface_records
+del _qualified_s3_pressure_surface_records_impl
 
 
 def _assemble_load_vector_under_lease(
@@ -6357,7 +7445,11 @@ def _assemble_load_vector_under_lease(
             }
         ),
     }
-    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    pressure_surfaces = _qualified_s3_pressure_surface_records(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
     exact_qualified_guard(model, context="load-vector assembly output")
@@ -6533,7 +7625,11 @@ def _assemble_external_load_tangent_under_lease(
         },
         "assembly_time": time.time() - start_time,
     }
-    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    pressure_surfaces = _qualified_s3_pressure_surface_records(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
     exact_qualified_guard(
@@ -6815,6 +7911,10 @@ def assemble_system(
     return _run_with_qualified_assembly_runtime_lease(
         model,
         context="system assembly",
+        # The hidden cached/cold plan is stiffness-only.  A system request
+        # that also assembles mass must retain the generic multi-operator
+        # lease so its second matrix operation cannot inherit that plan.
+        allow_q4_cached_stiffness=not include_mass,
         operation=lambda lease: _assemble_system_under_lease(
             model,
             load_case,

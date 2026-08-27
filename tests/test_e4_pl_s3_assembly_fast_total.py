@@ -341,6 +341,107 @@ def test_warm_s3_assembly_consumes_closure_total_without_batch_reentry(
     assert info["diagnostics"]["scalar_shell_element_count"] == 0
 
 
+def test_cold_s3_assembly_rejects_reference_provider_replacement_before_call() -> None:
+    model = _model()
+    original = s3_batch_module.get_reference_s3_stiffness_components
+    reached: list[str] = []
+
+    def forged(*_args: Any, **_kwargs: Any) -> Any:
+        reached.append("forged")
+        raise AssertionError("forged S3 reference provider executed")
+
+    setattr(
+        s3_batch_module,
+        "get_reference_s3_stiffness_components",
+        forged,
+    )
+    try:
+        with pytest.raises(
+            AssemblyError,
+            match="reference-provider authority|qualified shell authority",
+        ):
+            assemble_stiffness_matrix(model)
+    finally:
+        setattr(
+            s3_batch_module,
+            "get_reference_s3_stiffness_components",
+            original,
+        )
+    assert reached == []
+
+
+@pytest.mark.parametrize(
+    "attribute",
+    ("__code__", "__defaults__", "__kwdefaults__"),
+)
+def test_cold_s3_assembly_rejects_reference_provider_metadata_change(
+    attribute: str,
+) -> None:
+    model = _model()
+    provider = s3_batch_module.get_reference_s3_stiffness_components
+    original = getattr(provider, attribute)
+
+    def forged(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("forged S3 reference provider executed")
+
+    replacement: Any = (
+        forged.__code__
+        if attribute == "__code__"
+        else ()
+        if attribute == "__defaults__"
+        else {}
+    )
+    setattr(provider, attribute, replacement)
+    try:
+        with pytest.raises(
+            AssemblyError,
+            match="incompatible qualified shell authority",
+        ):
+            assemble_stiffness_matrix(model)
+    finally:
+        setattr(provider, attribute, original)
+
+
+def test_cold_s3_assembly_rejects_reference_provider_global_aba() -> None:
+    model = _model()
+    lease = matrix_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        model,
+        context="S3 reference-provider ABA preflight",
+        allow_q4_cached_stiffness=True,
+    )
+    original = s3_batch_module.get_reference_s3_stiffness_components
+    reached: list[str] = []
+
+    def forged(*_args: Any, **_kwargs: Any) -> Any:
+        reached.append("forged")
+        raise AssertionError("forged S3 reference provider executed")
+
+    setattr(
+        s3_batch_module,
+        "get_reference_s3_stiffness_components",
+        forged,
+    )
+    setattr(
+        s3_batch_module,
+        "get_reference_s3_stiffness_components",
+        original,
+    )
+    with pytest.raises(
+        AssemblyError,
+        match="qualified shell authority|authority changed",
+    ):
+        matrix_module._assemble_element_matrix_under_lease(
+            model,
+            "stiffness",
+            lambda element, mesh, material: element.compute_stiffness_matrix(
+                mesh,
+                material,
+            ),
+            lease,
+        )
+    assert reached == []
+
+
 def test_s3_assembly_rejects_accessor_metadata_change_and_recovers() -> None:
     model = _model()
     expected = _warm(model)
