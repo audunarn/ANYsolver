@@ -6,6 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
 import inspect
+from json.encoder import encode_basestring as _JSON_ENCODE_BASESTRING
+import math
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -46,7 +48,6 @@ from .e4_pl_s3_element import (
     REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
     QualifiedE4PLS3ShellElement,
 )
-from .e4_pl_s3_state import canonical_json_bytes, canonical_plain_data
 from .elements import ShellElement
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
@@ -295,13 +296,22 @@ def _require_current_state_modal_mass_authority(
         )
 
 
-def _canonical_prestress_element_id(raw: Any) -> int:
-    if isinstance(raw, (bool, np.bool_)):
+def _canonical_prestress_element_id(
+    raw: Any,
+    _bool_types: tuple[type[Any], ...] = (bool, np.bool_),
+    _exact_int: Any = int,
+    _exact_isinstance: Any = isinstance,
+    _integer_types: tuple[type[Any], ...] = (int, np.integer),
+    _string_type: type[Any] = str,
+) -> int:
+    if _exact_isinstance(raw, _bool_types):
         raise ValueError("prestress element-state IDs must be canonical integers")
-    if isinstance(raw, (int, np.integer)):
-        return int(raw)
-    if isinstance(raw, str) and raw == str(int(raw)):
-        return int(raw)
+    if _exact_isinstance(raw, _integer_types):
+        return _exact_int(raw)
+    if _exact_isinstance(raw, _string_type) and raw == _string_type(
+        _exact_int(raw)
+    ):
+        return _exact_int(raw)
     raise ValueError("prestress element-state IDs must be canonical integers")
 
 
@@ -333,80 +343,161 @@ def _guarded_prestress_snapshot(
     *,
     path: str,
     _exact_guard: Any,
+    _internal_guard: Any,
+    _dict_items: Any = dict.items,
+    _dict_type: type[Any] = dict,
+    _exact_isinstance: Any = isinstance,
+    _exact_iter: Any = iter,
+    _exact_next: Any = next,
+    _exact_type: Any = type,
+    _list_type: type[Any] = list,
+    _mapping_type: Any = Mapping,
+    _numpy_array_type: type[Any] = np.ndarray,
+    _numpy_asarray: Any = np.asarray,
+    _numpy_generic_type: type[Any] = np.generic,
+    _primitive_types: frozenset[type[Any]] = frozenset(
+        {str, bool, int, float}
+    ),
+    _sequence_exclusions: tuple[type[Any], ...] = (
+        str,
+        bytes,
+        bytearray,
+    ),
+    _sequence_type: Any = Sequence,
+    _stop_iteration: type[BaseException] = StopIteration,
+    _string_type: type[Any] = str,
+    _snapshotter: Any = None,
+    _tuple_type: type[Any] = tuple,
 ) -> Any:
-    """Detach provider/mapping data before canonical prestress processing."""
+    """Detach provider/mapping data before canonical prestress processing.
+
+    Exact built-in containers cannot execute caller code while they are being
+    traversed.  Their checkpoints may therefore use the operation's
+    non-renewable, ABA-sensitive lease.  NumPy objects and arbitrary
+    ``Mapping``/``Sequence`` implementations retain the complete lifecycle
+    scan after every observation.
+    """
+
+    if _snapshotter is None:
+        _snapshotter = _guarded_prestress_snapshot
+
+    def snapshot(member: Any, member_path: str) -> Any:
+        """Recurse without consulting mutable helper keyword defaults."""
+
+        return _snapshotter(
+            model,
+            member,
+            path=member_path,
+            _exact_guard=_exact_guard,
+            _internal_guard=_internal_guard,
+            _dict_items=_dict_items,
+            _dict_type=_dict_type,
+            _exact_isinstance=_exact_isinstance,
+            _exact_iter=_exact_iter,
+            _exact_next=_exact_next,
+            _exact_type=_exact_type,
+            _list_type=_list_type,
+            _mapping_type=_mapping_type,
+            _numpy_array_type=_numpy_array_type,
+            _numpy_asarray=_numpy_asarray,
+            _numpy_generic_type=_numpy_generic_type,
+            _primitive_types=_primitive_types,
+            _sequence_exclusions=_sequence_exclusions,
+            _sequence_type=_sequence_type,
+            _stop_iteration=_stop_iteration,
+            _string_type=_string_type,
+            _snapshotter=_snapshotter,
+            _tuple_type=_tuple_type,
+        )
 
     context = f"qualified reference-prestress input observation at {path}"
-    if isinstance(value, np.ndarray):
-        observed = np.asarray(value)
-        _exact_guard(model, context=context)
-        return _guarded_prestress_snapshot(
-            model,
-            observed.tolist(),
-            path=path,
-            _exact_guard=_exact_guard,
-        )
-    if isinstance(value, np.generic):
-        observed = value.item()
-        _exact_guard(model, context=context)
-        return _guarded_prestress_snapshot(
-            model,
-            observed,
-            path=path,
-            _exact_guard=_exact_guard,
-        )
-    if value is None or type(value) in {str, bool, int, float}:
+    value_type = _exact_type(value)
+    if value is None or value_type in _primitive_types:
         return value
-    if isinstance(value, Mapping):
-        observed_items = value.items()
-        _exact_guard(model, context=context)
-        observed_iterator = iter(observed_items)
-        _exact_guard(model, context=context)
+    if value_type is _dict_type:
+        observed_iterator = _exact_iter(_dict_items(value))
+        _internal_guard(model, context=context)
         result: Dict[str, Any] = {}
         while True:
             try:
-                observed_item = next(observed_iterator)
-            except StopIteration:
-                _exact_guard(model, context=context)
+                observed_item = _exact_next(observed_iterator)
+            except _stop_iteration:
+                _internal_guard(model, context=context)
                 break
-            _exact_guard(model, context=context)
+            _internal_guard(model, context=context)
             key, member = observed_item
-            _exact_guard(model, context=context)
-            if type(key) is not str:
+            _internal_guard(model, context=context)
+            if _exact_type(key) is not _string_type:
                 raise ValueError(f"prestress state has a non-string key at {path}")
             if key in result:
                 raise ValueError(
                     f"prestress state has duplicate key {key!r} at {path}"
                 )
-            result[key] = _guarded_prestress_snapshot(
-                model,
-                member,
-                path=f"{path}.{key}",
-                _exact_guard=_exact_guard,
-            )
+            result[key] = snapshot(member, f"{path}.{key}")
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
+    if value_type in {_list_type, _tuple_type}:
+        observed_iterator = _exact_iter(value)
+        _internal_guard(model, context=context)
+        result = []
+        index = 0
+        while True:
+            try:
+                member = _exact_next(observed_iterator)
+            except _stop_iteration:
+                _internal_guard(model, context=context)
+                break
+            _internal_guard(model, context=context)
+            result.append(snapshot(member, f"{path}[{index}]"))
+            index += 1
+        return result
+    if _exact_isinstance(value, _numpy_array_type):
+        observed = _numpy_asarray(value)
+        _exact_guard(model, context=context)
+        observed_list = observed.tolist()
+        _exact_guard(model, context=context)
+        return snapshot(observed_list, path)
+    if _exact_isinstance(value, _numpy_generic_type):
+        observed = value.item()
+        _exact_guard(model, context=context)
+        return snapshot(observed, path)
+    if _exact_isinstance(value, _mapping_type):
+        observed_items = value.items()
+        _exact_guard(model, context=context)
+        observed_iterator = _exact_iter(observed_items)
+        _exact_guard(model, context=context)
+        result: Dict[str, Any] = {}
+        while True:
+            try:
+                observed_item = _exact_next(observed_iterator)
+            except _stop_iteration:
+                _exact_guard(model, context=context)
+                break
+            _exact_guard(model, context=context)
+            key, member = observed_item
+            _exact_guard(model, context=context)
+            if _exact_type(key) is not _string_type:
+                raise ValueError(f"prestress state has a non-string key at {path}")
+            if key in result:
+                raise ValueError(
+                    f"prestress state has duplicate key {key!r} at {path}"
+                )
+            result[key] = snapshot(member, f"{path}.{key}")
+        return result
+    if _exact_isinstance(value, _sequence_type) and not _exact_isinstance(
+        value, _sequence_exclusions
     ):
-        observed_iterator = iter(value)
+        observed_iterator = _exact_iter(value)
         _exact_guard(model, context=context)
         result = []
         index = 0
         while True:
             try:
-                member = next(observed_iterator)
-            except StopIteration:
+                member = _exact_next(observed_iterator)
+            except _stop_iteration:
                 _exact_guard(model, context=context)
                 break
             _exact_guard(model, context=context)
-            result.append(
-                _guarded_prestress_snapshot(
-                model,
-                member,
-                path=f"{path}[{index}]",
-                _exact_guard=_exact_guard,
-            )
-            )
+            result.append(snapshot(member, f"{path}[{index}]"))
             index += 1
         return result
     return value
@@ -417,17 +508,320 @@ def _normalize_prestress_states(
     source: Any,
     *,
     _exact_guard: Any = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD,
+    _qualified_runtime_guard: Any = None,
+    _dict_get: Any = dict.get,
+    _dict_items: Any = dict.items,
+    _dict_type: type[Any] = dict,
+    _bool_type: type[Any] = bool,
+    _bool_types: tuple[type[Any], ...] = (bool, np.bool_),
+    _builtin_key_types: tuple[type[Any], ...] = (int, str),
+    _exact_callable: Any = callable,
+    _exact_enumerate: Any = enumerate,
+    _exact_float_isfinite: Any = math.isfinite,
+    _exact_float_repr: Any = repr,
+    _exact_int: Any = int,
+    _exact_isinstance: Any = isinstance,
+    _exact_iter: Any = iter,
+    _exact_len: Any = len,
+    _exact_list: Any = list,
+    _exact_next: Any = next,
+    _exact_object_getattribute: Any = object.__getattribute__,
+    _exact_set: Any = set,
+    _exact_sorted: Any = sorted,
+    _exact_str_encode: Any = str.encode,
+    _exact_str_join: Any = str.join,
+    _exact_type: Any = type,
+    _exact_tuple: Any = tuple,
+    _float_type: type[Any] = float,
+    _inspect_signature: Any = inspect.signature,
+    _integer_type: type[Any] = int,
+    _json_encode_string: Any = _JSON_ENCODE_BASESTRING,
+    _mapping_type: Any = Mapping,
+    _numpy_array_type: type[Any] = np.ndarray,
+    _numpy_asarray: Any = np.asarray,
+    _numpy_generic_type: type[Any] = np.generic,
+    _integer_types: tuple[type[Any], ...] = (int, np.integer),
+    _primitive_types: frozenset[type[Any]] = frozenset(
+        {str, bool, int, float}
+    ),
+    _sequence_exclusions: tuple[type[Any], ...] = (
+        str,
+        bytes,
+        bytearray,
+    ),
+    _sequence_type: Any = Sequence,
+    _schema_id: str = PRESTRESS_INPUT_SCHEMA_ID,
+    _sha256: Any = hashlib.sha256,
+    _stop_iteration: type[BaseException] = StopIteration,
+    _string_type: type[Any] = str,
+    _type_error: type[BaseException] = TypeError,
+    _value_error: type[BaseException] = ValueError,
 ) -> tuple[Dict[int, Any], Dict[str, Any]]:
-    """Evaluate once and bind a complete canonical element-state map."""
+    """Evaluate once and bind a complete canonical element-state map.
 
-    model_ids = tuple(sorted(int(value) for value in model.mesh.elements))
-    model_id_set = set(model_ids)
+    The complete lifecycle guard still owns both ends of this operation and
+    every caller-controlled observation.  An all-qualified solver lease may
+    amortize only traversal of already-observed exact built-in containers.
+    """
+
+    _exact_guard(
+        model,
+        context="qualified reference-prestress normalization preflight",
+    )
+    runtime_namespace = (
+        _exact_object_getattribute(_qualified_runtime_guard, "__dict__")
+        if _qualified_runtime_guard is not None
+        else None
+    )
+    trusted_runtime_guard = None
+    if _exact_type(runtime_namespace) is _dict_type:
+        trusted_runtime_guard = _dict_get(
+            runtime_namespace,
+            "_qualified_trusted_input_require",
+        )
+        if trusted_runtime_guard is None:
+            trusted_runtime_guard = _dict_get(
+                runtime_namespace,
+                "_qualified_trusted_require",
+            )
+
+    def internal_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Any:
+        if trusted_runtime_guard is None or observed_model is not model:
+            return _exact_guard(observed_model, context=context)
+        return trusted_runtime_guard(observed_model, context=context)
+
+    def snapshot_state(value: Any, *, path: str) -> Any:
+        """Detach input with an operation-private recursive helper."""
+
+        context = f"qualified reference-prestress input observation at {path}"
+        value_type = _exact_type(value)
+        if value is None or value_type in _primitive_types:
+            return value
+        if value_type is _dict_type:
+            observed_iterator = _exact_iter(_dict_items(value))
+            internal_guard(model, context=context)
+            result = {}
+            while True:
+                try:
+                    observed_item = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    internal_guard(model, context=context)
+                    break
+                internal_guard(model, context=context)
+                key, member = observed_item
+                internal_guard(model, context=context)
+                if _exact_type(key) is not _string_type:
+                    raise _value_error(
+                        f"prestress state has a non-string key at {path}"
+                    )
+                if key in result:
+                    raise _value_error(
+                        f"prestress state has duplicate key {key!r} at {path}"
+                    )
+                result[key] = snapshot_state(member, path=f"{path}.{key}")
+            return result
+        if value_type in {_exact_list, _exact_tuple}:
+            observed_iterator = _exact_iter(value)
+            internal_guard(model, context=context)
+            result = []
+            index = 0
+            while True:
+                try:
+                    member = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    internal_guard(model, context=context)
+                    break
+                internal_guard(model, context=context)
+                result.append(snapshot_state(member, path=f"{path}[{index}]"))
+                index += 1
+            return result
+        if _exact_isinstance(value, _numpy_array_type):
+            observed = _numpy_asarray(value)
+            _exact_guard(model, context=context)
+            observed_list = observed.tolist()
+            _exact_guard(model, context=context)
+            return snapshot_state(observed_list, path=path)
+        if _exact_isinstance(value, _numpy_generic_type):
+            observed = value.item()
+            _exact_guard(model, context=context)
+            return snapshot_state(observed, path=path)
+        if _exact_isinstance(value, _mapping_type):
+            observed_items = value.items()
+            _exact_guard(model, context=context)
+            observed_iterator = _exact_iter(observed_items)
+            _exact_guard(model, context=context)
+            result = {}
+            while True:
+                try:
+                    observed_item = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    _exact_guard(model, context=context)
+                    break
+                _exact_guard(model, context=context)
+                key, member = observed_item
+                _exact_guard(model, context=context)
+                if _exact_type(key) is not _string_type:
+                    raise _value_error(
+                        f"prestress state has a non-string key at {path}"
+                    )
+                if key in result:
+                    raise _value_error(
+                        f"prestress state has duplicate key {key!r} at {path}"
+                    )
+                result[key] = snapshot_state(member, path=f"{path}.{key}")
+            return result
+        if _exact_isinstance(value, _sequence_type) and not _exact_isinstance(
+            value, _sequence_exclusions
+        ):
+            observed_iterator = _exact_iter(value)
+            _exact_guard(model, context=context)
+            result = []
+            index = 0
+            while True:
+                try:
+                    member = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    _exact_guard(model, context=context)
+                    break
+                _exact_guard(model, context=context)
+                result.append(snapshot_state(member, path=f"{path}[{index}]"))
+                index += 1
+            return result
+        return value
+
+    def canonical_element_id(raw: Any) -> int:
+        """Canonicalize one key without callback-reachable helper authority."""
+
+        if _exact_isinstance(raw, _bool_types):
+            raise _value_error(
+                "prestress element-state IDs must be canonical integers"
+            )
+        if _exact_isinstance(raw, _integer_types):
+            return _exact_int(raw)
+        if _exact_isinstance(raw, _string_type) and raw == _string_type(
+            _exact_int(raw)
+        ):
+            return _exact_int(raw)
+        raise _value_error(
+            "prestress element-state IDs must be canonical integers"
+        )
+
+    def canonical_owned(value: Any, *, path: str = "$") -> Any:
+        """Copy an observed built-in tree under the canonical JSON rules."""
+
+        value_type = _exact_type(value)
+        if (
+            value is None
+            or value_type is _string_type
+            or value_type is _bool_type
+            or value_type is _integer_type
+        ):
+            return value
+        if value_type is _float_type:
+            if not _exact_float_isfinite(value):
+                raise _value_error(f"nonfinite canonical value at {path}")
+            return 0.0 if value == 0.0 else value
+        if value_type is _dict_type:
+            result = {}
+            for key, member in _dict_items(value):
+                if _exact_type(key) is not _string_type:
+                    raise _value_error(f"non-string canonical key at {path}")
+                if key in result:
+                    raise _value_error(
+                        f"duplicate canonical key {key!r} at {path}"
+                    )
+                result[key] = canonical_owned(member, path=f"{path}.{key}")
+            return result
+        if value_type is _exact_list:
+            return [
+                canonical_owned(member, path=f"{path}[{index}]")
+                for index, member in _exact_enumerate(value)
+            ]
+        raise _value_error(
+            f"unsupported canonical value {value_type.__name__} at {path}"
+        )
+
+    def canonical_fragment(value: Any) -> str:
+        """Encode an already-owned canonical tree without shared Python helpers."""
+
+        value_type = _exact_type(value)
+        if value is None:
+            return "null"
+        if value_type is _bool_type:
+            return "true" if value else "false"
+        if value_type is _integer_type:
+            return _string_type(value)
+        if value_type is _float_type:
+            return _exact_float_repr(value)
+        if value_type is _string_type:
+            return _json_encode_string(value)
+        if value_type is _exact_list:
+            return "[" + _exact_str_join(
+                ",", [canonical_fragment(member) for member in value]
+            ) + "]"
+        if value_type is _dict_type:
+            members = [
+                _json_encode_string(key) + ":" + canonical_fragment(member)
+                for key, member in _exact_sorted(_dict_items(value))
+            ]
+            return "{" + _exact_str_join(",", members) + "}"
+        raise _value_error(
+            f"unsupported canonical value {value_type.__name__} at $"
+        )
+
+    def canonical_json_owned(value: Any) -> bytes:
+        return _exact_str_encode(canonical_fragment(value) + "\n", "utf-8")
+
+    model_ids = _exact_tuple(
+        _exact_sorted(_exact_int(value) for value in model.mesh.elements)
+    )
+    model_id_set = _exact_set(model_ids)
     supplied: Dict[int, Any] = {}
-    if callable(source):
+    if _exact_callable(source):
         source_kind = "callable_evaluated_once"
+        provider_argument_count = 2
+        if model_ids:
+            signature_context = (
+                "qualified reference-prestress provider signature observation"
+            )
+            try:
+                signature = _inspect_signature(source)
+            except (_type_error, _value_error) as exc:
+                _exact_guard(model, context=signature_context)
+                raise _type_error(
+                    "prestress state provider must expose a deterministic "
+                    "inspectable signature"
+                ) from exc
+            _exact_guard(model, context=signature_context)
+            sample_element_id = model_ids[0]
+            sample_element = model.mesh.elements[sample_element_id]
+            provider_argument_count = 0
+            for arguments in (
+                (sample_element_id, sample_element),
+                (sample_element_id,),
+            ):
+                try:
+                    signature.bind(*arguments)
+                except _type_error:
+                    _exact_guard(model, context=signature_context)
+                    continue
+                _exact_guard(model, context=signature_context)
+                provider_argument_count = 2 if _exact_len(arguments) == 2 else 1
+                break
+            if provider_argument_count == 0:
+                raise _type_error(
+                    "prestress state provider must accept "
+                    "(element_id, element) or element_id"
+                )
         for element_id in model_ids:
-            raw_state = _evaluate_prestress_provider(
-                source, element_id, model.mesh.elements[element_id]
+            raw_state = (
+                source(element_id, model.mesh.elements[element_id])
+                if provider_argument_count == 2
+                else source(element_id)
             )
             _exact_guard(
                 model,
@@ -437,105 +831,134 @@ def _normalize_prestress_states(
                 ),
             )
             try:
-                snapshot = _guarded_prestress_snapshot(
-                    model,
+                snapshot = snapshot_state(
                     raw_state,
                     path=f"prestress_states[{element_id}]",
-                    _exact_guard=_exact_guard,
                 )
-                supplied[element_id] = canonical_plain_data(snapshot)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(
+                supplied[element_id] = canonical_owned(snapshot)
+                internal_guard(
+                    model,
+                    context=(
+                        "qualified reference-prestress owned provider state for "
+                        f"element {element_id}"
+                    ),
+                )
+            except (_type_error, _value_error) as exc:
+                raise _value_error(
                     f"prestress state for element {element_id} is not strict "
                     "canonical data"
                 ) from exc
-    elif isinstance(source, Mapping):
+    elif _exact_isinstance(source, _mapping_type):
         source_kind = "mapping"
-        observed_items = source.items()
-        _exact_guard(
+        exact_builtin_mapping = _exact_type(source) is _dict_type
+        mapping_guard = internal_guard if exact_builtin_mapping else _exact_guard
+        observed_items = (
+            _dict_items(source) if exact_builtin_mapping else source.items()
+        )
+        mapping_guard(
             model,
             context="qualified reference-prestress mapping observation",
         )
-        observed_iterator = iter(observed_items)
-        _exact_guard(
+        observed_iterator = _exact_iter(observed_items)
+        mapping_guard(
             model,
             context="qualified reference-prestress mapping observation",
         )
         while True:
             try:
-                observed_item = next(observed_iterator)
-            except StopIteration:
-                _exact_guard(
+                observed_item = _exact_next(observed_iterator)
+            except _stop_iteration:
+                mapping_guard(
                     model,
                     context="qualified reference-prestress mapping observation",
                 )
                 break
-            _exact_guard(
+            mapping_guard(
                 model,
                 context="qualified reference-prestress mapping observation",
             )
             raw_element_id, state = observed_item
-            _exact_guard(
+            mapping_guard(
                 model,
                 context="qualified reference-prestress mapping item observation",
             )
-            element_id = _canonical_prestress_element_id(raw_element_id)
-            _exact_guard(
+            element_id = canonical_element_id(raw_element_id)
+            key_guard = (
+                mapping_guard
+                if _exact_type(raw_element_id) in _builtin_key_types
+                else _exact_guard
+            )
+            key_guard(
                 model,
                 context="qualified reference-prestress element-ID observation",
             )
             if element_id in supplied:
-                raise ValueError(
+                raise _value_error(
                     "prestress element-state IDs are duplicate or ambiguous"
                 )
             if element_id not in model_id_set:
-                raise ValueError(
+                raise _value_error(
                     f"prestress element-state ID {element_id} is not in the model"
                 )
             try:
-                snapshot = _guarded_prestress_snapshot(
-                    model,
+                snapshot = snapshot_state(
                     state,
                     path=f"prestress_states[{element_id}]",
-                    _exact_guard=_exact_guard,
                 )
-                supplied[element_id] = canonical_plain_data(snapshot)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(
+                supplied[element_id] = canonical_owned(snapshot)
+                internal_guard(
+                    model,
+                    context=(
+                        "qualified reference-prestress owned mapping state for "
+                        f"element {element_id}"
+                    ),
+                )
+            except (_type_error, _value_error) as exc:
+                raise _value_error(
                     f"prestress state for element {element_id} is not strict "
                     "canonical data"
                 ) from exc
     else:
-        raise TypeError("prestress_states must be a mapping or deterministic callable")
+        raise _type_error(
+            "prestress_states must be a mapping or deterministic callable"
+        )
 
     complete: Dict[int, Any] = {}
     for element_id in model_ids:
         raw_state = supplied.get(element_id)
         try:
-            complete[element_id] = canonical_plain_data(raw_state)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
+            complete[element_id] = canonical_owned(raw_state)
+        except (_type_error, _value_error) as exc:
+            raise _value_error(
                 f"prestress state for element {element_id} is not strict canonical data"
             ) from exc
     state_hashes: Dict[str, str] = {}
-    for element_id, state in complete.items():
+    for element_id, state in _dict_items(complete):
         try:
-            payload = canonical_json_bytes(state)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
+            payload = canonical_json_owned(state)
+        except (_type_error, _value_error) as exc:
+            raise _value_error(
                 f"prestress state for element {element_id} is not strict canonical data"
             ) from exc
-        state_hashes[str(element_id)] = hashlib.sha256(payload).hexdigest().upper()
+        state_hashes[_string_type(element_id)] = _sha256(
+            payload
+        ).hexdigest().upper()
     provenance = {
-        "schema_id": PRESTRESS_INPUT_SCHEMA_ID,
+        "schema_id": _schema_id,
         "source_kind": source_kind,
-        "element_ids": list(model_ids),
-        "supplied_element_ids": sorted(int(value) for value in supplied),
+        "element_ids": _exact_list(model_ids),
+        "supplied_element_ids": _exact_sorted(
+            _exact_int(value) for value in supplied
+        ),
         "explicitly_unstressed_element_ids": [
             element_id for element_id, state in complete.items() if state is None
         ],
         "state_sha256": state_hashes,
     }
+    _exact_guard(
+        model,
+        context="qualified reference-prestress normalization output",
+    )
     return complete, provenance
 
 
@@ -1206,6 +1629,7 @@ def _solve_free_vibration_under_lease(
                 model,
                 prestress_states,
                 _exact_guard=exact_guard,
+                _qualified_runtime_guard=_qualified_runtime_guard,
             )
         )
         exact_guard(

@@ -67,6 +67,7 @@ from .s3_reference_batch import (
     REFERENCE_S3_FORMULATION_ID as _REFERENCE_S3_FORMULATION_ID,
 )
 from .element_capabilities import ElementCapabilityError
+from .elements import BeamElement as _BeamElement, Element as _Element
 if TYPE_CHECKING:
     from .boundary import LoadCase
     from .fe_core import FEModel
@@ -94,7 +95,42 @@ _ASSEMBLY_MODULE_ALIASES = {
     "_Node": _Node,
     "_PreparedReferenceS3Components": _PreparedReferenceS3Components,
     "_QualifiedStateMapping": _QualifiedStateMapping,
+    "_BeamElement": _BeamElement,
+    "_Element": _Element,
 }
+
+_EXACT_BEAM_GEOMETRIC_STIFFNESS = type.__getattribute__(
+    _BeamElement,
+    "__dict__",
+)["compute_geometric_stiffness_matrix"]
+_ASSEMBLY_MODULE_ALIASES["_EXACT_BEAM_GEOMETRIC_STIFFNESS"] = (
+    _EXACT_BEAM_GEOMETRIC_STIFFNESS
+)
+_EXACT_BEAM_DYNAMIC_LOOKUP_AUTHORITY = (
+    *(
+        (
+            _BeamElement,
+            name,
+            type.__getattribute__(_BeamElement, "__dict__")[name],
+        )
+        for name in (
+            "_axial_compression_from_state",
+            "get_node_coordinates",
+            "_beam_frame_and_transform",
+            "_geometric_polar_radius_squared",
+            "num_nodes",
+            "dofs_per_node",
+        )
+    ),
+    (
+        _Element,
+        "total_dofs",
+        type.__getattribute__(_Element, "__dict__")["total_dofs"],
+    ),
+)
+_ASSEMBLY_MODULE_ALIASES["_EXACT_BEAM_DYNAMIC_LOOKUP_AUTHORITY"] = (
+    _EXACT_BEAM_DYNAMIC_LOOKUP_AUTHORITY
+)
 _ASSEMBLY_SPARSE_ALIASES = {
     name: vars(sparse)[name]
     for name in ("coo_matrix", "csr_matrix", "diags", "issparse", "linalg")
@@ -380,8 +416,46 @@ def _bind_qualified_assembly_runtime_lease(
     )
     owned_routing_by_mesh: dict[int, tuple[Any, dict[str, Any]]] = {}
     prepared_s3_by_mesh: dict[int, tuple[Any, dict[str, Any]]] = {}
+    exact_assembly_error = AssemblyError
+    exact_attribute_error = AttributeError
     exact_bool = bool
+    exact_dict_contains = dict.__contains__
+    exact_dict_get = dict.get
+    exact_dict_pop = dict.pop
+    exact_dict_type = dict
+    exact_globals = globals
+    exact_id = id
+    exact_int = int
+    exact_len = len
+    exact_list_getitem = list.__getitem__
     exact_numpy_isfinite = np.isfinite
+    exact_object_getattribute = object.__getattribute__
+    exact_runtime_error = RuntimeError
+    exact_type = type
+    exact_type_error = TypeError
+    exact_value_error = ValueError
+    module_namespace = exact_globals()
+    trusted_element_builtin_shadow_names = (
+        "dict",
+        "id",
+        "int",
+        "len",
+        "list",
+        "object",
+        "type",
+    )
+
+    def require_no_trusted_element_builtin_shadows() -> None:
+        changed = tuple(
+            name
+            for name in trusted_element_builtin_shadow_names
+            if exact_dict_contains(module_namespace, name)
+        )
+        if changed:
+            raise exact_assembly_error(
+                "qualified trusted-element builtin authority changed: "
+                + ", ".join(changed)
+            )
     exact_numpy_coordinate_types = frozenset(
         {
             np.float16,
@@ -501,6 +575,7 @@ def _bind_qualified_assembly_runtime_lease(
         context: str,
         allow_q4_cached_stiffness: bool = False,
     ) -> Any:
+        require_no_trusted_element_builtin_shadows()
         # Both family generations precede every model/mesh observation.  A
         # provider that mutates either authority while exposing the model can
         # therefore never redefine the lease's starting generation.
@@ -541,15 +616,15 @@ def _bind_qualified_assembly_runtime_lease(
                 if qualified_input_plan is not None
                 else None
             )
-            if type(mesh) is _FEMesh:
-                namespace = object.__getattribute__(mesh, "__dict__")
-                if type(namespace) is dict:
-                    dict.pop(
+            if exact_type(mesh) is _FEMesh:
+                namespace = exact_object_getattribute(mesh, "__dict__")
+                if exact_type(namespace) is exact_dict_type:
+                    exact_dict_pop(
                         namespace,
                         "_qualified_s3_reference_stiffness_plan",
                         None,
                     )
-                prepared_s3_by_mesh.pop(id(mesh), None)
+                exact_dict_pop(prepared_s3_by_mesh, exact_id(mesh), None)
 
         def canonical_q4_total_bytes(value: Any) -> bytes:
             if type(value) is bytes:
@@ -2548,8 +2623,14 @@ def _bind_qualified_assembly_runtime_lease(
         try:
             if allow_q4_cached_stiffness:
                 q4_fast_plan = raw_plan_candidate()
-            if q4_fast_plan is None:
-                qualified_input_plan = qualified_builtin_inputs()
+            # The warm-stiffness plan and the callback-free input plan have
+            # different scopes.  Mixed shell/beam models can own a warm Q4
+            # plan while still needing the narrower input-traversal
+            # capability during prestress normalization and geometric-state
+            # lookup.  Capture that authority independently; otherwise the
+            # cached mixed route silently loses it and falls back to a full
+            # O(N) lifecycle scan for every state observation.
+            qualified_input_plan = qualified_builtin_inputs()
             if q4_fast_plan is not None:
                 elements = tuple(
                     element
@@ -2810,6 +2891,7 @@ def _bind_qualified_assembly_runtime_lease(
             final: bool = False,
         ) -> None:
             try:
+                require_no_trusted_element_builtin_shadows()
                 if expected_model is not model:
                     raise ValueError("qualified assembly lease model changed")
                 assembly_epoch_manager.require_generation(
@@ -3188,6 +3270,271 @@ def _bind_qualified_assembly_runtime_lease(
             require._qualified_owned_material = owned_material
             require._qualified_owned_material_name = owned_material_name
             require._qualified_owned_mesh = qualified_input_plan["mesh"]
+
+            trusted_plan = qualified_input_plan
+            trusted_token = trusted_plan["token"]
+            trusted_token_value = trusted_plan["token_value"]
+
+            def trusted_element_require(
+                expected_model: "FEModel",
+                element: Any,
+                material: Any,
+                *,
+                context: str,
+            ) -> None:
+                """Check one exact qualified owned element in constant time.
+
+                Mixed models cannot use the complete all-qualified loop fast
+                path because generic elements remain callback boundaries.  A
+                qualified element and its already-bound material are still
+                safe to observe between those boundaries: the exact capture
+                owns their providers, while monotonic family/assembly epochs
+                and the shared mesh token reject supported mutation and ABA.
+                """
+
+                try:
+                    require_no_trusted_element_builtin_shadows()
+                    assembly_epoch_manager.require_generation(
+                        assembly_start_generation
+                    )
+                    if q4_generation is not None:
+                        q4_manager.require_generation(q4_generation)
+                    if s3_generation is not None:
+                        s3_manager.require_generation(s3_generation)
+                    record = exact_dict_get(
+                        bound_by_identity,
+                        exact_id(element),
+                    )
+                    if (
+                        expected_model is not model
+                        or exact_type(model) is not exact_model_type
+                        or exact_type(element) not in {q4_type, s3_type}
+                        or record is None
+                        or record[0] is not element
+                        or record[1] is not material
+                        or exact_object_getattribute(model, "__dict__")
+                        is not trusted_plan["model_namespace"]
+                        or exact_dict_get(
+                            trusted_plan["model_namespace"], "mesh"
+                        )
+                        is not trusted_plan["mesh"]
+                        or exact_dict_get(
+                            trusted_plan["model_namespace"], "materials"
+                        )
+                        is not trusted_plan["materials"]
+                        or exact_dict_get(
+                            trusted_plan["model_namespace"],
+                            "current_material",
+                        )
+                        != trusted_plan["current_material"]
+                        or exact_type(trusted_plan["mesh"]) is not _FEMesh
+                        or exact_object_getattribute(
+                            trusted_plan["mesh"], "__dict__"
+                        )
+                        is not trusted_plan["mesh_namespace"]
+                        or exact_dict_get(
+                            trusted_plan["mesh_namespace"], "elements"
+                        )
+                        is not trusted_plan["mapping"]
+                        or exact_dict_get(
+                            trusted_plan["mesh_namespace"],
+                            "_qualified_direct_state_token",
+                        )
+                        is not trusted_token
+                        or exact_type(trusted_plan["mapping"])
+                        is not _QualifiedStateMapping
+                        or exact_object_getattribute(
+                            trusted_plan["mapping"], "__dict__"
+                        )
+                        is not trusted_plan["mapping_namespace"]
+                        or exact_dict_get(
+                            trusted_plan["mapping_namespace"],
+                            "_qualified_token",
+                        )
+                        is not trusted_token
+                        or exact_dict_get(
+                            trusted_plan["mapping_namespace"],
+                            "_qualified_kind",
+                        )
+                        != "element"
+                        or exact_type(trusted_token) is not _QualifiedMutationEpoch
+                        or exact_len(trusted_token) != 1
+                        or exact_int(exact_list_getitem(trusted_token, 0))
+                        != trusted_token_value
+                    ):
+                        raise exact_value_error(
+                            "qualified trusted-element inputs changed"
+                        )
+                    if q4_generation is not None:
+                        q4_manager.require_generation(q4_generation)
+                    if s3_generation is not None:
+                        s3_manager.require_generation(s3_generation)
+                    assembly_epoch_manager.require_generation(
+                        assembly_start_generation
+                    )
+                except (
+                    exact_attribute_error,
+                    exact_runtime_error,
+                    exact_type_error,
+                    exact_value_error,
+                ) as exc:
+                    for current in q4_elements:
+                        invalidate_q4(current)
+                    for current in s3_elements:
+                        invalidate_s3(current)
+                    invalidate_s3_reference_plan()
+                    raise exact_assembly_error(
+                        f"{context} found incompatible qualified shell authority"
+                    ) from exc
+
+            require._qualified_trusted_element_require = (
+                trusted_element_require
+            )
+
+            qualified_input_anchors = q4_elements + s3_elements
+            if qualified_input_anchors:
+                trusted_input_element = qualified_input_anchors[0]
+                trusted_input_record = exact_dict_get(
+                    bound_by_identity,
+                    exact_id(trusted_input_element),
+                )
+                if (
+                    trusted_input_record is None
+                    or trusted_input_record[0] is not trusted_input_element
+                ):
+                    raise exact_assembly_error(
+                        "qualified input-traversal authority is absent"
+                    )
+                trusted_input_material = trusted_input_record[1]
+
+                def trusted_input_require(
+                    expected_model: "FEModel",
+                    *,
+                    context: str,
+                ) -> None:
+                    """Guard callback-free owned input traversal in mixed models.
+
+                    This authority is deliberately narrower than the
+                    all-qualified mechanics-loop lease.  It may be used only
+                    between observations of exact built-in input containers;
+                    arbitrary element/provider calls remain complete-guard
+                    boundaries.
+                    """
+
+                    trusted_element_require(
+                        expected_model,
+                        trusted_input_element,
+                        trusted_input_material,
+                        context=context,
+                    )
+
+                require._qualified_trusted_input_require = (
+                    trusted_input_require
+                )
+
+            if len(q4_elements) + len(s3_elements) == len(elements):
+                def trusted_require(
+                    expected_model: "FEModel",
+                    *,
+                    context: str,
+                ) -> None:
+                    """Check a fully qualified trusted loop in constant time.
+
+                    The exact capture and every caller-controlled boundary use
+                    the complete lease.  Between those boundaries, monotonic
+                    authority generations and the mesh mutation token reject
+                    supported mutation, including mutate-then-restore ABA.
+                    """
+
+                    try:
+                        require_no_trusted_element_builtin_shadows()
+                        assembly_epoch_manager.require_generation(
+                            assembly_start_generation
+                        )
+                        if q4_generation is not None:
+                            q4_manager.require_generation(q4_generation)
+                        if s3_generation is not None:
+                            s3_manager.require_generation(s3_generation)
+                        if (
+                            expected_model is not model
+                            or exact_type(model) is not exact_model_type
+                            or exact_object_getattribute(model, "__dict__")
+                            is not trusted_plan["model_namespace"]
+                            or exact_dict_get(
+                                trusted_plan["model_namespace"], "mesh"
+                            )
+                            is not trusted_plan["mesh"]
+                            or exact_dict_get(
+                                trusted_plan["model_namespace"], "materials"
+                            )
+                            is not trusted_plan["materials"]
+                            or exact_dict_get(
+                                trusted_plan["model_namespace"],
+                                "current_material",
+                            )
+                            != trusted_plan["current_material"]
+                            or exact_type(trusted_plan["mesh"]) is not _FEMesh
+                            or exact_object_getattribute(
+                                trusted_plan["mesh"], "__dict__"
+                            )
+                            is not trusted_plan["mesh_namespace"]
+                            or exact_dict_get(
+                                trusted_plan["mesh_namespace"], "elements"
+                            )
+                            is not trusted_plan["mapping"]
+                            or exact_dict_get(
+                                trusted_plan["mesh_namespace"],
+                                "_qualified_direct_state_token",
+                            )
+                            is not trusted_token
+                            or exact_type(trusted_plan["mapping"])
+                            is not _QualifiedStateMapping
+                            or exact_object_getattribute(
+                                trusted_plan["mapping"], "__dict__"
+                            )
+                            is not trusted_plan["mapping_namespace"]
+                            or exact_dict_get(
+                                trusted_plan["mapping_namespace"],
+                                "_qualified_token",
+                            )
+                            is not trusted_token
+                            or exact_dict_get(
+                                trusted_plan["mapping_namespace"],
+                                "_qualified_kind",
+                            )
+                            != "element"
+                            or exact_type(trusted_token)
+                            is not _QualifiedMutationEpoch
+                            or exact_len(trusted_token) != 1
+                            or exact_int(exact_list_getitem(trusted_token, 0))
+                            != trusted_token_value
+                        ):
+                            raise exact_value_error(
+                                "qualified trusted-loop inputs changed"
+                            )
+                        if q4_generation is not None:
+                            q4_manager.require_generation(q4_generation)
+                        if s3_generation is not None:
+                            s3_manager.require_generation(s3_generation)
+                        assembly_epoch_manager.require_generation(
+                            assembly_start_generation
+                        )
+                    except (
+                        exact_attribute_error,
+                        exact_runtime_error,
+                        exact_type_error,
+                        exact_value_error,
+                    ) as exc:
+                        for element in q4_elements:
+                            invalidate_q4(element)
+                        for element in s3_elements:
+                            invalidate_s3(element)
+                        invalidate_s3_reference_plan()
+                        raise exact_assembly_error(
+                            f"{context} found incompatible qualified shell authority"
+                        ) from exc
+
+                require._qualified_trusted_require = trusted_require
 
         return require
 
@@ -5136,6 +5483,49 @@ def _assemble_geometric_stiffness_matrix_under_lease(
     element_states: Optional[Any] = None,
     *,
     qualified_runtime_guard: Any,
+    _assembly_error_type: type[BaseException] = AssemblyError,
+    _beam_dynamic_lookup_authority: tuple[tuple[Any, str, Any], ...] = (
+        _EXACT_BEAM_DYNAMIC_LOOKUP_AUTHORITY
+    ),
+    _beam_element_type: type[Any] = _BeamElement,
+    _beam_geometric_stiffness: Any = _EXACT_BEAM_GEOMETRIC_STIFFNESS,
+    _dict_contains: Any = dict.__contains__,
+    _dict_get: Any = dict.get,
+    _dict_getitem: Any = dict.__getitem__,
+    _dict_items: Any = dict.items,
+    _dict_type: type[Any] = dict,
+    _exact_any: Any = any,
+    _exact_callable: Any = callable,
+    _exact_getattr: Any = getattr,
+    _exact_isinstance: Any = isinstance,
+    _exact_iter: Any = iter,
+    _exact_len: Any = len,
+    _exact_next: Any = next,
+    _exact_object_getattribute: Any = object.__getattribute__,
+    _exact_type: Any = type,
+    _exact_type_getattribute: Any = type.__getattribute__,
+    _list_type: type[Any] = list,
+    _integer_type: type[Any] = int,
+    _mapping_type: Any = Mapping,
+    _numpy_array_type: type[Any] = np.ndarray,
+    _numpy_asarray: Any = np.asarray,
+    _numpy_ascontiguousarray: Any = np.ascontiguousarray,
+    _numpy_frombuffer: Any = np.frombuffer,
+    _numpy_generic_type: type[Any] = np.generic,
+    _primitive_types: frozenset[type[Any]] = frozenset(
+        {str, bool, int, float}
+    ),
+    _beam_scalar_types: frozenset[type[Any]] = frozenset({int, float}),
+    _sequence_exclusions: tuple[type[Any], ...] = (
+        str,
+        bytes,
+        bytearray,
+    ),
+    _sequence_type: Any = Sequence,
+    _stop_iteration: type[BaseException] = StopIteration,
+    _string_type: type[Any] = str,
+    _tuple_type: type[Any] = tuple,
+    _type_error: type[BaseException] = TypeError,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble the global geometric stiffness matrix KG only.
 
@@ -5158,6 +5548,305 @@ def _assemble_geometric_stiffness_matrix_under_lease(
     ) -> None:
         lifecycle_guard(expected_model, context=context)
         qualified_runtime_guard(expected_model, context=context)
+
+    runtime_namespace = _exact_object_getattribute(
+        qualified_runtime_guard,
+        "__dict__",
+    )
+    trusted_input_guard = (
+        _dict_get(
+            runtime_namespace,
+            "_qualified_trusted_input_require",
+        )
+        if _exact_type(runtime_namespace) is _dict_type
+        else None
+    )
+
+    def internal_input_guard(*, context: str) -> None:
+        if trusted_input_guard is None:
+            exact_qualified_guard(model, context=context)
+            return
+        trusted_input_guard(model, context=context)
+
+    def observed_element_state(
+        source: Any,
+        element_id: int,
+        element: Any,
+    ) -> Any:
+        """Read one state; only exact dict operations use the narrow lease."""
+
+        if source is None:
+            return None
+        if _exact_callable(source):
+            try:
+                try:
+                    state = source(element_id, element)
+                except _type_error:
+                    exact_qualified_guard(
+                        model,
+                        context=(
+                            "geometric stiffness assembly state provider "
+                            f"signature fallback for element {element_id}"
+                        ),
+                    )
+                    state = source(element_id)
+            finally:
+                exact_qualified_guard(
+                    model,
+                    context=(
+                        "geometric stiffness assembly state provider return "
+                        f"for element {element_id}"
+                    ),
+                )
+            return state
+
+        exact_mapping = _exact_type(source) is _dict_type
+
+        def post_lookup(label: str) -> None:
+            context = (
+                "geometric stiffness assembly state "
+                f"{label} for element {element_id}"
+            )
+            if exact_mapping:
+                internal_input_guard(context=context)
+            else:
+                exact_qualified_guard(model, context=context)
+
+        if exact_mapping:
+            has_numeric_id = _dict_contains(source, element_id)
+            post_lookup("mapping numeric-ID lookup")
+            if has_numeric_id:
+                state = _dict_getitem(source, element_id)
+                post_lookup("mapping numeric-ID value")
+                return state
+            element_id_text = _string_type(element_id)
+            has_text_id = _dict_contains(source, element_id_text)
+            post_lookup("mapping text-ID lookup")
+            if has_text_id:
+                state = _dict_getitem(source, element_id_text)
+                post_lookup("mapping text-ID value")
+                return state
+            return None
+        if _exact_isinstance(source, _mapping_type):
+            try:
+                has_numeric_id = element_id in source
+            finally:
+                post_lookup("mapping numeric-ID lookup")
+            if has_numeric_id:
+                try:
+                    state = source[element_id]
+                finally:
+                    post_lookup("mapping numeric-ID value")
+                return state
+            element_id_text = _string_type(element_id)
+            try:
+                has_text_id = element_id_text in source
+            finally:
+                post_lookup("mapping text-ID lookup")
+            if has_text_id:
+                try:
+                    state = source[element_id_text]
+                finally:
+                    post_lookup("mapping text-ID value")
+                return state
+        return None
+
+    def snapshot_geometric_state(
+        state: Any,
+        *,
+        element_id: int,
+        path: str = "state",
+    ) -> Any:
+        """Detach state with private callback-aware traversal authority."""
+
+        context = (
+            f"geometric state observation for element {element_id} at {path}"
+        )
+        state_type = _exact_type(state)
+        if state is None or state_type in _primitive_types:
+            return state
+        if state_type is _dict_type:
+            observed_iterator = _exact_iter(_dict_items(state))
+            internal_input_guard(context=context)
+            result = {}
+            while True:
+                try:
+                    observed_item = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    internal_input_guard(context=context)
+                    break
+                internal_input_guard(context=context)
+                key, member = observed_item
+                internal_input_guard(context=context)
+                if _exact_type(key) is not _string_type:
+                    raise _assembly_error_type(
+                        f"qualified geometric state for element {element_id} "
+                        f"contains a non-string key at {path}"
+                    )
+                if key in result:
+                    raise _assembly_error_type(
+                        f"qualified geometric state for element {element_id} "
+                        f"contains duplicate key {key!r} at {path}"
+                    )
+                result[key] = snapshot_geometric_state(
+                    member,
+                    element_id=element_id,
+                    path=f"{path}.{key}",
+                )
+            return result
+        if state_type in {_list_type, _tuple_type}:
+            observed_iterator = _exact_iter(state)
+            internal_input_guard(context=context)
+            result = []
+            index = 0
+            while True:
+                try:
+                    member = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    internal_input_guard(context=context)
+                    break
+                internal_input_guard(context=context)
+                result.append(
+                    snapshot_geometric_state(
+                        member,
+                        element_id=element_id,
+                        path=f"{path}[{index}]",
+                    )
+                )
+                index += 1
+            return result
+        if _exact_isinstance(state, _numpy_array_type):
+            observed = _numpy_asarray(state)
+            exact_qualified_guard(model, context=context)
+            observed_bytes = _numpy_ascontiguousarray(observed).tobytes(
+                order="C"
+            )
+            exact_qualified_guard(model, context=context)
+            copied = _numpy_frombuffer(
+                observed_bytes,
+                dtype=observed.dtype,
+            ).reshape(observed.shape)
+            exact_qualified_guard(model, context=context)
+            return copied
+        if _exact_isinstance(state, _numpy_generic_type):
+            observed = state.item()
+            exact_qualified_guard(model, context=context)
+            return observed
+        if _exact_isinstance(state, _mapping_type):
+            observed_items = state.items()
+            exact_qualified_guard(model, context=context)
+            observed_iterator = _exact_iter(observed_items)
+            exact_qualified_guard(model, context=context)
+            result = {}
+            while True:
+                try:
+                    observed_item = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    exact_qualified_guard(model, context=context)
+                    break
+                exact_qualified_guard(model, context=context)
+                key, member = observed_item
+                exact_qualified_guard(model, context=context)
+                if _exact_type(key) is not _string_type:
+                    raise _assembly_error_type(
+                        f"qualified geometric state for element {element_id} "
+                        f"contains a non-string key at {path}"
+                    )
+                if key in result:
+                    raise _assembly_error_type(
+                        f"qualified geometric state for element {element_id} "
+                        f"contains duplicate key {key!r} at {path}"
+                    )
+                result[key] = snapshot_geometric_state(
+                    member,
+                    element_id=element_id,
+                    path=f"{path}.{key}",
+                )
+            return result
+        if _exact_isinstance(state, _sequence_type) and not _exact_isinstance(
+            state,
+            _sequence_exclusions,
+        ):
+            observed_iterator = _exact_iter(state)
+            exact_qualified_guard(model, context=context)
+            result = []
+            index = 0
+            while True:
+                try:
+                    member = _exact_next(observed_iterator)
+                except _stop_iteration:
+                    exact_qualified_guard(model, context=context)
+                    break
+                exact_qualified_guard(model, context=context)
+                result.append(
+                    snapshot_geometric_state(
+                        member,
+                        element_id=element_id,
+                        path=f"{path}[{index}]",
+                    )
+                )
+                index += 1
+            return result
+        raise _assembly_error_type(
+            f"qualified geometric state for element {element_id} has "
+            f"unsupported type {state_type.__name__} at {path}"
+        )
+
+    def has_exact_builtin_beam_profile(element: Any) -> bool:
+        """Prove every BeamElement lookup used by the direct fast path."""
+
+        if _exact_type(element) is not _beam_element_type:
+            return False
+        element_namespace = _exact_object_getattribute(element, "__dict__")
+        if _exact_type(element_namespace) is not _dict_type:
+            return False
+        for name in (
+            "compute_geometric_stiffness_matrix",
+            "_axial_compression_from_state",
+            "get_node_coordinates",
+            "_beam_frame_and_transform",
+            "_geometric_polar_radius_squared",
+            "total_dofs",
+            "num_nodes",
+            "dofs_per_node",
+        ):
+            if _dict_contains(element_namespace, name):
+                return False
+        for owner, name, descriptor in _beam_dynamic_lookup_authority:
+            if (
+                _exact_type_getattribute(owner, "__dict__").get(name)
+                is not descriptor
+            ):
+                return False
+        if (
+            _exact_type_getattribute(
+                _beam_element_type,
+                "__dict__",
+            ).get("compute_geometric_stiffness_matrix")
+            is not _beam_geometric_stiffness
+            or _exact_type(_dict_get(element_namespace, "element_id"))
+            is not _integer_type
+            or _exact_type(_dict_get(element_namespace, "material_name"))
+            is not _string_type
+            or _exact_type(_dict_get(element_namespace, "node_ids"))
+            is not _list_type
+            or _exact_len(_dict_get(element_namespace, "node_ids")) != 2
+            or _exact_any(
+                _exact_type(node_id) is not _integer_type
+                for node_id in _dict_get(element_namespace, "node_ids")
+            )
+            or _exact_type(_dict_get(element_namespace, "cross_section"))
+            is not _dict_type
+            or _dict_get(element_namespace, "generalized_section") is not None
+            or _exact_any(
+                _exact_type(_dict_get(element_namespace, name))
+                not in _beam_scalar_types
+                for name in ("_A", "_Iy", "_Iz")
+            )
+        ):
+            return False
+        orientation = _dict_get(element_namespace, "_orientation")
+        return orientation is None or _exact_type(orientation) is _numpy_array_type
 
     exact_qualified_guard(
         model,
@@ -5279,23 +5968,14 @@ def _assemble_geometric_stiffness_matrix_under_lease(
         bending = np.zeros_like(membrane)
         second_moment = np.zeros_like(membrane)
         for index, (elem_id, element) in enumerate(elem_list):
-            state = _get_element_state(
+            state = observed_element_state(
                 element_states,
                 elem_id,
                 element,
-                _post_observation=lambda label, _elem_id=elem_id: exact_qualified_guard(
-                    model,
-                    context=(
-                        "geometric stiffness assembly state "
-                        f"{label} for element {_elem_id}"
-                    ),
-                ),
             )
-            state = _guarded_geometric_state_snapshot(
-                model,
+            state = snapshot_geometric_state(
                 state,
                 element_id=elem_id,
-                _exact_guard=exact_qualified_guard,
             )
             membrane[index] = element._membrane_compression_samples(state, gp_count)
             bending[index] = element._bending_compression_samples(state, gp_count)
@@ -5345,33 +6025,98 @@ def _assemble_geometric_stiffness_matrix_under_lease(
         if int(elem_id) in precomputed:
             element_matrix = precomputed[int(elem_id)]
         else:
-            state = _get_element_state(
+            state = observed_element_state(
                 element_states,
                 int(elem_id),
                 element,
-                _post_observation=lambda label, _elem_id=int(elem_id): exact_qualified_guard(
-                    model,
-                    context=(
-                        "geometric stiffness assembly state "
-                        f"{label} for element {_elem_id}"
-                    ),
-                ),
             )
             if type(element) in {
                 _QualifiedE4PLShellElement,
                 _QualifiedE4PLS3ShellElement,
             }:
-                state = _guarded_geometric_state_snapshot(
-                    model,
+                state = snapshot_geometric_state(
                     state,
                     element_id=int(elem_id),
-                    _exact_guard=exact_qualified_guard,
                 )
-            getter = getattr(element, "compute_geometric_stiffness_matrix", None)
-            if getter is None:
-                element_matrix = np.zeros((dof_mapping.size, dof_mapping.size), dtype=float)
+            exact_builtin_beam = has_exact_builtin_beam_profile(element)
+            if exact_builtin_beam:
+                # The exact built-in beam implementation is a fixed operator,
+                # not an arbitrary callback.  Keep its per-element boundary
+                # checks constant-time so mixed shell/beam assembly remains
+                # O(N), and detach exact built-in state containers before the
+                # direct authority-bound call.
+                state = snapshot_geometric_state(
+                    state,
+                    element_id=int(elem_id),
+                )
+                internal_input_guard(
+                    context=(
+                        "geometric stiffness exact built-in beam preflight "
+                        f"for element {int(elem_id)}"
+                    ),
+                )
+                element_matrix = _beam_geometric_stiffness(
+                    element,
+                    mesh,
+                    material,
+                    state,
+                )
+                internal_input_guard(
+                    context=(
+                        "geometric stiffness exact built-in beam return "
+                        f"for element {int(elem_id)}"
+                    ),
+                )
             else:
-                element_matrix = getter(mesh, material, state)
+                # Attribute lookup and invocation can both execute arbitrary
+                # user code for a generic/custom element.  Exact-dict input
+                # traversal authority must never cross either callback
+                # boundary, even when the state source itself is an exact
+                # built-in dictionary.
+                exact_qualified_guard(
+                    model,
+                    context=(
+                        "geometric stiffness custom getter lookup preflight "
+                        f"for element {int(elem_id)}"
+                    ),
+                )
+                try:
+                    getter = _exact_getattr(
+                        element,
+                        "compute_geometric_stiffness_matrix",
+                        None,
+                    )
+                finally:
+                    exact_qualified_guard(
+                        model,
+                        context=(
+                            "geometric stiffness custom getter lookup return "
+                            f"for element {int(elem_id)}"
+                        ),
+                    )
+                if getter is None:
+                    element_matrix = np.zeros(
+                        (dof_mapping.size, dof_mapping.size),
+                        dtype=float,
+                    )
+                else:
+                    exact_qualified_guard(
+                        model,
+                        context=(
+                            "geometric stiffness custom getter call preflight "
+                            f"for element {int(elem_id)}"
+                        ),
+                    )
+                    try:
+                        element_matrix = getter(mesh, material, state)
+                    finally:
+                        exact_qualified_guard(
+                            model,
+                            context=(
+                                "geometric stiffness custom getter call return "
+                                f"for element {int(elem_id)}"
+                            ),
+                        )
         element_matrix = _check_element_matrix_shape(
             int(elem_id),
             "geometric_stiffness",

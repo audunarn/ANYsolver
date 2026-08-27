@@ -49,6 +49,10 @@ from .current_state_tangent import (
     _guarded_owned_input_snapshot as _guarded_owned_nonlinear_snapshot,
     require_exact_qualified_component_lifecycle_api as _EXACT_QUALIFIED_LIFECYCLE_GUARD,
 )
+from .e4_pl_element import QualifiedE4PLShellElement as _QualifiedE4PLShellElement
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+)
 from .element_capabilities import (
     require_model_element_capabilities,
     require_model_nonlinear_workflow_capabilities,
@@ -4459,6 +4463,62 @@ def _solve_static_nonlinear_under_lease(
         _qualified_runtime_guard(lease_model, context=context)
         return result
 
+    lease_namespace = getattr(_qualified_runtime_guard, "__dict__", {})
+    owned_items_provider = (
+        dict.get(lease_namespace, "_qualified_owned_element_items")
+        if type(lease_namespace) is dict
+        else None
+    )
+    trusted_runtime_guard = (
+        dict.get(lease_namespace, "_qualified_trusted_require")
+        if type(lease_namespace) is dict
+        else None
+    )
+    owned_items = (
+        owned_items_provider()
+        if callable(owned_items_provider)
+        else None
+    )
+    exact_qualified_internal_fast_path = bool(
+        type(owned_items) is tuple
+        and owned_items
+        and callable(trusted_runtime_guard)
+        and all(
+            type(element)
+            in {_QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement}
+            for element_id, element in owned_items
+            if type(element_id) is int
+        )
+        and all(type(element_id) is int for element_id, _element in owned_items)
+    )
+
+    def internal_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Dict[str, Any]:
+        """Use the captured lease only across exact built-in solver work.
+
+        Caller-controlled observations retain ``exact_guard``.  Mixed,
+        generic, and imperfection-owned models also fail closed to that full
+        lifecycle scan.  The lease is non-renewable and still rejects every
+        Q4, S3, assembly, numerical, and model-input generation change.
+        """
+
+        if (
+            not exact_qualified_internal_fast_path
+            or observed_model is not lease_model
+        ):
+            return exact_guard(observed_model, context=context)
+        trusted_runtime_guard(lease_model, context=context)
+        return {}
+
+    def cancellation_guard(*, context: str) -> Dict[str, Any]:
+        """Treat an absent token as internal; arbitrary tokens remain hostile."""
+
+        guard = internal_guard if cancellation_token is None else exact_guard
+        return guard(model, context=context)
+
     exact_guard(model, context="nonlinear static solve preflight")
     cancellation_safe_point(cancellation_token, "nonlinear_static.start")
     exact_guard(model, context="nonlinear static start cancellation")
@@ -5053,7 +5113,7 @@ def _solve_static_nonlinear_under_lease(
                     corotational_tangent=resolved_corotational_tangent,
                 )
             )
-            exact_guard(
+            internal_guard(
                 model,
                 context="nonlinear static fully-constrained assembly",
             )
@@ -5275,6 +5335,16 @@ def _solve_static_nonlinear_under_lease(
             tangent=tangent,
         )
         return force, load_tangent, factors, active_stage
+
+    def external_load_guard(*, context: str) -> Dict[str, Any]:
+        """Use the lease for the preassembled affine load path only."""
+
+        guard = (
+            internal_guard
+            if not follower_active and not deleted_element_ids
+            else exact_guard
+        )
+        return guard(model, context=context)
 
     if control_name == "displacement":
         if displacement_control is None:
@@ -5589,8 +5659,7 @@ def _solve_static_nonlinear_under_lease(
             cancellation_token,
             f"nonlinear_static.force.step:{step_index}.start",
         )
-        exact_guard(
-            model,
+        cancellation_guard(
             context="nonlinear static force increment cancellation",
         )
         q_trial = q_start.copy()
@@ -5607,13 +5676,13 @@ def _solve_static_nonlinear_under_lease(
                 fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
             ),
         )
-        exact_guard(model, context="nonlinear static force tangent assembly")
+        internal_guard(model, context="nonlinear static force tangent assembly")
         F_ext, K_ext, _stage_factors, _active_stage = external_load_at(
             path_factor,
             u,
             tangent=True,
         )
-        exact_guard(model, context="nonlinear static force external load")
+        external_load_guard(context="nonlinear static force external load")
         residual = (
             np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
             - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
@@ -5625,8 +5694,7 @@ def _solve_static_nonlinear_under_lease(
                 cancellation_token,
                 f"nonlinear_static.force.step:{step_index}.iteration:{iteration}",
             )
-            exact_guard(
-                model,
+            cancellation_guard(
                 context="nonlinear static force iteration cancellation",
             )
             if status_callback is not None:
@@ -5681,13 +5749,13 @@ def _solve_static_nonlinear_under_lease(
                         fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
                     ),
                 )
-                exact_guard(model, context="nonlinear static force tangent assembly")
+                internal_guard(model, context="nonlinear static force tangent assembly")
                 F_ext, K_ext, _stage_factors, _active_stage = external_load_at(
                     path_factor,
                     u,
                     tangent=True,
                 )
-                exact_guard(model, context="nonlinear static force external load")
+                external_load_guard(context="nonlinear static force external load")
                 residual = (
                     np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
                     - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
@@ -5709,8 +5777,7 @@ def _solve_static_nonlinear_under_lease(
                     cancellation_token,
                     f"nonlinear_static.force.step:{step_index}.line_search:{trial + 1}",
                 )
-                exact_guard(
-                    model,
+                cancellation_guard(
                     context="nonlinear static line-search cancellation",
                 )
                 q_candidate = q_trial + scale * dq
@@ -5729,13 +5796,13 @@ def _solve_static_nonlinear_under_lease(
                         fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
                     ),
                 )
-                exact_guard(model, context="nonlinear static line-search assembly")
+                internal_guard(model, context="nonlinear static line-search assembly")
                 F_ext_c, K_ext_c, _stage_factors, _active_stage = external_load_at(
                     path_factor,
                     u,
                     tangent=with_tangent,
                 )
-                exact_guard(model, context="nonlinear static line-search load")
+                external_load_guard(context="nonlinear static line-search load")
                 r_c = (
                     np.asarray(T.T @ F_ext_c, dtype=float).reshape(-1)
                     - np.asarray(T.T @ F_c, dtype=float).reshape(-1)
@@ -5756,7 +5823,7 @@ def _solve_static_nonlinear_under_lease(
                                 fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
                             ),
                         )
-                        exact_guard(
+                        internal_guard(
                             model,
                             context="nonlinear static accepted line-search assembly",
                         )
@@ -5765,8 +5832,7 @@ def _solve_static_nonlinear_under_lease(
                             u,
                             tangent=True,
                         )
-                        exact_guard(
-                            model,
+                        external_load_guard(
                             context="nonlinear static accepted line-search load",
                         )
                         r_c = (
@@ -5810,8 +5876,7 @@ def _solve_static_nonlinear_under_lease(
                 cancellation_token,
                 f"nonlinear_static.force.step:{step_index + 1}",
             )
-            exact_guard(
-                model,
+            cancellation_guard(
                 context="nonlinear static force step cancellation",
             )
             step_size = min(step_size, max(target_load_factor - lam, min_step))
@@ -5831,7 +5896,7 @@ def _solve_static_nonlinear_under_lease(
                 u_start,
                 tangent=False,
             )
-            exact_guard(model, context="nonlinear static step external load")
+            external_load_guard(context="nonlinear static step external load")
             F_ext_red = np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
             reference = max(float(np.linalg.norm(F_ext_red)), 1.0)
 
@@ -5861,7 +5926,7 @@ def _solve_static_nonlinear_under_lease(
                     model=model,
                     accepted_displacements=full_displacement(q_new, lam_trial),
                 )
-                exact_guard(
+                internal_guard(
                     model,
                     context="nonlinear static committed-state observation",
                 )
@@ -5884,14 +5949,14 @@ def _solve_static_nonlinear_under_lease(
                     corotational_tangent=resolved_corotational_tangent,
                     require_full_coordinates=True,
                 )
-                exact_guard(model, context="nonlinear static reaction assembly")
+                internal_guard(model, context="nonlinear static reaction assembly")
                 # Reaction recovery is diagnostic-only; do not leave its trial
                 # constitutive state active for the next accepted increment.
                 _discard_nonlinear_state_candidate(committed_states)
                 reaction_external, _unused_tangent, _unused_factors, _unused_stage = (
                     external_load_at(lam, u, tangent=False)
                 )
-                exact_guard(model, context="nonlinear static reaction load")
+                external_load_guard(context="nonlinear static reaction load")
                 support_reactions = _support_reaction_resultants(
                     model, reaction_internal - reaction_external
                 )
@@ -6024,7 +6089,7 @@ def _solve_static_nonlinear_under_lease(
                             control_value=control_value,
                         )
                     )
-                    exact_guard(
+                    internal_guard(
                         model,
                         context="nonlinear static increment snapshot",
                     )
@@ -6323,6 +6388,7 @@ def solve_static_nonlinear(
             resource_config,
             post_observation=post_observation,
         )
+
         return solve_under_lease(
             model,
             load_case=load_case,
