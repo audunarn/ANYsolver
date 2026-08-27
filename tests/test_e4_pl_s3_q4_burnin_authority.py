@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "e8ea534b1463de1546de7f3e29af769f98da1d567e67bd726d1c070f869efa87"
+CONTRACT_SHA256 = "c75b37d8e4aa60e330a8c21d6c05cf963845df3333d3ed93cfb39f5df2f11e7b"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -36,7 +36,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-20"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-21"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -197,6 +197,22 @@ FAILED_ATTEMPT_20_REQUEST_IDS = [
     "4e36e652152d449a9b2b3bb35584925f",
     "a95aae82621b47a7a9cd0c39c15953bb",
     "703801b6572a454f9fa64b697201d723",
+]
+FAILED_ATTEMPT_21_REQUEST_IDS = [
+    "702e4a6971124781be59c55125444488",
+    "b763af40a72b45b180351c6a5a497e49",
+    "1487c9114ff342cea6908c511b4df8ff",
+    "487654cde60849c98d4688a07b9976d8",
+    "114440ee881d4cd9aab250c55cf656fb",
+    "a45b5048a1bd443381faf71e7cdb4742",
+]
+REJECTED_V22_SERIALIZATION_REQUEST_IDS = [
+    "9eba0d76326040db9e47598a591c0503",
+    "370fc949e04d4d939cd97a7172fb7db2",
+    "df107756b76443bf877809118600a003",
+    "ad903846e7f34e4ab510c65fa410e821",
+    "67c7f552839f49ab97e3ee741534e780",
+    "434bf80f6c6e494da552a7673caadc1a",
 ]
 _ACTIVE_CONTRACT_BOOTSTRAP = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
 _ACTIVE_REQUEST_ROWS = [
@@ -577,10 +593,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v21"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v22"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "fa1fa81a695401e75c0580ef85c56e5dbf3df015",
+        "exact_parent": "064f68d0a0754c4037e78d1883d90da9935e39e3",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -2083,7 +2099,7 @@ def test_lane_inventory_hashes_are_current_and_extended_is_excluded() -> None:
     assert spec is not None and spec.loader is not None
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
-    assert runner.BURNIN_AUTHORITY_CYCLE == 21
+    assert runner.BURNIN_AUTHORITY_CYCLE == 22
     inventory = runner.inventory()
     gate_inventory = runner.gate_inventories()
     for lane in ("quick", "functional", "performance", "extended", "additive"):
@@ -2132,13 +2148,15 @@ def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
     assert wave["functional_wave_schema_version"] == 3
     assert wave["deferred_activation"] == {
         "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
-        "node_count": 1,
+        "node_count": 2,
         "node_ids": [
+            "tests/test_local_patch_transition.py::"
+            "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
             "tests/test_local_patch_transition.py::"
             "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
         ],
         "node_ids_sha256": (
-            "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc"
+            "a21a8a44724a3d1601dd54ff8c7a8fd0c97ac4b8572f1731db93cf8767ce277d"
         ),
         "reason": (
             "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_"
@@ -2253,10 +2271,10 @@ def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
     assert execution["source_status_must_match"] is True
     manifest = wave["manifest"]
     assert manifest["module_count"] == 85
-    assert manifest["node_count"] == 1066
+    assert manifest["node_count"] == 1065
     assert manifest["collection_artifact"] == {
-        "bytes": 119426,
-        "sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+        "bytes": 119327,
+        "sha256": "53a5cc7a39489f4eb0d33db4abab3ae3cb0798efe110345129a2d80d49d52e96",
     }
     spec = importlib.util.spec_from_file_location(
         "s3_q4_wave_inventory", ROOT / "scripts" / "run_e4_pl_burnin_gate.py"
@@ -2338,7 +2356,7 @@ def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
         8,
         6,
         262,
-        293,
+        292,
         238,
         249,
     ]
@@ -2347,7 +2365,7 @@ def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
         "bb78a167e46dba569a001002e6b37aacc9e737fb73ff04d45f9d3784c7cf6a8f",
         "cb9326084e3d7cb531fbc4cc7bf123e045c28cd6b455d508e1afaf1a53604221",
         "7330ad1a643c0811f026c3e632cc3265daf7768271b9ea0b7c05f31ca6968c67",
-        "58f2d35842bf7e0f032a4cd8be7b396ef064d93ff8c83e4aa21837a115f41860",
+        "49784c9327ca270986103fa4ed3ebe8d776d5e54f56729d9da6c0e92bcb2a6ad",
         "ae1330121594e6b9d5993b389256e2c2eb8c9d6e645764e3aeb7a1792ec7a3e4",
         "f87ca0b65519aedb3427c75dc019a8a06166da8f4e71d9cf0ba0a4a6ec703a17",
     ]
@@ -2365,13 +2383,13 @@ def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
         list(dict.fromkeys(node.split("::", 1)[0] for node in shard["node_ids"]))
         for shard in shards
     ]
-    assert [len(modules) for modules in module_sets] == [1, 1, 2, 22, 22, 19, 21]
+    assert [len(modules) for modules in module_sets] == [1, 1, 2, 22, 21, 19, 21]
     assert [_canonical_list_hash(modules) for modules in module_sets] == [
         "98849593ac93845b998d2dfdb64be01d31e2752ce61b562038a4f66807e24c22",
         "5f0064fb99008360515a758066fc35b60c2c03225460e26d7bafe9e4c8cb14ad",
         "41551e23750c140ac0bfb0cef159bc8b739e47cc4a5a0657ecc6ee72fee07ba5",
         "a67f8bfad4c6ab582d1b51ac240be5362497b48bccd852a6377bfcc1973e29bb",
-        "34e1f2ed3b35f29022cba7fb815832ae4cce4bcce8418a8f045881ff41930447",
+        "eaa9e5ea6f6383cdb28b107d0339edba2a1c25e68e0fffcd5dc54063384d3937",
         "e9c3bbcfec8bb681ea60c4bb7e60ab08de3b59e826a8da12543bb27ab35a4594",
         "19102d408e3d38fd13198a68636847c8ea304d9c60f7853967e28a15016e3a1f",
     ]
@@ -2449,9 +2467,9 @@ def test_functional_wave_is_exact_staged_parallel_and_hard_bounded() -> None:
             "inner_wave_cleanup_cutoff_seconds": 385,
             "inner_wave_result_cutoff_seconds": 370,
             "max_concurrent_workers": 7,
-            "node_count": 1066,
+            "node_count": 1065,
             "normal_evidence_cutoff_seconds": 460,
-            "parallel_shard_node_counts": [10, 8, 6, 262, 293, 238, 249],
+            "parallel_shard_node_counts": [10, 8, 6, 262, 292, 238, 249],
             "ready_barrier_cutoff_seconds": 90,
             "shard_execution_cutoff_seconds": 430,
             "watchdog_termination_start_cutoff_seconds": 500,
@@ -3565,7 +3583,7 @@ def test_v20_seven_shard_source_policy_is_disjoint_and_hard_bounded() -> None:
         for shard_id in gate.FUNCTIONAL_V19_SHARD_IDS
         for node in gate.FUNCTIONAL_V19_SPLIT_NODE_IDS[shard_id]
     ]
-    assert len(split_nodes) == len(set(split_nodes)) == 10
+    assert len(split_nodes) == len(set(split_nodes)) == 9
     assert all(
         node.startswith(f"{gate.FUNCTIONAL_V19_SPLIT_MODULE}::")
         for node in split_nodes
@@ -3573,7 +3591,7 @@ def test_v20_seven_shard_source_policy_is_disjoint_and_hard_bounded() -> None:
     assert sum(
         row["node_count"]
         for row in gate.FUNCTIONAL_V19_SHARD_AUTHORITIES.values()
-    ) == gate.FUNCTIONAL_V19_FULL_NODE_AUTHORITY["node_count"] == 1066
+    ) == gate.FUNCTIONAL_V19_FULL_NODE_AUTHORITY["node_count"] == 1065
 
     stage = gate.FUNCTIONAL_V19_STAGE_POLICY
     assert stage["max_concurrent_workers"] == len(gate.FUNCTIONAL_V19_SHARD_IDS) == 7
@@ -3613,7 +3631,7 @@ def test_functional_selectors_preserve_one_exact_split_module() -> None:
         ("V01", 1, 0),
         ("G01", 1, 1),
         ("B01", 21, 1),
-        ("B02", 21, 1),
+        ("B02", 21, 0),
         ("B03", 18, 7),
         ("D01", 21, 0),
     ):
@@ -3683,7 +3701,7 @@ def test_v20_exact_functional_lists_reconstruct_all_seven_authorities() -> None:
         assert summary["exact_node_count"] == len(owned_exact_nodes)
         assigned.extend(nodes)
         full_modules.extend(owned_modules)
-    assert len(assigned) == len(set(assigned)) == len(full_nodes) == 1066
+    assert len(assigned) == len(set(assigned)) == len(full_nodes) == 1065
     assert set(assigned) == set(full_nodes)
     assert len(full_modules) == len(set(full_modules)) == 84
     assert set(full_modules) | {gate.FUNCTIONAL_V19_SPLIT_MODULE} == set(
@@ -4086,15 +4104,21 @@ def test_v18_shard_environment_discards_barrier_and_inner_wave_controls(
 def test_deferred_mixed_transition_node_is_bound_outside_opt_in_burnin() -> None:
     contract = burnin.strict_json_load(CONTRACT_PATH)
     wave = contract["functional_wave"]
-    expected_node = (
-        "tests/test_local_patch_transition.py::"
-        "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
-    )
+    expected_nodes = [
+        (
+            "tests/test_local_patch_transition.py::"
+            "test_local_patch_buckling_has_no_spurious_flat_facet_modes"
+        ),
+        (
+            "tests/test_local_patch_transition.py::"
+            "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
+        ),
+    ]
     assert wave["deferred_activation"] == {
         "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
-        "node_count": 1,
-        "node_ids": [expected_node],
-        "node_ids_sha256": "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc",
+        "node_count": 2,
+        "node_ids": expected_nodes,
+        "node_ids_sha256": "a21a8a44724a3d1601dd54ff8c7a8fd0c97ac4b8572f1731db93cf8767ce277d",
         "reason": "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_BEFORE_DEFAULT_ACTIVATION",
     }
     manifest_nodes = {
@@ -4102,7 +4126,8 @@ def test_deferred_mixed_transition_node_is_bound_outside_opt_in_burnin() -> None
         for shard in wave["manifest"]["shards"]
         for node in shard["node_ids"]
     }
-    assert expected_node not in manifest_nodes
+    assert set(expected_nodes).isdisjoint(manifest_nodes)
+    expected_node = expected_nodes[1]
     assert "def test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams(" in (
         ROOT / "tests" / "test_local_patch_transition.py"
     ).read_text(encoding="utf-8")
@@ -4135,6 +4160,71 @@ def test_disabled_inner_mesh_style_policy_is_bound_consistently() -> None:
     assert policy == burnin.FUNCTIONAL_V20_INNER_WAVE_POLICY
     assert policy["enabled"] is False
     assert policy["disposition"] == "DEFERRED_ACTIVATION_DIAGNOSTIC_ONLY"
+
+
+def test_v21_failure_and_v22_request_serialization_are_quarantined() -> None:
+    contract = _load_contract()
+    v21 = contract["background_inputs"][
+        "failed_v21_functional_and_aggregate_attempt"
+    ]
+    assert v21["blocked_closeout"]["commit"] == (
+        "064f68d0a0754c4037e78d1883d90da9935e39e3"
+    )
+    assert v21["failure"] == {
+        "aggregate_validation_cause": (
+            "FUNCTIONAL_ARTIFACT_EXTENT_WINDOWS_CASE_INSENSITIVE_SORT_REJECTED_"
+            "BY_CANONICAL_CASE_SENSITIVE_VALIDATOR"
+        ),
+        "clean_cycles_recorded": 0,
+        "failed_node": (
+            "tests/test_local_patch_transition.py::"
+            "test_local_patch_buckling_has_no_spurious_flat_facet_modes"
+        ),
+        "failed_request_id": "702e4a6971124781be59c55125444488",
+        "functional_disposition": (
+            "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN"
+        ),
+        "resource_lock_released": True,
+        "schema_defect": True,
+        "success_claim": False,
+    }
+    assert v21["request_dispositions"] == [
+        "COMPLETED_FAIL_EXECUTED_ONCE_DO_NOT_REUSE",
+        *("CANCELLED_NOT_RUN_DO_NOT_REUSE" for _ in range(5)),
+    ]
+
+    serialization = contract["background_inputs"][
+        "failed_v22_request_serialization_attempt"
+    ]
+    assert serialization["ledger_occurrences"] == 0
+    assert serialization["request_disposition"] == (
+        "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+    )
+    assert serialization["request_ids"] == [
+        "9eba0d76326040db9e47598a591c0503",
+        "370fc949e04d4d939cd97a7172fb7db2",
+        "df107756b76443bf877809118600a003",
+        "ad903846e7f34e4ab510c65fa410e821",
+        "67c7f552839f49ab97e3ee741534e780",
+        "434bf80f6c6e494da552a7673caadc1a",
+    ]
+    current_ids = {
+        row["request_id"]
+        for cycle in ("cycle_1", "cycle_2")
+        for row in contract["resource_requests"][cycle]
+    }
+    assert current_ids.isdisjoint(serialization["request_ids"])
+    assert current_ids.isdisjoint(v21["request_ids"])
+
+    mutated = copy.deepcopy(v21)
+    mutated["failure"]["success_claim"] = True
+    with pytest.raises(burnin.EvidenceError, match="failure mismatch"):
+        burnin._validate_attempt_21_incident(mutated, "$mutation")
+
+    mutated = copy.deepcopy(serialization)
+    mutated["ledger_occurrences"] = 1
+    with pytest.raises(burnin.EvidenceError, match="ledger_occurrences"):
+        burnin._validate_v22_request_serialization_incident(mutated, "$mutation")
 
 
 def _activation_stage_mesh_style_wave_lifecycle_excluded_from_opt_in_burnin(
@@ -4764,19 +4854,19 @@ def test_bounded_ci_uses_exact_node_guards_and_complete_inventory(
     spec.loader.exec_module(gate)
 
     assert gate.CI_NONFUNCTIONAL_NODE_AUTHORITY == {
-        "node_count": 908,
+        "node_count": 910,
         "node_ids_sha256": (
-            "6451af9564361a97dd803b877f6f8ad19874b3f441d5a08c2c30dc8ccf3e764b"
+            "4fb785042836255467776a617940aff34c82fbcbc7f0a40437c1eb43ae786bab"
         ),
     }
     assert {
         shard_id: authority["node_count"]
         for shard_id, authority in gate.CI_SHARD_NODE_AUTHORITIES.items()
-    } == {"P01": 273, "P02": 496, "P03": 613, "P04": 594}
+    } == {"P01": 272, "P02": 496, "P03": 612, "P04": 595}
     assert sum(
         authority["node_count"]
         for authority in gate.CI_SHARD_NODE_AUTHORITIES.values()
-    ) == 1976
+    ) == 1975
     contract = _load_contract()
     full_nodes = contract["functional_wave"]["manifest"]["full_node_ids"]
     partitions = gate._ci_functional_node_partitions(
@@ -5717,10 +5807,12 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_16_REQUEST_IDS,
             *FAILED_ATTEMPT_17_REQUEST_IDS,
             *FAILED_ATTEMPT_18_REQUEST_IDS,
-            *FAILED_ATTEMPT_19_REQUEST_IDS,
-            *FAILED_ATTEMPT_20_REQUEST_IDS,
-        }
-    )
+                *FAILED_ATTEMPT_19_REQUEST_IDS,
+                *FAILED_ATTEMPT_20_REQUEST_IDS,
+                *FAILED_ATTEMPT_21_REQUEST_IDS,
+                *REJECTED_V22_SERIALIZATION_REQUEST_IDS,
+            }
+        )
     assert [row["lane"] for row in rows[:3]] == ["functional", "anyfem", "performance"]
     if any(row["request_sha256"] == "0" * 64 for row in rows):
         assert all(row["request_sha256"] == "0" * 64 for row in rows)
@@ -5754,6 +5846,10 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_19_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_20_REQUEST_IDS)
+    assert all(
+        request_id not in ledger_text
+        for request_id in REJECTED_V22_SERIALIZATION_REQUEST_IDS
+    )
     assert [
         state
         for state in ("APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL")

@@ -146,6 +146,22 @@ V21_REQUEST_IDS = (
     "114440ee881d4cd9aab250c55cf656fb",
     "a45b5048a1bd443381faf71e7cdb4742",
 )
+V22_REJECTED_SERIALIZATION_REQUEST_IDS = (
+    "9eba0d76326040db9e47598a591c0503",
+    "370fc949e04d4d939cd97a7172fb7db2",
+    "df107756b76443bf877809118600a003",
+    "ad903846e7f34e4ab510c65fa410e821",
+    "67c7f552839f49ab97e3ee741534e780",
+    "434bf80f6c6e494da552a7673caadc1a",
+)
+V22_REQUEST_IDS = (
+    "abcd69379be746dfbd116ace59f7f807",
+    "cdc309b9eef14bdabea9354bc34c232f",
+    "740f12a9fb7b49d98ab1545691a9c203",
+    "766fa4bcc27f43b89b76bbb47fc697fd",
+    "bd0310232b0143b9abbaf3e548170d7a",
+    "33fd9c00f47c4324bd17061ebf76ce07",
+)
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
     "5c7e14b9ec54493eab0c07b65b9ea060",
@@ -227,12 +243,12 @@ FUNCTIONAL_WAVE_COLLECTION_ARTIFACT = {
     "sha256": "244132e6294f3dc37f5bf865bd800c7402d9ff6b3300af670ca954ad24bb5c15",
 }
 FUNCTIONAL_V19_COLLECTION_ARTIFACT = {
-    "bytes": 119426,
-    "sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+    "bytes": 119327,
+    "sha256": "53a5cc7a39489f4eb0d33db4abab3ae3cb0798efe110345129a2d80d49d52e96",
 }
 FUNCTIONAL_V19_FULL_NODE_AUTHORITY = {
-    "node_count": 1066,
-    "node_ids_sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+    "node_count": 1065,
+    "node_ids_sha256": "53a5cc7a39489f4eb0d33db4abab3ae3cb0798efe110345129a2d80d49d52e96",
 }
 FUNCTIONAL_V19_SHARD_IDS = (
     "H01",
@@ -261,8 +277,8 @@ FUNCTIONAL_V19_SHARD_AUTHORITIES = {
         "node_ids_sha256": "7330ad1a643c0811f026c3e632cc3265daf7768271b9ea0b7c05f31ca6968c67",
     },
     "B02": {
-        "node_count": 293,
-        "node_ids_sha256": "58f2d35842bf7e0f032a4cd8be7b396ef064d93ff8c83e4aa21837a115f41860",
+        "node_count": 292,
+        "node_ids_sha256": "49784c9327ca270986103fa4ed3ebe8d776d5e54f56729d9da6c0e92bcb2a6ad",
     },
     "B03": {
         "node_count": 238,
@@ -291,8 +307,8 @@ FUNCTIONAL_V19_SHARD_MODULE_AUTHORITIES = {
         "modules_sha256": "a67f8bfad4c6ab582d1b51ac240be5362497b48bccd852a6377bfcc1973e29bb",
     },
     "B02": {
-        "module_count": 22,
-        "modules_sha256": "34e1f2ed3b35f29022cba7fb815832ae4cce4bcce8418a8f045881ff41930447",
+        "module_count": 21,
+        "modules_sha256": "eaa9e5ea6f6383cdb28b107d0339edba2a1c25e68e0fffcd5dc54063384d3937",
     },
     "B03": {
         "module_count": 19,
@@ -409,10 +425,7 @@ FUNCTIONAL_V19_SPLIT_NODE_IDS = {
         "tests/test_local_patch_transition.py::"
         "test_axial_flat_plate_stress_is_mesh_style_invariant",
     ),
-    "B02": (
-        "tests/test_local_patch_transition.py::"
-        "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
-    ),
+    "B02": (),
     "B03": (
         "tests/test_local_patch_transition.py::test_flat_local_patch_is_conforming_and_local",
         "tests/test_local_patch_transition.py::test_cylinder_local_patch_quality_beats_graded",
@@ -426,12 +439,14 @@ FUNCTIONAL_V19_SPLIT_NODE_IDS = {
 }
 FUNCTIONAL_V20_DEFERRED_ACTIVATION_NODES = (
     "tests/test_local_patch_transition.py::"
+    "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
+    "tests/test_local_patch_transition.py::"
     "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams",
 )
 FUNCTIONAL_V20_DEFERRED_ACTIVATION_AUTHORITY = {
     "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
-    "node_count": 1,
-    "node_ids_sha256": "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc",
+    "node_count": 2,
+    "node_ids_sha256": "a21a8a44724a3d1601dd54ff8c7a8fd0c97ac4b8572f1731db93cf8767ce277d",
     "reason": "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_BEFORE_DEFAULT_ACTIVATION",
 }
 FUNCTIONAL_V20_INNER_WAVE_POLICY = {
@@ -967,9 +982,9 @@ def _validate_cycle_runtime_basis(value: Any, location: str) -> dict[str, Any]:
             "inner_wave_cleanup_cutoff_seconds": 385,
             "inner_wave_result_cutoff_seconds": 370,
             "max_concurrent_workers": 7,
-            "node_count": 1066,
+            "node_count": 1065,
             "normal_evidence_cutoff_seconds": 460,
-            "parallel_shard_node_counts": [10, 8, 6, 262, 293, 238, 249],
+            "parallel_shard_node_counts": [10, 8, 6, 262, 292, 238, 249],
             "ready_barrier_cutoff_seconds": 90,
             "shard_execution_cutoff_seconds": 430,
             "watchdog_termination_start_cutoff_seconds": 500,
@@ -1313,7 +1328,7 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
         manifest["modules_sha256"],
         f"{location}.manifest.modules_sha256",
     )
-    expected_node_count = 1066 if v19 else 1036
+    expected_node_count = 1065 if v19 else 1036
     if (
         _require_int(manifest["node_count"], f"{location}.manifest.node_count")
         != expected_node_count
@@ -1507,10 +1522,10 @@ def _validate_functional_wave(value: Any, location: str) -> dict[str, Any]:
         if (
             len(observed_split_nodes) != len(set(observed_split_nodes))
             or set(observed_split_nodes) != set(full_split_nodes)
-            or len(full_split_nodes) != 10
+            or len(full_split_nodes) != 9
         ):
             raise EvidenceError(
-                f"{location}.manifest split-module assignments must partition twelve nodes"
+                f"{location}.manifest split-module assignments must partition nine burn-in nodes"
             )
     elif shards[0]["node_ids"] != [FUNCTIONAL_WAVE_TAIL_NODE]:
         raise EvidenceError(f"{location}.manifest.shards[0] must isolate the tail-risk node")
@@ -5417,6 +5432,200 @@ def _validate_attempt_20_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_21_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the consumed v21 functional failure and rejected aggregate."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "blocked_closeout",
+            "contract",
+            "execution_authorization_commit",
+            "external_evidence",
+            "failure",
+            "incident_evidence",
+            "preserved_ref",
+            "request_dispositions",
+            "request_ids",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 21:
+        raise EvidenceError(f"{location}.attempt must be 21")
+    authority = _exact_keys(
+        incident["authority_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.authority_commit",
+    )
+    if authority != {
+        "commit": "243984e8c9d66fea1a38f8888ac3c5b1fa1fa4c7",
+        "parent": "fa1fa81a695401e75c0580ef85c56e5dbf3df015",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "d3fba7e51233e8ed5e02f3728a617e260d8c26be",
+    }:
+        raise EvidenceError(f"{location}.authority_commit mismatch")
+    authorization = _exact_keys(
+        incident["execution_authorization_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.execution_authorization_commit",
+    )
+    if authorization != {
+        "commit": "3f9480726d4e5b915b921664824de3865ef936ab",
+        "parent": authority["commit"],
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "eacfaeaee3ed3c619e48b01137c0f234af1ccfd1",
+    }:
+        raise EvidenceError(f"{location}.execution_authorization_commit mismatch")
+    closeout = _exact_keys(
+        incident["blocked_closeout"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.blocked_closeout",
+    )
+    if closeout != {
+        "commit": "064f68d0a0754c4037e78d1883d90da9935e39e3",
+        "parent": authorization["commit"],
+        "subject": "docs: record blocked corrected S3 Q4 burn-in",
+        "tree": "4c0ae2b3cf8aa747b704a9c3d2822860054760b2",
+    }:
+        raise EvidenceError(f"{location}.blocked_closeout mismatch")
+    if _validate_hash_record(incident["contract"], f"{location}.contract") != {
+        "bytes": 325325,
+        "sha256": "e8ea534b1463de1546de7f3e29af769f98da1d567e67bd726d1c070f869efa87",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    external = _exact_keys(
+        incident["external_evidence"],
+        {"output_root", "records"},
+        f"{location}.external_evidence",
+    )
+    if external["output_root"] != (
+        r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+        r"\s3-q4-final-freeze-correction-20"
+    ):
+        raise EvidenceError(f"{location}.external_evidence.output_root mismatch")
+    expected_records = [
+        ("resource-ledger-approval-snapshot.json", 4360, "1a41b3f99d51f06c85d91ba2ab7559506d9a4bf1eff60d28d19a4c2dbdc852fc"),
+        ("resource-ledger-cycle-1-terminal-snapshot.json", 4769, "406b0153771c7a18a3a39af009b22b141563a79d4c90ab288631e72363c11dd1"),
+        ("resource-ledger-cycle-2-terminal-snapshot.json", 3657, "a92b1378ee51ab2f596580528b9df19aa575a25ac0018c69eee9a7b8ee73acc3"),
+        ("cycle-1-functional/result.json", 1131, "08839a484b4b7d7b39b67cbdadf70d3b7b942d31eef27660c578b06ccf9b88ba"),
+        ("functional-wave/cycle-1/functional-wave-aggregate.json", 3264, "c56fb5d5bcfc714b2e6571a651b5a972334492c890c944fda7ae564c0a3015de"),
+        ("functional-wave/cycle-1/functional-wave-raw-diagnostics.json", 1329957, "aa882326e2cd6155845334df814d7c0967ceca9c2e7fdc92a2e9b718922a7c33"),
+        ("functional-wave/cycle-1/shard-B02/logs/shard-result.json", 41355, "7bffd5a19b2ad16d15ac8fe8b737b0a7acdaabfe8e445587ee9a07a77b015eac"),
+    ]
+    if not isinstance(external["records"], list) or len(external["records"]) != len(expected_records):
+        raise EvidenceError(f"{location}.external_evidence.records mismatch")
+    for index, (path, size, digest) in enumerate(expected_records):
+        _validate_repository_evidence_record(
+            external["records"][index],
+            f"{location}.external_evidence.records[{index}]",
+            expected_path=path,
+            expected_bytes=size,
+            expected_sha256=digest,
+        )
+    expected_failure = {
+        "aggregate_validation_cause": "FUNCTIONAL_ARTIFACT_EXTENT_WINDOWS_CASE_INSENSITIVE_SORT_REJECTED_BY_CANONICAL_CASE_SENSITIVE_VALIDATOR",
+        "clean_cycles_recorded": 0,
+        "failed_node": "tests/test_local_patch_transition.py::test_local_patch_buckling_has_no_spurious_flat_facet_modes",
+        "failed_request_id": V21_REQUEST_IDS[0],
+        "functional_disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
+        "resource_lock_released": True,
+        "schema_defect": True,
+        "success_claim": False,
+    }
+    if incident["failure"] != expected_failure:
+        raise EvidenceError(f"{location}.failure mismatch")
+    evidence = _exact_keys(
+        incident["incident_evidence"],
+        {"result", "review", "status"},
+        f"{location}.incident_evidence",
+    )
+    for name, path, size, digest in (
+        ("result", "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json", 5451, "ef89c35d9d66a25d8cf5451d82ee7b3ee137789fbde933c5b374428629b03ca4"),
+        ("review", "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json", 711, "09ce11dc630479625e116b757cef0ef8e672c339d620eb3ab568be2a71b0aea8"),
+        ("status", "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json", 293, "f82dcc735f2f617b9de1dc25a2b497f62636850d496bec82b8c98be3343c5be3"),
+    ):
+        _validate_repository_evidence_record(
+            evidence[name],
+            f"{location}.incident_evidence.{name}",
+            expected_path=path,
+            expected_bytes=size,
+            expected_sha256=digest,
+        )
+    if incident["request_ids"] != list(V21_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    if incident["request_dispositions"] != [
+        "COMPLETED_FAIL_EXECUTED_ONCE_DO_NOT_REUSE",
+        *(["CANCELLED_NOT_RUN_DO_NOT_REUSE"] * 5),
+    ]:
+        raise EvidenceError(f"{location}.request_dispositions mismatch")
+    if (
+        incident["preserved_ref"]
+        != "codex/s3-e4-pl-final-burnin-blocked-v21-3f94807"
+        or incident["role"] != "PRESERVED_BLOCKED_NONCANONICAL_INCIDENT_ONLY"
+    ):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
+def _validate_v22_request_serialization_incident(
+    value: Any, location: str
+) -> dict[str, Any]:
+    """Bind malformed, unapproved request drafts without permitting reuse."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "cause",
+            "ledger_occurrences",
+            "request_disposition",
+            "request_ids",
+            "request_records",
+            "role",
+        },
+        location,
+    )
+    if incident["cause"] != "POWERSHELL_EXPANDED_LITERAL_ENVIRONMENT_TOKENS_DURING_REQUEST_SERIALIZATION":
+        raise EvidenceError(f"{location}.cause mismatch")
+    if incident["ledger_occurrences"] != 0:
+        raise EvidenceError(f"{location}.ledger_occurrences mismatch")
+    if incident["request_ids"] != list(V22_REJECTED_SERIALIZATION_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    expected = [
+        (1126, "918737969b6d67462f2d81573272dd558f8b1c945476fc6a58a57b67871a265b", "e03d8b7d75eee9ff0861f3fb14e0ab72efc24f36946fcfa0a5a0a8f2fd97f7af"),
+        (873, "7d1b4143af7c65443eab463daac3f27d684dcbb0b80879b9ee8424a64419e631", "a49d1ea77e5de0ecefb5d335b6ace1f37c421022c7000c4235d3e7cb35e0212e"),
+        (1037, "b878d29e2452790f8a9c8f6e232800ead46e00c966550fbc95a5e53a38375a5d", "0368851f95c086f6f0f6cde42caa9cedeabc5220e8bdc4e40411bf9b63ee48d5"),
+        (1126, "66b7c5356033071f40c78b5bbdf059da0c429e0bcb3a2ef5eedf973438368979", "25e27de6690b62ad11ef120e679c2aa0595c634c09d0aa9fbcd03a60ffd75197"),
+        (873, "7d1b4143af7c65443eab463daac3f27d684dcbb0b80879b9ee8424a64419e631", "74d505d59d7e38f37cbe41c3e563021226f6a535343be6608230326a67dfda47"),
+        (1037, "b878d29e2452790f8a9c8f6e232800ead46e00c966550fbc95a5e53a38375a5d", "141b5e08f4a416ef2570ef90a6fda5b5acaefc039bc4c013bd4449e51ed0a0d2"),
+    ]
+    records = incident["request_records"]
+    if not isinstance(records, list) or len(records) != 6:
+        raise EvidenceError(f"{location}.request_records mismatch")
+    for index, (size, command_digest, request_digest) in enumerate(expected):
+        row = _exact_keys(
+            records[index],
+            {"bytes", "command_sha256", "request_id", "request_sha256"},
+            f"{location}.request_records[{index}]",
+        )
+        if row != {
+            "bytes": size,
+            "command_sha256": command_digest,
+            "request_id": V22_REJECTED_SERIALIZATION_REQUEST_IDS[index],
+            "request_sha256": request_digest,
+        }:
+            raise EvidenceError(f"{location}.request_records[{index}] mismatch")
+    if (
+        incident["request_disposition"]
+        != "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+        or incident["role"] != "PRESERVED_REJECTED_REQUEST_SERIALIZATION_ONLY"
+    ):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -5567,16 +5776,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     }:
         raise EvidenceError("cycle completion certificate filenames mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v21"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v22"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-20"
+        r"\s3-q4-final-freeze-correction-21"
     ):
-        raise EvidenceError("v21 burn-in output root mismatch")
+        raise EvidenceError("v22 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -5688,6 +5897,8 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v18_incomplete_terminalization_attempt",
             "failed_v19_quick_preflight_attempt",
             "failed_v20_nonresource_preflight_attempt",
+            "failed_v21_functional_and_aggregate_attempt",
+            "failed_v22_request_serialization_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -5760,6 +5971,14 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v20_nonresource_preflight_attempt"],
         "$contract.background_inputs.failed_v20_nonresource_preflight_attempt",
     )
+    v21_functional_and_aggregate = _validate_attempt_21_incident(
+        background["failed_v21_functional_and_aggregate_attempt"],
+        "$contract.background_inputs.failed_v21_functional_and_aggregate_attempt",
+    )
+    v22_request_serialization = _validate_v22_request_serialization_incident(
+        background["failed_v22_request_serialization_attempt"],
+        "$contract.background_inputs.failed_v22_request_serialization_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -5781,11 +6000,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v21 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v22 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v21 resource request IDs are not unique")
-    if current_request_ids != list(V21_REQUEST_IDS):
-        raise EvidenceError("v21 resource request IDs differ from frozen authority")
+        raise EvidenceError("v22 resource request IDs are not unique")
+    if current_request_ids != list(V22_REQUEST_IDS):
+        raise EvidenceError("v22 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -5804,6 +6023,8 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v18_incomplete_terminalization["request_ids"],
         *v19_quick_preflight["request_ids"],
         *v20_nonresource_preflight["request_ids"],
+        *v21_functional_and_aggregate["request_ids"],
+        *v22_request_serialization["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -5824,7 +6045,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v21 resource request IDs reuse historical authority")
+        raise EvidenceError("v22 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -5880,7 +6101,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "fa1fa81a695401e75c0580ef85c56e5dbf3df015":
+    if authority["exact_parent"] != "064f68d0a0754c4037e78d1883d90da9935e39e3":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",

@@ -37,7 +37,7 @@ from typing import Any, Mapping, Sequence
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
-BURNIN_AUTHORITY_CYCLE = 21
+BURNIN_AUTHORITY_CYCLE = 22
 _GATE_SOURCE_ROOT = ROOT
 TESTS = ROOT / "tests"
 CONTRACT_PATH = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.json"
@@ -85,12 +85,12 @@ FUNCTIONAL_COLLECTION_ARTIFACT = {
     "sha256": "244132e6294f3dc37f5bf865bd800c7402d9ff6b3300af670ca954ad24bb5c15",
 }
 FUNCTIONAL_V19_COLLECTION_ARTIFACT = {
-    "bytes": 119426,
-    "sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+    "bytes": 119327,
+    "sha256": "53a5cc7a39489f4eb0d33db4abab3ae3cb0798efe110345129a2d80d49d52e96",
 }
 FUNCTIONAL_V19_FULL_NODE_AUTHORITY = {
-    "node_count": 1066,
-    "node_ids_sha256": "4cce833a0bc83177895ab74427cfb2dfbd6d842a4cadb9dc43bb60e8f1149855",
+    "node_count": 1065,
+    "node_ids_sha256": "53a5cc7a39489f4eb0d33db4abab3ae3cb0798efe110345129a2d80d49d52e96",
 }
 FUNCTIONAL_SHARD_AUTHORITIES = {
     "P01": {
@@ -137,8 +137,8 @@ FUNCTIONAL_V19_SHARD_AUTHORITIES = {
         "node_ids_sha256": "7330ad1a643c0811f026c3e632cc3265daf7768271b9ea0b7c05f31ca6968c67",
     },
     "B02": {
-        "node_count": 293,
-        "node_ids_sha256": "58f2d35842bf7e0f032a4cd8be7b396ef064d93ff8c83e4aa21837a115f41860",
+        "node_count": 292,
+        "node_ids_sha256": "49784c9327ca270986103fa4ed3ebe8d776d5e54f56729d9da6c0e92bcb2a6ad",
     },
     "B03": {
         "node_count": 238,
@@ -167,8 +167,8 @@ FUNCTIONAL_V19_SHARD_MODULE_AUTHORITIES = {
         "modules_sha256": "a67f8bfad4c6ab582d1b51ac240be5362497b48bccd852a6377bfcc1973e29bb",
     },
     "B02": {
-        "module_count": 22,
-        "modules_sha256": "34e1f2ed3b35f29022cba7fb815832ae4cce4bcce8418a8f045881ff41930447",
+        "module_count": 21,
+        "modules_sha256": "eaa9e5ea6f6383cdb28b107d0339edba2a1c25e68e0fffcd5dc54063384d3937",
     },
     "B03": {
         "module_count": 19,
@@ -285,10 +285,7 @@ FUNCTIONAL_V19_SPLIT_NODE_IDS = {
         "tests/test_local_patch_transition.py::"
         "test_axial_flat_plate_stress_is_mesh_style_invariant",
     ),
-    "B02": (
-        "tests/test_local_patch_transition.py::"
-        "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
-    ),
+    "B02": (),
     "B03": (
         "tests/test_local_patch_transition.py::test_flat_local_patch_is_conforming_and_local",
         "tests/test_local_patch_transition.py::test_cylinder_local_patch_quality_beats_graded",
@@ -302,12 +299,14 @@ FUNCTIONAL_V19_SPLIT_NODE_IDS = {
 }
 FUNCTIONAL_V20_DEFERRED_ACTIVATION_NODES = (
     "tests/test_local_patch_transition.py::"
+    "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
+    "tests/test_local_patch_transition.py::"
     "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams",
 )
 FUNCTIONAL_V20_DEFERRED_ACTIVATION_AUTHORITY = {
     "disposition": "MANDATORY_DEFAULT_ACTIVATION_GATE_NOT_OPT_IN_BURN_IN",
-    "node_count": 1,
-    "node_ids_sha256": "db386502776bcf3bc40eec44e260546b70a02bf7347e8519d46078860b3758fc",
+    "node_count": 2,
+    "node_ids_sha256": "a21a8a44724a3d1601dd54ff8c7a8fd0c97ac4b8572f1731db93cf8767ce277d",
     "reason": "GENERATED_TRANSITION_TRIANGLES_RESOLVE_TO_LEGACY_S3_BEFORE_DEFAULT_ACTIVATION",
 }
 FUNCTIONAL_V20_INNER_WAVE_POLICY = {
@@ -493,10 +492,7 @@ CI_FUNCTIONAL_MODULE_AUTHORITIES = {
     "P04": {"module_count": 22, "modules_sha256": "c22f089c1b0a89b32b104805864aaac7f0f3bb6b2662557967e4ac2787eab983"},
 }
 CI_FUNCTIONAL_EXACT_NODES = {
-    "P01": (
-        "tests/test_local_patch_transition.py::"
-        "test_local_patch_buckling_has_no_spurious_flat_facet_modes",
-    ),
+    "P01": (),
     "P02": (
         "tests/test_local_patch_transition.py::"
         "test_axial_flat_plate_stress_is_mesh_style_invariant",
@@ -514,20 +510,20 @@ CI_FUNCTIONAL_EXACT_NODES = {
     ),
 }
 CI_FUNCTIONAL_EXACT_NODE_AUTHORITIES = {
-    "P01": {"node_count": 1, "node_ids_sha256": "4f842f1261a74dca82c42e98abad7216277f3065d80676a817dcfdb9d74de091"},
+    "P01": {"node_count": 0, "node_ids_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"},
     "P02": {"node_count": 1, "node_ids_sha256": "8238c1b9ac48397eac227af41cb3639cd4c3419a94df636642d857a72f301377"},
     "P03": {"node_count": 0, "node_ids_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"},
     "P04": {"node_count": 8, "node_ids_sha256": "4218b7c97abc9903a6b86dc899b8ce51b8a32050473454f5f70f6d64ae77d43b"},
 }
 CI_FUNCTIONAL_NODE_AUTHORITIES = {
-    "P01": {"node_count": 181, "node_ids_sha256": "d29313cc50fff61045aa8a07d6e50fedb980e86d1aeac45e0c8db7e360ce0c83"},
+    "P01": {"node_count": 180, "node_ids_sha256": "dd40cfcd3a4669d9124eecb590231863ffa3b36fc21f8dade293522a0f53ba81"},
     "P02": {"node_count": 236, "node_ids_sha256": "8edc0691fa6af896622130673d73d4bdc272f1adcdde3eae337cebacfeaba36e"},
     "P03": {"node_count": 364, "node_ids_sha256": "c9afdeece65a339e87a47d5a1558c4b1aa8009949b27cc7da244b4349d62d88b"},
     "P04": {"node_count": 285, "node_ids_sha256": "b157590645ef8417b6b833cd606b7ece2991b5a06026a8ccea8020036665b929"},
 }
 CI_NONFUNCTIONAL_NODE_AUTHORITY = {
-    "node_count": 908,
-    "node_ids_sha256": "6451af9564361a97dd803b877f6f8ad19874b3f441d5a08c2c30dc8ccf3e764b",
+    "node_count": 910,
+    "node_ids_sha256": "4fb785042836255467776a617940aff34c82fbcbc7f0a40437c1eb43ae786bab",
 }
 CI_NONFUNCTIONAL_MODULE_AUTHORITIES = {
     "P01": {"module_count": 7, "modules_sha256": "6798a1e7bf8d796c210b60cb2600ed0a161545ea9f239a3720975ae591800304"},
@@ -539,28 +535,28 @@ CI_NONFUNCTIONAL_NODE_AUTHORITIES = {
     "P01": {"node_count": 92, "node_ids_sha256": "f97fa883bd2ba01e13a18d7ae413ac2fe341ec26b7722f6748c170239ed9d502"},
     "P02": {"node_count": 260, "node_ids_sha256": "742afa90066e70cd3706551a449b59f0fe5bd65e9fb453e9a56797477deac31f"},
     "P03": {"node_count": 248, "node_ids_sha256": "05a654eba6b1b8a515ca8066c9f637ab8d1f59f5f57327d9f8aad0daa0f4f744"},
-    "P04": {"node_count": 308, "node_ids_sha256": "90626ff83b51b59e129c425085f91357f621c0cd3bcf9b2e43319f59601be331"},
+    "P04": {"node_count": 310, "node_ids_sha256": "fec37150c16a184d022d2d98bac9ffdfa63f59ecaf9f50b8fba226f2c3b0350f"},
 }
 CI_FULL_NODE_AUTHORITY = {
-    "node_count": 1976,
-    "node_ids_sha256": "9105d64a80193758f0303da3d2b5267315bf671196621039d187255eba1b8902",
+    "node_count": 1975,
+    "node_ids_sha256": "1b44d5b7472a037a549699ac2aa305dd83e8da393553986cca173abb9ac232da",
 }
 CI_SHARD_NODE_AUTHORITIES = {
     "P01": {
-        "node_count": 273,
-        "node_ids_sha256": "8e3fdc4eee7a125f13f64df50950988838fd784ad6bbe338fbef75fe4fe4a98d",
+        "node_count": 272,
+        "node_ids_sha256": "038e2eb049cae0bfb874dfb6494e977d3691860b70b446d3ccc6d30fe238aabe",
     },
     "P02": {
         "node_count": 496,
         "node_ids_sha256": "80159dd214c1861c1235f128dff0f792c4518041e2a0f52ab191ef6daf5c86cd",
     },
     "P03": {
-        "node_count": 613,
-        "node_ids_sha256": "357d041a158b39bf17e26b1bd9d0a192b2f54123d3606d2144c3ac8f2de54a40",
+        "node_count": 612,
+        "node_ids_sha256": "8286fc6302f0a281d46e8701fa71d03405be68dfe66f5303d6db72d089d5b69c",
     },
     "P04": {
-        "node_count": 594,
-        "node_ids_sha256": "db1e8f5bd7430fef426700dafaa11fda6c770607cf4fff157a3ad8c111a95a47",
+        "node_count": 595,
+        "node_ids_sha256": "91dfd702f478e53c202694f88b8461e069e99803dc6d853b78832255de06d795",
     },
 }
 
@@ -2389,10 +2385,10 @@ def validate_functional_wave_contract(contract: Mapping[str, Any]) -> dict[str, 
         if (
             len(observed_split_nodes) != len(set(observed_split_nodes))
             or set(observed_split_nodes) != set(full_split_nodes)
-            or len(full_split_nodes) != 10
+            or len(full_split_nodes) != 9
         ):
             raise EvidenceError(
-                "v20 exact split-module assignments must partition all twelve nodes"
+                "v22 exact split-module assignments must partition all nine burn-in nodes"
             )
 
     execution = _exact_keys(
@@ -5029,7 +5025,10 @@ def _functional_artifact_extent(
     absolute_deadline: float | None = None,
 ) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
-    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+    for path in sorted(
+        (item for item in root.rglob("*") if item.is_file()),
+        key=lambda item: item.relative_to(root).as_posix(),
+    ):
         if absolute_deadline is not None:
             _functional_deadline_check(
                 absolute_deadline, "functional artifact-extent enumeration"
@@ -6034,7 +6033,7 @@ def _ci_functional_node_partitions(
     if (
         len(exact_rows) != len(set(exact_rows))
         or set(exact_rows) != set(split_nodes)
-        or len(split_nodes) != 10
+        or len(split_nodes) != 9
     ):
         raise EvidenceError("bounded CI exact selectors do not partition the split module")
 
