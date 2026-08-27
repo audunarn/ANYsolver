@@ -22,6 +22,8 @@ SMOKE_PROGRAM = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 INPUT = ROOT / "docs" / "reference_cases" / "e4_pl_s3_default_activation_v2_input.json"
 CONTRACT = ROOT / "docs" / "reference_cases" / "e4_pl_s3_default_activation_v2_contract.json"
 MANIFEST = ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_connectivity_manifest.json"
+ASSIGNMENT_SHA256 = "A" * 64
+MANIFEST_RECORD_SHA256 = "B" * 64
 
 
 def _load(name: str, path: Path) -> Any:
@@ -488,7 +490,13 @@ def test_cold_smoke_coordinator_is_stdlib_bounded_and_nonclassifying() -> None:
     assert 'default=[20, 40]' in source
     assert 'max_workers=workers' in source
     assert 'not 1 <= workers <= 3' in source
-    assert 'not 1 <= global_limit_seconds <= 1200' in source
+    assert "DEFAULT_INACTIVITY_SECONDS = 1800" in source
+    assert '"total_runtime_limit_seconds": None' in source
+    assert '"runtime_classification": False' in source
+    assert "forecast_acceptance_seconds" not in source
+    assert "partial_forecast_exceeds_acceptance" not in source
+    assert "global_limit_seconds" not in source
+    assert "timeout_seconds" not in source
     assert '"automatic_retry": False' in source
     assert '"classification_authority": False' in source
     assert '"formal_execution_authorized": False' in source
@@ -530,7 +538,7 @@ def test_cold_smoke_forecast_is_complete_only_for_all_twelve_records() -> None:
     assert smoke.forecast_seconds(rows) is None
 
 
-def test_cold_smoke_partial_forecast_proves_infeasibility_without_larger_levels() -> None:
+def test_cold_smoke_partial_forecast_is_diagnostic_without_larger_levels() -> None:
     smoke = _load("_activation_cold_smoke_partial_forecast", SMOKE_PROGRAM)
     rows = [
         {
@@ -550,7 +558,6 @@ def test_cold_smoke_partial_forecast_proves_infeasibility_without_larger_levels(
     )
     assert smoke.forecast_seconds(rows) is None
     assert smoke.partial_forecast_lower_bound_seconds(rows) == expected
-    assert expected > 480.0
     incomplete = rows[:-1]
     assert smoke.partial_forecast_lower_bound_seconds(incomplete) == (
         60.0 + 1.25 * (5.0 + 20.0 * 16.0)
@@ -591,11 +598,18 @@ def test_cold_smoke_partial_forecast_ignores_failed_and_unregistered_rows() -> N
 
 def _valid_cold_smoke_child(smoke: Any) -> dict[str, Any]:
     return {
+        "assignment_sha256": ASSIGNMENT_SHA256,
+        "call_counts": {
+            "assembly_runtime_lease_captures": 1,
+            "connectivity_manifest_regenerations": 0,
+        },
         "classification_authority": False,
         "elapsed_microseconds": 123,
         "energy_norm_error": 0.25,
         "fraction_percent": 10,
+        "implementation": "optimized",
         "level": 20,
+        "manifest_record_sha256": MANIFEST_RECORD_SHA256,
         "record_id": "N20:10PCT:dispersed:alternating",
         "schema": smoke.CHILD_SCHEMA,
     }
@@ -613,6 +627,8 @@ def test_cold_smoke_child_record_binds_canonical_bytes_and_hash(
         path,
         level=20,
         fraction=10,
+        assignment_sha256=ASSIGNMENT_SHA256,
+        manifest_record_sha256=MANIFEST_RECORD_SHA256,
     )
     assert observed == value
     assert digest == hashlib.sha256(raw).hexdigest().upper()
@@ -626,6 +642,8 @@ def test_cold_smoke_child_record_binds_canonical_bytes_and_hash(
         "nonfinite",
         "noncanonical",
         "schema",
+        "assignment",
+        "manifest_record",
         "classification",
         "level",
         "level_type",
@@ -634,6 +652,8 @@ def test_cold_smoke_child_record_binds_canonical_bytes_and_hash(
         "record_id",
         "elapsed",
         "energy",
+        "implementation",
+        "call_counts",
         "missing",
         "extra",
     ),
@@ -646,6 +666,10 @@ def test_cold_smoke_child_record_mutations_fail_closed(
     value = _valid_cold_smoke_child(smoke)
     if mutation == "schema":
         value["schema"] = "changed"
+    elif mutation == "assignment":
+        value["assignment_sha256"] = "C" * 64
+    elif mutation == "manifest_record":
+        value["manifest_record_sha256"] = "D" * 64
     elif mutation == "classification":
         value["classification_authority"] = True
     elif mutation == "level":
@@ -662,6 +686,10 @@ def test_cold_smoke_child_record_mutations_fail_closed(
         value["elapsed_microseconds"] = -1
     elif mutation == "energy":
         value["energy_norm_error"] = -0.25
+    elif mutation == "implementation":
+        value["implementation"] = "changed"
+    elif mutation == "call_counts":
+        value["call_counts"]["assembly_runtime_lease_captures"] = -1
     elif mutation == "missing":
         del value["record_id"]
     elif mutation == "extra":
@@ -676,7 +704,35 @@ def test_cold_smoke_child_record_mutations_fail_closed(
     path = tmp_path / f"{mutation}.json"
     path.write_bytes(raw)
     with pytest.raises(smoke.SmokeError):
-        smoke._read_child(path, level=20, fraction=10)
+        smoke._read_child(
+            path,
+            level=20,
+            fraction=10,
+            assignment_sha256=ASSIGNMENT_SHA256,
+            manifest_record_sha256=MANIFEST_RECORD_SHA256,
+        )
+
+
+def _child_invocation(
+    tmp_path: Path,
+    *,
+    level: int,
+    fraction: int,
+) -> dict[str, Any]:
+    directory = tmp_path / f"n{level}-{fraction}pct"
+    directory.mkdir()
+    assignment = directory / "assignment.json"
+    assignment.write_bytes(b"{}\n")
+    return {
+        "level": level,
+        "fraction": fraction,
+        "directory": directory,
+        "assignment_path": assignment,
+        "assignment_sha256": ASSIGNMENT_SHA256,
+        "manifest_record_sha256": MANIFEST_RECORD_SHA256,
+        "environment": {},
+        "inactivity_seconds": 1800.0,
+    }
 
 
 def test_cold_smoke_run_child_never_accepts_unvalidated_output(
@@ -697,8 +753,8 @@ def test_cold_smoke_run_child_never_accepts_unvalidated_output(
 
     class AccountedTree:
         @staticmethod
-        def sample() -> tuple[int, int]:
-            return 4096, 0
+        def sample_activity() -> tuple[int, int, tuple[int, int]]:
+            return 4096, 0, (1, 1)
 
         @staticmethod
         def terminate() -> bool:
@@ -720,12 +776,7 @@ def test_cold_smoke_run_child_never_accepts_unvalidated_output(
         lambda _process, _limit: AccountedTree(),
     )
     result = smoke._run_child(
-        level=20,
-        fraction=10,
-        root=tmp_path,
-        environment={},
-        timeout_seconds=5.0,
-        deadline_ns=smoke.time.monotonic_ns() + 5_000_000_000,
+        **_child_invocation(tmp_path, level=20, fraction=10),
         memory_limit_bytes=1 << 30,
     )
     assert result.status == "MALFORMED_OUTPUT"
@@ -751,8 +802,8 @@ def test_cold_smoke_oversized_malformed_output_is_not_read_or_hashed(
 
     class AccountedTree:
         @staticmethod
-        def sample() -> tuple[int, int]:
-            return 4096, 0
+        def sample_activity() -> tuple[int, int, tuple[int, int]]:
+            return 4096, 0, (1, 1)
 
         @staticmethod
         def terminate() -> bool:
@@ -774,12 +825,7 @@ def test_cold_smoke_oversized_malformed_output_is_not_read_or_hashed(
         lambda _process, _limit: AccountedTree(),
     )
     result = smoke._run_child(
-        level=20,
-        fraction=10,
-        root=tmp_path,
-        environment={},
-        timeout_seconds=1.0,
-        deadline_ns=smoke.time.monotonic_ns() + 1_000_000_000,
+        **_child_invocation(tmp_path, level=20, fraction=10),
         memory_limit_bytes=1 << 30,
     )
     assert result.status == "MALFORMED_OUTPUT"
@@ -799,12 +845,7 @@ def test_cold_smoke_spawn_failure_is_a_deterministic_terminal_row(
 
     monkeypatch.setattr(smoke.subprocess, "Popen", fail_spawn)
     result = smoke._run_child(
-        level=20,
-        fraction=0,
-        root=tmp_path,
-        environment={},
-        timeout_seconds=1.0,
-        deadline_ns=smoke.time.monotonic_ns() + 1_000_000_000,
+        **_child_invocation(tmp_path, level=20, fraction=0),
         memory_limit_bytes=1 << 30,
     )
     assert result.status == "SPAWN_FAILED"
@@ -887,8 +928,8 @@ def test_cold_smoke_tree_memory_excess_terminates_and_removes_record(
 
     class ExcessTree:
         @staticmethod
-        def sample() -> tuple[int, int]:
-            return limit + 1, 2
+        def sample_activity() -> tuple[int, int, tuple[int, int]]:
+            return limit + 1, 2, (1, 1)
 
         @staticmethod
         def terminate() -> bool:
@@ -914,12 +955,7 @@ def test_cold_smoke_tree_memory_excess_terminates_and_removes_record(
         lambda _process, _limit: ExcessTree(),
     )
     result = smoke._run_child(
-        level=20,
-        fraction=25,
-        root=tmp_path,
-        environment={},
-        timeout_seconds=1.0,
-        deadline_ns=smoke.time.monotonic_ns() + 1_000_000_000,
+        **_child_invocation(tmp_path, level=20, fraction=25),
         memory_limit_bytes=limit,
     )
     assert result.status == "MEMORY_LIMIT"
@@ -950,9 +986,10 @@ def test_cold_smoke_waits_for_complete_job_tree_before_accepting_output(
 
     class DescendantTree:
         @staticmethod
-        def sample() -> tuple[int, int]:
+        def sample_activity() -> tuple[int, int, tuple[int, int]]:
             calls["sample"] += 1
-            return samples.pop(0)
+            peak, active = samples.pop(0)
+            return peak, active, (calls["sample"], 0)
 
         @staticmethod
         def terminate() -> bool:
@@ -973,12 +1010,7 @@ def test_cold_smoke_waits_for_complete_job_tree_before_accepting_output(
         lambda _process, _limit: DescendantTree(),
     )
     result = smoke._run_child(
-        level=20,
-        fraction=0,
-        root=tmp_path,
-        environment={},
-        timeout_seconds=1.0,
-        deadline_ns=smoke.time.monotonic_ns() + 1_000_000_000,
+        **_child_invocation(tmp_path, level=20, fraction=0),
         memory_limit_bytes=1 << 30,
     )
     assert result.status == "COMPLETE"
@@ -1024,12 +1056,7 @@ def test_cold_smoke_accounting_failure_blocks_before_acceptance(
         ),
     )
     result = smoke._run_child(
-        level=20,
-        fraction=10,
-        root=tmp_path,
-        environment={},
-        timeout_seconds=1.0,
-        deadline_ns=smoke.time.monotonic_ns() + 1_000_000_000,
+        **_child_invocation(tmp_path, level=20, fraction=10),
         memory_limit_bytes=1 << 30,
     )
     assert result.status == "MEMORY_ACCOUNTING_UNAVAILABLE"
@@ -1037,16 +1064,13 @@ def test_cold_smoke_accounting_failure_blocks_before_acceptance(
     assert not (tmp_path / "n20-10pct" / "record.json").exists()
 
 
-@pytest.mark.parametrize(
-    ("workers", "global_limit"),
-    ((4, 600), (3, 1201)),
-)
-def test_cold_smoke_rejects_unbounded_controls_without_creating_output(
+@pytest.mark.parametrize(("workers", "inactivity"), ((4, 1800), (3, 1799)))
+def test_cold_smoke_rejects_invalid_successor_controls_without_creating_output(
     workers: int,
-    global_limit: int,
+    inactivity: int,
 ) -> None:
     smoke = _load(
-        f"_activation_cold_smoke_bounds_{workers}_{global_limit}", SMOKE_PROGRAM
+        f"_activation_cold_smoke_bounds_{workers}_{inactivity}", SMOKE_PROGRAM
     )
     output = ROOT / ".forbidden-cold-smoke-test"
     assert not output.exists()
@@ -1055,8 +1079,7 @@ def test_cold_smoke_rejects_unbounded_controls_without_creating_output(
             levels=(20,),
             output_root=output,
             workers=workers,
-            timeout_seconds=120,
-            global_limit_seconds=global_limit,
+            inactivity_seconds=inactivity,
             memory_limit_gib=24,
         )
     assert not output.exists()
@@ -1071,8 +1094,7 @@ def test_cold_smoke_rejects_repository_output_before_execution() -> None:
             levels=(20,),
             output_root=output,
             workers=3,
-            timeout_seconds=120,
-            global_limit_seconds=600,
+            inactivity_seconds=1800,
             memory_limit_gib=24,
         )
     assert not output.exists()

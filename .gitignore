@@ -1,6 +1,10 @@
 __pycache__/
 .numba_cache_*/
 .perf2-worktrees/
+.perf2-artifacts/
+.perf2-tmp/
+.perf2-review-*-basetemp/
+.perf2-review-*-nodecollect/
 *.py[cod]
 *.egg-info/
 .pytest_cache/

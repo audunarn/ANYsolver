@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import threading
 import time
 
 import pytest
@@ -57,10 +58,31 @@ def test_q1w_contract_is_canonical_bounded_and_production_is_unchanged() -> None
 
 def test_q1w_parallel_process_bounds_overlap_timeout_and_memory(tmp_path: Path) -> None:
     environment = os.environ.copy()
+    launch_barrier = threading.Barrier(4)
+    release_path = tmp_path / "parallel-release.event"
 
-    def sleep_job(index: int) -> runner.ProcessResult:
+    def synchronized_job(index: int) -> runner.ProcessResult:
+        ready_path = tmp_path / f"parallel-{index}.ready"
+        interval_path = tmp_path / f"parallel-{index}.interval.json"
+        child = (
+            "import json,time\n"
+            "from pathlib import Path\n"
+            f"ready=Path({str(ready_path)!r})\n"
+            f"release=Path({str(release_path)!r})\n"
+            f"interval=Path({str(interval_path)!r})\n"
+            "start=time.monotonic_ns()\n"
+            "ready.write_text(str(start),encoding='ascii')\n"
+            "deadline=time.monotonic()+1.5\n"
+            "while not release.is_file():\n"
+            "    if time.monotonic() >= deadline: raise SystemExit(3)\n"
+            "    time.sleep(0.005)\n"
+            "end=time.monotonic_ns()\n"
+            "interval.write_text(json.dumps({'end':end,'start':start},"
+            "sort_keys=True,separators=(',',':'))+'\\n',encoding='ascii')\n"
+        )
+        launch_barrier.wait(timeout=2)
         return runner.run_bounded_process(
-            [sys.executable, "-c", "import time; time.sleep(0.25)"],
+            [sys.executable, "-c", child],
             cwd=ROOT,
             environment=environment,
             stdout_path=tmp_path / f"parallel-{index}.out",
@@ -70,12 +92,30 @@ def test_q1w_parallel_process_bounds_overlap_timeout_and_memory(tmp_path: Path) 
             rss_reader=lambda _pid: 1,
         )
 
-    started = time.monotonic()
     with ThreadPoolExecutor(max_workers=3) as pool:
-        rows = list(pool.map(sleep_job, range(3)))
-    elapsed = time.monotonic() - started
+        futures = [pool.submit(synchronized_job, index) for index in range(3)]
+        launch_barrier.wait(timeout=2)
+        ready_deadline = time.monotonic() + 2
+        ready_paths = [tmp_path / f"parallel-{index}.ready" for index in range(3)]
+        while not all(path.is_file() for path in ready_paths):
+            if time.monotonic() >= ready_deadline:
+                pytest.fail("parallel child-process barrier was not reached")
+            threading.Event().wait(0.005)
+        assert not any(future.done() for future in futures)
+        release_path.write_text("release\n", encoding="ascii")
+        rows = [future.result(timeout=2) for future in futures]
     assert all(row.status == "COMPLETE" for row in rows)
-    assert elapsed < 0.65
+    intervals = [
+        json.loads(
+            (tmp_path / f"parallel-{index}.interval.json").read_text(
+                encoding="ascii"
+            )
+        )
+        for index in range(3)
+    ]
+    assert max(row["start"] for row in intervals) < min(
+        row["end"] for row in intervals
+    )
     timeout = runner.run_bounded_process(
         [sys.executable, "-c", "import time; time.sleep(2)"],
         cwd=ROOT,

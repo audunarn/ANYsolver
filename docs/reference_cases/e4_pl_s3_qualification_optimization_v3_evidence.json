@@ -1,0 +1,163 @@
+{
+  "after": {
+    "elapsed_ms": 19295,
+    "external_path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-v3-evidence-final-optimized-n20n40-20260827\\summary.json",
+    "partial_forecast_lower_bound_seconds": 562.5625,
+    "scientific_payload_sha256": "5143F0376BAB3EE432EEE7F946BC5C0B00B6D2F5AB29F1A8161E6BC723621AC7",
+    "summary_bytes": 6426,
+    "summary_sha256": "5822494E30AECBB0650FF6B8178D2D5EC9A31BDBF391A615CBFFF44067E9710D",
+    "terminal": "NONCLASSIFYING_E4_PL_S3_COLD_PATH_TIMING_ONLY"
+  },
+  "before": {
+    "elapsed_ms": 23691,
+    "external_path": "C:\\Github\\ANYsolver\\.perf2-artifacts\\s3-v3-evidence-final-baseline-n20n40-20260827\\summary.json",
+    "partial_forecast_lower_bound_seconds": 679.2112499999998,
+    "scientific_payload_sha256": "5143F0376BAB3EE432EEE7F946BC5C0B00B6D2F5AB29F1A8161E6BC723621AC7",
+    "summary_bytes": 6422,
+    "summary_sha256": "4AC0D3EF7FF1D9D6159CEE1C49F13DEE6E1FF561D32EDEE54A825BBBDBB93436",
+    "terminal": "NONCLASSIFYING_E4_PL_S3_COLD_PATH_TIMING_ONLY"
+  },
+  "comparison": {
+    "assembly_runtime_lease_captures_per_record_after": 1,
+    "assembly_runtime_lease_captures_per_record_before": 3,
+    "complete_tree_cpu_fraction_reduced": 0.23480797277588722,
+    "complete_tree_cpu_time_100ns_after": 491875000,
+    "complete_tree_cpu_time_100ns_before": 642812500,
+    "connectivity_manifest_regenerations_per_record_after": 0,
+    "connectivity_manifest_regenerations_per_record_before": 1,
+    "coordinator_elapsed_fraction_reduced": 0.1855556962559622,
+    "peak_tree_memory_bytes_after": 399106048,
+    "peak_tree_memory_bytes_before": 405491712,
+    "peak_tree_memory_fraction_reduced": 0.015747951958140147,
+    "runtime_classification": false,
+    "scientific_payloads_byte_identical": true
+  },
+  "formal_execution_authorized": false,
+  "levels": [
+    20,
+    40
+  ],
+  "processes": [
+    {
+      "after": {
+        "assembly_runtime_lease_captures": 1,
+        "connectivity_manifest_regenerations": 0,
+        "elapsed_ms": 4209,
+        "peak_tree_memory_bytes": 217812992,
+        "tree_cpu_time_100ns": 40312500
+      },
+      "before": {
+        "assembly_runtime_lease_captures": 3,
+        "connectivity_manifest_regenerations": 1,
+        "elapsed_ms": 6834,
+        "peak_tree_memory_bytes": 217268224,
+        "tree_cpu_time_100ns": 68125000
+      },
+      "energy_norm_error": 0.09209276781730313,
+      "fraction_percent": 0,
+      "level": 20
+    },
+    {
+      "after": {
+        "assembly_runtime_lease_captures": 1,
+        "connectivity_manifest_regenerations": 0,
+        "elapsed_ms": 4110,
+        "peak_tree_memory_bytes": 220520448,
+        "tree_cpu_time_100ns": 40000000
+      },
+      "before": {
+        "assembly_runtime_lease_captures": 3,
+        "connectivity_manifest_regenerations": 1,
+        "elapsed_ms": 6683,
+        "peak_tree_memory_bytes": 220635136,
+        "tree_cpu_time_100ns": 65937500
+      },
+      "energy_norm_error": 0.09182074902396782,
+      "fraction_percent": 10,
+      "level": 20
+    },
+    {
+      "after": {
+        "assembly_runtime_lease_captures": 1,
+        "connectivity_manifest_regenerations": 0,
+        "elapsed_ms": 5221,
+        "peak_tree_memory_bytes": 225447936,
+        "tree_cpu_time_100ns": 51093750
+      },
+      "before": {
+        "assembly_runtime_lease_captures": 3,
+        "connectivity_manifest_regenerations": 1,
+        "elapsed_ms": 7642,
+        "peak_tree_memory_bytes": 226439168,
+        "tree_cpu_time_100ns": 75468750
+      },
+      "energy_norm_error": 0.09172936601896518,
+      "fraction_percent": 25,
+      "level": 20
+    },
+    {
+      "after": {
+        "assembly_runtime_lease_captures": 1,
+        "connectivity_manifest_regenerations": 0,
+        "elapsed_ms": 12001,
+        "peak_tree_memory_bytes": 383676416,
+        "tree_cpu_time_100ns": 118437500
+      },
+      "before": {
+        "assembly_runtime_lease_captures": 3,
+        "connectivity_manifest_regenerations": 1,
+        "elapsed_ms": 14775,
+        "peak_tree_memory_bytes": 383111168,
+        "tree_cpu_time_100ns": 146562500
+      },
+      "energy_norm_error": 0.023210716284393855,
+      "fraction_percent": 0,
+      "level": 40
+    },
+    {
+      "after": {
+        "assembly_runtime_lease_captures": 1,
+        "connectivity_manifest_regenerations": 0,
+        "elapsed_ms": 10381,
+        "peak_tree_memory_bytes": 393207808,
+        "tree_cpu_time_100ns": 102812500
+      },
+      "before": {
+        "assembly_runtime_lease_captures": 3,
+        "connectivity_manifest_regenerations": 1,
+        "elapsed_ms": 12803,
+        "peak_tree_memory_bytes": 394895360,
+        "tree_cpu_time_100ns": 127343750
+      },
+      "energy_norm_error": 0.024002630709741683,
+      "fraction_percent": 10,
+      "level": 40
+    },
+    {
+      "after": {
+        "assembly_runtime_lease_captures": 1,
+        "connectivity_manifest_regenerations": 0,
+        "elapsed_ms": 14071,
+        "peak_tree_memory_bytes": 399106048,
+        "tree_cpu_time_100ns": 139218750
+      },
+      "before": {
+        "assembly_runtime_lease_captures": 3,
+        "connectivity_manifest_regenerations": 1,
+        "elapsed_ms": 16046,
+        "peak_tree_memory_bytes": 405491712,
+        "tree_cpu_time_100ns": 159375000
+      },
+      "energy_norm_error": 0.025443830759751485,
+      "fraction_percent": 25,
+      "level": 40
+    }
+  ],
+  "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
+  "schema": "anysolver.e4-pl-s3-qualification-optimization-evidence-v3",
+  "scope": "N20_N40_DEVELOPMENT_TIMING_ONLY",
+  "worker_overlap": {
+    "N20": true,
+    "N40": true
+  }
+}

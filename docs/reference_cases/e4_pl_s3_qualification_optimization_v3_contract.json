@@ -1,0 +1,192 @@
+{
+  "authority_state": "DRAFT_REQUIRES_FINAL_CANDIDATE_REBIND",
+  "candidate_provenance": {
+    "github_main": {
+      "commit": "21dca63b6dbc11f52950e3af2316ba4a6e398d73",
+      "subject": "Merge pull request #30 from audunarn/codex/s3-e4-pl-burnin-ci-portability",
+      "tree": "6daa9ce46afdaed9223f1eeda8711243be099d68"
+    },
+    "imported_reviewed_hardening": {
+      "commit": "65ec3428ff4a6b225efe3dcb6043784723956ea3",
+      "subject": "docs: record bounded S3 activation forecast",
+      "tree": "c5cc24fa60a3ce1cdc3a1910bd45fe0efe7ec620"
+    },
+    "lease_hardening_source": {
+      "commit": "e7060294a10b2ee8c18b4001e9194f608986d53e",
+      "subject": "perf: harden qualified S3 activation lease paths",
+      "tree": "049c663c52e05231e186771b8a51f24f8492aafe"
+    }
+  },
+  "execution_policy": {
+    "assignment": {
+      "canonical_json": true,
+      "exclusive_creation": true,
+      "owner": "STANDARD_LIBRARY_COORDINATOR",
+      "required_bindings": [
+        "CONTRACT_SHA256",
+        "INPUT_SHA256",
+        "CONNECTIVITY_MANIFEST_SHA256",
+        "CONNECTIVITY_RECORD_AND_SHA256",
+        "PROTOCOL_V2_PROGRAM_SHA256",
+        "SUCCESSOR_PROGRAM_SHA256",
+        "COORDINATOR_SHA256",
+        "LEVEL_FRACTION_AND_RECORD_ID"
+      ],
+      "schema": "anysolver.e4-pl-s3-coordinator-assignment-v1"
+    },
+    "automatic_retry": false,
+    "inactivity_watchdog": {
+      "condition": "NO_CHECKPOINT_OR_STDOUT_STDERR_PROGRESS_AND_NO_COMPLETE_TREE_CPU_TIME_PROGRESS",
+      "seconds": 1800
+    },
+    "memory_limit_gib_per_child": 24,
+    "memory_limit_scope": "COMPLETE_CHILD_PROCESS_TREE",
+    "parallel_workers_maximum": 3,
+    "runtime_classification": false,
+    "total_runtime_limit_seconds": null,
+    "tree_accounting_unavailable": "FAIL_CLOSED"
+  },
+  "final_rebind_required": [
+    "ANYsolver.commit",
+    "ANYsolver.tree",
+    "ANYsolver.subject",
+    "ANYsolver.changed_paths",
+    "ANYsolver.wheel.path",
+    "ANYsolver.wheel.filename",
+    "ANYsolver.wheel.bytes",
+    "ANYsolver.wheel.sha256",
+    "ANYmesh.commit_tree_subject_root_and_wheel",
+    "ANYfem.commit_tree_subject_root_and_wheel",
+    "ANYstructure.commit_tree_subject_and_root",
+    "ANYstructure.wheel.path_filename_bytes_and_sha256",
+    "ANYintelligent.commit_tree_subject_and_root",
+    "ANYfileIO.commit_tree_subject_root_and_wheel",
+    "ANYmaterial.commit_tree_subject_root_and_wheel",
+    "ANYgeometry.commit_tree_subject_root_and_wheel",
+    "isolated_execution_target",
+    "candidate_dependency_graph",
+    "candidate_preflight_results_and_log_hashes",
+    "ci_candidate_remote_refs",
+    "coordinator.bytes_and_sha256",
+    "formal_full_coverage_runner.bytes_and_sha256",
+    "candidate_binding_generator.bytes_and_sha256",
+    "optimization_evidence.bytes_and_sha256",
+    "successor_program.bytes_and_sha256",
+    "successor_test.bytes_and_sha256",
+    "final_contract.bytes_and_sha256",
+    "final_authority_commit_tree_parent_subject_and_path_set",
+    "independent_review_hashes"
+  ],
+  "formal_qualification_authority": false,
+  "formal_runner": {
+    "aggregate_after_all_launched_workers_terminal": true,
+    "batch_workers": 3,
+    "cycle_count_allowed": [
+      1,
+      2
+    ],
+    "cycle_scientific_bytes_must_match_for_two_cycles": true,
+    "eigen_performance_workers": 1,
+    "exact_batch_repetitions": 12,
+    "exact_special_fixture_count": 8,
+    "exact_topology_records": 252,
+    "execution_waves": [
+      [
+        "STRUCTURAL_SLASH",
+        "STRUCTURAL_BACKSLASH",
+        "STRUCTURAL_ALTERNATING"
+      ],
+      [
+        "EIGEN_PERFORMANCE",
+        "SPECIAL_ECOSYSTEM"
+      ],
+      [
+        "BATCH_0",
+        "BATCH_1",
+        "BATCH_2"
+      ]
+    ],
+    "scientific_scope": "UNCHANGED_PROTOCOL_V2_COMPLETE_GATES",
+    "special_lane_overlay": [
+      {
+        "name": "anyfileio-neutral-shell-authority-v3",
+        "nodes": [
+          "tests/test_sesam.py::test_semantics_resolves_a_neutral_mesh_and_records",
+          "tests/test_sesam.py::test_semantics_resolves_explicit_shell_local_axes"
+        ],
+        "repository": "ANYfileIO"
+      },
+      {
+        "name": "anyintelligent-production-entrypoint-v3",
+        "nodes": [
+          "tests/test_external_anysolver_adapter.py::test_production_entrypoint_routes_qualified_geometry_through_adapter"
+        ],
+        "repository": "ANYintelligent"
+      },
+      {
+        "name": "exact-wheel-cross-package-v3",
+        "nodes": [
+          "tests/test_e4_pl_s3_cross_wheel_v3.py"
+        ],
+        "repository": "ANYsolver"
+      }
+    ],
+    "special_ecosystem_workers": 1,
+    "structural_shards": 3
+  },
+  "frozen_historical_inputs": {
+    "activation_v2_contract": {
+      "bytes": 12044,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2_contract.json",
+      "sha256": "4C6EC1DB8DCFF3C4BA1A8C280E9D8E3DE9E57A4CE8CB1F4BC5631E5A86E17302"
+    },
+    "activation_v2_input": {
+      "bytes": 5367,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2_input.json",
+      "sha256": "B2A357B82667C5A978A381E5595D3D5EE32435E38ADD47990D88A9D95E002FDA"
+    },
+    "activation_v2_program": {
+      "bytes": 73780,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
+      "sha256": "E526D23AAEAB37F7C80A966748B6EA31777C43C46A3E7319C41BCBAE3FF1B0C4"
+    },
+    "connectivity_manifest": {
+      "bytes": 110005,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+      "record_count": 252,
+      "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    }
+  },
+  "mechanics_equivalence": {
+    "assembly_change": "ONE_NONRENEWABLE_QUALIFIED_ASSEMBLY_LEASE_PER_PLATE_RECORD",
+    "connectivity_change": "NONE",
+    "manifest_generation_change": "COORDINATOR_SELECTS_ONE_STORED_HASH_BOUND_ROW_WITHOUT_CHILD_REGENERATION",
+    "q4_mechanics_git_blob": "59ceb9534dfd22e05ea69296f92abeb0511f14cf",
+    "q4_mechanics_unchanged": true,
+    "s3_mechanics_git_blob": "823b5b0cdc450f7c7f2f2861aefcf4dd2062b99e",
+    "scientific_formula_change": "NONE"
+  },
+  "nonclassifying_development_evidence": {
+    "after_summary_bytes": 6426,
+    "after_summary_sha256": "5822494E30AECBB0650FF6B8178D2D5EC9A31BDBF391A615CBFFF44067E9710D",
+    "before_summary_bytes": 6422,
+    "before_summary_sha256": "4AC0D3EF7FF1D9D6159CEE1C49F13DEE6E1FF561D32EDEE54A825BBBDBB93436",
+    "levels": [
+      20,
+      40
+    ],
+    "metrics": [
+      "WALL_TIME",
+      "COMPLETE_TREE_CPU_TIME",
+      "PEAK_COMPLETE_TREE_MEMORY",
+      "CONNECTIVITY_MANIFEST_REGENERATION_CALLS",
+      "ASSEMBLY_RUNTIME_LEASE_CAPTURE_CALLS"
+    ],
+    "runtime_values_are_diagnostic_only": true,
+    "scientific_payload_sha256": "5143F0376BAB3EE432EEE7F946BC5C0B00B6D2F5AB29F1A8161E6BC723621AC7",
+    "scientific_payloads_byte_identical": true
+  },
+  "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
+  "schema": "anysolver.e4-pl-s3-qualification-optimization-contract-v3",
+  "terminal": "DRAFT_E4_PL_S3_OPTIMIZATION_REQUIRES_FINAL_REBIND_AND_REVIEW"
+}
