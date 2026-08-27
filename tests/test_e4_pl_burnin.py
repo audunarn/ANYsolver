@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from scripts import run_portable_ci as portable_ci
+
 from anysolver import (
     LEGACY_Q4_AVAILABLE_THROUGH,
     LEGACY_Q4_REMOVAL_TARGET,
@@ -627,10 +629,83 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
         encoding="utf-8"
     )
-    assert "python scripts/run_e4_pl_burnin_gate.py ci" in workflow
+    assert (
+        "python scripts/run_portable_ci.py --workers 4 --timeout-seconds 1200"
+        in workflow
+    )
+    assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
     for authority in gate.strict_json_load(CONTRACT)["sibling_authority"].values():
         if authority["commit"] != "ba8b21b9cf2732168b099cfedc7508789bdcfbb3":
             assert authority["commit"] in workflow
+
+
+def test_portable_ci_inventory_is_unique_and_excludes_long_lanes() -> None:
+    lanes = portable_ci.inventory()
+    modules = portable_ci.merge_test_modules()
+    assert modules
+    assert len(modules) == len(set(modules))
+    registered = {
+        module for lane in portable_ci.MERGE_LANES for module in lanes[lane]
+    }
+    assert set(modules) == registered - set(
+        portable_ci.POST_CLOSEOUT_HISTORICAL_MODULES
+    )
+    assert set(portable_ci.POST_CLOSEOUT_HISTORICAL_MODULES) <= registered
+    assert set(modules).isdisjoint(lanes["performance"])
+    assert set(modules).isdisjoint(lanes["extended"])
+
+
+def test_portable_ci_partition_is_deterministic_disjoint_and_complete(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    weights = {"a.py": 100, "b.py": 80, "c.py": 30, "d.py": 20, "e.py": 10}
+    monkeypatch.setattr(portable_ci, "_module_weight", weights.__getitem__)
+    first = portable_ci.partition_modules(tuple(weights), 3)
+    second = portable_ci.partition_modules(tuple(reversed(weights)), 3)
+    assert first == second
+    assigned = [module for bucket in first for module in bucket]
+    assert len(assigned) == len(set(assigned)) == len(weights)
+    assert set(assigned) == set(weights)
+
+
+@pytest.mark.parametrize("workers", [0, -1, True])
+def test_portable_ci_partition_rejects_invalid_worker_counts(workers: int) -> None:
+    with pytest.raises(ValueError, match="positive integer"):
+        portable_ci.partition_modules(("a.py",), workers)
+
+
+def test_portable_ci_worker_is_headless_isolated_and_single_threaded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ANYSOLVER_CI_EXPECTED_NODES", "hostile")
+    monkeypatch.setenv("ANYSOLVER_FUNCTIONAL_RESULT", "hostile")
+    monkeypatch.setenv("ANYSOLVER_BURNIN_ACTIVE_TEST_LANE", "functional")
+    environment = portable_ci._worker_environment(tmp_path)
+    assert "ANYSOLVER_CI_EXPECTED_NODES" not in environment
+    assert "ANYSOLVER_FUNCTIONAL_RESULT" not in environment
+    assert "ANYSOLVER_BURNIN_ACTIVE_TEST_LANE" not in environment
+    assert environment["ANY3DVIEW_DISABLE_GPU"] == "1"
+    for name in (
+        "NUMBA_NUM_THREADS",
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ):
+        assert environment[name] == "1"
+    modules = ("tests/test_a.py", "tests/test_b.py")
+    command = portable_ci._worker_command(modules, tmp_path)
+    assert command[-2:] == list(modules)
+    assert f"--basetemp={tmp_path / 'basetemp'}" in command
+    assert "--collect-only" not in command
+    local_patch_command = portable_ci._worker_command(
+        ("tests/test_local_patch_transition.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in local_patch_command) == 2
+    pardiso_command = portable_ci._worker_command(
+        ("tests/test_fe_solver_infrastructure.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in pardiso_command) == 1
 
 
 def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
