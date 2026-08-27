@@ -34,7 +34,7 @@ from anysolver.e4_pl_s3_element import (
 )
 from anysolver.e4_pl_s3_state import canonical_json_bytes
 from anysolver.element_capabilities import ElementCapabilityError
-from anysolver.elements import Element, ShellElement
+from anysolver.elements import BeamElement, Element, ShellElement
 from anysolver.linalg import FactorizationCache
 from anysolver.matrix_assembly import (
     AssemblyError,
@@ -105,6 +105,39 @@ def _qualified_q4_reference_model(*, warped: bool = False) -> FEModel:
         ),
     )
     model.add_boundary_condition(FixedSupport("left", [1, 4]))
+    return model
+
+
+def _qualified_q4_beam_reference_model() -> FEModel:
+    """Small mixed model exercising qualified-shell input authority."""
+
+    return _qualified_q4_beam_chain_reference_model(1)
+
+
+def _qualified_q4_beam_chain_reference_model(beam_count: int) -> FEModel:
+    """Mixed qualified-Q4 model with an exact built-in beam chain."""
+
+    model = _qualified_q4_reference_model()
+    previous_node_id = 2
+    for offset in range(beam_count):
+        node_id = 5 + offset
+        element_id = 2 + offset
+        model.add_node(node_id, 2.0 + offset, 0.0, 0.0)
+        model.add_element(
+            element_id,
+            BeamElement(
+                element_id,
+                [previous_node_id, node_id],
+                "steel",
+                {
+                    "area": 0.02,
+                    "Iy": 1.0e-6,
+                    "Iz": 1.0e-6,
+                    "J": 1.0e-6,
+                },
+            ),
+        )
+        previous_node_id = node_id
     return model
 
 
@@ -1445,6 +1478,318 @@ def test_prestress_provider_matrix_assembly_primitive_shadow_fails_closed(
     assert callbacks == []
 
 
+def test_mixed_cached_q4_beam_route_exposes_narrow_input_capability() -> None:
+    model = _qualified_q4_beam_reference_model()
+    # Populate the real warm-Q4 plan before capturing the same route used by
+    # the stiffened mixed-model solver.
+    assemble_stiffness_matrix(model)
+    lease = matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        model,
+        context="mixed cached prestress input capability test",
+        allow_q4_cached_stiffness=True,
+    )
+    namespace = vars(lease)
+
+    assert namespace["_qualified_q4_raw_mesh"] is model.mesh
+    assert namespace["_qualified_q4_only"] is False
+    assert callable(namespace.get("_qualified_trusted_input_require"))
+    assert "_qualified_trusted_require" not in namespace
+
+
+def test_mixed_q4_beam_builtin_prestress_amortization_preserves_evidence() -> None:
+    model = _qualified_q4_beam_reference_model()
+    lease = matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        model,
+        context="mixed prestress normalization equality test",
+    )
+    assert callable(vars(lease).get("_qualified_trusted_input_require"))
+    assert "_qualified_trusted_require" not in vars(lease)
+    state = {
+        1: {
+            "membrane_compression": [2.5e4, 0.0, 0.0],
+            "nested": {"values": (1.0, 2.0, 3.0)},
+        },
+        2: {"axial_compression": 125.0},
+    }
+    full_contexts: list[str] = []
+
+    def full_guard(observed_model: FEModel, *, context: str) -> dict[str, object]:
+        full_contexts.append(context)
+        modal_module._EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD(
+            observed_model,
+            context=context,
+        )
+        lease(observed_model, context=context)
+        return {}
+
+    fast = modal_module._normalize_prestress_states(
+        model,
+        state,
+        _exact_guard=full_guard,
+        _qualified_runtime_guard=lease,
+    )
+    reference = modal_module._normalize_prestress_states(
+        model,
+        state,
+        _exact_guard=lambda _model, *, context: {},
+    )
+
+    assert fast == reference
+    assert full_contexts == [
+        "qualified reference-prestress normalization preflight",
+        "qualified reference-prestress normalization output",
+    ]
+
+
+def test_mixed_q4_beam_exact_geometric_state_amortization_is_identical() -> None:
+    fast_model = _qualified_q4_beam_reference_model()
+    reference_model = _qualified_q4_beam_reference_model()
+    states = {
+        1: {"membrane_compression": [2.5e4, 0.0, 0.0]},
+        2: {"axial_compression": 125.0},
+    }
+    fast_lease = matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        fast_model,
+        context="mixed geometric-state amortization test",
+    )
+    trusted = vars(fast_lease).get("_qualified_trusted_input_require")
+    assert callable(trusted)
+    trusted_contexts: list[str] = []
+
+    def counted_trusted(observed_model: FEModel, *, context: str) -> None:
+        trusted_contexts.append(context)
+        trusted(observed_model, context=context)
+
+    vars(fast_lease)["_qualified_trusted_input_require"] = counted_trusted
+    fast_matrix, fast_info = (
+        matrix_assembly_module._assemble_geometric_stiffness_matrix_under_lease(
+            fast_model,
+            states,
+            qualified_runtime_guard=fast_lease,
+        )
+    )
+
+    reference_lease = (
+        matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+            reference_model,
+            context="mixed geometric-state full-guard reference test",
+        )
+    )
+
+    def reference_guard(observed_model: FEModel, *, context: str) -> None:
+        reference_lease(observed_model, context=context)
+
+    reference_matrix, reference_info = (
+        matrix_assembly_module._assemble_geometric_stiffness_matrix_under_lease(
+            reference_model,
+            states,
+            qualified_runtime_guard=reference_guard,
+        )
+    )
+
+    np.testing.assert_array_equal(
+        fast_matrix.toarray(),
+        reference_matrix.toarray(),
+    )
+    assert trusted_contexts
+    for key in ("matrix_type", "num_elements", "state_source", "sparsity_signature"):
+        assert fast_info[key] == reference_info[key]
+
+
+@pytest.mark.parametrize("attack", ("getter_lookup", "getter_call"))
+def test_exact_dict_state_never_crosses_a_custom_geometric_getter_guard(
+    attack: str,
+) -> None:
+    model = _qualified_q4_reference_model()
+    shell = model.mesh.elements[1]
+
+    class HostileGenericElement(Element):
+        def __init__(self) -> None:
+            super().__init__(2, [2, 5], "steel")
+            self.armed = False
+
+        @property
+        def num_nodes(self) -> int:
+            return 2
+
+        @property
+        def dofs_per_node(self) -> int:
+            return 6
+
+        def get_node_coordinates(self, mesh: object) -> np.ndarray:
+            return np.asarray(
+                [mesh.nodes[node_id].coords() for node_id in self.node_ids],
+                dtype=float,
+            )
+
+        def compute_stiffness_matrix(
+            self,
+            _mesh: object,
+            _material: object,
+        ) -> np.ndarray:
+            return np.zeros((12, 12), dtype=float)
+
+        def __getattribute__(self, name: str) -> object:
+            if (
+                name == "compute_geometric_stiffness_matrix"
+                and object.__getattribute__(self, "armed")
+                and attack == "getter_lookup"
+            ):
+                thickness = shell.thickness
+                shell.thickness = thickness * 2.0
+                shell.thickness = thickness
+            return super().__getattribute__(name)
+
+        def compute_geometric_stiffness_matrix(
+            self,
+            _mesh: object,
+            _material: object,
+            _state: object = None,
+        ) -> np.ndarray:
+            if attack == "getter_call":
+                thickness = shell.thickness
+                shell.thickness = thickness * 2.0
+                shell.thickness = thickness
+            return np.zeros((12, 12), dtype=float)
+
+    model.add_node(5, 2.0, 0.0, 0.0)
+    hostile = HostileGenericElement()
+    model.add_element(2, hostile)
+    hostile.armed = True
+    exact_builtin_states = {
+        1: {"membrane_compression": [2.5e4, 0.0, 0.0]},
+        2: {"axial_compression": 125.0},
+    }
+
+    with pytest.raises(AssemblyError, match="qualified shell authority"):
+        assemble_geometric_stiffness_matrix(model, exact_builtin_states)
+
+
+@pytest.mark.parametrize("shadow_scope", ("instance", "class"))
+def test_nested_beam_helper_shadow_uses_the_fully_guarded_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+    shadow_scope: str,
+) -> None:
+    model = _qualified_q4_beam_reference_model()
+    shell = model.mesh.elements[1]
+    beam = model.mesh.elements[2]
+    callbacks: list[str] = []
+
+    def hostile_axial_state(*_args: object, **_kwargs: object) -> float:
+        callbacks.append("axial-state")
+        thickness = shell.thickness
+        shell.thickness = thickness * 2.0
+        shell.thickness = thickness
+        return 125.0
+
+    if shadow_scope == "instance":
+        monkeypatch.setattr(
+            beam,
+            "_axial_compression_from_state",
+            hostile_axial_state,
+        )
+    else:
+        monkeypatch.setattr(
+            BeamElement,
+            "_axial_compression_from_state",
+            staticmethod(hostile_axial_state),
+        )
+
+    with pytest.raises((AssemblyError, ElementCapabilityError)):
+        assemble_geometric_stiffness_matrix(
+            model,
+            {
+                1: {"membrane_compression": [2.5e4, 0.0, 0.0]},
+                2: {"axial_compression": 125.0},
+            },
+        )
+    assert callbacks == (["axial-state"] if shadow_scope == "instance" else [])
+
+
+def test_exact_builtin_beam_geometric_guards_scale_linearly() -> None:
+    def guard_counts(beam_count: int) -> tuple[int, int]:
+        model = _qualified_q4_beam_chain_reference_model(beam_count)
+        lease = matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+            model,
+            context=f"mixed geometric scaling probe with {beam_count} beams",
+        )
+        trusted = vars(lease).get("_qualified_trusted_input_require")
+        assert callable(trusted)
+        full_contexts: list[str] = []
+        narrow_contexts: list[str] = []
+
+        def counted_trusted(observed_model: FEModel, *, context: str) -> None:
+            narrow_contexts.append(context)
+            trusted(observed_model, context=context)
+
+        def counted_full(observed_model: FEModel, *, context: str) -> None:
+            full_contexts.append(context)
+            lease(observed_model, context=context)
+
+        vars(counted_full)["_qualified_trusted_input_require"] = counted_trusted
+        states = {
+            1: {"membrane_compression": [2.5e4, 0.0, 0.0]},
+            **{
+                element_id: {"axial_compression": 125.0}
+                for element_id in range(2, beam_count + 2)
+            },
+        }
+        matrix_assembly_module._assemble_geometric_stiffness_matrix_under_lease(
+            model,
+            states,
+            qualified_runtime_guard=counted_full,
+        )
+        return len(full_contexts), len(narrow_contexts)
+
+    one_full, one_narrow = guard_counts(1)
+    sixteen_full, sixteen_narrow = guard_counts(16)
+
+    # Full lifecycle/lease scans are cycle-boundary work, not one scan per
+    # built-in beam.  The narrow constant-time checks grow by a fixed amount
+    # per beam, proving that the mixed built-in route remains O(N).
+    assert one_full == sixteen_full
+    assert 2 * 15 <= sixteen_narrow - one_narrow <= 12 * 15
+
+
+@pytest.mark.parametrize("attack", ("qualified_aba", "builtin_shadow"))
+def test_mixed_geometric_custom_mapping_observation_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+    attack: str,
+) -> None:
+    model = _qualified_q4_beam_reference_model()
+    shell = model.mesh.elements[1]
+    callbacks: list[str] = []
+
+    def trap(*_args: object, **_kwargs: object) -> object:
+        callbacks.append("type")
+        raise AssertionError("shadowed matrix_assembly.type must not run")
+
+    class HostileStates(dict[int, object]):
+        def __contains__(self, key: object) -> bool:
+            if attack == "qualified_aba":
+                thickness = shell.thickness
+                shell.thickness = thickness * 2.0
+                shell.thickness = thickness
+            else:
+                monkeypatch.setattr(
+                    matrix_assembly_module,
+                    "type",
+                    trap,
+                    raising=False,
+                )
+            return super().__contains__(key)
+
+    states = HostileStates(
+        {
+            1: {"membrane_compression": [2.5e4, 0.0, 0.0]},
+            2: {"axial_compression": 125.0},
+        }
+    )
+    with pytest.raises(AssemblyError, match="qualified shell authority"):
+        assemble_geometric_stiffness_matrix(model, states)
+    assert callbacks == []
+
+
 @pytest.mark.parametrize("attack", ("element", "assembly_module"))
 def test_builtin_prestress_guard_rejects_operation_local_aba(
     monkeypatch: pytest.MonkeyPatch,
@@ -1456,7 +1801,12 @@ def test_builtin_prestress_guard_rejects_operation_local_aba(
         model,
         context="prestress normalization ABA test",
     )
-    trusted = vars(lease).get("_qualified_trusted_require")
+    trusted_name = (
+        "_qualified_trusted_input_require"
+        if "_qualified_trusted_input_require" in vars(lease)
+        else "_qualified_trusted_require"
+    )
+    trusted = vars(lease).get(trusted_name)
     assert callable(trusted)
     original_assembly = matrix_assembly_module._assemble_element_matrix_under_lease
     calls = 0
@@ -1485,7 +1835,7 @@ def test_builtin_prestress_guard_rejects_operation_local_aba(
                 )
         trusted(observed_model, context=context)
 
-    vars(lease)["_qualified_trusted_require"] = injected_guard
+    vars(lease)[trusted_name] = injected_guard
 
     def exact_guard(
         observed_model: FEModel,

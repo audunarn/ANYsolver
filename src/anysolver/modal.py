@@ -573,11 +573,17 @@ def _normalize_prestress_states(
         if _qualified_runtime_guard is not None
         else None
     )
-    trusted_runtime_guard = (
-        _dict_get(runtime_namespace, "_qualified_trusted_require")
-        if _exact_type(runtime_namespace) is _dict_type
-        else None
-    )
+    trusted_runtime_guard = None
+    if _exact_type(runtime_namespace) is _dict_type:
+        trusted_runtime_guard = _dict_get(
+            runtime_namespace,
+            "_qualified_trusted_input_require",
+        )
+        if trusted_runtime_guard is None:
+            trusted_runtime_guard = _dict_get(
+                runtime_namespace,
+                "_qualified_trusted_require",
+            )
 
     def internal_guard(
         observed_model: "FEModel",
