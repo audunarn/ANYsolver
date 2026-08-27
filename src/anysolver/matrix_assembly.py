@@ -385,6 +385,8 @@ def _bind_qualified_assembly_runtime_lease(
     exact_bool = bool
     exact_dict_contains = dict.__contains__
     exact_dict_get = dict.get
+    exact_dict_pop = dict.pop
+    exact_dict_type = dict
     exact_globals = globals
     exact_id = id
     exact_int = int
@@ -578,15 +580,15 @@ def _bind_qualified_assembly_runtime_lease(
                 if qualified_input_plan is not None
                 else None
             )
-            if type(mesh) is _FEMesh:
-                namespace = object.__getattribute__(mesh, "__dict__")
-                if type(namespace) is dict:
-                    dict.pop(
+            if exact_type(mesh) is _FEMesh:
+                namespace = exact_object_getattribute(mesh, "__dict__")
+                if exact_type(namespace) is exact_dict_type:
+                    exact_dict_pop(
                         namespace,
                         "_qualified_s3_reference_stiffness_plan",
                         None,
                     )
-                prepared_s3_by_mesh.pop(id(mesh), None)
+                exact_dict_pop(prepared_s3_by_mesh, exact_id(mesh), None)
 
         def canonical_q4_total_bytes(value: Any) -> bytes:
             if type(value) is bytes:
@@ -2847,6 +2849,7 @@ def _bind_qualified_assembly_runtime_lease(
             final: bool = False,
         ) -> None:
             try:
+                require_no_trusted_element_builtin_shadows()
                 if expected_model is not model:
                     raise ValueError("qualified assembly lease model changed")
                 assembly_epoch_manager.require_generation(
@@ -3360,6 +3363,7 @@ def _bind_qualified_assembly_runtime_lease(
                     """
 
                     try:
+                        require_no_trusted_element_builtin_shadows()
                         assembly_epoch_manager.require_generation(
                             assembly_start_generation
                         )
@@ -3369,58 +3373,59 @@ def _bind_qualified_assembly_runtime_lease(
                             s3_manager.require_generation(s3_generation)
                         if (
                             expected_model is not model
-                            or type(model) is not exact_model_type
-                            or object.__getattribute__(model, "__dict__")
+                            or exact_type(model) is not exact_model_type
+                            or exact_object_getattribute(model, "__dict__")
                             is not trusted_plan["model_namespace"]
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["model_namespace"], "mesh"
                             )
                             is not trusted_plan["mesh"]
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["model_namespace"], "materials"
                             )
                             is not trusted_plan["materials"]
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["model_namespace"],
                                 "current_material",
                             )
                             != trusted_plan["current_material"]
-                            or type(trusted_plan["mesh"]) is not _FEMesh
-                            or object.__getattribute__(
+                            or exact_type(trusted_plan["mesh"]) is not _FEMesh
+                            or exact_object_getattribute(
                                 trusted_plan["mesh"], "__dict__"
                             )
                             is not trusted_plan["mesh_namespace"]
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["mesh_namespace"], "elements"
                             )
                             is not trusted_plan["mapping"]
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["mesh_namespace"],
                                 "_qualified_direct_state_token",
                             )
                             is not trusted_token
-                            or type(trusted_plan["mapping"])
+                            or exact_type(trusted_plan["mapping"])
                             is not _QualifiedStateMapping
-                            or object.__getattribute__(
+                            or exact_object_getattribute(
                                 trusted_plan["mapping"], "__dict__"
                             )
                             is not trusted_plan["mapping_namespace"]
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["mapping_namespace"],
                                 "_qualified_token",
                             )
                             is not trusted_token
-                            or dict.get(
+                            or exact_dict_get(
                                 trusted_plan["mapping_namespace"],
                                 "_qualified_kind",
                             )
                             != "element"
-                            or type(trusted_token) is not _QualifiedMutationEpoch
-                            or len(trusted_token) != 1
-                            or int(list.__getitem__(trusted_token, 0))
+                            or exact_type(trusted_token)
+                            is not _QualifiedMutationEpoch
+                            or exact_len(trusted_token) != 1
+                            or exact_int(exact_list_getitem(trusted_token, 0))
                             != trusted_token_value
                         ):
-                            raise ValueError(
+                            raise exact_value_error(
                                 "qualified trusted-loop inputs changed"
                             )
                         if q4_generation is not None:
@@ -3430,13 +3435,18 @@ def _bind_qualified_assembly_runtime_lease(
                         assembly_epoch_manager.require_generation(
                             assembly_start_generation
                         )
-                    except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+                    except (
+                        exact_attribute_error,
+                        exact_runtime_error,
+                        exact_type_error,
+                        exact_value_error,
+                    ) as exc:
                         for element in q4_elements:
                             invalidate_q4(element)
                         for element in s3_elements:
                             invalidate_s3(element)
                         invalidate_s3_reference_plan()
-                        raise AssemblyError(
+                        raise exact_assembly_error(
                             f"{context} found incompatible qualified shell authority"
                         ) from exc
 

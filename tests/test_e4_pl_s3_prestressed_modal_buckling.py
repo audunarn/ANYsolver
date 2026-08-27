@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import numpy as np
 import pytest
 from scipy import linalg
@@ -9,6 +10,8 @@ from scipy import linalg
 import anysolver.modal as modal_module
 import anysolver.e4_pl_element as q4_element_module
 import anysolver.e4_pl_s3_element as s3_element_module
+import anysolver.e4_pl_s3_state as s3_state_module
+import anysolver.matrix_assembly as matrix_assembly_module
 from anysolver import (
     AnalysisSession,
     BoundaryCondition,
@@ -34,6 +37,7 @@ from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.elements import Element, ShellElement
 from anysolver.linalg import FactorizationCache
 from anysolver.matrix_assembly import (
+    AssemblyError,
     assemble_geometric_stiffness_matrix,
     assemble_mass_matrix,
     assemble_stiffness_matrix,
@@ -1051,6 +1055,457 @@ def test_prestress_states_are_owned_when_each_value_is_observed(
     assert provenance["source_kind"] == (
         "callable_evaluated_once" if source_kind == "callable" else "mapping"
     )
+
+
+def test_builtin_prestress_map_amortizes_only_internal_observations() -> None:
+    model = _model()
+    full_contexts: list[str] = []
+    trusted_contexts: list[str] = []
+
+    def full_guard(_model: FEModel, *, context: str) -> dict[str, object]:
+        full_contexts.append(context)
+        return {}
+
+    def lease(_model: FEModel, *, context: str) -> None:
+        raise AssertionError(f"outer lease callback unexpectedly used at {context}")
+
+    def trusted_guard(_model: FEModel, *, context: str) -> None:
+        trusted_contexts.append(context)
+
+    vars(lease)["_qualified_trusted_require"] = trusted_guard
+    state = {
+        1: {
+            "membrane_compression": [2.5e4, 0.0, 0.0],
+            "nested": {"values": (1.0, 2.0, 3.0)},
+        }
+    }
+    normalized, provenance = modal_module._normalize_prestress_states(
+        model,
+        state,
+        _exact_guard=full_guard,
+        _qualified_runtime_guard=lease,
+    )
+
+    assert normalized == {
+        1: {
+            "membrane_compression": [2.5e4, 0.0, 0.0],
+            "nested": {"values": [1.0, 2.0, 3.0]},
+        }
+    }
+    assert provenance["supplied_element_ids"] == [1]
+    assert full_contexts == [
+        "qualified reference-prestress normalization preflight",
+        "qualified reference-prestress normalization output",
+    ]
+    assert len(trusted_contexts) >= 20
+
+
+def test_numpy_and_custom_prestress_inputs_keep_full_observation_guards() -> None:
+    model = _model()
+    events: list[tuple[str, str]] = []
+
+    def full_guard(_model: FEModel, *, context: str) -> dict[str, object]:
+        events.append(("full", context))
+        return {}
+
+    def lease(_model: FEModel, *, context: str) -> None:
+        del context
+
+    def trusted_guard(_model: FEModel, *, context: str) -> None:
+        events.append(("trusted", context))
+
+    vars(lease)["_qualified_trusted_require"] = trusted_guard
+
+    class ObservedMapping(dict[int, object]):
+        def items(self):  # type: ignore[override]
+            events.append(("callback", "mapping.items"))
+            return super().items()
+
+    source = ObservedMapping(
+        {1: {"membrane_compression": np.asarray((2.5e4, 0.0, 0.0))}}
+    )
+    normalized, _provenance = modal_module._normalize_prestress_states(
+        model,
+        source,
+        _exact_guard=full_guard,
+        _qualified_runtime_guard=lease,
+    )
+
+    assert normalized[1]["membrane_compression"] == [2.5e4, 0.0, 0.0]
+    callback_index = events.index(("callback", "mapping.items"))
+    assert events[callback_index + 1][0] == "full"
+    numpy_full_observations = [
+        context
+        for kind, context in events
+        if kind == "full" and "prestress_states[1].membrane_compression" in context
+    ]
+    assert len(numpy_full_observations) == 2
+
+
+def test_builtin_prestress_traversal_ignores_hostile_module_primitives(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _model()
+    callbacks: list[str] = []
+
+    def trap(*_args: object, **_kwargs: object) -> object:
+        callbacks.append("primitive")
+        raise AssertionError("modal module primitive shadow must not run")
+
+    class TrapObject:
+        __getattribute__ = staticmethod(trap)
+
+    class TrapDict:
+        get = staticmethod(trap)
+        items = staticmethod(trap)
+
+    for name, replacement in {
+        "callable": trap,
+        "dict": TrapDict,
+        "int": trap,
+        "isinstance": trap,
+        "iter": trap,
+        "list": trap,
+        "next": trap,
+        "object": TrapObject,
+        "set": trap,
+        "sorted": trap,
+        "str": trap,
+        "tuple": trap,
+        "type": trap,
+    }.items():
+        monkeypatch.setattr(modal_module, name, replacement, raising=False)
+
+    full_contexts: list[str] = []
+    trusted_contexts: list[str] = []
+
+    def full_guard(_model: FEModel, *, context: str) -> dict[str, object]:
+        full_contexts.append(context)
+        return {}
+
+    def lease(_model: FEModel, *, context: str) -> None:
+        del context
+
+    def trusted_guard(_model: FEModel, *, context: str) -> None:
+        trusted_contexts.append(context)
+
+    vars(lease)["_qualified_trusted_require"] = trusted_guard
+    normalized, _provenance = modal_module._normalize_prestress_states(
+        model,
+        {1: {"membrane_compression": [2.5e4, 0.0, 0.0]}},
+        _exact_guard=full_guard,
+        _qualified_runtime_guard=lease,
+    )
+
+    assert normalized[1]["membrane_compression"] == [2.5e4, 0.0, 0.0]
+    assert len(full_contexts) == 2
+    assert trusted_contexts
+    assert callbacks == []
+
+
+@pytest.mark.parametrize("source_kind", ("callable", "mapping"))
+def test_prestress_callback_cannot_replace_selected_trusted_guard(
+    monkeypatch: pytest.MonkeyPatch,
+    source_kind: str,
+) -> None:
+    model = _model()
+    original_calls: list[str] = []
+    replacement_calls: list[str] = []
+    helper_calls: list[str] = []
+
+    def full_guard(_model: FEModel, *, context: str) -> dict[str, object]:
+        del context
+        return {}
+
+    def lease(_model: FEModel, *, context: str) -> None:
+        del context
+
+    def original_guard(_model: FEModel, *, context: str) -> None:
+        original_calls.append(context)
+
+    def replacement_guard(_model: FEModel, *, context: str) -> None:
+        replacement_calls.append(context)
+        raise AssertionError("callback-selected replacement guard must not run")
+
+    vars(lease)["_qualified_trusted_require"] = original_guard
+    snapshot_function = modal_module._guarded_prestress_snapshot
+    canonical_id_function = modal_module._canonical_prestress_element_id
+    normalize_function = modal_module._normalize_prestress_states
+
+    def forbidden_helper(*_args: object, **_kwargs: object) -> object:
+        helper_calls.append("helper")
+        raise AssertionError("callback-replaced prestress helper must not run")
+
+    def replace_guard() -> None:
+        vars(lease)["_qualified_trusted_require"] = replacement_guard
+        snapshot_defaults = dict(snapshot_function.__kwdefaults__ or {})
+        snapshot_defaults.update(
+            {
+                "_dict_items": forbidden_helper,
+                "_exact_iter": forbidden_helper,
+                "_exact_next": forbidden_helper,
+                "_exact_type": forbidden_helper,
+                "_snapshotter": forbidden_helper,
+            }
+        )
+        monkeypatch.setattr(
+            snapshot_function,
+            "__kwdefaults__",
+            snapshot_defaults,
+        )
+        monkeypatch.setattr(
+            canonical_id_function,
+            "__defaults__",
+            (
+                (),
+                forbidden_helper,
+                forbidden_helper,
+                (),
+                forbidden_helper,
+            ),
+        )
+        normalize_defaults = dict(normalize_function.__kwdefaults__ or {})
+        normalize_defaults.update(
+            {
+                "_canonical_prestress_id": forbidden_helper,
+                "_exact_type": forbidden_helper,
+                "_snapshotter": forbidden_helper,
+            }
+        )
+        monkeypatch.setattr(
+            normalize_function,
+            "__kwdefaults__",
+            normalize_defaults,
+        )
+        for name in (
+            "_canonical_prestress_element_id",
+            "_evaluate_prestress_provider",
+            "_guarded_prestress_snapshot",
+        ):
+            monkeypatch.setattr(modal_module, name, forbidden_helper)
+        for name in ("canonical_json_bytes", "canonical_plain_data"):
+            monkeypatch.setattr(s3_state_module, name, forbidden_helper)
+
+    if source_kind == "callable":
+        def source(_element_id: int, _element: object) -> dict[str, object]:
+            replace_guard()
+            return {"membrane_compression": [2.5e4, 0.0, 0.0]}
+    else:
+        class SwitchingMapping(dict[int, object]):
+            def items(self):  # type: ignore[override]
+                replace_guard()
+                return super().items()
+
+        source = SwitchingMapping(
+            {1: {"membrane_compression": [2.5e4, 0.0, 0.0]}}
+        )
+
+    normalized, _provenance = modal_module._normalize_prestress_states(
+        model,
+        source,
+        _exact_guard=full_guard,
+        _qualified_runtime_guard=lease,
+    )
+
+    assert normalized[1]["membrane_compression"] == [2.5e4, 0.0, 0.0]
+    assert original_calls
+    assert replacement_calls == []
+    assert helper_calls == []
+
+
+@pytest.mark.parametrize("attack", ("code", "globals"))
+def test_prestress_provider_cannot_mutate_private_helper_authority(
+    monkeypatch: pytest.MonkeyPatch,
+    attack: str,
+) -> None:
+    model = _model()
+    expected_state = {"membrane_compression": [2.5e4, 0.0, 0.0]}
+    expected_schema = modal_module.PRESTRESS_INPUT_SCHEMA_ID
+    expected_hash = hashlib.sha256(
+        s3_state_module.canonical_json_bytes(expected_state)
+    ).hexdigest().upper()
+    normalize_function = modal_module._normalize_prestress_states
+    shared_helpers = (
+        normalize_function,
+        modal_module._guarded_prestress_snapshot,
+        modal_module._canonical_prestress_element_id,
+        modal_module._evaluate_prestress_provider,
+        s3_state_module.canonical_plain_data,
+        s3_state_module.canonical_json_bytes,
+    )
+
+    def redirected(*_args: object, **_kwargs: object) -> str:
+        return "CALLBACK_REDIRECTED_SHARED_HELPER"
+
+    def full_guard(_model: FEModel, *, context: str) -> dict[str, object]:
+        del context
+        return {}
+
+    def lease(_model: FEModel, *, context: str) -> None:
+        del context
+
+    def trusted_guard(_model: FEModel, *, context: str) -> None:
+        del context
+
+    vars(lease)["_qualified_trusted_require"] = trusted_guard
+
+    def source(_element_id: int, _element: object) -> dict[str, object]:
+        if attack == "code":
+            for helper in shared_helpers:
+                monkeypatch.setattr(helper, "__code__", redirected.__code__)
+        else:
+            modal_globals = normalize_function.__globals__
+            state_globals = s3_state_module.canonical_plain_data.__globals__
+            for name in (
+                "Mapping",
+                "PRESTRESS_INPUT_SCHEMA_ID",
+                "Sequence",
+                "TypeError",
+                "ValueError",
+                "_JSON_ENCODE_BASESTRING",
+                "_canonical_prestress_element_id",
+                "_evaluate_prestress_provider",
+                "_guarded_prestress_snapshot",
+                "dict",
+                "hashlib",
+                "inspect",
+                "int",
+                "isinstance",
+                "iter",
+                "list",
+                "math",
+                "next",
+                "np",
+                "repr",
+                "set",
+                "sorted",
+                "str",
+                "tuple",
+                "type",
+            ):
+                monkeypatch.setitem(modal_globals, name, redirected)
+            for name in ("_canonical_value", "json", "math", "np"):
+                monkeypatch.setitem(state_globals, name, redirected)
+        return expected_state
+
+    normalized, provenance = normalize_function(
+        model,
+        source,
+        _exact_guard=full_guard,
+        _qualified_runtime_guard=lease,
+    )
+
+    assert normalized[1] == expected_state
+    assert provenance["schema_id"] == expected_schema
+    assert provenance["state_sha256"] == {"1": expected_hash}
+
+
+def test_prestress_provider_matrix_assembly_primitive_shadow_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _qualified_q4_reference_model()
+    lease = matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        model,
+        context="prestress provider primitive-shadow test",
+    )
+    callbacks: list[str] = []
+
+    def trap(*_args: object, **_kwargs: object) -> object:
+        callbacks.append("type")
+        raise AssertionError("shadowed matrix_assembly.type must not run")
+
+    def source(_element_id: int, _element: object) -> dict[str, object]:
+        monkeypatch.setattr(
+            matrix_assembly_module,
+            "type",
+            trap,
+            raising=False,
+        )
+        return {"membrane_compression": [2.5e4, 0.0, 0.0]}
+
+    def exact_guard(
+        observed_model: FEModel,
+        *,
+        context: str,
+    ) -> dict[str, object]:
+        result = modal_module._EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD(
+            observed_model,
+            context=context,
+        )
+        lease(observed_model, context=context)
+        return result
+
+    with pytest.raises(AssemblyError, match="incompatible qualified shell authority"):
+        modal_module._normalize_prestress_states(
+            model,
+            source,
+            _exact_guard=exact_guard,
+            _qualified_runtime_guard=lease,
+        )
+    assert callbacks == []
+
+
+@pytest.mark.parametrize("attack", ("element", "assembly_module"))
+def test_builtin_prestress_guard_rejects_operation_local_aba(
+    monkeypatch: pytest.MonkeyPatch,
+    attack: str,
+) -> None:
+    model = _qualified_q4_reference_model()
+    element = model.mesh.elements[1]
+    lease = matrix_assembly_module._CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE(
+        model,
+        context="prestress normalization ABA test",
+    )
+    trusted = vars(lease).get("_qualified_trusted_require")
+    assert callable(trusted)
+    original_assembly = matrix_assembly_module._assemble_element_matrix_under_lease
+    calls = 0
+
+    def injected_guard(observed_model: FEModel, *, context: str) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            if attack == "element":
+                original_thickness = element.thickness
+                element.thickness = original_thickness * 2.0
+                element.thickness = original_thickness
+            else:
+                def replacement(*_args: object, **_kwargs: object) -> object:
+                    raise AssertionError("restored assembly replacement must not run")
+
+                monkeypatch.setattr(
+                    matrix_assembly_module,
+                    "_assemble_element_matrix_under_lease",
+                    replacement,
+                )
+                monkeypatch.setattr(
+                    matrix_assembly_module,
+                    "_assemble_element_matrix_under_lease",
+                    original_assembly,
+                )
+        trusted(observed_model, context=context)
+
+    vars(lease)["_qualified_trusted_require"] = injected_guard
+
+    def exact_guard(
+        observed_model: FEModel,
+        *,
+        context: str,
+    ) -> dict[str, object]:
+        result = modal_module._EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD(
+            observed_model,
+            context=context,
+        )
+        lease(observed_model, context=context)
+        return result
+
+    with pytest.raises(AssemblyError, match="qualified shell authority"):
+        modal_module._normalize_prestress_states(
+            model,
+            {1: {"membrane_compression": [2.5e4, 0.0, 0.0]}},
+            _exact_guard=exact_guard,
+            _qualified_runtime_guard=lease,
+        )
 
 
 def test_omitted_prestress_ids_are_explicitly_unstressed() -> None:

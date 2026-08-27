@@ -782,6 +782,7 @@ def _solve_eigenvalue_buckling_under_lease(
             model,
             element_states,
             _exact_guard=exact_guard,
+            _qualified_runtime_guard=_qualified_runtime_guard,
         )
         exact_guard(
             model,
