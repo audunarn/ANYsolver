@@ -53,12 +53,49 @@ Therefore, 63 independent sequences with an N=160 record each cannot complete
 inside the user-mandated 20-minute ceiling. Parallel scheduling alone does not
 repair this. A formal cycle was deliberately not started.
 
+## Qualified-lease hardening result
+
+The first successor action was implemented and frozen as ANYsolver commit
+`e7060294a10b2ee8c18b4001e9194f608986d53e`, tree
+`049c663c52e05231e186771b8a51f24f8492aafe`. It adds exact cold assembly,
+dead-pressure load, narrow interface-recovery, and flexural-solve paths under
+non-renewable qualified leases. The Q4 and S3 formulation blobs remain exactly
+`59ceb9534dfd22e05ea69296f92abeb0511f14cf` and
+`823b5b0cdc450f7c7f2f2861aefcf4dd2062b99e`, respectively.
+
+Verification before the timing smoke comprised 227 focused tests and 76
+adjacent load, assembly, and recovery regressions. All 303 passed. An
+independent adversarial re-review found no remaining P0, P1, or P2 runtime
+finding in the hardened paths.
+
+A bounded, nonclassifying N=20/N=40 smoke then ran six fresh child processes
+with three-way overlap, a 120-second per-child limit, a 300-second global
+limit, one numerical-library thread per child, and a 24-GiB child-tree memory
+limit. All children completed; the coordinator elapsed time was 23.858
+seconds. The canonical smoke summary is 3,058 bytes with SHA-256
+`EADD63EEA7CD1BA4DBC738B15CEBE522953ACF819A7DC653F06A1B88E30BEB4A`.
+
+The registered conservative partial forecast lower bound is
+683.3075 seconds, exceeding the 480-second acceptance budget. Consequently,
+N=80/N=160 timing expansion and both formal qualification cycles were not
+started. This smoke is explicitly
+`NONCLASSIFYING_E4_PL_S3_COLD_PATH_TIMING_ONLY`; it creates no scientific
+aggregate and leaves `NO_GO_PRODUCTION_RESTRICTION_UNCHANGED` in force.
+
+The optimized runner also requires a new successor execution-authority freeze
+before any formal use. The historical v2 authority is intentionally preserved;
+it does not bind the optimized runner, and its batch-program raw-byte binding
+is not portable under Windows CRLF checkout. A successor must bind an
+LF-controlled executed batch-program path and pass authority-only validation
+from a fresh Windows checkout.
+
 ## Required successor action
 
 Before formal execution, choose and independently review one of these paths:
 
-1. optimize the qualified cold-path guard under its existing non-renewable
-   operation lease, then rerun guard mutation tests and bounded timing smoke;
+1. further optimize the bounded plate-record path until a conservative forecast
+   proves both complete cycles fit the acceptance budget, then create and
+   review a successor LF-stable execution-authority freeze;
 2. preregister a smaller nonclassifying screening campaign that cannot
    authorize default activation.
 
