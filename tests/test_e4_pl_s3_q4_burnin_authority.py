@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "c2643cbaaac04a4073c1463cd40a5a78f0f8bf3254412d1389e6aa3595d81f89"
+CONTRACT_SHA256 = "e8ea534b1463de1546de7f3e29af769f98da1d567e67bd726d1c070f869efa87"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -36,7 +36,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-19"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-20"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -189,6 +189,14 @@ FAILED_ATTEMPT_19_REQUEST_IDS = [
     "4906266d55aa4aeeb13061e30491e8b5",
     "956dfa9ebc8548bb8ecf55f46329aa9b",
     "fa7c1d229d6a46b093e144c71890c0c3",
+]
+FAILED_ATTEMPT_20_REQUEST_IDS = [
+    "c2074aa3e6e64cc38e442d6362ed279d",
+    "4c80bdc7e4ef405e80ec507fc60ea862",
+    "6df95187d9ab43bf8067849dab7e196a",
+    "4e36e652152d449a9b2b3bb35584925f",
+    "a95aae82621b47a7a9cd0c39c15953bb",
+    "703801b6572a454f9fa64b697201d723",
 ]
 _ACTIVE_CONTRACT_BOOTSTRAP = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
 _ACTIVE_REQUEST_ROWS = [
@@ -569,10 +577,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v20"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v21"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "79572d92fcdaa38135f79b87a4b8ba0d52833f57",
+        "exact_parent": "fa1fa81a695401e75c0580ef85c56e5dbf3df015",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -1717,6 +1725,93 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         ],
         "role": "PRESERVED_FAILED_QUICK_PREFLIGHT_ONLY",
     }
+    v20_preflight = contract["background_inputs"][
+        "failed_v20_nonresource_preflight_attempt"
+    ]
+    assert v20_preflight == {
+        "attempt": 20,
+        "authority_commit": {
+            "commit": "ae0a4f548baa3e43aa9e31c86d7d830763f5d8e3",
+            "parent": "79572d92fcdaa38135f79b87a4b8ba0d52833f57",
+            "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+            "tree": "3763b9392d4ec8e8c7f684d1f58f697e14d7b927",
+        },
+        "contract": {
+            "bytes": 322235,
+            "sha256": "c2643cbaaac04a4073c1463cd40a5a78f0f8bf3254412d1389e6aa3595d81f89",
+        },
+        "execution_authorization_commit": {
+            "commit": "fa1fa81a695401e75c0580ef85c56e5dbf3df015",
+            "parent": "ae0a4f548baa3e43aa9e31c86d7d830763f5d8e3",
+            "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+            "tree": "50216c45ddc393f90f1a478f31bcc701d85bb240",
+        },
+        "failure": {
+            "canonical_process_manifests_created": False,
+            "cause": "NONRESOURCE_PACKAGE_COMMAND_BYPASSED_PROCESS_COORDINATOR",
+            "formal_resource_execution_started": False,
+            "phase": "COMMON_PREFLIGHT",
+            "quick_command_returncode": 0,
+            "resource_requests_approved": False,
+            "resource_requests_consumed": False,
+        },
+        "package_artifacts": {
+            "output_root": (
+                r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+                r"\s3-q4-final-freeze-correction-19"
+            ),
+            "package_result": {
+                "bytes": 4311,
+                "sha256": "31d5f6eda0f1398b52d793cc3956b7c95451a88d141389bad87ed219a91acb70",
+            },
+            "wheel": {
+                "bytes": 1111698,
+                "sha256": "426f24f1d79a520b94aa62aa1e3c138df7290a8a7ff978f4b2eedf5928af2bbe",
+            },
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-rejected-v20-fa1fa81",
+        "request_disposition": "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED",
+        "request_ids": FAILED_ATTEMPT_20_REQUEST_IDS,
+        "request_records": [
+            {
+                "bytes": 1334,
+                "command_sha256": "44e273dcac461370123405af556faff930e36f1739541b9f6add8d5b782adb7a",
+                "request_id": "c2074aa3e6e64cc38e442d6362ed279d",
+                "request_sha256": "f57cec181e0efea3820cf7b4c622b1d252ed92c2a0916cc36a809ef508dd0c8e",
+            },
+            {
+                "bytes": 987,
+                "command_sha256": "a568f3f6017b60ed084bfc4562b39dd94df8b31f5e67d1965aa776f3bb3014ee",
+                "request_id": "4c80bdc7e4ef405e80ec507fc60ea862",
+                "request_sha256": "02977d8cf12a96a89647b29883f198f40ba8174ccfe4e5c4bf6d5c39ea738c70",
+            },
+            {
+                "bytes": 1245,
+                "command_sha256": "f8cc6e460d2bb88f104d313aaa9f25fabd61c50ae536bbb5b1daa06e2a5d87a6",
+                "request_id": "6df95187d9ab43bf8067849dab7e196a",
+                "request_sha256": "cb61f939ccc61f97a75ab3cf5fb40a126a4008e47cccadbe4558a6df84ea9ff9",
+            },
+            {
+                "bytes": 1334,
+                "command_sha256": "11d434e84ac11608c0f2b3e339bdb312a41399712fd22540b8f0177bb7f58f63",
+                "request_id": "4e36e652152d449a9b2b3bb35584925f",
+                "request_sha256": "947b2e04837963456aa9f1a16a669d6cd0b8f01524fdd0fd8037bb563ea6f7d0",
+            },
+            {
+                "bytes": 987,
+                "command_sha256": "a568f3f6017b60ed084bfc4562b39dd94df8b31f5e67d1965aa776f3bb3014ee",
+                "request_id": "a95aae82621b47a7a9cd0c39c15953bb",
+                "request_sha256": "54e716f676b8d8f84e824fb3b6375f78ce3d88a58c4a7df8e7b13469f599cb93",
+            },
+            {
+                "bytes": 1245,
+                "command_sha256": "f8cc6e460d2bb88f104d313aaa9f25fabd61c50ae536bbb5b1daa06e2a5d87a6",
+                "request_id": "703801b6572a454f9fa64b697201d723",
+                "request_sha256": "069ccd3d7dceed96dfe59bb1a27b53f4a0ed2ea7b19fa3659a691e128c67362a",
+            },
+        ],
+        "role": "PRESERVED_FAILED_NONRESOURCE_PREFLIGHT_ONLY",
+    }
     assert Path(contract["non_resource_commands"]["output_root"]) == CORRECTION_OUTPUT_ROOT
     environment_guard = contract["execution"]["environment_guard"]
     assert Path(environment_guard["python_cache_root"]) == (
@@ -1749,6 +1844,8 @@ def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
         r"\s3-q4-final-freeze-correction-18"
     )
     assert all(attempt19_output_root + "\\" not in command for command in commands)
+    attempt20_output_root = v20_preflight["package_artifacts"]["output_root"]
+    assert all(attempt20_output_root + "\\" not in command for command in commands)
     attempt10_output_root = functional_cleanliness["external_authority"]["output_root"]
     assert all(attempt10_output_root + "\\" not in command for command in commands)
     for incident_name in (
@@ -1986,7 +2083,7 @@ def test_lane_inventory_hashes_are_current_and_extended_is_excluded() -> None:
     assert spec is not None and spec.loader is not None
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
-    assert runner.BURNIN_AUTHORITY_CYCLE == 20
+    assert runner.BURNIN_AUTHORITY_CYCLE == 21
     inventory = runner.inventory()
     gate_inventory = runner.gate_inventories()
     for lane in ("quick", "functional", "performance", "extended", "additive"):
@@ -5621,6 +5718,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
             *FAILED_ATTEMPT_17_REQUEST_IDS,
             *FAILED_ATTEMPT_18_REQUEST_IDS,
             *FAILED_ATTEMPT_19_REQUEST_IDS,
+            *FAILED_ATTEMPT_20_REQUEST_IDS,
         }
     )
     assert [row["lane"] for row in rows[:3]] == ["functional", "anyfem", "performance"]
@@ -5655,6 +5753,7 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_17_REQUEST_IDS)
     assert all(request_id not in ledger_text for request_id in live_ids)
     assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_19_REQUEST_IDS)
+    assert all(request_id not in ledger_text for request_id in FAILED_ATTEMPT_20_REQUEST_IDS)
     assert [
         state
         for state in ("APPROVED", "EXECUTION_STARTED", "COMPLETED_FAIL")
@@ -6246,7 +6345,7 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
     assert "current v15" not in source
     assert "standalone v15" not in source
     assert "current v19 worker request" in source
-    assert "standalone v19 worker execution" in source
+    assert "standalone current worker execution" in source
     validator_raw = VALIDATOR_PATH.read_bytes()
     assert process_runner._VALIDATOR_BYTES == len(validator_raw)
     assert process_runner._VALIDATOR_SHA256 == hashlib.sha256(validator_raw).hexdigest()
@@ -6272,7 +6371,7 @@ def test_resource_state_machine_order_and_finalizer_prefixes_are_frozen(
             check=False,
         )
         assert bootstrap.returncode == 0, bootstrap.stderr
-        assert "standalone v19 worker execution" in bootstrap.stdout
+        assert "standalone current worker execution" in bootstrap.stdout
         assert not list(bootstrap_root.iterdir())
     else:
         assert os.environ.get("GITHUB_ACTIONS") == "true"

@@ -42,8 +42,8 @@ WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
 CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
     "anysolver.e4-pl-s3-q4-cycle-completion-certificate-v1"
 )
-_VALIDATOR_BYTES = 337226
-_VALIDATOR_SHA256 = "ed982b6b2e730338c32a1d61142336e138ea44f0a76aef86aa2a3fa30f30c940"
+_VALIDATOR_BYTES = 342583
+_VALIDATOR_SHA256 = "e9e1628af8c6629066d30b4232cc14c3335099f5597ae917d8ebaf8ad5cc1017"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),
@@ -4501,9 +4501,9 @@ def main(argv: list[str] | None = None) -> int:
         local.add_argument("--partition", type=int)
         resource = subparsers.add_parser(
             "resource",
-            help="reject standalone v19 worker execution; use cycle --cycle N",
+            help="reject standalone current worker execution; use cycle --cycle N",
             description=(
-                "Standalone execution of current v19 resource requests is disabled. "
+                "Standalone execution of current resource requests is disabled. "
                 "Use cycle --cycle N so all three workers share one 900-second watchdog."
             ),
         )

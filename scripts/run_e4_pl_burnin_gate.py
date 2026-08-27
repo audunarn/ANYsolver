@@ -37,7 +37,7 @@ from typing import Any, Mapping, Sequence
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
-BURNIN_AUTHORITY_CYCLE = 20
+BURNIN_AUTHORITY_CYCLE = 21
 _GATE_SOURCE_ROOT = ROOT
 TESTS = ROOT / "tests"
 CONTRACT_PATH = ROOT / "docs" / "reference_cases" / "e4_pl_q1m_burnin_contract.json"

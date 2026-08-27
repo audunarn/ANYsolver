@@ -138,6 +138,14 @@ V20_REQUEST_IDS = (
     "a95aae82621b47a7a9cd0c39c15953bb",
     "703801b6572a454f9fa64b697201d723",
 )
+V21_REQUEST_IDS = (
+    "702e4a6971124781be59c55125444488",
+    "b763af40a72b45b180351c6a5a497e49",
+    "1487c9114ff342cea6908c511b4df8ff",
+    "487654cde60849c98d4688a07b9976d8",
+    "114440ee881d4cd9aab250c55cf656fb",
+    "a45b5048a1bd443381faf71e7cdb4742",
+)
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
     "5c7e14b9ec54493eab0c07b65b9ea060",
@@ -5292,6 +5300,123 @@ def _validate_attempt_19_incident(value: Any, location: str) -> dict[str, Any]:
     return incident
 
 
+def _validate_attempt_20_incident(value: Any, location: str) -> dict[str, Any]:
+    """Bind the unconsumed v20 coordinator-bypass preflight incident."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "attempt",
+            "authority_commit",
+            "contract",
+            "execution_authorization_commit",
+            "failure",
+            "package_artifacts",
+            "preserved_ref",
+            "request_disposition",
+            "request_ids",
+            "request_records",
+            "role",
+        },
+        location,
+    )
+    if incident["attempt"] != 20:
+        raise EvidenceError(f"{location}.attempt must be 20")
+    authority = _exact_keys(
+        incident["authority_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.authority_commit",
+    )
+    if authority != {
+        "commit": "ae0a4f548baa3e43aa9e31c86d7d830763f5d8e3",
+        "parent": "79572d92fcdaa38135f79b87a4b8ba0d52833f57",
+        "subject": "docs: authorize corrected S3 Q4 burn-in cycles",
+        "tree": "3763b9392d4ec8e8c7f684d1f58f697e14d7b927",
+    }:
+        raise EvidenceError(f"{location}.authority_commit mismatch")
+    authorization = _exact_keys(
+        incident["execution_authorization_commit"],
+        {"commit", "parent", "subject", "tree"},
+        f"{location}.execution_authorization_commit",
+    )
+    if authorization != {
+        "commit": "fa1fa81a695401e75c0580ef85c56e5dbf3df015",
+        "parent": authority["commit"],
+        "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+        "tree": "50216c45ddc393f90f1a478f31bcc701d85bb240",
+    }:
+        raise EvidenceError(f"{location}.execution_authorization_commit mismatch")
+    if _validate_hash_record(incident["contract"], f"{location}.contract") != {
+        "bytes": 322235,
+        "sha256": "c2643cbaaac04a4073c1463cd40a5a78f0f8bf3254412d1389e6aa3595d81f89",
+    }:
+        raise EvidenceError(f"{location}.contract mismatch")
+    if incident["failure"] != {
+        "canonical_process_manifests_created": False,
+        "cause": "NONRESOURCE_PACKAGE_COMMAND_BYPASSED_PROCESS_COORDINATOR",
+        "formal_resource_execution_started": False,
+        "phase": "COMMON_PREFLIGHT",
+        "quick_command_returncode": 0,
+        "resource_requests_approved": False,
+        "resource_requests_consumed": False,
+    }:
+        raise EvidenceError(f"{location}.failure mismatch")
+    artifacts = _exact_keys(
+        incident["package_artifacts"],
+        {"output_root", "package_result", "wheel"},
+        f"{location}.package_artifacts",
+    )
+    if artifacts["output_root"] != (
+        r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+        r"\s3-q4-final-freeze-correction-19"
+    ):
+        raise EvidenceError(f"{location}.package_artifacts.output_root mismatch")
+    if _validate_hash_record(
+        artifacts["package_result"], f"{location}.package_artifacts.package_result"
+    ) != {
+        "bytes": 4311,
+        "sha256": "31d5f6eda0f1398b52d793cc3956b7c95451a88d141389bad87ed219a91acb70",
+    }:
+        raise EvidenceError(f"{location}.package_artifacts.package_result mismatch")
+    if _validate_hash_record(
+        artifacts["wheel"], f"{location}.package_artifacts.wheel"
+    ) != {
+        "bytes": 1111698,
+        "sha256": "426f24f1d79a520b94aa62aa1e3c138df7290a8a7ff978f4b2eedf5928af2bbe",
+    }:
+        raise EvidenceError(f"{location}.package_artifacts.wheel mismatch")
+    if incident["request_ids"] != list(V20_REQUEST_IDS):
+        raise EvidenceError(f"{location}.request_ids mismatch")
+    records = incident["request_records"]
+    if not isinstance(records, list) or len(records) != 6:
+        raise EvidenceError(f"{location}.request_records mismatch")
+    for index, record in enumerate(records):
+        row = _exact_keys(
+            record,
+            {"bytes", "command_sha256", "request_id", "request_sha256"},
+            f"{location}.request_records[{index}]",
+        )
+        if row["request_id"] != V20_REQUEST_IDS[index]:
+            raise EvidenceError(f"{location}.request_records ordering mismatch")
+        _validate_hash_record(
+            {"bytes": row["bytes"], "sha256": row["request_sha256"]},
+            f"{location}.request_records[{index}]",
+        )
+        _require_hash(
+            row["command_sha256"],
+            f"{location}.request_records[{index}].command_sha256",
+        )
+    if (
+        incident["preserved_ref"]
+        != "codex/s3-e4-pl-final-burnin-rejected-v20-fa1fa81"
+        or incident["request_disposition"]
+        != "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+        or incident["role"] != "PRESERVED_FAILED_NONRESOURCE_PREFLIGHT_ONLY"
+    ):
+        raise EvidenceError(f"{location} disposition mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -5442,16 +5567,16 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     }:
         raise EvidenceError("cycle completion certificate filenames mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v20"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v21"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-19"
+        r"\s3-q4-final-freeze-correction-20"
     ):
-        raise EvidenceError("v20 burn-in output root mismatch")
+        raise EvidenceError("v21 burn-in output root mismatch")
     execution = _exact_keys(
         contract["execution"],
         {
@@ -5562,6 +5687,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v17_late_final_pass_authority_review_attempt",
             "failed_v18_incomplete_terminalization_attempt",
             "failed_v19_quick_preflight_attempt",
+            "failed_v20_nonresource_preflight_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -5630,6 +5756,10 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v19_quick_preflight_attempt"],
         "$contract.background_inputs.failed_v19_quick_preflight_attempt",
     )
+    v20_nonresource_preflight = _validate_attempt_20_incident(
+        background["failed_v20_nonresource_preflight_attempt"],
+        "$contract.background_inputs.failed_v20_nonresource_preflight_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -5651,11 +5781,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v20 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v21 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v20 resource request IDs are not unique")
-    if current_request_ids != list(V20_REQUEST_IDS):
-        raise EvidenceError("v20 resource request IDs differ from frozen authority")
+        raise EvidenceError("v21 resource request IDs are not unique")
+    if current_request_ids != list(V21_REQUEST_IDS):
+        raise EvidenceError("v21 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -5673,6 +5803,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v17_late_final_pass_authority_review["request_ids"],
         *v18_incomplete_terminalization["request_ids"],
         *v19_quick_preflight["request_ids"],
+        *v20_nonresource_preflight["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -5693,7 +5824,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v20 resource request IDs reuse historical authority")
+        raise EvidenceError("v21 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -5749,7 +5880,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "79572d92fcdaa38135f79b87a4b8ba0d52833f57":
+    if authority["exact_parent"] != "fa1fa81a695401e75c0580ef85c56e5dbf3df015":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",
