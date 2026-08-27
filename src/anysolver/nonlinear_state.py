@@ -38,15 +38,30 @@ from ._native_rotation_state import (
     create_native_rotation_state_store,
     validate_proper_rotation_matrices,
 )
+from .e4_pl_s3_state import canonical_sha256
 
 
 _CORE_FIELDS = ("plastic_strain", "alpha", "layer_strain")
 _FIELD_INDEX = {name: index for index, name in enumerate(_CORE_FIELDS)}
 _Q4_ALGORITHMIC_ORIGIN_KEY = "qualified_q4_algorithmic_origin"
-_Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID = (
+Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1 = (
     "E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_V1"
 )
+Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID = (
+    "E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_V2"
+)
+_Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID = Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID
 _Q4_ALGORITHMIC_ORIGIN_KIND = "LAYERED_DISCRETE_RETURN_MAP_PARENT_STATE"
+Q4_SCALAR_ALGORITHMIC_PRODUCER_ID = "Q4_SCALAR_BASE_NONLINEAR_KERNEL_V1"
+Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID = "Q4_VECTORIZED_SHELL_BATCH_V1"
+Q4_LEGACY_ALGORITHMIC_PRODUCER_ID = "Q4_LEGACY_V1_EXACT_REPLAY_MIGRATION_V1"
+_Q4_ALGORITHMIC_PRODUCER_IDS = frozenset(
+    {
+        Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
+        Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
+        Q4_LEGACY_ALGORITHMIC_PRODUCER_ID,
+    }
+)
 _INITIAL_FIELD_KEYS = (
     "initial_membrane_stress",
     "initial_bending_stress",
@@ -59,6 +74,107 @@ _KNOWN_PROVENANCE_KEYS = (
     "state_provenance",
     "material_provenance",
 )
+
+
+def q4_accepted_algorithmic_update_sha256(
+    *,
+    producer_id: str,
+    num_layers: int,
+    parent_plastic_strain: Any,
+    parent_alpha: Any,
+    plastic_strain: Any,
+    alpha: Any,
+    layer_strain: Any,
+) -> str:
+    """Bind one exact parent/output pair at its constitutive producer boundary.
+
+    The vectorized return map has cohort-wide convergence control, so replaying
+    one element in isolation is not a bitwise reproduction of its accepted
+    vector result.  This digest is created atomically with the trial state and
+    gives final-state sealing an exact producer-neutral integrity witness
+    without changing the return map or introducing a numerical tolerance.
+    """
+
+    if type(producer_id) is not str:
+        raise ValueError("qualified Q4 algorithmic producer is incompatible")
+    producer = producer_id
+    if producer not in _Q4_ALGORITHMIC_PRODUCER_IDS:
+        raise ValueError("qualified Q4 algorithmic producer is incompatible")
+    layers = int(num_layers)
+    if isinstance(num_layers, (bool, np.bool_)) or layers <= 0:
+        raise ValueError("qualified Q4 algorithmic layer count is incompatible")
+    parent_plastic = np.asarray(parent_plastic_strain, dtype=np.float64)
+    parent_alpha_array = np.asarray(parent_alpha, dtype=np.float64)
+    accepted_plastic = np.asarray(plastic_strain, dtype=np.float64)
+    accepted_alpha = np.asarray(alpha, dtype=np.float64)
+    accepted_layer = np.asarray(layer_strain, dtype=np.float64)
+    if (
+        parent_plastic.ndim != 2
+        or parent_plastic.shape[1:] != (3,)
+        or accepted_plastic.shape != parent_plastic.shape
+        or accepted_layer.shape != parent_plastic.shape
+        or parent_alpha_array.shape != parent_plastic.shape[:1]
+        or accepted_alpha.shape != parent_alpha_array.shape
+        or not all(
+            np.all(np.isfinite(values))
+            for values in (
+                parent_plastic,
+                parent_alpha_array,
+                accepted_plastic,
+                accepted_alpha,
+                accepted_layer,
+            )
+        )
+    ):
+        raise ValueError("qualified Q4 algorithmic parent/output arrays are incompatible")
+    origin = {
+        "schema_id": _Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+        "kind": _Q4_ALGORITHMIC_ORIGIN_KIND,
+        "producer_id": producer,
+        "num_layers": layers,
+        "parent_plastic_strain": {
+            "shape": list(parent_plastic.shape),
+            "binary64_hex": [
+                float(value).hex() for value in parent_plastic.reshape(-1)
+            ],
+        },
+        "parent_alpha": {
+            "shape": list(parent_alpha_array.shape),
+            "binary64_hex": [
+                float(value).hex()
+                for value in parent_alpha_array.reshape(-1)
+            ],
+        },
+    }
+    return canonical_sha256(
+        {
+            "layout": "Q4_ACCEPTED_DISCRETE_CONSTITUTIVE_UPDATE_V2",
+            "algorithmic_origin": origin,
+            "accepted_core": {
+                "plastic_strain": {
+                    "shape": list(accepted_plastic.shape),
+                    "binary64_hex": [
+                        float(value).hex()
+                        for value in accepted_plastic.reshape(-1)
+                    ],
+                },
+                "alpha": {
+                    "shape": list(accepted_alpha.shape),
+                    "binary64_hex": [
+                        float(value).hex()
+                        for value in accepted_alpha.reshape(-1)
+                    ],
+                },
+                "layer_strain": {
+                    "shape": list(accepted_layer.shape),
+                    "binary64_hex": [
+                        float(value).hex()
+                        for value in accepted_layer.reshape(-1)
+                    ],
+                },
+            },
+        }
+    )
 
 
 class NonlinearStateError(RuntimeError):
@@ -372,17 +488,30 @@ def _fallback_reason(state: Any, layout: ShellStateLayout) -> Optional[str]:
         origin = state[_Q4_ALGORITHMIC_ORIGIN_KEY]
         if not isinstance(origin, Mapping):
             return "invalid_q4_algorithmic_origin_mapping"
+        if origin.get("schema_id") == Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1:
+            if set(origin) != {
+                "schema_id",
+                "kind",
+                "num_layers",
+                "parent_plastic_strain",
+                "parent_alpha",
+            }:
+                return "invalid_legacy_q4_algorithmic_origin_schema"
+            return "legacy_q4_algorithmic_origin_v1_requires_migration"
         if set(origin) != {
             "schema_id",
             "kind",
+            "producer_id",
             "num_layers",
             "parent_plastic_strain",
             "parent_alpha",
+            "accepted_core_sha256",
         }:
             return "invalid_q4_algorithmic_origin_schema"
         if (
             origin.get("schema_id") != _Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID
             or origin.get("kind") != _Q4_ALGORITHMIC_ORIGIN_KIND
+            or origin.get("producer_id") not in _Q4_ALGORITHMIC_PRODUCER_IDS
             or origin.get("num_layers") != layout.num_layers
         ):
             return "incompatible_q4_algorithmic_origin_identity"
@@ -400,6 +529,20 @@ def _fallback_reason(state: Any, layout: ShellStateLayout) -> Optional[str]:
             or not np.all(np.isfinite(parent_alpha))
         ):
             return "invalid_q4_algorithmic_origin_shape_or_values"
+        try:
+            accepted_digest = q4_accepted_algorithmic_update_sha256(
+                producer_id=str(origin["producer_id"]),
+                num_layers=int(origin["num_layers"]),
+                parent_plastic_strain=parent_plastic,
+                parent_alpha=parent_alpha,
+                plastic_strain=state.get("plastic_strain", ()),
+                alpha=state.get("alpha", ()),
+                layer_strain=state.get("layer_strain", ()),
+            )
+        except (TypeError, ValueError):
+            return "invalid_q4_algorithmic_origin_accepted_core"
+        if origin.get("accepted_core_sha256") != accepted_digest:
+            return "invalid_q4_algorithmic_origin_accepted_core_sha256"
     return None
 
 
@@ -461,6 +604,10 @@ class ShellStateBatch(Mapping[int, Any]):
         self._q4_origin_trial_plastic: Optional[np.ndarray] = None
         self._q4_origin_committed_alpha: Optional[np.ndarray] = None
         self._q4_origin_trial_alpha: Optional[np.ndarray] = None
+        self._q4_origin_committed_producer: Optional[np.ndarray] = None
+        self._q4_origin_trial_producer: Optional[np.ndarray] = None
+        self._q4_origin_committed_digest: Optional[np.ndarray] = None
+        self._q4_origin_trial_digest: Optional[np.ndarray] = None
         self._q4_origin_present_committed = np.zeros(
             layout.n_elements, dtype=bool
         )
@@ -590,6 +737,18 @@ class ShellStateBatch(Mapping[int, Any]):
             shape_alpha, dtype=np.float64
         )
         self._q4_origin_trial_alpha = np.empty(shape_alpha, dtype=np.float64)
+        self._q4_origin_committed_producer = np.zeros(
+            self.layout.n_elements, dtype="S64"
+        )
+        self._q4_origin_trial_producer = np.empty(
+            self.layout.n_elements, dtype="S64"
+        )
+        self._q4_origin_committed_digest = np.zeros(
+            self.layout.n_elements, dtype="S64"
+        )
+        self._q4_origin_trial_digest = np.empty(
+            self.layout.n_elements, dtype="S64"
+        )
 
     def committed_arrays(self) -> ShellStateArrays:
         """Return read-only, zero-copy views for constitutive kernels."""
@@ -638,12 +797,20 @@ class ShellStateBatch(Mapping[int, Any]):
                 self._ensure_q4_algorithmic_origin_buffers()
                 assert self._q4_origin_committed_plastic is not None
                 assert self._q4_origin_committed_alpha is not None
+                assert self._q4_origin_committed_producer is not None
+                assert self._q4_origin_committed_digest is not None
                 self._q4_origin_committed_plastic[index] = np.asarray(
                     origin["parent_plastic_strain"], dtype=float
                 ).reshape(points, 3)
                 self._q4_origin_committed_alpha[index] = np.asarray(
                     origin["parent_alpha"], dtype=float
                 ).reshape(points)
+                self._q4_origin_committed_producer[index] = str(
+                    origin["producer_id"]
+                ).encode("ascii")
+                self._q4_origin_committed_digest[index] = str(
+                    origin["accepted_core_sha256"]
+                ).encode("ascii")
                 self._q4_origin_present_committed[index] = True
         self._metrics["state_pack_seconds"] += time.perf_counter() - start
 
@@ -781,9 +948,11 @@ class ShellStateBatch(Mapping[int, Any]):
         *,
         parent_plastic_strain: Any,
         parent_alpha: Any,
+        producer_id: str,
+        accepted_core_sha256: Optional[str] = None,
         element_ids: Sequence[int],
     ) -> int:
-        """Atomically retain the parent history of accepted Q4 trial updates."""
+        """Atomically retain the exact producer-bound Q4 update provenance."""
 
         with self._lock:
             self._require_active(token)
@@ -805,11 +974,47 @@ class ShellStateBatch(Mapping[int, Any]):
             self._ensure_q4_algorithmic_origin_buffers()
             assert self._q4_origin_trial_plastic is not None
             assert self._q4_origin_trial_alpha is not None
+            assert self._q4_origin_trial_producer is not None
+            assert self._q4_origin_trial_digest is not None
             active_in_input = ~self._deleted_mask[indices]
             active = indices[active_in_input]
             if active.size:
                 self._q4_origin_trial_plastic[active] = plastic[active_in_input]
                 self._q4_origin_trial_alpha[active] = alpha[active_in_input]
+                trial = self._views(self._trial_buffer)
+                active_input_indices = np.flatnonzero(active_in_input)
+                computed_digests = {
+                    int(state_index): q4_accepted_algorithmic_update_sha256(
+                        producer_id=producer_id,
+                        num_layers=self.layout.num_layers,
+                        parent_plastic_strain=plastic[input_index],
+                        parent_alpha=alpha[input_index],
+                        plastic_strain=trial.plastic_strain[state_index],
+                        alpha=trial.alpha[state_index],
+                        layer_strain=trial.layer_strain[state_index],
+                    )
+                    for input_index, state_index in zip(
+                        active_input_indices,
+                        active,
+                    )
+                }
+                if accepted_core_sha256 is not None:
+                    if (
+                        len(indices) != 1
+                        or len(active) != 1
+                        or str(accepted_core_sha256)
+                        != computed_digests[int(active[0])]
+                    ):
+                        raise ValueError(
+                            "qualified Q4 supplied accepted-core digest is incompatible"
+                        )
+                for state_index in active:
+                    self._q4_origin_trial_producer[state_index] = str(
+                        producer_id
+                    ).encode("ascii")
+                    self._q4_origin_trial_digest[state_index] = (
+                        computed_digests[int(state_index)].encode("ascii")
+                    )
                 self._q4_origin_trial_stamps[active] = self._serial
             return int(active.size)
 
@@ -885,6 +1090,8 @@ class ShellStateBatch(Mapping[int, Any]):
                         "parent_plastic_strain"
                     ],
                     parent_alpha=origin["parent_alpha"],
+                    producer_id=str(origin["producer_id"]),
+                    accepted_core_sha256=str(origin["accepted_core_sha256"]),
                     element_ids=(int(element_id),),
                 )
 
@@ -924,6 +1131,10 @@ class ShellStateBatch(Mapping[int, Any]):
             assert self._q4_origin_trial_plastic is not None
             assert self._q4_origin_committed_alpha is not None
             assert self._q4_origin_trial_alpha is not None
+            assert self._q4_origin_committed_producer is not None
+            assert self._q4_origin_trial_producer is not None
+            assert self._q4_origin_committed_digest is not None
+            assert self._q4_origin_trial_digest is not None
             plastic_source = (
                 self._q4_origin_trial_plastic
                 if origin_is_trial
@@ -934,9 +1145,20 @@ class ShellStateBatch(Mapping[int, Any]):
                 if origin_is_trial
                 else self._q4_origin_committed_alpha
             )
+            producer_source = (
+                self._q4_origin_trial_producer
+                if origin_is_trial
+                else self._q4_origin_committed_producer
+            )
+            digest_source = (
+                self._q4_origin_trial_digest
+                if origin_is_trial
+                else self._q4_origin_committed_digest
+            )
             result[_Q4_ALGORITHMIC_ORIGIN_KEY] = {
                 "schema_id": _Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID,
                 "kind": _Q4_ALGORITHMIC_ORIGIN_KIND,
+                "producer_id": bytes(producer_source[index]).decode("ascii"),
                 "num_layers": self.layout.num_layers,
                 "parent_plastic_strain": np.asarray(
                     plastic_source[index], dtype=np.float64
@@ -944,6 +1166,9 @@ class ShellStateBatch(Mapping[int, Any]):
                 "parent_alpha": np.asarray(
                     alpha_source[index], dtype=np.float64
                 ).tolist(),
+                "accepted_core_sha256": bytes(digest_source[index]).decode(
+                    "ascii"
+                ),
             }
         return result
 
@@ -1051,6 +1276,10 @@ class ShellStateBatch(Mapping[int, Any]):
                 assert self._q4_origin_trial_plastic is not None
                 assert self._q4_origin_committed_alpha is not None
                 assert self._q4_origin_trial_alpha is not None
+                assert self._q4_origin_committed_producer is not None
+                assert self._q4_origin_trial_producer is not None
+                assert self._q4_origin_committed_digest is not None
+                assert self._q4_origin_trial_digest is not None
                 missing_origin = self._q4_origin_trial_stamps != self._serial
                 missing_origin = np.logical_or(
                     missing_origin, self._deleted_mask
@@ -1063,6 +1292,12 @@ class ShellStateBatch(Mapping[int, Any]):
                     )
                     self._q4_origin_trial_alpha[missing_origin] = (
                         self._q4_origin_committed_alpha[missing_origin]
+                    )
+                    self._q4_origin_trial_producer[missing_origin] = (
+                        self._q4_origin_committed_producer[missing_origin]
+                    )
+                    self._q4_origin_trial_digest[missing_origin] = (
+                        self._q4_origin_committed_digest[missing_origin]
                     )
                 self._q4_origin_present_committed = np.logical_or(
                     self._q4_origin_present_committed,
@@ -1081,6 +1316,20 @@ class ShellStateBatch(Mapping[int, Any]):
                 ) = (
                     self._q4_origin_trial_alpha,
                     self._q4_origin_committed_alpha,
+                )
+                (
+                    self._q4_origin_committed_producer,
+                    self._q4_origin_trial_producer,
+                ) = (
+                    self._q4_origin_trial_producer,
+                    self._q4_origin_committed_producer,
+                )
+                (
+                    self._q4_origin_committed_digest,
+                    self._q4_origin_trial_digest,
+                ) = (
+                    self._q4_origin_trial_digest,
+                    self._q4_origin_committed_digest,
                 )
 
             self._committed_buffer, self._trial_buffer = (
@@ -1128,11 +1377,19 @@ class ShellStateBatch(Mapping[int, Any]):
                 assert self._q4_origin_trial_plastic is not None
                 assert self._q4_origin_committed_alpha is not None
                 assert self._q4_origin_trial_alpha is not None
+                assert self._q4_origin_committed_producer is not None
+                assert self._q4_origin_trial_producer is not None
+                assert self._q4_origin_committed_digest is not None
+                assert self._q4_origin_trial_digest is not None
                 q4_origin_bytes = int(
                     self._q4_origin_committed_plastic.nbytes
                     + self._q4_origin_trial_plastic.nbytes
                     + self._q4_origin_committed_alpha.nbytes
                     + self._q4_origin_trial_alpha.nbytes
+                    + self._q4_origin_committed_producer.nbytes
+                    + self._q4_origin_trial_producer.nbytes
+                    + self._q4_origin_committed_digest.nbytes
+                    + self._q4_origin_trial_digest.nbytes
                 )
             return {
                 "state_batch_count": 1,

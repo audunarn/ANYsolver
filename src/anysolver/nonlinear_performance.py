@@ -49,6 +49,7 @@ from .nonlinear_element_evaluation import (
 from .nonlinear_state import (
     NonlinearStateStore,
     PersistentStateEligibilityError,
+    Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
     ShellStateBatch,
     ShellStateLayout,
     StateTrialToken,
@@ -515,6 +516,7 @@ class _ShellBatchPlan:
                         state,
                         self.num_layers,
                         tangent_evaluated=bool(tangent),
+                        producer_id=Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
                     )
                 states[int(element_id)] = state
         else:
@@ -659,6 +661,7 @@ class _ShellBatchPlan:
                         int(self.element_ids[index])
                         for index in q4_origin_indices
                     ),
+                    producer_id=Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
                 )
         if deleted:
             deleted_set = set(deleted)

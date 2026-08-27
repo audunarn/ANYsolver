@@ -11,13 +11,22 @@ from anysolver.e4_pl_element import (
     Q4_CURRENT_STATE_PROJECTION_POLICY_ID,
     Q4_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID,
     QualifiedE4PLShellElement,
+    QualifiedQ4MigrationWarning,
 )
-from anysolver.e4_pl_s3_state import canonical_json_bytes
+from anysolver.e4_pl_s3_state import canonical_json_bytes, canonical_sha256
 from anysolver.elements import ShellElement
 from anysolver.fe_core import FEMesh, Material
 from anysolver.material_curves import DNVC208MaterialCurve
 from anysolver.materials import Hill48Yield, OrthotropicMaterial
-from anysolver.nonlinear_state import ShellStateBatch, ShellStateLayout
+from anysolver.nonlinear_state import (
+    Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1,
+    Q4_LEGACY_ALGORITHMIC_PRODUCER_ID,
+    Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
+    Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
+    ShellStateBatch,
+    ShellStateLayout,
+    q4_accepted_algorithmic_update_sha256,
+)
 from anysolver.shell_sections import GeneralizedShellSection
 from anysolver.vectorized_nonlinear import batch_shell_nonlinear_response
 
@@ -320,7 +329,7 @@ def test_q4_binding_rejects_every_configuration_and_state_mismatch() -> None:
         )
     bad_state = copy.deepcopy(state)
     bad_state["plastic_strain"][0, 0] += 1.0e-12
-    with pytest.raises(ValueError, match="binding"):
+    with pytest.raises(ValueError, match="accepted-core hash|binding"):
         element.validate_committed_current_tangent_state(
             mesh, material, displacement, bad_state, 3
         )
@@ -377,6 +386,12 @@ def test_plastic_q4_origin_is_required_and_reproduces_the_accepted_core() -> Non
     assert trial["qualified_q4_algorithmic_origin"]["schema_id"] == (
         Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
     )
+    assert trial["qualified_q4_algorithmic_origin"]["producer_id"] == (
+        Q4_SCALAR_ALGORITHMIC_PRODUCER_ID
+    )
+    assert len(
+        trial["qualified_q4_algorithmic_origin"]["accepted_core_sha256"]
+    ) == 64
 
     missing = copy.deepcopy(trial)
     missing.pop("qualified_q4_algorithmic_origin")
@@ -394,6 +409,31 @@ def test_plastic_q4_origin_is_required_and_reproduces_the_accepted_core() -> Non
             mesh, material, displacement, mutated, 3
         )
 
+    mutated_core = copy.deepcopy(trial)
+    mutated_core["alpha"][0] += 1.0e-12
+    with pytest.raises(ValueError, match="accepted-core hash"):
+        element.seal_committed_current_tangent_state(
+            mesh, material, displacement, mutated_core, 3
+        )
+
+    mutated_digest = copy.deepcopy(trial)
+    mutated_digest["qualified_q4_algorithmic_origin"][
+        "accepted_core_sha256"
+    ] = "0" * 64
+    with pytest.raises(ValueError, match="accepted-core hash"):
+        element.seal_committed_current_tangent_state(
+            mesh, material, displacement, mutated_digest, 3
+        )
+
+    mutated_producer = copy.deepcopy(trial)
+    mutated_producer["qualified_q4_algorithmic_origin"][
+        "producer_id"
+    ] = "UNREGISTERED_PRODUCER"
+    with pytest.raises(ValueError, match="producer"):
+        element.seal_committed_current_tangent_state(
+            mesh, material, displacement, mutated_producer, 3
+        )
+
     stale_recovery = copy.deepcopy(trial)
     stale_recovery["layer_stress"][0, 0] += 1.0
     with pytest.raises(ValueError, match="layer_stress"):
@@ -408,10 +448,83 @@ def test_plastic_q4_origin_is_required_and_reproduces_the_accepted_core() -> Non
     changed_after_seal["qualified_q4_algorithmic_origin"][
         "parent_alpha"
     ][0] += 1.0e-12
-    with pytest.raises(ValueError, match="binding"):
+    with pytest.raises(ValueError, match="accepted-core hash|binding"):
         element.compute_committed_current_tangent_components(
             mesh, material, displacement, changed_after_seal, 3
         )
+
+
+def test_q4_v1_origin_and_element_identity_migrate_only_after_exact_replay() -> None:
+    nodes = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)),
+        dtype=np.float64,
+    )
+    mesh = _mesh(nodes)
+    material = _material(plastic=True)
+    element = QualifiedE4PLShellElement(
+        81, [1, 2, 3, 4], material.name, thickness=0.02
+    )
+    displacement = np.zeros(24, dtype=np.float64)
+    displacement[6] = displacement[12] = 0.004
+    trial = element.compute_nonlinear_response(
+        mesh, material, displacement, None, 3, True
+    )[2]
+    legacy = copy.deepcopy(trial)
+    legacy_origin = legacy["qualified_q4_algorithmic_origin"]
+    legacy_origin["schema_id"] = Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+    legacy_origin.pop("producer_id")
+    legacy_origin.pop("accepted_core_sha256")
+    binding = element._committed_current_binding_payload(
+        mesh,
+        material,
+        displacement,
+        legacy,
+        3,
+        algorithmic_origin_schema_id=Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1,
+    )
+    digest = canonical_sha256(binding)
+    binding["state_integrity_sha256"] = digest
+    legacy["qualified_q4_committed_binding"] = binding
+    legacy["state_integrity_sha256"] = digest
+    assert element.validate_committed_current_tangent_state(
+        mesh, material, displacement, legacy, 3
+    ) == digest
+    assert element.compute_committed_current_tangent_components(
+        mesh, material, displacement, legacy, 3
+    )["algorithmic_origin_schema_id"] == Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+
+    incompatible_legacy = copy.deepcopy(legacy)
+    incompatible_legacy.pop("qualified_q4_committed_binding")
+    incompatible_legacy.pop("state_integrity_sha256")
+    incompatible_legacy["plastic_strain"][0, 0] += 1.0e-12
+    with pytest.raises(ValueError, match="does not reproduce committed"):
+        element.seal_committed_current_tangent_state(
+            mesh, material, displacement, incompatible_legacy, 3
+        )
+
+    migrated = element.seal_committed_current_tangent_state(
+        mesh, material, displacement, legacy, 3
+    )
+    migrated_origin = migrated["qualified_q4_algorithmic_origin"]
+    assert migrated_origin["schema_id"] == (
+        Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+    )
+    assert migrated_origin["producer_id"] == (
+        Q4_LEGACY_ALGORITHMIC_PRODUCER_ID
+    )
+    element.validate_committed_current_tangent_state(
+        mesh, material, displacement, migrated, 3
+    )
+
+    descriptor = element.to_dict()
+    descriptor["current_state_algorithmic_origin_schema_id"] = (
+        Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+    )
+    with pytest.warns(QualifiedQ4MigrationWarning, match="producer-bound V2"):
+        rebuilt = QualifiedE4PLShellElement.from_dict(descriptor)
+    assert rebuilt.to_dict()["current_state_algorithmic_origin_schema_id"] == (
+        Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+    )
 
 
 @pytest.mark.parametrize(
@@ -875,18 +988,31 @@ def test_packed_scalar_q4_origin_survives_partial_commit_discard_and_delete() ->
     points = layout.points_per_element
 
     def state(value: float, parent: float) -> dict[str, object]:
-        return {
+        made: dict[str, object] = {
             "plastic_strain": np.full((points, 3), value),
             "alpha": np.full(points, value),
             "layer_strain": np.full((points, 3), 2.0 * value),
             "qualified_q4_algorithmic_origin": {
                 "schema_id": Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID,
                 "kind": "LAYERED_DISCRETE_RETURN_MAP_PARENT_STATE",
+                "producer_id": Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
                 "num_layers": 3,
                 "parent_plastic_strain": np.full((points, 3), parent),
                 "parent_alpha": np.full(points, parent),
             },
         }
+        origin = made["qualified_q4_algorithmic_origin"]
+        assert isinstance(origin, dict)
+        origin["accepted_core_sha256"] = q4_accepted_algorithmic_update_sha256(
+            producer_id=Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
+            num_layers=3,
+            parent_plastic_strain=origin["parent_plastic_strain"],
+            parent_alpha=origin["parent_alpha"],
+            plastic_strain=made["plastic_strain"],
+            alpha=made["alpha"],
+            layer_strain=made["layer_strain"],
+        )
+        return made
 
     packed = ShellStateBatch(layout, {1: state(1.0, 0.1), 2: state(2.0, 0.2)})
     assert packed.all_packed
@@ -929,17 +1055,19 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
     displacement[14] = 7.0e-4
     cache = element._nonlinear_geometry(mesh)
     parent = element.init_nonlinear_state(3)
+    points = len(element.gauss_points) * 3
+    cohort = np.asarray((displacement, 2.0 * displacement), dtype=np.float64)
     force, tangent, plastic, alpha, layer_strain = (
         batch_shell_nonlinear_response(
-            displacement[None, :],
-            np.asarray(cache["T0"])[None, :, :],
-            np.asarray(cache["B_m_all"])[None, :, :, :],
-            np.asarray(cache["B_b_all"])[None, :, :, :],
-            np.asarray(cache["B_d_all"])[None, :, :, :],
-            np.asarray(cache["Gw_all"])[None, :, :, :],
-            np.asarray(cache["detw_all"])[None, :],
-            np.asarray(cache["B_s_all"])[None, :, :, :],
-            np.asarray(cache["detw_shear_all"])[None, :],
+            cohort,
+            np.repeat(np.asarray(cache["T0"])[None, :, :], 2, axis=0),
+            np.repeat(np.asarray(cache["B_m_all"])[None, :, :, :], 2, axis=0),
+            np.repeat(np.asarray(cache["B_b_all"])[None, :, :, :], 2, axis=0),
+            np.repeat(np.asarray(cache["B_d_all"])[None, :, :, :], 2, axis=0),
+            np.repeat(np.asarray(cache["Gw_all"])[None, :, :, :], 2, axis=0),
+            np.repeat(np.asarray(cache["detw_all"])[None, :], 2, axis=0),
+            np.repeat(np.asarray(cache["B_s_all"])[None, :, :, :], 2, axis=0),
+            np.repeat(np.asarray(cache["detw_shear_all"])[None, :], 2, axis=0),
             float(material.elastic_modulus),
             float(material.poisson_ratio),
             float(material.shear_modulus),
@@ -947,10 +1075,27 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
             float(element.drilling_stabilization),
             True,
             material.hardening_curve,
-            np.asarray(parent["plastic_strain"])[None, :, :],
-            np.asarray(parent["alpha"])[None, :],
+            np.repeat(
+                np.asarray(parent["plastic_strain"])[None, :, :], 2, axis=0
+            ),
+            np.repeat(np.asarray(parent["alpha"])[None, :], 2, axis=0),
             3,
         )
+    )
+    scalar_force, scalar_tangent, scalar_state = element.compute_nonlinear_response(
+        mesh,
+        material,
+        displacement,
+        parent,
+        3,
+        True,
+    )
+    assert not np.array_equal(
+        np.asarray(scalar_state["plastic_strain"]), plastic[0]
+    )
+    assert not np.array_equal(np.asarray(scalar_state["alpha"]), alpha[0])
+    np.testing.assert_array_equal(
+        np.asarray(scalar_state["layer_strain"]), layer_strain[:points]
     )
     trial = element.attach_current_tangent_algorithmic_origin(
         material,
@@ -958,10 +1103,11 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
         {
             "plastic_strain": plastic[0],
             "alpha": alpha[0],
-            "layer_strain": layer_strain.copy(),
+            "layer_strain": layer_strain[:points].copy(),
         },
         3,
         tangent_evaluated=True,
+        producer_id=Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
     )
     sealed = element.seal_committed_current_tangent_state(
         mesh, material, displacement, trial, 3
@@ -969,8 +1115,8 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
     components = element.compute_committed_current_tangent_components(
         mesh, material, displacement, sealed, 3
     )
-    correction = element._qualified_linear_correction(mesh, material, 3)
     np.testing.assert_array_equal(
-        components["force"], force[0] + correction @ displacement
+        components["force"], scalar_force
     )
-    np.testing.assert_array_equal(components["total"], tangent[0] + correction)
+    np.testing.assert_array_equal(components["total"], scalar_tangent)
+    assert not np.array_equal(components["force"], force[0])

@@ -63,6 +63,14 @@ from .e4_pl_s3_state import (
     resolved_material_descriptor,
 )
 from .plasticity import hill48_plane_stress_equivalent_stress, lobatto_layers
+from .nonlinear_state import (
+    Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+    Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1,
+    Q4_LEGACY_ALGORITHMIC_PRODUCER_ID,
+    Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
+    Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
+    q4_accepted_algorithmic_update_sha256,
+)
 from .shell_sections import (
     GeneralizedShellSection,
     SHELL_MEMBRANE_VOIGT_ORDER,
@@ -96,7 +104,7 @@ Q4_CURRENT_STATE_PROJECTION_POLICY_ID = (
     "Q4_NO_INTERNAL_BUBBLE_IDENTITY_PROJECTION_V1"
 )
 Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID = (
-    "E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_V1"
+    Q4_ALGORITHMIC_ORIGIN_SCHEMA_ID
 )
 Q4_ACTIVITY_DISPOSITION_SCHEMA_ID = "E4_PL_Q4_ACTIVITY_DISPOSITION_V1"
 Q4_DELETED_FROZEN_POLICY_ID = (
@@ -3451,8 +3459,22 @@ class QualifiedE4PLShellElement(
                 Q4_CURRENT_STATE_PROJECTION_POLICY_ID
             ),
         }
+        v7_origin_v1_identity = {
+            **identity,
+            "current_state_algorithmic_origin_schema_id": (
+                Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+            ),
+        }
         present = {name for name in identity if name in data}
-        current_identity = present == set(identity)
+        full_identity_present = present == set(identity)
+        v7_origin_v1_identity_present = bool(
+            full_identity_present
+            and data.get("current_state_algorithmic_origin_schema_id")
+            == Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+        )
+        current_identity = bool(
+            full_identity_present and not v7_origin_v1_identity_present
+        )
         v7_pre_quadrature_identity_present = present == set(
             v7_pre_quadrature_identity
         )
@@ -3468,6 +3490,7 @@ class QualifiedE4PLShellElement(
         if (
             present
             and not current_identity
+            and not v7_origin_v1_identity_present
             and not v7_pre_quadrature_identity_present
             and not v7_pre_activity_identity_present
             and not v5_identity_present
@@ -3483,6 +3506,19 @@ class QualifiedE4PLShellElement(
                     raise ValueError(
                         f"serialized E4-PL Q4 {name} is incompatible"
                     )
+        elif v7_origin_v1_identity_present:
+            for name, expected in v7_origin_v1_identity.items():
+                if data.get(name) != expected:
+                    raise ValueError(
+                        f"serialized E4-PL Q4 {name} is incompatible"
+                    )
+            warnings.warn(
+                "Migrated an exact qualified Q4 V7 element configuration from "
+                "the scalar-replay-only state guard to the producer-bound V2 "
+                "state guard; mechanics are unchanged.",
+                QualifiedQ4MigrationWarning,
+                stacklevel=2,
+            )
         elif v7_pre_quadrature_identity_present:
             for name, expected in v7_pre_quadrature_identity.items():
                 if data.get(name) != expected:
@@ -3537,6 +3573,7 @@ class QualifiedE4PLShellElement(
             )
         if (
             current_identity
+            or v7_origin_v1_identity_present
             or v7_pre_quadrature_identity_present
             or v7_pre_activity_identity_present
             or v5_identity_present
@@ -3851,6 +3888,8 @@ class QualifiedE4PLShellElement(
         material: Any,
         prior_state: Optional[Mapping[str, Any]],
         num_layers: int,
+        *,
+        producer_id: str,
     ) -> Optional[Dict[str, Any]]:
         """Capture the exact parent history used by one return-map call.
 
@@ -3889,6 +3928,7 @@ class QualifiedE4PLShellElement(
         return {
             "schema_id": Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID,
             "kind": "LAYERED_DISCRETE_RETURN_MAP_PARENT_STATE",
+            "producer_id": str(producer_id),
             "num_layers": layers,
             # Persist the descriptor in canonical JSON-native form.  The
             # constitutive evaluator materializes owned binary64 arrays only
@@ -3905,6 +3945,7 @@ class QualifiedE4PLShellElement(
         num_layers: int,
         *,
         tangent_evaluated: bool,
+        producer_id: str = Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
     ) -> Dict[str, Any]:
         """Return an owned trial state carrying its exact update origin.
 
@@ -3924,8 +3965,20 @@ class QualifiedE4PLShellElement(
             material,
             prior_state,
             num_layers,
+            producer_id=producer_id,
         )
         if origin is not None:
+            origin["accepted_core_sha256"] = (
+                q4_accepted_algorithmic_update_sha256(
+                    producer_id=str(origin["producer_id"]),
+                    num_layers=int(origin["num_layers"]),
+                    parent_plastic_strain=origin["parent_plastic_strain"],
+                    parent_alpha=origin["parent_alpha"],
+                    plastic_strain=made.get("plastic_strain", ()),
+                    alpha=made.get("alpha", ()),
+                    layer_strain=made.get("layer_strain", ()),
+                )
+            )
             made[_Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY] = origin
         return made
 
@@ -3952,20 +4005,33 @@ class QualifiedE4PLShellElement(
                 "qualified Q4 plastic committed state lacks the accepted "
                 "algorithmic return-map origin"
             )
-        expected_keys = {
+        schema_id = raw.get("schema_id")
+        legacy_keys = {
             "schema_id",
             "kind",
             "num_layers",
             "parent_plastic_strain",
             "parent_alpha",
         }
+        current_keys = legacy_keys | {
+            "producer_id",
+            "accepted_core_sha256",
+        }
+        expected_keys = (
+            legacy_keys
+            if schema_id == Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+            else current_keys
+        )
         if set(raw) != expected_keys:
             raise ValueError(
                 "qualified Q4 algorithmic return-map origin schema is incomplete"
             )
         if (
-            raw.get("schema_id")
-            != Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+            schema_id
+            not in {
+                Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1,
+                Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+            }
             or raw.get("kind")
             != "LAYERED_DISCRETE_RETURN_MAP_PARENT_STATE"
             or raw.get("num_layers") != layers
@@ -3987,6 +4053,30 @@ class QualifiedE4PLShellElement(
             raise ValueError(
                 "qualified Q4 algorithmic return-map origin arrays are incompatible"
             )
+        if schema_id == Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID:
+            producer_id = raw.get("producer_id")
+            if producer_id not in {
+                Q4_SCALAR_ALGORITHMIC_PRODUCER_ID,
+                Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
+                Q4_LEGACY_ALGORITHMIC_PRODUCER_ID,
+            }:
+                raise ValueError(
+                    "qualified Q4 algorithmic return-map producer is incompatible"
+                )
+            accepted_digest = q4_accepted_algorithmic_update_sha256(
+                producer_id=str(producer_id),
+                num_layers=layers,
+                parent_plastic_strain=plastic,
+                parent_alpha=alpha,
+                plastic_strain=state.get("plastic_strain", ()),
+                alpha=state.get("alpha", ()),
+                layer_strain=state.get("layer_strain", ()),
+            )
+            if raw.get("accepted_core_sha256") != accepted_digest:
+                raise ValueError(
+                    "qualified Q4 accepted algorithmic origin does not "
+                    "reproduce committed accepted-core hash"
+                )
         return {
             "plastic_strain": plastic.copy(),
             "alpha": alpha.copy(),
@@ -4074,6 +4164,12 @@ class QualifiedE4PLShellElement(
         parent = self._validated_algorithmic_origin(material, state, layers)
         if parent is None:
             return None
+        raw_origin = state[_Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY]
+        if (
+            raw_origin.get("schema_id")
+            == Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+        ):
+            return str(raw_origin["accepted_core_sha256"])
         points = len(self.gauss_points) * layers
         core: Dict[str, Any] = {}
         for name, shape in (
@@ -4146,11 +4242,20 @@ class QualifiedE4PLShellElement(
                     "qualified Q4 accepted return-map replay produced no state"
                 )
             points = len(self.gauss_points) * layers
-            for name, shape in (
-                ("plastic_strain", (points, 3)),
-                ("alpha", (points,)),
-                ("layer_strain", (points, 3)),
-            ):
+            raw_origin = committed_state[
+                _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY
+            ]
+            producer_id = raw_origin.get("producer_id")
+            exact_fields = (
+                (("layer_strain", (points, 3)),)
+                if producer_id == Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID
+                else (
+                    ("plastic_strain", (points, 3)),
+                    ("alpha", (points,)),
+                    ("layer_strain", (points, 3)),
+                )
+            )
+            for name, shape in exact_fields:
                 expected = np.asarray(
                     committed_state.get(name, ()), dtype=np.float64
                 )
@@ -4164,6 +4269,24 @@ class QualifiedE4PLShellElement(
                     raise ValueError(
                         "qualified Q4 accepted algorithmic origin does not "
                         f"reproduce committed {name}"
+                    )
+            # Even for the vector producer, every accepted output component is
+            # closed, finite, and digest-bound.  Plastic strain and alpha are
+            # deliberately not compared to a one-element scalar replay: the
+            # production batch return map advances converged rows until the
+            # complete cohort converges, making those last bits cohort-sized.
+            for name, shape in (
+                ("plastic_strain", (points, 3)),
+                ("alpha", (points,)),
+                ("layer_strain", (points, 3)),
+            ):
+                values = np.asarray(
+                    committed_state.get(name, ()), dtype=np.float64
+                )
+                if values.shape != shape or not np.all(np.isfinite(values)):
+                    raise ValueError(
+                        "qualified Q4 accepted algorithmic state has incompatible "
+                        f"{name}"
                     )
         # Scalar/generalized evaluations retain richer deterministic recovery
         # fields than the compact batch state.  When present, each such field
@@ -4234,11 +4357,28 @@ class QualifiedE4PLShellElement(
         mesh: Any,
         material: Any,
         num_layers: int,
+        *,
+        algorithmic_origin_schema_id: str = (
+            Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+        ),
     ) -> Dict[str, Any]:
         """Return stable element/material identity shared by state dispositions."""
 
         coordinates = np.asarray(self.get_node_coordinates(mesh), dtype=np.float64)
         element_descriptor = self.to_dict()
+        if algorithmic_origin_schema_id not in {
+            Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1,
+            Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+        }:
+            raise ValueError(
+                "qualified Q4 state identity algorithmic origin is incompatible"
+            )
+        # The V1-to-V2 state-guard migration does not change the element.  To
+        # verify an already sealed V1 restart exactly, reconstruct only the
+        # historical schema field used in its stable descriptor hash.
+        element_descriptor["current_state_algorithmic_origin_schema_id"] = (
+            algorithmic_origin_schema_id
+        )
         material_descriptor = resolved_material_descriptor(material)
         return {
             "formulation_id": FORMULATION_ID,
@@ -4273,17 +4413,20 @@ class QualifiedE4PLShellElement(
         committed_u_elem: np.ndarray,
         state: Mapping[str, Any],
         num_layers: int,
+        *,
+        algorithmic_origin_schema_id: str = (
+            Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+        ),
     ) -> Dict[str, Any]:
         identity = self._stable_state_identity_payload(
             mesh,
             material,
             num_layers,
+            algorithmic_origin_schema_id=algorithmic_origin_schema_id,
         )
         return {
             "schema_id": Q4_CURRENT_STATE_BINDING_SCHEMA_ID,
-            "algorithmic_origin_schema_id": (
-                Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
-            ),
+            "algorithmic_origin_schema_id": algorithmic_origin_schema_id,
             **identity,
             "decomposition_policy_id": (
                 Q4_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID
@@ -4497,6 +4640,33 @@ class QualifiedE4PLShellElement(
             layers,
             return_components=False,
         )
+        raw_origin = made.get(_Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY)
+        if (
+            isinstance(raw_origin, Mapping)
+            and raw_origin.get("schema_id")
+            == Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1
+        ):
+            # A legacy origin is upgraded only after its original scalar-exact
+            # replay succeeds.  Unknown historical vector-cohort output is not
+            # relabelled: it still fails the replay above and requires fresh
+            # accepted evaluation rather than migration by assertion.
+            upgraded = copy.deepcopy(dict(raw_origin))
+            upgraded["schema_id"] = (
+                Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+            )
+            upgraded["producer_id"] = Q4_LEGACY_ALGORITHMIC_PRODUCER_ID
+            upgraded["accepted_core_sha256"] = (
+                q4_accepted_algorithmic_update_sha256(
+                    producer_id=Q4_LEGACY_ALGORITHMIC_PRODUCER_ID,
+                    num_layers=layers,
+                    parent_plastic_strain=upgraded["parent_plastic_strain"],
+                    parent_alpha=upgraded["parent_alpha"],
+                    plastic_strain=made.get("plastic_strain", ()),
+                    alpha=made.get("alpha", ()),
+                    layer_strain=made.get("layer_strain", ()),
+                )
+            )
+            made[_Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY] = upgraded
         binding = self._committed_current_binding_payload(
             mesh,
             material,
@@ -4627,12 +4797,28 @@ class QualifiedE4PLShellElement(
             raise ValueError(
                 "qualified Q4 committed displacement disagrees with its state seal"
             )
+        origin_schema_id = binding.get("algorithmic_origin_schema_id")
+        if origin_schema_id not in {
+            Q4_ALGORITHMIC_ORIGIN_SCHEMA_V1,
+            Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID,
+        }:
+            raise ValueError(
+                "qualified Q4 committed state origin schema is incompatible"
+            )
+        raw_origin = state.get(_Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY)
+        if isinstance(raw_origin, Mapping) and (
+            raw_origin.get("schema_id") != origin_schema_id
+        ):
+            raise ValueError(
+                "qualified Q4 committed state origin and binding disagree"
+            )
         expected_payload = self._committed_current_binding_payload(
             mesh,
             material,
             displacement,
             state,
             layers,
+            algorithmic_origin_schema_id=str(origin_schema_id),
         )
         expected_digest = canonical_sha256(expected_payload)
         expected = {
@@ -5728,6 +5914,14 @@ class QualifiedE4PLShellElement(
                 "qualified Q4 committed tangent violates its production "
                 "decomposition or symmetry bound"
             )
+        raw_origin = committed_state.get(
+            _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY
+        )
+        verified_origin_schema_id = (
+            str(raw_origin["schema_id"])
+            if isinstance(raw_origin, Mapping)
+            else Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+        )
         readonly: Dict[str, Any] = {
             "state_digest": state_digest,
             "state_binding_verified": True,
@@ -5735,7 +5929,7 @@ class QualifiedE4PLShellElement(
                 "sealed_accepted_algorithmic_origin_plus_transient_components"
             ),
             "algorithmic_origin_schema_id": (
-                Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_SCHEMA_ID
+                verified_origin_schema_id
             ),
             "algorithmic_origin_verified": True,
             "decomposition_policy_id": (

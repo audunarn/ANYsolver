@@ -84,6 +84,7 @@ from .nonlinear_analysis_diagnostics import (
 )
 from .nonlinear_state import (
     NonlinearStateStore,
+    Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
     StateMaterializationPolicy,
     StateTransactionError,
     commit_state_candidate,
@@ -1243,6 +1244,7 @@ def _assemble_nonlinear_system_unchecked(
                     trial_state,
                     int(num_layers),
                     tangent_evaluated=bool(tangent),
+                    producer_id=Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
                 )
             if curve is not None:
                 # We need layer_stress for outputs if people use it, let's keep it simple: we can omit it if not strictly required,
