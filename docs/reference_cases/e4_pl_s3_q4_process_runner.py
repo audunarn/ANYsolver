@@ -42,8 +42,8 @@ WORKER_COMPLETION_SCHEMA = "anysolver.e4-pl-s3-q4-worker-completion-v2"
 CYCLE_COMPLETION_CERTIFICATE_SCHEMA = (
     "anysolver.e4-pl-s3-q4-cycle-completion-certificate-v1"
 )
-_VALIDATOR_BYTES = 353189
-_VALIDATOR_SHA256 = "91a316f07f29262306eaa115f458e516ea3e6e789f021af0f5c8a29ab78d989e"
+_VALIDATOR_BYTES = 360710
+_VALIDATOR_SHA256 = "822efe21379cd71438f1f06d7e79243bda5cb493af71b150f75628be21c36858"
 _RESOURCE_UNPROVEN_TREE = threading.Event()
 _EARLY_RESOURCE_TIMEOUT_POLICY = {
     "taskkill": Path(r"C:\Windows\System32\taskkill.exe"),

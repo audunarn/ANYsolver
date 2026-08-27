@@ -162,6 +162,22 @@ V22_REQUEST_IDS = (
     "bd0310232b0143b9abbaf3e548170d7a",
     "33fd9c00f47c4324bd17061ebf76ce07",
 )
+V23_REJECTED_SERIALIZATION_REQUEST_IDS = (
+    "fa254b4780d243cf8f6c36680d996e4b",
+    "cae8ee0cade34bdb89098e12e91b4965",
+    "fea3e30dfa914f41a07af4952a516be6",
+    "faf13a508e6f419d8bb443b74edc1d39",
+    "a209f42d2c06441a8300095752e29737",
+    "b53ea9b8748f4c7b8e99d2e9d137f015",
+)
+V23_REQUEST_IDS = (
+    "191ea65f7d9043e89b9ff6e3db68ef37",
+    "9ef8a9d563d84af18c080929b1a657fe",
+    "c8007d3b1e7e4fa9b360e71f17698e32",
+    "048849a5cef740e38a3327d8b1a51797",
+    "97f6b02b724342d5a9a0a449ab1c03be",
+    "e6e77166be624f11ad8525224f2700ad",
+)
 V9_SUPERSEDED_REQUEST_IDS = (
     "99c2fcc3c6e84c7c99408023e5dc33a4",
     "5c7e14b9ec54493eab0c07b65b9ea060",
@@ -5626,6 +5642,151 @@ def _validate_v22_request_serialization_incident(
     return incident
 
 
+def _validate_attempt_22_aggregate_serialization_incident(
+    value: Any, location: str
+) -> dict[str, Any]:
+    """Bind the completed v22 workers and rejected noncanonical aggregate."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "blocked_closeout",
+            "contract",
+            "execution_authorization_commit",
+            "external_graphs",
+            "failure",
+            "preserved_ref",
+            "repository_evidence",
+            "request_dispositions",
+            "request_ids",
+            "role",
+            "terminal",
+        },
+        location,
+    )
+    if incident != {
+        "blocked_closeout": {
+            "commit": "fd750a4ec81e8453084774c940178d857a681c88",
+            "subject": "docs: record blocked corrected S3 Q4 burn-in",
+            "tree": "a7e95d7db0566c15620badb8bf68ee696ccbe247",
+        },
+        "contract": {
+            "bytes": 330793,
+            "sha256": "c75b37d8e4aa60e330a8c21d6c05cf963845df3333d3ed93cfb39f5df2f11e7b",
+        },
+        "execution_authorization_commit": {
+            "commit": "981839cd0cdd8f64f93fd88f75d4bb818aee6c1f",
+            "subject": "docs: reauthorize corrected S3 Q4 burn-in execution",
+            "tree": "afa77ec3a88081ac3a691b255e595d9faebc1390",
+        },
+        "external_graphs": {
+            "cycle_1": {
+                "bytes": 138055,
+                "sha256": "e185f72059c11a990f7147a4b86ef153b18a4ce283f191ef0f4f8328b3411869",
+            },
+            "cycle_2": {
+                "bytes": 138055,
+                "sha256": "e185f72059c11a990f7147a4b86ef153b18a4ce283f191ef0f4f8328b3411869",
+            },
+        },
+        "failure": {
+            "canonical_gate_result_present": False,
+            "cause": "FUNCTIONAL_SOURCE_FILE_GRAPH_WINDOWS_PATH_SORT_CONFLICTS_WITH_CANONICAL_ORDINAL_SORT",
+            "clean_cycles_recorded": 0,
+            "duplicate_graph_hash_across_cycles": True,
+            "graph_file_count": 952,
+            "ordinal_order_violations_per_cycle": 10,
+            "resource_commands_completed_pass": 6,
+            "scientific_or_mechanics_contradiction": False,
+        },
+        "preserved_ref": "codex/s3-e4-pl-final-burnin-blocked-v22-fd750a4",
+        "repository_evidence": {
+            "result": {
+                "bytes": 4274,
+                "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_result.json",
+                "sha256": "b58dbd8cd110ec7d3072063a99fd0c9867595ed3e2fca88e1d2631b10bdb014c",
+            },
+            "review": {
+                "bytes": 711,
+                "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_review.json",
+                "sha256": "427cd35b039cf06f994ebdf5de0f4709f721b0508b7f84d4e00e8aea18a67d26",
+            },
+            "status": {
+                "bytes": 293,
+                "path": "docs/reference_cases/e4_pl_s3_q4_blocked_burnin_status.json",
+                "sha256": "bc2c151806d6b2fa96bc2e8d238b07bd7c4ca2ba3b3445b994b51260232c372b",
+            },
+        },
+        "request_dispositions": [
+            "COMPLETED_PASS_EXECUTED_ONCE_DO_NOT_REUSE",
+            "COMPLETED_PASS_EXECUTED_ONCE_DO_NOT_REUSE",
+            "COMPLETED_PASS_EXECUTED_ONCE_DO_NOT_REUSE",
+            "COMPLETED_PASS_EXECUTED_ONCE_DO_NOT_REUSE",
+            "COMPLETED_PASS_EXECUTED_ONCE_DO_NOT_REUSE",
+            "COMPLETED_PASS_EXECUTED_ONCE_DO_NOT_REUSE",
+        ],
+        "request_ids": list(V22_REQUEST_IDS),
+        "role": "PRESERVED_BLOCKED_SERIALIZATION_INCIDENT_ONLY",
+        "terminal": "BLOCKED_E4_PL_S3_Q4_BURN_IN_GATE",
+    }:
+        raise EvidenceError(f"{location} mismatch")
+    return incident
+
+
+def _validate_v23_request_serialization_incident(
+    value: Any, location: str
+) -> dict[str, Any]:
+    """Bind the second malformed, unapproved request-draft batch."""
+
+    incident = _exact_keys(
+        value,
+        {
+            "cause",
+            "ledger_occurrences",
+            "request_disposition",
+            "request_ids",
+            "request_records",
+            "role",
+        },
+        location,
+    )
+    expected = [
+        (1131, "918737969b6d67462f2d81573272dd558f8b1c945476fc6a58a57b67871a265b", "53741af34c49ba9515340bc885914bb7272b7a91e65188bf5465ddc3b4240f7e"),
+        (878, "7d1b4143af7c65443eab463daac3f27d684dcbb0b80879b9ee8424a64419e631", "8d7321985dfcd1300efa258c2eac312f260a0e404c1137f7114af8a12d7f0e39"),
+        (1042, "b878d29e2452790f8a9c8f6e232800ead46e00c966550fbc95a5e53a38375a5d", "4eaaf4625cc6d8b40c81b1e8b8c3bff8bddacfc168430d47989545f11fecd434"),
+        (1131, "66b7c5356033071f40c78b5bbdf059da0c429e0bcb3a2ef5eedf973438368979", "de9a391d07a6d1398fbd4d0bce76d0a6aebbc636a8aa5304a6d25714fc2cacff"),
+        (878, "7d1b4143af7c65443eab463daac3f27d684dcbb0b80879b9ee8424a64419e631", "f3329c5b28e80cbc035b75dff5571e5e10639aaf8a03a43d551c2ac9fe47ba85"),
+        (1042, "b878d29e2452790f8a9c8f6e232800ead46e00c966550fbc95a5e53a38375a5d", "c47b68b38320a4bd6c551d926520b34f15634d6061ea86c3a927d97988343d44"),
+    ]
+    if (
+        incident["cause"]
+        != "POWERSHELL_EXPANDED_LITERAL_ENVIRONMENT_TOKENS_DURING_REQUEST_SERIALIZATION"
+        or incident["ledger_occurrences"] != 0
+        or incident["request_ids"] != list(V23_REJECTED_SERIALIZATION_REQUEST_IDS)
+        or incident["request_disposition"]
+        != "NOT_APPROVED_NOT_CONSUMED_SUPERSEDED"
+        or incident["role"] != "PRESERVED_REJECTED_REQUEST_SERIALIZATION_ONLY"
+    ):
+        raise EvidenceError(f"{location} disposition mismatch")
+    records = incident["request_records"]
+    if not isinstance(records, list) or len(records) != len(expected):
+        raise EvidenceError(f"{location}.request_records mismatch")
+    for index, (size, command_digest, request_digest) in enumerate(expected):
+        row = _exact_keys(
+            records[index],
+            {"bytes", "command_sha256", "request_id", "request_sha256"},
+            f"{location}.request_records[{index}]",
+        )
+        if row != {
+            "bytes": size,
+            "command_sha256": command_digest,
+            "request_id": V23_REJECTED_SERIALIZATION_REQUEST_IDS[index],
+            "request_sha256": request_digest,
+        }:
+            raise EvidenceError(f"{location}.request_records[{index}] mismatch")
+    return incident
+
+
 def _validate_review_hygiene(value: Any, location: str) -> dict[str, Any]:
     """Require reviews to leave the frozen candidate byte-for-byte clean."""
 
@@ -5776,14 +5937,14 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
     }:
         raise EvidenceError("cycle completion certificate filenames mismatch")
     if contract["study_id"] != (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v22"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v23"
     ):
         raise EvidenceError("burn-in study identity mismatch")
     if not isinstance(contract["non_resource_commands"], dict) or contract[
         "non_resource_commands"
     ].get("output_root") != (
         r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
-        r"\s3-q4-final-freeze-correction-21"
+        r"\s3-q4-final-freeze-correction-22"
     ):
         raise EvidenceError("v22 burn-in output root mismatch")
     execution = _exact_keys(
@@ -5898,7 +6059,9 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             "failed_v19_quick_preflight_attempt",
             "failed_v20_nonresource_preflight_attempt",
             "failed_v21_functional_and_aggregate_attempt",
+            "failed_v22_aggregate_serialization_attempt",
             "failed_v22_request_serialization_attempt",
+            "failed_v23_request_serialization_attempt",
             "paused_checkpoint",
         },
         "$contract.background_inputs",
@@ -5979,6 +6142,14 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         background["failed_v22_request_serialization_attempt"],
         "$contract.background_inputs.failed_v22_request_serialization_attempt",
     )
+    v22_aggregate_serialization = _validate_attempt_22_aggregate_serialization_incident(
+        background["failed_v22_aggregate_serialization_attempt"],
+        "$contract.background_inputs.failed_v22_aggregate_serialization_attempt",
+    )
+    v23_request_serialization = _validate_v23_request_serialization_incident(
+        background["failed_v23_request_serialization_attempt"],
+        "$contract.background_inputs.failed_v23_request_serialization_attempt",
+    )
     requests = _exact_keys(
         contract["resource_requests"],
         {"cycle_1", "cycle_2"},
@@ -6000,11 +6171,11 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         or not REQUEST_ID_RE.fullmatch(request_id)
         for request_id in current_request_ids
     ):
-        raise EvidenceError("v22 resource request IDs are incomplete or malformed")
+        raise EvidenceError("v23 resource request IDs are incomplete or malformed")
     if len(set(current_request_ids)) != 6:
-        raise EvidenceError("v22 resource request IDs are not unique")
-    if current_request_ids != list(V22_REQUEST_IDS):
-        raise EvidenceError("v22 resource request IDs differ from frozen authority")
+        raise EvidenceError("v23 resource request IDs are not unique")
+    if current_request_ids != list(V23_REQUEST_IDS):
+        raise EvidenceError("v23 resource request IDs differ from frozen authority")
     historical_request_ids: set[str] = {
         *interruption["request_ids"],
         *review_contamination["request_ids"],
@@ -6025,6 +6196,8 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         *v20_nonresource_preflight["request_ids"],
         *v21_functional_and_aggregate["request_ids"],
         *v22_request_serialization["request_ids"],
+        *v22_aggregate_serialization["request_ids"],
+        *v23_request_serialization["request_ids"],
     }
     for incident_name, request_key in (
         ("failed_preflight_attempt", "resource_request_ids"),
@@ -6045,7 +6218,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
             )
         historical_request_ids.update(request_ids)
     if set(current_request_ids) & historical_request_ids:
-        raise EvidenceError("v22 resource request IDs reuse historical authority")
+        raise EvidenceError("v23 resource request IDs reuse historical authority")
     runner_inputs = _exact_keys(
         contract["runner_inputs"],
         {
@@ -6101,7 +6274,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
         {"exact_parent", "exact_paths", "path_count", "subject"},
         "$contract.authority_commit",
     )
-    if authority["exact_parent"] != "064f68d0a0754c4037e78d1883d90da9935e39e3":
+    if authority["exact_parent"] != "fd750a4ec81e8453084774c940178d857a681c88":
         raise EvidenceError("burn-in authority parent mismatch")
     expected_authority_paths = [
         "docs/reference_cases/e4_pl_s3_q4_burnin.py",

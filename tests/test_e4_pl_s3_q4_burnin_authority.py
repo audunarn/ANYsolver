@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs" / "reference_cases"
 CONTRACT_PATH = REFERENCE / "e4_pl_s3_q4_burnin_contract.json"
 VALIDATOR_PATH = REFERENCE / "e4_pl_s3_q4_burnin.py"
-CONTRACT_SHA256 = "c75b37d8e4aa60e330a8c21d6c05cf963845df3333d3ed93cfb39f5df2f11e7b"
+CONTRACT_SHA256 = "7d17830af9e4956d2e314f29f764d47487b6a8d939bee1ee6cff8b9bdf6d6dcf"
 ATTEMPT_5_CONTRACT_SHA256 = (
     "519b24c97f7a3953457922aa08514efd59e5aacfc26843c1765988e79cc1842c"
 )
@@ -36,7 +36,7 @@ ANYFEM_FREEZE = Path(
     r"C:\Github\ANYsolver\.perf2-worktrees\anyfem-e4-pl-default-routing"
 )
 CORRECTION_OUTPUT_ROOT = Path(
-    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-21"
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-q4-final-freeze-correction-22"
 )
 FAILED_ATTEMPT_1_REQUEST_IDS = [
     "228852e559ba4adca2cfd8cffd2a98c0",
@@ -213,6 +213,22 @@ REJECTED_V22_SERIALIZATION_REQUEST_IDS = [
     "ad903846e7f34e4ab510c65fa410e821",
     "67c7f552839f49ab97e3ee741534e780",
     "434bf80f6c6e494da552a7673caadc1a",
+]
+FAILED_ATTEMPT_22_REQUEST_IDS = [
+    "abcd69379be746dfbd116ace59f7f807",
+    "cdc309b9eef14bdabea9354bc34c232f",
+    "740f12a9fb7b49d98ab1545691a9c203",
+    "766fa4bcc27f43b89b76bbb47fc697fd",
+    "bd0310232b0143b9abbaf3e548170d7a",
+    "33fd9c00f47c4324bd17061ebf76ce07",
+]
+REJECTED_V23_SERIALIZATION_REQUEST_IDS = [
+    "fa254b4780d243cf8f6c36680d996e4b",
+    "cae8ee0cade34bdb89098e12e91b4965",
+    "fea3e30dfa914f41a07af4952a516be6",
+    "faf13a508e6f419d8bb443b74edc1d39",
+    "a209f42d2c06441a8300095752e29737",
+    "b53ea9b8748f4c7b8e99d2e9d137f015",
 ]
 _ACTIVE_CONTRACT_BOOTSTRAP = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
 _ACTIVE_REQUEST_ROWS = [
@@ -593,10 +609,10 @@ def _valid_result(contract: dict[str, object]) -> dict[str, object]:
 def test_contract_is_canonical_and_binds_all_local_inputs() -> None:
     contract = _load_contract()
     assert contract["study_id"] == (
-        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v22"
+        "study_e4_pl_s3_q4.corrected_opt_in_release_burnin_v23"
     )
     assert contract["authority_commit"] == {
-        "exact_parent": "064f68d0a0754c4037e78d1883d90da9935e39e3",
+        "exact_parent": "fd750a4ec81e8453084774c940178d857a681c88",
         "exact_paths": [
             "docs/reference_cases/e4_pl_s3_q4_burnin.py",
             "docs/reference_cases/e4_pl_s3_q4_burnin_contract.json",
@@ -4162,7 +4178,7 @@ def test_disabled_inner_mesh_style_policy_is_bound_consistently() -> None:
     assert policy["disposition"] == "DEFERRED_ACTIVATION_DIAGNOSTIC_ONLY"
 
 
-def test_v21_failure_and_v22_request_serialization_are_quarantined() -> None:
+def test_v21_v22_failures_and_request_serialization_are_quarantined() -> None:
     contract = _load_contract()
     v21 = contract["background_inputs"][
         "failed_v21_functional_and_aggregate_attempt"
@@ -4216,6 +4232,24 @@ def test_v21_failure_and_v22_request_serialization_are_quarantined() -> None:
     assert current_ids.isdisjoint(serialization["request_ids"])
     assert current_ids.isdisjoint(v21["request_ids"])
 
+    v22 = contract["background_inputs"][
+        "failed_v22_aggregate_serialization_attempt"
+    ]
+    assert v22["blocked_closeout"]["commit"] == (
+        "fd750a4ec81e8453084774c940178d857a681c88"
+    )
+    assert v22["failure"]["resource_commands_completed_pass"] == 6
+    assert v22["failure"]["scientific_or_mechanics_contradiction"] is False
+    assert v22["failure"]["ordinal_order_violations_per_cycle"] == 10
+    assert current_ids.isdisjoint(v22["request_ids"])
+
+    v23_serialization = contract["background_inputs"][
+        "failed_v23_request_serialization_attempt"
+    ]
+    assert v23_serialization["ledger_occurrences"] == 0
+    assert len(v23_serialization["request_ids"]) == 6
+    assert current_ids.isdisjoint(v23_serialization["request_ids"])
+
     mutated = copy.deepcopy(v21)
     mutated["failure"]["success_claim"] = True
     with pytest.raises(burnin.EvidenceError, match="failure mismatch"):
@@ -4225,6 +4259,18 @@ def test_v21_failure_and_v22_request_serialization_are_quarantined() -> None:
     mutated["ledger_occurrences"] = 1
     with pytest.raises(burnin.EvidenceError, match="ledger_occurrences"):
         burnin._validate_v22_request_serialization_incident(mutated, "$mutation")
+
+    mutated = copy.deepcopy(v22)
+    mutated["failure"]["scientific_or_mechanics_contradiction"] = True
+    with pytest.raises(burnin.EvidenceError, match="mismatch"):
+        burnin._validate_attempt_22_aggregate_serialization_incident(
+            mutated, "$mutation"
+        )
+
+    mutated = copy.deepcopy(v23_serialization)
+    mutated["request_records"][0]["bytes"] += 1
+    with pytest.raises(burnin.EvidenceError, match="request_records"):
+        burnin._validate_v23_request_serialization_incident(mutated, "$mutation")
 
 
 def _activation_stage_mesh_style_wave_lifecycle_excluded_from_opt_in_burnin(
@@ -5811,6 +5857,8 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
                 *FAILED_ATTEMPT_20_REQUEST_IDS,
                 *FAILED_ATTEMPT_21_REQUEST_IDS,
                 *REJECTED_V22_SERIALIZATION_REQUEST_IDS,
+                *FAILED_ATTEMPT_22_REQUEST_IDS,
+                *REJECTED_V23_SERIALIZATION_REQUEST_IDS,
             }
         )
     assert [row["lane"] for row in rows[:3]] == ["functional", "anyfem", "performance"]
@@ -5849,6 +5897,11 @@ def test_external_request_ids_commands_and_hashes_are_preregistered() -> None:
     assert all(
         request_id not in ledger_text
         for request_id in REJECTED_V22_SERIALIZATION_REQUEST_IDS
+    )
+    assert all(request_id not in ledger_text for request_id in live_ids)
+    assert all(
+        request_id not in ledger_text
+        for request_id in REJECTED_V23_SERIALIZATION_REQUEST_IDS
     )
     assert [
         state
@@ -7266,3 +7319,34 @@ def test_production_boundary_keeps_q4_and_s3_rollbacks_available() -> None:
     assert contract["adjudication"]["success_terminal"] == (
         "PROVISIONAL_GO_E4_PL_S3_COMPANION_OPT_IN_RELEASE"
     )
+
+
+def test_functional_source_graph_uses_canonical_ordinal_path_order(
+    tmp_path: Path,
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "e4_pl_s3_q4_gate_ordinal_graph",
+        ROOT / "scripts" / "run_e4_pl_burnin_gate.py",
+    )
+    assert spec is not None and spec.loader is not None
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    for relative in (
+        "docs/agent_plans/s4_lowercase.md",
+        "docs/agent_plans/S4_UPPERCASE.md",
+        "docs/ARCHITECTURE.md",
+        "docs/reference_cases/README.md",
+        "README.md",
+    ):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(relative, encoding="utf-8")
+
+    rows, summary = gate._functional_file_graph(
+        tmp_path,
+        absolute_deadline=time.monotonic() + 10.0,
+    )
+    observed = [row["path"] for row in rows]
+    assert observed == sorted(observed)
+    assert summary["files"] == len(observed)

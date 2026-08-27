@@ -2651,7 +2651,7 @@ def _functional_file_graph(
         _functional_deadline_check(absolute_deadline, "source-graph enumeration")
         if item.is_file():
             paths.append(item)
-    for path in sorted(paths):
+    for path in sorted(paths, key=lambda item: item.relative_to(root).as_posix()):
         _functional_deadline_check(absolute_deadline, "source-graph hashing")
         if path.is_symlink() or _is_reparse_point(path):
             raise EvidenceError(f"functional source graph contains a reparse file: {path}")
@@ -6367,7 +6367,10 @@ def _extract_git_archive(archive: Path, destination: Path) -> dict[str, Any]:
                 raise RuntimeError(f"duplicate Git archive target: {name}") from exc
 
     graph = []
-    for path in sorted(item for item in destination.rglob("*") if item.is_file()):
+    for path in sorted(
+        (item for item in destination.rglob("*") if item.is_file()),
+        key=lambda item: item.relative_to(destination).as_posix(),
+    ):
         relative = path.relative_to(destination).as_posix()
         graph.append(
             {"bytes": path.stat().st_size, "path": relative, "sha256": _sha256_file(path)}
