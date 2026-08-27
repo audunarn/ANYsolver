@@ -56,23 +56,20 @@ def test_capability_matrix_reflects_blocked_gates() -> None:
     )
     assert by_feature["curved_thin_stiffened_shell"].status == "not_evaluated"
     s3 = by_feature["qualified_s3_companion_shell_candidate"]
-    assert s3.status == "not_qualified"
+    assert s3.status == "qualified"
     assert s3.release_gate == "qualified_s3_companion_activation"
     assert s3.limits == {
-        "default_formulation": "legacy-s3",
+        "default_formulation": "e4-pl-s3",
         "explicit_selectors": ["e4-pl-s3", "qualified-s3"],
         "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+        "legacy_rollback": "legacy-s3",
         "shell_topology": "S3",
     }
-    assert s3.verification_cases == []
-    assert s3.gate_blockers == [
-        "S3_INDEPENDENT_LOCAL_ORACLE_AND_INTERVAL",
-        "S3_CURRENT_STATE_BUCKLING",
-        "S3_DIRECTOR_OFFSET_AND_RESTART",
-        "S3_MIXED_MESH_CAMPAIGN_TWO_CYCLES",
-        "S3_PERFORMANCE_AND_BATCH",
-        "S3_ECOSYSTEM_CROSS_WHEEL",
+    assert s3.verification_cases == [
+        "E4_PL_S3_COMPANION_LOCAL_FORMULATION",
+        "E4_PL_S3_MIXED_MESH_DEFAULT_ACTIVATION",
     ]
+    assert s3.gate_blockers == []
     assert by_feature["unsupported_general_purpose_fe"].status == "unsupported"
 
 
@@ -110,9 +107,7 @@ def test_scope_statement_and_artifact_writer() -> None:
 
     assert scope["production_release_status"] == "not_qualified"
     assert "unsupported_general_purpose_fe" in scope["unsupported"]
-    assert "qualified_s3_companion_shell_candidate" in scope[
-        "conditionally_supported"
-    ]
+    assert "qualified_s3_companion_shell_candidate" in scope["verified"]
     assert any(
         "Follower pressure is limited to nonlinear static and arc-length equilibrium"
         in limitation

@@ -6,8 +6,9 @@ requests need a different property: the current merge-test inventory must run
 on every supported host, including tests added after the burn-in closeout.
 
 This coordinator balances whole test modules over a small number of isolated
-pytest processes.  It never retries a worker, and it terminates every launched
-process tree when the shared wall-clock limit expires.
+pytest processes.  It never retries a worker.  Ordinary CI has no elapsed-time
+classification; a positive wall-clock limit remains available as an explicit
+manual diagnostic option.
 """
 
 from __future__ import annotations
@@ -50,7 +51,6 @@ DEDICATED_LANE_NODES = (
     ),
 )
 DEFAULT_WORKERS = 4
-DEFAULT_TIMEOUT_SECONDS = 1_200
 TIMEOUT_EXIT_CODE = 124
 
 
@@ -200,9 +200,11 @@ def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0
         worker.wait()
 
 
-def run(*, workers: int, timeout_seconds: int) -> int:
-    if isinstance(timeout_seconds, bool) or timeout_seconds < 1:
-        raise ValueError("timeout_seconds must be a positive integer")
+def run(*, workers: int, timeout_seconds: int | None = None) -> int:
+    if timeout_seconds is not None and (
+        isinstance(timeout_seconds, bool) or timeout_seconds < 1
+    ):
+        raise ValueError("timeout_seconds must be None or a positive integer")
     modules = merge_test_modules()
     partitions = partition_modules(modules, workers)
     temp_parent = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())).resolve()
@@ -235,9 +237,9 @@ def run(*, workers: int, timeout_seconds: int) -> int:
                 )
             )
 
-        deadline = started + timeout_seconds
+        deadline = None if timeout_seconds is None else started + timeout_seconds
         while any(worker.poll() is None for worker in launched):
-            if time.monotonic() >= deadline:
+            if deadline is not None and time.monotonic() >= deadline:
                 print(
                     f"[portable-ci] shared {timeout_seconds}-second limit reached",
                     file=sys.stderr,
@@ -261,9 +263,7 @@ def run(*, workers: int, timeout_seconds: int) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
-    parser.add_argument(
-        "--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS
-    )
+    parser.add_argument("--timeout-seconds", type=int, default=None)
     return parser
 
 

@@ -19,8 +19,8 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-EXPECTED_REQUIREMENT = "ANYfileio>=0.1,<0.3"
-EXPECTED_SPECIFIER = SpecifierSet(">=0.1,<0.3")
+EXPECTED_REQUIREMENT = "ANYfileio>=0.2.1,<0.3"
+EXPECTED_SPECIFIER = SpecifierSet(">=0.2.1,<0.3")
 RELEVANT_PACKAGES = {
     "anymaterial",
     "anygeometry",
@@ -328,8 +328,23 @@ def test_source_declares_exact_anyfileio_compatibility_range() -> None:
     assert _source_fileio_requirements() == [EXPECTED_REQUIREMENT]
 
 
+def test_source_declares_coordinated_s3_foundation_floors() -> None:
+    dependencies = _project(Path(__file__).resolve().parents[1])["dependencies"]
+    selected = {
+        canonicalize_name(Requirement(item).name): item
+        for item in dependencies
+        if canonicalize_name(Requirement(item).name)
+        in {"anymaterial", "anymesher", "anyfileio"}
+    }
+    assert selected == {
+        "anymaterial": "ANYmaterial>=0.1.1,<0.2",
+        "anymesher": "ANYmesher>=0.3.2,<0.4",
+        "anyfileio": "ANYfileio>=0.2.1,<0.3",
+    }
+
+
 def test_fileio_requirement_accepts_canonicalized_specifier_order() -> None:
-    _assert_expected_fileio_requirement("ANYfileio<0.3,>=0.1")
+    _assert_expected_fileio_requirement("ANYfileio<0.3,>=0.2.1")
 
 
 def test_current_source_origins_and_complete_graphs() -> None:
@@ -384,7 +399,12 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert set(re.findall(r"(?m)^\s*- uses: (\S+)\s*$", combined)) == action_refs
 
     ci_header, ci_jobs = ci.split("jobs:\n", maxsplit=1)
-    assert ci_header == "name: Tests\n\non:\n  push:\n  pull_request:\n\n"
+    assert ci_header == (
+        "name: Tests\n\non:\n  push:\n  pull_request:\n\n"
+        "# DRAFT: the REBIND_FINAL_* values are deliberately invalid Git refs.  Final\n"
+        "# activation authorization must replace all four from the reviewed candidate\n"
+        "# graph; until then ordinary CI fails closed during sibling checkout.\n\n"
+    )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
         "pytest",
         "anymesher-compatibility",
@@ -401,6 +421,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", publish_jobs) == [
         "dependency-gate",
         "build",
+        "release-assets",
         "testpypi",
         "pypi",
     ]
@@ -409,18 +430,14 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert ci_hashes == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
-        "4626887667f4c251479d26f321b9e73b046a2783",
-        "f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-        "939e047f19177692c861a68eaef0eaa18b2976c5",
-        "05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-        "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-        "0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
-        "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-        "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
-        "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
-        "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
-        "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
     }
+    placeholders = {
+        "REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT",
+        "REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
+        "REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
+        "REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
+    }
+    assert set(re.findall(r"REBIND_FINAL_[A-Z0-9_]+_COMMIT", ci)) == placeholders
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
@@ -466,6 +483,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         setup_ref,
         upload_ref,
     ]
+    assert action_sequence(job_block(publish, "release-assets")) == [upload_ref]
     assert action_sequence(job_block(publish, "testpypi")) == [
         download_ref,
         publish_ref,
@@ -486,44 +504,22 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     current_checkouts = [
         (
             "audunarn/ANYmaterial",
-            "4626887667f4c251479d26f321b9e73b046a2783",
+            "REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT",
             ".ecosystem/ANYmaterial",
         ),
         (
             "audunarn/ANYgeometry",
-            "939e047f19177692c861a68eaef0eaa18b2976c5",
+            "REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
             ".ecosystem/ANYgeometry",
         ),
         (
             "audunarn/ANYmesh",
-            "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
+            "REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
             ".ecosystem/ANYmesh",
         ),
         (
             "audunarn/ANYfileIO",
-            "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-            ".ecosystem/ANYfileIO",
-        ),
-    ]
-    q1m_checkouts = [
-        (
-            "audunarn/ANYmaterial",
-            "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
-            ".ecosystem/ANYmaterial",
-        ),
-        (
-            "audunarn/ANYgeometry",
-            "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
-            ".ecosystem/ANYgeometry",
-        ),
-        (
-            "audunarn/ANYmesh",
-            "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
-            ".ecosystem/ANYmesh",
-        ),
-        (
-            "audunarn/ANYfileIO",
-            "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+            "REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
             ".ecosystem/ANYfileIO",
         ),
     ]
@@ -565,7 +561,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             ),
         ],
     }
-    assert checkout_pattern.findall(job_block(ci, "pytest")) == q1m_checkouts
+    assert checkout_pattern.findall(job_block(ci, "pytest")) == current_checkouts
     for name in ("wheel", "numba", "pardiso"):
         block = job_block(ci, name)
         assert checkout_pattern.findall(block) == current_checkouts
@@ -634,38 +630,24 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert matrix_rows(mesh_job) == "\n".join(
         (
-            '          - anymesher-version: "0.1.0"',
-            "            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-            '            anygeometry-version: "0.2.0"',
-            "            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-            '            anyfileio-version: "0.1.0"',
-            "            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
-            "            anyfileio-install: .ecosystem/ANYfileIO",
-            '          - anymesher-version: "0.2.1"',
-            "            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-            '            anygeometry-version: "0.2.1"',
-            "            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5",
-            '            anyfileio-version: "0.2.0"',
-            "            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
+            '          - anymesher-version: "0.3.2"',
+            "            anymesher-ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
+            '            anygeometry-version: "0.4.1"',
+            "            anygeometry-ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
+            '            anyfileio-version: "0.2.1"',
+            "            anyfileio-ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
             "            anyfileio-install: .ecosystem/ANYfileIO[semantics]",
         )
     )
     assert matrix_rows(fileio_job) == "\n".join(
         (
-            '          - anyfileio-version: "0.1.0"',
-            "            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
-            "            anyfileio-install: .ecosystem/ANYfileIO",
-            '            anymesher-version: "0.1.0"',
-            "            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-            '            anygeometry-version: "0.2.0"',
-            "            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-            '          - anyfileio-version: "0.2.0"',
-            "            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
+            '          - anyfileio-version: "0.2.1"',
+            "            anyfileio-ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT",
             "            anyfileio-install: .ecosystem/ANYfileIO[semantics]",
-            '            anymesher-version: "0.2.1"',
-            "            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-            '            anygeometry-version: "0.2.1"',
-            "            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5",
+            '            anymesher-version: "0.3.2"',
+            "            anymesher-ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT",
+            '            anygeometry-version: "0.4.1"',
+            "            anygeometry-ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT",
         )
     )
 
@@ -684,8 +666,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert probe_environment(mesh_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.3.1"',
-            '          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
+            '          EXPECTED_ANYMATERIAL_VERSION: "0.1.1"',
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
@@ -694,26 +676,19 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert probe_environment(fileio_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.3.1"',
-            '          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
+            '          EXPECTED_ANYMATERIAL_VERSION: "0.1.1"',
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
             "",
         )
     )
-    for value in (
-        "05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-        "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-        "f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-        "939e047f19177692c861a68eaef0eaa18b2976c5",
-        "0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
-        "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-    ):
+    for value in placeholders:
         assert mesh_job.count(value) == 1
         assert fileio_job.count(value) == 1
-    assert mesh_job.count("          - anymesher-version:") == 2
-    assert fileio_job.count("          - anyfileio-version:") == 2
+    assert mesh_job.count("          - anymesher-version:") == 1
+    assert fileio_job.count("          - anyfileio-version:") == 1
     expected_install = (
         "python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry "
         '.ecosystem/ANYmesh "${{ matrix.anyfileio-install }}"'
@@ -732,7 +707,18 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "    runs-on: ubuntu-latest\n"
     )
     assert job_preamble(job_block(publish, "build")) == (
-        "  build:\n    needs: dependency-gate\n    runs-on: ubuntu-latest\n"
+        "  build:\n"
+        "    if: github.event_name == 'workflow_dispatch'\n"
+        "    needs: dependency-gate\n"
+        "    runs-on: ubuntu-latest\n"
+    )
+    assert job_preamble(job_block(publish, "release-assets")) == (
+        "  release-assets:\n"
+        "    if: github.event_name == 'release'\n"
+        "    needs: dependency-gate\n"
+        "    runs-on: ubuntu-latest\n"
+        "    permissions:\n"
+        "      contents: read\n"
     )
     assert job_preamble(job_block(publish, "testpypi")) == (
         "  testpypi:\n"
@@ -748,7 +734,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert job_preamble(job_block(publish, "pypi")) == (
         "  pypi:\n"
         "    if: github.event_name == 'release'\n"
-        "    needs: build\n"
+        "    needs: release-assets\n"
         "    runs-on: ubuntu-latest\n"
         "    environment:\n"
         "      name: pypi\n"
@@ -769,22 +755,57 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     ) == 1
     assert "repository-url:" not in pypi_job
     assert publish.count("repository-url:") == 1
+    release_assets_job = job_block(publish, "release-assets")
+    assert "gh release download" in release_assets_job
+    assert "SHA256SUMS" in release_assets_job
+    assert "hashlib.sha256" in release_assets_job
+    assert "python -m build" not in release_assets_job
+    assert "python -m build" not in pypi_job
+    assert "name: qualified-release-distributions" in release_assets_job
+    assert "name: qualified-release-distributions" in pypi_job
+    assert "EXPECTED_TAG: v0.4.0" in release_assets_job
+    assert "if [ \"$RELEASE_TAG\" != \"$EXPECTED_TAG\" ]" in release_assets_job
+    assert "anysolver-0.4.0-py3-none-any.whl" in release_assets_job
+    assert "anysolver-0.4.0.tar.gz" in release_assets_job
+    assert "set(names) != expected_names" in release_assets_job
+    assert "expected_dependencies = {" in release_assets_job
+    assert 'message.get("Version") != "0.4.0"' in release_assets_job
+    assert "dependency floors differ" in release_assets_job
+    assert "zipfile.ZipFile" in release_assets_job
+    assert "tarfile.open" in release_assets_job
+    assert "--pattern '*.whl'" not in release_assets_job
+    assert "--pattern '*.tar.gz'" not in release_assets_job
 
     permission_bodies: list[str] = []
-    for name in ("dependency-gate", "build", "testpypi", "pypi"):
+    for name in (
+        "dependency-gate",
+        "build",
+        "release-assets",
+        "testpypi",
+        "pypi",
+    ):
         block = job_block(publish, name)
         match = re.search(
             r"(?m)^    permissions:\n((?:^      [^\n]*\n)+)", block
         )
         if match is not None:
             permission_bodies.append(match.group(1))
-    assert permission_bodies == ["      id-token: write\n"] * 2
+    assert permission_bodies == [
+        "      contents: read\n",
+        "      id-token: write\n",
+        "      id-token: write\n",
+    ]
     assert "permissions:" not in job_block(publish, "dependency-gate")
     assert "permissions:" not in job_block(publish, "build")
     assert "SIBLINGS" not in ci
     assert "git+https://" not in ci
     assert ci.count("python -m pip check") == 8
-    assert '"ANYfileio>=0.1,<0.3"' in publish
+    for requirement in (
+        '"ANYmaterial>=0.1.1,<0.2"',
+        '"ANYmesher>=0.3.2,<0.4"',
+        '"ANYfileio>=0.2.1,<0.3"',
+    ):
+        assert publish.count(requirement) == 1
 
 
 def _main() -> int:

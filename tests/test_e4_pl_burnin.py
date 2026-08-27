@@ -552,6 +552,7 @@ def test_migration_surface_is_mechanics_free_and_production_bypasses_stay_closed
     assert legacy_calls == {
         "src/anysolver/elements.py",
         "tests/test_performance_improvements.py",
+        "tests/test_qualified_interface_recovery_batch.py",
     }
     assert routed_scripts >= {
         "scripts/benchmark_advanced_s4_batches.py",
@@ -635,14 +636,16 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
         encoding="utf-8"
     )
-    assert (
-        "python scripts/run_portable_ci.py --workers 4 --timeout-seconds 1200"
-        in workflow
-    )
+    assert "python scripts/run_portable_ci.py --workers 4" in workflow
+    assert "--timeout-seconds" not in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
-    for authority in gate.strict_json_load(CONTRACT)["sibling_authority"].values():
-        if authority["commit"] != "ba8b21b9cf2732168b099cfedc7508789bdcfbb3":
-            assert authority["commit"] in workflow
+    # The immutable burn-in contract retains its historical sibling graph.
+    # Current candidate CI must instead fail closed until the coordinated
+    # 0.4.0 graph's four exact remote refs are rebound.
+    assert "REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT" in workflow
+    assert "REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT" in workflow
+    assert "REBIND_FINAL_ANYMESH_0_3_2_COMMIT" in workflow
+    assert "REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT" in workflow
 
 
 def test_portable_ci_inventory_is_unique_and_excludes_long_lanes() -> None:
@@ -678,6 +681,13 @@ def test_portable_ci_partition_is_deterministic_disjoint_and_complete(
 def test_portable_ci_partition_rejects_invalid_worker_counts(workers: int) -> None:
     with pytest.raises(ValueError, match="positive integer"):
         portable_ci.partition_modules(("a.py",), workers)
+
+
+def test_portable_ci_elapsed_limit_is_manual_and_optional() -> None:
+    ordinary = portable_ci._parser().parse_args([])
+    manual = portable_ci._parser().parse_args(["--timeout-seconds", "1200"])
+    assert ordinary.timeout_seconds is None
+    assert manual.timeout_seconds == 1200
 
 
 def test_portable_ci_worker_is_headless_isolated_and_single_threaded(

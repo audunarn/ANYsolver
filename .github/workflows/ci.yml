@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+# DRAFT: the REBIND_FINAL_* values are deliberately invalid Git refs.  Final
+# activation authorization must replace all four from the reviewed candidate
+# graph; until then ordinary CI fails closed during sibling checkout.
+
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
@@ -23,25 +27,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 74100a95988a633e311f8eb21df3d24cbb6bcc0d
+          ref: REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 6fb06c8b68b73dd0630aa41ac81ef999ef610457
+          ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf
+          ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 9b1e5adea77a20155bbc23866af8c9aad853ddfd
+          ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -57,7 +61,7 @@ jobs:
       - run: python -c "import anysolver; print(anysolver.__version__)"
       # The accepted S3/Q4 burn-in runner is immutable, machine-bound evidence.
       # Ordinary CI uses the current portable inventory and does not reopen it.
-      - run: python scripts/run_portable_ci.py --workers 4 --timeout-seconds 1200
+      - run: python scripts/run_portable_ci.py --workers 4
 
   anymesher-compatibility:
     name: ANYmesher ${{ matrix.anymesher-version }} compatibility
@@ -66,19 +70,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - anymesher-version: "0.1.0"
-            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96
-            anygeometry-version: "0.2.0"
-            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288
-            anyfileio-version: "0.1.0"
-            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d
-            anyfileio-install: .ecosystem/ANYfileIO
-          - anymesher-version: "0.2.1"
-            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
-            anygeometry-version: "0.2.1"
-            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5
-            anyfileio-version: "0.2.0"
-            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          - anymesher-version: "0.3.2"
+            anymesher-ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT
+            anygeometry-version: "0.4.1"
+            anygeometry-ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT
+            anyfileio-version: "0.2.1"
+            anyfileio-ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT
             anyfileio-install: .ecosystem/ANYfileIO[semantics]
 
     steps:
@@ -86,7 +83,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -122,8 +119,8 @@ jobs:
       - name: Probe the installed endpoint outside the checkout
         shell: pwsh
         env:
-          EXPECTED_ANYSOLVER_VERSION: "0.3.1"
-          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"
+          EXPECTED_ANYSOLVER_VERSION: "0.4.0"
+          EXPECTED_ANYMATERIAL_VERSION: "0.1.1"
           EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}
           EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}
           EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}
@@ -146,27 +143,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - anyfileio-version: "0.1.0"
-            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d
-            anyfileio-install: .ecosystem/ANYfileIO
-            anymesher-version: "0.1.0"
-            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96
-            anygeometry-version: "0.2.0"
-            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288
-          - anyfileio-version: "0.2.0"
-            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          - anyfileio-version: "0.2.1"
+            anyfileio-ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT
             anyfileio-install: .ecosystem/ANYfileIO[semantics]
-            anymesher-version: "0.2.1"
-            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
-            anygeometry-version: "0.2.1"
-            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+            anymesher-version: "0.3.2"
+            anymesher-ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT
+            anygeometry-version: "0.4.1"
+            anygeometry-ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -202,8 +192,8 @@ jobs:
       - name: Probe the installed endpoint outside the checkout
         shell: pwsh
         env:
-          EXPECTED_ANYSOLVER_VERSION: "0.3.1"
-          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"
+          EXPECTED_ANYSOLVER_VERSION: "0.4.0"
+          EXPECTED_ANYMATERIAL_VERSION: "0.1.1"
           EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}
           EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}
           EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}
@@ -233,25 +223,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -300,25 +290,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -346,25 +336,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: REBIND_FINAL_ANYMATERIAL_0_1_1_COMMIT
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: REBIND_FINAL_ANYGEOMETRY_0_4_1_COMMIT
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: REBIND_FINAL_ANYMESH_0_3_2_COMMIT
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: REBIND_FINAL_ANYFILEIO_0_2_1_COMMIT
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065

@@ -571,7 +571,7 @@ def _shell_director_kwargs(
     direction, so qualified Q4 construction must not infer that direction from
     connectivity winding.  Normalized generated geometry may supply the exact
     authority as ``reference_normal`` (and, optionally, ``director_polarity``).
-    The authority is valid only for the qualified Q4 or opt-in qualified S3
+    The authority is valid only for the qualified Q4 or current-policy qualified S3
     route.  A legacy request fails closed instead of discarding or interpreting
     formulation-specific state.
     """

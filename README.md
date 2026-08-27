@@ -21,28 +21,23 @@ python -m pip install -e C:\Github\ANYfileIO
 python -m pip install -e C:\Github\ANYsolver
 ```
 
-### Release order for the 0.3 line
+### Release order for the 0.4 line
 
-ANYsolver 0.3 depends on compatible extracted packages. Publish them to the
-same target index in this order:
+ANYsolver 0.4 depends on the coordinated extracted-package set. Publish it to
+the same target index in this order:
 
 1. `ANYmaterial` and `ANYmesher` (either order).
 2. `ANYfileio`, which depends on both.
-3. `ANYsolver` 0.3.x, which depends on all three.
+3. `ANYsolver` 0.4.x, which depends on all three.
 
-Apply that order separately to TestPyPI and PyPI. The compatible sibling
-releases are available on PyPI. The publish workflow checks the selected
-target index and refuses to build or upload ANYsolver unless
-`ANYmaterial>=0.1,<0.2`, `ANYmesher>=0.1,<0.3`, and
-`ANYfileio>=0.1,<0.3` can already be resolved there. CI also uses pinned sibling
-source checkouts to exercise the exact compatibility graph.
-
-ANYsolver uses the neutral mesh, panel-generation, quality, and section APIs
-available in ANYmesher 0.1 and retains compatibility with the additive 0.2
-line. The strict `<0.3` cap prevents an unqualified major contract change.
-The endpoint compatibility job exercises pinned 0.1.0 and 0.2.1 installed
-wheels on Windows AMD64 CPython 3.13; that focused job is not a wider platform
-or interpreter qualification claim.
+Apply that order separately to TestPyPI and PyPI. The publish workflow checks
+the selected target index and refuses to upload ANYsolver unless
+`ANYmaterial>=0.1.1,<0.2`, `ANYmesher>=0.3.2,<0.4`, and
+`ANYfileio>=0.2.1,<0.3` can already be resolved there. CI also uses pinned
+sibling source checkouts to exercise the exact compatibility graph. The qualified S3
+rollout requires ANYmesher 0.3.2, ANYfileio 0.2.1, and ANYmaterial 0.1.1 or
+newer within their retained compatible minor lines; earlier endpoints are not
+part of the 0.4 production dependency contract.
 
 Core analyses and the solver-owned generated-geometry workflow are available
 directly from `anysolver`; the lightweight normalized flat-panel and cylinder

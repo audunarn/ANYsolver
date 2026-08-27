@@ -10,11 +10,11 @@ import pytest
 
 from anysolver import (
     FEModel,
+    LegacyShellElement,
     QualifiedE4PLS3ShellElement,
     QualifiedE4PLShellElement,
     assemble_stiffness_matrix,
 )
-from anysolver.elements import ShellElement
 from anysolver.matrix_assembly import AssemblyError
 import anysolver.recovery as recovery
 
@@ -76,7 +76,7 @@ def _mixed_model(*, include_legacy: bool = False) -> FEModel:
     if include_legacy:
         model.add_element(
             4,
-            ShellElement(
+            LegacyShellElement(
                 4,
                 (10, 11, 12, 13),
                 "steel",
@@ -677,7 +677,7 @@ def test_private_interface_batch_snapshots_external_displacement_once(
     original_values = displacement.copy()
     changed_values = original_values + 0.125
 
-    class MutatingLegacyShell(ShellElement):
+    class MutatingLegacyShell(LegacyShellElement):
         enabled = False
 
         def __init__(self, *args: Any, action: str, **kwargs: Any) -> None:

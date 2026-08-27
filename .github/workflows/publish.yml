@@ -18,9 +18,10 @@ jobs:
           TARGET_INDEX_URL: ${{ github.event_name == 'release' && 'https://pypi.org/simple' || 'https://test.pypi.org/simple' }}
         run: |
           python -m pip install --upgrade pip
-          python -m pip download --no-deps --dest sibling-distributions --index-url "$TARGET_INDEX_URL" "ANYmaterial>=0.1,<0.2" "ANYmesher>=0.1,<0.3" "ANYfileio>=0.1,<0.3"
+          python -m pip download --no-deps --dest sibling-distributions --index-url "$TARGET_INDEX_URL" "ANYmaterial>=0.1.1,<0.2" "ANYmesher>=0.3.2,<0.4" "ANYfileio>=0.2.1,<0.3"
 
   build:
+    if: github.event_name == 'workflow_dispatch'
     needs: dependency-gate
     runs-on: ubuntu-latest
     steps:
@@ -37,6 +38,135 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+
+  release-assets:
+    if: github.event_name == 'release'
+    needs: dependency-gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download locally qualified release distributions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          EXPECTED_TAG: v0.4.0
+          WHEEL_NAME: anysolver-0.4.0-py3-none-any.whl
+          SDIST_NAME: anysolver-0.4.0.tar.gz
+        run: |
+          if [ "$RELEASE_TAG" != "$EXPECTED_TAG" ]; then
+            echo "production publication is frozen to $EXPECTED_TAG" >&2
+            exit 1
+          fi
+          mkdir release-assets
+          gh release download "$EXPECTED_TAG" --repo "${{ github.repository }}" --dir release-assets --pattern "$WHEEL_NAME" --pattern "$SDIST_NAME" --pattern 'SHA256SUMS'
+      - name: Verify release distribution hashes and closed artifact set
+        run: |
+          python - <<'PY'
+          import hashlib
+          from email import policy
+          from email.parser import BytesParser
+          from pathlib import Path
+          import re
+          import tarfile
+          import zipfile
+
+          root = Path("release-assets")
+          expected_names = {
+              "anysolver-0.4.0-py3-none-any.whl",
+              "anysolver-0.4.0.tar.gz",
+          }
+          expected_dependencies = {
+              "anymaterial": frozenset({">=0.1.1", "<0.2"}),
+              "anymesher": frozenset({">=0.3.2", "<0.4"}),
+              "anyfileio": frozenset({">=0.2.1", "<0.3"}),
+          }
+
+          def verify_metadata(raw, label):
+              message = BytesParser(policy=policy.compat32).parsebytes(raw)
+              if message.get("Name", "").lower() != "anysolver":
+                  raise SystemExit(f"{label} has the wrong distribution name")
+              if message.get("Version") != "0.4.0":
+                  raise SystemExit(f"{label} has the wrong distribution version")
+              found = {}
+              for requirement in message.get_all("Requires-Dist", []):
+                  compact = "".join(requirement.split())
+                  lower = compact.lower()
+                  for name in expected_dependencies:
+                      if lower.startswith(name):
+                          if name in found:
+                              raise SystemExit(f"{label} duplicates {name}")
+                          found[name] = frozenset(compact[len(name):].split(","))
+              if found != expected_dependencies:
+                  raise SystemExit(f"{label} dependency floors differ")
+          checksum_path = root / "SHA256SUMS"
+          if not checksum_path.is_file() or checksum_path.is_symlink():
+              raise SystemExit("release must contain a regular SHA256SUMS asset")
+          raw = checksum_path.read_bytes()
+          try:
+              text = raw.decode("ascii")
+          except UnicodeDecodeError as exc:
+              raise SystemExit("SHA256SUMS must be ASCII") from exc
+          if not text.endswith("\n") or "\r" in text:
+              raise SystemExit("SHA256SUMS must use canonical LF records")
+          rows = []
+          for line in text.splitlines():
+              match = re.fullmatch(r"([0-9A-Fa-f]{64})  ([A-Za-z0-9_.+-]+)", line)
+              if match is None:
+                  raise SystemExit("SHA256SUMS contains a malformed record")
+              rows.append((match.group(1).lower(), match.group(2)))
+          names = [name for _digest, name in rows]
+          if len(rows) != 2 or set(names) != expected_names:
+              raise SystemExit("SHA256SUMS does not bind the exact v0.4.0 distributions")
+          entries = list(root.iterdir())
+          if any(not path.is_file() or path.is_symlink() for path in entries):
+              raise SystemExit("release download contains a non-regular asset")
+          downloaded = {path.name for path in entries}
+          if downloaded != expected_names | {"SHA256SUMS"}:
+              raise SystemExit("downloaded release artifact set is not closed")
+          dist = Path("dist")
+          dist.mkdir()
+          for expected, name in rows:
+              source = root / name
+              if not source.is_file() or source.is_symlink():
+                  raise SystemExit(f"release asset is not a regular file: {name}")
+              actual = hashlib.sha256(source.read_bytes()).hexdigest()
+              if actual != expected:
+                  raise SystemExit(f"release asset hash differs: {name}")
+              (dist / name).write_bytes(source.read_bytes())
+
+          wheel = root / "anysolver-0.4.0-py3-none-any.whl"
+          with zipfile.ZipFile(wheel) as archive:
+              metadata_names = [
+                  name for name in archive.namelist()
+                  if name.endswith(".dist-info/METADATA")
+              ]
+              if len(metadata_names) != 1:
+                  raise SystemExit("wheel must contain exactly one METADATA")
+              info = archive.getinfo(metadata_names[0])
+              if info.is_dir() or (info.external_attr >> 16) & 0o170000 == 0o120000:
+                  raise SystemExit("wheel METADATA must be a regular entry")
+              verify_metadata(archive.read(info), "wheel")
+
+          sdist = root / "anysolver-0.4.0.tar.gz"
+          with tarfile.open(sdist, mode="r:gz") as archive:
+              metadata = [
+                  member for member in archive.getmembers()
+                  if member.name.endswith("/PKG-INFO")
+                  and member.name.count("/") == 1
+              ]
+              if len(metadata) != 1 or not metadata[0].isfile():
+                  raise SystemExit("sdist must contain one regular PKG-INFO")
+              stream = archive.extractfile(metadata[0])
+              if stream is None:
+                  raise SystemExit("sdist PKG-INFO cannot be read")
+              verify_metadata(stream.read(), "sdist")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qualified-release-distributions
+          path: dist/
+          if-no-files-found: error
 
   testpypi:
     if: github.event_name == 'workflow_dispatch'
@@ -58,7 +188,7 @@ jobs:
 
   pypi:
     if: github.event_name == 'release'
-    needs: build
+    needs: release-assets
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -68,6 +198,6 @@ jobs:
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: python-package-distributions
+          name: qualified-release-distributions
           path: dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33

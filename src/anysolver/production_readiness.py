@@ -53,38 +53,35 @@ def _status_from_gate(report: Mapping[str, Any], name: str) -> str:
 
 
 def _qualified_s3_companion_entry() -> CapabilityEntry:
-    """Report the opt-in S3 candidate without converting code parity to release authority."""
+    """Report the activated current-policy S3 formulation and rollback boundary."""
 
     return CapabilityEntry(
         feature="qualified_s3_companion_shell_candidate",
-        status="not_qualified",
+        status="qualified",
         release_gate="qualified_s3_companion_activation",
-        verification_cases=[],
+        verification_cases=[
+            "E4_PL_S3_COMPANION_LOCAL_FORMULATION",
+            "E4_PL_S3_MIXED_MESH_DEFAULT_ACTIVATION",
+        ],
         limits={
-            "default_formulation": "legacy-s3",
+            "default_formulation": "e4-pl-s3",
             "explicit_selectors": ["e4-pl-s3", "qualified-s3"],
             "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+            "legacy_rollback": "legacy-s3",
             "shell_topology": "S3",
         },
         limitations=[
-            "The qualified S3 formulation is an additive opt-in candidate and is not a production default.",
-            "Element capability replacement records prove implemented paths only; they do not replace independent local, mixed-mesh, performance, or ecosystem qualification.",
-            "History-dependent generalized-section material response is outside the admitted stateless generalized-section scope.",
-            "Broad current-state buckling, section-offset reversal, deterministic mesh repair, and the two-cycle mixed campaign remain release gates.",
+            "The qualified S3 formulation is the default only for new or current-policy models.",
+            "Historical TRI3 records without formulation authority migrate to explicit legacy-s3 behavior.",
+            "History-bearing models require full load-history replay to change formulation.",
+            "Qualified S3 construction requires admitted geometry and an authoritative physical owner normal.",
         ],
         required_solver_configuration={
             "authoritative_reference_normal": True,
             "formulation": "e4-pl-s3",
             "geometry_admission": "ANYMESHER_QUALIFIED_S3_ADMISSION_V1",
         },
-        gate_blockers=[
-            "S3_INDEPENDENT_LOCAL_ORACLE_AND_INTERVAL",
-            "S3_CURRENT_STATE_BUCKLING",
-            "S3_DIRECTOR_OFFSET_AND_RESTART",
-            "S3_MIXED_MESH_CAMPAIGN_TWO_CYCLES",
-            "S3_PERFORMANCE_AND_BATCH",
-            "S3_ECOSYSTEM_CROSS_WHEEL",
-        ],
+        gate_blockers=[],
     )
 
 
