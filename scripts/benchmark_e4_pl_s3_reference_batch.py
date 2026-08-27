@@ -203,10 +203,36 @@ def _recovery_error(
     }
 
 
+def qualification_repetition_indices(
+    *, repeats: int, shard_index: int, shard_count: int, total_repeats: int
+) -> list[int]:
+    """Return the exact global repetition indices assigned to one process."""
+
+    if shard_count == 1:
+        if shard_index != 0:
+            raise ValueError("the unsharded benchmark requires shard index zero")
+        if repeats < 11:
+            raise ValueError("repeats must be at least 11")
+        return list(range(repeats))
+    if shard_count != 3:
+        raise ValueError("formal qualification requires exactly three shards")
+    if not 0 <= shard_index < shard_count:
+        raise ValueError("qualification shard index is out of range")
+    if total_repeats < 11:
+        raise ValueError("qualification total repeats must be at least 11")
+    indices = list(range(shard_index, total_repeats, shard_count))
+    if len(indices) != repeats:
+        raise ValueError("local repeats do not match the registered shard allocation")
+    return indices
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--elements", type=int, default=4096)
     parser.add_argument("--repeats", type=int, default=11)
+    parser.add_argument("--qualification-shard-index", type=int, default=0)
+    parser.add_argument("--qualification-shard-count", type=int, default=1)
+    parser.add_argument("--qualification-total-repeats", type=int, default=0)
     parser.add_argument("--return-global", action="store_true")
     parser.add_argument("--include-q4-comparator", action="store_true")
     args = parser.parse_args()
@@ -215,8 +241,20 @@ def main() -> int:
             "elements must cover the qualified S3 recovery batch minimum "
             f"({s3_batch.MIN_REFERENCE_S3_RECOVERY_GROUP})"
         )
-    if args.repeats < 11:
-        parser.error("repeats must be at least 11")
+    total_repeats = (
+        int(args.repeats)
+        if args.qualification_shard_count == 1
+        else int(args.qualification_total_repeats)
+    )
+    try:
+        repetition_indices = qualification_repetition_indices(
+            repeats=int(args.repeats),
+            shard_index=int(args.qualification_shard_index),
+            shard_count=int(args.qualification_shard_count),
+            total_repeats=total_repeats,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     thread_environment = {
         name: os.environ.get(name) for name in THREAD_ENVIRONMENT
     }
@@ -294,7 +332,7 @@ def main() -> int:
     last_stiffness: Dict[str, Any] = {}
     last_recovery: Dict[str, Any] = {}
     try:
-        for repetition in range(int(args.repeats)):
+        for repetition in repetition_indices:
             stiffness_order = (
                 (("batch", batch_stiffness), ("scalar", scalar_stiffness))
                 if repetition % 2 == 0
@@ -343,6 +381,10 @@ def main() -> int:
         "elements": int(args.elements),
         "warmups_per_route": 1,
         "repeats": int(args.repeats),
+        "qualification_shard_count": int(args.qualification_shard_count),
+        "qualification_shard_index": int(args.qualification_shard_index),
+        "qualification_total_repeats": int(total_repeats),
+        "repetition_indices": repetition_indices,
         "return_global": bool(args.return_global),
         "one_numerical_thread": (
             THREAD_ENVIRONMENT_AT_IMPORT == THREAD_ENVIRONMENT
