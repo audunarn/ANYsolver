@@ -34,6 +34,46 @@ def _flat_geometry() -> dict[str, object]:
     }
 
 
+def _precomputed_runtime_panel() -> tuple[dict[str, object], object]:
+    generated: dict[str, object] = {
+        "plot_type": "flat",
+        "plot_grid": [],
+        "nodes": [
+            {"id": 1, "coords": [0.0, 0.0, 0.0]},
+            {"id": 2, "coords": [2.0, 0.0, 0.0]},
+            {"id": 3, "coords": [2.0, 1.0, 0.0]},
+            {"id": 4, "coords": [0.0, 1.0, 0.0]},
+        ],
+        "shells": [
+            {
+                "id": 1,
+                "node_ids": [1, 2, 3, 4],
+                "thickness": 0.02,
+                "role": "skin",
+            }
+        ],
+        "beams": [],
+    }
+    return (
+        generated,
+        anystructure_fem_mode.build_fe_model_from_generated_geometry(generated),
+    )
+
+
+def _patch_converged_reference_linear(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_linear(model_arg, _load_case, **_kwargs):
+        return np.zeros(model_arg.mesh.dof_manager.total_dofs), {
+            "convergence_info": {
+                "status": "converged",
+                "backend": {"backend": "test_double"},
+            },
+            "constraint_method": "test_double",
+            "constraint_mode": "test_double",
+        }
+
+    monkeypatch.setattr(runtime, "_backend_solve_linear", fake_linear)
+
+
 def test_runtime_contract_is_headless_and_builds_geometry() -> None:
     config = runtime.LightweightFEMConfig(
         mesh_fidelity="coarse",
@@ -71,6 +111,262 @@ def test_runtime_public_api_is_explicit_and_complete() -> None:
 
     assert set(runtime.__all__) == expected
     assert all(hasattr(runtime, name) for name in runtime.__all__)
+
+
+def test_runtime_result_facade_preserves_native_outcome_and_quantities() -> None:
+    native_outcome = anysolver.SolveOutcome.stopped(
+        "minimum_load_increment_reached",
+        control_kind="load_factor",
+        requested_control=1.0,
+        achieved_control=0.42,
+        last_converged_increment=7,
+    )
+    native = SimpleNamespace(
+        outcome=native_outcome,
+        displacements=np.zeros(6),
+        reactions={1: (-3.0, 0.0, 0.0, 0.0, 0.0, 0.0)},
+    )
+    result = runtime.LightweightFEMResult(
+        status="nonlinear_not_converged",
+        stress_max_pa=0.0,
+        stress_p95_pa=0.0,
+        displacement_max_m=0.0,
+        result_carrier=native,
+    )
+
+    assert result.outcome is native_outcome
+    assert {item.quantity_id for item in result.quantity_metadata} == {
+        "displacement",
+        "reaction",
+    }
+    resolved = result.resolve_quantity("reaction")
+    assert resolved.data is native.reactions
+
+
+def test_runtime_native_result_carrier_precedence_is_explicit() -> None:
+    capacity = object()
+    static = object()
+    nonlinear = object()
+    buckling = object()
+
+    assert runtime._authoritative_runtime_result_carrier(
+        capacity,
+        static,
+        nonlinear,
+        buckling,
+        eigenvalue_requested=True,
+    ) is capacity
+    assert runtime._authoritative_runtime_result_carrier(
+        None,
+        static,
+        nonlinear,
+        buckling,
+        eigenvalue_requested=True,
+    ) is static
+    assert runtime._authoritative_runtime_result_carrier(
+        None,
+        None,
+        nonlinear,
+        buckling,
+        eigenvalue_requested=True,
+    ) is nonlinear
+    assert runtime._authoritative_runtime_result_carrier(
+        None,
+        None,
+        None,
+        buckling,
+        eigenvalue_requested=True,
+    ) is buckling
+    assert runtime._authoritative_runtime_result_carrier(
+        None,
+        None,
+        None,
+        buckling,
+        eigenvalue_requested=False,
+    ) is None
+
+
+def test_runtime_result_facade_falls_back_to_bound_outcome_data() -> None:
+    native_outcome = anysolver.SolveOutcome.failure("linear_equilibrium_failed")
+    result = runtime.LightweightFEMResult(
+        status="static_failed",
+        stress_max_pa=0.0,
+        stress_p95_pa=0.0,
+        displacement_max_m=0.0,
+        outcome_data=native_outcome.to_dict(),
+    )
+
+    assert result.outcome == native_outcome
+    assert result.quantity_metadata == ()
+    with pytest.raises(anysolver.QuantityUnavailableError):
+        result.resolve_quantity("reaction")
+
+
+def test_runtime_result_facade_rejects_malformed_authoritative_outcomes() -> None:
+    malformed_native = SimpleNamespace(
+        outcome={
+            "disposition": "failed",
+            "termination": "native_failure",
+            "target_reached": False,
+            "converged": False,
+            "has_results": False,
+            "requested_control": True,
+        }
+    )
+    result = runtime.LightweightFEMResult(
+        status="ok",
+        stress_max_pa=0.0,
+        stress_p95_pa=0.0,
+        displacement_max_m=0.0,
+        result_carrier=malformed_native,
+    )
+
+    with pytest.raises(TypeError, match="finite numeric"):
+        _ = result.outcome
+
+    malformed_data = runtime.LightweightFEMResult(
+        status="ok",
+        stress_max_pa=0.0,
+        stress_p95_pa=0.0,
+        displacement_max_m=0.0,
+        outcome_data=object(),
+    )
+    with pytest.raises(TypeError, match="outcome_data"):
+        _ = malformed_data.outcome
+
+    malformed_data_mapping = runtime.LightweightFEMResult(
+        status="ok",
+        stress_max_pa=0.0,
+        stress_p95_pa=0.0,
+        displacement_max_m=0.0,
+        outcome_data={
+            "disposition": "failed",
+            "termination": "bound_failure",
+            "target_reached": False,
+            "converged": False,
+            "has_results": False,
+            "requested_control": True,
+        },
+    )
+    with pytest.raises(TypeError, match="finite numeric"):
+        _ = malformed_data_mapping.outcome
+
+
+def test_runtime_result_binds_failed_native_buckling_carrier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generated, model = _precomputed_runtime_panel()
+    _patch_converged_reference_linear(monkeypatch)
+    native = anysolver.BucklingResult([], 2, "eigensolve_failed", {}, {})
+    monkeypatch.setattr(runtime, "_backend_solve_buckling", lambda *_args, **_kwargs: native)
+
+    result = runtime.run_production_fem(
+        _flat_geometry(),
+        runtime.LightweightFEMConfig(
+            runtime_solver="stepwise",
+            analysis_type="linear eigenvalue",
+            num_buckling_modes=2,
+        ),
+        imported_fem_model=model,
+        precomputed_generated_geometry=generated,
+    )
+
+    assert result.result_carrier is native
+    assert result.outcome == anysolver.solve_outcome(native)
+    assert result.outcome.failed
+    assert result.outcome.termination == "eigensolve_failed"
+
+
+def test_runtime_result_binds_failed_native_nonlinear_limit_carrier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generated, model = _precomputed_runtime_panel()
+    _patch_converged_reference_linear(monkeypatch)
+    native = anysolver.NonlinearLimitPointResult(
+        [],
+        "nonconvergence",
+        np.zeros(model.mesh.dof_manager.total_dofs),
+        None,
+        {},
+        {},
+    )
+    monkeypatch.setattr(
+        runtime,
+        "_backend_solve_nonlinear_limit",
+        lambda *_args, **_kwargs: native,
+    )
+
+    result = runtime.run_production_fem(
+        _flat_geometry(),
+        runtime.LightweightFEMConfig(
+            runtime_solver="static only",
+            analysis_type="nonlinear stability",
+            buckling_analysis_type="nonlinear limit",
+        ),
+        imported_fem_model=model,
+        precomputed_generated_geometry=generated,
+    )
+
+    assert result.result_carrier is native
+    assert result.outcome == anysolver.solve_outcome(native)
+    assert result.outcome.failed
+    assert result.outcome.termination == "nonconvergence"
+
+
+@pytest.mark.parametrize(
+    ("runtime_solver", "analysis_type", "backend_name", "termination"),
+    (
+        (
+            "nonlinear static",
+            "geometric nonlinear static",
+            "_backend_solve_static_nonlinear",
+            "runtime_nonlinear_static_failed",
+        ),
+        (
+            "anysolver capacity workflow",
+            "linear eigenvalue",
+            "run_nonlinear_capacity_workflow",
+            "runtime_capacity_workflow_failed",
+        ),
+    ),
+)
+def test_runtime_requested_nonlinear_exception_is_a_failed_outcome(
+    monkeypatch: pytest.MonkeyPatch,
+    runtime_solver: str,
+    analysis_type: str,
+    backend_name: str,
+    termination: str,
+) -> None:
+    generated, model = _precomputed_runtime_panel()
+    _patch_converged_reference_linear(monkeypatch)
+    failed_buckling = anysolver.BucklingResult([], 1, "eigensolve_failed", {}, {})
+    monkeypatch.setattr(
+        runtime,
+        "_backend_solve_buckling",
+        lambda *_args, **_kwargs: failed_buckling,
+    )
+
+    def fail_requested_solver(*_args, **_kwargs):
+        raise RuntimeError("forced requested-analysis failure")
+
+    owner = runtime._full_backend if backend_name == "run_nonlinear_capacity_workflow" else runtime
+    monkeypatch.setattr(owner, backend_name, fail_requested_solver)
+    result = runtime.run_production_fem(
+        _flat_geometry(),
+        runtime.LightweightFEMConfig(
+            runtime_solver=runtime_solver,
+            analysis_type=analysis_type,
+            num_buckling_modes=1,
+        ),
+        imported_fem_model=model,
+        precomputed_generated_geometry=generated,
+    )
+
+    assert result.status == "ok"
+    assert result.result_carrier is None
+    assert result.outcome.failed
+    assert result.outcome.termination == termination
+    assert "forced requested-analysis failure" in result.outcome.message
 
 
 def test_runtime_analysis_selection_is_public_and_normalized() -> None:

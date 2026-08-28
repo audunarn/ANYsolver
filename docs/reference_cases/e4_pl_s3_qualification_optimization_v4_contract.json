@@ -1,0 +1,519 @@
+{
+  "authority_state": "CORRECTED_IMPLEMENTATION_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS",
+  "candidate_provenance": {
+    "any3dview_packaged_candidate": {
+      "commit": "ebe8245538504633b2b5a6579e16c4fd321d2f0e",
+      "parent": "a9b015aeb39a74c1c9be890952c78961a9a1bf67",
+      "project": "ANY3dView",
+      "subject": "release: bind ANY3dView 0.5.4 verified assets",
+      "tree": "d0ae85d63ee32fe664293c7240490c97d9488d90",
+      "version": "0.5.4"
+    },
+    "anybuckling_packaged_candidate": {
+      "commit": "242901005930e0f840d162c67ee86f54daecd261",
+      "parent": "2d45a8e3001711eba1348d0997b31b4f48eb963f",
+      "project": "ANYbuckling",
+      "subject": "release: bind ANYbuckling 0.1.1 verified assets",
+      "tree": "c544a75a50b45bb45a26b6b91af431cd95f5ceb9",
+      "version": "0.1.1"
+    },
+    "anygeometry_packaged_candidate": {
+      "commit": "7f856484795bb16f49b92a17e640f03d1bda94c9",
+      "parent": "cabf775a95b0f6d63f5026ad92ca729109cecf36",
+      "project": "ANYgeometry",
+      "subject": "feat: register downstream feature replay modes",
+      "tree": "1c2d845c60f5a7a9a2bb6db134a874c5a47b9480",
+      "version": "0.4.1"
+    },
+    "anyintelligent_source_candidate": {
+      "commit": "06ff7ddb9284b7c0d0571fbd237f6e64d4f3fa52",
+      "import": "fe_solver",
+      "parent": "2ff5c428bb9d46fed10ef4c3718c53c6c99c3d52",
+      "project": "ANYintelligent",
+      "subject": "fix: seal external ANYsolver shell authority",
+      "tree": "aa0278c8a268da96125051f61189d65cfe80245a"
+    },
+    "anymaterial_packaged_candidate": {
+      "commit": "ff556c6c742ba1464f67cfba6bf208e8e5dd5d5a",
+      "parent": "2b6431c291c8f571803484f69d08807875996b72",
+      "project": "ANYmaterial",
+      "subject": "docs: finalize ANYmaterial 0.1.1 changelog",
+      "tree": "22cc448ac828412ea9f73e5d5f0b17730a730c3f",
+      "version": "0.1.1"
+    },
+    "anytk3d_packaged_candidate": {
+      "commit": "d82bebaf8ceb588ea1f92f32037d5c8a848c71d0",
+      "parent": "516aa46ec8affaa737fd165efad7c7b45a2b852a",
+      "project": "ANYtk3D",
+      "subject": "test: bind exact ANYtk3D viewer wheel pair",
+      "tree": "5985b341aa3a604b5afa3318101b0fa6d083541b",
+      "version": "0.5.3"
+    },
+    "github_main": {
+      "commit": "1a472dcd4edadbb944302363a16c1e7dc20227fb",
+      "subject": "Merge pull request #29 from audunarn/codex/s3-e4-pl-final-burnin",
+      "tree": "bed5551bd64966b5d0ef79d68ecf1544a332600d"
+    },
+    "imported_reviewed_hardening": {
+      "commit": "65ec3428ff4a6b225efe3dcb6043784723956ea3",
+      "subject": "docs: record bounded S3 activation forecast",
+      "tree": "c5cc24fa60a3ce1cdc3a1910bd45fe0efe7ec620"
+    },
+    "lease_hardening_source": {
+      "commit": "e7060294a10b2ee8c18b4001e9194f608986d53e",
+      "subject": "perf: harden qualified S3 activation lease paths",
+      "tree": "049c663c52e05231e186771b8a51f24f8492aafe"
+    },
+    "q4_guard_correction_import": {
+      "commit": "eeec9ebd430c65d0af5ac29f0f4ba0c1fe5ddbbc",
+      "parent": "084f6da03d573ea0dedd46c0ecb45ebd487fad08",
+      "subject": "fix: bind Q4 vector state sealing to producer origin",
+      "tree": "60a01afc1cfe7521bb62c4a928632e4d7f4f2555"
+    },
+    "stable_ci_sibling_refs": {
+      "ANYfileIO": "07124405ce0160437928e9b0c3c7a0d530c1f5de",
+      "ANYgeometry": "97b06b0cfc72179c4f6522f9077d8a1d91911d61",
+      "ANYmaterial": "2b6431c291c8f571803484f69d08807875996b72",
+      "ANYmesh": "c06c8fa9ca58f282941a921548bf8303a8ddd084"
+    },
+    "successor_preflight_correction": {
+      "correction_scope": "PREFLIGHT_AUTHORITY_CONFIG_ISOLATION_AND_MERGE_LANE_ONLY",
+      "first_pass_candidate_commit": "c9115d91bbf4856b9a6cb4d5450aab98c8c3c53e",
+      "first_pass_candidate_tree": "e08eb9d88e19d9e9734aa01fe65c8650bb6e9c9e",
+      "incidents_preserved": [
+        "SOLVER_ALL_TEST_COLLECTION_INCLUDED_HISTORICAL_EXTENDED_AND_PERFORMANCE_PROTOCOLS",
+        "ANYINTELLIGENT_PYTEST_DISCOVERED_ENCLOSING_ANYSOLVER_0_3_1_PYTHONPATH",
+        "ANYFEM_MEMBER_INTERSECTION_DUPLICATION_REQUIRES_GEOMETRY_INTEGRATION_CORRECTION",
+        "ANYSTRUCTURE_RUNTIME_RESULT_CARRIER_CONTRACT_WAS_MISSING_FROM_CURRENT_SOLVER_CANDIDATE"
+      ],
+      "integration_correction": "RUNTIME_FACADE_NATIVE_RESULT_AUTHORITY_ONLY",
+      "mechanics_change": "NONE",
+      "runtime_result_carrier_contract": {
+        "malformed_non_null_outcome_data": "FAIL_CLOSED",
+        "native_precedence": [
+          "capacity_workflow_result",
+          "nonlinear_static_result",
+          "nonlinear_result",
+          "requested_eigenvalue_buckling_result"
+        ],
+        "requested_solver_exception": "FAILED_OUTCOME_NOT_COMPLETED"
+      },
+      "scientific_protocol_change": "NONE"
+    }
+  },
+  "execution_policy": {
+    "assignment": {
+      "canonical_json": true,
+      "exclusive_creation": true,
+      "owner": "STANDARD_LIBRARY_COORDINATOR",
+      "required_bindings": [
+        "CONTRACT_SHA256",
+        "INPUT_SHA256",
+        "CONNECTIVITY_MANIFEST_SHA256",
+        "CONNECTIVITY_RECORD_AND_SHA256",
+        "PROTOCOL_V2_PROGRAM_SHA256",
+        "SUCCESSOR_PROGRAM_SHA256",
+        "COORDINATOR_SHA256",
+        "LEVEL_FRACTION_AND_RECORD_ID"
+      ],
+      "schema": "anysolver.e4-pl-s3-formal-shard-assignment-v3"
+    },
+    "automatic_retry": false,
+    "candidate_checkout_closure": {
+      "ignored_files_permitted": false,
+      "source_directories_and_files_hash_bound": true,
+      "tracked_worktree_must_be_physically_closed": true
+    },
+    "candidate_preflight": {
+      "allowed_runtime_dependency_distributions": [
+        "build",
+        "charset-normalizer",
+        "colorama",
+        "contourpy",
+        "cycler",
+        "fonttools",
+        "glcontext",
+        "h5py",
+        "iniconfig",
+        "joblib",
+        "kiwisolver",
+        "markdown-it-py",
+        "matplotlib",
+        "mdurl",
+        "meshio",
+        "moderngl",
+        "numpy",
+        "numpy-stl",
+        "packaging",
+        "pillow",
+        "platformdirs",
+        "pluggy",
+        "psutil",
+        "pygments",
+        "pyparsing",
+        "pyproject-hooks",
+        "pytest",
+        "python-dateutil",
+        "python-utils",
+        "pywin32",
+        "reportlab",
+        "rich",
+        "scikit-learn",
+        "scipy",
+        "setuptools",
+        "shapely",
+        "six",
+        "threadpoolctl",
+        "tkinter-gl",
+        "typing-extensions",
+        "wheel",
+        "xlwings"
+      ],
+      "anystructure_dependency_root_environment": {
+        "ANYSTRUCTURE_ANY3DVIEW_ROOT": "BOUND_ANY3DVIEW_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYBUCKLING_ROOT": "BOUND_ANYBUCKLING_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYFILEIO_ROOT": "BOUND_ANYFILEIO_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYGEOMETRY_ROOT": "BOUND_ANYGEOMETRY_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYMATERIAL_ROOT": "BOUND_ANYMATERIAL_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYMESHER_ROOT": "BOUND_ANYMESH_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYSOLVER_ROOT": "BOUND_ANYSOLVER_CANDIDATE_ROOT",
+        "ANYSTRUCTURE_ANYTK3D_ROOT": "BOUND_ANYTK3D_CANDIDATE_ROOT",
+        "checkout_binding": "EXACT_COMMIT_TREE_SUBJECT_ROOT_AND_CLOSED_WORKTREE_BEFORE_AND_AFTER_GATES",
+        "scope": "ANYSTRUCTURE_GATES_ONLY_AND_RECORDED_IN_EACH_CLOSED_GATE_ENVIRONMENT"
+      },
+      "anytk3d_dependency_root_environment": {
+        "ANYTK3D_ANY3DVIEW_ROOT": "BOUND_ANY3DVIEW_CANDIDATE_ROOT",
+        "checkout_binding": "EXACT_COMMIT_TREE_SUBJECT_ROOT_AND_CLOSED_WORKTREE_BEFORE_AND_AFTER_GATES",
+        "scope": "ANYTK3D_PREFLIGHT_GATES_ONLY"
+      },
+      "configuration": "EXPLICIT_HASH_BOUND_CONFIG_WITH_ROOTDIR_CONF_CUT_AND_IMPORTLIB_MODE",
+      "dependency_root_inheritance": "REJECTED_BEFORE_CLOSED_ENVIRONMENT_CONSTRUCTION",
+      "exact_target_precedes_candidate_root": true,
+      "failed_first_pass_records_preserved": true,
+      "normal_protected_pr_ci_remains_required": true,
+      "pytest_startup_flags": [
+        "-I",
+        "-S",
+        "-B"
+      ],
+      "solver_merge_lane": "scripts/run_portable_ci.py --workers 3",
+      "source_candidate_import_origins": {
+        "ANYintelligent.fe_solver": "BOUND_CANDIDATE_ROOT"
+      },
+      "targeted_ecosystem_gates_are_nonclassifying": true,
+      "tree_accounting_release": "ATTACH_BEFORE_GATE_RELEASE_V1"
+    },
+    "git_runtime": {
+      "absolute_launcher_and_native_engine_hash_bound": true,
+      "application_directories_and_non_os_dlls_hash_bound": true,
+      "authority_commands_required_as_builtins": true,
+      "build_options_and_exec_path_hash_bound": true,
+      "configuration_grafts_replacements_and_attributes_disabled": true,
+      "local_filter_include_and_info_attribute_routes_forbidden": true,
+      "native_engine_executed_directly": true
+    },
+    "inactivity_watchdog": {
+      "condition": "NO_CHECKPOINT_OR_STDOUT_STDERR_PROGRESS_AND_NO_COMPLETE_TREE_CPU_TIME_PROGRESS",
+      "seconds": 1800
+    },
+    "memory_limit_gib_per_child": 24,
+    "memory_limit_scope": "COMPLETE_CHILD_PROCESS_TREE",
+    "parallel_workers_maximum": 3,
+    "python_startup": {
+      "environment": "CLOSED_HASH_BOUND_ALLOWLIST_WITH_NO_INHERITED_PROJECT_NUMERIC_OR_PYTEST_CONTROLS",
+      "flags": [
+        "-I",
+        "-S",
+        "-B"
+      ],
+      "interpreter": "EXACT_RESOURCE_AUTHORITY_PATH",
+      "optimization_level": 0,
+      "pytest_plugin_autoload": false,
+      "runtime_surface": "EXECUTABLE_DLL_STDLIB_AND_BASE_ROOT_IMPORT_SURFACE_HASH_BOUND"
+    },
+    "resource_attempt": {
+      "exclusive_claim": true,
+      "reuse_after_any_claim": false,
+      "worker_binding": "INHERITED_ATTEMPT_SHA256"
+    },
+    "runtime_classification": false,
+    "total_runtime_limit_seconds": null,
+    "tree_accounting_unavailable": "FAIL_CLOSED"
+  },
+  "final_rebind_required": [
+    "ANYsolver.commit",
+    "ANYsolver.tree",
+    "ANYsolver.subject",
+    "ANYsolver.root",
+    "ANYsolver.changed_paths",
+    "ANYsolver.wheel.path",
+    "ANYsolver.wheel.filename",
+    "ANYsolver.wheel.bytes",
+    "ANYsolver.wheel.sha256",
+    "ANYmesh.commit_tree_subject_root_and_wheel",
+    "ANYfem.commit_tree_subject_root_and_wheel",
+    "ANYstructure.commit_tree_subject_and_root",
+    "ANYstructure.wheel.path_filename_bytes_and_sha256",
+    "ANYintelligent.commit_tree_subject_and_root",
+    "ANY3dView.commit_tree_subject_root_and_wheel",
+    "ANYbuckling.commit_tree_subject_root_and_wheel",
+    "ANYtk3D.commit_tree_subject_root_and_wheel",
+    "ANYfileIO.commit_tree_subject_root_and_wheel",
+    "ANYmaterial.commit_tree_subject_root_and_wheel",
+    "ANYgeometry.commit_tree_subject_root_and_wheel",
+    "isolated_execution_target",
+    "isolated_runtime_environment",
+    "candidate_dependency_graph",
+    "all_candidates.closed_working_tree_file_and_directory_hashes",
+    "all_packaged_candidates.installed_target_file_and_directory_inventories",
+    "runtime_dependencies.normalized_name_version_record_and_file_hashes",
+    "ANYintelligent.fe_solver.exact_source_origin",
+    "ANYstructure.eight_dependency_roots_and_before_after_identities",
+    "ANYtk3D.any3dview_dependency_root_and_before_after_identity",
+    "candidate_preflight_results_and_log_hashes",
+    "coordinator.bytes_and_sha256",
+    "formal_full_coverage_runner.bytes_and_sha256",
+    "candidate_binding_generator.bytes_and_sha256",
+    "candidate_preflight_config.bytes_and_sha256",
+    "candidate_preflight_runner.bytes_and_sha256",
+    "optimization_evidence.bytes_and_sha256",
+    "successor_program.bytes_and_sha256",
+    "successor_test.bytes_and_sha256",
+    "final_contract.bytes_and_sha256",
+    "final_authority_commit_tree_parent_subject_and_path_set",
+    "independent_review_hashes"
+  ],
+  "formal_qualification_authority": false,
+  "formal_runner": {
+    "aggregate_after_all_launched_workers_terminal": true,
+    "batch_workers": 3,
+    "cycle_count_required": 2,
+    "cycle_scientific_bytes_must_match_for_two_cycles": true,
+    "eigen_performance_workers": 1,
+    "exact_batch_repetitions": 12,
+    "exact_special_fixture_count": 8,
+    "exact_topology_records": 252,
+    "execution_waves": [
+      [
+        "STRUCTURAL_SLASH",
+        "STRUCTURAL_BACKSLASH",
+        "STRUCTURAL_ALTERNATING"
+      ],
+      [
+        "EIGEN_PERFORMANCE",
+        "SPECIAL_ECOSYSTEM"
+      ],
+      [
+        "BATCH_0",
+        "BATCH_1",
+        "BATCH_2"
+      ]
+    ],
+    "scientific_protocol_interpretation": {
+      "d3_and_director_reversal": "EXACT_MACHINE_COUNTED_REQUIRED_SPECIAL_ECOSYSTEM_LANES",
+      "patch_basis": [
+        "MEMBRANE_CONSTANT_STRAIN",
+        "BENDING_CONSTANT_CURVATURE",
+        "FORCE_LOADED_IN_PLANE_SHEAR"
+      ],
+      "transverse_shear_affine_trace": "NONCLASSIFYING_KINEMATIC_AND_RECOVERY_DIAGNOSTIC",
+      "transverse_shear_qualification": "LOCKING_RECOVERY_MODAL_BUCKLING_AND_MIXED_STRUCTURAL_GATES; NO_INVENTED_FORCE_LOADED_PROTOCOL",
+      "worker_process_failure": "BLOCKED_NOT_SCIENTIFIC_NO_GO"
+    },
+    "scientific_scope": "UNCHANGED_CASES_TOLERANCES_TOPOLOGIES_AND_RELATIVE_PERFORMANCE_GATES_WITH_CORRECTED_PROCESS_ENFORCEMENT",
+    "special_ecosystem_workers": 1,
+    "special_lane_overlay": [
+      {
+        "name": "anyfileio-neutral-shell-authority-v3",
+        "nodes": [
+          "tests/test_sesam.py::test_semantics_resolves_a_neutral_mesh_and_records",
+          "tests/test_sesam.py::test_semantics_resolves_explicit_shell_local_axes"
+        ],
+        "repository": "ANYfileIO"
+      },
+      {
+        "name": "anyintelligent-production-entrypoint-v3",
+        "nodes": [
+          "tests/test_external_anysolver_adapter.py::test_production_entrypoint_routes_qualified_geometry_through_adapter"
+        ],
+        "repository": "ANYintelligent"
+      },
+      {
+        "name": "exact-wheel-cross-package-v3",
+        "nodes": [
+          "tests/test_e4_pl_s3_cross_wheel_v4.py"
+        ],
+        "repository": "ANYsolver"
+      }
+    ],
+    "structural_shards": 3
+  },
+  "frozen_historical_inputs": {
+    "activation_v2_contract": {
+      "bytes": 12044,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2_contract.json",
+      "sha256": "4C6EC1DB8DCFF3C4BA1A8C280E9D8E3DE9E57A4CE8CB1F4BC5631E5A86E17302"
+    },
+    "activation_v2_input": {
+      "bytes": 5367,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2_input.json",
+      "sha256": "B2A357B82667C5A978A381E5595D3D5EE32435E38ADD47990D88A9D95E002FDA"
+    },
+    "activation_v2_program": {
+      "bytes": 63308,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
+      "sha256": "0353FAE7E44F1BE3E95F789CB97E759E70059090D84E65C42CDACA74A67F2F1E"
+    },
+    "connectivity_manifest": {
+      "bytes": 110005,
+      "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
+      "record_count": 252,
+      "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    }
+  },
+  "frozen_successor_scientific_programs": {
+    "batch_benchmark": {
+      "bytes": 18309,
+      "path": "scripts/benchmark_e4_pl_s3_reference_batch.py",
+      "sha256": "A348DFBCE3FDC62E9DBEE42788022A142605B2C1E2C436B385A702B0A6389DA5"
+    },
+    "runner": {
+      "bytes": 90136,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
+      "sha256": "E16EB76B2C3BCB6D50675F58694D61980614CB9760185E0F135BD51CA7CC82CF"
+    },
+    "test": {
+      "bytes": 12704,
+      "path": "tests/test_e4_pl_s3_default_activation_v2.py",
+      "sha256": "CE6E5FDF4A1C8266B01E5EEA24132A07AA26DA74A708033AC1F423B21FBE48F3"
+    }
+  },
+  "mechanics_equivalence": {
+    "assembly_change": "ONE_NONRENEWABLE_QUALIFIED_ASSEMBLY_LEASE_PER_PLATE_RECORD",
+    "connectivity_change": "NONE",
+    "manifest_generation_change": "COORDINATOR_SELECTS_ONE_STORED_HASH_BOUND_ROW_WITHOUT_CHILD_REGENERATION",
+    "q4_base_mechanics_git_blob": "59ceb9534dfd22e05ea69296f92abeb0511f14cf",
+    "q4_guard_corrected_git_blob": "031da1cde23e7983c0f94d837f5610a24737920b",
+    "q4_guard_only_identity": {
+      "base": {
+        "commit": "62464bea649229aa2c9f89ba7cbe431bf6a9282a",
+        "parent": "19d7726ad09a4969c187af1816bab08596db7590",
+        "subject": "docs: record bounded S3 activation forecast",
+        "tree": "c5cc24fa60a3ce1cdc3a1910bd45fe0efe7ec620"
+      },
+      "frozen_q4_source_identity": {
+        "bound_nonmechanics_integration_paths": [
+          {
+            "git_blob": "9bcbacb9ac6a71fdb2f9c8c8349d50aadb16946d",
+            "path": "src/anysolver/anystructure_fem_mode.py"
+          },
+          {
+            "git_blob": "b0562fdfa3d26a7c7bfd2a48c5fb70d0e95a8b4a",
+            "path": "src/anysolver/production_readiness.py"
+          },
+          {
+            "git_blob": "4f141a70a5c19aa5ee35869a02e88d21e9e370c3",
+            "path": "src/anysolver/runtime.py"
+          }
+        ],
+        "excluded_authorized_guard_paths": [
+          "src/anysolver/e4_pl_element.py",
+          "src/anysolver/nonlinear_performance.py",
+          "src/anysolver/nonlinear_state.py",
+          "src/anysolver/nonlinear_static.py"
+        ],
+        "excluded_nonmechanics_integration_paths": [
+          "src/anysolver/anystructure_fem_mode.py",
+          "src/anysolver/production_readiness.py",
+          "src/anysolver/runtime.py"
+        ],
+        "file_count": 103,
+        "rows_sha256": "6C3489D4814C28CDFCA47EE881CFA3CB38349C6774464EF366A8D8836B334560",
+        "scope": "ALL_TRACKED_SRC_ANYSOLVER_FILES_EXCEPT_EXACT_GUARD_AND_NON_Q4_INTEGRATION_PATHS"
+      },
+      "guard_correction": {
+        "authorized_paths": [
+          {
+            "git_blob": "dbb69ff168d2ed938eec87f3d86143aa3c0ec92d",
+            "path": "docs/reference_cases/e4_pl_q4_state_seal_guard_v2_incident.md"
+          },
+          {
+            "git_blob": "031da1cde23e7983c0f94d837f5610a24737920b",
+            "path": "src/anysolver/e4_pl_element.py"
+          },
+          {
+            "git_blob": "80e7bc75c897aa83617ae1d35b47631b894d5481",
+            "path": "src/anysolver/nonlinear_performance.py"
+          },
+          {
+            "git_blob": "9b578d2d8ed55c3ab8e14f11c24737361d2a785e",
+            "path": "src/anysolver/nonlinear_state.py"
+          },
+          {
+            "git_blob": "645fcee0d5dd6ccf7ca89ea80870b2b0e22ba974",
+            "path": "src/anysolver/nonlinear_static.py"
+          },
+          {
+            "git_blob": "ac4a695088aeb79dc6392163446f6acb2f662247",
+            "path": "tests/test_e4_pl_q4_current_tangent.py"
+          }
+        ],
+        "imported": {
+          "commit": "eeec9ebd430c65d0af5ac29f0f4ba0c1fe5ddbbc",
+          "parent": "084f6da03d573ea0dedd46c0ecb45ebd487fad08",
+          "subject": "fix: bind Q4 vector state sealing to producer origin",
+          "tree": "60a01afc1cfe7521bb62c4a928632e4d7f4f2555"
+        },
+        "reviewed_source": {
+          "commit": "04ec1d5cbb5725913aec35ec62ba1de754881360",
+          "parent": "62464bea649229aa2c9f89ba7cbe431bf6a9282a",
+          "subject": "fix: bind Q4 vector state sealing to producer origin",
+          "tree": "310f9cc18b3dd0fe439a96f8adcc0e36bafe94fb"
+        },
+        "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY"
+      },
+      "q4_mechanics_change": "NONE"
+    },
+    "q4_mechanics_unchanged": true,
+    "s3_mechanics_git_blob": "823b5b0cdc450f7c7f2f2861aefcf4dd2062b99e",
+    "scientific_formula_change": "NONE"
+  },
+  "nonclassifying_development_evidence": {
+    "after_summary_bytes": 6426,
+    "after_summary_sha256": "5822494E30AECBB0650FF6B8178D2D5EC9A31BDBF391A615CBFFF44067E9710D",
+    "before_summary_bytes": 6422,
+    "before_summary_sha256": "4AC0D3EF7FF1D9D6159CEE1C49F13DEE6E1FF561D32EDEE54A825BBBDBB93436",
+    "levels": [
+      20,
+      40
+    ],
+    "metrics": [
+      "WALL_TIME",
+      "COMPLETE_TREE_CPU_TIME",
+      "PEAK_COMPLETE_TREE_MEMORY",
+      "CONNECTIVITY_MANIFEST_REGENERATION_CALLS",
+      "ASSEMBLY_RUNTIME_LEASE_CAPTURE_CALLS"
+    ],
+    "runtime_values_are_diagnostic_only": true,
+    "scientific_payload_sha256": "5143F0376BAB3EE432EEE7F946BC5C0B00B6D2F5AB29F1A8161E6BC723621AC7",
+    "scientific_payloads_byte_identical": true
+  },
+  "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
+  "release_authority": {
+    "activation_integration_must_precede_release_authorization": true,
+    "exact_qualified_wheel_only": true,
+    "post_qualification_review_required": true,
+    "protected_merge_ancestry_required": true,
+    "qualification_restriction_retained_until_separate_release_authorization": true,
+    "release_ledger_schema": "anysolver.e4-pl-s3-release-ledger-v4"
+  },
+  "review_authority": {
+    "required_reviewer_ids": [
+      "s3-v4-authority-reviewer",
+      "s3-v4-science-reviewer"
+    ],
+    "roles": "SEPARATE_AUTHORITY_AND_SCIENTIFIC_REVIEWS_BOUND_BY_AUTHORIZATION_COMMIT"
+  },
+  "schema": "anysolver.e4-pl-s3-qualification-optimization-contract-v4",
+  "terminal": "CORRECTED_E4_PL_S3_OPTIMIZATION_REQUIRES_FINAL_REBIND_AND_REVIEW"
+}

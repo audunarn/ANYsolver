@@ -294,6 +294,76 @@ class LightweightFEMResult:
     load_resultant: dict[str, tuple[float, float, float]] = field(default_factory=dict)
     visualization: dict[str, object] = field(default_factory=dict)
     solver_name: str = "ANYsolver lightweight"
+    # Appended to preserve the existing positional runtime-adapter contract.
+    # ``result_carrier`` is the authoritative native solver result when this
+    # facade wraps one; neither field is part of persisted application summaries.
+    outcome_data: object | None = None
+    result_carrier: object | None = None
+
+    @property
+    def outcome(self):
+        """Return the common typed outcome without replacing native authority."""
+
+        from .outcomes import SolveOutcome, solve_outcome
+
+        if self.result_carrier is not None:
+            return solve_outcome(self.result_carrier)
+        if isinstance(self.outcome_data, SolveOutcome):
+            return self.outcome_data
+        if isinstance(self.outcome_data, Mapping):
+            return SolveOutcome.from_dict(self.outcome_data)
+        if self.outcome_data is not None:
+            raise TypeError(
+                "LightweightFEMResult outcome_data must be a SolveOutcome, "
+                "a mapping, or None"
+            )
+        if self.status == "ok":
+            return SolveOutcome.success("runtime_analysis_completed")
+        return SolveOutcome.failure(str(self.status or "runtime_analysis_failed"))
+
+    @property
+    def quantity_metadata(self) -> tuple[object, ...]:
+        """Describe only quantities carried by the authoritative native result."""
+
+        if self.result_carrier is None:
+            return ()
+        from .quantities import describe_result_quantities
+
+        return describe_result_quantities(self.result_carrier)
+
+    def resolve_quantity(self, quantity_id: str):
+        """Resolve a native quantity without copying it into this facade."""
+
+        if self.result_carrier is None:
+            from .quantities import QuantityUnavailableError
+
+            raise QuantityUnavailableError(
+                f"quantity {quantity_id!r} is unavailable on this runtime result"
+            )
+        from .quantities import resolve_result_quantity
+
+        return resolve_result_quantity(self.result_carrier, quantity_id)
+
+
+def _authoritative_runtime_result_carrier(
+    capacity_workflow_result: object | None,
+    nonlinear_static_result: object | None,
+    nonlinear_result: object | None,
+    buckling_result: object | None,
+    *,
+    eigenvalue_requested: bool,
+) -> object | None:
+    """Select the native result that owns the requested analysis outcome."""
+
+    if capacity_workflow_result is not None:
+        return capacity_workflow_result
+    if nonlinear_static_result is not None:
+        return nonlinear_static_result
+    if nonlinear_result is not None:
+        return nonlinear_result
+    if eigenvalue_requested:
+        return buckling_result
+    return None
 
 
 def _positive(value: float, fallback: float) -> float:
@@ -7549,6 +7619,7 @@ def _run_collision_response(
         load_resultant={},
         visualization=visualization,
         solver_name="ANYsolver production FE mesh",
+        result_carrier=impact,
     )
 
 
@@ -8786,6 +8857,7 @@ def run_production_fem(
             load_resultant=_resultant_dict(load_resultant),
             solver_name="ANYsolver production FE mesh",
             visualization=_visualization_from_full_result(generated_geometry, model, None),
+            outcome_data=solver_info.get("outcome"),
         )
 
     prestress_states, prestress_summary = _full_backend.recover_prestress_from_static_result(model, displacements)
@@ -8853,11 +8925,19 @@ def run_production_fem(
     nonlinear_factor = None
     nonlinear_static_factor = None
     nonlinear_static_result = None
+    requested_analysis_failure = None
     plastic_strain_by_node: dict[int, float] = {}
     if _wants_capacity_workflow(config):
         if status_callback: status_callback("Solving nonlinear capacity workflow...")
         if not hasattr(_full_backend, "run_nonlinear_capacity_workflow"):
-            diagnostics.append("ANYsolver capacity workflow is unavailable in this backend.")
+            message = "ANYsolver capacity workflow is unavailable in this backend."
+            diagnostics.append(message)
+            from .outcomes import SolveOutcome
+
+            requested_analysis_failure = SolveOutcome.failure(
+                "runtime_capacity_workflow_unavailable",
+                message=message,
+            )
         else:
             try:
                 selected_imperfection = None
@@ -8931,7 +9011,14 @@ def run_production_fem(
                     diagnostics.append(str(warning))
             except Exception as exc:
                 prestress_summary["capacity_workflow_status"] = "failed"
-                diagnostics.append("ANYsolver capacity workflow failed: " + str(exc))
+                message = "ANYsolver capacity workflow failed: " + str(exc)
+                diagnostics.append(message)
+                from .outcomes import SolveOutcome
+
+                requested_analysis_failure = SolveOutcome.failure(
+                    "runtime_capacity_workflow_failed",
+                    message=message,
+                )
 
     if _wants_static_nonlinear_analysis(config) and capacity_workflow_result is None:
         nonlinear_control = _nonlinear_solution_control(config)
@@ -8945,6 +9032,12 @@ def run_production_fem(
             unavailable_message = "Incremental geometric/material nonlinear static solver is unavailable in this backend."
         if not solver_available:
             diagnostics.append(unavailable_message)
+            from .outcomes import SolveOutcome
+
+            requested_analysis_failure = SolveOutcome.failure(
+                "runtime_nonlinear_static_unavailable",
+                message=unavailable_message,
+            )
         else:
             try:
                 nonlinear_resource_config = None
@@ -9066,11 +9159,25 @@ def run_production_fem(
                             recovered[key] = prestress_summary[key]
                     prestress_summary = recovered
             except Exception as exc:
-                diagnostics.append("Incremental nonlinear static solver failed: " + str(exc))
+                message = "Incremental nonlinear static solver failed: " + str(exc)
+                diagnostics.append(message)
+                from .outcomes import SolveOutcome
+
+                requested_analysis_failure = SolveOutcome.failure(
+                    "runtime_nonlinear_static_failed",
+                    message=message,
+                )
 
     if _wants_tangent_stability_analysis(config) and capacity_workflow_result is None:
         if _backend_solve_nonlinear_limit is None:
-            diagnostics.append("Nonlinear load-step solver is unavailable in this backend.")
+            message = "Nonlinear load-step solver is unavailable in this backend."
+            diagnostics.append(message)
+            from .outcomes import SolveOutcome
+
+            requested_analysis_failure = SolveOutcome.failure(
+                "runtime_nonlinear_stability_unavailable",
+                message=message,
+            )
         else:
             try:
                 nonlinear_result = _backend_solve_nonlinear_limit(
@@ -9093,7 +9200,14 @@ def run_production_fem(
                 if _wants_nonlinear_analysis(config) and nonlinear_result.converged:
                     displacements = np.asarray(nonlinear_result.final_displacements, dtype=float)
             except Exception as exc:
-                diagnostics.append("Nonlinear load-step solver failed: " + str(exc))
+                message = "Nonlinear load-step solver failed: " + str(exc)
+                diagnostics.append(message)
+                from .outcomes import SolveOutcome
+
+                requested_analysis_failure = SolveOutcome.failure(
+                    "runtime_nonlinear_stability_failed",
+                    message=message,
+                )
     if geometry.get("geometry") == "cylinder" and config.include_end_lids and _add_cylinder_buckling_gauge(model, generated_geometry):
         diagnostics.append("Applied buckling-only rigid-body gauge constraints to the lid center nodes.")
     buckling_kwargs = _buckling_solver_kwargs(config)
@@ -9271,6 +9385,19 @@ def run_production_fem(
     if not buckling_factors:
         diagnostics.append("Static solve converged; no positive buckling modes were returned for this load state.")
 
+    result_carrier = _authoritative_runtime_result_carrier(
+        capacity_workflow_result,
+        nonlinear_static_result,
+        nonlinear_result,
+        buckling_result,
+        eigenvalue_requested=_wants_eigenvalue_buckling(config),
+    )
+
+    outcome_data = solver_info.get("outcome")
+    if requested_analysis_failure is not None:
+        result_carrier = None
+        outcome_data = requested_analysis_failure
+
     return LightweightFEMResult(
         status="ok",
         stress_max_pa=float(stress_stats["max"]),
@@ -9292,6 +9419,8 @@ def run_production_fem(
         load_resultant=_resultant_dict(load_resultant),
         visualization=visualization,
         solver_name="ANYsolver production FE mesh",
+        outcome_data=outcome_data,
+        result_carrier=result_carrier,
     )
 
 
