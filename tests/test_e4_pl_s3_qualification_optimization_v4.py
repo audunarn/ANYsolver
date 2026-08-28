@@ -386,7 +386,7 @@ def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity()
         "59ceb9534dfd22e05ea69296f92abeb0511f14cf"
     )
     assert mechanics["q4_guard_corrected_git_blob"] == (
-        "031da1cde23e7983c0f94d837f5610a24737920b"
+        "d8c42c4a3f6ebe10c2c7d4a96404b7bc9baa8129"
     )
     identity = mechanics["q4_guard_only_identity"]
     assert identity["base"] == generator.Q4_BASE_IDENTITY
@@ -397,6 +397,7 @@ def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity()
         ],
         "imported": generator.Q4_GUARD_IMPORT_IDENTITY,
         "reviewed_source": generator.Q4_GUARD_SOURCE_IDENTITY,
+        "vector_replay_successor": generator.Q4_GUARD_SUCCESSOR_IDENTITY,
         "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY",
     }
     frozen = identity["frozen_q4_source_identity"]

@@ -412,7 +412,7 @@ Q4_GUARD_IMPORT_IDENTITY = {
     "subject": Q4_GUARD_SOURCE_IDENTITY["subject"],
     "tree": "60a01afc1cfe7521bb62c4a928632e4d7f4f2555",
 }
-Q4_GUARD_PATH_BLOBS = (
+Q4_GUARD_V2_PATH_BLOBS = (
     (
         "docs/reference_cases/e4_pl_q4_state_seal_guard_v2_incident.md",
         "dbb69ff168d2ed938eec87f3d86143aa3c0ec92d",
@@ -438,8 +438,11 @@ Q4_GUARD_PATH_BLOBS = (
         "ac4a695088aeb79dc6392163446f6acb2f662247",
     ),
 )
-Q4_GUARD_SOURCE_PATHS = tuple(
-    path for path, _blob in Q4_GUARD_PATH_BLOBS if path.startswith("src/")
+Q4_GUARD_SOURCE_PATHS = (
+    "src/anysolver/e4_pl_element.py",
+    "src/anysolver/nonlinear_performance.py",
+    "src/anysolver/nonlinear_state.py",
+    "src/anysolver/nonlinear_static.py",
 )
 Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS = (
     (
@@ -454,6 +457,33 @@ Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS = (
         "src/anysolver/runtime.py",
         "4f141a70a5c19aa5ee35869a02e88d21e9e370c3",
     ),
+)
+Q4_GUARD_SUCCESSOR_IDENTITY = {
+    "commit": "bf9fa2c676507c2c86343c391c73f69319cb4525",
+    "parent": "005d8a6ba32a0ed8888416d9c489b16d2540399b",
+    "subject": "fix: replay accepted Q4 vector layer kinematics",
+    "tree": "ce7f37f13337bb716d0957fdffe15cd26a4005e2",
+}
+Q4_GUARD_SUCCESSOR_PATH_BLOBS = (
+    (
+        "docs/reference_cases/e4_pl_q4_vector_layer_replay_guard_incident.md",
+        "3579cc4b25736bf8643bebc33f1341d676c75c98",
+    ),
+    (
+        "src/anysolver/e4_pl_element.py",
+        "d8c42c4a3f6ebe10c2c7d4a96404b7bc9baa8129",
+    ),
+    (
+        "tests/test_e4_pl_q4_current_tangent.py",
+        "b91e47e11d3daa6357c5df6c4ef478a2f5c33431",
+    ),
+)
+Q4_GUARD_PATH_BLOBS = (
+    Q4_GUARD_V2_PATH_BLOBS[0],
+    Q4_GUARD_SUCCESSOR_PATH_BLOBS[0],
+    Q4_GUARD_SUCCESSOR_PATH_BLOBS[1],
+    *Q4_GUARD_V2_PATH_BLOBS[2:5],
+    Q4_GUARD_SUCCESSOR_PATH_BLOBS[2],
 )
 Q4_NONMECHANICS_INTEGRATION_PATHS = tuple(
     path for path, _blob_id in Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS
@@ -1875,22 +1905,35 @@ def _verify_anysolver_policy(
         solver_root,
         Q4_GUARD_SOURCE_IDENTITY["parent"],
         Q4_GUARD_SOURCE_IDENTITY["commit"],
-    ) != [path for path, _blob_id in Q4_GUARD_PATH_BLOBS]:
+    ) != [path for path, _blob_id in Q4_GUARD_V2_PATH_BLOBS]:
         raise BindingError("reviewed Q4 guard path set differs")
     if _changed_paths(
         solver_root,
         Q4_GUARD_IMPORT_IDENTITY["parent"],
         Q4_GUARD_IMPORT_IDENTITY["commit"],
-    ) != [path for path, _blob_id in Q4_GUARD_PATH_BLOBS]:
+    ) != [path for path, _blob_id in Q4_GUARD_V2_PATH_BLOBS]:
         raise BindingError("imported Q4 guard path set differs")
-    for path, expected_blob in Q4_GUARD_PATH_BLOBS:
+    for path, expected_blob in Q4_GUARD_V2_PATH_BLOBS:
         observed = {
             _blob(solver_root, Q4_GUARD_SOURCE_IDENTITY["commit"], path),
             _blob(solver_root, guard_import_commit, path),
-            _blob(solver_root, candidate_commit, path),
         }
         if observed != {expected_blob}:
             raise BindingError(f"reviewed Q4 guard blob differs: {path}")
+    if (
+        _commit_identity(solver_root, Q4_GUARD_SUCCESSOR_IDENTITY["commit"])
+        != Q4_GUARD_SUCCESSOR_IDENTITY
+    ):
+        raise BindingError("reviewed Q4 vector replay guard identity differs")
+    if _changed_paths(
+        solver_root,
+        Q4_GUARD_SUCCESSOR_IDENTITY["parent"],
+        Q4_GUARD_SUCCESSOR_IDENTITY["commit"],
+    ) != [path for path, _blob_id in Q4_GUARD_SUCCESSOR_PATH_BLOBS]:
+        raise BindingError("reviewed Q4 vector replay guard path set differs")
+    for path, expected_blob in Q4_GUARD_PATH_BLOBS:
+        if _blob(solver_root, candidate_commit, path) != expected_blob:
+            raise BindingError(f"reviewed Q4 final guard blob differs: {path}")
     for path, expected_blob in Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS:
         if _blob(solver_root, candidate_commit, path) != expected_blob:
             raise BindingError(f"bound nonmechanics integration blob differs: {path}")
@@ -1937,6 +1980,7 @@ def _verify_anysolver_policy(
             ],
             "imported": dict(Q4_GUARD_IMPORT_IDENTITY),
             "reviewed_source": dict(Q4_GUARD_SOURCE_IDENTITY),
+            "vector_replay_successor": dict(Q4_GUARD_SUCCESSOR_IDENTITY),
             "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY",
         },
         "q4_mechanics_change": "NONE",

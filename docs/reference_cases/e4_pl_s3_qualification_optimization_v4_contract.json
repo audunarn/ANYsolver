@@ -393,7 +393,7 @@
     "connectivity_change": "NONE",
     "manifest_generation_change": "COORDINATOR_SELECTS_ONE_STORED_HASH_BOUND_ROW_WITHOUT_CHILD_REGENERATION",
     "q4_base_mechanics_git_blob": "59ceb9534dfd22e05ea69296f92abeb0511f14cf",
-    "q4_guard_corrected_git_blob": "031da1cde23e7983c0f94d837f5610a24737920b",
+    "q4_guard_corrected_git_blob": "d8c42c4a3f6ebe10c2c7d4a96404b7bc9baa8129",
     "q4_guard_only_identity": {
       "base": {
         "commit": "62464bea649229aa2c9f89ba7cbe431bf6a9282a",
@@ -438,7 +438,11 @@
             "path": "docs/reference_cases/e4_pl_q4_state_seal_guard_v2_incident.md"
           },
           {
-            "git_blob": "031da1cde23e7983c0f94d837f5610a24737920b",
+            "git_blob": "3579cc4b25736bf8643bebc33f1341d676c75c98",
+            "path": "docs/reference_cases/e4_pl_q4_vector_layer_replay_guard_incident.md"
+          },
+          {
+            "git_blob": "d8c42c4a3f6ebe10c2c7d4a96404b7bc9baa8129",
             "path": "src/anysolver/e4_pl_element.py"
           },
           {
@@ -454,7 +458,7 @@
             "path": "src/anysolver/nonlinear_static.py"
           },
           {
-            "git_blob": "ac4a695088aeb79dc6392163446f6acb2f662247",
+            "git_blob": "b91e47e11d3daa6357c5df6c4ef478a2f5c33431",
             "path": "tests/test_e4_pl_q4_current_tangent.py"
           }
         ],
@@ -470,7 +474,13 @@
           "subject": "fix: bind Q4 vector state sealing to producer origin",
           "tree": "310f9cc18b3dd0fe439a96f8adcc0e36bafe94fb"
         },
-        "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY"
+        "scope": "GUARD_SERIALIZATION_AND_STATE_LIFECYCLE_ONLY",
+        "vector_replay_successor": {
+          "commit": "bf9fa2c676507c2c86343c391c73f69319cb4525",
+          "parent": "005d8a6ba32a0ed8888416d9c489b16d2540399b",
+          "subject": "fix: replay accepted Q4 vector layer kinematics",
+          "tree": "ce7f37f13337bb716d0957fdffe15cd26a4005e2"
+        }
       },
       "q4_mechanics_change": "NONE"
     },
