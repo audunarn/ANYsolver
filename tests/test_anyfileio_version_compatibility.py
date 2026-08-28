@@ -436,8 +436,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     final_candidate_refs = {
         "0591d4833806ee95bdd710c352a1f836af7b910e",
         "6a8b023ef6f65805519c96b56e025b4e3b457a1f",
-        "e79d14a03ef605afd947948e8588ccb8428eb52f",
-        "da8bff840128ac1e183c77be9e5a53b2bb5c0834",
+        "449a445746152c49315615ff8a1fc232db75afb9",
+        "4c55df4cebee1ad285927f7f33487e0a1f66715a",
     }
     ci_hashes = set(re.findall(r"\b[0-9a-f]{40}\b", ci))
     assert ci_hashes == {
