@@ -1270,14 +1270,19 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
 def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None:
     generator = _load("_s3_v4_source_candidate_shadow", GENERATOR)
     assert generator.SOURCE_CANDIDATE_IMPORTS == {
+        "ANY3dView": ("any3dview",),
         "ANYintelligent": ("fe_solver",)
     }
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS["ANYbuckling"] == "tests"
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS == {
+        "ANY3dView": "src",
         "ANYbuckling": "tests",
         "ANYintelligent": ".",
+        "ANYsolver": "tests",
     }
-    assert "ANY3dView" not in generator.SOURCE_CANDIDATE_IMPORTS
+    assert "[str(candidate_sys_path),str(target),str(root)]" in (
+        generator.PREFLIGHT_BOOTSTRAP
+    )
     with pytest.raises(generator.BindingError, match="shadows source candidate import"):
         generator._reject_source_candidate_target_shadowing(
             [{"path": "fe_solver/__init__.py"}]
@@ -1394,11 +1399,20 @@ def test_v4_preflight_has_supported_full_gates_and_portable_target_bootstrap(
             runtime,
             output,
         )
-        expected_sys_path = "tests" if candidate_name == "ANYbuckling" else "."
+        expected_sys_path = {
+            "ANY3dView": "src",
+            "ANYbuckling": "tests",
+        }.get(candidate_name, ".")
+        expected_candidate_imports = (
+            ["any3dview"] if candidate_name == "ANY3dView" else []
+        )
+        expected_target_imports = (
+            [] if candidate_name == "ANY3dView" else [import_name]
+        )
         assert json.loads(command[10]) == {
-            "candidate_imports": [],
+            "candidate_imports": expected_candidate_imports,
             "candidate_sys_path": expected_sys_path,
-            "target_imports": [import_name],
+            "target_imports": expected_target_imports,
         }
 
 

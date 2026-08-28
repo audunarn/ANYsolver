@@ -150,11 +150,14 @@ PACKAGED_IDENTITIES = {
     "ANYtk3D": ("ANYtk3D", "0.5.3", "anytk3d"),
 }
 SOURCE_CANDIDATE_IMPORTS = {
+    "ANY3dView": ("any3dview",),
     "ANYintelligent": ("fe_solver",),
 }
 SOURCE_CANDIDATE_IMPORT_ROOTS = {
+    "ANY3dView": "src",
     "ANYbuckling": "tests",
     "ANYintelligent": ".",
+    "ANYsolver": "tests",
 }
 ANYSTRUCTURE_GATE_ROOT_ENVIRONMENT = {
     "ANYSTRUCTURE_ANY3DVIEW_ROOT": "ANY3dView",
@@ -372,7 +375,7 @@ PREFLIGHT_BOOTSTRAP = PREFLIGHT_TREE_RELEASE_BOOTSTRAP + (
     "assert isinstance(candidate_imports,list) and isinstance(target_imports,list);"
     "assert all(isinstance(name,str) and name for name in candidate_imports+target_imports);"
     "assert 'sitecustomize' not in sys.modules and 'usercustomize' not in sys.modules;"
-    "sys.path[:0]=list(dict.fromkeys([str(target),str(candidate_sys_path),str(root)]));"
+    "sys.path[:0]=list(dict.fromkeys([str(candidate_sys_path),str(target),str(root)]));"
     "import pytest;"
     "assert pathlib.Path(pytest.__file__).resolve(strict=True).is_relative_to(target);"
     "target_mods=[importlib.import_module(name) for name in target_imports];"
@@ -996,7 +999,9 @@ def _reject_source_candidate_target_shadowing(
     for row in rows:
         path = str(row.get("path", ""))
         folded_path = path.casefold()
-        for names in SOURCE_CANDIDATE_IMPORTS.values():
+        for candidate_name, names in SOURCE_CANDIDATE_IMPORTS.items():
+            if candidate_name in PACKAGED:
+                continue
             for import_name in names:
                 import_path = import_name.replace(".", "/").casefold()
                 if folded_path.startswith(import_path + "/") or (
@@ -2282,6 +2287,8 @@ def _preflight_command(
             "target_imports": (
                 [PACKAGED_IDENTITIES[name][2]]
                 if name in PACKAGED_IDENTITIES
+                and PACKAGED_IDENTITIES[name][2]
+                not in SOURCE_CANDIDATE_IMPORTS.get(name, ())
                 else []
             ),
         },

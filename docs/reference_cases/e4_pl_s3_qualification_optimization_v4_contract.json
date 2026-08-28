@@ -204,6 +204,7 @@
       ],
       "solver_merge_lane": "scripts/run_portable_ci.py --workers 3",
       "source_candidate_import_origins": {
+        "ANY3dView.any3dview": "BOUND_CANDIDATE_SRC_FOR_SOURCE_AND_RELEASE_AUTHORITY_TESTS_WITH_EXACT_WHEEL_MANIFEST_SEPARATELY_BOUND",
         "ANYintelligent.fe_solver": "BOUND_CANDIDATE_ROOT"
       },
       "targeted_ecosystem_gates_are_nonclassifying": true,
