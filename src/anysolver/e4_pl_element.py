@@ -4194,6 +4194,62 @@ class QualifiedE4PLShellElement(
             }
         )
 
+    def _replay_vector_kinematic_layer_strain(
+        self,
+        mesh: Any,
+        committed_u_elem: np.ndarray,
+        num_layers: int,
+    ) -> np.ndarray:
+        """Reproduce the registered vector producer's kinematic layer field."""
+
+        layers = _qualified_q4_layer_count(num_layers)
+        cache = self._nonlinear_geometry(mesh)
+
+        def _one_element_batch(values: Any) -> np.ndarray:
+            source = np.asarray(values, dtype=np.float64)
+            batch = np.empty((1, *source.shape), dtype=np.float64)
+            batch[0] = source
+            return batch
+
+        u_elem_batch = _one_element_batch(committed_u_elem)
+        transform_batch = _one_element_batch(cache["T0"])
+        membrane_batch = _one_element_batch(cache["B_m_all"])
+        bending_batch = _one_element_batch(cache["B_b_all"])
+        gradient_batch = _one_element_batch(cache["Gw_all"])
+
+        # Keep this operation order identical to the registered vector
+        # producer.  A scalar replay is not a byte-identity witness for a
+        # state produced through NumPy's leading-batch matmul path.
+        local_batch = (
+            transform_batch @ u_elem_batch[:, :, None]
+        ).squeeze(-1)
+        gradient_values = (
+            gradient_batch @ local_batch[:, None, :, None]
+        ).squeeze(-1)
+        membrane_values = (
+            membrane_batch @ local_batch[:, None, :, None]
+        ).squeeze(-1)
+        membrane_values += np.stack(
+            (
+                0.5 * gradient_values[..., 0] ** 2,
+                0.5 * gradient_values[..., 1] ** 2,
+                gradient_values[..., 0] * gradient_values[..., 1],
+            ),
+            axis=-1,
+        )
+        curvature_values = (
+            bending_batch @ local_batch[:, None, :, None]
+        ).squeeze(-1)
+        z_layers, _weights = lobatto_layers(
+            layers, float(self.thickness)
+        )
+        gauss_points = int(np.asarray(cache["detw_all"]).shape[0])
+        return (
+            membrane_values[:, :, None, :]
+            + z_layers[None, None, :, None]
+            * curvature_values[:, :, None, :]
+        ).reshape(gauss_points * layers, 3)
+
     def _replay_accepted_algorithmic_response(
         self,
         mesh: Any,
@@ -4246,15 +4302,32 @@ class QualifiedE4PLShellElement(
                 _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY
             ]
             producer_id = raw_origin.get("producer_id")
-            exact_fields = (
-                (("layer_strain", (points, 3)),)
-                if producer_id == Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID
-                else (
+            if producer_id == Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID:
+                expected_layer = np.asarray(
+                    committed_state.get("layer_strain", ()),
+                    dtype=np.float64,
+                )
+                replayed_layer = self._replay_vector_kinematic_layer_strain(
+                    mesh,
+                    np.asarray(committed_u_elem, dtype=np.float64),
+                    layers,
+                )
+                if (
+                    expected_layer.shape != (points, 3)
+                    or not np.all(np.isfinite(expected_layer))
+                    or not np.array_equal(replayed_layer, expected_layer)
+                ):
+                    raise ValueError(
+                        "qualified Q4 accepted algorithmic origin does not "
+                        "reproduce committed layer_strain"
+                    )
+                exact_fields: tuple[tuple[str, tuple[int, ...]], ...] = ()
+            else:
+                exact_fields = (
                     ("plastic_strain", (points, 3)),
                     ("alpha", (points,)),
                     ("layer_strain", (points, 3)),
                 )
-            )
             for name, shape in exact_fields:
                 expected = np.asarray(
                     committed_state.get(name, ()), dtype=np.float64

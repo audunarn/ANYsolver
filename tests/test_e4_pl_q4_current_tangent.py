@@ -1039,7 +1039,7 @@ def test_packed_scalar_q4_origin_survives_partial_commit_discard_and_delete() ->
     assert canonical_json_bytes(packed[2]) == canonical_json_bytes(state(6.0, 0.6))
 
 
-def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -> None:
+def test_vectorized_q4_accepted_tangent_uses_vector_kinematic_replay() -> None:
     nodes = np.asarray(
         ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)),
         dtype=np.float64,
@@ -1109,6 +1109,11 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
         tangent_evaluated=True,
         producer_id=Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
     )
+    np.testing.assert_array_equal(
+        element._replay_vector_kinematic_layer_strain(mesh, displacement, 3),
+        layer_strain[:points],
+    )
+
     sealed = element.seal_committed_current_tangent_state(
         mesh, material, displacement, trial, 3
     )
@@ -1120,3 +1125,97 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
     )
     np.testing.assert_array_equal(components["total"], scalar_tangent)
     assert not np.array_equal(components["force"], force[0])
+
+    changed_layer = layer_strain[:points].copy()
+    changed_layer[0, 0] = np.nextafter(changed_layer[0, 0], np.inf)
+    changed_trial = element.attach_current_tangent_algorithmic_origin(
+        material,
+        parent,
+        {
+            "plastic_strain": plastic[0],
+            "alpha": alpha[0],
+            "layer_strain": changed_layer,
+        },
+        3,
+        tangent_evaluated=True,
+        producer_id=Q4_VECTORIZED_ALGORITHMIC_PRODUCER_ID,
+    )
+    with pytest.raises(ValueError, match="reproduce committed layer_strain"):
+        element.seal_committed_current_tangent_state(
+            mesh, material, displacement, changed_trial, 3
+        )
+
+
+@pytest.mark.parametrize(
+    "nodes",
+    (
+        np.asarray(
+            (
+                (0.0, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+                (1.0, 1.0, 0.0),
+                (0.0, 1.0, 0.0),
+            ),
+            dtype=np.float64,
+        ),
+        np.asarray(
+            (
+                (-0.2, -0.1, 0.03),
+                (1.4, 0.1, -0.02),
+                (1.2, 1.0, 0.04),
+                (-0.1, 0.8, -0.01),
+            ),
+            dtype=np.float64,
+        ),
+        np.asarray(
+            (
+                (0.0, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+                (1.0, 1.0, 0.0),
+                (0.0, 1.0, 0.0),
+            ),
+            dtype=np.float64,
+        )
+        @ _axis_rotation(np.asarray((0.3, -0.5, 0.8)), 0.63).T,
+    ),
+    ids=("square", "skew-warped", "rotated"),
+)
+def test_vector_layer_guard_matches_registered_batch_operations(
+    nodes: np.ndarray,
+) -> None:
+    mesh = _mesh(nodes)
+    material = _material(plastic=True)
+    element = QualifiedE4PLShellElement(
+        34, [1, 2, 3, 4], material.name, thickness=0.02
+    )
+    displacement = np.linspace(-8.0e-4, 1.1e-3, 24, dtype=np.float64)
+    cache = element._nonlinear_geometry(mesh)
+    parent = element.init_nonlinear_state(3)
+    points = len(element.gauss_points) * 3
+    _force, _tangent, _plastic, _alpha, layer_strain = (
+        batch_shell_nonlinear_response(
+            displacement[None, :],
+            np.asarray(cache["T0"])[None, :, :].copy(),
+            np.asarray(cache["B_m_all"])[None, :, :, :].copy(),
+            np.asarray(cache["B_b_all"])[None, :, :, :].copy(),
+            np.asarray(cache["B_d_all"])[None, :, :, :].copy(),
+            np.asarray(cache["Gw_all"])[None, :, :, :].copy(),
+            np.asarray(cache["detw_all"])[None, :].copy(),
+            np.asarray(cache["B_s_all"])[None, :, :, :].copy(),
+            np.asarray(cache["detw_shear_all"])[None, :].copy(),
+            float(material.elastic_modulus),
+            float(material.poisson_ratio),
+            float(material.shear_modulus),
+            float(element.thickness),
+            float(element.drilling_stabilization),
+            True,
+            material.hardening_curve,
+            np.asarray(parent["plastic_strain"])[None, :, :].copy(),
+            np.asarray(parent["alpha"])[None, :].copy(),
+            3,
+        )
+    )
+    np.testing.assert_array_equal(
+        element._replay_vector_kinematic_layer_strain(mesh, displacement, 3),
+        layer_strain[:points],
+    )
