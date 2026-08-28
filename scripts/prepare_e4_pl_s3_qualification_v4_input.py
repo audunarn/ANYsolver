@@ -500,6 +500,23 @@ def _regular_file_bytes(path: Path, *, label: str) -> bytes:
     return path.read_bytes()
 
 
+def _canonical_regular_file_route(value: object, *, label: str) -> Path:
+    if type(value) is not str or not value:
+        raise BindingError(f"{label} path is malformed")
+    declared = Path(value)
+    if not declared.is_absolute():
+        raise BindingError(f"{label} path is not absolute")
+    try:
+        for route in (declared, *declared.parents):
+            if route.is_symlink() or _is_reparse(route):
+                raise BindingError(f"{label} route contains a reparse point")
+        resolved = declared.resolve(strict=True)
+    except OSError as exc:
+        raise BindingError(f"{label} route cannot be resolved") from exc
+    _regular_file_bytes(resolved, label=label)
+    return resolved
+
+
 def _tool_record(path: Path, *, label: str) -> dict[str, Any]:
     resolved = path.resolve(strict=True)
     if not resolved.is_absolute():
@@ -1048,7 +1065,9 @@ def _metadata_identity(raw: bytes, *, label: str) -> tuple[str, str]:
 
 def _wheel_blueprint(name: str, wheel: Mapping[str, Any]) -> dict[str, Any]:
     expected_distribution, expected_version, import_name = PACKAGED_IDENTITIES[name]
-    wheel_path = Path(str(wheel["path"])).resolve(strict=True)
+    wheel_path = _canonical_regular_file_route(
+        wheel["path"], label=f"{name} wheel"
+    )
     raw = _regular_file_bytes(wheel_path, label=f"{name} wheel")
     if (
         wheel_path.name != wheel["filename"]
@@ -2013,6 +2032,11 @@ def _verify_candidate(name: str, value: object) -> dict[str, Any]:
                 "sha256",
             )
         }
+        wheel_base["path"] = str(
+            _canonical_regular_file_route(
+                wheel_base["path"], label=f"{name} wheel"
+            )
+        )
         _wheel_blueprint(name, wheel_base)
         if installed_target is not None:
             wheel_base["installed_target"] = _reverify_one_installed_target(

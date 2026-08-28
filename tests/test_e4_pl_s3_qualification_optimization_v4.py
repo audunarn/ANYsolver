@@ -588,6 +588,35 @@ def test_binding_generator_requires_all_exact_local_wheels() -> None:
     )
 
 
+def test_wheel_route_is_absolute_canonical_and_nonreparse(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generator = _load("_s3_v4_generator_wheel_route", GENERATOR)
+    wheel = tmp_path / "candidate.whl"
+    wheel.write_bytes(b"wheel")
+    assert generator._canonical_regular_file_route(
+        str(wheel), label="test wheel"
+    ) == wheel.resolve(strict=True)
+
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(generator.BindingError, match="not absolute"):
+        generator._canonical_regular_file_route(
+            wheel.name, label="test wheel"
+        )
+
+    original = generator._is_reparse
+    monkeypatch.setattr(
+        generator,
+        "_is_reparse",
+        lambda path: path == wheel or original(path),
+    )
+    with pytest.raises(generator.BindingError, match="reparse point"):
+        generator._canonical_regular_file_route(
+            str(wheel), label="test wheel"
+        )
+
+
 def _live_solver_policy(generator: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     def git(*arguments: str) -> str:
         return subprocess.run(
