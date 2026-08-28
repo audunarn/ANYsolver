@@ -784,6 +784,31 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "parse_constant=reject_constant" in release_assets_job
     assert "ledger_raw != canonical" in release_assets_job
     assert "anysolver.e4-pl-s3-release-ledger-v3" in release_assets_job
+    assert (
+        '"anysolver.e4-pl-s3-qualification-candidate-binding-v4"'
+        in release_assets_job
+    )
+    assert (
+        '"anysolver.e4-pl-s3-qualification-authorization-v4"'
+        in release_assets_job
+    )
+    for candidate in (
+        "ANY3dView",
+        "ANYbuckling",
+        "ANYfem",
+        "ANYfileIO",
+        "ANYgeometry",
+        "ANYintelligent",
+        "ANYmaterial",
+        "ANYmesh",
+        "ANYsolver",
+        "ANYstructure",
+        "ANYtk3D",
+    ):
+        assert f'"{candidate}"' in release_assets_job
+    assert '"s3-v4-authority-reviewer"' in release_assets_job
+    assert '"s3-v4-science-reviewer"' in release_assets_job
+    assert '"s3-v4-post-qualification-reviewer"' in release_assets_job
     assert 'for token in ("PLACEHOLDER", "REBIND_FINAL", "TO_BE_REBOUND")' in release_assets_job
     assert '["git", "rev-list", "--parents", "-n", "1", "HEAD"]' in release_assets_job
     assert '["git", "rev-parse", f"{source_commit}^{{tree}}"]' in release_assets_job
