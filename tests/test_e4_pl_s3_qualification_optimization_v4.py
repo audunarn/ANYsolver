@@ -1401,6 +1401,9 @@ def test_v4_preflight_has_supported_full_gates_and_portable_target_bootstrap(
     assert "mod._worker_command" in generator.PREFLIGHT_PORTABLE_BOOTSTRAP
     assert generator.PREFLIGHT_CANDIDATE_GIT_MODULES == frozenset(
         {
+            "tests/test_e4_pl_burnin.py",
+            "tests/test_e4_pl_s3_exact_wheel_target_v3.py",
+            "tests/test_e4_pl_s3_mixed_mesh_manifest.py",
             "tests/test_e4_pl_s3_qualification_optimization_v3.py",
             "tests/test_e4_pl_s3_qualification_optimization_v4.py",
         }

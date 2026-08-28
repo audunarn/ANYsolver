@@ -357,6 +357,9 @@ PREFLIGHT_TREE_RELEASE_BYTES = b"ANYSOLVER_S3_PREFLIGHT_TREE_ACCOUNTED_V1\n"
 PREFLIGHT_TREE_RELEASE_WAIT_SECONDS = 5.0
 PREFLIGHT_CANDIDATE_GIT_MODULES = frozenset(
     {
+        "tests/test_e4_pl_burnin.py",
+        "tests/test_e4_pl_s3_exact_wheel_target_v3.py",
+        "tests/test_e4_pl_s3_mixed_mesh_manifest.py",
         "tests/test_e4_pl_s3_qualification_optimization_v3.py",
         "tests/test_e4_pl_s3_qualification_optimization_v4.py",
     }

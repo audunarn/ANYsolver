@@ -122,6 +122,10 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
             ): 1,
             (
                 "tests/test_production_validation.py",
+                "test_validate_production_model_accepts_triangular_shell_quality",
+            ): 1,
+            (
+                "tests/test_production_validation.py",
                 "test_validate_production_model_reports_q8_midside_and_warp_warnings",
             ): 1,
             (
@@ -135,7 +139,7 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
         }
     )
     assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == 22
+    assert sum(calls["ShellElement"].values()) == 23
     expected_qualified_q4 = Counter(
         {
             (
@@ -257,7 +261,15 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
             ): 1,
             (
                 "tests/test_e4_pl_q4_current_tangent.py",
-                "test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly",
+                "test_q4_v1_origin_and_element_identity_migrate_only_after_exact_replay",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_vectorized_q4_accepted_tangent_uses_vector_kinematic_replay",
+            ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_vector_layer_guard_matches_registered_batch_operations",
             ): 1,
             ("tests/test_e4_pl_q4_state_lifecycle.py", "_loaded_q4_model"): 1,
             (
@@ -285,6 +297,8 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "tests/test_mixed_shell_quadrature_grouping.py",
                 "_mixed_model",
             ): 1,
+            ("tests/test_qualified_dead_pressure_fast_path.py", "_q4_model"): 1,
+            ("tests/test_qualified_dead_pressure_fast_path.py", "_mixed_model"): 1,
             (
                 "tests/test_qualified_mutation_epoch.py",
                 "_qualified_q4_model",
@@ -306,10 +320,15 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "test_large_alternating_q4_beam_recovery_has_constant_full_guard_count",
             ): 1,
             ("tests/test_qualified_q4_assembly_authority.py", "_model"): 1,
+            ("tests/test_qualified_q4_cold_fallback.py", "_angled_q4_model"): 1,
+            (
+                "tests/test_qualified_s3_pressure_surface_fast_path.py",
+                "_mixed_model",
+            ): 1,
         }
     )
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
-    assert sum(calls["QualifiedE4PLShellElement"].values()) == 53
+    assert sum(calls["QualifiedE4PLShellElement"].values()) == 59
 
 
 def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None:
