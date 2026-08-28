@@ -1271,6 +1271,12 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
     assert environment["PYTHONNOUSERSITE"] == "1"
     assert environment["TEMP"] == str(scratch_root.resolve())
     assert environment["TMP"] == str(scratch_root.resolve())
+    assert environment["NUMBA_CACHE_DIR"] == str(scratch_root.resolve() / "numba-cache")
+    assert environment["MPLCONFIGDIR"] == str(scratch_root.resolve() / "matplotlib-config")
+    assert environment["XDG_CACHE_HOME"] == str(scratch_root.resolve() / "xdg-cache")
+    runner_source = PREFLIGHT_RUNNER.read_text(encoding="utf-8")
+    assert "target_before = generator._preflight_target_identity(target)" in runner_source
+    assert "target_after == target_before" in runner_source
     assert "GIT_GRAFT_FILE" not in environment
     assert "GIT_NO_REPLACE_OBJECTS" not in environment
     assert "GIT_REPLACE_REF_BASE" not in environment

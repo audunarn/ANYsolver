@@ -2168,6 +2168,16 @@ def _preflight_environment(
         raise BindingError("preflight scratch root is not a regular directory")
     result["TEMP"] = str(scratch_root)
     result["TMP"] = str(scratch_root)
+    scratch_environment = {
+        "MPLCONFIGDIR": scratch_root / "matplotlib-config",
+        "NUMBA_CACHE_DIR": scratch_root / "numba-cache",
+        "XDG_CACHE_HOME": scratch_root / "xdg-cache",
+    }
+    for environment_name, directory in scratch_environment.items():
+        directory.mkdir(exist_ok=True)
+        if not directory.is_dir() or directory.is_symlink():
+            raise BindingError("preflight cache scratch is not a regular directory")
+        result[environment_name] = str(directory)
     for environment_name, dependency_name in sorted(root_environment.items()):
         dependency_root = Path(
             str(dependency_roots[dependency_name])

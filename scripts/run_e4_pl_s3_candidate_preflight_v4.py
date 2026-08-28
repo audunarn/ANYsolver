@@ -365,6 +365,7 @@ def run(args: argparse.Namespace) -> int:
         name,
         dependency_roots,
     )
+    target_before = generator._preflight_target_identity(target)
     gates: list[dict[str, object]] = []
     passed = True
     for identifier in generator.PREFLIGHT_GATE_IDS[name]:
@@ -426,6 +427,11 @@ def run(args: argparse.Namespace) -> int:
         )
     except (generator.BindingError, OSError, subprocess.SubprocessError):
         dependency_candidates_after = None
+    target_after: dict[str, object] | None = None
+    try:
+        target_after = generator._preflight_target_identity(target)
+    except (generator.BindingError, OSError):
+        target_after = None
     record = {
         "candidate": name,
         "checkout_after": checkout_after,
@@ -433,6 +439,7 @@ def run(args: argparse.Namespace) -> int:
         "clean_tree": (
             checkout_after == checkout_before
             and final_identity == (args.commit, args.tree)
+            and target_after == target_before
         ),
         "commit": final_identity[0],
         "dependency_candidates_after": dependency_candidates_after,
@@ -443,7 +450,7 @@ def run(args: argparse.Namespace) -> int:
         "execution_checkout_after": execution_checkout_after,
         "execution_checkout_before": execution_checkout_before,
         "execution_root": str(execution_root),
-        "execution_target": generator._preflight_target_identity(target),
+        "execution_target": target_after if target_after is not None else target_before,
         "gates": gates,
         "generated_products": [],
         "preflight_config": generator._file_binding(generator.PREFLIGHT_CONFIG),
