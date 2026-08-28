@@ -146,7 +146,7 @@ jobs:
               {"artifact_source", "artifacts", "qualification", "schema"},
               "release ledger",
           )
-          if ledger["schema"] != "anysolver.e4-pl-s3-release-ledger-v3":
+          if ledger["schema"] != "anysolver.e4-pl-s3-release-ledger-v4":
               raise SystemExit("release ledger schema differs")
           reject_placeholders(ledger)
           artifact_source = ledger["artifact_source"]

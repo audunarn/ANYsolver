@@ -783,7 +783,19 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "object_pairs_hook=strict_pairs" in release_assets_job
     assert "parse_constant=reject_constant" in release_assets_job
     assert "ledger_raw != canonical" in release_assets_job
-    assert "anysolver.e4-pl-s3-release-ledger-v3" in release_assets_job
+    optimization_contract = json.loads(
+        (
+            root
+            / "docs"
+            / "reference_cases"
+            / "e4_pl_s3_qualification_optimization_v4_contract.json"
+        ).read_text(encoding="utf-8")
+    )
+    release_ledger_schema = optimization_contract["release_authority"][
+        "release_ledger_schema"
+    ]
+    assert release_ledger_schema == "anysolver.e4-pl-s3-release-ledger-v4"
+    assert f'"{release_ledger_schema}"' in release_assets_job
     assert (
         '"anysolver.e4-pl-s3-qualification-candidate-binding-v4"'
         in release_assets_job
