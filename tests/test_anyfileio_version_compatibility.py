@@ -786,6 +786,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "def git_environment():" in release_assets_job
     assert 'environment["GIT_CONFIG_NOSYSTEM"] = "1"' in release_assets_job
     assert 'environment["GIT_CONFIG_GLOBAL"] = os.devnull' in release_assets_job
+    assert '"GIT_CONFIG_PARAMETERS"' in release_assets_job
     assert 'environment["GIT_ATTR_NOSYSTEM"] = "1"' in release_assets_job
     assert 'environment["GIT_NO_REPLACE_OBJECTS"] = "1"' in release_assets_job
     assert '"core.attributesFile="' in release_assets_job

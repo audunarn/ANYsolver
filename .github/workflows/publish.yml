@@ -85,6 +85,7 @@ jobs:
                   "GIT_COMMON_DIR",
                   "GIT_CONFIG",
                   "GIT_CONFIG_COUNT",
+                  "GIT_CONFIG_PARAMETERS",
                   "GIT_DIFF_OPTS",
                   "GIT_DIR",
                   "GIT_DISCOVERY_ACROSS_FILESYSTEM",
