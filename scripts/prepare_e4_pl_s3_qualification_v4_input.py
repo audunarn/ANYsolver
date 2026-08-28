@@ -190,6 +190,7 @@ RUNTIME_DISTRIBUTION_IDENTITIES = frozenset(
         "mdurl",
         "meshio",
         "moderngl",
+        "narwhals",
         "numpy",
         "numpy-stl",
         "packaging",

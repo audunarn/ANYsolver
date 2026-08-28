@@ -1284,6 +1284,7 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
         "mdurl",
         "meshio",
         "moderngl",
+        "narwhals",
         "numpy",
         "numpy-stl",
         "packaging",

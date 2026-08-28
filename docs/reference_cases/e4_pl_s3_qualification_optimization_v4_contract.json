@@ -142,6 +142,7 @@
         "mdurl",
         "meshio",
         "moderngl",
+        "narwhals",
         "numpy",
         "numpy-stl",
         "packaging",
