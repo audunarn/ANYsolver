@@ -2140,6 +2140,12 @@ def _preflight_environment(
         raise BindingError(f"{candidate_name} preflight dependency roots differ")
     result = dict(process_environment)
     result.update(PREFLIGHT_ENVIRONMENT)
+    for test_repository_override in (
+        "GIT_GRAFT_FILE",
+        "GIT_NO_REPLACE_OBJECTS",
+        "GIT_REPLACE_REF_BASE",
+    ):
+        result.pop(test_repository_override, None)
     result["PYTHONPATH"] = str(target.resolve(strict=True))
     scratch_root = scratch_root.resolve(strict=True)
     if not scratch_root.is_dir() or scratch_root.is_symlink():

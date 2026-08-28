@@ -722,7 +722,10 @@ def _preflight_binding(
         Path(sys.executable), label="synthetic preflight Python"
     )
     runtime = {
-        "process_environment": {"PATH": str(tmp_path)},
+        "process_environment": {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "PATH": str(tmp_path),
+        },
         "python": {**python_row, "version": sys.version},
     }
     checkout = {"directories_sha256": "A" * 64, "directory_count": 1,
@@ -1222,7 +1225,10 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
     scratch_root = output / "process-temp"
     scratch_root.mkdir()
     runtime = {
-        "process_environment": {"PATH": str(tmp_path)},
+        "process_environment": {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "PATH": str(tmp_path),
+        },
         "python": {
             **generator._tool_record(
                 Path(sys.executable), label="synthetic preflight Python"
@@ -1265,6 +1271,10 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
     assert environment["PYTHONNOUSERSITE"] == "1"
     assert environment["TEMP"] == str(scratch_root.resolve())
     assert environment["TMP"] == str(scratch_root.resolve())
+    assert "GIT_GRAFT_FILE" not in environment
+    assert "GIT_NO_REPLACE_OBJECTS" not in environment
+    assert "GIT_REPLACE_REF_BASE" not in environment
+    assert environment["GIT_CONFIG_NOSYSTEM"] == "1"
 
 
 def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None:

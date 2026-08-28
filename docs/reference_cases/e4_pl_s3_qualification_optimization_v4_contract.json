@@ -195,6 +195,7 @@
       "exact_target_precedes_candidate_root": true,
       "execution_sandbox": "EXACT_TRACKED_COPY_BOUND_BEFORE_AND_AFTER_GATES_WITH_GENERATED_PRODUCTS_EXTERNAL",
       "process_scratch": "EXCLUSIVE_CANDIDATE_OUTPUT_SUBDIRECTORY_BOUND_AS_TEMP_AND_TMP",
+      "test_repository_git_scope": "EXECUTION_COPY_HAS_NO_GIT_DIRECTORY; TEST_CREATED_REPOSITORIES_MAY_EXERCISE_GRAFT_AND_REPLACEMENT_REJECTION_WHILE_GLOBAL_SYSTEM_CONFIG_AND_ATTRIBUTES_REMAIN_DISABLED",
       "failed_first_pass_records_preserved": true,
       "normal_protected_pr_ci_remains_required": true,
       "pytest_startup_flags": [
