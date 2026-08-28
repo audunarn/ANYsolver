@@ -1281,16 +1281,17 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
     generator = _load("_s3_v4_source_candidate_shadow", GENERATOR)
     assert generator.SOURCE_CANDIDATE_IMPORTS == {
         "ANY3dView": ("any3dview",),
-        "ANYintelligent": ("fe_solver",)
+        "ANYintelligent": ("fe_solver",),
+        "ANYsolver": ("anysolver",),
     }
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS["ANYbuckling"] == "tests"
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS == {
         "ANY3dView": "src",
         "ANYbuckling": "tests",
         "ANYintelligent": ".",
-        "ANYsolver": "tests",
+        "ANYsolver": "src",
     }
-    assert "[str(candidate_sys_path),str(target),str(root)]" in (
+    assert "[str(candidate_sys_path),str(test_support),str(target),str(root)]" in (
         generator.PREFLIGHT_BOOTSTRAP
     )
     with pytest.raises(generator.BindingError, match="shadows source candidate import"):
@@ -1399,7 +1400,10 @@ def test_v4_preflight_has_supported_full_gates_and_portable_target_bootstrap(
     assert generator.PREFLIGHT_BOOTSTRAP == command[-1]
     assert "mod._worker_command" in generator.PREFLIGHT_PORTABLE_BOOTSTRAP
     assert generator.PREFLIGHT_CANDIDATE_GIT_MODULES == frozenset(
-        {"tests/test_e4_pl_s3_qualification_optimization_v4.py"}
+        {
+            "tests/test_e4_pl_s3_qualification_optimization_v3.py",
+            "tests/test_e4_pl_s3_qualification_optimization_v4.py",
+        }
     )
     assert "if module not in excluded" in generator.PREFLIGHT_PORTABLE_BOOTSTRAP
     for candidate_name, import_name in (

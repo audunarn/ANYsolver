@@ -152,12 +152,13 @@ PACKAGED_IDENTITIES = {
 SOURCE_CANDIDATE_IMPORTS = {
     "ANY3dView": ("any3dview",),
     "ANYintelligent": ("fe_solver",),
+    "ANYsolver": ("anysolver",),
 }
 SOURCE_CANDIDATE_IMPORT_ROOTS = {
     "ANY3dView": "src",
     "ANYbuckling": "tests",
     "ANYintelligent": ".",
-    "ANYsolver": "tests",
+    "ANYsolver": "src",
 }
 ANYSTRUCTURE_GATE_ROOT_ENVIRONMENT = {
     "ANYSTRUCTURE_ANY3DVIEW_ROOT": "ANY3dView",
@@ -355,7 +356,10 @@ PREFLIGHT_TREE_RELEASE_ENVIRONMENT = "ANYSOLVER_S3_PREFLIGHT_TREE_RELEASE"
 PREFLIGHT_TREE_RELEASE_BYTES = b"ANYSOLVER_S3_PREFLIGHT_TREE_ACCOUNTED_V1\n"
 PREFLIGHT_TREE_RELEASE_WAIT_SECONDS = 5.0
 PREFLIGHT_CANDIDATE_GIT_MODULES = frozenset(
-    {"tests/test_e4_pl_s3_qualification_optimization_v4.py"}
+    {
+        "tests/test_e4_pl_s3_qualification_optimization_v3.py",
+        "tests/test_e4_pl_s3_qualification_optimization_v4.py",
+    }
 )
 PREFLIGHT_TREE_RELEASE_BOOTSTRAP = (
     "import os,pathlib,time\n"
@@ -376,11 +380,13 @@ PREFLIGHT_BOOTSTRAP = PREFLIGHT_TREE_RELEASE_BOOTSTRAP + (
     "assert set(imports)=={'candidate_imports','candidate_sys_path','target_imports'};"
     "candidate_imports=imports['candidate_imports'];target_imports=imports['target_imports'];"
     "candidate_sys_path=(root/imports['candidate_sys_path']).resolve(strict=True);"
+    "test_support=(root/'tests').resolve(strict=True);"
     "assert candidate_sys_path.is_relative_to(root);"
+    "assert test_support.is_relative_to(root) and test_support.is_dir();"
     "assert isinstance(candidate_imports,list) and isinstance(target_imports,list);"
     "assert all(isinstance(name,str) and name for name in candidate_imports+target_imports);"
     "assert 'sitecustomize' not in sys.modules and 'usercustomize' not in sys.modules;"
-    "sys.path[:0]=list(dict.fromkeys([str(candidate_sys_path),str(target),str(root)]));"
+    "sys.path[:0]=list(dict.fromkeys([str(candidate_sys_path),str(test_support),str(target),str(root)]));"
     "import pytest;"
     "assert pathlib.Path(pytest.__file__).resolve(strict=True).is_relative_to(target);"
     "target_mods=[importlib.import_module(name) for name in target_imports];"
