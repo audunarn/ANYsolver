@@ -10,6 +10,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 from types import SimpleNamespace
@@ -995,6 +996,34 @@ def test_preflight_runner_rejects_host_dependency_root_injection(
     monkeypatch.setenv("ANYTK3D_ANY3DVIEW_ROOT", "injected")
     with pytest.raises(runner.PreflightError, match="must not be inherited"):
         runner._process_environment(generator)
+
+
+def test_closed_process_environment_preserves_bound_home_authority(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    generator = _load("_s3_v4_bound_home_environment", GENERATOR)
+    home = tmp_path / "profile"
+    home.mkdir()
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.delenv("HOME", raising=False)
+    monkeypatch.delenv("HOMEDRIVE", raising=False)
+    monkeypatch.delenv("HOMEPATH", raising=False)
+    launcher = Path(shutil.which("git") or "").resolve(strict=True)
+    provisional = generator._closed_process_environment(launcher, launcher)
+    engine = generator._git_engine_from_exec_path(
+        launcher,
+        generator._git_probe(launcher, ("--exec-path",), provisional),
+    )
+    environment = generator._closed_process_environment(launcher, engine)
+    assert environment["USERPROFILE"] == str(home)
+    assert "HOME" not in environment
+    controlled_names = {
+        name
+        for mapping in generator.CANDIDATE_GATE_ROOT_ENVIRONMENTS.values()
+        for name in mapping
+    }
+    assert set(environment).isdisjoint(controlled_names)
 
 
 def test_anytk3d_preflight_binds_only_exact_any3dview_root(tmp_path: Path) -> None:
