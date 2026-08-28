@@ -216,6 +216,7 @@
         "tests/test_e4_pl_s3_qualification_optimization_v3.py": "SUPERSEDED_V3_GIT_AUTHORITY",
         "tests/test_e4_pl_s3_qualification_optimization_v4.py": "CURRENT_GIT_AUTHORITY_RUN_ON_CLEAN_CANDIDATE"
       },
+      "gitless_package_gate_deselection": "tests/test_e4_pl_s3_exact_wheel_target_v3.py::test_generator_binds_indirect_programs_graph_and_nonmechanics_blobs",
       "source_candidate_import_origins": {
         "ANY3dView.any3dview": "BOUND_CANDIDATE_SRC_FOR_SOURCE_AND_RELEASE_AUTHORITY_TESTS_WITH_EXACT_WHEEL_MANIFEST_SEPARATELY_BOUND",
         "ANYintelligent.fe_solver": "BOUND_CANDIDATE_ROOT",

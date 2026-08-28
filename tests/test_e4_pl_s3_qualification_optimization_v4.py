@@ -703,6 +703,8 @@ def _preflight_binding(
     candidate_root.mkdir(parents=True, exist_ok=True)
     for nodes in generator.PREFLIGHT_GATE_NODES[name].values():
         for relative in nodes:
+            if relative.startswith("-"):
+                continue
             node = candidate_root / relative
             if Path(relative).suffix:
                 node.parent.mkdir(parents=True, exist_ok=True)
@@ -1301,6 +1303,12 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
     }
     assert "[str(candidate_sys_path),str(test_support),str(target),str(root)]" in (
         generator.PREFLIGHT_BOOTSTRAP
+    )
+    assert (
+        "--deselect=tests/test_e4_pl_s3_exact_wheel_target_v3.py::"
+        "test_generator_binds_indirect_programs_graph_and_nonmechanics_blobs"
+        in generator.PREFLIGHT_GATE_NODES["ANYsolver"]
+        ["package-isolation-and-default-routing"]
     )
     with pytest.raises(generator.BindingError, match="shadows source candidate import"):
         generator._reject_source_candidate_target_shadowing(
