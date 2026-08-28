@@ -108,6 +108,7 @@ jobs:
                       environment.pop(key, None)
               environment["GIT_CONFIG_NOSYSTEM"] = "1"
               environment["GIT_CONFIG_GLOBAL"] = os.devnull
+              environment["GIT_ATTR_NOSYSTEM"] = "1"
               environment["GIT_NO_REPLACE_OBJECTS"] = "1"
               environment["GIT_OPTIONAL_LOCKS"] = "0"
               environment["GIT_TERMINAL_PROMPT"] = "0"
@@ -150,6 +151,18 @@ jobs:
               graft_path = Path.cwd() / graft_path
           if graft_path.exists() and graft_path.stat().st_size:
               raise SystemExit("Git grafts are forbidden")
+          attributes_path = Path(
+              git_run(
+                  ["git", "rev-parse", "--git-path", "info/attributes"],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              ).stdout.strip()
+          )
+          if not attributes_path.is_absolute():
+              attributes_path = Path.cwd() / attributes_path
+          if attributes_path.exists() and attributes_path.stat().st_size:
+              raise SystemExit("Git info attributes are forbidden")
 
           root = Path("release-assets")
           expected_names = {
@@ -252,7 +265,16 @@ jobs:
           if observed_source_tree != source_tree:
               raise SystemExit("artifact-source tree differs")
           changed = git_run(
-              ["git", "diff", "--name-status", source_commit, "HEAD", "--"],
+              [
+                  "git",
+                  "diff",
+                  "--no-ext-diff",
+                  "--no-renames",
+                  "--name-status",
+                  source_commit,
+                  "HEAD",
+                  "--",
+              ],
               check=True,
               capture_output=True,
               text=True,

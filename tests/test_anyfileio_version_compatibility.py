@@ -786,12 +786,17 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "def git_environment():" in release_assets_job
     assert 'environment["GIT_CONFIG_NOSYSTEM"] = "1"' in release_assets_job
     assert 'environment["GIT_CONFIG_GLOBAL"] = os.devnull' in release_assets_job
+    assert 'environment["GIT_ATTR_NOSYSTEM"] = "1"' in release_assets_job
     assert 'environment["GIT_NO_REPLACE_OBJECTS"] = "1"' in release_assets_job
     assert '"core.attributesFile="' in release_assets_job
     assert '"refs/replace"' in release_assets_job
     assert '"info/grafts"' in release_assets_job
+    assert '"info/attributes"' in release_assets_job
     assert "Git replacement objects are forbidden" in release_assets_job
     assert "Git grafts are forbidden" in release_assets_job
+    assert "Git info attributes are forbidden" in release_assets_job
+    assert '"--no-ext-diff"' in release_assets_job
+    assert '"--no-renames"' in release_assets_job
     assert release_assets_job.count("subprocess.run(") == 1
     assert release_assets_job.count("git_run(") >= 15
     optimization_contract = json.loads(
@@ -835,10 +840,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert 'for token in ("PLACEHOLDER", "REBIND_FINAL", "TO_BE_REBOUND")' in release_assets_job
     assert '["git", "rev-list", "--parents", "-n", "1", "HEAD"]' in release_assets_job
     assert '["git", "rev-parse", f"{source_commit}^{{tree}}"]' in release_assets_job
-    assert (
-        '["git", "diff", "--name-status", source_commit, "HEAD", "--"]'
-        in release_assets_job
-    )
+    assert '"--name-status"' in release_assets_job
     assert 'changed != [f"A\\t{ledger_path.as_posix()}"]' in release_assets_job
     assert 'exact_keys(artifacts, {"wheel"}' in release_assets_job
     assert 'exact_keys(row, {"filename", "sha256"}' in release_assets_job
