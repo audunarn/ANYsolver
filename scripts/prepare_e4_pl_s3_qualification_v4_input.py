@@ -192,6 +192,7 @@ RUNTIME_DISTRIBUTION_IDENTITIES = frozenset(
         "kiwisolver",
         "llvmlite",
         "markdown-it-py",
+        "mapbox-earcut",
         "matplotlib",
         "mdurl",
         "meshio",

@@ -1327,6 +1327,7 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
             "kiwisolver",
             "llvmlite",
             "markdown-it-py",
+            "mapbox-earcut",
         "matplotlib",
         "mdurl",
         "meshio",

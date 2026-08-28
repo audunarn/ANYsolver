@@ -138,6 +138,7 @@
         "joblib",
         "kiwisolver",
         "llvmlite",
+        "mapbox-earcut",
         "markdown-it-py",
         "matplotlib",
         "mdurl",
