@@ -72,10 +72,84 @@ jobs:
           from email import policy
           from email.parser import BytesParser
           import json
+          import os
           from pathlib import Path
           import re
           import subprocess
           import zipfile
+
+          def git_environment():
+              environment = os.environ.copy()
+              forbidden = {
+                  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                  "GIT_COMMON_DIR",
+                  "GIT_CONFIG",
+                  "GIT_CONFIG_COUNT",
+                  "GIT_DIFF_OPTS",
+                  "GIT_DIR",
+                  "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+                  "GIT_EXTERNAL_DIFF",
+                  "GIT_INDEX_FILE",
+                  "GIT_NAMESPACE",
+                  "GIT_OBJECT_DIRECTORY",
+                  "GIT_PAGER",
+                  "GIT_PREFIX",
+                  "GIT_QUARANTINE_PATH",
+                  "GIT_REPLACE_REF_BASE",
+                  "GIT_SHALLOW_FILE",
+                  "GIT_WORK_TREE",
+              }
+              for key in tuple(environment):
+                  if (
+                      key in forbidden
+                      or key.startswith("GIT_CONFIG_KEY_")
+                      or key.startswith("GIT_CONFIG_VALUE_")
+                  ):
+                      environment.pop(key, None)
+              environment["GIT_CONFIG_NOSYSTEM"] = "1"
+              environment["GIT_CONFIG_GLOBAL"] = os.devnull
+              environment["GIT_NO_REPLACE_OBJECTS"] = "1"
+              environment["GIT_OPTIONAL_LOCKS"] = "0"
+              environment["GIT_TERMINAL_PROMPT"] = "0"
+              return environment
+
+          def git_run(arguments, **kwargs):
+              if not isinstance(arguments, list) or arguments[:1] != ["git"]:
+                  raise SystemExit("release verifier attempted a non-Git subprocess")
+              return subprocess.run(
+                  [
+                      "git",
+                      "-c",
+                      "core.attributesFile=",
+                      "-c",
+                      "diff.external=",
+                      "-c",
+                      "core.pager=cat",
+                      *arguments[1:],
+                  ],
+                  env=git_environment(),
+                  **kwargs,
+              )
+
+          if git_run(
+              ["git", "for-each-ref", "--format=%(refname)", "refs/replace"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.strip():
+              raise SystemExit("Git replacement objects are forbidden")
+          graft_path = Path(
+              git_run(
+                  ["git", "rev-parse", "--git-path", "info/grafts"],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              ).stdout.strip()
+          )
+          if not graft_path.is_absolute():
+              graft_path = Path.cwd() / graft_path
+          if graft_path.exists() and graft_path.stat().st_size:
+              raise SystemExit("Git grafts are forbidden")
 
           root = Path("release-assets")
           expected_names = {
@@ -85,7 +159,7 @@ jobs:
           if not ledger_path.is_file() or ledger_path.is_symlink():
               raise SystemExit("the canonical S3 release ledger is absent")
           ledger_raw = ledger_path.read_bytes()
-          committed_raw = subprocess.run(
+          committed_raw = git_run(
               ["git", "show", f"HEAD:{ledger_path.as_posix()}"],
               check=True,
               capture_output=True,
@@ -161,7 +235,7 @@ jobs:
           ):
               raise SystemExit("artifact-source Git identity is malformed")
 
-          parents = subprocess.run(
+          parents = git_run(
               ["git", "rev-list", "--parents", "-n", "1", "HEAD"],
               check=True,
               capture_output=True,
@@ -169,7 +243,7 @@ jobs:
           ).stdout.split()
           if len(parents) != 2 or parents[1] != source_commit:
               raise SystemExit("release ledger must be the sole child of its artifact source")
-          observed_source_tree = subprocess.run(
+          observed_source_tree = git_run(
               ["git", "rev-parse", f"{source_commit}^{{tree}}"],
               check=True,
               capture_output=True,
@@ -177,7 +251,7 @@ jobs:
           ).stdout.strip()
           if observed_source_tree != source_tree:
               raise SystemExit("artifact-source tree differs")
-          changed = subprocess.run(
+          changed = git_run(
               ["git", "diff", "--name-status", source_commit, "HEAD", "--"],
               check=True,
               capture_output=True,
@@ -206,7 +280,7 @@ jobs:
                   or row["sha256"] != digest
               ):
                   raise SystemExit(f"{label} bytes differ")
-              committed = subprocess.run(
+              committed = git_run(
                   ["git", "show", f"{source_commit}:{path.as_posix()}"],
                   check=True,
                   capture_output=True,
@@ -898,43 +972,43 @@ jobs:
               or integration["protected_branch"] != "refs/remotes/origin/main"
           ):
               raise SystemExit("activation integration identity is malformed")
-          observed_integration_tree = subprocess.run(
+          observed_integration_tree = git_run(
               ["git", "rev-parse", f"{integration_commit}^{{tree}}"],
               check=True,
               capture_output=True,
               text=True,
           ).stdout.strip()
-          observed_integration_subject = subprocess.run(
+          observed_integration_subject = git_run(
               ["git", "show", "-s", "--format=%s", integration_commit],
               check=True,
               capture_output=True,
               text=True,
           ).stdout.strip()
-          integration_parents = subprocess.run(
+          integration_parents = git_run(
               ["git", "rev-list", "--parents", "-n", "1", integration_commit],
               check=True,
               capture_output=True,
               text=True,
           ).stdout.split()
-          observed_qualified_solver_tree = subprocess.run(
+          observed_qualified_solver_tree = git_run(
               ["git", "rev-parse", f"{qualified_solver_commit}^{{tree}}"],
               check=True,
               capture_output=True,
               text=True,
           ).stdout.strip()
           protected_branch = integration["protected_branch"]
-          subprocess.run(
+          git_run(
               ["git", "rev-parse", "--verify", f"{protected_branch}^{{commit}}"],
               check=True,
               capture_output=True,
           )
-          subprocess.run(
+          git_run(
               ["git", "merge-base", "--is-ancestor", integration_commit, source_commit],
               check=True,
               capture_output=True,
           )
           for protected_commit in (integration_commit, source_commit, "HEAD"):
-              subprocess.run(
+              git_run(
                   [
                       "git",
                       "merge-base",

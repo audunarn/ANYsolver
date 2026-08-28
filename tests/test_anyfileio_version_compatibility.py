@@ -783,6 +783,17 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "object_pairs_hook=strict_pairs" in release_assets_job
     assert "parse_constant=reject_constant" in release_assets_job
     assert "ledger_raw != canonical" in release_assets_job
+    assert "def git_environment():" in release_assets_job
+    assert 'environment["GIT_CONFIG_NOSYSTEM"] = "1"' in release_assets_job
+    assert 'environment["GIT_CONFIG_GLOBAL"] = os.devnull' in release_assets_job
+    assert 'environment["GIT_NO_REPLACE_OBJECTS"] = "1"' in release_assets_job
+    assert '"core.attributesFile="' in release_assets_job
+    assert '"refs/replace"' in release_assets_job
+    assert '"info/grafts"' in release_assets_job
+    assert "Git replacement objects are forbidden" in release_assets_job
+    assert "Git grafts are forbidden" in release_assets_job
+    assert release_assets_job.count("subprocess.run(") == 1
+    assert release_assets_job.count("git_run(") >= 15
     optimization_contract = json.loads(
         (
             root
