@@ -396,7 +396,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 449a445746152c49315615ff8a1fc232db75afb9
+          ref: 7a2605232a041f6a5b7ecb5679b626570612884b
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
