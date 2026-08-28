@@ -402,8 +402,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     ci_header, ci_jobs = ci.split("jobs:\n", maxsplit=1)
     assert ci_header == (
         "name: Tests\n\non:\n  push:\n  pull_request:\n\n"
-        "# Sibling repositories are pinned to the reviewed stable candidate commits.\n"
-        "# The final activation authority still binds their exact trees and wheels.\n\n"
+        "# Existing lanes retain the reviewed stable sibling graph.\n"
+        "# The final-candidate lane separately freezes the release graph used by authority.\n\n"
     )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
         "pytest",
@@ -412,6 +412,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "wheel",
         "numba",
         "pardiso",
+        "final-candidate-graph",
     ]
     publish_header, publish_jobs = publish.split("jobs:\n", maxsplit=1)
     assert publish_header == (
@@ -432,11 +433,17 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "97b06b0cfc72179c4f6522f9077d8a1d91911d61",
         "c06c8fa9ca58f282941a921548bf8303a8ddd084",
     }
+    final_candidate_refs = {
+        "0591d4833806ee95bdd710c352a1f836af7b910e",
+        "6a8b023ef6f65805519c96b56e025b4e3b457a1f",
+        "e79d14a03ef605afd947948e8588ccb8428eb52f",
+        "da8bff840128ac1e183c77be9e5a53b2bb5c0834",
+    }
     ci_hashes = set(re.findall(r"\b[0-9a-f]{40}\b", ci))
     assert ci_hashes == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
-    } | sibling_refs
+    } | sibling_refs | final_candidate_refs
     assert "RE" + "BIND_FINAL" not in ci
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
@@ -473,6 +480,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "wheel",
         "numba",
         "pardiso",
+        "final-candidate-graph",
     ):
         assert action_sequence(job_block(ci, name)) == [checkout_ref] * 5 + [
             setup_ref
@@ -933,7 +941,23 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "permissions:" not in job_block(publish, "build")
     assert "SIBLINGS" not in ci
     assert "git+https://" not in ci
-    assert ci.count("python -m pip check") == 8
+    final_candidate_job = job_block(ci, "final-candidate-graph")
+    for ref in final_candidate_refs:
+        assert final_candidate_job.count(f"ref: {ref}") == 1
+    for ref in sibling_refs:
+        assert ref not in final_candidate_job
+    for token in (
+        'EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
+        'EXPECTED_ANYMATERIAL_VERSION: "0.1.1"',
+        'EXPECTED_ANYGEOMETRY_VERSION: "0.4.1"',
+        'EXPECTED_ANYMESHER_VERSION: "0.3.2"',
+        'EXPECTED_ANYFILEIO_VERSION: "0.2.1"',
+        "test_s3_default_activation.py",
+        "test_e4_pl_s3_default_activation_v2.py",
+        "test_e4_pl_default_activation.py",
+    ):
+        assert token in final_candidate_job
+    assert ci.count("python -m pip check") == 9
     for requirement in (
         '"ANYmaterial>=0.1.1,<0.2"',
         '"ANYmesher>=0.3.2,<0.4"',
