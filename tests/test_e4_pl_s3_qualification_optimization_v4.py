@@ -1323,14 +1323,16 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
         "h5py",
         "iniconfig",
         "joblib",
-        "kiwisolver",
-        "markdown-it-py",
+            "kiwisolver",
+            "llvmlite",
+            "markdown-it-py",
         "matplotlib",
         "mdurl",
         "meshio",
         "moderngl",
-        "narwhals",
-        "numpy",
+            "narwhals",
+            "numba",
+            "numpy",
         "numpy-stl",
         "packaging",
         "pillow",
@@ -1396,6 +1398,10 @@ def test_v4_preflight_has_supported_full_gates_and_portable_target_bootstrap(
     ]
     assert generator.PREFLIGHT_BOOTSTRAP == command[-1]
     assert "mod._worker_command" in generator.PREFLIGHT_PORTABLE_BOOTSTRAP
+    assert generator.PREFLIGHT_CANDIDATE_GIT_MODULES == frozenset(
+        {"tests/test_e4_pl_s3_qualification_optimization_v4.py"}
+    )
+    assert "if module not in excluded" in generator.PREFLIGHT_PORTABLE_BOOTSTRAP
     for candidate_name, import_name in (
         ("ANY3dView", "any3dview"),
         ("ANYbuckling", "anybuckling"),

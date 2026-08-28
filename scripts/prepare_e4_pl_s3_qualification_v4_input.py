@@ -189,12 +189,14 @@ RUNTIME_DISTRIBUTION_IDENTITIES = frozenset(
         "iniconfig",
         "joblib",
         "kiwisolver",
+        "llvmlite",
         "markdown-it-py",
         "matplotlib",
         "mdurl",
         "meshio",
         "moderngl",
         "narwhals",
+        "numba",
         "numpy",
         "numpy-stl",
         "packaging",
@@ -352,6 +354,9 @@ PREFLIGHT_ENVIRONMENT = {
 PREFLIGHT_TREE_RELEASE_ENVIRONMENT = "ANYSOLVER_S3_PREFLIGHT_TREE_RELEASE"
 PREFLIGHT_TREE_RELEASE_BYTES = b"ANYSOLVER_S3_PREFLIGHT_TREE_ACCOUNTED_V1\n"
 PREFLIGHT_TREE_RELEASE_WAIT_SECONDS = 5.0
+PREFLIGHT_CANDIDATE_GIT_MODULES = frozenset(
+    {"tests/test_e4_pl_s3_qualification_optimization_v4.py"}
+)
 PREFLIGHT_TREE_RELEASE_BOOTSTRAP = (
     "import os,pathlib,time\n"
     f"release=pathlib.Path(os.environ[{PREFLIGHT_TREE_RELEASE_ENVIRONMENT!r}])\n"
@@ -398,7 +403,8 @@ PREFLIGHT_PORTABLE_BOOTSTRAP = PREFLIGHT_TREE_RELEASE_BOOTSTRAP + (
     "assert spec is not None and spec.loader is not None;"
     "mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod);"
     "bootstrap=sys.argv[6];"
-    "mod._worker_command=lambda modules,worker:[sys.executable,'-I','-S','-B','-c',bootstrap,str(target),str(root),str(config),str((worker/'basetemp').resolve()),imports,*[f'--deselect={node}' for node in mod.DEDICATED_LANE_NODES if node.partition('::')[0] in set(modules)],*modules];"
+    f"excluded={sorted(PREFLIGHT_CANDIDATE_GIT_MODULES)!r};"
+    "mod._worker_command=lambda modules,worker:[sys.executable,'-I','-S','-B','-c',bootstrap,str(target),str(root),str(config),str((worker/'basetemp').resolve()),imports,*[f'--deselect={node}' for node in mod.DEDICATED_LANE_NODES if node.partition('::')[0] in set(modules)],*[module for module in modules if module not in excluded]];"
     "raise SystemExit(mod.run(workers=3,timeout_seconds=None))"
 )
 HEX40 = re.compile(r"[0-9a-f]{40}")
