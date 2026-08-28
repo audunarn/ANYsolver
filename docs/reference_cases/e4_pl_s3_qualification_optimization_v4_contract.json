@@ -219,7 +219,8 @@
       "source_candidate_import_origins": {
         "ANY3dView.any3dview": "BOUND_CANDIDATE_SRC_FOR_SOURCE_AND_RELEASE_AUTHORITY_TESTS_WITH_EXACT_WHEEL_MANIFEST_SEPARATELY_BOUND",
         "ANYintelligent.fe_solver": "BOUND_CANDIDATE_ROOT",
-        "ANYsolver.anysolver": "BOUND_CANDIDATE_SRC_FOR_FULL_SOURCE_SUITE_WITH_EXACT_WHEEL_MANIFEST_AND_WHEEL_GATES_SEPARATELY_BOUND"
+        "ANYsolver.anysolver": "BOUND_CANDIDATE_SRC_FOR_FULL_SOURCE_SUITE_WITH_EXACT_WHEEL_MANIFEST_AND_WHEEL_GATES_SEPARATELY_BOUND",
+        "ANYstructure.anystruct": "BOUND_ROOT_LAYOUT_CANDIDATE_FOR_FULL_SOURCE_SUITE_WITH_EXACT_WHEEL_MANIFEST_SEPARATELY_BOUND"
       },
       "targeted_ecosystem_gates_are_nonclassifying": true,
       "tree_accounting_release": "ATTACH_BEFORE_GATE_RELEASE_V1"
@@ -289,6 +290,7 @@
     "all_packaged_candidates.installed_target_file_and_directory_inventories",
     "runtime_dependencies.normalized_name_version_record_and_file_hashes",
     "ANYintelligent.fe_solver.exact_source_origin",
+    "ANYstructure.anystruct.exact_source_origin",
     "ANYstructure.eight_dependency_roots_and_before_after_identities",
     "ANYtk3D.any3dview_dependency_root_and_before_after_identity",
     "candidate_preflight_results_and_log_hashes",

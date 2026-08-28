@@ -153,12 +153,14 @@ SOURCE_CANDIDATE_IMPORTS = {
     "ANY3dView": ("any3dview",),
     "ANYintelligent": ("fe_solver",),
     "ANYsolver": ("anysolver",),
+    "ANYstructure": ("anystruct",),
 }
 SOURCE_CANDIDATE_IMPORT_ROOTS = {
     "ANY3dView": "src",
     "ANYbuckling": "tests",
     "ANYintelligent": ".",
     "ANYsolver": "src",
+    "ANYstructure": ".",
 }
 ANYSTRUCTURE_GATE_ROOT_ENVIRONMENT = {
     "ANYSTRUCTURE_ANY3DVIEW_ROOT": "ANY3dView",

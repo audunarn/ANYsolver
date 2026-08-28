@@ -1289,6 +1289,7 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
         "ANY3dView": ("any3dview",),
         "ANYintelligent": ("fe_solver",),
         "ANYsolver": ("anysolver",),
+        "ANYstructure": ("anystruct",),
     }
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS["ANYbuckling"] == "tests"
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS == {
@@ -1296,6 +1297,7 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
         "ANYbuckling": "tests",
         "ANYintelligent": ".",
         "ANYsolver": "src",
+        "ANYstructure": ".",
     }
     assert "[str(candidate_sys_path),str(test_support),str(target),str(root)]" in (
         generator.PREFLIGHT_BOOTSTRAP
