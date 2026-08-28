@@ -1272,7 +1272,9 @@ def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None
     assert generator.SOURCE_CANDIDATE_IMPORTS == {
         "ANYintelligent": ("fe_solver",)
     }
+    assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS["ANYbuckling"] == "tests"
     assert generator.SOURCE_CANDIDATE_IMPORT_ROOTS == {
+        "ANYbuckling": "tests",
         "ANYintelligent": ".",
     }
     assert "ANY3dView" not in generator.SOURCE_CANDIDATE_IMPORTS
@@ -1392,9 +1394,10 @@ def test_v4_preflight_has_supported_full_gates_and_portable_target_bootstrap(
             runtime,
             output,
         )
+        expected_sys_path = "tests" if candidate_name == "ANYbuckling" else "."
         assert json.loads(command[10]) == {
             "candidate_imports": [],
-            "candidate_sys_path": ".",
+            "candidate_sys_path": expected_sys_path,
             "target_imports": [import_name],
         }
 

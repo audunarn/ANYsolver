@@ -153,6 +153,7 @@ SOURCE_CANDIDATE_IMPORTS = {
     "ANYintelligent": ("fe_solver",),
 }
 SOURCE_CANDIDATE_IMPORT_ROOTS = {
+    "ANYbuckling": "tests",
     "ANYintelligent": ".",
 }
 ANYSTRUCTURE_GATE_ROOT_ENVIRONMENT = {

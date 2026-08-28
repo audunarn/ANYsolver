@@ -188,6 +188,9 @@
         "scope": "ANYTK3D_PREFLIGHT_GATES_ONLY"
       },
       "configuration": "EXPLICIT_HASH_BOUND_CONFIG_WITH_ROOTDIR_CONF_CUT_AND_IMPORTLIB_MODE",
+      "candidate_support_import_roots": {
+        "ANYbuckling": "TRACKED_TESTS_DIRECTORY_FOR_EXAMPLE_DATA_FIXTURES"
+      },
       "dependency_root_inheritance": "REJECTED_BEFORE_CLOSED_ENVIRONMENT_CONSTRUCTION",
       "exact_target_precedes_candidate_root": true,
       "execution_sandbox": "EXACT_TRACKED_COPY_BOUND_BEFORE_AND_AFTER_GATES_WITH_GENERATED_PRODUCTS_EXTERNAL",
