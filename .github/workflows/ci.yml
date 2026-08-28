@@ -390,7 +390,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 6a8b023ef6f65805519c96b56e025b4e3b457a1f
+          ref: 254ce138dfc72d48a971035b028ba2dc5e9f082b
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -402,7 +402,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 4c55df4cebee1ad285927f7f33487e0a1f66715a
+          ref: 4a98b84879d5ccdc95052f626c4f96ed3340fbb7
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
