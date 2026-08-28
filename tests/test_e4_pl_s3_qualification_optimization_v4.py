@@ -716,6 +716,8 @@ def _preflight_binding(
     shutil.copytree(candidate_root, execution_root)
     target = tmp_path / "exact-target"
     target.mkdir(exist_ok=True)
+    scratch_root = tmp_path / "process-temp"
+    scratch_root.mkdir(exist_ok=True)
     python_row = generator._tool_record(
         Path(sys.executable), label="synthetic preflight Python"
     )
@@ -752,6 +754,7 @@ def _preflight_binding(
     expected_environment = generator._preflight_environment(
         runtime,
         target,
+        scratch_root,
         name,
         dependency_roots,
     )
@@ -818,6 +821,7 @@ def _preflight_binding(
         "preflight_runner": generator._file_binding(generator.PREFLIGHT_RUNNER),
         "python_runtime": generator._preflight_python_identity(runtime),
         "schema": generator.PREFLIGHT_SCHEMA,
+        "scratch_root": str(scratch_root),
         "tree": candidate["tree"],
     }
     result_path = tmp_path / f"{name}-preflight.json"
@@ -915,11 +919,14 @@ def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
     }
     for path in (target, *dependency_paths.values()):
         path.mkdir()
+    scratch_root = tmp_path / "process-temp"
+    scratch_root.mkdir()
     roots = {name: str(path) for name, path in dependency_paths.items()}
     runtime = {"process_environment": {"PATH": str(tmp_path)}}
     environment = generator._preflight_environment(
         runtime,
         target,
+        scratch_root,
         "ANYstructure",
         roots,
     )
@@ -932,6 +939,7 @@ def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
     ordinary = generator._preflight_environment(
         runtime,
         target,
+        scratch_root,
         "ANYintelligent",
         {},
     )
@@ -944,6 +952,7 @@ def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
                 }
             },
             target,
+            scratch_root,
             "ANYstructure",
             roots,
         )
@@ -951,6 +960,7 @@ def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
         generator._preflight_environment(
             runtime,
             target,
+            scratch_root,
             "ANYstructure",
             {name: value for name, value in roots.items() if name != "ANY3dView"},
         )
@@ -958,6 +968,7 @@ def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
         generator._preflight_environment(
             runtime,
             target,
+            scratch_root,
             "ANYintelligent",
             roots,
         )
@@ -1037,10 +1048,13 @@ def test_anytk3d_preflight_binds_only_exact_any3dview_root(tmp_path: Path) -> No
     view = tmp_path / "bound-any3dview"
     target.mkdir()
     view.mkdir()
+    scratch_root = tmp_path / "process-temp"
+    scratch_root.mkdir()
     runtime = {"process_environment": {"PATH": str(tmp_path)}}
     environment = generator._preflight_environment(
         runtime,
         target,
+        scratch_root,
         "ANYtk3D",
         {"ANY3dView": str(view)},
     )
@@ -1054,15 +1068,19 @@ def test_anytk3d_preflight_binds_only_exact_any3dview_root(tmp_path: Path) -> No
                 }
             },
             target,
+            scratch_root,
             "ANYtk3D",
             {"ANY3dView": str(view)},
         )
     with pytest.raises(generator.BindingError, match="roots differ"):
-        generator._preflight_environment(runtime, target, "ANYtk3D", {})
+        generator._preflight_environment(
+            runtime, target, scratch_root, "ANYtk3D", {}
+        )
     with pytest.raises(generator.BindingError, match="roots differ"):
         generator._preflight_environment(
             runtime,
             target,
+            scratch_root,
             "ANYsolver",
             {"ANY3dView": str(view)},
         )
@@ -1201,6 +1219,8 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
     (root / "tests").mkdir(parents=True)
     target.mkdir()
     output.mkdir()
+    scratch_root = output / "process-temp"
+    scratch_root.mkdir()
     runtime = {
         "process_environment": {"PATH": str(tmp_path)},
         "python": {
@@ -1236,12 +1256,15 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
     environment = generator._preflight_environment(
         runtime,
         target,
+        scratch_root,
         "ANYintelligent",
         {},
     )
     assert environment["PYTHONPATH"] == str(target.resolve())
     assert environment["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
     assert environment["PYTHONNOUSERSITE"] == "1"
+    assert environment["TEMP"] == str(scratch_root.resolve())
+    assert environment["TMP"] == str(scratch_root.resolve())
 
 
 def test_v4_source_candidate_import_cannot_be_shadowed_by_exact_target() -> None:

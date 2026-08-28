@@ -2107,6 +2107,7 @@ def _verify_candidate(name: str, value: object) -> dict[str, Any]:
 def _preflight_environment(
     runtime_environment: Mapping[str, Any],
     target: Path,
+    scratch_root: Path,
     candidate_name: str,
     dependency_roots: Mapping[str, object],
 ) -> dict[str, str]:
@@ -2134,6 +2135,11 @@ def _preflight_environment(
     result = dict(process_environment)
     result.update(PREFLIGHT_ENVIRONMENT)
     result["PYTHONPATH"] = str(target.resolve(strict=True))
+    scratch_root = scratch_root.resolve(strict=True)
+    if not scratch_root.is_dir() or scratch_root.is_symlink():
+        raise BindingError("preflight scratch root is not a regular directory")
+    result["TEMP"] = str(scratch_root)
+    result["TMP"] = str(scratch_root)
     for environment_name, dependency_name in sorted(root_environment.items()):
         dependency_root = Path(
             str(dependency_roots[dependency_name])
@@ -2367,6 +2373,7 @@ def _verify_preflight(
         "preflight_runner",
         "python_runtime",
         "schema",
+        "scratch_root",
         "tree",
     }:
         raise BindingError(f"{name} preflight record differs")
@@ -2379,6 +2386,7 @@ def _verify_preflight(
     expected_execution_root = (output_directory / "candidate-source").resolve(
         strict=True
     )
+    expected_scratch_root = (output_directory / "process-temp").resolve(strict=True)
     if (
         record["schema"] != PREFLIGHT_SCHEMA
         or record["candidate"] != name
@@ -2391,6 +2399,7 @@ def _verify_preflight(
         or record["execution_checkout_before"] != candidate.get("working_tree")
         or record["execution_checkout_after"] != candidate.get("working_tree")
         or record["execution_root"] != str(expected_execution_root)
+        or record["scratch_root"] != str(expected_scratch_root)
         or record["checkout_before"] != candidate.get("working_tree")
         or record["checkout_after"] != candidate.get("working_tree")
         or record["execution_target"] != _preflight_target_identity(execution_target)
@@ -2406,6 +2415,7 @@ def _verify_preflight(
     expected_environment = _preflight_environment(
         runtime_environment,
         execution_target,
+        expected_scratch_root,
         name,
         _preflight_dependency_roots(name, candidates),
     )

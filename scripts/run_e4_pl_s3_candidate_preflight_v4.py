@@ -330,6 +330,8 @@ def run(args: argparse.Namespace) -> int:
     target = Path(args.execution_target).resolve(strict=True)
     output = Path(args.output_directory).resolve()
     output.mkdir(parents=False, exist_ok=False)
+    scratch_root = output / "process-temp"
+    scratch_root.mkdir(parents=False, exist_ok=False)
     if not target.is_dir() or target.is_symlink():
         raise PreflightError("execution target is not a regular directory")
     if _identity(generator, root) != (args.commit, args.tree):
@@ -359,6 +361,7 @@ def run(args: argparse.Namespace) -> int:
     environment = generator._preflight_environment(
         runtime,
         target,
+        scratch_root,
         name,
         dependency_roots,
     )
@@ -447,6 +450,7 @@ def run(args: argparse.Namespace) -> int:
         "preflight_runner": generator._file_binding(generator.PREFLIGHT_RUNNER),
         "python_runtime": generator._preflight_python_identity(runtime),
         "schema": generator.PREFLIGHT_SCHEMA,
+        "scratch_root": str(scratch_root),
         "tree": final_identity[1],
     }
     result_path = output / f"{name}-preflight.json"

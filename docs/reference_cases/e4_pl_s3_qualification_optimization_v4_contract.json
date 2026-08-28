@@ -191,6 +191,7 @@
       "dependency_root_inheritance": "REJECTED_BEFORE_CLOSED_ENVIRONMENT_CONSTRUCTION",
       "exact_target_precedes_candidate_root": true,
       "execution_sandbox": "EXACT_TRACKED_COPY_BOUND_BEFORE_AND_AFTER_GATES_WITH_GENERATED_PRODUCTS_EXTERNAL",
+      "process_scratch": "EXCLUSIVE_CANDIDATE_OUTPUT_SUBDIRECTORY_BOUND_AS_TEMP_AND_TMP",
       "failed_first_pass_records_preserved": true,
       "normal_protected_pr_ci_remains_required": true,
       "pytest_startup_flags": [
