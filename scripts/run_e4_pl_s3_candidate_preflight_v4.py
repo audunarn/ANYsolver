@@ -291,6 +291,23 @@ def _write_exclusive(path: Path, value: object, generator: Any) -> None:
         os.fsync(stream.fileno())
 
 
+def _create_execution_copy(root: Path, destination: Path, generator: Any) -> dict[str, object]:
+    destination.mkdir(parents=False, exist_ok=False)
+    tracked = [
+        path
+        for path in generator._git(root, "ls-files", "-z", "--cached").split("\0")
+        if path
+    ]
+    for relative in tracked:
+        source = root / Path(relative)
+        target = destination / Path(relative)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_symlink() or generator._is_reparse(source) or not source.is_file():
+            raise PreflightError("candidate execution-copy source is not regular")
+        shutil.copy2(source, target)
+    return generator._execution_copy_binding(root, destination)
+
+
 def run(args: argparse.Namespace) -> int:
     generator = _load_generator()
     controller_module = _load_controller(generator)
@@ -318,6 +335,12 @@ def run(args: argparse.Namespace) -> int:
     if _identity(generator, root) != (args.commit, args.tree):
         raise PreflightError("candidate Git identity differs")
     checkout_before = generator._closed_worktree_binding(root)
+    execution_root = output / "candidate-source"
+    execution_checkout_before = _create_execution_copy(
+        root, execution_root, generator
+    )
+    if execution_checkout_before != checkout_before:
+        raise PreflightError("candidate execution copy differs before gates")
     dependency_candidates_before = _dependency_candidate_bindings(
         generator,
         dependency_roots,
@@ -345,7 +368,7 @@ def run(args: argparse.Namespace) -> int:
         command = generator._preflight_command(
             name,
             identifier,
-            root,
+            execution_root,
             target,
             runtime,
             output,
@@ -354,7 +377,7 @@ def run(args: argparse.Namespace) -> int:
         stderr_path = output / f"{name}-{identifier}.stderr.log"
         returncode, control = _run_controlled(
             command,
-            cwd=root,
+            cwd=execution_root,
             environment=environment,
             stdout_path=log_path,
             stderr_path=stderr_path,
@@ -372,7 +395,7 @@ def run(args: argparse.Namespace) -> int:
                 "controller": control,
                 "passed": gate_passed,
                 "returncode": returncode,
-                "working_directory": str(root),
+                "working_directory": str(execution_root),
             }
         )
         if not gate_passed:
@@ -380,6 +403,13 @@ def run(args: argparse.Namespace) -> int:
             break
 
     final_identity = _identity(generator, root)
+    execution_checkout_after: dict[str, object] | None = None
+    try:
+        execution_checkout_after = generator._execution_copy_binding(
+            root, execution_root
+        )
+    except generator.BindingError:
+        execution_checkout_after = None
     checkout_after: dict[str, object] | None = None
     try:
         checkout_after = generator._closed_worktree_binding(root)
@@ -407,6 +437,9 @@ def run(args: argparse.Namespace) -> int:
         "dependency_roots_clean": (
             dependency_candidates_after == dependency_candidates_before
         ),
+        "execution_checkout_after": execution_checkout_after,
+        "execution_checkout_before": execution_checkout_before,
+        "execution_root": str(execution_root),
         "execution_target": generator._preflight_target_identity(target),
         "gates": gates,
         "generated_products": [],
@@ -419,7 +452,12 @@ def run(args: argparse.Namespace) -> int:
     result_path = output / f"{name}-preflight.json"
     _write_exclusive(result_path, record, generator)
     print(json.dumps(_binding(result_path), separators=(",", ":"), sort_keys=True))
-    return 0 if passed and record["clean_tree"] and record["dependency_roots_clean"] else 1
+    return 0 if (
+        passed
+        and record["clean_tree"]
+        and record["dependency_roots_clean"]
+        and execution_checkout_after == execution_checkout_before
+    ) else 1
 
 
 def _parser() -> argparse.ArgumentParser:

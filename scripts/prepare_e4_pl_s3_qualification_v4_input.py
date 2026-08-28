@@ -2195,6 +2195,41 @@ def _preflight_target_identity(target: Path) -> dict[str, Any]:
     }
 
 
+def _execution_copy_binding(candidate_root: Path, execution_root: Path) -> dict[str, Any]:
+    """Bind tracked candidate bytes in a disposable preflight execution copy."""
+
+    candidate_root = candidate_root.resolve(strict=True)
+    execution_root = execution_root.resolve(strict=True)
+    tracked = [
+        path
+        for path in _git(candidate_root, "ls-files", "-z", "--cached").split("\0")
+        if path
+    ]
+    directories = sorted(_implied_target_directories(tracked))
+    for relative in directories:
+        directory = execution_root / Path(relative)
+        if directory.is_symlink() or _is_reparse(directory) or not directory.is_dir():
+            raise BindingError("preflight execution-copy directory differs")
+    rows = [
+        _sha256_row(
+            relative,
+            _regular_file_bytes(
+                execution_root / Path(relative),
+                label="preflight execution-copy file",
+            ),
+        )
+        for relative in tracked
+    ]
+    return {
+        "directories_sha256": hashlib.sha256(
+            canonical_bytes(directories)
+        ).hexdigest().upper(),
+        "directory_count": len(directories),
+        "file_count": len(rows),
+        "rows_sha256": hashlib.sha256(canonical_bytes(rows)).hexdigest().upper(),
+    }
+
+
 def _preflight_python_identity(runtime_environment: Mapping[str, Any]) -> dict[str, Any]:
     python = runtime_environment.get("python")
     if not isinstance(python, dict):
@@ -2322,6 +2357,9 @@ def _verify_preflight(
         "dependency_candidates_after",
         "dependency_candidates_before",
         "dependency_roots_clean",
+        "execution_checkout_after",
+        "execution_checkout_before",
+        "execution_root",
         "execution_target",
         "gates",
         "generated_products",
@@ -2337,6 +2375,10 @@ def _verify_preflight(
         name,
         candidates,
     )
+    output_directory = path.parent.resolve(strict=True)
+    expected_execution_root = (output_directory / "candidate-source").resolve(
+        strict=True
+    )
     if (
         record["schema"] != PREFLIGHT_SCHEMA
         or record["candidate"] != name
@@ -2346,6 +2388,9 @@ def _verify_preflight(
         or record["dependency_candidates_before"] != expected_dependencies
         or record["dependency_candidates_after"] != expected_dependencies
         or record["dependency_roots_clean"] is not True
+        or record["execution_checkout_before"] != candidate.get("working_tree")
+        or record["execution_checkout_after"] != candidate.get("working_tree")
+        or record["execution_root"] != str(expected_execution_root)
         or record["checkout_before"] != candidate.get("working_tree")
         or record["checkout_after"] != candidate.get("working_tree")
         or record["execution_target"] != _preflight_target_identity(execution_target)
@@ -2358,7 +2403,6 @@ def _verify_preflight(
         or not gates
     ):
         raise BindingError(f"{name} preflight identity is not green")
-    output_directory = path.parent.resolve(strict=True)
     expected_environment = _preflight_environment(
         runtime_environment,
         execution_target,
@@ -2388,7 +2432,7 @@ def _verify_preflight(
         expected_command = _preflight_command(
             name,
             identifier,
-            Path(str(candidate["root"])),
+            expected_execution_root,
             execution_target,
             runtime_environment,
             output_directory,
@@ -2400,7 +2444,7 @@ def _verify_preflight(
             or not isinstance(command, list)
             or command != expected_command
             or gate["environment"] != expected_environment
-            or gate["working_directory"] != candidate["root"]
+            or gate["working_directory"] != str(expected_execution_root)
             or gate["passed"] is not True
             or type(gate["returncode"]) is not int
             or gate["returncode"] != 0
@@ -2436,14 +2480,14 @@ def _verify_preflight(
         ):
             raise BindingError(f"{name} preflight gate is not green")
         for relative in expected_nodes:
-            node_path = (Path(str(candidate["root"])) / relative).resolve(strict=True)
+            node_path = (expected_execution_root / relative).resolve(strict=True)
             expected_kind = (
                 node_path.is_dir()
                 if relative in {".", "tests"}
                 else node_path.is_file()
             )
             if not expected_kind or not node_path.is_relative_to(
-                Path(str(candidate["root"])).resolve(strict=True)
+                expected_execution_root
             ):
                 raise BindingError(f"{name} preflight node differs")
         log_path = Path(str(log["path"])).resolve(strict=True)

@@ -712,6 +712,8 @@ def _preflight_binding(
     portable = candidate_root / "scripts" / "run_portable_ci.py"
     portable.parent.mkdir(parents=True, exist_ok=True)
     portable.touch(exist_ok=True)
+    execution_root = tmp_path / "candidate-source"
+    shutil.copytree(candidate_root, execution_root)
     target = tmp_path / "exact-target"
     target.mkdir(exist_ok=True)
     python_row = generator._tool_record(
@@ -766,7 +768,7 @@ def _preflight_binding(
                 "command": generator._preflight_command(
                     name,
                     identifier,
-                    candidate_root,
+                    execution_root,
                     target,
                     runtime,
                     tmp_path,
@@ -794,7 +796,7 @@ def _preflight_binding(
                 },
                 "passed": True,
                 "returncode": 0,
-                "working_directory": str(candidate_root),
+                "working_directory": str(execution_root),
             }
         )
     record = {
@@ -806,6 +808,9 @@ def _preflight_binding(
         "dependency_candidates_after": dependency_bindings,
         "dependency_candidates_before": dependency_bindings,
         "dependency_roots_clean": True,
+        "execution_checkout_after": checkout,
+        "execution_checkout_before": checkout,
+        "execution_root": str(execution_root),
         "execution_target": generator._preflight_target_identity(target),
         "gates": gates,
         "generated_products": [],
