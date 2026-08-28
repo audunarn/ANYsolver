@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -51,6 +52,9 @@ V2_CONTRACT = (
     / "reference_cases"
     / "e4_pl_s3_default_activation_v2_contract.json"
 )
+V2_PROGRAM = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_default_activation_v2.py"
+)
 
 
 def _load(name: str, path: Path) -> Any:
@@ -81,6 +85,7 @@ def _assignment_authority(formal: Any) -> Any:
         contract_raw=V2_CONTRACT.read_bytes(),
         manifest=manifest,
     )
+    qualification_contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     return formal.SuccessorAuthority(
         base=SimpleNamespace(),
         successor=SimpleNamespace(),
@@ -91,6 +96,11 @@ def _assignment_authority(formal: Any) -> Any:
         authorization_path=Path("authorization.json"),
         authorization_raw=b"authorization\n",
         authorization={},
+        verified_file_bytes={
+            "formal_runner": FORMAL.read_bytes(),
+            "successor": SUCCESSOR.read_bytes(),
+        },
+        qualification_contract=qualification_contract,
     )
 
 
@@ -100,6 +110,7 @@ def test_v3_coordinators_are_standard_library_and_have_no_elapsed_ceiling() -> N
     assert _top_level_imports(FORMAL).isdisjoint(forbidden)
     formal_source = FORMAL.read_text(encoding="utf-8")
     contract_source = CONTRACT.read_text(encoding="utf-8")
+    contract = json.loads(contract_source)
     for source in (formal_source, contract_source):
         assert "timeout_seconds_per_process" not in source
         assert "total_command_limit_seconds" not in source
@@ -108,6 +119,113 @@ def test_v3_coordinators_are_standard_library_and_have_no_elapsed_ceiling() -> N
     assert "MEMORY_LIMIT_BYTES = 24 * (1 << 30)" in formal_source
     assert '"total_runtime_limit_seconds": None' in formal_source
     assert '"runtime_classification": False' in formal_source
+    assert 'sys.executable,\n        "-I",\n        "-S",\n        "-B",' in formal_source
+    environment_start = formal_source.index("def _environment")
+    environment_end = formal_source.index("def _checkpoint_identity", environment_start)
+    environment_source = formal_source[environment_start:environment_end]
+    assert 'environment["PYTHONPATH"]' not in environment_source
+    assert "environment = dict(process_environment)" in environment_source
+    assert "os.environ.copy()" not in environment_source
+    assert 'environment["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"' in environment_source
+    assert (
+        contract["execution_policy"]["python_startup"]["pytest_plugin_autoload"]
+        is False
+    )
+    main_start = formal_source.index("def main(")
+    main_source = formal_source[main_start:]
+    assert main_source.index("_preclaim_launched_resource(args.output_root)") < (
+        main_source.rindex("authority = load_authority(args.binding, args.authorization)")
+    )
+    formal = _load("_s3_v3_frozen_generator_identity", FORMAL)
+    generator_raw = GENERATOR.read_bytes()
+    assert formal.BINDING_GENERATOR_IDENTITY == {
+        "bytes": len(generator_raw),
+        "path": "scripts/prepare_e4_pl_s3_qualification_v3_input.py",
+        "sha256": hashlib.sha256(generator_raw).hexdigest().upper(),
+    }
+    loader = formal_source[
+        formal_source.index("def load_authority(") : formal_source.index(
+            "def _manifest_rows", formal_source.index("def load_authority(")
+        )
+    ]
+    assert loader.index("binding_raw, binding = read_json(binding_path)") < (
+        loader.index("_load_module_from_verified_bytes(")
+    )
+    assert "_load_module(\"_s3_v3_binding_generator\"" not in loader
+    assert "types.MappingProxyType(verified_program_bytes)" in loader
+    worker_source = formal_source[
+        formal_source.index("def run_worker(") : formal_source.index(
+            "@dataclass(frozen=True)\nclass ProcessRow", formal_source.index("def run_worker(")
+        )
+    ]
+    assert "_load_module(" not in worker_source
+    assert "base._load_module = verified_loader" in worker_source
+    assert "verified_loader=verified_loader" in worker_source
+    process_source = formal_source[
+        formal_source.index("def _run_process(") : formal_source.index(
+            "def _expected_worker_fields", formal_source.index("def _run_process(")
+        )
+    ]
+    assert "str(Path(__file__).resolve())" not in process_source
+    assert "stdin=subprocess.PIPE" in process_source
+    assert 'runner_raw = frozen_files["formal_runner"]' in process_source
+    assert process_source.index("control._attach_tree_controller(") < (
+        process_source.index("process.stdin.write(runner_raw)")
+    )
+    assert worker_source.index("_await_tree_accounting_release()") < (
+        worker_source.index("successor_authority = load_authority(")
+    )
+
+
+def test_formal_scientific_loader_executes_only_captured_bytes(tmp_path: Path) -> None:
+    formal = _load("_s3_v3_verified_scientific_loader", FORMAL)
+    program = tmp_path / "registered_helper.py"
+    captured = b"VALUE = 'captured'\n"
+    program.write_bytes(captured)
+    frozen = {formal._program_key(program): captured}
+    program.write_bytes(b"VALUE = 'mutated-path'\n")
+
+    module = formal._verified_program_loader(frozen, "_captured_helper", program)
+    assert module.VALUE == "captured"
+
+    with pytest.raises(formal.QualificationError, match="unregistered scientific"):
+        formal._verified_program_loader(
+            frozen,
+            "_unregistered_helper",
+            tmp_path / "unregistered.py",
+        )
+
+    successor_source = SUCCESSOR.read_text(encoding="utf-8")
+    assert "common._load_source = verified_loader" in successor_source
+    assert "eigen._load_module = verified_loader" in successor_source
+    assert "smoke_runner._load_manifest_generator = lambda: manifest_generator" in (
+        successor_source
+    )
+
+
+def test_worker_bootstrap_executes_pipe_buffer_not_bound_path(tmp_path: Path) -> None:
+    formal = _load("_s3_v3_worker_bootstrap", FORMAL)
+    bound_path = tmp_path / "formal_runner.py"
+    bound_path.write_text("raise RuntimeError('live path executed')\n", encoding="utf-8")
+    frozen = b"import sys;sys.stdout.write('frozen:'+sys.argv[1])\n"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-S",
+            "-B",
+            "-c",
+            formal.WORKER_BOOTSTRAP,
+            str(bound_path),
+            str(len(frozen)),
+            "assigned",
+        ],
+        input=frozen,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert completed.stdout == b"frozen:assigned"
 
 
 def test_formal_assignments_cover_exact_252_special_and_batch_scope() -> None:
@@ -209,13 +327,16 @@ def test_successor_skips_manifest_rebuild_and_amortizes_assembly_lease() -> None
     assert "timeout=" not in source
 
 
-def test_contract_is_draft_regenerable_and_preserves_strict_q4_guard_identity() -> None:
+def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity() -> None:
     generator = _load("_s3_v3_generator_contract", GENERATOR)
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-    assert contract["authority_state"] == "DRAFT_REQUIRES_FINAL_CANDIDATE_REBIND"
+    assert contract["authority_state"] == (
+        "IMPLEMENTATION_FROZEN_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS"
+    )
     assert contract["formal_qualification_authority"] is False
     assert contract["formal_runner"]["exact_topology_records"] == 252
     assert contract["formal_runner"]["exact_special_fixture_count"] == 8
+    assert contract["formal_runner"]["cycle_count_required"] == 2
     assert contract["execution_policy"]["total_runtime_limit_seconds"] is None
     assert contract["execution_policy"]["runtime_classification"] is False
     mechanics = contract["mechanics_equivalence"]
@@ -429,6 +550,13 @@ def _preflight_binding(
     name: str,
     candidate: dict[str, Any],
 ) -> dict[str, Any]:
+    candidate_root = Path(candidate["root"])
+    candidate_root.mkdir(parents=True, exist_ok=True)
+    for nodes in generator.PREFLIGHT_GATE_NODES[name].values():
+        for relative in nodes:
+            node = candidate_root / relative
+            node.parent.mkdir(parents=True, exist_ok=True)
+            node.touch(exist_ok=True)
     gates = []
     for identifier in generator.PREFLIGHT_GATE_IDS[name]:
         log_path = tmp_path / f"{name}-{identifier}.log"
@@ -436,7 +564,17 @@ def _preflight_binding(
         log_path.write_bytes(log_raw)
         gates.append(
             {
-                "command": ["python", "-m", "pytest", identifier],
+                "command": [
+                    sys.executable,
+                    "-B",
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "-p",
+                    "no:cacheprovider",
+                    *generator.PREFLIGHT_GATE_NODES[name][identifier],
+                ],
+                "environment": generator.PREFLIGHT_ENVIRONMENT,
                 "id": identifier,
                 "log": {
                     "bytes": len(log_raw),
@@ -445,6 +583,7 @@ def _preflight_binding(
                 },
                 "passed": True,
                 "returncode": 0,
+                "working_directory": str(candidate_root),
             }
         )
     record = {
@@ -468,7 +607,11 @@ def _preflight_binding(
 def test_candidate_preflight_is_canonical_exact_and_green(tmp_path: Path) -> None:
     generator = _load("_s3_v3_preflight_green", GENERATOR)
     name = "ANYsolver"
-    candidate = {"commit": "a" * 40, "tree": "b" * 40}
+    candidate = {
+        "commit": "a" * 40,
+        "root": str(tmp_path / "candidate"),
+        "tree": "b" * 40,
+    }
     binding = _preflight_binding(generator, tmp_path, name, candidate)
     verified = generator._verify_preflight(name, candidate, binding)
     assert verified["result"] == {
@@ -488,7 +631,11 @@ def test_candidate_preflight_mutations_fail_closed(
 ) -> None:
     generator = _load(f"_s3_v3_preflight_{mutation}", GENERATOR)
     name = "ANYsolver"
-    candidate = {"commit": "a" * 40, "tree": "b" * 40}
+    candidate = {
+        "commit": "a" * 40,
+        "root": str(tmp_path / "candidate"),
+        "tree": "b" * 40,
+    }
     binding = _preflight_binding(generator, tmp_path, name, candidate)
     result_path = Path(binding["path"])
     record = json.loads(result_path.read_text(encoding="utf-8"))
@@ -530,34 +677,144 @@ def test_formal_loader_does_not_resolve_historical_candidate_roots() -> None:
     assert "opt_in_burnin" not in loader
 
 
+def test_successor_loader_binds_live_programs_without_rewriting_v2_input(
+    tmp_path: Path,
+) -> None:
+    formal = _load("_s3_v3_live_program_loader", FORMAL)
+    base = _load("_s3_v3_live_program_base", V2_PROGRAM)
+    binding_path = tmp_path / "binding.json"
+    binding_raw = formal.canonical_bytes({"candidate": "synthetic"})
+    binding_path.write_bytes(binding_raw)
+    paths = {
+        "base_contract": ROOT
+        / "docs/reference_cases/e4_pl_s3_default_activation_v2_contract.json",
+        "base_input": ROOT
+        / "docs/reference_cases/e4_pl_s3_default_activation_v2_input.json",
+        "base_program": V2_PROGRAM,
+        "base_test": ROOT / "tests/test_e4_pl_s3_default_activation_v2.py",
+        "batch_benchmark": ROOT / "scripts/benchmark_e4_pl_s3_reference_batch.py",
+        "manifest": MANIFEST,
+    }
+    verified_files = {name: path.read_bytes() for name, path in paths.items()}
+    file_rows = {
+        name: {
+            "bytes": len(verified_files[name]),
+            "path": path.resolve().relative_to(ROOT.resolve()).as_posix(),
+            "sha256": hashlib.sha256(verified_files[name]).hexdigest().upper(),
+        }
+        for name, path in paths.items()
+    }
+    contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    authority = formal._load_frozen_v2_scientific_authority(
+        base,
+        binding_path,
+        binding_raw,
+        {
+            "candidates": {},
+            "files": file_rows,
+            "runtime_environment": {"synthetic": True},
+        },
+        tmp_path,
+        verified_files,
+        contract,
+    )
+    assert authority.manifest_path == MANIFEST.resolve()
+    assert contract["frozen_successor_scientific_programs"] == {
+        "batch_benchmark": {
+            "bytes": 18309,
+            "path": "scripts/benchmark_e4_pl_s3_reference_batch.py",
+            "sha256": "A348DFBCE3FDC62E9DBEE42788022A142605B2C1E2C436B385A702B0A6389DA5",
+        },
+        "runner": {
+            "bytes": 90136,
+            "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
+            "sha256": "E16EB76B2C3BCB6D50675F58694D61980614CB9760185E0F135BD51CA7CC82CF",
+        },
+        "test": {
+            "bytes": 12704,
+            "path": "tests/test_e4_pl_s3_default_activation_v2.py",
+            "sha256": "CE6E5FDF4A1C8266B01E5EEA24132A07AA26DA74A708033AC1F423B21FBE48F3",
+        },
+    }
+
+
 @dataclass
 class _CycleStubAuthority:
     pass
 
 
-@pytest.mark.parametrize("first_terminal", ("BLOCKED", "NO_GO"))
-def test_two_cycle_request_does_not_retry_blocked_or_no_go(
+def test_two_cycle_request_does_not_retry_blocked_process(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
-    first_terminal: str,
 ) -> None:
-    formal = _load(f"_s3_v3_cycle_stop_{first_terminal}", FORMAL)
-    terminal = formal.TERMINALS[0 if first_terminal == "BLOCKED" else 1]
+    formal = _load("_s3_v3_cycle_stop_blocked", FORMAL)
+    terminal = formal.TERMINALS[0]
     calls: list[Path] = []
 
     def fake_cycle(_authority: Any, path: Path) -> tuple[bytes, dict[str, Any]]:
         calls.append(path)
+        path.mkdir(parents=True)
+        (path / "process-binding.json").write_bytes(b"{}\n")
         return b"first\n", {"terminal": terminal}
 
     monkeypatch.setattr(formal, "run_cycle", fake_cycle)
-    result = formal.run_cycles(_CycleStubAuthority(), tmp_path / "cycles", 2)
+    authority = SimpleNamespace(
+        authorization_path=tmp_path / "authorization.json",
+        authorization_raw=b"authorization\n",
+        binding_path=tmp_path / "binding.json",
+        binding_raw=b"binding\n",
+    )
+    monkeypatch.setattr(formal, "load_authority", lambda *_args: authority)
+    monkeypatch.setattr(
+        formal, "require_active_resource_execution", lambda *_args, **_kwargs: None
+    )
+    result = formal.run_cycles(authority, tmp_path / "cycles", 2)
     assert len(calls) == 1
     assert result["cycles_completed"] == 1
     assert result["scientific_byte_identical"] is False
     assert result["terminal"] == terminal
+    assert result["publication_commit_marker"] == "cycle-set.json"
+    assert not (tmp_path / "cycles" / "cycle-1" / "scientific.json").exists()
 
 
-def test_second_cycle_runs_only_after_provisional_go_and_must_match(
+def test_scientific_no_go_runs_two_preregistered_cycles_and_must_match(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    formal = _load("_s3_v3_cycle_no_go", FORMAL)
+    calls: list[Path] = []
+
+    def fake_cycle(_authority: Any, path: Path) -> tuple[bytes, dict[str, Any]]:
+        calls.append(path)
+        path.mkdir(parents=True)
+        (path / "process-binding.json").write_bytes(b"{}\n")
+        (path / ".pending-scientific.json").write_bytes(b"no-go\n")
+        return b"no-go\n", {"terminal": formal.TERMINALS[1]}
+
+    monkeypatch.setattr(formal, "run_cycle", fake_cycle)
+    authority = SimpleNamespace(
+        authorization_path=tmp_path / "authorization.json",
+        authorization_raw=b"authorization\n",
+        binding_path=tmp_path / "binding.json",
+        binding_raw=b"binding\n",
+    )
+    monkeypatch.setattr(formal, "load_authority", lambda *_args: authority)
+    monkeypatch.setattr(
+        formal, "require_active_resource_execution", lambda *_args, **_kwargs: None
+    )
+    result = formal.run_cycles(authority, tmp_path / "cycles", 2)
+    assert len(calls) == 2
+    assert result["cycles_completed"] == 2
+    assert result["scientific_byte_identical"] is True
+    assert result["terminal"] == formal.TERMINALS[1]
+    assert result["publication_commit_marker"] == "cycle-set.json"
+    for cycle in (1, 2):
+        assert (
+            tmp_path / "cycles" / f"cycle-{cycle}" / "scientific.json"
+        ).read_bytes() == b"no-go\n"
+
+
+def test_second_cycle_scientific_evidence_must_match(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -567,17 +824,259 @@ def test_second_cycle_runs_only_after_provisional_go_and_must_match(
     def fake_cycle(_authority: Any, path: Path) -> tuple[bytes, dict[str, Any]]:
         calls.append(path)
         raw = b"same\n" if len(calls) == 1 else b"different\n"
+        path.mkdir(parents=True)
+        (path / "process-binding.json").write_bytes(b"{}\n")
+        (path / ".pending-scientific.json").write_bytes(raw)
         return raw, {"terminal": formal.TERMINALS[2]}
 
     monkeypatch.setattr(formal, "run_cycle", fake_cycle)
-    result = formal.run_cycles(_CycleStubAuthority(), tmp_path / "cycles", 2)
+    authority = SimpleNamespace(
+        authorization_path=tmp_path / "authorization.json",
+        authorization_raw=b"authorization\n",
+        binding_path=tmp_path / "binding.json",
+        binding_raw=b"binding\n",
+    )
+    monkeypatch.setattr(formal, "load_authority", lambda *_args: authority)
+    monkeypatch.setattr(
+        formal, "require_active_resource_execution", lambda *_args, **_kwargs: None
+    )
+    result = formal.run_cycles(authority, tmp_path / "cycles", 2)
     assert len(calls) == 2
     assert result["cycles_completed"] == 2
     assert result["scientific_byte_identical"] is False
     assert result["terminal"] == formal.TERMINALS[0]
+    assert not (tmp_path / "cycles" / "cycle-1" / "scientific.json").exists()
+    assert not (tmp_path / "cycles" / "cycle-2" / "scientific.json").exists()
+    assert (tmp_path / "cycles" / "cycle-set.json").is_file()
 
 
-def _process_authority(tmp_path: Path) -> Any:
+def test_one_cycle_request_is_rejected_before_output_creation(tmp_path: Path) -> None:
+    formal = _load("_s3_v3_one_cycle_rejected", FORMAL)
+    output = tmp_path / "cycles"
+    with pytest.raises(formal.QualificationError, match="exactly two"):
+        formal.run_cycles(_CycleStubAuthority(), output, 1)
+    assert not output.exists()
+
+
+def test_blocked_cycle_never_writes_partial_scientific_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    formal = _load("_s3_v3_blocked_not_scientific", FORMAL)
+    authority = _assignment_authority(formal)
+
+    def failed_process(
+        _authority: Any,
+        worker_id: str,
+        _directory: Path,
+        _assignment: Path,
+        assignment_sha256: str,
+    ) -> Any:
+        return formal.ProcessRow(
+            worker_id,
+            "FAILED",
+            1,
+            1,
+            0,
+            assignment_sha256,
+            "",
+            "",
+            hashlib.sha256(b"").hexdigest().upper(),
+            hashlib.sha256(b"").hexdigest().upper(),
+        )
+
+    monkeypatch.setattr(formal, "_run_process", failed_process)
+    raw, record = formal.run_cycle(authority, tmp_path / "cycle")
+    assert record["terminal"] == formal.TERMINALS[0]
+    assert record["schema"].endswith("blocked-v3")
+    assert "coverage" not in record and "gates" not in record
+    assert (tmp_path / "cycle" / "blocked.json").read_bytes() == raw
+    assert not (tmp_path / "cycle" / "scientific.json").exists()
+
+
+def test_scientific_projection_binds_measurements_but_not_raw_timings() -> None:
+    formal = _load("_s3_v3_scientific_projection", FORMAL)
+    structural_a = {"convergence": {"energy_norm_error": 0.125}}
+    structural_b = {"convergence": {"energy_norm_error": 0.126}}
+    assert formal.canonical_bytes(
+        formal._scientific_projection("STRUCTURAL_SLASH", structural_a)
+    ) != formal.canonical_bytes(
+        formal._scientific_projection("STRUCTURAL_SLASH", structural_b)
+    )
+    eigen_a = {
+        "modal_10": {"frequencies": [1.0, 2.0]},
+        "performance_10": {"summaries": {"mixed": {"median": 4.0}}},
+    }
+    eigen_b = copy.deepcopy(eigen_a)
+    eigen_b["performance_10"]["summaries"]["mixed"]["median"] = 99.0
+    assert formal._scientific_projection("EIGEN_PERFORMANCE", eigen_a) == (
+        formal._scientific_projection("EIGEN_PERFORMANCE", eigen_b)
+    )
+    eigen_b["modal_10"]["frequencies"][0] = 1.1
+    assert formal._scientific_projection("EIGEN_PERFORMANCE", eigen_a) != (
+        formal._scientific_projection("EIGEN_PERFORMANCE", eigen_b)
+    )
+
+    special = {
+        "qualified-s3": {
+            "passed": True,
+            "report": {
+                "collected": 1,
+                "collection_errors": 0,
+                "outcomes": [
+                    {
+                        "nodeid": "tests/test_s3.py::test_d3",
+                        "outcome": "passed",
+                        "properties": [["e4_pl_s3_d3_numbering_count", 6]],
+                    }
+                ],
+            },
+            "requested_node_count": 1,
+            "returncode": 0,
+            "status": "PASS",
+            "stderr": "raw process diagnostic",
+            "stdout": "raw process diagnostic",
+        }
+    }
+    projected = formal._scientific_projection("SPECIAL_ECOSYSTEM", special)
+    assert projected["qualified-s3"]["report"]["collected"] == 1
+    assert "stdout" not in projected["qualified-s3"]
+    mutated = copy.deepcopy(special)
+    mutated["qualified-s3"]["report"]["outcomes"][0]["properties"][0][1] = 5
+    assert formal._scientific_projection("SPECIAL_ECOSYSTEM", special) != (
+        formal._scientific_projection("SPECIAL_ECOSYSTEM", mutated)
+    )
+
+
+def test_canonical_reviews_are_loaded_and_mutations_fail(
+    tmp_path: Path,
+) -> None:
+    formal = _load("_s3_v3_review_authority", FORMAL)
+    binding = {"bytes": 11, "path": "binding.json", "sha256": "A" * 64}
+    review = {
+        "candidate_binding": binding,
+        "disposition": "ACCEPTED_NO_P0_P1",
+        "findings": [],
+        "production_restriction": formal.PRODUCTION_RESTRICTION,
+        "reviewer_id": "independent-a",
+        "schema": formal.REVIEW_SCHEMA,
+    }
+    path = tmp_path / "review.json"
+    path.write_bytes(formal.canonical_bytes(review))
+    file_binding = {
+        "bytes": path.stat().st_size,
+        "path": str(path),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest().upper(),
+    }
+    reviewer, observed = formal._review_authority(
+        file_binding,
+        expected_binding=binding,
+        label="review",
+    )
+    assert reviewer == "independent-a" and observed == path.resolve()
+    review["findings"] = [{"priority": "P1"}]
+    path.write_bytes(formal.canonical_bytes(review))
+    file_binding.update(
+        bytes=path.stat().st_size,
+        sha256=hashlib.sha256(path.read_bytes()).hexdigest().upper(),
+    )
+    with pytest.raises(formal.QualificationError, match="accepted canonical"):
+        formal._review_authority(
+            file_binding,
+            expected_binding=binding,
+            label="review",
+        )
+    review["findings"] = []
+    review["reviewer_id"] = " independent-a"
+    path.write_bytes(formal.canonical_bytes(review))
+    file_binding.update(
+        bytes=path.stat().st_size,
+        sha256=hashlib.sha256(path.read_bytes()).hexdigest().upper(),
+    )
+    with pytest.raises(formal.QualificationError, match="accepted canonical"):
+        formal._review_authority(
+            file_binding,
+            expected_binding=binding,
+            label="review",
+        )
+
+
+def test_resource_request_is_exact_approved_and_single_use(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    formal = _load("_s3_v3_resource_authority", FORMAL)
+    manager = tmp_path / "manager"
+    requests = manager / "requests"
+    requests.mkdir(parents=True)
+    monkeypatch.setattr(formal, "RESOURCE_MANAGER", manager)
+    binding_path = tmp_path / "binding.json"
+    authorization_path = tmp_path / "authorization.json"
+    output_root = tmp_path / "cycles"
+    binding_path.write_bytes(b"{}\n")
+    authorization_path.write_bytes(b"{}\n")
+    request_id = "1" * 32
+    arguments = [
+        "--binding",
+        str(binding_path),
+        "--authorization",
+        str(authorization_path),
+        "--cycles",
+        "2",
+        "--output-root",
+        str(output_root),
+    ]
+    command = formal._resource_command(request_id, sys.executable, arguments)
+    request = {
+        "command": command,
+        "estimate_minutes": 60,
+        "repository": str(ROOT.resolve()),
+        "request_id": request_id,
+        "requested_at": "2026-08-28T00:00:00+02:00",
+        "status": "PENDING",
+        "task": "ANYsolver S3 qualification v3 two-cycle formal execution",
+    }
+    request_path = requests / f"{request_id}.json"
+    request_path.write_bytes(formal.canonical_bytes(request))
+    approval_line = (
+        f"| 2026-08-28T00:01:00Z | {request_id} | APPROVED | task | repo | "
+        "request bound | diagnostic | standing approval |\n"
+    )
+    ledger = manager / "ledger.md"
+    ledger.write_text(approval_line, encoding="utf-8", newline="")
+    resource = {
+        "approval_row_sha256": hashlib.sha256(
+            approval_line.encode("utf-8")
+        ).hexdigest().upper(),
+        "command_sha256": hashlib.sha256(command.encode("utf-8")).hexdigest().upper(),
+        "coordinator_arguments": arguments,
+        "ledger_path": str(ledger),
+        "python_executable": sys.executable,
+        "request": {
+            "bytes": request_path.stat().st_size,
+            "path": str(request_path),
+            "request_id": request_id,
+            "sha256": hashlib.sha256(request_path.read_bytes()).hexdigest().upper(),
+        },
+    }
+    verified = formal._verify_resource_authority(
+        resource,
+        authorization_path=authorization_path,
+    )
+    assert verified["request"]["request_id"] == request_id
+    with ledger.open("a", encoding="utf-8", newline="") as stream:
+        stream.write(
+            f"| 2026-08-28T00:02:00Z | {request_id} | COMPLETED_FAIL | task | repo | "
+            "consumed | diagnostic | no retry |\n"
+        )
+    with pytest.raises(formal.QualificationError, match="one-use"):
+        formal._verify_resource_authority(
+            resource,
+            authorization_path=authorization_path,
+        )
+
+
+def _process_authority(tmp_path: Path, control: Any) -> Any:
     return SimpleNamespace(
         binding_path=tmp_path / "binding.json",
         authorization_path=tmp_path / "authorization.json",
@@ -587,7 +1086,15 @@ def _process_authority(tmp_path: Path) -> Any:
                 "ANYstructure": {"root": str(tmp_path)},
             },
             "execution_target": str(tmp_path),
+            "files": {
+                "formal_runner": {
+                    "path": "scripts/run_e4_pl_s3_qualification_v3.py"
+                }
+            },
+            "runtime_environment": {"process_environment": {}},
         },
+        control=control,
+        verified_file_bytes={"formal_runner": FORMAL.read_bytes()},
     )
 
 
@@ -613,7 +1120,7 @@ def test_formal_spawn_failure_is_one_deterministic_terminal_row(
     assignment = directory / "assignment.json"
     assignment.write_bytes(b"{}\n")
     row = formal._run_process(
-        _process_authority(tmp_path),
+        _process_authority(tmp_path, Control),
         "BATCH_0",
         directory,
         assignment,
@@ -642,6 +1149,20 @@ def test_formal_memory_and_inactivity_fail_closed_and_clean_tree(
     class Process:
         pid = 1234
         returncode: int | None = None
+
+        class Input:
+            def __init__(self) -> None:
+                self.raw = bytearray()
+                self.closed = False
+
+            def write(self, raw: bytes) -> int:
+                self.raw.extend(raw)
+                return len(raw)
+
+            def close(self) -> None:
+                self.closed = True
+
+        stdin = Input()
 
         def poll(self) -> int | None:
             return self.returncode
@@ -685,7 +1206,7 @@ def test_formal_memory_and_inactivity_fail_closed_and_clean_tree(
     assignment = directory / "assignment.json"
     assignment.write_bytes(b"{}\n")
     row = formal._run_process(
-        _process_authority(tmp_path),
+        _process_authority(tmp_path, Control),
         "BATCH_0",
         directory,
         assignment,
@@ -701,4 +1222,272 @@ def test_formal_worker_rejects_canonical_but_malformed_output(tmp_path: Path) ->
     path = tmp_path / "record.json"
     path.write_bytes(formal.canonical_bytes({"schema": formal.WORKER_SCHEMA}))
     with pytest.raises(formal.QualificationError, match="fields differ"):
-        formal._read_worker(path, "BATCH_0", "C" * 64)
+        formal._read_worker(
+            path,
+            "BATCH_0",
+            "C" * 64,
+            _assignment_authority(formal),
+        )
+
+
+@pytest.mark.parametrize(
+    ("gates", "coverage"),
+    (
+        ({"equality": True}, {"batch_elements": 4096, "batch_repetitions": 4}),
+        (
+            {"equality": True, "scalar_fallback": True, "shard_complete": True},
+            {"batch_elements": 4096.0, "batch_repetitions": 4},
+        ),
+    ),
+)
+def test_worker_gate_and_coverage_schemas_fail_closed(
+    tmp_path: Path,
+    gates: dict[str, Any],
+    coverage: dict[str, Any],
+) -> None:
+    formal = _load("_s3_v3_formal_worker_schema", FORMAL)
+    path = tmp_path / "record.json"
+    path.write_bytes(
+        formal.canonical_bytes(
+            {
+                "assignment_sha256": "C" * 64,
+                "coverage": coverage,
+                "gates": gates,
+                "production_restriction": formal.PRODUCTION_RESTRICTION,
+                "schema": formal.WORKER_SCHEMA,
+                "scientific_payload_sha256": "D" * 64,
+                "worker_id": "BATCH_0",
+            }
+        )
+    )
+    with pytest.raises(formal.QualificationError, match="gate or coverage schema"):
+        formal._read_worker(
+            path,
+            "BATCH_0",
+            "C" * 64,
+            _assignment_authority(formal),
+        )
+
+
+def test_active_execution_rejects_a_different_live_interpreter(tmp_path: Path) -> None:
+    formal = _load("_s3_v3_live_interpreter", FORMAL)
+    with pytest.raises(formal.QualificationError, match="interpreter differs"):
+        formal.require_active_resource_execution(
+            SimpleNamespace(
+                authorization={
+                    "resource_execution": {
+                        "python_executable": str(CONTRACT),
+                    }
+                }
+            )
+        )
+
+
+def test_resource_attempt_is_exclusive_and_never_reused(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    formal = _load("_s3_v3_resource_attempt", FORMAL)
+    monkeypatch.setattr(formal, "RESOURCE_MANAGER", tmp_path / "manager")
+    monkeypatch.delenv(formal.RESOURCE_ATTEMPT_ENVIRONMENT, raising=False)
+    authority = SimpleNamespace(
+        authorization={
+            "resource_execution": {
+                "command_sha256": "A" * 64,
+                "request": {"request_id": "1" * 32},
+            }
+        }
+    )
+    digest = formal._claim_resource_attempt(authority, tmp_path / "cycles")
+    assert len(digest) == 64
+    assert os.environ[formal.RESOURCE_ATTEMPT_ENVIRONMENT] == digest
+    with pytest.raises(FileExistsError):
+        formal._claim_resource_attempt(authority, tmp_path / "cycles")
+
+
+def test_launched_request_is_claimed_before_mutable_authority_validation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    formal = _load("_s3_v3_resource_preclaim", FORMAL)
+    manager = tmp_path / "manager"
+    requests = manager / "requests"
+    active = manager / "active-lock"
+    requests.mkdir(parents=True)
+    active.mkdir()
+    monkeypatch.setattr(formal, "RESOURCE_MANAGER", manager)
+    request_id = "2" * 32
+    output = tmp_path / "cycles"
+    arguments = [
+        "--binding",
+        str(tmp_path / "malformed-binding.json"),
+        "--authorization",
+        str(tmp_path / "malformed-authorization.json"),
+        "--cycles",
+        "2",
+        "--output-root",
+        str(output),
+    ]
+    monkeypatch.setattr(formal.sys, "argv", [str(FORMAL), *arguments])
+    monkeypatch.setenv(formal.RESOURCE_REQUEST_ENVIRONMENT, request_id)
+    command = formal._resource_command(
+        request_id,
+        str(Path(sys.executable).resolve()),
+        arguments,
+    )
+    request = {
+        "command": command,
+        "estimate_minutes": 60,
+        "repository": str(ROOT.resolve()),
+        "request_id": request_id,
+        "requested_at": "2026-08-28T00:00:00+02:00",
+        "status": "PENDING",
+        "task": "ANYsolver S3 qualification v3 two-cycle formal execution",
+    }
+    (requests / f"{request_id}.json").write_bytes(formal.canonical_bytes(request))
+    owner = {
+        "acquired_at": "2026-08-28T00:01:00+02:00",
+        "command": command,
+        "process_id": 1,
+        "repository": str(ROOT.resolve()),
+        "request_id": request_id,
+        "task": request["task"],
+    }
+    (active / "owner.json").write_bytes(formal.canonical_bytes(owner))
+    (manager / "ledger.md").write_text(
+        f"| 2026-08-28T00:01:00Z | {request_id} | EXECUTION_STARTED | task | repo |\n",
+        encoding="utf-8",
+        newline="",
+    )
+    digest = formal._preclaim_launched_resource(output)
+    assert len(digest) == 64
+    attempt = manager / "attempts" / f"{request_id}.json"
+    assert attempt.is_file()
+    with pytest.raises(FileExistsError):
+        formal._preclaim_launched_resource(output)
+
+
+def test_bound_repository_file_is_independent_of_worker_cwd(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    formal = _load("_s3_v3_relative_binding", FORMAL)
+    raw = CONTRACT.read_bytes()
+    binding = {
+        "bytes": len(raw),
+        "path": CONTRACT.relative_to(ROOT).as_posix(),
+        "sha256": hashlib.sha256(raw).hexdigest().upper(),
+    }
+    monkeypatch.chdir(tmp_path)
+    observed, path = formal._bound_regular_file(binding, label="contract")
+    assert observed == raw
+    assert path == CONTRACT.resolve()
+
+
+def test_publication_rejects_pending_bytes_changed_after_adjudication(
+    tmp_path: Path,
+) -> None:
+    formal = _load("_s3_v3_pending_publication", FORMAL)
+    pending = tmp_path / ".pending.json"
+    canonical = tmp_path / "canonical.json"
+    pending.write_bytes(b"changed\n")
+    with pytest.raises(formal.QualificationError, match="bytes differ"):
+        formal._publish_staged(
+            pending,
+            canonical,
+            expected_raw=b"accepted\n",
+        )
+    assert not canonical.exists()
+
+
+def test_publication_is_independent_of_pending_inode_after_validation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    formal = _load("_s3_v3_pending_publication_race", FORMAL)
+    pending = tmp_path / ".pending.json"
+    canonical = tmp_path / "canonical.json"
+    accepted = b"accepted\n"
+    pending.write_bytes(accepted)
+    real_link = formal.os.link
+
+    def mutate_pending_before_link(source: Path, destination: Path) -> None:
+        pending.write_bytes(b"changed\n")
+        real_link(source, destination)
+
+    monkeypatch.setattr(formal.os, "link", mutate_pending_before_link)
+    formal._publish_staged(pending, canonical, expected_raw=accepted)
+    assert canonical.read_bytes() == accepted
+    assert not pending.exists()
+
+
+def test_nested_special_lane_returns_the_strict_adjudicator_schema(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    successor = _load("_s3_v3_nested_lane", SUCCESSOR)
+    binding = tmp_path / "binding.json"
+    binding.write_bytes(b"{}\n")
+    report = {
+        "collected": 1,
+        "collection_errors": 0,
+        "outcomes": [
+            {
+                "nodeid": "tests/test_s3.py::test_d3",
+                "outcome": "passed",
+                "properties": [["e4_pl_s3_d3_numbering_count", 6]],
+            }
+        ],
+    }
+    base = SimpleNamespace(
+        QualificationError=RuntimeError,
+        _parse_pytest_lane_report=lambda stdout: report,
+        _pytest_lane_code=lambda authority, nodes: (
+            "raise SystemExit(pytest.main([] + ['-q']))"
+        ),
+        _pytest_lane_status=lambda returncode, parsed: (
+            "PASS" if returncode == 0 and parsed == report else "BLOCKED"
+        ),
+        strict_json=lambda raw, label: {
+            "files": {
+                "binding_generator": {
+                    "bytes": 1,
+                    "path": "scripts/prepare_e4_pl_s3_qualification_v3_input.py",
+                    "sha256": "A" * 64,
+                }
+            }
+        },
+    )
+    captured: dict[str, Any] = {}
+
+    def run(command: list[str], **kwargs: Any) -> SimpleNamespace:
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(returncode=0, stderr="", stdout="report\n")
+
+    monkeypatch.setattr(subprocess, "run", run)
+    result = successor.run_pytest_lane_without_elapsed_ceiling(
+        base,
+        SimpleNamespace(
+            input={"runtime_environment": {"process_environment": {}}},
+            input_raw=b"{}\n",
+            input_path=binding,
+            target=tmp_path,
+        ),
+        "qualified-s3",
+        tmp_path,
+        ["tests/test_s3.py::test_d3"],
+    )
+    assert result == {
+        "lane": "qualified-s3",
+        "passed": True,
+        "report": report,
+        "requested_node_count": 1,
+        "returncode": 0,
+        "status": "PASS",
+        "stderr": "",
+        "stdout": "report\n",
+    }
+    assert captured["command"][1:4] == ["-I", "-S", "-B"]
+    assert "no:cacheprovider" in captured["command"][5]
+    assert "timeout" not in captured["kwargs"]

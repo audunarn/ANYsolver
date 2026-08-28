@@ -46,36 +46,955 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
       - name: Download locally qualified release distributions
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           EXPECTED_TAG: v0.4.0
           WHEEL_NAME: anysolver-0.4.0-py3-none-any.whl
-          SDIST_NAME: anysolver-0.4.0.tar.gz
         run: |
           if [ "$RELEASE_TAG" != "$EXPECTED_TAG" ]; then
             echo "production publication is frozen to $EXPECTED_TAG" >&2
             exit 1
           fi
           mkdir release-assets
-          gh release download "$EXPECTED_TAG" --repo "${{ github.repository }}" --dir release-assets --pattern "$WHEEL_NAME" --pattern "$SDIST_NAME" --pattern 'SHA256SUMS'
+          gh release download "$EXPECTED_TAG" --repo "${{ github.repository }}" --dir release-assets
       - name: Verify release distribution hashes and closed artifact set
         run: |
           python - <<'PY'
+          from datetime import datetime
           import hashlib
           from email import policy
           from email.parser import BytesParser
+          import json
           from pathlib import Path
           import re
-          import tarfile
+          import subprocess
           import zipfile
 
           root = Path("release-assets")
           expected_names = {
               "anysolver-0.4.0-py3-none-any.whl",
-              "anysolver-0.4.0.tar.gz",
           }
+          ledger_path = Path("docs/reference_cases/e4_pl_s3_release_ledger.json")
+          if not ledger_path.is_file() or ledger_path.is_symlink():
+              raise SystemExit("the canonical S3 release ledger is absent")
+          ledger_raw = ledger_path.read_bytes()
+          committed_raw = subprocess.run(
+              ["git", "show", f"HEAD:{ledger_path.as_posix()}"],
+              check=True,
+              capture_output=True,
+          ).stdout
+          if ledger_raw != committed_raw:
+              raise SystemExit("the working release ledger differs from tag HEAD")
+
+          def strict_pairs(pairs):
+              value = {}
+              for key, item in pairs:
+                  if key in value:
+                      raise ValueError(f"duplicate release-ledger key: {key}")
+                  value[key] = item
+              return value
+
+          def reject_constant(value):
+              raise ValueError(f"nonfinite release-ledger value: {value}")
+
+          try:
+              ledger = json.loads(
+                  ledger_raw.decode("utf-8"),
+                  object_pairs_hook=strict_pairs,
+                  parse_constant=reject_constant,
+              )
+          except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+              raise SystemExit("release ledger is not strict UTF-8 JSON") from exc
+          canonical = (
+              json.dumps(ledger, allow_nan=False, indent=2, sort_keys=True) + "\n"
+          ).encode("utf-8")
+          if ledger_raw != canonical:
+              raise SystemExit("release ledger is not canonical JSON")
+
+          def exact_keys(value, keys, label):
+              if type(value) is not dict or set(value) != set(keys):
+                  raise SystemExit(f"{label} fields differ")
+
+          def is_upper_sha256(value):
+              return (
+                  type(value) is str
+                  and re.fullmatch(r"[0-9A-F]{64}", value) is not None
+              )
+
+          def reject_placeholders(value):
+              if isinstance(value, dict):
+                  for item in value.values():
+                      reject_placeholders(item)
+              elif isinstance(value, list):
+                  for item in value:
+                      reject_placeholders(item)
+              elif isinstance(value, str) and any(
+                  token in value.upper()
+                  for token in ("PLACEHOLDER", "REBIND_FINAL", "TO_BE_REBOUND")
+              ):
+                  raise SystemExit("release ledger contains a placeholder")
+
+          exact_keys(
+              ledger,
+              {"artifact_source", "artifacts", "qualification", "schema"},
+              "release ledger",
+          )
+          if ledger["schema"] != "anysolver.e4-pl-s3-release-ledger-v3":
+              raise SystemExit("release ledger schema differs")
+          reject_placeholders(ledger)
+          artifact_source = ledger["artifact_source"]
+          exact_keys(artifact_source, {"commit", "tree"}, "artifact source")
+          source_commit = artifact_source["commit"]
+          source_tree = artifact_source["tree"]
+          if (
+              type(source_commit) is not str
+              or re.fullmatch(r"[0-9a-f]{40}", source_commit) is None
+              or type(source_tree) is not str
+              or re.fullmatch(r"[0-9a-f]{40}", source_tree) is None
+          ):
+              raise SystemExit("artifact-source Git identity is malformed")
+
+          parents = subprocess.run(
+              ["git", "rev-list", "--parents", "-n", "1", "HEAD"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.split()
+          if len(parents) != 2 or parents[1] != source_commit:
+              raise SystemExit("release ledger must be the sole child of its artifact source")
+          observed_source_tree = subprocess.run(
+              ["git", "rev-parse", f"{source_commit}^{{tree}}"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.strip()
+          if observed_source_tree != source_tree:
+              raise SystemExit("artifact-source tree differs")
+          changed = subprocess.run(
+              ["git", "diff", "--name-status", source_commit, "HEAD", "--"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if changed != [f"A\t{ledger_path.as_posix()}"]:
+              raise SystemExit("release-ledger commit must add exactly the ledger path")
+
+          def bound_file(row, label):
+              exact_keys(row, {"bytes", "path", "sha256"}, label)
+              path = Path(row["path"])
+              if (
+                  path.is_absolute()
+                  or ".." in path.parts
+                  or path.parts[:2] != ("docs", "reference_cases")
+                  or not path.is_file()
+                  or path.is_symlink()
+              ):
+                  raise SystemExit(f"{label} path is not a committed evidence path")
+              raw = path.read_bytes()
+              digest = hashlib.sha256(raw).hexdigest().upper()
+              if (
+                  type(row["bytes"]) is not int
+                  or row["bytes"] != len(raw)
+                  or type(row["sha256"]) is not str
+                  or row["sha256"] != digest
+              ):
+                  raise SystemExit(f"{label} bytes differ")
+              committed = subprocess.run(
+                  ["git", "show", f"{source_commit}:{path.as_posix()}"],
+                  check=True,
+                  capture_output=True,
+              ).stdout
+              if committed != raw:
+                  raise SystemExit(f"{label} differs from artifact source")
+              return raw, path
+
+          def bound_json(row, label):
+              raw, _path = bound_file(row, label)
+              try:
+                  value = json.loads(
+                      raw.decode("utf-8"),
+                      object_pairs_hook=strict_pairs,
+                      parse_constant=reject_constant,
+                  )
+              except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+                  raise SystemExit(f"{label} is not strict JSON") from exc
+              compact = (
+                  json.dumps(
+                      value,
+                      allow_nan=False,
+                      ensure_ascii=True,
+                      separators=(",", ":"),
+                      sort_keys=True,
+                  )
+                  + "\n"
+              ).encode("utf-8")
+              if raw != compact:
+                  raise SystemExit(f"{label} is not canonical compact JSON")
+              return value
+
+          qualification = ledger["qualification"]
+          exact_keys(
+              qualification,
+              {
+                  "authorization",
+                  "candidate_binding",
+                  "cycle_process",
+                  "cycle_scientific",
+                  "cycle_set",
+                  "independent_reviews",
+                  "post_qualification_review",
+                  "release_authorization",
+                  "resource_completion",
+                  "resource_ledger_snapshot",
+                  "resource_terminal_snapshot",
+              },
+              "qualification",
+          )
+          candidate_binding = bound_json(
+              qualification["candidate_binding"], "candidate binding"
+          )
+          authorization = bound_json(
+              qualification["authorization"], "qualification authorization"
+          )
+          cycle_set = bound_json(qualification["cycle_set"], "cycle set")
+          resource_completion = bound_json(
+              qualification["resource_completion"], "resource completion"
+          )
+          resource_terminal_snapshot = bound_json(
+              qualification["resource_terminal_snapshot"],
+              "resource terminal snapshot",
+          )
+          resource_ledger_raw, resource_ledger_path = bound_file(
+              qualification["resource_ledger_snapshot"],
+              "resource ledger snapshot",
+          )
+          if resource_ledger_path.as_posix() != (
+              "docs/reference_cases/e4_pl_s3_v3_resource_ledger_snapshot.md"
+          ):
+              raise SystemExit("resource ledger snapshot path differs")
+          post_qualification_review = bound_json(
+              qualification["post_qualification_review"],
+              "post-qualification review",
+          )
+          release_authorization = bound_json(
+              qualification["release_authorization"],
+              "release authorization",
+          )
+          review_rows = qualification["independent_reviews"]
+          if type(review_rows) is not list or len(review_rows) != 2:
+              raise SystemExit("exactly two qualification reviews are required")
+          reviews = [
+              bound_json(row, f"independent review {index}")
+              for index, row in enumerate(review_rows, start=1)
+          ]
+          scientific_rows = qualification["cycle_scientific"]
+          if type(scientific_rows) is not list or len(scientific_rows) != 2:
+              raise SystemExit("exactly two scientific cycles are required")
+          scientific = [
+              bound_json(row, f"scientific cycle {index}")
+              for index, row in enumerate(scientific_rows, start=1)
+          ]
+          process_rows = qualification["cycle_process"]
+          if type(process_rows) is not list or len(process_rows) != 2:
+              raise SystemExit("exactly two cycle process records are required")
+          cycle_process = [
+              bound_json(row, f"cycle process {index}")
+              for index, row in enumerate(process_rows, start=1)
+          ]
+          expected_evidence_paths = {
+              "cycle_scientific": [
+                  "docs/reference_cases/e4_pl_s3_v3_cycle_1_scientific.json",
+                  "docs/reference_cases/e4_pl_s3_v3_cycle_2_scientific.json",
+              ],
+              "cycle_process": [
+                  "docs/reference_cases/e4_pl_s3_v3_cycle_1_process_binding.json",
+                  "docs/reference_cases/e4_pl_s3_v3_cycle_2_process_binding.json",
+              ],
+          }
+          for name, rows in (
+              ("cycle_scientific", scientific_rows),
+              ("cycle_process", process_rows),
+          ):
+              if [row["path"] for row in rows] != expected_evidence_paths[name]:
+                  raise SystemExit(f"{name} paths or order differ")
+              if len({row["path"] for row in rows}) != 2:
+                  raise SystemExit(f"{name} paths are not distinct")
+          scientific_raw = [Path(row["path"]).read_bytes() for row in scientific_rows]
+          candidate_sha = qualification["candidate_binding"]["sha256"]
+          authorization_sha = qualification["authorization"]["sha256"]
+          exact_keys(
+              candidate_binding,
+              {
+                  "anysolver_policy",
+                  "candidate_graph",
+                  "candidate_preflight",
+                  "candidates",
+                  "execution_target",
+                  "files",
+                  "formal_execution_authorized",
+                  "production_restriction",
+                  "runtime_environment",
+                  "schema",
+              },
+              "candidate binding",
+          )
+          exact_keys(
+              authorization,
+              {
+                  "authority_commit",
+                  "candidate_binding",
+                  "formal_execution_authorized",
+                  "independent_reviews",
+                  "production_restriction",
+                  "resource_execution",
+                  "schema",
+                  "user_approval",
+              },
+              "qualification authorization",
+          )
+          if (
+              candidate_binding["schema"]
+              != "anysolver.e4-pl-s3-qualification-candidate-binding-v3"
+              or authorization["schema"]
+              != "anysolver.e4-pl-s3-qualification-authorization-v3"
+              or candidate_binding["formal_execution_authorized"] is not False
+              or authorization["formal_execution_authorized"] is not True
+              or authorization.get("candidate_binding", {}).get("sha256")
+              != candidate_sha
+          ):
+              raise SystemExit("candidate or authorization disposition differs")
+          expected_candidate_names = {
+              "ANYfem",
+              "ANYfileIO",
+              "ANYgeometry",
+              "ANYintelligent",
+              "ANYmaterial",
+              "ANYmesh",
+              "ANYsolver",
+              "ANYstructure",
+          }
+          candidates = candidate_binding["candidates"]
+          if type(candidates) is not dict or set(candidates) != expected_candidate_names:
+              raise SystemExit("qualified candidate set differs")
+          candidate_commits = {}
+          for name in sorted(expected_candidate_names):
+              candidate = candidates[name]
+              if type(candidate) is not dict:
+                  raise SystemExit(f"{name} candidate identity differs")
+              commit = candidate.get("commit")
+              tree = candidate.get("tree")
+              if (
+                  type(commit) is not str
+                  or re.fullmatch(r"[0-9a-f]{40}", commit) is None
+                  or type(tree) is not str
+                  or re.fullmatch(r"[0-9a-f]{40}", tree) is None
+              ):
+                  raise SystemExit(f"{name} candidate Git identity differs")
+              candidate_commits[name] = commit
+          qualified_solver = candidates["ANYsolver"]
+          qualified_solver_commit = qualified_solver["commit"]
+          qualified_solver_tree = qualified_solver["tree"]
+          expected_reviewers = {
+              "s3-v3-authority-reviewer",
+              "s3-v3-science-reviewer",
+          }
+          if {
+              review.get("reviewer_id") for review in reviews
+          } != expected_reviewers or any(
+              review.get("disposition") != "ACCEPTED_NO_P0_P1"
+              or review.get("findings") != []
+              or review.get("candidate_binding", {}).get("sha256") != candidate_sha
+              for review in reviews
+          ):
+              raise SystemExit("independent qualification reviews differ")
+          authorized_reviews = authorization.get("independent_reviews")
+          if type(authorized_reviews) is not list or {
+              (row.get("bytes"), row.get("sha256")) for row in authorized_reviews
+          } != {
+              (row["bytes"], row["sha256"]) for row in review_rows
+          }:
+              raise SystemExit("authorization does not bind the accepted reviews")
+          accepted_terminal = "PROVISIONAL_GO_E4_PL_S3_DEFAULT_ACTIVATION"
+          exact_keys(
+              cycle_set,
+              {
+                  "cycle_record_sha256",
+                  "cycles_completed",
+                  "process_binding_sha256",
+                  "production_restriction",
+                  "publication_commit_marker",
+                  "runtime_classification",
+                  "schema",
+                  "scientific_byte_identical",
+                  "terminal",
+                  "total_runtime_limit_seconds",
+              },
+              "cycle set",
+          )
+          cycle_hashes = [hashlib.sha256(raw).hexdigest().upper() for raw in scientific_raw]
+          process_hashes = [row["sha256"] for row in process_rows]
+          if (
+              cycle_set["schema"]
+              != "anysolver.e4-pl-s3-default-activation-cycle-set-v3"
+              or cycle_set["cycles_completed"] != 2
+              or cycle_set["scientific_byte_identical"] is not True
+              or cycle_set["cycle_record_sha256"] != cycle_hashes
+              or cycle_set["process_binding_sha256"] != process_hashes
+              or len(set(cycle_hashes)) != 1
+              or cycle_set["terminal"] != accepted_terminal
+              or cycle_set["publication_commit_marker"] != "cycle-set.json"
+          ):
+              raise SystemExit("two-cycle qualification was not accepted")
+          expected_worker_ids = (
+              "STRUCTURAL_SLASH",
+              "STRUCTURAL_BACKSLASH",
+              "STRUCTURAL_ALTERNATING",
+              "EIGEN_PERFORMANCE",
+              "SPECIAL_ECOSYSTEM",
+              "BATCH_0",
+              "BATCH_1",
+              "BATCH_2",
+          )
+          expected_worker_set = set(expected_worker_ids)
+          expected_worker_gate_names = {
+              "STRUCTURAL_SLASH": {
+                  "convergence",
+                  "interface_resultants",
+                  "locking",
+                  "patch_and_equilibrium",
+                  "pl_participation",
+                  "symmetry_and_covariance",
+                  "topology_252",
+              },
+              "STRUCTURAL_BACKSLASH": {
+                  "convergence",
+                  "interface_resultants",
+                  "pl_participation",
+                  "topology_252",
+              },
+              "STRUCTURAL_ALTERNATING": {
+                  "convergence",
+                  "interface_resultants",
+                  "pl_participation",
+                  "topology_252",
+              },
+              "EIGEN_PERFORMANCE": {
+                  "buckling_10",
+                  "buckling_25",
+                  "modal_10",
+                  "modal_25",
+                  "performance_10",
+                  "performance_25",
+              },
+              "SPECIAL_ECOSYSTEM": {
+                  "lane_anyfem-policy-and-routing",
+                  "lane_anyfileio-neutral-shell-authority-v3",
+                  "lane_anyintelligent-external-adapter",
+                  "lane_anyintelligent-production-entrypoint-v3",
+                  "lane_anymesh-admission-repair",
+                  "lane_anysolver-default-migration-and-special",
+                  "lane_anystructure-runtime-state-v2",
+                  "lane_exact-wheel-cross-package-v3",
+              },
+              "BATCH_0": {"equality", "scalar_fallback", "shard_complete"},
+              "BATCH_1": {"equality", "scalar_fallback", "shard_complete"},
+              "BATCH_2": {"equality", "scalar_fallback", "shard_complete"},
+          }
+          expected_gate_keys = {
+              f"{worker.lower()}::{gate}"
+              for worker, names in expected_worker_gate_names.items()
+              for gate in names
+          } | {
+              "batch_aggregate::candidate_hot_path",
+              "batch_aggregate::complete_registered_repetitions",
+              "batch_aggregate::recovery_throughput",
+              "batch_aggregate::stiffness_throughput",
+              "batch_aggregate::warm_s3_vs_q4",
+          }
+          expected_coverage_values = {
+              "structural_slash::gated_topology_records": 84,
+              "structural_slash::global_convergence_records": 84,
+              "structural_slash::locking_records": 18,
+              "structural_backslash::gated_topology_records": 84,
+              "structural_backslash::global_convergence_records": 84,
+              "structural_alternating::gated_topology_records": 84,
+              "structural_alternating::global_convergence_records": 84,
+              "eigen_performance::buckling_cases": 2,
+              "eigen_performance::modal_cases": 2,
+              "eigen_performance::paired_performance_comparisons": 24,
+              "special_ecosystem::d3_numberings": 6,
+              "special_ecosystem::director_polarities": 2,
+              "special_ecosystem::director_reversal_cases": 12,
+              "special_ecosystem::director_reversal_d3_numberings": 6,
+              "special_ecosystem::registered_special_fixtures": 8,
+              "special_ecosystem::special_failed_tests": 0,
+              "special_ecosystem::special_lanes": 8,
+              "special_ecosystem::special_requested_nodes": 22,
+              "special_ecosystem::v3_overlay_lanes": 3,
+              "batch_0::batch_elements": 4096,
+              "batch_0::batch_repetitions": 4,
+              "batch_1::batch_elements": 4096,
+              "batch_1::batch_repetitions": 4,
+              "batch_2::batch_elements": 4096,
+              "batch_2::batch_repetitions": 4,
+          }
+          expected_coverage_keys = set(expected_coverage_values) | {
+              "special_ecosystem::special_collected_tests",
+              "special_ecosystem::special_passed_tests",
+          }
+          expected_scientific_fields = {
+              "assignment_sha256",
+              "authorization_sha256",
+              "candidate_binding_sha256",
+              "candidate_commits",
+              "coverage",
+              "gates",
+              "production_restriction",
+              "schema",
+              "terminal",
+              "worker_scientific_payload_sha256",
+          }
+          for index, row in enumerate(scientific, start=1):
+              exact_keys(row, expected_scientific_fields, f"scientific cycle {index}")
+              assignments = row["assignment_sha256"]
+              payload_hashes = row["worker_scientific_payload_sha256"]
+              gates = row["gates"]
+              coverage = row["coverage"]
+              if (
+                  row["schema"]
+                  != "anysolver.e4-pl-s3-default-activation-scientific-v3"
+                  or row["terminal"] != accepted_terminal
+                  or row["candidate_binding_sha256"] != candidate_sha
+                  or row["authorization_sha256"] != authorization_sha
+                  or row["candidate_commits"] != candidate_commits
+                  or row["production_restriction"]
+                  != "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED"
+                  or type(assignments) is not dict
+                  or set(assignments) != expected_worker_set
+                  or any(not is_upper_sha256(value) for value in assignments.values())
+                  or type(payload_hashes) is not dict
+                  or set(payload_hashes) != expected_worker_set
+                  or any(not is_upper_sha256(value) for value in payload_hashes.values())
+                  or type(gates) is not dict
+                  or set(gates) != expected_gate_keys
+                  or any(value is not True for value in gates.values())
+                  or type(coverage) is not dict
+                  or set(coverage) != expected_coverage_keys
+                  or any(type(value) is not int or value < 0 for value in coverage.values())
+                  or any(
+                      coverage.get(name) != value
+                      for name, value in expected_coverage_values.items()
+                  )
+                  or coverage["special_ecosystem::special_collected_tests"]
+                  != coverage["special_ecosystem::special_passed_tests"]
+                  or coverage["special_ecosystem::special_collected_tests"] <= 0
+              ):
+                  raise SystemExit(f"scientific cycle {index} schema or gates differ")
+          for index, process in enumerate(cycle_process, start=1):
+              exact_keys(
+                  process,
+                  {
+                      "inactivity_watchdog_seconds",
+                      "memory_limit_bytes_per_complete_tree",
+                      "runtime_classification",
+                      "total_runtime_limit_seconds",
+                      "worker_evidence",
+                      "workers",
+                  },
+                  f"cycle process {index}",
+              )
+              if (
+                  process["inactivity_watchdog_seconds"] != 1800
+                  or process["memory_limit_bytes_per_complete_tree"]
+                  != 24 * (1 << 30)
+                  or process["runtime_classification"] is not False
+                  or process["total_runtime_limit_seconds"] is not None
+                  or type(process["workers"]) is not list
+                  or len(process["workers"]) != len(expected_worker_ids)
+                  or type(process["worker_evidence"]) is not dict
+                  or set(process["worker_evidence"])
+                  != expected_worker_set | {"BATCH_AGGREGATE"}
+              ):
+                  raise SystemExit(f"cycle process {index} policy differs")
+              assignments = scientific[index - 1]["assignment_sha256"]
+              payload_hashes = scientific[index - 1][
+                  "worker_scientific_payload_sha256"
+              ]
+              for expected_worker, worker in zip(
+                  expected_worker_ids, process["workers"], strict=True
+              ):
+                  exact_keys(
+                      worker,
+                      {
+                          "assignment_sha256",
+                          "checkpoint_sha256",
+                          "elapsed_ms",
+                          "last_checkpoint",
+                          "peak_tree_memory_bytes",
+                          "returncode",
+                          "status",
+                          "stderr_sha256",
+                          "stdout_sha256",
+                          "worker_id",
+                      },
+                      f"cycle {index} worker {expected_worker}",
+                  )
+                  if (
+                      worker["worker_id"] != expected_worker
+                      or worker["status"] != "COMPLETE"
+                      or worker["returncode"] != 0
+                      or type(worker["elapsed_ms"]) is not int
+                      or worker["elapsed_ms"] < 0
+                      or type(worker["peak_tree_memory_bytes"]) is not int
+                      or not 0
+                      <= worker["peak_tree_memory_bytes"]
+                      <= 24 * (1 << 30)
+                      or worker["assignment_sha256"] != assignments[expected_worker]
+                      or not is_upper_sha256(worker["checkpoint_sha256"])
+                      or worker["last_checkpoint"] != "worker-output-complete"
+                      or not is_upper_sha256(worker["stdout_sha256"])
+                      or not is_upper_sha256(worker["stderr_sha256"])
+                  ):
+                      raise SystemExit(
+                          f"cycle {index} worker {expected_worker} process differs"
+                      )
+              for worker_id in expected_worker_ids:
+                  evidence = process["worker_evidence"][worker_id]
+                  exact_keys(
+                      evidence,
+                      {
+                          "diagnostic_sha256",
+                          "record_sha256",
+                          "scientific_payload_sha256",
+                      },
+                      f"cycle {index} worker evidence {worker_id}",
+                  )
+                  if (
+                      any(not is_upper_sha256(value) for value in evidence.values())
+                      or evidence["scientific_payload_sha256"]
+                      != payload_hashes[worker_id]
+                  ):
+                      raise SystemExit(
+                          f"cycle {index} worker evidence {worker_id} differs"
+                      )
+              aggregate = process["worker_evidence"]["BATCH_AGGREGATE"]
+              exact_keys(
+                  aggregate,
+                  {
+                      "diagnostic_sha256",
+                      "record_sha256",
+                      "scientific_payload_sha256",
+                  },
+                  f"cycle {index} batch aggregate evidence",
+              )
+              if (
+                  not is_upper_sha256(aggregate["diagnostic_sha256"])
+                  or aggregate["record_sha256"] != ""
+                  or aggregate["scientific_payload_sha256"] != ""
+              ):
+                  raise SystemExit(f"cycle {index} batch aggregate evidence differs")
+          if scientific_raw[0] != scientific_raw[1] or cycle_set[
+              "production_restriction"
+          ] != (
+              "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED"
+          ):
+              raise SystemExit("scientific cycle authority or equality differs")
+          exact_keys(
+              resource_completion,
+              {
+                  "cycle_set_sha256",
+                  "request_id",
+                  "schema",
+                  "terminal_snapshot_sha256",
+                  "terminal_state",
+              },
+              "resource completion",
+          )
+          exact_keys(
+              resource_terminal_snapshot,
+              {
+                  "ledger_snapshot_sha256",
+                  "request_id",
+                  "schema",
+                  "terminal_row",
+                  "terminal_row_sha256",
+                  "terminal_state",
+              },
+              "resource terminal snapshot",
+          )
+          resource_execution = authorization.get("resource_execution")
+          if type(resource_execution) is not dict:
+              raise SystemExit("authorization resource execution is absent")
+          authorized_request = resource_execution.get("request")
+          if type(authorized_request) is not dict:
+              raise SystemExit("authorization resource request is absent")
+          authorized_request_id = authorized_request.get("request_id")
+          try:
+              resource_ledger_text = resource_ledger_raw.decode("utf-8")
+          except UnicodeDecodeError as exc:
+              raise SystemExit("resource ledger snapshot is not UTF-8") from exc
+          expected_resource_ledger_header = [
+              "# Performance test approval ledger",
+              "",
+              "Append-only record managed by the GitHub/resource administrator task.",
+              "",
+              "| Timestamp (ISO 8601) | Request ID | Status | Task | Repository | Command / scope | Estimate | Notes |",
+              "|---|---|---|---|---|---|---|---|",
+          ]
+          if (
+              "\r" in resource_ledger_text
+              or not resource_ledger_text.endswith("\n")
+              or resource_ledger_text.splitlines()[:6]
+              != expected_resource_ledger_header
+          ):
+              raise SystemExit("resource ledger snapshot header or newlines differ")
+
+          def resource_ledger_fields(line):
+              if not line.startswith("| ") or not line.endswith(" |"):
+                  raise SystemExit("resource ledger snapshot row is malformed")
+              fields = [field.strip() for field in line[1:-1].split("|")]
+              if (
+                  len(fields) != 8
+                  or any(not field for field in fields)
+                  or line != "| " + " | ".join(fields) + " |"
+                  or re.fullmatch(r"[0-9a-f]{32}", fields[1]) is None
+                  or re.fullmatch(r"[A-Z][A-Z0-9_]*", fields[2]) is None
+              ):
+                  raise SystemExit("resource ledger snapshot row fields differ")
+              try:
+                  timestamp = datetime.fromisoformat(fields[0].replace("Z", "+00:00"))
+              except ValueError as exc:
+                  raise SystemExit("resource ledger timestamp is malformed") from exc
+              if timestamp.utcoffset() is None:
+                  raise SystemExit("resource ledger timestamp has no timezone")
+              return fields
+
+          resource_ledger_rows = [
+              (line, resource_ledger_fields(line))
+              for line in resource_ledger_text.splitlines()[6:]
+          ]
+          request_ledger_rows = [
+              (line, fields)
+              for line, fields in resource_ledger_rows
+              if fields[1] == authorized_request_id
+          ]
+          if [fields[2] for _line, fields in request_ledger_rows] != [
+              "APPROVED",
+              "EXECUTION_STARTED",
+              "COMPLETED_PASS",
+          ]:
+              raise SystemExit("resource ledger request lifecycle differs")
+          terminal_row = resource_terminal_snapshot["terminal_row"]
+          expected_terminal_row = request_ledger_rows[-1][0] + "\n"
+          if type(terminal_row) is not str or terminal_row != expected_terminal_row:
+              raise SystemExit("resource terminal row is malformed")
+          terminal_fields = resource_ledger_fields(terminal_row.rstrip("\n"))
+          terminal_row_sha = hashlib.sha256(terminal_row.encode("utf-8")).hexdigest().upper()
+          if (
+              resource_completion["schema"]
+              != "anysolver.e4-pl-s3-resource-completion-v3"
+              or resource_completion["terminal_state"] != "COMPLETED_PASS"
+              or resource_completion["cycle_set_sha256"]
+              != qualification["cycle_set"]["sha256"]
+              or resource_completion["request_id"] != authorized_request_id
+              or resource_completion["terminal_snapshot_sha256"]
+              != qualification["resource_terminal_snapshot"]["sha256"]
+              or resource_terminal_snapshot["schema"]
+              != "anysolver.e4-pl-s3-resource-terminal-snapshot-v2"
+              or resource_terminal_snapshot["ledger_snapshot_sha256"]
+              != qualification["resource_ledger_snapshot"]["sha256"]
+              or resource_terminal_snapshot["request_id"] != authorized_request_id
+              or resource_terminal_snapshot["terminal_state"] != "COMPLETED_PASS"
+              or resource_terminal_snapshot["terminal_row_sha256"] != terminal_row_sha
+              or terminal_fields[1] != authorized_request_id
+              or terminal_fields[2] != "COMPLETED_PASS"
+          ):
+              raise SystemExit("resource completion authority differs")
+
+          exact_keys(
+              post_qualification_review,
+              {
+                  "candidate_binding_sha256",
+                  "cycle_set_sha256",
+                  "disposition",
+                  "findings",
+                  "q4_mechanics_unchanged",
+                  "resource_completion_sha256",
+                  "reviewer_id",
+                  "schema",
+                  "scientific_terminal",
+              },
+              "post-qualification review",
+          )
+          if (
+              post_qualification_review["schema"]
+              != "anysolver.e4-pl-s3-post-qualification-review-v1"
+              or post_qualification_review["reviewer_id"]
+              != "s3-v3-post-qualification-reviewer"
+              or post_qualification_review["disposition"]
+              != "ACCEPTED_NO_P0_P1"
+              or post_qualification_review["findings"] != []
+              or post_qualification_review["candidate_binding_sha256"]
+              != candidate_sha
+              or post_qualification_review["cycle_set_sha256"]
+              != qualification["cycle_set"]["sha256"]
+              or post_qualification_review["resource_completion_sha256"]
+              != qualification["resource_completion"]["sha256"]
+              or post_qualification_review["scientific_terminal"]
+              != accepted_terminal
+              or post_qualification_review["q4_mechanics_unchanged"] is not True
+          ):
+              raise SystemExit("post-qualification review differs")
+
+          exact_keys(
+              release_authorization,
+              {
+                  "activation_integration",
+                  "candidate_binding_sha256",
+                  "cycle_set_sha256",
+                  "default_s3_activation_authorized",
+                  "post_qualification_review_sha256",
+                  "production_authorization",
+                  "publication_authorized",
+                  "q4_mechanics_unchanged",
+                  "qualified_wheel_sha256",
+                  "resource_completion_sha256",
+                  "schema",
+                  "terminal",
+                  "trust_boundary",
+              },
+              "release authorization",
+          )
+          integration = release_authorization["activation_integration"]
+          exact_keys(
+              integration,
+              {"commit", "protected_branch", "pull_request", "subject", "tree"},
+              "activation integration",
+          )
+          integration_commit = integration["commit"]
+          integration_tree = integration["tree"]
+          pull_request = integration["pull_request"]
+          if (
+              type(integration_commit) is not str
+              or re.fullmatch(r"[0-9a-f]{40}", integration_commit) is None
+              or type(integration_tree) is not str
+              or re.fullmatch(r"[0-9a-f]{40}", integration_tree) is None
+              or type(pull_request) is not int
+              or pull_request <= 0
+              or type(integration["subject"]) is not str
+              or integration["subject"].startswith(
+                  f"Merge pull request #{pull_request} from "
+              ) is not True
+              or integration["protected_branch"] != "refs/remotes/origin/main"
+          ):
+              raise SystemExit("activation integration identity is malformed")
+          observed_integration_tree = subprocess.run(
+              ["git", "rev-parse", f"{integration_commit}^{{tree}}"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.strip()
+          observed_integration_subject = subprocess.run(
+              ["git", "show", "-s", "--format=%s", integration_commit],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.strip()
+          integration_parents = subprocess.run(
+              ["git", "rev-list", "--parents", "-n", "1", integration_commit],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.split()
+          observed_qualified_solver_tree = subprocess.run(
+              ["git", "rev-parse", f"{qualified_solver_commit}^{{tree}}"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.strip()
+          protected_branch = integration["protected_branch"]
+          subprocess.run(
+              ["git", "rev-parse", "--verify", f"{protected_branch}^{{commit}}"],
+              check=True,
+              capture_output=True,
+          )
+          subprocess.run(
+              ["git", "merge-base", "--is-ancestor", integration_commit, source_commit],
+              check=True,
+              capture_output=True,
+          )
+          for protected_commit in (integration_commit, source_commit, "HEAD"):
+              subprocess.run(
+                  [
+                      "git",
+                      "merge-base",
+                      "--is-ancestor",
+                      protected_commit,
+                      protected_branch,
+                  ],
+                  check=True,
+                  capture_output=True,
+              )
+          qualified_wheel_sha = qualified_solver["wheel"]["sha256"]
+          if (
+              len(integration_parents) != 3
+              or integration_parents[0] != integration_commit
+              or integration_parents[1] == integration_parents[2]
+              or integration_parents[2] != qualified_solver_commit
+              or observed_qualified_solver_tree != qualified_solver_tree
+              or observed_integration_tree != integration_tree
+              or integration_tree != qualified_solver_tree
+              or observed_integration_subject != integration["subject"]
+              or release_authorization["schema"]
+              != "anysolver.e4-pl-s3-release-authorization-v2"
+              or release_authorization["candidate_binding_sha256"] != candidate_sha
+              or release_authorization["cycle_set_sha256"]
+              != qualification["cycle_set"]["sha256"]
+              or release_authorization["post_qualification_review_sha256"]
+              != qualification["post_qualification_review"]["sha256"]
+              or release_authorization["resource_completion_sha256"]
+              != qualification["resource_completion"]["sha256"]
+              or release_authorization["qualified_wheel_sha256"]
+              != qualified_wheel_sha
+              or release_authorization["terminal"] != accepted_terminal
+              or release_authorization["default_s3_activation_authorized"] is not True
+              or release_authorization["publication_authorized"] is not True
+              or release_authorization["q4_mechanics_unchanged"] is not True
+              or release_authorization["production_authorization"]
+              != "QUALIFIED_S3_DEFAULT_AND_ACCEPTED_WHEEL_PUBLICATION_ONLY"
+              or release_authorization["trust_boundary"]
+              != "GITHUB_PROTECTED_ORIGIN_MAIN_AND_POST_QUALIFICATION_REVIEW"
+          ):
+              raise SystemExit("post-qualification release authorization differs")
+
+          artifacts = ledger["artifacts"]
+          exact_keys(artifacts, {"wheel"}, "release artifacts")
+          expected_artifacts = {
+              "wheel": "anysolver-0.4.0-py3-none-any.whl",
+          }
+          accepted_hashes = {}
+          for role, filename in expected_artifacts.items():
+              row = artifacts[role]
+              exact_keys(row, {"filename", "sha256"}, f"{role} artifact")
+              if row["filename"] != filename:
+                  raise SystemExit(f"{role} artifact filename differs")
+              digest = row["sha256"]
+              if type(digest) is not str or re.fullmatch(r"[0-9A-F]{64}", digest) is None:
+                  raise SystemExit(f"{role} artifact hash is malformed")
+              accepted_hashes[filename] = digest.lower()
+          qualified_wheel = candidate_binding["candidates"]["ANYsolver"]["wheel"]
+          if (
+              qualified_wheel["filename"] != expected_artifacts["wheel"]
+              or qualified_wheel["sha256"] != artifacts["wheel"]["sha256"]
+          ):
+              raise SystemExit("release wheel differs from the qualified candidate")
           expected_dependencies = {
               "anymaterial": frozenset({">=0.1.1", "<0.2"}),
               "anymesher": frozenset({">=0.3.2", "<0.4"}),
@@ -116,8 +1035,13 @@ jobs:
                   raise SystemExit("SHA256SUMS contains a malformed record")
               rows.append((match.group(1).lower(), match.group(2)))
           names = [name for _digest, name in rows]
-          if len(rows) != 2 or set(names) != expected_names:
-              raise SystemExit("SHA256SUMS does not bind the exact v0.4.0 distributions")
+          recorded_hashes = {name: digest for digest, name in rows}
+          if (
+              len(rows) != 1
+              or set(names) != expected_names
+              or recorded_hashes != accepted_hashes
+          ):
+              raise SystemExit("SHA256SUMS differs from the accepted qualification hashes")
           entries = list(root.iterdir())
           if any(not path.is_file() or path.is_symlink() for path in entries):
               raise SystemExit("release download contains a non-regular asset")
@@ -131,8 +1055,8 @@ jobs:
               if not source.is_file() or source.is_symlink():
                   raise SystemExit(f"release asset is not a regular file: {name}")
               actual = hashlib.sha256(source.read_bytes()).hexdigest()
-              if actual != expected:
-                  raise SystemExit(f"release asset hash differs: {name}")
+              if actual != expected or actual != accepted_hashes[name]:
+                  raise SystemExit(f"release asset differs from accepted qualification: {name}")
               (dist / name).write_bytes(source.read_bytes())
 
           wheel = root / "anysolver-0.4.0-py3-none-any.whl"
@@ -148,19 +1072,6 @@ jobs:
                   raise SystemExit("wheel METADATA must be a regular entry")
               verify_metadata(archive.read(info), "wheel")
 
-          sdist = root / "anysolver-0.4.0.tar.gz"
-          with tarfile.open(sdist, mode="r:gz") as archive:
-              metadata = [
-                  member for member in archive.getmembers()
-                  if member.name.endswith("/PKG-INFO")
-                  and member.name.count("/") == 1
-              ]
-              if len(metadata) != 1 or not metadata[0].isfile():
-                  raise SystemExit("sdist must contain one regular PKG-INFO")
-              stream = archive.extractfile(metadata[0])
-              if stream is None:
-                  raise SystemExit("sdist PKG-INFO cannot be read")
-              verify_metadata(stream.read(), "sdist")
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

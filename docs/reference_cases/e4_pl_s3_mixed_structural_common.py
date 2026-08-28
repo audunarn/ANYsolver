@@ -806,10 +806,10 @@ def _expected_patch_payload(
             for name in force_keys
         }
         if force_values["patch_residual"] > patch_limit:
-            patch_contradictions.append(f"{rid}:PATCH")
+            patch_contradictions.append(f"{rid}:IN_PLANE_FORCE_PATCH")
         for name in force_keys[:-1]:
             if force_values[name] > float(equilibrium[f"{name}_maximum"]):
-                patch_contradictions.append(f"{rid}:{name.upper()}")
+                patch_contradictions.append(f"{rid}:IN_PLANE_{name.upper()}")
         residuals = _object(row["patch_residuals"], f"patch basis {index} residuals")
         _exact_keys(residuals, ("bending", "membrane", "shear"), f"patch basis {index} residuals")
         residual_values = {
@@ -879,15 +879,18 @@ def _expected_patch_payload(
     expected_scope = {
         "all_registered_topology_hashes": "EXECUTED",
         "bending_patch": "EXECUTED",
-        "d3_numberings": "UNEXECUTED_ALL_SIX_REQUIRED",
+        "d3_numberings": "OUTSIDE_THIS_SHARD; REQUIRED_SPECIAL_ECOSYSTEM_LANE",
         "force_loaded_in_plane_patch": "EXECUTED",
         "membrane_patch": "EXECUTED",
-        "physical_director_reversal": "UNEXECUTED_REQUIRED",
+        "physical_director_reversal": (
+            "OUTSIDE_THIS_SHARD; REQUIRED_SPECIAL_ECOSYSTEM_LANE"
+        ),
         "translation_equivalence": (
             "REGULAR_CELL_BASIS_DIAGNOSTIC_NOT_A_SUBSTITUTE_FOR_D3_OR_REVERSAL"
         ),
         "transverse_force_loaded_shear_patch": (
-            "UNEXECUTED_NO_HASH_BOUND_LOAD_AND_RESTRAINT_PROTOCOL"
+            "NOT_PART_OF_THE_FROZEN_MEMBRANE_BENDING_IN_PLANE_SHEAR_"
+            "PATCH_BASIS; AFFINE_TRANSVERSE_TRACE_REMAINS_NONCLASSIFYING"
         ),
     }
     if scope != expected_scope:
@@ -906,10 +909,11 @@ def _expected_patch_payload(
             "symmetry_and_covariance": PARTIAL,
         }, expected_contradictions
     return {
-        "patch_and_equilibrium": FAIL if patch_contradictions else PARTIAL,
-        # This remains partial until every D3 numbering and physical director
-        # reversal is constructed and executed, irrespective of this basis.
-        "symmetry_and_covariance": FAIL if covariance_contradictions else PARTIAL,
+        "patch_and_equilibrium": FAIL if patch_contradictions else COMPLETE,
+        # Full D3 numbering and physical-director reversal are separately
+        # machine-counted by the required SPECIAL_ECOSYSTEM lane.  This shard
+        # owns assembled symmetry and its registered operator-covariance basis.
+        "symmetry_and_covariance": FAIL if covariance_contradictions else COMPLETE,
     }, expected_contradictions
 
 

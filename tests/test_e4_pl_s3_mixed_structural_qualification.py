@@ -210,12 +210,25 @@ def test_producer_classifies_membrane_and_bending_patch_mutations(
         monkeypatch.setattr(
             producer,
             "_patch_basis",
-            lambda _authorities, *, quick, row=row: [row],
+            lambda _authorities, *, quick, row=row: [row]
+            * len(_authorities.input["coverage"]["patch_basis_cases"]),
         )
         payload, status = producer.produce_patch(authorities, quick=False)
         assert status["patch_and_equilibrium"] == common.FAIL
         assert payload["contradictions"] == [f"MUTATED:{component.upper()}_PATCH"]
         assert payload["contradictions_classifying"] is True
+
+    monkeypatch.setattr(
+        producer,
+        "_patch_basis",
+        lambda _authorities, *, quick: [copy.deepcopy(base)],
+    )
+    payload, status = producer.produce_patch(authorities, quick=False)
+    assert payload["basis_complete"] is False
+    assert status == {
+        "patch_and_equilibrium": common.BLOCKED,
+        "symmetry_and_covariance": common.BLOCKED,
+    }
 
 
 def test_independent_mindlin_reference_is_positive_and_converges_to_kirchhoff(
@@ -334,12 +347,17 @@ def test_quick_diagnostics_are_real_but_never_formal_qualification(
     }
     patch = shards[common.SHARD_IDS[0]]["diagnostic_payload"]
     assert patch["manifest_audit"]["gated_record_count"] == 252
-    assert patch["scope"]["transverse_force_loaded_shear_patch"].startswith("UNEXECUTED_")
+    assert patch["scope"]["transverse_force_loaded_shear_patch"].startswith(
+        "NOT_PART_OF_THE_FROZEN_"
+    )
     assert not patch["contradictions"]
     for row in patch["basis"]:
         assert row["force_loaded_in_plane"]["patch_residual"] < 1.0e-10
         assert row["patch_residuals"]["membrane"] < 1.0e-10
         assert row["patch_residuals"]["bending"] < 1.0e-10
+        assert row["transverse_shear_classification"] == (
+            "NONCLASSIFYING_NOT_THE_PUBLISHED_FORCE_LOADED_PATCH"
+        )
         assert row["force_loaded_in_plane"]["action_reaction_residual"] < 1.0e-10
         assert row["force_loaded_in_plane"]["edge_work_residual"] < 1.0e-10
         assert row["symmetry_residual"] < 1.0e-12

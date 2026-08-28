@@ -7,6 +7,7 @@ import json
 import os
 import re
 import tempfile
+import textwrap
 import tomllib
 from importlib import metadata
 from pathlib import Path
@@ -482,7 +483,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         setup_ref,
         upload_ref,
     ]
-    assert action_sequence(job_block(publish, "release-assets")) == [upload_ref]
+    assert action_sequence(job_block(publish, "release-assets")) == [
+        checkout_ref,
+        upload_ref,
+    ]
     assert action_sequence(job_block(publish, "testpypi")) == [
         download_ref,
         publish_ref,
@@ -755,9 +759,91 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "repository-url:" not in pypi_job
     assert publish.count("repository-url:") == 1
     release_assets_job = job_block(publish, "release-assets")
+    embedded_marker = "          python - <<'PY'\n"
+    embedded_verifier = release_assets_job.split(embedded_marker, maxsplit=1)[1].split(
+        "          PY\n", maxsplit=1
+    )[0]
+    compile(
+        textwrap.dedent(embedded_verifier),
+        "publish.yml:release-verifier",
+        "exec",
+    )
     assert "gh release download" in release_assets_job
     assert "SHA256SUMS" in release_assets_job
     assert "hashlib.sha256" in release_assets_job
+    assert "REBIND_FINAL_ACCEPTED" not in publish
+    assert publish.count('"REBIND_FINAL"') == 1
+    assert (
+        'Path("docs/reference_cases/e4_pl_s3_release_ledger.json")'
+        in release_assets_job
+    )
+    assert "the canonical S3 release ledger is absent" in release_assets_job
+    assert '["git", "show", f"HEAD:{ledger_path.as_posix()}"]' in release_assets_job
+    assert "ledger_raw != committed_raw" in release_assets_job
+    assert "object_pairs_hook=strict_pairs" in release_assets_job
+    assert "parse_constant=reject_constant" in release_assets_job
+    assert "ledger_raw != canonical" in release_assets_job
+    assert "anysolver.e4-pl-s3-release-ledger-v3" in release_assets_job
+    assert 'for token in ("PLACEHOLDER", "REBIND_FINAL", "TO_BE_REBOUND")' in release_assets_job
+    assert '["git", "rev-list", "--parents", "-n", "1", "HEAD"]' in release_assets_job
+    assert '["git", "rev-parse", f"{source_commit}^{{tree}}"]' in release_assets_job
+    assert (
+        '["git", "diff", "--name-status", source_commit, "HEAD", "--"]'
+        in release_assets_job
+    )
+    assert 'changed != [f"A\\t{ledger_path.as_posix()}"]' in release_assets_job
+    assert 'exact_keys(artifacts, {"wheel"}' in release_assets_job
+    assert 'exact_keys(row, {"filename", "sha256"}' in release_assets_job
+    assert 're.fullmatch(r"[0-9A-F]{64}", digest)' in release_assets_job
+    assert "recorded_hashes != accepted_hashes" in release_assets_job
+    assert "actual != accepted_hashes[name]" in release_assets_job
+    assert "two-cycle qualification was not accepted" in release_assets_job
+    assert "release wheel differs from the qualified candidate" in release_assets_job
+    assert "resource completion authority differs" in release_assets_job
+    assert 'raise SystemExit(f"{name} paths or order differ")' in release_assets_job
+    assert "e4_pl_s3_v3_cycle_1_scientific.json" in release_assets_job
+    assert "e4_pl_s3_v3_cycle_2_scientific.json" in release_assets_job
+    assert "e4_pl_s3_v3_cycle_1_process_binding.json" in release_assets_job
+    assert "e4_pl_s3_v3_cycle_2_process_binding.json" in release_assets_job
+    assert 'cycle_set["process_binding_sha256"] != process_hashes' in release_assets_job
+    assert "expected_scientific_fields" in release_assets_job
+    assert "anysolver.e4-pl-s3-default-activation-scientific-v3" in release_assets_job
+    assert "expected_worker_gate_names" in release_assets_job
+    assert "expected_coverage_values" in release_assets_job
+    assert "set(assignments) != expected_worker_set" in release_assets_job
+    assert 'worker["status"] != "COMPLETE"' in release_assets_job
+    assert (
+        'worker["assignment_sha256"] != assignments[expected_worker]'
+        in release_assets_job
+    )
+    assert 'evidence["scientific_payload_sha256"]' in release_assets_job
+    assert "anysolver.e4-pl-s3-resource-completion-v3" in release_assets_job
+    assert "anysolver.e4-pl-s3-resource-terminal-snapshot-v2" in release_assets_job
+    assert "e4_pl_s3_v3_resource_ledger_snapshot.md" in release_assets_job
+    assert "resource ledger request lifecycle differs" in release_assets_job
+    assert "resource terminal row is malformed" in release_assets_job
+    assert "post-qualification review differs" in release_assets_job
+    assert "post-qualification release authorization differs" in release_assets_job
+    assert "anysolver.e4-pl-s3-release-authorization-v2" in release_assets_job
+    assert "integration_parents[2] != qualified_solver_commit" in release_assets_job
+    assert "integration_tree != qualified_solver_tree" in release_assets_job
+    assert '"refs/remotes/origin/main"' in release_assets_job
+    assert (
+        'for protected_commit in (integration_commit, source_commit, "HEAD"):'
+        in release_assets_job
+    )
+    assert (
+        "GITHUB_PROTECTED_ORIGIN_MAIN_AND_POST_QUALIFICATION_REVIEW"
+        in release_assets_job
+    )
+    assert "QUALIFIED_S3_DEFAULT_AND_ACCEPTED_WHEEL_PUBLICATION_ONLY" in release_assets_job
+    assert '"PROVISIONAL_GO_E4_PL_S3_DEFAULT_ACTIVATION"' in release_assets_job
+    assert "gh release download \"$EXPECTED_TAG\"" in release_assets_job
+    assert "--pattern" not in release_assets_job
+    assert "anysolver-0.4.0.tar.gz" not in release_assets_job
+    assert "ref: ${{ github.event.release.tag_name }}" in release_assets_job
+    assert "fetch-depth: 0" in release_assets_job
+    assert "persist-credentials: false" in release_assets_job
     assert "python -m build" not in release_assets_job
     assert "python -m build" not in pypi_job
     assert "name: qualified-release-distributions" in release_assets_job
@@ -765,13 +851,11 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "EXPECTED_TAG: v0.4.0" in release_assets_job
     assert "if [ \"$RELEASE_TAG\" != \"$EXPECTED_TAG\" ]" in release_assets_job
     assert "anysolver-0.4.0-py3-none-any.whl" in release_assets_job
-    assert "anysolver-0.4.0.tar.gz" in release_assets_job
     assert "set(names) != expected_names" in release_assets_job
     assert "expected_dependencies = {" in release_assets_job
     assert 'message.get("Version") != "0.4.0"' in release_assets_job
     assert "dependency floors differ" in release_assets_job
     assert "zipfile.ZipFile" in release_assets_job
-    assert "tarfile.open" in release_assets_job
     assert "--pattern '*.whl'" not in release_assets_job
     assert "--pattern '*.tar.gz'" not in release_assets_job
 

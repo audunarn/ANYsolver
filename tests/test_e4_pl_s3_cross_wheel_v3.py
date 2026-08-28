@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import importlib
+import importlib.util
 from importlib import metadata
 import os
 from pathlib import Path
+import sys
+from typing import Any
 
 import pytest
 
@@ -26,7 +31,77 @@ EXPECTED_DISTRIBUTIONS = {
 }
 
 
+def _load_generator() -> Any:
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "prepare_e4_pl_s3_qualification_v3_input.py"
+    )
+    spec = importlib.util.spec_from_file_location("_s3_v3_cross_wheel_target", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _verify_bound_target_before_runtime_imports() -> tuple[Any, dict[str, Any]]:
+    generator = _load_generator()
+    binding_path = Path(os.environ["ANYSOLVER_S3_V3_BINDING"]).resolve(strict=True)
+    raw = binding_path.read_bytes()
+    binding = generator.read_json(binding_path)
+    assert raw == generator.canonical_bytes(binding)
+    target = Path(os.environ["ANYSOLVER_S3_V3_TARGET"]).resolve(strict=True)
+    assert target == Path(binding["execution_target"]).resolve(strict=True)
+    candidates = binding["candidates"]
+    assert (
+        generator._verify_bound_execution_target(
+            target,
+            candidates,
+            binding["runtime_environment"],
+        )
+        == candidates
+    )
+    assert "sitecustomize" not in sys.modules
+    assert "usercustomize" not in sys.modules
+    return generator, binding
+
+
+def _assert_runtime_modules_match_bound_wheel(
+    target: Path,
+    candidate: dict[str, Any],
+) -> None:
+    installed = candidate["wheel"]["installed_target"]
+    import_name = installed["import_name"]
+    importlib.import_module(import_name)
+    exact_files = {
+        row["path"]: row
+        for row in installed["files"]
+        if row["provenance"] == "WHEEL_RECORD"
+    }
+    observed = 0
+    for module_name, module in tuple(sys.modules.items()):
+        if module_name != import_name and not module_name.startswith(import_name + "."):
+            continue
+        origin = getattr(module, "__file__", None)
+        if origin is None:
+            continue
+        path = Path(str(origin)).resolve(strict=True)
+        assert path.is_relative_to(target)
+        relative = path.relative_to(target).as_posix()
+        row = exact_files[relative]
+        raw = path.read_bytes()
+        assert len(raw) == row["bytes"]
+        assert hashlib.sha256(raw).hexdigest().upper() == row["sha256"]
+        observed += 1
+    assert observed > 0
+
+
 def test_exact_wheels_import_and_route_qualified_s3_with_provenance() -> None:
+    _generator, binding = _verify_bound_target_before_runtime_imports()
+    assert {
+        distribution: version
+        for distribution, version, _import_name in _generator.PACKAGED_IDENTITIES.values()
+    } == EXPECTED_DISTRIBUTIONS
     import anysolver
     from anysolver.e4_pl_s3_element import (
         FORMULATION_ID,
@@ -41,10 +116,14 @@ def test_exact_wheels_import_and_route_qualified_s3_with_provenance() -> None:
     target = Path(os.environ["ANYSOLVER_S3_V3_TARGET"]).resolve(strict=True)
     assert Path(str(anysolver.__file__)).resolve().is_relative_to(target)
     assert anysolver.__version__ == EXPECTED_DISTRIBUTIONS["ANYsolver"]
-    for distribution_name, version in EXPECTED_DISTRIBUTIONS.items():
+    candidates = binding["candidates"]
+    for candidate_name, (distribution_name, version, _import_name) in (
+        _generator.PACKAGED_IDENTITIES.items()
+    ):
         distribution = metadata.distribution(distribution_name)
         assert distribution.version == version
         assert Path(distribution.locate_file("")).resolve().is_relative_to(target)
+        _assert_runtime_modules_match_bound_wheel(target, candidates[candidate_name])
     assert DEFAULT_S3_FORMULATION == "e4-pl-s3"
     element = create_shell_element(1, [1, 2, 3], "qualified")
     assert type(element) is QualifiedE4PLS3ShellElement

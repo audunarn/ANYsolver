@@ -11,14 +11,22 @@ bind that output before any formal qualification execution.
 from __future__ import annotations
 
 import argparse
+import base64
+import csv
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
+from pathlib import PurePosixPath
 import re
+import shutil
+import stat
 import subprocess
 import sys
+import sysconfig
 from typing import Any, Mapping, Sequence
+import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +47,44 @@ SUCCESSOR = (
 )
 TEST = ROOT / "tests" / "test_e4_pl_s3_activation_cold_path.py"
 FORMAL_TEST = ROOT / "tests" / "test_e4_pl_s3_qualification_optimization_v3.py"
+BASE_PROGRAM = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_default_activation_v2.py"
+)
+BASE_INPUT = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_s3_default_activation_v2_input.json"
+)
+BASE_CONTRACT = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_s3_default_activation_v2_contract.json"
+)
+BASE_TEST = ROOT / "tests" / "test_e4_pl_s3_default_activation_v2.py"
+BATCH_BENCHMARK = ROOT / "scripts" / "benchmark_e4_pl_s3_reference_batch.py"
+MIXED_STRUCTURAL_COMMON = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_structural_common.py"
+)
+MIXED_STRUCTURAL_PRODUCER = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_structural_producer.py"
+)
+MIXED_EIGEN_PERFORMANCE = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_eigen_performance.py"
+)
+MIXED_MESH_RUNNER = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_s3_mixed_mesh_qualification_runner.py"
+)
+MIXED_MESH_SMOKE_INPUT = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_smoke_input.json"
+)
+MIXED_MESH_MANIFEST_PROGRAM = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_manifest.py"
+)
 OPTIMIZATION_EVIDENCE = (
     ROOT
     / "docs"
@@ -75,6 +121,37 @@ PACKAGED = frozenset(
         "ANYgeometry",
     }
 )
+PACKAGED_IDENTITIES = {
+    "ANYfem": ("ANYfem", "0.4.0", "anyfem"),
+    "ANYfileIO": ("ANYfileio", "0.2.1", "anyfileio"),
+    "ANYgeometry": ("ANYgeometry", "0.4.1", "anygeometry"),
+    "ANYmaterial": ("ANYmaterial", "0.1.1", "anymaterial"),
+    "ANYmesh": ("ANYmesher", "0.3.2", "anymesher"),
+    "ANYsolver": ("ANYsolver", "0.4.0", "anysolver"),
+    "ANYstructure": ("ANYstructure", "6.3.1", "anystruct"),
+}
+PROCESS_ENVIRONMENT_NAMES = (
+    "COMSPEC",
+    "PATHEXT",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "TEMP",
+    "TMP",
+    "WINDIR",
+)
+GIT_BOUND_CONFIG_OVERRIDES = (
+    ("core.attributesFile", "NUL" if os.name == "nt" else "/dev/null"),
+    ("core.commitGraph", "false"),
+    ("core.fsmonitor", "false"),
+    ("core.untrackedCache", "false"),
+    ("log.showSignature", "false"),
+)
+_FROZEN_GIT_EXECUTABLE: Path | None = None
+_FROZEN_GIT_ENGINE: Path | None = None
+INSTALLED_TARGET_SCHEMA = "anysolver.exact-wheel-installed-target-v3"
+INSTALLER_GENERATED_NAMES = frozenset(
+    {"INSTALLER", "REQUESTED", "direct_url.json"}
+)
 PREFLIGHT_GATE_IDS = {
     "ANYfem": (
         "full-repository-tests",
@@ -103,6 +180,69 @@ PREFLIGHT_GATE_IDS = {
         "full-repository-tests",
         "runtime-state-v2-formulation-and-normal",
     ),
+}
+PREFLIGHT_GATE_NODES = {
+    "ANYfem": {
+        "full-repository-tests": (),
+        "qualified-s3-policy-and-migration": (
+            "tests/test_s3_formulation_policy.py",
+            "tests/test_e4_pl_default_routing.py",
+            "tests/test_migration.py",
+            "tests/test_legacy_geometry_owner_migration.py",
+        ),
+    },
+    "ANYfileIO": {
+        "full-repository-tests": (),
+        "neutral-shell-formulation-and-owner-normal": ("tests/test_sesam.py",),
+    },
+    "ANYgeometry": {"full-repository-tests": ()},
+    "ANYintelligent": {
+        "full-repository-tests": (),
+        "production-anysolver-adapter-routing": (
+            "tests/test_external_anysolver_adapter.py",
+        ),
+    },
+    "ANYmaterial": {"full-repository-tests": ()},
+    "ANYmesh": {
+        "full-repository-tests": (),
+        "qualified-s3-admission-repair-and-normals": (
+            "tests/test_s3_production.py",
+            "tests/test_s3_quality.py",
+            "tests/test_s3_repair.py",
+            "tests/test_geometry_owner_integration.py",
+        ),
+    },
+    "ANYsolver": {
+        "full-repository-tests": (),
+        "package-isolation-and-default-routing": (
+            "tests/test_s3_default_activation.py",
+            "tests/test_e4_pl_s3_cross_wheel_v3.py",
+            "tests/test_e4_pl_s3_exact_wheel_target_v3.py",
+            "tests/test_extracted_package_wiring.py",
+        ),
+        "q4-mechanics-identity": (
+            "tests/test_e4_pl_default_activation.py",
+            "tests/test_e4_pl_q4_current_tangent.py",
+            "tests/test_qualified_q4_assembly_authority.py",
+            "tests/test_qualified_q4_cold_fallback.py",
+        ),
+    },
+    "ANYstructure": {
+        "full-repository-tests": (),
+        "runtime-state-v2-formulation-and-normal": (
+            "tests/test_s3_runtime_state_v2.py",
+            "tests/test_fem_import_routing.py",
+            "tests/test_sesam_fem_document_backend.py",
+        ),
+    },
+}
+PREFLIGHT_ENVIRONMENT = {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONHASHSEED": "0",
 }
 HEX40 = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9A-F]{64}")
@@ -153,9 +293,18 @@ Q4_GUARD_PATH_BLOBS = (
 Q4_GUARD_SOURCE_PATHS = tuple(
     path for path, _blob in Q4_GUARD_PATH_BLOBS if path.startswith("src/")
 )
-Q4_NONMECHANICS_INTEGRATION_PATHS = (
-    "src/anysolver/anystructure_fem_mode.py",
-    "src/anysolver/production_readiness.py",
+Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS = (
+    (
+        "src/anysolver/anystructure_fem_mode.py",
+        "9bcbacb9ac6a71fdb2f9c8c8349d50aadb16946d",
+    ),
+    (
+        "src/anysolver/production_readiness.py",
+        "b0562fdfa3d26a7c7bfd2a48c5fb70d0e95a8b4a",
+    ),
+)
+Q4_NONMECHANICS_INTEGRATION_PATHS = tuple(
+    path for path, _blob_id in Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS
 )
 Q4_FROZEN_SOURCE_EXCLUSIONS = tuple(
     sorted((*Q4_GUARD_SOURCE_PATHS, *Q4_NONMECHANICS_INTEGRATION_PATHS))
@@ -168,6 +317,972 @@ Q4_FROZEN_SOURCE_ROWS_SHA256 = (
 
 class BindingError(ValueError):
     """The supplied candidate graph cannot be bound safely."""
+
+
+def _canonical_distribution_name(value: str) -> str:
+    return re.sub(r"[-_.]+", "-", value).lower()
+
+
+def _safe_archive_path(value: str, *, label: str) -> str:
+    path = PurePosixPath(value)
+    if (
+        not value
+        or "\\" in value
+        or path.is_absolute()
+        or any(part in {"", ".", ".."} for part in path.parts)
+        or any(":" in part for part in path.parts)
+        or any(ord(character) < 32 for character in value)
+    ):
+        raise BindingError(f"unsafe {label} path: {value!r}")
+    return path.as_posix()
+
+
+def _is_reparse(path: Path) -> bool:
+    attributes = getattr(path.lstat(), "st_file_attributes", 0)
+    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+
+
+def _regular_file_bytes(path: Path, *, label: str) -> bytes:
+    if path.is_symlink() or _is_reparse(path) or not path.is_file():
+        raise BindingError(f"{label} is not a non-reparse regular file")
+    return path.read_bytes()
+
+
+def _tool_record(path: Path, *, label: str) -> dict[str, Any]:
+    resolved = path.resolve(strict=True)
+    if not resolved.is_absolute():
+        raise BindingError(f"{label} path is not absolute")
+    raw = _regular_file_bytes(resolved, label=label)
+    return {
+        "bytes": len(raw),
+        "path": str(resolved),
+        "sha256": hashlib.sha256(raw).hexdigest().upper(),
+    }
+
+
+def _apply_bound_git_controls(environment: dict[str, str]) -> None:
+    """Install the complete fail-closed Git process control surface."""
+
+    for name in tuple(environment):
+        if (
+            name in {"GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS"}
+            or name.startswith("GIT_CONFIG_KEY_")
+            or name.startswith("GIT_CONFIG_VALUE_")
+        ):
+            del environment[name]
+    environment.update(
+        {
+            "GIT_ATTR_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_GRAFT_FILE": os.devnull,
+            "GIT_NO_LAZY_FETCH": "1",
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_REPLACE_REF_BASE": "refs/disabled-replacements/",
+            "GIT_CONFIG_COUNT": str(len(GIT_BOUND_CONFIG_OVERRIDES)),
+        }
+    )
+    for index, (key, value) in enumerate(GIT_BOUND_CONFIG_OVERRIDES):
+        environment[f"GIT_CONFIG_KEY_{index}"] = key
+        environment[f"GIT_CONFIG_VALUE_{index}"] = value
+
+
+def _closed_process_environment(launcher: Path, engine: Path) -> dict[str, str]:
+    """Return the only inherited OS values exposed to scientific children."""
+
+    result = {
+        name: os.environ[name]
+        for name in PROCESS_ENVIRONMENT_NAMES
+        if name in os.environ and os.environ[name]
+    }
+    path_entries = [engine.parent, Path(sys.executable).resolve(strict=True).parent]
+    system_root = result.get("SYSTEMROOT") or result.get("WINDIR")
+    if system_root:
+        system32 = Path(system_root) / "System32"
+        if system32 not in path_entries:
+            path_entries.append(system32)
+    result["PATH"] = os.pathsep.join(str(path) for path in path_entries)
+    _apply_bound_git_controls(result)
+    return dict(sorted(result.items()))
+
+
+def _git_environment(
+    process_environment: Mapping[str, str], executable: Path
+) -> dict[str, str]:
+    result = dict(process_environment)
+    path_entries = [executable.parent]
+    system_root = result.get("SYSTEMROOT") or result.get("WINDIR")
+    if system_root:
+        path_entries.append(Path(system_root) / "System32")
+    result["PATH"] = os.pathsep.join(str(path) for path in path_entries)
+    _apply_bound_git_controls(result)
+    return result
+
+
+def _git_probe(
+    launcher: Path,
+    arguments: Sequence[str],
+    process_environment: Mapping[str, str],
+) -> bytes:
+    completed = subprocess.run(
+        [str(launcher), *arguments],
+        check=False,
+        capture_output=True,
+        cwd=launcher.parent,
+        env=_git_environment(process_environment, launcher),
+    )
+    if completed.returncode != 0 or completed.stderr:
+        raise BindingError("Git runtime identity probe failed")
+    return completed.stdout
+
+
+def _git_engine_from_exec_path(launcher: Path, exec_path_raw: bytes) -> Path:
+    try:
+        exec_path = Path(exec_path_raw.decode("utf-8").strip()).resolve(strict=True)
+    except (OSError, UnicodeDecodeError) as exc:
+        raise BindingError("Git exec-path identity is malformed") from exc
+    if os.name != "nt":
+        return launcher
+    candidates = []
+    if len(exec_path.parents) >= 2:
+        candidates.append(exec_path.parents[1] / "bin" / "git.exe")
+    candidates.append(launcher)
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve(strict=True)
+        except OSError:
+            continue
+        if resolved.is_file() and not resolved.is_symlink() and not _is_reparse(resolved):
+            return resolved
+    raise BindingError("Git native engine is unavailable")
+
+
+def _git_loadable_surface(launcher: Path, engine: Path) -> dict[str, Any]:
+    """Hash every non-OS file reachable from the Git application dirs."""
+
+    loadable_roots = sorted(
+        {launcher.parent.resolve(strict=True), engine.parent.resolve(strict=True)},
+        key=lambda path: str(path).casefold(),
+    )
+    loadable_rows: list[dict[str, Any]] = []
+    loadable_directories: list[str] = []
+    for index, root in enumerate(loadable_roots):
+        if root.is_symlink() or _is_reparse(root) or not root.is_dir():
+            raise BindingError("Git loadable runtime root is linked")
+        prefix = f"root-{index}"
+        for directory, directory_names, filenames in os.walk(root, followlinks=False):
+            base_directory = Path(directory)
+            directory_names.sort(key=str.casefold)
+            filenames.sort(key=str.casefold)
+            for name in directory_names:
+                child = base_directory / name
+                if child.is_symlink() or _is_reparse(child) or not child.is_dir():
+                    raise BindingError("Git loadable runtime contains a linked directory")
+                loadable_directories.append(
+                    f"{prefix}/{child.relative_to(root).as_posix()}"
+                )
+            for name in filenames:
+                child = base_directory / name
+                loadable_rows.append(
+                    _sha256_row(
+                        f"{prefix}/{child.relative_to(root).as_posix()}",
+                        _regular_file_bytes(child, label="Git loadable runtime file"),
+                    )
+                )
+    loadable_rows.sort(key=lambda row: str(row["path"]).casefold())
+    loadable_directories.sort(key=str.casefold)
+    loadable_names = [str(row["path"]) for row in loadable_rows]
+    if len({name.casefold() for name in loadable_names + loadable_directories}) != (
+        len(loadable_names) + len(loadable_directories)
+    ):
+        raise BindingError("Git loadable runtime contains a case-fold collision")
+    return {
+        "directories_sha256": hashlib.sha256(
+            canonical_bytes(loadable_directories)
+        ).hexdigest().upper(),
+        "directory_count": len(loadable_directories),
+        "file_count": len(loadable_rows),
+        "roots": [str(path) for path in loadable_roots],
+        "rows_sha256": hashlib.sha256(
+            canonical_bytes(loadable_rows)
+        ).hexdigest().upper(),
+    }
+
+
+def _git_runtime_binding() -> tuple[dict[str, Any], dict[str, str]]:
+    discovered = (
+        str(_FROZEN_GIT_EXECUTABLE)
+        if _FROZEN_GIT_EXECUTABLE is not None
+        else shutil.which("git")
+    )
+    if discovered is None:
+        raise BindingError("Git launcher is unavailable")
+    launcher = Path(discovered).resolve(strict=True)
+    if _FROZEN_GIT_ENGINE is None:
+        provisional_environment = _closed_process_environment(launcher, launcher)
+        provisional_exec_path = _git_probe(
+            launcher, ("--exec-path",), provisional_environment
+        )
+        engine = _git_engine_from_exec_path(launcher, provisional_exec_path)
+    else:
+        engine = _FROZEN_GIT_ENGINE.resolve(strict=True)
+    process_environment = _closed_process_environment(launcher, engine)
+    loadable_surface = _git_loadable_surface(launcher, engine)
+    exec_path_raw = _git_probe(engine, ("--exec-path",), process_environment)
+    build_raw = _git_probe(
+        engine,
+        ("--version", "--build-options"),
+        process_environment,
+    )
+    builtins_raw = _git_probe(
+        engine,
+        ("--list-cmds=builtins",),
+        process_environment,
+    )
+    if not {
+        "config",
+        "diff",
+        "fsck",
+        "hash-object",
+        "ls-files",
+        "ls-tree",
+        "merge-base",
+        "rev-parse",
+        "show",
+        "status",
+    } <= set(builtins_raw.decode("utf-8").splitlines()):
+        raise BindingError("Git runtime lacks a required built-in command")
+    return (
+        {
+            "build_options": _sha256_row("stdout", build_raw),
+            "builtin_commands": _sha256_row("stdout", builtins_raw),
+            "engine": _tool_record(engine, label="Git native engine"),
+            "exec_path": exec_path_raw.decode("utf-8").strip().replace("\\", "/"),
+            "exec_path_output": _sha256_row("stdout", exec_path_raw),
+            "launcher": _tool_record(launcher, label="Git launcher"),
+            "loadable_surface": loadable_surface,
+        },
+        process_environment,
+    )
+
+
+def _activate_bound_runtime_environment(runtime: object) -> Path:
+    """Verify the bound Git/runtime launch surface before any Git authority use."""
+
+    global _FROZEN_GIT_ENGINE, _FROZEN_GIT_EXECUTABLE
+    if not isinstance(runtime, dict) or set(runtime) != {
+        "closed_target",
+        "distributions",
+        "git",
+        "process_environment",
+        "python",
+        "schema",
+        "target",
+    }:
+        raise BindingError("isolated runtime environment fields differ")
+    if runtime["schema"] != "anysolver.e4-pl-s3-isolated-runtime-environment-v2":
+        raise BindingError("isolated runtime environment schema differs")
+    git = runtime["git"]
+    if not isinstance(git, dict) or set(git) != {
+        "build_options",
+        "builtin_commands",
+        "engine",
+        "exec_path",
+        "exec_path_output",
+        "launcher",
+        "loadable_surface",
+    }:
+        raise BindingError("Git runtime binding fields differ")
+    launcher_row = git["launcher"]
+    engine_row = git["engine"]
+    for row, label in ((launcher_row, "Git launcher"), (engine_row, "Git engine")):
+        if not isinstance(row, dict) or set(row) != {"bytes", "path", "sha256"}:
+            raise BindingError(f"{label} binding fields differ")
+        if _tool_record(Path(str(row["path"])), label=label) != row:
+            raise BindingError(f"{label} identity differs")
+    launcher = Path(str(launcher_row["path"]))
+    engine = Path(str(engine_row["path"]))
+    process_environment = runtime["process_environment"]
+    if (
+        not isinstance(process_environment, dict)
+        or process_environment != _closed_process_environment(launcher, engine)
+        or not all(type(key) is str and type(value) is str for key, value in process_environment.items())
+    ):
+        raise BindingError("closed process environment differs")
+    selected_git = shutil.which("git", path=process_environment["PATH"])
+    if selected_git is None or Path(selected_git).resolve(strict=True) != engine:
+        raise BindingError("closed process PATH does not select the bound Git engine")
+    if _git_loadable_surface(launcher, engine) != git["loadable_surface"]:
+        raise BindingError("Git loadable runtime surface differs")
+    exec_raw = _git_probe(engine, ("--exec-path",), process_environment)
+    build_raw = _git_probe(
+        engine,
+        ("--version", "--build-options"),
+        process_environment,
+    )
+    builtins_raw = _git_probe(
+        engine,
+        ("--list-cmds=builtins",),
+        process_environment,
+    )
+    if (
+        git["exec_path_output"] != _sha256_row("stdout", exec_raw)
+        or git["build_options"] != _sha256_row("stdout", build_raw)
+        or git["builtin_commands"] != _sha256_row("stdout", builtins_raw)
+        or git["exec_path"] != exec_raw.decode("utf-8").strip().replace("\\", "/")
+        or _git_engine_from_exec_path(launcher, exec_raw) != engine
+    ):
+        raise BindingError("Git runtime identity differs")
+    _FROZEN_GIT_EXECUTABLE = launcher
+    _FROZEN_GIT_ENGINE = engine
+    return launcher
+
+
+def _python_runtime_binding(
+    process_environment: Mapping[str, str],
+) -> dict[str, Any]:
+    """Bind every base-prefix code surface visible to isolated Python."""
+
+    executable = Path(sys.executable).resolve(strict=True)
+    executable_raw = _regular_file_bytes(executable, label="runtime Python executable")
+    base = Path(sys.base_prefix).resolve(strict=True)
+    stdlib = Path(sysconfig.get_path("stdlib")).resolve(strict=True)
+    if not stdlib.is_relative_to(base):
+        raise BindingError("Python stdlib is outside the base runtime")
+    if base.is_symlink() or _is_reparse(base) or not base.is_dir():
+        raise BindingError("Python base runtime is linked or not a directory")
+    code_suffixes = {".py", ".pyc", ".pyd", ".pyw"}
+    complete_extra_roots: set[str] = set()
+    for child in sorted(base.iterdir(), key=lambda path: path.name.casefold()):
+        if not child.is_dir() or child.name in {"DLLs", "Lib"}:
+            continue
+        for _directory, _directory_names, filenames in os.walk(
+            child, followlinks=False
+        ):
+            if any(Path(name).suffix.casefold() in code_suffixes for name in filenames):
+                complete_extra_roots.add(child.name)
+                break
+    rows: list[dict[str, Any]] = []
+    directories: list[str] = []
+    for directory, directory_names, filenames in os.walk(base, followlinks=False):
+        base_directory = Path(directory)
+        relative_directory = base_directory.relative_to(base)
+        parts = relative_directory.parts
+        if parts == ("Lib",):
+            directory_names[:] = [
+                name
+                for name in directory_names
+                if name not in {"site-packages", "dist-packages"}
+            ]
+        directory_names.sort(key=str.casefold)
+        filenames.sort(key=str.casefold)
+        for name in directory_names:
+            child = base_directory / name
+            if child.is_symlink() or _is_reparse(child) or not child.is_dir():
+                raise BindingError("Python runtime contains a linked directory")
+            directories.append(child.relative_to(base).as_posix())
+        for name in filenames:
+            child = base_directory / name
+            first = parts[0] if parts else ""
+            include = (
+                not parts
+                or first in {"DLLs", "Lib"}
+                or first in complete_extra_roots
+                or child.suffix.casefold() in code_suffixes
+            )
+            if not include:
+                continue
+            rows.append(
+                _sha256_row(
+                    child.relative_to(base).as_posix(),
+                    _regular_file_bytes(child, label="Python runtime file"),
+                )
+            )
+    rows.sort(key=lambda row: str(row["path"]))
+    directories.sort()
+    if len({str(row["path"]).casefold() for row in rows}) != len(rows):
+        raise BindingError("Python runtime contains a case-fold collision")
+    probe_code = (
+        "import json,sys,sysconfig;"
+        "print(json.dumps({'base_prefix':sys.base_prefix,'cache_tag':sys.implementation.cache_tag,"
+        "'executable':sys.executable,'path':sys.path,'prefix':sys.prefix,"
+        "'stdlib':sysconfig.get_path('stdlib'),'version':sys.version},"
+        "allow_nan=False,ensure_ascii=True,separators=(',',':'),sort_keys=True))"
+    )
+    completed = subprocess.run(
+        [str(executable), "-I", "-S", "-B", "-c", probe_code],
+        check=False,
+        capture_output=True,
+        env=dict(process_environment),
+    )
+    if completed.returncode != 0 or completed.stderr or not completed.stdout:
+        raise BindingError("isolated Python runtime probe failed")
+    return {
+        "base_prefix": str(base),
+        "bytes": len(executable_raw),
+        "cache_tag": str(sys.implementation.cache_tag),
+        "directory_count": len(directories),
+        "directories_sha256": hashlib.sha256(
+            canonical_bytes(directories)
+        ).hexdigest().upper(),
+        "file_count": len(rows),
+        "isolated_probe": _sha256_row("stdout", completed.stdout),
+        "path": str(executable),
+        "runtime_surface": (
+            "EXECUTABLE_DLL_STDLIB_AND_BASE_ROOT_IMPORT_SURFACE"
+        ),
+        "rows_sha256": hashlib.sha256(canonical_bytes(rows)).hexdigest().upper(),
+        "sha256": hashlib.sha256(executable_raw).hexdigest().upper(),
+        "stdlib": str(stdlib),
+        "version": sys.version,
+    }
+
+
+def _sha256_row(path: str, raw: bytes) -> dict[str, Any]:
+    return {
+        "bytes": len(raw),
+        "path": path,
+        "sha256": hashlib.sha256(raw).hexdigest().upper(),
+    }
+
+
+def _target_inventory(target: Path) -> list[dict[str, Any]]:
+    target = target.resolve(strict=True)
+    if target.is_symlink() or _is_reparse(target) or not target.is_dir():
+        raise BindingError("isolated execution target is not a regular directory")
+    rows: list[dict[str, Any]] = []
+    seen_casefold: set[str] = set()
+    for directory, directory_names, filenames in os.walk(target, followlinks=False):
+        directory_names.sort()
+        filenames.sort()
+        base = Path(directory)
+        for name in directory_names:
+            child = base / name
+            if child.is_symlink() or _is_reparse(child) or not child.is_dir():
+                raise BindingError("installed target contains a linked directory")
+        for name in filenames:
+            child = base / name
+            raw = _regular_file_bytes(child, label="installed target entry")
+            relative = child.relative_to(target).as_posix()
+            _safe_archive_path(relative, label="installed target")
+            folded = relative.casefold()
+            if folded in seen_casefold:
+                raise BindingError("installed target contains a case-fold collision")
+            seen_casefold.add(folded)
+            basename = PurePosixPath(relative).name.casefold()
+            if basename in {"sitecustomize.py", "usercustomize.py"} or (
+                basename.endswith(".pyc")
+                and (
+                    basename.startswith("sitecustomize.")
+                    or basename.startswith("usercustomize.")
+                )
+            ):
+                raise BindingError("installed target contains a forbidden customization module")
+            rows.append(_sha256_row(relative, raw))
+    return rows
+
+
+def _target_directory_inventory(target: Path) -> list[str]:
+    """Return every installed-target directory below the bound root."""
+
+    target = target.resolve(strict=True)
+    if target.is_symlink() or _is_reparse(target) or not target.is_dir():
+        raise BindingError("isolated execution target is not a regular directory")
+    rows: list[str] = []
+    seen_casefold: set[str] = set()
+    for directory, directory_names, _filenames in os.walk(target, followlinks=False):
+        directory_names.sort()
+        base = Path(directory)
+        for name in directory_names:
+            child = base / name
+            if child.is_symlink() or _is_reparse(child) or not child.is_dir():
+                raise BindingError("installed target contains a linked directory")
+            relative = child.relative_to(target).as_posix()
+            _safe_archive_path(relative, label="installed target directory")
+            folded = relative.casefold()
+            if folded in seen_casefold:
+                raise BindingError("installed target contains a directory case-fold collision")
+            seen_casefold.add(folded)
+            rows.append(relative)
+    return sorted(rows)
+
+
+def _implied_target_directories(paths: Sequence[str]) -> set[str]:
+    implied: set[str] = set()
+    for value in paths:
+        for parent in PurePosixPath(value).parents:
+            if parent != PurePosixPath("."):
+                implied.add(parent.as_posix())
+    return implied
+
+
+def _record_digest(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode(
+        "ascii"
+    )
+
+
+def _read_record(raw: bytes, *, label: str) -> dict[str, tuple[str, str]]:
+    try:
+        rows = list(csv.reader(io.StringIO(raw.decode("utf-8"), newline="")))
+    except (UnicodeDecodeError, csv.Error) as exc:
+        raise BindingError(f"{label} is not valid UTF-8 CSV") from exc
+    result: dict[str, tuple[str, str]] = {}
+    seen_casefold: set[str] = set()
+    for row in rows:
+        if len(row) != 3:
+            raise BindingError(f"{label} row width differs")
+        path = _safe_archive_path(row[0], label=label)
+        folded = path.casefold()
+        if path in result or folded in seen_casefold:
+            raise BindingError(f"{label} contains duplicate paths")
+        seen_casefold.add(folded)
+        result[path] = (row[1], row[2])
+    if not result:
+        raise BindingError(f"{label} is empty")
+    return result
+
+
+def _installed_member_path(value: str) -> str:
+    parts = PurePosixPath(value).parts
+    if len(parts) >= 3 and parts[0].endswith(".data"):
+        if parts[1] not in {"purelib", "platlib"}:
+            raise BindingError("wheel uses an unsupported .data installation scheme")
+        return _safe_archive_path(
+            PurePosixPath(*parts[2:]).as_posix(), label="installed wheel"
+        )
+    return _safe_archive_path(value, label="installed wheel")
+
+
+def _metadata_identity(raw: bytes, *, label: str) -> tuple[str, str]:
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise BindingError(f"{label} METADATA is not UTF-8") from exc
+    fields: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line:
+            break
+        key, separator, value = line.partition(":")
+        if separator and key in {"Name", "Version"}:
+            if key in fields:
+                raise BindingError(f"{label} METADATA duplicates {key}")
+            fields[key] = value.strip()
+    if set(fields) != {"Name", "Version"}:
+        raise BindingError(f"{label} METADATA identity is incomplete")
+    return fields["Name"], fields["Version"]
+
+
+def _wheel_blueprint(name: str, wheel: Mapping[str, Any]) -> dict[str, Any]:
+    expected_distribution, expected_version, import_name = PACKAGED_IDENTITIES[name]
+    wheel_path = Path(str(wheel["path"])).resolve(strict=True)
+    raw = _regular_file_bytes(wheel_path, label=f"{name} wheel")
+    if (
+        wheel_path.name != wheel["filename"]
+        or type(wheel["bytes"]) is not int
+        or wheel["bytes"] != len(raw)
+        or not raw
+        or type(wheel["sha256"]) is not str
+        or HEX64.fullmatch(wheel["sha256"]) is None
+        or hashlib.sha256(raw).hexdigest().upper() != wheel["sha256"]
+    ):
+        raise BindingError(f"{name} wheel bytes differ")
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(raw))
+        bad = archive.testzip()
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise BindingError(f"{name} wheel archive is malformed") from exc
+    if bad is not None:
+        raise BindingError(f"{name} wheel CRC differs: {bad}")
+    members: dict[str, bytes] = {}
+    seen_casefold: set[str] = set()
+    for info in archive.infolist():
+        archive_path = _safe_archive_path(info.filename.rstrip("/"), label="wheel")
+        if info.is_dir():
+            continue
+        mode = (info.external_attr >> 16) & 0xFFFF
+        kind = stat.S_IFMT(mode)
+        if kind not in {0, stat.S_IFREG} or stat.S_ISLNK(mode):
+            raise BindingError(f"{name} wheel contains a non-regular member")
+        folded = archive_path.casefold()
+        if archive_path in members or folded in seen_casefold:
+            raise BindingError(f"{name} wheel contains duplicate paths")
+        seen_casefold.add(folded)
+        members[archive_path] = archive.read(info)
+    record_paths = [path for path in members if path.endswith(".dist-info/RECORD")]
+    metadata_paths = [path for path in members if path.endswith(".dist-info/METADATA")]
+    if len(record_paths) != 1 or len(metadata_paths) != 1:
+        raise BindingError(f"{name} wheel metadata membership differs")
+    record_path = record_paths[0]
+    dist_info = record_path.rsplit("/", 1)[0]
+    if not metadata_paths[0].startswith(dist_info + "/"):
+        raise BindingError(f"{name} wheel dist-info roots differ")
+    distribution, version = _metadata_identity(members[metadata_paths[0]], label=name)
+    if (
+        _canonical_distribution_name(distribution)
+        != _canonical_distribution_name(expected_distribution)
+        or version != expected_version
+    ):
+        raise BindingError(f"{name} wheel distribution identity differs")
+    record = _read_record(members[record_path], label=f"{name} wheel RECORD")
+    if set(record) != set(members):
+        raise BindingError(f"{name} wheel RECORD membership differs")
+    installed: dict[str, dict[str, Any]] = {}
+    for archive_path, member_raw in members.items():
+        digest, size = record[archive_path]
+        if archive_path == record_path:
+            if digest or size:
+                raise BindingError(f"{name} wheel RECORD self-row differs")
+        elif digest != f"sha256={_record_digest(member_raw)}" or size != str(
+            len(member_raw)
+        ):
+            raise BindingError(f"{name} wheel RECORD hash or size differs")
+        installed_path = _installed_member_path(archive_path)
+        if installed_path in installed:
+            raise BindingError(f"{name} wheel installation paths collide")
+        installed[installed_path] = {
+            **_sha256_row(installed_path, member_raw),
+            "archive_path": archive_path,
+        }
+    if not any(
+        path == f"{import_name}.py" or path.startswith(f"{import_name}/")
+        for path in installed
+    ):
+        raise BindingError(f"{name} wheel does not contain its runtime import root")
+    installed_record_path = _installed_member_path(record_path)
+    return {
+        "dist_info": _installed_member_path(dist_info),
+        "distribution": expected_distribution,
+        "files": installed,
+        "import_name": import_name,
+        "record": {
+            "archive_path": record_path,
+            "bytes": len(members[record_path]),
+            "row_count": len(record),
+            "sha256": hashlib.sha256(members[record_path]).hexdigest().upper(),
+            "target_path": installed_record_path,
+        },
+        "version": expected_version,
+    }
+
+
+def _installed_wheel_manifest(
+    name: str,
+    wheel: Mapping[str, Any],
+    target: Path,
+    closed_target: Mapping[str, Any],
+) -> dict[str, Any]:
+    blueprint = _wheel_blueprint(name, wheel)
+    target_record_path = target / Path(blueprint["record"]["target_path"])
+    target_record_raw = _regular_file_bytes(
+        target_record_path, label=f"{name} installed RECORD"
+    )
+    target_record = _read_record(target_record_raw, label=f"{name} installed RECORD")
+    expected_paths = set(blueprint["files"])
+    record_path = str(blueprint["record"]["target_path"])
+    allowed_generated = {
+        f"{blueprint['dist_info']}/{generated}"
+        for generated in INSTALLER_GENERATED_NAMES
+    }
+    generated_paths = set(target_record) - expected_paths
+    if not generated_paths <= allowed_generated:
+        raise BindingError(f"{name} installed RECORD claims an unregistered file")
+    if set(target_record) != expected_paths | generated_paths:
+        raise BindingError(f"{name} installed RECORD membership differs")
+    rows: list[dict[str, Any]] = []
+    for path in sorted(target_record):
+        digest, size = target_record[path]
+        installed_path = target / Path(path)
+        installed_raw = _regular_file_bytes(
+            installed_path, label=f"{name} installed file"
+        )
+        if path == record_path:
+            if digest or size:
+                raise BindingError(f"{name} installed RECORD self-row differs")
+            provenance = "TARGET_RECORD"
+        else:
+            if digest != f"sha256={_record_digest(installed_raw)}" or size != str(
+                len(installed_raw)
+            ):
+                raise BindingError(f"{name} installed RECORD hash or size differs")
+            if path in blueprint["files"]:
+                expected = blueprint["files"][path]
+                if (
+                    len(installed_raw) != expected["bytes"]
+                    or hashlib.sha256(installed_raw).hexdigest().upper()
+                    != expected["sha256"]
+                ):
+                    raise BindingError(f"{name} installed file differs from exact wheel")
+                provenance = "WHEEL_RECORD"
+            else:
+                provenance = "INSTALLER_GENERATED"
+        rows.append({**_sha256_row(path, installed_raw), "provenance": provenance})
+    return {
+        "closed_target": dict(closed_target),
+        "distribution": blueprint["distribution"],
+        "files": rows,
+        "files_sha256": hashlib.sha256(canonical_bytes(rows)).hexdigest().upper(),
+        "import_name": blueprint["import_name"],
+        "record": blueprint["record"],
+        "schema": INSTALLED_TARGET_SCHEMA,
+        "target": str(target),
+        "version": blueprint["version"],
+        "wheel_sha256": wheel["sha256"],
+    }
+
+
+def _build_installed_target_manifests(
+    target: Path,
+    candidates: Mapping[str, Mapping[str, Any]],
+    *,
+    allow_unregistered: bool = False,
+) -> dict[str, dict[str, Any]]:
+    target = target.resolve(strict=True)
+    actual_rows = _target_inventory(target)
+    actual_directories = _target_directory_inventory(target)
+    closed_target = {
+        "directories_sha256": hashlib.sha256(
+            canonical_bytes(actual_directories)
+        ).hexdigest().upper(),
+        "directory_count": len(actual_directories),
+        "file_count": len(actual_rows),
+        "rows_sha256": hashlib.sha256(canonical_bytes(actual_rows)).hexdigest().upper(),
+    }
+    manifests = {
+        name: _installed_wheel_manifest(
+            name,
+            candidates[name]["wheel"],
+            target,
+            closed_target,
+        )
+        for name in sorted(PACKAGED)
+    }
+    claimed: dict[str, str] = {}
+    for name, manifest in manifests.items():
+        for row in manifest["files"]:
+            path = str(row["path"])
+            if path in claimed:
+                raise BindingError(
+                    f"installed target path is claimed by {claimed[path]} and {name}"
+                )
+            claimed[path] = name
+    actual_paths = {str(row["path"]) for row in actual_rows}
+    if not allow_unregistered and actual_paths != set(claimed):
+        raise BindingError("installed target contains unregistered files")
+    implied_paths = actual_paths if allow_unregistered else set(claimed)
+    if set(actual_directories) != _implied_target_directories(sorted(implied_paths)):
+        raise BindingError("installed target contains unregistered directories")
+    all_paths = actual_paths | set(actual_directories)
+    if len({path.casefold() for path in all_paths}) != len(all_paths):
+        raise BindingError("installed target contains a file/directory case-fold collision")
+    return manifests
+
+
+def _runtime_environment_binding(
+    target: Path,
+    candidate_manifests: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Bind every non-candidate distribution in the isolated target."""
+
+    target = target.resolve(strict=True)
+    actual_rows = _target_inventory(target)
+    actual_by_path = {str(row["path"]): row for row in actual_rows}
+    candidate_paths = {
+        str(row["path"])
+        for manifest in candidate_manifests.values()
+        for row in manifest["files"]
+    }
+    extra_paths = set(actual_by_path) - candidate_paths
+    record_paths = sorted(
+        path for path in extra_paths if path.endswith(".dist-info/RECORD")
+    )
+    claimed: dict[str, str] = {}
+    distributions: list[dict[str, Any]] = []
+    identities: set[str] = set()
+    for record_path in record_paths:
+        dist_info = PurePosixPath(record_path).parent.as_posix()
+        metadata_path = f"{dist_info}/METADATA"
+        if metadata_path not in extra_paths:
+            raise BindingError("runtime distribution METADATA is absent")
+        distribution, version = _metadata_identity(
+            (target / Path(metadata_path)).read_bytes(),
+            label=f"runtime {dist_info}",
+        )
+        canonical_name = _canonical_distribution_name(distribution)
+        if canonical_name in identities:
+            raise BindingError("runtime distribution identity is duplicated")
+        identities.add(canonical_name)
+        record_raw = _regular_file_bytes(
+            target / Path(record_path),
+            label=f"runtime {dist_info} RECORD",
+        )
+        record = _read_record(record_raw, label=f"runtime {dist_info} RECORD")
+        rows: list[dict[str, Any]] = []
+        for path in sorted(record):
+            if path not in extra_paths or path in claimed:
+                raise BindingError("runtime RECORD ownership differs")
+            raw = _regular_file_bytes(
+                target / Path(path),
+                label=f"runtime {dist_info} file",
+            )
+            digest, size = record[path]
+            if path == record_path:
+                if digest or size:
+                    raise BindingError("runtime RECORD self-row differs")
+            elif digest != f"sha256={_record_digest(raw)}" or size != str(len(raw)):
+                raise BindingError("runtime RECORD hash or size differs")
+            claimed[path] = canonical_name
+            rows.append(dict(actual_by_path[path]))
+        distributions.append(
+            {
+                "dist_info": dist_info,
+                "distribution": distribution,
+                "file_count": len(rows),
+                "files_sha256": hashlib.sha256(canonical_bytes(rows)).hexdigest().upper(),
+                "normalized_name": canonical_name,
+                "record_sha256": hashlib.sha256(record_raw).hexdigest().upper(),
+                "version": version,
+            }
+        )
+    if set(claimed) != extra_paths:
+        raise BindingError("isolated runtime target contains non-RECORD files")
+    required = {"numpy", "psutil", "pytest", "scipy"}
+    if not required <= identities:
+        raise BindingError("isolated runtime target lacks required distributions")
+    directories = _target_directory_inventory(target)
+    git_runtime, process_environment = _git_runtime_binding()
+    python_runtime = _python_runtime_binding(process_environment)
+    return {
+        "closed_target": {
+            "directories_sha256": hashlib.sha256(
+                canonical_bytes(directories)
+            ).hexdigest().upper(),
+            "directory_count": len(directories),
+            "file_count": len(actual_rows),
+            "rows_sha256": hashlib.sha256(
+                canonical_bytes(actual_rows)
+            ).hexdigest().upper(),
+        },
+        "distributions": sorted(
+            distributions, key=lambda row: str(row["normalized_name"])
+        ),
+        "git": git_runtime,
+        "process_environment": process_environment,
+        "python": python_runtime,
+        "schema": "anysolver.e4-pl-s3-isolated-runtime-environment-v2",
+        "target": str(target),
+    }
+
+
+def _bind_execution_target(
+    target: Path,
+    candidates: Mapping[str, Mapping[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    manifests = _build_installed_target_manifests(
+        target, candidates, allow_unregistered=True
+    )
+    runtime = _runtime_environment_binding(target, manifests)
+    result = {name: dict(candidate) for name, candidate in candidates.items()}
+    for name in PACKAGED:
+        wheel = dict(result[name]["wheel"])
+        wheel["installed_target"] = manifests[name]
+        result[name]["wheel"] = wheel
+    return result, runtime
+
+
+def _verify_bound_execution_target(
+    target: Path,
+    candidates: Mapping[str, Mapping[str, Any]],
+    runtime_environment: object,
+) -> dict[str, dict[str, Any]]:
+    stripped: dict[str, dict[str, Any]] = {}
+    for name, candidate in candidates.items():
+        copied = dict(candidate)
+        wheel = copied.get("wheel")
+        if name in PACKAGED:
+            if not isinstance(wheel, dict) or "installed_target" not in wheel:
+                raise BindingError(f"{name} installed-target binding is absent")
+            wheel_copy = dict(wheel)
+            wheel_copy.pop("installed_target")
+            copied["wheel"] = wheel_copy
+        stripped[name] = copied
+    expected_candidates, expected_runtime = _bind_execution_target(target, stripped)
+    if candidates != expected_candidates or runtime_environment != expected_runtime:
+        raise BindingError("bound isolated execution environment differs")
+    return expected_candidates
+
+
+def _reverify_one_installed_target(
+    name: str,
+    wheel: Mapping[str, Any],
+    value: object,
+) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != {
+        "closed_target",
+        "distribution",
+        "files",
+        "files_sha256",
+        "import_name",
+        "record",
+        "schema",
+        "target",
+        "version",
+        "wheel_sha256",
+    }:
+        raise BindingError(f"{name} installed-target binding is malformed")
+    target = Path(str(value["target"])).resolve(strict=True)
+    actual_rows = _target_inventory(target)
+    actual_directories = _target_directory_inventory(target)
+    expected_closed = {
+        "directories_sha256": hashlib.sha256(
+            canonical_bytes(actual_directories)
+        ).hexdigest().upper(),
+        "directory_count": len(actual_directories),
+        "file_count": len(actual_rows),
+        "rows_sha256": hashlib.sha256(canonical_bytes(actual_rows)).hexdigest().upper(),
+    }
+    if value["closed_target"] != expected_closed:
+        raise BindingError(f"{name} installed target inventory differs")
+    expected = _installed_wheel_manifest(name, wheel, target, expected_closed)
+    if value != expected:
+        raise BindingError(f"{name} installed target provenance differs")
+    return expected
+
+
+def _bind_installed_target(
+    target: Path,
+    candidates: Mapping[str, Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    manifests = _build_installed_target_manifests(target, candidates)
+    result = {name: dict(candidate) for name, candidate in candidates.items()}
+    for name in PACKAGED:
+        wheel = dict(result[name]["wheel"])
+        wheel["installed_target"] = manifests[name]
+        result[name]["wheel"] = wheel
+    return result
+
+
+def _verify_bound_installed_target(
+    target: Path,
+    candidates: Mapping[str, Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    stripped: dict[str, dict[str, Any]] = {}
+    bound: dict[str, object] = {}
+    for name, candidate in candidates.items():
+        copied = dict(candidate)
+        wheel = copied.get("wheel")
+        if name in PACKAGED:
+            if not isinstance(wheel, dict) or "installed_target" not in wheel:
+                raise BindingError(f"{name} installed-target binding is absent")
+            wheel_copy = dict(wheel)
+            bound[name] = wheel_copy.pop("installed_target")
+            copied["wheel"] = wheel_copy
+        stripped[name] = copied
+    expected = _build_installed_target_manifests(target, stripped)
+    if bound != expected:
+        raise BindingError("bound installed target differs from exact wheels")
+    return _bind_installed_target(target, stripped)
 
 
 def _pairs(values: Sequence[tuple[str, Any]]) -> dict[str, Any]:
@@ -222,33 +1337,262 @@ def _file_binding(path: Path) -> dict[str, Any]:
 
 
 def _git(root: Path, *arguments: str) -> str:
-    environment = os.environ.copy()
-    environment.update(
-        {
-            "GIT_CONFIG_GLOBAL": os.devnull,
-            "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_GRAFT_FILE": os.devnull,
-            "GIT_OPTIONAL_LOCKS": "0",
-            "GIT_REPLACE_REF_BASE": "refs/disabled-replacements/",
-        }
-    )
+    launcher = _FROZEN_GIT_EXECUTABLE
+    if launcher is None:
+        discovered = shutil.which("git")
+        if discovered is None:
+            raise BindingError("Git launcher is unavailable")
+        launcher = Path(discovered).resolve(strict=True)
+    engine = _FROZEN_GIT_ENGINE or launcher
+    executable = engine if _FROZEN_GIT_ENGINE is not None else launcher
+    process_environment = _closed_process_environment(launcher, engine)
+    environment = _git_environment(process_environment, executable)
     result = subprocess.run(
         [
-            "git",
+            str(executable),
+            "--no-replace-objects",
+            "-c",
+            f"safe.directory={root}",
+            "-c",
+            "core.autocrlf=true" if os.name == "nt" else "core.autocrlf=input",
             "-c",
             "core.attributesFile=NUL" if os.name == "nt" else "core.attributesFile=/dev/null",
+            "-c",
+            "core.commitGraph=false",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.quotepath=false",
+            "-c",
+            "core.untrackedCache=false",
             "-C",
             str(root),
             *arguments,
         ],
         check=False,
         capture_output=True,
+        cwd=executable.parent,
         env=environment,
         text=True,
     )
     if result.returncode != 0:
         raise BindingError(f"Git identity check failed for {root}")
     return result.stdout.rstrip("\r\n")
+
+
+def _git_hash_worktree(root: Path, paths: Sequence[str]) -> list[str]:
+    """Hash every tracked file through only the frozen built-in clean rules."""
+
+    launcher = _FROZEN_GIT_EXECUTABLE
+    if launcher is None:
+        discovered = shutil.which("git")
+        if discovered is None:
+            raise BindingError("Git launcher is unavailable")
+        launcher = Path(discovered).resolve(strict=True)
+    engine = _FROZEN_GIT_ENGINE or launcher
+    executable = engine if _FROZEN_GIT_ENGINE is not None else launcher
+    process_environment = _closed_process_environment(launcher, engine)
+    result = subprocess.run(
+        [
+            str(executable),
+            "--no-replace-objects",
+            "-c",
+            f"safe.directory={root}",
+            "-c",
+            "core.autocrlf=true" if os.name == "nt" else "core.autocrlf=input",
+            "-c",
+            "core.attributesFile=NUL" if os.name == "nt" else "core.attributesFile=/dev/null",
+            "-c",
+            "core.commitGraph=false",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.quotepath=false",
+            "-c",
+            "core.untrackedCache=false",
+            "-C",
+            str(root),
+            "hash-object",
+            "--stdin-paths",
+        ],
+        check=False,
+        capture_output=True,
+        cwd=executable.parent,
+        env=_git_environment(process_environment, executable),
+        input="".join(f"{path}\n" for path in paths),
+        text=True,
+    )
+    hashes = result.stdout.splitlines()
+    if result.returncode != 0 or result.stderr or len(hashes) != len(paths):
+        raise BindingError("tracked worktree hashing failed")
+    return hashes
+
+
+def _reject_worktree_git_overrides(root: Path) -> None:
+    """Reject repository-local routes that can transform executable bytes."""
+
+    config_raw = _git(root, "config", "--show-scope", "--null", "--list")
+    fields = config_raw.split("\0")
+    if fields and fields[-1] == "":
+        fields.pop()
+    if len(fields) % 2:
+        raise BindingError("candidate Git configuration scope is malformed")
+    for index in range(0, len(fields), 2):
+        scope = fields[index].casefold()
+        entry = fields[index + 1]
+        if scope == "command":
+            continue
+        if scope not in {"local", "worktree"}:
+            raise BindingError("candidate Git configuration escaped the closed scopes")
+        key, separator, _value = entry.partition("\n")
+        normalized = key.casefold()
+        if separator != "\n" or (
+            normalized.startswith(
+                (
+                    "commitgraph.",
+                    "core.fsmonitor",
+                    "filter.",
+                    "fsmonitor.",
+                    "include.",
+                    "includeif.",
+                )
+            )
+            or normalized == "diff.external"
+            or (
+                normalized.startswith("diff.")
+                and normalized.endswith((".command", ".textconv"))
+            )
+            or (
+                normalized.startswith("merge.")
+                and normalized.endswith(".driver")
+            )
+            or normalized
+            in {
+                "core.attributesfile",
+                "core.commitgraph",
+                "core.hookspath",
+                "core.worktree",
+                "extensions.partialclone",
+                "extensions.worktreeconfig",
+                "gpg.program",
+                "interactive.difffilter",
+                "log.showsignature",
+            }
+            or (
+                normalized.startswith("gpg.")
+                and normalized.endswith(".program")
+            )
+            or (
+                normalized.startswith("remote.")
+                and normalized.endswith((".partialclonefilter", ".promisor"))
+            )
+        ):
+            raise BindingError("candidate Git configuration contains an executable override")
+    info_value = _git(root, "rev-parse", "--git-path", "info/attributes")
+    info_path = Path(info_value)
+    if not info_path.is_absolute():
+        info_path = root / info_path
+    if info_path.exists() or info_path.is_symlink():
+        raise BindingError("candidate Git info attributes are forbidden")
+
+
+def _closed_worktree_binding(root: Path) -> dict[str, Any]:
+    """Hash the complete checkout surface and reject ignored/untracked entries."""
+
+    root = root.resolve(strict=True)
+    _reject_worktree_git_overrides(root)
+    tracked_raw = _git(root, "ls-files", "-z", "--cached")
+    tracked = [path for path in tracked_raw.split("\0") if path]
+    flagged_raw = _git(root, "ls-files", "-v", "-z", "--cached")
+    flagged = [entry for entry in flagged_raw.split("\0") if entry]
+    staged_raw = _git(root, "ls-files", "--stage", "-z", "--cached")
+    staged_entries = [entry for entry in staged_raw.split("\0") if entry]
+    tree_raw = _git(root, "ls-tree", "-rz", "HEAD")
+    tree_entries = [entry for entry in tree_raw.split("\0") if entry]
+    if (
+        len(tracked) != len(set(tracked))
+        or len({path.casefold() for path in tracked}) != len(tracked)
+        or any(_safe_archive_path(path, label="tracked checkout") != path for path in tracked)
+        or len(flagged) != len(tracked)
+        or any(
+            len(entry) < 3
+            or entry[0] != "H"
+            or entry[1] != " "
+            or entry[2:] != tracked[index]
+            for index, entry in enumerate(flagged)
+        )
+    ):
+        raise BindingError("tracked checkout paths or index flags are malformed")
+    staged: list[tuple[str, str, str]] = []
+    for entry in staged_entries:
+        metadata, separator, path = entry.partition("\t")
+        fields = metadata.split()
+        if (
+            separator != "\t"
+            or len(fields) != 3
+            or fields[2] != "0"
+            or path != tracked[len(staged)]
+        ):
+            raise BindingError("candidate index stage differs")
+        staged.append((fields[0], fields[1], path))
+    tree: list[tuple[str, str, str]] = []
+    for entry in tree_entries:
+        metadata, separator, path = entry.partition("\t")
+        fields = metadata.split()
+        if separator != "\t" or len(fields) != 3 or fields[1] != "blob":
+            raise BindingError("candidate HEAD tree contains a non-blob entry")
+        tree.append((fields[0], fields[2], path))
+    if staged != tree or [row[2] for row in staged] != tracked:
+        raise BindingError("candidate index differs from HEAD tree")
+    if _git_hash_worktree(root, tracked) != [row[1] for row in staged]:
+        raise BindingError("candidate worktree bytes differ from HEAD")
+    rows: list[dict[str, Any]] = []
+    directories: list[str] = []
+    for directory, directory_names, filenames in os.walk(root, followlinks=False):
+        base = Path(directory)
+        if base == root:
+            directory_names[:] = [name for name in directory_names if name != ".git"]
+            filenames = [name for name in filenames if name != ".git"]
+        directory_names.sort()
+        filenames.sort()
+        for name in directory_names:
+            child = base / name
+            if child.is_symlink() or _is_reparse(child) or not child.is_dir():
+                raise BindingError("candidate checkout contains a linked directory")
+            relative = child.relative_to(root).as_posix()
+            _safe_archive_path(relative, label="candidate directory")
+            directories.append(relative)
+        for name in filenames:
+            child = base / name
+            relative = child.relative_to(root).as_posix()
+            _safe_archive_path(relative, label="candidate file")
+            rows.append(
+                _sha256_row(
+                    relative,
+                    _regular_file_bytes(child, label="candidate checkout file"),
+                )
+            )
+    rows.sort(key=lambda row: str(row["path"]))
+    directories.sort()
+    actual_paths = [str(row["path"]) for row in rows]
+    expected_directories = sorted(_implied_target_directories(tracked))
+    combined = actual_paths + directories
+    if (
+        actual_paths != sorted(tracked)
+        or directories != expected_directories
+        or len({path.casefold() for path in combined}) != len(combined)
+    ):
+        raise BindingError(
+            "candidate checkout contains ignored, untracked, or extra directory entries"
+        )
+    return {
+        "directories_sha256": hashlib.sha256(
+            canonical_bytes(directories)
+        ).hexdigest().upper(),
+        "directory_count": len(directories),
+        "file_count": len(rows),
+        "rows_sha256": hashlib.sha256(canonical_bytes(rows)).hexdigest().upper(),
+    }
 
 
 def _commit_identity(root: Path, commit: str) -> dict[str, str]:
@@ -356,6 +1700,9 @@ def _verify_anysolver_policy(
         }
         if observed != {expected_blob}:
             raise BindingError(f"reviewed Q4 guard blob differs: {path}")
+    for path, expected_blob in Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS:
+        if _blob(solver_root, candidate_commit, path) != expected_blob:
+            raise BindingError(f"bound nonmechanics integration blob differs: {path}")
     _git(solver_root, "merge-base", "--is-ancestor", guard_import_commit, candidate_commit)
     observed_paths = _changed_paths(solver_root, base_commit, candidate_commit)
     if observed_paths != changed_paths:
@@ -381,6 +1728,10 @@ def _verify_anysolver_policy(
             "excluded_nonmechanics_integration_paths": list(
                 Q4_NONMECHANICS_INTEGRATION_PATHS
             ),
+            "bound_nonmechanics_integration_paths": [
+                {"git_blob": blob_id, "path": path}
+                for path, blob_id in Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS
+            ],
             "file_count": len(base_rows),
             "rows_sha256": rows_sha256,
             "scope": (
@@ -419,13 +1770,17 @@ def _reverify_bound_anysolver_policy(
 
 
 def _verify_candidate(name: str, value: object) -> dict[str, Any]:
-    if not isinstance(value, dict) or set(value) != {
+    input_fields = {
         "commit",
         "root",
         "subject",
         "tree",
         "wheel",
-    }:
+    }
+    if not isinstance(value, dict) or set(value) not in (
+        input_fields,
+        input_fields | {"working_tree"},
+    ):
         raise BindingError(f"{name} candidate fields differ")
     commit = value["commit"]
     tree = value["tree"]
@@ -444,8 +1799,13 @@ def _verify_candidate(name: str, value: object) -> dict[str, Any]:
     root = Path(str(value["root"])).resolve(strict=True)
     if not root.is_dir():
         raise BindingError(f"{name} root is not a directory")
+    _reject_worktree_git_overrides(root)
+    _git(root, "fsck", "--full", "--strict")
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
         raise BindingError(f"{name} candidate root is dirty")
+    working_tree = _closed_worktree_binding(root)
+    if "working_tree" in value and value["working_tree"] != working_tree:
+        raise BindingError(f"{name} closed checkout identity differs")
     observed = {
         "commit": _git(root, "rev-parse", "HEAD"),
         "tree": _git(root, "rev-parse", "HEAD^{tree}"),
@@ -455,27 +1815,38 @@ def _verify_candidate(name: str, value: object) -> dict[str, Any]:
         raise BindingError(f"{name} candidate Git identity differs")
     wheel = value["wheel"]
     if name in PACKAGED:
-        if not isinstance(wheel, dict) or set(wheel) != {
-            "bytes",
-            "filename",
-            "path",
-            "sha256",
-        }:
-            raise BindingError(f"{name} wheel binding is malformed")
-        wheel_path = Path(str(wheel["path"])).resolve(strict=True)
-        raw = wheel_path.read_bytes()
-        if (
-            not wheel_path.is_file()
-            or wheel_path.is_symlink()
-            or wheel_path.name != wheel["filename"]
-            or type(wheel["bytes"]) is not int
-            or wheel["bytes"] != len(raw)
-            or len(raw) <= 0
-            or type(wheel["sha256"]) is not str
-            or HEX64.fullmatch(wheel["sha256"]) is None
-            or hashlib.sha256(raw).hexdigest().upper() != wheel["sha256"]
+        if not isinstance(wheel, dict) or set(wheel) not in (
+            {
+                "bytes",
+                "filename",
+                "path",
+                "sha256",
+            },
+            {
+                "bytes",
+                "filename",
+                "installed_target",
+                "path",
+                "sha256",
+            },
         ):
-            raise BindingError(f"{name} wheel bytes differ")
+            raise BindingError(f"{name} wheel binding is malformed")
+        installed_target = wheel.get("installed_target")
+        wheel_base = {
+            key: wheel[key]
+            for key in (
+                "bytes",
+                "filename",
+                "path",
+                "sha256",
+            )
+        }
+        _wheel_blueprint(name, wheel_base)
+        if installed_target is not None:
+            wheel_base["installed_target"] = _reverify_one_installed_target(
+                name, wheel_base, installed_target
+            )
+        wheel = wheel_base
     elif wheel is not None:
         raise BindingError(f"{name} must not carry a wheel")
     return {
@@ -484,6 +1855,7 @@ def _verify_candidate(name: str, value: object) -> dict[str, Any]:
         "subject": subject,
         "tree": tree,
         "wheel": wheel,
+        "working_tree": working_tree,
     }
 
 
@@ -538,21 +1910,36 @@ def _verify_preflight(
     for gate in gates:
         if not isinstance(gate, dict) or set(gate) != {
             "command",
+            "environment",
             "id",
             "log",
             "passed",
             "returncode",
+            "working_directory",
         }:
             raise BindingError(f"{name} preflight gate differs")
         command = gate["command"]
         identifier = gate["id"]
         log = gate["log"]
+        expected_nodes = PREFLIGHT_GATE_NODES[name].get(identifier)
+        expected_command = [
+            sys.executable,
+            "-B",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            *(expected_nodes or ()),
+        ]
         if (
             type(identifier) is not str
             or not identifier
+            or expected_nodes is None
             or not isinstance(command, list)
-            or not command
-            or any(type(item) is not str or not item for item in command)
+            or command != expected_command
+            or gate["environment"] != PREFLIGHT_ENVIRONMENT
+            or gate["working_directory"] != candidate["root"]
             or gate["passed"] is not True
             or type(gate["returncode"]) is not int
             or gate["returncode"] != 0
@@ -560,6 +1947,12 @@ def _verify_preflight(
             or set(log) != {"bytes", "path", "sha256"}
         ):
             raise BindingError(f"{name} preflight gate is not green")
+        for relative in expected_nodes:
+            node_path = (Path(str(candidate["root"])) / relative).resolve(strict=True)
+            if not node_path.is_file() or not node_path.is_relative_to(
+                Path(str(candidate["root"])).resolve(strict=True)
+            ):
+                raise BindingError(f"{name} preflight node differs")
         log_path = Path(str(log["path"])).resolve(strict=True)
         if not log_path.is_file() or log_path.is_symlink():
             raise BindingError(f"{name} preflight log is not regular")
@@ -607,6 +2000,12 @@ def build_binding(graph_path: Path) -> dict[str, Any]:
     verified_candidates = {
         name: _verify_candidate(name, candidates[name]) for name in CANDIDATES
     }
+    target = Path(str(graph["execution_target"])).resolve(strict=True)
+    if not target.is_dir():
+        raise BindingError("isolated execution target is not a directory")
+    verified_candidates, runtime_environment = _bind_execution_target(
+        target, verified_candidates
+    )
     preflight = graph["preflight_results"]
     if not isinstance(preflight, dict) or tuple(preflight) != CANDIDATES:
         raise BindingError("candidate preflight membership or order differs")
@@ -614,16 +2013,24 @@ def build_binding(graph_path: Path) -> dict[str, Any]:
         name: _verify_preflight(name, verified_candidates[name], preflight[name])
         for name in CANDIDATES
     }
-    target = Path(str(graph["execution_target"])).resolve(strict=True)
-    if not target.is_dir():
-        raise BindingError("isolated execution target is not a directory")
     files = {
+        "base_contract": _file_binding(BASE_CONTRACT),
+        "base_input": _file_binding(BASE_INPUT),
+        "base_program": _file_binding(BASE_PROGRAM),
+        "base_test": _file_binding(BASE_TEST),
+        "batch_benchmark": _file_binding(BATCH_BENCHMARK),
         "binding_generator": _file_binding(BINDING_GENERATOR),
         "contract": _file_binding(CONTRACT),
         "coordinator": _file_binding(COORDINATOR),
         "formal_runner": _file_binding(FORMAL_RUNNER),
         "formal_test": _file_binding(FORMAL_TEST),
         "manifest": _file_binding(MANIFEST),
+        "mixed_eigen_performance": _file_binding(MIXED_EIGEN_PERFORMANCE),
+        "mixed_mesh_manifest_program": _file_binding(MIXED_MESH_MANIFEST_PROGRAM),
+        "mixed_mesh_runner": _file_binding(MIXED_MESH_RUNNER),
+        "mixed_mesh_smoke_input": _file_binding(MIXED_MESH_SMOKE_INPUT),
+        "mixed_structural_common": _file_binding(MIXED_STRUCTURAL_COMMON),
+        "mixed_structural_producer": _file_binding(MIXED_STRUCTURAL_PRODUCER),
         "optimization_evidence": _file_binding(OPTIMIZATION_EVIDENCE),
         "successor": _file_binding(SUCCESSOR),
         "test": _file_binding(TEST),
@@ -632,16 +2039,14 @@ def build_binding(graph_path: Path) -> dict[str, Any]:
     policy = _verify_anysolver_policy(graph["anysolver_policy"], solver)
     return {
         "anysolver_policy": policy,
-        "candidate_graph": {
-            "bytes": len(graph_raw),
-            "sha256": hashlib.sha256(graph_raw).hexdigest().upper(),
-        },
+        "candidate_graph": _file_binding(graph_path),
         "candidate_preflight": verified_preflight,
         "candidates": verified_candidates,
         "execution_target": str(target),
         "files": files,
         "formal_execution_authorized": False,
         "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
+        "runtime_environment": runtime_environment,
         "schema": SCHEMA,
     }
 

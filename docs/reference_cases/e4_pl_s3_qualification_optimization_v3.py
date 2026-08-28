@@ -11,9 +11,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import replace
+import hashlib
 import math
+import os
 from pathlib import Path
+import shutil
 import sys
+import tempfile
 from typing import Any, Callable, Mapping
 
 
@@ -25,7 +29,13 @@ def _checkpoint(callback: Callable[[str], None] | None, stage: str) -> None:
         callback(stage)
 
 
-def activate_assigned(base: Any, authority: Any) -> Any:
+def activate_assigned(
+    base: Any,
+    authority: Any,
+    *,
+    verified_loader: Callable[[str, Path], Any] | None = None,
+    verified_data_bytes: Mapping[str, bytes] | None = None,
+) -> Any:
     """Activate mechanics without regenerating the 252-record manifest.
 
     The standard-library coordinator has already selected and hash-bound the
@@ -36,6 +46,29 @@ def activate_assigned(base: Any, authority: Any) -> Any:
     coordinator-created assignment together.
     """
 
+    sys.dont_write_bytecode = True
+    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    generator = sys.modules.get("_s3_v3_binding_generator")
+    if generator is None:
+        raise base.QualificationError("verified binding generator is not active")
+    candidates = authority.input.get("candidates")
+    try:
+        generator._activate_bound_runtime_environment(
+            authority.input["runtime_environment"]
+        )
+        verified = generator._verify_bound_execution_target(
+            authority.target,
+            candidates,
+            authority.input["runtime_environment"],
+        )
+    except (generator.BindingError, OSError) as exc:
+        raise base.QualificationError(
+            "exact-wheel installed target provenance differs"
+        ) from exc
+    if verified != candidates:
+        raise base.QualificationError(
+            "exact-wheel installed target binding is noncanonical"
+        )
     imported = __import__("anysolver")
     if str(getattr(imported, "__version__", "")) != "0.4.0":
         raise base.QualificationError(
@@ -50,32 +83,72 @@ def activate_assigned(base: Any, authority: Any) -> Any:
     reference_cases = base.REFERENCE_CASES
     if str(reference_cases) not in sys.path:
         sys.path.insert(0, str(reference_cases))
-    common = base._load_module(
+    loader = base._load_module if verified_loader is None else verified_loader
+    common = loader(
         "e4_pl_s3_mixed_structural_common",
         reference_cases / "e4_pl_s3_mixed_structural_common.py",
     )
-    producer = base._load_module(
+    producer = loader(
         "_s3_activation_v3_structural_producer",
         reference_cases / "e4_pl_s3_mixed_structural_producer.py",
     )
-    eigen = base._load_module(
+    eigen = loader(
         "_s3_activation_v3_eigen",
         reference_cases / "e4_pl_s3_mixed_eigen_performance.py",
     )
-    smoke_runner = base._load_module(
+    smoke_runner = loader(
         "_s3_activation_v3_smoke",
         reference_cases / "e4_pl_s3_mixed_mesh_qualification_runner.py",
     )
+    if verified_data_bytes is not None:
+        def read_verified_json(
+            path: Path,
+            *,
+            style: str,
+            label: str,
+        ) -> tuple[dict[str, Any], bytes]:
+            key = os.path.normcase(
+                os.path.normpath(str(Path(path).absolute()))
+            )
+            raw = verified_data_bytes.get(key)
+            if raw is None:
+                raise smoke_runner.CampaignInputError(
+                    f"unregistered frozen JSON route: {path}"
+                )
+            value = smoke_runner._strict_json(raw, label=label)
+            if not isinstance(value, dict):
+                raise smoke_runner.CampaignInputError(
+                    f"{label} must be a JSON object"
+                )
+            expected = (
+                smoke_runner._canonical_bytes(value)
+                if style == "compact"
+                else smoke_runner._pretty_canonical_bytes(value)
+            )
+            if raw != expected:
+                raise smoke_runner.CampaignInputError(
+                    f"{label} is not canonical {style} JSON"
+                )
+            return value, raw
+
+        smoke_runner._read_canonical_json = read_verified_json
     smoke = smoke_runner.load_authorities(
         reference_cases / "e4_pl_s3_mixed_mesh_smoke_input.json"
     )
     payload = deepcopy(smoke.input_payload)
     payload["factories"]["default_s3_expected"] = "e4-pl-s3"
     smoke = replace(smoke, input_payload=payload)
-    manifest_generator = base._load_module(
+    manifest_generator = loader(
         "_s3_activation_v3_manifest",
         reference_cases / "e4_pl_s3_mixed_mesh_manifest.py",
     )
+    if verified_loader is not None:
+        # Protocol-v2 helpers otherwise reload registered programs from their
+        # paths after authority validation.  The formal runner supplies one
+        # loader backed only by its already verified byte buffers.
+        common._load_source = verified_loader
+        eigen._load_module = verified_loader
+        smoke_runner._load_manifest_generator = lambda: manifest_generator
     return base.MechanicsBundle(
         common,
         producer,
@@ -126,23 +199,142 @@ def run_pytest_lane_without_elapsed_ceiling(
 
     import subprocess
 
+    binding_path = Path(authority.input_path).resolve(strict=True)
+    generator_path = (
+        Path(__file__).resolve().parents[2]
+        / "scripts"
+        / "prepare_e4_pl_s3_qualification_v3_input.py"
+    ).resolve(strict=True)
+    lane_temp = Path(tempfile.mkdtemp(prefix="anysolver-s3-v3-pytest-"))
+    lane_code = base._pytest_lane_code(authority, nodes)
+    needle = "+ ['-q']"
+    if lane_code.count(needle) != 1:
+        shutil.rmtree(lane_temp)
+        raise base.QualificationError("pytest lane invocation authority differs")
+    lane_code = lane_code.replace(
+        needle,
+        (
+            "+ ['-q', '-p', 'no:cacheprovider', '--basetemp', "
+            f"{str(lane_temp)!r}]"
+        ),
+        1,
+    )
+    expected_binding_sha256 = hashlib.sha256(authority.input_raw).hexdigest().upper()
+    outer_binding = base.strict_json(
+        authority.input_raw,
+        label="outer verified candidate binding",
+    )
+    expected_generator = outer_binding.get("files", {}).get("binding_generator")
+    if (
+        not isinstance(expected_generator, dict)
+        or set(expected_generator) != {"bytes", "path", "sha256"}
+        or expected_generator["path"]
+        != "scripts/prepare_e4_pl_s3_qualification_v3_input.py"
+    ):
+        shutil.rmtree(lane_temp)
+        raise base.QualificationError("verified binding generator authority differs")
     code = (
-        "import pathlib,sys,pytest,anysolver;"
-        f"target=pathlib.Path({str(authority.target)!r}).resolve();"
-        "assert pathlib.Path(anysolver.__file__).resolve().is_relative_to(target);"
-        f"raise SystemExit(pytest.main({list(nodes)!r}+['-q']))"
+        "import hashlib,json,os,pathlib,sys,types;"
+        "sys.dont_write_bytecode=True;"
+        "binding_path=pathlib.Path(sys.argv[1]).resolve(strict=True);"
+        "generator_path=pathlib.Path(sys.argv[2]).resolve(strict=True);"
+        "expected_binding_sha256=sys.argv[3];"
+        "expected_generator_bytes=int(sys.argv[4]);expected_generator_sha256=sys.argv[5];"
+        "raw=binding_path.read_bytes();"
+        "assert hashlib.sha256(raw).hexdigest().upper()==expected_binding_sha256;"
+        "binding=json.loads(raw);row=binding['files']['binding_generator'];"
+        "generator_status=generator_path.lstat();"
+        "assert generator_path.is_file() and not generator_path.is_symlink() and not (getattr(generator_status,'st_file_attributes',0)&0x400);"
+        "generator_raw=generator_path.read_bytes();"
+        "assert row=={'bytes':expected_generator_bytes,'path':'scripts/prepare_e4_pl_s3_qualification_v3_input.py','sha256':expected_generator_sha256};"
+        "assert len(generator_raw)==expected_generator_bytes and hashlib.sha256(generator_raw).hexdigest().upper()==expected_generator_sha256;"
+        "generator=types.ModuleType('_s3_v3_nested_target');"
+        "generator.__file__=str(generator_path);generator.__package__='';"
+        "sys.modules[generator.__name__]=generator;"
+        "exec(compile(generator_raw,str(generator_path),'exec',dont_inherit=True,optimize=0),generator.__dict__);"
+        "binding=generator.read_json(binding_path);"
+        "assert raw==generator.canonical_bytes(binding);"
+        "generator._activate_bound_runtime_environment(binding['runtime_environment']);"
+        "target=pathlib.Path(binding['execution_target']).resolve(strict=True);"
+        "candidates=binding['candidates'];"
+        "assert generator._verify_bound_execution_target(target,candidates,binding['runtime_environment'])==candidates;"
+        "assert all(generator._verify_candidate(name,candidates[name])==candidates[name] for name in ('ANYstructure','ANYintelligent'));"
+        "assert 'sitecustomize' not in sys.modules and 'usercustomize' not in sys.modules;"
+        "roots=[str(target),str(pathlib.Path(candidates['ANYintelligent']['root']).resolve())];"
+        "sys.path[:0]=list(dict.fromkeys(roots));"
+        f"exec({lane_code!r})"
     )
-    completed = subprocess.run(
-        [sys.executable, "-c", code],
-        cwd=cwd,
-        check=False,
-        capture_output=True,
-        text=True,
+    process_environment = authority.input["runtime_environment"].get(
+        "process_environment"
     )
+    if not isinstance(process_environment, dict) or not all(
+        type(key) is str and type(value) is str
+        for key, value in process_environment.items()
+    ):
+        raise base.QualificationError("bound process environment differs")
+    environment = dict(process_environment)
+    environment.update(
+        {
+            "ANYSOLVER_S3_V3_BINDING": str(binding_path),
+            "ANYSOLVER_S3_V3_CROSS_WHEEL": "1",
+            "ANYSOLVER_S3_V3_TARGET": str(authority.target),
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        }
+    )
+    for environment_name, length, alphabet in (
+        ("E4_PL_S3_QUALIFICATION_REQUEST_ID", 32, "0123456789abcdef"),
+        (
+            "E4_PL_S3_QUALIFICATION_ATTEMPT_SHA256",
+            64,
+            "0123456789ABCDEF",
+        ),
+    ):
+        value = os.environ.get(environment_name)
+        if value is not None:
+            if len(value) != length or any(character not in alphabet for character in value):
+                raise base.QualificationError(f"{environment_name} is malformed")
+            environment[environment_name] = value
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-S",
+                "-B",
+                "-c",
+                code,
+                str(binding_path),
+                str(generator_path),
+                expected_binding_sha256,
+                str(expected_generator["bytes"]),
+                str(expected_generator["sha256"]),
+            ],
+            cwd=cwd,
+            check=False,
+            capture_output=True,
+            env=environment,
+            text=True,
+        )
+    finally:
+        shutil.rmtree(lane_temp)
+    try:
+        report: dict[str, Any] | None = base._parse_pytest_lane_report(
+            completed.stdout
+        )
+    except base.QualificationError:
+        report = None
+    status = base._pytest_lane_status(completed.returncode, report)
     return {
         "lane": name,
-        "passed": completed.returncode == 0,
+        "passed": status == "PASS",
+        "report": report,
+        "requested_node_count": len(nodes),
         "returncode": completed.returncode,
+        "status": status,
         "stderr": completed.stderr,
         "stdout": completed.stdout,
     }

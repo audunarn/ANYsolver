@@ -12,6 +12,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import deepcopy
 from dataclasses import dataclass, replace
+import gc
 import hashlib
 import importlib.util
 import json
@@ -56,6 +57,42 @@ THREAD_ENVIRONMENT = {
     "NUMEXPR_NUM_THREADS": "1",
     "PYTHONHASHSEED": "0",
 }
+PYTEST_LANE_REPORT_PREFIX = "@@ANYSOLVER_S3_PYTEST_LANE_V1@@"
+PYTEST_LANE_STATUSES = ("PASS", "FAIL", "BLOCKED")
+SPECIAL_COVERAGE_PROPERTIES = {
+    "e4_pl_s3_d3_numbering_count": 6,
+    "e4_pl_s3_director_polarity_count": 2,
+    "e4_pl_s3_director_reversal_case_count": 12,
+    "e4_pl_s3_director_reversal_d3_numbering_count": 6,
+}
+SPECIAL_COVERAGE_NODES = {
+    "e4_pl_s3_d3_numbering_count": (
+        "tests/test_e4_pl_s3_native_tl_full_d3.py::"
+        "test_all_six_d3_numberings_transport_full_layered_bubble_response"
+    ),
+    "e4_pl_s3_director_polarity_count": (
+        "tests/test_e4_pl_s3_physical_director_reversal.py::"
+        "test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling"
+    ),
+    "e4_pl_s3_director_reversal_case_count": (
+        "tests/test_e4_pl_s3_physical_director_reversal.py::"
+        "test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling"
+    ),
+    "e4_pl_s3_director_reversal_d3_numbering_count": (
+        "tests/test_e4_pl_s3_physical_director_reversal.py::"
+        "test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling"
+    ),
+}
+REQUIRED_SPECIAL_FIXTURES = (
+    "ISOLATED_S3",
+    "PAIRED_S3",
+    "Q4_S3_Q4_CHAIN",
+    "DISTORTED_Q4_INTERFACE",
+    "ALL_SIX_D3_NUMBERINGS",
+    "PHYSICAL_DIRECTOR_REVERSAL",
+    "PUBLISHED_MESH_A",
+    "PUBLISHED_MESH_B",
+)
 
 
 class QualificationError(ValueError):
@@ -1045,8 +1082,21 @@ def _gate_convergence(authority: Authority, payload: Mapping[str, Any]) -> tuple
     convergence = limits["convergence"]
     rows = list(payload["rows"])
     levels = list(authority.contract["coverage"]["structural"]["required_levels"])
-    baseline = next(row for row in rows if int(row["sequence"]["fraction_percent"]) == 0)
+    baselines = [
+        row for row in rows if int(row["sequence"]["fraction_percent"]) == 0
+    ]
+    if len(baselines) != 1:
+        raise QualificationError("convergence shard requires exactly one all-Q4 baseline")
+    baseline = baselines[0]
     baseline_fine = float(baseline["records"][-1]["center_displacement_relative_error"])
+    baseline_response = [
+        float(row["center_displacement_relative_error"])
+        for row in baseline["records"]
+    ]
+    baseline_slope = bundle_slope(baseline_response, levels)
+    slope_deficit_limit = float(
+        convergence["response_slope_maximum_deficit_from_all_q4"]
+    )
     passed = True
     summaries: list[dict[str, Any]] = []
     for sequence in rows:
@@ -1054,6 +1104,11 @@ def _gate_convergence(authority: Authority, payload: Mapping[str, Any]) -> tuple
         response = [float(row["center_displacement_relative_error"]) for row in records]
         energy = [float(row["energy_norm_error"]) for row in records]
         response_slope = bundle_slope(response, levels)
+        response_slope_deficit = (
+            None
+            if response_slope is None or baseline_slope is None
+            else baseline_slope - response_slope
+        )
         energy_lower = _lower_one_sided_95(energy, levels)
         successive = all(
             second <= float(convergence["successive_error_factor_maximum"]) * first + 1.0e-13
@@ -1071,6 +1126,8 @@ def _gate_convergence(authority: Authority, payload: Mapping[str, Any]) -> tuple
         row_pass = bool(
             response_slope is not None
             and response_slope >= float(convergence["response_slope_lower_bound"])
+            and response_slope_deficit is not None
+            and response_slope_deficit <= slope_deficit_limit
             and energy_lower is not None
             and energy_lower >= float(convergence["energy_norm_slope_lower_95_percent"])
             and successive
@@ -1085,6 +1142,8 @@ def _gate_convergence(authority: Authority, payload: Mapping[str, Any]) -> tuple
                 "fraction_percent": fraction,
                 "passed": row_pass,
                 "response_error_slope": response_slope,
+                "response_error_slope_all_q4": baseline_slope,
+                "response_error_slope_deficit_from_all_q4": response_slope_deficit,
                 "response_error_values": response,
             }
         )
@@ -1175,11 +1234,44 @@ def _structural_worker(
         "global_convergence_records": 84,
     }
     if worker_id == STRUCTURAL_WORKERS[0]:
-        patch, _patch_status = bundle.structural_producer.produce_patch(synthetic, quick=False)
+        patch, patch_status = bundle.structural_producer.produce_patch(
+            synthetic, quick=False
+        )
         locking, _locking_status = bundle.structural_producer.produce_locking(synthetic, quick=False)
+        expected_patch_statuses = {
+            "patch_and_equilibrium",
+            "symmetry_and_covariance",
+        }
+        if set(patch_status) != expected_patch_statuses:
+            raise QualificationError("patch producer gate schema differs")
+        allowed_patch_statuses = {
+            bundle.structural_producer.BLOCKED,
+            bundle.structural_producer.COMPLETE,
+            bundle.structural_producer.FAIL,
+            bundle.structural_producer.PARTIAL,
+        }
+        if any(value not in allowed_patch_statuses for value in patch_status.values()):
+            raise QualificationError("patch producer returned an unknown gate status")
+        if patch_status["patch_and_equilibrium"] in {
+            bundle.structural_producer.BLOCKED,
+            bundle.structural_producer.PARTIAL,
+        }:
+            raise QualificationError(
+                "force-loaded transverse-shear patch evidence is incomplete"
+            )
+        if patch_status["symmetry_and_covariance"] == bundle.structural_producer.BLOCKED:
+            raise QualificationError("patch covariance process is blocked")
         locking_gate, locking_diag = _gate_locking(authority, locking, bundle)
-        patch_gate = not patch["contradictions"] and bool(patch["basis_complete"])
-        covariance_gate = patch_gate and all(
+        patch_gate = bool(
+            patch_status["patch_and_equilibrium"]
+            == bundle.structural_producer.COMPLETE
+            and not patch["contradictions"]
+            and patch["basis_complete"]
+        )
+        covariance_gate = bool(
+            patch_status["symmetry_and_covariance"]
+            != bundle.structural_producer.FAIL
+        ) and all(
             float(row["symmetry_residual"])
             <= float(
                 authority.contract["acceptance_gates"][
@@ -1256,40 +1348,88 @@ def _summary(values: Sequence[float]) -> dict[str, float]:
     return {"mad": float(statistics.median(abs(value - median) for value in ordered)), "median": median, "p95": float(p95)}
 
 
+def _performance_route_observation(
+    build: Any,
+    assemble: Any,
+    solve: Any,
+    *,
+    rss_reader: Any = None,
+) -> dict[str, float]:
+    """Measure one route without retaining the comparator model or state."""
+
+    reader = _working_set_bytes if rss_reader is None else rss_reader
+    gc.collect()
+    built = build()
+    try:
+        started = time.perf_counter()
+        assemble(built.model)
+        assembly_seconds = time.perf_counter() - started
+        started = time.perf_counter()
+        displacement, info = solve(
+            built.model,
+            built.load_case,
+            constraint_mode="transformation",
+        )
+        solve_seconds = time.perf_counter() - started
+        if (
+            (info.get("convergence_info") or {}).get("status") != "converged"
+            or not all(math.isfinite(float(value)) for value in displacement)
+        ):
+            raise QualificationError("paired performance solve failed")
+        rss_bytes = int(reader())
+        if rss_bytes <= 0:
+            raise QualificationError("paired performance RSS measurement failed")
+        return {
+            "assembly": float(assembly_seconds),
+            "rss": float(rss_bytes),
+            "solve": float(solve_seconds),
+        }
+    finally:
+        # Route isolation is intentional: the all-Q4 and mixed models, their
+        # factorization state, and their load state must never coexist during
+        # an RSS observation.
+        del built
+        gc.collect()
+
+
 def _paired_performance(bundle: MechanicsBundle, rows: Mapping[int, Mapping[str, Any]], fraction: int) -> tuple[bool, dict[str, Any]]:
     from anysolver.assembly import solve_linear
     from anysolver.matrix_assembly import assemble_stiffness_matrix
 
-    models = {
-        "all_q4": _candidate_case(bundle, rows, 0, auxiliary=True),
-        "mixed": _candidate_case(bundle, rows, fraction, auxiliary=True),
+    builders = {
+        "all_q4": lambda: _candidate_case(bundle, rows, 0, auxiliary=True),
+        "mixed": lambda: _candidate_case(bundle, rows, fraction, auxiliary=True),
     }
-    for built in models.values():
-        assemble_stiffness_matrix(built.model)
-        displacement, info = solve_linear(built.model, built.load_case, constraint_mode="transformation")
-        if (info.get("convergence_info") or {}).get("status") != "converged" or not all(math.isfinite(float(value)) for value in displacement):
-            raise QualificationError("paired performance warmup failed")
-    samples = {name: {"assembly": [], "solve": [], "rss": []} for name in models}
+    for build in builders.values():
+        _performance_route_observation(
+            build,
+            assemble_stiffness_matrix,
+            solve_linear,
+        )
+    samples = {name: {"assembly": [], "solve": [], "rss": []} for name in builders}
     for repetition in range(12):
         order = ("all_q4", "mixed") if repetition % 2 == 0 else ("mixed", "all_q4")
         for name in order:
-            built = models[name]
-            started = time.perf_counter()
-            assemble_stiffness_matrix(built.model)
-            samples[name]["assembly"].append(time.perf_counter() - started)
-            started = time.perf_counter()
-            _displacement, info = solve_linear(built.model, built.load_case, constraint_mode="transformation")
-            samples[name]["solve"].append(time.perf_counter() - started)
-            if (info.get("convergence_info") or {}).get("status") != "converged":
-                raise QualificationError("paired performance solve failed")
-            samples[name]["rss"].append(float(_working_set_bytes()))
+            observed = _performance_route_observation(
+                builders[name],
+                assemble_stiffness_matrix,
+                solve_linear,
+            )
+            for metric in ("assembly", "solve", "rss"):
+                samples[name][metric].append(observed[metric])
     summaries = {name: {metric: _summary(values) for metric, values in metrics.items()} for name, metrics in samples.items()}
     ratios = {
         metric: summaries["mixed"][metric]["median"] / max(summaries["all_q4"][metric]["median"], sys.float_info.min)
         for metric in ("assembly", "solve", "rss")
     }
     passed = all(value <= 1.10 for value in ratios.values())
-    return passed, {"fraction_percent": fraction, "order": "ALTERNATING_BALANCED_12_PAIRS", "ratios": ratios, "summaries": summaries}
+    return passed, {
+        "fraction_percent": fraction,
+        "order": "ALTERNATING_BALANCED_12_PAIRS",
+        "ratios": ratios,
+        "rss_measurement": "ONE_ROUTE_MODEL_AT_A_TIME_NO_COMPARATOR_RETENTION",
+        "summaries": summaries,
+    }
 
 
 def _eigen_authority(authority: Authority, bundle: MechanicsBundle) -> Any:
@@ -1327,6 +1467,53 @@ def _eigen_authority(authority: Authority, bundle: MechanicsBundle) -> Any:
     return synthetic
 
 
+def _adjudicate_scientific_statuses(
+    label: str,
+    statuses: Mapping[str, str],
+    expected_keys: set[str],
+    *,
+    pass_status: str,
+    fail_status: str,
+    blocked_status: str,
+) -> bool:
+    """Keep malformed/process blocks distinct from measured contradictions."""
+
+    if set(statuses) != expected_keys:
+        raise QualificationError(f"{label} gate schema differs")
+    allowed = {pass_status, fail_status, blocked_status}
+    if any(value not in allowed for value in statuses.values()):
+        raise QualificationError(f"{label} returned an unknown gate status")
+    if blocked_status in statuses.values():
+        raise QualificationError(f"{label} solver process is blocked")
+    return all(value == pass_status for value in statuses.values())
+
+
+def _adjudicate_modal_buckling(
+    bundle: MechanicsBundle,
+    modal_status: Mapping[str, str],
+    buckling_status: Mapping[str, str],
+) -> tuple[bool, bool]:
+    common = {
+        "pass_status": bundle.eigen.PASS,
+        "fail_status": bundle.eigen.FAIL,
+        "blocked_status": bundle.eigen.BLOCKED,
+    }
+    return (
+        _adjudicate_scientific_statuses(
+            "modal",
+            modal_status,
+            {"modal_frequency", "modal_mac", "rigid_modes"},
+            **common,
+        ),
+        _adjudicate_scientific_statuses(
+            "buckling",
+            buckling_status,
+            {"buckling_factors", "buckling_mac", "buckling_positive"},
+            **common,
+        ),
+    )
+
+
 def _eigen_worker(authority: Authority, bundle: MechanicsBundle) -> tuple[dict[str, bool], dict[str, Any], dict[str, int]]:
     synthetic = _eigen_authority(authority, bundle)
     rows = _topology_rows(authority)
@@ -1335,9 +1522,12 @@ def _eigen_worker(authority: Authority, bundle: MechanicsBundle) -> tuple[dict[s
     for fraction in (10, 25):
         modal_status, modal_diag = bundle.eigen._modal_worker(synthetic, fraction)
         buckling_status, buckling_diag = bundle.eigen._buckling_worker(synthetic, fraction)
+        modal_pass, buckling_pass = _adjudicate_modal_buckling(
+            bundle, modal_status, buckling_status
+        )
         pair_pass, pair_diag = _paired_performance(bundle, rows, fraction)
-        statuses[f"modal_{fraction}"] = all(value == bundle.eigen.PASS for value in modal_status.values())
-        statuses[f"buckling_{fraction}"] = all(value == bundle.eigen.PASS for value in buckling_status.values())
+        statuses[f"modal_{fraction}"] = modal_pass
+        statuses[f"buckling_{fraction}"] = buckling_pass
         statuses[f"performance_{fraction}"] = pair_pass
         diagnostics[f"modal_{fraction}"] = modal_diag
         diagnostics[f"buckling_{fraction}"] = buckling_diag
@@ -1358,15 +1548,14 @@ def _eigen_fraction_worker(
     rows = _topology_rows(authority)
     modal_status, modal_diag = bundle.eigen._modal_worker(synthetic, fraction)
     buckling_status, buckling_diag = bundle.eigen._buckling_worker(synthetic, fraction)
+    modal_pass, buckling_pass = _adjudicate_modal_buckling(
+        bundle, modal_status, buckling_status
+    )
     pair_pass, pair_diag = _paired_performance(bundle, rows, fraction)
     return (
         {
-            f"modal_{fraction}": all(
-                value == bundle.eigen.PASS for value in modal_status.values()
-            ),
-            f"buckling_{fraction}": all(
-                value == bundle.eigen.PASS for value in buckling_status.values()
-            ),
+            f"modal_{fraction}": modal_pass,
+            f"buckling_{fraction}": buckling_pass,
             f"performance_{fraction}": pair_pass,
         },
         {
@@ -1454,13 +1643,118 @@ def _batch_shard_worker(
     )
 
 
-def _run_pytest_lane(authority: Authority, name: str, cwd: Path, nodes: Sequence[str]) -> dict[str, Any]:
-    code = (
-        "import pathlib,sys,pytest,anysolver;"
-        f"target=pathlib.Path({str(authority.target)!r}).resolve();"
-        "assert pathlib.Path(anysolver.__file__).resolve().is_relative_to(target);"
-        f"raise SystemExit(pytest.main({list(nodes)!r}+['-q']))"
+def _pytest_lane_code(authority: Authority, nodes: Sequence[str]) -> str:
+    """Return a self-contained pytest process with a strict outcome report."""
+
+    return "\n".join(
+        (
+            "import json, pathlib, sys, pytest, anysolver",
+            f"target = pathlib.Path({str(authority.target)!r}).resolve()",
+            "assert pathlib.Path(anysolver.__file__).resolve().is_relative_to(target)",
+            "class _LanePlugin:",
+            "    def __init__(self):",
+            "        self.collected = 0",
+            "        self.collection_errors = 0",
+            "        self.outcomes = {}",
+            "    def pytest_collection_finish(self, session):",
+            "        self.collected = len(session.items)",
+            "    def pytest_collectreport(self, report):",
+            "        if report.failed:",
+            "            self.collection_errors += 1",
+            "    def pytest_runtest_logreport(self, report):",
+            "        row = self.outcomes.setdefault(report.nodeid, {'nodeid': report.nodeid, 'outcome': 'not-run', 'properties': []})",
+            "        if report.when == 'call':",
+            "            row['outcome'] = report.outcome",
+            "            row['properties'] = [[str(key), value] for key, value in report.user_properties]",
+            "        elif report.failed:",
+            "            row['outcome'] = 'failed'",
+            "        elif report.skipped and row['outcome'] == 'not-run':",
+            "            row['outcome'] = 'skipped'",
+            "plugin = _LanePlugin()",
+            f"returncode = int(pytest.main({list(nodes)!r} + ['-q'], plugins=[plugin]))",
+            "report = {'collected': plugin.collected, 'collection_errors': plugin.collection_errors, 'outcomes': [plugin.outcomes[key] for key in sorted(plugin.outcomes)]}",
+            f"print({PYTEST_LANE_REPORT_PREFIX!r} + json.dumps(report, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False), flush=True)",
+            "raise SystemExit(returncode)",
+        )
     )
+
+
+def _parse_pytest_lane_report(stdout: str) -> dict[str, Any]:
+    matches = [
+        line.removeprefix(PYTEST_LANE_REPORT_PREFIX)
+        for line in stdout.splitlines()
+        if line.startswith(PYTEST_LANE_REPORT_PREFIX)
+    ]
+    if len(matches) != 1:
+        raise QualificationError("pytest lane report count differs")
+    report = strict_json(
+        (matches[0] + "\n").encode("utf-8"), label="pytest lane report"
+    )
+    _exact_keys(
+        report,
+        ("collected", "collection_errors", "outcomes"),
+        "pytest lane report",
+    )
+    if (
+        type(report["collected"]) is not int
+        or report["collected"] < 0
+        or type(report["collection_errors"]) is not int
+        or report["collection_errors"] < 0
+        or not isinstance(report["outcomes"], list)
+    ):
+        raise QualificationError("pytest lane report counts are malformed")
+    nodeids: set[str] = set()
+    for index, outcome in enumerate(report["outcomes"]):
+        _exact_keys(
+            outcome,
+            ("nodeid", "outcome", "properties"),
+            f"pytest lane outcome {index}",
+        )
+        if (
+            not isinstance(outcome["nodeid"], str)
+            or not outcome["nodeid"]
+            or outcome["nodeid"] in nodeids
+            or outcome["outcome"] not in {"passed", "failed", "skipped"}
+            or not isinstance(outcome["properties"], list)
+        ):
+            raise QualificationError("pytest lane outcome is malformed")
+        nodeids.add(outcome["nodeid"])
+        property_names: set[str] = set()
+        for item in outcome["properties"]:
+            if (
+                not isinstance(item, list)
+                or len(item) != 2
+                or not isinstance(item[0], str)
+                or not item[0]
+                or item[0] in property_names
+            ):
+                raise QualificationError("pytest lane property is malformed")
+            property_names.add(item[0])
+    return report
+
+
+def _pytest_lane_status(returncode: int, report: Mapping[str, Any] | None) -> str:
+    if report is None:
+        return "BLOCKED"
+    outcomes = list(report["outcomes"])
+    if (
+        int(report["collected"]) <= 0
+        or int(report["collected"]) != len(outcomes)
+        or int(report["collection_errors"]) != 0
+        or any(row["outcome"] == "skipped" for row in outcomes)
+    ):
+        return "BLOCKED"
+    failed = sum(row["outcome"] == "failed" for row in outcomes)
+    passed = sum(row["outcome"] == "passed" for row in outcomes)
+    if returncode == 0 and failed == 0 and passed == len(outcomes):
+        return "PASS"
+    if returncode == 1 and failed > 0 and failed + passed == len(outcomes):
+        return "FAIL"
+    return "BLOCKED"
+
+
+def _run_pytest_lane(authority: Authority, name: str, cwd: Path, nodes: Sequence[str]) -> dict[str, Any]:
+    code = _pytest_lane_code(authority, nodes)
     completed = subprocess.run(
         [sys.executable, "-c", code],
         cwd=cwd,
@@ -1469,7 +1763,151 @@ def _run_pytest_lane(authority: Authority, name: str, cwd: Path, nodes: Sequence
         text=True,
         timeout=480,
     )
-    return {"lane": name, "passed": completed.returncode == 0, "returncode": completed.returncode, "stdout": completed.stdout, "stderr": completed.stderr}
+    try:
+        report: dict[str, Any] | None = _parse_pytest_lane_report(completed.stdout)
+    except QualificationError:
+        report = None
+    status = _pytest_lane_status(completed.returncode, report)
+    return {
+        "lane": name,
+        "passed": status == "PASS",
+        "report": report,
+        "requested_node_count": len(nodes),
+        "returncode": completed.returncode,
+        "status": status,
+        "stderr": completed.stderr,
+        "stdout": completed.stdout,
+    }
+
+
+def _validated_pytest_lane_result(
+    lane: Mapping[str, Any], result: Mapping[str, Any]
+) -> tuple[str, dict[str, Any] | None]:
+    _exact_keys(lane, ("name", "nodes", "repository"), "special lane")
+    if (
+        not isinstance(lane["name"], str)
+        or not isinstance(lane["repository"], str)
+        or not isinstance(lane["nodes"], list)
+        or not lane["nodes"]
+        or any(not isinstance(node, str) or not node for node in lane["nodes"])
+    ):
+        raise QualificationError("special lane declaration is malformed")
+    _exact_keys(
+        result,
+        (
+            "lane",
+            "passed",
+            "report",
+            "requested_node_count",
+            "returncode",
+            "status",
+            "stderr",
+            "stdout",
+        ),
+        f"special lane {lane['name']} result",
+    )
+    if (
+        result["lane"] != lane["name"]
+        or type(result["passed"]) is not bool
+        or type(result["requested_node_count"]) is not int
+        or result["requested_node_count"] != len(lane["nodes"])
+        or type(result["returncode"]) is not int
+        or result["status"] not in PYTEST_LANE_STATUSES
+        or not isinstance(result["stdout"], str)
+        or not isinstance(result["stderr"], str)
+    ):
+        raise QualificationError("special lane result identity differs")
+    try:
+        parsed = _parse_pytest_lane_report(result["stdout"])
+    except QualificationError:
+        parsed = None
+    if result["report"] != parsed:
+        raise QualificationError("special lane embedded report differs")
+    expected_status = _pytest_lane_status(result["returncode"], parsed)
+    if (
+        result["status"] != expected_status
+        or result["passed"] != (expected_status == "PASS")
+    ):
+        raise QualificationError("special lane status was not recomputed")
+    return expected_status, parsed
+
+
+def _special_coverage_claims(
+    reports: Sequence[Mapping[str, Any]],
+) -> dict[str, int]:
+    claims: dict[str, int] = {}
+    for report in reports:
+        for outcome in report["outcomes"]:
+            normalized_nodeid = str(outcome["nodeid"]).replace("\\", "/")
+            for name, value in outcome["properties"]:
+                if name not in SPECIAL_COVERAGE_PROPERTIES:
+                    continue
+                expected_node = SPECIAL_COVERAGE_NODES[name]
+                if not normalized_nodeid.endswith(expected_node):
+                    raise QualificationError(
+                        f"special coverage property {name} came from the wrong test"
+                    )
+                if name in claims or type(value) is not int or value < 0:
+                    raise QualificationError(
+                        f"special coverage property {name} is duplicated or malformed"
+                    )
+                claims[name] = value
+    return claims
+
+
+def _adjudicate_special_lanes(
+    lanes: Sequence[Mapping[str, Any]],
+    results: Sequence[Mapping[str, Any]],
+    special_fixtures: Sequence[str],
+) -> tuple[dict[str, bool], dict[str, Any], dict[str, int]]:
+    if tuple(special_fixtures) != REQUIRED_SPECIAL_FIXTURES:
+        raise QualificationError("registered special fixture inventory differs")
+    if not lanes or len(lanes) != len(results):
+        raise QualificationError("special lane result count differs")
+    names = [lane.get("name") for lane in lanes]
+    if any(not isinstance(name, str) for name in names) or len(set(names)) != len(names):
+        raise QualificationError("special lane identities are malformed or duplicated")
+    statuses: list[str] = []
+    reports: list[Mapping[str, Any]] = []
+    diagnostics: dict[str, Any] = {}
+    collected = passed = failed = 0
+    for lane, result in zip(lanes, results):
+        status, report = _validated_pytest_lane_result(lane, result)
+        statuses.append(status)
+        diagnostics[str(lane["name"])] = {
+            key: value for key, value in result.items() if key != "lane"
+        }
+        if report is not None:
+            reports.append(report)
+            collected += int(report["collected"])
+            passed += sum(row["outcome"] == "passed" for row in report["outcomes"])
+            failed += sum(row["outcome"] == "failed" for row in report["outcomes"])
+    if "BLOCKED" in statuses:
+        raise QualificationError("special pytest process or evidence is blocked")
+    claims = _special_coverage_claims(reports)
+    if all(status == "PASS" for status in statuses) and claims != SPECIAL_COVERAGE_PROPERTIES:
+        raise QualificationError("successful special lanes lack exact D3/reversal coverage")
+    gates = {
+        f"lane_{lane['name']}": status == "PASS"
+        for lane, status in zip(lanes, statuses)
+    }
+    coverage = {
+        "d3_numberings": claims.get("e4_pl_s3_d3_numbering_count", 0),
+        "director_polarities": claims.get("e4_pl_s3_director_polarity_count", 0),
+        "director_reversal_cases": claims.get(
+            "e4_pl_s3_director_reversal_case_count", 0
+        ),
+        "director_reversal_d3_numberings": claims.get(
+            "e4_pl_s3_director_reversal_d3_numbering_count", 0
+        ),
+        "registered_special_fixtures": len(special_fixtures),
+        "special_collected_tests": collected,
+        "special_failed_tests": failed,
+        "special_lanes": len(lanes),
+        "special_passed_tests": passed,
+        "special_requested_nodes": sum(len(lane["nodes"]) for lane in lanes),
+    }
+    return gates, diagnostics, coverage
 
 
 def _special_worker(authority: Authority, _bundle: MechanicsBundle) -> tuple[dict[str, bool], dict[str, Any], dict[str, int]]:
@@ -1479,9 +1917,11 @@ def _special_worker(authority: Authority, _bundle: MechanicsBundle) -> tuple[dic
         root = Path(str(authority.input["candidates"][lane["repository"]]["root"])).resolve()
         nodes = [str(root / node.split("::", 1)[0]) + ("::" + node.split("::", 1)[1] if "::" in node else "") for node in lane["nodes"]]
         results.append(_run_pytest_lane(authority, str(lane["name"]), root, nodes))
-    gates = {f"lane_{row['lane']}": bool(row["passed"]) for row in results}
-    diagnostics = {row["lane"]: {key: value for key, value in row.items() if key != "lane"} for row in results}
-    return gates, diagnostics, {"special_lanes": len(results), "registered_special_fixtures": 8}
+    return _adjudicate_special_lanes(
+        lanes,
+        results,
+        authority.contract["coverage"]["structural"]["special_fixtures"],
+    )
 
 
 def run_worker(authority: Authority, worker_id: str, output: Path) -> None:

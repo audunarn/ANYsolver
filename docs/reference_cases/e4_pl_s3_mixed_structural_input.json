@@ -17,9 +17,9 @@
     },
     "programs": {
       "common": {
-        "bytes": 59977,
+        "bytes": 60238,
         "path": "docs/reference_cases/e4_pl_s3_mixed_structural_common.py",
-        "sha256": "5F08AF199C46517D2489616EF865EB2AF0C14B2864C4A503DF72EC12C668163D"
+        "sha256": "834B3A061D0B37A6EB494BD1B66EE031093AEE6A87C3051F0D63253C3C67CE82"
       },
       "coordinator": {
         "bytes": 14227,
@@ -27,14 +27,14 @@
         "sha256": "22E79A9AC370ADD821A8B10817071ECD13A7E707EEBB2EE3715C0BCB22DEF711"
       },
       "producer": {
-        "bytes": 41981,
+        "bytes": 42132,
         "path": "docs/reference_cases/e4_pl_s3_mixed_structural_producer.py",
-        "sha256": "6D255283FE9E38CA67543AD3D2DBBABAF4DCECD9D9BB269B2456B52F9869ED31"
+        "sha256": "BB3BE3D7068473A6A7D37C0AAF773FF6489BE167F2B29E194E9F2ABEF524F986"
       },
       "qualification_test": {
-        "bytes": 25498,
+        "bytes": 26112,
         "path": "tests/test_e4_pl_s3_mixed_structural_qualification.py",
-        "sha256": "CB54674637B26595318ABE66A377CA259DCD6EE716FDBD899BAA873F5C552336"
+        "sha256": "F614DA5D4E635D927CACB51C12FADC73F56819163F7261928C1EA4207BC3F4A4"
       }
     },
     "q4_mechanics": {

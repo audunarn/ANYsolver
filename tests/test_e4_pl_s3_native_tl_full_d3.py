@@ -507,7 +507,9 @@ def _assert_trial_state_transport(
     assert actual["equivalent_stress_measure"] == baseline["equivalent_stress_measure"]
 
 
-def test_all_six_d3_numberings_transport_full_layered_bubble_response() -> None:
+def test_all_six_d3_numberings_transport_full_layered_bubble_response(
+    record_property,
+) -> None:
     (
         reference_nodes,
         current_nodes,
@@ -534,8 +536,10 @@ def test_all_six_d3_numberings_transport_full_layered_bubble_response() -> None:
     baseline_work = float(baseline_virtual @ baseline_force)
     baseline_quadratic_work = float(external @ baseline_tangent @ external)
     odd_permutations = 0
+    executed_permutations: set[tuple[int, ...]] = set()
 
     for permutation in itertools.permutations(range(3)):
+        executed_permutations.add(permutation)
         inversions = sum(
             permutation[left] > permutation[right]
             for left in range(3)
@@ -658,4 +662,7 @@ def test_all_six_d3_numberings_transport_full_layered_bubble_response() -> None:
             err_msg=f"equilibrated director state for {permutation}",
         )
 
+    expected_permutations = set(itertools.permutations(range(3)))
+    assert executed_permutations == expected_permutations
     assert odd_permutations == 3
+    record_property("e4_pl_s3_d3_numbering_count", len(executed_permutations))

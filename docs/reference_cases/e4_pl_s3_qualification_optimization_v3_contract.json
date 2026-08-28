@@ -1,10 +1,10 @@
 {
-  "authority_state": "DRAFT_REQUIRES_FINAL_CANDIDATE_REBIND",
+  "authority_state": "IMPLEMENTATION_FROZEN_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS",
   "candidate_provenance": {
     "github_main": {
-      "commit": "21dca63b6dbc11f52950e3af2316ba4a6e398d73",
-      "subject": "Merge pull request #30 from audunarn/codex/s3-e4-pl-burnin-ci-portability",
-      "tree": "6daa9ce46afdaed9223f1eeda8711243be099d68"
+      "commit": "1a472dcd4edadbb944302363a16c1e7dc20227fb",
+      "subject": "Merge pull request #29 from audunarn/codex/s3-e4-pl-final-burnin",
+      "tree": "bed5551bd64966b5d0ef79d68ecf1544a332600d"
     },
     "imported_reviewed_hardening": {
       "commit": "65ec3428ff4a6b225efe3dcb6043784723956ea3",
@@ -44,9 +44,23 @@
         "COORDINATOR_SHA256",
         "LEVEL_FRACTION_AND_RECORD_ID"
       ],
-      "schema": "anysolver.e4-pl-s3-coordinator-assignment-v1"
+      "schema": "anysolver.e4-pl-s3-formal-shard-assignment-v3"
     },
     "automatic_retry": false,
+    "candidate_checkout_closure": {
+      "ignored_files_permitted": false,
+      "source_directories_and_files_hash_bound": true,
+      "tracked_worktree_must_be_physically_closed": true
+    },
+    "git_runtime": {
+      "absolute_launcher_and_native_engine_hash_bound": true,
+      "application_directories_and_non_os_dlls_hash_bound": true,
+      "authority_commands_required_as_builtins": true,
+      "build_options_and_exec_path_hash_bound": true,
+      "configuration_grafts_replacements_and_attributes_disabled": true,
+      "local_filter_include_and_info_attribute_routes_forbidden": true,
+      "native_engine_executed_directly": true
+    },
     "inactivity_watchdog": {
       "condition": "NO_CHECKPOINT_OR_STDOUT_STDERR_PROGRESS_AND_NO_COMPLETE_TREE_CPU_TIME_PROGRESS",
       "seconds": 1800
@@ -54,6 +68,23 @@
     "memory_limit_gib_per_child": 24,
     "memory_limit_scope": "COMPLETE_CHILD_PROCESS_TREE",
     "parallel_workers_maximum": 3,
+    "python_startup": {
+      "environment": "CLOSED_HASH_BOUND_ALLOWLIST_WITH_NO_INHERITED_PROJECT_NUMERIC_OR_PYTEST_CONTROLS",
+      "flags": [
+        "-I",
+        "-S",
+        "-B"
+      ],
+      "interpreter": "EXACT_RESOURCE_AUTHORITY_PATH",
+      "optimization_level": 0,
+      "pytest_plugin_autoload": false,
+      "runtime_surface": "EXECUTABLE_DLL_STDLIB_AND_BASE_ROOT_IMPORT_SURFACE_HASH_BOUND"
+    },
+    "resource_attempt": {
+      "exclusive_claim": true,
+      "reuse_after_any_claim": false,
+      "worker_binding": "INHERITED_ATTEMPT_SHA256"
+    },
     "runtime_classification": false,
     "total_runtime_limit_seconds": null,
     "tree_accounting_unavailable": "FAIL_CLOSED"
@@ -76,6 +107,7 @@
     "ANYmaterial.commit_tree_subject_root_and_wheel",
     "ANYgeometry.commit_tree_subject_root_and_wheel",
     "isolated_execution_target",
+    "isolated_runtime_environment",
     "candidate_dependency_graph",
     "candidate_preflight_results_and_log_hashes",
     "coordinator.bytes_and_sha256",
@@ -92,10 +124,7 @@
   "formal_runner": {
     "aggregate_after_all_launched_workers_terminal": true,
     "batch_workers": 3,
-    "cycle_count_allowed": [
-      1,
-      2
-    ],
+    "cycle_count_required": 2,
     "cycle_scientific_bytes_must_match_for_two_cycles": true,
     "eigen_performance_workers": 1,
     "exact_batch_repetitions": 12,
@@ -117,7 +146,19 @@
         "BATCH_2"
       ]
     ],
-    "scientific_scope": "UNCHANGED_PROTOCOL_V2_COMPLETE_GATES",
+    "scientific_protocol_interpretation": {
+      "d3_and_director_reversal": "EXACT_MACHINE_COUNTED_REQUIRED_SPECIAL_ECOSYSTEM_LANES",
+      "patch_basis": [
+        "MEMBRANE_CONSTANT_STRAIN",
+        "BENDING_CONSTANT_CURVATURE",
+        "FORCE_LOADED_IN_PLANE_SHEAR"
+      ],
+      "transverse_shear_affine_trace": "NONCLASSIFYING_KINEMATIC_AND_RECOVERY_DIAGNOSTIC",
+      "transverse_shear_qualification": "LOCKING_RECOVERY_MODAL_BUCKLING_AND_MIXED_STRUCTURAL_GATES; NO_INVENTED_FORCE_LOADED_PROTOCOL",
+      "worker_process_failure": "BLOCKED_NOT_SCIENTIFIC_NO_GO"
+    },
+    "scientific_scope": "UNCHANGED_CASES_TOLERANCES_TOPOLOGIES_AND_RELATIVE_PERFORMANCE_GATES_WITH_CORRECTED_PROCESS_ENFORCEMENT",
+    "special_ecosystem_workers": 1,
     "special_lane_overlay": [
       {
         "name": "anyfileio-neutral-shell-authority-v3",
@@ -142,7 +183,6 @@
         "repository": "ANYsolver"
       }
     ],
-    "special_ecosystem_workers": 1,
     "structural_shards": 3
   },
   "frozen_historical_inputs": {
@@ -157,15 +197,32 @@
       "sha256": "B2A357B82667C5A978A381E5595D3D5EE32435E38ADD47990D88A9D95E002FDA"
     },
     "activation_v2_program": {
-      "bytes": 73780,
+      "bytes": 63308,
       "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
-      "sha256": "E526D23AAEAB37F7C80A966748B6EA31777C43C46A3E7319C41BCBAE3FF1B0C4"
+      "sha256": "0353FAE7E44F1BE3E95F789CB97E759E70059090D84E65C42CDACA74A67F2F1E"
     },
     "connectivity_manifest": {
       "bytes": 110005,
       "path": "docs/reference_cases/e4_pl_s3_mixed_mesh_connectivity_manifest.json",
       "record_count": 252,
       "sha256": "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+    }
+  },
+  "frozen_successor_scientific_programs": {
+    "batch_benchmark": {
+      "bytes": 18309,
+      "path": "scripts/benchmark_e4_pl_s3_reference_batch.py",
+      "sha256": "A348DFBCE3FDC62E9DBEE42788022A142605B2C1E2C436B385A702B0A6389DA5"
+    },
+    "runner": {
+      "bytes": 90136,
+      "path": "docs/reference_cases/e4_pl_s3_default_activation_v2.py",
+      "sha256": "E16EB76B2C3BCB6D50675F58694D61980614CB9760185E0F135BD51CA7CC82CF"
+    },
+    "test": {
+      "bytes": 12704,
+      "path": "tests/test_e4_pl_s3_default_activation_v2.py",
+      "sha256": "CE6E5FDF4A1C8266B01E5EEA24132A07AA26DA74A708033AC1F423B21FBE48F3"
     }
   },
   "mechanics_equivalence": {
@@ -264,6 +321,21 @@
     "scientific_payloads_byte_identical": true
   },
   "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
+  "release_authority": {
+    "activation_integration_must_precede_release_authorization": true,
+    "exact_qualified_wheel_only": true,
+    "post_qualification_review_required": true,
+    "protected_merge_ancestry_required": true,
+    "qualification_restriction_retained_until_separate_release_authorization": true,
+    "release_ledger_schema": "anysolver.e4-pl-s3-release-ledger-v3"
+  },
+  "review_authority": {
+    "required_reviewer_ids": [
+      "s3-v3-authority-reviewer",
+      "s3-v3-science-reviewer"
+    ],
+    "roles": "SEPARATE_AUTHORITY_AND_SCIENTIFIC_REVIEWS_BOUND_BY_AUTHORIZATION_COMMIT"
+  },
   "schema": "anysolver.e4-pl-s3-qualification-optimization-contract-v3",
-  "terminal": "DRAFT_E4_PL_S3_OPTIMIZATION_REQUIRES_FINAL_REBIND_AND_REVIEW"
+  "terminal": "FROZEN_E4_PL_S3_OPTIMIZATION_REQUIRES_FINAL_REBIND_AND_REVIEW"
 }

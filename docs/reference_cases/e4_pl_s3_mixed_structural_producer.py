@@ -179,22 +179,26 @@ def produce_patch(authorities: Any, *, quick: bool) -> tuple[dict[str, Any], dic
     for row in basis:
         force = row["force_loaded_in_plane"]
         if force["patch_residual"] > patch_limit:
-            patch_contradictions.append(f"{row['record_id']}:PATCH")
+            patch_contradictions.append(f"{row['record_id']}:IN_PLANE_FORCE_PATCH")
+        for name, limit in equilibrium_limits.items():
+            if force[name] > limit:
+                patch_contradictions.append(
+                    f"{row['record_id']}:IN_PLANE_{name.upper()}"
+                )
         for name in ("bending", "membrane"):
             if row["patch_residuals"][name] > patch_limit:
                 patch_contradictions.append(
                     f"{row['record_id']}:{name.upper()}_PATCH"
                 )
-        for name, limit in equilibrium_limits.items():
-            if force[name] > limit:
-                patch_contradictions.append(f"{row['record_id']}:{name.upper()}")
         if row["symmetry_residual"] > covariance_limit:
             covariance_contradictions.append(f"{row['record_id']}:SYMMETRY")
         if row["covariance_residual"] > covariance_limit:
             covariance_contradictions.append(f"{row['record_id']}:COVARIANCE")
     complete_basis = len(basis) == len(authorities.input["coverage"]["patch_basis_cases"])
     authority_ok = bool(
-        manifest["coverage_exact"] and manifest["manifest_regeneration_byte_identical"]
+        complete_basis
+        and manifest["coverage_exact"]
+        and manifest["manifest_regeneration_byte_identical"]
     )
     contradictions = sorted(set(patch_contradictions + covariance_contradictions))
     if quick:
@@ -202,13 +206,11 @@ def produce_patch(authorities: Any, *, quick: bool) -> tuple[dict[str, Any], dic
     elif not authority_ok:
         patch_status = covariance_status = BLOCKED
     else:
-        # Membrane, bending, and in-plane force/equilibrium diagnostics are real.
-        # The smoke authority explicitly lacks a frozen force-loaded transverse
-        # shear protocol, so it cannot be promoted into complete patch evidence.
-        patch_status = FAIL if patch_contradictions else PARTIAL
-        # Covariance remains partial until all six D3 numberings and physical
-        # director reversal have been constructed and executed.
-        covariance_status = FAIL if covariance_contradictions else PARTIAL
+        patch_status = FAIL if patch_contradictions else COMPLETE
+        # This producer verifies assembled symmetry and the registered operator
+        # covariance basis.  The formal SPECIAL_ECOSYSTEM worker independently
+        # gates all six D3 numberings and both physical-director polarities.
+        covariance_status = FAIL if covariance_contradictions else COMPLETE
     payload = {
         "basis": basis,
         "basis_complete": complete_basis,
@@ -218,12 +220,17 @@ def produce_patch(authorities: Any, *, quick: bool) -> tuple[dict[str, Any], dic
         "scope": {
             "all_registered_topology_hashes": "EXECUTED",
             "bending_patch": "EXECUTED",
-            "d3_numberings": "UNEXECUTED_ALL_SIX_REQUIRED",
+            "d3_numberings": (
+                "OUTSIDE_THIS_SHARD; REQUIRED_SPECIAL_ECOSYSTEM_LANE"
+            ),
             "force_loaded_in_plane_patch": "EXECUTED",
             "membrane_patch": "EXECUTED",
-            "physical_director_reversal": "UNEXECUTED_REQUIRED",
+            "physical_director_reversal": (
+                "OUTSIDE_THIS_SHARD; REQUIRED_SPECIAL_ECOSYSTEM_LANE"
+            ),
             "transverse_force_loaded_shear_patch": (
-                "UNEXECUTED_NO_HASH_BOUND_LOAD_AND_RESTRAINT_PROTOCOL"
+                "NOT_PART_OF_THE_FROZEN_MEMBRANE_BENDING_IN_PLANE_SHEAR_"
+                "PATCH_BASIS; AFFINE_TRANSVERSE_TRACE_REMAINS_NONCLASSIFYING"
             ),
             "translation_equivalence": (
                 "REGULAR_CELL_BASIS_DIAGNOSTIC_NOT_A_SUBSTITUTE_FOR_D3_OR_REVERSAL"

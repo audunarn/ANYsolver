@@ -200,7 +200,10 @@ def test_all_six_d3_actions_preserve_both_physical_directors() -> None:
             assert element.sheet_area_orientation_sign(model.mesh) == expected_sign
 
 
-def test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling() -> None:
+def test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling(
+    record_property,
+) -> None:
+    executed_cases: set[tuple[int, tuple[int, int, int]]] = set()
     for polarity in (-1, 1):
         baseline_model, baseline_element = _model(
             polarity=polarity,
@@ -214,6 +217,7 @@ def test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling()
             )["total"]
         )
         for ordering in itertools.permutations((1, 2, 3)):
+            executed_cases.add((polarity, ordering))
             model, element = _model(
                 polarity=polarity,
                 node_order=ordering,
@@ -232,6 +236,22 @@ def test_all_six_d3_operators_are_covariant_for_both_polarities_and_B_coupling()
                 for component in range(6)
             ]
             assert _relative(actual, baseline[np.ix_(dofs, dofs)]) <= 3.0e-14
+    assert executed_cases == {
+        (polarity, ordering)
+        for polarity in (-1, 1)
+        for ordering in itertools.permutations((1, 2, 3))
+    }
+    record_property(
+        "e4_pl_s3_director_reversal_d3_numbering_count",
+        len({ordering for _polarity, ordering in executed_cases}),
+    )
+    record_property(
+        "e4_pl_s3_director_polarity_count",
+        len({polarity for polarity, _ordering in executed_cases}),
+    )
+    record_property(
+        "e4_pl_s3_director_reversal_case_count", len(executed_cases)
+    )
 
 
 def test_B_coupled_linear_operator_and_virtual_work_are_polarity_invariant() -> None:
