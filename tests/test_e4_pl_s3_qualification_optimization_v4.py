@@ -925,6 +925,19 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
     }
     assert exception["returncode"] != 0
     assert "passed" not in exception
+    assert generator.ALLOWED_EMPTY_EXECUTION_TARGET_DIRECTORIES == {
+        "anybuckling/semianalytical/__pycache__",
+        "bin",
+    }
+    assert (
+        generator.PRE_EMPTY_DIRECTORY_EXECUTION_TARGET["rows_sha256"]
+        == generator.POST_EMPTY_DIRECTORY_EXECUTION_TARGET["rows_sha256"]
+    )
+    assert (
+        generator.POST_EMPTY_DIRECTORY_EXECUTION_TARGET["directory_count"]
+        - generator.PRE_EMPTY_DIRECTORY_EXECUTION_TARGET["directory_count"]
+        == 1
+    )
 
 
 def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(

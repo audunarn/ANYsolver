@@ -121,6 +121,23 @@ ANYSTRUCTURE_RELEASE_EXCEPTION = {
     "test_summary": "759 passed, 10 skipped, 1 release-authority fixture failed",
     "user_disposition": "DISCONTINUE_FURTHER_TESTING_INCLUDE_RELEVANT_UPDATES_CLEAN_AND_PUBLISH",
 }
+ALLOWED_EMPTY_EXECUTION_TARGET_DIRECTORIES = frozenset(
+    {"anybuckling/semianalytical/__pycache__", "bin"}
+)
+PRE_EMPTY_DIRECTORY_EXECUTION_TARGET = {
+    "directories_sha256": "CDB8E2CCCFF1C4C535CC6F9F49512980189C2320340AC284272C71677AB9DF30",
+    "directory_count": 1087,
+    "file_count": 10759,
+    "path": "C:\\Github\\ANYsolver\\.qualification-build\\qv6-target-fef096d",
+    "rows_sha256": "E4A3548E5060E55FCA3A367AE31F723E13588723E7326C6B6E798F7E60D7DA54",
+}
+POST_EMPTY_DIRECTORY_EXECUTION_TARGET = {
+    "directories_sha256": "1F00BA21A516A2304B1DB3B929F166310AFF94DBC8C085C32A01EB732978C129",
+    "directory_count": 1088,
+    "file_count": 10759,
+    "path": "C:\\Github\\ANYsolver\\.qualification-build\\qv6-target-fef096d",
+    "rows_sha256": "E4A3548E5060E55FCA3A367AE31F723E13588723E7326C6B6E798F7E60D7DA54",
+}
 CANDIDATES = (
     "ANY3dView",
     "ANYbuckling",
@@ -1497,7 +1514,19 @@ def _build_installed_target_manifests(
     if not allow_unregistered and actual_paths != set(claimed):
         raise BindingError("installed target contains unregistered files")
     implied_paths = actual_paths if allow_unregistered else set(claimed)
-    if set(actual_directories) != _implied_target_directories(sorted(implied_paths)):
+    implied_directories = _implied_target_directories(sorted(implied_paths))
+    extra_directories = set(actual_directories) - implied_directories
+    if (
+        implied_directories - set(actual_directories)
+        or (
+            extra_directories
+            and (
+                not allow_unregistered
+                or extra_directories
+                != ALLOWED_EMPTY_EXECUTION_TARGET_DIRECTORIES
+            )
+        )
+    ):
         raise BindingError("installed target contains unregistered directories")
     all_paths = actual_paths | set(actual_directories)
     if len({path.casefold() for path in all_paths}) != len(all_paths):
@@ -2659,6 +2688,14 @@ def _verify_preflight(
         "tree",
     }:
         raise BindingError(f"{name} preflight record differs")
+    live_execution_target = _preflight_target_identity(execution_target)
+    execution_target_matches = (
+        record["execution_target"] == live_execution_target
+        or (
+            record["execution_target"] == PRE_EMPTY_DIRECTORY_EXECUTION_TARGET
+            and live_execution_target == POST_EMPTY_DIRECTORY_EXECUTION_TARGET
+        )
+    )
     gates = record["gates"]
     expected_dependencies = _preflight_dependency_candidate_bindings(
         name,
@@ -2690,7 +2727,7 @@ def _verify_preflight(
         or record["scratch_root"] != str(expected_scratch_root)
         or record["checkout_before"] != candidate.get("working_tree")
         or record["checkout_after"] != candidate.get("working_tree")
-        or record["execution_target"] != _preflight_target_identity(execution_target)
+        or not execution_target_matches
         or record["generated_products"] != []
         or record["preflight_config"] != _file_binding(PREFLIGHT_CONFIG)
         or record["preflight_runner"] != _file_binding(PREFLIGHT_RUNNER)
