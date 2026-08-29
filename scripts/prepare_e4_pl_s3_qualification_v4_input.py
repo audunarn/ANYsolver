@@ -489,7 +489,7 @@ Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS = (
     ),
     (
         "src/anysolver/matrix_assembly.py",
-        "10740d6bde7d1c542c59b1945d23346b37caff04",
+        "be78cfb74f8663abdc85dac1811fc64247527877",
     ),
     (
         "src/anysolver/s3_reference_batch.py",

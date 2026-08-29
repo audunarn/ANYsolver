@@ -333,7 +333,7 @@ def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity()
     generator = _load("_s3_v3_generator_contract", GENERATOR)
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     assert contract["authority_state"] == (
-        "CORRECTED_IMPLEMENTATION_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS"
+        "CORRECTED_QV6_IMPLEMENTATION_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS"
     )
     assert contract["formal_qualification_authority"] is False
     assert contract["formal_runner"]["exact_topology_records"] == 252
