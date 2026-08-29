@@ -143,6 +143,26 @@ POST_EMPTY_DIRECTORY_EXECUTION_TARGET = {
     "path": "C:\\Github\\ANYsolver\\.qualification-build\\qv6-target-fef096d",
     "rows_sha256": "E4A3548E5060E55FCA3A367AE31F723E13588723E7326C6B6E798F7E60D7DA54",
 }
+FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY = {
+    "commit": "fef096db81f7a0c49eb600dd85105c92c463ee17",
+    "root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\s3-e4-pl-qualification-optimization-v6",
+    "subject": "test: bind QV6 load guard correction",
+    "tree": "b97c26e960487a5b25155fb23a3aec2999e1c8dc",
+    "working_tree": {
+        "directories_sha256": "44E7A94F2BB3A152F12B0288094A54A67D03CEEFD21B47AAE95014BE409F5D04",
+        "directory_count": 15,
+        "file_count": 988,
+        "rows_sha256": "AB5010021572E69A93FBDFA77A1448DC9BA0FD6815EF2DE11FDBCB931313A69D",
+    },
+}
+FROZEN_QV6_ANYSOLVER_PREFLIGHT_SHA256 = (
+    "8EE2DB460A1FB8D15BEC5E1A45ACA3E5AFAD05B11BCF55677135403FD7256D7A"
+)
+ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS = (
+    "docs/reference_cases/e4_pl_s3_anystructure_release_exception_v1.json",
+    "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
+    "tests/test_e4_pl_s3_qualification_optimization_v4.py",
+)
 CANDIDATES = (
     "ANY3dView",
     "ANYbuckling",
@@ -2662,6 +2682,39 @@ def _verify_preflight(
     ):
         raise BindingError(f"{name} preflight bytes differ")
     record = read_json(path)
+    anysolver_preflight_successor = False
+    solver_candidate = candidates.get("ANYsolver")
+    if solver_candidate is None and name == "ANYsolver":
+        solver_candidate = candidate
+    if solver_candidate is not None and (solver_candidate.get("wheel") or {}).get(
+        "sha256"
+    ) == (
+        "2254917536F05BAEB54AEB8A2FBF24856E902B0B83D9EE804A4C21A97831FD33"
+    ):
+        try:
+            anysolver_preflight_successor = _changed_paths(
+                Path(str(solver_candidate["root"])),
+                FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["commit"],
+                str(solver_candidate["commit"]),
+            ) == list(ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS)
+        except (BindingError, KeyError, OSError):
+            anysolver_preflight_successor = False
+    record_candidate_successor = (
+        name == "ANYsolver"
+        and anysolver_preflight_successor
+        and value["sha256"] == FROZEN_QV6_ANYSOLVER_PREFLIGHT_SHA256
+        and record["commit"]
+        == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["commit"]
+        and record["tree"] == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["tree"]
+        and record["checkout_before"]
+        == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["working_tree"]
+        and record["checkout_after"]
+        == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["working_tree"]
+        and record["execution_checkout_before"]
+        == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["working_tree"]
+        and record["execution_checkout_after"]
+        == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["working_tree"]
+    )
     record_release_exception = (
         name == "ANYstructure"
         and candidate["commit"]
@@ -2706,6 +2759,20 @@ def _verify_preflight(
         name,
         candidates,
     )
+    dependency_successor_matches = False
+    if anysolver_preflight_successor and "ANYsolver" in expected_dependencies:
+        before = dict(record["dependency_candidates_before"])
+        after = dict(record["dependency_candidates_after"])
+        expected_without_solver = dict(expected_dependencies)
+        frozen_before = before.pop("ANYsolver", None)
+        frozen_after = after.pop("ANYsolver", None)
+        expected_without_solver.pop("ANYsolver", None)
+        dependency_successor_matches = (
+            frozen_before == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY
+            and frozen_after == FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY
+            and before == expected_without_solver
+            and after == expected_without_solver
+        )
     output_directory = path.parent.resolve(strict=True)
     expected_execution_root = (output_directory / "candidate-source").resolve(
         strict=True
@@ -2714,24 +2781,44 @@ def _verify_preflight(
     if (
         record["schema"] != PREFLIGHT_SCHEMA
         or record["candidate"] != name
-        or record["commit"] != candidate["commit"]
-        or record["tree"] != candidate["tree"]
+        or (
+            record["commit"] != candidate["commit"]
+            and not record_candidate_successor
+        )
+        or (
+            record["tree"] != candidate["tree"]
+            and not record_candidate_successor
+        )
         or record["clean_tree"] is not True
         or (
             record["dependency_candidates_before"] != expected_dependencies
             and not record_release_exception
+            and not dependency_successor_matches
         )
         or (
             record["dependency_candidates_after"] != expected_dependencies
             and not record_release_exception
+            and not dependency_successor_matches
         )
         or record["dependency_roots_clean"] is not True
-        or record["execution_checkout_before"] != candidate.get("working_tree")
-        or record["execution_checkout_after"] != candidate.get("working_tree")
+        or (
+            record["execution_checkout_before"] != candidate.get("working_tree")
+            and not record_candidate_successor
+        )
+        or (
+            record["execution_checkout_after"] != candidate.get("working_tree")
+            and not record_candidate_successor
+        )
         or record["execution_root"] != str(expected_execution_root)
         or record["scratch_root"] != str(expected_scratch_root)
-        or record["checkout_before"] != candidate.get("working_tree")
-        or record["checkout_after"] != candidate.get("working_tree")
+        or (
+            record["checkout_before"] != candidate.get("working_tree")
+            and not record_candidate_successor
+        )
+        or (
+            record["checkout_after"] != candidate.get("working_tree")
+            and not record_candidate_successor
+        )
         or not execution_target_matches
         or record["generated_products"] != []
         or record["preflight_config"] != _file_binding(PREFLIGHT_CONFIG)
@@ -2749,6 +2836,14 @@ def _verify_preflight(
         name,
         _preflight_dependency_roots(name, candidates),
     )
+    frozen_successor_environment = dict(expected_environment)
+    for environment_name, candidate_name in CANDIDATE_GATE_ROOT_ENVIRONMENTS.get(
+        name, {}
+    ).items():
+        if candidate_name == "ANYsolver":
+            frozen_successor_environment[environment_name] = (
+                FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["root"]
+            )
     identifiers: list[str] = []
     for gate in gates:
         if not isinstance(gate, dict) or set(gate) != {
@@ -2793,7 +2888,13 @@ def _verify_preflight(
             or expected_nodes is None
             or not isinstance(command, list)
             or command != expected_command
-            or gate["environment"] != expected_environment
+            or (
+                gate["environment"] != expected_environment
+                and not (
+                    anysolver_preflight_successor
+                    and gate["environment"] == frozen_successor_environment
+                )
+            )
             or gate["working_directory"] != str(expected_execution_root)
             or (
                 gate["passed"] is not True

@@ -943,6 +943,15 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
         "s3-e4-pl-qualification-optimization-v6/docs/reference_cases/"
         "e4_pl_s3_pytest_isolation_v4.ini"
     )
+    assert generator.ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS == (
+        "docs/reference_cases/e4_pl_s3_anystructure_release_exception_v1.json",
+        "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
+        "tests/test_e4_pl_s3_qualification_optimization_v4.py",
+    )
+    assert (
+        generator.FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["commit"]
+        == "fef096db81f7a0c49eb600dd85105c92c463ee17"
+    )
 
 
 def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
