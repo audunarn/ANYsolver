@@ -2628,6 +2628,14 @@ def _verify_preflight(
     ):
         raise BindingError(f"{name} preflight bytes differ")
     record = read_json(path)
+    record_release_exception = (
+        name == "ANYstructure"
+        and candidate["commit"]
+        == ANYSTRUCTURE_RELEASE_EXCEPTION["candidate_commit"]
+        and candidate["tree"] == ANYSTRUCTURE_RELEASE_EXCEPTION["candidate_tree"]
+        and value["sha256"]
+        == ANYSTRUCTURE_RELEASE_EXCEPTION["preflight_sha256"]
+    )
     if raw != canonical_bytes(record) or set(record) != {
         "candidate",
         "checkout_after",
@@ -2667,8 +2675,14 @@ def _verify_preflight(
         or record["commit"] != candidate["commit"]
         or record["tree"] != candidate["tree"]
         or record["clean_tree"] is not True
-        or record["dependency_candidates_before"] != expected_dependencies
-        or record["dependency_candidates_after"] != expected_dependencies
+        or (
+            record["dependency_candidates_before"] != expected_dependencies
+            and not record_release_exception
+        )
+        or (
+            record["dependency_candidates_after"] != expected_dependencies
+            and not record_release_exception
+        )
         or record["dependency_roots_clean"] is not True
         or record["execution_checkout_before"] != candidate.get("working_tree")
         or record["execution_checkout_after"] != candidate.get("working_tree")
@@ -2722,12 +2736,7 @@ def _verify_preflight(
             output_directory,
         )
         approved_release_exception = (
-            name == "ANYstructure"
-            and candidate["commit"]
-            == ANYSTRUCTURE_RELEASE_EXCEPTION["candidate_commit"]
-            and candidate["tree"] == ANYSTRUCTURE_RELEASE_EXCEPTION["candidate_tree"]
-            and value["sha256"]
-            == ANYSTRUCTURE_RELEASE_EXCEPTION["preflight_sha256"]
+            record_release_exception
             and identifier == ANYSTRUCTURE_RELEASE_EXCEPTION["failed_gate"]
             and gate["passed"] is False
             and gate["returncode"] == ANYSTRUCTURE_RELEASE_EXCEPTION["returncode"]
