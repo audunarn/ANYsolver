@@ -500,6 +500,27 @@ def _solve_hard_navier_plate_under_lease(
         np.asarray(force[active], dtype=float),
         "direct",
     )
+    active_force = np.asarray(force[active], dtype=float)
+    refinement_steps = 0
+    if convergence.get("status") == "converged":
+        # Fine thin-plate systems can satisfy the solver's normwise backward
+        # error while losing digits in the stricter load-scaled residual.
+        # Retain the frozen residual limit and improve the same reduced
+        # solution with at most two deterministic direct corrections.
+        for _refinement in range(2):
+            correction_rhs = active_force - np.asarray(
+                reduced @ solution,
+                dtype=float,
+            ).reshape(-1)
+            correction, correction_info = _solve_reduced_system(
+                reduced,
+                correction_rhs,
+                "direct",
+            )
+            if correction_info.get("status") != "converged":
+                break
+            solution = np.asarray(solution + correction, dtype=float)
+            refinement_steps += 1
     displacement = np.zeros(stiffness.shape[0], dtype=float)
     displacement[active] = solution
     if convergence.get("status") == "converged":
@@ -519,7 +540,8 @@ def _solve_hard_navier_plate_under_lease(
             or relative_residual > 1.0e-8
         ):
             raise base.QualificationError(
-                "bounded plate full-system residual exceeds its frozen limit"
+                "bounded plate full-system residual exceeds its frozen limit: "
+                f"{relative_residual:.17e} after {refinement_steps} refinements"
             )
     constraint_report = constraint_residual_summary(model, displacement)
     if constraint_report.get("status") != "passed":
@@ -536,6 +558,7 @@ def _solve_hard_navier_plate_under_lease(
             },
             "constraint_postcheck": constraint_report,
             "convergence_info": convergence,
+            "deterministic_iterative_refinement_steps": refinement_steps,
         },
         stiffness,
     )

@@ -466,13 +466,13 @@ def test_warm_plan_matrix_metadata_restore_during_use_cannot_change_output() -> 
     mutate_line = start + next(
         index
         for index, text in enumerate(source)
-        if "rows = _ndarray_constructor(" in text
+        if "canonical_index_count = _owned_execution_plan[" in text
     )
     restore_line = start + next(
         index
         for index, text in enumerate(source)
         if index > mutate_line - start
-        and "data = _ndarray_constructor(" in text
+        and "matrix_data[:] = _ndarray_constructor(" in text
     )
     state = {"mutated": False, "restored": False}
 
@@ -661,6 +661,37 @@ def test_warm_plan_reuses_exact_binary64_element_caches_without_rounding() -> No
         "qualified_s3_reference_elastic_stiffness"
     ]["element_count"] == 0
 
+
+def test_exact_edge_groups_remove_centroid_roundoff_without_rounding_geometry() -> None:
+    model = _build_model(8)
+    for node_id, node in tuple(model.mesh.nodes.items()):
+        model.set_node_coordinates(
+            node_id,
+            0.05 * float(node.x),
+            0.05 * float(node.y),
+            float(node.z),
+        )
+
+    pairs = [
+        s3_batch_module._exact_translation_component_keys(model, element)
+        for element in model.mesh.elements.values()
+    ]
+    assert len({group_key for group_key, _element_key in pairs}) == 2
+    assert len({element_key for _group_key, element_key in pairs}) == 6
+
+    prepared = prepare_reference_s3_components(
+        model,
+        list(model.mesh.elements.items()),
+        minimum_group_size=1,
+        allow_exact_element_cache_reuse=False,
+    )
+    assert prepared.component_evaluation_count == 2
+    assert sorted(map(len, prepared.group_element_ids)) == [3, 5]
+    assert len(set(prepared.element_cache_keys.values())) == 6
+    for group in prepared.group_element_ids:
+        first = prepared.matrices[group[0]]
+        for element_id in group[1:]:
+            np.testing.assert_array_equal(prepared.matrices[element_id], first)
 
 def test_warm_plan_detects_direct_node_edits_without_a_mesh_revision() -> None:
     model = _build_model(8)

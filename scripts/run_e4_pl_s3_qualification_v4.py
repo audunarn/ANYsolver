@@ -1470,6 +1470,13 @@ def run_worker(
             results.append(
                 base._run_pytest_lane(authority, str(lane["name"]), root, nodes)
             )
+        # Preserve complete external diagnostics even when adjudication raises.
+        # This file is never canonical scientific evidence.
+        base._write_exclusive(
+            output.with_name("special-lane-results.json"),
+            {str(row["lane"]): row for row in results},
+            pretty=True,
+        )
         gates, diagnostics, coverage = base._adjudicate_special_lanes(
             lanes,
             results,
@@ -1516,7 +1523,10 @@ class ProcessRow:
     stderr_sha256: str
 
 
-def _environment(authority: SuccessorAuthority) -> dict[str, str]:
+def _environment(
+    authority: SuccessorAuthority,
+    worker_directory: Path,
+) -> dict[str, str]:
     process_environment = authority.binding["runtime_environment"].get(
         "process_environment"
     )
@@ -1546,6 +1556,17 @@ def _environment(authority: SuccessorAuthority) -> dict[str, str]:
     environment["ANYSOLVER_S3_V4_TARGET"] = str(
         Path(authority.binding["execution_target"]).resolve()
     )
+    cache_root = worker_directory / "runtime-cache"
+    cache_paths = {
+        "MPLCONFIGDIR": cache_root / "matplotlib",
+        "NUMBA_CACHE_DIR": cache_root / "numba",
+        "TEMP": cache_root / "temp",
+        "TMP": cache_root / "temp",
+        "XDG_CACHE_HOME": cache_root / "xdg",
+    }
+    for path in sorted(set(cache_paths.values()), key=str):
+        path.mkdir(parents=True, exist_ok=False)
+    environment.update({name: str(path.resolve()) for name, path in cache_paths.items()})
     return environment
 
 
@@ -1609,7 +1630,7 @@ def _run_process(
         "--progress",
         str(progress),
     ]
-    environment = _environment(authority)
+    environment = _environment(authority, directory)
     environment.pop(control.TREE_RELEASE_ENVIRONMENT, None)
     if os.name == "nt":
         environment[control.TREE_RELEASE_ENVIRONMENT] = str(release.resolve())

@@ -66,6 +66,7 @@ from .s3_reference_batch import (
     REFERENCE_S3_BATCH_POLICY_ID as _REFERENCE_S3_BATCH_POLICY_ID,
     REFERENCE_S3_FORMULATION_ID as _REFERENCE_S3_FORMULATION_ID,
     _require_prepared_s3_matrix_authority as _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY,
+    _exact_translation_component_keys as _EXACT_S3_TRANSLATION_COMPONENT_KEYS,
     get_reference_s3_stiffness_components as _EXACT_GET_REFERENCE_S3_STIFFNESS_COMPONENTS,
     reference_s3_candidate as _EXACT_REFERENCE_S3_CANDIDATE,
 )
@@ -79,6 +80,84 @@ if TYPE_CHECKING:
 
 class AssemblyError(ValueError):
     """Raised when an element returns an invalid matrix or load contribution."""
+
+
+def _canonical_cached_csr_payload(
+    rows_bytes: bytes,
+    cols_bytes: bytes,
+    data_bytes: bytes,
+    *,
+    entry_count: int,
+    total_dofs: int,
+) -> Mapping[str, Any]:
+    """Canonicalize immutable warm-assembly COO bytes exactly once."""
+
+    if (
+        type(rows_bytes) is not bytes
+        or type(cols_bytes) is not bytes
+        or type(data_bytes) is not bytes
+        or type(entry_count) is not int
+        or type(total_dofs) is not int
+        or entry_count < 0
+        or total_dofs < 0
+        or len(rows_bytes) != entry_count * np.dtype(np.intp).itemsize
+        or len(cols_bytes) != entry_count * np.dtype(np.intp).itemsize
+        or len(data_bytes) != entry_count * np.dtype(np.float64).itemsize
+    ):
+        raise AssemblyError("qualified cached COO payload is incompatible")
+    rows = np.frombuffer(rows_bytes, dtype=np.intp)
+    cols = np.frombuffer(cols_bytes, dtype=np.intp)
+    values = np.frombuffer(data_bytes, dtype=np.float64)
+    indptr = np.empty(total_dofs + 1, dtype=np.intp)
+    indices = np.empty(entry_count, dtype=np.intp)
+    summed = np.empty(entry_count, dtype=np.float64)
+    _SCIPY_COO_TO_CSR(
+        total_dofs,
+        total_dofs,
+        entry_count,
+        rows,
+        cols,
+        values,
+        indptr,
+        indices,
+        summed,
+    )
+    _SCIPY_CSR_SORT_INDICES(total_dofs, indptr, indices, summed)
+    _SCIPY_CSR_SUM_DUPLICATES(
+        total_dofs,
+        total_dofs,
+        indptr,
+        indices,
+        summed,
+    )
+    unique_count = int(indptr[-1])
+    canonical_indices = np.ascontiguousarray(indices[:unique_count])
+    canonical_data = np.ascontiguousarray(summed[:unique_count])
+    if (
+        not _SCIPY_CSR_HAS_SORTED_INDICES(
+            total_dofs,
+            indptr,
+            canonical_indices,
+        )
+        or not _SCIPY_CSR_HAS_CANONICAL_FORMAT(
+            total_dofs,
+            indptr,
+            canonical_indices,
+        )
+        or not bool(np.all(np.isfinite(canonical_data)))
+    ):
+        raise AssemblyError("qualified cached CSR payload is incompatible")
+    return MappingProxyType(
+        {
+            "data_bytes": canonical_data.tobytes(order="C"),
+            "index_count": unique_count,
+            "indices_bytes": canonical_indices.tobytes(order="C"),
+            "indptr_bytes": np.ascontiguousarray(indptr).tobytes(order="C"),
+        }
+    )
+
+
+_EXACT_CANONICAL_CACHED_CSR_PAYLOAD = _canonical_cached_csr_payload
 
 
 _ASSEMBLY_NUMERICAL_EPOCH_MANAGER = make_authority_epoch_manager(
@@ -105,6 +184,12 @@ _ASSEMBLY_MODULE_ALIASES = {
     "_EXACT_REFERENCE_S3_CANDIDATE": _EXACT_REFERENCE_S3_CANDIDATE,
     "_EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY": (
         _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY
+    ),
+    "_EXACT_S3_TRANSLATION_COMPONENT_KEYS": (
+        _EXACT_S3_TRANSLATION_COMPONENT_KEYS
+    ),
+    "_EXACT_CANONICAL_CACHED_CSR_PAYLOAD": (
+        _EXACT_CANONICAL_CACHED_CSR_PAYLOAD
     ),
     "_QualifiedStateMapping": _QualifiedStateMapping,
     "_BeamElement": _BeamElement,
@@ -157,6 +242,9 @@ _ASSEMBLY_S3_REFERENCE_ALIASES = {
     "reference_s3_candidate": _EXACT_REFERENCE_S3_CANDIDATE,
     "_require_prepared_s3_matrix_authority": (
         _EXACT_REQUIRE_PREPARED_S3_MATRIX_AUTHORITY
+    ),
+    "_exact_translation_component_keys": (
+        _EXACT_S3_TRANSLATION_COMPONENT_KEYS
     ),
 }
 _EXACT_COO_TO_CSR = next(
@@ -1369,6 +1457,7 @@ def _bind_qualified_assembly_runtime_lease(
                 return None
             matrix_items = tuple(matrices.items())
             matrix_records: list[tuple[int, Any, bytes]] = []
+            payload_by_matrix_id: dict[int, bytes] = {}
             for element_id, matrix in matrix_items:
                 if (
                     type(element_id) is not int
@@ -1398,7 +1487,11 @@ def _bind_qualified_assembly_runtime_lease(
                     )
                 ):
                     return None
-                payload = memoryview(matrix).cast("B").tobytes()
+                matrix_identity = id(matrix)
+                payload = payload_by_matrix_id.get(matrix_identity)
+                if payload is None:
+                    payload = memoryview(matrix).cast("B").tobytes()
+                    payload_by_matrix_id[matrix_identity] = payload
                 if (
                     len(payload) != 18 * 18 * 8
                     or matrix.dtype.str != "<f8"
@@ -1473,12 +1566,25 @@ def _bind_qualified_assembly_runtime_lease(
                 "diagnostics": diagnostics,
             }
 
-        def require_s3_reference_snapshot(snapshot: dict[str, Any]) -> None:
+        def require_s3_reference_snapshot(
+            snapshot: dict[str, Any],
+            *,
+            validate_items: bool = True,
+            validate_payloads: bool = True,
+        ) -> None:
             _require_exact_prepared_s3_class_authority()
             candidate = snapshot["candidate"]
             namespace = snapshot["namespace"]
-            current_matrix_items = tuple(snapshot["matrices"].items())
-            current_cache_key_items = tuple(snapshot["cache_keys"].items())
+            current_matrix_items = (
+                tuple(snapshot["matrices"].items())
+                if validate_items
+                else snapshot["matrix_items"]
+            )
+            current_cache_key_items = (
+                tuple(snapshot["cache_keys"].items())
+                if validate_items
+                else snapshot["cache_key_items"]
+            )
             matrix_items_changed = (
                 len(current_matrix_items) != len(snapshot["matrix_items"])
                 or any(
@@ -1499,26 +1605,37 @@ def _bind_qualified_assembly_runtime_lease(
                     )
                 )
             )
+            validated_matrix_ids: set[int] = set()
+            matrix_payload_changed = False
+            for _element_id, expected, payload in snapshot[
+                "matrix_records"
+            ]:
+                matrix_identity = id(expected)
+                if matrix_identity in validated_matrix_ids:
+                    continue
+                validated_matrix_ids.add(matrix_identity)
+                if (
+                    type(expected) is not np.ndarray
+                    or expected.dtype.str != "<f8"
+                    or expected.shape != (18, 18)
+                    or expected.strides != (144, 8)
+                    or not expected.flags.c_contiguous
+                    or expected.flags.writeable
+                    or (
+                        validate_payloads
+                        and memoryview(expected).cast("B").tobytes()
+                        != payload
+                    )
+                ):
+                    matrix_payload_changed = True
+                    break
             if (
                 type(candidate) is not _PreparedReferenceS3Components
                 or object.__getattribute__(candidate, "__dict__") is not namespace
                 or tuple(namespace) != snapshot["namespace_keys"]
                 or dict.get(namespace, "matrices") is not snapshot["matrices"]
                 or matrix_items_changed
-                or any(
-                    type(current) is not np.ndarray
-                    or current is not expected
-                    or current.dtype.str != "<f8"
-                    or current.shape != (18, 18)
-                    or current.strides != (144, 8)
-                    or not current.flags.c_contiguous
-                    or current.flags.writeable
-                    or memoryview(current).cast("B").tobytes() != payload
-                    for _element_id, expected, payload in snapshot[
-                        "matrix_records"
-                    ]
-                    for current in (expected,)
-                )
+                or matrix_payload_changed
                 or dict.get(namespace, "element_cache_keys") is not snapshot["cache_keys"]
                 or cache_key_items_changed
                 or dict.get(namespace, "batched_element_ids") is not snapshot["batched_ids"]
@@ -1834,6 +1951,9 @@ def _bind_qualified_assembly_runtime_lease(
             if family != "s3":
                 raise ValueError("prepared execution authority is S3-only")
             captured: list[tuple[Any, ...]] = []
+            total_authority_by_id: dict[
+                int, tuple[tuple[Any, ...], bytes]
+            ] = {}
             for element, material, expected_bytes in records:
                 if type(element) is not s3_type or type(material) is not _Material:
                     raise ValueError("qualified cached execution type changed")
@@ -1900,12 +2020,30 @@ def _bind_qualified_assembly_runtime_lease(
                     or total.strides != (144, 8)
                     or not total.flags.c_contiguous
                     or total.flags.writeable
-                    or memoryview(total).cast("B").tobytes() != expected_bytes
                 ):
                     raise ValueError("qualified cached execution total changed")
-                total_authority = capture_execution_array(total)
-                if total_authority is None:
-                    raise ValueError("qualified cached execution total changed")
+                total_identity = id(total)
+                cached_total = total_authority_by_id.get(total_identity)
+                if cached_total is None:
+                    if memoryview(total).cast("B").tobytes() != expected_bytes:
+                        raise ValueError(
+                            "qualified cached execution total changed"
+                        )
+                    total_authority = capture_execution_array(total)
+                    if total_authority is None:
+                        raise ValueError(
+                            "qualified cached execution total changed"
+                        )
+                    total_authority_by_id[total_identity] = (
+                        total_authority,
+                        expected_bytes,
+                    )
+                else:
+                    total_authority, captured_bytes = cached_total
+                    if captured_bytes != expected_bytes:
+                        raise ValueError(
+                            "qualified cached execution total changed"
+                        )
                 captured.append(
                     (
                         element,
@@ -1935,6 +2073,8 @@ def _bind_qualified_assembly_runtime_lease(
             allow_equivalent_guard_rebind: bool = False,
         ) -> tuple[tuple[Any, ...], ...]:
             rebound: list[tuple[Any, ...]] | None = None
+            validated_total_ids: set[int] = set()
+            validated_material_ids: set[int] = set()
             for record_index, record in enumerate(authority):
                 (
                 element,
@@ -2043,22 +2183,30 @@ def _bind_qualified_assembly_runtime_lease(
                         current_normal,
                         normal_authority,
                     )
-                if not has_multiple_owners:
+                total_identity = id(total_authority[0])
+                if (
+                    not has_multiple_owners
+                    and total_identity not in validated_total_ids
+                ):
                     require_execution_array(
                         total_authority[0],
                         total_authority,
                     )
-                current_material_values = material_execution_getter(
-                    material_namespace
-                )
-                if (
-                    tuple(map(type, current_material_values))
-                    != material_types
-                    or current_material_values != material_values
-                ):
-                    raise PreparedS3MaterialChanged(
-                        "qualified cached material input changed"
+                    validated_total_ids.add(total_identity)
+                material_identity = id(material)
+                if material_identity not in validated_material_ids:
+                    current_material_values = material_execution_getter(
+                        material_namespace
                     )
+                    if (
+                        tuple(map(type, current_material_values))
+                        != material_types
+                        or current_material_values != material_values
+                    ):
+                        raise PreparedS3MaterialChanged(
+                            "qualified cached material input changed"
+                        )
+                    validated_material_ids.add(material_identity)
             return authority if rebound is None else tuple(rebound)
 
         def require_execution_node_authority(routing: dict[str, Any]) -> None:
@@ -2184,7 +2332,15 @@ def _bind_qualified_assembly_runtime_lease(
                 return None
             snapshot = authority["snapshot"]
             try:
-                require_s3_reference_snapshot(snapshot)
+                # The following execution-authority pass validates the same
+                # immutable total arrays (deduplicated by exact component
+                # identity), so this layer owns mapping/metadata identity and
+                # does not copy those payload bytes a second time.
+                require_s3_reference_snapshot(
+                    snapshot,
+                    validate_items=False,
+                    validate_payloads=False,
+                )
             except ValueError as exc:
                 raise PreparedS3PlanDataChanged(
                     "qualified S3 prepared matrix authority changed"
@@ -3142,12 +3298,28 @@ def _bind_qualified_assembly_runtime_lease(
                 assembly_operation_guard()
                 require_cached_accessor_authority()
                 require_qualified_builtin_inputs()
+                raw_plan_checked = False
+                raw_token_checked = False
+
+                def require_raw_plan_once() -> None:
+                    nonlocal raw_plan_checked, raw_token_checked
+                    if not raw_plan_checked:
+                        require_raw_plan()
+                        raw_plan_checked = True
+                        raw_token_checked = True
+
+                def require_raw_token_once() -> None:
+                    nonlocal raw_token_checked
+                    if not raw_token_checked:
+                        require_raw_token()
+                        raw_token_checked = True
+
                 if q4_fast_records:
                     q4_cached_epoch_guard()
                     if final:
-                        require_raw_plan()
+                        require_raw_plan_once()
                     else:
-                        require_raw_token()
+                        require_raw_token_once()
                     if q4_fast_mesh_token is None:
                         raise ValueError(
                             "qualified Q4 warm assembly token is absent"
@@ -3182,9 +3354,9 @@ def _bind_qualified_assembly_runtime_lease(
                 if s3_fast_records:
                     s3_cached_epoch_guard()
                     if final:
-                        require_raw_plan()
+                        require_raw_plan_once()
                     else:
-                        require_raw_token()
+                        require_raw_token_once()
                     if (
                         q4_fast_plan is None
                         or s3_fast_reference_snapshot is None
@@ -3209,9 +3381,23 @@ def _bind_qualified_assembly_runtime_lease(
                                 "qualified S3 prepared execution authority changed"
                             )
                     else:
-                        require_s3_reference_snapshot(
-                            s3_fast_reference_snapshot
-                        )
+                        snapshot = s3_fast_reference_snapshot
+                        candidate = snapshot["candidate"]
+                        namespace = snapshot["namespace"]
+                        if (
+                            type(candidate) is not _PreparedReferenceS3Components
+                            or object.__getattribute__(candidate, "__dict__")
+                            is not namespace
+                            or dict.get(namespace, "matrices")
+                            is not snapshot["matrices"]
+                            or dict.get(namespace, "element_cache_keys")
+                            is not snapshot["cache_keys"]
+                            or dict.get(namespace, "revision_key")
+                            is not snapshot["revision_key"]
+                        ):
+                            raise ValueError(
+                                "qualified S3 reference-plan identity changed"
+                            )
                     if final and s3_prepared_authority is None:
                         for element, material, expected_bytes in s3_fast_records:
                             fallback_record = next(
@@ -3441,6 +3627,13 @@ def _bind_qualified_assembly_runtime_lease(
                 raise AssemblyError(
                     f"{context} found incompatible cached assembly payloads"
                 )
+            canonical_csr = _EXACT_CANONICAL_CACHED_CSR_PAYLOAD(
+                routing["rows_bytes"],
+                routing["cols_bytes"],
+                data_bytes,
+                entry_count=routing["entry_count"],
+                total_dofs=routing["total_dofs"],
+            )
             execution_plan = MappingProxyType(
                 {
                     "mesh": q4_fast_plan["mesh"],
@@ -3450,6 +3643,10 @@ def _bind_qualified_assembly_runtime_lease(
                     "cols_bytes": routing["cols_bytes"],
                     "data_bytes": data_bytes,
                     "entry_count": routing["entry_count"],
+                    "canonical_data_bytes": canonical_csr["data_bytes"],
+                    "canonical_index_count": canonical_csr["index_count"],
+                    "canonical_indices_bytes": canonical_csr["indices_bytes"],
+                    "canonical_indptr_bytes": canonical_csr["indptr_bytes"],
                     "total_dofs": routing["total_dofs"],
                     "num_nodes": len(routing["node_records"]),
                     "revision_signature": routing["revision_items"],
@@ -4339,22 +4536,25 @@ def _assemble_element_matrix_under_lease_impl(
         records = _owned_execution_plan["records"]
         total_dofs = _owned_execution_plan["total_dofs"]
         entry_count = _owned_execution_plan["entry_count"]
-        rows = _ndarray_constructor(
-            (entry_count,),
-            dtype=_intp_dtype,
-            buffer=_owned_execution_plan["rows_bytes"],
-        )
-        cols = _ndarray_constructor(
-            (entry_count,),
-            dtype=_intp_dtype,
-            buffer=_owned_execution_plan["cols_bytes"],
-        )
-        data = _ndarray_constructor(
-            (entry_count,),
-            dtype=_float64_dtype,
-            buffer=_owned_execution_plan["data_bytes"],
-        )
-        if rows.size != data.size or cols.size != data.size:
+        canonical_index_count = _owned_execution_plan[
+            "canonical_index_count"
+        ]
+        if (
+            _exact_type(canonical_index_count) is not _exact_int
+            or canonical_index_count < 0
+            or _exact_len(_owned_execution_plan["rows_bytes"])
+            != entry_count * _intp_dtype.itemsize
+            or _exact_len(_owned_execution_plan["cols_bytes"])
+            != entry_count * _intp_dtype.itemsize
+            or _exact_len(_owned_execution_plan["data_bytes"])
+            != entry_count * _float64_dtype.itemsize
+            or _exact_len(_owned_execution_plan["canonical_data_bytes"])
+            != canonical_index_count * _float64_dtype.itemsize
+            or _exact_len(_owned_execution_plan["canonical_indices_bytes"])
+            != canonical_index_count * _intp_dtype.itemsize
+            or _exact_len(_owned_execution_plan["canonical_indptr_bytes"])
+            != (total_dofs + 1) * _intp_dtype.itemsize
+        ):
             raise _assembly_error_type(
                 "qualified owned sparsity does not match matrices"
             )
@@ -4362,41 +4562,29 @@ def _assemble_element_matrix_under_lease_impl(
             (total_dofs + 1,),
             dtype=_intp_dtype,
         )
-        unsummed_indices = _empty_constructor(
-            (entry_count,),
+        matrix_indices = _empty_constructor(
+            (canonical_index_count,),
             dtype=_intp_dtype,
         )
-        unsummed_data = _empty_constructor(
-            (entry_count,),
+        matrix_data = _empty_constructor(
+            (canonical_index_count,),
             dtype=_float64_dtype,
         )
-        _coo_to_csr_kernel(
-            total_dofs,
-            total_dofs,
-            entry_count,
-            rows,
-            cols,
-            data,
-            matrix_indptr,
-            unsummed_indices,
-            unsummed_data,
+        matrix_indptr[:] = _ndarray_constructor(
+            (total_dofs + 1,),
+            dtype=_intp_dtype,
+            buffer=_owned_execution_plan["canonical_indptr_bytes"],
         )
-        _csr_sort_indices_kernel(
-            total_dofs,
-            matrix_indptr,
-            unsummed_indices,
-            unsummed_data,
+        matrix_indices[:] = _ndarray_constructor(
+            (canonical_index_count,),
+            dtype=_intp_dtype,
+            buffer=_owned_execution_plan["canonical_indices_bytes"],
         )
-        _csr_sum_duplicates_kernel(
-            total_dofs,
-            total_dofs,
-            matrix_indptr,
-            unsummed_indices,
-            unsummed_data,
+        matrix_data[:] = _ndarray_constructor(
+            (canonical_index_count,),
+            dtype=_float64_dtype,
+            buffer=_owned_execution_plan["canonical_data_bytes"],
         )
-        unique_count = _exact_int(matrix_indptr[-1])
-        matrix_indices = unsummed_indices[:unique_count]
-        matrix_data = unsummed_data[:unique_count]
         if (
             not _csr_has_sorted_indices_kernel(
                 total_dofs,
@@ -4938,7 +5126,16 @@ def _assemble_element_matrix_under_lease_impl(
         if cold_reference_s3_items:
             cold_s3_groups: Dict[
                 tuple[Any, ...],
-                list[tuple[int, Any, Any, np.ndarray, Any]],
+                list[
+                    tuple[
+                        int,
+                        Any,
+                        Any,
+                        np.ndarray,
+                        Any,
+                        tuple[Any, ...],
+                    ]
+                ],
             ] = {}
             cold_s3_eligible = True
 
@@ -5012,18 +5209,22 @@ def _assemble_element_matrix_under_lease_impl(
                 ):
                     cold_s3_eligible = False
                     break
-                cache_key = (
-                    *element._cache_key(
-                        mesh,
-                        material,
-                        coordinates,
-                        post_observation=recheck,
-                    ),
-                    True,
+                group_key, element_key = _EXACT_S3_TRANSLATION_COMPONENT_KEYS(
+                    model,
+                    element,
+                    coordinates=coordinates,
+                    post_observation=recheck,
                 )
                 recheck()
-                cold_s3_groups.setdefault(cache_key, []).append(
-                    (element_id, element, material, coordinates, recheck)
+                cold_s3_groups.setdefault(group_key, []).append(
+                    (
+                        element_id,
+                        element,
+                        material,
+                        coordinates,
+                        recheck,
+                        element_key,
+                    )
                 )
 
             if not cold_s3_eligible:
@@ -5033,13 +5234,14 @@ def _assemble_element_matrix_under_lease_impl(
                 cold_s3_matrices: dict[int, np.ndarray] = {}
                 cold_s3_keys: dict[int, tuple[Any, ...]] = {}
                 cold_s3_group_ids: list[tuple[int, ...]] = []
-                for cache_key, group in cold_s3_groups.items():
+                for _group_key, group in cold_s3_groups.items():
                     (
                         first_id,
                         first,
                         first_material,
                         first_coordinates,
                         first_recheck,
+                        first_key,
                     ) = group[0]
                     first_recheck()
                     components = first._compute_stiffness_components(
@@ -5049,7 +5251,7 @@ def _assemble_element_matrix_under_lease_impl(
                         post_observation=first_recheck,
                     )
                     first_recheck()
-                    if tuple(first._qualified_cache_key) != tuple(cache_key):
+                    if tuple(first._qualified_cache_key) != tuple(first_key):
                         raise AssemblyError(
                             "qualified cold S3 component cache identity changed"
                         )
@@ -5060,6 +5262,7 @@ def _assemble_element_matrix_under_lease_impl(
                         material,
                         _coordinates,
                         recheck,
+                        element_key,
                     ) in group:
                         recheck()
                         object.__setattr__(
@@ -5070,7 +5273,7 @@ def _assemble_element_matrix_under_lease_impl(
                         object.__setattr__(
                             element,
                             "_qualified_cache_key",
-                            cache_key,
+                            element_key,
                         )
                         object.__setattr__(
                             element,
@@ -5099,7 +5302,7 @@ def _assemble_element_matrix_under_lease_impl(
                                 "qualified cold S3 stiffness is incompatible"
                             )
                         cold_s3_matrices[element_id] = matrix
-                        cold_s3_keys[element_id] = cache_key
+                        cold_s3_keys[element_id] = element_key
                         precomputed[element_id] = matrix
                         prevalidated_element_ids.add(element_id)
                         group_ids.append(element_id)
@@ -7110,14 +7313,11 @@ def _qualified_s3_pressure_surface_records_impl(
 
     if load_case is None:
         return []
-    from .current_state_tangent import (
-        require_exact_qualified_component_lifecycle_api,
-    )
-
-    lifecycle_guard = require_exact_qualified_component_lifecycle_api
-
     def full_guard(*, context: str) -> None:
-        lifecycle_guard(model, context=context)
+        # The enclosing non-renewable assembly lease already performed the
+        # complete qualified component/lifecycle authority scan.  Recheck its
+        # immutable generation at observation boundaries without repeating an
+        # O(element-count) class-namespace walk.
         qualified_runtime_guard(model, context=context)
 
     full_guard(context="qualified S3 pressure-surface mapping preflight")
@@ -7133,7 +7333,7 @@ def _qualified_s3_pressure_surface_records_impl(
         return fast_records
 
     pressure_ids = tuple(getattr(load_case, "pressure_loads", {}))
-    lifecycle_guard(
+    qualified_runtime_guard(
         model,
         context="qualified S3 pressure-surface scalar observation",
     )
@@ -7148,7 +7348,7 @@ def _qualified_s3_pressure_surface_records_impl(
         ):
             continue
         offset = float(getattr(element, "reference_surface_offset", 0.0))
-        lifecycle_guard(
+        qualified_runtime_guard(
             model,
             context=(
                 "qualified S3 pressure-surface offset observation for "
@@ -7351,18 +7551,14 @@ def _assemble_load_vector_under_lease(
     ``follower_pressure=True`` uses it to evaluate pressure on the current
     shell nodal interpolation surface.
     """
-    from .current_state_tangent import (
-        require_exact_qualified_component_lifecycle_api,
-    )
-
-    lifecycle_guard = require_exact_qualified_component_lifecycle_api
-
     def exact_qualified_guard(
         expected_model: "FEModel",
         *,
         context: str,
     ) -> None:
-        lifecycle_guard(expected_model, context=context)
+        # Capture/finalization of the enclosing assembly lease provide the
+        # complete lifecycle scan.  Hot observations require only that same
+        # immutable lease generation.
         qualified_runtime_guard(expected_model, context=context)
 
     exact_qualified_guard(model, context="load-vector assembly preflight")
@@ -7400,13 +7596,37 @@ def _assemble_load_vector_under_lease(
     if load_case is None:
         load_vector = np.zeros(total_dofs, dtype=float)
     else:
-        load_vector = load_case.get_load_vector(
-            model.mesh,
-            model.mesh.dof_manager,
-            model.get_material,
-            displacements=displacements,
-            element_activity=_element_activity(model),
-        )
+        from .boundary import LoadCase
+
+        if type(load_case) is LoadCase:
+            # ``assemble_system`` already owns one non-renewable qualified
+            # assembly lease spanning stiffness, load and finalization.  Do
+            # not capture a second mesh-wide lease for the exact built-in
+            # LoadCase: its implementation validates the load epoch and every
+            # observed input while the enclosing lease validates qualified
+            # element/module authority.  Subclasses retain the public route
+            # because their callback surface is not part of this exact path.
+            load_vector = load_case._get_load_vector_under_lease(
+                model.mesh,
+                model.mesh.dof_manager,
+                model.get_material,
+                displacements,
+                _element_activity(model),
+                qualified_runtime_guard=lambda *, stage: (
+                    qualified_runtime_guard(
+                        model,
+                        context=f"load-vector {stage}",
+                    )
+                ),
+            )
+        else:
+            load_vector = load_case.get_load_vector(
+                model.mesh,
+                model.mesh.dof_manager,
+                model.get_material,
+                displacements=displacements,
+                element_activity=_element_activity(model),
+            )
         exact_qualified_guard(
             model,
             context="load-vector LoadCase observation",

@@ -720,6 +720,13 @@ class LoadCase:
             )
             if admitted:
                 F_fast = np.zeros(total_dofs, dtype=float)
+                element_force_records: list[
+                    tuple[tuple[int, ...], np.ndarray | None]
+                ] = []
+                s3_batch_indices: list[int] = []
+                s3_batch_coordinates: list[np.ndarray] = []
+                s3_batch_pressures: list[float] = []
+                s3_batch_orientation_signs: list[float] = []
                 for element_id, raw_pressure in pressure_items:
                     element = dict.__getitem__(elements, element_id)
                     element_namespace = object.__getattribute__(
@@ -824,6 +831,21 @@ class LoadCase:
                             )
                         orientation_sign = 1.0 if signed > 0.0 else -1.0
 
+                        # Preserve the original pressure-item order for the
+                        # final global accumulation, but evaluate every exact
+                        # linear S3 surface in one array wave.  The triangle
+                        # derivatives are constant and the published seven
+                        # stations are common to the entire admitted batch.
+                        dof_mapping = tuple(
+                            dof for dofs in dof_rows for dof in dofs
+                        )
+                        s3_batch_indices.append(len(element_force_records))
+                        s3_batch_coordinates.append(coordinates)
+                        s3_batch_pressures.append(float(raw_pressure))
+                        s3_batch_orientation_signs.append(orientation_sign)
+                        element_force_records.append((dof_mapping, None))
+                        continue
+
                     pressure = float(raw_pressure)
                     f_elem = np.zeros(expected_nodes * 6, dtype=float)
                     for (xi, eta), weight in zip(points, weights):
@@ -857,16 +879,6 @@ class LoadCase:
                                 ),
                                 dtype=float,
                             )
-                        else:
-                            shape = np.asarray(
-                                (1.0 - xi - eta, xi, eta), dtype=float
-                            )
-                            derivative_xi = np.asarray(
-                                (-1.0, 1.0, 0.0), dtype=float
-                            )
-                            derivative_eta = np.asarray(
-                                (-1.0, 0.0, 1.0), dtype=float
-                            )
                         tangent_xi = coordinates.T @ derivative_xi
                         tangent_eta = coordinates.T @ derivative_eta
                         area_vector = orientation_sign * np.cross(
@@ -885,6 +897,65 @@ class LoadCase:
                     dof_mapping = tuple(
                         dof for dofs in dof_rows for dof in dofs
                     )
+                    element_force_records.append((dof_mapping, f_elem))
+
+                if s3_batch_indices:
+                    batch_coordinates = np.stack(s3_batch_coordinates)
+                    batch_pressures = np.asarray(
+                        s3_batch_pressures, dtype=float
+                    )
+                    batch_orientation = np.asarray(
+                        s3_batch_orientation_signs, dtype=float
+                    )
+                    batch_area_vectors = batch_orientation[:, None] * np.cross(
+                        batch_coordinates[:, 1] - batch_coordinates[:, 0],
+                        batch_coordinates[:, 2] - batch_coordinates[:, 0],
+                    )
+                    active = (
+                        np.linalg.norm(batch_area_vectors, axis=1) >= _SMALL
+                    )
+                    batch_area_vectors = np.where(
+                        active[:, None], batch_area_vectors, 0.0
+                    )
+                    batch_forces = np.zeros(
+                        (len(s3_batch_indices), 18), dtype=float
+                    )
+                    for (xi, eta), weight in zip(
+                        _S3_QUADRATURE_POINTS, _S3_QUADRATURE_WEIGHTS
+                    ):
+                        xi = float(xi)
+                        eta = float(eta)
+                        shape = np.asarray(
+                            (1.0 - xi - eta, xi, eta), dtype=float
+                        )
+                        for local_index in range(3):
+                            start = 6 * local_index
+                            batch_forces[:, start : start + 3] += (
+                                shape[local_index]
+                                * batch_pressures[:, None]
+                                * batch_area_vectors
+                                * float(weight)
+                            )
+                    for batch_index, record_index in enumerate(
+                        s3_batch_indices
+                    ):
+                        dof_mapping, pending = element_force_records[
+                            record_index
+                        ]
+                        if pending is not None:
+                            raise ValueError(
+                                "exact qualified S3 pressure batch is inconsistent"
+                            )
+                        element_force_records[record_index] = (
+                            dof_mapping,
+                            batch_forces[batch_index],
+                        )
+
+                for dof_mapping, f_elem in element_force_records:
+                    if f_elem is None:
+                        raise ValueError(
+                            "exact qualified pressure batch is incomplete"
+                        )
                     for local_index, dof in enumerate(dof_mapping):
                         if local_index < len(f_elem):
                             F_fast[dof] += f_elem[local_index]

@@ -236,16 +236,57 @@ def reference_s3_eligibility(
     return True, "eligible_reference_elastic_isotropic_positive_winding"
 
 
-def _component_key(model: "FEModel", element: Any) -> Tuple[Any, ...]:
-    """Return the formulation's own exact, revision-bound component key."""
+def _exact_translation_component_keys(
+    model: "FEModel",
+    element: Any,
+    *,
+    coordinates: Optional[np.ndarray] = None,
+    post_observation: Optional[Any] = None,
+) -> Tuple[Tuple[Any, ...], Tuple[Any, ...]]:
+    """Return exact group and element keys for one S3 component evaluation.
+
+    The formulation is translation invariant and constructs its local frame
+    from the two directed edges rooted at node one.  Using those exact
+    binary64 edge differences avoids the extra rounding introduced by
+    subtracting a computed centroid.  No coordinate is rounded or compared
+    with a tolerance.  The second result remains the element's original
+    revision-bound cache key, so every adopted cache is guarded by its own
+    complete input identity.
+    """
 
     material = model.get_material(element.material_name)
-    coordinates = np.asarray(
-        element.get_node_coordinates(model.mesh), dtype=float
+    observed = (
+        np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
+        if coordinates is None
+        else np.asarray(coordinates, dtype=float)
+    )
+    if observed.shape != (3, 3) or not bool(np.all(np.isfinite(observed))):
+        raise ValueError("qualified S3 translation key geometry is incompatible")
+    element_key = element._cache_key(
+        model.mesh,
+        material,
+        observed,
+        post_observation=post_observation,
+    )
+    directed_edges = np.ascontiguousarray(
+        (observed[1:] - observed[0]),
+        dtype=np.float64,
+    ).tobytes(order="C")
+    group_key = (
+        *element_key[:5],
+        directed_edges,
+        *element_key[6:],
     )
     # ``True`` is the public production path's positive-winding guard and is
     # part of the QualifiedE4PLS3ShellElement cache identity.
-    return (*element._cache_key(model.mesh, material, coordinates), True)
+    return (*group_key, True), (*element_key, True)
+
+
+def _component_key(model: "FEModel", element: Any) -> Tuple[Any, ...]:
+    """Return the exact translation-group component key."""
+
+    group_key, _element_key = _exact_translation_component_keys(model, element)
+    return group_key
 
 
 def _plan_validation_signature(
@@ -601,7 +642,10 @@ def _prepare_reference_s3_components_under_lease(
     candidate_ids: list[int] = []
     eligible_ids: list[int] = []
     candidate_material_names: set[str] = set()
-    groups: Dict[Tuple[Any, ...], list[Tuple[int, Any]]] = {}
+    groups: Dict[
+        Tuple[Any, ...],
+        list[Tuple[int, Any, Tuple[Any, ...]]],
+    ] = {}
     fallback: Dict[str, list[int]] = {}
     for raw_element_id, element in items:
         element_id = int(raw_element_id)
@@ -614,8 +658,9 @@ def _prepare_reference_s3_components_under_lease(
             fallback.setdefault(reason, []).append(element_id)
             continue
         eligible_ids.append(element_id)
-        groups.setdefault(_component_key(model, element), []).append(
-            (element_id, element)
+        group_key, element_key = _exact_translation_component_keys(model, element)
+        groups.setdefault(group_key, []).append(
+            (element_id, element, element_key)
         )
 
     matrices: Dict[int, np.ndarray] = {}
@@ -623,8 +668,10 @@ def _prepare_reference_s3_components_under_lease(
     admitted_groups: list[Tuple[int, ...]] = []
     cached_element_ids: list[int] = []
     evaluation_count = 0
-    for cache_key, group in groups.items():
-        ordered_group = tuple(int(element_id) for element_id, _element in group)
+    for _group_key, group in groups.items():
+        ordered_group = tuple(
+            int(element_id) for element_id, _element, _element_key in group
+        )
         if len(group) < minimum:
             # A warm production assembly has already populated each element's
             # formulation-native, exact cache.  Retain those exact matrices in
@@ -634,12 +681,12 @@ def _prepare_reference_s3_components_under_lease(
             # shared between distinct cache keys.
             cached_group: Dict[int, np.ndarray] = {}
             if allow_exact_element_cache_reuse:
-                for element_id, element in group:
+                for element_id, element, element_key in group:
                     current = getattr(element, "_qualified_components", None)
                     current_key = getattr(element, "_qualified_cache_key", None)
                     if (
                         current is None
-                        or current_key != cache_key
+                        or current_key != element_key
                         or current.get("formulation_id")
                         != REFERENCE_S3_FORMULATION_ID
                         or bool(current.get("legacy_fallback", True))
@@ -658,12 +705,15 @@ def _prepare_reference_s3_components_under_lease(
                 matrices.update(cached_group)
                 cached_element_ids.extend(cached_group)
                 element_cache_keys.update(
-                    {int(element_id): cache_key for element_id in cached_group}
+                    {
+                        int(element_id): element_key
+                        for element_id, _element, element_key in group
+                    }
                 )
                 continue
             fallback.setdefault("group_below_minimum_size", []).extend(ordered_group)
             continue
-        first_id, first = group[0]
+        first_id, first, first_key = group[0]
         material = model.get_material(first.material_name)
         components = first.compute_stiffness_components(model.mesh, material)
         evaluation_count += 1
@@ -674,16 +724,16 @@ def _prepare_reference_s3_components_under_lease(
             raise ValueError(
                 "qualified S3 reference batch received incompatible component provenance"
             )
-        if tuple(first._qualified_cache_key) != tuple(cache_key):
+        if tuple(first._qualified_cache_key) != tuple(first_key):
             raise ValueError(
                 "qualified S3 reference batch component cache identity changed during evaluation"
             )
         matrices[int(first_id)] = np.asarray(components["total"], dtype=float)
-        element_cache_keys[int(first_id)] = cache_key
-        for element_id, element in group[1:]:
+        element_cache_keys[int(first_id)] = first_key
+        for element_id, element, element_key in group[1:]:
             current = getattr(element, "_qualified_components", None)
             current_key = getattr(element, "_qualified_cache_key", None)
-            if current is not None and current_key == cache_key:
+            if current is not None and current_key == element_key:
                 element._validate_qualified_component_cache_identity()
                 element._bind_qualified_component_guard(
                     model.mesh,
@@ -695,12 +745,12 @@ def _prepare_reference_s3_components_under_lease(
             else:
                 matrices[int(element_id)] = _adopt_components(
                     element,
-                    cache_key,
+                    element_key,
                     components,
                     model.mesh,
                     model.get_material(element.material_name),
                 )
-            element_cache_keys[int(element_id)] = cache_key
+            element_cache_keys[int(element_id)] = element_key
         admitted_groups.append(ordered_group)
 
     frozen_matrices = MappingProxyType(
