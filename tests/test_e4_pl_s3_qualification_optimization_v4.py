@@ -938,6 +938,11 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
         - generator.PRE_EMPTY_DIRECTORY_EXECUTION_TARGET["directory_count"]
         == 1
     )
+    assert generator.FROZEN_PREFLIGHT_EXECUTION_CONFIG == Path(
+        "C:/Github/ANYsolver/.perf2-worktrees/"
+        "s3-e4-pl-qualification-optimization-v6/docs/reference_cases/"
+        "e4_pl_s3_pytest_isolation_v4.ini"
+    )
 
 
 def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
@@ -1281,7 +1286,7 @@ def test_v4_preflight_commands_are_target_bound_and_config_isolated(
     assert command[6:9] == [
         str(target.resolve()),
         str(root.resolve()),
-        str(generator.PREFLIGHT_CONFIG.resolve()),
+        str(generator.FROZEN_PREFLIGHT_EXECUTION_CONFIG.resolve()),
     ]
     assert json.loads(command[10]) == {
         "candidate_imports": ["fe_solver"],

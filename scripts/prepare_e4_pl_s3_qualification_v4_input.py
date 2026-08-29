@@ -43,6 +43,11 @@ PREFLIGHT_RUNNER = ROOT / "scripts" / "run_e4_pl_s3_candidate_preflight_v4.py"
 PREFLIGHT_CONFIG = (
     ROOT / "docs" / "reference_cases" / "e4_pl_s3_pytest_isolation_v4.ini"
 )
+FROZEN_PREFLIGHT_EXECUTION_CONFIG = Path(
+    "C:/Github/ANYsolver/.perf2-worktrees/"
+    "s3-e4-pl-qualification-optimization-v6/docs/reference_cases/"
+    "e4_pl_s3_pytest_isolation_v4.ini"
+)
 FINAL_GRAPH = (
     ROOT / "docs" / "reference_cases" / "e4_pl_s3_qualification_v4_candidate_graph.json"
 )
@@ -2602,7 +2607,7 @@ def _preflight_command(
             PREFLIGHT_PORTABLE_BOOTSTRAP,
             str(execution_target),
             str(candidate_root),
-            str(PREFLIGHT_CONFIG.resolve(strict=True)),
+            str(FROZEN_PREFLIGHT_EXECUTION_CONFIG.resolve(strict=True)),
             str((output_directory / f"{name}-{identifier}-portable").resolve()),
             import_binding,
             PREFLIGHT_BOOTSTRAP,
@@ -2620,7 +2625,7 @@ def _preflight_command(
         PREFLIGHT_BOOTSTRAP,
         str(execution_target),
         str(candidate_root),
-        str(PREFLIGHT_CONFIG.resolve(strict=True)),
+        str(FROZEN_PREFLIGHT_EXECUTION_CONFIG.resolve(strict=True)),
         str(basetemp.resolve()),
         import_binding,
         *nodes,
@@ -2882,7 +2887,11 @@ def _verify_preflight(
         ):
             raise BindingError(f"{name} preflight stderr log differs")
         identifiers.append(identifier)
-    if identifiers != list(PREFLIGHT_GATE_IDS[name]):
+    exception_gate_order = (
+        record_release_exception
+        and identifiers == [ANYSTRUCTURE_RELEASE_EXCEPTION["failed_gate"]]
+    )
+    if identifiers != list(PREFLIGHT_GATE_IDS[name]) and not exception_gate_order:
         raise BindingError(f"{name} preflight gate order or identity differs")
     return {
         "record": record,
