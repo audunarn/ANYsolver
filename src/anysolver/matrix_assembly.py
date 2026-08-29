@@ -7551,6 +7551,12 @@ def _assemble_load_vector_under_lease(
     ``follower_pressure=True`` uses it to evaluate pressure on the current
     shell nodal interpolation surface.
     """
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
     def exact_qualified_guard(
         expected_model: "FEModel",
         *,
@@ -7559,6 +7565,7 @@ def _assemble_load_vector_under_lease(
         # Capture/finalization of the enclosing assembly lease provide the
         # complete lifecycle scan.  Hot observations require only that same
         # immutable lease generation.
+        lifecycle_guard(expected_model, context=context)
         qualified_runtime_guard(expected_model, context=context)
 
     exact_qualified_guard(model, context="load-vector assembly preflight")
