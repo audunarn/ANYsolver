@@ -35,7 +35,7 @@ CONTRACT = (
     ROOT
     / "docs"
     / "reference_cases"
-    / "e4_pl_s3_qualification_optimization_v5_contract.json"
+    / "e4_pl_s3_qualification_optimization_v6_contract.json"
 )
 COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 FORMAL_RUNNER = ROOT / "scripts" / "run_e4_pl_s3_qualification_v4.py"

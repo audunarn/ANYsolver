@@ -34,7 +34,7 @@ CONTRACT = (
     ROOT
     / "docs"
     / "reference_cases"
-    / "e4_pl_s3_qualification_optimization_v5_contract.json"
+    / "e4_pl_s3_qualification_optimization_v6_contract.json"
 )
 EVIDENCE = (
     ROOT
