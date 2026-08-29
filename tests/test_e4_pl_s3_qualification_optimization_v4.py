@@ -909,6 +909,24 @@ def test_candidate_preflight_mutations_fail_closed(
         )
 
 
+def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None:
+    generator = _load("_s3_v6_anystructure_release_exception", GENERATOR)
+    exception = generator.ANYSTRUCTURE_RELEASE_EXCEPTION
+    assert exception == {
+        "candidate_commit": "6362095a0afe9165da17ad8e288a922f16aad564",
+        "candidate_tree": "0fb263dc4d0e9d6c48aad9be0de6206e1c2758b9",
+        "failed_gate": "full-supported-test-suite",
+        "log_sha256": "D359E68044760CA0402A019ED5F765129721DE2A38F209AAEDB8D64DC30272F9",
+        "preflight_sha256": "3A2E4C26848563F62701804D0392B448826CA3D381193B01C5E93779348DC359",
+        "returncode": 1,
+        "stderr_sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "test_summary": "759 passed, 10 skipped, 1 release-authority fixture failed",
+        "user_disposition": "DISCONTINUE_FURTHER_TESTING_INCLUDE_RELEVANT_UPDATES_CLEAN_AND_PUBLISH",
+    }
+    assert exception["returncode"] != 0
+    assert "passed" not in exception
+
+
 def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
     tmp_path: Path,
 ) -> None:

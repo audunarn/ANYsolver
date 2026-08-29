@@ -110,6 +110,17 @@ MANIFEST = (
 SCHEMA = "anysolver.e4-pl-s3-qualification-candidate-binding-v4"
 GRAPH_SCHEMA = "anysolver.e4-pl-s3-final-candidate-graph-v4"
 PREFLIGHT_SCHEMA = "anysolver.e4-pl-s3-candidate-preflight-v4"
+ANYSTRUCTURE_RELEASE_EXCEPTION = {
+    "candidate_commit": "6362095a0afe9165da17ad8e288a922f16aad564",
+    "candidate_tree": "0fb263dc4d0e9d6c48aad9be0de6206e1c2758b9",
+    "failed_gate": "full-supported-test-suite",
+    "log_sha256": "D359E68044760CA0402A019ED5F765129721DE2A38F209AAEDB8D64DC30272F9",
+    "preflight_sha256": "3A2E4C26848563F62701804D0392B448826CA3D381193B01C5E93779348DC359",
+    "returncode": 1,
+    "stderr_sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "test_summary": "759 passed, 10 skipped, 1 release-authority fixture failed",
+    "user_disposition": "DISCONTINUE_FURTHER_TESTING_INCLUDE_RELEVANT_UPDATES_CLEAN_AND_PUBLISH",
+}
 CANDIDATES = (
     "ANY3dView",
     "ANYbuckling",
@@ -2710,6 +2721,21 @@ def _verify_preflight(
             runtime_environment,
             output_directory,
         )
+        approved_release_exception = (
+            name == "ANYstructure"
+            and candidate["commit"]
+            == ANYSTRUCTURE_RELEASE_EXCEPTION["candidate_commit"]
+            and candidate["tree"] == ANYSTRUCTURE_RELEASE_EXCEPTION["candidate_tree"]
+            and value["sha256"]
+            == ANYSTRUCTURE_RELEASE_EXCEPTION["preflight_sha256"]
+            and identifier == ANYSTRUCTURE_RELEASE_EXCEPTION["failed_gate"]
+            and gate["passed"] is False
+            and gate["returncode"] == ANYSTRUCTURE_RELEASE_EXCEPTION["returncode"]
+            and log.get("sha256")
+            == ANYSTRUCTURE_RELEASE_EXCEPTION["log_sha256"]
+            and stderr_log.get("sha256")
+            == ANYSTRUCTURE_RELEASE_EXCEPTION["stderr_sha256"]
+        )
         if (
             type(identifier) is not str
             or not identifier
@@ -2718,9 +2744,15 @@ def _verify_preflight(
             or command != expected_command
             or gate["environment"] != expected_environment
             or gate["working_directory"] != str(expected_execution_root)
-            or gate["passed"] is not True
+            or (
+                gate["passed"] is not True
+                and not approved_release_exception
+            )
             or type(gate["returncode"]) is not int
-            or gate["returncode"] != 0
+            or (
+                gate["returncode"] != 0
+                and not approved_release_exception
+            )
             or not isinstance(log, dict)
             or set(log) != {"bytes", "path", "sha256"}
             or not isinstance(stderr_log, dict)
