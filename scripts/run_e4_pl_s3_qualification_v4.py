@@ -1560,8 +1560,6 @@ def _environment(
     cache_paths = {
         "MPLCONFIGDIR": cache_root / "matplotlib",
         "NUMBA_CACHE_DIR": cache_root / "numba",
-        "TEMP": cache_root / "temp",
-        "TMP": cache_root / "temp",
         "XDG_CACHE_HOME": cache_root / "xdg",
     }
     for path in sorted(set(cache_paths.values()), key=str):

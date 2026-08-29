@@ -945,13 +945,44 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
     )
     assert generator.ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS == (
         "docs/reference_cases/e4_pl_s3_anystructure_release_exception_v1.json",
+        "docs/reference_cases/e4_pl_s3_qualification_v4_authority_review.json",
+        "docs/reference_cases/e4_pl_s3_qualification_v4_candidate_binding.json",
+        "docs/reference_cases/e4_pl_s3_qualification_v4_candidate_graph.json",
+        "docs/reference_cases/e4_pl_s3_qualification_v4_science_review.json",
+        "docs/reference_cases/e4_pl_s3_qv6_worker_environment_incident_v1.json",
         "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
+        "scripts/run_e4_pl_s3_qualification_v4.py",
         "tests/test_e4_pl_s3_qualification_optimization_v4.py",
     )
     assert (
         generator.FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["commit"]
         == "fef096db81f7a0c49eb600dd85105c92c463ee17"
     )
+
+
+def test_worker_environment_preserves_bound_temp_and_tmp(tmp_path: Path) -> None:
+    formal = _load("_s3_v6_worker_environment", FORMAL)
+    frozen_temp = str(tmp_path / "frozen-temp")
+    environment = formal._environment(
+        SimpleNamespace(
+            binding={
+                "execution_target": str(tmp_path / "target"),
+                "runtime_environment": {
+                    "process_environment": {
+                        "PATH": str(tmp_path),
+                        "TEMP": frozen_temp,
+                        "TMP": frozen_temp,
+                    }
+                },
+            }
+        ),
+        tmp_path / "worker",
+    )
+    assert environment["TEMP"] == frozen_temp
+    assert environment["TMP"] == frozen_temp
+    assert "runtime-cache" in environment["MPLCONFIGDIR"]
+    assert "runtime-cache" in environment["NUMBA_CACHE_DIR"]
+    assert "runtime-cache" in environment["XDG_CACHE_HOME"]
 
 
 def test_anystructure_preflight_environment_uses_only_bound_dependency_roots(
