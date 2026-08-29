@@ -32,22 +32,22 @@ BASE_PROGRAM = REFERENCE_CASES / "e4_pl_s3_default_activation_v2.py"
 BASE_INPUT = REFERENCE_CASES / "e4_pl_s3_default_activation_v2_input.json"
 BASE_CONTRACT = REFERENCE_CASES / "e4_pl_s3_default_activation_v2_contract.json"
 SUCCESSOR = REFERENCE_CASES / "e4_pl_s3_qualification_optimization_v4.py"
-CONTRACT = REFERENCE_CASES / "e4_pl_s3_qualification_optimization_v4_contract.json"
+CONTRACT = REFERENCE_CASES / "e4_pl_s3_qualification_optimization_v5_contract.json"
 COLD_COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 BINDING_GENERATOR = ROOT / "scripts" / "prepare_e4_pl_s3_qualification_v4_input.py"
 WORKER_SCHEMA = "anysolver.e4-pl-s3-default-activation-worker-v3"
 SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-default-activation-scientific-v3"
 CYCLE_SET_SCHEMA = "anysolver.e4-pl-s3-default-activation-cycle-set-v3"
 ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-formal-shard-assignment-v3"
-AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v4"
-REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v4"
-AUTHORITY_SUBJECT = "docs: authorize corrected optimized S3 qualification execution"
+AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v5"
+REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v5"
+AUTHORITY_SUBJECT = "docs: authorize optimized S3 qualification execution v5"
 RESOURCE_MANAGER = Path(r"C:\Github\.resource-manager")
 RESOURCE_REQUEST_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_REQUEST_ID"
 RESOURCE_ATTEMPT_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_ATTEMPT_SHA256"
 REQUIRED_REVIEWER_IDS = (
-    "s3-v4-authority-reviewer",
-    "s3-v4-science-reviewer",
+    "s3-v5-authority-reviewer",
+    "s3-v5-science-reviewer",
 )
 STRUCTURAL_WORKERS = (
     "STRUCTURAL_SLASH",

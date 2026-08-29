@@ -35,7 +35,7 @@ CONTRACT = (
     ROOT
     / "docs"
     / "reference_cases"
-    / "e4_pl_s3_qualification_optimization_v4_contract.json"
+    / "e4_pl_s3_qualification_optimization_v5_contract.json"
 )
 COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 FORMAL_RUNNER = ROOT / "scripts" / "run_e4_pl_s3_qualification_v4.py"
@@ -484,6 +484,18 @@ Q4_GUARD_SOURCE_PATHS = (
 )
 Q4_NONMECHANICS_INTEGRATION_PATH_BLOBS = (
     (
+        "src/anysolver/boundary.py",
+        "631c2798d1f8cf435e44e82499ab04b79a837925",
+    ),
+    (
+        "src/anysolver/matrix_assembly.py",
+        "10740d6bde7d1c542c59b1945d23346b37caff04",
+    ),
+    (
+        "src/anysolver/s3_reference_batch.py",
+        "e2d441ef19db7d348fb63ef147b1191251bcc7d7",
+    ),
+    (
         "src/anysolver/anystructure_fem_mode.py",
         "9bcbacb9ac6a71fdb2f9c8c8349d50aadb16946d",
     ),
@@ -529,9 +541,9 @@ Q4_NONMECHANICS_INTEGRATION_PATHS = tuple(
 Q4_FROZEN_SOURCE_EXCLUSIONS = tuple(
     sorted((*Q4_GUARD_SOURCE_PATHS, *Q4_NONMECHANICS_INTEGRATION_PATHS))
 )
-Q4_FROZEN_SOURCE_FILE_COUNT = 103
+Q4_FROZEN_SOURCE_FILE_COUNT = 100
 Q4_FROZEN_SOURCE_ROWS_SHA256 = (
-    "6C3489D4814C28CDFCA47EE881CFA3CB38349C6774464EF366A8D8836B334560"
+    "FE11F05F91B1C70262AA4940E28CCA277267CCE6460E68FCEB267AAA30058FCE"
 )
 
 
