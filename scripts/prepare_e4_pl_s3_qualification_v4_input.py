@@ -1103,6 +1103,113 @@ def _read_record(raw: bytes, *, label: str) -> dict[str, tuple[str, str]]:
     return result
 
 
+def _installed_record_target_path(value: str, *, label: str) -> tuple[str, bool]:
+    """Map a pip ``--target`` RECORD route into the closed target.
+
+    Pip records generated scheme files relative to a conventional
+    ``site-packages`` directory. In a ``--target`` installation those rows
+    retain exactly two leading parent components even though pip copies the
+    generated file into the target's ``bin``/``share``/root namespace. Accept
+    only that exact, installer-authored shape and normalize the remainder
+    through the ordinary archive-path guard. All other traversal remains
+    forbidden.
+    """
+
+    path = PurePosixPath(value)
+    parts = path.parts
+    if (
+        not value
+        or "\\" in value
+        or path.is_absolute()
+        or any(part in {"", "."} for part in parts)
+        or any(":" in part for part in parts)
+        or any(ord(character) < 32 for character in value)
+    ):
+        raise BindingError(f"unsafe {label} path: {value!r}")
+    if ".." not in parts:
+        return _safe_archive_path(value, label=label), False
+    if len(parts) > 2 and parts[:2] == ("..", "..") and ".." not in parts[2:]:
+        return (
+            _safe_archive_path(
+                PurePosixPath(*parts[2:]).as_posix(),
+                label=f"{label} target",
+            ),
+            True,
+        )
+    raise BindingError(f"unsafe {label} path: {value!r}")
+
+
+def _read_installed_record(
+    raw: bytes,
+    *,
+    label: str,
+) -> dict[str, tuple[str, str, str, bool]]:
+    try:
+        rows = list(csv.reader(io.StringIO(raw.decode("utf-8"), newline="")))
+    except (UnicodeDecodeError, csv.Error) as exc:
+        raise BindingError(f"{label} is not valid UTF-8 CSV") from exc
+    result: dict[str, tuple[str, str, str, bool]] = {}
+    source_paths: set[str] = set()
+    seen_casefold: set[str] = set()
+    for row in rows:
+        if len(row) != 3:
+            raise BindingError(f"{label} row width differs")
+        target_path, installer_external = _installed_record_target_path(
+            row[0], label=label
+        )
+        folded = target_path.casefold()
+        if (
+            row[0] in source_paths
+            or target_path in result
+            or folded in seen_casefold
+        ):
+            raise BindingError(f"{label} contains duplicate paths")
+        source_paths.add(row[0])
+        seen_casefold.add(folded)
+        result[target_path] = (row[1], row[2], row[0], installer_external)
+    if not result:
+        raise BindingError(f"{label} is empty")
+    return result
+
+
+def _installer_generated_bytecode_source(
+    path: str,
+    expected_paths: set[str],
+) -> str | None:
+    route = PurePosixPath(path)
+    if len(route.parts) < 2 or route.parent.name != "__pycache__":
+        return None
+    match = re.fullmatch(
+        rf"(?P<stem>.+)\.{re.escape(str(sys.implementation.cache_tag))}"
+        r"(?:\.opt-[12]|-pytest-[0-9]+(?:\.[0-9]+){1,3})?\.pyc",
+        route.name,
+    )
+    if match is None:
+        return None
+    source = route.parent.parent / f"{match.group('stem')}.py"
+    source_path = source.as_posix()
+    return source_path if source_path in expected_paths else None
+
+
+def _is_installer_generated_bytecode(
+    path: str,
+    expected_paths: set[str],
+) -> bool:
+    return _installer_generated_bytecode_source(path, expected_paths) is not None
+
+
+def _record_payload_matches(
+    raw: bytes,
+    digest: str,
+    size: str,
+    *,
+    allow_blank: bool,
+) -> bool:
+    if allow_blank and not digest and not size:
+        return True
+    return digest == f"sha256={_record_digest(raw)}" and size == str(len(raw))
+
+
 def _installed_member_path(value: str) -> str:
     parts = PurePosixPath(value).parts
     if len(parts) >= 3 and parts[0].endswith(".data"):
@@ -1233,28 +1340,48 @@ def _installed_wheel_manifest(
     wheel: Mapping[str, Any],
     target: Path,
     closed_target: Mapping[str, Any],
+    actual_by_path: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    if actual_by_path is None:
+        actual_by_path = {
+            str(row["path"]): row for row in _target_inventory(target)
+        }
     blueprint = _wheel_blueprint(name, wheel)
     target_record_path = target / Path(blueprint["record"]["target_path"])
     target_record_raw = _regular_file_bytes(
         target_record_path, label=f"{name} installed RECORD"
     )
-    target_record = _read_record(target_record_raw, label=f"{name} installed RECORD")
+    target_record = _read_installed_record(
+        target_record_raw, label=f"{name} installed RECORD"
+    )
     expected_paths = set(blueprint["files"])
     record_path = str(blueprint["record"]["target_path"])
     allowed_generated = {
         f"{blueprint['dist_info']}/{generated}"
         for generated in INSTALLER_GENERATED_NAMES
     }
-    generated_paths = set(target_record) - expected_paths
+    generated_paths = {
+        path
+        for path, (_digest, _size, _source, installer_external) in target_record.items()
+        if (
+            path not in expected_paths
+            and not installer_external
+            and not _is_installer_generated_bytecode(path, expected_paths)
+        )
+    }
     if not generated_paths <= allowed_generated:
         raise BindingError(f"{name} installed RECORD claims an unregistered file")
-    if set(target_record) != expected_paths | generated_paths:
+    if not expected_paths <= set(target_record):
         raise BindingError(f"{name} installed RECORD membership differs")
     rows: list[dict[str, Any]] = []
     for path in sorted(target_record):
-        digest, size = target_record[path]
+        digest, size, _source_path, installer_external = target_record[path]
+        installer_bytecode = _is_installer_generated_bytecode(
+            path, expected_paths
+        )
         installed_path = target / Path(path)
+        if installer_external and not installed_path.is_file():
+            continue
         installed_raw = _regular_file_bytes(
             installed_path, label=f"{name} installed file"
         )
@@ -1263,8 +1390,11 @@ def _installed_wheel_manifest(
                 raise BindingError(f"{name} installed RECORD self-row differs")
             provenance = "TARGET_RECORD"
         else:
-            if digest != f"sha256={_record_digest(installed_raw)}" or size != str(
-                len(installed_raw)
+            if not _record_payload_matches(
+                installed_raw,
+                digest,
+                size,
+                allow_blank=installer_bytecode,
             ):
                 raise BindingError(f"{name} installed RECORD hash or size differs")
             if path in blueprint["files"]:
@@ -1279,6 +1409,16 @@ def _installed_wheel_manifest(
             else:
                 provenance = "INSTALLER_GENERATED"
         rows.append({**_sha256_row(path, installed_raw), "provenance": provenance})
+    for path in sorted(set(actual_by_path) - set(target_record)):
+        if _installer_generated_bytecode_source(path, expected_paths) is None:
+            continue
+        rows.append(
+            {
+                **dict(actual_by_path[path]),
+                "provenance": "INSTALLER_GENERATED_UNRECORDED_BYTECODE",
+            }
+        )
+    rows.sort(key=lambda row: str(row["path"]))
     return {
         "closed_target": dict(closed_target),
         "distribution": blueprint["distribution"],
@@ -1301,6 +1441,7 @@ def _build_installed_target_manifests(
 ) -> dict[str, dict[str, Any]]:
     target = target.resolve(strict=True)
     actual_rows = _target_inventory(target)
+    actual_by_path = {str(row["path"]): row for row in actual_rows}
     actual_directories = _target_directory_inventory(target)
     closed_target = {
         "directories_sha256": hashlib.sha256(
@@ -1316,6 +1457,7 @@ def _build_installed_target_manifests(
             candidates[name]["wheel"],
             target,
             closed_target,
+            actual_by_path,
         )
         for name in sorted(PACKAGED)
     }
@@ -1340,6 +1482,15 @@ def _build_installed_target_manifests(
     return manifests
 
 
+def _is_top_level_dist_info_record(path: str) -> bool:
+    route = PurePosixPath(path)
+    return (
+        len(route.parts) == 2
+        and route.name == "RECORD"
+        and route.parent.name.endswith(".dist-info")
+    )
+
+
 def _runtime_environment_binding(
     target: Path,
     candidate_manifests: Mapping[str, Mapping[str, Any]],
@@ -1348,8 +1499,8 @@ def _runtime_environment_binding(
 
     target = target.resolve(strict=True)
     actual_rows = _target_inventory(target)
-    _reject_source_candidate_target_shadowing(actual_rows)
     actual_by_path = {str(row["path"]): row for row in actual_rows}
+    _reject_source_candidate_target_shadowing(actual_rows)
     candidate_paths = {
         str(row["path"])
         for manifest in candidate_manifests.values()
@@ -1357,10 +1508,11 @@ def _runtime_environment_binding(
     }
     extra_paths = set(actual_by_path) - candidate_paths
     record_paths = sorted(
-        path for path in extra_paths if path.endswith(".dist-info/RECORD")
+        path for path in extra_paths if _is_top_level_dist_info_record(path)
     )
     claimed: dict[str, str] = {}
-    distributions: list[dict[str, Any]] = []
+    distribution_records: list[dict[str, Any]] = []
+    distribution_rows: dict[str, list[dict[str, Any]]] = {}
     identities: set[str] = set()
     for record_path in record_paths:
         dist_info = PurePosixPath(record_path).parent.as_posix()
@@ -1379,38 +1531,84 @@ def _runtime_environment_binding(
             target / Path(record_path),
             label=f"runtime {dist_info} RECORD",
         )
-        record = _read_record(record_raw, label=f"runtime {dist_info} RECORD")
+        record = _read_installed_record(
+            record_raw, label=f"runtime {dist_info} RECORD"
+        )
+        record_paths = set(record)
         rows: list[dict[str, Any]] = []
         for path in sorted(record):
-            if path not in extra_paths or path in claimed:
-                raise BindingError("runtime RECORD ownership differs")
+            digest, size, _source_path, installer_external = record[path]
+            if installer_external and not (target / Path(path)).is_file():
+                continue
+            if path not in extra_paths:
+                raise BindingError(
+                    f"runtime RECORD path is absent from the closed target: "
+                    f"{dist_info}:{path}"
+                )
+            if path in claimed:
+                raise BindingError(
+                    f"runtime RECORD path is multiply owned by "
+                    f"{claimed[path]} and {canonical_name}: {path}"
+                )
             raw = _regular_file_bytes(
                 target / Path(path),
                 label=f"runtime {dist_info} file",
             )
-            digest, size = record[path]
             if path == record_path:
                 if digest or size:
                     raise BindingError("runtime RECORD self-row differs")
-            elif digest != f"sha256={_record_digest(raw)}" or size != str(len(raw)):
+            elif not _record_payload_matches(
+                raw,
+                digest,
+                size,
+                allow_blank=_is_installer_generated_bytecode(path, record_paths),
+            ):
                 raise BindingError("runtime RECORD hash or size differs")
             claimed[path] = canonical_name
             rows.append(dict(actual_by_path[path]))
-        distributions.append(
+        distribution_rows[canonical_name] = rows
+        distribution_records.append(
             {
                 "dist_info": dist_info,
                 "distribution": distribution,
-                "file_count": len(rows),
-                "files_sha256": hashlib.sha256(canonical_bytes(rows)).hexdigest().upper(),
                 "normalized_name": canonical_name,
                 "record_sha256": hashlib.sha256(record_raw).hexdigest().upper(),
                 "version": version,
             }
         )
+    for path in sorted(extra_paths - set(claimed)):
+        source = _installer_generated_bytecode_source(path, set(claimed))
+        if source is None:
+            continue
+        owner = claimed[source]
+        claimed[path] = owner
+        distribution_rows[owner].append(dict(actual_by_path[path]))
     if set(claimed) != extra_paths:
-        raise BindingError("isolated runtime target contains non-RECORD files")
+        unclaimed = sorted(extra_paths - set(claimed))
+        overclaimed = sorted(set(claimed) - extra_paths)
+        detail = (
+            f"unclaimed={unclaimed[0]}" if unclaimed else f"overclaimed={overclaimed[0]}"
+        )
+        raise BindingError(
+            f"isolated runtime target contains non-RECORD files: {detail}"
+        )
     if identities != RUNTIME_DISTRIBUTION_IDENTITIES:
         raise BindingError("isolated runtime target distribution identities differ")
+    distributions: list[dict[str, Any]] = []
+    for record in distribution_records:
+        rows = sorted(
+            distribution_rows[str(record["normalized_name"])],
+            key=lambda row: str(row["path"]),
+        )
+        distributions.append(
+            {
+                **record,
+                "file_count": len(rows),
+                "files_sha256": hashlib.sha256(
+                    canonical_bytes(rows)
+                ).hexdigest().upper(),
+            }
+        )
     directories = _target_directory_inventory(target)
     git_runtime, process_environment = _git_runtime_binding()
     python_runtime = _python_runtime_binding(process_environment)

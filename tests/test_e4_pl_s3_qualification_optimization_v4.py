@@ -2424,3 +2424,95 @@ def test_nested_special_lane_returns_the_strict_adjudicator_schema(
     assert not set(successor.ANYSTRUCTURE_GATE_ROOT_ENVIRONMENT) & set(
         captured[1]["kwargs"]["env"]
     )
+
+
+def test_v4_installed_record_paths_normalize_only_pip_target_scheme() -> None:
+    generator = _load("_s3_v4_installed_record_paths", GENERATOR)
+    assert generator._installed_record_target_path(
+        "package/__init__.py", label="installed RECORD"
+    ) == ("package/__init__.py", False)
+    assert generator._installed_record_target_path(
+        "../../bin/tool.exe", label="installed RECORD"
+    ) == ("bin/tool.exe", True)
+    assert generator._installed_record_target_path(
+        "../../share/man/tool.1", label="installed RECORD"
+    ) == ("share/man/tool.1", True)
+    assert generator._installed_record_target_path(
+        "../../runtime.dll", label="installed RECORD"
+    ) == ("runtime.dll", True)
+    for unsafe in (
+        "../bin/tool.exe",
+        "../../../bin/tool.exe",
+        "../../bin/../tool.exe",
+        "/bin/tool.exe",
+        "C:/bin/tool.exe",
+        "..\\..\\bin\\tool.exe",
+    ):
+        with pytest.raises(generator.BindingError, match="unsafe installed RECORD"):
+            generator._installed_record_target_path(
+                unsafe, label="installed RECORD"
+            )
+
+
+def test_v4_installed_record_normalization_rejects_target_collisions() -> None:
+    generator = _load("_s3_v4_installed_record_collision", GENERATOR)
+    raw = (
+        b"../../bin/tool.exe,sha256=first,1\r\n"
+        b"bin/tool.exe,sha256=second,1\r\n"
+    )
+    with pytest.raises(generator.BindingError, match="duplicate paths"):
+        generator._read_installed_record(raw, label="installed RECORD")
+
+
+def test_v4_installer_bytecode_requires_exact_bound_source_and_cache_tag() -> None:
+    generator = _load("_s3_v4_installed_record_bytecode", GENERATOR)
+    tag = sys.implementation.cache_tag
+    expected = {"package/module.py"}
+    assert generator._is_installer_generated_bytecode(
+        f"package/__pycache__/module.{tag}.pyc", expected
+    )
+    assert generator._installer_generated_bytecode_source(
+        f"package/__pycache__/module.{tag}.pyc", expected
+    ) == "package/module.py"
+    assert generator._is_installer_generated_bytecode(
+        f"package/__pycache__/module.{tag}.opt-1.pyc", expected
+    )
+    assert generator._is_installer_generated_bytecode(
+        f"package/__pycache__/module.{tag}-pytest-9.1.1.pyc", expected
+    )
+    assert not generator._is_installer_generated_bytecode(
+        f"package/__pycache__/other.{tag}.pyc", expected
+    )
+    assert not generator._is_installer_generated_bytecode(
+        "package/__pycache__/module.cpython-999.pyc", expected
+    )
+    assert not generator._is_installer_generated_bytecode(
+        f"package/__pycache__/module.{tag}-pytest-custom.pyc", expected
+    )
+    assert generator._installer_generated_bytecode_source(
+        "package/__pycache__/module.cpython-999.pyc", expected
+    ) is None
+    payload = b"compiled-bytecode"
+    assert generator._record_payload_matches(
+        payload, "", "", allow_blank=True
+    )
+    assert not generator._record_payload_matches(
+        payload, "", "", allow_blank=False
+    )
+    assert generator._record_payload_matches(
+        payload,
+        f"sha256={generator._record_digest(payload)}",
+        str(len(payload)),
+        allow_blank=False,
+    )
+
+
+def test_v4_runtime_distribution_discovery_excludes_vendored_records() -> None:
+    generator = _load("_s3_v4_runtime_record_discovery", GENERATOR)
+    assert generator._is_top_level_dist_info_record(
+        "setuptools-84.0.0.dist-info/RECORD"
+    )
+    assert not generator._is_top_level_dist_info_record(
+        "setuptools/_vendor/autocommand-2.2.2.dist-info/RECORD"
+    )
+    assert not generator._is_top_level_dist_info_record("package/RECORD")
