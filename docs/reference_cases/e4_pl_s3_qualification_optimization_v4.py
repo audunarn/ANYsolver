@@ -480,11 +480,19 @@ def run_pytest_node_after_parent_authority(
         shutil.rmtree(lane_temp)
         raise base.QualificationError("bound process environment differs")
     environment = dict(process_environment)
+    cache_paths = {
+        "MPLCONFIGDIR": lane_temp / "matplotlib-config",
+        "NUMBA_CACHE_DIR": lane_temp / "numba-cache",
+        "XDG_CACHE_HOME": lane_temp / "xdg-cache",
+    }
+    for path in sorted(cache_paths.values(), key=str):
+        path.mkdir(parents=True, exist_ok=False)
     environment.update(
         {
             "ANYSOLVER_S3_V4_BINDING": str(binding_path),
             "ANYSOLVER_S3_V4_CROSS_WHEEL": "1",
             "ANYSOLVER_S3_V4_TARGET": str(target),
+            **{name: str(path.resolve()) for name, path in cache_paths.items()},
             "MKL_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
             "OMP_NUM_THREADS": "1",

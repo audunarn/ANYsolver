@@ -39,15 +39,15 @@ WORKER_SCHEMA = "anysolver.e4-pl-s3-default-activation-worker-v3"
 SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-default-activation-scientific-v3"
 CYCLE_SET_SCHEMA = "anysolver.e4-pl-s3-default-activation-cycle-set-v3"
 ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-formal-shard-assignment-v3"
-AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v7"
-REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v7"
-AUTHORITY_SUBJECT = "docs: authorize isolated S3 qualification execution v7"
+AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v8"
+REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v8"
+AUTHORITY_SUBJECT = "docs: authorize isolated S3 qualification execution v8"
 RESOURCE_MANAGER = Path(r"C:\Github\.resource-manager")
 RESOURCE_REQUEST_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_REQUEST_ID"
 RESOURCE_ATTEMPT_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_ATTEMPT_SHA256"
 REQUIRED_REVIEWER_IDS = (
-    "s3-v7-authority-reviewer",
-    "s3-v7-science-reviewer",
+    "s3-v8-authority-reviewer",
+    "s3-v8-science-reviewer",
 )
 STRUCTURAL_WORKERS = (
     "STRUCTURAL_SLASH",

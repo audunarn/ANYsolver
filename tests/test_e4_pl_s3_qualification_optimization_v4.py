@@ -359,6 +359,69 @@ def test_special_node_results_rebuild_one_strict_lane_report() -> None:
     assert len(combined["report"]["outcomes"]) == 2
 
 
+def test_special_node_uses_fresh_writable_numeric_cache_directories(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    successor = _load("_s3_v8_special_node_cache", SUCCESSOR)
+    binding_path = tmp_path / "binding.json"
+    target = tmp_path / "target"
+    source = tmp_path / "source"
+    cwd = tmp_path / "candidate"
+    lane_temp = tmp_path / "node-temp"
+    for path in (target, source, cwd, lane_temp):
+        path.mkdir()
+    isolation = b"[pytest]\n"
+    binding = {
+        "candidates": {"ANYintelligent": {"root": str(source)}},
+        "execution_target": str(target),
+        "files": {
+            "preflight_config": {
+                "bytes": len(isolation),
+                "path": "docs/reference_cases/e4_pl_s3_pytest_isolation_v4.ini",
+                "sha256": hashlib.sha256(isolation).hexdigest().upper(),
+            }
+        },
+        "runtime_environment": {
+            "process_environment": {"GIT_CONFIG_NOSYSTEM": "1"}
+        },
+    }
+    raw = json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()
+    binding_path.write_bytes(raw)
+    authority = SimpleNamespace(input=binding, input_path=binding_path, input_raw=raw)
+    captured: dict[str, str] = {}
+
+    def fake_run(*_args: object, **kwargs: object) -> SimpleNamespace:
+        environment = kwargs["env"]
+        for name in ("NUMBA_CACHE_DIR", "MPLCONFIGDIR", "XDG_CACHE_HOME"):
+            path = Path(environment[name])
+            assert path.is_dir()
+            assert path.is_relative_to(lane_temp)
+            captured[name] = str(path)
+        return SimpleNamespace(returncode=0, stderr="", stdout="report")
+
+    base = SimpleNamespace(
+        QualificationError=RuntimeError,
+        _parse_pytest_lane_report=lambda _stdout: {"collected": 1},
+        _pytest_lane_code=lambda _authority, nodes: f"pytest.main({nodes!r} + ['-q'])",
+        _pytest_lane_status=lambda _returncode, _report: "PASS",
+        strict_json=lambda value, **_kwargs: json.loads(value),
+    )
+    monkeypatch.setattr(successor.tempfile, "mkdtemp", lambda **_kwargs: str(lane_temp))
+    monkeypatch.setattr("subprocess.run", fake_run)
+    result = successor.run_pytest_node_after_parent_authority(
+        base,
+        authority,
+        "lane::node-0",
+        cwd,
+        "tests/test_node.py::test_value",
+        isolation_config_bytes=isolation,
+    )
+    assert result["status"] == "PASS"
+    assert set(captured) == {"MPLCONFIGDIR", "NUMBA_CACHE_DIR", "XDG_CACHE_HOME"}
+    assert not lane_temp.exists()
+
+
 def test_formal_assignment_is_canonical_hash_bound_and_mutation_rejected(
     tmp_path: Path,
 ) -> None:
@@ -399,7 +462,8 @@ def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity()
     generator = _load("_s3_v3_generator_contract", GENERATOR)
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     assert contract["authority_state"] == (
-        "CORRECTED_QV7_PROCESS_ISOLATION_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS"
+        "CORRECTED_QV8_SPECIAL_NODE_CACHE_ISOLATION_REQUIRES_FINAL_"
+        "CANDIDATE_GRAPH_AND_REVIEWS"
     )
     assert contract["formal_qualification_authority"] is False
     assert contract["formal_runner"]["exact_topology_records"] == 252
@@ -411,6 +475,11 @@ def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity()
     assert contract["formal_runner"]["excluded_special_repositories"] == [
         "ANYstructure"
     ]
+    assert contract["qv8_successor"]["mechanics_change"] == "NONE"
+    assert contract["qv8_successor"]["scientific_cases_change"] == "NONE"
+    assert contract["qv8_successor"]["failed_request"]["request_id"] == (
+        "35186e8f4fc74af2804f5d2a858e9ee3"
+    )
     assert contract["execution_policy"]["total_runtime_limit_seconds"] is None
     assert contract["execution_policy"]["runtime_classification"] is False
     preflight_policy = contract["execution_policy"]["candidate_preflight"]
@@ -1025,6 +1094,7 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
         "docs/reference_cases/e4_pl_s3_qualification_v4_science_review.json",
         "docs/reference_cases/e4_pl_s3_qv6_memory_and_scope_incident_v1.json",
         "docs/reference_cases/e4_pl_s3_qv6_worker_environment_incident_v1.json",
+        "docs/reference_cases/e4_pl_s3_qv7_numba_cache_incident_v1.json",
         "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
         "scripts/run_e4_pl_s3_qualification_v4.py",
         "tests/test_e4_pl_s3_qualification_optimization_v4.py",
