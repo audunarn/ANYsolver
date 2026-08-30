@@ -37,6 +37,17 @@ CONTRACT = (
     / "reference_cases"
     / "e4_pl_s3_qualification_isolation_v7_contract.json"
 )
+QV9_CONTRACT = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_qv9_recovery_contract_v1.json"
+)
+QV8_INCIDENT = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_s3_qv8_process_and_science_incident_v1.json"
+)
+QV9_DIAGNOSTIC = ROOT / "scripts" / "run_e4_pl_s3_qv9_diagnostic.py"
+QV9_TEST = ROOT / "tests" / "test_e4_pl_s3_qv9_recovery.py"
 COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 FORMAL_RUNNER = ROOT / "scripts" / "run_e4_pl_s3_qualification_v4.py"
 PREFLIGHT_RUNNER = ROOT / "scripts" / "run_e4_pl_s3_candidate_preflight_v4.py"
@@ -169,9 +180,13 @@ ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS = (
     "docs/reference_cases/e4_pl_s3_qv6_memory_and_scope_incident_v1.json",
     "docs/reference_cases/e4_pl_s3_qv6_worker_environment_incident_v1.json",
     "docs/reference_cases/e4_pl_s3_qv7_numba_cache_incident_v1.json",
+    "docs/reference_cases/e4_pl_s3_qv8_process_and_science_incident_v1.json",
+    "docs/reference_cases/e4_pl_s3_qv9_recovery_contract_v1.json",
     "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
     "scripts/run_e4_pl_s3_qualification_v4.py",
+    "scripts/run_e4_pl_s3_qv9_diagnostic.py",
     "tests/test_e4_pl_s3_qualification_optimization_v4.py",
+    "tests/test_e4_pl_s3_qv9_recovery.py",
 )
 CANDIDATES = (
     "ANY3dView",
@@ -3078,6 +3093,10 @@ def build_binding(graph_path: Path) -> dict[str, Any]:
         "optimization_evidence": _file_binding(OPTIMIZATION_EVIDENCE),
         "preflight_config": _file_binding(PREFLIGHT_CONFIG),
         "preflight_runner": _file_binding(PREFLIGHT_RUNNER),
+        "qv8_incident": _file_binding(QV8_INCIDENT),
+        "qv9_contract": _file_binding(QV9_CONTRACT),
+        "qv9_diagnostic": _file_binding(QV9_DIAGNOSTIC),
+        "qv9_test": _file_binding(QV9_TEST),
         "successor": _file_binding(SUCCESSOR),
         "test": _file_binding(TEST),
     }

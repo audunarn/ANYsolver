@@ -33,21 +33,25 @@ BASE_INPUT = REFERENCE_CASES / "e4_pl_s3_default_activation_v2_input.json"
 BASE_CONTRACT = REFERENCE_CASES / "e4_pl_s3_default_activation_v2_contract.json"
 SUCCESSOR = REFERENCE_CASES / "e4_pl_s3_qualification_optimization_v4.py"
 CONTRACT = REFERENCE_CASES / "e4_pl_s3_qualification_isolation_v7_contract.json"
+QV9_CONTRACT = REFERENCE_CASES / "e4_pl_s3_qv9_recovery_contract_v1.json"
+QV8_INCIDENT = REFERENCE_CASES / "e4_pl_s3_qv8_process_and_science_incident_v1.json"
+QV9_DIAGNOSTIC = ROOT / "scripts" / "run_e4_pl_s3_qv9_diagnostic.py"
+QV9_TEST = ROOT / "tests" / "test_e4_pl_s3_qv9_recovery.py"
 COLD_COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 BINDING_GENERATOR = ROOT / "scripts" / "prepare_e4_pl_s3_qualification_v4_input.py"
 WORKER_SCHEMA = "anysolver.e4-pl-s3-default-activation-worker-v3"
 SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-default-activation-scientific-v3"
 CYCLE_SET_SCHEMA = "anysolver.e4-pl-s3-default-activation-cycle-set-v3"
 ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-formal-shard-assignment-v3"
-AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v8"
-REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v8"
-AUTHORITY_SUBJECT = "docs: authorize isolated S3 qualification execution v8"
+AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v9"
+REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v9"
+AUTHORITY_SUBJECT = "docs: authorize repaired S3 qualification execution v9"
 RESOURCE_MANAGER = Path(r"C:\Github\.resource-manager")
 RESOURCE_REQUEST_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_REQUEST_ID"
 RESOURCE_ATTEMPT_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_ATTEMPT_SHA256"
 REQUIRED_REVIEWER_IDS = (
-    "s3-v8-authority-reviewer",
-    "s3-v8-science-reviewer",
+    "s3-v9-authority-reviewer",
+    "s3-v9-science-reviewer",
 )
 STRUCTURAL_WORKERS = (
     "STRUCTURAL_SLASH",
@@ -76,6 +80,10 @@ MAX_RECORD_BYTES = 4 * (1 << 20)
 STRUCTURAL_CHUNK_MIXED_SEQUENCE_COUNT = 5
 SPECIAL_NODE_CONCURRENCY = 3
 STRUCTURAL_CHUNK_SCHEMA = "anysolver.e4-pl-s3-structural-chunk-v1"
+SHARED_BASELINE_SCHEMA = "anysolver.e4-pl-s3-shared-structural-baseline-v1"
+EXECUTION_LEASE_ENVIRONMENT = "ANYSOLVER_S3_QV9_EXECUTION_LEASE"
+EXECUTION_LEASE_SHA_ENVIRONMENT = "ANYSOLVER_S3_QV9_EXECUTION_LEASE_SHA256"
+EXECUTION_LEASE_SCHEMA = "anysolver.e4-pl-s3-qv9-execution-lease-v1"
 TREE_RELEASE_ENVIRONMENT = "ANYSOLVER_S3_COLD_TREE_RELEASE"
 TREE_RELEASE_BYTES = b"ANYSOLVER_S3_COLD_TREE_ACCOUNTED_V1\n"
 TREE_RELEASE_WAIT_SECONDS = 5.0
@@ -151,6 +159,118 @@ def write_exclusive(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("xb") as stream:
         stream.write(canonical_bytes(value))
+
+
+def _capture_execution_lease(
+    authority: SuccessorAuthority,
+    root: Path,
+) -> tuple[Path, str]:
+    """Capture every candidate once; children consume only this gitless graph."""
+
+    root.mkdir()
+    (root / "candidates").mkdir()
+    candidates: dict[str, Any] = {}
+    if authority.generator is None:
+        raise QualificationError("bound Git inventory authority is absent")
+    for name in sorted(authority.binding["candidates"]):
+        candidate = authority.binding["candidates"][name]
+        original_root = Path(str(candidate["root"])).resolve(strict=True)
+        captured_root, manifest = authority.successor.capture_tracked_execution_copy(
+            authority.base,
+            original_root,
+            root / "candidates" / name,
+            tracked_paths=tuple(
+                path
+                for path in authority.generator._git(
+                    original_root, "ls-files", "-z", "--cached"
+                ).split("\0")
+                if path
+            ),
+        )
+        candidates[name] = {
+            "commit": candidate["commit"],
+            "manifest": manifest,
+            "original_root": str(original_root),
+            "root": str(captured_root),
+        }
+    value = {
+        "candidate_binding_sha256": sha256(authority.binding_raw),
+        "candidates": candidates,
+        "epoch": sha256(
+            canonical_bytes(
+                {
+                    name: {
+                        "commit": row["commit"],
+                        "manifest": row["manifest"],
+                    }
+                    for name, row in candidates.items()
+                }
+            )
+        ),
+        "schema": EXECUTION_LEASE_SCHEMA,
+    }
+    path = root / "lease.json"
+    write_exclusive(path, value)
+    return path.resolve(strict=True), sha256(path.read_bytes())
+
+
+def _read_execution_lease(authority: SuccessorAuthority) -> dict[str, Any]:
+    path_value = os.environ.get(EXECUTION_LEASE_ENVIRONMENT)
+    expected_sha = os.environ.get(EXECUTION_LEASE_SHA_ENVIRONMENT)
+    if not path_value or not expected_sha:
+        raise QualificationError("QV9 execution lease environment is absent")
+    path = Path(path_value).resolve(strict=True)
+    raw, value = read_json(path)
+    if (
+        sha256(raw) != expected_sha
+        or set(value) != {"candidate_binding_sha256", "candidates", "epoch", "schema"}
+        or value["schema"] != EXECUTION_LEASE_SCHEMA
+        or value["candidate_binding_sha256"] != sha256(authority.binding_raw)
+        or not isinstance(value["candidates"], dict)
+        or set(value["candidates"]) != set(authority.binding["candidates"])
+    ):
+        raise QualificationError("QV9 execution lease identity differs")
+    expected_epoch_rows: dict[str, Any] = {}
+    for name, candidate in authority.binding["candidates"].items():
+        row = value["candidates"][name]
+        if (
+            not isinstance(row, dict)
+            or set(row) != {"commit", "manifest", "original_root", "root"}
+            or row["commit"] != candidate["commit"]
+            or Path(str(row["original_root"])).resolve(strict=True)
+            != Path(str(candidate["root"])).resolve(strict=True)
+            or not Path(str(row["root"])).resolve(strict=True).is_dir()
+        ):
+            raise QualificationError("QV9 execution lease candidate differs")
+        expected_epoch_rows[name] = {
+            "commit": row["commit"],
+            "manifest": row["manifest"],
+        }
+    if value["epoch"] != sha256(canonical_bytes(expected_epoch_rows)):
+        raise QualificationError("QV9 execution lease epoch differs")
+    return value
+
+
+def _verify_execution_lease(
+    authority: SuccessorAuthority,
+    lease: Mapping[str, Any],
+) -> None:
+    for row in lease["candidates"].values():
+        observed = authority.successor._tree_manifest(
+            authority.base,
+            Path(str(row["root"])).resolve(strict=True),
+        )
+        if observed != row["manifest"]:
+            raise QualificationError("QV9 execution copy changed")
+
+
+def _execution_root_map(lease: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    result: dict[str, Mapping[str, Any]] = {}
+    for row in lease["candidates"].values():
+        entry = {"manifest": row["manifest"], "root": row["root"]}
+        result[str(Path(str(row["original_root"])).resolve(strict=True))] = entry
+        result[str(Path(str(row["root"])).resolve(strict=True))] = entry
+    return result
 
 
 def _stage_bytes(path: Path, raw: bytes) -> None:
@@ -253,6 +373,7 @@ class SuccessorAuthority:
     verified_file_bytes: Mapping[str, bytes] | None = None
     qualification_contract: Mapping[str, Any] | None = None
     verified_data_bytes: Mapping[str, bytes] | None = None
+    generator: Any | None = None
 
 
 def _live_file_binding(path: Path) -> dict[str, Any]:
@@ -877,9 +998,16 @@ def _load_frozen_v2_scientific_authority(
     )
 
 
-def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAuthority:
+def load_authority(
+    binding_path: Path,
+    authorization_path: Path,
+    *,
+    full_validation: bool | None = None,
+) -> SuccessorAuthority:
     """Validate final successor authority before any mechanics import."""
 
+    if full_validation is None:
+        full_validation = os.environ.get(EXECUTION_LEASE_ENVIRONMENT) is None
     binding_raw, binding = read_json(binding_path)
     authorization_raw, authorization = read_json(authorization_path)
     if set(binding) != {
@@ -982,6 +1110,10 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
         ),
         "preflight_config": _live_file_binding(generator.PREFLIGHT_CONFIG),
         "preflight_runner": _live_file_binding(generator.PREFLIGHT_RUNNER),
+        "qv8_incident": _live_file_binding(QV8_INCIDENT),
+        "qv9_contract": _live_file_binding(QV9_CONTRACT),
+        "qv9_diagnostic": _live_file_binding(QV9_DIAGNOSTIC),
+        "qv9_test": _live_file_binding(QV9_TEST),
         "successor": _live_file_binding(SUCCESSOR),
         "test": _live_file_binding(
             ROOT / "tests" / "test_e4_pl_s3_activation_cold_path.py"
@@ -1030,6 +1162,25 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
     )
     if not isinstance(qualification_contract, dict):
         raise QualificationError("qualification contract must be an object")
+    recovery_contract = json.loads(
+        verified_file_bytes["qv9_contract"],
+        object_pairs_hook=_pairs,
+        parse_constant=_reject_constant,
+    )
+    if (
+        not isinstance(recovery_contract, dict)
+        or verified_file_bytes["qv9_contract"] != canonical_bytes(recovery_contract)
+        or recovery_contract.get("schema")
+        != "anysolver.e4-pl-s3-qv9-recovery-contract-v1"
+        or recovery_contract.get("mechanics_change") != "NONE"
+        or recovery_contract.get("q4_mechanics_change") != "NONE"
+        or recovery_contract.get("scientific_cases_change") != "NONE"
+        or recovery_contract.get("scientific_tolerances_change") != "NONE"
+    ):
+        raise QualificationError("QV9 recovery contract differs")
+    incident_row = recovery_contract.get("frozen_qv8_incident")
+    if incident_row != binding["files"]["qv8_incident"]:
+        raise QualificationError("QV8 incident authority differs")
     smoke_input_raw = verified_file_bytes["mixed_mesh_smoke_input"]
     smoke_input = json.loads(
         smoke_input_raw,
@@ -1060,42 +1211,45 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
     candidates = binding["candidates"]
     if not isinstance(candidates, dict) or set(candidates) != set(generator.CANDIDATES):
         raise QualificationError("candidate graph membership or order differs")
-    for name in generator.CANDIDATES:
-        if generator._verify_candidate(name, candidates[name]) != candidates[name]:
-            raise QualificationError(f"{name} candidate identity differs")
+    if full_validation:
+        for name in generator.CANDIDATES:
+            if generator._verify_candidate(name, candidates[name]) != candidates[name]:
+                raise QualificationError(f"{name} candidate identity differs")
     preflight = binding["candidate_preflight"]
     if not isinstance(preflight, dict) or set(preflight) != set(generator.CANDIDATES):
         raise QualificationError("candidate preflight membership differs")
-    for name in generator.CANDIDATES:
-        entry = preflight[name]
-        if not isinstance(entry, dict) or set(entry) != {"record", "result"}:
-            raise QualificationError(f"{name} candidate preflight fields differ")
-        if (
-            generator._verify_preflight(
-                name,
-                candidates[name],
-                entry["result"],
-                Path(str(binding["execution_target"])),
-                binding["runtime_environment"],
-                candidates,
-            )
-            != entry
-        ):
-            raise QualificationError(f"{name} candidate preflight differs")
+    if full_validation:
+        for name in generator.CANDIDATES:
+            entry = preflight[name]
+            if not isinstance(entry, dict) or set(entry) != {"record", "result"}:
+                raise QualificationError(f"{name} candidate preflight fields differ")
+            if (
+                generator._verify_preflight(
+                    name,
+                    candidates[name],
+                    entry["result"],
+                    Path(str(binding["execution_target"])),
+                    binding["runtime_environment"],
+                    candidates,
+                )
+                != entry
+            ):
+                raise QualificationError(f"{name} candidate preflight differs")
     policy = binding["anysolver_policy"]
-    try:
-        if (
-            generator._reverify_bound_anysolver_policy(
-                policy,
-                candidates["ANYsolver"],
-            )
-            != policy
-        ):
-            raise QualificationError("qualified Q4 guard-only identity differs")
-    except generator.BindingError as exc:
-        raise QualificationError(
-            "qualified Q4 guard-only identity differs"
-        ) from exc
+    if full_validation:
+        try:
+            if (
+                generator._reverify_bound_anysolver_policy(
+                    policy,
+                    candidates["ANYsolver"],
+                )
+                != policy
+            ):
+                raise QualificationError("qualified Q4 guard-only identity differs")
+        except generator.BindingError as exc:
+            raise QualificationError(
+                "qualified Q4 guard-only identity differs"
+            ) from exc
     target = Path(str(binding["execution_target"])).resolve(strict=True)
     try:
         if (
@@ -1119,7 +1273,7 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
         or len(reviews) != 2
     ):
         raise QualificationError("authorization is incomplete or malformed")
-    if qualification_contract.get("review_authority") != {
+    if recovery_contract.get("review_authority") != {
         "required_reviewer_ids": list(REQUIRED_REVIEWER_IDS),
         "roles": (
             "SEPARATE_AUTHORITY_AND_SCIENTIFIC_REVIEWS_BOUND_BY_"
@@ -1157,18 +1311,20 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
         graph_binding,
         label="candidate graph",
     )
-    try:
-        if generator.build_binding(graph_path) != binding:
-            raise QualificationError("candidate graph does not reproduce its binding")
-    except generator.BindingError as exc:
-        raise QualificationError("candidate graph revalidation failed") from exc
+    if full_validation:
+        try:
+            if generator.build_binding(graph_path) != binding:
+                raise QualificationError("candidate graph does not reproduce its binding")
+        except generator.BindingError as exc:
+            raise QualificationError("candidate graph revalidation failed") from exc
     authority_paths.add(graph_path.relative_to(ROOT.resolve()).as_posix())
-    _verify_authority_commit(
-        generator,
-        authorization["authority_commit"],
-        candidate_commit=str(candidates["ANYsolver"]["commit"]),
-        required_paths=authority_paths,
-    )
+    if full_validation:
+        _verify_authority_commit(
+            generator,
+            authorization["authority_commit"],
+            candidate_commit=str(candidates["ANYsolver"]["commit"]),
+            required_paths=authority_paths,
+        )
     verified_resource = _verify_resource_authority(
         authorization["resource_execution"],
         authorization_path=authorization_path,
@@ -1225,6 +1381,7 @@ def load_authority(binding_path: Path, authorization_path: Path) -> SuccessorAut
         types.MappingProxyType(verified_file_bytes),
         types.MappingProxyType(qualification_contract),
         types.MappingProxyType(verified_data_bytes),
+        generator,
     )
 
 
@@ -1263,20 +1420,126 @@ def _special_lanes(authority: SuccessorAuthority) -> tuple[list[dict[str, Any]],
 
 
 def _structural_sequence_chunks(base: Any, diagonal: str) -> list[list[dict[str, Any]]]:
-    """Partition one frozen diagonal without changing its scientific rows."""
+    """Create four cost-ordered mixed groups; the all-Q4 baseline is shared."""
 
     sequences = [dict(row) for row in base._structural_sequences(diagonal)]
     baselines = [row for row in sequences if int(row["fraction_percent"]) == 0]
     mixed = [row for row in sequences if int(row["fraction_percent"]) != 0]
     if len(sequences) != 21 or len(baselines) != 1 or len(mixed) != 20:
         raise QualificationError("structural sequence partition authority differs")
+    registered = {id(row): index for index, row in enumerate(mixed)}
+    ordered = sorted(
+        mixed,
+        key=lambda row: (-int(row["fraction_percent"]), registered[id(row)]),
+    )
+    buckets: list[tuple[int, list[dict[str, Any]]]] = [(0, []) for _ in range(4)]
+    for row in ordered:
+        target = min(
+            range(len(buckets)),
+            key=lambda index: (buckets[index][0], len(buckets[index][1]), index),
+        )
+        cost = 100 + int(row["fraction_percent"])
+        buckets[target] = (buckets[target][0] + cost, [*buckets[target][1], dict(row)])
+    chunks = [bucket for _cost, bucket in buckets]
+    # Dict identities do not survive the defensive copies above.  Restore the
+    # exact registered order through the immutable scientific identity.
+    position = {
+        (int(row["fraction_percent"]), str(row["mask"])): index
+        for index, row in enumerate(mixed)
+    }
     chunks = [
-        [dict(baselines[0]), *map(dict, mixed[index:index + STRUCTURAL_CHUNK_MIXED_SEQUENCE_COUNT])]
-        for index in range(0, len(mixed), STRUCTURAL_CHUNK_MIXED_SEQUENCE_COUNT)
+        sorted(
+            chunk,
+            key=lambda row: position[(int(row["fraction_percent"]), str(row["mask"]))],
+        )
+        for chunk in chunks
     ]
-    if len(chunks) != 4 or any(len(chunk) != 6 for chunk in chunks):
+    chunks.sort(
+        key=lambda chunk: (
+            -sum(100 + int(row["fraction_percent"]) for row in chunk),
+            min(position[(int(row["fraction_percent"]), str(row["mask"]))] for row in chunk),
+        )
+    )
+    if len(chunks) != 4 or sum(map(len, chunks)) != 20 or any(not chunk for chunk in chunks):
         raise QualificationError("structural sequence chunk cardinality differs")
     return chunks
+
+
+def _encode_shared_baseline(
+    row: Mapping[str, Any],
+    errors_by_level: Mapping[int, Mapping[tuple[int, int], float]],
+) -> dict[str, Any]:
+    if int(row.get("sequence", {}).get("fraction_percent", -1)) != 0:
+        raise QualificationError("shared structural baseline row differs")
+    return {
+        "errors": [
+            {
+                "cells": [
+                    [cell[0], cell[1], value]
+                    for cell, value in sorted(errors_by_level[level].items())
+                ],
+                "level": level,
+            }
+            for level in sorted(errors_by_level)
+        ],
+        "row": deepcopy(row),
+        "schema": SHARED_BASELINE_SCHEMA,
+    }
+
+
+def _decode_shared_baseline(
+    value: object,
+) -> tuple[dict[int, dict[str, Any]], dict[int, dict[tuple[int, int], float]]]:
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"errors", "row", "schema"}
+        or value["schema"] != SHARED_BASELINE_SCHEMA
+        or not isinstance(value["row"], dict)
+        or int(value["row"].get("sequence", {}).get("fraction_percent", -1)) != 0
+        or not isinstance(value["errors"], list)
+    ):
+        raise QualificationError("shared structural baseline is malformed")
+    records = value["row"].get("records")
+    if not isinstance(records, list):
+        raise QualificationError("shared structural baseline records differ")
+    rows_by_level: dict[int, dict[str, Any]] = {}
+    for row in records:
+        if not isinstance(row, dict) or type(row.get("level")) is not int:
+            raise QualificationError("shared structural baseline record differs")
+        level = int(row["level"])
+        if level in rows_by_level:
+            raise QualificationError("shared structural baseline level is duplicated")
+        rows_by_level[level] = deepcopy(row)
+    errors_by_level: dict[int, dict[tuple[int, int], float]] = {}
+    for level_row in value["errors"]:
+        if (
+            not isinstance(level_row, dict)
+            or set(level_row) != {"cells", "level"}
+            or type(level_row["level"]) is not int
+            or not isinstance(level_row["cells"], list)
+        ):
+            raise QualificationError("shared structural baseline errors differ")
+        level = int(level_row["level"])
+        if level in errors_by_level:
+            raise QualificationError("shared structural baseline errors are duplicated")
+        cells: dict[tuple[int, int], float] = {}
+        for cell in level_row["cells"]:
+            if (
+                not isinstance(cell, list)
+                or len(cell) != 3
+                or type(cell[0]) is not int
+                or type(cell[1]) is not int
+                or not isinstance(cell[2], (int, float))
+            ):
+                raise QualificationError("shared structural baseline cell differs")
+            identity = (cell[0], cell[1])
+            if identity in cells:
+                raise QualificationError("shared structural baseline cell is duplicated")
+            cells[identity] = float(cell[2])
+        errors_by_level[level] = cells
+    if set(rows_by_level) != set(errors_by_level) or not rows_by_level:
+        raise QualificationError("shared structural baseline level coverage differs")
+    return rows_by_level, errors_by_level
 
 
 def build_assignment(authority: SuccessorAuthority, worker_id: str) -> dict[str, Any]:
@@ -1404,6 +1667,7 @@ def run_structural_chunk(
     output: Path,
     progress: Path,
     chunk_index: int,
+    baseline_path: Path | None = None,
 ) -> None:
     """Run a bounded subset in a fresh process so native factors are released."""
 
@@ -1421,13 +1685,14 @@ def run_structural_chunk(
     checkpoint("chunk-initialized")
     successor_authority = load_authority(binding_path, authorization_path)
     require_active_resource_execution(successor_authority)
+    execution_lease = _read_execution_lease(successor_authority)
     assignment, assignment_sha = read_assignment(successor_authority, assignment_path)
     worker_id = str(assignment["worker_id"])
     if worker_id not in STRUCTURAL_WORKERS:
         raise QualificationError("structural chunk assignment is not structural")
     diagonal = worker_id.removeprefix("STRUCTURAL_").lower()
     chunks = _structural_sequence_chunks(successor_authority.base, diagonal)
-    if not 0 <= chunk_index < len(chunks):
+    if chunk_index != -1 and not 0 <= chunk_index < len(chunks):
         raise QualificationError("structural chunk index differs")
     checkpoint("chunk-authority-verified")
     base = successor_authority.base
@@ -1444,7 +1709,7 @@ def run_structural_chunk(
     base._load_module = verified_loader
     runtime_paths = [
         Path(successor_authority.binding["execution_target"]).resolve(strict=True),
-        Path(successor_authority.binding["candidates"]["ANYintelligent"]["root"]).resolve(strict=True),
+        Path(execution_lease["candidates"]["ANYintelligent"]["root"]).resolve(strict=True),
     ]
     sys.path[:0] = [str(path) for path in runtime_paths]
     bundle = successor.activate_assigned(
@@ -1461,15 +1726,74 @@ def run_structural_chunk(
         diagonal,
         base_factory=original,
     )
-    synthetic.input["coverage"]["convergence_sequences"] = deepcopy(
-        chunks[chunk_index]
-    )
+    sequences = successor_authority.base._structural_sequences(diagonal)
+    baselines = [row for row in sequences if int(row["fraction_percent"]) == 0]
+    if len(baselines) != 1:
+        raise QualificationError("structural baseline identity differs")
+    plate_case = bundle.structural_producer._plate_case
+    captured_errors: dict[int, dict[tuple[int, int], float]] = {}
+    if chunk_index == -1:
+        synthetic.input["coverage"]["convergence_sequences"] = deepcopy(baselines)
+
+        def capture_baseline(
+            made: Any, record: Mapping[str, Any], *, recover_interface: bool
+        ) -> tuple[dict[str, Any], dict[tuple[int, int], float]]:
+            row, errors = plate_case(
+                made,
+                record,
+                recover_interface=recover_interface,
+            )
+            level = int(record["level"])
+            if level in captured_errors:
+                raise QualificationError("structural baseline level was reevaluated")
+            captured_errors[level] = deepcopy(errors)
+            return row, errors
+
+        bundle.structural_producer._plate_case = capture_baseline
+    else:
+        if baseline_path is None:
+            raise QualificationError("shared structural baseline is absent")
+        baseline_payload = _read_structural_chunk(
+            baseline_path,
+            assignment_sha=assignment_sha,
+            chunk_index=-1,
+            diagonal=diagonal,
+        )
+        shared_baseline = baseline_payload.get("shared_baseline")
+        rows_by_level, errors_by_level = _decode_shared_baseline(shared_baseline)
+        synthetic.input["coverage"]["convergence_sequences"] = deepcopy(
+            [*baselines, *chunks[chunk_index]]
+        )
+
+        def replay_baseline(
+            made: Any, record: Mapping[str, Any], *, recover_interface: bool
+        ) -> tuple[dict[str, Any], dict[tuple[int, int], float]]:
+            if int(record.get("s3_area_fraction_percent", -1)) == 0:
+                level = int(record["level"])
+                if level not in rows_by_level:
+                    raise QualificationError("shared structural baseline level is absent")
+                return deepcopy(rows_by_level[level]), deepcopy(errors_by_level[level])
+            return plate_case(
+                made,
+                record,
+                recover_interface=recover_interface,
+            )
+
+        bundle.structural_producer._plate_case = replay_baseline
     bundle.manifest_generator.build_manifest = lambda: deepcopy(authority.manifest)
     checkpoint("chunk-mechanics-activated")
-    payload, status = bundle.structural_producer.produce_convergence(
+    produced_payload, status = bundle.structural_producer.produce_convergence(
         synthetic,
         quick=False,
     )
+    payload = dict(produced_payload)
+    if chunk_index == -1:
+        rows = payload.get("rows")
+        if not isinstance(rows, list) or len(rows) != 1:
+            raise QualificationError("structural baseline output differs")
+        payload["shared_baseline"] = _encode_shared_baseline(
+            rows[0], captured_errors
+        )
     if set(status) != {"convergence", "interface_resultants", "pl_participation"}:
         raise QualificationError("structural chunk status schema differs")
     write_exclusive(
@@ -1520,7 +1844,7 @@ def _run_structural_chunks(
     directory: Path,
     checkpoint: Any,
 ) -> dict[str, Any]:
-    """Execute four deterministic convergence chunks serially and combine them."""
+    """Evaluate one baseline, then four cost-ordered mixed groups serially."""
 
     diagonal = worker_id.removeprefix("STRUCTURAL_").lower()
     chunks = _structural_sequence_chunks(successor_authority.base, diagonal)
@@ -1532,8 +1856,10 @@ def _run_structural_chunks(
     chunk_root = directory / "structural-chunks"
     chunk_root.mkdir()
     payloads: list[dict[str, Any]] = []
-    for chunk_index in range(len(chunks)):
-        chunk_directory = chunk_root / f"chunk-{chunk_index}"
+
+    def launch(chunk_index: int, baseline_path: Path | None) -> dict[str, Any]:
+        label = "baseline" if chunk_index == -1 else f"chunk-{chunk_index}"
+        chunk_directory = chunk_root / label
         chunk_directory.mkdir()
         output = chunk_directory / "record.json"
         progress = chunk_directory / "progress.ndjson"
@@ -1560,6 +1886,8 @@ def _run_structural_chunks(
             "--chunk-index",
             str(chunk_index),
         ]
+        if baseline_path is not None:
+            command.extend(("--baseline", str(baseline_path)))
         with (chunk_directory / "stdout.log").open("xb") as stdout, (
             chunk_directory / "stderr.log"
         ).open("xb") as stderr:
@@ -1580,26 +1908,34 @@ def _run_structural_chunks(
             raise QualificationError(
                 f"structural chunk {chunk_index} ended with {returncode}"
             )
-        payloads.append(
-            _read_structural_chunk(
-                output,
-                assignment_sha=assignment_sha,
-                chunk_index=chunk_index,
-                diagonal=diagonal,
-            )
+        return _read_structural_chunk(
+            output,
+            assignment_sha=assignment_sha,
+            chunk_index=chunk_index,
+            diagonal=diagonal,
         )
+
+    baseline_payload = launch(-1, None)
+    baseline_record_path = chunk_root / "baseline" / "record.json"
+    checkpoint("structural-baseline-complete")
+    for chunk_index in range(len(chunks)):
+        payloads.append(launch(chunk_index, baseline_record_path))
         checkpoint(f"structural-chunk-{chunk_index}-complete")
 
-    baseline_rows = [
+    baseline_rows = baseline_payload.get("rows")
+    if not isinstance(baseline_rows, list) or len(baseline_rows) != 1:
+        raise QualificationError("shared structural baseline row differs")
+    baseline_row = baseline_rows[0]
+    repeated_baselines = [
         payload["rows"][0]
         for payload in payloads
         if isinstance(payload.get("rows"), list) and payload["rows"]
     ]
-    if len(baseline_rows) != len(payloads) or any(
-        canonical_bytes(row) != canonical_bytes(baseline_rows[0])
-        for row in baseline_rows[1:]
+    if len(repeated_baselines) != len(payloads) or any(
+        canonical_bytes(row) != canonical_bytes(baseline_row)
+        for row in repeated_baselines
     ):
-        raise QualificationError("repeated structural baseline differs")
+        raise QualificationError("shared structural baseline differs")
     mixed_by_identity: dict[tuple[int, str], dict[str, Any]] = {}
     interface_rows: list[dict[str, Any]] = []
     contradictions: set[str] = set()
@@ -1626,7 +1962,7 @@ def _run_structural_chunks(
     return {
         "contradictions": sorted(contradictions),
         "interface_rows": interface_rows,
-        "rows": [baseline_rows[0], *ordered_mixed],
+        "rows": [baseline_row, *ordered_mixed],
     }
 
 
@@ -1715,6 +2051,8 @@ def run_worker(
     checkpoint("worker-initialized")
     successor_authority = load_authority(binding_path, authorization_path)
     require_active_resource_execution(successor_authority)
+    execution_lease = _read_execution_lease(successor_authority)
+    captured_roots = _execution_root_map(execution_lease)
     assignment, assignment_sha = read_assignment(successor_authority, assignment_path)
     worker_id = str(assignment["worker_id"])
     checkpoint("authority-and-assignment-verified")
@@ -1735,7 +2073,7 @@ def run_worker(
     runtime_paths = [
         Path(successor_authority.binding["execution_target"]).resolve(strict=True),
         Path(
-            successor_authority.binding["candidates"]["ANYintelligent"]["root"]
+            execution_lease["candidates"]["ANYintelligent"]["root"]
         ).resolve(strict=True),
     ]
     sys.path[:0] = [str(path) for path in runtime_paths]
@@ -1789,7 +2127,9 @@ def run_worker(
         lanes, overlay_count = _special_lanes(successor_authority)
         node_specs: list[tuple[int, int, Path, str, str]] = []
         for lane_index, lane in enumerate(lanes):
-            root = Path(str(authority.input["candidates"][lane["repository"]]["root"])).resolve()
+            root = Path(
+                str(execution_lease["candidates"][lane["repository"]]["root"])
+            ).resolve(strict=True)
             for node_index, node in enumerate(lane["nodes"]):
                 absolute = str(root / node.split("::", 1)[0]) + (
                     "::" + node.split("::", 1)[1] if "::" in node else ""
@@ -1819,6 +2159,7 @@ def run_worker(
                     isolation_config_bytes=successor_authority.verified_file_bytes[
                         "preflight_config"
                     ],
+                    captured_roots=captured_roots,
                 ): (lane_index, node_index)
                 for lane_index, node_index, root, node, name in node_specs
             }
@@ -1924,6 +2265,15 @@ def _environment(
         ):
             raise QualificationError("resource attempt environment is malformed")
         environment[RESOURCE_ATTEMPT_ENVIRONMENT] = attempt_sha
+    lease_path = os.environ.get(EXECUTION_LEASE_ENVIRONMENT)
+    lease_sha = os.environ.get(EXECUTION_LEASE_SHA_ENVIRONMENT)
+    if (lease_path is None) != (lease_sha is None):
+        raise QualificationError("QV9 execution lease environment differs")
+    if lease_path is not None and lease_sha is not None:
+        if len(lease_sha) != 64:
+            raise QualificationError("QV9 execution lease environment differs")
+        environment[EXECUTION_LEASE_ENVIRONMENT] = lease_path
+        environment[EXECUTION_LEASE_SHA_ENVIRONMENT] = lease_sha
     environment["ANYSOLVER_S3_V4_CROSS_WHEEL"] = "1"
     environment["ANYSOLVER_S3_V4_TARGET"] = str(
         Path(authority.binding["execution_target"]).resolve()
@@ -2461,6 +2811,7 @@ def run_cycle(authority: SuccessorAuthority, output_root: Path) -> tuple[bytes, 
             refreshed = load_authority(
                 authority.binding_path,
                 authority.authorization_path,
+                full_validation=True,
             )
             require_active_resource_execution(refreshed)
             if (
@@ -2522,12 +2873,11 @@ def run_cycle(authority: SuccessorAuthority, output_root: Path) -> tuple[bytes, 
     return raw, scientific
 
 
-def run_cycles(
+def _run_cycles_under_lease(
     authority: SuccessorAuthority, output_root: Path, cycles: int
 ) -> dict[str, Any]:
     if cycles != 2:
         raise QualificationError("exactly two cycles are required")
-    output_root.mkdir(parents=True, exist_ok=False)
     records = [run_cycle(authority, output_root / "cycle-1")]
     # A second complete scientific cycle is a preregistered replicate, not a
     # retry.  Only a process/evidence block prevents its launch.
@@ -2541,6 +2891,7 @@ def run_cycles(
         refreshed = load_authority(
             authority.binding_path,
             authority.authorization_path,
+            full_validation=True,
         )
         require_active_resource_execution(refreshed)
         if (
@@ -2567,6 +2918,9 @@ def run_cycles(
         "terminal": terminal,
         "total_runtime_limit_seconds": None,
     }
+    if os.environ.get(EXECUTION_LEASE_ENVIRONMENT) is not None:
+        lease = _read_execution_lease(authority)
+        _verify_execution_lease(authority, lease)
     cycle_set_raw = canonical_bytes(value)
     pending = output_root / ".pending-cycle-set.json"
     _stage_bytes(pending, cycle_set_raw)
@@ -2595,6 +2949,37 @@ def run_cycles(
     return value
 
 
+def run_cycles(
+    authority: SuccessorAuthority, output_root: Path, cycles: int
+) -> dict[str, Any]:
+    """Capture one execution lease and use it for both formal replicates."""
+
+    if cycles != 2:
+        raise QualificationError("exactly two cycles are required")
+    output_root.mkdir(parents=True, exist_ok=False)
+    if not isinstance(getattr(authority, "binding", None), dict):
+        return _run_cycles_under_lease(authority, output_root, cycles)
+    lease_path, lease_sha = _capture_execution_lease(
+        authority,
+        output_root / "execution-lease",
+    )
+    previous_path = os.environ.get(EXECUTION_LEASE_ENVIRONMENT)
+    previous_sha = os.environ.get(EXECUTION_LEASE_SHA_ENVIRONMENT)
+    os.environ[EXECUTION_LEASE_ENVIRONMENT] = str(lease_path)
+    os.environ[EXECUTION_LEASE_SHA_ENVIRONMENT] = lease_sha
+    try:
+        return _run_cycles_under_lease(authority, output_root, cycles)
+    finally:
+        if previous_path is None:
+            os.environ.pop(EXECUTION_LEASE_ENVIRONMENT, None)
+        else:
+            os.environ[EXECUTION_LEASE_ENVIRONMENT] = previous_path
+        if previous_sha is None:
+            os.environ.pop(EXECUTION_LEASE_SHA_ENVIRONMENT, None)
+        else:
+            os.environ[EXECUTION_LEASE_SHA_ENVIRONMENT] = previous_sha
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binding", type=Path, required=True)
@@ -2603,6 +2988,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--structural-chunk", action="store_true")
     parser.add_argument("--chunk-index", type=int)
+    parser.add_argument("--baseline", type=Path)
     parser.add_argument("--assignment", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--progress", type=Path)
@@ -2625,6 +3011,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.output,
                 args.progress,
                 args.chunk_index,
+                args.baseline,
             )
             return 0
         if args.worker:

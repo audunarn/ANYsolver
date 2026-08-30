@@ -34,6 +34,143 @@ ANYSTRUCTURE_GATE_ROOT_ENVIRONMENT = {
 }
 
 
+def _tree_manifest(base: Any, root: Path) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    directories: list[str] = []
+    for directory, names, filenames in os.walk(root, followlinks=False):
+        names.sort()
+        filenames.sort()
+        parent = Path(directory)
+        for name in names:
+            child = parent / name
+            if child.is_symlink() or bool(
+                getattr(child.lstat(), "st_file_attributes", 0) & 0x400
+            ):
+                raise base.QualificationError("gitless execution copy contains a linked directory")
+            directories.append(child.relative_to(root).as_posix())
+        for name in filenames:
+            child = parent / name
+            if (
+                not child.is_file()
+                or child.is_symlink()
+                or bool(getattr(child.lstat(), "st_file_attributes", 0) & 0x400)
+            ):
+                raise base.QualificationError("gitless execution copy contains a non-regular file")
+            raw = child.read_bytes()
+            rows.append(
+                {
+                    "bytes": len(raw),
+                    "path": child.relative_to(root).as_posix(),
+                    "sha256": hashlib.sha256(raw).hexdigest().upper(),
+                }
+            )
+    return {
+        "directories": sorted(directories),
+        "rows": sorted(rows, key=lambda row: str(row["path"])),
+        "schema": "anysolver.e4-pl-s3-gitless-execution-tree-v1",
+    }
+
+
+def capture_tracked_execution_copy(
+    base: Any,
+    source: Path,
+    destination: Path,
+    *,
+    tracked_paths: list[str] | tuple[str, ...] | None = None,
+) -> tuple[Path, dict[str, Any]]:
+    """Capture the clean tracked checkout once into an exact gitless tree."""
+
+    import subprocess
+
+    source = source.resolve(strict=True)
+    if tracked_paths is None:
+        completed = subprocess.run(
+            [
+                "git",
+                "-c",
+                f"safe.directory={source.as_posix()}",
+                "-C",
+                str(source),
+                "ls-files",
+                "-z",
+                "--cached",
+            ],
+            check=False,
+            capture_output=True,
+        )
+        if completed.returncode != 0 or not isinstance(completed.stdout, bytes):
+            raise base.QualificationError("tracked execution-copy inventory failed")
+        paths = [
+            item.decode("utf-8") for item in completed.stdout.split(b"\0") if item
+        ]
+    else:
+        paths = list(tracked_paths)
+    if not paths or paths != sorted(set(paths)):
+        raise base.QualificationError("tracked execution-copy paths differ")
+    destination.mkdir()
+    for relative in paths:
+        route = Path(relative)
+        if route.is_absolute() or ".." in route.parts:
+            raise base.QualificationError("tracked execution-copy route is unsafe")
+        origin = source / route
+        if (
+            not origin.is_file()
+            or origin.is_symlink()
+            or bool(getattr(origin.lstat(), "st_file_attributes", 0) & 0x400)
+        ):
+            raise base.QualificationError(
+                "tracked execution-copy source is not a regular file"
+            )
+        target = destination / route
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with origin.open("rb") as reader, target.open("xb") as writer:
+            shutil.copyfileobj(reader, writer)
+    resolved = destination.resolve(strict=True)
+    manifest = _tree_manifest(base, resolved)
+    if [row["path"] for row in manifest["rows"]] != paths:
+        raise base.QualificationError("gitless execution-copy coverage differs")
+    return resolved, manifest
+
+
+def clone_gitless_execution_copy(
+    base: Any,
+    source: Path,
+    destination: Path,
+    manifest: Mapping[str, Any],
+) -> Path:
+    """Clone a captured tree without consulting Git or a live checkout."""
+
+    if (
+        not isinstance(manifest, Mapping)
+        or manifest.get("schema") != "anysolver.e4-pl-s3-gitless-execution-tree-v1"
+        or not isinstance(manifest.get("directories"), list)
+        or not isinstance(manifest.get("rows"), list)
+    ):
+        raise base.QualificationError("gitless execution manifest differs")
+    source = source.resolve(strict=True)
+    destination.mkdir()
+    for relative in manifest["directories"]:
+        (destination / str(relative)).mkdir()
+    for row in manifest["rows"]:
+        if not isinstance(row, Mapping) or set(row) != {"bytes", "path", "sha256"}:
+            raise base.QualificationError("gitless execution manifest row differs")
+        relative = str(row["path"])
+        origin = source / relative
+        raw = origin.read_bytes()
+        if (
+            len(raw) != row["bytes"]
+            or hashlib.sha256(raw).hexdigest().upper() != row["sha256"]
+        ):
+            raise base.QualificationError("captured execution tree changed")
+        target = destination / relative
+        with target.open("xb") as stream:
+            stream.write(raw)
+    resolved = destination.resolve(strict=True)
+    if _tree_manifest(base, resolved) != dict(manifest):
+        raise base.QualificationError("cloned execution tree differs")
+    return resolved
+
+
 def _checkpoint(callback: Callable[[str], None] | None, stage: str) -> None:
     if callback is not None:
         callback(stage)
@@ -407,6 +544,7 @@ def run_pytest_node_after_parent_authority(
     node: str,
     *,
     isolation_config_bytes: bytes,
+    captured_roots: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run one node after the formal parent has verified the complete graph.
 
@@ -417,8 +555,6 @@ def run_pytest_node_after_parent_authority(
 
     import subprocess
 
-    binding_path = Path(authority.input_path).resolve(strict=True)
-    expected_binding_sha256 = hashlib.sha256(authority.input_raw).hexdigest().upper()
     binding = base.strict_json(
         authority.input_raw,
         label="parent-verified candidate binding",
@@ -440,10 +576,85 @@ def run_pytest_node_after_parent_authority(
     source_root = Path(candidates["ANYintelligent"]["root"]).resolve(strict=True)
     target = Path(binding["execution_target"]).resolve(strict=True)
     lane_temp = Path(tempfile.mkdtemp(prefix="anysolver-s3-v4-node-"))
+    cwd = cwd.resolve(strict=True)
+    if captured_roots is None:
+        execution_root, execution_manifest = capture_tracked_execution_copy(
+            base, cwd, lane_temp / "candidate"
+        )
+        if source_root == cwd:
+            source_execution_root = execution_root
+            source_manifest = execution_manifest
+        else:
+            source_execution_root, source_manifest = capture_tracked_execution_copy(
+                base, source_root, lane_temp / "source-candidate"
+            )
+    else:
+        cwd_entry = captured_roots.get(str(cwd))
+        source_entry = captured_roots.get(str(source_root))
+        if not isinstance(cwd_entry, Mapping) or not isinstance(source_entry, Mapping):
+            shutil.rmtree(lane_temp)
+            raise base.QualificationError("captured execution root is absent")
+        execution_manifest = cwd_entry.get("manifest")
+        source_manifest = source_entry.get("manifest")
+        execution_root = clone_gitless_execution_copy(
+            base,
+            Path(str(cwd_entry.get("root"))),
+            lane_temp / "candidate",
+            execution_manifest,
+        )
+        same_capture = Path(str(source_entry.get("root"))).resolve(strict=True) == Path(
+            str(cwd_entry.get("root"))
+        ).resolve(strict=True)
+        source_execution_root = (
+            execution_root
+            if source_root == cwd or same_capture
+            else clone_gitless_execution_copy(
+                base,
+                Path(str(source_entry.get("root"))),
+                lane_temp / "source-candidate",
+                source_manifest,
+            )
+        )
+    node_binding = deepcopy(binding)
+    for candidate_name, candidate in node_binding["candidates"].items():
+        original_root = Path(
+            str(binding["candidates"][candidate_name]["root"])
+        ).resolve(strict=True)
+        if original_root == cwd:
+            candidate["root"] = str(execution_root)
+        elif original_root == source_root:
+            candidate["root"] = str(source_execution_root)
+        elif captured_roots is not None:
+            entry = captured_roots.get(str(original_root))
+            if isinstance(entry, Mapping):
+                captured_root = Path(str(entry["root"])).resolve(strict=True)
+                candidate["root"] = str(
+                    execution_root if captured_root == cwd else captured_root
+                )
+    binding_raw = base.canonical_bytes(node_binding)
+    binding_path = lane_temp / "candidate-binding.json"
+    with binding_path.open("xb") as stream:
+        stream.write(binding_raw)
+    expected_binding_sha256 = hashlib.sha256(binding_raw).hexdigest().upper()
+    node_path, separator, node_suffix = node.partition("::")
+    declared_node_path = Path(node_path)
+    original_node_path = (
+        declared_node_path
+        if declared_node_path.is_absolute()
+        else cwd / declared_node_path
+    ).resolve(strict=True)
+    try:
+        relative_node = original_node_path.relative_to(cwd)
+    except ValueError as exc:
+        shutil.rmtree(lane_temp)
+        raise base.QualificationError("pytest node is outside its candidate") from exc
+    execution_node = str((execution_root / relative_node).resolve(strict=True))
+    if separator:
+        execution_node += "::" + node_suffix
     staged_config = lane_temp / "pytest-isolation.ini"
     with staged_config.open("xb") as stream:
         stream.write(isolation_config_bytes)
-    lane_code = base._pytest_lane_code(authority, [node])
+    lane_code = base._pytest_lane_code(authority, [execution_node])
     needle = "+ ['-q']"
     if lane_code.count(needle) != 1:
         shutil.rmtree(lane_temp)
@@ -452,22 +663,30 @@ def run_pytest_node_after_parent_authority(
         needle,
         (
             "+ ['-q', '-p', 'no:cacheprovider', '-c', "
-            f"{str(staged_config)!r}, '--rootdir', {str(cwd)!r}, "
-            f"'--confcutdir', {str(cwd)!r}, '--import-mode=importlib', "
+            f"{str(staged_config)!r}, '--rootdir', {str(execution_root)!r}, "
+            f"'--confcutdir', {str(execution_root)!r}, '--import-mode=importlib', "
             f"'--basetemp', {str(lane_temp / 'basetemp')!r}]"
         ),
         1,
     )
     code = (
-        "import hashlib,importlib,pathlib,sys;"
+        "import hashlib,importlib,importlib.util,pathlib,sys;"
         "sys.dont_write_bytecode=True;"
         "binding_path=pathlib.Path(sys.argv[1]).resolve(strict=True);"
         "assert hashlib.sha256(binding_path.read_bytes()).hexdigest().upper()==sys.argv[2];"
         "target=pathlib.Path(sys.argv[3]).resolve(strict=True);"
         "source_root=pathlib.Path(sys.argv[4]).resolve(strict=True);"
-        "sys.path[:0]=[str(target),str(source_root)];"
+        "execution_root=pathlib.Path(sys.argv[5]).resolve(strict=True);"
+        "sys.path[:0]=[str(target),str(source_root),str(execution_root),str(execution_root/'tests')];"
         "source_mods=[importlib.import_module(name) for name in ['fe_solver']];"
         "assert all(getattr(mod,'__file__',None) is not None and pathlib.Path(mod.__file__).resolve(strict=True).is_relative_to(source_root) for mod in source_mods);"
+        "portable=execution_root/'scripts'/'run_portable_ci.py';"
+        "native=execution_root/'tests'/'_e4_pl_s3_native_trial.py';"
+        "generator=execution_root/'scripts'/'prepare_e4_pl_s3_qualification_v4_input.py';"
+        "load=lambda name,path:(lambda spec:(lambda mod:(sys.modules.__setitem__(name,mod),spec.loader.exec_module(mod),mod)[2])(importlib.util.module_from_spec(spec)))(importlib.util.spec_from_file_location(name,path));"
+        "load('scripts.run_portable_ci',portable) if portable.is_file() else None;"
+        "load('_e4_pl_s3_native_trial',native) if native.is_file() else None;"
+        "load('_s3_v4_nested_target',generator) if generator.is_file() else None;"
         f"exec({lane_code!r})"
     )
     process_environment = authority.input["runtime_environment"].get(
@@ -512,9 +731,10 @@ def run_pytest_node_after_parent_authority(
                 str(binding_path),
                 expected_binding_sha256,
                 str(target),
-                str(source_root),
+                str(source_execution_root),
+                str(execution_root),
             ],
-            cwd=cwd,
+            cwd=execution_root,
             check=False,
             capture_output=True,
             env=environment,

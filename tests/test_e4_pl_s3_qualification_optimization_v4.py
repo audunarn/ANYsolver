@@ -310,11 +310,16 @@ def test_structural_chunks_preserve_all_sequences_and_bound_process_lifetime() -
     base = SimpleNamespace(_structural_sequences=lambda _diagonal: sequences)
     chunks = formal._structural_sequence_chunks(base, "slash")
     assert len(chunks) == 4
-    assert all(len(chunk) == 6 for chunk in chunks)
-    assert all(chunk[0] == sequences[0] for chunk in chunks)
-    assert [row for chunk in chunks for row in chunk[1:]] == sequences[1:]
-    chunks[0][0]["mask"] = "mutated"
-    assert chunks[1][0]["mask"] == "none"
+    assert sum(len(chunk) for chunk in chunks) == 20
+    assert all(row["fraction_percent"] != 0 for chunk in chunks for row in chunk)
+    assert sorted(
+        (row["fraction_percent"], row["mask"])
+        for chunk in chunks
+        for row in chunk
+    ) == sorted(
+        (row["fraction_percent"], row["mask"])
+        for row in sequences[1:]
+    )
 
 
 def test_special_node_results_rebuild_one_strict_lane_report() -> None:
@@ -371,6 +376,9 @@ def test_special_node_uses_fresh_writable_numeric_cache_directories(
     lane_temp = tmp_path / "node-temp"
     for path in (target, source, cwd, lane_temp):
         path.mkdir()
+    (cwd / "tests").mkdir()
+    node_raw = b"def test_value():\n    assert True\n"
+    (cwd / "tests" / "test_node.py").write_bytes(node_raw)
     isolation = b"[pytest]\n"
     binding = {
         "candidates": {"ANYintelligent": {"root": str(source)}},
@@ -405,6 +413,10 @@ def test_special_node_uses_fresh_writable_numeric_cache_directories(
         _parse_pytest_lane_report=lambda _stdout: {"collected": 1},
         _pytest_lane_code=lambda _authority, nodes: f"pytest.main({nodes!r} + ['-q'])",
         _pytest_lane_status=lambda _returncode, _report: "PASS",
+        canonical_bytes=lambda value: json.dumps(
+            value, sort_keys=True, separators=(",", ":")
+        ).encode()
+        + b"\n",
         strict_json=lambda value, **_kwargs: json.loads(value),
     )
     monkeypatch.setattr(successor.tempfile, "mkdtemp", lambda **_kwargs: str(lane_temp))
@@ -416,6 +428,30 @@ def test_special_node_uses_fresh_writable_numeric_cache_directories(
         cwd,
         "tests/test_node.py::test_value",
         isolation_config_bytes=isolation,
+        captured_roots={
+            str(cwd.resolve()): {
+                "root": str(cwd.resolve()),
+                "manifest": {
+                    "directories": ["tests"],
+                    "rows": [
+                        {
+                            "bytes": len(node_raw),
+                            "path": "tests/test_node.py",
+                            "sha256": hashlib.sha256(node_raw).hexdigest().upper(),
+                        }
+                    ],
+                    "schema": "anysolver.e4-pl-s3-gitless-execution-tree-v1",
+                },
+            },
+            str(source.resolve()): {
+                "root": str(source.resolve()),
+                "manifest": {
+                    "directories": [],
+                    "rows": [],
+                    "schema": "anysolver.e4-pl-s3-gitless-execution-tree-v1",
+                },
+            },
+        },
     )
     assert result["status"] == "PASS"
     assert set(captured) == {"MPLCONFIGDIR", "NUMBA_CACHE_DIR", "XDG_CACHE_HOME"}
@@ -1095,9 +1131,13 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
         "docs/reference_cases/e4_pl_s3_qv6_memory_and_scope_incident_v1.json",
         "docs/reference_cases/e4_pl_s3_qv6_worker_environment_incident_v1.json",
         "docs/reference_cases/e4_pl_s3_qv7_numba_cache_incident_v1.json",
+        "docs/reference_cases/e4_pl_s3_qv8_process_and_science_incident_v1.json",
+        "docs/reference_cases/e4_pl_s3_qv9_recovery_contract_v1.json",
         "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
         "scripts/run_e4_pl_s3_qualification_v4.py",
+        "scripts/run_e4_pl_s3_qv9_diagnostic.py",
         "tests/test_e4_pl_s3_qualification_optimization_v4.py",
+        "tests/test_e4_pl_s3_qv9_recovery.py",
     )
     assert (
         generator.FROZEN_QV6_ANYSOLVER_PREFLIGHT_IDENTITY["commit"]
@@ -1870,7 +1910,7 @@ def test_two_cycle_request_does_not_retry_blocked_process(
         binding_path=tmp_path / "binding.json",
         binding_raw=b"binding\n",
     )
-    monkeypatch.setattr(formal, "load_authority", lambda *_args: authority)
+    monkeypatch.setattr(formal, "load_authority", lambda *_args, **_kwargs: authority)
     monkeypatch.setattr(
         formal, "require_active_resource_execution", lambda *_args, **_kwargs: None
     )
@@ -1904,7 +1944,7 @@ def test_scientific_no_go_runs_two_preregistered_cycles_and_must_match(
         binding_path=tmp_path / "binding.json",
         binding_raw=b"binding\n",
     )
-    monkeypatch.setattr(formal, "load_authority", lambda *_args: authority)
+    monkeypatch.setattr(formal, "load_authority", lambda *_args, **_kwargs: authority)
     monkeypatch.setattr(
         formal, "require_active_resource_execution", lambda *_args, **_kwargs: None
     )
@@ -1942,7 +1982,7 @@ def test_second_cycle_scientific_evidence_must_match(
         binding_path=tmp_path / "binding.json",
         binding_raw=b"binding\n",
     )
-    monkeypatch.setattr(formal, "load_authority", lambda *_args: authority)
+    monkeypatch.setattr(formal, "load_authority", lambda *_args, **_kwargs: authority)
     monkeypatch.setattr(
         formal, "require_active_resource_execution", lambda *_args, **_kwargs: None
     )
