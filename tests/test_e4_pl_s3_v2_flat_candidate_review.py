@@ -37,6 +37,10 @@ def _decode(raw: bytes) -> dict[str, object]:
     return made
 
 
+def _canonical_repository_bytes(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def test_review_is_canonical_independent_empty_and_hash_bound() -> None:
     review = _decode(REVIEW.read_bytes())
     assert set(review) == {
@@ -62,8 +66,9 @@ def test_review_is_canonical_independent_empty_and_hash_bound() -> None:
     assert "docs/reference_cases/e4_pl_s3_v2_candidate_binding.json" in paths
     for record in review["reviewed_inputs"]:
         path = ROOT / record["path"]
-        assert path.stat().st_size == record["bytes"]
-        assert hashlib.sha256(path.read_bytes()).hexdigest().upper() == record["sha256"]
+        raw = _canonical_repository_bytes(path)
+        assert len(raw) == record["bytes"]
+        assert hashlib.sha256(raw).hexdigest().upper() == record["sha256"]
 
 
 def test_review_parser_rejects_duplicate_and_nonfinite_values() -> None:

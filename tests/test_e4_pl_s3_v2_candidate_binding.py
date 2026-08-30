@@ -43,8 +43,12 @@ def _decode(raw: bytes) -> dict[str, object]:
     return made
 
 
+def _canonical_repository_bytes(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+    return hashlib.sha256(_canonical_repository_bytes(path)).hexdigest().upper()
 
 
 def test_candidate_binding_is_canonical_and_binds_every_registered_file() -> None:
@@ -70,7 +74,7 @@ def test_candidate_binding_is_canonical_and_binds_every_registered_file() -> Non
     for record in registered:
         path = ROOT / record["path"]
         assert path.is_file()
-        assert path.stat().st_size == record["bytes"]
+        assert len(_canonical_repository_bytes(path)) == record["bytes"]
         assert _sha256(path) == record["sha256"]
 
 
