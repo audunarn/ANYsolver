@@ -110,6 +110,13 @@ from .e4_pl_s3_element import (
     QualifiedE4PLS3ShellElement,
     QualifiedS3MigrationWarning,
 )
+from .e4_pl_s3_v2_element import (
+    FORMULATION_ID as STRICT_FLAT_S3_V2_FORMULATION_ID,
+    IMPLEMENTATION_ID as STRICT_FLAT_S3_V2_IMPLEMENTATION_ID,
+    SELECTOR as STRICT_FLAT_S3_V2_SELECTOR,
+    StrictFlatLinearCapabilityError,
+    StrictFlatLinearE4PLS3V2ShellElement,
+)
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -541,7 +548,12 @@ __all__ = [
     "QualifiedS3MigrationWarning",
     "QUALIFIED_Q4_FORMULATION_ID",
     "QUALIFIED_S3_FORMULATION_ID",
+    "STRICT_FLAT_S3_V2_FORMULATION_ID",
+    "STRICT_FLAT_S3_V2_IMPLEMENTATION_ID",
+    "STRICT_FLAT_S3_V2_SELECTOR",
     "ShellElement",
+    "StrictFlatLinearCapabilityError",
+    "StrictFlatLinearE4PLS3V2ShellElement",
     "create_element",
     "create_shell_element",
     "shell_formulation_diagnostics",

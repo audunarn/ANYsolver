@@ -175,7 +175,7 @@ class LoadCase:
     name: str
     nodal_loads: Dict[int, np.ndarray] = field(default_factory=dict)
     element_loads: Dict[int, np.ndarray] = field(default_factory=dict)
-    pressure_loads: Dict[int, float] = field(default_factory=dict)
+    pressure_loads: Dict[int, Any] = field(default_factory=dict)
     gravity: Optional[np.ndarray] = None
     added_node_masses: Dict[int, float] = field(default_factory=dict)
     follower_pressure: bool = False
@@ -218,12 +218,15 @@ class LoadCase:
         else:
             self.nodal_loads[node_id] = load
 
-    def add_pressure_load(self, element_id: int, pressure: float):
+    def add_pressure_load(self, element_id: int, pressure: Any):
         """
         Add a pressure load to a shell element.
 
         Positive pressure follows the element normal as defined by the element
-        node ordering and natural-coordinate surface Jacobian.
+        node ordering and natural-coordinate surface Jacobian.  A scalar is a
+        uniform pressure.  Exactly three finite nodal values may be supplied
+        for an affine field; that field is accepted only by an element whose
+        formulation explicitly owns affine pressure mechanics.
 
         Pressure is a dead load by default.  Set ``follower_pressure=True`` on
         the load case to integrate it over the current nodal interpolation
@@ -232,7 +235,63 @@ class LoadCase:
         pattern cannot accidentally mix reference- and current-configuration
         pressure semantics.
         """
-        self.pressure_loads[element_id] = float(pressure)
+        try:
+            scalar = float(pressure)
+        except (TypeError, ValueError):
+            try:
+                values = np.asarray(pressure, dtype=float).reshape(-1)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "pressure must be a scalar or exactly three finite nodal values"
+                ) from exc
+            if values.shape != (3,) or not np.all(np.isfinite(values)):
+                raise ValueError(
+                    "pressure must be a scalar or exactly three finite nodal values"
+                )
+            # Own the field at registration so later caller mutation cannot
+            # change a load case between authority checks and assembly.
+            self.pressure_loads[element_id] = tuple(float(value) for value in values)
+        else:
+            self.pressure_loads[element_id] = scalar
+
+    @staticmethod
+    def _is_strict_flat_s3_v2(element: Any) -> bool:
+        """Return true only for the exact opt-in Stage-1 V2 production class."""
+
+        # Keep the dependency local: the V2 module derives from ShellElement,
+        # while boundary/load definitions are imported by the public package.
+        from .e4_pl_s3_v2_element import (
+            StrictFlatLinearE4PLS3V2ShellElement,
+        )
+
+        return type(element) is StrictFlatLinearE4PLS3V2ShellElement
+
+    @classmethod
+    def _strict_flat_s3_v2_dead_pressure_load(
+        cls,
+        element: Any,
+        mesh: "FEMesh",
+        pressure: Any,
+    ) -> Optional[np.ndarray]:
+        """Dispatch the exact V2 dead-pressure kernel without legacy fallback."""
+
+        if not cls._is_strict_flat_s3_v2(element):
+            return None
+        return np.asarray(
+            element.compute_dead_transverse_pressure_load(mesh, pressure),
+            dtype=float,
+        )
+
+    @classmethod
+    def _reject_strict_flat_s3_v2_follower_pressure(cls, element: Any) -> None:
+        if not cls._is_strict_flat_s3_v2(element):
+            return
+        from .e4_pl_s3_v2_element import StrictFlatLinearCapabilityError
+
+        raise StrictFlatLinearCapabilityError(
+            "strict-flat S3 V2 capability 'follower_pressure' is outside the "
+            "authorized Stage-1 flat-linear surface"
+        )
 
     def set_gravity(self, gx: float = 0.0, gy: float = 0.0, gz: float = -9.81):
         """Set gravity acceleration."""
@@ -377,6 +436,20 @@ class LoadCase:
         load.  No independent rotational pressure moments are introduced:
         pressure virtual work is conjugate to interpolation-surface translations.
         """
+        v2_load = self._strict_flat_s3_v2_dead_pressure_load(
+            element,
+            mesh,
+            pressure,
+        )
+        if v2_load is not None:
+            return v2_load
+
+        try:
+            pressure = float(pressure)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "affine nodal pressure requires a formulation-specific dead-pressure kernel"
+            ) from exc
         if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
             return self._fallback_lumped_pressure_load(element, mesh, pressure, coords)
 
@@ -427,6 +500,7 @@ class LoadCase:
         the derivative of the external force, so equilibrium Newton systems use
         ``K_internal - K_external``.
         """
+        self._reject_strict_flat_s3_v2_follower_pressure(element)
         if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
             raise ValueError(
                 f"Follower pressure requires a shell interpolation with shape functions; "
@@ -547,6 +621,7 @@ class LoadCase:
                 continue
             coords = None
             if self.follower_pressure:
+                self._reject_strict_flat_s3_v2_follower_pressure(element)
                 coords = self._current_element_coordinates(element, mesh, displacements)
             f_elem = self._consistent_pressure_load(element, mesh, pressure, coords)
             scale = activity_scale(int(element_id))

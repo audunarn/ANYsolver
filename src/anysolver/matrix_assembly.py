@@ -6463,6 +6463,7 @@ def _assemble_external_load_tangent_under_lease(
                 continue
             if not hasattr(element, "node_ids"):
                 raise AssemblyError(f"Follower pressure element {element_id} has no nodal interpolation.")
+            load_case._reject_strict_flat_s3_v2_follower_pressure(element)
             dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
             coords = load_case._current_element_coordinates(element, model.mesh, u)
             exact_qualified_guard(
@@ -6476,7 +6477,7 @@ def _assemble_external_load_tangent_under_lease(
                 element_tangent = load_case._consistent_pressure_tangent(
                     element,
                     model.mesh,
-                    float(pressure),
+                    pressure,
                     coords,
                 )
             except ValueError as exc:
