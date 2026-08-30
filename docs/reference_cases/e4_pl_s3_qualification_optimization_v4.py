@@ -399,6 +399,140 @@ def run_pytest_lane_without_elapsed_ceiling(
     }
 
 
+def run_pytest_node_after_parent_authority(
+    base: Any,
+    authority: Any,
+    name: str,
+    cwd: Path,
+    node: str,
+    *,
+    isolation_config_bytes: bytes,
+) -> dict[str, Any]:
+    """Run one node after the formal parent has verified the complete graph.
+
+    The child repeats the immutable binding hash, exact execution-target path,
+    source-adapter origin, and one-thread policy checks.  It deliberately does
+    not rebuild the 10,000-file candidate graph for every test node.
+    """
+
+    import subprocess
+
+    binding_path = Path(authority.input_path).resolve(strict=True)
+    expected_binding_sha256 = hashlib.sha256(authority.input_raw).hexdigest().upper()
+    binding = base.strict_json(
+        authority.input_raw,
+        label="parent-verified candidate binding",
+    )
+    expected_config = binding.get("files", {}).get("preflight_config")
+    if (
+        not isinstance(expected_config, dict)
+        or set(expected_config) != {"bytes", "path", "sha256"}
+        or expected_config["path"]
+        != "docs/reference_cases/e4_pl_s3_pytest_isolation_v4.ini"
+        or len(isolation_config_bytes) != expected_config["bytes"]
+        or hashlib.sha256(isolation_config_bytes).hexdigest().upper()
+        != expected_config["sha256"]
+    ):
+        raise base.QualificationError("verified pytest isolation authority differs")
+    candidates = binding.get("candidates")
+    if not isinstance(candidates, dict):
+        raise base.QualificationError("bound candidate graph differs")
+    source_root = Path(candidates["ANYintelligent"]["root"]).resolve(strict=True)
+    target = Path(binding["execution_target"]).resolve(strict=True)
+    lane_temp = Path(tempfile.mkdtemp(prefix="anysolver-s3-v4-node-"))
+    staged_config = lane_temp / "pytest-isolation.ini"
+    with staged_config.open("xb") as stream:
+        stream.write(isolation_config_bytes)
+    lane_code = base._pytest_lane_code(authority, [node])
+    needle = "+ ['-q']"
+    if lane_code.count(needle) != 1:
+        shutil.rmtree(lane_temp)
+        raise base.QualificationError("pytest node invocation authority differs")
+    lane_code = lane_code.replace(
+        needle,
+        (
+            "+ ['-q', '-p', 'no:cacheprovider', '-c', "
+            f"{str(staged_config)!r}, '--rootdir', {str(cwd)!r}, "
+            f"'--confcutdir', {str(cwd)!r}, '--import-mode=importlib', "
+            f"'--basetemp', {str(lane_temp / 'basetemp')!r}]"
+        ),
+        1,
+    )
+    code = (
+        "import hashlib,importlib,pathlib,sys;"
+        "sys.dont_write_bytecode=True;"
+        "binding_path=pathlib.Path(sys.argv[1]).resolve(strict=True);"
+        "assert hashlib.sha256(binding_path.read_bytes()).hexdigest().upper()==sys.argv[2];"
+        "target=pathlib.Path(sys.argv[3]).resolve(strict=True);"
+        "source_root=pathlib.Path(sys.argv[4]).resolve(strict=True);"
+        "sys.path[:0]=[str(target),str(source_root)];"
+        "source_mods=[importlib.import_module(name) for name in ['fe_solver']];"
+        "assert all(getattr(mod,'__file__',None) is not None and pathlib.Path(mod.__file__).resolve(strict=True).is_relative_to(source_root) for mod in source_mods);"
+        f"exec({lane_code!r})"
+    )
+    process_environment = authority.input["runtime_environment"].get(
+        "process_environment"
+    )
+    if not isinstance(process_environment, dict) or not all(
+        type(key) is str and type(value) is str
+        for key, value in process_environment.items()
+    ):
+        shutil.rmtree(lane_temp)
+        raise base.QualificationError("bound process environment differs")
+    environment = dict(process_environment)
+    environment.update(
+        {
+            "ANYSOLVER_S3_V4_BINDING": str(binding_path),
+            "ANYSOLVER_S3_V4_CROSS_WHEEL": "1",
+            "ANYSOLVER_S3_V4_TARGET": str(target),
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        }
+    )
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-S",
+                "-B",
+                "-c",
+                code,
+                str(binding_path),
+                expected_binding_sha256,
+                str(target),
+                str(source_root),
+            ],
+            cwd=cwd,
+            check=False,
+            capture_output=True,
+            env=environment,
+            text=True,
+        )
+    finally:
+        shutil.rmtree(lane_temp)
+    try:
+        report: dict[str, Any] | None = base._parse_pytest_lane_report(
+            completed.stdout
+        )
+    except base.QualificationError:
+        report = None
+    status = base._pytest_lane_status(completed.returncode, report)
+    return {
+        "lane": name,
+        "passed": status == "PASS",
+        "report": report,
+        "requested_node_count": 1,
+        "returncode": completed.returncode,
+        "status": status,
+        "stderr": completed.stderr,
+        "stdout": completed.stdout,
+    }
+
+
 def _solve_hard_navier_plate_under_lease(
     base: Any,
     model: Any,

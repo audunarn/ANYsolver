@@ -35,7 +35,7 @@ CONTRACT = (
     ROOT
     / "docs"
     / "reference_cases"
-    / "e4_pl_s3_qualification_optimization_v6_contract.json"
+    / "e4_pl_s3_qualification_isolation_v7_contract.json"
 )
 COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 FORMAL_RUNNER = ROOT / "scripts" / "run_e4_pl_s3_qualification_v4.py"
@@ -160,11 +160,14 @@ FROZEN_QV6_ANYSOLVER_PREFLIGHT_SHA256 = (
 )
 ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS = (
     "docs/reference_cases/e4_pl_s3_anystructure_release_exception_v1.json",
+    "docs/reference_cases/e4_pl_s3_qualification_isolation_v7_contract.json",
+    "docs/reference_cases/e4_pl_s3_qualification_optimization_v4.py",
     "docs/reference_cases/e4_pl_s3_qualification_v4_authority_review.json",
     "docs/reference_cases/e4_pl_s3_qualification_v4_candidate_binding.json",
     "docs/reference_cases/e4_pl_s3_qualification_v4_candidate_graph.json",
     "docs/reference_cases/e4_pl_s3_qualification_v4_science_review.json",
     "docs/reference_cases/e4_pl_s3_qv6_worker_environment_incident_v1.json",
+    "docs/reference_cases/e4_pl_s3_qv6_memory_and_scope_incident_v1.json",
     "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
     "scripts/run_e4_pl_s3_qualification_v4.py",
     "tests/test_e4_pl_s3_qualification_optimization_v4.py",

@@ -34,7 +34,7 @@ CONTRACT = (
     ROOT
     / "docs"
     / "reference_cases"
-    / "e4_pl_s3_qualification_optimization_v6_contract.json"
+    / "e4_pl_s3_qualification_isolation_v7_contract.json"
 )
 EVIDENCE = (
     ROOT
@@ -259,7 +259,8 @@ def test_formal_assignments_cover_exact_252_special_and_batch_scope() -> None:
     assert eigen["paired_performance_comparisons"] == 24
     special = formal.build_assignment(authority, "SPECIAL_ECOSYSTEM")["payload"]
     assert special["registered_special_fixtures"] == 8
-    assert special["lane_count"] == len(special["lanes"]) > 0
+    assert special["lane_count"] == len(special["lanes"]) == 7
+    assert all(row["repository"] != "ANYstructure" for row in special["lanes"])
     overlay = special["lanes"][-3:]
     assert overlay == [
         {
@@ -291,6 +292,71 @@ def test_formal_assignments_cover_exact_252_special_and_batch_scope() -> None:
         range(12)
     )
     assert all(shard["eligible_element_count"] == 4096 for shard in batch)
+
+
+def test_structural_chunks_preserve_all_sequences_and_bound_process_lifetime() -> None:
+    formal = _load("_s3_v7_structural_chunks", FORMAL)
+    sequences = [
+        {"fraction_percent": 0, "mask": "none", "diagonal": "slash"},
+        *[
+            {
+                "fraction_percent": 1 + index // 5,
+                "mask": f"mask-{index}",
+                "diagonal": "slash",
+            }
+            for index in range(20)
+        ],
+    ]
+    base = SimpleNamespace(_structural_sequences=lambda _diagonal: sequences)
+    chunks = formal._structural_sequence_chunks(base, "slash")
+    assert len(chunks) == 4
+    assert all(len(chunk) == 6 for chunk in chunks)
+    assert all(chunk[0] == sequences[0] for chunk in chunks)
+    assert [row for chunk in chunks for row in chunk[1:]] == sequences[1:]
+    chunks[0][0]["mask"] = "mutated"
+    assert chunks[1][0]["mask"] == "none"
+
+
+def test_special_node_results_rebuild_one_strict_lane_report() -> None:
+    formal = _load("_s3_v7_special_aggregate", FORMAL)
+    base = _load("_s3_v7_special_base", V2_PROGRAM)
+    lane = {"name": "lane-a", "nodes": ["a", "b"], "repository": "ANYsolver"}
+    results = []
+    for index in range(2):
+        report = {
+            "collected": 1,
+            "collection_errors": 0,
+            "outcomes": [
+                {
+                    "nodeid": f"test_{index}.py::test_value",
+                    "outcome": "passed",
+                    "properties": [],
+                }
+            ],
+        }
+        stdout = (
+            base.PYTEST_LANE_REPORT_PREFIX
+            + json.dumps(report, sort_keys=True, separators=(",", ":"))
+            + "\n"
+        )
+        results.append(
+            {
+                "lane": f"node-{index}",
+                "passed": True,
+                "report": report,
+                "requested_node_count": 1,
+                "returncode": 0,
+                "status": "PASS",
+                "stderr": "",
+                "stdout": stdout,
+            }
+        )
+    combined = formal._aggregate_special_node_results(base, lane, results)
+    assert combined["lane"] == "lane-a"
+    assert combined["requested_node_count"] == 2
+    assert combined["status"] == "PASS"
+    assert combined["report"]["collected"] == 2
+    assert len(combined["report"]["outcomes"]) == 2
 
 
 def test_formal_assignment_is_canonical_hash_bound_and_mutation_rejected(
@@ -333,12 +399,18 @@ def test_contract_is_frozen_regenerable_and_preserves_strict_q4_guard_identity()
     generator = _load("_s3_v3_generator_contract", GENERATOR)
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     assert contract["authority_state"] == (
-        "CORRECTED_QV6_IMPLEMENTATION_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS"
+        "CORRECTED_QV7_PROCESS_ISOLATION_REQUIRES_FINAL_CANDIDATE_GRAPH_AND_REVIEWS"
     )
     assert contract["formal_qualification_authority"] is False
     assert contract["formal_runner"]["exact_topology_records"] == 252
     assert contract["formal_runner"]["exact_special_fixture_count"] == 8
     assert contract["formal_runner"]["cycle_count_required"] == 2
+    assert contract["formal_runner"]["structural_chunks_per_diagonal"] == 4
+    assert contract["formal_runner"]["structural_chunk_mixed_sequences"] == 5
+    assert contract["formal_runner"]["special_node_concurrency"] == 3
+    assert contract["formal_runner"]["excluded_special_repositories"] == [
+        "ANYstructure"
+    ]
     assert contract["execution_policy"]["total_runtime_limit_seconds"] is None
     assert contract["execution_policy"]["runtime_classification"] is False
     preflight_policy = contract["execution_policy"]["candidate_preflight"]
@@ -945,11 +1017,14 @@ def test_anystructure_release_exception_is_exact_and_non_generalizable() -> None
     )
     assert generator.ANYSOLVER_PREFLIGHT_SUCCESSOR_PATHS == (
         "docs/reference_cases/e4_pl_s3_anystructure_release_exception_v1.json",
+        "docs/reference_cases/e4_pl_s3_qualification_isolation_v7_contract.json",
+        "docs/reference_cases/e4_pl_s3_qualification_optimization_v4.py",
         "docs/reference_cases/e4_pl_s3_qualification_v4_authority_review.json",
         "docs/reference_cases/e4_pl_s3_qualification_v4_candidate_binding.json",
         "docs/reference_cases/e4_pl_s3_qualification_v4_candidate_graph.json",
         "docs/reference_cases/e4_pl_s3_qualification_v4_science_review.json",
         "docs/reference_cases/e4_pl_s3_qv6_worker_environment_incident_v1.json",
+        "docs/reference_cases/e4_pl_s3_qv6_memory_and_scope_incident_v1.json",
         "scripts/prepare_e4_pl_s3_qualification_v4_input.py",
         "scripts/run_e4_pl_s3_qualification_v4.py",
         "tests/test_e4_pl_s3_qualification_optimization_v4.py",

@@ -32,22 +32,22 @@ BASE_PROGRAM = REFERENCE_CASES / "e4_pl_s3_default_activation_v2.py"
 BASE_INPUT = REFERENCE_CASES / "e4_pl_s3_default_activation_v2_input.json"
 BASE_CONTRACT = REFERENCE_CASES / "e4_pl_s3_default_activation_v2_contract.json"
 SUCCESSOR = REFERENCE_CASES / "e4_pl_s3_qualification_optimization_v4.py"
-CONTRACT = REFERENCE_CASES / "e4_pl_s3_qualification_optimization_v6_contract.json"
+CONTRACT = REFERENCE_CASES / "e4_pl_s3_qualification_isolation_v7_contract.json"
 COLD_COORDINATOR = ROOT / "scripts" / "benchmark_e4_pl_s3_activation_cold_path.py"
 BINDING_GENERATOR = ROOT / "scripts" / "prepare_e4_pl_s3_qualification_v4_input.py"
 WORKER_SCHEMA = "anysolver.e4-pl-s3-default-activation-worker-v3"
 SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-default-activation-scientific-v3"
 CYCLE_SET_SCHEMA = "anysolver.e4-pl-s3-default-activation-cycle-set-v3"
 ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-formal-shard-assignment-v3"
-AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v6"
-REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v6"
-AUTHORITY_SUBJECT = "docs: authorize optimized S3 qualification execution v6"
+AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-qualification-authorization-v7"
+REVIEW_SCHEMA = "anysolver.e4-pl-s3-qualification-independent-review-v7"
+AUTHORITY_SUBJECT = "docs: authorize isolated S3 qualification execution v7"
 RESOURCE_MANAGER = Path(r"C:\Github\.resource-manager")
 RESOURCE_REQUEST_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_REQUEST_ID"
 RESOURCE_ATTEMPT_ENVIRONMENT = "E4_PL_S3_QUALIFICATION_ATTEMPT_SHA256"
 REQUIRED_REVIEWER_IDS = (
-    "s3-v6-authority-reviewer",
-    "s3-v6-science-reviewer",
+    "s3-v7-authority-reviewer",
+    "s3-v7-science-reviewer",
 )
 STRUCTURAL_WORKERS = (
     "STRUCTURAL_SLASH",
@@ -73,6 +73,9 @@ THREAD_ENVIRONMENT = {
 INACTIVITY_SECONDS = 1800
 MEMORY_LIMIT_BYTES = 24 * (1 << 30)
 MAX_RECORD_BYTES = 4 * (1 << 20)
+STRUCTURAL_CHUNK_MIXED_SEQUENCE_COUNT = 5
+SPECIAL_NODE_CONCURRENCY = 3
+STRUCTURAL_CHUNK_SCHEMA = "anysolver.e4-pl-s3-structural-chunk-v1"
 TREE_RELEASE_ENVIRONMENT = "ANYSOLVER_S3_COLD_TREE_RELEASE"
 TREE_RELEASE_BYTES = b"ANYSOLVER_S3_COLD_TREE_ACCOUNTED_V1\n"
 TREE_RELEASE_WAIT_SECONDS = 5.0
@@ -1244,14 +1247,36 @@ def _special_lanes(authority: SuccessorAuthority) -> tuple[list[dict[str, Any]],
     overlay = formal.get("special_lane_overlay") if isinstance(formal, dict) else None
     if not isinstance(overlay, list) or len(overlay) != 3:
         raise QualificationError("v3 special-lane overlay differs")
-    historical = deepcopy(
-        authority.authority.contract["coverage"]["special_pytest_lanes"]
-    )
+    excluded = formal.get("excluded_special_repositories")
+    if excluded != ["ANYstructure"]:
+        raise QualificationError("ANYstructure release-exception scope differs")
+    historical = [
+        deepcopy(row)
+        for row in authority.authority.contract["coverage"]["special_pytest_lanes"]
+        if row.get("repository") not in excluded
+    ]
     lanes = historical + deepcopy(overlay)
     names = [row.get("name") for row in lanes if isinstance(row, dict)]
     if len(names) != len(lanes) or len(set(names)) != len(lanes):
         raise QualificationError("special lane identities are duplicated")
     return lanes, len(overlay)
+
+
+def _structural_sequence_chunks(base: Any, diagonal: str) -> list[list[dict[str, Any]]]:
+    """Partition one frozen diagonal without changing its scientific rows."""
+
+    sequences = [dict(row) for row in base._structural_sequences(diagonal)]
+    baselines = [row for row in sequences if int(row["fraction_percent"]) == 0]
+    mixed = [row for row in sequences if int(row["fraction_percent"]) != 0]
+    if len(sequences) != 21 or len(baselines) != 1 or len(mixed) != 20:
+        raise QualificationError("structural sequence partition authority differs")
+    chunks = [
+        [dict(baselines[0]), *map(dict, mixed[index:index + STRUCTURAL_CHUNK_MIXED_SEQUENCE_COUNT])]
+        for index in range(0, len(mixed), STRUCTURAL_CHUNK_MIXED_SEQUENCE_COUNT)
+    ]
+    if len(chunks) != 4 or any(len(chunk) != 6 for chunk in chunks):
+        raise QualificationError("structural sequence chunk cardinality differs")
+    return chunks
 
 
 def build_assignment(authority: SuccessorAuthority, worker_id: str) -> dict[str, Any]:
@@ -1372,6 +1397,303 @@ def _require_safe_python_startup() -> None:
         raise QualificationError("formal execution requires Python -I -S -B startup")
 
 
+def run_structural_chunk(
+    binding_path: Path,
+    authorization_path: Path,
+    assignment_path: Path,
+    output: Path,
+    progress: Path,
+    chunk_index: int,
+) -> None:
+    """Run a bounded subset in a fresh process so native factors are released."""
+
+    _require_safe_python_startup()
+    _await_tree_accounting_release()
+    if {name: os.environ.get(name) for name in THREAD_ENVIRONMENT} != THREAD_ENVIRONMENT:
+        raise QualificationError("structural chunk thread environment differs")
+    sequence = 0
+
+    def checkpoint(stage: str) -> None:
+        nonlocal sequence
+        sequence += 1
+        _checkpoint(progress, sequence, stage)
+
+    checkpoint("chunk-initialized")
+    successor_authority = load_authority(binding_path, authorization_path)
+    require_active_resource_execution(successor_authority)
+    assignment, assignment_sha = read_assignment(successor_authority, assignment_path)
+    worker_id = str(assignment["worker_id"])
+    if worker_id not in STRUCTURAL_WORKERS:
+        raise QualificationError("structural chunk assignment is not structural")
+    diagonal = worker_id.removeprefix("STRUCTURAL_").lower()
+    chunks = _structural_sequence_chunks(successor_authority.base, diagonal)
+    if not 0 <= chunk_index < len(chunks):
+        raise QualificationError("structural chunk index differs")
+    checkpoint("chunk-authority-verified")
+    base = successor_authority.base
+    successor = successor_authority.successor
+    authority = successor_authority.authority
+    program_bytes = successor_authority.verified_program_bytes
+    data_bytes = successor_authority.verified_data_bytes
+    if program_bytes is None or data_bytes is None:
+        raise QualificationError("verified scientific buffers are absent")
+
+    def verified_loader(name: str, path: Path) -> Any:
+        return _verified_program_loader(program_bytes, name, path)
+
+    base._load_module = verified_loader
+    runtime_paths = [
+        Path(successor_authority.binding["execution_target"]).resolve(strict=True),
+        Path(successor_authority.binding["candidates"]["ANYintelligent"]["root"]).resolve(strict=True),
+    ]
+    sys.path[:0] = [str(path) for path in runtime_paths]
+    bundle = successor.activate_assigned(
+        base,
+        authority,
+        verified_loader=verified_loader,
+        verified_data_bytes=data_bytes,
+    )
+    original = base._structural_authority
+    synthetic = successor.structural_authority(
+        base,
+        authority,
+        bundle,
+        diagonal,
+        base_factory=original,
+    )
+    synthetic.input["coverage"]["convergence_sequences"] = deepcopy(
+        chunks[chunk_index]
+    )
+    bundle.manifest_generator.build_manifest = lambda: deepcopy(authority.manifest)
+    checkpoint("chunk-mechanics-activated")
+    payload, status = bundle.structural_producer.produce_convergence(
+        synthetic,
+        quick=False,
+    )
+    if set(status) != {"convergence", "interface_resultants", "pl_participation"}:
+        raise QualificationError("structural chunk status schema differs")
+    write_exclusive(
+        output,
+        {
+            "assignment_sha256": assignment_sha,
+            "chunk_index": chunk_index,
+            "diagonal": diagonal,
+            "payload": payload,
+            "schema": STRUCTURAL_CHUNK_SCHEMA,
+        },
+    )
+    checkpoint("chunk-output-complete")
+
+
+def _read_structural_chunk(
+    path: Path,
+    *,
+    assignment_sha: str,
+    chunk_index: int,
+    diagonal: str,
+) -> dict[str, Any]:
+    _raw, value = read_json(path)
+    if set(value) != {
+        "assignment_sha256",
+        "chunk_index",
+        "diagonal",
+        "payload",
+        "schema",
+    }:
+        raise QualificationError("structural chunk fields differ")
+    if (
+        value["schema"] != STRUCTURAL_CHUNK_SCHEMA
+        or value["assignment_sha256"] != assignment_sha
+        or value["chunk_index"] != chunk_index
+        or value["diagonal"] != diagonal
+        or not isinstance(value["payload"], dict)
+    ):
+        raise QualificationError("structural chunk identity differs")
+    return value["payload"]
+
+
+def _run_structural_chunks(
+    successor_authority: SuccessorAuthority,
+    assignment_path: Path,
+    assignment_sha: str,
+    worker_id: str,
+    directory: Path,
+    checkpoint: Any,
+) -> dict[str, Any]:
+    """Execute four deterministic convergence chunks serially and combine them."""
+
+    diagonal = worker_id.removeprefix("STRUCTURAL_").lower()
+    chunks = _structural_sequence_chunks(successor_authority.base, diagonal)
+    frozen_files = successor_authority.verified_file_bytes
+    if frozen_files is None:
+        raise QualificationError("verified authority file buffers are absent")
+    runner_raw = frozen_files["formal_runner"]
+    runner_path = ROOT / str(successor_authority.binding["files"]["formal_runner"]["path"])
+    chunk_root = directory / "structural-chunks"
+    chunk_root.mkdir()
+    payloads: list[dict[str, Any]] = []
+    for chunk_index in range(len(chunks)):
+        chunk_directory = chunk_root / f"chunk-{chunk_index}"
+        chunk_directory.mkdir()
+        output = chunk_directory / "record.json"
+        progress = chunk_directory / "progress.ndjson"
+        command = [
+            sys.executable,
+            "-I",
+            "-S",
+            "-B",
+            "-c",
+            WORKER_BOOTSTRAP,
+            str(runner_path),
+            str(len(runner_raw)),
+            "--structural-chunk",
+            "--binding",
+            str(successor_authority.binding_path),
+            "--authorization",
+            str(successor_authority.authorization_path),
+            "--assignment",
+            str(assignment_path),
+            "--output",
+            str(output),
+            "--progress",
+            str(progress),
+            "--chunk-index",
+            str(chunk_index),
+        ]
+        with (chunk_directory / "stdout.log").open("xb") as stdout, (
+            chunk_directory / "stderr.log"
+        ).open("xb") as stderr:
+            process = subprocess.Popen(
+                command,
+                cwd=chunk_directory,
+                env=os.environ.copy(),
+                stdin=subprocess.PIPE,
+                stdout=stdout,
+                stderr=stderr,
+            )
+            if process.stdin is None:
+                raise QualificationError("structural chunk source pipe is absent")
+            process.stdin.write(runner_raw)
+            process.stdin.close()
+            returncode = process.wait()
+        if returncode != 0 or not output.is_file():
+            raise QualificationError(
+                f"structural chunk {chunk_index} ended with {returncode}"
+            )
+        payloads.append(
+            _read_structural_chunk(
+                output,
+                assignment_sha=assignment_sha,
+                chunk_index=chunk_index,
+                diagonal=diagonal,
+            )
+        )
+        checkpoint(f"structural-chunk-{chunk_index}-complete")
+
+    baseline_rows = [
+        payload["rows"][0]
+        for payload in payloads
+        if isinstance(payload.get("rows"), list) and payload["rows"]
+    ]
+    if len(baseline_rows) != len(payloads) or any(
+        canonical_bytes(row) != canonical_bytes(baseline_rows[0])
+        for row in baseline_rows[1:]
+    ):
+        raise QualificationError("repeated structural baseline differs")
+    mixed_by_identity: dict[tuple[int, str], dict[str, Any]] = {}
+    interface_rows: list[dict[str, Any]] = []
+    contradictions: set[str] = set()
+    for payload in payloads:
+        for row in payload["rows"][1:]:
+            sequence = row["sequence"]
+            identity = (int(sequence["fraction_percent"]), str(sequence["mask"]))
+            if identity in mixed_by_identity:
+                raise QualificationError("structural mixed sequence is duplicated")
+            mixed_by_identity[identity] = row
+        interface_rows.extend(payload["interface_rows"])
+        contradictions.update(str(item) for item in payload["contradictions"])
+    expected_mixed = [
+        row
+        for row in successor_authority.base._structural_sequences(diagonal)
+        if int(row["fraction_percent"]) != 0
+    ]
+    ordered_mixed = [
+        mixed_by_identity[(int(row["fraction_percent"]), str(row["mask"]))]
+        for row in expected_mixed
+    ]
+    if len(mixed_by_identity) != 20:
+        raise QualificationError("structural mixed sequence coverage differs")
+    return {
+        "contradictions": sorted(contradictions),
+        "interface_rows": interface_rows,
+        "rows": [baseline_rows[0], *ordered_mixed],
+    }
+
+
+def _aggregate_special_node_results(
+    base: Any,
+    lane: Mapping[str, Any],
+    node_results: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Recreate the frozen lane schema from independently isolated nodes."""
+
+    if len(node_results) != len(lane["nodes"]):
+        raise QualificationError("special node result count differs")
+    reports: list[Mapping[str, Any]] = []
+    statuses: list[str] = []
+    stderr_parts: list[str] = []
+    for index, result in enumerate(node_results):
+        if result.get("requested_node_count") != 1:
+            raise QualificationError("special node request cardinality differs")
+        report = result.get("report")
+        status = result.get("status")
+        if status not in base.PYTEST_LANE_STATUSES or not isinstance(report, dict):
+            raise QualificationError("special node process or report is blocked")
+        reports.append(report)
+        statuses.append(str(status))
+        stderr_parts.append(f"node-{index}\n{result.get('stderr', '')}")
+    outcomes = sorted(
+        (dict(outcome) for report in reports for outcome in report["outcomes"]),
+        key=lambda row: str(row["nodeid"]),
+    )
+    if len({str(row["nodeid"]) for row in outcomes}) != len(outcomes):
+        raise QualificationError("special node outcome is duplicated")
+    report = {
+        "collected": sum(int(row["collected"]) for row in reports),
+        "collection_errors": sum(int(row["collection_errors"]) for row in reports),
+        "outcomes": outcomes,
+    }
+    if "BLOCKED" in statuses:
+        returncode = 2
+    elif "FAIL" in statuses:
+        returncode = 1
+    else:
+        returncode = 0
+    stdout = (
+        base.PYTEST_LANE_REPORT_PREFIX
+        + json.dumps(
+            report,
+            allow_nan=False,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    parsed = base._parse_pytest_lane_report(stdout)
+    status = base._pytest_lane_status(returncode, parsed)
+    return {
+        "lane": str(lane["name"]),
+        "passed": status == "PASS",
+        "report": parsed,
+        "requested_node_count": len(lane["nodes"]),
+        "returncode": returncode,
+        "status": status,
+        "stderr": "\n".join(stderr_parts),
+        "stdout": stdout,
+    }
+
+
 def run_worker(
     binding_path: Path,
     authorization_path: Path,
@@ -1425,6 +1747,14 @@ def run_worker(
     )
     checkpoint("mechanics-activated")
     if worker_id in STRUCTURAL_WORKERS:
+        convergence_payload = _run_structural_chunks(
+            successor_authority,
+            assignment_path,
+            assignment_sha,
+            worker_id,
+            output.parent,
+            checkpoint,
+        )
         original = base._structural_authority
 
         def structural_factory(value: Any, mechanics: Any, diagonal: str) -> Any:
@@ -1440,41 +1770,83 @@ def run_worker(
         # Coordinator authority has already validated and hash-bound all 252
         # rows; do not regenerate the full manifest independently per worker.
         bundle.manifest_generator.build_manifest = lambda: deepcopy(authority.manifest)
+        bundle.structural_producer.produce_convergence = (
+            lambda _synthetic, *, quick: (
+                deepcopy(convergence_payload),
+                {
+                    "convergence": bundle.structural_producer.COMPLETE,
+                    "interface_resultants": bundle.structural_producer.COMPLETE,
+                    "pl_participation": bundle.structural_producer.COMPLETE,
+                },
+            )
+        )
         gates, diagnostics, coverage = base._structural_worker(
             authority, bundle, worker_id
         )
     elif worker_id == "EIGEN_PERFORMANCE":
         gates, diagnostics, coverage = base._eigen_worker(authority, bundle)
     elif worker_id == "SPECIAL_ECOSYSTEM":
-        base._run_pytest_lane = lambda value, name, cwd, nodes: (
-            successor.run_pytest_lane_without_elapsed_ceiling(
+        lanes, overlay_count = _special_lanes(successor_authority)
+        node_specs: list[tuple[int, int, Path, str, str]] = []
+        for lane_index, lane in enumerate(lanes):
+            root = Path(str(authority.input["candidates"][lane["repository"]]["root"])).resolve()
+            for node_index, node in enumerate(lane["nodes"]):
+                absolute = str(root / node.split("::", 1)[0]) + (
+                    "::" + node.split("::", 1)[1] if "::" in node else ""
+                )
+                node_specs.append(
+                    (
+                        lane_index,
+                        node_index,
+                        root,
+                        absolute,
+                        f"{lane['name']}::node-{node_index}",
+                    )
+                )
+        node_results: dict[tuple[int, int], dict[str, Any]] = {}
+        with ThreadPoolExecutor(
+            max_workers=SPECIAL_NODE_CONCURRENCY,
+            thread_name_prefix="s3-special-node",
+        ) as pool:
+            futures = {
+                pool.submit(
+                    successor.run_pytest_node_after_parent_authority,
+                    base,
+                    authority,
+                    name,
+                    root,
+                    node,
+                    isolation_config_bytes=successor_authority.verified_file_bytes[
+                        "preflight_config"
+                    ],
+                ): (lane_index, node_index)
+                for lane_index, node_index, root, node, name in node_specs
+            }
+            for future in as_completed(futures):
+                lane_index, node_index = futures[future]
+                node_results[(lane_index, node_index)] = future.result()
+                checkpoint(
+                    f"special-node-{lane_index}-{node_index}-complete"
+                )
+        results = [
+            _aggregate_special_node_results(
                 base,
-                value,
-                name,
-                cwd,
-                nodes,
-                isolation_config_bytes=successor_authority.verified_file_bytes[
-                    "preflight_config"
+                lane,
+                [
+                    node_results[(lane_index, node_index)]
+                    for node_index in range(len(lane["nodes"]))
                 ],
             )
-        )
-        lanes, overlay_count = _special_lanes(successor_authority)
-        results: list[dict[str, Any]] = []
-        for lane in lanes:
-            root = Path(str(authority.input["candidates"][lane["repository"]]["root"])).resolve()
-            nodes = [
-                str(root / node.split("::", 1)[0])
-                + ("::" + node.split("::", 1)[1] if "::" in node else "")
-                for node in lane["nodes"]
-            ]
-            results.append(
-                base._run_pytest_lane(authority, str(lane["name"]), root, nodes)
-            )
+            for lane_index, lane in enumerate(lanes)
+        ]
         # Preserve complete external diagnostics even when adjudication raises.
         # This file is never canonical scientific evidence.
         base._write_exclusive(
-            output.with_name("special-lane-results.json"),
-            {str(row["lane"]): row for row in results},
+            output.with_name("special-node-results.json"),
+            {
+                f"{lane_index}:{node_index}": row
+                for (lane_index, node_index), row in sorted(node_results.items())
+            },
             pretty=True,
         )
         gates, diagnostics, coverage = base._adjudicate_special_lanes(
@@ -2229,6 +2601,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--authorization", type=Path, required=True)
     parser.add_argument("--authority-only", action="store_true")
     parser.add_argument("--worker", action="store_true")
+    parser.add_argument("--structural-chunk", action="store_true")
+    parser.add_argument("--chunk-index", type=int)
     parser.add_argument("--assignment", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--progress", type=Path)
@@ -2236,6 +2610,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output-root", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.structural_chunk:
+            if (
+                args.assignment is None
+                or args.output is None
+                or args.progress is None
+                or args.chunk_index is None
+            ):
+                raise QualificationError("structural chunk paths are incomplete")
+            run_structural_chunk(
+                args.binding,
+                args.authorization,
+                args.assignment,
+                args.output,
+                args.progress,
+                args.chunk_index,
+            )
+            return 0
         if args.worker:
             if args.assignment is None or args.output is None or args.progress is None:
                 raise QualificationError("worker paths are incomplete")
