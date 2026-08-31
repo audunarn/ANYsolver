@@ -55,7 +55,7 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v3"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v4"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -135,9 +135,38 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     ]
     extent = authority["allowed_extent"]
     assert {
+        "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
         "tests/test_e4_pl_s3_v2_candidate_binding.py",
+        "tests/test_e4_pl_s3_v2_bounded_process.py",
         "tests/test_e4_pl_s3_v2_flat_candidate_review.py",
     } <= set(extent["implementation_paths"])
+    assert correction["current_change"] == {
+        "cases_changed": False,
+        "classification": "PROCESS_RESOURCE_ADMISSION_ONLY",
+        "consumed_request": {
+            "checker_processes_started": 0,
+            "classifying_records": 0,
+            "producer_processes_started": 0,
+            "request_id": "3725cb19803543bfa789903b2a11f59a",
+            "request_reuse_forbidden": True,
+            "terminal": "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE",
+            "wave_terminal": "RESOURCE_DEFERRED",
+        },
+        "defaults_changed": False,
+        "mechanics_changed": False,
+        "process_control_changed": True,
+        "protocol_changed": False,
+        "tolerances_changed": False,
+    }
+    assert correction["history"][2] == {
+        "bytes": 6458,
+        "commit": "3bbf5d3e85b8ba218846004a4f84a2bbaf0818a0",
+        "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+        "reason": "RESOURCE_DEFERRED_WITH_ZERO_WORKER_LAUNCHES",
+        "sha256": "17B7B768EDE593A600F4B37C120E0653BE3C522B2E5C62687EFCD8C02272C322",
+        "subject": "docs: authorize S3 V2A Stage 4A review corrections",
+        "tree": "95bdde42a9260b10cebfa59e7315d0530610c4cf",
+    }
     assert correction["review_incident"] == {
         "candidate_commit": "0f93779feded35846ce7a093d27a8a98f5c0fc81",
         "findings": [
@@ -179,6 +208,55 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "docs/reference_cases/e4_pl_s3_v2_stage4a_status.json",
         "tests/test_e4_pl_s3_v2_stage4a_closeout.py",
     }
+
+
+def test_stage4a_resource_admission_correction_retains_hard_limits(authority) -> None:
+    assert authority["execution"] == {
+        "checker_phase_finalization_reserve_seconds": 60,
+        "checker_phase_required_seconds": 960,
+        "checker_phase_schedule": "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER",
+        "checker_replica_wall_seconds": 300,
+        "coordinator_wall_seconds": 1800,
+        "inactivity_seconds": 300,
+        "maximum_concurrent_workers": 2,
+        "maximum_memory_gib_per_process_tree": 24,
+        "maximum_workers": 3,
+        "memory_admission_headroom_gib": 16,
+        "memory_admission_required_bytes": 68_719_476_736,
+        "no_automatic_retry": True,
+        "numerical_library_threads_per_worker": 1,
+        "producer_wall_seconds": 900,
+        "registered_shards": 3,
+        "schedule": "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER",
+        "wave_wall_seconds": 1800,
+    }
+
+
+def test_stage4a_prior_v3_authority_binding_is_exact(authority) -> None:
+    prior = authority["correction"]["history"][2]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree) == (prior["subject"], prior["tree"])
 
 
 def test_registered_parent_objects_exist_and_match(authority) -> None:

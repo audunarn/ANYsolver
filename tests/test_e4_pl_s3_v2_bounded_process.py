@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -60,12 +61,51 @@ def _manifest(tmp_path: Path, *, lane: str = "flat-proof", wall: int = 900):
 
 def test_frozen_bounds_are_finite_and_below_thirty_minutes():
     module = _load()
+    assert module.MAX_WORKERS == 3
+    assert module.MAX_CONCURRENT_WORKERS == 2
     assert module.WAVE_WALL_SECONDS == 1800
     assert module.MAX_WORKER_WALL_SECONDS == 1500
     assert module.INACTIVITY_SECONDS == 300
     assert module.JOB_MEMORY_LIMIT_BYTES == 24 * (1 << 30)
     assert max(module.LANE_WALL_LIMITS.values()) == 1500
     assert None not in module.LANE_WALL_LIMITS.values()
+
+
+def test_wave_memory_admission_uses_concurrency_not_registered_shard_count():
+    module = _load()
+    one_worker = module.JOB_MEMORY_LIMIT_BYTES + module.OS_HEADROOM_BYTES
+    two_workers = 2 * module.JOB_MEMORY_LIMIT_BYTES + module.OS_HEADROOM_BYTES
+    assert module._required_wave_memory_bytes(1) == one_worker
+    assert module._required_wave_memory_bytes(2) == two_workers
+    assert module._required_wave_memory_bytes(3) == two_workers
+    for invalid in (0, 4, True):
+        with pytest.raises(module.BoundedProcessError, match="outside wave policy"):
+            module._required_wave_memory_bytes(invalid)
+
+
+def test_slot_release_requires_zero_active_tree_or_proven_termination():
+    module = _load()
+    running = SimpleNamespace(
+        job=SimpleNamespace(terminate=lambda: False),
+        process=SimpleNamespace(returncode=0),
+        status="RUNNING",
+        termination_proven=False,
+        slot_released=False,
+    )
+    assert module._record_root_exit_if_tree_drained(running, 1) is False
+    assert running.status == "RUNNING"
+    assert running.slot_released is False
+    running.status = "TIMEOUT"
+    assert module._terminate_and_release_slot(running) is False
+    assert running.termination_proven is False
+    assert running.slot_released is False
+    assert module._queued_launch_is_blocked((running,)) is True
+
+    running.status = "RUNNING"
+    assert module._record_root_exit_if_tree_drained(running, 0) is True
+    assert running.status == "COMPLETED"
+    assert running.termination_proven is True
+    assert running.slot_released is True
 
 
 def test_every_registered_contract_hard_wall_has_an_exact_runner_lane():
@@ -381,6 +421,315 @@ def _worker_program() -> str:
         "raw=(json.dumps(payload,indent=2)+'\\n').encode('ascii') if mode=='noncanonical' else raw;"
         "science.write_bytes(raw) if mode!='missing-science' else None"
     )
+
+
+def _scheduled_worker_program() -> str:
+    return """\
+import hashlib
+import json
+import pathlib
+import sys
+import time
+
+progress = pathlib.Path(sys.argv[1])
+science = pathlib.Path(sys.argv[2])
+assignment_id = sys.argv[3]
+assignment_sha256 = sys.argv[4]
+plan_sha256 = sys.argv[5]
+selector = sys.argv[6]
+delay = float(sys.argv[7])
+mode = sys.argv[8]
+
+print(json.dumps({"event": "START", "at_ns": time.monotonic_ns()}), flush=True)
+time.sleep(delay)
+print(json.dumps({"event": "END", "at_ns": time.monotonic_ns()}), flush=True)
+if mode == "fail":
+    raise SystemExit(7)
+
+progress.parent.mkdir(parents=True, exist_ok=True)
+phases = [
+    "INITIALIZATION",
+    "AUTHORITY_COMPLETE",
+    "CASE_OR_REFINEMENT_OR_STATION",
+    "STAGING",
+    "VALIDATION",
+    "COMPLETION",
+]
+rows = [
+    {
+        "schema": "anysolver.e4-pl-s3-v2-worker-progress-v1",
+        "assignment_id": assignment_id,
+        "sequence": index,
+        "phase": phase,
+        "completed": index + 1,
+        "total": len(phases),
+    }
+    for index, phase in enumerate(phases)
+]
+progress.write_text(
+    "".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\\n" for row in rows),
+    encoding="utf-8",
+)
+canonical = lambda value: (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\\n").encode("ascii")
+record_ids = [assignment_id + "-record"]
+scientific_payload = {"records": [{"exact": True}]}
+payload = {
+    "schema": "test.s3-v2-scientific-v1",
+    "assignment_sha256": assignment_sha256,
+    "plan_sha256": plan_sha256,
+    "selector": selector,
+    "record_count": 1,
+    "record_ids": record_ids,
+    "record_ids_sha256": hashlib.sha256(canonical(record_ids)).hexdigest().upper(),
+    "scientific_payload": scientific_payload,
+    "scientific_payload_sha256": hashlib.sha256(canonical(scientific_payload)).hexdigest().upper(),
+    "terminal": "ACCEPTED_FOR_AGGREGATION",
+}
+science.write_bytes(canonical(payload))
+"""
+
+
+def _three_worker_wave(module, tmp_path: Path, modes, *, delay: float = 0.8):
+    program = tmp_path / "scheduled-worker.py"
+    program.write_text(_scheduled_worker_program(), encoding="utf-8")
+    plan = tmp_path / "plan.json"
+    plan.write_bytes(module.canonical_json_bytes({"schema": "test.plan-v1"}))
+    registered_input = tmp_path / "input.bin"
+    registered_input.write_bytes(b"frozen input\n")
+    program_sha256 = module.sha256_bytes(program.read_bytes())
+    plan_sha256 = module.sha256_bytes(plan.read_bytes())
+    input_sha256 = module.sha256_bytes(registered_input.read_bytes())
+    workers = []
+    for index, mode in enumerate(modes, start=1):
+        assignment_id = f"shard-{index}"
+        assignment_sha256 = f"{index:X}" * 64
+        worker_root = tmp_path / assignment_id
+        workers.append(
+            {
+                "assignment_id": assignment_id,
+                "assignment_sha256": assignment_sha256,
+                "command": [
+                    sys.executable,
+                    str(program.resolve()),
+                    str((worker_root / "progress.ndjson").resolve()),
+                    str((worker_root / "scientific.json").resolve()),
+                    assignment_id,
+                    assignment_sha256,
+                    plan_sha256,
+                    "e4-pl-s3-v2",
+                    str(delay),
+                    mode,
+                ],
+                "cwd": str(tmp_path.resolve()),
+                "expected_record_count": 1,
+                "expected_selector": "e4-pl-s3-v2",
+                "input_hashes": [
+                    {"path": str(registered_input.resolve()), "sha256": input_sha256}
+                ],
+                "plan_path": str(plan.resolve()),
+                "plan_sha256": plan_sha256,
+                "progress_path": str((worker_root / "progress.ndjson").resolve()),
+                "program_path": str(program.resolve()),
+                "program_sha256": program_sha256,
+                "scientific_path": str((worker_root / "scientific.json").resolve()),
+                "scientific_schema": "test.s3-v2-scientific-v1",
+                "stdout_path": str((worker_root / "stdout.bin").resolve()),
+                "stderr_path": str((worker_root / "stderr.bin").resolve()),
+                "wall_seconds": 5,
+            }
+        )
+    made = {
+        "schema": module.MANIFEST_SCHEMA,
+        "wave_id": "scheduled-wave",
+        "lane": "authority",
+        "output_root": str(tmp_path.resolve()),
+        "workers": workers,
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_bytes(module.canonical_json_bytes(made))
+    return made, manifest_path
+
+
+def _stdout_events(worker) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in Path(worker["stdout_path"]).read_text(encoding="utf-8").splitlines()
+    ]
+
+
+def test_three_shards_run_two_plus_one_and_retain_every_output(tmp_path, monkeypatch):
+    module = _load()
+    manifest, manifest_path = _three_worker_wave(
+        module, tmp_path, ("valid", "valid", "valid")
+    )
+    monkeypatch.setattr(module, "_formal_platform_name", lambda: "nt")
+    monkeypatch.setattr(
+        module,
+        "available_physical_memory_bytes",
+        lambda: 2 * module.JOB_MEMORY_LIMIT_BYTES + module.OS_HEADROOM_BYTES,
+    )
+    monkeypatch.setattr(module, "POLL_SECONDS", 0.01)
+    result = module.run_wave(manifest_path, (tmp_path / "result.json").resolve())
+
+    assert result["terminal"] == "COMPLETED"
+    assert [row["assignment_id"] for row in result["workers"]] == [
+        "shard-1",
+        "shard-2",
+        "shard-3",
+    ]
+    intervals = []
+    for worker in manifest["workers"]:
+        events = _stdout_events(worker)
+        assert [event["event"] for event in events] == ["START", "END"]
+        intervals.append((events[0]["at_ns"], events[1]["at_ns"]))
+        for field in ("progress_path", "scientific_path", "stdout_path", "stderr_path"):
+            assert Path(worker[field]).is_file()
+
+    timeline = sorted(
+        [(start, 1) for start, _ in intervals]
+        + [(end, -1) for _, end in intervals],
+        key=lambda item: (item[0], item[1]),
+    )
+    overlap = 0
+    maximum_overlap = 0
+    for _, delta in timeline:
+        overlap += delta
+        maximum_overlap = max(maximum_overlap, overlap)
+    assert maximum_overlap == 2
+    assert intervals[2][0] >= min(intervals[0][1], intervals[1][1])
+
+
+def test_failed_shard_is_not_retried_and_queued_shard_still_runs(tmp_path, monkeypatch):
+    module = _load()
+    manifest, manifest_path = _three_worker_wave(
+        module, tmp_path, ("fail", "valid", "valid"), delay=0.25
+    )
+    monkeypatch.setattr(module, "_formal_platform_name", lambda: "nt")
+    monkeypatch.setattr(module, "available_physical_memory_bytes", lambda: 1 << 50)
+    monkeypatch.setattr(module, "POLL_SECONDS", 0.01)
+    result = module.run_wave(manifest_path, (tmp_path / "result.json").resolve())
+
+    assert result["terminal"] == "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
+    assert [row["status"] for row in result["workers"]] == [
+        "FAILED",
+        "COMPLETED",
+        "COMPLETED",
+    ]
+    for worker in manifest["workers"]:
+        events = _stdout_events(worker)
+        assert sum(event["event"] == "START" for event in events) == 1
+        assert sum(event["event"] == "END" for event in events) == 1
+        assert Path(worker["stdout_path"]).is_file()
+        assert Path(worker["stderr_path"]).is_file()
+    assert not Path(manifest["workers"][0]["scientific_path"]).exists()
+    assert Path(manifest["workers"][2]["scientific_path"]).is_file()
+
+
+def test_root_exit_does_not_free_slot_until_job_tree_reports_zero(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    _manifest_value, manifest_path = _three_worker_wave(
+        module, tmp_path, ("valid", "valid", "valid"), delay=0
+    )
+
+    class FakeProcess:
+        returncode = 0
+
+        def poll(self):
+            return self.returncode
+
+    class DrainingJob:
+        instances = []
+        launches = []
+        third_launch_snapshot = None
+
+        def __init__(self, _memory_limit):
+            self.index = len(self.instances)
+            self.accounting_calls = 0
+            self.instances.append(self)
+
+        def launch(self, command, **_kwargs):
+            self.launches.append(tuple(command))
+            if self.index == 2:
+                self.__class__.third_launch_snapshot = tuple(
+                    job.accounting_calls for job in self.instances[:2]
+                )
+            return FakeProcess()
+
+        def accounting(self):
+            self.accounting_calls += 1
+            active = int(self.index < 2 and self.accounting_calls == 1)
+            return 0, active, 0
+
+        def terminate(self):
+            return True
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(module, "_ProcessJob", DrainingJob)
+    monkeypatch.setattr(module, "_formal_platform_name", lambda: "nt")
+    monkeypatch.setattr(module, "available_physical_memory_bytes", lambda: 1 << 50)
+    monkeypatch.setattr(module, "POLL_SECONDS", 0)
+    result = module.run_wave(manifest_path, (tmp_path / "result.json").resolve())
+
+    assert len(DrainingJob.launches) == 3
+    assert DrainingJob.third_launch_snapshot is not None
+    assert min(DrainingJob.third_launch_snapshot) >= 2
+    assert len(result["workers"]) == 3
+    assert result["terminal"] == "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
+
+
+def test_failed_termination_proof_blocks_queued_launch_without_hanging(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    _manifest_value, manifest_path = _three_worker_wave(
+        module, tmp_path, ("valid", "valid", "valid"), delay=0
+    )
+
+    class FakeProcess:
+        def __init__(self, returncode):
+            self.returncode = returncode
+
+        def poll(self):
+            return self.returncode
+
+    class UnprovenTerminationJob:
+        instances = []
+        launches = []
+
+        def __init__(self, _memory_limit):
+            self.index = len(self.instances)
+            self.instances.append(self)
+
+        def launch(self, command, **_kwargs):
+            self.launches.append(tuple(command))
+            return FakeProcess(None if self.index == 0 else 0)
+
+        def accounting(self):
+            if self.index == 0:
+                raise OSError("synthetic accounting failure")
+            return 0, 0, 0
+
+        def terminate(self):
+            return self.index != 0
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(module, "_ProcessJob", UnprovenTerminationJob)
+    monkeypatch.setattr(module, "_formal_platform_name", lambda: "nt")
+    monkeypatch.setattr(module, "available_physical_memory_bytes", lambda: 1 << 50)
+    monkeypatch.setattr(module, "POLL_SECONDS", 0)
+    result = module.run_wave(manifest_path, (tmp_path / "result.json").resolve())
+
+    assert len(UnprovenTerminationJob.launches) == 2
+    assert len(result["workers"]) == 2
+    assert result["workers"][0]["status"] == "MALFORMED_PROGRESS_OR_ACCOUNTING"
+    assert result["workers"][0]["termination_proven"] is False
+    assert result["terminal"] == "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
 
 
 def _run_worker_wave(module, tmp_path: Path, monkeypatch, mode: str):

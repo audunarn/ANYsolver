@@ -40,9 +40,9 @@ CHECKER_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_checker.py"
 FUNNEL_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel.py"
 BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v3"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v4"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v3"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v4"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
 AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
 CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
@@ -53,7 +53,15 @@ PASS = "PASS_E4_PL_S3_V2A_FLAT_FUNNEL_PHASE_4A"
 PRODUCTION_RESTRICTION = "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED"
 CHECKER_WALL_SECONDS = 300
 WAVE_WALL_SECONDS = 1800
+COORDINATOR_WALL_SECONDS = 1800
 MEMORY_LIMIT_BYTES = 24 * (1 << 30)
+OS_HEADROOM_BYTES = 16 * (1 << 30)
+MAXIMUM_REGISTERED_WORKERS = 3
+MAXIMUM_CONCURRENT_WORKERS = 2
+WORKER_SCHEDULE = "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER"
+CHECKER_PHASE_SCHEDULE = "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER"
+CHECKER_PHASE_FINALIZATION_RESERVE_SECONDS = 60
+CHECKER_PHASE_REQUIRED_SECONDS = 960
 EXPECTED_SHARDS = {
     "S3_V2_FLAT_4A_SLASH": "slash",
     "S3_V2_FLAT_4A_BACKSLASH": "backslash",
@@ -159,6 +167,136 @@ PREDECESSOR_ARTIFACTS = {
         "1F9317E839A9451B6B97F0E0D60A4B5E316F74D3F754B90763A754081C89931B",
     ),
 }
+RESOURCE_DEFERRED_INCIDENT_ROOT = Path(
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+    r"\s3-v2-stage4a-20260831-correction1-cycle1"
+)
+RESOURCE_DEFERRED_REPOSITORY = PREDECESSOR_REPOSITORY
+RESOURCE_DEFERRED_REQUEST_ID = "3725cb19803543bfa789903b2a11f59a"
+RESOURCE_DEFERRED_REQUESTED_AT = "2026-08-31T09:58:56.9567735+02:00"
+RESOURCE_DEFERRED_TASK = PREDECESSOR_TASK
+RESOURCE_DEFERRED_REQUEST_BYTE_COUNT = 1335
+RESOURCE_DEFERRED_REQUEST_SHA256 = (
+    "3BD8B7CE627647C563F8FA8D32F61F3E80322914358259364EAF6CA7280D81C6"
+)
+RESOURCE_DEFERRED_COMMAND_SHA256 = (
+    "DAC6537170A4315EE72983954DB68B404A9F7DB95A70E1E9A4929AB46572DC8C"
+)
+RESOURCE_DEFERRED_ATTEMPT_BYTE_COUNT = 182
+RESOURCE_DEFERRED_ATTEMPT_SHA256 = (
+    "A3BC7CD54F2EF5AF1F36172F77EDC914567FF23F6FE168C279D278D5ADD32BD7"
+)
+RESOURCE_DEFERRED_AUTHORIZATION_COMMIT = (
+    "b428c772e509b8e599af09f6d9f548fdaf9eef94"
+)
+RESOURCE_DEFERRED_AUTHORIZATION_TREE = "f663d308ccafbb76cc02968bf432df153c538156"
+RESOURCE_DEFERRED_AUTHORIZATION_PARENT = (
+    "88836999a43b70ac6c2b8c2c14a19bb7b7ada060"
+)
+RESOURCE_DEFERRED_AUTHORIZATION_SUBJECT = (
+    "docs: reauthorize corrected S3 V2A Stage 4A execution"
+)
+RESOURCE_DEFERRED_AUTHORIZATION_BYTE_COUNT = 2394
+RESOURCE_DEFERRED_AUTHORIZATION_SHA256 = (
+    "F92015A3B16398C17EC5FD52A87949225A14436794D6A20DECF3EA84090DF5FB"
+)
+RESOURCE_DEFERRED_CONTRACT_COMMIT = "17a8bf10ae65f0ecc8e6d3c91864fa6f118a0145"
+RESOURCE_DEFERRED_CONTRACT_TREE = "427f0e9d70046ab98c202cc59a06c311a006ee17"
+RESOURCE_DEFERRED_CONTRACT_PARENT = "2d924788b05115ba3318bacb538f5040684ac1ae"
+RESOURCE_DEFERRED_CONTRACT_SUBJECT = "docs: refreeze Stage 4A after process incident"
+RESOURCE_DEFERRED_CONTRACT_BYTE_COUNT = 12_324
+RESOURCE_DEFERRED_CONTRACT_SHA256 = (
+    "B32545BF9559D1F5DE9F91473767BEADC2ED13F2D42FD8AC8371D5FA775A50EE"
+)
+RESOURCE_DEFERRED_CANDIDATE_COMMIT = "2d924788b05115ba3318bacb538f5040684ac1ae"
+RESOURCE_DEFERRED_CANDIDATE_TREE = "7c961d3ee6dee727a2f22ac2b9d858055e770be5"
+RESOURCE_DEFERRED_AUTHORITY_SHA256 = (
+    "17B7B768EDE593A600F4B37C120E0653BE3C522B2E5C62687EFCD8C02272C322"
+)
+RESOURCE_DEFERRED_COORDINATOR_SHA256 = (
+    "3338C3C48C518F207CDB78A43952F0D168A53693F528E749082F96B46704BEB8"
+)
+RESOURCE_DEFERRED_BOUNDED_SHA256 = PREDECESSOR_BOUNDED_SHA256
+RESOURCE_DEFERRED_CONNECTIVITY_MANIFEST_SHA256 = (
+    PREDECESSOR_CONNECTIVITY_MANIFEST_SHA256
+)
+RESOURCE_DEFERRED_ARCHIVE_REF = (
+    "refs/archive/s3-v2-stage4a-resource-deferred-correction1-cycle1"
+)
+RESOURCE_DEFERRED_ARCHIVE_COMMIT = RESOURCE_DEFERRED_AUTHORIZATION_COMMIT
+RESOURCE_DEFERRED_CANDIDATE_FILE_COUNT = 995
+RESOURCE_DEFERRED_CANDIDATE_DIRECTORY_COUNT = 15
+RESOURCE_DEFERRED_OLD_ADMISSION_REQUIRED_BYTES = 94_489_280_512
+RESOURCE_DEFERRED_LEDGER_ROW_SHA256 = {
+    "APPROVED": "5011DA117D98DC5F9850B41B28E814625EA00DAD523E65C121691BEEC103CD73",
+    "EXECUTION_STARTED": "CE4FABF5E412C281C730E0D972E58D753C80F2B3AFEC8B48F724C9ADF9E9524C",
+    "COMPLETED_FAIL": "1CC6AC5D477B134CD7A3FC2C834A8DE21FD5B8C3E81E84704FFB9C718B0F4718",
+}
+RESOURCE_DEFERRED_ARTIFACTS = {
+    "aggregate": (
+        "stage4a-aggregate.json",
+        681,
+        "87FD564CD9C68385B7C1A36DBC8D7817508813C57B0E060F6C07B39342211B49",
+    ),
+    "approval_snapshot": (
+        "approval-snapshot.json",
+        1500,
+        "E4B84F20AEE7FB5C6C9CF36FB63C5A343522B5DDF5DB716EA18695E10BB70646",
+    ),
+    "candidate_archive": (
+        "candidate-source.tar",
+        27_238_400,
+        "EC79D671E0381B98D984F4BA0F493C4C9CC073F3967E20BAA935E1BDBEA453A8",
+    ),
+    "candidate_binding": (
+        "candidate-source-binding.json",
+        519,
+        "D63EEF89BB81C5E83E3AF2CB577DAF699F14D1474574778960BBCBB251E6479D",
+    ),
+    "ledger_snapshot": (
+        "resource-ledger-pre-run.md",
+        95_210,
+        "79CA316DAF38E24E1958218165EE2475BF5755FAEF78DC904EDE0325843F64B8",
+    ),
+    "manifest": (
+        "producer-wave-manifest.json",
+        12_667,
+        "C5BCE5CDF047E7AC3894D7AE4AD6629D194CC3EF11894552101786B9C0AF8D47",
+    ),
+    "phase_plan": (
+        "phase4a-plan.json",
+        40_609,
+        "03095DB243064F7D70F9EA0BF4CCCCEF36DF983D441B5A3B09E8D6568412C9E0",
+    ),
+    "transcript": (
+        "formal-transcript.txt",
+        4162,
+        "767F1E5666875E5197C0F94FF8CBCE1621DF75B353F5A97269835EA5F53A15D4",
+    ),
+}
+RESOURCE_DEFERRED_PRODUCER_RESULT = (
+    "producer-wave/producer-wave-result.json",
+    245,
+    "7DF0A1759C6E99BC099486BB425BD345093578B4C699681853810796B471BB9B",
+)
+CONTRACT_KEYS = frozenset(
+    {
+        "adjudication",
+        "authority",
+        "candidate",
+        "coverage",
+        "dependencies",
+        "execution",
+        "frozen_files",
+        "git_authority",
+        "predecessor_process_incident",
+        "predecessor_resource_deferred_incident",
+        "production_boundary",
+        "protocol",
+        "schema",
+        "stage",
+    }
+)
 PROCESS_REVIEW_PATH = (
     REFERENCE_CASES / "e4_pl_s3_v2_stage4a_process_implementation_review.json"
 )
@@ -184,6 +322,7 @@ REQUIRED_FROZEN_PATHS = {
     "src/anysolver/e4_pl_s3_element.py",
     "src/anysolver/e4_pl_s3_v2_element.py",
     "tests/test_e4_pl_s3_v2_candidate_binding.py",
+    "tests/test_e4_pl_s3_v2_bounded_process.py",
     "tests/test_e4_pl_s3_v2_flat_candidate_review.py",
     "tests/test_e4_pl_s3_v2_flat_funnel_checker.py",
     "tests/test_e4_pl_s3_v2_flat_funnel_producer.py",
@@ -206,6 +345,35 @@ DEPENDENCY_REPOSITORIES = (
 
 class CoordinatorError(RuntimeError):
     """Raised when formal process or evidence authority is incomplete."""
+
+
+def _execution_policy() -> dict[str, Any]:
+    """Return the exact Stage 4A bounded process contract."""
+
+    return {
+        "checker_phase_finalization_reserve_seconds": (
+            CHECKER_PHASE_FINALIZATION_RESERVE_SECONDS
+        ),
+        "checker_phase_required_seconds": CHECKER_PHASE_REQUIRED_SECONDS,
+        "checker_phase_schedule": CHECKER_PHASE_SCHEDULE,
+        "checker_replica_wall_seconds": CHECKER_WALL_SECONDS,
+        "checker_replicas_per_shard": 2,
+        "coordinator_wall_seconds": COORDINATOR_WALL_SECONDS,
+        "inactivity_seconds": 300,
+        "maximum_concurrent_workers": MAXIMUM_CONCURRENT_WORKERS,
+        "maximum_memory_gib_per_process_tree": MEMORY_LIMIT_BYTES // (1 << 30),
+        "maximum_workers": MAXIMUM_REGISTERED_WORKERS,
+        "memory_admission_headroom_gib": OS_HEADROOM_BYTES // (1 << 30),
+        "memory_admission_required_bytes": (
+            MAXIMUM_CONCURRENT_WORKERS * MEMORY_LIMIT_BYTES + OS_HEADROOM_BYTES
+        ),
+        "no_automatic_retry": True,
+        "numerical_library_threads_per_worker": 1,
+        "producer_wall_seconds": 900,
+        "registered_shards": MAXIMUM_REGISTERED_WORKERS,
+        "schedule": WORKER_SCHEDULE,
+        "wave_wall_seconds": WAVE_WALL_SECONDS,
+    }
 
 
 def _load_module(name: str, path: Path) -> Any:
@@ -1478,33 +1646,1060 @@ def _validate_predecessor_process_incident(value: Any) -> None:
         raise CoordinatorError("predecessor live ledger history differs")
 
 
+def _resource_deferred_archive_inventory(
+    archive_path: Path,
+) -> tuple[set[str], dict[str, tuple[int, str]]]:
+    """Return the exact regular directory/file inventory of the bound Git archive."""
+
+    directories: set[str] = set()
+    files: dict[str, tuple[int, str]] = {}
+    seen: set[str] = set()
+    try:
+        with tarfile.open(archive_path, mode="r:") as bundle:
+            for member in bundle:
+                raw_name = member.name
+                normalized_name = raw_name[:-1] if raw_name.endswith("/") else raw_name
+                raw_parts = normalized_name.split("/")
+                pure = PurePosixPath(normalized_name)
+                if (
+                    not normalized_name
+                    or "\\" in raw_name
+                    or pure.is_absolute()
+                    or any(part in {"", ".", ".."} for part in raw_parts)
+                ):
+                    raise CoordinatorError(
+                        "resource-deferred candidate archive contains an unsafe path"
+                    )
+                relative = pure.as_posix()
+                if relative in seen:
+                    raise CoordinatorError(
+                        "resource-deferred candidate archive path is duplicated"
+                    )
+                seen.add(relative)
+                for parent in pure.parents:
+                    if parent != PurePosixPath("."):
+                        directories.add(parent.as_posix())
+                if member.isdir():
+                    directories.add(relative)
+                    continue
+                if not member.isfile():
+                    raise CoordinatorError(
+                        "resource-deferred candidate archive contains a link or special entry"
+                    )
+                stream = bundle.extractfile(member)
+                if stream is None:
+                    raise CoordinatorError(
+                        "resource-deferred candidate archive member cannot be read"
+                    )
+                digest = hashlib.sha256()
+                byte_count = 0
+                while True:
+                    chunk = stream.read(1 << 20)
+                    if not chunk:
+                        break
+                    byte_count += len(chunk)
+                    digest.update(chunk)
+                if byte_count != member.size:
+                    raise CoordinatorError(
+                        "resource-deferred candidate archive member size differs"
+                    )
+                files[relative] = (byte_count, digest.hexdigest().upper())
+    except (OSError, tarfile.TarError) as exc:
+        raise CoordinatorError(
+            f"cannot read resource-deferred candidate archive: {exc}"
+        ) from exc
+    if directories.intersection(files):
+        raise CoordinatorError(
+            "resource-deferred candidate archive has a file/directory collision"
+        )
+    return directories, files
+
+
+def _validate_resource_deferred_candidate_tree(
+    value: Any, location: str, *, archive_path: Path
+) -> None:
+    binding = _exact(value, {"directory_count", "file_count", "path"}, location)
+    nominal_root = RESOURCE_DEFERRED_INCIDENT_ROOT / "candidate-source-tree"
+    if binding["path"] != str(RESOURCE_DEFERRED_INCIDENT_ROOT / "candidate-source-tree"):
+        raise CoordinatorError("resource-deferred candidate-tree path differs")
+    if (
+        _nonnegative_integer(binding["file_count"], f"{location}.file_count")
+        != RESOURCE_DEFERRED_CANDIDATE_FILE_COUNT
+        or _nonnegative_integer(
+            binding["directory_count"], f"{location}.directory_count"
+        )
+        != RESOURCE_DEFERRED_CANDIDATE_DIRECTORY_COUNT
+    ):
+        raise CoordinatorError("resource-deferred candidate-tree counts differ")
+
+    actual_directories: set[str] = set()
+    actual_files: dict[str, tuple[int, str]] = {}
+    try:
+        root_information = nominal_root.lstat()
+        root_attributes = getattr(root_information, "st_file_attributes", 0)
+        if (
+            not stat.S_ISDIR(root_information.st_mode)
+            or nominal_root.is_symlink()
+            or root_attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            raise CoordinatorError(
+                "resource-deferred candidate tree contains a linked directory"
+            )
+        expected_root = nominal_root.resolve()
+        for current, directory_names, file_names in os.walk(
+            expected_root,
+            topdown=True,
+            followlinks=False,
+            onerror=lambda error: (_ for _ in ()).throw(error),
+        ):
+            current_path = Path(current)
+            current_information = current_path.lstat()
+            current_attributes = getattr(current_information, "st_file_attributes", 0)
+            if (
+                not stat.S_ISDIR(current_information.st_mode)
+                or current_path.is_symlink()
+                or current_attributes
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+            ):
+                raise CoordinatorError(
+                    "resource-deferred candidate tree contains a linked directory"
+                )
+            directory_names.sort()
+            file_names.sort()
+            for name in directory_names:
+                child = current_path / name
+                information = child.lstat()
+                attributes = getattr(information, "st_file_attributes", 0)
+                if (
+                    not stat.S_ISDIR(information.st_mode)
+                    or child.is_symlink()
+                    or attributes
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+                ):
+                    raise CoordinatorError(
+                        "resource-deferred candidate tree contains a linked directory"
+                    )
+                actual_directories.add(
+                    child.relative_to(expected_root).as_posix()
+                )
+            for name in file_names:
+                child = current_path / name
+                information = child.lstat()
+                attributes = getattr(information, "st_file_attributes", 0)
+                if (
+                    not stat.S_ISREG(information.st_mode)
+                    or child.is_symlink()
+                    or attributes
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+                ):
+                    raise CoordinatorError(
+                        "resource-deferred candidate tree contains a non-regular file"
+                    )
+                relative = child.relative_to(expected_root).as_posix()
+                digest = hashlib.sha256()
+                byte_count = 0
+                with child.open("rb") as stream:
+                    while True:
+                        chunk = stream.read(1 << 20)
+                        if not chunk:
+                            break
+                        byte_count += len(chunk)
+                        digest.update(chunk)
+                actual_files[relative] = (byte_count, digest.hexdigest().upper())
+    except OSError as exc:
+        raise CoordinatorError(
+            f"cannot enumerate resource-deferred candidate tree: {exc}"
+        ) from exc
+    if (
+        len(actual_files) != RESOURCE_DEFERRED_CANDIDATE_FILE_COUNT
+        or len(actual_directories) != RESOURCE_DEFERRED_CANDIDATE_DIRECTORY_COUNT
+    ):
+        raise CoordinatorError("resource-deferred candidate-tree extent differs")
+    archive_directories, archive_files = _resource_deferred_archive_inventory(
+        archive_path
+    )
+    if actual_directories != archive_directories or set(actual_files) != set(archive_files):
+        raise CoordinatorError(
+            "resource-deferred candidate-tree extent differs from archive"
+        )
+    for relative, identity in actual_files.items():
+        if identity != archive_files[relative]:
+            raise CoordinatorError(
+                "resource-deferred candidate-tree content differs from archive"
+            )
+
+
+def _validate_predecessor_resource_deferred_incident(value: Any) -> None:
+    """Validate the consumed zero-worker resource-admission deferral."""
+
+    location = "$.contract.predecessor_resource_deferred_incident"
+    incident = _exact(
+        value,
+        {
+            "aggregate",
+            "approval_snapshot",
+            "archive_ref",
+            "attempt_claim",
+            "authorization",
+            "candidate_archive",
+            "candidate_binding",
+            "candidate_tree",
+            "contract",
+            "ledger_snapshot",
+            "manifest",
+            "memory_admission",
+            "output_root",
+            "phase_plan",
+            "producer_result",
+            "request",
+            "request_reuse_forbidden",
+            "root_cause",
+            "scientific_execution",
+            "terminal_ledger_rows",
+            "transcript",
+        },
+        location,
+    )
+    if (
+        incident["output_root"] != str(RESOURCE_DEFERRED_INCIDENT_ROOT)
+        or incident["root_cause"]
+        != "RESOURCE_ADMISSION_DEFERRED_BEFORE_WORKER_LAUNCH"
+        or incident["request_reuse_forbidden"] is not True
+    ):
+        raise CoordinatorError("resource-deferred incident identity differs")
+
+    scientific = _exact(
+        incident["scientific_execution"],
+        {
+            "checker_processes_started",
+            "classifying_records",
+            "producer_processes_started",
+            "producer_result_present",
+        },
+        f"{location}.scientific_execution",
+    )
+    if (
+        _nonnegative_integer(
+            scientific["checker_processes_started"],
+            f"{location}.scientific_execution.checker_processes_started",
+        )
+        != 0
+        or _nonnegative_integer(
+            scientific["classifying_records"],
+            f"{location}.scientific_execution.classifying_records",
+        )
+        != 0
+        or _nonnegative_integer(
+            scientific["producer_processes_started"],
+            f"{location}.scientific_execution.producer_processes_started",
+        )
+        != 0
+        or scientific["producer_result_present"] is not True
+    ):
+        raise CoordinatorError("resource-deferred scientific disposition differs")
+
+    memory = _exact(
+        incident["memory_admission"],
+        {
+            "concurrent_workers_assumed",
+            "maximum_memory_gib_per_process_tree",
+            "observed_at_event_available_bytes",
+            "observation_status",
+            "os_headroom_gib",
+            "registered_workers",
+            "required_bytes",
+        },
+        f"{location}.memory_admission",
+    )
+    if (
+        _nonnegative_integer(
+            memory["concurrent_workers_assumed"],
+            f"{location}.memory_admission.concurrent_workers_assumed",
+        )
+        != 3
+        or _nonnegative_integer(
+            memory["maximum_memory_gib_per_process_tree"],
+            f"{location}.memory_admission.maximum_memory_gib_per_process_tree",
+        )
+        != 24
+        or memory["observed_at_event_available_bytes"] is not None
+        or memory["observation_status"] != "NOT_RECORDED"
+        or _nonnegative_integer(
+            memory["os_headroom_gib"],
+            f"{location}.memory_admission.os_headroom_gib",
+        )
+        != 16
+        or _nonnegative_integer(
+            memory["registered_workers"],
+            f"{location}.memory_admission.registered_workers",
+        )
+        != 3
+        or _nonnegative_integer(
+            memory["required_bytes"], f"{location}.memory_admission.required_bytes"
+        )
+        != RESOURCE_DEFERRED_OLD_ADMISSION_REQUIRED_BYTES
+        or memory["required_bytes"]
+        != (memory["concurrent_workers_assumed"] * 24 + 16) * (1 << 30)
+    ):
+        raise CoordinatorError("resource-deferred memory admission differs")
+
+    incident_root = RESOURCE_DEFERRED_INCIDENT_ROOT.resolve()
+    bound: dict[str, tuple[Path, bytes]] = {}
+    for name, (filename, expected_count, expected_sha256) in (
+        RESOURCE_DEFERRED_ARTIFACTS.items()
+    ):
+        raw_binding = _exact(
+            incident[name],
+            {"byte_count", "path", "sha256"},
+            f"{location}.{name}",
+        )
+        if (
+            _nonnegative_integer(
+                raw_binding["byte_count"], f"{location}.{name}.byte_count"
+            )
+            != expected_count
+            or _digest(raw_binding["sha256"], f"{location}.{name}.sha256")
+            != expected_sha256
+        ):
+            raise CoordinatorError(f"resource-deferred {name} identity differs")
+        expected_path = RESOURCE_DEFERRED_INCIDENT_ROOT / filename
+        bound[name] = _validate_external_file_binding(
+            raw_binding, f"{location}.{name}", expected_path=expected_path
+        )
+        if bound[name][0] != expected_path.resolve():
+            raise CoordinatorError(f"resource-deferred {name} resolved path differs")
+
+    request_path = (
+        RESOURCE_MANAGER_ROOT / "requests" / f"{RESOURCE_DEFERRED_REQUEST_ID}.json"
+    )
+    request_binding = _exact(
+        incident["request"],
+        {"byte_count", "path", "sha256"},
+        f"{location}.request",
+    )
+    if (
+        _nonnegative_integer(
+            request_binding["byte_count"], f"{location}.request.byte_count"
+        )
+        != RESOURCE_DEFERRED_REQUEST_BYTE_COUNT
+        or _digest(request_binding["sha256"], f"{location}.request.sha256")
+        != RESOURCE_DEFERRED_REQUEST_SHA256
+    ):
+        raise CoordinatorError("resource-deferred request identity differs")
+    request_file, request_raw = _validate_external_file_binding(
+        request_binding, f"{location}.request", expected_path=request_path
+    )
+
+    attempt_path = (
+        RESOURCE_MANAGER_ROOT / "attempts" / f"{RESOURCE_DEFERRED_REQUEST_ID}.json"
+    )
+    attempt_binding = _exact(
+        incident["attempt_claim"],
+        {"byte_count", "path", "sha256"},
+        f"{location}.attempt_claim",
+    )
+    if (
+        _nonnegative_integer(
+            attempt_binding["byte_count"], f"{location}.attempt_claim.byte_count"
+        )
+        != RESOURCE_DEFERRED_ATTEMPT_BYTE_COUNT
+        or _digest(attempt_binding["sha256"], f"{location}.attempt_claim.sha256")
+        != RESOURCE_DEFERRED_ATTEMPT_SHA256
+    ):
+        raise CoordinatorError("resource-deferred attempt identity differs")
+    attempt_file, attempt_raw = _validate_external_file_binding(
+        attempt_binding, f"{location}.attempt_claim", expected_path=attempt_path
+    )
+
+    producer_filename, producer_count, producer_sha256 = (
+        RESOURCE_DEFERRED_PRODUCER_RESULT
+    )
+    producer_path = RESOURCE_DEFERRED_INCIDENT_ROOT.joinpath(
+        *PurePosixPath(producer_filename).parts
+    )
+    producer_binding = _exact(
+        incident["producer_result"],
+        {"byte_count", "path", "sha256"},
+        f"{location}.producer_result",
+    )
+    if (
+        _nonnegative_integer(
+            producer_binding["byte_count"], f"{location}.producer_result.byte_count"
+        )
+        != producer_count
+        or _digest(
+            producer_binding["sha256"], f"{location}.producer_result.sha256"
+        )
+        != producer_sha256
+    ):
+        raise CoordinatorError("resource-deferred producer result identity differs")
+    producer_file, producer_raw = _validate_external_file_binding(
+        producer_binding,
+        f"{location}.producer_result",
+        expected_path=producer_path,
+    )
+
+    try:
+        actual_root_names = {entry.name for entry in os.scandir(incident_root)}
+        actual_wave_names = {
+            entry.name for entry in os.scandir(incident_root / "producer-wave")
+        }
+    except OSError as exc:
+        raise CoordinatorError(
+            f"cannot enumerate resource-deferred incident: {exc}"
+        ) from exc
+    expected_root_names = {
+        artifact[0] for artifact in RESOURCE_DEFERRED_ARTIFACTS.values()
+    } | {"candidate-source-tree", "producer-wave"}
+    if actual_root_names != expected_root_names:
+        raise CoordinatorError("resource-deferred incident artifact extent differs")
+    if actual_wave_names != {Path(producer_filename).name}:
+        raise CoordinatorError("resource-deferred producer-wave extent differs")
+    _validate_resource_deferred_candidate_tree(
+        incident["candidate_tree"],
+        f"{location}.candidate_tree",
+        archive_path=bound["candidate_archive"][0],
+    )
+
+    request_value, observed_request_raw = _strict_external_json(
+        request_file, "resource-deferred request"
+    )
+    request = _exact(
+        request_value,
+        {
+            "command",
+            "estimate_minutes",
+            "repository",
+            "request_id",
+            "requested_at",
+            "status",
+            "task",
+        },
+        f"{location}.request_file",
+    )
+    if (
+        request_file != request_path.resolve()
+        or observed_request_raw != request_raw
+        or request["request_id"] != RESOURCE_DEFERRED_REQUEST_ID
+        or request["requested_at"] != RESOURCE_DEFERRED_REQUESTED_AT
+        or request["task"] != RESOURCE_DEFERRED_TASK
+        or request["repository"] != RESOURCE_DEFERRED_REPOSITORY
+        or request["status"] != "PENDING"
+        or _nonnegative_integer(
+            request["estimate_minutes"], f"{location}.request_file.estimate_minutes"
+        )
+        != 30
+        or not isinstance(request["command"], str)
+        or sha256(request["command"].encode("utf-8"))
+        != RESOURCE_DEFERRED_COMMAND_SHA256
+    ):
+        raise CoordinatorError("resource-deferred request content differs")
+
+    attempt = _exact(
+        _canonical_external_json(attempt_raw, "resource-deferred attempt claim"),
+        {"contract_sha256", "request_id", "schema"},
+        f"{location}.attempt_claim_file",
+    )
+    if (
+        attempt_file != attempt_path.resolve()
+        or attempt
+        != {
+            "contract_sha256": RESOURCE_DEFERRED_CONTRACT_SHA256,
+            "request_id": RESOURCE_DEFERRED_REQUEST_ID,
+            "schema": "anysolver.resource-attempt-claim-v1",
+        }
+    ):
+        raise CoordinatorError("resource-deferred consumed attempt differs")
+
+    snapshot = _exact(
+        _canonical_external_json(
+            bound["approval_snapshot"][1], "resource-deferred approval snapshot"
+        ),
+        {"approved_row", "candidate", "ledger", "request", "schema"},
+        f"{location}.approval_snapshot_file",
+    )
+    approved = _exact(
+        snapshot["approved_row"],
+        {"line", "sha256"},
+        f"{location}.approval_snapshot_file.approved_row",
+    )
+    approved_line = approved["line"]
+    if (
+        snapshot["schema"]
+        != "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2"
+        or snapshot["candidate"]
+        != {
+            "commit": RESOURCE_DEFERRED_CANDIDATE_COMMIT,
+            "tree": RESOURCE_DEFERRED_CANDIDATE_TREE,
+        }
+        or not isinstance(approved_line, str)
+        or "\n" in approved_line
+        or "\r" in approved_line
+        or _digest(approved["sha256"], f"{location}.approved_row.sha256")
+        != RESOURCE_DEFERRED_LEDGER_ROW_SHA256["APPROVED"]
+        or sha256((approved_line + "\n").encode("utf-8"))
+        != RESOURCE_DEFERRED_LEDGER_ROW_SHA256["APPROVED"]
+    ):
+        raise CoordinatorError("resource-deferred approval snapshot differs")
+    snapshot_request = _exact(
+        snapshot["request"],
+        {"byte_count", "path", "request_id", "sha256"},
+        f"{location}.approval_snapshot_file.request",
+    )
+    snapshot_ledger = _exact(
+        snapshot["ledger"],
+        {"byte_count", "path", "sha256", "snapshot_path"},
+        f"{location}.approval_snapshot_file.ledger",
+    )
+    if (
+        snapshot_request
+        != {
+            "byte_count": RESOURCE_DEFERRED_REQUEST_BYTE_COUNT,
+            "path": str(request_path),
+            "request_id": RESOURCE_DEFERRED_REQUEST_ID,
+            "sha256": RESOURCE_DEFERRED_REQUEST_SHA256,
+        }
+        or snapshot_ledger
+        != {
+            "byte_count": RESOURCE_DEFERRED_ARTIFACTS["ledger_snapshot"][1],
+            "path": str(RESOURCE_LEDGER_PATH),
+            "sha256": RESOURCE_DEFERRED_ARTIFACTS["ledger_snapshot"][2],
+            "snapshot_path": str(
+                RESOURCE_DEFERRED_INCIDENT_ROOT
+                / RESOURCE_DEFERRED_ARTIFACTS["ledger_snapshot"][0]
+            ),
+        }
+    ):
+        raise CoordinatorError("resource-deferred approval joins differ")
+    try:
+        ledger_snapshot_text = bound["ledger_snapshot"][1].decode("utf-8-sig")
+    except UnicodeError as exc:
+        raise CoordinatorError("resource-deferred ledger snapshot is not UTF-8") from exc
+    if ledger_snapshot_text.splitlines().count(approved_line) != 1:
+        raise CoordinatorError("resource-deferred approved row is absent or duplicated")
+
+    candidate_binding = _exact(
+        _canonical_external_json(
+            bound["candidate_binding"][1], "resource-deferred candidate binding"
+        ),
+        {
+            "artifact_path",
+            "artifact_sha256",
+            "candidate_id",
+            "commit",
+            "formulation_id",
+            "schema",
+            "selector",
+            "tree",
+        },
+        f"{location}.candidate_binding_file",
+    )
+    if candidate_binding != {
+        "artifact_path": str(
+            RESOURCE_DEFERRED_INCIDENT_ROOT
+            / RESOURCE_DEFERRED_ARTIFACTS["candidate_archive"][0]
+        ),
+        "artifact_sha256": RESOURCE_DEFERRED_ARTIFACTS["candidate_archive"][2],
+        "candidate_id": "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1",
+        "commit": RESOURCE_DEFERRED_CANDIDATE_COMMIT,
+        "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V2",
+        "schema": "anysolver.e4-pl-s3-v2-flat-candidate-binding-v1",
+        "selector": "e4-pl-s3-v2",
+        "tree": RESOURCE_DEFERRED_CANDIDATE_TREE,
+    }:
+        raise CoordinatorError("resource-deferred candidate archive join differs")
+
+    plan = _exact(
+        _canonical_external_json(
+            bound["phase_plan"][1], "resource-deferred phase plan"
+        ),
+        {
+            "advisory_review_triggers",
+            "formal_thresholds",
+            "manifest_sha256",
+            "phase",
+            "prerequisites",
+            "record_count",
+            "schema",
+            "scope",
+            "selector",
+            "shards",
+        },
+        f"{location}.phase_plan_file",
+    )
+    shards = plan["shards"]
+    if (
+        plan["schema"] != "anysolver.e4-pl-s3-v2-flat-funnel-plan-v1"
+        or plan["phase"] != "4A"
+        or plan["scope"] != "full"
+        or plan["selector"] != "e4-pl-s3-v2"
+        or plan["prerequisites"] != []
+        or plan["manifest_sha256"]
+        != RESOURCE_DEFERRED_CONNECTIVITY_MANIFEST_SHA256
+        or _nonnegative_integer(plan["record_count"], f"{location}.plan.record_count")
+        != 81
+        or not isinstance(shards, list)
+        or len(shards) != 3
+        or [
+            shard.get("assignment_id") if isinstance(shard, dict) else None
+            for shard in shards
+        ]
+        != list(EXPECTED_SHARDS)
+        or any(
+            not isinstance(shard.get("records"), list)
+            or len(shard["records"]) != 27
+            for shard in shards
+        )
+    ):
+        raise CoordinatorError("resource-deferred phase-plan identity differs")
+
+    manifest = _exact(
+        _canonical_external_json(
+            bound["manifest"][1], "resource-deferred producer manifest"
+        ),
+        {"lane", "output_root", "schema", "wave_id", "workers"},
+        f"{location}.manifest_file",
+    )
+    wave_root = (RESOURCE_DEFERRED_INCIDENT_ROOT / "producer-wave").resolve()
+    workers = manifest["workers"]
+    if (
+        manifest["schema"] != "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1"
+        or manifest["wave_id"] != "S3_V2_FLAT_FUNNEL_4A_FULL"
+        or manifest["lane"] != "flat-proof"
+        or manifest["output_root"]
+        != str(RESOURCE_DEFERRED_INCIDENT_ROOT / "producer-wave")
+        or not isinstance(workers, list)
+        or len(workers) != 3
+        or [worker.get("assignment_id") for worker in workers]
+        != list(EXPECTED_SHARDS)
+    ):
+        raise CoordinatorError("resource-deferred producer manifest identity differs")
+    for worker in workers:
+        if (
+            worker.get("plan_path")
+            != str(
+                RESOURCE_DEFERRED_INCIDENT_ROOT
+                / RESOURCE_DEFERRED_ARTIFACTS["phase_plan"][0]
+            )
+            or worker.get("plan_sha256")
+            != RESOURCE_DEFERRED_ARTIFACTS["phase_plan"][2]
+        ):
+            raise CoordinatorError("resource-deferred worker plan binding differs")
+        assignment_id = worker["assignment_id"]
+        assignment_root = wave_root / assignment_id
+        for key, filename in (
+            ("progress_path", "progress.jsonl"),
+            ("scientific_path", "scientific.json"),
+            ("stderr_path", "stderr.log"),
+            ("stdout_path", "stdout.log"),
+        ):
+            if worker.get(key) != str(assignment_root / filename):
+                raise CoordinatorError("resource-deferred worker output path differs")
+        input_hashes = worker.get("input_hashes")
+        if not isinstance(input_hashes, list):
+            raise CoordinatorError("resource-deferred worker input graph is malformed")
+        inputs = {
+            item.get("path"): item.get("sha256")
+            for item in input_hashes
+            if isinstance(item, dict) and set(item) == {"path", "sha256"}
+        }
+        if (
+            len(inputs) != len(input_hashes)
+            or inputs.get(str(AUTHORITY_PATH))
+            != RESOURCE_DEFERRED_AUTHORITY_SHA256
+            or inputs.get(str(REFERENCE_CASES / "e4_pl_s3_v2_stage4a_contract.json"))
+            != RESOURCE_DEFERRED_CONTRACT_SHA256
+            or inputs.get(
+                str(REFERENCE_CASES / "e4_pl_s3_v2_stage4a_execution_authorization.json")
+            )
+            != RESOURCE_DEFERRED_AUTHORIZATION_SHA256
+            or inputs.get(
+                str(
+                    RESOURCE_DEFERRED_INCIDENT_ROOT
+                    / RESOURCE_DEFERRED_ARTIFACTS["candidate_binding"][0]
+                )
+            )
+            != RESOURCE_DEFERRED_ARTIFACTS["candidate_binding"][2]
+        ):
+            raise CoordinatorError("resource-deferred worker frozen-input join differs")
+    bounded = _load_module(
+        "_s3_v2_resource_deferred_incident_bounded", BOUNDED_PATH
+    )
+    validated_wave_id, validated_lane, validated_root, validated_workers = (
+        bounded.validate_manifest(manifest)
+    )
+    if (
+        validated_wave_id != manifest["wave_id"]
+        or validated_lane != manifest["lane"]
+        or validated_root != wave_root
+        or [worker.assignment_id for worker in validated_workers]
+        != list(EXPECTED_SHARDS)
+    ):
+        raise CoordinatorError("resource-deferred bounded manifest validation differs")
+
+    producer_result = _exact(
+        _canonical_external_json(producer_raw, "resource-deferred producer result"),
+        {"lane", "manifest_sha256", "schema", "terminal", "wave_id", "workers"},
+        f"{location}.producer_result_file",
+    )
+    if (
+        producer_file != producer_path.resolve()
+        or producer_result
+        != {
+            "lane": "flat-proof",
+            "manifest_sha256": RESOURCE_DEFERRED_ARTIFACTS["manifest"][2],
+            "schema": PRODUCER_RESULT_SCHEMA,
+            "terminal": "RESOURCE_DEFERRED",
+            "wave_id": "S3_V2_FLAT_FUNNEL_4A_FULL",
+            "workers": [],
+        }
+    ):
+        raise CoordinatorError("resource-deferred producer result differs")
+
+    aggregate = _exact(
+        _canonical_external_json(
+            bound["aggregate"][1], "resource-deferred aggregate"
+        ),
+        {
+            "advisory_review_required",
+            "authorization_sha256",
+            "checker_replica_bindings",
+            "classifying_record_count",
+            "contract_sha256",
+            "formal_failures",
+            "producer_wave_result_sha256",
+            "production_restriction",
+            "schema",
+            "sequence_results",
+            "successor_expansion_authorized",
+            "terminal",
+            "v1_diagnostic_record_count",
+        },
+        f"{location}.aggregate_file",
+    )
+    if (
+        aggregate["schema"] != AGGREGATE_SCHEMA
+        or aggregate["terminal"] != BLOCKED
+        or aggregate["formal_failures"] != ["PRODUCER_WAVE_NOT_COMPLETED"]
+        or aggregate["authorization_sha256"]
+        != RESOURCE_DEFERRED_AUTHORIZATION_SHA256
+        or aggregate["contract_sha256"] != RESOURCE_DEFERRED_CONTRACT_SHA256
+        or aggregate["producer_wave_result_sha256"] != producer_sha256
+        or aggregate["checker_replica_bindings"] != []
+        or aggregate["sequence_results"] != []
+        or aggregate["production_restriction"] != PRODUCTION_RESTRICTION
+        or aggregate["advisory_review_required"] is not False
+        or aggregate["successor_expansion_authorized"] is not False
+        or _nonnegative_integer(
+            aggregate["classifying_record_count"],
+            f"{location}.aggregate.classifying_record_count",
+        )
+        != 0
+        or _nonnegative_integer(
+            aggregate["v1_diagnostic_record_count"],
+            f"{location}.aggregate.v1_diagnostic_record_count",
+        )
+        != 0
+    ):
+        raise CoordinatorError("resource-deferred aggregate disposition differs")
+
+    authorization_binding = _exact(
+        incident["authorization"],
+        {"byte_count", "commit", "parent", "path", "sha256", "subject", "tree"},
+        f"{location}.authorization",
+    )
+    contract_binding = _exact(
+        incident["contract"],
+        {"byte_count", "commit", "parent", "path", "sha256", "subject", "tree"},
+        f"{location}.contract",
+    )
+    expected_authorization_binding = {
+        "byte_count": RESOURCE_DEFERRED_AUTHORIZATION_BYTE_COUNT,
+        "commit": RESOURCE_DEFERRED_AUTHORIZATION_COMMIT,
+        "parent": RESOURCE_DEFERRED_AUTHORIZATION_PARENT,
+        "path": PREDECESSOR_AUTHORIZATION_PATH,
+        "sha256": RESOURCE_DEFERRED_AUTHORIZATION_SHA256,
+        "subject": RESOURCE_DEFERRED_AUTHORIZATION_SUBJECT,
+        "tree": RESOURCE_DEFERRED_AUTHORIZATION_TREE,
+    }
+    expected_contract_binding = {
+        "byte_count": RESOURCE_DEFERRED_CONTRACT_BYTE_COUNT,
+        "commit": RESOURCE_DEFERRED_CONTRACT_COMMIT,
+        "parent": RESOURCE_DEFERRED_CONTRACT_PARENT,
+        "path": PREDECESSOR_CONTRACT_PATH,
+        "sha256": RESOURCE_DEFERRED_CONTRACT_SHA256,
+        "subject": RESOURCE_DEFERRED_CONTRACT_SUBJECT,
+        "tree": RESOURCE_DEFERRED_CONTRACT_TREE,
+    }
+    if authorization_binding != expected_authorization_binding:
+        raise CoordinatorError("resource-deferred authorization binding differs")
+    if contract_binding != expected_contract_binding:
+        raise CoordinatorError("resource-deferred contract binding differs")
+    _validate_git_object_authority()
+    for binding in (authorization_binding, contract_binding):
+        commit = binding["commit"]
+        if (
+            _git("rev-parse", commit) != commit
+            or _git("rev-parse", f"{commit}^{{tree}}") != binding["tree"]
+            or _git("show", "-s", "--format=%P", commit) != binding["parent"]
+            or _git("show", "-s", "--format=%s", commit) != binding["subject"]
+        ):
+            raise CoordinatorError("resource-deferred Git topology differs")
+    authorization_raw = _git(
+        "show",
+        f"{RESOURCE_DEFERRED_AUTHORIZATION_COMMIT}:{PREDECESSOR_AUTHORIZATION_PATH}",
+        binary=True,
+    )
+    contract_raw = _git(
+        "show",
+        f"{RESOURCE_DEFERRED_CONTRACT_COMMIT}:{PREDECESSOR_CONTRACT_PATH}",
+        binary=True,
+    )
+    contract_at_authorization = _git(
+        "show",
+        f"{RESOURCE_DEFERRED_AUTHORIZATION_COMMIT}:{PREDECESSOR_CONTRACT_PATH}",
+        binary=True,
+    )
+    if (
+        len(authorization_raw) != RESOURCE_DEFERRED_AUTHORIZATION_BYTE_COUNT
+        or sha256(authorization_raw) != RESOURCE_DEFERRED_AUTHORIZATION_SHA256
+        or len(contract_raw) != RESOURCE_DEFERRED_CONTRACT_BYTE_COUNT
+        or sha256(contract_raw) != RESOURCE_DEFERRED_CONTRACT_SHA256
+        or contract_at_authorization != contract_raw
+    ):
+        raise CoordinatorError("resource-deferred Git evidence blob differs")
+
+    authorization = _exact(
+        _canonical_external_json(
+            authorization_raw, "resource-deferred execution authorization"
+        ),
+        {
+            "contract_path",
+            "contract_sha256",
+            "execution_paths",
+            "formal_execution_authorized",
+            "implementation_reviews",
+            "ledger_approval",
+            "resource_lock_required",
+            "resource_request",
+            "schema",
+            "user_approval",
+        },
+        f"{location}.authorization_blob",
+    )
+    execution_paths = _exact(
+        authorization["execution_paths"],
+        {"aggregate_path", "approval_snapshot_path", "output_root", "python_executable"},
+        f"{location}.authorization_blob.execution_paths",
+    )
+    resource_request = _exact(
+        authorization["resource_request"],
+        {
+            "command_sha256",
+            "repository",
+            "request_id",
+            "request_path",
+            "request_sha256",
+            "task",
+        },
+        f"{location}.authorization_blob.resource_request",
+    )
+    ledger_approval = _exact(
+        authorization["ledger_approval"],
+        {"approved_row_sha256", "ledger_path", "snapshot_path", "snapshot_sha256"},
+        f"{location}.authorization_blob.ledger_approval",
+    )
+    user_approval = _exact(
+        authorization["user_approval"],
+        {"recorded", "source"},
+        f"{location}.authorization_blob.user_approval",
+    )
+    expected_reviews = [
+        {
+            "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_process_implementation_review.json",
+            "role": "PROCESS_AND_AUTHORITY",
+            "sha256": "7B7CF54AD998E31B11B2F4286C3BE638126817D28D7290F90B15BA1AAB0109E3",
+            "verdict": "ACCEPT_STAGE4A_PROCESS_IMPLEMENTATION_NO_P0_P1",
+        },
+        {
+            "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_scientific_implementation_review.json",
+            "role": "SCIENTIFIC_AND_MECHANICS",
+            "sha256": "22EA28DAC7719F8748389204860AA4B90E936EE96AE564F414801D539D84A797",
+            "verdict": "ACCEPT_STAGE4A_SCIENTIFIC_IMPLEMENTATION_NO_P0_P1",
+        },
+    ]
+    if (
+        authorization["schema"] != AUTHORIZATION_SCHEMA
+        or authorization["contract_path"] != PREDECESSOR_CONTRACT_PATH
+        or authorization["contract_sha256"] != RESOURCE_DEFERRED_CONTRACT_SHA256
+        or authorization["formal_execution_authorized"] is not True
+        or authorization["resource_lock_required"] is not True
+        or authorization["implementation_reviews"] != expected_reviews
+        or execution_paths["output_root"] != str(RESOURCE_DEFERRED_INCIDENT_ROOT)
+        or execution_paths["aggregate_path"]
+        != str(
+            RESOURCE_DEFERRED_INCIDENT_ROOT
+            / RESOURCE_DEFERRED_ARTIFACTS["aggregate"][0]
+        )
+        or execution_paths["approval_snapshot_path"]
+        != str(
+            RESOURCE_DEFERRED_INCIDENT_ROOT
+            / RESOURCE_DEFERRED_ARTIFACTS["approval_snapshot"][0]
+        )
+        or resource_request
+        != {
+            "command_sha256": RESOURCE_DEFERRED_COMMAND_SHA256,
+            "repository": RESOURCE_DEFERRED_REPOSITORY,
+            "request_id": RESOURCE_DEFERRED_REQUEST_ID,
+            "request_path": str(request_path),
+            "request_sha256": RESOURCE_DEFERRED_REQUEST_SHA256,
+            "task": RESOURCE_DEFERRED_TASK,
+        }
+        or ledger_approval
+        != {
+            "approved_row_sha256": RESOURCE_DEFERRED_LEDGER_ROW_SHA256["APPROVED"],
+            "ledger_path": str(RESOURCE_LEDGER_PATH),
+            "snapshot_path": str(
+                RESOURCE_DEFERRED_INCIDENT_ROOT
+                / RESOURCE_DEFERRED_ARTIFACTS["approval_snapshot"][0]
+            ),
+            "snapshot_sha256": RESOURCE_DEFERRED_ARTIFACTS["approval_snapshot"][2],
+        }
+        or user_approval["recorded"] is not True
+        or not isinstance(user_approval["source"], str)
+        or RESOURCE_DEFERRED_REQUEST_ID not in user_approval["source"]
+    ):
+        raise CoordinatorError("resource-deferred authorization joins differ")
+
+    contract = _canonical_external_json(contract_raw, "resource-deferred contract")
+    contract_candidate = contract.get("candidate")
+    if (
+        contract.get("schema") != "anysolver.e4-pl-s3-v2-stage4a-contract-v3"
+        or not isinstance(contract_candidate, dict)
+        or contract_candidate.get("commit") != RESOURCE_DEFERRED_CANDIDATE_COMMIT
+        or contract_candidate.get("tree") != RESOURCE_DEFERRED_CANDIDATE_TREE
+        or contract.get("execution", {}).get("maximum_workers") != 3
+        or contract.get("execution", {}).get("maximum_memory_gib_per_process_tree")
+        != 24
+    ):
+        raise CoordinatorError("resource-deferred contract content differs")
+    frozen_files = contract.get("frozen_files")
+    if not isinstance(frozen_files, list):
+        raise CoordinatorError("resource-deferred frozen graph is malformed")
+    frozen_by_path = {
+        item.get("path"): item.get("git_blob_sha256")
+        for item in frozen_files
+        if isinstance(item, dict)
+    }
+    coordinator_path = "docs/reference_cases/e4_pl_s3_v2_stage4a_coordinator.py"
+    bounded_path = "docs/reference_cases/e4_pl_s3_v2_bounded_process.py"
+    if (
+        frozen_by_path.get(coordinator_path) != RESOURCE_DEFERRED_COORDINATOR_SHA256
+        or frozen_by_path.get(bounded_path) != RESOURCE_DEFERRED_BOUNDED_SHA256
+        or sha256(
+            _git(
+                "show",
+                f"{RESOURCE_DEFERRED_AUTHORIZATION_COMMIT}:{coordinator_path}",
+                binary=True,
+            )
+        )
+        != RESOURCE_DEFERRED_COORDINATOR_SHA256
+        or sha256(
+            _git(
+                "show",
+                f"{RESOURCE_DEFERRED_AUTHORIZATION_COMMIT}:{bounded_path}",
+                binary=True,
+            )
+        )
+        != RESOURCE_DEFERRED_BOUNDED_SHA256
+    ):
+        raise CoordinatorError("resource-deferred process authority differs")
+
+    archive_ref = _exact(
+        incident["archive_ref"], {"commit", "ref"}, f"{location}.archive_ref"
+    )
+    if archive_ref != {
+        "commit": RESOURCE_DEFERRED_ARCHIVE_COMMIT,
+        "ref": RESOURCE_DEFERRED_ARCHIVE_REF,
+    } or _git("rev-parse", RESOURCE_DEFERRED_ARCHIVE_REF) != RESOURCE_DEFERRED_ARCHIVE_COMMIT:
+        raise CoordinatorError("resource-deferred archive ref differs")
+
+    try:
+        transcript = bound["transcript"][1].decode("utf-8-sig")
+    except UnicodeError as exc:
+        raise CoordinatorError("resource-deferred transcript is not UTF-8") from exc
+    transcript_lines = [line.strip() for line in transcript.splitlines()]
+    if (
+        transcript_lines.count("REGISTERED_COMMAND_EXIT=2") != 1
+        or "REGISTERED_COMMAND_EXIT=0" in transcript_lines
+        or f"FORMAL_TERMINAL={PASS}" in transcript_lines
+        or f"FORMAL_TERMINAL={NO_GO}" in transcript_lines
+    ):
+        raise CoordinatorError("resource-deferred transcript disposition differs")
+
+    terminal_rows = incident["terminal_ledger_rows"]
+    if not isinstance(terminal_rows, list) or len(terminal_rows) != 2:
+        raise CoordinatorError("resource-deferred terminal ledger coverage differs")
+    terminal_lines: list[str] = []
+    for index, (raw_row, expected_status) in enumerate(
+        zip(terminal_rows, ("EXECUTION_STARTED", "COMPLETED_FAIL"))
+    ):
+        row = _exact(
+            raw_row,
+            {"line", "sha256", "status"},
+            f"{location}.terminal_ledger_rows[{index}]",
+        )
+        line = row["line"]
+        if (
+            row["status"] != expected_status
+            or not isinstance(line, str)
+            or "\r" in line
+            or "\n" in line
+            or _digest(row["sha256"], f"{location}.terminal_ledger_rows[{index}].sha256")
+            != RESOURCE_DEFERRED_LEDGER_ROW_SHA256[expected_status]
+            or sha256((line + "\n").encode("utf-8"))
+            != RESOURCE_DEFERRED_LEDGER_ROW_SHA256[expected_status]
+        ):
+            raise CoordinatorError("resource-deferred terminal ledger row differs")
+        fields = [field.strip() for field in line.split("|")]
+        if (
+            len(fields) < 5
+            or fields[2] != RESOURCE_DEFERRED_REQUEST_ID
+            or fields[3] != expected_status
+        ):
+            raise CoordinatorError("resource-deferred terminal ledger fields differ")
+        terminal_lines.append(line)
+    try:
+        live_ledger = RESOURCE_LEDGER_PATH.read_bytes().decode("utf-8-sig")
+    except (OSError, UnicodeError) as exc:
+        raise CoordinatorError(
+            f"cannot validate resource-deferred live ledger: {exc}"
+        ) from exc
+    matching_rows = [
+        line
+        for line in live_ledger.splitlines()
+        if f"| {RESOURCE_DEFERRED_REQUEST_ID} |" in line
+    ]
+    if matching_rows != [approved_line, *terminal_lines]:
+        raise CoordinatorError("resource-deferred live ledger history differs")
+
+
 def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
     value, raw = strict_json_load(path)
     if raw != canonical_bytes(value):
         raise CoordinatorError("Stage 4A contract is not canonical JSON")
     contract = _exact(
         value,
-        {
-            "adjudication",
-            "authority",
-            "candidate",
-            "coverage",
-            "dependencies",
-            "execution",
-            "frozen_files",
-            "git_authority",
-            "predecessor_process_incident",
-            "production_boundary",
-            "protocol",
-            "schema",
-            "stage",
-        },
+        CONTRACT_KEYS,
         "$contract",
     )
     if contract["schema"] != CONTRACT_SCHEMA or contract["stage"] != "STAGE_4A":
         raise CoordinatorError("Stage 4A contract identity differs")
     _validate_predecessor_process_incident(
         contract["predecessor_process_incident"]
+    )
+    _validate_predecessor_resource_deferred_incident(
+        contract["predecessor_resource_deferred_incident"]
     )
     git_authority = _exact(
         contract["git_authority"],
@@ -1679,17 +2874,7 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
         "v1_diagnostic_records": 72,
     }:
         raise CoordinatorError("Stage 4A coverage contract differs")
-    if contract["execution"] != {
-        "checker_replica_wall_seconds": 300,
-        "checker_replicas_per_shard": 2,
-        "inactivity_seconds": 300,
-        "maximum_memory_gib_per_process_tree": 24,
-        "maximum_workers": 3,
-        "no_automatic_retry": True,
-        "numerical_library_threads_per_worker": 1,
-        "producer_wall_seconds": 900,
-        "wave_wall_seconds": 1800,
-    }:
+    if contract["execution"] != _execution_policy():
         raise CoordinatorError("Stage 4A bounded execution contract differs")
     if contract["production_boundary"] != {
         "default_s3_formulation": "legacy-s3",
@@ -2467,6 +3652,83 @@ def _run_checker_process(
     }
 
 
+def _checker_replica_required_memory_bytes() -> int:
+    """Return the admission floor for one two-at-a-time checker replica."""
+
+    return MAXIMUM_CONCURRENT_WORKERS * MEMORY_LIMIT_BYTES + OS_HEADROOM_BYTES
+
+
+def _require_checker_phase_admission(bounded: Any, deadline: float) -> None:
+    """Fail closed before any checker path or process is launched."""
+
+    available = bounded.available_physical_memory_bytes()
+    if isinstance(available, bool) or not isinstance(available, int) or available < 0:
+        raise CoordinatorError("checker phase available-memory value is invalid")
+    required = _checker_replica_required_memory_bytes()
+    if available < required:
+        raise CoordinatorError(
+            "checker phase resources are deferred: "
+            f"available={available} required={required}"
+        )
+    remaining = deadline - time.monotonic()
+    if remaining < CHECKER_PHASE_REQUIRED_SECONDS:
+        raise CoordinatorError(
+            "checker phase has insufficient coordinator-wall budget: "
+            f"remaining={remaining:.6f} required={CHECKER_PHASE_REQUIRED_SECONDS}"
+        )
+
+
+def _run_checker_phase(
+    *,
+    bounded: Any,
+    proofs: Mapping[str, Path],
+    plan: Path,
+    output_root: Path,
+    deadline: float,
+) -> list[list[dict[str, Any]]]:
+    """Run all six checkers as three frozen-order replica pairs."""
+
+    if set(proofs) != set(EXPECTED_SHARDS):
+        raise CoordinatorError("checker phase proof coverage differs")
+    _require_checker_phase_admission(bounded, deadline)
+    results: dict[int, list[dict[str, Any]]] = {1: [], 2: []}
+    first_error: Exception | None = None
+    with ThreadPoolExecutor(max_workers=MAXIMUM_CONCURRENT_WORKERS) as pool:
+        for assignment_id in EXPECTED_SHARDS:
+            proof = proofs[assignment_id]
+            pair: list[tuple[int, Any]] = []
+            for replica_index in (1, 2):
+                root = output_root / f"checker-replica-{replica_index}" / assignment_id
+                pair.append(
+                    (
+                        replica_index,
+                        pool.submit(
+                            _run_checker_process,
+                            assignment_id=assignment_id,
+                            proof=proof,
+                            plan=plan,
+                            output=root / "checker.json",
+                            stdout_path=root / "stdout.log",
+                            stderr_path=root / "stderr.log",
+                            deadline=deadline,
+                        ),
+                    )
+                )
+            for replica_index, task in pair:
+                try:
+                    result = task.result()
+                except Exception as exc:
+                    if first_error is None:
+                        first_error = exc
+                else:
+                    results[replica_index].append(result)
+    if first_error is not None:
+        raise CoordinatorError(
+            "checker phase failed after all six registered tasks reached terminal state"
+        ) from first_error
+    return [results[1], results[2]]
+
+
 def validate_producer_proofs(
     manifest: Mapping[str, Any],
     manifest_raw: bytes,
@@ -2804,7 +4066,7 @@ def run_stage4a(
         )
         _write_exclusive(aggregate_path, canonical_bytes(blocked))
         return blocked
-    deadline = started + WAVE_WALL_SECONDS
+    deadline = started + COORDINATOR_WALL_SECONDS
     replicas: list[list[dict[str, Any]]] = []
     try:
         manifest, raw_manifest = strict_json_load(paths["producer_manifest"])
@@ -2825,24 +4087,13 @@ def run_stage4a(
         }
         if set(proofs) != set(EXPECTED_SHARDS):
             raise CoordinatorError("producer manifest does not expose three exact proofs")
-        for replica_index in (1, 2):
-            tasks = []
-            with ThreadPoolExecutor(max_workers=3) as pool:
-                for assignment_id, proof in sorted(proofs.items()):
-                    root = output_root / f"checker-replica-{replica_index}" / assignment_id
-                    tasks.append(
-                        pool.submit(
-                            _run_checker_process,
-                            assignment_id=assignment_id,
-                            proof=proof,
-                            plan=paths["plan"],
-                            output=root / "checker.json",
-                            stdout_path=root / "stdout.log",
-                            stderr_path=root / "stderr.log",
-                            deadline=deadline,
-                        )
-                    )
-                replicas.append([task.result() for task in tasks])
+        replicas = _run_checker_phase(
+            bounded=bounded,
+            proofs=proofs,
+            plan=paths["plan"],
+            output_root=output_root,
+            deadline=deadline,
+        )
         _final_contract, final_contract_raw = validate_contract(contract_path)
         final_authorization, final_authorization_raw = validate_authorization(
             authorization_path,

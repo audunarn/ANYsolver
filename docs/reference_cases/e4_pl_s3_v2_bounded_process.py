@@ -38,6 +38,7 @@ REQUIRED_PROGRESS_PHASES = (
     "COMPLETION",
 )
 MAX_WORKERS = 3
+MAX_CONCURRENT_WORKERS = 2
 WAVE_WALL_SECONDS = 1_800
 MAX_WORKER_WALL_SECONDS = 1_500
 INACTIVITY_SECONDS = 300
@@ -229,6 +230,7 @@ class _RunningWorker:
     last_progress_sequence: int = -1
     status: str = "RUNNING"
     termination_proven: bool = False
+    slot_released: bool = False
 
 
 def validate_manifest(value: Any) -> tuple[str, str, Path, tuple[WorkerSpec, ...]]:
@@ -941,6 +943,54 @@ def _preflight_worker_specs(worker_specs: Sequence[WorkerSpec]) -> None:
         _verify_worker_bindings(spec)
 
 
+def _required_wave_memory_bytes(registered_worker_count: int) -> int:
+    """Return the admission floor for the workers that can run concurrently."""
+
+    if (
+        isinstance(registered_worker_count, bool)
+        or not isinstance(registered_worker_count, int)
+        or registered_worker_count <= 0
+        or registered_worker_count > MAX_WORKERS
+    ):
+        raise BoundedProcessError("registered worker count is outside wave policy")
+    concurrent = min(registered_worker_count, MAX_CONCURRENT_WORKERS)
+    return concurrent * JOB_MEMORY_LIMIT_BYTES + OS_HEADROOM_BYTES
+
+
+def _terminate_and_release_slot(running: _RunningWorker) -> bool:
+    """Release a worker slot only when whole-tree termination is proven."""
+
+    try:
+        proven = bool(running.job.terminate())
+    except BaseException:
+        proven = False
+    running.termination_proven = proven
+    running.slot_released = proven
+    return proven
+
+
+def _record_root_exit_if_tree_drained(
+    running: _RunningWorker, active_processes: int
+) -> bool:
+    """Record root completion only after the Job reports no live descendants."""
+
+    if active_processes != 0:
+        return False
+    running.status = "COMPLETED" if running.process.returncode == 0 else "FAILED"
+    running.termination_proven = True
+    running.slot_released = True
+    return True
+
+
+def _queued_launch_is_blocked(active: Sequence[_RunningWorker]) -> bool:
+    """A failed termination proof forbids every later queued launch."""
+
+    return any(
+        running.status != "RUNNING" and not running.slot_released
+        for running in active
+    )
+
+
 def run_wave(manifest_path: Path, result_path: Path) -> dict[str, Any]:
     """Execute exactly one registered bounded wave and publish its result."""
 
@@ -972,7 +1022,7 @@ def run_wave(manifest_path: Path, result_path: Path) -> dict[str, Any]:
         raise BoundedProcessError("canonical wave result already exists")
     _require_formal_process_control()
     _preflight_worker_specs(worker_specs)
-    required_memory = len(worker_specs) * JOB_MEMORY_LIMIT_BYTES + OS_HEADROOM_BYTES
+    required_memory = _required_wave_memory_bytes(len(worker_specs))
     available = available_physical_memory_bytes()
     if available < required_memory:
         made = {
@@ -1019,53 +1069,77 @@ def run_wave(manifest_path: Path, result_path: Path) -> dict[str, Any]:
     try:
         _preflight_worker_specs(worker_specs)
 
-        for spec in worker_specs:
-            stdout_stream = _exclusive_stream(spec.stdout_path)
-            try:
-                stderr_stream = _exclusive_stream(spec.stderr_path)
-            except BaseException:
-                stdout_stream.close()
-                raise
-            job = _ProcessJob(JOB_MEMORY_LIMIT_BYTES)
-            started = time.monotonic()
-            try:
-                process = job.launch(
-                    spec.command,
-                    cwd=spec.cwd,
-                    env=_environment(),
-                    stdout=stdout_stream,
-                    stderr=stderr_stream,
-                )
-            except BaseException:
-                stdout_stream.close()
-                stderr_stream.close()
-                job.close()
-                raise
-            active.append(
-                _RunningWorker(
-                    spec=spec,
-                    process=process,
-                    job=job,
-                    stdout_stream=stdout_stream,
-                    stderr_stream=stderr_stream,
-                    started=started,
-                    last_activity=started,
-                )
-            )
+        next_worker_index = 0
 
-        while any(item.status == "RUNNING" for item in active):
+        def launch_available_workers() -> None:
+            nonlocal next_worker_index
+            if _queued_launch_is_blocked(active):
+                return
+            occupied_slots = sum(not item.slot_released for item in active)
+            while (
+                next_worker_index < len(worker_specs)
+                and occupied_slots < MAX_CONCURRENT_WORKERS
+            ):
+                spec = worker_specs[next_worker_index]
+                # Recheck a queued assignment immediately before launch.  Earlier
+                # assignments have already created registered outputs, so this
+                # check is deliberately scoped to the next assignment only.
+                _preflight_worker_specs((spec,))
+                stdout_stream = _exclusive_stream(spec.stdout_path)
+                try:
+                    stderr_stream = _exclusive_stream(spec.stderr_path)
+                except BaseException:
+                    stdout_stream.close()
+                    raise
+                job = _ProcessJob(JOB_MEMORY_LIMIT_BYTES)
+                started = time.monotonic()
+                try:
+                    process = job.launch(
+                        spec.command,
+                        cwd=spec.cwd,
+                        env=_environment(),
+                        stdout=stdout_stream,
+                        stderr=stderr_stream,
+                    )
+                except BaseException:
+                    stdout_stream.close()
+                    stderr_stream.close()
+                    job.close()
+                    raise
+                active.append(
+                    _RunningWorker(
+                        spec=spec,
+                        process=process,
+                        job=job,
+                        stdout_stream=stdout_stream,
+                        stderr_stream=stderr_stream,
+                        started=started,
+                        last_activity=started,
+                    )
+                )
+                next_worker_index += 1
+                occupied_slots += 1
+
+        launch_available_workers()
+        while (
+            (
+                next_worker_index < len(worker_specs)
+                and not _queued_launch_is_blocked(active)
+            )
+            or any(item.status == "RUNNING" for item in active)
+        ):
             now = time.monotonic()
             for running in active:
                 if running.status != "RUNNING":
                     continue
                 try:
-                    cpu, _, _ = running.job.accounting()
+                    cpu, active_processes, _ = running.job.accounting()
                     sequence = _progress_sequence(
                         running.spec.progress_path, running.spec.assignment_id
                     )
                 except BaseException:
                     running.status = "MALFORMED_PROGRESS_OR_ACCOUNTING"
-                    running.termination_proven = running.job.terminate()
+                    _terminate_and_release_slot(running)
                     continue
                 if cpu > running.last_cpu_100ns or sequence > running.last_progress_sequence:
                     running.last_activity = now
@@ -1074,21 +1148,19 @@ def run_wave(manifest_path: Path, result_path: Path) -> dict[str, Any]:
                         running.last_progress_sequence, sequence
                     )
                 if running.process.poll() is not None:
-                    running.status = (
-                        "COMPLETED" if running.process.returncode == 0 else "FAILED"
-                    )
-                    running.termination_proven = True
-                    continue
+                    if _record_root_exit_if_tree_drained(running, active_processes):
+                        continue
                 deadline = min(
                     running.started + running.spec.wall_seconds,
                     worker_deadline_limit,
                 )
                 if now >= deadline:
                     running.status = "TIMEOUT"
-                    running.termination_proven = running.job.terminate()
+                    _terminate_and_release_slot(running)
                 elif now - running.last_activity >= INACTIVITY_SECONDS:
                     running.status = "INACTIVE"
-                    running.termination_proven = running.job.terminate()
+                    _terminate_and_release_slot(running)
+            launch_available_workers()
             time.sleep(POLL_SECONDS)
 
         records: list[dict[str, Any]] = []
@@ -1184,11 +1256,8 @@ def run_wave(manifest_path: Path, result_path: Path) -> dict[str, Any]:
         return made
     finally:
         for running in active:
-            if running.process.poll() is None:
-                try:
-                    running.job.terminate()
-                except BaseException:
-                    pass
+            if not running.slot_released:
+                _terminate_and_release_slot(running)
             running.stdout_stream.close()
             running.stderr_stream.close()
             running.job.close()

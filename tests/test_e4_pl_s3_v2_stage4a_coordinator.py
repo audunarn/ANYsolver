@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import sys
 import tarfile
+import threading
+import time
 
 import pytest
 
@@ -447,6 +449,525 @@ def _synthetic_predecessor_incident(module, tmp_path, monkeypatch):
     }
 
 
+def _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch):
+    incident_root = (tmp_path / "resource-deferred-cycle").resolve()
+    candidate_tree_root = incident_root / "candidate-source-tree"
+    candidate_directory = candidate_tree_root / "docs"
+    candidate_directory.mkdir(parents=True)
+    (candidate_directory / "one.txt").write_bytes(b"one\n")
+    wave_root = incident_root / "producer-wave"
+    wave_root.mkdir()
+
+    resource_root = (tmp_path / "resource-manager").resolve()
+    request_root = resource_root / "requests"
+    attempt_root = resource_root / "attempts"
+    request_root.mkdir(parents=True)
+    attempt_root.mkdir()
+    repository = (tmp_path / "frozen-repository").resolve()
+    repository.mkdir()
+
+    request_id = "a" * 32
+    candidate_commit, candidate_tree = "b" * 40, "c" * 40
+    contract_commit, contract_tree, contract_parent = "d" * 40, "e" * 40, "f" * 40
+    authorization_commit = "1" * 40
+    authorization_tree, authorization_parent = "2" * 40, "3" * 40
+    contract_subject = "synthetic resource-deferred contract"
+    authorization_subject = "synthetic resource-deferred authorization"
+    requested_at = "2026-08-31T09:58:56.9567735+02:00"
+    task = "synthetic bounded Stage 4A"
+    connectivity_sha = "4" * 64
+    coordinator_raw = b"synthetic corrected coordinator"
+    bounded_raw = b"synthetic three-worker bounded runner"
+
+    request = {
+        "command": "registered resource command",
+        "estimate_minutes": 30,
+        "repository": str(repository),
+        "request_id": request_id,
+        "requested_at": requested_at,
+        "status": "PENDING",
+        "task": task,
+    }
+    request_raw = module.canonical_bytes(request)
+    request_path = request_root / f"{request_id}.json"
+    request_path.write_bytes(request_raw)
+
+    approved_line = f"| t0 | {request_id} | APPROVED | synthetic |"
+    started_line = f"| t1 | {request_id} | EXECUTION_STARTED | synthetic |"
+    failed_line = f"| t2 | {request_id} | COMPLETED_FAIL | synthetic |"
+    row_hashes = {
+        status: module.sha256((line + "\n").encode())
+        for status, line in (
+            ("APPROVED", approved_line),
+            ("EXECUTION_STARTED", started_line),
+            ("COMPLETED_FAIL", failed_line),
+        )
+    }
+    ledger_snapshot_raw = ("header\n" + approved_line + "\n").encode()
+    live_ledger = resource_root / "ledger.md"
+    live_ledger.write_text(
+        "header\n" + "\n".join((approved_line, started_line, failed_line)) + "\n",
+        encoding="utf-8",
+    )
+
+    archive_path = incident_root / "candidate-source.tar"
+    candidate_payload = b"one\n"
+    with tarfile.open(archive_path, "w") as bundle:
+        directory = tarfile.TarInfo("docs/")
+        directory.type = tarfile.DIRTYPE
+        directory.mode = 0o755
+        directory.mtime = 0
+        bundle.addfile(directory)
+        member = tarfile.TarInfo("docs/one.txt")
+        member.mode = 0o644
+        member.mtime = 0
+        member.size = len(candidate_payload)
+        bundle.addfile(member, io.BytesIO(candidate_payload))
+    archive_raw = archive_path.read_bytes()
+    candidate_binding = {
+        "artifact_path": str(archive_path),
+        "artifact_sha256": module.sha256(archive_raw),
+        "candidate_id": "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1",
+        "commit": candidate_commit,
+        "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V2",
+        "schema": "anysolver.e4-pl-s3-v2-flat-candidate-binding-v1",
+        "selector": "e4-pl-s3-v2",
+        "tree": candidate_tree,
+    }
+    candidate_binding_raw = module.canonical_bytes(candidate_binding)
+
+    plan = {
+        "advisory_review_triggers": {},
+        "formal_thresholds": {},
+        "manifest_sha256": connectivity_sha,
+        "phase": "4A",
+        "prerequisites": [],
+        "record_count": 81,
+        "schema": "anysolver.e4-pl-s3-v2-flat-funnel-plan-v1",
+        "scope": "full",
+        "selector": "e4-pl-s3-v2",
+        "shards": [
+            {"assignment_id": assignment_id, "records": [{} for _ in range(27)]}
+            for assignment_id in module.EXPECTED_SHARDS
+        ],
+    }
+    plan_raw = module.canonical_bytes(plan)
+
+    contract = {
+        "candidate": {"commit": candidate_commit, "tree": candidate_tree},
+        "execution": {
+            "maximum_memory_gib_per_process_tree": 24,
+            "maximum_workers": 3,
+        },
+        "frozen_files": [
+            {
+                "git_blob_sha256": module.sha256(bounded_raw),
+                "path": "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
+                "role": "bounded",
+            },
+            {
+                "git_blob_sha256": module.sha256(coordinator_raw),
+                "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_coordinator.py",
+                "role": "coordinator",
+            },
+        ],
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-contract-v3",
+    }
+    contract_raw = module.canonical_bytes(contract)
+    contract_sha = module.sha256(contract_raw)
+
+    attempt = {
+        "contract_sha256": contract_sha,
+        "request_id": request_id,
+        "schema": "anysolver.resource-attempt-claim-v1",
+    }
+    attempt_raw = module.canonical_bytes(attempt)
+    attempt_path = attempt_root / f"{request_id}.json"
+    attempt_path.write_bytes(attempt_raw)
+
+    approval_snapshot = {
+        "approved_row": {"line": approved_line, "sha256": row_hashes["APPROVED"]},
+        "candidate": {"commit": candidate_commit, "tree": candidate_tree},
+        "ledger": {
+            "byte_count": len(ledger_snapshot_raw),
+            "path": str(live_ledger),
+            "sha256": module.sha256(ledger_snapshot_raw),
+            "snapshot_path": str(incident_root / "resource-ledger-pre-run.md"),
+        },
+        "request": {
+            "byte_count": len(request_raw),
+            "path": str(request_path),
+            "request_id": request_id,
+            "sha256": module.sha256(request_raw),
+        },
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2",
+    }
+    approval_raw = module.canonical_bytes(approval_snapshot)
+    authorization = {
+        "contract_path": module.PREDECESSOR_CONTRACT_PATH,
+        "contract_sha256": contract_sha,
+        "execution_paths": {
+            "aggregate_path": str(incident_root / "stage4a-aggregate.json"),
+            "approval_snapshot_path": str(incident_root / "approval-snapshot.json"),
+            "output_root": str(incident_root),
+            "python_executable": sys.executable,
+        },
+        "formal_execution_authorized": True,
+        "implementation_reviews": [
+            {
+                "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_process_implementation_review.json",
+                "role": "PROCESS_AND_AUTHORITY",
+                "sha256": "7B7CF54AD998E31B11B2F4286C3BE638126817D28D7290F90B15BA1AAB0109E3",
+                "verdict": "ACCEPT_STAGE4A_PROCESS_IMPLEMENTATION_NO_P0_P1",
+            },
+            {
+                "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_scientific_implementation_review.json",
+                "role": "SCIENTIFIC_AND_MECHANICS",
+                "sha256": "22EA28DAC7719F8748389204860AA4B90E936EE96AE564F414801D539D84A797",
+                "verdict": "ACCEPT_STAGE4A_SCIENTIFIC_IMPLEMENTATION_NO_P0_P1",
+            },
+        ],
+        "ledger_approval": {
+            "approved_row_sha256": row_hashes["APPROVED"],
+            "ledger_path": str(live_ledger),
+            "snapshot_path": str(incident_root / "approval-snapshot.json"),
+            "snapshot_sha256": module.sha256(approval_raw),
+        },
+        "resource_lock_required": True,
+        "resource_request": {
+            "command_sha256": module.sha256(request["command"].encode()),
+            "repository": str(repository),
+            "request_id": request_id,
+            "request_path": str(request_path),
+            "request_sha256": module.sha256(request_raw),
+            "task": task,
+        },
+        "schema": module.AUTHORIZATION_SCHEMA,
+        "user_approval": {
+            "recorded": True,
+            "source": f"synthetic approval for {request_id}",
+        },
+    }
+    authorization_raw = module.canonical_bytes(authorization)
+
+    workers = []
+    for assignment_id in module.EXPECTED_SHARDS:
+        assignment_root = wave_root / assignment_id
+        workers.append(
+            {
+                "assignment_id": assignment_id,
+                "input_hashes": [
+                    {"path": str(module.AUTHORITY_PATH), "sha256": "5" * 64},
+                    {
+                        "path": str(
+                            module.REFERENCE_CASES
+                            / "e4_pl_s3_v2_stage4a_contract.json"
+                        ),
+                        "sha256": contract_sha,
+                    },
+                    {
+                        "path": str(
+                            module.REFERENCE_CASES
+                            / "e4_pl_s3_v2_stage4a_execution_authorization.json"
+                        ),
+                        "sha256": module.sha256(authorization_raw),
+                    },
+                    {
+                        "path": str(incident_root / "candidate-source-binding.json"),
+                        "sha256": module.sha256(candidate_binding_raw),
+                    },
+                ],
+                "plan_path": str(incident_root / "phase4a-plan.json"),
+                "plan_sha256": module.sha256(plan_raw),
+                "progress_path": str(assignment_root / "progress.jsonl"),
+                "scientific_path": str(assignment_root / "scientific.json"),
+                "stderr_path": str(assignment_root / "stderr.log"),
+                "stdout_path": str(assignment_root / "stdout.log"),
+            }
+        )
+    manifest = {
+        "lane": "flat-proof",
+        "output_root": str(wave_root),
+        "schema": "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1",
+        "wave_id": "S3_V2_FLAT_FUNNEL_4A_FULL",
+        "workers": workers,
+    }
+    manifest_raw = module.canonical_bytes(manifest)
+    producer_result = {
+        "lane": "flat-proof",
+        "manifest_sha256": module.sha256(manifest_raw),
+        "schema": module.PRODUCER_RESULT_SCHEMA,
+        "terminal": "RESOURCE_DEFERRED",
+        "wave_id": "S3_V2_FLAT_FUNNEL_4A_FULL",
+        "workers": [],
+    }
+    producer_raw = module.canonical_bytes(producer_result)
+    producer_path = wave_root / "producer-wave-result.json"
+    producer_path.write_bytes(producer_raw)
+    aggregate = {
+        "advisory_review_required": False,
+        "authorization_sha256": module.sha256(authorization_raw),
+        "checker_replica_bindings": [],
+        "classifying_record_count": 0,
+        "contract_sha256": contract_sha,
+        "formal_failures": ["PRODUCER_WAVE_NOT_COMPLETED"],
+        "producer_wave_result_sha256": module.sha256(producer_raw),
+        "production_restriction": module.PRODUCTION_RESTRICTION,
+        "schema": module.AGGREGATE_SCHEMA,
+        "sequence_results": [],
+        "successor_expansion_authorized": False,
+        "terminal": module.BLOCKED,
+        "v1_diagnostic_record_count": 0,
+    }
+    transcript_raw = b"REGISTERED_COMMAND_EXIT=2\n"
+    artifacts = {
+        "aggregate": ("stage4a-aggregate.json", module.canonical_bytes(aggregate)),
+        "approval_snapshot": ("approval-snapshot.json", approval_raw),
+        "candidate_archive": ("candidate-source.tar", archive_raw),
+        "candidate_binding": (
+            "candidate-source-binding.json",
+            candidate_binding_raw,
+        ),
+        "ledger_snapshot": ("resource-ledger-pre-run.md", ledger_snapshot_raw),
+        "manifest": ("producer-wave-manifest.json", manifest_raw),
+        "phase_plan": ("phase4a-plan.json", plan_raw),
+        "transcript": ("formal-transcript.txt", transcript_raw),
+    }
+    artifact_constants = {
+        name: (filename, len(raw), module.sha256(raw))
+        for name, (filename, raw) in artifacts.items()
+    }
+    for filename, raw in artifacts.values():
+        (incident_root / filename).write_bytes(raw)
+
+    incident = {
+        name: {
+            "byte_count": count,
+            "path": str(incident_root / filename),
+            "sha256": digest,
+        }
+        for name, (filename, count, digest) in artifact_constants.items()
+    }
+    incident.update(
+        {
+            "archive_ref": {
+                "commit": authorization_commit,
+                "ref": "refs/archive/synthetic-resource-deferred",
+            },
+            "attempt_claim": {
+                "byte_count": len(attempt_raw),
+                "path": str(attempt_path),
+                "sha256": module.sha256(attempt_raw),
+            },
+            "authorization": {
+                "byte_count": len(authorization_raw),
+                "commit": authorization_commit,
+                "parent": authorization_parent,
+                "path": module.PREDECESSOR_AUTHORIZATION_PATH,
+                "sha256": module.sha256(authorization_raw),
+                "subject": authorization_subject,
+                "tree": authorization_tree,
+            },
+            "candidate_tree": {
+                "directory_count": 1,
+                "file_count": 1,
+                "path": str(candidate_tree_root),
+            },
+            "contract": {
+                "byte_count": len(contract_raw),
+                "commit": contract_commit,
+                "parent": contract_parent,
+                "path": module.PREDECESSOR_CONTRACT_PATH,
+                "sha256": contract_sha,
+                "subject": contract_subject,
+                "tree": contract_tree,
+            },
+            "memory_admission": {
+                "concurrent_workers_assumed": 3,
+                "maximum_memory_gib_per_process_tree": 24,
+                "observed_at_event_available_bytes": None,
+                "observation_status": "NOT_RECORDED",
+                "os_headroom_gib": 16,
+                "registered_workers": 3,
+                "required_bytes": 88 * (1 << 30),
+            },
+            "output_root": str(incident_root),
+            "producer_result": {
+                "byte_count": len(producer_raw),
+                "path": str(producer_path),
+                "sha256": module.sha256(producer_raw),
+            },
+            "request": {
+                "byte_count": len(request_raw),
+                "path": str(request_path),
+                "sha256": module.sha256(request_raw),
+            },
+            "request_reuse_forbidden": True,
+            "root_cause": "RESOURCE_ADMISSION_DEFERRED_BEFORE_WORKER_LAUNCH",
+            "scientific_execution": {
+                "checker_processes_started": 0,
+                "classifying_records": 0,
+                "producer_processes_started": 0,
+                "producer_result_present": True,
+            },
+            "terminal_ledger_rows": [
+                {
+                    "line": started_line,
+                    "sha256": row_hashes["EXECUTION_STARTED"],
+                    "status": "EXECUTION_STARTED",
+                },
+                {
+                    "line": failed_line,
+                    "sha256": row_hashes["COMPLETED_FAIL"],
+                    "status": "COMPLETED_FAIL",
+                },
+            ],
+        }
+    )
+
+    patches = {
+        "RESOURCE_DEFERRED_INCIDENT_ROOT": incident_root,
+        "RESOURCE_DEFERRED_REPOSITORY": str(repository),
+        "RESOURCE_DEFERRED_REQUEST_ID": request_id,
+        "RESOURCE_DEFERRED_REQUESTED_AT": requested_at,
+        "RESOURCE_DEFERRED_TASK": task,
+        "RESOURCE_DEFERRED_REQUEST_BYTE_COUNT": len(request_raw),
+        "RESOURCE_DEFERRED_REQUEST_SHA256": module.sha256(request_raw),
+        "RESOURCE_DEFERRED_COMMAND_SHA256": module.sha256(request["command"].encode()),
+        "RESOURCE_DEFERRED_ATTEMPT_BYTE_COUNT": len(attempt_raw),
+        "RESOURCE_DEFERRED_ATTEMPT_SHA256": module.sha256(attempt_raw),
+        "RESOURCE_DEFERRED_AUTHORIZATION_COMMIT": authorization_commit,
+        "RESOURCE_DEFERRED_AUTHORIZATION_TREE": authorization_tree,
+        "RESOURCE_DEFERRED_AUTHORIZATION_PARENT": authorization_parent,
+        "RESOURCE_DEFERRED_AUTHORIZATION_SUBJECT": authorization_subject,
+        "RESOURCE_DEFERRED_AUTHORIZATION_BYTE_COUNT": len(authorization_raw),
+        "RESOURCE_DEFERRED_AUTHORIZATION_SHA256": module.sha256(authorization_raw),
+        "RESOURCE_DEFERRED_CONTRACT_COMMIT": contract_commit,
+        "RESOURCE_DEFERRED_CONTRACT_TREE": contract_tree,
+        "RESOURCE_DEFERRED_CONTRACT_PARENT": contract_parent,
+        "RESOURCE_DEFERRED_CONTRACT_SUBJECT": contract_subject,
+        "RESOURCE_DEFERRED_CONTRACT_BYTE_COUNT": len(contract_raw),
+        "RESOURCE_DEFERRED_CONTRACT_SHA256": contract_sha,
+        "RESOURCE_DEFERRED_CANDIDATE_COMMIT": candidate_commit,
+        "RESOURCE_DEFERRED_CANDIDATE_TREE": candidate_tree,
+        "RESOURCE_DEFERRED_AUTHORITY_SHA256": "5" * 64,
+        "RESOURCE_DEFERRED_COORDINATOR_SHA256": module.sha256(coordinator_raw),
+        "RESOURCE_DEFERRED_BOUNDED_SHA256": module.sha256(bounded_raw),
+        "RESOURCE_DEFERRED_CONNECTIVITY_MANIFEST_SHA256": connectivity_sha,
+        "RESOURCE_DEFERRED_ARCHIVE_REF": "refs/archive/synthetic-resource-deferred",
+        "RESOURCE_DEFERRED_ARCHIVE_COMMIT": authorization_commit,
+        "RESOURCE_DEFERRED_CANDIDATE_FILE_COUNT": 1,
+        "RESOURCE_DEFERRED_CANDIDATE_DIRECTORY_COUNT": 1,
+        "RESOURCE_DEFERRED_OLD_ADMISSION_REQUIRED_BYTES": 88 * (1 << 30),
+        "RESOURCE_DEFERRED_LEDGER_ROW_SHA256": row_hashes,
+        "RESOURCE_DEFERRED_ARTIFACTS": artifact_constants,
+        "RESOURCE_DEFERRED_PRODUCER_RESULT": (
+            "producer-wave/producer-wave-result.json",
+            len(producer_raw),
+            module.sha256(producer_raw),
+        ),
+        "RESOURCE_MANAGER_ROOT": resource_root,
+        "RESOURCE_LEDGER_PATH": live_ledger,
+    }
+    for name, made in patches.items():
+        monkeypatch.setattr(module, name, made)
+    monkeypatch.setattr(module, "_validate_git_object_authority", lambda: None)
+
+    git_blobs = {
+        f"{authorization_commit}:{module.PREDECESSOR_AUTHORIZATION_PATH}": authorization_raw,
+        f"{authorization_commit}:{module.PREDECESSOR_CONTRACT_PATH}": contract_raw,
+        f"{contract_commit}:{module.PREDECESSOR_CONTRACT_PATH}": contract_raw,
+        f"{authorization_commit}:docs/reference_cases/e4_pl_s3_v2_stage4a_coordinator.py": coordinator_raw,
+        f"{authorization_commit}:docs/reference_cases/e4_pl_s3_v2_bounded_process.py": bounded_raw,
+    }
+    identities = {
+        authorization_commit: (
+            authorization_tree,
+            authorization_parent,
+            authorization_subject,
+        ),
+        contract_commit: (contract_tree, contract_parent, contract_subject),
+    }
+
+    def fake_git(*args, binary=False, **_kwargs):
+        if args == ("rev-parse", "refs/archive/synthetic-resource-deferred"):
+            return authorization_commit
+        for commit, (tree, parent, subject) in identities.items():
+            if args == ("rev-parse", commit):
+                return commit
+            if args == ("rev-parse", f"{commit}^{{tree}}"):
+                return tree
+            if args == ("show", "-s", "--format=%P", commit):
+                return parent
+            if args == ("show", "-s", "--format=%s", commit):
+                return subject
+        if args[0] == "show" and len(args) == 2 and args[1] in git_blobs:
+            return git_blobs[args[1]] if binary else git_blobs[args[1]].decode()
+        raise AssertionError(f"unexpected synthetic Git query: {args}")
+
+    monkeypatch.setattr(module, "_git", fake_git)
+
+    class SyntheticWorker:
+        def __init__(self, assignment_id):
+            self.assignment_id = assignment_id
+
+    class SyntheticBounded:
+        def validate_manifest(self, value):
+            return (
+                value["wave_id"],
+                value["lane"],
+                Path(value["output_root"]).resolve(),
+                tuple(SyntheticWorker(item["assignment_id"]) for item in value["workers"]),
+            )
+
+    bounded = SyntheticBounded()
+    real_load_module = module._load_module
+
+    def fake_load_module(name, path):
+        if path == module.BOUNDED_PATH:
+            return bounded
+        return real_load_module(name, path)
+
+    monkeypatch.setattr(module, "_load_module", fake_load_module)
+
+    def replace_artifact(name, value):
+        raw = value if isinstance(value, bytes) else module.canonical_bytes(value)
+        filename = artifacts[name][0]
+        (incident_root / filename).write_bytes(raw)
+        constants = dict(module.RESOURCE_DEFERRED_ARTIFACTS)
+        constants[name] = (filename, len(raw), module.sha256(raw))
+        monkeypatch.setattr(module, "RESOURCE_DEFERRED_ARTIFACTS", constants)
+        incident[name] = {
+            "byte_count": len(raw),
+            "path": str(incident_root / filename),
+            "sha256": module.sha256(raw),
+        }
+
+    def replace_producer(value):
+        raw = module.canonical_bytes(value)
+        producer_path.write_bytes(raw)
+        monkeypatch.setattr(
+            module,
+            "RESOURCE_DEFERRED_PRODUCER_RESULT",
+            ("producer-wave/producer-wave-result.json", len(raw), module.sha256(raw)),
+        )
+        incident["producer_result"] = {
+            "byte_count": len(raw),
+            "path": str(producer_path),
+            "sha256": module.sha256(raw),
+        }
+
+    return {
+        "aggregate": aggregate,
+        "candidate_tree_root": candidate_tree_root,
+        "incident": incident,
+        "live_ledger": live_ledger,
+        "producer_result": producer_result,
+        "replace_artifact": replace_artifact,
+        "replace_producer": replace_producer,
+    }
+
+
 def _sequence(mask: str, fraction: int, *, advisory: bool = False, failure: str | None = None):
     failures = [] if failure is None else [failure]
     return {
@@ -823,6 +1344,151 @@ def test_predecessor_incident_rejects_manifest_coverage_and_ledger_reordering(
         module._validate_predecessor_process_incident(fixture["incident"])
 
 
+def test_resource_deferred_incident_validates_complete_synthetic_graph(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+@pytest.mark.parametrize(
+    ("path", "replacement", "message"),
+    [
+        (("memory_admission", "observed_at_event_available_bytes"), 1, "memory admission"),
+        (("memory_admission", "required_bytes"), False, "nonnegative integer"),
+        (("scientific_execution", "producer_processes_started"), True, "nonnegative integer"),
+        (("scientific_execution", "classifying_records"), 0.0, "nonnegative integer"),
+        (("scientific_execution", "producer_result_present"), False, "scientific"),
+        (("request_reuse_forbidden",), False, "identity"),
+    ],
+)
+def test_resource_deferred_incident_rejects_disposition_mutations(
+    tmp_path, monkeypatch, path, replacement, message
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    target = fixture["incident"]
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = replacement
+    with pytest.raises(module.CoordinatorError, match=message):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("terminal", "COMPLETED"),
+        ("workers", [{"status": "COMPLETED"}]),
+        ("manifest_sha256", "F" * 64),
+    ],
+)
+def test_resource_deferred_incident_rejects_rebound_producer_result(
+    tmp_path, monkeypatch, field, replacement
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["producer_result"])
+    changed[field] = replacement
+    fixture["replace_producer"](changed)
+    with pytest.raises(module.CoordinatorError, match="producer result"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+def test_resource_deferred_incident_rejects_aggregate_result_cross_join(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["aggregate"])
+    changed["producer_wave_result_sha256"] = "F" * 64
+    fixture["replace_artifact"]("aggregate", changed)
+    with pytest.raises(module.CoordinatorError, match="aggregate"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+def test_resource_deferred_incident_rejects_tree_and_root_extent_mutations(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    (fixture["candidate_tree_root"] / "unexpected.txt").write_text(
+        "unexpected\n", encoding="utf-8"
+    )
+    with pytest.raises(module.CoordinatorError, match="candidate-tree extent"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+    fixture = _synthetic_resource_deferred_incident(
+        module, tmp_path / "other", monkeypatch
+    )
+    (module.RESOURCE_DEFERRED_INCIDENT_ROOT / "unregistered.bin").write_bytes(b"x")
+    with pytest.raises(module.CoordinatorError, match="artifact extent"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+def test_resource_deferred_incident_rejects_same_count_candidate_tree_rename(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    candidate_directory = fixture["candidate_tree_root"] / "docs"
+    (candidate_directory / "one.txt").rename(candidate_directory / "renamed.txt")
+    with pytest.raises(module.CoordinatorError, match="extent differs from archive"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+def test_resource_deferred_incident_rejects_same_count_candidate_tree_content_mutation(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    (fixture["candidate_tree_root"] / "docs" / "one.txt").write_bytes(b"two\n")
+    with pytest.raises(module.CoordinatorError, match="content differs from archive"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+def test_resource_deferred_incident_rejects_archive_ref_and_ledger_mutations(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
+    fixture["incident"]["archive_ref"]["commit"] = "0" * 40
+    with pytest.raises(module.CoordinatorError, match="archive ref"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+    fixture = _synthetic_resource_deferred_incident(
+        module, tmp_path / "other", monkeypatch
+    )
+    rows = fixture["live_ledger"].read_text(encoding="utf-8").splitlines()
+    fixture["live_ledger"].write_text(
+        "\n".join([rows[0], rows[1], rows[3], rows[2]]) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(module.CoordinatorError, match="ledger history"):
+        module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+def test_stage4a_contract_v4_requires_both_predecessor_incidents():
+    module = _load()
+    assert module.CONTRACT_KEYS == {
+        "adjudication",
+        "authority",
+        "candidate",
+        "coverage",
+        "dependencies",
+        "execution",
+        "frozen_files",
+        "git_authority",
+        "predecessor_process_incident",
+        "predecessor_resource_deferred_incident",
+        "production_boundary",
+        "protocol",
+        "schema",
+        "stage",
+    }
+
+
 def test_aggregate_pass_has_exact_coverage_and_registered_order(tmp_path):
     module = _load()
     aggregate = _aggregate(module, tmp_path, _values(module))
@@ -949,6 +1615,193 @@ def test_registered_resource_command_isolated_and_supplies_only_bound_dependenci
         assert str((repository / "src").resolve()) in command
     assert str(module.ROOT / "src") not in command
     assert command.count("--run-stage4a") == 1
+
+
+def _checker_proofs(module, tmp_path):
+    return {
+        assignment_id: (tmp_path / assignment_id / "proof.json").resolve()
+        for assignment_id in module.EXPECTED_SHARDS
+    }
+
+
+class _SyntheticCheckerResources:
+    def __init__(self, available_values):
+        self._available_values = iter(available_values)
+        self.calls = 0
+
+    def available_physical_memory_bytes(self):
+        self.calls += 1
+        return next(self._available_values)
+
+
+def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
+    module = _load()
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v4"
+    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v4"
+    assert module.MAXIMUM_REGISTERED_WORKERS == 3
+    assert module.MAXIMUM_CONCURRENT_WORKERS == 2
+    assert module._checker_replica_required_memory_bytes() == 64 * (1 << 30)
+    assert module._execution_policy() == {
+        "checker_phase_finalization_reserve_seconds": 60,
+        "checker_phase_required_seconds": 960,
+        "checker_phase_schedule": "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER",
+        "checker_replica_wall_seconds": 300,
+        "checker_replicas_per_shard": 2,
+        "coordinator_wall_seconds": 1800,
+        "inactivity_seconds": 300,
+        "maximum_concurrent_workers": 2,
+        "maximum_memory_gib_per_process_tree": 24,
+        "maximum_workers": 3,
+        "memory_admission_headroom_gib": 16,
+        "memory_admission_required_bytes": 68_719_476_736,
+        "no_automatic_retry": True,
+        "numerical_library_threads_per_worker": 1,
+        "producer_wall_seconds": 900,
+        "registered_shards": 3,
+        "schedule": "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER",
+        "wave_wall_seconds": 1800,
+    }
+    assert (
+        "tests/test_e4_pl_s3_v2_bounded_process.py"
+        in module.REQUIRED_FROZEN_PATHS
+    )
+
+
+def test_checker_phase_runs_replica_pairs_in_frozen_order_without_lost_coverage(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    required = module._checker_replica_required_memory_bytes()
+    resources = _SyntheticCheckerResources([required])
+    lock = threading.Lock()
+    active = 0
+    maximum_active = 0
+    events = []
+    calls = {}
+
+    def fake_checker(**kwargs):
+        nonlocal active, maximum_active
+        assignment_id = kwargs["assignment_id"]
+        replica = int(kwargs["output"].parent.parent.name.rsplit("-", 1)[1])
+        task_id = (replica, assignment_id)
+        with lock:
+            calls[task_id] = calls.get(task_id, 0) + 1
+            active += 1
+            maximum_active = max(maximum_active, active)
+            events.append(("START", task_id))
+        time.sleep(0.15)
+        with lock:
+            events.append(("END", task_id))
+            active -= 1
+        return {"assignment_id": assignment_id, "replica": replica}
+
+    monkeypatch.setattr(module, "_run_checker_process", fake_checker)
+    results = module._run_checker_phase(
+        bounded=resources,
+        proofs=_checker_proofs(module, tmp_path),
+        plan=(tmp_path / "plan.json").resolve(),
+        output_root=tmp_path.resolve(),
+        deadline=time.monotonic() + module.CHECKER_PHASE_REQUIRED_SECONDS + 1,
+    )
+
+    frozen_order = list(module.EXPECTED_SHARDS)
+    submission_order = [
+        (replica, assignment_id)
+        for assignment_id in frozen_order
+        for replica in (1, 2)
+    ]
+    assert [result["assignment_id"] for result in results[0]] == frozen_order
+    assert [result["assignment_id"] for result in results[1]] == frozen_order
+    assert calls == {task_id: 1 for task_id in submission_order}
+    assert resources.calls == 1
+    assert maximum_active == 2
+    assert [task_id for event, task_id in events[:2] if event == "START"] == (
+        submission_order[:2]
+    )
+    for pair_index in range(1, 3):
+        pair_start = events.index(("START", submission_order[pair_index * 2]))
+        assert sum(event == "END" for event, _task_id in events[:pair_start]) >= 2
+
+
+def test_checker_phase_resource_deferral_occurs_before_any_launch(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    required = module._checker_replica_required_memory_bytes()
+    resources = _SyntheticCheckerResources([required - 1])
+    calls = []
+
+    def fake_checker(**kwargs):
+        calls.append((kwargs["assignment_id"], kwargs["output"]))
+        return {"assignment_id": kwargs["assignment_id"]}
+
+    monkeypatch.setattr(module, "_run_checker_process", fake_checker)
+    with pytest.raises(module.CoordinatorError, match="resources are deferred"):
+        module._run_checker_phase(
+            bounded=resources,
+            proofs=_checker_proofs(module, tmp_path),
+            plan=(tmp_path / "plan.json").resolve(),
+            output_root=tmp_path.resolve(),
+            deadline=time.monotonic() + module.CHECKER_PHASE_REQUIRED_SECONDS + 1,
+        )
+    assert resources.calls == 1
+    assert calls == []
+    assert not list(tmp_path.glob("checker-replica-*"))
+
+
+def test_checker_phase_time_deferral_occurs_before_any_launch(tmp_path, monkeypatch):
+    module = _load()
+    resources = _SyntheticCheckerResources(
+        [module._checker_replica_required_memory_bytes()]
+    )
+    calls = []
+    monkeypatch.setattr(
+        module, "_run_checker_process", lambda **kwargs: calls.append(kwargs)
+    )
+    with pytest.raises(module.CoordinatorError, match="insufficient coordinator-wall"):
+        module._run_checker_phase(
+            bounded=resources,
+            proofs=_checker_proofs(module, tmp_path),
+            plan=(tmp_path / "plan.json").resolve(),
+            output_root=tmp_path.resolve(),
+            deadline=time.monotonic() + module.CHECKER_PHASE_REQUIRED_SECONDS - 1,
+        )
+    assert calls == []
+    assert not list(tmp_path.glob("checker-replica-*"))
+
+
+def test_checker_failure_is_not_retried_and_does_not_drop_queued_work(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    resources = _SyntheticCheckerResources(
+        [module._checker_replica_required_memory_bytes()]
+    )
+    frozen_order = list(module.EXPECTED_SHARDS)
+    calls = {(replica, assignment_id): 0 for assignment_id in frozen_order for replica in (1, 2)}
+    lock = threading.Lock()
+
+    def fake_checker(**kwargs):
+        assignment_id = kwargs["assignment_id"]
+        replica = int(kwargs["output"].parent.parent.name.rsplit("-", 1)[1])
+        task_id = (replica, assignment_id)
+        with lock:
+            calls[task_id] += 1
+        if task_id == (1, frozen_order[0]):
+            raise module.CoordinatorError("synthetic checker failure")
+        time.sleep(0.05)
+        return {"assignment_id": assignment_id, "replica": replica}
+
+    monkeypatch.setattr(module, "_run_checker_process", fake_checker)
+    with pytest.raises(module.CoordinatorError, match="all six registered tasks"):
+        module._run_checker_phase(
+            bounded=resources,
+            proofs=_checker_proofs(module, tmp_path),
+            plan=(tmp_path / "plan.json").resolve(),
+            output_root=tmp_path.resolve(),
+            deadline=time.monotonic() + module.CHECKER_PHASE_REQUIRED_SECONDS + 1,
+        )
+    assert all(count == 1 for count in calls.values())
 
 
 @pytest.mark.parametrize(
