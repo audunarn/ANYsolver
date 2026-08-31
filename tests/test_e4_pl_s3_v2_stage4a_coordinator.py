@@ -460,8 +460,17 @@ def test_atomic_publication_never_exposes_partial_canonical_path(tmp_path, monke
         module._write_exclusive(output, b"other\n")
 
 
-def test_candidate_archive_extraction_rejects_escape_and_is_exclusive(tmp_path):
+def test_candidate_archive_extraction_rejects_escape_and_is_exclusive(
+    tmp_path, monkeypatch
+):
     module = _load()
+    monkeypatch.setattr(
+        module.tempfile,
+        "mkdtemp",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("candidate extraction must inherit the output-root ACL")
+        ),
+    )
     safe_root = tmp_path / "safe"
     safe_root.mkdir()
     safe_archive = safe_root / "candidate.tar"
@@ -489,6 +498,48 @@ def test_candidate_archive_extraction_rejects_escape_and_is_exclusive(tmp_path):
     with pytest.raises(module.CoordinatorError, match="unsafe path"):
         module._extract_candidate_archive(bad_archive, bad_root)
     assert not (tmp_path / "escape.txt").exists()
+
+
+def test_producer_result_is_contained_by_registered_wave_root(tmp_path):
+    module = _load()
+    wave_root = (tmp_path / "producer-wave").resolve()
+    manifest = {
+        "lane": "flat-proof",
+        "output_root": str(wave_root),
+        "schema": "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1",
+        "wave_id": "S3_V2_FLAT_FUNNEL_4A_FULL",
+        "workers": [],
+    }
+    manifest_path = (tmp_path / "producer-wave-manifest.json").resolve()
+    manifest_path.write_bytes(module.canonical_bytes(manifest))
+    result_path = module._producer_result_path(manifest_path)
+    assert result_path == wave_root / "producer-wave-result.json"
+    assert result_path.is_relative_to(wave_root)
+    assert result_path != tmp_path / "producer-wave-result.json"
+
+
+def test_process_incident_records_exact_failure_stage(tmp_path):
+    module = _load()
+    path = (tmp_path / "stage4a-process-incident.json").resolve()
+    module._write_process_incident(
+        path,
+        authorization_sha256="A" * 64,
+        contract_sha256="B" * 64,
+        error=module.CoordinatorError("synthetic containment failure"),
+        phase="PRODUCER_WAVE",
+        producer_result_path=None,
+    )
+    value, raw = module.strict_json_load(path)
+    assert raw == module.canonical_bytes(value)
+    assert value == {
+        "authorization_sha256": "A" * 64,
+        "contract_sha256": "B" * 64,
+        "exception_message": "synthetic containment failure",
+        "exception_type": "CoordinatorError",
+        "phase": "PRODUCER_WAVE",
+        "producer_result_sha256": None,
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-process-incident-v1",
+    }
 
 
 def test_formal_main_returns_nonzero_for_blocked_aggregate(tmp_path, monkeypatch):

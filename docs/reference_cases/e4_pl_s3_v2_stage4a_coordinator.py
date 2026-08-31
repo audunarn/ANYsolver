@@ -17,6 +17,7 @@ import json
 import math
 import os
 from pathlib import Path, PurePosixPath
+import secrets
 import shutil
 import subprocess
 import sys
@@ -1315,9 +1316,24 @@ def _extract_candidate_archive(archive_path: Path, output_root: Path) -> Path:
     candidate_root = (output_root / "candidate-source-tree").resolve()
     if os.path.lexists(candidate_root):
         raise CoordinatorError("candidate source tree output already exists")
-    staging = Path(
-        tempfile.mkdtemp(prefix=".candidate-source-tree.pending-", dir=output_root)
-    ).resolve()
+    # Python 3.13 gives ``tempfile.mkdtemp`` a private Windows ACL.  The exact
+    # source tree must remain readable by the separately contained producer
+    # children, so create an exclusive ordinary directory that inherits the
+    # already validated output-root ACL instead.
+    staging: Path | None = None
+    for _attempt in range(32):
+        candidate = (
+            output_root / f".candidate-source-tree.pending-{secrets.token_hex(12)}"
+        ).resolve()
+        try:
+            candidate.relative_to(output_root.resolve())
+            candidate.mkdir()
+        except FileExistsError:
+            continue
+        staging = candidate
+        break
+    if staging is None:
+        raise CoordinatorError("cannot create exclusive candidate staging directory")
     seen: set[str] = set()
     try:
         with tarfile.open(archive_path, mode="r:") as bundle:
@@ -1363,6 +1379,58 @@ def _extract_candidate_archive(archive_path: Path, output_root: Path) -> Path:
         shutil.rmtree(staging, ignore_errors=True)
         raise
     return candidate_root
+
+
+def _producer_result_path(manifest_path: Path) -> Path:
+    """Return a canonical producer result contained by the registered wave root."""
+
+    manifest, raw = strict_json_load(manifest_path)
+    if raw != canonical_bytes(manifest):
+        raise CoordinatorError("producer wave manifest is not canonical JSON")
+    manifest = _exact(
+        manifest,
+        {"lane", "output_root", "schema", "wave_id", "workers"},
+        "$.producer_wave_manifest",
+    )
+    raw_root = manifest["output_root"]
+    if not isinstance(raw_root, str) or not Path(raw_root).is_absolute():
+        raise CoordinatorError("producer wave output root is not absolute")
+    wave_root = Path(raw_root).resolve()
+    result_path = (wave_root / "producer-wave-result.json").resolve()
+    try:
+        result_path.relative_to(wave_root)
+    except ValueError as exc:
+        raise CoordinatorError("producer wave result escapes its registered root") from exc
+    return result_path
+
+
+def _write_process_incident(
+    path: Path,
+    *,
+    authorization_sha256: str,
+    contract_sha256: str,
+    error: BaseException,
+    phase: str,
+    producer_result_path: Path | None,
+) -> None:
+    """Preserve deterministic diagnostics without changing adjudication evidence."""
+
+    producer_digest = None
+    if producer_result_path is not None and producer_result_path.is_file():
+        producer_digest = sha256(producer_result_path.read_bytes())
+    message = str(error)
+    if len(message) > 2_048:
+        message = message[:2_048]
+    incident = {
+        "authorization_sha256": authorization_sha256,
+        "contract_sha256": contract_sha256,
+        "exception_message": message,
+        "exception_type": type(error).__name__,
+        "phase": phase,
+        "producer_result_sha256": producer_digest,
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-process-incident-v1",
+    }
+    _write_exclusive(path, canonical_bytes(incident))
 
 
 def prepare_wave(
@@ -1822,21 +1890,36 @@ def run_stage4a(
     validate_resource_execution_state(authorization)
     authorization_digest = sha256(authorization_raw)
     contract_digest = sha256(contract_raw)
-    producer_result_path = (output_root / "producer-wave-result.json").resolve()
+    producer_result_path: Path | None = None
+    process_phase = "PREPARE_WAVE"
     try:
         paths = prepare_wave(
             contract_path,
             output_root,
             authorization_path=authorization_path,
         )
+        producer_result_path = _producer_result_path(paths["producer_manifest"])
+        process_phase = "LOAD_BOUNDED_RUNNER"
         bounded = _load_module("_s3_v2_stage4a_bounded", BOUNDED_PATH)
+        process_phase = "PRODUCER_WAVE"
         producer_result = bounded.run_wave(paths["producer_manifest"], producer_result_path)
-    except Exception:
+    except Exception as exc:
         producer_digest = (
             sha256(producer_result_path.read_bytes())
-            if producer_result_path.is_file()
+            if producer_result_path is not None and producer_result_path.is_file()
             else None
         )
+        try:
+            _write_process_incident(
+                (output_root / "stage4a-process-incident.json").resolve(),
+                authorization_sha256=authorization_digest,
+                contract_sha256=contract_digest,
+                error=exc,
+                phase=process_phase,
+                producer_result_path=producer_result_path,
+            )
+        except Exception:
+            pass
         blocked = blocked_aggregate(
             authorization_sha256=authorization_digest,
             contract_sha256=contract_digest,
@@ -1845,6 +1928,7 @@ def run_stage4a(
         )
         _write_exclusive(aggregate_path, canonical_bytes(blocked))
         return blocked
+    assert producer_result_path is not None
     if producer_result.get("terminal") != "COMPLETED":
         blocked = blocked_aggregate(
             authorization_sha256=authorization_digest,
