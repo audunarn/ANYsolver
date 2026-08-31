@@ -63,9 +63,19 @@ def _synthetic_predecessor_incident(module, tmp_path, monkeypatch):
         "status": "PENDING",
         "task": task,
     }
-    request["command"] = "x" * (1311 - len(module.canonical_bytes(request)))
-    request_raw = module.canonical_bytes(request)
+
+    def historical_request_bytes(value):
+        return (
+            module.json.dumps(
+                value, sort_keys=True, indent=2, ensure_ascii=True
+            )
+            + "\n"
+        ).encode("ascii")
+
+    request["command"] = "x" * (1311 - len(historical_request_bytes(request)))
+    request_raw = historical_request_bytes(request)
     assert len(request_raw) == 1311
+    assert request_raw != module.canonical_bytes(request)
     request_path = request_root / f"{request_id}.json"
     request_path.write_bytes(request_raw)
 
@@ -413,11 +423,11 @@ def _synthetic_predecessor_incident(module, tmp_path, monkeypatch):
     def replace_request(value, *, rebind_command):
         value = copy.deepcopy(value)
         value["command"] = str(value["command"])
-        raw = module.canonical_bytes(value)
+        raw = historical_request_bytes(value)
         difference = 1311 - len(raw)
         assert difference >= 0
         value["command"] += "x" * difference
-        raw = module.canonical_bytes(value)
+        raw = historical_request_bytes(value)
         assert len(raw) == 1311
         request_path.write_bytes(raw)
         monkeypatch.setattr(module, "PREDECESSOR_REQUEST_SHA256", module.sha256(raw))
@@ -1228,6 +1238,304 @@ def test_correction7_stable_external_reader_rejects_nonregular_file(tmp_path):
         module._read_regular_nonreparse_file(tmp_path.resolve(), "ledger")
 
 
+def test_correction9_formal_request_reader_rejects_noncanonical_and_nonregular(
+    tmp_path,
+):
+    module = _load()
+    with pytest.raises(module.CoordinatorError, match="regular non-reparse"):
+        module._read_canonical_resource_request(tmp_path.resolve(), "resource request")
+
+    request_path = (tmp_path / "request.json").resolve()
+    request_path.write_bytes(b'\xef\xbb\xbf{"request_id":"' + b"1" * 32 + b'"}\r\n')
+    with pytest.raises(module.CoordinatorError, match="invalid strict JSON|not canonical"):
+        module._read_canonical_resource_request(request_path, "resource request")
+
+
+def test_correction9_historical_request_accepts_exact_pretty_bytes_but_stays_strict(
+    tmp_path,
+):
+    module = _load()
+    request_path = (tmp_path / "historical-request.json").resolve()
+    pretty_raw = b'{\n  "request_id": "' + b"1" * 32 + b'"\n}\n'
+    request_path.write_bytes(pretty_raw)
+    binding = {
+        "byte_count": len(pretty_raw),
+        "path": str(request_path),
+        "sha256": module.sha256(pretty_raw),
+    }
+    resolved, value, observed = module._validate_resource_request_file_binding(
+        binding,
+        "historical request",
+        expected_path=request_path,
+        require_canonical=False,
+    )
+    assert resolved == request_path
+    assert value == {"request_id": "1" * 32}
+    assert observed == pretty_raw
+    with pytest.raises(module.CoordinatorError, match="not canonical"):
+        module._validate_resource_request_file_binding(
+            binding, "active request", expected_path=request_path
+        )
+
+    for invalid in (b'{"a":1,"a":2}\n', b'{"a":NaN}\n'):
+        request_path.write_bytes(invalid)
+        rebound = {
+            "byte_count": len(invalid),
+            "path": str(request_path),
+            "sha256": module.sha256(invalid),
+        }
+        with pytest.raises(
+            module.CoordinatorError,
+            match="duplicate JSON key|non-finite JSON constant",
+        ):
+            module._validate_resource_request_file_binding(
+                rebound,
+                "historical request",
+                expected_path=request_path,
+                require_canonical=False,
+            )
+
+
+def test_correction9_formal_request_reader_rejects_request_file_reparse(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    request_path = (tmp_path / "request.json").resolve()
+    request_path.write_bytes(module.canonical_bytes({"request_id": "1" * 32}))
+    path_type = type(request_path)
+    real_is_symlink = path_type.is_symlink
+
+    def synthetic_is_symlink(path):
+        return path == request_path or real_is_symlink(path)
+
+    monkeypatch.setattr(path_type, "is_symlink", synthetic_is_symlink)
+    with pytest.raises(module.CoordinatorError, match="regular non-reparse"):
+        module._read_canonical_resource_request(request_path, "resource request")
+
+
+def test_correction9_formal_request_reader_rejects_reparse_ancestor(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    ancestor = (tmp_path / "request-root").resolve()
+    ancestor.mkdir()
+    request_path = ancestor / "request.json"
+    request_path.write_bytes(module.canonical_bytes({"request_id": "1" * 32}))
+    path_type = type(request_path)
+    real_is_symlink = path_type.is_symlink
+
+    def synthetic_is_symlink(path):
+        return path == ancestor or real_is_symlink(path)
+
+    monkeypatch.setattr(path_type, "is_symlink", synthetic_is_symlink)
+    with pytest.raises(module.CoordinatorError, match="reparse-path ancestor"):
+        module._read_canonical_resource_request(request_path, "resource request")
+
+
+def test_correction9_formal_request_reader_rejects_identity_change_during_read(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    request_path = (tmp_path / "request.json").resolve()
+    request_path.write_bytes(module.canonical_bytes({"request_id": "1" * 32}))
+    real_fstat = module.os.fstat
+    calls = 0
+
+    class ChangedStat:
+        def __init__(self, original):
+            self._original = original
+            self.st_size = original.st_size + 1
+            self.st_mtime_ns = original.st_mtime_ns
+
+        def __getattr__(self, name):
+            return getattr(self._original, name)
+
+    def changing_fstat(file_descriptor):
+        nonlocal calls
+        calls += 1
+        observed = real_fstat(file_descriptor)
+        return observed if calls == 1 else ChangedStat(observed)
+
+    monkeypatch.setattr(module.os, "fstat", changing_fstat)
+    with pytest.raises(module.CoordinatorError, match="changed while reading"):
+        module._read_canonical_resource_request(request_path, "resource request")
+
+
+@pytest.mark.parametrize("mutation", ["rewrite", "truncate"])
+def test_correction9_finalizer_ledger_rejects_rewritten_or_truncated_snapshot(
+    monkeypatch, mutation,
+):
+    module = _load()
+    approved = "| t0 | " + "1" * 32 + " | APPROVED | exact |"
+    preserved = ("header\n" + approved + "\n").encode()
+    live = (
+        b"rewritten-header\n" + preserved.split(b"\n", 1)[1]
+        if mutation == "rewrite"
+        else preserved[:-1]
+    )
+    monkeypatch.setattr(
+        module,
+        "_read_resource_ledger",
+        lambda *_args, **_kwargs: (live, live.decode().splitlines()),
+    )
+    with pytest.raises(module.CoordinatorError, match="append-only extension"):
+        module._validate_finalizer_live_ledger(preserved, approved)
+
+
+def test_correction9_finalizer_ledger_allows_append_but_rejects_content_race(
+    monkeypatch,
+):
+    module = _load()
+    approved = "| t0 | " + "1" * 32 + " | APPROVED | exact |"
+    preserved = ("header\n" + approved + "\n").encode()
+    appended = preserved + b"| t1 | unrelated | APPROVED | exact |\n"
+    observations = iter((preserved, appended))
+
+    def read_ledger(*_args, **_kwargs):
+        raw = next(observations)
+        return raw, raw.decode().splitlines()
+
+    monkeypatch.setattr(module, "_read_resource_ledger", read_ledger)
+    module._validate_finalizer_live_ledger(preserved, approved)
+
+    rewritten = b"changed\n" + preserved.split(b"\n", 1)[1]
+    observations = iter((preserved, rewritten))
+    with pytest.raises(module.CoordinatorError, match="changed other than by append"):
+        module._validate_finalizer_live_ledger(preserved, approved)
+
+
+def test_correction9_live_ledger_reader_rejects_reparse(tmp_path, monkeypatch):
+    module = _load()
+    ledger_path = (tmp_path / "ledger.md").resolve()
+    ledger_path.write_bytes(b"header\n")
+    monkeypatch.setattr(module, "RESOURCE_LEDGER_PATH", ledger_path)
+    path_type = type(ledger_path)
+    real_is_symlink = path_type.is_symlink
+
+    def synthetic_is_symlink(path):
+        return path == ledger_path or real_is_symlink(path)
+
+    monkeypatch.setattr(path_type, "is_symlink", synthetic_is_symlink)
+    with pytest.raises(module.CoordinatorError, match="regular non-reparse"):
+        module._read_resource_ledger()
+
+
+@pytest.mark.parametrize("reparse_target", ["file", "ancestor"])
+def test_correction9_finalizer_approval_snapshot_preserves_lexical_reparse_checks(
+    tmp_path, monkeypatch, reparse_target,
+):
+    module = _load()
+    approval_root = (tmp_path / "finalizer-approval").resolve()
+    approval_root.mkdir()
+    request_path = (tmp_path / "request.json").resolve()
+    request_raw = module.canonical_bytes({"request_id": "1" * 32})
+    request_path.write_bytes(request_raw)
+    ledger_path = (tmp_path / "ledger.md").resolve()
+    approved_line = "| t0 | " + "1" * 32 + " | APPROVED | exact |"
+    ledger_raw = ("header\n" + approved_line + "\n").encode()
+    ledger_path.write_bytes(ledger_raw)
+    ledger_snapshot_path = approval_root / "resource-ledger-pre-run.md"
+    ledger_snapshot_path.write_bytes(ledger_raw)
+    contract = {"candidate": {"commit": "a" * 40, "tree": "b" * 40}}
+    snapshot = {
+        "approved_row": {
+            "line": approved_line,
+            "sha256": module.sha256((approved_line + "\n").encode()),
+        },
+        "candidate": contract["candidate"],
+        "ledger": {
+            "byte_count": len(ledger_raw),
+            "path": str(ledger_path),
+            "sha256": module.sha256(ledger_raw),
+            "snapshot_path": str(ledger_snapshot_path),
+        },
+        "request": {
+            "byte_count": len(request_raw),
+            "path": str(request_path),
+            "request_id": "1" * 32,
+            "sha256": module.sha256(request_raw),
+        },
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2",
+    }
+    snapshot_path = approval_root / "approval-snapshot.json"
+    snapshot_path.write_bytes(module.canonical_bytes(snapshot))
+    target = snapshot_path if reparse_target == "file" else approval_root
+    path_type = type(snapshot_path)
+    real_is_symlink = path_type.is_symlink
+
+    def synthetic_is_symlink(path):
+        return path == target or real_is_symlink(path)
+
+    monkeypatch.setattr(path_type, "is_symlink", synthetic_is_symlink)
+    with pytest.raises(module.CoordinatorError, match="reparse"):
+        module._validate_approval_snapshot(
+            snapshot_path,
+            contract=contract,
+            request_id="1" * 32,
+            request_path=request_path,
+            request_raw=request_raw,
+        )
+
+
+def test_correction9_finalizer_approval_snapshot_rejects_relative_lexical_path():
+    module = _load()
+    with pytest.raises(module.CoordinatorError, match="must be absolute"):
+        module._absolute_lexical_path(
+            "approvals/finalizer.json", "resource approval snapshot path"
+        )
+
+
+@pytest.mark.parametrize("route", ["completed-wave", "execution-state"])
+def test_correction9_active_ledger_routes_use_stable_reader(
+    tmp_path, monkeypatch, route,
+):
+    module = _load()
+
+    def reject_ledger(*_args, **_kwargs):
+        raise module.CoordinatorError("synthetic ledger identity changed while reading")
+
+    monkeypatch.setattr(module, "_read_resource_ledger", reject_ledger)
+    if route == "completed-wave":
+        with pytest.raises(module.CoordinatorError, match="identity changed while reading"):
+            module._validate_completed_leaf_wave_ledger_row(
+                "1" * 32,
+                {"repository": "synthetic", "task": "synthetic"},
+                receipt_raw=b"receipt\n",
+            )
+        return
+
+    resource_root = (tmp_path / "resource-manager").resolve()
+    request_root = resource_root / "requests"
+    request_root.mkdir(parents=True)
+    request_id = "1" * 32
+    request_path = request_root / f"{request_id}.json"
+    request = {
+        "command": "synthetic-command",
+        "estimate_minutes": 30,
+        "repository": "synthetic-repository",
+        "request_id": request_id,
+        "requested_at": "2026-08-31T12:00:00+02:00",
+        "status": "PENDING",
+        "task": "synthetic-task",
+    }
+    request_raw = module.canonical_bytes(request)
+    request_path.write_bytes(request_raw)
+    monkeypatch.setattr(module, "RESOURCE_MANAGER_ROOT", resource_root)
+    authorization = {
+        "contract_sha256": "A" * 64,
+        "resource_request": {
+            "command_sha256": module.sha256(request["command"].encode()),
+            "repository": request["repository"],
+            "request_id": request_id,
+            "request_path": str(request_path),
+            "request_sha256": module.sha256(request_raw),
+            "task": request["task"],
+        },
+    }
+    with pytest.raises(module.CoordinatorError, match="identity changed while reading"):
+        module.validate_resource_execution_state(authorization)
+
+
 def test_predecessor_incident_validates_complete_synthetic_graph(tmp_path, monkeypatch):
     module = _load()
     fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
@@ -1380,6 +1688,28 @@ def test_resource_deferred_incident_validates_complete_synthetic_graph(
     module = _load()
     fixture = _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch)
     module._validate_predecessor_resource_deferred_incident(fixture["incident"])
+
+
+@pytest.mark.parametrize("route", ["predecessor", "resource-deferred"])
+def test_correction9_historical_ledger_routes_use_stable_reader(
+    tmp_path, monkeypatch, route,
+):
+    module = _load()
+    if route == "predecessor":
+        fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+        validate = module._validate_predecessor_process_incident
+    else:
+        fixture = _synthetic_resource_deferred_incident(
+            module, tmp_path, monkeypatch
+        )
+        validate = module._validate_predecessor_resource_deferred_incident
+
+    def reject_ledger(*_args, **_kwargs):
+        raise module.CoordinatorError("synthetic ledger identity changed while reading")
+
+    monkeypatch.setattr(module, "_read_resource_ledger", reject_ledger)
+    with pytest.raises(module.CoordinatorError, match="identity changed while reading"):
+        validate(fixture["incident"])
 
 
 @pytest.mark.parametrize(
@@ -2081,8 +2411,8 @@ class _SyntheticCheckerResources:
 
 def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
-    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v7"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v11"
+    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v8"
     assert module.CHECKER_REGISTERED_SHARDS == 3
     assert module.MAXIMUM_CONCURRENT_WORKERS == 2
     assert module._checker_replica_required_memory_bytes() == 64 * (1 << 30)
@@ -2127,6 +2457,7 @@ def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers
         "memory_admission_required_bytes": 68_719_476_736,
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
+        "resource_request_authority_files_regular_nonreparse_stable_read_required": True,
         "timeout_aggregate_requires_proven_empty_process_trees": True,
         "unproven_tree_hard_deadline_action": (
             "EXIT_WITHOUT_CANONICAL_AGGREGATE"
@@ -3387,11 +3718,97 @@ def _validate_correction4_leaf_authorization(module, fixture, wave_index=1):
     )
 
 
+@pytest.mark.parametrize("route", ["leaf", "finalizer", "execution-state"])
+def test_correction9_all_formal_request_routes_use_stable_nonreparse_reader(
+    tmp_path, monkeypatch, route,
+):
+    module = _load()
+    fixture = _correction4_success_receipt(module, tmp_path, monkeypatch)
+    leaf_authorization, leaf_authorization_raw = module.strict_json_load(
+        fixture["authorization_path"]
+    )
+    selected_wave = leaf_authorization["leaf_waves"][0]
+    request_path = Path(
+        selected_wave["resource_request"]["request_path"]
+    ).resolve()
+
+    finalizer_path = (
+        fixture["contract_path"].parent / "finalizer-authorization.json"
+    ).resolve()
+    finalizer_authorization = {
+        "contract_path": leaf_authorization["contract_path"],
+        "contract_sha256": leaf_authorization["contract_sha256"],
+        "execution_paths": selected_wave["execution_paths"],
+        "formal_execution_authorized": True,
+        "implementation_reviews": leaf_authorization["implementation_reviews"],
+        "ledger_approval": selected_wave["ledger_approval"],
+        "resource_lock_required": True,
+        "resource_request": selected_wave["resource_request"],
+        "schema": module.AUTHORIZATION_SCHEMA,
+        "user_approval": leaf_authorization["user_approval"],
+    }
+    finalizer_path.write_bytes(module.canonical_bytes(finalizer_authorization))
+    monkeypatch.setattr(module, "EXECUTION_AUTHORIZATION_PATH", finalizer_path)
+
+    if route == "execution-state":
+        selected_authorization, _selected_raw = (
+            module._validate_leaf_wave_authorization_v5(
+                path=fixture["authorization_path"],
+                value=leaf_authorization,
+                raw=leaf_authorization_raw,
+                contract_path=fixture["contract_path"],
+                contract_raw=fixture["contract_raw"],
+                selected_wave_index=1,
+                selected_plan_sha256=selected_wave["plan_sha256"],
+                selected_leaf_catalog_sha256=selected_wave["leaf_catalog_sha256"],
+                selected_manifest_sha256=selected_wave["leaf_wave_manifest_sha256"],
+                selected_result_path=Path(selected_wave["leaf_wave_result_path"]),
+            )
+        )
+
+    real_reader = module._read_regular_nonreparse_file
+
+    def reject_request(path, location):
+        if Path(path).resolve() == request_path:
+            raise module.CoordinatorError(
+                "synthetic resource request identity changed while reading"
+            )
+        return real_reader(path, location)
+
+    monkeypatch.setattr(module, "_read_regular_nonreparse_file", reject_request)
+    with pytest.raises(module.CoordinatorError, match="identity changed while reading"):
+        if route == "leaf":
+            _validate_correction4_leaf_authorization(module, fixture)
+        elif route == "finalizer":
+            module.validate_authorization(
+                finalizer_path,
+                contract_path=fixture["contract_path"],
+                contract_raw=fixture["contract_raw"],
+                execution_mode="leaf-finalizer",
+            )
+        else:
+            module.validate_resource_execution_state(selected_authorization)
+
+
+def test_correction9_execution_state_rejects_request_content_changed_after_authority(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    fixture = _correction4_success_receipt(module, tmp_path, monkeypatch)
+    selected, _raw = _validate_correction4_leaf_authorization(module, fixture)
+    request_path = Path(selected["resource_request"]["request_path"])
+    request, _request_raw = module.strict_json_load(request_path)
+    request["requested_at"] = "2026-08-31T23:59:59+02:00"
+    request_path.write_bytes(module.canonical_bytes(request))
+    with pytest.raises(module.CoordinatorError, match="changed after authorization"):
+        module.validate_resource_execution_state(selected)
+
+
 def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     monkeypatch,
 ):
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v11"
     assert "tests/test_e4_pl_s3_v2_component_cache.py" in module.REQUIRED_FROZEN_PATHS
     plan, plan_raw = _correction4_plan(module)
     candidate_authority, _archive = _correction4_candidate(module)

@@ -49,12 +49,12 @@ CHECKER_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_checker.py"
 FUNNEL_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel.py"
 BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v7"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v8"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
 LEAF_WAVE_AUTHORIZATION_SCHEMA = (
     "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v5"
 )
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v11"
 DEPENDENCY_AUTHORITY_SCHEMA = (
     "anysolver.e4-pl-s3-v2-stage4a-dependency-authority-v1"
 )
@@ -669,6 +669,7 @@ def _execution_policy() -> dict[str, Any]:
         ),
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
+        "resource_request_authority_files_regular_nonreparse_stable_read_required": True,
         "timeout_aggregate_requires_proven_empty_process_trees": True,
         "unproven_tree_hard_deadline_action": (
             "EXIT_WITHOUT_CANONICAL_AGGREGATE"
@@ -801,6 +802,15 @@ def _repo_relative_path(value: Any, location: str, *, regular_file: bool = True)
     return resolved
 
 
+def _absolute_lexical_path(value: Any, location: str) -> Path:
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise CoordinatorError(f"{location} must be an absolute path string")
+    path = Path(value)
+    if not path.is_absolute():
+        raise CoordinatorError(f"{location} must be absolute")
+    return path
+
+
 def _strict_external_json(path: Path, location: str) -> tuple[Any, bytes]:
     try:
         raw = path.read_bytes()
@@ -893,6 +903,93 @@ def _read_regular_nonreparse_file(path: Path, location: str) -> tuple[Path, byte
     return final_resolved, raw
 
 
+def _read_resource_ledger(
+    location: str = "live resource ledger",
+) -> tuple[bytes, list[str]]:
+    """Read the live ledger through the stable non-reparse authority boundary."""
+
+    _ledger_path, raw = _read_regular_nonreparse_file(RESOURCE_LEDGER_PATH, location)
+    try:
+        lines = raw.decode("utf-8-sig").splitlines()
+    except UnicodeError as exc:
+        raise CoordinatorError(f"{location} is not UTF-8") from exc
+    return raw, lines
+
+
+def _read_canonical_resource_request(
+    path: Path, location: str, *, require_canonical: bool = True
+) -> tuple[Path, Mapping[str, Any], bytes]:
+    """Read one resource request as stable strict JSON.
+
+    Resource requests are authority inputs.  The lexical path (including every
+    ancestor) is therefore inspected before and after the descriptor-backed
+    read. Active execution authority requires canonical bytes. Immutable
+    historical incidents may retain their exact registered formatting while
+    still rejecting duplicate keys and non-finite constants.
+    """
+
+    resolved, raw = _read_regular_nonreparse_file(path, location)
+    if require_canonical:
+        value = strict_json_bytes(raw, location)
+    else:
+        try:
+            value = json.loads(
+                raw.decode("utf-8-sig"),
+                object_pairs_hook=_reject_pairs,
+                parse_constant=_reject_constant,
+            )
+        except (UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            if isinstance(exc, CoordinatorError):
+                raise
+            raise CoordinatorError(f"{location} is invalid strict JSON: {exc}") from exc
+    if require_canonical and raw != canonical_bytes(value):
+        raise CoordinatorError(f"{location} is not canonical JSON")
+    if not isinstance(value, dict):
+        raise CoordinatorError(f"{location} must contain a JSON object")
+    return resolved, value, raw
+
+
+def _validate_resource_request_file_binding(
+    value: Any,
+    location: str,
+    *,
+    expected_path: Path | None = None,
+    require_canonical: bool = True,
+) -> tuple[Path, Mapping[str, Any], bytes]:
+    """Validate a hash binding while reading its request exactly once."""
+
+    binding = _exact(value, {"byte_count", "path", "sha256"}, location)
+    raw_path = binding["path"]
+    if not isinstance(raw_path, str) or not raw_path or raw_path != raw_path.strip():
+        raise CoordinatorError(f"{location}.path must be an absolute path string")
+    path = Path(raw_path)
+    if not path.is_absolute():
+        raise CoordinatorError(f"{location}.path must be absolute")
+    if expected_path is not None and raw_path != str(expected_path):
+        raise CoordinatorError(f"{location}.path differs from its frozen path")
+    byte_count = _nonnegative_integer(binding["byte_count"], f"{location}.byte_count")
+    digest = _digest(binding["sha256"], f"{location}.sha256")
+    resolved, request, raw = _read_canonical_resource_request(
+        path, location, require_canonical=require_canonical
+    )
+    if byte_count <= 0 or byte_count != len(raw) or digest != sha256(raw):
+        raise CoordinatorError(f"{location} identity differs")
+    return resolved, request, raw
+
+
+def _resource_request_file_binding(path: Path, location: str) -> dict[str, Any]:
+    """Create a binding from the same canonical request bytes used for execution."""
+
+    resolved, _request, raw = _read_canonical_resource_request(path, location)
+    if not raw:
+        raise CoordinatorError(f"{location} must be nonempty")
+    return {
+        "byte_count": len(raw),
+        "path": str(resolved),
+        "sha256": sha256(raw),
+    }
+
+
 def _validate_external_file_binding(
     value: Any,
     location: str,
@@ -910,41 +1007,7 @@ def _validate_external_file_binding(
         raise CoordinatorError(f"{location}.path differs from its frozen path")
     byte_count = _nonnegative_integer(binding["byte_count"], f"{location}.byte_count")
     digest = _digest(binding["sha256"], f"{location}.sha256")
-    try:
-        information = path.lstat()
-    except OSError as exc:
-        raise CoordinatorError(f"cannot read {location}: {exc}") from exc
-    file_attributes = getattr(information, "st_file_attributes", 0)
-    if (
-        not stat.S_ISREG(information.st_mode)
-        or path.is_symlink()
-        or file_attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
-    ):
-        raise CoordinatorError(f"{location} is not a regular non-reparse file")
-    for ancestor in path.parents:
-        try:
-            ancestor_information = ancestor.lstat()
-        except OSError as exc:
-            raise CoordinatorError(f"cannot inspect {location} ancestor: {exc}") from exc
-        ancestor_attributes = getattr(ancestor_information, "st_file_attributes", 0)
-        if (
-            ancestor.is_symlink()
-            or ancestor_attributes
-            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
-        ):
-            raise CoordinatorError(f"{location} has a reparse-path ancestor")
-    try:
-        with path.open("rb") as stream:
-            opened_information = os.fstat(stream.fileno())
-            if (
-                not stat.S_ISREG(opened_information.st_mode)
-                or not os.path.samestat(information, opened_information)
-            ):
-                raise CoordinatorError(f"{location} identity changed while opening")
-            raw = stream.read()
-        resolved = path.resolve(strict=True)
-    except OSError as exc:
-        raise CoordinatorError(f"cannot read {location}: {exc}") from exc
+    resolved, raw = _read_regular_nonreparse_file(path, location)
     if byte_count <= 0 or byte_count != len(raw) or digest != sha256(raw):
         raise CoordinatorError(f"{location} identity differs")
     return resolved, raw
@@ -954,8 +1017,7 @@ def _external_file_binding(path: Path, location: str) -> dict[str, Any]:
     raw_path = Path(path)
     if not raw_path.is_absolute():
         raise CoordinatorError(f"{location} must be absolute")
-    resolved = raw_path.resolve(strict=True)
-    raw = resolved.read_bytes()
+    resolved, raw = _read_regular_nonreparse_file(raw_path, location)
     if not raw:
         raise CoordinatorError(f"{location} must be nonempty")
     binding = {
@@ -2947,10 +3009,11 @@ def _validate_predecessor_process_incident(value: Any) -> None:
         != PREDECESSOR_REQUEST_SHA256
     ):
         raise CoordinatorError("predecessor request frozen identity differs")
-    request_file, request_raw = _validate_external_file_binding(
+    request_file, request, request_raw = _validate_resource_request_file_binding(
         request_binding,
         f"{location}.request",
         expected_path=request_path,
+        require_canonical=False,
     )
     if request_file != request_path.resolve():
         raise CoordinatorError("predecessor request resolved path differs")
@@ -2964,9 +3027,6 @@ def _validate_predecessor_process_incident(value: Any) -> None:
     if actual_names != expected_names:
         raise CoordinatorError("predecessor incident artifact extent differs")
 
-    request, observed_request_raw = _strict_external_json(
-        request_file, "predecessor resource request"
-    )
     request = _exact(
         request,
         {
@@ -2982,8 +3042,7 @@ def _validate_predecessor_process_incident(value: Any) -> None:
     )
     command = request["command"]
     if (
-        observed_request_raw != request_raw
-        or request["request_id"] != PREDECESSOR_REQUEST_ID
+        request["request_id"] != PREDECESSOR_REQUEST_ID
         or request["requested_at"] != PREDECESSOR_REQUESTED_AT
         or request["task"] != PREDECESSOR_TASK
         or request["repository"] != PREDECESSOR_REPOSITORY
@@ -3513,13 +3572,12 @@ def _validate_predecessor_process_incident(value: Any) -> None:
         if len(fields) < 5 or fields[2] != PREDECESSOR_REQUEST_ID or fields[3] != expected_status:
             raise CoordinatorError("predecessor terminal ledger row fields differ")
         terminal_lines.append(line)
-    try:
-        live_ledger = RESOURCE_LEDGER_PATH.read_bytes().decode("utf-8-sig")
-    except (OSError, UnicodeError) as exc:
-        raise CoordinatorError(f"cannot validate predecessor live ledger: {exc}") from exc
+    _live_ledger_raw, live_ledger_lines = _read_resource_ledger(
+        "predecessor live resource ledger"
+    )
     matching_rows = [
         line
-        for line in live_ledger.splitlines()
+        for line in live_ledger_lines
         if f"| {PREDECESSOR_REQUEST_ID} |" in line
     ]
     if matching_rows != [approved_line, *terminal_lines]:
@@ -3866,8 +3924,11 @@ def _validate_predecessor_resource_deferred_incident(value: Any) -> None:
         != RESOURCE_DEFERRED_REQUEST_SHA256
     ):
         raise CoordinatorError("resource-deferred request identity differs")
-    request_file, request_raw = _validate_external_file_binding(
-        request_binding, f"{location}.request", expected_path=request_path
+    request_file, request_value, request_raw = _validate_resource_request_file_binding(
+        request_binding,
+        f"{location}.request",
+        expected_path=request_path,
+        require_canonical=False,
     )
 
     attempt_path = (
@@ -3941,9 +4002,6 @@ def _validate_predecessor_resource_deferred_incident(value: Any) -> None:
         archive_path=bound["candidate_archive"][0],
     )
 
-    request_value, observed_request_raw = _strict_external_json(
-        request_file, "resource-deferred request"
-    )
     request = _exact(
         request_value,
         {
@@ -3959,7 +4017,6 @@ def _validate_predecessor_resource_deferred_incident(value: Any) -> None:
     )
     if (
         request_file != request_path.resolve()
-        or observed_request_raw != request_raw
         or request["request_id"] != RESOURCE_DEFERRED_REQUEST_ID
         or request["requested_at"] != RESOURCE_DEFERRED_REQUESTED_AT
         or request["task"] != RESOURCE_DEFERRED_TASK
@@ -4549,15 +4606,12 @@ def _validate_predecessor_resource_deferred_incident(value: Any) -> None:
         ):
             raise CoordinatorError("resource-deferred terminal ledger fields differ")
         terminal_lines.append(line)
-    try:
-        live_ledger = RESOURCE_LEDGER_PATH.read_bytes().decode("utf-8-sig")
-    except (OSError, UnicodeError) as exc:
-        raise CoordinatorError(
-            f"cannot validate resource-deferred live ledger: {exc}"
-        ) from exc
+    _live_ledger_raw, live_ledger_lines = _read_resource_ledger(
+        "resource-deferred live resource ledger"
+    )
     matching_rows = [
         line
-        for line in live_ledger.splitlines()
+        for line in live_ledger_lines
         if f"| {RESOURCE_DEFERRED_REQUEST_ID} |" in line
     ]
     if matching_rows != [approved_line, *terminal_lines]:
@@ -5190,16 +5244,19 @@ def _validate_leaf_wave_authorization_v5(
             or len(request_id) != 32
             or any(character not in "0123456789abcdef" for character in request_id)
             or request_id in seen_request_ids
-            or request_path.resolve()
-            != (RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json").resolve()
-            or not request_path.is_file()
-            or request_path.is_symlink()
+            or not request_path.is_absolute()
         ):
             raise CoordinatorError("leaf wave request ID/path is invalid or reused")
         seen_request_ids.add(request_id)
-        request_value, request_raw = _strict_external_json(
-            request_path, f"leaf wave request {index}"
+        resolved_request_path, request_value, request_raw = (
+            _read_canonical_resource_request(
+                request_path, f"leaf wave request {index}"
+            )
         )
+        if resolved_request_path != (
+            RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json"
+        ).resolve():
+            raise CoordinatorError("leaf wave request ID/path is invalid or reused")
         request_value = _exact(
             request_value,
             {
@@ -5325,12 +5382,9 @@ def _validate_completed_leaf_wave_ledger_row(
 ) -> dict[str, str]:
     """Bind one consumed leaf request to its unique successful terminal row."""
 
-    try:
-        ledger_lines = RESOURCE_LEDGER_PATH.read_text(
-            encoding="utf-8-sig"
-        ).splitlines()
-    except (OSError, UnicodeError) as exc:
-        raise CoordinatorError(f"cannot inspect resource ledger: {exc}") from exc
+    _ledger_raw, ledger_lines = _read_resource_ledger(
+        "completed leaf-wave resource ledger"
+    )
     matching = [line for line in ledger_lines if f"| {request_id} |" in line]
     parsed: list[tuple[str, str]] = []
     for line in matching:
@@ -5366,6 +5420,34 @@ def _validate_completed_leaf_wave_ledger_row(
         "sha256": sha256((terminal_line.rstrip() + "\n").encode("utf-8")),
         "status": "COMPLETED_PASS",
     }
+
+
+def _validate_finalizer_live_ledger(
+    preserved_ledger_raw: bytes, approved_line: str
+) -> None:
+    """Prove the finalizer ledger preserved its snapshot and only appended."""
+
+    initial_ledger_raw, ledger_lines = _read_resource_ledger(
+        "finalizer authorization live resource ledger"
+    )
+    if not initial_ledger_raw.startswith(preserved_ledger_raw):
+        raise CoordinatorError(
+            "live resource ledger is not an append-only extension of the "
+            "preserved finalizer pre-run ledger"
+        )
+    if ledger_lines.count(approved_line) != 1:
+        raise CoordinatorError("registered APPROVED row is absent or duplicated")
+    final_ledger_raw, _final_ledger_lines = _read_resource_ledger(
+        "finalizer authorization live resource ledger"
+    )
+    if (
+        not final_ledger_raw.startswith(preserved_ledger_raw)
+        or not final_ledger_raw.startswith(initial_ledger_raw)
+    ):
+        raise CoordinatorError(
+            "live resource ledger changed other than by append during finalizer "
+            "authorization validation"
+        )
 
 
 def validate_authorization(
@@ -5512,13 +5594,16 @@ def validate_authorization(
         not isinstance(request_id, str)
         or len(request_id) != 32
         or any(character not in "0123456789abcdef" for character in request_id)
-        or request_path.resolve()
-        != (RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json").resolve()
-        or not request_path.is_file()
-        or request_path.is_symlink()
+        or not request_path.is_absolute()
     ):
         raise CoordinatorError("resource request path is not an absolute file")
-    request_value, request_raw = _strict_external_json(request_path, "resource request")
+    resolved_request_path, request_value, request_raw = _read_canonical_resource_request(
+        request_path, "resource request"
+    )
+    if resolved_request_path != (
+        RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json"
+    ).resolve():
+        raise CoordinatorError("resource request path is not an absolute file")
     request_value = _exact(
         request_value,
         {
@@ -5540,7 +5625,11 @@ def validate_authorization(
     python_executable = Path(str(execution_paths["python_executable"])).resolve()
     output_root = Path(str(execution_paths["output_root"])).resolve()
     aggregate_path = Path(str(execution_paths["aggregate_path"])).resolve()
-    approval_snapshot_path = Path(str(execution_paths["approval_snapshot_path"])).resolve()
+    lexical_approval_snapshot_path = _absolute_lexical_path(
+        execution_paths["approval_snapshot_path"],
+        "resource approval snapshot path",
+    )
+    approval_snapshot_path = lexical_approval_snapshot_path.resolve()
     expected_command = expected_resource_command(
         python_executable=python_executable,
         contract_path=contract_path,
@@ -5585,8 +5674,8 @@ def validate_authorization(
     )
     if approval["ledger_path"] != str(RESOURCE_LEDGER_PATH):
         raise CoordinatorError("resource ledger path differs")
-    snapshot, snapshot_raw, _preserved_ledger_raw = _validate_approval_snapshot(
-        approval_snapshot_path,
+    snapshot, snapshot_raw, preserved_ledger_raw = _validate_approval_snapshot(
+        lexical_approval_snapshot_path,
         contract=contract,
         request_id=request_id,
         request_path=request_path,
@@ -5598,12 +5687,9 @@ def validate_authorization(
         or approval["approved_row_sha256"] != snapshot["approved_row"]["sha256"]
     ):
         raise CoordinatorError("resource ledger approval binding differs")
-    try:
-        ledger_lines = RESOURCE_LEDGER_PATH.read_text(encoding="utf-8-sig").splitlines()
-    except (OSError, UnicodeError) as exc:
-        raise CoordinatorError(f"cannot inspect resource ledger: {exc}") from exc
-    if ledger_lines.count(snapshot["approved_row"]["line"]) != 1:
-        raise CoordinatorError("registered APPROVED row is absent or duplicated")
+    _validate_finalizer_live_ledger(
+        preserved_ledger_raw, snapshot["approved_row"]["line"]
+    )
     return authorization, raw
 
 
@@ -5613,11 +5699,39 @@ def validate_resource_execution_state(
     request = authorization["resource_request"]
     request_id = str(request["request_id"])
     request_path = Path(str(request["request_path"]))
-    request_value, _request_raw = _strict_external_json(request_path, "resource request")
-    try:
-        ledger_lines = RESOURCE_LEDGER_PATH.read_text(encoding="utf-8-sig").splitlines()
-    except (OSError, UnicodeError) as exc:
-        raise CoordinatorError(f"cannot inspect live resource ledger: {exc}") from exc
+    resolved_request_path, raw_request_value, request_raw = (
+        _read_canonical_resource_request(request_path, "resource request")
+    )
+    request_value = _exact(
+        raw_request_value,
+        {
+            "command",
+            "estimate_minutes",
+            "repository",
+            "request_id",
+            "requested_at",
+            "status",
+            "task",
+        },
+        "$.resource_request_file",
+    )
+    expected_request_path = (
+        RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json"
+    ).resolve()
+    if (
+        resolved_request_path != expected_request_path
+        or request_value["request_id"] != request_id
+        or request_value["status"] != "PENDING"
+        or request_value["task"] != request["task"]
+        or request_value["repository"] != request["repository"]
+        or sha256(request_value["command"].encode("utf-8"))
+        != request["command_sha256"]
+        or sha256(request_raw) != request["request_sha256"]
+    ):
+        raise CoordinatorError("resource request changed after authorization validation")
+    _ledger_raw, ledger_lines = _read_resource_ledger(
+        "resource execution live ledger"
+    )
     matching = [line for line in ledger_lines if f"| {request_id} |" in line]
     statuses = [
         fields[3].strip()
@@ -6523,9 +6637,14 @@ def validate_stage4a_leaf_wave_receipt(
     root = allowed_root.resolve(strict=True)
     bound_files: dict[str, tuple[Path, bytes]] = {}
     for name in ("attempt", "authorization", "contract", "manifest", "request", "result"):
-        path, raw = _validate_external_file_binding(
-            receipt[name], f"$.leaf_wave_receipt.{name}"
-        )
+        if name == "request":
+            path, _request_value, raw = _validate_resource_request_file_binding(
+                receipt[name], f"$.leaf_wave_receipt.{name}"
+            )
+        else:
+            path, raw = _validate_external_file_binding(
+                receipt[name], f"$.leaf_wave_receipt.{name}"
+            )
         try:
             path.relative_to(root)
         except ValueError:
@@ -7571,7 +7690,7 @@ def _stage4a_leaf_wave_receipt(
             cycle["manifest_path"], "leaf wave manifest"
         ),
         "plan_sha256": sha256(cycle["plan_raw"]),
-        "request": _external_file_binding(request_path, "leaf wave request"),
+        "request": _resource_request_file_binding(request_path, "leaf wave request"),
         "request_command_sha256": authorization["resource_request"][
             "command_sha256"
         ],
