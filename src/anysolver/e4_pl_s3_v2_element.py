@@ -1,11 +1,13 @@
 """Strict flat-linear E4-PL S3 V2 production candidate.
 
-This module deliberately implements only the bounded Stage-1 surface recorded
-in ``docs/reference_cases/e4_pl_s3_v2_dkmt_equation_map.md``: a flat,
+This module deliberately implements only the bounded flat-linear surface
+recorded in ``docs/reference_cases/e4_pl_s3_v2_dkmt_equation_map.md``: a flat,
 small-strain, homogeneous isotropic elastic triangle with CST membrane,
 published DKMT bending/shear, exact three-point Hammer integration and the
-barycentric PL drill completion.  Every inherited shell capability outside
-that surface fails closed rather than falling back to legacy TRI3 mechanics.
+barycentric PL drill completion.  Its only mixed-model admission is an exact,
+globally coplanar qualified-Q4/V2A mesh with one positively aligned physical
+director.  Every inherited shell capability outside that surface fails closed
+rather than falling back to legacy TRI3 mechanics.
 """
 
 from __future__ import annotations
@@ -19,7 +21,11 @@ import numpy as np
 
 from .element_capabilities import ElementCapabilityError
 from .elements import ShellElement
-from .fe_core import FEMesh, Material
+from .e4_pl_element import (
+    FORMULATION_ID as _QUALIFIED_Q4_FORMULATION_ID,
+    QualifiedE4PLShellElement,
+)
+from .fe_core import FEMesh, Material, Node
 from .e4_pl_s3_state import require_exact_numpy_runtime_authority
 
 
@@ -79,6 +85,7 @@ SUPPORTED_OPERATIONS = frozenset(
         "linear_internal_force",
         "raw_variational_resultants",
         "dead_transverse_pressure",
+        "flat_qualified_q4_v2a_mixed_mesh",
     }
 )
 BLOCKED_OPERATIONS = frozenset(
@@ -87,7 +94,7 @@ BLOCKED_OPERATIONS = frozenset(
         "geometric_stiffness",
         "nonlinear_geometry",
         "material_nonlinearity",
-        "mixed_element_mesh",
+        "unqualified_mixed_element_mesh",
         "nonlinear_state",
         "qualified_recovery",
         "serialization",
@@ -97,7 +104,7 @@ BLOCKED_OPERATIONS = frozenset(
         "offset_load",
         "generalized_section",
         "curved_shell",
-        "mixed_shell_mesh",
+        "nonplanar_mixed_shell_mesh",
     }
 )
 CAPABILITY_MATRIX = MappingProxyType(
@@ -179,6 +186,8 @@ def _plate_embedding() -> np.ndarray:
 
 _PLATE_EMBEDDING = _immutable_float64_array(_plate_embedding())
 _LAYOUT_SENTINEL = object()
+_MIXED_SCOPE_CACHE_SENTINEL = object()
+_MIXED_SCOPE_CACHE_NAME = "_strict_flat_v2_mixed_scope_cache_v1"
 
 
 def _validate_module_authority(
@@ -218,6 +227,11 @@ def _validate_module_authority(
     _expected_component_transform: Any = _local_component_transform,
     _expected_numpy_guard: Any = require_exact_numpy_runtime_authority,
     _expected_layout_sentinel: Any = _LAYOUT_SENTINEL,
+    _expected_mixed_scope_cache_sentinel: Any = _MIXED_SCOPE_CACHE_SENTINEL,
+    _expected_mixed_scope_cache_name: str = _MIXED_SCOPE_CACHE_NAME,
+    _expected_qualified_q4_formulation_id: str = _QUALIFIED_Q4_FORMULATION_ID,
+    _expected_qualified_q4_class: Any = QualifiedE4PLShellElement,
+    _expected_node_class: Any = Node,
 ) -> None:
     """Fail closed if a frozen Stage-1 module binding was rebound at runtime."""
 
@@ -231,8 +245,10 @@ def _validate_module_authority(
         (np, _expected_numpy),
         (math, _expected_math),
         (ShellElement, _expected_shell_class),
+        (QualifiedE4PLShellElement, _expected_qualified_q4_class),
         (FEMesh, _expected_mesh_class),
         (Material, _expected_material_class),
+        (Node, _expected_node_class),
         (ElementCapabilityError, _expected_capability_error),
         (StrictFlatLinearCapabilityError, _expected_candidate_error),
         (_real_scalar, _expected_real_scalar),
@@ -242,6 +258,7 @@ def _validate_module_authority(
         (_local_component_transform, _expected_component_transform),
         (require_exact_numpy_runtime_authority, _expected_numpy_guard),
         (_LAYOUT_SENTINEL, _expected_layout_sentinel),
+        (_MIXED_SCOPE_CACHE_SENTINEL, _expected_mixed_scope_cache_sentinel),
     )
     scalar_bindings = (
         (SHEAR_CORRECTION, _expected_shear_correction),
@@ -260,6 +277,11 @@ def _validate_module_authority(
         (RESULTANT_POLICY_ID, _expected_resultant_id),
         (DIRECTOR_POLICY_ID, _expected_director_id),
         (SECTION_POLICY_ID, _expected_section_id),
+        (_MIXED_SCOPE_CACHE_NAME, _expected_mixed_scope_cache_name),
+        (
+            _QUALIFIED_Q4_FORMULATION_ID,
+            _expected_qualified_q4_formulation_id,
+        ),
     )
     if any(actual is not expected for actual, expected in identity_bindings) or any(
         type(actual) is not type(expected) or actual != expected
@@ -673,68 +695,235 @@ class StrictFlatLinearE4PLS3V2ShellElement(
         return coordinates
 
     def _validate_model_scope(self, mesh: FEMesh) -> None:
-        """Conservatively close the open curved and mixed-shell model gates."""
+        """Admit only one exact, coplanar qualified-Q4/V2A model boundary.
 
-        registered_items = list(mesh.elements.items())
-        if any(
-            type(key) is not int or key != element.element_id
-            for key, element in registered_items
+        The complete registry is checked once per mesh mutation epoch.  A
+        successful check is cached with the mesh's solver-owned direct-state
+        token, mapping identities and topology/geometry revisions.  This keeps
+        formal mixed-mesh assembly linear in the element count while any node,
+        element or registry mutation forces a complete revalidation.
+        """
+
+        if type(mesh) is not FEMesh:
+            raise TypeError("strict-flat S3 V2 requires an exact FEMesh")
+
+        mesh_namespace = object.__getattribute__(mesh, "__dict__")
+        elements = dict.get(mesh_namespace, "elements")
+        nodes = dict.get(mesh_namespace, "nodes")
+        token = dict.get(mesh_namespace, "_qualified_direct_state_token")
+        revisions = dict.get(mesh_namespace, "revisions")
+        if (
+            not isinstance(elements, dict)
+            or not isinstance(nodes, dict)
+            or not isinstance(token, list)
+            or len(token) != 1
+            or type(token[0]) is not int
+            or type(revisions) is not dict
+            or type(revisions.get("topology")) is not int
+            or type(revisions.get("geometry")) is not int
         ):
             raise StrictFlatLinearCapabilityError(
-                "strict-flat S3 V2 element registry identity is malformed"
+                "strict-flat S3 V2 mesh registry authority is malformed"
             )
-        registered_elements = [element for _, element in registered_items]
-        if len({id(element) for element in registered_elements}) != len(
-            registered_elements
-        ) or len({element.element_id for element in registered_elements}) != len(
-            registered_elements
+        if not elements:
+            # Standalone element evaluation remains part of the local
+            # formulation gate.  A nonempty model registry, however, must own
+            # the exact element instance evaluated below.
+            return
+        if elements.get(self.element_id) is not self:
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 element registry identity must register the "
+                "evaluated V2A instance exactly"
+            )
+
+        q4_class_namespace = type.__getattribute__(
+            QualifiedE4PLShellElement,
+            "__dict__",
+        )
+        if (
+            q4_class_namespace.get("formulation_id")
+            != _QUALIFIED_Q4_FORMULATION_ID
+        ):
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 qualified Q4 formulation identity changed"
+            )
+
+        common_normal = np.asarray(self.reference_normal, dtype=np.float64)
+        cache = dict.get(mesh_namespace, _MIXED_SCOPE_CACHE_NAME)
+        if (
+            type(cache) is tuple
+            and len(cache) == 8
+            and cache[0] is _MIXED_SCOPE_CACHE_SENTINEL
+            and cache[1] is token
+            and cache[2] == token[0]
+            and cache[3] is nodes
+            and cache[4] is elements
+            and cache[5] == revisions["topology"]
+            and cache[6] == revisions["geometry"]
+            and cache[7] == common_normal.tobytes(order="C")
+        ):
+            return
+
+        try:
+            registered_items = list(elements.items())
+            registered_nodes = list(nodes.items())
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 mesh registry authority is malformed"
+            ) from exc
+
+        allowed_types = (__class__, QualifiedE4PLShellElement)
+        registered_elements: list[Any] = []
+        for key, element in registered_items:
+            if type(key) is not int or type(element) not in allowed_types:
+                raise StrictFlatLinearCapabilityError(
+                    "strict-flat S3 V2 mixed element registry permits only exact "
+                    "qualified Q4 and V2A shell elements"
+                )
+            namespace = object.__getattribute__(element, "__dict__")
+            element_id = dict.get(namespace, "element_id")
+            if type(element_id) is not int or key != element_id:
+                raise StrictFlatLinearCapabilityError(
+                    "strict-flat S3 V2 element registry identity is malformed"
+                )
+            registered_elements.append(element)
+        if (
+            len({id(element) for element in registered_elements})
+            != len(registered_elements)
+            or len(
+                {
+                    dict.get(object.__getattribute__(element, "__dict__"), "element_id")
+                    for element in registered_elements
+                }
+            )
+            != len(registered_elements)
         ):
             raise StrictFlatLinearCapabilityError(
                 "strict-flat S3 V2 element registry contains duplicate identities"
             )
-        if registered_elements and not any(
-            element is self for element in registered_elements
-        ):
-            raise StrictFlatLinearCapabilityError(
-                "strict-flat S3 V2 must be registered in a nonempty element mesh"
-            )
-        if any(type(element) is not __class__ for element in registered_elements):
-            raise StrictFlatLinearCapabilityError(
-                "strict-flat S3 V2 mixed element meshes are outside Stage-1 authority"
-            )
-        if not registered_elements:
-            return
 
-        common_normal = np.asarray(
-            registered_elements[0].reference_normal, dtype=float
-        )
-        common_origin: Optional[np.ndarray] = None
-        gathered: list[np.ndarray] = []
-        for element in registered_elements:
-            element._validate_configuration()
-            normal = np.asarray(element.reference_normal, dtype=float)
-            if abs(float(normal @ common_normal)) < 1.0 - _NORMAL_TOLERANCE:
+        node_coordinates: dict[int, np.ndarray] = {}
+        observed_nodes: list[Node] = []
+        for key, node in registered_nodes:
+            if type(key) is not int or type(node) is not Node:
                 raise StrictFlatLinearCapabilityError(
-                    "strict-flat S3 V2 shell directors do not share one flat plane"
+                    "strict-flat S3 V2 node registry identity is malformed"
                 )
-            coordinates = element._coordinates(mesh)
-            gathered.append(coordinates)
-            if common_origin is None:
-                common_origin = coordinates[0].copy()
-        assert common_origin is not None
-        scale = max(
-            1.0,
-            *(
-                float(np.max(np.linalg.norm(coordinates - common_origin, axis=1)))
-                for coordinates in gathered
+            namespace = object.__getattribute__(node, "__dict__")
+            if type(dict.get(namespace, "id")) is not int or namespace["id"] != key:
+                raise StrictFlatLinearCapabilityError(
+                    "strict-flat S3 V2 node registry identity is malformed"
+                )
+            try:
+                coordinate = np.asarray(
+                    (
+                        _real_scalar(dict.get(namespace, "x"), f"node {key} x"),
+                        _real_scalar(dict.get(namespace, "y"), f"node {key} y"),
+                        _real_scalar(dict.get(namespace, "z"), f"node {key} z"),
+                    ),
+                    dtype=np.float64,
+                )
+            except (TypeError, ValueError) as exc:
+                raise StrictFlatLinearCapabilityError(
+                    f"strict-flat S3 V2 node {key} coordinates are invalid"
+                ) from exc
+            node_coordinates[key] = coordinate
+            observed_nodes.append(node)
+        if len({id(node) for node in observed_nodes}) != len(observed_nodes):
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 node registry contains duplicate identities"
+            )
+
+        for element in registered_elements:
+            if type(element) is __class__:
+                element._validate_configuration()
+                director = np.asarray(element.reference_normal, dtype=np.float64)
+                element_coordinates = element._coordinates(mesh)
+            else:
+                namespace = object.__getattribute__(element, "__dict__")
+                if "formulation_id" in namespace:
+                    raise StrictFlatLinearCapabilityError(
+                        "strict-flat S3 V2 qualified Q4 formulation identity is "
+                        "shadowed"
+                    )
+                # This accessor runs the independently frozen Q4 runtime and
+                # instance guards before returning any coordinate observation.
+                element_coordinates = np.asarray(
+                    element.get_node_coordinates(mesh),
+                    dtype=np.float64,
+                )
+                reference_normal = dict.get(namespace, "reference_normal")
+                polarity = dict.get(namespace, "director_polarity")
+                if reference_normal is None:
+                    raise StrictFlatLinearCapabilityError(
+                        "strict-flat S3 V2 mixed qualified Q4 requires an "
+                        "authoritative reference_normal"
+                    )
+                if type(polarity) is not int or polarity not in {-1, 1}:
+                    raise StrictFlatLinearCapabilityError(
+                        "strict-flat S3 V2 qualified Q4 physical-director "
+                        "authority is malformed"
+                    )
+                director = float(polarity) * np.asarray(
+                    reference_normal,
+                    dtype=np.float64,
+                )
+            if (
+                director.shape != (3,)
+                or not np.all(np.isfinite(director))
+                or not math.isclose(
+                    float(np.linalg.norm(director)),
+                    1.0,
+                    rel_tol=0.0,
+                    abs_tol=8.0 * np.finfo(np.float64).eps,
+                )
+                or float(director @ common_normal)
+                < 1.0 - _NORMAL_TOLERANCE
+            ):
+                raise StrictFlatLinearCapabilityError(
+                    "strict-flat S3 V2 mixed shell physical directors are not "
+                    "positively aligned"
+                )
+            if (
+                element_coordinates.shape != (len(element.node_ids), 3)
+                or not np.all(np.isfinite(element_coordinates))
+                or any(node_id not in node_coordinates for node_id in element.node_ids)
+            ):
+                raise StrictFlatLinearCapabilityError(
+                    "strict-flat S3 V2 mixed shell connectivity is malformed"
+                )
+
+        if not node_coordinates:
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 nonempty element registry has no nodes"
+            )
+        all_coordinates = np.asarray(
+            [node_coordinates[key] for key in sorted(node_coordinates)],
+            dtype=np.float64,
+        )
+        common_origin = all_coordinates[0]
+        relative = all_coordinates - common_origin
+        scale = max(1.0, float(np.max(np.linalg.norm(relative, axis=1))))
+        offsets = relative @ common_normal
+        if float(np.max(np.abs(offsets))) > _NORMAL_TOLERANCE * scale:
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 shell nodes are not globally coplanar"
+            )
+
+        object.__setattr__(
+            mesh,
+            _MIXED_SCOPE_CACHE_NAME,
+            (
+                _MIXED_SCOPE_CACHE_SENTINEL,
+                token,
+                token[0],
+                nodes,
+                elements,
+                revisions["topology"],
+                revisions["geometry"],
+                common_normal.tobytes(order="C"),
             ),
         )
-        for coordinates in gathered:
-            offsets = (coordinates - common_origin) @ common_normal
-            if float(np.max(np.abs(offsets))) > _NORMAL_TOLERANCE * scale:
-                raise StrictFlatLinearCapabilityError(
-                    "strict-flat S3 V2 shell nodes are not globally coplanar"
-                )
 
     def _geometry(self, mesh: FEMesh) -> Dict[str, Any]:
         self._validate_configuration()
