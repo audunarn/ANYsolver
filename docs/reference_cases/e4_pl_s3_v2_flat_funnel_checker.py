@@ -14,6 +14,7 @@ import json
 import math
 import os
 from pathlib import Path
+import tempfile
 from typing import Any, Mapping, Sequence
 
 
@@ -48,8 +49,10 @@ REFERENCE = {
     "thickness": 0.01,
     "width": 1.0,
 }
-SUPPORT_ID = "HARD_NAVIER_TRANSLATIONS_PLUS_TANGENTIAL_ROTATIONS_V2"
-REFERENCE_ID = "INDEPENDENT_NAVIER_REISSNER_MINDLIN_UNIFORM_PRESSURE_V2"
+SUPPORT_ID = "HARD_NAVIER_TRANSLATIONS_PLUS_EDGE_ZERO_SHELL_ROTATIONS_V3"
+REFERENCE_ID = (
+    "INDEPENDENT_NAVIER_REISSNER_MINDLIN_UNIFORM_PRESSURE_SHELL_EMBEDDED_V3"
+)
 ENERGY_ID = "DISCRETE_STIFFNESS_ENERGY_NORM_OF_UH_MINUS_NODAL_MINDLIN_REFERENCE_V1"
 LOAD_ID = "UNIFORM_REFERENCE_NORMAL_DEAD_PRESSURE_1000_PA_V1"
 BLOCKED = "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
@@ -232,25 +235,25 @@ def reference_vector_document(level: int) -> tuple[dict[str, Any], float]:
     sine = np.sin(angles)
     cosine = np.cos(angles)
     w = np.einsum("mn,im,jn->ji", solved[..., 0], sine, sine, optimize=True)
-    theta_x = np.einsum(
+    beta_x = np.einsum(
         "mn,im,jn->ji", solved[..., 1], cosine, sine, optimize=True
     )
-    theta_y = np.einsum(
+    beta_y = np.einsum(
         "mn,im,jn->ji", solved[..., 2], sine, cosine, optimize=True
     )
     vector = np.zeros(((level + 1) ** 2, 6), dtype=float)
     vector[:, 2] = w.reshape(-1)
-    vector[:, 3] = theta_x.reshape(-1)
-    vector[:, 4] = theta_y.reshape(-1)
+    vector[:, 3] = -beta_y.reshape(-1)
+    vector[:, 4] = beta_x.reshape(-1)
     for j in range(level + 1):
         for i in range(level + 1):
             row = j * (level + 1) + i
             if i in (0, level) or j in (0, level):
                 vector[row, :3] = 0.0
             if i in (0, level):
-                vector[row, 4] = 0.0
-            if j in (0, level):
                 vector[row, 3] = 0.0
+            if j in (0, level):
+                vector[row, 4] = 0.0
     document = {
         "dof_order": ["ux", "uy", "uz", "theta_x", "theta_y", "theta_d"],
         "level": level,
@@ -359,8 +362,8 @@ def _validate_record(
         record["support_counts"],
         {
             "edge_nodes",
-            "theta_x_y_edge_constraints",
-            "theta_y_x_edge_constraints",
+            "theta_x_x_edge_constraints",
+            "theta_y_y_edge_constraints",
             "translation_constraints",
         },
         "$.record.support_counts",
@@ -368,8 +371,8 @@ def _validate_record(
     expected_edge_nodes = 4 * level
     if supports != {
         "edge_nodes": expected_edge_nodes,
-        "theta_x_y_edge_constraints": 2 * (level + 1),
-        "theta_y_x_edge_constraints": 2 * (level + 1),
+        "theta_x_x_edge_constraints": 2 * (level + 1),
+        "theta_y_y_edge_constraints": 2 * (level + 1),
         "translation_constraints": 3 * expected_edge_nodes,
     }:
         raise CheckerError("hard-Navier support counts differ")
@@ -724,13 +727,26 @@ def verify_shard(proof_path: Path, plan_path: Path) -> dict[str, Any]:
 def write_exclusive(path: Path, value: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = canonical_bytes(dict(value))
+    if os.path.lexists(path):
+        raise CheckerError(f"refusing to overwrite checker output: {path}")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.pending-", dir=path.parent
+    )
+    temporary = Path(temporary_name)
     try:
-        with path.open("xb") as stream:
+        with os.fdopen(descriptor, "wb") as stream:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
-    except FileExistsError as exc:
-        raise CheckerError(f"refusing to overwrite checker output: {path}") from exc
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise CheckerError(f"refusing to overwrite checker output: {path}") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
 
 
 def _parser() -> argparse.ArgumentParser:

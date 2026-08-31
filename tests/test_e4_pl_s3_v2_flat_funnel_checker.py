@@ -116,8 +116,8 @@ def _classifying_record(
         },
         "support_counts": {
             "edge_nodes": 4 * level,
-            "theta_x_y_edge_constraints": 2 * (level + 1),
-            "theta_y_x_edge_constraints": 2 * (level + 1),
+            "theta_x_x_edge_constraints": 2 * (level + 1),
+            "theta_y_y_edge_constraints": 2 * (level + 1),
             "translation_constraints": 12 * level,
         },
     }
@@ -149,10 +149,10 @@ def _proof(
         "phase": "4A",
         "protocol": {
             "classification": producer.CLASSIFICATION,
-            "energy_norm_id": funnel.ENERGY_NORM_IDENTITY,
+            "energy_norm_id": checker.ENERGY_ID,
             "load_id": producer.LOAD_IDENTITY,
-            "reference_id": funnel.REFERENCE_IDENTITY,
-            "support_id": funnel.SUPPORT_IDENTITY,
+            "reference_id": producer.REFERENCE_IDENTITY,
+            "support_id": producer.SUPPORT_IDENTITY,
         },
         "schema": producer.PAYLOAD_SCHEMA,
         "scope": "full",
@@ -208,6 +208,28 @@ def test_independent_reference_encoding_matches_producer() -> None:
         assert center == producer_center
 
 
+def test_independent_reference_uses_v3_shell_embedding_and_hard_trace() -> None:
+    level = 2
+    document, _center = checker.reference_vector_document(level)
+    rows = [
+        document["values"][index : index + 6]
+        for index in range(0, len(document["values"]), 6)
+    ]
+    assert checker.REFERENCE_ID.endswith("SHELL_EMBEDDED_V3")
+    assert checker.SUPPORT_ID.endswith("SHELL_ROTATIONS_V3")
+    for j in range(level + 1):
+        for i in range(level + 1):
+            row = rows[j * (level + 1) + i]
+            if i in (0, level) or j in (0, level):
+                assert row[:3] == [0.0, 0.0, 0.0]
+            # beta_y=-theta_x and beta_x=theta_y.  The frozen hard trace
+            # therefore constrains rx on x edges and ry on y edges.
+            if i in (0, level):
+                assert row[3] == 0.0
+            if j in (0, level):
+                assert row[4] == 0.0
+
+
 def test_formal_pass_is_deterministic_and_authorizes_expansion(tmp_path: Path) -> None:
     proof, plan, _document = _proof(tmp_path, ratio=1.10)
     first = checker.verify_shard(proof, plan)
@@ -218,6 +240,15 @@ def test_formal_pass_is_deterministic_and_authorizes_expansion(tmp_path: Path) -
     assert first["advisory_review_required"] is False
     assert first["successor_expansion_authorized"] is True
     assert len(first["sequence_results"]) == 8
+
+    payload = checker.strict_json_load(proof)[0]["scientific_payload"]
+    assert payload["protocol"] == {
+        "classification": producer.CLASSIFICATION,
+        "energy_norm_id": checker.ENERGY_ID,
+        "load_id": checker.LOAD_ID,
+        "reference_id": checker.REFERENCE_ID,
+        "support_id": checker.SUPPORT_ID,
+    }
 
 
 def test_advisory_margin_pauses_without_changing_formal_terminal(tmp_path: Path) -> None:
@@ -287,6 +318,9 @@ def test_cli_writes_exclusive_byte_identical_replicas(tmp_path: Path) -> None:
             ]
         ) == 0
         outputs.append(output.read_bytes())
+        assert not list(tmp_path.glob(f".{output.name}.pending-*"))
     assert outputs[0] == outputs[1]
     with pytest.raises(checker.CheckerError, match="overwrite"):
         checker.write_exclusive(tmp_path / "checker-1.json", {"blocked": False})
+    assert (tmp_path / "checker-1.json").read_bytes() == outputs[0]
+    assert not list(tmp_path.glob(".checker-1.json.pending-*"))

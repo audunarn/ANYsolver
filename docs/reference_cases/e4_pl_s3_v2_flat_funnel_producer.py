@@ -15,15 +15,15 @@ import math
 import os
 from pathlib import Path
 import sys
+import tarfile
+import tempfile
 from typing import Any, Mapping, Sequence
 
 from e4_pl_s3_v2_flat_funnel import (
     ENERGY_NORM_IDENTITY,
     MANIFEST_SHA256,
-    REFERENCE_IDENTITY,
     SELECTOR,
     SHARD_SCIENTIFIC_SCHEMA,
-    SUPPORT_IDENTITY,
     FlatFunnelError,
     append_progress,
     canonical_bytes,
@@ -49,6 +49,10 @@ CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
 V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
 REFERENCE_VECTOR_ENCODING = "CANONICAL_JSON_ROW_MAJOR_NODAL_6DOF_V1"
 REFERENCE_DOF_ORDER = ("ux", "uy", "uz", "theta_x", "theta_y", "theta_d")
+REFERENCE_IDENTITY = (
+    "INDEPENDENT_NAVIER_REISSNER_MINDLIN_UNIFORM_PRESSURE_SHELL_EMBEDDED_V3"
+)
+SUPPORT_IDENTITY = "HARD_NAVIER_TRANSLATIONS_PLUS_EDGE_ZERO_SHELL_ROTATIONS_V3"
 Q4_FORMULATION_ID = "E4_PL_QUALIFIED_Q4_HYBRID_V2"
 V2A_FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1"
 V1_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
@@ -62,6 +66,30 @@ POISSON_RATIO = 0.3
 DENSITY = 7850.0
 SHEAR_CORRECTION = 5.0 / 6.0
 SERIES_MAX_ODD_INDEX = 99
+
+
+def _publish_exclusive(path: Path, raw: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(path):
+        raise FlatFunnelError("refusing to overwrite scientific output")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.pending-", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise FlatFunnelError("refusing to overwrite scientific output") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
 
 
 def _load_manifest_generator() -> Any:
@@ -104,10 +132,17 @@ def load_assignment(
     return plan, shard, sha256(plan_raw)
 
 
-def activate_frozen_candidate_source() -> None:
-    """Select this checkout's source tree only after authority validation."""
+def activate_frozen_candidate_source(candidate_source_root: Path) -> None:
+    """Select an extracted exact-candidate source only after authority validation."""
 
-    source_root = (ROOT / "src").resolve()
+    candidate_root = candidate_source_root.resolve()
+    source_root = (candidate_root / "src").resolve()
+    try:
+        source_root.relative_to(candidate_root)
+    except ValueError as exc:
+        raise FlatFunnelError("candidate source root escapes its extracted tree") from exc
+    if not source_root.is_dir() or source_root.is_symlink():
+        raise FlatFunnelError("candidate source root is not a regular extracted tree")
     if any(name == "anysolver" or name.startswith("anysolver.") for name in sys.modules):
         raise FlatFunnelError("ANYsolver was imported before producer authority validation")
     sys.path.insert(0, str(source_root))
@@ -119,6 +154,64 @@ def activate_frozen_candidate_source() -> None:
         origin.relative_to(source_root)
     except ValueError as exc:
         raise FlatFunnelError("ANYsolver candidate resolved outside the frozen source tree") from exc
+
+
+def validate_extracted_candidate_source(
+    candidate_source_root: Path,
+    candidate_archive: Path,
+    candidate_archive_sha256: str,
+) -> None:
+    """Prove the imported tree is exactly the registered Git archive."""
+
+    root = candidate_source_root.resolve()
+    archive = candidate_archive.resolve()
+    if not root.is_dir() or root.is_symlink():
+        raise FlatFunnelError("extracted candidate root is not a regular directory")
+    if not archive.is_file() or archive.is_symlink():
+        raise FlatFunnelError("candidate archive is not a regular file")
+    if (
+        len(candidate_archive_sha256) != 64
+        or candidate_archive_sha256 != candidate_archive_sha256.upper()
+        or any(character not in "0123456789ABCDEF" for character in candidate_archive_sha256)
+        or sha256(archive.read_bytes()) != candidate_archive_sha256
+    ):
+        raise FlatFunnelError("candidate archive hash differs")
+    expected_files: set[str] = set()
+    seen_names: set[str] = set()
+    with tarfile.open(archive, mode="r:") as bundle:
+        for member in bundle.getmembers():
+            name = member.name.rstrip("/")
+            if not name:
+                continue
+            pure = Path(name.replace("/", os.sep))
+            if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
+                raise FlatFunnelError("candidate archive contains an unsafe path")
+            canonical_name = "/".join(pure.parts)
+            if canonical_name.casefold() in seen_names:
+                raise FlatFunnelError("candidate archive path is duplicated")
+            seen_names.add(canonical_name.casefold())
+            target = root.joinpath(*pure.parts).resolve()
+            try:
+                target.relative_to(root)
+            except ValueError as exc:
+                raise FlatFunnelError("candidate archive path escapes its root") from exc
+            if member.isdir():
+                if not target.is_dir() or target.is_symlink():
+                    raise FlatFunnelError("candidate archive directory differs")
+                continue
+            if not member.isfile() or not target.is_file() or target.is_symlink():
+                raise FlatFunnelError("candidate archive contains a non-regular entry")
+            source = bundle.extractfile(member)
+            if source is None or target.read_bytes() != source.read():
+                raise FlatFunnelError("extracted candidate file differs from its archive")
+            expected_files.add(canonical_name)
+    actual_files = {
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*")
+        if path.is_file() and not path.is_symlink()
+    }
+    if actual_files != expected_files:
+        raise FlatFunnelError("extracted candidate file graph differs from its archive")
 
 
 def _node_id(i: int, j: int, level: int) -> int:
@@ -149,22 +242,22 @@ def _hard_navier_supports(model: Any, level: int) -> dict[str, int]:
     )
     model.add_boundary_condition(
         BoundaryCondition(
-            "hard_navier_theta_y_on_x_edges",
+            "hard_navier_theta_x_on_x_edges",
             x_edges,
-            {"ry": 0.0},
+            {"rx": 0.0},
         )
     )
     model.add_boundary_condition(
         BoundaryCondition(
-            "hard_navier_theta_x_on_y_edges",
+            "hard_navier_theta_y_on_y_edges",
             y_edges,
-            {"rx": 0.0},
+            {"ry": 0.0},
         )
     )
     return {
         "edge_nodes": len(all_edges),
-        "theta_x_y_edge_constraints": len(y_edges),
-        "theta_y_x_edge_constraints": len(x_edges),
+        "theta_x_x_edge_constraints": len(x_edges),
+        "theta_y_y_edge_constraints": len(y_edges),
         "translation_constraints": 3 * len(all_edges),
     }
 
@@ -227,6 +320,7 @@ def _build_model(
                         "phase4a_steel",
                         formulation="e4-pl",
                         thickness=THICKNESS,
+                        reference_normal=np.asarray((0.0, 0.0, 1.0)),
                         drilling_stabilization=0.001,
                         hourglass_stabilization=0.001,
                         pl_stabilization=1.0,
@@ -334,7 +428,7 @@ def mindlin_nodal_reference(level: int) -> tuple[Any, str, float]:
     if cached is not None:
         vector, digest, center = cached
         return vector.copy(), digest, center
-    odd, w_amplitude, theta_x_amplitude, theta_y_amplitude, _load = (
+    odd, w_amplitude, beta_x_amplitude, beta_y_amplitude, _load = (
         _mindlin_amplitudes()
     )
     coordinates = np.linspace(0.0, 1.0, nlevel + 1)
@@ -342,16 +436,17 @@ def mindlin_nodal_reference(level: int) -> tuple[Any, str, float]:
     sine = np.sin(angles)
     cosine = np.cos(angles)
     transverse = np.einsum("mn,im,jn->ji", w_amplitude, sine, sine, optimize=True)
-    theta_x = np.einsum(
-        "mn,im,jn->ji", theta_x_amplitude, cosine, sine, optimize=True
+    beta_x = np.einsum(
+        "mn,im,jn->ji", beta_x_amplitude, cosine, sine, optimize=True
     )
-    theta_y = np.einsum(
-        "mn,im,jn->ji", theta_y_amplitude, sine, cosine, optimize=True
+    beta_y = np.einsum(
+        "mn,im,jn->ji", beta_y_amplitude, sine, cosine, optimize=True
     )
     vector = np.zeros(((nlevel + 1) ** 2, 6), dtype=float)
     vector[:, 2] = transverse.reshape(-1)
-    vector[:, 3] = theta_x.reshape(-1)
-    vector[:, 4] = theta_y.reshape(-1)
+    # Frozen shell convention: beta_x=theta_y and beta_y=-theta_x.
+    vector[:, 3] = -beta_y.reshape(-1)
+    vector[:, 4] = beta_x.reshape(-1)
     # Enforce the exact discrete hard-Navier trace, avoiding sine(pi) roundoff
     # in a reference input that is compared in assembled discrete energy.
     for j in range(nlevel + 1):
@@ -360,9 +455,9 @@ def mindlin_nodal_reference(level: int) -> tuple[Any, str, float]:
             if i in (0, nlevel) or j in (0, nlevel):
                 vector[row, :3] = 0.0
             if i in (0, nlevel):
-                vector[row, 4] = 0.0
-            if j in (0, nlevel):
                 vector[row, 3] = 0.0
+            if j in (0, nlevel):
+                vector[row, 4] = 0.0
     made = np.asarray(vector.reshape(-1), dtype=np.float64)
     reference_document = {
         "dof_order": list(REFERENCE_DOF_ORDER),
@@ -504,8 +599,8 @@ def produce_case(
         key: int(combined_counts[key])
         for key in (
             "edge_nodes",
-            "theta_x_y_edge_constraints",
-            "theta_y_x_edge_constraints",
+            "theta_x_x_edge_constraints",
+            "theta_y_y_edge_constraints",
             "translation_constraints",
         )
     }
@@ -573,6 +668,9 @@ def run_assignment(
     *,
     shard_index: int,
     selector: str,
+    candidate_source_root: Path,
+    candidate_archive: Path,
+    candidate_archive_sha256: str,
     output: Path,
     progress: Path,
 ) -> dict[str, Any]:
@@ -610,7 +708,12 @@ def run_assignment(
             total=len(records),
         ),
     )
-    activate_frozen_candidate_source()
+    validate_extracted_candidate_source(
+        candidate_source_root,
+        candidate_archive,
+        candidate_archive_sha256,
+    )
+    activate_frozen_candidate_source(candidate_source_root)
     classifying: list[dict[str, Any]] = []
     comparators: list[dict[str, Any]] = []
     for completed, member in enumerate(records, start=1):
@@ -684,11 +787,7 @@ def run_assignment(
             total=len(records),
         ),
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("xb") as stream:
-        stream.write(canonical_bytes(document))
-        stream.flush()
-        os.fsync(stream.fileno())
+    _publish_exclusive(output, canonical_bytes(document))
     sequence += 1
     append_progress(
         progress,
@@ -708,6 +807,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-flat-assignment", type=Path, required=True)
     parser.add_argument("--shard-index", type=int, required=True)
     parser.add_argument("--selector", required=True)
+    parser.add_argument("--candidate-source-root", type=Path, required=True)
+    parser.add_argument("--candidate-archive", type=Path, required=True)
+    parser.add_argument("--candidate-archive-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--progress", type=Path, required=True)
     return parser
@@ -719,6 +821,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         arguments.run_flat_assignment,
         shard_index=arguments.shard_index,
         selector=arguments.selector,
+        candidate_source_root=arguments.candidate_source_root,
+        candidate_archive=arguments.candidate_archive,
+        candidate_archive_sha256=arguments.candidate_archive_sha256,
         output=arguments.output,
         progress=arguments.progress,
     )

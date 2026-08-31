@@ -17,8 +17,11 @@ import json
 import math
 import os
 from pathlib import Path, PurePosixPath
+import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 import time
 from typing import Any, Mapping, Sequence
 
@@ -36,10 +39,11 @@ BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
 CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v1"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v1"
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v2"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v3"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
-AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v1"
+AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
 CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
+PRODUCER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-bounded-wave-result-v1"
 BLOCKED = "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
 NO_GO = "NO_GO_E4_PL_S3_V2A_MIXED_FLEXURAL_CONVERGENCE"
 PASS = "PASS_E4_PL_S3_V2A_FLAT_FUNNEL_PHASE_4A"
@@ -322,6 +326,7 @@ def _validate_checker_result(
     wrapper: Mapping[str, Any],
     *,
     expected_assignment_id: str,
+    expected_proof: Mapping[str, Any],
 ) -> tuple[Mapping[str, Any], bytes]:
     wrapper = _exact(
         wrapper,
@@ -331,6 +336,8 @@ def _validate_checker_result(
             "output_path",
             "output_sha256",
             "peak_tree_memory_bytes",
+            "proof_path",
+            "proof_sha256",
             "stderr_sha256",
             "stdout_sha256",
             "termination_proven",
@@ -350,6 +357,15 @@ def _validate_checker_result(
     )
     for key in ("output_sha256", "stderr_sha256", "stdout_sha256"):
         _digest(wrapper[key], f"$.checker_wrapper.{key}")
+    proof_path = Path(str(wrapper["proof_path"])).resolve()
+    if (
+        not proof_path.is_file()
+        or proof_path.is_symlink()
+        or proof_path != Path(str(expected_proof["proof_path"])).resolve()
+        or wrapper["proof_sha256"] != expected_proof["proof_sha256"]
+        or sha256(proof_path.read_bytes()) != expected_proof["proof_sha256"]
+    ):
+        raise CoordinatorError("checker wrapper proof binding differs")
     output_path = Path(str(wrapper["output_path"]))
     if not output_path.is_absolute() or not output_path.is_file():
         raise CoordinatorError("checker output path is not an absolute regular file")
@@ -399,6 +415,12 @@ def _validate_checker_result(
         raise CoordinatorError("checker result identity or coverage differs")
     for key in ("assignment_sha256", "plan_sha256", "proof_sha256"):
         _digest(result[key], f"$.checker[{expected_assignment_id}].{key}")
+    if (
+        result["assignment_sha256"] != expected_proof["assignment_sha256"]
+        or result["plan_sha256"] != expected_proof["plan_sha256"]
+        or result["proof_sha256"] != expected_proof["proof_sha256"]
+    ):
+        raise CoordinatorError("checker result is not joined to its producer proof")
     failures = result["formal_failures"]
     if (
         not isinstance(failures, list)
@@ -435,12 +457,19 @@ def _git_environment() -> dict[str, str]:
     for key in tuple(environment):
         if key in {
             "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+            "GIT_ATTR_SOURCE",
+            "GIT_CEILING_DIRECTORIES",
             "GIT_COMMON_DIR",
+            "GIT_CONFIG",
             "GIT_CONFIG_COUNT",
+            "GIT_CONFIG_SYSTEM",
             "GIT_DIR",
+            "GIT_DISCOVERY_ACROSS_FILESYSTEM",
             "GIT_EXTERNAL_DIFF",
             "GIT_INDEX_FILE",
             "GIT_OBJECT_DIRECTORY",
+            "GIT_NAMESPACE",
+            "GIT_SHALLOW_FILE",
             "GIT_WORK_TREE",
         } or key.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")):
             environment.pop(key, None)
@@ -456,9 +485,60 @@ def _git_environment() -> dict[str, str]:
     return environment
 
 
+def _git_runtime_paths() -> tuple[Path, Path]:
+    launcher_text = shutil.which("git")
+    if launcher_text is None:
+        raise CoordinatorError("registered Git launcher cannot be resolved")
+    launcher = Path(launcher_text).resolve()
+    if os.name == "nt":
+        engine = (launcher.parent.parent / "mingw64" / "bin" / "git.exe").resolve()
+    else:
+        engine = launcher
+    for label, path in (("launcher", launcher), ("engine", engine)):
+        if not path.is_file() or path.is_symlink():
+            raise CoordinatorError(f"Git {label} is not a regular non-link file")
+    return launcher, engine
+
+
+def _discover_git_runtime() -> dict[str, Any]:
+    launcher, engine = _git_runtime_paths()
+    completed_version = subprocess.run(
+        [str(engine), "--version"],
+        cwd=ROOT,
+        env=_git_environment(),
+        check=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    completed_exec = subprocess.run(
+        [str(engine), "--exec-path"],
+        cwd=ROOT,
+        env=_git_environment(),
+        check=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    exec_path = Path(completed_exec.stdout.decode("utf-8").strip()).resolve()
+    if not exec_path.is_dir() or exec_path.is_symlink():
+        raise CoordinatorError("Git exec path is not a regular directory")
+    return {
+        "engine_byte_count": engine.stat().st_size,
+        "engine_path": str(engine),
+        "engine_sha256": sha256(engine.read_bytes()),
+        "exec_path": str(exec_path),
+        "launcher_byte_count": launcher.stat().st_size,
+        "launcher_path": str(launcher),
+        "launcher_sha256": sha256(launcher.read_bytes()),
+        "version": completed_version.stdout.decode("utf-8").strip(),
+    }
+
+
 def _git_command(*arguments: str, repository: Path = ROOT) -> list[str]:
+    _launcher, engine = _git_runtime_paths()
     return [
-        "git",
+        str(engine),
         "-c",
         f"safe.directory={repository.resolve()}",
         "-c",
@@ -498,6 +578,28 @@ def _git(
 
 
 def _validate_git_object_authority(repository: Path = ROOT) -> None:
+    included = _git_run(
+        "config",
+        "--local",
+        "--no-includes",
+        "--get-regexp",
+        r"^include(If)?\.",
+        check=False,
+        repository=repository,
+    )
+    if included.returncode not in {0, 1} or included.stdout.strip():
+        raise CoordinatorError("repository-local Git config includes are forbidden")
+    attributes_setting = _git_run(
+        "config",
+        "--local",
+        "--no-includes",
+        "--get-all",
+        "core.attributesfile",
+        check=False,
+        repository=repository,
+    )
+    if attributes_setting.returncode not in {0, 1} or attributes_setting.stdout.strip():
+        raise CoordinatorError("repository-local external attributes are forbidden")
     if _git(
         "for-each-ref",
         "--format=%(refname)",
@@ -510,9 +612,19 @@ def _validate_git_object_authority(repository: Path = ROOT) -> None:
     )
     if not common.is_absolute():
         common = (repository / common).resolve()
-    grafts = common / "info" / "grafts"
-    if grafts.exists() and grafts.stat().st_size:
-        raise CoordinatorError("Git graft authority is forbidden")
+    git_dir = Path(str(_git("rev-parse", "--git-dir", repository=repository)))
+    if not git_dir.is_absolute():
+        git_dir = (repository / git_dir).resolve()
+    forbidden = {
+        common / "info" / "attributes": "Git common attributes",
+        common / "info" / "grafts": "Git graft authority",
+        common / "objects" / "info" / "alternates": "Git object alternates",
+        common / "objects" / "info" / "http-alternates": "Git HTTP alternates",
+        git_dir / "info" / "attributes": "Git worktree attributes",
+    }
+    for path, label in forbidden.items():
+        if os.path.lexists(path):
+            raise CoordinatorError(f"{label} is forbidden")
 
 
 def _git_blob_sha256(commit: str, path: str) -> str:
@@ -533,6 +645,7 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
             "dependencies",
             "execution",
             "frozen_files",
+            "git_authority",
             "production_boundary",
             "protocol",
             "schema",
@@ -542,6 +655,23 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
     )
     if contract["schema"] != CONTRACT_SCHEMA or contract["stage"] != "STAGE_4A":
         raise CoordinatorError("Stage 4A contract identity differs")
+    git_authority = _exact(
+        contract["git_authority"],
+        {
+            "engine_byte_count",
+            "engine_path",
+            "engine_sha256",
+            "exec_path",
+            "launcher_byte_count",
+            "launcher_path",
+            "launcher_sha256",
+            "version",
+        },
+        "$.contract.git_authority",
+    )
+    discovered_git = _discover_git_runtime()
+    if git_authority != discovered_git:
+        raise CoordinatorError("registered Git launcher or engine identity differs")
     _validate_git_object_authority()
     authority_value, authority_raw = strict_json_load(AUTHORITY_PATH)
     if authority_raw != canonical_bytes(authority_value):
@@ -839,7 +969,7 @@ def _validate_approval_snapshot(
     )
     ledger = _exact(
         snapshot["ledger"],
-        {"byte_count", "path", "sha256"},
+        {"byte_count", "path", "sha256", "snapshot_path"},
         "$.approval_snapshot.ledger",
     )
     request = _exact(
@@ -848,8 +978,20 @@ def _validate_approval_snapshot(
         "$.approval_snapshot.request",
     )
     line = approved["line"]
+    ledger_snapshot_path = Path(str(ledger["snapshot_path"])).resolve()
+    ledger_byte_count = _nonnegative_integer(
+        ledger["byte_count"], "$.approval_snapshot.ledger.byte_count"
+    )
     if (
-        snapshot["schema"] != "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v1"
+        not ledger_snapshot_path.is_file()
+        or ledger_snapshot_path.is_symlink()
+        or ledger_snapshot_path.parent != path.parent.resolve()
+        or ledger_snapshot_path.name != "resource-ledger-pre-run.md"
+    ):
+        raise CoordinatorError("preserved pre-run ledger snapshot path differs")
+    ledger_raw = ledger_snapshot_path.read_bytes()
+    if (
+        snapshot["schema"] != "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2"
         or snapshot["candidate"]
         != {"commit": contract["candidate"]["commit"], "tree": contract["candidate"]["tree"]}
         or not isinstance(line, str)
@@ -857,8 +999,9 @@ def _validate_approval_snapshot(
         or f"| {request_id} | APPROVED |" not in line
         or approved["sha256"] != sha256((line.rstrip() + "\n").encode("utf-8"))
         or ledger["path"] != str(RESOURCE_LEDGER_PATH)
-        or _nonnegative_integer(ledger["byte_count"], "$.approval_snapshot.ledger.byte_count") <= 0
-        or not _digest(ledger["sha256"], "$.approval_snapshot.ledger.sha256")
+        or ledger_byte_count != len(ledger_raw)
+        or ledger_byte_count <= 0
+        or ledger["sha256"] != sha256(ledger_raw)
         or request
         != {
             "byte_count": len(request_raw),
@@ -868,6 +1011,12 @@ def _validate_approval_snapshot(
         }
     ):
         raise CoordinatorError("resource approval snapshot identity differs")
+    try:
+        preserved_lines = ledger_raw.decode("utf-8-sig").splitlines()
+    except UnicodeError as exc:
+        raise CoordinatorError("preserved pre-run ledger is not UTF-8") from exc
+    if preserved_lines.count(line) != 1:
+        raise CoordinatorError("preserved pre-run ledger approval row differs")
     return snapshot, raw
 
 
@@ -1103,14 +1252,115 @@ def validate_resource_execution_state(
 
 
 def _write_exclusive(path: Path, raw: bytes) -> None:
+    """Stage, fsync, and atomically publish without exposing partial bytes."""
+
     path.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(path):
+        raise CoordinatorError(f"refusing to overwrite canonical output: {path}")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.pending-",
+        dir=path.parent,
+    )
+    temporary = Path(temporary_name)
     try:
-        with path.open("xb") as stream:
+        with os.fdopen(descriptor, "wb") as stream:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
-    except FileExistsError as exc:
-        raise CoordinatorError(f"refusing to overwrite canonical output: {path}") from exc
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise CoordinatorError(
+                f"refusing to overwrite canonical output: {path}"
+            ) from exc
+    finally:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+
+
+def _publish_candidate_archive(path: Path, commit: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(path):
+        raise CoordinatorError("candidate source archive output already exists")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.pending-",
+        dir=path.parent,
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            _git_run("archive", "--format=tar", commit, stdout=stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if temporary.stat().st_size <= 0:
+            raise CoordinatorError("candidate source archive is empty")
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise CoordinatorError("candidate source archive output already exists") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+
+
+def _extract_candidate_archive(archive_path: Path, output_root: Path) -> Path:
+    """Safely extract the exact Git archive into one fresh external tree."""
+
+    candidate_root = (output_root / "candidate-source-tree").resolve()
+    if os.path.lexists(candidate_root):
+        raise CoordinatorError("candidate source tree output already exists")
+    staging = Path(
+        tempfile.mkdtemp(prefix=".candidate-source-tree.pending-", dir=output_root)
+    ).resolve()
+    seen: set[str] = set()
+    try:
+        with tarfile.open(archive_path, mode="r:") as bundle:
+            for member in bundle.getmembers():
+                raw_name = member.name.rstrip("/")
+                if not raw_name:
+                    continue
+                pure = PurePosixPath(raw_name)
+                if pure.is_absolute() or any(
+                    part in {"", ".", ".."} for part in pure.parts
+                ):
+                    raise CoordinatorError("candidate archive contains an unsafe path")
+                folded = pure.as_posix().casefold()
+                if folded in seen:
+                    raise CoordinatorError("candidate archive path is duplicated")
+                seen.add(folded)
+                target = staging.joinpath(*pure.parts).resolve()
+                try:
+                    target.relative_to(staging)
+                except ValueError as exc:
+                    raise CoordinatorError(
+                        "candidate archive path escapes its extraction root"
+                    ) from exc
+                if member.isdir():
+                    target.mkdir(parents=True, exist_ok=False)
+                    continue
+                if not member.isfile():
+                    raise CoordinatorError(
+                        "candidate archive contains a link or special entry"
+                    )
+                target.parent.mkdir(parents=True, exist_ok=True)
+                source = bundle.extractfile(member)
+                if source is None:
+                    raise CoordinatorError("candidate archive member cannot be read")
+                with target.open("xb") as destination:
+                    shutil.copyfileobj(source, destination)
+                    destination.flush()
+                    os.fsync(destination.fileno())
+        if not (staging / "src" / "anysolver" / "__init__.py").is_file():
+            raise CoordinatorError("candidate archive lacks the ANYsolver source tree")
+        os.rename(staging, candidate_root)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return candidate_root
 
 
 def prepare_wave(
@@ -1134,18 +1384,12 @@ def prepare_wave(
     _write_exclusive(plan_path, funnel.canonical_bytes(plan))
     candidate = contract["candidate"]
     archive_path = (output_root / "candidate-source.tar").resolve()
-    if archive_path.exists():
-        raise CoordinatorError("candidate source archive output already exists")
-    archive_path.parent.mkdir(parents=True, exist_ok=True)
-    with archive_path.open("xb") as stream:
-        _git_run("archive", "--format=tar", str(candidate["commit"]), stdout=stream)
-        stream.flush()
-        os.fsync(stream.fileno())
-    if archive_path.stat().st_size <= 0:
-        raise CoordinatorError("candidate source archive is empty")
+    _publish_candidate_archive(archive_path, str(candidate["commit"]))
+    archive_sha256 = sha256(archive_path.read_bytes())
+    candidate_source_root = _extract_candidate_archive(archive_path, output_root)
     binding = {
         "artifact_path": str(archive_path),
-        "artifact_sha256": sha256(archive_path.read_bytes()),
+        "artifact_sha256": archive_sha256,
         "candidate_id": "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1",
         "commit": candidate["commit"],
         "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V2",
@@ -1174,6 +1418,16 @@ def prepare_wave(
         extra_inputs.append(authorization_path.resolve())
     for worker in wave_manifest["workers"]:
         worker["input_hashes"] = list(worker["input_hashes"])
+        worker["command"].extend(
+            [
+                "--candidate-source-root",
+                str(candidate_source_root),
+                "--candidate-archive",
+                str(archive_path),
+                "--candidate-archive-sha256",
+                archive_sha256,
+            ]
+        )
     for worker in wave_manifest["workers"]:
         for path in extra_inputs:
             worker["input_hashes"].append(
@@ -1185,6 +1439,7 @@ def prepare_wave(
     return {
         "archive": archive_path,
         "binding": binding_path,
+        "candidate_source_root": candidate_source_root,
         "plan": plan_path,
         "producer_manifest": wave_manifest_path,
     }
@@ -1268,6 +1523,8 @@ def _run_checker_process(
         "output_path": str(output.resolve()),
         "output_sha256": sha256(raw),
         "peak_tree_memory_bytes": peak,
+        "proof_path": str(proof.resolve()),
+        "proof_sha256": sha256(proof.read_bytes()),
         "stderr_sha256": sha256(stderr_path.read_bytes()),
         "stdout_sha256": sha256(stdout_path.read_bytes()),
         "termination_proven": termination_proven,
@@ -1275,9 +1532,105 @@ def _run_checker_process(
     }
 
 
+def validate_producer_proofs(
+    manifest: Mapping[str, Any],
+    manifest_raw: bytes,
+    producer_result: Mapping[str, Any],
+    producer_result_raw: bytes,
+) -> dict[str, dict[str, Any]]:
+    """Join each completed worker result to its exact proof and assignment."""
+
+    if producer_result_raw != canonical_bytes(producer_result):
+        raise CoordinatorError("producer wave result is not canonical JSON")
+    result = _exact(
+        producer_result,
+        {"lane", "manifest_sha256", "schema", "terminal", "wave_id", "workers"},
+        "$.producer_result",
+    )
+    if (
+        result["schema"] != PRODUCER_RESULT_SCHEMA
+        or result["terminal"] != "COMPLETED"
+        or result["manifest_sha256"] != sha256(manifest_raw)
+        or not isinstance(result["workers"], list)
+        or len(result["workers"]) != 3
+    ):
+        raise CoordinatorError("producer wave result identity differs")
+    manifest_workers = manifest.get("workers")
+    if not isinstance(manifest_workers, list) or len(manifest_workers) != 3:
+        raise CoordinatorError("producer wave manifest coverage differs")
+    by_manifest = {
+        str(worker.get("assignment_id")): worker for worker in manifest_workers
+    }
+    by_result = {
+        str(worker.get("assignment_id")): worker for worker in result["workers"]
+        if isinstance(worker, dict)
+    }
+    if (
+        set(by_manifest) != set(EXPECTED_SHARDS)
+        or set(by_result) != set(EXPECTED_SHARDS)
+        or len(by_manifest) != 3
+        or len(by_result) != 3
+    ):
+        raise CoordinatorError("producer assignment coverage differs")
+    worker_keys = {
+        "assignment_id",
+        "assignment_sha256",
+        "cpu_100ns",
+        "input_hashes",
+        "last_progress_sequence",
+        "peak_tree_memory_bytes",
+        "plan_sha256",
+        "program_sha256",
+        "returncode",
+        "scientific_byte_count",
+        "scientific_payload_sha256",
+        "scientific_record_count",
+        "scientific_record_ids_sha256",
+        "scientific_schema",
+        "scientific_sha256",
+        "scientific_terminal",
+        "status",
+        "stderr_sha256",
+        "stdout_sha256",
+        "termination_proven",
+    }
+    made: dict[str, dict[str, Any]] = {}
+    for assignment_id in EXPECTED_SHARDS:
+        registered = by_manifest[assignment_id]
+        completed = _exact(
+            by_result[assignment_id],
+            worker_keys,
+            f"$.producer_result.workers[{assignment_id}]",
+        )
+        proof_path = Path(str(registered.get("scientific_path"))).resolve()
+        proof_sha256 = _digest(
+            completed["scientific_sha256"],
+            f"$.producer_result.workers[{assignment_id}].scientific_sha256",
+        )
+        if (
+            completed["status"] != "COMPLETED"
+            or completed["returncode"] != 0
+            or completed["termination_proven"] is not True
+            or completed["assignment_sha256"] != registered.get("assignment_sha256")
+            or completed["plan_sha256"] != registered.get("plan_sha256")
+            or not proof_path.is_file()
+            or proof_path.is_symlink()
+            or sha256(proof_path.read_bytes()) != proof_sha256
+        ):
+            raise CoordinatorError("producer proof binding differs")
+        made[assignment_id] = {
+            "assignment_sha256": completed["assignment_sha256"],
+            "plan_sha256": completed["plan_sha256"],
+            "proof_path": str(proof_path),
+            "proof_sha256": proof_sha256,
+        }
+    return made
+
+
 def aggregate_checker_results(
     replica_results: Sequence[Sequence[Mapping[str, Any]]],
     *,
+    producer_proofs: Mapping[str, Mapping[str, Any]],
     producer_result_sha256: str,
     contract_sha256: str,
     authorization_sha256: str,
@@ -1285,6 +1638,17 @@ def aggregate_checker_results(
     _digest(producer_result_sha256, "$.producer_result_sha256")
     _digest(contract_sha256, "$.contract_sha256")
     _digest(authorization_sha256, "$.authorization_sha256")
+    if set(producer_proofs) != set(EXPECTED_SHARDS):
+        raise CoordinatorError("producer proof binding coverage differs")
+    for assignment_id, proof in producer_proofs.items():
+        _exact(
+            proof,
+            {"assignment_sha256", "plan_sha256", "proof_path", "proof_sha256"},
+            f"$.producer_proofs[{assignment_id}]",
+        )
+        _digest(proof["assignment_sha256"], "$.producer_proof.assignment_sha256")
+        _digest(proof["plan_sha256"], "$.producer_proof.plan_sha256")
+        _digest(proof["proof_sha256"], "$.producer_proof.proof_sha256")
     if len(replica_results) != 2 or any(len(replica) != 3 for replica in replica_results):
         raise CoordinatorError("exactly two complete three-shard checker replicas are required")
     by_replica = [
@@ -1306,10 +1670,14 @@ def aggregate_checker_results(
         first = by_replica[0][assignment_id]
         second = by_replica[1][assignment_id]
         first_value, first_raw = _validate_checker_result(
-            first, expected_assignment_id=assignment_id
+            first,
+            expected_assignment_id=assignment_id,
+            expected_proof=producer_proofs[assignment_id],
         )
         _second_value, second_raw = _validate_checker_result(
-            second, expected_assignment_id=assignment_id
+            second,
+            expected_assignment_id=assignment_id,
+            expected_proof=producer_proofs[assignment_id],
         )
         if first_raw != second_raw:
             raise CoordinatorError(f"checker replicas disagree: {assignment_id}")
@@ -1348,10 +1716,36 @@ def aggregate_checker_results(
     v1_count = sum(int(value["v1_diagnostic_record_count"]) for value in accepted)
     if classifying_count != 81 or v1_count != 72:
         raise CoordinatorError("aggregate checker record coverage differs")
+    checker_bindings = []
+    for assignment_id in EXPECTED_SHARDS:
+        first = by_replica[0][assignment_id]
+        second = by_replica[1][assignment_id]
+        proof = producer_proofs[assignment_id]
+        checker_bindings.append(
+            {
+                "assignment_id": assignment_id,
+                "assignment_sha256": proof["assignment_sha256"],
+                "checker_output_sha256": [
+                    first["output_sha256"],
+                    second["output_sha256"],
+                ],
+                "checker_stderr_sha256": [
+                    first["stderr_sha256"],
+                    second["stderr_sha256"],
+                ],
+                "checker_stdout_sha256": [
+                    first["stdout_sha256"],
+                    second["stdout_sha256"],
+                ],
+                "plan_sha256": proof["plan_sha256"],
+                "proof_sha256": proof["proof_sha256"],
+            }
+        )
     return {
         "advisory_review_required": bool(advisory and terminal == PASS),
         "authorization_sha256": authorization_sha256,
         "classifying_record_count": classifying_count,
+        "checker_replica_bindings": checker_bindings,
         "contract_sha256": contract_sha256,
         "formal_failures": failures,
         "production_restriction": PRODUCTION_RESTRICTION,
@@ -1387,6 +1781,7 @@ def blocked_aggregate(
         "advisory_review_required": False,
         "authorization_sha256": authorization_sha256,
         "classifying_record_count": 0,
+        "checker_replica_bindings": [],
         "contract_sha256": contract_sha256,
         "formal_failures": [reason],
         "production_restriction": PRODUCTION_RESTRICTION,
@@ -1460,10 +1855,21 @@ def run_stage4a(
     deadline = started + WAVE_WALL_SECONDS
     replicas: list[list[dict[str, Any]]] = []
     try:
-        manifest, _raw_manifest = strict_json_load(paths["producer_manifest"])
+        manifest, raw_manifest = strict_json_load(paths["producer_manifest"])
+        stored_producer_result, producer_result_raw = strict_json_load(
+            producer_result_path
+        )
+        if stored_producer_result != producer_result:
+            raise CoordinatorError("producer result changed after bounded execution")
+        producer_proofs = validate_producer_proofs(
+            manifest,
+            raw_manifest,
+            stored_producer_result,
+            producer_result_raw,
+        )
         proofs = {
-            str(worker["assignment_id"]): Path(str(worker["scientific_path"]))
-            for worker in manifest["workers"]
+            assignment_id: Path(str(binding["proof_path"]))
+            for assignment_id, binding in producer_proofs.items()
         }
         if set(proofs) != set(EXPECTED_SHARDS):
             raise CoordinatorError("producer manifest does not expose three exact proofs")
@@ -1496,6 +1902,7 @@ def run_stage4a(
         validate_resource_execution_state(final_authorization, claim_attempt=False)
         aggregate = aggregate_checker_results(
             replicas,
+            producer_proofs=producer_proofs,
             producer_result_sha256=sha256(producer_result_path.read_bytes()),
             contract_sha256=contract_digest,
             authorization_sha256=authorization_digest,
@@ -1534,13 +1941,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.authorization is None or args.aggregate is None:
         raise CoordinatorError("formal execution requires authorization and aggregate")
-    run_stage4a(
+    aggregate = run_stage4a(
         contract,
         args.authorization.resolve(),
         output_root,
         args.aggregate.resolve(),
     )
-    return 0
+    return 0 if aggregate["terminal"] in {PASS, NO_GO} else 2
 
 
 if __name__ == "__main__":

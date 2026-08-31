@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
 import json
 from pathlib import Path
 import sys
+import tarfile
 
 import numpy as np
 import pytest
@@ -64,6 +66,7 @@ def _tiny_q4_model() -> tuple[object, dict[int, str]]:
                 "phase4a_steel",
                 formulation="e4-pl",
                 thickness=producer.THICKNESS,
+                reference_normal=np.asarray((0.0, 0.0, 1.0)),
                 drilling_stabilization=0.001,
                 hourglass_stabilization=0.001,
                 pl_stabilization=1.0,
@@ -78,6 +81,60 @@ def _tiny_q4_model() -> tuple[object, dict[int, str]]:
         load.add_pressure_load(registered_id, producer.PRESSURE)
     model.add_load_case(load)
     return model, kinds
+
+
+def _tiny_mixed_model() -> tuple[object, list[object], object]:
+    from anysolver.elements import create_shell_element
+    from anysolver.fe_core import FEModel
+
+    model = FEModel("tiny-phase4a-qualified-q4-v2a")
+    model.add_material(
+        "phase4a_steel",
+        producer.ELASTIC_MODULUS,
+        producer.POISSON_RATIO,
+        density=producer.DENSITY,
+    )
+    for node_id, coordinates in enumerate(
+        (
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (2.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (2.0, 1.0, 0.0),
+        ),
+        start=1,
+    ):
+        model.add_node(node_id, *coordinates)
+    normal = np.asarray((0.0, 0.0, 1.0))
+    q4 = create_shell_element(
+        1,
+        [1, 2, 5, 4],
+        "phase4a_steel",
+        formulation="e4-pl",
+        thickness=producer.THICKNESS,
+        reference_normal=normal,
+        drilling_stabilization=0.001,
+        hourglass_stabilization=0.001,
+        pl_stabilization=1.0,
+        planar_tolerance=1.0e-10,
+        warped_formulation="varying_frame",
+    )
+    triangles = [
+        create_shell_element(
+            element_id,
+            list(nodes),
+            "phase4a_steel",
+            formulation=producer.SELECTOR,
+            thickness=producer.THICKNESS,
+            reference_normal=normal,
+        )
+        for element_id, nodes in ((2, (2, 3, 6)), (3, (2, 6, 5)))
+    ]
+    model.add_element(1, q4)
+    for triangle in triangles:
+        model.add_element(triangle.element_id, triangle)
+    return model, triangles, q4
 
 
 def test_assignment_is_exact_phase4a_diagonal_shard(tmp_path: Path) -> None:
@@ -109,10 +166,35 @@ def test_mindlin_nodal_input_is_deterministic_and_satisfies_hard_trace() -> None
             if i in (0, 2) or j in (0, 2):
                 np.testing.assert_array_equal(row[:3], np.zeros(3))
             if i in (0, 2):
-                assert row[4] == 0.0
-            if j in (0, 2):
                 assert row[3] == 0.0
+            if j in (0, 2):
+                assert row[4] == 0.0
     assert center != 0.0
+
+
+def test_reference_uses_correct_shell_embedding_and_v3_protocol() -> None:
+    vector, _digest, _center = producer.mindlin_nodal_reference(2)
+    document, _checker_center = __import__(
+        "e4_pl_s3_v2_flat_funnel_checker"
+    ).reference_vector_document(2)
+    np.testing.assert_array_equal(vector, np.asarray(document["values"]))
+    assert producer.REFERENCE_IDENTITY.endswith("SHELL_EMBEDDED_V3")
+    assert producer.SUPPORT_IDENTITY.endswith("SHELL_ROTATIONS_V3")
+
+
+def test_tiny_mixed_q4_v2a_model_has_authoritative_directors_and_passes_guard() -> None:
+    model, triangles, q4 = _tiny_mixed_model()
+    normal = np.asarray((0.0, 0.0, 1.0))
+    np.testing.assert_array_equal(q4.reference_normal, normal)
+    material = model.get_material("phase4a_steel")
+    for triangle in triangles:
+        components = triangle.compute_stiffness_components(model.mesh, material)
+        assert {"physical", "pl", "total"} <= set(components)
+        assert all(
+            components[key].shape == (18, 18)
+            and np.all(np.isfinite(components[key]))
+            for key in ("physical", "pl", "total")
+        )
 
 
 def test_tiny_q4_production_solve_closes_discrete_energy_identity() -> None:
@@ -159,7 +241,14 @@ def test_three_fake_shards_cover_exact_81_classifying_and_72_v1_diagnostics(
         }
 
     monkeypatch.setattr(producer, "produce_case", fake_case)
-    monkeypatch.setattr(producer, "activate_frozen_candidate_source", lambda: None)
+    monkeypatch.setattr(
+        producer,
+        "validate_extracted_candidate_source",
+        lambda _root, _archive, _digest: None,
+    )
+    monkeypatch.setattr(
+        producer, "activate_frozen_candidate_source", lambda _root: None
+    )
     documents = []
     for shard_index in range(3):
         documents.append(
@@ -167,6 +256,9 @@ def test_three_fake_shards_cover_exact_81_classifying_and_72_v1_diagnostics(
                 plan_path,
                 shard_index=shard_index,
                 selector=producer.SELECTOR,
+                candidate_source_root=tmp_path / "candidate-source",
+                candidate_archive=tmp_path / "candidate-source.tar",
+                candidate_archive_sha256="A" * 64,
                 output=tmp_path / f"scientific-{shard_index}.json",
                 progress=tmp_path / f"progress-{shard_index}.jsonl",
             )
@@ -220,13 +312,23 @@ def test_v2_failure_never_launches_v1_or_publishes_canonical_output(
         raise RuntimeError("synthetic V2 contradiction")
 
     monkeypatch.setattr(producer, "produce_case", fail_v2)
-    monkeypatch.setattr(producer, "activate_frozen_candidate_source", lambda: None)
+    monkeypatch.setattr(
+        producer,
+        "validate_extracted_candidate_source",
+        lambda _root, _archive, _digest: None,
+    )
+    monkeypatch.setattr(
+        producer, "activate_frozen_candidate_source", lambda _root: None
+    )
     output = tmp_path / "must-not-exist.json"
     with pytest.raises(RuntimeError, match="synthetic V2"):
         producer.run_assignment(
             plan_path,
             shard_index=0,
             selector=producer.SELECTOR,
+            candidate_source_root=tmp_path / "candidate-source",
+            candidate_archive=tmp_path / "candidate-source.tar",
+            candidate_archive_sha256="B" * 64,
             output=output,
             progress=tmp_path / "failed-progress.jsonl",
         )
@@ -244,6 +346,12 @@ def test_cli_requires_the_exact_shard_interface() -> None:
             "2",
             "--selector",
             producer.SELECTOR,
+            "--candidate-source-root",
+            "candidate-source",
+            "--candidate-archive",
+            "candidate-source.tar",
+            "--candidate-archive-sha256",
+            "C" * 64,
             "--output",
             "scientific.json",
             "--progress",
@@ -252,3 +360,41 @@ def test_cli_requires_the_exact_shard_interface() -> None:
     )
     assert arguments.shard_index == 2
     assert arguments.selector == producer.SELECTOR
+    assert arguments.candidate_source_root == Path("candidate-source")
+    assert arguments.candidate_archive == Path("candidate-source.tar")
+    assert arguments.candidate_archive_sha256 == "C" * 64
+
+
+def test_candidate_archive_must_exactly_match_extracted_source(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate-source"
+    package = candidate / "src" / "anysolver"
+    package.mkdir(parents=True)
+    source = b'FORMULATION = "S3_V2A"\n'
+    (package / "__init__.py").write_bytes(source)
+    archive = tmp_path / "candidate-source.tar"
+    with tarfile.open(archive, mode="w:") as bundle:
+        for name in ("src", "src/anysolver"):
+            directory = tarfile.TarInfo(name)
+            directory.type = tarfile.DIRTYPE
+            bundle.addfile(directory)
+        member = tarfile.TarInfo("src/anysolver/__init__.py")
+        member.size = len(source)
+        bundle.addfile(member, io.BytesIO(source))
+    digest = funnel.sha256(archive.read_bytes())
+
+    producer.validate_extracted_candidate_source(candidate, archive, digest)
+    (package / "__init__.py").write_bytes(b'FORMULATION = "MUTATED"\n')
+    with pytest.raises(funnel.FlatFunnelError, match="differs"):
+        producer.validate_extracted_candidate_source(candidate, archive, digest)
+
+
+def test_scientific_output_publication_is_atomic_and_exclusive(tmp_path: Path) -> None:
+    output = tmp_path / "scientific.json"
+    raw = funnel.canonical_bytes({"terminal": "TEST_ONLY"})
+    producer._publish_exclusive(output, raw)
+    assert output.read_bytes() == raw
+    assert not list(tmp_path.glob(".scientific.json.pending-*"))
+    with pytest.raises(funnel.FlatFunnelError, match="overwrite"):
+        producer._publish_exclusive(output, b"different\n")
+    assert output.read_bytes() == raw
+    assert not list(tmp_path.glob(".scientific.json.pending-*"))

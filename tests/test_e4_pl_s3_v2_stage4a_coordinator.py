@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import copy
+import io
 import importlib.util
 from pathlib import Path
 import sys
+import tarfile
 
 import pytest
 
@@ -86,7 +88,7 @@ def _checker_value(
         "formal_failures": failures,
         "plan_sha256": "B" * 64,
         "production_restriction": module.PRODUCTION_RESTRICTION,
-        "proof_sha256": "C" * 64,
+        "proof_sha256": module.sha256(b""),
         "schema": module.CHECKER_RESULT_SCHEMA,
         "sequence_results": sequences,
         "successor_expansion_authorized": bool(not advisory and not no_go),
@@ -108,6 +110,10 @@ def _replica(
         output = (tmp_path / f"replica-{replica_index}" / f"{assignment_id}.json").resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_bytes(raw)
+        proof = (tmp_path / "proofs" / f"{assignment_id}.json").resolve()
+        proof.parent.mkdir(parents=True, exist_ok=True)
+        if not proof.exists():
+            proof.write_bytes(b"")
         made.append(
             {
                 "assignment_id": assignment_id,
@@ -115,6 +121,8 @@ def _replica(
                 "output_path": str(output),
                 "output_sha256": module.sha256(raw),
                 "peak_tree_memory_bytes": 1024,
+                "proof_path": str(proof),
+                "proof_sha256": module.sha256(proof.read_bytes()),
                 "stderr_sha256": module.sha256(b""),
                 "stdout_sha256": module.sha256(b""),
                 "termination_proven": True,
@@ -141,8 +149,18 @@ def _aggregate(module, tmp_path: Path, first_values, second_values=None):
         _replica(module, tmp_path, 1, first_values),
         _replica(module, tmp_path, 2, second_values),
     ]
+    producer_proofs = {
+        assignment_id: {
+            "assignment_sha256": "A" * 64,
+            "plan_sha256": "B" * 64,
+            "proof_path": str((tmp_path / "proofs" / f"{assignment_id}.json").resolve()),
+            "proof_sha256": module.sha256(b""),
+        }
+        for assignment_id in module.EXPECTED_SHARDS
+    }
     return module.aggregate_checker_results(
         replicas,
+        producer_proofs=producer_proofs,
         producer_result_sha256="D" * 64,
         contract_sha256="E" * 64,
         authorization_sha256="F" * 64,
@@ -168,6 +186,11 @@ def test_aggregate_pass_has_exact_coverage_and_registered_order(tmp_path):
     assert aggregate["classifying_record_count"] == 81
     assert aggregate["v1_diagnostic_record_count"] == 72
     assert len(aggregate["sequence_results"]) == 24
+    assert len(aggregate["checker_replica_bindings"]) == 3
+    assert all(
+        len(binding["checker_output_sha256"]) == 2
+        for binding in aggregate["checker_replica_bindings"]
+    )
     assert [
         (item["diagonal"], item["mask"], item["fraction_percent"])
         for item in aggregate["sequence_results"]
@@ -240,7 +263,9 @@ def test_aggregate_rejects_replica_byte_disagreement(tmp_path):
     module = _load()
     first = _values(module)
     second = copy.deepcopy(first)
-    second["S3_V2_FLAT_4A_ALTERNATING"]["proof_sha256"] = "9" * 64
+    second["S3_V2_FLAT_4A_ALTERNATING"]["sequence_results"][0][
+        "energy_norm_slope"
+    ] = 1.21
     with pytest.raises(module.CoordinatorError, match="checker replicas disagree"):
         _aggregate(module, tmp_path, first, second)
 
@@ -278,3 +303,229 @@ def test_registered_resource_command_isolated_and_supplies_only_bound_dependenci
         assert str((repository / "src").resolve()) in command
     assert str(module.ROOT / "src") not in command
     assert command.count("--run-stage4a") == 1
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("assignment_sha256", "7" * 64),
+        ("plan_sha256", "8" * 64),
+        ("proof_sha256", "9" * 64),
+    ],
+)
+def test_checker_must_join_exact_producer_assignment_plan_and_proof(
+    tmp_path, field, replacement
+):
+    module = _load()
+    values = _values(module)
+    values["S3_V2_FLAT_4A_SLASH"][field] = replacement
+    with pytest.raises(module.CoordinatorError, match="not joined"):
+        _aggregate(module, tmp_path, values)
+
+
+def test_validate_producer_proofs_recomputes_each_scientific_hash(tmp_path):
+    module = _load()
+    workers = []
+    completed = []
+    for assignment_id in module.EXPECTED_SHARDS:
+        proof = (tmp_path / assignment_id / "scientific.json").resolve()
+        proof.parent.mkdir(parents=True)
+        proof.write_bytes(assignment_id.encode("ascii"))
+        workers.append(
+            {
+                "assignment_id": assignment_id,
+                "assignment_sha256": "A" * 64,
+                "plan_sha256": "B" * 64,
+                "scientific_path": str(proof),
+            }
+        )
+        completed.append(
+            {
+                "assignment_id": assignment_id,
+                "assignment_sha256": "A" * 64,
+                "cpu_100ns": 1,
+                "input_hashes": [],
+                "last_progress_sequence": 31,
+                "peak_tree_memory_bytes": 1,
+                "plan_sha256": "B" * 64,
+                "program_sha256": "C" * 64,
+                "returncode": 0,
+                "scientific_byte_count": proof.stat().st_size,
+                "scientific_payload_sha256": "D" * 64,
+                "scientific_record_count": 27,
+                "scientific_record_ids_sha256": "E" * 64,
+                "scientific_schema": "proof-v1",
+                "scientific_sha256": module.sha256(proof.read_bytes()),
+                "scientific_terminal": "ACCEPTED_FOR_AGGREGATION",
+                "status": "COMPLETED",
+                "stderr_sha256": module.sha256(b""),
+                "stdout_sha256": module.sha256(b""),
+                "termination_proven": True,
+            }
+        )
+    manifest = {"workers": workers}
+    manifest_raw = module.canonical_bytes(manifest)
+    result = {
+        "lane": "flat-proof",
+        "manifest_sha256": module.sha256(manifest_raw),
+        "schema": module.PRODUCER_RESULT_SCHEMA,
+        "terminal": "COMPLETED",
+        "wave_id": "S3_V2_FLAT_FUNNEL_4A_FULL",
+        "workers": completed,
+    }
+    result_raw = module.canonical_bytes(result)
+    bindings = module.validate_producer_proofs(
+        manifest, manifest_raw, result, result_raw
+    )
+    assert set(bindings) == set(module.EXPECTED_SHARDS)
+    completed[0]["scientific_sha256"] = "F" * 64
+    mutated_raw = module.canonical_bytes(result)
+    with pytest.raises(module.CoordinatorError, match="proof binding differs"):
+        module.validate_producer_proofs(manifest, manifest_raw, result, mutated_raw)
+
+
+def test_approval_snapshot_recomputes_preserved_ledger_bytes(tmp_path, monkeypatch):
+    module = _load()
+    request_id = "1" * 32
+    request_path = (tmp_path / f"{request_id}.json").resolve()
+    request_raw = module.canonical_bytes({"request_id": request_id})
+    request_path.write_bytes(request_raw)
+    live_ledger = (tmp_path / "live-ledger.md").resolve()
+    approved_line = f"| 2026-08-31 | {request_id} | APPROVED | exact |"
+    ledger_raw = (approved_line + "\n").encode("utf-8")
+    live_ledger.write_bytes(ledger_raw)
+    monkeypatch.setattr(module, "RESOURCE_LEDGER_PATH", live_ledger)
+    preserved = (tmp_path / "resource-ledger-pre-run.md").resolve()
+    preserved.write_bytes(ledger_raw)
+    contract = {"candidate": {"commit": "a" * 40, "tree": "b" * 40}}
+    snapshot = {
+        "approved_row": {
+            "line": approved_line,
+            "sha256": module.sha256((approved_line + "\n").encode("utf-8")),
+        },
+        "candidate": contract["candidate"],
+        "ledger": {
+            "byte_count": len(ledger_raw),
+            "path": str(live_ledger),
+            "sha256": module.sha256(ledger_raw),
+            "snapshot_path": str(preserved),
+        },
+        "request": {
+            "byte_count": len(request_raw),
+            "path": str(request_path),
+            "request_id": request_id,
+            "sha256": module.sha256(request_raw),
+        },
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2",
+    }
+    snapshot_path = (tmp_path / "approval-snapshot.json").resolve()
+    snapshot_path.write_bytes(module.canonical_bytes(snapshot))
+    value, raw = module._validate_approval_snapshot(
+        snapshot_path,
+        contract=contract,
+        request_id=request_id,
+        request_path=request_path,
+        request_raw=request_raw,
+    )
+    assert value == snapshot
+    assert raw == module.canonical_bytes(snapshot)
+    preserved.write_bytes(ledger_raw + b"mutation\n")
+    with pytest.raises(module.CoordinatorError, match="identity differs"):
+        module._validate_approval_snapshot(
+            snapshot_path,
+            contract=contract,
+            request_id=request_id,
+            request_path=request_path,
+            request_raw=request_raw,
+        )
+
+
+def test_atomic_publication_never_exposes_partial_canonical_path(tmp_path, monkeypatch):
+    module = _load()
+    output = tmp_path / "canonical.json"
+    real_link = module.os.link
+
+    def fail_link(_source, _target):
+        raise OSError("synthetic promotion failure")
+
+    monkeypatch.setattr(module.os, "link", fail_link)
+    with pytest.raises(OSError, match="synthetic"):
+        module._write_exclusive(output, b"complete\n")
+    assert not output.exists()
+    assert not list(tmp_path.glob(".canonical.json.pending-*"))
+    monkeypatch.setattr(module.os, "link", real_link)
+    module._write_exclusive(output, b"complete\n")
+    assert output.read_bytes() == b"complete\n"
+    with pytest.raises(module.CoordinatorError, match="overwrite"):
+        module._write_exclusive(output, b"other\n")
+
+
+def test_candidate_archive_extraction_rejects_escape_and_is_exclusive(tmp_path):
+    module = _load()
+    safe_root = tmp_path / "safe"
+    safe_root.mkdir()
+    safe_archive = safe_root / "candidate.tar"
+    with tarfile.open(safe_archive, "w") as bundle:
+        directory = tarfile.TarInfo("src/anysolver/")
+        directory.type = tarfile.DIRTYPE
+        bundle.addfile(directory)
+        payload = b"# exact candidate\n"
+        member = tarfile.TarInfo("src/anysolver/__init__.py")
+        member.size = len(payload)
+        bundle.addfile(member, io.BytesIO(payload))
+    extracted = module._extract_candidate_archive(safe_archive, safe_root)
+    assert (extracted / "src" / "anysolver" / "__init__.py").read_bytes() == payload
+    with pytest.raises(module.CoordinatorError, match="already exists"):
+        module._extract_candidate_archive(safe_archive, safe_root)
+
+    bad_root = tmp_path / "bad"
+    bad_root.mkdir()
+    bad_archive = bad_root / "candidate.tar"
+    with tarfile.open(bad_archive, "w") as bundle:
+        payload = b"escape"
+        member = tarfile.TarInfo("../escape.txt")
+        member.size = len(payload)
+        bundle.addfile(member, io.BytesIO(payload))
+    with pytest.raises(module.CoordinatorError, match="unsafe path"):
+        module._extract_candidate_archive(bad_archive, bad_root)
+    assert not (tmp_path / "escape.txt").exists()
+
+
+def test_formal_main_returns_nonzero_for_blocked_aggregate(tmp_path, monkeypatch):
+    module = _load()
+    blocked = module.blocked_aggregate(
+        authorization_sha256="F" * 64,
+        contract_sha256="E" * 64,
+        producer_result_sha256=None,
+        reason="FORMAL_PROCESS_FAILED",
+    )
+    monkeypatch.setattr(module, "run_stage4a", lambda *_args, **_kwargs: blocked)
+    code = module.main(
+        [
+            "--run-stage4a",
+            "--contract",
+            str(tmp_path / "contract.json"),
+            "--authorization",
+            str(tmp_path / "authorization.json"),
+            "--output-root",
+            str(tmp_path),
+            "--aggregate",
+            str(tmp_path / "aggregate.json"),
+        ]
+    )
+    assert code == 2
+
+
+def test_git_launcher_and_engine_identity_is_complete():
+    module = _load()
+    runtime = module._discover_git_runtime()
+    assert Path(runtime["launcher_path"]).is_file()
+    assert Path(runtime["engine_path"]).is_file()
+    assert Path(runtime["exec_path"]).is_dir()
+    assert runtime["launcher_sha256"] == module.sha256(
+        Path(runtime["launcher_path"]).read_bytes()
+    )
+    assert runtime["engine_sha256"] == module.sha256(
+        Path(runtime["engine_path"]).read_bytes()
+    )
+    assert runtime["version"].startswith("git version ")
