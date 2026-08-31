@@ -250,12 +250,27 @@ def _issue(
 
 
 def _shell_corner_metrics(coords: np.ndarray) -> Dict[str, float]:
-    corner = np.asarray(coords[:4], dtype=float)
+    coordinates = np.asarray(coords, dtype=float)
+    if coordinates.ndim != 2 or coordinates.shape[1] != 3:
+        raise ValueError("shell coordinates must be an N x 3 array")
+    if not np.all(np.isfinite(coordinates)):
+        raise ValueError("shell coordinates must be finite")
+
+    node_count = int(coordinates.shape[0])
+    if node_count in {3, 6}:
+        corner = coordinates[:3]
+    elif node_count in {4, 8}:
+        corner = coordinates[:4]
+    else:
+        raise ValueError(
+            "shell mesh-quality evaluation supports 3, 4, 6 or 8 nodes; "
+            f"received {node_count}"
+        )
+
+    corner_count = int(corner.shape[0])
     edges = [
-        corner[1] - corner[0],
-        corner[2] - corner[1],
-        corner[3] - corner[2],
-        corner[0] - corner[3],
+        corner[(index + 1) % corner_count] - corner[index]
+        for index in range(corner_count)
     ]
     lengths = [float(np.linalg.norm(edge)) for edge in edges]
     min_edge = min(lengths) if lengths else 0.0
@@ -263,11 +278,19 @@ def _shell_corner_metrics(coords: np.ndarray) -> Dict[str, float]:
     aspect_ratio = max_edge / max(min_edge, 1.0e-15)
     normal_raw = np.cross(corner[1] - corner[0], corner[2] - corner[0])
     normal_norm = float(np.linalg.norm(normal_raw))
-    signed_area = 0.5 * normal_norm + 0.5 * float(np.linalg.norm(np.cross(corner[2] - corner[0], corner[3] - corner[0])))
+    signed_area = 0.5 * normal_norm
+    if corner_count == 4:
+        signed_area += 0.5 * float(
+            np.linalg.norm(
+                np.cross(corner[2] - corner[0], corner[3] - corner[0])
+            )
+        )
     warp = 0.0
-    if normal_norm > 1.0e-15:
+    if corner_count == 4 and normal_norm > 1.0e-15:
         normal = normal_raw / normal_norm
-        warp = abs(float(np.dot(corner[3] - corner[0], normal))) / max(sum(lengths) / 4.0, 1.0e-15)
+        warp = abs(float(np.dot(corner[3] - corner[0], normal))) / max(
+            sum(lengths) / float(corner_count), 1.0e-15
+        )
     return {
         "min_edge": min_edge,
         "max_edge": max_edge,

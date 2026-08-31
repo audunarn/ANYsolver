@@ -74,6 +74,50 @@ def test_validate_production_model_reports_q8_midside_and_warp_warnings() -> Non
     assert report.mesh_quality["max_q8_midside_deviation"] > 0.20
 
 
+@pytest.mark.parametrize(
+    "node_ids, coordinates",
+    [
+        (
+            [1, 2, 3],
+            {
+                1: (0.0, 0.0, 0.0),
+                2: (1.0, 0.0, 0.0),
+                3: (0.0, 1.0, 0.0),
+            },
+        ),
+        (
+            [1, 2, 3, 4, 5, 6],
+            {
+                1: (0.0, 0.0, 0.0),
+                2: (1.0, 0.0, 0.0),
+                3: (0.0, 1.0, 0.0),
+                4: (0.5, 0.0, 0.0),
+                5: (0.5, 0.5, 0.0),
+                6: (0.0, 0.5, 0.0),
+            },
+        ),
+    ],
+    ids=["s3", "s6"],
+)
+def test_validate_production_model_accepts_triangular_shell_quality(
+    node_ids, coordinates
+) -> None:
+    model = FEModel("triangular_shell")
+    model.add_material("steel", 210e9, 0.3)
+    for node_id, xyz in coordinates.items():
+        model.add_node(node_id, *xyz)
+    model.add_element(
+        1, ShellElement(1, node_ids, "steel", thickness=0.01)
+    )
+
+    report = validate_production_model(model, allow_free_mechanisms=True)
+
+    assert report.status == "ok"
+    assert "MESH005" not in _issue_codes(report)
+    assert report.mesh_quality["shell_count"] == 1
+    assert report.mesh_quality["min_edge_length"] == pytest.approx(1.0)
+
+
 def test_validate_production_model_rejects_duplicate_mpc_slave_owner() -> None:
     model = FEModel("duplicate_mpc")
     model.add_material("steel", 210e9, 0.3)
