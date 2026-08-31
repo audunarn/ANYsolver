@@ -20,6 +20,7 @@ from pathlib import Path, PurePosixPath
 import re
 import secrets
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -39,7 +40,7 @@ CHECKER_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_checker.py"
 FUNNEL_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel.py"
 BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v2"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v3"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
 AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v3"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
@@ -64,6 +65,100 @@ FRACTION_ORDER = (1, 5, 10, 25)
 RESOURCE_MANAGER_ROOT = Path(r"C:\Github\.resource-manager")
 RESOURCE_LEDGER_PATH = RESOURCE_MANAGER_ROOT / "ledger.md"
 RESOURCE_LOCK_OWNER_PATH = RESOURCE_MANAGER_ROOT / "active-lock" / "owner.json"
+PREDECESSOR_INCIDENT_ROOT = Path(
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+    r"\s3-v2-stage4a-20260831-cycle1"
+)
+PREDECESSOR_REPOSITORY = (
+    r"C:\Github\ANYsolver\.perf2-worktrees\s3-e4-pl-v2-formulation"
+)
+PREDECESSOR_REQUEST_ID = "98dfaf4a153a4bb7bcce46c11d9de13a"
+PREDECESSOR_REQUESTED_AT = "2026-08-31T09:06:41.6684913+02:00"
+PREDECESSOR_TASK = "ANYsolver S3 V2A Stage 4A bounded mixed-flexural gate"
+PREDECESSOR_REQUEST_SHA256 = (
+    "4E272F0B247C496AEE65645B5E4AADE7D2E0136491A1DD77128558ABFB926559"
+)
+PREDECESSOR_COMMAND_SHA256 = (
+    "4E5564A38C85DB66803F4337D69800DC8DD3736A478E84EC69A8EBDCA3CAC55B"
+)
+PREDECESSOR_AUTHORIZATION_COMMIT = "37af54dd1c2684010a5c41c30e82df92b2558004"
+PREDECESSOR_AUTHORIZATION_TREE = "75fd1d5d36ba7834c6c783633fe73b85e17092f9"
+PREDECESSOR_AUTHORIZATION_PARENT = "b79932e8b745153d7fae77c5d092011d39333125"
+PREDECESSOR_AUTHORIZATION_SUBJECT = (
+    "docs: authorize S3 V2A Stage 4A formal execution"
+)
+PREDECESSOR_AUTHORIZATION_PATH = (
+    "docs/reference_cases/e4_pl_s3_v2_stage4a_execution_authorization.json"
+)
+PREDECESSOR_AUTHORIZATION_SHA256 = (
+    "0A48D63557CF82CE9401DC2C2DB1049683E540104B17647C80172F6FCC966F20"
+)
+PREDECESSOR_AUTHORIZATION_BYTE_COUNT = 2336
+PREDECESSOR_CONTRACT_PATH = (
+    "docs/reference_cases/e4_pl_s3_v2_stage4a_contract.json"
+)
+PREDECESSOR_CONTRACT_SHA256 = (
+    "C3A5F67633B7F7016141E2B3F526F2DF8A4A0B91A5E66DC9D4957F7CE1C21A60"
+)
+PREDECESSOR_CONTRACT_BYTE_COUNT = 8079
+PREDECESSOR_CANDIDATE_COMMIT = "b382215b531568910db846ce7212580eefa5746e"
+PREDECESSOR_CANDIDATE_TREE = "12b76c6a4e5fa0aeead61085c635344bc38f58fe"
+PREDECESSOR_COORDINATOR_SHA256 = (
+    "9084E9AACB901492726541EA137176C863B6452F35ABE6D7F5820F001AF9D63B"
+)
+PREDECESSOR_BOUNDED_SHA256 = (
+    "15D30B50668BE82F2EB70D913137FA66B1084AFF19AC3998943E376C9724518D"
+)
+PREDECESSOR_CONNECTIVITY_MANIFEST_SHA256 = (
+    "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+)
+PREDECESSOR_LEDGER_ROW_SHA256 = {
+    "APPROVED": "F369A3D0390937653BC1097C0BF1C6CE18AFC828CB93173F93E5E0DE28CD0718",
+    "EXECUTION_STARTED": "F4AA97F951460D8DB748AC31102E28A6CE887B0BADDDC229DDD76F7ED6B7C0C3",
+    "COMPLETED_FAIL": "890184F7F2E9BF1FCF4862715E566ED84DCE4C805E80EFD87FFB1D44F995D2F3",
+}
+PREDECESSOR_ARTIFACTS = {
+    "aggregate": (
+        "stage4a-aggregate.json",
+        613,
+        "575BD64910B30B38F7A80A29C98A196F4D4499FC1D9D60AF62C37D600D45239F",
+    ),
+    "approval_snapshot": (
+        "approval-snapshot.json",
+        1427,
+        "5A706825428F8F9D45A183AFC1227623234A17691AC1343B3C81A6618CF0F6DF",
+    ),
+    "candidate_archive": (
+        "candidate-source.tar",
+        27_166_720,
+        "8888007F135F5D0977DDC5B7DAB02A7D882A8D7163CC033ACEE314F0F037AB3F",
+    ),
+    "candidate_binding": (
+        "candidate-source-binding.json",
+        507,
+        "60FD209E00B187BD64F9E3C3B9542694C81190EFC02ECB75FF31312A65F2991D",
+    ),
+    "ledger_snapshot": (
+        "resource-ledger-pre-run.md",
+        92_923,
+        "DD38D91CF636D94D567FA79FED928727CE0C6BEC4633D46FEB64068EF8429EB5",
+    ),
+    "manifest": (
+        "producer-wave-manifest.json",
+        12_259,
+        "432E1CCB99CFBA1EAA3FEBA29AA2E97530BC27F60BBB9F341BCB9EF892D653E5",
+    ),
+    "phase_plan": (
+        "phase4a-plan.json",
+        40_609,
+        "03095DB243064F7D70F9EA0BF4CCCCEF36DF983D441B5A3B09E8D6568412C9E0",
+    ),
+    "transcript": (
+        "formal-transcript.txt",
+        4031,
+        "1F9317E839A9451B6B97F0E0D60A4B5E316F74D3F754B90763A754081C89931B",
+    ),
+}
 PROCESS_REVIEW_PATH = (
     REFERENCE_CASES / "e4_pl_s3_v2_stage4a_process_implementation_review.json"
 )
@@ -251,6 +346,63 @@ def _strict_external_json(path: Path, location: str) -> tuple[Any, bytes]:
             raise
         raise CoordinatorError(f"{location} is invalid strict JSON: {exc}") from exc
     return value, raw
+
+
+def _validate_external_file_binding(
+    value: Any,
+    location: str,
+    *,
+    expected_path: Path | None = None,
+) -> tuple[Path, bytes]:
+    binding = _exact(value, {"byte_count", "path", "sha256"}, location)
+    raw_path = binding["path"]
+    if not isinstance(raw_path, str) or not raw_path or raw_path != raw_path.strip():
+        raise CoordinatorError(f"{location}.path must be an absolute path string")
+    path = Path(raw_path)
+    if not path.is_absolute():
+        raise CoordinatorError(f"{location}.path must be absolute")
+    if expected_path is not None and raw_path != str(expected_path):
+        raise CoordinatorError(f"{location}.path differs from its frozen path")
+    byte_count = _nonnegative_integer(binding["byte_count"], f"{location}.byte_count")
+    digest = _digest(binding["sha256"], f"{location}.sha256")
+    try:
+        information = path.lstat()
+    except OSError as exc:
+        raise CoordinatorError(f"cannot read {location}: {exc}") from exc
+    file_attributes = getattr(information, "st_file_attributes", 0)
+    if (
+        not stat.S_ISREG(information.st_mode)
+        or path.is_symlink()
+        or file_attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    ):
+        raise CoordinatorError(f"{location} is not a regular non-reparse file")
+    for ancestor in path.parents:
+        try:
+            ancestor_information = ancestor.lstat()
+        except OSError as exc:
+            raise CoordinatorError(f"cannot inspect {location} ancestor: {exc}") from exc
+        ancestor_attributes = getattr(ancestor_information, "st_file_attributes", 0)
+        if (
+            ancestor.is_symlink()
+            or ancestor_attributes
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            raise CoordinatorError(f"{location} has a reparse-path ancestor")
+    try:
+        with path.open("rb") as stream:
+            opened_information = os.fstat(stream.fileno())
+            if (
+                not stat.S_ISREG(opened_information.st_mode)
+                or not os.path.samestat(information, opened_information)
+            ):
+                raise CoordinatorError(f"{location} identity changed while opening")
+            raw = stream.read()
+        resolved = path.resolve(strict=True)
+    except OSError as exc:
+        raise CoordinatorError(f"cannot read {location}: {exc}") from exc
+    if byte_count <= 0 or byte_count != len(raw) or digest != sha256(raw):
+        raise CoordinatorError(f"{location} identity differs")
+    return resolved, raw
 
 
 def _nonnegative_integer(value: Any, location: str) -> int:
@@ -635,6 +787,697 @@ def _git_blob_sha256(commit: str, path: str) -> str:
     return sha256(_git("show", f"{commit}:{path}", binary=True))
 
 
+def _canonical_external_json(raw: bytes, location: str) -> Mapping[str, Any]:
+    value = strict_json_bytes(raw, location)
+    if raw != canonical_bytes(value) or not isinstance(value, dict):
+        raise CoordinatorError(f"{location} is not canonical JSON")
+    return value
+
+
+def _validate_predecessor_process_incident(value: Any) -> None:
+    """Validate and cross-join the consumed, pre-worker Stage-4A incident."""
+
+    location = "$.contract.predecessor_process_incident"
+    incident = _exact(
+        value,
+        {
+            "aggregate",
+            "approval_snapshot",
+            "authorization",
+            "candidate_archive",
+            "candidate_binding",
+            "ledger_snapshot",
+            "manifest",
+            "output_root",
+            "phase_plan",
+            "request",
+            "root_cause",
+            "scientific_execution",
+            "terminal_ledger_rows",
+            "transcript",
+        },
+        location,
+    )
+    if (
+        incident["output_root"] != str(PREDECESSOR_INCIDENT_ROOT)
+        or incident["root_cause"]
+        != "PRODUCER_RESULT_PATH_OUTSIDE_REGISTERED_WAVE_ROOT"
+    ):
+        raise CoordinatorError("predecessor process incident identity differs")
+    scientific = _exact(
+        incident["scientific_execution"],
+        {
+            "checker_processes_started",
+            "classifying_records",
+            "producer_processes_started",
+            "producer_result_present",
+        },
+        f"{location}.scientific_execution",
+    )
+    if (
+        _nonnegative_integer(
+            scientific["checker_processes_started"],
+            f"{location}.scientific_execution.checker_processes_started",
+        )
+        != 0
+        or _nonnegative_integer(
+            scientific["classifying_records"],
+            f"{location}.scientific_execution.classifying_records",
+        )
+        != 0
+        or _nonnegative_integer(
+            scientific["producer_processes_started"],
+            f"{location}.scientific_execution.producer_processes_started",
+        )
+        != 0
+        or scientific["producer_result_present"] is not False
+    ):
+        raise CoordinatorError("predecessor scientific-execution disposition differs")
+
+    incident_root = PREDECESSOR_INCIDENT_ROOT.resolve()
+    bound: dict[str, tuple[Path, bytes]] = {}
+    for name, (filename, expected_count, expected_sha256) in (
+        PREDECESSOR_ARTIFACTS.items()
+    ):
+        raw_binding = _exact(
+            incident[name],
+            {"byte_count", "path", "sha256"},
+            f"{location}.{name}",
+        )
+        if (
+            _nonnegative_integer(
+                raw_binding["byte_count"], f"{location}.{name}.byte_count"
+            )
+            != expected_count
+            or _digest(raw_binding["sha256"], f"{location}.{name}.sha256")
+            != expected_sha256
+        ):
+            raise CoordinatorError(f"predecessor {name} frozen identity differs")
+        expected_path = PREDECESSOR_INCIDENT_ROOT / filename
+        bound[name] = _validate_external_file_binding(
+            raw_binding,
+            f"{location}.{name}",
+            expected_path=expected_path,
+        )
+        if bound[name][0] != expected_path.resolve():
+            raise CoordinatorError(f"predecessor {name} resolved path differs")
+
+    request_path = (
+        RESOURCE_MANAGER_ROOT / "requests" / f"{PREDECESSOR_REQUEST_ID}.json"
+    )
+    request_binding = _exact(
+        incident["request"],
+        {"byte_count", "path", "sha256"},
+        f"{location}.request",
+    )
+    if (
+        _nonnegative_integer(
+            request_binding["byte_count"], f"{location}.request.byte_count"
+        )
+        != 1311
+        or _digest(request_binding["sha256"], f"{location}.request.sha256")
+        != PREDECESSOR_REQUEST_SHA256
+    ):
+        raise CoordinatorError("predecessor request frozen identity differs")
+    request_file, request_raw = _validate_external_file_binding(
+        request_binding,
+        f"{location}.request",
+        expected_path=request_path,
+    )
+    if request_file != request_path.resolve():
+        raise CoordinatorError("predecessor request resolved path differs")
+
+    try:
+        actual_names = {entry.name for entry in os.scandir(incident_root)}
+    except OSError as exc:
+        raise CoordinatorError(f"cannot enumerate predecessor incident: {exc}") from exc
+    expected_names = {artifact[0] for artifact in PREDECESSOR_ARTIFACTS.values()}
+    expected_names.add("candidate-source-tree")
+    if actual_names != expected_names:
+        raise CoordinatorError("predecessor incident artifact extent differs")
+
+    request, observed_request_raw = _strict_external_json(
+        request_file, "predecessor resource request"
+    )
+    request = _exact(
+        request,
+        {
+            "command",
+            "estimate_minutes",
+            "repository",
+            "request_id",
+            "requested_at",
+            "status",
+            "task",
+        },
+        f"{location}.request_file",
+    )
+    command = request["command"]
+    if (
+        observed_request_raw != request_raw
+        or request["request_id"] != PREDECESSOR_REQUEST_ID
+        or request["requested_at"] != PREDECESSOR_REQUESTED_AT
+        or request["task"] != PREDECESSOR_TASK
+        or request["repository"] != PREDECESSOR_REPOSITORY
+        or request["status"] != "PENDING"
+        or _nonnegative_integer(
+            request["estimate_minutes"], f"{location}.request_file.estimate_minutes"
+        )
+        != 30
+        or not isinstance(command, str)
+        or not command
+        or sha256(command.encode("utf-8")) != PREDECESSOR_COMMAND_SHA256
+    ):
+        raise CoordinatorError("predecessor resource request identity differs")
+
+    snapshot = _exact(
+        _canonical_external_json(
+            bound["approval_snapshot"][1], "predecessor approval snapshot"
+        ),
+        {"approved_row", "candidate", "ledger", "request", "schema"},
+        f"{location}.approval_snapshot_file",
+    )
+    approved_row = _exact(
+        snapshot["approved_row"],
+        {"line", "sha256"},
+        f"{location}.approval_snapshot_file.approved_row",
+    )
+    approved_line = approved_row["line"]
+    if (
+        snapshot["schema"]
+        != "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2"
+        or snapshot["candidate"]
+        != {
+            "commit": PREDECESSOR_CANDIDATE_COMMIT,
+            "tree": PREDECESSOR_CANDIDATE_TREE,
+        }
+        or not isinstance(approved_line, str)
+        or "\n" in approved_line
+        or "\r" in approved_line
+        or _digest(approved_row["sha256"], f"{location}.approved_row.sha256")
+        != PREDECESSOR_LEDGER_ROW_SHA256["APPROVED"]
+        or sha256((approved_line + "\n").encode("utf-8"))
+        != PREDECESSOR_LEDGER_ROW_SHA256["APPROVED"]
+    ):
+        raise CoordinatorError("predecessor approval snapshot identity differs")
+    snapshot_request = _exact(
+        snapshot["request"],
+        {"byte_count", "path", "request_id", "sha256"},
+        f"{location}.approval_snapshot_file.request",
+    )
+    snapshot_ledger = _exact(
+        snapshot["ledger"],
+        {"byte_count", "path", "sha256", "snapshot_path"},
+        f"{location}.approval_snapshot_file.ledger",
+    )
+    if (
+        snapshot_request
+        != {
+            "byte_count": 1311,
+            "path": str(request_path),
+            "request_id": PREDECESSOR_REQUEST_ID,
+            "sha256": PREDECESSOR_REQUEST_SHA256,
+        }
+        or snapshot_ledger
+        != {
+            "byte_count": PREDECESSOR_ARTIFACTS["ledger_snapshot"][1],
+            "path": str(RESOURCE_LEDGER_PATH),
+            "sha256": PREDECESSOR_ARTIFACTS["ledger_snapshot"][2],
+            "snapshot_path": str(
+                PREDECESSOR_INCIDENT_ROOT
+                / PREDECESSOR_ARTIFACTS["ledger_snapshot"][0]
+            ),
+        }
+    ):
+        raise CoordinatorError("predecessor approval snapshot joins differ")
+    try:
+        ledger_snapshot_text = bound["ledger_snapshot"][1].decode("utf-8-sig")
+    except UnicodeError as exc:
+        raise CoordinatorError("predecessor ledger snapshot is not UTF-8") from exc
+    if ledger_snapshot_text.splitlines().count(approved_line) != 1:
+        raise CoordinatorError("predecessor approved row is absent or duplicated")
+
+    candidate_binding = _exact(
+        _canonical_external_json(
+            bound["candidate_binding"][1], "predecessor candidate binding"
+        ),
+        {
+            "artifact_path",
+            "artifact_sha256",
+            "candidate_id",
+            "commit",
+            "formulation_id",
+            "schema",
+            "selector",
+            "tree",
+        },
+        f"{location}.candidate_binding_file",
+    )
+    if candidate_binding != {
+        "artifact_path": str(
+            PREDECESSOR_INCIDENT_ROOT
+            / PREDECESSOR_ARTIFACTS["candidate_archive"][0]
+        ),
+        "artifact_sha256": PREDECESSOR_ARTIFACTS["candidate_archive"][2],
+        "candidate_id": "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1",
+        "commit": PREDECESSOR_CANDIDATE_COMMIT,
+        "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V2",
+        "schema": "anysolver.e4-pl-s3-v2-flat-candidate-binding-v1",
+        "selector": "e4-pl-s3-v2",
+        "tree": PREDECESSOR_CANDIDATE_TREE,
+    }:
+        raise CoordinatorError("predecessor candidate archive join differs")
+
+    plan = _exact(
+        _canonical_external_json(bound["phase_plan"][1], "predecessor phase plan"),
+        {
+            "advisory_review_triggers",
+            "formal_thresholds",
+            "manifest_sha256",
+            "phase",
+            "prerequisites",
+            "record_count",
+            "schema",
+            "scope",
+            "selector",
+            "shards",
+        },
+        f"{location}.phase_plan_file",
+    )
+    shards = plan["shards"]
+    if (
+        plan["schema"] != "anysolver.e4-pl-s3-v2-flat-funnel-plan-v1"
+        or plan["phase"] != "4A"
+        or plan["scope"] != "full"
+        or plan["selector"] != "e4-pl-s3-v2"
+        or plan["prerequisites"] != []
+        or plan["manifest_sha256"]
+        != PREDECESSOR_CONNECTIVITY_MANIFEST_SHA256
+        or _nonnegative_integer(plan["record_count"], f"{location}.plan.record_count")
+        != 81
+        or not isinstance(shards, list)
+        or len(shards) != 3
+        or [
+            shard.get("assignment_id") if isinstance(shard, dict) else None
+            for shard in shards
+        ]
+        != list(EXPECTED_SHARDS)
+        or any(
+            not isinstance(shard.get("records"), list)
+            or len(shard["records"]) != 27
+            for shard in shards
+        )
+    ):
+        raise CoordinatorError("predecessor phase-plan identity or coverage differs")
+
+    manifest = _exact(
+        _canonical_external_json(
+            bound["manifest"][1], "predecessor producer-wave manifest"
+        ),
+        {"lane", "output_root", "schema", "wave_id", "workers"},
+        f"{location}.manifest_file",
+    )
+    wave_root = (PREDECESSOR_INCIDENT_ROOT / "producer-wave").resolve()
+    workers = manifest["workers"]
+    if (
+        manifest["schema"]
+        != "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1"
+        or manifest["wave_id"] != "S3_V2_FLAT_FUNNEL_4A_FULL"
+        or manifest["lane"] != "flat-proof"
+        or manifest["output_root"] != str(PREDECESSOR_INCIDENT_ROOT / "producer-wave")
+        or not isinstance(workers, list)
+        or len(workers) != 3
+        or [
+            worker.get("assignment_id") if isinstance(worker, dict) else None
+            for worker in workers
+        ]
+        != list(EXPECTED_SHARDS)
+    ):
+        raise CoordinatorError("predecessor producer-wave manifest identity differs")
+    for worker in workers:
+        if (
+            worker.get("plan_path")
+            != str(PREDECESSOR_INCIDENT_ROOT / PREDECESSOR_ARTIFACTS["phase_plan"][0])
+            or worker.get("plan_sha256") != PREDECESSOR_ARTIFACTS["phase_plan"][2]
+        ):
+            raise CoordinatorError("predecessor worker plan binding differs")
+        for key in ("progress_path", "scientific_path", "stderr_path", "stdout_path"):
+            raw_worker_path = worker.get(key)
+            if not isinstance(raw_worker_path, str) or not Path(raw_worker_path).is_absolute():
+                raise CoordinatorError("predecessor worker output path is invalid")
+            try:
+                Path(raw_worker_path).resolve().relative_to(wave_root)
+            except ValueError as exc:
+                raise CoordinatorError(
+                    "predecessor worker output escapes the registered wave root"
+                ) from exc
+    bounded = _load_module(
+        "_s3_v2_predecessor_incident_bounded", BOUNDED_PATH
+    )
+    validated_wave_id, validated_lane, validated_root, validated_workers = (
+        bounded.validate_manifest(manifest)
+    )
+    if (
+        validated_wave_id != manifest["wave_id"]
+        or validated_lane != manifest["lane"]
+        or validated_root != wave_root
+        or [worker.assignment_id for worker in validated_workers]
+        != list(EXPECTED_SHARDS)
+    ):
+        raise CoordinatorError("predecessor bounded manifest validation differs")
+
+    aggregate = _exact(
+        _canonical_external_json(
+            bound["aggregate"][1], "predecessor blocked aggregate"
+        ),
+        {
+            "advisory_review_required",
+            "authorization_sha256",
+            "checker_replica_bindings",
+            "classifying_record_count",
+            "contract_sha256",
+            "formal_failures",
+            "producer_wave_result_sha256",
+            "production_restriction",
+            "schema",
+            "sequence_results",
+            "successor_expansion_authorized",
+            "terminal",
+            "v1_diagnostic_record_count",
+        },
+        f"{location}.aggregate_file",
+    )
+    if (
+        aggregate["schema"] != AGGREGATE_SCHEMA
+        or aggregate["terminal"] != BLOCKED
+        or aggregate["formal_failures"] != ["FORMAL_PROCESS_FAILED"]
+        or aggregate["authorization_sha256"] != PREDECESSOR_AUTHORIZATION_SHA256
+        or aggregate["contract_sha256"] != PREDECESSOR_CONTRACT_SHA256
+        or aggregate["production_restriction"] != PRODUCTION_RESTRICTION
+        or aggregate["producer_wave_result_sha256"] is not None
+        or aggregate["checker_replica_bindings"] != []
+        or aggregate["sequence_results"] != []
+        or aggregate["advisory_review_required"] is not False
+        or aggregate["successor_expansion_authorized"] is not False
+        or _nonnegative_integer(
+            aggregate["classifying_record_count"],
+            f"{location}.aggregate.classifying_record_count",
+        )
+        != 0
+        or _nonnegative_integer(
+            aggregate["v1_diagnostic_record_count"],
+            f"{location}.aggregate.v1_diagnostic_record_count",
+        )
+        != 0
+    ):
+        raise CoordinatorError("predecessor blocked aggregate disposition differs")
+
+    authorization_binding = _exact(
+        incident["authorization"],
+        {"byte_count", "commit", "parent", "path", "sha256", "subject", "tree"},
+        f"{location}.authorization",
+    )
+    if (
+        _nonnegative_integer(
+            authorization_binding["byte_count"],
+            f"{location}.authorization.byte_count",
+        )
+        != PREDECESSOR_AUTHORIZATION_BYTE_COUNT
+        or authorization_binding["commit"] != PREDECESSOR_AUTHORIZATION_COMMIT
+        or authorization_binding["tree"] != PREDECESSOR_AUTHORIZATION_TREE
+        or authorization_binding["parent"] != PREDECESSOR_AUTHORIZATION_PARENT
+        or authorization_binding["subject"] != PREDECESSOR_AUTHORIZATION_SUBJECT
+        or authorization_binding["path"] != PREDECESSOR_AUTHORIZATION_PATH
+        or _digest(
+            authorization_binding["sha256"], f"{location}.authorization.sha256"
+        )
+        != PREDECESSOR_AUTHORIZATION_SHA256
+    ):
+        raise CoordinatorError("predecessor authorization binding differs")
+    _validate_git_object_authority()
+    if (
+        _git("rev-parse", PREDECESSOR_AUTHORIZATION_COMMIT)
+        != PREDECESSOR_AUTHORIZATION_COMMIT
+        or _git(
+            "rev-parse", f"{PREDECESSOR_AUTHORIZATION_COMMIT}^{{tree}}"
+        )
+        != PREDECESSOR_AUTHORIZATION_TREE
+        or _git(
+            "show", "-s", "--format=%P", PREDECESSOR_AUTHORIZATION_COMMIT
+        )
+        != PREDECESSOR_AUTHORIZATION_PARENT
+        or _git(
+            "show", "-s", "--format=%s", PREDECESSOR_AUTHORIZATION_COMMIT
+        )
+        != PREDECESSOR_AUTHORIZATION_SUBJECT
+    ):
+        raise CoordinatorError("predecessor authorization Git identity differs")
+    authorization_raw = _git(
+        "show",
+        f"{PREDECESSOR_AUTHORIZATION_COMMIT}:{PREDECESSOR_AUTHORIZATION_PATH}",
+        binary=True,
+    )
+    if (
+        len(authorization_raw) != PREDECESSOR_AUTHORIZATION_BYTE_COUNT
+        or sha256(authorization_raw) != PREDECESSOR_AUTHORIZATION_SHA256
+    ):
+        raise CoordinatorError("predecessor authorization blob differs")
+    authorization = _exact(
+        _canonical_external_json(
+            authorization_raw, "predecessor execution authorization"
+        ),
+        {
+            "contract_path",
+            "contract_sha256",
+            "execution_paths",
+            "formal_execution_authorized",
+            "implementation_reviews",
+            "ledger_approval",
+            "resource_lock_required",
+            "resource_request",
+            "schema",
+            "user_approval",
+        },
+        f"{location}.authorization_blob",
+    )
+    execution_paths = _exact(
+        authorization["execution_paths"],
+        {
+            "aggregate_path",
+            "approval_snapshot_path",
+            "output_root",
+            "python_executable",
+        },
+        f"{location}.authorization_blob.execution_paths",
+    )
+    resource_request = _exact(
+        authorization["resource_request"],
+        {
+            "command_sha256",
+            "repository",
+            "request_id",
+            "request_path",
+            "request_sha256",
+            "task",
+        },
+        f"{location}.authorization_blob.resource_request",
+    )
+    ledger_approval = _exact(
+        authorization["ledger_approval"],
+        {
+            "approved_row_sha256",
+            "ledger_path",
+            "snapshot_path",
+            "snapshot_sha256",
+        },
+        f"{location}.authorization_blob.ledger_approval",
+    )
+    user_approval = _exact(
+        authorization["user_approval"],
+        {"recorded", "source"},
+        f"{location}.authorization_blob.user_approval",
+    )
+    if (
+        authorization["schema"] != AUTHORIZATION_SCHEMA
+        or authorization["contract_path"] != PREDECESSOR_CONTRACT_PATH
+        or authorization["contract_sha256"] != PREDECESSOR_CONTRACT_SHA256
+        or authorization["formal_execution_authorized"] is not True
+        or authorization["resource_lock_required"] is not True
+        or execution_paths["output_root"] != str(PREDECESSOR_INCIDENT_ROOT)
+        or execution_paths["aggregate_path"]
+        != str(PREDECESSOR_INCIDENT_ROOT / PREDECESSOR_ARTIFACTS["aggregate"][0])
+        or execution_paths["approval_snapshot_path"]
+        != str(
+            PREDECESSOR_INCIDENT_ROOT
+            / PREDECESSOR_ARTIFACTS["approval_snapshot"][0]
+        )
+        or resource_request
+        != {
+            "command_sha256": PREDECESSOR_COMMAND_SHA256,
+            "repository": PREDECESSOR_REPOSITORY,
+            "request_id": PREDECESSOR_REQUEST_ID,
+            "request_path": str(request_path),
+            "request_sha256": PREDECESSOR_REQUEST_SHA256,
+            "task": PREDECESSOR_TASK,
+        }
+        or ledger_approval
+        != {
+            "approved_row_sha256": PREDECESSOR_LEDGER_ROW_SHA256["APPROVED"],
+            "ledger_path": str(RESOURCE_LEDGER_PATH),
+            "snapshot_path": str(
+                PREDECESSOR_INCIDENT_ROOT
+                / PREDECESSOR_ARTIFACTS["approval_snapshot"][0]
+            ),
+            "snapshot_sha256": PREDECESSOR_ARTIFACTS["approval_snapshot"][2],
+        }
+        or user_approval["recorded"] is not True
+        or not isinstance(user_approval["source"], str)
+        or PREDECESSOR_REQUEST_ID not in user_approval["source"]
+    ):
+        raise CoordinatorError("predecessor authorization joins differ")
+
+    predecessor_contract_raw = _git(
+        "show",
+        f"{PREDECESSOR_AUTHORIZATION_COMMIT}:{PREDECESSOR_CONTRACT_PATH}",
+        binary=True,
+    )
+    if (
+        len(predecessor_contract_raw) != PREDECESSOR_CONTRACT_BYTE_COUNT
+        or sha256(predecessor_contract_raw) != PREDECESSOR_CONTRACT_SHA256
+    ):
+        raise CoordinatorError("predecessor contract blob differs")
+    predecessor_contract = _canonical_external_json(
+        predecessor_contract_raw, "predecessor Stage 4A contract"
+    )
+    predecessor_candidate = predecessor_contract.get("candidate")
+    if (
+        predecessor_contract.get("schema")
+        != "anysolver.e4-pl-s3-v2-stage4a-contract-v2"
+        or not isinstance(predecessor_candidate, dict)
+        or predecessor_candidate.get("commit") != PREDECESSOR_CANDIDATE_COMMIT
+        or predecessor_candidate.get("tree") != PREDECESSOR_CANDIDATE_TREE
+    ):
+        raise CoordinatorError("predecessor contract candidate identity differs")
+    frozen_files = predecessor_contract.get("frozen_files")
+    if not isinstance(frozen_files, list):
+        raise CoordinatorError("predecessor frozen-file graph is malformed")
+    frozen_by_path: dict[str, Mapping[str, Any]] = {}
+    for index, item in enumerate(frozen_files):
+        binding = _exact(
+            item,
+            {"git_blob_sha256", "path", "role"},
+            f"{location}.predecessor_contract.frozen_files[{index}]",
+        )
+        if not isinstance(binding["path"], str) or binding["path"] in frozen_by_path:
+            raise CoordinatorError("predecessor frozen-file path is invalid or duplicated")
+        frozen_by_path[binding["path"]] = binding
+    coordinator_path = "docs/reference_cases/e4_pl_s3_v2_stage4a_coordinator.py"
+    bounded_path = "docs/reference_cases/e4_pl_s3_v2_bounded_process.py"
+    if (
+        frozen_by_path.get(coordinator_path, {}).get("git_blob_sha256")
+        != PREDECESSOR_COORDINATOR_SHA256
+        or frozen_by_path.get(bounded_path, {}).get("git_blob_sha256")
+        != PREDECESSOR_BOUNDED_SHA256
+    ):
+        raise CoordinatorError("predecessor process-program authority differs")
+    predecessor_coordinator_raw = _git(
+        "show",
+        f"{PREDECESSOR_AUTHORIZATION_COMMIT}:{coordinator_path}",
+        binary=True,
+    )
+    predecessor_bounded_raw = _git(
+        "show",
+        f"{PREDECESSOR_AUTHORIZATION_COMMIT}:{bounded_path}",
+        binary=True,
+    )
+    if (
+        sha256(predecessor_coordinator_raw) != PREDECESSOR_COORDINATOR_SHA256
+        or sha256(predecessor_bounded_raw) != PREDECESSOR_BOUNDED_SHA256
+        or b'producer_result_path = (output_root / "producer-wave-result.json").resolve()'
+        not in predecessor_coordinator_raw
+        or b"result_path.relative_to(output_root)" not in predecessor_bounded_raw
+        or b'raise BoundedProcessError("canonical wave result path escapes output_root")'
+        not in predecessor_bounded_raw
+    ):
+        raise CoordinatorError("predecessor containment implementation differs")
+
+    failed_result_path = (incident_root / "producer-wave-result.json").resolve()
+    corrected_result_path = (wave_root / "producer-wave-result.json").resolve()
+    try:
+        failed_result_path.relative_to(wave_root)
+    except ValueError:
+        pass
+    else:
+        raise CoordinatorError("predecessor root cause is not reproduced")
+    try:
+        corrected_result_path.relative_to(wave_root)
+    except ValueError as exc:
+        raise CoordinatorError("corrected producer result containment is invalid") from exc
+    absent_paths = (
+        wave_root,
+        failed_result_path,
+        corrected_result_path,
+        incident_root / "checker-replica-1",
+        incident_root / "checker-replica-2",
+    )
+    if any(os.path.lexists(path) for path in absent_paths):
+        raise CoordinatorError("predecessor worker or result output unexpectedly exists")
+
+    try:
+        transcript = bound["transcript"][1].decode("utf-8-sig")
+    except UnicodeError as exc:
+        raise CoordinatorError("predecessor transcript is not UTF-8") from exc
+    transcript_lines = [line.strip() for line in transcript.splitlines()]
+    if (
+        transcript_lines.count("REGISTERED_COMMAND_EXIT=2") != 1
+        or "REGISTERED_COMMAND_EXIT=0" in transcript_lines
+        or f"FORMAL_TERMINAL={PASS}" in transcript_lines
+        or f"FORMAL_TERMINAL={NO_GO}" in transcript_lines
+    ):
+        raise CoordinatorError("predecessor transcript disposition differs")
+
+    terminal_rows = incident["terminal_ledger_rows"]
+    if not isinstance(terminal_rows, list) or len(terminal_rows) != 2:
+        raise CoordinatorError("predecessor terminal ledger-row coverage differs")
+    expected_statuses = ("EXECUTION_STARTED", "COMPLETED_FAIL")
+    terminal_lines: list[str] = []
+    for index, (raw_row, expected_status) in enumerate(
+        zip(terminal_rows, expected_statuses)
+    ):
+        row = _exact(
+            raw_row,
+            {"line", "sha256", "status"},
+            f"{location}.terminal_ledger_rows[{index}]",
+        )
+        line = row["line"]
+        if (
+            row["status"] != expected_status
+            or not isinstance(line, str)
+            or "\r" in line
+            or "\n" in line
+            or _digest(row["sha256"], f"{location}.terminal_ledger_rows[{index}].sha256")
+            != PREDECESSOR_LEDGER_ROW_SHA256[expected_status]
+            or sha256((line + "\n").encode("utf-8"))
+            != PREDECESSOR_LEDGER_ROW_SHA256[expected_status]
+        ):
+            raise CoordinatorError("predecessor terminal ledger row differs")
+        fields = [field.strip() for field in line.split("|")]
+        if len(fields) < 5 or fields[2] != PREDECESSOR_REQUEST_ID or fields[3] != expected_status:
+            raise CoordinatorError("predecessor terminal ledger row fields differ")
+        terminal_lines.append(line)
+    try:
+        live_ledger = RESOURCE_LEDGER_PATH.read_bytes().decode("utf-8-sig")
+    except (OSError, UnicodeError) as exc:
+        raise CoordinatorError(f"cannot validate predecessor live ledger: {exc}") from exc
+    matching_rows = [
+        line
+        for line in live_ledger.splitlines()
+        if f"| {PREDECESSOR_REQUEST_ID} |" in line
+    ]
+    if matching_rows != [approved_line, *terminal_lines]:
+        raise CoordinatorError("predecessor live ledger history differs")
+
+
 def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
     value, raw = strict_json_load(path)
     if raw != canonical_bytes(value):
@@ -650,6 +1493,7 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
             "execution",
             "frozen_files",
             "git_authority",
+            "predecessor_process_incident",
             "production_boundary",
             "protocol",
             "schema",
@@ -659,6 +1503,9 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
     )
     if contract["schema"] != CONTRACT_SCHEMA or contract["stage"] != "STAGE_4A":
         raise CoordinatorError("Stage 4A contract identity differs")
+    _validate_predecessor_process_incident(
+        contract["predecessor_process_incident"]
+    )
     git_authority = _exact(
         contract["git_authority"],
         {

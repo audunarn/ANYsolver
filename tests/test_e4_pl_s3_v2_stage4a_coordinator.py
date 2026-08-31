@@ -33,6 +33,420 @@ def _load():
     return module
 
 
+def _synthetic_predecessor_incident(module, tmp_path, monkeypatch):
+    incident_root = (tmp_path / "cycle-1").resolve()
+    incident_root.mkdir(parents=True)
+    (incident_root / "candidate-source-tree").mkdir()
+    resource_root = (tmp_path / "resource-manager").resolve()
+    request_root = resource_root / "requests"
+    request_root.mkdir(parents=True)
+    repository = (tmp_path / "frozen-repository").resolve()
+    repository.mkdir()
+    request_id = "1" * 32
+    candidate_commit, candidate_tree = "2" * 40, "3" * 40
+    authorization_commit, authorization_tree = "4" * 40, "5" * 40
+    authorization_parent = "6" * 40
+    authorization_subject = "synthetic predecessor authorization"
+    authorization_path = "docs/reference_cases/authorization.json"
+    contract_path = "docs/reference_cases/contract.json"
+    requested_at = "2026-08-31T09:06:41.6684913+02:00"
+    task = "synthetic bounded Stage 4A"
+
+    request = {
+        "command": "",
+        "estimate_minutes": 30,
+        "repository": str(repository),
+        "request_id": request_id,
+        "requested_at": requested_at,
+        "status": "PENDING",
+        "task": task,
+    }
+    request["command"] = "x" * (1311 - len(module.canonical_bytes(request)))
+    request_raw = module.canonical_bytes(request)
+    assert len(request_raw) == 1311
+    request_path = request_root / f"{request_id}.json"
+    request_path.write_bytes(request_raw)
+
+    approved_line = f"| t0 | {request_id} | APPROVED | synthetic |"
+    started_line = f"| t1 | {request_id} | EXECUTION_STARTED | synthetic |"
+    failed_line = f"| t2 | {request_id} | COMPLETED_FAIL | synthetic |"
+    row_hashes = {
+        status: module.sha256((line + "\n").encode())
+        for status, line in (
+            ("APPROVED", approved_line),
+            ("EXECUTION_STARTED", started_line),
+            ("COMPLETED_FAIL", failed_line),
+        )
+    }
+    ledger_snapshot_raw = ("header\n" + approved_line + "\n").encode()
+    live_ledger = resource_root / "ledger.md"
+    live_ledger.write_text(
+        "header\n" + "\n".join((approved_line, started_line, failed_line)) + "\n",
+        encoding="utf-8",
+    )
+
+    archive_raw = b"synthetic exact archive"
+    archive_name = "candidate-source.tar"
+    archive_path = incident_root / archive_name
+    archive_path.write_bytes(archive_raw)
+    candidate_binding = {
+        "artifact_path": str(archive_path),
+        "artifact_sha256": module.sha256(archive_raw),
+        "candidate_id": "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1",
+        "commit": candidate_commit,
+        "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V2",
+        "schema": "anysolver.e4-pl-s3-v2-flat-candidate-binding-v1",
+        "selector": "e4-pl-s3-v2",
+        "tree": candidate_tree,
+    }
+    phase_plan = {
+        "advisory_review_triggers": {},
+        "formal_thresholds": {},
+        "manifest_sha256": "7" * 64,
+        "phase": "4A",
+        "prerequisites": [],
+        "record_count": 81,
+        "schema": "anysolver.e4-pl-s3-v2-flat-funnel-plan-v1",
+        "scope": "full",
+        "selector": "e4-pl-s3-v2",
+        "shards": [
+            {"assignment_id": assignment_id, "records": [{} for _ in range(27)]}
+            for assignment_id in module.EXPECTED_SHARDS
+        ],
+    }
+    phase_raw = module.canonical_bytes(phase_plan)
+    wave_root = incident_root / "producer-wave"
+    workers = []
+    for assignment_id in module.EXPECTED_SHARDS:
+        worker_root = wave_root / assignment_id
+        workers.append(
+            {
+                "assignment_id": assignment_id,
+                "plan_path": str(incident_root / "phase4a-plan.json"),
+                "plan_sha256": module.sha256(phase_raw),
+                "progress_path": str(worker_root / "progress.jsonl"),
+                "scientific_path": str(worker_root / "scientific.json"),
+                "stderr_path": str(worker_root / "stderr.log"),
+                "stdout_path": str(worker_root / "stdout.log"),
+            }
+        )
+    manifest = {
+        "lane": "flat-proof",
+        "output_root": str(wave_root),
+        "schema": "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1",
+        "wave_id": "S3_V2_FLAT_FUNNEL_4A_FULL",
+        "workers": workers,
+    }
+
+    contract_sha = "8" * 64
+    authorization = {
+        "contract_path": contract_path,
+        "contract_sha256": contract_sha,
+        "execution_paths": {
+            "aggregate_path": str(incident_root / "stage4a-aggregate.json"),
+            "approval_snapshot_path": str(incident_root / "approval-snapshot.json"),
+            "output_root": str(incident_root),
+            "python_executable": sys.executable,
+        },
+        "formal_execution_authorized": True,
+        "implementation_reviews": [],
+        "ledger_approval": {},
+        "resource_lock_required": True,
+        "resource_request": {},
+        "schema": module.AUTHORIZATION_SCHEMA,
+        "user_approval": {
+            "recorded": True,
+            "source": f"synthetic approval for {request_id}",
+        },
+    }
+    approval_snapshot = {
+        "approved_row": {"line": approved_line, "sha256": row_hashes["APPROVED"]},
+        "candidate": {"commit": candidate_commit, "tree": candidate_tree},
+        "ledger": {},
+        "request": {
+            "byte_count": len(request_raw),
+            "path": str(request_path),
+            "request_id": request_id,
+            "sha256": module.sha256(request_raw),
+        },
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2",
+    }
+    transcript_raw = b"REGISTERED_COMMAND_EXIT=2\n"
+    aggregate = {
+        "advisory_review_required": False,
+        "authorization_sha256": "0" * 64,
+        "checker_replica_bindings": [],
+        "classifying_record_count": 0,
+        "contract_sha256": contract_sha,
+        "formal_failures": ["FORMAL_PROCESS_FAILED"],
+        "producer_wave_result_sha256": None,
+        "production_restriction": module.PRODUCTION_RESTRICTION,
+        "schema": module.AGGREGATE_SCHEMA,
+        "sequence_results": [],
+        "successor_expansion_authorized": False,
+        "terminal": module.BLOCKED,
+        "v1_diagnostic_record_count": 0,
+    }
+    coordinator_raw = (
+        b'producer_result_path = (output_root / "producer-wave-result.json").resolve()'
+    )
+    bounded_raw = (
+        b"result_path.relative_to(output_root)\n"
+        b'raise BoundedProcessError("canonical wave result path escapes output_root")'
+    )
+    predecessor_contract = {
+        "candidate": {"commit": candidate_commit, "tree": candidate_tree},
+        "frozen_files": [
+            {
+                "git_blob_sha256": module.sha256(coordinator_raw),
+                "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_coordinator.py",
+                "role": "coordinator",
+            },
+            {
+                "git_blob_sha256": module.sha256(bounded_raw),
+                "path": "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
+                "role": "bounded",
+            },
+        ],
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-contract-v2",
+    }
+    contract_raw = module.canonical_bytes(predecessor_contract)
+    contract_sha = module.sha256(contract_raw)
+    authorization["contract_sha256"] = contract_sha
+    aggregate["contract_sha256"] = contract_sha
+
+    artifacts = {
+        "candidate_archive": (archive_name, archive_raw),
+        "candidate_binding": (
+            "candidate-source-binding.json",
+            module.canonical_bytes(candidate_binding),
+        ),
+        "ledger_snapshot": ("resource-ledger-pre-run.md", ledger_snapshot_raw),
+        "manifest": ("producer-wave-manifest.json", module.canonical_bytes(manifest)),
+        "phase_plan": ("phase4a-plan.json", phase_raw),
+        "transcript": ("formal-transcript.txt", transcript_raw),
+    }
+    artifact_constants = {
+        name: (filename, len(raw), module.sha256(raw))
+        for name, (filename, raw) in artifacts.items()
+    }
+    approval_snapshot["ledger"] = {
+        "byte_count": len(ledger_snapshot_raw),
+        "path": str(live_ledger),
+        "sha256": module.sha256(ledger_snapshot_raw),
+        "snapshot_path": str(incident_root / "resource-ledger-pre-run.md"),
+    }
+    artifacts["approval_snapshot"] = (
+        "approval-snapshot.json",
+        module.canonical_bytes(approval_snapshot),
+    )
+    authorization["ledger_approval"] = {
+        "approved_row_sha256": row_hashes["APPROVED"],
+        "ledger_path": str(live_ledger),
+        "snapshot_path": str(incident_root / "approval-snapshot.json"),
+        "snapshot_sha256": module.sha256(artifacts["approval_snapshot"][1]),
+    }
+    authorization["resource_request"] = {
+        "command_sha256": module.sha256(request["command"].encode()),
+        "repository": str(repository),
+        "request_id": request_id,
+        "request_path": str(request_path),
+        "request_sha256": module.sha256(request_raw),
+        "task": task,
+    }
+    authorization_raw = module.canonical_bytes(authorization)
+    aggregate["authorization_sha256"] = module.sha256(authorization_raw)
+    artifacts["aggregate"] = (
+        "stage4a-aggregate.json",
+        module.canonical_bytes(aggregate),
+    )
+    artifact_constants = {
+        name: (filename, len(raw), module.sha256(raw))
+        for name, (filename, raw) in artifacts.items()
+    }
+    for filename, raw in artifacts.values():
+        (incident_root / filename).write_bytes(raw)
+
+    incident = {
+        name: {
+            "byte_count": count,
+            "path": str(incident_root / filename),
+            "sha256": digest,
+        }
+        for name, (filename, count, digest) in artifact_constants.items()
+    }
+    incident.update(
+        {
+            "authorization": {
+                "byte_count": len(authorization_raw),
+                "commit": authorization_commit,
+                "parent": authorization_parent,
+                "path": authorization_path,
+                "sha256": module.sha256(authorization_raw),
+                "subject": authorization_subject,
+                "tree": authorization_tree,
+            },
+            "output_root": str(incident_root),
+            "request": {
+                "byte_count": len(request_raw),
+                "path": str(request_path),
+                "sha256": module.sha256(request_raw),
+            },
+            "root_cause": "PRODUCER_RESULT_PATH_OUTSIDE_REGISTERED_WAVE_ROOT",
+            "scientific_execution": {
+                "checker_processes_started": 0,
+                "classifying_records": 0,
+                "producer_processes_started": 0,
+                "producer_result_present": False,
+            },
+            "terminal_ledger_rows": [
+                {
+                    "line": started_line,
+                    "sha256": row_hashes["EXECUTION_STARTED"],
+                    "status": "EXECUTION_STARTED",
+                },
+                {
+                    "line": failed_line,
+                    "sha256": row_hashes["COMPLETED_FAIL"],
+                    "status": "COMPLETED_FAIL",
+                },
+            ],
+        }
+    )
+
+    monkeypatch.setattr(module, "PREDECESSOR_INCIDENT_ROOT", incident_root)
+    monkeypatch.setattr(module, "PREDECESSOR_REPOSITORY", str(repository))
+    monkeypatch.setattr(module, "PREDECESSOR_REQUEST_ID", request_id)
+    monkeypatch.setattr(module, "PREDECESSOR_REQUESTED_AT", requested_at)
+    monkeypatch.setattr(module, "PREDECESSOR_TASK", task)
+    monkeypatch.setattr(module, "PREDECESSOR_REQUEST_SHA256", module.sha256(request_raw))
+    monkeypatch.setattr(
+        module, "PREDECESSOR_COMMAND_SHA256", module.sha256(request["command"].encode())
+    )
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_COMMIT", authorization_commit)
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_TREE", authorization_tree)
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_PARENT", authorization_parent)
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_SUBJECT", authorization_subject)
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_PATH", authorization_path)
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_SHA256", module.sha256(authorization_raw))
+    monkeypatch.setattr(module, "PREDECESSOR_AUTHORIZATION_BYTE_COUNT", len(authorization_raw))
+    monkeypatch.setattr(module, "PREDECESSOR_CONTRACT_PATH", contract_path)
+    monkeypatch.setattr(module, "PREDECESSOR_CONTRACT_SHA256", contract_sha)
+    monkeypatch.setattr(module, "PREDECESSOR_CONTRACT_BYTE_COUNT", len(contract_raw))
+    monkeypatch.setattr(
+        module,
+        "PREDECESSOR_CONNECTIVITY_MANIFEST_SHA256",
+        phase_plan["manifest_sha256"],
+    )
+    monkeypatch.setattr(module, "PREDECESSOR_CANDIDATE_COMMIT", candidate_commit)
+    monkeypatch.setattr(module, "PREDECESSOR_CANDIDATE_TREE", candidate_tree)
+    monkeypatch.setattr(module, "PREDECESSOR_COORDINATOR_SHA256", module.sha256(coordinator_raw))
+    monkeypatch.setattr(module, "PREDECESSOR_BOUNDED_SHA256", module.sha256(bounded_raw))
+    monkeypatch.setattr(module, "PREDECESSOR_LEDGER_ROW_SHA256", row_hashes)
+    monkeypatch.setattr(module, "PREDECESSOR_ARTIFACTS", artifact_constants)
+    monkeypatch.setattr(module, "RESOURCE_MANAGER_ROOT", resource_root)
+    monkeypatch.setattr(module, "RESOURCE_LEDGER_PATH", live_ledger)
+    monkeypatch.setattr(module, "_validate_git_object_authority", lambda: None)
+
+    git_blobs = {
+        f"{authorization_commit}:{authorization_path}": authorization_raw,
+        f"{authorization_commit}:{contract_path}": contract_raw,
+        f"{authorization_commit}:docs/reference_cases/e4_pl_s3_v2_stage4a_coordinator.py": coordinator_raw,
+        f"{authorization_commit}:docs/reference_cases/e4_pl_s3_v2_bounded_process.py": bounded_raw,
+    }
+
+    def fake_git(*args, binary=False, **_kwargs):
+        if args == ("rev-parse", authorization_commit):
+            return authorization_commit
+        if args == ("rev-parse", f"{authorization_commit}^{{tree}}"):
+            return authorization_tree
+        if args == ("show", "-s", "--format=%P", authorization_commit):
+            return authorization_parent
+        if args == ("show", "-s", "--format=%s", authorization_commit):
+            return authorization_subject
+        if args[0] == "show" and len(args) == 2 and args[1] in git_blobs:
+            return git_blobs[args[1]] if binary else git_blobs[args[1]].decode()
+        raise AssertionError(f"unexpected synthetic Git query: {args}")
+
+    monkeypatch.setattr(module, "_git", fake_git)
+
+    class SyntheticWorker:
+        def __init__(self, assignment_id):
+            self.assignment_id = assignment_id
+
+    class SyntheticBounded:
+        def validate_manifest(self, value):
+            bounded_calls.append(copy.deepcopy(value))
+            return (
+                value["wave_id"],
+                value["lane"],
+                Path(value["output_root"]).resolve(),
+                tuple(SyntheticWorker(item["assignment_id"]) for item in value["workers"]),
+            )
+
+    bounded_calls = []
+    bounded = SyntheticBounded()
+    real_load_module = module._load_module
+
+    def fake_load_module(name, path):
+        if path == module.BOUNDED_PATH:
+            return bounded
+        return real_load_module(name, path)
+
+    monkeypatch.setattr(module, "_load_module", fake_load_module)
+
+    def replace_artifact(name, value):
+        raw = value if isinstance(value, bytes) else module.canonical_bytes(value)
+        filename = artifacts[name][0]
+        (incident_root / filename).write_bytes(raw)
+        constants = dict(module.PREDECESSOR_ARTIFACTS)
+        constants[name] = (filename, len(raw), module.sha256(raw))
+        monkeypatch.setattr(module, "PREDECESSOR_ARTIFACTS", constants)
+        incident[name] = {
+            "byte_count": len(raw),
+            "path": str(incident_root / filename),
+            "sha256": module.sha256(raw),
+        }
+
+    def replace_request(value, *, rebind_command):
+        value = copy.deepcopy(value)
+        value["command"] = str(value["command"])
+        raw = module.canonical_bytes(value)
+        difference = 1311 - len(raw)
+        assert difference >= 0
+        value["command"] += "x" * difference
+        raw = module.canonical_bytes(value)
+        assert len(raw) == 1311
+        request_path.write_bytes(raw)
+        monkeypatch.setattr(module, "PREDECESSOR_REQUEST_SHA256", module.sha256(raw))
+        if rebind_command:
+            monkeypatch.setattr(
+                module,
+                "PREDECESSOR_COMMAND_SHA256",
+                module.sha256(value["command"].encode()),
+            )
+        incident["request"] = {
+            "byte_count": len(raw),
+            "path": str(request_path),
+            "sha256": module.sha256(raw),
+        }
+
+    return {
+        "aggregate": aggregate,
+        "approval_snapshot": approval_snapshot,
+        "bounded_calls": bounded_calls,
+        "candidate_binding": candidate_binding,
+        "incident": incident,
+        "live_ledger": live_ledger,
+        "manifest": manifest,
+        "phase_plan": phase_plan,
+        "replace_artifact": replace_artifact,
+        "replace_request": replace_request,
+        "request": request,
+        "request_path": request_path,
+    }
+
+
 def _sequence(mask: str, fraction: int, *, advisory: bool = False, failure: str | None = None):
     failures = [] if failure is None else [failure]
     return {
@@ -176,6 +590,237 @@ def test_strict_json_rejects_duplicate_keys_and_nonfinite_constants():
         module.strict_json_bytes(b'{"a":NaN}', "nonfinite")
     with pytest.raises(module.CoordinatorError, match="non-finite number"):
         module.canonical_bytes({"a": float("inf")})
+
+
+def test_external_incident_binding_is_exact_and_supports_utf8_bom(tmp_path):
+    module = _load()
+    path = (tmp_path / "request.json").resolve()
+    raw = b'\xef\xbb\xbf{"request_id":"' + b"1" * 32 + b'"}\r\n'
+    path.write_bytes(raw)
+    binding = {
+        "byte_count": len(raw),
+        "path": str(path),
+        "sha256": module.sha256(raw),
+    }
+    assert module._validate_external_file_binding(binding, "incident") == (path, raw)
+    value, observed = module._strict_external_json(path, "incident request")
+    assert value == {"request_id": "1" * 32}
+    assert observed == raw
+
+    for field, replacement in (
+        ("byte_count", len(raw) + 1),
+        ("sha256", "0" * 64),
+    ):
+        changed = dict(binding)
+        changed[field] = replacement
+        with pytest.raises(module.CoordinatorError, match="identity differs"):
+            module._validate_external_file_binding(changed, "incident")
+
+
+@pytest.mark.parametrize("alias", [True, float(1)])
+def test_external_incident_binding_rejects_boolean_and_float_byte_counts(
+    tmp_path, alias
+):
+    module = _load()
+    path = (tmp_path / "one-byte.bin").resolve()
+    path.write_bytes(b"x")
+    binding = {
+        "byte_count": alias,
+        "path": str(path),
+        "sha256": module.sha256(b"x"),
+    }
+    with pytest.raises(module.CoordinatorError, match="nonnegative integer"):
+        module._validate_external_file_binding(binding, "incident")
+
+
+@pytest.mark.parametrize("digest", [None, 7, "a" * 64, "G" * 64, "A" * 63])
+def test_external_incident_binding_rejects_noncanonical_digest(tmp_path, digest):
+    module = _load()
+    path = (tmp_path / "artifact.bin").resolve()
+    path.write_bytes(b"exact")
+    binding = {"byte_count": 5, "path": str(path), "sha256": digest}
+    with pytest.raises(module.CoordinatorError, match="SHA-256"):
+        module._validate_external_file_binding(binding, "incident")
+
+
+def test_external_incident_binding_rejects_raw_reparse_alias_before_resolve(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    target = (tmp_path / "target.bin").resolve()
+    target.write_bytes(b"exact")
+
+    class SyntheticRawReparsePath:
+        def is_absolute(self):
+            return True
+
+        def lstat(self):
+            class SyntheticStat:
+                st_mode = target.stat().st_mode
+                st_file_attributes = 0x400
+
+            return SyntheticStat()
+
+        def is_symlink(self):
+            return False
+
+        def resolve(self):
+            return target
+
+    monkeypatch.setattr(module, "Path", lambda _value: SyntheticRawReparsePath())
+    binding = {
+        "byte_count": 5,
+        "path": str(tmp_path / "synthetic-reparse.bin"),
+        "sha256": module.sha256(b"exact"),
+    }
+    with pytest.raises(module.CoordinatorError, match="reparse|identity"):
+        module._validate_external_file_binding(binding, "incident")
+
+
+def test_predecessor_incident_validates_complete_synthetic_graph(tmp_path, monkeypatch):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "ROOT", tmp_path / "unrelated-live-root")
+    module._validate_predecessor_process_incident(fixture["incident"])
+    assert fixture["bounded_calls"] == [fixture["manifest"]]
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("checker_processes_started", False),
+        ("classifying_records", 0.0),
+        ("producer_processes_started", False),
+        ("producer_result_present", 0),
+    ],
+)
+def test_predecessor_incident_rejects_scientific_type_aliases(
+    tmp_path, monkeypatch, field, replacement
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    fixture["incident"]["scientific_execution"][field] = replacement
+    with pytest.raises(module.CoordinatorError, match="scientific|nonnegative integer"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("authorization_sha256", "9" * 64),
+        ("producer_wave_result_sha256", "9" * 64),
+        ("advisory_review_required", 0),
+        ("classifying_record_count", False),
+        ("v1_diagnostic_record_count", 0.0),
+    ],
+)
+def test_predecessor_incident_rejects_rebound_aggregate_disposition_mutations(
+    tmp_path, monkeypatch, field, replacement
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["aggregate"])
+    changed[field] = replacement
+    fixture["replace_artifact"]("aggregate", changed)
+    with pytest.raises(module.CoordinatorError, match="aggregate"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+def test_predecessor_incident_rejects_extra_aggregate_key(tmp_path, monkeypatch):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["aggregate"])
+    changed["unexpected"] = False
+    fixture["replace_artifact"]("aggregate", changed)
+    with pytest.raises(module.CoordinatorError, match="keys differ"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (lambda request: request.__setitem__("estimate_minutes", False), "nonnegative integer"),
+        (lambda request: request.__setitem__("estimate_minutes", 30.0), "nonnegative integer"),
+        (lambda request: request.__setitem__("command", "tampered"), "request identity"),
+        (lambda request: request.__setitem__("unexpected", True), "keys differ"),
+    ],
+)
+def test_predecessor_incident_rejects_rebound_request_mutations(
+    tmp_path, monkeypatch, mutation, message
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["request"])
+    changed["command"] = "registered"
+    mutation(changed)
+    fixture["replace_request"](
+        changed,
+        rebind_command=changed.get("command") != "tampered",
+    )
+    with pytest.raises(module.CoordinatorError, match=message):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+def test_predecessor_incident_rejects_arbitrary_authorization_commit(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    fixture["incident"]["authorization"]["commit"] = "f" * 40
+    with pytest.raises(module.CoordinatorError, match="authorization binding"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+@pytest.mark.parametrize("artifact", ["approval_snapshot", "candidate_binding"])
+def test_predecessor_incident_rejects_rebound_cross_join_mutations(
+    tmp_path, monkeypatch, artifact
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture[artifact])
+    if artifact == "approval_snapshot":
+        changed["candidate"]["commit"] = "f" * 40
+    else:
+        changed["artifact_sha256"] = "f" * 64
+    fixture["replace_artifact"](artifact, changed)
+    with pytest.raises(module.CoordinatorError, match="approval snapshot|archive join"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+def test_predecessor_incident_rejects_rebound_phase_plan_manifest_hash(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["phase_plan"])
+    changed["manifest_sha256"] = "f" * 64
+    fixture["replace_artifact"]("phase_plan", changed)
+    changed_manifest = copy.deepcopy(fixture["manifest"])
+    for worker in changed_manifest["workers"]:
+        worker["plan_sha256"] = fixture["incident"]["phase_plan"]["sha256"]
+    fixture["replace_artifact"]("manifest", changed_manifest)
+    with pytest.raises(module.CoordinatorError, match="phase-plan|manifest"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+
+def test_predecessor_incident_rejects_manifest_coverage_and_ledger_reordering(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
+    changed = copy.deepcopy(fixture["manifest"])
+    changed["workers"].pop()
+    fixture["replace_artifact"]("manifest", changed)
+    with pytest.raises(module.CoordinatorError, match="manifest"):
+        module._validate_predecessor_process_incident(fixture["incident"])
+
+    fixture = _synthetic_predecessor_incident(module, tmp_path / "other", monkeypatch)
+    rows = fixture["live_ledger"].read_text(encoding="utf-8").splitlines()
+    fixture["live_ledger"].write_text(
+        "\n".join([rows[0], rows[1], rows[3], rows[2]]) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(module.CoordinatorError, match="ledger history"):
+        module._validate_predecessor_process_incident(fixture["incident"])
 
 
 def test_aggregate_pass_has_exact_coverage_and_registered_order(tmp_path):
