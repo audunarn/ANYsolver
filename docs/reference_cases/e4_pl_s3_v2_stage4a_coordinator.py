@@ -43,11 +43,40 @@ BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
 CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v5"
+LEAF_WAVE_AUTHORIZATION_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v3"
+)
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
 AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
 CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
 PRODUCER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-bounded-wave-result-v1"
+LEAF_ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v1"
+LEAF_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-catalog-v1"
+LEAF_WAVE_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-catalog-v1"
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v1"
+LEAF_SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v1"
+LEAF_UNION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-union-v1"
+LEAF_WAVE_RECEIPT_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-receipt-v1"
+)
+LEAF_UNION_TERMINAL = "COMPLETE_FOR_DIAGONAL_RECONSTRUCTION"
+LEAF_PROOF_TERMINAL = "ACCEPTED_FOR_AGGREGATION"
+DIAGONAL_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
+DIAGONAL_SCIENTIFIC_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-flat-funnel-shard-scientific-v1"
+)
+LEAF_SELECTOR = "e4-pl-s3-v2"
+LEAF_CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
+LEAF_V1_CLASSIFICATION = "NONCLASSIFYING_V1_COMPARATOR_ONLY"
+LEAF_V1_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+LEAF_V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+LEAF_CATALOG_COUNT = 81
+LEAF_V1_DIAGNOSTIC_COUNT = 72
+LEAF_WAVE_COUNT = 41
+LEAF_WORKER_WALL_SECONDS = 900
+LEAF_FINALIZER_WALL_SECONDS = 1740
+LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS = 15
 BLOCKED = "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
 NO_GO = "NO_GO_E4_PL_S3_V2A_MIXED_FLEXURAL_CONVERGENCE"
 PASS = "PASS_E4_PL_S3_V2A_FLAT_FUNNEL_PHASE_4A"
@@ -330,6 +359,7 @@ REQUIRED_FROZEN_PATHS = {
     "tests/test_e4_pl_s3_v2_flat_candidate_review.py",
     "tests/test_e4_pl_s3_v2_flat_funnel_checker.py",
     "tests/test_e4_pl_s3_v2_flat_funnel_producer.py",
+    "tests/test_e4_pl_s3_v2_component_cache.py",
     "tests/test_e4_pl_s3_v2_mixed_scope.py",
     "tests/test_e4_pl_s3_v2_stage4a_authority.py",
     "tests/test_e4_pl_s3_v2_stage4a_coordinator.py",
@@ -379,12 +409,31 @@ class _CoordinatorWallGuard:
         aggregate_path: Path,
         started: float,
         exit_function: Any = os._exit,
+        wall_seconds: int = COORDINATOR_WALL_SECONDS,
+        publication_reserve_seconds: int = (
+            COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS
+        ),
     ) -> None:
+        if (
+            isinstance(wall_seconds, bool)
+            or not isinstance(wall_seconds, int)
+            or wall_seconds <= 0
+            or wall_seconds >= 1800
+            and wall_seconds != COORDINATOR_WALL_SECONDS
+        ):
+            raise CoordinatorError("coordinator wall must be a positive registered bound")
+        if (
+            isinstance(publication_reserve_seconds, bool)
+            or not isinstance(publication_reserve_seconds, int)
+            or publication_reserve_seconds <= 0
+            or publication_reserve_seconds >= wall_seconds
+        ):
+            raise CoordinatorError("coordinator publication reserve is invalid")
         self.aggregate_path = aggregate_path.resolve()
-        self.hard_deadline = started + COORDINATOR_WALL_SECONDS
+        self.hard_deadline = started + wall_seconds
         self.work_deadline = (
             self.hard_deadline
-            - COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS
+            - publication_reserve_seconds
         )
         self._exit_function = exit_function
         self._stop = threading.Event()
@@ -773,10 +822,1039 @@ def _validate_external_file_binding(
     return resolved, raw
 
 
+def _external_file_binding(path: Path, location: str) -> dict[str, Any]:
+    raw_path = Path(path)
+    if not raw_path.is_absolute():
+        raise CoordinatorError(f"{location} must be absolute")
+    resolved = raw_path.resolve(strict=True)
+    raw = resolved.read_bytes()
+    if not raw:
+        raise CoordinatorError(f"{location} must be nonempty")
+    binding = {
+        "byte_count": len(raw),
+        "path": str(resolved),
+        "sha256": sha256(raw),
+    }
+    _validate_external_file_binding(binding, location, expected_path=resolved)
+    return binding
+
+
 def _nonnegative_integer(value: Any, location: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise CoordinatorError(f"{location} must be a nonnegative integer")
     return value
+
+
+def _stage4a_plan_shards(
+    plan: Mapping[str, Any], plan_raw: bytes
+) -> tuple[Mapping[str, Any], ...]:
+    """Validate the content-addressed structure needed by correction-4 leaves.
+
+    The formal finalizer additionally joins this plan to the immutable
+    connectivity manifest through ``validate_phase_plan``.  This local check is
+    deliberately independent of the producer so catalog corruption is caught
+    before any producer or checker is imported.
+    """
+
+    if plan_raw != canonical_bytes(plan):
+        raise CoordinatorError("Stage 4A leaf plan is not canonical JSON")
+    checked = _exact(
+        plan,
+        {
+            "advisory_review_triggers",
+            "formal_thresholds",
+            "manifest_sha256",
+            "phase",
+            "prerequisites",
+            "record_count",
+            "schema",
+            "selector",
+            "shards",
+            "scope",
+        },
+        "$.leaf_plan",
+    )
+    if (
+        checked["schema"] != "anysolver.e4-pl-s3-v2-flat-funnel-plan-v1"
+        or checked["phase"] != "4A"
+        or checked["scope"] != "full"
+        or checked["selector"] != LEAF_SELECTOR
+        or checked["record_count"] != LEAF_CATALOG_COUNT
+    ):
+        raise CoordinatorError("Stage 4A leaf plan identity differs")
+    _digest(checked["manifest_sha256"], "$.leaf_plan.manifest_sha256")
+    raw_shards = checked["shards"]
+    if not isinstance(raw_shards, list) or len(raw_shards) != len(EXPECTED_SHARDS):
+        raise CoordinatorError("Stage 4A leaf plan shard coverage differs")
+    made: list[Mapping[str, Any]] = []
+    seen_indices: set[int] = set()
+    seen_records: set[str] = set()
+    for shard_index, (raw_shard, (assignment_id, diagonal)) in enumerate(
+        zip(raw_shards, EXPECTED_SHARDS.items())
+    ):
+        location = f"$.leaf_plan.shards[{shard_index}]"
+        shard = _exact(
+            raw_shard,
+            {
+                "assignment_id",
+                "assignment_sha256",
+                "diagonal",
+                "manifest_sha256",
+                "phase",
+                "records",
+                "schema",
+                "selector",
+                "scope",
+            },
+            location,
+        )
+        members = shard["records"]
+        if (
+            shard["schema"]
+            != "anysolver.e4-pl-s3-v2-flat-funnel-assignment-v1"
+            or shard["assignment_id"] != assignment_id
+            or shard["diagonal"] != diagonal
+            or shard["manifest_sha256"] != checked["manifest_sha256"]
+            or shard["phase"] != "4A"
+            or shard["scope"] != "full"
+            or shard["selector"] != LEAF_SELECTOR
+            or not isinstance(members, list)
+            or len(members) != 27
+        ):
+            raise CoordinatorError(f"Stage 4A leaf shard identity differs: {diagonal}")
+        assignment_core = dict(shard)
+        assignment_digest = assignment_core.pop("assignment_sha256")
+        if (
+            _digest(assignment_digest, f"{location}.assignment_sha256")
+            != sha256(canonical_bytes(assignment_core))
+        ):
+            raise CoordinatorError(f"Stage 4A leaf shard hash differs: {diagonal}")
+        for member_index, raw_member in enumerate(members):
+            member_location = f"{location}.records[{member_index}]"
+            member = _exact(
+                raw_member,
+                {"manifest_index", "record", "record_id"},
+                member_location,
+            )
+            manifest_index = _nonnegative_integer(
+                member["manifest_index"], f"{member_location}.manifest_index"
+            )
+            record_id = member["record_id"]
+            record = member["record"]
+            if (
+                manifest_index in seen_indices
+                or not isinstance(record_id, str)
+                or not record_id
+                or record_id in seen_records
+                or not isinstance(record, dict)
+                or record.get("diagonal") != diagonal
+            ):
+                raise CoordinatorError("Stage 4A leaf plan record coverage differs")
+            s3_count = record.get("s3_element_count")
+            if (
+                isinstance(s3_count, bool)
+                or not isinstance(s3_count, int)
+                or s3_count < 0
+            ):
+                raise CoordinatorError("Stage 4A leaf plan S3 count is malformed")
+            seen_indices.add(manifest_index)
+            seen_records.add(record_id)
+        made.append(shard)
+    if len(seen_indices) != LEAF_CATALOG_COUNT or len(seen_records) != LEAF_CATALOG_COUNT:
+        raise CoordinatorError("Stage 4A leaf plan does not contain 81 unique records")
+    return tuple(made)
+
+
+def _leaf_candidate_authority(
+    *,
+    candidate_commit: Any,
+    candidate_tree: Any,
+    candidate_archive_sha256: Any,
+    producer_program_sha256: Any,
+) -> dict[str, str]:
+    """Return the exact four-field identity frozen into every leaf."""
+
+    return {
+        "candidate_archive_sha256": _digest(
+            candidate_archive_sha256, "$.leaf_candidate.candidate_archive_sha256"
+        ),
+        "candidate_commit": _lower_object(
+            candidate_commit, "$.leaf_candidate.candidate_commit"
+        ),
+        "candidate_tree": _lower_object(
+            candidate_tree, "$.leaf_candidate.candidate_tree"
+        ),
+        "producer_program_sha256": _digest(
+            producer_program_sha256, "$.leaf_candidate.producer_program_sha256"
+        ),
+    }
+
+
+def _leaf_candidate_authority_sha256(authority: Mapping[str, Any]) -> str:
+    checked = _exact(
+        authority,
+        {
+            "candidate_archive_sha256",
+            "candidate_commit",
+            "candidate_tree",
+            "producer_program_sha256",
+        },
+        "$.leaf_candidate_authority",
+    )
+    canonical = _leaf_candidate_authority(**checked)
+    if dict(checked) != canonical:
+        raise CoordinatorError("leaf candidate authority is noncanonical")
+    return sha256(canonical_bytes(canonical))
+
+
+def build_stage4a_leaf_catalog(
+    plan: Mapping[str, Any],
+    plan_raw: bytes,
+    *,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> dict[str, Any]:
+    """Build the deterministic content-addressed 81-leaf catalog."""
+
+    shards = _stage4a_plan_shards(plan, plan_raw)
+    plan_digest = sha256(plan_raw)
+    candidate_authority = _leaf_candidate_authority(
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    candidate_authority_sha256 = _leaf_candidate_authority_sha256(
+        candidate_authority
+    )
+    leaves: list[dict[str, Any]] = []
+    seen_digests: set[str] = set()
+    for shard in shards:
+        for member in shard["records"]:
+            record = member["record"]
+            assignment = {
+                "catalog_index": len(leaves),
+                **candidate_authority,
+                "diagonal": shard["diagonal"],
+                "manifest_index": member["manifest_index"],
+                "parent_assignment_id": shard["assignment_id"],
+                "parent_assignment_sha256": shard["assignment_sha256"],
+                "phase": "4A",
+                "plan_sha256": plan_digest,
+                "record_id": member["record_id"],
+                "record_member_sha256": sha256(canonical_bytes(dict(member))),
+                "schema": LEAF_ASSIGNMENT_SCHEMA,
+                "selector": LEAF_SELECTOR,
+                "v1_diagnostic_expected": record["s3_element_count"] > 0,
+            }
+            digest = sha256(canonical_bytes(assignment))
+            if digest in seen_digests:
+                raise CoordinatorError("Stage 4A leaf assignment hash is duplicated")
+            seen_digests.add(digest)
+            leaves.append(
+                {
+                    "assignment": assignment,
+                    "leaf_assignment_sha256": digest,
+                    "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
+                }
+            )
+    diagnostic_count = sum(
+        bool(leaf["assignment"]["v1_diagnostic_expected"]) for leaf in leaves
+    )
+    if (
+        len(leaves) != LEAF_CATALOG_COUNT
+        or len(seen_digests) != LEAF_CATALOG_COUNT
+        or diagnostic_count != LEAF_V1_DIAGNOSTIC_COUNT
+    ):
+        raise CoordinatorError("Stage 4A leaf catalog coverage differs")
+    return {
+        "candidate_authority": candidate_authority,
+        "candidate_authority_sha256": candidate_authority_sha256,
+        "leaf_count": LEAF_CATALOG_COUNT,
+        "leaves": leaves,
+        "plan_sha256": plan_digest,
+        "schema": LEAF_CATALOG_SCHEMA,
+        "v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
+    }
+
+
+def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    checked = _exact(
+        catalog,
+        {
+            "candidate_authority",
+            "candidate_authority_sha256",
+            "leaf_count",
+            "leaves",
+            "plan_sha256",
+            "schema",
+            "v1_diagnostic_count",
+        },
+        "$.leaf_catalog",
+    )
+    if (
+        checked["schema"] != LEAF_CATALOG_SCHEMA
+        or checked["leaf_count"] != LEAF_CATALOG_COUNT
+        or checked["v1_diagnostic_count"] != LEAF_V1_DIAGNOSTIC_COUNT
+    ):
+        raise CoordinatorError("Stage 4A leaf catalog identity differs")
+    plan_digest = _digest(checked["plan_sha256"], "$.leaf_catalog.plan_sha256")
+    candidate_authority = _exact(
+        checked["candidate_authority"],
+        {
+            "candidate_archive_sha256",
+            "candidate_commit",
+            "candidate_tree",
+            "producer_program_sha256",
+        },
+        "$.leaf_catalog.candidate_authority",
+    )
+    candidate_authority_sha256 = _leaf_candidate_authority_sha256(
+        candidate_authority
+    )
+    if checked["candidate_authority_sha256"] != candidate_authority_sha256:
+        raise CoordinatorError("Stage 4A leaf candidate authority hash differs")
+    raw_leaves = checked["leaves"]
+    if not isinstance(raw_leaves, list) or len(raw_leaves) != LEAF_CATALOG_COUNT:
+        raise CoordinatorError("Stage 4A leaf catalog count differs")
+    seen_ids: set[str] = set()
+    seen_hashes: set[str] = set()
+    seen_records: set[str] = set()
+    diagnostic_count = 0
+    leaves: list[Mapping[str, Any]] = []
+    assignment_keys = {
+        "catalog_index",
+        "candidate_archive_sha256",
+        "candidate_commit",
+        "candidate_tree",
+        "diagonal",
+        "manifest_index",
+        "parent_assignment_id",
+        "parent_assignment_sha256",
+        "phase",
+        "plan_sha256",
+        "producer_program_sha256",
+        "record_id",
+        "record_member_sha256",
+        "schema",
+        "selector",
+        "v1_diagnostic_expected",
+    }
+    for index, raw_leaf in enumerate(raw_leaves):
+        location = f"$.leaf_catalog.leaves[{index}]"
+        leaf = _exact(
+            raw_leaf,
+            {"assignment", "leaf_assignment_sha256", "leaf_id"},
+            location,
+        )
+        assignment = _exact(leaf["assignment"], assignment_keys, f"{location}.assignment")
+        digest = _digest(
+            leaf["leaf_assignment_sha256"], f"{location}.leaf_assignment_sha256"
+        )
+        record_id = assignment["record_id"]
+        if (
+            assignment["schema"] != LEAF_ASSIGNMENT_SCHEMA
+            or assignment["catalog_index"] != index
+            or any(
+                assignment[key] != candidate_authority[key]
+                for key in candidate_authority
+            )
+            or assignment["phase"] != "4A"
+            or assignment["plan_sha256"] != plan_digest
+            or assignment["selector"] != LEAF_SELECTOR
+            or assignment["diagonal"] not in DIAGONAL_ORDER
+            or assignment["parent_assignment_id"]
+            not in EXPECTED_SHARDS
+            or EXPECTED_SHARDS.get(str(assignment["parent_assignment_id"]))
+            != assignment["diagonal"]
+            or not isinstance(record_id, str)
+            or not record_id
+            or not isinstance(assignment["v1_diagnostic_expected"], bool)
+            or sha256(canonical_bytes(dict(assignment))) != digest
+            or leaf["leaf_id"] != f"S3_V2_FLAT_4A_LEAF_{digest}"
+        ):
+            raise CoordinatorError("Stage 4A leaf catalog member identity differs")
+        _nonnegative_integer(
+            assignment["manifest_index"], f"{location}.assignment.manifest_index"
+        )
+        _digest(
+            assignment["parent_assignment_sha256"],
+            f"{location}.assignment.parent_assignment_sha256",
+        )
+        _digest(
+            assignment["record_member_sha256"],
+            f"{location}.assignment.record_member_sha256",
+        )
+        if leaf["leaf_id"] in seen_ids or digest in seen_hashes or record_id in seen_records:
+            raise CoordinatorError("Stage 4A leaf catalog contains a duplicate")
+        seen_ids.add(str(leaf["leaf_id"]))
+        seen_hashes.add(digest)
+        seen_records.add(str(record_id))
+        diagnostic_count += int(assignment["v1_diagnostic_expected"])
+        leaves.append(leaf)
+    if diagnostic_count != LEAF_V1_DIAGNOSTIC_COUNT:
+        raise CoordinatorError("Stage 4A leaf diagnostic coverage differs")
+    return leaves
+
+
+def build_stage4a_leaf_wave_catalog(catalog: Mapping[str, Any]) -> dict[str, Any]:
+    """Pair consecutive leaves into 40 two-worker waves and one singleton."""
+
+    leaves = _validate_stage4a_leaf_catalog(catalog)
+    waves: list[dict[str, Any]] = []
+    for offset in range(0, len(leaves), MAXIMUM_CONCURRENT_WORKERS):
+        group = leaves[offset : offset + MAXIMUM_CONCURRENT_WORKERS]
+        wave_index = len(waves) + 1
+        waves.append(
+            {
+                "leaf_assignment_sha256": [
+                    leaf["leaf_assignment_sha256"] for leaf in group
+                ],
+                "leaf_ids": [leaf["leaf_id"] for leaf in group],
+                "wave_id": f"S3_V2_FLAT_4A_WAVE_{wave_index:02d}",
+                "worker_count": len(group),
+            }
+        )
+    if (
+        len(waves) != LEAF_WAVE_COUNT
+        or any(wave["worker_count"] != 2 for wave in waves[:-1])
+        or waves[-1]["worker_count"] != 1
+        or [leaf_id for wave in waves for leaf_id in wave["leaf_ids"]]
+        != [leaf["leaf_id"] for leaf in leaves]
+    ):
+        raise CoordinatorError("Stage 4A leaf wave partition differs")
+    return {
+        "leaf_catalog_sha256": sha256(canonical_bytes(dict(catalog))),
+        "maximum_concurrent_workers": MAXIMUM_CONCURRENT_WORKERS,
+        "schema": LEAF_WAVE_CATALOG_SCHEMA,
+        "wave_count": LEAF_WAVE_COUNT,
+        "waves": waves,
+    }
+
+
+_SCIENTIFIC_RECORD_KEYS = {
+    "classification",
+    "connectivity_sha256",
+    "diagonal",
+    "element_counts",
+    "energy_norm",
+    "formulation_counts",
+    "level",
+    "manifest_index",
+    "mask",
+    "node_count",
+    "participation",
+    "quadratic_forms",
+    "record_id",
+    "reference",
+    "response",
+    "s3_area_fraction_percent",
+    "solution_energies",
+    "solver",
+    "support_counts",
+}
+
+
+def _validate_leaf_scientific_record(
+    value: Any,
+    *,
+    member: Mapping[str, Any],
+    diagnostic_v1: bool,
+    location: str,
+) -> Mapping[str, Any]:
+    keys = set(_SCIENTIFIC_RECORD_KEYS)
+    if diagnostic_v1:
+        keys.add("formulation_id")
+    record = _exact(value, keys, location)
+    expected = member["record"]
+    if (
+        record["classification"]
+        != (LEAF_V1_CLASSIFICATION if diagnostic_v1 else LEAF_CLASSIFICATION)
+        or record["record_id"] != member["record_id"]
+        or record["manifest_index"] != member["manifest_index"]
+        or record["connectivity_sha256"] != expected["connectivity_sha256"]
+        or record["level"] != expected["level"]
+        or record["mask"] != expected["mask"]
+        or record["diagonal"] != expected["diagonal"]
+        or record["s3_area_fraction_percent"]
+        != expected["s3_area_fraction_percent"]
+    ):
+        raise CoordinatorError(f"{location} differs from its immutable plan member")
+    if diagnostic_v1 and record["formulation_id"] != LEAF_V1_FORMULATION_ID:
+        raise CoordinatorError(f"{location} V1 formulation identity differs")
+    # Canonical serialization recursively rejects non-finite or unsupported
+    # values.  Detailed mechanics predicates remain solely in the independent
+    # checker after diagonal reconstruction.
+    canonical_bytes(dict(record))
+    return record
+
+
+def validate_stage4a_leaf_proof(
+    value: Mapping[str, Any],
+    raw: bytes,
+    *,
+    entry: Mapping[str, Any],
+    member: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Validate one leaf and its exact parent/member cross-join."""
+
+    if raw != canonical_bytes(value):
+        raise CoordinatorError("Stage 4A leaf proof is not canonical JSON")
+    proof = _exact(
+        value,
+        {
+            "assignment_sha256",
+            "plan_sha256",
+            "record_count",
+            "record_ids",
+            "record_ids_sha256",
+            "schema",
+            "scientific_payload",
+            "scientific_payload_sha256",
+            "selector",
+            "terminal",
+        },
+        "$.leaf_proof",
+    )
+    catalog_entry = _exact(
+        entry,
+        {"assignment", "leaf_assignment_sha256", "leaf_id"},
+        "$.leaf_catalog_entry",
+    )
+    assignment = catalog_entry["assignment"]
+    record_ids = proof["record_ids"]
+    payload = _exact(
+        proof["scientific_payload"],
+        {
+            "classifying_record",
+            "leaf_assignment",
+            "phase",
+            "protocol",
+            "schema",
+            "v1_comparator_diagnostic",
+            "v1_comparator_disposition",
+        },
+        "$.leaf_proof.scientific_payload",
+    )
+    if (
+        proof["schema"] != LEAF_SCIENTIFIC_SCHEMA
+        or proof["terminal"] != LEAF_PROOF_TERMINAL
+        or proof["selector"] != LEAF_SELECTOR
+        or proof["record_count"] != 1
+        or proof["assignment_sha256"] != catalog_entry["leaf_assignment_sha256"]
+        or proof["plan_sha256"] != assignment["plan_sha256"]
+        or record_ids != [member["record_id"]]
+        or payload["schema"] != LEAF_PAYLOAD_SCHEMA
+        or payload["phase"] != "4A"
+        or payload["leaf_assignment"] != assignment
+        or payload["v1_comparator_disposition"] != LEAF_V1_DISPOSITION
+    ):
+        raise CoordinatorError("Stage 4A leaf proof identity differs")
+    if (
+        _digest(proof["record_ids_sha256"], "$.leaf_proof.record_ids_sha256")
+        != sha256(canonical_bytes(record_ids))
+        or _digest(
+            proof["scientific_payload_sha256"],
+            "$.leaf_proof.scientific_payload_sha256",
+        )
+        != sha256(canonical_bytes(dict(payload)))
+    ):
+        raise CoordinatorError("Stage 4A leaf proof content hash differs")
+    protocol = _exact(
+        payload["protocol"],
+        {"classification", "energy_norm_id", "load_id", "reference_id", "support_id"},
+        "$.leaf_proof.scientific_payload.protocol",
+    )
+    if protocol["classification"] != LEAF_CLASSIFICATION or any(
+        not isinstance(protocol[key], str) or not protocol[key]
+        for key in ("energy_norm_id", "load_id", "reference_id", "support_id")
+    ):
+        raise CoordinatorError("Stage 4A leaf proof protocol identity differs")
+    _validate_leaf_scientific_record(
+        payload["classifying_record"],
+        member=member,
+        diagnostic_v1=False,
+        location="$.leaf_proof.scientific_payload.classifying_record",
+    )
+    diagnostic_expected = assignment["v1_diagnostic_expected"]
+    diagnostic = payload["v1_comparator_diagnostic"]
+    if diagnostic_expected:
+        _validate_leaf_scientific_record(
+            diagnostic,
+            member=member,
+            diagnostic_v1=True,
+            location="$.leaf_proof.scientific_payload.v1_comparator_diagnostic",
+        )
+    elif diagnostic is not None:
+        raise CoordinatorError("all-Q4 leaf unexpectedly contains a V1 diagnostic")
+    return proof
+
+
+def build_stage4a_leaf_union(
+    catalog: Mapping[str, Any],
+    receipt_paths_by_wave_index: Mapping[int, Path],
+    *,
+    candidate_archive_path: Path,
+    contract: Mapping[str, Any],
+    contract_path: Path,
+    contract_raw: bytes,
+    authorization_path: Path,
+    authorization_raw: bytes,
+    output_root: Path,
+) -> dict[str, Any]:
+    """Build a union only from 41 canonical, process-complete wave receipts."""
+
+    leaves = _validate_stage4a_leaf_catalog(catalog)
+    if set(receipt_paths_by_wave_index) != set(range(1, LEAF_WAVE_COUNT + 1)):
+        raise CoordinatorError("Stage 4A leaf wave receipt coverage differs")
+    candidate_authority = catalog["candidate_authority"]
+    raw_archive_path = Path(candidate_archive_path)
+    if not raw_archive_path.is_absolute():
+        raise CoordinatorError("Stage 4A candidate archive path must be absolute")
+    archive_path = raw_archive_path.resolve()
+    if not archive_path.is_file() or archive_path.is_symlink():
+        raise CoordinatorError("Stage 4A candidate archive is not a regular non-link file")
+    archive_raw = archive_path.read_bytes()
+    if (
+        not archive_raw
+        or sha256(archive_raw) != candidate_authority["candidate_archive_sha256"]
+    ):
+        raise CoordinatorError("Stage 4A candidate archive identity differs")
+    bindings: list[dict[str, Any]] = []
+    receipt_bindings: list[dict[str, Any]] = []
+    request_ids: set[str] = set()
+    leaf_by_id = {str(leaf["leaf_id"]): leaf for leaf in leaves}
+    for wave_index in range(1, LEAF_WAVE_COUNT + 1):
+        cycle = _validate_stage4a_leaf_cycle(
+            contract=contract,
+            contract_path=contract_path,
+            output_root=output_root,
+            wave_index=wave_index,
+        )
+        validated = validate_stage4a_leaf_wave_receipt(
+            Path(receipt_paths_by_wave_index[wave_index]),
+            contract=contract,
+            contract_path=contract_path,
+            contract_raw=contract_raw,
+            cycle=cycle,
+            wave_index=wave_index,
+            allowed_root=output_root,
+            expected_authorization_path=authorization_path,
+            expected_authorization_raw=authorization_raw,
+        )
+        receipt = validated["receipt"]
+        request_id = str(receipt["request_id"])
+        if request_id in request_ids:
+            raise CoordinatorError("leaf wave resource request ID was reused")
+        request_ids.add(request_id)
+        receipt_bindings.append(
+            _external_file_binding(validated["path"], "leaf wave receipt")
+            | {
+                "request_id": request_id,
+                "terminal_ledger_row": validated["terminal_ledger_row"],
+                "wave_index": wave_index,
+            }
+        )
+        for worker in validated["workers"]:
+            leaf_id = str(worker["leaf_id"])
+            leaf = leaf_by_id.get(leaf_id)
+            if leaf is None or worker["assignment_sha256"] != leaf["leaf_assignment_sha256"]:
+                raise CoordinatorError("leaf receipt worker is absent from catalog")
+            proof = worker["proof"]
+            bindings.append(
+                {
+                    "attempt_sha256": receipt["attempt"]["sha256"],
+                    "authorization_sha256": receipt["authorization"]["sha256"],
+                    "byte_count": proof["byte_count"],
+                    "leaf_assignment_sha256": leaf["leaf_assignment_sha256"],
+                    "leaf_id": leaf_id,
+                    "path": proof["path"],
+                    "request_command_sha256": receipt["request_command_sha256"],
+                    "request_id": request_id,
+                    "result_sha256": receipt["result"]["sha256"],
+                    "sha256": proof["sha256"],
+                    "termination_proven": True,
+                    "wave_receipt_sha256": sha256(validated["raw"]),
+                }
+            )
+    expected_leaf_ids = [str(leaf["leaf_id"]) for leaf in leaves]
+    if (
+        [binding["leaf_id"] for binding in bindings] != expected_leaf_ids
+        or len(request_ids) != LEAF_WAVE_COUNT
+    ):
+        raise CoordinatorError("Stage 4A receipt union leaf order differs")
+    return {
+        "candidate_archive": {
+            "byte_count": len(archive_raw),
+            "path": str(archive_path),
+            "sha256": sha256(archive_raw),
+        },
+        "candidate_authority": candidate_authority,
+        "candidate_authority_sha256": catalog["candidate_authority_sha256"],
+        "leaf_catalog_sha256": sha256(canonical_bytes(dict(catalog))),
+        "leaf_count": LEAF_CATALOG_COUNT,
+        "leaf_wave_authorization": _external_file_binding(
+            authorization_path, "leaf wave authorization"
+        ),
+        "plan_sha256": catalog["plan_sha256"],
+        "proofs": bindings,
+        "schema": LEAF_UNION_SCHEMA,
+        "terminal": LEAF_UNION_TERMINAL,
+        "v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
+        "wave_receipts": receipt_bindings,
+    }
+
+
+def validate_stage4a_leaf_union(
+    union_path: Path,
+    *,
+    catalog: Mapping[str, Any],
+    plan: Mapping[str, Any],
+    plan_raw: bytes,
+    candidate_authority: Mapping[str, Any],
+    contract: Mapping[str, Any],
+    contract_path: Path,
+    contract_raw: bytes,
+    allowed_root: Path | None = None,
+    frozen_union_raw: bytes | None = None,
+) -> dict[str, Any]:
+    """Validate complete leaf coverage and every proof before reconstruction."""
+
+    canonical_authority = _leaf_candidate_authority(**candidate_authority)
+    expected_catalog = build_stage4a_leaf_catalog(
+        plan,
+        plan_raw,
+        **canonical_authority,
+    )
+    if catalog != expected_catalog:
+        raise CoordinatorError("Stage 4A leaf catalog differs from the frozen plan")
+    leaves = _validate_stage4a_leaf_catalog(catalog)
+    if frozen_union_raw is None:
+        union, union_raw = strict_json_load(union_path)
+    else:
+        union_raw = frozen_union_raw
+        union = strict_json_bytes(union_raw, str(union_path))
+    if union_raw != canonical_bytes(union):
+        raise CoordinatorError("Stage 4A leaf union is not canonical JSON")
+    bound = _exact(
+        union,
+        {
+            "candidate_archive",
+            "candidate_authority",
+            "candidate_authority_sha256",
+            "leaf_catalog_sha256",
+            "leaf_count",
+            "leaf_wave_authorization",
+            "plan_sha256",
+            "proofs",
+            "schema",
+            "terminal",
+            "v1_diagnostic_count",
+            "wave_receipts",
+        },
+        "$.leaf_union",
+    )
+    if (
+        bound["schema"] != LEAF_UNION_SCHEMA
+        or bound["terminal"] != LEAF_UNION_TERMINAL
+        or bound["leaf_count"] != LEAF_CATALOG_COUNT
+        or bound["v1_diagnostic_count"] != LEAF_V1_DIAGNOSTIC_COUNT
+        or bound["plan_sha256"] != sha256(plan_raw)
+        or bound["leaf_catalog_sha256"] != sha256(canonical_bytes(dict(catalog)))
+        or bound["candidate_authority"] != canonical_authority
+        or bound["candidate_authority_sha256"]
+        != _leaf_candidate_authority_sha256(canonical_authority)
+    ):
+        raise CoordinatorError("Stage 4A leaf union identity differs")
+    archive_path, archive_raw = _validate_external_file_binding(
+        bound["candidate_archive"], "$.leaf_union.candidate_archive"
+    )
+    if sha256(archive_raw) != canonical_authority["candidate_archive_sha256"]:
+        raise CoordinatorError("Stage 4A leaf union archive identity differs")
+    wave_authorization_path, wave_authorization_raw = (
+        _validate_external_file_binding(
+            bound["leaf_wave_authorization"],
+            "$.leaf_union.leaf_wave_authorization",
+        )
+    )
+    receipt_bindings = bound["wave_receipts"]
+    if (
+        not isinstance(receipt_bindings, list)
+        or len(receipt_bindings) != LEAF_WAVE_COUNT
+    ):
+        raise CoordinatorError("Stage 4A leaf union receipt coverage differs")
+    receipt_paths: dict[int, Path] = {}
+    for expected_index, raw_receipt in enumerate(receipt_bindings, start=1):
+        receipt_binding = _exact(
+            raw_receipt,
+            {
+                "byte_count",
+                "path",
+                "request_id",
+                "sha256",
+                "terminal_ledger_row",
+                "wave_index",
+            },
+            f"$.leaf_union.wave_receipts[{expected_index - 1}]",
+        )
+        terminal_row = _exact(
+            receipt_binding["terminal_ledger_row"],
+            {"line", "sha256", "status"},
+            f"$.leaf_union.wave_receipts[{expected_index - 1}].terminal_ledger_row",
+        )
+        if (
+            receipt_binding["wave_index"] != expected_index
+            or not isinstance(receipt_binding["request_id"], str)
+            or len(receipt_binding["request_id"]) != 32
+            or terminal_row["status"] != "COMPLETED_PASS"
+            or terminal_row["sha256"]
+            != sha256((str(terminal_row["line"]).rstrip() + "\n").encode("utf-8"))
+        ):
+            raise CoordinatorError("Stage 4A leaf union receipt order differs")
+        receipt_path, _receipt_raw = _validate_external_file_binding(
+            {
+                "byte_count": receipt_binding["byte_count"],
+                "path": receipt_binding["path"],
+                "sha256": receipt_binding["sha256"],
+            },
+            f"$.leaf_union.wave_receipts[{expected_index - 1}]",
+        )
+        receipt_paths[expected_index] = receipt_path
+    if allowed_root is None:
+        raise CoordinatorError("Stage 4A receipt union requires its cycle root")
+    expected_union = build_stage4a_leaf_union(
+        catalog,
+        receipt_paths,
+        candidate_archive_path=archive_path,
+        contract=contract,
+        contract_path=contract_path,
+        contract_raw=contract_raw,
+        authorization_path=wave_authorization_path,
+        authorization_raw=wave_authorization_raw,
+        output_root=allowed_root,
+    )
+    if bound != expected_union:
+        raise CoordinatorError("Stage 4A leaf union differs from bounded wave receipts")
+    bindings = bound["proofs"]
+    if not isinstance(bindings, list) or len(bindings) != LEAF_CATALOG_COUNT:
+        raise CoordinatorError("Stage 4A leaf union count differs")
+    plan_members = {
+        str(member["record_id"]): member
+        for shard in _stage4a_plan_shards(plan, plan_raw)
+        for member in shard["records"]
+    }
+    resolved_root = allowed_root.resolve() if allowed_root is not None else None
+    if resolved_root is not None:
+        try:
+            archive_path.relative_to(resolved_root)
+        except ValueError as exc:
+            raise CoordinatorError("Stage 4A candidate archive escapes its output root") from exc
+    made: dict[str, dict[str, Any]] = {}
+    seen_paths: set[str] = set()
+    for index, (raw_binding, entry) in enumerate(zip(bindings, leaves)):
+        location = f"$.leaf_union.proofs[{index}]"
+        binding = _exact(
+            raw_binding,
+            {
+                "attempt_sha256",
+                "authorization_sha256",
+                "byte_count",
+                "leaf_assignment_sha256",
+                "leaf_id",
+                "path",
+                "request_command_sha256",
+                "request_id",
+                "result_sha256",
+                "sha256",
+                "termination_proven",
+                "wave_receipt_sha256",
+            },
+            location,
+        )
+        if (
+            binding["leaf_id"] != entry["leaf_id"]
+            or binding["leaf_assignment_sha256"]
+            != entry["leaf_assignment_sha256"]
+            or binding["termination_proven"] is not True
+        ):
+            raise CoordinatorError("Stage 4A leaf union order or assignment differs")
+        path, raw = _validate_external_file_binding(
+            {
+                "byte_count": binding["byte_count"],
+                "path": binding["path"],
+                "sha256": binding["sha256"],
+            },
+            location,
+        )
+        if resolved_root is not None:
+            try:
+                path.relative_to(resolved_root)
+            except ValueError as exc:
+                raise CoordinatorError("Stage 4A leaf proof escapes its output root") from exc
+        if str(path) in seen_paths:
+            raise CoordinatorError("Stage 4A leaf union aliases one proof path")
+        seen_paths.add(str(path))
+        value = strict_json_bytes(raw, str(path))
+        member = plan_members[str(entry["assignment"]["record_id"])]
+        proof = validate_stage4a_leaf_proof(
+            value,
+            raw,
+            entry=entry,
+            member=member,
+        )
+        made[str(entry["leaf_id"])] = {
+            "document": proof,
+            "path": path,
+            "raw": raw,
+        }
+    if len(made) != LEAF_CATALOG_COUNT:
+        raise CoordinatorError("Stage 4A leaf union is incomplete")
+    return {"proofs": made, "union": bound, "union_raw": union_raw}
+
+
+def reconstruct_stage4a_diagonal_documents(
+    plan: Mapping[str, Any],
+    plan_raw: bytes,
+    validated_union: Mapping[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """Reconstruct the three legacy checker inputs without recomputation."""
+
+    union = validated_union.get("union")
+    if not isinstance(union, dict) or not isinstance(
+        union.get("candidate_authority"), dict
+    ):
+        raise CoordinatorError("Stage 4A validated union candidate authority is absent")
+    catalog = build_stage4a_leaf_catalog(
+        plan,
+        plan_raw,
+        **union["candidate_authority"],
+    )
+    leaves = _validate_stage4a_leaf_catalog(catalog)
+    proofs = validated_union.get("proofs")
+    if not isinstance(proofs, dict) or set(proofs) != {
+        str(leaf["leaf_id"]) for leaf in leaves
+    }:
+        raise CoordinatorError("Stage 4A validated leaf union coverage differs")
+    by_assignment: dict[str, list[tuple[Mapping[str, Any], Mapping[str, Any]]]] = {
+        assignment_id: [] for assignment_id in EXPECTED_SHARDS
+    }
+    protocol: Mapping[str, Any] | None = None
+    for leaf in leaves:
+        stored = proofs[str(leaf["leaf_id"])]
+        if not isinstance(stored, dict) or not isinstance(stored.get("document"), dict):
+            raise CoordinatorError("Stage 4A validated leaf proof is malformed")
+        document = stored["document"]
+        payload = document["scientific_payload"]
+        if protocol is None:
+            protocol = payload["protocol"]
+        elif payload["protocol"] != protocol:
+            raise CoordinatorError("Stage 4A leaf scientific protocols disagree")
+        by_assignment[str(leaf["assignment"]["parent_assignment_id"])].append(
+            (leaf, payload)
+        )
+    if protocol is None:
+        raise CoordinatorError("Stage 4A leaf protocol is absent")
+    made: dict[str, dict[str, Any]] = {}
+    plan_digest = sha256(plan_raw)
+    shards = _stage4a_plan_shards(plan, plan_raw)
+    for shard in shards:
+        assignment_id = str(shard["assignment_id"])
+        joined = by_assignment[assignment_id]
+        if (
+            len(joined) != 27
+            or [item[0]["assignment"]["record_id"] for item in joined]
+            != [member["record_id"] for member in shard["records"]]
+        ):
+            raise CoordinatorError("Stage 4A diagonal leaf order differs")
+        classifying = [item[1]["classifying_record"] for item in joined]
+        diagnostics = [
+            item[1]["v1_comparator_diagnostic"]
+            for item in joined
+            if item[1]["v1_comparator_diagnostic"] is not None
+        ]
+        if len(classifying) != 27 or len(diagnostics) != 24:
+            raise CoordinatorError("Stage 4A diagonal diagnostic coverage differs")
+        payload = {
+            "assignment_id": assignment_id,
+            "classifying_records": classifying,
+            "diagonal": shard["diagonal"],
+            "phase": "4A",
+            "protocol": protocol,
+            "schema": DIAGONAL_PAYLOAD_SCHEMA,
+            "scope": "full",
+            "v1_comparator_diagnostics": diagnostics,
+            "v1_comparator_disposition": LEAF_V1_DISPOSITION,
+        }
+        record_ids = [str(member["record_id"]) for member in shard["records"]]
+        made[assignment_id] = {
+            "assignment_sha256": shard["assignment_sha256"],
+            "plan_sha256": plan_digest,
+            "record_count": 27,
+            "record_ids": record_ids,
+            "record_ids_sha256": sha256(canonical_bytes(record_ids)),
+            "schema": DIAGONAL_SCIENTIFIC_SCHEMA,
+            "scientific_payload": payload,
+            "scientific_payload_sha256": sha256(canonical_bytes(payload)),
+            "selector": LEAF_SELECTOR,
+            "terminal": LEAF_PROOF_TERMINAL,
+        }
+    if set(made) != set(EXPECTED_SHARDS):
+        raise CoordinatorError("Stage 4A diagonal reconstruction coverage differs")
+    return made
+
+
+def publish_stage4a_diagonal_documents(
+    documents: Mapping[str, Mapping[str, Any]], output_root: Path
+) -> dict[str, dict[str, Any]]:
+    """Exclusively publish the three reconstructed legacy proof documents."""
+
+    if list(documents) != list(EXPECTED_SHARDS):
+        raise CoordinatorError("Stage 4A reconstructed proof order differs")
+    made: dict[str, dict[str, Any]] = {}
+    for assignment_id in EXPECTED_SHARDS:
+        document = documents[assignment_id]
+        raw = canonical_bytes(dict(document))
+        path = (
+            output_root
+            / "reconstructed-diagonal-proofs"
+            / assignment_id
+            / "scientific.json"
+        ).resolve()
+        path = _contained_leaf_output(
+            path, output_root.resolve(), "reconstructed diagonal proof"
+        )
+        _write_exclusive(path, raw)
+        made[assignment_id] = {
+            "assignment_sha256": document["assignment_sha256"],
+            "plan_sha256": document["plan_sha256"],
+            "proof_path": str(path),
+            "proof_sha256": sha256(raw),
+        }
+    return made
+
+
+def _validate_stage4a_plan_raw(
+    plan_raw: bytes, *, label: str
+) -> tuple[Mapping[str, Any], bytes]:
+    funnel = _load_module("_s3_v2_stage4a_leaf_finalizer_funnel", FUNNEL_PATH)
+    manifest_value, manifest_raw = funnel.strict_json_load(MANIFEST_PATH)
+    records = funnel.validate_manifest(manifest_value, manifest_raw)
+    plan_value = funnel.strict_json_bytes(plan_raw, label=label)
+    try:
+        plan = funnel.validate_phase_plan(plan_value, plan_raw, records, "4A")
+    except Exception as exc:
+        raise CoordinatorError(f"Stage 4A leaf plan validation failed: {exc}") from exc
+    # Revalidate through the coordinator's independently authored catalog view.
+    _stage4a_plan_shards(plan, plan_raw)
+    return plan, plan_raw
+
+
+def _load_validated_stage4a_plan(plan_path: Path) -> tuple[Mapping[str, Any], bytes]:
+    return _validate_stage4a_plan_raw(
+        plan_path.read_bytes(), label=str(plan_path)
+    )
 
 
 def _validate_sequence_results(
@@ -3166,7 +4244,65 @@ def expected_resource_command(
     authorization_path: Path,
     output_root: Path,
     aggregate_path: Path,
+    execution_mode: str = "legacy",
+    plan_path: Path | None = None,
+    leaf_union_path: Path | None = None,
+    plan_sha256: str | None = None,
+    leaf_union_sha256: str | None = None,
+    leaf_wave_index: int | None = None,
+    leaf_catalog_sha256: str | None = None,
+    leaf_wave_manifest_sha256: str | None = None,
+    leaf_wave_result_path: Path | None = None,
 ) -> str:
+    if execution_mode not in {"legacy", "leaf-finalizer", "leaf-wave"}:
+        raise CoordinatorError("unregistered Stage 4A execution mode")
+    if execution_mode == "legacy":
+        if any(
+            value is not None
+            for value in (
+                plan_path,
+                leaf_union_path,
+                plan_sha256,
+                leaf_union_sha256,
+                leaf_wave_index,
+                leaf_catalog_sha256,
+                leaf_wave_manifest_sha256,
+                leaf_wave_result_path,
+            )
+        ):
+            raise CoordinatorError("legacy Stage 4A command does not accept leaf inputs")
+    elif execution_mode == "leaf-finalizer":
+        if (
+            plan_path is None
+            or leaf_union_path is None
+            or plan_sha256 is None
+            or leaf_union_sha256 is None
+            or any(
+                value is not None
+                for value in (
+                    leaf_wave_index,
+                    leaf_catalog_sha256,
+                    leaf_wave_manifest_sha256,
+                    leaf_wave_result_path,
+                )
+            )
+        ):
+            raise CoordinatorError(
+                "leaf finalizer command requires exact plan/union paths and hashes"
+            )
+        _digest(plan_sha256, "finalizer plan hash")
+        _digest(leaf_union_sha256, "finalizer union hash")
+    elif (
+        leaf_wave_index is None
+        or leaf_catalog_sha256 is None
+        or leaf_wave_manifest_sha256 is None
+        or plan_sha256 is None
+        or leaf_wave_result_path is None
+        or plan_path is not None
+        or leaf_union_path is not None
+        or leaf_union_sha256 is not None
+    ):
+        raise CoordinatorError("leaf wave command inputs are incomplete")
     dependency_path = ";".join(
         str((repository / "src").resolve())
         for _name, repository in DEPENDENCY_REPOSITORIES
@@ -3180,7 +4316,15 @@ def expected_resource_command(
         "-I",
         "-B",
         _powershell_quote(Path(__file__).resolve()),
-        _powershell_quote("--run-stage4a"),
+        _powershell_quote(
+            "--run-stage4a"
+            if execution_mode == "legacy"
+            else (
+                "--finalize-leaf-union"
+                if execution_mode == "leaf-finalizer"
+                else "--run-leaf-wave"
+            )
+        ),
         _powershell_quote("--contract"),
         _powershell_quote(contract_path.resolve()),
         _powershell_quote("--authorization"),
@@ -3190,6 +4334,47 @@ def expected_resource_command(
         _powershell_quote("--aggregate"),
         _powershell_quote(aggregate_path.resolve()),
     ]
+    if execution_mode == "leaf-finalizer":
+        assert (
+            plan_path is not None
+            and leaf_union_path is not None
+            and plan_sha256 is not None
+            and leaf_union_sha256 is not None
+        )
+        parts.extend(
+            [
+                _powershell_quote("--plan"),
+                _powershell_quote(plan_path.resolve()),
+                _powershell_quote("--leaf-union"),
+                _powershell_quote(leaf_union_path.resolve()),
+                _powershell_quote("--plan-sha256"),
+                _powershell_quote(plan_sha256),
+                _powershell_quote("--leaf-union-sha256"),
+                _powershell_quote(leaf_union_sha256),
+            ]
+        )
+    elif execution_mode == "leaf-wave":
+        assert (
+            leaf_wave_index is not None
+            and plan_sha256 is not None
+            and leaf_catalog_sha256 is not None
+            and leaf_wave_manifest_sha256 is not None
+            and leaf_wave_result_path is not None
+        )
+        parts.extend(
+            [
+                _powershell_quote("--leaf-wave-index"),
+                _powershell_quote(str(leaf_wave_index)),
+                _powershell_quote("--plan-sha256"),
+                _powershell_quote(plan_sha256),
+                _powershell_quote("--leaf-catalog-sha256"),
+                _powershell_quote(leaf_catalog_sha256),
+                _powershell_quote("--leaf-wave-manifest-sha256"),
+                _powershell_quote(leaf_wave_manifest_sha256),
+                _powershell_quote("--leaf-wave-result"),
+                _powershell_quote(leaf_wave_result_path.resolve()),
+            ]
+        )
     return " ".join(parts)
 
 
@@ -3265,15 +4450,381 @@ def _validate_approval_snapshot(
     return snapshot, raw
 
 
+def _validate_leaf_wave_authorization_v3(
+    *,
+    path: Path,
+    value: Mapping[str, Any],
+    raw: bytes,
+    contract_path: Path,
+    contract_raw: bytes,
+    selected_wave_index: int,
+    selected_plan_sha256: str,
+    selected_leaf_catalog_sha256: str,
+    selected_manifest_sha256: str,
+    selected_result_path: Path,
+) -> tuple[Mapping[str, Any], bytes]:
+    """Select one of 41 immutable requests without mutating tracked authority."""
+
+    authorization = _exact(
+        value,
+        {
+            "contract_path",
+            "contract_sha256",
+            "formal_execution_authorized",
+            "implementation_reviews",
+            "leaf_waves",
+            "resource_lock_required",
+            "schema",
+            "user_approval",
+        },
+        "$leaf_wave_authorization",
+    )
+    contract = strict_json_bytes(contract_raw, str(contract_path))
+    if (
+        authorization["schema"] != LEAF_WAVE_AUTHORIZATION_SCHEMA
+        or authorization["formal_execution_authorized"] is not True
+        or authorization["resource_lock_required"] is not True
+        or _repo_relative_path(
+            authorization["contract_path"],
+            "$.leaf_wave_authorization.contract_path",
+        )
+        != contract_path.resolve()
+        or authorization["contract_sha256"] != sha256(contract_raw)
+    ):
+        raise CoordinatorError("leaf wave authorization identity differs")
+    user_approval = _exact(
+        authorization["user_approval"],
+        {"recorded", "source"},
+        "$.leaf_wave_authorization.user_approval",
+    )
+    if (
+        user_approval["recorded"] is not True
+        or not isinstance(user_approval["source"], str)
+        or not user_approval["source"]
+    ):
+        raise CoordinatorError("leaf wave user approval is not recorded")
+    reviews = authorization["implementation_reviews"]
+    if not isinstance(reviews, list) or len(reviews) != 2:
+        raise CoordinatorError("two leaf wave implementation reviews are required")
+    expected_paths = {
+        "PROCESS_AND_AUTHORITY": PROCESS_REVIEW_PATH.resolve(),
+        "SCIENTIFIC_AND_MECHANICS": SCIENTIFIC_REVIEW_PATH.resolve(),
+    }
+    expected_inputs = _review_inputs(contract, contract_raw)
+    reviewer_ids: set[str] = set()
+    observed_roles: list[str] = []
+    for index, raw_review in enumerate(reviews):
+        binding = _exact(
+            raw_review,
+            {"path", "role", "sha256", "verdict"},
+            f"$.leaf_wave_authorization.reviews[{index}]",
+        )
+        role = str(binding["role"])
+        if role not in EXPECTED_REVIEW_VERDICTS or role in observed_roles:
+            raise CoordinatorError("leaf wave review role is missing or duplicated")
+        review_path = _repo_relative_path(binding["path"], "$.leaf_wave_review.path")
+        if review_path != expected_paths[role]:
+            raise CoordinatorError("leaf wave review path differs")
+        review_value, review_raw = _validate_review(
+            review_path, role=role, expected_inputs=expected_inputs
+        )
+        if (
+            binding["sha256"] != sha256(review_raw)
+            or binding["verdict"] != EXPECTED_REVIEW_VERDICTS[role]
+        ):
+            raise CoordinatorError("leaf wave review binding differs")
+        reviewer_ids.add(review_value["reviewer_independence"]["reviewer_id"])
+        observed_roles.append(role)
+    if observed_roles != list(EXPECTED_REVIEW_VERDICTS) or len(reviewer_ids) != 2:
+        raise CoordinatorError("leaf wave reviews are not distinct and ordered")
+
+    raw_waves = authorization["leaf_waves"]
+    if not isinstance(raw_waves, list) or len(raw_waves) != LEAF_WAVE_COUNT:
+        raise CoordinatorError("leaf wave authorization must bind exactly 41 waves")
+    seen_request_ids: set[str] = set()
+    seen_approval_snapshots: set[Path] = set()
+    seen_receipts: set[Path] = set()
+    seen_results: set[Path] = set()
+    selected: Mapping[str, Any] | None = None
+    try:
+        ledger_lines = RESOURCE_LEDGER_PATH.read_text(encoding="utf-8-sig").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise CoordinatorError(f"cannot inspect resource ledger: {exc}") from exc
+    wave_keys = {
+        "execution_paths",
+        "leaf_catalog_sha256",
+        "leaf_wave_manifest_sha256",
+        "leaf_wave_result_path",
+        "ledger_approval",
+        "plan_sha256",
+        "resource_request",
+        "wave_index",
+    }
+    for index, raw_wave in enumerate(raw_waves, start=1):
+        wave = _exact(
+            raw_wave,
+            wave_keys,
+            f"$.leaf_wave_authorization.leaf_waves[{index - 1}]",
+        )
+        if wave["wave_index"] != index:
+            raise CoordinatorError("leaf wave authorization order differs")
+        plan_digest = _digest(wave["plan_sha256"], "$.leaf_wave.plan_sha256")
+        catalog_digest = _digest(
+            wave["leaf_catalog_sha256"], "$.leaf_wave.catalog_sha256"
+        )
+        manifest_digest = _digest(
+            wave["leaf_wave_manifest_sha256"], "$.leaf_wave.manifest_sha256"
+        )
+        execution = _exact(
+            wave["execution_paths"],
+            {
+                "aggregate_path",
+                "approval_snapshot_path",
+                "output_root",
+                "python_executable",
+            },
+            "$.leaf_wave.execution_paths",
+        )
+        python_executable = Path(str(execution["python_executable"])).resolve()
+        output_root = Path(str(execution["output_root"])).resolve()
+        receipt_path = Path(str(execution["aggregate_path"])).resolve()
+        approval_snapshot_path = Path(
+            str(execution["approval_snapshot_path"])
+        ).resolve()
+        result_path = Path(str(wave["leaf_wave_result_path"])).resolve()
+        try:
+            receipt_path.relative_to(output_root)
+            approval_snapshot_path.relative_to(output_root)
+            result_path.relative_to(output_root)
+        except ValueError as exc:
+            raise CoordinatorError("leaf wave execution path escapes its output root") from exc
+        if (
+            not python_executable.is_file()
+            or approval_snapshot_path in seen_approval_snapshots
+            or receipt_path in seen_receipts
+            or result_path in seen_results
+            or len({approval_snapshot_path, receipt_path, result_path}) != 3
+        ):
+            raise CoordinatorError("leaf wave execution path differs or is duplicated")
+        seen_approval_snapshots.add(approval_snapshot_path)
+        seen_receipts.add(receipt_path)
+        seen_results.add(result_path)
+        request = _exact(
+            wave["resource_request"],
+            {
+                "command_sha256",
+                "request_id",
+                "request_path",
+                "request_sha256",
+                "repository",
+                "task",
+            },
+            "$.leaf_wave.resource_request",
+        )
+        request_id = request["request_id"]
+        request_path = Path(str(request["request_path"]))
+        if (
+            not isinstance(request_id, str)
+            or len(request_id) != 32
+            or any(character not in "0123456789abcdef" for character in request_id)
+            or request_id in seen_request_ids
+            or request_path.resolve()
+            != (RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json").resolve()
+            or not request_path.is_file()
+            or request_path.is_symlink()
+        ):
+            raise CoordinatorError("leaf wave request ID/path is invalid or reused")
+        seen_request_ids.add(request_id)
+        request_value, request_raw = _strict_external_json(
+            request_path, f"leaf wave request {index}"
+        )
+        request_value = _exact(
+            request_value,
+            {
+                "command",
+                "estimate_minutes",
+                "repository",
+                "request_id",
+                "requested_at",
+                "status",
+                "task",
+            },
+            "$.leaf_wave.request_file",
+        )
+        expected_command = expected_resource_command(
+            python_executable=python_executable,
+            contract_path=contract_path,
+            authorization_path=path,
+            output_root=output_root,
+            aggregate_path=receipt_path,
+            execution_mode="leaf-wave",
+            plan_sha256=plan_digest,
+            leaf_wave_index=index,
+            leaf_catalog_sha256=catalog_digest,
+            leaf_wave_manifest_sha256=manifest_digest,
+            leaf_wave_result_path=result_path,
+        )
+        expected_task = (
+            f"ANYsolver S3 V2A Stage 4A bounded leaf wave {index:02d}"
+        )
+        if (
+            request_value["request_id"] != request_id
+            or request_value["status"] != "PENDING"
+            or request_value["task"] != expected_task
+            or request_value["repository"] != str(ROOT)
+            or request_value["estimate_minutes"] != 30
+            or request_value["command"] != expected_command
+            or request["task"] != expected_task
+            or request["repository"] != str(ROOT)
+            or request["command_sha256"] != sha256(expected_command.encode("utf-8"))
+            or request["request_sha256"] != sha256(request_raw)
+        ):
+            raise CoordinatorError("leaf wave request content differs")
+        approval = _exact(
+            wave["ledger_approval"],
+            {"approved_row_sha256", "ledger_path", "snapshot_path", "snapshot_sha256"},
+            "$.leaf_wave.ledger_approval",
+        )
+        if approval["ledger_path"] != str(RESOURCE_LEDGER_PATH):
+            raise CoordinatorError("leaf wave ledger path differs")
+        snapshot, snapshot_raw = _validate_approval_snapshot(
+            approval_snapshot_path,
+            contract=contract,
+            request_id=request_id,
+            request_path=request_path,
+            request_raw=request_raw,
+        )
+        if (
+            Path(str(approval["snapshot_path"])).resolve() != approval_snapshot_path
+            or approval["snapshot_sha256"] != sha256(snapshot_raw)
+            or approval["approved_row_sha256"] != snapshot["approved_row"]["sha256"]
+            or ledger_lines.count(snapshot["approved_row"]["line"]) != 1
+        ):
+            raise CoordinatorError("leaf wave approval binding differs")
+        if index == selected_wave_index:
+            selected = {
+                "contract_path": authorization["contract_path"],
+                "contract_sha256": authorization["contract_sha256"],
+                "execution_paths": execution,
+                "formal_execution_authorized": True,
+                "implementation_reviews": reviews,
+                "leaf_catalog_sha256": catalog_digest,
+                "leaf_wave_manifest_sha256": manifest_digest,
+                "leaf_wave_result_path": str(result_path),
+                "ledger_approval": approval,
+                "plan_sha256": plan_digest,
+                "resource_lock_required": True,
+                "resource_request": request,
+                "schema": LEAF_WAVE_AUTHORIZATION_SCHEMA,
+                "user_approval": user_approval,
+                "wave_index": index,
+            }
+            if (
+                plan_digest != selected_plan_sha256
+                or catalog_digest != selected_leaf_catalog_sha256
+                or manifest_digest != selected_manifest_sha256
+                or result_path != selected_result_path.resolve()
+            ):
+                raise CoordinatorError("selected leaf wave command inputs differ")
+    if selected is None:
+        raise CoordinatorError("selected leaf wave authorization is absent")
+    return selected, raw
+
+
+def _validate_completed_leaf_wave_ledger_row(
+    request_id: str,
+    request_value: Mapping[str, Any],
+    *,
+    receipt_raw: bytes,
+) -> dict[str, str]:
+    """Bind one consumed leaf request to its unique successful terminal row."""
+
+    try:
+        ledger_lines = RESOURCE_LEDGER_PATH.read_text(
+            encoding="utf-8-sig"
+        ).splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise CoordinatorError(f"cannot inspect resource ledger: {exc}") from exc
+    matching = [line for line in ledger_lines if f"| {request_id} |" in line]
+    parsed: list[tuple[str, str]] = []
+    for line in matching:
+        fields = line.split("|")
+        if len(fields) < 6:
+            raise CoordinatorError("leaf wave resource ledger row is malformed")
+        status = fields[3].strip()
+        if (
+            fields[2].strip() != request_id
+            or fields[4].strip() != request_value["task"]
+            or fields[5].strip() != request_value["repository"]
+        ):
+            raise CoordinatorError("leaf wave resource ledger identity differs")
+        parsed.append((status, line))
+    statuses = [status for status, _line in parsed]
+    if statuses != ["APPROVED", "EXECUTION_STARTED", "COMPLETED_PASS"]:
+        raise CoordinatorError(
+            "leaf wave resource ledger lacks one ordered COMPLETED_PASS history"
+        )
+    terminal_line = parsed[-1][1]
+    receipt_digest = sha256(receipt_raw)
+    if re.search(
+        rf"\b(?:aggregate|receipt|result) bytes {len(receipt_raw)} "
+        rf"SHA-256 {receipt_digest}\b",
+        terminal_line,
+        flags=re.IGNORECASE,
+    ) is None:
+        raise CoordinatorError(
+            "leaf wave COMPLETED_PASS row does not bind the exact receipt bytes"
+        )
+    return {
+        "line": terminal_line,
+        "sha256": sha256((terminal_line.rstrip() + "\n").encode("utf-8")),
+        "status": "COMPLETED_PASS",
+    }
+
+
 def validate_authorization(
     path: Path,
     *,
     contract_path: Path,
     contract_raw: bytes,
+    execution_mode: str = "legacy",
+    plan_path: Path | None = None,
+    leaf_union_path: Path | None = None,
+    plan_sha256: str | None = None,
+    leaf_union_sha256: str | None = None,
+    leaf_wave_index: int | None = None,
+    leaf_catalog_sha256: str | None = None,
+    leaf_wave_manifest_sha256: str | None = None,
+    leaf_wave_result_path: Path | None = None,
 ) -> tuple[Mapping[str, Any], bytes]:
     value, raw = strict_json_load(path)
     if raw != canonical_bytes(value):
         raise CoordinatorError("execution authorization is not canonical JSON")
+    if (
+        execution_mode == "leaf-wave"
+        and isinstance(value, dict)
+        and value.get("schema") == LEAF_WAVE_AUTHORIZATION_SCHEMA
+    ):
+        if (
+            leaf_wave_index is None
+            or plan_sha256 is None
+            or leaf_catalog_sha256 is None
+            or leaf_wave_manifest_sha256 is None
+            or leaf_wave_result_path is None
+        ):
+            raise CoordinatorError("selected leaf wave authorization inputs are absent")
+        return _validate_leaf_wave_authorization_v3(
+            path=path,
+            value=value,
+            raw=raw,
+            contract_path=contract_path,
+            contract_raw=contract_raw,
+            selected_wave_index=leaf_wave_index,
+            selected_plan_sha256=plan_sha256,
+            selected_leaf_catalog_sha256=leaf_catalog_sha256,
+            selected_manifest_sha256=leaf_wave_manifest_sha256,
+            selected_result_path=leaf_wave_result_path,
+        )
     authorization = _exact(
         value,
         {
@@ -3396,8 +4947,25 @@ def validate_authorization(
         authorization_path=path,
         output_root=output_root,
         aggregate_path=aggregate_path,
+        execution_mode=execution_mode,
+        plan_path=plan_path,
+        leaf_union_path=leaf_union_path,
+        plan_sha256=plan_sha256,
+        leaf_union_sha256=leaf_union_sha256,
+        leaf_wave_index=leaf_wave_index,
+        leaf_catalog_sha256=leaf_catalog_sha256,
+        leaf_wave_manifest_sha256=leaf_wave_manifest_sha256,
+        leaf_wave_result_path=leaf_wave_result_path,
     )
-    expected_task = "ANYsolver S3 V2A Stage 4A bounded mixed-flexural gate"
+    expected_task = (
+        "ANYsolver S3 V2A Stage 4A bounded mixed-flexural gate"
+        if execution_mode == "legacy"
+        else (
+            "ANYsolver S3 V2A Stage 4A bounded leaf finalizer"
+            if execution_mode == "leaf-finalizer"
+            else f"ANYsolver S3 V2A Stage 4A bounded leaf wave {leaf_wave_index:02d}"
+        )
+    )
     if (
         not python_executable.is_file()
         or aggregate_path.parent != output_root
@@ -3800,6 +5368,657 @@ def prepare_wave(
     }
 
 
+def _build_stage4a_leaf_wave_manifest(
+    *,
+    wave: Mapping[str, Any],
+    catalog: Mapping[str, Any],
+    plan_path: Path,
+    candidate_source_root: Path,
+    candidate_archive_path: Path,
+    candidate_binding_path: Path,
+    contract_path: Path,
+    wave_root: Path,
+) -> dict[str, Any]:
+    leaves = {
+        str(leaf["leaf_id"]): leaf
+        for leaf in _validate_stage4a_leaf_catalog(catalog)
+    }
+    leaf_ids = wave.get("leaf_ids")
+    assignment_hashes = wave.get("leaf_assignment_sha256")
+    if (
+        not isinstance(leaf_ids, list)
+        or not isinstance(assignment_hashes, list)
+        or len(leaf_ids) != wave.get("worker_count")
+        or len(leaf_ids) not in {1, 2}
+        or any(leaf_id not in leaves for leaf_id in leaf_ids)
+        or assignment_hashes
+        != [leaves[leaf_id]["leaf_assignment_sha256"] for leaf_id in leaf_ids]
+    ):
+        raise CoordinatorError("leaf wave assignment coverage differs")
+    plan_digest = sha256(plan_path.read_bytes())
+    producer_digest = sha256(PRODUCER_PATH.read_bytes())
+    candidate_authority = catalog["candidate_authority"]
+    common_input_paths = (
+        AUTHORITY_PATH.resolve(),
+        MANIFEST_PATH.resolve(),
+        SCAFFOLD_CONTRACT_PATH.resolve(),
+        SOURCE_CONTRACT_PATH.resolve(),
+        candidate_archive_path.resolve(),
+        candidate_binding_path.resolve(),
+        contract_path.resolve(),
+        plan_path.resolve(),
+    )
+    input_hashes = sorted(
+        (
+            {"path": str(path), "sha256": sha256(path.read_bytes())}
+            for path in common_input_paths
+        ),
+        key=lambda item: item["path"],
+    )
+    workers: list[dict[str, Any]] = []
+    for leaf_id in leaf_ids:
+        leaf = leaves[leaf_id]
+        worker_root = (wave_root / leaf_id).resolve()
+        scientific_path = worker_root / "scientific.json"
+        progress_path = worker_root / "progress.jsonl"
+        command = [
+            str(Path(sys.executable).resolve()),
+            str(PRODUCER_PATH.resolve()),
+            "--run-flat-leaf",
+            str(plan_path.resolve()),
+            "--leaf-assignment-sha256",
+            str(leaf["leaf_assignment_sha256"]),
+            "--selector",
+            LEAF_SELECTOR,
+            "--candidate-source-root",
+            str(candidate_source_root.resolve()),
+            "--candidate-archive",
+            str(candidate_archive_path.resolve()),
+            "--candidate-archive-sha256",
+            str(candidate_authority["candidate_archive_sha256"]),
+            "--candidate-commit",
+            str(candidate_authority["candidate_commit"]),
+            "--candidate-tree",
+            str(candidate_authority["candidate_tree"]),
+            "--producer-program-sha256",
+            str(candidate_authority["producer_program_sha256"]),
+            "--output",
+            str(scientific_path),
+            "--progress",
+            str(progress_path),
+        ]
+        workers.append(
+            {
+                "assignment_id": leaf_id,
+                "assignment_sha256": leaf["leaf_assignment_sha256"],
+                "command": command,
+                "cwd": str(ROOT.resolve()),
+                "expected_record_count": 1,
+                "expected_selector": LEAF_SELECTOR,
+                "input_hashes": input_hashes,
+                "plan_path": str(plan_path.resolve()),
+                "plan_sha256": plan_digest,
+                "program_path": str(PRODUCER_PATH.resolve()),
+                "program_sha256": producer_digest,
+                "progress_path": str(progress_path),
+                "scientific_path": str(scientific_path),
+                "scientific_schema": LEAF_SCIENTIFIC_SCHEMA,
+                "stderr_path": str(worker_root / "stderr.log"),
+                "stdout_path": str(worker_root / "stdout.log"),
+                "wall_seconds": LEAF_WORKER_WALL_SECONDS,
+            }
+        )
+    return {
+        "lane": "flat-proof",
+        "output_root": str(wave_root.resolve()),
+        "schema": "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1",
+        "wave_id": wave["wave_id"],
+        "workers": workers,
+    }
+
+
+def prepare_stage4a_leaf_cycle(
+    contract_path: Path, output_root: Path
+) -> dict[str, Any]:
+    """Prepare immutable leaf assignments and 41 executable bounded waves."""
+
+    _coordinator_checkpoint()
+    contract, _contract_raw = validate_contract(contract_path)
+    funnel = _load_module("_s3_v2_stage4a_leaf_prepare_funnel", FUNNEL_PATH)
+    manifest_value, manifest_raw = funnel.strict_json_load(MANIFEST_PATH)
+    records = funnel.validate_manifest(manifest_value, manifest_raw)
+    plan = funnel.build_phase_plan(records, "4A")
+    plan_path = (output_root / "phase4a-plan.json").resolve()
+    _write_exclusive(plan_path, funnel.canonical_bytes(plan))
+    archive_path = (output_root / "candidate-source.tar").resolve()
+    _publish_candidate_archive(archive_path, str(contract["candidate"]["commit"]))
+    archive_digest = sha256(archive_path.read_bytes())
+    candidate_source_root = _extract_candidate_archive(archive_path, output_root)
+    binding = {
+        "artifact_path": str(archive_path),
+        "artifact_sha256": archive_digest,
+        "candidate_id": "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1",
+        "commit": contract["candidate"]["commit"],
+        "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V2",
+        "schema": "anysolver.e4-pl-s3-v2-flat-candidate-binding-v1",
+        "selector": LEAF_SELECTOR,
+        "tree": contract["candidate"]["tree"],
+    }
+    binding_path = (output_root / "candidate-source-binding.json").resolve()
+    _write_exclusive(binding_path, canonical_bytes(binding))
+    candidate_authority = _leaf_candidate_authority(
+        candidate_commit=contract["candidate"]["commit"],
+        candidate_tree=contract["candidate"]["tree"],
+        candidate_archive_sha256=archive_digest,
+        producer_program_sha256=sha256(PRODUCER_PATH.read_bytes()),
+    )
+    catalog = build_stage4a_leaf_catalog(
+        plan,
+        plan_path.read_bytes(),
+        **candidate_authority,
+    )
+    catalog_path = (output_root / "stage4a-leaf-catalog.json").resolve()
+    _write_exclusive(catalog_path, canonical_bytes(catalog))
+    wave_catalog = build_stage4a_leaf_wave_catalog(catalog)
+    wave_catalog_path = (output_root / "stage4a-leaf-wave-catalog.json").resolve()
+    _write_exclusive(wave_catalog_path, canonical_bytes(wave_catalog))
+    manifests: list[Path] = []
+    for wave_index, wave in enumerate(wave_catalog["waves"], start=1):
+        _coordinator_checkpoint()
+        wave_root = (output_root / "leaf-waves" / f"wave-{wave_index:02d}").resolve()
+        manifest = _build_stage4a_leaf_wave_manifest(
+            wave=wave,
+            catalog=catalog,
+            plan_path=plan_path,
+            candidate_source_root=candidate_source_root,
+            candidate_archive_path=archive_path,
+            candidate_binding_path=binding_path,
+            contract_path=contract_path,
+            wave_root=wave_root,
+        )
+        manifest_path = (wave_root / "manifest.json").resolve()
+        _write_exclusive(manifest_path, canonical_bytes(manifest))
+        manifests.append(manifest_path)
+    return {
+        "archive": archive_path,
+        "binding": binding_path,
+        "candidate_source_root": candidate_source_root,
+        "catalog": catalog_path,
+        "manifests": manifests,
+        "plan": plan_path,
+        "wave_catalog": wave_catalog_path,
+    }
+
+
+def _validate_stage4a_leaf_cycle(
+    *,
+    contract: Mapping[str, Any],
+    contract_path: Path,
+    output_root: Path,
+    wave_index: int,
+) -> dict[str, Any]:
+    if (
+        isinstance(wave_index, bool)
+        or not isinstance(wave_index, int)
+        or not 1 <= wave_index <= LEAF_WAVE_COUNT
+    ):
+        raise CoordinatorError("leaf wave index is outside 1..41")
+    plan_path = _contained_leaf_finalizer_input(
+        (output_root / "phase4a-plan.json").resolve(), output_root, "leaf plan"
+    )
+    plan, plan_raw = _load_validated_stage4a_plan(plan_path)
+    binding_path = _contained_leaf_finalizer_input(
+        (output_root / "candidate-source-binding.json").resolve(),
+        output_root,
+        "candidate binding",
+    )
+    binding, binding_raw = strict_json_load(binding_path)
+    if binding_raw != canonical_bytes(binding):
+        raise CoordinatorError("leaf candidate binding is not canonical JSON")
+    binding = _exact(
+        binding,
+        {
+            "artifact_path",
+            "artifact_sha256",
+            "candidate_id",
+            "commit",
+            "formulation_id",
+            "schema",
+            "selector",
+            "tree",
+        },
+        "$.leaf_candidate_binding",
+    )
+    archive_path = _contained_leaf_finalizer_input(
+        Path(str(binding["artifact_path"])), output_root, "candidate archive"
+    )
+    archive_raw = archive_path.read_bytes()
+    if (
+        binding["schema"] != "anysolver.e4-pl-s3-v2-flat-candidate-binding-v1"
+        or binding["candidate_id"] != "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1"
+        or binding["formulation_id"] != "E4_PL_QUALIFIED_S3_COMPANION_V2"
+        or binding["selector"] != LEAF_SELECTOR
+        or binding["commit"] != contract["candidate"]["commit"]
+        or binding["tree"] != contract["candidate"]["tree"]
+        or binding["artifact_sha256"] != sha256(archive_raw)
+        or not archive_raw
+    ):
+        raise CoordinatorError("leaf candidate binding differs from contract/archive")
+    candidate_authority = _leaf_candidate_authority(
+        candidate_commit=binding["commit"],
+        candidate_tree=binding["tree"],
+        candidate_archive_sha256=binding["artifact_sha256"],
+        producer_program_sha256=sha256(PRODUCER_PATH.read_bytes()),
+    )
+    catalog_path = _contained_leaf_finalizer_input(
+        (output_root / "stage4a-leaf-catalog.json").resolve(),
+        output_root,
+        "leaf catalog",
+    )
+    catalog, catalog_raw = strict_json_load(catalog_path)
+    expected_catalog = build_stage4a_leaf_catalog(
+        plan, plan_raw, **candidate_authority
+    )
+    if catalog_raw != canonical_bytes(catalog) or catalog != expected_catalog:
+        raise CoordinatorError("stored leaf catalog differs from frozen inputs")
+    wave_catalog_path = _contained_leaf_finalizer_input(
+        (output_root / "stage4a-leaf-wave-catalog.json").resolve(),
+        output_root,
+        "leaf wave catalog",
+    )
+    wave_catalog, wave_catalog_raw = strict_json_load(wave_catalog_path)
+    expected_wave_catalog = build_stage4a_leaf_wave_catalog(catalog)
+    if (
+        wave_catalog_raw != canonical_bytes(wave_catalog)
+        or wave_catalog != expected_wave_catalog
+    ):
+        raise CoordinatorError("stored leaf wave catalog differs from leaf catalog")
+    candidate_source_root = (output_root / "candidate-source-tree").resolve()
+    if not candidate_source_root.is_dir() or candidate_source_root.is_symlink():
+        raise CoordinatorError("leaf candidate source tree is absent or aliased")
+    wave_root = (output_root / "leaf-waves" / f"wave-{wave_index:02d}").resolve()
+    manifest_path = _contained_leaf_finalizer_input(
+        (wave_root / "manifest.json").resolve(), output_root, "leaf wave manifest"
+    )
+    manifest, manifest_raw = strict_json_load(manifest_path)
+    expected_manifest = _build_stage4a_leaf_wave_manifest(
+        wave=wave_catalog["waves"][wave_index - 1],
+        catalog=catalog,
+        plan_path=plan_path,
+        candidate_source_root=candidate_source_root,
+        candidate_archive_path=archive_path,
+        candidate_binding_path=binding_path,
+        contract_path=contract_path,
+        wave_root=wave_root,
+    )
+    if manifest_raw != canonical_bytes(manifest) or manifest != expected_manifest:
+        raise CoordinatorError("stored leaf wave manifest differs from frozen inputs")
+    return {
+        "archive": archive_path,
+        "binding": binding_path,
+        "candidate_authority": candidate_authority,
+        "catalog": catalog,
+        "catalog_path": catalog_path,
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "plan": plan,
+        "plan_path": plan_path,
+        "plan_raw": plan_raw,
+        "wave": wave_catalog["waves"][wave_index - 1],
+        "wave_catalog": wave_catalog,
+        "wave_catalog_path": wave_catalog_path,
+        "wave_root": wave_root,
+    }
+
+
+_BOUNDED_WORKER_RESULT_KEYS = {
+    "assignment_id",
+    "assignment_sha256",
+    "cpu_100ns",
+    "input_hashes",
+    "last_progress_sequence",
+    "peak_tree_memory_bytes",
+    "plan_sha256",
+    "program_sha256",
+    "returncode",
+    "scientific_byte_count",
+    "scientific_payload_sha256",
+    "scientific_record_count",
+    "scientific_record_ids_sha256",
+    "scientific_schema",
+    "scientific_sha256",
+    "scientific_terminal",
+    "status",
+    "stderr_sha256",
+    "stdout_sha256",
+    "termination_proven",
+}
+
+
+def _validate_stage4a_leaf_wave_result(
+    result_path: Path, cycle: Mapping[str, Any]
+) -> tuple[Mapping[str, Any], bytes, list[dict[str, Any]]]:
+    result, result_raw = strict_json_load(result_path)
+    if result_raw != canonical_bytes(result):
+        raise CoordinatorError("leaf bounded-wave result is not canonical JSON")
+    result = _exact(
+        result,
+        {"lane", "manifest_sha256", "schema", "terminal", "wave_id", "workers"},
+        "$.leaf_wave_result",
+    )
+    manifest = cycle["manifest"]
+    workers = result["workers"]
+    if (
+        result["schema"] != PRODUCER_RESULT_SCHEMA
+        or result["lane"] != "flat-proof"
+        or result["terminal"] != "COMPLETED"
+        or result["wave_id"] != cycle["wave"]["wave_id"]
+        or result["manifest_sha256"]
+        != sha256(cycle["manifest_path"].read_bytes())
+        or not isinstance(workers, list)
+        or len(workers) != len(manifest["workers"])
+    ):
+        raise CoordinatorError("leaf bounded-wave result identity differs")
+    leaves = {
+        str(leaf["leaf_id"]): leaf for leaf in cycle["catalog"]["leaves"]
+    }
+    plan_members = {
+        str(member["record_id"]): member
+        for shard in _stage4a_plan_shards(cycle["plan"], cycle["plan_raw"])
+        for member in shard["records"]
+    }
+    accepted: list[dict[str, Any]] = []
+    for index, (raw_worker, spec) in enumerate(zip(workers, manifest["workers"])):
+        worker = _exact(
+            raw_worker,
+            _BOUNDED_WORKER_RESULT_KEYS,
+            f"$.leaf_wave_result.workers[{index}]",
+        )
+        leaf_id = str(spec["assignment_id"])
+        leaf = leaves[leaf_id]
+        proof_path = Path(str(spec["scientific_path"])).resolve()
+        if (
+            worker["assignment_id"] != leaf_id
+            or worker["assignment_sha256"] != spec["assignment_sha256"]
+            or worker["status"] != "COMPLETED"
+            or worker["returncode"] != 0
+            or worker["termination_proven"] is not True
+            or worker["plan_sha256"] != spec["plan_sha256"]
+            or worker["program_sha256"] != spec["program_sha256"]
+            or worker["input_hashes"] != spec["input_hashes"]
+            or worker["scientific_record_count"] != 1
+            or worker["scientific_schema"] != LEAF_SCIENTIFIC_SCHEMA
+            or worker["scientific_terminal"] != LEAF_PROOF_TERMINAL
+            or not proof_path.is_file()
+            or proof_path.is_symlink()
+        ):
+            raise CoordinatorError("leaf bounded worker authority/process result differs")
+        proof_raw = proof_path.read_bytes()
+        proof_sha = sha256(proof_raw)
+        proof_value = strict_json_bytes(proof_raw, str(proof_path))
+        member = plan_members[str(leaf["assignment"]["record_id"])]
+        validate_stage4a_leaf_proof(
+            proof_value,
+            proof_raw,
+            entry=leaf,
+            member=member,
+        )
+        if (
+            worker["scientific_byte_count"] != len(proof_raw)
+            or worker["scientific_sha256"] != proof_sha
+            or worker["scientific_payload_sha256"]
+            != proof_value["scientific_payload_sha256"]
+            or worker["scientific_record_ids_sha256"]
+            != proof_value["record_ids_sha256"]
+        ):
+            raise CoordinatorError("leaf bounded worker scientific binding differs")
+        accepted.append(
+            {
+                "assignment_sha256": leaf["leaf_assignment_sha256"],
+                "leaf_id": leaf_id,
+                "proof": _external_file_binding(proof_path, "leaf scientific proof"),
+                "status": "COMPLETED",
+                "termination_proven": True,
+            }
+        )
+    return result, result_raw, accepted
+
+
+def validate_stage4a_leaf_wave_receipt(
+    receipt_path: Path,
+    *,
+    contract: Mapping[str, Any],
+    contract_path: Path,
+    contract_raw: bytes,
+    cycle: Mapping[str, Any],
+    wave_index: int,
+    allowed_root: Path,
+    expected_authorization_path: Path,
+    expected_authorization_raw: bytes,
+) -> dict[str, Any]:
+    """Revalidate a consumed wave's immutable request, attempt, result, and proofs."""
+
+    receipt_path = _contained_leaf_finalizer_input(
+        receipt_path, allowed_root, "leaf wave receipt"
+    )
+    receipt, receipt_raw = strict_json_load(receipt_path)
+    if receipt_raw != canonical_bytes(receipt):
+        raise CoordinatorError("leaf wave receipt is not canonical JSON")
+    receipt = _exact(
+        receipt,
+        {
+            "attempt",
+            "authorization",
+            "candidate_authority",
+            "candidate_authority_sha256",
+            "contract",
+            "leaf_catalog_sha256",
+            "manifest",
+            "plan_sha256",
+            "request",
+            "request_command_sha256",
+            "request_id",
+            "result",
+            "schema",
+            "terminal",
+            "wave_id",
+            "wave_index",
+            "workers",
+        },
+        "$.leaf_wave_receipt",
+    )
+    candidate_authority = _leaf_candidate_authority(
+        **receipt["candidate_authority"]
+    )
+    if (
+        receipt["schema"] != LEAF_WAVE_RECEIPT_SCHEMA
+        or receipt["terminal"] != "COMPLETED"
+        or receipt["wave_index"] != wave_index
+        or receipt["wave_id"] != cycle["wave"]["wave_id"]
+        or candidate_authority != cycle["candidate_authority"]
+        or receipt["candidate_authority_sha256"]
+        != _leaf_candidate_authority_sha256(candidate_authority)
+        or receipt["plan_sha256"] != sha256(cycle["plan_raw"])
+        or receipt["leaf_catalog_sha256"]
+        != sha256(canonical_bytes(cycle["catalog"]))
+    ):
+        raise CoordinatorError("leaf wave receipt identity differs")
+    root = allowed_root.resolve(strict=True)
+    bound_files: dict[str, tuple[Path, bytes]] = {}
+    for name in ("attempt", "authorization", "contract", "manifest", "request", "result"):
+        path, raw = _validate_external_file_binding(
+            receipt[name], f"$.leaf_wave_receipt.{name}"
+        )
+        try:
+            path.relative_to(root)
+        except ValueError:
+            if name not in {"attempt", "request", "contract", "authorization"}:
+                raise CoordinatorError(f"leaf wave {name} escapes the cycle root")
+        bound_files[name] = (path, raw)
+    if (
+        bound_files["contract"][0] != contract_path.resolve()
+        or bound_files["contract"][1] != contract_raw
+        or bound_files["manifest"][0] != cycle["manifest_path"]
+        or bound_files["manifest"][1] != cycle["manifest_path"].read_bytes()
+    ):
+        raise CoordinatorError("leaf wave receipt contract/manifest binding differs")
+    result_path, result_raw = bound_files["result"]
+    _result, made_result_raw, accepted_workers = _validate_stage4a_leaf_wave_result(
+        result_path, cycle
+    )
+    if made_result_raw != result_raw or receipt["workers"] != accepted_workers:
+        raise CoordinatorError("leaf wave receipt workers differ from bounded result")
+
+    request_path, request_raw = bound_files["request"]
+    request_value = _exact(
+        strict_json_bytes(request_raw, str(request_path)),
+        {
+            "command",
+            "estimate_minutes",
+            "repository",
+            "request_id",
+            "requested_at",
+            "status",
+            "task",
+        },
+        "$.leaf_wave_receipt.request_file",
+    )
+    request_id = receipt["request_id"]
+    if (
+        request_value["request_id"] != request_id
+        or request_value["status"] != "PENDING"
+        or request_value["estimate_minutes"] != 30
+        or request_value["repository"] != str(ROOT)
+        or receipt["request_command_sha256"]
+        != sha256(request_value["command"].encode("utf-8"))
+    ):
+        raise CoordinatorError("leaf wave receipt request binding differs")
+    attempt_path, attempt_raw = bound_files["attempt"]
+    attempt = _exact(
+        strict_json_bytes(attempt_raw, str(attempt_path)),
+        {"contract_sha256", "request_id", "schema"},
+        "$.leaf_wave_receipt.attempt_file",
+    )
+    if attempt != {
+        "contract_sha256": sha256(contract_raw),
+        "request_id": request_id,
+        "schema": "anysolver.resource-attempt-claim-v1",
+    }:
+        raise CoordinatorError("leaf wave receipt attempt binding differs")
+
+    authorization_path, authorization_raw = bound_files["authorization"]
+    if (
+        authorization_path != expected_authorization_path.resolve()
+        or authorization_raw != expected_authorization_raw
+    ):
+        raise CoordinatorError("leaf wave receipt authorization differs from union authority")
+    authorization = _exact(
+        strict_json_bytes(authorization_raw, str(authorization_path)),
+        {
+            "contract_path",
+            "contract_sha256",
+            "formal_execution_authorized",
+            "implementation_reviews",
+            "leaf_waves",
+            "resource_lock_required",
+            "schema",
+            "user_approval",
+        },
+        "$.leaf_wave_receipt.authorization_file",
+    )
+    if (
+        authorization["schema"] != LEAF_WAVE_AUTHORIZATION_SCHEMA
+        or authorization["contract_sha256"] != sha256(contract_raw)
+        or authorization["formal_execution_authorized"] is not True
+        or authorization["resource_lock_required"] is not True
+        or not isinstance(authorization["leaf_waves"], list)
+        or len(authorization["leaf_waves"]) != LEAF_WAVE_COUNT
+    ):
+        raise CoordinatorError("leaf wave receipt authorization binding differs")
+    selected_authorization, selected_authorization_raw = (
+        _validate_leaf_wave_authorization_v3(
+            path=authorization_path,
+            value=authorization,
+            raw=authorization_raw,
+            contract_path=contract_path,
+            contract_raw=contract_raw,
+            selected_wave_index=wave_index,
+            selected_plan_sha256=receipt["plan_sha256"],
+            selected_leaf_catalog_sha256=receipt["leaf_catalog_sha256"],
+            selected_manifest_sha256=receipt["manifest"]["sha256"],
+            selected_result_path=result_path,
+        )
+    )
+    if selected_authorization_raw != authorization_raw:
+        raise CoordinatorError("leaf wave authorization bytes changed during validation")
+    authorized_wave = authorization["leaf_waves"][wave_index - 1]
+    authorized_request = authorized_wave.get("resource_request", {})
+    expected_request_path = (
+        RESOURCE_MANAGER_ROOT / "requests" / f"{request_id}.json"
+    ).resolve()
+    expected_attempt_path = (
+        RESOURCE_MANAGER_ROOT / "attempts" / f"{request_id}.json"
+    ).resolve()
+    execution_paths = selected_authorization["execution_paths"]
+    if (
+        authorized_wave.get("wave_index") != wave_index
+        or authorized_wave.get("plan_sha256") != receipt["plan_sha256"]
+        or authorized_wave.get("leaf_catalog_sha256")
+        != receipt["leaf_catalog_sha256"]
+        or authorized_wave.get("leaf_wave_manifest_sha256")
+        != receipt["manifest"]["sha256"]
+        or Path(str(authorized_wave.get("leaf_wave_result_path"))).resolve()
+        != result_path
+        or authorized_request.get("request_id") != request_id
+        or authorized_request.get("request_sha256") != sha256(request_raw)
+        or authorized_request.get("command_sha256")
+        != receipt["request_command_sha256"]
+        or request_path != expected_request_path
+        or attempt_path != expected_attempt_path
+        or authorization_path != Path(receipt["authorization"]["path"]).resolve()
+        or receipt_path.resolve()
+        != Path(str(execution_paths["aggregate_path"])).resolve()
+        or root != Path(str(execution_paths["output_root"])).resolve()
+        or selected_authorization["resource_request"] != authorized_request
+        or selected_authorization["plan_sha256"] != receipt["plan_sha256"]
+        or selected_authorization["leaf_catalog_sha256"]
+        != receipt["leaf_catalog_sha256"]
+        or selected_authorization["leaf_wave_manifest_sha256"]
+        != receipt["manifest"]["sha256"]
+        or Path(str(selected_authorization["leaf_wave_result_path"])).resolve()
+        != result_path
+        or request_value["command"]
+        != expected_resource_command(
+            python_executable=Path(
+                str(authorized_wave["execution_paths"]["python_executable"])
+            ),
+            contract_path=contract_path,
+            authorization_path=authorization_path,
+            output_root=Path(str(authorized_wave["execution_paths"]["output_root"])),
+            aggregate_path=Path(
+                str(authorized_wave["execution_paths"]["aggregate_path"])
+            ),
+            execution_mode="leaf-wave",
+            plan_sha256=receipt["plan_sha256"],
+            leaf_wave_index=wave_index,
+            leaf_catalog_sha256=receipt["leaf_catalog_sha256"],
+            leaf_wave_manifest_sha256=receipt["manifest"]["sha256"],
+            leaf_wave_result_path=result_path,
+        )
+    ):
+        raise CoordinatorError("leaf wave receipt is not joined to its exact authority")
+    terminal_ledger_row = _validate_completed_leaf_wave_ledger_row(
+        str(request_id), request_value, receipt_raw=receipt_raw
+    )
+    return {
+        "path": receipt_path.resolve(),
+        "raw": receipt_raw,
+        "receipt": receipt,
+        "terminal_ledger_row": terminal_ledger_row,
+        "workers": accepted_workers,
+    }
+
+
 def _run_checker_process(
     *,
     assignment_id: str,
@@ -3976,6 +6195,21 @@ def _run_checker_phase(
             pair: list[tuple[int, Any]] = []
             for replica_index in (1, 2):
                 root = output_root / f"checker-replica-{replica_index}" / assignment_id
+                output = _contained_leaf_output(
+                    (root / "checker.json").resolve(),
+                    output_root.resolve(),
+                    "leaf checker output",
+                )
+                stdout_path = _contained_leaf_output(
+                    (root / "stdout.log").resolve(),
+                    output_root.resolve(),
+                    "leaf checker stdout",
+                )
+                stderr_path = _contained_leaf_output(
+                    (root / "stderr.log").resolve(),
+                    output_root.resolve(),
+                    "leaf checker stderr",
+                )
                 pair.append(
                     (
                         replica_index,
@@ -3984,9 +6218,9 @@ def _run_checker_phase(
                             assignment_id=assignment_id,
                             proof=proof,
                             plan=plan,
-                            output=root / "checker.json",
-                            stdout_path=root / "stdout.log",
-                            stderr_path=root / "stderr.log",
+                            output=output,
+                            stdout_path=stdout_path,
+                            stderr_path=stderr_path,
                             deadline=deadline,
                         ),
                     )
@@ -4316,7 +6550,7 @@ def _run_stage4a_guarded(
     _coordinator_checkpoint()
     if not sys.flags.isolated or not sys.dont_write_bytecode:
         raise CoordinatorError("formal Stage 4A requires the registered -I -B launcher")
-    _contract, contract_raw = validate_contract(contract_path)
+    contract, contract_raw = validate_contract(contract_path)
     _coordinator_checkpoint()
     authorization, authorization_raw = validate_authorization(
         authorization_path,
@@ -4496,6 +6730,606 @@ def run_stage4a(
         guard.close()
 
 
+def _contained_leaf_finalizer_input(
+    path: Path, output_root: Path, location: str
+) -> Path:
+    if not path.is_absolute():
+        raise CoordinatorError(f"{location} must be absolute")
+    try:
+        information = path.lstat()
+    except OSError as exc:
+        raise CoordinatorError(f"cannot inspect {location}: {exc}") from exc
+    if (
+        not stat.S_ISREG(information.st_mode)
+        or path.is_symlink()
+        or getattr(information, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    ):
+        raise CoordinatorError(f"{location} must be a regular non-reparse file")
+    resolved_root = _validated_leaf_output_root(output_root, "leaf output root")
+    resolved = path.resolve(strict=True)
+    try:
+        resolved.relative_to(resolved_root)
+    except (OSError, ValueError) as exc:
+        raise CoordinatorError(f"{location} escapes the registered output root") from exc
+    _validate_leaf_output_ancestors(resolved.parent, resolved_root, location)
+    return resolved
+
+
+def _validated_leaf_output_root(output_root: Path, location: str) -> Path:
+    if not output_root.is_absolute():
+        raise CoordinatorError(f"{location} must be absolute")
+    try:
+        information = output_root.lstat()
+    except OSError as exc:
+        raise CoordinatorError(f"cannot inspect {location}: {exc}") from exc
+    if (
+        not stat.S_ISDIR(information.st_mode)
+        or output_root.is_symlink()
+        or getattr(information, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    ):
+        raise CoordinatorError(f"{location} must be a non-reparse directory")
+    return output_root.resolve(strict=True)
+
+
+def _validate_leaf_output_ancestors(
+    parent: Path, resolved_root: Path, location: str
+) -> None:
+    current = parent
+    while True:
+        if current.exists():
+            information = current.lstat()
+            if (
+                not stat.S_ISDIR(information.st_mode)
+                or current.is_symlink()
+                or getattr(information, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+            ):
+                raise CoordinatorError(
+                    f"{location} has a non-directory or reparse output ancestor"
+                )
+        if current == resolved_root:
+            return
+        if current.parent == current:
+            raise CoordinatorError(f"{location} escapes the registered output root")
+        current = current.parent
+
+
+def _contained_leaf_output(
+    path: Path, output_root: Path, location: str
+) -> Path:
+    """Resolve a not-yet-created leaf output below a plain cycle directory."""
+
+    if not path.is_absolute():
+        raise CoordinatorError(f"{location} must be absolute")
+    resolved_root = _validated_leaf_output_root(output_root, "leaf output root")
+    resolved = path.resolve(strict=False)
+    try:
+        resolved.relative_to(resolved_root)
+    except ValueError as exc:
+        raise CoordinatorError(f"{location} escapes the registered output root") from exc
+    _validate_leaf_output_ancestors(resolved.parent, resolved_root, location)
+    if os.path.lexists(resolved):
+        try:
+            information = resolved.lstat()
+        except OSError as exc:
+            raise CoordinatorError(f"cannot inspect {location}: {exc}") from exc
+        if (
+            resolved.is_symlink()
+            or getattr(information, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            raise CoordinatorError(f"{location} is a reparse output")
+    return resolved
+
+
+def _stage4a_leaf_wave_receipt(
+    *,
+    authorization: Mapping[str, Any],
+    authorization_path: Path,
+    contract_path: Path,
+    cycle: Mapping[str, Any],
+    result_path: Path,
+    result_raw: bytes,
+    workers: Sequence[Mapping[str, Any]],
+    wave_index: int,
+) -> dict[str, Any]:
+    request_id = str(authorization["resource_request"]["request_id"])
+    request_path = Path(str(authorization["resource_request"]["request_path"]))
+    attempt_path = (
+        RESOURCE_MANAGER_ROOT / "attempts" / f"{request_id}.json"
+    ).resolve()
+    return {
+        "attempt": _external_file_binding(attempt_path, "leaf wave attempt"),
+        "authorization": _external_file_binding(
+            authorization_path, "leaf wave authorization"
+        ),
+        "candidate_authority": cycle["candidate_authority"],
+        "candidate_authority_sha256": _leaf_candidate_authority_sha256(
+            cycle["candidate_authority"]
+        ),
+        "contract": _external_file_binding(contract_path, "leaf wave contract"),
+        "leaf_catalog_sha256": sha256(canonical_bytes(cycle["catalog"])),
+        "manifest": _external_file_binding(
+            cycle["manifest_path"], "leaf wave manifest"
+        ),
+        "plan_sha256": sha256(cycle["plan_raw"]),
+        "request": _external_file_binding(request_path, "leaf wave request"),
+        "request_command_sha256": authorization["resource_request"][
+            "command_sha256"
+        ],
+        "request_id": request_id,
+        "result": {
+            "byte_count": len(result_raw),
+            "path": str(result_path.resolve()),
+            "sha256": sha256(result_raw),
+        },
+        "schema": LEAF_WAVE_RECEIPT_SCHEMA,
+        "terminal": "COMPLETED",
+        "wave_id": cycle["wave"]["wave_id"],
+        "wave_index": wave_index,
+        "workers": list(workers),
+    }
+
+
+def _run_stage4a_leaf_wave_guarded(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    receipt_path: Path,
+    result_path: Path,
+    *,
+    wave_index: int,
+    plan_sha256: str,
+    leaf_catalog_sha256: str,
+    leaf_wave_manifest_sha256: str,
+    wall_guard: _CoordinatorWallGuard,
+) -> Mapping[str, Any]:
+    _coordinator_checkpoint()
+    if not sys.flags.isolated or not sys.dont_write_bytecode:
+        raise CoordinatorError("formal leaf wave requires the registered -I -B launcher")
+    contract, contract_raw = validate_contract(contract_path)
+    authorization, authorization_raw = validate_authorization(
+        authorization_path,
+        contract_path=contract_path,
+        contract_raw=contract_raw,
+        execution_mode="leaf-wave",
+        plan_sha256=plan_sha256,
+        leaf_wave_index=wave_index,
+        leaf_catalog_sha256=leaf_catalog_sha256,
+        leaf_wave_manifest_sha256=leaf_wave_manifest_sha256,
+        leaf_wave_result_path=result_path,
+    )
+    execution_paths = authorization["execution_paths"]
+    if (
+        Path(str(execution_paths["output_root"])).resolve() != output_root.resolve()
+        or Path(str(execution_paths["aggregate_path"])).resolve()
+        != receipt_path.resolve()
+        or Path(str(execution_paths["python_executable"])).resolve()
+        != Path(sys.executable).resolve()
+        or receipt_path.parent.resolve() != output_root.resolve()
+    ):
+        raise CoordinatorError("live leaf wave invocation differs from its request")
+    validate_resource_execution_state(authorization)
+    authorization_digest = sha256(authorization_raw)
+    contract_digest = sha256(contract_raw)
+    wall_guard.bind_evidence(
+        authorization_sha256=authorization_digest,
+        contract_sha256=contract_digest,
+    )
+    process_phase = "LEAF_WAVE_INPUT_VALIDATION"
+    result_published = False
+    try:
+        cycle = _validate_stage4a_leaf_cycle(
+            contract=contract,
+            contract_path=contract_path,
+            output_root=output_root,
+            wave_index=wave_index,
+        )
+        expected_result = (cycle["wave_root"] / "bounded-result.json").resolve()
+        if result_path.resolve() != expected_result:
+            raise CoordinatorError("leaf bounded result path differs")
+        if (
+            sha256(cycle["plan_raw"]) != _digest(plan_sha256, "leaf plan hash")
+            or sha256(canonical_bytes(cycle["catalog"]))
+            != _digest(leaf_catalog_sha256, "leaf catalog hash")
+            or sha256(cycle["manifest_path"].read_bytes())
+            != _digest(leaf_wave_manifest_sha256, "leaf wave manifest hash")
+        ):
+            raise CoordinatorError("leaf wave command hashes differ from frozen files")
+        wall_guard.bind_producer_result(result_path)
+        bounded = _load_module(
+            f"_s3_v2_stage4a_leaf_wave_{wave_index:02d}_bounded", BOUNDED_PATH
+        )
+        process_phase = "LEAF_WAVE_EXECUTION"
+        wall_guard.mark_process_phase_active()
+        result = bounded.run_wave(cycle["manifest_path"], result_path)
+        result_published = result_path.is_file()
+        wall_guard.mark_process_phase_terminal(
+            proven=_producer_process_trees_proven_terminal(result)
+        )
+        if result.get("terminal") != "COMPLETED":
+            raise CoordinatorError("leaf bounded wave did not complete")
+        result, result_raw, accepted_workers = _validate_stage4a_leaf_wave_result(
+            result_path, cycle
+        )
+        process_phase = "LEAF_WAVE_FINAL_AUTHORITY"
+        final_contract, final_contract_raw = validate_contract(contract_path)
+        final_authorization, final_authorization_raw = validate_authorization(
+            authorization_path,
+            contract_path=contract_path,
+            contract_raw=final_contract_raw,
+            execution_mode="leaf-wave",
+            plan_sha256=plan_sha256,
+            leaf_wave_index=wave_index,
+            leaf_catalog_sha256=leaf_catalog_sha256,
+            leaf_wave_manifest_sha256=leaf_wave_manifest_sha256,
+            leaf_wave_result_path=result_path,
+        )
+        if (
+            final_contract_raw != contract_raw
+            or final_authorization_raw != authorization_raw
+            or final_contract != contract
+        ):
+            raise CoordinatorError("leaf wave authority changed during execution")
+        validate_resource_execution_state(final_authorization, claim_attempt=False)
+        final_cycle = _validate_stage4a_leaf_cycle(
+            contract=contract,
+            contract_path=contract_path,
+            output_root=output_root,
+            wave_index=wave_index,
+        )
+        if (
+            final_cycle["manifest_path"].read_bytes()
+            != cycle["manifest_path"].read_bytes()
+            or final_cycle["plan_raw"] != cycle["plan_raw"]
+            or final_cycle["catalog"] != cycle["catalog"]
+            or result_path.read_bytes() != result_raw
+        ):
+            raise CoordinatorError("leaf wave input/result changed before receipt")
+        receipt = _stage4a_leaf_wave_receipt(
+            authorization=authorization,
+            authorization_path=authorization_path,
+            contract_path=contract_path,
+            cycle=cycle,
+            result_path=result_path,
+            result_raw=result_raw,
+            workers=accepted_workers,
+            wave_index=wave_index,
+        )
+    except _CoordinatorWallExceeded:
+        raise
+    except Exception:
+        producer_digest = (
+            sha256(result_path.read_bytes())
+            if result_published and result_path.is_file()
+            else None
+        )
+        receipt = blocked_aggregate(
+            authorization_sha256=authorization_digest,
+            contract_sha256=contract_digest,
+            producer_result_sha256=producer_digest,
+            reason=(
+                "PRODUCER_WAVE_NOT_COMPLETED"
+                if result_published
+                else "FORMAL_PROCESS_FAILED"
+            ),
+        )
+    _write_exclusive(receipt_path, canonical_bytes(receipt))
+    return receipt
+
+
+def run_stage4a_leaf_wave(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    receipt_path: Path,
+    result_path: Path,
+    *,
+    wave_index: int,
+    plan_sha256: str,
+    leaf_catalog_sha256: str,
+    leaf_wave_manifest_sha256: str,
+) -> Mapping[str, Any]:
+    """Execute one registered 1/2-worker leaf wave under 29 minutes."""
+
+    global _ACTIVE_COORDINATOR_GUARD
+    if _ACTIVE_COORDINATOR_GUARD is not None:
+        raise CoordinatorError("a coordinator wall guard is already active")
+    guard = _CoordinatorWallGuard(
+        aggregate_path=receipt_path,
+        started=time.monotonic(),
+        wall_seconds=LEAF_FINALIZER_WALL_SECONDS,
+        publication_reserve_seconds=LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS,
+    )
+    _ACTIVE_COORDINATOR_GUARD = guard
+    try:
+        guard.start()
+        try:
+            return _run_stage4a_leaf_wave_guarded(
+                contract_path,
+                authorization_path,
+                output_root,
+                receipt_path,
+                result_path,
+                wave_index=wave_index,
+                plan_sha256=plan_sha256,
+                leaf_catalog_sha256=leaf_catalog_sha256,
+                leaf_wave_manifest_sha256=leaf_wave_manifest_sha256,
+                wall_guard=guard,
+            )
+        except _CoordinatorWallExceeded as exc:
+            receipt = guard.publish_fail_closed()
+            if receipt is None:
+                raise CoordinatorError(
+                    "leaf wave wall elapsed before safe receipt publication"
+                ) from exc
+            return receipt
+    finally:
+        _ACTIVE_COORDINATOR_GUARD = None
+        guard.close()
+
+
+def _run_stage4a_leaf_finalizer_guarded(
+    contract_path: Path,
+    authorization_path: Path,
+    plan_path: Path,
+    leaf_union_path: Path,
+    output_root: Path,
+    aggregate_path: Path,
+    wall_guard: _CoordinatorWallGuard,
+    *,
+    expected_plan_sha256: str,
+    expected_leaf_union_sha256: str,
+) -> dict[str, Any]:
+    """Validate/reconstruct leaves and run only the unchanged checker phase."""
+
+    _coordinator_checkpoint()
+    if not sys.flags.isolated or not sys.dont_write_bytecode:
+        raise CoordinatorError("formal leaf finalization requires the registered -I -B launcher")
+    plan_path = _contained_leaf_finalizer_input(plan_path, output_root, "leaf plan")
+    leaf_union_path = _contained_leaf_finalizer_input(
+        leaf_union_path, output_root, "leaf union"
+    )
+    initial_plan_raw = plan_path.read_bytes()
+    initial_union_raw = leaf_union_path.read_bytes()
+    if (
+        sha256(initial_plan_raw)
+        != _digest(expected_plan_sha256, "registered finalizer plan hash")
+        or sha256(initial_union_raw)
+        != _digest(expected_leaf_union_sha256, "registered finalizer union hash")
+    ):
+        raise CoordinatorError("leaf finalizer plan/union differs from request hashes")
+    if plan_path == leaf_union_path or aggregate_path.resolve() in {
+        plan_path,
+        leaf_union_path,
+    }:
+        raise CoordinatorError("leaf finalizer inputs and aggregate must be distinct")
+    contract, contract_raw = validate_contract(contract_path)
+    _coordinator_checkpoint()
+    authorization, authorization_raw = validate_authorization(
+        authorization_path,
+        contract_path=contract_path,
+        contract_raw=contract_raw,
+        execution_mode="leaf-finalizer",
+        plan_path=plan_path,
+        leaf_union_path=leaf_union_path,
+        plan_sha256=expected_plan_sha256,
+        leaf_union_sha256=expected_leaf_union_sha256,
+    )
+    execution_paths = authorization["execution_paths"]
+    if (
+        Path(str(execution_paths["output_root"])).resolve() != output_root.resolve()
+        or Path(str(execution_paths["aggregate_path"])).resolve()
+        != aggregate_path.resolve()
+        or Path(str(execution_paths["python_executable"])).resolve()
+        != Path(sys.executable).resolve()
+    ):
+        raise CoordinatorError("live leaf finalizer invocation differs from its request")
+    validate_resource_execution_state(authorization)
+    authorization_digest = sha256(authorization_raw)
+    contract_digest = sha256(contract_raw)
+    union_digest = sha256(initial_union_raw)
+    snapshot_root = (output_root / "leaf-finalizer-input-snapshot").resolve()
+    snapshot_plan_path = _contained_leaf_output(
+        (snapshot_root / "phase4a-plan.json").resolve(),
+        output_root,
+        "leaf finalizer plan snapshot",
+    )
+    snapshot_union_path = _contained_leaf_output(
+        (snapshot_root / "leaf-union.json").resolve(),
+        output_root,
+        "leaf finalizer union snapshot",
+    )
+    _write_exclusive(snapshot_plan_path, initial_plan_raw)
+    _write_exclusive(snapshot_union_path, initial_union_raw)
+    wall_guard.bind_evidence(
+        authorization_sha256=authorization_digest,
+        contract_sha256=contract_digest,
+    )
+    # The complete union replaces the legacy producer-wave result as the
+    # content-addressed scientific producer input for aggregate binding.
+    wall_guard.bind_producer_result(snapshot_union_path)
+    process_phase = "LEAF_UNION_VALIDATION"
+    try:
+        union_envelope = strict_json_bytes(
+            initial_union_raw, str(snapshot_union_path)
+        )
+        if initial_union_raw != canonical_bytes(union_envelope) or not isinstance(
+            union_envelope, dict
+        ):
+            raise CoordinatorError("Stage 4A leaf union is not canonical JSON")
+        raw_candidate_authority = union_envelope.get("candidate_authority")
+        if not isinstance(raw_candidate_authority, dict):
+            raise CoordinatorError("Stage 4A leaf union candidate authority is absent")
+        candidate_authority = _leaf_candidate_authority(
+            **raw_candidate_authority
+        )
+        expected_candidate_authority = _leaf_candidate_authority(
+            candidate_commit=contract["candidate"]["commit"],
+            candidate_tree=contract["candidate"]["tree"],
+            candidate_archive_sha256=candidate_authority[
+                "candidate_archive_sha256"
+            ],
+            producer_program_sha256=sha256(PRODUCER_PATH.read_bytes()),
+        )
+        if candidate_authority != expected_candidate_authority:
+            raise CoordinatorError(
+                "leaf candidate commit/tree or producer identity differs from contract"
+            )
+        plan, plan_raw = _validate_stage4a_plan_raw(
+            initial_plan_raw, label=str(snapshot_plan_path)
+        )
+        catalog = build_stage4a_leaf_catalog(
+            plan,
+            plan_raw,
+            **candidate_authority,
+        )
+        wave_catalog = build_stage4a_leaf_wave_catalog(catalog)
+        if (
+            wave_catalog["wave_count"] != LEAF_WAVE_COUNT
+            or sum(wave["worker_count"] for wave in wave_catalog["waves"])
+            != LEAF_CATALOG_COUNT
+        ):
+            raise CoordinatorError("leaf wave catalog validation differs")
+        validated_union = validate_stage4a_leaf_union(
+            snapshot_union_path,
+            catalog=catalog,
+            plan=plan,
+            plan_raw=plan_raw,
+            candidate_authority=candidate_authority,
+            contract=contract,
+            contract_path=contract_path,
+            contract_raw=contract_raw,
+            allowed_root=output_root,
+            frozen_union_raw=initial_union_raw,
+        )
+        process_phase = "DIAGONAL_RECONSTRUCTION"
+        documents = reconstruct_stage4a_diagonal_documents(
+            plan, plan_raw, validated_union
+        )
+        producer_proofs = publish_stage4a_diagonal_documents(
+            documents, output_root
+        )
+        proofs = {
+            assignment_id: Path(str(binding["proof_path"]))
+            for assignment_id, binding in producer_proofs.items()
+        }
+        process_phase = "CHECKER_WAVE"
+        bounded = _load_module("_s3_v2_stage4a_leaf_finalizer_bounded", BOUNDED_PATH)
+        replicas = _run_checker_phase(
+            bounded=bounded,
+            proofs=proofs,
+            plan=snapshot_plan_path,
+            output_root=output_root,
+            deadline=wall_guard.work_deadline,
+            wall_guard=wall_guard,
+        )
+        process_phase = "FINAL_AUTHORITY_REVALIDATION"
+        _coordinator_checkpoint()
+        _final_contract, final_contract_raw = validate_contract(contract_path)
+        final_authorization, final_authorization_raw = validate_authorization(
+            authorization_path,
+            contract_path=contract_path,
+            contract_raw=final_contract_raw,
+            execution_mode="leaf-finalizer",
+            plan_path=plan_path,
+            leaf_union_path=leaf_union_path,
+            plan_sha256=expected_plan_sha256,
+            leaf_union_sha256=expected_leaf_union_sha256,
+        )
+        if final_contract_raw != contract_raw or final_authorization_raw != authorization_raw:
+            raise CoordinatorError("formal leaf finalizer authority changed during execution")
+        validate_resource_execution_state(final_authorization, claim_attempt=False)
+        if (
+            plan_path.read_bytes() != initial_plan_raw
+            or leaf_union_path.read_bytes() != initial_union_raw
+            or snapshot_plan_path.read_bytes() != initial_plan_raw
+            or snapshot_union_path.read_bytes() != initial_union_raw
+        ):
+            raise CoordinatorError("leaf finalizer plan/union changed before publication")
+        aggregate = aggregate_checker_results(
+            replicas,
+            producer_proofs=producer_proofs,
+            producer_result_sha256=union_digest,
+            contract_sha256=contract_digest,
+            authorization_sha256=authorization_digest,
+        )
+        _coordinator_checkpoint()
+    except _CoordinatorWallExceeded:
+        raise
+    except Exception as exc:
+        try:
+            _write_process_incident(
+                (output_root / "stage4a-leaf-finalizer-incident.json").resolve(),
+                authorization_sha256=authorization_digest,
+                contract_sha256=contract_digest,
+                error=exc,
+                phase=process_phase,
+                producer_result_path=snapshot_union_path,
+            )
+        except Exception:
+            pass
+        aggregate = blocked_aggregate(
+            authorization_sha256=authorization_digest,
+            contract_sha256=contract_digest,
+            producer_result_sha256=union_digest,
+            reason="CHECKER_WAVE_FAILED",
+        )
+    _write_exclusive(aggregate_path, canonical_bytes(aggregate))
+    return aggregate
+
+
+def run_stage4a_leaf_finalizer(
+    contract_path: Path,
+    authorization_path: Path,
+    plan_path: Path,
+    leaf_union_path: Path,
+    output_root: Path,
+    aggregate_path: Path,
+    *,
+    plan_sha256: str,
+    leaf_union_sha256: str,
+) -> dict[str, Any]:
+    """Run leaf validation plus checkers under a strict sub-30-minute wall."""
+
+    global _ACTIVE_COORDINATOR_GUARD
+    if _ACTIVE_COORDINATOR_GUARD is not None:
+        raise CoordinatorError("a coordinator wall guard is already active")
+    guard = _CoordinatorWallGuard(
+        aggregate_path=aggregate_path,
+        started=time.monotonic(),
+        wall_seconds=LEAF_FINALIZER_WALL_SECONDS,
+        publication_reserve_seconds=LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS,
+    )
+    _ACTIVE_COORDINATOR_GUARD = guard
+    try:
+        guard.start()
+        try:
+            return _run_stage4a_leaf_finalizer_guarded(
+                contract_path,
+                authorization_path,
+                plan_path,
+                leaf_union_path,
+                output_root,
+                aggregate_path,
+                guard,
+                expected_plan_sha256=plan_sha256,
+                expected_leaf_union_sha256=leaf_union_sha256,
+            )
+        except _CoordinatorWallExceeded as exc:
+            aggregate = guard.publish_fail_closed()
+            if aggregate is None:
+                raise CoordinatorError(
+                    "leaf finalizer wall elapsed before canonical hashes were bound"
+                ) from exc
+            return aggregate
+    finally:
+        _ACTIVE_COORDINATOR_GUARD = None
+        guard.close()
+
+
 def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Path]:
     """Apply the same no-forever wall to the non-executing preparation mode."""
 
@@ -4520,15 +7354,172 @@ def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Pat
         guard.close()
 
 
+def run_prepare_stage4a_leaf_cycle(
+    contract_path: Path, output_root: Path
+) -> dict[str, Any]:
+    """Prepare the correction-4 catalog/manifests under a sub-30-minute wall."""
+
+    global _ACTIVE_COORDINATOR_GUARD
+    if _ACTIVE_COORDINATOR_GUARD is not None:
+        raise CoordinatorError("a coordinator wall guard is already active")
+    guard = _CoordinatorWallGuard(
+        aggregate_path=(output_root / "stage4a-leaf-prepare-timeout.json").resolve(),
+        started=time.monotonic(),
+        wall_seconds=LEAF_FINALIZER_WALL_SECONDS,
+        publication_reserve_seconds=LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS,
+    )
+    _ACTIVE_COORDINATOR_GUARD = guard
+    try:
+        guard.start()
+        try:
+            return prepare_stage4a_leaf_cycle(contract_path, output_root)
+        except _CoordinatorWallExceeded as exc:
+            raise CoordinatorError(
+                "Stage 4A leaf preparation exceeded its registered wall"
+            ) from exc
+    finally:
+        _ACTIVE_COORDINATOR_GUARD = None
+        guard.close()
+
+
+def assemble_stage4a_leaf_union(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    union_path: Path,
+) -> dict[str, Any]:
+    """Join all 41 post-terminal receipts into one nonclassifying union."""
+
+    contract, contract_raw = validate_contract(contract_path)
+    authorization, authorization_raw = strict_json_load(authorization_path)
+    if authorization_raw != canonical_bytes(authorization):
+        raise CoordinatorError("leaf wave authorization is not canonical JSON")
+    authorization = _exact(
+        authorization,
+        {
+            "contract_path",
+            "contract_sha256",
+            "formal_execution_authorized",
+            "implementation_reviews",
+            "leaf_waves",
+            "resource_lock_required",
+            "schema",
+            "user_approval",
+        },
+        "$.leaf_wave_authorization",
+    )
+    if authorization["schema"] != LEAF_WAVE_AUTHORIZATION_SCHEMA:
+        raise CoordinatorError("leaf union assembly requires v3 wave authority")
+    raw_waves = authorization["leaf_waves"]
+    if not isinstance(raw_waves, list) or len(raw_waves) != LEAF_WAVE_COUNT:
+        raise CoordinatorError("leaf union assembly requires exactly 41 waves")
+    receipt_paths: dict[int, Path] = {}
+    for wave_index, raw_wave in enumerate(raw_waves, start=1):
+        wave = _exact(
+            raw_wave,
+            {
+                "execution_paths",
+                "leaf_catalog_sha256",
+                "leaf_wave_manifest_sha256",
+                "leaf_wave_result_path",
+                "ledger_approval",
+                "plan_sha256",
+                "resource_request",
+                "wave_index",
+            },
+            f"$.leaf_wave_authorization.leaf_waves[{wave_index - 1}]",
+        )
+        execution = _exact(
+            wave["execution_paths"],
+            {
+                "aggregate_path",
+                "approval_snapshot_path",
+                "output_root",
+                "python_executable",
+            },
+            f"$.leaf_wave_authorization.leaf_waves[{wave_index - 1}].execution_paths",
+        )
+        if wave["wave_index"] != wave_index:
+            raise CoordinatorError("leaf union assembly wave order differs")
+        receipt_paths[wave_index] = Path(str(execution["aggregate_path"])).resolve()
+    cycle = _validate_stage4a_leaf_cycle(
+        contract=contract,
+        contract_path=contract_path,
+        output_root=output_root,
+        wave_index=1,
+    )
+    union = build_stage4a_leaf_union(
+        cycle["catalog"],
+        receipt_paths,
+        candidate_archive_path=cycle["archive"],
+        contract=contract,
+        contract_path=contract_path,
+        contract_raw=contract_raw,
+        authorization_path=authorization_path,
+        authorization_raw=authorization_raw,
+        output_root=output_root,
+    )
+    union_path = _contained_leaf_output(
+        union_path, output_root, "leaf union output"
+    )
+    _write_exclusive(union_path, canonical_bytes(union))
+    return union
+
+
+def run_assemble_stage4a_leaf_union(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    union_path: Path,
+) -> dict[str, Any]:
+    """Bound union assembly to the same sub-30-minute safety envelope."""
+
+    global _ACTIVE_COORDINATOR_GUARD
+    if _ACTIVE_COORDINATOR_GUARD is not None:
+        raise CoordinatorError("a coordinator wall guard is already active")
+    guard = _CoordinatorWallGuard(
+        aggregate_path=union_path,
+        started=time.monotonic(),
+        wall_seconds=LEAF_FINALIZER_WALL_SECONDS,
+        publication_reserve_seconds=LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS,
+    )
+    _ACTIVE_COORDINATOR_GUARD = guard
+    try:
+        guard.start()
+        try:
+            return assemble_stage4a_leaf_union(
+                contract_path, authorization_path, output_root, union_path
+            )
+        except _CoordinatorWallExceeded as exc:
+            raise CoordinatorError(
+                "Stage 4A leaf union assembly exceeded its registered wall"
+            ) from exc
+    finally:
+        _ACTIVE_COORDINATOR_GUARD = None
+        guard.close()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--prepare-only", action="store_true")
+    mode.add_argument("--prepare-leaf-cycle", action="store_true")
+    mode.add_argument("--assemble-leaf-union", action="store_true")
     mode.add_argument("--run-stage4a", action="store_true")
+    mode.add_argument("--run-leaf-wave", action="store_true")
+    mode.add_argument("--finalize-leaf-union", action="store_true")
     parser.add_argument("--contract", type=Path, required=True)
     parser.add_argument("--authorization", type=Path)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--aggregate", type=Path)
+    parser.add_argument("--plan", type=Path)
+    parser.add_argument("--leaf-union", type=Path)
+    parser.add_argument("--plan-sha256")
+    parser.add_argument("--leaf-union-sha256")
+    parser.add_argument("--leaf-wave-index", type=int)
+    parser.add_argument("--leaf-catalog-sha256")
+    parser.add_argument("--leaf-wave-manifest-sha256")
+    parser.add_argument("--leaf-wave-result", type=Path)
     return parser
 
 
@@ -4537,19 +7528,138 @@ def main(argv: Sequence[str] | None = None) -> int:
     contract = args.contract.resolve()
     output_root = args.output_root.resolve()
     if args.prepare_only:
-        if args.authorization is not None or args.aggregate is not None:
+        if (
+            args.authorization is not None
+            or args.aggregate is not None
+            or args.plan is not None
+            or args.leaf_union is not None
+            or args.plan_sha256 is not None
+            or args.leaf_union_sha256 is not None
+            or args.leaf_wave_index is not None
+            or args.leaf_catalog_sha256 is not None
+            or args.leaf_wave_manifest_sha256 is not None
+            or args.leaf_wave_result is not None
+        ):
             raise CoordinatorError("prepare-only does not accept execution outputs")
         run_prepare_stage4a(contract, output_root)
         return 0
+    if args.prepare_leaf_cycle:
+        if any(
+            value is not None
+            for value in (
+                args.authorization,
+                args.aggregate,
+                args.plan,
+                args.leaf_union,
+                args.plan_sha256,
+                args.leaf_union_sha256,
+                args.leaf_wave_index,
+                args.leaf_catalog_sha256,
+                args.leaf_wave_manifest_sha256,
+                args.leaf_wave_result,
+            )
+        ):
+            raise CoordinatorError("leaf preparation does not accept execution outputs")
+        run_prepare_stage4a_leaf_cycle(contract, output_root)
+        return 0
     if args.authorization is None or args.aggregate is None:
         raise CoordinatorError("formal execution requires authorization and aggregate")
-    aggregate = run_stage4a(
-        contract,
-        args.authorization.resolve(),
-        output_root,
-        args.aggregate.resolve(),
-    )
-    return 0 if aggregate["terminal"] in {PASS, NO_GO} else 2
+    if args.assemble_leaf_union:
+        if any(
+            value is not None
+            for value in (
+                args.plan,
+                args.leaf_union,
+                args.plan_sha256,
+                args.leaf_union_sha256,
+                args.leaf_wave_index,
+                args.leaf_catalog_sha256,
+                args.leaf_wave_manifest_sha256,
+                args.leaf_wave_result,
+            )
+        ):
+            raise CoordinatorError("leaf union assembly does not accept leaf overrides")
+        run_assemble_stage4a_leaf_union(
+            contract,
+            args.authorization.resolve(),
+            output_root,
+            args.aggregate.resolve(),
+        )
+        return 0
+    if args.finalize_leaf_union:
+        if (
+            args.plan is None
+            or args.leaf_union is None
+            or args.plan_sha256 is None
+            or args.leaf_union_sha256 is None
+            or any(
+                value is not None
+                for value in (
+                    args.leaf_wave_index,
+                    args.leaf_catalog_sha256,
+                    args.leaf_wave_manifest_sha256,
+                    args.leaf_wave_result,
+                )
+            )
+        ):
+            raise CoordinatorError(
+                "leaf finalization requires exact plan and union paths/hashes"
+            )
+        aggregate = run_stage4a_leaf_finalizer(
+            contract,
+            args.authorization.resolve(),
+            args.plan.resolve(),
+            args.leaf_union.resolve(),
+            output_root,
+            args.aggregate.resolve(),
+            plan_sha256=args.plan_sha256,
+            leaf_union_sha256=args.leaf_union_sha256,
+        )
+    elif args.run_leaf_wave:
+        if (
+            args.leaf_wave_index is None
+            or args.plan_sha256 is None
+            or args.leaf_catalog_sha256 is None
+            or args.leaf_wave_manifest_sha256 is None
+            or args.leaf_wave_result is None
+            or args.plan is not None
+            or args.leaf_union is not None
+            or args.leaf_union_sha256 is not None
+        ):
+            raise CoordinatorError("leaf wave execution inputs are incomplete")
+        aggregate = run_stage4a_leaf_wave(
+            contract,
+            args.authorization.resolve(),
+            output_root,
+            args.aggregate.resolve(),
+            args.leaf_wave_result.resolve(),
+            wave_index=args.leaf_wave_index,
+            plan_sha256=args.plan_sha256,
+            leaf_catalog_sha256=args.leaf_catalog_sha256,
+            leaf_wave_manifest_sha256=args.leaf_wave_manifest_sha256,
+        )
+    else:
+        if any(
+            value is not None
+            for value in (
+                args.plan,
+                args.leaf_union,
+                args.plan_sha256,
+                args.leaf_union_sha256,
+                args.leaf_wave_index,
+                args.leaf_catalog_sha256,
+                args.leaf_wave_manifest_sha256,
+                args.leaf_wave_result,
+            )
+        ):
+            raise CoordinatorError("legacy formal execution does not accept leaf inputs")
+        aggregate = run_stage4a(
+            contract,
+            args.authorization.resolve(),
+            output_root,
+            args.aggregate.resolve(),
+        )
+    return 0 if aggregate["terminal"] in {PASS, NO_GO, "COMPLETED"} else 2
 
 
 if __name__ == "__main__":

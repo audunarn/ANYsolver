@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import io
 import json
+import os
 from pathlib import Path
+import stat
 import sys
 import tarfile
 
@@ -17,6 +19,25 @@ if str(REFERENCE_CASES) not in sys.path:
 
 import e4_pl_s3_v2_flat_funnel as funnel
 import e4_pl_s3_v2_flat_funnel_producer as producer
+
+
+def _leaf_authority(
+    *,
+    archive_sha256: str = "A" * 64,
+    candidate_commit: str = "1" * 40,
+    candidate_tree: str = "2" * 40,
+    producer_program_sha256: str | None = None,
+) -> dict[str, str]:
+    return {
+        "candidate_archive_sha256": archive_sha256,
+        "candidate_commit": candidate_commit,
+        "candidate_tree": candidate_tree,
+        "producer_program_sha256": (
+            funnel.sha256(Path(producer.__file__).read_bytes())
+            if producer_program_sha256 is None
+            else producer_program_sha256
+        ),
+    }
 
 
 def _plan(tmp_path: Path) -> tuple[Path, dict[str, object]]:
@@ -150,6 +171,350 @@ def test_assignment_is_exact_phase4a_diagonal_shard(tmp_path: Path) -> None:
     assert digest == funnel.sha256(plan_path.read_bytes())
     with pytest.raises(funnel.FlatFunnelError, match="only the exact"):
         producer.load_assignment(plan_path, shard_index=1, selector="e4-pl-s3")
+
+
+def test_leaf_catalog_is_exact_content_addressed_81_plus_72(
+    tmp_path: Path,
+) -> None:
+    plan_path, plan = _plan(tmp_path)
+    plan_digest = funnel.sha256(plan_path.read_bytes())
+    authority = _leaf_authority()
+    catalog = producer.build_leaf_catalog(plan, plan_digest, **authority)
+    repeated = producer.build_leaf_catalog(plan, plan_digest, **authority)
+
+    assert catalog == repeated
+    assert len(catalog) == 81
+    assert len({item["leaf_id"] for item in catalog}) == 81
+    assert len({item["leaf_assignment_sha256"] for item in catalog}) == 81
+    assert len({item["assignment"]["record_id"] for item in catalog}) == 81
+    assert sum(
+        item["assignment"]["v1_diagnostic_expected"] for item in catalog
+    ) == 72
+    assert [item["assignment"]["catalog_index"] for item in catalog] == list(
+        range(81)
+    )
+    assert catalog[0]["assignment"]["record_id"] == "N20:0PCT:none:slash"
+    assert catalog[-1]["assignment"]["record_id"] == (
+        "N80:25PCT:chain:alternating"
+    )
+    for item in catalog:
+        assert {
+            key: item["assignment"][key]
+            for key in producer.LEAF_CANDIDATE_AUTHORITY_KEYS
+        } == authority
+        digest = funnel.sha256(funnel.canonical_bytes(item["assignment"]))
+        assert item["leaf_assignment_sha256"] == digest
+        assert item["leaf_id"] == f"S3_V2_FLAT_4A_LEAF_{digest}"
+
+    successor_authority = {
+        **authority,
+        "candidate_commit": "3" * 40,
+    }
+    successor = producer.build_leaf_catalog(
+        plan, plan_digest, **successor_authority
+    )
+    assert {
+        item["leaf_assignment_sha256"] for item in catalog
+    }.isdisjoint(item["leaf_assignment_sha256"] for item in successor)
+
+    with pytest.raises(funnel.FlatFunnelError, match="lowercase 40-hex"):
+        producer.build_leaf_catalog(
+            plan,
+            plan_digest,
+            **{**authority, "candidate_commit": "A" * 40},
+        )
+
+    made_plan, shard, member, leaf, made_digest = producer.load_leaf_assignment(
+        plan_path,
+        leaf_assignment_sha256=catalog[28]["leaf_assignment_sha256"],
+        selector=producer.SELECTOR,
+        **authority,
+    )
+    assert made_plan == plan
+    assert shard["diagonal"] == "backslash"
+    assert member["record_id"] == leaf["assignment"]["record_id"]
+    assert made_digest == plan_digest
+
+    with pytest.raises(funnel.FlatFunnelError, match="uppercase SHA-256"):
+        producer.load_leaf_assignment(
+            plan_path,
+            leaf_assignment_sha256=catalog[0]["leaf_assignment_sha256"].lower(),
+            selector=producer.SELECTOR,
+            **authority,
+        )
+    with pytest.raises(funnel.FlatFunnelError, match="absent or duplicated"):
+        producer.load_leaf_assignment(
+            plan_path,
+            leaf_assignment_sha256="A" * 64,
+            selector=producer.SELECTOR,
+            **authority,
+        )
+    with pytest.raises(funnel.FlatFunnelError, match="only the exact"):
+        producer.load_leaf_assignment(
+            plan_path,
+            leaf_assignment_sha256=catalog[0]["leaf_assignment_sha256"],
+            selector="e4-pl-s3",
+            **authority,
+        )
+
+
+def test_single_record_leaves_preserve_v2_first_and_optional_v1(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan_path, plan = _plan(tmp_path)
+    catalog = producer.build_leaf_catalog(
+        plan,
+        funnel.sha256(plan_path.read_bytes()),
+        **_leaf_authority(archive_sha256="B" * 64),
+    )
+    baseline = next(
+        item
+        for item in catalog
+        if not item["assignment"]["v1_diagnostic_expected"]
+    )
+    mixed = next(
+        item for item in catalog if item["assignment"]["v1_diagnostic_expected"]
+    )
+    calls: list[tuple[str, str]] = []
+    events: list[str] = []
+
+    def fake_case(member: dict[str, object], *, s3_selector: str) -> dict[str, object]:
+        calls.append((str(member["record_id"]), s3_selector))
+        return {
+            "classification": (
+                producer.CLASSIFICATION
+                if s3_selector == producer.SELECTOR
+                else "NONCLASSIFYING_V1_COMPARATOR_ONLY"
+            ),
+            "record_id": str(member["record_id"]),
+        }
+
+    monkeypatch.setattr(producer, "produce_case", fake_case)
+    real_append = producer._append_reserved_progress
+
+    def observed_append(descriptor: int, record: dict[str, object]) -> None:
+        events.append(str(record["phase"]))
+        real_append(descriptor, record)
+
+    monkeypatch.setattr(producer, "_append_reserved_progress", observed_append)
+    monkeypatch.setattr(
+        producer,
+        "validate_extracted_candidate_source",
+        lambda _root, _archive, _digest: events.append("ARCHIVE_VALIDATED"),
+    )
+    monkeypatch.setattr(
+        producer,
+        "activate_frozen_candidate_source",
+        lambda _root: events.append("SOURCE_ACTIVATED"),
+    )
+
+    for index, leaf in enumerate((baseline, mixed)):
+        before = len(calls)
+        event_before = len(events)
+        output = tmp_path / f"leaf-{index}.json"
+        progress = tmp_path / f"leaf-{index}.jsonl"
+        document = producer.run_leaf(
+            plan_path,
+            leaf_assignment_sha256=leaf["leaf_assignment_sha256"],
+            selector=producer.SELECTOR,
+            candidate_source_root=tmp_path / "candidate-source",
+            candidate_archive=tmp_path / "candidate-source.tar",
+            **_leaf_authority(archive_sha256="B" * 64),
+            output=output,
+            progress=progress,
+        )
+        payload = document["scientific_payload"]
+        expected_diagnostic = leaf["assignment"]["v1_diagnostic_expected"]
+        assert document["schema"] == producer.LEAF_SCIENTIFIC_SCHEMA
+        assert document["assignment_sha256"] == leaf["leaf_assignment_sha256"]
+        assert document["record_count"] == 1
+        assert document["record_ids"] == [leaf["assignment"]["record_id"]]
+        assert payload["schema"] == producer.LEAF_PAYLOAD_SCHEMA
+        assert payload["leaf_assignment"] == leaf["assignment"]
+        assert (payload["v1_comparator_diagnostic"] is not None) is bool(
+            expected_diagnostic
+        )
+        assert output.read_bytes() == funnel.canonical_bytes(document)
+        assert document["scientific_payload_sha256"] == funnel.sha256(
+            funnel.canonical_bytes(payload)
+        )
+        rows = [json.loads(line) for line in progress.read_text().splitlines()]
+        assert [row["phase"] for row in rows] == [
+            "INITIALIZATION",
+            "AUTHORITY_COMPLETE",
+            "CASE_OR_REFINEMENT_OR_STATION",
+            "STAGING",
+            "VALIDATION",
+            "COMPLETION",
+        ]
+        assert rows[-1]["completed"] == rows[-1]["total"] == 1
+        assert events[event_before:] == [
+            "INITIALIZATION",
+            "ARCHIVE_VALIDATED",
+            "SOURCE_ACTIVATED",
+            "AUTHORITY_COMPLETE",
+            "CASE_OR_REFINEMENT_OR_STATION",
+            "STAGING",
+            "VALIDATION",
+            "COMPLETION",
+        ]
+        selectors = [selector for _record_id, selector in calls[before:]]
+        assert selectors == (
+            [producer.SELECTOR, "e4-pl-s3"]
+            if expected_diagnostic
+            else [producer.SELECTOR]
+        )
+
+
+def test_leaf_v2_failure_never_launches_v1_or_publishes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan_path, plan = _plan(tmp_path)
+    mixed = next(
+        item
+        for item in producer.build_leaf_catalog(
+            plan,
+            funnel.sha256(plan_path.read_bytes()),
+            **_leaf_authority(archive_sha256="C" * 64),
+        )
+        if item["assignment"]["v1_diagnostic_expected"]
+    )
+    selectors: list[str] = []
+
+    def fail_v2(_member: object, *, s3_selector: str) -> object:
+        selectors.append(s3_selector)
+        raise RuntimeError("synthetic leaf V2 contradiction")
+
+    monkeypatch.setattr(producer, "produce_case", fail_v2)
+    monkeypatch.setattr(
+        producer,
+        "validate_extracted_candidate_source",
+        lambda _root, _archive, _digest: None,
+    )
+    monkeypatch.setattr(
+        producer, "activate_frozen_candidate_source", lambda _root: None
+    )
+    output = tmp_path / "must-not-exist-leaf.json"
+    with pytest.raises(RuntimeError, match="synthetic leaf V2"):
+        producer.run_leaf(
+            plan_path,
+            leaf_assignment_sha256=mixed["leaf_assignment_sha256"],
+            selector=producer.SELECTOR,
+            candidate_source_root=tmp_path / "candidate-source",
+            candidate_archive=tmp_path / "candidate-source.tar",
+            **_leaf_authority(archive_sha256="C" * 64),
+            output=output,
+            progress=tmp_path / "failed-leaf-progress.jsonl",
+        )
+    assert selectors == [producer.SELECTOR]
+    assert not output.exists()
+
+
+def test_leaf_rejects_wrong_program_identity_before_scientific_work(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan_path, plan = _plan(tmp_path)
+    authority = _leaf_authority(archive_sha256="D" * 64)
+    leaf = producer.build_leaf_catalog(
+        plan, funnel.sha256(plan_path.read_bytes()), **authority
+    )[0]
+    launched: list[str] = []
+    monkeypatch.setattr(
+        producer,
+        "produce_case",
+        lambda *_args, **_kwargs: launched.append("CASE"),
+    )
+    progress = tmp_path / "wrong-program-progress.jsonl"
+    with pytest.raises(funnel.FlatFunnelError, match="program hash differs"):
+        producer.run_leaf(
+            plan_path,
+            leaf_assignment_sha256=leaf["leaf_assignment_sha256"],
+            selector=producer.SELECTOR,
+            candidate_source_root=tmp_path / "candidate-source",
+            candidate_archive=tmp_path / "candidate-source.tar",
+            **{**authority, "producer_program_sha256": "F" * 64},
+            output=tmp_path / "wrong-program.json",
+            progress=progress,
+        )
+    assert launched == []
+    assert not progress.exists()
+
+
+def test_leaf_authority_completes_only_after_archive_activation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan_path, plan = _plan(tmp_path)
+    authority = _leaf_authority(archive_sha256="E" * 64)
+    leaf = producer.build_leaf_catalog(
+        plan, funnel.sha256(plan_path.read_bytes()), **authority
+    )[0]
+    reached: list[str] = []
+
+    def reject_archive(*_args: object) -> None:
+        reached.append("ARCHIVE_REJECTED")
+        raise funnel.FlatFunnelError("synthetic archive rejection")
+
+    monkeypatch.setattr(
+        producer, "validate_extracted_candidate_source", reject_archive
+    )
+    monkeypatch.setattr(
+        producer,
+        "activate_frozen_candidate_source",
+        lambda _root: reached.append("SOURCE_ACTIVATED"),
+    )
+    monkeypatch.setattr(
+        producer,
+        "produce_case",
+        lambda *_args, **_kwargs: reached.append("CASE"),
+    )
+    output = tmp_path / "rejected-archive.json"
+    progress = tmp_path / "rejected-archive.jsonl"
+    with pytest.raises(funnel.FlatFunnelError, match="synthetic archive"):
+        producer.run_leaf(
+            plan_path,
+            leaf_assignment_sha256=leaf["leaf_assignment_sha256"],
+            selector=producer.SELECTOR,
+            candidate_source_root=tmp_path / "candidate-source",
+            candidate_archive=tmp_path / "candidate-source.tar",
+            **authority,
+            output=output,
+            progress=progress,
+        )
+    rows = [json.loads(line) for line in progress.read_text().splitlines()]
+    assert [row["phase"] for row in rows] == ["INITIALIZATION"]
+    assert reached == ["ARCHIVE_REJECTED"]
+    assert not output.exists()
+
+
+def test_leaf_progress_is_reserved_as_exclusive_regular_file(
+    tmp_path: Path,
+) -> None:
+    progress = tmp_path / "progress.jsonl"
+    descriptor = producer._reserve_progress_exclusive(progress)
+    try:
+        information = os.fstat(descriptor)
+        assert stat.S_ISREG(information.st_mode)
+        assert not (
+            getattr(information, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        )
+    finally:
+        os.close(descriptor)
+    assert progress.read_bytes() == b""
+    with pytest.raises(funnel.FlatFunnelError, match="overwrite progress"):
+        producer._reserve_progress_exclusive(progress)
+
+    dangling = tmp_path / "dangling-progress.jsonl"
+    try:
+        dangling.symlink_to(tmp_path / "absent-target.jsonl")
+    except OSError:
+        return
+    with pytest.raises(funnel.FlatFunnelError, match="overwrite progress"):
+        producer._reserve_progress_exclusive(dangling)
 
 
 def test_mindlin_nodal_input_is_deterministic_and_satisfies_hard_trace() -> None:
@@ -336,7 +701,7 @@ def test_v2_failure_never_launches_v1_or_publishes_canonical_output(
     assert not output.exists()
 
 
-def test_cli_requires_the_exact_shard_interface() -> None:
+def test_cli_requires_exact_shard_or_leaf_interface() -> None:
     parser = producer._parser()
     arguments = parser.parse_args(
         [
@@ -363,6 +728,60 @@ def test_cli_requires_the_exact_shard_interface() -> None:
     assert arguments.candidate_source_root == Path("candidate-source")
     assert arguments.candidate_archive == Path("candidate-source.tar")
     assert arguments.candidate_archive_sha256 == "C" * 64
+    leaf_arguments = parser.parse_args(
+        [
+            "--run-flat-leaf",
+            "plan.json",
+            "--leaf-assignment-sha256",
+            "D" * 64,
+            "--selector",
+            producer.SELECTOR,
+            "--candidate-source-root",
+            "candidate-source",
+            "--candidate-archive",
+            "candidate-source.tar",
+            "--candidate-archive-sha256",
+            "E" * 64,
+            "--candidate-commit",
+            "1" * 40,
+            "--candidate-tree",
+            "2" * 40,
+            "--producer-program-sha256",
+            "F" * 64,
+            "--output",
+            "leaf.json",
+            "--progress",
+            "leaf.jsonl",
+        ]
+    )
+    assert leaf_arguments.run_flat_leaf == Path("plan.json")
+    assert leaf_arguments.shard_index is None
+    assert leaf_arguments.leaf_assignment_sha256 == "D" * 64
+    assert leaf_arguments.candidate_commit == "1" * 40
+    assert leaf_arguments.candidate_tree == "2" * 40
+    assert leaf_arguments.producer_program_sha256 == "F" * 64
+
+    with pytest.raises(funnel.FlatFunnelError, match="complete authority"):
+        producer.main(
+            [
+                "--run-flat-leaf",
+                "plan.json",
+                "--leaf-assignment-sha256",
+                "D" * 64,
+                "--selector",
+                producer.SELECTOR,
+                "--candidate-source-root",
+                "candidate-source",
+                "--candidate-archive",
+                "candidate-source.tar",
+                "--candidate-archive-sha256",
+                "E" * 64,
+                "--output",
+                "leaf.json",
+                "--progress",
+                "leaf.jsonl",
+            ]
+        )
 
 
 def test_candidate_archive_must_exactly_match_extracted_source(

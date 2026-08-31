@@ -55,7 +55,7 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v5"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -103,6 +103,7 @@ def test_stage4a_authority_preserves_defaults_and_mechanics_boundaries(authority
     assert "src/anysolver/e4_pl_element.py" not in extent["implementation_paths"]
     assert "src/anysolver/e4_pl_s3_element.py" not in extent["implementation_paths"]
     assert "src/anysolver/boundary.py" not in extent["implementation_paths"]
+    assert "tests/test_e4_pl_s3_v2_component_cache.py" in extent["implementation_paths"]
 
 
 def test_stage4a_authority_correction_preserves_original_and_closes_paths(authority) -> None:
@@ -140,7 +141,7 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "tests/test_e4_pl_s3_v2_bounded_process.py",
         "tests/test_e4_pl_s3_v2_flat_candidate_review.py",
     } <= set(extent["implementation_paths"])
-    assert correction["current_change"] == {
+    assert correction["predecessor_v5_current_change"] == {
         "cases_changed": False,
         "classification": "PROCESS_WALL_AND_CHECKER_TREE_DRAIN_ONLY",
         "consumed_request": {
@@ -157,6 +158,19 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "process_control_changed": True,
         "protocol_changed": False,
         "tolerances_changed": False,
+    }
+    assert correction["current_change"] == {
+        "cases_changed": False,
+        "classification": (
+            "EXACT_COMPONENT_CACHE_AND_CONTENT_ADDRESSED_LEAF_PROCESS_ONLY"
+        ),
+        "defaults_changed": False,
+        "mechanics_changed": False,
+        "process_control_changed": True,
+        "protocol_changed": False,
+        "tolerances_changed": False,
+        "v2_equations_changed": False,
+        "v2_matrices_changed": False,
     }
     assert correction["history"][2] == {
         "bytes": 6458,
@@ -175,6 +189,18 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "sha256": "6F5D2C676D7728EEBC36E12A27678CDE95151E2747E721F10B5DCE80FC2E4C6D",
         "subject": "fix: serialize Stage 4A resource admission",
         "tree": "5666a6d729db322b49a7ce1b242dec7c0f98b960",
+    }
+    assert correction["history"][4] == {
+        "bytes": 8668,
+        "commit": "d085c097c434db396024d06c3f113b540189b75e",
+        "parent": "3ba32964a75dfe077440692535876b3c3a6b076e",
+        "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+        "reason": "MONOLITHIC_SHARDS_EXCEEDED_BOUNDED_WORKER_WALL",
+        "sha256": (
+            "D145B76F394EC4733FB2EE2A5DD0844C49F9ED711918F53F539D81394A2F64AA"
+        ),
+        "subject": "fix: enforce Stage 4A hard process bounds",
+        "tree": "d9208ec9d98fd9c7ac9f4156ee9dda97a1de86cb",
     }
     assert correction["review_incident"] == {
         "candidate_commit": "0f93779feded35846ce7a093d27a8a98f5c0fc81",
@@ -219,37 +245,116 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     }
 
 
-def test_stage4a_resource_admission_correction_retains_hard_limits(authority) -> None:
+def test_stage4a_correction4_exact_component_cache_policy(authority) -> None:
+    assert authority["component_cache_policy"] == {
+        "capacity": 512,
+        "closure_owned": True,
+        "deterministic_eviction": (
+            "RETAIN_LEXICOGRAPHICALLY_SMALLEST_EXACT_CONTENT_KEYS"
+        ),
+        "fresh_writable_copies_on_every_return": True,
+        "guard_before_lookup": True,
+        "key": "FULL_VALIDATED_NUMERIC_CONTENT_AND_FROZEN_FORMULATION_IDENTITY",
+        "key_validation": ["DTYPE", "FINITE", "SHAPE", "VALUE"],
+        "lock": "THREADING_RLOCK",
+        "pl_and_numerical_outputs_distinct": True,
+        "v2_equations_or_matrices_changed": False,
+    }
+
+
+def test_stage4a_correction3_consumed_timeout_incident_is_exact(authority) -> None:
+    assert authority["correction"]["correction3_incident"] == {
+        "canonical_aggregate": {
+            "byte_count": 681,
+            "sha256": (
+                "79E58C76EDE5DEEBC84C98014333FBBAEE7DB6A0A4BC978374138EAB4BEB42DB"
+            ),
+        },
+        "classifying_record_count": 0,
+        "completed_partial_records": {
+            "alternating": {"completed": 17, "registered": 27},
+            "backslash": {"completed": 16, "registered": 27},
+            "slash": {"completed": 16, "registered": 27},
+        },
+        "partial_records_classification": "NONCLASSIFYING",
+        "producer_result": {
+            "byte_count": 7476,
+            "sha256": (
+                "23E56EF27DBF81C80EF79F1A888E89FCFF0F64787AF9892E2497ABA6A93BAB8A"
+            ),
+        },
+        "producer_workers": {"count": 3, "terminal_counts": {"TIMEOUT": 3}},
+        "request": {
+            "request_id": "da3f0b058f124d8488dcd8bae341ac22",
+            "request_reuse_forbidden": True,
+        },
+        "scientific_checker_count": 0,
+        "scientific_proof_count": 0,
+        "terminal": "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE",
+        "transcript": {
+            "byte_count": 4526,
+            "sha256": (
+                "9C3214F6554D362CB881C1A5BBFC62156A8EE5B2E4933B34EE05BC71D46F617E"
+            ),
+        },
+    }
+
+
+def test_stage4a_correction4_content_addressed_leaf_bounds(authority) -> None:
     assert authority["execution"] == {
+        "all_launched_process_terminals_bound": True,
+        "candidate_authority_bound_in_every_leaf": True,
+        "canonical_aggregate_requires_complete_leaf_union": True,
         "canonical_aggregate_requires_proven_empty_process_trees": True,
-        "checker_tree_drain_required_before_queue_advance": True,
-        "checker_phase_finalization_reserve_seconds": 60,
-        "checker_phase_required_seconds": 960,
-        "checker_phase_schedule": "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER",
         "checker_replica_wall_seconds": 300,
-        "coordinator_wall_seconds": 1800,
-        "coordinator_fail_closed_publication_reserve_seconds": 15,
-        "coordinator_hard_exit_code": 124,
-        "coordinator_work_deadline_action": "MARK_EXPIRED_ONLY",
-        "git_subprocess_wall_seconds": 60,
-        "hard_coordinator_wall_enforced": True,
-        "inactivity_seconds": 300,
+        "checker_tree_drain_required_before_queue_advance": True,
+        "classifying_leaf_count": 81,
+        "common_leaf_wave_authorization_required": True,
+        "complete_receipt_coverage_required": True,
+        "consumed_request_reuse_forbidden": True,
+        "content_addressed_assignments": True,
+        "finalizer_accepts_complete_receipt_bound_union_only": True,
+        "finalizer_input_hash_revalidated_before_publication": True,
+        "finalizer_wall_seconds": 1740,
+        "incomplete_or_partial_leaf_classification": "NONCLASSIFYING",
+        "leaf_worker_wall_seconds": 900,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
-        "maximum_workers": 3,
-        "memory_admission_headroom_gib": 16,
-        "memory_admission_required_bytes": 68_719_476_736,
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
-        "producer_wall_seconds": 900,
-        "registered_shards": 3,
-        "schedule": "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER",
-        "timeout_aggregate_requires_proven_empty_process_trees": True,
-        "unproven_tree_hard_deadline_action": (
-            "EXIT_WITHOUT_CANONICAL_AGGREGATE"
-        ),
-        "wave_wall_seconds": 1800,
+        "pair_wave_count": 40,
+        "process_tree_termination_proven_required": True,
+        "receipt_binding": [
+            "ATTEMPT",
+            "AUTHORIZATION",
+            "CANDIDATE_ARCHIVE_SHA256",
+            "CANDIDATE_COMMIT",
+            "CANDIDATE_TREE",
+            "CONTRACT",
+            "LEAF_CATALOG_SHA256",
+            "LEAF_MANIFEST",
+            "LEAF_SCIENTIFIC_HASHES",
+            "PLAN_SHA256",
+            "PRODUCER_PROGRAM_SHA256",
+            "REQUEST_COMMAND_SHA256",
+            "REQUEST_ID",
+            "REQUEST_SHA256",
+            "RESULT_SHA256",
+            "TERMINATION_PROVEN",
+            "WORKER_TERMINALS",
+        ],
+        "receipt_required_per_wave": True,
+        "registered_wave_count": 41,
+        "schedule": "40_CONTENT_ADDRESSED_PAIRS_THEN_1_SINGLETON_IN_FROZEN_ORDER",
+        "singleton_wave_count": 1,
+        "wave_wall_seconds": 1740,
     }
+    assert authority["correction"]["predecessor_v5_execution"][
+        "wave_wall_seconds"
+    ] == 1800
+    assert authority["execution"]["leaf_worker_wall_seconds"] < 30 * 60
+    assert authority["execution"]["wave_wall_seconds"] < 30 * 60
+    assert authority["execution"]["finalizer_wall_seconds"] < 30 * 60
 
 
 def test_stage4a_prior_v3_authority_binding_is_exact(authority) -> None:
@@ -304,6 +409,73 @@ def test_stage4a_prior_v4_authority_binding_is_exact(authority) -> None:
     assert len(raw) == prior["bytes"]
     assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
     assert (subject, tree) == (prior["subject"], prior["tree"])
+
+
+def test_stage4a_prior_v5_authority_binding_and_history_are_exact(authority) -> None:
+    prior = authority["correction"]["history"][4]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    parent = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    predecessor = json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=_reject_duplicates,
+        parse_constant=_reject_constant,
+    )
+    assert raw == _canonical(predecessor)
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree, parent) == (
+        prior["subject"],
+        prior["tree"],
+        prior["parent"],
+    )
+    assert predecessor["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v5"
+    assert predecessor["correction"]["history"] == authority["correction"][
+        "history"
+    ][:4]
+    assert predecessor["correction"]["current_change"] == authority["correction"][
+        "predecessor_v5_current_change"
+    ]
+    assert predecessor["execution"] == authority["correction"][
+        "predecessor_v5_execution"
+    ]
+    for unchanged in (
+        "advisory_policy",
+        "candidate",
+        "formal_phase",
+        "formal_protocol",
+        "frozen_inputs",
+        "parent",
+        "production_boundary",
+        "review_correction_requirements",
+        "scope_base",
+        "terminals",
+    ):
+        assert predecessor[unchanged] == authority[unchanged]
 
 
 def test_registered_parent_objects_exist_and_match(authority) -> None:

@@ -1,10 +1,9 @@
 """Stage-4A production-mechanics producer for the flat S3 V2 funnel.
 
 The command validates the frozen 252-record manifest and a canonical Phase-4A
-plan before importing NumPy, SciPy, or ANYsolver.  One invocation owns exactly
-one diagonal shard: 27 classifying Q4/V2A records and, for the 24 mixed rows,
-one separately labelled V1 comparator diagnostic.  A V1 result is never used
-as a fallback for a missing or failed V2A result.
+plan before importing NumPy, SciPy, or ANYsolver.  An invocation owns either
+one historical diagonal shard or one content-addressed record leaf.  A V1
+result is never used as a fallback for a missing or failed V2A result.
 """
 
 from __future__ import annotations
@@ -14,6 +13,7 @@ import importlib.util
 import math
 import os
 from pathlib import Path
+import stat
 import sys
 import tarfile
 import tempfile
@@ -45,6 +45,19 @@ MANIFEST_GENERATOR_PATH = (
 _ACTIVE_CANDIDATE_ROOT: Path | None = None
 
 PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
+LEAF_ASSIGNMENT_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v1"
+)
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v1"
+LEAF_SCIENTIFIC_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v1"
+)
+LEAF_CANDIDATE_AUTHORITY_KEYS = (
+    "candidate_archive_sha256",
+    "candidate_commit",
+    "candidate_tree",
+    "producer_program_sha256",
+)
 LOAD_IDENTITY = "UNIFORM_REFERENCE_NORMAL_DEAD_PRESSURE_1000_PA_V1"
 CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
 V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
@@ -91,6 +104,60 @@ def _publish_exclusive(path: Path, raw: bytes) -> None:
             temporary.unlink()
         except OSError:
             pass
+
+
+def _reserve_progress_exclusive(path: Path) -> int:
+    """Create one regular non-reparse progress file and retain its descriptor."""
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    flags = (
+        os.O_CREAT
+        | os.O_EXCL
+        | os.O_WRONLY
+        | getattr(os, "O_BINARY", 0)
+        | getattr(os, "O_NOINHERIT", 0)
+    )
+    try:
+        descriptor = os.open(path, flags, 0o600)
+    except FileExistsError as exc:
+        raise FlatFunnelError("refusing to overwrite progress output") from exc
+    try:
+        information = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(information.st_mode)
+            or getattr(information, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            raise FlatFunnelError(
+                "progress output is not a regular non-reparse file"
+            )
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _append_reserved_progress(descriptor: int, record: Mapping[str, Any]) -> None:
+    """Append one validated canonical row through the reserved descriptor."""
+
+    expected = progress_record(
+        str(record.get("assignment_id", "")),
+        sequence=record.get("sequence"),  # type: ignore[arg-type]
+        phase=str(record.get("phase", "")),
+        completed=record.get("completed"),  # type: ignore[arg-type]
+        total=record.get("total"),  # type: ignore[arg-type]
+    )
+    if dict(record) != expected:
+        raise FlatFunnelError("progress record has extra or altered fields")
+    raw = canonical_bytes(expected)
+    offset = 0
+    while offset < len(raw):
+        written = os.write(descriptor, raw[offset:])
+        if written <= 0:
+            raise FlatFunnelError("progress output write did not advance")
+        offset += written
+    os.fsync(descriptor)
 
 
 def _load_manifest_generator() -> Any:
@@ -141,6 +208,284 @@ def load_assignment(
     if len(shard["records"]) != 27:
         raise FlatFunnelError("Phase-4A diagonal assignment must contain 27 records")
     return plan, shard, sha256(plan_raw)
+
+
+def _require_sha256(value: str, location: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in "0123456789ABCDEF" for character in value)
+    ):
+        raise FlatFunnelError(f"{location} must be an uppercase SHA-256")
+    return value
+
+
+def _require_git_object(value: str, location: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 40
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise FlatFunnelError(f"{location} must be a lowercase 40-hex Git object")
+    return value
+
+
+def leaf_candidate_authority(
+    *,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> dict[str, str]:
+    """Return the exact candidate/program identity shared by every leaf."""
+
+    return {
+        "candidate_archive_sha256": _require_sha256(
+            candidate_archive_sha256, "leaf candidate archive hash"
+        ),
+        "candidate_commit": _require_git_object(
+            candidate_commit, "leaf candidate commit"
+        ),
+        "candidate_tree": _require_git_object(
+            candidate_tree, "leaf candidate tree"
+        ),
+        "producer_program_sha256": _require_sha256(
+            producer_program_sha256, "leaf producer program hash"
+        ),
+    }
+
+
+def _require_current_producer_program(expected_sha256: str) -> None:
+    expected = _require_sha256(expected_sha256, "leaf producer program hash")
+    path = Path(__file__)
+    try:
+        information = path.lstat()
+    except OSError as exc:
+        raise FlatFunnelError(f"cannot inspect leaf producer program: {exc}") from exc
+    if (
+        not stat.S_ISREG(information.st_mode)
+        or path.is_symlink()
+        or getattr(information, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    ):
+        raise FlatFunnelError("leaf producer program is not a regular non-reparse file")
+    if sha256(path.read_bytes()) != expected:
+        raise FlatFunnelError("leaf producer program hash differs")
+
+
+def leaf_assignment_core(
+    plan_sha256: str,
+    shard: Mapping[str, Any],
+    member: Mapping[str, Any],
+    *,
+    catalog_index: int,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> dict[str, Any]:
+    """Return the immutable input identity for one Phase-4A record leaf."""
+
+    _require_sha256(plan_sha256, "leaf plan hash")
+    if (
+        isinstance(catalog_index, bool)
+        or not isinstance(catalog_index, int)
+        or catalog_index < 0
+    ):
+        raise FlatFunnelError("leaf catalog index must be a nonnegative integer")
+    try:
+        assignment_id = str(shard["assignment_id"])
+        assignment_sha256 = _require_sha256(
+            str(shard["assignment_sha256"]), "parent assignment hash"
+        )
+        diagonal = str(shard["diagonal"])
+        manifest_index = int(member["manifest_index"])
+        record_id = str(member["record_id"])
+        record = member["record"]
+        member_raw = canonical_bytes(dict(member))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise FlatFunnelError("leaf parent assignment or member is malformed") from exc
+    if (
+        not assignment_id
+        or not record_id
+        or not isinstance(record, Mapping)
+        or str(record.get("diagonal")) != diagonal
+    ):
+        raise FlatFunnelError("leaf parent assignment identity differs")
+    s3_element_count = record.get("s3_element_count")
+    if (
+        isinstance(s3_element_count, bool)
+        or not isinstance(s3_element_count, int)
+        or s3_element_count < 0
+    ):
+        raise FlatFunnelError("leaf S3 element count is malformed")
+    diagnostic_expected = s3_element_count > 0
+    candidate_authority = leaf_candidate_authority(
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    return {
+        "catalog_index": catalog_index,
+        **candidate_authority,
+        "diagonal": diagonal,
+        "manifest_index": manifest_index,
+        "parent_assignment_id": assignment_id,
+        "parent_assignment_sha256": assignment_sha256,
+        "phase": "4A",
+        "plan_sha256": plan_sha256,
+        "record_id": record_id,
+        "record_member_sha256": sha256(member_raw),
+        "schema": LEAF_ASSIGNMENT_SCHEMA,
+        "selector": SELECTOR,
+        "v1_diagnostic_expected": diagnostic_expected,
+    }
+
+
+def build_leaf_catalog(
+    plan: Mapping[str, Any],
+    plan_sha256: str,
+    *,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> list[dict[str, Any]]:
+    """Derive the exact ordered 81-leaf content-addressed catalog."""
+
+    _require_sha256(plan_sha256, "leaf catalog plan hash")
+    if (
+        plan.get("phase") != "4A"
+        or plan.get("scope") != "full"
+        or plan.get("selector") != SELECTOR
+        or plan.get("record_count") != 81
+    ):
+        raise FlatFunnelError("leaf catalog requires the exact full Phase-4A plan")
+    shards = plan.get("shards")
+    if not isinstance(shards, list) or len(shards) != 3:
+        raise FlatFunnelError("leaf catalog requires three diagonal assignments")
+    made: list[dict[str, Any]] = []
+    seen_records: set[str] = set()
+    seen_hashes: set[str] = set()
+    for shard in shards:
+        if not isinstance(shard, Mapping):
+            raise FlatFunnelError("leaf catalog shard is malformed")
+        members = shard.get("records")
+        if not isinstance(members, list) or len(members) != 27:
+            raise FlatFunnelError("leaf catalog shard coverage differs")
+        for member in members:
+            if not isinstance(member, Mapping):
+                raise FlatFunnelError("leaf catalog member is malformed")
+            core = leaf_assignment_core(
+                plan_sha256,
+                shard,
+                member,
+                catalog_index=len(made),
+                candidate_commit=candidate_commit,
+                candidate_tree=candidate_tree,
+                candidate_archive_sha256=candidate_archive_sha256,
+                producer_program_sha256=producer_program_sha256,
+            )
+            digest = sha256(canonical_bytes(core))
+            record_id = str(core["record_id"])
+            if record_id in seen_records or digest in seen_hashes:
+                raise FlatFunnelError("leaf catalog contains a duplicate record or hash")
+            seen_records.add(record_id)
+            seen_hashes.add(digest)
+            made.append(
+                {
+                    "assignment": core,
+                    "leaf_assignment_sha256": digest,
+                    "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
+                }
+            )
+    if (
+        len(made) != 81
+        or len(seen_records) != 81
+        or sum(
+            bool(item["assignment"]["v1_diagnostic_expected"])
+            for item in made
+        )
+        != 72
+    ):
+        raise FlatFunnelError(
+            "leaf catalog coverage must be 81 classifying plus 72 diagnostics"
+        )
+    return made
+
+
+def load_leaf_assignment(
+    plan_path: Path,
+    *,
+    leaf_assignment_sha256: str,
+    selector: str,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> tuple[
+    Mapping[str, Any],
+    Mapping[str, Any],
+    Mapping[str, Any],
+    Mapping[str, Any],
+    str,
+]:
+    """Validate and resolve exactly one content-addressed Phase-4A leaf."""
+
+    requested = _require_sha256(
+        leaf_assignment_sha256, "leaf assignment hash"
+    )
+    manifest_value, manifest_raw = strict_json_load(MANIFEST_PATH)
+    records = validate_manifest(manifest_value, manifest_raw)
+    plan_value, plan_raw = strict_json_load(Path(plan_path))
+    plan = validate_phase_plan(plan_value, plan_raw, records, "4A")
+    plan_digest = sha256(plan_raw)
+    if (
+        selector != SELECTOR
+        or plan["selector"] != SELECTOR
+        or plan["phase"] != "4A"
+        or plan["scope"] != "full"
+        or plan["record_count"] != 81
+    ):
+        raise FlatFunnelError("producer accepts only the exact Phase-4A V2A plan")
+    catalog = build_leaf_catalog(
+        plan,
+        plan_digest,
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    matching = [
+        leaf for leaf in catalog if leaf["leaf_assignment_sha256"] == requested
+    ]
+    if len(matching) != 1:
+        raise FlatFunnelError("leaf assignment hash is absent or duplicated")
+    leaf = matching[0]
+    assignment = leaf["assignment"]
+    matching_shards = [
+        shard
+        for shard in plan["shards"]
+        if shard["assignment_id"] == assignment["parent_assignment_id"]
+    ]
+    if len(matching_shards) != 1:
+        raise FlatFunnelError("leaf parent assignment is absent or duplicated")
+    shard = matching_shards[0]
+    matching_members = [
+        member
+        for member in shard["records"]
+        if member["record_id"] == assignment["record_id"]
+    ]
+    if len(matching_members) != 1:
+        raise FlatFunnelError("leaf record is absent or duplicated")
+    member = matching_members[0]
+    if (
+        sha256(canonical_bytes(dict(member)))
+        != assignment["record_member_sha256"]
+    ):
+        raise FlatFunnelError("leaf record member hash differs")
+    return plan, shard, member, leaf, plan_digest
 
 
 def activate_frozen_candidate_source(candidate_source_root: Path) -> None:
@@ -815,14 +1160,179 @@ def run_assignment(
     return document
 
 
+def run_leaf(
+    plan_path: Path,
+    *,
+    leaf_assignment_sha256: str,
+    selector: str,
+    candidate_source_root: Path,
+    candidate_archive: Path,
+    candidate_archive_sha256: str,
+    candidate_commit: str,
+    candidate_tree: str,
+    producer_program_sha256: str,
+    output: Path,
+    progress: Path,
+) -> dict[str, Any]:
+    """Run one content-addressed record leaf and publish it exclusively."""
+
+    _require_current_producer_program(producer_program_sha256)
+    candidate_authority = leaf_candidate_authority(
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    _plan, _shard, member, leaf, plan_digest = load_leaf_assignment(
+        plan_path,
+        leaf_assignment_sha256=leaf_assignment_sha256,
+        selector=selector,
+        **candidate_authority,
+    )
+    output = Path(output)
+    progress = Path(progress)
+    if output.resolve() == progress.resolve():
+        raise FlatFunnelError("scientific and progress outputs must be distinct")
+    if os.path.lexists(output):
+        raise FlatFunnelError("scientific output must be exclusive")
+    leaf_id = str(leaf["leaf_id"])
+    assignment = leaf["assignment"]
+    embedded_authority = {
+        key: assignment[key] for key in LEAF_CANDIDATE_AUTHORITY_KEYS
+    }
+    if embedded_authority != candidate_authority:
+        raise FlatFunnelError("leaf assignment candidate authority differs")
+    progress_descriptor = _reserve_progress_exclusive(progress)
+    try:
+        sequence = 0
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="INITIALIZATION",
+                completed=0,
+                total=1,
+            ),
+        )
+        validate_extracted_candidate_source(
+            candidate_source_root,
+            candidate_archive,
+            candidate_archive_sha256,
+        )
+        activate_frozen_candidate_source(candidate_source_root)
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="AUTHORITY_COMPLETE",
+                completed=0,
+                total=1,
+            ),
+        )
+
+        # Preserve the registered scientific order: V2A is always evaluated
+        # first, and a V1 diagnostic is never substituted if it fails.
+        classifying = produce_case(member, s3_selector=SELECTOR)
+        diagnostic = None
+        if assignment["v1_diagnostic_expected"]:
+            diagnostic = produce_case(member, s3_selector="e4-pl-s3")
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="CASE_OR_REFINEMENT_OR_STATION",
+                completed=1,
+                total=1,
+            ),
+        )
+        scientific_payload = {
+            "classifying_record": classifying,
+            "leaf_assignment": assignment,
+            "phase": "4A",
+            "protocol": {
+                "classification": CLASSIFICATION,
+                "energy_norm_id": ENERGY_NORM_IDENTITY,
+                "load_id": LOAD_IDENTITY,
+                "reference_id": REFERENCE_IDENTITY,
+                "support_id": SUPPORT_IDENTITY,
+            },
+            "schema": LEAF_PAYLOAD_SCHEMA,
+            "v1_comparator_diagnostic": diagnostic,
+            "v1_comparator_disposition": V1_DISPOSITION,
+        }
+        record_ids = [str(member["record_id"])]
+        document = {
+            "assignment_sha256": str(leaf["leaf_assignment_sha256"]),
+            "plan_sha256": plan_digest,
+            "record_count": 1,
+            "record_ids": record_ids,
+            "record_ids_sha256": sha256(canonical_bytes(record_ids)),
+            "schema": LEAF_SCIENTIFIC_SCHEMA,
+            "scientific_payload": scientific_payload,
+            "scientific_payload_sha256": sha256(
+                canonical_bytes(scientific_payload)
+            ),
+            "selector": SELECTOR,
+            "terminal": "ACCEPTED_FOR_AGGREGATION",
+        }
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="STAGING",
+                completed=1,
+                total=1,
+            ),
+        )
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="VALIDATION",
+                completed=1,
+                total=1,
+            ),
+        )
+        _publish_exclusive(output, canonical_bytes(document))
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="COMPLETION",
+                completed=1,
+                total=1,
+            ),
+        )
+        return document
+    finally:
+        os.close(progress_descriptor)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-flat-assignment", type=Path, required=True)
-    parser.add_argument("--shard-index", type=int, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--run-flat-assignment", type=Path)
+    mode.add_argument("--run-flat-leaf", type=Path)
+    parser.add_argument("--shard-index", type=int)
+    parser.add_argument("--leaf-assignment-sha256")
     parser.add_argument("--selector", required=True)
     parser.add_argument("--candidate-source-root", type=Path, required=True)
     parser.add_argument("--candidate-archive", type=Path, required=True)
     parser.add_argument("--candidate-archive-sha256", required=True)
+    parser.add_argument("--candidate-commit")
+    parser.add_argument("--candidate-tree")
+    parser.add_argument("--producer-program-sha256")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--progress", type=Path, required=True)
     return parser
@@ -830,16 +1340,51 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
-    run_assignment(
-        arguments.run_flat_assignment,
-        shard_index=arguments.shard_index,
-        selector=arguments.selector,
-        candidate_source_root=arguments.candidate_source_root,
-        candidate_archive=arguments.candidate_archive,
-        candidate_archive_sha256=arguments.candidate_archive_sha256,
-        output=arguments.output,
-        progress=arguments.progress,
-    )
+    if arguments.run_flat_assignment is not None:
+        if (
+            arguments.shard_index is None
+            or arguments.leaf_assignment_sha256 is not None
+            or arguments.candidate_commit is not None
+            or arguments.candidate_tree is not None
+            or arguments.producer_program_sha256 is not None
+        ):
+            raise FlatFunnelError(
+                "diagonal execution requires shard-index and forbids leaf authority"
+            )
+        run_assignment(
+            arguments.run_flat_assignment,
+            shard_index=arguments.shard_index,
+            selector=arguments.selector,
+            candidate_source_root=arguments.candidate_source_root,
+            candidate_archive=arguments.candidate_archive,
+            candidate_archive_sha256=arguments.candidate_archive_sha256,
+            output=arguments.output,
+            progress=arguments.progress,
+        )
+    else:
+        if (
+            arguments.shard_index is not None
+            or arguments.leaf_assignment_sha256 is None
+            or arguments.candidate_commit is None
+            or arguments.candidate_tree is None
+            or arguments.producer_program_sha256 is None
+        ):
+            raise FlatFunnelError(
+                "leaf execution requires complete authority and forbids shard-index"
+            )
+        run_leaf(
+            arguments.run_flat_leaf,
+            leaf_assignment_sha256=arguments.leaf_assignment_sha256,
+            selector=arguments.selector,
+            candidate_source_root=arguments.candidate_source_root,
+            candidate_archive=arguments.candidate_archive,
+            candidate_archive_sha256=arguments.candidate_archive_sha256,
+            candidate_commit=arguments.candidate_commit,
+            candidate_tree=arguments.candidate_tree,
+            producer_program_sha256=arguments.producer_program_sha256,
+            output=arguments.output,
+            progress=arguments.progress,
+        )
     return 0
 
 

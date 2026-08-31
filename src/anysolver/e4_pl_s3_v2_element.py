@@ -13,6 +13,7 @@ rather than falling back to legacy TRI3 mechanics.
 from __future__ import annotations
 
 import math
+import threading
 import weakref
 from types import MappingProxyType
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
@@ -188,6 +189,297 @@ _PLATE_EMBEDDING = _immutable_float64_array(_plate_embedding())
 _LAYOUT_SENTINEL = object()
 _MIXED_SCOPE_CACHE_SENTINEL = object()
 _MIXED_SCOPE_CACHE_NAME = "_strict_flat_v2_mixed_scope_cache_v1"
+_COMPONENT_CACHE_SCHEMA = "strict-flat-s3-v2-exact-component-cache-v1"
+_COMPONENT_CACHE_ENTRY_SCHEMA = (
+    "strict-flat-s3-v2-exact-component-cache-entry-v1"
+)
+_COMPONENT_CACHE_CAPACITY = 512
+
+
+def _make_exact_component_compute_wrapper() -> Any:
+    """Create the sole cache surface with all mutable state closure-owned."""
+
+    entries: Dict[Tuple[Any, ...], Tuple[Any, ...]] = {}
+    missing = object()
+    lock = threading.RLock()
+    float64 = np.dtype(np.float64)
+    float64_name = float64.str
+    matrix_names = (
+        "membrane",
+        "bending",
+        "shear",
+        "physical",
+        "pl",
+        "total",
+    )
+    packed_shapes = {
+        **{name: (18, 18) for name in matrix_names},
+        "frame": (3, 3),
+        "phi": (3,),
+    }
+    packed_names = (*matrix_names, "frame", "phi")
+    output_names = (
+        "membrane",
+        "bending",
+        "shear",
+        "physical",
+        "pl",
+        "numerical",
+        "hourglass",
+        "total",
+        "frame",
+        "area",
+        "phi",
+        "quadrature_authority_id",
+        "pl_completion_policy_id",
+    )
+    zero_matrix_payload = np.zeros((18, 18), dtype=np.float64).tobytes(order="C")
+
+    def fail(label: str) -> None:
+        raise StrictFlatLinearCapabilityError(
+            f"strict-flat S3 V2 exact component cache {label}"
+        )
+
+    def array_identity(
+        value: Any,
+        shape: Tuple[int, ...],
+        label: str,
+    ) -> Tuple[Any, ...]:
+        if (
+            type(value) is not np.ndarray
+            or value.dtype != float64
+            or value.shape != shape
+            or not np.all(np.isfinite(value))
+        ):
+            fail(f"{label} array is malformed")
+        return (float64_name, shape, value.tobytes(order="C"))
+
+    def scalar_identity(value: Any, label: str) -> bytes:
+        if type(value) is not float or not math.isfinite(value) or value <= 0.0:
+            fail(f"{label} scalar is malformed")
+        return np.float64(value).tobytes()
+
+    def cache_key(
+        geometry: Mapping[str, Any],
+        constitutive: Mapping[str, Any],
+    ) -> Tuple[Any, ...]:
+        return (
+            _COMPONENT_CACHE_SCHEMA,
+            FORMULATION_ID,
+            IMPLEMENTATION_ID,
+            SOURCE_CONTRACT_SHA256,
+            EQUATION_MAP_SHA256,
+            QUADRATURE_AUTHORITY_ID,
+            PL_COMPLETION_POLICY_ID,
+            array_identity(
+                geometry["local_coordinates"], (3, 2), "local-coordinate"
+            ),
+            array_identity(
+                geometry["shape_gradients"], (3, 2), "shape-gradient"
+            ),
+            scalar_identity(geometry["area"], "area"),
+            array_identity(geometry["frame"], (3, 3), "frame"),
+            array_identity(
+                geometry["local_from_external"],
+                (18, 18),
+                "external transform",
+            ),
+            array_identity(constitutive["A"], (3, 3), "membrane constitutive"),
+            array_identity(constitutive["D"], (3, 3), "bending constitutive"),
+            array_identity(constitutive["H"], (2, 2), "shear constitutive"),
+            scalar_identity(constitutive["bending_scalar"], "bending"),
+            scalar_identity(constitutive["shear_scalar"], "shear"),
+            scalar_identity(constitutive["drill_scale"], "drill"),
+            array_identity(HAMMER_POINTS, (3, 2), "Hammer point"),
+            array_identity(HAMMER_REFERENCE_WEIGHTS, (3,), "Hammer weight"),
+            array_identity(_PLATE_EMBEDDING, (9, 18), "plate embedding"),
+        )
+
+    def pack_result(result: Mapping[str, Any]) -> Tuple[Any, ...]:
+        if type(result) is not dict or tuple(result) != output_names:
+            fail("result schema or order differs")
+        packed = tuple(
+            (
+                name,
+                *array_identity(result[name], packed_shapes[name], name),
+            )
+            for name in packed_names
+        )
+        pl_payload = packed[packed_names.index("pl")][-1]
+        numerical = array_identity(result["numerical"], (18, 18), "numerical")
+        hourglass = array_identity(result["hourglass"], (18, 18), "hourglass")
+        if numerical[-1] != pl_payload or hourglass[-1] != zero_matrix_payload:
+            fail("numerical component identity differs")
+        if (
+            result["quadrature_authority_id"] != QUADRATURE_AUTHORITY_ID
+            or result["pl_completion_policy_id"] != PL_COMPLETION_POLICY_ID
+        ):
+            fail("policy identity differs")
+        return (
+            _COMPONENT_CACHE_ENTRY_SCHEMA,
+            packed,
+            scalar_identity(result["area"], "result area"),
+        )
+
+    def unpack_result(record: Tuple[Any, ...]) -> Dict[str, Any]:
+        if (
+            type(record) is not tuple
+            or len(record) != 3
+            or record[0] != _COMPONENT_CACHE_ENTRY_SCHEMA
+            or type(record[1]) is not tuple
+            or len(record[1]) != len(packed_names)
+            or type(record[2]) is not bytes
+            or len(record[2]) != float64.itemsize
+        ):
+            fail("packed entry schema differs")
+        arrays: Dict[str, np.ndarray] = {}
+        for expected_name, expected_shape, packed in zip(
+            packed_names,
+            (packed_shapes[name] for name in packed_names),
+            record[1],
+        ):
+            if (
+                type(packed) is not tuple
+                or len(packed) != 4
+                or packed[0] != expected_name
+                or packed[1] != float64_name
+                or packed[2] != expected_shape
+                or type(packed[3]) is not bytes
+                or len(packed[3]) != math.prod(expected_shape) * float64.itemsize
+            ):
+                fail("packed array schema differs")
+            array = np.frombuffer(packed[3], dtype=float64).reshape(expected_shape)
+            if not np.all(np.isfinite(array)):
+                fail("packed array is nonfinite")
+            arrays[expected_name] = array.copy()
+        area = float(np.frombuffer(record[2], dtype=float64, count=1)[0])
+        if not math.isfinite(area) or area <= 0.0:
+            fail("packed area is malformed")
+        pl = arrays["pl"]
+        return {
+            "membrane": arrays["membrane"],
+            "bending": arrays["bending"],
+            "shear": arrays["shear"],
+            "physical": arrays["physical"],
+            "pl": pl,
+            "numerical": pl.copy(),
+            "hourglass": np.zeros((18, 18), dtype=np.float64),
+            "total": arrays["total"],
+            "frame": arrays["frame"],
+            "area": area,
+            "phi": arrays["phi"],
+            "quadrature_authority_id": QUADRATURE_AUTHORITY_ID,
+            "pl_completion_policy_id": PL_COMPLETION_POLICY_ID,
+        }
+
+    def calculate(
+        self: Any,
+        geometry: Mapping[str, Any],
+        constitutive: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        operators = self._operators(geometry, constitutive)
+        area = float(geometry["area"])
+        physical_weight = area / 3.0
+        membrane_local = (
+            operators["B_m"].T
+            @ constitutive["A"]
+            @ operators["B_m"]
+            * area
+        )
+        bending_local = np.zeros((18, 18), dtype=np.float64)
+        shear_local = np.zeros((18, 18), dtype=np.float64)
+        for bending_operator, shear_operator in zip(
+            operators["B_b"],
+            operators["B_s"],
+        ):
+            bending_local += (
+                bending_operator.T
+                @ constitutive["D"]
+                @ bending_operator
+                * physical_weight
+            )
+            shear_local += (
+                shear_operator.T
+                @ constitutive["H"]
+                @ shear_operator
+                * physical_weight
+            )
+        barycentric_mass = (area / 12.0) * np.asarray(
+            ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
+            dtype=np.float64,
+        )
+        constraint = operators["C"]
+        pl_local = (
+            float(constitutive["drill_scale"])
+            * constraint.T
+            @ barycentric_mass
+            @ constraint
+        )
+        physical_local = membrane_local + bending_local + shear_local
+        total_local = physical_local + pl_local
+        transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
+
+        def globalize(matrix: np.ndarray) -> np.ndarray:
+            made = transform.T @ matrix @ transform
+            return 0.5 * (made + made.T)
+
+        membrane = globalize(membrane_local)
+        bending = globalize(bending_local)
+        shear = globalize(shear_local)
+        physical = globalize(physical_local)
+        pl = globalize(pl_local)
+        total = globalize(total_local)
+        return {
+            "membrane": membrane,
+            "bending": bending,
+            "shear": shear,
+            "physical": physical,
+            "pl": pl,
+            "numerical": pl.copy(),
+            "hourglass": np.zeros((18, 18), dtype=np.float64),
+            "total": total,
+            "frame": np.asarray(geometry["frame"], dtype=np.float64).copy(),
+            "area": area,
+            "phi": np.asarray(operators["phi"], dtype=np.float64).copy(),
+            "quadrature_authority_id": QUADRATURE_AUTHORITY_ID,
+            "pl_completion_policy_id": PL_COMPLETION_POLICY_ID,
+        }
+
+    def compute_stiffness_components(
+        self: Any,
+        mesh: FEMesh,
+        material: Material,
+    ) -> Mapping[str, Any]:
+        # Admission and all live instance/model/material guards deliberately run
+        # before any cache observation.  Only exact validated numeric inputs
+        # enter the closure-owned key.
+        geometry = self._geometry(mesh)
+        constitutive = self._constitutive(material)
+        key = cache_key(geometry, constitutive)
+        with lock:
+            cached = entries.get(key, missing)
+        if cached is not missing:
+            return unpack_result(cached)
+
+        components = calculate(self, geometry, constitutive)
+        packed = pack_result(components)
+        with lock:
+            existing = entries.get(key, missing)
+            if existing is not missing:
+                if existing != packed:
+                    fail("concurrent result disagreement")
+            else:
+                entries[key] = packed
+                if len(entries) > _COMPONENT_CACHE_CAPACITY:
+                    # Retain the lexicographically smallest exact content keys;
+                    # the final cache set is independent of insertion/thread order.
+                    del entries[max(entries)]
+        return components
+
+    compute_stiffness_components.__qualname__ = (
+        "StrictFlatLinearE4PLS3V2ShellElement.compute_stiffness_components"
+    )
+    return compute_stiffness_components
 
 
 def _validate_module_authority(
@@ -215,6 +507,7 @@ def _validate_module_authority(
     _expected_section_id: str = SECTION_POLICY_ID,
     _expected_numpy: Any = np,
     _expected_math: Any = math,
+    _expected_threading: Any = threading,
     _expected_shell_class: Any = ShellElement,
     _expected_mesh_class: Any = FEMesh,
     _expected_material_class: Any = Material,
@@ -229,6 +522,9 @@ def _validate_module_authority(
     _expected_layout_sentinel: Any = _LAYOUT_SENTINEL,
     _expected_mixed_scope_cache_sentinel: Any = _MIXED_SCOPE_CACHE_SENTINEL,
     _expected_mixed_scope_cache_name: str = _MIXED_SCOPE_CACHE_NAME,
+    _expected_component_cache_schema: str = _COMPONENT_CACHE_SCHEMA,
+    _expected_component_cache_entry_schema: str = _COMPONENT_CACHE_ENTRY_SCHEMA,
+    _expected_component_cache_capacity: int = _COMPONENT_CACHE_CAPACITY,
     _expected_qualified_q4_formulation_id: str = _QUALIFIED_Q4_FORMULATION_ID,
     _expected_qualified_q4_class: Any = QualifiedE4PLShellElement,
     _expected_node_class: Any = Node,
@@ -244,6 +540,7 @@ def _validate_module_authority(
         (CAPABILITY_MATRIX, _expected_capabilities),
         (np, _expected_numpy),
         (math, _expected_math),
+        (threading, _expected_threading),
         (ShellElement, _expected_shell_class),
         (QualifiedE4PLShellElement, _expected_qualified_q4_class),
         (FEMesh, _expected_mesh_class),
@@ -278,6 +575,9 @@ def _validate_module_authority(
         (DIRECTOR_POLICY_ID, _expected_director_id),
         (SECTION_POLICY_ID, _expected_section_id),
         (_MIXED_SCOPE_CACHE_NAME, _expected_mixed_scope_cache_name),
+        (_COMPONENT_CACHE_SCHEMA, _expected_component_cache_schema),
+        (_COMPONENT_CACHE_ENTRY_SCHEMA, _expected_component_cache_entry_schema),
+        (_COMPONENT_CACHE_CAPACITY, _expected_component_cache_capacity),
         (
             _QUALIFIED_Q4_FORMULATION_ID,
             _expected_qualified_q4_formulation_id,
@@ -1244,81 +1544,7 @@ class StrictFlatLinearE4PLS3V2ShellElement(
             "phi": phi,
         }
 
-    def compute_stiffness_components(
-        self,
-        mesh: FEMesh,
-        material: Material,
-    ) -> Mapping[str, Any]:
-        geometry = self._geometry(mesh)
-        constitutive = self._constitutive(material)
-        operators = self._operators(geometry, constitutive)
-        area = float(geometry["area"])
-        physical_weight = area / 3.0
-        membrane_local = (
-            operators["B_m"].T
-            @ constitutive["A"]
-            @ operators["B_m"]
-            * area
-        )
-        bending_local = np.zeros((18, 18), dtype=np.float64)
-        shear_local = np.zeros((18, 18), dtype=np.float64)
-        for bending_operator, shear_operator in zip(
-            operators["B_b"],
-            operators["B_s"],
-        ):
-            bending_local += (
-                bending_operator.T
-                @ constitutive["D"]
-                @ bending_operator
-                * physical_weight
-            )
-            shear_local += (
-                shear_operator.T
-                @ constitutive["H"]
-                @ shear_operator
-                * physical_weight
-            )
-        barycentric_mass = (area / 12.0) * np.asarray(
-            ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
-            dtype=np.float64,
-        )
-        constraint = operators["C"]
-        pl_local = (
-            float(constitutive["drill_scale"])
-            * constraint.T
-            @ barycentric_mass
-            @ constraint
-        )
-        physical_local = membrane_local + bending_local + shear_local
-        total_local = physical_local + pl_local
-        transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
-
-        def globalize(matrix: np.ndarray) -> np.ndarray:
-            made = transform.T @ matrix @ transform
-            return 0.5 * (made + made.T)
-
-        membrane = globalize(membrane_local)
-        bending = globalize(bending_local)
-        shear = globalize(shear_local)
-        physical = globalize(physical_local)
-        pl = globalize(pl_local)
-        total = globalize(total_local)
-        zero = np.zeros((18, 18), dtype=np.float64)
-        return {
-            "membrane": membrane,
-            "bending": bending,
-            "shear": shear,
-            "physical": physical,
-            "pl": pl,
-            "numerical": pl.copy(),
-            "hourglass": zero,
-            "total": total,
-            "frame": np.asarray(geometry["frame"], dtype=np.float64).copy(),
-            "area": area,
-            "phi": np.asarray(operators["phi"], dtype=np.float64).copy(),
-            "quadrature_authority_id": QUADRATURE_AUTHORITY_ID,
-            "pl_completion_policy_id": PL_COMPLETION_POLICY_ID,
-        }
+    compute_stiffness_components = _make_exact_component_compute_wrapper()
 
     def compute_stiffness_matrix(
         self,
@@ -1516,6 +1742,11 @@ class StrictFlatLinearE4PLS3V2ShellElement(
     ) -> "StrictFlatLinearE4PLS3V2ShellElement":
         del memo
         self._unsupported("restart")
+
+
+# The live cache can be reached only through the reviewed public compute
+# wrapper installed above; its construction primitive is not a module surface.
+del _make_exact_component_compute_wrapper
 
 
 _ALLOWED_INHERITED_CALLABLES = frozenset(
