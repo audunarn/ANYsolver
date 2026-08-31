@@ -55,7 +55,7 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -159,11 +159,22 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "protocol_changed": False,
         "tolerances_changed": False,
     }
-    assert correction["current_change"] == {
+    assert correction["predecessor_v6_current_change"] == {
         "cases_changed": False,
         "classification": (
             "EXACT_COMPONENT_CACHE_AND_CONTENT_ADDRESSED_LEAF_PROCESS_ONLY"
         ),
+        "defaults_changed": False,
+        "mechanics_changed": False,
+        "process_control_changed": True,
+        "protocol_changed": False,
+        "tolerances_changed": False,
+        "v2_equations_changed": False,
+        "v2_matrices_changed": False,
+    }
+    assert correction["current_change"] == {
+        "cases_changed": False,
+        "classification": "ROLE_SPLIT_CONTENT_ADDRESSED_PROCESS_ONLY",
         "defaults_changed": False,
         "mechanics_changed": False,
         "process_control_changed": True,
@@ -201,6 +212,18 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         ),
         "subject": "fix: enforce Stage 4A hard process bounds",
         "tree": "d9208ec9d98fd9c7ac9f4156ee9dda97a1de86cb",
+    }
+    assert correction["history"][5] == {
+        "bytes": 12266,
+        "commit": "0de98307c02a5b98cb924941fee9c21f94b60d66",
+        "parent": "d085c097c434db396024d06c3f113b540189b75e",
+        "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+        "reason": "COMBINED_ROLE_N80_LEAVES_EXCEEDED_900_SECOND_WORKER_WALL",
+        "sha256": (
+            "69B75020D165EFBA3642D4575F624D99A1556B2352739E396C34754D0BC3987E"
+        ),
+        "subject": "fix: partition Stage 4A bounded evidence",
+        "tree": "55d836332cecca7f9a38d8f5b3484adab5138fcc",
     }
     assert correction["review_incident"] == {
         "candidate_commit": "0f93779feded35846ce7a093d27a8a98f5c0fc81",
@@ -300,7 +323,150 @@ def test_stage4a_correction3_consumed_timeout_incident_is_exact(authority) -> No
     }
 
 
-def test_stage4a_correction4_content_addressed_leaf_bounds(authority) -> None:
+def test_stage4a_correction4_nonclassifying_calibration_is_exact(authority) -> None:
+    calibration = authority["correction"]["correction4_calibration"]
+    assert calibration["disposition"] == "ROLE_SPLIT_REQUIRED_BEFORE_FORMAL_EXECUTION"
+    assert calibration["earlier_requests"] == [
+        {
+            "disposition": "MALFORMED_COMMAND_NEVER_APPROVED_OR_EXECUTED",
+            "request": {
+                "byte_count": 1187,
+                "request_id": "d6fe49a58b3444a092ae64a734a7a31a",
+                "request_reuse_forbidden": True,
+                "sha256": (
+                    "3B75A3FDC7A1DF40E9B6FA7EA124F52E8BF3CF253321245B63FE74712DB7D8B3"
+                ),
+            },
+            "terminal": "CANCELLED_UNAPPROVED",
+        },
+        {
+            "disposition": "INVALID_PILOT_GIT_ENVIRONMENT_BEFORE_OUTPUT",
+            "lock_released": True,
+            "output_root_present": False,
+            "request": {
+                "byte_count": 1264,
+                "command_sha256": (
+                    "F01956582A71F19A9BCB0A73367BBF3675BF552251C4406C4F3FD63542BB657F"
+                ),
+                "request_id": "36380f3acd8c43e48a17eb0ac3eaf4ea",
+                "request_reuse_forbidden": True,
+                "sha256": (
+                    "64D68EEEAA1C95877E2A1BBC528CE66C6F2575E06D40E5D5745FA1FC5290D26D"
+                ),
+            },
+            "terminal": "COMPLETED_FAIL",
+            "transcript": {
+                "byte_count": 954,
+                "sha256": (
+                    "D3233B391C0D020C9E642F7CD07E3C84F03DBAE228A26A342336544098E68A80"
+                ),
+            },
+        },
+    ]
+    assert calibration["n20_success"] == {
+        "bounded_result": {
+            "byte_count": 3120,
+            "sha256": (
+                "4F595234B5E8C27D388B5BF36DBE7616DD2F58037A8CE76EC1741CF2CC1AB4C2"
+            ),
+        },
+        "peak_tree_memory_bytes": 332_537_856,
+        "request": {
+            "byte_count": 1277,
+            "command_sha256": (
+                "028FBA2C16E80C46A691C73E866F82CAB1D05475AA6DC14E66D0ADB27BC851CA"
+            ),
+            "request_id": "f5a6be8595484898ba566af5d91aa483",
+            "request_reuse_forbidden": True,
+            "sha256": (
+                "57793FB7E6D2F352F8795288A6A18B32398F3CB3235B554A852834776C20A66C"
+            ),
+        },
+        "scientific_classification": "NONCLASSIFYING_RUNTIME_CALIBRATION_ONLY",
+        "summary": {
+            "byte_count": 3716,
+            "sha256": (
+                "D19C6160A424518A909851D97ED42250FB5C949A52AA7ABDCABE6401930E5DF0"
+            ),
+        },
+        "terminal": "COMPLETED_PASS",
+        "termination_proven": True,
+        "transcript": {
+            "byte_count": 3717,
+            "sha256": (
+                "CF18AB52FE057FF712A642003D5E530C12F27E111A2700852ED36D352DFC850B"
+            ),
+        },
+        "wall_seconds": "29.683154",
+    }
+    assert calibration["n80_timeout"] == {
+        "bounded_result": {
+            "byte_count": 5539,
+            "sha256": (
+                "5ECD12B629D320E076A2DA9252A6DCA9EA4D37FA40EECA1E271365D5FBAF02CE"
+            ),
+        },
+        "last_progress_sequence": [1, 1],
+        "peak_tree_memory_bytes": [1_937_715_200, 1_935_978_496],
+        "request": {
+            "byte_count": 1254,
+            "command_sha256": (
+                "2B7D302AD348F3FC3BFC8A31A8DE1FB3C33F05EF165F2B6455CE36D140BBFAF1"
+            ),
+            "request_id": "dc08835483b747d3afd3397fb35ef46d",
+            "request_reuse_forbidden": True,
+            "sha256": (
+                "C2F2C206486E1CF043B67D8340F674E3C5650FA1DB9956EE6164F13EC53315E2"
+            ),
+        },
+        "scientific_classification": "NONCLASSIFYING_RUNTIME_CALIBRATION_ONLY",
+        "scientific_proof_count": 0,
+        "summary": {
+            "byte_count": 6301,
+            "sha256": (
+                "1A9D1BE927D71B38E3CE3F510CB9A1158B4930F18ACFA0188A2364ADFC23B781"
+            ),
+        },
+        "terminal": "COMPLETED_FAIL",
+        "termination_proven": [True, True],
+        "transcript": {
+            "byte_count": 6302,
+            "sha256": (
+                "1F01661205F5FD3A9EED0CB71ECCB57FD591EBAD94B7D4C2124665E87F3B51AB"
+            ),
+        },
+        "wall_seconds": "900.872125",
+        "worker_terminal_counts": {"TIMEOUT": 2},
+    }
+    assert calibration["canceled_never_run"] == [
+        {
+            "byte_count": 1266,
+            "command_sha256": (
+                "A0DC4A08E8F60DD351CDC09A3768125886C1F9A92C1ED78A3EE6242DEE1038BB"
+            ),
+            "request_id": "92297500432c46c9ad46523232817d9d",
+            "request_reuse_forbidden": True,
+            "sha256": (
+                "0C370444B534C58D2C818A53FB3306522C95A8E3F0F206834D6FCDEE59062F57"
+            ),
+            "terminal": "CANCELLED_NOT_RUN",
+        },
+        {
+            "byte_count": 1272,
+            "command_sha256": (
+                "89ACD2D229474CFA3A68F9CEC93C40BAAD442642499DEC2DC1B11B91BC35901A"
+            ),
+            "request_id": "96bf7d1d6d514e14b9b0a6da3307ec0e",
+            "request_reuse_forbidden": True,
+            "sha256": (
+                "00A0DC143E30FCC11077935E463DA224D236A1E339C073339E7A91D3B5E23D2A"
+            ),
+            "terminal": "CANCELLED_NOT_RUN",
+        },
+    ]
+
+
+def test_stage4a_correction5_role_split_leaf_bounds(authority) -> None:
     assert authority["execution"] == {
         "all_launched_process_terminals_bound": True,
         "candidate_authority_bound_in_every_leaf": True,
@@ -308,21 +474,24 @@ def test_stage4a_correction4_content_addressed_leaf_bounds(authority) -> None:
         "canonical_aggregate_requires_proven_empty_process_trees": True,
         "checker_replica_wall_seconds": 300,
         "checker_tree_drain_required_before_queue_advance": True,
-        "classifying_leaf_count": 81,
+        "classifying_record_count": 81,
         "common_leaf_wave_authorization_required": True,
         "complete_receipt_coverage_required": True,
+        "computation_leaf_count": 153,
         "consumed_request_reuse_forbidden": True,
         "content_addressed_assignments": True,
+        "diagnostic_record_count": 72,
         "finalizer_accepts_complete_receipt_bound_union_only": True,
         "finalizer_input_hash_revalidated_before_publication": True,
         "finalizer_wall_seconds": 1740,
         "incomplete_or_partial_leaf_classification": "NONCLASSIFYING",
-        "leaf_worker_wall_seconds": 900,
+        "leaf_roles": ["V2_CLASSIFYING", "V1_DIAGNOSTIC"],
+        "leaf_worker_wall_seconds": 1500,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
-        "pair_wave_count": 40,
+        "pair_wave_count": 72,
         "process_tree_termination_proven_required": True,
         "receipt_binding": [
             "ATTEMPT",
@@ -344,9 +513,15 @@ def test_stage4a_correction4_content_addressed_leaf_bounds(authority) -> None:
             "WORKER_TERMINALS",
         ],
         "receipt_required_per_wave": True,
-        "registered_wave_count": 41,
-        "schedule": "40_CONTENT_ADDRESSED_PAIRS_THEN_1_SINGLETON_IN_FROZEN_ORDER",
-        "singleton_wave_count": 1,
+        "registered_wave_count": 81,
+        "role_split_required": True,
+        "schedule": (
+            "81_LOGICAL_RECORD_WAVES_IN_FROZEN_ORDER_WITH_72_V2_V1_PAIRS_AND_9_V2_SINGLETONS"
+        ),
+        "singleton_wave_count": 9,
+        "v1_diagnostic_leaf_count": 72,
+        "v1_diagnostic_never_classifies_or_falls_back": True,
+        "v2_classifying_leaf_count": 81,
         "wave_wall_seconds": 1740,
     }
     assert authority["correction"]["predecessor_v5_execution"][
@@ -355,6 +530,14 @@ def test_stage4a_correction4_content_addressed_leaf_bounds(authority) -> None:
     assert authority["execution"]["leaf_worker_wall_seconds"] < 30 * 60
     assert authority["execution"]["wave_wall_seconds"] < 30 * 60
     assert authority["execution"]["finalizer_wall_seconds"] < 30 * 60
+    assert authority["execution"]["computation_leaf_count"] == (
+        authority["execution"]["v2_classifying_leaf_count"]
+        + authority["execution"]["v1_diagnostic_leaf_count"]
+    )
+    assert authority["execution"]["registered_wave_count"] == (
+        authority["execution"]["pair_wave_count"]
+        + authority["execution"]["singleton_wave_count"]
+    )
 
 
 def test_stage4a_prior_v3_authority_binding_is_exact(authority) -> None:
@@ -466,6 +649,75 @@ def test_stage4a_prior_v5_authority_binding_and_history_are_exact(authority) -> 
     for unchanged in (
         "advisory_policy",
         "candidate",
+        "formal_phase",
+        "formal_protocol",
+        "frozen_inputs",
+        "parent",
+        "production_boundary",
+        "review_correction_requirements",
+        "scope_base",
+        "terminals",
+    ):
+        assert predecessor[unchanged] == authority[unchanged]
+
+
+def test_stage4a_prior_v6_authority_binding_and_history_are_exact(authority) -> None:
+    prior = authority["correction"]["history"][5]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    parent = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    predecessor = json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=_reject_duplicates,
+        parse_constant=_reject_constant,
+    )
+    assert raw == _canonical(predecessor)
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree, parent) == (
+        prior["subject"],
+        prior["tree"],
+        prior["parent"],
+    )
+    assert predecessor["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
+    assert predecessor["correction"]["history"] == authority["correction"][
+        "history"
+    ][:5]
+    assert predecessor["correction"]["current_change"] == authority["correction"][
+        "predecessor_v6_current_change"
+    ]
+    assert predecessor["execution"] == authority["correction"][
+        "predecessor_v6_execution"
+    ]
+    for unchanged in (
+        "advisory_policy",
+        "allowed_extent",
+        "candidate",
+        "component_cache_policy",
         "formal_phase",
         "formal_protocol",
         "frozen_inputs",

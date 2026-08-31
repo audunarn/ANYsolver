@@ -118,6 +118,7 @@ def test_every_registered_contract_hard_wall_has_an_exact_runner_lane():
         "aggregation": walls["final_aggregation"],
         "package": walls["package_isolation"],
         "flat-proof": walls["flat_exact_or_local_proof"],
+        "flat-leaf": 1_500,
         "local-proof": walls["flat_exact_or_local_proof"],
         "mixed": walls["mixed_curved_or_recovery"],
         "curved": walls["mixed_curved_or_recovery"],
@@ -152,6 +153,17 @@ def test_manifest_enforces_lane_limit_and_output_containment(tmp_path):
     made = _manifest(tmp_path)
     made["workers"][0]["stdout_path"] = str(tmp_path.parent / "escape.bin")
     with pytest.raises(module.BoundedProcessError, match="escapes output_root"):
+        module.validate_manifest(made)
+
+
+def test_role_split_leaf_lane_has_exact_twenty_five_minute_worker_bound(tmp_path):
+    module = _load()
+    made = _manifest(tmp_path, lane="flat-leaf", wall=1_500)
+    _wave_id, lane, _root, workers = module.validate_manifest(made)
+    assert lane == "flat-leaf"
+    assert workers[0].wall_seconds == 1_500
+    made["workers"][0]["wall_seconds"] = 1_501
+    with pytest.raises(module.BoundedProcessError, match="exceeds lane policy"):
         module.validate_manifest(made)
 
 

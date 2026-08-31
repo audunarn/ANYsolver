@@ -64,6 +64,11 @@ LANE_WALL_LIMITS = {
     "aggregation": 300,
     "package": 600,
     "flat-proof": 900,
+    # Correction 5 separates the classifying V2 and diagnostic V1 solves.
+    # Either exact solve may use the generic 25-minute worker maximum while
+    # the containing coordinator command retains its independent sub-30
+    # minute hard wall.
+    "flat-leaf": 1_500,
     "local-proof": 900,
     "mixed": 1_200,
     "curved": 1_200,

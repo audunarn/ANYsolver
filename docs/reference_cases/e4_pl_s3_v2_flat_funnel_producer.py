@@ -46,11 +46,11 @@ _ACTIVE_CANDIDATE_ROOT: Path | None = None
 
 PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
 LEAF_ASSIGNMENT_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v1"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v2"
 )
-LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v1"
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v2"
 LEAF_SCIENTIFIC_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v1"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v2"
 )
 LEAF_CANDIDATE_AUTHORITY_KEYS = (
     "candidate_archive_sha256",
@@ -61,6 +61,9 @@ LEAF_CANDIDATE_AUTHORITY_KEYS = (
 LOAD_IDENTITY = "UNIFORM_REFERENCE_NORMAL_DEAD_PRESSURE_1000_PA_V1"
 CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
 V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+V2_COMPUTATION_ROLE = "V2_CLASSIFYING"
+V1_COMPUTATION_ROLE = "V1_DIAGNOSTIC"
+COMPUTATION_ROLES = (V2_COMPUTATION_ROLE, V1_COMPUTATION_ROLE)
 REFERENCE_VECTOR_ENCODING = "CANONICAL_JSON_ROW_MAJOR_NODAL_6DOF_V1"
 REFERENCE_DOF_ORDER = ("ux", "uy", "uz", "theta_x", "theta_y", "theta_d")
 REFERENCE_IDENTITY = (
@@ -279,6 +282,8 @@ def leaf_assignment_core(
     member: Mapping[str, Any],
     *,
     catalog_index: int,
+    logical_record_index: int,
+    computation_role: str,
     candidate_commit: str,
     candidate_tree: str,
     candidate_archive_sha256: str,
@@ -293,6 +298,16 @@ def leaf_assignment_core(
         or catalog_index < 0
     ):
         raise FlatFunnelError("leaf catalog index must be a nonnegative integer")
+    if (
+        isinstance(logical_record_index, bool)
+        or not isinstance(logical_record_index, int)
+        or logical_record_index < 0
+    ):
+        raise FlatFunnelError(
+            "leaf logical record index must be a nonnegative integer"
+        )
+    if computation_role not in COMPUTATION_ROLES:
+        raise FlatFunnelError("leaf computation role is not registered")
     try:
         assignment_id = str(shard["assignment_id"])
         assignment_sha256 = _require_sha256(
@@ -320,6 +335,13 @@ def leaf_assignment_core(
     ):
         raise FlatFunnelError("leaf S3 element count is malformed")
     diagnostic_expected = s3_element_count > 0
+    if computation_role == V1_COMPUTATION_ROLE and not diagnostic_expected:
+        raise FlatFunnelError("all-Q4 records forbid a V1 diagnostic leaf")
+    s3_selector = (
+        SELECTOR
+        if computation_role == V2_COMPUTATION_ROLE
+        else "e4-pl-s3"
+    )
     candidate_authority = leaf_candidate_authority(
         candidate_commit=candidate_commit,
         candidate_tree=candidate_tree,
@@ -329,7 +351,9 @@ def leaf_assignment_core(
     return {
         "catalog_index": catalog_index,
         **candidate_authority,
+        "computation_role": computation_role,
         "diagonal": diagonal,
+        "logical_record_index": logical_record_index,
         "manifest_index": manifest_index,
         "parent_assignment_id": assignment_id,
         "parent_assignment_sha256": assignment_sha256,
@@ -339,6 +363,7 @@ def leaf_assignment_core(
         "record_member_sha256": sha256(member_raw),
         "schema": LEAF_ASSIGNMENT_SCHEMA,
         "selector": SELECTOR,
+        "s3_selector": s3_selector,
         "v1_diagnostic_expected": diagnostic_expected,
     }
 
@@ -352,7 +377,7 @@ def build_leaf_catalog(
     candidate_archive_sha256: str,
     producer_program_sha256: str,
 ) -> list[dict[str, Any]]:
-    """Derive the exact ordered 81-leaf content-addressed catalog."""
+    """Derive 153 role-specific leaves for 81 ordered logical records."""
 
     _require_sha256(plan_sha256, "leaf catalog plan hash")
     if (
@@ -366,8 +391,9 @@ def build_leaf_catalog(
     if not isinstance(shards, list) or len(shards) != 3:
         raise FlatFunnelError("leaf catalog requires three diagonal assignments")
     made: list[dict[str, Any]] = []
-    seen_records: set[str] = set()
+    seen_record_roles: set[tuple[str, str]] = set()
     seen_hashes: set[str] = set()
+    logical_record_index = 0
     for shard in shards:
         if not isinstance(shard, Mapping):
             raise FlatFunnelError("leaf catalog shard is malformed")
@@ -377,40 +403,61 @@ def build_leaf_catalog(
         for member in members:
             if not isinstance(member, Mapping):
                 raise FlatFunnelError("leaf catalog member is malformed")
-            core = leaf_assignment_core(
-                plan_sha256,
-                shard,
-                member,
-                catalog_index=len(made),
-                candidate_commit=candidate_commit,
-                candidate_tree=candidate_tree,
-                candidate_archive_sha256=candidate_archive_sha256,
-                producer_program_sha256=producer_program_sha256,
-            )
-            digest = sha256(canonical_bytes(core))
-            record_id = str(core["record_id"])
-            if record_id in seen_records or digest in seen_hashes:
-                raise FlatFunnelError("leaf catalog contains a duplicate record or hash")
-            seen_records.add(record_id)
-            seen_hashes.add(digest)
-            made.append(
-                {
-                    "assignment": core,
-                    "leaf_assignment_sha256": digest,
-                    "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
-                }
-            )
+            record = member.get("record")
+            if not isinstance(record, Mapping):
+                raise FlatFunnelError("leaf catalog record is malformed")
+            roles = [V2_COMPUTATION_ROLE]
+            if record.get("s3_element_count", 0) > 0:
+                roles.append(V1_COMPUTATION_ROLE)
+            for computation_role in roles:
+                core = leaf_assignment_core(
+                    plan_sha256,
+                    shard,
+                    member,
+                    catalog_index=len(made),
+                    logical_record_index=logical_record_index,
+                    computation_role=computation_role,
+                    candidate_commit=candidate_commit,
+                    candidate_tree=candidate_tree,
+                    candidate_archive_sha256=candidate_archive_sha256,
+                    producer_program_sha256=producer_program_sha256,
+                )
+                digest = sha256(canonical_bytes(core))
+                identity = (str(core["record_id"]), computation_role)
+                if identity in seen_record_roles or digest in seen_hashes:
+                    raise FlatFunnelError(
+                        "leaf catalog contains a duplicate record role or hash"
+                    )
+                seen_record_roles.add(identity)
+                seen_hashes.add(digest)
+                made.append(
+                    {
+                        "assignment": core,
+                        "leaf_assignment_sha256": digest,
+                        "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
+                    }
+                )
+            logical_record_index += 1
     if (
-        len(made) != 81
-        or len(seen_records) != 81
+        len(made) != 153
+        or len(seen_record_roles) != 153
+        or len(
+            {item["assignment"]["record_id"] for item in made}
+        )
+        != 81
         or sum(
-            bool(item["assignment"]["v1_diagnostic_expected"])
+            item["assignment"]["computation_role"] == V1_COMPUTATION_ROLE
             for item in made
         )
         != 72
+        or sum(
+            item["assignment"]["computation_role"] == V2_COMPUTATION_ROLE
+            for item in made
+        )
+        != 81
     ):
         raise FlatFunnelError(
-            "leaf catalog coverage must be 81 classifying plus 72 diagnostics"
+            "leaf catalog coverage must be 81 V2 plus 72 V1 computations"
         )
     return made
 
@@ -1233,12 +1280,22 @@ def run_leaf(
             ),
         )
 
-        # Preserve the registered scientific order: V2A is always evaluated
-        # first, and a V1 diagnostic is never substituted if it fails.
-        classifying = produce_case(member, s3_selector=SELECTOR)
-        diagnostic = None
-        if assignment["v1_diagnostic_expected"]:
-            diagnostic = produce_case(member, s3_selector="e4-pl-s3")
+        computation_role = str(assignment["computation_role"])
+        s3_selector = str(assignment["s3_selector"])
+        if (
+            computation_role not in COMPUTATION_ROLES
+            or s3_selector
+            != (
+                SELECTOR
+                if computation_role == V2_COMPUTATION_ROLE
+                else "e4-pl-s3"
+            )
+        ):
+            raise FlatFunnelError("leaf role and formulation selector disagree")
+        # One process performs exactly one formulation.  The coordinator pairs
+        # the mandatory V2 result with its nonclassifying V1 diagnostic and
+        # can therefore bound and attribute each computation independently.
+        record = produce_case(member, s3_selector=s3_selector)
         sequence += 1
         _append_reserved_progress(
             progress_descriptor,
@@ -1251,7 +1308,7 @@ def run_leaf(
             ),
         )
         scientific_payload = {
-            "classifying_record": classifying,
+            "computation_role": computation_role,
             "leaf_assignment": assignment,
             "phase": "4A",
             "protocol": {
@@ -1261,8 +1318,8 @@ def run_leaf(
                 "reference_id": REFERENCE_IDENTITY,
                 "support_id": SUPPORT_IDENTITY,
             },
+            "record": record,
             "schema": LEAF_PAYLOAD_SCHEMA,
-            "v1_comparator_diagnostic": diagnostic,
             "v1_comparator_disposition": V1_DISPOSITION,
         }
         record_ids = [str(member["record_id"])]

@@ -1822,7 +1822,7 @@ class _SyntheticCheckerResources:
 
 def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
     assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
     assert module.MAXIMUM_REGISTERED_WORKERS == 3
     assert module.MAXIMUM_CONCURRENT_WORKERS == 2
@@ -2545,8 +2545,9 @@ def _correction4_record(module, member, *, diagnostic=False):
 
 def _correction4_leaf_proof(module, entry, member, *, protocol_suffix=""):
     assignment = entry["assignment"]
+    diagnostic = assignment["computation_role"] == module.LEAF_V1_ROLE
     payload = {
-        "classifying_record": _correction4_record(module, member),
+        "computation_role": assignment["computation_role"],
         "leaf_assignment": assignment,
         "phase": "4A",
         "protocol": {
@@ -2556,12 +2557,8 @@ def _correction4_leaf_proof(module, entry, member, *, protocol_suffix=""):
             "reference_id": "REFERENCE",
             "support_id": "SUPPORT",
         },
+        "record": _correction4_record(module, member, diagnostic=diagnostic),
         "schema": module.LEAF_PAYLOAD_SCHEMA,
-        "v1_comparator_diagnostic": (
-            _correction4_record(module, member, diagnostic=True)
-            if assignment["v1_diagnostic_expected"]
-            else None
-        ),
         "v1_comparator_disposition": module.LEAF_V1_DISPOSITION,
     }
     record_ids = [member["record_id"]]
@@ -2589,11 +2586,14 @@ def _correction4_union(
     catalog = module.build_stage4a_leaf_catalog(
         plan, plan_raw, **candidate_authority
     )
-    members = [
-        member for shard in plan["shards"] for member in shard["records"]
-    ]
+    members = {
+        member["record_id"]: member
+        for shard in plan["shards"]
+        for member in shard["records"]
+    }
     paths = {}
-    for index, (entry, member) in enumerate(zip(catalog["leaves"], members)):
+    for index, entry in enumerate(catalog["leaves"]):
+        member = members[entry["assignment"]["record_id"]]
         path = (tmp_path / "leaf-proofs" / entry["leaf_id"] / "scientific.json").resolve()
         path.parent.mkdir(parents=True)
         proof = _correction4_leaf_proof(
@@ -2885,7 +2885,7 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
             }
         )
     manifest = {
-        "lane": "flat-proof",
+        "lane": "flat-leaf",
         "output_root": str(selected_input["manifest_path"].parent),
         "schema": "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1",
         "wave_id": selected_input["wave"]["wave_id"],
@@ -3018,7 +3018,7 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
             }
         )
     result = {
-        "lane": "flat-proof",
+        "lane": "flat-leaf",
         "manifest_sha256": module.sha256(manifest_raw),
         "schema": module.PRODUCER_RESULT_SCHEMA,
         "terminal": "COMPLETED",
@@ -3035,7 +3035,7 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
     (resource_root / "attempts" / f"{selected_request['request_id']}.json").write_bytes(
         module.canonical_bytes(attempt)
     )
-    selected_authorization, _ = module._validate_leaf_wave_authorization_v3(
+    selected_authorization, _ = module._validate_leaf_wave_authorization_v4(
         path=authorization_path,
         value=authorization,
         raw=authorization_raw,
@@ -3095,7 +3095,7 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     monkeypatch,
 ):
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
     assert "tests/test_e4_pl_s3_v2_component_cache.py" in module.REQUIRED_FROZEN_PATHS
     plan, plan_raw = _correction4_plan(module)
     candidate_authority, _archive = _correction4_candidate(module)
@@ -3109,15 +3109,36 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     assert catalog["leaves"] == producer.build_leaf_catalog(
         plan, module.sha256(plan_raw), **candidate_authority
     )
-    assert catalog["leaf_count"] == 81
+    assert catalog["leaf_count"] == 153
+    assert catalog["logical_record_count"] == 81
+    assert catalog["v2_classifying_count"] == 81
     assert catalog["v1_diagnostic_count"] == 72
     assert [leaf["assignment"]["catalog_index"] for leaf in catalog["leaves"]] == list(
-        range(81)
+        range(153)
     )
+    assert sum(
+        leaf["assignment"]["computation_role"] == module.LEAF_V2_ROLE
+        for leaf in catalog["leaves"]
+    ) == 81
+    assert sum(
+        leaf["assignment"]["computation_role"] == module.LEAF_V1_ROLE
+        for leaf in catalog["leaves"]
+    ) == 72
 
     waves = module.build_stage4a_leaf_wave_catalog(catalog)
-    assert waves["wave_count"] == 41
-    assert [wave["worker_count"] for wave in waves["waves"]] == [2] * 40 + [1]
+    assert waves["wave_count"] == 81
+    assert sum(wave["worker_count"] == 2 for wave in waves["waves"]) == 72
+    assert sum(wave["worker_count"] == 1 for wave in waves["waves"]) == 9
+    for wave in waves["waves"]:
+        roles = [
+            next(
+                leaf["assignment"]["computation_role"]
+                for leaf in catalog["leaves"]
+                if leaf["leaf_id"] == leaf_id
+            )
+            for leaf_id in wave["leaf_ids"]
+        ]
+        assert roles in ([module.LEAF_V2_ROLE], [module.LEAF_V2_ROLE, module.LEAF_V1_ROLE])
     assert [leaf_id for wave in waves["waves"] for leaf_id in wave["leaf_ids"]] == [
         leaf["leaf_id"] for leaf in catalog["leaves"]
     ]
@@ -3127,7 +3148,7 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
             for wave in waves["waves"]
             for digest in wave["leaf_assignment_sha256"]
         }
-    ) == 81
+    ) == 153
 
 
 def test_correction4_leaf_proof_keeps_generic_ten_key_envelope_and_binds_candidate():
@@ -3157,6 +3178,61 @@ def test_correction4_leaf_proof_keeps_generic_ten_key_envelope_and_binds_candida
         assert proof["scientific_payload"]["leaf_assignment"][key] == value
 
 
+def test_correction5_v1_leaf_is_diagnostic_only_and_cannot_substitute_for_v2():
+    module = _load()
+    plan, plan_raw = _correction4_plan(module)
+    candidate_authority, _archive = _correction4_candidate(module)
+    catalog = module.build_stage4a_leaf_catalog(
+        plan, plan_raw, **candidate_authority
+    )
+    entry = next(
+        leaf
+        for leaf in catalog["leaves"]
+        if leaf["assignment"]["computation_role"] == module.LEAF_V1_ROLE
+    )
+    member = next(
+        member
+        for shard in plan["shards"]
+        for member in shard["records"]
+        if member["record_id"] == entry["assignment"]["record_id"]
+    )
+    proof = _correction4_leaf_proof(module, entry, member)
+    module.validate_stage4a_leaf_proof(
+        proof,
+        module.canonical_bytes(proof),
+        entry=entry,
+        member=member,
+    )
+
+    forged = copy.deepcopy(proof)
+    forged["scientific_payload"]["record"]["classification"] = (
+        module.LEAF_CLASSIFICATION
+    )
+    forged["scientific_payload_sha256"] = module.sha256(
+        module.canonical_bytes(forged["scientific_payload"])
+    )
+    with pytest.raises(module.CoordinatorError, match="immutable plan member"):
+        module.validate_stage4a_leaf_proof(
+            forged,
+            module.canonical_bytes(forged),
+            entry=entry,
+            member=member,
+        )
+
+    wrong_role = copy.deepcopy(proof)
+    wrong_role["scientific_payload"]["computation_role"] = module.LEAF_V2_ROLE
+    wrong_role["scientific_payload_sha256"] = module.sha256(
+        module.canonical_bytes(wrong_role["scientific_payload"])
+    )
+    with pytest.raises(module.CoordinatorError, match="identity differs"):
+        module.validate_stage4a_leaf_proof(
+            wrong_role,
+            module.canonical_bytes(wrong_role),
+            entry=entry,
+            member=member,
+        )
+
+
 def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
     tmp_path, monkeypatch,
 ):
@@ -3179,8 +3255,12 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
     bounded = module._load_module(
         "_test_stage4a_correction4_bounded", module.BOUNDED_PATH
     )
-    for wave_index in (1, 41):
-        wave = waves[wave_index - 1]
+    selected_waves = [
+        next(wave for wave in waves if wave["worker_count"] == worker_count)
+        for worker_count in (2, 1)
+    ]
+    for wave in selected_waves:
+        wave_index = waves.index(wave) + 1
         manifest = module._build_stage4a_leaf_wave_manifest(
             wave=wave,
             catalog=catalog,
@@ -3192,9 +3272,9 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
             wave_root=(tmp_path / f"wave-{wave_index:02d}").resolve(),
         )
         _wave_id, lane, _root, workers = bounded.validate_manifest(manifest)
-        assert lane == "flat-proof"
+        assert lane == "flat-leaf"
         assert len(workers) == wave["worker_count"]
-        assert all(worker.wall_seconds == 900 for worker in workers)
+        assert all(worker.wall_seconds == 1500 for worker in workers)
         assert len({worker.scientific_path.parent for worker in workers}) == len(workers)
         for worker in manifest["workers"]:
             command = worker["command"]
@@ -3207,6 +3287,30 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
             assert command[
                 command.index("--producer-program-sha256") + 1
             ] == candidate_authority["producer_program_sha256"]
+
+    pair = next(wave for wave in waves if wave["worker_count"] == 2)
+    replacement = next(
+        leaf
+        for leaf in catalog["leaves"]
+        if leaf["assignment"]["computation_role"] == module.LEAF_V1_ROLE
+        and leaf["assignment"]["record_id"] != pair["record_id"]
+    )
+    cross_record = copy.deepcopy(pair)
+    cross_record["leaf_ids"][1] = replacement["leaf_id"]
+    cross_record["leaf_assignment_sha256"][1] = replacement[
+        "leaf_assignment_sha256"
+    ]
+    with pytest.raises(module.CoordinatorError, match="logical role pairing"):
+        module._build_stage4a_leaf_wave_manifest(
+            wave=cross_record,
+            catalog=catalog,
+            plan_path=plan_path,
+            candidate_source_root=source_root,
+            candidate_archive_path=archive_path,
+            candidate_binding_path=binding_path,
+            contract_path=contract_path,
+            wave_root=(tmp_path / "cross-record-wave").resolve(),
+        )
 
 
 def test_correction4_success_receipt_requires_full_authority_and_exact_terminal_hash(
@@ -3306,7 +3410,7 @@ def test_correction4_union_validates_all_leaves_and_reconstructs_legacy_proofs(
         contract_raw=contract_raw,
         allowed_root=tmp_path,
     )
-    assert len(validated["proofs"]) == 81
+    assert len(validated["proofs"]) == 153
     assert module.sha256(validated["union_raw"]) == module.sha256(
         module.canonical_bytes(union)
     )
@@ -3439,6 +3543,127 @@ def test_correction4_leaf_outputs_cannot_escape_cycle_root(tmp_path):
         module._contained_leaf_output(
             (tmp_path / "outside.json").resolve(), root, "synthetic output"
         )
+
+
+def test_correction5_guarded_wave_publishes_nested_contained_receipt(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    output_root = (tmp_path / "cycle").resolve()
+    wave_root = output_root / "leaf-waves" / "wave-01"
+    wave_root.mkdir(parents=True)
+    receipt_path = wave_root / "receipt.json"
+    result_path = wave_root / "bounded-result.json"
+    contract_path = (tmp_path / "contract.json").resolve()
+    authorization_path = (tmp_path / "authorization.json").resolve()
+    contract_raw = module.canonical_bytes({"contract": True})
+    authorization_raw = module.canonical_bytes({"authorization": True})
+    contract_path.write_bytes(contract_raw)
+    authorization_path.write_bytes(authorization_raw)
+    manifest_path = wave_root / "manifest.json"
+    manifest_raw = module.canonical_bytes({"manifest": True})
+    manifest_path.write_bytes(manifest_raw)
+    plan_raw = module.canonical_bytes({"plan": True})
+    catalog = {"catalog": True}
+    candidate_authority = {
+        "candidate_archive_sha256": "A" * 64,
+        "candidate_commit": "a" * 40,
+        "candidate_tree": "b" * 40,
+        "producer_program_sha256": "B" * 64,
+    }
+    cycle = {
+        "candidate_authority": candidate_authority,
+        "catalog": catalog,
+        "manifest_path": manifest_path,
+        "plan_raw": plan_raw,
+        "wave": {"wave_id": "S3_V2_FLAT_4A_WAVE_01"},
+        "wave_root": wave_root,
+    }
+    authorization = {
+        "execution_paths": {
+            "aggregate_path": str(receipt_path),
+            "output_root": str(output_root),
+            "python_executable": str(Path(sys.executable).resolve()),
+        }
+    }
+
+    monkeypatch.setattr(
+        module.sys,
+        "flags",
+        type("Flags", (), {"isolated": 1, "dont_write_bytecode": 1})(),
+    )
+    monkeypatch.setattr(module.sys, "dont_write_bytecode", True)
+    monkeypatch.setattr(
+        module, "validate_contract", lambda _path: ({"contract": True}, contract_raw)
+    )
+    monkeypatch.setattr(
+        module,
+        "validate_authorization",
+        lambda *_args, **_kwargs: (authorization, authorization_raw),
+    )
+    monkeypatch.setattr(
+        module, "validate_resource_execution_state", lambda *_args, **_kwargs: None
+    )
+    monkeypatch.setattr(
+        module, "_validate_stage4a_leaf_cycle", lambda **_kwargs: cycle
+    )
+
+    class Bounded:
+        @staticmethod
+        def run_wave(_manifest_path, output_path):
+            result = {"terminal": "COMPLETED"}
+            output_path.write_bytes(module.canonical_bytes(result))
+            return result
+
+    monkeypatch.setattr(module, "_load_module", lambda *_args, **_kwargs: Bounded)
+    monkeypatch.setattr(
+        module, "_producer_process_trees_proven_terminal", lambda _result: True
+    )
+    monkeypatch.setattr(
+        module,
+        "_validate_stage4a_leaf_wave_result",
+        lambda path, _cycle: (
+            {"terminal": "COMPLETED"},
+            path.read_bytes(),
+            [],
+        ),
+    )
+    expected_receipt = {
+        "nested_path_accepted": True,
+        "terminal": "COMPLETED",
+    }
+    monkeypatch.setattr(
+        module, "_stage4a_leaf_wave_receipt", lambda **_kwargs: expected_receipt
+    )
+
+    class Guard:
+        def bind_evidence(self, **_kwargs):
+            return None
+
+        def bind_producer_result(self, _path):
+            return None
+
+        def mark_process_phase_active(self):
+            return None
+
+        def mark_process_phase_terminal(self, *, proven):
+            assert proven is True
+
+    made = module._run_stage4a_leaf_wave_guarded(
+        contract_path,
+        authorization_path,
+        output_root,
+        receipt_path,
+        result_path,
+        wave_index=1,
+        plan_sha256=module.sha256(plan_raw),
+        leaf_catalog_sha256=module.sha256(module.canonical_bytes(catalog)),
+        leaf_wave_manifest_sha256=module.sha256(manifest_raw),
+        wall_guard=Guard(),
+    )
+    assert made == expected_receipt
+    assert receipt_path.parent == wave_root
+    assert module.strict_json_load(receipt_path)[0] == expected_receipt
 
 
 def test_correction4_reconstruction_rejects_protocol_disagreement(

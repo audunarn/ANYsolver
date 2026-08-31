@@ -44,21 +44,21 @@ BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
 LEAF_WAVE_AUTHORIZATION_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v3"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v4"
 )
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v6"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
 AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
 CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
 PRODUCER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-bounded-wave-result-v1"
-LEAF_ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v1"
-LEAF_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-catalog-v1"
-LEAF_WAVE_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-catalog-v1"
-LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v1"
-LEAF_SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v1"
-LEAF_UNION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-union-v1"
+LEAF_ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v2"
+LEAF_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-catalog-v2"
+LEAF_WAVE_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-catalog-v2"
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v2"
+LEAF_SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v2"
+LEAF_UNION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-union-v2"
 LEAF_WAVE_RECEIPT_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-receipt-v1"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-receipt-v2"
 )
 LEAF_UNION_TERMINAL = "COMPLETE_FOR_DIAGONAL_RECONSTRUCTION"
 LEAF_PROOF_TERMINAL = "ACCEPTED_FOR_AGGREGATION"
@@ -71,10 +71,15 @@ LEAF_CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
 LEAF_V1_CLASSIFICATION = "NONCLASSIFYING_V1_COMPARATOR_ONLY"
 LEAF_V1_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
 LEAF_V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
-LEAF_CATALOG_COUNT = 81
+LEAF_V2_ROLE = "V2_CLASSIFYING"
+LEAF_V1_ROLE = "V1_DIAGNOSTIC"
+LEAF_V1_SELECTOR = "e4-pl-s3"
+LEAF_LOGICAL_RECORD_COUNT = 81
+LEAF_V2_COUNT = 81
 LEAF_V1_DIAGNOSTIC_COUNT = 72
-LEAF_WAVE_COUNT = 41
-LEAF_WORKER_WALL_SECONDS = 900
+LEAF_CATALOG_COUNT = LEAF_V2_COUNT + LEAF_V1_DIAGNOSTIC_COUNT
+LEAF_WAVE_COUNT = LEAF_LOGICAL_RECORD_COUNT
+LEAF_WORKER_WALL_SECONDS = 1500
 LEAF_FINALIZER_WALL_SECONDS = 1740
 LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS = 15
 BLOCKED = "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE"
@@ -879,7 +884,7 @@ def _stage4a_plan_shards(
         or checked["phase"] != "4A"
         or checked["scope"] != "full"
         or checked["selector"] != LEAF_SELECTOR
-        or checked["record_count"] != LEAF_CATALOG_COUNT
+        or checked["record_count"] != LEAF_LOGICAL_RECORD_COUNT
     ):
         raise CoordinatorError("Stage 4A leaf plan identity differs")
     _digest(checked["manifest_sha256"], "$.leaf_plan.manifest_sha256")
@@ -960,7 +965,10 @@ def _stage4a_plan_shards(
             seen_indices.add(manifest_index)
             seen_records.add(record_id)
         made.append(shard)
-    if len(seen_indices) != LEAF_CATALOG_COUNT or len(seen_records) != LEAF_CATALOG_COUNT:
+    if (
+        len(seen_indices) != LEAF_LOGICAL_RECORD_COUNT
+        or len(seen_records) != LEAF_LOGICAL_RECORD_COUNT
+    ):
         raise CoordinatorError("Stage 4A leaf plan does not contain 81 unique records")
     return tuple(made)
 
@@ -1016,7 +1024,7 @@ def build_stage4a_leaf_catalog(
     candidate_archive_sha256: str,
     producer_program_sha256: str,
 ) -> dict[str, Any]:
-    """Build the deterministic content-addressed 81-leaf catalog."""
+    """Build the deterministic content-addressed role-split leaf catalog."""
 
     shards = _stage4a_plan_shards(plan, plan_raw)
     plan_digest = sha256(plan_raw)
@@ -1031,41 +1039,58 @@ def build_stage4a_leaf_catalog(
     )
     leaves: list[dict[str, Any]] = []
     seen_digests: set[str] = set()
+    logical_record_index = 0
     for shard in shards:
         for member in shard["records"]:
             record = member["record"]
-            assignment = {
-                "catalog_index": len(leaves),
-                **candidate_authority,
-                "diagonal": shard["diagonal"],
-                "manifest_index": member["manifest_index"],
-                "parent_assignment_id": shard["assignment_id"],
-                "parent_assignment_sha256": shard["assignment_sha256"],
-                "phase": "4A",
-                "plan_sha256": plan_digest,
-                "record_id": member["record_id"],
-                "record_member_sha256": sha256(canonical_bytes(dict(member))),
-                "schema": LEAF_ASSIGNMENT_SCHEMA,
-                "selector": LEAF_SELECTOR,
-                "v1_diagnostic_expected": record["s3_element_count"] > 0,
-            }
-            digest = sha256(canonical_bytes(assignment))
-            if digest in seen_digests:
-                raise CoordinatorError("Stage 4A leaf assignment hash is duplicated")
-            seen_digests.add(digest)
-            leaves.append(
-                {
-                    "assignment": assignment,
-                    "leaf_assignment_sha256": digest,
-                    "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
+            diagnostic_expected = record["s3_element_count"] > 0
+            roles = [(LEAF_V2_ROLE, LEAF_SELECTOR)]
+            if diagnostic_expected:
+                roles.append((LEAF_V1_ROLE, LEAF_V1_SELECTOR))
+            for computation_role, s3_selector in roles:
+                assignment = {
+                    "catalog_index": len(leaves),
+                    **candidate_authority,
+                    "computation_role": computation_role,
+                    "diagonal": shard["diagonal"],
+                    "logical_record_index": logical_record_index,
+                    "manifest_index": member["manifest_index"],
+                    "parent_assignment_id": shard["assignment_id"],
+                    "parent_assignment_sha256": shard["assignment_sha256"],
+                    "phase": "4A",
+                    "plan_sha256": plan_digest,
+                    "record_id": member["record_id"],
+                    "record_member_sha256": sha256(canonical_bytes(dict(member))),
+                    "s3_selector": s3_selector,
+                    "schema": LEAF_ASSIGNMENT_SCHEMA,
+                    "selector": LEAF_SELECTOR,
+                    "v1_diagnostic_expected": diagnostic_expected,
                 }
-            )
+                digest = sha256(canonical_bytes(assignment))
+                if digest in seen_digests:
+                    raise CoordinatorError("Stage 4A leaf assignment hash is duplicated")
+                seen_digests.add(digest)
+                leaves.append(
+                    {
+                        "assignment": assignment,
+                        "leaf_assignment_sha256": digest,
+                        "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
+                    }
+                )
+            logical_record_index += 1
     diagnostic_count = sum(
-        bool(leaf["assignment"]["v1_diagnostic_expected"]) for leaf in leaves
+        leaf["assignment"]["computation_role"] == LEAF_V1_ROLE
+        for leaf in leaves
+    )
+    classifying_count = sum(
+        leaf["assignment"]["computation_role"] == LEAF_V2_ROLE
+        for leaf in leaves
     )
     if (
         len(leaves) != LEAF_CATALOG_COUNT
         or len(seen_digests) != LEAF_CATALOG_COUNT
+        or logical_record_index != LEAF_LOGICAL_RECORD_COUNT
+        or classifying_count != LEAF_V2_COUNT
         or diagnostic_count != LEAF_V1_DIAGNOSTIC_COUNT
     ):
         raise CoordinatorError("Stage 4A leaf catalog coverage differs")
@@ -1074,8 +1099,10 @@ def build_stage4a_leaf_catalog(
         "candidate_authority_sha256": candidate_authority_sha256,
         "leaf_count": LEAF_CATALOG_COUNT,
         "leaves": leaves,
+        "logical_record_count": LEAF_LOGICAL_RECORD_COUNT,
         "plan_sha256": plan_digest,
         "schema": LEAF_CATALOG_SCHEMA,
+        "v2_classifying_count": LEAF_V2_COUNT,
         "v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
     }
 
@@ -1088,8 +1115,10 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             "candidate_authority_sha256",
             "leaf_count",
             "leaves",
+            "logical_record_count",
             "plan_sha256",
             "schema",
+            "v2_classifying_count",
             "v1_diagnostic_count",
         },
         "$.leaf_catalog",
@@ -1097,6 +1126,8 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
     if (
         checked["schema"] != LEAF_CATALOG_SCHEMA
         or checked["leaf_count"] != LEAF_CATALOG_COUNT
+        or checked["logical_record_count"] != LEAF_LOGICAL_RECORD_COUNT
+        or checked["v2_classifying_count"] != LEAF_V2_COUNT
         or checked["v1_diagnostic_count"] != LEAF_V1_DIAGNOSTIC_COUNT
     ):
         raise CoordinatorError("Stage 4A leaf catalog identity differs")
@@ -1121,15 +1152,19 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         raise CoordinatorError("Stage 4A leaf catalog count differs")
     seen_ids: set[str] = set()
     seen_hashes: set[str] = set()
-    seen_records: set[str] = set()
+    seen_roles: set[tuple[str, str]] = set()
+    logical_records: dict[int, list[Mapping[str, Any]]] = {}
     diagnostic_count = 0
+    classifying_count = 0
     leaves: list[Mapping[str, Any]] = []
     assignment_keys = {
         "catalog_index",
         "candidate_archive_sha256",
         "candidate_commit",
         "candidate_tree",
+        "computation_role",
         "diagonal",
+        "logical_record_index",
         "manifest_index",
         "parent_assignment_id",
         "parent_assignment_sha256",
@@ -1138,6 +1173,7 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         "producer_program_sha256",
         "record_id",
         "record_member_sha256",
+        "s3_selector",
         "schema",
         "selector",
         "v1_diagnostic_expected",
@@ -1154,6 +1190,14 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             leaf["leaf_assignment_sha256"], f"{location}.leaf_assignment_sha256"
         )
         record_id = assignment["record_id"]
+        computation_role = assignment["computation_role"]
+        expected_s3_selector = (
+            LEAF_SELECTOR
+            if computation_role == LEAF_V2_ROLE
+            else LEAF_V1_SELECTOR
+            if computation_role == LEAF_V1_ROLE
+            else None
+        )
         if (
             assignment["schema"] != LEAF_ASSIGNMENT_SCHEMA
             or assignment["catalog_index"] != index
@@ -1164,6 +1208,8 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             or assignment["phase"] != "4A"
             or assignment["plan_sha256"] != plan_digest
             or assignment["selector"] != LEAF_SELECTOR
+            or expected_s3_selector is None
+            or assignment["s3_selector"] != expected_s3_selector
             or assignment["diagonal"] not in DIAGONAL_ORDER
             or assignment["parent_assignment_id"]
             not in EXPECTED_SHARDS
@@ -1172,6 +1218,10 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             or not isinstance(record_id, str)
             or not record_id
             or not isinstance(assignment["v1_diagnostic_expected"], bool)
+            or (
+                computation_role == LEAF_V1_ROLE
+                and assignment["v1_diagnostic_expected"] is not True
+            )
             or sha256(canonical_bytes(dict(assignment))) != digest
             or leaf["leaf_id"] != f"S3_V2_FLAT_4A_LEAF_{digest}"
         ):
@@ -1179,6 +1229,12 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         _nonnegative_integer(
             assignment["manifest_index"], f"{location}.assignment.manifest_index"
         )
+        logical_index = _nonnegative_integer(
+            assignment["logical_record_index"],
+            f"{location}.assignment.logical_record_index",
+        )
+        if logical_index >= LEAF_LOGICAL_RECORD_COUNT:
+            raise CoordinatorError("Stage 4A logical record index is outside coverage")
         _digest(
             assignment["parent_assignment_sha256"],
             f"{location}.assignment.parent_assignment_sha256",
@@ -1187,25 +1243,57 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             assignment["record_member_sha256"],
             f"{location}.assignment.record_member_sha256",
         )
-        if leaf["leaf_id"] in seen_ids or digest in seen_hashes or record_id in seen_records:
+        role_key = (str(record_id), str(computation_role))
+        if leaf["leaf_id"] in seen_ids or digest in seen_hashes or role_key in seen_roles:
             raise CoordinatorError("Stage 4A leaf catalog contains a duplicate")
         seen_ids.add(str(leaf["leaf_id"]))
         seen_hashes.add(digest)
-        seen_records.add(str(record_id))
-        diagnostic_count += int(assignment["v1_diagnostic_expected"])
+        seen_roles.add(role_key)
+        logical_records.setdefault(logical_index, []).append(leaf)
+        diagnostic_count += int(computation_role == LEAF_V1_ROLE)
+        classifying_count += int(computation_role == LEAF_V2_ROLE)
         leaves.append(leaf)
-    if diagnostic_count != LEAF_V1_DIAGNOSTIC_COUNT:
+    if (
+        diagnostic_count != LEAF_V1_DIAGNOSTIC_COUNT
+        or classifying_count != LEAF_V2_COUNT
+        or set(logical_records) != set(range(LEAF_LOGICAL_RECORD_COUNT))
+    ):
         raise CoordinatorError("Stage 4A leaf diagnostic coverage differs")
+    for logical_index, group in logical_records.items():
+        expected_roles = (
+            [LEAF_V2_ROLE, LEAF_V1_ROLE]
+            if group[0]["assignment"]["v1_diagnostic_expected"]
+            else [LEAF_V2_ROLE]
+        )
+        if (
+            [leaf["assignment"]["computation_role"] for leaf in group]
+            != expected_roles
+            or any(
+                leaf["assignment"]["logical_record_index"] != logical_index
+                or leaf["assignment"]["record_id"]
+                != group[0]["assignment"]["record_id"]
+                or leaf["assignment"]["record_member_sha256"]
+                != group[0]["assignment"]["record_member_sha256"]
+                or leaf["assignment"]["v1_diagnostic_expected"]
+                != group[0]["assignment"]["v1_diagnostic_expected"]
+                for leaf in group
+            )
+        ):
+            raise CoordinatorError("Stage 4A logical role pair differs")
     return leaves
 
 
 def build_stage4a_leaf_wave_catalog(catalog: Mapping[str, Any]) -> dict[str, Any]:
-    """Pair consecutive leaves into 40 two-worker waves and one singleton."""
+    """Group each logical record's V2/V1 roles in one bounded wave."""
 
     leaves = _validate_stage4a_leaf_catalog(catalog)
     waves: list[dict[str, Any]] = []
-    for offset in range(0, len(leaves), MAXIMUM_CONCURRENT_WORKERS):
-        group = leaves[offset : offset + MAXIMUM_CONCURRENT_WORKERS]
+    for logical_index in range(LEAF_LOGICAL_RECORD_COUNT):
+        group = [
+            leaf
+            for leaf in leaves
+            if leaf["assignment"]["logical_record_index"] == logical_index
+        ]
         wave_index = len(waves) + 1
         waves.append(
             {
@@ -1213,14 +1301,16 @@ def build_stage4a_leaf_wave_catalog(catalog: Mapping[str, Any]) -> dict[str, Any
                     leaf["leaf_assignment_sha256"] for leaf in group
                 ],
                 "leaf_ids": [leaf["leaf_id"] for leaf in group],
+                "logical_record_index": logical_index,
+                "record_id": group[0]["assignment"]["record_id"],
                 "wave_id": f"S3_V2_FLAT_4A_WAVE_{wave_index:02d}",
                 "worker_count": len(group),
             }
         )
     if (
         len(waves) != LEAF_WAVE_COUNT
-        or any(wave["worker_count"] != 2 for wave in waves[:-1])
-        or waves[-1]["worker_count"] != 1
+        or sum(wave["worker_count"] == 2 for wave in waves) != 72
+        or sum(wave["worker_count"] == 1 for wave in waves) != 9
         or [leaf_id for wave in waves for leaf_id in wave["leaf_ids"]]
         != [leaf["leaf_id"] for leaf in leaves]
     ):
@@ -1328,12 +1418,12 @@ def validate_stage4a_leaf_proof(
     payload = _exact(
         proof["scientific_payload"],
         {
-            "classifying_record",
+            "computation_role",
             "leaf_assignment",
             "phase",
             "protocol",
+            "record",
             "schema",
-            "v1_comparator_diagnostic",
             "v1_comparator_disposition",
         },
         "$.leaf_proof.scientific_payload",
@@ -1349,6 +1439,7 @@ def validate_stage4a_leaf_proof(
         or payload["schema"] != LEAF_PAYLOAD_SCHEMA
         or payload["phase"] != "4A"
         or payload["leaf_assignment"] != assignment
+        or payload["computation_role"] != assignment["computation_role"]
         or payload["v1_comparator_disposition"] != LEAF_V1_DISPOSITION
     ):
         raise CoordinatorError("Stage 4A leaf proof identity differs")
@@ -1372,22 +1463,14 @@ def validate_stage4a_leaf_proof(
         for key in ("energy_norm_id", "load_id", "reference_id", "support_id")
     ):
         raise CoordinatorError("Stage 4A leaf proof protocol identity differs")
+    diagnostic_v1 = assignment["computation_role"] == LEAF_V1_ROLE
     _validate_leaf_scientific_record(
-        payload["classifying_record"],
+        payload["record"],
         member=member,
-        diagnostic_v1=False,
-        location="$.leaf_proof.scientific_payload.classifying_record",
+        diagnostic_v1=diagnostic_v1,
+        location="$.leaf_proof.scientific_payload.record",
     )
-    diagnostic_expected = assignment["v1_diagnostic_expected"]
-    diagnostic = payload["v1_comparator_diagnostic"]
-    if diagnostic_expected:
-        _validate_leaf_scientific_record(
-            diagnostic,
-            member=member,
-            diagnostic_v1=True,
-            location="$.leaf_proof.scientific_payload.v1_comparator_diagnostic",
-        )
-    elif diagnostic is not None:
+    if diagnostic_v1 and assignment["v1_diagnostic_expected"] is not True:
         raise CoordinatorError("all-Q4 leaf unexpectedly contains a V1 diagnostic")
     return proof
 
@@ -1404,7 +1487,7 @@ def build_stage4a_leaf_union(
     authorization_raw: bytes,
     output_root: Path,
 ) -> dict[str, Any]:
-    """Build a union only from 41 canonical, process-complete wave receipts."""
+    """Build a union only from all canonical, process-complete wave receipts."""
 
     leaves = _validate_stage4a_leaf_catalog(catalog)
     if set(receipt_paths_by_wave_index) != set(range(1, LEAF_WAVE_COUNT + 1)):
@@ -1495,6 +1578,7 @@ def build_stage4a_leaf_union(
         "candidate_authority_sha256": catalog["candidate_authority_sha256"],
         "leaf_catalog_sha256": sha256(canonical_bytes(dict(catalog))),
         "leaf_count": LEAF_CATALOG_COUNT,
+        "logical_record_count": LEAF_LOGICAL_RECORD_COUNT,
         "leaf_wave_authorization": _external_file_binding(
             authorization_path, "leaf wave authorization"
         ),
@@ -1502,6 +1586,7 @@ def build_stage4a_leaf_union(
         "proofs": bindings,
         "schema": LEAF_UNION_SCHEMA,
         "terminal": LEAF_UNION_TERMINAL,
+        "v2_classifying_count": LEAF_V2_COUNT,
         "v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
         "wave_receipts": receipt_bindings,
     }
@@ -1547,10 +1632,12 @@ def validate_stage4a_leaf_union(
             "leaf_catalog_sha256",
             "leaf_count",
             "leaf_wave_authorization",
+            "logical_record_count",
             "plan_sha256",
             "proofs",
             "schema",
             "terminal",
+            "v2_classifying_count",
             "v1_diagnostic_count",
             "wave_receipts",
         },
@@ -1560,6 +1647,8 @@ def validate_stage4a_leaf_union(
         bound["schema"] != LEAF_UNION_SCHEMA
         or bound["terminal"] != LEAF_UNION_TERMINAL
         or bound["leaf_count"] != LEAF_CATALOG_COUNT
+        or bound["logical_record_count"] != LEAF_LOGICAL_RECORD_COUNT
+        or bound["v2_classifying_count"] != LEAF_V2_COUNT
         or bound["v1_diagnostic_count"] != LEAF_V1_DIAGNOSTIC_COUNT
         or bound["plan_sha256"] != sha256(plan_raw)
         or bound["leaf_catalog_sha256"] != sha256(canonical_bytes(dict(catalog)))
@@ -1737,9 +1826,9 @@ def reconstruct_stage4a_diagonal_documents(
         str(leaf["leaf_id"]) for leaf in leaves
     }:
         raise CoordinatorError("Stage 4A validated leaf union coverage differs")
-    by_assignment: dict[str, list[tuple[Mapping[str, Any], Mapping[str, Any]]]] = {
-        assignment_id: [] for assignment_id in EXPECTED_SHARDS
-    }
+    by_assignment: dict[
+        str, dict[int, dict[str, tuple[Mapping[str, Any], Mapping[str, Any]]]]
+    ] = {assignment_id: {} for assignment_id in EXPECTED_SHARDS}
     protocol: Mapping[str, Any] | None = None
     for leaf in leaves:
         stored = proofs[str(leaf["leaf_id"])]
@@ -1751,9 +1840,15 @@ def reconstruct_stage4a_diagonal_documents(
             protocol = payload["protocol"]
         elif payload["protocol"] != protocol:
             raise CoordinatorError("Stage 4A leaf scientific protocols disagree")
-        by_assignment[str(leaf["assignment"]["parent_assignment_id"])].append(
-            (leaf, payload)
+        assignment = leaf["assignment"]
+        logical_index = assignment["logical_record_index"]
+        role = assignment["computation_role"]
+        roles = by_assignment[str(assignment["parent_assignment_id"])].setdefault(
+            logical_index, {}
         )
+        if role in roles:
+            raise CoordinatorError("Stage 4A diagonal role is duplicated")
+        roles[role] = (leaf, payload)
     if protocol is None:
         raise CoordinatorError("Stage 4A leaf protocol is absent")
     made: dict[str, dict[str, Any]] = {}
@@ -1761,19 +1856,40 @@ def reconstruct_stage4a_diagonal_documents(
     shards = _stage4a_plan_shards(plan, plan_raw)
     for shard in shards:
         assignment_id = str(shard["assignment_id"])
-        joined = by_assignment[assignment_id]
+        role_groups = by_assignment[assignment_id]
+        logical_indices = [
+            next(
+                leaf["assignment"]["logical_record_index"]
+                for leaf in leaves
+                if leaf["assignment"]["record_id"] == member["record_id"]
+            )
+            for member in shard["records"]
+        ]
         if (
-            len(joined) != 27
-            or [item[0]["assignment"]["record_id"] for item in joined]
-            != [member["record_id"] for member in shard["records"]]
+            set(role_groups) != set(logical_indices)
+            or len(role_groups) != 27
         ):
             raise CoordinatorError("Stage 4A diagonal leaf order differs")
-        classifying = [item[1]["classifying_record"] for item in joined]
-        diagnostics = [
-            item[1]["v1_comparator_diagnostic"]
-            for item in joined
-            if item[1]["v1_comparator_diagnostic"] is not None
-        ]
+        classifying: list[Mapping[str, Any]] = []
+        diagnostics: list[Mapping[str, Any]] = []
+        for member, logical_index in zip(shard["records"], logical_indices):
+            roles = role_groups[logical_index]
+            expected_roles = (
+                {LEAF_V2_ROLE, LEAF_V1_ROLE}
+                if member["record"]["s3_element_count"] > 0
+                else {LEAF_V2_ROLE}
+            )
+            if set(roles) != expected_roles:
+                raise CoordinatorError("Stage 4A diagonal role coverage differs")
+            v2_leaf, v2_payload = roles[LEAF_V2_ROLE]
+            if v2_leaf["assignment"]["record_id"] != member["record_id"]:
+                raise CoordinatorError("Stage 4A diagonal classifying order differs")
+            classifying.append(v2_payload["record"])
+            if LEAF_V1_ROLE in roles:
+                v1_leaf, v1_payload = roles[LEAF_V1_ROLE]
+                if v1_leaf["assignment"]["record_id"] != member["record_id"]:
+                    raise CoordinatorError("Stage 4A diagonal diagnostic order differs")
+                diagnostics.append(v1_payload["record"])
         if len(classifying) != 27 or len(diagnostics) != 24:
             raise CoordinatorError("Stage 4A diagonal diagnostic coverage differs")
         payload = {
@@ -4450,7 +4566,7 @@ def _validate_approval_snapshot(
     return snapshot, raw
 
 
-def _validate_leaf_wave_authorization_v3(
+def _validate_leaf_wave_authorization_v4(
     *,
     path: Path,
     value: Mapping[str, Any],
@@ -4463,7 +4579,7 @@ def _validate_leaf_wave_authorization_v3(
     selected_manifest_sha256: str,
     selected_result_path: Path,
 ) -> tuple[Mapping[str, Any], bytes]:
-    """Select one of 41 immutable requests without mutating tracked authority."""
+    """Select one of 81 immutable requests without mutating tracked authority."""
 
     authorization = _exact(
         value,
@@ -4540,7 +4656,9 @@ def _validate_leaf_wave_authorization_v3(
 
     raw_waves = authorization["leaf_waves"]
     if not isinstance(raw_waves, list) or len(raw_waves) != LEAF_WAVE_COUNT:
-        raise CoordinatorError("leaf wave authorization must bind exactly 41 waves")
+        raise CoordinatorError(
+            f"leaf wave authorization must bind exactly {LEAF_WAVE_COUNT} waves"
+        )
     seen_request_ids: set[str] = set()
     seen_approval_snapshots: set[Path] = set()
     seen_receipts: set[Path] = set()
@@ -4813,7 +4931,7 @@ def validate_authorization(
             or leaf_wave_result_path is None
         ):
             raise CoordinatorError("selected leaf wave authorization inputs are absent")
-        return _validate_leaf_wave_authorization_v3(
+        return _validate_leaf_wave_authorization_v4(
             path=path,
             value=value,
             raw=raw,
@@ -5383,18 +5501,48 @@ def _build_stage4a_leaf_wave_manifest(
         str(leaf["leaf_id"]): leaf
         for leaf in _validate_stage4a_leaf_catalog(catalog)
     }
-    leaf_ids = wave.get("leaf_ids")
-    assignment_hashes = wave.get("leaf_assignment_sha256")
+    wave = _exact(
+        wave,
+        {
+            "leaf_assignment_sha256",
+            "leaf_ids",
+            "logical_record_index",
+            "record_id",
+            "wave_id",
+            "worker_count",
+        },
+        "$.leaf_wave",
+    )
+    leaf_ids = wave["leaf_ids"]
+    assignment_hashes = wave["leaf_assignment_sha256"]
     if (
         not isinstance(leaf_ids, list)
         or not isinstance(assignment_hashes, list)
-        or len(leaf_ids) != wave.get("worker_count")
+        or len(leaf_ids) != wave["worker_count"]
         or len(leaf_ids) not in {1, 2}
         or any(leaf_id not in leaves for leaf_id in leaf_ids)
         or assignment_hashes
         != [leaves[leaf_id]["leaf_assignment_sha256"] for leaf_id in leaf_ids]
     ):
         raise CoordinatorError("leaf wave assignment coverage differs")
+    grouped = [leaves[leaf_id]["assignment"] for leaf_id in leaf_ids]
+    expected_roles = (
+        [LEAF_V2_ROLE, LEAF_V1_ROLE]
+        if grouped[0]["v1_diagnostic_expected"]
+        else [LEAF_V2_ROLE]
+    )
+    if (
+        wave["logical_record_index"] != grouped[0]["logical_record_index"]
+        or wave["record_id"] != grouped[0]["record_id"]
+        or [assignment["computation_role"] for assignment in grouped]
+        != expected_roles
+        or any(
+            assignment["logical_record_index"] != wave["logical_record_index"]
+            or assignment["record_id"] != wave["record_id"]
+            for assignment in grouped
+        )
+    ):
+        raise CoordinatorError("leaf wave logical role pairing differs")
     plan_digest = sha256(plan_path.read_bytes())
     producer_digest = sha256(PRODUCER_PATH.read_bytes())
     candidate_authority = catalog["candidate_authority"]
@@ -5469,7 +5617,7 @@ def _build_stage4a_leaf_wave_manifest(
             }
         )
     return {
-        "lane": "flat-proof",
+        "lane": "flat-leaf",
         "output_root": str(wave_root.resolve()),
         "schema": "anysolver.e4-pl-s3-v2-bounded-wave-manifest-v1",
         "wave_id": wave["wave_id"],
@@ -5480,7 +5628,7 @@ def _build_stage4a_leaf_wave_manifest(
 def prepare_stage4a_leaf_cycle(
     contract_path: Path, output_root: Path
 ) -> dict[str, Any]:
-    """Prepare immutable leaf assignments and 41 executable bounded waves."""
+    """Prepare immutable role assignments and 81 executable bounded waves."""
 
     _coordinator_checkpoint()
     contract, _contract_raw = validate_contract(contract_path)
@@ -5562,7 +5710,9 @@ def _validate_stage4a_leaf_cycle(
         or not isinstance(wave_index, int)
         or not 1 <= wave_index <= LEAF_WAVE_COUNT
     ):
-        raise CoordinatorError("leaf wave index is outside 1..41")
+        raise CoordinatorError(
+            f"leaf wave index is outside 1..{LEAF_WAVE_COUNT}"
+        )
     plan_path = _contained_leaf_finalizer_input(
         (output_root / "phase4a-plan.json").resolve(), output_root, "leaf plan"
     )
@@ -5710,7 +5860,7 @@ def _validate_stage4a_leaf_wave_result(
     workers = result["workers"]
     if (
         result["schema"] != PRODUCER_RESULT_SCHEMA
-        or result["lane"] != "flat-proof"
+        or result["lane"] != "flat-leaf"
         or result["terminal"] != "COMPLETED"
         or result["wave_id"] != cycle["wave"]["wave_id"]
         or result["manifest_sha256"]
@@ -5936,7 +6086,7 @@ def validate_stage4a_leaf_wave_receipt(
     ):
         raise CoordinatorError("leaf wave receipt authorization binding differs")
     selected_authorization, selected_authorization_raw = (
-        _validate_leaf_wave_authorization_v3(
+        _validate_leaf_wave_authorization_v4(
             path=authorization_path,
             value=authorization,
             raw=authorization_raw,
@@ -6902,13 +7052,17 @@ def _run_stage4a_leaf_wave_guarded(
         leaf_wave_result_path=result_path,
     )
     execution_paths = authorization["execution_paths"]
+    contained_receipt = _contained_leaf_output(
+        receipt_path,
+        output_root,
+        "leaf wave receipt output",
+    )
     if (
         Path(str(execution_paths["output_root"])).resolve() != output_root.resolve()
         or Path(str(execution_paths["aggregate_path"])).resolve()
-        != receipt_path.resolve()
+        != contained_receipt
         or Path(str(execution_paths["python_executable"])).resolve()
         != Path(sys.executable).resolve()
-        or receipt_path.parent.resolve() != output_root.resolve()
     ):
         raise CoordinatorError("live leaf wave invocation differs from its request")
     validate_resource_execution_state(authorization)
@@ -7357,7 +7511,7 @@ def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Pat
 def run_prepare_stage4a_leaf_cycle(
     contract_path: Path, output_root: Path
 ) -> dict[str, Any]:
-    """Prepare the correction-4 catalog/manifests under a sub-30-minute wall."""
+    """Prepare the correction-5 catalog/manifests under a sub-30-minute wall."""
 
     global _ACTIVE_COORDINATOR_GUARD
     if _ACTIVE_COORDINATOR_GUARD is not None:
@@ -7388,7 +7542,7 @@ def assemble_stage4a_leaf_union(
     output_root: Path,
     union_path: Path,
 ) -> dict[str, Any]:
-    """Join all 41 post-terminal receipts into one nonclassifying union."""
+    """Join all 81 post-terminal receipts into one nonclassifying union."""
 
     contract, contract_raw = validate_contract(contract_path)
     authorization, authorization_raw = strict_json_load(authorization_path)
@@ -7409,10 +7563,12 @@ def assemble_stage4a_leaf_union(
         "$.leaf_wave_authorization",
     )
     if authorization["schema"] != LEAF_WAVE_AUTHORIZATION_SCHEMA:
-        raise CoordinatorError("leaf union assembly requires v3 wave authority")
+        raise CoordinatorError("leaf union assembly requires v4 wave authority")
     raw_waves = authorization["leaf_waves"]
     if not isinstance(raw_waves, list) or len(raw_waves) != LEAF_WAVE_COUNT:
-        raise CoordinatorError("leaf union assembly requires exactly 41 waves")
+        raise CoordinatorError(
+            f"leaf union assembly requires exactly {LEAF_WAVE_COUNT} waves"
+        )
     receipt_paths: dict[int, Path] = {}
     for wave_index, raw_wave in enumerate(raw_waves, start=1):
         wave = _exact(
