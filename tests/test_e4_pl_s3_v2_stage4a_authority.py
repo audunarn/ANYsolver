@@ -55,8 +55,13 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v1"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v2"
     assert authority["parent"] == {
+        "commit": "2d3c7511846485c649c47873a96cdbf039d7a406",
+        "subject": "test: bind S3 V2A producer progress phases",
+        "tree": "15927925b8dbaa7b0e860b811c97c46b14a30e0e",
+    }
+    assert authority["scope_base"] == {
         "commit": "d1f6d3d264882cc70a34b6a764476f5ec6baeb3b",
         "subject": "test: make S3 V2 evidence hashes checkout portable",
         "tree": "5fb2bfa183018e7365cb9fa5f864912fab003b97",
@@ -94,36 +99,67 @@ def test_stage4a_authority_preserves_defaults_and_mechanics_boundaries(authority
     assert extent["v2_matrix_or_equation_change_authorized"] is False
     assert "src/anysolver/e4_pl_element.py" not in extent["implementation_paths"]
     assert "src/anysolver/e4_pl_s3_element.py" not in extent["implementation_paths"]
+    assert "src/anysolver/boundary.py" not in extent["implementation_paths"]
+
+
+def test_stage4a_authority_correction_preserves_original_and_closes_paths(authority) -> None:
+    assert authority["correction"] == {
+        "classification": "AUTHORITY_SCHEMA_CORRECTION_ONLY",
+        "mechanics_or_protocol_changed": False,
+        "prior_authority": {
+            "bytes": 3726,
+            "commit": "0f0979db7548cf0e715451d052fa837da61cbdf6",
+            "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+            "sha256": "061BD82022D7FB6D6403057DA81389C8E59282FCD48E57CC3B2B824693AFE6B3",
+            "subject": "docs: authorize S3 V2A flat mixed funnel",
+            "tree": "873962fcfafbd71ff1be1240f47afa04e2acad41",
+        },
+        "reason": "INCOMPLETE_DOWNSTREAM_PATH_ENUMERATION",
+    }
+    extent = authority["allowed_extent"]
+    assert set(extent["freeze_authorization_paths"]) == {
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_contract.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_execution_authorization.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_process_implementation_review.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_scientific_implementation_review.json",
+    }
+    assert set(extent["outcome_paths"]) == {
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_evidence.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_result.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_scientific_review.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_status.json",
+        "tests/test_e4_pl_s3_v2_stage4a_closeout.py",
+    }
 
 
 def test_registered_parent_objects_exist_and_match(authority) -> None:
-    parent = authority["parent"]
-    commit = subprocess.run(
-        ["git", "rev-parse", parent["commit"]],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    tree = subprocess.run(
-        ["git", "rev-parse", f"{parent['commit']}^{{tree}}"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    subject = subprocess.run(
-        ["git", "show", "-s", "--format=%s", parent["commit"]],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    assert (commit, tree, subject) == (
-        parent["commit"],
-        parent["tree"],
-        parent["subject"],
-    )
+    for identity in (authority["parent"], authority["scope_base"]):
+        commit = subprocess.run(
+            ["git", "rev-parse", identity["commit"]],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        tree = subprocess.run(
+            ["git", "rev-parse", f"{identity['commit']}^{{tree}}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        subject = subprocess.run(
+            ["git", "show", "-s", "--format=%s", identity["commit"]],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        assert (commit, tree, subject) == (
+            identity["commit"],
+            identity["tree"],
+            identity["subject"],
+        )
 
 
 def test_stage4a_authority_has_stable_identity() -> None:
