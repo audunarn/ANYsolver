@@ -42,6 +42,7 @@ MANIFEST_PATH = (
 MANIFEST_GENERATOR_PATH = (
     ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_manifest.py"
 )
+_ACTIVE_CANDIDATE_ROOT: Path | None = None
 
 PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
 LOAD_IDENTITY = "UNIFORM_REFERENCE_NORMAL_DEAD_PRESSURE_1000_PA_V1"
@@ -93,9 +94,19 @@ def _publish_exclusive(path: Path, raw: bytes) -> None:
 
 
 def _load_manifest_generator() -> Any:
+    generator_path = (
+        MANIFEST_GENERATOR_PATH
+        if _ACTIVE_CANDIDATE_ROOT is None
+        else _ACTIVE_CANDIDATE_ROOT
+        / "docs"
+        / "reference_cases"
+        / "e4_pl_s3_mixed_mesh_manifest.py"
+    ).resolve()
+    if not generator_path.is_file() or generator_path.is_symlink():
+        raise FlatFunnelError("frozen connectivity generator is not a regular file")
     spec = importlib.util.spec_from_file_location(
         "_s3_v2_phase4a_manifest_generator",
-        MANIFEST_GENERATOR_PATH,
+        generator_path,
     )
     if spec is None or spec.loader is None:
         raise FlatFunnelError("cannot load the frozen connectivity generator")
@@ -154,6 +165,8 @@ def activate_frozen_candidate_source(candidate_source_root: Path) -> None:
         origin.relative_to(source_root)
     except ValueError as exc:
         raise FlatFunnelError("ANYsolver candidate resolved outside the frozen source tree") from exc
+    global _ACTIVE_CANDIDATE_ROOT
+    _ACTIVE_CANDIDATE_ROOT = candidate_root
 
 
 def validate_extracted_candidate_source(

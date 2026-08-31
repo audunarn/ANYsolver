@@ -365,24 +365,39 @@ def test_cli_requires_the_exact_shard_interface() -> None:
     assert arguments.candidate_archive_sha256 == "C" * 64
 
 
-def test_candidate_archive_must_exactly_match_extracted_source(tmp_path: Path) -> None:
+def test_candidate_archive_must_exactly_match_extracted_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     candidate = tmp_path / "candidate-source"
     package = candidate / "src" / "anysolver"
     package.mkdir(parents=True)
     source = b'FORMULATION = "S3_V2A"\n'
     (package / "__init__.py").write_bytes(source)
+    generator = candidate / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_manifest.py"
+    generator.parent.mkdir(parents=True)
+    generator_source = b'ORIGIN = "EXTRACTED_CANDIDATE"\n'
+    generator.write_bytes(generator_source)
     archive = tmp_path / "candidate-source.tar"
     with tarfile.open(archive, mode="w:") as bundle:
-        for name in ("src", "src/anysolver"):
+        for name in ("src", "src/anysolver", "docs", "docs/reference_cases"):
             directory = tarfile.TarInfo(name)
             directory.type = tarfile.DIRTYPE
             bundle.addfile(directory)
         member = tarfile.TarInfo("src/anysolver/__init__.py")
         member.size = len(source)
         bundle.addfile(member, io.BytesIO(source))
+        member = tarfile.TarInfo(
+            "docs/reference_cases/e4_pl_s3_mixed_mesh_manifest.py"
+        )
+        member.size = len(generator_source)
+        bundle.addfile(member, io.BytesIO(generator_source))
     digest = funnel.sha256(archive.read_bytes())
 
     producer.validate_extracted_candidate_source(candidate, archive, digest)
+    monkeypatch.setattr(producer, "_ACTIVE_CANDIDATE_ROOT", candidate)
+    loaded = producer._load_manifest_generator()
+    assert loaded.ORIGIN == "EXTRACTED_CANDIDATE"
+    assert Path(loaded.__file__).resolve() == generator.resolve()
     (package / "__init__.py").write_bytes(b'FORMULATION = "MUTATED"\n')
     with pytest.raises(funnel.FlatFunnelError, match="differs"):
         producer.validate_extracted_candidate_source(candidate, archive, digest)
