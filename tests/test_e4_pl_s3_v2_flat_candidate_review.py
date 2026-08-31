@@ -2,13 +2,93 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REVIEW = ROOT / "docs" / "reference_cases" / "e4_pl_s3_v2_flat_candidate_review.json"
+REGISTERED_COMMIT = "d1f6d3d264882cc70a34b6a764476f5ec6baeb3b"
+REVIEW_PATH = "docs/reference_cases/e4_pl_s3_v2_flat_candidate_review.json"
+
+
+def _sanitized_git(*arguments: str) -> subprocess.CompletedProcess[bytes]:
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.upper().startswith("GIT_")
+    }
+    environment.update(
+        {
+            "GIT_ATTR_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
+    return subprocess.run(
+        ["git", "-c", f"safe.directory={ROOT}", *arguments],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+
+
+def _is_explicit_github_shallow_boundary() -> bool:
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return False
+    shallow_repository = _sanitized_git("rev-parse", "--is-shallow-repository")
+    if shallow_repository.returncode or shallow_repository.stdout.strip() != b"true":
+        return False
+    shallow_name = _sanitized_git("rev-parse", "--git-path", "shallow")
+    head = _sanitized_git("rev-parse", "HEAD")
+    if shallow_name.returncode or head.returncode:
+        return False
+    shallow = Path(os.fsdecode(shallow_name.stdout.strip()))
+    if not shallow.is_absolute():
+        shallow = (ROOT / shallow).resolve()
+    if not shallow.is_file():
+        return False
+    return head.stdout.decode("ascii").strip() in shallow.read_text(
+        encoding="ascii"
+    ).splitlines()
+
+
+def _registered_bytes(path: str) -> bytes:
+    replacement_refs = _sanitized_git("replace", "-l")
+    assert replacement_refs.returncode == 0, replacement_refs.stderr.decode(
+        "utf-8", errors="replace"
+    )
+    assert replacement_refs.stdout == b"", "replacement refs are forbidden"
+    graft_name = _sanitized_git("rev-parse", "--git-path", "info/grafts")
+    assert graft_name.returncode == 0, graft_name.stderr.decode(
+        "utf-8", errors="replace"
+    )
+    graft = Path(os.fsdecode(graft_name.stdout.strip()))
+    if not graft.is_absolute():
+        graft = (ROOT / graft).resolve()
+    assert not graft.exists(), "Git grafts are forbidden"
+
+    object_name = f"{REGISTERED_COMMIT}:{path}"
+    probe = _sanitized_git("cat-file", "-e", object_name)
+    if probe.returncode:
+        assert _is_explicit_github_shallow_boundary(), (
+            f"registered object is unavailable outside an explicit GitHub shallow "
+            f"boundary: {object_name}: "
+            f"{probe.stderr.decode('utf-8', errors='replace').strip()}"
+        )
+        pytest.skip(
+            "immutable registered bytes are unavailable at the explicit GitHub "
+            "shallow boundary; working-tree bytes are intentionally forbidden"
+        )
+    shown = _sanitized_git("show", "--no-ext-diff", "--no-textconv", object_name)
+    assert shown.returncode == 0, shown.stderr.decode("utf-8", errors="replace")
+    return shown.stdout
 
 
 def _reject_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -37,12 +117,12 @@ def _decode(raw: bytes) -> dict[str, object]:
     return made
 
 
-def _canonical_repository_bytes(path: Path) -> bytes:
-    return path.read_bytes().replace(b"\r\n", b"\n")
+def _canonical_repository_bytes(raw: bytes) -> bytes:
+    return raw.replace(b"\r\n", b"\n")
 
 
 def test_review_is_canonical_independent_empty_and_hash_bound() -> None:
-    review = _decode(REVIEW.read_bytes())
+    review = _decode(_registered_bytes(REVIEW_PATH))
     assert set(review) == {
         "findings",
         "reviewed_inputs",
@@ -65,8 +145,7 @@ def test_review_is_canonical_independent_empty_and_hash_bound() -> None:
     assert len(paths) == len(set(paths))
     assert "docs/reference_cases/e4_pl_s3_v2_candidate_binding.json" in paths
     for record in review["reviewed_inputs"]:
-        path = ROOT / record["path"]
-        raw = _canonical_repository_bytes(path)
+        raw = _canonical_repository_bytes(_registered_bytes(record["path"]))
         assert len(raw) == record["bytes"]
         assert hashlib.sha256(raw).hexdigest().upper() == record["sha256"]
 
