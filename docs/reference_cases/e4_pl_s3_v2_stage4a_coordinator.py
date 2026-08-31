@@ -86,6 +86,8 @@ REQUIRED_FROZEN_PATHS = {
     "src/anysolver/e4_pl_element.py",
     "src/anysolver/e4_pl_s3_element.py",
     "src/anysolver/e4_pl_s3_v2_element.py",
+    "tests/test_e4_pl_s3_v2_candidate_binding.py",
+    "tests/test_e4_pl_s3_v2_flat_candidate_review.py",
     "tests/test_e4_pl_s3_v2_flat_funnel_checker.py",
     "tests/test_e4_pl_s3_v2_flat_funnel_producer.py",
     "tests/test_e4_pl_s3_v2_mixed_scope.py",
