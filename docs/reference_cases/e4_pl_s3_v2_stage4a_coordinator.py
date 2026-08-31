@@ -49,12 +49,12 @@ CHECKER_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_checker.py"
 FUNNEL_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel.py"
 BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v6"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v7"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
 LEAF_WAVE_AUTHORIZATION_SCHEMA = (
     "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v5"
 )
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
 DEPENDENCY_AUTHORITY_SCHEMA = (
     "anysolver.e4-pl-s3-v2-stage4a-dependency-authority-v1"
 )
@@ -625,6 +625,7 @@ def _execution_policy() -> dict[str, Any]:
     """Return the exact Stage 4A bounded process contract."""
 
     return {
+        "approval_and_ledger_authority_files_regular_nonreparse_required": True,
         "canonical_aggregate_requires_proven_empty_process_trees": True,
         "checker_tree_drain_required_before_queue_advance": True,
         "checker_phase_finalization_reserve_seconds": (
@@ -644,6 +645,8 @@ def _execution_policy() -> dict[str, Any]:
         "git_subprocess_wall_seconds": GIT_SUBPROCESS_WALL_SECONDS,
         "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
+        "frozen_pre_run_ledger_snapshot_count": LEAF_WAVE_COUNT,
+        "frozen_pre_run_ledger_snapshots_byte_identical_required": True,
         "leaf_catalog_count": LEAF_CATALOG_COUNT,
         "leaf_finalizer_wall_seconds": LEAF_FINALIZER_WALL_SECONDS,
         "leaf_formal_v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
@@ -657,6 +660,7 @@ def _execution_policy() -> dict[str, Any]:
         "leaf_wave_receipt_count": LEAF_WAVE_COUNT,
         "leaf_wave_wall_seconds": LEAF_FINALIZER_WALL_SECONDS,
         "leaf_worker_wall_seconds": LEAF_WORKER_WALL_SECONDS,
+        "live_ledger_append_only_extension_revalidated_at_every_v5_validation": True,
         "maximum_concurrent_workers": MAXIMUM_CONCURRENT_WORKERS,
         "maximum_memory_gib_per_process_tree": MEMORY_LIMIT_BYTES // (1 << 30),
         "memory_admission_headroom_gib": OS_HEADROOM_BYTES // (1 << 30),
@@ -811,6 +815,82 @@ def _strict_external_json(path: Path, location: str) -> tuple[Any, bytes]:
             raise
         raise CoordinatorError(f"{location} is invalid strict JSON: {exc}") from exc
     return value, raw
+
+
+def _read_regular_nonreparse_file(path: Path, location: str) -> tuple[Path, bytes]:
+    """Read one stable external file without following a reparse path."""
+
+    raw_path = Path(path)
+    if not raw_path.is_absolute():
+        raise CoordinatorError(f"{location} must be absolute")
+
+    def inspect() -> tuple[os.stat_result, Path]:
+        try:
+            information = raw_path.lstat()
+        except OSError as exc:
+            raise CoordinatorError(f"cannot inspect {location}: {exc}") from exc
+        reparse_attribute = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        if (
+            not stat.S_ISREG(information.st_mode)
+            or raw_path.is_symlink()
+            or getattr(information, "st_file_attributes", 0) & reparse_attribute
+        ):
+            raise CoordinatorError(f"{location} is not a regular non-reparse file")
+        for ancestor in raw_path.parents:
+            try:
+                ancestor_information = ancestor.lstat()
+            except OSError as exc:
+                raise CoordinatorError(
+                    f"cannot inspect {location} ancestor: {exc}"
+                ) from exc
+            if (
+                not stat.S_ISDIR(ancestor_information.st_mode)
+                or ancestor.is_symlink()
+                or getattr(ancestor_information, "st_file_attributes", 0)
+                & reparse_attribute
+            ):
+                raise CoordinatorError(f"{location} has a reparse-path ancestor")
+        try:
+            resolved = raw_path.resolve(strict=True)
+        except OSError as exc:
+            raise CoordinatorError(f"cannot resolve {location}: {exc}") from exc
+        return information, resolved
+
+    information, initial_resolved = inspect()
+    try:
+        with raw_path.open("rb") as stream:
+            opened_before = os.fstat(stream.fileno())
+            if (
+                not stat.S_ISREG(opened_before.st_mode)
+                or not os.path.samestat(information, opened_before)
+            ):
+                raise CoordinatorError(f"{location} identity changed while opening")
+            raw = stream.read()
+            opened_after = os.fstat(stream.fileno())
+    except OSError as exc:
+        raise CoordinatorError(f"cannot read {location}: {exc}") from exc
+    before_state = (
+        opened_before.st_size,
+        opened_before.st_mtime_ns,
+    )
+    after_state = (
+        opened_after.st_size,
+        opened_after.st_mtime_ns,
+    )
+    if not os.path.samestat(opened_before, opened_after) or before_state != after_state:
+        raise CoordinatorError(f"{location} changed while reading")
+    final_information, final_resolved = inspect()
+    final_state = (
+        final_information.st_size,
+        final_information.st_mtime_ns,
+    )
+    if (
+        not os.path.samestat(information, final_information)
+        or before_state != final_state
+        or initial_resolved != final_resolved
+    ):
+        raise CoordinatorError(f"{location} identity changed after reading")
+    return final_resolved, raw
 
 
 def _validate_external_file_binding(
@@ -4842,8 +4922,11 @@ def _validate_approval_snapshot(
     request_id: str,
     request_path: Path,
     request_raw: bytes,
-) -> tuple[Mapping[str, Any], bytes]:
-    value, raw = strict_json_load(path)
+) -> tuple[Mapping[str, Any], bytes, bytes]:
+    resolved_path, raw = _read_regular_nonreparse_file(
+        path, "resource approval snapshot"
+    )
+    value = strict_json_bytes(raw, str(resolved_path))
     if raw != canonical_bytes(value):
         raise CoordinatorError("resource approval snapshot is not canonical JSON")
     snapshot = _exact(
@@ -4865,18 +4948,28 @@ def _validate_approval_snapshot(
         "$.approval_snapshot.request",
     )
     line = approved["line"]
-    ledger_snapshot_path = Path(str(ledger["snapshot_path"])).resolve()
     ledger_byte_count = _nonnegative_integer(
         ledger["byte_count"], "$.approval_snapshot.ledger.byte_count"
     )
+    raw_ledger_snapshot_path = ledger["snapshot_path"]
     if (
-        not ledger_snapshot_path.is_file()
-        or ledger_snapshot_path.is_symlink()
-        or ledger_snapshot_path.parent != path.parent.resolve()
+        not isinstance(raw_ledger_snapshot_path, str)
+        or not raw_ledger_snapshot_path
+        or raw_ledger_snapshot_path != raw_ledger_snapshot_path.strip()
+    ):
+        raise CoordinatorError("preserved pre-run ledger snapshot path differs")
+    lexical_ledger_snapshot_path = Path(raw_ledger_snapshot_path)
+    if not lexical_ledger_snapshot_path.is_absolute():
+        raise CoordinatorError("preserved pre-run ledger snapshot path differs")
+    ledger_snapshot_path, ledger_raw = _read_regular_nonreparse_file(
+        lexical_ledger_snapshot_path,
+        "preserved pre-run ledger snapshot",
+    )
+    if (
+        ledger_snapshot_path.parent != resolved_path.parent
         or ledger_snapshot_path.name != "resource-ledger-pre-run.md"
     ):
         raise CoordinatorError("preserved pre-run ledger snapshot path differs")
-    ledger_raw = ledger_snapshot_path.read_bytes()
     if (
         snapshot["schema"] != "anysolver.e4-pl-s3-v2-stage4a-approval-snapshot-v2"
         or snapshot["candidate"]
@@ -4904,7 +4997,7 @@ def _validate_approval_snapshot(
         raise CoordinatorError("preserved pre-run ledger is not UTF-8") from exc
     if preserved_lines.count(line) != 1:
         raise CoordinatorError("preserved pre-run ledger approval row differs")
-    return snapshot, raw
+    return snapshot, raw, ledger_raw
 
 
 def _validate_leaf_wave_authorization_v5(
@@ -5008,10 +5101,14 @@ def _validate_leaf_wave_authorization_v5(
     seen_receipts: set[Path] = set()
     seen_results: set[Path] = set()
     selected: Mapping[str, Any] | None = None
+    _live_ledger_path, initial_ledger_raw = _read_regular_nonreparse_file(
+        RESOURCE_LEDGER_PATH, "live resource ledger"
+    )
     try:
-        ledger_lines = RESOURCE_LEDGER_PATH.read_text(encoding="utf-8-sig").splitlines()
-    except (OSError, UnicodeError) as exc:
-        raise CoordinatorError(f"cannot inspect resource ledger: {exc}") from exc
+        ledger_lines = initial_ledger_raw.decode("utf-8-sig").splitlines()
+    except UnicodeError as exc:
+        raise CoordinatorError("live resource ledger is not UTF-8") from exc
+    preserved_ledger_raw: bytes | None = None
     wave_keys = {
         "execution_paths",
         "leaf_catalog_sha256",
@@ -5050,9 +5147,12 @@ def _validate_leaf_wave_authorization_v5(
         python_executable = Path(str(execution["python_executable"])).resolve()
         output_root = Path(str(execution["output_root"])).resolve()
         receipt_path = Path(str(execution["aggregate_path"])).resolve()
-        approval_snapshot_path = Path(
+        lexical_approval_snapshot_path = Path(
             str(execution["approval_snapshot_path"])
-        ).resolve()
+        )
+        if not lexical_approval_snapshot_path.is_absolute():
+            raise CoordinatorError("leaf wave approval snapshot path must be absolute")
+        approval_snapshot_path = lexical_approval_snapshot_path.resolve()
         result_path = Path(str(wave["leaf_wave_result_path"])).resolve()
         try:
             receipt_path.relative_to(output_root)
@@ -5149,13 +5249,24 @@ def _validate_leaf_wave_authorization_v5(
         )
         if approval["ledger_path"] != str(RESOURCE_LEDGER_PATH):
             raise CoordinatorError("leaf wave ledger path differs")
-        snapshot, snapshot_raw = _validate_approval_snapshot(
-            approval_snapshot_path,
+        snapshot, snapshot_raw, wave_ledger_raw = _validate_approval_snapshot(
+            lexical_approval_snapshot_path,
             contract=contract,
             request_id=request_id,
             request_path=request_path,
             request_raw=request_raw,
         )
+        if preserved_ledger_raw is None:
+            preserved_ledger_raw = wave_ledger_raw
+            if not initial_ledger_raw.startswith(preserved_ledger_raw):
+                raise CoordinatorError(
+                    "live resource ledger is not an append-only extension of the "
+                    "preserved pre-run ledger"
+                )
+        elif wave_ledger_raw != preserved_ledger_raw:
+            raise CoordinatorError(
+                "leaf wave approvals do not share one preserved pre-run ledger"
+            )
         if (
             Path(str(approval["snapshot_path"])).resolve() != approval_snapshot_path
             or approval["snapshot_sha256"] != sha256(snapshot_raw)
@@ -5190,6 +5301,19 @@ def _validate_leaf_wave_authorization_v5(
                 raise CoordinatorError("selected leaf wave command inputs differ")
     if selected is None:
         raise CoordinatorError("selected leaf wave authorization is absent")
+    if preserved_ledger_raw is None:
+        raise CoordinatorError("leaf wave preserved pre-run ledger is absent")
+    _final_ledger_path, final_ledger_raw = _read_regular_nonreparse_file(
+        RESOURCE_LEDGER_PATH, "live resource ledger"
+    )
+    if (
+        not final_ledger_raw.startswith(preserved_ledger_raw)
+        or not final_ledger_raw.startswith(initial_ledger_raw)
+    ):
+        raise CoordinatorError(
+            "live resource ledger changed other than by append during authorization "
+            "validation"
+        )
     return selected, raw
 
 
@@ -5461,7 +5585,7 @@ def validate_authorization(
     )
     if approval["ledger_path"] != str(RESOURCE_LEDGER_PATH):
         raise CoordinatorError("resource ledger path differs")
-    snapshot, snapshot_raw = _validate_approval_snapshot(
+    snapshot, snapshot_raw, _preserved_ledger_raw = _validate_approval_snapshot(
         approval_snapshot_path,
         contract=contract,
         request_id=request_id,

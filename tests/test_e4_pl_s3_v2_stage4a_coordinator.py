@@ -1198,6 +1198,36 @@ def test_external_incident_binding_rejects_raw_reparse_alias_before_resolve(
         module._validate_external_file_binding(binding, "incident")
 
 
+def test_correction7_stable_external_reader_rejects_reparse(tmp_path, monkeypatch):
+    module = _load()
+    target = (tmp_path / "ledger-target.md").resolve()
+    target.write_bytes(b"exact-ledger\n")
+
+    class SyntheticRawReparsePath:
+        def is_absolute(self):
+            return True
+
+        def lstat(self):
+            class SyntheticStat:
+                st_mode = target.stat().st_mode
+                st_file_attributes = 0x400
+
+            return SyntheticStat()
+
+        def is_symlink(self):
+            return False
+
+    monkeypatch.setattr(module, "Path", lambda _value: SyntheticRawReparsePath())
+    with pytest.raises(module.CoordinatorError, match="regular non-reparse"):
+        module._read_regular_nonreparse_file(target, "ledger")
+
+
+def test_correction7_stable_external_reader_rejects_nonregular_file(tmp_path):
+    module = _load()
+    with pytest.raises(module.CoordinatorError, match="regular non-reparse"):
+        module._read_regular_nonreparse_file(tmp_path.resolve(), "ledger")
+
+
 def test_predecessor_incident_validates_complete_synthetic_graph(tmp_path, monkeypatch):
     module = _load()
     fixture = _synthetic_predecessor_incident(module, tmp_path, monkeypatch)
@@ -2051,12 +2081,13 @@ class _SyntheticCheckerResources:
 
 def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
-    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v6"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
+    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v7"
     assert module.CHECKER_REGISTERED_SHARDS == 3
     assert module.MAXIMUM_CONCURRENT_WORKERS == 2
     assert module._checker_replica_required_memory_bytes() == 64 * (1 << 30)
     assert module._execution_policy() == {
+        "approval_and_ledger_authority_files_regular_nonreparse_required": True,
         "canonical_aggregate_requires_proven_empty_process_trees": True,
         "checker_tree_drain_required_before_queue_advance": True,
         "checker_phase_finalization_reserve_seconds": 60,
@@ -2072,6 +2103,8 @@ def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers
         "git_subprocess_wall_seconds": 60,
         "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
+        "frozen_pre_run_ledger_snapshot_count": 41,
+        "frozen_pre_run_ledger_snapshots_byte_identical_required": True,
         "leaf_catalog_count": 81,
         "leaf_finalizer_wall_seconds": 1740,
         "leaf_formal_v1_diagnostic_count": 0,
@@ -2087,6 +2120,7 @@ def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers
         "leaf_wave_receipt_count": 41,
         "leaf_wave_wall_seconds": 1740,
         "leaf_worker_wall_seconds": 1500,
+        "live_ledger_append_only_extension_revalidated_at_every_v5_validation": True,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
         "memory_admission_headroom_gib": 16,
@@ -2494,7 +2528,7 @@ def test_approval_snapshot_recomputes_preserved_ledger_bytes(tmp_path, monkeypat
     }
     snapshot_path = (tmp_path / "approval-snapshot.json").resolve()
     snapshot_path.write_bytes(module.canonical_bytes(snapshot))
-    value, raw = module._validate_approval_snapshot(
+    value, raw, preserved_raw = module._validate_approval_snapshot(
         snapshot_path,
         contract=contract,
         request_id=request_id,
@@ -2503,6 +2537,7 @@ def test_approval_snapshot_recomputes_preserved_ledger_bytes(tmp_path, monkeypat
     )
     assert value == snapshot
     assert raw == module.canonical_bytes(snapshot)
+    assert preserved_raw == ledger_raw
     preserved.write_bytes(ledger_raw + b"mutation\n")
     with pytest.raises(module.CoordinatorError, match="identity differs"):
         module._validate_approval_snapshot(
@@ -3313,9 +3348,9 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
         f"{selected_request['task']} | {repository} | receipt bytes "
         f"{len(receipt_raw)} SHA-256 {module.sha256(receipt_raw)} |"
     )
-    live_ledger.write_text(
-        ledger_snapshot_raw.decode() + started_line + "\n" + completed_line + "\n",
-        encoding="utf-8",
+    live_ledger.write_bytes(
+        ledger_snapshot_raw
+        + (started_line + "\n" + completed_line + "\n").encode("utf-8")
     )
     return {
         "authorization_path": authorization_path,
@@ -3333,11 +3368,30 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
     }
 
 
+def _validate_correction4_leaf_authorization(module, fixture, wave_index=1):
+    authorization, authorization_raw = module.strict_json_load(
+        fixture["authorization_path"]
+    )
+    wave = authorization["leaf_waves"][wave_index - 1]
+    return module._validate_leaf_wave_authorization_v5(
+        path=fixture["authorization_path"],
+        value=authorization,
+        raw=authorization_raw,
+        contract_path=fixture["contract_path"],
+        contract_raw=fixture["contract_raw"],
+        selected_wave_index=wave_index,
+        selected_plan_sha256=wave["plan_sha256"],
+        selected_leaf_catalog_sha256=wave["leaf_catalog_sha256"],
+        selected_manifest_sha256=wave["leaf_wave_manifest_sha256"],
+        selected_result_path=Path(wave["leaf_wave_result_path"]),
+    )
+
+
 def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     monkeypatch,
 ):
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
     assert "tests/test_e4_pl_s3_v2_component_cache.py" in module.REQUIRED_FROZEN_PATHS
     plan, plan_raw = _correction4_plan(module)
     candidate_authority, _archive = _correction4_candidate(module)
@@ -3615,9 +3669,11 @@ def test_correction4_success_receipt_requires_full_authority_and_exact_terminal_
     forged = fixture["completed_line"].replace(
         module.sha256(fixture["receipt_raw"]), "F" * 64
     )
-    ledger_text = fixture["live_ledger"].read_text(encoding="utf-8")
-    fixture["live_ledger"].write_text(
-        ledger_text.replace(fixture["completed_line"], forged), encoding="utf-8"
+    ledger_raw = fixture["live_ledger"].read_bytes()
+    fixture["live_ledger"].write_bytes(
+        ledger_raw.replace(
+            fixture["completed_line"].encode("utf-8"), forged.encode("utf-8")
+        )
     )
     with pytest.raises(module.CoordinatorError, match="exact receipt bytes"):
         module.validate_stage4a_leaf_wave_receipt(
@@ -3631,6 +3687,66 @@ def test_correction4_success_receipt_requires_full_authority_and_exact_terminal_
             expected_authorization_path=fixture["authorization_path"],
             expected_authorization_raw=fixture["authorization_raw"],
         )
+
+
+@pytest.mark.parametrize("mutation", ["rewrite", "truncate"])
+def test_correction7_leaf_authorization_rejects_nonappend_ledger_mutation(
+    tmp_path, monkeypatch, mutation,
+):
+    module = _load()
+    fixture = _correction4_success_receipt(module, tmp_path, monkeypatch)
+    _validate_correction4_leaf_authorization(module, fixture)
+    authorization, _authorization_raw = module.strict_json_load(
+        fixture["authorization_path"]
+    )
+    approval_path = Path(
+        authorization["leaf_waves"][0]["execution_paths"]["approval_snapshot_path"]
+    )
+    approval, _approval_raw = module.strict_json_load(approval_path)
+    preserved_raw = Path(approval["ledger"]["snapshot_path"]).read_bytes()
+    live_raw = fixture["live_ledger"].read_bytes()
+    if mutation == "rewrite":
+        _header, preserved_tail = preserved_raw.split(b"\n", 1)
+        mutated = b"rewritten-header\n" + preserved_tail + live_raw[len(preserved_raw):]
+    else:
+        mutated = preserved_raw[:-1]
+    fixture["live_ledger"].write_bytes(mutated)
+    with pytest.raises(module.CoordinatorError, match="append-only extension"):
+        _validate_correction4_leaf_authorization(module, fixture)
+
+
+@pytest.mark.parametrize("mutation", ["rewrite", "truncate", "append"])
+def test_correction7_leaf_authorization_requires_one_common_ledger_snapshot(
+    tmp_path, monkeypatch, mutation,
+):
+    module = _load()
+    fixture = _correction4_success_receipt(module, tmp_path, monkeypatch)
+    authorization, _authorization_raw = module.strict_json_load(
+        fixture["authorization_path"]
+    )
+    second_wave = authorization["leaf_waves"][1]
+    approval_path = Path(
+        second_wave["execution_paths"]["approval_snapshot_path"]
+    )
+    approval, _approval_raw = module.strict_json_load(approval_path)
+    preserved_path = Path(approval["ledger"]["snapshot_path"])
+    common_raw = preserved_path.read_bytes()
+    if mutation == "rewrite":
+        different_raw = common_raw.replace(b"header\n", b"Header\n", 1)
+    elif mutation == "truncate":
+        assert common_raw.endswith(b"\n")
+        different_raw = common_raw[:-1]
+    else:
+        different_raw = common_raw + b"different-wave-snapshot\n"
+    preserved_path.write_bytes(different_raw)
+    approval["ledger"]["byte_count"] = len(different_raw)
+    approval["ledger"]["sha256"] = module.sha256(different_raw)
+    approval_raw = module.canonical_bytes(approval)
+    approval_path.write_bytes(approval_raw)
+    second_wave["ledger_approval"]["snapshot_sha256"] = module.sha256(approval_raw)
+    fixture["authorization_path"].write_bytes(module.canonical_bytes(authorization))
+    with pytest.raises(module.CoordinatorError, match="share one preserved"):
+        _validate_correction4_leaf_authorization(module, fixture)
 
 
 def test_correction6_uses_distinct_tracked_wave_and_finalizer_authority_paths(

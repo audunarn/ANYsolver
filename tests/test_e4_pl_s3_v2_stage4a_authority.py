@@ -11,6 +11,20 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTHORITY = ROOT / "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json"
+V10_LEDGER_REQUIREMENTS = {
+    "approval_and_ledger_authority_files_regular_nonreparse_required": True,
+    "frozen_pre_run_ledger_snapshot_count": 41,
+    "frozen_pre_run_ledger_snapshots_byte_identical_required": True,
+    "live_ledger_append_only_extension_revalidated_at_every_v5_validation": True,
+}
+
+
+def _pre_v10_review_requirements(authority: dict[str, object]) -> dict[str, object]:
+    return {
+        key: value
+        for key, value in authority["review_correction_requirements"].items()
+        if key not in V10_LEDGER_REQUIREMENTS
+    }
 
 
 def _reject_constant(value: str) -> None:
@@ -73,7 +87,7 @@ def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
         "scope_base",
         "terminals",
     }
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v10"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -192,13 +206,18 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     }
     assert correction["current_change"] == {
         "cases_changed": False,
-        "classification": "CALIBRATED_CLEAN_DEPENDENCY_AUTHORITY_ONLY",
+        "classification": (
+            "LIVE_LEDGER_APPEND_ONLY_PREFIX_AND_REGULAR_NONREPARSE_"
+            "BINDING_CORRECTION_ONLY"
+        ),
         "classifying_scientific_protocol_changed": False,
-        "dependency_paths_changed": True,
         "defaults_changed": False,
+        "dependency_paths_changed": False,
+        "live_ledger_append_only_prefix_revalidation_added": True,
         "mechanics_changed": False,
         "process_or_evidence_protocol_changed": True,
         "protocol_changed": False,
+        "regular_nonreparse_external_binding_added": True,
         "tolerances_changed": False,
         "v1_mechanics_changed": False,
         "v2_equations_changed": False,
@@ -280,6 +299,7 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "scientific_review": "REJECT_PENDING_CORRECTION",
     }
     assert authority["review_correction_requirements"] == {
+        **V10_LEDGER_REQUIREMENTS,
         "atomic_canonical_publication": True,
         "blocked_process_exit_nonzero": True,
         "checker_producer_digest_join": True,
@@ -904,8 +924,58 @@ def test_stage4a_correction7_dependency_authority_is_exact(authority) -> None:
     assert sum(entry["source_file_count"] for entry in entries) == 126
 
 
+def test_stage4a_correction8_live_ledger_authority_is_exact(authority) -> None:
+    correction = authority["correction"]
+    assert correction["history"][8] == {
+        "bytes": 34312,
+        "commit": "cdb8a04991943e6f0e4ff3b8c3afc389cb1bb776",
+        "parent": "3760372cf88dfe37c8a74c893d7cf09c7b74b72b",
+        "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+        "reason": "LIVE_LEDGER_APPEND_ONLY_PREFIX_NOT_REVALIDATED",
+        "sha256": (
+            "39E28E73E4EC7AF59340574B18CEEBDAFF1915A140155456A03BDB2B96798D0D"
+        ),
+        "subject": "fix: bind calibrated Stage 4A dependency graph",
+        "tree": "1cc0a77641a6fc6260a9533343eb8e14454bf489",
+    }
+    assert len(correction["history"]) == 9
+    assert correction["predecessor_v9_current_change"] == {
+        "cases_changed": False,
+        "classification": "CALIBRATED_CLEAN_DEPENDENCY_AUTHORITY_ONLY",
+        "classifying_scientific_protocol_changed": False,
+        "defaults_changed": False,
+        "dependency_paths_changed": True,
+        "mechanics_changed": False,
+        "process_or_evidence_protocol_changed": True,
+        "protocol_changed": False,
+        "tolerances_changed": False,
+        "v1_mechanics_changed": False,
+        "v2_equations_changed": False,
+        "v2_matrices_changed": False,
+    }
+    assert correction["predecessor_v9_execution"] == {
+        key: value
+        for key, value in authority["execution"].items()
+        if key not in V10_LEDGER_REQUIREMENTS
+    }
+    for section in (
+        authority["execution"],
+        authority["review_correction_requirements"],
+    ):
+        assert {key: section[key] for key in V10_LEDGER_REQUIREMENTS} == (
+            V10_LEDGER_REQUIREMENTS
+        )
+    assert correction["current_change"]["cases_changed"] is False
+    assert correction["current_change"]["mechanics_changed"] is False
+    assert correction["current_change"]["tolerances_changed"] is False
+    assert correction["current_change"]["defaults_changed"] is False
+    assert correction["current_change"]["protocol_changed"] is False
+    assert correction["current_change"]["process_or_evidence_protocol_changed"] is True
+
+
 def test_stage4a_correction6_v2_only_leaf_bounds(authority) -> None:
     assert authority["execution"] == {
+        **V10_LEDGER_REQUIREMENTS,
         "all_launched_process_terminals_bound": True,
         "candidate_authority_bound_in_every_leaf": True,
         "canonical_aggregate_requires_complete_leaf_union": True,
@@ -1096,11 +1166,13 @@ def test_stage4a_prior_v5_authority_binding_and_history_are_exact(authority) -> 
         "frozen_inputs",
         "parent",
         "production_boundary",
-        "review_correction_requirements",
         "scope_base",
         "terminals",
     ):
         assert predecessor[unchanged] == authority[unchanged]
+    assert predecessor["review_correction_requirements"] == (
+        _pre_v10_review_requirements(authority)
+    )
     current_candidate = dict(authority["candidate"])
     assert current_candidate.pop("v1_formal_runtime_disposition") == (
         "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
@@ -1170,11 +1242,13 @@ def test_stage4a_prior_v6_authority_binding_and_history_are_exact(authority) -> 
         "frozen_inputs",
         "parent",
         "production_boundary",
-        "review_correction_requirements",
         "scope_base",
         "terminals",
     ):
         assert predecessor[unchanged] == authority[unchanged]
+    assert predecessor["review_correction_requirements"] == (
+        _pre_v10_review_requirements(authority)
+    )
     current_candidate = dict(authority["candidate"])
     current_candidate.pop("v1_formal_runtime_disposition")
     assert predecessor["candidate"] == current_candidate
@@ -1258,11 +1332,13 @@ def test_stage4a_prior_v7_authority_binding_and_history_are_exact(authority) -> 
         "frozen_inputs",
         "parent",
         "production_boundary",
-        "review_correction_requirements",
         "scope_base",
         "terminals",
     ):
         assert predecessor[unchanged] == authority[unchanged]
+    assert predecessor["review_correction_requirements"] == (
+        _pre_v10_review_requirements(authority)
+    )
 
 
 def test_stage4a_prior_v8_authority_binding_and_history_are_exact(authority) -> None:
@@ -1327,11 +1403,85 @@ def test_stage4a_prior_v8_authority_binding_and_history_are_exact(authority) -> 
         "frozen_inputs",
         "parent",
         "production_boundary",
-        "review_correction_requirements",
         "scope_base",
         "terminals",
     ):
         assert predecessor[unchanged] == authority[unchanged]
+    assert predecessor["review_correction_requirements"] == (
+        _pre_v10_review_requirements(authority)
+    )
+
+
+def test_stage4a_prior_v9_authority_binding_and_history_are_exact(authority) -> None:
+    prior = authority["correction"]["history"][8]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    parent = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    predecessor = json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=_reject_duplicates,
+        parse_constant=_reject_constant,
+    )
+    assert raw == _canonical(predecessor)
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree, parent) == (
+        prior["subject"],
+        prior["tree"],
+        prior["parent"],
+    )
+    assert predecessor["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
+    assert predecessor["correction"]["history"] == authority["correction"][
+        "history"
+    ][:8]
+    assert predecessor["correction"]["current_change"] == authority["correction"][
+        "predecessor_v9_current_change"
+    ]
+    assert predecessor["execution"] == authority["correction"][
+        "predecessor_v9_execution"
+    ]
+    assert predecessor["formal_phase"] == authority["formal_phase"]
+    assert predecessor["candidate"] == authority["candidate"]
+    assert predecessor["dependency_authority"] == authority["dependency_authority"]
+    for unchanged in (
+        "advisory_policy",
+        "allowed_extent",
+        "component_cache_policy",
+        "formal_protocol",
+        "frozen_inputs",
+        "parent",
+        "production_boundary",
+        "scope_base",
+        "terminals",
+    ):
+        assert predecessor[unchanged] == authority[unchanged]
+    assert predecessor["review_correction_requirements"] == (
+        _pre_v10_review_requirements(authority)
+    )
 
 
 def test_registered_parent_objects_exist_and_match(authority) -> None:
