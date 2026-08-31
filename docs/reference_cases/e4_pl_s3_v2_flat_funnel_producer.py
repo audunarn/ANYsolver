@@ -577,7 +577,18 @@ def run_assignment(
         progress_record(
             str(shard["assignment_id"]),
             sequence=sequence,
-            phase="4A_PRODUCTION_INITIALIZED",
+            phase="INITIALIZATION",
+            completed=0,
+            total=len(records),
+        ),
+    )
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="AUTHORITY_COMPLETE",
             completed=0,
             total=len(records),
         ),
@@ -596,7 +607,7 @@ def run_assignment(
             progress_record(
                 str(shard["assignment_id"]),
                 sequence=sequence,
-                phase="4A_PRODUCTION_RECORD_COMPLETED",
+                phase="CASE_OR_REFINEMENT_OR_STATION",
                 completed=completed,
                 total=len(records),
             ),
@@ -633,6 +644,28 @@ def run_assignment(
         "selector": SELECTOR,
         "terminal": "ACCEPTED_FOR_AGGREGATION",
     }
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="STAGING",
+            completed=len(records),
+            total=len(records),
+        ),
+    )
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="VALIDATION",
+            completed=len(records),
+            total=len(records),
+        ),
+    )
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("xb") as stream:
         stream.write(canonical_bytes(document))
@@ -644,7 +677,7 @@ def run_assignment(
         progress_record(
             str(shard["assignment_id"]),
             sequence=sequence,
-            phase="4A_PRODUCTION_OUTPUT_COMPLETED",
+            phase="COMPLETION",
             completed=len(records),
             total=len(records),
         ),

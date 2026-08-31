@@ -189,9 +189,22 @@ def test_three_fake_shards_cover_exact_81_classifying_and_72_v1_diagnostics(
             json.loads(line)
             for line in (tmp_path / f"progress-{shard_index}.jsonl").read_text().splitlines()
         ]
-        assert len(progress_rows) == 29
+        assert len(progress_rows) == 32
         assert progress_rows[0]["completed"] == 0
         assert progress_rows[-1]["completed"] == 27
+        required = [
+            "INITIALIZATION",
+            "AUTHORITY_COMPLETE",
+            "CASE_OR_REFINEMENT_OR_STATION",
+            "STAGING",
+            "VALIDATION",
+            "COMPLETION",
+        ]
+        phases = [row["phase"] for row in progress_rows]
+        assert all(phase in phases for phase in required)
+        assert [phases.index(phase) for phase in required] == sorted(
+            phases.index(phase) for phase in required
+        )
 
 
 def test_v2_failure_never_launches_v1_or_publishes_canonical_output(
