@@ -17,6 +17,7 @@ import json
 import math
 import os
 from pathlib import Path, PurePosixPath
+import re
 import secrets
 import shutil
 import subprocess
@@ -1419,16 +1420,33 @@ def _write_process_incident(
     if producer_result_path is not None and producer_result_path.is_file():
         producer_digest = sha256(producer_result_path.read_bytes())
     message = str(error)
+    replacements = (
+        (path.parent.resolve(), "<OUTPUT_ROOT>"),
+        (ROOT.resolve(), "<REPOSITORY_ROOT>"),
+        (RESOURCE_MANAGER_ROOT.resolve(), "<RESOURCE_MANAGER_ROOT>"),
+    )
+    for registered_path, replacement in replacements:
+        message = re.sub(
+            re.escape(str(registered_path)), replacement, message, flags=re.IGNORECASE
+        )
+    message = re.sub(
+        r"\.candidate-source-tree\.pending-[0-9a-f]{24}",
+        ".candidate-source-tree.pending-<TOKEN>",
+        message,
+        flags=re.IGNORECASE,
+    )
     if len(message) > 2_048:
         message = message[:2_048]
     incident = {
         "authorization_sha256": authorization_sha256,
         "contract_sha256": contract_sha256,
+        "errno": getattr(error, "errno", None),
         "exception_message": message,
-        "exception_type": type(error).__name__,
+        "exception_type": f"{type(error).__module__}.{type(error).__qualname__}",
         "phase": phase,
         "producer_result_sha256": producer_digest,
         "schema": "anysolver.e4-pl-s3-v2-stage4a-process-incident-v1",
+        "winerror": getattr(error, "winerror", None),
     }
     _write_exclusive(path, canonical_bytes(incident))
 
@@ -1898,6 +1916,7 @@ def run_stage4a(
             output_root,
             authorization_path=authorization_path,
         )
+        process_phase = "PRODUCER_RESULT_REGISTRATION"
         producer_result_path = _producer_result_path(paths["producer_manifest"])
         process_phase = "LOAD_BOUNDED_RUNNER"
         bounded = _load_module("_s3_v2_stage4a_bounded", BOUNDED_PATH)

@@ -4,6 +4,7 @@ import copy
 import io
 import importlib.util
 from pathlib import Path
+import subprocess
 import sys
 import tarfile
 
@@ -484,6 +485,19 @@ def test_candidate_archive_extraction_rejects_escape_and_is_exclusive(
         bundle.addfile(member, io.BytesIO(payload))
     extracted = module._extract_candidate_archive(safe_archive, safe_root)
     assert (extracted / "src" / "anysolver" / "__init__.py").read_bytes() == payload
+    fresh_child = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-c",
+            "from pathlib import Path; import sys; print(Path(sys.argv[1]).read_text())",
+            str(extracted / "src" / "anysolver" / "__init__.py"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert fresh_child.stdout.strip() == "# exact candidate"
     with pytest.raises(module.CoordinatorError, match="already exists"):
         module._extract_candidate_archive(safe_archive, safe_root)
 
@@ -534,11 +548,15 @@ def test_process_incident_records_exact_failure_stage(tmp_path):
     assert value == {
         "authorization_sha256": "A" * 64,
         "contract_sha256": "B" * 64,
+        "errno": None,
         "exception_message": "synthetic containment failure",
-        "exception_type": "CoordinatorError",
+        "exception_type": (
+            f"{module.CoordinatorError.__module__}.CoordinatorError"
+        ),
         "phase": "PRODUCER_WAVE",
         "producer_result_sha256": None,
         "schema": "anysolver.e4-pl-s3-v2-stage4a-process-incident-v1",
+        "winerror": None,
     }
 
 
