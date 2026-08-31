@@ -1782,6 +1782,36 @@ def test_correction6_rejects_legacy_stage4a_before_any_guarded_work(
 
 def test_registered_resource_command_isolated_and_supplies_only_bound_dependencies(tmp_path):
     module = _load()
+    assert module.DEPENDENCY_REPOSITORIES == (
+        (
+            "ANYmaterial",
+            Path(
+                r"C:\Github\ANYsolver\.perf2-worktrees"
+                r"\s3-v2-stage4a-anymaterial-dependency"
+            ),
+        ),
+        (
+            "ANYgeometry",
+            Path(
+                r"C:\Github\ANYsolver\.perf2-worktrees"
+                r"\s3-v2-stage4a-anygeometry-dependency"
+            ),
+        ),
+        (
+            "ANYmesh",
+            Path(
+                r"C:\Github\ANYsolver\.perf2-worktrees"
+                r"\s3-v2-stage4a-anymesh-dependency"
+            ),
+        ),
+        (
+            "ANYfileIO",
+            Path(
+                r"C:\Github\ANYsolver\.perf2-worktrees"
+                r"\s3-v2-stage4a-anyfileio-dependency"
+            ),
+        ),
+    )
     plan_path = (tmp_path / "phase4a-plan.json").resolve()
     union_path = (tmp_path / "leaf-union.json").resolve()
     command = module.expected_resource_command(
@@ -1804,6 +1834,152 @@ def test_registered_resource_command_isolated_and_supplies_only_bound_dependenci
     assert str(module.ROOT / "src") not in command
     assert command.count("--finalize-leaf-union") == 1
     assert "--run-stage4a" not in command
+
+
+def _make_synthetic_dependency_repository(module, tmp_path):
+    repository = (tmp_path / "dependency").resolve()
+    source = repository / "src"
+    package = source / "synthetic_dependency"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (package / "module.py").write_text("VALUE = 2\n", encoding="utf-8")
+    (repository / ".gitignore").write_text("__pycache__/\n", encoding="utf-8")
+    module._git_run("init", repository=repository)
+    module._git_run("add", "--all", repository=repository)
+    module._git_run(
+        "-c",
+        "user.name=Stage4A Test",
+        "-c",
+        "user.email=stage4a@example.invalid",
+        "commit",
+        "-m",
+        "freeze synthetic dependency",
+        repository=repository,
+    )
+    commit = module._git("rev-parse", "HEAD", repository=repository)
+    tree = module._git("rev-parse", "HEAD^{tree}", repository=repository)
+    return repository, source, commit, tree
+
+
+def test_correction7_dependency_authority_rejects_old_live_root():
+    module = _load()
+    authority, _raw = module.strict_json_load(module.AUTHORITY_PATH)
+    dependencies = copy.deepcopy(authority["dependency_authority"]["entries"])
+    dependencies[0]["path"] = r"C:\Github\ANYmaterial"
+    dependencies[0]["source_path"] = r"C:\Github\ANYmaterial\src"
+    with pytest.raises(module.CoordinatorError, match="differs from authority"):
+        module._validate_stage4a_dependency_graph(
+            dependencies, authority["dependency_authority"]
+        )
+
+
+@pytest.mark.parametrize("extra_kind", ["ignored", "untracked"])
+def test_correction7_dependency_source_snapshot_rejects_extra_files(
+    tmp_path, extra_kind
+):
+    module = _load()
+    repository, source, commit, tree = _make_synthetic_dependency_repository(
+        module, tmp_path
+    )
+    if extra_kind == "ignored":
+        extra = source / "synthetic_dependency" / "__pycache__" / "module.pyc"
+    else:
+        extra = source / "synthetic_dependency" / "untracked.py"
+    extra.parent.mkdir(parents=True, exist_ok=True)
+    extra.write_bytes(b"not importable authority\n")
+    with pytest.raises(
+        module.CoordinatorError, match="dirty, untracked, or ignored source files"
+    ):
+        module._dependency_source_bindings(
+            repository,
+            source,
+            "synthetic",
+            expected_commit=commit,
+            expected_tree=tree,
+        )
+
+
+def test_correction7_dependency_source_snapshot_rejects_mid_hash_mutation(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    repository, source, commit, tree = _make_synthetic_dependency_repository(
+        module, tmp_path
+    )
+    original = module._dependency_source_file_binding
+    mutated = False
+
+    def mutate_after_binding(repository_path, source_path, relative_path, location):
+        nonlocal mutated
+        binding = original(
+            repository_path, source_path, relative_path, location
+        )
+        if not mutated:
+            mutated = True
+            target = repository_path.joinpath(*Path(relative_path).parts)
+            target.write_bytes(target.read_bytes() + b"# post-hash mutation\n")
+        return binding
+
+    monkeypatch.setattr(
+        module, "_dependency_source_file_binding", mutate_after_binding
+    )
+    with pytest.raises(module.CoordinatorError, match="snapshot changed while hashing"):
+        module._dependency_source_bindings(
+            repository,
+            source,
+            "synthetic",
+            expected_commit=commit,
+            expected_tree=tree,
+        )
+
+
+def test_correction7_dependency_snapshot_joins_expected_git_identity(tmp_path):
+    module = _load()
+    repository, source, _commit, tree = _make_synthetic_dependency_repository(
+        module, tmp_path
+    )
+    with pytest.raises(module.CoordinatorError, match="identity changed before hashing"):
+        module._dependency_source_bindings(
+            repository,
+            source,
+            "synthetic",
+            expected_commit="0" * 40,
+            expected_tree=tree,
+        )
+
+
+def test_correction7_dependency_source_rejects_reparse_root(tmp_path, monkeypatch):
+    module = _load()
+    repository, source, _commit, _tree = _make_synthetic_dependency_repository(
+        module, tmp_path
+    )
+    path_type = type(repository)
+    original_lstat = path_type.lstat
+
+    class ReparseInformation:
+        def __init__(self, information):
+            self._information = information
+            self.st_file_attributes = getattr(
+                information, "st_file_attributes", 0
+            ) | getattr(module.stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+
+        def __getattr__(self, name):
+            return getattr(self._information, name)
+
+    def marked_root(path):
+        information = original_lstat(path)
+        if path == repository:
+            return ReparseInformation(information)
+        return information
+
+    monkeypatch.setattr(path_type, "lstat", marked_root)
+    with pytest.raises(module.CoordinatorError, match="reparse or symlink source root"):
+        module._dependency_source_file_binding(
+            repository,
+            source,
+            "src/synthetic_dependency/module.py",
+            "synthetic",
+        )
 
 
 def test_correction6_resource_command_requires_current_mode_and_rejects_legacy(
@@ -1875,7 +2051,7 @@ class _SyntheticCheckerResources:
 
 def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
     assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v6"
     assert module.CHECKER_REGISTERED_SHARDS == 3
     assert module.MAXIMUM_CONCURRENT_WORKERS == 2
@@ -3161,7 +3337,7 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     monkeypatch,
 ):
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
     assert "tests/test_e4_pl_s3_v2_component_cache.py" in module.REQUIRED_FROZEN_PATHS
     plan, plan_raw = _correction4_plan(module)
     candidate_authority, _archive = _correction4_candidate(module)
@@ -3317,6 +3493,17 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
     binding_path.write_bytes(module.canonical_bytes({"synthetic": True}))
     contract_path = (tmp_path / "contract.json").resolve()
     contract_path.write_bytes(module.canonical_bytes({"synthetic": True}))
+    authority, authority_raw = module.strict_json_load(module.AUTHORITY_PATH)
+    assert authority_raw == module.canonical_bytes(authority)
+    dependency_input_hashes = module._validate_stage4a_dependency_graph(
+        authority["dependency_authority"]["entries"],
+        authority["dependency_authority"],
+    )
+    assert len(dependency_input_hashes) == 126
+    assert len(module.canonical_bytes(dependency_input_hashes)) == 24730
+    assert module.sha256(module.canonical_bytes(dependency_input_hashes)) == (
+        "FDB2585F82394FBC4E631E7F4960FFEE800DDF8485FE7B3574DA9BB90ABA77D5"
+    )
     source_root = (tmp_path / "candidate-source").resolve()
     source_root.mkdir()
     monkeypatch.syspath_prepend(str(module.REFERENCE_CASES))
@@ -3337,6 +3524,7 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
             candidate_archive_path=archive_path,
             candidate_binding_path=binding_path,
             contract_path=contract_path,
+            dependency_input_hashes=dependency_input_hashes,
             wave_root=(tmp_path / f"wave-{wave_index:02d}").resolve(),
         )
         _wave_id, lane, _root, workers = bounded.validate_manifest(manifest)
@@ -3345,6 +3533,8 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
         assert all(worker.wall_seconds == 1500 for worker in workers)
         assert len({worker.scientific_path.parent for worker in workers}) == len(workers)
         for worker in manifest["workers"]:
+            assert len(worker["input_hashes"]) == 134
+            assert all(item in worker["input_hashes"] for item in dependency_input_hashes)
             command = worker["command"]
             assert command[command.index("--candidate-commit") + 1] == candidate_authority[
                 "candidate_commit"
@@ -3376,6 +3566,7 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
             candidate_archive_path=archive_path,
             candidate_binding_path=binding_path,
             contract_path=contract_path,
+            dependency_input_hashes=dependency_input_hashes,
             wave_root=(tmp_path / "cross-record-wave").resolve(),
         )
 
@@ -3722,8 +3913,9 @@ def test_correction4_leaf_outputs_cannot_escape_cycle_root(tmp_path):
         )
 
 
-def test_correction5_guarded_wave_publishes_nested_contained_receipt(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize("final_dependency_valid", [True, False])
+def test_correction5_guarded_wave_revalidates_before_receipt(
+    tmp_path, monkeypatch, final_dependency_valid
 ):
     module = _load()
     output_root = (tmp_path / "cycle").resolve()
@@ -3781,9 +3973,18 @@ def test_correction5_guarded_wave_publishes_nested_contained_receipt(
     monkeypatch.setattr(
         module, "validate_resource_execution_state", lambda *_args, **_kwargs: None
     )
-    monkeypatch.setattr(
-        module, "_validate_stage4a_leaf_cycle", lambda **_kwargs: cycle
-    )
+    cycle_validation_calls = 0
+
+    def validate_cycle(**_kwargs):
+        nonlocal cycle_validation_calls
+        cycle_validation_calls += 1
+        if cycle_validation_calls == 2 and not final_dependency_valid:
+            raise module.CoordinatorError(
+                "Stage 4A dependency source graph differs after execution"
+            )
+        return cycle
+
+    monkeypatch.setattr(module, "_validate_stage4a_leaf_cycle", validate_cycle)
 
     class Bounded:
         @staticmethod
@@ -3838,9 +4039,15 @@ def test_correction5_guarded_wave_publishes_nested_contained_receipt(
         leaf_wave_manifest_sha256=module.sha256(manifest_raw),
         wall_guard=Guard(),
     )
-    assert made == expected_receipt
+    assert cycle_validation_calls == 2
     assert receipt_path.parent == wave_root
-    assert module.strict_json_load(receipt_path)[0] == expected_receipt
+    if final_dependency_valid:
+        assert made == expected_receipt
+        assert module.strict_json_load(receipt_path)[0] == expected_receipt
+    else:
+        assert made["terminal"] == module.BLOCKED
+        assert made["formal_failures"] == ["PRODUCER_WAVE_NOT_COMPLETED"]
+        assert module.strict_json_load(receipt_path)[0] == made
 
 
 def test_correction4_reconstruction_rejects_protocol_disagreement(

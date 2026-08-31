@@ -54,7 +54,10 @@ AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2
 LEAF_WAVE_AUTHORIZATION_SCHEMA = (
     "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v5"
 )
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
+DEPENDENCY_AUTHORITY_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-dependency-authority-v1"
+)
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
 AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v3"
 HISTORICAL_AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
@@ -382,15 +385,33 @@ REQUIRED_FROZEN_PATHS = {
     "tests/test_e4_pl_s3_v2_stage4a_coordinator.py",
 }
 DEPENDENCY_REPOSITORIES = (
-    ("ANYmaterial", Path(r"C:\Github\ANYmaterial")),
-    ("ANYgeometry", Path(r"C:\Github\ANYgeometry")),
+    (
+        "ANYmaterial",
+        Path(
+            r"C:\Github\ANYsolver\.perf2-worktrees"
+            r"\s3-v2-stage4a-anymaterial-dependency"
+        ),
+    ),
+    (
+        "ANYgeometry",
+        Path(
+            r"C:\Github\ANYsolver\.perf2-worktrees"
+            r"\s3-v2-stage4a-anygeometry-dependency"
+        ),
+    ),
     (
         "ANYmesh",
         Path(
             r"C:\Github\ANYsolver\.perf2-worktrees\s3-v2-stage4a-anymesh-dependency"
         ),
     ),
-    ("ANYfileIO", Path(r"C:\Github\ANYfileIO")),
+    (
+        "ANYfileIO",
+        Path(
+            r"C:\Github\ANYsolver\.perf2-worktrees"
+            r"\s3-v2-stage4a-anyfileio-dependency"
+        ),
+    ),
 )
 
 
@@ -870,6 +891,13 @@ def _nonnegative_integer(value: Any, location: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise CoordinatorError(f"{location} must be a nonnegative integer")
     return value
+
+
+def _positive_integer(value: Any, location: str) -> int:
+    made = _nonnegative_integer(value, location)
+    if made <= 0:
+        raise CoordinatorError(f"{location} must be a positive integer")
+    return made
 
 
 def _stage4a_plan_shards(
@@ -2299,6 +2327,378 @@ def _git(
 ) -> bytes | str:
     completed = _git_run(*arguments, repository=repository)
     return completed.stdout if binary else completed.stdout.decode("utf-8").strip()
+
+
+def _git_nul_paths(raw: bytes, location: str) -> list[str]:
+    if not raw:
+        return []
+    if not raw.endswith(b"\0"):
+        raise CoordinatorError(f"{location} is not NUL-terminated")
+    try:
+        paths = [member.decode("utf-8") for member in raw[:-1].split(b"\0")]
+    except UnicodeError as exc:
+        raise CoordinatorError(f"{location} contains a non-UTF-8 path") from exc
+    if any(not path for path in paths) or paths != sorted(set(paths)):
+        raise CoordinatorError(f"{location} is not strictly sorted and unique")
+    return paths
+
+
+def _dependency_source_file_binding(
+    repository: Path,
+    source: Path,
+    relative_path: str,
+    location: str,
+) -> dict[str, str]:
+    pure = PurePosixPath(relative_path)
+    if (
+        pure.is_absolute()
+        or not pure.parts
+        or pure.parts[0] != "src"
+        or any(part in {"", ".", ".."} for part in pure.parts)
+        or "\\" in relative_path
+    ):
+        raise CoordinatorError(f"{location} escapes the registered source tree")
+    nominal_repository = repository
+    nominal_source = source
+    try:
+        nominal_repository_information = nominal_repository.lstat()
+        nominal_source_information = nominal_source.lstat()
+    except OSError as exc:
+        raise CoordinatorError(f"cannot inspect {location} roots: {exc}") from exc
+    reparse_attribute = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    if (
+        not stat.S_ISDIR(nominal_repository_information.st_mode)
+        or not stat.S_ISDIR(nominal_source_information.st_mode)
+        or nominal_repository.is_symlink()
+        or nominal_source.is_symlink()
+        or getattr(nominal_repository_information, "st_file_attributes", 0)
+        & reparse_attribute
+        or getattr(nominal_source_information, "st_file_attributes", 0)
+        & reparse_attribute
+    ):
+        raise CoordinatorError(f"{location} has a reparse or symlink source root")
+    repository = nominal_repository.resolve(strict=True)
+    source = nominal_source.resolve(strict=True)
+    lexical = nominal_repository.joinpath(*pure.parts)
+    try:
+        resolved = lexical.resolve(strict=True)
+        resolved.relative_to(source)
+    except (OSError, ValueError) as exc:
+        raise CoordinatorError(f"{location} resolves outside the source tree") from exc
+
+    def inspect_components() -> os.stat_result:
+        current = repository
+        try:
+            repository_information = current.lstat()
+        except OSError as exc:
+            raise CoordinatorError(f"cannot inspect {location}: {exc}") from exc
+        repository_attributes = getattr(
+            repository_information, "st_file_attributes", 0
+        )
+        if (
+            not stat.S_ISDIR(repository_information.st_mode)
+            or current.is_symlink()
+            or repository_attributes
+            & reparse_attribute
+        ):
+            raise CoordinatorError(
+                f"{location} has a non-directory or reparse repository root"
+            )
+        final_information = repository_information
+        for index, part in enumerate(pure.parts):
+            current = current / part
+            try:
+                information = current.lstat()
+            except OSError as exc:
+                raise CoordinatorError(f"cannot inspect {location}: {exc}") from exc
+            attributes = getattr(information, "st_file_attributes", 0)
+            if (
+                current.is_symlink()
+                or attributes & reparse_attribute
+            ):
+                raise CoordinatorError(f"{location} contains a reparse or symlink")
+            final = index == len(pure.parts) - 1
+            if (final and not stat.S_ISREG(information.st_mode)) or (
+                not final and not stat.S_ISDIR(information.st_mode)
+            ):
+                raise CoordinatorError(f"{location} is not a regular source file")
+            final_information = information
+        return final_information
+
+    information = inspect_components()
+    try:
+        with lexical.open("rb") as stream:
+            opened_information = os.fstat(stream.fileno())
+            if (
+                not stat.S_ISREG(opened_information.st_mode)
+                or not os.path.samestat(information, opened_information)
+                or information.st_size != opened_information.st_size
+                or information.st_mtime_ns != opened_information.st_mtime_ns
+            ):
+                raise CoordinatorError(f"{location} identity changed while opening")
+            raw = stream.read()
+            final_opened_information = os.fstat(stream.fileno())
+            if (
+                not os.path.samestat(opened_information, final_opened_information)
+                or opened_information.st_size != final_opened_information.st_size
+                or opened_information.st_mtime_ns
+                != final_opened_information.st_mtime_ns
+            ):
+                raise CoordinatorError(f"{location} changed while reading")
+    except OSError as exc:
+        raise CoordinatorError(f"cannot read {location}: {exc}") from exc
+    final_information = inspect_components()
+    if (
+        not os.path.samestat(information, final_information)
+        or information.st_size != final_information.st_size
+        or information.st_mtime_ns != final_information.st_mtime_ns
+    ):
+        raise CoordinatorError(f"{location} identity changed while hashing")
+    try:
+        if lexical.resolve(strict=True) != resolved:
+            raise CoordinatorError(f"{location} resolution changed while hashing")
+    except OSError as exc:
+        raise CoordinatorError(f"cannot re-resolve {location}: {exc}") from exc
+    return {"path": str(resolved), "sha256": sha256(raw)}
+
+
+def _dependency_git_snapshot(repository: Path) -> dict[str, bytes | str]:
+    return {
+        "head": _git("rev-parse", "HEAD", repository=repository),
+        "tree": _git("rev-parse", "HEAD^{tree}", repository=repository),
+        "index": _git(
+            "ls-files",
+            "-z",
+            "--stage",
+            "--",
+            "src",
+            binary=True,
+            repository=repository,
+        ),
+        "tracked": _git(
+            "ls-files",
+            "-z",
+            "--",
+            "src",
+            binary=True,
+            repository=repository,
+        ),
+        "status": _git(
+            "status",
+            "--porcelain=v1",
+            "-z",
+            "--untracked-files=all",
+            binary=True,
+            repository=repository,
+        ),
+        "untracked": _git(
+            "ls-files",
+            "-z",
+            "--others",
+            "--exclude-standard",
+            "--",
+            "src",
+            binary=True,
+            repository=repository,
+        ),
+        "ignored": _git(
+            "ls-files",
+            "-z",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "--",
+            "src",
+            binary=True,
+            repository=repository,
+        ),
+    }
+
+
+def _dependency_source_bindings(
+    repository: Path,
+    source: Path,
+    location: str,
+    *,
+    expected_commit: str,
+    expected_tree: str,
+) -> list[dict[str, str]]:
+    before = _dependency_git_snapshot(repository)
+    if before["head"] != expected_commit or before["tree"] != expected_tree:
+        raise CoordinatorError(f"{location} Git identity changed before hashing")
+    ignored = _git_nul_paths(
+        before["ignored"],
+        f"{location}.ignored_source_files",
+    )
+    untracked = _git_nul_paths(
+        before["untracked"],
+        f"{location}.untracked_source_files",
+    )
+    if before["status"] or untracked or ignored:
+        raise CoordinatorError(
+            f"{location} contains dirty, untracked, or ignored source files"
+        )
+    tracked = _git_nul_paths(
+        before["tracked"],
+        f"{location}.tracked_source_files",
+    )
+    if not tracked:
+        raise CoordinatorError(f"{location} has no tracked source files")
+    bindings = [
+        _dependency_source_file_binding(
+            repository,
+            source,
+            relative_path,
+            f"{location}.tracked_source_files[{index}]",
+        )
+        for index, relative_path in enumerate(tracked)
+    ]
+    bindings.sort(key=lambda item: item["path"])
+    if len({item["path"] for item in bindings}) != len(bindings):
+        raise CoordinatorError(f"{location} source bindings are duplicated")
+    after = _dependency_git_snapshot(repository)
+    if after != before:
+        raise CoordinatorError(f"{location} Git/source snapshot changed while hashing")
+    return bindings
+
+
+def _validate_stage4a_dependency_graph(
+    dependencies: Any,
+    dependency_authority_value: Any,
+) -> list[dict[str, str]]:
+    dependency_authority = _exact(
+        dependency_authority_value,
+        {
+            "combined_graph",
+            "entries",
+            "ignored_source_files_forbidden",
+            "reparse_or_symlink_source_files_forbidden",
+            "schema",
+        },
+        "$.authority.dependency_authority",
+    )
+    if (
+        dependency_authority["schema"] != DEPENDENCY_AUTHORITY_SCHEMA
+        or dependency_authority["ignored_source_files_forbidden"] is not True
+        or dependency_authority["reparse_or_symlink_source_files_forbidden"]
+        is not True
+    ):
+        raise CoordinatorError("Stage 4A dependency authority policy differs")
+    authority_entries = dependency_authority["entries"]
+    if (
+        not isinstance(dependencies, list)
+        or not isinstance(authority_entries, list)
+        or len(dependencies) != len(DEPENDENCY_REPOSITORIES)
+        or dependencies != authority_entries
+    ):
+        raise CoordinatorError("Stage 4A dependency graph differs from authority")
+
+    combined: list[dict[str, str]] = []
+    for index, ((expected_name, expected_root), raw_dependency) in enumerate(
+        zip(DEPENDENCY_REPOSITORIES, dependencies)
+    ):
+        location = f"$.contract.dependencies[{index}]"
+        dependency = _exact(
+            raw_dependency,
+            {
+                "commit",
+                "name",
+                "path",
+                "source_file_count",
+                "source_graph_sha256",
+                "source_path",
+                "tree",
+            },
+            location,
+        )
+        nominal_repository = Path(str(dependency["path"]))
+        nominal_source = Path(str(dependency["source_path"]))
+        repository = nominal_repository.resolve()
+        source = nominal_source.resolve()
+        dependency_commit = _lower_object(
+            dependency["commit"], f"{location}.commit"
+        )
+        dependency_tree = _lower_object(dependency["tree"], f"{location}.tree")
+        source_file_count = _positive_integer(
+            dependency["source_file_count"], f"{location}.source_file_count"
+        )
+        source_graph_sha256 = _digest(
+            dependency["source_graph_sha256"], f"{location}.source_graph_sha256"
+        )
+        if (
+            dependency["name"] != expected_name
+            or str(nominal_repository) != str(expected_root)
+            or str(nominal_source) != str(expected_root / "src")
+            or repository != expected_root.resolve()
+            or source != (expected_root / "src").resolve()
+            or not source.is_dir()
+        ):
+            raise CoordinatorError("Stage 4A dependency path or order differs")
+        _validate_git_object_authority(repository)
+        if (
+            _git("rev-parse", "HEAD", repository=repository) != dependency_commit
+            or _git(
+                "rev-parse",
+                f"{dependency_commit}^{{tree}}",
+                repository=repository,
+            )
+            != dependency_tree
+            or _git(
+                "status",
+                "--porcelain=v1",
+                "--untracked-files=all",
+                repository=repository,
+            )
+        ):
+            raise CoordinatorError(
+                f"Stage 4A dependency is dirty or differs: {expected_name}"
+            )
+        bindings = _dependency_source_bindings(
+            nominal_repository,
+            nominal_source,
+            location,
+            expected_commit=dependency_commit,
+            expected_tree=dependency_tree,
+        )
+        if (
+            len(bindings) != source_file_count
+            or sha256(canonical_bytes(bindings)) != source_graph_sha256
+        ):
+            raise CoordinatorError(
+                f"Stage 4A dependency source graph differs: {expected_name}"
+            )
+        combined.extend(bindings)
+
+    combined.sort(key=lambda item: item["path"])
+    if len({item["path"] for item in combined}) != len(combined):
+        raise CoordinatorError("Stage 4A combined dependency graph is duplicated")
+    combined_graph = _exact(
+        dependency_authority["combined_graph"],
+        {"byte_count", "file_count", "sha256"},
+        "$.authority.dependency_authority.combined_graph",
+    )
+    combined_raw = canonical_bytes(combined)
+    if combined_graph != {
+        "byte_count": len(combined_raw),
+        "file_count": len(combined),
+        "sha256": sha256(combined_raw),
+    }:
+        raise CoordinatorError("Stage 4A combined dependency source graph differs")
+    return combined
+
+
+def _validated_dependency_input_hashes(
+    contract: Mapping[str, Any],
+) -> list[dict[str, str]]:
+    authority_value, authority_raw = strict_json_load(AUTHORITY_PATH)
+    if (
+        authority_raw != canonical_bytes(authority_value)
+        or authority_value.get("schema") != AUTHORITY_SCHEMA
+    ):
+        raise CoordinatorError("Stage 4A dependency authority is invalid")
+    return _validate_stage4a_dependency_graph(
+        contract["dependencies"], authority_value.get("dependency_authority")
+    )
 
 
 def _validate_git_object_authority(repository: Path = ROOT) -> None:
@@ -4190,51 +4590,9 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
     )
     if changed_paths != registered_extent or changed_paths != actual_changed:
         raise CoordinatorError("candidate changed-path extent differs")
-    dependencies = contract["dependencies"]
-    if not isinstance(dependencies, list) or len(dependencies) != len(
-        DEPENDENCY_REPOSITORIES
-    ):
-        raise CoordinatorError("Stage 4A dependency graph differs")
-    for index, ((expected_name, expected_root), raw_dependency) in enumerate(
-        zip(DEPENDENCY_REPOSITORIES, dependencies)
-    ):
-        dependency = _exact(
-            raw_dependency,
-            {"commit", "name", "path", "source_path", "tree"},
-            f"$.contract.dependencies[{index}]",
-        )
-        repository = Path(str(dependency["path"])).resolve()
-        source = Path(str(dependency["source_path"])).resolve()
-        dependency_commit = _lower_object(
-            dependency["commit"], f"$.contract.dependencies[{index}].commit"
-        )
-        dependency_tree = _lower_object(
-            dependency["tree"], f"$.contract.dependencies[{index}].tree"
-        )
-        if (
-            dependency["name"] != expected_name
-            or repository != expected_root.resolve()
-            or source != (expected_root / "src").resolve()
-            or not source.is_dir()
-        ):
-            raise CoordinatorError("Stage 4A dependency path or order differs")
-        _validate_git_object_authority(repository)
-        if (
-            _git("rev-parse", "HEAD", repository=repository) != dependency_commit
-            or _git(
-                "rev-parse",
-                f"{dependency_commit}^{{tree}}",
-                repository=repository,
-            )
-            != dependency_tree
-            or _git(
-                "status",
-                "--porcelain=v1",
-                "--untracked-files=all",
-                repository=repository,
-            )
-        ):
-            raise CoordinatorError(f"Stage 4A dependency is dirty or differs: {expected_name}")
+    _validate_stage4a_dependency_graph(
+        contract["dependencies"], authority_value.get("dependency_authority")
+    )
     files = contract["frozen_files"]
     if not isinstance(files, list) or not files:
         raise CoordinatorError("Stage 4A frozen-file graph is empty")
@@ -5509,6 +5867,7 @@ def _build_stage4a_leaf_wave_manifest(
     candidate_archive_path: Path,
     candidate_binding_path: Path,
     contract_path: Path,
+    dependency_input_hashes: Sequence[Mapping[str, Any]],
     wave_root: Path,
 ) -> dict[str, Any]:
     leaves = {
@@ -5569,13 +5928,41 @@ def _build_stage4a_leaf_wave_manifest(
         contract_path.resolve(),
         plan_path.resolve(),
     )
-    input_hashes = sorted(
-        (
-            {"path": str(path), "sha256": sha256(path.read_bytes())}
-            for path in common_input_paths
-        ),
-        key=lambda item: item["path"],
-    )
+    dependency_inputs: list[dict[str, str]] = []
+    previous_dependency_path = ""
+    for index, raw_binding in enumerate(dependency_input_hashes):
+        binding = _exact(
+            raw_binding,
+            {"path", "sha256"},
+            f"$.dependency_input_hashes[{index}]",
+        )
+        path = Path(str(binding["path"]))
+        if not path.is_absolute():
+            raise CoordinatorError("dependency input path must be absolute")
+        path_text = str(path.resolve(strict=True))
+        if path_text <= previous_dependency_path:
+            raise CoordinatorError(
+                "dependency input hashes must be strictly path-sorted and unique"
+            )
+        previous_dependency_path = path_text
+        dependency_inputs.append(
+            {
+                "path": path_text,
+                "sha256": _digest(
+                    binding["sha256"],
+                    f"$.dependency_input_hashes[{index}].sha256",
+                ),
+            }
+        )
+    if not dependency_inputs:
+        raise CoordinatorError("dependency input hash graph is empty")
+    input_hashes = dependency_inputs + [
+        {"path": str(path), "sha256": sha256(path.read_bytes())}
+        for path in common_input_paths
+    ]
+    input_hashes.sort(key=lambda item: item["path"])
+    if len({item["path"] for item in input_hashes}) != len(input_hashes):
+        raise CoordinatorError("leaf worker input hash graph is duplicated")
     workers: list[dict[str, Any]] = []
     for leaf_id in leaf_ids:
         leaf = leaves[leaf_id]
@@ -5645,6 +6032,7 @@ def prepare_stage4a_leaf_cycle(
 
     _coordinator_checkpoint()
     contract, _contract_raw = validate_contract(contract_path)
+    dependency_input_hashes = _validated_dependency_input_hashes(contract)
     funnel = _load_module("_s3_v2_stage4a_leaf_prepare_funnel", FUNNEL_PATH)
     manifest_value, manifest_raw = funnel.strict_json_load(MANIFEST_PATH)
     records = funnel.validate_manifest(manifest_value, manifest_raw)
@@ -5695,6 +6083,7 @@ def prepare_stage4a_leaf_cycle(
             candidate_archive_path=archive_path,
             candidate_binding_path=binding_path,
             contract_path=contract_path,
+            dependency_input_hashes=dependency_input_hashes,
             wave_root=wave_root,
         )
         manifest_path = (wave_root / "manifest.json").resolve()
@@ -5812,6 +6201,7 @@ def _validate_stage4a_leaf_cycle(
         candidate_archive_path=archive_path,
         candidate_binding_path=binding_path,
         contract_path=contract_path,
+        dependency_input_hashes=_validated_dependency_input_hashes(contract),
         wave_root=wave_root,
     )
     if manifest_raw != canonical_bytes(manifest) or manifest != expected_manifest:

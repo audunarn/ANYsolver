@@ -55,7 +55,25 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
+    assert set(authority) == {
+        "advisory_policy",
+        "allowed_extent",
+        "candidate",
+        "component_cache_policy",
+        "correction",
+        "dependency_authority",
+        "execution",
+        "formal_phase",
+        "formal_protocol",
+        "frozen_inputs",
+        "parent",
+        "production_boundary",
+        "review_correction_requirements",
+        "schema",
+        "scope_base",
+        "terminals",
+    }
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v9"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -174,10 +192,9 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     }
     assert correction["current_change"] == {
         "cases_changed": False,
-        "classification": (
-            "V2_ONLY_FORMAL_RUNTIME_PROCESS_AND_EVIDENCE_PROTOCOL_CORRECTION"
-        ),
+        "classification": "CALIBRATED_CLEAN_DEPENDENCY_AUTHORITY_ONLY",
         "classifying_scientific_protocol_changed": False,
+        "dependency_paths_changed": True,
         "defaults_changed": False,
         "mechanics_changed": False,
         "process_or_evidence_protocol_changed": True,
@@ -649,6 +666,244 @@ def test_stage4a_correction5_nonclassifying_calibration_is_exact(authority) -> N
     }
 
 
+def test_stage4a_correction6_calibration_and_monitor_incident_are_nonclassifying(
+    authority,
+) -> None:
+    calibration = authority["correction"]["correction6_calibration"]
+    assert calibration["disposition"] == "USABLE_FOR_FORMAL_AUTHORITY_PREPARATION_ONLY"
+    assert calibration["formal_evidence_eligible"] is False
+    assert calibration["no_scientific_adjudication"] is True
+    assert calibration["summary"] == {
+        "byte_count": 5977,
+        "sha256": "5871DE245CDF2C91C0E27A1F2688F8E2E0B5043A030E7E904B46EA4072B7C993",
+        "terminal": "COMPLETED_NONCLASSIFYING_CALIBRATION",
+    }
+    assert calibration["bounded_result"] == {
+        "byte_count": 57435,
+        "sha256": "5CCCFCBEC1A7C6343C8F50360EEE6F9FE1E1622FDFD2CDC4DE02ECC8AAE34DFF",
+    }
+    assert calibration["incident"] == {
+        "byte_count": 4553,
+        "ledger_chain": {
+            "final_ledger": {
+                "byte_count": 117260,
+                "line_count": 214,
+                "sha256": (
+                    "386CA9114C7F21A6FF940FCCE87E7CA5D82832624A01DA055A369ADBB63EA676"
+                ),
+            },
+            "ordered_rows": [
+                {
+                    "byte_count": 992,
+                    "preceding_ledger": {
+                        "byte_count": 113842,
+                        "line_count": 210,
+                        "sha256": (
+                            "C65CC8D5BD15EBA13D03D9897174EAB58102714EC854B2739B4829B72AE9E84A"
+                        ),
+                    },
+                    "recorded_incident_byte_count": 4339,
+                    "sha256": (
+                        "EAC114403ACC354C87A857610BC6595C97949D2490422A0797DE91003F146090"
+                    ),
+                    "status": "COMPLETED_WITH_MONITOR_BOOKKEEPING_INCIDENT",
+                },
+                {
+                    "actual_preceding_ledger": {
+                        "byte_count": 114834,
+                        "line_count": 211,
+                        "sha256": (
+                            "4848DC1CAFEDAED7EA381FF5DDC031D4CA29E03E50023E06B8BBBA70E838783D"
+                        ),
+                    },
+                    "byte_count": 648,
+                    "corrected_incident_byte_count": 4553,
+                    "recorded_preceding_ledger_byte_count": 114959,
+                    "sha256": (
+                        "1E67813A47EB9FDB319E3E129C437D43F2AAE29F21BE9BE1B389B3B15B64EE64"
+                    ),
+                    "status": "LEDGER_BOOKKEEPING_CORRECTION",
+                },
+                {
+                    "actual_row_212_sha256": (
+                        "1E67813A47EB9FDB319E3E129C437D43F2AAE29F21BE9BE1B389B3B15B64EE64"
+                    ),
+                    "byte_count": 890,
+                    "preceding_ledger": {
+                        "byte_count": 115482,
+                        "line_count": 212,
+                        "sha256": (
+                            "55B7F5CEBB48D66605278BD66BA4EC3EEF5D231F76CF2E6F7464C4F50ED763D9"
+                        ),
+                    },
+                    "recorded_row_212_sha256": (
+                        "1E67813A2B1759016C69055F4EC09E0ED04C4E8010A956701714CC8D3AA5BAA4"
+                    ),
+                    "sha256": (
+                        "AC20F999AB9174BD0D7B728ABC7A2EC5635DBC2C9EE35F8B40AA05729AC58C74"
+                    ),
+                    "status": "LEDGER_BOOKKEEPING_CORRECTION",
+                },
+                {
+                    "byte_count": 888,
+                    "corrected_row_212_sha256": (
+                        "1E67813A47EB9FDB319E3E129C437D43F2AAE29F21BE9BE1B389B3B15B64EE64"
+                    ),
+                    "preceding_ledger": {
+                        "byte_count": 116372,
+                        "line_count": 213,
+                        "sha256": (
+                            "66633828C6BF1B6EA31D17E001C646819718E17A0226A5AB58BD7E43546D913D"
+                        ),
+                    },
+                    "sha256": (
+                        "EA92545767989F1183A2649435CCA8C5E5D54D56E8CE6F5FBBFEE7AC9A2C1B40"
+                    ),
+                    "status": "LEDGER_BOOKKEEPING_CORRECTION",
+                },
+            ],
+            "request_id": "4e8ea97778d543babba5586ba74bc4fb",
+        },
+        "ledger_terminal": "COMPLETED_WITH_MONITOR_BOOKKEEPING_INCIDENT",
+        "path": (
+            "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\"
+            "s3-v2-stage4a-c6-calibration-incidents\\"
+            "4e8ea97778d543babba5586ba74bc4fb-monitor-incident.json"
+        ),
+        "resource_execution_clean_pass": False,
+        "sha256": "47C5A1217BEDFC0B650DA933D4FF3294793AA39C3E855BCCC9325CAF24FECBC6",
+    }
+    assert calibration["request"]["request_id"] == (
+        "4e8ea97778d543babba5586ba74bc4fb"
+    )
+    assert calibration["request"]["request_reuse_forbidden"] is True
+    assert calibration["v1_live_worker_count"] == 0
+    assert calibration["wall_seconds"] == "84.376511"
+    assert calibration["worker_termination_proven"] == [True, True]
+    chain = calibration["incident"]["ledger_chain"]
+    rows = chain["ordered_rows"]
+    prefixes = [
+        rows[0]["preceding_ledger"],
+        rows[1]["actual_preceding_ledger"],
+        rows[2]["preceding_ledger"],
+        rows[3]["preceding_ledger"],
+    ]
+    for index in range(1, len(prefixes)):
+        assert prefixes[index]["byte_count"] == (
+            prefixes[index - 1]["byte_count"] + rows[index - 1]["byte_count"]
+        )
+        assert prefixes[index]["line_count"] == (
+            prefixes[index - 1]["line_count"] + 1
+        )
+    assert chain["final_ledger"]["byte_count"] == (
+        prefixes[-1]["byte_count"] + rows[-1]["byte_count"]
+    )
+    assert chain["final_ledger"]["line_count"] == prefixes[-1]["line_count"] + 1
+    assert rows[1]["corrected_incident_byte_count"] == calibration["incident"][
+        "byte_count"
+    ]
+    assert rows[1]["recorded_preceding_ledger_byte_count"] != rows[1][
+        "actual_preceding_ledger"
+    ]["byte_count"]
+    assert rows[2]["recorded_row_212_sha256"] != rows[2][
+        "actual_row_212_sha256"
+    ]
+
+
+def test_stage4a_correction7_dependency_authority_is_exact(authority) -> None:
+    assert authority["dependency_authority"] == {
+        "combined_graph": {
+            "byte_count": 24730,
+            "file_count": 126,
+            "sha256": (
+                "FDB2585F82394FBC4E631E7F4960FFEE800DDF8485FE7B3574DA9BB90ABA77D5"
+            ),
+        },
+        "entries": [
+            {
+                "commit": "de2be5819dd07b9ad9c02d87335d61482808bcec",
+                "name": "ANYmaterial",
+                "path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anymaterial-dependency"
+                ),
+                "source_file_count": 15,
+                "source_graph_sha256": (
+                    "AA316B42C0D4053F4A468C2D453EA6BFAC8EA7A17ABC1F7F0BFDD4F4F343C109"
+                ),
+                "source_path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anymaterial-dependency\\src"
+                ),
+                "tree": "e1e75423f623e9aad787bf584b3f0c9a6fe2360a",
+            },
+            {
+                "commit": "b2c4df0892025963623201b27e45a1e9af615d8e",
+                "name": "ANYgeometry",
+                "path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anygeometry-dependency"
+                ),
+                "source_file_count": 37,
+                "source_graph_sha256": (
+                    "60AEC025D7659B5714A9588150B1EFABF74DA3398FAA9297420BB2E1D0A29149"
+                ),
+                "source_path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anygeometry-dependency\\src"
+                ),
+                "tree": "8ee3a63ade1127f45245bf9f0b1c442717ec34d5",
+            },
+            {
+                "commit": "ffeb538f6f1422cd7c8f3f2b86610c29dc26e078",
+                "name": "ANYmesh",
+                "path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anymesh-dependency"
+                ),
+                "source_file_count": 50,
+                "source_graph_sha256": (
+                    "7226109CD4986C4F18828F72B0DAA80EEDD37DA86AC9FEBB908CA4779F21F324"
+                ),
+                "source_path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anymesh-dependency\\src"
+                ),
+                "tree": "c6092a1fce57a7182d647c34d393838ef700a846",
+            },
+            {
+                "commit": "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+                "name": "ANYfileIO",
+                "path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anyfileio-dependency"
+                ),
+                "source_file_count": 24,
+                "source_graph_sha256": (
+                    "FCDECDEFAF7E1DC370287215D6C2EE705332C721360C0D95B477E6F003F9512D"
+                ),
+                "source_path": (
+                    "C:\\Github\\ANYsolver\\.perf2-worktrees\\"
+                    "s3-v2-stage4a-anyfileio-dependency\\src"
+                ),
+                "tree": "70b406be2574adceab4a7b688c0e489e0937df5d",
+            },
+        ],
+        "ignored_source_files_forbidden": True,
+        "reparse_or_symlink_source_files_forbidden": True,
+        "schema": "anysolver.e4-pl-s3-v2-stage4a-dependency-authority-v1",
+    }
+    entries = authority["dependency_authority"]["entries"]
+    assert [
+        {
+            key: entry[key]
+            for key in ("commit", "name", "path", "tree")
+        }
+        for entry in entries
+    ] == authority["correction"]["correction6_calibration"]["dependency_graph"]
+    assert sum(entry["source_file_count"] for entry in entries) == 126
+
+
 def test_stage4a_correction6_v2_only_leaf_bounds(authority) -> None:
     assert authority["execution"] == {
         "all_launched_process_terminals_bound": True,
@@ -998,6 +1253,75 @@ def test_stage4a_prior_v7_authority_binding_and_history_are_exact(authority) -> 
     }
     for unchanged in (
         "advisory_policy",
+        "component_cache_policy",
+        "formal_protocol",
+        "frozen_inputs",
+        "parent",
+        "production_boundary",
+        "review_correction_requirements",
+        "scope_base",
+        "terminals",
+    ):
+        assert predecessor[unchanged] == authority[unchanged]
+
+
+def test_stage4a_prior_v8_authority_binding_and_history_are_exact(authority) -> None:
+    prior = authority["correction"]["history"][7]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    parent = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    predecessor = json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=_reject_duplicates,
+        parse_constant=_reject_constant,
+    )
+    assert raw == _canonical(predecessor)
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree, parent) == (
+        prior["subject"],
+        prior["tree"],
+        prior["parent"],
+    )
+    assert predecessor["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
+    assert predecessor["correction"]["history"] == authority["correction"][
+        "history"
+    ][:7]
+    assert predecessor["correction"]["current_change"] == authority["correction"][
+        "predecessor_v8_current_change"
+    ]
+    assert predecessor["execution"] == authority["correction"][
+        "predecessor_v8_execution"
+    ]
+    assert predecessor["formal_phase"] == authority["formal_phase"]
+    assert predecessor["candidate"] == authority["candidate"]
+    for unchanged in (
+        "advisory_policy",
+        "allowed_extent",
         "component_cache_policy",
         "formal_protocol",
         "frozen_inputs",
