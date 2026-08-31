@@ -159,6 +159,7 @@ def test_three_fake_shards_cover_exact_81_classifying_and_72_v1_diagnostics(
         }
 
     monkeypatch.setattr(producer, "produce_case", fake_case)
+    monkeypatch.setattr(producer, "activate_frozen_candidate_source", lambda: None)
     documents = []
     for shard_index in range(3):
         documents.append(
@@ -219,6 +220,7 @@ def test_v2_failure_never_launches_v1_or_publishes_canonical_output(
         raise RuntimeError("synthetic V2 contradiction")
 
     monkeypatch.setattr(producer, "produce_case", fail_v2)
+    monkeypatch.setattr(producer, "activate_frozen_candidate_source", lambda: None)
     output = tmp_path / "must-not-exist.json"
     with pytest.raises(RuntimeError, match="synthetic V2"):
         producer.run_assignment(

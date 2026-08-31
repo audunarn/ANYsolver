@@ -104,6 +104,23 @@ def load_assignment(
     return plan, shard, sha256(plan_raw)
 
 
+def activate_frozen_candidate_source() -> None:
+    """Select this checkout's source tree only after authority validation."""
+
+    source_root = (ROOT / "src").resolve()
+    if any(name == "anysolver" or name.startswith("anysolver.") for name in sys.modules):
+        raise FlatFunnelError("ANYsolver was imported before producer authority validation")
+    sys.path.insert(0, str(source_root))
+    spec = importlib.util.find_spec("anysolver")
+    if spec is None or spec.origin is None:
+        raise FlatFunnelError("frozen ANYsolver candidate cannot be resolved")
+    origin = Path(spec.origin).resolve()
+    try:
+        origin.relative_to(source_root)
+    except ValueError as exc:
+        raise FlatFunnelError("ANYsolver candidate resolved outside the frozen source tree") from exc
+
+
 def _node_id(i: int, j: int, level: int) -> int:
     return int(j) * (int(level) + 1) + int(i) + 1
 
@@ -593,6 +610,7 @@ def run_assignment(
             total=len(records),
         ),
     )
+    activate_frozen_candidate_source()
     classifying: list[dict[str, Any]] = []
     comparators: list[dict[str, Any]] = []
     for completed, member in enumerate(records, start=1):
