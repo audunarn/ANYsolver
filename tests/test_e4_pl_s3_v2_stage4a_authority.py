@@ -55,7 +55,7 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v4"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v5"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -142,7 +142,7 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     } <= set(extent["implementation_paths"])
     assert correction["current_change"] == {
         "cases_changed": False,
-        "classification": "PROCESS_RESOURCE_ADMISSION_ONLY",
+        "classification": "PROCESS_WALL_AND_CHECKER_TREE_DRAIN_ONLY",
         "consumed_request": {
             "checker_processes_started": 0,
             "classifying_records": 0,
@@ -166,6 +166,15 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "sha256": "17B7B768EDE593A600F4B37C120E0653BE3C522B2E5C62687EFCD8C02272C322",
         "subject": "docs: authorize S3 V2A Stage 4A review corrections",
         "tree": "95bdde42a9260b10cebfa59e7315d0530610c4cf",
+    }
+    assert correction["history"][3] == {
+        "bytes": 7809,
+        "commit": "3ba32964a75dfe077440692535876b3c3a6b076e",
+        "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+        "reason": "INCOMPLETE_COORDINATOR_WALL_AND_CHECKER_TREE_DRAIN_GUARDS",
+        "sha256": "6F5D2C676D7728EEBC36E12A27678CDE95151E2747E721F10B5DCE80FC2E4C6D",
+        "subject": "fix: serialize Stage 4A resource admission",
+        "tree": "5666a6d729db322b49a7ce1b242dec7c0f98b960",
     }
     assert correction["review_incident"] == {
         "candidate_commit": "0f93779feded35846ce7a093d27a8a98f5c0fc81",
@@ -212,11 +221,18 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
 
 def test_stage4a_resource_admission_correction_retains_hard_limits(authority) -> None:
     assert authority["execution"] == {
+        "canonical_aggregate_requires_proven_empty_process_trees": True,
+        "checker_tree_drain_required_before_queue_advance": True,
         "checker_phase_finalization_reserve_seconds": 60,
         "checker_phase_required_seconds": 960,
         "checker_phase_schedule": "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER",
         "checker_replica_wall_seconds": 300,
         "coordinator_wall_seconds": 1800,
+        "coordinator_fail_closed_publication_reserve_seconds": 15,
+        "coordinator_hard_exit_code": 124,
+        "coordinator_work_deadline_action": "MARK_EXPIRED_ONLY",
+        "git_subprocess_wall_seconds": 60,
+        "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
@@ -228,12 +244,43 @@ def test_stage4a_resource_admission_correction_retains_hard_limits(authority) ->
         "producer_wall_seconds": 900,
         "registered_shards": 3,
         "schedule": "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER",
+        "timeout_aggregate_requires_proven_empty_process_trees": True,
+        "unproven_tree_hard_deadline_action": (
+            "EXIT_WITHOUT_CANONICAL_AGGREGATE"
+        ),
         "wave_wall_seconds": 1800,
     }
 
 
 def test_stage4a_prior_v3_authority_binding_is_exact(authority) -> None:
     prior = authority["correction"]["history"][2]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree) == (prior["subject"], prior["tree"])
+
+
+def test_stage4a_prior_v4_authority_binding_is_exact(authority) -> None:
+    prior = authority["correction"]["history"][3]
     raw = subprocess.run(
         ["git", "show", f"{prior['commit']}:{prior['path']}"],
         cwd=ROOT,

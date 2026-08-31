@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import threading
 import time
 from typing import Any, Mapping, Sequence
 
@@ -40,9 +41,9 @@ CHECKER_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_checker.py"
 FUNNEL_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel.py"
 BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v4"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v4"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v5"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
 AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
 CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
@@ -54,6 +55,9 @@ PRODUCTION_RESTRICTION = "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED"
 CHECKER_WALL_SECONDS = 300
 WAVE_WALL_SECONDS = 1800
 COORDINATOR_WALL_SECONDS = 1800
+COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS = 15
+COORDINATOR_HARD_EXIT_CODE = 124
+GIT_SUBPROCESS_WALL_SECONDS = 60
 MEMORY_LIMIT_BYTES = 24 * (1 << 30)
 OS_HEADROOM_BYTES = 16 * (1 << 30)
 MAXIMUM_REGISTERED_WORKERS = 3
@@ -347,10 +351,195 @@ class CoordinatorError(RuntimeError):
     """Raised when formal process or evidence authority is incomplete."""
 
 
+class _CoordinatorWallExceeded(CoordinatorError):
+    """Raised when cooperative work reaches the reserved publication window."""
+
+
+class _CheckerTreeNotDrained(CoordinatorError):
+    """Raised when a checker Job cannot prove that its process tree is empty."""
+
+
+class _CheckerPhaseError(CoordinatorError):
+    """Carry checker-phase tree-drain disposition to the coordinator."""
+
+    def __init__(self, message: str, *, trees_proven_terminal: bool) -> None:
+        super().__init__(message)
+        self.trees_proven_terminal = trees_proven_terminal
+
+
+_ACTIVE_COORDINATOR_GUARD: "_CoordinatorWallGuard | None" = None
+
+
+class _CoordinatorWallGuard:
+    """Enforce one wall across validation, preparation, workers, and publication."""
+
+    def __init__(
+        self,
+        *,
+        aggregate_path: Path,
+        started: float,
+        exit_function: Any = os._exit,
+    ) -> None:
+        self.aggregate_path = aggregate_path.resolve()
+        self.hard_deadline = started + COORDINATOR_WALL_SECONDS
+        self.work_deadline = (
+            self.hard_deadline
+            - COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS
+        )
+        self._exit_function = exit_function
+        self._stop = threading.Event()
+        self._expired = threading.Event()
+        self._state_lock = threading.Lock()
+        self._publication_lock = threading.Lock()
+        self._authorization_sha256: str | None = None
+        self._contract_sha256: str | None = None
+        self._producer_result_path: Path | None = None
+        self._process_trees_proven_terminal = True
+        self._published: dict[str, Any] | None = None
+        self._publisher = threading.Thread(
+            target=self._publisher_main,
+            name="s3-v2-stage4a-fail-closed-publisher",
+            daemon=True,
+        )
+        self._hard_exit = threading.Thread(
+            target=self._hard_exit_main,
+            name="s3-v2-stage4a-hard-wall",
+            daemon=True,
+        )
+        self._started_threads: list[threading.Thread] = []
+
+    def bind_evidence(
+        self, *, authorization_sha256: str, contract_sha256: str
+    ) -> None:
+        with self._state_lock:
+            self._authorization_sha256 = authorization_sha256
+            self._contract_sha256 = contract_sha256
+
+    def bind_producer_result(self, path: Path) -> None:
+        with self._state_lock:
+            self._producer_result_path = path
+
+    def mark_process_phase_active(self) -> None:
+        with self._state_lock:
+            self._process_trees_proven_terminal = False
+
+    def mark_process_phase_terminal(self, *, proven: bool) -> None:
+        with self._state_lock:
+            self._process_trees_proven_terminal = proven
+
+    def require_canonical_publication_is_safe(self, path: Path) -> None:
+        if path.resolve() != self.aggregate_path:
+            return
+        with self._state_lock:
+            proven = self._process_trees_proven_terminal
+        if not proven:
+            raise CoordinatorError(
+                "canonical aggregate publication requires a proven-empty process tree"
+            )
+
+    def start(self) -> None:
+        for thread in (self._publisher, self._hard_exit):
+            thread.start()
+            self._started_threads.append(thread)
+
+    def close(self) -> None:
+        self._stop.set()
+        for thread in self._started_threads:
+            thread.join(timeout=0.2)
+
+    def checkpoint(self) -> None:
+        if self._expired.is_set() or time.monotonic() >= self.work_deadline:
+            self._expired.set()
+            self.publish_fail_closed()
+            raise _CoordinatorWallExceeded(
+                "Stage 4A coordinator entered its fail-closed publication reserve"
+            )
+
+    def _publisher_main(self) -> None:
+        delay = max(0.0, self.work_deadline - time.monotonic())
+        if self._stop.wait(delay):
+            return
+        self._expired.set()
+
+    def _hard_exit_main(self) -> None:
+        delay = max(0.0, self.hard_deadline - time.monotonic())
+        if self._stop.wait(delay):
+            return
+        self._exit_function(COORDINATOR_HARD_EXIT_CODE)
+
+    def publish_fail_closed(self) -> dict[str, Any] | None:
+        """Publish one fixed-schema timeout aggregate when hashes are available."""
+
+        with self._publication_lock:
+            if self._published is not None:
+                return self._published
+            if os.path.lexists(self.aggregate_path):
+                try:
+                    value, raw = strict_json_load(self.aggregate_path)
+                except Exception:
+                    return None
+                if raw == canonical_bytes(value) and isinstance(value, dict):
+                    self._published = value
+                    return value
+                return None
+            with self._state_lock:
+                authorization_sha256 = self._authorization_sha256
+                contract_sha256 = self._contract_sha256
+                producer_result_path = self._producer_result_path
+                process_trees_proven = self._process_trees_proven_terminal
+            if not process_trees_proven:
+                return None
+            if authorization_sha256 is None or contract_sha256 is None:
+                return None
+            producer_result_sha256 = None
+            if producer_result_path is not None and producer_result_path.is_file():
+                try:
+                    producer_result_sha256 = sha256(producer_result_path.read_bytes())
+                except OSError:
+                    producer_result_sha256 = None
+            aggregate = blocked_aggregate(
+                authorization_sha256=authorization_sha256,
+                contract_sha256=contract_sha256,
+                producer_result_sha256=producer_result_sha256,
+                reason="COORDINATOR_WALL_EXCEEDED",
+            )
+            try:
+                _write_exclusive(
+                    self.aggregate_path,
+                    canonical_bytes(aggregate),
+                    deadline_exempt=True,
+                )
+            except Exception:
+                return None
+            self._published = aggregate
+            return aggregate
+
+
+def _coordinator_checkpoint() -> None:
+    guard = _ACTIVE_COORDINATOR_GUARD
+    if guard is not None:
+        guard.checkpoint()
+
+
+def _git_subprocess_timeout() -> float:
+    """Return a finite Git timeout capped by the active coordinator deadline."""
+
+    guard = _ACTIVE_COORDINATOR_GUARD
+    if guard is None:
+        return float(GIT_SUBPROCESS_WALL_SECONDS)
+    guard.checkpoint()
+    remaining = guard.work_deadline - time.monotonic()
+    if remaining <= 0:
+        guard.checkpoint()
+    return max(0.001, min(float(GIT_SUBPROCESS_WALL_SECONDS), remaining))
+
+
 def _execution_policy() -> dict[str, Any]:
     """Return the exact Stage 4A bounded process contract."""
 
     return {
+        "canonical_aggregate_requires_proven_empty_process_trees": True,
+        "checker_tree_drain_required_before_queue_advance": True,
         "checker_phase_finalization_reserve_seconds": (
             CHECKER_PHASE_FINALIZATION_RESERVE_SECONDS
         ),
@@ -359,6 +548,13 @@ def _execution_policy() -> dict[str, Any]:
         "checker_replica_wall_seconds": CHECKER_WALL_SECONDS,
         "checker_replicas_per_shard": 2,
         "coordinator_wall_seconds": COORDINATOR_WALL_SECONDS,
+        "coordinator_fail_closed_publication_reserve_seconds": (
+            COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS
+        ),
+        "coordinator_hard_exit_code": COORDINATOR_HARD_EXIT_CODE,
+        "coordinator_work_deadline_action": "MARK_EXPIRED_ONLY",
+        "git_subprocess_wall_seconds": GIT_SUBPROCESS_WALL_SECONDS,
+        "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
         "maximum_concurrent_workers": MAXIMUM_CONCURRENT_WORKERS,
         "maximum_memory_gib_per_process_tree": MEMORY_LIMIT_BYTES // (1 << 30),
@@ -372,6 +568,10 @@ def _execution_policy() -> dict[str, Any]:
         "producer_wall_seconds": 900,
         "registered_shards": MAXIMUM_REGISTERED_WORKERS,
         "schedule": WORKER_SCHEDULE,
+        "timeout_aggregate_requires_proven_empty_process_trees": True,
+        "unproven_tree_hard_deadline_action": (
+            "EXIT_WITHOUT_CANONICAL_AGGREGATE"
+        ),
         "wave_wall_seconds": WAVE_WALL_SECONDS,
     }
 
@@ -826,24 +1026,29 @@ def _git_runtime_paths() -> tuple[Path, Path]:
 
 def _discover_git_runtime() -> dict[str, Any]:
     launcher, engine = _git_runtime_paths()
-    completed_version = subprocess.run(
-        [str(engine), "--version"],
-        cwd=ROOT,
-        env=_git_environment(),
-        check=True,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    completed_exec = subprocess.run(
-        [str(engine), "--exec-path"],
-        cwd=ROOT,
-        env=_git_environment(),
-        check=True,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        completed_version = subprocess.run(
+            [str(engine), "--version"],
+            cwd=ROOT,
+            env=_git_environment(),
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=_git_subprocess_timeout(),
+        )
+        completed_exec = subprocess.run(
+            [str(engine), "--exec-path"],
+            cwd=ROOT,
+            env=_git_environment(),
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=_git_subprocess_timeout(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise CoordinatorError("Git runtime discovery exceeded its bound") from exc
     exec_path = Path(completed_exec.stdout.decode("utf-8").strip()).resolve()
     if not exec_path.is_dir() or exec_path.is_symlink():
         raise CoordinatorError("Git exec path is not a regular directory")
@@ -881,15 +1086,19 @@ def _git_run(
     stdout: Any = subprocess.PIPE,
     repository: Path = ROOT,
 ) -> subprocess.CompletedProcess[bytes]:
-    return subprocess.run(
-        _git_command(*arguments, repository=repository),
-        cwd=repository,
-        env=_git_environment(),
-        check=check,
-        stdin=subprocess.DEVNULL,
-        stdout=stdout,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        return subprocess.run(
+            _git_command(*arguments, repository=repository),
+            cwd=repository,
+            env=_git_environment(),
+            check=check,
+            stdin=subprocess.DEVNULL,
+            stdout=stdout,
+            stderr=subprocess.PIPE,
+            timeout=_git_subprocess_timeout(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise CoordinatorError("Git subprocess exceeded its bound") from exc
 
 
 def _git(
@@ -3287,9 +3496,16 @@ def validate_resource_execution_state(
             raise CoordinatorError("resource attempt claim differs at finalization")
 
 
-def _write_exclusive(path: Path, raw: bytes) -> None:
+def _write_exclusive(
+    path: Path, raw: bytes, *, deadline_exempt: bool = False
+) -> None:
     """Stage, fsync, and atomically publish without exposing partial bytes."""
 
+    if not deadline_exempt:
+        guard = _ACTIVE_COORDINATOR_GUARD
+        if guard is not None:
+            guard.require_canonical_publication_is_safe(path)
+        _coordinator_checkpoint()
     path.parent.mkdir(parents=True, exist_ok=True)
     if os.path.lexists(path):
         raise CoordinatorError(f"refusing to overwrite canonical output: {path}")
@@ -3303,6 +3519,11 @@ def _write_exclusive(path: Path, raw: bytes) -> None:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
+        if not deadline_exempt:
+            guard = _ACTIVE_COORDINATOR_GUARD
+            if guard is not None:
+                guard.require_canonical_publication_is_safe(path)
+            _coordinator_checkpoint()
         try:
             os.link(temporary, path)
         except FileExistsError as exc:
@@ -3317,6 +3538,7 @@ def _write_exclusive(path: Path, raw: bytes) -> None:
 
 
 def _publish_candidate_archive(path: Path, commit: str) -> None:
+    _coordinator_checkpoint()
     path.parent.mkdir(parents=True, exist_ok=True)
     if os.path.lexists(path):
         raise CoordinatorError("candidate source archive output already exists")
@@ -3330,6 +3552,7 @@ def _publish_candidate_archive(path: Path, commit: str) -> None:
             _git_run("archive", "--format=tar", commit, stdout=stream)
             stream.flush()
             os.fsync(stream.fileno())
+        _coordinator_checkpoint()
         if temporary.stat().st_size <= 0:
             raise CoordinatorError("candidate source archive is empty")
         try:
@@ -3346,6 +3569,7 @@ def _publish_candidate_archive(path: Path, commit: str) -> None:
 def _extract_candidate_archive(archive_path: Path, output_root: Path) -> Path:
     """Safely extract the exact Git archive into one fresh external tree."""
 
+    _coordinator_checkpoint()
     candidate_root = (output_root / "candidate-source-tree").resolve()
     if os.path.lexists(candidate_root):
         raise CoordinatorError("candidate source tree output already exists")
@@ -3371,6 +3595,7 @@ def _extract_candidate_archive(archive_path: Path, output_root: Path) -> Path:
     try:
         with tarfile.open(archive_path, mode="r:") as bundle:
             for member in bundle.getmembers():
+                _coordinator_checkpoint()
                 raw_name = member.name.rstrip("/")
                 if not raw_name:
                     continue
@@ -3405,9 +3630,11 @@ def _extract_candidate_archive(archive_path: Path, output_root: Path) -> Path:
                     shutil.copyfileobj(source, destination)
                     destination.flush()
                     os.fsync(destination.fileno())
+                _coordinator_checkpoint()
         if not (staging / "src" / "anysolver" / "__init__.py").is_file():
             raise CoordinatorError("candidate archive lacks the ANYsolver source tree")
         os.rename(staging, candidate_root)
+        _coordinator_checkpoint()
     except BaseException:
         shutil.rmtree(staging, ignore_errors=True)
         raise
@@ -3489,23 +3716,28 @@ def prepare_wave(
     *,
     authorization_path: Path | None = None,
 ) -> dict[str, Path]:
+    _coordinator_checkpoint()
     contract, contract_raw = validate_contract(contract_path)
+    _coordinator_checkpoint()
     if authorization_path is not None:
         validate_authorization(
             authorization_path,
             contract_path=contract_path,
             contract_raw=contract_raw,
         )
+    _coordinator_checkpoint()
     funnel = _load_module("_s3_v2_stage4a_funnel", FUNNEL_PATH)
     manifest_value, manifest_raw = funnel.strict_json_load(MANIFEST_PATH)
     records = funnel.validate_manifest(manifest_value, manifest_raw)
     plan = funnel.build_phase_plan(records, "4A")
+    _coordinator_checkpoint()
     plan_path = (output_root / "phase4a-plan.json").resolve()
     _write_exclusive(plan_path, funnel.canonical_bytes(plan))
     candidate = contract["candidate"]
     archive_path = (output_root / "candidate-source.tar").resolve()
     _publish_candidate_archive(archive_path, str(candidate["commit"]))
     archive_sha256 = sha256(archive_path.read_bytes())
+    _coordinator_checkpoint()
     candidate_source_root = _extract_candidate_archive(archive_path, output_root)
     binding = {
         "artifact_path": str(archive_path),
@@ -3519,6 +3751,7 @@ def prepare_wave(
     }
     binding_path = (output_root / "candidate-source-binding.json").resolve()
     _write_exclusive(binding_path, canonical_bytes(binding))
+    _coordinator_checkpoint()
     wave_manifest = funnel.build_bounded_wave_manifest(
         plan,
         plan_path=plan_path,
@@ -3554,8 +3787,10 @@ def prepare_wave(
                 {"path": str(path), "sha256": sha256(path.read_bytes())}
             )
         worker["input_hashes"].sort(key=lambda item: item["path"])
+        _coordinator_checkpoint()
     wave_manifest_path = (output_root / "producer-wave-manifest.json").resolve()
     _write_exclusive(wave_manifest_path, canonical_bytes(wave_manifest))
+    _coordinator_checkpoint()
     return {
         "archive": archive_path,
         "binding": binding_path,
@@ -3601,6 +3836,7 @@ def _run_checker_process(
     last_cpu = 0
     last_activity = started
     termination_proven = False
+    slot_released = False
     peak = 0
     process: Any = None
     try:
@@ -3611,29 +3847,64 @@ def _run_checker_process(
             stdout=stdout,
             stderr=stderr,
         )
-        while process.poll() is None:
+        while True:
             now = time.monotonic()
-            cpu, _active, peak = job.accounting()
+            cpu, active, peak = job.accounting()
             if cpu > last_cpu:
                 last_cpu = cpu
                 last_activity = now
+            returncode = process.poll()
+            if returncode is not None:
+                if active == 0:
+                    termination_proven = True
+                    slot_released = True
+                    if returncode != 0:
+                        raise CoordinatorError(
+                            f"checker process failed: {assignment_id}"
+                        )
+                    break
+                raise CoordinatorError(
+                    "checker root exited before its Job tree drained: "
+                    f"{assignment_id} active={active}"
+                )
             if now >= min(deadline, started + CHECKER_WALL_SECONDS) or now - last_activity >= 300:
-                termination_proven = job.terminate()
                 raise CoordinatorError(f"checker process exceeded its bound: {assignment_id}")
             time.sleep(0.05)
-        cpu, active, peak = job.accounting()
-        last_cpu = max(last_cpu, cpu)
-        termination_proven = active in (0, -1)
-        if process.returncode != 0 or not termination_proven:
-            raise CoordinatorError(f"checker process failed: {assignment_id}")
-    except BaseException:
-        if process is not None and process.poll() is None:
-            termination_proven = job.terminate()
+    except BaseException as exc:
+        if not slot_released:
+            try:
+                termination_proven = bool(job.terminate())
+            except BaseException:
+                termination_proven = False
+            slot_released = termination_proven
+        if not slot_released:
+            raise _CheckerTreeNotDrained(
+                "checker Job termination could not prove an empty process tree: "
+                f"{assignment_id}"
+            ) from exc
         raise
     finally:
-        stdout.close()
-        stderr.close()
-        job.close()
+        cleanup_error: BaseException | None = None
+        for stream in (stdout, stderr):
+            try:
+                stream.close()
+            except BaseException as exc:
+                if cleanup_error is None:
+                    cleanup_error = exc
+        try:
+            job.close()
+        except BaseException as exc:
+            if cleanup_error is None:
+                cleanup_error = exc
+        if cleanup_error is not None:
+            if not slot_released:
+                raise _CheckerTreeNotDrained(
+                    "checker cleanup failed before its process tree was proven empty: "
+                    f"{assignment_id}"
+                ) from cleanup_error
+            raise CoordinatorError(
+                f"checker cleanup failed: {assignment_id}"
+            ) from cleanup_error
     value, raw = strict_json_load(output)
     if raw != canonical_bytes(value) or value.get("schema") != CHECKER_RESULT_SCHEMA:
         raise CoordinatorError("checker output is malformed or noncanonical")
@@ -3685,16 +3956,22 @@ def _run_checker_phase(
     plan: Path,
     output_root: Path,
     deadline: float,
+    wall_guard: _CoordinatorWallGuard | None = None,
 ) -> list[list[dict[str, Any]]]:
     """Run all six checkers as three frozen-order replica pairs."""
 
     if set(proofs) != set(EXPECTED_SHARDS):
         raise CoordinatorError("checker phase proof coverage differs")
     _require_checker_phase_admission(bounded, deadline)
+    if wall_guard is not None:
+        wall_guard.mark_process_phase_active()
     results: dict[int, list[dict[str, Any]]] = {1: [], 2: []}
     first_error: Exception | None = None
+    queue_blocked = False
     with ThreadPoolExecutor(max_workers=MAXIMUM_CONCURRENT_WORKERS) as pool:
         for assignment_id in EXPECTED_SHARDS:
+            if queue_blocked:
+                break
             proof = proofs[assignment_id]
             pair: list[tuple[int, Any]] = []
             for replica_index in (1, 2):
@@ -3714,19 +3991,42 @@ def _run_checker_phase(
                         ),
                     )
                 )
+            pair_tree_not_drained = False
             for replica_index, task in pair:
                 try:
                     result = task.result()
+                except _CheckerTreeNotDrained as exc:
+                    pair_tree_not_drained = True
+                    if first_error is None:
+                        first_error = exc
                 except Exception as exc:
                     if first_error is None:
                         first_error = exc
                 else:
                     results[replica_index].append(result)
+            queue_blocked = pair_tree_not_drained
     if first_error is not None:
-        raise CoordinatorError(
-            "checker phase failed after all six registered tasks reached terminal state"
+        disposition = (
+            "checker queue blocked because a Job tree did not drain"
+            if queue_blocked
+            else "all six registered tasks reached terminal state"
+        )
+        if wall_guard is not None:
+            wall_guard.mark_process_phase_terminal(proven=not queue_blocked)
+        raise _CheckerPhaseError(
+            f"checker phase failed after {disposition}",
+            trees_proven_terminal=not queue_blocked,
         ) from first_error
-    return [results[1], results[2]]
+    replicas = [results[1], results[2]]
+    if wall_guard is not None:
+        wall_guard.mark_process_phase_terminal(
+            proven=all(
+                result.get("termination_proven") is True
+                for replica in replicas
+                for result in replica
+            )
+        )
+    return replicas
 
 
 def validate_producer_proofs(
@@ -3970,6 +4270,7 @@ def blocked_aggregate(
         _digest(producer_result_sha256, "$.producer_result_sha256")
     if reason not in {
         "CHECKER_WAVE_FAILED",
+        "COORDINATOR_WALL_EXCEEDED",
         "FORMAL_PROCESS_FAILED",
         "PRODUCER_WAVE_NOT_COMPLETED",
     }:
@@ -3991,16 +4292,32 @@ def blocked_aggregate(
     }
 
 
-def run_stage4a(
+def _producer_process_trees_proven_terminal(result: Mapping[str, Any]) -> bool:
+    workers = result.get("workers")
+    if result.get("terminal") == "RESOURCE_DEFERRED" and workers == []:
+        return True
+    return bool(
+        isinstance(workers, list)
+        and workers
+        and all(
+            isinstance(worker, dict) and worker.get("termination_proven") is True
+            for worker in workers
+        )
+    )
+
+
+def _run_stage4a_guarded(
     contract_path: Path,
     authorization_path: Path,
     output_root: Path,
     aggregate_path: Path,
+    wall_guard: _CoordinatorWallGuard,
 ) -> dict[str, Any]:
-    started = time.monotonic()
+    _coordinator_checkpoint()
     if not sys.flags.isolated or not sys.dont_write_bytecode:
         raise CoordinatorError("formal Stage 4A requires the registered -I -B launcher")
     _contract, contract_raw = validate_contract(contract_path)
+    _coordinator_checkpoint()
     authorization, authorization_raw = validate_authorization(
         authorization_path,
         contract_path=contract_path,
@@ -4017,6 +4334,10 @@ def run_stage4a(
     validate_resource_execution_state(authorization)
     authorization_digest = sha256(authorization_raw)
     contract_digest = sha256(contract_raw)
+    wall_guard.bind_evidence(
+        authorization_sha256=authorization_digest,
+        contract_sha256=contract_digest,
+    )
     producer_result_path: Path | None = None
     process_phase = "PREPARE_WAVE"
     try:
@@ -4027,10 +4348,19 @@ def run_stage4a(
         )
         process_phase = "PRODUCER_RESULT_REGISTRATION"
         producer_result_path = _producer_result_path(paths["producer_manifest"])
+        wall_guard.bind_producer_result(producer_result_path)
         process_phase = "LOAD_BOUNDED_RUNNER"
         bounded = _load_module("_s3_v2_stage4a_bounded", BOUNDED_PATH)
         process_phase = "PRODUCER_WAVE"
-        producer_result = bounded.run_wave(paths["producer_manifest"], producer_result_path)
+        wall_guard.mark_process_phase_active()
+        producer_result = bounded.run_wave(
+            paths["producer_manifest"], producer_result_path
+        )
+        wall_guard.mark_process_phase_terminal(
+            proven=_producer_process_trees_proven_terminal(producer_result)
+        )
+    except _CoordinatorWallExceeded:
+        raise
     except Exception as exc:
         producer_digest = (
             sha256(producer_result_path.read_bytes())
@@ -4066,7 +4396,7 @@ def run_stage4a(
         )
         _write_exclusive(aggregate_path, canonical_bytes(blocked))
         return blocked
-    deadline = started + COORDINATOR_WALL_SECONDS
+    deadline = wall_guard.work_deadline
     replicas: list[list[dict[str, Any]]] = []
     try:
         manifest, raw_manifest = strict_json_load(paths["producer_manifest"])
@@ -4093,8 +4423,11 @@ def run_stage4a(
             plan=paths["plan"],
             output_root=output_root,
             deadline=deadline,
+            wall_guard=wall_guard,
         )
+        _coordinator_checkpoint()
         _final_contract, final_contract_raw = validate_contract(contract_path)
+        _coordinator_checkpoint()
         final_authorization, final_authorization_raw = validate_authorization(
             authorization_path,
             contract_path=contract_path,
@@ -4103,6 +4436,7 @@ def run_stage4a(
         if final_contract_raw != contract_raw or final_authorization_raw != authorization_raw:
             raise CoordinatorError("formal authority changed during execution")
         validate_resource_execution_state(final_authorization, claim_attempt=False)
+        _coordinator_checkpoint()
         aggregate = aggregate_checker_results(
             replicas,
             producer_proofs=producer_proofs,
@@ -4110,6 +4444,9 @@ def run_stage4a(
             contract_sha256=contract_digest,
             authorization_sha256=authorization_digest,
         )
+        _coordinator_checkpoint()
+    except _CoordinatorWallExceeded:
+        raise
     except Exception:
         aggregate = blocked_aggregate(
             authorization_sha256=authorization_digest,
@@ -4119,6 +4456,68 @@ def run_stage4a(
         )
     _write_exclusive(aggregate_path, canonical_bytes(aggregate))
     return aggregate
+
+
+def run_stage4a(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    aggregate_path: Path,
+) -> dict[str, Any]:
+    """Run Stage 4A under one fail-closed coordinator-wide hard wall."""
+
+    global _ACTIVE_COORDINATOR_GUARD
+    if _ACTIVE_COORDINATOR_GUARD is not None:
+        raise CoordinatorError("a coordinator wall guard is already active")
+    guard = _CoordinatorWallGuard(
+        aggregate_path=aggregate_path,
+        started=time.monotonic(),
+    )
+    _ACTIVE_COORDINATOR_GUARD = guard
+    try:
+        guard.start()
+        try:
+            return _run_stage4a_guarded(
+                contract_path,
+                authorization_path,
+                output_root,
+                aggregate_path,
+                guard,
+            )
+        except _CoordinatorWallExceeded as exc:
+            aggregate = guard.publish_fail_closed()
+            if aggregate is None:
+                raise CoordinatorError(
+                    "coordinator wall elapsed before canonical failure hashes were bound"
+                ) from exc
+            return aggregate
+    finally:
+        _ACTIVE_COORDINATOR_GUARD = None
+        guard.close()
+
+
+def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Path]:
+    """Apply the same no-forever wall to the non-executing preparation mode."""
+
+    global _ACTIVE_COORDINATOR_GUARD
+    if _ACTIVE_COORDINATOR_GUARD is not None:
+        raise CoordinatorError("a coordinator wall guard is already active")
+    guard = _CoordinatorWallGuard(
+        aggregate_path=(output_root / "stage4a-prepare-timeout.json").resolve(),
+        started=time.monotonic(),
+    )
+    _ACTIVE_COORDINATOR_GUARD = guard
+    try:
+        guard.start()
+        try:
+            return prepare_wave(contract_path, output_root)
+        except _CoordinatorWallExceeded as exc:
+            raise CoordinatorError(
+                "Stage 4A preparation exceeded its coordinator wall"
+            ) from exc
+    finally:
+        _ACTIVE_COORDINATOR_GUARD = None
+        guard.close()
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -4140,7 +4539,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.prepare_only:
         if args.authorization is not None or args.aggregate is not None:
             raise CoordinatorError("prepare-only does not accept execution outputs")
-        prepare_wave(contract, output_root)
+        run_prepare_stage4a(contract, output_root)
         return 0
     if args.authorization is None or args.aggregate is None:
         raise CoordinatorError("formal execution requires authorization and aggregate")

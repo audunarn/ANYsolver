@@ -1599,6 +1599,192 @@ def test_blocked_aggregate_uses_the_same_fixed_schema_as_scientific_aggregate(tm
     assert blocked["successor_expansion_authorized"] is False
 
 
+def test_coordinator_wall_guard_publishes_canonical_blocked_aggregate(tmp_path):
+    module = _load()
+    aggregate_path = (tmp_path / "stage4a-aggregate.json").resolve()
+    guard = module._CoordinatorWallGuard(
+        aggregate_path=aggregate_path,
+        started=time.monotonic(),
+        exit_function=lambda _code: None,
+    )
+    guard.bind_evidence(
+        authorization_sha256="A" * 64,
+        contract_sha256="B" * 64,
+    )
+    aggregate = guard.publish_fail_closed()
+    assert aggregate["terminal"] == module.BLOCKED
+    assert aggregate["formal_failures"] == ["COORDINATOR_WALL_EXCEEDED"]
+    value, raw = module.strict_json_load(aggregate_path)
+    assert value == aggregate
+    assert raw == module.canonical_bytes(value)
+
+
+def test_watchdog_never_publishes_while_a_process_tree_may_be_live(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    observed_waits = []
+    observed_exits = []
+
+    class NeverStopped:
+        @staticmethod
+        def wait(seconds):
+            observed_waits.append(seconds)
+            return False
+
+    monkeypatch.setattr(module.time, "monotonic", lambda: 100.0)
+    aggregate_path = (tmp_path / "stage4a-aggregate.json").resolve()
+    guard = module._CoordinatorWallGuard(
+        aggregate_path=aggregate_path,
+        started=100.0,
+        exit_function=observed_exits.append,
+    )
+    guard.bind_evidence(
+        authorization_sha256="A" * 64,
+        contract_sha256="B" * 64,
+    )
+    guard.mark_process_phase_active()
+    guard._stop = NeverStopped()
+    guard._publisher_main()
+    assert guard._expired.is_set()
+    assert guard.publish_fail_closed() is None
+    assert not aggregate_path.exists()
+    guard._hard_exit_main()
+    assert observed_waits == [
+        float(
+            module.COORDINATOR_WALL_SECONDS
+            - module.COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS
+        ),
+        float(module.COORDINATOR_WALL_SECONDS),
+    ]
+    assert observed_exits == [module.COORDINATOR_HARD_EXIT_CODE]
+
+
+def test_expired_main_checkpoint_publishes_only_after_tree_terminal_proof(
+    tmp_path
+):
+    module = _load()
+    aggregate_path = (tmp_path / "stage4a-aggregate.json").resolve()
+    guard = module._CoordinatorWallGuard(
+        aggregate_path=aggregate_path,
+        started=time.monotonic(),
+        exit_function=lambda _code: None,
+    )
+    guard.bind_evidence(
+        authorization_sha256="A" * 64,
+        contract_sha256="B" * 64,
+    )
+    guard.mark_process_phase_active()
+    guard._expired.set()
+    with pytest.raises(module._CoordinatorWallExceeded):
+        guard.checkpoint()
+    assert not aggregate_path.exists()
+    guard.mark_process_phase_terminal(proven=True)
+    with pytest.raises(module._CoordinatorWallExceeded):
+        guard.checkpoint()
+    value, raw = module.strict_json_load(aggregate_path)
+    assert raw == module.canonical_bytes(value)
+    assert value["formal_failures"] == ["COORDINATOR_WALL_EXCEEDED"]
+
+
+def test_coordinator_hard_wall_uses_absolute_deadline_and_exit_code(monkeypatch):
+    module = _load()
+    observed_waits = []
+    observed_exits = []
+
+    class NeverStopped:
+        @staticmethod
+        def wait(seconds):
+            observed_waits.append(seconds)
+            return False
+
+    monkeypatch.setattr(module.time, "monotonic", lambda: 100.0)
+    guard = module._CoordinatorWallGuard(
+        aggregate_path=Path("aggregate.json"),
+        started=100.0,
+        exit_function=observed_exits.append,
+    )
+    guard._stop = NeverStopped()
+    guard._hard_exit_main()
+    assert observed_waits == [float(module.COORDINATOR_WALL_SECONDS)]
+    assert observed_exits == [module.COORDINATOR_HARD_EXIT_CODE]
+
+
+def test_normal_publication_fails_before_writing_in_reserved_window(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    path = (tmp_path / "canonical.json").resolve()
+
+    class ExpiredGuard:
+        @staticmethod
+        def require_canonical_publication_is_safe(_path):
+            return None
+
+        @staticmethod
+        def checkpoint():
+            raise module._CoordinatorWallExceeded("synthetic wall")
+
+    monkeypatch.setattr(module, "_ACTIVE_COORDINATOR_GUARD", ExpiredGuard())
+    with pytest.raises(module._CoordinatorWallExceeded, match="synthetic wall"):
+        module._write_exclusive(path, b"{}\n")
+    assert not path.exists()
+
+
+def test_canonical_aggregate_is_rejected_when_tree_terminal_is_unproven(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    aggregate_path = (tmp_path / "stage4a-aggregate.json").resolve()
+    diagnostic_path = (tmp_path / "stage4a-process-incident.json").resolve()
+    guard = module._CoordinatorWallGuard(
+        aggregate_path=aggregate_path,
+        started=time.monotonic(),
+        exit_function=lambda _code: None,
+    )
+    guard.mark_process_phase_active()
+    monkeypatch.setattr(module, "_ACTIVE_COORDINATOR_GUARD", guard)
+    with pytest.raises(module.CoordinatorError, match="proven-empty"):
+        module._write_exclusive(aggregate_path, b"{}\n")
+    module._write_exclusive(diagnostic_path, b"{}\n")
+    assert not aggregate_path.exists()
+    assert diagnostic_path.read_bytes() == b"{}\n"
+
+
+def test_run_stage4a_installs_wall_before_any_guarded_work(tmp_path, monkeypatch):
+    module = _load()
+    observed = []
+    made = module.blocked_aggregate(
+        authorization_sha256="A" * 64,
+        contract_sha256="B" * 64,
+        producer_result_sha256=None,
+        reason="FORMAL_PROCESS_FAILED",
+    )
+
+    def fake_guarded(*args):
+        guard = args[-1]
+        observed.append(
+            (
+                module._ACTIVE_COORDINATOR_GUARD is guard,
+                guard.hard_deadline - guard.work_deadline,
+            )
+        )
+        return made
+
+    monkeypatch.setattr(module, "_run_stage4a_guarded", fake_guarded)
+    result = module.run_stage4a(
+        tmp_path / "contract.json",
+        tmp_path / "authorization.json",
+        tmp_path,
+        tmp_path / "aggregate.json",
+    )
+    assert result == made
+    assert observed == [
+        (True, float(module.COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS))
+    ]
+    assert module._ACTIVE_COORDINATOR_GUARD is None
+
+
 def test_registered_resource_command_isolated_and_supplies_only_bound_dependencies(tmp_path):
     module = _load()
     command = module.expected_resource_command(
@@ -1636,18 +1822,25 @@ class _SyntheticCheckerResources:
 
 def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v4"
-    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v4"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v5"
+    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
     assert module.MAXIMUM_REGISTERED_WORKERS == 3
     assert module.MAXIMUM_CONCURRENT_WORKERS == 2
     assert module._checker_replica_required_memory_bytes() == 64 * (1 << 30)
     assert module._execution_policy() == {
+        "canonical_aggregate_requires_proven_empty_process_trees": True,
+        "checker_tree_drain_required_before_queue_advance": True,
         "checker_phase_finalization_reserve_seconds": 60,
         "checker_phase_required_seconds": 960,
         "checker_phase_schedule": "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER",
         "checker_replica_wall_seconds": 300,
         "checker_replicas_per_shard": 2,
         "coordinator_wall_seconds": 1800,
+        "coordinator_fail_closed_publication_reserve_seconds": 15,
+        "coordinator_hard_exit_code": 124,
+        "coordinator_work_deadline_action": "MARK_EXPIRED_ONLY",
+        "git_subprocess_wall_seconds": 60,
+        "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
@@ -1659,6 +1852,10 @@ def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers
         "producer_wall_seconds": 900,
         "registered_shards": 3,
         "schedule": "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER",
+        "timeout_aggregate_requires_proven_empty_process_trees": True,
+        "unproven_tree_hard_deadline_action": (
+            "EXIT_WITHOUT_CANONICAL_AGGREGATE"
+        ),
         "wave_wall_seconds": 1800,
     }
     assert (
@@ -1802,6 +1999,143 @@ def test_checker_failure_is_not_retried_and_does_not_drop_queued_work(
             deadline=time.monotonic() + module.CHECKER_PHASE_REQUIRED_SECONDS + 1,
         )
     assert all(count == 1 for count in calls.values())
+
+
+def test_checker_tree_drain_failure_blocks_later_pairs_without_cancelling_peer(
+    tmp_path, monkeypatch
+):
+    module = _load()
+    resources = _SyntheticCheckerResources(
+        [module._checker_replica_required_memory_bytes()]
+    )
+    guard = module._CoordinatorWallGuard(
+        aggregate_path=(tmp_path / "stage4a-aggregate.json").resolve(),
+        started=time.monotonic(),
+        exit_function=lambda _code: None,
+    )
+    guard.bind_evidence(
+        authorization_sha256="A" * 64,
+        contract_sha256="B" * 64,
+    )
+    frozen_order = list(module.EXPECTED_SHARDS)
+    calls = []
+    completed = []
+    lock = threading.Lock()
+
+    def fake_checker(**kwargs):
+        assignment_id = kwargs["assignment_id"]
+        replica = int(kwargs["output"].parent.parent.name.rsplit("-", 1)[1])
+        task_id = (replica, assignment_id)
+        with lock:
+            calls.append(task_id)
+        if task_id == (1, frozen_order[0]):
+            raise module._CheckerTreeNotDrained("synthetic uncontained tree")
+        time.sleep(0.05)
+        with lock:
+            completed.append(task_id)
+        return {"assignment_id": assignment_id, "replica": replica}
+
+    monkeypatch.setattr(module, "_run_checker_process", fake_checker)
+    with pytest.raises(module.CoordinatorError, match="queue blocked"):
+        module._run_checker_phase(
+            bounded=resources,
+            proofs=_checker_proofs(module, tmp_path),
+            plan=(tmp_path / "plan.json").resolve(),
+            output_root=tmp_path.resolve(),
+            deadline=time.monotonic() + module.CHECKER_PHASE_REQUIRED_SECONDS + 1,
+            wall_guard=guard,
+        )
+    assert sorted(calls) == sorted(
+        [(1, frozen_order[0]), (2, frozen_order[0])]
+    )
+    assert completed == [(2, frozen_order[0])]
+    guard._expired.set()
+    assert guard.publish_fail_closed() is None
+    assert not guard.aggregate_path.exists()
+
+
+def test_checker_root_exit_with_live_tree_requires_proven_termination(
+    tmp_path, monkeypatch
+):
+    module = _load()
+
+    class Process:
+        returncode = 0
+
+        @staticmethod
+        def poll():
+            return 0
+
+    class Job:
+        instance = None
+
+        def __init__(self, _memory_limit):
+            type(self).instance = self
+            self.terminate_calls = 0
+            self.closed = False
+
+        @staticmethod
+        def launch(*_args, **_kwargs):
+            return Process()
+
+        @staticmethod
+        def accounting():
+            return 1, 1, 1
+
+        def terminate(self):
+            self.terminate_calls += 1
+            return False
+
+        def close(self):
+            self.closed = True
+
+    class Bounded:
+        _ProcessJob = Job
+
+        @staticmethod
+        def _environment():
+            return {}
+
+    monkeypatch.setattr(module, "_load_module", lambda *_args: Bounded)
+    root = (tmp_path / "checker").resolve()
+    with pytest.raises(module._CheckerTreeNotDrained, match="could not prove"):
+        module._run_checker_process(
+            assignment_id=next(iter(module.EXPECTED_SHARDS)),
+            proof=(tmp_path / "proof.json").resolve(),
+            plan=(tmp_path / "plan.json").resolve(),
+            output=root / "checker.json",
+            stdout_path=root / "stdout.log",
+            stderr_path=root / "stderr.log",
+            deadline=time.monotonic() + 10,
+        )
+    assert Job.instance.terminate_calls == 1
+    assert Job.instance.closed is True
+
+
+def test_producer_phase_requires_every_launched_tree_terminal_proof():
+    module = _load()
+    assert module._producer_process_trees_proven_terminal(
+        {"terminal": "RESOURCE_DEFERRED", "workers": []}
+    )
+    assert module._producer_process_trees_proven_terminal(
+        {
+            "terminal": "COMPLETED",
+            "workers": [
+                {"termination_proven": True},
+                {"termination_proven": True},
+                {"termination_proven": True},
+            ],
+        }
+    )
+    assert not module._producer_process_trees_proven_terminal(
+        {
+            "terminal": "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE",
+            "workers": [
+                {"termination_proven": True},
+                {"termination_proven": False},
+            ],
+        }
+    )
 
 
 @pytest.mark.parametrize(
@@ -2096,3 +2430,57 @@ def test_git_launcher_and_engine_identity_is_complete():
         Path(runtime["engine_path"]).read_bytes()
     )
     assert runtime["version"].startswith("git version ")
+
+
+def test_every_git_subprocess_receives_a_finite_wall_timeout(monkeypatch):
+    module = _load()
+    observed = []
+
+    def fake_run(command, **kwargs):
+        observed.append((command, kwargs))
+        return subprocess.CompletedProcess(command, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(module, "_git_command", lambda *_args, **_kwargs: ["git"])
+    monkeypatch.setattr(module, "_git_environment", lambda: {})
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    module._git_run("status")
+    assert len(observed) == 1
+    assert observed[0][1]["timeout"] == float(module.GIT_SUBPROCESS_WALL_SECONDS)
+
+
+def test_git_timeout_is_capped_by_coordinator_reserved_deadline(monkeypatch):
+    module = _load()
+    now = time.monotonic()
+    observed = []
+
+    class ActiveGuard:
+        work_deadline = now + 5.0
+
+        @staticmethod
+        def checkpoint():
+            return None
+
+    def fake_run(command, **kwargs):
+        observed.append(kwargs["timeout"])
+        return subprocess.CompletedProcess(command, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(module, "_ACTIVE_COORDINATOR_GUARD", ActiveGuard())
+    monkeypatch.setattr(module, "_git_command", lambda *_args, **_kwargs: ["git"])
+    monkeypatch.setattr(module, "_git_environment", lambda: {})
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    module._git_run("status")
+    assert len(observed) == 1
+    assert 0 < observed[0] <= 5.0
+
+
+def test_git_timeout_failure_is_fail_closed(monkeypatch):
+    module = _load()
+
+    def timeout(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(["git"], 1)
+
+    monkeypatch.setattr(module, "_git_command", lambda *_args, **_kwargs: ["git"])
+    monkeypatch.setattr(module, "_git_environment", lambda: {})
+    monkeypatch.setattr(module.subprocess, "run", timeout)
+    with pytest.raises(module.CoordinatorError, match="exceeded its bound"):
+        module._git_run("status")
