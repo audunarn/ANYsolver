@@ -2,8 +2,8 @@
 
 The command validates the frozen 252-record manifest and a canonical Phase-4A
 plan before importing NumPy, SciPy, or ANYsolver.  An invocation owns either
-one historical diagonal shard or one content-addressed record leaf.  A V1
-result is never used as a fallback for a missing or failed V2A result.
+one historical diagonal shard or one content-addressed formal V2 record leaf.
+V1 replay is excluded from formal runtime and can never replace a V2A result.
 """
 
 from __future__ import annotations
@@ -46,11 +46,11 @@ _ACTIVE_CANDIDATE_ROOT: Path | None = None
 
 PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
 LEAF_ASSIGNMENT_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v2"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v3"
 )
-LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v2"
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v3"
 LEAF_SCIENTIFIC_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v2"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v3"
 )
 LEAF_CANDIDATE_AUTHORITY_KEYS = (
     "candidate_archive_sha256",
@@ -61,6 +61,9 @@ LEAF_CANDIDATE_AUTHORITY_KEYS = (
 LOAD_IDENTITY = "UNIFORM_REFERENCE_NORMAL_DEAD_PRESSURE_1000_PA_V1"
 CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
 V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+FORMAL_V1_DISPOSITION = (
+    "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+)
 V2_COMPUTATION_ROLE = "V2_CLASSIFYING"
 V1_COMPUTATION_ROLE = "V1_DIAGNOSTIC"
 COMPUTATION_ROLES = (V2_COMPUTATION_ROLE, V1_COMPUTATION_ROLE)
@@ -306,8 +309,8 @@ def leaf_assignment_core(
         raise FlatFunnelError(
             "leaf logical record index must be a nonnegative integer"
         )
-    if computation_role not in COMPUTATION_ROLES:
-        raise FlatFunnelError("leaf computation role is not registered")
+    if computation_role != V2_COMPUTATION_ROLE:
+        raise FlatFunnelError("formal leaf computation role must be V2 classifying")
     try:
         assignment_id = str(shard["assignment_id"])
         assignment_sha256 = _require_sha256(
@@ -334,14 +337,7 @@ def leaf_assignment_core(
         or s3_element_count < 0
     ):
         raise FlatFunnelError("leaf S3 element count is malformed")
-    diagnostic_expected = s3_element_count > 0
-    if computation_role == V1_COMPUTATION_ROLE and not diagnostic_expected:
-        raise FlatFunnelError("all-Q4 records forbid a V1 diagnostic leaf")
-    s3_selector = (
-        SELECTOR
-        if computation_role == V2_COMPUTATION_ROLE
-        else "e4-pl-s3"
-    )
+    s3_selector = SELECTOR
     candidate_authority = leaf_candidate_authority(
         candidate_commit=candidate_commit,
         candidate_tree=candidate_tree,
@@ -364,7 +360,6 @@ def leaf_assignment_core(
         "schema": LEAF_ASSIGNMENT_SCHEMA,
         "selector": SELECTOR,
         "s3_selector": s3_selector,
-        "v1_diagnostic_expected": diagnostic_expected,
     }
 
 
@@ -377,7 +372,7 @@ def build_leaf_catalog(
     candidate_archive_sha256: str,
     producer_program_sha256: str,
 ) -> list[dict[str, Any]]:
-    """Derive 153 role-specific leaves for 81 ordered logical records."""
+    """Derive exactly 81 V2 classifying leaves in logical-record order."""
 
     _require_sha256(plan_sha256, "leaf catalog plan hash")
     if (
@@ -406,10 +401,7 @@ def build_leaf_catalog(
             record = member.get("record")
             if not isinstance(record, Mapping):
                 raise FlatFunnelError("leaf catalog record is malformed")
-            roles = [V2_COMPUTATION_ROLE]
-            if record.get("s3_element_count", 0) > 0:
-                roles.append(V1_COMPUTATION_ROLE)
-            for computation_role in roles:
+            for computation_role in (V2_COMPUTATION_ROLE,):
                 core = leaf_assignment_core(
                     plan_sha256,
                     shard,
@@ -439,17 +431,12 @@ def build_leaf_catalog(
                 )
             logical_record_index += 1
     if (
-        len(made) != 153
-        or len(seen_record_roles) != 153
+        len(made) != 81
+        or len(seen_record_roles) != 81
         or len(
             {item["assignment"]["record_id"] for item in made}
         )
         != 81
-        or sum(
-            item["assignment"]["computation_role"] == V1_COMPUTATION_ROLE
-            for item in made
-        )
-        != 72
         or sum(
             item["assignment"]["computation_role"] == V2_COMPUTATION_ROLE
             for item in made
@@ -457,7 +444,7 @@ def build_leaf_catalog(
         != 81
     ):
         raise FlatFunnelError(
-            "leaf catalog coverage must be 81 V2 plus 72 V1 computations"
+            "formal leaf catalog coverage must be exactly 81 V2 computations"
         )
     return made
 
@@ -1282,19 +1269,13 @@ def run_leaf(
 
         computation_role = str(assignment["computation_role"])
         s3_selector = str(assignment["s3_selector"])
-        if (
-            computation_role not in COMPUTATION_ROLES
-            or s3_selector
-            != (
-                SELECTOR
-                if computation_role == V2_COMPUTATION_ROLE
-                else "e4-pl-s3"
+        if computation_role != V2_COMPUTATION_ROLE or s3_selector != SELECTOR:
+            raise FlatFunnelError(
+                "formal leaf must use the V2 classifying role and selector"
             )
-        ):
-            raise FlatFunnelError("leaf role and formulation selector disagree")
-        # One process performs exactly one formulation.  The coordinator pairs
-        # the mandatory V2 result with its nonclassifying V1 diagnostic and
-        # can therefore bound and attribute each computation independently.
+        # Formal Stage 4A runs only the classifying V2 formulation.  Historical
+        # V1 replay is retained outside the formal hot path and can never act
+        # as a fallback or substitute for this record.
         record = produce_case(member, s3_selector=s3_selector)
         sequence += 1
         _append_reserved_progress(
@@ -1320,7 +1301,7 @@ def run_leaf(
             },
             "record": record,
             "schema": LEAF_PAYLOAD_SCHEMA,
-            "v1_comparator_disposition": V1_DISPOSITION,
+            "v1_comparator_disposition": FORMAL_V1_DISPOSITION,
         }
         record_ids = [str(member["record_id"])]
         document = {

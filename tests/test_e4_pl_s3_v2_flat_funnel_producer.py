@@ -173,7 +173,7 @@ def test_assignment_is_exact_phase4a_diagonal_shard(tmp_path: Path) -> None:
         producer.load_assignment(plan_path, shard_index=1, selector="e4-pl-s3")
 
 
-def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
+def test_leaf_catalog_is_exact_content_addressed_81_v2_computations(
     tmp_path: Path,
 ) -> None:
     plan_path, plan = _plan(tmp_path)
@@ -183,22 +183,17 @@ def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
     repeated = producer.build_leaf_catalog(plan, plan_digest, **authority)
 
     assert catalog == repeated
-    assert len(catalog) == 153
-    assert len({item["leaf_id"] for item in catalog}) == 153
-    assert len({item["leaf_assignment_sha256"] for item in catalog}) == 153
+    assert len(catalog) == 81
+    assert len({item["leaf_id"] for item in catalog}) == 81
+    assert len({item["leaf_assignment_sha256"] for item in catalog}) == 81
     assert len({item["assignment"]["record_id"] for item in catalog}) == 81
     assert sum(
         item["assignment"]["computation_role"]
         == producer.V2_COMPUTATION_ROLE
         for item in catalog
     ) == 81
-    assert sum(
-        item["assignment"]["computation_role"]
-        == producer.V1_COMPUTATION_ROLE
-        for item in catalog
-    ) == 72
     assert [item["assignment"]["catalog_index"] for item in catalog] == list(
-        range(153)
+        range(81)
     )
     assert catalog[0]["assignment"]["record_id"] == "N20:0PCT:none:slash"
     assert catalog[0]["assignment"]["computation_role"] == (
@@ -207,15 +202,14 @@ def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
     assert catalog[1]["assignment"]["record_id"] == (
         "N20:1PCT:dispersed:slash"
     )
-    assert [
-        catalog[index]["assignment"]["computation_role"]
-        for index in (1, 2)
-    ] == [producer.V2_COMPUTATION_ROLE, producer.V1_COMPUTATION_ROLE]
+    assert catalog[1]["assignment"]["computation_role"] == (
+        producer.V2_COMPUTATION_ROLE
+    )
     assert catalog[-1]["assignment"]["record_id"] == (
         "N80:25PCT:chain:alternating"
     )
     assert catalog[-1]["assignment"]["computation_role"] == (
-        producer.V1_COMPUTATION_ROLE
+        producer.V2_COMPUTATION_ROLE
     )
     logical_indices = {
         item["assignment"]["record_id"]: item["assignment"][
@@ -225,6 +219,11 @@ def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
     }
     assert sorted(set(logical_indices.values())) == list(range(81))
     for item in catalog:
+        assert item["assignment"]["computation_role"] == (
+            producer.V2_COMPUTATION_ROLE
+        )
+        assert item["assignment"]["s3_selector"] == producer.SELECTOR
+        assert "v1_diagnostic_expected" not in item["assignment"]
         assert {
             key: item["assignment"][key]
             for key in producer.LEAF_CANDIDATE_AUTHORITY_KEYS
@@ -253,7 +252,7 @@ def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
 
     first_shard = plan["shards"][0]
     all_q4_member = first_shard["records"][0]
-    with pytest.raises(funnel.FlatFunnelError, match="forbid.*V1"):
+    with pytest.raises(funnel.FlatFunnelError, match="must be V2"):
         producer.leaf_assignment_core(
             plan_digest,
             first_shard,
@@ -263,7 +262,7 @@ def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
             computation_role=producer.V1_COMPUTATION_ROLE,
             **authority,
         )
-    with pytest.raises(funnel.FlatFunnelError, match="role is not registered"):
+    with pytest.raises(funnel.FlatFunnelError, match="must be V2"):
         producer.leaf_assignment_core(
             plan_digest,
             first_shard,
@@ -313,7 +312,7 @@ def test_leaf_catalog_is_exact_content_addressed_153_role_computations(
         )
 
 
-def test_role_split_leaves_run_exactly_one_registered_formulation(
+def test_formal_leaves_run_exactly_one_v2_formulation(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -323,37 +322,15 @@ def test_role_split_leaves_run_exactly_one_registered_formulation(
         funnel.sha256(plan_path.read_bytes()),
         **_leaf_authority(archive_sha256="B" * 64),
     )
-    baseline = next(
-        item
-        for item in catalog
-        if not item["assignment"]["v1_diagnostic_expected"]
-    )
-    mixed_v2 = next(
-        item
-        for item in catalog
-        if item["assignment"]["v1_diagnostic_expected"]
-        and item["assignment"]["computation_role"]
-        == producer.V2_COMPUTATION_ROLE
-    )
-    mixed_v1 = next(
-        item
-        for item in catalog
-        if item["assignment"]["record_id"]
-        == mixed_v2["assignment"]["record_id"]
-        and item["assignment"]["computation_role"]
-        == producer.V1_COMPUTATION_ROLE
-    )
+    baseline = catalog[0]
+    mixed_v2 = catalog[1]
     calls: list[tuple[str, str]] = []
     events: list[str] = []
 
     def fake_case(member: dict[str, object], *, s3_selector: str) -> dict[str, object]:
         calls.append((str(member["record_id"]), s3_selector))
         return {
-            "classification": (
-                producer.CLASSIFICATION
-                if s3_selector == producer.SELECTOR
-                else "NONCLASSIFYING_V1_COMPARATOR_ONLY"
-            ),
+            "classification": producer.CLASSIFICATION,
             "record_id": str(member["record_id"]),
         }
 
@@ -376,7 +353,7 @@ def test_role_split_leaves_run_exactly_one_registered_formulation(
         lambda _root: events.append("SOURCE_ACTIVATED"),
     )
 
-    for index, leaf in enumerate((baseline, mixed_v2, mixed_v1)):
+    for index, leaf in enumerate((baseline, mixed_v2)):
         before = len(calls)
         event_before = len(events)
         output = tmp_path / f"leaf-{index}.json"
@@ -402,10 +379,9 @@ def test_role_split_leaves_run_exactly_one_registered_formulation(
         assert payload["leaf_assignment"] == leaf["assignment"]
         assert payload["computation_role"] == expected_role
         assert payload["record"]["record_id"] == leaf["assignment"]["record_id"]
-        assert payload["record"]["classification"] == (
-            producer.CLASSIFICATION
-            if expected_role == producer.V2_COMPUTATION_ROLE
-            else "NONCLASSIFYING_V1_COMPARATOR_ONLY"
+        assert payload["record"]["classification"] == producer.CLASSIFICATION
+        assert payload["v1_comparator_disposition"] == (
+            producer.FORMAL_V1_DISPOSITION
         )
         assert output.read_bytes() == funnel.canonical_bytes(document)
         assert document["scientific_payload_sha256"] == funnel.sha256(
@@ -433,6 +409,8 @@ def test_role_split_leaves_run_exactly_one_registered_formulation(
         ]
         selectors = [selector for _record_id, selector in calls[before:]]
         assert selectors == [expected_selector]
+        assert expected_role == producer.V2_COMPUTATION_ROLE
+        assert expected_selector == producer.SELECTOR
 
 
 def test_leaf_v2_failure_never_launches_v1_or_publishes(
@@ -447,9 +425,8 @@ def test_leaf_v2_failure_never_launches_v1_or_publishes(
             funnel.sha256(plan_path.read_bytes()),
             **_leaf_authority(archive_sha256="C" * 64),
         )
-        if item["assignment"]["v1_diagnostic_expected"]
-        and item["assignment"]["computation_role"]
-        == producer.V2_COMPUTATION_ROLE
+        if item["assignment"]["record_id"]
+        == "N20:1PCT:dispersed:slash"
     )
     selectors: list[str] = []
 
@@ -482,50 +459,20 @@ def test_leaf_v2_failure_never_launches_v1_or_publishes(
     assert not output.exists()
 
 
-def test_leaf_v1_failure_is_attributed_to_diagnostic_role_only(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    plan_path, plan = _plan(tmp_path)
-    diagnostic = next(
-        item
-        for item in producer.build_leaf_catalog(
-            plan,
-            funnel.sha256(plan_path.read_bytes()),
-            **_leaf_authority(archive_sha256="9" * 64),
-        )
-        if item["assignment"]["computation_role"]
-        == producer.V1_COMPUTATION_ROLE
-    )
-    selectors: list[str] = []
-
-    def fail_v1(_member: object, *, s3_selector: str) -> object:
-        selectors.append(s3_selector)
-        raise RuntimeError("synthetic leaf V1 diagnostic failure")
-
-    monkeypatch.setattr(producer, "produce_case", fail_v1)
-    monkeypatch.setattr(
-        producer,
-        "validate_extracted_candidate_source",
-        lambda _root, _archive, _digest: None,
-    )
-    monkeypatch.setattr(
-        producer, "activate_frozen_candidate_source", lambda _root: None
-    )
-    output = tmp_path / "must-not-exist-v1-leaf.json"
-    with pytest.raises(RuntimeError, match="synthetic leaf V1"):
-        producer.run_leaf(
-            plan_path,
-            leaf_assignment_sha256=diagnostic["leaf_assignment_sha256"],
-            selector=producer.SELECTOR,
-            candidate_source_root=tmp_path / "candidate-source",
-            candidate_archive=tmp_path / "candidate-source.tar",
-            **_leaf_authority(archive_sha256="9" * 64),
-            output=output,
-            progress=tmp_path / "failed-v1-leaf-progress.jsonl",
-        )
-    assert selectors == ["e4-pl-s3"]
-    assert not output.exists()
+def test_formal_leaf_catalog_never_registers_v1_diagnostic() -> None:
+    plan = {
+        "phase": "4A",
+        "record_count": 81,
+        "scope": "full",
+        "selector": producer.SELECTOR,
+        "shards": [],
+    }
+    assert producer.V1_COMPUTATION_ROLE not in {
+        producer.V2_COMPUTATION_ROLE
+    }
+    assert producer.FORMAL_V1_DISPOSITION.endswith("NO_FALLBACK")
+    with pytest.raises(funnel.FlatFunnelError, match="three diagonal"):
+        producer.build_leaf_catalog(plan, "A" * 64, **_leaf_authority())
 
 
 def test_leaf_rejects_wrong_program_identity_before_scientific_work(

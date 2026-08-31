@@ -183,7 +183,7 @@ def _synthetic_predecessor_incident(module, tmp_path, monkeypatch):
         "formal_failures": ["FORMAL_PROCESS_FAILED"],
         "producer_wave_result_sha256": None,
         "production_restriction": module.PRODUCTION_RESTRICTION,
-        "schema": module.AGGREGATE_SCHEMA,
+        "schema": module.HISTORICAL_AGGREGATE_SCHEMA,
         "sequence_results": [],
         "successor_expansion_authorized": False,
         "terminal": module.BLOCKED,
@@ -713,7 +713,7 @@ def _synthetic_resource_deferred_incident(module, tmp_path, monkeypatch):
         "formal_failures": ["PRODUCER_WAVE_NOT_COMPLETED"],
         "producer_wave_result_sha256": module.sha256(producer_raw),
         "production_restriction": module.PRODUCTION_RESTRICTION,
-        "schema": module.AGGREGATE_SCHEMA,
+        "schema": module.HISTORICAL_AGGREGATE_SCHEMA,
         "sequence_results": [],
         "successor_expansion_authorized": False,
         "terminal": module.BLOCKED,
@@ -1029,7 +1029,7 @@ def _checker_value(
         "sequence_results": sequences,
         "successor_expansion_authorized": bool(not advisory and not no_go),
         "terminal": module.NO_GO if no_go else module.PASS,
-        "v1_diagnostic_record_count": 24,
+        "v1_diagnostic_record_count": 0,
     }
 
 
@@ -1496,7 +1496,8 @@ def test_aggregate_pass_has_exact_coverage_and_registered_order(tmp_path):
     assert aggregate["successor_expansion_authorized"] is True
     assert aggregate["advisory_review_required"] is False
     assert aggregate["classifying_record_count"] == 81
-    assert aggregate["v1_diagnostic_record_count"] == 72
+    assert aggregate["v1_diagnostic_record_count"] == 0
+    assert aggregate["v1_comparator_disposition"] == module.LEAF_V1_DISPOSITION
     assert len(aggregate["sequence_results"]) == 24
     assert len(aggregate["checker_replica_bindings"]) == 3
     assert all(
@@ -1751,48 +1752,49 @@ def test_canonical_aggregate_is_rejected_when_tree_terminal_is_unproven(
     assert diagnostic_path.read_bytes() == b"{}\n"
 
 
-def test_run_stage4a_installs_wall_before_any_guarded_work(tmp_path, monkeypatch):
+def test_correction6_rejects_legacy_stage4a_before_any_guarded_work(
+    tmp_path, monkeypatch
+):
     module = _load()
-    observed = []
-    made = module.blocked_aggregate(
-        authorization_sha256="A" * 64,
-        contract_sha256="B" * 64,
-        producer_result_sha256=None,
-        reason="FORMAL_PROCESS_FAILED",
+    monkeypatch.setattr(
+        module,
+        "validate_contract",
+        lambda _path: pytest.fail("legacy execution loaded the contract"),
     )
-
-    def fake_guarded(*args):
-        guard = args[-1]
-        observed.append(
-            (
-                module._ACTIVE_COORDINATOR_GUARD is guard,
-                guard.hard_deadline - guard.work_deadline,
-            )
-        )
-        return made
-
-    monkeypatch.setattr(module, "_run_stage4a_guarded", fake_guarded)
-    result = module.run_stage4a(
+    arguments = (
         tmp_path / "contract.json",
         tmp_path / "authorization.json",
         tmp_path,
         tmp_path / "aggregate.json",
     )
-    assert result == made
-    assert observed == [
-        (True, float(module.COORDINATOR_FAIL_CLOSED_PUBLICATION_RESERVE_SECONDS))
-    ]
+    for runner in (module.run_stage4a, module._historical_run_stage4a):
+        with pytest.raises(module.CoordinatorError, match="correction 6"):
+            runner(*arguments)
+    for runner in (
+        module._run_stage4a_guarded,
+        module._historical_run_stage4a_guarded,
+    ):
+        with pytest.raises(module.CoordinatorError, match="correction 6"):
+            runner(*arguments, object())
     assert module._ACTIVE_COORDINATOR_GUARD is None
+    assert not (tmp_path / "aggregate.json").exists()
 
 
 def test_registered_resource_command_isolated_and_supplies_only_bound_dependencies(tmp_path):
     module = _load()
+    plan_path = (tmp_path / "phase4a-plan.json").resolve()
+    union_path = (tmp_path / "leaf-union.json").resolve()
     command = module.expected_resource_command(
         python_executable=Path(sys.executable),
         contract_path=ROOT / "contract.json",
         authorization_path=ROOT / "authorization.json",
         output_root=tmp_path,
         aggregate_path=tmp_path / "stage4a-aggregate.json",
+        execution_mode="leaf-finalizer",
+        plan_path=plan_path,
+        leaf_union_path=union_path,
+        plan_sha256="A" * 64,
+        leaf_union_sha256="B" * 64,
     )
     assert "$env:PYTHONNOUSERSITE='1';" in command
     assert "$env:PYTHONDONTWRITEBYTECODE='1';" in command
@@ -1800,7 +1802,58 @@ def test_registered_resource_command_isolated_and_supplies_only_bound_dependenci
     for _name, repository in module.DEPENDENCY_REPOSITORIES:
         assert str((repository / "src").resolve()) in command
     assert str(module.ROOT / "src") not in command
-    assert command.count("--run-stage4a") == 1
+    assert command.count("--finalize-leaf-union") == 1
+    assert "--run-stage4a" not in command
+
+
+def test_correction6_resource_command_requires_current_mode_and_rejects_legacy(
+    tmp_path,
+):
+    module = _load()
+    arguments = {
+        "python_executable": Path(sys.executable),
+        "contract_path": ROOT / "contract.json",
+        "authorization_path": ROOT / "authorization.json",
+        "output_root": tmp_path,
+        "aggregate_path": tmp_path / "stage4a-aggregate.json",
+    }
+    with pytest.raises(TypeError, match="execution_mode"):
+        module.expected_resource_command(**arguments)
+    with pytest.raises(module.CoordinatorError, match="not authorized by correction 6"):
+        module.expected_resource_command(**arguments, execution_mode="legacy")
+
+
+def test_correction6_rejects_legacy_preparation_before_contract_or_output(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    output_root = (tmp_path / "legacy-output").resolve()
+    monkeypatch.setattr(
+        module,
+        "validate_contract",
+        lambda _path: pytest.fail("legacy preparation loaded the contract"),
+    )
+    for prepare in (
+        module.prepare_wave,
+        module.run_prepare_stage4a,
+        module._historical_prepare_wave,
+        module._historical_run_prepare_stage4a,
+    ):
+        with pytest.raises(module.CoordinatorError, match="correction 6"):
+            prepare(tmp_path / "contract.json", output_root)
+    with pytest.raises(
+        module.CoordinatorError, match="preparation is not authorized by correction 6"
+    ):
+        module.main(
+            [
+                "--prepare-only",
+                "--contract",
+                str(tmp_path / "contract.json"),
+                "--output-root",
+                str(output_root),
+            ]
+        )
+    assert not output_root.exists()
 
 
 def _checker_proofs(module, tmp_path):
@@ -1822,9 +1875,9 @@ class _SyntheticCheckerResources:
 
 def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers():
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
-    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
-    assert module.MAXIMUM_REGISTERED_WORKERS == 3
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
+    assert module.CONTRACT_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-contract-v6"
+    assert module.CHECKER_REGISTERED_SHARDS == 3
     assert module.MAXIMUM_CONCURRENT_WORKERS == 2
     assert module._checker_replica_required_memory_bytes() == 64 * (1 << 30)
     assert module._execution_policy() == {
@@ -1833,6 +1886,7 @@ def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers
         "checker_phase_finalization_reserve_seconds": 60,
         "checker_phase_required_seconds": 960,
         "checker_phase_schedule": "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER",
+        "checker_registered_shards": 3,
         "checker_replica_wall_seconds": 300,
         "checker_replicas_per_shard": 2,
         "coordinator_wall_seconds": 1800,
@@ -1842,16 +1896,27 @@ def test_checker_policy_freezes_three_registered_but_only_two_concurrent_workers
         "git_subprocess_wall_seconds": 60,
         "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
+        "leaf_catalog_count": 81,
+        "leaf_finalizer_wall_seconds": 1740,
+        "leaf_formal_v1_diagnostic_count": 0,
+        "leaf_historical_v1_disposition": (
+            "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+        ),
+        "leaf_logical_record_count": 81,
+        "leaf_pair_wave_count": 40,
+        "leaf_pairing": "CONSECUTIVE_V2_LEAVES_IN_FROZEN_CATALOG_ORDER",
+        "leaf_singleton_wave_count": 1,
+        "leaf_v2_classifying_count": 81,
+        "leaf_wave_count": 41,
+        "leaf_wave_receipt_count": 41,
+        "leaf_wave_wall_seconds": 1740,
+        "leaf_worker_wall_seconds": 1500,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
-        "maximum_workers": 3,
         "memory_admission_headroom_gib": 16,
         "memory_admission_required_bytes": 68_719_476_736,
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
-        "producer_wall_seconds": 900,
-        "registered_shards": 3,
-        "schedule": "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER",
         "timeout_aggregate_requires_proven_empty_process_trees": True,
         "unproven_tree_hard_deadline_action": (
             "EXIT_WITHOUT_CANONICAL_AGGREGATE"
@@ -2392,29 +2457,27 @@ def test_process_incident_records_exact_failure_stage(tmp_path):
     }
 
 
-def test_formal_main_returns_nonzero_for_blocked_aggregate(tmp_path, monkeypatch):
+def test_correction6_cli_rejects_legacy_before_runner_access(tmp_path, monkeypatch):
     module = _load()
-    blocked = module.blocked_aggregate(
-        authorization_sha256="F" * 64,
-        contract_sha256="E" * 64,
-        producer_result_sha256=None,
-        reason="FORMAL_PROCESS_FAILED",
+    monkeypatch.setattr(
+        module,
+        "run_stage4a",
+        lambda *_args, **_kwargs: pytest.fail("legacy runner was reached"),
     )
-    monkeypatch.setattr(module, "run_stage4a", lambda *_args, **_kwargs: blocked)
-    code = module.main(
-        [
-            "--run-stage4a",
-            "--contract",
-            str(tmp_path / "contract.json"),
-            "--authorization",
-            str(tmp_path / "authorization.json"),
-            "--output-root",
-            str(tmp_path),
-            "--aggregate",
-            str(tmp_path / "aggregate.json"),
-        ]
-    )
-    assert code == 2
+    with pytest.raises(module.CoordinatorError, match="not authorized by correction 6"):
+        module.main(
+            [
+                "--run-stage4a",
+                "--contract",
+                str(tmp_path / "contract.json"),
+                "--authorization",
+                str(tmp_path / "authorization.json"),
+                "--output-root",
+                str(tmp_path),
+                "--aggregate",
+                str(tmp_path / "aggregate.json"),
+            ]
+        )
 
 
 def test_git_launcher_and_engine_identity_is_complete():
@@ -2784,7 +2847,10 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
             }
         )
 
-    authorization_path = reference_cases / "leaf-wave-authorization.json"
+    authorization_path = (
+        reference_cases / "e4_pl_s3_v2_stage4a_leaf_wave_authorization.json"
+    )
+    monkeypatch.setattr(module, "LEAF_WAVE_AUTHORIZATION_PATH", authorization_path)
     approved_rows = []
     wave_inputs = []
     for wave_index, wave in enumerate(wave_catalog["waves"], start=1):
@@ -3035,7 +3101,7 @@ def _correction4_success_receipt(module, tmp_path, monkeypatch):
     (resource_root / "attempts" / f"{selected_request['request_id']}.json").write_bytes(
         module.canonical_bytes(attempt)
     )
-    selected_authorization, _ = module._validate_leaf_wave_authorization_v4(
+    selected_authorization, _ = module._validate_leaf_wave_authorization_v5(
         path=authorization_path,
         value=authorization,
         raw=authorization_raw,
@@ -3095,7 +3161,7 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     monkeypatch,
 ):
     module = _load()
-    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
+    assert module.AUTHORITY_SCHEMA == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
     assert "tests/test_e4_pl_s3_v2_component_cache.py" in module.REQUIRED_FROZEN_PATHS
     plan, plan_raw = _correction4_plan(module)
     candidate_authority, _archive = _correction4_candidate(module)
@@ -3109,12 +3175,13 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     assert catalog["leaves"] == producer.build_leaf_catalog(
         plan, module.sha256(plan_raw), **candidate_authority
     )
-    assert catalog["leaf_count"] == 153
+    assert catalog["leaf_count"] == 81
     assert catalog["logical_record_count"] == 81
     assert catalog["v2_classifying_count"] == 81
-    assert catalog["v1_diagnostic_count"] == 72
+    assert catalog["v1_diagnostic_count"] == 0
+    assert catalog["v1_comparator_disposition"] == module.LEAF_V1_DISPOSITION
     assert [leaf["assignment"]["catalog_index"] for leaf in catalog["leaves"]] == list(
-        range(153)
+        range(81)
     )
     assert sum(
         leaf["assignment"]["computation_role"] == module.LEAF_V2_ROLE
@@ -3123,12 +3190,14 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
     assert sum(
         leaf["assignment"]["computation_role"] == module.LEAF_V1_ROLE
         for leaf in catalog["leaves"]
-    ) == 72
+    ) == 0
 
     waves = module.build_stage4a_leaf_wave_catalog(catalog)
-    assert waves["wave_count"] == 81
-    assert sum(wave["worker_count"] == 2 for wave in waves["waves"]) == 72
-    assert sum(wave["worker_count"] == 1 for wave in waves["waves"]) == 9
+    assert waves["wave_count"] == 41
+    assert waves["pair_wave_count"] == 40
+    assert waves["singleton_wave_count"] == 1
+    assert sum(wave["worker_count"] == 2 for wave in waves["waves"]) == 40
+    assert sum(wave["worker_count"] == 1 for wave in waves["waves"]) == 1
     for wave in waves["waves"]:
         roles = [
             next(
@@ -3138,7 +3207,7 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
             )
             for leaf_id in wave["leaf_ids"]
         ]
-        assert roles in ([module.LEAF_V2_ROLE], [module.LEAF_V2_ROLE, module.LEAF_V1_ROLE])
+        assert roles == [module.LEAF_V2_ROLE] * wave["worker_count"]
     assert [leaf_id for wave in waves["waves"] for leaf_id in wave["leaf_ids"]] == [
         leaf["leaf_id"] for leaf in catalog["leaves"]
     ]
@@ -3148,7 +3217,12 @@ def test_correction4_catalog_matches_producer_and_has_exact_wave_partition(
             for wave in waves["waves"]
             for digest in wave["leaf_assignment_sha256"]
         }
-    ) == 153
+    ) == 81
+    assert [
+        index
+        for wave in waves["waves"]
+        for index in wave["logical_record_indices"]
+    ] == list(range(81))
 
 
 def test_correction4_leaf_proof_keeps_generic_ten_key_envelope_and_binds_candidate():
@@ -3178,24 +3252,19 @@ def test_correction4_leaf_proof_keeps_generic_ten_key_envelope_and_binds_candida
         assert proof["scientific_payload"]["leaf_assignment"][key] == value
 
 
-def test_correction5_v1_leaf_is_diagnostic_only_and_cannot_substitute_for_v2():
+def test_correction6_formal_catalog_and_proofs_reject_v1_and_correction5_artifacts():
     module = _load()
     plan, plan_raw = _correction4_plan(module)
     candidate_authority, _archive = _correction4_candidate(module)
     catalog = module.build_stage4a_leaf_catalog(
         plan, plan_raw, **candidate_authority
     )
-    entry = next(
-        leaf
+    assert all(
+        leaf["assignment"]["computation_role"] == module.LEAF_V2_ROLE
         for leaf in catalog["leaves"]
-        if leaf["assignment"]["computation_role"] == module.LEAF_V1_ROLE
     )
-    member = next(
-        member
-        for shard in plan["shards"]
-        for member in shard["records"]
-        if member["record_id"] == entry["assignment"]["record_id"]
-    )
+    entry = catalog["leaves"][0]
+    member = plan["shards"][0]["records"][0]
     proof = _correction4_leaf_proof(module, entry, member)
     module.validate_stage4a_leaf_proof(
         proof,
@@ -3205,13 +3274,11 @@ def test_correction5_v1_leaf_is_diagnostic_only_and_cannot_substitute_for_v2():
     )
 
     forged = copy.deepcopy(proof)
-    forged["scientific_payload"]["record"]["classification"] = (
-        module.LEAF_CLASSIFICATION
-    )
+    forged["scientific_payload"]["computation_role"] = module.LEAF_V1_ROLE
     forged["scientific_payload_sha256"] = module.sha256(
         module.canonical_bytes(forged["scientific_payload"])
     )
-    with pytest.raises(module.CoordinatorError, match="immutable plan member"):
+    with pytest.raises(module.CoordinatorError, match="identity differs"):
         module.validate_stage4a_leaf_proof(
             forged,
             module.canonical_bytes(forged),
@@ -3219,15 +3286,16 @@ def test_correction5_v1_leaf_is_diagnostic_only_and_cannot_substitute_for_v2():
             member=member,
         )
 
-    wrong_role = copy.deepcopy(proof)
-    wrong_role["scientific_payload"]["computation_role"] = module.LEAF_V2_ROLE
-    wrong_role["scientific_payload_sha256"] = module.sha256(
-        module.canonical_bytes(wrong_role["scientific_payload"])
-    )
+    old_catalog = copy.deepcopy(catalog)
+    old_catalog["schema"] = "anysolver.e4-pl-s3-v2-stage4a-leaf-catalog-v2"
+    with pytest.raises(module.CoordinatorError, match="identity differs"):
+        module.build_stage4a_leaf_wave_catalog(old_catalog)
+    old_proof = copy.deepcopy(proof)
+    old_proof["schema"] = "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v2"
     with pytest.raises(module.CoordinatorError, match="identity differs"):
         module.validate_stage4a_leaf_proof(
-            wrong_role,
-            module.canonical_bytes(wrong_role),
+            old_proof,
+            module.canonical_bytes(old_proof),
             entry=entry,
             member=member,
         )
@@ -3292,15 +3360,14 @@ def test_correction4_leaf_manifests_are_bounded_executable_pairs_and_singleton(
     replacement = next(
         leaf
         for leaf in catalog["leaves"]
-        if leaf["assignment"]["computation_role"] == module.LEAF_V1_ROLE
-        and leaf["assignment"]["record_id"] != pair["record_id"]
+        if leaf["assignment"]["logical_record_index"] == 3
     )
     cross_record = copy.deepcopy(pair)
     cross_record["leaf_ids"][1] = replacement["leaf_id"]
     cross_record["leaf_assignment_sha256"][1] = replacement[
         "leaf_assignment_sha256"
     ]
-    with pytest.raises(module.CoordinatorError, match="logical role pairing"):
+    with pytest.raises(module.CoordinatorError, match="consecutive V2 partition"):
         module._build_stage4a_leaf_wave_manifest(
             wave=cross_record,
             catalog=catalog,
@@ -3334,6 +3401,26 @@ def test_correction4_success_receipt_requires_full_authority_and_exact_terminal_
         "sha256": module.sha256((fixture["completed_line"] + "\n").encode()),
         "status": "COMPLETED_PASS",
     }
+    correction5_receipt = copy.deepcopy(fixture["receipt"])
+    correction5_receipt["schema"] = (
+        "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-receipt-v2"
+    )
+    fixture["receipt_path"].write_bytes(
+        module.canonical_bytes(correction5_receipt)
+    )
+    with pytest.raises(module.CoordinatorError, match="identity differs"):
+        module.validate_stage4a_leaf_wave_receipt(
+            fixture["receipt_path"],
+            contract=fixture["contract"],
+            contract_path=fixture["contract_path"],
+            contract_raw=fixture["contract_raw"],
+            cycle=fixture["cycle"],
+            wave_index=1,
+            allowed_root=fixture["output_root"],
+            expected_authorization_path=fixture["authorization_path"],
+            expected_authorization_raw=fixture["authorization_raw"],
+        )
+    fixture["receipt_path"].write_bytes(fixture["receipt_raw"])
     forged = fixture["completed_line"].replace(
         module.sha256(fixture["receipt_raw"]), "F" * 64
     )
@@ -3352,6 +3439,77 @@ def test_correction4_success_receipt_requires_full_authority_and_exact_terminal_
             allowed_root=fixture["output_root"],
             expected_authorization_path=fixture["authorization_path"],
             expected_authorization_raw=fixture["authorization_raw"],
+        )
+
+
+def test_correction6_uses_distinct_tracked_wave_and_finalizer_authority_paths(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    assert module.LEAF_WAVE_AUTHORIZATION_PATH.name == (
+        "e4_pl_s3_v2_stage4a_leaf_wave_authorization.json"
+    )
+    assert module.EXECUTION_AUTHORIZATION_PATH.name == (
+        "e4_pl_s3_v2_stage4a_execution_authorization.json"
+    )
+    assert module.LEAF_WAVE_AUTHORIZATION_PATH != module.EXECUTION_AUTHORIZATION_PATH
+    wrong_path = (tmp_path / "untracked-authorization.json").resolve()
+    raw = module.canonical_bytes({"schema": "synthetic"})
+    wrong_path.write_bytes(raw)
+    with pytest.raises(module.CoordinatorError, match="finalizer.*path differs"):
+        module.validate_authorization(
+            wrong_path,
+            contract_path=(tmp_path / "contract.json").resolve(),
+            contract_raw=module.canonical_bytes({"contract": True}),
+            execution_mode="leaf-finalizer",
+        )
+    with pytest.raises(module.CoordinatorError, match="wave authorization path differs"):
+        module._validate_leaf_wave_authorization_v5(
+            path=wrong_path,
+            value={"schema": "synthetic"},
+            raw=raw,
+            contract_path=(tmp_path / "contract.json").resolve(),
+            contract_raw=module.canonical_bytes({"contract": True}),
+            selected_wave_index=1,
+            selected_plan_sha256="A" * 64,
+            selected_leaf_catalog_sha256="B" * 64,
+            selected_manifest_sha256="C" * 64,
+            selected_result_path=(tmp_path / "result.json").resolve(),
+        )
+    tracked_wave_path = (tmp_path / "tracked-wave-authorization.json").resolve()
+    tracked_wave_path.write_bytes(
+        module.canonical_bytes({"schema": module.AUTHORIZATION_SCHEMA})
+    )
+    monkeypatch.setattr(module, "LEAF_WAVE_AUTHORIZATION_PATH", tracked_wave_path)
+    with pytest.raises(module.CoordinatorError, match="wave authorization schema differs"):
+        module.validate_authorization(
+            tracked_wave_path,
+            contract_path=(tmp_path / "contract.json").resolve(),
+            contract_raw=module.canonical_bytes({"contract": True}),
+            execution_mode="leaf-wave",
+            leaf_wave_index=1,
+            plan_sha256="A" * 64,
+            leaf_catalog_sha256="B" * 64,
+            leaf_wave_manifest_sha256="C" * 64,
+            leaf_wave_result_path=(tmp_path / "result.json").resolve(),
+        )
+
+
+def test_correction6_authorization_rejects_legacy_before_file_access(
+    tmp_path, monkeypatch,
+):
+    module = _load()
+    monkeypatch.setattr(
+        module,
+        "strict_json_load",
+        lambda _path: pytest.fail("authorization file was accessed"),
+    )
+    with pytest.raises(module.CoordinatorError, match="not authorized by correction 6"):
+        module.validate_authorization(
+            tmp_path / "missing-authorization.json",
+            contract_path=(tmp_path / "contract.json").resolve(),
+            contract_raw=module.canonical_bytes({"contract": True}),
+            execution_mode="legacy",
         )
 
 
@@ -3410,7 +3568,7 @@ def test_correction4_union_validates_all_leaves_and_reconstructs_legacy_proofs(
         contract_raw=contract_raw,
         allowed_root=tmp_path,
     )
-    assert len(validated["proofs"]) == 153
+    assert len(validated["proofs"]) == 81
     assert module.sha256(validated["union_raw"]) == module.sha256(
         module.canonical_bytes(union)
     )
@@ -3425,7 +3583,11 @@ def test_correction4_union_validates_all_leaves_and_reconstructs_legacy_proofs(
         ]
         assert document["schema"] == module.DIAGONAL_SCIENTIFIC_SCHEMA
         assert len(document["scientific_payload"]["classifying_records"]) == 27
-        assert len(document["scientific_payload"]["v1_comparator_diagnostics"]) == 24
+        assert document["scientific_payload"]["v1_comparator_diagnostics"] == []
+        assert (
+            document["scientific_payload"]["v1_comparator_disposition"]
+            == module.LEAF_V1_DISPOSITION
+        )
         assert document["scientific_payload_sha256"] == module.sha256(
             module.canonical_bytes(document["scientific_payload"])
         )
@@ -3447,6 +3609,21 @@ def test_correction4_union_rejects_missing_alias_hash_and_noncanonical_mutations
     ) = _correction4_union(
         module, tmp_path, monkeypatch
     )
+    correction5_union = copy.deepcopy(union)
+    correction5_union["schema"] = "anysolver.e4-pl-s3-v2-stage4a-leaf-union-v2"
+    union_path.write_bytes(module.canonical_bytes(correction5_union))
+    with pytest.raises(module.CoordinatorError, match="identity differs"):
+        module.validate_stage4a_leaf_union(
+            union_path,
+            catalog=catalog,
+            plan=plan,
+            plan_raw=plan_raw,
+            candidate_authority=candidate_authority,
+            contract=contract,
+            contract_path=contract_path,
+            contract_raw=contract_raw,
+            allowed_root=tmp_path,
+        )
     mutated = copy.deepcopy(union)
     mutated["proofs"][0]["sha256"] = "F" * 64
     union_path.unlink()
@@ -3810,7 +3987,7 @@ def test_correction4_prepare_wave_receipt_and_union_cli_paths_are_wired(
     )
     assert code == 0
     assert observed["args"][2] == (tmp_path / "plan.json").resolve()
-    with pytest.raises(module.CoordinatorError, match="does not accept leaf inputs"):
+    with pytest.raises(module.CoordinatorError, match="not authorized by correction 6"):
         module.main(
             [
                 "--run-stage4a",

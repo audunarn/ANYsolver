@@ -18,12 +18,15 @@ import tempfile
 from typing import Any, Mapping, Sequence
 
 
-PROOF_SCHEMA = "anysolver.e4-pl-s3-v2-flat-funnel-shard-scientific-v1"
-PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
+PROOF_SCHEMA = "anysolver.e4-pl-s3-v2-flat-funnel-shard-scientific-v2"
+PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v2"
 PLAN_SCHEMA = "anysolver.e4-pl-s3-v2-flat-funnel-plan-v1"
 ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-v2-flat-funnel-assignment-v1"
-RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
+RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v2"
 SELECTOR = "e4-pl-s3-v2"
+HISTORICAL_V1_DISPOSITION = (
+    "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+)
 DIAGONALS = ("slash", "backslash", "alternating")
 LEVELS = (20, 40, 80)
 MASKS = ("dispersed", "chain")
@@ -612,8 +615,7 @@ def verify_shard(proof_path: Path, plan_path: Path) -> dict[str, Any]:
         or payload["phase"] != "4A"
         or payload["scope"] != "full"
         or payload["diagonal"] not in DIAGONALS
-        or payload["v1_comparator_disposition"]
-        != "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+        or payload["v1_comparator_disposition"] != HISTORICAL_V1_DISPOSITION
     ):
         raise CheckerError("scientific payload identity differs")
     protocol = _exact(
@@ -662,29 +664,12 @@ def verify_shard(proof_path: Path, plan_path: Path) -> dict[str, Any]:
     diagnostics = payload["v1_comparator_diagnostics"]
     if not isinstance(classifying, list) or len(classifying) != 27:
         raise CheckerError("shard must contain exactly 27 classifying records")
-    if not isinstance(diagnostics, list) or len(diagnostics) != 24:
-        raise CheckerError("shard must contain exactly 24 V1 diagnostics")
+    if not isinstance(diagnostics, list) or diagnostics:
+        raise CheckerError("runtime V1 comparator diagnostics are forbidden")
     checked = [
         _validate_record(record, expected)
         for record, expected in zip(classifying, assignment["records"])
     ]
-    mixed_assignments = [
-        item for item in assignment["records"] if item["record"]["s3_element_count"] > 0
-    ]
-    for diagnostic, expected in zip(diagnostics, mixed_assignments):
-        _validate_record(diagnostic, expected, diagnostic_v1=True)
-    diagnostic_coordinates = {
-        (item["level"], item["mask"], item["s3_area_fraction_percent"])
-        for item in diagnostics
-    }
-    expected_diagnostic_coordinates = {
-        (level, mask, fraction)
-        for level in LEVELS
-        for mask in MASKS
-        for fraction in FRACTIONS
-    }
-    if diagnostic_coordinates != expected_diagnostic_coordinates:
-        raise CheckerError("V1 comparator diagnostic coverage differs")
     baseline = [row for row in checked if row["fraction"] == 0 and row["mask"] == "none"]
     baseline.sort(key=lambda row: row["level"])
     if len(baseline) != 3:
@@ -720,7 +705,7 @@ def verify_shard(proof_path: Path, plan_path: Path) -> dict[str, Any]:
         "sequence_results": sequences,
         "successor_expansion_authorized": bool(not failures and not advisory),
         "terminal": terminal,
-        "v1_diagnostic_record_count": 24,
+        "v1_diagnostic_record_count": 0,
     }
 
 

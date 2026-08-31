@@ -1,9 +1,11 @@
 """Bounded coordinator for the formal S3 V2A Stage-4A funnel.
 
 The coordinator validates the frozen Git candidate before numerical imports,
-creates an exact source archive and three-shard producer manifest, runs the
-existing Windows Job-Object wave, then runs two independent checker replicas
-per shard.  It publishes one canonical aggregate only after every launched
+creates an exact source archive and 81 content-addressed V2 leaves, executes
+them as 40 bounded pairs plus one singleton, and joins all 41 terminal
+receipts.  It then reconstructs the three diagonal checker inputs and runs two
+independent checker replicas per input.  Legacy monolithic and live V1 routes
+fail closed.  A canonical aggregate is published only after every launched
 process has reached a proven terminal state.
 """
 
@@ -33,6 +35,12 @@ from typing import Any, Mapping, Sequence
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_CASES = ROOT / "docs" / "reference_cases"
 AUTHORITY_PATH = REFERENCE_CASES / "e4_pl_s3_v2_stage4a_authority.json"
+LEAF_WAVE_AUTHORIZATION_PATH = (
+    REFERENCE_CASES / "e4_pl_s3_v2_stage4a_leaf_wave_authorization.json"
+)
+EXECUTION_AUTHORIZATION_PATH = (
+    REFERENCE_CASES / "e4_pl_s3_v2_stage4a_execution_authorization.json"
+)
 MANIFEST_PATH = REFERENCE_CASES / "e4_pl_s3_mixed_mesh_connectivity_manifest.json"
 SCAFFOLD_CONTRACT_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_contract.json"
 SOURCE_CONTRACT_PATH = REFERENCE_CASES / "e4_pl_s3_v2_source_equation_contract.json"
@@ -41,44 +49,49 @@ CHECKER_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel_checker.py"
 FUNNEL_PATH = REFERENCE_CASES / "e4_pl_s3_v2_flat_funnel.py"
 BOUNDED_PATH = REFERENCE_CASES / "e4_pl_s3_v2_bounded_process.py"
 
-CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v5"
+CONTRACT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-contract-v6"
 AUTHORIZATION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-execution-authorization-v2"
 LEAF_WAVE_AUTHORIZATION_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v4"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-authorization-v5"
 )
-AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
+AUTHORITY_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
 REVIEW_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-implementation-review-v1"
-AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
-CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v1"
+AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v3"
+HISTORICAL_AGGREGATE_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-aggregate-v2"
+CHECKER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-checker-result-v2"
 PRODUCER_RESULT_SCHEMA = "anysolver.e4-pl-s3-v2-bounded-wave-result-v1"
-LEAF_ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v2"
-LEAF_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-catalog-v2"
-LEAF_WAVE_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-catalog-v2"
-LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v2"
-LEAF_SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v2"
-LEAF_UNION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-union-v2"
+LEAF_ASSIGNMENT_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v3"
+LEAF_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-catalog-v3"
+LEAF_WAVE_CATALOG_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-catalog-v3"
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v3"
+LEAF_SCIENTIFIC_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v3"
+LEAF_UNION_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-union-v3"
 LEAF_WAVE_RECEIPT_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-receipt-v2"
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-wave-receipt-v3"
 )
 LEAF_UNION_TERMINAL = "COMPLETE_FOR_DIAGONAL_RECONSTRUCTION"
 LEAF_PROOF_TERMINAL = "ACCEPTED_FOR_AGGREGATION"
-DIAGONAL_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
+DIAGONAL_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v2"
 DIAGONAL_SCIENTIFIC_SCHEMA = (
-    "anysolver.e4-pl-s3-v2-flat-funnel-shard-scientific-v1"
+    "anysolver.e4-pl-s3-v2-flat-funnel-shard-scientific-v2"
 )
 LEAF_SELECTOR = "e4-pl-s3-v2"
 LEAF_CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
 LEAF_V1_CLASSIFICATION = "NONCLASSIFYING_V1_COMPARATOR_ONLY"
 LEAF_V1_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
-LEAF_V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+LEAF_V1_DISPOSITION = (
+    "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+)
 LEAF_V2_ROLE = "V2_CLASSIFYING"
 LEAF_V1_ROLE = "V1_DIAGNOSTIC"
 LEAF_V1_SELECTOR = "e4-pl-s3"
 LEAF_LOGICAL_RECORD_COUNT = 81
 LEAF_V2_COUNT = 81
-LEAF_V1_DIAGNOSTIC_COUNT = 72
+LEAF_V1_DIAGNOSTIC_COUNT = 0
 LEAF_CATALOG_COUNT = LEAF_V2_COUNT + LEAF_V1_DIAGNOSTIC_COUNT
-LEAF_WAVE_COUNT = LEAF_LOGICAL_RECORD_COUNT
+LEAF_WAVE_PAIR_COUNT = 40
+LEAF_WAVE_SINGLETON_COUNT = 1
+LEAF_WAVE_COUNT = LEAF_WAVE_PAIR_COUNT + LEAF_WAVE_SINGLETON_COUNT
 LEAF_WORKER_WALL_SECONDS = 1500
 LEAF_FINALIZER_WALL_SECONDS = 1740
 LEAF_FINALIZER_PUBLICATION_RESERVE_SECONDS = 15
@@ -94,9 +107,8 @@ COORDINATOR_HARD_EXIT_CODE = 124
 GIT_SUBPROCESS_WALL_SECONDS = 60
 MEMORY_LIMIT_BYTES = 24 * (1 << 30)
 OS_HEADROOM_BYTES = 16 * (1 << 30)
-MAXIMUM_REGISTERED_WORKERS = 3
+CHECKER_REGISTERED_SHARDS = 3
 MAXIMUM_CONCURRENT_WORKERS = 2
-WORKER_SCHEDULE = "TWO_CONCURRENT_THEN_REMAINING_ONE_IN_FROZEN_ORDER"
 CHECKER_PHASE_SCHEDULE = "REPLICA_PAIRS_BY_FROZEN_SHARD_ORDER"
 CHECKER_PHASE_FINALIZATION_RESERVE_SECONDS = 60
 CHECKER_PHASE_REQUIRED_SECONDS = 960
@@ -599,6 +611,7 @@ def _execution_policy() -> dict[str, Any]:
         ),
         "checker_phase_required_seconds": CHECKER_PHASE_REQUIRED_SECONDS,
         "checker_phase_schedule": CHECKER_PHASE_SCHEDULE,
+        "checker_registered_shards": CHECKER_REGISTERED_SHARDS,
         "checker_replica_wall_seconds": CHECKER_WALL_SECONDS,
         "checker_replicas_per_shard": 2,
         "coordinator_wall_seconds": COORDINATOR_WALL_SECONDS,
@@ -610,18 +623,27 @@ def _execution_policy() -> dict[str, Any]:
         "git_subprocess_wall_seconds": GIT_SUBPROCESS_WALL_SECONDS,
         "hard_coordinator_wall_enforced": True,
         "inactivity_seconds": 300,
+        "leaf_catalog_count": LEAF_CATALOG_COUNT,
+        "leaf_finalizer_wall_seconds": LEAF_FINALIZER_WALL_SECONDS,
+        "leaf_formal_v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
+        "leaf_historical_v1_disposition": LEAF_V1_DISPOSITION,
+        "leaf_logical_record_count": LEAF_LOGICAL_RECORD_COUNT,
+        "leaf_pair_wave_count": LEAF_WAVE_PAIR_COUNT,
+        "leaf_pairing": "CONSECUTIVE_V2_LEAVES_IN_FROZEN_CATALOG_ORDER",
+        "leaf_singleton_wave_count": LEAF_WAVE_SINGLETON_COUNT,
+        "leaf_v2_classifying_count": LEAF_V2_COUNT,
+        "leaf_wave_count": LEAF_WAVE_COUNT,
+        "leaf_wave_receipt_count": LEAF_WAVE_COUNT,
+        "leaf_wave_wall_seconds": LEAF_FINALIZER_WALL_SECONDS,
+        "leaf_worker_wall_seconds": LEAF_WORKER_WALL_SECONDS,
         "maximum_concurrent_workers": MAXIMUM_CONCURRENT_WORKERS,
         "maximum_memory_gib_per_process_tree": MEMORY_LIMIT_BYTES // (1 << 30),
-        "maximum_workers": MAXIMUM_REGISTERED_WORKERS,
         "memory_admission_headroom_gib": OS_HEADROOM_BYTES // (1 << 30),
         "memory_admission_required_bytes": (
             MAXIMUM_CONCURRENT_WORKERS * MEMORY_LIMIT_BYTES + OS_HEADROOM_BYTES
         ),
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
-        "producer_wall_seconds": 900,
-        "registered_shards": MAXIMUM_REGISTERED_WORKERS,
-        "schedule": WORKER_SCHEDULE,
         "timeout_aggregate_requires_proven_empty_process_trees": True,
         "unproven_tree_hard_deadline_action": (
             "EXIT_WITHOUT_CANONICAL_AGGREGATE"
@@ -1024,7 +1046,7 @@ def build_stage4a_leaf_catalog(
     candidate_archive_sha256: str,
     producer_program_sha256: str,
 ) -> dict[str, Any]:
-    """Build the deterministic content-addressed role-split leaf catalog."""
+    """Build the deterministic content-addressed V2-only formal leaf catalog."""
 
     shards = _stage4a_plan_shards(plan, plan_raw)
     plan_digest = sha256(plan_raw)
@@ -1042,41 +1064,34 @@ def build_stage4a_leaf_catalog(
     logical_record_index = 0
     for shard in shards:
         for member in shard["records"]:
-            record = member["record"]
-            diagnostic_expected = record["s3_element_count"] > 0
-            roles = [(LEAF_V2_ROLE, LEAF_SELECTOR)]
-            if diagnostic_expected:
-                roles.append((LEAF_V1_ROLE, LEAF_V1_SELECTOR))
-            for computation_role, s3_selector in roles:
-                assignment = {
-                    "catalog_index": len(leaves),
-                    **candidate_authority,
-                    "computation_role": computation_role,
-                    "diagonal": shard["diagonal"],
-                    "logical_record_index": logical_record_index,
-                    "manifest_index": member["manifest_index"],
-                    "parent_assignment_id": shard["assignment_id"],
-                    "parent_assignment_sha256": shard["assignment_sha256"],
-                    "phase": "4A",
-                    "plan_sha256": plan_digest,
-                    "record_id": member["record_id"],
-                    "record_member_sha256": sha256(canonical_bytes(dict(member))),
-                    "s3_selector": s3_selector,
-                    "schema": LEAF_ASSIGNMENT_SCHEMA,
-                    "selector": LEAF_SELECTOR,
-                    "v1_diagnostic_expected": diagnostic_expected,
+            assignment = {
+                "catalog_index": len(leaves),
+                **candidate_authority,
+                "computation_role": LEAF_V2_ROLE,
+                "diagonal": shard["diagonal"],
+                "logical_record_index": logical_record_index,
+                "manifest_index": member["manifest_index"],
+                "parent_assignment_id": shard["assignment_id"],
+                "parent_assignment_sha256": shard["assignment_sha256"],
+                "phase": "4A",
+                "plan_sha256": plan_digest,
+                "record_id": member["record_id"],
+                "record_member_sha256": sha256(canonical_bytes(dict(member))),
+                "s3_selector": LEAF_SELECTOR,
+                "schema": LEAF_ASSIGNMENT_SCHEMA,
+                "selector": LEAF_SELECTOR,
+            }
+            digest = sha256(canonical_bytes(assignment))
+            if digest in seen_digests:
+                raise CoordinatorError("Stage 4A leaf assignment hash is duplicated")
+            seen_digests.add(digest)
+            leaves.append(
+                {
+                    "assignment": assignment,
+                    "leaf_assignment_sha256": digest,
+                    "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
                 }
-                digest = sha256(canonical_bytes(assignment))
-                if digest in seen_digests:
-                    raise CoordinatorError("Stage 4A leaf assignment hash is duplicated")
-                seen_digests.add(digest)
-                leaves.append(
-                    {
-                        "assignment": assignment,
-                        "leaf_assignment_sha256": digest,
-                        "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
-                    }
-                )
+            )
             logical_record_index += 1
     diagnostic_count = sum(
         leaf["assignment"]["computation_role"] == LEAF_V1_ROLE
@@ -1103,6 +1118,7 @@ def build_stage4a_leaf_catalog(
         "plan_sha256": plan_digest,
         "schema": LEAF_CATALOG_SCHEMA,
         "v2_classifying_count": LEAF_V2_COUNT,
+        "v1_comparator_disposition": LEAF_V1_DISPOSITION,
         "v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
     }
 
@@ -1119,6 +1135,7 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             "plan_sha256",
             "schema",
             "v2_classifying_count",
+            "v1_comparator_disposition",
             "v1_diagnostic_count",
         },
         "$.leaf_catalog",
@@ -1129,6 +1146,7 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         or checked["logical_record_count"] != LEAF_LOGICAL_RECORD_COUNT
         or checked["v2_classifying_count"] != LEAF_V2_COUNT
         or checked["v1_diagnostic_count"] != LEAF_V1_DIAGNOSTIC_COUNT
+        or checked["v1_comparator_disposition"] != LEAF_V1_DISPOSITION
     ):
         raise CoordinatorError("Stage 4A leaf catalog identity differs")
     plan_digest = _digest(checked["plan_sha256"], "$.leaf_catalog.plan_sha256")
@@ -1176,7 +1194,6 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         "s3_selector",
         "schema",
         "selector",
-        "v1_diagnostic_expected",
     }
     for index, raw_leaf in enumerate(raw_leaves):
         location = f"$.leaf_catalog.leaves[{index}]"
@@ -1191,13 +1208,6 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         )
         record_id = assignment["record_id"]
         computation_role = assignment["computation_role"]
-        expected_s3_selector = (
-            LEAF_SELECTOR
-            if computation_role == LEAF_V2_ROLE
-            else LEAF_V1_SELECTOR
-            if computation_role == LEAF_V1_ROLE
-            else None
-        )
         if (
             assignment["schema"] != LEAF_ASSIGNMENT_SCHEMA
             or assignment["catalog_index"] != index
@@ -1208,8 +1218,8 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             or assignment["phase"] != "4A"
             or assignment["plan_sha256"] != plan_digest
             or assignment["selector"] != LEAF_SELECTOR
-            or expected_s3_selector is None
-            or assignment["s3_selector"] != expected_s3_selector
+            or computation_role != LEAF_V2_ROLE
+            or assignment["s3_selector"] != LEAF_SELECTOR
             or assignment["diagonal"] not in DIAGONAL_ORDER
             or assignment["parent_assignment_id"]
             not in EXPECTED_SHARDS
@@ -1217,11 +1227,6 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
             != assignment["diagonal"]
             or not isinstance(record_id, str)
             or not record_id
-            or not isinstance(assignment["v1_diagnostic_expected"], bool)
-            or (
-                computation_role == LEAF_V1_ROLE
-                and assignment["v1_diagnostic_expected"] is not True
-            )
             or sha256(canonical_bytes(dict(assignment))) != digest
             or leaf["leaf_id"] != f"S3_V2_FLAT_4A_LEAF_{digest}"
         ):
@@ -1258,42 +1263,31 @@ def _validate_stage4a_leaf_catalog(catalog: Mapping[str, Any]) -> list[Mapping[s
         or classifying_count != LEAF_V2_COUNT
         or set(logical_records) != set(range(LEAF_LOGICAL_RECORD_COUNT))
     ):
-        raise CoordinatorError("Stage 4A leaf diagnostic coverage differs")
+        raise CoordinatorError("Stage 4A formal leaf coverage differs")
     for logical_index, group in logical_records.items():
-        expected_roles = (
-            [LEAF_V2_ROLE, LEAF_V1_ROLE]
-            if group[0]["assignment"]["v1_diagnostic_expected"]
-            else [LEAF_V2_ROLE]
-        )
         if (
             [leaf["assignment"]["computation_role"] for leaf in group]
-            != expected_roles
+            != [LEAF_V2_ROLE]
             or any(
                 leaf["assignment"]["logical_record_index"] != logical_index
                 or leaf["assignment"]["record_id"]
                 != group[0]["assignment"]["record_id"]
                 or leaf["assignment"]["record_member_sha256"]
                 != group[0]["assignment"]["record_member_sha256"]
-                or leaf["assignment"]["v1_diagnostic_expected"]
-                != group[0]["assignment"]["v1_diagnostic_expected"]
                 for leaf in group
             )
         ):
-            raise CoordinatorError("Stage 4A logical role pair differs")
+            raise CoordinatorError("Stage 4A logical V2 leaf differs")
     return leaves
 
 
 def build_stage4a_leaf_wave_catalog(catalog: Mapping[str, Any]) -> dict[str, Any]:
-    """Group each logical record's V2/V1 roles in one bounded wave."""
+    """Pair consecutive formal V2 leaves, leaving the final leaf singleton."""
 
     leaves = _validate_stage4a_leaf_catalog(catalog)
     waves: list[dict[str, Any]] = []
-    for logical_index in range(LEAF_LOGICAL_RECORD_COUNT):
-        group = [
-            leaf
-            for leaf in leaves
-            if leaf["assignment"]["logical_record_index"] == logical_index
-        ]
+    for offset in range(0, LEAF_CATALOG_COUNT, MAXIMUM_CONCURRENT_WORKERS):
+        group = leaves[offset : offset + MAXIMUM_CONCURRENT_WORKERS]
         wave_index = len(waves) + 1
         waves.append(
             {
@@ -1301,24 +1295,36 @@ def build_stage4a_leaf_wave_catalog(catalog: Mapping[str, Any]) -> dict[str, Any
                     leaf["leaf_assignment_sha256"] for leaf in group
                 ],
                 "leaf_ids": [leaf["leaf_id"] for leaf in group],
-                "logical_record_index": logical_index,
-                "record_id": group[0]["assignment"]["record_id"],
+                "logical_record_indices": [
+                    leaf["assignment"]["logical_record_index"] for leaf in group
+                ],
+                "record_ids": [leaf["assignment"]["record_id"] for leaf in group],
                 "wave_id": f"S3_V2_FLAT_4A_WAVE_{wave_index:02d}",
                 "worker_count": len(group),
             }
         )
     if (
         len(waves) != LEAF_WAVE_COUNT
-        or sum(wave["worker_count"] == 2 for wave in waves) != 72
-        or sum(wave["worker_count"] == 1 for wave in waves) != 9
+        or sum(wave["worker_count"] == 2 for wave in waves)
+        != LEAF_WAVE_PAIR_COUNT
+        or sum(wave["worker_count"] == 1 for wave in waves)
+        != LEAF_WAVE_SINGLETON_COUNT
         or [leaf_id for wave in waves for leaf_id in wave["leaf_ids"]]
         != [leaf["leaf_id"] for leaf in leaves]
+        or [
+            logical_index
+            for wave in waves
+            for logical_index in wave["logical_record_indices"]
+        ]
+        != list(range(LEAF_LOGICAL_RECORD_COUNT))
     ):
         raise CoordinatorError("Stage 4A leaf wave partition differs")
     return {
         "leaf_catalog_sha256": sha256(canonical_bytes(dict(catalog))),
         "maximum_concurrent_workers": MAXIMUM_CONCURRENT_WORKERS,
+        "pair_wave_count": LEAF_WAVE_PAIR_COUNT,
         "schema": LEAF_WAVE_CATALOG_SCHEMA,
+        "singleton_wave_count": LEAF_WAVE_SINGLETON_COUNT,
         "wave_count": LEAF_WAVE_COUNT,
         "waves": waves,
     }
@@ -1439,7 +1445,9 @@ def validate_stage4a_leaf_proof(
         or payload["schema"] != LEAF_PAYLOAD_SCHEMA
         or payload["phase"] != "4A"
         or payload["leaf_assignment"] != assignment
-        or payload["computation_role"] != assignment["computation_role"]
+        or payload["computation_role"] != LEAF_V2_ROLE
+        or assignment["computation_role"] != LEAF_V2_ROLE
+        or assignment["s3_selector"] != LEAF_SELECTOR
         or payload["v1_comparator_disposition"] != LEAF_V1_DISPOSITION
     ):
         raise CoordinatorError("Stage 4A leaf proof identity differs")
@@ -1463,15 +1471,12 @@ def validate_stage4a_leaf_proof(
         for key in ("energy_norm_id", "load_id", "reference_id", "support_id")
     ):
         raise CoordinatorError("Stage 4A leaf proof protocol identity differs")
-    diagnostic_v1 = assignment["computation_role"] == LEAF_V1_ROLE
     _validate_leaf_scientific_record(
         payload["record"],
         member=member,
-        diagnostic_v1=diagnostic_v1,
+        diagnostic_v1=False,
         location="$.leaf_proof.scientific_payload.record",
     )
-    if diagnostic_v1 and assignment["v1_diagnostic_expected"] is not True:
-        raise CoordinatorError("all-Q4 leaf unexpectedly contains a V1 diagnostic")
     return proof
 
 
@@ -1587,6 +1592,7 @@ def build_stage4a_leaf_union(
         "schema": LEAF_UNION_SCHEMA,
         "terminal": LEAF_UNION_TERMINAL,
         "v2_classifying_count": LEAF_V2_COUNT,
+        "v1_comparator_disposition": LEAF_V1_DISPOSITION,
         "v1_diagnostic_count": LEAF_V1_DIAGNOSTIC_COUNT,
         "wave_receipts": receipt_bindings,
     }
@@ -1638,6 +1644,7 @@ def validate_stage4a_leaf_union(
             "schema",
             "terminal",
             "v2_classifying_count",
+            "v1_comparator_disposition",
             "v1_diagnostic_count",
             "wave_receipts",
         },
@@ -1650,6 +1657,7 @@ def validate_stage4a_leaf_union(
         or bound["logical_record_count"] != LEAF_LOGICAL_RECORD_COUNT
         or bound["v2_classifying_count"] != LEAF_V2_COUNT
         or bound["v1_diagnostic_count"] != LEAF_V1_DIAGNOSTIC_COUNT
+        or bound["v1_comparator_disposition"] != LEAF_V1_DISPOSITION
         or bound["plan_sha256"] != sha256(plan_raw)
         or bound["leaf_catalog_sha256"] != sha256(canonical_bytes(dict(catalog)))
         or bound["candidate_authority"] != canonical_authority
@@ -1871,27 +1879,16 @@ def reconstruct_stage4a_diagonal_documents(
         ):
             raise CoordinatorError("Stage 4A diagonal leaf order differs")
         classifying: list[Mapping[str, Any]] = []
-        diagnostics: list[Mapping[str, Any]] = []
         for member, logical_index in zip(shard["records"], logical_indices):
             roles = role_groups[logical_index]
-            expected_roles = (
-                {LEAF_V2_ROLE, LEAF_V1_ROLE}
-                if member["record"]["s3_element_count"] > 0
-                else {LEAF_V2_ROLE}
-            )
-            if set(roles) != expected_roles:
-                raise CoordinatorError("Stage 4A diagonal role coverage differs")
+            if set(roles) != {LEAF_V2_ROLE}:
+                raise CoordinatorError("Stage 4A diagonal V2 coverage differs")
             v2_leaf, v2_payload = roles[LEAF_V2_ROLE]
             if v2_leaf["assignment"]["record_id"] != member["record_id"]:
                 raise CoordinatorError("Stage 4A diagonal classifying order differs")
             classifying.append(v2_payload["record"])
-            if LEAF_V1_ROLE in roles:
-                v1_leaf, v1_payload = roles[LEAF_V1_ROLE]
-                if v1_leaf["assignment"]["record_id"] != member["record_id"]:
-                    raise CoordinatorError("Stage 4A diagonal diagnostic order differs")
-                diagnostics.append(v1_payload["record"])
-        if len(classifying) != 27 or len(diagnostics) != 24:
-            raise CoordinatorError("Stage 4A diagonal diagnostic coverage differs")
+        if len(classifying) != 27:
+            raise CoordinatorError("Stage 4A diagonal classifying coverage differs")
         payload = {
             "assignment_id": assignment_id,
             "classifying_records": classifying,
@@ -1900,7 +1897,7 @@ def reconstruct_stage4a_diagonal_documents(
             "protocol": protocol,
             "schema": DIAGONAL_PAYLOAD_SCHEMA,
             "scope": "full",
-            "v1_comparator_diagnostics": diagnostics,
+            "v1_comparator_diagnostics": [],
             "v1_comparator_disposition": LEAF_V1_DISPOSITION,
         }
         record_ids = [str(member["record_id"]) for member in shard["records"]]
@@ -2127,7 +2124,7 @@ def _validate_checker_result(
         or result["assignment_id"] != expected_assignment_id
         or result["diagonal"] != EXPECTED_SHARDS[expected_assignment_id]
         or classifying_count != 27
-        or v1_count != 24
+        or v1_count != 0
         or result["production_restriction"] != PRODUCTION_RESTRICTION
     ):
         raise CoordinatorError("checker result identity or coverage differs")
@@ -2739,7 +2736,7 @@ def _validate_predecessor_process_incident(value: Any) -> None:
         f"{location}.aggregate_file",
     )
     if (
-        aggregate["schema"] != AGGREGATE_SCHEMA
+        aggregate["schema"] != HISTORICAL_AGGREGATE_SCHEMA
         or aggregate["terminal"] != BLOCKED
         or aggregate["formal_failures"] != ["FORMAL_PROCESS_FAILED"]
         or aggregate["authorization_sha256"] != PREDECESSOR_AUTHORIZATION_SHA256
@@ -3781,7 +3778,7 @@ def _validate_predecessor_resource_deferred_incident(value: Any) -> None:
         f"{location}.aggregate_file",
     )
     if (
-        aggregate["schema"] != AGGREGATE_SCHEMA
+        aggregate["schema"] != HISTORICAL_AGGREGATE_SCHEMA
         or aggregate["terminal"] != BLOCKED
         or aggregate["formal_failures"] != ["PRODUCER_WAVE_NOT_COMPLETED"]
         or aggregate["authorization_sha256"]
@@ -4273,8 +4270,9 @@ def validate_contract(path: Path) -> tuple[Mapping[str, Any], bytes]:
         raise CoordinatorError("Stage 4A frozen-file graph coverage or order differs")
     if contract["coverage"] != {
         "classifying_records": 81,
+        "historical_v1_comparator_disposition": LEAF_V1_DISPOSITION,
         "records_per_diagonal_shard": 27,
-        "v1_diagnostic_records": 72,
+        "v1_diagnostic_records": 0,
     }:
         raise CoordinatorError("Stage 4A coverage contract differs")
     if contract["execution"] != _execution_policy():
@@ -4360,7 +4358,7 @@ def expected_resource_command(
     authorization_path: Path,
     output_root: Path,
     aggregate_path: Path,
-    execution_mode: str = "legacy",
+    execution_mode: str,
     plan_path: Path | None = None,
     leaf_union_path: Path | None = None,
     plan_sha256: str | None = None,
@@ -4370,24 +4368,13 @@ def expected_resource_command(
     leaf_wave_manifest_sha256: str | None = None,
     leaf_wave_result_path: Path | None = None,
 ) -> str:
-    if execution_mode not in {"legacy", "leaf-finalizer", "leaf-wave"}:
-        raise CoordinatorError("unregistered Stage 4A execution mode")
     if execution_mode == "legacy":
-        if any(
-            value is not None
-            for value in (
-                plan_path,
-                leaf_union_path,
-                plan_sha256,
-                leaf_union_sha256,
-                leaf_wave_index,
-                leaf_catalog_sha256,
-                leaf_wave_manifest_sha256,
-                leaf_wave_result_path,
-            )
-        ):
-            raise CoordinatorError("legacy Stage 4A command does not accept leaf inputs")
-    elif execution_mode == "leaf-finalizer":
+        raise CoordinatorError(
+            "legacy Stage 4A execution is not authorized by correction 6"
+        )
+    if execution_mode not in {"leaf-finalizer", "leaf-wave"}:
+        raise CoordinatorError("unregistered Stage 4A execution mode")
+    if execution_mode == "leaf-finalizer":
         if (
             plan_path is None
             or leaf_union_path is None
@@ -4433,13 +4420,9 @@ def expected_resource_command(
         "-B",
         _powershell_quote(Path(__file__).resolve()),
         _powershell_quote(
-            "--run-stage4a"
-            if execution_mode == "legacy"
-            else (
-                "--finalize-leaf-union"
-                if execution_mode == "leaf-finalizer"
-                else "--run-leaf-wave"
-            )
+            "--finalize-leaf-union"
+            if execution_mode == "leaf-finalizer"
+            else "--run-leaf-wave"
         ),
         _powershell_quote("--contract"),
         _powershell_quote(contract_path.resolve()),
@@ -4566,7 +4549,7 @@ def _validate_approval_snapshot(
     return snapshot, raw
 
 
-def _validate_leaf_wave_authorization_v4(
+def _validate_leaf_wave_authorization_v5(
     *,
     path: Path,
     value: Mapping[str, Any],
@@ -4579,7 +4562,10 @@ def _validate_leaf_wave_authorization_v4(
     selected_manifest_sha256: str,
     selected_result_path: Path,
 ) -> tuple[Mapping[str, Any], bytes]:
-    """Select one of 81 immutable requests without mutating tracked authority."""
+    """Select one of 41 immutable requests from tracked wave authority."""
+
+    if path.resolve() != LEAF_WAVE_AUTHORIZATION_PATH.resolve():
+        raise CoordinatorError("leaf wave authorization path differs")
 
     authorization = _exact(
         value,
@@ -4905,7 +4891,7 @@ def validate_authorization(
     *,
     contract_path: Path,
     contract_raw: bytes,
-    execution_mode: str = "legacy",
+    execution_mode: str,
     plan_path: Path | None = None,
     leaf_union_path: Path | None = None,
     plan_sha256: str | None = None,
@@ -4915,14 +4901,23 @@ def validate_authorization(
     leaf_wave_manifest_sha256: str | None = None,
     leaf_wave_result_path: Path | None = None,
 ) -> tuple[Mapping[str, Any], bytes]:
+    if execution_mode == "legacy":
+        raise CoordinatorError(
+            "legacy Stage 4A execution is not authorized by correction 6"
+        )
+    if execution_mode not in {"leaf-finalizer", "leaf-wave"}:
+        raise CoordinatorError("unregistered Stage 4A execution mode")
     value, raw = strict_json_load(path)
     if raw != canonical_bytes(value):
         raise CoordinatorError("execution authorization is not canonical JSON")
-    if (
-        execution_mode == "leaf-wave"
-        and isinstance(value, dict)
-        and value.get("schema") == LEAF_WAVE_AUTHORIZATION_SCHEMA
-    ):
+    if execution_mode == "leaf-wave":
+        if path.resolve() != LEAF_WAVE_AUTHORIZATION_PATH.resolve():
+            raise CoordinatorError("leaf wave authorization path differs")
+        if (
+            not isinstance(value, dict)
+            or value.get("schema") != LEAF_WAVE_AUTHORIZATION_SCHEMA
+        ):
+            raise CoordinatorError("leaf wave authorization schema differs")
         if (
             leaf_wave_index is None
             or plan_sha256 is None
@@ -4931,7 +4926,7 @@ def validate_authorization(
             or leaf_wave_result_path is None
         ):
             raise CoordinatorError("selected leaf wave authorization inputs are absent")
-        return _validate_leaf_wave_authorization_v4(
+        return _validate_leaf_wave_authorization_v5(
             path=path,
             value=value,
             raw=raw,
@@ -4943,6 +4938,11 @@ def validate_authorization(
             selected_manifest_sha256=leaf_wave_manifest_sha256,
             selected_result_path=leaf_wave_result_path,
         )
+    if (
+        execution_mode == "leaf-finalizer"
+        and path.resolve() != EXECUTION_AUTHORIZATION_PATH.resolve()
+    ):
+        raise CoordinatorError("leaf finalizer execution authorization path differs")
     authorization = _exact(
         value,
         {
@@ -5076,13 +5076,9 @@ def validate_authorization(
         leaf_wave_result_path=leaf_wave_result_path,
     )
     expected_task = (
-        "ANYsolver S3 V2A Stage 4A bounded mixed-flexural gate"
-        if execution_mode == "legacy"
-        else (
-            "ANYsolver S3 V2A Stage 4A bounded leaf finalizer"
-            if execution_mode == "leaf-finalizer"
-            else f"ANYsolver S3 V2A Stage 4A bounded leaf wave {leaf_wave_index:02d}"
-        )
+        "ANYsolver S3 V2A Stage 4A bounded leaf finalizer"
+        if execution_mode == "leaf-finalizer"
+        else f"ANYsolver S3 V2A Stage 4A bounded leaf wave {leaf_wave_index:02d}"
     )
     if (
         not python_executable.is_file()
@@ -5402,6 +5398,23 @@ def prepare_wave(
     *,
     authorization_path: Path | None = None,
 ) -> dict[str, Path]:
+    raise CoordinatorError(
+        "legacy Stage 4A preparation is not authorized by correction 6"
+    )
+
+
+def _historical_prepare_wave(
+    contract_path: Path,
+    output_root: Path,
+    *,
+    authorization_path: Path | None = None,
+) -> dict[str, Path]:
+    """Retain the obsolete monolithic preparation for history inspection only."""
+
+    raise CoordinatorError(
+        "historical Stage 4A preparation is not executable under correction 6"
+    )
+
     _coordinator_checkpoint()
     contract, contract_raw = validate_contract(contract_path)
     _coordinator_checkpoint()
@@ -5410,6 +5423,7 @@ def prepare_wave(
             authorization_path,
             contract_path=contract_path,
             contract_raw=contract_raw,
+            execution_mode="legacy",
         )
     _coordinator_checkpoint()
     funnel = _load_module("_s3_v2_stage4a_funnel", FUNNEL_PATH)
@@ -5506,8 +5520,8 @@ def _build_stage4a_leaf_wave_manifest(
         {
             "leaf_assignment_sha256",
             "leaf_ids",
-            "logical_record_index",
-            "record_id",
+            "logical_record_indices",
+            "record_ids",
             "wave_id",
             "worker_count",
         },
@@ -5526,23 +5540,22 @@ def _build_stage4a_leaf_wave_manifest(
     ):
         raise CoordinatorError("leaf wave assignment coverage differs")
     grouped = [leaves[leaf_id]["assignment"] for leaf_id in leaf_ids]
-    expected_roles = (
-        [LEAF_V2_ROLE, LEAF_V1_ROLE]
-        if grouped[0]["v1_diagnostic_expected"]
-        else [LEAF_V2_ROLE]
-    )
     if (
-        wave["logical_record_index"] != grouped[0]["logical_record_index"]
-        or wave["record_id"] != grouped[0]["record_id"]
+        wave["logical_record_indices"]
+        != [assignment["logical_record_index"] for assignment in grouped]
+        or wave["record_ids"]
+        != [assignment["record_id"] for assignment in grouped]
         or [assignment["computation_role"] for assignment in grouped]
-        != expected_roles
-        or any(
-            assignment["logical_record_index"] != wave["logical_record_index"]
-            or assignment["record_id"] != wave["record_id"]
-            for assignment in grouped
+        != [LEAF_V2_ROLE] * len(grouped)
+        or wave["logical_record_indices"]
+        != list(
+            range(
+                wave["logical_record_indices"][0],
+                wave["logical_record_indices"][0] + len(grouped),
+            )
         )
     ):
-        raise CoordinatorError("leaf wave logical role pairing differs")
+        raise CoordinatorError("leaf wave consecutive V2 partition differs")
     plan_digest = sha256(plan_path.read_bytes())
     producer_digest = sha256(PRODUCER_PATH.read_bytes())
     candidate_authority = catalog["candidate_authority"]
@@ -5628,7 +5641,7 @@ def _build_stage4a_leaf_wave_manifest(
 def prepare_stage4a_leaf_cycle(
     contract_path: Path, output_root: Path
 ) -> dict[str, Any]:
-    """Prepare immutable role assignments and 81 executable bounded waves."""
+    """Prepare 81 immutable V2 assignments in 41 executable bounded waves."""
 
     _coordinator_checkpoint()
     contract, _contract_raw = validate_contract(contract_path)
@@ -6086,7 +6099,7 @@ def validate_stage4a_leaf_wave_receipt(
     ):
         raise CoordinatorError("leaf wave receipt authorization binding differs")
     selected_authorization, selected_authorization_raw = (
-        _validate_leaf_wave_authorization_v4(
+        _validate_leaf_wave_authorization_v5(
             path=authorization_path,
             value=authorization,
             raw=authorization_raw,
@@ -6595,7 +6608,7 @@ def aggregate_checker_results(
         raise CoordinatorError("aggregate sequence coverage is not exactly 24")
     classifying_count = sum(int(value["classifying_record_count"]) for value in accepted)
     v1_count = sum(int(value["v1_diagnostic_record_count"]) for value in accepted)
-    if classifying_count != 81 or v1_count != 72:
+    if classifying_count != 81 or v1_count != 0:
         raise CoordinatorError("aggregate checker record coverage differs")
     checker_bindings = []
     for assignment_id in EXPECTED_SHARDS:
@@ -6637,6 +6650,7 @@ def aggregate_checker_results(
             terminal == PASS and not advisory
         ),
         "terminal": terminal,
+        "v1_comparator_disposition": LEAF_V1_DISPOSITION,
         "v1_diagnostic_record_count": v1_count,
     }
 
@@ -6672,6 +6686,7 @@ def blocked_aggregate(
         "sequence_results": [],
         "successor_expansion_authorized": False,
         "terminal": BLOCKED,
+        "v1_comparator_disposition": LEAF_V1_DISPOSITION,
         "v1_diagnostic_record_count": 0,
     }
 
@@ -6697,6 +6712,24 @@ def _run_stage4a_guarded(
     aggregate_path: Path,
     wall_guard: _CoordinatorWallGuard,
 ) -> dict[str, Any]:
+    raise CoordinatorError(
+        "legacy Stage 4A execution is not authorized by correction 6"
+    )
+
+
+def _historical_run_stage4a_guarded(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    aggregate_path: Path,
+    wall_guard: _CoordinatorWallGuard,
+) -> dict[str, Any]:
+    """Retain correction-3 incident logic for immutable-history inspection only."""
+
+    raise CoordinatorError(
+        "historical Stage 4A execution is not executable under correction 6"
+    )
+
     _coordinator_checkpoint()
     if not sys.flags.isolated or not sys.dont_write_bytecode:
         raise CoordinatorError("formal Stage 4A requires the registered -I -B launcher")
@@ -6706,6 +6739,7 @@ def _run_stage4a_guarded(
         authorization_path,
         contract_path=contract_path,
         contract_raw=contract_raw,
+        execution_mode="legacy",
     )
     execution_paths = authorization["execution_paths"]
     if (
@@ -6725,7 +6759,7 @@ def _run_stage4a_guarded(
     producer_result_path: Path | None = None
     process_phase = "PREPARE_WAVE"
     try:
-        paths = prepare_wave(
+        paths = _historical_prepare_wave(
             contract_path,
             output_root,
             authorization_path=authorization_path,
@@ -6816,6 +6850,7 @@ def _run_stage4a_guarded(
             authorization_path,
             contract_path=contract_path,
             contract_raw=final_contract_raw,
+            execution_mode="legacy",
         )
         if final_contract_raw != contract_raw or final_authorization_raw != authorization_raw:
             raise CoordinatorError("formal authority changed during execution")
@@ -6848,7 +6883,24 @@ def run_stage4a(
     output_root: Path,
     aggregate_path: Path,
 ) -> dict[str, Any]:
-    """Run Stage 4A under one fail-closed coordinator-wide hard wall."""
+    """Reject the obsolete monolithic runner retained only as history."""
+
+    raise CoordinatorError(
+        "legacy Stage 4A execution is not authorized by correction 6"
+    )
+
+
+def _historical_run_stage4a(
+    contract_path: Path,
+    authorization_path: Path,
+    output_root: Path,
+    aggregate_path: Path,
+) -> dict[str, Any]:
+    """Retain correction-3 wall handling for immutable-history inspection only."""
+
+    raise CoordinatorError(
+        "historical Stage 4A execution is not executable under correction 6"
+    )
 
     global _ACTIVE_COORDINATOR_GUARD
     if _ACTIVE_COORDINATOR_GUARD is not None:
@@ -6861,7 +6913,7 @@ def run_stage4a(
     try:
         guard.start()
         try:
-            return _run_stage4a_guarded(
+            return _historical_run_stage4a_guarded(
                 contract_path,
                 authorization_path,
                 output_root,
@@ -7485,7 +7537,21 @@ def run_stage4a_leaf_finalizer(
 
 
 def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Path]:
-    """Apply the same no-forever wall to the non-executing preparation mode."""
+    """Reject the obsolete monolithic preparation mode."""
+
+    raise CoordinatorError(
+        "legacy Stage 4A preparation is not authorized by correction 6"
+    )
+
+
+def _historical_run_prepare_stage4a(
+    contract_path: Path, output_root: Path
+) -> dict[str, Path]:
+    """Retain correction-3 preparation wall handling for history inspection."""
+
+    raise CoordinatorError(
+        "historical Stage 4A preparation is not executable under correction 6"
+    )
 
     global _ACTIVE_COORDINATOR_GUARD
     if _ACTIVE_COORDINATOR_GUARD is not None:
@@ -7498,7 +7564,7 @@ def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Pat
     try:
         guard.start()
         try:
-            return prepare_wave(contract_path, output_root)
+            return _historical_prepare_wave(contract_path, output_root)
         except _CoordinatorWallExceeded as exc:
             raise CoordinatorError(
                 "Stage 4A preparation exceeded its coordinator wall"
@@ -7511,7 +7577,7 @@ def run_prepare_stage4a(contract_path: Path, output_root: Path) -> dict[str, Pat
 def run_prepare_stage4a_leaf_cycle(
     contract_path: Path, output_root: Path
 ) -> dict[str, Any]:
-    """Prepare the correction-5 catalog/manifests under a sub-30-minute wall."""
+    """Prepare the correction-6 catalog/manifests under a sub-30-minute wall."""
 
     global _ACTIVE_COORDINATOR_GUARD
     if _ACTIVE_COORDINATOR_GUARD is not None:
@@ -7542,8 +7608,10 @@ def assemble_stage4a_leaf_union(
     output_root: Path,
     union_path: Path,
 ) -> dict[str, Any]:
-    """Join all 81 post-terminal receipts into one nonclassifying union."""
+    """Join all 41 post-terminal receipts into one nonclassifying union."""
 
+    if authorization_path.resolve() != LEAF_WAVE_AUTHORIZATION_PATH.resolve():
+        raise CoordinatorError("leaf union assembly authorization path differs")
     contract, contract_raw = validate_contract(contract_path)
     authorization, authorization_raw = strict_json_load(authorization_path)
     if authorization_raw != canonical_bytes(authorization):
@@ -7563,7 +7631,7 @@ def assemble_stage4a_leaf_union(
         "$.leaf_wave_authorization",
     )
     if authorization["schema"] != LEAF_WAVE_AUTHORIZATION_SCHEMA:
-        raise CoordinatorError("leaf union assembly requires v4 wave authority")
+        raise CoordinatorError("leaf union assembly requires v5 wave authority")
     raw_waves = authorization["leaf_waves"]
     if not isinstance(raw_waves, list) or len(raw_waves) != LEAF_WAVE_COUNT:
         raise CoordinatorError(
@@ -7681,6 +7749,14 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.prepare_only:
+        raise CoordinatorError(
+            "legacy Stage 4A preparation is not authorized by correction 6"
+        )
+    if args.run_stage4a:
+        raise CoordinatorError(
+            "legacy Stage 4A execution is not authorized by correction 6"
+        )
     contract = args.contract.resolve()
     output_root = args.output_root.resolve()
     if args.prepare_only:

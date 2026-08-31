@@ -137,11 +137,6 @@ def _proof(
     classifying = [
         _classifying_record(member, ratio=ratio) for member in shard["records"]
     ]
-    mixed = [member for member in shard["records"] if member["record"]["s3_element_count"]]
-    diagnostics = [
-        _classifying_record(member, ratio=1.8, diagnostic_v1=True)
-        for member in mixed
-    ]
     payload = {
         "assignment_id": shard["assignment_id"],
         "classifying_records": classifying,
@@ -154,10 +149,10 @@ def _proof(
             "reference_id": producer.REFERENCE_IDENTITY,
             "support_id": producer.SUPPORT_IDENTITY,
         },
-        "schema": producer.PAYLOAD_SCHEMA,
+        "schema": checker.PAYLOAD_SCHEMA,
         "scope": "full",
-        "v1_comparator_diagnostics": diagnostics,
-        "v1_comparator_disposition": producer.V1_DISPOSITION,
+        "v1_comparator_diagnostics": [],
+        "v1_comparator_disposition": checker.HISTORICAL_V1_DISPOSITION,
     }
     ids = [member["record_id"] for member in shard["records"]]
     document = {
@@ -166,7 +161,7 @@ def _proof(
         "record_count": 27,
         "record_ids": ids,
         "record_ids_sha256": funnel.sha256(funnel.canonical_bytes(ids)),
-        "schema": funnel.SHARD_SCIENTIFIC_SCHEMA,
+        "schema": checker.PROOF_SCHEMA,
         "scientific_payload": payload,
         "scientific_payload_sha256": funnel.sha256(funnel.canonical_bytes(payload)),
         "selector": funnel.SELECTOR,
@@ -240,8 +235,14 @@ def test_formal_pass_is_deterministic_and_authorizes_expansion(tmp_path: Path) -
     assert first["advisory_review_required"] is False
     assert first["successor_expansion_authorized"] is True
     assert len(first["sequence_results"]) == 8
+    assert first["v1_diagnostic_record_count"] == 0
 
     payload = checker.strict_json_load(proof)[0]["scientific_payload"]
+    assert payload["v1_comparator_diagnostics"] == []
+    assert (
+        payload["v1_comparator_disposition"]
+        == checker.HISTORICAL_V1_DISPOSITION
+    )
     assert payload["protocol"] == {
         "classification": producer.CLASSIFICATION,
         "energy_norm_id": checker.ENERGY_ID,
@@ -291,6 +292,51 @@ def test_scientific_mutations_are_rejected(tmp_path: Path, mutation: str, match:
         record["support_counts"]["translation_constraints"] += 1
     _rewrite(proof, made)
     with pytest.raises(checker.CheckerError, match=match):
+        checker.verify_shard(proof, plan)
+
+
+def test_runtime_v1_diagnostic_is_rejected(tmp_path: Path) -> None:
+    proof, plan, document = _proof(tmp_path, ratio=1.10)
+    made = copy.deepcopy(document)
+    shard = checker.strict_json_load(plan)[0]["shards"][0]
+    mixed_member = next(
+        member
+        for member in shard["records"]
+        if member["record"]["s3_element_count"] > 0
+    )
+    made["scientific_payload"]["v1_comparator_diagnostics"].append(
+        _classifying_record(mixed_member, ratio=1.8, diagnostic_v1=True)
+    )
+    _rewrite(proof, made)
+    with pytest.raises(checker.CheckerError, match="runtime V1 comparator diagnostics"):
+        checker.verify_shard(proof, plan)
+
+
+@pytest.mark.parametrize("schema_location", ["proof", "payload"])
+def test_correction5_proof_schemas_are_rejected(
+    tmp_path: Path, schema_location: str
+) -> None:
+    proof, plan, document = _proof(tmp_path, ratio=1.10)
+    made = copy.deepcopy(document)
+    if schema_location == "proof":
+        made["schema"] = "anysolver.e4-pl-s3-v2-flat-funnel-shard-scientific-v1"
+    else:
+        made["scientific_payload"]["schema"] = (
+            "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
+        )
+    _rewrite(proof, made)
+    with pytest.raises(checker.CheckerError, match="identity differs"):
+        checker.verify_shard(proof, plan)
+
+
+def test_historical_v1_disposition_is_exact(tmp_path: Path) -> None:
+    proof, plan, document = _proof(tmp_path, ratio=1.10)
+    made = copy.deepcopy(document)
+    made["scientific_payload"]["v1_comparator_disposition"] = (
+        "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+    )
+    _rewrite(proof, made)
+    with pytest.raises(checker.CheckerError, match="payload identity differs"):
         checker.verify_shard(proof, plan)
 
 

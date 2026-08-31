@@ -55,7 +55,7 @@ def authority() -> dict[str, object]:
 
 
 def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
-    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
+    assert authority["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v8"
     assert authority["parent"] == {
         "commit": "171df65eef875508effe16018875ffccf6b0f4f6",
         "subject": "docs: freeze S3 V2A Stage 4A execution",
@@ -68,7 +68,7 @@ def test_stage4a_authority_binds_exact_parent_and_protocol(authority) -> None:
     }
     phase = authority["formal_phase"]
     assert phase["classifying_record_count"] == 81
-    assert phase["v1_diagnostic_record_count"] == 72
+    assert phase["v1_diagnostic_record_count"] == 0
     assert authority["formal_protocol"]["support"] == {
         "all_edge_translations": ["ux", "uy", "uz"],
         "constant_x_edge_rotation": "theta_x",
@@ -174,12 +174,16 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     }
     assert correction["current_change"] == {
         "cases_changed": False,
-        "classification": "ROLE_SPLIT_CONTENT_ADDRESSED_PROCESS_ONLY",
+        "classification": (
+            "V2_ONLY_FORMAL_RUNTIME_PROCESS_AND_EVIDENCE_PROTOCOL_CORRECTION"
+        ),
+        "classifying_scientific_protocol_changed": False,
         "defaults_changed": False,
         "mechanics_changed": False,
-        "process_control_changed": True,
+        "process_or_evidence_protocol_changed": True,
         "protocol_changed": False,
         "tolerances_changed": False,
+        "v1_mechanics_changed": False,
         "v2_equations_changed": False,
         "v2_matrices_changed": False,
     }
@@ -225,6 +229,21 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
         "subject": "fix: partition Stage 4A bounded evidence",
         "tree": "55d836332cecca7f9a38d8f5b3484adab5138fcc",
     }
+    assert correction["history"][6] == {
+        "bytes": 17991,
+        "commit": "0470804a56b00cd15fc1aca92a5bee9151783716",
+        "parent": "0de98307c02a5b98cb924941fee9c21f94b60d66",
+        "path": "docs/reference_cases/e4_pl_s3_v2_stage4a_authority.json",
+        "reason": (
+            "NONCLASSIFYING_V1_DIAGNOSTIC_EXCEEDED_1500_SECOND_WORKER_WALL_"
+            "AFTER_V2_COMPLETED"
+        ),
+        "sha256": (
+            "0B4E8ADCE4BAE49DB1F8429296C9CC246B7FB56870A3087CC6EEB08EC498B4EB"
+        ),
+        "subject": "fix: split Stage 4A formulation roles",
+        "tree": "9833c99edb92c88d6442ac960354030bf080191c",
+    }
     assert correction["review_incident"] == {
         "candidate_commit": "0f93779feded35846ce7a093d27a8a98f5c0fc81",
         "findings": [
@@ -256,6 +275,7 @@ def test_stage4a_authority_correction_preserves_original_and_closes_paths(author
     assert set(extent["freeze_authorization_paths"]) == {
         "docs/reference_cases/e4_pl_s3_v2_stage4a_contract.json",
         "docs/reference_cases/e4_pl_s3_v2_stage4a_execution_authorization.json",
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_leaf_wave_authorization.json",
         "docs/reference_cases/e4_pl_s3_v2_stage4a_process_implementation_review.json",
         "docs/reference_cases/e4_pl_s3_v2_stage4a_scientific_implementation_review.json",
     }
@@ -466,7 +486,170 @@ def test_stage4a_correction4_nonclassifying_calibration_is_exact(authority) -> N
     ]
 
 
-def test_stage4a_correction5_role_split_leaf_bounds(authority) -> None:
+def test_stage4a_correction5_nonclassifying_calibration_is_exact(authority) -> None:
+    calibration = authority["correction"]["correction5_calibration"]
+    assert calibration["disposition"] == (
+        "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+    )
+    assert calibration["n20_role_equivalence"] == {
+        "bounded_result": {
+            "byte_count": 5962,
+            "sha256": (
+                "92BFCFECFF0DA5D728FFA71AD35D7EE84C9643052E74064F087891FEDE3CCB90"
+            ),
+        },
+        "equivalence": {
+            "byte_count": 2502,
+            "disposition": "NONCLASSIFYING_RUNTIME_EQUIVALENCE_ONLY",
+            "sha256": (
+                "83352E5121E4B925321B3B6AA8575EB24BF6BF496545B174F77FC04DAED9B1F1"
+            ),
+            "terminal": "PASS_EXACT_INNER_RECORD_EQUIVALENCE",
+        },
+        "pilot_runner": {
+            "byte_count": 10495,
+            "sha256": (
+                "441DC8E39871A2836513B7A7CF10A3FB4AA33B7A983DCA3217180B372C254539"
+            ),
+        },
+        "proofs": {
+            "v1_diagnostic": {
+                "byte_count": 3652,
+                "inner_record": {
+                    "byte_count": 1570,
+                    "correction4_sha256": (
+                        "4DF1908BBD3C7BCE71FB050975A0D514AF88802CD2B1729E16021B5AD3CC4DA6"
+                    ),
+                    "sha256": (
+                        "4DF1908BBD3C7BCE71FB050975A0D514AF88802CD2B1729E16021B5AD3CC4DA6"
+                    ),
+                },
+                "sha256": (
+                    "A2201E843CD389CCD0A7906DD9AB7DCD92DB303CA18A725EBCD1604F3B3C2A45"
+                ),
+                "status": "COMPLETED",
+            },
+            "v2_classifying": {
+                "byte_count": 3615,
+                "inner_record": {
+                    "byte_count": 1528,
+                    "correction4_sha256": (
+                        "682353D9B6849CF05AE3C61BB6F545D753C5C82B07128115FB3A959123A65FD5"
+                    ),
+                    "sha256": (
+                        "682353D9B6849CF05AE3C61BB6F545D753C5C82B07128115FB3A959123A65FD5"
+                    ),
+                },
+                "sha256": (
+                    "D1C6D1B44B10249A9DB423E0BA5ED64942FAD68EBA1C531400A065237240D5F9"
+                ),
+                "status": "COMPLETED",
+            },
+        },
+        "request": {
+            "byte_count": 1292,
+            "command_sha256": (
+                "4ACF18BA8E9A3E946641264D818BC96F536D2A937BBCB1F340F084E08DF9506C"
+            ),
+            "request_id": "91d5550d3b18459d80d1c6ce157de056",
+            "request_reuse_forbidden": True,
+            "sha256": (
+                "A16711471E99C1B524D9C2E213BFC0E47BA6736F40C67985EC2A0C58E2739267"
+            ),
+        },
+        "scientific_classification": "NONCLASSIFYING_RUNTIME_CALIBRATION_ONLY",
+        "summary": {
+            "byte_count": 2730,
+            "sha256": (
+                "9FADA46C663CF2A7D753DE36B7AC080DC16B618092152277ACFD8B109628AB83"
+            ),
+        },
+        "terminal": "COMPLETED_PASS",
+        "termination_proven": [True, True],
+        "transcript": {
+            "byte_count": 2731,
+            "sha256": (
+                "05CD6295399281AD032659856809781FB5397023767C8444395D6EE22645AB8A"
+            ),
+        },
+        "wall_seconds": "26.272784",
+    }
+    assert calibration["n80_v1_timeout"] == {
+        "bounded_result": {
+            "byte_count": 5803,
+            "sha256": (
+                "274933EEE33FF8B50E5C88835C7A24506E6255913F2B892792EFB8A0C1C80826"
+            ),
+            "terminal": "BLOCKED_E4_PL_S3_V2_PROCESS_OR_EVIDENCE",
+        },
+        "manifest": {
+            "byte_count": 10736,
+            "sha256": (
+                "2111BB7F2740D218F272FBC89AE942AA1616202223F14D7B7FC977EF1287A8A0"
+            ),
+        },
+        "pilot_runner": {
+            "byte_count": 10495,
+            "sha256": (
+                "441DC8E39871A2836513B7A7CF10A3FB4AA33B7A983DCA3217180B372C254539"
+            ),
+        },
+        "record_id": "N80:25PCT:dispersed:slash",
+        "request": {
+            "byte_count": 1291,
+            "command_sha256": (
+                "61895014712DBCD31CDD69C21444B0857E4E3311A69E7FE4BB08817D3723C196"
+            ),
+            "request_id": "f016d9a4d0a9429bb09517a29998046a",
+            "request_reuse_forbidden": True,
+            "sha256": (
+                "618E9051C9E1830A81551C2D5E9A11305E7888B3A8B9791238A3C014128ECE69"
+            ),
+        },
+        "scientific_classification": "NONCLASSIFYING_RUNTIME_CALIBRATION_ONLY",
+        "summary": {
+            "byte_count": 2709,
+            "sha256": (
+                "509C1CF2D135A024D50BC2BB92FCA2A42030ED9C426B76DC4BBB9453746E2D1F"
+            ),
+        },
+        "terminal": "COMPLETED_FAIL",
+        "transcript": {
+            "byte_count": 2710,
+            "sha256": (
+                "2966E53C7FC0963BC39813B2571E578CFC2E2F7F88EF2097ECE91AC5BAE26205"
+            ),
+        },
+        "wall_seconds": "1500.962516",
+        "workers": {
+            "v1_diagnostic": {
+                "cpu_100ns": 14_869_687_500,
+                "last_progress_sequence": 1,
+                "peak_tree_memory_bytes": 964_890_624,
+                "returncode": 124,
+                "scientific_proof_count": 0,
+                "status": "TIMEOUT",
+                "termination_proven": True,
+            },
+            "v2_classifying": {
+                "cpu_100ns": 597_500_000,
+                "last_progress_sequence": 5,
+                "peak_tree_memory_bytes": 1_954_713_600,
+                "proof": {
+                    "byte_count": 3625,
+                    "sha256": (
+                        "9A765D7B44D55736A75017660D7BA9C790A6B451A1FC8BAEF84F7C7F8E89EBC9"
+                    ),
+                },
+                "returncode": 0,
+                "status": "COMPLETED",
+                "termination_proven": True,
+            },
+        },
+    }
+
+
+def test_stage4a_correction6_v2_only_leaf_bounds(authority) -> None:
     assert authority["execution"] == {
         "all_launched_process_terminals_bound": True,
         "candidate_authority_bound_in_every_leaf": True,
@@ -477,21 +660,23 @@ def test_stage4a_correction5_role_split_leaf_bounds(authority) -> None:
         "classifying_record_count": 81,
         "common_leaf_wave_authorization_required": True,
         "complete_receipt_coverage_required": True,
-        "computation_leaf_count": 153,
+        "computation_leaf_count": 81,
         "consumed_request_reuse_forbidden": True,
         "content_addressed_assignments": True,
-        "diagnostic_record_count": 72,
+        "diagnostic_record_count": 0,
         "finalizer_accepts_complete_receipt_bound_union_only": True,
         "finalizer_input_hash_revalidated_before_publication": True,
         "finalizer_wall_seconds": 1740,
         "incomplete_or_partial_leaf_classification": "NONCLASSIFYING",
-        "leaf_roles": ["V2_CLASSIFYING", "V1_DIAGNOSTIC"],
+        "leaf_roles": ["V2_CLASSIFYING"],
         "leaf_worker_wall_seconds": 1500,
+        "live_v1_diagnostic_execution_authorized": False,
         "maximum_concurrent_workers": 2,
         "maximum_memory_gib_per_process_tree": 24,
         "no_automatic_retry": True,
         "numerical_library_threads_per_worker": 1,
-        "pair_wave_count": 72,
+        "pair_wave_count": 40,
+        "pairing_policy": "CONSECUTIVE_V2_CLASSIFYING_LEAVES_IN_FROZEN_ORDER",
         "process_tree_termination_proven_required": True,
         "receipt_binding": [
             "ATTEMPT",
@@ -513,13 +698,17 @@ def test_stage4a_correction5_role_split_leaf_bounds(authority) -> None:
             "WORKER_TERMINALS",
         ],
         "receipt_required_per_wave": True,
-        "registered_wave_count": 81,
-        "role_split_required": True,
+        "registered_wave_count": 41,
+        "required_receipt_count": 41,
+        "role_split_required": False,
         "schedule": (
-            "81_LOGICAL_RECORD_WAVES_IN_FROZEN_ORDER_WITH_72_V2_V1_PAIRS_AND_9_V2_SINGLETONS"
+            "40_CONSECUTIVE_TWO_V2_WORKER_PAIRS_THEN_1_V2_SINGLETON_IN_FROZEN_ORDER"
         ),
-        "singleton_wave_count": 9,
-        "v1_diagnostic_leaf_count": 72,
+        "singleton_wave_count": 1,
+        "v1_comparator_disposition": (
+            "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+        ),
+        "v1_diagnostic_leaf_count": 0,
         "v1_diagnostic_never_classifies_or_falls_back": True,
         "v2_classifying_leaf_count": 81,
         "wave_wall_seconds": 1740,
@@ -648,8 +837,6 @@ def test_stage4a_prior_v5_authority_binding_and_history_are_exact(authority) -> 
     ]
     for unchanged in (
         "advisory_policy",
-        "candidate",
-        "formal_phase",
         "formal_protocol",
         "frozen_inputs",
         "parent",
@@ -659,6 +846,14 @@ def test_stage4a_prior_v5_authority_binding_and_history_are_exact(authority) -> 
         "terminals",
     ):
         assert predecessor[unchanged] == authority[unchanged]
+    current_candidate = dict(authority["candidate"])
+    assert current_candidate.pop("v1_formal_runtime_disposition") == (
+        "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+    )
+    assert predecessor["candidate"] == current_candidate
+    assert predecessor["formal_phase"] == authority["correction"][
+        "predecessor_v7_formal_phase"
+    ]
 
 
 def test_stage4a_prior_v6_authority_binding_and_history_are_exact(authority) -> None:
@@ -715,10 +910,95 @@ def test_stage4a_prior_v6_authority_binding_and_history_are_exact(authority) -> 
     ]
     for unchanged in (
         "advisory_policy",
-        "allowed_extent",
-        "candidate",
         "component_cache_policy",
-        "formal_phase",
+        "formal_protocol",
+        "frozen_inputs",
+        "parent",
+        "production_boundary",
+        "review_correction_requirements",
+        "scope_base",
+        "terminals",
+    ):
+        assert predecessor[unchanged] == authority[unchanged]
+    current_candidate = dict(authority["candidate"])
+    current_candidate.pop("v1_formal_runtime_disposition")
+    assert predecessor["candidate"] == current_candidate
+    assert predecessor["formal_phase"] == authority["correction"][
+        "predecessor_v7_formal_phase"
+    ]
+    predecessor_paths = set(predecessor["allowed_extent"]["freeze_authorization_paths"])
+    current_paths = set(authority["allowed_extent"]["freeze_authorization_paths"])
+    assert current_paths - predecessor_paths == {
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_leaf_wave_authorization.json"
+    }
+
+
+def test_stage4a_prior_v7_authority_binding_and_history_are_exact(authority) -> None:
+    prior = authority["correction"]["history"][6]
+    raw = subprocess.run(
+        ["git", "show", f"{prior['commit']}:{prior['path']}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    subject = subprocess.run(
+        ["git", "show", "-s", "--format=%s", prior["commit"]],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tree = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^{{tree}}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    parent = subprocess.run(
+        ["git", "rev-parse", f"{prior['commit']}^"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    predecessor = json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=_reject_duplicates,
+        parse_constant=_reject_constant,
+    )
+    assert raw == _canonical(predecessor)
+    assert len(raw) == prior["bytes"]
+    assert hashlib.sha256(raw).hexdigest().upper() == prior["sha256"]
+    assert (subject, tree, parent) == (
+        prior["subject"],
+        prior["tree"],
+        prior["parent"],
+    )
+    assert predecessor["schema"] == "anysolver.e4-pl-s3-v2-stage4a-authority-v7"
+    assert predecessor["correction"]["history"] == authority["correction"][
+        "history"
+    ][:6]
+    assert predecessor["correction"]["current_change"] == authority["correction"][
+        "predecessor_v7_current_change"
+    ]
+    assert predecessor["execution"] == authority["correction"][
+        "predecessor_v7_execution"
+    ]
+    assert predecessor["formal_phase"] == authority["correction"][
+        "predecessor_v7_formal_phase"
+    ]
+    current_candidate = dict(authority["candidate"])
+    current_candidate.pop("v1_formal_runtime_disposition")
+    assert predecessor["candidate"] == current_candidate
+    predecessor_paths = set(predecessor["allowed_extent"]["freeze_authorization_paths"])
+    current_paths = set(authority["allowed_extent"]["freeze_authorization_paths"])
+    assert current_paths - predecessor_paths == {
+        "docs/reference_cases/e4_pl_s3_v2_stage4a_leaf_wave_authorization.json"
+    }
+    for unchanged in (
+        "advisory_policy",
+        "component_cache_policy",
         "formal_protocol",
         "frozen_inputs",
         "parent",
