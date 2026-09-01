@@ -24,6 +24,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
 REFERENCE = ROOT / "docs" / "reference_cases"
+CONTRACT_PATH = REFERENCE / "e4_pl_s3_v2b_interface_contract.json"
 for entry in (str(SRC), str(REFERENCE)):
     if entry not in sys.path:
         sys.path.insert(0, entry)
@@ -303,6 +304,7 @@ def produce_proof(*, include_development: bool = True) -> dict[str, Any]:
     return {
         "boundary_maps": boundary,
         "comparisons": comparisons,
+        "contract_sha256": sha256_file(CONTRACT_PATH),
         "development_records": development,
         "development_record_ids": list(DEVELOPMENT_IDS) if include_development else [],
         "diagnostics": {"d3_worst_relative_inf_hex": d3_worst.hex(), "director_reversal_worst_relative_inf_hex": reversal_worst.hex()},
@@ -352,7 +354,7 @@ def _append_progress(path: Path, phase: str, sequence: int) -> None:
 
 
 def adjudicate(*, checker_identical: bool, report: Mapping[str, Any], formulation_id: str) -> str:
-    if not checker_identical:
+    if not checker_identical or not report["authority_complete"]:
         return "BLOCKED_E4_PL_S3_V2B_PROCESS_OR_EVIDENCE"
     if not report["source_equation_agreement"]:
         return "NO_GO_E4_PL_S3_V2B_LOCAL_OPERATOR"
@@ -391,6 +393,7 @@ def run_bounded(output_root: Path, *, timeout_seconds: int = 600) -> dict[str, A
         "activation_authorized": False,
         "checker_replicas_byte_identical": identical,
         "checker_sha256": sha256_file(checker_a),
+        "contract_sha256": sha256_file(CONTRACT_PATH),
         "full_stage4a_rerun_authorized": terminal == "PROVISIONAL_GO_E4_PL_S3_V2B_STAGE4A_RERUN",
         "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",
         "proof_sha256": sha256_file(proof),

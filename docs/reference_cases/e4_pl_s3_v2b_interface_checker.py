@@ -14,6 +14,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = ROOT / "docs" / "reference_cases"
+CONTRACT_PATH = REFERENCE / "e4_pl_s3_v2b_interface_contract.json"
 if str(REFERENCE) not in sys.path:
     sys.path.insert(0, str(REFERENCE))
 
@@ -98,6 +99,7 @@ def verify(proof: Mapping[str, Any]) -> dict[str, Any]:
         mismatch_nonzero = mismatch_nonzero or not np.array_equal(q4, s3)
     status = json.loads((REFERENCE / "e4_pl_s3_v2_stage4a_nogo_status.json").read_text(encoding="ascii"))
     bound = status["aggregate"]["sha256"] == EXPECTED_NOGO_SHA256 and status["terminal"] == "NO_GO_E4_PL_S3_V2A_MIXED_FLEXURAL_CONVERGENCE"
+    contract_bound = proof.get("contract_sha256") == hashlib.sha256(CONTRACT_PATH.read_bytes()).hexdigest().upper()
     development = {row["record_id"]: row for row in proof["development_records"]}
     nonmonotone = False
     if development:
@@ -106,6 +108,7 @@ def verify(proof: Mapping[str, Any]) -> dict[str, Any]:
             fine = float(development[f"N40:{fraction}PCT:dispersed:slash"]["response"]["relative_error"])
             nonmonotone = nonmonotone or fine > 1.02 * coarse
     return {
+        "authority_complete": bool(contract_bound),
         "development_successive_response_failed": bool(nonmonotone),
         "macrocell_operator_mismatch_nonzero": bool(mismatch_nonzero),
         "production_restriction": "NO_GO_PRODUCTION_RESTRICTION_UNCHANGED",

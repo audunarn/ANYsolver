@@ -79,6 +79,7 @@ def test_independent_source_reconstruction_agrees_and_mutation_is_rejected() -> 
     proof = produce_proof(include_development=False)
     report = verify(proof)
     assert report["source_equation_agreement"] is True
+    assert report["authority_complete"] is True
     assert report["macrocell_operator_mismatch_nonzero"] is True
     assert report["v2a_mixed_no_go_bound"] is True
     assert report["development_successive_response_failed"] is False
@@ -90,6 +91,7 @@ def test_independent_source_reconstruction_agrees_and_mutation_is_rejected() -> 
 
 def test_terminal_precedence_and_v2a_replacement_disposition() -> None:
     base = {
+        "authority_complete": True,
         "development_successive_response_failed": True,
         "macrocell_operator_mismatch_nonzero": True,
         "source_equation_agreement": True,
