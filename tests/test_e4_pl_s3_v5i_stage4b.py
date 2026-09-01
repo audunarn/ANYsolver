@@ -49,13 +49,8 @@ def test_input_is_canonical_hash_bound_and_exact_extent(runner) -> None:
         assert hashlib.sha256(content).hexdigest().upper() == row["sha256"]
     assert value["authority_commit"]["exact_paths"] == sorted(
         [
-            "docs/reference_cases/e4_pl_s3_v5i_stage4b.py",
             "docs/reference_cases/e4_pl_s3_v5i_stage4b_input.json",
             "docs/reference_cases/e4_pl_s3_v5i_stage4b_plan.json",
-            "docs/reference_cases/e4_pl_s3_v5i_stage4b_protocol_checker.py",
-            "src/anysolver/algebraic_dynamics.py",
-            "src/anysolver/e4_pl_s3_v2c_element.py",
-            "tests/test_e4_pl_s3_v2c_production.py",
             "tests/test_e4_pl_s3_v5i_stage4b.py",
         ]
     )
