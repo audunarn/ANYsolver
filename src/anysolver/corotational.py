@@ -144,6 +144,21 @@ def _minimal_rotation(from_direction: np.ndarray, to_direction: np.ndarray) -> n
 
 def _shell_center_frame(element: Any, coords: np.ndarray) -> np.ndarray:
     """Element midsurface frame (columns = local axes) at the element center."""
+    native_frame = getattr(element, "corotational_reference_frame", None)
+    if callable(native_frame):
+        frame = np.asarray(native_frame(coords), dtype=float)
+        if frame.shape != (3, 3) or not np.all(np.isfinite(frame)):
+            raise ValueError(
+                "formulation-native corotational frame must be finite 3x3"
+            )
+        orthogonality = frame.T @ frame
+        if not np.allclose(
+            orthogonality, np.eye(3), rtol=0.0, atol=64.0 * np.finfo(float).eps
+        ) or float(np.linalg.det(frame)) <= 0.0:
+            raise ValueError(
+                "formulation-native corotational frame must be proper orthonormal"
+            )
+        return frame
     if element.num_nodes in (3, 6):
         xi, eta = 1.0 / 3.0, 1.0 / 3.0
     else:

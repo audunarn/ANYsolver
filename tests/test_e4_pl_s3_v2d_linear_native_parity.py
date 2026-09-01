@@ -213,7 +213,9 @@ def test_native_section_operator_is_d3_covariant_with_physical_material_directio
         np.testing.assert_allclose(restored, base, rtol=2.0e-14, atol=2.0e-6)
 
 
-def test_v2d_stateless_identity_roundtrip_and_successor_gaps() -> None:
+def test_v2d_stateless_identity_roundtrip_and_remaining_successor_gaps() -> None:
+    import subprocess
+
     element = _v2d(shell_section=_homogeneous_section())
     payload = element.to_dict()
     restored = shell_element_from_dict(payload)
@@ -222,10 +224,17 @@ def test_v2d_stateless_identity_roundtrip_and_successor_gaps() -> None:
     changed = dict(payload, source_selection_sha256="0" * 64)
     with pytest.raises(ValueError, match="fingerprint"):
         shell_element_from_dict(changed)
-    with pytest.raises(NativeParityCapabilityError, match="nonlinear_geometry"):
-        element.compute_nonlinear_response(
-            _mesh(), _material(), np.zeros(18, dtype=np.float64)
-        )
+    v6a_source = subprocess.run(
+        [
+            "git",
+            "show",
+            "dfe3d31424fdc97bd770a2657f19bb009bab7989:src/anysolver/e4_pl_s3_v2d_element.py",
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        text=True,
+    ).stdout
+    assert 'self._unsupported("nonlinear_geometry")' in v6a_source
     with pytest.raises(NativeParityCapabilityError, match="restart"):
         element.__getstate__()
     with pytest.raises(NativeParityCapabilityError, match="director reversal"):

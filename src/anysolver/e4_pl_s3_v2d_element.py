@@ -1,10 +1,10 @@
 """Opt-in S3 V2D native-parity successor.
 
-V2D preserves the accepted V2C MIN3/CST/PL small-strain operator and adds a
-native generalized-section integration surface.  This first implementation
-gate is intentionally linear and stateless.  Nonlinear geometry, material
-history, restart, offsets and activation remain fail-closed until their own
-reviewed gates are complete.
+V2D preserves the accepted V2C MIN3/CST/PL small-strain operator and adds
+native generalized-section integration, model-bound constitutive state, and
+an element-independent corotational response.  Solver-integrated hot restart,
+offsets, advanced loads, batching, and activation remain fail-closed until
+their own reviewed gates are complete.
 
 No legacy TRI3 or qualified-Q4 mechanics are dispatched from this module.
 """
@@ -28,12 +28,26 @@ from .e4_pl_s3_v2c_element import (
     RESULTANT_POLICY_ID,
     StrictFlatLinearE4PLS3V2CShellElement,
 )
+from .e4_pl_s3_initial_fields import integrate_generalized_initial_fields
+from .e4_pl_s3_state import qualified_s3_lobatto_layers
+from .e4_pl_s3_v2d_state import (
+    STATE_LAYOUT_ID,
+    STATE_SCHEMA,
+    V2DStateError,
+    canonical_sha256,
+    deserialize_v2d_state,
+    initialize_v2d_state,
+    seal_v2d_state,
+    serialize_v2d_state,
+    validate_v2d_state,
+)
 from .fe_core import FEMesh, Material
+from .plasticity import plane_stress_return_map
 
 
 SELECTOR = "e4-pl-s3-v2d"
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-IMPLEMENTATION_ID = "E4_PL_S3_V2D_MIN3_NATIVE_SECTION_LINEAR_GATE_V1"
+IMPLEMENTATION_ID = "E4_PL_S3_V2D_NATIVE_STATE_COROTATIONAL_GATE_V1"
 FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v1"
 SOURCE_SELECTION_SHA256 = (
     "DB5750539FB87CA4E4DDA1B37ECEACD65B76DF9A64969808712A4BDD44A45E3D"
@@ -43,6 +57,10 @@ V2C_OPERATOR_SHA256 = (
 )
 NATIVE_SECTION_POLICY_ID = "S3_V2D_NATIVE_MIN3_GENERALIZED_SECTION_STATIONS_V1"
 SERIALIZATION_POLICY_ID = "S3_V2D_STATELESS_LINEAR_FINGERPRINT_V1"
+NATIVE_STATE_SCHEMA_ID = STATE_SCHEMA
+NATIVE_STATE_LAYOUT_ID = STATE_LAYOUT_ID
+COROTATIONAL_POLICY_ID = "S3_V2D_EICR_ELEMENT_INDEPENDENT_PULLBACK_V1"
+MATERIAL_LIFECYCLE_POLICY_ID = "S3_V2D_HAMMER3_LOBATTO_TRIAL_COMMIT_REVERT_V1"
 DRILL_SCALE_POLICY_ID = "S3_BASIS_INVARIANT_GENERALIZED_EIGENVALUE_V1"
 MASS_POLICY_ID = "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1"
 CBMIN3 = 2.0
@@ -67,14 +85,15 @@ SUPPORTED_OPERATIONS = frozenset(
         "dead_uniform_pressure",
         "lumped_translational_mass",
         "stateless_serialization",
+        "model_bound_material_state",
+        "initial_generalized_fields",
+        "layered_plane_stress_material_update",
+        "same_formulation_state_serialization",
+        "element_independent_corotational_response",
     }
 )
 BLOCKED_OPERATIONS = frozenset(
     {
-        "nonlinear_geometry",
-        "material_nonlinearity",
-        "nonlinear_state",
-        "restart",
         "reference_surface_offset",
         "director_polarity_reversal",
         "follower_pressure",
@@ -83,6 +102,7 @@ BLOCKED_OPERATIONS = frozenset(
         "activity_state",
         "qualified_batch_path",
         "default_activation",
+        "solver_integrated_hot_restart",
     }
 )
 CAPABILITY_MATRIX = MappingProxyType(
@@ -163,6 +183,10 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
 
     formulation_id = FORMULATION_ID
     selector = SELECTOR
+    native_state_schema_id = NATIVE_STATE_SCHEMA_ID
+    native_state_layout_id = NATIVE_STATE_LAYOUT_ID
+    corotational_policy_id = COROTATIONAL_POLICY_ID
+    formulation_native_total_lagrangian = False
     _legacy_shell_dispatch_forbidden = FORMULATION_ID
     TRI_GAUSS_POINTS_3 = HAMMER_POINTS
     TRI_GAUSS_WEIGHTS_3 = HAMMER_REFERENCE_WEIGHTS
@@ -255,6 +279,36 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
 
     def capability_matrix(self) -> Dict[str, str]:
         return dict(CAPABILITY_MATRIX)
+
+    def corotational_reference_frame(self, coordinates: Any) -> np.ndarray:
+        """Return the objective triangle frame used only by the EICR wrapper."""
+
+        made = np.asarray(coordinates, dtype=np.float64)
+        if made.shape != (3, 3) or not np.all(np.isfinite(made)):
+            raise ValueError("S3 V2D corotational coordinates must be finite (3,3)")
+        first = made[1] - made[0]
+        second = made[2] - made[0]
+        first_norm = float(np.linalg.norm(first))
+        cross = np.cross(first, second)
+        cross_norm = float(np.linalg.norm(cross))
+        scale = max(
+            float(first @ first),
+            float(second @ second),
+            float((made[2] - made[1]) @ (made[2] - made[1])),
+            np.finfo(np.float64).tiny,
+        )
+        if (
+            not math.isfinite(first_norm)
+            or not math.isfinite(cross_norm)
+            or first_norm <= 0.0
+            or cross_norm <= _DEGENERACY_FACTOR * scale
+        ):
+            raise ValueError("S3 V2D corotational triangle is degenerate")
+        x_axis = first / first_norm
+        z_axis = cross / cross_norm
+        y_axis = np.cross(z_axis, x_axis)
+        y_axis /= float(np.linalg.norm(y_axis))
+        return np.column_stack((x_axis, y_axis, z_axis))
 
     def _material_angle(self, local_frame: np.ndarray) -> float:
         """Resolve the physical material direction without legacy mechanics."""
@@ -421,6 +475,58 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         # binary64 operation ordering required by the overlap certificate.
         return StrictFlatLinearE4PLS3V2CShellElement._constitutive(self, material)
 
+    def _elastic_baseline_constitutive(self, material: Material) -> Dict[str, Any]:
+        if type(material) is not Material:
+            raise NativeParityCapabilityError(
+                "S3 V2D layered material currently requires exact isotropic Material"
+            )
+        elastic_modulus = _real_scalar(
+            getattr(material, "elastic_modulus", None), "elastic_modulus"
+        )
+        poisson_ratio = _real_scalar(
+            getattr(material, "poisson_ratio", None), "poisson_ratio"
+        )
+        if elastic_modulus <= 0.0 or not -1.0 < poisson_ratio < 0.5:
+            raise ValueError("S3 V2D isotropic elastic constants are inadmissible")
+        scale = elastic_modulus / (1.0 - poisson_ratio**2)
+        plane = scale * np.asarray(
+            (
+                (1.0, poisson_ratio, 0.0),
+                (poisson_ratio, 1.0, 0.0),
+                (0.0, 0.0, 0.5 * (1.0 - poisson_ratio)),
+            ),
+            dtype=np.float64,
+        )
+        shear_scalar = (
+            (5.0 / 6.0)
+            * elastic_modulus
+            * self.thickness
+            / (2.0 * (1.0 + poisson_ratio))
+        )
+        return {
+            "A": self.thickness * plane,
+            "B": np.zeros((3, 3), dtype=np.float64),
+            "D": self.thickness**3 / 12.0 * plane,
+            "H": shear_scalar * np.eye(2, dtype=np.float64),
+            "E": elastic_modulus,
+            "nu": poisson_ratio,
+            "drill_scale": self.thickness
+            * elastic_modulus
+            / (2.0 * (1.0 + poisson_ratio)),
+        }
+
+    @staticmethod
+    def _is_v2c_elastic_overlap(material: Material) -> bool:
+        if type(material) is not Material:
+            return False
+        if getattr(material, "hardening_curve", None) is not None:
+            return False
+        raw_yield = getattr(material, "yield_stress", 0.0)
+        try:
+            return float(raw_yield or 0.0) == 0.0
+        except (TypeError, ValueError):
+            return False
+
     def _native_section(self, geometry: Mapping[str, Any]) -> Dict[str, np.ndarray]:
         section = self._generalized_section_in_frame(
             np.asarray(geometry["frame"], dtype=np.float64)
@@ -437,6 +543,223 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             raise ValueError("S3 V2D generalized section is nonfinite")
         return matrices
 
+    def _state_material_mode(self) -> str:
+        return (
+            "GENERALIZED_SECTION"
+            if self.shell_section is not None
+            else "LAYERED_PLANE_STRESS"
+        )
+
+    @staticmethod
+    def _validated_num_layers(value: Any) -> int:
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+            value, (int, np.integer)
+        ):
+            raise V2DStateError("S3 V2D num_layers must be an integer")
+        layers = int(value)
+        if layers <= 0:
+            raise V2DStateError("S3 V2D num_layers must be positive")
+        return layers
+
+    @staticmethod
+    def _curve_descriptor(curve: Any) -> Any:
+        if curve is None:
+            return None
+        fields = (
+            "sigma_prop",
+            "sigma_yield",
+            "sigma_yield_2",
+            "eps_p_y1",
+            "eps_p_y2",
+            "K",
+            "n",
+            "_power_offset",
+        )
+        descriptor: Dict[str, float] = {}
+        for name in fields:
+            if not hasattr(curve, name):
+                raise V2DStateError(
+                    f"S3 V2D hardening curve lacks required field {name}"
+                )
+            descriptor[name] = _real_scalar(getattr(curve, name), name)
+        return descriptor
+
+    def _state_identity(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        num_layers: int,
+    ) -> str:
+        geometry = self._geometry(mesh)
+        material_descriptor: Dict[str, Any]
+        if self.shell_section is None:
+            material_descriptor = {
+                "type": type(material).__name__,
+                "elastic_modulus": _real_scalar(
+                    getattr(material, "elastic_modulus", None), "elastic_modulus"
+                ),
+                "poisson_ratio": _real_scalar(
+                    getattr(material, "poisson_ratio", None), "poisson_ratio"
+                ),
+                "yield_stress": _real_scalar(
+                    getattr(material, "yield_stress", 0.0), "yield_stress"
+                ),
+                "hardening_curve": self._curve_descriptor(
+                    getattr(material, "hardening_curve", None)
+                ),
+            }
+        else:
+            section = self._native_section(geometry)
+            material_descriptor = {
+                "type": "GeneralizedShellSection",
+                "A": section["A"],
+                "B": section["B"],
+                "D": section["D"],
+                "As": section["H"],
+            }
+        return canonical_sha256(
+            {
+                "identity_id": "S3_V2D_MODEL_BOUND_STATE_IDENTITY_V1",
+                "formulation_id": FORMULATION_ID,
+                "element_id": int(self.element_id),
+                "node_ids": tuple(int(value) for value in self.node_ids),
+                "reference_coordinates": geometry["external_coordinates"],
+                "reference_normal": self.reference_normal,
+                "thickness": float(self.thickness),
+                "material_direction": self.material_direction,
+                "material_angle_deg": float(self.material_angle_deg),
+                "material_mode": self._state_material_mode(),
+                "material": material_descriptor,
+                "num_layers": int(num_layers),
+                "source_selection_sha256": SOURCE_SELECTION_SHA256,
+            }
+        )
+
+    @staticmethod
+    def _initial_station_rows(value: Any, label: str) -> np.ndarray:
+        try:
+            made = np.asarray(value, dtype=np.float64)
+        except (TypeError, ValueError) as exc:
+            raise V2DStateError(f"S3 V2D {label} must be numeric") from exc
+        if made.shape == (3,):
+            made = np.broadcast_to(made, (3, 3)).copy()
+        elif made.shape == (1, 3):
+            made = np.broadcast_to(made, (3, 3)).copy()
+        elif made.shape == (3, 3):
+            made = made.copy()
+        else:
+            raise V2DStateError(
+                f"S3 V2D {label} must have shape (3,), (1,3), or (3,3)"
+            )
+        if not np.all(np.isfinite(made)):
+            raise V2DStateError(f"S3 V2D {label} must be finite")
+        return made
+
+    def _initial_generalized_fields(
+        self, initial_fields: Optional[Mapping[str, Any]]
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        names = (
+            "initial_membrane_stress",
+            "initial_bending_stress",
+            "initial_membrane_prestrain",
+            "initial_curvature_prestrain",
+        )
+        normalized = {
+            name: np.zeros((3, 3), dtype=np.float64) for name in names
+        }
+        if initial_fields is not None:
+            if not isinstance(initial_fields, Mapping):
+                raise V2DStateError("S3 V2D initial fields must be a mapping")
+            unknown = set(initial_fields) - set(names)
+            if unknown:
+                raise V2DStateError(
+                    f"S3 V2D initial-field keys are unknown: {sorted(unknown)}"
+                )
+            for name, value in initial_fields.items():
+                normalized[name] = self._initial_station_rows(value, name)
+        return integrate_generalized_initial_fields(
+            normalized,
+            self.thickness,
+            station_count=3,
+        )
+
+    def init_model_bound_nonlinear_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        num_layers: int,
+        *,
+        initial_fields: Optional[Mapping[str, Any]] = None,
+        initial_field_provenance: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        self._validate_configuration()
+        layers = self._validated_num_layers(num_layers)
+        prestrain, resultant = self._initial_generalized_fields(initial_fields)
+        return initialize_v2d_state(
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            element_identity_sha256=self._state_identity(
+                mesh, material, layers
+            ),
+            num_layers=layers,
+            material_mode=self._state_material_mode(),
+            initial_generalized_prestrain=prestrain,
+            initial_generalized_resultant=resultant,
+            initial_field_provenance=initial_field_provenance,
+        )
+
+    def validate_model_bound_nonlinear_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int,
+        *,
+        expected_committed_total_u: Any | None = None,
+    ) -> Dict[str, Any]:
+        layers = self._validated_num_layers(num_layers)
+        return validate_v2d_state(
+            state,
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            element_identity_sha256=self._state_identity(
+                mesh, material, layers
+            ),
+            num_layers=layers,
+            material_mode=self._state_material_mode(),
+            expected_committed_total_u=expected_committed_total_u,
+        )
+
+    def serialize_nonlinear_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int,
+    ) -> bytes:
+        validated = self.validate_model_bound_nonlinear_state(
+            mesh, material, state, num_layers
+        )
+        return serialize_v2d_state(validated)
+
+    def deserialize_nonlinear_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        raw: bytes,
+        num_layers: int,
+        *,
+        expected_committed_total_u: Any | None = None,
+    ) -> Dict[str, Any]:
+        decoded = deserialize_v2d_state(raw)
+        return self.validate_model_bound_nonlinear_state(
+            mesh,
+            material,
+            decoded,
+            num_layers,
+            expected_committed_total_u=expected_committed_total_u,
+        )
+
     @staticmethod
     def _globalize(matrix: np.ndarray, transform: np.ndarray) -> np.ndarray:
         made = transform.T @ matrix @ transform
@@ -445,9 +768,11 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     def _native_generalized_components(
         self, mesh: FEMesh, material: Material
     ) -> Dict[str, Any]:
-        del material  # A generalized section is the complete constitutive authority.
         geometry = self._geometry(mesh)
-        section = self._native_section(geometry)
+        if self.shell_section is None:
+            section = self._elastic_baseline_constitutive(material)
+        else:
+            section = self._native_section(geometry)
         operators = self._operators(geometry, section)
         area = float(geometry["area"])
         weight = area / 3.0
@@ -475,7 +800,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
             dtype=np.float64,
         )
-        drill_scale = _invariant_drill_scale(section["A"])
+        drill_scale = float(
+            section.get("drill_scale", _invariant_drill_scale(section["A"]))
+        )
         constraint = operators["C"]
         pl_local = drill_scale * constraint.T @ barycentric_mass @ constraint
         physical_local = membrane_local + coupling_local + bending_local + shear_local
@@ -505,7 +832,11 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "drill_scale": drill_scale,
             "quadrature_authority_id": "S3_V2D_MIN3_HAMMER3_V1",
             "pl_completion_policy_id": PL_COMPLETION_POLICY_ID,
-            "native_section_policy_id": NATIVE_SECTION_POLICY_ID,
+            "native_section_policy_id": (
+                NATIVE_SECTION_POLICY_ID
+                if self.shell_section is not None
+                else "S3_V2D_LAYERED_ELASTIC_BASELINE_V1"
+            ),
             "relaxation_authority_sha256": RELAXATION_AUTHORITY_SHA256,
         }
 
@@ -513,7 +844,7 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         self, mesh: FEMesh, material: Material
     ) -> Mapping[str, Any]:
         self._validate_configuration()
-        if self.shell_section is None:
+        if self.shell_section is None and self._is_v2c_elastic_overlap(material):
             return StrictFlatLinearE4PLS3V2CShellElement.compute_stiffness_components(
                 self, mesh, material
             )
@@ -638,21 +969,236 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
         return self._globalize(local, transform)
 
+    @staticmethod
+    def _external_station_order(
+        values: np.ndarray, order: Tuple[int, int, int]
+    ) -> np.ndarray:
+        made = np.empty_like(values)
+        for internal, external in enumerate(order):
+            made[external] = values[internal]
+        return made
+
+    @staticmethod
+    def _internal_station_order(
+        values: np.ndarray, order: Tuple[int, int, int]
+    ) -> np.ndarray:
+        return np.asarray(values, dtype=np.float64)[np.asarray(order, dtype=np.intp)]
+
+    def _native_trial_response(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        total_u: np.ndarray,
+        committed: Mapping[str, Any],
+        num_layers: int,
+    ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+        geometry = self._geometry(mesh)
+        baseline = (
+            self._native_section(geometry)
+            if self.shell_section is not None
+            else self._elastic_baseline_constitutive(material)
+        )
+        operators = self._operators(geometry, baseline)
+        components = self.compute_stiffness_components(mesh, material)
+        phi_squared = float(components["phi_squared"])
+        transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
+        local_u = transform @ total_u
+        epsilon = np.broadcast_to(operators["B_m"] @ local_u, (3, 3)).copy()
+        kappa = np.einsum("gij,j->gi", operators["B_b"], local_u)
+        gamma = np.einsum("gij,j->gi", operators["B_s"], local_u)
+        generalized_strain = np.concatenate((epsilon, kappa, gamma), axis=1)
+        order = tuple(int(value) for value in geometry["internal_order"])
+        initial_prestrain = self._internal_station_order(
+            np.asarray(
+                committed["initial_generalized_prestrain"], dtype=np.float64
+            ),
+            order,
+        )
+        initial_resultant = self._internal_station_order(
+            np.asarray(
+                committed["initial_generalized_resultant"], dtype=np.float64
+            ),
+            order,
+        )
+        area_weight = float(geometry["area"]) / 3.0
+        force_local = np.zeros(18, dtype=np.float64)
+        tangent_local = np.zeros((18, 18), dtype=np.float64)
+        station_resultant = np.zeros((3, 8), dtype=np.float64)
+
+        trial = dict(committed)
+        if self.shell_section is not None:
+            constitutive = np.block(
+                [
+                    [baseline["A"], baseline["B"], np.zeros((3, 2))],
+                    [baseline["B"].T, baseline["D"], np.zeros((3, 2))],
+                    [
+                        np.zeros((2, 3)),
+                        np.zeros((2, 3)),
+                        phi_squared * baseline["H"],
+                    ],
+                ]
+            )
+            for station in range(3):
+                effective = generalized_strain[station] - initial_prestrain[station]
+                resultant = constitutive @ effective + initial_resultant[station]
+                station_resultant[station] = resultant
+                combined = np.vstack(
+                    (
+                        operators["B_m"],
+                        operators["B_b"][station],
+                        operators["B_s"][station],
+                    )
+                )
+                force_local += combined.T @ resultant * area_weight
+                tangent_local += combined.T @ constitutive @ combined * area_weight
+            trial["plastic_strain"] = np.zeros((0, 3), dtype=np.float64)
+            trial["alpha"] = np.zeros(0, dtype=np.float64)
+            trial["layer_strain"] = np.zeros((0, 3), dtype=np.float64)
+            trial["layer_stress"] = np.zeros((0, 3), dtype=np.float64)
+        else:
+            layer_z, layer_weight = qualified_s3_lobatto_layers(
+                int(num_layers), self.thickness
+            )
+            plastic = np.asarray(
+                committed["plastic_strain"], dtype=np.float64
+            ).reshape(3, int(num_layers), 3)
+            alpha = np.asarray(committed["alpha"], dtype=np.float64).reshape(
+                3, int(num_layers)
+            )
+            material_strain = np.empty((3, int(num_layers), 3), dtype=np.float64)
+            for station in range(3):
+                for layer, z_value in enumerate(layer_z):
+                    material_strain[station, layer] = (
+                        epsilon[station]
+                        + float(z_value) * kappa[station]
+                        - initial_prestrain[station, :3]
+                        - float(z_value) * initial_prestrain[station, 3:6]
+                    )
+            stress, algorithmic, plastic_new, alpha_new = plane_stress_return_map(
+                material_strain.reshape(-1, 3),
+                plastic.reshape(-1, 3),
+                alpha.reshape(-1),
+                float(baseline["E"]),
+                float(baseline["nu"]),
+                getattr(material, "hardening_curve", None),
+                compute_tangent=True,
+            )
+            stress = np.asarray(stress, dtype=np.float64).reshape(
+                3, int(num_layers), 3
+            )
+            algorithmic = np.asarray(algorithmic, dtype=np.float64).reshape(
+                3, int(num_layers), 3, 3
+            )
+            for station in range(3):
+                membrane = np.zeros(3, dtype=np.float64)
+                bending = np.zeros(3, dtype=np.float64)
+                tangent_mb = np.zeros((6, 6), dtype=np.float64)
+                for layer, (z_value, weight_value) in enumerate(
+                    zip(layer_z, layer_weight)
+                ):
+                    z = float(z_value)
+                    weight = float(weight_value)
+                    membrane += weight * stress[station, layer]
+                    bending += weight * z * stress[station, layer]
+                    layer_map = np.hstack(
+                        (np.eye(3, dtype=np.float64), z * np.eye(3, dtype=np.float64))
+                    )
+                    tangent_mb += (
+                        layer_map.T
+                        @ algorithmic[station, layer]
+                        @ layer_map
+                        * weight
+                    )
+                shear = (
+                    phi_squared
+                    * baseline["H"]
+                    @ (gamma[station] - initial_prestrain[station, 6:])
+                )
+                resultant = np.concatenate((membrane, bending, shear))
+                resultant += initial_resultant[station]
+                station_resultant[station] = resultant
+                membrane_bending_operator = np.vstack(
+                    (operators["B_m"], operators["B_b"][station])
+                )
+                force_local += (
+                    membrane_bending_operator.T @ resultant[:6]
+                    + operators["B_s"][station].T @ resultant[6:]
+                ) * area_weight
+                tangent_local += (
+                    membrane_bending_operator.T
+                    @ tangent_mb
+                    @ membrane_bending_operator
+                    + operators["B_s"][station].T
+                    @ (phi_squared * baseline["H"])
+                    @ operators["B_s"][station]
+                ) * area_weight
+            trial["plastic_strain"] = np.asarray(
+                plastic_new, dtype=np.float64
+            ).reshape(-1, 3)
+            trial["alpha"] = np.asarray(alpha_new, dtype=np.float64).reshape(-1)
+            trial["layer_strain"] = material_strain.reshape(-1, 3)
+            trial["layer_stress"] = stress.reshape(-1, 3)
+
+        physical_force = transform.T @ force_local
+        physical_tangent = self._globalize(tangent_local, transform)
+        pl = np.asarray(components["pl"], dtype=np.float64)
+        total_force = physical_force + pl @ total_u
+        total_tangent = physical_tangent + pl
+        total_tangent = 0.5 * (total_tangent + total_tangent.T)
+        if not np.all(np.isfinite(total_force)) or not np.all(np.isfinite(total_tangent)):
+            raise ValueError("S3 V2D native trial response is nonfinite")
+        trial["committed_total_u"] = total_u.copy()
+        trial["station_generalized_strain"] = self._external_station_order(
+            generalized_strain, order
+        )
+        trial["station_generalized_resultant"] = self._external_station_order(
+            station_resultant, order
+        )
+        sealed = seal_v2d_state(trial)
+        return total_force, total_tangent, sealed
+
     def compute_nonlinear_response(
         self,
         mesh: FEMesh,
         material: Material,
         u_elem: np.ndarray,
-        state: Optional[Any] = None,
+        state: Optional[Mapping[str, Any]] = None,
         num_layers: int = 5,
         tangent: bool = True,
     ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
-        del mesh, material, u_elem, state, num_layers, tangent
-        self._unsupported("nonlinear_geometry")
+        self._validate_configuration()
+        try:
+            total_u = np.asarray(u_elem, dtype=np.float64).reshape(18)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("S3 V2D nonlinear displacement must be a finite 18-vector") from exc
+        if not np.all(np.isfinite(total_u)):
+            raise ValueError("S3 V2D nonlinear displacement must be a finite 18-vector")
+        layers = self._validated_num_layers(num_layers)
+        committed = (
+            self.init_model_bound_nonlinear_state(mesh, material, layers)
+            if state is None
+            else self.validate_model_bound_nonlinear_state(
+                mesh, material, state, layers
+            )
+        )
+        force, made_tangent, trial = self._native_trial_response(
+            mesh, material, total_u, committed, layers
+        )
+        validated = self.validate_model_bound_nonlinear_state(
+            mesh,
+            material,
+            trial,
+            layers,
+            expected_committed_total_u=total_u,
+        )
+        return force, made_tangent if bool(tangent) else None, validated
 
     def init_nonlinear_state(self, num_layers: int) -> Dict[str, Any]:
         del num_layers
-        self._unsupported("nonlinear_state")
+        raise NativeParityCapabilityError(
+            "S3 V2D state initialization is model-bound; use "
+            "init_model_bound_nonlinear_state(mesh, material, num_layers)"
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         self._validate_configuration()
