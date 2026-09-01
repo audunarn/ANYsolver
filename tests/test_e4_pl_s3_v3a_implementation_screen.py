@@ -119,3 +119,20 @@ def test_production_boundary_remains_static() -> None:
     assert 'DEFAULT_Q4_FORMULATION = "e4-pl"' in source
     assert 'DEFAULT_S3_FORMULATION = "legacy-s3"' in source
     assert not any(path.is_file() for path in (ROOT / "src").rglob("*v3a*"))
+
+
+def test_canonical_no_go_closeout_binds_evidence_and_review() -> None:
+    result_path = REFERENCE / "e4_pl_s3_v3a_implementation_screen_result.json"
+    review_path = REFERENCE / "e4_pl_s3_v3a_implementation_screen_review.json"
+    status = json.loads((REFERENCE / "e4_pl_s3_v3a_implementation_screen_status.json").read_text(encoding="ascii"))
+    result = json.loads(result_path.read_text(encoding="ascii"))
+    review = json.loads(review_path.read_text(encoding="ascii"))
+    assert result["terminal"] == status["terminal"] == "NO_GO_E4_PL_S3_V3A_LOCAL_OPERATOR"
+    assert result["diagnosis"]["exact_coupling_rank"] == 5
+    assert result["diagnosis"]["exact_total_rank"] == 11
+    assert result["later_stages"]["macrocell_trace_executed"] is False
+    assert result["later_stages"]["development_n20_n40_executed"] is False
+    assert review["findings"] == {"P0": [], "P1": []}
+    assert status["result"] == {"bytes": result_path.stat().st_size, "sha256": hashlib.sha256(result_path.read_bytes()).hexdigest().upper()}
+    assert status["review"] == {"bytes": review_path.stat().st_size, "sha256": hashlib.sha256(review_path.read_bytes()).hexdigest().upper()}
+    assert status["activation_authorized"] is status["stage4a_rerun_authorized"] is False
