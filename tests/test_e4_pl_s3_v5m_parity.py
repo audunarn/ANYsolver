@@ -66,3 +66,25 @@ def test_bounds_terminal_precedence_and_exact_worker_set_are_frozen() -> None:
     assert runner.CHECKER_CONCURRENCY == 4
     assert runner.CYCLES == 2
     assert runner.BLOCKED != runner.NO_GO != runner.GO
+
+
+def test_staged_build_artifact_purge_is_scoped(tmp_path: Path) -> None:
+    runner = _load("_v5m_runner_purge_test", RUNNER)
+    source = tmp_path / "source"
+    retained = source / "src" / "anysolver" / "module.py"
+    retained.parent.mkdir(parents=True)
+    retained.write_text("retained\n", encoding="ascii")
+    (source / "build" / "lib").mkdir(parents=True)
+    (source / "build" / "lib" / "stale.py").write_text("stale\n", encoding="ascii")
+    (source / "src" / "ANYsolver.egg-info").mkdir()
+    outside = tmp_path / "outside.txt"
+    outside.write_text("preserved\n", encoding="ascii")
+    removed = runner._purge_staged_build_artifacts(source)
+    assert removed == ("build", "src/ANYsolver.egg-info")
+    assert retained.read_text(encoding="ascii") == "retained\n"
+    assert outside.read_text(encoding="ascii") == "preserved\n"
+
+
+def test_installed_source_hash_is_line_ending_invariant() -> None:
+    runner = _load("_v5m_runner_line_ending_test", RUNNER)
+    assert runner.normalized_source_sha256(b"first\nsecond\n") == runner.normalized_source_sha256(b"first\r\nsecond\r\n")

@@ -11,6 +11,12 @@ from typing import Any, Sequence
 
 WORKER_IDS = ("BATCH_4096", "SERIALIZATION_RESTART", "PACKAGE_WHEEL")
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2C_FLAT_LINEAR_PARITY_V1"
+FROZEN_NORMALIZED_MODULE_SHA256 = {
+    "e4_pl_s3_v2c_element.py": "89D3E26DC7B242BFB15D050F20DB8FDBE96FDF4B27F04DBA76A5078FF1F27B69",
+    "elements.py": "032002A3BF6C5448C99CD0A231D8EFCE678B9B5F26C748360E1B3C318854A943",
+    "matrix_assembly.py": "410D68A9ED0E839E75FE56FA16C86BC7BD3906312DA506A9A9D2CB23E8A89289",
+    "s3_v2c_fast_assembly.py": "D6373C3BA879BE51EEBFD32732674EEE580EB9F32410F7523E16243C15342B3A",
+}
 PASS = "PASS_MEASURED_REGISTERED_SCOPE"
 PROOF_SCHEMA = "anysolver.e4-pl-s3-v5m-worker-proof-v1"
 
@@ -82,6 +88,7 @@ def _package(payload: dict[str, Any]) -> bool:
             "default_q4_formulation": "e4-pl",
             "default_s3_formulation": "legacy-s3",
             "installed_origin_under_target": True,
+            "installed_module_normalized_sha256": FROZEN_NORMALIZED_MODULE_SHA256,
             "public_export_matches": True,
             "roundtrip_identical": True,
             "source_root_absent_from_sys_path": True,

@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import pickle
+import shutil
 import subprocess
 import sys
 import time
@@ -30,6 +31,12 @@ BLOCKED = "BLOCKED_E4_PL_S3_V5M_PROCESS_OR_EVIDENCE"
 NO_GO = "NO_GO_E4_PL_S3_V5M_BATCH_RESTART_OR_PACKAGE_PARITY"
 GO = "PROVISIONAL_GO_E4_PL_S3_V5M_PARITY_CLOSED_ONLY"
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2C_FLAT_LINEAR_PARITY_V1"
+FROZEN_NORMALIZED_MODULE_SHA256 = {
+    "e4_pl_s3_v2c_element.py": "89D3E26DC7B242BFB15D050F20DB8FDBE96FDF4B27F04DBA76A5078FF1F27B69",
+    "elements.py": "032002A3BF6C5448C99CD0A231D8EFCE678B9B5F26C748360E1B3C318854A943",
+    "matrix_assembly.py": "410D68A9ED0E839E75FE56FA16C86BC7BD3906312DA506A9A9D2CB23E8A89289",
+    "s3_v2c_fast_assembly.py": "D6373C3BA879BE51EEBFD32732674EEE580EB9F32410F7523E16243C15342B3A",
+}
 CHILD_TIMEOUT_SECONDS = 600
 WAVE_TIMEOUT_SECONDS = 1800
 MEMORY_LIMIT_GIB = 24
@@ -50,6 +57,10 @@ def canonical_bytes(value: Any) -> bytes:
 
 def sha256(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest().upper()
+
+
+def normalized_source_sha256(raw: bytes) -> str:
+    return sha256(raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
 
 
 def _pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -303,6 +314,11 @@ def package_probe(target: Path, output: Path) -> None:
     from anysolver.elements import DEFAULT_Q4_FORMULATION, DEFAULT_S3_FORMULATION, create_shell_element, shell_element_from_dict
 
     origin = Path(anysolver.__file__).resolve()
+    package_directory = origin.parent
+    installed_module_normalized_sha256 = {
+        name: normalized_source_sha256((package_directory / name).read_bytes())
+        for name in FROZEN_NORMALIZED_MODULE_SHA256
+    }
     candidate = create_shell_element(1, (1, 2, 3), "steel", formulation="e4-pl-s3-v2c", thickness=0.08, reference_normal=(0.0, 0.0, 1.0))
     serialized = candidate.to_dict()
     restored = shell_element_from_dict(serialized)
@@ -312,6 +328,7 @@ def package_probe(target: Path, output: Path) -> None:
         "default_q4_formulation": DEFAULT_Q4_FORMULATION,
         "default_s3_formulation": DEFAULT_S3_FORMULATION,
         "installed_origin_under_target": origin.is_relative_to(resolved_target),
+        "installed_module_normalized_sha256": installed_module_normalized_sha256,
         "public_export_matches": anysolver.STRICT_FLAT_S3_V2C_FORMULATION_ID == FORMULATION_ID,
         "roundtrip_identical": type(restored) is StrictFlatLinearE4PLS3V2CShellElement and restored.to_dict() == serialized,
         "source_root_absent_from_sys_path": all(
@@ -345,6 +362,7 @@ def _package_worker(anysolver_wheel: Path, anyfileio_wheel: Path, package_root: 
         "default_q4_formulation": "e4-pl",
         "default_s3_formulation": "legacy-s3",
         "installed_origin_under_target": True,
+        "installed_module_normalized_sha256": FROZEN_NORMALIZED_MODULE_SHA256,
         "public_export_matches": True,
         "roundtrip_identical": True,
         "source_root_absent_from_sys_path": True,
@@ -458,6 +476,28 @@ def _extract_archive(archive: Path, destination: Path) -> None:
         stream.extractall(destination)
 
 
+def _purge_staged_build_artifacts(source: Path) -> tuple[str, ...]:
+    """Remove only generated build metadata inside an extracted source tree."""
+
+    root = source.resolve()
+    candidates = [root / "build", root / "dist"]
+    candidates.extend(root.rglob("*.egg-info"))
+    removed: list[str] = []
+    for candidate in sorted(set(candidates), key=lambda path: str(path).lower()):
+        if not candidate.exists():
+            continue
+        resolved = candidate.resolve()
+        if resolved == root or not resolved.is_relative_to(root):
+            raise V5MParityError("refusing staged-artifact removal outside source root")
+        relative = resolved.relative_to(root).as_posix()
+        if resolved.is_dir():
+            shutil.rmtree(resolved)
+        else:
+            resolved.unlink()
+        removed.append(relative)
+    return tuple(removed)
+
+
 def _build_frozen_wheels(root: Path, deadline: float) -> tuple[Path, Path, dict[str, Any]]:
     contract = validate_protocol()
     artifacts = root / "artifacts"
@@ -478,6 +518,10 @@ def _build_frozen_wheels(root: Path, deadline: float) -> tuple[Path, Path, dict[
     anyfileio_source = artifacts / "source-anyfileio"
     _extract_archive(anysolver_archive, anysolver_source)
     _extract_archive(anyfileio_archive, anyfileio_source)
+    purged = {
+        "anyfileio": list(_purge_staged_build_artifacts(anyfileio_source)),
+        "anysolver": list(_purge_staged_build_artifacts(anysolver_source)),
+    }
     wheelhouse = artifacts / "wheelhouse"
     wheelhouse.mkdir()
     for label, source in (("build-anysolver", anysolver_source), ("build-anyfileio", anyfileio_source)):
@@ -493,6 +537,7 @@ def _build_frozen_wheels(root: Path, deadline: float) -> tuple[Path, Path, dict[
         "anyfileio_wheel_sha256": sha256(anyfileio_wheels[0].read_bytes()),
         "anysolver_wheel_bytes": anysolver_wheels[0].stat().st_size,
         "anysolver_wheel_sha256": sha256(anysolver_wheels[0].read_bytes()),
+        "staged_artifacts_purged": purged,
     }
     return anysolver_wheels[0], anyfileio_wheels[0], made
 
