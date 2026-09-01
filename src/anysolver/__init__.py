@@ -117,6 +117,13 @@ from .e4_pl_s3_v2_element import (
     StrictFlatLinearCapabilityError,
     StrictFlatLinearE4PLS3V2ShellElement,
 )
+from .e4_pl_s3_v2b_element import (
+    FORMULATION_ID as STRICT_FLAT_S3_V2B_FORMULATION_ID,
+    IMPLEMENTATION_ID as STRICT_FLAT_S3_V2B_IMPLEMENTATION_ID,
+    SELECTOR as STRICT_FLAT_S3_V2B_SELECTOR,
+    StrictFlatLinearCapabilityError as StrictFlatLinearV2BCapabilityError,
+    StrictFlatLinearE4PLS3V2BShellElement,
+)
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
