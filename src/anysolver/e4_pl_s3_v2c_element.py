@@ -54,6 +54,8 @@ GEOMETRIC_STIFFNESS_POLICY_ID = (
     "CST_MEMBRANE_STRESS_STIFFNESS_TRANSLATIONAL_3D_V1"
 )
 SERIALIZATION_POLICY_ID = "V2C_FORMULATION_SCHEMA_AND_STATELESS_FINGERPRINT_V1"
+DYNAMIC_ALGEBRAIC_POLICY_ID = "S3_V2C_ALL_NODAL_ROTATIONS_ZERO_INERTIA_V1"
+DYNAMIC_ALGEBRAIC_MASS_WITNESS = "S3_V2C_LOCAL_ROTATION_ROWS_EXACT_ZERO_V1"
 DIRECTOR_POLICY_ID = "S3_V2_FIXED_PHYSICAL_DIRECTOR_D3_BLOCK_TRANSPORT_V1"
 SECTION_POLICY_ID = "S3_V2_HOMOGENEOUS_ISOTROPIC_UNCOUPLED_ZERO_OFFSET_V1"
 SHEAR_CORRECTION = 5.0 / 6.0
@@ -100,6 +102,8 @@ SUPPORTED_OPERATIONS = frozenset(
         "qualified_recovery",
         "dead_transverse_pressure",
         "lumped_translational_mass",
+        "auditable_mass_components",
+        "descriptor_modal",
         "geometric_stiffness",
         "stateless_serialization",
         "flat_qualified_q4_v2c_mixed_mesh",
@@ -765,6 +769,10 @@ class StrictFlatLinearE4PLS3V2CShellElement(
 
     formulation_id = FORMULATION_ID
     selector = SELECTOR
+    dynamic_algebraic_nullity = 9
+    dynamic_algebraic_policy = DYNAMIC_ALGEBRAIC_POLICY_ID
+    dynamic_algebraic_mass_witness = DYNAMIC_ALGEBRAIC_MASS_WITNESS
+    dynamic_algebraic_local_zero_indices = (3, 4, 5, 9, 10, 11, 15, 16, 17)
     supported_operations = SUPPORTED_OPERATIONS
     blocked_operations = BLOCKED_OPERATIONS
     _legacy_shell_dispatch_forbidden = FORMULATION_ID
@@ -817,6 +825,7 @@ class StrictFlatLinearE4PLS3V2CShellElement(
         *,
         thickness: float = 0.01,
         reference_normal: Sequence[float],
+        director_polarity: int = 1,
     ) -> None:
         __class__._module_authority_guard()
         if type(element_id) is not int:
@@ -834,6 +843,11 @@ class StrictFlatLinearE4PLS3V2CShellElement(
             )
         if len(set(owned_node_ids)) != 3:
             raise ValueError("strict-flat S3 V2 node_ids must be distinct")
+        if type(director_polarity) is not int or director_polarity != 1:
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2C requires director_polarity=1; physical "
+                "director reversal is represented by reference_normal"
+            )
         thickness_value = _real_scalar(thickness, "thickness")
         if thickness_value <= 0.0:
             raise ValueError("strict-flat S3 V2 thickness must be strictly positive")
@@ -1802,6 +1816,53 @@ class StrictFlatLinearE4PLS3V2CShellElement(
         made = transform.T @ local @ transform
         return 0.5 * (made + made.T)
 
+    def compute_mass_components(
+        self,
+        mesh: FEMesh,
+        material: Material,
+    ) -> Dict[str, Any]:
+        """Return the source-selected lumped mass and exact zero-row witness."""
+
+        geometry = self._geometry(mesh)
+        self._constitutive(material)
+        density = _real_scalar(getattr(material, "density", None), "density")
+        if density <= 0.0:
+            raise ValueError("strict-flat S3 V2C density must be positive")
+        mass_per_area = density * self.thickness
+        nodal_mass = mass_per_area * float(geometry["area"]) / 3.0
+        local = np.zeros((18, 18), dtype=np.float64)
+        for node in range(3):
+            for axis in range(3):
+                local[6 * node + axis, 6 * node + axis] = nodal_mass
+        transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
+        global_mass = transform.T @ local @ transform
+        global_mass = 0.5 * (global_mass + global_mass.T)
+        return {
+            "condensed_local": local,
+            "condensed_rank": 9,
+            "formulation_id": FORMULATION_ID,
+            "global": global_mass,
+            "mass_per_area": mass_per_area,
+            "mass_policy_id": MASS_POLICY_ID,
+            "rotary_inertia_per_area": 0.0,
+            "zero_drill_inertia": True,
+            "zero_rotational_inertia": True,
+        }
+
+    def dynamic_algebraic_directions(
+        self,
+        mesh: FEMesh,
+        material: Material,
+    ) -> np.ndarray:
+        """Return the nine exact global nodal-rotation mass-null directions."""
+
+        self.compute_mass_components(mesh, material)
+        directions = np.zeros((18, 9), dtype=np.float64)
+        for node in range(3):
+            for axis in range(3):
+                directions[6 * node + 3 + axis, 3 * node + axis] = 1.0
+        return directions
+
     def compute_geometric_stiffness_matrix(
         self,
         mesh: FEMesh,
@@ -2069,6 +2130,8 @@ __all__ = [
     "CBMIN3",
     "CAPABILITY_MATRIX",
     "DIRECTOR_POLICY_ID",
+    "DYNAMIC_ALGEBRAIC_MASS_WITNESS",
+    "DYNAMIC_ALGEBRAIC_POLICY_ID",
     "EQUATION_MAP_SHA256",
     "FORMULATION_ID",
     "FORMULATION_SCHEMA",

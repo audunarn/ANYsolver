@@ -465,9 +465,7 @@ def _local_declarations(
             raise AlgebraicDynamicsError(
                 f"element {element_id} returned an incompatible mass matrix"
             )
-        if float(components.get("mass_per_area", 0.0)) <= 0.0 or float(
-            components.get("rotary_inertia_per_area", 0.0)
-        ) <= 0.0:
+        if float(components.get("mass_per_area", 0.0)) <= 0.0:
             raise AlgebraicDynamicsError(
                 f"element {element_id} descriptor dynamics require positive "
                 "areal mass and rotary inertia"
@@ -484,11 +482,41 @@ def _local_declarations(
             )
         )
         local_mass = np.asarray(components.get("condensed_local"), dtype=float)
+        node_ids = tuple(int(node_id) for node_id in getattr(element, "node_ids", ()))
+        drill_witness = witness == "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1"
+        rotation_witness = witness == "S3_V2C_LOCAL_ROTATION_ROWS_EXACT_ZERO_V1"
+        expected_zero_indices = (
+            tuple(6 * index + 5 for index in range(len(node_ids)))
+            if drill_witness
+            else tuple(
+                6 * node + axis
+                for node in range(len(node_ids))
+                for axis in (3, 4, 5)
+            )
+            if rotation_witness
+            else ()
+        )
+        witness_metadata_valid = bool(
+            (drill_witness and expected == len(node_ids))
+            or (rotation_witness and expected == 3 * len(node_ids))
+        )
+        inertia_metadata_valid = bool(
+            (
+                drill_witness
+                and float(components.get("rotary_inertia_per_area", 0.0)) > 0.0
+                and components.get("zero_drill_inertia") is True
+            )
+            or (
+                rotation_witness
+                and float(components.get("rotary_inertia_per_area", -1.0)) == 0.0
+                and components.get("zero_rotational_inertia") is True
+            )
+        )
         if (
-            witness != "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1"
-            or zero_indices != tuple(6 * index + 5 for index in range(expected))
+            not witness_metadata_valid
+            or not inertia_metadata_valid
+            or zero_indices != expected_zero_indices
             or local_mass.shape != (dof_count, dof_count)
-            or components.get("zero_drill_inertia") is not True
             or np.any(local_mass[np.asarray(zero_indices, dtype=np.intp), :] != 0.0)
             or np.any(local_mass[:, np.asarray(zero_indices, dtype=np.intp)] != 0.0)
         ):
@@ -509,18 +537,32 @@ def _local_declarations(
                 f"element {element_id} mass rank {full_rank} does not match declared "
                 f"nullity {expected}"
             )
-        node_ids = tuple(int(node_id) for node_id in getattr(element, "node_ids", ()))
-        if expected != len(node_ids) or dof_count != 6 * len(node_ids):
+        if dof_count != 6 * len(node_ids):
             raise AlgebraicDynamicsError(
-                f"element {element_id} algebraic directions are not one-per-node shell drills"
+                f"element {element_id} algebraic directions are not nodal shell rotations"
             )
-        for column, node_id in enumerate(node_ids):
-            allowed = np.arange(6 * column + 3, 6 * column + 6, dtype=np.intp)
+        columns_per_node = 1 if drill_witness else 3
+        for node_index, node_id in enumerate(node_ids):
+            columns = np.arange(
+                columns_per_node * node_index,
+                columns_per_node * (node_index + 1),
+                dtype=np.intp,
+            )
+            allowed = np.arange(6 * node_index + 3, 6 * node_index + 6, dtype=np.intp)
             outside = np.ones(dof_count, dtype=bool)
             outside[allowed] = False
-            if float(np.linalg.norm(directions[outside, column])) > 2.0e-13:
+            local_directions = directions[np.ix_(allowed, columns)]
+            if (
+                float(np.linalg.norm(directions[np.ix_(outside, columns)])) > 2.0e-13
+                or not np.allclose(
+                    local_directions.T @ local_directions,
+                    np.eye(columns_per_node),
+                    rtol=0.0,
+                    atol=2.0e-13,
+                )
+            ):
                 raise AlgebraicDynamicsError(
-                    f"element {element_id} algebraic direction {column} is not node-local"
+                    f"element {element_id} algebraic directions at node {node_id} are not node-local"
                 )
             node = model.mesh.get_node(node_id)
             if node is None:
@@ -532,9 +574,7 @@ def _local_declarations(
                 raise AlgebraicDynamicsError(
                     f"element {element_id} algebraic direction ordering is incompatible"
                 )
-            by_node.setdefault(node_id, []).append(
-                _canonical_unit_direction(directions[allowed, column])
-            )
+            by_node.setdefault(node_id, []).append(local_directions)
         records.append(
             {
                 "element_id": int(element_id),
@@ -799,39 +839,53 @@ def build_declared_algebraic_basis(
                 (int(element_id), element)
             )
     for node_id in sorted(by_node):
-        directions = by_node[node_id]
-        reference = directions[0]
-        aligned = []
-        compatible = True
-        for direction in directions:
-            dot = float(reference @ direction)
-            signed = direction if dot >= 0.0 else -direction
-            coplanar_roundoff = 256.0 * np.finfo(float).eps
-            if float(np.linalg.norm(reference - signed)) > coplanar_roundoff:
-                compatible = False
-                break
-            # Collapse roundoff-equivalent normals to the first authoritative
-            # direction so independently normalized coplanar facets share one
-            # structural algebraic coordinate.
-            aligned.append(reference)
-        if not compatible:
+        subspaces = by_node[node_id]
+        one_dimensional = [space for space in subspaces if space.shape == (3, 1)]
+        full_dimensional = [space for space in subspaces if space.shape == (3, 3)]
+        compatible_directions: list[np.ndarray] = []
+        if len(one_dimensional) + len(full_dimensional) != len(subspaces):
             noncoplanar_nodes.append(int(node_id))
             continue
-        direction = _canonical_unit_direction(np.sum(aligned, axis=0))
-        carries_mass, carrying_ids = _nondeclared_incident_mass_action(
-            model,
-            int(node_id),
-            direction,
-            declared_set,
-            tuple(incident_by_node.get(int(node_id), ())),
-            incident_mass_cache,
-        )
-        if carries_mass:
-            mass_removed_nodes.append(int(node_id))
-            mass_carrying_incident_elements[str(int(node_id))] = carrying_ids
-            continue
-        candidate_nodes.append(int(node_id))
-        candidate_directions.append(direction)
+        if one_dimensional:
+            reference = _canonical_unit_direction(one_dimensional[0][:, 0])
+            if any(
+                float(
+                    np.linalg.norm(
+                        reference
+                        - _canonical_unit_direction(space[:, 0])
+                    )
+                )
+                > 256.0 * np.finfo(float).eps
+                for space in one_dimensional[1:]
+            ):
+                noncoplanar_nodes.append(int(node_id))
+                continue
+            compatible_directions.append(reference)
+        else:
+            compatible_directions.extend(np.eye(3, dtype=float).T)
+        for direction in compatible_directions:
+            carries_mass, carrying_ids = _nondeclared_incident_mass_action(
+                model,
+                int(node_id),
+                direction,
+                declared_set,
+                tuple(incident_by_node.get(int(node_id), ())),
+                incident_mass_cache,
+            )
+            if carries_mass:
+                if int(node_id) not in mass_removed_nodes:
+                    mass_removed_nodes.append(int(node_id))
+                existing = mass_carrying_incident_elements.setdefault(
+                    str(int(node_id)), []
+                )
+                existing.extend(
+                    element_id
+                    for element_id in carrying_ids
+                    if element_id not in existing
+                )
+                continue
+            candidate_nodes.append(int(node_id))
+            candidate_directions.append(_canonical_unit_direction(direction))
 
     rows: list[int] = []
     columns: list[int] = []

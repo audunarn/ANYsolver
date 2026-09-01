@@ -19,7 +19,9 @@ from anysolver.elements import (
     create_shell_element,
     shell_element_from_dict,
 )
-from anysolver.fe_core import FEMesh, Material
+from anysolver.fe_core import FEModel, FEMesh, Material
+from anysolver.boundary import BoundaryCondition, FixedSupport
+from anysolver.modal import solve_free_vibration
 
 
 COORDINATES = np.asarray(
@@ -74,6 +76,16 @@ def test_v2c_is_additive_and_preserves_both_defaults() -> None:
     for spelling in ("e4_pl_s3_v2c", "qualified_s3_v2c"):
         with pytest.raises(ValueError, match="canonical"):
             create_shell_element(3, [1, 2, 3], "steel", formulation=spelling)
+    with pytest.raises(StrictFlatLinearCapabilityError, match="director_polarity=1"):
+        create_shell_element(
+            4,
+            [1, 2, 3],
+            "steel",
+            formulation="e4-pl-s3-v2c",
+            thickness=THICKNESS,
+            reference_normal=NORMAL,
+            director_polarity=-1,
+        )
 
 
 def test_v2c_static_stiffness_is_identical_to_v2b() -> None:
@@ -112,6 +124,37 @@ def test_source_selected_lumped_mass_has_only_translational_inertia() -> None:
         )
     assert np.linalg.matrix_rank(mass) == 9
     assert MASS_POLICY_ID == "MYSTRAN_TRIA3_LUMPED_TRANSLATIONAL_MASS_V1"
+
+
+def test_v2c_mass_components_drive_descriptor_modal_without_invented_inertia() -> None:
+    model = FEModel("v2c-descriptor-modal")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    for node_id, coordinate in enumerate(COORDINATES, start=1):
+        model.add_node(node_id, *coordinate)
+    candidate = _candidate()
+    model.add_element(1, candidate)
+    model.add_boundary_condition(FixedSupport("fixed-edge", [1, 2]))
+    model.add_boundary_condition(
+        BoundaryCondition("node-3-in-plane", [3], {"ux": 0.0, "uy": 0.0})
+    )
+    material = model.get_material("steel")
+    components = candidate.compute_mass_components(model.mesh, material)
+    directions = candidate.dynamic_algebraic_directions(model.mesh, material)
+    assert components["condensed_rank"] == 9
+    assert components["rotary_inertia_per_area"] == 0.0
+    assert components["zero_rotational_inertia"] is True
+    assert directions.shape == (18, 9)
+    np.testing.assert_array_equal(
+        components["global"] @ directions,
+        np.zeros((18, 9)),
+    )
+    result = solve_free_vibration(model, num_modes=1)
+    assert result.solver_status == "ok"
+    assert result.diagnostics["descriptor_modal"] is True
+    assert result.diagnostics["declared_algebraic_element_ids"] == [1]
+    assert result.diagnostics["declared_algebraic_mass_certificate"][
+        "compatible_global_nullity"
+    ] == 3
 
 
 def test_source_selected_membrane_stress_stiffness() -> None:
