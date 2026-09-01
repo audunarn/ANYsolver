@@ -62,17 +62,36 @@ def test_contract_is_canonical_complete_and_exact_extent() -> None:
         content = (ROOT / binding["path"]).read_bytes()
         assert len(content) == binding["bytes"]
         assert hashlib.sha256(content).hexdigest().upper() == binding["sha256"]
-    changed = subprocess.check_output(
-        ["git", "diff", "--name-only", value["authority"]["expected_parent"]],
-        cwd=ROOT,
-        text=True,
-    ).splitlines()
-    untracked = subprocess.check_output(
-        ["git", "ls-files", "--others", "--exclude-standard"],
-        cwd=ROOT,
-        text=True,
-    ).splitlines()
-    assert sorted(set(changed) | set(untracked)) == value["authority"]["exact_paths"]
+    result_path = REFERENCE / "e4_pl_s3_v5h_local_parity_result.json"
+    if result_path.is_file():
+        authority_commit = json.loads(result_path.read_text(encoding="ascii"))[
+            "authority"
+        ]["commit"]
+        changed = subprocess.check_output(
+            [
+                "git",
+                "diff-tree",
+                "--no-commit-id",
+                "--name-only",
+                "-r",
+                authority_commit,
+            ],
+            cwd=ROOT,
+            text=True,
+        ).splitlines()
+        assert changed == value["authority"]["exact_paths"]
+    else:
+        changed = subprocess.check_output(
+            ["git", "diff", "--name-only", value["authority"]["expected_parent"]],
+            cwd=ROOT,
+            text=True,
+        ).splitlines()
+        untracked = subprocess.check_output(
+            ["git", "ls-files", "--others", "--exclude-standard"],
+            cwd=ROOT,
+            text=True,
+        ).splitlines()
+        assert sorted(set(changed) | set(untracked)) == value["authority"]["exact_paths"]
     assert value["production_boundary"] == {
         "activation_authorized": False,
         "default_q4_formulation": "e4-pl",
