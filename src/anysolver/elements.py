@@ -1035,6 +1035,7 @@ def _rotation_vector_from_matrix(rotation: np.ndarray) -> np.ndarray:
 
 _STRICT_FLAT_S3_V2_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1"
 _STRICT_FLAT_S3_V2B_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2B_FLAT_LINEAR_V1"
+_STRICT_FLAT_S3_V2C_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2C_FLAT_LINEAR_PARITY_V1"
 
 
 def _reject_strict_flat_s3_v2_legacy_dispatch(
@@ -1045,6 +1046,7 @@ def _reject_strict_flat_s3_v2_legacy_dispatch(
         in {
             _STRICT_FLAT_S3_V2_CANDIDATE_ID,
             _STRICT_FLAT_S3_V2B_CANDIDATE_ID,
+            _STRICT_FLAT_S3_V2C_CANDIDATE_ID,
         }
     ):
         from .element_capabilities import ElementCapabilityError
@@ -5561,6 +5563,7 @@ def _normalized_shell_formulation(
     resolved = raw_resolved.replace("_", "-")
     exact_s3_v2_selectors = {"e4-pl-s3-v2", "qualified-s3-v2"}
     exact_s3_v2b_selectors = {"e4-pl-s3-v2b", "qualified-s3-v2b"}
+    exact_s3_v2c_selectors = {"e4-pl-s3-v2c", "qualified-s3-v2c"}
     if resolved in exact_s3_v2_selectors and raw_resolved not in exact_s3_v2_selectors:
         raise ValueError(
             "strict-flat E4-PL S3 V2 requires the canonical e4-pl-s3-v2 selector"
@@ -5568,6 +5571,10 @@ def _normalized_shell_formulation(
     if resolved in exact_s3_v2b_selectors and raw_resolved not in exact_s3_v2b_selectors:
         raise ValueError(
             "strict-flat E4-PL S3 V2B requires the canonical e4-pl-s3-v2b selector"
+        )
+    if resolved in exact_s3_v2c_selectors and raw_resolved not in exact_s3_v2c_selectors:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2C requires the canonical e4-pl-s3-v2c selector"
         )
     if resolved == "default":
         resolved = (
@@ -5581,6 +5588,7 @@ def _normalized_shell_formulation(
     s3_aliases = {"e4-pl-s3", "qualified-s3"}
     s3_v2_aliases = exact_s3_v2_selectors
     s3_v2b_aliases = exact_s3_v2b_selectors
+    s3_v2c_aliases = exact_s3_v2c_selectors
     legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
     if node_count == 4 and resolved in e4_aliases:
         return "e4-pl"
@@ -5590,6 +5598,8 @@ def _normalized_shell_formulation(
         return "e4-pl-s3-v2"
     if node_count == 3 and resolved in s3_v2b_aliases:
         return "e4-pl-s3-v2b"
+    if node_count == 3 and resolved in s3_v2c_aliases:
+        return "e4-pl-s3-v2c"
     if resolved == "legacy-s3":
         if node_count != 3:
             raise ValueError("legacy-s3 is available only for three-node shell topology")
@@ -5607,6 +5617,10 @@ def _normalized_shell_formulation(
     if resolved in s3_v2b_aliases:
         raise ValueError(
             "strict-flat E4-PL S3 V2B is available only for three-node shell topology"
+        )
+    if resolved in s3_v2c_aliases:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2C is available only for three-node shell topology"
         )
     raise ValueError(f"Unknown shell formulation: {formulation}")
 
@@ -5652,7 +5666,11 @@ def shell_formulation_diagnostics(
                         else (
                             "STRICT_FLAT_LINEAR_E4_PL_S3_V2B_OPT_IN"
                             if count == 3 and selected == "e4-pl-s3-v2b"
-                            else "PRESERVED_LEGACY_NON_Q4"
+                            else (
+                                "STRICT_FLAT_LINEAR_E4_PL_S3_V2C_OPT_IN"
+                                if count == 3 and selected == "e4-pl-s3-v2c"
+                                else "PRESERVED_LEGACY_NON_Q4"
+                            )
                         )
                     )
                 )
@@ -5722,6 +5740,15 @@ def create_shell_element(
             material_name,
             **kwargs,
         )
+    if resolved == "e4-pl-s3-v2c":
+        from .e4_pl_s3_v2c_element import StrictFlatLinearE4PLS3V2CShellElement
+
+        return StrictFlatLinearE4PLS3V2CShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
     if resolved in {"legacy", "legacy-s3"}:
         return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
     raise AssertionError(f"unreachable shell formulation selection: {resolved}")
@@ -5749,6 +5776,10 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
             FORMULATION_ID as S3_V2B_FORMULATION_ID,
             StrictFlatLinearCapabilityError as StrictFlatLinearV2BCapabilityError,
         )
+        from .e4_pl_s3_v2c_element import (
+            FORMULATION_ID as S3_V2C_FORMULATION_ID,
+            StrictFlatLinearE4PLS3V2CShellElement,
+        )
 
         if formulation_id == S3_V2_FORMULATION_ID:
             raise StrictFlatLinearCapabilityError(
@@ -5760,6 +5791,8 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
                 "strict-flat S3 V2B serialization/restart is outside the "
                 "authorized production-parity surface"
             )
+        if formulation_id == S3_V2C_FORMULATION_ID:
+            return StrictFlatLinearE4PLS3V2CShellElement.from_dict(data)
         from .e4_pl_element import (
             FORMULATION_ID as Q4_FORMULATION_ID,
             QualifiedE4PLShellElement,
@@ -5786,12 +5819,15 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         "qualifiede4pls3shellelement",
         "strictflatlineare4pls3v2shellelement",
         "strictflatlineare4pls3v2bshellelement",
+        "strictflatlineare4pls3v2cshellelement",
         "e4-pl",
         "e4-pl-s3",
         "e4-pl-s3-v2",
         "e4-pl-s3-v2b",
+        "e4-pl-s3-v2c",
         "qualified-s3-v2",
         "qualified-s3-v2b",
+        "qualified-s3-v2c",
         "qualified-s3",
     }:
         raise ValueError("serialized qualified shell is missing formulation_id")
@@ -5856,12 +5892,18 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
     ) in {
         "e4-pl-s3-v2",
         "e4-pl-s3-v2b",
+        "e4-pl-s3-v2c",
         "qualified-s3-v2",
         "qualified-s3-v2b",
+        "qualified-s3-v2c",
     }:
         strict_s3_v2_marker_set.add("selector")
     if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
         "e4-pl-s3-v2-dkmt-eq12-41-cst-pl-hammer3-v1"
+    ):
+        strict_s3_v2_marker_set.add("implementation_id")
+    if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
+        "e4-pl-s3-v2c-min3-relaxed-uhm-cst-pl-parity-v1"
     ):
         strict_s3_v2_marker_set.add("implementation_id")
     if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
@@ -5870,6 +5912,10 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         strict_s3_v2_marker_set.add("implementation_id")
     if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
         "anysolver.e4-pl-s3-v2-strict-flat-linear-element-v1"
+    ):
+        strict_s3_v2_marker_set.add("formulation_schema")
+    if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
+        "anysolver.e4-pl-s3-v2c-flat-linear-parity-element-v1"
     ):
         strict_s3_v2_marker_set.add("formulation_schema")
     if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
@@ -5936,6 +5982,14 @@ def create_element(
     **kwargs: Any,
 ) -> Element:
     normalized_type = str(element_type).lower()
+    if normalized_type in {"e4-pl-s3-v2c", "qualified-s3-v2c"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3-v2c",
+            **kwargs,
+        )
     if normalized_type in {"e4-pl-s3-v2b", "qualified-s3-v2b"}:
         return create_shell_element(
             element_id,
