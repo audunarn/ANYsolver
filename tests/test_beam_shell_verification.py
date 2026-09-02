@@ -131,6 +131,32 @@ def test_plate_buckling_is_cached_only_within_one_report(
     assert second["results"][0]["checks"]["nested"]["residual"] == 0.0
 
 
+def test_external_reference_decks_are_cached_only_within_one_report(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """The two deck-inspection views share one immutable handoff bundle."""
+
+    calls = 0
+    original = beam_shell_verification.generate_external_reference_report
+
+    def generate(deck_dir: Path):
+        nonlocal calls
+        calls += 1
+        return original(deck_dir)
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(beam_shell_verification, "generate_external_reference_report", generate)
+    first = run_beam_shell_verification(selected_ids={"EXT-001", "EXT-002"})
+    second = run_beam_shell_verification(selected_ids={"EXT-001", "EXT-002"})
+
+    assert calls == 2
+    assert [item["case_id"] for item in first["results"]] == ["EXT-001", "EXT-002"]
+    assert [item["case_id"] for item in second["results"]] == ["EXT-001", "EXT-002"]
+    first["results"][0]["checks"]["report"]["cases"][0]["name"] = "mutated"
+    assert second["results"][0]["checks"]["report"]["cases"][0]["name"] != "mutated"
+
+
 def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
     report = run_beam_shell_verification()
 
