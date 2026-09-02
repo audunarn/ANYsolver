@@ -83,11 +83,20 @@ def _exclusive(path: Path, value: Mapping[str, Any]) -> None:
 
 
 def _load_bounded() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("_s3_v6q_bounded_process", BOUNDED)
+    module_name = "_s3_v6q_bounded_process"
+    loaded = sys.modules.get(module_name)
+    if loaded is not None:
+        return loaded
+    spec = importlib.util.spec_from_file_location(module_name, BOUNDED)
     if spec is None or spec.loader is None:
         raise V6QCoordinatorError("cannot load bounded process guard")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        sys.modules.pop(module_name, None)
+        raise
     return module
 
 

@@ -69,8 +69,8 @@ def test_contract_is_canonical_complete_and_hash_bound() -> None:
 def test_authority_extent_and_static_boundaries() -> None:
     contract = json.loads(CONTRACT.read_bytes())
     authority = contract["authority_commit"]
-    assert authority["expected_parent"] == "74ae891580e0452ee29991b51201712c6b600ace"
-    assert authority["exact_path_count"] == len(authority["expected_paths"]) == 7
+    assert authority["expected_parent"] == "a3df08737ea7c472957a79e08634166334ed7ab2"
+    assert authority["exact_path_count"] == len(authority["expected_paths"]) == 5
     assert contract["production_boundary"] == {
         "activation_authorized": False,
         "anymesh_untouched": True,
@@ -147,3 +147,10 @@ def test_authority_validates_before_execution_authorization_exists() -> None:
     contract, raw = coordinator.validate_authority(require_execution=False)
     assert contract["activation_authorized"] is False
     assert coordinator.sha256(raw) == digest(CONTRACT)
+
+
+def test_bounded_guard_loader_registers_dataclass_module() -> None:
+    coordinator = load(COORDINATOR, "_test_v6q_coordinator_guard")
+    bounded = coordinator._load_bounded()
+    assert bounded._ProcessJob.__module__ == "_s3_v6q_bounded_process"
+    assert coordinator.sys.modules["_s3_v6q_bounded_process"] is bounded
