@@ -92,3 +92,22 @@ def test_v2d_adapter_is_explicit_and_defaults_are_unchanged() -> None:
     elements = (ROOT / "src/anysolver/elements.py").read_text(encoding="utf-8")
     assert 'DEFAULT_Q4_FORMULATION = "e4-pl"' in elements
     assert 'DEFAULT_S3_FORMULATION = "legacy-s3"' in elements
+
+
+def test_v2c_adapter_preserves_implicit_positive_director() -> None:
+    ecosystem = ROOT.parents[2]
+    for repository in ("ANYfileIO", "ANYgeometry", "ANYmaterial"):
+        source = ecosystem / repository / "src"
+        if source.is_dir():
+            sys.path.insert(0, str(source))
+    runner = _load("_v6s_adapter_test", RUNNER)
+    lane, authorities = runner._lane()
+    built = lane._build_case(authorities, 10, auxiliary=False)
+    s3 = [
+        built.model.mesh.elements[element_id]
+        for element_id, kind in built.element_kinds.items()
+        if kind == "S3"
+    ]
+    assert s3
+    assert all(type(element).__name__ == "NativeParityE4PLS3V2DShellElement" for element in s3)
+    assert all(element.director_polarity == 1 for element in s3)

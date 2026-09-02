@@ -159,9 +159,10 @@ def _lane() -> tuple[Any, Any]:
                     int(element_id), list(old.node_ids), str(old.material_name),
                     formulation="e4-pl-s3-v2d",
                     thickness=float(old.thickness),
-                    drilling_stabilization=float(old.drilling_stabilization),
                     reference_normal=list(old.reference_normal),
-                    director_polarity=int(old.director_polarity),
+                    # V2C predates the explicit polarity field.  Its frozen
+                    # builder always selected the positive physical director.
+                    director_polarity=int(getattr(old, "director_polarity", 1)),
                 )
             cache[key] = built
         return cache[key]
