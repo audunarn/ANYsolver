@@ -55,7 +55,7 @@ from .plasticity import plane_stress_return_map
 
 SELECTOR = "e4-pl-s3-v2d"
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-IMPLEMENTATION_ID = "E4_PL_S3_V2D_ACTIVITY_CONTACT_BATCH_GATE_V1"
+IMPLEMENTATION_ID = "E4_PL_S3_V2D_FINAL_PARITY_GATE_V1"
 FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v3"
 SOURCE_SELECTION_SHA256 = (
     "DB5750539FB87CA4E4DDA1B37ECEACD65B76DF9A64969808712A4BDD44A45E3D"
@@ -74,6 +74,11 @@ ACTIVITY_POLICY_ID = "S3_V2D_CLOSED_ACTIVITY_LIFECYCLE_V1"
 BATCH_POLICY_ID = "S3_V2D_EXACT_REVISION_BOUND_STIFFNESS_PLAN_V1"
 DRILL_SCALE_POLICY_ID = "S3_BASIS_INVARIANT_GENERALIZED_EIGENVALUE_V1"
 MASS_POLICY_ID = "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1"
+GEOMETRIC_STIFFNESS_POLICY_ID = (
+    "S3_V2D_CST_UNIFORM_MEMBRANE_COMPRESSION_INITIAL_STRESS_V1"
+)
+DYNAMIC_ALGEBRAIC_POLICY_ID = "S3_V2D_ALL_NODAL_ROTATIONS_ZERO_INERTIA_V1"
+DYNAMIC_ALGEBRAIC_MASS_WITNESS = "S3_V2C_LOCAL_ROTATION_ROWS_EXACT_ZERO_V1"
 CBMIN3 = 2.0
 
 _NORMAL_TOLERANCE = 1.0e-10
@@ -109,6 +114,11 @@ SUPPORTED_OPERATIONS = frozenset(
         "contact_state",
         "activity_state",
         "qualified_batch_path",
+        "descriptor_modal",
+        "rayleigh_damping",
+        "reference_elastic_buckling",
+        "local_resultant_recovery",
+        "package_round_trip",
     }
 )
 BLOCKED_OPERATIONS = frozenset(
@@ -223,6 +233,10 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     pressure_surface_policy_id = PRESSURE_SURFACE_POLICY_ID
     activity_policy_id = ACTIVITY_POLICY_ID
     qualified_batch_policy_id = BATCH_POLICY_ID
+    dynamic_algebraic_nullity = 9
+    dynamic_algebraic_policy = DYNAMIC_ALGEBRAIC_POLICY_ID
+    dynamic_algebraic_mass_witness = DYNAMIC_ALGEBRAIC_MASS_WITNESS
+    dynamic_algebraic_local_zero_indices = (3, 4, 5, 9, 10, 11, 15, 16, 17)
     legacy_stiffness_batch_eligible = False
     legacy_nonlinear_batch_eligible = False
     formulation_native_total_lagrangian = False
@@ -1661,6 +1675,110 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
         return self._globalize(local, transform)
 
+    def compute_mass_components(
+        self,
+        mesh: FEMesh,
+        material: Material,
+    ) -> Dict[str, Any]:
+        """Return the exact zero-rotation mass witness used by descriptor solvers."""
+
+        global_mass = self.compute_mass_matrix(mesh, material)
+        geometry = self._geometry(mesh)
+        section = self._generalized_section_in_frame(geometry["frame"])
+        if section is None:
+            density = _real_scalar(getattr(material, "density", None), "density")
+            mass_per_area = density * self.thickness
+        elif section.mass_per_area is None:
+            density = _real_scalar(getattr(material, "density", None), "density")
+            mass_per_area = density * self.thickness
+        else:
+            mass_per_area = _real_scalar(section.mass_per_area, "mass_per_area")
+        if mass_per_area <= 0.0:
+            raise ValueError("S3 V2D mass_per_area must be positive")
+        nodal_mass = mass_per_area * float(geometry["area"]) / 3.0
+        local = np.zeros((18, 18), dtype=np.float64)
+        for node in range(3):
+            for axis in range(3):
+                local[6 * node + axis, 6 * node + axis] = nodal_mass
+        return {
+            "condensed_local": local,
+            "condensed_rank": 9,
+            "formulation_id": FORMULATION_ID,
+            "global": np.asarray(global_mass, dtype=np.float64),
+            "mass_per_area": mass_per_area,
+            "mass_policy_id": MASS_POLICY_ID,
+            "rotary_inertia_per_area": 0.0,
+            "zero_drill_inertia": True,
+            "zero_rotational_inertia": True,
+        }
+
+    def dynamic_algebraic_directions(
+        self,
+        mesh: FEMesh,
+        material: Material,
+    ) -> np.ndarray:
+        """Return the nine orthonormal global rotation directions with zero mass."""
+
+        self.compute_mass_components(mesh, material)
+        directions = np.zeros((18, 9), dtype=np.float64)
+        for node in range(3):
+            for axis in range(3):
+                directions[6 * node + 3 + axis, 3 * node + axis] = 1.0
+        return directions
+
+    def compute_geometric_stiffness_matrix(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Optional[Any] = None,
+    ) -> np.ndarray:
+        """Assemble the frozen V2C uniform membrane initial-stress operator."""
+
+        self._validate_configuration()
+        geometry = self._geometry(mesh)
+        # Evaluate the formulation-owned section once so material and section
+        # authority are validated before consuming the prestress state.
+        self.compute_stiffness_components(mesh, material)
+        if state is None:
+            return np.zeros((18, 18), dtype=np.float64)
+        if not isinstance(state, Mapping):
+            raise TypeError("S3 V2D geometric state must be a mapping")
+        allowed = {
+            "membrane_compression",
+            "bending_compression",
+            "stress_second_moment",
+        }
+        if not set(state) <= allowed or "membrane_compression" not in state:
+            raise NativeParityCapabilityError(
+                "S3 V2D reference buckling admits only the frozen uniform "
+                "membrane-compression policy"
+            )
+        compression = np.asarray(state["membrane_compression"], dtype=np.float64)
+        if compression.shape != (3,) or not np.all(np.isfinite(compression)):
+            raise ValueError("S3 V2D membrane_compression must be a finite 3-vector")
+        for optional in ("bending_compression", "stress_second_moment"):
+            if optional not in state:
+                continue
+            values = np.asarray(state[optional], dtype=np.float64)
+            if values.shape != (3,) or not np.all(np.isfinite(values)):
+                raise ValueError(f"S3 V2D {optional} must be a finite 3-vector")
+            if np.any(values):
+                raise NativeParityCapabilityError(
+                    "S3 V2D source authority does not admit nonzero " + optional
+                )
+        nx, ny, nxy = (float(value) for value in compression)
+        stress = np.asarray(((nx, nxy), (nxy, ny)), dtype=np.float64)
+        gradients = np.asarray(geometry["shape_gradients"], dtype=np.float64)
+        scalar = float(geometry["area"]) * gradients @ stress @ gradients.T
+        local = np.zeros((18, 18), dtype=np.float64)
+        for first in range(3):
+            for second in range(3):
+                for axis in range(3):
+                    local[6 * first + axis, 6 * second + axis] = scalar[first, second]
+        transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
+        made = self._globalize(local, transform)
+        return 0.5 * (made + made.T)
+
     @staticmethod
     def _external_station_order(
         values: np.ndarray, order: Tuple[int, int, int]
@@ -1953,6 +2071,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "pressure_surface_policy_id": PRESSURE_SURFACE_POLICY_ID,
             "activity_policy_id": ACTIVITY_POLICY_ID,
             "qualified_batch_policy_id": BATCH_POLICY_ID,
+            "dynamic_algebraic_policy_id": DYNAMIC_ALGEBRAIC_POLICY_ID,
+            "geometric_stiffness_policy_id": GEOMETRIC_STIFFNESS_POLICY_ID,
+            "mass_policy_id": MASS_POLICY_ID,
             "source_selection_sha256": SOURCE_SELECTION_SHA256,
             "thickness": float(self.thickness),
             "type": type(self).__name__,
@@ -1990,6 +2111,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "pressure_surface_policy_id",
             "activity_policy_id",
             "qualified_batch_policy_id",
+            "dynamic_algebraic_policy_id",
+            "geometric_stiffness_policy_id",
+            "mass_policy_id",
             "source_selection_sha256",
             "thickness",
             "type",
@@ -2008,6 +2132,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "pressure_surface_policy_id": PRESSURE_SURFACE_POLICY_ID,
             "activity_policy_id": ACTIVITY_POLICY_ID,
             "qualified_batch_policy_id": BATCH_POLICY_ID,
+            "dynamic_algebraic_policy_id": DYNAMIC_ALGEBRAIC_POLICY_ID,
+            "geometric_stiffness_policy_id": GEOMETRIC_STIFFNESS_POLICY_ID,
+            "mass_policy_id": MASS_POLICY_ID,
             "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
             "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
             "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
@@ -2049,9 +2176,12 @@ __all__ = [
     "BATCH_POLICY_ID",
     "BLOCKED_OPERATIONS",
     "CAPABILITY_MATRIX",
+    "DYNAMIC_ALGEBRAIC_MASS_WITNESS",
+    "DYNAMIC_ALGEBRAIC_POLICY_ID",
     "DRILL_SCALE_POLICY_ID",
     "FORMULATION_ID",
     "FORMULATION_SCHEMA",
+    "GEOMETRIC_STIFFNESS_POLICY_ID",
     "IMPLEMENTATION_ID",
     "MASS_POLICY_ID",
     "MATERIAL_LIFECYCLE_POLICY_ID",
