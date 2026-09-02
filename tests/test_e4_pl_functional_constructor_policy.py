@@ -125,13 +125,17 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "test_validate_production_model_reports_q8_midside_and_warp_warnings",
             ): 1,
             (
+                "tests/test_production_validation.py",
+                "test_validate_production_model_accepts_triangular_shell_quality",
+            ): 1,
+            (
                 "tests/test_recovery_qualification.py",
                 "test_patch_rejects_reduced_q8_and_warped_q4_outside_qualified_scope",
             ): 1,
         }
     )
     assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == 21
+    assert sum(calls["ShellElement"].values()) == 22
     expected_qualified_q4 = Counter(
         {
             (

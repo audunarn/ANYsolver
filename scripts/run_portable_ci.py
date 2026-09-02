@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -34,6 +35,24 @@ MERGE_LANES = ("quick", "additive", "functional")
 POST_CLOSEOUT_HISTORICAL_MODULES = (
     "tests/test_e4_pl_s3_q4_burnin_authority.py",
 )
+# Versioned S3 files record authority, experiments, incidents, and formal
+# evidence accumulated while the successor was developed.  Most of those
+# modules deliberately bind a particular checkout representation, full Git
+# history, or external machine-local evidence.  They remain valuable in their
+# registered environment but are not portable merge tests.  Keep the small
+# current runtime-facing V2D suite explicit so a newly added study cannot
+# silently enter ordinary CI merely by matching the broad additive prefix.
+PORTABLE_CURRENT_S3_SUCCESSOR_MODULES = (
+    "tests/test_e4_pl_s3_v2d_linear_native_parity.py",
+    "tests/test_e4_pl_s3_v2d_native_state_corotational.py",
+    "tests/test_e4_pl_s3_v6c_offset_load_restart.py",
+    "tests/test_e4_pl_s3_v6e_final_parity.py",
+    "tests/test_e4_pl_s3_v6g_recovery_current_eigen.py",
+    "tests/test_e4_pl_s3_v6t_global_cache.py",
+)
+_VERSIONED_S3_STUDY_RE = re.compile(
+    r"tests/test_e4_pl_s3_(?:qv\d+|v\d)[^/]*\.py\Z"
+)
 DEDICATED_LANE_NODES = (
     (
         "tests/test_fe_solver_infrastructure.py::"
@@ -46,6 +65,15 @@ DEDICATED_LANE_NODES = (
     (
         "tests/test_local_patch_transition.py::"
         "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
+    ),
+)
+# This assertion proves the exact historical implementation commit.  Shallow
+# pull-request checkouts intentionally do not carry that object; all runtime
+# assertions in the module remain part of portable CI.
+PORTABLE_HISTORY_ONLY_NODES = (
+    (
+        "tests/test_e4_pl_s3_v2d_linear_native_parity.py::"
+        "test_v2d_stateless_identity_roundtrip_and_remaining_successor_gaps"
     ),
 )
 DEFAULT_WORKERS = 4
@@ -107,12 +135,27 @@ def merge_test_modules() -> tuple[str, ...]:
         raise RuntimeError(
             f"post-closeout historical modules are absent: {sorted(missing_historical)}"
         )
+    missing_current = set(PORTABLE_CURRENT_S3_SUCCESSOR_MODULES) - set(registered)
+    if missing_current:
+        raise RuntimeError(
+            f"current S3 successor modules are absent: {sorted(missing_current)}"
+        )
     modules = [
         module
         for module in registered
-        if module not in POST_CLOSEOUT_HISTORICAL_MODULES
+        if not _is_portable_historical_module(module)
     ]
     return tuple(modules)
+
+
+def _is_portable_historical_module(module: str) -> bool:
+    """Return whether *module* needs frozen history or external evidence."""
+
+    if module in POST_CLOSEOUT_HISTORICAL_MODULES:
+        return True
+    if module in PORTABLE_CURRENT_S3_SUCCESSOR_MODULES:
+        return False
+    return _VERSIONED_S3_STUDY_RE.fullmatch(module) is not None
 
 
 def _worker_environment(root: Path) -> dict[str, str]:
@@ -147,7 +190,7 @@ def _worker_command(modules: Sequence[str], root: Path) -> list[str]:
     owned_modules = set(modules)
     deselections = [
         node
-        for node in DEDICATED_LANE_NODES
+        for node in (*DEDICATED_LANE_NODES, *PORTABLE_HISTORY_ONLY_NODES)
         if node.partition("::")[0] in owned_modules
     ]
     return [

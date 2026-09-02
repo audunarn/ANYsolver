@@ -647,10 +647,15 @@ def test_portable_ci_inventory_is_unique_and_excludes_long_lanes() -> None:
     registered = {
         module for lane in portable_ci.MERGE_LANES for module in lanes[lane]
     }
-    assert set(modules) == registered - set(
-        portable_ci.POST_CLOSEOUT_HISTORICAL_MODULES
-    )
+    historical = {
+        module
+        for module in registered
+        if portable_ci._is_portable_historical_module(module)
+    }
+    assert set(modules) == registered - historical
     assert set(portable_ci.POST_CLOSEOUT_HISTORICAL_MODULES) <= registered
+    assert set(portable_ci.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES) <= set(modules)
+    assert historical
     assert set(modules).isdisjoint(lanes["performance"])
     assert set(modules).isdisjoint(lanes["extended"])
 
@@ -706,6 +711,10 @@ def test_portable_ci_worker_is_headless_isolated_and_single_threaded(
         ("tests/test_fe_solver_infrastructure.py",), tmp_path
     )
     assert sum(item.startswith("--deselect=") for item in pardiso_command) == 1
+    v2d_command = portable_ci._worker_command(
+        ("tests/test_e4_pl_s3_v2d_linear_native_parity.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in v2d_command) == 1
 
 
 def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
