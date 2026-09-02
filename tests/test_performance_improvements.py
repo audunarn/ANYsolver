@@ -563,6 +563,50 @@ def test_qualified_q4_warm_mass_rejects_spoofed_mass_callable() -> None:
         assemble_mass_matrix(model)
 
 
+def test_qualified_q4_warm_mass_keeps_mixed_v1_s3_authority_current() -> None:
+    """The Q4 mass shortcut tolerates only an equivalent V1-S3 guard rebind."""
+
+    from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
+    from anysolver.matrix_assembly import (
+        assemble_mass_matrix,
+        assemble_stiffness_matrix,
+    )
+
+    model = FEModel("mixed_q4_v1_s3_warm_mass")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    for node_id, coordinates in (
+        (1, (0.0, 0.0, 0.0)),
+        (2, (1.0, 0.0, 0.0)),
+        (3, (1.0, 1.0, 0.0)),
+        (4, (0.0, 1.0, 0.0)),
+        (5, (2.0, 0.5, 0.0)),
+    ):
+        model.add_node(node_id, *coordinates)
+    model.add_element(
+        1,
+        create_element(
+            "shell", 1, [1, 2, 3, 4], "steel", thickness=0.01
+        ),
+    )
+    model.add_element(
+        2,
+        QualifiedE4PLS3ShellElement(
+            2,
+            [2, 5, 3],
+            "steel",
+            thickness=0.01,
+            reference_normal=(0.0, 0.0, 1.0),
+        ),
+    )
+
+    assemble_stiffness_matrix(model)
+    mass, info = assemble_mass_matrix(model)
+
+    assert mass.shape == (model.mesh.dof_manager.total_dofs,) * 2
+    assert np.all(np.isfinite(mass.data))
+    assert info["diagnostics"]["vectorized_shell_element_count"] == 1
+
+
 def test_q8r_mass_assembly_keeps_scalar_lumped_path():
     """Reduced-integration S8R shells stay on the scalar lumped mass path."""
     from anysolver.matrix_assembly import assemble_mass_matrix

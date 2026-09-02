@@ -2974,6 +2974,12 @@ def _bind_qualified_assembly_runtime_lease(
                             s3_fast_reference_plan,
                             q4_fast_plan["token"],
                             routing_prevalidated=True,
+                            # A native mass evaluation may rebind an otherwise
+                            # equivalent V1-S3 component guard.  The prepared
+                            # authority still verifies every guarded component;
+                            # permit only that existing equivalent rebind on
+                            # the Q4 stiffness-to-mass reuse path.
+                            preflight=allow_q4_cached_stiffness,
                         )
                         if current_authority is not s3_prepared_authority:
                             raise ValueError(
