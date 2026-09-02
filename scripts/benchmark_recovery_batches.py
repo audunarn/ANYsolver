@@ -1,4 +1,4 @@
-"""Benchmark compiled isotropic S4 recovery against the scalar element oracle."""
+"""Benchmark the legacy isotropic S4 kernel against its scalar oracle."""
 
 from __future__ import annotations
 
@@ -6,14 +6,34 @@ import argparse
 import json
 import statistics
 import time
+import warnings
 from typing import Callable, Dict, Mapping
 
 import numpy as np
 
 from anysolver import RecoveryConfig, ResourceConfig, generate_simple_panel_mesh
+from anysolver.elements import LegacyQ4DeprecationWarning, LegacyShellElement
 from anysolver.recovery import (
     _compute_one_element_stress,
     recover_element_stresses_with_report,
+)
+
+
+_COMPILED_ISOTROPIC_S4_FIELDS = frozenset(
+    {
+        "bending_xx",
+        "bending_xy",
+        "bending_yy",
+        "equivalent_stress",
+        "equivalent_stress_measure",
+        "hill_utilization",
+        "membrane_xx",
+        "membrane_xy",
+        "membrane_yy",
+        "shear_xz",
+        "shear_yz",
+        "von_mises",
+    }
 )
 
 
@@ -31,20 +51,47 @@ def _maximum_error(
     candidate: Mapping[int, Mapping[str, object]],
 ) -> float:
     maximum = 0.0
-    for element_id, expected_fields in reference.items():
-        actual_fields = candidate[element_id]
-        for field, expected in expected_fields.items():
+    for element_id, actual_fields in candidate.items():
+        expected_fields = reference.get(element_id)
+        if expected_fields is None or set(actual_fields) != _COMPILED_ISOTROPIC_S4_FIELDS:
+            return float("inf")
+        for field, actual in actual_fields.items():
+            if field not in expected_fields:
+                return float("inf")
+            expected = expected_fields[field]
             if isinstance(expected, str):
-                if actual_fields[field] != expected:
+                if actual != expected:
                     return float("inf")
                 continue
-            actual = np.asarray(actual_fields[field], dtype=float)
             expected_array = np.asarray(expected, dtype=float)
+            actual_array = np.asarray(actual, dtype=float)
             maximum = max(
                 maximum,
-                float(np.max(np.abs(actual - expected_array), initial=0.0)),
+                float(np.max(np.abs(actual_array - expected_array), initial=0.0)),
             )
+    if set(reference) != set(candidate):
+        return float("inf")
     return maximum
+
+
+def _select_explicit_legacy_s4(model: object) -> None:
+    """Replace generated Q4 defaults with the kernel's exact legacy target."""
+
+    mesh = model.mesh
+    with warnings.catch_warnings():
+        # The benchmark intentionally exercises the still-supported legacy
+        # kernel; its private construction should not corrupt JSON output.
+        warnings.simplefilter("ignore", LegacyQ4DeprecationWarning)
+        for element_id, element in tuple(mesh.elements.items()):
+            model.add_element(
+                element_id,
+                LegacyShellElement(
+                    element_id,
+                    list(element.node_ids),
+                    element.material_name,
+                    thickness=element.thickness,
+                ),
+            )
 
 
 def main() -> int:
@@ -65,6 +112,7 @@ def main() -> int:
         num_divisions_x=args.nx,
         num_divisions_y=args.ny,
     )
+    _select_explicit_legacy_s4(model)
     displacements = np.linspace(
         0.0,
         1.0e-5,
@@ -99,6 +147,10 @@ def main() -> int:
     compiled()
     scalar_reference = scalar()
     compiled_reference, report = compiled()
+    if report.metadata["recovery_backend"] != "compiled_isotropic_s4":
+        raise RuntimeError(
+            "benchmark requires the compiled legacy isotropic S4 recovery path"
+        )
     scalar_seconds = _timings(scalar, args.repeats)
     compiled_seconds = _timings(compiled, args.repeats)
     scalar_median = float(statistics.median(scalar_seconds))
@@ -106,6 +158,7 @@ def main() -> int:
     payload = {
         "status": "completed",
         "elements": len(model.mesh.elements),
+        "formulation": "legacy-s4",
         "return_global": bool(args.return_global),
         "threads": int(args.threads),
         "repeats": int(args.repeats),

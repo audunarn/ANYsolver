@@ -1182,10 +1182,10 @@ def test_large_mixed_recovery_is_byte_identical_to_scalar_and_reuses_plan() -> N
     )
     assert first_report.metadata["fallback_element_count"] == 1
     assert first_report.metadata["fallback_reasons"] == {
-        "batch_below_minimum_size": {
-            "element_ids": [MIN_REFERENCE_S3_RECOVERY_GROUP + 1],
-            "minimum_size": 100,
-        }
+        # The single Q4 is the qualified stationary formulation.  It must
+        # remain on its native oracle rather than enter the legacy S4 batch
+        # kernel, which has different shear recovery mechanics.
+        "unsupported_formulation": [MIN_REFERENCE_S3_RECOVERY_GROUP + 1]
     }
     batch_diagnostics = first_report.metadata[
         "qualified_s3_reference_batch"

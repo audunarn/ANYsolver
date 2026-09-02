@@ -26,6 +26,7 @@ from .elements import (
     ShellElement,
     _shell_material_matrices,
 )
+from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEMesh as _FEMesh
 from .fe_core import Material as _BuiltinMaterial
 from .fe_core import Node as _Node
@@ -1510,6 +1511,13 @@ def _material_state_key(model: "FEModel") -> Tuple[Tuple[object, ...], ...]:
 
 
 def _formulation_name(model: "FEModel", element: object) -> str:
+    # The compiled S4 kernel reproduces ``ShellElement.compute_stresses``.  A
+    # qualified E4-PL Q4 instead recovers its fields from the stationary
+    # mixed system, so it must remain on that native oracle until it has its
+    # own independently validated batch kernel.  Treating it as generic S4
+    # changes transverse shear and is not a permissible acceleration.
+    if isinstance(element, QualifiedE4PLShellElement):
+        return "qualified_e4_pl_q4"
     if isinstance(element, ShellElement):
         node_count = len(element.node_ids)
         topology = {3: "t3", 4: "s4", 6: "t6", 8: "q8"}.get(

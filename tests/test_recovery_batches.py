@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from anysolver import RecoveryConfig, ResourceConfig, generate_simple_panel_mesh
+from anysolver.elements import LegacyShellElement
 from anysolver.recovery import (
     _compute_one_element_stress,
     recover_element_stresses_with_report,
@@ -28,6 +29,23 @@ def _large_panel():
         num_divisions_x=10,
         num_divisions_y=10,
     )
+
+
+def _large_legacy_panel():
+    """Build an S4 panel explicitly eligible for the legacy batch kernel."""
+
+    model = _large_panel()
+    for element_id, element in tuple(model.mesh.elements.items()):
+        model.add_element(
+            element_id,
+            LegacyShellElement(
+                element_id,
+                list(element.node_ids),
+                element.material_name,
+                thickness=element.thickness,
+            ),
+        )
+    return model
 
 
 def test_chunked_scalar_recovery_preserves_order_and_exact_values(
@@ -137,7 +155,7 @@ def test_report_serialization_exposes_fallback_diagnostics() -> None:
 
 
 def test_compiled_isotropic_s4_matches_scalar_oracle_for_warped_global_output() -> None:
-    model = _large_panel()
+    model = _large_legacy_panel()
     for node_id, node in tuple(model.mesh.nodes.items()):
         model.set_node_coordinates(
             node_id,
@@ -184,3 +202,27 @@ def test_compiled_isotropic_s4_matches_scalar_oracle_for_warped_global_output() 
                     rtol=2.0e-13,
                     atol=1.0e-7,
                 )
+
+
+def test_qualified_q4_recovery_never_uses_legacy_compiled_kernel() -> None:
+    model = _large_panel()
+    displacement = np.linspace(
+        0.0,
+        1.0e-5,
+        model.mesh.dof_manager.total_dofs,
+    )
+
+    recovered, report = recover_element_stresses_with_report(
+        model,
+        displacement,
+        resource_config=ResourceConfig(recovery_threads=3),
+    )
+
+    assert report.metadata["compiled_batch_count"] == 0
+    assert report.metadata["eligible_element_count"] == 0
+    assert report.metadata["recovery_backend"] == "scalar_chunk_thread_pool"
+    assert set(recovered) == set(model.mesh.elements)
+    assert all(
+        item["recovery_scope"] == "qualified_q4_local_physical_only"
+        for item in recovered.values()
+    )
