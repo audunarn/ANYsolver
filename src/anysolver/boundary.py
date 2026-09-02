@@ -436,6 +436,19 @@ class LoadCase:
         load.  No independent rotational pressure moments are introduced:
         pressure virtual work is conjugate to interpolation-surface translations.
         """
+        if coords is None:
+            native_dead = getattr(element, "compute_native_dead_pressure_load", None)
+            if callable(native_dead):
+                return np.asarray(native_dead(mesh, pressure), dtype=float)
+        else:
+            native_current = getattr(
+                element, "compute_native_current_pressure_load", None
+            )
+            if callable(native_current):
+                return np.asarray(
+                    native_current(mesh, pressure, coords), dtype=float
+                )
+
         v2_load = self._strict_flat_s3_v2_dead_pressure_load(
             element,
             mesh,
@@ -501,6 +514,19 @@ class LoadCase:
         ``K_internal - K_external``.
         """
         self._reject_strict_flat_s3_v2_follower_pressure(element)
+        native_tangent = getattr(
+            element, "compute_native_current_pressure_tangent", None
+        )
+        if callable(native_tangent):
+            if coords is None:
+                coords = self._current_element_coordinates(
+                    element,
+                    mesh,
+                    np.zeros(mesh.dof_manager.total_dofs, dtype=float),
+                )
+            return np.asarray(
+                native_tangent(mesh, pressure, coords), dtype=float
+            )
         if not hasattr(element, "compute_shape_functions") or not hasattr(element, "gauss_points"):
             raise ValueError(
                 f"Follower pressure requires a shell interpolation with shape functions; "

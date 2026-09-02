@@ -18,10 +18,13 @@ import numpy as np
 
 
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-STATE_SCHEMA = "anysolver.e4-pl-s3-v2d-native-committed-state-v1"
-STATE_LAYOUT_ID = "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_STATE_V1"
-STATE_INTEGRITY_ID = "S3_V2D_COMPLETE_COMMITTED_STATE_SHA256_V1"
+STATE_SCHEMA = "anysolver.e4-pl-s3-v2d-native-committed-state-v2"
+STATE_LAYOUT_ID = "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_RESTART_STATE_V2"
+STATE_INTEGRITY_ID = "S3_V2D_CANONICAL_RESTART_STATE_INTEGRITY_V2"
 MATERIAL_MODES = frozenset({"LAYERED_PLANE_STRESS", "GENERALIZED_SECTION"})
+SOLVER_KINEMATICS = frozenset(
+    {"UNBOUND", "ELEMENT_LOCAL", "LINEAR", "VON_KARMAN", "COROTATIONAL"}
+)
 
 _REQUIRED_KEYS = frozenset(
     {
@@ -34,6 +37,8 @@ _REQUIRED_KEYS = frozenset(
         "element_identity_sha256",
         "num_layers",
         "committed_total_u",
+        "committed_constitutive_u",
+        "solver_kinematics",
         "plastic_strain",
         "alpha",
         "layer_strain",
@@ -189,6 +194,8 @@ def initialize_v2d_state(
         "element_identity_sha256": str(element_identity_sha256),
         "num_layers": layers,
         "committed_total_u": np.zeros(18, dtype=np.float64),
+        "committed_constitutive_u": np.zeros(18, dtype=np.float64),
+        "solver_kinematics": "UNBOUND",
         "plastic_strain": np.zeros((points, 3), dtype=np.float64),
         "alpha": np.zeros(points, dtype=np.float64),
         "layer_strain": np.zeros((points, 3), dtype=np.float64),
@@ -246,6 +253,11 @@ def validate_v2d_state(
         "committed_total_u": _finite_array(
             made["committed_total_u"], (18,), "committed_total_u"
         ),
+        "committed_constitutive_u": _finite_array(
+            made["committed_constitutive_u"],
+            (18,),
+            "committed_constitutive_u",
+        ),
         "plastic_strain": _finite_array(
             made["plastic_strain"], (points, 3), "plastic_strain"
         ),
@@ -279,6 +291,8 @@ def validate_v2d_state(
     }
     if np.any(arrays["alpha"] < 0.0):
         raise V2DStateError("V2D alpha must be nonnegative")
+    if made["solver_kinematics"] not in SOLVER_KINEMATICS:
+        raise V2DStateError("V2D solver_kinematics is incompatible")
     if expected_committed_total_u is not None:
         expected = _finite_array(
             expected_committed_total_u, (18,), "expected committed_total_u"
@@ -320,6 +334,7 @@ __all__ = [
     "STATE_INTEGRITY_ID",
     "STATE_LAYOUT_ID",
     "STATE_SCHEMA",
+    "SOLVER_KINEMATICS",
     "V2DStateError",
     "canonical_json_bytes",
     "canonical_sha256",

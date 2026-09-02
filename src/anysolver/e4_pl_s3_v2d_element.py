@@ -29,7 +29,13 @@ from .e4_pl_s3_v2c_element import (
     StrictFlatLinearE4PLS3V2CShellElement,
 )
 from .e4_pl_s3_initial_fields import integrate_generalized_initial_fields
-from .e4_pl_s3_state import qualified_s3_lobatto_layers
+from .e4_pl_s3_state import (
+    DIRECTOR_POLARITY_POLICY_ID,
+    DIRECTOR_REVERSAL_TRANSFORM_ID,
+    REFERENCE_SURFACE_OFFSET_POLICY_ID,
+    REFERENCE_SURFACE_STRAIN_TRANSFORM_ID,
+    qualified_s3_lobatto_layers,
+)
 from .e4_pl_s3_v2d_state import (
     STATE_LAYOUT_ID,
     STATE_SCHEMA,
@@ -47,8 +53,8 @@ from .plasticity import plane_stress_return_map
 
 SELECTOR = "e4-pl-s3-v2d"
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-IMPLEMENTATION_ID = "E4_PL_S3_V2D_NATIVE_STATE_COROTATIONAL_GATE_V1"
-FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v1"
+IMPLEMENTATION_ID = "E4_PL_S3_V2D_OFFSET_LOAD_RESTART_GATE_V1"
+FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v2"
 SOURCE_SELECTION_SHA256 = (
     "DB5750539FB87CA4E4DDA1B37ECEACD65B76DF9A64969808712A4BDD44A45E3D"
 )
@@ -56,11 +62,12 @@ V2C_OPERATOR_SHA256 = (
     "84FB0B881F0F795BB9FC315A27FF53998BADE58CBAA1EF0A48785A5BE5E086F4"
 )
 NATIVE_SECTION_POLICY_ID = "S3_V2D_NATIVE_MIN3_GENERALIZED_SECTION_STATIONS_V1"
-SERIALIZATION_POLICY_ID = "S3_V2D_STATELESS_LINEAR_FINGERPRINT_V1"
+SERIALIZATION_POLICY_ID = "S3_V2D_ELEMENT_AND_STATE_FINGERPRINT_V2"
 NATIVE_STATE_SCHEMA_ID = STATE_SCHEMA
 NATIVE_STATE_LAYOUT_ID = STATE_LAYOUT_ID
 COROTATIONAL_POLICY_ID = "S3_V2D_EICR_ELEMENT_INDEPENDENT_PULLBACK_V1"
 MATERIAL_LIFECYCLE_POLICY_ID = "S3_V2D_HAMMER3_LOBATTO_TRIAL_COMMIT_REVERT_V1"
+PRESSURE_SURFACE_POLICY_ID = "ELEMENT_NODAL_REFERENCE_SURFACE_V1"
 DRILL_SCALE_POLICY_ID = "S3_BASIS_INVARIANT_GENERALIZED_EIGENVALUE_V1"
 MASS_POLICY_ID = "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1"
 CBMIN3 = 2.0
@@ -90,24 +97,26 @@ SUPPORTED_OPERATIONS = frozenset(
         "layered_plane_stress_material_update",
         "same_formulation_state_serialization",
         "element_independent_corotational_response",
+        "director_polarity_reversal",
+        "reference_surface_offset",
+        "follower_pressure",
+        "distributed_couple",
+        "solver_integrated_hot_restart",
     }
 )
 BLOCKED_OPERATIONS = frozenset(
     {
-        "reference_surface_offset",
-        "director_polarity_reversal",
-        "follower_pressure",
-        "distributed_couple",
         "contact_state",
         "activity_state",
         "qualified_batch_path",
         "default_activation",
-        "solver_integrated_hot_restart",
+        "python_pickle_restart",
+        "v6b_state_hot_migration",
     }
 )
 CAPABILITY_MATRIX = MappingProxyType(
     {
-        **{name: "SUPPORTED_V6A_LINEAR_NATIVE_PARITY" for name in SUPPORTED_OPERATIONS},
+        **{name: "SUPPORTED" for name in SUPPORTED_OPERATIONS},
         **{name: "BLOCKED_PENDING_SUCCESSOR_GATE" for name in BLOCKED_OPERATIONS},
     }
 )
@@ -186,6 +195,11 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     native_state_schema_id = NATIVE_STATE_SCHEMA_ID
     native_state_layout_id = NATIVE_STATE_LAYOUT_ID
     corotational_policy_id = COROTATIONAL_POLICY_ID
+    director_polarity_policy_id = DIRECTOR_POLARITY_POLICY_ID
+    director_reversal_transform_id = DIRECTOR_REVERSAL_TRANSFORM_ID
+    reference_surface_offset_policy_id = REFERENCE_SURFACE_OFFSET_POLICY_ID
+    reference_surface_strain_transform_id = REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+    pressure_surface_policy_id = PRESSURE_SURFACE_POLICY_ID
     formulation_native_total_lagrangian = False
     _legacy_shell_dispatch_forbidden = FORMULATION_ID
     TRI_GAUSS_POINTS_3 = HAMMER_POINTS
@@ -224,14 +238,11 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             or len(set(owned_nodes)) != 3
         ):
             raise ValueError("S3 V2D requires three distinct exact-integer nodes")
-        if type(director_polarity) is not int or director_polarity != 1:
-            raise NativeParityCapabilityError(
-                "S3 V2D director reversal is pending its dedicated native-state gate"
-            )
-        if _real_scalar(reference_surface_offset, "reference_surface_offset") != 0.0:
-            raise NativeParityCapabilityError(
-                "S3 V2D reference_surface_offset is pending its dedicated work gate"
-            )
+        if type(director_polarity) is not int or director_polarity not in (-1, 1):
+            raise ValueError("S3 V2D director_polarity must be the integer -1 or +1")
+        offset_value = _real_scalar(
+            reference_surface_offset, "reference_surface_offset"
+        )
         thickness_value = _real_scalar(thickness, "thickness")
         if thickness_value <= 0.0:
             raise ValueError("S3 V2D thickness must be positive")
@@ -254,12 +265,29 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         )
         self.node_ids = owned_nodes
         self.reference_normal = normal
-        self.director_polarity = 1
-        self.reference_surface_offset = 0.0
+        self.director_polarity = director_polarity
+        self.reference_surface_offset = 0.0 if offset_value == 0.0 else offset_value
 
     @property
     def physical_reference_director(self) -> np.ndarray:
-        return np.asarray(self.reference_normal, dtype=np.float64).copy()
+        return (
+            float(self.director_polarity)
+            * np.asarray(self.reference_normal, dtype=np.float64)
+        ).copy()
+
+    @property
+    def material_mid_surface_offset_from_reference(self) -> float:
+        return -float(self.reference_surface_offset)
+
+    def material_surface_offset_from_reference(
+        self, normalized_thickness_coordinate: Any
+    ) -> float:
+        coordinate = _real_scalar(
+            normalized_thickness_coordinate, "normalized_thickness_coordinate"
+        )
+        if coordinate < -1.0 or coordinate > 1.0:
+            raise ValueError("S3 V2D surface coordinate must be in [-1,1]")
+        return 0.5 * self.thickness * coordinate - self.reference_surface_offset
 
     @property
     def gauss_points(self) -> np.ndarray:
@@ -373,6 +401,20 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             abs_tol=8.0 * np.finfo(np.float64).eps,
         ):
             raise ValueError("S3 V2D reference normal is not unit length")
+        if type(self.director_polarity) is not int or self.director_polarity not in (
+            -1,
+            1,
+        ):
+            raise ValueError("S3 V2D director-polarity authority changed")
+        if (
+            isinstance(self.reference_surface_offset, (bool, np.bool_))
+            or not isinstance(
+                self.reference_surface_offset,
+                (int, float, np.integer, np.floating),
+            )
+            or not math.isfinite(float(self.reference_surface_offset))
+        ):
+            raise ValueError("S3 V2D reference-surface offset authority changed")
 
     def _coordinates(self, mesh: FEMesh) -> np.ndarray:
         if type(mesh) is not FEMesh:
@@ -543,6 +585,60 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             raise ValueError("S3 V2D generalized section is nonfinite")
         return matrices
 
+    def _director_generalized_transform(self) -> np.ndarray:
+        transform = np.eye(8, dtype=np.float64)
+        transform[3:, 3:] *= float(self.director_polarity)
+        return transform
+
+    def _reference_surface_strain_transform(self) -> np.ndarray:
+        transform = np.eye(8, dtype=np.float64)
+        offset = float(self.reference_surface_offset)
+        if offset != 0.0:
+            transform[:3, 3:6] = -offset * np.eye(3, dtype=np.float64)
+        return transform
+
+    def _director_adjusted_section(
+        self, section: Mapping[str, Any]
+    ) -> Dict[str, Any]:
+        adjusted = dict(section)
+        adjusted["A"] = np.asarray(section["A"], dtype=np.float64)
+        adjusted["B"] = (
+            float(self.director_polarity)
+            * np.asarray(section["B"], dtype=np.float64)
+        )
+        adjusted["D"] = np.asarray(section["D"], dtype=np.float64)
+        adjusted["H"] = np.asarray(section["H"], dtype=np.float64)
+        return adjusted
+
+    def _effective_station_operators(
+        self, operators: Mapping[str, Any]
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        polarity = float(self.director_polarity)
+        curvature = polarity * np.asarray(operators["B_b"], dtype=np.float64)
+        shear = polarity * np.asarray(operators["B_s"], dtype=np.float64)
+        membrane = np.broadcast_to(
+            np.asarray(operators["B_m"], dtype=np.float64),
+            curvature.shape,
+        ).copy()
+        offset = float(self.reference_surface_offset)
+        if offset != 0.0:
+            membrane -= offset * curvature
+        return membrane, curvature, shear
+
+    @staticmethod
+    def _generalized_constitutive(
+        section: Mapping[str, Any], phi_squared: float
+    ) -> np.ndarray:
+        constitutive = np.zeros((8, 8), dtype=np.float64)
+        constitutive[:3, :3] = np.asarray(section["A"], dtype=np.float64)
+        constitutive[:3, 3:6] = np.asarray(section["B"], dtype=np.float64)
+        constitutive[3:6, :3] = np.asarray(section["B"], dtype=np.float64).T
+        constitutive[3:6, 3:6] = np.asarray(section["D"], dtype=np.float64)
+        constitutive[6:, 6:] = (
+            float(phi_squared) * np.asarray(section["H"], dtype=np.float64)
+        )
+        return constitutive
+
     def _state_material_mode(self) -> str:
         return (
             "GENERALIZED_SECTION"
@@ -625,6 +721,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
                 "node_ids": tuple(int(value) for value in self.node_ids),
                 "reference_coordinates": geometry["external_coordinates"],
                 "reference_normal": self.reference_normal,
+                "director_polarity": int(self.director_polarity),
+                "reference_surface_offset": float(self.reference_surface_offset),
                 "thickness": float(self.thickness),
                 "material_direction": self.material_direction,
                 "material_angle_deg": float(self.material_angle_deg),
@@ -677,6 +775,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
                 )
             for name, value in initial_fields.items():
                 normalized[name] = self._initial_station_rows(value, name)
+        polarity = float(self.director_polarity)
+        normalized["initial_bending_stress"] *= polarity
+        normalized["initial_curvature_prestrain"] *= polarity
         return integrate_generalized_initial_fields(
             normalized,
             self.thickness,
@@ -760,6 +861,44 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             expected_committed_total_u=expected_committed_total_u,
         )
 
+    def seal_solver_integrated_nonlinear_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int,
+        committed_total_u: Any,
+        *,
+        kinematics: str,
+    ) -> Dict[str, Any]:
+        validated = self.validate_model_bound_nonlinear_state(
+            mesh, material, state, num_layers
+        )
+        try:
+            global_u = np.asarray(committed_total_u, dtype=np.float64).reshape(18)
+        except (TypeError, ValueError) as exc:
+            raise V2DStateError(
+                "S3 V2D solver state requires a finite committed 18-vector"
+            ) from exc
+        if not np.all(np.isfinite(global_u)):
+            raise V2DStateError(
+                "S3 V2D solver state requires a finite committed 18-vector"
+            )
+        normalized = str(kinematics).strip().replace("-", "_").upper()
+        if normalized not in {"LINEAR", "VON_KARMAN", "COROTATIONAL"}:
+            raise V2DStateError("S3 V2D solver kinematics is unsupported")
+        made = dict(validated)
+        made["committed_total_u"] = global_u.copy()
+        made["solver_kinematics"] = normalized
+        sealed = seal_v2d_state(made)
+        return self.validate_model_bound_nonlinear_state(
+            mesh,
+            material,
+            sealed,
+            num_layers,
+            expected_committed_total_u=global_u,
+        )
+
     @staticmethod
     def _globalize(matrix: np.ndarray, transform: np.ndarray) -> np.ndarray:
         made = transform.T @ matrix @ transform
@@ -770,38 +909,50 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     ) -> Dict[str, Any]:
         geometry = self._geometry(mesh)
         if self.shell_section is None:
-            section = self._elastic_baseline_constitutive(material)
+            raw_section = self._elastic_baseline_constitutive(material)
         else:
-            section = self._native_section(geometry)
-        operators = self._operators(geometry, section)
+            raw_section = self._native_section(geometry)
+        section = self._director_adjusted_section(raw_section)
+        operators = self._operators(geometry, raw_section)
+        membrane_operators, curvature_operators, shear_operators = (
+            self._effective_station_operators(operators)
+        )
         area = float(geometry["area"])
         weight = area / 3.0
-        membrane_local = operators["B_m"].T @ section["A"] @ operators["B_m"] * area
+        membrane_local = np.zeros((18, 18), dtype=np.float64)
         bending_local = np.zeros((18, 18), dtype=np.float64)
         coupling_local = np.zeros((18, 18), dtype=np.float64)
         shear_local = np.zeros((18, 18), dtype=np.float64)
-        for bending, shear in zip(operators["B_b"], operators["B_s"]):
+        unrelaxed_shear = np.zeros((18, 18), dtype=np.float64)
+        for membrane, bending, shear in zip(
+            membrane_operators, curvature_operators, shear_operators
+        ):
+            membrane_local += membrane.T @ section["A"] @ membrane * weight
             bending_local += bending.T @ section["D"] @ bending * weight
             coupling_local += (
-                operators["B_m"].T @ section["B"] @ bending
-                + bending.T @ section["B"].T @ operators["B_m"]
+                membrane.T @ section["B"] @ bending
+                + bending.T @ section["B"].T @ membrane
             ) * weight
-            shear_local += shear.T @ section["H"] @ shear * weight
+            unrelaxed_shear += shear.T @ section["H"] @ shear * weight
         bending_sum = float(sum(bending_local[i, i] for i in _ROTATIONAL_INDICES))
-        shear_sum = float(sum(shear_local[i, i] for i in _ROTATIONAL_INDICES))
+        shear_sum = float(
+            sum(unrelaxed_shear[i, i] for i in _ROTATIONAL_INDICES)
+        )
         if bending_sum <= 0.0 or shear_sum <= 0.0:
             raise ValueError("S3 V2D native MIN3 relaxation traces must be positive")
         psi_hat = bending_sum / shear_sum
         phi_squared = CBMIN3 * psi_hat / (1.0 + CBMIN3 * psi_hat)
         if not math.isfinite(phi_squared) or not 0.0 < phi_squared <= 1.0:
             raise ValueError("S3 V2D native MIN3 relaxation is invalid")
-        shear_local *= phi_squared
+        shear_local = phi_squared * unrelaxed_shear
         barycentric_mass = (area / 12.0) * np.asarray(
             ((2.0, 1.0, 1.0), (1.0, 2.0, 1.0), (1.0, 1.0, 2.0)),
             dtype=np.float64,
         )
         drill_scale = float(
-            section.get("drill_scale", _invariant_drill_scale(section["A"]))
+            raw_section.get(
+                "drill_scale", _invariant_drill_scale(raw_section["A"])
+            )
         )
         constraint = operators["C"]
         pl_local = drill_scale * constraint.T @ barycentric_mass @ constraint
@@ -838,13 +989,28 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
                 else "S3_V2D_LAYERED_ELASTIC_BASELINE_V1"
             ),
             "relaxation_authority_sha256": RELAXATION_AUTHORITY_SHA256,
+            "director_polarity": int(self.director_polarity),
+            "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+            "reference_surface_offset": float(self.reference_surface_offset),
+            "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+            "reference_surface_strain_transform": (
+                self._reference_surface_strain_transform()
+            ),
+            "reference_surface_strain_transform_id": (
+                REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+            ),
         }
 
     def compute_stiffness_components(
         self, mesh: FEMesh, material: Material
     ) -> Mapping[str, Any]:
         self._validate_configuration()
-        if self.shell_section is None and self._is_v2c_elastic_overlap(material):
+        if (
+            self.shell_section is None
+            and self._is_v2c_elastic_overlap(material)
+            and self.director_polarity == 1
+            and self.reference_surface_offset == 0.0
+        ):
             return StrictFlatLinearE4PLS3V2CShellElement.compute_stiffness_components(
                 self, mesh, material
             )
@@ -867,19 +1033,32 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     def compute_variational_resultants(
         self, mesh: FEMesh, displacements: np.ndarray, material: Material
     ) -> Dict[str, Any]:
-        if self.shell_section is None:
+        if (
+            self.shell_section is None
+            and self._is_v2c_elastic_overlap(material)
+            and self.director_polarity == 1
+            and self.reference_surface_offset == 0.0
+        ):
             return StrictFlatLinearE4PLS3V2CShellElement.compute_variational_resultants(
                 self, mesh, displacements, material
             )
         geometry = self._geometry(mesh)
-        section = self._native_section(geometry)
-        operators = self._operators(geometry, section)
+        raw_section = (
+            self._native_section(geometry)
+            if self.shell_section is not None
+            else self._elastic_baseline_constitutive(material)
+        )
+        section = self._director_adjusted_section(raw_section)
+        operators = self._operators(geometry, raw_section)
+        membrane_operators, curvature_operators, shear_operators = (
+            self._effective_station_operators(operators)
+        )
         phi_squared = float(self.compute_stiffness_components(mesh, material)["phi_squared"])
         vector = self._get_element_displacements(mesh, displacements)
         local_vector = np.asarray(geometry["local_from_external"]) @ vector
-        epsilon = np.broadcast_to(operators["B_m"] @ local_vector, (3, 3)).copy()
-        kappa = np.einsum("gij,j->gi", operators["B_b"], local_vector)
-        gamma = np.einsum("gij,j->gi", operators["B_s"], local_vector)
+        epsilon = np.einsum("gij,j->gi", membrane_operators, local_vector)
+        kappa = np.einsum("gij,j->gi", curvature_operators, local_vector)
+        gamma = np.einsum("gij,j->gi", shear_operators, local_vector)
         membrane_resultants = epsilon @ section["A"].T + kappa @ section["B"].T
         bending_resultants = epsilon @ section["B"] + kappa @ section["D"].T
         shear_resultants = phi_squared * gamma @ section["H"].T
@@ -918,7 +1097,22 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "physical_weights": np.full(3, float(geometry["area"]) / 3.0),
             "frame": np.asarray(geometry["frame"], dtype=np.float64).copy(),
             "resultant_policy_id": RESULTANT_POLICY_ID,
-            "native_section_policy_id": NATIVE_SECTION_POLICY_ID,
+            "native_section_policy_id": (
+                NATIVE_SECTION_POLICY_ID
+                if self.shell_section is not None
+                else "S3_V2D_LAYERED_ELASTIC_BASELINE_V1"
+            ),
+            "director_polarity": int(self.director_polarity),
+            "reference_surface_offset": float(self.reference_surface_offset),
+            "section_origin_offset_from_reference": (
+                self.material_mid_surface_offset_from_reference
+            ),
+            "physical_bottom_offset_from_reference": (
+                self.material_surface_offset_from_reference(-1.0)
+            ),
+            "physical_top_offset_from_reference": (
+                self.material_surface_offset_from_reference(1.0)
+            ),
         }
 
     def compute_stresses(
@@ -943,6 +1137,127 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         return StrictFlatLinearE4PLS3V2CShellElement.compute_dead_transverse_pressure_load(
             self, mesh, pressure
         )
+
+    def compute_native_dead_pressure_load(
+        self, mesh: FEMesh, pressure: Any
+    ) -> np.ndarray:
+        return self.compute_dead_transverse_pressure_load(mesh, pressure)
+
+    @staticmethod
+    def compute_native_surface_shape_functions(
+        xi: Any, eta: Any
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        r = _real_scalar(xi, "surface_xi")
+        s = _real_scalar(eta, "surface_eta")
+        return (
+            np.asarray((1.0 - r - s, r, s), dtype=np.float64),
+            np.asarray((-1.0, 1.0, 0.0), dtype=np.float64),
+            np.asarray((-1.0, 0.0, 1.0), dtype=np.float64),
+        )
+
+    def sheet_area_orientation_sign(self, mesh: FEMesh) -> float:
+        coordinates = self._coordinates(mesh)
+        raw = np.cross(
+            coordinates[1] - coordinates[0],
+            coordinates[2] - coordinates[0],
+        )
+        signed = float(raw @ np.asarray(self.reference_normal, dtype=np.float64))
+        scale = float(np.linalg.norm(raw))
+        if (
+            not math.isfinite(signed)
+            or not math.isfinite(scale)
+            or scale <= np.finfo(np.float64).tiny
+            or abs(signed) <= _NORMAL_TOLERANCE * scale
+        ):
+            raise ValueError("S3 V2D sheet orientation is unresolved")
+        return 1.0 if signed > 0.0 else -1.0
+
+    @staticmethod
+    def _pressure_scalar(pressure: Any) -> float:
+        if isinstance(pressure, (bool, np.bool_)) or not isinstance(
+            pressure, (int, float, np.integer, np.floating)
+        ):
+            raise NativeParityCapabilityError(
+                "S3 V2D pressure authority admits a uniform scalar only"
+            )
+        return _real_scalar(pressure, "pressure")
+
+    def compute_native_current_pressure_load(
+        self,
+        mesh: FEMesh,
+        pressure: Any,
+        current_coordinates: Any,
+    ) -> np.ndarray:
+        value = self._pressure_scalar(pressure)
+        coordinates = np.asarray(current_coordinates, dtype=np.float64)
+        if coordinates.shape != (3, 3) or not np.all(np.isfinite(coordinates)):
+            raise ValueError("S3 V2D current pressure coordinates must be finite (3,3)")
+        orientation = self.sheet_area_orientation_sign(mesh)
+        load = np.zeros(18, dtype=np.float64)
+        for (xi, eta), weight in zip(HAMMER_POINTS, HAMMER_REFERENCE_WEIGHTS):
+            shape, derivative_xi, derivative_eta = (
+                self.compute_native_surface_shape_functions(xi, eta)
+            )
+            tangent_xi = coordinates.T @ derivative_xi
+            tangent_eta = coordinates.T @ derivative_eta
+            area_vector = orientation * np.cross(tangent_xi, tangent_eta)
+            if float(np.linalg.norm(area_vector)) <= np.finfo(np.float64).tiny:
+                raise ValueError("S3 V2D current pressure surface is degenerate")
+            for node in range(3):
+                load[6 * node : 6 * node + 3] += (
+                    float(shape[node])
+                    * value
+                    * area_vector
+                    * float(weight)
+                )
+        return load
+
+    def compute_native_current_pressure_tangent(
+        self,
+        mesh: FEMesh,
+        pressure: Any,
+        current_coordinates: Any,
+    ) -> np.ndarray:
+        value = self._pressure_scalar(pressure)
+        coordinates = np.asarray(current_coordinates, dtype=np.float64)
+        if coordinates.shape != (3, 3) or not np.all(np.isfinite(coordinates)):
+            raise ValueError("S3 V2D current pressure coordinates must be finite (3,3)")
+        orientation = self.sheet_area_orientation_sign(mesh)
+        tangent = np.zeros((18, 18), dtype=np.float64)
+
+        def skew(vector: np.ndarray) -> np.ndarray:
+            x, y, z = np.asarray(vector, dtype=np.float64)
+            return np.asarray(
+                ((0.0, -z, y), (z, 0.0, -x), (-y, x, 0.0)),
+                dtype=np.float64,
+            )
+
+        for (xi, eta), weight in zip(HAMMER_POINTS, HAMMER_REFERENCE_WEIGHTS):
+            shape, derivative_xi, derivative_eta = (
+                self.compute_native_surface_shape_functions(xi, eta)
+            )
+            tangent_xi = coordinates.T @ derivative_xi
+            tangent_eta = coordinates.T @ derivative_eta
+            if float(np.linalg.norm(np.cross(tangent_xi, tangent_eta))) <= np.finfo(
+                np.float64
+            ).tiny:
+                raise ValueError("S3 V2D current pressure surface is degenerate")
+            skew_xi = skew(tangent_xi)
+            skew_eta = skew(tangent_eta)
+            scale = orientation * value * float(weight)
+            for row_node in range(3):
+                row = slice(6 * row_node, 6 * row_node + 3)
+                for column_node in range(3):
+                    column = slice(6 * column_node, 6 * column_node + 3)
+                    tangent[row, column] += (
+                        scale
+                        * float(shape[row_node])
+                        * (
+                            -float(derivative_xi[column_node]) * skew_eta
+                            + float(derivative_eta[column_node]) * skew_xi
+                        )
+                    )
+        return tangent
 
     def compute_mass_matrix(self, mesh: FEMesh, material: Material, **kwargs: Any) -> np.ndarray:
         if kwargs:
@@ -993,19 +1308,23 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         num_layers: int,
     ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
         geometry = self._geometry(mesh)
-        baseline = (
+        raw_baseline = (
             self._native_section(geometry)
             if self.shell_section is not None
             else self._elastic_baseline_constitutive(material)
         )
-        operators = self._operators(geometry, baseline)
+        baseline = self._director_adjusted_section(raw_baseline)
+        operators = self._operators(geometry, raw_baseline)
+        membrane_operators, curvature_operators, shear_operators = (
+            self._effective_station_operators(operators)
+        )
         components = self.compute_stiffness_components(mesh, material)
         phi_squared = float(components["phi_squared"])
         transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
         local_u = transform @ total_u
-        epsilon = np.broadcast_to(operators["B_m"] @ local_u, (3, 3)).copy()
-        kappa = np.einsum("gij,j->gi", operators["B_b"], local_u)
-        gamma = np.einsum("gij,j->gi", operators["B_s"], local_u)
+        epsilon = np.einsum("gij,j->gi", membrane_operators, local_u)
+        kappa = np.einsum("gij,j->gi", curvature_operators, local_u)
+        gamma = np.einsum("gij,j->gi", shear_operators, local_u)
         generalized_strain = np.concatenate((epsilon, kappa, gamma), axis=1)
         order = tuple(int(value) for value in geometry["internal_order"])
         initial_prestrain = self._internal_station_order(
@@ -1027,16 +1346,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
 
         trial = dict(committed)
         if self.shell_section is not None:
-            constitutive = np.block(
-                [
-                    [baseline["A"], baseline["B"], np.zeros((3, 2))],
-                    [baseline["B"].T, baseline["D"], np.zeros((3, 2))],
-                    [
-                        np.zeros((2, 3)),
-                        np.zeros((2, 3)),
-                        phi_squared * baseline["H"],
-                    ],
-                ]
+            constitutive = self._generalized_constitutive(
+                baseline, phi_squared
             )
             for station in range(3):
                 effective = generalized_strain[station] - initial_prestrain[station]
@@ -1044,9 +1355,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
                 station_resultant[station] = resultant
                 combined = np.vstack(
                     (
-                        operators["B_m"],
-                        operators["B_b"][station],
-                        operators["B_s"][station],
+                        membrane_operators[station],
+                        curvature_operators[station],
+                        shear_operators[station],
                     )
                 )
                 force_local += combined.T @ resultant * area_weight
@@ -1118,19 +1429,22 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
                 resultant += initial_resultant[station]
                 station_resultant[station] = resultant
                 membrane_bending_operator = np.vstack(
-                    (operators["B_m"], operators["B_b"][station])
+                    (
+                        membrane_operators[station],
+                        curvature_operators[station],
+                    )
                 )
                 force_local += (
                     membrane_bending_operator.T @ resultant[:6]
-                    + operators["B_s"][station].T @ resultant[6:]
+                    + shear_operators[station].T @ resultant[6:]
                 ) * area_weight
                 tangent_local += (
                     membrane_bending_operator.T
                     @ tangent_mb
                     @ membrane_bending_operator
-                    + operators["B_s"][station].T
+                    + shear_operators[station].T
                     @ (phi_squared * baseline["H"])
-                    @ operators["B_s"][station]
+                    @ shear_operators[station]
                 ) * area_weight
             trial["plastic_strain"] = np.asarray(
                 plastic_new, dtype=np.float64
@@ -1148,6 +1462,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         if not np.all(np.isfinite(total_force)) or not np.all(np.isfinite(total_tangent)):
             raise ValueError("S3 V2D native trial response is nonfinite")
         trial["committed_total_u"] = total_u.copy()
+        trial["committed_constitutive_u"] = total_u.copy()
+        trial["solver_kinematics"] = "ELEMENT_LOCAL"
         trial["station_generalized_strain"] = self._external_station_order(
             generalized_strain, order
         )
@@ -1210,8 +1526,14 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "material_name": self.material_name,
             "node_ids": [int(value) for value in self.node_ids],
             "reference_normal": np.asarray(self.reference_normal).tolist(),
-            "director_polarity": 1,
-            "reference_surface_offset": 0.0,
+            "director_polarity": int(self.director_polarity),
+            "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
+            "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+            "reference_surface_offset": float(self.reference_surface_offset),
+            "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+            "reference_surface_strain_transform_id": (
+                REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+            ),
             "material_direction": (
                 None
                 if self.material_direction is None
@@ -1223,6 +1545,10 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             ),
             "selector": SELECTOR,
             "serialization_policy_id": SERIALIZATION_POLICY_ID,
+            "native_state_schema_id": NATIVE_STATE_SCHEMA_ID,
+            "native_state_layout_id": NATIVE_STATE_LAYOUT_ID,
+            "corotational_policy_id": COROTATIONAL_POLICY_ID,
+            "pressure_surface_policy_id": PRESSURE_SURFACE_POLICY_ID,
             "source_selection_sha256": SOURCE_SELECTION_SHA256,
             "thickness": float(self.thickness),
             "type": type(self).__name__,
@@ -1244,12 +1570,20 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "node_ids",
             "reference_normal",
             "director_polarity",
+            "director_polarity_policy_id",
+            "director_reversal_transform_id",
             "reference_surface_offset",
+            "reference_surface_offset_policy_id",
+            "reference_surface_strain_transform_id",
             "material_direction",
             "material_angle_deg",
             "shell_section",
             "selector",
             "serialization_policy_id",
+            "native_state_schema_id",
+            "native_state_layout_id",
+            "corotational_policy_id",
+            "pressure_surface_policy_id",
             "source_selection_sha256",
             "thickness",
             "type",
@@ -1262,6 +1596,16 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "implementation_id": IMPLEMENTATION_ID,
             "selector": SELECTOR,
             "serialization_policy_id": SERIALIZATION_POLICY_ID,
+            "native_state_schema_id": NATIVE_STATE_SCHEMA_ID,
+            "native_state_layout_id": NATIVE_STATE_LAYOUT_ID,
+            "corotational_policy_id": COROTATIONAL_POLICY_ID,
+            "pressure_surface_policy_id": PRESSURE_SURFACE_POLICY_ID,
+            "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
+            "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
+            "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
+            "reference_surface_strain_transform_id": (
+                REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
+            ),
             "source_selection_sha256": SOURCE_SELECTION_SHA256,
             "type": "NativeParityE4PLS3V2DShellElement",
         }
@@ -1281,15 +1625,15 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         )
 
     def __getstate__(self) -> Dict[str, Any]:
-        self._unsupported("restart")
+        self._unsupported("python_pickle_restart")
 
     def __setstate__(self, state: Mapping[str, Any]) -> None:
         del state
-        self._unsupported("restart")
+        self._unsupported("python_pickle_restart")
 
     def __reduce_ex__(self, protocol: int) -> Any:
         del protocol
-        self._unsupported("restart")
+        self._unsupported("python_pickle_restart")
 
 
 __all__ = [
@@ -1300,11 +1644,15 @@ __all__ = [
     "FORMULATION_SCHEMA",
     "IMPLEMENTATION_ID",
     "MASS_POLICY_ID",
+    "MATERIAL_LIFECYCLE_POLICY_ID",
+    "NATIVE_STATE_LAYOUT_ID",
+    "NATIVE_STATE_SCHEMA_ID",
     "NATIVE_SECTION_POLICY_ID",
     "NativeParityCapabilityError",
     "NativeParityE4PLS3V2DShellElement",
     "SELECTOR",
     "SERIALIZATION_POLICY_ID",
+    "PRESSURE_SURFACE_POLICY_ID",
     "SOURCE_SELECTION_SHA256",
     "SUPPORTED_OPERATIONS",
     "V2C_OPERATOR_SHA256",

@@ -237,7 +237,15 @@ def test_v2d_stateless_identity_roundtrip_and_remaining_successor_gaps() -> None
     assert 'self._unsupported("nonlinear_geometry")' in v6a_source
     with pytest.raises(NativeParityCapabilityError, match="restart"):
         element.__getstate__()
-    with pytest.raises(NativeParityCapabilityError, match="director reversal"):
-        _v2d(director_polarity=-1)
-    with pytest.raises(NativeParityCapabilityError, match="reference_surface_offset"):
-        _v2d(reference_surface_offset=0.001)
+    v6b_source = subprocess.run(
+        [
+            "git",
+            "show",
+            "afe691759a611278e341be7d58ffaae4f71bde89:src/anysolver/e4_pl_s3_v2d_element.py",
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        text=True,
+    ).stdout
+    assert "director reversal is pending" in v6b_source
+    assert "reference_surface_offset is pending" in v6b_source

@@ -1811,10 +1811,10 @@ def _qualified_s3_committed_state_validator(element: Any) -> Optional[Any]:
 
     formulation = str(getattr(element, "formulation_id", ""))
     validator = getattr(element, "validate_model_bound_nonlinear_state", None)
-    if (
-        formulation == "E4_PL_QUALIFIED_S3_COMPANION_V1"
-        and callable(validator)
-    ):
+    if formulation in {
+        "E4_PL_QUALIFIED_S3_COMPANION_V1",
+        "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+    } and callable(validator):
         return validator
     return None
 
@@ -2181,7 +2181,15 @@ def _seal_final_qualified_q4_states(
     """Materialize and seal every finalized additive-von-Karman Q4 state."""
 
     states = dict(element_states)
-    if str(kinematics) != "von_karman":
+    normalized_kinematics = str(kinematics)
+    has_solver_integrated_s3 = any(
+        _qualified_s3_committed_state_validator(element) is not None
+        and callable(
+            getattr(element, "seal_solver_integrated_nonlinear_state", None)
+        )
+        for element in model.mesh.elements.values()
+    )
+    if normalized_kinematics != "von_karman" and not has_solver_integrated_s3:
         return states
     full = np.asarray(displacements, dtype=np.float64)
     if (
@@ -2209,6 +2217,8 @@ def _seal_final_qualified_q4_states(
     for raw_element_id, element in sorted(
         model.mesh.elements.items(), key=lambda item: int(item[0])
     ):
+        if normalized_kinematics != "von_karman":
+            break
         hooks = _qualified_q4_committed_state_hooks(element)
         if hooks is None:
             continue
@@ -2360,6 +2370,13 @@ def _seal_final_qualified_q4_states(
             continue
         s3_elements_present = True
         element_id = int(raw_element_id)
+        solver_sealer = getattr(
+            element, "seal_solver_integrated_nonlinear_state", None
+        )
+        if normalized_kinematics != "von_karman" and not callable(
+            solver_sealer
+        ):
+            continue
         dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
         if dofs.shape != (18,):
             raise ValueError(
@@ -2428,13 +2445,23 @@ def _seal_final_qualified_q4_states(
                 f"qualified S3 finalized state for element {element_id} "
                 "must be a mapping"
             )
-        validated = validate_active(
-            model.mesh,
-            material,
-            state,
-            int(num_layers),
-            expected_committed_total_u=local_u,
-        )
+        if callable(solver_sealer):
+            validated = solver_sealer(
+                model.mesh,
+                material,
+                state,
+                int(num_layers),
+                local_u,
+                kinematics=str(kinematics),
+            )
+        else:
+            validated = validate_active(
+                model.mesh,
+                material,
+                state,
+                int(num_layers),
+                expected_committed_total_u=local_u,
+            )
         states[element_id] = validated
         s3_sealed_ids.append(element_id)
         s3_digests.append(
@@ -2566,6 +2593,13 @@ def _mark_failed_qualified_q4_states(
             continue
         marker = getattr(element, "mark_noncurrent_failed_state", None)
         if not callable(marker):
+            if str(getattr(element, "formulation_id", "")) == (
+                "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+            ):
+                # V2D active restart is qualified in V6C; fracture/activity
+                # disposition remains an explicit later gate. Preserve the
+                # last accepted active state on an ordinary failed solve.
+                continue
             raise ValueError(
                 f"qualified S3 element {element_id} lacks failed-state lifecycle"
             )

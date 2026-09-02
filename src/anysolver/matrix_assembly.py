@@ -6294,10 +6294,15 @@ def _qualified_s3_pressure_surface_records(
     for raw_element_id in pressure_ids:
         element_id = int(raw_element_id)
         element = model.mesh.get_element(element_id)
+        if element is None:
+            continue
+        formulation = str(getattr(element, "formulation_id", ""))
+        pressure_policy = str(
+            getattr(element, "pressure_surface_policy_id", "")
+        )
         if (
-            element is None
-            or str(getattr(element, "formulation_id", ""))
-            != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            formulation != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            and pressure_policy != "ELEMENT_NODAL_REFERENCE_SURFACE_V1"
         ):
             continue
         offset = float(getattr(element, "reference_surface_offset", 0.0))

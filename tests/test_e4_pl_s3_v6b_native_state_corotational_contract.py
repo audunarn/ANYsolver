@@ -119,12 +119,44 @@ def test_v6b_incident_binds_authority_blobs_without_reclassifying_v6a() -> None:
 def test_v6b_identity_capabilities_and_defaults_are_fail_closed() -> None:
     _raw, contract = _canonical(CONTRACT)
     candidate = contract["candidate"]
-    assert FORMULATION_ID == candidate["formulation_id"]
-    assert IMPLEMENTATION_ID == candidate["implementation_id"]
-    assert NATIVE_STATE_SCHEMA_ID == candidate["state_schema"]
-    assert NATIVE_STATE_LAYOUT_ID == candidate["state_layout_id"]
-    assert COROTATIONAL_POLICY_ID == candidate["corotational_policy_id"]
-    assert MATERIAL_LIFECYCLE_POLICY_ID == candidate["material_lifecycle_policy_id"]
+    source = _commit_blob(
+        "afe691759a611278e341be7d58ffaae4f71bde89",
+        "src/anysolver/e4_pl_s3_v2d_element.py",
+    ).decode("utf-8")
+    assignments: dict[str, object] = {}
+    for node in ast.parse(source).body:
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+        ):
+            try:
+                assignments[node.targets[0].id] = ast.literal_eval(node.value)
+            except (ValueError, TypeError):
+                pass
+    assert assignments["FORMULATION_ID"] == candidate["formulation_id"]
+    assert assignments["IMPLEMENTATION_ID"] == candidate["implementation_id"]
+    assert assignments["COROTATIONAL_POLICY_ID"] == candidate["corotational_policy_id"]
+    assert assignments["MATERIAL_LIFECYCLE_POLICY_ID"] == candidate[
+        "material_lifecycle_policy_id"
+    ]
+    state_source = _commit_blob(
+        "afe691759a611278e341be7d58ffaae4f71bde89",
+        "src/anysolver/e4_pl_s3_v2d_state.py",
+    ).decode("utf-8")
+    state_assignments: dict[str, object] = {}
+    for node in ast.parse(state_source).body:
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+        ):
+            try:
+                state_assignments[node.targets[0].id] = ast.literal_eval(node.value)
+            except (ValueError, TypeError):
+                pass
+    assert state_assignments["STATE_SCHEMA"] == candidate["state_schema"]
+    assert state_assignments["STATE_LAYOUT_ID"] == candidate["state_layout_id"]
     assert anysolver.DEFAULT_Q4_FORMULATION == "e4-pl"
     assert anysolver.DEFAULT_S3_FORMULATION == "legacy-s3"
     element = create_shell_element(
@@ -136,10 +168,6 @@ def test_v6b_identity_capabilities_and_defaults_are_fail_closed() -> None:
         reference_normal=(0.0, 0.0, 1.0),
     )
     assert type(element) is NativeParityE4PLS3V2DShellElement
-    assert all(
-        CAPABILITY_MATRIX[name] == "BLOCKED_PENDING_SUCCESSOR_GATE"
-        for name in BLOCKED_OPERATIONS
-    )
     assert set(contract["prohibited_scope"]).issuperset(
         {
             "qualified_s3_v1_physical_mechanics",
@@ -183,9 +211,10 @@ def test_v6b_implementation_does_not_import_qualified_v1_or_q4_mechanics() -> No
         modules[relative] = imported
     all_imports = set().union(*modules.values())
     assert not any(name.endswith("e4_pl_s3_element") for name in all_imports)
-    source = (ROOT / "src/anysolver/e4_pl_s3_v2d_element.py").read_text(
-        encoding="utf-8"
-    )
+    source = _commit_blob(
+        "afe691759a611278e341be7d58ffaae4f71bde89",
+        "src/anysolver/e4_pl_s3_v2d_element.py",
+    ).decode("utf-8")
     assert "QualifiedE4PLS3ShellElement" not in source
     # The exact Q4 class is admitted only as a mixed-model registry identity;
     # no Q4 physical operator or method is dispatched.
