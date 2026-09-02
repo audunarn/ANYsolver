@@ -3101,6 +3101,63 @@ def _bind_qualified_assembly_runtime_lease(
                 for element, material, total_bytes in q4_fast_records
             }
 
+            routing = q4_fast_plan["routing"]
+            coordinates_by_node: dict[int, tuple[float, float, float]] = {}
+            raw_coordinates_by_identity: dict[int, tuple[Any, np.ndarray]] = {}
+            if routing is not None:
+                for node_record in routing["node_records"]:
+                    (
+                        node_id,
+                        _node,
+                        _namespace,
+                        _namespace_keys,
+                        _stored_id,
+                        x_authority,
+                        y_authority,
+                        z_authority,
+                        coordinates_are_builtin,
+                        _revision,
+                        _dofs,
+                        _dof_values,
+                    ) = node_record
+                    if not coordinates_are_builtin:
+                        coordinates_by_node.clear()
+                        break
+                    coordinates_by_node[int(node_id)] = (
+                        float(x_authority[1]),
+                        float(y_authority[1]),
+                        float(z_authority[1]),
+                    )
+                if coordinates_by_node:
+                    for (
+                        _element_id,
+                        element,
+                        _namespace,
+                        _stored_id,
+                        _node_ids,
+                        node_values,
+                        _material_name,
+                        _dofs,
+                    ) in routing["element_records"]:
+                        if type(element) is not q4_type:
+                            continue
+                        try:
+                            coordinates = np.asarray(
+                                tuple(
+                                    coordinates_by_node[int(node_id)]
+                                    for node_id in node_values
+                                ),
+                                dtype=np.float64,
+                            )
+                        except KeyError:
+                            raw_coordinates_by_identity.clear()
+                            break
+                        coordinates.setflags(write=False)
+                        raw_coordinates_by_identity[id(element)] = (
+                            element,
+                            coordinates,
+                        )
+
             def raw_items() -> tuple[tuple[int, Any], ...]:
                 return q4_fast_plan["element_items"]
 
@@ -3118,9 +3175,16 @@ def _bind_qualified_assembly_runtime_lease(
                     (24, 24)
                 )
 
+            def raw_coordinates(element: Any) -> Any:
+                record = raw_coordinates_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return record[1]
+
             require._qualified_q4_raw_element_items = raw_items
             require._qualified_q4_raw_material = raw_material
             require._qualified_q4_cached_total = raw_total
+            require._qualified_q4_raw_coordinates = raw_coordinates
             require._qualified_q4_raw_mesh = q4_fast_plan["mesh"]
             require._qualified_q4_only = len(q4_elements) == len(elements)
 
@@ -4255,6 +4319,11 @@ def _assemble_element_matrix_under_lease_impl(
         "_qualified_q4_cached_total",
         None,
     )
+    raw_q4_coordinates_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_q4_raw_coordinates",
+        None,
+    )
     raw_s3_material_provider = getattr(
         qualified_runtime_guard,
         "_qualified_s3_raw_material",
@@ -4894,8 +4963,32 @@ def _assemble_element_matrix_under_lease_impl(
 
             n_elem = len(elem_list)
             coords_all = np.zeros((n_elem, num_nodes, 3))
-            for idx, (elem_id, element) in enumerate(elem_list):
-                coords_all[idx] = element.get_node_coordinates(mesh)
+            raw_q4_coordinates = (
+                tuple(
+                    raw_q4_coordinates_provider(element)
+                    for _elem_id, element in elem_list
+                )
+                if matrix_type == "mass"
+                and callable(raw_q4_coordinates_provider)
+                and all(
+                    type(element) is _QualifiedE4PLShellElement
+                    for _elem_id, element in elem_list
+                )
+                else ()
+            )
+            use_raw_q4_coordinates = bool(raw_q4_coordinates) and all(
+                type(coordinates) is np.ndarray
+                and coordinates.shape == (num_nodes, 3)
+                and coordinates.dtype == np.float64
+                and not coordinates.flags.writeable
+                for coordinates in raw_q4_coordinates
+            )
+            for idx, (_elem_id, element) in enumerate(elem_list):
+                coords_all[idx] = (
+                    raw_q4_coordinates[idx]
+                    if use_raw_q4_coordinates
+                    else element.get_node_coordinates(mesh)
+                )
 
             first_element = elem_list[0][1]
             is_4node = first_element._is_4node
@@ -4939,6 +5032,12 @@ def _assemble_element_matrix_under_lease_impl(
 
             for idx, (elem_id, element) in enumerate(elem_list):
                 precomputed[elem_id] = batched[idx]
+                if use_raw_q4_coordinates:
+                    # The enclosing Q4 lease bound these immutable geometry
+                    # rows, material identities and the exact mass kernel;
+                    # retain its final authority check rather than repeat
+                    # per-element public descriptor traversals below.
+                    prevalidated_element_ids.add(int(elem_id))
             jit_info = jit_diagnostics()
             vectorized_shell_groups.append(
                 {
@@ -4953,6 +5052,9 @@ def _assemble_element_matrix_under_lease_impl(
                     "parallel_kernel": True,
                     "parallel_threads": jit_info.get("num_threads"),
                     "backend": jit_info.get("backend"),
+                    "trusted_qualified_q4_inputs": bool(
+                        use_raw_q4_coordinates
+                    ),
                 }
             )
 
@@ -5387,7 +5489,15 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
             plan_lookup_defaults,
             plan_lookup_closure,
         )
-        owned_execution_plan = exact_plan_lookup(qualified_runtime_guard)
+        # The immutable execution payload contains stiffness coefficients.
+        # A mass assembly may still borrow the same captured Q4 input lease,
+        # but it must continue through its own mass kernel and cannot consume
+        # that stiffness-only payload.
+        owned_execution_plan = (
+            exact_plan_lookup(qualified_runtime_guard)
+            if matrix_type == "stiffness"
+            else None
+        )
         return exact_function(
             model,
             matrix_type,
@@ -5513,6 +5623,7 @@ def assemble_mass_matrix(model: "FEModel") -> Tuple[sparse.csr_matrix, Dict[str,
         model,
         context="mass assembly",
         operation=assemble,
+        allow_q4_cached_stiffness=True,
     )
 
 

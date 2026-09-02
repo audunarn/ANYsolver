@@ -435,6 +435,71 @@ def test_vectorized_mass_matches_sequential_and_assembly_uses_batch():
     assert abs(M_fast - M_ref).max() < 1.0e-12 * abs(M_ref).max()
 
 
+def test_qualified_q4_warm_mass_reuses_trusted_stiffness_inputs():
+    """A warmed qualified Q4 mass assembly keeps exact scalar mass values."""
+
+    from scipy import sparse
+
+    from anysolver.matrix_assembly import (
+        assemble_mass_matrix,
+        assemble_stiffness_matrix,
+    )
+
+    model = generate_simple_panel_mesh(
+        2.0,
+        1.0,
+        0.01,
+        num_divisions_x=2,
+        num_divisions_y=2,
+    )
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    material = model.get_material("steel")
+    assemble_stiffness_matrix(model)
+    mass, info = assemble_mass_matrix(model)
+
+    rows, cols, data = [], [], []
+    for element in model.mesh.elements.values():
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        local = element.compute_mass_matrix(model.mesh, material)
+        rows.append(np.repeat(dofs, dofs.size))
+        cols.append(np.tile(dofs, dofs.size))
+        data.append(local.ravel())
+    expected = sparse.coo_matrix(
+        (np.concatenate(data), (np.concatenate(rows), np.concatenate(cols))),
+        shape=(model.mesh.dof_manager.total_dofs,) * 2,
+    ).tocsr()
+
+    scale = max(float(abs(expected).max()), 1.0)
+    assert float(abs(mass - expected).max()) < 1.0e-12 * scale
+    group = info["diagnostics"]["vectorized_shell_groups"][0]
+    assert group["trusted_qualified_q4_inputs"] is True
+
+
+def test_qualified_q4_warm_mass_rejects_spoofed_mass_callable() -> None:
+    """The trusted input reuse remains behind the full Q4 lease boundary."""
+
+    from anysolver.matrix_assembly import (
+        AssemblyError,
+        assemble_mass_matrix,
+        assemble_stiffness_matrix,
+    )
+
+    model = generate_simple_panel_mesh(
+        2.0,
+        1.0,
+        0.01,
+        num_divisions_x=2,
+        num_divisions_y=2,
+    )
+    assemble_stiffness_matrix(model)
+    model.mesh.elements[1].__dict__["compute_mass_matrix"] = (
+        lambda *_args: np.eye(24)
+    )
+
+    with pytest.raises(AssemblyError, match="incompatible qualified shell authority"):
+        assemble_mass_matrix(model)
+
+
 def test_q8r_mass_assembly_keeps_scalar_lumped_path():
     """Reduced-integration S8R shells stay on the scalar lumped mass path."""
     from anysolver.matrix_assembly import assemble_mass_matrix
