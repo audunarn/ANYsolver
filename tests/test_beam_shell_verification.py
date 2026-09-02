@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 from anysolver import run_beam_shell_verification, verification_manifest_cases, write_beam_shell_verification_report
@@ -91,6 +92,35 @@ def test_composite_buckling_rows_are_cached_only_within_one_report(
     ]
     first["results"][0]["checks"]["rows"][0]["relative_error"] = 99.0
     assert second["results"][0]["checks"]["rows"][0]["relative_error"] == 0.0
+
+
+def test_plate_buckling_is_cached_only_within_one_report(
+    monkeypatch,
+) -> None:
+    """The BUC-004 compatibility view reuses SHELL-007's exact solve."""
+
+    calls = 0
+
+    def solve(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return SimpleNamespace(
+            solver_status="ok",
+            critical_load_factor=beam_shell_verification._plate_uniaxial_buckling_resultant(),
+            diagnostics={"nested": {"residual": 0.0}},
+        )
+
+    monkeypatch.setattr(beam_shell_verification, "solve_eigenvalue_buckling", solve)
+    first = run_beam_shell_verification(selected_ids={"SHELL-007", "BUC-004"})
+    second = run_beam_shell_verification(selected_ids={"SHELL-007", "BUC-004"})
+
+    assert calls == 2
+    assert [item["case_id"] for item in first["results"]] == [
+        "SHELL-007",
+        "BUC-004",
+    ]
+    first["results"][0]["checks"]["nested"]["residual"] = 99.0
+    assert second["results"][0]["checks"]["nested"]["residual"] == 0.0
 
 
 def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
