@@ -80,6 +80,12 @@ class AssemblyError(ValueError):
 _ASSEMBLY_NUMERICAL_EPOCH_MANAGER = make_authority_epoch_manager(
     "qualified sparse assembly runtime"
 )
+# The legacy Q8 vector kernel uses a distinct, parallel Numba compilation.
+# Compiling it solely for a tiny first model can take much longer than the
+# scalar calculation itself.  Once the kernel is warm, vectorization remains
+# preferable even for small groups; this threshold therefore applies only to
+# an as-yet-uncompiled vector kernel below.
+_MIN_COLD_Q8_VECTOR_STIFFNESS_GROUP = 8
 _ASSEMBLY_RUNTIME_MODULE = sys.modules[__name__]
 _ASSEMBLY_SPARSE_LINALG = sparse.linalg
 _ASSEMBLY_MODULE_ALIASES = {
@@ -4994,6 +5000,40 @@ def _assemble_element_matrix_under_lease_impl(
             is_4node = first_element._is_4node
             gauss_points = first_element.gauss_points
             gauss_weights = first_element.gauss_weights
+
+            # A first-use parallel Q8 batch compilation is disproportionately
+            # expensive for a few legacy Q8 elements.  Preserve the scalar
+            # reference path until an actual batch is worthwhile.  The test
+            # is intentionally based on Numba's dispatcher state: a caller
+            # that explicitly warmed the Q8 batch kernel, or a prior larger
+            # model, still receives vectorized small-group assembly.
+            if (
+                matrix_type == "stiffness"
+                and not is_4node
+                and n_elem < _MIN_COLD_Q8_VECTOR_STIFFNESS_GROUP
+                and bool(JIT_ENABLED)
+                and not tuple(
+                    getattr(
+                        compute_shell_stiffness_matrices_jit,
+                        "signatures",
+                        (),
+                    )
+                )
+            ):
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "Q8",
+                        "num_elements": int(n_elem),
+                        "num_nodes": int(num_nodes),
+                        "kernel": "scalar_cold_q8_startup_fallback",
+                        "parallel_kernel": False,
+                        "minimum_warm_vector_group": (
+                            _MIN_COLD_Q8_VECTOR_STIFFNESS_GROUP
+                        ),
+                        "reason": "avoid_first_use_parallel_jit_latency",
+                    }
+                )
+                continue
 
             if matrix_type == "mass":
                 kernel_name = "compute_shell_mass_matrices_jit"

@@ -22,7 +22,20 @@ def _warmup_model(shell_order: str):
     order = _normalize_shell_order(shell_order)
     if order == "S4":
         model = generate_simple_panel_mesh(1.0, 0.75, 0.01, num_divisions_x=1, num_divisions_y=1)
-    elif order in {"Q8", "Q8R"}:
+    elif order == "Q8":
+        # Q8 uses the vectorized stiffness kernel only for a real batch.
+        # Make the explicit warmup API cross that threshold so it pre-warms
+        # precisely the path it advertises, while ordinary tiny models retain
+        # the low-latency scalar cold-start fallback.
+        model = generate_simple_panel_mesh(
+            2.0,
+            1.0,
+            0.01,
+            num_divisions_x=4,
+            num_divisions_y=2,
+            use_8node_elements=True,
+        )
+    elif order == "Q8R":
         model = generate_simple_panel_mesh(
             1.0,
             0.75,
@@ -31,10 +44,9 @@ def _warmup_model(shell_order: str):
             num_divisions_y=1,
             use_8node_elements=True,
         )
-        if order == "Q8R":
-            for element in model.mesh.elements.values():
-                if getattr(element, "_is_8node", False):
-                    element.reduced_integration = True
+        for element in model.mesh.elements.values():
+            if getattr(element, "_is_8node", False):
+                element.reduced_integration = True
     else:
         raise ValueError(f"Unsupported shell order for warmup: {shell_order!r}")
     return model

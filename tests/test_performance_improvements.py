@@ -196,6 +196,69 @@ def test_parallel_legacy_shell_stiffness_batch_matches_legacy_reference(
         np.testing.assert_allclose(K_all[index], reference, rtol=1.0e-10, atol=1.0e-3)
 
 
+def test_small_cold_q8_assembly_uses_scalar_reference_without_batch_compile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A tiny first Q8 model avoids the expensive parallel JIT cold start."""
+
+    from scipy import sparse
+
+    import anysolver.vectorized_stiffness as vectorized_stiffness
+
+    model = generate_simple_panel_mesh(
+        2.0,
+        2.0,
+        0.012,
+        num_divisions_x=2,
+        num_divisions_y=2,
+        use_8node_elements=True,
+    )
+    material = model.get_material("steel")
+    rows, cols, data = [], [], []
+    for element in model.mesh.elements.values():
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        local = element.compute_stiffness_matrix(model.mesh, material)
+        rows.append(np.repeat(dofs, dofs.size))
+        cols.append(np.tile(dofs, dofs.size))
+        data.append(np.asarray(local, dtype=float).ravel())
+    expected = sparse.coo_matrix(
+        (np.concatenate(data), (np.concatenate(rows), np.concatenate(cols))),
+        shape=(model.mesh.dof_manager.total_dofs,) * 2,
+    ).tocsr()
+
+    def forbidden_batch_kernel(*_args: object, **_kwargs: object) -> np.ndarray:
+        raise AssertionError("tiny cold Q8 assembly entered the batch kernel")
+
+    monkeypatch.setattr(
+        vectorized_stiffness,
+        "compute_shell_stiffness_matrices_jit",
+        forbidden_batch_kernel,
+    )
+    actual, info = assemble_stiffness_matrix(model)
+
+    np.testing.assert_allclose(
+        actual.toarray(),
+        expected.toarray(),
+        rtol=1.0e-10,
+        atol=1.0e-3,
+    )
+    diagnostics = info["diagnostics"]
+    assert diagnostics["vectorized_shell_element_count"] == 0
+    assert diagnostics["scalar_shell_element_count"] == 4
+    fallback = diagnostics["vectorized_shell_groups"]
+    assert fallback == [
+        {
+            "shell_order": "Q8",
+            "num_elements": 4,
+            "num_nodes": 8,
+            "kernel": "scalar_cold_q8_startup_fallback",
+            "parallel_kernel": False,
+            "minimum_warm_vector_group": 8,
+            "reason": "avoid_first_use_parallel_jit_latency",
+        }
+    ]
+
+
 def test_warm_fe_solver_kernels_reports_shell_orders_and_consistent_matrices() -> None:
     report = warm_fe_solver_kernels(("S4", "Q8R"))
     assert report["status"] == "completed"
