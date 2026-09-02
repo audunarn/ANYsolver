@@ -69,8 +69,8 @@ def test_contract_is_canonical_complete_and_hash_bound() -> None:
 def test_authority_extent_and_static_boundaries() -> None:
     contract = json.loads(CONTRACT.read_bytes())
     authority = contract["authority_commit"]
-    assert authority["expected_parent"] == "a3df08737ea7c472957a79e08634166334ed7ab2"
-    assert authority["exact_path_count"] == len(authority["expected_paths"]) == 5
+    assert authority["expected_parent"] == "313518d0b12773389fc82ffd5d62eb7bcf5200e2"
+    assert authority["exact_path_count"] == len(authority["expected_paths"]) == 4
     assert contract["production_boundary"] == {
         "activation_authorized": False,
         "anymesh_untouched": True,
