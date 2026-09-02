@@ -39,6 +39,9 @@ def test_v6p_execution_authorization_is_canonical_valid_and_nonactivating() -> N
     made, made_raw = module._validate_execution_authorization(module.CONTRACT.read_bytes())
     assert made == authorization and made_raw == raw
     assert authorization["activation_authorized"] is False
+    assert authorization["authority_commit"]["commit"] == (
+        "0cc2cbdc1ce5c4bab89256a6b608e9c65dcff1c5"
+    )
     assert status["execution"]["mechanics_rerun"] is False
     assert status["execution"]["record_count"] == 81
 
@@ -60,4 +63,24 @@ def test_v6p_authority_commit_identity_is_exact() -> None:
         "d02d80e154be5c76f992a4142beb03ba4984b30c",
         "a646dff05b991f4beac05d9702823258bfe49154",
         "docs: authorize S3 V6P Stage 4A completion",
+    ]
+
+
+def test_v6p_checker_binding_correction_commit_is_exact() -> None:
+    lines = subprocess.run(
+        [
+            "git", "show", "-s", "--format=%H%n%T%n%P%n%s",
+            "0cc2cbdc1ce5c4bab89256a6b608e9c65dcff1c5",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    ).stdout.splitlines()
+    assert lines == [
+        "0cc2cbdc1ce5c4bab89256a6b608e9c65dcff1c5",
+        "9e6d4ae312fb0d0f7d1111082a8760f712fe6506",
+        "706d7e15e0baee29a8b94cd157819412c78e4adc",
+        "docs: revise S3 V6P checker replica binding",
     ]
