@@ -633,6 +633,7 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
         "python scripts/run_portable_ci.py --workers 4 --timeout-seconds 1200"
         in workflow
     )
+    assert "push:\n    branches: [main]\n  pull_request:" in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
     for authority in gate.strict_json_load(CONTRACT)["sibling_authority"].values():
         if authority["commit"] != "ba8b21b9cf2732168b099cfedc7508789bdcfbb3":
