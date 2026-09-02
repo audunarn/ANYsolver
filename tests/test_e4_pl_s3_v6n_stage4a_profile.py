@@ -63,3 +63,18 @@ def test_profile_bindings_and_registered_timeout_members() -> None:
         assert member["record"]["level"] == 80
         assert member["record"]["s3_area_fraction_percent"] == 10
         assert member["record"]["mask"] == "dispersed"
+
+
+def test_pressure_surface_traversal_uses_captured_constant_time_guard() -> None:
+    source_path = ROOT / "src" / "anysolver" / "matrix_assembly.py"
+    source = source_path.read_text(encoding="utf-8")
+    function_start = source.index("def _qualified_s3_pressure_surface_records(")
+    function_end = source.index("\ndef _assemble_load_vector_under_lease(", function_start)
+    body = source[function_start:function_end]
+    assert "qualified_runtime_guard: Any" in body
+    assert '"_qualified_trusted_input_require"' in body
+    assert "trusted_input_guard(model, context=context)" in body
+    assert "lifecycle_guard(model, context=context)" in body
+    assert "qualified_runtime_guard(model, context=context)" in body
+    caller = source[function_end : source.index("\ndef assemble_load_vector(", function_end)]
+    assert "qualified_runtime_guard=qualified_runtime_guard" in caller

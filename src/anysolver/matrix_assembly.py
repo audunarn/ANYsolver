@@ -6307,6 +6307,8 @@ def assemble_geometric_stiffness_matrix(
 def _qualified_s3_pressure_surface_records(
     model: "FEModel",
     load_case: Optional["LoadCase"],
+    *,
+    qualified_runtime_guard: Any,
 ) -> list[Dict[str, Any]]:
     """Identify the exact surface carrying qualified-S3 pressure work.
 
@@ -6323,10 +6325,35 @@ def _qualified_s3_pressure_surface_records(
         require_exact_qualified_component_lifecycle_api,
     )
 
-    exact_qualified_guard = require_exact_qualified_component_lifecycle_api
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
+    def exact_qualified_guard(*, context: str) -> None:
+        lifecycle_guard(model, context=context)
+        qualified_runtime_guard(model, context=context)
+
+    runtime_namespace = object.__getattribute__(
+        qualified_runtime_guard,
+        "__dict__",
+    )
+    trusted_input_guard = (
+        dict.get(runtime_namespace, "_qualified_trusted_input_require")
+        if type(runtime_namespace) is dict
+        else None
+    )
+
+    def internal_input_guard(*, context: str) -> None:
+        # Capture and finalization retain the complete closed-world guard.  An
+        # exact qualified model also exposes a non-renewable constant-time
+        # token/epoch guard for callback-free input traversal.  Re-running the
+        # complete model-wide lifecycle scan for every S3 pressure record made
+        # this diagnostic path quadratic in mesh size without adding authority.
+        if trusted_input_guard is None:
+            exact_qualified_guard(context=context)
+            return
+        trusted_input_guard(model, context=context)
+
     pressure_ids = tuple(getattr(load_case, "pressure_loads", {}))
     exact_qualified_guard(
-        model,
         context="qualified S3 pressure-surface mapping observation",
     )
     records: list[Dict[str, Any]] = []
@@ -6345,8 +6372,7 @@ def _qualified_s3_pressure_surface_records(
         ):
             continue
         offset = float(getattr(element, "reference_surface_offset", 0.0))
-        exact_qualified_guard(
-            model,
+        internal_input_guard(
             context=(
                 "qualified S3 pressure-surface offset observation for "
                 f"element {element_id}"
@@ -6478,7 +6504,11 @@ def _assemble_load_vector_under_lease(
             }
         ),
     }
-    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    pressure_surfaces = _qualified_s3_pressure_surface_records(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
     exact_qualified_guard(model, context="load-vector assembly output")
@@ -6655,7 +6685,11 @@ def _assemble_external_load_tangent_under_lease(
         },
         "assembly_time": time.time() - start_time,
     }
-    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    pressure_surfaces = _qualified_s3_pressure_surface_records(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
     exact_qualified_guard(
