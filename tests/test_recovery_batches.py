@@ -51,7 +51,7 @@ def _large_legacy_panel():
 def test_chunked_scalar_recovery_preserves_order_and_exact_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = _large_panel()
+    model = _large_legacy_panel()
     displacement = np.linspace(
         0.0,
         1.0e-5,
@@ -204,7 +204,7 @@ def test_compiled_isotropic_s4_matches_scalar_oracle_for_warped_global_output() 
                 )
 
 
-def test_qualified_q4_recovery_never_uses_legacy_compiled_kernel() -> None:
+def test_qualified_q4_recovery_uses_its_native_stationary_batch() -> None:
     model = _large_panel()
     displacement = np.linspace(
         0.0,
@@ -219,10 +219,67 @@ def test_qualified_q4_recovery_never_uses_legacy_compiled_kernel() -> None:
     )
 
     assert report.metadata["compiled_batch_count"] == 0
-    assert report.metadata["eligible_element_count"] == 0
-    assert report.metadata["recovery_backend"] == "scalar_chunk_thread_pool"
+    assert report.metadata["qualified_q4_reference_batch_count"] == 1
+    assert report.metadata["eligible_element_count"] == len(model.mesh.elements)
+    assert report.metadata["recovery_backend"] == (
+        "qualified_q4_reference_stationary_plan"
+    )
     assert set(recovered) == set(model.mesh.elements)
     assert all(
         item["recovery_scope"] == "qualified_q4_local_physical_only"
         for item in recovered.values()
     )
+
+
+def test_qualified_q4_stationary_batch_is_exact_and_reuses_its_plan() -> None:
+    model = _large_panel()
+    rng = np.random.default_rng(416)
+    displacement = rng.normal(
+        scale=2.0e-5,
+        size=model.mesh.dof_manager.total_dofs,
+    )
+    scalar = {}
+    for element_id in model.mesh.elements:
+        item = _compute_one_element_stress(
+            model,
+            displacement,
+            element_id,
+            return_global=True,
+        )
+        assert item is not None
+        scalar[item[0]] = item[1]
+
+    compiled, first_report = recover_element_stresses_with_report(
+        model,
+        displacement,
+        return_global=True,
+        resource_config=ResourceConfig(recovery_threads=1),
+    )
+    repeated, second_report = recover_element_stresses_with_report(
+        model,
+        displacement,
+        return_global=True,
+        resource_config=ResourceConfig(recovery_threads=1),
+    )
+
+    assert first_report.metadata["qualified_q4_reference_batch_count"] == 1
+    assert first_report.metadata["qualified_q4_reference_batch"]["policy_id"] == (
+        "QUALIFIED_Q4_PLANAR_EXACT_RECOVERY_PLAN_V1"
+    )
+    assert first_report.metadata["qualified_q4_reference_batch"]["element_count"] == (
+        len(model.mesh.elements)
+    )
+    assert first_report.metadata["qualified_q4_reference_batch"]["kernel_count"] == 1
+    assert first_report.metadata["plan_reused"] is False
+    assert second_report.metadata["plan_reused"] is True
+    assert list(compiled) == list(scalar)
+    for element_id, expected in scalar.items():
+        assert compiled[element_id].keys() == expected.keys()
+        assert repeated[element_id].keys() == expected.keys()
+        for field, expected_value in expected.items():
+            if isinstance(expected_value, str):
+                assert compiled[element_id][field] == expected_value
+                assert repeated[element_id][field] == expected_value
+            else:
+                np.testing.assert_array_equal(compiled[element_id][field], expected_value)
+                np.testing.assert_array_equal(repeated[element_id][field], expected_value)
