@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import warnings
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -630,9 +631,13 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
         encoding="utf-8"
     )
     assert (
-        "python scripts/run_portable_ci.py --workers 4 --timeout-seconds 1200"
+        "python scripts/run_portable_ci.py --workers 2 --timeout-seconds 1200\n"
+        "          --matrix-shard-index ${{ matrix.shard-index }} "
+        "--matrix-shard-count 8"
         in workflow
     )
+    assert len(re.findall(r"(?m)^\s+- \{os: .* shard-index: \d\}$", workflow)) == 8
+    assert "push:\n    branches: [main]\n  pull_request:" in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
     for authority in gate.strict_json_load(CONTRACT)["sibling_authority"].values():
         if authority["commit"] != "ba8b21b9cf2732168b099cfedc7508789bdcfbb3":
@@ -647,10 +652,15 @@ def test_portable_ci_inventory_is_unique_and_excludes_long_lanes() -> None:
     registered = {
         module for lane in portable_ci.MERGE_LANES for module in lanes[lane]
     }
-    assert set(modules) == registered - set(
-        portable_ci.POST_CLOSEOUT_HISTORICAL_MODULES
-    )
+    historical = {
+        module
+        for module in registered
+        if portable_ci._is_portable_historical_module(module)
+    }
+    assert set(modules) == registered - historical
     assert set(portable_ci.POST_CLOSEOUT_HISTORICAL_MODULES) <= registered
+    assert set(portable_ci.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES) <= set(modules)
+    assert historical
     assert set(modules).isdisjoint(lanes["performance"])
     assert set(modules).isdisjoint(lanes["extended"])
 
@@ -666,6 +676,50 @@ def test_portable_ci_partition_is_deterministic_disjoint_and_complete(
     assigned = [module for bucket in first for module in bucket]
     assert len(assigned) == len(set(assigned)) == len(weights)
     assert set(assigned) == set(weights)
+
+
+def test_portable_ci_observed_costs_separate_the_four_heaviest_modules() -> None:
+    partitions = portable_ci.partition_modules(
+        portable_ci.merge_test_modules(), 4
+    )
+    heaviest = {
+        "tests/test_beam_shell_verification.py",
+        "tests/test_e4_pl_q4_state_lifecycle.py",
+        "tests/test_e4_pl_s3_restart_history.py",
+        "tests/test_e4_pl_s3_state_lifecycle.py",
+    }
+    owners = {
+        index
+        for index, partition in enumerate(partitions)
+        if heaviest.intersection(partition)
+    }
+    assert owners == set(range(4))
+
+
+def test_portable_ci_matrix_shards_cover_general_once_and_s3_critical_always() -> None:
+    modules = portable_ci.merge_test_modules()
+    critical = set(portable_ci.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES)
+    shards = [portable_ci.matrix_modules(modules, index, 8) for index in range(8)]
+    for shard in shards:
+        assert critical <= set(shard)
+        assert len(shard) == len(set(shard))
+    general_counts = Counter(
+        module
+        for shard in shards
+        for module in shard
+        if module not in critical
+    )
+    assert set(general_counts) == set(modules) - critical
+    assert set(general_counts.values()) == {1}
+
+
+@pytest.mark.parametrize(
+    ("index", "count"),
+    [(0, None), (None, 8), (-1, 8), (8, 8), (0, 0), (True, 8), (0, True)],
+)
+def test_portable_ci_matrix_shards_reject_invalid_bounds(index, count) -> None:
+    with pytest.raises(ValueError, match="matrix shard"):
+        portable_ci.matrix_modules(portable_ci.merge_test_modules(), index, count)
 
 
 @pytest.mark.parametrize("workers", [0, -1, True])
@@ -706,6 +760,14 @@ def test_portable_ci_worker_is_headless_isolated_and_single_threaded(
         ("tests/test_fe_solver_infrastructure.py",), tmp_path
     )
     assert sum(item.startswith("--deselect=") for item in pardiso_command) == 1
+    v2d_command = portable_ci._worker_command(
+        ("tests/test_e4_pl_s3_v2d_linear_native_parity.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in v2d_command) == 1
+    mixed_command = portable_ci._worker_command(
+        ("tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in mixed_command) == 1
 
 
 def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(

@@ -467,9 +467,12 @@ def _project_qualified_s3_contact_coordinates(
         ),
     )
     local = np.asarray((selected_weights[1], selected_weights[2]), dtype=float)
-    N, dN_dxi, dN_deta = element.compute_shape_functions(
-        float(local[0]), float(local[1])
-    )
+    # Both qualified three-corner formulations use the same exact
+    # barycentric contact interpolation.  Keep this orchestration-owned so a
+    # strict candidate never enters the generic ShellElement dispatch.
+    N = np.asarray(selected_weights, dtype=float)
+    dN_dxi = np.asarray((-1.0, 1.0, 0.0), dtype=float)
+    dN_deta = np.asarray((-1.0, 0.0, 1.0), dtype=float)
     return local, N, dN_dxi, dN_deta, np.asarray(surface_point, dtype=float)
 
 
@@ -511,7 +514,12 @@ def _surface_offset(element: ShellElement, config: SphereContactConfig) -> float
     return normalized_coordinate * 0.5 * thickness
 
 
-_QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+_QUALIFIED_S3_FORMULATION_IDS = frozenset(
+    {
+        "E4_PL_QUALIFIED_S3_COMPANION_V1",
+        "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+    }
+)
 
 
 def _is_qualified_s3_contact_target(element: ShellElement) -> bool:
@@ -520,7 +528,7 @@ def _is_qualified_s3_contact_target(element: ShellElement) -> bool:
     return bool(
         int(getattr(element, "num_nodes", 0)) == 3
         and str(getattr(element, "formulation_id", ""))
-        == _QUALIFIED_S3_FORMULATION_ID
+        in _QUALIFIED_S3_FORMULATION_IDS
     )
 
 

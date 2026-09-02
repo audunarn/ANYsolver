@@ -66,7 +66,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import copy
-from types import MemberDescriptorType
+from types import FunctionType, MemberDescriptorType
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Tuple
 
@@ -1033,6 +1033,32 @@ def _rotation_vector_from_matrix(rotation: np.ndarray) -> np.ndarray:
     return angle * axis
 
 
+_STRICT_FLAT_S3_V2_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1"
+_STRICT_FLAT_S3_V2B_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2B_FLAT_LINEAR_V1"
+_STRICT_FLAT_S3_V2C_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2C_FLAT_LINEAR_PARITY_V1"
+_S3_V2D_NATIVE_PARITY_CANDIDATE_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+
+
+def _reject_strict_flat_s3_v2_legacy_dispatch(
+    element: Any, operation: str
+) -> None:
+    if (
+        getattr(type(element), "_legacy_shell_dispatch_forbidden", None)
+        in {
+            _STRICT_FLAT_S3_V2_CANDIDATE_ID,
+            _STRICT_FLAT_S3_V2B_CANDIDATE_ID,
+            _STRICT_FLAT_S3_V2C_CANDIDATE_ID,
+            _S3_V2D_NATIVE_PARITY_CANDIDATE_ID,
+        }
+    ):
+        from .element_capabilities import ElementCapabilityError
+
+        raise ElementCapabilityError(
+            "strict-flat S3 V2 forbids explicit legacy ShellElement dispatch: "
+            + operation
+        )
+
+
 class Element(ABC):
     """Abstract base class for all FE elements."""
 
@@ -1055,6 +1081,7 @@ class Element(ABC):
         declared anywhere in a concrete subclass hierarchy.
         """
 
+        _reject_strict_flat_s3_v2_legacy_dispatch(self, "Element.__deepcopy__")
         source_id = id(self)
         if source_id in memo:
             return memo[source_id]
@@ -1108,6 +1135,7 @@ class Element(ABC):
         raise NotImplementedError
 
     def compute_mass_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
+        _reject_strict_flat_s3_v2_legacy_dispatch(self, "Element.compute_mass_matrix")
         return np.zeros((self.total_dofs, self.total_dofs))
 
     def compute_geometric_stiffness_matrix(
@@ -1116,11 +1144,17 @@ class Element(ABC):
         material: "Material",
         state: Optional[Any] = None,
     ) -> np.ndarray:
+        _reject_strict_flat_s3_v2_legacy_dispatch(
+            self, "Element.compute_geometric_stiffness_matrix"
+        )
         return np.zeros((self.total_dofs, self.total_dofs))
 
     def compute_internal_forces(
         self, mesh: "FEMesh", displacements: np.ndarray, material: "Material"
     ) -> np.ndarray:
+        _reject_strict_flat_s3_v2_legacy_dispatch(
+            self, "Element.compute_internal_forces"
+        )
         return np.zeros(self.total_dofs)
 
     def compute_nonlinear_response(
@@ -1141,6 +1175,9 @@ class Element(ABC):
         ``tangent=False`` the stiffness entry may be None (used by the line
         search, which only needs residuals).
         """
+        _reject_strict_flat_s3_v2_legacy_dispatch(
+            self, "Element.compute_nonlinear_response"
+        )
         K = self._stiffness_matrix
         if K is None:
             K = self.compute_stiffness_matrix(mesh, material)
@@ -1153,6 +1190,7 @@ class Element(ABC):
         material: "Material",
         return_global: bool = False,
     ) -> Dict[str, Any]:
+        _reject_strict_flat_s3_v2_legacy_dispatch(self, "Element.compute_stresses")
         return {}
 
     def get_dof_mapping(self, mesh: "FEMesh") -> List[int]:
@@ -1179,12 +1217,53 @@ class Element(ABC):
         return u[dof_indices]
 
     def to_dict(self) -> Dict[str, Any]:
+        _reject_strict_flat_s3_v2_legacy_dispatch(self, "Element.to_dict")
         return {
             "element_id": self.element_id,
             "type": self.__class__.__name__,
             "node_ids": self.node_ids,
             "material_name": self.material_name,
         }
+
+
+def _install_strict_flat_s3_v2_element_base_guards() -> None:
+    """Capture the V2 guard in Element routes exposed by explicit dispatch."""
+
+    from functools import wraps
+    from inspect import signature
+
+    guard = _reject_strict_flat_s3_v2_legacy_dispatch
+    names = (
+        "__deepcopy__",
+        "compute_mass_matrix",
+        "compute_geometric_stiffness_matrix",
+        "compute_internal_forces",
+        "compute_nonlinear_response",
+        "compute_stresses",
+        "to_dict",
+    )
+    for name in names:
+        original = vars(Element)[name]
+
+        @wraps(original)
+        def guarded(
+            self: Any,
+            *args: Any,
+            __name: str = name,
+            __original: Callable[..., Any] = original,
+            __guard: Callable[[Any, str], None] = guard,
+            **kwargs: Any,
+        ) -> Any:
+            __guard(self, f"Element.{__name}")
+            return __original(self, *args, **kwargs)
+
+        guarded.__signature__ = signature(original)  # type: ignore[attr-defined]
+        delattr(guarded, "__wrapped__")
+        setattr(Element, name, guarded)
+
+
+_install_strict_flat_s3_v2_element_base_guards()
+del _install_strict_flat_s3_v2_element_base_guards
 
 
 @njit
@@ -3536,6 +3615,71 @@ _publish_shell_element_public_signatures()
 del _publish_shell_element_public_signatures
 
 
+def _install_strict_flat_s3_v2_legacy_dispatch_guards() -> None:
+    """Reject explicit base-method bypasses on the Stage-1 V2 candidate."""
+
+    from functools import wraps
+    from inspect import signature
+
+    guard = _reject_strict_flat_s3_v2_legacy_dispatch
+    allowed = {"__init__", "dofs_per_node", "get_node_coordinates", "num_nodes"}
+    for name, original in tuple(vars(ShellElement).items()):
+        if name in allowed or name.startswith("__"):
+            continue
+
+        if type(original) is property:
+            def wrap_accessor(
+                accessor: Optional[Callable[..., Any]],
+                label: str,
+                _guard: Callable[[Any, str], None] = guard,
+            ) -> Optional[Callable[..., Any]]:
+                if accessor is None:
+                    return None
+
+                @wraps(accessor)
+                def guarded_accessor(self: Any, *args: Any, **kwargs: Any) -> Any:
+                    _guard(self, f"ShellElement.{label}")
+                    return accessor(self, *args, **kwargs)
+
+                guarded_accessor.__signature__ = signature(accessor)  # type: ignore[attr-defined]
+                delattr(guarded_accessor, "__wrapped__")
+                return guarded_accessor
+
+            setattr(
+                ShellElement,
+                name,
+                property(
+                    wrap_accessor(original.fget, name),
+                    wrap_accessor(original.fset, name),
+                    wrap_accessor(original.fdel, name),
+                    original.__doc__,
+                ),
+            )
+            continue
+        if type(original) is not FunctionType:
+            continue
+
+        @wraps(original)
+        def guarded(
+            self: Any,
+            *args: Any,
+            __name: str = name,
+            __original: Callable[..., Any] = original,
+            __guard: Callable[[Any, str], None] = guard,
+            **kwargs: Any,
+        ) -> Any:
+            __guard(self, f"ShellElement.{__name}")
+            return __original(self, *args, **kwargs)
+
+        guarded.__signature__ = signature(original)  # type: ignore[attr-defined]
+        delattr(guarded, "__wrapped__")
+        setattr(ShellElement, name, guarded)
+
+
+_install_strict_flat_s3_v2_legacy_dispatch_guards()
+del _install_strict_flat_s3_v2_legacy_dispatch_guards
+
+
 class BeamElement(Element):
     """2-node Timoshenko beam element with 6 DOF per node.
 
@@ -5417,7 +5561,28 @@ def _normalized_shell_formulation(
         )
     else:
         resolved = str(formulation)
-    resolved = resolved.strip().lower().replace("_", "-")
+    raw_resolved = resolved.strip().lower()
+    resolved = raw_resolved.replace("_", "-")
+    exact_s3_v2_selectors = {"e4-pl-s3-v2", "qualified-s3-v2"}
+    exact_s3_v2b_selectors = {"e4-pl-s3-v2b", "qualified-s3-v2b"}
+    exact_s3_v2c_selectors = {"e4-pl-s3-v2c", "qualified-s3-v2c"}
+    exact_s3_v2d_selectors = {"e4-pl-s3-v2d", "qualified-s3-v2d"}
+    if resolved in exact_s3_v2_selectors and raw_resolved not in exact_s3_v2_selectors:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2 requires the canonical e4-pl-s3-v2 selector"
+        )
+    if resolved in exact_s3_v2b_selectors and raw_resolved not in exact_s3_v2b_selectors:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2B requires the canonical e4-pl-s3-v2b selector"
+        )
+    if resolved in exact_s3_v2c_selectors and raw_resolved not in exact_s3_v2c_selectors:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2C requires the canonical e4-pl-s3-v2c selector"
+        )
+    if resolved in exact_s3_v2d_selectors and raw_resolved not in exact_s3_v2d_selectors:
+        raise ValueError(
+            "native-parity E4-PL S3 V2D requires the canonical e4-pl-s3-v2d selector"
+        )
     if resolved == "default":
         resolved = (
             DEFAULT_Q4_FORMULATION
@@ -5428,11 +5593,23 @@ def _normalized_shell_formulation(
         )
     e4_aliases = {"e4-pl", "qualified-s4"}
     s3_aliases = {"e4-pl-s3", "qualified-s3"}
+    s3_v2_aliases = exact_s3_v2_selectors
+    s3_v2b_aliases = exact_s3_v2b_selectors
+    s3_v2c_aliases = exact_s3_v2c_selectors
+    s3_v2d_aliases = exact_s3_v2d_selectors
     legacy_aliases = {"legacy", "legacy-shell", "legacy-s4"}
     if node_count == 4 and resolved in e4_aliases:
         return "e4-pl"
     if node_count == 3 and resolved in s3_aliases:
         return "e4-pl-s3"
+    if node_count == 3 and resolved in s3_v2_aliases:
+        return "e4-pl-s3-v2"
+    if node_count == 3 and resolved in s3_v2b_aliases:
+        return "e4-pl-s3-v2b"
+    if node_count == 3 and resolved in s3_v2c_aliases:
+        return "e4-pl-s3-v2c"
+    if node_count == 3 and resolved in s3_v2d_aliases:
+        return "e4-pl-s3-v2d"
     if resolved == "legacy-s3":
         if node_count != 3:
             raise ValueError("legacy-s3 is available only for three-node shell topology")
@@ -5443,6 +5620,22 @@ def _normalized_shell_formulation(
         raise ValueError("E4-PL is available only for four-node shell topology")
     if resolved in s3_aliases:
         raise ValueError("qualified E4-PL S3 is available only for three-node shell topology")
+    if resolved in s3_v2_aliases:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2 is available only for three-node shell topology"
+        )
+    if resolved in s3_v2b_aliases:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2B is available only for three-node shell topology"
+        )
+    if resolved in s3_v2c_aliases:
+        raise ValueError(
+            "strict-flat E4-PL S3 V2C is available only for three-node shell topology"
+        )
+    if resolved in s3_v2d_aliases:
+        raise ValueError(
+            "native-parity E4-PL S3 V2D is available only for three-node shell topology"
+        )
     raise ValueError(f"Unknown shell formulation: {formulation}")
 
 
@@ -5481,7 +5674,23 @@ def shell_formulation_diagnostics(
                 else (
                     "QUALIFIED_E4_PL_S3_OPT_IN"
                     if count == 3 and selected == "e4-pl-s3"
-                    else "PRESERVED_LEGACY_NON_Q4"
+                    else (
+                        "STRICT_FLAT_LINEAR_E4_PL_S3_V2_OPT_IN"
+                        if count == 3 and selected == "e4-pl-s3-v2"
+                        else (
+                            "STRICT_FLAT_LINEAR_E4_PL_S3_V2B_OPT_IN"
+                            if count == 3 and selected == "e4-pl-s3-v2b"
+                            else (
+                                "STRICT_FLAT_LINEAR_E4_PL_S3_V2C_OPT_IN"
+                                if count == 3 and selected == "e4-pl-s3-v2c"
+                                else (
+                                    "NATIVE_PARITY_E4_PL_S3_V2D_OPT_IN"
+                                    if count == 3 and selected == "e4-pl-s3-v2d"
+                                    else "PRESERVED_LEGACY_NON_Q4"
+                                )
+                            )
+                        )
+                    )
                 )
             )
         ),
@@ -5531,6 +5740,42 @@ def create_shell_element(
             material_name,
             **kwargs,
         )
+    if resolved == "e4-pl-s3-v2":
+        from .e4_pl_s3_v2_element import StrictFlatLinearE4PLS3V2ShellElement
+
+        return StrictFlatLinearE4PLS3V2ShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
+    if resolved == "e4-pl-s3-v2b":
+        from .e4_pl_s3_v2b_element import StrictFlatLinearE4PLS3V2BShellElement
+
+        return StrictFlatLinearE4PLS3V2BShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
+    if resolved == "e4-pl-s3-v2c":
+        from .e4_pl_s3_v2c_element import StrictFlatLinearE4PLS3V2CShellElement
+
+        return StrictFlatLinearE4PLS3V2CShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
+    if resolved == "e4-pl-s3-v2d":
+        from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+        return NativeParityE4PLS3V2DShellElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
     if resolved in {"legacy", "legacy-s3"}:
         return LegacyShellElement(element_id, node_ids, material_name, **kwargs)
     raise AssertionError(f"unreachable shell formulation selection: {resolved}")
@@ -5550,6 +5795,37 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
     node_ids = [int(value) for value in data.get("node_ids", ())]
     formulation_id = data.get("formulation_id")
     if formulation_id is not None:
+        from .e4_pl_s3_v2_element import (
+            FORMULATION_ID as S3_V2_FORMULATION_ID,
+            StrictFlatLinearCapabilityError,
+        )
+        from .e4_pl_s3_v2b_element import (
+            FORMULATION_ID as S3_V2B_FORMULATION_ID,
+            StrictFlatLinearCapabilityError as StrictFlatLinearV2BCapabilityError,
+        )
+        from .e4_pl_s3_v2c_element import (
+            FORMULATION_ID as S3_V2C_FORMULATION_ID,
+            StrictFlatLinearE4PLS3V2CShellElement,
+        )
+        from .e4_pl_s3_v2d_element import (
+            FORMULATION_ID as S3_V2D_FORMULATION_ID,
+            NativeParityE4PLS3V2DShellElement,
+        )
+
+        if formulation_id == S3_V2_FORMULATION_ID:
+            raise StrictFlatLinearCapabilityError(
+                "strict-flat S3 V2 serialization/restart is outside the "
+                "authorized Stage-1 surface"
+            )
+        if formulation_id == S3_V2B_FORMULATION_ID:
+            raise StrictFlatLinearV2BCapabilityError(
+                "strict-flat S3 V2B serialization/restart is outside the "
+                "authorized production-parity surface"
+            )
+        if formulation_id == S3_V2C_FORMULATION_ID:
+            return StrictFlatLinearE4PLS3V2CShellElement.from_dict(data)
+        if formulation_id == S3_V2D_FORMULATION_ID:
+            return NativeParityE4PLS3V2DShellElement.from_dict(data)
         from .e4_pl_element import (
             FORMULATION_ID as Q4_FORMULATION_ID,
             QualifiedE4PLShellElement,
@@ -5565,11 +5841,29 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
         if formulation_id == S3_FORMULATION_ID:
             return QualifiedE4PLS3ShellElement.from_dict(data)
         raise ValueError(f"unknown serialized shell formulation_id: {formulation_id}")
-    if str(data.get("type", "")) in {
-        "QualifiedE4PLShellElement",
-        "QualifiedE4PLS3ShellElement",
+    def normalize_candidate_fingerprint(value: Any) -> str:
+        return str(value).strip().lower().replace("_", "-")
+
+    normalized_serialized_type = normalize_candidate_fingerprint(
+        data.get("type", "")
+    )
+    if normalized_serialized_type in {
+        "qualifiede4plshellelement",
+        "qualifiede4pls3shellelement",
+        "strictflatlineare4pls3v2shellelement",
+        "strictflatlineare4pls3v2bshellelement",
+        "strictflatlineare4pls3v2cshellelement",
+        "nativeparitye4pls3v2dshellelement",
         "e4-pl",
         "e4-pl-s3",
+        "e4-pl-s3-v2",
+        "e4-pl-s3-v2b",
+        "e4-pl-s3-v2c",
+        "e4-pl-s3-v2d",
+        "qualified-s3-v2",
+        "qualified-s3-v2b",
+        "qualified-s3-v2c",
+        "qualified-s3-v2d",
         "qualified-s3",
     }:
         raise ValueError("serialized qualified shell is missing formulation_id")
@@ -5595,6 +5889,19 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
             "state_layout_id",
         }
     )
+    strict_s3_v2_unique_markers = frozenset(
+        {
+            "director_policy_id",
+            "equation_map_sha256",
+            "pl_completion_policy_id",
+            "primary_source_sha256",
+            "resultant_policy_id",
+            "section_policy_id",
+            "source_contract_schema",
+            "source_contract_sha256",
+            "strict_flat_linear_scope_id",
+        }
+    )
     qualified_q4_markers = frozenset(
         {
             "activity_disposition_schema_id",
@@ -5614,7 +5921,65 @@ def shell_element_from_dict(payload: Mapping[str, Any]) -> ShellElement:
             "stationary_solve_policy_id",
         }
     )
-    retained_s3_markers = tuple(sorted(qualified_s3_markers & data.keys()))
+    strict_s3_v2_marker_set = set(strict_s3_v2_unique_markers & data.keys())
+    serialized_selector = data.get("selector")
+    if isinstance(serialized_selector, str) and normalize_candidate_fingerprint(
+        serialized_selector
+    ) in {
+        "e4-pl-s3-v2",
+        "e4-pl-s3-v2b",
+        "e4-pl-s3-v2c",
+        "e4-pl-s3-v2d",
+        "qualified-s3-v2",
+        "qualified-s3-v2b",
+        "qualified-s3-v2c",
+        "qualified-s3-v2d",
+    }:
+        strict_s3_v2_marker_set.add("selector")
+    if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
+        "e4-pl-s3-v2-dkmt-eq12-41-cst-pl-hammer3-v1"
+    ):
+        strict_s3_v2_marker_set.add("implementation_id")
+    if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
+        "e4-pl-s3-v2c-min3-relaxed-uhm-cst-pl-parity-v1"
+    ):
+        strict_s3_v2_marker_set.add("implementation_id")
+    if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
+        "e4-pl-s3-v2d-min3-native-section-linear-gate-v1"
+    ):
+        strict_s3_v2_marker_set.add("implementation_id")
+    if normalize_candidate_fingerprint(data.get("implementation_id", "")) == (
+        "e4-pl-s3-v2b-min3-relaxed-uhm-cst-pl-hammer3-v1"
+    ):
+        strict_s3_v2_marker_set.add("implementation_id")
+    if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
+        "anysolver.e4-pl-s3-v2-strict-flat-linear-element-v1"
+    ):
+        strict_s3_v2_marker_set.add("formulation_schema")
+    if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
+        "anysolver.e4-pl-s3-v2c-flat-linear-parity-element-v1"
+    ):
+        strict_s3_v2_marker_set.add("formulation_schema")
+    if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
+        "anysolver.e4-pl-s3-v2d-native-parity-element-v1"
+    ):
+        strict_s3_v2_marker_set.add("formulation_schema")
+    if normalize_candidate_fingerprint(data.get("formulation_schema", "")) == (
+        "anysolver.e4-pl-s3-v2b-strict-flat-linear-element-v1"
+    ):
+        strict_s3_v2_marker_set.add("formulation_schema")
+    if normalize_candidate_fingerprint(
+        data.get("quadrature_authority_id", "")
+    ) == "s3-v2-dkmt-hammer3-degree2-exact-v1":
+        strict_s3_v2_marker_set.add("quadrature_authority_id")
+    if strict_s3_v2_marker_set:
+        raise ValueError(
+            "serialized shell retains strict-flat S3 V2 fingerprint markers "
+            "but is missing formulation_id: "
+            + ", ".join(sorted(strict_s3_v2_marker_set))
+        )
+    retained_s3_marker_set = set(qualified_s3_markers & data.keys())
+    retained_s3_markers = tuple(sorted(retained_s3_marker_set))
     if len(node_ids) == 3 and retained_s3_markers:
         raise ValueError(
             "serialized three-node shell retains qualified S3 fingerprint "
@@ -5663,6 +6028,38 @@ def create_element(
     **kwargs: Any,
 ) -> Element:
     normalized_type = str(element_type).lower()
+    if normalized_type in {"e4-pl-s3-v2d", "qualified-s3-v2d"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3-v2d",
+            **kwargs,
+        )
+    if normalized_type in {"e4-pl-s3-v2c", "qualified-s3-v2c"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3-v2c",
+            **kwargs,
+        )
+    if normalized_type in {"e4-pl-s3-v2b", "qualified-s3-v2b"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3-v2b",
+            **kwargs,
+        )
+    if normalized_type in {"e4-pl-s3-v2", "qualified-s3-v2"}:
+        return create_shell_element(
+            element_id,
+            node_ids,
+            material_name,
+            formulation="e4-pl-s3-v2",
+            **kwargs,
+        )
     if normalized_type in {"e4-pl-s3", "e4_pl_s3", "qualified-s3", "qualified_s3"}:
         return create_shell_element(
             element_id,

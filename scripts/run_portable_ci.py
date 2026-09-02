@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -34,6 +35,24 @@ MERGE_LANES = ("quick", "additive", "functional")
 POST_CLOSEOUT_HISTORICAL_MODULES = (
     "tests/test_e4_pl_s3_q4_burnin_authority.py",
 )
+# Versioned S3 files record authority, experiments, incidents, and formal
+# evidence accumulated while the successor was developed.  Most of those
+# modules deliberately bind a particular checkout representation, full Git
+# history, or external machine-local evidence.  They remain valuable in their
+# registered environment but are not portable merge tests.  Keep the small
+# current runtime-facing V2D suite explicit so a newly added study cannot
+# silently enter ordinary CI merely by matching the broad additive prefix.
+PORTABLE_CURRENT_S3_SUCCESSOR_MODULES = (
+    "tests/test_e4_pl_s3_v2d_linear_native_parity.py",
+    "tests/test_e4_pl_s3_v2d_native_state_corotational.py",
+    "tests/test_e4_pl_s3_v6c_offset_load_restart.py",
+    "tests/test_e4_pl_s3_v6e_final_parity.py",
+    "tests/test_e4_pl_s3_v6g_recovery_current_eigen.py",
+    "tests/test_e4_pl_s3_v6t_global_cache.py",
+)
+_VERSIONED_S3_STUDY_RE = re.compile(
+    r"tests/test_e4_pl_s3_(?:qv\d+|v\d)[^/]*\.py\Z"
+)
 DEDICATED_LANE_NODES = (
     (
         "tests/test_fe_solver_infrastructure.py::"
@@ -48,6 +67,41 @@ DEDICATED_LANE_NODES = (
         "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
     ),
 )
+# This assertion proves the exact historical implementation commit.  Shallow
+# pull-request checkouts intentionally do not carry that object; all runtime
+# assertions in the module remain part of portable CI.
+PORTABLE_HISTORY_ONLY_NODES = (
+    (
+        "tests/test_e4_pl_s3_v2d_linear_native_parity.py::"
+        "test_v2d_stateless_identity_roundtrip_and_remaining_successor_gaps"
+    ),
+)
+# This invokes an external two-cycle N20/N40 diagnostic with its own 240-second
+# subprocess bound.  It is explicitly nonclassifying and already preserved by
+# the qualification record; ordinary CI retains every deterministic manifest,
+# geometry, and guard test in the module without rerunning that diagnostic.
+PORTABLE_NONQUALIFYING_NODES = (
+    (
+        "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py::"
+        "test_real_n20_n40_smoke_is_byte_identical_and_never_claims_a_gate"
+    ),
+)
+# File size is a useful default partition proxy, but these integration modules
+# are computationally dense relative to their source size.  Frozen observed
+# costs keep the four existing workers balanced on slower hosted runners; they
+# do not change any test, timeout, or scientific result.
+PORTABLE_MODULE_WEIGHT_OVERRIDES = {
+    "tests/test_beam_shell_verification.py": 250_000,
+    "tests/test_corotational.py": 100_000,
+    "tests/test_e4_pl_q4_state_lifecycle.py": 160_000,
+    "tests/test_e4_pl_s3_generalized_nonlinear.py": 100_000,
+    "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py": 80_000,
+    "tests/test_e4_pl_s3_restart_history.py": 220_000,
+    "tests/test_e4_pl_s3_state_lifecycle.py": 220_000,
+    "tests/test_fe_solver_nonlinear_static.py": 150_000,
+    "tests/test_hht_alpha.py": 100_000,
+    "tests/test_mixed_shell_quadrature_grouping.py": 120_000,
+}
 DEFAULT_WORKERS = 4
 DEFAULT_TIMEOUT_SECONDS = 1_200
 TIMEOUT_EXIT_CODE = 124
@@ -59,7 +113,9 @@ def _module_weight(module: str) -> int:
     path = ROOT / module
     if not path.is_file():
         raise RuntimeError(f"merge-test module is missing: {module}")
-    return max(1, path.stat().st_size)
+    return PORTABLE_MODULE_WEIGHT_OVERRIDES.get(
+        module, max(1, path.stat().st_size)
+    )
 
 
 def partition_modules(
@@ -95,6 +151,42 @@ def partition_modules(
     return result
 
 
+def matrix_modules(
+    modules: Sequence[str],
+    shard_index: int | None,
+    shard_count: int | None,
+) -> tuple[str, ...]:
+    """Select one matrix shard while repeating the current S3 critical suite."""
+
+    if shard_index is None and shard_count is None:
+        return tuple(modules)
+    if shard_index is None or shard_count is None:
+        raise ValueError("matrix shard index and count must be provided together")
+    if (
+        isinstance(shard_index, bool)
+        or isinstance(shard_count, bool)
+        or shard_count < 1
+        or shard_index < 0
+        or shard_index >= shard_count
+    ):
+        raise ValueError("matrix shard index/count are invalid")
+    ordered = tuple(modules)
+    if len(ordered) != len(set(ordered)):
+        raise ValueError("matrix input modules must be unique")
+    critical = tuple(
+        module
+        for module in ordered
+        if module in PORTABLE_CURRENT_S3_SUCCESSOR_MODULES
+    )
+    if set(critical) != set(PORTABLE_CURRENT_S3_SUCCESSOR_MODULES):
+        raise RuntimeError("matrix input omits current S3 successor coverage")
+    general = tuple(module for module in ordered if module not in set(critical))
+    if shard_count > len(general):
+        raise ValueError("matrix shard count exceeds general module count")
+    shards = partition_modules(general, shard_count)
+    return tuple(sorted((*shards[shard_index], *critical)))
+
+
 def merge_test_modules() -> tuple[str, ...]:
     """Return the current non-performance, non-historical merge-test extent."""
 
@@ -107,12 +199,27 @@ def merge_test_modules() -> tuple[str, ...]:
         raise RuntimeError(
             f"post-closeout historical modules are absent: {sorted(missing_historical)}"
         )
+    missing_current = set(PORTABLE_CURRENT_S3_SUCCESSOR_MODULES) - set(registered)
+    if missing_current:
+        raise RuntimeError(
+            f"current S3 successor modules are absent: {sorted(missing_current)}"
+        )
     modules = [
         module
         for module in registered
-        if module not in POST_CLOSEOUT_HISTORICAL_MODULES
+        if not _is_portable_historical_module(module)
     ]
     return tuple(modules)
+
+
+def _is_portable_historical_module(module: str) -> bool:
+    """Return whether *module* needs frozen history or external evidence."""
+
+    if module in POST_CLOSEOUT_HISTORICAL_MODULES:
+        return True
+    if module in PORTABLE_CURRENT_S3_SUCCESSOR_MODULES:
+        return False
+    return _VERSIONED_S3_STUDY_RE.fullmatch(module) is not None
 
 
 def _worker_environment(root: Path) -> dict[str, str]:
@@ -147,7 +254,11 @@ def _worker_command(modules: Sequence[str], root: Path) -> list[str]:
     owned_modules = set(modules)
     deselections = [
         node
-        for node in DEDICATED_LANE_NODES
+        for node in (
+            *DEDICATED_LANE_NODES,
+            *PORTABLE_HISTORY_ONLY_NODES,
+            *PORTABLE_NONQUALIFYING_NODES,
+        )
         if node.partition("::")[0] in owned_modules
     ]
     return [
@@ -199,10 +310,25 @@ def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0
         worker.wait()
 
 
-def run(*, workers: int, timeout_seconds: int) -> int:
+def run(
+    *,
+    workers: int,
+    timeout_seconds: int,
+    matrix_shard_index: int | None = None,
+    matrix_shard_count: int | None = None,
+) -> int:
     if isinstance(timeout_seconds, bool) or timeout_seconds < 1:
         raise ValueError("timeout_seconds must be a positive integer")
-    modules = merge_test_modules()
+    modules = matrix_modules(
+        merge_test_modules(), matrix_shard_index, matrix_shard_count
+    )
+    if matrix_shard_index is not None:
+        print(
+            "[portable-ci] matrix shard "
+            f"{matrix_shard_index + 1}/{matrix_shard_count} "
+            f"selected {len(modules)} modules",
+            flush=True,
+        )
     partitions = partition_modules(modules, workers)
     temp_parent = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())).resolve()
     temp_parent.mkdir(parents=True, exist_ok=True)
@@ -263,12 +389,19 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS
     )
+    parser.add_argument("--matrix-shard-index", type=int)
+    parser.add_argument("--matrix-shard-count", type=int)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    return run(workers=args.workers, timeout_seconds=args.timeout_seconds)
+    return run(
+        workers=args.workers,
+        timeout_seconds=args.timeout_seconds,
+        matrix_shard_index=args.matrix_shard_index,
+        matrix_shard_count=args.matrix_shard_count,
+    )
 
 
 if __name__ == "__main__":

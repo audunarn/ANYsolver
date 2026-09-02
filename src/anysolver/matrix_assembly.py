@@ -244,6 +244,7 @@ _Q4_WARM_ASSEMBLY_OWNED_MESH_CACHE_KEYS = frozenset(
         "_topology_signature_cache",
         "_qualified_s3_reference_stiffness_plan",
         "_recovery_batch_plan",
+        "_strict_flat_v2c_mixed_scope_cache_v1",
     }
 )
 
@@ -4279,6 +4280,7 @@ def _assemble_element_matrix_under_lease_impl(
             False,
         )
     )
+    fast_plan_started = time.time()
     element_items = (
         fast_items_provider()
         if callable(fast_items_provider)
@@ -4288,6 +4290,79 @@ def _assemble_element_matrix_under_lease_impl(
         if callable(owned_items_provider)
         else tuple(mesh.elements.items())
     )
+
+    if matrix_type == "stiffness":
+        from .s3_v2c_fast_assembly import lookup_v2c_global_stiffness_plan
+        from .s3_v2d_fast_assembly import (
+            V2D_GLOBAL_ASSEMBLY_POLICY_ID,
+            lookup_v2d_global_stiffness_plan,
+        )
+
+        global_v2c_plan = lookup_v2c_global_stiffness_plan(model, element_items)
+        if global_v2c_plan is not None:
+            qualified_runtime_guard(
+                model,
+                context="stiffness assembly V2C global-plan preflight",
+            )
+            data = np.frombuffer(global_v2c_plan.data_bytes, dtype=np.float64)
+            indices = np.frombuffer(
+                global_v2c_plan.indices_bytes,
+                dtype=np.dtype(global_v2c_plan.indices_dtype),
+            )
+            indptr = np.frombuffer(
+                global_v2c_plan.indptr_bytes,
+                dtype=np.dtype(global_v2c_plan.indptr_dtype),
+            )
+            matrix = _csr_constructor(
+                (data, indices, indptr),
+                shape=global_v2c_plan.shape,
+                copy=False,
+            )
+            info = json.loads(global_v2c_plan.info_bytes)
+            info["element_times"] = {
+                int(element_id): float(value)
+                for element_id, value in info["element_times"].items()
+            }
+            info["diagnostics"]["s3_v2c_exact_stiffness"][
+                "plan_reused"
+            ] = True
+            info["assembly_time"] = float(time.time() - fast_plan_started)
+            return matrix, info
+
+        global_v2d_plan = lookup_v2d_global_stiffness_plan(model, element_items)
+        if global_v2d_plan is not None:
+            qualified_runtime_guard(
+                model,
+                context="stiffness assembly V2D global-plan preflight",
+            )
+            data = np.frombuffer(global_v2d_plan.data_bytes, dtype=np.float64)
+            indices = np.frombuffer(
+                global_v2d_plan.indices_bytes,
+                dtype=np.dtype(global_v2d_plan.indices_dtype),
+            )
+            indptr = np.frombuffer(
+                global_v2d_plan.indptr_bytes,
+                dtype=np.dtype(global_v2d_plan.indptr_dtype),
+            )
+            matrix = _csr_constructor(
+                (data, indices, indptr),
+                shape=global_v2d_plan.shape,
+                copy=False,
+            )
+            info = json.loads(global_v2d_plan.info_bytes)
+            info["element_times"] = {
+                int(element_id): float(value)
+                for element_id, value in info["element_times"].items()
+            }
+            info["diagnostics"]["s3_v2d_exact_stiffness"][
+                "plan_reused"
+            ] = True
+            info["diagnostics"]["s3_v2d_global_stiffness"] = {
+                "plan_reused": True,
+                "policy_id": V2D_GLOBAL_ASSEMBLY_POLICY_ID,
+            }
+            info["assembly_time"] = float(time.time() - fast_plan_started)
+            return matrix, info
 
     def observed_material(name: Any, *, context: str) -> Any:
         if callable(owned_material_name_provider):
@@ -4351,9 +4426,20 @@ def _assemble_element_matrix_under_lease_impl(
             get_reference_s3_stiffness_components,
             reference_s3_candidate,
         )
+        from .s3_v2c_fast_assembly import (
+            get_v2c_stiffness_plan,
+            v2c_fast_candidate,
+        )
+        from .s3_v2d_fast_assembly import (
+            get_v2d_stiffness_plan,
+            v2d_batch_eligibility,
+            v2d_fast_candidate,
+        )
 
         groups = {}
         reference_s3_items = []
+        v2c_stiffness_items = []
+        v2d_stiffness_items = []
         cached_s3_stiffness_items = []
         qualified_stiffness_items = []
         advanced_stiffness_items = []
@@ -4422,6 +4508,22 @@ def _assemble_element_matrix_under_lease_impl(
                     or getattr(shell_section, "rotary_inertia_per_area", None) is not None
                 )
             )
+            if (
+                matrix_type == "stiffness"
+                and v2c_fast_candidate(element)
+            ):
+                # V2C owns a revision-bound exact-matrix plan.  It remains
+                # distinct from both legacy TRI3 and the qualified S3 V1
+                # shared-component path.
+                v2c_stiffness_items.append((int(elem_id), element))
+                continue
+            if (
+                matrix_type == "stiffness"
+                and v2d_fast_candidate(element)
+                and v2d_batch_eligibility(model, element)[0]
+            ):
+                v2d_stiffness_items.append((int(elem_id), element))
+                continue
             if (
                 matrix_type == "stiffness"
                 and reference_s3_candidate(element)
@@ -4632,6 +4734,58 @@ def _assemble_element_matrix_under_lease_impl(
                         "speedup_claimed": False,
                     }
                 )
+
+        if v2c_stiffness_items:
+            prepared_v2c, v2c_plan_reused = get_v2c_stiffness_plan(
+                model,
+                v2c_stiffness_items,
+            )
+            precomputed.update(prepared_v2c.matrices)
+            if prepared_v2c.matrices_prevalidated:
+                prevalidated_element_ids.update(prepared_v2c.matrices)
+            v2c_diagnostics = prepared_v2c.diagnostics()
+            v2c_diagnostics["plan_reused"] = bool(v2c_plan_reused)
+            info["diagnostics"]["s3_v2c_exact_stiffness"] = v2c_diagnostics
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S3",
+                    "num_elements": len(prepared_v2c.element_ids),
+                    "kernel": "s3_v2c_exact_revision_bound_matrix_plan",
+                    "parallel_kernel": False,
+                    "unique_geometry_count": len(prepared_v2c.element_ids),
+                    "component_evaluation_count": (
+                        0 if v2c_plan_reused else len(prepared_v2c.element_ids)
+                    ),
+                    "formulation_id": v2c_diagnostics["formulation_id"],
+                    "speedup_claimed": False,
+                }
+            )
+
+        if v2d_stiffness_items:
+            prepared_v2d, v2d_plan_reused = get_v2d_stiffness_plan(
+                model,
+                v2d_stiffness_items,
+            )
+            precomputed.update(prepared_v2d.matrices)
+            if prepared_v2d.matrices_prevalidated:
+                prevalidated_element_ids.update(prepared_v2d.matrices)
+            v2d_diagnostics = prepared_v2d.diagnostics()
+            v2d_diagnostics["plan_reused"] = bool(v2d_plan_reused)
+            info["diagnostics"]["s3_v2d_exact_stiffness"] = v2d_diagnostics
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S3",
+                    "num_elements": len(prepared_v2d.element_ids),
+                    "kernel": "s3_v2d_exact_revision_bound_stiffness_plan",
+                    "parallel_kernel": False,
+                    "unique_geometry_count": len(prepared_v2d.element_ids),
+                    "component_evaluation_count": (
+                        0 if v2d_plan_reused else len(prepared_v2d.element_ids)
+                    ),
+                    "formulation_id": v2d_diagnostics["formulation_id"],
+                    "speedup_claimed": False,
+                }
+            )
 
         if qualified_stiffness_items:
             shared_components = {}
@@ -5058,6 +5212,14 @@ def _assemble_element_matrix_under_lease_impl(
         element_items=element_items,
     )
     info["assembly_time"] = time.time() - start_time
+    if matrix_type == "stiffness" and v2c_stiffness_items:
+        from .s3_v2c_fast_assembly import bind_v2c_global_stiffness_plan
+
+        bind_v2c_global_stiffness_plan(model, element_items, matrix, info)
+    if matrix_type == "stiffness" and v2d_stiffness_items:
+        from .s3_v2d_fast_assembly import bind_v2d_global_stiffness_plan
+
+        bind_v2d_global_stiffness_plan(model, element_items, matrix, info)
     return matrix, info
 
 
@@ -6188,6 +6350,8 @@ def assemble_geometric_stiffness_matrix(
 def _qualified_s3_pressure_surface_records(
     model: "FEModel",
     load_case: Optional["LoadCase"],
+    *,
+    qualified_runtime_guard: Any,
 ) -> list[Dict[str, Any]]:
     """Identify the exact surface carrying qualified-S3 pressure work.
 
@@ -6204,25 +6368,54 @@ def _qualified_s3_pressure_surface_records(
         require_exact_qualified_component_lifecycle_api,
     )
 
-    exact_qualified_guard = require_exact_qualified_component_lifecycle_api
+    lifecycle_guard = require_exact_qualified_component_lifecycle_api
+
+    def exact_qualified_guard(*, context: str) -> None:
+        lifecycle_guard(model, context=context)
+        qualified_runtime_guard(model, context=context)
+
+    runtime_namespace = object.__getattribute__(
+        qualified_runtime_guard,
+        "__dict__",
+    )
+    trusted_input_guard = (
+        dict.get(runtime_namespace, "_qualified_trusted_input_require")
+        if type(runtime_namespace) is dict
+        else None
+    )
+
+    def internal_input_guard(*, context: str) -> None:
+        # Capture and finalization retain the complete closed-world guard.  An
+        # exact qualified model also exposes a non-renewable constant-time
+        # token/epoch guard for callback-free input traversal.  Re-running the
+        # complete model-wide lifecycle scan for every S3 pressure record made
+        # this diagnostic path quadratic in mesh size without adding authority.
+        if trusted_input_guard is None:
+            exact_qualified_guard(context=context)
+            return
+        trusted_input_guard(model, context=context)
+
     pressure_ids = tuple(getattr(load_case, "pressure_loads", {}))
     exact_qualified_guard(
-        model,
         context="qualified S3 pressure-surface mapping observation",
     )
     records: list[Dict[str, Any]] = []
     for raw_element_id in pressure_ids:
         element_id = int(raw_element_id)
         element = model.mesh.get_element(element_id)
+        if element is None:
+            continue
+        formulation = str(getattr(element, "formulation_id", ""))
+        pressure_policy = str(
+            getattr(element, "pressure_surface_policy_id", "")
+        )
         if (
-            element is None
-            or str(getattr(element, "formulation_id", ""))
-            != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            formulation != "E4_PL_QUALIFIED_S3_COMPANION_V1"
+            and pressure_policy != "ELEMENT_NODAL_REFERENCE_SURFACE_V1"
         ):
             continue
         offset = float(getattr(element, "reference_surface_offset", 0.0))
-        exact_qualified_guard(
-            model,
+        internal_input_guard(
             context=(
                 "qualified S3 pressure-surface offset observation for "
                 f"element {element_id}"
@@ -6354,7 +6547,11 @@ def _assemble_load_vector_under_lease(
             }
         ),
     }
-    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    pressure_surfaces = _qualified_s3_pressure_surface_records(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
     exact_qualified_guard(model, context="load-vector assembly output")
@@ -6463,6 +6660,7 @@ def _assemble_external_load_tangent_under_lease(
                 continue
             if not hasattr(element, "node_ids"):
                 raise AssemblyError(f"Follower pressure element {element_id} has no nodal interpolation.")
+            load_case._reject_strict_flat_s3_v2_follower_pressure(element)
             dof_mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
             coords = load_case._current_element_coordinates(element, model.mesh, u)
             exact_qualified_guard(
@@ -6476,7 +6674,7 @@ def _assemble_external_load_tangent_under_lease(
                 element_tangent = load_case._consistent_pressure_tangent(
                     element,
                     model.mesh,
-                    float(pressure),
+                    pressure,
                     coords,
                 )
             except ValueError as exc:
@@ -6530,7 +6728,11 @@ def _assemble_external_load_tangent_under_lease(
         },
         "assembly_time": time.time() - start_time,
     }
-    pressure_surfaces = _qualified_s3_pressure_surface_records(model, load_case)
+    pressure_surfaces = _qualified_s3_pressure_surface_records(
+        model,
+        load_case,
+        qualified_runtime_guard=qualified_runtime_guard,
+    )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
     exact_qualified_guard(

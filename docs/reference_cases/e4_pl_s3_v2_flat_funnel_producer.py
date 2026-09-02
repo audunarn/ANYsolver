@@ -1,0 +1,1430 @@
+"""Stage-4A production-mechanics producer for the flat S3 V2 funnel.
+
+The command validates the frozen 252-record manifest and a canonical Phase-4A
+plan before importing NumPy, SciPy, or ANYsolver.  An invocation owns either
+one historical diagonal shard or one content-addressed formal V2 record leaf.
+V1 replay is excluded from formal runtime and can never replace a V2A result.
+"""
+
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import math
+import os
+from pathlib import Path
+import stat
+import sys
+import tarfile
+import tempfile
+from typing import Any, Mapping, Sequence
+
+from e4_pl_s3_v2_flat_funnel import (
+    ENERGY_NORM_IDENTITY,
+    MANIFEST_SHA256,
+    SELECTOR,
+    SHARD_SCIENTIFIC_SCHEMA,
+    FlatFunnelError,
+    append_progress,
+    canonical_bytes,
+    progress_record,
+    sha256,
+    strict_json_load,
+    validate_manifest,
+    validate_phase_plan,
+)
+
+
+ROOT = Path(__file__).resolve().parents[2]
+MANIFEST_PATH = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_connectivity_manifest.json"
+)
+MANIFEST_GENERATOR_PATH = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_s3_mixed_mesh_manifest.py"
+)
+_ACTIVE_CANDIDATE_ROOT: Path | None = None
+
+PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-phase4a-production-payload-v1"
+LEAF_ASSIGNMENT_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-assignment-v3"
+)
+LEAF_PAYLOAD_SCHEMA = "anysolver.e4-pl-s3-v2-stage4a-leaf-payload-v3"
+LEAF_SCIENTIFIC_SCHEMA = (
+    "anysolver.e4-pl-s3-v2-stage4a-leaf-scientific-v3"
+)
+LEAF_CANDIDATE_AUTHORITY_KEYS = (
+    "candidate_archive_sha256",
+    "candidate_commit",
+    "candidate_tree",
+    "producer_program_sha256",
+)
+LOAD_IDENTITY = "UNIFORM_REFERENCE_NORMAL_DEAD_PRESSURE_1000_PA_V1"
+CLASSIFICATION = "CLASSIFYING_Q4_V2A_PRODUCTION_MECHANICS"
+V1_DISPOSITION = "NONCLASSIFYING_V1_COMPARATOR_NEVER_FALLBACK"
+FORMAL_V1_DISPOSITION = (
+    "HISTORICAL_V1_COMPARATOR_EXCLUDED_FROM_FORMAL_RUNTIME_NO_FALLBACK"
+)
+V2_COMPUTATION_ROLE = "V2_CLASSIFYING"
+V1_COMPUTATION_ROLE = "V1_DIAGNOSTIC"
+COMPUTATION_ROLES = (V2_COMPUTATION_ROLE, V1_COMPUTATION_ROLE)
+REFERENCE_VECTOR_ENCODING = "CANONICAL_JSON_ROW_MAJOR_NODAL_6DOF_V1"
+REFERENCE_DOF_ORDER = ("ux", "uy", "uz", "theta_x", "theta_y", "theta_d")
+REFERENCE_IDENTITY = (
+    "INDEPENDENT_NAVIER_REISSNER_MINDLIN_UNIFORM_PRESSURE_SHELL_EMBEDDED_V3"
+)
+SUPPORT_IDENTITY = "HARD_NAVIER_TRANSLATIONS_PLUS_EDGE_ZERO_SHELL_ROTATIONS_V3"
+Q4_FORMULATION_ID = "E4_PL_QUALIFIED_Q4_HYBRID_V2"
+V2A_FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2A_FLAT_LINEAR_V1"
+V1_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+
+LENGTH = 1.0
+WIDTH = 1.0
+THICKNESS = 0.01
+PRESSURE = 1000.0
+ELASTIC_MODULUS = 210_000_000_000.0
+POISSON_RATIO = 0.3
+DENSITY = 7850.0
+SHEAR_CORRECTION = 5.0 / 6.0
+SERIES_MAX_ODD_INDEX = 99
+
+
+def _publish_exclusive(path: Path, raw: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(path):
+        raise FlatFunnelError("refusing to overwrite scientific output")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.pending-", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise FlatFunnelError("refusing to overwrite scientific output") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+
+
+def _reserve_progress_exclusive(path: Path) -> int:
+    """Create one regular non-reparse progress file and retain its descriptor."""
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    flags = (
+        os.O_CREAT
+        | os.O_EXCL
+        | os.O_WRONLY
+        | getattr(os, "O_BINARY", 0)
+        | getattr(os, "O_NOINHERIT", 0)
+    )
+    try:
+        descriptor = os.open(path, flags, 0o600)
+    except FileExistsError as exc:
+        raise FlatFunnelError("refusing to overwrite progress output") from exc
+    try:
+        information = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(information.st_mode)
+            or getattr(information, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+        ):
+            raise FlatFunnelError(
+                "progress output is not a regular non-reparse file"
+            )
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _append_reserved_progress(descriptor: int, record: Mapping[str, Any]) -> None:
+    """Append one validated canonical row through the reserved descriptor."""
+
+    expected = progress_record(
+        str(record.get("assignment_id", "")),
+        sequence=record.get("sequence"),  # type: ignore[arg-type]
+        phase=str(record.get("phase", "")),
+        completed=record.get("completed"),  # type: ignore[arg-type]
+        total=record.get("total"),  # type: ignore[arg-type]
+    )
+    if dict(record) != expected:
+        raise FlatFunnelError("progress record has extra or altered fields")
+    raw = canonical_bytes(expected)
+    offset = 0
+    while offset < len(raw):
+        written = os.write(descriptor, raw[offset:])
+        if written <= 0:
+            raise FlatFunnelError("progress output write did not advance")
+        offset += written
+    os.fsync(descriptor)
+
+
+def _load_manifest_generator() -> Any:
+    generator_path = (
+        MANIFEST_GENERATOR_PATH
+        if _ACTIVE_CANDIDATE_ROOT is None
+        else _ACTIVE_CANDIDATE_ROOT
+        / "docs"
+        / "reference_cases"
+        / "e4_pl_s3_mixed_mesh_manifest.py"
+    ).resolve()
+    if not generator_path.is_file() or generator_path.is_symlink():
+        raise FlatFunnelError("frozen connectivity generator is not a regular file")
+    spec = importlib.util.spec_from_file_location(
+        "_s3_v2_phase4a_manifest_generator",
+        generator_path,
+    )
+    if spec is None or spec.loader is None:
+        raise FlatFunnelError("cannot load the frozen connectivity generator")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_assignment(
+    plan_path: Path,
+    *,
+    shard_index: int,
+    selector: str,
+) -> tuple[Mapping[str, Any], Mapping[str, Any], str]:
+    """Validate and return one exact Phase-4A diagonal assignment."""
+
+    manifest_value, manifest_raw = strict_json_load(MANIFEST_PATH)
+    records = validate_manifest(manifest_value, manifest_raw)
+    plan_value, plan_raw = strict_json_load(Path(plan_path))
+    plan = validate_phase_plan(plan_value, plan_raw, records, "4A")
+    if (
+        selector != SELECTOR
+        or plan["selector"] != SELECTOR
+        or plan["phase"] != "4A"
+        or plan["scope"] != "full"
+        or plan["record_count"] != 81
+    ):
+        raise FlatFunnelError("producer accepts only the exact Phase-4A V2A plan")
+    if isinstance(shard_index, bool) or shard_index not in range(3):
+        raise FlatFunnelError("shard-index must be 0, 1, or 2")
+    shard = plan["shards"][shard_index]
+    if len(shard["records"]) != 27:
+        raise FlatFunnelError("Phase-4A diagonal assignment must contain 27 records")
+    return plan, shard, sha256(plan_raw)
+
+
+def _require_sha256(value: str, location: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in "0123456789ABCDEF" for character in value)
+    ):
+        raise FlatFunnelError(f"{location} must be an uppercase SHA-256")
+    return value
+
+
+def _require_git_object(value: str, location: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 40
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise FlatFunnelError(f"{location} must be a lowercase 40-hex Git object")
+    return value
+
+
+def leaf_candidate_authority(
+    *,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> dict[str, str]:
+    """Return the exact candidate/program identity shared by every leaf."""
+
+    return {
+        "candidate_archive_sha256": _require_sha256(
+            candidate_archive_sha256, "leaf candidate archive hash"
+        ),
+        "candidate_commit": _require_git_object(
+            candidate_commit, "leaf candidate commit"
+        ),
+        "candidate_tree": _require_git_object(
+            candidate_tree, "leaf candidate tree"
+        ),
+        "producer_program_sha256": _require_sha256(
+            producer_program_sha256, "leaf producer program hash"
+        ),
+    }
+
+
+def _require_current_producer_program(expected_sha256: str) -> None:
+    expected = _require_sha256(expected_sha256, "leaf producer program hash")
+    path = Path(__file__)
+    try:
+        information = path.lstat()
+    except OSError as exc:
+        raise FlatFunnelError(f"cannot inspect leaf producer program: {exc}") from exc
+    if (
+        not stat.S_ISREG(information.st_mode)
+        or path.is_symlink()
+        or getattr(information, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    ):
+        raise FlatFunnelError("leaf producer program is not a regular non-reparse file")
+    if sha256(path.read_bytes()) != expected:
+        raise FlatFunnelError("leaf producer program hash differs")
+
+
+def leaf_assignment_core(
+    plan_sha256: str,
+    shard: Mapping[str, Any],
+    member: Mapping[str, Any],
+    *,
+    catalog_index: int,
+    logical_record_index: int,
+    computation_role: str,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> dict[str, Any]:
+    """Return the immutable input identity for one Phase-4A record leaf."""
+
+    _require_sha256(plan_sha256, "leaf plan hash")
+    if (
+        isinstance(catalog_index, bool)
+        or not isinstance(catalog_index, int)
+        or catalog_index < 0
+    ):
+        raise FlatFunnelError("leaf catalog index must be a nonnegative integer")
+    if (
+        isinstance(logical_record_index, bool)
+        or not isinstance(logical_record_index, int)
+        or logical_record_index < 0
+    ):
+        raise FlatFunnelError(
+            "leaf logical record index must be a nonnegative integer"
+        )
+    if computation_role != V2_COMPUTATION_ROLE:
+        raise FlatFunnelError("formal leaf computation role must be V2 classifying")
+    try:
+        assignment_id = str(shard["assignment_id"])
+        assignment_sha256 = _require_sha256(
+            str(shard["assignment_sha256"]), "parent assignment hash"
+        )
+        diagonal = str(shard["diagonal"])
+        manifest_index = int(member["manifest_index"])
+        record_id = str(member["record_id"])
+        record = member["record"]
+        member_raw = canonical_bytes(dict(member))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise FlatFunnelError("leaf parent assignment or member is malformed") from exc
+    if (
+        not assignment_id
+        or not record_id
+        or not isinstance(record, Mapping)
+        or str(record.get("diagonal")) != diagonal
+    ):
+        raise FlatFunnelError("leaf parent assignment identity differs")
+    s3_element_count = record.get("s3_element_count")
+    if (
+        isinstance(s3_element_count, bool)
+        or not isinstance(s3_element_count, int)
+        or s3_element_count < 0
+    ):
+        raise FlatFunnelError("leaf S3 element count is malformed")
+    s3_selector = SELECTOR
+    candidate_authority = leaf_candidate_authority(
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    return {
+        "catalog_index": catalog_index,
+        **candidate_authority,
+        "computation_role": computation_role,
+        "diagonal": diagonal,
+        "logical_record_index": logical_record_index,
+        "manifest_index": manifest_index,
+        "parent_assignment_id": assignment_id,
+        "parent_assignment_sha256": assignment_sha256,
+        "phase": "4A",
+        "plan_sha256": plan_sha256,
+        "record_id": record_id,
+        "record_member_sha256": sha256(member_raw),
+        "schema": LEAF_ASSIGNMENT_SCHEMA,
+        "selector": SELECTOR,
+        "s3_selector": s3_selector,
+    }
+
+
+def build_leaf_catalog(
+    plan: Mapping[str, Any],
+    plan_sha256: str,
+    *,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> list[dict[str, Any]]:
+    """Derive exactly 81 V2 classifying leaves in logical-record order."""
+
+    _require_sha256(plan_sha256, "leaf catalog plan hash")
+    if (
+        plan.get("phase") != "4A"
+        or plan.get("scope") != "full"
+        or plan.get("selector") != SELECTOR
+        or plan.get("record_count") != 81
+    ):
+        raise FlatFunnelError("leaf catalog requires the exact full Phase-4A plan")
+    shards = plan.get("shards")
+    if not isinstance(shards, list) or len(shards) != 3:
+        raise FlatFunnelError("leaf catalog requires three diagonal assignments")
+    made: list[dict[str, Any]] = []
+    seen_record_roles: set[tuple[str, str]] = set()
+    seen_hashes: set[str] = set()
+    logical_record_index = 0
+    for shard in shards:
+        if not isinstance(shard, Mapping):
+            raise FlatFunnelError("leaf catalog shard is malformed")
+        members = shard.get("records")
+        if not isinstance(members, list) or len(members) != 27:
+            raise FlatFunnelError("leaf catalog shard coverage differs")
+        for member in members:
+            if not isinstance(member, Mapping):
+                raise FlatFunnelError("leaf catalog member is malformed")
+            record = member.get("record")
+            if not isinstance(record, Mapping):
+                raise FlatFunnelError("leaf catalog record is malformed")
+            for computation_role in (V2_COMPUTATION_ROLE,):
+                core = leaf_assignment_core(
+                    plan_sha256,
+                    shard,
+                    member,
+                    catalog_index=len(made),
+                    logical_record_index=logical_record_index,
+                    computation_role=computation_role,
+                    candidate_commit=candidate_commit,
+                    candidate_tree=candidate_tree,
+                    candidate_archive_sha256=candidate_archive_sha256,
+                    producer_program_sha256=producer_program_sha256,
+                )
+                digest = sha256(canonical_bytes(core))
+                identity = (str(core["record_id"]), computation_role)
+                if identity in seen_record_roles or digest in seen_hashes:
+                    raise FlatFunnelError(
+                        "leaf catalog contains a duplicate record role or hash"
+                    )
+                seen_record_roles.add(identity)
+                seen_hashes.add(digest)
+                made.append(
+                    {
+                        "assignment": core,
+                        "leaf_assignment_sha256": digest,
+                        "leaf_id": f"S3_V2_FLAT_4A_LEAF_{digest}",
+                    }
+                )
+            logical_record_index += 1
+    if (
+        len(made) != 81
+        or len(seen_record_roles) != 81
+        or len(
+            {item["assignment"]["record_id"] for item in made}
+        )
+        != 81
+        or sum(
+            item["assignment"]["computation_role"] == V2_COMPUTATION_ROLE
+            for item in made
+        )
+        != 81
+    ):
+        raise FlatFunnelError(
+            "formal leaf catalog coverage must be exactly 81 V2 computations"
+        )
+    return made
+
+
+def load_leaf_assignment(
+    plan_path: Path,
+    *,
+    leaf_assignment_sha256: str,
+    selector: str,
+    candidate_commit: str,
+    candidate_tree: str,
+    candidate_archive_sha256: str,
+    producer_program_sha256: str,
+) -> tuple[
+    Mapping[str, Any],
+    Mapping[str, Any],
+    Mapping[str, Any],
+    Mapping[str, Any],
+    str,
+]:
+    """Validate and resolve exactly one content-addressed Phase-4A leaf."""
+
+    requested = _require_sha256(
+        leaf_assignment_sha256, "leaf assignment hash"
+    )
+    manifest_value, manifest_raw = strict_json_load(MANIFEST_PATH)
+    records = validate_manifest(manifest_value, manifest_raw)
+    plan_value, plan_raw = strict_json_load(Path(plan_path))
+    plan = validate_phase_plan(plan_value, plan_raw, records, "4A")
+    plan_digest = sha256(plan_raw)
+    if (
+        selector != SELECTOR
+        or plan["selector"] != SELECTOR
+        or plan["phase"] != "4A"
+        or plan["scope"] != "full"
+        or plan["record_count"] != 81
+    ):
+        raise FlatFunnelError("producer accepts only the exact Phase-4A V2A plan")
+    catalog = build_leaf_catalog(
+        plan,
+        plan_digest,
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    matching = [
+        leaf for leaf in catalog if leaf["leaf_assignment_sha256"] == requested
+    ]
+    if len(matching) != 1:
+        raise FlatFunnelError("leaf assignment hash is absent or duplicated")
+    leaf = matching[0]
+    assignment = leaf["assignment"]
+    matching_shards = [
+        shard
+        for shard in plan["shards"]
+        if shard["assignment_id"] == assignment["parent_assignment_id"]
+    ]
+    if len(matching_shards) != 1:
+        raise FlatFunnelError("leaf parent assignment is absent or duplicated")
+    shard = matching_shards[0]
+    matching_members = [
+        member
+        for member in shard["records"]
+        if member["record_id"] == assignment["record_id"]
+    ]
+    if len(matching_members) != 1:
+        raise FlatFunnelError("leaf record is absent or duplicated")
+    member = matching_members[0]
+    if (
+        sha256(canonical_bytes(dict(member)))
+        != assignment["record_member_sha256"]
+    ):
+        raise FlatFunnelError("leaf record member hash differs")
+    return plan, shard, member, leaf, plan_digest
+
+
+def activate_frozen_candidate_source(candidate_source_root: Path) -> None:
+    """Select an extracted exact-candidate source only after authority validation."""
+
+    candidate_root = candidate_source_root.resolve()
+    source_root = (candidate_root / "src").resolve()
+    try:
+        source_root.relative_to(candidate_root)
+    except ValueError as exc:
+        raise FlatFunnelError("candidate source root escapes its extracted tree") from exc
+    if not source_root.is_dir() or source_root.is_symlink():
+        raise FlatFunnelError("candidate source root is not a regular extracted tree")
+    if any(name == "anysolver" or name.startswith("anysolver.") for name in sys.modules):
+        raise FlatFunnelError("ANYsolver was imported before producer authority validation")
+    sys.path.insert(0, str(source_root))
+    spec = importlib.util.find_spec("anysolver")
+    if spec is None or spec.origin is None:
+        raise FlatFunnelError("frozen ANYsolver candidate cannot be resolved")
+    origin = Path(spec.origin).resolve()
+    try:
+        origin.relative_to(source_root)
+    except ValueError as exc:
+        raise FlatFunnelError("ANYsolver candidate resolved outside the frozen source tree") from exc
+    global _ACTIVE_CANDIDATE_ROOT
+    _ACTIVE_CANDIDATE_ROOT = candidate_root
+
+
+def validate_extracted_candidate_source(
+    candidate_source_root: Path,
+    candidate_archive: Path,
+    candidate_archive_sha256: str,
+) -> None:
+    """Prove the imported tree is exactly the registered Git archive."""
+
+    root = candidate_source_root.resolve()
+    archive = candidate_archive.resolve()
+    if not root.is_dir() or root.is_symlink():
+        raise FlatFunnelError("extracted candidate root is not a regular directory")
+    if not archive.is_file() or archive.is_symlink():
+        raise FlatFunnelError("candidate archive is not a regular file")
+    if (
+        len(candidate_archive_sha256) != 64
+        or candidate_archive_sha256 != candidate_archive_sha256.upper()
+        or any(character not in "0123456789ABCDEF" for character in candidate_archive_sha256)
+        or sha256(archive.read_bytes()) != candidate_archive_sha256
+    ):
+        raise FlatFunnelError("candidate archive hash differs")
+    expected_files: set[str] = set()
+    seen_names: set[str] = set()
+    with tarfile.open(archive, mode="r:") as bundle:
+        for member in bundle.getmembers():
+            name = member.name.rstrip("/")
+            if not name:
+                continue
+            pure = Path(name.replace("/", os.sep))
+            if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
+                raise FlatFunnelError("candidate archive contains an unsafe path")
+            canonical_name = "/".join(pure.parts)
+            if canonical_name.casefold() in seen_names:
+                raise FlatFunnelError("candidate archive path is duplicated")
+            seen_names.add(canonical_name.casefold())
+            target = root.joinpath(*pure.parts).resolve()
+            try:
+                target.relative_to(root)
+            except ValueError as exc:
+                raise FlatFunnelError("candidate archive path escapes its root") from exc
+            if member.isdir():
+                if not target.is_dir() or target.is_symlink():
+                    raise FlatFunnelError("candidate archive directory differs")
+                continue
+            if not member.isfile() or not target.is_file() or target.is_symlink():
+                raise FlatFunnelError("candidate archive contains a non-regular entry")
+            source = bundle.extractfile(member)
+            if source is None or target.read_bytes() != source.read():
+                raise FlatFunnelError("extracted candidate file differs from its archive")
+            expected_files.add(canonical_name)
+    actual_files = {
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*")
+        if path.is_file() and not path.is_symlink()
+    }
+    if actual_files != expected_files:
+        raise FlatFunnelError("extracted candidate file graph differs from its archive")
+
+
+def _node_id(i: int, j: int, level: int) -> int:
+    return int(j) * (int(level) + 1) + int(i) + 1
+
+
+def _hard_navier_supports(model: Any, level: int) -> dict[str, int]:
+    """Apply the frozen translation-plus-tangential-rotation support."""
+
+    from anysolver.boundary import BoundaryCondition
+
+    n = int(level)
+    x_edges = sorted(
+        {_node_id(0, j, n) for j in range(n + 1)}
+        | {_node_id(n, j, n) for j in range(n + 1)}
+    )
+    y_edges = sorted(
+        {_node_id(i, 0, n) for i in range(n + 1)}
+        | {_node_id(i, n, n) for i in range(n + 1)}
+    )
+    all_edges = sorted(set(x_edges) | set(y_edges))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "hard_navier_edge_translations",
+            all_edges,
+            {"ux": 0.0, "uy": 0.0, "uz": 0.0},
+        )
+    )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "hard_navier_theta_x_on_x_edges",
+            x_edges,
+            {"rx": 0.0},
+        )
+    )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "hard_navier_theta_y_on_y_edges",
+            y_edges,
+            {"ry": 0.0},
+        )
+    )
+    return {
+        "edge_nodes": len(all_edges),
+        "theta_x_x_edge_constraints": len(x_edges),
+        "theta_y_y_edge_constraints": len(y_edges),
+        "translation_constraints": 3 * len(all_edges),
+    }
+
+
+def _build_model(
+    record: Mapping[str, Any],
+    *,
+    s3_selector: str,
+) -> tuple[Any, dict[int, str], dict[str, int], dict[str, int]]:
+    """Build one exact manifest topology with Q4 plus the requested S3."""
+
+    import numpy as np
+    from anysolver.boundary import LoadCase
+    from anysolver.elements import create_shell_element
+    from anysolver.fe_core import FEModel
+
+    generator = _load_manifest_generator()
+    level = int(record["level"])
+    split_count = int(record["split_base_cell_count"])
+    mask = str(record["mask"])
+    diagonal = str(record["diagonal"])
+    base_cells = () if split_count == 0 else generator.selected_base_cells(mask, split_count)
+    split_cells = set(generator.expanded_split_cells(base_cells, level))
+    if len(split_cells) != int(record["split_refined_cell_count"]):
+        raise FlatFunnelError("refined split cells differ from the frozen manifest")
+
+    model = FEModel(f"S3_V2_PHASE4A_{s3_selector}_{level}_{mask}_{diagonal}")
+    model.add_material(
+        "phase4a_steel",
+        ELASTIC_MODULUS,
+        POISSON_RATIO,
+        density=DENSITY,
+    )
+    for j in range(level + 1):
+        for i in range(level + 1):
+            model.add_node(
+                _node_id(i, j, level),
+                LENGTH * i / level,
+                WIDTH * j / level,
+                0.0,
+            )
+
+    kinds: dict[int, str] = {}
+    formulation_counts = {"qualified_q4": 0, "v2a_s3": 0, "v1_s3": 0}
+    element_id = 0
+    for j in range(level):
+        for i in range(level):
+            for kind, nodes in generator._cell_connectivity(
+                i,
+                j,
+                level,
+                split=(i, j) in split_cells,
+                diagonal=diagonal,
+            ):
+                element_id += 1
+                if kind == "Q4":
+                    element = create_shell_element(
+                        element_id,
+                        list(nodes),
+                        "phase4a_steel",
+                        formulation="e4-pl",
+                        thickness=THICKNESS,
+                        reference_normal=np.asarray((0.0, 0.0, 1.0)),
+                        drilling_stabilization=0.001,
+                        hourglass_stabilization=0.001,
+                        pl_stabilization=1.0,
+                        planar_tolerance=1.0e-10,
+                        warped_formulation="varying_frame",
+                    )
+                    if str(getattr(element, "formulation_id", "")) != Q4_FORMULATION_ID:
+                        raise FlatFunnelError("Q4 factory did not return the qualified Q4")
+                    formulation_counts["qualified_q4"] += 1
+                else:
+                    kwargs: dict[str, Any] = {
+                        "formulation": s3_selector,
+                        "thickness": THICKNESS,
+                        "reference_normal": np.asarray((0.0, 0.0, 1.0)),
+                    }
+                    if s3_selector == "e4-pl-s3":
+                        kwargs["director_polarity"] = 1
+                    element = create_shell_element(
+                        element_id,
+                        list(nodes),
+                        "phase4a_steel",
+                        **kwargs,
+                    )
+                    expected = (
+                        V2A_FORMULATION_ID
+                        if s3_selector == SELECTOR
+                        else V1_FORMULATION_ID
+                    )
+                    if str(getattr(element, "formulation_id", "")) != expected:
+                        raise FlatFunnelError(
+                            f"S3 factory returned {getattr(element, 'formulation_id', None)!r}, "
+                            f"expected {expected!r}"
+                        )
+                    formulation_counts["v2a_s3" if s3_selector == SELECTOR else "v1_s3"] += 1
+                model.add_element(element_id, element)
+                kinds[element_id] = kind
+
+    topology_digest = generator.connectivity_sha256(level, frozenset(split_cells), diagonal)
+    if topology_digest != record["connectivity_sha256"]:
+        raise FlatFunnelError("constructed connectivity differs from the manifest")
+    element_counts = {
+        "Q4": sum(kind == "Q4" for kind in kinds.values()),
+        "S3": sum(kind == "S3" for kind in kinds.values()),
+    }
+    if element_counts != {
+        "Q4": int(record["q4_element_count"]),
+        "S3": int(record["s3_element_count"]),
+    }:
+        raise FlatFunnelError("constructed element counts differ from the manifest")
+    supports = _hard_navier_supports(model, level)
+    load = LoadCase("phase4a_uniform_dead_pressure")
+    for registered_id in model.mesh.elements:
+        load.add_pressure_load(int(registered_id), PRESSURE)
+    model.add_load_case(load)
+    return model, kinds, element_counts, formulation_counts | supports
+
+
+def _mindlin_amplitudes() -> tuple[Any, Any, Any, Any, Any]:
+    """Independently solve the continuum modal stationarity equations."""
+
+    import numpy as np
+
+    odd = np.arange(1, SERIES_MAX_ODD_INDEX + 1, 2, dtype=float)
+    m, n = np.meshgrid(odd, odd, indexing="ij")
+    a = math.pi * m / LENGTH
+    b = math.pi * n / WIDTH
+    load = 16.0 * PRESSURE / (math.pi**2 * m * n)
+    rigidity = ELASTIC_MODULUS * THICKNESS**3 / (
+        12.0 * (1.0 - POISSON_RATIO**2)
+    )
+    shear = (
+        SHEAR_CORRECTION
+        * ELASTIC_MODULUS
+        / (2.0 * (1.0 + POISSON_RATIO))
+        * THICKNESS
+    )
+    transverse = 0.5 * (1.0 - POISSON_RATIO)
+    coupling = 0.5 * (1.0 + POISSON_RATIO)
+    matrices = np.empty(m.shape + (3, 3), dtype=float)
+    matrices[..., 0, 0] = shear * (a * a + b * b)
+    matrices[..., 0, 1] = matrices[..., 1, 0] = shear * a
+    matrices[..., 0, 2] = matrices[..., 2, 0] = shear * b
+    matrices[..., 1, 1] = shear + rigidity * (a * a + transverse * b * b)
+    matrices[..., 2, 2] = shear + rigidity * (b * b + transverse * a * a)
+    matrices[..., 1, 2] = matrices[..., 2, 1] = rigidity * coupling * a * b
+    right = np.zeros(m.shape + (3,), dtype=float)
+    right[..., 0] = load
+    # NumPy 2 treats a stacked ``(..., M)`` right-hand side as matrices rather
+    # than stacked vectors.  Retain the explicit singleton column so the
+    # batched solve has an unambiguous ``(..., M, 1)`` signature.
+    solved = np.linalg.solve(matrices, right[..., None])[..., 0]
+    return odd, solved[..., 0], solved[..., 1], solved[..., 2], load
+
+
+_REFERENCE_CACHE: dict[int, tuple[Any, str, float]] = {}
+
+
+def mindlin_nodal_reference(level: int) -> tuple[Any, str, float]:
+    """Return the frozen independent Mindlin field in global nodal DOF order."""
+
+    import numpy as np
+
+    nlevel = int(level)
+    cached = _REFERENCE_CACHE.get(nlevel)
+    if cached is not None:
+        vector, digest, center = cached
+        return vector.copy(), digest, center
+    odd, w_amplitude, beta_x_amplitude, beta_y_amplitude, _load = (
+        _mindlin_amplitudes()
+    )
+    coordinates = np.linspace(0.0, 1.0, nlevel + 1)
+    angles = math.pi * np.outer(coordinates, odd)
+    sine = np.sin(angles)
+    cosine = np.cos(angles)
+    transverse = np.einsum("mn,im,jn->ji", w_amplitude, sine, sine, optimize=True)
+    beta_x = np.einsum(
+        "mn,im,jn->ji", beta_x_amplitude, cosine, sine, optimize=True
+    )
+    beta_y = np.einsum(
+        "mn,im,jn->ji", beta_y_amplitude, sine, cosine, optimize=True
+    )
+    vector = np.zeros(((nlevel + 1) ** 2, 6), dtype=float)
+    vector[:, 2] = transverse.reshape(-1)
+    # Frozen shell convention: beta_x=theta_y and beta_y=-theta_x.
+    vector[:, 3] = -beta_y.reshape(-1)
+    vector[:, 4] = beta_x.reshape(-1)
+    # Enforce the exact discrete hard-Navier trace, avoiding sine(pi) roundoff
+    # in a reference input that is compared in assembled discrete energy.
+    for j in range(nlevel + 1):
+        for i in range(nlevel + 1):
+            row = _node_id(i, j, nlevel) - 1
+            if i in (0, nlevel) or j in (0, nlevel):
+                vector[row, :3] = 0.0
+            if i in (0, nlevel):
+                vector[row, 3] = 0.0
+            if j in (0, nlevel):
+                vector[row, 4] = 0.0
+    made = np.asarray(vector.reshape(-1), dtype=np.float64)
+    reference_document = {
+        "dof_order": list(REFERENCE_DOF_ORDER),
+        "level": nlevel,
+        "values": [float(value) for value in made],
+    }
+    digest = sha256(canonical_bytes(reference_document))
+    center_id = _node_id(nlevel // 2, nlevel // 2, nlevel) - 1
+    center = float(vector[center_id, 2])
+    stored = (made.copy(), digest, center)
+    _REFERENCE_CACHE[nlevel] = stored
+    return made.copy(), digest, center
+
+
+def _solve_and_measure(
+    model: Any,
+    kinds: Mapping[int, str],
+    reference: Any,
+) -> tuple[dict[str, Any], dict[str, float], Any]:
+    """Assemble once, solve free DOFs, and compute raw energy forms."""
+
+    import numpy as np
+    from scipy.sparse.linalg import spsolve
+    from anysolver.matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
+
+    stiffness, _assembly = assemble_stiffness_matrix(model)
+    load, _load_info = assemble_load_vector(model, model.load_cases[0])
+    model.apply_boundary_conditions()
+    fixed = np.asarray(sorted(model.mesh.dof_manager._constrained_dofs), dtype=np.intp)
+    free_mask = np.ones(stiffness.shape[0], dtype=bool)
+    free_mask[fixed] = False
+    free = np.flatnonzero(free_mask)
+    if reference.shape != (stiffness.shape[0],):
+        raise FlatFunnelError("Mindlin nodal reference size differs from assembled DOFs")
+    solution = np.zeros(stiffness.shape[0], dtype=float)
+    solution[free] = spsolve(stiffness[free][:, free], load[free])
+    if not np.all(np.isfinite(solution)):
+        raise FlatFunnelError("Phase-4A linear solution contains nonfinite values")
+    residual = stiffness[free] @ solution - load[free]
+    residual_relative = float(
+        np.linalg.norm(residual) / max(np.linalg.norm(load[free]), np.finfo(float).tiny)
+    )
+
+    stiffness_solution = stiffness @ solution
+    stiffness_reference = stiffness @ reference
+    solution_total = float(solution @ stiffness_solution)
+    reference_total = float(reference @ stiffness_reference)
+    cross = float(solution @ stiffness_reference)
+    error_total_raw = solution_total + reference_total - 2.0 * cross
+    rounding_scale = max(abs(solution_total), abs(reference_total), abs(cross), 1.0)
+    if error_total_raw < -256.0 * np.finfo(float).eps * rounding_scale:
+        raise FlatFunnelError("assembled energy-error quadratic form is negative")
+    error_total = max(error_total_raw, 0.0)
+
+    component_quadratics = {
+        "physical": 0.0,
+        "q4_pl": 0.0,
+        "s3_pl": 0.0,
+        "q4_hourglass": 0.0,
+    }
+    material = model.get_material("phase4a_steel")
+    for element_id, element in model.mesh.elements.items():
+        mapping = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        local = solution[mapping]
+        components = element.compute_stiffness_components(model.mesh, material)
+        component_quadratics["physical"] += float(local @ components["physical"] @ local)
+        if kinds[int(element_id)] == "Q4":
+            component_quadratics["q4_pl"] += float(local @ components["pl"] @ local)
+            component_quadratics["q4_hourglass"] += float(
+                local @ components["hourglass"] @ local
+            )
+        else:
+            component_quadratics["s3_pl"] += float(local @ components["pl"] @ local)
+    reconstruction = sum(component_quadratics.values())
+    if abs(reconstruction - solution_total) > 2.0e-10 * max(abs(solution_total), 1.0):
+        raise FlatFunnelError("component energies do not reconstruct total stiffness energy")
+    strain_energies = {
+        name: 0.5 * value for name, value in component_quadratics.items()
+    }
+    strain_energies["total"] = 0.5 * solution_total
+    denominator = max(solution_total, np.finfo(float).tiny)
+    participation = {
+        "q4_hourglass": component_quadratics["q4_hourglass"] / denominator,
+        "q4_pl": component_quadratics["q4_pl"] / denominator,
+        "s3_pl": component_quadratics["s3_pl"] / denominator,
+    }
+    return (
+        {
+            "free_dofs": int(free.size),
+            "residual_relative": residual_relative,
+            "status": "CONVERGED_DIRECT_SPARSE",
+            "total_dofs": int(stiffness.shape[0]),
+        },
+        {
+            "error_total": error_total,
+            "reference_total": reference_total,
+            "solution_reference_cross": cross,
+            "solution_total": solution_total,
+        }
+        | {
+            "energy_absolute": math.sqrt(error_total),
+            "energy_relative": math.sqrt(
+                error_total / max(reference_total, np.finfo(float).tiny)
+            ),
+        }
+        | {f"strain_{key}": value for key, value in strain_energies.items()}
+        | {f"participation_{key}": value for key, value in participation.items()},
+        solution,
+    )
+
+
+def produce_case(
+    member: Mapping[str, Any],
+    *,
+    s3_selector: str = SELECTOR,
+) -> dict[str, Any]:
+    """Execute one manifest member with either V2A or diagnostic V1 S3."""
+
+    import numpy as np
+
+    record = member["record"]
+    model, kinds, element_counts, combined_counts = _build_model(
+        record,
+        s3_selector=s3_selector,
+    )
+    reference, reference_digest, reference_center = mindlin_nodal_reference(
+        int(record["level"])
+    )
+    solver, measured, solution = _solve_and_measure(model, kinds, reference)
+    center_node = model.mesh.nodes[
+        _node_id(int(record["level"]) // 2, int(record["level"]) // 2, int(record["level"]))
+    ]
+    center_solution = float(solution[center_node.dofs[2]])
+    formulation_counts = {
+        key: int(combined_counts[key])
+        for key in ("qualified_q4", "v2a_s3", "v1_s3")
+    }
+    support_counts = {
+        key: int(combined_counts[key])
+        for key in (
+            "edge_nodes",
+            "theta_x_x_edge_constraints",
+            "theta_y_y_edge_constraints",
+            "translation_constraints",
+        )
+    }
+    made = {
+        "connectivity_sha256": str(record["connectivity_sha256"]),
+        "diagonal": str(record["diagonal"]),
+        "element_counts": element_counts,
+        "energy_norm": {
+            "absolute": measured["energy_absolute"],
+            "relative": measured["energy_relative"],
+        },
+        "formulation_counts": formulation_counts,
+        "level": int(record["level"]),
+        "manifest_index": int(member["manifest_index"]),
+        "mask": str(record["mask"]),
+        "node_count": int(record["node_count"]),
+        "participation": {
+            "q4_hourglass": measured["participation_q4_hourglass"],
+            "q4_pl": measured["participation_q4_pl"],
+            "s3_pl": measured["participation_s3_pl"],
+        },
+        "quadratic_forms": {
+            key: measured[key]
+            for key in (
+                "error_total",
+                "reference_total",
+                "solution_reference_cross",
+                "solution_total",
+            )
+        },
+        "record_id": str(member["record_id"]),
+        "reference": {
+            "center_transverse_displacement": reference_center,
+            "dof_order": list(REFERENCE_DOF_ORDER),
+            "nodal_input_encoding": REFERENCE_VECTOR_ENCODING,
+            "reference_nodal_input_sha256": reference_digest,
+            "series_max_odd_index": SERIES_MAX_ODD_INDEX,
+        },
+        "response": {
+            "center_transverse_displacement": center_solution,
+            "relative_error": abs(center_solution - reference_center)
+            / max(abs(reference_center), np.finfo(float).tiny),
+        },
+        "s3_area_fraction_percent": int(record["s3_area_fraction_percent"]),
+        "solution_energies": {
+            "physical": measured["strain_physical"],
+            "q4_hourglass": measured["strain_q4_hourglass"],
+            "q4_pl": measured["strain_q4_pl"],
+            "s3_pl": measured["strain_s3_pl"],
+            "total": measured["strain_total"],
+        },
+        "solver": solver,
+        "support_counts": support_counts,
+    }
+    if s3_selector == SELECTOR:
+        made["classification"] = CLASSIFICATION
+    else:
+        made["classification"] = "NONCLASSIFYING_V1_COMPARATOR_ONLY"
+        made["formulation_id"] = V1_FORMULATION_ID
+    return made
+
+
+def run_assignment(
+    plan_path: Path,
+    *,
+    shard_index: int,
+    selector: str,
+    candidate_source_root: Path,
+    candidate_archive: Path,
+    candidate_archive_sha256: str,
+    output: Path,
+    progress: Path,
+) -> dict[str, Any]:
+    """Run one exact diagonal shard and exclusively publish canonical JSON."""
+
+    plan, shard, plan_digest = load_assignment(
+        plan_path,
+        shard_index=shard_index,
+        selector=selector,
+    )
+    output = Path(output)
+    progress = Path(progress)
+    if output.exists() or progress.exists():
+        raise FlatFunnelError("scientific and progress outputs must be exclusive")
+    records = shard["records"]
+    sequence = 0
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="INITIALIZATION",
+            completed=0,
+            total=len(records),
+        ),
+    )
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="AUTHORITY_COMPLETE",
+            completed=0,
+            total=len(records),
+        ),
+    )
+    validate_extracted_candidate_source(
+        candidate_source_root,
+        candidate_archive,
+        candidate_archive_sha256,
+    )
+    activate_frozen_candidate_source(candidate_source_root)
+    classifying: list[dict[str, Any]] = []
+    comparators: list[dict[str, Any]] = []
+    for completed, member in enumerate(records, start=1):
+        # V2A always executes first.  Its failure aborts the shard; V1 is never
+        # substituted for the missing classifying evidence.
+        classifying.append(produce_case(member, s3_selector=SELECTOR))
+        if int(member["record"]["s3_element_count"]) > 0:
+            comparators.append(produce_case(member, s3_selector="e4-pl-s3"))
+        sequence += 1
+        append_progress(
+            progress,
+            progress_record(
+                str(shard["assignment_id"]),
+                sequence=sequence,
+                phase="CASE_OR_REFINEMENT_OR_STATION",
+                completed=completed,
+                total=len(records),
+            ),
+        )
+    if len(classifying) != 27 or len(comparators) != 24:
+        raise FlatFunnelError("Phase-4A shard coverage must be 27 V2A plus 24 V1 diagnostics")
+    scientific_payload = {
+        "assignment_id": str(shard["assignment_id"]),
+        "classifying_records": classifying,
+        "diagonal": str(shard["diagonal"]),
+        "phase": "4A",
+        "protocol": {
+            "classification": CLASSIFICATION,
+            "energy_norm_id": ENERGY_NORM_IDENTITY,
+            "load_id": LOAD_IDENTITY,
+            "reference_id": REFERENCE_IDENTITY,
+            "support_id": SUPPORT_IDENTITY,
+        },
+        "schema": PAYLOAD_SCHEMA,
+        "scope": "full",
+        "v1_comparator_diagnostics": comparators,
+        "v1_comparator_disposition": V1_DISPOSITION,
+    }
+    record_ids = [str(member["record_id"]) for member in records]
+    document = {
+        "assignment_sha256": str(shard["assignment_sha256"]),
+        "plan_sha256": plan_digest,
+        "record_count": len(record_ids),
+        "record_ids": record_ids,
+        "record_ids_sha256": sha256(canonical_bytes(record_ids)),
+        "schema": SHARD_SCIENTIFIC_SCHEMA,
+        "scientific_payload": scientific_payload,
+        "scientific_payload_sha256": sha256(canonical_bytes(scientific_payload)),
+        "selector": SELECTOR,
+        "terminal": "ACCEPTED_FOR_AGGREGATION",
+    }
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="STAGING",
+            completed=len(records),
+            total=len(records),
+        ),
+    )
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="VALIDATION",
+            completed=len(records),
+            total=len(records),
+        ),
+    )
+    _publish_exclusive(output, canonical_bytes(document))
+    sequence += 1
+    append_progress(
+        progress,
+        progress_record(
+            str(shard["assignment_id"]),
+            sequence=sequence,
+            phase="COMPLETION",
+            completed=len(records),
+            total=len(records),
+        ),
+    )
+    return document
+
+
+def run_leaf(
+    plan_path: Path,
+    *,
+    leaf_assignment_sha256: str,
+    selector: str,
+    candidate_source_root: Path,
+    candidate_archive: Path,
+    candidate_archive_sha256: str,
+    candidate_commit: str,
+    candidate_tree: str,
+    producer_program_sha256: str,
+    output: Path,
+    progress: Path,
+) -> dict[str, Any]:
+    """Run one content-addressed record leaf and publish it exclusively."""
+
+    _require_current_producer_program(producer_program_sha256)
+    candidate_authority = leaf_candidate_authority(
+        candidate_commit=candidate_commit,
+        candidate_tree=candidate_tree,
+        candidate_archive_sha256=candidate_archive_sha256,
+        producer_program_sha256=producer_program_sha256,
+    )
+    _plan, _shard, member, leaf, plan_digest = load_leaf_assignment(
+        plan_path,
+        leaf_assignment_sha256=leaf_assignment_sha256,
+        selector=selector,
+        **candidate_authority,
+    )
+    output = Path(output)
+    progress = Path(progress)
+    if output.resolve() == progress.resolve():
+        raise FlatFunnelError("scientific and progress outputs must be distinct")
+    if os.path.lexists(output):
+        raise FlatFunnelError("scientific output must be exclusive")
+    leaf_id = str(leaf["leaf_id"])
+    assignment = leaf["assignment"]
+    embedded_authority = {
+        key: assignment[key] for key in LEAF_CANDIDATE_AUTHORITY_KEYS
+    }
+    if embedded_authority != candidate_authority:
+        raise FlatFunnelError("leaf assignment candidate authority differs")
+    progress_descriptor = _reserve_progress_exclusive(progress)
+    try:
+        sequence = 0
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="INITIALIZATION",
+                completed=0,
+                total=1,
+            ),
+        )
+        validate_extracted_candidate_source(
+            candidate_source_root,
+            candidate_archive,
+            candidate_archive_sha256,
+        )
+        activate_frozen_candidate_source(candidate_source_root)
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="AUTHORITY_COMPLETE",
+                completed=0,
+                total=1,
+            ),
+        )
+
+        computation_role = str(assignment["computation_role"])
+        s3_selector = str(assignment["s3_selector"])
+        if computation_role != V2_COMPUTATION_ROLE or s3_selector != SELECTOR:
+            raise FlatFunnelError(
+                "formal leaf must use the V2 classifying role and selector"
+            )
+        # Formal Stage 4A runs only the classifying V2 formulation.  Historical
+        # V1 replay is retained outside the formal hot path and can never act
+        # as a fallback or substitute for this record.
+        record = produce_case(member, s3_selector=s3_selector)
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="CASE_OR_REFINEMENT_OR_STATION",
+                completed=1,
+                total=1,
+            ),
+        )
+        scientific_payload = {
+            "computation_role": computation_role,
+            "leaf_assignment": assignment,
+            "phase": "4A",
+            "protocol": {
+                "classification": CLASSIFICATION,
+                "energy_norm_id": ENERGY_NORM_IDENTITY,
+                "load_id": LOAD_IDENTITY,
+                "reference_id": REFERENCE_IDENTITY,
+                "support_id": SUPPORT_IDENTITY,
+            },
+            "record": record,
+            "schema": LEAF_PAYLOAD_SCHEMA,
+            "v1_comparator_disposition": FORMAL_V1_DISPOSITION,
+        }
+        record_ids = [str(member["record_id"])]
+        document = {
+            "assignment_sha256": str(leaf["leaf_assignment_sha256"]),
+            "plan_sha256": plan_digest,
+            "record_count": 1,
+            "record_ids": record_ids,
+            "record_ids_sha256": sha256(canonical_bytes(record_ids)),
+            "schema": LEAF_SCIENTIFIC_SCHEMA,
+            "scientific_payload": scientific_payload,
+            "scientific_payload_sha256": sha256(
+                canonical_bytes(scientific_payload)
+            ),
+            "selector": SELECTOR,
+            "terminal": "ACCEPTED_FOR_AGGREGATION",
+        }
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="STAGING",
+                completed=1,
+                total=1,
+            ),
+        )
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="VALIDATION",
+                completed=1,
+                total=1,
+            ),
+        )
+        _publish_exclusive(output, canonical_bytes(document))
+        sequence += 1
+        _append_reserved_progress(
+            progress_descriptor,
+            progress_record(
+                leaf_id,
+                sequence=sequence,
+                phase="COMPLETION",
+                completed=1,
+                total=1,
+            ),
+        )
+        return document
+    finally:
+        os.close(progress_descriptor)
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--run-flat-assignment", type=Path)
+    mode.add_argument("--run-flat-leaf", type=Path)
+    parser.add_argument("--shard-index", type=int)
+    parser.add_argument("--leaf-assignment-sha256")
+    parser.add_argument("--selector", required=True)
+    parser.add_argument("--candidate-source-root", type=Path, required=True)
+    parser.add_argument("--candidate-archive", type=Path, required=True)
+    parser.add_argument("--candidate-archive-sha256", required=True)
+    parser.add_argument("--candidate-commit")
+    parser.add_argument("--candidate-tree")
+    parser.add_argument("--producer-program-sha256")
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--progress", type=Path, required=True)
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    arguments = _parser().parse_args(argv)
+    if arguments.run_flat_assignment is not None:
+        if (
+            arguments.shard_index is None
+            or arguments.leaf_assignment_sha256 is not None
+            or arguments.candidate_commit is not None
+            or arguments.candidate_tree is not None
+            or arguments.producer_program_sha256 is not None
+        ):
+            raise FlatFunnelError(
+                "diagonal execution requires shard-index and forbids leaf authority"
+            )
+        run_assignment(
+            arguments.run_flat_assignment,
+            shard_index=arguments.shard_index,
+            selector=arguments.selector,
+            candidate_source_root=arguments.candidate_source_root,
+            candidate_archive=arguments.candidate_archive,
+            candidate_archive_sha256=arguments.candidate_archive_sha256,
+            output=arguments.output,
+            progress=arguments.progress,
+        )
+    else:
+        if (
+            arguments.shard_index is not None
+            or arguments.leaf_assignment_sha256 is None
+            or arguments.candidate_commit is None
+            or arguments.candidate_tree is None
+            or arguments.producer_program_sha256 is None
+        ):
+            raise FlatFunnelError(
+                "leaf execution requires complete authority and forbids shard-index"
+            )
+        run_leaf(
+            arguments.run_flat_leaf,
+            leaf_assignment_sha256=arguments.leaf_assignment_sha256,
+            selector=arguments.selector,
+            candidate_source_root=arguments.candidate_source_root,
+            candidate_archive=arguments.candidate_archive,
+            candidate_archive_sha256=arguments.candidate_archive_sha256,
+            candidate_commit=arguments.candidate_commit,
+            candidate_tree=arguments.candidate_tree,
+            producer_program_sha256=arguments.producer_program_sha256,
+            output=arguments.output,
+            progress=arguments.progress,
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

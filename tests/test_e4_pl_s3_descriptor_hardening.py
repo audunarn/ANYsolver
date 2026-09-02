@@ -275,10 +275,12 @@ def test_mixed_basis_and_certificate_are_insertion_order_deterministic() -> None
 def test_one_ulp_coplanar_facet_normals_share_structural_drill_coordinates() -> None:
     model, first_normal, second_normal = _two_s3_facet_model(fold_height=0.0)
 
-    np.testing.assert_array_equal(first_normal[:1], second_normal[:1])
-    np.testing.assert_array_equal(
-        np.nextafter(first_normal[1:], np.inf), second_normal[1:]
-    )
+    # The component in which normalization rounds by one ULP is permitted to
+    # vary with the platform/libm.  The contract under test is that the two
+    # independently constructed normals differ by no more than one ULP, not
+    # that a particular component owns that rounding difference.
+    np.testing.assert_array_max_ulp(first_normal, second_normal, maxulp=1)
+    assert np.any(first_normal != second_normal)
     basis = _unconstrained_declared_basis(model)
 
     assert basis.diagnostics["noncoplanar_node_ids"] == []

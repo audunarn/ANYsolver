@@ -1152,7 +1152,11 @@ def validate_nonlinear_checkpoint(
         if type(element) in {
             QualifiedE4PLShellElement,
             QualifiedE4PLS3ShellElement,
-        } and element_id not in states:
+        } or str(getattr(element, "formulation_id", "")) == (
+            "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+        ):
+            if element_id in states:
+                continue
             lifecycle = "deleted" if element_id in deleted else "active"
             raise NonlinearCheckpointError(
                 f"checkpoint {lifecycle} qualified element {element_id} has no "
@@ -1284,6 +1288,63 @@ def validate_nonlinear_checkpoint(
                     normalized_states[element_id] = (
                         QualifiedE4PLS3ShellElement.validate_model_bound_nonlinear_state(
                             element,
+                            model.mesh,
+                            material,
+                            state,
+                            int(num_layers),
+                            expected_committed_total_u=local_u,
+                        )
+                    )
+                continue
+
+            if str(getattr(element, "formulation_id", "")) == (
+                "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+            ):
+                disposition = (
+                    state.get("qualified_s3_activity_disposition")
+                    if isinstance(state, Mapping)
+                    else None
+                )
+                if element_id in deleted:
+                    if not isinstance(disposition, Mapping) or disposition.get(
+                        "status"
+                    ) != "DELETED_FROZEN_NONCURRENT":
+                        raise ValueError(
+                            "deleted S3 V2D state lacks its exact frozen disposition"
+                        )
+                    validate_deleted = getattr(
+                        element, "validate_noncurrent_deleted_state", None
+                    )
+                    if not callable(validate_deleted):
+                        raise ValueError(
+                            "deleted S3 V2D state lacks its validator"
+                        )
+                    validate_deleted(
+                        model.mesh,
+                        material,
+                        state,
+                        int(num_layers),
+                        expected_deletion_step_index=int(
+                            deletion_authority[element_id]["step_index"]
+                        ),
+                        expected_deletion_load_factor=float(
+                            deletion_authority[element_id]["load_factor"]
+                        ),
+                        expected_residual_stiffness_fraction=(
+                            residual_stiffness_fraction
+                        ),
+                        expected_trigger_name=str(
+                            deletion_authority[element_id]["trigger_name"]
+                        ),
+                    )
+                    normalized_states[element_id] = copy.deepcopy(state)
+                else:
+                    if disposition is not None:
+                        raise ValueError(
+                            "noncurrent S3 V2D state is not continuable"
+                        )
+                    normalized_states[element_id] = (
+                        element.validate_model_bound_nonlinear_state(
                             model.mesh,
                             material,
                             state,

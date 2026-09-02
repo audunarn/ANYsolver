@@ -48,6 +48,11 @@ from .e4_pl_s3_element import (
     REFERENCE_ELASTIC_BUBBLE_LINEARIZATION_ID,
     QualifiedE4PLS3ShellElement,
 )
+from .e4_pl_s3_v2d_element import (
+    DYNAMIC_ALGEBRAIC_MASS_WITNESS as S3_V2D_DYNAMIC_MASS_WITNESS,
+    DYNAMIC_ALGEBRAIC_POLICY_ID as S3_V2D_DYNAMIC_POLICY_ID,
+    NativeParityE4PLS3V2DShellElement,
+)
 from .elements import ShellElement
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
@@ -121,6 +126,17 @@ _CURRENT_MODAL_MASS_APIS = {
         "shear_gauss_points": QualifiedE4PLS3ShellElement.shear_gauss_points,
         "shear_gauss_weights": QualifiedE4PLS3ShellElement.shear_gauss_weights,
         "validate_quadrature_authority": QualifiedE4PLS3ShellElement.validate_quadrature_authority,
+    },
+    "qualified_s3_v2d": {
+        "compute_mass_matrix": NativeParityE4PLS3V2DShellElement.compute_mass_matrix,
+        "get_node_coordinates": ShellElement.get_node_coordinates,
+        "compute_mass_components": NativeParityE4PLS3V2DShellElement.compute_mass_components,
+        "dynamic_algebraic_directions": NativeParityE4PLS3V2DShellElement.dynamic_algebraic_directions,
+        "gauss_points": NativeParityE4PLS3V2DShellElement.gauss_points,
+        "gauss_weights": NativeParityE4PLS3V2DShellElement.gauss_weights,
+        "shear_gauss_points": NativeParityE4PLS3V2DShellElement.shear_gauss_points,
+        "shear_gauss_weights": NativeParityE4PLS3V2DShellElement.shear_gauss_weights,
+        "validate_quadrature_authority": NativeParityE4PLS3V2DShellElement.validate_quadrature_authority,
     },
 }
 _QUALIFIED_PRESTRESS_OPERATOR_APIS = {
@@ -204,6 +220,16 @@ _S3_DYNAMIC_DESCRIPTOR_AUTHORITY = {
     "dynamic_algebraic_mass_witness": "S3_LOCAL_DRILL_ROWS_EXACT_ZERO_V1",
     "dynamic_algebraic_local_zero_indices": (5, 11, 17),
 }
+_S3_V2D_DYNAMIC_DESCRIPTOR_AUTHORITY = {
+    "dynamic_algebraic_nullity": 9,
+    "dynamic_algebraic_policy": S3_V2D_DYNAMIC_POLICY_ID,
+    "dynamic_algebraic_mass_witness": S3_V2D_DYNAMIC_MASS_WITNESS,
+    "dynamic_algebraic_local_zero_indices": (3, 4, 5, 9, 10, 11, 15, 16, 17),
+}
+_S3_DYNAMIC_DESCRIPTOR_AUTHORITIES = {
+    "qualified_s3": _S3_DYNAMIC_DESCRIPTOR_AUTHORITY,
+    "qualified_s3_v2d": _S3_V2D_DYNAMIC_DESCRIPTOR_AUTHORITY,
+}
 
 _QUALIFIED_NONCURRENT_ACTIVITY_DISPOSITION_KEYS = frozenset(
     {
@@ -234,7 +260,15 @@ def _static_formulation_id(element: Any) -> Optional[str]:
 
 
 def _has_no_dynamic_descriptor_declarations(element: Any) -> bool:
-    names = tuple(_S3_DYNAMIC_DESCRIPTOR_AUTHORITY)
+    names = tuple(
+        sorted(
+            {
+                name
+                for authority in _S3_DYNAMIC_DESCRIPTOR_AUTHORITIES.values()
+                for name in authority
+            }
+        )
+    )
     try:
         instance_namespace = object.__getattribute__(element, "__dict__")
     except AttributeError:
@@ -247,7 +281,10 @@ def _has_no_dynamic_descriptor_declarations(element: Any) -> bool:
     )
 
 
-def _has_exact_s3_dynamic_descriptor_authority(element: Any) -> bool:
+def _has_exact_s3_dynamic_descriptor_authority(
+    element: Any,
+    authority: Mapping[str, Any] = _S3_DYNAMIC_DESCRIPTOR_AUTHORITY,
+) -> bool:
     """Check static class data without invoking caller-controlled descriptors."""
 
     try:
@@ -259,7 +296,7 @@ def _has_exact_s3_dynamic_descriptor_authority(element: Any) -> bool:
         name not in instance_namespace
         and type(class_namespace.get(name)) is type(expected)
         and class_namespace.get(name) == expected
-        for name, expected in _S3_DYNAMIC_DESCRIPTOR_AUTHORITY.items()
+        for name, expected in authority.items()
     )
 
 
@@ -281,8 +318,10 @@ def _require_current_state_modal_mass_authority(
                 or _static_mro_attribute(type(element), name) is not expected
             ):
                 failures.append((element_id, f"{family}:{name}"))
-        if family == "qualified_s3":
-            if not _has_exact_s3_dynamic_descriptor_authority(element):
+        if family in _S3_DYNAMIC_DESCRIPTOR_AUTHORITIES:
+            if not _has_exact_s3_dynamic_descriptor_authority(
+                element, _S3_DYNAMIC_DESCRIPTOR_AUTHORITIES[family]
+            ):
                 failures.append((element_id, f"{family}:dynamic_identity"))
         elif not _has_no_dynamic_descriptor_declarations(element):
             failures.append((element_id, f"{family}:unexpected_dynamic_identity"))
@@ -1557,7 +1596,7 @@ def _solve_free_vibration_under_lease(
             for element_id, profile in sorted(
                 current_state_route["element_profiles"].items()
             )
-            if str(profile["family"]) == "qualified_s3"
+            if str(profile["family"]) in {"qualified_s3", "qualified_s3_v2d"}
         )
         if q4_ids:
             require_model_element_capabilities(

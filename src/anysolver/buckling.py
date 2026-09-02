@@ -693,7 +693,10 @@ def _solve_eigenvalue_buckling_under_lease(
                 context="current-state buckling analysis",
             )
         )
-        if str(current_state_route["route"]) != "qualified_s3":
+        if str(current_state_route["route"]) not in {
+            "qualified_s3",
+            "qualified_s3_v2d",
+        }:
             active_current_state_policy_id = (
                 QUALIFIED_Q4_S3_CURRENT_STATE_BUCKLING_POLICY_ID
             )
@@ -709,7 +712,7 @@ def _solve_eigenvalue_buckling_under_lease(
             for element_id, profile in sorted(
                 current_state_route["element_profiles"].items()
             )
-            if str(profile["family"]) == "qualified_s3"
+            if str(profile["family"]) in {"qualified_s3", "qualified_s3_v2d"}
         )
         if qualified_q4_ids:
             current_state_capability_profiles.append(

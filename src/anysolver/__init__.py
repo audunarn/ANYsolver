@@ -110,6 +110,34 @@ from .e4_pl_s3_element import (
     QualifiedE4PLS3ShellElement,
     QualifiedS3MigrationWarning,
 )
+from .e4_pl_s3_v2_element import (
+    FORMULATION_ID as STRICT_FLAT_S3_V2_FORMULATION_ID,
+    IMPLEMENTATION_ID as STRICT_FLAT_S3_V2_IMPLEMENTATION_ID,
+    SELECTOR as STRICT_FLAT_S3_V2_SELECTOR,
+    StrictFlatLinearCapabilityError,
+    StrictFlatLinearE4PLS3V2ShellElement,
+)
+from .e4_pl_s3_v2b_element import (
+    FORMULATION_ID as STRICT_FLAT_S3_V2B_FORMULATION_ID,
+    IMPLEMENTATION_ID as STRICT_FLAT_S3_V2B_IMPLEMENTATION_ID,
+    SELECTOR as STRICT_FLAT_S3_V2B_SELECTOR,
+    StrictFlatLinearCapabilityError as StrictFlatLinearV2BCapabilityError,
+    StrictFlatLinearE4PLS3V2BShellElement,
+)
+from .e4_pl_s3_v2c_element import (
+    FORMULATION_ID as STRICT_FLAT_S3_V2C_FORMULATION_ID,
+    IMPLEMENTATION_ID as STRICT_FLAT_S3_V2C_IMPLEMENTATION_ID,
+    SELECTOR as STRICT_FLAT_S3_V2C_SELECTOR,
+    StrictFlatLinearCapabilityError as StrictFlatLinearV2CCapabilityError,
+    StrictFlatLinearE4PLS3V2CShellElement,
+)
+from .e4_pl_s3_v2d_element import (
+    FORMULATION_ID as S3_V2D_FORMULATION_ID,
+    IMPLEMENTATION_ID as S3_V2D_IMPLEMENTATION_ID,
+    SELECTOR as S3_V2D_SELECTOR,
+    NativeParityCapabilityError,
+    NativeParityE4PLS3V2DShellElement,
+)
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -541,7 +569,27 @@ __all__ = [
     "QualifiedS3MigrationWarning",
     "QUALIFIED_Q4_FORMULATION_ID",
     "QUALIFIED_S3_FORMULATION_ID",
+    "STRICT_FLAT_S3_V2_FORMULATION_ID",
+    "STRICT_FLAT_S3_V2_IMPLEMENTATION_ID",
+    "STRICT_FLAT_S3_V2_SELECTOR",
+    "STRICT_FLAT_S3_V2B_FORMULATION_ID",
+    "STRICT_FLAT_S3_V2B_IMPLEMENTATION_ID",
+    "STRICT_FLAT_S3_V2B_SELECTOR",
+    "STRICT_FLAT_S3_V2C_FORMULATION_ID",
+    "STRICT_FLAT_S3_V2C_IMPLEMENTATION_ID",
+    "STRICT_FLAT_S3_V2C_SELECTOR",
+    "S3_V2D_FORMULATION_ID",
+    "S3_V2D_IMPLEMENTATION_ID",
+    "S3_V2D_SELECTOR",
     "ShellElement",
+    "StrictFlatLinearCapabilityError",
+    "StrictFlatLinearE4PLS3V2ShellElement",
+    "StrictFlatLinearV2BCapabilityError",
+    "StrictFlatLinearE4PLS3V2BShellElement",
+    "StrictFlatLinearV2CCapabilityError",
+    "StrictFlatLinearE4PLS3V2CShellElement",
+    "NativeParityCapabilityError",
+    "NativeParityE4PLS3V2DShellElement",
     "create_element",
     "create_shell_element",
     "shell_formulation_diagnostics",

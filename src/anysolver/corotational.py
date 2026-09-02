@@ -144,6 +144,21 @@ def _minimal_rotation(from_direction: np.ndarray, to_direction: np.ndarray) -> n
 
 def _shell_center_frame(element: Any, coords: np.ndarray) -> np.ndarray:
     """Element midsurface frame (columns = local axes) at the element center."""
+    native_frame = getattr(element, "corotational_reference_frame", None)
+    if callable(native_frame):
+        frame = np.asarray(native_frame(coords), dtype=float)
+        if frame.shape != (3, 3) or not np.all(np.isfinite(frame)):
+            raise ValueError(
+                "formulation-native corotational frame must be finite 3x3"
+            )
+        orthogonality = frame.T @ frame
+        if not np.allclose(
+            orthogonality, np.eye(3), rtol=0.0, atol=64.0 * np.finfo(float).eps
+        ) or float(np.linalg.det(frame)) <= 0.0:
+            raise ValueError(
+                "formulation-native corotational frame must be proper orthonormal"
+            )
+        return frame
     if element.num_nodes in (3, 6):
         xi, eta = 1.0 / 3.0, 1.0 / 3.0
     else:
@@ -343,6 +358,80 @@ def corotational_element_response(
     return f_global, k_global, trial_state
 
 
+def corotational_element_response_components(
+    model: "FEModel",
+    element_id: int,
+    element: Any,
+    u_element: np.ndarray,
+    committed_state: Optional[Any] = None,
+    num_layers: int = 5,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Any]:
+    """Return the symmetric material/geometric split for eigen workflows.
+
+    This is the read-only energy-Hessian counterpart of
+    :func:`corotational_element_response`.  It evaluates the same element
+    response and exact frame sensitivity, then returns the symmetric parts of
+    the constitutive/pull-back and force/frame contributions separately.
+    Additive rotation coordinates can make the Newton Jacobian nonsymmetric;
+    modal and buckling pencils require the symmetric energy Hessian instead.
+    """
+
+    if bool(getattr(element, "formulation_native_total_lagrangian", False)):
+        raise ValueError(
+            "formulation-native total-Lagrangian elements cannot use the "
+            "element-independent corotational component route"
+        )
+    reference = _corotational_cache(model).get(int(element_id))
+    if reference is None or reference.category is None:
+        raise ValueError("element is outside the corotational shell/beam scope")
+    num_nodes = int(element.num_nodes)
+    u = np.asarray(u_element, dtype=float).reshape(num_nodes, 6)
+    rotations = u[:, 3:]
+    u_d, rigid_rotation, deformed = _corotational_deformation_state(
+        reference,
+        element,
+        u_element,
+    )
+    material = model.get_material(element.material_name)
+    force_reference, tangent_reference, trial_state = element.compute_nonlinear_response(
+        model.mesh,
+        material,
+        u_d,
+        committed_state,
+        int(num_layers),
+        True,
+    )
+    force_reference = np.asarray(force_reference, dtype=float).reshape(-1)
+    tangent_reference = np.asarray(tangent_reference, dtype=float)
+    from .corotational_performance import rotate_corotational_force_blocks
+
+    force_global = rotate_corotational_force_blocks(
+        force_reference,
+        rigid_rotation,
+    )
+    block_rotation = _dense_block_rotation(rigid_rotation, num_nodes)
+    material_tangent, geometric_tangent = (
+        _consistent_corotational_tangent_components(
+            reference,
+            element,
+            deformed,
+            rotations,
+            rigid_rotation,
+            block_rotation,
+            force_global,
+            tangent_reference,
+        )
+    )
+    material_symmetric = 0.5 * (material_tangent + material_tangent.T)
+    geometric_symmetric = 0.5 * (geometric_tangent + geometric_tangent.T)
+    return (
+        np.asarray(force_global, dtype=np.float64),
+        np.asarray(material_symmetric, dtype=np.float64),
+        np.asarray(geometric_symmetric, dtype=np.float64),
+        trial_state,
+    )
+
+
 def _rotation_right_jacobian(vector: np.ndarray) -> np.ndarray:
     """Right Jacobian of the exponential map: d exp(theta + d) ~ exp(theta) skew(Jr d)."""
     vector = np.asarray(vector, dtype=float).reshape(3)
@@ -435,7 +524,7 @@ def _rotation_sensitivity(
     return G
 
 
-def _consistent_corotational_tangent(
+def _consistent_corotational_tangent_components(
     reference: "_CorotationalReference",
     element: Any,
     deformed: np.ndarray,
@@ -444,8 +533,8 @@ def _consistent_corotational_tangent(
     E: np.ndarray,
     f_global: np.ndarray,
     k_ref: np.ndarray,
-) -> np.ndarray:
-    """Consistent corotational tangent for additive global DOF increments.
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Split the consistent corotational tangent into material and geometric parts.
 
     Chain rule of ``f = E(omega) K_ref u_d(u, omega)`` through the three
     dependency paths:
@@ -494,7 +583,34 @@ def _consistent_corotational_tangent(
 
     G = _rotation_sensitivity(reference, element, deformed, rotations, R_rig)
     EK = E @ k_ref
-    return EK @ D + (S + EK @ U) @ G
+    material_tangent = EK @ D + (EK @ U) @ G
+    geometric_tangent = S @ G
+    return material_tangent, geometric_tangent
+
+
+def _consistent_corotational_tangent(
+    reference: "_CorotationalReference",
+    element: Any,
+    deformed: np.ndarray,
+    rotations: np.ndarray,
+    R_rig: np.ndarray,
+    E: np.ndarray,
+    f_global: np.ndarray,
+    k_ref: np.ndarray,
+) -> np.ndarray:
+    """Return the exact additive-coordinate Jacobian used by Newton solves."""
+
+    material, geometric = _consistent_corotational_tangent_components(
+        reference,
+        element,
+        deformed,
+        rotations,
+        R_rig,
+        E,
+        f_global,
+        k_ref,
+    )
+    return material + geometric
 
 
 def validate_corotational_scope(model: "FEModel") -> None:

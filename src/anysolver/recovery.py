@@ -2119,7 +2119,13 @@ def _recover_one_committed_state(
         )
         return (
             recovered,
-            "committed_qualified_s3_native_state" if recovered is not None else "",
+            (
+                "committed_s3_v2d_hammer3_state"
+                if recovered is not None and _is_v2d_s3(element)
+                else "committed_qualified_s3_native_state"
+                if recovered is not None
+                else ""
+            ),
             reason,
             component_sources,
         )
@@ -2437,8 +2443,21 @@ def _is_qualified_s3(element: Any) -> bool:
     """Return whether ``element`` is the qualified companion, never legacy TRI3."""
 
     from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+    from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 
-    return isinstance(element, QualifiedE4PLS3ShellElement)
+    return isinstance(
+        element,
+        (QualifiedE4PLS3ShellElement, NativeParityE4PLS3V2DShellElement),
+    )
+
+
+def _is_v2d_s3(element: Any) -> bool:
+    from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+    return (
+        type(element) is NativeParityE4PLS3V2DShellElement
+        and element.formulation_id == "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+    )
 
 
 def _qualified_s3_current_physical_frame(
@@ -2559,6 +2578,225 @@ def _qualified_s3_tensor_rows(values: np.ndarray, frame: np.ndarray) -> np.ndarr
     )
 
 
+def _recover_v2d_committed_state(
+    model: "FEModel",
+    element_id: int,
+    element: Any,
+    state: Any,
+    *,
+    displacements: np.ndarray,
+    return_global: bool,
+) -> Tuple[Optional[Dict[str, Any]], str, Dict[str, str]]:
+    """Recover V2D Hammer-3 state without constitutive reevaluation."""
+
+    if not _is_v2d_s3(element):
+        return None, "element is not an S3 V2D candidate", {}
+    if not isinstance(state, Mapping):
+        return None, "S3 V2D committed state is not a mapping", {}
+    material = model.get_material(element.material_name)
+    try:
+        local_u = np.asarray(
+            element._get_element_displacements(model.mesh, displacements),
+            dtype=np.float64,
+        ).reshape(18)
+        num_layers = int(state.get("num_layers", 0))
+        committed = element.validate_model_bound_nonlinear_state(
+            model.mesh,
+            material,
+            state,
+            num_layers,
+            expected_committed_total_u=local_u,
+        )
+    except (TypeError, ValueError, IndexError) as exc:
+        return None, f"S3 V2D committed state validation failed: {exc}", {}
+
+    try:
+        from .corotational import (
+            _corotational_cache,
+            _corotational_deformation_state,
+        )
+
+        reference_coordinates = np.asarray(
+            element.get_node_coordinates(model.mesh), dtype=np.float64
+        ).reshape(3, 3)
+        reference_record = _corotational_cache(model).get(int(element_id))
+        if reference_record is None:
+            raise ValueError("missing element-independent corotational reference")
+        _deformational, rigid_rotation, current_coordinates = (
+            _corotational_deformation_state(
+                reference_record,
+                element,
+                local_u,
+            )
+        )
+        reference_frame = np.asarray(
+            element._geometry(model.mesh)["frame"], dtype=np.float64
+        ).reshape(3, 3)
+        current_frame = np.asarray(
+            rigid_rotation @ reference_frame, dtype=np.float64
+        )
+        physical_director = (
+            float(element.director_polarity) * current_frame[:, 2]
+        )
+        reference_offset = float(element.reference_surface_offset)
+        material_current = (
+            np.asarray(current_coordinates, dtype=np.float64)
+            - reference_offset * physical_director[None, :]
+        )
+    except (TypeError, ValueError, np.linalg.LinAlgError) as exc:
+        return None, f"S3 V2D current recovery frame is invalid: {exc}", {}
+
+    strain = np.asarray(
+        committed["station_generalized_strain"], dtype=np.float64
+    ).reshape(3, 8)
+    resultant = np.asarray(
+        committed["station_generalized_resultant"], dtype=np.float64
+    ).reshape(3, 8)
+    recovered: Dict[str, Any] = {
+        "formulation_id": str(element.formulation_id),
+        "implementation_id": str(element.implementation_id),
+        "recovery_scope": (
+            "PHYSICAL_GLOBAL_RESULTANTS_ONLY"
+            if element.shell_section is not None
+            else "PHYSICAL_COMMITTED_GLOBAL_SURFACE_TENSORS"
+        ),
+        "physical_stress_available": element.shell_section is None,
+        "physical_layer_recovery_available": element.shell_section is None,
+        "membrane_strain": strain[:, :3].copy(),
+        "curvature": strain[:, 3:6].copy(),
+        "transverse_shear_strain": strain[:, 6:].copy(),
+        "membrane_resultants": resultant[:, :3].copy(),
+        "bending_resultants": resultant[:, 3:6].copy(),
+        "transverse_shear_resultants": resultant[:, 6:].copy(),
+        "numerical_fields_excluded": True,
+        "recovery_history_source": "committed_s3_v2d_hammer3_state",
+        "reference_surface_offset": reference_offset,
+        "section_origin_offset_from_reference": -reference_offset,
+        "physical_bottom_offset_from_reference": (
+            -0.5 * float(element.thickness) - reference_offset
+        ),
+        "physical_top_offset_from_reference": (
+            0.5 * float(element.thickness) - reference_offset
+        ),
+        "_reference_surface_recovery_coordinates": np.asarray(
+            current_coordinates, dtype=np.float64
+        ).copy(),
+        "_recovery_coordinates": material_current.copy(),
+        "_recovery_stress_frame": current_frame.copy(),
+    }
+    if return_global:
+        recovered.update(
+            {
+                "global_membrane_resultant_tensors": _qualified_s3_tensor_rows(
+                    resultant[:, :3], current_frame
+                ),
+                "global_bending_resultant_tensors": _qualified_s3_tensor_rows(
+                    resultant[:, 3:6], current_frame
+                ),
+                "global_transverse_shear_resultants": (
+                    resultant[:, 6, None] * current_frame[:, 0][None, :]
+                    + resultant[:, 7, None] * current_frame[:, 1][None, :]
+                ),
+            }
+        )
+    component_sources = {
+        "generalized_membrane_bending": "committed_s3_v2d_hammer3_state",
+        "generalized_transverse_shear": "committed_s3_v2d_hammer3_state",
+        "numerical_pl": "excluded_from_physical_recovery",
+        "stress_frame": "element_independent_corotational_physical_frame",
+    }
+    if element.shell_section is not None:
+        recovered["generalized_stress_scope"] = "section_resultants_only"
+        recovered["initial_field_provenance"] = copy.deepcopy(
+            committed["initial_field_provenance"]
+        )
+        recovered["initial_generalized_prestrain"] = np.asarray(
+            committed["initial_generalized_prestrain"], dtype=np.float64
+        ).copy()
+        recovered["initial_generalized_resultant"] = np.asarray(
+            committed["initial_generalized_resultant"], dtype=np.float64
+        ).copy()
+        component_sources["physical_stress"] = (
+            "unavailable_from_preintegrated_section"
+        )
+        return recovered, "", component_sources
+
+    thickness = abs(float(element.thickness))
+    if not math.isfinite(thickness) or thickness <= np.finfo(float).tiny:
+        return None, "S3 V2D recovery thickness is invalid", {}
+    try:
+        layers = np.asarray(committed["layer_stress"], dtype=np.float64).reshape(
+            3, num_layers, 3
+        )
+    except (TypeError, ValueError) as exc:
+        return None, f"S3 V2D layer stress is malformed: {exc}", {}
+    from .e4_pl_s3_state import qualified_s3_lobatto_layers
+
+    layer_coordinates, _weights = qualified_s3_lobatto_layers(
+        num_layers, thickness
+    )
+    recovered["physical_layer_coordinates_from_section_origin"] = (
+        layer_coordinates.copy()
+    )
+    recovered["physical_layer_offsets_from_reference"] = (
+        layer_coordinates - reference_offset
+    )
+    shear = resultant[:, 6:] / thickness
+    in_plane_vm = np.sqrt(
+        np.maximum(
+            layers[:, :, 0] ** 2
+            - layers[:, :, 0] * layers[:, :, 1]
+            + layers[:, :, 1] ** 2
+            + 3.0 * layers[:, :, 2] ** 2,
+            0.0,
+        )
+    )
+    mixed_vm = np.sqrt(
+        np.maximum(
+            in_plane_vm**2
+            + 3.0 * (shear[:, 0, None] ** 2 + shear[:, 1, None] ** 2),
+            0.0,
+        )
+    )
+    recovered["in_plane_von_mises"] = np.max(in_plane_vm, axis=1)
+    recovered["von_mises"] = np.max(mixed_vm, axis=1)
+    recovered["equivalent_stress"] = recovered["von_mises"].copy()
+    recovered["equivalent_stress_measure"] = "von_mises"
+    for surface, layer_index in (("bot", 0), ("top", -1)):
+        local_tensors = np.zeros((3, 3, 3), dtype=np.float64)
+        local_tensors[:, 0, 0] = layers[:, layer_index, 0]
+        local_tensors[:, 1, 1] = layers[:, layer_index, 1]
+        local_tensors[:, 0, 1] = layers[:, layer_index, 2]
+        local_tensors[:, 1, 0] = layers[:, layer_index, 2]
+        local_tensors[:, 0, 2] = shear[:, 0]
+        local_tensors[:, 2, 0] = shear[:, 0]
+        local_tensors[:, 1, 2] = shear[:, 1]
+        local_tensors[:, 2, 1] = shear[:, 1]
+        global_tensors = np.asarray(
+            [current_frame @ tensor @ current_frame.T for tensor in local_tensors],
+            dtype=np.float64,
+        )
+        for first, second, label in (
+            (0, 0, "xx"),
+            (1, 1, "yy"),
+            (2, 2, "zz"),
+            (0, 1, "xy"),
+            (1, 2, "yz"),
+            (0, 2, "xz"),
+        ):
+            recovered[f"local_{label}_{surface}"] = local_tensors[
+                :, first, second
+            ].copy()
+            if return_global:
+                recovered[f"global_{label}_{surface}"] = global_tensors[
+                    :, first, second
+                ].copy()
+    component_sources["physical_stress"] = (
+        "committed_s3_v2d_layer_state_and_hammer3_resultants"
+    )
+    return recovered, "", component_sources
+
+
 def _recover_qualified_s3_committed_state(
     model: "FEModel",
     element_id: int,
@@ -2570,6 +2808,15 @@ def _recover_qualified_s3_committed_state(
 ) -> Tuple[Optional[Dict[str, Any]], str, Dict[str, str]]:
     """Recover one model-bound native S3 state without mechanics re-evaluation."""
 
+    if _is_v2d_s3(element):
+        return _recover_v2d_committed_state(
+            model,
+            element_id,
+            element,
+            state,
+            displacements=displacements,
+            return_global=return_global,
+        )
     if not _is_qualified_s3(element):
         return None, "element is not a qualified S3", {}
     if not isinstance(state, Mapping):
@@ -3027,7 +3274,11 @@ def _recover_stress_result_after_selection(
                 )
             committed_generalized[int(element_id)] = (
                 state_stress,
-                "committed_qualified_s3_native_state",
+                (
+                    "committed_s3_v2d_hammer3_state"
+                    if _is_v2d_s3(element)
+                    else "committed_qualified_s3_native_state"
+                ),
                 component_sources,
             )
             continue
@@ -3261,6 +3512,7 @@ def _prepare_shell_patch_elements(
     from .results import _gauss_to_node_extrapolation
     from .e4_pl_element import QualifiedE4PLShellElement
     from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
+    from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 
     selected = (
         set(int(element_id) for element_id in element_ids)
@@ -3278,7 +3530,10 @@ def _prepare_shell_patch_elements(
             all_shell_incidence.setdefault(int(node_id), []).append(
                 int(element_id)
             )
-        qualified_s3 = isinstance(element, QualifiedE4PLS3ShellElement)
+        qualified_s3 = isinstance(
+            element,
+            (QualifiedE4PLS3ShellElement, NativeParityE4PLS3V2DShellElement),
+        )
         if int(element.num_nodes) not in {4, 8} and not (
             int(element.num_nodes) == 3 and qualified_s3
         ):
@@ -3396,7 +3651,11 @@ def _prepare_shell_patch_elements(
                 "qualified_e4_pl_shell"
                 if isinstance(
                     element,
-                    (QualifiedE4PLShellElement, QualifiedE4PLS3ShellElement),
+                    (
+                        QualifiedE4PLShellElement,
+                        QualifiedE4PLS3ShellElement,
+                        NativeParityE4PLS3V2DShellElement,
+                    ),
                 )
                 else f"shell_{int(element.num_nodes)}"
             ),
