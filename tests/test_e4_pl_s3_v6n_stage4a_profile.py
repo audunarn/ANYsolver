@@ -94,3 +94,4 @@ def test_equivalence_pair_is_preserved_and_nonclassifying() -> None:
         assert module._member(record_id)["record_id"] == record_id
     source = PROGRAM.read_text(encoding="utf-8")
     assert "NONCLASSIFYING_BYTE_EQUIVALENCE_DIAGNOSTIC_ONLY" in source
+    assert '"optimized-profile"' in source

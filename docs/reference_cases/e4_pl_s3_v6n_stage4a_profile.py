@@ -380,11 +380,11 @@ def run_bounded(
 
     _require_bindings()
     _member(record_id)
-    if mode == "profile" and record_id not in ALLOWED_RECORD_IDS:
+    if mode in {"profile", "optimized-profile"} and record_id not in ALLOWED_RECORD_IDS:
         raise ProfileError("profile mode requires one V6M timeout record")
     if mode == "equivalence" and record_id not in COMPARISON_RECORDS:
         raise ProfileError("equivalence mode requires one preserved comparison record")
-    if mode not in {"profile", "equivalence"}:
+    if mode not in {"profile", "optimized-profile", "equivalence"}:
         raise ProfileError("unknown bounded diagnostic mode")
     if not 1 <= wall_seconds <= MAX_WALL_SECONDS:
         raise ProfileError("diagnostic wall must be between 1 and 600 seconds")
@@ -411,7 +411,7 @@ def run_bounded(
     command = [
         sys.executable,
         str(Path(__file__).resolve()),
-        "--worker" if mode == "profile" else "--equivalence-worker",
+        "--equivalence-worker" if mode == "equivalence" else "--worker",
         "--record-id",
         record_id,
         "--progress",
@@ -508,7 +508,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--candidate-root", type=Path)
     parser.add_argument("--dependency-root", type=Path)
     parser.add_argument("--wall-seconds", type=int, default=MAX_WALL_SECONDS)
-    parser.add_argument("--mode", choices=("profile", "equivalence"), default="profile")
+    parser.add_argument(
+        "--mode",
+        choices=("profile", "optimized-profile", "equivalence"),
+        default="profile",
+    )
     return parser
 
 
