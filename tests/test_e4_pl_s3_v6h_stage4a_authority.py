@@ -154,13 +154,21 @@ def test_v6h_adapter_emits_byte_identical_bounded_n20_science(tmp_path: Path) ->
 
 def test_v6h_frozen_authority_is_byte_identical_in_two_processes(tmp_path: Path) -> None:
     contract = json.loads(CONTRACT.read_bytes())
-    head = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    frozen_authority_path = (
+        REFERENCE / "e4_pl_s3_v6h_stage4a_preparation_authority.json"
+    )
+    if frozen_authority_path.exists():
+        head = json.loads(frozen_authority_path.read_bytes())["authority_commit"][
+            "commit"
+        ]
+    else:
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
     if head == contract["authority_commit"]["expected_parent"]:
         pytest.skip("authority commit has not yet been frozen")
     outputs = [tmp_path / "first.json", tmp_path / "second.json"]
