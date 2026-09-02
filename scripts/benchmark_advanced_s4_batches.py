@@ -94,6 +94,10 @@ def _build_model(kind: str, nx: int, ny: int) -> FEModel:
                     ],
                     material.name,
                     thickness=0.018,
+                    # This benchmark owns a near-flat panel coordinate system;
+                    # B-coupled generalized sections must declare its physical
+                    # thickness direction instead of relying on node winding.
+                    reference_normal=np.array([0.0, 0.0, 1.0]),
                     material_direction=np.array([1.0, 0.25, 0.08]),
                     material_angle_deg=float((row + 2 * column) % 4) * 15.0,
                     shell_section=section,
