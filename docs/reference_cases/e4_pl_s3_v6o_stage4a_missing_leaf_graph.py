@@ -86,6 +86,7 @@ MEMORY_LIMIT_GIB = _BASE.MEMORY_LIMIT_GIB
 MAXIMUM_CONCURRENT_WORKERS = _BASE.MAXIMUM_CONCURRENT_WORKERS
 REGISTERED_WORKERS_PER_WAVE = _BASE.REGISTERED_WORKERS_PER_WAVE
 DIAGONALS = ("slash", "backslash", "alternating")
+ROOT = _V6I.ROOT
 
 
 def _program_sha256() -> str:
@@ -100,6 +101,13 @@ def _configure_candidate() -> None:
         module.CANDIDATE_ARCHIVE_SHA256 = CANDIDATE_ARCHIVE_SHA256
         module.CANDIDATE_COMMIT = CANDIDATE_COMMIT
         module.CANDIDATE_TREE = CANDIDATE_TREE
+
+
+def verify_archive(path: Path) -> None:
+    """Expose exact optimized-archive verification to authority tooling."""
+
+    _configure_candidate()
+    _V6I.verify_archive(path.resolve())
 
 
 def _configure_execution() -> None:

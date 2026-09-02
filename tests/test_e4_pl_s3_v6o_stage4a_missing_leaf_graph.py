@@ -24,6 +24,8 @@ def _load():
 
 def test_v6o_graph_is_exact_missing_subset() -> None:
     module = _load()
+    module.verify_archive(CANDIDATE)
+    assert module.ROOT == ROOT
     graph = module.build_graph(CANDIDATE)
     module.validate_graph(graph)
     assert graph["activation_authorized"] is False
