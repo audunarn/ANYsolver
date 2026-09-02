@@ -73,6 +73,12 @@ _EXTERNAL_REFERENCE_REPORT_OVERRIDE: contextvars.ContextVar[Optional[Path]] = co
     "anysolver_external_reference_report",
     default=None,
 )
+_COMPOSITE_METRIC_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[str, Tuple[Tuple[Dict[str, Any], ...], float, float]]]
+] = contextvars.ContextVar(
+    "anysolver_composite_metric_run_cache",
+    default=None,
+)
 
 DEFAULT_TOLERANCES: Dict[str, float] = {
     "stiffness_symmetry_rel": 1.0e-10,
@@ -599,9 +605,11 @@ def _composite_strip_result(
     expected_status: str,
     reference_type: str,
 ) -> VerificationCaseResult:
-    rows = composite_strip_metric_rows(metric)
+    # Reuse the same run-scoped, copy-on-read rows used by the companion
+    # composite verification views.  COUP-016 and BUC-005 deliberately expose
+    # the same buckling calculation under different acceptance labels.
+    rows, max_relative_error, _pair_spread = _composite_rows_for(metric)
     finite_rows = _finite_metric_rows(rows)
-    max_relative_error = max((float(row["relative_error"]) for row in finite_rows), default=math.inf)
     status_ok = all(str(row.get("solver_status")) == expected_status for row in rows)
     tolerance_ok = bool(finite_rows) and len(finite_rows) == len(rows) and max_relative_error <= float(tolerance)
     payload = {
@@ -1559,6 +1567,14 @@ def _run_coup_009(case: VerificationCase) -> VerificationCaseResult:
 
 
 def _composite_rows_for(metric: str) -> Tuple[List[Dict[str, Any]], float, float]:
+    cache = _COMPOSITE_METRIC_RUN_CACHE.get()
+    cached = None if cache is None else cache.get(metric)
+    if cached is not None:
+        cached_rows, max_error, spread = cached
+        # Result objects are mutable dictionaries.  Keep the run-local cache
+        # private and hand every case a new copy of the exact cached values.
+        return [dict(row) for row in cached_rows], max_error, spread
+
     rows = [dict(row) for row in composite_strip_metric_rows(metric)]
     finite = [row for row in rows if math.isfinite(float(row.get("relative_error", math.inf)))]
     max_error = max((float(row["relative_error"]) for row in finite), default=math.inf)
@@ -1571,6 +1587,12 @@ def _composite_rows_for(metric: str) -> Tuple[List[Dict[str, Any]], float, float
     for row in finite:
         values.append(float(row[value_key]))
     spread = (max(values) - min(values)) / max(max(abs(value) for value in values), 1.0e-30) if values else math.inf
+    if cache is not None:
+        cache[metric] = (
+            tuple(dict(row) for row in rows),
+            max_error,
+            float(spread),
+        )
     return rows, max_error, float(spread)
 
 
@@ -4487,6 +4509,7 @@ def run_beam_shell_verification(
     """Run the manifest, optionally consuming a separately generated external report."""
 
     token = None
+    composite_cache_token = _COMPOSITE_METRIC_RUN_CACHE.set({})
     if external_reference_report is not None:
         token = _EXTERNAL_REFERENCE_REPORT_OVERRIDE.set(Path(external_reference_report))
     try:
@@ -4494,6 +4517,7 @@ def run_beam_shell_verification(
     finally:
         if token is not None:
             _EXTERNAL_REFERENCE_REPORT_OVERRIDE.reset(token)
+        _COMPOSITE_METRIC_RUN_CACHE.reset(composite_cache_token)
 
 
 def _markdown(report: Mapping[str, Any]) -> str:

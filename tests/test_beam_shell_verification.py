@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from anysolver import run_beam_shell_verification, verification_manifest_cases, write_beam_shell_verification_report
+import anysolver.beam_shell_verification as beam_shell_verification
 
 
 def test_manifest_contains_stable_case_ids_from_spec() -> None:
@@ -58,6 +59,38 @@ def test_nlg_008_follower_pressure_case_passes() -> None:
     assert ring_diagnostics["rigid_body_handling"] == "projected"
     assert ring_diagnostics["rigid_projection"]["applied"] is True
     assert ring_diagnostics["rigid_projection"]["metric_version"] == "dimensionless_full_dof_bbox_v1"
+
+
+def test_composite_buckling_rows_are_cached_only_within_one_report(
+    monkeypatch,
+) -> None:
+    """Duplicate verification views reuse one exact buckling computation."""
+
+    calls: list[str] = []
+
+    def rows(metric: str):
+        calls.append(metric)
+        assert metric == "buckling"
+        return [
+            {"relative_error": 0.0, "critical_load_factor": 1.0},
+            {"relative_error": 0.0, "critical_load_factor": 1.0},
+        ]
+
+    monkeypatch.setattr(beam_shell_verification, "composite_strip_metric_rows", rows)
+    first = run_beam_shell_verification(selected_ids={"BUC-005", "COUP-016"})
+    second = run_beam_shell_verification(selected_ids={"BUC-005", "COUP-016"})
+
+    assert calls == ["buckling", "buckling"]
+    assert [item["case_id"] for item in first["results"]] == [
+        "COUP-016",
+        "BUC-005",
+    ]
+    assert [item["case_id"] for item in second["results"]] == [
+        "COUP-016",
+        "BUC-005",
+    ]
+    first["results"][0]["checks"]["rows"][0]["relative_error"] = 99.0
+    assert second["results"][0]["checks"]["rows"][0]["relative_error"] == 0.0
 
 
 def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
