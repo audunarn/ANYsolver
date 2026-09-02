@@ -55,7 +55,7 @@ from .plasticity import plane_stress_return_map
 
 SELECTOR = "e4-pl-s3-v2d"
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-IMPLEMENTATION_ID = "E4_PL_S3_V2D_FINAL_PARITY_GATE_V1"
+IMPLEMENTATION_ID = "E4_PL_S3_V2D_RECOVERY_CURRENT_EIGEN_GATE_V1"
 FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v3"
 SOURCE_SELECTION_SHA256 = (
     "DB5750539FB87CA4E4DDA1B37ECEACD65B76DF9A64969808712A4BDD44A45E3D"
@@ -74,6 +74,7 @@ ACTIVITY_POLICY_ID = "S3_V2D_CLOSED_ACTIVITY_LIFECYCLE_V1"
 BATCH_POLICY_ID = "S3_V2D_EXACT_REVISION_BOUND_STIFFNESS_PLAN_V1"
 DRILL_SCALE_POLICY_ID = "S3_BASIS_INVARIANT_GENERALIZED_EIGENVALUE_V1"
 MASS_POLICY_ID = "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1"
+QUADRATURE_AUTHORITY_ID = "S3_V2D_MIN3_HAMMER3_V1"
 GEOMETRIC_STIFFNESS_POLICY_ID = (
     "S3_V2D_CST_UNIFORM_MEMBRANE_COMPRESSION_INITIAL_STRESS_V1"
 )
@@ -222,6 +223,7 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     """Explicit V2D candidate; no public alias or default selects it."""
 
     formulation_id = FORMULATION_ID
+    implementation_id = IMPLEMENTATION_ID
     selector = SELECTOR
     native_state_schema_id = NATIVE_STATE_SCHEMA_ID
     native_state_layout_id = NATIVE_STATE_LAYOUT_ID
@@ -233,6 +235,7 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     pressure_surface_policy_id = PRESSURE_SURFACE_POLICY_ID
     activity_policy_id = ACTIVITY_POLICY_ID
     qualified_batch_policy_id = BATCH_POLICY_ID
+    quadrature_authority_id = QUADRATURE_AUTHORITY_ID
     dynamic_algebraic_nullity = 9
     dynamic_algebraic_policy = DYNAMIC_ALGEBRAIC_POLICY_ID
     dynamic_algebraic_mass_witness = DYNAMIC_ALGEBRAIC_MASS_WITNESS
@@ -356,6 +359,19 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
 
     def capability_matrix(self) -> Dict[str, str]:
         return dict(CAPABILITY_MATRIX)
+
+    def validate_quadrature_authority(self) -> None:
+        """Fail closed unless the frozen MIN3/Hammer-3 station rule is exact."""
+
+        self._validate_configuration()
+        if (
+            self.quadrature_authority_id != QUADRATURE_AUTHORITY_ID
+            or not np.array_equal(self.gauss_points, HAMMER_POINTS)
+            or not np.array_equal(self.gauss_weights, HAMMER_REFERENCE_WEIGHTS)
+            or not np.array_equal(self.shear_gauss_points, HAMMER_POINTS)
+            or not np.array_equal(self.shear_gauss_weights, HAMMER_REFERENCE_WEIGHTS)
+        ):
+            raise NativeParityCapabilityError("S3 V2D quadrature authority changed")
 
     def corotational_reference_frame(self, coordinates: Any) -> np.ndarray:
         """Return the objective triangle frame used only by the EICR wrapper."""
@@ -1372,7 +1388,7 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "phi": np.asarray(operators["phi"], dtype=np.float64).copy(),
             "phi_squared": phi_squared,
             "drill_scale": drill_scale,
-            "quadrature_authority_id": "S3_V2D_MIN3_HAMMER3_V1",
+            "quadrature_authority_id": QUADRATURE_AUTHORITY_ID,
             "pl_completion_policy_id": PL_COMPLETION_POLICY_ID,
             "native_section_policy_id": (
                 NATIVE_SECTION_POLICY_ID
@@ -1513,16 +1529,107 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         material: Material,
         return_global: bool = False,
     ) -> Dict[str, Any]:
-        if return_global:
-            raise NativeParityCapabilityError(
-                "S3 V2D global tensor recovery is pending a successor gate"
-            )
-        return {
-            **self.compute_variational_resultants(mesh, displacements, material),
+        recovered = self.compute_variational_resultants(
+            mesh,
+            displacements,
+            material,
+        )
+        result: Dict[str, Any] = {
+            **recovered,
             "formulation_id": FORMULATION_ID,
             "implementation_id": IMPLEMENTATION_ID,
             "recovery_scope": "PHYSICAL_LOCAL_RESULTANTS_ONLY",
         }
+        if not return_global:
+            return result
+
+        frame = np.asarray(recovered["frame"], dtype=np.float64).reshape(3, 3)
+        membrane = np.asarray(
+            recovered["membrane_resultants"], dtype=np.float64
+        ).reshape(3, 3)
+        bending = np.asarray(
+            recovered["bending_resultants"], dtype=np.float64
+        ).reshape(3, 3)
+        shear_resultant = np.asarray(
+            recovered["transverse_shear_resultants"], dtype=np.float64
+        ).reshape(3, 2)
+
+        def tensor_rows(rows: np.ndarray) -> np.ndarray:
+            tensors = np.zeros((3, 3, 3), dtype=np.float64)
+            tensors[:, 0, 0] = rows[:, 0]
+            tensors[:, 1, 1] = rows[:, 1]
+            tensors[:, 0, 1] = rows[:, 2]
+            tensors[:, 1, 0] = rows[:, 2]
+            return np.asarray(
+                [frame @ tensor @ frame.T for tensor in tensors],
+                dtype=np.float64,
+            )
+
+        reference_coordinates = self._coordinates(mesh)
+        result.update(
+            {
+                "global_membrane_resultant_tensors": tensor_rows(membrane),
+                "global_bending_resultant_tensors": tensor_rows(bending),
+                "global_transverse_shear_resultants": (
+                    shear_resultant[:, 0, None] * frame[:, 0][None, :]
+                    + shear_resultant[:, 1, None] * frame[:, 1][None, :]
+                ),
+                "_reference_surface_recovery_coordinates": (
+                    reference_coordinates.copy()
+                ),
+                "_recovery_coordinates": (
+                    reference_coordinates
+                    - float(self.reference_surface_offset)
+                    * self.physical_reference_director[None, :]
+                ),
+                "_recovery_stress_frame": frame.copy(),
+            }
+        )
+        if self.shell_section is not None:
+            result["recovery_scope"] = "PHYSICAL_GLOBAL_RESULTANTS_ONLY"
+            result["physical_stress_available"] = False
+            result["physical_layer_recovery_available"] = False
+            return result
+
+        thickness = float(self.thickness)
+        if not math.isfinite(thickness) or thickness <= np.finfo(np.float64).tiny:
+            raise ValueError("S3 V2D recovery thickness must be positive")
+        membrane_stress = membrane / thickness
+        bending_stress = 6.0 * bending / (thickness * thickness)
+        owner_shear = shear_resultant / thickness
+        for surface, sign in (("bot", -1.0), ("top", 1.0)):
+            in_plane = membrane_stress + sign * bending_stress
+            local_tensors = np.zeros((3, 3, 3), dtype=np.float64)
+            local_tensors[:, 0, 0] = in_plane[:, 0]
+            local_tensors[:, 1, 1] = in_plane[:, 1]
+            local_tensors[:, 0, 1] = in_plane[:, 2]
+            local_tensors[:, 1, 0] = in_plane[:, 2]
+            local_tensors[:, 0, 2] = owner_shear[:, 0]
+            local_tensors[:, 2, 0] = owner_shear[:, 0]
+            local_tensors[:, 1, 2] = owner_shear[:, 1]
+            local_tensors[:, 2, 1] = owner_shear[:, 1]
+            global_tensors = np.asarray(
+                [frame @ tensor @ frame.T for tensor in local_tensors],
+                dtype=np.float64,
+            )
+            for first, second, label in (
+                (0, 0, "xx"),
+                (1, 1, "yy"),
+                (2, 2, "zz"),
+                (0, 1, "xy"),
+                (1, 2, "yz"),
+                (0, 2, "xz"),
+            ):
+                result[f"local_{label}_{surface}"] = local_tensors[
+                    :, first, second
+                ].copy()
+                result[f"global_{label}_{surface}"] = global_tensors[
+                    :, first, second
+                ].copy()
+        result["recovery_scope"] = "PHYSICAL_GLOBAL_SURFACE_TENSORS"
+        result["physical_stress_available"] = True
+        result["physical_layer_recovery_available"] = True
+        return result
 
     def compute_dead_transverse_pressure_load(self, mesh: FEMesh, pressure: Any) -> np.ndarray:
         return StrictFlatLinearE4PLS3V2CShellElement.compute_dead_transverse_pressure_load(
@@ -2193,6 +2300,7 @@ __all__ = [
     "SELECTOR",
     "SERIALIZATION_POLICY_ID",
     "PRESSURE_SURFACE_POLICY_ID",
+    "QUADRATURE_AUTHORITY_ID",
     "SOURCE_SELECTION_SHA256",
     "SUPPORTED_OPERATIONS",
     "V2C_OPERATOR_SHA256",

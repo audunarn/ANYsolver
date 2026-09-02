@@ -19,8 +19,11 @@ import anymaterial.curves as _anymaterial_curves_module
 import anymaterial.yield_criteria as _anymaterial_yield_module
 
 from . import _native_rotation_state as _native_rotation_state_module
+from . import corotational as _corotational_module
 from . import e4_pl_s3_initial_fields as _s3_initial_fields_module
 from . import e4_pl_s3_state as _s3_state_module
+from . import e4_pl_s3_v2d_element as _s3_v2d_element_module
+from . import e4_pl_s3_v2d_state as _s3_v2d_state_module
 from . import elements as _elements_module
 from . import material_curves as _material_curves_module
 from . import materials as _materials_module
@@ -60,6 +63,15 @@ from .e4_pl_s3_state import (
     _module_authority_signature,
     canonical_json_bytes,
 )
+from .e4_pl_s3_v2d_element import (
+    FORMULATION_ID as _S3_V2D_DECLARED_FORMULATION_ID,
+    IMPLEMENTATION_ID as S3_V2D_IMPLEMENTATION_ID,
+    QUADRATURE_AUTHORITY_ID as S3_V2D_QUADRATURE_AUTHORITY_ID,
+    NativeParityE4PLS3V2DShellElement,
+)
+from .e4_pl_s3_v2d_state import (
+    canonical_json_bytes as _v2d_canonical_json_bytes,
+)
 from .element_capabilities import ElementCapabilityError
 from .elements import ShellElement
 from .matrix_assembly import (
@@ -79,6 +91,15 @@ if TYPE_CHECKING:
 
 QUALIFIED_Q4_FORMULATION_ID = "E4_PL_QUALIFIED_Q4_HYBRID_V2"
 QUALIFIED_S3_FORMULATION_ID = "E4_PL_QUALIFIED_S3_COMPANION_V1"
+S3_V2D_FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+if _S3_V2D_DECLARED_FORMULATION_ID != S3_V2D_FORMULATION_ID:
+    raise RuntimeError("S3 V2D current-state formulation authority mismatch")
+S3_V2D_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID = (
+    "S3_V2D_EICR_SYMMETRIC_MATERIAL_FORCE_GEOMETRIC_HESSIAN_SPLIT_V1"
+)
+S3_V2D_CURRENT_STATE_PROJECTION_POLICY_ID = (
+    "S3_V2D_EICR_NO_INTERNAL_BUBBLE_PROJECTION_V1"
+)
 COMMITTED_CURRENT_TANGENT_ASSEMBLY_POLICY_ID = (
     "Q4_ADDITIVE_VON_KARMAN_S3_NATIVE_TL_COMMITTED_COMPONENT_ASSEMBLY_V1"
 )
@@ -250,6 +271,123 @@ _S3_DEPENDENCY_MODULE_AUTHORITY = tuple(
         _anymaterial_yield_module,
     )
 )
+
+_S3_V2D_MODULE_AUTHORITY = _capture_dependency_module_authority(
+    _s3_v2d_element_module
+)
+_S3_V2D_DEPENDENCY_MODULE_AUTHORITY = tuple(
+    _capture_dependency_module_authority(module)
+    for module in (
+        _corotational_module,
+        _s3_v2d_state_module,
+    )
+)
+
+
+def _validate_s3_v2d_serialization_authority(
+    element: Any,
+    *,
+    expected_class: type[Any],
+) -> None:
+    if type(element) is not expected_class:
+        raise TypeError("S3 V2D serialization requires its exact class")
+    element._validate_configuration()
+    payload = element.to_dict()
+    restored = expected_class.from_dict(payload)
+    if type(restored) is not expected_class or restored.to_dict() != payload:
+        raise ValueError("S3 V2D serialization round trip changed its fingerprint")
+
+
+def _s3_v2d_committed_current_tangent_components(
+    element: Any,
+    model: "FEModel",
+    material: Any,
+    committed_u_elem: Any,
+    committed_state: Mapping[str, Any],
+    num_layers: int = 5,
+) -> Mapping[str, Any]:
+    """Evaluate one immutable V2D EICR energy-Hessian decomposition."""
+
+    if type(element) is not NativeParityE4PLS3V2DShellElement:
+        raise TypeError("S3 V2D current tangent requires its exact class")
+    if not isinstance(committed_state, Mapping):
+        raise TypeError("S3 V2D current tangent requires a committed mapping")
+    if committed_state.get("qualified_s3_activity_disposition") is not None:
+        raise ElementCapabilityError(
+            "S3 V2D current-state eigen analysis requires ACTIVE state"
+        )
+    displacement = np.asarray(committed_u_elem, dtype=np.float64)
+    if displacement.shape != (18,) or not np.all(np.isfinite(displacement)):
+        raise ValueError("S3 V2D current tangent requires a finite 18-vector")
+    validated = element.validate_model_bound_nonlinear_state(
+        model.mesh,
+        material,
+        committed_state,
+        int(num_layers),
+        expected_committed_total_u=displacement,
+    )
+    before = _v2d_canonical_json_bytes(committed_state)
+    from .corotational import corotational_element_response_components
+
+    force, material_tangent, geometric_tangent, _discarded_state = (
+        corotational_element_response_components(
+            model,
+            int(element.element_id),
+            element,
+            displacement,
+            committed_state,
+            int(num_layers),
+        )
+    )
+    after = _v2d_canonical_json_bytes(committed_state)
+    if before != after:
+        raise RuntimeError("S3 V2D current tangent mutated committed state")
+    material_array = np.asarray(material_tangent, dtype=np.float64)
+    geometric_array = np.asarray(geometric_tangent, dtype=np.float64)
+    total_array = material_array + geometric_array
+    force_array = np.asarray(force, dtype=np.float64)
+    if (
+        force_array.shape != (18,)
+        or material_array.shape != (18, 18)
+        or geometric_array.shape != (18, 18)
+        or total_array.shape != (18, 18)
+        or not np.all(np.isfinite(force_array))
+        or not np.all(np.isfinite(total_array))
+    ):
+        raise ValueError("S3 V2D current tangent returned incompatible arrays")
+    scale = max(float(np.linalg.norm(total_array, ord="fro")), 1.0)
+    decomposition_error = float(
+        np.linalg.norm(total_array - material_array - geometric_array, ord="fro")
+        / scale
+    )
+    symmetry_error = max(
+        float(np.linalg.norm(value - value.T, ord="fro") / scale)
+        for value in (material_array, geometric_array, total_array)
+    )
+    if (
+        decomposition_error > 256.0 * np.finfo(np.float64).eps
+        or symmetry_error > 512.0 * np.finfo(np.float64).eps
+    ):
+        raise ValueError("S3 V2D current tangent violates decomposition symmetry")
+    readonly: Dict[str, Any] = {
+        "decomposition_policy_id": (
+            S3_V2D_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID
+        ),
+        "force": force_array.copy(),
+        "geometric": geometric_array.copy(),
+        "material": material_array.copy(),
+        "projection_policy_id": S3_V2D_CURRENT_STATE_PROJECTION_POLICY_ID,
+        "relative_decomposition_error": decomposition_error,
+        "relative_symmetry_error": symmetry_error,
+        "state_digest": str(validated["state_integrity_sha256"]),
+        "state_storage": "transient_read_only_not_persisted",
+        "total": total_array.copy(),
+    }
+    for name in ("force", "geometric", "material", "total"):
+        readonly[name].setflags(write=False)
+    return MappingProxyType(readonly)
+
+
 _QUALIFIED_PROFILES = MappingProxyType(
     {
         QUALIFIED_Q4_FORMULATION_ID: MappingProxyType(
@@ -264,6 +402,7 @@ _QUALIFIED_PROFILES = MappingProxyType(
                 "component_api": (
                     QualifiedE4PLShellElement.compute_committed_current_tangent_components
                 ),
+                "component_api_receives_model": False,
                 "serialization_validator": _validate_q4_serialization_authority,
                 "state_validator": (
                     QualifiedE4PLShellElement.validate_committed_current_tangent_state
@@ -375,6 +514,7 @@ _QUALIFIED_PROFILES = MappingProxyType(
                 "component_api": (
                     QualifiedE4PLS3ShellElement.compute_committed_current_tangent_components
                 ),
+                "component_api_receives_model": False,
                 "serialization_validator": _validate_s3_serialization_authority,
                 "state_validator": (
                     QualifiedE4PLS3ShellElement.validate_model_bound_nonlinear_state
@@ -447,6 +587,73 @@ _QUALIFIED_PROFILES = MappingProxyType(
                 "class_namespace_authority": _QUALIFIED_S3_CLASS_NAMESPACE_AUTHORITY,
                 "module_name": QualifiedE4PLS3ShellElement.__module__,
                 "dependency_module_authority": _S3_DEPENDENCY_MODULE_AUTHORITY,
+            }
+        ),
+        S3_V2D_FORMULATION_ID: MappingProxyType(
+            {
+                "formulation_id": S3_V2D_FORMULATION_ID,
+                "family": "qualified_s3_v2d",
+                "node_count": 3,
+                "native_rotation_required": False,
+                "kinematics": "element_independent_corotational_energy_hessian",
+                "reference_surface_offset_scope": "s3_v2d_signed_offset",
+                "element_type": NativeParityE4PLS3V2DShellElement,
+                "component_api": _s3_v2d_committed_current_tangent_components,
+                "component_api_receives_model": True,
+                "serialization_validator": _validate_s3_v2d_serialization_authority,
+                "state_validator": (
+                    NativeParityE4PLS3V2DShellElement.validate_model_bound_nonlinear_state
+                ),
+                "implementation_id": S3_V2D_IMPLEMENTATION_ID,
+                "class_identity": MappingProxyType(
+                    {
+                        "formulation_native_total_lagrangian": False,
+                        "implementation_id": S3_V2D_IMPLEMENTATION_ID,
+                        "quadrature_authority_id": S3_V2D_QUADRATURE_AUTHORITY_ID,
+                    }
+                ),
+                "decomposition_policy_id": (
+                    S3_V2D_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID
+                ),
+                "projection_policy_id": S3_V2D_CURRENT_STATE_PROJECTION_POLICY_ID,
+                "state_binding_schema_id": None,
+                "algorithmic_origin_schema_id": None,
+                "state_displacement_binding": "committed_total_u",
+                "component_binding_flag_required": False,
+                "component_algorithmic_origin_flag_required": False,
+                "quadrature_authority_id": S3_V2D_QUADRATURE_AUTHORITY_ID,
+                "critical_apis": MappingProxyType(
+                    {
+                        "get_dof_mapping": ShellElement.get_dof_mapping,
+                        "compute_nonlinear_response": NativeParityE4PLS3V2DShellElement.compute_nonlinear_response,
+                        "init_model_bound_nonlinear_state": NativeParityE4PLS3V2DShellElement.init_model_bound_nonlinear_state,
+                        "validate_model_bound_nonlinear_state": NativeParityE4PLS3V2DShellElement.validate_model_bound_nonlinear_state,
+                        "compute_stiffness_components": NativeParityE4PLS3V2DShellElement.compute_stiffness_components,
+                        "compute_mass_matrix": NativeParityE4PLS3V2DShellElement.compute_mass_matrix,
+                        "compute_mass_components": NativeParityE4PLS3V2DShellElement.compute_mass_components,
+                        "dynamic_algebraic_directions": NativeParityE4PLS3V2DShellElement.dynamic_algebraic_directions,
+                        "get_node_coordinates": ShellElement.get_node_coordinates,
+                        "to_dict": NativeParityE4PLS3V2DShellElement.to_dict,
+                        "from_dict": NativeParityE4PLS3V2DShellElement.from_dict.__func__,
+                        "validate_quadrature_authority": NativeParityE4PLS3V2DShellElement.validate_quadrature_authority,
+                        "gauss_points": NativeParityE4PLS3V2DShellElement.gauss_points,
+                        "gauss_weights": NativeParityE4PLS3V2DShellElement.gauss_weights,
+                        "shear_gauss_points": NativeParityE4PLS3V2DShellElement.shear_gauss_points,
+                        "shear_gauss_weights": NativeParityE4PLS3V2DShellElement.shear_gauss_weights,
+                    }
+                ),
+                "base_critical_apis": MappingProxyType({}),
+                "module_function_authority": _S3_V2D_MODULE_AUTHORITY[
+                    "callable_bindings"
+                ],
+                "module_data_authority": _S3_V2D_MODULE_AUTHORITY["data_bindings"],
+                "class_namespace_authority": _S3_V2D_MODULE_AUTHORITY[
+                    "class_namespaces"
+                ],
+                "module_name": NativeParityE4PLS3V2DShellElement.__module__,
+                "dependency_module_authority": (
+                    _S3_V2D_DEPENDENCY_MODULE_AUTHORITY
+                ),
             }
         ),
     }
@@ -524,7 +731,7 @@ def _qualified_profile_api_failure(
         return f"{expected_formulation_id}:INSTANCE_DATA_VALUE_MISMATCH"
     if _static_mro_attribute(type(element), "reference_surface_offset") is not None:
         return f"{expected_formulation_id}:OFFSET_SCOPE_MISMATCH"
-    if profile["family"] == "qualified_s3":
+    if profile["family"] in {"qualified_s3", "qualified_s3_v2d"}:
         if "reference_surface_offset" not in instance_namespace:
             return f"{expected_formulation_id}:OFFSET_SCOPE_MISMATCH"
         raw_offset = instance_namespace["reference_surface_offset"]
@@ -674,7 +881,7 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
         element_id = raw_element_id
         qualified_ids.append(element_id)
         admitted_profiles.setdefault(
-            str(profile["family"]), (element_id, profile)
+            str(profile["formulation_id"]), (element_id, profile)
         )
         candidates.append((element_id, element, profile))
     qualified_ids.sort()
@@ -702,9 +909,10 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
                 + ",".join(sorted(changed_numerical)),
             )
         )
-    for family, (element_id, profile) in admitted_profiles.items():
+    for _formulation_id, (element_id, profile) in admitted_profiles.items():
         if failures:
             break
+        family = str(profile["family"])
         authority_module = _sys_module.modules.get(str(profile["module_name"]))
         authority_namespace = (
             {} if authority_module is None else vars(authority_module)
@@ -1018,7 +1226,7 @@ def _qualified_route(
             )
             continue
         reference_surface_offset = 0.0
-        if profile["family"] == "qualified_s3":
+        if profile["family"] in {"qualified_s3", "qualified_s3_v2d"}:
             if "reference_surface_offset" not in instance_namespace:
                 unsupported.append(
                     (element_id, f"{formulation_id}:OFFSET_SCOPE_MISMATCH")
@@ -1740,9 +1948,14 @@ def _assemble_committed_current_tangent_components_implementation(
                     "assemble_committed_current_tangent_components material"
                 ),
             )
+            component_context = (
+                model
+                if bool(profile["component_api_receives_model"])
+                else model.mesh
+            )
             components = profile["component_api"](
                 element,
-                model.mesh,
+                component_context,
                 material,
                 full[dofs],
                 normalized_states[element_id],
@@ -2124,6 +2337,9 @@ __all__ = [
     "CURRENT_STATE_EIGEN_ACTIVITY_POLICY_ID",
     "QUALIFIED_Q4_FORMULATION_ID",
     "QUALIFIED_S3_FORMULATION_ID",
+    "S3_V2D_FORMULATION_ID",
+    "S3_V2D_CURRENT_STATE_PROJECTION_POLICY_ID",
+    "S3_V2D_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID",
     "assemble_committed_current_tangent_components",
     "require_committed_tangent_component_api",
     "require_active_current_state_eigen_lifecycle",

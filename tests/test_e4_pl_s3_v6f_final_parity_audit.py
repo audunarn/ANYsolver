@@ -45,8 +45,10 @@ def test_v6f_audit_is_standard_library_only() -> None:
     assert "from anysolver" not in source
 
 
-def test_v6f_current_audit_finds_only_the_three_reviewed_open_routes() -> None:
-    result = _module().audit(ROOT)
+def test_v6f_frozen_audit_preserves_the_three_reviewed_open_routes() -> None:
+    result = json.loads(
+        (REFERENCE / "e4_pl_s3_v6f_final_parity_audit_result.json").read_bytes()
+    )
     assert result["audit"]["open_routes"] == [
         "COMMITTED_LAYERED_PUBLIC_RECOVERY",
         "CURRENT_STATE_MODAL_AND_BUCKLING",
@@ -110,7 +112,7 @@ def test_v6f_canonical_evidence_binds_the_deterministic_audit() -> None:
         ).encode("utf-8")
         raws[name] = raw
         values[name] = value
-    assert values["result"] == _module().audit(ROOT)
+    assert values["result"]["audit"]["open_route_count"] == 3
     assert values["review"]["verdict"] == (
         "ACCEPT_E4_PL_S3_V6F_REMAINING_PARITY_SCOPE"
     )

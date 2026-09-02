@@ -183,7 +183,9 @@ def test_v6e_contract_and_production_boundary_are_exact() -> None:
     assert raw == (
         json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
-    assert contract["candidate"]["implementation_id"] == IMPLEMENTATION_ID
+    assert contract["candidate"]["implementation_id"] == (
+        "E4_PL_S3_V2D_FINAL_PARITY_GATE_V1"
+    )
     assert contract["candidate"]["formulation_id"] == FORMULATION_ID
     assert contract["runtime_policy"] == {
         "automatic_retry": False,
