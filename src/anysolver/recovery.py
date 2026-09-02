@@ -25,6 +25,7 @@ from .recovery_batches import (
 from .recovery_s4 import recover_isotropic_s4
 from .q4_reference_batch import (
     MIN_REFERENCE_Q4_RECOVERY_GROUP,
+    reference_q4_candidate,
     recover_reference_q4,
 )
 from .s3_reference_batch import (
@@ -758,7 +759,19 @@ def _recover_element_stresses_with_report_under_lease(
     deterministic = True if resource_config is None else bool(resource_config.deterministic)
     backend = "serial" if used_workers <= 1 else "thread_pool"
     start = time.perf_counter()
-    if len(selected_ids) < _MIN_RECOVERY_PLAN_SIZE:
+    # The native qualified-Q4 plan is a direct stationary operator cache, not
+    # a coarse compiled scheduler.  A uniform 2x2 group already reuses one
+    # kernel four times, making the plan cheaper than four scalar stationary
+    # reconstructions even on its first use.  Preserve the mature low-setup
+    # scalar path for all other small selections (including legacy and S3).
+    selected_q4_plan_group = (
+        len(selected_ids) >= MIN_REFERENCE_Q4_RECOVERY_GROUP
+        and all(
+            reference_q4_candidate(model.mesh.elements[int(element_id)])
+            for element_id in selected_ids
+        )
+    )
+    if len(selected_ids) < _MIN_RECOVERY_PLAN_SIZE and not selected_q4_plan_group:
         # Preserve the low-setup scalar oracle for small selections.  The
         # retained plan, native-pool scope and coarse scheduler break even only
         # on larger recoveries; paying them here regresses the mature path.

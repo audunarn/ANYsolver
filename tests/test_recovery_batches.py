@@ -48,6 +48,23 @@ def _large_legacy_panel():
     return model
 
 
+def _legacy_panel():
+    """Build a small panel that must stay on the scalar fallback path."""
+
+    model = _panel()
+    for element_id, element in tuple(model.mesh.elements.items()):
+        model.add_element(
+            element_id,
+            LegacyShellElement(
+                element_id,
+                list(element.node_ids),
+                element.material_name,
+                thickness=element.thickness,
+            ),
+        )
+    return model
+
+
 def test_chunked_scalar_recovery_preserves_order_and_exact_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -136,7 +153,7 @@ def test_plan_ignores_load_revision_and_invalidates_on_geometry() -> None:
 
 
 def test_report_serialization_exposes_fallback_diagnostics() -> None:
-    model = _panel()
+    model = _legacy_panel()
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
 
     _values, report = recover_element_stresses_with_report(
@@ -152,6 +169,64 @@ def test_report_serialization_exposes_fallback_diagnostics() -> None:
     assert payload["metadata"]["eligible_element_count"] == 0
     assert "below_recovery_plan_threshold" in payload["metadata"]["fallback_reasons"]
     assert payload["metadata"]["plan_retained_bytes"] == 0
+
+
+def test_small_qualified_q4_group_uses_exact_native_stationary_plan() -> None:
+    model = generate_simple_panel_mesh(
+        2.0,
+        1.0,
+        0.01,
+        num_divisions_x=2,
+        num_divisions_y=2,
+    )
+    rng = np.random.default_rng(218)
+    displacement = rng.normal(
+        scale=2.0e-5,
+        size=model.mesh.dof_manager.total_dofs,
+    )
+    scalar = {}
+    for element_id in model.mesh.elements:
+        item = _compute_one_element_stress(
+            model,
+            displacement,
+            element_id,
+            return_global=True,
+        )
+        assert item is not None
+        scalar[item[0]] = item[1]
+
+    recovered, first_report = recover_element_stresses_with_report(
+        model,
+        displacement,
+        return_global=True,
+        resource_config=ResourceConfig(recovery_threads=1),
+    )
+    repeated, second_report = recover_element_stresses_with_report(
+        model,
+        displacement,
+        return_global=True,
+        resource_config=ResourceConfig(recovery_threads=1),
+    )
+
+    details = first_report.metadata["qualified_q4_reference_batch"]
+    assert first_report.metadata["recovery_backend"] == (
+        "qualified_q4_reference_stationary_plan"
+    )
+    assert details["element_count"] == 4
+    assert details["kernel_count"] == 1
+    assert first_report.metadata["plan_reused"] is False
+    assert second_report.metadata["plan_reused"] is True
+    assert list(recovered) == list(scalar)
+    for element_id, expected in scalar.items():
+        assert recovered[element_id].keys() == expected.keys()
+        assert repeated[element_id].keys() == expected.keys()
+        for field, expected_value in expected.items():
+            if isinstance(expected_value, str):
+                assert recovered[element_id][field] == expected_value
+                assert repeated[element_id][field] == expected_value
+            else:
+                np.testing.assert_array_equal(recovered[element_id][field], expected_value)
+                np.testing.assert_array_equal(repeated[element_id][field], expected_value)
 
 
 def test_compiled_isotropic_s4_matches_scalar_oracle_for_warped_global_output() -> None:

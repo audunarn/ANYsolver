@@ -52,7 +52,13 @@ if TYPE_CHECKING:
 
 REFERENCE_Q4_FORMULATION_ID = FORMULATION_ID
 REFERENCE_Q4_BATCH_POLICY_ID = "QUALIFIED_Q4_PLANAR_EXACT_RECOVERY_PLAN_V1"
-MIN_REFERENCE_Q4_RECOVERY_GROUP = 32
+# The plan stores one direct stationary kernel per distinct local Q4 geometry.
+# For uniform panels that is normally one kernel, so even a 2x2 panel avoids
+# rebuilding the same stationary system four times.  Empirical scalar-versus-
+# plan measurements show that four elements are already break-even on the
+# first call and materially faster on every warm recovery.  Keep singleton
+# and paired selections on the low-setup scalar oracle.
+MIN_REFERENCE_Q4_RECOVERY_GROUP = 4
 _PHYSICAL_EXTERNAL_INDICES = np.asarray(
     tuple(index for node in range(4) for index in range(6 * node, 6 * node + 5)),
     dtype=np.intp,
