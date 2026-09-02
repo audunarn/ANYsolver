@@ -50,7 +50,7 @@ def test_contract_is_canonical_complete_and_hash_bound() -> None:
         "automatic_retry": False,
         "checker_replicas_per_diagonal": 2,
         "child_wall_seconds": 600,
-        "correction_cycle": 1,
+        "correction_cycle": 2,
         "cycle_wall_seconds": 1800,
         "maximum_concurrent_producers": 2,
         "memory_limit_gib_per_process_tree": 24,
@@ -70,7 +70,7 @@ def test_contract_is_canonical_complete_and_hash_bound() -> None:
 def test_authority_extent_and_static_boundaries() -> None:
     contract = json.loads(CONTRACT.read_bytes())
     authority = contract["authority_commit"]
-    assert authority["expected_parent"] == "5cb08952ef3017df54924f3d13899a9eaa78ded5"
+    assert authority["expected_parent"] == "479f13e43abc12406ff7876094412cd424db827b"
     assert authority["exact_path_count"] == len(authority["expected_paths"]) == 7
     assert contract["production_boundary"] == {
         "activation_authorized": False,
@@ -165,3 +165,11 @@ def test_cycle_preloads_guard_before_concurrent_launch() -> None:
     assert isinstance(first_call.value, ast.Call)
     assert isinstance(first_call.value.func, ast.Name)
     assert first_call.value.func.id == "_load_bounded"
+
+
+def test_checker_authority_excludes_unimported_production_files() -> None:
+    text = CHECKER.read_text(encoding="utf-8")
+    assert "predecessor.get(\"frozen_inputs\"" not in text
+    contract = json.loads(CONTRACT.read_bytes())
+    paths = {item["path"] for item in contract["frozen_inputs"]}
+    assert not any(path.startswith("src/") for path in paths)

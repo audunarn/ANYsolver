@@ -46,13 +46,6 @@ def _contract(module: ModuleType) -> tuple[dict[str, Any], bytes]:
         payload = path.read_bytes()
         if len(payload) != item["bytes"] or module.sha256_bytes(payload) != item["sha256"]:
             raise V6QCheckerError(f"frozen input differs: {path}")
-    predecessor_path = REFERENCE / "e4_pl_s3_v5d_response_metric_contract.json"
-    predecessor = module.load_canonical(predecessor_path)
-    for item in predecessor.get("frozen_inputs", []):
-        path = ROOT / str(item["path"])
-        payload = path.read_bytes()
-        if len(payload) != item["bytes"] or module.sha256_bytes(payload) != item["sha256"]:
-            raise V6QCheckerError(f"V5D independent input differs: {path}")
     return value, raw
 
 
