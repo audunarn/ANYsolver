@@ -169,6 +169,9 @@ def _run_child(command: list[str], deadline: float, child_limit: int, stdout: Pa
 
 
 def _cycle(root: Path, cycle: int, contract: Mapping[str, Any], child_limit: int) -> dict[str, Any]:
+    # Load the dataclass-bearing guard to completion on the coordinator thread.
+    # Concurrent lazy imports can observe a partially initialized module.
+    _load_bounded()
     cycle_root = root / f"cycle-{cycle}"
     cycle_root.mkdir()
     deadline = time.monotonic() + int(contract["execution"]["cycle_wall_seconds"])

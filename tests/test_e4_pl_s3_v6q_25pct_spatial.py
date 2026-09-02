@@ -50,6 +50,7 @@ def test_contract_is_canonical_complete_and_hash_bound() -> None:
         "automatic_retry": False,
         "checker_replicas_per_diagonal": 2,
         "child_wall_seconds": 600,
+        "correction_cycle": 1,
         "cycle_wall_seconds": 1800,
         "maximum_concurrent_producers": 2,
         "memory_limit_gib_per_process_tree": 24,
@@ -69,8 +70,8 @@ def test_contract_is_canonical_complete_and_hash_bound() -> None:
 def test_authority_extent_and_static_boundaries() -> None:
     contract = json.loads(CONTRACT.read_bytes())
     authority = contract["authority_commit"]
-    assert authority["expected_parent"] == "313518d0b12773389fc82ffd5d62eb7bcf5200e2"
-    assert authority["exact_path_count"] == len(authority["expected_paths"]) == 4
+    assert authority["expected_parent"] == "5cb08952ef3017df54924f3d13899a9eaa78ded5"
+    assert authority["exact_path_count"] == len(authority["expected_paths"]) == 7
     assert contract["production_boundary"] == {
         "activation_authorized": False,
         "anymesh_untouched": True,
@@ -154,3 +155,13 @@ def test_bounded_guard_loader_registers_dataclass_module() -> None:
     bounded = coordinator._load_bounded()
     assert bounded._ProcessJob.__module__ == "_s3_v6q_bounded_process"
     assert coordinator.sys.modules["_s3_v6q_bounded_process"] is bounded
+
+
+def test_cycle_preloads_guard_before_concurrent_launch() -> None:
+    tree = ast.parse(COORDINATOR.read_text(encoding="utf-8"))
+    cycle = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_cycle")
+    first_call = cycle.body[0]
+    assert isinstance(first_call, ast.Expr)
+    assert isinstance(first_call.value, ast.Call)
+    assert isinstance(first_call.value.func, ast.Name)
+    assert first_call.value.func.id == "_load_bounded"
