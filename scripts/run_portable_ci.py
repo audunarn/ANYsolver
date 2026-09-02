@@ -89,6 +89,10 @@ PORTABLE_HISTORY_ONLY_NODES = (
         "tests/test_e4_pl_s3_v6g_recovery_current_eigen.py::"
         "test_v6g_contract_is_canonical_and_defaults_remain_frozen"
     ),
+    (
+        "tests/test_e4_pl_s3_v6g_recovery_current_eigen.py::"
+        "test_v6g_closes_the_frozen_v6f_readiness_inventory"
+    ),
 )
 # This invokes an external two-cycle N20/N40 diagnostic with its own 240-second
 # subprocess bound.  It is explicitly nonclassifying and already preserved by

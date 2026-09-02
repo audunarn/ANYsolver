@@ -773,6 +773,10 @@ def test_portable_ci_worker_is_headless_isolated_and_single_threaded(
         ("tests/test_e4_pl_s3_v2d_linear_native_parity.py",), tmp_path
     )
     assert sum(item.startswith("--deselect=") for item in v2d_command) == 1
+    v6g_command = portable_ci._worker_command(
+        ("tests/test_e4_pl_s3_v6g_recovery_current_eigen.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in v6g_command) == 2
     mixed_command = portable_ci._worker_command(
         ("tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py",), tmp_path
     )
