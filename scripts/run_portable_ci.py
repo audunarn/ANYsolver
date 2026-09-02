@@ -151,6 +151,42 @@ def partition_modules(
     return result
 
 
+def matrix_modules(
+    modules: Sequence[str],
+    shard_index: int | None,
+    shard_count: int | None,
+) -> tuple[str, ...]:
+    """Select one matrix shard while repeating the current S3 critical suite."""
+
+    if shard_index is None and shard_count is None:
+        return tuple(modules)
+    if shard_index is None or shard_count is None:
+        raise ValueError("matrix shard index and count must be provided together")
+    if (
+        isinstance(shard_index, bool)
+        or isinstance(shard_count, bool)
+        or shard_count < 1
+        or shard_index < 0
+        or shard_index >= shard_count
+    ):
+        raise ValueError("matrix shard index/count are invalid")
+    ordered = tuple(modules)
+    if len(ordered) != len(set(ordered)):
+        raise ValueError("matrix input modules must be unique")
+    critical = tuple(
+        module
+        for module in ordered
+        if module in PORTABLE_CURRENT_S3_SUCCESSOR_MODULES
+    )
+    if set(critical) != set(PORTABLE_CURRENT_S3_SUCCESSOR_MODULES):
+        raise RuntimeError("matrix input omits current S3 successor coverage")
+    general = tuple(module for module in ordered if module not in set(critical))
+    if shard_count > len(general):
+        raise ValueError("matrix shard count exceeds general module count")
+    shards = partition_modules(general, shard_count)
+    return tuple(sorted((*shards[shard_index], *critical)))
+
+
 def merge_test_modules() -> tuple[str, ...]:
     """Return the current non-performance, non-historical merge-test extent."""
 
@@ -274,10 +310,25 @@ def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0
         worker.wait()
 
 
-def run(*, workers: int, timeout_seconds: int) -> int:
+def run(
+    *,
+    workers: int,
+    timeout_seconds: int,
+    matrix_shard_index: int | None = None,
+    matrix_shard_count: int | None = None,
+) -> int:
     if isinstance(timeout_seconds, bool) or timeout_seconds < 1:
         raise ValueError("timeout_seconds must be a positive integer")
-    modules = merge_test_modules()
+    modules = matrix_modules(
+        merge_test_modules(), matrix_shard_index, matrix_shard_count
+    )
+    if matrix_shard_index is not None:
+        print(
+            "[portable-ci] matrix shard "
+            f"{matrix_shard_index + 1}/{matrix_shard_count} "
+            f"selected {len(modules)} modules",
+            flush=True,
+        )
     partitions = partition_modules(modules, workers)
     temp_parent = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())).resolve()
     temp_parent.mkdir(parents=True, exist_ok=True)
@@ -338,12 +389,19 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS
     )
+    parser.add_argument("--matrix-shard-index", type=int)
+    parser.add_argument("--matrix-shard-count", type=int)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    return run(workers=args.workers, timeout_seconds=args.timeout_seconds)
+    return run(
+        workers=args.workers,
+        timeout_seconds=args.timeout_seconds,
+        matrix_shard_index=args.matrix_shard_index,
+        matrix_shard_count=args.matrix_shard_count,
+    )
 
 
 if __name__ == "__main__":

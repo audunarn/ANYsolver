@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import warnings
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -630,9 +631,12 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
         encoding="utf-8"
     )
     assert (
-        "python scripts/run_portable_ci.py --workers 4 --timeout-seconds 1200"
+        "python scripts/run_portable_ci.py --workers 2 --timeout-seconds 1200\n"
+        "          --matrix-shard-index ${{ matrix.shard-index }} "
+        "--matrix-shard-count 8"
         in workflow
     )
+    assert len(re.findall(r"(?m)^\s+- \{os: .* shard-index: \d\}$", workflow)) == 8
     assert "push:\n    branches: [main]\n  pull_request:" in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
     for authority in gate.strict_json_load(CONTRACT)["sibling_authority"].values():
@@ -690,6 +694,32 @@ def test_portable_ci_observed_costs_separate_the_four_heaviest_modules() -> None
         if heaviest.intersection(partition)
     }
     assert owners == set(range(4))
+
+
+def test_portable_ci_matrix_shards_cover_general_once_and_s3_critical_always() -> None:
+    modules = portable_ci.merge_test_modules()
+    critical = set(portable_ci.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES)
+    shards = [portable_ci.matrix_modules(modules, index, 8) for index in range(8)]
+    for shard in shards:
+        assert critical <= set(shard)
+        assert len(shard) == len(set(shard))
+    general_counts = Counter(
+        module
+        for shard in shards
+        for module in shard
+        if module not in critical
+    )
+    assert set(general_counts) == set(modules) - critical
+    assert set(general_counts.values()) == {1}
+
+
+@pytest.mark.parametrize(
+    ("index", "count"),
+    [(0, None), (None, 8), (-1, 8), (8, 8), (0, 0), (True, 8), (0, True)],
+)
+def test_portable_ci_matrix_shards_reject_invalid_bounds(index, count) -> None:
+    with pytest.raises(ValueError, match="matrix shard"):
+        portable_ci.matrix_modules(portable_ci.merge_test_modules(), index, count)
 
 
 @pytest.mark.parametrize("workers", [0, -1, True])
