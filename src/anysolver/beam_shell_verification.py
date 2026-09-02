@@ -74,6 +74,12 @@ _EXTERNAL_REFERENCE_REPORT_OVERRIDE: contextvars.ContextVar[Optional[Path]] = co
     "anysolver_external_reference_report",
     default=None,
 )
+_EXTERNAL_REFERENCE_REPORT_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[Path, Dict[str, Any]]]
+] = contextvars.ContextVar(
+    "anysolver_external_reference_report_run_cache",
+    default=None,
+)
 _COMPOSITE_METRIC_RUN_CACHE: contextvars.ContextVar[
     Optional[Dict[str, Tuple[Tuple[Dict[str, Any], ...], float, float]]]
 ] = contextvars.ContextVar(
@@ -3560,7 +3566,21 @@ def _external_reference_locations() -> Tuple[Path, Path, Path]:
 
 def _external_reference_report_for_verification() -> Dict[str, Any]:
     _report_path, _markdown_path, deck_dir = _external_reference_locations()
-    return generate_external_reference_report(deck_dir)
+    cache = _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.get()
+    # EXT-001, EXT-002 and VVR-001 inspect the same deterministic deck-only
+    # handoff bundle.  Generate it once per top-level report, but retain the
+    # existing public behaviour of regenerating it for each independent run.
+    key = deck_dir.absolute()
+    cached = None if cache is None else cache.get(key)
+    if cached is not None:
+        return copy.deepcopy(cached)
+
+    report = generate_external_reference_report(deck_dir)
+    if cache is not None:
+        # Case checks own mutable result dictionaries, so never expose the
+        # cached object itself to a verification case.
+        cache[key] = copy.deepcopy(report)
+    return report
 
 
 def _external_report_evidence_summary(report: Mapping[str, Any]) -> Dict[str, Any]:
@@ -4548,6 +4568,7 @@ def run_beam_shell_verification(
     """Run the manifest, optionally consuming a separately generated external report."""
 
     token = None
+    external_reference_cache_token = _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.set({})
     composite_cache_token = _COMPOSITE_METRIC_RUN_CACHE.set({})
     plate_buckling_cache_token = _PLATE_BUCKLING_RUN_CACHE.set({})
     if external_reference_report is not None:
@@ -4559,6 +4580,7 @@ def run_beam_shell_verification(
             _EXTERNAL_REFERENCE_REPORT_OVERRIDE.reset(token)
         _PLATE_BUCKLING_RUN_CACHE.reset(plate_buckling_cache_token)
         _COMPOSITE_METRIC_RUN_CACHE.reset(composite_cache_token)
+        _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.reset(external_reference_cache_token)
 
 
 def _markdown(report: Mapping[str, Any]) -> str:
