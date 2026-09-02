@@ -438,6 +438,19 @@ def _write_exclusive(path: Path, raw: bytes) -> None:
         os.fsync(handle.fileno())
 
 
+def _checker_replica_root(
+    output_root: Path, replica: int, assignment_id: str
+) -> Path:
+    """Give each concurrent replica a distinct bounded-module name component."""
+
+    return (
+        output_root
+        / f"checker-replica-{replica + 1}"
+        / assignment_id
+        / f"replica-{replica + 1}"
+    )
+
+
 def _validate_execution_authorization(contract_raw: bytes) -> tuple[dict[str, Any], bytes]:
     authorization, raw = strict_json(AUTHORIZATION)
     expected = {
@@ -514,7 +527,7 @@ def run_completion(output_root: Path) -> dict[str, Any]:
     for assignment_id in coordinator.EXPECTED_SHARDS:
         proof = Path(proofs[assignment_id]["proof_path"])
         def launch(replica: int) -> dict[str, Any]:
-            root = output_root / f"checker-replica-{replica + 1}" / assignment_id
+            root = _checker_replica_root(output_root, replica, assignment_id)
             return coordinator._run_checker_process(
                 assignment_id=assignment_id,
                 proof=proof,

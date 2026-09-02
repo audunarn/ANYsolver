@@ -68,3 +68,14 @@ def test_v6p_strict_json_rejects_duplicates_and_nonfinite(tmp_path: Path) -> Non
     nonfinite.write_text('{"a":NaN}\n', encoding="utf-8")
     with pytest.raises(module.V6PError, match="nonfinite"):
         module.strict_json(nonfinite)
+
+
+def test_v6p_checker_replica_module_name_components_are_distinct(tmp_path: Path) -> None:
+    module = _module()
+    first = module._checker_replica_root(tmp_path, 0, "S3_V2_FLAT_4A_SLASH")
+    second = module._checker_replica_root(tmp_path, 1, "S3_V2_FLAT_4A_SLASH")
+    assert first.parent.name == "S3_V2_FLAT_4A_SLASH"
+    assert second.parent.name == "S3_V2_FLAT_4A_SLASH"
+    assert first.name == "replica-1"
+    assert second.name == "replica-2"
+    assert first != second
