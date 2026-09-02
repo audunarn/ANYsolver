@@ -63,6 +63,16 @@ def test_checker_is_deterministic_and_detects_gate_mutation() -> None:
         checker.verify(checker.canonical_bytes(changed), changed)
 
 
+def test_checker_accepts_a_consistent_nogo_without_converting_it_to_blocked() -> None:
+    checker = _load("_v6v_checker_nogo_test", CHECKER)
+    value = _common(checker)
+    value["gate_status"]["package_isolation"] = checker.FAIL
+    value["next_gate"] = None
+    value["terminal"] = checker.NO_GO
+    raw = checker.canonical_bytes(value)
+    assert checker.verify(raw, value)["terminal"] == checker.NO_GO
+
+
 def test_checker_imports_no_production_or_runner() -> None:
     tree = ast.parse(CHECKER.read_text(encoding="utf-8"))
     imports = []

@@ -10,6 +10,8 @@ from typing import Any, Sequence
 
 
 PASS = "PASS_BOUND_REGISTERED_SCOPE"
+FAIL = "FAIL_BOUND_REGISTERED_SCOPE"
+NO_GO = "NO_GO_E4_PL_S3_V6V_PACKAGE_RESTART_OR_BATCH"
 GO = "PROVISIONAL_GO_E4_PL_S3_V6V_FINAL_QUALIFICATION_PREPARATION"
 GATES = {
     "batching",
@@ -64,10 +66,16 @@ def verify(raw: bytes, value: dict[str, Any]) -> dict[str, Any]:
     gates = value.get("gate_status")
     if not isinstance(gates, dict) or set(gates) != GATES:
         raise CheckerError("V6V gate set differs")
-    if set(gates.values()) != {PASS}:
-        raise CheckerError("V6V common contains a failed gate")
-    if value.get("terminal") != GO:
-        raise CheckerError("V6V terminal differs")
+    if not set(gates.values()).issubset({PASS, FAIL}):
+        raise CheckerError("V6V gate value differs")
+    passed = set(gates.values()) == {PASS}
+    if passed:
+        if value.get("terminal") != GO or value.get("next_gate") != (
+            "V6W_FINAL_QUALIFICATION_EVIDENCE_COMPOSITION"
+        ):
+            raise CheckerError("V6V PASS terminal differs")
+    elif value.get("terminal") != NO_GO or value.get("next_gate") is not None:
+        raise CheckerError("V6V NO-GO terminal differs")
     boundary = value.get("production_boundary")
     if boundary != {
         "anymesh_untouched": True,
@@ -80,6 +88,7 @@ def verify(raw: bytes, value: dict[str, Any]) -> dict[str, Any]:
         "accepted": True,
         "common_sha256": hashlib.sha256(raw).hexdigest().upper(),
         "schema": "anysolver.e4-pl-s3-v6v-activation-gap-checker-v1",
+        "terminal": value["terminal"],
     }
     package = value.get("package")
     if (

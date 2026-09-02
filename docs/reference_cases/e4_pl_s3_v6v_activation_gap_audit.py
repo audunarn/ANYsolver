@@ -42,6 +42,17 @@ FOCUSED_TESTS = (
 )
 
 
+def _sibling(name: str) -> Path:
+    for base in (ROOT, *ROOT.parents):
+        candidate = base / name
+        if candidate.is_dir():
+            return candidate.resolve()
+    raise RuntimeError(f"required sibling repository is absent: {name}")
+
+
+ANYFILEIO_ROOT = _sibling("ANYfileIO")
+
+
 class V6VError(RuntimeError):
     pass
 
@@ -91,9 +102,22 @@ def _module(name: str, path: Path) -> Any:
 
 
 def _git(*arguments: str) -> str:
+    return _git_at(ROOT, *arguments)
+
+
+def _git_command(repository: Path, *arguments: str) -> list[str]:
+    return [
+        "git",
+        "-c",
+        f"safe.directory={repository.as_posix()}",
+        *arguments,
+    ]
+
+
+def _git_at(repository: Path, *arguments: str) -> str:
     process = subprocess.run(
-        ["git", *arguments],
-        cwd=ROOT,
+        _git_command(repository, *arguments),
+        cwd=repository,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
@@ -121,6 +145,17 @@ def validate_contract() -> tuple[bytes, dict[str, Any]]:
         raw_input = (ROOT / row["path"]).read_bytes()
         if len(raw_input) != row["bytes"] or sha256(raw_input) != row["sha256"]:
             raise V6VError(f"frozen input differs: {row['path']}")
+    dependency = value.get("dependency_inputs", {}).get("anyfileio", {})
+    dependency_pyproject = (ANYFILEIO_ROOT / "pyproject.toml").read_bytes()
+    if (
+        _git_at(ANYFILEIO_ROOT, "rev-parse", "HEAD") != dependency.get("commit")
+        or _git_at(ANYFILEIO_ROOT, "rev-parse", "HEAD^{tree}")
+        != dependency.get("tree")
+        or _git_at(ANYFILEIO_ROOT, "status", "--porcelain")
+        or dependency.get("pyproject")
+        != {"bytes": len(dependency_pyproject), "sha256": sha256(dependency_pyproject)}
+    ):
+        raise V6VError("ANYfileIO dependency identity differs")
     return raw, value
 
 
@@ -181,12 +216,76 @@ def package_worker(output: Path) -> dict[str, Any]:
     archive = work / "source.tar"
     source = work / "source"
     wheelhouse = work / "wheelhouse"
+    dependency_archive = work / "anyfileio-source.tar"
+    dependency_source = work / "anyfileio-source"
+    dependency_wheelhouse = work / "anyfileio-wheelhouse"
     target = work / "installed"
     source.mkdir()
     wheelhouse.mkdir()
+    dependency_source.mkdir()
+    dependency_wheelhouse.mkdir()
     target.mkdir()
+    dependency_archive_process = _run_command(
+        _git_command(
+            ANYFILEIO_ROOT,
+            "archive",
+            "--format=tar",
+            "HEAD",
+            "-o",
+            str(dependency_archive),
+        ),
+        ANYFILEIO_ROOT,
+        work / "anyfileio-archive",
+    )
+    if dependency_archive_process.returncode:
+        raise V6VError("ANYfileIO git archive failed")
+    with tarfile.open(dependency_archive, "r") as stream:
+        stream.extractall(dependency_source, filter="data")
+    dependency_build = _run_command(
+        [
+            sys.executable,
+            "-m",
+            "build",
+            "--wheel",
+            "--no-isolation",
+            "--outdir",
+            str(dependency_wheelhouse),
+            str(dependency_source),
+        ],
+        work,
+        work / "anyfileio-build",
+    )
+    if dependency_build.returncode:
+        raise V6VError("ANYfileIO wheel build failed")
+    dependency_wheels = sorted(dependency_wheelhouse.glob("*.whl"))
+    if len(dependency_wheels) != 1:
+        raise V6VError("ANYfileIO wheel count differs")
+    dependency_wheel = dependency_wheels[0]
+    if (
+        not dependency_wheel.is_file()
+        or _is_reparse(dependency_wheel)
+        or dependency_wheel.stat().st_size <= 0
+        or not dependency_wheel.name.lower().startswith("anyfileio-")
+    ):
+        raise V6VError("ANYfileIO wheel identity differs")
+    dependency_install = _run_command(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "--target",
+            str(target),
+            str(dependency_wheel),
+        ],
+        work,
+        work / "anyfileio-install",
+    )
+    if dependency_install.returncode:
+        raise V6VError("ANYfileIO wheel install failed")
     archive_process = _run_command(
-        ["git", "archive", "--format=tar", "HEAD", "-o", str(archive)],
+        _git_command(ROOT, "archive", "--format=tar", "HEAD", "-o", str(archive)),
         ROOT,
         work / "archive",
     )
@@ -242,14 +341,16 @@ def package_worker(output: Path) -> dict[str, Any]:
             "import importlib.metadata as md, json, pathlib, sys",
             "target=pathlib.Path(sys.argv[1]).resolve()",
             "sys.path.insert(0,str(target))",
-            "import anysolver",
+            "import anyfileio, anysolver",
             "from anysolver import DEFAULT_Q4_FORMULATION, DEFAULT_S3_FORMULATION, create_shell_element, shell_element_from_dict",
             "element=create_shell_element(1,[1,2,3],'steel',formulation='e4-pl-s3-v2d',thickness=0.08,reference_normal=(0.0,0.0,1.0))",
             "payload=element.to_dict()",
             "restored=shell_element_from_dict(payload)",
             "origin=pathlib.Path(anysolver.__file__).resolve()",
+            "anyfileio_origin=pathlib.Path(anyfileio.__file__).resolve()",
             "assert origin.is_relative_to(target)",
-            "result={'class_name':type(element).__name__,'default_q4':DEFAULT_Q4_FORMULATION,'default_s3':DEFAULT_S3_FORMULATION,'formulation_id':payload['formulation_id'],'import_from_target':True,'import_origin':str(origin),'round_trip_exact':restored.to_dict()==payload,'version':anysolver.__version__}",
+            "assert anyfileio_origin.is_relative_to(target)",
+            "result={'anyfileio_import_from_target':True,'anyfileio_import_origin':str(anyfileio_origin),'class_name':type(element).__name__,'default_q4':DEFAULT_Q4_FORMULATION,'default_s3':DEFAULT_S3_FORMULATION,'formulation_id':payload['formulation_id'],'import_from_target':True,'import_origin':str(origin),'round_trip_exact':restored.to_dict()==payload,'version':anysolver.__version__}",
             "print(json.dumps(result,sort_keys=True,separators=(',',':'),allow_nan=False))",
         )
     )
@@ -273,16 +374,34 @@ def package_worker(output: Path) -> dict[str, Any]:
         and smoke_value.get("formulation_id")
         == "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
         and smoke_value.get("import_from_target") is True
+        and smoke_value.get("anyfileio_import_from_target") is True
         and smoke_value.get("round_trip_exact") is True
     )
     wheel_raw = wheel.read_bytes()
     record = {
         "candidate_commit": _git("rev-parse", "HEAD"),
         "candidate_tree": _git("rev-parse", "HEAD^{tree}"),
+        "dependencies": {
+            "anyfileio": {
+                "bytes": dependency_wheel.stat().st_size,
+                "commit": _git_at(ANYFILEIO_ROOT, "rev-parse", "HEAD"),
+                "filename": dependency_wheel.name,
+                "sha256": sha256(dependency_wheel.read_bytes()),
+                "tree": _git_at(ANYFILEIO_ROOT, "rev-parse", "HEAD^{tree}"),
+            }
+        },
         "gate_status": PASS if passed else FAIL,
         "logs": {
-            name: _log_record(work / f"{name}.{kind}.log")
-            for name in ("archive", "build", "install", "smoke")
+            f"{name}_{kind}": _log_record(work / f"{name}.{kind}.log")
+            for name in (
+                "anyfileio-archive",
+                "anyfileio-build",
+                "anyfileio-install",
+                "archive",
+                "build",
+                "install",
+                "smoke",
+            )
             for kind in ("stdout", "stderr")
         },
         "schema": "anysolver.e4-pl-s3-v6v-package-record-v1",
