@@ -8,6 +8,7 @@ unsupported solver features.
 
 from __future__ import annotations
 
+import copy
 import contextvars
 import json
 import importlib.metadata
@@ -77,6 +78,12 @@ _COMPOSITE_METRIC_RUN_CACHE: contextvars.ContextVar[
     Optional[Dict[str, Tuple[Tuple[Dict[str, Any], ...], float, float]]]
 ] = contextvars.ContextVar(
     "anysolver_composite_metric_run_cache",
+    default=None,
+)
+_PLATE_BUCKLING_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[Tuple[int, float], Tuple[float, Dict[str, Any]]]]
+] = contextvars.ContextVar(
+    "anysolver_plate_buckling_run_cache",
     default=None,
 )
 
@@ -1159,6 +1166,43 @@ def _plate_uniaxial_buckling_resultant(*, width: float = 1.0, thickness: float =
     return float(k * math.pi**2 * D / (width**2))
 
 
+def _simply_supported_plate_buckling(
+    *,
+    divisions: int = 10,
+    thickness: float = 0.01,
+) -> Tuple[float, Dict[str, Any]]:
+    """Return a report-local cached plate buckling result and diagnostics."""
+
+    key = (int(divisions), float(thickness))
+    cache = _PLATE_BUCKLING_RUN_CACHE.get()
+    cached = None if cache is None else cache.get(key)
+    if cached is not None:
+        value, diagnostics = cached
+        return value, copy.deepcopy(diagnostics)
+
+    model = _simply_supported_plate_model(divisions=divisions, thickness=thickness)
+    states = {
+        int(element_id): {"membrane_compression_x": 1.0}
+        for element_id, element in model.mesh.elements.items()
+        if isinstance(element, ShellElement)
+    }
+    result = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=3,
+        dense_size_limit=10000,
+    )
+    _assert(
+        result.solver_status == "ok" and result.critical_load_factor is not None,
+        "plate buckling solve failed",
+    )
+    value = float(result.critical_load_factor)
+    diagnostics = copy.deepcopy(result.diagnostics or {})
+    if cache is not None:
+        cache[key] = (value, copy.deepcopy(diagnostics))
+    return value, diagnostics
+
+
 def _run_shell_006(case: VerificationCase) -> VerificationCaseResult:
     model = _simply_supported_plate_model(divisions=10, thickness=0.01)
     result = solve_free_vibration(model, num_modes=6, dense_size_limit=10000)
@@ -1179,15 +1223,10 @@ def _run_shell_006(case: VerificationCase) -> VerificationCaseResult:
 
 
 def _run_shell_007(case: VerificationCase) -> VerificationCaseResult:
-    model = _simply_supported_plate_model(divisions=10, thickness=0.01)
-    states = {
-        int(element_id): {"membrane_compression_x": 1.0}
-        for element_id, element in model.mesh.elements.items()
-        if isinstance(element, ShellElement)
-    }
-    result = solve_eigenvalue_buckling(model, states, num_modes=3, dense_size_limit=10000)
-    _assert(result.solver_status == "ok" and result.critical_load_factor is not None, "plate buckling solve failed")
-    value = float(result.critical_load_factor)
+    value, diagnostics = _simply_supported_plate_buckling(
+        divisions=10,
+        thickness=0.01,
+    )
     reference = _plate_uniaxial_buckling_resultant()
     err = _rel_error(value, reference)
     _assert(err < 0.02, "simply supported plate buckling load mismatch")
@@ -1198,7 +1237,7 @@ def _run_shell_007(case: VerificationCase) -> VerificationCaseResult:
         mesh={"divisions": 10, "span_to_thickness": 100},
         reference={"type": "analytical", "k": 4.0, "critical_membrane_resultant": reference},
         result={"critical_load_factor": value, "relative_error": err},
-        checks=result.diagnostics or {},
+        checks=diagnostics,
     )
 
 
@@ -4510,6 +4549,7 @@ def run_beam_shell_verification(
 
     token = None
     composite_cache_token = _COMPOSITE_METRIC_RUN_CACHE.set({})
+    plate_buckling_cache_token = _PLATE_BUCKLING_RUN_CACHE.set({})
     if external_reference_report is not None:
         token = _EXTERNAL_REFERENCE_REPORT_OVERRIDE.set(Path(external_reference_report))
     try:
@@ -4517,6 +4557,7 @@ def run_beam_shell_verification(
     finally:
         if token is not None:
             _EXTERNAL_REFERENCE_REPORT_OVERRIDE.reset(token)
+        _PLATE_BUCKLING_RUN_CACHE.reset(plate_buckling_cache_token)
         _COMPOSITE_METRIC_RUN_CACHE.reset(composite_cache_token)
 
 
