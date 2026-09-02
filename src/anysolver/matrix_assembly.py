@@ -4293,6 +4293,10 @@ def _assemble_element_matrix_under_lease_impl(
 
     if matrix_type == "stiffness":
         from .s3_v2c_fast_assembly import lookup_v2c_global_stiffness_plan
+        from .s3_v2d_fast_assembly import (
+            V2D_GLOBAL_ASSEMBLY_POLICY_ID,
+            lookup_v2d_global_stiffness_plan,
+        )
 
         global_v2c_plan = lookup_v2c_global_stiffness_plan(model, element_items)
         if global_v2c_plan is not None:
@@ -4322,6 +4326,41 @@ def _assemble_element_matrix_under_lease_impl(
             info["diagnostics"]["s3_v2c_exact_stiffness"][
                 "plan_reused"
             ] = True
+            info["assembly_time"] = float(time.time() - fast_plan_started)
+            return matrix, info
+
+        global_v2d_plan = lookup_v2d_global_stiffness_plan(model, element_items)
+        if global_v2d_plan is not None:
+            qualified_runtime_guard(
+                model,
+                context="stiffness assembly V2D global-plan preflight",
+            )
+            data = np.frombuffer(global_v2d_plan.data_bytes, dtype=np.float64)
+            indices = np.frombuffer(
+                global_v2d_plan.indices_bytes,
+                dtype=np.dtype(global_v2d_plan.indices_dtype),
+            )
+            indptr = np.frombuffer(
+                global_v2d_plan.indptr_bytes,
+                dtype=np.dtype(global_v2d_plan.indptr_dtype),
+            )
+            matrix = _csr_constructor(
+                (data, indices, indptr),
+                shape=global_v2d_plan.shape,
+                copy=False,
+            )
+            info = json.loads(global_v2d_plan.info_bytes)
+            info["element_times"] = {
+                int(element_id): float(value)
+                for element_id, value in info["element_times"].items()
+            }
+            info["diagnostics"]["s3_v2d_exact_stiffness"][
+                "plan_reused"
+            ] = True
+            info["diagnostics"]["s3_v2d_global_stiffness"] = {
+                "plan_reused": True,
+                "policy_id": V2D_GLOBAL_ASSEMBLY_POLICY_ID,
+            }
             info["assembly_time"] = float(time.time() - fast_plan_started)
             return matrix, info
 
@@ -5177,6 +5216,10 @@ def _assemble_element_matrix_under_lease_impl(
         from .s3_v2c_fast_assembly import bind_v2c_global_stiffness_plan
 
         bind_v2c_global_stiffness_plan(model, element_items, matrix, info)
+    if matrix_type == "stiffness" and v2d_stiffness_items:
+        from .s3_v2d_fast_assembly import bind_v2d_global_stiffness_plan
+
+        bind_v2d_global_stiffness_plan(model, element_items, matrix, info)
     return matrix, info
 
 

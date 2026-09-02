@@ -9,6 +9,7 @@ bounded eligibility and identity signature remains exactly unchanged.
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import weakref
 from dataclasses import dataclass
@@ -23,7 +24,11 @@ from .e4_pl_s3_v2d_element import (
     NativeParityE4PLS3V2DShellElement,
 )
 from .e4_pl_s3_v2d_state import canonical_sha256
+from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEModel, FEMesh, Material
+
+
+V2D_GLOBAL_ASSEMBLY_POLICY_ID = "S3_V2D_EXACT_REVISION_BOUND_GLOBAL_CSR_PLAN_V1"
 
 
 class V2DFastAssemblyError(RuntimeError):
@@ -163,6 +168,194 @@ class PreparedV2DStiffness:
         }
 
 
+@dataclass(frozen=True)
+class PreparedV2DGlobalStiffness:
+    data_bytes: bytes
+    indices_bytes: bytes
+    indices_dtype: str
+    indptr_bytes: bytes
+    indptr_dtype: str
+    info_bytes: bytes
+    shape: tuple[int, int]
+
+
+def _global_fast_signature(
+    model: FEModel, items: Sequence[Tuple[int, Any]]
+) -> tuple[Any, ...] | None:
+    if type(model) is not FEModel or type(model.mesh) is not FEMesh:
+        return None
+    frozen = tuple(items)
+    if not frozen or not any(_candidate(element) for _element_id, element in frozen):
+        return None
+    if not all(
+        type(element)
+        in {QualifiedE4PLShellElement, NativeParityE4PLS3V2DShellElement}
+        for _element_id, element in frozen
+    ):
+        return None
+    mesh = model.mesh
+    namespace = object.__getattribute__(mesh, "__dict__")
+    if namespace.get("element_activity") is not None:
+        return None
+    token = namespace.get("_qualified_direct_state_token")
+    revisions = namespace.get("revisions")
+    if (
+        not isinstance(token, list)
+        or len(token) != 1
+        or type(token[0]) is not int
+        or type(revisions) is not dict
+    ):
+        return None
+    candidate_items = tuple(
+        (int(element_id), element)
+        for element_id, element in frozen
+        if _candidate(element)
+    )
+    if any(not v2d_batch_eligibility(model, element)[0] for _, element in candidate_items):
+        return None
+    material_signatures = []
+    for name in sorted({element.material_name for _, element in candidate_items}):
+        material = model.get_material(name)
+        material_signatures.append(
+            (
+                name,
+                id(material),
+                tuple(
+                    (field, _finite_scalar(getattr(material, field), field))
+                    for field in (
+                        "elastic_modulus",
+                        "poisson_ratio",
+                        "density",
+                        "yield_stress",
+                    )
+                ),
+            )
+        )
+    return (
+        id(model),
+        id(object.__getattribute__(model, "__dict__")),
+        id(mesh),
+        id(namespace),
+        id(mesh.elements),
+        id(mesh.nodes),
+        id(token),
+        token[0],
+        tuple(
+            int(revisions.get(name, 0))
+            for name in ("topology", "geometry", "material")
+        ),
+        tuple(
+            (int(element_id), id(element), type(element))
+            for element_id, element in frozen
+        ),
+        tuple(material_signatures),
+    )
+
+
+def _make_global_plan_manager() -> tuple[Any, Any]:
+    records: dict[int, tuple[Any, tuple[Any, ...], PreparedV2DGlobalStiffness]] = {}
+
+    def discard(mesh_id: int, observed: Any) -> None:
+        current = records.get(mesh_id)
+        if current is not None and current[0] is observed:
+            records.pop(mesh_id, None)
+
+    def lookup(
+        model: FEModel, items: Sequence[Tuple[int, Any]]
+    ) -> PreparedV2DGlobalStiffness | None:
+        signature = _global_fast_signature(model, items)
+        if signature is None:
+            return None
+        current = records.get(id(model.mesh))
+        if current is None:
+            return None
+        reference, expected_signature, plan = current
+        if (
+            reference() is not model.mesh
+            or signature != expected_signature
+            or type(plan) is not PreparedV2DGlobalStiffness
+            or not all(
+                type(value) is bytes
+                for value in (
+                    plan.data_bytes,
+                    plan.indices_bytes,
+                    plan.indptr_bytes,
+                    plan.info_bytes,
+                )
+            )
+        ):
+            records.pop(id(model.mesh), None)
+            return None
+        return plan
+
+    def bind(
+        model: FEModel,
+        items: Sequence[Tuple[int, Any]],
+        matrix: Any,
+        info: Mapping[str, Any],
+    ) -> None:
+        signature = _global_fast_signature(model, items)
+        if signature is None:
+            return
+        data = getattr(matrix, "data", None)
+        indices = getattr(matrix, "indices", None)
+        indptr = getattr(matrix, "indptr", None)
+        shape = getattr(matrix, "shape", None)
+        if (
+            type(data) is not np.ndarray
+            or data.dtype != np.dtype(np.float64)
+            or data.ndim != 1
+            or not np.all(np.isfinite(data))
+            or type(indices) is not np.ndarray
+            or indices.ndim != 1
+            or indices.dtype.kind != "i"
+            or type(indptr) is not np.ndarray
+            or indptr.ndim != 1
+            or indptr.dtype.kind != "i"
+            or type(shape) is not tuple
+            or len(shape) != 2
+            or shape[0] != shape[1]
+        ):
+            raise V2DFastAssemblyError("V2D global stiffness output is incompatible")
+        owned_info = dict(info)
+        owned_info["assembly_time"] = 0.0
+        owned_info["element_times"] = {
+            str(element_id): 0.0 for element_id, _element in items
+        }
+        info_bytes = (
+            json.dumps(
+                owned_info,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            + "\n"
+        ).encode("ascii")
+        plan = PreparedV2DGlobalStiffness(
+            data_bytes=np.ascontiguousarray(data).tobytes(order="C"),
+            indices_bytes=np.ascontiguousarray(indices).tobytes(order="C"),
+            indices_dtype=indices.dtype.str,
+            indptr_bytes=np.ascontiguousarray(indptr).tobytes(order="C"),
+            indptr_dtype=indptr.dtype.str,
+            info_bytes=info_bytes,
+            shape=(int(shape[0]), int(shape[1])),
+        )
+        mesh_id = id(model.mesh)
+        reference = weakref.ref(
+            model.mesh,
+            lambda observed, expected=mesh_id: discard(expected, observed),
+        )
+        records[mesh_id] = (reference, signature, plan)
+
+    return lookup, bind
+
+
+lookup_v2d_global_stiffness_plan, bind_v2d_global_stiffness_plan = (
+    _make_global_plan_manager()
+)
+del _make_global_plan_manager
+
+
 def _make_plan_manager() -> Any:
     records: dict[int, tuple[Any, tuple[Any, ...], PreparedV2DStiffness, tuple[tuple[int, bytes], ...]]] = {}
 
@@ -242,9 +435,13 @@ del _make_plan_manager
 
 
 __all__ = [
+    "PreparedV2DGlobalStiffness",
     "PreparedV2DStiffness",
+    "V2D_GLOBAL_ASSEMBLY_POLICY_ID",
     "V2DFastAssemblyError",
+    "bind_v2d_global_stiffness_plan",
     "get_v2d_stiffness_plan",
+    "lookup_v2d_global_stiffness_plan",
     "v2d_batch_eligibility",
     "v2d_fast_candidate",
 ]
