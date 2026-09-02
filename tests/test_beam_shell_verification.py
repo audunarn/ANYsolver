@@ -73,8 +73,16 @@ def test_composite_buckling_rows_are_cached_only_within_one_report(
         calls.append(metric)
         assert metric == "buckling"
         return [
-            {"relative_error": 0.0, "critical_load_factor": 1.0},
-            {"relative_error": 0.0, "critical_load_factor": 1.0},
+            {
+                "relative_error": 0.0,
+                "critical_load_factor": 1.0,
+                "nested": {"value": 0.0},
+            },
+            {
+                "relative_error": 0.0,
+                "critical_load_factor": 1.0,
+                "nested": {"value": 0.0},
+            },
         ]
 
     monkeypatch.setattr(beam_shell_verification, "composite_strip_metric_rows", rows)
@@ -90,8 +98,8 @@ def test_composite_buckling_rows_are_cached_only_within_one_report(
         "COUP-016",
         "BUC-005",
     ]
-    first["results"][0]["checks"]["rows"][0]["relative_error"] = 99.0
-    assert second["results"][0]["checks"]["rows"][0]["relative_error"] == 0.0
+    first["results"][0]["checks"]["rows"][0]["nested"]["value"] = 99.0
+    assert second["results"][0]["checks"]["rows"][0]["nested"]["value"] == 0.0
 
 
 def test_plate_buckling_is_cached_only_within_one_report(

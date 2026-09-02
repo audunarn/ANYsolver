@@ -1612,9 +1612,9 @@ def _composite_rows_for(metric: str) -> Tuple[List[Dict[str, Any]], float, float
         cached_rows, max_error, spread = cached
         # Result objects are mutable dictionaries.  Keep the run-local cache
         # private and hand every case a new copy of the exact cached values.
-        return [dict(row) for row in cached_rows], max_error, spread
+        return copy.deepcopy(list(cached_rows)), max_error, spread
 
-    rows = [dict(row) for row in composite_strip_metric_rows(metric)]
+    rows = copy.deepcopy(list(composite_strip_metric_rows(metric)))
     finite = [row for row in rows if math.isfinite(float(row.get("relative_error", math.inf)))]
     max_error = max((float(row["relative_error"]) for row in finite), default=math.inf)
     values = []
@@ -1628,7 +1628,7 @@ def _composite_rows_for(metric: str) -> Tuple[List[Dict[str, Any]], float, float
     spread = (max(values) - min(values)) / max(max(abs(value) for value in values), 1.0e-30) if values else math.inf
     if cache is not None:
         cache[metric] = (
-            tuple(dict(row) for row in rows),
+            tuple(copy.deepcopy(rows)),
             max_error,
             float(spread),
         )
