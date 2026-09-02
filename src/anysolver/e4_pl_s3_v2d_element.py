@@ -2,9 +2,9 @@
 
 V2D preserves the accepted V2C MIN3/CST/PL small-strain operator and adds
 native generalized-section integration, model-bound constitutive state, and
-an element-independent corotational response.  Solver-integrated hot restart,
-offsets, advanced loads, batching, and activation remain fail-closed until
-their own reviewed gates are complete.
+an element-independent corotational response.  Activity, contact, and the
+bounded stiffness-plan path are formulation-owned; activation remains
+fail-closed until its later reviewed gates are complete.
 
 No legacy TRI3 or qualified-Q4 mechanics are dispatched from this module.
 """
@@ -37,9 +37,11 @@ from .e4_pl_s3_state import (
     qualified_s3_lobatto_layers,
 )
 from .e4_pl_s3_v2d_state import (
+    ACTIVITY_DISPOSITION_KEY,
     STATE_LAYOUT_ID,
     STATE_SCHEMA,
     V2DStateError,
+    canonical_json_bytes,
     canonical_sha256,
     deserialize_v2d_state,
     initialize_v2d_state,
@@ -53,8 +55,8 @@ from .plasticity import plane_stress_return_map
 
 SELECTOR = "e4-pl-s3-v2d"
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-IMPLEMENTATION_ID = "E4_PL_S3_V2D_OFFSET_LOAD_RESTART_GATE_V1"
-FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v2"
+IMPLEMENTATION_ID = "E4_PL_S3_V2D_ACTIVITY_CONTACT_BATCH_GATE_V1"
+FORMULATION_SCHEMA = "anysolver.e4-pl-s3-v2d-native-parity-element-v3"
 SOURCE_SELECTION_SHA256 = (
     "DB5750539FB87CA4E4DDA1B37ECEACD65B76DF9A64969808712A4BDD44A45E3D"
 )
@@ -62,12 +64,14 @@ V2C_OPERATOR_SHA256 = (
     "84FB0B881F0F795BB9FC315A27FF53998BADE58CBAA1EF0A48785A5BE5E086F4"
 )
 NATIVE_SECTION_POLICY_ID = "S3_V2D_NATIVE_MIN3_GENERALIZED_SECTION_STATIONS_V1"
-SERIALIZATION_POLICY_ID = "S3_V2D_ELEMENT_AND_STATE_FINGERPRINT_V2"
+SERIALIZATION_POLICY_ID = "S3_V2D_ELEMENT_AND_STATE_FINGERPRINT_V3"
 NATIVE_STATE_SCHEMA_ID = STATE_SCHEMA
 NATIVE_STATE_LAYOUT_ID = STATE_LAYOUT_ID
 COROTATIONAL_POLICY_ID = "S3_V2D_EICR_ELEMENT_INDEPENDENT_PULLBACK_V1"
 MATERIAL_LIFECYCLE_POLICY_ID = "S3_V2D_HAMMER3_LOBATTO_TRIAL_COMMIT_REVERT_V1"
 PRESSURE_SURFACE_POLICY_ID = "ELEMENT_NODAL_REFERENCE_SURFACE_V1"
+ACTIVITY_POLICY_ID = "S3_V2D_CLOSED_ACTIVITY_LIFECYCLE_V1"
+BATCH_POLICY_ID = "S3_V2D_EXACT_REVISION_BOUND_STIFFNESS_PLAN_V1"
 DRILL_SCALE_POLICY_ID = "S3_BASIS_INVARIANT_GENERALIZED_EIGENVALUE_V1"
 MASS_POLICY_ID = "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1"
 CBMIN3 = 2.0
@@ -102,16 +106,16 @@ SUPPORTED_OPERATIONS = frozenset(
         "follower_pressure",
         "distributed_couple",
         "solver_integrated_hot_restart",
+        "contact_state",
+        "activity_state",
+        "qualified_batch_path",
     }
 )
 BLOCKED_OPERATIONS = frozenset(
     {
-        "contact_state",
-        "activity_state",
-        "qualified_batch_path",
         "default_activation",
         "python_pickle_restart",
-        "v6b_state_hot_migration",
+        "v2_or_earlier_state_hot_migration",
     }
 )
 CAPABILITY_MATRIX = MappingProxyType(
@@ -131,6 +135,23 @@ def _real_scalar(value: Any, label: str) -> float:
     if not math.isfinite(made):
         raise ValueError(f"S3 V2D {label} must be finite")
     return made
+
+
+def _binary64_vector_sha256(value: Any, label: str) -> str:
+    try:
+        vector = np.asarray(value, dtype=np.float64).reshape(18)
+    except (TypeError, ValueError) as exc:
+        raise V2DStateError(f"S3 V2D {label} must be a finite 18-vector") from exc
+    if not np.all(np.isfinite(vector)):
+        raise V2DStateError(f"S3 V2D {label} must be a finite 18-vector")
+    return canonical_sha256(
+        {
+            "binary64_little_endian_hex": np.asarray(
+                vector, dtype="<f8"
+            ).tobytes(order="C").hex().upper(),
+            "shape": [18],
+        }
+    )
 
 
 def _immutable_vector(value: Any, label: str) -> np.ndarray:
@@ -200,6 +221,10 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     reference_surface_offset_policy_id = REFERENCE_SURFACE_OFFSET_POLICY_ID
     reference_surface_strain_transform_id = REFERENCE_SURFACE_STRAIN_TRANSFORM_ID
     pressure_surface_policy_id = PRESSURE_SURFACE_POLICY_ID
+    activity_policy_id = ACTIVITY_POLICY_ID
+    qualified_batch_policy_id = BATCH_POLICY_ID
+    legacy_stiffness_batch_eligible = False
+    legacy_nonlinear_batch_eligible = False
     formulation_native_total_lagrangian = False
     _legacy_shell_dispatch_forbidden = FORMULATION_ID
     TRI_GAUSS_POINTS_3 = HAMMER_POINTS
@@ -288,6 +313,16 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         if coordinate < -1.0 or coordinate > 1.0:
             raise ValueError("S3 V2D surface coordinate must be in [-1,1]")
         return 0.5 * self.thickness * coordinate - self.reference_surface_offset
+
+    def native_reference_directors(self, mesh: FEMesh) -> np.ndarray:
+        """Return the physical facet directors consumed by contact routing."""
+
+        geometry = self._geometry(mesh)
+        director = (
+            float(self.director_polarity)
+            * np.asarray(geometry["frame"], dtype=np.float64)[:, 2]
+        )
+        return np.repeat(director[None, :], 3, axis=0)
 
     @property
     def gauss_points(self) -> np.ndarray:
@@ -819,7 +854,7 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         expected_committed_total_u: Any | None = None,
     ) -> Dict[str, Any]:
         layers = self._validated_num_layers(num_layers)
-        return validate_v2d_state(
+        validated = validate_v2d_state(
             state,
             element_id=self.element_id,
             node_ids=self.node_ids,
@@ -830,6 +865,348 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             material_mode=self._state_material_mode(),
             expected_committed_total_u=expected_committed_total_u,
         )
+        if validated[ACTIVITY_DISPOSITION_KEY] is not None:
+            raise V2DStateError(
+                "S3 V2D noncurrent activity state cannot supply ACTIVE mechanics"
+            )
+        return validated
+
+    def _validated_activity_core(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int,
+        *,
+        expected_committed_total_u: Any | None = None,
+    ) -> Dict[str, Any]:
+        layers = self._validated_num_layers(num_layers)
+        validated = validate_v2d_state(
+            state,
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            element_identity_sha256=self._state_identity(
+                mesh, material, layers
+            ),
+            num_layers=layers,
+            material_mode=self._state_material_mode(),
+        )
+        made = dict(validated)
+        made[ACTIVITY_DISPOSITION_KEY] = None
+        core = seal_v2d_state(made)
+        return self.validate_model_bound_nonlinear_state(
+            mesh,
+            material,
+            core,
+            layers,
+            expected_committed_total_u=expected_committed_total_u,
+        )
+
+    def _activity_core_identity(
+        self, state: Mapping[str, Any], num_layers: int
+    ) -> Dict[str, Any]:
+        return {
+            "activity_policy_id": ACTIVITY_POLICY_ID,
+            "core_committed_total_u_sha256": _binary64_vector_sha256(
+                state["committed_total_u"], "activity committed_total_u"
+            ),
+            "core_state_integrity_sha256": str(
+                state["state_integrity_sha256"]
+            ),
+            "element_id": int(state["element_id"]),
+            "element_identity_sha256": str(
+                state["element_identity_sha256"]
+            ),
+            "formulation_id": FORMULATION_ID,
+            "formulation_schema": FORMULATION_SCHEMA,
+            "material_mode": str(state["material_mode"]),
+            "node_ids": [int(value) for value in state["node_ids"]],
+            "solver_kinematics": str(state["solver_kinematics"]),
+            "solver_num_layers": int(num_layers),
+            "state_layout_id": NATIVE_STATE_LAYOUT_ID,
+            "state_schema": NATIVE_STATE_SCHEMA_ID,
+        }
+
+    def _deleted_disposition(
+        self,
+        core: Mapping[str, Any],
+        accepted_local_u: Any,
+        num_layers: int,
+        *,
+        deletion_step_index: int,
+        deletion_load_factor: float,
+        residual_stiffness_fraction: float,
+        trigger_name: str,
+    ) -> Dict[str, Any]:
+        try:
+            displacement = np.asarray(
+                accepted_local_u, dtype=np.float64
+            ).reshape(18)
+        except (TypeError, ValueError) as exc:
+            raise V2DStateError(
+                "S3 V2D deletion requires a finite accepted 18-vector"
+            ) from exc
+        if not np.all(np.isfinite(displacement)):
+            raise V2DStateError(
+                "S3 V2D deletion requires a finite accepted 18-vector"
+            )
+        step = int(deletion_step_index)
+        load_factor = float(deletion_load_factor)
+        residual = float(residual_stiffness_fraction)
+        trigger = str(trigger_name)
+        if step <= 0 or not math.isfinite(load_factor):
+            raise V2DStateError("S3 V2D deletion coordinates are invalid")
+        if not math.isfinite(residual) or not 0.0 <= residual <= 1.0:
+            raise V2DStateError("S3 V2D deletion residual fraction is invalid")
+        if not trigger:
+            raise V2DStateError("S3 V2D deletion trigger must not be empty")
+        identity = self._activity_core_identity(core, num_layers)
+        displacement_sha = _binary64_vector_sha256(
+            displacement, "deletion accepted_local_u"
+        )
+        if displacement_sha != identity["core_committed_total_u_sha256"]:
+            raise V2DStateError(
+                "S3 V2D deletion displacement differs from frozen history"
+            )
+        payload = {
+            **identity,
+            "accepted_local_u": displacement.tolist(),
+            "accepted_local_u_sha256": displacement_sha,
+            "constitutive_history_semantics": "FROZEN_AT_DELETION_ACCEPTED_STATE",
+            "deletion_load_factor": load_factor,
+            "deletion_step_index": step,
+            "operator_semantics": "CURRENT_FORCE_AND_TANGENT_FROM_FROZEN_PARENT_THEN_SCALED",
+            "residual_stiffness_fraction": residual,
+            "status": "DELETED_FROZEN_NONCURRENT",
+            "trigger_name": trigger,
+        }
+        payload["disposition_sha256"] = canonical_sha256(payload)
+        return payload
+
+    def _failed_disposition(
+        self,
+        core: Mapping[str, Any],
+        failed_local_u: Any,
+        num_layers: int,
+        *,
+        failure_reason: str,
+    ) -> Dict[str, Any]:
+        try:
+            displacement = np.asarray(
+                failed_local_u, dtype=np.float64
+            ).reshape(18)
+        except (TypeError, ValueError) as exc:
+            raise V2DStateError(
+                "S3 V2D failed state requires a finite 18-vector"
+            ) from exc
+        if not np.all(np.isfinite(displacement)):
+            raise V2DStateError(
+                "S3 V2D failed state requires a finite 18-vector"
+            )
+        reason = str(failure_reason)
+        if not reason:
+            raise V2DStateError("S3 V2D failed state requires a reason")
+        payload = {
+            **self._activity_core_identity(core, num_layers),
+            "failed_local_u": displacement.tolist(),
+            "failed_local_u_sha256": _binary64_vector_sha256(
+                displacement, "failed_local_u"
+            ),
+            "failure_reason": reason,
+            "semantics": "MATERIALIZED_RESULT_ONLY_NOT_ACTIVE_EVIDENCE",
+            "status": "FAILED_NONAUTHORITATIVE",
+        }
+        payload["disposition_sha256"] = canonical_sha256(payload)
+        return payload
+
+    def seal_noncurrent_deleted_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        accepted_local_u: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        deletion_step_index: int,
+        deletion_load_factor: float,
+        residual_stiffness_fraction: float,
+        trigger_name: str,
+    ) -> Dict[str, Any]:
+        before = canonical_json_bytes(state)
+        core = self.validate_model_bound_nonlinear_state(
+            mesh,
+            material,
+            state,
+            num_layers,
+            expected_committed_total_u=accepted_local_u,
+        )
+        marker = self._deleted_disposition(
+            core,
+            accepted_local_u,
+            int(num_layers),
+            deletion_step_index=deletion_step_index,
+            deletion_load_factor=deletion_load_factor,
+            residual_stiffness_fraction=residual_stiffness_fraction,
+            trigger_name=trigger_name,
+        )
+        made = dict(core)
+        made[ACTIVITY_DISPOSITION_KEY] = marker
+        sealed = seal_v2d_state(made)
+        if canonical_json_bytes(state) != before:
+            raise RuntimeError("S3 V2D deletion sealing mutated its input")
+        return sealed
+
+    def validate_noncurrent_deleted_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        expected_deletion_step_index: int | None = None,
+        expected_deletion_load_factor: float | None = None,
+        expected_residual_stiffness_fraction: float | None = None,
+        expected_trigger_name: str | None = None,
+    ) -> str:
+        layers = self._validated_num_layers(num_layers)
+        validated = validate_v2d_state(
+            state,
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            element_identity_sha256=self._state_identity(
+                mesh, material, layers
+            ),
+            num_layers=layers,
+            material_mode=self._state_material_mode(),
+        )
+        raw = validated[ACTIVITY_DISPOSITION_KEY]
+        if not isinstance(raw, Mapping) or raw.get("status") != (
+            "DELETED_FROZEN_NONCURRENT"
+        ):
+            raise V2DStateError("S3 V2D deleted disposition is absent")
+        core = self._validated_activity_core(
+            mesh,
+            material,
+            validated,
+            layers,
+            expected_committed_total_u=raw.get("accepted_local_u"),
+        )
+        expected = self._deleted_disposition(
+            core,
+            raw.get("accepted_local_u"),
+            layers,
+            deletion_step_index=raw.get("deletion_step_index"),
+            deletion_load_factor=raw.get("deletion_load_factor"),
+            residual_stiffness_fraction=raw.get(
+                "residual_stiffness_fraction"
+            ),
+            trigger_name=raw.get("trigger_name"),
+        )
+        if canonical_json_bytes(raw) != canonical_json_bytes(expected):
+            raise V2DStateError("S3 V2D deleted disposition is incompatible")
+        if expected_deletion_step_index is not None and int(
+            raw["deletion_step_index"]
+        ) != int(expected_deletion_step_index):
+            raise V2DStateError("S3 V2D deletion step is incompatible")
+        if expected_deletion_load_factor is not None and float(
+            raw["deletion_load_factor"]
+        ) != float(expected_deletion_load_factor):
+            raise V2DStateError("S3 V2D deletion load factor is incompatible")
+        if expected_residual_stiffness_fraction is not None and float(
+            raw["residual_stiffness_fraction"]
+        ) != float(expected_residual_stiffness_fraction):
+            raise V2DStateError("S3 V2D deletion residual fraction is incompatible")
+        if expected_trigger_name is not None and str(
+            raw["trigger_name"]
+        ) != str(expected_trigger_name):
+            raise V2DStateError("S3 V2D deletion trigger is incompatible")
+        rebuilt = dict(core)
+        rebuilt[ACTIVITY_DISPOSITION_KEY] = expected
+        rebuilt = seal_v2d_state(rebuilt)
+        if canonical_json_bytes(rebuilt) != canonical_json_bytes(validated):
+            raise V2DStateError("S3 V2D deleted state integrity is incompatible")
+        return str(rebuilt["state_integrity_sha256"])
+
+    def restore_noncurrent_deleted_state_for_internal_use(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        **expected: Any,
+    ) -> Dict[str, Any]:
+        self.validate_noncurrent_deleted_state(
+            mesh, material, state, num_layers, **expected
+        )
+        return self._validated_activity_core(
+            mesh, material, state, num_layers
+        )
+
+    def mark_noncurrent_failed_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        failed_local_u: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        failure_reason: str,
+    ) -> Dict[str, Any]:
+        before = canonical_json_bytes(state)
+        core = self.validate_model_bound_nonlinear_state(
+            mesh, material, state, num_layers
+        )
+        marker = self._failed_disposition(
+            core,
+            failed_local_u,
+            int(num_layers),
+            failure_reason=failure_reason,
+        )
+        made = dict(core)
+        made[ACTIVITY_DISPOSITION_KEY] = marker
+        sealed = seal_v2d_state(made)
+        if canonical_json_bytes(state) != before:
+            raise RuntimeError("S3 V2D failure marking mutated its input")
+        return sealed
+
+    def validate_noncurrent_failed_state(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+    ) -> str:
+        layers = self._validated_num_layers(num_layers)
+        validated = validate_v2d_state(
+            state,
+            element_id=self.element_id,
+            node_ids=self.node_ids,
+            element_identity_sha256=self._state_identity(
+                mesh, material, layers
+            ),
+            num_layers=layers,
+            material_mode=self._state_material_mode(),
+        )
+        raw = validated[ACTIVITY_DISPOSITION_KEY]
+        if not isinstance(raw, Mapping) or raw.get("status") != (
+            "FAILED_NONAUTHORITATIVE"
+        ):
+            raise V2DStateError("S3 V2D failed disposition is absent")
+        core = self._validated_activity_core(mesh, material, validated, layers)
+        expected = self._failed_disposition(
+            core,
+            raw.get("failed_local_u"),
+            layers,
+            failure_reason=raw.get("failure_reason"),
+        )
+        if canonical_json_bytes(raw) != canonical_json_bytes(expected):
+            raise V2DStateError("S3 V2D failed disposition is incompatible")
+        rebuilt = dict(core)
+        rebuilt[ACTIVITY_DISPOSITION_KEY] = expected
+        rebuilt = seal_v2d_state(rebuilt)
+        if canonical_json_bytes(rebuilt) != canonical_json_bytes(validated):
+            raise V2DStateError("S3 V2D failed state integrity is incompatible")
+        return str(rebuilt["state_integrity_sha256"])
 
     def serialize_nonlinear_state(
         self,
@@ -1509,6 +1886,31 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         )
         return force, made_tangent if bool(tangent) else None, validated
 
+    def compute_noncurrent_deleted_residual_operator(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        current_u_elem: Any,
+        frozen_state: Mapping[str, Any],
+        num_layers: int = 5,
+        *,
+        tangent: bool = True,
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+        """Evaluate from frozen parent history and discard the trial state."""
+
+        core = self.validate_model_bound_nonlinear_state(
+            mesh, material, frozen_state, num_layers
+        )
+        force, stiffness, _discarded = self.compute_nonlinear_response(
+            mesh,
+            material,
+            np.asarray(current_u_elem, dtype=np.float64),
+            core,
+            num_layers,
+            bool(tangent),
+        )
+        return force, stiffness
+
     def init_nonlinear_state(self, num_layers: int) -> Dict[str, Any]:
         del num_layers
         raise NativeParityCapabilityError(
@@ -1549,6 +1951,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "native_state_layout_id": NATIVE_STATE_LAYOUT_ID,
             "corotational_policy_id": COROTATIONAL_POLICY_ID,
             "pressure_surface_policy_id": PRESSURE_SURFACE_POLICY_ID,
+            "activity_policy_id": ACTIVITY_POLICY_ID,
+            "qualified_batch_policy_id": BATCH_POLICY_ID,
             "source_selection_sha256": SOURCE_SELECTION_SHA256,
             "thickness": float(self.thickness),
             "type": type(self).__name__,
@@ -1584,6 +1988,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "native_state_layout_id",
             "corotational_policy_id",
             "pressure_surface_policy_id",
+            "activity_policy_id",
+            "qualified_batch_policy_id",
             "source_selection_sha256",
             "thickness",
             "type",
@@ -1600,6 +2006,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             "native_state_layout_id": NATIVE_STATE_LAYOUT_ID,
             "corotational_policy_id": COROTATIONAL_POLICY_ID,
             "pressure_surface_policy_id": PRESSURE_SURFACE_POLICY_ID,
+            "activity_policy_id": ACTIVITY_POLICY_ID,
+            "qualified_batch_policy_id": BATCH_POLICY_ID,
             "director_polarity_policy_id": DIRECTOR_POLARITY_POLICY_ID,
             "director_reversal_transform_id": DIRECTOR_REVERSAL_TRANSFORM_ID,
             "reference_surface_offset_policy_id": REFERENCE_SURFACE_OFFSET_POLICY_ID,
@@ -1637,6 +2045,8 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
 
 
 __all__ = [
+    "ACTIVITY_POLICY_ID",
+    "BATCH_POLICY_ID",
     "BLOCKED_OPERATIONS",
     "CAPABILITY_MATRIX",
     "DRILL_SCALE_POLICY_ID",

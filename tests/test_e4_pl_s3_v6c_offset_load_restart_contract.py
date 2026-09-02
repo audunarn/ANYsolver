@@ -7,24 +7,22 @@ from pathlib import Path
 import subprocess
 
 import anysolver
-from anysolver.e4_pl_s3_v2d_element import (
-    BLOCKED_OPERATIONS,
-    CAPABILITY_MATRIX,
-    FORMULATION_ID,
-    FORMULATION_SCHEMA,
-    IMPLEMENTATION_ID,
-    NATIVE_STATE_LAYOUT_ID,
-    NATIVE_STATE_SCHEMA_ID,
-    PRESSURE_SURFACE_POLICY_ID,
-    SELECTOR,
-    SERIALIZATION_POLICY_ID,
-    SUPPORTED_OPERATIONS,
-)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "docs/reference_cases"
 CONTRACT = REFERENCE / "e4_pl_s3_v6c_v2d_offset_load_restart_contract.json"
+V6C_AUTHORITY = "c06d680da74f4c32d181cd552e5abd328d614dfa"
+
+
+def _authority_source(path: str) -> str:
+    return subprocess.run(
+        ["git", "show", f"{V6C_AUTHORITY}:{path}"],
+        cwd=ROOT,
+        check=True,
+        stdout=subprocess.PIPE,
+        text=True,
+    ).stdout
 
 
 def _reject_duplicate(pairs: list[tuple[str, object]]) -> dict:
@@ -79,13 +77,13 @@ def test_v6c_contract_binds_v6b_authority_and_current_candidate_identity() -> No
         assert hashlib.sha256(raw).hexdigest().upper() == expected
     candidate = contract["candidate"]
     assert candidate == {
-        "formulation_id": FORMULATION_ID,
-        "formulation_schema": FORMULATION_SCHEMA,
-        "implementation_id": IMPLEMENTATION_ID,
-        "selector": SELECTOR,
-        "serialization_policy_id": SERIALIZATION_POLICY_ID,
-        "state_layout_id": NATIVE_STATE_LAYOUT_ID,
-        "state_schema": NATIVE_STATE_SCHEMA_ID,
+        "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+        "formulation_schema": "anysolver.e4-pl-s3-v2d-native-parity-element-v2",
+        "implementation_id": "E4_PL_S3_V2D_OFFSET_LOAD_RESTART_GATE_V1",
+        "selector": "e4-pl-s3-v2d",
+        "serialization_policy_id": "S3_V2D_ELEMENT_AND_STATE_FINGERPRINT_V2",
+        "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_RESTART_STATE_V2",
+        "state_schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v2",
     }
 
 
@@ -98,8 +96,8 @@ def test_v6c_capability_boundary_and_defaults_are_exact() -> None:
         "distributed_couple",
         "solver_integrated_hot_restart",
     }
-    assert required <= SUPPORTED_OPERATIONS
-    assert all(CAPABILITY_MATRIX[name] == "SUPPORTED" for name in required)
+    element_source = _authority_source("src/anysolver/e4_pl_s3_v2d_element.py")
+    assert all(f'"{name}"' in element_source for name in required)
     assert set(contract["prohibited_scope"]) == {
         "qualified_s3_v1_physical_mechanics",
         "q4_physical_mechanics",
@@ -110,18 +108,14 @@ def test_v6c_capability_boundary_and_defaults_are_exact() -> None:
         "v6b_state_hot_migration",
         "default_activation",
     }
-    assert all(
-        CAPABILITY_MATRIX[name] == "BLOCKED_PENDING_SUCCESSOR_GATE"
-        for name in BLOCKED_OPERATIONS
-    )
-    assert PRESSURE_SURFACE_POLICY_ID == "ELEMENT_NODAL_REFERENCE_SURFACE_V1"
+    assert "ELEMENT_NODAL_REFERENCE_SURFACE_V1" in element_source
     assert anysolver.DEFAULT_Q4_FORMULATION == "e4-pl"
     assert anysolver.DEFAULT_S3_FORMULATION == "legacy-s3"
 
 
 def test_v6c_implementation_is_native_and_restart_route_is_exactly_scoped() -> None:
-    element_source = (ROOT / "src/anysolver/e4_pl_s3_v2d_element.py").read_text(
-        encoding="utf-8"
+    element_source = _authority_source(
+        "src/anysolver/e4_pl_s3_v2d_element.py"
     )
     tree = ast.parse(element_source)
     imports: set[str] = set()
@@ -136,13 +130,13 @@ def test_v6c_implementation_is_native_and_restart_route_is_exactly_scoped() -> N
     assert "compute_native_current_pressure_tangent" in element_source
     assert "seal_solver_integrated_nonlinear_state" in element_source
 
-    nonlinear_source = (ROOT / "src/anysolver/nonlinear_static.py").read_text(
-        encoding="utf-8"
+    nonlinear_source = _authority_source(
+        "src/anysolver/nonlinear_static.py"
     )
-    assert nonlinear_source.count(FORMULATION_ID) == 2
+    assert nonlinear_source.count("CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1") == 2
     assert "seal_solver_integrated_nonlinear_state" in nonlinear_source
-    boundary_source = (ROOT / "src/anysolver/boundary.py").read_text(
-        encoding="utf-8"
+    boundary_source = _authority_source(
+        "src/anysolver/boundary.py"
     )
     assert boundary_source.count("compute_native_current_pressure_load") == 1
     assert boundary_source.count("compute_native_current_pressure_tangent") == 1

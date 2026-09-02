@@ -2037,7 +2037,7 @@ def _prepare_qualified_q4_states_for_nonlinear_solve(
                 f"qualified S3 element {element_id} must map exactly 18 DOFs"
             )
         local_u = np.asarray(full[dofs], dtype=np.float64)
-        has_disposition = _S3_ACTIVITY_DISPOSITION_KEY in state
+        has_disposition = state.get(_S3_ACTIVITY_DISPOSITION_KEY) is not None
         if has_disposition:
             if element_id not in expected_deleted:
                 raise ValueError(
@@ -2538,7 +2538,13 @@ def _mark_failed_qualified_q4_states(
     """Own failed Q4 output while denying it ACTIVE current-state authority."""
 
     states = dict(element_states)
-    if str(kinematics) != "von_karman":
+    normalized_kinematics = str(kinematics)
+    has_solver_integrated_s3 = any(
+        _qualified_s3_committed_state_validator(element) is not None
+        and callable(getattr(element, "mark_noncurrent_failed_state", None))
+        for element in model.mesh.elements.values()
+    )
+    if normalized_kinematics != "von_karman" and not has_solver_integrated_s3:
         return states
     full = np.asarray(displacements, dtype=np.float64)
     marked_ids: List[int] = []
@@ -2546,6 +2552,8 @@ def _mark_failed_qualified_q4_states(
     for raw_element_id, element in sorted(
         model.mesh.elements.items(), key=lambda item: int(item[0])
     ):
+        if normalized_kinematics != "von_karman":
+            break
         if _qualified_q4_committed_state_hooks(element) is None:
             continue
         element_id = int(raw_element_id)
@@ -2593,12 +2601,7 @@ def _mark_failed_qualified_q4_states(
             continue
         marker = getattr(element, "mark_noncurrent_failed_state", None)
         if not callable(marker):
-            if str(getattr(element, "formulation_id", "")) == (
-                "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-            ):
-                # V2D active restart is qualified in V6C; fracture/activity
-                # disposition remains an explicit later gate. Preserve the
-                # last accepted active state on an ordinary failed solve.
+            if normalized_kinematics != "von_karman":
                 continue
             raise ValueError(
                 f"qualified S3 element {element_id} lacks failed-state lifecycle"

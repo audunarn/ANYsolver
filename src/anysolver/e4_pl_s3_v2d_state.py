@@ -18,9 +18,10 @@ import numpy as np
 
 
 FORMULATION_ID = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
-STATE_SCHEMA = "anysolver.e4-pl-s3-v2d-native-committed-state-v2"
-STATE_LAYOUT_ID = "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_RESTART_STATE_V2"
-STATE_INTEGRITY_ID = "S3_V2D_CANONICAL_RESTART_STATE_INTEGRITY_V2"
+STATE_SCHEMA = "anysolver.e4-pl-s3-v2d-native-committed-state-v3"
+STATE_LAYOUT_ID = "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3"
+STATE_INTEGRITY_ID = "S3_V2D_CANONICAL_ACTIVITY_STATE_INTEGRITY_V3"
+ACTIVITY_DISPOSITION_KEY = "qualified_s3_activity_disposition"
 MATERIAL_MODES = frozenset({"LAYERED_PLANE_STRESS", "GENERALIZED_SECTION"})
 SOLVER_KINEMATICS = frozenset(
     {"UNBOUND", "ELEMENT_LOCAL", "LINEAR", "VON_KARMAN", "COROTATIONAL"}
@@ -39,6 +40,7 @@ _REQUIRED_KEYS = frozenset(
         "committed_total_u",
         "committed_constitutive_u",
         "solver_kinematics",
+        ACTIVITY_DISPOSITION_KEY,
         "plastic_strain",
         "alpha",
         "layer_strain",
@@ -196,6 +198,7 @@ def initialize_v2d_state(
         "committed_total_u": np.zeros(18, dtype=np.float64),
         "committed_constitutive_u": np.zeros(18, dtype=np.float64),
         "solver_kinematics": "UNBOUND",
+        ACTIVITY_DISPOSITION_KEY: None,
         "plastic_strain": np.zeros((points, 3), dtype=np.float64),
         "alpha": np.zeros(points, dtype=np.float64),
         "layer_strain": np.zeros((points, 3), dtype=np.float64),
@@ -293,6 +296,9 @@ def validate_v2d_state(
         raise V2DStateError("V2D alpha must be nonnegative")
     if made["solver_kinematics"] not in SOLVER_KINEMATICS:
         raise V2DStateError("V2D solver_kinematics is incompatible")
+    disposition = made[ACTIVITY_DISPOSITION_KEY]
+    if disposition is not None and not isinstance(disposition, Mapping):
+        raise V2DStateError("V2D activity disposition is malformed")
     if expected_committed_total_u is not None:
         expected = _finite_array(
             expected_committed_total_u, (18,), "expected committed_total_u"
@@ -307,6 +313,9 @@ def validate_v2d_state(
     made.update(arrays)
     made["initial_field_provenance"] = copy.deepcopy(
         dict(made["initial_field_provenance"])
+    )
+    made[ACTIVITY_DISPOSITION_KEY] = (
+        None if disposition is None else copy.deepcopy(dict(disposition))
     )
     return made
 
@@ -329,6 +338,7 @@ def deserialize_v2d_state(raw: bytes) -> Mapping[str, Any]:
 
 
 __all__ = [
+    "ACTIVITY_DISPOSITION_KEY",
     "FORMULATION_ID",
     "MATERIAL_MODES",
     "STATE_INTEGRITY_ID",

@@ -4391,10 +4391,16 @@ def _assemble_element_matrix_under_lease_impl(
             get_v2c_stiffness_plan,
             v2c_fast_candidate,
         )
+        from .s3_v2d_fast_assembly import (
+            get_v2d_stiffness_plan,
+            v2d_batch_eligibility,
+            v2d_fast_candidate,
+        )
 
         groups = {}
         reference_s3_items = []
         v2c_stiffness_items = []
+        v2d_stiffness_items = []
         cached_s3_stiffness_items = []
         qualified_stiffness_items = []
         advanced_stiffness_items = []
@@ -4471,6 +4477,13 @@ def _assemble_element_matrix_under_lease_impl(
                 # distinct from both legacy TRI3 and the qualified S3 V1
                 # shared-component path.
                 v2c_stiffness_items.append((int(elem_id), element))
+                continue
+            if (
+                matrix_type == "stiffness"
+                and v2d_fast_candidate(element)
+                and v2d_batch_eligibility(model, element)[0]
+            ):
+                v2d_stiffness_items.append((int(elem_id), element))
                 continue
             if (
                 matrix_type == "stiffness"
@@ -4705,6 +4718,32 @@ def _assemble_element_matrix_under_lease_impl(
                         0 if v2c_plan_reused else len(prepared_v2c.element_ids)
                     ),
                     "formulation_id": v2c_diagnostics["formulation_id"],
+                    "speedup_claimed": False,
+                }
+            )
+
+        if v2d_stiffness_items:
+            prepared_v2d, v2d_plan_reused = get_v2d_stiffness_plan(
+                model,
+                v2d_stiffness_items,
+            )
+            precomputed.update(prepared_v2d.matrices)
+            if prepared_v2d.matrices_prevalidated:
+                prevalidated_element_ids.update(prepared_v2d.matrices)
+            v2d_diagnostics = prepared_v2d.diagnostics()
+            v2d_diagnostics["plan_reused"] = bool(v2d_plan_reused)
+            info["diagnostics"]["s3_v2d_exact_stiffness"] = v2d_diagnostics
+            vectorized_shell_groups.append(
+                {
+                    "shell_order": "S3",
+                    "num_elements": len(prepared_v2d.element_ids),
+                    "kernel": "s3_v2d_exact_revision_bound_stiffness_plan",
+                    "parallel_kernel": False,
+                    "unique_geometry_count": len(prepared_v2d.element_ids),
+                    "component_evaluation_count": (
+                        0 if v2d_plan_reused else len(prepared_v2d.element_ids)
+                    ),
+                    "formulation_id": v2d_diagnostics["formulation_id"],
                     "speedup_claimed": False,
                 }
             )
