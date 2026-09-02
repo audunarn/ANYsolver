@@ -537,7 +537,31 @@ def _shell_formulation_policy(
             raise ValueError("conflicting-shell-formulation-fields")
     request = formulation if formulation is not None else shell_formulation
     requested = None if request is None else str(request)
-    return requested, _normalized_shell_formulation(int(node_count), requested)
+    selected = _normalized_shell_formulation(int(node_count), requested)
+    supplied_id = _value(shell, "formulation_id", default=None)
+    expected_ids = {
+        "e4-pl": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+        "e4-pl-s3-v2d": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+        "legacy-s3": "LEGACY_SHELL_ELEMENT_TRI3",
+        "legacy": "LEGACY_SHELL_ELEMENT",
+    }
+    expected_id = expected_ids.get(selected)
+    if supplied_id is not None and (
+        expected_id is None or str(supplied_id) != expected_id
+    ):
+        raise ValueError("shell-formulation-id-does-not-match-selected-policy")
+    if selected == "e4-pl-s3-v2d":
+        if supplied_id is None:
+            raise ValueError("qualified-s3-generated-record-requires-formulation-id")
+        if _value(shell, "reference_normal", default=None) is None:
+            raise ValueError("qualified-s3-generated-record-requires-owner-normal")
+        if _value(shell, "owner_normal_authority", default=None) != (
+            "PHYSICAL_SURFACE_OWNER_NORMAL_V2D_V1"
+        ):
+            raise ValueError(
+                "qualified-s3-generated-record-requires-physical-owner-normal-authority"
+            )
+    return requested, selected
 
 
 def _shell_director_kwargs(
@@ -550,8 +574,8 @@ def _shell_director_kwargs(
     direction, so qualified Q4 construction must not infer that direction from
     connectivity winding.  Normalized generated geometry may supply the exact
     authority as ``reference_normal`` (and, optionally, ``director_polarity``).
-    The authority is valid only for the qualified Q4 or opt-in qualified S3
-    route.  A legacy request fails closed instead of discarding or interpreting
+    The authority is valid only for the qualified Q4 or qualified S3 routes.
+    A legacy request fails closed instead of discarding or interpreting
     formulation-specific state.
     """
 
@@ -559,7 +583,7 @@ def _shell_director_kwargs(
     director_polarity = _value(shell, "director_polarity", default=None)
     if reference_normal is None and director_polarity is None:
         return {}
-    if selected_formulation not in {"e4-pl", "e4-pl-s3"}:
+    if selected_formulation not in {"e4-pl", "e4-pl-s3", "e4-pl-s3-v2d"}:
         raise ValueError(
             "shell-director-authority-requires-qualified-shell-formulation"
         )
@@ -1039,10 +1063,14 @@ def build_fe_model_from_generated_geometry(
                     _material_name(shell, config),
                     formulation=formulation,
                     thickness=thickness,
-                    reduced_integration=(elem_type == "S8R"),
                     shell_section=_generalized_shell_section(
                         shell,
                         generalized_shell_sections,
+                    ),
+                    **(
+                        {}
+                        if selected_formulation == "e4-pl-s3-v2d"
+                        else {"reduced_integration": elem_type == "S8R"}
                     ),
                     **_shell_material_kwargs(shell),
                     **_shell_director_kwargs(shell, selected_formulation),

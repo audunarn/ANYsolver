@@ -16,6 +16,7 @@ from anysolver import (
     ImperfectionField,
     LegacyS3MigrationWarning,
     LegacyShellElement,
+    NativeParityE4PLS3V2DShellElement,
     QualifiedE4PLS3ShellElement,
     QualifiedE4PLShellElement,
     QualifiedS3MigrationWarning,
@@ -86,12 +87,24 @@ def test_published_identity_and_seven_point_rule_are_frozen() -> None:
     assert sum(weight for _r, _s, weight in TRIANGLE_QUADRATURE) == pytest.approx(0.5)
 
 
-def test_opt_in_dispatch_keeps_all_existing_defaults_unchanged() -> None:
+def test_qualified_aliases_and_s3_defaults_dispatch_to_v2d() -> None:
     assert DEFAULT_Q4_FORMULATION == "e4-pl"
-    assert DEFAULT_S3_FORMULATION == "legacy-s3"
-    assert type(create_shell_element(1, [1, 2, 3], "steel")) is LegacyShellElement
-    assert type(create_element("s3", 2, [1, 2, 3], "steel")) is LegacyShellElement
-    assert type(create_element("tria3", 3, [1, 2, 3], "steel")) is LegacyShellElement
+    assert DEFAULT_S3_FORMULATION == "e4-pl-s3-v2d"
+    assert type(
+        create_shell_element(
+            1, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
+        )
+    ) is NativeParityE4PLS3V2DShellElement
+    assert type(
+        create_element(
+            "s3", 2, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
+        )
+    ) is NativeParityE4PLS3V2DShellElement
+    assert type(
+        create_element(
+            "tria3", 3, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
+        )
+    ) is NativeParityE4PLS3V2DShellElement
     assert type(
         create_element(
             "tria3",
@@ -101,7 +114,7 @@ def test_opt_in_dispatch_keeps_all_existing_defaults_unchanged() -> None:
             formulation="qualified-s3",
             reference_normal=OWNER_NORMAL,
         )
-    ) is QualifiedE4PLS3ShellElement
+    ) is NativeParityE4PLS3V2DShellElement
     assert type(create_shell_element(4, [1, 2, 3, 4], "steel")) is QualifiedE4PLShellElement
     assert type(
         create_shell_element(
@@ -111,12 +124,17 @@ def test_opt_in_dispatch_keeps_all_existing_defaults_unchanged() -> None:
             formulation="e4-pl-s3",
             reference_normal=OWNER_NORMAL,
         )
-    ) is QualifiedE4PLS3ShellElement
+    ) is NativeParityE4PLS3V2DShellElement
     assert type(
         create_element(
             "qualified-s3", 6, [1, 2, 3], "steel", reference_normal=OWNER_NORMAL
         )
-    ) is QualifiedE4PLS3ShellElement
+    ) is NativeParityE4PLS3V2DShellElement
+    assert type(
+        create_shell_element(
+            61, [1, 2, 3], "steel", formulation="legacy-s3"
+        )
+    ) is LegacyShellElement
     with pytest.raises(ValueError, match="only for three-node"):
         create_element("legacy-s3", 7, [1, 2, 3, 4], "steel")
     with pytest.raises(ValueError, match="only for three-node"):

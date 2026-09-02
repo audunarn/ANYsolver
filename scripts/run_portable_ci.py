@@ -67,13 +67,27 @@ DEDICATED_LANE_NODES = (
         "test_stiffened_cylinder_keeps_mesh_style_invariance_with_beams"
     ),
 )
-# This assertion proves the exact historical implementation commit.  Shallow
-# pull-request checkouts intentionally do not carry that object; all runtime
-# assertions in the module remain part of portable CI.
+# These nodes replay frozen authority or selector state. Shallow pull-request
+# checkouts may not carry the bound object, and superseded aliases must retain
+# their historical meaning on the frozen source revision.
 PORTABLE_HISTORY_ONLY_NODES = (
+    # This module replays the immutable V1 opt-in mixed-mesh campaign. Its
+    # canonical input intentionally binds the original ``e4-pl-s3`` alias to
+    # QualifiedE4PLS3ShellElement, so it cannot be replayed after that public
+    # alias is activated for V2D. Keep it available as a focused historical
+    # test on its frozen source revision, but do not mix it into current CI.
+    "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py",
     (
         "tests/test_e4_pl_s3_v2d_linear_native_parity.py::"
         "test_v2d_stateless_identity_roundtrip_and_remaining_successor_gaps"
+    ),
+    (
+        "tests/test_e4_pl_s3_v6e_final_parity.py::"
+        "test_v6e_contract_and_production_boundary_are_exact"
+    ),
+    (
+        "tests/test_e4_pl_s3_v6g_recovery_current_eigen.py::"
+        "test_v6g_contract_is_canonical_and_defaults_remain_frozen"
     ),
 )
 # This invokes an external two-cycle N20/N40 diagnostic with its own 240-second

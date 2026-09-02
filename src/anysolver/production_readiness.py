@@ -53,38 +53,35 @@ def _status_from_gate(report: Mapping[str, Any], name: str) -> str:
 
 
 def _qualified_s3_companion_entry() -> CapabilityEntry:
-    """Report the opt-in S3 candidate without converting code parity to release authority."""
+    """Report the qualified V2D companion selected for current models."""
 
     return CapabilityEntry(
-        feature="qualified_s3_companion_shell_candidate",
-        status="not_qualified",
+        feature="qualified_s3_companion_shell",
+        status="qualified",
         release_gate="qualified_s3_companion_activation",
-        verification_cases=[],
+        verification_cases=["S3-V6W"],
         limits={
-            "default_formulation": "legacy-s3",
-            "explicit_selectors": ["e4-pl-s3", "qualified-s3"],
-            "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+            "default_formulation": "e4-pl-s3-v2d",
+            "explicit_selectors": [
+                "e4-pl-s3",
+                "qualified-s3",
+                "e4-pl-s3-v2d",
+                "qualified-s3-v2d",
+            ],
+            "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
             "shell_topology": "S3",
         },
         limitations=[
-            "The qualified S3 formulation is an additive opt-in candidate and is not a production default.",
-            "Element capability replacement records prove implemented paths only; they do not replace independent local, mixed-mesh, performance, or ecosystem qualification.",
-            "History-dependent generalized-section material response is outside the admitted stateless generalized-section scope.",
-            "Broad current-state buckling, section-offset reversal, deterministic mesh repair, and the two-cycle mixed campaign remain release gates.",
+            "Historical S3 records without formulation identity remain legacy-s3.",
+            "Switching a history-bearing model requires complete load-history replay.",
+            "Qualified construction requires authoritative physical owner-normal input.",
         ],
         required_solver_configuration={
             "authoritative_reference_normal": True,
-            "formulation": "e4-pl-s3",
+            "formulation": "e4-pl-s3-v2d",
             "geometry_admission": "ANYMESHER_QUALIFIED_S3_ADMISSION_V1",
         },
-        gate_blockers=[
-            "S3_INDEPENDENT_LOCAL_ORACLE_AND_INTERVAL",
-            "S3_CURRENT_STATE_BUCKLING",
-            "S3_DIRECTOR_OFFSET_AND_RESTART",
-            "S3_MIXED_MESH_CAMPAIGN_TWO_CYCLES",
-            "S3_PERFORMANCE_AND_BATCH",
-            "S3_ECOSYSTEM_CROSS_WHEEL",
-        ],
+        gate_blockers=[],
     )
 
 

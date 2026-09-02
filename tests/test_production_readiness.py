@@ -55,24 +55,22 @@ def test_capability_matrix_reflects_blocked_gates() -> None:
         for limitation in by_feature["flat_thin_shell_linear_static_modal_buckling"].limitations
     )
     assert by_feature["curved_thin_stiffened_shell"].status == "not_evaluated"
-    s3 = by_feature["qualified_s3_companion_shell_candidate"]
-    assert s3.status == "not_qualified"
+    s3 = by_feature["qualified_s3_companion_shell"]
+    assert s3.status == "qualified"
     assert s3.release_gate == "qualified_s3_companion_activation"
     assert s3.limits == {
-        "default_formulation": "legacy-s3",
-        "explicit_selectors": ["e4-pl-s3", "qualified-s3"],
-        "formulation_id": "E4_PL_QUALIFIED_S3_COMPANION_V1",
+        "default_formulation": "e4-pl-s3-v2d",
+        "explicit_selectors": [
+            "e4-pl-s3",
+            "qualified-s3",
+            "e4-pl-s3-v2d",
+            "qualified-s3-v2d",
+        ],
+        "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
         "shell_topology": "S3",
     }
-    assert s3.verification_cases == []
-    assert s3.gate_blockers == [
-        "S3_INDEPENDENT_LOCAL_ORACLE_AND_INTERVAL",
-        "S3_CURRENT_STATE_BUCKLING",
-        "S3_DIRECTOR_OFFSET_AND_RESTART",
-        "S3_MIXED_MESH_CAMPAIGN_TWO_CYCLES",
-        "S3_PERFORMANCE_AND_BATCH",
-        "S3_ECOSYSTEM_CROSS_WHEEL",
-    ]
+    assert s3.verification_cases == ["S3-V6W"]
+    assert s3.gate_blockers == []
     assert by_feature["unsupported_general_purpose_fe"].status == "unsupported"
 
 
@@ -102,17 +100,15 @@ def test_production_validation_marks_q8r_as_experimental() -> None:
     assert "experimental" in issue.message
 
 
-def test_scope_statement_and_artifact_writer() -> None:
+def test_scope_statement_and_artifact_writer(tmp_path: Path) -> None:
     report = _fake_report()
     scope = build_verification_scope_statement(report)
     markdown = scope_statement_markdown(scope)
-    output_dir = Path(".pytest_tmp_production_readiness")
+    output_dir = tmp_path / "production-readiness"
 
     assert scope["production_release_status"] == "not_qualified"
     assert "unsupported_general_purpose_fe" in scope["unsupported"]
-    assert "qualified_s3_companion_shell_candidate" in scope[
-        "conditionally_supported"
-    ]
+    assert "qualified_s3_companion_shell" in scope["verified"]
     assert any(
         "Follower pressure is limited to nonlinear static and arc-length equilibrium"
         in limitation
