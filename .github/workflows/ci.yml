@@ -8,6 +8,10 @@ on:
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
+    # The portable coordinator applies a 20-minute test budget.  Retain an
+    # outer runner deadline so a failed child-process cleanup cannot hold a
+    # hosted runner indefinitely.
+    timeout-minutes: 30
     env:
       Q1M_ANYMATERIAL_ROOT: ${{ github.workspace }}/.ecosystem/ANYmaterial
       Q1M_ANYGEOMETRY_ROOT: ${{ github.workspace }}/.ecosystem/ANYgeometry
