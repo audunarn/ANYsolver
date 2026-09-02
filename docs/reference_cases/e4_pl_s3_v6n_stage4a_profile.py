@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 import time
 from typing import Any, Mapping, Sequence
 
@@ -25,10 +26,18 @@ REFERENCE = Path(__file__).resolve().parent
 ADAPTER_PATH = REFERENCE / "e4_pl_s3_v6h_stage4a_adapter.py"
 BOUNDED_PATH = REFERENCE / "e4_pl_s3_v2_bounded_process.py"
 MANIFEST_PATH = REFERENCE / "e4_pl_s3_mixed_mesh_connectivity_manifest.json"
+CANDIDATE_ARCHIVE_PATH = Path(
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-v2d-stage4a-v6k-2d91bba2\candidate-source.tar"
+)
+DEPENDENCY_ARCHIVE_PATH = Path(
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-v2d-stage4a-v6l-dependency-closure\anyfileio-source.tar"
+)
 
 ADAPTER_SHA256 = "2C70B6B952CB7100ED1ED7C3E9BAB867C634BD11497422DF2916D045948E54C5"
 BOUNDED_SHA256 = "C5B192C9C3F6EE2C68A42AB4A0CFBCDBE81581381B800C13AACCE0BB219A3383"
 MANIFEST_SHA256 = "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
+CANDIDATE_ARCHIVE_SHA256 = "AC1EA6D71A273355439B25F915EE7BB383DC60769F22EEA8CC84095CDDAF426F"
+DEPENDENCY_ARCHIVE_SHA256 = "ABDFD6F6B6E04185FD277E4EE80400FA05B702BD43BA50851C4F9E85A5970C90"
 SCHEMA = "anysolver.e4-pl-s3-v6n-stage4a-nonclassifying-profile-v1"
 RESULT_SCHEMA = "anysolver.e4-pl-s3-v6n-stage4a-bounded-profile-result-v1"
 MAX_WALL_SECONDS = 600
@@ -68,6 +77,8 @@ def _require_bindings() -> None:
         ADAPTER_PATH: ADAPTER_SHA256,
         BOUNDED_PATH: BOUNDED_SHA256,
         MANIFEST_PATH: MANIFEST_SHA256,
+        CANDIDATE_ARCHIVE_PATH: CANDIDATE_ARCHIVE_SHA256,
+        DEPENDENCY_ARCHIVE_PATH: DEPENDENCY_ARCHIVE_SHA256,
     }
     for path, digest in expected.items():
         if not path.is_file() or path.is_symlink() or _sha256_path(path) != digest:
@@ -127,10 +138,29 @@ def _array_hash(array: Any) -> str:
     return _sha256_bytes(header + made.tobytes(order="C"))
 
 
-def run_worker(record_id: str, progress_path: Path, output_path: Path) -> dict[str, Any]:
+def _require_extracted_root(root: Path, marker: Path) -> None:
+    resolved = root.resolve()
+    required = (resolved / marker).resolve()
+    try:
+        required.relative_to(resolved)
+    except ValueError as exc:
+        raise ProfileError("extracted marker escapes its root") from exc
+    if not required.is_file() or required.is_symlink():
+        raise ProfileError(f"extracted environment marker is absent: {marker}")
+
+
+def run_worker(
+    record_id: str,
+    progress_path: Path,
+    output_path: Path,
+    candidate_root: Path,
+    dependency_root: Path,
+) -> dict[str, Any]:
     """Run the original leaf operations with diagnostic checkpoints only."""
 
     _require_bindings()
+    _require_extracted_root(candidate_root, Path("src/anysolver/__init__.py"))
+    _require_extracted_root(dependency_root, Path("src/anyfileio/__init__.py"))
     member = _member(record_id)
     progress = _Progress(progress_path, record_id)
     try:
@@ -139,6 +169,7 @@ def run_worker(record_id: str, progress_path: Path, output_path: Path) -> dict[s
         import e4_pl_s3_v6h_stage4a_adapter as adapter
 
         base = adapter.configure()
+        base._ACTIVE_CANDIDATE_ROOT = candidate_root.resolve()
         model, kinds, element_counts, combined_counts = adapter.build_model_for_validation(
             member["record"]
         )
@@ -258,6 +289,23 @@ def _environment() -> dict[str, str]:
     return made
 
 
+def _extract_archive(archive: Path, destination: Path) -> None:
+    """Extract a frozen Git archive after rejecting links and path traversal."""
+
+    destination.mkdir(parents=True, exist_ok=False)
+    resolved = destination.resolve()
+    with tarfile.open(archive, "r") as package:
+        for member in package.getmembers():
+            target = (resolved / member.name).resolve()
+            try:
+                target.relative_to(resolved)
+            except ValueError as exc:
+                raise ProfileError("archive member escapes extraction root") from exc
+            if member.issym() or member.islnk() or member.isdev():
+                raise ProfileError("archive contains a link or device member")
+        package.extractall(resolved, filter="data")
+
+
 def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str, Any]:
     """Launch one profiler child with a hard process-tree wall and memory cap."""
 
@@ -266,6 +314,10 @@ def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str
     if not 1 <= wall_seconds <= MAX_WALL_SECONDS:
         raise ProfileError("diagnostic wall must be between 1 and 600 seconds")
     output_dir.mkdir(parents=True, exist_ok=False)
+    candidate_root = output_dir / "candidate"
+    dependency_root = output_dir / "dependency"
+    _extract_archive(CANDIDATE_ARCHIVE_PATH, candidate_root)
+    _extract_archive(DEPENDENCY_ARCHIVE_PATH, dependency_root)
     progress_path = output_dir / "progress.jsonl"
     diagnostic_path = output_dir / "diagnostic.json"
     stdout_path = output_dir / "stdout.log"
@@ -286,13 +338,25 @@ def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str
         str(progress_path),
         "--output",
         str(diagnostic_path),
+        "--candidate-root",
+        str(candidate_root),
+        "--dependency-root",
+        str(dependency_root),
     ]
     started = time.monotonic()
     with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
         process = job.launch(
             command,
             cwd=Path(__file__).resolve().parents[2],
-            env=_environment(),
+            env=_environment()
+            | {
+                "PYTHONPATH": os.pathsep.join(
+                    (
+                        str((candidate_root / "src").resolve()),
+                        str((dependency_root / "src").resolve()),
+                    )
+                )
+            },
             stdout=stdout,
             stderr=stderr,
         )
@@ -355,6 +419,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--progress", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--candidate-root", type=Path)
+    parser.add_argument("--dependency-root", type=Path)
     parser.add_argument("--wall-seconds", type=int, default=MAX_WALL_SECONDS)
     return parser
 
@@ -364,9 +430,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.worker == args.run_bounded:
         raise SystemExit("select exactly one of --worker or --run-bounded")
     if args.worker:
-        if args.progress is None or args.output is None:
-            raise SystemExit("--worker requires --progress and --output")
-        run_worker(args.record_id, args.progress.resolve(), args.output.resolve())
+        if (
+            args.progress is None
+            or args.output is None
+            or args.candidate_root is None
+            or args.dependency_root is None
+        ):
+            raise SystemExit(
+                "--worker requires --progress, --output, --candidate-root, and "
+                "--dependency-root"
+            )
+        run_worker(
+            args.record_id,
+            args.progress.resolve(),
+            args.output.resolve(),
+            args.candidate_root.resolve(),
+            args.dependency_root.resolve(),
+        )
         return 0
     if args.output_dir is None:
         raise SystemExit("--run-bounded requires --output-dir")

@@ -26,6 +26,12 @@ def test_profile_is_narrow_nonclassifying_and_bounded() -> None:
     )
     assert module.MAX_WALL_SECONDS == 600
     assert module.MEMORY_LIMIT_BYTES == 24 * 1024**3
+    assert module.CANDIDATE_ARCHIVE_SHA256 == (
+        "AC1EA6D71A273355439B25F915EE7BB383DC60769F22EEA8CC84095CDDAF426F"
+    )
+    assert module.DEPENDENCY_ARCHIVE_SHA256 == (
+        "ABDFD6F6B6E04185FD277E4EE80400FA05B702BD43BA50851C4F9E85A5970C90"
+    )
     source = PROGRAM.read_text(encoding="utf-8")
     assert "NONCLASSIFYING_RUNTIME_DIAGNOSTIC_ONLY" in source
     assert "PROVISIONAL_GO" not in source
