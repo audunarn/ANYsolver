@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -45,10 +46,20 @@ def test_v6o_authority_is_deterministic_fresh_and_four_wave_only() -> None:
     ledger = Path(r"C:\Github\.resource-manager\ledger.md").read_text(
         encoding="utf-8-sig"
     )
+    completed = (REFERENCE / "e4_pl_s3_v6p_stage4a_result.json").is_file()
     for index, (request_id, row) in enumerate(zip(ids, first["requests"])):
         assert request_id == module.request_id(index)
-        assert request_id not in ledger
-        assert not (REQUESTS / f"{request_id}.json").exists()
+        request_path = REQUESTS / f"{request_id}.json"
+        if completed:
+            raw_request = request_path.read_bytes()
+            assert hashlib.sha256(raw_request).hexdigest().upper() == row["request_sha256"]
+            assert ledger.count(f"| {request_id} | APPROVED |") == 1
+            assert ledger.count(f"| {request_id} | EXECUTION_STARTED |") == 1
+            assert ledger.count(f"| {request_id} | COMPLETED_PASS |") == 1
+            assert f"| {request_id} | COMPLETED_FAIL |" not in ledger
+        else:
+            assert request_id not in ledger
+            assert not request_path.exists()
         assert row["request"]["status"] == "PENDING"
         assert "--run-registered-wave" in row["request"]["command"]
 
