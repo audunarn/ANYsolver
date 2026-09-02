@@ -32,6 +32,9 @@ def test_profile_is_narrow_nonclassifying_and_bounded() -> None:
     assert module.DEPENDENCY_ARCHIVE_SHA256 == (
         "ABDFD6F6B6E04185FD277E4EE80400FA05B702BD43BA50851C4F9E85A5970C90"
     )
+    assert module.OPTIMIZED_CANDIDATE_ARCHIVE_SHA256 == (
+        "DBEFBF12554832962C375F0CD827BE5310E0507145A5B6C84CFD68EB9BC2ABA1"
+    )
     source = PROGRAM.read_text(encoding="utf-8")
     assert "NONCLASSIFYING_RUNTIME_DIAGNOSTIC_ONLY" in source
     assert "PROVISIONAL_GO" not in source
@@ -78,3 +81,16 @@ def test_pressure_surface_traversal_uses_captured_constant_time_guard() -> None:
     assert "qualified_runtime_guard(model, context=context)" in body
     caller = source[function_end : source.index("\ndef assemble_load_vector(", function_end)]
     assert "qualified_runtime_guard=qualified_runtime_guard" in caller
+
+
+def test_equivalence_pair_is_preserved_and_nonclassifying() -> None:
+    module = _load()
+    assert tuple(module.COMPARISON_RECORDS) == (
+        "N20:1PCT:dispersed:slash",
+        "N40:10PCT:dispersed:slash",
+    )
+    for record_id, (path, digest) in module.COMPARISON_RECORDS.items():
+        assert module._sha256_path(path) == digest
+        assert module._member(record_id)["record_id"] == record_id
+    source = PROGRAM.read_text(encoding="utf-8")
+    assert "NONCLASSIFYING_BYTE_EQUIVALENCE_DIAGNOSTIC_ONLY" in source

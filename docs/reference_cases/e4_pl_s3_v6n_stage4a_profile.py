@@ -32,12 +32,16 @@ CANDIDATE_ARCHIVE_PATH = Path(
 DEPENDENCY_ARCHIVE_PATH = Path(
     r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-v2d-stage4a-v6l-dependency-closure\anyfileio-source.tar"
 )
+OPTIMIZED_CANDIDATE_ARCHIVE_PATH = Path(
+    r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-v2d-stage4a-v6n-lease-optimization-c1e2ad9\candidate-source.tar"
+)
 
 ADAPTER_SHA256 = "2C70B6B952CB7100ED1ED7C3E9BAB867C634BD11497422DF2916D045948E54C5"
 BOUNDED_SHA256 = "C5B192C9C3F6EE2C68A42AB4A0CFBCDBE81581381B800C13AACCE0BB219A3383"
 MANIFEST_SHA256 = "3EA7ABD0B332831D62B30B3CD52E0DB85EC951B125340FFAF40A891DC37BD589"
 CANDIDATE_ARCHIVE_SHA256 = "AC1EA6D71A273355439B25F915EE7BB383DC60769F22EEA8CC84095CDDAF426F"
 DEPENDENCY_ARCHIVE_SHA256 = "ABDFD6F6B6E04185FD277E4EE80400FA05B702BD43BA50851C4F9E85A5970C90"
+OPTIMIZED_CANDIDATE_ARCHIVE_SHA256 = "DBEFBF12554832962C375F0CD827BE5310E0507145A5B6C84CFD68EB9BC2ABA1"
 SCHEMA = "anysolver.e4-pl-s3-v6n-stage4a-nonclassifying-profile-v1"
 RESULT_SCHEMA = "anysolver.e4-pl-s3-v6n-stage4a-bounded-profile-result-v1"
 MAX_WALL_SECONDS = 600
@@ -46,6 +50,20 @@ ALLOWED_RECORD_IDS = tuple(
     f"N80:10PCT:dispersed:{diagonal}"
     for diagonal in ("slash", "backslash", "alternating")
 )
+COMPARISON_RECORDS = {
+    "N20:1PCT:dispersed:slash": (
+        Path(
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-v2d-stage4a-v6m-validator-safe\wave-02\worker-1\scientific.json"
+        ),
+        "78C097500A5901E0B969DAA8FDAB38ACF88EFCA4B07251F0FC94B71D953E78C2",
+    ),
+    "N40:10PCT:dispersed:slash": (
+        Path(
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\s3-v2d-stage4a-v6m-validator-safe\wave-15\worker-1\scientific.json"
+        ),
+        "A207D2B4809E5EF631D878B6C9F0E9D81D0C489751D771B5B145217B44E67D75",
+    ),
+}
 
 
 class ProfileError(RuntimeError):
@@ -79,6 +97,7 @@ def _require_bindings() -> None:
         MANIFEST_PATH: MANIFEST_SHA256,
         CANDIDATE_ARCHIVE_PATH: CANDIDATE_ARCHIVE_SHA256,
         DEPENDENCY_ARCHIVE_PATH: DEPENDENCY_ARCHIVE_SHA256,
+        OPTIMIZED_CANDIDATE_ARCHIVE_PATH: OPTIMIZED_CANDIDATE_ARCHIVE_SHA256,
     }
     for path, digest in expected.items():
         if not path.is_file() or path.is_symlink() or _sha256_path(path) != digest:
@@ -86,15 +105,16 @@ def _require_bindings() -> None:
 
 
 def _member(record_id: str) -> dict[str, Any]:
-    if record_id not in ALLOWED_RECORD_IDS:
-        raise ProfileError("record is outside the registered V6M timeout set")
-    _, fraction, mask, diagonal = record_id.split(":")
+    if record_id not in ALLOWED_RECORD_IDS and record_id not in COMPARISON_RECORDS:
+        raise ProfileError("record is outside the registered diagnostic sets")
+    level_text, fraction, mask, diagonal = record_id.split(":")
+    wanted_level = int(level_text.removeprefix("N"))
     wanted_fraction = int(fraction.removesuffix("PCT"))
     manifest = json.loads(MANIFEST_PATH.read_bytes())
     matches = [
         (index, record)
         for index, record in enumerate(manifest["records"])
-        if int(record["level"]) == 80
+        if int(record["level"]) == wanted_level
         and int(record["s3_area_fraction_percent"]) == wanted_fraction
         and str(record["mask"]) == mask
         and str(record["diagonal"]) == diagonal
@@ -281,6 +301,49 @@ def run_worker(
         progress.close()
 
 
+def run_equivalence_worker(
+    record_id: str,
+    output_path: Path,
+    candidate_root: Path,
+    dependency_root: Path,
+) -> dict[str, Any]:
+    """Compare one optimized record with preserved V6M scientific output."""
+
+    _require_bindings()
+    if record_id not in COMPARISON_RECORDS:
+        raise ProfileError("record is outside the frozen equivalence pair")
+    _require_extracted_root(candidate_root, Path("src/anysolver/__init__.py"))
+    _require_extracted_root(dependency_root, Path("src/anyfileio/__init__.py"))
+    reference_path, reference_sha256 = COMPARISON_RECORDS[record_id]
+    if _sha256_path(reference_path) != reference_sha256:
+        raise ProfileError("preserved V6M comparison wrapper differs")
+    preserved = json.loads(reference_path.read_bytes())
+    if preserved.get("record_ids") != [record_id]:
+        raise ProfileError("preserved V6M comparison record ID differs")
+    old_record = preserved["scientific_payload"]["record"]
+
+    sys.path.insert(0, str(REFERENCE))
+    import e4_pl_s3_v6h_stage4a_adapter as adapter
+
+    base = adapter.configure()
+    base._ACTIVE_CANDIDATE_ROOT = candidate_root.resolve()
+    new_record = adapter.produce_case(_member(record_id))
+    old_raw = _canonical(old_record)
+    new_raw = _canonical(new_record)
+    made = {
+        "classification": "NONCLASSIFYING_BYTE_EQUIVALENCE_DIAGNOSTIC_ONLY",
+        "equal": old_raw == new_raw,
+        "optimized_candidate_archive_sha256": OPTIMIZED_CANDIDATE_ARCHIVE_SHA256,
+        "optimized_record_sha256": _sha256_bytes(new_raw),
+        "preserved_record_sha256": _sha256_bytes(old_raw),
+        "preserved_wrapper_sha256": reference_sha256,
+        "record_id": record_id,
+        "schema": "anysolver.e4-pl-s3-v6n-guard-equivalence-v1",
+    }
+    _publish_exclusive(output_path, made)
+    return made
+
+
 def _environment() -> dict[str, str]:
     made = dict(os.environ)
     for key in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
@@ -306,17 +369,34 @@ def _extract_archive(archive: Path, destination: Path) -> None:
         package.extractall(resolved, filter="data")
 
 
-def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str, Any]:
+def run_bounded(
+    record_id: str,
+    output_dir: Path,
+    wall_seconds: int,
+    *,
+    mode: str = "profile",
+) -> dict[str, Any]:
     """Launch one profiler child with a hard process-tree wall and memory cap."""
 
     _require_bindings()
     _member(record_id)
+    if mode == "profile" and record_id not in ALLOWED_RECORD_IDS:
+        raise ProfileError("profile mode requires one V6M timeout record")
+    if mode == "equivalence" and record_id not in COMPARISON_RECORDS:
+        raise ProfileError("equivalence mode requires one preserved comparison record")
+    if mode not in {"profile", "equivalence"}:
+        raise ProfileError("unknown bounded diagnostic mode")
     if not 1 <= wall_seconds <= MAX_WALL_SECONDS:
         raise ProfileError("diagnostic wall must be between 1 and 600 seconds")
     output_dir.mkdir(parents=True, exist_ok=False)
     candidate_root = output_dir / "candidate"
     dependency_root = output_dir / "dependency"
-    _extract_archive(CANDIDATE_ARCHIVE_PATH, candidate_root)
+    candidate_archive = (
+        CANDIDATE_ARCHIVE_PATH
+        if mode == "profile"
+        else OPTIMIZED_CANDIDATE_ARCHIVE_PATH
+    )
+    _extract_archive(candidate_archive, candidate_root)
     _extract_archive(DEPENDENCY_ARCHIVE_PATH, dependency_root)
     progress_path = output_dir / "progress.jsonl"
     diagnostic_path = output_dir / "diagnostic.json"
@@ -331,7 +411,7 @@ def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str
     command = [
         sys.executable,
         str(Path(__file__).resolve()),
-        "--worker",
+        "--worker" if mode == "profile" else "--equivalence-worker",
         "--record-id",
         record_id,
         "--progress",
@@ -400,6 +480,7 @@ def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str
         "peak_tree_memory_bytes": int(peak_memory),
         "progress_bytes": len(progress_raw),
         "progress_sha256": _sha256_bytes(progress_raw),
+        "mode": mode,
         "record_id": record_id,
         "returncode": process.returncode,
         "schema": RESULT_SCHEMA,
@@ -414,21 +495,29 @@ def run_bounded(record_id: str, output_dir: Path, wall_seconds: int) -> dict[str
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--worker", action="store_true")
+    parser.add_argument("--equivalence-worker", action="store_true")
     parser.add_argument("--run-bounded", action="store_true")
-    parser.add_argument("--record-id", choices=ALLOWED_RECORD_IDS, required=True)
+    parser.add_argument(
+        "--record-id",
+        choices=ALLOWED_RECORD_IDS + tuple(COMPARISON_RECORDS),
+        required=True,
+    )
     parser.add_argument("--progress", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--candidate-root", type=Path)
     parser.add_argument("--dependency-root", type=Path)
     parser.add_argument("--wall-seconds", type=int, default=MAX_WALL_SECONDS)
+    parser.add_argument("--mode", choices=("profile", "equivalence"), default="profile")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    if args.worker == args.run_bounded:
-        raise SystemExit("select exactly one of --worker or --run-bounded")
+    if sum((args.worker, args.equivalence_worker, args.run_bounded)) != 1:
+        raise SystemExit(
+            "select exactly one of --worker, --equivalence-worker, or --run-bounded"
+        )
     if args.worker:
         if (
             args.progress is None
@@ -448,9 +537,31 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.dependency_root.resolve(),
         )
         return 0
+    if args.equivalence_worker:
+        if (
+            args.output is None
+            or args.candidate_root is None
+            or args.dependency_root is None
+        ):
+            raise SystemExit(
+                "--equivalence-worker requires --output, --candidate-root, and "
+                "--dependency-root"
+            )
+        made = run_equivalence_worker(
+            args.record_id,
+            args.output.resolve(),
+            args.candidate_root.resolve(),
+            args.dependency_root.resolve(),
+        )
+        return 0 if made["equal"] else 3
     if args.output_dir is None:
         raise SystemExit("--run-bounded requires --output-dir")
-    made = run_bounded(args.record_id, args.output_dir.resolve(), args.wall_seconds)
+    made = run_bounded(
+        args.record_id,
+        args.output_dir.resolve(),
+        args.wall_seconds,
+        mode=args.mode,
+    )
     return 0 if made["status"] == "COMPLETED" else 2
 
 
