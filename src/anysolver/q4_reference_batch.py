@@ -333,7 +333,6 @@ def _build_reference_q4_recovery_batch_under_lease(
     kernels = []
     kernel_indices: Dict[Tuple[object, ...], int] = {}
     for element_id, element, mapping in eligible:
-        _runtime_lease(model, context="qualified Q4 recovery kernel construction")
         coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
         numbered_frame, local, warpage = equation7_frame(coordinates)
         if warpage > float(element.planar_tolerance):
@@ -403,6 +402,7 @@ def _build_reference_q4_recovery_batch_under_lease(
         element_ids.append(int(element_id))
         mappings.append(mapping)
         kernel_index_by_row.append(kernel_index)
+    _runtime_lease(model, context="qualified Q4 recovery kernel observation")
     batch = ReferenceQ4RecoveryBatch(
         revision_key=_revision_key(model),
         direct_state_key=_direct_state_key(model),
