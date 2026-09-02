@@ -76,6 +76,32 @@ PORTABLE_HISTORY_ONLY_NODES = (
         "test_v2d_stateless_identity_roundtrip_and_remaining_successor_gaps"
     ),
 )
+# This invokes an external two-cycle N20/N40 diagnostic with its own 240-second
+# subprocess bound.  It is explicitly nonclassifying and already preserved by
+# the qualification record; ordinary CI retains every deterministic manifest,
+# geometry, and guard test in the module without rerunning that diagnostic.
+PORTABLE_NONQUALIFYING_NODES = (
+    (
+        "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py::"
+        "test_real_n20_n40_smoke_is_byte_identical_and_never_claims_a_gate"
+    ),
+)
+# File size is a useful default partition proxy, but these integration modules
+# are computationally dense relative to their source size.  Frozen observed
+# costs keep the four existing workers balanced on slower hosted runners; they
+# do not change any test, timeout, or scientific result.
+PORTABLE_MODULE_WEIGHT_OVERRIDES = {
+    "tests/test_beam_shell_verification.py": 250_000,
+    "tests/test_corotational.py": 100_000,
+    "tests/test_e4_pl_q4_state_lifecycle.py": 160_000,
+    "tests/test_e4_pl_s3_generalized_nonlinear.py": 100_000,
+    "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py": 80_000,
+    "tests/test_e4_pl_s3_restart_history.py": 220_000,
+    "tests/test_e4_pl_s3_state_lifecycle.py": 220_000,
+    "tests/test_fe_solver_nonlinear_static.py": 150_000,
+    "tests/test_hht_alpha.py": 100_000,
+    "tests/test_mixed_shell_quadrature_grouping.py": 120_000,
+}
 DEFAULT_WORKERS = 4
 DEFAULT_TIMEOUT_SECONDS = 1_200
 TIMEOUT_EXIT_CODE = 124
@@ -87,7 +113,9 @@ def _module_weight(module: str) -> int:
     path = ROOT / module
     if not path.is_file():
         raise RuntimeError(f"merge-test module is missing: {module}")
-    return max(1, path.stat().st_size)
+    return PORTABLE_MODULE_WEIGHT_OVERRIDES.get(
+        module, max(1, path.stat().st_size)
+    )
 
 
 def partition_modules(
@@ -190,7 +218,11 @@ def _worker_command(modules: Sequence[str], root: Path) -> list[str]:
     owned_modules = set(modules)
     deselections = [
         node
-        for node in (*DEDICATED_LANE_NODES, *PORTABLE_HISTORY_ONLY_NODES)
+        for node in (
+            *DEDICATED_LANE_NODES,
+            *PORTABLE_HISTORY_ONLY_NODES,
+            *PORTABLE_NONQUALIFYING_NODES,
+        )
         if node.partition("::")[0] in owned_modules
     ]
     return [

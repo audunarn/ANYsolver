@@ -384,7 +384,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert set(re.findall(r"(?m)^\s*- uses: (\S+)\s*$", combined)) == action_refs
 
     ci_header, ci_jobs = ci.split("jobs:\n", maxsplit=1)
-    assert ci_header == "name: Tests\n\non:\n  push:\n  pull_request:\n\n"
+    assert ci_header == (
+        "name: Tests\n\non:\n  push:\n    branches: [main]\n"
+        "  pull_request:\n\n"
+    )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
         "pytest",
         "anymesher-compatibility",

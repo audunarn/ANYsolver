@@ -674,6 +674,24 @@ def test_portable_ci_partition_is_deterministic_disjoint_and_complete(
     assert set(assigned) == set(weights)
 
 
+def test_portable_ci_observed_costs_separate_the_four_heaviest_modules() -> None:
+    partitions = portable_ci.partition_modules(
+        portable_ci.merge_test_modules(), 4
+    )
+    heaviest = {
+        "tests/test_beam_shell_verification.py",
+        "tests/test_e4_pl_q4_state_lifecycle.py",
+        "tests/test_e4_pl_s3_restart_history.py",
+        "tests/test_e4_pl_s3_state_lifecycle.py",
+    }
+    owners = {
+        index
+        for index, partition in enumerate(partitions)
+        if heaviest.intersection(partition)
+    }
+    assert owners == set(range(4))
+
+
 @pytest.mark.parametrize("workers", [0, -1, True])
 def test_portable_ci_partition_rejects_invalid_worker_counts(workers: int) -> None:
     with pytest.raises(ValueError, match="positive integer"):
@@ -716,6 +734,10 @@ def test_portable_ci_worker_is_headless_isolated_and_single_threaded(
         ("tests/test_e4_pl_s3_v2d_linear_native_parity.py",), tmp_path
     )
     assert sum(item.startswith("--deselect=") for item in v2d_command) == 1
+    mixed_command = portable_ci._worker_command(
+        ("tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py",), tmp_path
+    )
+    assert sum(item.startswith("--deselect=") for item in mixed_command) == 1
 
 
 def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(
