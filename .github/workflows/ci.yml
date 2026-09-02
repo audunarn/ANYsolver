@@ -132,7 +132,7 @@ jobs:
       - name: Probe the installed endpoint outside the checkout
         shell: pwsh
         env:
-          EXPECTED_ANYSOLVER_VERSION: "0.3.1"
+          EXPECTED_ANYSOLVER_VERSION: "0.4.0"
           EXPECTED_ANYMATERIAL_VERSION: "0.1.0"
           EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}
           EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}
@@ -212,7 +212,7 @@ jobs:
       - name: Probe the installed endpoint outside the checkout
         shell: pwsh
         env:
-          EXPECTED_ANYSOLVER_VERSION: "0.3.1"
+          EXPECTED_ANYSOLVER_VERSION: "0.4.0"
           EXPECTED_ANYMATERIAL_VERSION: "0.1.0"
           EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}
           EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}

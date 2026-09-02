@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Activate the V6W-qualified native-parity S3 V2D companion as the default
+  three-node shell for new/current-policy models. Historical records without
+  formulation authority remain explicit `legacy-s3`, direct `ShellElement`
+  construction remains legacy, and qualified S3 creation fails closed without
+  an authoritative physical owner normal. Qualified Q4 mechanics are unchanged.
+- Mark the coordinated breaking activation boundary as ANYsolver 0.4.0 and
+  admit the compatible ANYmesher 0.3 line while retaining the strict 0.4 cap.
+
 - Add the explicitly selected `e4-pl-s3`/`qualified-s3` linear MITC3+
   companion candidate with frozen source identity, two bubble rotations,
   basis-invariant three-mode PL completion, stable serialization identity,
@@ -15,10 +23,8 @@
   stress resultants and generalized eigenstrains, contact virtual work,
   committed recovery without fabricated layer data, physical-director
   reversal, current-state modal/buckling operators, and solver-owned
-  static/arc-length checkpoints. Existing S3 aliases remain
-  legacy; unsupported broad workflow scopes and every unqualified route still
-  fail closed pending the independent domain, mixed-mesh, performance, and
-  ecosystem release gates.
+  static/arc-length checkpoints. The original candidate remained opt-in until
+  the independent V6W qualification and this successor activation boundary.
 - Keep qualified E4-PL as the production Q4 default and begin the explicit
   legacy-Q4 retirement window. Legacy Q4 selectors now emit a dedicated
   deprecation warning, diagnostics expose the selected formulation and

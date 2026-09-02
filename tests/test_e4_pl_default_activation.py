@@ -5,7 +5,9 @@ from pathlib import Path
 
 from anysolver import (
     DEFAULT_Q4_FORMULATION,
+    DEFAULT_S3_FORMULATION,
     LegacyShellElement,
+    NativeParityE4PLS3V2DShellElement,
     QualifiedE4PLShellElement,
     create_element,
     create_shell_element,
@@ -20,19 +22,26 @@ from anysolver.cylinder_benchmarks import (
 
 def test_q4_default_and_explicit_rollback_are_topology_closed() -> None:
     assert DEFAULT_Q4_FORMULATION == "e4-pl"
+    assert DEFAULT_S3_FORMULATION == "e4-pl-s3-v2d"
     default = create_shell_element(1, [1, 2, 3, 4], "steel")
     factory = create_element("shell", 2, [1, 2, 3, 4], "steel")
     rollback = create_shell_element(
         3, [1, 2, 3, 4], "steel", formulation="legacy"
     )
     rollback_alias = create_element("legacy-shell", 4, [1, 2, 3, 4], "steel")
-    tri3 = create_element("shell", 5, [1, 2, 3], "steel")
+    tri3 = create_element(
+        "shell",
+        5,
+        [1, 2, 3],
+        "steel",
+        reference_normal=(0.0, 0.0, 1.0),
+    )
     q8 = create_element("shell", 6, list(range(1, 9)), "steel")
     assert type(default) is QualifiedE4PLShellElement
     assert type(factory) is QualifiedE4PLShellElement
     assert type(rollback) is LegacyShellElement
     assert type(rollback_alias) is LegacyShellElement
-    assert type(tri3) is LegacyShellElement
+    assert type(tri3) is NativeParityE4PLS3V2DShellElement
     assert type(q8) is LegacyShellElement
 
 

@@ -192,7 +192,7 @@ def _assert_complete_source_graphs(roots: dict[str, str]) -> None:
                 "anyfileio": archives / "fileio-legacy",
             },
             {
-                "anysolver": "0.3.1",
+                "anysolver": "0.4.0",
                 "anymaterial": "0.1.0",
                 "anygeometry": "0.2.0",
                 "anymesher": "0.1.0",
@@ -208,7 +208,7 @@ def _assert_complete_source_graphs(roots: dict[str, str]) -> None:
                 "anyfileio": archives / "fileio-current",
             },
             {
-                "anysolver": "0.3.1",
+                "anysolver": "0.4.0",
                 "anymaterial": "0.1.0",
                 "anygeometry": "0.2.1",
                 "anymesher": "0.2.1",
@@ -687,7 +687,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert probe_environment(mesh_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.3.1"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"',
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
@@ -697,7 +697,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert probe_environment(fileio_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.3.1"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"',
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",

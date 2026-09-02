@@ -5528,10 +5528,11 @@ ELEMENT_TYPES = {
 
 
 DEFAULT_Q4_FORMULATION = "e4-pl"
-# S3 remains legacy-by-default during the additive qualification release.
-# The qualified companion is available only through an explicit formulation
-# request until its parity and mixed-mesh gates are closed.
-DEFAULT_S3_FORMULATION = "legacy-s3"
+# New/current-policy three-node shells use the V2D companion accepted by the
+# V6W qualification. Historical records without formulation identity still
+# deserialize explicitly as ``legacy-s3`` below, and direct
+# ``ShellElement(...)`` construction remains the documented legacy API.
+DEFAULT_S3_FORMULATION = "e4-pl-s3-v2d"
 LEGACY_Q4_AVAILABLE_THROUGH = "0.4.x"
 LEGACY_Q4_REMOVAL_TARGET = "0.5.0"
 
@@ -5601,7 +5602,7 @@ def _normalized_shell_formulation(
     if node_count == 4 and resolved in e4_aliases:
         return "e4-pl"
     if node_count == 3 and resolved in s3_aliases:
-        return "e4-pl-s3"
+        return "e4-pl-s3-v2d"
     if node_count == 3 and resolved in s3_v2_aliases:
         return "e4-pl-s3-v2"
     if node_count == 3 and resolved in s3_v2b_aliases:
@@ -5664,7 +5665,7 @@ def shell_formulation_diagnostics(
         "node_count": count,
         "requested_formulation": normalized_request,
         "selected_formulation": selected,
-        "production_default": formulation is None and count == 4,
+        "production_default": formulation is None and count in {3, 4},
         "topology_policy": (
             "QUALIFIED_E4_PL_Q4"
             if count == 4 and selected == "e4-pl"
@@ -5684,7 +5685,7 @@ def shell_formulation_diagnostics(
                                 "STRICT_FLAT_LINEAR_E4_PL_S3_V2C_OPT_IN"
                                 if count == 3 and selected == "e4-pl-s3-v2c"
                                 else (
-                                    "NATIVE_PARITY_E4_PL_S3_V2D_OPT_IN"
+                                    "NATIVE_PARITY_E4_PL_S3_V2D_DEFAULT"
                                     if count == 3 and selected == "e4-pl-s3-v2d"
                                     else "PRESERVED_LEGACY_NON_Q4"
                                 )
@@ -5714,11 +5715,11 @@ def create_shell_element(
 ) -> ShellElement:
     """Create a topology-selected shell while retaining explicit rollbacks.
 
-    Four-node shells select the qualified E4-PL implementation by default.
-    Other supported shell topologies retain :class:`LegacyShellElement`;
-    qualified S3 is available through ``formulation="e4-pl-s3"`` only.
-    Passing ``formulation="legacy"`` is the documented rollback/compatibility
-    route; an explicit E4-PL request rejects non-Q4 topology.
+    Four-node and three-node shells select their qualified E4-PL formulations
+    by default. Higher-order shell topologies retain
+    :class:`LegacyShellElement`. Passing ``formulation="legacy-s3"`` is the
+    documented three-node rollback; an explicit ``e4-pl`` request remains
+    Q4-only.
     """
 
     resolved = _normalized_shell_formulation(len(node_ids), formulation)
@@ -5769,6 +5770,12 @@ def create_shell_element(
         )
     if resolved == "e4-pl-s3-v2d":
         from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+        if kwargs.get("reference_normal") is None:
+            raise ValueError(
+                "qualified S3 V2D requires authoritative reference_normal; "
+                "use formulation='legacy-s3' for historical connectivity-only input"
+            )
 
         return NativeParityE4PLS3V2DShellElement(
             element_id,
@@ -6102,7 +6109,7 @@ def create_element(
             **kwargs,
         )
     if normalized_type in {"shell3", "tri3", "tria3", "t3", "s3"}:
-        formulation = kwargs.pop("formulation", "legacy-s3")
+        formulation = kwargs.pop("formulation", None)
         return create_shell_element(
             element_id,
             node_ids,

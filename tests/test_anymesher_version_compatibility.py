@@ -17,8 +17,8 @@ from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 
 
-EXPECTED_REQUIREMENT = "ANYmesher>=0.1,<0.3"
-EXPECTED_SPECIFIER = SpecifierSet(">=0.1,<0.3")
+EXPECTED_REQUIREMENT = "ANYmesher>=0.1,<0.4"
+EXPECTED_SPECIFIER = SpecifierSet(">=0.1,<0.4")
 
 
 def _assert_expected_anymesher_requirement(requirement: str) -> None:
@@ -222,7 +222,7 @@ def test_source_declares_exact_anymesher_compatibility_range() -> None:
 
 
 def test_installed_requirement_accepts_canonicalized_specifier_order() -> None:
-    _assert_expected_anymesher_requirement("ANYmesher<0.3,>=0.1")
+    _assert_expected_anymesher_requirement("ANYmesher<0.4,>=0.1")
 
 
 def test_anymesher_public_contract_used_by_anysolver() -> None:

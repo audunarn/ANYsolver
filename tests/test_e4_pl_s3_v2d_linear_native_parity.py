@@ -72,9 +72,18 @@ def _homogeneous_section(*, coupling: np.ndarray | None = None) -> GeneralizedSh
     )
 
 
-def test_v2d_is_explicit_only_and_preserves_q4_and_s3_defaults() -> None:
+def test_v2d_is_the_s3_default_and_preserves_the_q4_default() -> None:
     assert DEFAULT_Q4_FORMULATION == "e4-pl"
-    assert DEFAULT_S3_FORMULATION == "legacy-s3"
+    assert DEFAULT_S3_FORMULATION == "e4-pl-s3-v2d"
+    assert type(
+        create_shell_element(
+            1,
+            [1, 2, 3],
+            "steel",
+            thickness=THICKNESS,
+            reference_normal=NORMAL,
+        )
+    ) is NativeParityE4PLS3V2DShellElement
     assert type(_v2d()) is NativeParityE4PLS3V2DShellElement
     assert type(
         create_shell_element(
@@ -89,7 +98,7 @@ def test_v2d_is_explicit_only_and_preserves_q4_and_s3_defaults() -> None:
     assert anysolver.S3_V2D_FORMULATION_ID == FORMULATION_ID
     assert shell_formulation_diagnostics(
         node_count=3, formulation="e4-pl-s3-v2d"
-    )["topology_policy"] == "NATIVE_PARITY_E4_PL_S3_V2D_OPT_IN"
+    )["topology_policy"] == "NATIVE_PARITY_E4_PL_S3_V2D_DEFAULT"
     for spelling in ("e4_pl_s3_v2d", "qualified_s3_v2d"):
         with pytest.raises(ValueError, match="canonical"):
             create_shell_element(
