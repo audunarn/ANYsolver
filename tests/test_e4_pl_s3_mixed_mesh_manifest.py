@@ -36,6 +36,12 @@ Q4_REPLAY_HOTFIX = (
     / "reference_cases"
     / "e4_pl_q4_0_4_1_replay_hotfix.json"
 )
+Q4_REPLAY_CANONICALIZATION = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_q4_0_4_2_replay_canonicalization.json"
+)
 Q4_MECHANICS_AUTHORITY_SCHEMA = "anysolver.python-ast-mechanics-closure-v1"
 Q4_MECHANICS_CANONICALIZATION = (
     "AST_NODE_ORDERED_FIELDS_COMPACT_JSON_WITHOUT_LOCATIONS_DOCSTRINGS_"
@@ -479,18 +485,28 @@ def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() ->
     )
     hotfix = _strict_json(Q4_REPLAY_HOTFIX.read_bytes())
     correction = hotfix["source_correction"]
+    successor = _strict_json(Q4_REPLAY_CANONICALIZATION.read_bytes())
+    successor_correction = successor["correction"]
     changed = sorted(
         name
         for name, digest in expected.items()
         if actual["symbols"][name] != digest
     )
     added = sorted(set(actual["symbols"]) - set(expected))
-    assert changed == correction["updated_existing_symbols"]
-    assert added == correction["added_symbols"]
+    assert changed == successor_correction["cumulative_updated_existing_symbols"]
+    assert added == successor_correction["cumulative_added_symbols"]
+    assert correction["updated_existing_symbols"] == changed
+    assert set(correction["added_symbols"]) < set(added)
     assert authority["aggregate_sha256"] == correction[
         "prior_mechanics_aggregate_sha256"
     ]
-    assert _q4_mechanics_aggregate(actual) == correction[
+    assert correction["current_mechanics_aggregate_sha256"] == successor_correction[
+        "prior_mechanics_aggregate_sha256"
+    ]
+    assert hashlib.sha256(Q4_REPLAY_HOTFIX.read_bytes()).hexdigest().upper() == successor[
+        "prior_evidence"
+    ]["sha256"]
+    assert _q4_mechanics_aggregate(actual) == successor_correction[
         "current_mechanics_aggregate_sha256"
     ]
 
