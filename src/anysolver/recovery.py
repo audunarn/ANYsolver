@@ -869,6 +869,17 @@ def _recover_element_stresses_with_report_under_lease(
     compiled_error: Optional[str] = None
     reference_q4_error: Optional[str] = None
     reference_s3_error: Optional[str] = None
+    # Reference-qualified batches evaluate formulation-native NumPy kernels in
+    # the coordinator thread.  They do not need a Python worker pool, but
+    # they must still constrain native numerical libraries when recovery was
+    # requested with multiple workers: otherwise a later mixed fallback can
+    # oversubscribe the same process.  Keep the completed scope report for
+    # the public recovery metadata.
+    native_report: Mapping[str, Any] = {
+        "status": "not_needed",
+        "requested_threads": None,
+        "restored": True,
+    }
     candidate_indices = (
         np.empty(0, dtype=np.intp)
         if plan.isotropic_s4 is None
@@ -910,13 +921,16 @@ def _recover_element_stresses_with_report_under_lease(
     if reference_q4_active:
         reference_q4_start = time.perf_counter()
         try:
-            recovered_q4 = recover_reference_q4(
-                model,
-                plan.reference_q4,
-                reference_q4_indices,
-                displacements,
-                return_global=return_global,
-            )
+            with native_thread_scope(
+                1, phase="stress_recovery_qualified_q4_reference"
+            ) as native_report:
+                recovered_q4 = recover_reference_q4(
+                    model,
+                    plan.reference_q4,
+                    reference_q4_indices,
+                    displacements,
+                    return_global=return_global,
+                )
             recovered_by_id.update(recovered_q4)
             reference_q4_ids.update(int(element_id) for element_id in recovered_q4)
         except Exception as exc:  # formulation-native scalar path remains authoritative
@@ -935,13 +949,16 @@ def _recover_element_stresses_with_report_under_lease(
     if reference_s3_active:
         reference_s3_start = time.perf_counter()
         try:
-            recovered_s3 = recover_reference_s3(
-                model,
-                plan.reference_s3,
-                reference_s3_indices,
-                displacements,
-                return_global=return_global,
-            )
+            with native_thread_scope(
+                1, phase="stress_recovery_qualified_s3_reference"
+            ) as native_report:
+                recovered_s3 = recover_reference_s3(
+                    model,
+                    plan.reference_s3,
+                    reference_s3_indices,
+                    displacements,
+                    return_global=return_global,
+                )
             recovered_by_id.update(recovered_s3)
             reference_s3_ids.update(int(element_id) for element_id in recovered_s3)
         except Exception as exc:  # formulation-native scalar path remains authoritative
@@ -956,13 +973,7 @@ def _recover_element_stresses_with_report_under_lease(
         and item.element_id not in reference_s3_ids
     )
     chunks = build_recovery_chunks(fallback_items, used_workers)
-    if not fallback_items:
-        native_report: Mapping[str, Any] = {
-            "status": "not_needed",
-            "requested_threads": None,
-            "restored": True,
-        }
-    elif used_workers <= 1:
+    if fallback_items and used_workers <= 1:
         for plan_item in fallback_items:
             item = _compute_one_element_stress(
                 model,
@@ -978,7 +989,7 @@ def _recover_element_stresses_with_report_under_lease(
             "requested_threads": None,
             "restored": True,
         }
-    else:
+    elif fallback_items:
         with native_thread_scope(1, phase="stress_recovery_thread_pool") as native_report:
             with ThreadPoolExecutor(max_workers=used_workers) as executor:
                 futures = [
