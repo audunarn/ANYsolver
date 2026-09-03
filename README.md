@@ -90,7 +90,16 @@ changes before making release claims.
 ## Functional overview
 
 Production four-node shell selectors use the qualified E4-PL formulation by
-default. TRI3, TRI6, Q8, and Q8R remain on their established implementations.
+default. New/current-policy three-node shell selectors use the independently
+qualified E4-PL S3 V2D companion; historical S3 records without formulation
+authority remain explicit legacy. TRI6, Q8, and Q8R remain on their established
+implementations.
+
+Qualified S3 admission intentionally fails closed where a triangle touches a
+shell edge with more than two incident elements. Automatically imprinted
+four-way sheet intersections therefore require junction-aware meshing support
+or an explicit model-level legacy-S3 rollback; the mesher never silently
+changes the formulation.
 The explicit legacy-Q4 rollback is deprecated during the 0.4.x burn-in and is
 scheduled for removal no earlier than 0.5.0; see
 [the E4-PL migration guide](docs/E4_PL_MIGRATION.md) for diagnostics, rollback,
@@ -256,10 +265,6 @@ the generated production-scope artifacts before production use.
   import changes.
 - [`extract_mat_mesh_io_performance_review.md`](reports/extract_mat_mesh_io_performance_review.md):
   current extraction, assembly, nonlinear, MPC and buckling performance evidence.
-- [`femaster_adoption_review.md`](reports/femaster_adoption_review.md): clean-room
-  FEMaster concept review, constraint/thread implementation, and the gated CSR
-  prototype measurements.
-
 ## Basic verification
 
 From the repository root:
@@ -284,3 +289,12 @@ python scripts/run_fe_verification.py --execute-calculix
 An external case becomes passing evidence only after isolated execution,
 successful FRD/DAT parsing, and every declared comparison meeting its
 tolerance.
+
+## License
+
+Starting with version 0.4.0, this project is licensed under the Mozilla Public
+License 2.0. See [LICENSE](LICENSE) for the full terms and
+[LICENSING.md](LICENSING.md) for the transition and third-party scope.
+
+Earlier published versions remain available under the licence terms that
+applied to those versions.
