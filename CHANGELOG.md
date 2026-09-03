@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.4.2 - 2026-09-03
+
+- Canonicalize solver-owned compact qualified-Q4 plastic state once at the
+  accepted Newton finalization boundary. Public sealing remains fail-closed,
+  while restart and subsequent current-tangent replay become byte-exact.
+- Preserve qualified Q4/S3 mechanics, coefficients, recovery, formulation
+  identities, and defaults.
+
 ## 0.4.1 - 2026-09-03
 
 - Correct the coordinated ecosystem dependency bands to require ANYmaterial
