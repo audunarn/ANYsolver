@@ -300,12 +300,18 @@ def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0
     if os.name == "nt":
         taskkill = shutil.which("taskkill.exe") or shutil.which("taskkill")
         if taskkill is not None:
-            subprocess.run(
-                [taskkill, "/PID", str(worker.pid), "/T", "/F"],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            try:
+                subprocess.run(
+                    [taskkill, "/PID", str(worker.pid), "/T", "/F"],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=grace_seconds,
+                )
+            except subprocess.TimeoutExpired:
+                # The outer CI job deadline remains the final safety net for
+                # a Windows process tree which the runner cannot terminate.
+                pass
         else:
             worker.kill()
     else:
@@ -325,7 +331,12 @@ def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0
         worker.wait(timeout=grace_seconds)
     except subprocess.TimeoutExpired:
         worker.kill()
-        worker.wait()
+        try:
+            worker.wait(timeout=grace_seconds)
+        except subprocess.TimeoutExpired:
+            # Do not let a non-cooperative child turn the coordinator's own
+            # shared wall-clock bound into an unbounded wait.
+            return
 
 
 def run(

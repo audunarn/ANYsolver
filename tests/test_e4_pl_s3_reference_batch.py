@@ -1182,10 +1182,10 @@ def test_large_mixed_recovery_is_byte_identical_to_scalar_and_reuses_plan() -> N
     )
     assert first_report.metadata["fallback_element_count"] == 1
     assert first_report.metadata["fallback_reasons"] == {
-        "batch_below_minimum_size": {
-            "element_ids": [MIN_REFERENCE_S3_RECOVERY_GROUP + 1],
-            "minimum_size": 100,
-        }
+        # The single Q4 is the qualified stationary formulation.  It must
+        # remain on its native oracle rather than enter the legacy S4 batch
+        # kernel, which has different shear recovery mechanics.
+        "unsupported_formulation": [MIN_REFERENCE_S3_RECOVERY_GROUP + 1]
     }
     batch_diagnostics = first_report.metadata[
         "qualified_s3_reference_batch"
@@ -1199,6 +1199,36 @@ def test_large_mixed_recovery_is_byte_identical_to_scalar_and_reuses_plan() -> N
     assert batch_diagnostics["legacy_nonlinear_batch_eligible"] is False
     assert first_report.metadata["plan_reused"] is False
     assert second_report.metadata["plan_reused"] is True
+
+
+def test_recovery_preserves_qualified_s3_input_identity_for_warm_stiffness() -> None:
+    """Recovery-plan preparation must not invalidate warm S3 stiffness data."""
+
+    model = _build_model(MIN_REFERENCE_S3_RECOVERY_GROUP)
+    vector = 2.0e-5 * np.sin(
+        np.arange(model.mesh.dof_manager.total_dofs, dtype=float) + 0.375
+    )
+    baseline, _baseline_info = assemble_stiffness_matrix(model)
+    element = model.mesh.elements[1]
+    reference_normal = element.reference_normal
+    assert reference_normal.flags.writeable is False
+
+    recovered, report = recover_element_stresses_with_report(
+        model,
+        vector,
+        RecoveryConfig(),
+        return_global=True,
+        resource_config=ResourceConfig(recovery_threads=1),
+    )
+    assert len(recovered) == MIN_REFERENCE_S3_RECOVERY_GROUP
+    assert report.metadata["qualified_s3_reference_batch_count"] == 1
+    assert element.reference_normal is reference_normal
+
+    warm, warm_info = assemble_stiffness_matrix(model)
+    np.testing.assert_array_equal(warm.toarray(), baseline.toarray())
+    assert warm_info["diagnostics"]["qualified_s3_reference_elastic_stiffness"][
+        "plan_reused"
+    ] is True
 
 
 def test_recovery_plan_invalidates_on_direct_qualified_state_mutation() -> None:

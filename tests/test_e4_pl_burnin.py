@@ -554,8 +554,10 @@ def test_migration_surface_is_mechanics_free_and_production_bypasses_stay_closed
                 routed_performance_tests.add(path.relative_to(ROOT).as_posix())
     assert bypasses == []
     assert legacy_calls == {
+        "scripts/benchmark_recovery_batches.py",
         "src/anysolver/elements.py",
         "tests/test_performance_improvements.py",
+        "tests/test_recovery_batches.py",
     }
     assert routed_scripts >= {
         "scripts/benchmark_advanced_s4_batches.py",
@@ -645,6 +647,8 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
         "--matrix-shard-count 8"
         in workflow
     )
+    assert "pytest:\n    runs-on: ${{ matrix.os }}\n    # The portable" in workflow
+    assert "timeout-minutes: 30" in workflow
     assert len(re.findall(r"(?m)^\s+- \{os: .* shard-index: \d\}$", workflow)) == 8
     assert "push:\n    branches: [main]\n  pull_request:" in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
@@ -783,6 +787,48 @@ def test_portable_ci_worker_is_headless_isolated_and_single_threaded(
         ("tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py",), tmp_path
     )
     assert sum(item.startswith("--deselect=") for item in mixed_command) == 2
+
+
+def test_portable_ci_windows_termination_bounds_a_hung_taskkill(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A stalled Windows cleanup cannot make the coordinator wait forever."""
+
+    class Worker:
+        pid = 123
+
+        def __init__(self) -> None:
+            self.kill_count = 0
+            self.wait_count = 0
+
+        def poll(self) -> None:
+            return None
+
+        def wait(self, *, timeout: float) -> None:
+            self.wait_count += 1
+            raise subprocess.TimeoutExpired("worker", timeout)
+
+        def kill(self) -> None:
+            self.kill_count += 1
+
+    observed: dict[str, object] = {}
+
+    def timeout_taskkill(command, **kwargs):
+        observed["command"] = command
+        observed["timeout"] = kwargs["timeout"]
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    worker = Worker()
+    monkeypatch.setattr(portable_ci.os, "name", "nt")
+    monkeypatch.setattr(portable_ci.shutil, "which", lambda _name: "taskkill")
+    monkeypatch.setattr(portable_ci.subprocess, "run", timeout_taskkill)
+
+    portable_ci._terminate_tree(worker, grace_seconds=1.5)
+
+    assert observed["command"] == ["taskkill", "/PID", "123", "/T", "/F"]
+    assert observed["timeout"] == 1.5
+    assert worker.kill_count == 1
+    assert worker.wait_count == 2
 
 
 def test_pytest_lane_uses_and_cleans_workspace_local_basetemp(

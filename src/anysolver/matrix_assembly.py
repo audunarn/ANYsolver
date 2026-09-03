@@ -80,6 +80,12 @@ class AssemblyError(ValueError):
 _ASSEMBLY_NUMERICAL_EPOCH_MANAGER = make_authority_epoch_manager(
     "qualified sparse assembly runtime"
 )
+# The legacy Q8 vector kernel uses a distinct, parallel Numba compilation.
+# Compiling it solely for a tiny first model can take much longer than the
+# scalar calculation itself.  Once the kernel is warm, vectorization remains
+# preferable even for small groups; this threshold therefore applies only to
+# an as-yet-uncompiled vector kernel below.
+_MIN_COLD_Q8_VECTOR_STIFFNESS_GROUP = 8
 _ASSEMBLY_RUNTIME_MODULE = sys.modules[__name__]
 _ASSEMBLY_SPARSE_LINALG = sparse.linalg
 _ASSEMBLY_MODULE_ALIASES = {
@@ -575,6 +581,7 @@ def _bind_qualified_assembly_runtime_lease(
         *,
         context: str,
         allow_q4_cached_stiffness: bool = False,
+        allow_final_s3_equivalent_guard_rebind: bool = False,
     ) -> Any:
         require_no_trusted_element_builtin_shadows()
         # Both family generations precede every model/mesh observation.  A
@@ -2552,10 +2559,13 @@ def _bind_qualified_assembly_runtime_lease(
                 or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
                 is not _EXACT_FE_MESH_NUM_NODES
                 or dict.get(mesh_namespace, "elements") is not mapping
-                or dict.get(mesh_namespace, "_sparsity_cache")
-                is not plan["sparsity_cache"]
-                or dict.get(mesh_namespace, "_topology_signature_cache")
-                is not plan["topology_cache"]
+                # Sparse/topology caches are owned by the exact assembly
+                # operation and are intentionally excluded from ``mesh_keys``
+                # above.  A first mass assembly may initialize either cache
+                # after this lease captures raw inputs; treating that internal
+                # population as an input mutation rejects an otherwise valid
+                # Q4 stiffness-to-mass reuse.  Their own revision-key checks
+                # protect every cached entry used by assembly.
                 or dict.get(mesh_namespace, "_qualified_direct_state_token")
                 is not plan["token"]
                 or type(mapping) is not _QualifiedStateMapping
@@ -2968,6 +2978,15 @@ def _bind_qualified_assembly_runtime_lease(
                             s3_fast_reference_plan,
                             q4_fast_plan["token"],
                             routing_prevalidated=True,
+                            # A native mass evaluation may rebind an otherwise
+                            # equivalent V1-S3 component guard.  The prepared
+                            # authority still verifies every guarded component;
+                            # permit only that existing equivalent rebind on
+                            # the Q4 stiffness-to-mass reuse path.  Stiffness
+                            # capture may accept a pre-existing value-equal
+                            # guard, but its final lease check must still
+                            # reject any subsequent rebind.
+                            preflight=allow_final_s3_equivalent_guard_rebind,
                         )
                         if current_authority is not s3_prepared_authority:
                             raise ValueError(
@@ -3101,6 +3120,63 @@ def _bind_qualified_assembly_runtime_lease(
                 for element, material, total_bytes in q4_fast_records
             }
 
+            routing = q4_fast_plan["routing"]
+            coordinates_by_node: dict[int, tuple[float, float, float]] = {}
+            raw_coordinates_by_identity: dict[int, tuple[Any, np.ndarray]] = {}
+            if routing is not None:
+                for node_record in routing["node_records"]:
+                    (
+                        node_id,
+                        _node,
+                        _namespace,
+                        _namespace_keys,
+                        _stored_id,
+                        x_authority,
+                        y_authority,
+                        z_authority,
+                        coordinates_are_builtin,
+                        _revision,
+                        _dofs,
+                        _dof_values,
+                    ) = node_record
+                    if not coordinates_are_builtin:
+                        coordinates_by_node.clear()
+                        break
+                    coordinates_by_node[int(node_id)] = (
+                        float(x_authority[1]),
+                        float(y_authority[1]),
+                        float(z_authority[1]),
+                    )
+                if coordinates_by_node:
+                    for (
+                        _element_id,
+                        element,
+                        _namespace,
+                        _stored_id,
+                        _node_ids,
+                        node_values,
+                        _material_name,
+                        _dofs,
+                    ) in routing["element_records"]:
+                        if type(element) is not q4_type:
+                            continue
+                        try:
+                            coordinates = np.asarray(
+                                tuple(
+                                    coordinates_by_node[int(node_id)]
+                                    for node_id in node_values
+                                ),
+                                dtype=np.float64,
+                            )
+                        except KeyError:
+                            raw_coordinates_by_identity.clear()
+                            break
+                        coordinates.setflags(write=False)
+                        raw_coordinates_by_identity[id(element)] = (
+                            element,
+                            coordinates,
+                        )
+
             def raw_items() -> tuple[tuple[int, Any], ...]:
                 return q4_fast_plan["element_items"]
 
@@ -3118,9 +3194,16 @@ def _bind_qualified_assembly_runtime_lease(
                     (24, 24)
                 )
 
+            def raw_coordinates(element: Any) -> Any:
+                record = raw_coordinates_by_identity.get(id(element))
+                if record is None or record[0] is not element:
+                    return None
+                return record[1]
+
             require._qualified_q4_raw_element_items = raw_items
             require._qualified_q4_raw_material = raw_material
             require._qualified_q4_cached_total = raw_total
+            require._qualified_q4_raw_coordinates = raw_coordinates
             require._qualified_q4_raw_mesh = q4_fast_plan["mesh"]
             require._qualified_q4_only = len(q4_elements) == len(elements)
 
@@ -3574,6 +3657,7 @@ def _run_with_qualified_assembly_runtime_lease(
     context: str,
     operation: Callable[[Any], Any],
     allow_q4_cached_stiffness: bool = False,
+    allow_final_s3_equivalent_guard_rebind: bool = False,
 ) -> Any:
     """Run an assembly operation under one non-renewable runtime lease."""
 
@@ -3581,6 +3665,9 @@ def _run_with_qualified_assembly_runtime_lease(
         model,
         context=f"{context} preflight",
         allow_q4_cached_stiffness=allow_q4_cached_stiffness,
+        allow_final_s3_equivalent_guard_rebind=(
+            allow_final_s3_equivalent_guard_rebind
+        ),
     )
     try:
         result = operation(lease)
@@ -4255,6 +4342,11 @@ def _assemble_element_matrix_under_lease_impl(
         "_qualified_q4_cached_total",
         None,
     )
+    raw_q4_coordinates_provider = getattr(
+        qualified_runtime_guard,
+        "_qualified_q4_raw_coordinates",
+        None,
+    )
     raw_s3_material_provider = getattr(
         qualified_runtime_guard,
         "_qualified_s3_raw_material",
@@ -4894,13 +4986,71 @@ def _assemble_element_matrix_under_lease_impl(
 
             n_elem = len(elem_list)
             coords_all = np.zeros((n_elem, num_nodes, 3))
-            for idx, (elem_id, element) in enumerate(elem_list):
-                coords_all[idx] = element.get_node_coordinates(mesh)
+            raw_q4_coordinates = (
+                tuple(
+                    raw_q4_coordinates_provider(element)
+                    for _elem_id, element in elem_list
+                )
+                if matrix_type == "mass"
+                and callable(raw_q4_coordinates_provider)
+                and all(
+                    type(element) is _QualifiedE4PLShellElement
+                    for _elem_id, element in elem_list
+                )
+                else ()
+            )
+            use_raw_q4_coordinates = bool(raw_q4_coordinates) and all(
+                type(coordinates) is np.ndarray
+                and coordinates.shape == (num_nodes, 3)
+                and coordinates.dtype == np.float64
+                and not coordinates.flags.writeable
+                for coordinates in raw_q4_coordinates
+            )
+            for idx, (_elem_id, element) in enumerate(elem_list):
+                coords_all[idx] = (
+                    raw_q4_coordinates[idx]
+                    if use_raw_q4_coordinates
+                    else element.get_node_coordinates(mesh)
+                )
 
             first_element = elem_list[0][1]
             is_4node = first_element._is_4node
             gauss_points = first_element.gauss_points
             gauss_weights = first_element.gauss_weights
+
+            # A first-use parallel Q8 batch compilation is disproportionately
+            # expensive for a few legacy Q8 elements.  Preserve the scalar
+            # reference path until an actual batch is worthwhile.  The test
+            # is intentionally based on Numba's dispatcher state: a caller
+            # that explicitly warmed the Q8 batch kernel, or a prior larger
+            # model, still receives vectorized small-group assembly.
+            if (
+                matrix_type == "stiffness"
+                and not is_4node
+                and n_elem < _MIN_COLD_Q8_VECTOR_STIFFNESS_GROUP
+                and bool(JIT_ENABLED)
+                and not tuple(
+                    getattr(
+                        compute_shell_stiffness_matrices_jit,
+                        "signatures",
+                        (),
+                    )
+                )
+            ):
+                vectorized_shell_groups.append(
+                    {
+                        "shell_order": "Q8",
+                        "num_elements": int(n_elem),
+                        "num_nodes": int(num_nodes),
+                        "kernel": "scalar_cold_q8_startup_fallback",
+                        "parallel_kernel": False,
+                        "minimum_warm_vector_group": (
+                            _MIN_COLD_Q8_VECTOR_STIFFNESS_GROUP
+                        ),
+                        "reason": "avoid_first_use_parallel_jit_latency",
+                    }
+                )
+                continue
 
             if matrix_type == "mass":
                 kernel_name = "compute_shell_mass_matrices_jit"
@@ -4939,6 +5089,12 @@ def _assemble_element_matrix_under_lease_impl(
 
             for idx, (elem_id, element) in enumerate(elem_list):
                 precomputed[elem_id] = batched[idx]
+                if use_raw_q4_coordinates:
+                    # The enclosing Q4 lease bound these immutable geometry
+                    # rows, material identities and the exact mass kernel;
+                    # retain its final authority check rather than repeat
+                    # per-element public descriptor traversals below.
+                    prevalidated_element_ids.add(int(elem_id))
             jit_info = jit_diagnostics()
             vectorized_shell_groups.append(
                 {
@@ -4953,6 +5109,9 @@ def _assemble_element_matrix_under_lease_impl(
                     "parallel_kernel": True,
                     "parallel_threads": jit_info.get("num_threads"),
                     "backend": jit_info.get("backend"),
+                    "trusted_qualified_q4_inputs": bool(
+                        use_raw_q4_coordinates
+                    ),
                 }
             )
 
@@ -5387,7 +5546,15 @@ def _make_exact_assembly_operation(implementation: Any) -> tuple[Any, Any]:
             plan_lookup_defaults,
             plan_lookup_closure,
         )
-        owned_execution_plan = exact_plan_lookup(qualified_runtime_guard)
+        # The immutable execution payload contains stiffness coefficients.
+        # A mass assembly may still borrow the same captured Q4 input lease,
+        # but it must continue through its own mass kernel and cannot consume
+        # that stiffness-only payload.
+        owned_execution_plan = (
+            exact_plan_lookup(qualified_runtime_guard)
+            if matrix_type == "stiffness"
+            else None
+        )
         return exact_function(
             model,
             matrix_type,
@@ -5513,6 +5680,8 @@ def assemble_mass_matrix(model: "FEModel") -> Tuple[sparse.csr_matrix, Dict[str,
         model,
         context="mass assembly",
         operation=assemble,
+        allow_q4_cached_stiffness=True,
+        allow_final_s3_equivalent_guard_rebind=True,
     )
 
 

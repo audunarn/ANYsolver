@@ -8,6 +8,7 @@ unsupported solver features.
 
 from __future__ import annotations
 
+import copy
 import contextvars
 import json
 import importlib.metadata
@@ -16,7 +17,7 @@ import platform
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
@@ -71,6 +72,30 @@ from .validation import mpc_constraint_residuals, validate_production_model
 DEFAULT_BEAM_SHELL_VERIFICATION_PATH = Path("reports/beam_shell_verification/beam_shell_verification_report.json")
 _EXTERNAL_REFERENCE_REPORT_OVERRIDE: contextvars.ContextVar[Optional[Path]] = contextvars.ContextVar(
     "anysolver_external_reference_report",
+    default=None,
+)
+_EXTERNAL_REFERENCE_REPORT_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[Path, Dict[str, Any]]]
+] = contextvars.ContextVar(
+    "anysolver_external_reference_report_run_cache",
+    default=None,
+)
+_COMPOSITE_METRIC_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[str, Tuple[Tuple[Dict[str, Any], ...], float, float]]]
+] = contextvars.ContextVar(
+    "anysolver_composite_metric_run_cache",
+    default=None,
+)
+_PLATE_BUCKLING_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[Tuple[int, float], Tuple[float, Dict[str, Any]]]]
+] = contextvars.ContextVar(
+    "anysolver_plate_buckling_run_cache",
+    default=None,
+)
+_NONLINEAR_FRAMEWORK_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[str, "VerificationCaseResult"]]
+] = contextvars.ContextVar(
+    "anysolver_nonlinear_framework_run_cache",
     default=None,
 )
 
@@ -543,6 +568,34 @@ def _fail(case: VerificationCase, reason: str, **kwargs: Any) -> VerificationCas
     return VerificationCaseResult(case.case_id, "FAIL", case.title, case.tier, case.category, case.required, reason=reason, **kwargs)
 
 
+def _cached_nonlinear_framework_result(
+    key: str,
+    case: VerificationCase,
+    evaluator: Callable[[VerificationCase], VerificationCaseResult],
+) -> VerificationCaseResult:
+    """Reuse NLG-003 ingredients only within one verification report."""
+
+    cache = _NONLINEAR_FRAMEWORK_RUN_CACHE.get()
+    cached = None if cache is None else cache.get(key)
+    if cached is not None:
+        # NLG-003 uses the same mechanics check as a framework ingredient,
+        # while standalone rows retain their own manifest identity and mutable
+        # diagnostics.  Rebind only that manifest envelope on a deep copy.
+        return replace(
+            copy.deepcopy(cached),
+            case_id=case.case_id,
+            title=case.title,
+            tier=case.tier,
+            category=case.category,
+            required=case.required,
+        )
+
+    result = evaluator(case)
+    if cache is not None:
+        cache[key] = copy.deepcopy(result)
+    return result
+
+
 def _rel_error(value: float, reference: float, floor: float = 1.0e-30) -> float:
     return abs(float(value) - float(reference)) / max(abs(float(reference)), floor)
 
@@ -599,9 +652,11 @@ def _composite_strip_result(
     expected_status: str,
     reference_type: str,
 ) -> VerificationCaseResult:
-    rows = composite_strip_metric_rows(metric)
+    # Reuse the same run-scoped, copy-on-read rows used by the companion
+    # composite verification views.  COUP-016 and BUC-005 deliberately expose
+    # the same buckling calculation under different acceptance labels.
+    rows, max_relative_error, _pair_spread = _composite_rows_for(metric)
     finite_rows = _finite_metric_rows(rows)
-    max_relative_error = max((float(row["relative_error"]) for row in finite_rows), default=math.inf)
     status_ok = all(str(row.get("solver_status")) == expected_status for row in rows)
     tolerance_ok = bool(finite_rows) and len(finite_rows) == len(rows) and max_relative_error <= float(tolerance)
     payload = {
@@ -1151,6 +1206,43 @@ def _plate_uniaxial_buckling_resultant(*, width: float = 1.0, thickness: float =
     return float(k * math.pi**2 * D / (width**2))
 
 
+def _simply_supported_plate_buckling(
+    *,
+    divisions: int = 10,
+    thickness: float = 0.01,
+) -> Tuple[float, Dict[str, Any]]:
+    """Return a report-local cached plate buckling result and diagnostics."""
+
+    key = (int(divisions), float(thickness))
+    cache = _PLATE_BUCKLING_RUN_CACHE.get()
+    cached = None if cache is None else cache.get(key)
+    if cached is not None:
+        value, diagnostics = cached
+        return value, copy.deepcopy(diagnostics)
+
+    model = _simply_supported_plate_model(divisions=divisions, thickness=thickness)
+    states = {
+        int(element_id): {"membrane_compression_x": 1.0}
+        for element_id, element in model.mesh.elements.items()
+        if isinstance(element, ShellElement)
+    }
+    result = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=3,
+        dense_size_limit=10000,
+    )
+    _assert(
+        result.solver_status == "ok" and result.critical_load_factor is not None,
+        "plate buckling solve failed",
+    )
+    value = float(result.critical_load_factor)
+    diagnostics = copy.deepcopy(result.diagnostics or {})
+    if cache is not None:
+        cache[key] = (value, copy.deepcopy(diagnostics))
+    return value, diagnostics
+
+
 def _run_shell_006(case: VerificationCase) -> VerificationCaseResult:
     model = _simply_supported_plate_model(divisions=10, thickness=0.01)
     result = solve_free_vibration(model, num_modes=6, dense_size_limit=10000)
@@ -1171,15 +1263,10 @@ def _run_shell_006(case: VerificationCase) -> VerificationCaseResult:
 
 
 def _run_shell_007(case: VerificationCase) -> VerificationCaseResult:
-    model = _simply_supported_plate_model(divisions=10, thickness=0.01)
-    states = {
-        int(element_id): {"membrane_compression_x": 1.0}
-        for element_id, element in model.mesh.elements.items()
-        if isinstance(element, ShellElement)
-    }
-    result = solve_eigenvalue_buckling(model, states, num_modes=3, dense_size_limit=10000)
-    _assert(result.solver_status == "ok" and result.critical_load_factor is not None, "plate buckling solve failed")
-    value = float(result.critical_load_factor)
+    value, diagnostics = _simply_supported_plate_buckling(
+        divisions=10,
+        thickness=0.01,
+    )
     reference = _plate_uniaxial_buckling_resultant()
     err = _rel_error(value, reference)
     _assert(err < 0.02, "simply supported plate buckling load mismatch")
@@ -1190,7 +1277,7 @@ def _run_shell_007(case: VerificationCase) -> VerificationCaseResult:
         mesh={"divisions": 10, "span_to_thickness": 100},
         reference={"type": "analytical", "k": 4.0, "critical_membrane_resultant": reference},
         result={"critical_load_factor": value, "relative_error": err},
-        checks=result.diagnostics or {},
+        checks=diagnostics,
     )
 
 
@@ -1559,7 +1646,15 @@ def _run_coup_009(case: VerificationCase) -> VerificationCaseResult:
 
 
 def _composite_rows_for(metric: str) -> Tuple[List[Dict[str, Any]], float, float]:
-    rows = [dict(row) for row in composite_strip_metric_rows(metric)]
+    cache = _COMPOSITE_METRIC_RUN_CACHE.get()
+    cached = None if cache is None else cache.get(metric)
+    if cached is not None:
+        cached_rows, max_error, spread = cached
+        # Result objects are mutable dictionaries.  Keep the run-local cache
+        # private and hand every case a new copy of the exact cached values.
+        return copy.deepcopy(list(cached_rows)), max_error, spread
+
+    rows = copy.deepcopy(list(composite_strip_metric_rows(metric)))
     finite = [row for row in rows if math.isfinite(float(row.get("relative_error", math.inf)))]
     max_error = max((float(row["relative_error"]) for row in finite), default=math.inf)
     values = []
@@ -1571,6 +1666,12 @@ def _composite_rows_for(metric: str) -> Tuple[List[Dict[str, Any]], float, float
     for row in finite:
         values.append(float(row[value_key]))
     spread = (max(values) - min(values)) / max(max(abs(value) for value in values), 1.0e-30) if values else math.inf
+    if cache is not None:
+        cache[metric] = (
+            tuple(copy.deepcopy(rows)),
+            max_error,
+            float(spread),
+        )
     return rows, max_error, float(spread)
 
 
@@ -3070,7 +3171,7 @@ def _run_nlg_006(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
-def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
+def _evaluate_nlg_007(case: VerificationCase) -> VerificationCaseResult:
     from .arc_length import ArcLengthControl, solve_static_arc_length
     from .imperfections import ImperfectionField
 
@@ -3140,7 +3241,7 @@ def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
-def _run_nlg_008(case: VerificationCase) -> VerificationCaseResult:
+def _evaluate_nlg_008(case: VerificationCase) -> VerificationCaseResult:
     model = _verification_plate_model(divisions=2, thickness=0.01, element_family="S4")
     follower = _pressure_load_all_shells(model, 1000.0)
     follower.follower_pressure = True
@@ -3440,7 +3541,7 @@ def _run_bench_004(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
-def _run_nlg_002(case: VerificationCase) -> VerificationCaseResult:
+def _evaluate_nlg_002(case: VerificationCase) -> VerificationCaseResult:
     from .beam_validity import corotational_axial_extension_metric, corotational_rigid_rotation_metric
 
     rigid = corotational_rigid_rotation_metric(angle_degrees=75.0)
@@ -3456,6 +3557,18 @@ def _run_nlg_002(case: VerificationCase) -> VerificationCaseResult:
         result={"angle_degrees": rigid["angle_degrees"], "corotational_force_norm": rigid["corotational_force_norm"]},
         checks={"rigid_rotation": rigid, "axial_extension": axial},
     )
+
+
+def _run_nlg_002(case: VerificationCase) -> VerificationCaseResult:
+    return _cached_nonlinear_framework_result("NLG-002", case, _evaluate_nlg_002)
+
+
+def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
+    return _cached_nonlinear_framework_result("NLG-007", case, _evaluate_nlg_007)
+
+
+def _run_nlg_008(case: VerificationCase) -> VerificationCaseResult:
+    return _cached_nonlinear_framework_result("NLG-008", case, _evaluate_nlg_008)
 
 
 def _run_nlg_003(case: VerificationCase) -> VerificationCaseResult:
@@ -3499,7 +3612,21 @@ def _external_reference_locations() -> Tuple[Path, Path, Path]:
 
 def _external_reference_report_for_verification() -> Dict[str, Any]:
     _report_path, _markdown_path, deck_dir = _external_reference_locations()
-    return generate_external_reference_report(deck_dir)
+    cache = _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.get()
+    # EXT-001, EXT-002 and VVR-001 inspect the same deterministic deck-only
+    # handoff bundle.  Generate it once per top-level report, but retain the
+    # existing public behaviour of regenerating it for each independent run.
+    key = deck_dir.absolute()
+    cached = None if cache is None else cache.get(key)
+    if cached is not None:
+        return copy.deepcopy(cached)
+
+    report = generate_external_reference_report(deck_dir)
+    if cache is not None:
+        # Case checks own mutable result dictionaries, so never expose the
+        # cached object itself to a verification case.
+        cache[key] = copy.deepcopy(report)
+    return report
 
 
 def _external_report_evidence_summary(report: Mapping[str, Any]) -> Dict[str, Any]:
@@ -4487,6 +4614,10 @@ def run_beam_shell_verification(
     """Run the manifest, optionally consuming a separately generated external report."""
 
     token = None
+    external_reference_cache_token = _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.set({})
+    composite_cache_token = _COMPOSITE_METRIC_RUN_CACHE.set({})
+    plate_buckling_cache_token = _PLATE_BUCKLING_RUN_CACHE.set({})
+    nonlinear_framework_cache_token = _NONLINEAR_FRAMEWORK_RUN_CACHE.set({})
     if external_reference_report is not None:
         token = _EXTERNAL_REFERENCE_REPORT_OVERRIDE.set(Path(external_reference_report))
     try:
@@ -4494,6 +4625,10 @@ def run_beam_shell_verification(
     finally:
         if token is not None:
             _EXTERNAL_REFERENCE_REPORT_OVERRIDE.reset(token)
+        _PLATE_BUCKLING_RUN_CACHE.reset(plate_buckling_cache_token)
+        _COMPOSITE_METRIC_RUN_CACHE.reset(composite_cache_token)
+        _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.reset(external_reference_cache_token)
+        _NONLINEAR_FRAMEWORK_RUN_CACHE.reset(nonlinear_framework_cache_token)
 
 
 def _markdown(report: Mapping[str, Any]) -> str:

@@ -26,6 +26,7 @@ from .elements import (
     ShellElement,
     _shell_material_matrices,
 )
+from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEMesh as _FEMesh
 from .fe_core import Material as _BuiltinMaterial
 from .fe_core import Node as _Node
@@ -35,6 +36,12 @@ from .materials import elastic_compliance_matrix, material_symmetry
 from .matrix_assembly import (
     AssemblyError,
     _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE,
+)
+from .q4_reference_batch import (
+    MIN_REFERENCE_Q4_RECOVERY_GROUP,
+    ReferenceQ4RecoveryBatch,
+    build_reference_q4_recovery_batch,
+    reference_q4_candidate,
 )
 from .s3_reference_batch import (
     MIN_REFERENCE_S3_RECOVERY_GROUP,
@@ -1510,6 +1517,13 @@ def _material_state_key(model: "FEModel") -> Tuple[Tuple[object, ...], ...]:
 
 
 def _formulation_name(model: "FEModel", element: object) -> str:
+    # The compiled S4 kernel reproduces ``ShellElement.compute_stresses``.  A
+    # qualified E4-PL Q4 instead recovers its fields from the stationary
+    # mixed system, so it must remain on that native oracle until it has its
+    # own independently validated batch kernel.  Treating it as generic S4
+    # changes transverse shear and is not a permissible acceleration.
+    if isinstance(element, QualifiedE4PLShellElement):
+        return "qualified_e4_pl_q4"
     if isinstance(element, ShellElement):
         node_count = len(element.node_ids)
         topology = {3: "t3", 4: "s4", 6: "t6", 8: "q8"}.get(
@@ -1556,6 +1570,9 @@ class RecoveryBatchPlan:
     setup_seconds: float
     retained_bytes: int
     isotropic_s4: "RecoveryS4Batch | None"
+    reference_q4: "ReferenceQ4RecoveryBatch | None"
+    reference_q4_candidate_ids: Tuple[int, ...]
+    reference_q4_fallback_reasons: Mapping[str, Tuple[int, ...]]
     reference_s3: "ReferenceS3RecoveryBatch | None"
     reference_s3_candidate_ids: Tuple[int, ...]
     reference_s3_fallback_reasons: Mapping[str, Tuple[int, ...]]
@@ -1576,6 +1593,7 @@ class RecoveryBatchPlan:
         s4_q_local = []
         s4_g_local = []
         s4_thickness = []
+        reference_q4_items = []
         reference_s3_items = []
         retained_bytes = 0
         for element_id, element in model.mesh.elements.items():
@@ -1594,6 +1612,10 @@ class RecoveryBatchPlan:
             )
             if reference_s3_candidate(element):
                 reference_s3_items.append(
+                    (int(element_id), element, mapping)
+                )
+            if reference_q4_candidate(element):
+                reference_q4_items.append(
                     (int(element_id), element, mapping)
                 )
             if items[-1].formulation in {"shell_s4_isotropic", "shell_s4r_isotropic"}:
@@ -1628,6 +1650,22 @@ class RecoveryBatchPlan:
                 ),
             )
             retained_bytes += isotropic_s4.retained_bytes
+        reference_q4 = None
+        reference_q4_candidate_ids: Tuple[int, ...] = ()
+        reference_q4_fallback_reasons: Mapping[str, Tuple[int, ...]] = (
+            MappingProxyType({})
+        )
+        if len(reference_q4_items) >= MIN_REFERENCE_Q4_RECOVERY_GROUP:
+            reference_q4, q4_reasons = build_reference_q4_recovery_batch(
+                model,
+                reference_q4_items,
+            )
+            reference_q4_candidate_ids = tuple(
+                int(element_id) for element_id, _element, _mapping in reference_q4_items
+            )
+            reference_q4_fallback_reasons = q4_reasons
+            if reference_q4 is not None:
+                retained_bytes += reference_q4.retained_bytes
         reference_s3 = None
         reference_s3_candidate_ids: Tuple[int, ...] = ()
         reference_s3_fallback_reasons: Mapping[str, Tuple[int, ...]] = (
@@ -1656,6 +1694,9 @@ class RecoveryBatchPlan:
             setup_seconds=float(time.perf_counter() - start),
             retained_bytes=int(retained_bytes),
             isotropic_s4=isotropic_s4,
+            reference_q4=reference_q4,
+            reference_q4_candidate_ids=reference_q4_candidate_ids,
+            reference_q4_fallback_reasons=reference_q4_fallback_reasons,
             reference_s3=reference_s3,
             reference_s3_candidate_ids=reference_s3_candidate_ids,
             reference_s3_fallback_reasons=reference_s3_fallback_reasons,

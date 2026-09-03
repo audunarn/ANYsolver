@@ -23,6 +23,11 @@ from .recovery_batches import (
     get_recovery_batch_plan,
 )
 from .recovery_s4 import recover_isotropic_s4
+from .q4_reference_batch import (
+    MIN_REFERENCE_Q4_RECOVERY_GROUP,
+    reference_q4_candidate,
+    recover_reference_q4,
+)
 from .s3_reference_batch import (
     MIN_REFERENCE_S3_RECOVERY_GROUP,
     recover_reference_s3,
@@ -754,7 +759,19 @@ def _recover_element_stresses_with_report_under_lease(
     deterministic = True if resource_config is None else bool(resource_config.deterministic)
     backend = "serial" if used_workers <= 1 else "thread_pool"
     start = time.perf_counter()
-    if len(selected_ids) < _MIN_RECOVERY_PLAN_SIZE:
+    # The native qualified-Q4 plan is a direct stationary operator cache, not
+    # a coarse compiled scheduler.  A uniform 2x2 group already reuses one
+    # kernel four times, making the plan cheaper than four scalar stationary
+    # reconstructions even on its first use.  Preserve the mature low-setup
+    # scalar path for all other small selections (including legacy and S3).
+    selected_q4_plan_group = (
+        len(selected_ids) >= MIN_REFERENCE_Q4_RECOVERY_GROUP
+        and all(
+            reference_q4_candidate(model.mesh.elements[int(element_id)])
+            for element_id in selected_ids
+        )
+    )
+    if len(selected_ids) < _MIN_RECOVERY_PLAN_SIZE and not selected_q4_plan_group:
         # Preserve the low-setup scalar oracle for small selections.  The
         # retained plan, native-pool scope and coarse scheduler break even only
         # on larger recoveries; paying them here regresses the mature path.
@@ -844,11 +861,25 @@ def _recover_element_stresses_with_report_under_lease(
     batch_counts = formulation_counts(selected_items)
     recovered_by_id: Dict[int, Dict[str, np.ndarray]] = {}
     compiled_ids: set[int] = set()
+    reference_q4_ids: set[int] = set()
     reference_s3_ids: set[int] = set()
     compiled_seconds = 0.0
+    reference_q4_seconds = 0.0
     reference_s3_seconds = 0.0
     compiled_error: Optional[str] = None
+    reference_q4_error: Optional[str] = None
     reference_s3_error: Optional[str] = None
+    # Reference-qualified batches evaluate formulation-native NumPy kernels in
+    # the coordinator thread.  They do not need a Python worker pool, but
+    # they must still constrain native numerical libraries when recovery was
+    # requested with multiple workers: otherwise a later mixed fallback can
+    # oversubscribe the same process.  Keep the completed scope report for
+    # the public recovery metadata.
+    native_report: Mapping[str, Any] = {
+        "status": "not_needed",
+        "requested_threads": None,
+        "restored": True,
+    }
     candidate_indices = (
         np.empty(0, dtype=np.intp)
         if plan.isotropic_s4 is None
@@ -878,6 +909,43 @@ def _recover_element_stresses_with_report_under_lease(
             compiled_error = f"{type(exc).__name__}: {exc}"
         compiled_seconds = time.perf_counter() - compiled_start
 
+    reference_q4_indices = (
+        np.empty(0, dtype=np.intp)
+        if plan.reference_q4 is None
+        else plan.reference_q4.select_indices(selected_ids)
+    )
+    reference_q4_active = bool(
+        plan.reference_q4 is not None
+        and reference_q4_indices.size >= MIN_REFERENCE_Q4_RECOVERY_GROUP
+    )
+    if reference_q4_active:
+        reference_q4_start = time.perf_counter()
+        try:
+            if used_workers > 1:
+                with native_thread_scope(
+                    1, phase="stress_recovery_qualified_q4_reference"
+                ) as native_report:
+                    recovered_q4 = recover_reference_q4(
+                        model,
+                        plan.reference_q4,
+                        reference_q4_indices,
+                        displacements,
+                        return_global=return_global,
+                    )
+            else:
+                recovered_q4 = recover_reference_q4(
+                    model,
+                    plan.reference_q4,
+                    reference_q4_indices,
+                    displacements,
+                    return_global=return_global,
+                )
+            recovered_by_id.update(recovered_q4)
+            reference_q4_ids.update(int(element_id) for element_id in recovered_q4)
+        except Exception as exc:  # formulation-native scalar path remains authoritative
+            reference_q4_error = f"{type(exc).__name__}: {exc}"
+        reference_q4_seconds = time.perf_counter() - reference_q4_start
+
     reference_s3_indices = (
         np.empty(0, dtype=np.intp)
         if plan.reference_s3 is None
@@ -890,13 +958,25 @@ def _recover_element_stresses_with_report_under_lease(
     if reference_s3_active:
         reference_s3_start = time.perf_counter()
         try:
-            recovered_s3 = recover_reference_s3(
-                model,
-                plan.reference_s3,
-                reference_s3_indices,
-                displacements,
-                return_global=return_global,
-            )
+            if used_workers > 1:
+                with native_thread_scope(
+                    1, phase="stress_recovery_qualified_s3_reference"
+                ) as native_report:
+                    recovered_s3 = recover_reference_s3(
+                        model,
+                        plan.reference_s3,
+                        reference_s3_indices,
+                        displacements,
+                        return_global=return_global,
+                    )
+            else:
+                recovered_s3 = recover_reference_s3(
+                    model,
+                    plan.reference_s3,
+                    reference_s3_indices,
+                    displacements,
+                    return_global=return_global,
+                )
             recovered_by_id.update(recovered_s3)
             reference_s3_ids.update(int(element_id) for element_id in recovered_s3)
         except Exception as exc:  # formulation-native scalar path remains authoritative
@@ -907,16 +987,11 @@ def _recover_element_stresses_with_report_under_lease(
         item
         for item in selected_items
         if item.element_id not in compiled_ids
+        and item.element_id not in reference_q4_ids
         and item.element_id not in reference_s3_ids
     )
     chunks = build_recovery_chunks(fallback_items, used_workers)
-    if not fallback_items:
-        native_report: Mapping[str, Any] = {
-            "status": "not_needed",
-            "requested_threads": None,
-            "restored": True,
-        }
-    elif used_workers <= 1:
+    if fallback_items and used_workers <= 1:
         for plan_item in fallback_items:
             item = _compute_one_element_stress(
                 model,
@@ -932,7 +1007,7 @@ def _recover_element_stresses_with_report_under_lease(
             "requested_threads": None,
             "restored": True,
         }
-    else:
+    elif fallback_items:
         with native_thread_scope(1, phase="stress_recovery_thread_pool") as native_report:
             with ThreadPoolExecutor(max_workers=used_workers) as executor:
                 futures = [
@@ -963,7 +1038,17 @@ def _recover_element_stresses_with_report_under_lease(
     if components is not None:
         stresses = {int(element_id): _filter_components(values, components) for element_id, values in stresses.items()}
     elapsed = time.perf_counter() - start
-    if compiled_ids and reference_s3_ids and fallback_items:
+    if reference_q4_ids and not compiled_ids and not reference_s3_ids and not fallback_items:
+        recovery_backend = "qualified_q4_reference_stationary_plan"
+    elif reference_q4_ids and fallback_items:
+        recovery_backend = (
+            "hybrid_qualified_q4_reference_thread_pool"
+            if used_workers > 1
+            else "hybrid_qualified_q4_reference_serial"
+        )
+    elif reference_q4_ids and (compiled_ids or reference_s3_ids):
+        recovery_backend = "combined_qualified_q4_reference_recovery"
+    elif compiled_ids and reference_s3_ids and fallback_items:
         recovery_backend = "hybrid_numba_qualified_s3_scalar"
     elif compiled_ids and reference_s3_ids:
         recovery_backend = "compiled_isotropic_s4_and_qualified_s3_reference"
@@ -996,6 +1081,12 @@ def _recover_element_stresses_with_report_under_lease(
         if plan.reference_s3 is None
         else plan.reference_s3.index_by_id
     )
+    reference_q4_index = (
+        {}
+        if plan.reference_q4 is None
+        else plan.reference_q4.index_by_id
+    )
+    recorded_reference_q4_candidates = set(plan.reference_q4_candidate_ids)
     recorded_reference_s3_candidates = set(plan.reference_s3_candidate_ids)
     unsupported_ids = [
         int(item.element_id)
@@ -1003,6 +1094,8 @@ def _recover_element_stresses_with_report_under_lease(
         if (
             (plan.isotropic_s4 is None
             or int(item.element_id) not in plan.isotropic_s4.index_by_id)
+            and int(item.element_id) not in reference_q4_index
+            and int(item.element_id) not in recorded_reference_q4_candidates
             and int(item.element_id) not in reference_s3_index
             and int(item.element_id) not in recorded_reference_s3_candidates
         )
@@ -1031,6 +1124,22 @@ def _recover_element_stresses_with_report_under_lease(
                 "element_ids": eligible_fallback_ids,
                 "minimum_size": _MIN_COMPILED_RECOVERY_BATCH,
             }
+    eligible_reference_q4_fallback_ids = [
+        int(item.element_id)
+        for item in fallback_items
+        if int(item.element_id) in reference_q4_index
+    ]
+    if eligible_reference_q4_fallback_ids:
+        if reference_q4_error is not None:
+            fallback_reasons["qualified_q4_reference_batch_error"] = {
+                "element_ids": eligible_reference_q4_fallback_ids,
+                "error": reference_q4_error,
+            }
+        else:
+            fallback_reasons["qualified_q4_batch_below_minimum_size"] = {
+                "element_ids": eligible_reference_q4_fallback_ids,
+                "minimum_size": MIN_REFERENCE_Q4_RECOVERY_GROUP,
+            }
     eligible_reference_s3_fallback_ids = [
         int(item.element_id)
         for item in fallback_items
@@ -1047,6 +1156,14 @@ def _recover_element_stresses_with_report_under_lease(
                 "element_ids": eligible_reference_s3_fallback_ids,
                 "minimum_size": MIN_REFERENCE_S3_RECOVERY_GROUP,
             }
+    for reason_name, reason_ids in plan.reference_q4_fallback_reasons.items():
+        selected_reason_ids = [
+            int(item.element_id)
+            for item in fallback_items
+            if int(item.element_id) in set(reason_ids)
+        ]
+        if selected_reason_ids:
+            fallback_reasons[f"qualified_q4_{reason_name}"] = selected_reason_ids
     for reason_name, reason_ids in plan.reference_s3_fallback_reasons.items():
         selected_reason_ids = [
             int(item.element_id)
@@ -1070,6 +1187,19 @@ def _recover_element_stresses_with_report_under_lease(
             "batch_counts": batch_counts,
             "compiled_batch_count": int(bool(compiled_ids)),
             "compiled_batch_seconds": float(compiled_seconds),
+            "qualified_q4_reference_batch_count": int(bool(reference_q4_ids)),
+            "qualified_q4_reference_batch_seconds": float(reference_q4_seconds),
+            "qualified_q4_reference_batch": (
+                None
+                if plan.reference_q4 is None
+                else {
+                    "policy_id": "QUALIFIED_Q4_PLANAR_EXACT_RECOVERY_PLAN_V1",
+                    "formulation_id": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+                    "element_count": int(plan.reference_q4.element_ids.size),
+                    "kernel_count": int(len(plan.reference_q4.kernels)),
+                    "retained_bytes": int(plan.reference_q4.retained_bytes),
+                }
+            ),
             "qualified_s3_reference_batch_count": int(bool(reference_s3_ids)),
             "qualified_s3_reference_batch_seconds": float(reference_s3_seconds),
             "qualified_s3_reference_batch": (
@@ -1077,7 +1207,9 @@ def _recover_element_stresses_with_report_under_lease(
                 if plan.reference_s3 is None
                 else plan.reference_s3.diagnostics()
             ),
-            "eligible_element_count": len(compiled_ids | reference_s3_ids),
+            "eligible_element_count": len(
+                compiled_ids | reference_q4_ids | reference_s3_ids
+            ),
             "fallback_element_count": len(fallback_items),
             "fallback_reasons": fallback_reasons,
             "chunk_count": len(chunks) if used_workers > 1 else int(bool(fallback_items)),

@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 from anysolver import run_beam_shell_verification, verification_manifest_cases, write_beam_shell_verification_report
+import anysolver.beam_shell_verification as beam_shell_verification
 
 
 def test_manifest_contains_stable_case_ids_from_spec() -> None:
@@ -58,6 +60,136 @@ def test_nlg_008_follower_pressure_case_passes() -> None:
     assert ring_diagnostics["rigid_body_handling"] == "projected"
     assert ring_diagnostics["rigid_projection"]["applied"] is True
     assert ring_diagnostics["rigid_projection"]["metric_version"] == "dimensionless_full_dof_bbox_v1"
+
+
+def test_composite_buckling_rows_are_cached_only_within_one_report(
+    monkeypatch,
+) -> None:
+    """Duplicate verification views reuse one exact buckling computation."""
+
+    calls: list[str] = []
+
+    def rows(metric: str):
+        calls.append(metric)
+        assert metric == "buckling"
+        return [
+            {
+                "relative_error": 0.0,
+                "critical_load_factor": 1.0,
+                "nested": {"value": 0.0},
+            },
+            {
+                "relative_error": 0.0,
+                "critical_load_factor": 1.0,
+                "nested": {"value": 0.0},
+            },
+        ]
+
+    monkeypatch.setattr(beam_shell_verification, "composite_strip_metric_rows", rows)
+    first = run_beam_shell_verification(selected_ids={"BUC-005", "COUP-016"})
+    second = run_beam_shell_verification(selected_ids={"BUC-005", "COUP-016"})
+
+    assert calls == ["buckling", "buckling"]
+    assert [item["case_id"] for item in first["results"]] == [
+        "COUP-016",
+        "BUC-005",
+    ]
+    assert [item["case_id"] for item in second["results"]] == [
+        "COUP-016",
+        "BUC-005",
+    ]
+    first["results"][0]["checks"]["rows"][0]["nested"]["value"] = 99.0
+    assert second["results"][0]["checks"]["rows"][0]["nested"]["value"] == 0.0
+
+
+def test_plate_buckling_is_cached_only_within_one_report(
+    monkeypatch,
+) -> None:
+    """The BUC-004 compatibility view reuses SHELL-007's exact solve."""
+
+    calls = 0
+
+    def solve(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return SimpleNamespace(
+            solver_status="ok",
+            critical_load_factor=beam_shell_verification._plate_uniaxial_buckling_resultant(),
+            diagnostics={"nested": {"residual": 0.0}},
+        )
+
+    monkeypatch.setattr(beam_shell_verification, "solve_eigenvalue_buckling", solve)
+    first = run_beam_shell_verification(selected_ids={"SHELL-007", "BUC-004"})
+    second = run_beam_shell_verification(selected_ids={"SHELL-007", "BUC-004"})
+
+    assert calls == 2
+    assert [item["case_id"] for item in first["results"]] == [
+        "SHELL-007",
+        "BUC-004",
+    ]
+    first["results"][0]["checks"]["nested"]["residual"] = 99.0
+    assert second["results"][0]["checks"]["nested"]["residual"] == 0.0
+
+
+def test_external_reference_decks_are_cached_only_within_one_report(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """The two deck-inspection views share one immutable handoff bundle."""
+
+    calls = 0
+    original = beam_shell_verification.generate_external_reference_report
+
+    def generate(deck_dir: Path):
+        nonlocal calls
+        calls += 1
+        return original(deck_dir)
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(beam_shell_verification, "generate_external_reference_report", generate)
+    first = run_beam_shell_verification(selected_ids={"EXT-001", "EXT-002"})
+    second = run_beam_shell_verification(selected_ids={"EXT-001", "EXT-002"})
+
+    assert calls == 2
+    assert [item["case_id"] for item in first["results"]] == ["EXT-001", "EXT-002"]
+    assert [item["case_id"] for item in second["results"]] == ["EXT-001", "EXT-002"]
+    first["results"][0]["checks"]["report"]["cases"][0]["name"] = "mutated"
+    assert second["results"][0]["checks"]["report"]["cases"][0]["name"] != "mutated"
+
+
+def test_nonlinear_framework_ingredients_are_cached_only_within_one_report(
+    monkeypatch,
+) -> None:
+    """NLG-003 shares its three mechanics checks with standalone manifest rows."""
+
+    calls: list[str] = []
+
+    def evaluator(case):
+        calls.append(case.case_id)
+        return beam_shell_verification._pass(case, checks={"nested": {"value": 0.0}})
+
+    monkeypatch.setattr(beam_shell_verification, "_evaluate_nlg_002", evaluator)
+    monkeypatch.setattr(beam_shell_verification, "_evaluate_nlg_007", evaluator)
+    monkeypatch.setattr(beam_shell_verification, "_evaluate_nlg_008", evaluator)
+    selected = {"NLG-002", "NLG-003", "NLG-007", "NLG-008"}
+    first = run_beam_shell_verification(selected_ids=selected)
+    second = run_beam_shell_verification(selected_ids=selected)
+
+    assert calls == ["NLG-002", "NLG-003", "NLG-003"] * 2
+    assert [item["case_id"] for item in first["results"]] == [
+        "NLG-002",
+        "NLG-003",
+        "NLG-007",
+        "NLG-008",
+    ]
+    assert [item["case_id"] for item in second["results"]] == [
+        "NLG-002",
+        "NLG-003",
+        "NLG-007",
+        "NLG-008",
+    ]
+    first["results"][0]["checks"]["nested"]["value"] = 99.0
+    assert second["results"][0]["checks"]["nested"]["value"] == 0.0
 
 
 def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:

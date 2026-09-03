@@ -53,14 +53,57 @@ def _clear_element_local_caches(element: "Element") -> None:
             object.__setattr__(element, name, None)
 
 
+def _is_canonical_immutable_float64_array(value: Any) -> bool:
+    """Return whether ``value`` already has the qualified frozen-array form.
+
+    Qualified vector inputs are stored as contiguous ``float64`` views backed
+    by immutable bytes.  Recreating that same view is value-preserving, but it
+    changes its object identity.  Warm qualified assembly plans intentionally
+    bind the identity of their immutable inputs, so needless recreation turns
+    a recovery-plan build into a cache invalidation.  Recognise the canonical
+    representation before allocating a replacement.
+    """
+
+    if (
+        type(value) is not np.ndarray
+        or value.dtype != np.dtype(np.float64)
+        or not value.flags.c_contiguous
+    ):
+        return False
+    current: Any = value
+    seen: set[int] = set()
+    while type(current) is np.ndarray:
+        if current.flags.writeable or id(current) in seen:
+            return False
+        seen.add(id(current))
+        current = current.base
+        if current is None:
+            return False
+    return bool(
+        type(current) is bytes
+        or (
+            type(current) is memoryview
+            and current.readonly
+            and type(current.obj) is bytes
+        )
+    )
+
+
 def _freeze_qualified_element_vector_inputs(element: "Element") -> None:
-    """Restore immutable vector inputs for qualified cache-aware elements."""
+    """Restore immutable vector inputs for qualified cache-aware elements.
+
+    The operation is idempotent for an already canonical immutable input.  In
+    addition to avoiding a tiny allocation, this preserves the identity bound
+    by qualified warm-assembly authority records across recovery calls.
+    """
 
     if not hasattr(element, "_qualified_plan_state_revision"):
         return
     for name in ("material_direction", "reference_normal"):
         value = getattr(element, name, None)
         if value is None:
+            continue
+        if _is_canonical_immutable_float64_array(value):
             continue
         made = np.ascontiguousarray(np.asarray(value, dtype=float))
         frozen = np.frombuffer(made.tobytes(order="C"), dtype=float).reshape(
