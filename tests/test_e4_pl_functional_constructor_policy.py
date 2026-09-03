@@ -259,6 +259,10 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "tests/test_e4_pl_q4_current_tangent.py",
                 "test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly",
             ): 1,
+            (
+                "tests/test_e4_pl_q4_current_tangent.py",
+                "test_distorted_vectorized_q4_plastic_history_replays_after_multiple_increments",
+            ): 1,
             ("tests/test_e4_pl_q4_state_lifecycle.py", "_loaded_q4_model"): 1,
             (
                 "tests/test_e4_pl_q4_state_lifecycle.py",
@@ -309,7 +313,7 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
         }
     )
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
-    assert sum(calls["QualifiedE4PLShellElement"].values()) == 53
+    assert sum(calls["QualifiedE4PLShellElement"].values()) == 54
 
 
 def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None:
