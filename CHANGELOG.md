@@ -8,8 +8,13 @@
   0.2.x, ANYmesher 0.4.x, and ANYfileio 0.3.1 or newer. Version 0.4.0 carried the
   pre-activation bands and cannot be resolved together with ANYfem 0.4.0.
 - Add a release gate that resolves the built wheel with the exact coordinated
-  sibling releases before trusted publication. No solver mechanics,
-  qualification evidence, public selector, or formulation default changes.
+  sibling releases before trusted publication.
+- Admit only a fixed binary64 last-place envelope when scalar final-state
+  replay validates compact qualified-Q4 plastic states produced by vectorized
+  assembly. This fixes sealing after valid plastic increments while preserving
+  exact origin/configuration hashes, exact rich-state replay, and strict
+  rejection of material history differences. Qualified Q4/S3 mechanics and
+  formulation defaults are unchanged.
 
 ## 0.4.0 - 2026-09-03
 

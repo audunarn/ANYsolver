@@ -11,6 +11,7 @@ from anysolver.e4_pl_element import (
     Q4_CURRENT_STATE_PROJECTION_POLICY_ID,
     Q4_CURRENT_STATE_TANGENT_DECOMPOSITION_POLICY_ID,
     QualifiedE4PLShellElement,
+    _q4_compact_replay_last_place_equivalent,
 )
 from anysolver.e4_pl_s3_state import canonical_json_bytes
 from anysolver.elements import ShellElement
@@ -32,6 +33,25 @@ D4 = (
     (0, 3, 2, 1),
     (2, 1, 0, 3),
 )
+
+
+def test_compact_q4_replay_accepts_only_the_frozen_last_place_envelope() -> None:
+    expected = np.asarray((1.0, 0.5, 2.0), dtype=np.float64)
+    accepted_bits = expected.view(np.uint64).copy()
+    accepted_bits[0] += np.uint64(262144)
+    accepted = accepted_bits.view(np.float64)
+    assert _q4_compact_replay_last_place_equivalent(accepted, expected)
+
+    rejected_bits = expected.view(np.uint64).copy()
+    rejected_bits[0] += np.uint64(262145)
+    rejected = rejected_bits.view(np.float64)
+    assert not _q4_compact_replay_last_place_equivalent(rejected, expected)
+    assert not _q4_compact_replay_last_place_equivalent(
+        np.asarray((np.nan,)), np.asarray((np.nan,))
+    )
+    assert not _q4_compact_replay_last_place_equivalent(
+        np.asarray((1.0,)), np.asarray((1.0, 2.0))
+    )
 
 
 def _mesh(nodes: np.ndarray) -> FEMesh:
@@ -974,3 +994,106 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
         components["force"], force[0] + correction @ displacement
     )
     np.testing.assert_array_equal(components["total"], tangent[0] + correction)
+
+
+def test_distorted_vectorized_q4_plastic_history_replays_after_multiple_increments() -> None:
+    """Regression for final-state replay of the production batch path."""
+
+    nodes = np.asarray(
+        ((0.0, 0.0, 0.0), (0.47, 0.01, 0.0), (0.45, 0.39, 0.0), (-0.02, 0.36, 0.0)),
+        dtype=np.float64,
+    )
+    mesh = _mesh(nodes)
+    material = _material(plastic=True)
+    element = QualifiedE4PLShellElement(
+        34,
+        [1, 2, 3, 4],
+        material.name,
+        thickness=0.012,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+    cache = element._nonlinear_geometry(mesh)
+    batch_size = 16
+    target = 11
+    committed = [element.init_nonlinear_state(3) for _ in range(batch_size)]
+
+    for scale in (0.35, 0.7, 1.0):
+        displacement = np.zeros((batch_size, 24), dtype=np.float64)
+        element_scales = np.linspace(0.91, 1.09, batch_size) * scale
+        displacement[:, 6] = 0.004 * element_scales
+        displacement[:, 12] = 0.0043 * element_scales
+        displacement[:, 8] = 4.0e-4 * element_scales
+        displacement[:, 14] = 7.0e-4 * element_scales
+        force, tangent, plastic, alpha, layer_strain = batch_shell_nonlinear_response(
+            displacement,
+            np.broadcast_to(np.asarray(cache["T0"]), (batch_size, 24, 24)),
+            np.broadcast_to(np.asarray(cache["B_m_all"]), (batch_size, 4, 3, 24)),
+            np.broadcast_to(np.asarray(cache["B_b_all"]), (batch_size, 4, 3, 24)),
+            np.broadcast_to(np.asarray(cache["B_d_all"]), (batch_size, 4, 1, 24)),
+            np.broadcast_to(np.asarray(cache["Gw_all"]), (batch_size, 4, 2, 24)),
+            np.broadcast_to(np.asarray(cache["detw_all"]), (batch_size, 4)),
+            np.broadcast_to(np.asarray(cache["B_s_all"]), (batch_size, 4, 2, 24)),
+            np.broadcast_to(np.asarray(cache["detw_shear_all"]), (batch_size, 4)),
+            float(material.elastic_modulus),
+            float(material.poisson_ratio),
+            float(material.shear_modulus),
+            float(element.thickness),
+            float(element.drilling_stabilization),
+            True,
+            material.hardening_curve,
+            np.asarray([state["plastic_strain"] for state in committed]),
+            np.asarray([state["alpha"] for state in committed]),
+            3,
+        )
+        single = batch_shell_nonlinear_response(
+            displacement[target : target + 1],
+            np.asarray(cache["T0"])[None, :, :],
+            np.asarray(cache["B_m_all"])[None, :, :, :],
+            np.asarray(cache["B_b_all"])[None, :, :, :],
+            np.asarray(cache["B_d_all"])[None, :, :, :],
+            np.asarray(cache["Gw_all"])[None, :, :, :],
+            np.asarray(cache["detw_all"])[None, :],
+            np.asarray(cache["B_s_all"])[None, :, :, :],
+            np.asarray(cache["detw_shear_all"])[None, :],
+            float(material.elastic_modulus),
+            float(material.poisson_ratio),
+            float(material.shear_modulus),
+            float(element.thickness),
+            float(element.drilling_stabilization),
+            True,
+            material.hardening_curve,
+            np.asarray(committed[target]["plastic_strain"])[None, :, :],
+            np.asarray(committed[target]["alpha"])[None, :],
+            3,
+        )
+        np.testing.assert_array_equal(single[0][0], force[target])
+        np.testing.assert_array_equal(single[1][0], tangent[target])
+        np.testing.assert_array_equal(single[2][0], plastic[target])
+        np.testing.assert_array_equal(single[3][0], alpha[target])
+        np.testing.assert_array_equal(
+            single[4], layer_strain[target * 12 : (target + 1) * 12]
+        )
+        next_committed = []
+        points = 4 * 3
+        for index in range(batch_size):
+            trial = element.attach_current_tangent_algorithmic_origin(
+                material,
+                committed[index],
+                {
+                    "plastic_strain": plastic[index],
+                    "alpha": alpha[index],
+                    "layer_strain": layer_strain[
+                        index * points : (index + 1) * points
+                    ].copy(),
+                },
+                3,
+                tangent_evaluated=True,
+            )
+            if index == target:
+                trial = element.seal_committed_current_tangent_state(
+                    mesh, material, displacement[index], trial, 3
+                )
+            next_committed.append(trial)
+        committed = next_committed
+        assert tangent.shape == (batch_size, 24, 24)
+        assert force.shape == (batch_size, 24)
