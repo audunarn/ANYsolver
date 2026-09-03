@@ -1054,8 +1054,119 @@ def _apply_local_patch_transition(
                 if not flags:
                     emit(template, [a, b, c, d])
                     continue
-                center = node_at(um, vm, locator=cell_point)
                 mids = {side: mid[side]() for side in flags}
+                center_u = um
+                center_v = vm
+                if len(flags) == 1:
+                    side = flags[0]
+                    ring = {
+                        "b": (a, b, c, d),
+                        "r": (b, c, d, a),
+                        "t": (c, d, a, b),
+                        "l": (d, a, b, c),
+                    }[side]
+                    base_first = np.asarray(coords_by_id[ring[2]], dtype=float)
+                    base_second = np.asarray(coords_by_id[ring[3]], dtype=float)
+
+                    def preview(candidate_u: float, candidate_v: float) -> np.ndarray:
+                        blend = surface_blend(candidate_u, candidate_v)
+                        chord = np.asarray(cell_point(candidate_u, candidate_v), dtype=float)
+                        if blend <= 0.0:
+                            return chord
+                        exact = np.asarray(
+                            point_of_param(candidate_u, wrap_v(candidate_v)),
+                            dtype=float,
+                        )
+                        return (1.0 - blend) * chord + blend * exact
+
+                    def minimum_triangle_angle(apex: np.ndarray) -> float:
+                        points = (base_first, base_second, apex)
+                        smallest = 180.0
+                        for vertex in range(3):
+                            first_edge = points[(vertex - 1) % 3] - points[vertex]
+                            second_edge = points[(vertex + 1) % 3] - points[vertex]
+                            denominator = float(
+                                np.linalg.norm(first_edge) * np.linalg.norm(second_edge)
+                            )
+                            if denominator <= 0.0:
+                                return 0.0
+                            cosine = float(first_edge @ second_edge) / denominator
+                            angle = math.degrees(
+                                math.acos(min(1.0, max(-1.0, cosine)))
+                            )
+                            smallest = min(smallest, angle)
+                        return smallest
+
+                    midpoint_point = np.asarray(coords_by_id[mids[side]], dtype=float)
+                    ring_points = tuple(
+                        np.asarray(coords_by_id[node_id_value], dtype=float)
+                        for node_id_value in ring
+                    )
+
+                    def quad_edge_aspect(points: tuple[np.ndarray, ...]) -> float:
+                        lengths = tuple(
+                            float(np.linalg.norm(points[(index + 1) % 4] - points[index]))
+                            for index in range(4)
+                        )
+                        shortest = min(lengths)
+                        if shortest <= 0.0:
+                            return math.inf
+                        return max(lengths) / shortest
+
+                    candidates: list[tuple[bool, float, float, float, float]] = []
+                    for fraction in (0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875):
+                        candidate_u = center_u
+                        candidate_v = center_v
+                        if side in {"b", "t"}:
+                            candidate_v = v0 + dv * (j + fraction)
+                        else:
+                            candidate_u = u0 + du * (i + fraction)
+                        candidate_point = preview(candidate_u, candidate_v)
+                        triangle_score = minimum_triangle_angle(candidate_point)
+                        quad_aspect = max(
+                            quad_edge_aspect(
+                                (
+                                    ring_points[0],
+                                    midpoint_point,
+                                    candidate_point,
+                                    ring_points[3],
+                                )
+                            ),
+                            quad_edge_aspect(
+                                (
+                                    midpoint_point,
+                                    ring_points[1],
+                                    ring_points[2],
+                                    candidate_point,
+                                )
+                            ),
+                        )
+                        candidates.append(
+                            (
+                                quad_aspect < 4.0,
+                                triangle_score,
+                                -quad_aspect,
+                                candidate_u,
+                                candidate_v,
+                            )
+                        )
+                    _admissible, _score, _negative_aspect, center_u, center_v = max(
+                        candidates,
+                        key=lambda item: (
+                            item[0],
+                            item[1],
+                            item[2],
+                            -abs(
+                                (
+                                    ((item[3] - (u0 + du * i)) / du)
+                                    if side in {"l", "r"}
+                                    else ((item[4] - (v0 + dv * j)) / dv)
+                                )
+                                - 0.5
+                            ),
+                        ),
+                    )
+                center = node_at(center_u, center_v, locator=cell_point)
                 if len(flags) == 4:
                     emit(template, [a, mids["b"], center, mids["l"]])
                     emit(template, [mids["b"], b, mids["r"], center])
@@ -1740,6 +1851,81 @@ def _upgrade_shells_to_s8(nodes: list[dict[str, object]], shells: list[dict[str,
             midside_id(n3, n4),
             midside_id(n4, n1),
         ]
+
+
+def _qualified_s3_owner_normal(
+    node_coords: dict[int, np.ndarray],
+    shell: dict[str, object],
+    corners: tuple[int, int, int],
+    *,
+    radius: float = 0.0,
+) -> list[float]:
+    """Return a facet-normal oriented by the generated surface authority."""
+
+    first, second, third = (node_coords[node_id] for node_id in corners)
+    facet = np.cross(second - first, third - first)
+    facet_magnitude = float(np.linalg.norm(facet))
+    if not math.isfinite(facet_magnitude) or facet_magnitude <= 0.0:
+        raise ValueError("runtime-qualified-s3-is-degenerate")
+
+    authority: np.ndarray | None = None
+    supplied = shell.get("reference_normal")
+    if supplied is not None:
+        try:
+            candidate = np.asarray(supplied, dtype=float).reshape(3)
+        except (TypeError, ValueError):
+            candidate = np.empty(0, dtype=float)
+        if candidate.shape == (3,) and np.all(np.isfinite(candidate)):
+            candidate_magnitude = float(np.linalg.norm(candidate))
+            if candidate_magnitude > 0.0:
+                authority = candidate / candidate_magnitude
+    if authority is None and radius > 0.0:
+        centroid = (first + second + third) / 3.0
+        radial = np.asarray([centroid[0], centroid[1], 0.0], dtype=float)
+        radial_magnitude = float(np.linalg.norm(radial))
+        if radial_magnitude > 0.0:
+            authority = radial / radial_magnitude
+    if authority is None:
+        # Flat runtime geometry owns a positive global-Z skin normal.  It
+        # supplies orientation only; the returned vector remains exactly
+        # normal to the discrete triangle facet.
+        authority = np.asarray([0.0, 0.0, 1.0], dtype=float)
+
+    orientation = float(facet @ authority)
+    if not math.isfinite(orientation) or abs(orientation) <= 1.0e-15 * facet_magnitude:
+        raise ValueError("runtime-qualified-s3-owner-normal-is-not-facet-compatible")
+    if orientation < 0.0:
+        facet = -facet
+    return (facet / facet_magnitude).tolist()
+
+
+def _bind_runtime_qualified_s3_authority(
+    nodes: list[dict[str, object]],
+    shells: list[dict[str, object]],
+    *,
+    radius: float = 0.0,
+) -> None:
+    """Bind current-policy S3 identity and physical owner-normal authority."""
+
+    node_coords = _node_lookup(nodes)
+    for shell in shells:
+        corners = tuple(int(node_id) for node_id in shell.get("node_ids", ()))
+        if len(corners) != 3:
+            continue
+        requested = str(
+            shell.get("formulation", shell.get("shell_formulation", ""))
+        ).strip().lower().replace("_", "-")
+        if requested in {"legacy", "legacy-s3"}:
+            continue
+        shell["formulation"] = "e4-pl-s3-v2d"
+        shell["formulation_id"] = "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+        shell["reference_normal"] = _qualified_s3_owner_normal(
+            node_coords,
+            shell,
+            corners,
+            radius=radius,
+        )
+        shell["owner_normal_authority"] = "PHYSICAL_SURFACE_OWNER_NORMAL_V2D_V1"
 
 
 def _split_shells_to_triangles(
@@ -3236,6 +3422,7 @@ def _flat_generated_geometry(geometry: dict, config: LightweightFEMConfig) -> di
     elif _wants_s8(config):
         elem_type = "S8R" if "s8r" in config.shell_element_order.lower() else "S8"
         _upgrade_shells_to_s8(nodes, shells, element_type=elem_type)
+    _bind_runtime_qualified_s3_authority(nodes, shells)
 
     couplings = _offset_beam_nodes_and_couplings(
         nodes,
@@ -3455,6 +3642,20 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
         circumferential_div = _multiple_at_least(circumferential_div, stiffener_count)
     if _wants_b3(config) and config.include_girders and geometry.get("has_girder"):
         circumferential_div *= 2
+    if _wants_local_patch_transition(config) and not is_cone:
+        # Curvature resolution can increase the ring count after the original
+        # axial count was selected.  Keep the resulting parametric cells
+        # shape-regular so every mandatory transition triangle lies within the
+        # qualified S3 angle/shape envelope before it reaches the factory.
+        arc_size = circumference / max(circumferential_div, 1)
+        transition_axial_div = int(
+            math.ceil(length / max(1.5 * arc_size, 1.0e-9))
+        )
+        if transition_axial_div > axial_div:
+            axial_div = transition_axial_div
+            mesh_generation["local_patch_s3_quality_min_axial_div"] = int(
+                transition_axial_div
+            )
     girder_positions = []
     if config.include_girders and geometry.get("has_girder"):
         if girder_spacing > 1.0e-9:
@@ -3728,6 +3929,7 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
     elif _wants_s8(config):
         elem_type = "S8R" if "s8r" in config.shell_element_order.lower() else "S8"
         _upgrade_shells_to_s8(nodes, shells, radius=radius, element_type=elem_type)
+    _bind_runtime_qualified_s3_authority(nodes, shells, radius=radius)
 
     def cylinder_normal(_node_id: int, coord: np.ndarray) -> np.ndarray:
         radial = np.asarray([coord[0], coord[1], 0.0], dtype=float)
@@ -8345,6 +8547,7 @@ def run_production_fem(
             solver_name="ANYsolver production FE mesh",
         )
 
+    model = None
     try:
         if status_callback: status_callback("Building FE model...")
         if imported_fem_model is not None:

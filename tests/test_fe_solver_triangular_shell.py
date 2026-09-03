@@ -166,7 +166,14 @@ def test_triangular_pressure_reverses_with_winding() -> None:
 
 
 def test_triangular_aliases_and_mixed_q4_t3_assembly() -> None:
-    tri3 = create_element("TRIA3", 1, [1, 2, 3], "steel", thickness=0.01)
+    tri3 = create_element(
+        "TRIA3",
+        1,
+        [1, 2, 3],
+        "steel",
+        thickness=0.01,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
     tri6 = create_element("t6", 2, [1, 2, 3, 4, 5, 6], "steel", thickness=0.01)
     assert isinstance(tri3, ShellElement)
     assert isinstance(tri6, ShellElement)
@@ -228,7 +235,14 @@ def test_generated_geometry_accepts_triangular_shell_topology() -> None:
             {"id": 2, "coords": [1.0, 0.0, 0.0]},
             {"id": 3, "coords": [0.0, 1.0, 0.0]},
         ],
-        "shells": [{"id": 10, "node_ids": [1, 2, 3], "thickness": 0.01}],
+        "shells": [
+            {
+                "id": 10,
+                "node_ids": [1, 2, 3],
+                "thickness": 0.01,
+                "formulation": "legacy-s3",
+            }
+        ],
     }
     model = build_fe_model_from_generated_geometry(generated, AnyStructureFEMConfig(include_beams=False))
     element = model.mesh.elements[10]

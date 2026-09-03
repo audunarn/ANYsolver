@@ -179,6 +179,31 @@ def _immutable_vector(value: Any, label: str) -> np.ndarray:
     return np.frombuffer(contiguous.tobytes(order="C"), dtype=np.float64)
 
 
+def _immutable_serialized_unit_vector(value: Any, label: str) -> np.ndarray:
+    """Validate and preserve a serialized unit vector byte-for-byte.
+
+    Qualified restart identity is expressed in binary64.  Re-normalizing an
+    already normalized vector is not generally bit-idempotent, so a validated
+    serialized vector must be restored without another arithmetic transform.
+    """
+
+    try:
+        vector = np.asarray(value, dtype=np.float64).reshape(-1)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"S3 V2D {label} must be a finite 3-vector") from exc
+    if vector.size != 3 or not np.all(np.isfinite(vector)):
+        raise ValueError(f"S3 V2D {label} must be a finite 3-vector")
+    if not math.isclose(
+        float(np.linalg.norm(vector)),
+        1.0,
+        rel_tol=0.0,
+        abs_tol=8.0 * np.finfo(np.float64).eps,
+    ):
+        raise ValueError(f"S3 V2D serialized {label} must be unit length")
+    contiguous = np.ascontiguousarray(vector, dtype=np.float64)
+    return np.frombuffer(contiguous.tobytes(order="C"), dtype=np.float64)
+
+
 def _block_permutation(order: Tuple[int, int, int]) -> np.ndarray:
     permutation = np.zeros((18, 18), dtype=np.float64)
     identity = np.eye(6, dtype=np.float64)
@@ -510,9 +535,12 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
             StrictFlatLinearE4PLS3V2CShellElement,
             QualifiedE4PLShellElement,
         )
-        if any(type(element) not in allowed for element in elements.values()):
+        if any(
+            isinstance(element, ShellElement) and type(element) not in allowed
+            for element in elements.values()
+        ):
             raise NativeParityCapabilityError(
-                "S3 V2D mixed scope admits only exact V2D, accepted V2C and qualified Q4"
+                "S3 V2D mixed shell scope admits only exact V2D, accepted V2C and qualified Q4"
             )
 
     def _geometry(self, mesh: FEMesh) -> Dict[str, Any]:
@@ -1760,14 +1788,9 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     def compute_mass_matrix(self, mesh: FEMesh, material: Material, **kwargs: Any) -> np.ndarray:
         if kwargs:
             raise NativeParityCapabilityError("S3 V2D mass gate accepts no options")
-        if self.shell_section is None:
-            return StrictFlatLinearE4PLS3V2CShellElement.compute_mass_matrix(
-                self, mesh, material
-            )
         geometry = self._geometry(mesh)
         section = self._generalized_section_in_frame(geometry["frame"])
-        assert section is not None
-        if section.mass_per_area is None:
+        if section is None or section.mass_per_area is None:
             density = _real_scalar(getattr(material, "density", None), "density")
             mass_per_area = density * self.thickness
         else:
@@ -2253,18 +2276,24 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         }
         if any(data[name] != value for name, value in identities.items()):
             raise ValueError("S3 V2D serialized fingerprint mismatch")
-        return cls(
+        serialized_normal = _immutable_serialized_unit_vector(
+            data["reference_normal"], "reference_normal"
+        )
+        restored = cls(
             data["element_id"],
             data["node_ids"],
             data["material_name"],
             thickness=data["thickness"],
-            reference_normal=data["reference_normal"],
+            reference_normal=serialized_normal,
             director_polarity=data["director_polarity"],
             reference_surface_offset=data["reference_surface_offset"],
             material_direction=data["material_direction"],
             material_angle_deg=data["material_angle_deg"],
             shell_section=data["shell_section"],
         )
+        restored.reference_normal = serialized_normal
+        restored._validate_configuration()
+        return restored
 
     def __getstate__(self) -> Dict[str, Any]:
         self._unsupported("python_pickle_restart")

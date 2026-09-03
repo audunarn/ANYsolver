@@ -144,6 +144,17 @@ def build_fe_model_from_sesam_document(
                     list(node_ids),
                     material_name=material_name,
                     thickness=semantics.thickness_of_element[element_id],
+                    # Neutral legacy records carry connectivity but no
+                    # physical-owner normal or formulation identity.
+                    formulation="legacy-s3",
+                )
+                diagnostics.append(
+                    FemDiagnostic(
+                        "FEM131",
+                        "historical TRI3 record loaded as legacy-s3; qualified S3 was not inferred",
+                        severity="warning",
+                        context={"element_id": element_id},
+                    )
                 )
             elif element_id in semantics.mesh.beams:
                 node_ids = semantics.mesh.beams[element_id]

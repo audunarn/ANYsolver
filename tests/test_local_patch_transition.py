@@ -412,6 +412,41 @@ def test_cylinder_local_patch_quality_beats_graded() -> None:
     assert worst_aspect(patched) < 4.0
     assert worst_aspect(patched) < worst_aspect(graded)
 
+    nodes = {
+        int(node["id"]): np.asarray(node["coords"], dtype=float)
+        for node in patched["nodes"]
+    }
+    triangles = [shell for shell in _skin_shells(patched) if len(shell["node_ids"]) == 3]
+    assert triangles
+    for shell in triangles:
+        assert shell["formulation"] == "e4-pl-s3-v2d"
+        assert shell["formulation_id"] == "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+        assert shell["owner_normal_authority"] == "PHYSICAL_SURFACE_OWNER_NORMAL_V2D_V1"
+        points = [nodes[int(node_id)] for node_id in shell["node_ids"]]
+        edge_lengths = [
+            float(np.linalg.norm(points[(index + 1) % 3] - points[index]))
+            for index in range(3)
+        ]
+        doubled_area = float(
+            np.linalg.norm(np.cross(points[1] - points[0], points[2] - points[0]))
+        )
+        angles = []
+        for index in range(3):
+            first = points[(index - 1) % 3] - points[index]
+            second = points[(index + 1) % 3] - points[index]
+            cosine = float(first @ second) / float(
+                np.linalg.norm(first) * np.linalg.norm(second)
+            )
+            angles.append(math.degrees(math.acos(min(1.0, max(-1.0, cosine)))))
+        area = 0.5 * doubled_area
+        shape_metric = 4.0 * math.sqrt(3.0) * area / sum(
+            length * length for length in edge_lengths
+        )
+        assert min(angles) >= 30.0
+        assert max(angles) <= 150.0
+        assert max(edge_lengths) / min(edge_lengths) <= 4.0
+        assert shape_metric >= 0.60
+
 
 def _cylinder_skin_normal_counts(generated: dict) -> tuple[int, int]:
     """(outward, inward) radial-normal counts over cylinder skin shells."""
