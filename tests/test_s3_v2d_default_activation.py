@@ -42,6 +42,12 @@ Q4_REPLAY_HOTFIX = (
     / "reference_cases"
     / "e4_pl_q4_0_4_1_replay_hotfix.json"
 )
+Q4_REPLAY_CANONICALIZATION = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_q4_0_4_2_replay_canonicalization.json"
+)
 
 
 def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -67,6 +73,20 @@ def _q4_replay_hotfix() -> dict[str, object]:
     return payload
 
 
+def _q4_replay_canonicalization() -> dict[str, object]:
+    raw = Q4_REPLAY_CANONICALIZATION.read_bytes()
+    payload = json.loads(raw, object_pairs_hook=_strict_object)
+    assert raw == (
+        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    prior = payload["prior_evidence"]
+    assert prior["path"] == Q4_REPLAY_HOTFIX.relative_to(ROOT).as_posix()
+    assert hashlib.sha256(Q4_REPLAY_HOTFIX.read_bytes()).hexdigest().upper() == prior[
+        "sha256"
+    ]
+    return payload
+
+
 def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
     raw = ACTIVATION.read_bytes()
     payload = json.loads(raw, object_pairs_hook=_strict_object)
@@ -87,10 +107,14 @@ def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
         f"blob {len(q4_data)}\0".encode("ascii") + q4_data
     ).hexdigest()
     hotfix = _q4_replay_hotfix()
+    successor = _q4_replay_canonicalization()
     assert payload["production_boundary"]["q4_mechanics_blob"] == hotfix[
         "source_correction"
     ]["prior_git_blob"]
-    assert q4_blob == hotfix["source_correction"]["current_git_blob"]
+    assert hotfix["source_correction"]["current_git_blob"] == successor["correction"][
+        "prior_e4_pl_element_blob"
+    ]
+    assert q4_blob == successor["correction"]["e4_pl_element_blob"]
     assert hotfix["qualification_boundary"]["q4_coefficients_or_operators_changed"] is False
     assert payload["production_boundary"]["q4_mechanics_unchanged"] is True
     assert payload["production_boundary"]["publication_authorized"] is False
@@ -124,10 +148,14 @@ def test_integration_repair_preserves_qualification_and_q4_boundary() -> None:
         f"blob {len(q4_data)}\0".encode("ascii") + q4_data
     ).hexdigest()
     hotfix = _q4_replay_hotfix()
+    successor = _q4_replay_canonicalization()
     assert payload["production_boundary"]["q4_mechanics_blob"] == hotfix[
         "source_correction"
     ]["prior_git_blob"]
-    assert q4_blob == hotfix["source_correction"]["current_git_blob"]
+    assert hotfix["source_correction"]["current_git_blob"] == successor["correction"][
+        "prior_e4_pl_element_blob"
+    ]
+    assert q4_blob == successor["correction"]["e4_pl_element_blob"]
     assert hotfix["qualification_boundary"]["s3_evidence_changed"] is False
     assert payload["production_boundary"]["v6w_evidence_changed"] is False
     assert payload["production_boundary"]["s3_linear_stiffness_operator_changed"] is False
