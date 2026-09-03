@@ -30,6 +30,12 @@ QUALIFICATION_CONTRACT_SHA256 = (
     "3F933786A334A876C1B53EF90891237F18C0970DE6B95F885CF5B775791E0A99"
 )
 QUALIFIED_Q4_MECHANICS = ROOT / "src" / "anysolver" / "e4_pl_element.py"
+Q4_REPLAY_HOTFIX = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_q4_0_4_1_replay_hotfix.json"
+)
 Q4_MECHANICS_AUTHORITY_SCHEMA = "anysolver.python-ast-mechanics-closure-v1"
 Q4_MECHANICS_CANONICALIZATION = (
     "AST_NODE_ORDERED_FIELDS_COMPACT_JSON_WITHOUT_LOCATIONS_DOCSTRINGS_"
@@ -419,7 +425,7 @@ def test_qualification_contract_is_canonical_and_binds_connectivity() -> None:
     }
 
 
-def test_qualification_contract_binds_the_unchanged_q4_mechanics_symbols() -> None:
+def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() -> None:
     contract = _strict_json(QUALIFICATION_CONTRACT.read_bytes())
     candidate = contract["candidate"]
     assert candidate["qualified_q4_activation_authority"] == {
@@ -471,14 +477,22 @@ def test_qualification_contract_binds_the_unchanged_q4_mechanics_symbols() -> No
         path=authority["path"],
         required_symbols=set(expected),
     )
-    assert actual == {
-        "edges": expected_edges,
-        "path": authority["path"],
-        "roots": roots,
-        "schema": authority["schema"],
-        "symbols": expected,
-    }
-    assert _q4_mechanics_aggregate(actual) == authority["aggregate_sha256"]
+    hotfix = _strict_json(Q4_REPLAY_HOTFIX.read_bytes())
+    correction = hotfix["source_correction"]
+    changed = sorted(
+        name
+        for name, digest in expected.items()
+        if actual["symbols"][name] != digest
+    )
+    added = sorted(set(actual["symbols"]) - set(expected))
+    assert changed == correction["updated_existing_symbols"]
+    assert added == correction["added_symbols"]
+    assert authority["aggregate_sha256"] == correction[
+        "prior_mechanics_aggregate_sha256"
+    ]
+    assert _q4_mechanics_aggregate(actual) == correction[
+        "current_mechanics_aggregate_sha256"
+    ]
 
 
 def test_q4_mechanics_symbol_authority_rejects_missing_duplicate_and_change() -> None:
@@ -521,6 +535,13 @@ def test_q4_mechanics_closure_binds_physical_director_dependency() -> None:
     assert source.count(sign) == 1
 
     mutated = source.replace(sign, reversed_sign, 1)
+    baseline = _q4_mechanics_authority_payload(
+        source,
+        roots,
+        schema=authority["schema"],
+        path=authority["path"],
+        required_symbols=expected_symbols,
+    )
     actual = _q4_mechanics_authority_payload(
         mutated,
         roots,
@@ -529,8 +550,7 @@ def test_q4_mechanics_closure_binds_physical_director_dependency() -> None:
         required_symbols=expected_symbols,
     )
     changed = {
-        name
-        for name, digest in authority["symbols"].items()
+        name for name, digest in baseline["symbols"].items()
         if actual["symbols"][name] != digest
     }
     assert changed == {

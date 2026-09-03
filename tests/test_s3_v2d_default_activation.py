@@ -36,6 +36,12 @@ INTEGRATION_REPAIR = (
     / "reference_cases"
     / "e4_pl_s3_v2d_default_integration_repair.json"
 )
+Q4_REPLAY_HOTFIX = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_q4_0_4_1_replay_hotfix.json"
+)
 
 
 def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -45,6 +51,20 @@ def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
             raise ValueError(f"duplicate key: {key}")
         made[key] = value
     return made
+
+
+def _q4_replay_hotfix() -> dict[str, object]:
+    raw = Q4_REPLAY_HOTFIX.read_bytes()
+    payload = json.loads(raw, object_pairs_hook=_strict_object)
+    assert raw == (
+        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    for record in payload["historical_authority"]:
+        source = ROOT / record["path"]
+        data = source.read_bytes()
+        assert len(data) == record["bytes"]
+        assert hashlib.sha256(data).hexdigest().upper() == record["sha256"]
+    return payload
 
 
 def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
@@ -66,7 +86,12 @@ def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
     q4_blob = hashlib.sha1(
         f"blob {len(q4_data)}\0".encode("ascii") + q4_data
     ).hexdigest()
-    assert q4_blob == payload["production_boundary"]["q4_mechanics_blob"]
+    hotfix = _q4_replay_hotfix()
+    assert payload["production_boundary"]["q4_mechanics_blob"] == hotfix[
+        "source_correction"
+    ]["prior_git_blob"]
+    assert q4_blob == hotfix["source_correction"]["current_git_blob"]
+    assert hotfix["qualification_boundary"]["q4_coefficients_or_operators_changed"] is False
     assert payload["production_boundary"]["q4_mechanics_unchanged"] is True
     assert payload["production_boundary"]["publication_authorized"] is False
     assert payload["default_policy"]["current_model_q4"] == "e4-pl"
@@ -98,7 +123,12 @@ def test_integration_repair_preserves_qualification_and_q4_boundary() -> None:
     q4_blob = hashlib.sha1(
         f"blob {len(q4_data)}\0".encode("ascii") + q4_data
     ).hexdigest()
-    assert q4_blob == payload["production_boundary"]["q4_mechanics_blob"]
+    hotfix = _q4_replay_hotfix()
+    assert payload["production_boundary"]["q4_mechanics_blob"] == hotfix[
+        "source_correction"
+    ]["prior_git_blob"]
+    assert q4_blob == hotfix["source_correction"]["current_git_blob"]
+    assert hotfix["qualification_boundary"]["s3_evidence_changed"] is False
     assert payload["production_boundary"]["v6w_evidence_changed"] is False
     assert payload["production_boundary"]["s3_linear_stiffness_operator_changed"] is False
     assert payload["default_policy"]["current_model_s3"] == "e4-pl-s3-v2d"
