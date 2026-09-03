@@ -983,9 +983,20 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
         3,
         tangent_evaluated=True,
     )
-    sealed = element.seal_committed_current_tangent_state(
-        mesh, material, displacement, trial, 3
+    canonical_plastic = np.asarray(plastic[0]).copy()
+    perturbed = copy.deepcopy(trial)
+    positive = int(np.flatnonzero(canonical_plastic > 0.0)[0])
+    changed = canonical_plastic.ravel().copy()
+    changed[positive] += 568728.0 * np.spacing(abs(changed[positive]))
+    perturbed["plastic_strain"] = changed.reshape(canonical_plastic.shape)
+    with pytest.raises(ValueError, match="does not reproduce committed"):
+        element.seal_committed_current_tangent_state(
+            mesh, material, displacement, perturbed, 3
+        )
+    sealed = element._seal_solver_finalized_current_tangent_state(
+        mesh, material, displacement, perturbed, 3
     )
+    np.testing.assert_array_equal(sealed["plastic_strain"], canonical_plastic)
     components = element.compute_committed_current_tangent_components(
         mesh, material, displacement, sealed, 3
     )
