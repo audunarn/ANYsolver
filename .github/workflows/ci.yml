@@ -18,6 +18,23 @@ jobs:
           python-version: "3.x"
       - run: python scripts/check_license_compliance.py
 
+  resolver:
+    name: Coordinated PyPI resolver
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - run: python -m pip install build
+      - run: python -m build --wheel
+      - name: Resolve the coordinated release wheels
+        run: >-
+          python -m pip install --dry-run --only-binary=:all:
+          dist/*.whl ANYmaterial==0.2.0 ANYmesher==0.4.0 ANYfileio==0.3.1
+
   pytest:
     runs-on: ${{ matrix.os }}
     env:
@@ -43,25 +60,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 74100a95988a633e311f8eb21df3d24cbb6bcc0d
+          ref: d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 6fb06c8b68b73dd0630aa41ac81ef999ef610457
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 9b1e5adea77a20155bbc23866af8c9aad853ddfd
+          ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -71,7 +88,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
-          .ecosystem/ANYmesh ".ecosystem/ANYfileIO[semantics]"
+          .ecosystem/ANYmesh .ecosystem/ANYfileIO
       - run: python -m pip install -e ".[dev,numba]"
       - run: python -m pip check
       - run: python -c "import anysolver; print(anysolver.__version__)"
@@ -88,27 +105,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - anymesher-version: "0.1.0"
-            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96
-            anygeometry-version: "0.2.0"
-            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288
-            anyfileio-version: "0.1.0"
-            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d
+          - anymesher-version: "0.4.0"
+            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2
+            anygeometry-version: "0.4.2"
+            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9
+            anyfileio-version: "0.3.1"
+            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
             anyfileio-install: .ecosystem/ANYfileIO
-          - anymesher-version: "0.2.1"
-            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
-            anygeometry-version: "0.2.1"
-            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5
-            anyfileio-version: "0.2.0"
-            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
-            anyfileio-install: .ecosystem/ANYfileIO[semantics]
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -144,8 +154,8 @@ jobs:
       - name: Probe the installed endpoint outside the checkout
         shell: pwsh
         env:
-          EXPECTED_ANYSOLVER_VERSION: "0.4.0"
-          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"
+          EXPECTED_ANYSOLVER_VERSION: "0.4.1"
+          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"
           EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}
           EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}
           EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}
@@ -168,27 +178,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - anyfileio-version: "0.1.0"
-            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d
+          - anyfileio-version: "0.3.1"
+            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
             anyfileio-install: .ecosystem/ANYfileIO
-            anymesher-version: "0.1.0"
-            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96
-            anygeometry-version: "0.2.0"
-            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288
-          - anyfileio-version: "0.2.0"
-            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
-            anyfileio-install: .ecosystem/ANYfileIO[semantics]
-            anymesher-version: "0.2.1"
-            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
-            anygeometry-version: "0.2.1"
-            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+            anymesher-version: "0.4.0"
+            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2
+            anygeometry-version: "0.4.2"
+            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -224,8 +227,8 @@ jobs:
       - name: Probe the installed endpoint outside the checkout
         shell: pwsh
         env:
-          EXPECTED_ANYSOLVER_VERSION: "0.4.0"
-          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"
+          EXPECTED_ANYSOLVER_VERSION: "0.4.1"
+          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"
           EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}
           EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}
           EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}
@@ -255,25 +258,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -283,7 +286,7 @@ jobs:
       - name: Install and resolve current siblings
         run: |
           python -m pip install --upgrade pip build twine
-          python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry .ecosystem/ANYmesh ".ecosystem/ANYfileIO[semantics]"
+          python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry .ecosystem/ANYmesh .ecosystem/ANYfileIO
           python -m pip check
       - name: Build and check distributions
         run: |
@@ -322,25 +325,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -350,7 +353,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
-          .ecosystem/ANYmesh ".ecosystem/ANYfileIO[semantics]"
+          .ecosystem/ANYmesh .ecosystem/ANYfileIO
       - run: python -m pip install -e ".[dev,numba]"
       - run: python -m pip check
       - run: python -m pytest tests/test_batch_b_activation.py tests/test_nonlinear_performance_batch_b.py tests/test_nonlinear_performance_batch_c.py
@@ -368,25 +371,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmaterial
-          ref: 4626887667f4c251479d26f321b9e73b046a2783
+          ref: d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2
           path: .ecosystem/ANYmaterial
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 939e047f19177692c861a68eaef0eaa18b2976c5
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYfileIO
-          ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f
+          ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
           path: .ecosystem/ANYfileIO
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -396,7 +399,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
-          .ecosystem/ANYmesh ".ecosystem/ANYfileIO[semantics]"
+          .ecosystem/ANYmesh .ecosystem/ANYfileIO
       - run: python -m pip install -e ".[dev,pardiso]"
       - run: python -m pip check
       - run: python -c "import pypardiso"

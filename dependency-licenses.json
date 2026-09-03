@@ -23,24 +23,24 @@
     },
     {
       "distribution": "ANYmaterial",
-      "licence": "GPL-3.0-or-later",
-      "requirement": "ANYmaterial>=0.1,<0.2",
+      "licence": "MPL-2.0",
+      "requirement": "ANYmaterial>=0.2,<0.3",
       "scope": "runtime",
-      "status": "reviewed-transitional-not-bundled"
+      "status": "not-bundled"
     },
     {
       "distribution": "ANYmesher",
-      "licence": "GPL-3.0-or-later",
-      "requirement": "ANYmesher>=0.1,<0.4",
+      "licence": "MPL-2.0",
+      "requirement": "ANYmesher>=0.4,<0.5",
       "scope": "runtime",
-      "status": "reviewed-transitional-not-bundled"
+      "status": "not-bundled"
     },
     {
       "distribution": "ANYfileio",
-      "licence": "GPL-3.0-or-later",
-      "requirement": "ANYfileio>=0.1,<0.3",
+      "licence": "MPL-2.0",
+      "requirement": "ANYfileio>=0.3.1,<0.4",
       "scope": "runtime",
-      "status": "reviewed-transitional-not-bundled"
+      "status": "not-bundled"
     },
     {
       "distribution": "numba",
@@ -87,6 +87,6 @@
   ],
   "project": "ANYsolver",
   "project_licence": "MPL-2.0",
-  "release": "0.4.0",
+  "release": "0.4.1",
   "schema": "anysolver.dependency-licences-v1"
 }

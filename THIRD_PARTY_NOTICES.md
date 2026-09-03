@@ -10,9 +10,9 @@ inventory is `dependency-licenses.json`.
 | NumPy | `numpy>=1.26` | BSD-3-Clause and bundled-component licences | Runtime dependency; not bundled |
 | SciPy | `scipy>=1.11` | BSD-3-Clause and bundled-component licences | Runtime dependency; not bundled |
 | threadpoolctl | `threadpoolctl>=3.5` | BSD-3-Clause | Runtime dependency; not bundled |
-| ANYmaterial | `ANYmaterial>=0.1,<0.2` | GPL-3.0-or-later | Runtime dependency; separately distributed |
-| ANYmesher | `ANYmesher>=0.1,<0.4` | GPL-3.0-or-later | Runtime dependency; separately distributed |
-| ANYfileio | `ANYfileio>=0.1,<0.3` | GPL-3.0-or-later | Runtime dependency; separately distributed |
+| ANYmaterial | `ANYmaterial>=0.2,<0.3` | MPL-2.0 | Runtime dependency; separately distributed |
+| ANYmesher | `ANYmesher>=0.4,<0.5` | MPL-2.0 | Runtime dependency; separately distributed |
+| ANYfileio | `ANYfileio>=0.3.1,<0.4` | MPL-2.0 | Runtime dependency; separately distributed |
 | Numba | `numba>=0.59` | BSD | Optional accelerator; not bundled |
 | pypardiso | `pypardiso>=0.4` | BSD-3-Clause | Optional accelerator; not bundled |
 | mpmath | `mpmath==1.3.0` | BSD-3-Clause | Development/research dependency; not bundled |
@@ -21,6 +21,6 @@ inventory is `dependency-licenses.json`.
 | Twine | `twine>=5` | Apache-2.0 | Development dependency; not bundled |
 
 For complete licence texts and bundled-component notices, consult the exact
-dependency distribution installed in the target environment. The GPL-licensed
-ANY dependencies are explicitly reviewed transitional dependencies; their
-presence is not an assertion that they have adopted MPL-2.0.
+dependency distribution installed in the target environment. Earlier ANY
+dependency releases retain the licence terms under which they were published;
+the coordinated release bands above identify their MPL-2.0 successors.

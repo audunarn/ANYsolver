@@ -19,8 +19,8 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-EXPECTED_REQUIREMENT = "ANYfileio>=0.1,<0.3"
-EXPECTED_SPECIFIER = SpecifierSet(">=0.1,<0.3")
+EXPECTED_REQUIREMENT = "ANYfileio>=0.3.1,<0.4"
+EXPECTED_SPECIFIER = SpecifierSet(">=0.3.1,<0.4")
 RELEVANT_PACKAGES = {
     "anymaterial",
     "anygeometry",
@@ -168,13 +168,8 @@ def _assert_graph(
         ("anysolver", "anymaterial"),
         ("anysolver", "anymesher"),
         ("anysolver", "anyfileio"),
-        ("anyfileio", "anymesher"),
-        ("anyfileio", "anymaterial"),
+        ("anymesher", "anygeometry"),
     }
-    if versions["anymesher"] == "0.2.1":
-        required_edges.add(("anymesher", "anygeometry"))
-    else:
-        assert versions["anymesher"] == "0.1.0"
     assert required_edges <= edges
     return edges
 
@@ -183,23 +178,7 @@ def _assert_complete_source_graphs(roots: dict[str, str]) -> None:
     archives = Path(roots["anymaterial"]).resolve().parents[1]
     solver_root = Path(roots["anysolver"]).resolve().parent
     cells = {
-        "legacy": (
-            {
-                "anysolver": solver_root,
-                "anymaterial": archives / "material-current",
-                "anygeometry": archives / "geometry-legacy",
-                "anymesher": archives / "mesh-legacy",
-                "anyfileio": archives / "fileio-legacy",
-            },
-            {
-                "anysolver": "0.4.0",
-                "anymaterial": "0.1.0",
-                "anygeometry": "0.2.0",
-                "anymesher": "0.1.0",
-                "anyfileio": "0.1.0",
-            },
-        ),
-        "current": (
+        "coordinated": (
             {
                 "anysolver": solver_root,
                 "anymaterial": archives / "material-current",
@@ -208,11 +187,11 @@ def _assert_complete_source_graphs(roots: dict[str, str]) -> None:
                 "anyfileio": archives / "fileio-current",
             },
             {
-                "anysolver": "0.4.0",
-                "anymaterial": "0.1.0",
-                "anygeometry": "0.2.1",
-                "anymesher": "0.2.1",
-                "anyfileio": "0.2.0",
+                "anysolver": "0.4.1",
+                "anymaterial": "0.2.0",
+                "anygeometry": "0.4.2",
+                "anymesher": "0.4.0",
+                "anyfileio": "0.3.1",
             },
         ),
     }
@@ -329,7 +308,7 @@ def test_source_declares_exact_anyfileio_compatibility_range() -> None:
 
 
 def test_fileio_requirement_accepts_canonicalized_specifier_order() -> None:
-    _assert_expected_fileio_requirement("ANYfileio<0.3,>=0.1")
+    _assert_expected_fileio_requirement("ANYfileio<0.4,>=0.3.1")
 
 
 def test_current_source_origins_and_complete_graphs() -> None:
@@ -390,6 +369,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
         "license",
+        "resolver",
         "pytest",
         "anymesher-compatibility",
         "anyfileio-compatibility",
@@ -414,17 +394,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert ci_hashes == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
-        "4626887667f4c251479d26f321b9e73b046a2783",
-        "f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-        "939e047f19177692c861a68eaef0eaa18b2976c5",
-        "05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-        "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-        "0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
-        "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-        "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
-        "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
-        "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
-        "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+        "d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2",
+        "dd954f088a4cb95e267280cc4777b09e16232bd9",
+        "27e428188a891705288fef82bab0b166e330aff2",
+        "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
     }
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
@@ -455,6 +428,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         return re.findall(r"(?m)^      - uses: (\S+)\s*$", block)
 
     assert action_sequence(job_block(ci, "license")) == [checkout_ref, setup_ref]
+    assert action_sequence(job_block(ci, "resolver")) == [checkout_ref, setup_ref]
     for name in (
         "pytest",
         "anymesher-compatibility",
@@ -496,44 +470,22 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     current_checkouts = [
         (
             "audunarn/ANYmaterial",
-            "4626887667f4c251479d26f321b9e73b046a2783",
+            "d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2",
             ".ecosystem/ANYmaterial",
         ),
         (
             "audunarn/ANYgeometry",
-            "939e047f19177692c861a68eaef0eaa18b2976c5",
+            "dd954f088a4cb95e267280cc4777b09e16232bd9",
             ".ecosystem/ANYgeometry",
         ),
         (
             "audunarn/ANYmesh",
-            "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
+            "27e428188a891705288fef82bab0b166e330aff2",
             ".ecosystem/ANYmesh",
         ),
         (
             "audunarn/ANYfileIO",
-            "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-            ".ecosystem/ANYfileIO",
-        ),
-    ]
-    q1m_checkouts = [
-        (
-            "audunarn/ANYmaterial",
-            "74100a95988a633e311f8eb21df3d24cbb6bcc0d",
-            ".ecosystem/ANYmaterial",
-        ),
-        (
-            "audunarn/ANYgeometry",
-            "6fb06c8b68b73dd0630aa41ac81ef999ef610457",
-            ".ecosystem/ANYgeometry",
-        ),
-        (
-            "audunarn/ANYmesh",
-            "c9dad1d0a37d920e9fb95d1f6d0f12fbb1bf9fbf",
-            ".ecosystem/ANYmesh",
-        ),
-        (
-            "audunarn/ANYfileIO",
-            "9b1e5adea77a20155bbc23866af8c9aad853ddfd",
+            "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
             ".ecosystem/ANYfileIO",
         ),
     ]
@@ -575,7 +527,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             ),
         ],
     }
-    assert checkout_pattern.findall(job_block(ci, "pytest")) == q1m_checkouts
+    assert checkout_pattern.findall(job_block(ci, "pytest")) == current_checkouts
     for name in ("wheel", "numba", "pardiso"):
         block = job_block(ci, name)
         assert checkout_pattern.findall(block) == current_checkouts
@@ -644,38 +596,24 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert matrix_rows(mesh_job) == "\n".join(
         (
-            '          - anymesher-version: "0.1.0"',
-            "            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-            '            anygeometry-version: "0.2.0"',
-            "            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-            '            anyfileio-version: "0.1.0"',
-            "            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
+            '          - anymesher-version: "0.4.0"',
+            "            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2",
+            '            anygeometry-version: "0.4.2"',
+            "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
+            '            anyfileio-version: "0.3.1"',
+            "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
             "            anyfileio-install: .ecosystem/ANYfileIO",
-            '          - anymesher-version: "0.2.1"',
-            "            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-            '            anygeometry-version: "0.2.1"',
-            "            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5",
-            '            anyfileio-version: "0.2.0"',
-            "            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-            "            anyfileio-install: .ecosystem/ANYfileIO[semantics]",
         )
     )
     assert matrix_rows(fileio_job) == "\n".join(
         (
-            '          - anyfileio-version: "0.1.0"',
-            "            anyfileio-ref: 0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
+            '          - anyfileio-version: "0.3.1"',
+            "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
             "            anyfileio-install: .ecosystem/ANYfileIO",
-            '            anymesher-version: "0.1.0"',
-            "            anymesher-ref: 05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-            '            anygeometry-version: "0.2.0"',
-            "            anygeometry-ref: f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-            '          - anyfileio-version: "0.2.0"',
-            "            anyfileio-ref: 48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
-            "            anyfileio-install: .ecosystem/ANYfileIO[semantics]",
-            '            anymesher-version: "0.2.1"',
-            "            anymesher-ref: 979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-            '            anygeometry-version: "0.2.1"',
-            "            anygeometry-ref: 939e047f19177692c861a68eaef0eaa18b2976c5",
+            '            anymesher-version: "0.4.0"',
+            "            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2",
+            '            anygeometry-version: "0.4.2"',
+            "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
         )
     )
 
@@ -694,8 +632,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert probe_environment(mesh_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
-            '          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.1"',
+            '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
@@ -704,8 +642,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert probe_environment(fileio_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.0"',
-            '          EXPECTED_ANYMATERIAL_VERSION: "0.1.0"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.1"',
+            '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
@@ -713,17 +651,14 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         )
     )
     for value in (
-        "05ab5f45301c34de0ac86c1a0eb6407702d98e96",
-        "979f6a88f0d81507e1ac61b854f1f56362ce5e37",
-        "f2d7793d7d32a6dcd772c7ed8701aca11b459288",
-        "939e047f19177692c861a68eaef0eaa18b2976c5",
-        "0d2c7f8ef1b17f42f667d6183125e51cb650a70d",
-        "48c6423c2aaf1f94f7bea8e7a971adf99500a91f",
+        "27e428188a891705288fef82bab0b166e330aff2",
+        "dd954f088a4cb95e267280cc4777b09e16232bd9",
+        "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
     ):
         assert mesh_job.count(value) == 1
         assert fileio_job.count(value) == 1
-    assert mesh_job.count("          - anymesher-version:") == 2
-    assert fileio_job.count("          - anyfileio-version:") == 2
+    assert mesh_job.count("          - anymesher-version:") == 1
+    assert fileio_job.count("          - anyfileio-version:") == 1
     expected_install = (
         "python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry "
         '.ecosystem/ANYmesh "${{ matrix.anyfileio-install }}"'
@@ -796,7 +731,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "SIBLINGS" not in ci
     assert "git+https://" not in ci
     assert ci.count("python -m pip check") == 8
-    assert '"ANYfileio>=0.1,<0.3"' in publish
+    assert '"ANYmaterial==0.2.0"' in publish
+    assert '"ANYmesher==0.4.0"' in publish
+    assert '"ANYfileio==0.3.1"' in publish
+    assert "pip install --dry-run --only-binary=:all:" in publish
 
 
 def _main() -> int:

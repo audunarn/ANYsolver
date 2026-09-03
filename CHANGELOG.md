@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.4.1 - 2026-09-03
+
+- Correct the coordinated ecosystem dependency bands to require ANYmaterial
+  0.2.x, ANYmesher 0.4.x, and ANYfileio 0.3.1 or newer. Version 0.4.0 carried the
+  pre-activation bands and cannot be resolved together with ANYfem 0.4.0.
+- Add a release gate that resolves the built wheel with the exact coordinated
+  sibling releases before trusted publication. No solver mechanics,
+  qualification evidence, public selector, or formulation default changes.
+
 ## 0.4.0 - 2026-09-03
 
 - Relicense ANYsolver source releases from GPL-3.0-or-later to MPL-2.0.

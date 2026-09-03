@@ -19,7 +19,7 @@ EXPECTED_LICENSE_SHA256 = (
     "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
 )
 EXPECTED_PROJECT_LICENSE = "MPL-2.0"
-EXPECTED_RELEASE = "0.4.0"
+EXPECTED_RELEASE = "0.4.1"
 REQUIRED_NOTICE_FILES = {"LICENSE", "COPYRIGHT", "THIRD_PARTY_NOTICES.md"}
 REQUIRED_SDIST_FILES = REQUIRED_NOTICE_FILES | {
     "LICENSING.md",
@@ -151,8 +151,12 @@ def validate_repository(root: Path = ROOT) -> None:
     if "licensed under the Mozilla Public\nLicense 2.0" not in readme:
         errors.append("README MPL-2.0 statement is missing")
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    if "## 0.4.1 - 2026-09-03" not in changelog:
+        errors.append("0.4.1 changelog section is missing")
+    if "coordinated ecosystem dependency bands" not in changelog:
+        errors.append("0.4.1 dependency correction note is missing")
     if "## 0.4.0 - 2026-09-03" not in changelog:
-        errors.append("0.4.0 changelog section is missing")
+        errors.append("0.4.0 licence-transition history is missing")
     if "Relicense ANYsolver source releases" not in changelog:
         errors.append("0.4.0 relicensing note is missing")
     if "GPL-3.0-or-later" in (root / "pyproject.toml").read_text(encoding="utf-8"):
@@ -191,8 +195,10 @@ def validate_artifact(path: Path) -> None:
     if missing:
         raise ComplianceError(f"artifact {path.name} is missing: {', '.join(missing)}")
     if metadata is not None:
-        if "Version: 0.4.0\n" not in metadata.replace("\r\n", "\n"):
-            raise ComplianceError("wheel metadata version is not 0.4.0")
+        if f"Version: {EXPECTED_RELEASE}\n" not in metadata.replace("\r\n", "\n"):
+            raise ComplianceError(
+                f"wheel metadata version is not {EXPECTED_RELEASE}"
+            )
         normalized = metadata.replace("\r\n", "\n")
         if not any(
             marker in normalized

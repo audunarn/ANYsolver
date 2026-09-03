@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ANYsolver"
-version = "0.4.0"
+version = "0.4.1"
 description = "Qualified beam and shell finite-element solver"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,9 +27,9 @@ dependencies = [
   "numpy>=1.26",
   "scipy>=1.11",
   "threadpoolctl>=3.5",
-  "ANYmaterial>=0.1,<0.2",
-  "ANYmesher>=0.1,<0.4",
-  "ANYfileio>=0.1,<0.3",
+  "ANYmaterial>=0.2,<0.3",
+  "ANYmesher>=0.4,<0.5",
+  "ANYfileio>=0.3.1,<0.4",
 ]
 
 [project.optional-dependencies]
