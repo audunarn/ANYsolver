@@ -157,6 +157,19 @@ with AnalysisSession(model) as session:
     all_cases, _ = solve_linear_many(model, [first_load, second_load], session=session)
 ```
 
+Applications that expect a large qualified-Q4 nonlinear analysis can move the
+first-use JIT cost out of the interactive solve path with an explicit warm-up:
+
+```python
+from anysolver import warm_fe_solver_kernels
+
+warm_fe_solver_kernels(include_nonlinear_static=True)
+```
+
+This is opt-in: it builds and discards a small 4×4 Q4 batch solely to prepare
+the native kernel. It does not change the application model, material state, or
+normal solver behavior.
+
 The session fingerprints model revisions and constraint values, rebuilding only
 the dependent plans when the model changes. It is therefore preferable to an
 application-owned matrix cache.

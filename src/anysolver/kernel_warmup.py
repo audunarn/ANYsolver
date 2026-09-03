@@ -129,10 +129,60 @@ def _warm_nonlinear_impact_kernel() -> Dict[str, Any]:
     }
 
 
+def _warm_nonlinear_static_kernel() -> Dict[str, Any]:
+    """Precompile the qualified-Q4 nonlinear batch path without solving a case.
+
+    A 4x4 panel crosses the vectorized batch threshold while staying small
+    enough for a caller to schedule during an application warm-up phase.  The
+    Numba signatures are independent of the leading element count, so this
+    prepares the same elastic local-response kernel used by larger Q4 models.
+    The temporary model is retained only for the duration of this helper.
+    """
+
+    import numpy as np
+
+    from .nonlinear_performance_bootstrap import (
+        clear_nonlinear_assembly_cache,
+        get_nonlinear_assembly_plan,
+        install_nonlinear_performance_optimizations,
+    )
+
+    model = generate_simple_panel_mesh(
+        1.0,
+        1.0,
+        0.012,
+        num_divisions_x=4,
+        num_divisions_y=4,
+    )
+    start = time.perf_counter()
+    installed = bool(install_nonlinear_performance_optimizations())
+    plan = get_nonlinear_assembly_plan(model, 5)
+    try:
+        internal_force, tangent, _trial_states = plan.assemble(
+            np.zeros(model.mesh.dof_manager.total_dofs, dtype=float),
+            {},
+            tangent=True,
+        )
+        elapsed = time.perf_counter() - start
+        return {
+            "status": "completed",
+            "element_count": int(model.mesh.num_elements),
+            "nonlinear_layers": 5,
+            "performance_layer_installed": installed,
+            "seconds": float(elapsed),
+            "internal_force_inf": float(np.linalg.norm(internal_force, ord=np.inf)),
+            "tangent_nnz": 0 if tangent is None else int(tangent.nnz),
+            "plan": plan.diagnostics(),
+        }
+    finally:
+        clear_nonlinear_assembly_cache(model)
+
+
 def warm_fe_solver_kernels(
     shell_orders: Iterable[str] = ("S4", "Q8", "Q8R"),
     *,
     include_nonlinear_impact: bool = False,
+    include_nonlinear_static: bool = False,
 ) -> Dict[str, Any]:
     """Warm representative FE kernels and return timing/correctness diagnostics.
 
@@ -177,6 +227,9 @@ def warm_fe_solver_kernels(
             "first_assembly": first_info.get("diagnostics", {}),
             "second_assembly": second_info.get("diagnostics", {}),
         }
+    nonlinear_static = None
+    if include_nonlinear_static:
+        nonlinear_static = _warm_nonlinear_static_kernel()
     nonlinear_impact = None
     if include_nonlinear_impact:
         nonlinear_impact = _warm_nonlinear_impact_kernel()
@@ -185,6 +238,7 @@ def warm_fe_solver_kernels(
         "jit": jit,
         "total_seconds": float(time.perf_counter() - total_start),
         "shell_orders": results,
+        "nonlinear_static": nonlinear_static,
         "nonlinear_impact": nonlinear_impact,
     }
 
