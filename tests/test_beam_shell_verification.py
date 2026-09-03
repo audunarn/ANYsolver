@@ -157,6 +157,41 @@ def test_external_reference_decks_are_cached_only_within_one_report(
     assert second["results"][0]["checks"]["report"]["cases"][0]["name"] != "mutated"
 
 
+def test_nonlinear_framework_ingredients_are_cached_only_within_one_report(
+    monkeypatch,
+) -> None:
+    """NLG-003 shares its three mechanics checks with standalone manifest rows."""
+
+    calls: list[str] = []
+
+    def evaluator(case):
+        calls.append(case.case_id)
+        return beam_shell_verification._pass(case, checks={"nested": {"value": 0.0}})
+
+    monkeypatch.setattr(beam_shell_verification, "_evaluate_nlg_002", evaluator)
+    monkeypatch.setattr(beam_shell_verification, "_evaluate_nlg_007", evaluator)
+    monkeypatch.setattr(beam_shell_verification, "_evaluate_nlg_008", evaluator)
+    selected = {"NLG-002", "NLG-003", "NLG-007", "NLG-008"}
+    first = run_beam_shell_verification(selected_ids=selected)
+    second = run_beam_shell_verification(selected_ids=selected)
+
+    assert calls == ["NLG-002", "NLG-003", "NLG-003"] * 2
+    assert [item["case_id"] for item in first["results"]] == [
+        "NLG-002",
+        "NLG-003",
+        "NLG-007",
+        "NLG-008",
+    ]
+    assert [item["case_id"] for item in second["results"]] == [
+        "NLG-002",
+        "NLG-003",
+        "NLG-007",
+        "NLG-008",
+    ]
+    first["results"][0]["checks"]["nested"]["value"] = 99.0
+    assert second["results"][0]["checks"]["nested"]["value"] == 0.0
+
+
 def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
     report = run_beam_shell_verification()
 

@@ -17,7 +17,7 @@ import platform
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
@@ -90,6 +90,12 @@ _PLATE_BUCKLING_RUN_CACHE: contextvars.ContextVar[
     Optional[Dict[Tuple[int, float], Tuple[float, Dict[str, Any]]]]
 ] = contextvars.ContextVar(
     "anysolver_plate_buckling_run_cache",
+    default=None,
+)
+_NONLINEAR_FRAMEWORK_RUN_CACHE: contextvars.ContextVar[
+    Optional[Dict[str, "VerificationCaseResult"]]
+] = contextvars.ContextVar(
+    "anysolver_nonlinear_framework_run_cache",
     default=None,
 )
 
@@ -560,6 +566,34 @@ def _xfail(case: VerificationCase, reason: str, **kwargs: Any) -> VerificationCa
 
 def _fail(case: VerificationCase, reason: str, **kwargs: Any) -> VerificationCaseResult:
     return VerificationCaseResult(case.case_id, "FAIL", case.title, case.tier, case.category, case.required, reason=reason, **kwargs)
+
+
+def _cached_nonlinear_framework_result(
+    key: str,
+    case: VerificationCase,
+    evaluator: Callable[[VerificationCase], VerificationCaseResult],
+) -> VerificationCaseResult:
+    """Reuse NLG-003 ingredients only within one verification report."""
+
+    cache = _NONLINEAR_FRAMEWORK_RUN_CACHE.get()
+    cached = None if cache is None else cache.get(key)
+    if cached is not None:
+        # NLG-003 uses the same mechanics check as a framework ingredient,
+        # while standalone rows retain their own manifest identity and mutable
+        # diagnostics.  Rebind only that manifest envelope on a deep copy.
+        return replace(
+            copy.deepcopy(cached),
+            case_id=case.case_id,
+            title=case.title,
+            tier=case.tier,
+            category=case.category,
+            required=case.required,
+        )
+
+    result = evaluator(case)
+    if cache is not None:
+        cache[key] = copy.deepcopy(result)
+    return result
 
 
 def _rel_error(value: float, reference: float, floor: float = 1.0e-30) -> float:
@@ -3137,7 +3171,7 @@ def _run_nlg_006(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
-def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
+def _evaluate_nlg_007(case: VerificationCase) -> VerificationCaseResult:
     from .arc_length import ArcLengthControl, solve_static_arc_length
     from .imperfections import ImperfectionField
 
@@ -3207,7 +3241,7 @@ def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
-def _run_nlg_008(case: VerificationCase) -> VerificationCaseResult:
+def _evaluate_nlg_008(case: VerificationCase) -> VerificationCaseResult:
     model = _verification_plate_model(divisions=2, thickness=0.01, element_family="S4")
     follower = _pressure_load_all_shells(model, 1000.0)
     follower.follower_pressure = True
@@ -3507,7 +3541,7 @@ def _run_bench_004(case: VerificationCase) -> VerificationCaseResult:
     )
 
 
-def _run_nlg_002(case: VerificationCase) -> VerificationCaseResult:
+def _evaluate_nlg_002(case: VerificationCase) -> VerificationCaseResult:
     from .beam_validity import corotational_axial_extension_metric, corotational_rigid_rotation_metric
 
     rigid = corotational_rigid_rotation_metric(angle_degrees=75.0)
@@ -3523,6 +3557,18 @@ def _run_nlg_002(case: VerificationCase) -> VerificationCaseResult:
         result={"angle_degrees": rigid["angle_degrees"], "corotational_force_norm": rigid["corotational_force_norm"]},
         checks={"rigid_rotation": rigid, "axial_extension": axial},
     )
+
+
+def _run_nlg_002(case: VerificationCase) -> VerificationCaseResult:
+    return _cached_nonlinear_framework_result("NLG-002", case, _evaluate_nlg_002)
+
+
+def _run_nlg_007(case: VerificationCase) -> VerificationCaseResult:
+    return _cached_nonlinear_framework_result("NLG-007", case, _evaluate_nlg_007)
+
+
+def _run_nlg_008(case: VerificationCase) -> VerificationCaseResult:
+    return _cached_nonlinear_framework_result("NLG-008", case, _evaluate_nlg_008)
 
 
 def _run_nlg_003(case: VerificationCase) -> VerificationCaseResult:
@@ -4571,6 +4617,7 @@ def run_beam_shell_verification(
     external_reference_cache_token = _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.set({})
     composite_cache_token = _COMPOSITE_METRIC_RUN_CACHE.set({})
     plate_buckling_cache_token = _PLATE_BUCKLING_RUN_CACHE.set({})
+    nonlinear_framework_cache_token = _NONLINEAR_FRAMEWORK_RUN_CACHE.set({})
     if external_reference_report is not None:
         token = _EXTERNAL_REFERENCE_REPORT_OVERRIDE.set(Path(external_reference_report))
     try:
@@ -4581,6 +4628,7 @@ def run_beam_shell_verification(
         _PLATE_BUCKLING_RUN_CACHE.reset(plate_buckling_cache_token)
         _COMPOSITE_METRIC_RUN_CACHE.reset(composite_cache_token)
         _EXTERNAL_REFERENCE_REPORT_RUN_CACHE.reset(external_reference_cache_token)
+        _NONLINEAR_FRAMEWORK_RUN_CACHE.reset(nonlinear_framework_cache_token)
 
 
 def _markdown(report: Mapping[str, Any]) -> str:
