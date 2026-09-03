@@ -2344,7 +2344,13 @@ def _seal_final_qualified_q4_states(
                 )
             state = tangent_state
             origin_materialized_ids.append(element_id)
-        sealed = seal(
+        solver_finalizer = getattr(
+            element,
+            "_seal_solver_finalized_current_tangent_state",
+            None,
+        )
+        sealing_hook = solver_finalizer if callable(solver_finalizer) else seal
+        sealed = sealing_hook(
             model.mesh,
             material,
             local_u,

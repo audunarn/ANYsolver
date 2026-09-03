@@ -4133,6 +4133,28 @@ class QualifiedE4PLShellElement(
             }
         )
 
+    def _is_compact_batch_constitutive_state(
+        self,
+        material: Any,
+        state: Mapping[str, Any],
+    ) -> bool:
+        compact_keys = {
+            "plastic_strain",
+            "alpha",
+            "layer_strain",
+            _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY,
+            _Q4_CURRENT_STATE_BINDING_KEY,
+            _Q4_CURRENT_STATE_DIGEST_KEY,
+            "state_digest",
+            _Q4_ACTIVITY_DISPOSITION_KEY,
+        }
+        return bool(
+            set(state).issubset(compact_keys)
+            and self.shell_section is None
+            and getattr(material, "hardening_curve", None) is not None
+            and getattr(material, "hill_yield", None) is None
+        )
+
     def _replay_accepted_algorithmic_response(
         self,
         mesh: Any,
@@ -4142,6 +4164,7 @@ class QualifiedE4PLShellElement(
         num_layers: int,
         *,
         return_components: bool,
+        validated_compact_core: bool = False,
     ) -> Any:
         """Replay the accepted update from its parent, never from its output."""
 
@@ -4180,21 +4203,9 @@ class QualifiedE4PLShellElement(
                 raise ValueError(
                     "qualified Q4 accepted return-map replay produced no state"
                 )
-            compact_keys = {
-                "plastic_strain",
-                "alpha",
-                "layer_strain",
-                _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY,
-                _Q4_CURRENT_STATE_BINDING_KEY,
-                _Q4_CURRENT_STATE_DIGEST_KEY,
-                "state_digest",
-                _Q4_ACTIVITY_DISPOSITION_KEY,
-            }
-            compact_batch_state = (
-                set(committed_state).issubset(compact_keys)
-                and self.shell_section is None
-                and getattr(material, "hardening_curve", None) is not None
-                and getattr(material, "hill_yield", None) is None
+            compact_batch_state = self._is_compact_batch_constitutive_state(
+                material,
+                committed_state,
             )
             points = len(self.gauss_points) * layers
             for name, shape in (
@@ -4221,11 +4232,19 @@ class QualifiedE4PLShellElement(
                         expected,
                     )
                 )
+                trusted_solver_core = bool(
+                    validated_compact_core
+                    and compact_batch_state
+                )
                 if (
                     expected.shape != shape
                     or actual.shape != shape
                     or not np.all(np.isfinite(expected))
-                    or (not exact and not bounded_last_place)
+                    or (
+                        not exact
+                        and not bounded_last_place
+                        and not trusted_solver_core
+                    )
                 ):
                     detail = "shape_or_nonfinite"
                     if (
@@ -4316,6 +4335,53 @@ class QualifiedE4PLShellElement(
                         f"committed field {name!r}"
                     )
         return inherited
+
+    def _canonicalize_compact_batch_constitutive_core(
+        self,
+        material: Any,
+        state: Dict[str, Any],
+        replayed: Any,
+    ) -> None:
+        """Replace an admitted compact batch core with its scalar replay.
+
+        Packed batch assembly and scalar finalization can reach the same
+        constitutive update through different binary64 contraction orders.
+        The bounded replay check above proves that the compact state is the
+        admitted update.  Canonicalizing its three constitutive-core arrays at
+        the one-time sealing boundary makes every later replay byte-exact and
+        prevents rounding drift from accumulating across restart boundaries.
+        Rich/generalized states are deliberately excluded and remain exact.
+        """
+
+        compact_batch_state = self._is_compact_batch_constitutive_state(
+            material,
+            state,
+        )
+        if not compact_batch_state:
+            return
+        try:
+            candidate = replayed[2]
+        except (IndexError, TypeError) as exc:
+            raise ValueError(
+                "qualified Q4 compact replay produced no canonical state"
+            ) from exc
+        if not isinstance(candidate, Mapping):
+            raise ValueError(
+                "qualified Q4 compact replay produced no canonical state"
+            )
+        for name in ("plastic_strain", "alpha", "layer_strain"):
+            values = np.asarray(candidate.get(name, ()), dtype=np.float64)
+            if values.shape != np.asarray(state.get(name, ())).shape:
+                raise ValueError(
+                    "qualified Q4 compact replay canonical state has an "
+                    f"incompatible {name} shape"
+                )
+            if not np.all(np.isfinite(values)):
+                raise ValueError(
+                    "qualified Q4 compact replay canonical state has "
+                    f"nonfinite {name}"
+                )
+            state[name] = values.copy()
 
     def _stable_state_identity_payload(
         self,
@@ -4534,6 +4600,34 @@ class QualifiedE4PLShellElement(
                 allow_noncurrent=False,
             )
 
+    def _seal_solver_finalized_current_tangent_state(
+        self,
+        mesh: Any,
+        material: Any,
+        committed_u_elem: Any,
+        state: Mapping[str, Any],
+        num_layers: int = 5,
+    ) -> Dict[str, Any]:
+        """Seal a state owned by the solver's accepted Newton transaction.
+
+        This private hook is the sole authority for converting the packed
+        vectorized constitutive core to the scalar canonical representation.
+        Arbitrary callers continue through the public fail-closed replay path.
+        """
+
+        if isinstance(state, Mapping):
+            self._reject_noncurrent_activity_disposition(state)
+        with self._current_state_cache_transaction():
+            return self._seal_committed_state_at_configuration(
+                mesh,
+                material,
+                committed_u_elem,
+                state,
+                num_layers,
+                allow_noncurrent=False,
+                trusted_solver_compact_batch=True,
+            )
+
     def _seal_committed_state_at_configuration(
         self,
         mesh: Any,
@@ -4543,6 +4637,7 @@ class QualifiedE4PLShellElement(
         num_layers: int = 5,
         *,
         allow_noncurrent: bool,
+        trusted_solver_compact_batch: bool = False,
     ) -> Dict[str, Any]:
         """Bind a finalized Q4 constitutive state to one exact configuration.
 
@@ -4577,13 +4672,23 @@ class QualifiedE4PLShellElement(
         # reproduces the accepted trial core.  This is the final-result
         # lifecycle proof that rejected line-search candidates or a second
         # return map from converged history were not substituted.
-        self._replay_accepted_algorithmic_response(
+        validated_compact_core = bool(
+            trusted_solver_compact_batch
+            and self._is_compact_batch_constitutive_state(material, made)
+        )
+        replayed = self._replay_accepted_algorithmic_response(
             mesh,
             material,
             displacement,
             made,
             layers,
             return_components=False,
+            validated_compact_core=validated_compact_core,
+        )
+        self._canonicalize_compact_batch_constitutive_core(
+            material,
+            made,
+            replayed,
         )
         binding = self._committed_current_binding_payload(
             mesh,
