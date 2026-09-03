@@ -581,6 +581,7 @@ def _bind_qualified_assembly_runtime_lease(
         *,
         context: str,
         allow_q4_cached_stiffness: bool = False,
+        allow_final_s3_equivalent_guard_rebind: bool = False,
     ) -> Any:
         require_no_trusted_element_builtin_shadows()
         # Both family generations precede every model/mesh observation.  A
@@ -2978,8 +2979,11 @@ def _bind_qualified_assembly_runtime_lease(
                             # equivalent V1-S3 component guard.  The prepared
                             # authority still verifies every guarded component;
                             # permit only that existing equivalent rebind on
-                            # the Q4 stiffness-to-mass reuse path.
-                            preflight=allow_q4_cached_stiffness,
+                            # the Q4 stiffness-to-mass reuse path.  Stiffness
+                            # capture may accept a pre-existing value-equal
+                            # guard, but its final lease check must still
+                            # reject any subsequent rebind.
+                            preflight=allow_final_s3_equivalent_guard_rebind,
                         )
                         if current_authority is not s3_prepared_authority:
                             raise ValueError(
@@ -3650,6 +3654,7 @@ def _run_with_qualified_assembly_runtime_lease(
     context: str,
     operation: Callable[[Any], Any],
     allow_q4_cached_stiffness: bool = False,
+    allow_final_s3_equivalent_guard_rebind: bool = False,
 ) -> Any:
     """Run an assembly operation under one non-renewable runtime lease."""
 
@@ -3657,6 +3662,9 @@ def _run_with_qualified_assembly_runtime_lease(
         model,
         context=f"{context} preflight",
         allow_q4_cached_stiffness=allow_q4_cached_stiffness,
+        allow_final_s3_equivalent_guard_rebind=(
+            allow_final_s3_equivalent_guard_rebind
+        ),
     )
     try:
         result = operation(lease)
@@ -5670,6 +5678,7 @@ def assemble_mass_matrix(model: "FEModel") -> Tuple[sparse.csr_matrix, Dict[str,
         context="mass assembly",
         operation=assemble,
         allow_q4_cached_stiffness=True,
+        allow_final_s3_equivalent_guard_rebind=True,
     )
 
 
