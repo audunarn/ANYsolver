@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.4.0 - 2026-09-03
+
+- Relicense ANYsolver source releases from GPL-3.0-or-later to MPL-2.0.
+  Earlier published versions retain the licence terms that applied to them.
+- Publish a machine-readable direct-dependency licence inventory and preserve
+  third-party notices in source and wheel distributions. The extracted ANY
+  dependencies remain separately licensed and are not bundled or relicensed
+  by ANYsolver.
+- Add release-time checks for repository metadata, notices, dependency
+  inventory, and licence files in built distributions.
+- Document the qualified-S3 admission boundary for automatically imprinted
+  four-way shell intersections. These junctions continue to fail closed rather
+  than bypassing qualification or silently selecting legacy S3.
 - Activate the V6W-qualified native-parity S3 V2D companion as the default
   three-node shell for new/current-policy models. Historical records without
   formulation authority remain explicit `legacy-s3`, direct `ShellElement`

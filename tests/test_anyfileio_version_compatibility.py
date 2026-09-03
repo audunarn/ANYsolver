@@ -389,6 +389,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "  pull_request:\n\n"
     )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
+        "license",
         "pytest",
         "anymesher-compatibility",
         "anyfileio-compatibility",
@@ -402,6 +403,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "    types: [published]\n\n"
     )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", publish_jobs) == [
+        "license-gate",
         "dependency-gate",
         "build",
         "testpypi",
@@ -452,6 +454,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     def action_sequence(block: str) -> list[str]:
         return re.findall(r"(?m)^      - uses: (\S+)\s*$", block)
 
+    assert action_sequence(job_block(ci, "license")) == [checkout_ref, setup_ref]
     for name in (
         "pytest",
         "anymesher-compatibility",
@@ -463,6 +466,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         assert action_sequence(job_block(ci, name)) == [checkout_ref] * 5 + [
             setup_ref
         ]
+    assert action_sequence(job_block(publish, "license-gate")) == [
+        checkout_ref,
+        setup_ref,
+    ]
     assert action_sequence(job_block(publish, "dependency-gate")) == [setup_ref]
     assert action_sequence(job_block(publish, "build")) == [
         checkout_ref,
@@ -735,7 +742,9 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "    runs-on: ubuntu-latest\n"
     )
     assert job_preamble(job_block(publish, "build")) == (
-        "  build:\n    needs: dependency-gate\n    runs-on: ubuntu-latest\n"
+        "  build:\n"
+        "    needs: [dependency-gate, license-gate]\n"
+        "    runs-on: ubuntu-latest\n"
     )
     assert job_preamble(job_block(publish, "testpypi")) == (
         "  testpypi:\n"
