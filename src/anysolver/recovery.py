@@ -921,9 +921,18 @@ def _recover_element_stresses_with_report_under_lease(
     if reference_q4_active:
         reference_q4_start = time.perf_counter()
         try:
-            with native_thread_scope(
-                1, phase="stress_recovery_qualified_q4_reference"
-            ) as native_report:
+            if used_workers > 1:
+                with native_thread_scope(
+                    1, phase="stress_recovery_qualified_q4_reference"
+                ) as native_report:
+                    recovered_q4 = recover_reference_q4(
+                        model,
+                        plan.reference_q4,
+                        reference_q4_indices,
+                        displacements,
+                        return_global=return_global,
+                    )
+            else:
                 recovered_q4 = recover_reference_q4(
                     model,
                     plan.reference_q4,
@@ -949,9 +958,18 @@ def _recover_element_stresses_with_report_under_lease(
     if reference_s3_active:
         reference_s3_start = time.perf_counter()
         try:
-            with native_thread_scope(
-                1, phase="stress_recovery_qualified_s3_reference"
-            ) as native_report:
+            if used_workers > 1:
+                with native_thread_scope(
+                    1, phase="stress_recovery_qualified_s3_reference"
+                ) as native_report:
+                    recovered_s3 = recover_reference_s3(
+                        model,
+                        plan.reference_s3,
+                        reference_s3_indices,
+                        displacements,
+                        return_global=return_global,
+                    )
+            else:
                 recovered_s3 = recover_reference_s3(
                     model,
                     plan.reference_s3,
