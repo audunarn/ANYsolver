@@ -327,10 +327,14 @@ def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None
                 "tests/test_recovery_qualification.py",
                 "test_patch_rejects_reduced_q8_and_warped_q4_outside_qualified_scope",
             ): 1,
+            (
+                "tests/test_s3_v2d_default_activation.py",
+                "test_direct_and_explicit_legacy_routes_remain_available",
+            ): 1,
         }
     )
     assert calls["LegacyShellElement"] == expected_legacy
-    assert sum(calls["LegacyShellElement"].values()) == 6
+    assert sum(calls["LegacyShellElement"].values()) == 7
 
 
 def test_production_constructor_calls_are_confined_to_central_factory() -> None:

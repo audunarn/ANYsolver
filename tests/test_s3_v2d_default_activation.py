@@ -30,6 +30,12 @@ ACTIVATION = (
     / "reference_cases"
     / "e4_pl_s3_v2d_default_activation_candidate.json"
 )
+INTEGRATION_REPAIR = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "e4_pl_s3_v2d_default_integration_repair.json"
+)
 
 
 def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -67,6 +73,37 @@ def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
     assert payload["default_policy"]["current_model_s3"] == "e4-pl-s3-v2d"
     assert payload["terminal"] == (
         "PROVISIONAL_GO_E4_PL_S3_V2D_DEFAULT_ACTIVATION_CANDIDATE"
+    )
+
+
+def test_integration_repair_preserves_qualification_and_q4_boundary() -> None:
+    raw = INTEGRATION_REPAIR.read_bytes()
+    payload = json.loads(raw, object_pairs_hook=_strict_object)
+    assert raw == (
+        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+
+    for record in payload["preserved_qualification"]:
+        source = ROOT / record["path"]
+        data = source.read_bytes()
+        assert len(data) == record["bytes"]
+        assert hashlib.sha256(data).hexdigest().upper() == record["sha256"]
+    activation = payload["activation_candidate"]
+    activation_data = (ROOT / activation["path"]).read_bytes()
+    assert len(activation_data) == activation["bytes"]
+    assert hashlib.sha256(activation_data).hexdigest().upper() == activation["sha256"]
+
+    q4_data = (ROOT / "src" / "anysolver" / "e4_pl_element.py").read_bytes()
+    q4_data = q4_data.replace(b"\r\n", b"\n")
+    q4_blob = hashlib.sha1(
+        f"blob {len(q4_data)}\0".encode("ascii") + q4_data
+    ).hexdigest()
+    assert q4_blob == payload["production_boundary"]["q4_mechanics_blob"]
+    assert payload["production_boundary"]["v6w_evidence_changed"] is False
+    assert payload["production_boundary"]["s3_linear_stiffness_operator_changed"] is False
+    assert payload["default_policy"]["current_model_s3"] == "e4-pl-s3-v2d"
+    assert payload["terminal"] == (
+        "PROVISIONAL_GO_E4_PL_S3_V2D_DEFAULT_INTEGRATION_REPAIRED"
     )
 
 
@@ -113,6 +150,28 @@ def test_missing_identity_historical_record_never_inherits_new_default() -> None
         restored = shell_element_from_dict(payload)
 
     assert type(restored) is LegacyShellElement
+
+
+def test_v2d_non_axis_owner_normal_round_trip_is_binary64_exact() -> None:
+    element = create_shell_element(
+        8,
+        [1, 2, 3],
+        "steel",
+        formulation="e4-pl-s3-v2d",
+        reference_normal=(0.8819212643483547, -0.4713967368259981, -4.8139e-16),
+    )
+    payload = element.to_dict()
+
+    first = shell_element_from_dict(payload)
+    second = shell_element_from_dict(first.to_dict())
+
+    assert first.to_dict() == payload
+    assert second.to_dict() == payload
+
+    malformed = dict(payload)
+    malformed["reference_normal"] = [2.0, 0.0, 0.0]
+    with pytest.raises(ValueError, match="must be unit length"):
+        shell_element_from_dict(malformed)
 
 
 def test_diagnostics_report_both_topology_defaults() -> None:

@@ -1420,19 +1420,27 @@ def recover_prestress_from_static_result(
                     ),
                     dtype=float,
                 )
-            state = {
-                # Legacy scalar summaries remain for serialized/downstream
-                # compatibility, but are now quadrature-weighted.  The
-                # enhanced Mindlin operator consumes the full station fields.
-                "membrane_force_x": float(mean_membrane[0]),
-                "membrane_force_y": float(mean_membrane[1]),
-                "membrane_force_xy": float(mean_membrane[2]),
-                "membrane_forces_at_gauss": membrane_resultants.tolist(),
-                "bending_moments_at_gauss": bending_resultants.tolist(),
-                "resultant_summary_policy": (
-                    "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1"
-                ),
-            }
+            if getattr(element, "formulation_id", None) == (
+                "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
+            ):
+                # The qualified V2D reference-buckling surface consumes only
+                # one uniform, compression-positive membrane resultant.
+                # Recovery is tension-positive, hence the sign conversion.
+                state = {"membrane_compression": (-mean_membrane).tolist()}
+            else:
+                state = {
+                    # Legacy scalar summaries remain for serialized/downstream
+                    # compatibility, but are now quadrature-weighted.  The
+                    # enhanced Mindlin operator consumes the full station fields.
+                    "membrane_force_x": float(mean_membrane[0]),
+                    "membrane_force_y": float(mean_membrane[1]),
+                    "membrane_force_xy": float(mean_membrane[2]),
+                    "membrane_forces_at_gauss": membrane_resultants.tolist(),
+                    "bending_moments_at_gauss": bending_resultants.tolist(),
+                    "resultant_summary_policy": (
+                        "QUADRATURE_WEIGHTED_INTEGRATION_STATION_MEAN_V1"
+                    ),
+                }
             for provenance_key in (
                 "bubble_linearization_policy",
                 "through_thickness_stress_profile",

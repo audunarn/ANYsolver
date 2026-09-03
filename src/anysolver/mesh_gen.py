@@ -432,6 +432,11 @@ def _install_shells(
     from .elements import create_shell_element
 
     for element_id, node_ids in {**mesh.quads, **mesh.tris}.items():
+        director_kwargs: dict[str, object] = {}
+        if len(node_ids) == 3:
+            # NeutralMesh panel triangles are generated on the physical +Z
+            # plate surface; do not delegate their director to connectivity.
+            director_kwargs["reference_normal"] = (0.0, 0.0, 1.0)
         model.add_element(
             int(element_id),
             create_shell_element(
@@ -439,6 +444,7 @@ def _install_shells(
                 list(node_ids),
                 material_name=material_name,
                 thickness=float(thickness),
+                **director_kwargs,
             ),
         )
 

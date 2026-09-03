@@ -21,7 +21,10 @@ from anysolver.nonlinear_performance_bootstrap import (
     install_nonlinear_performance_optimizations,
 )
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
-from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
+from anysolver.e4_pl_s3_v2d_element import (
+    FORMULATION_ID as S3_V2D_FORMULATION_ID,
+    NativeParityE4PLS3V2DShellElement,
+)
 from anysolver.elements import LegacyShellElement
 from anysolver.vectorized_nonlinear import shell_nonlinear_batch_eligible
 
@@ -160,19 +163,21 @@ def test_generated_geometry_routes_explicit_qualified_s3_with_director_authority
             "node_ids": [1, 2, 4],
             "thickness": 0.02,
             "shell_section": "laminate",
-            "shell_formulation": "qualified-s3",
+            "shell_formulation": "e4-pl-s3-v2d",
+            "formulation_id": S3_V2D_FORMULATION_ID,
             "reference_normal": [0.0, 0.0, 1.0],
+            "owner_normal_authority": "PHYSICAL_SURFACE_OWNER_NORMAL_V2D_V1",
         }
     ]
 
     model = build_fe_model_from_generated_geometry(geometry)
     shell = model.mesh.get_element(1)
-    assert type(shell) is QualifiedE4PLS3ShellElement
+    assert type(shell) is NativeParityE4PLS3V2DShellElement
     assert shell.shell_section.name == "laminate"
     np.testing.assert_array_equal(shell.reference_normal, (0.0, 0.0, 1.0))
 
 
-def test_generated_geometry_preserves_legacy_s3_default_and_rejects_director_state() -> None:
+def test_generated_geometry_requires_v2d_authority_and_preserves_explicit_legacy_s3() -> None:
     geometry = _generated_geometry()
     geometry["shells"] = [
         {
@@ -181,6 +186,13 @@ def test_generated_geometry_preserves_legacy_s3_default_and_rejects_director_sta
             "thickness": 0.02,
         }
     ]
+    with pytest.raises(
+        ValueError,
+        match="qualified-s3-generated-record-requires-formulation-id",
+    ):
+        build_fe_model_from_generated_geometry(geometry)
+
+    geometry["shells"][0]["formulation"] = "legacy-s3"
     model = build_fe_model_from_generated_geometry(geometry)
     assert type(model.mesh.get_element(1)) is LegacyShellElement
 
