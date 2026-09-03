@@ -37,4 +37,4 @@ def test_file_document_and_result_api_is_canonical_anyfileio() -> None:
 
 
 def test_distribution_version_marks_the_extraction_boundary() -> None:
-    assert anysolver.__version__ == "0.4.0"
+    assert anysolver.__version__ == "0.4.1"

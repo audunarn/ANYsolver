@@ -112,6 +112,7 @@ _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY = (
     "qualified_q4_algorithmic_origin"
 )
 _Q4_ACTIVITY_DISPOSITION_KEY = "qualified_q4_activity_disposition"
+_Q4_COMPACT_REPLAY_MAX_ULPS = 262144
 _FOREIGN_S3_ACTIVITY_DISPOSITION_KEY = "qualified_s3_activity_disposition"
 _V5_IMPLEMENTATION_ID = (
     "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V5"
@@ -137,6 +138,40 @@ _Q4_INITIAL_STATE_KEYS = (
     "initial_curvature_prestrain",
     "initial_field_provenance",
 )
+
+
+def _q4_compact_replay_last_place_equivalent(
+    actual: np.ndarray,
+    expected: np.ndarray,
+    *,
+    max_ulps: int = _Q4_COMPACT_REPLAY_MAX_ULPS,
+) -> bool:
+    """Return whether finite binary64 arrays differ only in bounded last places.
+
+    Production batch assembly and scalar final-state replay evaluate identical
+    Q4 kinematics with different BLAS operation shapes.  That can move a small
+    number of values by a bounded count of representable binary64 steps.  This
+    predicate is deliberately narrower than an engineering tolerance: it has
+    no absolute or relative floor and is used only for compact batch-produced
+    constitutive state after all state and origin hashes have been validated.
+    """
+
+    lhs = np.asarray(actual, dtype=np.float64)
+    rhs = np.asarray(expected, dtype=np.float64)
+    if lhs.shape != rhs.shape or max_ulps < 0:
+        return False
+    if not np.all(np.isfinite(lhs)) or not np.all(np.isfinite(rhs)):
+        return False
+    if np.array_equal(lhs, rhs):
+        return True
+    scale = np.maximum(np.abs(lhs), np.abs(rhs))
+    spacing = np.spacing(scale)
+    with np.errstate(over="ignore", invalid="ignore"):
+        difference = np.abs(lhs - rhs)
+        limit = float(max_ulps) * spacing
+    return bool(np.all(np.isfinite(difference)) and np.all(difference <= limit))
+
+
 _QUALIFIED_Q4_COORDINATE_SCALAR_TYPES = frozenset(
     {
         int,
@@ -4145,6 +4180,22 @@ class QualifiedE4PLShellElement(
                 raise ValueError(
                     "qualified Q4 accepted return-map replay produced no state"
                 )
+            compact_keys = {
+                "plastic_strain",
+                "alpha",
+                "layer_strain",
+                _Q4_CURRENT_STATE_ALGORITHMIC_ORIGIN_KEY,
+                _Q4_CURRENT_STATE_BINDING_KEY,
+                _Q4_CURRENT_STATE_DIGEST_KEY,
+                "state_digest",
+                _Q4_ACTIVITY_DISPOSITION_KEY,
+            }
+            compact_batch_state = (
+                set(committed_state).issubset(compact_keys)
+                and self.shell_section is None
+                and getattr(material, "hardening_curve", None) is not None
+                and getattr(material, "hill_yield", None) is None
+            )
             points = len(self.gauss_points) * layers
             for name, shape in (
                 ("plastic_strain", (points, 3)),
@@ -4155,15 +4206,52 @@ class QualifiedE4PLShellElement(
                     committed_state.get(name, ()), dtype=np.float64
                 )
                 actual = np.asarray(candidate.get(name, ()), dtype=np.float64)
+                exact = (
+                    expected.shape == shape
+                    and actual.shape == shape
+                    and np.all(np.isfinite(expected))
+                    and np.array_equal(actual, expected)
+                )
+                bounded_last_place = (
+                    compact_batch_state
+                    and expected.shape == shape
+                    and actual.shape == shape
+                    and _q4_compact_replay_last_place_equivalent(
+                        actual,
+                        expected,
+                    )
+                )
                 if (
                     expected.shape != shape
                     or actual.shape != shape
                     or not np.all(np.isfinite(expected))
-                    or not np.array_equal(actual, expected)
+                    or (not exact and not bounded_last_place)
                 ):
+                    detail = "shape_or_nonfinite"
+                    if (
+                        expected.shape == shape
+                        and actual.shape == shape
+                        and np.all(np.isfinite(expected))
+                        and np.all(np.isfinite(actual))
+                    ):
+                        differing = np.flatnonzero(actual.ravel() != expected.ravel())
+                        maximum = float(np.max(np.abs(actual - expected)))
+                        scale = np.maximum(np.abs(actual), np.abs(expected))
+                        ratios = np.abs(actual - expected) / np.spacing(scale)
+                        maximum_ulps = float(np.max(ratios))
+                        first = int(differing[0])
+                        detail = (
+                            f"different_values={differing.size}, "
+                            f"max_abs_difference={maximum:.17g}, "
+                            f"max_ulp_distance={maximum_ulps:.17g}, "
+                            f"first_flat_index={first}, "
+                            f"first_actual={actual.ravel()[first]:.17g}, "
+                            f"first_expected={expected.ravel()[first]:.17g}"
+                        )
                     raise ValueError(
                         "qualified Q4 accepted algorithmic origin does not "
-                        f"reproduce committed {name}"
+                        f"reproduce committed {name} for element "
+                        f"{self.element_id} ({detail})"
                     )
         # Scalar/generalized evaluations retain richer deterministic recovery
         # fields than the compact batch state.  When present, each such field
