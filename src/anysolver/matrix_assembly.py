@@ -2559,10 +2559,13 @@ def _bind_qualified_assembly_runtime_lease(
                 or type.__getattribute__(_FEMesh, "__dict__").get("num_nodes")
                 is not _EXACT_FE_MESH_NUM_NODES
                 or dict.get(mesh_namespace, "elements") is not mapping
-                or dict.get(mesh_namespace, "_sparsity_cache")
-                is not plan["sparsity_cache"]
-                or dict.get(mesh_namespace, "_topology_signature_cache")
-                is not plan["topology_cache"]
+                # Sparse/topology caches are owned by the exact assembly
+                # operation and are intentionally excluded from ``mesh_keys``
+                # above.  A first mass assembly may initialize either cache
+                # after this lease captures raw inputs; treating that internal
+                # population as an input mutation rejects an otherwise valid
+                # Q4 stiffness-to-mass reuse.  Their own revision-key checks
+                # protect every cached entry used by assembly.
                 or dict.get(mesh_namespace, "_qualified_direct_state_token")
                 is not plan["token"]
                 or type(mapping) is not _QualifiedStateMapping
