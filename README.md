@@ -153,6 +153,19 @@ Diagnostics record requested limits, active runtime pools, the selected sparse
 backend, and any limiter/backend fallback. Omitting the resource policy retains
 the backend's existing unrestricted default.
 
+Applications that expect a large qualified-Q4 nonlinear analysis can move the
+first-use JIT cost out of the interactive solve path with an explicit warm-up:
+
+```python
+from anysolver import warm_fe_solver_kernels
+
+warm_fe_solver_kernels(include_nonlinear_static=True)
+```
+
+This opt-in helper builds and discards a small 4x4 Q4 batch solely to prepare
+the existing native kernel. It does not change the application model, material
+state, element mechanics, or normal solver behavior.
+
 `GeneralizedShellSectionProtocol` and `GeneralizedBeamSectionContract` are
 likewise solver-owned structural interfaces. The built-in
 `GeneralizedShellSection(A, B, D, As, ...)` accepts pre-integrated laminate or
