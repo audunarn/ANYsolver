@@ -20,6 +20,7 @@ from typing import Callable, Mapping, Sequence, TypeAlias
 import numpy as np
 
 import anysolver as _full_backend
+from .analysis_session import AnalysisSession as _backend_AnalysisSession
 from .arc_length import ArcLengthControl as _backend_arc_length_control
 from .arc_length import solve_static_arc_length as _backend_solve_static_arc_length
 from .assembly import compute_stresses as _backend_compute_stresses
@@ -5580,6 +5581,18 @@ def _wants_tangent_stability_analysis(config: LightweightFEMConfig) -> bool:
     return buckling_choice == "nonlinear limit" and not _wants_static_nonlinear_analysis(config)
 
 
+def _can_reuse_linear_buckling_session(config: LightweightFEMConfig) -> bool:
+    """Whether one immutable operator serves linear prestress and buckling."""
+
+    return bool(
+        _wants_eigenvalue_buckling(config)
+        and not _wants_capacity_workflow(config)
+        and not _wants_static_nonlinear_analysis(config)
+        and not _wants_tangent_stability_analysis(config)
+        and not config.collision_enabled
+    )
+
+
 def _positive_int(value: object, fallback: int, minimum: int = 1) -> int:
     try:
         number = int(float(value))
@@ -8548,6 +8561,7 @@ def run_production_fem(
         )
 
     model = None
+    analysis_session = None
     try:
         if status_callback: status_callback("Building FE model...")
         if imported_fem_model is not None:
@@ -8635,14 +8649,24 @@ def run_production_fem(
                 status_callback("Solving reference linear static system...")
             else:
                 status_callback("Solving linear static system...")
+        if _can_reuse_linear_buckling_session(config):
+            # Materials, geometry, supports and element state are now final
+            # for this immutable linear/buckling sequence.  Keep one bounded
+            # session so stiffness, constraints and direct-solver factors are
+            # assembled once.  Nonlinear/capacity paths remain deliberately
+            # excluded because they can change the live state.
+            analysis_session = _backend_AnalysisSession(model)
         displacements, solver_info = _backend_solve_linear(
             model,
             load_case,
             solver_type=backend_config.solver_type,
             constraint_mode=constraint_mode,
             allow_unbalanced_free_free=_allow_unbalanced_free_free(config, geometry),
+            session=analysis_session,
         )
     except Exception as exc:
+        if analysis_session is not None:
+            analysis_session.close()
         return LightweightFEMResult(
             status="production_failed",
             stress_max_pa=0.0,
@@ -8661,6 +8685,8 @@ def run_production_fem(
     diagnostics.append(f"Linear solver backend used: {backend_name}")
 
     if static_status != "converged":
+        if analysis_session is not None:
+            analysis_session.close()
         diagnostics.append("Static solve status: " + static_status)
         return LightweightFEMResult(
             status="static_failed",
@@ -8983,29 +9009,42 @@ def run_production_fem(
     if geometry.get("geometry") == "cylinder" and config.include_end_lids and _add_cylinder_buckling_gauge(model, generated_geometry):
         diagnostics.append("Applied buckling-only rigid-body gauge constraints to the lid center nodes.")
     buckling_kwargs = _buckling_solver_kwargs(config)
-    if capacity_workflow_result is not None:
-        buckling_result = capacity_workflow_result.buckling_result
-    elif _wants_eigenvalue_buckling(config):
-        buckling_result = _backend_solve_buckling(model, prestress_states, num_modes=int(config.num_buckling_modes), **buckling_kwargs)
-    else:
-        # Dummy result if buckling is explicitly skipped by runtime path
-        class DummyBucklingResult:
-            modes = ()
-            failed = False
-            status = "skipped by runtime path"
-            diagnostics = ()
-        buckling_result = DummyBucklingResult()
-    if not buckling_result.modes and geometry.get("geometry") == "cylinder" and abs(float(effective_pressure)) > 0.0:
-        pressure_states = _cylinder_pressure_prestress_states(
-            model,
-            float(effective_pressure) * float(config.load_scale),
-            _positive(geometry.get("radius_m", generated_geometry.get("radius_m", 1.0)), 1.0),
-        )
-        if pressure_states:
-            pressure_buckling_result = _backend_solve_buckling(model, pressure_states, num_modes=int(config.num_buckling_modes), **buckling_kwargs)
-            if pressure_buckling_result.modes:
-                buckling_result = pressure_buckling_result
-                diagnostics.append("Buckling modes use equivalent external-pressure membrane prestress because the full mixed prestress returned no positive modes.")
+    if analysis_session is not None:
+        buckling_kwargs["session"] = analysis_session
+    try:
+        if capacity_workflow_result is not None:
+            buckling_result = capacity_workflow_result.buckling_result
+        elif _wants_eigenvalue_buckling(config):
+            buckling_result = _backend_solve_buckling(model, prestress_states, num_modes=int(config.num_buckling_modes), **buckling_kwargs)
+        else:
+            # Dummy result if buckling is explicitly skipped by runtime path
+            class DummyBucklingResult:
+                modes = ()
+                failed = False
+                status = "skipped by runtime path"
+                diagnostics = ()
+            buckling_result = DummyBucklingResult()
+        if not buckling_result.modes and geometry.get("geometry") == "cylinder" and abs(float(effective_pressure)) > 0.0:
+            pressure_states = _cylinder_pressure_prestress_states(
+                model,
+                float(effective_pressure) * float(config.load_scale),
+                _positive(geometry.get("radius_m", generated_geometry.get("radius_m", 1.0)), 1.0),
+            )
+            if pressure_states:
+                pressure_buckling_result = _backend_solve_buckling(model, pressure_states, num_modes=int(config.num_buckling_modes), **buckling_kwargs)
+                if pressure_buckling_result.modes:
+                    buckling_result = pressure_buckling_result
+                    diagnostics.append("Buckling modes use equivalent external-pressure membrane prestress because the full mixed prestress returned no positive modes.")
+    finally:
+        if analysis_session is not None:
+            session_diagnostics = analysis_session.diagnostics()
+            prestress_summary["analysis_session"] = session_diagnostics
+            diagnostics.append(
+                "Reused one analysis session across linear prestress and "
+                "eigenvalue buckling."
+            )
+            analysis_session.close()
+            analysis_session = None
     if capacity_workflow_result is None:
         _record_buckling_mesh_adequacy(model, buckling_result, config, prestress_summary, diagnostics)
     if _wants_nonlinear_buckling(config) and nonlinear_static_factor is not None and float(nonlinear_static_factor) > 0.0:
