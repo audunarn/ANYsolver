@@ -9268,6 +9268,7 @@ def warm_fe_solver_kernels(
     shell_orders: Sequence[str] = ("S4", "Q8", "Q8R"),
     *,
     include_nonlinear_impact: bool = False,
+    include_nonlinear_static: bool = False,
 ) -> dict[str, object]:
     """Warm optional compiled FE backend kernels for runtime use."""
 
@@ -9277,4 +9278,8 @@ def warm_fe_solver_kernels(
             "shell_orders": {},
             "message": "The ANYsolver backend warmup helper is not available.",
         }
-    return _backend_warm_fe_solver_kernels(shell_orders, include_nonlinear_impact=include_nonlinear_impact)
+    return _backend_warm_fe_solver_kernels(
+        shell_orders,
+        include_nonlinear_impact=include_nonlinear_impact,
+        include_nonlinear_static=include_nonlinear_static,
+    )

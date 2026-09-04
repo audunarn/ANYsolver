@@ -73,6 +73,29 @@ def test_runtime_public_api_is_explicit_and_complete() -> None:
     assert all(hasattr(runtime, name) for name in runtime.__all__)
 
 
+def test_runtime_forwards_optional_nonlinear_static_warmup(monkeypatch) -> None:
+    observed = {}
+
+    def warm(shell_orders, **options):
+        observed["shell_orders"] = shell_orders
+        observed.update(options)
+        return {"status": "completed"}
+
+    monkeypatch.setattr(runtime, "_backend_warm_fe_solver_kernels", warm)
+
+    result = runtime.warm_fe_solver_kernels(
+        ("S4",),
+        include_nonlinear_static=True,
+    )
+
+    assert result == {"status": "completed"}
+    assert observed == {
+        "shell_orders": ("S4",),
+        "include_nonlinear_impact": False,
+        "include_nonlinear_static": True,
+    }
+
+
 def test_runtime_analysis_selection_is_public_and_normalized() -> None:
     selection = runtime.resolve_runtime_analysis(
         runtime.LightweightFEMConfig(

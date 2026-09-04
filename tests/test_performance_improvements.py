@@ -216,6 +216,19 @@ def test_warm_fe_solver_kernels_reports_jit_fallback_state(monkeypatch) -> None:
     assert item["jit_disabled_reason"] == "unit_test_fallback"
 
 
+def test_warm_fe_solver_kernels_can_precompile_nonlinear_q4_batch() -> None:
+    report = warm_fe_solver_kernels(("S4",), include_nonlinear_static=True)
+
+    nonlinear_static = report["nonlinear_static"]
+    assert nonlinear_static is not None
+    assert nonlinear_static["status"] == "completed"
+    assert nonlinear_static["element_count"] == 16
+    assert nonlinear_static["nonlinear_layers"] == 5
+    assert nonlinear_static["seconds"] >= 0.0
+    assert nonlinear_static["tangent_nnz"] > 0
+    assert nonlinear_static["internal_force_inf"] < 1.0e-12
+
+
 def test_nonlinear_response_jit_matches_sequential():
     """Verify JIT-compiled nonlinear integration matches a sequential Python implementation."""
     model = FEModel("nonlin_test")
