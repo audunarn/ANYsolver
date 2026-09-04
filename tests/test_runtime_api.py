@@ -280,6 +280,104 @@ def test_runtime_rejects_follower_pressure_with_stepwise_eigen_buckling() -> Non
     assert "'static only' or 'nonlinear static'" in reason
 
 
+def test_runtime_reuses_one_bounded_session_for_linear_prestress_and_buckling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generated = {
+        "plot_type": "flat",
+        "plot_grid": [],
+        "nodes": [
+            {"id": 1, "coords": [0.0, 0.0, 0.0]},
+            {"id": 2, "coords": [1.0, 0.0, 0.0]},
+            {"id": 3, "coords": [1.0, 1.0, 0.0]},
+            {"id": 4, "coords": [0.0, 1.0, 0.0]},
+        ],
+        "shells": [
+            {
+                "id": 1,
+                "node_ids": [1, 2, 3, 4],
+                "thickness": 0.01,
+                "role": "skin",
+            }
+        ],
+        "beams": [],
+    }
+    model = anystructure_fem_mode.build_fe_model_from_generated_geometry(generated)
+    captured: dict[str, object] = {}
+
+    class RecordingSession:
+        def __init__(self, owned_model):
+            captured["owned_model"] = owned_model
+            self.closed = False
+
+        def diagnostics(self):
+            return {"plan_reused": True, "stiffness_builds": 1}
+
+        def close(self):
+            self.closed = True
+            captured["closed"] = True
+
+    def fake_linear(model_arg, _load_case, **kwargs):
+        captured["linear_session"] = kwargs.get("session")
+        return np.zeros(model_arg.mesh.dof_manager.total_dofs), {
+            "convergence_info": {
+                "status": "converged",
+                "backend": {"backend": "test_double"},
+            },
+            "constraint_method": "test_double",
+            "constraint_mode": "test_double",
+        }
+
+    def fake_buckling(_model_arg, _states, **kwargs):
+        captured["buckling_session"] = kwargs.get("session")
+        return SimpleNamespace(
+            modes=(),
+            failed=False,
+            status="completed",
+            diagnostics={},
+        )
+
+    monkeypatch.setattr(runtime, "_backend_AnalysisSession", RecordingSession)
+    monkeypatch.setattr(runtime, "_backend_solve_linear", fake_linear)
+    monkeypatch.setattr(runtime, "_backend_solve_buckling", fake_buckling)
+
+    result = runtime.run_production_fem(
+        _flat_geometry(),
+        runtime.LightweightFEMConfig(
+            runtime_solver="stepwise",
+            analysis_type="linear eigenvalue",
+            num_buckling_modes=1,
+        ),
+        imported_fem_model=model,
+        precomputed_generated_geometry=generated,
+    )
+
+    assert result.status == "ok"
+    assert captured["owned_model"] is model
+    assert captured["linear_session"] is captured["buckling_session"]
+    assert captured["closed"] is True
+    assert result.prestress_summary["analysis_session"]["plan_reused"] is True
+    assert any("Reused one analysis session" in item for item in result.diagnostics)
+
+
+def test_runtime_session_reuse_excludes_state_changing_paths() -> None:
+    assert runtime._can_reuse_linear_buckling_session(
+        runtime.LightweightFEMConfig(
+            runtime_solver="stepwise",
+            analysis_type="linear eigenvalue",
+        )
+    )
+    assert not runtime._can_reuse_linear_buckling_session(
+        runtime.LightweightFEMConfig(
+            runtime_solver="nonlinear static",
+            analysis_type="geometric nonlinear static",
+        )
+    )
+    assert not runtime._can_reuse_linear_buckling_session(
+        runtime.LightweightFEMConfig(collision_enabled=True)
+    )
+
+
 def test_geometric_nonlinear_elastic_runtime_does_not_claim_plastic_history() -> None:
     result = runtime.run_production_fem(
         {
