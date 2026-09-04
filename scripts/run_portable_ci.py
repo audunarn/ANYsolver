@@ -120,6 +120,12 @@ PORTABLE_MODULE_WEIGHT_OVERRIDES = {
     "tests/test_hht_alpha.py": 100_000,
     "tests/test_mixed_shell_quadrature_grouping.py": 120_000,
 }
+# Runtime panel tests repeatedly construct and solve independent application
+# models.  Keep them in a fresh interpreter so report/restart tests cannot
+# leak process-local solver bootstrap state into these production routes.
+PORTABLE_ISOLATED_MODULES = (
+    "tests/test_geometry_panel.py",
+)
 DEFAULT_WORKERS = 4
 DEFAULT_TIMEOUT_SECONDS = 1_200
 TIMEOUT_EXIT_CODE = 124
@@ -131,8 +137,12 @@ def _module_weight(module: str) -> int:
     path = ROOT / module
     if not path.is_file():
         raise RuntimeError(f"merge-test module is missing: {module}")
+    # Git stores text with LF endings, while Windows worktrees may expose CRLF.
+    # Normalize the proxy so the same commit receives the same shard assignment
+    # on every supported host.
+    normalized_size = len(path.read_bytes().replace(b"\r\n", b"\n"))
     return PORTABLE_MODULE_WEIGHT_OVERRIDES.get(
-        module, max(1, path.stat().st_size)
+        module, max(1, normalized_size)
     )
 
 
@@ -167,6 +177,25 @@ def partition_modules(
     if len(assigned) != len(set(assigned)) or set(assigned) != set(ordered):
         raise RuntimeError("portable CI partition is not disjoint and complete")
     return result
+
+
+def execution_partitions(
+    modules: Sequence[str], workers: int
+) -> tuple[tuple[str, ...], ...]:
+    """Partition ordinary modules and isolate process-state-sensitive modules."""
+
+    if isinstance(workers, bool) or workers < 1:
+        raise ValueError("workers must be a positive integer")
+    ordered = tuple(modules)
+    if not ordered or len(ordered) != len(set(ordered)):
+        raise ValueError("modules must be nonempty and unique")
+    if any(not isinstance(module, str) or not module for module in ordered):
+        raise ValueError("module selectors must be nonempty strings")
+    isolated_set = set(PORTABLE_ISOLATED_MODULES)
+    isolated = tuple(sorted(module for module in ordered if module in isolated_set))
+    shared = tuple(module for module in ordered if module not in isolated_set)
+    ordinary = partition_modules(shared, workers) if shared else ()
+    return (*ordinary, *((module,) for module in isolated))
 
 
 def matrix_modules(
@@ -347,7 +376,7 @@ def run(
             f"selected {len(modules)} modules",
             flush=True,
         )
-    partitions = partition_modules(modules, workers)
+    partitions = execution_partitions(modules, workers)
     temp_parent = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())).resolve()
     temp_parent.mkdir(parents=True, exist_ok=True)
     run_root = Path(tempfile.mkdtemp(prefix="anysolver-portable-ci-", dir=temp_parent))

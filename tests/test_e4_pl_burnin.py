@@ -689,6 +689,41 @@ def test_portable_ci_partition_is_deterministic_disjoint_and_complete(
     assert set(assigned) == set(weights)
 
 
+def test_portable_ci_weights_are_line_ending_independent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = "tests/test_line_endings.py"
+    path = tmp_path / module
+    path.parent.mkdir(parents=True)
+    monkeypatch.setattr(portable_ci, "ROOT", tmp_path)
+
+    path.write_bytes(b"first\nsecond\n")
+    lf_weight = portable_ci._module_weight(module)
+    path.write_bytes(b"first\r\nsecond\r\n")
+
+    assert portable_ci._module_weight(module) == lf_weight
+
+
+def test_portable_ci_executes_geometry_panel_in_a_fresh_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modules = (
+        "tests/test_geometry_panel.py",
+        "tests/test_a.py",
+        "tests/test_b.py",
+    )
+    monkeypatch.setattr(portable_ci, "_module_weight", lambda _module: 1)
+    partitions = portable_ci.execution_partitions(modules, 2)
+
+    assert partitions[-1] == ("tests/test_geometry_panel.py",)
+    assert all(
+        "tests/test_geometry_panel.py" not in partition
+        for partition in partitions[:-1]
+    )
+    assigned = [module for partition in partitions for module in partition]
+    assert sorted(assigned) == sorted(modules)
+
+
 def test_portable_ci_observed_costs_separate_the_four_heaviest_modules() -> None:
     partitions = portable_ci.partition_modules(
         portable_ci.merge_test_modules(), 4
