@@ -67,21 +67,25 @@ class _Budget:
 
 
 class NonlinearAssemblyHistoryProbe:
-    """At most eight connected 3-node elements with one atomic state tuple.
+    """Eight-element default; explicit sixteen-element refinement profile.
 
 No history is committed by local convergence or a successful element replay.
 All elements are replayed and checked before one whole-model publication.
 No load cutback/retry, arc length, dynamics, restart codec or shell coupling.
 """
 
-    def __init__(self, references, connectivity, sections, *, fixed_nodes=(0,), order=24):
+    def __init__(self, references, connectivity, sections, *, fixed_nodes=(0,), order=24, extent='SMALL8'):
+        if extent not in ('SMALL8','REFINEMENT16'):
+            raise ValueError('registered assembly extent required')
+        self._extent = extent
+        maximum = 8 if extent == 'SMALL8' else 16
         references, connectivity, sections = tuple(references), tuple(connectivity), tuple(sections)
-        if not 1 <= len(references) <= 8 or len(connectivity) != len(references) or len(sections) != len(references):
-            raise ValueError('one through eight elements with matching maps/sections required')
+        if not 1 <= len(references) <= maximum or len(connectivity) != len(references) or len(sections) != len(references):
+            raise ValueError('bounded element count with matching maps/sections required')
         maps = []
         for row in connectivity:
             row = tuple(row)
-            if (len(row) != 3 or any(type(n) is not int or not 0 <= n < 24 for n in row)
+            if (len(row) != 3 or any(type(n) is not int or not 0 <= n < 3*maximum for n in row)
                     or len(set(row)) != 3):
                 raise ValueError('three distinct bounded integer node IDs required')
             maps.append(row)
