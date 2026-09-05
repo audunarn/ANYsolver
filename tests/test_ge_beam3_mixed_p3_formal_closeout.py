@@ -182,8 +182,24 @@ def _decode_strict(raw: bytes) -> object:
     )
 
 
+def _repository_canonical_bytes(path: Path) -> bytes:
+    """Return the canonical Git text while preserving mutation detection.
+
+    The evidence blobs are canonical LF text.  A Windows checkout may apply
+    Git's configured CRLF worktree transform even though the committed blob is
+    unchanged.  Normalize that one reversible transform, but reject every
+    remaining carriage return so arbitrary byte drift cannot hide here.
+    """
+
+    resolved = path.resolve()
+    assert resolved.is_relative_to(ROOT.resolve())
+    raw = path.read_bytes().replace(b"\r\n", b"\n")
+    assert b"\r" not in raw
+    return raw
+
+
 def _canonical(path: Path) -> tuple[bytes, dict[str, object]]:
-    raw = path.read_bytes()
+    raw = _repository_canonical_bytes(path)
     value = _decode_strict(raw)
     assert isinstance(value, dict)
     expected = (
@@ -446,12 +462,13 @@ def test_all_bound_repository_and_available_external_hashes_recompute() -> None:
     reviewed = {item["path"]: item for item in review["reviewed_inputs"]}
     assert len(reviewed) == len(review["reviewed_inputs"]) == 25
 
-    evidence_identity = (EVIDENCE.stat().st_size, _sha(EVIDENCE.read_bytes()))
+    evidence_bytes = _repository_canonical_bytes(EVIDENCE)
+    evidence_identity = (len(evidence_bytes), _sha(evidence_bytes))
     assert reviewed[CLOSEOUT_PATHS[0]] == _record(
         CLOSEOUT_PATHS[0], *evidence_identity
     )
     for logical, identity in REPO_INPUTS.items():
-        raw = (ROOT / logical).read_bytes()
+        raw = _repository_canonical_bytes(ROOT / logical)
         assert (len(raw), _sha(raw)) == identity
         assert reviewed[logical] == _record(logical, *identity)
 
