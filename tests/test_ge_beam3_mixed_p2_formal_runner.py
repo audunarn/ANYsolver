@@ -16,6 +16,14 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER = ROOT / "docs/reference_cases/ge_beam3_mixed_p2_formal_runner.py"
+_ANYFILEIO_DEFAULT = next(
+    candidate.parent / "ANYfileIO"
+    for candidate in (ROOT, *ROOT.parents)
+    if candidate.name.casefold() == "anysolver"
+)
+ANYFILEIO = Path(
+    os.environ.get("Q1M_ANYFILEIO_ROOT", str(_ANYFILEIO_DEFAULT))
+).resolve()
 
 
 def _load_runner():
@@ -80,8 +88,38 @@ def _repository(tmp_path: Path) -> tuple[Path, str, str]:
     return repository, commit, tree
 
 
+def _dependency_repository(tmp_path: Path, name: str = "anyfileio") -> Path:
+    repository = tmp_path / name
+    repository.mkdir()
+    _git(repository, "init", "--initial-branch=main")
+    _git(repository, "config", "user.name", "P2 Dependency Test")
+    _git(repository, "config", "user.email", "p2-dependency@example.invalid")
+    _git(repository, "config", "core.autocrlf", "false")
+    source = repository / "src" / "anyfileio"
+    source.mkdir(parents=True)
+    (repository / ".gitattributes").write_text(
+        "*.py text eol=lf\n", encoding="utf-8", newline="\n"
+    )
+    (source / "__init__.py").write_text(
+        '"""Bound test dependency."""\n', encoding="utf-8", newline="\n"
+    )
+    (source / "codec.py").write_text(
+        "VALUE = 17\n", encoding="utf-8", newline="\n"
+    )
+    _git(repository, "add", ".gitattributes", "src/anyfileio")
+    _git(repository, "commit", "-m", "test: freeze dependency")
+    return repository
+
+
 def _snapshot() -> object:
     return runner.RepositorySnapshot(
+        anyfileio=runner.DependencyIdentity(
+            commit="D" * 40,
+            file_count=3,
+            manifest_sha256="E" * 64,
+            total_bytes=123,
+            tree="F" * 40,
+        ),
         harness_commit="A" * 40,
         harness_tree="B" * 40,
         manifest_sha256="C" * 64,
@@ -236,6 +274,93 @@ def test_git_blob_hashing_uses_committed_bytes_and_dirty_tree_fails_closed(
         runner.git_blob_binding(repository, commit, "missing.txt")
 
 
+def test_anyfileio_dependency_binding_is_exact_clean_and_path_free(
+    tmp_path: Path,
+) -> None:
+    repository = _dependency_repository(tmp_path)
+    identity = runner.validate_anyfileio_repository(repository)
+    assert identity.commit == _git(repository, "rev-parse", "HEAD")
+    assert identity.tree == _git(repository, "show", "-s", "--format=%T", "HEAD")
+    assert identity.file_count == 2
+    assert identity.total_bytes == len(b'"""Bound test dependency."""\n') + len(
+        b"VALUE = 17\n"
+    )
+    manifest = []
+    for relative in ("src/anyfileio/__init__.py", "src/anyfileio/codec.py"):
+        listing = _git(repository, "ls-tree", "HEAD", "--", relative)
+        metadata, listed_relative = listing.split("\t", 1)
+        mode, kind, oid = metadata.split(" ", 2)
+        payload = runner._git_bytes(repository, "cat-file", "blob", oid)
+        assert kind == "blob" and listed_relative == relative
+        manifest.append(
+            {
+                "bytes": len(payload),
+                "git_blob_oid": oid,
+                "mode": mode,
+                "path": relative,
+                "sha256": runner._sha256(payload),
+            }
+        )
+    assert identity.manifest_sha256 == runner._sha256(
+        runner.canonical_bytes(manifest)
+    )
+    record = identity.record()
+    assert set(record) == {
+        "commit",
+        "file_count",
+        "manifest_sha256",
+        "total_bytes",
+        "tree",
+    }
+    assert "\\" not in json.dumps(record)
+    assert "/" not in json.dumps(record)
+
+
+def test_anyfileio_dependency_missing_dirty_and_hidden_mutation_fail_closed(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(runner.AuthorizationError, match="explicit ANYfileIO"):
+        runner.validate_anyfileio_repository(None)
+
+    dirty = _dependency_repository(tmp_path, "dirty-anyfileio")
+    (dirty / "src" / "anyfileio" / "codec.py").write_text(
+        "VALUE = 18\n", encoding="utf-8", newline="\n"
+    )
+    with pytest.raises(runner.BaselineError, match="not clean"):
+        runner.validate_anyfileio_repository(dirty)
+
+    hidden = _dependency_repository(tmp_path, "hidden-anyfileio")
+    relative = "src/anyfileio/codec.py"
+    _git(hidden, "update-index", "--assume-unchanged", relative)
+    (hidden / relative).write_text("VALUE = 19\n", encoding="utf-8", newline="\n")
+    assert _git(hidden, "status", "--porcelain=v1", "--untracked-files=all") == ""
+    with pytest.raises(runner.BaselineError, match="differs from its Git blob"):
+        runner.validate_anyfileio_repository(hidden)
+
+
+def test_missing_dependency_refuses_entry_points_before_side_effects(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    output = tmp_path / "authority.json"
+    with pytest.raises(runner.AuthorizationError, match="explicit ANYfileIO"):
+        runner.write_authority_check(output_path=output, repository=repository)
+    assert not output.exists()
+
+    aggregate = tmp_path / "aggregate.json"
+    work = tmp_path / "work"
+    with pytest.raises(runner.AuthorizationError, match="explicit ANYfileIO"):
+        runner.run(
+            mode=runner.REHEARSAL_MODE,
+            output_path=aggregate,
+            work_root=work,
+            repository=repository,
+        )
+    assert not aggregate.exists()
+    assert not work.exists()
+
+
 @pytest.mark.parametrize(
     ("groups", "terminal"),
     [
@@ -273,7 +398,9 @@ def test_formal_mode_requires_separate_exact_authorization_before_side_effects(
     repository = tmp_path / "repository"
     repository.mkdir()
     snapshot = _snapshot()
-    monkeypatch.setattr(runner, "validate_repository", lambda _repository: snapshot)
+    monkeypatch.setattr(
+        runner, "validate_repository", lambda _repository, _anyfileio: snapshot
+    )
     authority_checks, check_sha256 = _authority_checks(tmp_path, snapshot)
     output = tmp_path / "aggregate.json"
     work = tmp_path / "work"
@@ -282,6 +409,7 @@ def test_formal_mode_requires_separate_exact_authorization_before_side_effects(
             mode=runner.FORMAL_MODE,
             output_path=output,
             work_root=work,
+            anyfileio_repository=tmp_path / "anyfileio",
             repository=repository,
             authority_check_paths=authority_checks,
         )
@@ -299,6 +427,7 @@ def test_formal_mode_requires_separate_exact_authorization_before_side_effects(
             work_root=work,
             authorization_path=authority,
             authority_check_paths=authority_checks,
+            anyfileio_repository=tmp_path / "anyfileio",
             repository=repository,
         )
     assert not output.exists()
@@ -311,12 +440,15 @@ def test_authority_check_only_is_path_free_deterministic_and_replica_bound(
     repository = tmp_path / "repository"
     repository.mkdir()
     snapshot = _snapshot()
-    monkeypatch.setattr(runner, "validate_repository", lambda _repository: snapshot)
+    monkeypatch.setattr(
+        runner, "validate_repository", lambda _repository, _anyfileio: snapshot
+    )
     outputs = (tmp_path / "check-a.json", tmp_path / "check-b.json")
     for output in outputs:
         record = runner.write_authority_check(
             output_path=output,
             repository=repository,
+            anyfileio_repository=tmp_path / "anyfileio",
         )
         assert record["terminal"] == "AUTHORITY_CHECK_ONLY_PASS"
     assert outputs[0].read_bytes() == outputs[1].read_bytes()
@@ -340,7 +472,9 @@ def test_two_formal_invocations_are_byte_identical_and_run_two_cycles(
     repository = tmp_path / "repository"
     repository.mkdir()
     snapshot = _snapshot()
-    monkeypatch.setattr(runner, "validate_repository", lambda _repository: snapshot)
+    monkeypatch.setattr(
+        runner, "validate_repository", lambda _repository, _anyfileio: snapshot
+    )
     authority_checks, check_sha256 = _authority_checks(tmp_path, snapshot)
     authority = tmp_path / "authorization.json"
     _write_canonical(authority, runner.expected_authorization(snapshot, check_sha256))
@@ -363,6 +497,7 @@ def test_two_formal_invocations_are_byte_identical_and_run_two_cycles(
             mode=runner.FORMAL_MODE,
             output_path=output,
             work_root=tmp_path / f"work-{index}",
+            anyfileio_repository=tmp_path / "anyfileio",
             authorization_path=authority,
             authority_check_paths=authority_checks,
             repository=repository,
@@ -383,7 +518,9 @@ def test_no_retry_after_failed_first_formal_cycle(
     repository = tmp_path / "repository"
     repository.mkdir()
     snapshot = _snapshot()
-    monkeypatch.setattr(runner, "validate_repository", lambda _repository: snapshot)
+    monkeypatch.setattr(
+        runner, "validate_repository", lambda _repository, _anyfileio: snapshot
+    )
     authority_checks, check_sha256 = _authority_checks(tmp_path, snapshot)
     authority = tmp_path / "authorization.json"
     _write_canonical(authority, runner.expected_authorization(snapshot, check_sha256))
@@ -415,6 +552,7 @@ def test_no_retry_after_failed_first_formal_cycle(
         mode=runner.FORMAL_MODE,
         output_path=tmp_path / "aggregate.json",
         work_root=tmp_path / "work",
+        anyfileio_repository=tmp_path / "anyfileio",
         authorization_path=authority,
         authority_check_paths=authority_checks,
         repository=repository,
@@ -423,6 +561,60 @@ def test_no_retry_after_failed_first_formal_cycle(
     assert calls == 1
     assert result["cycle_replica_count"] == 1
     assert result["terminal"] == "NO_GO_GE_BEAM3_P2_SOLVER_CHART_OR_STATE"
+
+
+def test_dependency_identity_is_revalidated_before_canonical_publication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    anyfileio = tmp_path / "anyfileio"
+    snapshot = _snapshot()
+    changed = runner.RepositorySnapshot(
+        anyfileio=runner.DependencyIdentity(
+            commit="0" * 40,
+            file_count=snapshot.anyfileio.file_count,
+            manifest_sha256=snapshot.anyfileio.manifest_sha256,
+            total_bytes=snapshot.anyfileio.total_bytes,
+            tree=snapshot.anyfileio.tree,
+        ),
+        harness_commit=snapshot.harness_commit,
+        harness_tree=snapshot.harness_tree,
+        manifest_sha256=snapshot.manifest_sha256,
+        producer_input_bindings=snapshot.producer_input_bindings,
+        test_bindings=snapshot.test_bindings,
+    )
+    calls = 0
+
+    def validate(_repository: Path, _anyfileio: Path) -> object:
+        nonlocal calls
+        calls += 1
+        return snapshot if calls == 1 else changed
+
+    def fake_cycle(
+        _repository: Path,
+        _runner: Path,
+        directory: Path,
+        **_keywords: object,
+    ) -> dict[str, object]:
+        directory.mkdir(parents=False, exist_ok=False)
+        return _passing_cycle()
+
+    monkeypatch.setattr(runner, "validate_repository", validate)
+    authority_checks, _check_sha256 = _authority_checks(tmp_path, snapshot)
+    output = tmp_path / "aggregate.json"
+    with pytest.raises(runner.BaselineError, match="changed during execution"):
+        runner.run(
+            mode=runner.REHEARSAL_MODE,
+            output_path=output,
+            work_root=tmp_path / "work",
+            anyfileio_repository=anyfileio,
+            authority_check_paths=authority_checks,
+            repository=repository,
+            cycle_runner=fake_cycle,
+        )
+    assert calls == 2
+    assert not output.exists()
 
 
 def test_bounded_process_terminates_timeout_and_reports_process_failure(
@@ -485,6 +677,7 @@ def test_worker_evidence_missing_or_malformed_is_process_failure(tmp_path: Path)
 def test_raw_producer_and_two_independent_checker_replicas_pass(tmp_path: Path) -> None:
     snapshot = _snapshot()
     snapshot = runner.RepositorySnapshot(
+        anyfileio=snapshot.anyfileio,
         harness_commit=snapshot.harness_commit,
         harness_tree=snapshot.harness_tree,
         manifest_sha256=snapshot.manifest_sha256,
@@ -502,6 +695,7 @@ def test_raw_producer_and_two_independent_checker_replicas_pass(tmp_path: Path) 
     cycle.mkdir()
     result = runner._run_scientific_lane(
         ROOT,
+        ANYFILEIO,
         cycle,
         snapshot,
         bounds=runner.FROZEN_BOUNDS,
@@ -531,6 +725,7 @@ def test_focused_modules_run_once_each_in_isolated_children(
         ROOT,
         RUNNER,
         tmp_path / "focused-cycle",
+        anyfileio_repository=ANYFILEIO,
         snapshot=_snapshot(),
         bounds=runner.FROZEN_BOUNDS,
         absolute_deadline=time.monotonic() + 600.0,
@@ -594,14 +789,27 @@ def test_aggregate_contains_no_paths_timings_or_measurements() -> None:
     assert json.loads(raw) == aggregate
 
 
-def test_child_environment_forces_one_numerical_thread(tmp_path: Path) -> None:
+def test_child_environment_forces_one_numerical_thread(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     repository = tmp_path / "repository"
     repository.mkdir()
-    environment = runner._child_environment(repository, tmp_path)
+    anyfileio = tmp_path / "anyfileio"
+    anyfileio.mkdir()
+    monkeypatch.setenv("PYTHONPATH", "UNBOUND_SENTINEL")
+    environment = runner._child_environment(repository, anyfileio, tmp_path)
     assert {environment[name] for name in runner.THREAD_VARIABLES} == {"1"}
+    assert environment["PYTHONPATH"] == os.pathsep.join(
+        (str((repository / "src").resolve()), str((anyfileio / "src").resolve()))
+    )
+    assert "UNBOUND_SENTINEL" not in environment["PYTHONPATH"]
     assert environment["PYTHONHASHSEED"] == "0"
     assert environment["PYTHONDONTWRITEBYTECODE"] == "1"
     assert environment["PYTHONNOUSERSITE"] == "1"
+    assert environment["PYTHONSAFEPATH"] == "1"
+    assert environment["PYTHONPYCACHEPREFIX"] == str(
+        (tmp_path / "python-cache").resolve()
+    )
 
 
 def test_exclusive_outputs_and_nonfrozen_bounds_fail_closed(
@@ -609,7 +817,9 @@ def test_exclusive_outputs_and_nonfrozen_bounds_fail_closed(
 ) -> None:
     repository = tmp_path / "repository"
     repository.mkdir()
-    monkeypatch.setattr(runner, "validate_repository", lambda _repository: _snapshot())
+    monkeypatch.setattr(
+        runner, "validate_repository", lambda _repository, _anyfileio: _snapshot()
+    )
     output = tmp_path / "aggregate.json"
     output.write_bytes(b"occupied")
     with pytest.raises(runner.ExclusiveOutputError, match="fresh"):
@@ -617,6 +827,7 @@ def test_exclusive_outputs_and_nonfrozen_bounds_fail_closed(
             mode=runner.REHEARSAL_MODE,
             output_path=output,
             work_root=tmp_path / "work",
+            anyfileio_repository=tmp_path / "anyfileio",
             repository=repository,
         )
     output.unlink()
@@ -626,6 +837,7 @@ def test_exclusive_outputs_and_nonfrozen_bounds_fail_closed(
             mode=runner.REHEARSAL_MODE,
             output_path=output,
             work_root=tmp_path / "work",
+            anyfileio_repository=tmp_path / "anyfileio",
             repository=repository,
             bounds=changed,
         )

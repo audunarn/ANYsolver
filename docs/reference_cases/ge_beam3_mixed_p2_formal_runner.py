@@ -23,6 +23,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -319,6 +320,7 @@ def _git_environment() -> dict[str, str]:
     }
     environment.update(
         {
+            "GIT_ATTR_NOSYSTEM": "1",
             "GIT_CONFIG_GLOBAL": os.devnull,
             "GIT_CONFIG_NOSYSTEM": "1",
             "GIT_NO_REPLACE_OBJECTS": "1",
@@ -423,8 +425,146 @@ def git_blob_binding(repository: Path, revision: str, relative: str) -> dict[str
     }
 
 
+def _same_path(left: Path, right: Path) -> bool:
+    return os.path.normcase(str(left.resolve())) == os.path.normcase(str(right.resolve()))
+
+
+def _is_reparse(path: Path) -> bool:
+    try:
+        attributes = getattr(path.lstat(), "st_file_attributes", 0)
+    except OSError:
+        return False
+    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+
+
+def validate_anyfileio_repository(
+    anyfileio_repository: Path | None,
+) -> DependencyIdentity:
+    """Bind the exact clean ANYfileIO checkout used by isolated children."""
+
+    if anyfileio_repository is None:
+        raise AuthorizationError("an explicit ANYfileIO repository is required")
+    repository = anyfileio_repository.resolve()
+    if not repository.is_dir():
+        raise AuthorizationError("the explicit ANYfileIO repository is missing")
+    top = Path(_git_text(repository, "rev-parse", "--show-toplevel")).resolve()
+    if not _same_path(top, repository):
+        raise BaselineError("ANYfileIO dependency path is not its Git root")
+    _require_clean(repository)
+    commit = _git_text(repository, "rev-parse", "HEAD")
+    tree = _git_text(repository, "show", "-s", "--format=%T", "HEAD")
+    if not _is_hex(commit.upper(), 40) or not _is_hex(tree.upper(), 40):
+        raise BaselineError("ANYfileIO dependency has invalid Git identities")
+
+    raw_listing = _git_bytes(
+        repository,
+        "ls-tree",
+        "-r",
+        "-z",
+        "--full-tree",
+        commit,
+        "--",
+        "src/anyfileio",
+    )
+    entries = [entry for entry in raw_listing.split(b"\0") if entry]
+    if not entries:
+        raise BaselineError("ANYfileIO has no registered src/anyfileio manifest")
+    manifest: list[dict[str, Any]] = []
+    registered_paths: set[str] = set()
+    for entry in entries:
+        try:
+            metadata_raw, relative_raw = entry.split(b"\t", 1)
+            mode_raw, kind_raw, oid_raw = metadata_raw.split(b" ", 2)
+            mode = mode_raw.decode("ascii")
+            kind = kind_raw.decode("ascii")
+            oid = oid_raw.decode("ascii").lower()
+            relative = relative_raw.decode("utf-8")
+        except (ValueError, UnicodeDecodeError) as exc:
+            raise BaselineError("ANYfileIO Git manifest is malformed") from exc
+        if (
+            mode not in {"100644", "100755"}
+            or kind != "blob"
+            or not relative.startswith("src/anyfileio/")
+            or relative in registered_paths
+            or not _is_hex(oid.upper(), 40)
+        ):
+            raise BaselineError("ANYfileIO Git manifest has a noncanonical entry")
+        registered_paths.add(relative)
+        path = repository / Path(relative)
+        if (
+            not path.is_file()
+            or path.is_symlink()
+            or _is_reparse(path)
+            or not _is_within(path, repository / "src" / "anyfileio")
+        ):
+            raise BaselineError("ANYfileIO working source is not a regular registered file")
+        working_oid = _git_text(
+            repository,
+            "-c",
+            "core.autocrlf=true",
+            "hash-object",
+            f"--path={relative}",
+            "--",
+            relative,
+        ).lower()
+        if working_oid != oid:
+            raise BaselineError("ANYfileIO working source differs from its Git blob")
+        payload = _git_bytes(repository, "cat-file", "blob", oid)
+        manifest.append(
+            {
+                "bytes": len(payload),
+                "git_blob_oid": oid,
+                "mode": mode,
+                "path": relative,
+                "sha256": _sha256(payload),
+            }
+        )
+
+    # Ignored bytecode is harmless because every child uses a fresh explicit
+    # PYTHONPYCACHEPREFIX.  Every other source-tree file must be registered.
+    on_disk: set[str] = set()
+    source_root = repository / "src" / "anyfileio"
+    for path in source_root.rglob("*"):
+        relative_parts = path.relative_to(source_root).parts
+        if "__pycache__" in relative_parts:
+            continue
+        if path.is_symlink() or _is_reparse(path):
+            raise BaselineError("ANYfileIO source tree contains an unregistered reparse point")
+        if path.is_file():
+            on_disk.add(path.relative_to(repository).as_posix())
+    if on_disk != registered_paths:
+        raise BaselineError("ANYfileIO source-tree inventory differs from its Git manifest")
+    manifest.sort(key=lambda row: row["path"])
+    return DependencyIdentity(
+        commit=commit,
+        file_count=len(manifest),
+        manifest_sha256=_sha256(canonical_bytes(manifest)),
+        total_bytes=sum(row["bytes"] for row in manifest),
+        tree=tree,
+    )
+
+
+@dataclass(frozen=True)
+class DependencyIdentity:
+    commit: str
+    file_count: int
+    manifest_sha256: str
+    total_bytes: int
+    tree: str
+
+    def record(self) -> dict[str, Any]:
+        return {
+            "commit": self.commit,
+            "file_count": self.file_count,
+            "manifest_sha256": self.manifest_sha256,
+            "total_bytes": self.total_bytes,
+            "tree": self.tree,
+        }
+
+
 @dataclass(frozen=True)
 class RepositorySnapshot:
+    anyfileio: DependencyIdentity
     harness_commit: str
     harness_tree: str
     manifest_sha256: str
@@ -432,9 +572,17 @@ class RepositorySnapshot:
     test_bindings: dict[str, dict[str, Any]]
 
 
-def validate_repository(repository: Path = ROOT) -> RepositorySnapshot:
+def validate_repository(
+    repository: Path = ROOT,
+    anyfileio_repository: Path | None = None,
+) -> RepositorySnapshot:
     repository = repository.resolve()
+    if anyfileio_repository is None:
+        raise AuthorizationError("an explicit ANYfileIO repository is required")
+    if _same_path(repository, anyfileio_repository):
+        raise AuthorizationError("ANYsolver and ANYfileIO repositories must be distinct")
     _require_clean(repository)
+    anyfileio = validate_anyfileio_repository(anyfileio_repository)
     _verify_commit(
         repository,
         RECOVERY_CORRECTION_COMMIT,
@@ -519,6 +667,7 @@ def validate_repository(repository: Path = ROOT) -> RepositorySnapshot:
         for spec in FOCUSED_TESTS
     }
     return RepositorySnapshot(
+        anyfileio=anyfileio,
         harness_commit=head,
         harness_tree=tree,
         manifest_sha256=manifest_sha256,
@@ -531,6 +680,10 @@ def expected_authority_check(snapshot: RepositorySnapshot) -> dict[str, Any]:
     return {
         "candidate_id": CANDIDATE_ID,
         "checks": {
+            "anyfileio_clean": True,
+            "anyfileio_git_root_exact": True,
+            "anyfileio_manifest_exact": True,
+            "anyfileio_working_sources_equal_git_blobs": True,
             "bound_inputs_are_git_blobs": True,
             "frozen_commit_chain_exact": True,
             "frozen_path_extents_exact": True,
@@ -539,6 +692,7 @@ def expected_authority_check(snapshot: RepositorySnapshot) -> dict[str, Any]:
             "repository_clean": True,
         },
         "frozen_inputs": {
+            "anyfileio": snapshot.anyfileio.record(),
             "harness_commit": snapshot.harness_commit,
             "harness_tree": snapshot.harness_tree,
             "implementation_commit": IMPLEMENTATION_COMMIT,
@@ -558,15 +712,23 @@ def expected_authority_check(snapshot: RepositorySnapshot) -> dict[str, Any]:
 
 
 def write_authority_check(
-    *, output_path: Path, repository: Path = ROOT
+    *,
+    output_path: Path,
+    repository: Path = ROOT,
+    anyfileio_repository: Path | None = None,
 ) -> dict[str, Any]:
     repository = repository.resolve()
+    if anyfileio_repository is None:
+        raise AuthorizationError("an explicit ANYfileIO repository is required")
+    anyfileio_repository = anyfileio_repository.resolve()
     output_path = output_path.resolve()
-    if _is_within(output_path, repository):
+    if _is_within(output_path, repository) or _is_within(
+        output_path, anyfileio_repository
+    ):
         raise ExclusiveOutputError("authority-check output must be external")
     if output_path.exists():
         raise ExclusiveOutputError("authority-check output must be exclusive")
-    snapshot = validate_repository(repository)
+    snapshot = validate_repository(repository, anyfileio_repository)
     record = expected_authority_check(snapshot)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("xb") as stream:
@@ -620,6 +782,11 @@ def expected_authorization(
             "commit": RECOVERY_CORRECTION_COMMIT,
             "tree": RECOVERY_CORRECTION_TREE,
         },
+        "frozen_dependency": {
+            "distribution": "ANYfileio",
+            "identity": snapshot.anyfileio.record(),
+            "import_root": "SRC_ANYFILEIO",
+        },
         "harness": {
             "commit": snapshot.harness_commit,
             "manifest_sha256": snapshot.manifest_sha256,
@@ -662,22 +829,23 @@ def _is_within(path: Path, root: Path) -> bool:
         return False
 
 
-def _child_environment(repository: Path, directory: Path) -> dict[str, str]:
+def _child_environment(
+    repository: Path,
+    anyfileio_repository: Path,
+    directory: Path,
+) -> dict[str, str]:
     environment = {
         key: value
         for key, value in os.environ.items()
         if not key.upper().startswith("GIT_")
-        and key.upper() not in {"VIRTUAL_ENV", "PYTHONHASHSEED", "PYTHONDONTWRITEBYTECODE"}
+        and not key.upper().startswith("PYTHON")
+        and key.upper() != "VIRTUAL_ENV"
     }
     for name in THREAD_VARIABLES:
         environment[name] = "1"
-    source = str((repository / "src").resolve())
-    inherited_pythonpath = os.environ.get("PYTHONPATH", "")
-    environment["PYTHONPATH"] = (
-        source
-        if not inherited_pythonpath
-        else source + os.pathsep + inherited_pythonpath
-    )
+    solver_source = str((repository / "src").resolve())
+    anyfileio_source = str((anyfileio_repository / "src").resolve())
+    environment["PYTHONPATH"] = solver_source + os.pathsep + anyfileio_source
     environment.update(
         {
             "GIT_CONFIG_COUNT": "1",
@@ -688,6 +856,8 @@ def _child_environment(repository: Path, directory: Path) -> dict[str, str]:
             "GIT_OPTIONAL_LOCKS": "0",
             "GIT_TERMINAL_PROMPT": "0",
             "GIT_CONFIG_VALUE_0": str(repository.resolve()),
+            "PYTHONPYCACHEPREFIX": str((directory / "python-cache").resolve()),
+            "PYTHONSAFEPATH": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTHONHASHSEED": "0",
             "PYTHONNOUSERSITE": "1",
@@ -1144,6 +1314,7 @@ def _validate_worker_record(
 
 def _run_one_test(
     repository: Path,
+    anyfileio_repository: Path,
     runner: Path,
     directory: Path,
     spec: TestSpec,
@@ -1167,7 +1338,9 @@ def _run_one_test(
             command,
             directory=directory,
             result_path=result_path,
-            environment=_child_environment(repository, directory),
+            environment=_child_environment(
+                repository, anyfileio_repository, directory
+            ),
             bounds=bounds,
             absolute_deadline=absolute_deadline,
         )
@@ -1198,6 +1371,7 @@ def _run_program(
     command: Sequence[str],
     *,
     repository: Path,
+    anyfileio_repository: Path,
     directory: Path,
     output: Path,
     bounds: ExecutionBounds,
@@ -1207,7 +1381,7 @@ def _run_program(
         command,
         directory=directory,
         result_path=output,
-        environment=_child_environment(repository, directory),
+        environment=_child_environment(repository, anyfileio_repository, directory),
         bounds=bounds,
         absolute_deadline=absolute_deadline,
     )
@@ -1390,6 +1564,7 @@ def _validate_check(
 
 def _run_scientific_lane(
     repository: Path,
+    anyfileio_repository: Path,
     cycle_directory: Path,
     snapshot: RepositorySnapshot,
     *,
@@ -1408,6 +1583,7 @@ def _run_scientific_lane(
         producer_process = _run_program(
             producer_command,
             repository=repository,
+            anyfileio_repository=anyfileio_repository,
             directory=producer_directory,
             output=proof_path,
             bounds=bounds,
@@ -1436,6 +1612,7 @@ def _run_scientific_lane(
             process = _run_program(
                 command,
                 repository=repository,
+                anyfileio_repository=anyfileio_repository,
                 directory=directory,
                 output=output,
                 bounds=bounds,
@@ -1491,6 +1668,7 @@ def run_cycle(
     runner: Path,
     cycle_directory: Path,
     *,
+    anyfileio_repository: Path,
     snapshot: RepositorySnapshot,
     bounds: ExecutionBounds,
     absolute_deadline: float,
@@ -1502,6 +1680,7 @@ def run_cycle(
             pool.submit(
                 _run_one_test,
                 repository,
+                anyfileio_repository,
                 runner,
                 cycle_directory / spec.test_id.lower(),
                 spec,
@@ -1526,6 +1705,7 @@ def run_cycle(
     if all(row["passed"] for row in ordered):
         scientific = _run_scientific_lane(
             repository,
+            anyfileio_repository,
             cycle_directory,
             snapshot,
             bounds=bounds,
@@ -1626,6 +1806,7 @@ def _aggregate(
         "cycle_result_sha256": cycle_hashes,
         "cycle_results_byte_identical": cycles_byte_identical,
         "frozen_inputs": {
+            "anyfileio": snapshot.anyfileio.record(),
             "harness_commit": snapshot.harness_commit,
             "harness_tree": snapshot.harness_tree,
             "implementation_commit": IMPLEMENTATION_COMMIT,
@@ -1648,6 +1829,7 @@ def run(
     mode: str,
     output_path: Path,
     work_root: Path,
+    anyfileio_repository: Path | None = None,
     authorization_path: Path | None = None,
     authority_check_paths: tuple[Path, Path] | None = None,
     repository: Path = ROOT,
@@ -1659,22 +1841,37 @@ def run(
     if bounds != FROZEN_BOUNDS:
         raise AuthorizationError("entry point requires the frozen execution bounds")
     repository = repository.resolve()
+    if anyfileio_repository is None:
+        raise AuthorizationError("an explicit ANYfileIO repository is required")
+    anyfileio_repository = anyfileio_repository.resolve()
+    if _same_path(repository, anyfileio_repository):
+        raise AuthorizationError("ANYsolver and ANYfileIO repositories must be distinct")
     output_path = output_path.resolve()
     work_root = work_root.resolve()
-    if _is_within(output_path, repository) or _is_within(work_root, repository):
+    if (
+        _is_within(output_path, repository)
+        or _is_within(work_root, repository)
+        or _is_within(output_path, anyfileio_repository)
+        or _is_within(work_root, anyfileio_repository)
+    ):
         raise ExclusiveOutputError("outputs must be outside the repository")
     if _is_within(output_path, work_root):
         raise ExclusiveOutputError("canonical aggregate and diagnostic root must be separate")
     if output_path.exists() or work_root.exists():
         raise ExclusiveOutputError("aggregate and diagnostic destinations must be fresh")
     for check_path in authority_check_paths or ():
-        if _is_within(check_path, repository):
+        if _is_within(check_path, repository) or _is_within(
+            check_path, anyfileio_repository
+        ):
             raise AuthorizationError("authority-check records must be external")
-    if authorization_path is not None and _is_within(authorization_path, repository):
+    if authorization_path is not None and (
+        _is_within(authorization_path, repository)
+        or _is_within(authorization_path, anyfileio_repository)
+    ):
         raise AuthorizationError("formal authorization must be external")
 
     # All Git and authority checks precede any directory or child creation.
-    snapshot = validate_repository(repository)
+    snapshot = validate_repository(repository, anyfileio_repository)
     authority_check_raw, _authority_check = validate_authority_checks(
         authority_check_paths, snapshot
     )
@@ -1698,6 +1895,7 @@ def run(
         repository,
         runner,
         work_root / "cycle-1",
+        anyfileio_repository=anyfileio_repository,
         snapshot=snapshot,
         bounds=bounds,
         absolute_deadline=deadline,
@@ -1712,6 +1910,7 @@ def run(
             repository,
             runner,
             work_root / "cycle-2",
+            anyfileio_repository=anyfileio_repository,
             snapshot=snapshot,
             bounds=bounds,
             absolute_deadline=deadline,
@@ -1731,7 +1930,7 @@ def run(
     )
     # A concurrent working-tree or ref mutation invalidates the complete run;
     # raw diagnostics remain, but no canonical aggregate may be published.
-    if validate_repository(repository) != snapshot:
+    if validate_repository(repository, anyfileio_repository) != snapshot:
         raise BaselineError("repository identity changed during execution")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("xb") as stream:
@@ -1747,6 +1946,7 @@ def _parser() -> argparse.ArgumentParser:
     modes.add_argument("--authority-check-only", action="store_true")
     modes.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--repository", type=Path, default=ROOT)
+    parser.add_argument("--anyfileio-repository", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--work-root", type=Path)
     parser.add_argument("--authorization", type=Path)
@@ -1768,6 +1968,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             write_authority_check(
                 output_path=arguments.output,
                 repository=arguments.repository,
+                anyfileio_repository=arguments.anyfileio_repository,
             )
         except RunnerError as exc:
             print(f"GE Beam3 P2 authority check refused: {exc}", file=sys.stderr)
@@ -1782,6 +1983,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             mode=mode,
             output_path=arguments.output,
             work_root=arguments.work_root,
+            anyfileio_repository=arguments.anyfileio_repository,
             authorization_path=arguments.authorization,
             authority_check_paths=(
                 arguments.authority_check_1,
