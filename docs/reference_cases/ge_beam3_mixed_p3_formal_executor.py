@@ -5,6 +5,10 @@ closed, committed authority overlays, checks the repository and runtime twice,
 claims the request and attempt durably, and only then invokes the frozen P3
 gate.  Package and performance are separate serial requests; the latter must
 bind the accepted package receipt, aggregate, and exact wheel.
+
+The v2 harness also binds the consumed v1 package incident and materializes
+the frozen candidate from raw Git blobs.  Checkout attributes therefore cannot
+change evidence bytes before the package worker starts.
 """
 
 from __future__ import annotations
@@ -31,9 +35,9 @@ import time
 from typing import Any, Mapping, Sequence
 
 
-SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-authority-v1"
-REVIEW_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-review-v1"
-CHECK_SCHEMA = "anysolver.ge-beam3-mixed-p3-authority-check-v1"
+SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-authority-v2"
+REVIEW_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-review-v2"
+CHECK_SCHEMA = "anysolver.ge-beam3-mixed-p3-authority-check-v2"
 CLAIM_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-claim-v1"
 REQUEST_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-request-v1"
 RECEIPT_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-receipt-v1"
@@ -51,7 +55,80 @@ CONTRACT_RELATIVE = "docs/reference_cases/ge_beam3_mixed_p3_formal_contract.json
 EXECUTOR_RELATIVE = "docs/reference_cases/ge_beam3_mixed_p3_formal_executor.py"
 TEST_RELATIVE = "tests/test_ge_beam3_mixed_p3_formal_executor.py"
 HARNESS_PATHS = (CONTRACT_RELATIVE, EXECUTOR_RELATIVE, TEST_RELATIVE)
-HARNESS_SUBJECT = "docs: freeze GE Beam3 P3 formal execution harness"
+HARNESS_SUBJECT = "docs: repair GE Beam3 P3 exact materialization harness"
+HARNESS_V1_COMMIT = "ecf4cfe228d7513e9bb99f885c42da198a2d7fe5"
+HARNESS_V1_TREE = "3e40cd5b158b027e8f1f5491399f7e8639d9ed7f"
+HARNESS_V1_SUBJECT = "docs: freeze GE Beam3 P3 formal execution harness"
+FAILED_PACKAGE_AUTHORITY_COMMIT = "48a3eba3347d9ebe0fd15cac6a8c7db64c1f743e"
+FAILED_PACKAGE_AUTHORITY_TREE = "da4848f06678783e7f1e420c8b12f24050544470"
+FAILED_PACKAGE_AUTHORITY_SHA256 = "4FA0230776029CAE990F37A710F8684A3D5C13320087A27FADC626A2A6948E73"
+FAILED_PACKAGE_AUTHORITY_BYTES = 7_373
+FAILED_PACKAGE_REVIEW_SHA256 = "DEE4F805EFF3ED606BDA4B7FCBFF6E3157D19007264D0D8D08DB396C002C3157"
+FAILED_PACKAGE_REVIEW_BYTES = 478
+PRIOR_INCIDENT = {
+    "attempt_id": "2049501e1f29489eaef40c2d079c046d",
+    "authority_commit": FAILED_PACKAGE_AUTHORITY_COMMIT,
+    "bytes": 1_693,
+    "classification": "FORMAL_HARNESS_CHECKOUT_EOL_TRANSFORM_DEFECT",
+    "path": (r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+             r"\ge-beam3-p3-formal-20260905\incident\package-cycle1-root-cause.json"),
+    "request_id": "902862c1b4354c398da8cc2f3bb2a487",
+    "sha256": "AEB6431DE2CCE7CDDBC166E747B1245C11C755BAEE03FA8F4752A87FD3B071C1",
+    "terminal": "BLOCKED_GE_BEAM3_P3_PROCESS_OR_EVIDENCE",
+}
+FAILED_INCIDENT_RECORD = {
+    "a1": {
+        "attempt_id": PRIOR_INCIDENT["attempt_id"],
+        "authority": {
+            "bytes": FAILED_PACKAGE_AUTHORITY_BYTES,
+            "commit": FAILED_PACKAGE_AUTHORITY_COMMIT,
+            "sha256": FAILED_PACKAGE_AUTHORITY_SHA256,
+            "tree": FAILED_PACKAGE_AUTHORITY_TREE,
+        },
+        "receipt": {
+            "bytes": 1_531,
+            "sha256": "C19A51D05F8CFD5CD61B1E265138504053F2786D4DB6F494427E81665F1013C7",
+        },
+        "request": {
+            "bytes": 2_668,
+            "request_id": PRIOR_INCIDENT["request_id"],
+            "sha256": "642A611E51DAE6000175D5DABE0B0BE8D935510C2CB2A21D47DDC932CE5745F3",
+        },
+        "result": {
+            "bytes": 1_000,
+            "sha256": "A21002ACDCC57AB474BF7C059E93C8F36CBD126DA77A79F485581EFAD6963C01",
+        },
+        "review": {
+            "bytes": FAILED_PACKAGE_REVIEW_BYTES,
+            "sha256": FAILED_PACKAGE_REVIEW_SHA256,
+        },
+        "synthesis": {
+            "bytes": 2_078,
+            "sha256": "C171E1618E33D7439209F25A44202DFBB9E7FA696287F0BE5A565891DB9EB602",
+        },
+    },
+    "archive_ref": "refs/archive/ge-beam3-p3-package-cycle1-blocked-20260905",
+    "candidate": {"commit": CANDIDATE_COMMIT, "tree": CANDIDATE_TREE},
+    "diagnosis": {
+        "checkout_bytes": 12_745,
+        "checkout_path": "docs/S4_NULLSPACE_SEMANTICS_PROOF.md",
+        "checkout_sha256": "713465F03BE6221119C1CCB7539301BE01324445DE54FC466D398185B7B481CD",
+        "classification": PRIOR_INCIDENT["classification"],
+        "gate_started": False,
+        "git_attribute": "text eol=crlf",
+        "git_blob_bytes": 12_414,
+        "git_blob_sha256": "64895E2B56B81C3D5FB4318D026F049CA0BD8EE3591FAA434E2CC81C20F84754",
+        "worker_started": False,
+    },
+    "production_boundary": {
+        "activation_authorized": False,
+        "candidate_mechanics_changed": False,
+        "defaults_changed": False,
+        "publication_authorized": False,
+    },
+    "schema": "anysolver.ge-beam3-mixed-p3-package-cycle1-incident-v1",
+    "terminal": PRIOR_INCIDENT["terminal"],
+}
 AUTHORITY_PATHS = {
     "package": (
         "docs/reference_cases/ge_beam3_mixed_p3_package_execution_authority.json",
@@ -412,7 +489,7 @@ def _validate_authority(value: Any, *, mode: str, runtime: dict[str, Any],
                         wheelhouse: dict[str, Any]) -> dict[str, Any]:
     keys = {"activation_authorized", "candidate", "execution", "execution_authorized",
             "formal_argv", "harness", "locations", "mode", "overlay",
-            "package_input", "publication_authorized", "request", "runtime",
+            "package_input", "prior_incident", "publication_authorized", "request", "runtime",
             "schema", "study_id", "wheelhouse"}
     if type(value) is not dict or set(value) != keys:
         raise FormalExecutionError("authority keys differ")
@@ -450,6 +527,10 @@ def _validate_authority(value: Any, *, mode: str, runtime: dict[str, Any],
             or request["request_id"] == request["attempt_id"] \
             or not _is_sha(request["record_sha256"]):
         raise FormalExecutionError("request identity is malformed")
+    if request["request_id"] in {PRIOR_INCIDENT["request_id"], PRIOR_INCIDENT["attempt_id"]} \
+            or request["attempt_id"] in {
+                PRIOR_INCIDENT["request_id"], PRIOR_INCIDENT["attempt_id"]}:
+        raise FormalExecutionError("prior failed-package request or attempt was reused")
     runtime_binding = value["runtime"]
     if type(runtime_binding) is not dict or set(runtime_binding) != {"identity", "sha256"} \
             or runtime_binding["identity"] != runtime \
@@ -457,6 +538,8 @@ def _validate_authority(value: Any, *, mode: str, runtime: dict[str, Any],
         raise FormalExecutionError("runtime identity differs")
     if value["wheelhouse"] != wheelhouse:
         raise FormalExecutionError("wheelhouse identity differs")
+    if value["prior_incident"] != PRIOR_INCIDENT:
+        raise FormalExecutionError("prior failed-package incident binding differs")
     locations = value["locations"]
     location_keys = {"authority", "candidate_wheel", "executor", "output",
                      "package_aggregate", "package_receipt", "registry", "repository",
@@ -532,6 +615,69 @@ def _validate_review(value: Any, authority_identity: Mapping[str, Any], mode: st
         raise FormalExecutionError("reviewer independence differs")
 
 
+def _validate_prior_incident(repository: Path) -> None:
+    incident_path = Path(PRIOR_INCIDENT["path"])
+    raw, incident = strict_json(incident_path)
+    if {"bytes": len(raw), "path": str(incident_path), "sha256": _sha(raw)} != {
+        "bytes": PRIOR_INCIDENT["bytes"], "path": PRIOR_INCIDENT["path"],
+        "sha256": PRIOR_INCIDENT["sha256"],
+    } or incident != FAILED_INCIDENT_RECORD:
+        raise FormalExecutionError("prior failed-package incident record differs")
+    if _git(repository, "rev-parse", FAILED_INCIDENT_RECORD["archive_ref"]) \
+            != FAILED_PACKAGE_AUTHORITY_COMMIT:
+        raise FormalExecutionError("prior failed-package archive ref differs")
+    if _require_commit_overlay(
+            repository, FAILED_PACKAGE_AUTHORITY_COMMIT,
+            parent=HARNESS_V1_COMMIT, subject=AUTHORITY_SUBJECTS["package"],
+            paths=AUTHORITY_PATHS["package"]) != FAILED_PACKAGE_AUTHORITY_TREE:
+        raise FormalExecutionError("prior failed-package authority commit differs")
+    old_authority = _blob_identity(
+        repository, FAILED_PACKAGE_AUTHORITY_COMMIT, AUTHORITY_PATHS["package"][0])
+    old_review = _blob_identity(
+        repository, FAILED_PACKAGE_AUTHORITY_COMMIT, AUTHORITY_PATHS["package"][1])
+    if old_authority != {
+            "bytes": FAILED_PACKAGE_AUTHORITY_BYTES,
+            "path": AUTHORITY_PATHS["package"][0],
+            "sha256": FAILED_PACKAGE_AUTHORITY_SHA256,
+    } or old_review != {
+            "bytes": FAILED_PACKAGE_REVIEW_BYTES,
+            "path": AUTHORITY_PATHS["package"][1],
+            "sha256": FAILED_PACKAGE_REVIEW_SHA256,
+    }:
+        raise FormalExecutionError("prior failed-package authority blobs differ")
+
+    release_root = incident_path.parent.parent
+    registry = Path(r"C:\Github\.resource-manager")
+    request_id = PRIOR_INCIDENT["request_id"]
+    paths = {
+        "request": registry / "requests" / f"{request_id}.json",
+        "receipt": registry / "receipts" / f"{request_id}.json",
+        "result": release_root / "canonical" / f"package-result-{request_id}.json",
+        "synthesis_one": release_root / "incident" / "package-blocked-synthesis-1.json",
+        "synthesis_two": release_root / "incident" / "package-blocked-synthesis-2.json",
+    }
+    for key, path in paths.items():
+        raw_value = _regular_bytes(path)
+        expected_key = "synthesis" if key.startswith("synthesis_") else key
+        expected = FAILED_INCIDENT_RECORD["a1"][expected_key]
+        if len(raw_value) != expected["bytes"] or _sha(raw_value) != expected["sha256"]:
+            raise FormalExecutionError(f"prior failed-package {expected_key} differs")
+        _strict_json_bytes(raw_value, path.name)
+    request = _strict_json_bytes(_regular_bytes(paths["request"]), "prior request")
+    receipt = _strict_json_bytes(_regular_bytes(paths["receipt"]), "prior receipt")
+    result = _strict_json_bytes(_regular_bytes(paths["result"]), "prior result")
+    if request.get("request_id") != request_id \
+            or request.get("attempt_id") != PRIOR_INCIDENT["attempt_id"] \
+            or receipt.get("request_id") != request_id \
+            or receipt.get("attempt_id") != PRIOR_INCIDENT["attempt_id"] \
+            or receipt.get("authority_commit") != FAILED_PACKAGE_AUTHORITY_COMMIT \
+            or receipt.get("terminal") != PRIOR_INCIDENT["terminal"] \
+            or result.get("request_id") != request_id \
+            or result.get("authority", {}).get("commit") != FAILED_PACKAGE_AUTHORITY_COMMIT \
+            or result.get("terminal") != PRIOR_INCIDENT["terminal"]:
+        raise FormalExecutionError("prior failed-package provenance differs")
+
+
 def _validate_git_chain(repository: Path, validated: ValidatedAuthority,
                         *, commit: str | None = None) -> None:
     _require_unmodified_git_graph(repository)
@@ -548,9 +694,15 @@ def _validate_git_chain(repository: Path, validated: ValidatedAuthority,
     if _sha(gate_raw) != authority["candidate"]["gate_sha256"]:
         raise FormalExecutionError("candidate package gate differs")
     _validate_gate_safeguards(gate_raw)
+    if _require_commit_overlay(
+            repository, HARNESS_V1_COMMIT, parent=CANDIDATE_COMMIT,
+            subject=HARNESS_V1_SUBJECT, paths=HARNESS_PATHS) != HARNESS_V1_TREE:
+        raise FormalExecutionError("original harness tree differs")
+    _validate_prior_incident(repository)
     harness = authority["harness"]
-    if _require_commit_overlay(repository, harness["commit"], parent=CANDIDATE_COMMIT,
-                               subject=HARNESS_SUBJECT, paths=HARNESS_PATHS) != harness["tree"]:
+    if _require_commit_overlay(
+            repository, harness["commit"], parent=FAILED_PACKAGE_AUTHORITY_COMMIT,
+            subject=HARNESS_SUBJECT, paths=HARNESS_PATHS) != harness["tree"]:
         raise FormalExecutionError("harness tree differs")
     for row in harness["files"]:
         if _blob_identity(repository, harness["commit"], row["path"]) != row:
@@ -780,6 +932,24 @@ def _verify_checkout(repository: Path) -> None:
         raise FormalExecutionError("materialized candidate topology differs")
 
 
+def _populate_exact_worktree(repository: Path) -> None:
+    """Populate the index and worktree from raw blobs, bypassing EOL filters."""
+    _git(repository, "config", "--local", "core.autocrlf", "false")
+    _git(repository, "config", "--local", "core.eol", "lf")
+    _git(repository, "config", "--local", "core.safecrlf", "true")
+    _git(repository, "update-ref", "--no-deref", "HEAD", CANDIDATE_COMMIT)
+    _git(repository, "read-tree", "--reset", CANDIDATE_COMMIT)
+    for row in _tree_rows(repository, CANDIDATE_COMMIT):
+        path = repository / row["path"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        raw = _git(repository, "cat-file", "blob", row["oid"], binary=True)
+        assert isinstance(raw, bytes)
+        with path.open("xb", buffering=0) as stream:
+            stream.write(raw)
+        if row["mode"] == "100755" and os.name != "nt":
+            path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+
 def _materialize(repository: Path, destination: Path) -> Path:
     if destination.exists():
         raise FormalExecutionError("candidate materialization path already exists")
@@ -794,7 +964,7 @@ def _materialize(repository: Path, destination: Path) -> Path:
                             timeout=120, check=False)
     if result.returncode:
         raise FormalExecutionError("candidate clone failed")
-    _git(destination, "checkout", "--detach", "--force", CANDIDATE_COMMIT)
+    _populate_exact_worktree(destination)
     _verify_checkout(destination)
     return destination
 

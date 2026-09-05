@@ -94,7 +94,8 @@ def _authority(tmp_path: Path, mode: str = "package") -> dict[str, object]:
         "overlay": {"exact_paths": list(executor.AUTHORITY_PATHS[mode]),
                     "expected_parent": "a" * 40,
                     "subject": executor.AUTHORITY_SUBJECTS[mode]},
-        "package_input": package_input, "publication_authorized": False,
+        "package_input": package_input, "prior_incident": executor.PRIOR_INCIDENT,
+        "publication_authorized": False,
         "request": {"attempt_id": "2" * 32,
                     "record_sha256": hashlib.sha256(executor.canonical_bytes(request)).hexdigest().upper(),
                     "request_id": "1" * 32},
@@ -168,6 +169,14 @@ def test_authority_schema_rejects_injection_and_unfrozen_scope(tmp_path: Path) -
             executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
     changed = {**authority, "activation_authorized": True}
     with pytest.raises(executor.FormalExecutionError, match="scope"):
+        executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
+    changed = {**authority, "prior_incident": {
+        **executor.PRIOR_INCIDENT, "worker_started": True}}
+    with pytest.raises(executor.FormalExecutionError, match="incident"):
+        executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
+    changed = {**authority, "request": {
+        **authority["request"], "request_id": executor.PRIOR_INCIDENT["request_id"]}}
+    with pytest.raises(executor.FormalExecutionError, match="reused"):
         executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
 
 
@@ -252,6 +261,33 @@ def test_commit_overlay_checks_parent_subject_and_exact_paths(tmp_path: Path) ->
                                          subject="overlay", paths=("a",))
 
 
+def test_materialization_preserves_raw_blob_bytes_despite_tracked_crlf_attribute(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repository = tmp_path / "source"; repository.mkdir()
+    def git(*arguments: str, binary: bool = False) -> bytes | str:
+        result = subprocess.run(["git", *arguments], cwd=repository, check=True,
+                                stdout=subprocess.PIPE,
+                                text=not binary)
+        return result.stdout if binary else result.stdout.strip()
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "Test")
+    (repository / ".gitattributes").write_bytes(b"*.md text eol=crlf\n")
+    payload = b"first line\nsecond line\n"
+    (repository / "proof.md").write_bytes(payload)
+    git("add", ".gitattributes", "proof.md")
+    git("commit", "-q", "-m", "fixture")
+    commit = str(git("rev-parse", "HEAD"))
+    tree = str(git("rev-parse", "HEAD^{tree}"))
+    assert git("cat-file", "blob", f"{commit}:proof.md", binary=True) == payload
+    monkeypatch.setattr(executor, "CANDIDATE_COMMIT", commit)
+    monkeypatch.setattr(executor, "CANDIDATE_TREE", tree)
+    destination = tmp_path / "materialized"
+    made = executor._materialize(repository, destination)
+    assert (made / "proof.md").read_bytes() == payload
+    assert executor._git(made, "status", "--porcelain=v1", "--untracked-files=all") == ""
+
+
 def test_frozen_gate_and_candidate_manifest_are_exact() -> None:
     raw = subprocess.check_output(
         ["git", "cat-file", "blob", f"{executor.CANDIDATE_COMMIT}:{executor.GATE_RELATIVE}"], cwd=ROOT)
@@ -306,8 +342,27 @@ def test_package_only_blocked_closeout_is_deterministic(tmp_path: Path,
 
 
 def test_contract_and_executor_freezes_match_and_source_is_stdlib_only() -> None:
-    contract = json.loads(CONTRACT.read_bytes())
+    contract_raw = CONTRACT.read_bytes()
+    contract = json.loads(contract_raw)
+    assert executor.canonical_bytes(contract) == contract_raw
+    assert contract["schema"] == "anysolver.ge-beam3-mixed-p3-formal-contract-v2"
     assert contract["harness"]["exact_paths"] == list(executor.HARNESS_PATHS)
+    assert contract["harness"]["expected_parent"] == executor.FAILED_PACKAGE_AUTHORITY_COMMIT
+    assert contract["harness"]["expected_subject"] == executor.HARNESS_SUBJECT
+    assert contract["harness"]["predecessor_chain"] == {
+        "candidate": executor.CANDIDATE_COMMIT,
+        "failed_package_authority": {
+            "commit": executor.FAILED_PACKAGE_AUTHORITY_COMMIT,
+            "tree": executor.FAILED_PACKAGE_AUTHORITY_TREE,
+        },
+        "original_harness": {
+            "commit": executor.HARNESS_V1_COMMIT,
+            "tree": executor.HARNESS_V1_TREE,
+        },
+    }
+    assert contract["failed_package_incident"] == executor.PRIOR_INCIDENT
+    assert contract["process"]["candidate_materialization"] \
+        == "RAW_GIT_BLOBS_WITH_INDEX_NO_CHECKOUT_FILTERS"
     assert contract["execution"] == {**executor.BOUNDS,
         "formal_host": "WINDOWS_JOB_OBJECT_SUSPENDED_ASSIGN_V1",
         "package_then_performance_serial": True, "request_reuse": "FORBIDDEN",
