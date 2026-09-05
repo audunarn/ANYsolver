@@ -94,7 +94,8 @@ def _authority(tmp_path: Path, mode: str = "package") -> dict[str, object]:
         "overlay": {"exact_paths": list(executor.AUTHORITY_PATHS[mode]),
                     "expected_parent": "a" * 40,
                     "subject": executor.AUTHORITY_SUBJECTS[mode]},
-        "package_input": package_input, "prior_incident": executor.PRIOR_INCIDENT,
+        "package_input": package_input,
+        "prior_incidents": list(executor.PRIOR_INCIDENTS),
         "publication_authorized": False,
         "request": {"attempt_id": "2" * 32,
                     "record_sha256": hashlib.sha256(executor.canonical_bytes(request)).hexdigest().upper(),
@@ -170,12 +171,18 @@ def test_authority_schema_rejects_injection_and_unfrozen_scope(tmp_path: Path) -
     changed = {**authority, "activation_authorized": True}
     with pytest.raises(executor.FormalExecutionError, match="scope"):
         executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
-    changed = {**authority, "prior_incident": {
-        **executor.PRIOR_INCIDENT, "worker_started": True}}
+    changed = {**authority, "prior_incidents": [
+        {**executor.PRIOR_INCIDENT, "worker_started": True},
+        executor.SECOND_PRIOR_INCIDENT,
+    ]}
     with pytest.raises(executor.FormalExecutionError, match="incident"):
         executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
     changed = {**authority, "request": {
         **authority["request"], "request_id": executor.PRIOR_INCIDENT["request_id"]}}
+    with pytest.raises(executor.FormalExecutionError, match="reused"):
+        executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
+    changed = {**authority, "request": {
+        **authority["request"], "attempt_id": executor.SECOND_PRIOR_INCIDENT["attempt_id"]}}
     with pytest.raises(executor.FormalExecutionError, match="reused"):
         executor._validate_authority(changed, mode="package", runtime=_runtime(), wheelhouse=_wheelhouse())
 
@@ -216,6 +223,9 @@ def test_receipt_precedes_atomic_publication_and_recovery(tmp_path: Path,
 def test_child_environment_removes_ambient_injection_and_freezes_pip(tmp_path: Path,
                                                                      monkeypatch: pytest.MonkeyPatch) -> None:
     wheelhouse = tmp_path / "wheelhouse"; wheelhouse.mkdir()
+    ambient_home = tmp_path / "ambient-home"; ambient_home.mkdir()
+    monkeypatch.setenv("HOME", str(ambient_home))
+    monkeypatch.setenv("USERPROFILE", str(ambient_home))
     monkeypatch.setenv("PYTHONPATH", "EVIL")
     monkeypatch.setenv("PIP_INDEX_URL", "https://example.invalid")
     monkeypatch.setenv("PYTEST_ADDOPTS", "--pwn")
@@ -225,6 +235,19 @@ def test_child_environment_removes_ambient_injection_and_freezes_pip(tmp_path: P
     assert environment["PIP_CONFIG_FILE"] == os.devnull
     assert "PYTHONPATH" not in environment and "PYTEST_ADDOPTS" not in environment
     assert {environment[name] for name in executor.THREAD_VARIABLES} == {"1"}
+    private_home = (tmp_path / "temp" / "private-home").resolve()
+    assert environment["HOME"] == environment["USERPROFILE"] == str(private_home)
+    assert environment["HOME"] != str(ambient_home.resolve())
+    assert private_home.is_dir() and list(private_home.iterdir()) == []
+    if os.name == "nt":
+        assert environment["HOMEDRIVE"] == private_home.drive
+        assert environment["HOMEPATH"] == str(private_home)[len(private_home.drive):]
+    completed = subprocess.run(
+        [sys.executable, "-I", "-B", "-c", "from pathlib import Path; print(Path.home())"],
+        env=environment, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    assert Path(completed.stdout.strip()).resolve() == private_home
+    with pytest.raises(FileExistsError):
+        executor._child_environment(wheelhouse, tmp_path / "temp")
 
 
 def test_fake_child_success_failure_and_wall_termination(tmp_path: Path) -> None:
@@ -240,6 +263,20 @@ def test_fake_child_success_failure_and_wall_termination(tmp_path: Path) -> None
         (sys.executable, "-c", "import time;time.sleep(5)"), cwd=tmp_path,
         environment=dict(os.environ), log_path=tmp_path / "timed.log", wall_seconds=1)
     assert timed.forced_reason == "COMPLETE_WAVE_WALL_LIMIT" and timed.returncode != 0
+
+
+def test_diagnostics_report_only_the_candidate_wheel_directory(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    wheel = work / "gate" / "wheel" / "candidate.whl"
+    installed_record_member = (
+        work / "gate" / "environment-1" / "Lib" / "site-packages" / "dependency.whl")
+    wheel.parent.mkdir(parents=True)
+    installed_record_member.parent.mkdir(parents=True)
+    (work / "formal-gate.log").write_bytes(b"formal diagnostics\n")
+    wheel.write_bytes(b"candidate wheel")
+    installed_record_member.write_bytes(b"")
+    rows = executor._diagnostic_artifacts(work, "package")
+    assert [row["filename"] for row in rows if row["kind"] == "WHEEL"] == ["candidate.whl"]
 
 
 def test_commit_overlay_checks_parent_subject_and_exact_paths(tmp_path: Path) -> None:
@@ -345,12 +382,16 @@ def test_contract_and_executor_freezes_match_and_source_is_stdlib_only() -> None
     contract_raw = CONTRACT.read_bytes()
     contract = json.loads(contract_raw)
     assert executor.canonical_bytes(contract) == contract_raw
-    assert contract["schema"] == "anysolver.ge-beam3-mixed-p3-formal-contract-v2"
+    assert contract["schema"] == "anysolver.ge-beam3-mixed-p3-formal-contract-v3"
     assert contract["harness"]["exact_paths"] == list(executor.HARNESS_PATHS)
-    assert contract["harness"]["expected_parent"] == executor.FAILED_PACKAGE_AUTHORITY_COMMIT
+    assert contract["harness"]["expected_parent"] == executor.FAILED_PACKAGE_AUTHORITY_V2_COMMIT
     assert contract["harness"]["expected_subject"] == executor.HARNESS_SUBJECT
     assert contract["harness"]["predecessor_chain"] == {
         "candidate": executor.CANDIDATE_COMMIT,
+        "exact_materialization_harness": {
+            "commit": executor.HARNESS_V2_COMMIT,
+            "tree": executor.HARNESS_V2_TREE,
+        },
         "failed_package_authority": {
             "commit": executor.FAILED_PACKAGE_AUTHORITY_COMMIT,
             "tree": executor.FAILED_PACKAGE_AUTHORITY_TREE,
@@ -359,10 +400,18 @@ def test_contract_and_executor_freezes_match_and_source_is_stdlib_only() -> None
             "commit": executor.HARNESS_V1_COMMIT,
             "tree": executor.HARNESS_V1_TREE,
         },
+        "second_failed_package_authority": {
+            "commit": executor.FAILED_PACKAGE_AUTHORITY_V2_COMMIT,
+            "tree": executor.FAILED_PACKAGE_AUTHORITY_V2_TREE,
+        },
     }
-    assert contract["failed_package_incident"] == executor.PRIOR_INCIDENT
+    assert contract["failed_package_incidents"] == list(executor.PRIOR_INCIDENTS)
     assert contract["process"]["candidate_materialization"] \
         == "RAW_GIT_BLOBS_WITH_INDEX_NO_CHECKOUT_FILTERS"
+    assert contract["process"]["child_home"] == "EXCLUSIVE_EXTERNAL_PRIVATE_HOME_V1"
+    assert contract["process"]["prior_failed_incidents_required_in_authority"] == 2
+    assert contract["runtime"]["ambient_user_home"] \
+        == "REPLACED_WITH_EXCLUSIVE_EXTERNAL_PRIVATE_HOME"
     assert contract["execution"] == {**executor.BOUNDS,
         "formal_host": "WINDOWS_JOB_OBJECT_SUSPENDED_ASSIGN_V1",
         "package_then_performance_serial": True, "request_reuse": "FORBIDDEN",

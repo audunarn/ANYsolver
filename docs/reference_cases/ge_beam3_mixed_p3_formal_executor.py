@@ -6,9 +6,10 @@ claims the request and attempt durably, and only then invokes the frozen P3
 gate.  Package and performance are separate serial requests; the latter must
 bind the accepted package receipt, aggregate, and exact wheel.
 
-The v2 harness also binds the consumed v1 package incident and materializes
-the frozen candidate from raw Git blobs.  Checkout attributes therefore cannot
-change evidence bytes before the package worker starts.
+The v3 harness binds both consumed package incidents, materializes the frozen
+candidate from raw Git blobs, and gives every worker an exclusive private home.
+Checkout attributes and ambient user-home state therefore cannot change the
+package worker's inputs.
 """
 
 from __future__ import annotations
@@ -35,9 +36,9 @@ import time
 from typing import Any, Mapping, Sequence
 
 
-SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-authority-v2"
-REVIEW_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-review-v2"
-CHECK_SCHEMA = "anysolver.ge-beam3-mixed-p3-authority-check-v2"
+SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-authority-v3"
+REVIEW_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-review-v3"
+CHECK_SCHEMA = "anysolver.ge-beam3-mixed-p3-authority-check-v3"
 CLAIM_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-claim-v1"
 REQUEST_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-request-v1"
 RECEIPT_SCHEMA = "anysolver.ge-beam3-mixed-p3-execution-receipt-v1"
@@ -55,10 +56,13 @@ CONTRACT_RELATIVE = "docs/reference_cases/ge_beam3_mixed_p3_formal_contract.json
 EXECUTOR_RELATIVE = "docs/reference_cases/ge_beam3_mixed_p3_formal_executor.py"
 TEST_RELATIVE = "tests/test_ge_beam3_mixed_p3_formal_executor.py"
 HARNESS_PATHS = (CONTRACT_RELATIVE, EXECUTOR_RELATIVE, TEST_RELATIVE)
-HARNESS_SUBJECT = "docs: repair GE Beam3 P3 exact materialization harness"
+HARNESS_SUBJECT = "docs: repair GE Beam3 P3 private home harness"
 HARNESS_V1_COMMIT = "ecf4cfe228d7513e9bb99f885c42da198a2d7fe5"
 HARNESS_V1_TREE = "3e40cd5b158b027e8f1f5491399f7e8639d9ed7f"
 HARNESS_V1_SUBJECT = "docs: freeze GE Beam3 P3 formal execution harness"
+HARNESS_V2_COMMIT = "7ad427a0e45973ecb4a573ec8cfb63dbec735e20"
+HARNESS_V2_TREE = "5625d5fa98d68b5a1f70b45c925bf5d1b73ad9ec"
+HARNESS_V2_SUBJECT = "docs: repair GE Beam3 P3 exact materialization harness"
 FAILED_PACKAGE_AUTHORITY_COMMIT = "48a3eba3347d9ebe0fd15cac6a8c7db64c1f743e"
 FAILED_PACKAGE_AUTHORITY_TREE = "da4848f06678783e7f1e420c8b12f24050544470"
 FAILED_PACKAGE_AUTHORITY_SHA256 = "4FA0230776029CAE990F37A710F8684A3D5C13320087A27FADC626A2A6948E73"
@@ -76,6 +80,24 @@ PRIOR_INCIDENT = {
     "sha256": "AEB6431DE2CCE7CDDBC166E747B1245C11C755BAEE03FA8F4752A87FD3B071C1",
     "terminal": "BLOCKED_GE_BEAM3_P3_PROCESS_OR_EVIDENCE",
 }
+FAILED_PACKAGE_AUTHORITY_V2_COMMIT = "7367270451c612e0d3cd1f8cfe8f21be111b4082"
+FAILED_PACKAGE_AUTHORITY_V2_TREE = "fc871781ab483231d3967cec14444a33fd60bdb6"
+FAILED_PACKAGE_AUTHORITY_V2_SHA256 = "4B16E980BB0EE3C166C77E19C8ACC037043E1F67427198A9422F83C9078DD3F1"
+FAILED_PACKAGE_AUTHORITY_V2_BYTES = 7_905
+FAILED_PACKAGE_REVIEW_V2_SHA256 = "1CAB427E6B0809764497AB29589DBECCF4435726F2C6CE6600E4B3036A8C507A"
+FAILED_PACKAGE_REVIEW_V2_BYTES = 478
+SECOND_PRIOR_INCIDENT = {
+    "attempt_id": "c18882fd05f44176b968a50af60204d8",
+    "authority_commit": FAILED_PACKAGE_AUTHORITY_V2_COMMIT,
+    "bytes": 2_622,
+    "classification": "FORMAL_HARNESS_PRIVATE_HOME_OMISSION",
+    "path": (r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease"
+             r"\ge-beam3-p3-formal-20260905-h2\incident\package-cycle2-root-cause.json"),
+    "request_id": "c03bc8a874d645a1b384b14060ed4fbf",
+    "sha256": "5C37A9DAAF42168883ECCD5C837F1EBA5D8A3047A6B29FAC9CDA6412AC49BE74",
+    "terminal": "BLOCKED_GE_BEAM3_P3_PROCESS_OR_EVIDENCE",
+}
+PRIOR_INCIDENTS = (PRIOR_INCIDENT, SECOND_PRIOR_INCIDENT)
 FAILED_INCIDENT_RECORD = {
     "a1": {
         "attempt_id": PRIOR_INCIDENT["attempt_id"],
@@ -128,6 +150,90 @@ FAILED_INCIDENT_RECORD = {
     },
     "schema": "anysolver.ge-beam3-mixed-p3-package-cycle1-incident-v1",
     "terminal": PRIOR_INCIDENT["terminal"],
+}
+SECOND_FAILED_INCIDENT_RECORD = {
+    "a1b": {
+        "attempt_id": SECOND_PRIOR_INCIDENT["attempt_id"],
+        "authority": {
+            "bytes": FAILED_PACKAGE_AUTHORITY_V2_BYTES,
+            "commit": FAILED_PACKAGE_AUTHORITY_V2_COMMIT,
+            "sha256": FAILED_PACKAGE_AUTHORITY_V2_SHA256,
+            "tree": FAILED_PACKAGE_AUTHORITY_V2_TREE,
+        },
+        "claim": {
+            "bytes": 583,
+            "sha256": "F847BE134BC7D3402424E9005CE3C85BAB2953E82CBF8242EBBF4C99B2DE3BF5",
+        },
+        "receipt": {
+            "bytes": 1_973,
+            "sha256": "734DBFE646ED57BE06549B1E28A677D536FBD37A1606FF37488D1DFEEF4FA936",
+        },
+        "request": {
+            "bytes": 2_680,
+            "request_id": SECOND_PRIOR_INCIDENT["request_id"],
+            "sha256": "9CD85CFB5167B84F50C9D2CDC299B22D477459310335F2D076D179FDF18CEF70",
+        },
+        "result": {
+            "bytes": 1_442,
+            "sha256": "A7584834AC834173F97E00EBEEF4AE776A29AF9230B86EB2E352CE17A46C38F3",
+        },
+        "review": {
+            "bytes": FAILED_PACKAGE_REVIEW_V2_BYTES,
+            "sha256": FAILED_PACKAGE_REVIEW_V2_SHA256,
+        },
+        "synthesis": {
+            "bytes": 2_078,
+            "sha256": "D9CBDDAD7E97E583C8EA935FD255B4F77EAF3719F10629D336A7E2A09959957D",
+        },
+    },
+    "archive_ref": "refs/archive/ge-beam3-p3-package-cycle2-blocked-20260905",
+    "candidate": {"commit": CANDIDATE_COMMIT, "tree": CANDIDATE_TREE},
+    "diagnosis": {
+        "candidate_wheel": {
+            "bytes": 1_233_936,
+            "sha256": "E4BE343A9B68059CC8203D3F81E92815F1BDDD9D802432A2E13CEF02C906E18B",
+        },
+        "check_index": 1,
+        "check_log": {
+            "bytes": 2_369,
+            "sha256": "54BCDAFC12B74E1F70894CDB7C2DA6E680AFB08043FA3E9CF3FD7E48183FA171",
+        },
+        "classification": SECOND_PRIOR_INCIDENT["classification"],
+        "exception": "RuntimeError: Could not determine home directory.",
+        "formal_log": {
+            "bytes": 1_490,
+            "sha256": "E1B5E3A20A7EDFFB0C635C9A37C7E4CC23135CFCFEBDAF50949BD1F5494AF185",
+        },
+        "gate_started": True,
+        "installed_anymaterial_version": "0.2.0",
+        "package_build_completed": True,
+        "package_install_completed": True,
+        "scipy_record_member": {
+            "bytes": 0,
+            "causal": False,
+            "filename": "scipy-1.18.1-cp313-cp313-win_amd64.whl",
+            "record_entry": (
+                "scipy-1.18.1-cp313-cp313-win_amd64.whl,"
+                "sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0"
+            ),
+            "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        },
+        "worker_started": True,
+    },
+    "h2": {"commit": HARNESS_V2_COMMIT, "tree": HARNESS_V2_TREE},
+    "prior_incident": {
+        "bytes": PRIOR_INCIDENT["bytes"],
+        "path": PRIOR_INCIDENT["path"],
+        "sha256": PRIOR_INCIDENT["sha256"],
+    },
+    "production_boundary": {
+        "activation_authorized": False,
+        "candidate_mechanics_changed": False,
+        "defaults_changed": False,
+        "publication_authorized": False,
+    },
+    "schema": "anysolver.ge-beam3-mixed-p3-package-cycle2-incident-v1",
+    "terminal": SECOND_PRIOR_INCIDENT["terminal"],
 }
 AUTHORITY_PATHS = {
     "package": (
@@ -425,6 +531,7 @@ def runtime_identity() -> dict[str, Any]:
                                 stderr=subprocess.PIPE, check=True, timeout=30, text=True)
     return {
         "controlled_environment": {
+            "child_home": "EXCLUSIVE_EXTERNAL_PRIVATE_HOME_V1",
             "git_configuration": "DISABLED", "hash_seed": "0",
             "numerical_library_threads": 1, "pip_configuration": "DISABLED",
             "pip_index": "DISABLED", "python_injection": "DISABLED",
@@ -489,7 +596,7 @@ def _validate_authority(value: Any, *, mode: str, runtime: dict[str, Any],
                         wheelhouse: dict[str, Any]) -> dict[str, Any]:
     keys = {"activation_authorized", "candidate", "execution", "execution_authorized",
             "formal_argv", "harness", "locations", "mode", "overlay",
-            "package_input", "prior_incident", "publication_authorized", "request", "runtime",
+            "package_input", "prior_incidents", "publication_authorized", "request", "runtime",
             "schema", "study_id", "wheelhouse"}
     if type(value) is not dict or set(value) != keys:
         raise FormalExecutionError("authority keys differ")
@@ -527,10 +634,13 @@ def _validate_authority(value: Any, *, mode: str, runtime: dict[str, Any],
             or request["request_id"] == request["attempt_id"] \
             or not _is_sha(request["record_sha256"]):
         raise FormalExecutionError("request identity is malformed")
-    if request["request_id"] in {PRIOR_INCIDENT["request_id"], PRIOR_INCIDENT["attempt_id"]} \
-            or request["attempt_id"] in {
-                PRIOR_INCIDENT["request_id"], PRIOR_INCIDENT["attempt_id"]}:
-        raise FormalExecutionError("prior failed-package request or attempt was reused")
+    consumed_ids = {
+        identity
+        for incident in PRIOR_INCIDENTS
+        for identity in (incident["request_id"], incident["attempt_id"])
+    }
+    if request["request_id"] in consumed_ids or request["attempt_id"] in consumed_ids:
+        raise FormalExecutionError("a consumed failed-package request or attempt was reused")
     runtime_binding = value["runtime"]
     if type(runtime_binding) is not dict or set(runtime_binding) != {"identity", "sha256"} \
             or runtime_binding["identity"] != runtime \
@@ -538,8 +648,8 @@ def _validate_authority(value: Any, *, mode: str, runtime: dict[str, Any],
         raise FormalExecutionError("runtime identity differs")
     if value["wheelhouse"] != wheelhouse:
         raise FormalExecutionError("wheelhouse identity differs")
-    if value["prior_incident"] != PRIOR_INCIDENT:
-        raise FormalExecutionError("prior failed-package incident binding differs")
+    if value["prior_incidents"] != list(PRIOR_INCIDENTS):
+        raise FormalExecutionError("prior failed-package incident bindings differ")
     locations = value["locations"]
     location_keys = {"authority", "candidate_wheel", "executor", "output",
                      "package_aggregate", "package_receipt", "registry", "repository",
@@ -615,7 +725,7 @@ def _validate_review(value: Any, authority_identity: Mapping[str, Any], mode: st
         raise FormalExecutionError("reviewer independence differs")
 
 
-def _validate_prior_incident(repository: Path) -> None:
+def _validate_prior_incidents(repository: Path) -> None:
     incident_path = Path(PRIOR_INCIDENT["path"])
     raw, incident = strict_json(incident_path)
     if {"bytes": len(raw), "path": str(incident_path), "sha256": _sha(raw)} != {
@@ -676,6 +786,120 @@ def _validate_prior_incident(repository: Path) -> None:
             or result.get("authority", {}).get("commit") != FAILED_PACKAGE_AUTHORITY_COMMIT \
             or result.get("terminal") != PRIOR_INCIDENT["terminal"]:
         raise FormalExecutionError("prior failed-package provenance differs")
+    first_diagnosis = FAILED_INCIDENT_RECORD["diagnosis"]
+    first_checkout = (release_root / f"package-work-{PRIOR_INCIDENT['attempt_id']}"
+                      / "candidate" / first_diagnosis["checkout_path"])
+    first_checkout_raw = _regular_bytes(first_checkout)
+    first_blob_raw = _git(
+        repository, "cat-file", "blob",
+        f"{CANDIDATE_COMMIT}:{first_diagnosis['checkout_path']}", binary=True)
+    assert isinstance(first_blob_raw, bytes)
+    if len(first_checkout_raw) != first_diagnosis["checkout_bytes"] \
+            or _sha(first_checkout_raw) != first_diagnosis["checkout_sha256"] \
+            or len(first_blob_raw) != first_diagnosis["git_blob_bytes"] \
+            or _sha(first_blob_raw) != first_diagnosis["git_blob_sha256"]:
+        raise FormalExecutionError("prior failed-package checkout diagnosis differs")
+
+    if _require_commit_overlay(
+            repository, HARNESS_V2_COMMIT, parent=FAILED_PACKAGE_AUTHORITY_COMMIT,
+            subject=HARNESS_V2_SUBJECT, paths=HARNESS_PATHS) != HARNESS_V2_TREE:
+        raise FormalExecutionError("exact-materialization harness commit differs")
+
+    second_path = Path(SECOND_PRIOR_INCIDENT["path"])
+    second_raw, second = strict_json(second_path)
+    if {"bytes": len(second_raw), "path": str(second_path), "sha256": _sha(second_raw)} != {
+        "bytes": SECOND_PRIOR_INCIDENT["bytes"], "path": SECOND_PRIOR_INCIDENT["path"],
+        "sha256": SECOND_PRIOR_INCIDENT["sha256"],
+    } or second != SECOND_FAILED_INCIDENT_RECORD:
+        raise FormalExecutionError("second failed-package incident record differs")
+    if _git(repository, "rev-parse", SECOND_FAILED_INCIDENT_RECORD["archive_ref"]) \
+            != FAILED_PACKAGE_AUTHORITY_V2_COMMIT:
+        raise FormalExecutionError("second failed-package archive ref differs")
+    if _require_commit_overlay(
+            repository, FAILED_PACKAGE_AUTHORITY_V2_COMMIT,
+            parent=HARNESS_V2_COMMIT, subject=AUTHORITY_SUBJECTS["package"],
+            paths=AUTHORITY_PATHS["package"]) != FAILED_PACKAGE_AUTHORITY_V2_TREE:
+        raise FormalExecutionError("second failed-package authority commit differs")
+    second_authority = _blob_identity(
+        repository, FAILED_PACKAGE_AUTHORITY_V2_COMMIT, AUTHORITY_PATHS["package"][0])
+    second_review = _blob_identity(
+        repository, FAILED_PACKAGE_AUTHORITY_V2_COMMIT, AUTHORITY_PATHS["package"][1])
+    if second_authority != {
+            "bytes": FAILED_PACKAGE_AUTHORITY_V2_BYTES,
+            "path": AUTHORITY_PATHS["package"][0],
+            "sha256": FAILED_PACKAGE_AUTHORITY_V2_SHA256,
+    } or second_review != {
+            "bytes": FAILED_PACKAGE_REVIEW_V2_BYTES,
+            "path": AUTHORITY_PATHS["package"][1],
+            "sha256": FAILED_PACKAGE_REVIEW_V2_SHA256,
+    }:
+        raise FormalExecutionError("second failed-package authority blobs differ")
+
+    second_release_root = second_path.parent.parent
+    second_registry = Path(r"C:\Github\.resource-manager")
+    second_request_id = SECOND_PRIOR_INCIDENT["request_id"]
+    second_attempt_id = SECOND_PRIOR_INCIDENT["attempt_id"]
+    second_work_root = second_release_root / f"package-work-{second_attempt_id}"
+    second_paths = {
+        "request": second_registry / "requests" / f"{second_request_id}.json",
+        "claim": second_registry / "claims" / f"{second_request_id}.json",
+        "attempt": second_registry / "attempts" / f"{second_attempt_id}.json",
+        "receipt": second_registry / "receipts" / f"{second_request_id}.json",
+        "result": second_release_root / "canonical" / f"package-result-{second_request_id}.json",
+        "synthesis_one": second_release_root / "incident" / "package-cycle2-blocked-synthesis-1.json",
+        "synthesis_two": second_release_root / "incident" / "package-cycle2-blocked-synthesis-2.json",
+        "formal_log": second_work_root / "formal-gate.log",
+        "check_log": second_work_root / "gate" / "diagnostics" / "check-1.log",
+        "candidate_wheel": (
+            second_work_root / "gate" / "wheel" / "anysolver-0.4.2-py3-none-any.whl"),
+        "scipy_record_member": (
+            second_work_root / "gate" / "environment-1" / "Lib" / "site-packages"
+            / SECOND_FAILED_INCIDENT_RECORD["diagnosis"]["scipy_record_member"]["filename"]),
+    }
+    second_expected = SECOND_FAILED_INCIDENT_RECORD["a1b"]
+    expected_by_key = {
+        "request": second_expected["request"],
+        "claim": second_expected["claim"],
+        "attempt": second_expected["claim"],
+        "receipt": second_expected["receipt"],
+        "result": second_expected["result"],
+        "synthesis_one": second_expected["synthesis"],
+        "synthesis_two": second_expected["synthesis"],
+        "formal_log": SECOND_FAILED_INCIDENT_RECORD["diagnosis"]["formal_log"],
+        "check_log": SECOND_FAILED_INCIDENT_RECORD["diagnosis"]["check_log"],
+        "candidate_wheel": SECOND_FAILED_INCIDENT_RECORD["diagnosis"]["candidate_wheel"],
+        "scipy_record_member": SECOND_FAILED_INCIDENT_RECORD["diagnosis"]["scipy_record_member"],
+    }
+    raw_by_key: dict[str, bytes] = {}
+    for key, path in second_paths.items():
+        raw_value = _regular_bytes(path)
+        expected = expected_by_key[key]
+        if len(raw_value) != expected["bytes"] or _sha(raw_value) != expected["sha256"]:
+            raise FormalExecutionError(f"second failed-package {key} differs")
+        raw_by_key[key] = raw_value
+    for key in ("request", "claim", "attempt", "receipt", "result",
+                "synthesis_one", "synthesis_two"):
+        _strict_json_bytes(raw_by_key[key], f"second prior {key}")
+    if raw_by_key["claim"] != raw_by_key["attempt"]:
+        raise FormalExecutionError("second failed-package claim and attempt differ")
+    second_request = _strict_json_bytes(raw_by_key["request"], "second prior request")
+    second_claim = _strict_json_bytes(raw_by_key["claim"], "second prior claim")
+    second_receipt = _strict_json_bytes(raw_by_key["receipt"], "second prior receipt")
+    second_result = _strict_json_bytes(raw_by_key["result"], "second prior result")
+    if second_request.get("request_id") != second_request_id \
+            or second_request.get("attempt_id") != second_attempt_id \
+            or second_claim.get("request_id") != second_request_id \
+            or second_claim.get("attempt_id") != second_attempt_id \
+            or second_claim.get("authority_commit") != FAILED_PACKAGE_AUTHORITY_V2_COMMIT \
+            or second_receipt.get("request_id") != second_request_id \
+            or second_receipt.get("attempt_id") != second_attempt_id \
+            or second_receipt.get("authority_commit") != FAILED_PACKAGE_AUTHORITY_V2_COMMIT \
+            or second_receipt.get("terminal") != SECOND_PRIOR_INCIDENT["terminal"] \
+            or second_result.get("request_id") != second_request_id \
+            or second_result.get("authority", {}).get("commit") \
+                != FAILED_PACKAGE_AUTHORITY_V2_COMMIT \
+            or second_result.get("terminal") != SECOND_PRIOR_INCIDENT["terminal"]:
+        raise FormalExecutionError("second failed-package provenance differs")
 
 
 def _validate_git_chain(repository: Path, validated: ValidatedAuthority,
@@ -698,10 +922,10 @@ def _validate_git_chain(repository: Path, validated: ValidatedAuthority,
             repository, HARNESS_V1_COMMIT, parent=CANDIDATE_COMMIT,
             subject=HARNESS_V1_SUBJECT, paths=HARNESS_PATHS) != HARNESS_V1_TREE:
         raise FormalExecutionError("original harness tree differs")
-    _validate_prior_incident(repository)
+    _validate_prior_incidents(repository)
     harness = authority["harness"]
     if _require_commit_overlay(
-            repository, harness["commit"], parent=FAILED_PACKAGE_AUTHORITY_COMMIT,
+            repository, harness["commit"], parent=FAILED_PACKAGE_AUTHORITY_V2_COMMIT,
             subject=HARNESS_SUBJECT, paths=HARNESS_PATHS) != harness["tree"]:
         raise FormalExecutionError("harness tree differs")
     for row in harness["files"]:
@@ -972,11 +1196,22 @@ def _materialize(repository: Path, destination: Path) -> Path:
 def _child_environment(wheelhouse: Path, temp: Path) -> dict[str, str]:
     environment = _base_environment()
     temp.mkdir(parents=True, exist_ok=False)
+    private_home = temp / "private-home"
+    private_home.mkdir(mode=0o700, exist_ok=False)
+    if any(private_home.iterdir()):
+        raise FormalExecutionError("private child home was not created empty")
     environment.update({
+        "HOME": str(private_home.resolve(strict=True)),
         "PIP_CONFIG_FILE": os.devnull, "PIP_DISABLE_PIP_VERSION_CHECK": "1",
         "PIP_FIND_LINKS": str(wheelhouse.resolve(strict=True)), "PIP_NO_CACHE_DIR": "1",
         "PIP_NO_INDEX": "1", "TEMP": str(temp), "TMP": str(temp),
+        "USERPROFILE": str(private_home.resolve(strict=True)),
     })
+    if os.name == "nt":
+        drive, tail = os.path.splitdrive(str(private_home.resolve(strict=True)))
+        if not drive or not tail.startswith(("\\", "/")):
+            raise FormalExecutionError("private child home has no absolute Windows drive")
+        environment.update({"HOMEDRIVE": drive, "HOMEPATH": tail})
     return environment
 
 
@@ -1222,8 +1457,9 @@ def _diagnostic_artifacts(work_root: Path, mode: str) -> list[dict[str, Any]]:
     gate_root = work_root / "gate"
     candidates.append(gate_root / ("package-aggregate.json" if mode == "package"
                                    else "performance-aggregate.json"))
-    if gate_root.exists():
-        candidates.extend(sorted(gate_root.rglob("*.whl")))
+    wheel_root = gate_root / "wheel"
+    if wheel_root.is_dir():
+        candidates.extend(sorted(wheel_root.glob("*.whl")))
     rows = []
     seen: set[Path] = set()
     for path in candidates:
