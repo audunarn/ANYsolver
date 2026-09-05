@@ -88,12 +88,17 @@ No frame finite difference, normalization or polar projection is used.
         potential = float(.5*stress @ self.compliance @ stress+.5*self.hardening*z*z+self.yield_force*abs(z))
         return strain, derivative, float(z), potential
 
+    def _inverse_at(self, t, stress):
+        # The virgin law is spatially uniform. History-reference successors
+        # may override this hook with an explicitly fixed material-origin grid.
+        return self.section_inverse(stress)
+
     def _rhs(self, t, state, moment, force):
         r,R = state[:3],state[3:12].reshape(3,3)
         sensitivity = state[13:].reshape(12,3)
         m = moment-np.cross(r-self.left,force)
         stress = np.r_[R.T @ force,R.T @ m]
-        strain,compliance,_,potential = self.section_inverse(stress)
+        strain,compliance,_,potential = self._inverse_at(t,stress)
         jacobian = np.sqrt(1+4*self.height*self.height*t*t)
         k0 = np.array([0.,-2*self.height/jacobian**3,0.])
         velocity = np.array([1.,0.,0.])+strain[:3]
@@ -159,7 +164,7 @@ No frame finite difference, normalization or polar projection is used.
                 spatial = moment-np.cross(states[:,:3]-self.left,force)
                 stresses = np.column_stack((np.einsum('nji,j->ni',frames,force),
                                            np.einsum('nji,nj->ni',frames,spatial)))
-                inverse = [self.section_inverse(s) for s in stresses]
+                inverse = [self._inverse_at(t,s) for t,s in zip(np.linspace(-1.,1.,steps+1),stresses)]
                 return ShootingResult(states[:,:3],frames,spatial,stresses,np.array([s[0] for s in inverse]),
                     np.array([s[2] for s in inverse]),float(states[-1,12]),moment.copy(),norm,error,steps,iteration,count)
             if iteration == max_iterations:
