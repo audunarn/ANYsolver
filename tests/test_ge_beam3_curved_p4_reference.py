@@ -189,6 +189,20 @@ def test_callers_cannot_weaken_frozen_reference_admission_tolerances() -> None:
         )
 
 
+def test_admitted_nodal_tolerance_is_not_rejected_during_frame_evaluation() -> None:
+    coordinates = np.array(
+        ((0.0, 0.0, 0.0), (0.5, 0.0, 0.0), (1.0, 0.0, 0.0))
+    )
+    admitted = np.eye(3)
+    admitted[0, 0] += 4.0e-12
+    geometry = CurvedBeam3ReferenceGeometry(
+        coordinates,
+        np.repeat(admitted[None, :, :], 3, axis=0),
+    )
+    frame = geometry.frame(-0.5)
+    assert np.linalg.norm(frame[:, 0] - np.array((1.0, 0.0, 0.0))) < 1.0e-11
+
+
 def test_shortest_transport_residual_roll_branch_fails_closed() -> None:
     coordinates = np.array(((0.0, 0.0, 0.0), (0.5, 0.0, 0.0), (1.0, 0.0, 0.0)))
     positive = _triad(np.array((1.0, 0.0, 0.0)), np.array((0.0, 1.0, 0.0)))

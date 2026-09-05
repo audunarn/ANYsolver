@@ -560,7 +560,10 @@ class CurvedBeam3ReferenceGeometry:
         base = _shortest_tangent_transport(left_tangent, first) @ self._nodal_triads[left]
         residual_roll = self._half_frame_data[left][1]
         frame = _axis_rotation(first, fraction * residual_roll) @ base
-        if float(np.linalg.norm(frame[:, 0] - first)) > self._frame_tolerance:
+        # Nodal frames are admitted to the registered SO(3)/tangent tolerance.
+        # The interpolant must not apply the tighter independent-checker frame
+        # agreement tolerance as a second, later admission test.
+        if float(np.linalg.norm(frame[:, 0] - first)) > self._rotation_tolerance:
             raise GeBeam3CurvedFrameError(
                 "reference frame interpolation lost tangent alignment"
             )
