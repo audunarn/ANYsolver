@@ -138,6 +138,10 @@ from .e4_pl_s3_v2d_element import (
     NativeParityCapabilityError,
     NativeParityE4PLS3V2DShellElement,
 )
+from .ge_beam3_element import (
+    GE_BEAM3_QUALIFIED_FORMULATION_ID,
+    GeometricallyExactBeam3D3NElement,
+)
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -564,6 +568,8 @@ __all__ = [
     "LegacyQ4DeprecationWarning",
     "LegacyS3MigrationWarning",
     "QuadraticBeamElement",
+    "GE_BEAM3_QUALIFIED_FORMULATION_ID",
+    "GeometricallyExactBeam3D3NElement",
     "QualifiedE4PLShellElement",
     "QualifiedE4PLS3ShellElement",
     "QualifiedS3MigrationWarning",

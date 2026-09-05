@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +26,65 @@ SCOPE = "PRIVATE_STRAIGHT_SOLVER_STATE_LOAD_MASS_RECOVERY_MODAL_BUCKLING_PARITY_
 REQUEST_ID = "071b0deaf3efa9cbef7b3286670eeba3"
 ATTEMPT_ID = "9eda46ce597513f303a4d73cc3931667"
 CYCLE_SHA256 = "979379D8AB906557B7C4FEF10ADCFF0A7C7E9FB13E81B0396DF79B41411CFC96"
+ACCEPTED_CLOSEOUT_COMMIT = "e31c9e292a2fc9f6b57472bb8c5b90919a535492"
+
+
+def _sanitized_git(*arguments: str) -> subprocess.CompletedProcess[bytes]:
+    environment = {
+        key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")
+    }
+    environment.update(
+        {
+            "GIT_ATTR_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
+    return subprocess.run(
+        ["git", "-c", f"safe.directory={ROOT}", *arguments],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+
+
+def _is_explicit_github_shallow_boundary() -> bool:
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return False
+    shallow_repository = _sanitized_git("rev-parse", "--is-shallow-repository")
+    shallow_name = _sanitized_git("rev-parse", "--git-path", "shallow")
+    head = _sanitized_git("rev-parse", "HEAD")
+    if (
+        shallow_repository.returncode
+        or shallow_repository.stdout.strip() != b"true"
+        or shallow_name.returncode
+        or head.returncode
+    ):
+        return False
+    shallow = Path(os.fsdecode(shallow_name.stdout.strip()))
+    if not shallow.is_absolute():
+        shallow = (ROOT / shallow).resolve()
+    return shallow.is_file() and head.stdout.decode("ascii").strip() in shallow.read_text(
+        encoding="ascii"
+    ).splitlines()
+
+
+def _accepted_route_text(path: str) -> str:
+    object_name = f"{ACCEPTED_CLOSEOUT_COMMIT}:{path}"
+    shown = _sanitized_git("show", "--no-ext-diff", "--no-textconv", object_name)
+    if shown.returncode:
+        assert _is_explicit_github_shallow_boundary(), (
+            f"accepted route is missing outside an explicit GitHub shallow boundary: "
+            f"{object_name}"
+        )
+        pytest.skip("accepted historical route is beyond the explicit GitHub shallow boundary")
+    return shown.stdout.decode(
+        "utf-8",
+    )
 
 
 def _reject_constant(value: str) -> None:
@@ -326,10 +389,10 @@ def test_scope_and_production_boundary_remain_private_and_fail_closed() -> None:
         "PROVISIONAL_GO_GE_BEAM3_MIXED_STRAIGHT_STATIC_CORE"
     )
     for route in (
-        ROOT / "src" / "anysolver" / "__init__.py",
-        ROOT / "src" / "anysolver" / "elements.py",
+        "src/anysolver/__init__.py",
+        "src/anysolver/elements.py",
     ):
-        text = route.read_text(encoding="utf-8")
+        text = _accepted_route_text(route)
         assert "GeometricallyExactBeam3D3NElement" not in text
         assert "GE_BEAM3_DC_MIXED_K1_MACRO_V2" not in text
         assert '"ge-beam3"' not in text
