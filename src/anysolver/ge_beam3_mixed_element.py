@@ -28,8 +28,19 @@ from ._ge_beam3_mixed_ad import (
     so3_log,
     transpose,
 )
-from .beam_sections import generalized_beam_stiffness, resolve_generalized_beam_section
+from .beam_sections import (
+    GeneralizedBeamSection,
+    generalized_beam_mass_matrix,
+    generalized_beam_stiffness,
+    resolve_generalized_beam_section,
+)
 from .elements import Element
+from ._native_rotation_state import NativeElementRotationView
+from .ge_beam3_mixed_state import (
+    GeBeam3MixedCommittedStateError,
+    initialize_ge_beam3_mixed_state,
+    validate_committed_ge_beam3_mixed_state,
+)
 
 
 GE_BEAM3_MIXED_CANDIDATE_ID = "CANDIDATE_GE_BEAM3_DC_MIXED_K1_MACRO_V2"
@@ -100,6 +111,7 @@ class GeometricallyExactBeam3D3NElement(Element):
     formulation_id = GE_BEAM3_MIXED_FORMULATION_ID
     formulation_native_total_lagrangian = True
     native_state_consistency_required = False
+    nonlinear_material_response_mode = "stateless_fixed_generalized_section"
     solver_integration_authorized = False
     REVERSAL_STRAIN_MAP = np.diag((1.0, -1.0, 1.0, 1.0, -1.0, 1.0))
 
@@ -133,10 +145,52 @@ class GeometricallyExactBeam3D3NElement(Element):
             if axis.shape != (3,) or not np.all(np.isfinite(axis)) or np.linalg.norm(axis) == 0.0:
                 raise GeBeam3MixedGeometryError("reference_axis_direction must contain three finite nonzero values")
             self.reference_axis_direction = np.array(axis, copy=True)
-        self.generalized_section = resolve_generalized_beam_section(self.cross_section, section)
-        if self.generalized_section is None:
+        inline_section = self.cross_section.get(
+            "generalized_section", self.cross_section.get("beam_section")
+        )
+        inline_stiffness = self.cross_section.get("generalized_stiffness")
+        raw_section = (
+            section
+            if section is not None
+            else inline_section
+            if inline_section is not None
+            else inline_stiffness
+        )
+        if (
+            raw_section is not None
+            and type(raw_section) is not GeneralizedBeamSection
+            and callable(getattr(raw_section, "generalized_stiffness_matrix", None))
+        ):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 P2 accepts only the immutable linear "
+                "GeneralizedBeamSection; external mutable or history-bearing "
+                "section protocols require a separately qualified trial/commit/"
+                "discard contract"
+            )
+        resolved_section = resolve_generalized_beam_section(self.cross_section, section)
+        if resolved_section is None:
             raise ValueError("mixed GE-B3 requires a symmetric positive-definite generalized 6x6 section")
-        stiffness = generalized_beam_stiffness(self.generalized_section)
+        if type(resolved_section) is not GeneralizedBeamSection:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 P2 section must resolve to an immutable linear "
+                "GeneralizedBeamSection"
+            )
+        stiffness = generalized_beam_stiffness(resolved_section)
+        mass = generalized_beam_mass_matrix(resolved_section)
+        self.generalized_section = GeneralizedBeamSection(
+            stiffness=stiffness,
+            mass_matrix=mass,
+            name=str(getattr(resolved_section, "name", "")),
+        )
+        for private_input in (
+            "beam_section",
+            "generalized_mass_matrix",
+            "generalized_mass_per_length",
+            "generalized_section",
+            "generalized_stiffness",
+            "mass_per_length",
+        ):
+            self.cross_section.pop(private_input, None)
         transform = self.REVERSAL_STRAIN_MAP
         reversal_sensitive = not np.allclose(
             transform @ stiffness @ transform,
@@ -144,9 +198,17 @@ class GeometricallyExactBeam3D3NElement(Element):
             rtol=0.0,
             atol=1.0e-12 * max(1.0, float(np.linalg.norm(stiffness, ord=np.inf))),
         )
+        if mass is not None:
+            reversal_sensitive = reversal_sensitive or not np.allclose(
+                transform @ mass @ transform,
+                mass,
+                rtol=0.0,
+                atol=1.0e-12 * max(1.0, float(np.linalg.norm(mass, ord=np.inf))),
+            )
         if reversal_sensitive and self.reference_axis_direction is None:
             raise GeBeam3MixedGeometryError(
-                "reversal-sensitive coupled section requires physical reference_axis_direction"
+                "reversal-sensitive coupled section stiffness or mass requires "
+                "physical reference_axis_direction"
             )
 
     @property
@@ -206,6 +268,36 @@ class GeometricallyExactBeam3D3NElement(Element):
             stiffness = transform @ stiffness @ transform
         return stiffness
 
+    def _section_mass(self, mesh: Any) -> np.ndarray:
+        _coordinates, _length, _frame, polarity = self._reference_geometry(mesh)
+        mass = generalized_beam_mass_matrix(self.generalized_section)
+        if mass is None:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 reference mass requires an explicit positive-definite "
+                "generalized 6x6 inertia per unit reference length"
+            )
+        if polarity < 0:
+            transform = self.REVERSAL_STRAIN_MAP
+            mass = transform @ mass @ transform
+        return mass
+
+    def require_private_analysis_route(self, route: str) -> None:
+        """Guard the preregistered private P2 capability boundary."""
+
+        normalized = str(route).strip().upper()
+        allowed = {
+            "NATIVE_NONLINEAR_STATIC",
+            "NATIVE_RECOVERY",
+            "REFERENCE_BUCKLING",
+            "REFERENCE_MODAL",
+            "REFERENCE_STATIC",
+        }
+        if normalized not in allowed:
+            raise GeBeam3MixedStateError(
+                f"mixed GE-B3 route {normalized or '<empty>'} is outside the "
+                "private P2 straight-reference authority"
+            )
+
     @staticmethod
     def reverse_section_stiffness(stiffness: Any) -> np.ndarray:
         matrix = np.asarray(stiffness, dtype=np.float64)
@@ -250,6 +342,113 @@ class GeometricallyExactBeam3D3NElement(Element):
         self._guard_vertex_rotations(rotations)
         return positions, rotations, 0.5 * length, frame, self._section_stiffness(mesh)
 
+    def _solver_chart_configuration(
+        self,
+        mesh: Any,
+        displacement: Any,
+        native_rotation_trial: NativeElementRotationView,
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        float,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
+        """Validate and materialize one solver-owned multiplicative trial."""
+
+        if type(native_rotation_trial) is not NativeElementRotationView:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 nonlinear mechanics requires an exact "
+                "NativeElementRotationView"
+            )
+        if native_rotation_trial.trial_serial is None:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 nonlinear mechanics requires an active trial"
+            )
+        if int(native_rotation_trial.element_id) != int(self.element_id):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 native rotation view has the wrong element ID"
+            )
+        if tuple(native_rotation_trial.node_ids) != tuple(self.node_ids):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 native rotation view has the wrong connectivity"
+            )
+        total = np.asarray(displacement, dtype=np.float64)
+        if total.shape != (18,) or not np.all(np.isfinite(total)):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 solver displacement must contain 18 finite values"
+            )
+        by_node = total.reshape(3, 6)
+        reference, length, frame, _polarity = self._reference_geometry(mesh)
+        trial_coordinates = np.asarray(
+            native_rotation_trial.trial_coordinates, dtype=np.float64
+        )
+        if trial_coordinates.shape != (3, 3) or not np.all(np.isfinite(trial_coordinates)):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 native trial coordinates are malformed"
+            )
+        scale = max(1.0, float(length), float(np.linalg.norm(trial_coordinates, ord=np.inf)))
+        if not np.allclose(
+            trial_coordinates,
+            reference + by_node[:, :3],
+            rtol=0.0,
+            atol=1.0e-12 * scale,
+        ):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 displacement and node-shared trial coordinates disagree"
+            )
+        trial_rotation_coordinates = np.asarray(
+            native_rotation_trial.trial_rotation_coordinates, dtype=np.float64
+        )
+        if not np.array_equal(by_node[:, 3:], trial_rotation_coordinates):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 displacement and node-shared rotation coordinates disagree"
+            )
+        committed_operators = np.asarray(
+            native_rotation_trial.committed_rotation_matrices, dtype=np.float64
+        )
+        trial_operators = np.asarray(
+            native_rotation_trial.trial_rotation_matrices, dtype=np.float64
+        )
+        increments = np.asarray(
+            native_rotation_trial.rotation_coordinate_increment, dtype=np.float64
+        )
+        if (
+            committed_operators.shape != (3, 3, 3)
+            or trial_operators.shape != (3, 3, 3)
+            or increments.shape != (3, 3)
+            or not np.all(np.isfinite(increments))
+        ):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 native rotation trial is malformed"
+            )
+        committed_absolute = np.einsum("nij,jk->nik", committed_operators, frame)
+        trial_absolute = np.einsum("nij,jk->nik", trial_operators, frame)
+        reconstructed = np.asarray(
+            [
+                rotation_exponential(increments[node]) @ committed_absolute[node]
+                for node in range(3)
+            ]
+        )
+        if not np.allclose(reconstructed, trial_absolute, rtol=0.0, atol=2.0e-12):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 native operators do not reproduce the solver chart"
+            )
+        self._guard_vertex_rotations(trial_absolute)
+        return (
+            np.array(trial_coordinates, copy=True),
+            np.array(trial_absolute, copy=True),
+            0.5 * float(length),
+            np.array(frame, copy=True),
+            self._section_stiffness(mesh),
+            np.array(committed_absolute, copy=True),
+            np.array(increments, copy=True),
+            np.array(total, copy=True),
+        )
+
     @staticmethod
     def _potential(
         positions: np.ndarray,
@@ -260,6 +459,8 @@ class GeometricallyExactBeam3D3NElement(Element):
         moments: np.ndarray,
         *,
         include_external: bool,
+        chart_rotation_increment: Optional[np.ndarray] = None,
+        chart_committed_rotations: Optional[np.ndarray] = None,
     ) -> Jet2:
         external_size = 18 if include_external else 0
         size = external_size + 18
@@ -275,8 +476,33 @@ class GeometricallyExactBeam3D3NElement(Element):
                 ]
             )
             if include_external:
-                increment = so3_exp(variables[node * 6 + 3 : node * 6 + 6])
-                made_vertices.append(matmul(increment, constant_matrix(vertex_rotations[node], size)))
+                if (chart_rotation_increment is None) != (
+                    chart_committed_rotations is None
+                ):
+                    raise ValueError(
+                        "mixed GE-B3 solver chart requires both rotation "
+                        "increments and committed frames"
+                    )
+                if chart_rotation_increment is None:
+                    rotation_coordinates = variables[node * 6 + 3 : node * 6 + 6]
+                    rotation_base = vertex_rotations[node]
+                else:
+                    increments = np.asarray(chart_rotation_increment, dtype=np.float64)
+                    bases = np.asarray(chart_committed_rotations, dtype=np.float64)
+                    if increments.shape != (3, 3) or bases.shape != (3, 3, 3):
+                        raise ValueError(
+                            "mixed GE-B3 solver-chart rotations have incompatible shape"
+                        )
+                    rotation_coordinates = [
+                        Jet2.constant(float(increments[node, axis]), size)
+                        + variables[node * 6 + 3 + axis]
+                        for axis in range(3)
+                    ]
+                    rotation_base = bases[node]
+                increment = so3_exp(rotation_coordinates)
+                made_vertices.append(
+                    matmul(increment, constant_matrix(rotation_base, size))
+                )
             else:
                 made_vertices.append(constant_matrix(vertex_rotations[node], size))
         a = section[:3, :3]
@@ -374,6 +600,61 @@ class GeometricallyExactBeam3D3NElement(Element):
                 raise GeBeam3MixedLocalSolveError("mixed GE-B3 local Newton line search stalled")
         raise GeBeam3MixedLocalSolveError("mixed GE-B3 local Newton exceeded 30 iterations")
 
+    @staticmethod
+    def _recover_section_fields(
+        positions: np.ndarray,
+        cell_length: float,
+        section: np.ndarray,
+        local: _LocalState,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        strains: list[np.ndarray] = []
+        resultants: list[np.ndarray] = []
+        d_inverse = np.linalg.inv(section[3:, 3:])
+        for cell, (left, right) in enumerate(_CELLS):
+            gamma = (
+                local.rotations[cell].T
+                @ ((positions[right] - positions[left]) / cell_length)
+                - np.array((1.0, 0.0, 0.0))
+            )
+            for endpoint in range(2):
+                moment = local.moments[cell, endpoint]
+                curvature = d_inverse @ (
+                    moment - section[:3, 3:].T @ gamma
+                )
+                strain = np.concatenate((gamma, curvature))
+                strains.append(strain)
+                resultants.append(section @ strain)
+        return np.asarray(strains), np.asarray(resultants)
+
+    @classmethod
+    def _candidate_fields(
+        cls,
+        positions: np.ndarray,
+        cell_length: float,
+        frame: np.ndarray,
+        section: np.ndarray,
+        local: _LocalState,
+    ) -> dict[str, Any]:
+        strains, resultants = cls._recover_section_fields(
+            positions, cell_length, section, local
+        )
+        return {
+            "candidate_id": GE_BEAM3_MIXED_CANDIDATE_ID,
+            "condensation_id": GE_BEAM3_MIXED_CONDENSATION_ID,
+            "formulation_id": GE_BEAM3_MIXED_FORMULATION_ID,
+            "generalized_resultant": resultants,
+            "generalized_strain": strains,
+            "local_iterations": local.iterations,
+            "local_moments": np.array(local.moments, copy=True),
+            "local_residual_norm": local.residual_norm,
+            "local_rotations": np.array(local.rotations, copy=True),
+            "quadrature_id": GE_BEAM3_MIXED_QUADRATURE_ID,
+            "reference_frame": np.array(frame, copy=True),
+            "reference_id": GE_BEAM3_MIXED_REFERENCE_ID,
+            "rotation_id": GE_BEAM3_MIXED_ROTATION_ID,
+            "schema_id": GE_BEAM3_MIXED_SCHEMA_ID,
+        }
+
     def evaluate_candidate(
         self,
         mesh: Any,
@@ -404,35 +685,69 @@ class GeometricallyExactBeam3D3NElement(Element):
             hii = hessian[18:, 18:]
             made_tangent = hee - hei @ np.linalg.solve(hii, hei.T)
             made_tangent = 0.5 * (made_tangent + made_tangent.T)
-        # Recover material strains/resultants at both moment endpoints per cell.
-        strains = []
-        resultants = []
-        d_inverse = np.linalg.inv(section[3:, 3:])
-        for cell, (left, right) in enumerate(_CELLS):
-            gamma = local.rotations[cell].T @ ((positions[right] - positions[left]) / cell_length) - np.array((1.0, 0.0, 0.0))
-            for endpoint in range(2):
-                moment = local.moments[cell, endpoint]
-                curvature = d_inverse @ (moment - section[:3, 3:].T @ gamma)
-                strain = np.concatenate((gamma, curvature))
-                strains.append(strain)
-                resultants.append(section @ strain)
-        fields = {
-            "candidate_id": GE_BEAM3_MIXED_CANDIDATE_ID,
-            "condensation_id": GE_BEAM3_MIXED_CONDENSATION_ID,
-            "formulation_id": GE_BEAM3_MIXED_FORMULATION_ID,
-            "generalized_resultant": np.asarray(resultants),
-            "generalized_strain": np.asarray(strains),
-            "local_iterations": local.iterations,
-            "local_moments": np.array(local.moments, copy=True),
-            "local_residual_norm": local.residual_norm,
-            "local_rotations": np.array(local.rotations, copy=True),
-            "quadrature_id": GE_BEAM3_MIXED_QUADRATURE_ID,
-            "reference_frame": np.array(frame, copy=True),
-            "reference_id": GE_BEAM3_MIXED_REFERENCE_ID,
-            "rotation_id": GE_BEAM3_MIXED_ROTATION_ID,
-            "schema_id": GE_BEAM3_MIXED_SCHEMA_ID,
-        }
+        fields = self._candidate_fields(
+            positions, cell_length, frame, section, local
+        )
         return float(potential.value), residual, made_tangent, fields
+
+    def _evaluate_solver_chart(
+        self,
+        mesh: Any,
+        displacement: Any,
+        native_rotation_trial: NativeElementRotationView,
+        *,
+        tangent: bool,
+    ) -> tuple[float, np.ndarray, Optional[np.ndarray], dict[str, Any], np.ndarray]:
+        (
+            positions,
+            trial_rotations,
+            cell_length,
+            frame,
+            section,
+            committed_rotations,
+            rotation_increment,
+            total,
+        ) = self._solver_chart_configuration(
+            mesh, displacement, native_rotation_trial
+        )
+        local = self._solve_local(
+            positions, trial_rotations, cell_length, section
+        )
+        potential = self._potential(
+            positions,
+            trial_rotations,
+            cell_length,
+            section,
+            local.rotations,
+            local.moments,
+            include_external=True,
+            chart_rotation_increment=rotation_increment,
+            chart_committed_rotations=committed_rotations,
+        )
+        residual = np.array(potential.gradient[:18], copy=True)
+        made_tangent = None
+        if tangent:
+            hessian = 0.5 * (potential.hessian + potential.hessian.T)
+            external_internal = hessian[:18, 18:]
+            try:
+                made_tangent = hessian[:18, :18] - external_internal @ np.linalg.solve(
+                    hessian[18:, 18:], external_internal.T
+                )
+            except np.linalg.LinAlgError as exc:
+                raise GeBeam3MixedLocalSolveError(
+                    "mixed GE-B3 solver-chart local Hessian is singular"
+                ) from exc
+            made_tangent = 0.5 * (made_tangent + made_tangent.T)
+        fields = self._candidate_fields(
+            positions, cell_length, frame, section, local
+        )
+        fields["solver_chart_id"] = (
+            "EXP_DELTA_PLUS_X_LEFT_MULTIPLIES_COMMITTED_OPERATOR_V1"
+        )
+        fields["spatial_operator_rotation_increment"] = np.array(
+            rotation_increment, copy=True
+        )
+        return float(potential.value), residual, made_tangent, fields, total
 
     def compute_candidate_stiffness_matrix(self, mesh: Any) -> np.ndarray:
         """Return the research-gate reference tangent without enabling assembly."""
@@ -442,6 +757,326 @@ class GeometricallyExactBeam3D3NElement(Element):
         )
         assert tangent is not None
         return np.array(tangent, copy=True)
+
+    @staticmethod
+    def _dead_load_rows(value: Any, label: str) -> np.ndarray:
+        rows = np.asarray(value, dtype=np.float64)
+        if rows.shape == (3,):
+            rows = np.repeat(rows[None, :], 3, axis=0)
+        if rows.shape != (3, 3) or not np.all(np.isfinite(rows)):
+            raise GeBeam3MixedStateError(
+                f"mixed GE-B3 {label} must contain one or three finite 3-vectors"
+            )
+        return np.array(rows, copy=True)
+
+    def compute_reference_line_load(
+        self,
+        mesh: Any,
+        descriptor: Mapping[str, Any],
+    ) -> np.ndarray:
+        """Return a private, reference-arclength consistent dead-load vector."""
+
+        if not isinstance(descriptor, Mapping):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 reference-line load descriptor must be a mapping"
+            )
+        classification = str(descriptor.get("classification", "")).upper()
+        if classification not in {"SPATIAL_DEAD", "MATERIAL_DEAD"}:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 P2 supports only spatial-dead or material-dead "
+                "reference-line loads"
+            )
+        exact_keys = {
+            "classification",
+            "couple_per_reference_length_at_nodes",
+            "force_per_reference_length_at_nodes",
+        }
+        if set(descriptor) != exact_keys:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 reference-line load descriptor has missing or "
+                "unknown keys"
+            )
+        forces = self._dead_load_rows(
+            descriptor["force_per_reference_length_at_nodes"], "line force"
+        )
+        couples = self._dead_load_rows(
+            descriptor["couple_per_reference_length_at_nodes"], "line couple"
+        )
+        _coordinates, length, frame, _polarity = self._reference_geometry(mesh)
+        if classification == "MATERIAL_DEAD":
+            forces = np.einsum("ij,nj->ni", frame, forces)
+            couples = np.einsum("ij,nj->ni", frame, couples)
+        made = np.zeros((3, 6), dtype=np.float64)
+        cell_length = 0.5 * length
+        for left, right in _CELLS:
+            made[left, :3] += cell_length * (2.0 * forces[left] + forces[right]) / 6.0
+            made[right, :3] += cell_length * (forces[left] + 2.0 * forces[right]) / 6.0
+            made[left, 3:] += cell_length * (2.0 * couples[left] + couples[right]) / 6.0
+            made[right, 3:] += cell_length * (couples[left] + 2.0 * couples[right]) / 6.0
+        return made.reshape(18)
+
+    def compute_mass_matrix(self, mesh: Any, material: Any = None) -> np.ndarray:
+        """Return reference-configuration consistent generalized inertia."""
+
+        del material
+        _coordinates, length, frame, _polarity = self._reference_geometry(mesh)
+        local_mass = self._section_mass(mesh)
+        rotation = np.zeros((6, 6), dtype=np.float64)
+        rotation[:3, :3] = frame
+        rotation[3:, 3:] = frame
+        spatial_mass = rotation @ local_mass @ rotation.T
+        made = np.zeros((18, 18), dtype=np.float64)
+        cell_length = 0.5 * length
+        for left, right in _CELLS:
+            for row_node, row_weight in ((left, 0), (right, 1)):
+                for column_node, column_weight in ((left, 0), (right, 1)):
+                    coefficient = cell_length * _MOMENT_MASS[row_weight, column_weight]
+                    rows = slice(6 * row_node, 6 * row_node + 6)
+                    columns = slice(6 * column_node, 6 * column_node + 6)
+                    made[rows, columns] += coefficient * spatial_mass
+        return 0.5 * (made + made.T)
+
+    def compute_reference_geometric_stiffness(
+        self,
+        mesh: Any,
+        *,
+        axial_compression: Any = None,
+        axial_force: Any = None,
+    ) -> np.ndarray:
+        """Return the frozen compression-positive reference Euler operator."""
+
+        if (axial_compression is None) == (axial_force is None):
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 geometric stiffness requires exactly one of "
+                "axial_compression or axial_force"
+            )
+        raw = axial_compression if axial_compression is not None else axial_force
+        if isinstance(raw, (bool, np.bool_)):
+            raise GeBeam3MixedStateError("mixed GE-B3 axial force must be a real scalar")
+        try:
+            compression = float(raw)
+        except (TypeError, ValueError) as exc:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 axial force must be a real scalar"
+            ) from exc
+        if axial_force is not None:
+            compression = -compression
+        if not np.isfinite(compression):
+            raise GeBeam3MixedStateError("mixed GE-B3 axial force must be finite")
+        _coordinates, length, frame, _polarity = self._reference_geometry(mesh)
+        transverse = frame[:, 1:] @ frame[:, 1:].T
+        cell_length = 0.5 * length
+        made = np.zeros((18, 18), dtype=np.float64)
+        for left, right in _CELLS:
+            scaled = compression / cell_length * transverse
+            left_rows = slice(6 * left, 6 * left + 3)
+            right_rows = slice(6 * right, 6 * right + 3)
+            made[left_rows, left_rows] += scaled
+            made[right_rows, right_rows] += scaled
+            made[left_rows, right_rows] -= scaled
+            made[right_rows, left_rows] -= scaled
+        return 0.5 * (made + made.T)
+
+    def recover_native_fields(
+        self,
+        mesh: Any,
+        displacement: Any,
+        *,
+        rotation_matrices: Any = None,
+    ) -> dict[str, Any]:
+        """Recover native four-sided station data without legacy beam paths."""
+
+        energy, _force, _tangent, fields = self.evaluate_candidate(
+            mesh,
+            displacement,
+            rotation_matrices=rotation_matrices,
+            tangent=False,
+        )
+        current_frames = np.repeat(
+            np.asarray(fields["local_rotations"], dtype=np.float64), 2, axis=0
+        )
+        local_resultants = np.asarray(
+            fields["generalized_resultant"], dtype=np.float64
+        )
+        global_resultants = np.empty_like(local_resultants)
+        for station in range(4):
+            global_resultants[station, :3] = (
+                current_frames[station] @ local_resultants[station, :3]
+            )
+            global_resultants[station, 3:] = (
+                current_frames[station] @ local_resultants[station, 3:]
+            )
+        return {
+            "candidate_id": GE_BEAM3_MIXED_CANDIDATE_ID,
+            "energy": float(energy),
+            "fibre_stress_available": False,
+            "formulation_id": GE_BEAM3_MIXED_FORMULATION_ID,
+            "global_generalized_resultant": global_resultants,
+            "local_generalized_resultant": np.array(local_resultants, copy=True),
+            "local_generalized_strain": np.array(
+                fields["generalized_strain"], copy=True
+            ),
+            "provenance": {
+                "condensation_id": GE_BEAM3_MIXED_CONDENSATION_ID,
+                "quadrature_id": GE_BEAM3_MIXED_QUADRATURE_ID,
+                "reference_id": GE_BEAM3_MIXED_REFERENCE_ID,
+                "rotation_id": GE_BEAM3_MIXED_ROTATION_ID,
+                "schema_id": GE_BEAM3_MIXED_SCHEMA_ID,
+            },
+            "reference_frames": np.repeat(
+                np.asarray(fields["reference_frame"])[None, :, :], 4, axis=0
+            ),
+            "station_frames": current_frames,
+            "station_order": (
+                "XI_MINUS_1",
+                "XI_ZERO_LEFT",
+                "XI_ZERO_RIGHT",
+                "XI_PLUS_1",
+            ),
+        }
+
+    def native_reference_directors(self, mesh: Any) -> np.ndarray:
+        """Return the element-owned material-two direction at each vertex.
+
+        The native rotation store owns one spatial operator per mesh node.  The
+        reference director remains element-owned so two beams meeting at a node
+        can retain distinct material rolls while sharing the same operator.
+        """
+
+        frame = self.reference_triad(mesh)
+        return np.repeat(frame[None, :, 1], 3, axis=0)
+
+    def _state_authority(self, mesh: Any) -> dict[str, Any]:
+        reference, _length, frame, _polarity = self._reference_geometry(mesh)
+        axis = self.reference_axis_direction
+        if axis is None:
+            axis = frame[:, 0]
+        return {
+            "element_id": int(self.element_id),
+            "node_ids": np.asarray(self.node_ids, dtype="<i8"),
+            "reference_geometry": np.asarray(reference, dtype="<f8"),
+            "reference_triad": np.asarray(frame, dtype="<f8"),
+            "reference_orientation": np.asarray(
+                self.reference_orientation, dtype="<f8"
+            ),
+            "reference_axis_direction": np.asarray(axis, dtype="<f8"),
+            "section_name": str(self.generalized_section.name),
+            "section_stiffness": np.asarray(
+                self._section_stiffness(mesh), dtype="<f8"
+            ),
+            "section_mass": np.asarray(self._section_mass(mesh), dtype="<f8"),
+        }
+
+    def _state_from_configuration(
+        self,
+        mesh: Any,
+        total_u: Any,
+        spatial_operators: Any,
+    ) -> dict[str, Any]:
+        total = np.asarray(total_u, dtype=np.float64)
+        operators = np.asarray(spatial_operators, dtype=np.float64)
+        if total.shape != (18,) or not np.all(np.isfinite(total)):
+            raise GeBeam3MixedCommittedStateError(
+                "mixed GE-B3 committed solver coordinates must contain 18 "
+                "finite values"
+            )
+        if operators.shape != (3, 3, 3):
+            raise GeBeam3MixedCommittedStateError(
+                "mixed GE-B3 committed spatial operators must have shape "
+                "(3, 3, 3)"
+            )
+        authority = self._state_authority(mesh)
+        frame = np.asarray(authority["reference_triad"], dtype=np.float64)
+        absolute = np.einsum("nij,jk->nik", operators, frame)
+        evaluation_u = np.array(total, copy=True).reshape(3, 6)
+        evaluation_u[:, 3:] = 0.0
+        _energy, _force, _tangent, fields = self.evaluate_candidate(
+            mesh,
+            evaluation_u.reshape(18),
+            rotation_matrices=absolute,
+            tangent=False,
+        )
+        return initialize_ge_beam3_mixed_state(
+            **authority,
+            committed_total_u=np.asarray(total, dtype="<f8"),
+            committed_nodal_rotation_matrices=np.asarray(operators, dtype="<f8"),
+            committed_local_rotation_matrices=np.asarray(
+                fields["local_rotations"], dtype="<f8"
+            ),
+            committed_local_moments=np.asarray(
+                fields["local_moments"], dtype="<f8"
+            ),
+            station_generalized_strain=np.asarray(
+                fields["generalized_strain"], dtype="<f8"
+            ),
+            station_generalized_resultant=np.asarray(
+                fields["generalized_resultant"], dtype="<f8"
+            ),
+        )
+
+    def init_model_bound_nonlinear_state(
+        self,
+        mesh: Any,
+        material: Any,
+        num_layers: int,
+    ) -> dict[str, Any]:
+        """Create the exact zero-configuration P2 committed state."""
+
+        del material
+        if type(num_layers) is not int or num_layers != 1:
+            raise GeBeam3MixedCommittedStateError(
+                "mixed GE-B3 stateless generalized section requires one layer"
+            )
+        identity = np.repeat(np.eye(3, dtype=np.float64)[None, :, :], 3, axis=0)
+        return self._state_from_configuration(mesh, np.zeros(18), identity)
+
+    def validate_model_bound_nonlinear_state(
+        self,
+        mesh: Any,
+        material: Any,
+        state: Mapping[str, Any],
+        num_layers: int,
+        *,
+        expected_committed_total_u: Any = None,
+    ) -> dict[str, Any]:
+        """Validate state identity, integrity, and a native mechanics replay."""
+
+        del material
+        if type(num_layers) is not int or num_layers != 1:
+            raise GeBeam3MixedCommittedStateError(
+                "mixed GE-B3 stateless generalized section requires one layer"
+            )
+        authority = self._state_authority(mesh)
+        normalized = validate_committed_ge_beam3_mixed_state(
+            state,
+            **authority,
+            expected_committed_total_u=expected_committed_total_u,
+        )
+        total = np.asarray(normalized["committed_total_u"], dtype=np.float64)
+        frame = np.asarray(authority["reference_triad"], dtype=np.float64)
+        operators = np.asarray(
+            normalized["committed_nodal_rotation_matrices"], dtype=np.float64
+        )
+        absolute = np.einsum("nij,jk->nik", operators, frame)
+        evaluation_u = np.array(total, copy=True).reshape(3, 6)
+        evaluation_u[:, 3:] = 0.0
+        _energy, _force, _tangent, fields = self.evaluate_candidate(
+            mesh,
+            evaluation_u.reshape(18),
+            rotation_matrices=absolute,
+            tangent=False,
+        )
+        return validate_committed_ge_beam3_mixed_state(
+            normalized,
+            **authority,
+            expected_committed_total_u=expected_committed_total_u,
+            expected_local_state={
+                "committed_local_rotation_matrices": fields["local_rotations"],
+                "committed_local_moments": fields["local_moments"],
+                "station_generalized_strain": fields["generalized_strain"],
+                "station_generalized_resultant": fields["generalized_resultant"],
+            },
+        )
 
     def compute_stiffness_matrix(self, mesh: Any, material: Any) -> np.ndarray:
         del mesh, material
@@ -456,11 +1091,114 @@ class GeometricallyExactBeam3D3NElement(Element):
             "mixed GE-B3 solver integration is not authorized; use the private evaluate_candidate gate only"
         )
 
-    def compute_nonlinear_response(self, *args: Any, **kwargs: Any) -> Any:
-        del args, kwargs
-        raise GeBeam3MixedStateError(
-            "mixed GE-B3 native rotation transaction is not implemented or authorized"
+    def compute_nonlinear_response(
+        self,
+        mesh: Any,
+        material: Any,
+        displacement: Any,
+        state: Optional[Mapping[str, Any]] = None,
+        num_layers: int = 1,
+        tangent: bool = True,
+        *,
+        native_rotation_trial: Optional[NativeElementRotationView] = None,
+    ) -> tuple[np.ndarray, Optional[np.ndarray], dict[str, Any]]:
+        """Evaluate one solver-owned P2 static trial without committing it."""
+
+        if native_rotation_trial is None:
+            raise GeBeam3MixedStateError(
+                "mixed GE-B3 native rotation transaction is not implemented "
+                "without an active NativeElementRotationView"
+            )
+        if type(num_layers) is not int or num_layers != 1:
+            raise GeBeam3MixedCommittedStateError(
+                "mixed GE-B3 stateless generalized section requires one layer"
+            )
+        reference = self.get_node_coordinates(mesh)
+        committed_total = np.empty((3, 6), dtype=np.float64)
+        committed_total[:, :3] = (
+            np.asarray(native_rotation_trial.committed_coordinates) - reference
         )
+        committed_total[:, 3:] = np.asarray(
+            native_rotation_trial.committed_rotation_coordinates
+        )
+        if state is None:
+            committed = self._state_from_configuration(
+                mesh,
+                committed_total.reshape(18),
+                native_rotation_trial.committed_rotation_matrices,
+            )
+        else:
+            committed = self.validate_model_bound_nonlinear_state(
+                mesh,
+                material,
+                state,
+                num_layers,
+            )
+            recorded = np.asarray(
+                committed["committed_total_u"], dtype=np.float64
+            ).reshape(3, 6)
+            coordinate_scale = max(
+                1.0,
+                float(np.max(np.abs(native_rotation_trial.committed_coordinates))),
+            )
+            if not np.allclose(
+                reference + recorded[:, :3],
+                native_rotation_trial.committed_coordinates,
+                rtol=0.0,
+                atol=1.0e-12 * coordinate_scale,
+            ):
+                raise GeBeam3MixedCommittedStateError(
+                    "committed state and node-shared coordinates disagree"
+                )
+            if not np.array_equal(
+                recorded[:, 3:],
+                native_rotation_trial.committed_rotation_coordinates,
+            ):
+                raise GeBeam3MixedCommittedStateError(
+                    "committed state and node-shared rotation coordinates disagree"
+                )
+            if not np.array_equal(
+                committed["committed_nodal_rotation_matrices"],
+                native_rotation_trial.committed_rotation_matrices,
+            ):
+                raise GeBeam3MixedCommittedStateError(
+                    "committed state and node-shared spatial operators disagree"
+                )
+        _energy, force, matrix, fields, total = self._evaluate_solver_chart(
+            mesh,
+            displacement,
+            native_rotation_trial,
+            tangent=bool(tangent),
+        )
+        candidate = initialize_ge_beam3_mixed_state(
+            **self._state_authority(mesh),
+            committed_total_u=np.asarray(total, dtype="<f8"),
+            committed_nodal_rotation_matrices=np.asarray(
+                native_rotation_trial.trial_rotation_matrices, dtype="<f8"
+            ),
+            committed_local_rotation_matrices=np.asarray(
+                fields["local_rotations"], dtype="<f8"
+            ),
+            committed_local_moments=np.asarray(
+                fields["local_moments"], dtype="<f8"
+            ),
+            station_generalized_strain=np.asarray(
+                fields["generalized_strain"], dtype="<f8"
+            ),
+            station_generalized_resultant=np.asarray(
+                fields["generalized_resultant"], dtype="<f8"
+            ),
+        )
+        self.validate_model_bound_nonlinear_state(
+            mesh,
+            material,
+            candidate,
+            num_layers,
+            expected_committed_total_u=np.asarray(total, dtype=np.float64),
+        )
+        return np.array(force, copy=True), (
+            None if matrix is None else np.array(matrix, copy=True)
+        ), candidate
 
     @property
     def capability_gaps(self) -> frozenset[str]:
@@ -471,8 +1209,8 @@ class GeometricallyExactBeam3D3NElement(Element):
                 "curved_reference",
                 "distributed_follower_loads",
                 "history_bearing_sections",
-                "mass_and_dynamics",
-                "native_restart",
+                "finite_rotation_transient_dynamics",
+                "current_state_modal_and_buckling",
                 "public_selector",
             }
         )
