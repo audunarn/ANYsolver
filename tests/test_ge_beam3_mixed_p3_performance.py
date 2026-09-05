@@ -52,6 +52,10 @@ def test_summary_reports_median_mad_and_fixed_linear_p95() -> None:
         GATE.summarize_timings([*values[:-1], float("nan")])
 
 
+def test_peak_rss_diagnostic_is_available_and_positive() -> None:
+    assert GATE._peak_rss_bytes() > 0
+
+
 def test_adjudication_covers_exact_inventory_and_five_percent_gate() -> None:
     base = _timings(1.0)
     candidate = _timings(1.049)
