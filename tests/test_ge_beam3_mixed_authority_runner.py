@@ -56,6 +56,33 @@ def test_current_candidate_extent_and_protected_boundary_are_exact() -> None:
     )
 
 
+def test_repository_input_hashes_are_git_blob_and_checkout_eol_independent(
+    tmp_path: Path,
+) -> None:
+    runner = _load_runner()
+    name = "ge_beam3_mixed_baseline.json"
+    relative = f"docs/reference_cases/{name}"
+    original = (REFERENCE_DIRECTORY / name).read_bytes()
+    assert b"\r" not in original
+    crlf_copy = tmp_path / name
+    crlf_copy.write_bytes(original.replace(b"\n", b"\r\n"))
+
+    binding = runner._repository_text_binding(relative, working_path=crlf_copy)
+
+    assert binding["git_blob_is_canonical_lf_text"] is True
+    assert binding["working_tree_matches_git_blob"] is True
+    assert binding["sha256"] == runner.EXPECTED_INPUTS[name][1]
+    assert binding["working_sha256"] == binding["sha256"]
+
+
+def test_repository_text_clean_rejects_binary_and_lone_carriage_return() -> None:
+    runner = _load_runner()
+    with pytest.raises(ValueError, match="NUL"):
+        runner._canonical_lf_text_bytes(b"a\0b")
+    with pytest.raises(ValueError, match="lone carriage return"):
+        runner._canonical_lf_text_bytes(b"a\rb")
+
+
 def test_extra_changed_path_blocks_candidate_boundary(monkeypatch) -> None:
     runner = _load_runner()
     monkeypatch.setattr(

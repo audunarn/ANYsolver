@@ -21,8 +21,20 @@ def _canonical_bytes(value: object) -> bytes:
     ).encode()
 
 
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+def _git_blob_sha256(relative_path: str) -> str:
+    raw = subprocess.check_output(
+        ("git", "ls-files", "--stage", "-z", "--", relative_path), cwd=ROOT
+    )
+    entries = [entry for entry in raw.split(b"\0") if entry]
+    assert len(entries) == 1
+    metadata, registered_path = entries[0].split(b"\t", 1)
+    mode, oid, stage = metadata.split()
+    assert mode in {b"100644", b"100755"}
+    assert stage == b"0"
+    assert registered_path.decode("utf-8").replace("\\", "/") == relative_path
+    blob = subprocess.check_output(("git", "cat-file", "blob", oid), cwd=ROOT)
+    assert b"\r" not in blob
+    return hashlib.sha256(blob).hexdigest().upper()
 
 
 def _rehash_record(record: dict) -> None:
@@ -95,9 +107,18 @@ def test_finite_proof_binds_frozen_inputs_and_nonclassifying_coverage(tmp_path: 
         _canonical_bytes(environment)
     ).hexdigest().upper()
     for name, digest in bindings["authority_inputs"].items():
-        assert digest == _sha256(REFERENCE_DIRECTORY / name)
+        assert digest == _git_blob_sha256(f"docs/reference_cases/{name}")
     for name, digest in bindings["programs"].items():
-        assert digest == _sha256(ROOT / name)
+        assert digest == _git_blob_sha256(name)
+    repository_paths = {
+        *(f"docs/reference_cases/{name}" for name in bindings["authority_inputs"]),
+        *bindings["programs"],
+    }
+    assert set(bindings["repository_git_blob_oids"]) == repository_paths
+    assert set(bindings["repository_git_blobs_are_canonical_lf_text"]) == repository_paths
+    assert set(bindings["repository_working_tree_matches_git_blobs"]) == repository_paths
+    assert all(bindings["repository_git_blobs_are_canonical_lf_text"].values())
+    assert all(bindings["repository_working_tree_matches_git_blobs"].values())
     assert bindings["source_artifacts"]["HUMER_STEINBRECHER_PECHSTEIN_2026"]["sha256"] == (
         "76AA9EDDDAE2EE16B47BF4E8255BDAA81678164B899E663E0B882B11C39BDB1E"
     )
@@ -229,6 +250,24 @@ def test_forged_bindings_and_rehashed_coverage_are_rejected(tmp_path: Path) -> N
     )
     assert binding_result["authority_bindings"]["base"] is False
     assert binding_result["terminal"] == "NONCLASSIFYING_FINITE_GATE_FINDING"
+
+    checkout_proof = json.loads(pristine.read_text(encoding="utf-8"))
+    checkout_map = checkout_proof["bindings"][
+        "repository_working_tree_matches_git_blobs"
+    ]
+    checkout_map[next(iter(checkout_map))] = False
+    checkout_path = tmp_path / "forged-checkout-binding-proof.json"
+    checkout_path.write_bytes(_canonical_bytes(checkout_proof))
+    checkout_result = _run_checker(
+        checkout_path, tmp_path / "forged-checkout-binding-check.json"
+    )
+    assert (
+        checkout_result["authority_bindings"][
+            "repository_working_tree_matches_git_blobs"
+        ]
+        is False
+    )
+    assert checkout_result["terminal"] == "NONCLASSIFYING_FINITE_GATE_FINDING"
 
     coverage_proof = json.loads(pristine.read_text(encoding="utf-8"))
     coverage = coverage_proof["coverage_diagnostics"]

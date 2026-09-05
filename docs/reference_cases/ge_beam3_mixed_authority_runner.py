@@ -24,17 +24,23 @@ BASE_TREE = "cfb0cf9a19f6519abf335694253efa264cd2e695"
 V1_COMMIT = "cea9cb340f721dc2fcfbb0608576b186478dab45"
 SOURCE_ARTIFACTS = {
     "ATTACHED_ORIGINAL_PLAN": (
-        Path(r"C:\Users\AudunArnesenNyhus\Downloads\GEOMETRICALLY_EXACT_BEAM_3D3N_IMPLEMENTATION_PLAN.md"),
+        Path(
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\ge-beam3-source-authority-20260905\GEOMETRICALLY_EXACT_BEAM_3D3N_IMPLEMENTATION_PLAN.md"
+        ),
         40060,
         "78C52EA1D88E5EF2FFB5EF5D2F37E6EFED78D5ADC3E9EF851C186CD83B42215B",
     ),
     "HUMER_STEINBRECHER_PECHSTEIN_2026": (
-        Path(r"C:\Users\AudunArnesenNyhus\AppData\Local\Temp\ge-beam-humer-2605.04573.pdf"),
+        Path(
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\ge-beam3-source-authority-20260905\humer-steinbrecher-pechstein-2605.04573-v3.pdf"
+        ),
         2646466,
         "76AA9EDDDAE2EE16B47BF4E8255BDAA81678164B899E663E0B882B11C39BDB1E",
     ),
     "MEIER_WALL_POPP_2016": (
-        Path(r"C:\Users\AudunArnesenNyhus\AppData\Local\Temp\ge-beam-meier-1609.00119.pdf"),
+        Path(
+            r"C:\Users\AudunArnesenNyhus\AppData\Local\ANYrelease\ge-beam3-source-authority-20260905\meier-wall-popp-1609.00119.pdf"
+        ),
         2243579,
         "7756A90077B190BA67225758024C68DFCFCEFC29C18C4C473C44F3583105DC8E",
     ),
@@ -49,10 +55,11 @@ JSON_INPUTS = (
     "ge_beam3_mixed_status.json",
 )
 
-# These raw-file hashes make the authority set closed-world: a field addition,
-# deletion, reordering, whitespace rewrite, or value mutation is authority drift.
-# The semantic checks below are deliberately redundant so that a blocked record
-# explains *which* frozen scientific assertion was altered.
+# These canonical LF Git-blob hashes make the repository authority set
+# closed-world: a field addition, deletion, reordering, canonical whitespace
+# rewrite, or value mutation is authority drift.  External artifacts remain
+# raw-byte bound below.  The semantic checks are deliberately redundant so a
+# blocked record explains *which* frozen scientific assertion was altered.
 EXPECTED_INPUTS = {
     "ge_beam3_mixed_baseline.json": (
         "anysolver.ge-beam3-mixed-baseline-v1",
@@ -66,7 +73,7 @@ EXPECTED_INPUTS = {
     ),
     "ge_beam3_mixed_equation_map_b.json": (
         "anysolver.ge-beam3-mixed-equation-map-b-v1",
-        "09CF9F18D9BEEDE64917BAC7FB6F89EDAB80091ABBC390FF196C2DEA61F7B97D",
+        "C1C20134B5E0360B57CDC4E7C5E9A0A768B99CDAC6E61FB433009B052F3A6C07",
         frozenset(("authorship", "candidate_id", "constitutive_partial_dual", "degree_of_freedom_audit", "integration_audit", "limitations", "macro_functional", "reversal_audit", "schema", "source_authority", "stationarity_audit", "study_id", "virtual_work_audit")),
     ),
     "ge_beam3_mixed_local_contract.json": (
@@ -183,6 +190,7 @@ EXPECTED_CANDIDATE_EXTENT = frozenset(
         "docs/reference_cases/ge_beam3_mixed_exact_reference.py",
         "docs/reference_cases/ge_beam3_mixed_finite_checker.py",
         "docs/reference_cases/ge_beam3_mixed_finite_producer.py",
+        "docs/reference_cases/ge_beam3_mixed_formal_runner.py",
         "docs/reference_cases/ge_beam3_mixed_independent_checker.py",
         "docs/reference_cases/ge_beam3_mixed_local_contract.json",
         "docs/reference_cases/ge_beam3_mixed_source_ledger.json",
@@ -193,6 +201,7 @@ EXPECTED_CANDIDATE_EXTENT = frozenset(
         "tests/test_ge_beam3_mixed_core.py",
         "tests/test_ge_beam3_mixed_exact_reference.py",
         "tests/test_ge_beam3_mixed_finite_gate.py",
+        "tests/test_ge_beam3_mixed_formal_runner.py",
         "tests/test_ge_beam3_mixed_independent_checker.py",
     )
 )
@@ -256,8 +265,89 @@ def _canonical_bytes(value: Any) -> bytes:
     return (json.dumps(value, allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True) + "\n").encode()
 
 
-def _sha(path: Path) -> str:
+def _raw_sha256(path: Path) -> str:
+    """Hash an external artifact exactly as registered, with no text cleaning."""
+
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+
+
+def _canonical_lf_text_bytes(data: bytes) -> bytes:
+    """Apply the repository's deterministic text clean transform.
+
+    Repository authority is expressed over LF Git-blob content.  NUL bytes and
+    lone carriage returns are rejected rather than guessed to be text.
+    """
+
+    if b"\0" in data:
+        raise ValueError("repository text input contains NUL")
+    normalized = data.replace(b"\r\n", b"\n")
+    if b"\r" in normalized:
+        raise ValueError("repository text input contains a lone carriage return")
+    return normalized
+
+
+def _index_blob(relative_path: str) -> tuple[str, bytes] | None:
+    raw = subprocess.check_output(
+        ("git", "ls-files", "--stage", "-z", "--", relative_path),
+        cwd=ROOT,
+        stderr=subprocess.DEVNULL,
+    )
+    entries = [entry for entry in raw.split(b"\0") if entry]
+    if len(entries) != 1 or b"\t" not in entries[0]:
+        return None
+    metadata, registered_path = entries[0].split(b"\t", 1)
+    fields = metadata.split()
+    if len(fields) != 3 or fields[2] != b"0":
+        return None
+    if registered_path.decode("utf-8", errors="surrogateescape").replace("\\", "/") != relative_path:
+        return None
+    oid = fields[1].decode("ascii")
+    blob = subprocess.check_output(
+        ("git", "cat-file", "blob", oid), cwd=ROOT, stderr=subprocess.DEVNULL
+    )
+    return oid, blob
+
+
+def _repository_text_binding(
+    relative_path: str, *, working_path: Path | None = None
+) -> dict[str, Any]:
+    """Bind canonical index/commit content and independently check checkout bytes."""
+
+    path = ROOT / relative_path if working_path is None else working_path
+    indexed = _index_blob(relative_path)
+    regular = path.is_file() and not path.is_symlink()
+    try:
+        working = _canonical_lf_text_bytes(path.read_bytes()) if regular else None
+    except (OSError, ValueError):
+        working = None
+    if indexed is None:
+        return {
+            "git_blob_is_canonical_lf_text": False,
+            "git_blob_oid": None,
+            "sha256": None,
+            "working_sha256": (
+                None if working is None else hashlib.sha256(working).hexdigest().upper()
+            ),
+            "working_tree_matches_git_blob": False,
+        }
+    oid, blob = indexed
+    try:
+        canonical_blob = _canonical_lf_text_bytes(blob)
+        canonical_blob_ok = canonical_blob == blob
+    except ValueError:
+        canonical_blob = b""
+        canonical_blob_ok = False
+    return {
+        "git_blob_is_canonical_lf_text": canonical_blob_ok,
+        "git_blob_oid": oid,
+        "sha256": hashlib.sha256(canonical_blob).hexdigest().upper(),
+        "working_sha256": (
+            None if working is None else hashlib.sha256(working).hexdigest().upper()
+        ),
+        "working_tree_matches_git_blob": bool(
+            canonical_blob_ok and working is not None and working == blob
+        ),
+    }
 
 
 def _git(*arguments: str) -> str:
@@ -363,15 +453,27 @@ def _indexed_rows(rows: Any, key: str) -> dict[str, dict[str, Any]] | None:
 
 def build_record(*, verify_external_sources: bool = True) -> dict[str, Any]:
     records = {name: _load(DIRECTORY / name) for name in JSON_INPUTS}
-    input_hashes = {name: _sha(DIRECTORY / name) for name in JSON_INPUTS}
+    input_bindings = {
+        name: _repository_text_binding(
+            f"docs/reference_cases/{name}", working_path=DIRECTORY / name
+        )
+        for name in JSON_INPUTS
+    }
+    input_hashes = {name: binding["sha256"] for name, binding in input_bindings.items()}
     input_validation_checks: dict[str, dict[str, bool]] = {}
     for name, record in records.items():
         expected_schema, expected_hash, expected_keys = EXPECTED_INPUTS[name]
+        binding = input_bindings[name]
         input_validation_checks[name] = {
-            "complete_field_set_and_values": input_hashes[name] == expected_hash,
+            "complete_field_set_and_values": (
+                input_hashes[name] == expected_hash
+                and binding["working_sha256"] == expected_hash
+            ),
             "exact_schema": record.get("schema") == expected_schema,
             "exact_top_level_fields": frozenset(record) == expected_keys,
+            "git_blob_is_canonical_lf_text": binding["git_blob_is_canonical_lf_text"],
             "strict_json_object": isinstance(record, dict),
+            "working_tree_matches_git_blob": binding["working_tree_matches_git_blob"],
         }
     identities = {
         name: (
@@ -436,7 +538,7 @@ def build_record(*, verify_external_sources: bool = True) -> dict[str, Any]:
             and path.is_file()
             and path.is_symlink() is False
             and path.stat().st_size == expected_bytes
-            and _sha(path) == expected_hash
+            and _raw_sha256(path) == expected_hash
         )
 
     ledger_blob_rows = source.get("internal_base_blobs")
@@ -640,7 +742,13 @@ def build_record(*, verify_external_sources: bool = True) -> dict[str, Any]:
         "equation_route_checks": equation_route_checks,
         "exact_agreement": exact_agreement,
         "input_hashes": input_hashes,
+        "input_git_blob_oids": {
+            name: binding["git_blob_oid"] for name, binding in input_bindings.items()
+        },
         "input_validation_checks": input_validation_checks,
+        "input_working_hashes": {
+            name: binding["working_sha256"] for name, binding in input_bindings.items()
+        },
         "policy_checks": policy_checks,
         "pytest_diagnostic_exclusion_policy": (
             "NON_CODE_DATA_OR_LOG_FILES_UNDER_TOP_LEVEL_DOT_PYTEST_DIRECTORIES_ONLY"

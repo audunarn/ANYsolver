@@ -9,9 +9,31 @@ import math
 import platform
 from pathlib import Path
 import sys
+import subprocess
+from types import ModuleType
 from typing import Any
 
 import numpy as np
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+# Formal executions run an immutable Git-archive materialization with Python's
+# isolated mode.  Install only a package namespace rooted in that archive so
+# importing the private modules cannot execute a different editable ANYsolver
+# checkout (or the public package initializer and its unrelated dependencies).
+if __name__ == "__main__":
+    package_root = (ROOT / "src" / "anysolver").resolve()
+    if not package_root.is_dir() or package_root.is_symlink():
+        raise RuntimeError("isolated candidate package root is not a regular directory")
+    existing = sys.modules.get("anysolver")
+    if existing is not None:
+        raise RuntimeError("anysolver was imported before isolated candidate bootstrap")
+    namespace = ModuleType("anysolver")
+    namespace.__file__ = str(package_root / "__init__.py")
+    namespace.__package__ = "anysolver"
+    namespace.__path__ = [str(package_root)]  # type: ignore[attr-defined]
+    sys.modules["anysolver"] = namespace
 
 from anysolver._ge_beam3_mixed_ad import rotation_exponential
 from anysolver.beam_sections import GeneralizedBeamSection, generalized_beam_stiffness
@@ -23,7 +45,6 @@ from anysolver.ge_beam3_mixed_element import (
 
 
 SCHEMA = "anysolver.ge-beam3-mixed-finite-proof-v2"
-ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_DIRECTORY = Path(__file__).resolve().parent
 BASE_COMMIT = "09351645ba17a0a5b130a1c7a48007d36dd08ada"
 BASE_TREE = "cfb0cf9a19f6519abf335694253efa264cd2e695"
@@ -64,8 +85,63 @@ def _hex_array(values: Any) -> Any:
     return [_hex_array(entry) for entry in array]
 
 
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+def _canonical_lf_text_bytes(data: bytes) -> bytes:
+    if b"\0" in data:
+        raise ValueError("repository text input contains NUL")
+    normalized = data.replace(b"\r\n", b"\n")
+    if b"\r" in normalized:
+        raise ValueError("repository text input contains a lone carriage return")
+    return normalized
+
+
+def _repository_text_binding(relative_path: str) -> dict[str, Any]:
+    path = ROOT / relative_path
+    raw = subprocess.check_output(
+        ("git", "ls-files", "--stage", "-z", "--", relative_path),
+        cwd=ROOT,
+        stderr=subprocess.DEVNULL,
+    )
+    entries = [entry for entry in raw.split(b"\0") if entry]
+    regular = path.is_file() and not path.is_symlink()
+    try:
+        working = _canonical_lf_text_bytes(path.read_bytes()) if regular else None
+    except (OSError, ValueError):
+        working = None
+    if len(entries) != 1 or b"\t" not in entries[0]:
+        return {
+            "git_blob_is_canonical_lf_text": False,
+            "git_blob_oid": None,
+            "sha256": None,
+            "working_tree_matches_git_blob": False,
+        }
+    metadata, registered_path = entries[0].split(b"\t", 1)
+    fields = metadata.split()
+    registered = registered_path.decode("utf-8", errors="surrogateescape").replace("\\", "/")
+    if len(fields) != 3 or fields[2] != b"0" or registered != relative_path:
+        return {
+            "git_blob_is_canonical_lf_text": False,
+            "git_blob_oid": None,
+            "sha256": None,
+            "working_tree_matches_git_blob": False,
+        }
+    oid = fields[1].decode("ascii")
+    blob = subprocess.check_output(
+        ("git", "cat-file", "blob", oid), cwd=ROOT, stderr=subprocess.DEVNULL
+    )
+    try:
+        canonical_blob = _canonical_lf_text_bytes(blob)
+        canonical_blob_ok = canonical_blob == blob
+    except ValueError:
+        canonical_blob = b""
+        canonical_blob_ok = False
+    return {
+        "git_blob_is_canonical_lf_text": canonical_blob_ok,
+        "git_blob_oid": oid,
+        "sha256": hashlib.sha256(canonical_blob).hexdigest().upper(),
+        "working_tree_matches_git_blob": bool(
+            canonical_blob_ok and working is not None and working == blob
+        ),
+    }
 
 
 def _hashed(value: Any) -> str:
@@ -90,6 +166,12 @@ def _strict_json(path: Path) -> dict[str, Any]:
 
 def _bindings() -> dict[str, Any]:
     source_ledger = _strict_json(REFERENCE_DIRECTORY / "ge_beam3_mixed_source_ledger.json")
+    repository_paths = tuple(
+        f"docs/reference_cases/{name}" for name in AUTHORITY_INPUTS
+    ) + PROGRAM_INPUTS
+    repository_bindings = {
+        path: _repository_text_binding(path) for path in repository_paths
+    }
     environment = {
         "byteorder": sys.byteorder,
         "machine": platform.machine(),
@@ -101,11 +183,26 @@ def _bindings() -> dict[str, Any]:
     base = {"commit": BASE_COMMIT, "tree": BASE_TREE}
     return {
         "authority_inputs": {
-            name: _sha256(REFERENCE_DIRECTORY / name) for name in AUTHORITY_INPUTS
+            name: repository_bindings[f"docs/reference_cases/{name}"]["sha256"]
+            for name in AUTHORITY_INPUTS
         },
         "base": {**base, "identity_sha256": _hashed(base)},
         "environment": {**environment, "identity_sha256": _hashed(environment)},
-        "programs": {path: _sha256(ROOT / path) for path in PROGRAM_INPUTS},
+        "programs": {
+            path: repository_bindings[path]["sha256"] for path in PROGRAM_INPUTS
+        },
+        "repository_git_blob_oids": {
+            path: binding["git_blob_oid"]
+            for path, binding in repository_bindings.items()
+        },
+        "repository_git_blobs_are_canonical_lf_text": {
+            path: binding["git_blob_is_canonical_lf_text"]
+            for path, binding in repository_bindings.items()
+        },
+        "repository_working_tree_matches_git_blobs": {
+            path: binding["working_tree_matches_git_blob"]
+            for path, binding in repository_bindings.items()
+        },
         "source_artifacts": {
             source["id"]: source["artifact"]
             for source in source_ledger["sources"]
