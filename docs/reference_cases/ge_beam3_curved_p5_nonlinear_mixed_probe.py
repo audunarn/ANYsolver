@@ -62,6 +62,46 @@ class NonlinearLocalError(RuntimeError):
     """No stable, admissible stationary mixed state within the fixed budget."""
 
 
+@dataclass(frozen=True)
+class LocalForceAccuracy:
+    """Opt-in research accuracy budget; not an assembly qualification bound.
+
+Use the assembly's physical moment-to-force length and force normalization.
+The limit bounds a first-order estimate, NOT a rigorous residual error.
+No global residual or recovered resultant is replaced by that estimate.
+"""
+
+    limit: float
+    rotation_length: float
+    force_scale: float = 1.
+
+    def __post_init__(self):
+        values = (self.limit, self.rotation_length, self.force_scale)
+        if any(type(v) not in (int, float) or not np.isfinite(v) or v <= 0
+               for v in values):
+            raise ValueError('finite positive local force accuracy values required')
+        if self.limit > 1e-11 or self.force_scale < 1:
+            raise ValueError('local force limit must not relax equilibrium normalization')
+
+
+def _accuracy_metrics(evaluation, accuracy):
+    """Internal Newton correction and estimated physical external-force error."""
+    if type(accuracy) is not LocalForceAccuracy:
+        raise ValueError('explicit LocalForceAccuracy required')
+    try:
+        step = np.linalg.solve(evaluation.hessian[18:, 18:], -evaluation.residual[18:])
+    except np.linalg.LinAlgError as exc:
+        raise NonlinearLocalError('singular local accuracy estimate') from exc
+    effect = (evaluation.hessian[:18, 18:] @ step).reshape(3, 6)
+    effect[:, 3:] /= accuracy.rotation_length
+    error = float(np.linalg.norm(effect)/accuracy.force_scale)
+    norm = float(np.linalg.norm(evaluation.residual[18:], np.inf))
+    merit = max(norm/1e-11, error/accuracy.limit)
+    if not np.isfinite(step).all() or not np.isfinite(error) or not np.isfinite(merit):
+        raise NonlinearLocalError('nonfinite local accuracy estimate')
+    return step, error, merit
+
+
 class NonlinearMixedBeamProbe:
     """18 external + six cell rotations + twelve material endpoint moments.
 
@@ -141,7 +181,9 @@ class NonlinearMixedBeamProbe:
         return MixedBeamEvaluation(total.value, _readonly(total.gradient), _readonly(total.hessian), tuple(station_trials))
 
     def solve(self, positions, vertex_frames, *, initial_rotations=None, initial_moments=None,
-              max_iterations=25, max_evaluations=64):
+              max_iterations=25, max_evaluations=64, force_accuracy=None):
+        if force_accuracy is not None and type(force_accuracy) is not LocalForceAccuracy:
+            raise ValueError('explicit LocalForceAccuracy required')
         for value, limit in ((max_iterations, 25), (max_evaluations, 64)):
             if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= limit:
                 raise ValueError("local iteration/evaluation limit outside research bounds")
@@ -166,7 +208,10 @@ class NonlinearMixedBeamProbe:
         current = evaluate(local, moments)
         for iteration in range(max_iterations+1):
             norm = float(np.linalg.norm(current.residual[18:], np.inf))
-            if norm <= 1e-11:
+            accuracy_step, merit = None, norm
+            if force_accuracy is not None:
+                accuracy_step, _, merit = _accuracy_metrics(current, force_accuracy)
+            if norm <= 1e-11 and (force_accuracy is None or merit <= 1):
                 h = current.hessian
                 try:
                     np.linalg.cholesky(-h[24:, 24:])
@@ -180,7 +225,8 @@ class NonlinearMixedBeamProbe:
             if iteration == max_iterations:
                 raise NonlinearLocalError("local iteration budget exhausted")
             try:
-                step = np.linalg.solve(current.hessian[18:, 18:], -current.residual[18:])
+                step = (np.linalg.solve(current.hessian[18:, 18:], -current.residual[18:])
+                        if force_accuracy is None else accuracy_step)
             except np.linalg.LinAlgError as exc:
                 raise NonlinearLocalError("singular local Newton system") from exc
             if not np.isfinite(step).all():
@@ -194,9 +240,11 @@ class NonlinearMixedBeamProbe:
                 made_m = moments+scaled[6:].reshape(2, 2, 3)
                 try:
                     trial = evaluate(made_u, made_m)
+                    trial_merit = (np.linalg.norm(trial.residual[18:], np.inf)
+                                   if force_accuracy is None else _accuracy_metrics(trial, force_accuracy)[2])
                 except (ValueError, np.linalg.LinAlgError):
                     continue
-                if np.linalg.norm(trial.residual[18:], np.inf) < norm:
+                if trial_merit < merit:
                     local, moments, current = made_u, made_m, trial
                     accepted = True
                     break
