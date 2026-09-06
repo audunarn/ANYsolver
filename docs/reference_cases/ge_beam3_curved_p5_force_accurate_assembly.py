@@ -39,6 +39,9 @@ one; the existing global normalization is at least one. These are linearized
 estimates, not rigorous bounds on residual arithmetic or nonlinear remainder.
 """
 
+    _mixed_type = NonlinearMixedBeamProbe
+    _accuracy_schema = SCHEMA
+
     @property
     def local_accuracy(self):
         return LocalForceAccuracy(TOTAL_FORCE_BUDGET/len(self._maps), float(self._length), 1.)
@@ -46,7 +49,7 @@ estimates, not rigorous bounds on residual arithmetic or nonlinear remainder.
     def _check_element_accuracy(self, response):
         expected = self.local_accuracy
         if (type(response) is not ForceAccurateElementResponse or
-                response.accuracy_schema != SCHEMA or response.force_accuracy != expected or
+                response.accuracy_schema != self._accuracy_schema or response.force_accuracy != expected or
                 type(response.estimated_force_error) is not float or
                 not math.isfinite(response.estimated_force_error) or
                 not 0 <= response.estimated_force_error <= expected.limit):
@@ -63,7 +66,7 @@ estimates, not rigorous bounds on residual arithmetic or nonlinear remainder.
         if len(origins) != len(self._maps):
             raise ValueError('complete element history inventory required')
 
-        class CountedMixed(NonlinearMixedBeamProbe):
+        class CountedMixed(self._mixed_type):
             def evaluate(inner, *args, **kwargs):
                 budget.consume()
                 result = super().evaluate(*args, **kwargs)
@@ -80,7 +83,7 @@ estimates, not rigorous bounds on residual arithmetic or nonlinear remainder.
             # the scalar estimate, not a cached matrix as replay authority.
             error = _accuracy_metrics(model.last_evaluation, accuracy)[1]
             values = {f.name: getattr(solved, f.name) for f in fields(NonlinearCondensedResponse)}
-            responses.append(ForceAccurateElementResponse(**values, accuracy_schema=SCHEMA,
+            responses.append(ForceAccurateElementResponse(**values, accuracy_schema=self._accuracy_schema,
                              force_accuracy=accuracy, estimated_force_error=error))
         return self._scatter(responses)
 
@@ -88,7 +91,7 @@ estimates, not rigorous bounds on residual arithmetic or nonlinear remainder.
         ref, row, section = self._references[index], self._maps[index], self._sections[index]
         old = trial.response.elements[index]
         self._check_element_accuracy(old)
-        model = NonlinearMixedBeamProbe(ref, section, order=self._order, origins=trial.origins[index])
+        model = self._mixed_type(ref, section, order=self._order, origins=trial.origins[index])
         made = model.evaluate(trial.positions[row], trial.rotations[row] @ ref.nodal_triads,
                               old.local_rotations, old.moments)
         error = _accuracy_metrics(made, self.local_accuracy)[1]

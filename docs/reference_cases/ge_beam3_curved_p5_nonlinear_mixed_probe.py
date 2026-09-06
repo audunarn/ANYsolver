@@ -139,6 +139,11 @@ class NonlinearMixedBeamProbe:
                                self.reference.frame(xi).T/jacobian, offset, reference_position))
             self._stations.append(tuple(values))
 
+    def _chord_strain(self, made_u, chord, left, right):
+        """Historical direct evaluation; successors may rearrange this identity."""
+        local = matvec(transpose(made_u), chord)
+        return [local[i]-(self.reference.coordinates[right, i]-self.reference.coordinates[left, i]) for i in range(3)]
+
     def evaluate(self, positions, vertex_frames, cell_rotations, moments, *, increment=None):
         x = _array(positions, (3, 3), "positions")
         q = _frames(vertex_frames, 3, "vertex frames")
@@ -156,8 +161,7 @@ class NonlinearMixedBeamProbe:
         for cell, (left, right) in enumerate(HALVES):
             made_u = matmul(so3_exp(variables[18+3*cell:21+3*cell]), constant_matrix(u[cell], 36))
             chord = [made_x[right][i]-made_x[left][i] for i in range(3)]
-            local = matvec(transpose(made_u), chord)
-            z = [local[i]-(self.reference.coordinates[right, i]-self.reference.coordinates[left, i]) for i in range(3)]
+            z = self._chord_strain(made_u, chord, left, right)
             endpoints = [[Jet2.constant(m[cell, n, i], 36)+variables[24+6*cell+3*n+i]
                           for i in range(3)] for n in (0, 1)]
             for endpoint, node, sign in ((0, left, -1), (1, right, 1)):
