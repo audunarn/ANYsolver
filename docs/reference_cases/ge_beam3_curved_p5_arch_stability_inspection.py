@@ -39,11 +39,14 @@ def snapshot(root):
     return [(row,load(root/'arch16'/row['raw']['name'])) for row in packet['records']]
 
 
-def spectral(matrix):
+def spectral(matrix, *, extent='REFINEMENT16'):
     """Backward-error diagnostics; uncertainty band is not a rigorous interval."""
     import numpy as np
+    if extent not in ('REFINEMENT16','ARCH_ONSET32'):
+        raise RefinementError('registered spectral extent required')
+    maximum=378 if extent=='ARCH_ONSET32' else 186
     a=np.asarray(matrix,dtype=float)
-    if a.ndim!=2 or a.shape[0]!=a.shape[1] or not 1<=len(a)<=186 or not np.isfinite(a).all():
+    if a.ndim!=2 or a.shape[0]!=a.shape[1] or not 1<=len(a)<=maximum or not np.isfinite(a).all():
         raise RefinementError('bounded finite square tangent required')
     norm=max(1.,float(np.linalg.norm(a)))
     symmetry=float(np.linalg.norm(a-a.T))/norm
@@ -68,7 +71,7 @@ def spectral(matrix):
             'orthogonality_error':orthogonality,'reconstruction_error':reconstruction}
 
 
-def classify_matrix(matrix,*,nodes,span=2.):
+def classify_matrix(matrix,*,nodes,span=2.,extent='REFINEMENT16'):
     """Clamped end nodes; only reflection-invariant planar conservative states.
 
     For S=diag(1,1,-1), delta r transforms with S but spatial delta theta
@@ -76,7 +79,10 @@ def classify_matrix(matrix,*,nodes,span=2.):
     scaled by reference span using a positive congruence, not an invented mass.
     """
     import numpy as np
-    if type(nodes) is not int or not 3<=nodes<=33 or not np.isfinite(span) or span<=0:
+    if extent not in ('REFINEMENT16','ARCH_ONSET32'):
+        raise RefinementError('registered nodal spectral extent required')
+    maximum=65 if extent=='ARCH_ONSET32' else 33
+    if type(nodes) is not int or not 3<=nodes<=maximum or not np.isfinite(span) or span<=0:
         raise RefinementError('bounded clamped node count and positive span required')
     matrix=np.asarray(matrix,dtype=float)
     if matrix.shape!=(6*nodes,6*nodes) or not np.isfinite(matrix).all():
@@ -90,7 +96,7 @@ def classify_matrix(matrix,*,nodes,span=2.):
     reflection=float(np.linalg.norm(a-signs[:,None]*a*signs[None,:]))/norm
     if reflection>LIMIT:
         raise RefinementError('planar reflection coupling failure')
-    full=spectral(a);in_plane=spectral(a[np.ix_(even,even)]);out_of_plane=spectral(a[np.ix_(odd,odd)])
+    full=spectral(a,extent=extent);in_plane=spectral(a[np.ix_(even,even)],extent=extent);out_of_plane=spectral(a[np.ix_(odd,odd)],extent=extent)
     union=np.sort(np.concatenate((in_plane['values'],out_of_plane['values'])))
     union_error=float(np.linalg.norm(union-full['values']))/norm
     if union_error>LIMIT:

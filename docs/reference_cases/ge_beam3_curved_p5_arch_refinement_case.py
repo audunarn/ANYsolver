@@ -21,8 +21,11 @@ from docs.reference_cases.ge_beam3_curved_p5_history_path_probe import digest
 SECTION = np.array([1000.,400.,400.,.02,.01,.02])
 
 
-def references(count):
-    if type(count) is not int or count not in (2,4,8,16):
+def references(count, *, extent='REFINEMENT16'):
+    if extent not in ('REFINEMENT16','ARCH_ONSET32'):
+        raise ValueError('registered arch extent required')
+    counts = (2,4,8,16,32) if extent == 'ARCH_ONSET32' else (2,4,8,16)
+    if type(count) is not int or count not in counts:
         raise ValueError('registered arch refinement count required')
     t = np.linspace(-1.,1.,2*count+1)
     nodes = np.column_stack((t,.1*(1-t*t),np.zeros_like(t)))
@@ -35,11 +38,12 @@ def references(count):
                  for i in range(0,2*count,2))
 
 
-def make_beam(count):
-    refs = references(count)
+def make_beam(count, *, extent='REFINEMENT16'):
+    refs = references(count,extent=extent)
     sections = [DirectedHardeningSectionProbe(np.diag(SECTION),[1.,0.,0.,0.,0.,0.],1e6,1.) for _ in refs]
     beam = NonlinearAssemblyHistoryProbe(refs,[(2*i,2*i+1,2*i+2) for i in range(count)],
-        sections,fixed_nodes=(0,2*count),order=8,extent='REFINEMENT16' if count==16 else 'SMALL8')
+        sections,fixed_nodes=(0,2*count),order=8,
+        extent='ARCH_ONSET32' if extent=='ARCH_ONSET32' else ('REFINEMENT16' if count==16 else 'SMALL8'))
     pattern = np.zeros((2*count+1,3));pattern[count,1] = -1.
     return beam,pattern
 

@@ -67,7 +67,7 @@ class _Budget:
 
 
 class NonlinearAssemblyHistoryProbe:
-    """Eight-element default; explicit sixteen-element refinement profile.
+    """Eight-element default; explicit sixteen/32-element research profiles.
 
 No history is committed by local convergence or a successful element replay.
 All elements are replayed and checked before one whole-model publication.
@@ -75,10 +75,10 @@ No load cutback/retry, arc length, dynamics, restart codec or shell coupling.
 """
 
     def __init__(self, references, connectivity, sections, *, fixed_nodes=(0,), order=24, extent='SMALL8'):
-        if extent not in ('SMALL8','REFINEMENT16'):
+        if extent not in ('SMALL8','REFINEMENT16','ARCH_ONSET32'):
             raise ValueError('registered assembly extent required')
         self._extent = extent
-        maximum = 8 if extent == 'SMALL8' else 16
+        maximum = {'SMALL8':8,'REFINEMENT16':16,'ARCH_ONSET32':32}[extent]
         references, connectivity, sections = tuple(references), tuple(connectivity), tuple(sections)
         if not 1 <= len(references) <= maximum or len(connectivity) != len(references) or len(sections) != len(references):
             raise ValueError('bounded element count with matching maps/sections required')

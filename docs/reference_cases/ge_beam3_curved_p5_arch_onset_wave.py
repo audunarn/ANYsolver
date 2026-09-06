@@ -152,7 +152,7 @@ def worker(repo, commit, output, count):
         progress('COMPLETION', None)
 
 
-def check_raw(raw, sample, count):
+def check_raw(raw, sample, count, *, extent='REFINEMENT16'):
     """Recompute spectra and physical state checks, not element mechanics."""
     import numpy as np
     from docs.reference_cases.ge_beam3_curved_p5_arch_stability_inspection import classify_matrix
@@ -199,7 +199,7 @@ def check_raw(raw, sample, count):
             any(s['response']['plastic_active'] or s['response']['history'] != {'accumulated': 0., 'plastic_coordinate': 0.}
                 for e in response['elements'] for s in e['stations'])):
         raise RefinementError('raw target/budget/station/history mismatch')
-    reconstructed = classify_matrix(h, nodes=nodes)
+    reconstructed = classify_matrix(h, nodes=nodes, extent=extent)
     if canonical(reconstructed) != canonical(raw['spectra']):
         raise RefinementError('raw tangent/spectral reconstruction mismatch')
     odd = reconstructed['out_of_plane']
@@ -208,10 +208,10 @@ def check_raw(raw, sample, count):
         raise RefinementError('raw spectral summary mismatch')
 
 
-def inspect_worker(folder, count, frozen, request_id, request_sha):
+def inspect_worker(folder, count, frozen, request_id, request_sha, *, extent='REFINEMENT16', schema=SCHEMA):
     packet = load(folder/'complete.json')
     if (set(packet) != {'schema', 'authority', 'request_id', 'request_sha256', 'result'} or
-            packet['schema'] != SCHEMA or packet['authority'] != frozen or
+            packet['schema'] != schema or packet['authority'] != frozen or
             packet['request_id'] != request_id or packet['request_sha256'] != request_sha):
         raise RefinementError('onset worker identity mismatch')
     result = packet['result'];samples = result['samples'];bindings = result['raw_bindings']
@@ -231,7 +231,7 @@ def inspect_worker(folder, count, frozen, request_id, request_sha):
         path = folder/binding['name'];data = ordinary(path)
         if len(data) != binding['bytes'] or sha(data) != binding['sha256']:
             raise RefinementError('onset raw hash mismatch')
-        raw = load(path);check_raw(raw, sample, count)
+        raw = load(path);check_raw(raw, sample, count, extent=extent)
         epoch = 0 if origin is None else visited[origin]+1
         if (type(raw['trial']['origin_epoch']) is not int or type(raw['trial']['assembly']['origin_epoch']) is not int or
                 raw['trial']['origin_epoch'] != epoch or raw['trial']['assembly']['origin_epoch'] != epoch):

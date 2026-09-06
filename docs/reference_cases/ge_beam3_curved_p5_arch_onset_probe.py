@@ -92,7 +92,7 @@ def locate(evaluate):
                          'width': right['drop']-left['drop']})
 
 
-def records(*, count, progress, publish_raw):
+def records(*, count, progress, publish_raw, extent='REFINEMENT16'):
     """Numerical callback for a future contained runner; no standalone CLI.
 
     The two-element extent is solely for small disposable unit smoke tests.
@@ -101,7 +101,10 @@ def records(*, count, progress, publish_raw):
     raw diagnostics. This function neither claims a lease nor publishes an
     aggregate or grants execution authority.
     """
-    if type(count) is not int or count not in (2, *MESHES):
+    if extent not in ('REFINEMENT16','ARCH_ONSET32'):
+        raise ValueError('registered onset extent required')
+    counts = (2, *MESHES, 32) if extent == 'ARCH_ONSET32' else (2, *MESHES)
+    if type(count) is not int or count not in counts:
         raise ValueError('registered onset mesh count required')
     from dataclasses import asdict
     import numpy as np
@@ -110,7 +113,7 @@ def records(*, count, progress, publish_raw):
     from docs.reference_cases.ge_beam3_curved_p5_arch_stability_inspection import classify_matrix
     from docs.reference_cases.ge_beam3_curved_p5_history_path_probe import digest
 
-    beam, _ = make_beam(count)
+    beam, _ = make_beam(count, extent=extent)
     states, bindings = {}, {}
     progress('INITIALIZATION', None)
     def evaluate(label, drop, origin):
@@ -141,7 +144,7 @@ def records(*, count, progress, publish_raw):
                 any(not math.isfinite(v) or v > LIMIT for v in errors.values())):
             raise ValueError('onset full spatial equilibrium/planarity/constraint mismatch')
         # Use the full conservative Hessian, never the control Schur matrix.
-        spectra = classify_matrix(response.tangent, nodes=2*count+1)
+        spectra = classify_matrix(response.tangent, nodes=2*count+1, extent=extent)
         odd = spectra['out_of_plane']
         row = {'drop': drop, 'load': float(-state.forces[count, 1]),
                'lowest': float(odd['values'][0]), 'uncertainty': odd['uncertainty_band'],
