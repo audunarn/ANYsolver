@@ -19,6 +19,7 @@ from docs.reference_cases.ge_beam3_curved_p5_assembly_history_probe import (
     NonlinearAssemblyHistoryProbe,AssemblyTrial,AssemblyPathError,AssemblyTransactionError,_Budget,
 )
 from docs.reference_cases.ge_beam3_curved_p5_nonlinear_mixed_probe import NonlinearLocalError
+from docs.reference_cases.ge_beam3_curved_p5_force_accurate_assembly import ForceAccurateAssemblyHistoryProbe
 
 
 class DisplacementControlError(RuntimeError):
@@ -50,7 +51,7 @@ class DisplacementTrial:
 
 class DisplacementControlledAssemblyProbe:
     def __init__(self,model,*,node,component=1):
-        if type(model) is not NonlinearAssemblyHistoryProbe or model._pending is not None:
+        if type(model) not in (NonlinearAssemblyHistoryProbe, ForceAccurateAssemblyHistoryProbe) or model._pending is not None:
             raise ValueError('exact research assembly without pending trial required')
         if (type(node) is not int or type(component) is not int or not 0<=component<3 or
                 node not in model._free_nodes):
