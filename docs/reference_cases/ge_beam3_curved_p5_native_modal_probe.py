@@ -17,6 +17,8 @@ from docs.reference_cases.ge_beam3_curved_p5_algebra_probe import validate_secti
 def prepare(model, section_inertias, *, cancellation_token=None):
     """Capture explicit elastic-origin inertia inputs; do not alter the elements."""
     elements = tuple(sorted(model.mesh.elements.items()))
+    if model.mesh.dof_manager.total_dofs + 6*len(elements) > 256:
+        raise ValueError("bounded native model required before factor construction")
     if (not elements or type(section_inertias) is not dict
             or set(section_inertias) != {i for i, _ in elements}
             or any(type(e) is not DriverP5Element for _, e in elements)):
