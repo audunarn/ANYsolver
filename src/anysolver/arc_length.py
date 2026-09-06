@@ -55,7 +55,7 @@ from .matrix_assembly import (
     assemble_stiffness_matrix,
 )
 from .nonlinear_analysis_diagnostics import capture_nonlinear_analysis_diagnostics
-from .nonlinear_state import NonlinearStateStore
+from .nonlinear_state import NonlinearStateStore, _run_with_nonlinear_state_cleanup
 from .nonlinear_restart import (
     canonical_checkpoint_json_bytes,
     create_nonlinear_checkpoint,
@@ -2368,7 +2368,8 @@ def solve_static_arc_length(
             resource_config,
             post_observation=post_observation,
         )
-        return solve_under_lease(
+        return _run_with_nonlinear_state_cleanup(
+            solve_under_lease,
             model,
             load_case,
             constant_load_case=constant_load_case,

@@ -83,6 +83,8 @@ from .nonlinear_analysis_diagnostics import (
     record_nonlinear_assembly_execution,
 )
 from .nonlinear_state import (
+    _register_nonlinear_state_cleanup,
+    _run_with_nonlinear_state_cleanup,
     NonlinearStateStore,
     StateMaterializationPolicy,
     StateTransactionError,
@@ -2998,7 +3000,7 @@ def _activate_nonlinear_state_storage(
                 committed_states.has_native_rotations
             )
         diagnostic.update(committed_states.diagnostics())
-        return committed_states
+        return _register_nonlinear_state_cleanup(committed_states)
     if str(kinematics) != "von_karman":
         if native_required:
             raise NotImplementedError(
@@ -3098,7 +3100,7 @@ def _activate_nonlinear_state_storage(
                 )
         diagnostic["activated"] = True
         diagnostic.update(store.diagnostics())
-        return store
+        return _register_nonlinear_state_cleanup(store)
     except Exception as exc:
         if native_required:
             diagnostic["fallback_reason"] = (
@@ -6432,7 +6434,8 @@ def solve_static_nonlinear(
             post_observation=post_observation,
         )
 
-        return solve_under_lease(
+        return _run_with_nonlinear_state_cleanup(
+            solve_under_lease,
             model,
             load_case=load_case,
             constant_load_case=constant_load_case,

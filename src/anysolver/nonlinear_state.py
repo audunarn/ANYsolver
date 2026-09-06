@@ -22,6 +22,7 @@ from __future__ import annotations
 import copy
 import threading
 import time
+from contextvars import ContextVar
 from collections.abc import Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
@@ -240,6 +241,50 @@ class _NativeElementStateBinding:
 
 _NATIVE_ELEMENT_BINDINGS_ATTRIBUTE = "_anysolver_native_element_state_bindings_v1"
 _NATIVE_DIRECTOR_CONSISTENCY_TOLERANCE = 1.0e-12
+
+# A synchronous solve owns only stores explicitly activated in its context.
+# Nested/concurrent solves do not share a mutable global cleanup registry.
+_SOLVE_STATE_CLEANUP: ContextVar[Optional[list[Any]]] = ContextVar(
+    "anysolver_nonlinear_state_cleanup", default=None
+)
+
+
+def _register_nonlinear_state_cleanup(store: Any) -> Any:
+    if not isinstance(store, NonlinearStateStore):
+        raise TypeError("Only a solver-owned nonlinear state store can be registered")
+    owned = _SOLVE_STATE_CLEANUP.get()
+    if owned is not None and not any(item is store for item in owned):
+        owned.append(store)
+    return store
+
+
+def _run_with_nonlinear_state_cleanup(operation: Any, *args: Any, **kwargs: Any) -> Any:
+    """Discard this solve's remaining trials on return, failure or cancellation.
+
+    Committed material/kinematic generations are never advanced or rolled back.
+    Cleanup failures are reported after attempting every owned store; they must
+    not silently turn an interrupted solve into a clean checkpoint.
+    """
+    owned: list[Any] = []
+    token = _SOLVE_STATE_CLEANUP.set(owned)
+    try:
+        return operation(*args, **kwargs)
+    finally:
+        _SOLVE_STATE_CLEANUP.reset(token)
+        failures = []
+        for store in reversed(owned):
+            try:
+                if store.has_active_trial:
+                    store.discard_trial(store.active_trial_token())
+                rotations = store.native_rotation_store
+                if store.has_active_trial or (rotations is not None and rotations.has_active_trial):
+                    raise StateTransactionError("Nonlinear solve left an inconsistent active trial")
+            except Exception as exc:
+                failures.append(exc)
+        if failures:
+            raise StateTransactionError(
+                f"Nonlinear solve cleanup failed for {len(failures)} owned state store(s)"
+            ) from failures[0]
 
 
 @dataclass(frozen=True, slots=True)
