@@ -10,7 +10,8 @@ from docs.reference_cases.ge_beam3_curved_p5_native_material_probe import (
     PrivateP5NativeElement, NativeMaterialError, sha, seal,
 )
 from docs.reference_cases.ge_beam3_curved_p5_native_chart_probe import pullback
-from docs.reference_cases.ge_beam3_curved_p5_finite_probe import _array
+from docs.reference_cases.ge_beam3_curved_p5_finite_probe import _array, _readonly
+from docs.reference_cases import ge_beam3_curved_p5_native_state_codec as codec
 
 
 SCHEMA='GE_BEAM3_P5_PRIVATE_DRIVER_STATION_STATE_V1'
@@ -27,11 +28,20 @@ class DriverP5Element(Element):
     dofs_per_node=6
 
     def __init__(self, element_id, nodes, reference, section, *, order=8):
-        self.core=PrivateP5NativeElement(element_id, nodes, reference, section, order=order)
+        self._core=PrivateP5NativeElement(element_id, nodes, reference, section, order=order)
         super().__init__(element_id, nodes, self.core.material_name)
+        self.core.section.checkpoint_descriptor=self._section_descriptor()
         self._layout=None
         self.driver_sha256=sha(dict(schema=SCHEMA, formulation=FORMULATION,
                                    element=element_id, nodes=nodes, core=self.core.model_sha256))
+
+    @property
+    def core(self): return self._core
+
+    def _section_descriptor(self):
+        law=self.core.section
+        return dict(schema='P5_DIRECTED_HARDENING_SECTION_DESCRIPTOR_V1', elastic=law._elastic.tolist(),
+                    direction=law._direction.tolist(), yield_force=law._yield, hardening=law._hardening)
 
     def _check(self, mesh):
         if type(self) is not DriverP5Element:
@@ -39,6 +49,8 @@ class DriverP5Element(Element):
         if mesh.elements.get(self.element_id) is not self or any(type(e) is not DriverP5Element for e in mesh.elements.values()):
             raise NativeMaterialError('private driver candidate is standalone-only; no unqualified joints or shells')
         self.core._check_model(mesh)
+        if sha(self.core.section.checkpoint_descriptor)!=sha(self._section_descriptor()):
+            raise NativeMaterialError('section checkpoint descriptor differs from physical law')
         expected=sha(dict(schema=SCHEMA, formulation=FORMULATION, element=self.element_id,
                           nodes=self.node_ids, core=self.core.model_sha256))
         if expected!=self.driver_sha256 or tuple(self.node_ids)!=self.core.node_ids:
@@ -83,8 +95,50 @@ class DriverP5Element(Element):
     def validate_model_bound_nonlinear_state(self, mesh, material, state, num_layers,
                                             *, expected_committed_total_u=None):
         self.core._arguments(mesh, material, num_layers)
+        if type(state) is dict and state.get('schema')==codec.SCHEMA:
+            state=codec.decode(state, order=self.core.order)
         self._validate(mesh, state, expected_committed_total_u)
         return deepcopy(state)
+
+    def serialize_native_material_state(self, mesh, state):
+        self._validate(mesh, state)
+        return codec.encode(state, order=self.core.order)
+
+    def to_dict(self):
+        # Deterministic model descriptor only. No public factory deserialization.
+        return dict(formulation_id=FORMULATION, schema=SCHEMA, codec=codec.SCHEMA,
+            element_id=self.element_id, node_ids=list(self.node_ids), driver_sha256=self.driver_sha256,
+            reference_coordinates=self.core.reference.coordinates.tolist(),
+            reference_triads=self.core.reference.nodal_triads.tolist(), section=self._section_descriptor(),
+            quadrature_order=self.core.order, update='SPATIAL_MULTIPLICATIVE',
+            reduction='STATIONARY_CELL_ROTATIONS_AND_ENDPOINT_MOMENTS', production_qualified=False)
+
+    def recover_native_fields(self, mesh, state, *, expected_committed_total_u=None):
+        """Read accepted station state; no new material trial or history advance."""
+        validated=self.validate_model_bound_nonlinear_state(mesh, self.core.section, state, 1,
+            expected_committed_total_u=expected_committed_total_u)
+        inner=validated['material_state'];response=inner['response'];ref=self.core.reference
+        reference_frames=[];current_frames=[];positions=[];global_resultants=[]
+        for station in response.stations:
+            xi=station.reference_coordinate;cell=station.cell;t=xi-(cell-1)
+            r0=ref.frame(xi);q=response.local_rotations[cell]@r0
+            lift=ref.position(xi)-(1-t)*ref.coordinates[cell]-t*ref.coordinates[cell+1]
+            point=(1-t)*inner['committed_positions'][cell]+t*inner['committed_positions'][cell+1]+response.local_rotations[cell]@lift
+            resultant=station.response.resultants
+            reference_frames.append(r0);current_frames.append(q);positions.append(point)
+            global_resultants.append(np.r_[q@resultant[:3], q@resultant[3:]])
+        return dict(formulation_id=FORMULATION, state_schema=SCHEMA, production_qualified=False,
+            driver_sha256=self.driver_sha256, state_sha256=validated['state_sha256'],
+            station_ids=tuple((s.cell, s.index) for s in response.stations),
+            reference_coordinates=_readonly(np.array([s.reference_coordinate for s in response.stations])),
+            reference_frames=_readonly(np.array(reference_frames)), current_frames=_readonly(np.array(current_frames)),
+            current_positions=_readonly(np.array(positions)),
+            strains=_readonly(np.array([s.response.strain for s in response.stations])),
+            resultants=_readonly(np.array([s.response.resultants for s in response.stations])),
+            global_resultants=_readonly(np.array(global_resultants)),
+            strain_order=('eps_x', 'gamma_xy', 'gamma_xz', 'kappa_x', 'kappa_y', 'kappa_z'),
+            resultant_order=('N', 'V_y', 'V_z', 'T', 'M_y', 'M_z'),
+            fibre_stress_status='SECTION_DOES_NOT_SUPPLY_FIBRE_STRESSES')
 
     @staticmethod
     def _pose(inner, view, *, committed):
@@ -147,4 +201,3 @@ class DriverP5Element(Element):
     compute_geometric_stiffness_matrix=_unsupported
     compute_internal_forces=_unsupported
     compute_stresses=_unsupported
-    to_dict=_unsupported
