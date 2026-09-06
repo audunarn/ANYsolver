@@ -64,9 +64,10 @@ class DisplacementControlledAssemblyProbe:
     @property
     def committed_model(self): return deepcopy(self._checkpoint)
 
-    def trial(self,target,*,max_iterations=16,max_mixed_evaluations=None,observer=None):
+    def trial(self,target,*,max_iterations=16,max_mixed_evaluations=None,observer=None,failure_observer=None):
         if self._pending is not None: raise DisplacementControlError('explicit commit/discard required')
         if observer is not None and not callable(observer): raise ValueError('callable observation sink required')
+        if failure_observer is not None and not callable(failure_observer): raise ValueError('callable failure observation sink required')
         original=self._checkpoint;state=original.committed;cap=256*len(original._maps)
         if max_mixed_evaluations is None: max_mixed_evaluations=cap
         if (isinstance(target,(bool,np.bool_)) or not np.isscalar(target) or not np.isfinite(target) or
@@ -78,6 +79,7 @@ class DisplacementControlledAssemblyProbe:
         free=staged._free[staged._free!=self._control]
         x,u=state.positions.copy(),state.rotations.copy();checkpoints=[]
         observations=0
+        last_evaluation=None
         def emit(phase,iteration=None,backtrack=None,**metrics):
             nonlocal observations
             if observer is None: return
@@ -108,7 +110,11 @@ class DisplacementControlledAssemblyProbe:
                  linear_residual=float(np.linalg.norm(matrix@delta[free]-rhs)/max(1.,float(np.linalg.norm(rhs)))),
                  translation_increment_max=float(np.max(np.abs(delta.reshape(staged._nodes,6)[:,:3]))),
                  rotation_increment_max=float(np.max(np.abs(delta.reshape(staged._nodes,6)[:,3:]))))
-        def evaluate(a,b): return staged._solve_all(a,b,origins,budget)
+        def evaluate(a,b):
+            nonlocal last_evaluation
+            response=staged._solve_all(a,b,origins,budget)
+            if failure_observer is not None: last_evaluation=(a,b,response,budget.count)
+            return response
         def residual(response):
             forces=state.forces.copy()
             forces[self._node,self._component]=response.residual[self._control]
@@ -176,6 +182,18 @@ class DisplacementControlledAssemblyProbe:
             raise AssertionError('unreachable')
         except (DisplacementControlError,AssemblyPathError,ValueError,NonlinearLocalError,np.linalg.LinAlgError) as error:
             emit('FAILURE',error_type=type(error).__name__,error=str(error)[:240])
+            if failure_observer is not None and last_evaluation is not None:
+                a,b,response,evaluated_count=last_evaluation
+                _,forces,norm=residual(response)
+                # Explicitly the last successful evaluation, which may be a
+                # rejected candidate. It is never an accepted trial or state.
+                snapshot={'schema':'GE_BEAM3_P5_FAILED_LAST_EVALUATION_V1',
+                    'disposition':'UNCOMMITTED_DIAGNOSTIC_ONLY','origin_epoch':state.epoch,
+                    'target':float(target),'positions':a,'rotations':b,'forces':forces,
+                    'origins':origins,'response':response,'residual_norm':norm,
+                    'mixed_evaluations':evaluated_count}
+                try: failure_observer(deepcopy(snapshot))
+                except Exception as failure: raise ControlObservationError('failure snapshot sink failed without publication') from failure
             raise DisplacementControlError(f'controlled trial failed without commit: {error}',checkpoints,budget.count) from error
 
     def _owned(self,trial):
