@@ -13,7 +13,7 @@ from docs.reference_cases.ge_beam3_curved_p5_arch_lateral_reference import arch_
 
 
 def integrate(generator,momenta,*,nodes=33,max_callbacks=10000,max_seconds=30.):
-    """Two fixed half-intervals, continuous u,p; retain unclipped end errors."""
+    """Resolve all Hermite coefficient knots; retain continuous u,p/end errors."""
     if (type(nodes) is not int or nodes not in (17,33,65,129) or type(max_callbacks) is not int or
             not 0<=max_callbacks<=10000 or isinstance(max_seconds,bool) or
             not np.isfinite(max_seconds) or not 0<=max_seconds<=30):
@@ -23,13 +23,15 @@ def integrate(generator,momenta,*,nodes=33,max_callbacks=10000,max_seconds=30.):
         raise ValueError('finite nonzero three-component initial momentum required')
     parameters=np.linspace(-1.,1.,nodes);values=np.zeros((nodes,7))
     state=np.r_[np.zeros(3),momenta,0.];calls=0;started=time.monotonic()
-    for index,(left,right) in enumerate(((-1.,0.),(0.,1.))):
+    coefficient_knots=np.linspace(-1.,1.,257)
+    for index,(left,right) in enumerate(zip(coefficient_knots[:-1],coefficient_knots[1:])):
+        side=0 if right<=0 else 1
         def rhs(t,y):
             nonlocal calls
             if calls>=max_callbacks or time.monotonic()-started>=max_seconds:
                 raise LateralReferenceError('linear mode callback/time budget exhausted')
             calls+=1
-            h=np.asarray(generator(t,index),dtype=float)
+            h=np.asarray(generator(t,side),dtype=float)
             if h.shape!=(6,6) or not np.isfinite(h).all():
                 raise LateralReferenceError('finite Jacobi generator required')
             u,p=y[:3],y[3:6];derivative=h@y[:6]
@@ -42,19 +44,20 @@ def integrate(generator,momenta,*,nodes=33,max_callbacks=10000,max_seconds=30.):
             velocity=derivative[:3]
             energy=velocity@a@velocity+2*u@b@velocity+u@c@u
             return np.r_[derivative,energy]
-        result=solve_ivp(rhs,(left,right),state,method='DOP853',rtol=1e-11,atol=1e-13,dense_output=True)
+        result=solve_ivp(rhs,(left,right),state,method='DOP853',rtol=1e-11,atol=1e-13,dense_output=True,
+                         first_step=right-left,max_step=right-left)
         if not result.success or result.t[-1]!=right or not np.isfinite(result.y).all():
             raise LateralReferenceError('linear mode integration failed without retry')
-        selected=np.flatnonzero((parameters>=left)&(parameters<=right))
-        if index==1: selected=selected[1:] # Crown value is continuous; preserve left sample once.
-        values[selected]=result.sol(parameters[selected]).T
+        selected=np.flatnonzero(((parameters>=left) if index==0 else (parameters>left))&(parameters<=right))
+        if len(selected): values[selected]=result.sol(parameters[selected]).T
         state=result.y[:,-1]
     boundary_work=float(state[:3]@state[3:6])
     work_error=abs(state[6]-boundary_work)/max(1.,abs(state[6]),abs(boundary_work))
     if not np.isfinite(values).all() or work_error>1e-9:
         raise LateralReferenceError('linear variational work consistency failed')
     return {'parameters':parameters,'states':values[:,:6],'energy_integral':float(state[6]),
-            'boundary_work':boundary_work,'work_error':float(work_error),'callbacks':calls}
+            'boundary_work':boundary_work,'work_error':float(work_error),'callbacks':calls,
+            'coefficient_half_nodes':129}
 
 
 def weights(parameters,*,height=.1):
@@ -101,6 +104,7 @@ def shape(reference,endpoint,*,stride=1,nodes=33):
             'energy_integral_normalized':recovered['energy_integral']/norm**2,
             'boundary_work_normalized':recovered['boundary_work']/norm**2,
             'callbacks':recovered['callbacks'],'reference_stride':stride,
+            'coefficient_half_nodes':recovered['coefficient_half_nodes'],
             'displacement':reference.displacement,'load':reference.load,
             'production_qualified':False,'natural_frequencies_computed':False}
 

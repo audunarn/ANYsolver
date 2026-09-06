@@ -11,6 +11,8 @@ from scipy.linalg import expm
 from docs.reference_cases import ge_beam3_curved_p5_arch_lateral_mode_reference as mode
 from docs.reference_cases import ge_beam3_curved_p5_arch_lateral_mode_comparison as reader
 from docs.reference_cases.ge_beam3_curved_p5_arch_lateral_reference import coefficients,jacobi
+from docs.reference_cases import ge_beam3_curved_p5_lateral_knot_diagnostic as knots
+from docs.reference_cases import ge_beam3_curved_p5_lateral_knot_revalidation as revalidator
 
 
 def straight():
@@ -126,3 +128,36 @@ def test_reference_does_not_import_or_read_discrete_mechanics():
                          'docs.reference_cases.ge_beam3_curved_p5_arch_lateral_reference'}
     top=ast.parse(Path(reader.__file__).read_text()).body
     assert not any(isinstance(n,(ast.Import,ast.ImportFrom)) and 'numpy' in ast.unparse(n) for n in top)
+
+
+def test_every_coefficient_knot_is_an_integration_boundary(monkeypatch):
+    calls=[];original=mode.solve_ivp;h,_=straight()
+    def record(fun,bounds,*args,**kwargs):
+        calls.append(bounds)
+        assert kwargs['rtol']==1e-11 and kwargs['atol']==1e-13
+        return original(fun,bounds,*args,**kwargs)
+    monkeypatch.setattr(mode,'solve_ivp',record)
+    result=mode.integrate(lambda t,i:h,[0.,0.,1.])
+    expected=np.linspace(-1.,1.,257)
+    assert calls==list(zip(expected[:-1],expected[1:]))
+    assert result['coefficient_half_nodes']==129 and result['callbacks']<=10000
+
+
+def test_knot_matrix_vector_linearity_and_refinement():
+    def generator(t,i):
+        angle=.2*np.sin(3*t)
+        return jacobi(*coefficients(angle,.99,.03,-.1,-.01,.002))
+    vector=np.r_[np.zeros(3),[.2,-.1,.3]]
+    a=knots.propagate(generator,np.eye(6));b=knots.propagate(generator,vector)
+    assert np.allclose(b['endpoint'],a['endpoint']@vector,rtol=1e-11,atol=1e-11)
+    c=mode.integrate(generator,vector[3:])
+    assert np.allclose(c['states'][-1],b['endpoint'],rtol=1e-11,atol=1e-11)
+
+
+def test_knot_profile_and_legacy_input_guard(tmp_path):
+    with pytest.raises(ValueError): knots.propagate(lambda *args:np.eye(6),np.eye(6),half_nodes=513)
+    with pytest.raises(RuntimeError,match='budget'):
+        knots.propagate(lambda *args:np.eye(6),np.eye(6),max_callbacks=0)
+    path=tmp_path/'bad.json';path.write_bytes(b'{}\n')
+    with pytest.raises(revalidator.RefinementError,match='hash'): revalidator.revalidate(path,1)
+    with pytest.raises(ValueError): revalidator.revalidate(path,True)

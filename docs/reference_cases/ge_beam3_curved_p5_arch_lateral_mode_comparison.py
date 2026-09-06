@@ -6,10 +6,10 @@ from pathlib import Path
 from docs.reference_cases.ge_beam3_curved_p5_refinement_wave import load,sha,canonical,publish,RefinementError
 
 
-ROOTS={1:(34293,'3cab47bfb275de3d9af26609f9f1291717420285be1ebb458815b5c7b4d08e20'),
-       2:(34291,'fe310ec8836fdd0adb58b8c910a47f111d32ad4097fe6bd9534279323fb6a1da')}
+ROOTS={1:(29126,'64c47952dacd030d81ec3a631744179c300c33052551e1ebe5c16a9e191019fc'),
+       2:(29139,'a7917c813953d181df20748c5e54179e0f84597585650b641fbd46b90e8f073c')}
 INSPECTION=(109306,'252ace01cabf4b11818657436f7d49b669325b9b97b7bfe21faf7c5679495e9f')
-SCHEMA='GE_BEAM3_P5_LATERAL_STATIC_SHAPE_COMPARISON_V1'
+SCHEMA='GE_BEAM3_P5_LATERAL_STATIC_SHAPE_COMPARISON_KNOT_V2'
 
 
 def bound(path,binding):
@@ -23,6 +23,8 @@ def run(root_folder,inspection_file):
     # All historical inputs are fixed before importing numerical reconstruction.
     roots={stride:bound(Path(root_folder)/f'root-stride-{stride}.json',binding)
            for stride,binding in ROOTS.items()}
+    if any(r['schema']!='GE_BEAM3_P5_KNOT_RESOLVED_LATERAL_REFERENCE_V1' for r in roots.values()):
+        raise RefinementError('knot-resolved successor references required')
     inspected=bound(inspection_file,INSPECTION)
     if [r['step'] for r in inspected['records']]!=list(range(8)):
         raise RefinementError('eight ordered discrete states required')
