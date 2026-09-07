@@ -4916,8 +4916,11 @@ def _solve_static_nonlinear_under_lease(
         and resolved_corotational_tangent == "consistent"
     )
     native_spatial_couples = False
-    if any(type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
-           for e in model.mesh.elements.values()):
+    native_line_model = any(
+        type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
+        for e in model.mesh.elements.values()
+    )
+    if native_line_model:
         from ._ge_beam3_native_spatial_couples import active_for
 
         native_spatial_couples = active_for(model)
@@ -5428,6 +5431,11 @@ def _solve_static_nonlinear_under_lease(
                 force = force + extra
                 if tangent:
                     zero_tangent = zero_tangent + extra_tangent
+            if native_line_model:
+                with np.errstate(over='ignore', invalid='ignore'):
+                    load_norm = float(np.linalg.norm(force))
+                if not np.all(np.isfinite(force)) or not np.isfinite(load_norm):
+                    raise ValueError('native external load exceeds finite norm range')
             return force, zero_tangent, factors, active_stage
 
         weighted_cases: List[Tuple[Optional["LoadCase"], float]] = [

@@ -194,3 +194,21 @@ def test_failed_actual_increment_preserves_committed_state(tmp_path):
     save(tmp_path/'failed.json',dict(result=packet(result),evidence=evidence))
     assert result.status!='completed' and canonical(result.element_states[1])==canonical(initial)
     assert _RUN.get() is None
+
+
+@pytest.mark.parametrize('kind',['effective-sum','external-norm','combined-load'])
+def test_numeric_range_fails_closed(kind,tmp_path):
+    model,e=make();save(tmp_path/'range-input.json',dict(kind=kind,finite_components=True))
+    if kind=='effective-sum':
+        large=SpatialNodalMoments(((3,1e308,0.,0.),));run=_Run(model,large,large)
+        with pytest.raises(ValueError,match='range'):run.effective(1.)
+    elif kind=='external-norm':
+        store=store_for(model,e);run=_Run(model,SpatialNodalMoments(((3,1e200,0.,0.),)));token=_RUN.set(run)
+        try:
+            with pytest.raises(ValueError,match='range'):external_at(model,store,np.zeros(18),1.,tangent=True)
+        finally:_RUN.reset(token)
+    else:
+        with pytest.raises(ValueError,match='range'):
+            solve_spatial_static(model,SpatialNodalMoments(((3,.1,0.,0.),)),line_pattern=LinePattern(((1,1e200,0.,0.),)),steps=1)
+    assert _RUN.get() is None
+    save(tmp_path/'range-rejected.json',dict(kind=kind,rejected=True,production_qualified=False))

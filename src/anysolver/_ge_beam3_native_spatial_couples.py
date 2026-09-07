@@ -61,7 +61,9 @@ class _Run:
         result={}
         for factor,pattern in ((1.,self.constant),(float(parameter),self.proportional)):
             for node,*moment in _rows(pattern):
-                result[node]=result.get(node,np.zeros(3))+factor*np.array(moment)
+                with np.errstate(over='ignore',invalid='ignore'):
+                    result[node]=result.get(node,np.zeros(3))+factor*np.array(moment)
+                if not np.isfinite(result[node]).all():raise ValueError('effective spatial couple exceeds finite range')
         return result
 
 
@@ -109,6 +111,10 @@ def external_at(model,store,displacements,parameter,*,tangent):
             a,da=exp_chart_terms(increments[node]);dofs=list(model.mesh.dof_manager.get_node_dofs(node)[3:])
             force[dofs]=a.T@moment
             if tangent:matrix[np.ix_(dofs,dofs)]=np.column_stack([da[:,:,k].T@moment for k in range(3)])
+        with np.errstate(over='ignore',invalid='ignore'):
+            norm=float(np.linalg.norm(force))
+        if not np.isfinite(force).all() or not np.isfinite(norm) or (tangent and not np.isfinite(matrix).all()):
+            raise ValueError('spatial couple chart force/tangent exceeds finite norm range')
         run.require(model)
         if generation!=(store.generation,store.native_rotation_store.generation):raise ValueError('spatial couple committed state changed')
         run.events.append(dict(parameter=float(parameter),tangent=tangent,generation=int(store.generation),

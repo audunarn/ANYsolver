@@ -85,3 +85,19 @@ as full provenance for a couple-loaded analysis. These remaining load/state
 steps, general nonlinear sections and paths, mass/modal/buckling/slenderness/
 engineering/package gates, independent review and the objective beam-shell
 connection remain required for the full goal. No public activation is implied.
+
+## Pre-closeout numeric-range correction
+
+Preserve initial frozen c0ace9209d5835bc47308388b01586347287fa69 and both
+successful 15-test cycles. A subsequent three-test finite-input range witness
+failed: effective moment sums could overflow, chart-force norms could overflow,
+and a combined line/couple load was not rejected. Finite components alone do
+not ensure a finite convergence reference norm. These are guard defects, not
+new mechanical equations; the initial freeze is superseded before closeout.
+
+Reject nonfinite effective sums, chart forces/tangents and external force norms.
+The combined-force guard is restricted to the private native line model; old
+beam/shell routes are unchanged. No numerical threshold is relaxed or coefficient
+tuned. Add the three rejection tests, rerun the complete revised 18-test suite,
+freeze this same four-path extent in a successor commit and repeat two guarded
+cycles. Preserve both initial cycles, the failed witness and corrected runs.
