@@ -88,3 +88,14 @@ def test_inputs_remain_unchanged():
     m = np.eye(3); before_h=h.copy(); before_m=m.copy()
     implementation.exact_inertia(h,m,.1)
     assert np.array_equal(h,before_h) and np.array_equal(m,before_m)
+
+
+def test_benchmark_guard_accepts_reduction_stage(monkeypatch):
+    from functools import partial
+    from docs.reference_cases import ge_beam3_exact_inertia_benchmark as bench
+    monkeypatch.setattr(bench.time,'monotonic',lambda: 10.)
+    check=partial(bench.deadline_check,0.)
+    check(); check('reduction.start')
+    monkeypatch.setattr(bench.time,'monotonic',lambda: 121.)
+    with pytest.raises(TimeoutError,match='arithmetic comparison deadline'):
+        check('reduction.start')

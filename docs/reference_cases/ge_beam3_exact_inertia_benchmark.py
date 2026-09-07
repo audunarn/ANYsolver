@@ -1,6 +1,7 @@
 """Bounded arithmetic-only comparison on a preserved native spectral packet."""
 import argparse
 from hashlib import sha256
+from functools import partial
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,10 @@ from docs.reference_cases.ge_beam3_preserved_arch_load_comparison import canonic
 ROOT=Path(__file__).resolve().parents[2]
 INPUT=Path('C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-loaded-spectra-20260907-v1/native-1.json')
 INPUT_SHA='4519178585b0ba921559bf161a5bea4425a4f069f51f7f07a306edac303204c8'
+
+
+def deadline_check(start, stage=None):
+    if time.monotonic()-start>120.: raise TimeoutError('arithmetic comparison deadline')
 
 
 def worker(revision, output):
@@ -28,8 +33,7 @@ def worker(revision, output):
     oracle=runpy.run_path(str(ROOT/'tests/test_native_fraction_free_inertia.py'))['rational_inertia']
     p=json.loads(raw)['packet']; left,right,g,b=(np.asarray(p[k]) for k in ('left','right','geometric','kinetic'))
     start=time.monotonic()
-    def check():
-        if time.monotonic()-start>120.: raise TimeoutError('arithmetic comparison deadline')
+    check=partial(deadline_check,start)
     print('REASSEMBLY',flush=True)
     _,_,mapping=_reduce(mm(left,right,check),g,b.T@b,p['free'],p['algebraic'],check,b)
     h,m=reassemble(left,right,g,b,mapping,check)
