@@ -17,6 +17,7 @@ from ._ge_beam3_retained_fibre_element import NativeRetainedFibreElement
 from ._ge_beam3_retained_fibre import POLICY
 from ._ge_beam3_fibre_cell import CellHistory
 from ._ge_beam3_fibre_section import FibreHistory
+from ._ge_beam3_spatial_nodal_moments import SpatialNodalMoments
 from ._native_reference_modal import _owned
 from ._ge_beam3_p5_seeded.core import canonical, sha
 from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
@@ -34,13 +35,16 @@ class Layout:
     make = GeometricOperations.make
     advance = GeometricOperations.advance
 
-    def __init__(self, model, program, *, max_coordinates=MAX_RETAINED_COORDINATES):
+    def __init__(self, model, program, *, max_coordinates=MAX_RETAINED_COORDINATES, nodal_moments=None):
         if type(program) is not ForceProgram or any(type(x) is not float for x in program.targets):
             raise ValueError('explicit binary64 retained fibre force program required')
         self.model, self.program = model, program
         if type(max_coordinates) is not int or max_coordinates not in ADMITTED_DENSE_COORDINATE_BUDGETS:
             raise ValueError('explicit admitted dense coordinate budget required')
         self.max_coordinates = max_coordinates
+        if nodal_moments is not None and type(nodal_moments) is not SpatialNodalMoments:
+            raise ValueError('exact explicit spatial nodal moment pattern required')
+        self.nodal_moments = nodal_moments
         self.elements = tuple(sorted(model.mesh.elements.items()))
         self.nodal_count = model.mesh.dof_manager.total_dofs
         self.count = self.nodal_count+24*len(self.elements)
@@ -67,6 +71,10 @@ class Layout:
         for node, *force in program.nodal_forces:
             if node not in self.node_index: raise ValueError('force references an absent fibre node')
             i = self.node_index[node]; self.force[6*i:6*i+3] = force
+        if nodal_moments is not None:
+            for node, *moment in nodal_moments.rows:
+                if node not in self.node_index: raise ValueError('moment references an absent fibre node')
+                i = self.node_index[node]; self.force[6*i+3:6*i+6] = moment
         self.force = _owned(self.force)
         self.probes = tuple(e.operator for _, e in self.elements)
         self.free = [int(v) for v in free]+list(range(self.nodal_count, self.count))
@@ -108,7 +116,8 @@ class Layout:
             nodes=[(i, node.coords()) for i, node in sorted(model.mesh.nodes.items())],
             boundaries=[vars(bc) for bc in model.boundary_conditions], dofs=model.mesh.dof_manager.total_dofs,
             constrained_dofs=sorted(model.mesh.dof_manager._constrained_dofs), program=self.program.descriptor(),
-            **({'dense_coordinate_budget': self.max_coordinates} if self.max_coordinates != 256 else {})))
+            **({'dense_coordinate_budget': self.max_coordinates} if self.max_coordinates != 256 else {}),
+            **({'nodal_moments': self.nodal_moments.descriptor()} if self.nodal_moments is not None else {})))
 
     def guard(self):
         if self.snapshot() != self.identity: raise ValueError('retained fibre frozen model/program changed')
@@ -124,11 +133,13 @@ class State:
 
 
 class Context:
-    def __init__(self, model, program, *, check=None, max_coordinates=MAX_RETAINED_COORDINATES):
+    def __init__(self, model, program, *, check=None, max_coordinates=MAX_RETAINED_COORDINATES, nodal_moments=None):
         self.started = monotonic(); self.external_check = check
-        self.layout = Layout(model, program, max_coordinates=max_coordinates); self.program = program; self.probes = self.layout.probes
+        moment_options = {} if nodal_moments is None else dict(nodal_moments=nodal_moments)
+        self.layout = Layout(model, program, max_coordinates=max_coordinates, **moment_options); self.program = program; self.probes = self.layout.probes
         self.program_data = {**program.descriptor(), 'schema': PROGRAM,
-            'line_search': 'RETAINED_EQUILIBRIUM_COMPATIBILITY_RESIDUAL_DECREASE_V1'}
+            'line_search': 'RETAINED_EQUILIBRIUM_COMPATIBILITY_RESIDUAL_DECREASE_V1',
+            **({'nodal_moments': nodal_moments.descriptor()} if nodal_moments is not None else {})}
         self.identity = sha(dict(formulation_id=POLICY, captured_model=self.layout.identity,
             operator_ids=[p.identity for p in self.probes], program=self.program_data, state_schema=SCHEMA))
         histories = tuple(p.cell.virgin() for p in self.probes)
