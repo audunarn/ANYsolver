@@ -11,8 +11,8 @@ TARGETS = (.01, .025, .04, .055)
 
 
 def model(macros):
-    if type(macros) is not int or macros not in (2, 4, 6):
-        raise ValueError('registered 2/4/6-macro arch within native 256-variable bound')
+    if type(macros) is not int or macros not in (2, 4, 6, 12):
+        raise ValueError('registered 2/4/6/12-macro arch within native allocation bound')
     from anysolver.fe_core import FEModel
     from anysolver.boundary import BoundaryCondition
     from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
@@ -41,7 +41,7 @@ def model(macros):
 
 
 def program(macros):
-    if type(macros) is not int or macros not in (2, 4, 6): raise ValueError('registered arch count')
+    if type(macros) is not int or macros not in (2, 4, 6, 12): raise ValueError('registered arch count')
     from anysolver._ge_beam3_seeded_fibre_control import TranslationProgram
     crown = macros+1
     return TranslationProgram(TARGETS, crown, (0., -1., 0.), ((crown, 0., -1., 0.),))

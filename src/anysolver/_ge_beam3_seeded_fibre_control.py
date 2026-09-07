@@ -20,10 +20,10 @@ PROGRAM = 'GE_BEAM3_KINEMATIC_SEEDED_SPATIAL_NEWTON_FIBRE_CONTROL_V1'
 
 
 class Context(PreviousContext):
-    def __init__(self, model, program, *, check=None):
+    def __init__(self, model, program, *, check=None, max_coordinates=256):
         if type(program) is not TranslationProgram: raise ValueError('exact physical translation program required')
         self._requested_program = program.descriptor()
-        super().__init__(model, program, check=check)
+        super().__init__(model, program, check=check, max_coordinates=max_coordinates)
         self.program_data = {**self.program_data, 'schema': PROGRAM, 'initialization': SEED_POLICY,
             'constitutive_trial_policy': 'INITIALIZE_ONCE_THEN_RETAIN_FULL_MIXED_NEWTON_TRIAL_V1',
             'newton_derivative': 'SPATIAL_RESIDUAL_JACOBIAN_FROM_EXP_CHART_HESSIAN_V1',
@@ -106,9 +106,10 @@ used by this controller. The symmetric energy Hessian is not modified.
 
 
 def solve_translation_program(model, program, *, checkpoint=None, expected_checkpoint_sha256=None,
-                              stop_after=None, cancellation_token=None, progress=None):
+                              stop_after=None, cancellation_token=None, progress=None, max_coordinates=256):
     started = monotonic(); cancellation_safe_point(cancellation_token, 'seeded-fibre-control.start')
-    context = Context(model, program, check=lambda: cancellation_safe_point(cancellation_token, 'seeded-fibre-control.material'))
+    context = Context(model, program, check=lambda: cancellation_safe_point(cancellation_token, 'seeded-fibre-control.material'),
+                      max_coordinates=max_coordinates)
     layout = context.layout; end = len(program.targets) if stop_after is None else stop_after
     if type(end) is not int or not 0 <= end <= len(program.targets): raise ValueError('bounded control stop target')
     if progress is not None and not callable(progress): raise ValueError('callable control observer required')

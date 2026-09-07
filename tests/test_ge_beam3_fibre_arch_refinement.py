@@ -17,11 +17,11 @@ def test_two_macro_family_preserves_existing_geometry_and_section():
         assert a.operator.cell.identity == b.operator.cell.identity
 
 
-@pytest.mark.parametrize('count', [2, 4, 6])
+@pytest.mark.parametrize('count', [2, 4, 6, 12])
 def test_refinement_preserves_parabola_crown_and_physical_frame(count):
     made = family.model(count); program = family.program(count)
     assert len(made.mesh.nodes) == 2*count+1 and len(made.mesh.elements) == count
-    assert 6*(2*count+1)+24*count <= 256
+    assert 6*(2*count+1)+24*count <= 512
     assert program.control_node == count+1 and program.targets == family.TARGETS
     for element in made.mesh.elements.values():
         ref = element.operator.reference

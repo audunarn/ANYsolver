@@ -24,20 +24,27 @@ from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
 
 SCHEMA = 'GE_BEAM3_RETAINED_PHYSICAL_FIBRE_ACCEPTED_CHAIN_V1'
 PROGRAM = 'GE_BEAM3_RETAINED_PHYSICAL_FIBRE_FORCE_PROGRAM_V1'
+# The original default remains unchanged. The separately selected 512-coordinate
+# budget bounds one binary64 square workspace to 2 MiB (not total process RSS).
+MAX_RETAINED_COORDINATES = 256
+ADMITTED_DENSE_COORDINATE_BUDGETS = (256, 512)
 
 
 class Layout:
     make = GeometricOperations.make
     advance = GeometricOperations.advance
 
-    def __init__(self, model, program):
+    def __init__(self, model, program, *, max_coordinates=MAX_RETAINED_COORDINATES):
         if type(program) is not ForceProgram or any(type(x) is not float for x in program.targets):
             raise ValueError('explicit binary64 retained fibre force program required')
         self.model, self.program = model, program
+        if type(max_coordinates) is not int or max_coordinates not in ADMITTED_DENSE_COORDINATE_BUDGETS:
+            raise ValueError('explicit admitted dense coordinate budget required')
+        self.max_coordinates = max_coordinates
         self.elements = tuple(sorted(model.mesh.elements.items()))
         self.nodal_count = model.mesh.dof_manager.total_dofs
         self.count = self.nodal_count+24*len(self.elements)
-        if not self.elements or not 1 <= self.count <= 256:
+        if not self.elements or not 1 <= self.count <= self.max_coordinates:
             raise ValueError('bounded standalone retained fibre model required')
         if any(type(e) is not NativeRetainedFibreElement for _, e in self.elements):
             raise ValueError('exact retained fibre elements only; mixed formulations/joints are not admitted')
@@ -100,7 +107,8 @@ class Layout:
         return sha(dict(elements=[(i, e.to_dict(), list(e.get_dof_mapping(model.mesh))) for i, e in self.elements],
             nodes=[(i, node.coords()) for i, node in sorted(model.mesh.nodes.items())],
             boundaries=[vars(bc) for bc in model.boundary_conditions], dofs=model.mesh.dof_manager.total_dofs,
-            constrained_dofs=sorted(model.mesh.dof_manager._constrained_dofs), program=self.program.descriptor()))
+            constrained_dofs=sorted(model.mesh.dof_manager._constrained_dofs), program=self.program.descriptor(),
+            **({'dense_coordinate_budget': self.max_coordinates} if self.max_coordinates != 256 else {})))
 
     def guard(self):
         if self.snapshot() != self.identity: raise ValueError('retained fibre frozen model/program changed')
@@ -116,9 +124,9 @@ class State:
 
 
 class Context:
-    def __init__(self, model, program, *, check=None):
+    def __init__(self, model, program, *, check=None, max_coordinates=MAX_RETAINED_COORDINATES):
         self.started = monotonic(); self.external_check = check
-        self.layout = Layout(model, program); self.program = program; self.probes = self.layout.probes
+        self.layout = Layout(model, program, max_coordinates=max_coordinates); self.program = program; self.probes = self.layout.probes
         self.program_data = {**program.descriptor(), 'schema': PROGRAM,
             'line_search': 'RETAINED_EQUILIBRIUM_COMPATIBILITY_RESIDUAL_DECREASE_V1'}
         self.identity = sha(dict(formulation_id=POLICY, captured_model=self.layout.identity,

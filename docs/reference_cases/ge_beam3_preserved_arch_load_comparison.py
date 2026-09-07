@@ -61,8 +61,9 @@ def _finite(value):
 
 def inspect_records(checkpoint, reference, *, macros=4):
     """Structural/semantic checks after external identity checks; unit-testable."""
-    if type(macros) is not int or macros not in (4, 6):
-        raise ValueError('registered four/six-macro audit scope required')
+    if type(macros) is not int or macros not in (4, 6, 12):
+        raise ValueError('registered four/six/twelve-macro audit scope required')
+    label = {4: 'four', 6: 'six', 12: 'twelve'}[macros]
     if (checkpoint['schema'] != 'GE_BEAM3_PHYSICAL_FIBRE_TRANSLATION_CONTROL_CHAIN_V1'
             or checkpoint['program']['schema'] != 'GE_BEAM3_KINEMATIC_SEEDED_SPATIAL_NEWTON_FIBRE_CONTROL_V1'
             or type(checkpoint['completed_targets']) is not int or checkpoint['completed_targets'] != 4
@@ -102,9 +103,9 @@ def inspect_records(checkpoint, reference, *, macros=4):
         native = _finite(row['parameter']); load = _finite(prior['reference_load'])
         coarse = _finite(prior['native_load'])
         if load <= 0.: raise ValueError('positive preserved reference load required')
-        result.append(dict(displacement=target, **{f'native_{"four" if macros == 4 else "six"}_macro_load': native},
+        result.append(dict(displacement=target, **{f'native_{label}_macro_load': native},
             preserved_reference_load=load, native_two_macro_load=coarse,
-            **{f'{"four" if macros == 4 else "six"}_macro_relative_load_error': abs(native-load)/abs(load)},
+            **{f'{label}_macro_relative_load_error': abs(native-load)/abs(load)},
             two_macro_relative_load_error=abs(coarse-load)/abs(load),
             inspected_zero_history_coordinates=count, checkpoint_record_sha256=row['record_sha256']))
         previous = row['record_sha256']

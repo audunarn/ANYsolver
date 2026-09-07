@@ -60,12 +60,12 @@ class State:
 
 
 class Context:
-    def __init__(self, model, program, *, check=None):
+    def __init__(self, model, program, *, check=None, max_coordinates=256):
         if type(program) is not TranslationProgram: raise ValueError('exact physical translation program required')
         self.program = program; self.program_data = program.descriptor()
         # Capture a load pattern, not a force-controlled execution or history.
         self.physical = FibreContext(model, ForceProgram((0.,), program.nodal_forces,
-            program.max_iterations, program.max_backtracks), check=check)
+            program.max_iterations, program.max_backtracks), check=check, max_coordinates=max_coordinates)
         self.layout = self.physical.layout
         if program.control_node not in self.layout.node_index: raise ValueError('control node absent')
         self.node = self.layout.node_index[program.control_node]
