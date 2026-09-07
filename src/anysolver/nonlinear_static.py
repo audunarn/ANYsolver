@@ -5728,6 +5728,15 @@ def _solve_static_nonlinear_under_lease(
             dtype=float,
         ).reshape(-1)
 
+    def assemble_force_system(path_factor, *args, **kwargs):
+        # Private load-aware candidate only; all existing formulations retain
+        # their original assembler and load semantics.
+        if any(type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
+               for e in model.mesh.elements.values()):
+            from ._ge_beam3_native_line_program import assemble_at
+            return assemble_at(path_factor, *args, **kwargs)
+        return _assemble_nonlinear_system(*args, **kwargs)
+
     def newton_increment(q_start, path_factor, reference, line_search):
         """One load increment.  Plain full Newton when ``line_search`` is
         False (the fast path); backtracking-line-search Newton otherwise.
@@ -5743,7 +5752,8 @@ def _solve_static_nonlinear_under_lease(
         )
         q_trial = q_start.copy()
         u = full_displacement(q_trial, path_factor)
-        F_int, K_T, trial_states = _assemble_nonlinear_system(
+        F_int, K_T, trial_states = assemble_force_system(
+            path_factor,
             model,
             u,
             committed_states,
@@ -5816,7 +5826,8 @@ def _solve_static_nonlinear_under_lease(
             if not line_search:
                 q_trial = q_trial + dq
                 u = full_displacement(q_trial, path_factor)
-                F_int, K_T, trial_states = _assemble_nonlinear_system(
+                F_int, K_T, trial_states = assemble_force_system(
+                    path_factor,
                     model,
                     u,
                     committed_states,
@@ -5862,7 +5873,8 @@ def _solve_static_nonlinear_under_lease(
                 q_candidate = q_trial + scale * dq
                 u = full_displacement(q_candidate, path_factor)
                 with_tangent = trial == 0
-                F_c, K_c, states_c = _assemble_nonlinear_system(
+                F_c, K_c, states_c = assemble_force_system(
+                    path_factor,
                     model,
                     u,
                     committed_states,
@@ -5889,7 +5901,8 @@ def _solve_static_nonlinear_under_lease(
                 rn_c = float(np.linalg.norm(r_c))
                 if np.isfinite(rn_c) and rn_c < residual_norm:
                     if not with_tangent:
-                        F_c, K_c, states_c = _assemble_nonlinear_system(
+                        F_c, K_c, states_c = assemble_force_system(
+                            path_factor,
                             model,
                             u,
                             committed_states,
@@ -6013,7 +6026,8 @@ def _solve_static_nonlinear_under_lease(
                 step_index += 1
                 u = full_displacement(q, lam)
                 control_value = float(np.linalg.norm(u))
-                reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
+                reaction_internal, _unused, _reaction_states = assemble_force_system(
+                    lam,
                     model,
                     u,
                     committed_states,
