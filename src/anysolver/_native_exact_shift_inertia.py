@@ -7,14 +7,16 @@ from time import monotonic
 import numpy as np
 
 
-def exact_inertia(h, mass, shift, check=lambda: None):
+def exact_inertia(h, mass, shift, check=lambda: None, *, dimension_limit=64):
     started = monotonic()
     def guard():
         check()
         if monotonic()-started > 30.:
             raise TimeoutError('exact shifted inertia deadline')
     guard()
-    if (h.ndim != 2 or h.shape[0] != h.shape[1] or not 1 <= len(h) <= 64
+    if type(dimension_limit) is not int or dimension_limit not in (64,96):
+        raise ValueError('explicit admitted exact-inertia dimension limit required')
+    if (h.ndim != 2 or h.shape[0] != h.shape[1] or not 1 <= len(h) <= dimension_limit
             or mass.shape != h.shape or not np.isfinite(h).all()
             or not np.isfinite(mass).all() or not np.isfinite(shift)
             or not np.array_equal(h, h.T) or not np.array_equal(mass, mass.T)):

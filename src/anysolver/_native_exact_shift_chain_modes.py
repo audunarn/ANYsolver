@@ -11,21 +11,22 @@ from ._native_exact_shift_inertia import exact_inertia
 from .control import cancellation_safe_point
 
 
-def inertia(h, mass, shift, checkpoint=lambda: None):
+def inertia(h, mass, shift, checkpoint=lambda: None, *, dimension_limit=64):
     checkpoint()
     try:
         return floating_inertia(h, mass, shift)
     except ValueError as error:
         if str(error) != 'unresolved shifted sign':
             raise
-        _, negative, zeros = exact_inertia(h, mass, shift, checkpoint)
+        _, negative, zeros = exact_inertia(h, mass, shift, checkpoint, dimension_limit=dimension_limit)
         if zeros:
             raise ValueError('unresolved shifted sign') from error
         return negative
 
 
-def brackets(h,mass,bounds,count,width,checkpoint):
-    if inertia(h,mass,bounds[0],checkpoint)!=0 or inertia(h,mass,bounds[1],checkpoint)<count:
+def brackets(h,mass,bounds,count,width,checkpoint,*,dimension_limit=64):
+    def sign(shift): return inertia(h,mass,shift,checkpoint,dimension_limit=dimension_limit)
+    if sign(bounds[0])!=0 or sign(bounds[1])<count:
         raise ValueError('bounds do not enclose lowest requested roots')
     results=[]
     for index in range(count):
@@ -34,11 +35,11 @@ def brackets(h,mass,bounds,count,width,checkpoint):
             checkpoint()
             if hi-lo<=width: break
             mid=lo+(hi-lo)/2
-            try: negative=inertia(h,mass,mid,checkpoint)
+            try: negative=sign(mid)
             except ValueError as exc:
                 if str(exc)!='unresolved shifted sign': raise
                 left,right=max(lo,mid-width/4),min(hi,mid+width/4)
-                a,b=inertia(h,mass,left,checkpoint),inertia(h,mass,right,checkpoint)
+                a,b=sign(left),sign(right)
                 if a<=index<b:
                     lo,hi=left,right; break
                 raise ValueError('shifted signs unresolved at requested root width') from exc
@@ -50,12 +51,14 @@ def brackets(h,mass,bounds,count,width,checkpoint):
     return np.array(results)
 
 
-def solve_factor_chain_modes(left_factor,right_factor,geometric,kinetic,free,algebraic,*,bounds,num_modes=6,root_width=1e-10,cancellation_token=None):
+def solve_factor_chain_modes(left_factor,right_factor,geometric,kinetic,free,algebraic,*,bounds,num_modes=6,root_width=1e-10,cancellation_token=None,exact_dimension_limit=64):
     start=monotonic()
     def checkpoint(stage='reassembly'):
         cancellation_safe_point(cancellation_token,'compensated_spectrum.'+stage)
         if monotonic()-start>600.: raise ValueError('compensated spectrum deadline')
     checkpoint('capture')
+    if type(exact_dimension_limit) is not int or exact_dimension_limit not in (64,96):
+        raise ValueError('explicit admitted exact-inertia dimension limit required')
     left,right,g,b=(_owned(x) for x in (left_factor,right_factor,geometric,kinetic))
     if (left.ndim!=2 or right.ndim!=2 or not 1<=left.shape[0]<=8192
             or not 1<=right.shape[0]<=512 or not 1<=right.shape[1]<=256
@@ -75,12 +78,14 @@ def solve_factor_chain_modes(left_factor,right_factor,geometric,kinetic,free,alg
     h,mass=reassemble(left,right,g,b,mapping,checkpoint)
     if num_modes>len(h): raise ValueError('mode count exceeds dynamic coordinates')
     linalg.cholesky(mass)
-    intervals=brackets(h,mass,bounds,num_modes,root_width,checkpoint)
+    if len(h)>exact_dimension_limit: raise ValueError('dynamic pencil exceeds exact-inertia dimension limit')
+    intervals=brackets(h,mass,bounds,num_modes,root_width,checkpoint,dimension_limit=exact_dimension_limit)
     coordinates=[]; values=[]; index=0
     while index<num_modes:
         end=index+1
         while end<num_modes and intervals[end,0]-intervals[end-1,1]<=8*root_width: end+=1
-        if inertia(h,mass,intervals[index,0],checkpoint)!=index or inertia(h,mass,intervals[end-1,1],checkpoint)!=end:
+        if (inertia(h,mass,intervals[index,0],checkpoint,dimension_limit=exact_dimension_limit)!=index
+                or inertia(h,mass,intervals[end-1,1],checkpoint,dimension_limit=exact_dimension_limit)!=end):
             raise ValueError('requested modes truncate a cluster')
         shifted_matrix,scale=shifted(h,mass,float(intervals[index,0]-2*root_width))
         roots,vectors=linalg.eigh(shifted_matrix); raw=vectors/scale[:,None]

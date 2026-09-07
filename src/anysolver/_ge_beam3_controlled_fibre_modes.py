@@ -25,7 +25,9 @@ from .control import cancellation_safe_point
 SCHEMA = 'GE_BEAM3_CONTROLLED_FIBRE_FIXED_LOAD_SPECTRA_V1'
 
 
-def prepare(model, program, checkpoint, section_inertias, *, material_policy, expected_checkpoint_sha256=None, cancellation_token=None):
+def prepare(model, program, checkpoint, section_inertias, *, material_policy, expected_checkpoint_sha256=None, cancellation_token=None, coordinate_limit=80):
+    if type(coordinate_limit) is not int or coordinate_limit not in (80,128):
+        raise ValueError('explicit admitted fibre spectral coordinate limit required')
     if material_policy not in (FROZEN, ALGORITHMIC): raise ValueError('explicit fibre spectral policy required')
     started = monotonic()
     def local_check():
@@ -39,7 +41,7 @@ def prepare(model, program, checkpoint, section_inertias, *, material_policy, ex
     def guard():
         local_check(); context.guard()
     layout = context.layout; n = layout.nodal_count+6*len(physical.probes)
-    if n > 80: raise ValueError('small fibre spectral correctness model only')
+    if n > coordinate_limit: raise ValueError('small fibre spectral correctness model only')
     if (type(section_inertias) is not dict or any(type(i) is not int for i in section_inertias)
             or set(section_inertias) != {i for i, _ in layout.elements}):
         raise ValueError('one explicit section inertia per element')
@@ -67,7 +69,8 @@ def prepare(model, program, checkpoint, section_inertias, *, material_policy, ex
     identity = sha(dict(schema=SCHEMA, equilibrium_load_parameter=state.parameter,
         continuation_constraint='REMOVED_FOR_FIXED_DEAD_LOAD_PERTURBATION', checkpoint_sha256=sha256(checkpoint).hexdigest(), material_policy=material_policy,
         operators=[probe.identity for probe in physical.probes], left=left, right=right, geometric=g,
-        kinetic=kinetic, free=free, algebraic=algebraic, inertias=inertias))
+        kinetic=kinetic, free=free, algebraic=algebraic, inertias=inertias,
+        **({'spectral_coordinate_limit':coordinate_limit} if coordinate_limit!=80 else {})))
     guard()
     return Packet(_owned(left), _owned(right), _owned(g), _owned(kinetic), free, algebraic, identity, material_policy), guard, state.parameter
 
@@ -81,13 +84,16 @@ class Analysis(FibreAnalysis):
 
 
 def solve_modes(model, program, checkpoint, section_inertias, *, material_policy,
-                bounds, num_modes=6, root_width=1e-10, expected_checkpoint_sha256=None, cancellation_token=None):
+                bounds, num_modes=6, root_width=1e-10, expected_checkpoint_sha256=None, cancellation_token=None,
+                coordinate_limit=80, exact_dimension_limit=64):
+    if type(exact_dimension_limit) is not int or exact_dimension_limit not in (64,96):
+        raise ValueError('explicit admitted exact-inertia dimension limit required')
     packet, guard, parameter = prepare(model, program, checkpoint, section_inertias,
         material_policy=material_policy, expected_checkpoint_sha256=expected_checkpoint_sha256,
-        cancellation_token=cancellation_token)
+        cancellation_token=cancellation_token, coordinate_limit=coordinate_limit)
     modes = solve_factor_chain_modes(packet.left, packet.right, packet.geometric, packet.kinetic,
         packet.free, packet.algebraic, bounds=bounds, num_modes=num_modes, root_width=root_width,
-        cancellation_token=cancellation_token)
+        cancellation_token=cancellation_token, exact_dimension_limit=exact_dimension_limit)
     guard()
     interpretation = ('ELASTIC_PERTURBATIONS_WITH_PLASTIC_COORDINATES_FIXED' if material_policy == FROZEN
         else 'LAST_INCREMENT_OPERATOR_ONLY_NOT_PHYSICAL_VIBRATION_AUTHORITY')
