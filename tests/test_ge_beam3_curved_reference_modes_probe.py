@@ -42,3 +42,31 @@ def test_spectral_cleanup_and_validation_precede_publication(tmp_path,monkeypatc
 def test_noncanonical_spectral_packets_reject(tmp_path,raw):
     path=tmp_path/'bad.json'; path.write_bytes(raw)
     with pytest.raises(ValueError): probe.read(path)
+
+
+def test_frozen_and_higher_kinetic_rules_are_not_conflated(monkeypatch):
+    import numpy as np
+    from docs.reference_cases import ge_beam3_curved_reference_modes as comparison
+    from docs.reference_cases import ge_beam3_curved_moment_fixture as fixture
+    from anysolver._ge_beam3_lifted_kinetic_factor import current_lifted_kinetic_factor
+    if not comparison.REFERENCE_PATH.is_file(): pytest.skip('Preserved development reference not installed')
+    def forbidden(*args,**kwargs): raise AssertionError('reference solve must not be rerun')
+    monkeypatch.setattr(comparison.ritz,'solve',forbidden)
+    _,references=comparison.preserved_reference(); reference=references[-1]
+    model=fixture.model(1); source=model.mesh.elements[1].operator.reference
+    b=current_lifted_kinetic_factor(source,comparison.INERTIA,np.tile(np.eye(3),(2,1,1)),order=4)
+    basis=np.eye(24)[:,[6,7,8,18,19,20]]
+    root=np.linalg.cholesky((b@basis).T@(b@basis)); vectors=np.linalg.solve(root,basis.T).T
+    same=comparison.modal_overlap(1,vectors,reference,quadrature=4)
+    fine=comparison.modal_overlap(1,vectors,reference,quadrature=16)
+    finer=comparison.modal_overlap(1,vectors,reference,quadrature=32)
+    assert np.max(abs(same['native_mass_gram']-np.eye(6)))<1e-11
+    assert np.max(abs(fine['native_mass_gram']-same['native_mass_gram']))>1e-10
+    np.testing.assert_allclose(finer['native_mass_gram'],fine['native_mass_gram'],atol=1e-11,rtol=1e-11)
+    assert np.max(abs(fine['reference_mass_gram']-np.eye(6)))<1e-8
+
+
+def test_preserved_reference_hash_mutation_rejects(tmp_path,monkeypatch):
+    from docs.reference_cases import ge_beam3_curved_reference_modes as comparison
+    path=tmp_path/'changed.json'; path.write_bytes(b'{}\n'); monkeypatch.setattr(comparison,'REFERENCE_PATH',path)
+    with pytest.raises(ValueError,match='identity'): comparison.preserved_reference()

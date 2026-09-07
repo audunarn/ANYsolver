@@ -40,3 +40,21 @@ A corrected, separately frozen development invocation may reuse only the
 hash-bound saved continuum packet and construct new native spectra. It must
 save native factors/vectors before the cross-rule diagnostic so a subsequent
 failure does not lose that raw packet. No reference solve is to be repeated.
+
+## Corrected successor rehearsal
+
+The successor uses schema GE_BEAM3_CURVED_REFERENCE_MODES_DEVELOPMENT_V2.
+It reuses the exact 646569-byte reference packet above, with zero new reference
+solves, and records both same-rule and higher-rule kinetic work. The native
+same-rule identity check is 1e-11. The higher-rule discrepancy is a separately
+reported integration diagnostic, not erased and not described as a passing
+mass qualification gate. The native stiffness, mass, quadrature and spectral
+solver are unchanged. Raw native factors/vectors are saved before these
+cross-checks. Sixteen successor containment/regression tests passed in 1.79
+seconds, including a mass-normalized arbitrary velocity basis that proves
+same-rule agreement, cross-rule difference and convergence of 16/32-point
+integration. No eigensolve or reference solve occurred in that test lane.
+
+The separately frozen successor may execute once in a distinct v2 external
+directory under the original containment limits. This is not a retry of the
+failed authority/source, and the old invocation remains failed.

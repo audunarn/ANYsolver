@@ -11,7 +11,8 @@ from docs.reference_cases.ge_beam3_preserved_arch_load_comparison import canonic
 
 ROOT=Path(__file__).resolve().parents[2]
 ARTIFACTS=('checkpoint-1.json','checkpoint-2.json','checkpoint-4.json',
-    'modes-1.json','modes-2.json','modes-4.json','reference-diagnostic.json')
+    'modes-1.json','modes-2.json','modes-4.json','native-spectrum-1.json',
+    'native-spectrum-2.json','native-spectrum-4.json','reference-diagnostic.json')
 
 
 def read(path):
@@ -22,10 +23,10 @@ def read(path):
 def validate(output,raw,revision):
     import numpy as np
     value=parse(raw)
-    if (value['revision']!=revision or value['schema']!='GE_BEAM3_CURVED_REFERENCE_MODES_DEVELOPMENT_V1'
+    if (value['revision']!=revision or value['schema']!='GE_BEAM3_CURVED_REFERENCE_MODES_DEVELOPMENT_V2'
             or value['status']!='DEVELOPMENT_SPECTRAL_COMPARISON_NOT_QUALIFICATION'
             or value['production_qualified'] is not False or value['independent_review']!='PENDING'
-            or value['nonlinear_solves']!=0 or value['new_reference_solves']!=2 or value['new_native_spectra']!=3
+            or value['nonlinear_solves']!=0 or value['new_reference_solves']!=0 or value['new_native_spectra']!=3
             or value['unloaded_only'] is not True or value['clustered_mac_qualification'] is not False
             or value['buckling_factor_authorized'] is not False or [r['macros'] for r in value['rows']]!=[1,2,4]):
         raise ValueError('complete development-only spectral scope')
@@ -34,20 +35,28 @@ def validate(output,raw,revision):
         data=read(output/name); inventory.append(dict(path=name,bytes=len(data),sha256=sha256(data).hexdigest()))
     if value['artifacts']!=inventory: raise ValueError('spectral artifact hash mismatch')
     refs=parse(read(output/'reference-diagnostic.json'))
+    if sha256(read(output/'reference-diagnostic.json')).hexdigest()!='9434d222b33aaedfe36a0c128a476b9a14692107f6663b923eb4484cbe85a51c':
+        raise ValueError('preserved reference input changed')
     if [(r['degree'],r['quadrature']) for r in refs]!=[(14,64),(18,80)]: raise ValueError('reference profile scope')
     fine=np.asarray(refs[-1]['eigenvalues']); discrepancy=float(np.max(abs(np.asarray(refs[0]['eigenvalues'])/fine-1)))
     if len(fine)!=6 or np.min(fine)<=0 or discrepancy>=1e-8: raise ValueError('complete positive converged reference roots')
     for row in value['rows']:
         count=row['macros']; detail=parse(read(output/f'modes-{count}.json')); modes=detail['modes']; fields=detail['field_comparison']
+        if canonical(dict(packet=detail['packet'],modes=modes))!=read(output/f'native-spectrum-{count}.json'):
+            raise ValueError('native pre-comparison packet changed')
         if detail['checkpoint_sha256']!=sha256(read(output/f'checkpoint-{count}.json')).hexdigest(): raise ValueError('virgin native checkpoint identity')
         eigenvalues=np.asarray(modes['eigenvalues'])
         if eigenvalues.shape!=(6,) or np.min(eigenvalues)<=0: raise ValueError('complete positive native roots')
         expected=dict(macros=count,eigenvalues=eigenvalues.tolist(),reference_eigenvalues=fine.tolist(),
             relative_frequency_errors=np.abs(np.sqrt(eigenvalues/fine)-1).tolist(),diagonal_mac=np.diag(fields['mac']).tolist(),
             spectral_residual=modes['spectral_residual'],original_ritz_residual=modes['original_ritz_residual'],
+            native_rule_kinetic_identity_error=float(np.max(abs(np.asarray(detail['frozen_rule_field_comparison']['native_mass_gram'])-np.eye(6)))),
+            higher_rule_kinetic_quadrature_error=float(np.max(abs(np.asarray(fields['native_mass_gram'])-np.eye(6)))),
             reference_profile_eigenvalue_difference=discrepancy)
         if canonical(expected)!=canonical(row): raise ValueError('spectral summary differs from raw packet')
         if max(modes['spectral_residual'],modes['original_ritz_residual'])>1e-11: raise ValueError('native spectral residual')
+        if expected['native_rule_kinetic_identity_error']>1e-11: raise ValueError('native kinetic work identity')
+        if np.max(abs(np.asarray(fields['reference_mass_gram'])-np.eye(6)))>1e-8: raise ValueError('reference kinetic work identity')
     return value
 
 
