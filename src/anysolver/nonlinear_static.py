@@ -1756,6 +1756,8 @@ def _owned_initial_element_states(
         if element_id in owned:
             raise ValueError("initial_element_states contains duplicate element IDs")
         element = model.mesh.elements.get(element_id)
+        if type(element).__module__ == "anysolver._ge_beam3_native_distributed_element":
+            raise ValueError("native distributed-couple restart requires its future authenticated chain")
         if type(element).__module__ == "anysolver._ge_beam3_native_line_static_element":
             from ._ge_beam3_native_line_restart import capture_solver_state
 
@@ -4916,6 +4918,20 @@ def _solve_static_nonlinear_under_lease(
         and resolved_corotational_tangent == "consistent"
     )
     native_spatial_couples = False
+    native_distributed_model = any(
+        type(e).__module__ == 'anysolver._ge_beam3_native_distributed_element'
+        for e in model.mesh.elements.values()
+    )
+    if native_distributed_model:
+        from ._ge_beam3_native_distributed_program import require_active
+
+        require_active(model)
+        if (control_name != 'force' or load_program is not None or follower_active or fracture_config is not None
+                or initial_element_states is not None or initial_displacements is not None or initial_fields):
+            raise ValueError('private distributed couples require virgin standalone force control')
+        general_tangent = True
+        info['equilibrium_tangent'] = 'GENERAL_DISTRIBUTED_COUPLE_STATIC_SCHUR'
+        info['native_distributed_couple_general_matrix'] = True
     native_line_model = any(
         type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
         for e in model.mesh.elements.values()
@@ -5431,7 +5447,7 @@ def _solve_static_nonlinear_under_lease(
                 force = force + extra
                 if tangent:
                     zero_tangent = zero_tangent + extra_tangent
-            if native_line_model:
+            if native_line_model or native_distributed_model:
                 with np.errstate(over='ignore', invalid='ignore'):
                     load_norm = float(np.linalg.norm(force))
                 if not np.all(np.isfinite(force)) or not np.isfinite(load_norm):
@@ -5776,6 +5792,9 @@ def _solve_static_nonlinear_under_lease(
     def assemble_force_system(path_factor, *args, **kwargs):
         # Private load-aware candidate only; all existing formulations retain
         # their original assembler and load semantics.
+        if native_distributed_model:
+            from ._ge_beam3_native_distributed_program import assemble_at
+            return assemble_at(path_factor, *args, **kwargs)
         if any(type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
                for e in model.mesh.elements.values()):
             from ._ge_beam3_native_line_program import assemble_at
