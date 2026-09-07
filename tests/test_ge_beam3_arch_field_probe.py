@@ -1,5 +1,6 @@
 """Disposable supervisor mocks: no native solves or reference generation."""
 from pathlib import Path
+from hashlib import sha256
 import pytest
 from docs.reference_cases import ge_beam3_arch_field_probe as probe
 
@@ -57,3 +58,38 @@ def test_job_cleanup_and_validation_precede_canonical_publication(tmp_path, monk
 @pytest.mark.parametrize('raw', [b'',b'{"x":1,"x":2}\n',b'{"x":NaN}\n',b'{"x":Infinity}\n',b' {"x":1}\n'])
 def test_diagnostic_encoding_rejects_duplicates_nonfinite_and_noncanonical(raw):
     with pytest.raises(ValueError): probe.parse_diagnostics(raw)
+
+
+@pytest.fixture
+def completed_fields():
+    root = probe.EXTERNAL/'ge-beam3-arch-fields-20260907-v1'
+    paths = [root/'comparison.json', root/'fields-diagnostic.json']
+    paths += [probe.EXTERNAL/f'ge-beam3-fibre-arch{m}-20260907-v1/checkpoint-diagnostic.json' for m in (6, 12)]
+    if any(not p.is_file() for p in paths):
+        pytest.skip('External development fields not installed; not qualification evidence')
+    raw, details = paths[0].read_bytes(), paths[1].read_bytes()
+    assert sha256(raw).hexdigest() == '5902c40f7e9f0fa203a6e8a61d24ea65dba11ac7c4b3436b67242dbbd83f09b9'
+    assert sha256(details).hexdigest() == '796d3b390daf986212067c78dde2e451d41fe7bcb1e3d0d5f7354c7b98cfe8d2'
+    return raw, details, probe.inputs()[0]
+
+
+def test_real_saved_field_metrics_recompute_without_reference_or_native_solve(completed_fields):
+    raw, details, packets = completed_fields
+    value = probe.validate(raw, details, '521327e7f0d1615eba238f950312995378f415fe', packets)
+    assert len(value['rows']) == 8
+    assert sum(r['station_recovery']['stations'] for r in value['rows']) == 576
+
+
+@pytest.mark.parametrize('mutation', ['summary', 'recovery', 'reference', 'qualification', 'order'])
+def test_real_field_or_summary_mutations_reject(completed_fields, mutation):
+    raw, details, packets = completed_fields
+    value = probe.audit.parse(raw); data = probe.parse_diagnostics(details)
+    if mutation == 'summary': value['rows'][0]['station_recovery']['native_integrated_energy'] += 1.
+    if mutation == 'recovery': data['recoveries'][0]['fields'][0]['stations'][0]['strain'][0] += .1
+    if mutation == 'reference': data['recoveries'][0]['reference_fields']['force'][0][0] += 1.
+    if mutation == 'qualification': value['production_qualified'] = True
+    if mutation == 'order': value['rows'].reverse()
+    changed = probe.audit.canonical(data)
+    value['diagnostics_sha256'] = sha256(changed).hexdigest()
+    with pytest.raises(ValueError):
+        probe.validate(probe.audit.canonical(value), changed, '521327e7f0d1615eba238f950312995378f415fe', packets)

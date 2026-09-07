@@ -89,6 +89,8 @@ def test_field_mutations_cannot_pass_unnoticed(mutation):
 def test_recovery_reproduces_actual_preserved_hash_without_equilibrium_run(macros,size,digest):
     from docs.reference_cases import ge_beam3_fibre_arch_refinement as family
     path = Path(f'C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-fibre-arch{macros}-20260907-v1/checkpoint-diagnostic.json')
+    if not path.is_file():
+        pytest.skip('External development checkpoint not installed; not qualification evidence')
     raw = path.read_bytes()
     assert len(raw) == size and sha256(raw).hexdigest() == digest
     packet = field.geometry.preserved(raw, digest)
