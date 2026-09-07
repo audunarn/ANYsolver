@@ -49,6 +49,15 @@ Original temporary evidence remains. The exact source identities, inventories,
 packet comparisons and complete archive manifest are in
 `docs/reference_cases/ge_beam3_local_force_elimination_status.json`.
 
+Administrative correction: the first closeout metadata audit found that two
+zero-RHS metrics were JSON integer 0 instead of the raw packet's floating 0.0.
+Commit `f8ce6431600a825a854a2e1038308db07b184ef9` was created before that audit
+failure was acted upon. Preserve it as history; the successor corrects only
+metadata by copying values directly from the archived canonical packets.
+No scientific values, raw packets, frozen implementation or tests changed.
+No worker was rerun. The corrected closeout requires the complete hash/type
+audit to succeed before its commit.
+
 ## Next step and completion boundary
 
 Bind a separately selected native controller to the new factorization. Compare
