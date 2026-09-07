@@ -140,5 +140,5 @@ def compare(row, reference_x, scale, reference):
         reference_energy=scale*reference.strain_energy, reference_load_slope=scale*reference.load_slope,
         reference_errors_normalized=dict(boundary=reference.boundary_error,
             differential=reference.differential_error, sensitivity=reference.sensitivity_error,
-            work=reference.work_error),
+            work=float(reference.work_error)),
         same_equilibrium_branch_proved=False, mechanics_replayed=False, production_qualified=False)

@@ -1,6 +1,8 @@
 """Disposable process-control mocks; no real subprocess or resource request."""
 from hashlib import sha256
 from pathlib import Path
+from types import SimpleNamespace
+import numpy as np
 import pytest
 from docs.reference_cases import ge_beam3_fibre_arch_probe as probe
 
@@ -21,6 +23,44 @@ def ready():
         checkpoint_sha256=sha256(b'checkpoint').hexdigest(),
         rows=[row(v) for v in (.01, .025, .04, .055)],
         production_qualified=False, independent_review='PENDING', runtime_version_check_only=True)
+
+
+def synthetic_comparison(monkeypatch, work):
+    from docs.reference_cases import ge_beam3_fibre_arch_comparison as comparison
+    # No native assembly or BVP. Use the actual comparator on a synthetic pose.
+    monkeypatch.setattr(comparison.continuum, 'solve', lambda *a, **k: pytest.fail('No BVP permitted'))
+    x = np.linspace(-1., 0., 129)
+    reference = SimpleNamespace(displacement=.01, load=.0001, load_slope=.002, profile='BVP9',
+        strain_energy=1e-6, boundary_error=0., differential_error=1e-10, sensitivity_error=2e-10,
+        work_error=work, parameter=x, fields=np.array([x, .1*(1-x*x), np.arctan(-.2*x), 0.*x]))
+    nodes = np.linspace(-1., 1., 9)
+    positions, frames = comparison.sampled_geometry(reference, nodes)
+    mechanical = dict(positions=positions.tolist(), position_low=np.zeros((9, 3)).tolist(),
+        nodal_frames=frames.tolist(), cell_rotations=np.tile(np.eye(3), (4, 2, 1, 1)).tolist())
+    row = dict(displacement_target=.01, parameter=100., mechanical=mechanical)
+    return comparison.compare(row, nodes, 1e6, reference)
+
+
+@pytest.mark.parametrize('work', [np.float64(0.), np.float64(8.80643214601351e-17),
+                                  np.nextafter(np.float64(0.), np.float64(1.))])
+def test_comparator_converts_numpy_work_scalar_without_changing_json(monkeypatch, work):
+    made = synthetic_comparison(monkeypatch, work)
+    assert type(made['reference_errors_normalized']['work']) is float
+    assert np.float64(made['reference_errors_normalized']['work']).tobytes() == work.tobytes()
+    old = {**made, 'reference_errors_normalized': {**made['reference_errors_normalized'], 'work': work}}
+    assert probe.canonical(made) == probe.canonical(old)
+    # Pre-correction in-memory scalar is rejected despite identical JSON bytes.
+    packet = ready(); old['mechanics_replayed'] = True; packet['rows'][0] = old
+    with pytest.raises(ValueError, match='finite diagnostic fields'): probe.validate_ready(packet, REVISION)
+    made['mechanics_replayed'] = True; packet['rows'][0] = made
+    probe.validate_ready(packet, REVISION)
+
+
+@pytest.mark.parametrize('work', [np.float64(float('nan')), np.float64(float('inf')), np.float64(-.1)])
+def test_work_scalar_conversion_does_not_relax_finite_nonnegative_guard(monkeypatch, work):
+    made = synthetic_comparison(monkeypatch, work); made['mechanics_replayed'] = True
+    packet = ready(); packet['rows'][0] = made
+    with pytest.raises(ValueError): probe.validate_ready(packet, REVISION)
 
 
 @pytest.mark.parametrize('incident', ['target', 'partial', 'extra', 'qualified', 'revision', 'row', 'nan', 'negative'])
