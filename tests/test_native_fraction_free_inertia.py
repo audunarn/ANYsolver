@@ -99,3 +99,22 @@ def test_benchmark_guard_accepts_reduction_stage(monkeypatch):
     monkeypatch.setattr(bench.time,'monotonic',lambda: 121.)
     with pytest.raises(TimeoutError,match='arithmetic comparison deadline'):
         check('reduction.start')
+
+
+def test_benchmark_complete_saved_packet_wiring(tmp_path,monkeypatch):
+    import json
+    import runpy
+    from docs.reference_cases import ge_beam3_exact_inertia_benchmark as bench
+    if not bench.INPUT.exists(): pytest.skip('external saved packet not present')
+    monkeypatch.setattr(bench,'guard',lambda _:None)
+    for key,value in bench.THREAD_ENVIRONMENT.items(): monkeypatch.setenv(key,value)
+    calls=[]
+    def stub(h,m,shift):
+        assert h.shape==m.shape==(45,45) and type(shift) is float
+        calls.append(shift); return (45,0,0)
+    monkeypatch.setattr(implementation,'exact_inertia',stub)
+    monkeypatch.setattr(runpy,'run_path',lambda _:dict(rational_inertia=stub))
+    bench.worker('0'*40,tmp_path)
+    result=json.loads((tmp_path/'benchmark.pending.json').read_bytes())
+    assert len(calls)==24 and result['equal'] and result['timed_pairs']==11
+    assert result['production_qualified'] is False

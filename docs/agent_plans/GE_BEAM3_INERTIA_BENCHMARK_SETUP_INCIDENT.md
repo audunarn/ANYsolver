@@ -13,3 +13,12 @@ This is a harness signature defect, not an arithmetic or mechanics failure.
 The correction accepts both callback forms while preserving the deadline;
 a regression checks stage-bearing calls and expiry. No failed output is
 deleted or reclassified. A successor freeze must use a new external directory.
+
+The v2 invocation at `1301e8cbce1bcc1e16bc7d82a219a1dd8bd8f567`
+also failed before measurements, from 14:01:14.8661512Z to 14:01:17.0856326Z.
+Its v2 external directory/transcript remain preserved. JSON lists were passed
+to the native reducer, whose exact DOF contract requires tuples. The harness
+now restores these immutable tuple types, with no alteration of slot values.
+A complete saved-packet wiring test reconstructs the actual 45-coordinate
+pencil and substitutes both timing routines only, exercising all 24 call
+sites and pending-output construction before another frozen invocation.

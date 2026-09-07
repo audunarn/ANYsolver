@@ -35,7 +35,7 @@ def worker(revision, output):
     start=time.monotonic()
     check=partial(deadline_check,start)
     print('REASSEMBLY',flush=True)
-    _,_,mapping=_reduce(mm(left,right,check),g,b.T@b,p['free'],p['algebraic'],check,b)
+    _,_,mapping=_reduce(mm(left,right,check),g,b.T@b,tuple(p['free']),tuple(p['algebraic']),check,b)
     h,m=reassemble(left,right,g,b,mapping,check)
     if h.shape!=(45,45): raise ValueError('saved 45-coordinate pencil')
     shift=float(json.loads(raw)['modes']['numerical_brackets'][-1][0])
