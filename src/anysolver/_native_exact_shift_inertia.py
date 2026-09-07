@@ -5,9 +5,23 @@ certificate for continuum mechanics or the pre-rounding source operator.
 """
 from time import monotonic
 import numpy as np
+from ._native_dyadic_interval_inertia import interval_inertia
 
 
 def exact_inertia(h, mass, shift, check=lambda: None, *, dimension_limit=64):
+    started=monotonic()
+    def guard():
+        check()
+        if monotonic()-started>30.: raise TimeoutError('exact shifted inertia deadline')
+    guard()
+    for precision in (256,512):
+        answer=interval_inertia(h,mass,shift,guard,precision=precision,dimension_limit=dimension_limit)
+        guard()
+        if answer is not None: return answer
+    return integer_inertia(h,mass,shift,guard,dimension_limit=dimension_limit)
+
+
+def integer_inertia(h, mass, shift, check=lambda: None, *, dimension_limit=64):
     started = monotonic()
     def guard():
         check()

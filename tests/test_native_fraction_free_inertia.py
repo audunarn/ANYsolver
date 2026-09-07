@@ -113,6 +113,7 @@ def test_benchmark_complete_saved_packet_wiring(tmp_path,monkeypatch):
         assert h.shape==m.shape==(45,45) and type(shift) is float
         calls.append(shift); return (45,0,0)
     monkeypatch.setattr(implementation,'exact_inertia',stub)
+    monkeypatch.setattr(implementation,'integer_inertia',stub)
     monkeypatch.setattr(runpy,'run_path',lambda _:dict(rational_inertia=stub))
     bench.worker('0'*40,tmp_path)
     result=json.loads((tmp_path/'benchmark.pending.json').read_bytes())
