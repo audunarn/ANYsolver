@@ -60,7 +60,7 @@ def test_refinement_cleanup_before_publication(tmp_path,monkeypatch,incident):
     ticks=iter([0.,601. if incident=='timeout' else 121. if incident=='inactivity' else 1.,601.])
     monkeypatch.setattr(probe.time,'monotonic',lambda:next(ticks)); monkeypatch.setattr(probe.time,'sleep',lambda _:None)
     monkeypatch.setattr(probe,'guard',lambda _:calls.append('guard'))
-    def validate(output,raw,revision):
+    def validate(output,raw,revision,macros=6):
         calls.append('validate'); assert raw==packet
         if incident=='invalid': raise ValueError('invalid')
     monkeypatch.setattr(probe,'validate',validate)

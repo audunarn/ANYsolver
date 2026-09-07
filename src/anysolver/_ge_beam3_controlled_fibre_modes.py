@@ -25,9 +25,11 @@ from .control import cancellation_safe_point
 SCHEMA = 'GE_BEAM3_CONTROLLED_FIBRE_FIXED_LOAD_SPECTRA_V1'
 
 
-def prepare(model, program, checkpoint, section_inertias, *, material_policy, expected_checkpoint_sha256=None, cancellation_token=None, coordinate_limit=80):
-    if type(coordinate_limit) is not int or coordinate_limit not in (80,128):
+def prepare(model, program, checkpoint, section_inertias, *, material_policy, expected_checkpoint_sha256=None, cancellation_token=None, coordinate_limit=80, max_coordinates=256):
+    if type(coordinate_limit) is not int or coordinate_limit not in (80,128,256):
         raise ValueError('explicit admitted fibre spectral coordinate limit required')
+    if type(max_coordinates) is not int or max_coordinates not in (256,512):
+        raise ValueError('explicit admitted retained coordinate budget required')
     if material_policy not in (FROZEN, ALGORITHMIC): raise ValueError('explicit fibre spectral policy required')
     started = monotonic()
     def local_check():
@@ -35,7 +37,7 @@ def prepare(model, program, checkpoint, section_inertias, *, material_policy, ex
         if monotonic()-started > 120.: raise TimeoutError('fibre spectral construction deadline')
     local_check()
     if type(checkpoint) is not bytes: raise ValueError('immutable canonical fibre checkpoint required')
-    context = Context(model, program, check=local_check)
+    context = Context(model, program, check=local_check, max_coordinates=max_coordinates)
     state, _ = context.restore(checkpoint, expected_sha256=expected_checkpoint_sha256)
     physical = context.physical
     def guard():
@@ -70,7 +72,8 @@ def prepare(model, program, checkpoint, section_inertias, *, material_policy, ex
         continuation_constraint='REMOVED_FOR_FIXED_DEAD_LOAD_PERTURBATION', checkpoint_sha256=sha256(checkpoint).hexdigest(), material_policy=material_policy,
         operators=[probe.identity for probe in physical.probes], left=left, right=right, geometric=g,
         kinetic=kinetic, free=free, algebraic=algebraic, inertias=inertias,
-        **({'spectral_coordinate_limit':coordinate_limit} if coordinate_limit!=80 else {})))
+        **({'spectral_coordinate_limit':coordinate_limit} if coordinate_limit!=80 else {}),
+        **({'retained_coordinate_limit':max_coordinates} if max_coordinates!=256 else {})))
     guard()
     return Packet(_owned(left), _owned(right), _owned(g), _owned(kinetic), free, algebraic, identity, material_policy), guard, state.parameter
 
@@ -85,12 +88,12 @@ class Analysis(FibreAnalysis):
 
 def solve_modes(model, program, checkpoint, section_inertias, *, material_policy,
                 bounds, num_modes=6, root_width=1e-10, expected_checkpoint_sha256=None, cancellation_token=None,
-                coordinate_limit=80, exact_dimension_limit=64):
-    if type(exact_dimension_limit) is not int or exact_dimension_limit not in (64,96):
+                coordinate_limit=80, exact_dimension_limit=64, max_coordinates=256):
+    if type(exact_dimension_limit) is not int or exact_dimension_limit not in (64,96,160):
         raise ValueError('explicit admitted exact-inertia dimension limit required')
     packet, guard, parameter = prepare(model, program, checkpoint, section_inertias,
         material_policy=material_policy, expected_checkpoint_sha256=expected_checkpoint_sha256,
-        cancellation_token=cancellation_token, coordinate_limit=coordinate_limit)
+        cancellation_token=cancellation_token, coordinate_limit=coordinate_limit, max_coordinates=max_coordinates)
     modes = solve_factor_chain_modes(packet.left, packet.right, packet.geometric, packet.kinetic,
         packet.free, packet.algebraic, bounds=bounds, num_modes=num_modes, root_width=root_width,
         cancellation_token=cancellation_token, exact_dimension_limit=exact_dimension_limit)

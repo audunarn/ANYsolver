@@ -28,7 +28,7 @@ def integer_inertia(h, mass, shift, check=lambda: None, *, dimension_limit=64):
         if monotonic()-started > 30.:
             raise TimeoutError('exact shifted inertia deadline')
     guard()
-    if type(dimension_limit) is not int or dimension_limit not in (64,96):
+    if type(dimension_limit) is not int or dimension_limit not in (64,96,160):
         raise ValueError('explicit admitted exact-inertia dimension limit required')
     if (h.ndim != 2 or h.shape[0] != h.shape[1] or not 1 <= len(h) <= dimension_limit
             or mass.shape != h.shape or not np.isfinite(h).all()

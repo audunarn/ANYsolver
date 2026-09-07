@@ -21,7 +21,7 @@ def test_unregistered_arithmetic_budget_rejects(bad):
         exact.exact_inertia(np.eye(1),np.eye(1),0.,dimension_limit=bad)
 
 
-@pytest.mark.parametrize('bad',[True,128.,0,81,256,None])
+@pytest.mark.parametrize('bad',[True,128.,0,81,257,None])
 def test_unregistered_native_budget_rejects_before_replay(bad,monkeypatch):
     def forbidden(*args,**kwargs): raise AssertionError('replay after invalid budget')
     monkeypatch.setattr(native,'Context',forbidden)
@@ -44,3 +44,19 @@ def test_budget_reaches_exact_fallback(monkeypatch):
     h=np.diag(np.arange(69,dtype=float)-35.25); m=np.zeros_like(h)
     with pytest.raises(ValueError,match='bounded'): chain.inertia(h,m,0.)
     assert chain.inertia(h,m,0.,dimension_limit=96)==36
+
+
+def test_explicit_160_dimension_signed_congruence():
+    d=np.array([1.]*64+[-2.]*64+[0.]*32)
+    t=np.eye(160); t[np.arange(159),np.arange(1,160)]=1.
+    h=t.T@np.diag(d)@t; m=np.zeros_like(h)
+    with pytest.raises(ValueError,match='bounded'): exact.exact_inertia(h,m,0.,dimension_limit=96)
+    assert exact.exact_inertia(h,m,0.,dimension_limit=160)==(64,64,32)
+
+
+@pytest.mark.parametrize('bad',[True,512.,128,1024,None])
+def test_invalid_retained_replay_budget_rejected_before_context(bad,monkeypatch):
+    def forbidden(*args,**kwargs): raise AssertionError('context after invalid replay budget')
+    monkeypatch.setattr(native,'Context',forbidden)
+    with pytest.raises(ValueError,match='retained coordinate budget'):
+        native.prepare(None,None,b'',{},material_policy=native.FROZEN,max_coordinates=bad)

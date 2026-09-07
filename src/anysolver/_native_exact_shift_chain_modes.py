@@ -57,7 +57,7 @@ def solve_factor_chain_modes(left_factor,right_factor,geometric,kinetic,free,alg
         cancellation_safe_point(cancellation_token,'compensated_spectrum.'+stage)
         if monotonic()-start>600.: raise ValueError('compensated spectrum deadline')
     checkpoint('capture')
-    if type(exact_dimension_limit) is not int or exact_dimension_limit not in (64,96):
+    if type(exact_dimension_limit) is not int or exact_dimension_limit not in (64,96,160):
         raise ValueError('explicit admitted exact-inertia dimension limit required')
     left,right,g,b=(_owned(x) for x in (left_factor,right_factor,geometric,kinetic))
     if (left.ndim!=2 or right.ndim!=2 or not 1<=left.shape[0]<=8192

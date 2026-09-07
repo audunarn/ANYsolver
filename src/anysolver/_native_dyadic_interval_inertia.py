@@ -27,7 +27,7 @@ def interval_inertia(h,mass,shift,check=lambda:None,*,precision=256,dimension_li
         if monotonic()-started>30.: raise TimeoutError('dyadic shifted inertia deadline')
     guard()
     if type(precision) is not int or precision not in (256,512): raise ValueError('admitted dyadic precision required')
-    if type(dimension_limit) is not int or dimension_limit not in (64,96): raise ValueError('explicit admitted exact-inertia dimension limit required')
+    if type(dimension_limit) is not int or dimension_limit not in (64,96,160): raise ValueError('explicit admitted exact-inertia dimension limit required')
     if (h.ndim!=2 or h.shape[0]!=h.shape[1] or not 1<=len(h)<=dimension_limit or mass.shape!=h.shape
             or not np.isfinite(h).all() or not np.isfinite(mass).all() or not np.isfinite(shift)
             or not np.array_equal(h,h.T) or not np.array_equal(mass,mass.T)):
