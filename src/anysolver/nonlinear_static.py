@@ -4915,6 +4915,18 @@ def _solve_static_nonlinear_under_lease(
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
     )
+    native_spatial_couples = False
+    if any(type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
+           for e in model.mesh.elements.values()):
+        from ._ge_beam3_native_spatial_couples import active_for
+
+        native_spatial_couples = active_for(model)
+        if native_spatial_couples:
+            if control_name != 'force' or load_program is not None or follower_active or fracture_config is not None:
+                raise ValueError('private spatial couples require standalone force control')
+            general_tangent = True
+            info['equilibrium_tangent'] = 'K_internal-K_spatial_couple_chart_external'
+            info['native_spatial_couple_general_matrix'] = True
     imperfection_provenance: List[Dict[str, Any]] = []
     if imperfection is not None:
         imperfection_provenance = list(getattr(model, "imperfection_metadata", []))
@@ -5407,6 +5419,15 @@ def _solve_static_nonlinear_under_lease(
                 if tangent
                 else None
             )
+            if native_spatial_couples:
+                from ._ge_beam3_native_spatial_couples import external_at
+
+                extra, extra_tangent = external_at(
+                    model, committed_states, displacements, path_factor, tangent=tangent
+                )
+                force = force + extra
+                if tangent:
+                    zero_tangent = zero_tangent + extra_tangent
             return force, zero_tangent, factors, active_stage
 
         weighted_cases: List[Tuple[Optional["LoadCase"], float]] = [
