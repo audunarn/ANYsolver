@@ -58,3 +58,29 @@ integration. No eigensolve or reference solve occurred in that test lane.
 The separately frozen successor may execute once in a distinct v2 external
 directory under the original containment limits. This is not a retry of the
 failed authority/source, and the old invocation remains failed.
+
+## Successor execution
+
+Source `a3c2e22156748dcca4f1b6269a707c8c32df828f` completed once, exit 0,
+from 2026-09-07T13:27:42.7387347Z to 13:27:48.2500839Z. The existing
+reference packet was reused exactly. Three native spectra completed, with no
+nonlinear solves or reference regeneration. Process-tree cleanup was verified;
+subsequent process inspection found zero matching workers.
+
+At 1/2/4 macros, maximum first-six frequency errors are 14.610%, 5.136%,
+and 1.332%. All six individual frequency errors decrease under refinement.
+Finest minimum diagonal kinetic MAC is 0.996628; this is not a clustered-MAC
+qualification. The native-rule kinetic identity error is at most 4.45e-16.
+The higher-rule mass quadrature discrepancy decreases from 2.233e-8 to
+7.068e-11 to 2.588e-13. Native original signed-Ritz residuals are below
+4.23e-16. The independent reference profiles differ by at most 1.291e-10
+relatively in eigenvalues.
+
+Nine subsequent saved-evidence tests passed in 1.91 seconds, recomputing
+kinetic overlaps and checking mutations without another spectral or nonlinear
+solve. All test inventories are separate in the status record. The committed
+4125-byte comparison exactly matches the external canonical record, SHA-256
+f2966ad7afa6fcafb289b0ff72db7995d532fe5b1d65249ff235acd0e2ba64bf.
+Both the genuine failed v1 invocation and successful corrected v2 invocation
+remain preserved. This is unloaded curved spectral development evidence,
+not a complete GE-B3, modal, buckling or shell-coupling qualification.
