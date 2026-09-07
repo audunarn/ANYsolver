@@ -65,3 +65,34 @@ target/refinement records, exact recovery hashes, unchanged elastic histories,
 canonical checkpoint replay, recomputed field metrics and complete Job cleanup.
 The canonical comparison remains development-only. No independent scientific
 review or reference multiprecision claim is made.
+
+## Completed bounded development invocation
+
+Frozen source `05beb51cb1da177b3b474d19b132719811f5c43e` completed once,
+2026-09-07 12:58:38.4754501Z to 12:58:48.4267148Z, exit 0. The supervisor
+verified complete Job cleanup before publishing the 9230-byte comparison;
+post-run inspection found no matching Python processes. All three native
+programs and exact checkpoint replays completed. Nine ordered records cover
+168 recovered stations; six separate continuum IVPs provide the comparison.
+Eight subsequent evidence-inspection/mutation tests passed in 1.35 seconds
+without new native or continuum solves. Inventories remain separate.
+
+At the largest moment, 1/2/4-macro strain-energy-norm errors are respectively
+2.878%, 1.134%, and 0.520%; integrated-energy errors are 1.892%, 0.484%, and
+0.122%. All recorded geometry/field refinement error metrics decrease at every
+target. This is not a frozen qualification convergence test or engineering GO.
+
+The four-macro maximum recovered-frame entry discrepancy is 0.054187, versus
+0.000786 for nodal frames. Its maximum recovered spatial-force norm is 0.007204
+despite zero applied spatial force, and its maximum recovered moment relative
+error is 1.033%. These discrepancies remain explicit and require interpretation
+of the station operator/transport and convergence; they are not erased or
+reclassified by the small global equilibrium residual. The continuum reference
+profile field discrepancy is at most 2.115e-9.
+
+All raw checkpoints, references, station fields, progress and failure history
+remain external. The committed comparison is an exact byte copy, bound by the
+execution status. No `src/`, shell mechanics, defaults, public API or package
+changes occurred in this branch. Full qualification, independent scientific
+review, general section/dynamics parity and objective beam-shell integration
+remain unfinished.
