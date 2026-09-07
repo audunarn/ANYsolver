@@ -59,14 +59,16 @@ def _finite(value):
     return value
 
 
-def inspect_records(checkpoint, reference):
+def inspect_records(checkpoint, reference, *, macros=4):
     """Structural/semantic checks after external identity checks; unit-testable."""
+    if type(macros) is not int or macros not in (4, 6):
+        raise ValueError('registered four/six-macro audit scope required')
     if (checkpoint['schema'] != 'GE_BEAM3_PHYSICAL_FIBRE_TRANSLATION_CONTROL_CHAIN_V1'
             or checkpoint['program']['schema'] != 'GE_BEAM3_KINEMATIC_SEEDED_SPATIAL_NEWTON_FIBRE_CONTROL_V1'
             or type(checkpoint['completed_targets']) is not int or checkpoint['completed_targets'] != 4
-            or len(checkpoint['records']) != 4 or checkpoint['node_ids'] != list(range(1, 10))
-            or checkpoint['element_ids'] != list(range(1, 5))):
-        raise ValueError('four-macro checkpoint scope mismatch')
+            or len(checkpoint['records']) != 4 or checkpoint['node_ids'] != list(range(1, 2*macros+2))
+            or checkpoint['element_ids'] != list(range(1, macros+1))):
+        raise ValueError('registered macro checkpoint scope mismatch')
     if (reference['schema'] != 'GE_BEAM3_PRESERVED_FIBRE_ARCH_GEOMETRIC_COMPARISON_V1'
             or reference['production_qualified'] is not False or reference['mechanics_replayed'] is not False
             or reference['section_comparison'] != 'NOMINAL_ELASTIC_EA_1E6_GA_4E5_EI_100_NOT_EXACT_DYADIC_SECTION_CERTIFICATE'):
@@ -100,9 +102,9 @@ def inspect_records(checkpoint, reference):
         native = _finite(row['parameter']); load = _finite(prior['reference_load'])
         coarse = _finite(prior['native_load'])
         if load <= 0.: raise ValueError('positive preserved reference load required')
-        result.append(dict(displacement=target, native_four_macro_load=native,
+        result.append(dict(displacement=target, **{f'native_{"four" if macros == 4 else "six"}_macro_load': native},
             preserved_reference_load=load, native_two_macro_load=coarse,
-            four_macro_relative_load_error=abs(native-load)/abs(load),
+            **{f'{"four" if macros == 4 else "six"}_macro_relative_load_error': abs(native-load)/abs(load)},
             two_macro_relative_load_error=abs(coarse-load)/abs(load),
             inspected_zero_history_coordinates=count, checkpoint_record_sha256=row['record_sha256']))
         previous = row['record_sha256']
