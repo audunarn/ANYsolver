@@ -610,6 +610,13 @@ class LoadCase:
         gravity loads retain their reference-configuration semantics.
         """
         qualified_runtime_guard(stage="load-vector preflight")
+        if any(type(e).__module__ == "anysolver._ge_beam3_native_fibre_static_element" for e in mesh.elements.values()):
+            from ._ge_beam3_native_load_admission import assemble_nodal_forces
+
+            return assemble_nodal_forces(
+                self, mesh, dof_manager, guard=qualified_runtime_guard,
+                activity=element_activity,
+            )
         total_dofs = dof_manager.total_dofs
         F = np.zeros(total_dofs)
 

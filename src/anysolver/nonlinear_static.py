@@ -4625,6 +4625,20 @@ def _solve_static_nonlinear_under_lease(
         imperfection,
         _exact_guard=exact_guard,
     )
+    if any(type(e).__module__ == "anysolver._ge_beam3_native_fibre_static_element" for e in model.mesh.elements.values()):
+        from ._ge_beam3_native_load_admission import assemble_nodal_forces
+
+        native_load_cases = (load_case, constant_load_case) + (
+            tuple(stage.load_case for stage in load_program.stages)
+            if load_program is not None else ()
+        )
+        for native_load_case in native_load_cases:
+            if native_load_case is not None:
+                assemble_nodal_forces(
+                    native_load_case, model.mesh, model.mesh.dof_manager,
+                    guard=lambda *, stage: exact_guard(model, context=stage),
+                    activity=model.mesh.element_activity,
+                )
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
     control_name = control
