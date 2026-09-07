@@ -4923,6 +4923,7 @@ def _solve_static_nonlinear_under_lease(
         and resolved_corotational_tangent == "consistent"
     )
     native_spatial_couples = False
+    native_combined_couples = False
     native_distributed_model = any(
         type(e).__module__ == 'anysolver._ge_beam3_native_distributed_element'
         for e in model.mesh.elements.values()
@@ -4938,6 +4939,12 @@ def _solve_static_nonlinear_under_lease(
         general_tangent = True
         info['equilibrium_tangent'] = 'GENERAL_DISTRIBUTED_COUPLE_STATIC_SCHUR'
         info['native_distributed_couple_general_matrix'] = True
+        from ._ge_beam3_native_combined_couples import active_for
+
+        native_combined_couples = active_for(model)
+        if native_combined_couples:
+            info['equilibrium_tangent'] = 'K_distributed_static_Schur-K_spatial_nodal_chart_external'
+            info['native_combined_couple_general_matrix'] = True
     native_line_model = any(
         type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
         for e in model.mesh.elements.values()
@@ -5453,8 +5460,11 @@ def _solve_static_nonlinear_under_lease(
                 if tangent
                 else None
             )
-            if native_spatial_couples:
-                from ._ge_beam3_native_spatial_couples import external_at
+            if native_spatial_couples or native_combined_couples:
+                if native_combined_couples:
+                    from ._ge_beam3_native_combined_couples import external_at
+                else:
+                    from ._ge_beam3_native_spatial_couples import external_at
 
                 extra, extra_tangent = external_at(
                     model, committed_states, displacements, path_factor, tangent=tangent
