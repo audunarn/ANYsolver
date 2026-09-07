@@ -75,8 +75,27 @@ def derivatives(t,y,p,height,axial,shear,bending):
     return a*jacobian,b*jacobian
 
 
+def sampling_parameters(values=None):
+    """Explicit evaluation sites for the resolved collocation polynomial.
+
+    This changes saved sampling only, not the BVP mesh, equations or tolerances.
+    Keep both boundary sites; do not extrapolate or interpolate saved stations.
+    """
+    if values is None: return np.linspace(-1., 0., 129)
+    raw = np.asarray(values, dtype=object)
+    if (raw.ndim != 1 or not 2 <= len(raw) <= 4097
+            or any(type(v) not in (int, float) for v in raw)):
+        raise ValueError('bounded explicit reference sampling parameters')
+    result = np.array(raw, dtype=float)
+    if (not np.isfinite(result).all() or result[0] != -1. or result[-1] != 0.
+            or np.any(np.diff(result) <= 0)):
+        raise ValueError('strictly ordered reference samples including both boundaries')
+    return result
+
+
 def solve(displacement,*,height=.1,axial=1000.,shear=400.,bending=.01,
-          previous=None,profile='BVP7',max_callbacks=2000,max_seconds=60.):
+          previous=None,profile='BVP7',max_callbacks=2000,max_seconds=60.,sample_parameters=None):
+    station = sampling_parameters(sample_parameters)
     if (any(isinstance(v,(bool,np.bool_)) or not np.isfinite(v) or v<=0
             for v in (height,axial,shear,bending)) or not 0<height<=.25 or
             isinstance(displacement,(bool,np.bool_)) or not np.isfinite(displacement) or
@@ -128,7 +147,6 @@ def solve(displacement,*,height=.1,axial=1000.,shear=400.,bending=.01,
                        tol=tolerance,bc_tol=1e-11,max_nodes=maximum_nodes)
     if not result.success:
         raise ArchReferenceError(f'collocation failed without retry: {result.message}')
-    station = np.linspace(-1.,0.,129)
     fields = result.sol(station)
     boundary_error = float(np.max(np.abs(boundary(fields[:,0],fields[:,-1],result.p))))
     # Avoid checking only collocation nodes, where the ODE can hold by design.
