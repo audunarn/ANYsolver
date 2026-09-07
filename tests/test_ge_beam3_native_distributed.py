@@ -179,7 +179,7 @@ def test_failed_global_step_and_restart_fail_closed(tmp_path):
     result,evidence=solve_distributed_model(m,pattern(m),steps=1,max_iterations=1)
     save(tmp_path/'failed.json',dict(result=packet(result),evidence=evidence))
     assert result.status!='completed' and canonical(result.element_states[1])==canonical(initial)
-    with pytest.raises(ValueError,match='future authenticated chain'):
+    with pytest.raises(ValueError,match='authenticated chain'):
         solver.solve_static_nonlinear(m,LoadCase('raw-state'),initial_element_states={1:initial})
     with pytest.raises(ValueError,match='live native distributed'):
         solver.solve_static_nonlinear(m,LoadCase('unissued-driver'))

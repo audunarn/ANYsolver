@@ -1757,7 +1757,12 @@ def _owned_initial_element_states(
             raise ValueError("initial_element_states contains duplicate element IDs")
         element = model.mesh.elements.get(element_id)
         if type(element).__module__ == "anysolver._ge_beam3_native_distributed_element":
-            raise ValueError("native distributed-couple restart requires its future authenticated chain")
+            from ._ge_beam3_native_distributed_restart import capture_solver_state
+
+            owned[element_id] = capture_solver_state(
+                model, element_id, state, exact_guard=_exact_guard
+            )
+            continue
         if type(element).__module__ == "anysolver._ge_beam3_native_line_static_element":
             from ._ge_beam3_native_line_restart import capture_solver_state
 
@@ -4923,12 +4928,13 @@ def _solve_static_nonlinear_under_lease(
         for e in model.mesh.elements.values()
     )
     if native_distributed_model:
-        from ._ge_beam3_native_distributed_program import require_active
+        from ._ge_beam3_native_distributed_program import require_active, require_solver_initial
 
         require_active(model)
+        require_solver_initial(model, initial_element_states, initial_displacements)
         if (control_name != 'force' or load_program is not None or follower_active or fracture_config is not None
-                or initial_element_states is not None or initial_displacements is not None or initial_fields):
-            raise ValueError('private distributed couples require virgin standalone force control')
+                or initial_fields):
+            raise ValueError('private distributed couples require authenticated standalone force control')
         general_tangent = True
         info['equilibrium_tangent'] = 'GENERAL_DISTRIBUTED_COUPLE_STATIC_SCHUR'
         info['native_distributed_couple_general_matrix'] = True
@@ -5056,6 +5062,15 @@ def _solve_static_nonlinear_under_lease(
             for element in model.mesh.elements.values()
         ):
             from ._ge_beam3_native_line_restart import supported_solver_coordinates
+
+            q, initial_affine_scale = supported_solver_coordinates(
+                model, T, u0, initial_displacements
+            )
+        elif initial_displacements is not None and model.mesh.elements and all(
+            type(element).__module__ == "anysolver._ge_beam3_native_distributed_element"
+            for element in model.mesh.elements.values()
+        ):
+            from ._ge_beam3_native_distributed_restart import supported_solver_coordinates
 
             q, initial_affine_scale = supported_solver_coordinates(
                 model, T, u0, initial_displacements

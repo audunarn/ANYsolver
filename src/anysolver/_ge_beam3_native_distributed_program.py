@@ -1,7 +1,7 @@
 """Private distributed-couple force control through the actual native solver.
 
-This first integration starts from virgin state only. Restart is rejected until
-the distributed-load chain codec is separately implemented and validated.
+Restart accepts only the externally authenticated, complete distributed-load
+chain. Raw initial states and cross-formulation checkpoints are not admitted.
 """
 from contextvars import ContextVar
 from dataclasses import dataclass,field
@@ -45,15 +45,23 @@ class _Program:
     proportional: DistributedPattern
     constant: DistributedPattern
     events: list
+    initial: object=None
+    restart_sha256: object=None
     input_sha256: str=field(init=False)
 
     def __post_init__(self):
-        object.__setattr__(self,'input_sha256',sha((self.identity,self.proportional.signature,self.constant.signature)))
+        if (self.initial is None)!=(self.restart_sha256 is None):raise ValueError('distributed programme restart binding')
+        object.__setattr__(self,'input_sha256',self._input_identity())
+
+    def _input_identity(self):
+        values=(self.identity,self.proportional.signature,self.constant.signature)
+        if self.initial is not None:values+= (self.restart_sha256,sha(self.initial))
+        return sha(values)
 
     def require(self,model):
         if model is not self.model or model_identity(model)!=self.identity:raise ValueError('distributed programme model changed')
         self.proportional.require(model.mesh);self.constant.require(model.mesh)
-        if sha((self.identity,self.proportional.signature,self.constant.signature))!=self.input_sha256:
+        if self._input_identity()!=self.input_sha256:
             raise ValueError('distributed programme load authority changed')
 
     def effective(self,parameter):
@@ -73,6 +81,16 @@ def require_active(model):
     if type(programme) is not _Program:raise ValueError('live native distributed force programme required')
     programme.require(model)
     return programme
+
+
+def require_solver_initial(model,states,displacements):
+    from ._ge_beam3_p5_seeded.core import canonical
+    programme=require_active(model)
+    if programme.initial is None:
+        if states is not None or displacements is not None:raise ValueError('distributed initial state requires an authenticated chain')
+    elif (canonical(states)!=canonical(programme.initial['states'])
+          or not np.array_equal(displacements,programme.initial['displacements'])):
+        raise ValueError('distributed solver initial data differ from authenticated chain')
 
 
 def assemble_at(parameter,model,displacements,store,num_layers,**kwargs):
@@ -95,7 +113,8 @@ def assemble_at(parameter,model,displacements,store,num_layers,**kwargs):
     finally:_ACTIVE.reset(token)
 
 
-def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_iterations=24,line_search=True):
+def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_iterations=24,line_search=True,
+                            initial_checkpoint=None,expected_sha256=None):
     from .boundary import LoadCase
     from .nonlinear_static import solve_static_nonlinear,NonlinearConvergenceSettings
     if _PROGRAM.get() is not None or _ACTIVE.get() is not None:raise ValueError('nested native distributed programme forbidden')
@@ -103,10 +122,18 @@ def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_itera
         raise ValueError('exact distributed patterns required')
     if type(steps) is not int or not 1<=steps<=16 or type(max_iterations) is not int or not 1<=max_iterations<=24 or type(line_search) is not bool:
         raise ValueError('bounded native distributed controls required')
+    initial=None
+    if initial_checkpoint is not None:
+        from ._ge_beam3_native_distributed_restart import decode_checkpoint
+        chain=decode_checkpoint(model,initial_checkpoint,expected_sha256=expected_sha256)
+        initial=chain[-1];accepted=initial['load_point'].effective(model)
+        if constant is None:constant=accepted
+        elif constant!=accepted:raise ValueError('distributed restart constant must match accepted load')
+    elif expected_sha256 is not None:raise ValueError('distributed restart hash without checkpoint')
     constant=DistributedPattern(LinePattern(()),()) if constant is None else constant
     proportional.require(model.mesh);constant.require(model.mesh)
     programme=_Program(model,model_identity(model),DistributedPattern(LinePattern(proportional.line.rows),proportional.couples),
-        DistributedPattern(LinePattern(constant.line.rows),constant.couples),[])
+        DistributedPattern(LinePattern(constant.line.rows),constant.couples),[],initial,expected_sha256)
     def load(pattern):
         vector=nodal_force_vector(model,pattern.line);value=LoadCase('private-native-distributed-line')
         for node in sorted(model.mesh.nodes):
@@ -120,9 +147,13 @@ def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_itera
         result=solve_static_nonlinear(model,prop,constant_load_case=const,num_steps=steps,
             max_iterations=max_iterations,tolerance=1e-12,num_layers=1,min_step_fraction=1.,
             record_increment_snapshots=True,equilibrate_initial_state=False,
+            initial_displacements=None if initial is None else initial['displacements'],
+            initial_element_states=None if initial is None else initial['states'],
             convergence_settings=NonlinearConvergenceSettings(profile='legacy',line_search='always' if line_search else 'never',
                 max_step_factor=1.,max_line_search_cuts=8))
         programme.require(model);proportional.require(model.mesh);constant.require(model.mesh)
-        return result,dict(programme_sha256=programme.input_sha256,model_sha256=programme.identity,
-            events=tuple(programme.events),general_matrix_required=True,production_qualified=False,restart_authorized=False)
+        evidence=dict(programme_sha256=programme.input_sha256,model_sha256=programme.identity,
+            events=tuple(programme.events),general_matrix_required=True,production_qualified=False,restart_authorized=initial is not None)
+        if initial is not None:evidence['restart_sha256']=expected_sha256
+        return result,evidence
     finally:_PROGRAM.reset(token)
