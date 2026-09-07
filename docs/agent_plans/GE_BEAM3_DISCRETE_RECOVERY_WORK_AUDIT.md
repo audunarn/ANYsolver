@@ -79,3 +79,15 @@ The next substantive scope is a frozen standalone finite-static/recovery
 convergence and loading-path programme, followed by current-state spectral
 and curved/ring coverage. Objective beam-shell coupling remains separate and
 unfinished. Existing B2/B3 and Q4/S3 remain untouched.
+
+## Reproducible closeout
+
+The extended lane passed 17 tests in 0.33 seconds, including frame, force,
+curvature, moment, nodal-director, cell-rotation and residual mutations. The
+frozen audit at `5efe48f0baab5e13ee746b638c08cd314907d577` then ran twice in
+fresh external directories. Both 20408-byte outputs have SHA-256
+`b720595f0c21207c566142b72e898a6302cb8e7f87c268cd5bcead4bcff74b4c`.
+The complete pair of read-only invocations and archive copy took less than
+one second of command wall time. Neither invocation launched native mechanics
+or a continuum reference solve. The execution status binds the raw packets
+and test report; no numerical evidence or production files were changed.
