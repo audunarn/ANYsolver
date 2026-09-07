@@ -41,3 +41,27 @@ Every native child must have one numerical-library thread, a 24 GiB process-tree
 memory limit, a 600-second wall limit and 120-second inactivity protection.
 Use fresh exclusive external outputs; preserve failure logs and retry nothing
 automatically. Full qualification and independent scientific review remain pending.
+
+## Successor rehearsal and execution boundary
+
+IVP13 passed the 12 reference tests in 1.72 seconds, retaining all original
+acceptance tolerances. The combined reference/diagnostic/containment lane passed
+28 tests in 1.80 seconds. A preceding test invocation produced 14 passes and
+14 fixture setup errors because its temporary parent directory was not created;
+the corrected invocation explicitly creates that fresh parent before pytest.
+No native equilibrium solve occurred in either unit-test invocation.
+
+Preserved XML report directories under the local temporary directory:
+
+- `ge-beam3-curved-moment-ref13-76de5b972bce43288c90e617a099b3c7`
+- `ge-beam3-curved-moment-prep-11ebb4a2241a4938b9a3e1d0c2115853` (setup errors)
+- `ge-beam3-curved-moment-prep-fixed-4302cd63f1ff4564a69790b874381f38`
+
+The new supervisor runs exactly three native programs serially and six continuum
+reference solves in one bounded child. It writes each native checkpoint and
+status before checking for completion; failures retain diagnostics but cannot
+create `comparison.json`. Successful publication requires all nine ordered
+target/refinement records, exact recovery hashes, unchanged elastic histories,
+canonical checkpoint replay, recomputed field metrics and complete Job cleanup.
+The canonical comparison remains development-only. No independent scientific
+review or reference multiprecision claim is made.

@@ -47,18 +47,17 @@ def reference_frame(t,height):
     return np.column_stack((tangent,[0.,0.,1.],np.cross(tangent,[0.,0.,1.])))
 
 
-def solve(section,moment,samples,*,height=.15,profile='IVP11',max_evaluations=4000,max_seconds=60.):
+def solve(section,moment,samples,*,height=.15,profile='IVP13',max_evaluations=4000,max_seconds=60.):
     c=matrix(section,(6,6)); m=matrix(moment,(3,)); x=matrix(samples,(len(samples),))
     if (type(height) not in (int,float) or not np.isfinite(height) or not 0<=height<=.25
             or not 2<=len(x)<=4097 or x[0]!=-1. or x[-1]!=1. or np.any(np.diff(x)<=0)):
         raise ValueError('registered parabolic geometry and ordered bounded samples')
     if np.max(abs(c-c.T))>1e-13*max(1.,float(np.max(abs(c)))): raise ValueError('symmetric section required')
     np.linalg.cholesky(c)
-    if (profile not in ('IVP9','IVP11') or type(max_evaluations) is not int or not 0<=max_evaluations<=4000
+    if (profile not in ('IVP9','IVP11','IVP13') or type(max_evaluations) is not int or not 0<=max_evaluations<=4000
             or type(max_seconds) not in (float,int) or not np.isfinite(max_seconds) or not 0<=max_seconds<=60.):
         raise ValueError('bounded explicit reference integration profile')
-    relative=1e-9 if profile=='IVP9' else 1e-11
-    absolute=1e-11 if profile=='IVP9' else 1e-13
+    relative,absolute={'IVP9':(1e-9,1e-11),'IVP11':(1e-11,1e-13),'IVP13':(1e-13,1e-15)}[profile]
     compliance=np.linalg.solve(c,np.eye(6)); started=monotonic(); evaluations=0
     def rhs(t,state):
         nonlocal evaluations
