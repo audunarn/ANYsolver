@@ -3,10 +3,12 @@
 Work is m dot spatial virtual rotation. A constant spatial couple is not a
 conservative SO(3) potential; its additive Exp-chart force/tangent are A.T m
 and (dA/dtheta).T m. Internal element forces/Hessians remain untouched.
-Distributed couples and moment-bearing restart require their own contracts.
+Distributed couples remain unsupported. Moment-bearing restart is admitted
+only through the complete externally authenticated spatial-load chain.
 """
 from contextvars import ContextVar
 from dataclasses import dataclass,field
+from hashlib import sha256
 import numpy as np
 from scipy import sparse
 from ._ge_beam3_spatial_nodal_moments import SpatialNodalMoments,POLICY
@@ -34,6 +36,7 @@ class _Run:
     model: object
     proportional: object
     constant: object=None
+    restart_sha256: object=None
     events: list=field(default_factory=list,init=False)
     store: object=field(default=None,init=False,repr=False)
     identity: str=field(init=False)
@@ -45,11 +48,15 @@ class _Run:
         self.model_sha256=model_identity(self.model);self.identity=sha(self.descriptor())
 
     def descriptor(self):
-        return dict(policy=POLICY,model_sha256=self.model_sha256,proportional=_rows(self.proportional),constant=_rows(self.constant),
+        value=dict(policy=POLICY,model_sha256=self.model_sha256,proportional=_rows(self.proportional),constant=_rows(self.constant),
             axes='FIXED_SPATIAL',virtual_work='M_DOT_SPATIAL_MULTIPLICATIVE_VIRTUAL_ROTATION',
             chart_force='A_TRANSPOSE_M',chart_tangent='DERIVATIVE_A_TRANSPOSE_M',
             general_matrix_required=True,conservative_potential=False,conservative_spectral_authority=False,
             moment_restart_authorized=False,production_qualified=False)
+        if self.restart_sha256 is not None:
+            value.update(restart_sha256=self.restart_sha256,moment_restart_authorized=True,
+                restart_policy='GE_BEAM3_SUPPORTED_NATIVE_SPATIAL_COUPLE_RESTART_V1')
+        return value
 
     def require(self,model):
         if model is not self.model or model_identity(model)!=self.model_sha256:raise ValueError('spatial couple model authority changed')
@@ -72,6 +79,20 @@ def active_for(model):
     if run is None:return False
     if type(run) is not _Run:raise ValueError('exact spatial couple programme scope required')
     run.require(model);return True
+
+
+def decode_active_restart(model,raw,*,expected_sha256):
+    from ._ge_beam3_native_spatial_restart import decode_checkpoint
+    run=_RUN.get()
+    if type(run) is not _Run:raise ValueError('live spatial restart programme required')
+    run.require(model)
+    if type(raw) is not bytes or run.restart_sha256 is None or expected_sha256!=run.restart_sha256 or sha256(raw).hexdigest()!=run.restart_sha256:
+        raise ValueError('spatial restart programme checkpoint mismatch')
+    chain=decode_checkpoint(model,raw,expected_sha256=expected_sha256)
+    if run.constant!=chain[-1]['load_point'].effective_moments(model):
+        raise ValueError('spatial restart constant moment mismatch')
+    run.require(model)
+    return chain
 
 
 def external_at(model,store,displacements,parameter,*,tangent):
@@ -126,18 +147,28 @@ def external_at(model,store,displacements,parameter,*,tangent):
 
 
 def solve_spatial_static(model,nodal_moments,*,line_pattern=None,constant_line=None,constant_moments=None,
-                         steps=2,max_iterations=24,line_search=True):
+                         steps=2,max_iterations=24,line_search=True,initial_checkpoint=None,expected_sha256=None):
     if _RUN.get() is not None:raise ValueError('nested spatial couple programme forbidden')
-    run=_Run(model,nodal_moments,constant_moments)
+    if initial_checkpoint is not None:
+        from ._ge_beam3_native_spatial_restart import decode_checkpoint
+        chain=decode_checkpoint(model,initial_checkpoint,expected_sha256=expected_sha256)
+        accepted=chain[-1]['load_point'];moments=accepted.effective_moments(model);line=accepted.line.effective(model)
+        if constant_moments is None:constant_moments=moments
+        elif _capture(constant_moments,model)!=moments:raise ValueError('spatial restart constant must match accepted moments')
+        if constant_line is None:constant_line=line
+        elif constant_line!=line:raise ValueError('spatial restart constant must match accepted line')
+    elif expected_sha256 is not None:raise ValueError('spatial restart hash without checkpoint')
+    run=_Run(model,nodal_moments,constant_moments,restart_sha256=expected_sha256)
     original=sha(dict(proportional=_rows(nodal_moments),constant=_rows(constant_moments)))
     token=_RUN.set(run)
     try:
         result,line_events=solve_line_static(model,LinePattern(()) if line_pattern is None else line_pattern,
-            constant=constant_line,steps=steps,max_iterations=max_iterations,line_search=line_search)
+            constant=constant_line,steps=steps,max_iterations=max_iterations,line_search=line_search,
+            initial_checkpoint=initial_checkpoint,expected_sha256=expected_sha256)
         run.require(model)
         if sha(dict(proportional=_rows(nodal_moments),constant=_rows(constant_moments)))!=original:raise ValueError('caller spatial couple inputs changed')
         evidence=dict(program=run.descriptor(),program_sha256=run.identity,line_assembly_events=line_events,external_events=tuple(run.events),
-            production_qualified=False,moment_restart_authorized=False)
+            production_qualified=False,moment_restart_authorized=initial_checkpoint is not None)
         result.info['native_spatial_couples']=run.descriptor()
         return result,evidence
     finally:

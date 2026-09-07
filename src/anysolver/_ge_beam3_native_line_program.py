@@ -108,10 +108,16 @@ def solve_line_static(model, proportional, *, constant=None, steps=2, max_iterat
     proportional.require(model.mesh)
     initial=None
     if initial_checkpoint is not None:
-        from ._ge_beam3_native_line_restart import decode_checkpoint
-        chain=decode_checkpoint(model,initial_checkpoint,expected_sha256=expected_sha256)
+        from ._ge_beam3_native_spatial_couples import active_for,decode_active_restart
+        if active_for(model):
+            chain=decode_active_restart(model,initial_checkpoint,expected_sha256=expected_sha256)
+            point=chain[-1]['load_point'].line
+        else:
+            from ._ge_beam3_native_line_restart import decode_checkpoint
+            chain=decode_checkpoint(model,initial_checkpoint,expected_sha256=expected_sha256)
+            point=chain[-1]['load_point']
         initial=chain[-1]
-        accepted=initial['load_point'].effective(model)
+        accepted=point.effective(model)
         if constant is None: constant=accepted
         elif constant!=accepted: raise ValueError('native line restart constant must match accepted load')
     elif expected_sha256 is not None:
