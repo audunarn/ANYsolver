@@ -1756,6 +1756,13 @@ def _owned_initial_element_states(
         if element_id in owned:
             raise ValueError("initial_element_states contains duplicate element IDs")
         element = model.mesh.elements.get(element_id)
+        if type(element).__module__ == "anysolver._ge_beam3_native_line_static_element":
+            from ._ge_beam3_native_line_restart import capture_solver_state
+
+            owned[element_id] = capture_solver_state(
+                model, element_id, state, exact_guard=_exact_guard
+            )
+            continue
         if type(element).__module__ == "anysolver._ge_beam3_native_fibre_static_element":
             # Private typed candidate only; the helper checks the exact class.
             # Keep the closed generic copier unchanged for all existing elements.
@@ -5009,6 +5016,15 @@ def _solve_static_nonlinear_under_lease(
             for element in model.mesh.elements.values()
         ):
             from ._ge_beam3_native_fibre_restart import supported_solver_coordinates
+
+            q, initial_affine_scale = supported_solver_coordinates(
+                model, T, u0, initial_displacements
+            )
+        elif initial_displacements is not None and model.mesh.elements and all(
+            type(element).__module__ == "anysolver._ge_beam3_native_line_static_element"
+            for element in model.mesh.elements.values()
+        ):
+            from ._ge_beam3_native_line_restart import supported_solver_coordinates
 
             q, initial_affine_scale = supported_solver_coordinates(
                 model, T, u0, initial_displacements

@@ -1,6 +1,7 @@
 """Private proportional reference-line force control through real global Newton.
 
-No restart, staged loading, public routing or dynamic authority is granted.
+Only authenticated typed line-chain restart is admitted. No staged loading,
+public routing or dynamic authority is granted.
 The frozen trial scope owns the effective load at every assembly call.
 """
 from contextvars import ContextVar
@@ -94,7 +95,8 @@ def assemble_at(parameter, model, displacements, store, num_layers, **kwargs):
         _ACTIVE.reset(token)
 
 
-def solve_line_static(model, proportional, *, constant=None, steps=2, max_iterations=12, line_search=False):
+def solve_line_static(model, proportional, *, constant=None, steps=2, max_iterations=12, line_search=False,
+                      initial_checkpoint=None, expected_sha256=None):
     from .boundary import LoadCase
     from .nonlinear_static import solve_static_nonlinear, NonlinearConvergenceSettings
     if _PROGRAM.get() is not None or _ACTIVE.get() is not None:
@@ -104,6 +106,16 @@ def solve_line_static(model, proportional, *, constant=None, steps=2, max_iterat
     if type(steps) is not int or not 1 <= steps <= 16 or type(max_iterations) is not int or not 1 <= max_iterations <= 24 or type(line_search) is not bool:
         raise ValueError('bounded native line controls required')
     proportional.require(model.mesh)
+    initial=None
+    if initial_checkpoint is not None:
+        from ._ge_beam3_native_line_restart import decode_checkpoint
+        chain=decode_checkpoint(model,initial_checkpoint,expected_sha256=expected_sha256)
+        initial=chain[-1]
+        accepted=initial['load_point'].effective(model)
+        if constant is None: constant=accepted
+        elif constant!=accepted: raise ValueError('native line restart constant must match accepted load')
+    elif expected_sha256 is not None:
+        raise ValueError('native line restart hash without checkpoint')
     constant = LinePattern(()) if constant is None else constant
     constant.require(model.mesh)
     program = _Program(model, model_identity(model), LinePattern(proportional.rows), LinePattern(constant.rows), [])
@@ -122,6 +134,8 @@ def solve_line_static(model, proportional, *, constant=None, steps=2, max_iterat
         result = solve_static_nonlinear(model, prop, constant_load_case=const, num_steps=steps,
             max_iterations=max_iterations, tolerance=1e-12, num_layers=1, min_step_fraction=1.,
             record_increment_snapshots=True, equilibrate_initial_state=False,
+            initial_displacements=None if initial is None else initial['displacements'],
+            initial_element_states=None if initial is None else initial['states'],
             convergence_settings=NonlinearConvergenceSettings(profile='legacy', line_search='always' if line_search else 'never',
                 max_step_factor=1., max_line_search_cuts=8))
         program.require(model); proportional.require(model.mesh); constant.require(model.mesh)
