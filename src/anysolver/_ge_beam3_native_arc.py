@@ -160,6 +160,40 @@ class ArcResult:
     production_qualified: bool=False
 
 
+class ArcConvergenceFailure(RuntimeError):
+    """Typed local convergence exhaustion; never a state/authority failure."""
+
+
+def attempt_step(model,program,store,total,parameter,previous,index,step,maps,metric,free,evaluate,observe):
+    """One uncommitted native predictor/corrector; caller owns commit/rollback."""
+    def residual_norm(f,r,scale):return float(max(np.linalg.norm(f[free]),np.linalg.norm(r[free]))/scale)
+    f,k,trial,r,scale=evaluate(total,parameter,index,0)
+    if residual_norm(f,r,scale)>1e-12:raise ValueError('native arc origin not equilibrated')
+    column=parameter_column(model,store,trial,program.distributed,nodal_moments=program.nodal_moments)['column']
+    observe('before_predictor',index);tangent=direction(k,column,free,previous,metric)
+    candidate=total+step*tangent[:-1];p=float(parameter+step*tangent[-1])
+    for iteration in range(program.max_iterations+1):
+        force,matrix,trial,imbalance,scale=evaluate(candidate,p,index,iteration)
+        gap,row=arc_row(candidate,total,tangent,metric,p,parameter,step,maps)
+        norm=max(residual_norm(force,imbalance,scale),abs(gap))
+        if not np.isfinite(norm):raise ValueError('native arc merit range')
+        observe('iteration',index,iteration,parameter=p,merit=norm,arc_residual=gap)
+        if norm<=1e-12:return candidate,p,trial,imbalance,tangent,iteration,float(abs(gap))
+        if iteration==program.max_iterations:break
+        column=parameter_column(model,store,trial,program.distributed,nodal_moments=program.nodal_moments)['column']
+        observe('before_corrector',index,iteration)
+        handle=factorize(bordered(matrix,column,free,row),MatrixClass.GENERAL)
+        delta=np.asarray(handle.solve(-np.r_[force[free],gap]),dtype=float).reshape(-1)
+        if delta.shape!=(len(free)+1,) or not np.isfinite(delta).all():raise ValueError('native arc corrector range')
+        for cut in range(program.max_backtracks+1):
+            proposed=candidate.copy();proposed[free]+=(.5**cut)*delta[:-1]
+            next_p=float(p+(.5**cut)*delta[-1]);changed,_,_,changed_r,s=evaluate(proposed,next_p,index,iteration)
+            changed_gap,_=arc_row(proposed,total,tangent,metric,next_p,parameter,step,maps)
+            if max(residual_norm(changed,changed_r,s),abs(changed_gap))<norm:candidate,p=proposed,next_p;break
+        else:raise ArcConvergenceFailure('native arc line search exhausted')
+    raise ArcConvergenceFailure('native arc iteration bound exhausted')
+
+
 def _solve_arc(model,program,*,checkpoint=None,expected_sha256=None,stop_after=None,progress=None,cancellation_token=None):
     from ._ge_beam3_native_arc_restart import encode_checkpoint,decode_checkpoint
     started=monotonic();elements,n,free,identity,maps,metric,initial=capture(model,program)
@@ -202,47 +236,26 @@ def _solve_arc(model,program,*,checkpoint=None,expected_sha256=None,stop_after=N
     status='completed' if end==len(program.steps) else 'paused';failure=None
     def evaluate(u,p,index,it):
         observe('before_assembly',index,it);result=assemble(model,store,u,program,p);safe('after_assembly');return result
-    def residual_norm(f,r,scale):return float(max(np.linalg.norm(f[free]),np.linalg.norm(r[free]))/scale)
     try:
         observe('initialized',cursor)
         for index in range(cursor,end):
-            step=program.steps[index];f,k,trial,r,scale=evaluate(total,parameter,index+1,0)
-            if residual_norm(f,r,scale)>1e-12:raise ValueError('native arc origin not equilibrated')
-            column=parameter_column(model,store,trial,program.distributed,nodal_moments=program.nodal_moments)['column']
-            observe('before_predictor',index+1);tangent=direction(k,column,free,previous,metric)
-            candidate=total+step*tangent[:-1];p=float(parameter+step*tangent[-1]);accepted=False
-            for iteration in range(program.max_iterations+1):
-                force,matrix,trial,imbalance,scale=evaluate(candidate,p,index+1,iteration)
-                gap,row=arc_row(candidate,total,tangent,metric,p,parameter,step,maps)
-                norm=max(residual_norm(force,imbalance,scale),abs(gap))
-                if not np.isfinite(norm):raise ValueError('native arc merit range')
-                observe('iteration',index+1,iteration,parameter=p,merit=norm,arc_residual=gap)
-                if norm<=1e-12:
-                    next_records=records+(dict(index=index+1,step_size=step,parameter=p,iterations=iteration,
-                        direction=tangent.copy(),arc_residual=float(abs(gap))),)
-                    next_chain=chain+(dict(load_point=load_point(program,p),displacements=candidate.copy(),states=deepcopy(dict(trial))),)
-                    staged=encode_checkpoint(model,program,next_chain,next_records)
-                    observe('before_commit',index+1,iteration)
-                    coordinates=native_trial_full_coordinates(store,model,candidate)
-                    store.commit(store.active_trial_token(),accepted_full_displacement=candidate,accepted_full_coordinates=coordinates)
-                    capsule,chain,records=staged,next_chain,next_records
-                    total,reaction,parameter,cursor=candidate.copy(),imbalance.copy(),p,index+1;previous=tangent.copy();accepted=True
-                    observe('committed',cursor,iteration);break
-                if iteration==program.max_iterations:break
-                column=parameter_column(model,store,trial,program.distributed,nodal_moments=program.nodal_moments)['column']
-                observe('before_corrector',index+1,iteration)
-                handle=factorize(bordered(matrix,column,free,row),MatrixClass.GENERAL)
-                delta=np.asarray(handle.solve(-np.r_[force[free],gap]),dtype=float).reshape(-1)
-                if delta.shape!=(len(free)+1,) or not np.isfinite(delta).all():raise ValueError('native arc corrector range')
-                for cut in range(program.max_backtracks+1):
-                    proposed=candidate.copy();proposed[free]+=(.5**cut)*delta[:-1]
-                    next_p=float(p+(.5**cut)*delta[-1]);changed,_,_,changed_r,s=evaluate(proposed,next_p,index+1,iteration)
-                    changed_gap,_=arc_row(proposed,total,tangent,metric,next_p,parameter,step,maps)
-                    if max(residual_norm(changed,changed_r,s),abs(changed_gap))<norm:candidate,p=proposed,next_p;break
-                else:raise RuntimeError('native arc line search exhausted')
-            if not accepted:raise RuntimeError('native arc iteration bound exhausted')
+            step=program.steps[index]
+            candidate,p,trial,imbalance,tangent,iteration,residual=attempt_step(
+                model,program,store,total,parameter,previous,index+1,step,maps,metric,free,evaluate,observe)
+            next_records=records+(dict(index=index+1,step_size=step,parameter=p,iterations=iteration,
+                direction=tangent.copy(),arc_residual=residual),)
+            next_chain=chain+(dict(load_point=load_point(program,p),displacements=candidate.copy(),states=deepcopy(dict(trial))),)
+            staged=encode_checkpoint(model,program,next_chain,next_records)
+            observe('before_commit',index+1,iteration)
+            coordinates=native_trial_full_coordinates(store,model,candidate)
+            store.commit(store.active_trial_token(),accepted_full_displacement=candidate,accepted_full_coordinates=coordinates)
+            capsule,chain,records=staged,next_chain,next_records
+            total,reaction,parameter,cursor=candidate.copy(),imbalance.copy(),p,index+1;previous=tangent.copy()
+            observe('committed',cursor,iteration)
     except SolveCancelled as error:status,failure='cancelled',str(error)
-    except Exception as error:status,failure='failed',type(error).__name__+': '+str(error)
+    except Exception as error:
+        name='RuntimeError' if type(error) is ArcConvergenceFailure else type(error).__name__
+        status,failure='failed',name+': '+str(error)
     finally:
         if store.has_active_trial:store.discard_trial(store.active_trial_token())
     return ArcResult(status,cursor,parameter,_owned(total),_owned(reaction),capsule,failure,tuple(events))
