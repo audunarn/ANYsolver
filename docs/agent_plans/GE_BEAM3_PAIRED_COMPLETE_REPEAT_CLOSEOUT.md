@@ -90,3 +90,15 @@ This closeout changes only two research documentation/status paths. Existing
 B2/B3/Q4/S3 mechanics, public selectors, defaults, versions, main and historical
 evidence are unchanged. The overall programme remains ACTIVE_INCOMPLETE;
 independent review remains PENDING. NO_GO_PRODUCTION_RESTRICTION_UNCHANGED.
+
+## Administrative serialization correction
+
+The first closeout status at `412769ada999510a19ed2a659aca3b5e5ad374e2`
+failed strict canonical parsing: JavaScript serialization placed integer-like
+lane keys before the lexically ordered keys. The surrounding PowerShell
+sequence did not stop on the native Python failure and committed the files.
+This is preserved as an administrative validation incident, not a scientific
+run failure. The successor changes only JSON key order and this disclosure.
+It validates canonical bytes and archive bindings before a separate commit
+operation. All field values, frozen inputs, external evidence, scientific
+results and qualification boundaries are unchanged; no worker is rerun.
