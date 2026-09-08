@@ -26,7 +26,7 @@ The initial WRITEABLE harness failure remains preserved in its own archive.
 ## Numerical result, not qualification
 
 All12 roots at each of twelve geometry/orientation/slenderness specimens
-agree with the100-digit supplied-factor audit; largest squared-root relative
+agree with the100-digit supplied-factor audit; largest squared-frequency relative
 error3.915e-15. Maximum original signed Ritz error1.809e-13 and reduced
 action error1.810e-13, both below unchanged1e-11 checks. Full original-factor
 free-coordinate residual and physical kinetic-Gram checks pass. Root counts,
