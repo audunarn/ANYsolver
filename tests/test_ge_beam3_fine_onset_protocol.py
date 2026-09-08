@@ -115,3 +115,18 @@ def test_exclusive_output(tmp_path):
     f=tmp_path/'science.json';publish(f,dict(value=1));raw=f.read_bytes()
     with pytest.raises(FileExistsError):publish(f,dict(value=2))
     assert f.read_bytes()==raw
+
+def test_nested_wave_root_is_exclusive(tmp_path):
+    from docs.reference_cases.ge_beam3_fine_onset_wave import output_root
+    path=tmp_path/'new-parent'/'rehearsal'
+    assert output_root(path)==path.resolve() and path.is_dir()
+    marker=path/'keep';marker.write_bytes(b'preserve')
+    with pytest.raises(ValueError):output_root(path)
+    assert marker.read_bytes()==b'preserve'
+
+def test_wave_root_rejects_repository_and_parent_file(tmp_path):
+    from docs.reference_cases.ge_beam3_fine_onset_wave import output_root,ROOT
+    with pytest.raises(ValueError):output_root(ROOT/'forbidden-wave')
+    parent=tmp_path/'file';parent.write_bytes(b'preserve')
+    with pytest.raises(OSError):output_root(parent/'rehearsal')
+    assert parent.read_bytes()==b'preserve'

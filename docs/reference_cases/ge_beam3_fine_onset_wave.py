@@ -65,12 +65,16 @@ def mesh(n,root,revision,deadline,stop,receipts):
         return dict(points=points,result=p.bind(root/'result.json'))
     except BaseException:stop.set();raise
 
+def output_root(path):
+    output=Path(path).resolve()
+    if output.exists() or output.is_relative_to(ROOT):raise ValueError('fresh external wave root')
+    output.mkdir(parents=True,exist_ok=False)
+    return output
+
 def run(revision,output,phase,prior):
     guard(revision);p.authority();before=prior_authority(phase,prior,revision)
     predecessor=None if prior is None else p.bind(prior)
-    output=Path(output).resolve()
-    if output.exists() or output.is_relative_to(ROOT):raise ValueError('fresh external wave root')
-    output.mkdir();start=time.monotonic();deadline=start+1800;stop=Event();receipts={};results={};errors=[]
+    output=output_root(output);start=time.monotonic();deadline=start+1800;stop=Event();receipts={};results={};errors=[]
     unit=output/'unit';unit.mkdir();code="import sys;sys.path[:0]=['src','.'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
     receipts['unit']=supervise([sys.executable,'-B','-c',code,'-q','-p','no:cacheprovider','tests/test_ge_beam3_fine_onset_protocol.py',
         '--basetemp',str(unit/'pytest')],unit,deadline,stop)
