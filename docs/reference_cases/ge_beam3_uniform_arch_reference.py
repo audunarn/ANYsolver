@@ -61,7 +61,19 @@ class Reference:
     production_qualified: bool=False
 
 
-def solve(drop,*,previous=None,profile='BVP9'):
+def sampling_sites(values=None):
+    if values is None:return np.linspace(-1.,0.,129)
+    raw=np.asarray(values,dtype=object)
+    if raw.ndim!=1 or not 2<=len(raw)<=4097 or any(type(v) not in (int,float) for v in raw):
+        raise ValueError('bounded explicit reference samples')
+    sites=np.array(raw,dtype=float)
+    if not np.isfinite(sites).all() or sites[0]!=-1. or sites[-1]!=0. or np.any(np.diff(sites)<=0):
+        raise ValueError('ordered reference samples including both ends')
+    return sites
+
+
+def solve(drop,*,previous=None,profile='BVP9',sample_parameters=None):
+    sample=sampling_sites(sample_parameters)
     if type(drop) is not float or not np.isfinite(drop) or not 0<=drop<=2*HEIGHT:
         raise ValueError('explicit finite bounded crown drop')
     if profile not in ('BVP7','BVP9'):raise ValueError('registered BVP profile')
@@ -118,7 +130,7 @@ def solve(drop,*,previous=None,profile='BVP9'):
         raise RuntimeError('uniform arch residual/stretch/work rejection')
     values=(result.p,tangent.p,y,z)
     if any(not np.isfinite(v).all() for v in values):raise RuntimeError('uniform arch nonfinite result')
-    sample=np.linspace(-1.,0.,129);fields=result.sol(sample);parameters=result.p.copy()
+    fields=result.sol(sample);parameters=result.p.copy()
     for a in (sample,fields,parameters):a.setflags(write=False)
     consume()
     return Reference(drop,float(AXIAL*result.p[1]),float(AXIAL*tangent.p[1]),parameters,sample,fields,
