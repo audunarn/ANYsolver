@@ -67,7 +67,7 @@ def _inertia(value):
     return matrix
 
 
-def _operator(element, state, inertia, check):
+def _elastic_replay(element, state, check):
     core = element.operator
     response = state['response']
     # New perturbations begin at committed history, not the previous increment.
@@ -100,6 +100,12 @@ def _operator(element, state, inertia, check):
         h = h-work.hessian
     if _relative(force,response.full_residual)>1e-11:
         raise ValueError('current-rest replay changed accepted equilibrium')
+    return h,force
+
+
+def _operator(element, state, inertia, check):
+    core=element.operator;response=state['response']
+    h,force=_elastic_replay(element,state,check)
     np.linalg.cholesky(-h[24:,24:])
     inverse = np.linalg.solve(h[24:,24:],np.eye(18))
     inverse_error = max(_relative(h[24:,24:]@inverse,np.eye(18)),
@@ -123,6 +129,14 @@ def _operator(element, state, inertia, check):
 def prepare(model, element_states, displacement, section_inertias,
         nodal_spatial_dead_forces, *, cancellation_token=None):
     """Capture a supported conservative equilibrium without registering a store."""
+    return _prepare_with_operator(model,element_states,displacement,section_inertias,
+        nodal_spatial_dead_forces,operator_factory=_operator,policy=POLICY,
+        cancellation_token=cancellation_token)
+
+
+def _prepare_with_operator(model,element_states,displacement,section_inertias,
+        nodal_spatial_dead_forces,*,operator_factory,policy,cancellation_token=None):
+    """Internal shared state/ownership capture; callers bind their numeric policy."""
     started = monotonic()
     elements = tuple(sorted(model.mesh.elements.items()))
     nodal = model.mesh.dof_manager.total_dofs
@@ -205,7 +219,7 @@ def prepare(model, element_states, displacement, section_inertias,
     k=np.zeros((size,size));m=np.zeros_like(k);force=np.zeros(size)
     layout=[];operators=[]
     for index,(eid,e) in enumerate(elements):
-        check();op=_operator(e,owned[eid],inertias[eid],activity)
+        check();op=operator_factory(e,owned[eid],inertias[eid],activity)
         check()
         internal=tuple(range(nodal+6*index,nodal+6*index+6))
         slots=tuple(e.get_dof_mapping(model.mesh))+internal
@@ -226,7 +240,7 @@ def prepare(model, element_states, displacement, section_inertias,
     body=dict(stiffness=_owned(k),mass=_owned(m),net_residual=_owned(force),
         nodal_spatial_dead_forces=external,free_dofs=free,algebraic_dofs=algebraic,
         internal_layout=tuple(layout),operators=tuple(operators))
-    packet=Pencil(**body,identity=sha(dict(policy=POLICY,inputs=identity,**body)))
+    packet=Pencil(**body,identity=sha(dict(policy=policy,inputs=identity,**body)),policy=policy)
     packet_hash=sha(packet)
 
     def guard():
