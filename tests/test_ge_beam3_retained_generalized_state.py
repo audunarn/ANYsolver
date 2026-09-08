@@ -20,6 +20,11 @@ LOAD=DistributedPattern(LinePattern(((1,.005,-.003,.002),)),((1,.002,-.001,.003)
 def model(rho=100.,curved=True):return make(rho,curved,np.eye(3))[0]
 def resume(m,p,result,**kwargs):return solve(m,p,checkpoint=result.checkpoint,expected_sha256=sha256(result.checkpoint).hexdigest(),**kwargs)
 
+def save_result(root,result):
+    save(root/'produced-checkpoint.json',result.checkpoint)
+    save(root/'result.json',dict(status=result.status,completed_targets=result.completed_targets,state=result.state,
+        failure=result.failure,production_qualified=result.production_qualified,checkpoint_sha256=sha256(result.checkpoint).hexdigest()))
+
 @pytest.mark.parametrize('rho,curved',((100.,False),(100.,True),(10000.,False),(10000.,True),(1000000.,False),(1000000.,True)))
 def test_native_port(rho,curved,tmp_path):
     raw=(ARCHIVE/'archive-manifest.json').read_bytes()
@@ -28,7 +33,7 @@ def test_native_port(rho,curved,tmp_path):
     rel=lane+'/pytest/test_retained_generalized_forc'+str(int(curved))+'/retained.json'
     b=(ARCHIVE/rel).read_bytes();assert [len(b),sha256(b).hexdigest().upper()]==json.loads(raw)[rel]
     expected=json.loads(b);p=Program((.5,1.),LOAD);m=model(rho,curved)
-    result=solve(m,p);save(tmp_path/'result.json',result)
+    result=solve(m,p);save_result(tmp_path,result)
     assert result.status=='completed',result.failure
     s=result.state.mechanical
     for key,a in s.descriptor().items():
@@ -44,7 +49,7 @@ def test_native_port(rho,curved,tmp_path):
 @pytest.mark.parametrize('case',('curved-plastic','connected-plastic'))
 def test_connected_plastic_history(case,tmp_path):
     m=plastic_model(case);p=Program((.25,.5,1.,.5,0.,-.5,0.),plastic_load(m))
-    result=solve(m,p);save(tmp_path/'result.json',result)
+    result=solve(m,p);save_result(tmp_path,result)
     assert result.status=='completed',result.failure
     assert any(sum(h.accumulated)>0 for cell in result.state.histories for h in cell.stations)
     paused=solve(plastic_model(case),p,stop_after=3);assert paused.status=='paused',paused.failure
