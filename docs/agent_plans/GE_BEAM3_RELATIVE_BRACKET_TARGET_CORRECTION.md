@@ -3,7 +3,7 @@
 Base97abdbd78085e8a84ff31c7d42916efea58d46b3, tree
 7dc8babb5cdf511e7eef390cbfff895ede4c17bd. Preserve its complete68-file
 archive and failed local signed-wide test; no historical rerun/reclassification.
-This five-path successor changes only _native_relative_factor_chain_modes.py,
+This four-path successor changes only _native_relative_factor_chain_modes.py,
 this plan, and adds the initial status/archive records (four paths total).
 The existing failing test is retained unchanged as the regression witness.
 
