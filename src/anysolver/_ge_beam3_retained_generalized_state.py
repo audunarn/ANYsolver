@@ -8,6 +8,8 @@ from hashlib import sha256
 from time import monotonic
 import numpy as np
 from ._ge_beam3_native_generalized_restart import _model, _history
+from ._ge_beam3_native_generalized_program import model_identity
+from .constraint_audit import require_valid_constraints
 from ._ge_beam3_native_generalized_loading import DistributedPattern
 from ._ge_beam3_native_line_loading import LinePattern
 from ._ge_beam3_fibre_line_work import evaluate as line_work
@@ -65,6 +67,7 @@ class Context:
         program.__post_init__();program.pattern.require(model.mesh)
         self.started=monotonic();self.model=model;self.program=program
         self.elements,self.nodal_count,nodal_free,self.fixed,self.model_identity=_model(model)
+        self.support_identity=canonical(require_valid_constraints(model))
         self.node_ids=tuple(sorted(model.mesh.nodes));self.index={node:i for i,node in enumerate(self.node_ids)}
         self.count=self.nodal_count+24*len(self.elements)
         if self.count>512:raise ValueError('bounded retained generalized system')
@@ -97,7 +100,13 @@ class Context:
 
     def guard(self):
         if monotonic()-self.started>120:raise RuntimeError('retained generalized context deadline')
-        if _model(self.model)[-1]!=self.model_identity or canonical(self.program)!=self.program_bytes:
+        # The complete supported transform is validated once in _model above.
+        # Recheck all model/DOF authority and the full audited constraint rows,
+        # including element MPC providers, without rebuilding sparse I/T/K/F.
+        # This is not an object-identity cache or a reduced-frequency guard.
+        if (model_identity(self.model)!=self.model_identity
+                or canonical(require_valid_constraints(self.model))!=self.support_identity
+                or canonical(self.program)!=self.program_bytes):
             raise ValueError('retained generalized frozen model/program changed')
         self.program.pattern.require(self.model.mesh)
 
