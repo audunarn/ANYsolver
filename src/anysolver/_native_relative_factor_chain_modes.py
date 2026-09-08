@@ -83,8 +83,13 @@ def brackets(h,mass,bounds,count,absolute,relative,checkpoint):
                 if str(exc)!='unresolved shifted sign':raise
                 left,right=max(lo,mid-width/4),min(hi,mid+width/4)
                 a,b=inertia(h,mass,left),inertia(h,mass,right)
+                if a>b:raise ValueError('nonmonotone relative shifted inertia')
                 if a<=index<b:
                     lo,hi=left,right;break
+                if index<a:
+                    hi=left;continue
+                if b<=index:
+                    lo=right;continue
                 raise ValueError('relative shifted signs unresolved') from exc
             if negative<=index:lo=mid
             else:hi=mid
