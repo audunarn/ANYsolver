@@ -123,7 +123,11 @@ def test_paired_result_mutation(mutation,tmp_path):
     result=solve_relative_factor_chain_modes(np.diag([1.,2.]),np.eye(2),np.zeros((2,2)),
         np.eye(2),(0,1),(),bounds=(-1.,10.),num_modes=2)
     if mutation=='writable':
-        result.low_modes.flags.writeable=True
+        with pytest.raises(ValueError,match='WRITEABLE'):
+            result.low_modes.flags.writeable=True
+        # Replace with equal-valued but writable storage: the fingerprint
+        # is unchanged, so this exercises the explicit ownership guard.
+        result=replace(result,low_modes=result.low_modes.copy())
     elif mutation=='missing-low':
         result=replace(result,low_modes=None)
     elif mutation=='shape':
