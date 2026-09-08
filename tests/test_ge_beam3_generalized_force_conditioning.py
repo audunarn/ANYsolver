@@ -52,6 +52,10 @@ def test_actual_generalized_force_conditioning(rho,curved,name,tmp_path,monkeypa
                 supplied_virgin_unchanged=canonical(virgin)==initial,production_qualified=False))
             if last:save(tmp_path/'last-evaluation.json',last)
             raise
+        finally:
+            # Recovery replays the operator after the observation stream closes.
+            # Always remove the observer before leaving its owned stream scope.
+            monkeypatch.setattr(RetainedGeneralizedOperator,'evaluate',original)
     if last:save(tmp_path/'last-evaluation.json',last)
     save(tmp_path/'result.json',dict(status=result.status,displacements=result.displacements,
         states=result.element_states,events=events,evaluations=count,production_qualified=False))
