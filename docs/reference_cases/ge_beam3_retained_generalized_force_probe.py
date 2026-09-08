@@ -60,15 +60,19 @@ def solve(operator,force,couple,*,progress=lambda value:None):
         for parameter in (.5,1.):
             for iteration in range(25):
                 safe();r,j,e,w=assemble(operator,state,origin,force,couple,parameter,safe);errors=metric(r)
-                progress(dict(stage='iteration',parameter=parameter,iteration=iteration,equilibrium=errors[0],compatibility=errors[1]))
-                if max(errors)<=1e-11:
+                step=np.zeros(42);step[free]=np.linalg.solve(j[np.ix_(free,free)],-r[free])
+                if not np.isfinite(step).all():raise ValueError('nonfinite retained Newton step')
+                nodal=step[:18].reshape(3,6)
+                correction=max(float(np.linalg.norm(nodal[:,:3]))/length,
+                    float(np.linalg.norm(nodal[:,3:])),float(np.linalg.norm(step[18:24])),
+                    float(np.linalg.norm(step[24:]))/max(1.,float(np.linalg.norm(state['resultants']))))
+                progress(dict(stage='iteration',parameter=parameter,iteration=iteration,equilibrium=errors[0],compatibility=errors[1],correction=correction))
+                if max(errors)<=1e-11 and correction<=1e-11:
                     if canonical(e.history)!=origin_bytes:raise ValueError('elastic-only probe cannot commit plastic history')
-                    records.append(dict(parameter=parameter,iterations=iteration,equilibrium=errors[0],compatibility=errors[1],
+                    records.append(dict(parameter=parameter,iterations=iteration,equilibrium=errors[0],compatibility=errors[1],correction=correction,
                         state={k:v.copy() for k,v in state.items()},reaction=r[:6].copy(),work=w.value))
                     accepted={k:v.copy() for k,v in state.items()};break
                 if iteration==24:raise RuntimeError('retained generalized Newton limit')
-                step=np.zeros(42);step[free]=np.linalg.solve(j[np.ix_(free,free)],-r[free])
-                if not np.isfinite(step).all():raise ValueError('nonfinite retained Newton step')
                 angle=max(np.linalg.norm(step[s:s+3]) for s in (3,9,15,18,21))
                 fraction=min(1.,.45*np.pi/max(float(angle),np.finfo(float).tiny))
                 for cut in range(9):
