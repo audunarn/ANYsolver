@@ -7,6 +7,7 @@ as orientations, enter the objective chord constraint. No branch switching.
 from copy import deepcopy
 from contextvars import ContextVar
 from dataclasses import dataclass
+from hashlib import sha256
 from math import sqrt
 from time import monotonic
 import numpy as np
@@ -50,6 +51,7 @@ class ArcProgram:
     max_iterations: int=24
     max_backtracks: int=8
     history_profile: object=None
+    source: object=None
 
     def require(self,model):
         require_history_profile(self.history_profile)
@@ -64,12 +66,16 @@ class ArcProgram:
         # Reuse load/control field validation only; no dummy target is run.
         TranslationProgram((0.,),min(model.mesh.nodes),'ux',self.distributed,self.nodal_moments,
             self.max_iterations,self.max_backtracks).require(model)
+        if self.source is not None:
+            from ._ge_beam3_native_arc_source import require_compatible
+            require_compatible(model,self)
 
     def descriptor(self):
         return dict(policy=POLICY,geometry=GEOMETRY,orientation=ORIENTATION,steps=self.steps,length_scale=self.length_scale,
             parameter_scale=self.parameter_scale,initial_sign=self.initial_sign,distributed=self.distributed,
             nodal_moments=self.nodal_moments,max_iterations=self.max_iterations,max_backtracks=self.max_backtracks,
-            tolerance=1e-12,production_qualified=False,conservative_spectral_authority=False,**history_binding(self.history_profile))
+            tolerance=1e-12,production_qualified=False,conservative_spectral_authority=False,**history_binding(self.history_profile),
+            **({} if self.source is None else {'source':self.source.descriptor()}))
 
 
 def capture(model,program):
@@ -169,15 +175,27 @@ def _solve_arc(model,program,*,checkpoint=None,expected_sha256=None,stop_after=N
         safe(stage);event=dict(stage=stage,step=index,iteration=iteration,**kw);events.append(event)
         if progress is not None:progress(deepcopy(event))
         safe(stage)
+    source_chain=None;source_parameter=0.
+    if program.source is not None:
+        if checkpoint is not None and (type(checkpoint) is not bytes or type(expected_sha256) is not str or sha256(checkpoint).hexdigest()!=expected_sha256):
+            raise ValueError('native arc external checkpoint SHA-256 mismatch')
+        from ._ge_beam3_native_arc_source import load_source,secant_orientation
+        source_chain,source_parameter,previous_parameter=load_source(model,program.source)
+        if len(source_chain)+len(program.steps)>65:raise ValueError('complete source plus arc history exceeds snapshot bound')
+        initial=secant_orientation(source_chain,source_parameter,previous_parameter,metric,program.source.forward_sign)
     if checkpoint is None:
         if expected_sha256 is not None:raise ValueError('native arc hash without checkpoint')
-        total=np.zeros(n);states={i:e.init_model_bound_nonlinear_state(model.mesh,e.section,1) for i,e in elements}
-        chain=(dict(load_point=load_point(program,0.,genesis=True),displacements=total.copy(),states=states),);records=()
+        if source_chain is None:
+            total=np.zeros(n);states={i:e.init_model_bound_nonlinear_state(model.mesh,e.section,1) for i,e in elements}
+            chain=(dict(load_point=load_point(program,0.,genesis=True),displacements=total.copy(),states=states),)
+        else:
+            chain=source_chain;total=chain[-1]['displacements'].copy();states=chain[-1]['states']
+        records=()
         capsule=encode_checkpoint(model,program,chain,records)
     else:
         chain,records=decode_checkpoint(model,program,checkpoint,expected_sha256=expected_sha256)
         total=chain[-1]['displacements'].copy();states=chain[-1]['states'];capsule=checkpoint
-    cursor=len(records);parameter=0. if not records else records[-1]['parameter']
+    cursor=len(records);parameter=source_parameter if not records else records[-1]['parameter']
     previous=initial.copy() if not records else records[-1]['direction'].copy()
     if cursor>end:raise ValueError('native arc cannot rewind accepted cursor')
     reaction=physical(model,states,effective(program,parameter)[1]);store=make_store(model,states,total)
