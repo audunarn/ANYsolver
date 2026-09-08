@@ -70,7 +70,7 @@ class NativeGeneralizedStaticElement(Element):
 
     def to_dict(self):
         return dict(formulation_id=FORMULATION,state_schema=SCHEMA,element_id=self.element_id,node_ids=self.node_ids,
-            operator=self.operator.identity,reference=self.operator.reference.fingerprint(),section=self.section.identity,
+            operator=self.operator.identity,reference=self.operator.reference_identity(),section=self.section.identity,
             quadrature=self.operator.order,reduction='GENERAL_STATIC_ONLY_24_INTERNAL_COORDINATES',production_qualified=False)
 
     def _coordinates(self,total):

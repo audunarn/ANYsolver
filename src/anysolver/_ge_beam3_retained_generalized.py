@@ -18,6 +18,7 @@ from ._ge_beam3_p5.compensated_coordinates import validate_pair
 from ._ge_beam3_p5.algebra import HALVES
 from ._ge_beam3_p5.arrays import _array, _frames
 from ._native_reference_modal import _owned
+from ._ge_beam3_reference_identity import CapturedReferenceIdentity
 from ._ge_beam3_p5_seeded.core import canonical, sha
 
 
@@ -37,7 +38,7 @@ class Evaluation:
 
 
 class RetainedGeneralizedOperator:
-    __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_sealed')
+    __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_reference_binding', '_sealed')
 
     def __setattr__(self, name, value):
         if getattr(self, '_sealed', False): raise AttributeError('retained generalized operator is immutable')
@@ -61,15 +62,20 @@ class RetainedGeneralizedOperator:
                 data.append(dict(cell=cell, t=t, weight=measure, v=(frame.T/jacobian).tolist()))
                 stations.append((cell, index, xi, measure, frame))
         self.cell = GeneralizedCellConjugate(section, data); self.stations = tuple(stations)
-        self._reference_identity = self.reference.fingerprint()
+        self._reference_binding = CapturedReferenceIdentity(self.reference)
+        self._reference_identity = self._reference_binding.require(self.reference)
         self.identity = sha(dict(formulation_id=POLICY, section=section.identity,
             reference=self._reference_identity, quadrature=order, cell=self.cell.identity))
         self._sealed = True
 
     def guard(self):
         self.cell.guard()
-        if self.reference.fingerprint() != self._reference_identity:
+        self.reference_identity()
+
+    def reference_identity(self):
+        if self._reference_binding.require(self.reference) != self._reference_identity:
             raise ValueError('captured retained generalized reference changed')
+        return self._reference_identity
 
     def evaluate(self, positions, position_low, vertices, rotations, resultants, *, origin=None, increment=None, check=None):
         self.guard()
