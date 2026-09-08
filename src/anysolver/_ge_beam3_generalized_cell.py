@@ -11,6 +11,7 @@ from time import monotonic
 from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection,GeneralizedHistory,_pair
 from ._ge_beam3_fibre_section import canonical
 from ._ge_beam3_station_resultant_cell import zero,ident,tr,mul,mv,dot,dec,pair,solve,cholesky,frozen
+from ._ge_beam3_cell_identity import CapturedCellIdentity
 
 POLICY='GE_BEAM3_CONSTRAINED_ELLIPSOID_CELL_CONJUGATE_V1'
 
@@ -22,7 +23,7 @@ class GeneralizedCellHistory:
 
 
 class GeneralizedCellConjugate:
-    __slots__=('section','stations','constraint','identity','size','_capture','_compiled','_sealed')
+    __slots__=('section','stations','constraint','identity','size','_capture','_compiled','_identity_binding','_sealed')
 
     def __setattr__(self,name,value):
         if getattr(self,'_sealed',False):raise AttributeError('generalized cell is immutable')
@@ -53,15 +54,14 @@ class GeneralizedCellConjugate:
             self.stations=tuple(rows);self.constraint=frozen(b)
         self._capture=canonical(capture);self._compiled=(self.stations,self.constraint)
         self.identity=sha256(canonical(dict(policy=POLICY,section=section.identity,stations=capture))).hexdigest()
+        self._identity_binding=CapturedCellIdentity(self)
         self._sealed=True
 
     def guard(self):
         self.section.guard()
         if self.stations is not self._compiled[0] or self.constraint is not self._compiled[1]:
             raise ValueError('compiled generalized cell changed')
-        import json
-        if sha256(canonical(dict(policy=POLICY,section=self.section.identity,stations=json.loads(self._capture)))).hexdigest()!=self.identity:
-            raise ValueError('generalized cell authority changed')
+        self._identity_binding.require(self)
 
     def virgin(self):
         self.guard();return GeneralizedCellHistory(self.identity,tuple(self.section.virgin() for _ in self.stations))

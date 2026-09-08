@@ -55,8 +55,8 @@ def prepare(model, program, checkpoint, section_inertias, *, expected_sha256, ca
 
     def check():
         cancellation_safe_point(cancellation_token, 'translation-modal.guard')
-        context._require_issued(state)
-        if canonical(state) != before or sha(section_inertias) != inertia_identity:
+        context._require_issued(state, expected_snapshot=before)
+        if sha(section_inertias) != inertia_identity:
             raise ValueError('translation-modal inputs changed')
 
     check()

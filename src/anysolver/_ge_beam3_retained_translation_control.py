@@ -147,12 +147,15 @@ class Context:
         delta = float(correction[-1])
         return step, delta, self.correction_norm(mechanical, parameter, step, delta), matrix
 
-    def _require_issued(self, state):
+    def _require_issued(self, state, *, expected_snapshot=None):
+        if expected_snapshot is not None and type(expected_snapshot) is not bytes:
+            raise ValueError('exact expected controlled snapshot bytes required')
         self.guard(); bound = self._issued.get(id(state))
         if (type(state) is not State or bound is None or bound[0] is not state
                 or state.model_sha256 != self.identity):
             raise ValueError('controlled state was not issued by this context')
-        if canonical(state) != bound[1]:
+        encoded=canonical(state)
+        if encoded != bound[1] or (expected_snapshot is not None and encoded != expected_snapshot):
             raise ValueError('issued controlled state changed')
         return bound[2]
 
