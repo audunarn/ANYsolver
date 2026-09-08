@@ -87,6 +87,7 @@ class Context:
         mechanical=self.make(dict(positions=self.reference_positions,position_low=np.zeros_like(self.reference_positions),
             nodal_frames=self.reference_frames,cell_rotations=np.tile(np.eye(3),(len(self.elements),2,1,1)),
             resultants=np.zeros((len(self.elements),18))))
+        self._issued={};self._issued_records=set()
         self.initial,self.genesis=self.record(mechanical,history,0,0,self.identity)
         self.guard()
 
@@ -167,7 +168,21 @@ class Context:
         if max(np.linalg.norm(v) for v in angular)>=.9*np.pi:raise ValueError('retained generalized step requires cutback')
         return self.make(s)
 
+    def _require_issued(self,state):
+        self.guard()
+        bound=self._issued.get(id(state))
+        if (type(state) is not State or bound is None or bound[0] is not state
+                or state.model_sha256!=self.identity):raise ValueError('state was not issued by this context')
+        if canonical(state)!=bound[1]:raise ValueError('issued state changed')
+        return bound[2]
+
     def recover(self,state):
+        self._require_issued(state)
+        result=self._recover_validated(state)
+        self._require_issued(state)
+        return result
+
+    def _recover_validated(self,state):
         if type(state) is not State or state.model_sha256!=self.identity:raise ValueError('recovery model binding')
         self.guard();rows=[]
         for i,(eid,e) in enumerate(self.elements):
@@ -188,17 +203,34 @@ class Context:
         state=State(mechanical,origins,histories,cursor,self.identity)
         body=dict(target=cursor,parameter=parameter,iterations=iterations,previous_sha256=previous,mechanical=mechanical.descriptor(),
             origins=origins,histories=histories,residual=r,metrics=metrics,correction=correction,work=work,
-            material_sha256=sha([a.material.decode() for a in responses]),recovery_sha256=sha(self.recover(state)))
-        self.guard();return state,canonical({**body,'record_sha256':sha(body)})
+            material_sha256=sha([a.material.decode() for a in responses]),recovery_sha256=sha(self._recover_validated(state)))
+        self.guard();raw=canonical({**body,'record_sha256':sha(body)})
+        self._issued[id(state)]=(state,canonical(state),raw)
+        self._issued_records.add(raw)
+        return state,raw
+
+    def _require_chain(self,records):
+        if type(records) is not tuple or len(records)>len(self.program.targets):raise ValueError('bounded issued record chain required')
+        previous=_load(self.genesis.decode())
+        for index,raw in enumerate(records,1):
+            if type(raw) is not bytes or raw not in self._issued_records:raise ValueError('record was not issued by this context')
+            row=_load(raw.decode())
+            if (row['target']!=index or row['parameter']!=self.program.targets[index-1]
+                    or row['previous_sha256']!=previous['record_sha256']
+                    or canonical(row['origins'])!=canonical(previous['histories'])):
+                raise ValueError('issued record chain is not contiguous')
+            previous=row
 
     def stage(self,mechanical,accepted,records,iterations):
+        issued=self._require_issued(accepted);self._require_chain(records)
+        if issued!=(records[-1] if records else self.genesis):raise ValueError('issued state differs from predecessor record')
         if type(accepted) is not State or accepted.model_sha256!=self.identity or accepted.completed_targets!=len(records):
             raise ValueError('accepted state and record cursor differ')
         previous=_load((records[-1] if records else self.genesis).decode())['record_sha256']
         return self.record(mechanical,accepted.histories,len(records)+1,iterations,previous)
 
     def checkpoint(self,records):
-        if type(records) is not tuple or len(records)>len(self.program.targets):raise ValueError('bounded accepted record chain')
+        self._require_chain(records)
         body=dict(schema=SCHEMA,formulation=POLICY,model_sha256=self.identity,program=self.program,
             initial=_load(self.genesis.decode()),records=[_load(r.decode()) for r in records],completed_targets=len(records))
         raw=canonical({**body,'checkpoint_sha256':sha(body)})
