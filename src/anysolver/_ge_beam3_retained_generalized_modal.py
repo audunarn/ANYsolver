@@ -65,9 +65,14 @@ class Pencil:
 
 
 def prepare(model,program,checkpoint,section_inertias,*,expected_sha256,cancellation_token=None):
+    return _prepare(Context,POLICY,model,program,checkpoint,section_inertias,
+        expected_sha256=expected_sha256,cancellation_token=cancellation_token)
+
+
+def _prepare(context_type,policy,model,program,checkpoint,section_inertias,*,expected_sha256,cancellation_token=None):
     """Authenticate the complete accepted chain before current-material replay."""
     cancellation_safe_point(cancellation_token,'retained-modal.capture')
-    if type(program) is not Program:raise ValueError('exact retained program required')
+    if type(program) is not context_type.program_type:raise ValueError('exact retained program required')
     program.__post_init__();program.pattern.require(model.mesh)
     if any(np.any(program.pattern.density(eid)) for eid in model.mesh.elements):
         raise ValueError('nonconservative distributed couples forbidden in conservative spectra')
@@ -78,7 +83,7 @@ def prepare(model,program,checkpoint,section_inertias,*,expected_sha256,cancella
         raise ValueError('complete exact section inertia map required')
     inertias={eid:_inertia(section_inertias[eid]) for eid in sorted(ids)}
     input_identity=sha(section_inertias)
-    context=Context(model,program)
+    context=context_type(model,program)
     state,records=context.restore(checkpoint,expected_sha256=expected_sha256)
     issued=context._require_issued(state)
     before=canonical(state)
@@ -126,6 +131,9 @@ def prepare(model,program,checkpoint,section_inertias,*,expected_sha256,cancella
         mass[np.ix_(slots,slots)]+=physical_mass
         force[list(slots)]+=residual[:24];full_force[context.slots[i]]+=residual
         layout.append((eid,internal))
+    external=context.nodal_external(parameter)
+    if np.any(external):
+        force[:nodal]-=external;full_force[:nodal]-=external
     accepted_residual=np.array(json.loads(issued)['residual'])
     if np.linalg.norm((full_force-accepted_residual)/context.scale)>1e-11:
         raise ValueError('current-rest replay changed accepted equilibrium')
@@ -143,7 +151,7 @@ def prepare(model,program,checkpoint,section_inertias,*,expected_sha256,cancella
         stiffness=_owned(expanded.T@expanded+geometric),mass=_owned(mass),net_residual=_owned(force),
         free_dofs=free,algebraic_dofs=algebraic,internal_layout=tuple(layout),compliance_errors=tuple(errors),
         checkpoint_sha256=expected_sha256,model_sha256=context.identity)
-    packet=Pencil(**body,identity=sha(dict(policy=POLICY,**body)))
+    packet=Pencil(**body,identity=sha(dict(policy=policy,**body)),policy=policy)
     identity=sha(packet)
 
     def guard():

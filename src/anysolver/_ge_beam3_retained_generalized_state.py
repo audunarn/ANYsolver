@@ -56,8 +56,12 @@ class State:
     model_sha256: str
 
 class Context:
+    program_type=Program
+    schema=SCHEMA
+    policy=POLICY
+
     def __init__(self,model,program):
-        if type(program) is not Program:raise ValueError('exact generalized retained program')
+        if type(program) is not self.program_type:raise ValueError('exact generalized retained program')
         program.__post_init__();program.pattern.require(model.mesh)
         self.started=monotonic();self.model=model;self.program=program
         self.elements,self.nodal_count,nodal_free,self.fixed,self.model_identity=_model(model)
@@ -81,7 +85,7 @@ class Context:
         self.reference_positions=_owned([model.mesh.nodes[i].coords() for i in self.node_ids])
         self.reference_frames=_owned(frames)
         self.program_bytes=canonical(program)
-        self.identity=sha(dict(schema=SCHEMA,formulation=POLICY,model=self.model_identity,program=program,
+        self.identity=sha(dict(schema=self.schema,formulation=self.policy,model=self.model_identity,program=program,
             operators=[e.operator.identity for _,e in self.elements],node_ids=self.node_ids))
         history=tuple(e.operator.cell.virgin() for _,e in self.elements)
         mechanical=self.make(dict(positions=self.reference_positions,position_low=np.zeros_like(self.reference_positions),
@@ -122,6 +126,9 @@ class Context:
     def histories(self,values,*,decoded=False):
         if type(values) not in (tuple,list) or len(values)!=len(self.elements):raise ValueError('complete generalized histories')
         return tuple(_history(v if decoded else _load(canonical(v).decode()),e) for v,(_,e) in zip(values,self.elements))
+
+    def nodal_external(self,parameter):
+        return np.zeros(self.nodal_count)
 
     def assemble(self,state,parameter,origins):
         self.guard();state=self.make(state.descriptor());origins=self.histories(origins)
@@ -231,7 +238,7 @@ class Context:
 
     def checkpoint(self,records):
         self._require_chain(records)
-        body=dict(schema=SCHEMA,formulation=POLICY,model_sha256=self.identity,program=self.program,
+        body=dict(schema=self.schema,formulation=self.policy,model_sha256=self.identity,program=self.program,
             initial=_load(self.genesis.decode()),records=[_load(r.decode()) for r in records],completed_targets=len(records))
         raw=canonical({**body,'checkpoint_sha256':sha(body)})
         if len(raw)>MAX_BYTES:raise ValueError('checkpoint size limit')
@@ -243,7 +250,7 @@ class Context:
         value=_load(raw.decode());keys={'schema','formulation','model_sha256','program','initial','records','completed_targets','checkpoint_sha256'}
         if type(value) is not dict or set(value)!=keys:raise ValueError('exact generalized retained checkpoint schema')
         body={k:v for k,v in value.items() if k!='checkpoint_sha256'}
-        if (value['schema']!=SCHEMA or value['formulation']!=POLICY or value['model_sha256']!=self.identity
+        if (value['schema']!=self.schema or value['formulation']!=self.policy or value['model_sha256']!=self.identity
                 or canonical(value['program'])!=self.program_bytes or value['checkpoint_sha256']!=sha(body)
                 or canonical(value['initial'])!=self.genesis):raise ValueError('checkpoint model/program/genesis binding')
         cursor=value['completed_targets']

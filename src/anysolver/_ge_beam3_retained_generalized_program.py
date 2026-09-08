@@ -14,9 +14,14 @@ class Result:
     production_qualified: bool=False
 
 def solve(model,program,*,checkpoint=None,expected_sha256=None,stop_after=None,cancellation_token=None,progress=None):
+    return _solve(Context,model,program,checkpoint=checkpoint,expected_sha256=expected_sha256,
+        stop_after=stop_after,cancellation_token=cancellation_token,progress=progress)
+
+
+def _solve(context_type,model,program,*,checkpoint=None,expected_sha256=None,stop_after=None,cancellation_token=None,progress=None):
     cancellation_safe_point(cancellation_token,'retained-generalized.start')
     if progress is not None and not callable(progress):raise ValueError('callable observer required')
-    context=Context(model,program);end=len(program.targets) if stop_after is None else stop_after
+    context=context_type(model,program);end=len(program.targets) if stop_after is None else stop_after
     if type(end) is not int or not 0<=end<=len(program.targets):raise ValueError('bounded stop target')
     if checkpoint is None:
         if expected_sha256 is not None:raise ValueError('hash requires a checkpoint')
