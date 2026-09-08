@@ -12,6 +12,20 @@ from scipy.optimize import brentq
 
 PROFILES={'ODE11':(1e-11,1e-13,1e-9),'ODE13':(1e-13,1e-15,1e-11)}
 
+def _cached_scalar(function,check):
+    """Solve-local exact-key reuse; resource checks also run on cache hits."""
+    cache={}
+    def evaluate(value):
+        check()
+        key=float(value)
+        if not np.isfinite(key):raise ValueError('finite determinant argument')
+        if key not in cache:
+            result=float(function(key))
+            if not np.isfinite(result):raise ValueError('finite determinant result')
+            cache[key]=result
+        return cache[key]
+    return evaluate
+
 def matrix(value):
     a=np.array(value,dtype=float,copy=True)
     if a.shape!=(6,6) or not np.isfinite(a).all() or not np.array_equal(a,a.T):
@@ -76,11 +90,12 @@ def solve(height,section,inertia,seeds,*,profile='ODE13',sites=None,mode_count=6
         if not result.success or not np.isfinite(result.y).all():
             raise ValueError('continuum shooting integration failed')
         return result
-    def determinant(omega):
+    def uncached_determinant(omega):
         block=integrate(float(omega)).y[:,-1].reshape(12,6)[6:]
         scale=np.linalg.norm(block,axis=0)
         if np.any(scale==0):raise ValueError('degenerate shooting column')
         return float(np.linalg.det(block/scale))
+    determinant=_cached_scalar(uncached_determinant,check)
     brackets=np.column_stack((seeds*(1-.002),seeds*(1+.002)))
     if np.any(brackets[:-1,1]>=brackets[1:,0]):raise ValueError('overlapping reference brackets')
     roots=[];fields=[];tip=[];work=[]
