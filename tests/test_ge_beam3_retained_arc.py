@@ -117,7 +117,7 @@ def test_curved_transverse_spatial_row_and_restart(tmp_path):
     current = c.physical.make(json.loads(records[1])['mechanical'], decoded=True)
     parameter = json.loads(records[1])['parameter']
     gap, row = c.row(current, parameter, accepted, predictor)
-    v = np.sin(np.arange(c.physical.count)+.4)*.1; v[c.physical.fixed] = 0.
+    v = np.sin(np.arange(c.physical.count)+.4)*.1; v[list(c.physical.fixed)] = 0.
     h = 2e-6; dp = .3
     plus, _ = c.row(c.physical.advance(current, h*v), float(parameter+h*dp), accepted, predictor)
     minus, _ = c.row(c.physical.advance(current, -h*v), float(parameter-h*dp), accepted, predictor)

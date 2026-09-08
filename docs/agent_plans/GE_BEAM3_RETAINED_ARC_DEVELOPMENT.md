@@ -53,3 +53,14 @@ behavior, distributed/follower loads, solver/public integration, independent
 review and complete environment attestation remain open. Plastic/spectral or
 beam postbuckling qualification cannot be inferred from the elastic smoke or
 scalar fold. Existing B2/B3/S3/Q4, defaults and public APIs stay unchanged.
+
+## Preserved first smoke incident
+
+Freeze ed6d4ed2aaa8e011be2c66a8df69cd95514745ff: geometry/admission 19
+passed; axial 2 passed. The curved controller and full replay completed, but
+the derivative test then indexed a one-dimensional array with the tuple of
+fixed DOFs, raising IndexError. Only that test expression changes to list
+indexing. Preserve external smoke directory
+`ge-beam3-retained-arc-smoke-curved-exjfbaat` and its completed raw capsule;
+it is a failed smoke, not accepted evidence. Mechanics, controller, cases and
+tolerances remain unchanged. A new frozen validation follows the correction.
