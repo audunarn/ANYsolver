@@ -68,7 +68,7 @@ def make(case, pose_name='base'):
         model.add_element(index+1, element); model.materials[element.material_name] = element.section
     model.add_boundary_condition(BoundaryCondition('clamped', [1], {k: 0. for k in ('ux','uy','uz','rx','ry','rz')}))
     force = np.array([1., 0., 0.] if axial else [1., -.3, .2]); direction = force/np.linalg.norm(force)
-    targets = (.00005,.00015,.0005,.0002,0.,-.0005,0.) if axial else (.005,.02,.08,.03,0.,-.08,0.)
+    targets = (.00005,.00015,.0005,.00045,.0002,0.,-.0005,0.) if axial else (.005,.02,.08,.079,.03,0.,-.08,0.)
     force = rotation@force; direction = rotation@direction
     program = Program(targets, len(points), tuple(map(float, direction)),
                       NodalDeadForces(((len(points), *map(float, force)),)))

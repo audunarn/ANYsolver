@@ -69,8 +69,8 @@ def test_unloaded_rigid_objectivity(case, tmp_path):
 def test_scalar_return_map_reverses():
     _, p = make('axial'); rows = axial_reference(p.targets)
     assert rows[0]['increment'] == 0. and rows[2]['increment'] > 0.
-    assert rows[3]['increment'] == 0. and rows[5]['increment'] > 0.
-    assert rows[5]['plastic'] < rows[2]['plastic']
+    assert rows[3]['increment'] == 0. and rows[6]['increment'] > 0.
+    assert rows[6]['plastic'] < rows[2]['plastic']
     assert all(b['accumulated'] >= a['accumulated'] for a, b in zip(rows, rows[1:]))
 
 
@@ -153,10 +153,10 @@ def test_actual_plastic_history(case, tmp_path):
                     close(row['parameter'], exact['stress'])
         plastic_counts.append(count); accumulated.append(total); plastic_signs.append(np.array(signed)); material_checks.append(station_errors)
         predecessor = row
-    assert plastic_counts[2] > 0 and plastic_counts[5] > 0
+    assert plastic_counts[2] > 0 and plastic_counts[6] > 0
     assert plastic_counts[3] == 0
     assert all(b >= a for a, b in zip(accumulated, accumulated[1:]))
-    assert np.sum((plastic_signs[5]-plastic_signs[4])*plastic_signs[2]) < 0.
+    assert np.sum((plastic_signs[6]-plastic_signs[5])*plastic_signs[2]) < 0.
     assert model_identity(m) == original_model and canonical(state) == before
     save(tmp_path/'checks.json', dict(case=case, plastic_station_counts=plastic_counts, accumulated=accumulated,
         independent_material_checks=material_checks, tangent_errors=tangent_errors, rigid_errors=rigid,

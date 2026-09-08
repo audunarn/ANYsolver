@@ -11,7 +11,7 @@ DOFs/node and all mixed internal variables retained:
 - Straight one-macrocell length-two bar. Reference triads have first director
   along x and second along z. Elastic diagonal (1000,400,350,0.8,1,1.2), identity
   yield metric, yield force 0.05, isotropic hardening 10. Axial tip-force pattern
-  (1,0,0); displacement targets (0.00005,0.00015,0.0005,0.0002,0,-0.0005,0).
+  (1,0,0); displacement targets (0.00005,0.00015,0.0005,0.00045,0.0002,0,-0.0005,0).
   Compare the full path with the independently implemented one-dimensional
   return map and require plasticity and reversed plastic flow.
 - Curved one- and two-macrocell beams. Nodes have x in [0,2],
@@ -19,7 +19,7 @@ DOFs/node and all mixed internal variables retained:
   director z. Use the existing coupled six-resultant section fixture, yield
   force 0.025 and its existing positive hardening. Tip-force pattern (1,-0.3,0.2)
   and its unit direction as the physical control row. Targets
-  (0.005,0.02,0.08,0.03,0,-0.08,0). No distributed forces or couples.
+  (0.005,0.02,0.08,0.079,0.03,0,-0.08,0). No distributed forces or couples.
 
 For every accepted target: exact origin/predecessor continuity; nondecreasing
 accumulated plasticity; immutable input model/state; force and moment balance;
@@ -62,3 +62,19 @@ history or removal of failed cases to obtain a pass. This is not fibre-section,
 arc-length, large-arch, shell-joint or full production qualification. Independent
 review and complete environment attestation remain pending. The full goal stays
 active. NO_GO_PRODUCTION_RESTRICTION_UNCHANGED.
+
+## Smoke-discovered protocol correction
+
+Initial freeze `4a8748983d946fbd859cca815c35a709eb44556b` passed both
+unloaded rigid-objectivity checks but failed the scalar unloading assertion.
+The original axial step 0.0005 -> 0.0002 crosses the reverse yield surface;
+its correct plastic increment is 4.558376629742179e-05, not zero. No actual
+plastic controller campaign had run. Preserve the failed smoke as such.
+
+Add an intermediate target 0.00045 for axial and 0.079 for the coupled curved
+paths, so the explicit elastic-unloading check has a physical observation.
+Every originally registered target remains, in order; no history is shortened
+and no failed case, operator, load, material, tolerance or gate is removed.
+The reverse-flow check moves to index six only because of the inserted target.
+This is a new test/protocol freeze, not a retry of the failed frozen worker.
+Initial smoke directory: `ge-beam3-controlled-history-smoke-smoke-o4bx6xtf`.
