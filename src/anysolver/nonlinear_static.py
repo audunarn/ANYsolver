@@ -4945,6 +4945,7 @@ def _solve_static_nonlinear_under_lease(
     )
     native_spatial_couples = False
     native_combined_couples = False
+    native_generalized_combined_couples = False
     if native_generalized_model:
         from ._ge_beam3_native_generalized_program import require_active, require_solver_initial
 
@@ -4955,6 +4956,12 @@ def _solve_static_nonlinear_under_lease(
         general_tangent = True
         info["equilibrium_tangent"] = "GENERAL_GENERALIZED_SECTION_DISTRIBUTED_STATIC_SCHUR"
         info["native_generalized_general_matrix"] = True
+        from ._ge_beam3_native_generalized_combined_couples import active_for
+
+        native_generalized_combined_couples = active_for(model)
+        if native_generalized_combined_couples:
+            info['equilibrium_tangent'] = 'K_generalized_static_Schur-K_spatial_nodal_chart_external'
+            info['native_generalized_combined_couple_general_matrix'] = True
     native_distributed_model = any(
         type(e).__module__ == 'anysolver._ge_beam3_native_distributed_element'
         for e in model.mesh.elements.values()
@@ -5500,8 +5507,10 @@ def _solve_static_nonlinear_under_lease(
                 if tangent
                 else None
             )
-            if native_spatial_couples or native_combined_couples:
-                if native_combined_couples:
+            if native_spatial_couples or native_combined_couples or native_generalized_combined_couples:
+                if native_generalized_combined_couples:
+                    from ._ge_beam3_native_generalized_combined_couples import external_at
+                elif native_combined_couples:
                     from ._ge_beam3_native_combined_couples import external_at
                 else:
                     from ._ge_beam3_native_spatial_couples import external_at
