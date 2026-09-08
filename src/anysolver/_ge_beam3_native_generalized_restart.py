@@ -14,7 +14,7 @@ from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
 from ._ge_beam3_native_line_loading import LinePattern, nodal_force_vector
 from ._ge_beam3_native_generalized_loading import DistributedPattern
 from ._ge_beam3_native_line_restart import _pattern as _line_pattern
-from ._ge_beam3_native_generalized_program import model_identity
+from ._ge_beam3_native_generalized_program import model_identity, retained_model_identity
 from ._ge_beam3_native_fibre_restart import _keys, _float, _array
 from ._ge_beam3_generalized_cell import GeneralizedCellHistory
 from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
@@ -130,8 +130,9 @@ def capture_solver_state(model,element_id,state,*,exact_guard):
     return made
 
 
-def _model(model):
-    identity=model_identity(model); elements=tuple(sorted(model.mesh.elements.items()))
+def _model(model, *, retained=False):
+    if type(retained) is not bool:raise ValueError('exact retained capacity selection')
+    identity=(retained_model_identity if retained else model_identity)(model); elements=tuple(sorted(model.mesh.elements.items()))
     nodes=tuple(sorted(model.mesh.nodes)); n=model.mesh.dof_manager.total_dofs
     for index,node in enumerate(nodes):
         if tuple(model.mesh.dof_manager.get_node_dofs(node))!=tuple(range(6*index,6*index+6)):

@@ -14,9 +14,18 @@ _PROGRAM=ContextVar('ge_beam3_native_distributed_program',default=None)
 
 
 def model_identity(model):
+    return _model_identity(model, 16)
+
+
+def retained_model_identity(model):
+    """Bounded retained-system refinement; condensed drivers keep their cap."""
+    return _model_identity(model, 24)
+
+
+def _model_identity(model, maximum_elements):
     from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
     elements=tuple(sorted(model.mesh.elements.items()));n=model.mesh.dof_manager.total_dofs
-    if not 1<=len(elements)<=16 or n!=6*len(model.mesh.nodes) or n>512:raise ValueError('bounded standalone distributed model required')
+    if not 1<=len(elements)<=maximum_elements or n!=6*len(model.mesh.nodes) or n>512:raise ValueError('bounded standalone distributed model required')
     if model.constraint_equations or model.mesh.point_masses or model.mesh.element_activity is not None:
         raise ValueError('distributed MPC/activity/dynamics not admitted')
     for eid,e in elements:

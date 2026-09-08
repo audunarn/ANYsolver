@@ -8,7 +8,7 @@ from hashlib import sha256
 from time import monotonic
 import numpy as np
 from ._ge_beam3_native_generalized_restart import _model, _history
-from ._ge_beam3_native_generalized_program import model_identity
+from ._ge_beam3_native_generalized_program import retained_model_identity
 from .constraint_audit import require_valid_constraints
 from ._ge_beam3_native_generalized_loading import DistributedPattern
 from ._ge_beam3_native_line_loading import LinePattern
@@ -23,6 +23,12 @@ from ._native_reference_modal import _owned
 
 SCHEMA='GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_ACCEPTED_CHAIN_V1'
 POLICY='CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_FORCE_V1'
+
+def _retained_size(nodal, elements):
+    if (type(nodal) is not int or type(elements) is not int or not 1<=elements<=24
+            or not 6<=nodal<=512 or nodal%6 or nodal+24*elements>1024):
+        raise ValueError('bounded retained generalized system')
+    return nodal+24*elements
 
 @dataclass(frozen=True)
 class Program:
@@ -66,11 +72,10 @@ class Context:
         if type(program) is not self.program_type:raise ValueError('exact generalized retained program')
         program.__post_init__();program.pattern.require(model.mesh)
         self.started=monotonic();self.model=model;self.program=program
-        self.elements,self.nodal_count,nodal_free,self.fixed,self.model_identity=_model(model)
+        self.elements,self.nodal_count,nodal_free,self.fixed,self.model_identity=_model(model,retained=True)
         self.support_identity=canonical(require_valid_constraints(model))
         self.node_ids=tuple(sorted(model.mesh.nodes));self.index={node:i for i,node in enumerate(self.node_ids)}
-        self.count=self.nodal_count+24*len(self.elements)
-        if self.count>512:raise ValueError('bounded retained generalized system')
+        self.count=_retained_size(self.nodal_count,len(self.elements))
         self.free=np.array((*nodal_free,*range(self.nodal_count,self.count)),dtype=int)
         self.nodes=[];self.slots=[];frames=[None]*len(self.node_ids);self.scale=np.ones(self.count)
         self.length=max(float(np.linalg.norm(e.operator.reference.coordinates[-1]-e.operator.reference.coordinates[0])) for _,e in self.elements)
@@ -106,7 +111,7 @@ class Context:
         # This is not an object-identity cache or a reduced-frequency guard.
         total=self.model.mesh.dof_manager.total_dofs
         if (type(total) is not type(self.nodal_count) or total!=self.nodal_count
-                or model_identity(self.model)!=self.model_identity
+                or retained_model_identity(self.model)!=self.model_identity
                 or canonical(require_valid_constraints(self.model))!=self.support_identity
                 or canonical(self.program)!=self.program_bytes):
             raise ValueError('retained generalized frozen model/program changed')

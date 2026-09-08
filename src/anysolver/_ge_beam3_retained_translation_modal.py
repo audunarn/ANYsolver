@@ -21,6 +21,13 @@ from ._native_paired_factor_chain_modes import solve_paired_factor_chain_modes
 POLICY = 'GE_BEAM3_RETAINED_TRANSLATION_OWNED_CURRENT_REST_FACTOR_CHAIN_V1'
 
 
+def _factor_size(nodal, elements):
+    if (type(nodal) is not int or type(elements) is not int or not 1<=elements<=24
+            or not 6<=nodal or nodal%6 or nodal+6*elements>512):
+        raise ValueError('bounded retained spectral model required')
+    return nodal+6*elements
+
+
 @dataclass(frozen=True)
 class TranslationPencil(Pencil):
     parameter: float = 0.
@@ -53,8 +60,7 @@ def prepare(model, program, checkpoint, section_inertias, *, expected_sha256, ca
             raise ValueError('translation-modal inputs changed')
 
     check()
-    nodal = physical.nodal_count; size = nodal+6*len(physical.elements)
-    if size > 256: raise ValueError('bounded retained spectral model required')
+    nodal = physical.nodal_count; size = _factor_size(nodal,len(physical.elements))
     lefts = []; rights = []; kinetics = []; errors = []; layout = []
     geometric = np.zeros((size,size)); mass = np.zeros_like(geometric)
     force = np.zeros(size); full_force = np.zeros(physical.count)
