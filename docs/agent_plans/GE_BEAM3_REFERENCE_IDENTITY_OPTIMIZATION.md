@@ -33,3 +33,20 @@ invocation run. Never relax120s/600s/24GiB/one-thread/three-worker bounds.
 No automatic retry; two deterministic qualification repeats still require a
 complete passing rehearsal. Independent review remains pending and no public
 integration, S3/Q4/B2/B3/default/package or historical evidence change occurs.
+
+## Resolved-method binding correction
+
+b542da93d6c0732988264db23113f80098d1335b passed identity41, prior guard15,
+centered reference32, arc50, translation41, plastic-history19 and coarse-arch1
+tests in separate lanes. All preserved scientific outputs match exactly.
+The identical profiled assembly dropped from4.870 to2.739 seconds; full guard
+count976 remained unchanged and repeated fingerprint construction was removed.
+Coarse four-macro full check dropped from119.320583 to80.874357 seconds.
+These are observations, not general performance acceptance claims.
+
+Code inspection found the method-binding tuple captured base-class methods but
+not a derived-class override of fingerprint/canonical_bytes. Also bind those
+resolved methods and the regularity instance's serializer in the live snapshot.
+Add three direct mutations. No numerical expression, canonical identity, test
+case, tolerance or deadline changes. Preserve b542da9 results as pre-correction
+evidence; do not treat them as proof that the extra mutation checks had run.

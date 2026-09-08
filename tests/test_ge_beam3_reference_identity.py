@@ -93,6 +93,19 @@ def test_fingerprint_method_replacement_is_not_a_cache_hit(monkeypatch):
     with pytest.raises(ValueError, match='authority changed'): bound.require(ref)
 
 
+@pytest.mark.parametrize('method', ('fingerprint', 'canonical_bytes'))
+def test_derived_class_method_override_is_bound(method, monkeypatch):
+    ref, bound = captured()
+    monkeypatch.setattr(Reference, method, lambda self:'forged')
+    with pytest.raises(ValueError, match='authority changed'): bound.require(ref)
+
+
+def test_regularity_instance_serializer_override_is_checked():
+    ref, bound = captured()
+    object.__setattr__(ref._regularity, 'canonical_data', lambda:{'changed':'serializer'})
+    with pytest.raises(ValueError, match='reference changed'): bound.require(ref)
+
+
 def test_closed_world_canonical_attribute_map():
     # Fail this guard test if a future source schema consumes a new instance
     # field without extending the snapshot. Constants are separately enumerated.

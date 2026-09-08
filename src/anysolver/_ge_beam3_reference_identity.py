@@ -24,6 +24,8 @@ def _number(value):
 
 def _methods():
     return (centered.CenteredCurvedBeam3ReferenceGeometry.canonical_data,
+        centered.CenteredCurvedBeam3ReferenceGeometry.canonical_bytes,
+        centered.CenteredCurvedBeam3ReferenceGeometry.fingerprint,
         source.CurvedBeam3ReferenceGeometry.canonical_data,
         source.CurvedBeam3ReferenceGeometry.canonical_bytes,
         source.CurvedBeam3ReferenceGeometry.fingerprint,
@@ -42,7 +44,8 @@ def _snapshot(reference):
         source.GE_BEAM3_CURVED_REFERENCE_REGULARITY_ID, centered.SCHEMA, centered.EVALUATION_ID)
     if any(type(value) is not str for value in constants):
         raise ValueError('exact canonical reference identifiers required')
-    return (constants, _array(source._NODE_PARAMETERS), _array(reference._coordinates),
+    return (constants, getattr(regularity.canonical_data, '__func__', regularity.canonical_data),
+        _array(source._NODE_PARAMETERS), _array(reference._coordinates),
         _array(reference._nodal_triads), _array(reference._coefficient_high), _array(reference._coefficient_low),
         tuple(tuple(_number(v) for v in row) for row in reference._half_frame_data),
         tuple(_number(v) for v in regularity.affine_constant),
