@@ -47,13 +47,14 @@ class Reference:
     independent_authorship: bool=False
     production_qualified: bool=False
 
-def solve(height,section,inertia,seeds,*,profile='ODE13',sites=None):
+def solve(height,section,inertia,seeds,*,profile='ODE13',sites=None,mode_count=6):
     if type(height) is not float or not 0<=height<=.75 or profile not in PROFILES:
         raise ValueError('registered continuum geometry/profile')
     c=matrix(section);j=matrix(inertia);compliance=np.linalg.inv(c)
     seeds=np.array(seeds,dtype=float,copy=True)
-    if seeds.shape!=(6,) or not np.isfinite(seeds).all() or np.any(seeds<=0) or np.any(np.diff(seeds)<=0):
-        raise ValueError('six positive increasing Ritz frequency seeds')
+    if (type(mode_count) is not int or not 6<=mode_count<=10 or seeds.shape!=(mode_count,)
+            or not np.isfinite(seeds).all() or np.any(seeds<=0) or np.any(np.diff(seeds)<=0)):
+        raise ValueError('registered six-through-ten positive increasing Ritz frequency seeds')
     sites=np.linspace(-1.,1.,129) if sites is None else np.array(sites,dtype=float,copy=True)
     if (sites.ndim!=1 or not 2<=len(sites)<=2049 or not np.isfinite(sites).all()
             or sites[0]!=-1. or sites[-1]!=1. or np.any(np.diff(sites)<=0)):

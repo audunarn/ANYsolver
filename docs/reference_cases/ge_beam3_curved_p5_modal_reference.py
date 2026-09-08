@@ -41,8 +41,8 @@ def parabolic_modal_reference(height, section, section_mass, *, terms=12, order=
     """
     if not np.isfinite(height) or not 0 <= height <= .75:
         raise ValueError("finite reference height in [0,0.75] required")
-    if not isinstance(terms, int) or isinstance(terms, bool) or terms not in (4, 8, 12, 16):
-        raise ValueError("four, eight, twelve or sixteen polynomial terms required")
+    if not isinstance(terms, int) or isinstance(terms, bool) or terms not in (4, 8, 12, 16, 20, 24):
+        raise ValueError("registered four-through-twenty-four polynomial terms required")
     if not isinstance(order, int) or isinstance(order, bool) or order not in (48, 64, 96):
         raise ValueError("48, 64 or 96 continuum quadrature points required")
     elastic = np.linalg.cholesky(_spd(section)).T
