@@ -47,6 +47,7 @@ class _Program:
     events: list
     initial: object=None
     restart_sha256: object=None
+    controls: object=None
     input_sha256: str=field(init=False)
 
     def __post_init__(self):
@@ -56,6 +57,9 @@ class _Program:
     def _input_identity(self):
         values=(self.identity,self.proportional.signature,self.constant.signature)
         if self.initial is not None:values+= (self.restart_sha256,sha(self.initial))
+        if self.controls is not None:
+            from ._ge_beam3_native_force_adaptation import describe
+            values+=(describe(*self.controls),)
         return sha(values)
 
     def require(self,model):
@@ -114,9 +118,11 @@ def assemble_at(parameter,model,displacements,store,num_layers,**kwargs):
 
 
 def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_iterations=24,line_search=True,
-                            initial_checkpoint=None,expected_sha256=None):
+                            initial_checkpoint=None,expected_sha256=None,step_policy=None):
     from .boundary import LoadCase
     from .nonlinear_static import solve_static_nonlinear,NonlinearConvergenceSettings
+    from ._ge_beam3_native_force_adaptation import describe,require_capacity,settings
+    control_descriptor=describe(step_policy,steps,max_iterations,line_search)
     if _PROGRAM.get() is not None or _ACTIVE.get() is not None:raise ValueError('nested native generalized programme forbidden')
     if type(proportional) is not DistributedPattern or (constant is not None and type(constant) is not DistributedPattern):
         raise ValueError('exact distributed patterns required')
@@ -136,10 +142,12 @@ def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_itera
         if constant is None:constant=accepted
         elif constant!=accepted:raise ValueError('distributed restart constant must match accepted load')
     elif expected_sha256 is not None:raise ValueError('distributed restart hash without checkpoint')
+    require_capacity(step_policy,steps,0 if initial is None else len(chain)-1)
     constant=DistributedPattern(LinePattern(()),()) if constant is None else constant
     proportional.require(model.mesh);constant.require(model.mesh)
     programme=_Program(model,model_identity(model),DistributedPattern(LinePattern(proportional.line.rows),proportional.couples),
-        DistributedPattern(LinePattern(constant.line.rows),constant.couples),[],initial,expected_sha256)
+        DistributedPattern(LinePattern(constant.line.rows),constant.couples),[],initial,expected_sha256,
+        None if step_policy is None else (step_policy,steps,max_iterations,line_search))
     def load(pattern):
         vector=nodal_force_vector(model,pattern.line);value=LoadCase('private-native-distributed-line')
         for node in sorted(model.mesh.nodes):
@@ -148,6 +156,10 @@ def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_itera
             value.add_nodal_load(node,forces=vector[dofs[:3]])
         return value
     prop,const=load(programme.proportional),load(programme.constant)
+    convergence=NonlinearConvergenceSettings(profile='legacy',line_search='always' if line_search else 'never',
+        max_step_factor=1.,max_line_search_cuts=8) if step_policy is None else settings(step_policy,steps,max_iterations,line_search)
+    if describe(step_policy,steps,max_iterations,line_search)!=control_descriptor:
+        raise ValueError('adaptive controls changed during capture')
     token=_PROGRAM.set(programme)
     try:
         result=solve_static_nonlinear(model,prop,constant_load_case=const,num_steps=steps,
@@ -155,11 +167,13 @@ def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_itera
             record_increment_snapshots=True,equilibrate_initial_state=False,
             initial_displacements=None if initial is None else initial['displacements'],
             initial_element_states=None if initial is None else initial['states'],
-            convergence_settings=NonlinearConvergenceSettings(profile='legacy',line_search='always' if line_search else 'never',
-                max_step_factor=1.,max_line_search_cuts=8))
+            convergence_settings=convergence)
         programme.require(model);proportional.require(model.mesh);constant.require(model.mesh)
         evidence=dict(programme_sha256=programme.input_sha256,model_sha256=programme.identity,
             events=tuple(programme.events),general_matrix_required=True,production_qualified=False,restart_authorized=initial is not None)
         if initial is not None:evidence['restart_sha256']=expected_sha256
+        if control_descriptor is not None:
+            evidence['adaptive_controls']=control_descriptor
+            evidence['adaptation']=tuple(result.info['convergence_adaptation'])
         return result,evidence
     finally:_PROGRAM.reset(token)
