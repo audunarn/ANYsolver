@@ -67,13 +67,35 @@ def test_curved_coupled_force_port(macros, curved, tmp_path):
     original = force.solve(m, fp); assert original.status == 'completed', original.failure
     direction = tuple(float(v) for v in np.array(loads.rows[0][1:])/np.linalg.norm(loads.rows[0][1:]))
     reference = m.mesh.nodes[3].coords()
-    targets = []
+    targets = []; polishing = []
+    # A force-converged state can have a displacement error below 1e-11
+    # but a larger inferred load-factor error after dividing by compliance.
+    # Refine the COMPARISON state at its SAME load and material origin twice;
+    # never alter/reissue the accepted force capsule or relax the port gate.
+    physical = force.Context(m, fp)
     for row in json.loads(original.checkpoint)['records']:
-        positions = row['mechanical']['positions'][2]; low = row['mechanical']['position_low'][2]
+        state = physical.make(row['mechanical'], decoded=True)
+        origins = physical.histories(row['origins'], decoded=True); diagnostics = []
+        for index in range(3):
+            residual, jacobian, metrics, _, _ = physical.assemble(state, row['parameter'], origins)
+            increment, remaining = physical.step(state, residual, jacobian)
+            diagnostics.append(dict(index=index, metrics=metrics, remaining=remaining))
+            if index < 2: state = physical.advance(state, increment)
+        assert max(*metrics, remaining) <= 1e-14
+        polishing.append(dict(target=row['target'], fixed_parameter=row['parameter'], diagnostics=diagnostics,
+                              unaccepted_comparison_only=True))
+        positions = state.positions[2]; low = state.position_low[2]
         targets.append(float(sum((Fraction(a)*(Fraction(x)+Fraction(y)-Fraction(float(z)))
             for a, x, y, z in zip(direction, positions, low, reference)), Fraction(0))))
     p = control.Program(tuple(targets), 3, direction, loads)
-    result = control.solve(m, p); assert result.status == 'completed', result.failure
+    result = control.solve(m, p)
+    # Preserve any actually produced capsule before assertions, including a
+    # failed port. These are raw outputs, never a partial canonical aggregate.
+    save(tmp_path/'controlled.json', result.checkpoint)
+    save(tmp_path/'force.json', original.checkpoint)
+    save(tmp_path/'comparison.json', dict(targets=targets, polishing=polishing, status=result.status,
+        failure=result.failure, actual_parameter=result.state.parameter, production_qualified=False))
+    assert result.status == 'completed', result.failure
     assert abs(result.state.parameter-1.) <= 1e-11
     errors = {}
     for key in original.state.mechanical.__dataclass_fields__:
@@ -83,8 +105,6 @@ def test_curved_coupled_force_port(macros, curved, tmp_path):
     context = control.Context(m, p); state, records = restore(context, result.checkpoint)
     assert context.checkpoint(records) == result.checkpoint
     before = canonical(state); recovery = context.recover(state); assert canonical(state) == before
-    save(tmp_path/'controlled.json', result.checkpoint)
-    save(tmp_path/'force.json', original.checkpoint)
     save(tmp_path/'port.json', dict(macros=macros, curved=curved, errors=errors, recovery=recovery,
         load_parameter_error=abs(state.parameter-1.), production_qualified=False))
 

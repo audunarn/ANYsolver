@@ -52,3 +52,38 @@ Broader controlled nonlinear histories, objective covariance, arches, real
 post-limit comparisons, arc length and controlled-state modal adapters remain
 successor gates. No full qualification, publication or activation is claimed.
 NO_GO_PRODUCTION_RESTRICTION_UNCHANGED.
+
+## Preserved first rehearsal and comparison-authority correction
+
+Initial freeze `fd42d3e84d82a3a65418fad5d3b29a7189caf371` passed 34 smoke
+checks, two analytical checks, three rollback checks, and 22 old nodal checks
+(separate inventories). The curved port had one pass and one failure. Preserve
+that failure; do not relabel it as a passing rehearsal.
+
+The two-macrocell port failed its unchanged 1e-11 load-factor comparison:
+the inferred factor differed by 4.829318056565057e-10. Read-only saved-state
+diagnosis found the original force-state residual 3.5637793271954375e-12 and
+remaining correction 3.897332510161963e-12, both within its original 1e-11 gate.
+At the identical accepted geometry, the full control border predicts a factor
+correction -4.827535166001761e-10. This is amplification of comparator-state
+error by inverse compliance, not evidence of changed element mechanics.
+
+Two explicit fixed-load Newton corrections with the SAME material origin bring
+the comparison residual to 5.187102689079677e-19 and its factor correction to
+1.795405870947635e-15. Freeze this stricter comparison preparation for BOTH
+registered curved ports: two corrections, then residual/compatibility/remaining
+correction at most 1e-14 before measuring the displacement target. Keep the
+original force capsule immutable; the refined trial is unaccepted comparison
+data, not an executed or issued force history. Keep every original port gate,
+including the 1e-11 factor and full-state comparisons. No controller or physical
+operator change is needed. Save actually created comparison/control capsules
+before assertions so any subsequent failure retains its complete raw data.
+
+The original failed port logs are under external temporary directory
+`ge-beam3-translation-rehearsal-ports-vg2h7y4g`; stdout SHA-256
+`B462635386462A6B996666E636EB21E61F3220584A6DFF403D778880F2488402`,
+process receipt SHA-256
+`F68242A72334EE8CBBEBDB2A3E7A7180594153375B05344819CD79600E223A90`.
+Saved-state diagnosis is `ge-beam3-control-sensitivity-diagnostic-gkq1661e`;
+preserve it with the failed evidence before closeout. It did not rerun the
+failed controller programme or modify the original accepted force checkpoint.
