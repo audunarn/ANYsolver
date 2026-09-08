@@ -31,3 +31,20 @@ numerical thread, at most three workers and 1800 seconds/wave; no retries.
 Independent review and complete environment graph remain pending. This private
 optimization does not qualify GE-B3 or authorize any production integration.
 NO_GO_PRODUCTION_RESTRICTION_UNCHANGED.
+
+## Post-rehearsal input-type correction
+
+The 16bef8b rehearsal completed N1/N2/N4 and all guards/ownership/nodal/port/modal
+inventories. Its archive manifest is 32910 bytes, SHA-256
+ECCAEF6F8E79A3FFC41E866362C16832ACF8677557A768767779AFFA2129CAE1.
+N1/N2 scientific bytes match the pre-optimization archive. N4 completed in
+243.316462 seconds, with relative Euler-load error 0.002063751220703347.
+
+Review identified an input-type edge case: the constraint audit normalizes the
+DOF count to int, while rebuilding the sparse transformation rejected a float
+count. Bind the captured count's type as well as value in every guard. Add the
+same-value float mutation and require rejection by both historical _model and
+the optimized guard. This correction does not affect valid mechanics or any
+serialized identity. Recheck the guard suite and saved scientific byte parity
+before the next mesh refinement. N8 and complete deterministic cycles remain
+unexecuted; avoid a monolithic N8 launch given measured scaling.

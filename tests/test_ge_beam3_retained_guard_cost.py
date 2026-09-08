@@ -25,7 +25,7 @@ def test_support_transform_built_once(monkeypatch):
 
 
 @pytest.mark.parametrize('mutation',('support-value','support-node','support-map','support-remove',
-    'dof-order','dof-count','node','material-owner','constraint','element-mpc','program','deadline'))
+    'dof-order','dof-count','dof-count-type','node','material-owner','constraint','element-mpc','program','deadline'))
 def test_full_guard_mutations(mutation,monkeypatch):
     m,_,_=make(False,1,clamped=True)
     c=retained.Context(m,retained.Program((1.,),EMPTY))
@@ -36,6 +36,9 @@ def test_full_guard_mutations(mutation,monkeypatch):
     elif mutation=='support-remove':m.boundary_conditions.clear()
     elif mutation=='dof-order':dm._node_to_dof[3][0],dm._node_to_dof[3][1]=dm._node_to_dof[3][1],dm._node_to_dof[3][0]
     elif mutation=='dof-count':dm._total_dofs+=6
+    elif mutation=='dof-count-type':
+        dm._total_dofs=float(dm._total_dofs)
+        with pytest.raises((ValueError,TypeError)):restart._model(m)
     elif mutation=='node':m.mesh.nodes[3].x+=.1
     elif mutation=='material-owner':m.materials.clear()
     elif mutation=='constraint':m.constraint_equations.append(object())

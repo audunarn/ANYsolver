@@ -104,7 +104,9 @@ class Context:
         # Recheck all model/DOF authority and the full audited constraint rows,
         # including element MPC providers, without rebuilding sparse I/T/K/F.
         # This is not an object-identity cache or a reduced-frequency guard.
-        if (model_identity(self.model)!=self.model_identity
+        total=self.model.mesh.dof_manager.total_dofs
+        if (type(total) is not type(self.nodal_count) or total!=self.nodal_count
+                or model_identity(self.model)!=self.model_identity
                 or canonical(require_valid_constraints(self.model))!=self.support_identity
                 or canonical(self.program)!=self.program_bytes):
             raise ValueError('retained generalized frozen model/program changed')
