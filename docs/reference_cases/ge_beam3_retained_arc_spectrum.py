@@ -43,6 +43,7 @@ def inspect_packet(packet, nodal, check):
     from anysolver._native_paired_factor_chain_modes import solve_paired_factor_chain_modes as paired
     from anysolver._dyadic_factor_chain import reassemble_chain_exact_binary64
     from anysolver._ge_beam3_p5_seeded.core import canonical
+    from docs.reference_cases.ge_beam3_decimal_signed_chain_audit import roots
     check(); before = canonical(packet)
     # Independent direct stationary elimination, used as a diagnostic comparison
     # to the retained factor-map solver. It is not an independently authored
@@ -63,8 +64,13 @@ def inspect_packet(packet, nodal, check):
     values = eigh(reduced,kinetic,eigvals_only=True)
     whole = paired(packet.left,packet.right,packet.geometric,packet.kinetic,free,algebraic,
                    bounds=(-100.,1e6),num_modes=6)
-    error = relative(whole.eigenvalues,values[:6])
-    if error > 1e-11: raise ValueError('independent direct Schur spectral comparison')
+    dense_error = relative(whole.eigenvalues,values[:6])
+    audits = [roots(packet.left.tolist(),packet.right.tolist(),packet.geometric.tolist(),packet.kinetic.tolist(),
+                    free,algebraic,digits=digits) for digits in (80,100)]
+    independent = [np.array([float(x) for x in a['eigenvalues']]) for a in audits]
+    precision_error = relative(independent[0],independent[1])
+    error = relative(whole.eigenvalues,independent[1][:6])
+    if max(precision_error,error) > 1e-11: raise ValueError('Decimal direct Schur spectral comparison')
     families = planar_partition(packet,nodal,check); modes = {}
     for name,f in families.items():
         print(dict(stage='family-spectrum',family=name),flush=True)
@@ -77,14 +83,17 @@ def inspect_packet(packet, nodal, check):
     if canonical(packet)!=before: raise ValueError('factor inputs changed')
     return dict(whole=whole,families=modes,physical_dimension=len(physical),algebraic_dimension=len(algebraic),
         trace_positive=True,mass_positive=True,stationarity_error=stationary,
-        direct_eigenvalues=values,schur_spectrum_error=error,partition_error=union_error,
+        direct_binary64_eigenvalues=values,direct_binary64_error=dense_error,
+        decimal_audits=audits,precision_error=precision_error,schur_spectrum_error=error,partition_error=union_error,
         current_frequency_squared_not_load_factor=True,full_spatial_qualification=False,production_qualified=False)
 
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--revision',required=True);p.add_argument('--macros',type=int,required=True)
     p.add_argument('--step',type=int,required=True);p.add_argument('--output',required=True);a=p.parse_args()
-    guard(a.revision);raw,binding=historical(a.macros,a.step)
+    guard(a.revision)
+    if a.macros != 2: raise ValueError('this Decimal-checked rehearsal admits two macros only')
+    raw,binding=historical(a.macros,a.step)
     if sys.flags.optimize or any(os.environ.get(k)!=v for k,v in THREAD_ENVIRONMENT.items()): raise ValueError('one thread and assertions required')
     output=Path(a.output).resolve()
     if output.is_relative_to(ROOT) or output.exists(): raise ValueError('fresh external output required')
@@ -102,7 +111,7 @@ def main():
     print(dict(stage='full-physical-spectrum',macros=a.macros,step=a.step),flush=True)
     result=inspect_packet(packet,m.mesh.dof_manager.total_dofs,check)
     guard(a.revision);historical(a.macros,a.step)
-    value=dict(schema='GE_BEAM3_ARC_CURRENT_REST_SPECTRA_V1',input=binding,macros=a.macros,step=a.step,
+    value=dict(schema='GE_BEAM3_ARC_CURRENT_REST_SPECTRA_V2',input=binding,macros=a.macros,step=a.step,
         section_inertia_diagonal=[1.,1.,1.,3e-5,1e-5,2e-5],result=result,
         terminal='UNCLASSIFIED_GE_BEAM3_ARC_CURRENT_REST_SPECTRA_ONLY',independent_review='PENDING',production_qualified=False)
     publish(output/'science.json',canonical(value))
