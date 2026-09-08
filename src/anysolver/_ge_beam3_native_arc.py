@@ -23,6 +23,7 @@ from ._ge_beam3_native_generalized_parameter import parameter_column
 from ._ge_beam3_arc_geometry import constraint,POLICY as GEOMETRY
 from ._ge_beam3_p5_seeded.core import sha
 from ._native_reference_modal import _owned
+from ._ge_beam3_native_history_profile import require as require_history_profile,binding as history_binding
 
 POLICY='GE_BEAM3_NATIVE_GENERALIZED_FRAME_CHORD_ARC_V1'
 ORIENTATION='SPATIAL_LEFT_TRIVIALIZED_PREDICTOR_DOT_V1'
@@ -48,8 +49,10 @@ class ArcProgram:
     initial_sign: float=1.
     max_iterations: int=24
     max_backtracks: int=8
+    history_profile: object=None
 
     def require(self,model):
+        require_history_profile(self.history_profile)
         if type(self) is not ArcProgram or type(self.steps) is not tuple or not 1<=len(self.steps)<=64:
             raise ValueError('bounded explicit native arc steps required')
         for step in self.steps:
@@ -66,7 +69,7 @@ class ArcProgram:
         return dict(policy=POLICY,geometry=GEOMETRY,orientation=ORIENTATION,steps=self.steps,length_scale=self.length_scale,
             parameter_scale=self.parameter_scale,initial_sign=self.initial_sign,distributed=self.distributed,
             nodal_moments=self.nodal_moments,max_iterations=self.max_iterations,max_backtracks=self.max_backtracks,
-            tolerance=1e-12,production_qualified=False,conservative_spectral_authority=False)
+            tolerance=1e-12,production_qualified=False,conservative_spectral_authority=False,**history_binding(self.history_profile))
 
 
 def capture(model,program):

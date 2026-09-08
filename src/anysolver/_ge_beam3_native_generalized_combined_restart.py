@@ -15,7 +15,7 @@ from ._ge_beam3_native_line_loading import nodal_force_vector
 from ._ge_beam3_native_generalized_restart import LoadPoint as DistributedLoadPoint, _point as _distributed_point, _state, _model
 from ._ge_beam3_native_fibre_restart import _keys, _array
 from ._ge_beam3_p5_seeded.core import canonical, sha
-from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
+from . import _ge_beam3_native_history_profile as capacity
 
 SCHEMA = 'GE_BEAM3_SUPPORTED_NATIVE_GENERALIZED_COMBINED_COUPLE_RESTART_V1'
 
@@ -152,34 +152,36 @@ def validate_chain(model, snapshots):
     return identity
 
 
-def encode_checkpoint(model, snapshots):
+def encode_checkpoint(model, snapshots, *, history_profile=None):
+    bound=capacity.limit(history_profile)
     if type(snapshots) is not tuple or not 1 <= len(snapshots) <= 65:
         raise ValueError('bounded complete native combined restart chain')
     elements = _model(model)[0]
     observed = canonical([_wire(s, elements) for s in snapshots])
-    if len(observed) > MAX_BYTES:
+    if len(observed) > bound:
         raise ValueError('native combined restart byte limit')
     identity = validate_chain(model, snapshots)
     records = [_wire(s, elements) for s in snapshots]
     if canonical(records) != observed:
         raise ValueError('native combined restart input changed during validation')
-    body = dict(schema=SCHEMA, load_policy=POLICY, model_sha256=identity, snapshots=records,
-                conservative_spectral_authority=False, production_qualified=False)
+    body = dict(schema=capacity.schema(SCHEMA,history_profile), load_policy=POLICY, model_sha256=identity, snapshots=records,
+                conservative_spectral_authority=False, production_qualified=False, **capacity.binding(history_profile))
     raw = canonical({**body, 'checkpoint_sha256': sha(body)})
-    if len(raw) > MAX_BYTES:
+    if len(raw) > bound:
         raise ValueError('native combined restart byte limit')
     return raw
 
 
-def decode_checkpoint(model, raw, *, expected_sha256):
+def decode_checkpoint(model, raw, *, expected_sha256, history_profile=None):
+    capacity.require(history_profile)
     if type(raw) is not bytes or type(expected_sha256) is not str or sha256(raw).hexdigest() != expected_sha256:
         raise ValueError('native combined restart external SHA-256 mismatch')
-    value = _load(raw.decode('ascii'))
-    _keys(value, ('schema', 'load_policy', 'model_sha256', 'snapshots', 'conservative_spectral_authority',
-                  'production_qualified', 'checkpoint_sha256'))
+    value = capacity.load(raw,history_profile)
+    capacity.envelope(value, ('schema', 'load_policy', 'model_sha256', 'snapshots', 'conservative_spectral_authority',
+                  'production_qualified', 'checkpoint_sha256'),SCHEMA,history_profile)
     elements, n, _, _, identity = _model(model)
     body = {k: v for k, v in value.items() if k != 'checkpoint_sha256'}
-    if (value['schema'] != SCHEMA or value['load_policy'] != POLICY or value['production_qualified'] is not False
+    if (value['load_policy'] != POLICY or value['production_qualified'] is not False
             or value['conservative_spectral_authority'] is not False or value['model_sha256'] != identity
             or value['checkpoint_sha256'] != sha(body)):
         raise ValueError('native combined restart model/schema/policy/hash mismatch')
@@ -200,6 +202,6 @@ def decode_checkpoint(model, raw, *, expected_sha256):
         snapshots.append(dict(load_point=_point(record['load_point'], model),
                               displacements=_array(record['displacements'], (n,)), states=states))
     snapshots = tuple(snapshots)
-    if encode_checkpoint(model, snapshots) != raw:
+    if encode_checkpoint(model, snapshots,history_profile=history_profile) != raw:
         raise ValueError('native combined restart canonical typed round trip')
     return snapshots

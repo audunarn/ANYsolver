@@ -22,6 +22,7 @@ from ._ge_beam3_native_generalized_restart import _model,LoadPoint as Distribute
 from ._ge_beam3_native_generalized_combined_restart import LoadPoint
 from ._ge_beam3_p5_seeded.core import sha
 from ._native_reference_modal import _owned
+from ._ge_beam3_native_history_profile import require as require_history_profile,binding as history_binding
 
 POLICY='GE_BEAM3_NATIVE_GENERALIZED_TRANSLATION_CONTINUATION_V1'
 EMPTY=DistributedPattern(LinePattern(()),())
@@ -42,8 +43,10 @@ class TranslationProgram:
     nodal_moments: object=None
     max_iterations: int=24
     max_backtracks: int=8
+    history_profile: object=None
 
     def require(self,model):
+        require_history_profile(self.history_profile)
         if type(self) is not TranslationProgram or type(self.targets) is not tuple or not 1<=len(self.targets)<=64:
             raise ValueError('bounded explicit translation targets required')
         for target in self.targets:scalar(target)
@@ -63,7 +66,8 @@ class TranslationProgram:
     def descriptor(self):
         return dict(policy=POLICY,targets=self.targets,control_node=self.control_node,control_component=self.control_component,
             distributed=self.distributed,nodal_moments=self.nodal_moments,max_iterations=self.max_iterations,
-            max_backtracks=self.max_backtracks,tolerance=1e-12,production_qualified=False,conservative_spectral_authority=False)
+            max_backtracks=self.max_backtracks,tolerance=1e-12,production_qualified=False,conservative_spectral_authority=False,
+            **history_binding(self.history_profile))
 
 
 def capture(model,program):
