@@ -98,6 +98,34 @@ def chart_pullback(force, jacobian, increments):
     return _owned(result), _owned(tangent), _owned(chart)
 
 
+def _interior_residual_secant(base, rejected, fraction):
+    """Propose an interior residual-line minimizer; this is NOT acceptance.
+
+    Both residuals use the same frozen Newton inverse. Common normalization
+    avoids overflow in the dot products and leaves the minimizer unchanged.
+    There is no empirical damping floor or material-specific coefficient.
+    """
+    base = np.asarray(base, dtype=float)
+    rejected = np.asarray(rejected, dtype=float)
+    if (base.shape != (24,) or rejected.shape != (24,)
+            or not np.isfinite(base).all() or not np.isfinite(rejected).all()
+            or not np.isfinite(fraction) or not 0. < fraction <= 1.):
+        raise ValueError('invalid distributed static secant input')
+    scale = max(float(np.max(np.abs(base))), float(np.max(np.abs(rejected))))
+    if scale == 0.:
+        raise ValueError('degenerate distributed static secant residual')
+    z = base/scale
+    difference = rejected/scale-z
+    denominator = float(difference@difference)
+    if denominator == 0.:
+        raise ValueError('degenerate distributed static secant direction')
+    interior = -float(z@difference)/denominator
+    proposed = float(fraction*interior)
+    if not np.isfinite(proposed) or not 0. < interior < 1. or not 0. < proposed < fraction:
+        raise ValueError('distributed static secant is not strictly interior')
+    return proposed
+
+
 def solve_distributed_static(operator, positions, position_low, nodal_frames, *, origin,
                              initial_rotations, initial_resultants, spatial_line_force,
                              spatial_couple_density, check=None, max_iterations=24):
@@ -152,8 +180,15 @@ def solve_distributed_static(operator, positions, position_low, nodal_frames, *,
             raise ValueError('nonfinite distributed static residual norm')
         return e, rc, h, net, float(value), error
 
+    pending_secant = None
     for iteration in range(max_iterations+1):
         e, rc, h, net, value, error = evaluate(u, p)
+        if pending_secant is not None:
+            old_factor, old_norm = pending_secant
+            merit = float(np.linalg.norm(linalg.lu_solve(old_factor, net[18:], check_finite=True)))
+            if not np.isfinite(merit) or not (error <= 1e-11 or merit < old_norm):
+                raise ValueError('distributed static secant failed actual decrease')
+            pending_secant = None
         jac = spatial_jacobian(rc, h)
         if error <= 1e-11:
             lift = -linalg.solve(jac[18:, 18:], jac[18:, :18], assume_a='gen', check_finite=True)
@@ -179,12 +214,19 @@ def solve_distributed_static(operator, positions, position_low, nodal_frames, *,
             trial_u = np.array([rotation(delta[3*c:3*c+3])@u[c] for c in (0, 1)])
             trial_p = p+delta[6:]
             _, _, _, changed, _, metric = evaluate(trial_u, trial_p)
-            merit = float(np.linalg.norm(linalg.lu_solve(factor, changed[18:], check_finite=True)))
+            preconditioned = linalg.lu_solve(factor, changed[18:], check_finite=True)
+            merit = float(np.linalg.norm(preconditioned))
             if not np.isfinite(merit):
                 raise ValueError('nonfinite distributed static internal merit')
             if metric <= 1e-11 or merit < norm:
                 u, p = trial_u, trial_p
                 break
         else:
-            raise ValueError('distributed static internal line search limit')
+            # The next outer evaluation is already in the existing budget.
+            # Keep this proposal private until its actual decrease is checked.
+            fraction = _interior_residual_secant(-step, preconditioned, fraction*.5**8)
+            delta = step*fraction
+            u = np.array([rotation(delta[3*c:3*c+3])@u[c] for c in (0, 1)])
+            p = p+delta[6:]
+            pending_secant = (factor, norm)
     raise AssertionError('unreachable distributed static state')
