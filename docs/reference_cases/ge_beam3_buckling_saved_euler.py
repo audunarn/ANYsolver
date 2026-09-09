@@ -4,6 +4,7 @@ from hashlib import sha256
 import json
 import math
 from pathlib import Path
+import sys
 
 
 ARCHIVE = Path('C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-euler-points-6536b4c-complete-20260908')
@@ -22,7 +23,7 @@ def strict(raw):
 
 
 def run(revision, output):
-    from docs.reference_cases.ge_beam3_fibre_arch_probe import guard
+    from docs.reference_cases.ge_beam3_fibre_arch_probe import guard, ROOT
     guard(revision)
     raw = (ARCHIVE/'archive-manifest.json').read_bytes()
     if sha256(raw).hexdigest() != MANIFEST_SHA256:
@@ -48,6 +49,10 @@ def run(revision, output):
             raise ValueError('actual accepted preload/packet authority mismatch')
         packets.append((index, point))
     # Numerical processing only after the preserved authority is verified.
+    sys.path.insert(0, str(ROOT/'src'))
+    import anysolver
+    if Path(anysolver.__file__).resolve() != (ROOT/'src/anysolver/__init__.py').resolve():
+        raise ValueError('saved-factor check did not import the frozen source package')
     import numpy as np
     from anysolver._ge_beam3_native_buckling import factor_buckling
     from anysolver._ge_beam3_p5_seeded.core import canonical
