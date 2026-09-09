@@ -222,3 +222,31 @@ completed subsets and preserve their exact scope:
 No production-qualification flag, default, version, tag, publication or public
 selector has been changed by these interface closeouts. Overall goal remains
 active; do not mark it complete while the delivery or connection gates are open.
+
+## Closed-ring gap: bounded engineering check
+
+The delivery audit found no closed-ring workflow evidence among the previously
+completed open-arch subsets. `test_ge_beam3_closed_ring.py` therefore adds a
+closed G1 piecewise-quadratic ring without changing runtime mechanics. Adjacent
+elements share nodes and physical reference triads, including the closing seam.
+Quadratic control points come from tangent intersections; no mechanical
+coefficient is fitted. Explicit nodal dead loads integrate radial circular
+pressure against Q2 shapes. This is a convergent load approximation, not an
+exact native distributed-pressure operator.
+
+The independent analytical circular reference is N=pR, epsilon=u/R and
+u=pR^2/EA. Removing a common translation fixes one node without altering the
+uniform expansion solution. Tests keep EA=1000, R=1 and pressure +/-0.1; the
+unchanged finest response threshold is 2%. Positive-pressure development errors
+are 98.81%, 16.68% and 1.695% for 4/8/16 macrocells. Coarse error is explicitly
+retained, not waived or relabelled as accuracy. Proper-motion and connectivity
+reversal relative errors are below 1e-12. The four-macro free ring has six
+numerical rigid modes and positive next roots. The 16-macro compression smoke
+also passes the 2% gate. These results do not qualify ring buckling or all rings.
+
+Separate smoke inventories: three tests (5.50s), four refinement/covariance
+tests (26.91s), and one compression test (12.99s). Freeze the final eight-test
+inventory and run two fresh replicas under the existing process bounds. Check
+all eleven emitted scientific files for byte equality, recompute refinement
+errors from saved displacement/reference arrays, and retain every smoke output.
+No repeated arch, Euler, N32 or force-workflow campaign is required.
