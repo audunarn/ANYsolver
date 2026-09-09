@@ -37,11 +37,11 @@ class NativeGeneralizedStaticElement(Element):
     native_material_state_protocol=PROTOCOL
     production_qualified=False
 
-    def __init__(self,element_id,node_ids,reference,section,*,order=4):
+    def __init__(self,element_id,node_ids,reference,section,*,order=4,arithmetic_policy=None):
         if type(element_id) is not int or element_id<=0 or type(node_ids) is not tuple or len(node_ids)!=3 or len(set(node_ids))!=3 or any(type(i) is not int or i<=0 for i in node_ids):
             raise ValueError('explicit native generalized element/node identities')
         super().__init__(element_id,node_ids,'private-native-generalized-'+str(element_id))
-        self.operator=RetainedGeneralizedOperator(reference,section,order=order); self.section=section
+        self.operator=RetainedGeneralizedOperator(reference,section,order=order,arithmetic_policy=arithmetic_policy); self.section=section
         self.identity=sha(dict(formulation=FORMULATION,element_id=element_id,nodes=node_ids,operator=self.operator.identity))
         self._mapping=None; self._mesh=None; self._validator=None; self._issued=None
 
@@ -69,9 +69,11 @@ class NativeGeneralizedStaticElement(Element):
         self._check(mesh); return self.operator.reference.nodal_triads[:,:,2].copy()
 
     def to_dict(self):
-        return dict(formulation_id=FORMULATION,state_schema=SCHEMA,element_id=self.element_id,node_ids=self.node_ids,
+        result=dict(formulation_id=FORMULATION,state_schema=SCHEMA,element_id=self.element_id,node_ids=self.node_ids,
             operator=self.operator.identity,reference=self.operator.reference_identity(),section=self.section.identity,
             quadrature=self.operator.order,reduction='GENERAL_STATIC_ONLY_24_INTERNAL_COORDINATES',production_qualified=False)
+        if self.operator.arithmetic_policy is not None:result['arithmetic_policy']=self.operator.arithmetic_policy
+        return result
 
     def _coordinates(self,total):
         total=_array(total,(18,),'native total displacement'); reference=self.operator.reference.coordinates

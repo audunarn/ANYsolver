@@ -20,6 +20,7 @@ from ._ge_beam3_p5.arrays import _array, _frames
 from ._native_reference_modal import _owned
 from ._ge_beam3_reference_identity import CapturedReferenceIdentity
 from ._ge_beam3_p5_seeded.core import canonical, sha
+from ._ge_beam3_precise_geometric_work import POLICY as PRECISE_WORK_POLICY, potential as precise_work
 
 
 POLICY = 'CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_ELLIPSOID_V1'
@@ -38,13 +39,15 @@ class Evaluation:
 
 
 class RetainedGeneralizedOperator:
-    __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_reference_binding', '_sealed')
+    __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_reference_binding', '_sealed', 'arithmetic_policy', '_arithmetic_capture')
 
     def __setattr__(self, name, value):
         if getattr(self, '_sealed', False): raise AttributeError('retained generalized operator is immutable')
         object.__setattr__(self, name, value)
 
-    def __init__(self, reference, section, *, order):
+    def __init__(self, reference, section, *, order, arithmetic_policy=None):
+        if arithmetic_policy is not None and (type(arithmetic_policy) is not str or arithmetic_policy != PRECISE_WORK_POLICY):
+            raise ValueError('explicit registered geometric arithmetic policy required')
         if type(reference) is not Reference or type(section) is not EllipsoidalGeneralizedSection:
             raise ValueError('explicit centered reference and native generalized ellipsoid section required')
         if type(order) is not int or order not in (4, 8):
@@ -66,9 +69,15 @@ class RetainedGeneralizedOperator:
         self._reference_identity = self._reference_binding.require(self.reference)
         self.identity = sha(dict(formulation_id=POLICY, section=section.identity,
             reference=self._reference_identity, quadrature=order, cell=self.cell.identity))
+        self.arithmetic_policy = arithmetic_policy
+        if arithmetic_policy is not None:
+            self.identity = sha(dict(source_operator=self.identity, arithmetic_policy=arithmetic_policy))
+        self._arithmetic_capture = (self.arithmetic_policy, self.identity)
         self._sealed = True
 
     def guard(self):
+        if (self.arithmetic_policy, self.identity) != self._arithmetic_capture:
+            raise ValueError('captured arithmetic policy changed')
         self.cell.guard()
         self.reference_identity()
 
@@ -109,6 +118,10 @@ class RetainedGeneralizedOperator:
         hessian_low = np.zeros((42, 42)); hessian_low[24:, 24:] = -cl
         potential = fsum([*(float(a)*float(b) for a, b in zip(p, k)),
                          -response['potential'][0][0], -response['potential'][1][0]])
+        if self.arithmetic_policy == PRECISE_WORK_POLICY:
+            potential = precise_work(self.reference.coordinates, self.reference.nodal_triads,
+                x, low, q, u, delta, p, [response['potential'][0][0], response['potential'][1][0]],
+                check=check if check is not None else lambda: None)
         if not np.isfinite(potential): raise ValueError('finite retained generalized potential required')
         self.guard()
         if check is not None: check()

@@ -9,7 +9,7 @@ from anysolver.fe_core import FEModel
 from anysolver.boundary import BoundaryCondition
 
 
-def model(macros):
+def model(macros, *, arithmetic_policy=None):
     if type(macros) is not int or macros not in (2,4,8,12,16,20,24):
         raise ValueError('registered bounded refinement mesh')
     made=FEModel('retained-full-spatial-crown-arch');frames=[]
@@ -21,7 +21,7 @@ def model(macros):
     for i in range(macros):
         nodes=(2*i+1,2*i+2,2*i+3)
         reference=Reference(np.array([made.mesh.nodes[n].coords() for n in nodes]),np.array(frames[2*i:2*i+3]))
-        element=NativeGeneralizedStaticElement(i+1,nodes,reference,section,order=4)
+        element=NativeGeneralizedStaticElement(i+1,nodes,reference,section,order=4,arithmetic_policy=arithmetic_policy)
         made.add_element(i+1,element);made.materials[element.material_name]=section
     made.add_boundary_condition(BoundaryCondition('ends',[1,2*macros+1],{key:0. for key in ('ux','uy','uz','rx','ry','rz')}))
     return made
