@@ -132,7 +132,7 @@ work; do not rerun the Euler, N32 or buckling waves as a substitute for the
 remaining delivery gates. No independent-author review or default activation
 is claimed. Overall goal remains active.
 
-## Combined spatial-couple API implemented; frozen verification next
+## Combined spatial-couple API verified
 
 The model-owned API now exposes `solve_spatial_couples`,
 `recover_spatial_couples` and `spatial_couple_checkpoint_prefix`. These call the
@@ -157,12 +157,18 @@ prefix continuation and unloading; failed-step preservation; strict envelope
 and control rejection; cancellation; and a prescribed rejected factorization
 whose cutback returns exactly to the fixed-step accepted history.
 
-For frozen verification, partition this same inventory into three case shards
-of three tests each and one common-controls shard of fifteen tests, twice in
-fresh processes. Add the separate existing 33-test V1 analysis inventory once.
-Use at most three workers, each 600 seconds/24 GiB/one numerical thread, and a
-1800-second wave. No automatic retry, coverage reduction, or mechanical rerun
-of the completed Euler/N32/buckling campaigns.
+Frozen implementation `e59154c9673d7362befb40ff6f922b673cff9e67` passed this
+same inventory in three case shards of three tests each and one common-controls
+shard of fifteen tests, twice in fresh processes. All 19 scientific files match
+between replicas. The separate existing V1 inventory passed 33 tests; its seven
+scientific files match the preserved pre-change regression byte-for-byte.
+All nine workers exited successfully with empty child trees. The longest worker
+took 339.83 seconds; the complete wave took approximately nine minutes, using
+at most three workers and the existing 600-second/24-GiB child bounds.
+No automatic retry, coverage reduction, or mechanical rerun of the completed
+Euler/N32/buckling campaigns occurred. The 121-file archive, tested source,
+smoke, receipts and logs are bound by
+`docs/reference_cases/ge_beam3_owned_combined_verification.json`.
 
 This does not yet expose generalized nodal dead forces through
 `NativeBeamAnalysis.solve_nodal`; those remain in the distinct existing retained
