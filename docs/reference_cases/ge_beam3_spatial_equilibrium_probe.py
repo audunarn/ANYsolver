@@ -32,6 +32,47 @@ def require_elastic(histories,virgin):
     from anysolver._ge_beam3_p5_seeded.core import canonical
     if canonical(histories)!=canonical(virgin):raise ValueError('spatial initializer cannot create material history')
 
+def elastic_control(model,program):
+    """Trial-only border; deliberately has no genesis, stage or checkpoint API.
+
+    A lateral control under vertical load is singular at the symmetric virgin
+    state. That is not a reason to weaken the normal history owner's genesis
+    check. This separate initializer borrows only its algebraic trial methods.
+    """
+    import numpy as np
+    from anysolver import _ge_beam3_retained_translation_control as control
+    from anysolver._ge_beam3_retained_nodal_loading import Context as Physical,Program as ForceProgram
+    from anysolver._ge_beam3_native_generalized_loading import DistributedPattern
+    from anysolver._ge_beam3_native_line_loading import LinePattern
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    from anysolver._native_reference_modal import _owned
+    if type(program) is not control.Program:raise ValueError('exact initializer control programme')
+    program.__post_init__()
+    class TrialControl:
+        value=control.Context.value
+        project=control.Context.project
+        assemble=control.Context.assemble
+        correction_norm=control.Context.correction_norm
+        step=control.Context.step
+        def guard(self):
+            self.physical.guard()
+            if canonical(self.program)!=self.program_bytes or canonical(dict(node=self.node,row=self.row,column=self.column))!=self.maps:
+                raise ValueError('elastic trial control authority changed')
+    made=TrialControl();made.program=program;made.program_bytes=canonical(program)
+    made.physical=Physical(model,ForceProgram((0.,),DistributedPattern(LinePattern(()),()),program.nodal_forces,
+        program.max_iterations,program.max_backtracks))
+    p=made.physical
+    if program.control_node not in p.index:raise ValueError('initializer control node absent')
+    made.node=p.index[program.control_node];slots=list(model.mesh.dof_manager.get_node_dofs(program.control_node)[:3])
+    if slots!=list(range(6*made.node,6*made.node+3)) or any(s in p.fixed for s in slots):
+        raise ValueError('initializer free physical translation map required')
+    row=np.zeros(p.count);row[slots]=program.direction
+    column=np.zeros(p.count);column[:p.nodal_count]=-p.nodal_external(1.)
+    if not np.any(column[p.free]):raise ValueError('initializer free force pattern required')
+    made.row,made.column=_owned(row),_owned(column)
+    made.maps=canonical(dict(node=made.node,row=made.row,column=made.column));made.guard()
+    return made
+
 def lateral_seed(context,mechanical,parameter,target):
     """Approximate eigenvector for a guess only; not an inertia certificate."""
     import numpy as np
@@ -115,7 +156,7 @@ def run(revision,target,output):
     emit(dict(stage='original-prefix-authenticated',records=len(records)))
     # Left quarter-span control; no external lateral force is applied.
     programme=control.Program((target,),11,(0.,0.,1.),control.NodalDeadForces(((21,0.,-1.,0.),)))
-    context=control.Context(case.model(20),programme);p=context.physical
+    context=elastic_control(case.model(20),programme);p=context.physical
     mechanical=p.make(descriptor)
     seed,diagnostic=lateral_seed(context,mechanical,parameter,target)
     emit(dict(stage='lateral-seed-constructed',**diagnostic))

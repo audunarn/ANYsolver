@@ -45,6 +45,24 @@ Process limits600seconds,24GiB,one numerical thread,120second CPU inactivity;
 at most3workers and1800seconds/wave. Frozen clean source/inputs before mechanics.
 No prior onset/plastic/native analysis campaign is rerun.
 
+## Preserved setup incident and trial-only successor
+
+The9f467e7 smoke authenticated all four source records, then failed in the
+ordinary translation context's virgin genesis border: lateral control has
+zero first-order sensitivity to the vertical load at that symmetric state.
+Exit1 after35.6724164seconds, peak172105728bytes, empty child tree; no new
+spatial equilibrium output. Preserve the external smoke directory and source.
+
+The successor uses a distinct trial-only wrapper that borrows the original
+value/project/assemble/step/correction-norm methods and captures the original
+physical virgin context. It has NO accepted-state genesis/stage/restore or
+checkpoint methods. Frozen model/program/control maps are guarded. The normal
+history-owner genesis test remains unchanged and a regression explicitly proves
+it still rejects this singular virgin border. This admits a separate elastic
+equilibrium initializer, not a history-validation shortcut or branch seed
+masquerading as a valid loading programme. New smoke uses a new source freeze
+and exclusive directory; no consumed command is rerun in place.
+
 After a successful smoke, independently test reflected +/- solutions and
 multiple amplitudes; establish source-equation/refinement agreement and a
 properly owned continuation handoff before claiming spatial postbuckling.
