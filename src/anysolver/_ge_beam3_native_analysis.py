@@ -324,23 +324,26 @@ its own integration. Model mutation or concurrent use fails closed.
             return solve_modes(self.model, self._initial(), zeros, self._inertias, zeros,
                                num_modes=num_modes, cancellation_token=cancellation_token)
 
+    def _translation_route(self):
+        if self._family == 'PHYSICAL_FIBRE_NODAL':
+            from . import _ge_beam3_analysis_fibre_translation as route
+        else:
+            from . import _ge_beam3_analysis_translation as route
+        return route
+
     def solve_translation(self, program, **kwargs):
         """Actual retained displacement control; distinct from force checkpoints."""
-        from ._ge_beam3_analysis_translation import solve
-        return solve(self, program, **kwargs)
+        return self._translation_route().solve(self, program, **kwargs)
 
     def import_translation_checkpoint(self, program, backend, *, expected_sha256, **kwargs):
         """Adopt only after native mechanical replay of the exact external bytes."""
-        from ._ge_beam3_analysis_translation import adopt
-        return adopt(self, program, backend, expected_sha256=expected_sha256, **kwargs)
+        return self._translation_route().adopt(self, program, backend, expected_sha256=expected_sha256, **kwargs)
 
     def recover_translation(self, program, checkpoint, *, expected_sha256, **kwargs):
-        from ._ge_beam3_analysis_translation import recover
-        return recover(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
+        return self._translation_route().recover(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
 
     def translation_checkpoint_prefix(self, program, checkpoint, accepted_steps, *, expected_sha256, **kwargs):
-        from ._ge_beam3_analysis_translation import prefix
-        return prefix(self, program, checkpoint, accepted_steps, expected_sha256=expected_sha256, **kwargs)
+        return self._translation_route().prefix(self, program, checkpoint, accepted_steps, expected_sha256=expected_sha256, **kwargs)
 
     def current_modes(self, checkpoint, *, expected_sha256, num_modes=6, cancellation_token=None):
         """Only the backend's conservative elastic-interior current-rest scope."""
@@ -353,3 +356,8 @@ its own integration. Model mutation or concurrent use fails closed.
             external = nodal_force_vector(self.model, pattern.line)
             return solve_modes(self.model, state['states'], state['displacements'], self._inertias, external,
                                num_modes=num_modes, cancellation_token=cancellation_token)
+
+    def translation_modes(self, program, checkpoint, *, expected_sha256, **kwargs):
+        """Conservative current-rest modes; preserve the native continuation owner."""
+        from ._ge_beam3_analysis_translation_modal import solve
+        return solve(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
