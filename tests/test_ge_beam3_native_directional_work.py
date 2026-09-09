@@ -1,4 +1,5 @@
 from copy import deepcopy
+from math import fsum
 import json
 import numpy as np
 import pytest
@@ -10,14 +11,25 @@ from docs.reference_cases.ge_beam3_native_directional_work import evaluate,lift,
 def test_actual_native_directional_variation_preserves_seed(seed):
     _,_,c,raw,_,packet,guard=capture(seed);p=json.loads(canonical(packet))
     direction=[float(.02*np.sin(i+.4)) for i in range(len(p['free_dofs']))]
-    before=canonical(c.initial);events=[]
-    result=evaluate(c,c.initial,p,direction,progress=events.append)
+    before=canonical(c.initial);events=[];saved=[]
+    result=evaluate(c,c.initial,p,direction,progress=events.append,record=saved.append)
     assert c.checkpoint(())==raw and canonical(c.initial)==before
     assert result['max_stationary_lift_error']<=1e-11
     assert result['native_mixed_directional_work']>0
     assert [e['amount'] for e in events]==[0.,STEPS[0],-STEPS[0],STEPS[1],-STEPS[1]]
     for row in result['rows']:
         assert max(row[k] for k in ('potential_error','directional_work_error','full_residual_direction_error'))<=1e-7
+    assert len(saved)==6
+    assert canonical(saved)==canonical(json.loads(canonical(saved)))
+    points={r['amount']:r for r in saved if r['kind']=='trial'}
+    base=next(r for r in saved if r['kind']=='baseline')
+    assert fsum(base['element_work'])==result['native_mixed_directional_work']
+    for row in result['rows']:
+        h=row['step'];plus=points[h];minus=points[-h]
+        derivative=(np.array(plus['residual'])-np.array(minus['residual']))/(2*h)
+        assert fsum((plus['potential'],minus['potential'],-2*points[0.]['potential']))/h**2==row['potential_second']
+        assert fsum(float(a)*float(b) for a,b in zip(base['direction'],derivative))==row['residual_directional_work']
+        assert float(np.linalg.norm(derivative-base['hessian_product']))/max(1.,float(np.linalg.norm(base['hessian_product'])))==row['full_residual_direction_error']
     guard()
 
 
@@ -54,3 +66,9 @@ def test_trial_adjudication_mutations(kind):
     elif kind=='potential':v['rows'][0]['potential_second']=.001
     else:v['rows'][0]['potential_error']=float('nan')
     with pytest.raises(ValueError):adjudicate(v,-.001)
+
+
+def test_failure_names_frozen_step_and_metric():
+    v=good();v['rows'][0]['full_residual_direction_error']=2e-7
+    with pytest.raises(ValueError,match='step 0.0001.*full_residual_direction_error'):
+        adjudicate(v,-.001)

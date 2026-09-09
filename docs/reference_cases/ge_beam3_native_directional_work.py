@@ -29,7 +29,7 @@ def lift(physical,packet,direction):
     return x,local,full
 
 
-def evaluate(context,state,packet,direction,progress=lambda row:None):
+def evaluate(context,state,packet,direction,progress=lambda row:None,record=lambda row:None):
     before=canonical(state);context._require_issued(state,expected_snapshot=before)
     captured=sha(packet);p=context.physical;mechanical=state.mechanical
     x,local,full=lift(p,packet,direction)
@@ -61,6 +61,11 @@ def evaluate(context,state,packet,direction,progress=lambda row:None):
         # actual spatial-dead-load incremental work; it has zero Hessian.
         potential=fsum([*potentials,-amount*external_slope])
         points[amount]=(potential,residual)
+        record(dict(kind='trial',amount=amount,potential=potential,residual=residual.tolist(),
+                    element_potentials=potentials,external_slope=external_slope))
+        if amount==0.:
+            record(dict(kind='baseline',direction=full.tolist(),hessian_product=baseline_product.tolist(),
+                        element_work=local_work,stationary_lift_errors=lift_errors))
     check()
     if sha(packet)!=captured or canonical(state)!=before:raise ValueError('native trial mutated frozen input/state')
     work=fsum(local_work);rows=[]
@@ -95,5 +100,6 @@ def adjudicate(result,expected):
     if tuple(row['step'] for row in result['rows'])!=STEPS:raise ValueError('fixed directional steps')
     for row in result['rows']:
         if row['potential_second']>=0 or row['residual_directional_work']>=0:raise ValueError('native trial did not show negative second variation')
-        if max(row[k] for k in ('potential_error','directional_work_error','full_residual_direction_error'))>1e-7:
-            raise ValueError('native variational directional disagreement')
+        failed={k:row[k] for k in ('potential_error','directional_work_error','full_residual_direction_error') if row[k]>1e-7}
+        if failed:
+            raise ValueError(f'native variational directional disagreement at step {row["step"]}: {failed}')

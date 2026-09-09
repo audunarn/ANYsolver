@@ -46,3 +46,24 @@ No src, element, material, recovery, API, alias, default, version or dependency
 changes. Full spatial postbuckling, physical loading path, plastic continuation,
 broad parity, independent review, installed selection and objective beam-shell
 connections remain open. NO_GO_PRODUCTION_RESTRICTION_UNCHANGED.
+
+## Logging-only successor after the consumed failed smoke
+
+Frozen 301820cc194377031e30a1be39f09e85bc72093d completed all five positive
+trial points but failed the final 1e-7 directional-agreement gate. Runtime
+114.0451894 seconds, child exit 1, empty terminal process tree. No negative or
+replica workers ran. No native result or aggregate was created; final recovery
+and checkpoint checks after adjudication did not run. Metrics were not saved,
+so the failing quantity and cause cannot be inferred from that attempt.
+
+Preserve all 12 files in external archive
+ge-beam3-native-second-variation-301820c-20260909, manifest 1653 bytes, SHA-256
+c796f3e3302088b02ded939784682b5b791fba1167915bf824373a943a09b7b8.
+This successor changes logging only: save every completed trial potential,
+element potential and full residual, plus baseline direction, Hessian product,
+element work and lift errors. Save hash-bound UNADJUDICATED metrics before the
+unchanged gate. Diagnostics do not assert successful later state/recovery checks
+and cannot substitute for native.json or an accepted aggregate. Identify failed
+metrics in exceptions. Use a new frozen revision, helper and exclusive external
+directory; preserve the consumed attempt. No step, threshold or mechanics change.
+Positive smoke still gates the signed replica wave; no automatic retry.

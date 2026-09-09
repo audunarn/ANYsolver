@@ -60,18 +60,29 @@ def run(revision,sign,output):
     state,records=context.restore(source['checkpoint.json'],expected_sha256=sha256(source['checkpoint.json']).hexdigest())
     if context.checkpoint(records)!=source['checkpoint.json']:raise ValueError('original checkpoint replay')
     state_bytes=canonical(state);recovery=canonical(context.recover(state))
-    result=evaluate(context,state,packet,witness['direction'],progress=lambda row:print(row,flush=True))
+    diagnostics=root/'diagnostics';diagnostics.mkdir(exist_ok=False);bindings=[]
+    def record(row):
+        path=diagnostics/('point-'+str(len(bindings))+'.json');write(path,row);raw=read(path)
+        bindings.append(dict(path=path.name,bytes=len(raw),sha256=sha256(raw).hexdigest()))
+    result=evaluate(context,state,packet,witness['direction'],progress=lambda row:print(row,flush=True),record=record)
+    # Diagnostic publication precedes adjudication. It is not canonical accepted
+    # evidence and does not assert the later checkpoint/recovery checks ran.
+    write(diagnostics/'unadjudicated.json',dict(schema='GE_BEAM3_NATIVE_TRIAL_DIAGNOSTICS_V2',
+        disposition='UNADJUDICATED',revision=revision,sign=sign,packet_sha256=PACKETS[sign],
+        witness_sha256=WITNESS[sign],expected_factor_work=expected,result=result,raw=bindings,
+        production_qualified=False,final_checkpoint_recovery_checks_completed=False))
     adjudicate(result,expected)
     if (canonical(state)!=state_bytes or canonical(context.recover(state))!=recovery
             or context.checkpoint(records)!=source['checkpoint.json']):raise ValueError('native trial changed accepted state/history/recovery')
     guard(revision)
     if inputs(sign)!=source or witness_input(sign)!=(witness,checked,expected):raise ValueError('external input changed')
     load(sign)
-    write(root/'native.json',dict(schema='GE_BEAM3_N24_NATIVE_NEGATIVE_SECOND_VARIATION_V1',revision=revision,
+    write(root/'native.json',dict(schema='GE_BEAM3_N24_NATIVE_NEGATIVE_SECOND_VARIATION_V2',revision=revision,
         sign=sign,packet_sha256=PACKETS[sign],witness_sha256=WITNESS[sign],exact_work_sha256=CHECK[sign],
         expected_factor_work=expected,result=result,state_sha256=sha256(state_bytes).hexdigest(),
         checkpoint_sha256=sha256(source['checkpoint.json']).hexdigest(),recovery_sha256=sha256(recovery).hexdigest(),
         original_checkpoint_unchanged=True,original_recovery_unchanged=True,production_qualified=False,
+        diagnostics_sha256=sha256(read(diagnostics/'unadjudicated.json')).hexdigest(),
         independent_author_review='PENDING',physical_loading_path_from_rest=False))
     print(dict(stage='native-negative-second-variation-complete',sign=sign),flush=True)
 
