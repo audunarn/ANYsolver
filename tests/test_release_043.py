@@ -23,6 +23,12 @@ def test_release_version_and_license_inventory_agree():
     assert json.loads((ROOT / 'dependency-licenses.json').read_text())['release'] == version
 
 
+def test_source_distribution_includes_release_authority_manifests():
+    manifest = (ROOT / 'MANIFEST.in').read_text().splitlines()
+    assert 'include scripts/ge_beam3_release_test_inventory.json' in manifest
+    assert 'include scripts/release_043_runtime.json' in manifest
+
+
 def test_ge_inventory_covers_every_module_and_keeps_runtime_tests():
     record = ci._ge_beam3_inventory()
     modules = ci.merge_test_modules()

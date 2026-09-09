@@ -10,4 +10,6 @@ recursive-include docs *.md
 prune reports
 include reports/extract_mat_mesh_io_performance_review.md
 recursive-include scripts *.py
+include scripts/ge_beam3_release_test_inventory.json
+include scripts/release_043_runtime.json
 recursive-include tests *.py *.json
