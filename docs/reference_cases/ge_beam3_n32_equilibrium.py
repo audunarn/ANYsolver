@@ -7,6 +7,13 @@ from docs.reference_cases.ge_beam3_retained_prestress_wave import write
 from docs.reference_cases.e4_pl_s3_v2_bounded_process import THREAD_ENVIRONMENT
 from docs.reference_cases.ge_beam3_spatial_ritz_worker import source,INPUTS
 
+def write_native(path,value):
+    # Validate/encode arrays and native history dataclasses BEFORE exclusive
+    # creation. The generic research writer accepts these canonical bytes.
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    from docs.reference_cases.ge_beam3_retained_prestress_protocol import strict_bytes
+    raw=canonical(value);strict_bytes(raw);write(path,raw)
+
 def sample(poly,x,segment=None):
     import numpy as np
     if not np.isfinite(x) or not -1<=x<=1:raise ValueError('bounded reference coordinate')
@@ -67,7 +74,7 @@ def run(revision,sign,output):
             context=elastic_control(model(32,arithmetic_policy=POLICY),program);p=context.physical
             progress(dict(stage='n32-virgin-context',full_coordinates=p.count,nodal=p.nodal_count))
             guess=guess_descriptor(p,value)
-            write(root/'guess.json',dict(source_sha256=INPUTS[sign][1],mechanical=guess.descriptor(),
+            write_native(root/'guess.json',dict(source_sha256=INPUTS[sign][1],mechanical=guess.descriptor(),
                 load=value['reference']['load'],accepted_history_issued=False,production_qualified=False))
             result,load,details=solve_guess(context,guess,value['reference']['load'],target,progress)
             before=canonical(result);recovery=[]
@@ -83,7 +90,7 @@ def run(revision,sign,output):
             if max(force,moment)>1e-11 or max(*details['metrics'],details['correction'])>1e-11:
                 raise ValueError('native N32 equilibrium and complete balance')
             context.guard();guard(revision);source(sign)
-            write(root/'equilibrium.json',dict(schema='GE_BEAM3_N32_PRECISE_ELASTIC_EQUILIBRIUM_V1',revision=revision,sign=sign,
+            write_native(root/'equilibrium.json',dict(schema='GE_BEAM3_N32_PRECISE_ELASTIC_EQUILIBRIUM_V1',revision=revision,sign=sign,
                 macros=32,nodes=65,full_retained_coordinates=1158,control_node=17,load_node=33,amplitude=target,
                 source_sha256=INPUTS[sign][1],arithmetic_policy=POLICY,model_sha256=p.model_identity,
                 operators=[e.operator.identity for _,e in p.elements],mechanical=result.descriptor(),load=load,
@@ -97,4 +104,3 @@ def run(revision,sign,output):
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--revision',required=True);p.add_argument('--sign',choices=('plus','minus'),required=True);p.add_argument('--output',required=True)
     a=p.parse_args();run(a.revision,a.sign,a.output)
-

@@ -9,7 +9,7 @@ from anysolver._ge_beam3_elastic_seed_modal import _factor_size
 from anysolver._ge_beam3_native_generalized_restart import _model
 from anysolver._ge_beam3_precise_geometric_work import POLICY
 from docs.reference_cases.ge_beam3_n32_controlled_case import model
-from docs.reference_cases.ge_beam3_n32_equilibrium import sample,guess_descriptor
+from docs.reference_cases.ge_beam3_n32_equilibrium import sample,guess_descriptor,write_native
 from docs.reference_cases.ge_beam3_refined_controlled_case import model as old_model
 
 def test_limits_scoped_restored_and_not_propagated_to_fresh_context():
@@ -75,3 +75,16 @@ def test_actual_bound_continuum_guess_native_shapes_frames_and_clamps(sign):
     assert guess.resultants.shape==(32,18) and guess.cell_rotations.shape==(32,2,3,3)
     assert np.isfinite(guess.resultants).all() and np.max(abs(guess.resultants))>0
     assert not initial.resultants.any() and not initial.position_low.any()
+
+def test_native_array_history_writer_roundtrip_exclusive_and_no_partial(tmp_path):
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    from docs.reference_cases.ge_beam3_retained_prestress_protocol import strict_bytes
+    m=old_model(2,arithmetic_policy=POLICY);history=m.mesh.elements[1].operator.cell.virgin()
+    value=dict(mechanical=dict(cell_rotations=np.tile(np.eye(3),(2,2,1,1))),recovery=[dict(history=history,field=np.zeros(6))])
+    path=tmp_path/'native.json';write_native(path,value)
+    raw=path.read_bytes();assert raw==canonical(value) and strict_bytes(raw)['mechanical']['cell_rotations'][0][0][0][0]==1.
+    with pytest.raises(FileExistsError):write_native(path,value)
+    assert path.read_bytes()==raw
+    invalid=tmp_path/'invalid.json'
+    with pytest.raises(ValueError):write_native(invalid,dict(bad=np.array([float('nan')])))
+    assert not invalid.exists()
