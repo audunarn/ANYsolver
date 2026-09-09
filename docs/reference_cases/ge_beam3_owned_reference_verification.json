@@ -1,0 +1,527 @@
+{
+  "schema": "GE_BEAM3_OWNED_REFERENCE_INTERFACE_VERIFICATION_V1",
+  "revision": "a7677218f84f7dd9aa7e4b406448d7ddf96294d3",
+  "tree": "d988ee99936e5d46f1c14558172ea070617ca054",
+  "archive": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\ge-beam3-owned-reference-a767721-20260909",
+  "stage": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-archive-stage",
+  "files": [
+    {
+      "relative": "failed-smoke\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\command.json",
+      "bytes": 331,
+      "sha256": "D5BC4199879F4780548E3032E515474928F9DCBCDF726B229E89BC1DFF1CE0E2"
+    },
+    {
+      "relative": "failed-smoke\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\junit.xml",
+      "bytes": 3771,
+      "sha256": "FF2321D17C9B84501EC46DA1AD01D15AB0DF71A90AD482AFE7C2AE36EDF61E45"
+    },
+    {
+      "relative": "failed-smoke\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\process.json",
+      "bytes": 293,
+      "sha256": "CBE5537489B875C77495CE30E606E1A0733EDE211ABAF3E7DF53A03B08A8C3EC"
+    },
+    {
+      "relative": "failed-smoke\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "failed-smoke\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\stdout.txt",
+      "bytes": 2493,
+      "sha256": "C59326C24DF3CBDEA25ECE0E13696A3427CEE97B89A028E77C326AB61A3FE32A"
+    },
+    {
+      "relative": "failed-smoke\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "bytes": 299393,
+      "sha256": "D8B68695CFE8D1883CC12222222AC013F650C953C81109D60A4BFD7ADD7317B2"
+    },
+    {
+      "relative": "failed-smoke\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "bytes": 345331,
+      "sha256": "798E7879F127C37FF239EE59302038621B8D2DCB3D7D2474EC3E766AF33A8503"
+    },
+    {
+      "relative": "failed-smoke\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "bytes": 287296,
+      "sha256": "25177711796C8AC65DBEC29D062F4AB1893D2EC786C4A9BE66786FC1A92815CD"
+    },
+    {
+      "relative": "failed-smoke\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "bytes": 333341,
+      "sha256": "C965B6417F7881A6D72DD45EAD1C7771809E13AA8D05A69B40F4FAD3CE477998"
+    },
+    {
+      "relative": "failed-smoke\\source\\src\\anysolver\\_ge_beam3_native_analysis.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_native_analysis.py",
+      "bytes": 28176,
+      "sha256": "5B97F332E4A5DDD193AC46DDBDD324A15BB5BC038453FCE0F916647A9C77250F"
+    },
+    {
+      "relative": "failed-smoke\\source\\tests\\test_ge_beam3_owned_reference_factor_modes.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a\\source\\tests\\test_ge_beam3_owned_reference_factor_modes.py",
+      "bytes": 2579,
+      "sha256": "339899181D71BB23C9805EE2FE2D5269FAD9F50B6E5BA91395D1024AA24A1877"
+    },
+    {
+      "relative": "rehearsal\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\command.json",
+      "bytes": 339,
+      "sha256": "DA2FD03A0F518E3A0853CFBD7C41854181314DAAD2BBFF405155F0926F25C671"
+    },
+    {
+      "relative": "rehearsal\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\junit.xml",
+      "bytes": 1648,
+      "sha256": "6D510E33B2B7160C581B573AE0E097E3E8487005606CAB68AB98B72F32867D35"
+    },
+    {
+      "relative": "rehearsal\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\process.json",
+      "bytes": 288,
+      "sha256": "0F12823E92011A01895B46775C269593C55CE1BE836BC037CBF2DBFA0444F102"
+    },
+    {
+      "relative": "rehearsal\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "rehearsal\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\stdout.txt",
+      "bytes": 100,
+      "sha256": "437679B37601E2ABDC99A46A8EE089CCDBD94E12D35C84669FF5B844AA508275"
+    },
+    {
+      "relative": "rehearsal\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "bytes": 299393,
+      "sha256": "D8B68695CFE8D1883CC12222222AC013F650C953C81109D60A4BFD7ADD7317B2"
+    },
+    {
+      "relative": "rehearsal\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "bytes": 345331,
+      "sha256": "798E7879F127C37FF239EE59302038621B8D2DCB3D7D2474EC3E766AF33A8503"
+    },
+    {
+      "relative": "rehearsal\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "bytes": 287296,
+      "sha256": "25177711796C8AC65DBEC29D062F4AB1893D2EC786C4A9BE66786FC1A92815CD"
+    },
+    {
+      "relative": "rehearsal\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "bytes": 333341,
+      "sha256": "C965B6417F7881A6D72DD45EAD1C7771809E13AA8D05A69B40F4FAD3CE477998"
+    },
+    {
+      "relative": "rehearsal\\source\\src\\anysolver\\_ge_beam3_native_analysis.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\source\\src\\anysolver\\_ge_beam3_native_analysis.py",
+      "bytes": 28262,
+      "sha256": "2411560BA81F5E8715B36E0BEA17348AA97074591BE227C7374A53B62697CB92"
+    },
+    {
+      "relative": "rehearsal\\source\\tests\\test_ge_beam3_owned_reference_factor_modes.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\source\\tests\\test_ge_beam3_owned_reference_factor_modes.py",
+      "bytes": 2579,
+      "sha256": "339899181D71BB23C9805EE2FE2D5269FAD9F50B6E5BA91395D1024AA24A1877"
+    },
+    {
+      "relative": "frozen-wave\\wave.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\wave.json",
+      "bytes": 127,
+      "sha256": "9F71DC999238084E8E6F89FBA7D00DACC7D2D2C1252751FE7CE8301B51256D59"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\command.json",
+      "bytes": 511,
+      "sha256": "FF4CF5CB1C52D84E69097E125237B176992094A1F5DF1996E2D3197631E7788D"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\junit.xml",
+      "bytes": 1680,
+      "sha256": "48EB27443489A578028B4A11893432FF545848CBCCE3CB502A32EB8650FC518F"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\process.json",
+      "bytes": 285,
+      "sha256": "9F6BD79B77FDFBB90826B88FD62C9957AC8655B93E2B625C809BD1837DEA5256"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\stdout.txt",
+      "bytes": 116,
+      "sha256": "9E2E9A00F509BD1C571759B0C01993526222143BFD9AE9578948C31D1792CAB2"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\pytest\\test_actual_reference_modal_re0\\modal.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\pytest\\test_actual_reference_modal_re0\\modal.json",
+      "bytes": 25870,
+      "sha256": "AC1387CA0955F0FC47AA29743105227CCD7C64ACBE14D31E9034E20DD086CC8D"
+    },
+    {
+      "relative": "frozen-wave\\default-regression\\pytest\\test_actual_reference_modal_re1\\modal.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\pytest\\test_actual_reference_modal_re1\\modal.json",
+      "bytes": 34061,
+      "sha256": "0AB4F8687FA48BEBF1102D3A5C0516BA1BFFD627267A26793CA9645297DEE7E9"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\command.json",
+      "bytes": 457,
+      "sha256": "988A3E794A6B946BD63BF84EFDE202E26D3A669A563900682A2A9F9A53D407DD"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\junit.xml",
+      "bytes": 1648,
+      "sha256": "FFE06DD2CA27A71D8C932137FF0CDB643BFCC2499ACF459812070C0739371CE6"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\process.json",
+      "bytes": 288,
+      "sha256": "1DB27EE0AB072C639DBD5795E653BC9F63C2B8C5439D8B5666EAFA1211990478"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\stdout.txt",
+      "bytes": 100,
+      "sha256": "16BFF07660A46174F5C0FE6CE8233DDB634BB74517E688B7F57AF3B3BB97170D"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "bytes": 299393,
+      "sha256": "D8B68695CFE8D1883CC12222222AC013F650C953C81109D60A4BFD7ADD7317B2"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "bytes": 345331,
+      "sha256": "798E7879F127C37FF239EE59302038621B8D2DCB3D7D2474EC3E766AF33A8503"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "bytes": 287296,
+      "sha256": "25177711796C8AC65DBEC29D062F4AB1893D2EC786C4A9BE66786FC1A92815CD"
+    },
+    {
+      "relative": "frozen-wave\\replica-a\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "bytes": 333341,
+      "sha256": "C965B6417F7881A6D72DD45EAD1C7771809E13AA8D05A69B40F4FAD3CE477998"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\command.json",
+      "bytes": 457,
+      "sha256": "F430404435B5E71A10D804FC3324BC030B8F7D68B097670FF40E75F0BE986EC8"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\junit.xml",
+      "bytes": 1648,
+      "sha256": "D481875CC61C2CF048D9BC5A1456687618A4045A0DFDEECF203C527914183EB3"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\process.json",
+      "bytes": 287,
+      "sha256": "4E76ED146F073D3A268E87E4950279A665B44D1A08858197CEE59B81BDB69A4A"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\stdout.txt",
+      "bytes": 100,
+      "sha256": "49A6EF630EBABC7AD1AA7F87F1E0567090E86C0C6CF9FA5161532A849D096430"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori0\\reference.json",
+      "bytes": 299393,
+      "sha256": "D8B68695CFE8D1883CC12222222AC013F650C953C81109D60A4BFD7ADD7317B2"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori1\\reference.json",
+      "bytes": 345331,
+      "sha256": "798E7879F127C37FF239EE59302038621B8D2DCB3D7D2474EC3E766AF33A8503"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori2\\reference.json",
+      "bytes": 287296,
+      "sha256": "25177711796C8AC65DBEC29D062F4AB1893D2EC786C4A9BE66786FC1A92815CD"
+    },
+    {
+      "relative": "frozen-wave\\replica-b\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori3\\reference.json",
+      "bytes": 333341,
+      "sha256": "C965B6417F7881A6D72DD45EAD1C7771809E13AA8D05A69B40F4FAD3CE477998"
+    },
+    {
+      "relative": "frozen-wave\\source\\src\\anysolver\\_ge_beam3_native_analysis.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\source\\src\\anysolver\\_ge_beam3_native_analysis.py",
+      "bytes": 28262,
+      "sha256": "2411560BA81F5E8715B36E0BEA17348AA97074591BE227C7374A53B62697CB92"
+    },
+    {
+      "relative": "frozen-wave\\source\\tests\\test_ge_beam3_native_analysis.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\source\\tests\\test_ge_beam3_native_analysis.py",
+      "bytes": 11018,
+      "sha256": "2741D45ED531A26B26678FC4008C22F7F425E20813BB7C4C43D166083161F2DA"
+    },
+    {
+      "relative": "frozen-wave\\source\\tests\\test_ge_beam3_owned_reference_factor_modes.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\source\\tests\\test_ge_beam3_owned_reference_factor_modes.py",
+      "bytes": 2579,
+      "sha256": "339899181D71BB23C9805EE2FE2D5269FAD9F50B6E5BA91395D1024AA24A1877"
+    }
+  ],
+  "scientific_equality": [
+    {
+      "case": "pytest\\test_reference_api_matches_ori0\\reference.json",
+      "paths": [
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori0\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori0\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori0\\reference.json"
+      ],
+      "sha256": "D8B68695CFE8D1883CC12222222AC013F650C953C81109D60A4BFD7ADD7317B2",
+      "bytes": 299393
+    },
+    {
+      "case": "pytest\\test_reference_api_matches_ori1\\reference.json",
+      "paths": [
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori1\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori1\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori1\\reference.json"
+      ],
+      "sha256": "798E7879F127C37FF239EE59302038621B8D2DCB3D7D2474EC3E766AF33A8503",
+      "bytes": 345331
+    },
+    {
+      "case": "pytest\\test_reference_api_matches_ori2\\reference.json",
+      "paths": [
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori2\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori2\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori2\\reference.json"
+      ],
+      "sha256": "25177711796C8AC65DBEC29D062F4AB1893D2EC786C4A9BE66786FC1A92815CD",
+      "bytes": 287296
+    },
+    {
+      "case": "pytest\\test_reference_api_matches_ori3\\reference.json",
+      "paths": [
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b\\pytest\\test_reference_api_matches_ori3\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a\\pytest\\test_reference_api_matches_ori3\\reference.json",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b\\pytest\\test_reference_api_matches_ori3\\reference.json"
+      ],
+      "sha256": "C965B6417F7881A6D72DD45EAD1C7771809E13AA8D05A69B40F4FAD3CE477998",
+      "bytes": 333341
+    }
+  ],
+  "historical_default_equality": [
+    {
+      "old": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\ge-beam3-native-analysis-74412ac-20260909\\successful-repeats\\formal-a\\modal\\pytest\\test_actual_reference_modal_re0\\modal.json",
+      "current": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\pytest\\test_actual_reference_modal_re0\\modal.json",
+      "bytes": 25870,
+      "sha256": "AC1387CA0955F0FC47AA29743105227CCD7C64ACBE14D31E9034E20DD086CC8D"
+    },
+    {
+      "old": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\ge-beam3-native-analysis-74412ac-20260909\\successful-repeats\\formal-a\\modal\\pytest\\test_actual_reference_modal_re1\\modal.json",
+      "current": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression\\pytest\\test_actual_reference_modal_re1\\modal.json",
+      "bytes": 34061,
+      "sha256": "0AB4F8687FA48BEBF1102D3A5C0516BA1BFFD627267A26793CA9645297DEE7E9"
+    }
+  ],
+  "inventories": [
+    {
+      "path": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-smoke-a",
+      "tests": 9,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 9.832,
+      "process": {
+        "after": [
+          115156250,
+          0,
+          245059584
+        ],
+        "before": [
+          115156250,
+          0,
+          245059584
+        ],
+        "cleanup_error": null,
+        "elapsed": 11.763350599998375,
+        "ended_utc": "2026-09-09T20:18:03.511746+02:00",
+        "error": null,
+        "exit_code": 1,
+        "pid": 68536,
+        "reason": "CHILD_FAILURE",
+        "started_utc": "2026-09-09T20:17:51.748395+02:00",
+        "success": false
+      }
+    },
+    {
+      "path": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-20260909-rehearsal-b",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 9.57,
+      "process": {
+        "after": [
+          111093750,
+          0,
+          244764672
+        ],
+        "before": [
+          111093750,
+          0,
+          244764672
+        ],
+        "cleanup_error": null,
+        "elapsed": 11.256398500001524,
+        "ended_utc": "2026-09-09T20:19:22.898822+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 64004,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:19:11.642423+02:00",
+        "success": true
+      }
+    },
+    {
+      "path": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-a",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 9.856,
+      "process": {
+        "after": [
+          115156250,
+          0,
+          244326400
+        ],
+        "before": [
+          115156250,
+          0,
+          244326400
+        ],
+        "cleanup_error": null,
+        "elapsed": 11.872107599978335,
+        "ended_utc": "2026-09-09T20:30:11.13493+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 65312,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:29:59.262824+02:00",
+        "success": true
+      }
+    },
+    {
+      "path": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\replica-b",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 9.721,
+      "process": {
+        "after": [
+          115000000,
+          0,
+          242647040
+        ],
+        "before": [
+          115000000,
+          0,
+          242647040
+        ],
+        "cleanup_error": null,
+        "elapsed": 11.77091950000613,
+        "ended_utc": "2026-09-09T20:30:11.034602+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 55996,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:29:59.263682+02:00",
+        "success": true
+      }
+    },
+    {
+      "path": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-owned-reference-a767721-20260909-wave\\default-regression",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 3.213,
+      "process": {
+        "after": [
+          49375000,
+          0,
+          239980544
+        ],
+        "before": [
+          49375000,
+          0,
+          239980544
+        ],
+        "cleanup_error": null,
+        "elapsed": 5.139717000012752,
+        "ended_utc": "2026-09-09T20:30:04.403661+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 64980,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:29:59.263943+02:00",
+        "success": true
+      }
+    }
+  ],
+  "wave": {
+    "all_futures_terminal": true,
+    "elapsed": 11.95466899999883,
+    "revision": "a7677218f84f7dd9aa7e4b406448d7ddf96294d3",
+    "success": true
+  },
+  "failed_smoke_preserved": true,
+  "independent_author_review": false,
+  "production_qualified": false
+}

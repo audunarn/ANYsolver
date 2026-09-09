@@ -1,6 +1,31 @@
 # GE-B3 finish checklist
 
-## Immediate checkpoint: private coupling conservativity correction
+## Current delivery checkpoint: finish, do not restart campaigns
+
+As of 2026-09-09, the conservative coupled modal/buckling integration and the
+bounded generalized reference-mode interface repair have passing frozen
+verification. The latter implementation is
+`a7677218f84f7dd9aa7e4b406448d7ddf96294d3`, tree
+`d988ee99936e5d46f1c14558172ea070617ca054`. All launched verification
+processes are terminal. The older checkpoints below are preserved chronology,
+not instructions to repeat closed work.
+
+Three delivery gates remain: independent-author review of the current native
+candidate and its supported engineering scope; the distinctly identified public
+interface after acceptance; and the final isolated wheel plus unchanged-path
+performance verification. The older accepted straight P3 `ge-beam3` facade
+does not qualify the newer private curved/native classes by association.
+No public/default activation, release or complete qualification is claimed.
+
+The request to finish does not waive these gates. Freeze further exploratory
+work; reopen mechanics only for a concrete correctness finding or an explicit
+uncovered requirement identified against the delivery audit below. Do not
+re-execute the Euler, N32, ring or continuum campaigns simply to refresh dates.
+The current required independent-author review is not supplied by the same
+author's tests or numerical oracle. A separate reviewer must be explicitly
+designated; no permission to spawn reviewer agents is inferred.
+
+## Preserved checkpoint: private coupling conservativity correction
 
 The loaded V1 coupled operator failed the required conservative symmetry gate
 (Q4 4.8553e-5, S3 V2D 5.9533e-5 versus 1e-11), although its actual equilibrium
@@ -151,6 +176,20 @@ factor solver, with exactly six numerical rigid modes in the free cases. Five
 preflight controls reject cancellation, invalid bounds/counts, dirty models and
 concurrent use before initialization. Frozen replicas and affected default-route
 regression follow; this is an interface repair, not new mechanics authority.
+
+Frozen implementation `a7677218f84f7dd9aa7e4b406448d7ddf96294d3` now passed
+both nine-test replicas (9.856s and 9.721s). The separate ten-test historical
+default-route/preflight regression passed in 3.213s. Four reference records are
+byte-identical across the corrected rehearsal and both frozen replicas. The two
+default-route modal records also match the preserved `74412ac` formal-a records
+byte-for-byte. All three process trees ended empty; the wave took 11.955s.
+The 51-file external archive includes the failed cancellation smoke, corrected
+rehearsal, commands, source snapshots, receipts, JUnit and science. Every copy
+was checked by size and SHA-256 and is bound in
+`docs/reference_cases/ge_beam3_owned_reference_verification.json`.
+This interface check is closed. Do not rerun the larger mechanics campaigns
+for it. Independent-author review, current-core public delivery and final
+installed-wheel/performance checks remain open; no qualification flag changes.
 
 1. **Standalone workflow audit.** Generalized nodal-force and combined-couple
    ownership are now integrated and verified below. The captured-state buckling
