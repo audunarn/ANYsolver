@@ -40,7 +40,10 @@ class ElasticSeedPencil(Pencil):
 
 
 def prepare(model, program, seed, checkpoint, section_inertias, *, expected_seed_sha256,
-            expected_sha256, cancellation_token=None):
+            expected_sha256, cancellation_token=None, compliance_guard_policy=None):
+    from ._ge_beam3_compliance_snapshot_guard import POLICY as SNAPSHOT_POLICY
+    if compliance_guard_policy is not None and (type(compliance_guard_policy) is not str or compliance_guard_policy!=SNAPSHOT_POLICY):
+        raise ValueError('explicit registered compliance guard policy required')
     cancellation_safe_point(cancellation_token, 'translation-modal.capture')
     if type(program) is not control.Program: raise ValueError('exact translation program required')
     program.__post_init__(); program.nodal_forces.require(model.mesh)
@@ -56,6 +59,8 @@ def prepare(model, program, seed, checkpoint, section_inertias, *, expected_seed
     issued = context._require_issued(state); before = canonical(state)
     if context.checkpoint(records) != checkpoint: raise ValueError('translation replay changed checkpoint')
     physical = context.physical
+    # Capture the original context start once; never reset or extend its timer.
+    factor_started = physical.started
 
     def check():
         cancellation_safe_point(cancellation_token, 'translation-modal.guard')
@@ -82,7 +87,12 @@ def prepare(model, program, seed, checkpoint, section_inertias, *, expected_seed
             raise ValueError('work-conjugate retained kinematic blocks required')
         if _relative(h[:24,:24], h[:24,:24].T) > 1e-11:
             raise ValueError('symmetric conservative geometric Hessian required')
-        left, error = compliance_factor(-h[24:,24:], check)
+        if compliance_guard_policy is None:
+            left, error = compliance_factor(-h[24:,24:], check)
+        else:
+            from ._ge_beam3_compliance_snapshot_guard import snapshot_compliance,deadline_checkpoint
+            left, error = snapshot_compliance(-h[24:,24:],check,
+                lambda:deadline_checkpoint(factor_started,cancellation_token))
         internal = tuple(range(nodal+6*i,nodal+6*i+6))
         slots = tuple(element.get_dof_mapping(model.mesh))+internal
         right = np.zeros((18,size)); right[:,slots] = h[24:,:24]
