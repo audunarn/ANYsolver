@@ -92,6 +92,36 @@ def test_saved_receipt_still_rejects_nonempty_process_tree(tmp_path):
     path=tmp_path/'process.json';path.write_bytes(p.canonical(live))
     with pytest.raises(ValueError,match='empty bounded process tree'):saved_receipt(path,live)
 
+def test_actual_complete_saved_graph_not_live_tuple_graph():
+    from pathlib import Path
+    from docs.reference_cases.ge_beam3_plastic_arc_lifecycle_wave import saved_value
+    root=Path('C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-plastic-lifecycle-794e368-incident-20260909')
+    raw=p.read(root/'archive-manifest.json')
+    assert sha256(raw).hexdigest()=='a1d793df77e7d9cd0fb71e4a1cac77eafb31c83b3c125fe30794e5db995c7501'
+    manifest=p.strict_bytes(raw)
+    for name in ('runs/wave.json','reconstructed-diagnostic-only.json'):
+        raw=p.read(root/name)
+        assert manifest[name]==[len(raw),sha256(raw).hexdigest().upper()]
+    wave=p.strict_bytes(p.read(root/'runs/wave.json'));live=deepcopy(wave)
+    for r in live['receipts'].values():
+        r['before']=tuple(r['before']);r['after']=tuple(r['after'])
+    aggregate=p.strict_bytes(p.read(root/'reconstructed-diagnostic-only.json'))
+    with pytest.raises(ValueError,match='empty bounded process tree'):
+        p.validate_wave(live,aggregate,wave['revision'])
+    decoded=saved_value(root/'runs/wave.json',live)
+    assert p.validate_wave(decoded,aggregate,wave['revision'])==aggregate['cases']
+    assert len(decoded['receipts'])==19 and set(decoded['cases'])=={'1','2'}
+
+def test_saved_whole_value_disagreement_and_noncanonical(tmp_path):
+    from docs.reference_cases.ge_beam3_plastic_arc_lifecycle_wave import saved_value
+    path=tmp_path/'wave.json';value=dict(receipts=dict(worker=dict(after=(100,0,1000))))
+    path.write_bytes(p.canonical(value))
+    assert saved_value(path,value)['receipts']['worker']['after']==[100,0,1000]
+    changed=deepcopy(value);changed['receipts']['worker']['after']=(100,1,1000)
+    with pytest.raises(ValueError):saved_value(path,changed)
+    path.write_bytes(b' '+p.canonical(value))
+    with pytest.raises(ValueError):saved_value(path,value)
+
 @pytest.mark.parametrize('raw',(b'{"x":1,"x":2}\n',b'{"x":Infinity}\n',b'{ "x":1}\n'))
 def test_strict_json(raw):
     with pytest.raises(ValueError):p.strict_bytes(raw)

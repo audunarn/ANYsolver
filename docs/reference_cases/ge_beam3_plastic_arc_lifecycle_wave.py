@@ -11,10 +11,13 @@ from docs.reference_cases.ge_beam3_retained_prestress_wave import supervise,writ
 
 MODULE='docs.reference_cases.ge_beam3_plastic_arc_lifecycle_worker'
 
-def saved_receipt(path,live):
+def saved_value(path,live):
     raw=p.read(path)
     if p.canonical(live)!=raw:raise ValueError('live/stored receipt disagreement')
-    value=p.strict_bytes(raw);p.receipt(value)
+    return p.strict_bytes(raw)
+
+def saved_receipt(path,live):
+    value=saved_value(path,live);p.receipt(value)
     return value
 
 def chain(n,root,revision,deadline,stop,receipts):
@@ -64,6 +67,7 @@ def run(revision,phase,output,prior):
     wave=dict(revision=revision,phase=phase,receipts=receipts,cases=cases,elapsed=elapsed,
         success=not errors and set(cases)=={'1','2'},errors=errors,all_children_terminal=True)
     write(root/'wave.json',wave)
+    wave=saved_value(root/'wave.json',wave)
     if not wave['success']:raise RuntimeError('lifecycle wave blocked; preserve partials; no retry')
     rows=[]
     for n in (1,2):
