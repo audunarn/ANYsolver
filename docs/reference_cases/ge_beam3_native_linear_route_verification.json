@@ -1,0 +1,330 @@
+{
+  "schema": "GE_BEAM3_NATIVE_LINEAR_ROUTE_VERIFICATION_V1",
+  "revision": "4b8fc3ff320d4796373f8d72fa287f8748bd1546",
+  "tree": "6342326c5eca72fae0bcbcaf4a0de6dad9f36d54",
+  "runtime_tree": "8ea77c9ab0d8b358a129bb9fecda4a3d121aaebb",
+  "archive": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\ge-beam3-native-linear-4b8fc3f-20260909",
+  "stage": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-archive-stage",
+  "files": [
+    {
+      "relative": "smoke\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\command.json",
+      "bytes": 438,
+      "sha256": "33005CAC37BCF4F2406085369B1212EAAFA67DFFEDC72CC628AD5907504616C4"
+    },
+    {
+      "relative": "smoke\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\junit.xml",
+      "bytes": 1170,
+      "sha256": "7A0618EC3A04D86B5D20001F31CB80AFA182B3105160EB39BC358C799BA28A9A"
+    },
+    {
+      "relative": "smoke\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\process.json",
+      "bytes": 285,
+      "sha256": "1C460EA73B7321DD4E6CEADA958C13899390FEBD2F66F076D421A0D5C3BB35B0"
+    },
+    {
+      "relative": "smoke\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "smoke\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\stdout.txt",
+      "bytes": 100,
+      "sha256": "815C8A45BCACE3D8804AED208B60479477DCEB9FF151823100F889266399940C"
+    },
+    {
+      "relative": "smoke\\test_ge_beam3_native_linear_route.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\test_ge_beam3_native_linear_route.py",
+      "bytes": 4288,
+      "sha256": "3F51D8D4411183DCB14B29674BC2C4B0568E158B7898FBF81DDD5701FAEE6921"
+    },
+    {
+      "relative": "smoke\\pytest\\test_actual_linear_route_match0\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\pytest\\test_actual_linear_route_match0\\linear.json",
+      "bytes": 2556,
+      "sha256": "15DB68634BF86FFF7168C8406BF49625CC890E73A2763C1DA253A08414B8D301"
+    },
+    {
+      "relative": "smoke\\pytest\\test_actual_linear_route_match1\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\pytest\\test_actual_linear_route_match1\\linear.json",
+      "bytes": 2502,
+      "sha256": "10BDD7CAA0C78565334E9DFC2999136D5262E7842324BF61D7C71B5649B1CE94"
+    },
+    {
+      "relative": "smoke\\pytest\\test_actual_linear_route_match2\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\pytest\\test_actual_linear_route_match2\\linear.json",
+      "bytes": 2754,
+      "sha256": "974FA43745C7D87A2CA2CBDD2080EA830C973A1CA097FCE76BD4DEF51A146140"
+    },
+    {
+      "relative": "smoke\\pytest\\test_actual_linear_route_match3\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-20260909-smoke-a\\pytest\\test_actual_linear_route_match3\\linear.json",
+      "bytes": 2733,
+      "sha256": "7DC409CE8A27914BDE16D626DFF0919422D44E0F6D9D102116D385F24612E106"
+    },
+    {
+      "relative": "wave\\test_ge_beam3_native_linear_route.py",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\test_ge_beam3_native_linear_route.py",
+      "bytes": 4288,
+      "sha256": "3F51D8D4411183DCB14B29674BC2C4B0568E158B7898FBF81DDD5701FAEE6921"
+    },
+    {
+      "relative": "wave\\wave.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\wave.json",
+      "bytes": 128,
+      "sha256": "D5AABED86D47411032C80D9E71195299C4B5BFEA0BBF9A7B342C5C8EF407749C"
+    },
+    {
+      "relative": "wave\\replica-a\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\command.json",
+      "bytes": 444,
+      "sha256": "CC57CC2C1A16544A662A3ADD9D765D16A25334F4E36E7A6E0BBB43DD5C3A2764"
+    },
+    {
+      "relative": "wave\\replica-a\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\junit.xml",
+      "bytes": 1170,
+      "sha256": "586F06DB49D5E9FAF4C306702CC09255908974A2875344B3FD75B8726C6CE898"
+    },
+    {
+      "relative": "wave\\replica-a\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\process.json",
+      "bytes": 285,
+      "sha256": "16DCC6DFAC6854F9086399040E8C6455D989357010EAF955EE7C748CF2BEC9F9"
+    },
+    {
+      "relative": "wave\\replica-a\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\replica-a\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\stdout.txt",
+      "bytes": 100,
+      "sha256": "236569A24CB7DAE40B632E5596199EE715D36AFB7A118BCA4268E5A0AD88663A"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_linear_route_match0\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\pytest\\test_actual_linear_route_match0\\linear.json",
+      "bytes": 2556,
+      "sha256": "15DB68634BF86FFF7168C8406BF49625CC890E73A2763C1DA253A08414B8D301"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_linear_route_match1\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\pytest\\test_actual_linear_route_match1\\linear.json",
+      "bytes": 2502,
+      "sha256": "10BDD7CAA0C78565334E9DFC2999136D5262E7842324BF61D7C71B5649B1CE94"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_linear_route_match2\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\pytest\\test_actual_linear_route_match2\\linear.json",
+      "bytes": 2754,
+      "sha256": "974FA43745C7D87A2CA2CBDD2080EA830C973A1CA097FCE76BD4DEF51A146140"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_linear_route_match3\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-a\\pytest\\test_actual_linear_route_match3\\linear.json",
+      "bytes": 2733,
+      "sha256": "7DC409CE8A27914BDE16D626DFF0919422D44E0F6D9D102116D385F24612E106"
+    },
+    {
+      "relative": "wave\\replica-b\\command.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\command.json",
+      "bytes": 444,
+      "sha256": "F62A96F0EFB7FBFEC9FE9651D47B4BE65AF767AE7DC3BF21C508DE9490363DE7"
+    },
+    {
+      "relative": "wave\\replica-b\\junit.xml",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\junit.xml",
+      "bytes": 1170,
+      "sha256": "538110F04440AD127F64097F47EB2A5DA9F3411CD43FB70B3C72F63842181C2C"
+    },
+    {
+      "relative": "wave\\replica-b\\process.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\process.json",
+      "bytes": 286,
+      "sha256": "67106E3E2C19A1EFAD730B9546F7A6A7D3BB4BA4F059C07657274FC7504C1AEA"
+    },
+    {
+      "relative": "wave\\replica-b\\stderr.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\replica-b\\stdout.txt",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\stdout.txt",
+      "bytes": 100,
+      "sha256": "044432FCD89F67EC73B7CD504A4E0B3161DA3EB29D15C011C40A24E6B2869249"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_linear_route_match0\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\pytest\\test_actual_linear_route_match0\\linear.json",
+      "bytes": 2556,
+      "sha256": "15DB68634BF86FFF7168C8406BF49625CC890E73A2763C1DA253A08414B8D301"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_linear_route_match1\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\pytest\\test_actual_linear_route_match1\\linear.json",
+      "bytes": 2502,
+      "sha256": "10BDD7CAA0C78565334E9DFC2999136D5262E7842324BF61D7C71B5649B1CE94"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_linear_route_match2\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\pytest\\test_actual_linear_route_match2\\linear.json",
+      "bytes": 2754,
+      "sha256": "974FA43745C7D87A2CA2CBDD2080EA830C973A1CA097FCE76BD4DEF51A146140"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_linear_route_match3\\linear.json",
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\ge-beam3-native-linear-4b8fc3f-20260909-wave\\replica-b\\pytest\\test_actual_linear_route_match3\\linear.json",
+      "bytes": 2733,
+      "sha256": "7DC409CE8A27914BDE16D626DFF0919422D44E0F6D9D102116D385F24612E106"
+    }
+  ],
+  "scientific_equality": [
+    {
+      "relative": "pytest\\test_actual_linear_route_match0\\linear.json",
+      "bytes": 2556,
+      "sha256": "15DB68634BF86FFF7168C8406BF49625CC890E73A2763C1DA253A08414B8D301",
+      "identical_in": [
+        "smoke",
+        "wave\\replica-a",
+        "wave\\replica-b"
+      ]
+    },
+    {
+      "relative": "pytest\\test_actual_linear_route_match1\\linear.json",
+      "bytes": 2502,
+      "sha256": "10BDD7CAA0C78565334E9DFC2999136D5262E7842324BF61D7C71B5649B1CE94",
+      "identical_in": [
+        "smoke",
+        "wave\\replica-a",
+        "wave\\replica-b"
+      ]
+    },
+    {
+      "relative": "pytest\\test_actual_linear_route_match2\\linear.json",
+      "bytes": 2754,
+      "sha256": "974FA43745C7D87A2CA2CBDD2080EA830C973A1CA097FCE76BD4DEF51A146140",
+      "identical_in": [
+        "smoke",
+        "wave\\replica-a",
+        "wave\\replica-b"
+      ]
+    },
+    {
+      "relative": "pytest\\test_actual_linear_route_match3\\linear.json",
+      "bytes": 2733,
+      "sha256": "7DC409CE8A27914BDE16D626DFF0919422D44E0F6D9D102116D385F24612E106",
+      "identical_in": [
+        "smoke",
+        "wave\\replica-a",
+        "wave\\replica-b"
+      ]
+    }
+  ],
+  "inventories": [
+    {
+      "directory": "smoke",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 2.389,
+      "process": {
+        "after": [
+          40625000,
+          0,
+          239558656
+        ],
+        "before": [
+          40625000,
+          0,
+          239558656
+        ],
+        "cleanup_error": null,
+        "elapsed": 4.128072299994528,
+        "ended_utc": "2026-09-09T20:40:37.920533+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 61088,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:40:33.79246+02:00",
+        "success": true
+      }
+    },
+    {
+      "directory": "wave\\replica-a",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 2.69,
+      "process": {
+        "after": [
+          44531250,
+          0,
+          241377280
+        ],
+        "before": [
+          44531250,
+          0,
+          241377280
+        ],
+        "cleanup_error": null,
+        "elapsed": 4.730648700002348,
+        "ended_utc": "2026-09-09T20:42:20.381045+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 61208,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:42:15.650399+02:00",
+        "success": true
+      }
+    },
+    {
+      "directory": "wave\\replica-b",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 2.703,
+      "process": {
+        "after": [
+          44218750,
+          0,
+          240070656
+        ],
+        "before": [
+          44218750,
+          0,
+          240070656
+        ],
+        "cleanup_error": null,
+        "elapsed": 4.7297077999974135,
+        "ended_utc": "2026-09-09T20:42:20.380487+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 64976,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:42:15.650776+02:00",
+        "success": true
+      }
+    }
+  ],
+  "wave": {
+    "all_futures_terminal": true,
+    "elapsed": 4.8145215999975335,
+    "revision": "4b8fc3ff320d4796373f8d72fa287f8748bd1546",
+    "success": true
+  },
+  "runtime_changed": false,
+  "independent_author_review": false,
+  "production_qualified": false
+}

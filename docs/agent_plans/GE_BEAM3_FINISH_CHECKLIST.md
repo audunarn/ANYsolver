@@ -163,6 +163,15 @@ mechanics, public selector or checkpoint schema was changed to add this check.
 Linearized internal recovery here is a diagnostic increment, never an accepted
 nonlinear history. The initial six-test smoke passed; frozen verification follows.
 
+Frozen tests `4b8fc3ff320d4796373f8d72fa287f8748bd1546` passed all six cases
+in both replicas (2.690s and 2.703s), following the six-test smoke (2.389s).
+All four scientific records are byte-identical in all three runs. Both replica
+process trees terminated empty in at most 4.731s; the wave took 4.815s. The
+30-file archive, source, commands, receipts and exact comparisons are bound by
+`docs/reference_cases/ge_beam3_native_linear_route_verification.json`. This
+closes the direct linear-route integration evidence gap without changing the
+runtime tree. It does not close public delivery or independent-author review.
+
 ### Current delivery audit (2026-09-09, after `b8cbebb`)
 
 This audit retains the full requested goal. "Verified subset" below is not a
