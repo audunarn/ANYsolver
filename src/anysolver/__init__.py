@@ -495,7 +495,7 @@ from .sesam_fem import (
     write_sesam_fem_document,
 )
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 __all__ = [
     # Core classes

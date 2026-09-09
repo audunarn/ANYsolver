@@ -13,6 +13,7 @@ process tree when the shared wall-clock limit expires.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -71,6 +72,10 @@ DEDICATED_LANE_NODES = (
 # checkouts may not carry the bound object, and superseded aliases must retain
 # their historical meaning on the frozen source revision.
 PORTABLE_HISTORY_ONLY_NODES = (
+    # Original P3 metadata/commit authority remains frozen at 0.4.2. Runtime
+    # routing/state tests in this module still run; release metadata is tested
+    # independently by test_release_043.py.
+    "tests/test_ge_beam3_mixed_p3_optin.py::test_frozen_mechanics_defaults_and_package_metadata_are_unchanged",
     # This module replays the immutable V1 opt-in mixed-mesh campaign. Its
     # canonical input intentionally binds the original ``e4-pl-s3`` alias to
     # QualifiedE4PLS3ShellElement, so it cannot be replayed after that public
@@ -237,6 +242,7 @@ def matrix_modules(
 def merge_test_modules() -> tuple[str, ...]:
     """Return the current non-performance, non-historical merge-test extent."""
 
+    _ge_beam3_inventory()
     lanes = inventory()
     registered = [module for lane in MERGE_LANES for module in lanes[lane]]
     if len(registered) != len(set(registered)):
@@ -262,11 +268,27 @@ def merge_test_modules() -> tuple[str, ...]:
 def _is_portable_historical_module(module: str) -> bool:
     """Return whether *module* needs frozen history or external evidence."""
 
+    if module.startswith("tests/test_ge_beam3_"):
+        return module in _ge_beam3_inventory()["extended"]
     if module in POST_CLOSEOUT_HISTORICAL_MODULES:
         return True
     if module in PORTABLE_CURRENT_S3_SUCCESSOR_MODULES:
         return False
     return _VERSIONED_S3_STUDY_RE.fullmatch(module) is not None
+
+
+def _ge_beam3_inventory() -> dict[str, list[str]]:
+    """Classify every GE test explicitly; never silently skip new modules."""
+    record = json.loads((ROOT / "scripts/ge_beam3_release_test_inventory.json").read_text())
+    if record["schema"] != "anysolver.release-ge-test-inventory.v1":
+        raise RuntimeError("invalid GE test inventory schema")
+    portable, extended = record["portable"], record["extended"]
+    registered = portable + extended
+    actual = {path.relative_to(ROOT).as_posix()
+              for path in (ROOT / "tests").glob("test_ge_beam3_*.py")}
+    if len(registered) != len(set(registered)) or set(registered) != actual:
+        raise RuntimeError("GE test inventory is incomplete or overlapping")
+    return record
 
 
 def _worker_environment(root: Path) -> dict[str, str]:

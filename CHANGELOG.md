@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 0.4.3 - 2026-09-09
+
+- Add the explicitly selected `ge-beam3` straight mixed beam and the reviewed
+  `ge-beam3-native` model-owned straight/regular-curved beam workflows, with
+  declared generalized and physical-fibre sections, authenticated history,
+  recovery, restart, and admitted reference/current-rest spectral analysis.
+- Add the reviewed objective eccentric generalized-beam connection to one
+  owned elastic qualified Q4 or S3 V2D through the native workflow API.
+- Preserve the full development/qualification history and its scoped
+  independent acceptance. This is not qualification of generic mixed FEModel
+  routing, plastic/fibre-shell coupling, finite-velocity rotational dynamics,
+  arbitrary sections, or stable postbuckling paths from rest.
+- Keep existing B2/B3, qualified Q4/S3 mechanics and all defaults unchanged.
+  See `docs/GE_BEAM3_NATIVE_WORKFLOWS.md` for the supported API and limitations.
+- Separate the explicit current GE runtime CI inventory from preserved extended
+  experiments. Historical evidence and the unpublished qualification wheel
+  remain immutable; the versioned release wheel is verified separately.
+
 ## 0.4.2 - 2026-09-03
 
 - Canonicalize solver-owned compact qualified-Q4 plastic state once at the
