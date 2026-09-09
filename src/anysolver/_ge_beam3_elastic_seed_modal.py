@@ -21,8 +21,10 @@ POLICY = 'GE_BEAM3_ELASTIC_SEED_OWNED_CURRENT_REST_FACTOR_CHAIN_V1'
 
 
 def _factor_size(nodal, elements):
-    if (type(nodal) is not int or type(elements) is not int or not 1<=elements<=24
-            or not 6<=nodal or nodal%6 or nodal+6*elements>512):
+    from ._ge_beam3_refinement_capacity import retained_limits
+    maximum,_,full=retained_limits()
+    if (type(nodal) is not int or type(elements) is not int or not 1<=elements<=maximum
+            or not 6<=nodal or nodal%6 or nodal+6*elements>full):
         raise ValueError('bounded retained spectral model required')
     return nodal+6*elements
 

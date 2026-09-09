@@ -25,8 +25,10 @@ SCHEMA='GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_ACCEPTED_CHAIN_V1'
 POLICY='CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_FORCE_V1'
 
 def _retained_size(nodal, elements):
-    if (type(nodal) is not int or type(elements) is not int or not 1<=elements<=24
-            or not 6<=nodal<=512 or nodal%6 or nodal+24*elements>1024):
+    from ._ge_beam3_refinement_capacity import retained_limits
+    maximum,full,_=retained_limits()
+    if (type(nodal) is not int or type(elements) is not int or not 1<=elements<=maximum
+            or not 6<=nodal<=512 or nodal%6 or nodal+24*elements>full):
         raise ValueError('bounded retained generalized system')
     return nodal+24*elements
 

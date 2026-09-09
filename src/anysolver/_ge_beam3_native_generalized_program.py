@@ -19,7 +19,8 @@ def model_identity(model):
 
 def retained_model_identity(model):
     """Bounded retained-system refinement; condensed drivers keep their cap."""
-    return _model_identity(model, 24)
+    from ._ge_beam3_refinement_capacity import retained_limits
+    return _model_identity(model, retained_limits()[0])
 
 
 def _model_identity(model, maximum_elements):
