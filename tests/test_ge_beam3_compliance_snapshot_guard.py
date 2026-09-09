@@ -59,4 +59,3 @@ def test_nonpositive_compliance_still_rejected_and_guarded():
     full=[]
     with pytest.raises(np.linalg.LinAlgError):policy.snapshot_compliance(-np.eye(18),lambda:full.append(1),lambda:None)
     assert full==[1,1]
-
