@@ -11,6 +11,12 @@ from docs.reference_cases.ge_beam3_retained_prestress_wave import supervise,writ
 
 MODULE='docs.reference_cases.ge_beam3_plastic_arc_lifecycle_worker'
 
+def saved_receipt(path,live):
+    raw=p.read(path)
+    if p.canonical(live)!=raw:raise ValueError('live/stored receipt disagreement')
+    value=p.strict_bytes(raw);p.receipt(value)
+    return value
+
 def chain(n,root,revision,deadline,stop,receipts):
     root.mkdir();files={};reports={};requests={}
     try:
@@ -24,7 +30,7 @@ def chain(n,root,revision,deadline,stop,receipts):
             receipts[f'n{n}/{mode}']=result
             print(dict(macros=n,mode=mode,**result),flush=True)
             if not result['success']:raise RuntimeError('lifecycle worker failed: '+mode+'; no retry')
-            p.receipt(result);p.bound(request)
+            saved_receipt(job/'process.json',result);p.bound(request)
             reports[mode]=p.bind(job/'output/report.json');requests[mode]=request
             if mode in ('full','prefix'):files[mode]=p.bind(job/'output/checkpoint.json')
             elif mode=='capture':files['capture']=p.bind(job/'output/capture.json')

@@ -74,6 +74,24 @@ def test_mutated_archive_authority(tmp_path,monkeypatch):
     monkeypatch.setattr(p,'ROOT',tmp_path)
     with pytest.raises(ValueError,match='smoke status authority'):p.authority()
 
+def test_live_tuple_receipt_validated_through_original_saved_bytes(tmp_path):
+    from docs.reference_cases.ge_beam3_plastic_arc_lifecycle_wave import saved_receipt
+    live=dict(reason='COMPLETED',success=True,exit_code=0,error=None,cleanup_error=None,
+        elapsed=1.,before=(100,0,1000),after=(100,0,1000))
+    with pytest.raises(ValueError):p.receipt(live)
+    path=tmp_path/'process.json';path.write_bytes(p.canonical(live))
+    value=saved_receipt(path,live)
+    assert type(value['after']) is list and value['after'][1]==0
+    live['after']=(100,1,1000)
+    with pytest.raises(ValueError,match='live/stored receipt'):saved_receipt(path,live)
+
+def test_saved_receipt_still_rejects_nonempty_process_tree(tmp_path):
+    from docs.reference_cases.ge_beam3_plastic_arc_lifecycle_wave import saved_receipt
+    live=dict(reason='COMPLETED',success=True,exit_code=0,error=None,cleanup_error=None,
+        elapsed=1.,before=(100,1,1000),after=(100,0,1000))
+    path=tmp_path/'process.json';path.write_bytes(p.canonical(live))
+    with pytest.raises(ValueError,match='empty bounded process tree'):saved_receipt(path,live)
+
 @pytest.mark.parametrize('raw',(b'{"x":1,"x":2}\n',b'{"x":Infinity}\n',b'{ "x":1}\n'))
 def test_strict_json(raw):
     with pytest.raises(ValueError):p.strict_bytes(raw)
