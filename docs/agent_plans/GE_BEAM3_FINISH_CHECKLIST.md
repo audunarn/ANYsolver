@@ -283,3 +283,38 @@ The next substantive connection task is binding
 real Q4/S3 and native-beam state owners, followed by assembled work/equilibrium,
 history, restart and modal/buckling checks. Do not substitute arbitrary pose
 arrays or a linear MPC for those owner and global-solver requirements.
+
+## Real shell/beam trial assembly
+
+`_ge_beam3_shell_joint_trial.py` now assembles the actual qualified Q4 or S3 V2D
+corotational response, the retained generalized beam response, and the eccentric
+pose constraint. Shell and beam node namespaces stay separate. The shell model
+and virgin elastic origin are owned by this trial context. The beam predecessor
+must be issued by the actual retained owner; its accepted material histories,
+not fabricated histories or current trial results, supply the material origins.
+
+The important interface distinction is explicit: existing shell residual rows
+are spatial wrenches, but their rotational columns are additive coordinates.
+The joint contribution therefore uses spatial residual `r` and Jacobian `J P`.
+It must not add chart-covector `P.T r` to the unchanged shell residual. No shell,
+beam, pose-kernel, default, tolerance or recovery implementation is modified.
+
+The 21-test development inventory passed in 7.73 seconds (9.75 seconds including
+the child process). All four Q4/S3-V2D x straight/curved eccentric coupled
+first-increment Newton diagnostics converged in two corrections; final free
+residual norms are at most 3.14e-14. Directional derivatives and physical wrench
+balance pass their existing tolerances. A separate genuine curved plastic-beam
+predecessor test passed in 8.21 seconds and preserved the complete accepted
+checkpoint and recovery after a rejected coupled trial. Two earlier development
+failures are retained: the adapter initially assumed Q4 had the S3 offset
+attribute, then the test attempted to JSON-encode byte-valued fields directly.
+Neither failure changes or reclassifies historical mechanics evidence.
+
+This closes the real-operator trial seam, not the remaining coupled state owner.
+There is deliberately no coupled commit, restart, modal or buckling API here.
+The Newton checks are converged first-increment diagnostics, not accepted
+coupled-history evidence. Accepted global history must be owned and committed
+only after joint equilibrium, constraints and both constitutive transactions
+pass; a standalone beam checkpoint cannot be relabelled as that history.
+Standalone delivery, independent-author review and final installed-wheel checks
+remain open. Use this checklist, not another speculative programme.

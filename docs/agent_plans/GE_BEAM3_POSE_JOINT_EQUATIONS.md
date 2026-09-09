@@ -125,3 +125,19 @@ public connection. Those assembled owner/solver gates remain required. In
 particular, an arbitrary rotation vector must not be presented as an accepted
 Q4/S3 director. Every result retains production_qualified=false and
 owner_binding_authorized=false.
+# Real shell residual convention
+
+The unchanged Q4 and S3 V2D corotational wrapper returns spatial nodal
+forces/moments. Its consistent tangent differentiates those rows with respect
+to translations and additive total rotation-vector coordinates. The private
+real-operator trial assembler therefore adds `r_pose` and `J_spatial P`, where
+`P` contains the shell left-Exp Jacobian and the identity for the beam's spatial
+increment. It does not apply the left `P.T` or its derivative: those would
+change the residual row convention without changing the existing shell rows.
+
+The pose-only additive-chart covector interface remains correct for its own
+declared convention and is unchanged. These two interfaces must not be confused.
+Tests use actual shell and retained beam operators, independent directional
+differences, physical wrench balance and first-increment coupled Newton checks.
+No symmetry or variational shell-mechanics claim is inferred from the generally
+nonsymmetric corotational Jacobian; no coupled accepted state is issued.
