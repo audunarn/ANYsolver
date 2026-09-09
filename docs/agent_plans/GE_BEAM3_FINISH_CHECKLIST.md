@@ -318,3 +318,20 @@ only after joint equilibrium, constraints and both constitutive transactions
 pass; a standalone beam checkpoint cannot be relabelled as that history.
 Standalone delivery, independent-author review and final installed-wheel checks
 remain open. Use this checklist, not another speculative programme.
+
+Frozen implementation `fa7ab2c18bf84ef9e7873a41629d1d2d50b6ecfe` passed the
+complete 22-test rehearsal and both fresh 22-test replicas. The ten scientific
+files are byte-identical across all three runs. Each process terminated with
+an empty child tree in at most 17.19 seconds; the complete bounded wave took
+approximately 35 seconds. Maximum real-assembly directional derivative error
+is 1.325e-10, below the unchanged 1e-7 gate. The complete 79-file archive,
+including failed development runs and their source snapshots, is bound by
+`docs/reference_cases/ge_beam3_shell_joint_trial_verification.json`.
+
+An elevated read-only archival audit initially could not traverse the sandbox
+account's owner-only pytest directories and stopped before creating the archive.
+The owning account then verified and staged each file; every final archive copy
+matches its source byte count and SHA-256. Original ACLs, data, tests and process
+results were not altered or rerun. This is an administrative access incident,
+not a failed scientific result. Existing element mechanics and defaults have
+zero delta from the preceding checkpoint. Overall qualification is still open.

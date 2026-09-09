@@ -1,0 +1,502 @@
+{
+  "schema": "GE_BEAM3_REAL_SHELL_JOINT_TRIAL_VERIFICATION_V1",
+  "revision": "fa7ab2c18bf84ef9e7873a41629d1d2d50b6ecfe",
+  "tree": "6dff378d0fa7370272c0c5ec8c0467cbbea2a4e2",
+  "archive": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-shell-joint-fa7ab2c-20260909",
+  "inventories": [
+    {
+      "name": "rehearsal",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 15.138,
+      "process_seconds": 17.182650699978694,
+      "pid": 44008,
+      "tree_empty": true
+    },
+    {
+      "name": "replica-a",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 14.656,
+      "process_seconds": 16.785114400001476,
+      "pid": 42820,
+      "tree_empty": true
+    },
+    {
+      "name": "replica-b",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 14.852,
+      "process_seconds": 16.985303000023123,
+      "pid": 43024,
+      "tree_empty": true
+    }
+  ],
+  "scientific_files": [
+    {
+      "path": "test_bounded_first_increment_c0/newton.json",
+      "bytes": 2386,
+      "sha256": "b33426a17845b1b1b15903b13413e626fec4e5609a8d3b53ab176330655813fa"
+    },
+    {
+      "path": "test_bounded_first_increment_c1/newton.json",
+      "bytes": 2397,
+      "sha256": "ae2d5adfca15c7284b5b06f59ef146fd0728fe8c5f0d9823ac59a15a02bd6ce1"
+    },
+    {
+      "path": "test_bounded_first_increment_c2/newton.json",
+      "bytes": 2471,
+      "sha256": "2eff68a16e5f07d46c87c42ae837c9a17dc9f26aef41f20cbd1ea83e0b7da5c3"
+    },
+    {
+      "path": "test_bounded_first_increment_c3/newton.json",
+      "bytes": 2444,
+      "sha256": "17362c6c3c590ef2247a378e9854817aaad399008767f342801c1ce0de19a68e"
+    },
+    {
+      "path": "test_genuine_curved_plastic_be0/predecessor.json",
+      "bytes": 30581,
+      "sha256": "bf136e96b3e32761e5ff97b29d71416b45cfc4489f38fcdfcafe14ce68b585b4"
+    },
+    {
+      "path": "test_genuine_curved_plastic_be0/trial-history.json",
+      "bytes": 3554,
+      "sha256": "6e4db5c832e5080a90168cb278248738b9f64ce7e3c4f2fd79a58631957bb749"
+    },
+    {
+      "path": "test_real_components_and_spati0/trial.json",
+      "bytes": 48190,
+      "sha256": "18cfe3404e7d699875a8d0d5fab63ed8322640c0940f72bfc671ade2b58d6602"
+    },
+    {
+      "path": "test_real_components_and_spati1/trial.json",
+      "bytes": 44703,
+      "sha256": "c16b0e016f94687400af0265778366347f1ddfabc09e77ce0b75d2424ebda3f6"
+    },
+    {
+      "path": "test_real_components_and_spati2/trial.json",
+      "bytes": 48397,
+      "sha256": "6357598e675fad67d4f714ab669f9392ade18c7f2761ebd92c115b163ebe5671"
+    },
+    {
+      "path": "test_real_components_and_spati3/trial.json",
+      "bytes": 44913,
+      "sha256": "a1bfa0401d651f0b722bf875ae846e0882c906d442b669f86076be2a8945d8ea"
+    }
+  ],
+  "all_replicas_byte_identical": true,
+  "production_qualified": false,
+  "coupled_state_committed": false,
+  "independent_author_review": false,
+  "scope": "Owned virgin elastic Q4/S3-V2D and genuine retained generalized beam trial assembly; first-increment Newton diagnostics; no coupled commit/restart/spectral authority",
+  "preserved_failures": [
+    "smoke-a: Q4 has no S3 reference_surface_offset attribute",
+    "smoke-b: diagnostic serializer attempted raw bytes in JSON"
+  ],
+  "source_snapshot_extent": "Failed smoke-a and smoke-b sources plus frozen implementation; later unfrozen passing smokes retain logs and outputs",
+  "administrative_incident": "An elevated read-only audit could not read sandbox-owned pytest directories; it stopped before archive creation. The original owning account verified and staged copies without changing original permissions or evidence.",
+  "files": [
+    {
+      "path": "wave/rehearsal/command.json",
+      "bytes": 344,
+      "sha256": "d7b61dd486ba04fadc79d915601d40eafc3579f6d2f427fe3ae5839e5f00027f"
+    },
+    {
+      "path": "wave/rehearsal/junit.xml",
+      "bytes": 3500,
+      "sha256": "dfda29b292b2590c261e5d87b15547372bef37111c82dbbdab2fe95ad8424bdb"
+    },
+    {
+      "path": "wave/rehearsal/process.json",
+      "bytes": 288,
+      "sha256": "333e217e55cc2d5199f9660104de59f6684b4ab0eb0eb0371ce66c5c915ce8dd"
+    },
+    {
+      "path": "wave/rehearsal/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "wave/rehearsal/stdout.txt",
+      "bytes": 102,
+      "sha256": "0147d95eb2dd6e2aafb9a0cb896ab7d3b782ec2eee975b0a8ffdfd388b896ebb"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_bounded_first_increment_c0/newton.json",
+      "bytes": 2386,
+      "sha256": "b33426a17845b1b1b15903b13413e626fec4e5609a8d3b53ab176330655813fa"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_bounded_first_increment_c1/newton.json",
+      "bytes": 2397,
+      "sha256": "ae2d5adfca15c7284b5b06f59ef146fd0728fe8c5f0d9823ac59a15a02bd6ce1"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_bounded_first_increment_c2/newton.json",
+      "bytes": 2471,
+      "sha256": "2eff68a16e5f07d46c87c42ae837c9a17dc9f26aef41f20cbd1ea83e0b7da5c3"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_bounded_first_increment_c3/newton.json",
+      "bytes": 2444,
+      "sha256": "17362c6c3c590ef2247a378e9854817aaad399008767f342801c1ce0de19a68e"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_genuine_curved_plastic_be0/predecessor.json",
+      "bytes": 30581,
+      "sha256": "bf136e96b3e32761e5ff97b29d71416b45cfc4489f38fcdfcafe14ce68b585b4"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_genuine_curved_plastic_be0/trial-history.json",
+      "bytes": 3554,
+      "sha256": "6e4db5c832e5080a90168cb278248738b9f64ce7e3c4f2fd79a58631957bb749"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_real_components_and_spati0/trial.json",
+      "bytes": 48190,
+      "sha256": "18cfe3404e7d699875a8d0d5fab63ed8322640c0940f72bfc671ade2b58d6602"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_real_components_and_spati1/trial.json",
+      "bytes": 44703,
+      "sha256": "c16b0e016f94687400af0265778366347f1ddfabc09e77ce0b75d2424ebda3f6"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_real_components_and_spati2/trial.json",
+      "bytes": 48397,
+      "sha256": "6357598e675fad67d4f714ab669f9392ade18c7f2761ebd92c115b163ebe5671"
+    },
+    {
+      "path": "wave/rehearsal/pytest/test_real_components_and_spati3/trial.json",
+      "bytes": 44913,
+      "sha256": "a1bfa0401d651f0b722bf875ae846e0882c906d442b669f86076be2a8945d8ea"
+    },
+    {
+      "path": "wave/replica-a/command.json",
+      "bytes": 344,
+      "sha256": "177c3a34e28b07d576ffa9fd99efb1926c123825290fdc54866bfac52ddf052a"
+    },
+    {
+      "path": "wave/replica-a/junit.xml",
+      "bytes": 3500,
+      "sha256": "dcc7057a820d375a551be30f71549afdee6274d65df03fd95e9fa81b19cf5bba"
+    },
+    {
+      "path": "wave/replica-a/process.json",
+      "bytes": 288,
+      "sha256": "166169fb33a8c7eef9f8cb1a676d87a6829a4019136cce35235c0021959bd287"
+    },
+    {
+      "path": "wave/replica-a/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "wave/replica-a/stdout.txt",
+      "bytes": 102,
+      "sha256": "c4b1b92cf6c2c2abf29f1fedd07b5d4dc278b6bda69c836f01f9d11ac6a72e51"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_bounded_first_increment_c0/newton.json",
+      "bytes": 2386,
+      "sha256": "b33426a17845b1b1b15903b13413e626fec4e5609a8d3b53ab176330655813fa"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_bounded_first_increment_c1/newton.json",
+      "bytes": 2397,
+      "sha256": "ae2d5adfca15c7284b5b06f59ef146fd0728fe8c5f0d9823ac59a15a02bd6ce1"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_bounded_first_increment_c2/newton.json",
+      "bytes": 2471,
+      "sha256": "2eff68a16e5f07d46c87c42ae837c9a17dc9f26aef41f20cbd1ea83e0b7da5c3"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_bounded_first_increment_c3/newton.json",
+      "bytes": 2444,
+      "sha256": "17362c6c3c590ef2247a378e9854817aaad399008767f342801c1ce0de19a68e"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_genuine_curved_plastic_be0/predecessor.json",
+      "bytes": 30581,
+      "sha256": "bf136e96b3e32761e5ff97b29d71416b45cfc4489f38fcdfcafe14ce68b585b4"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_genuine_curved_plastic_be0/trial-history.json",
+      "bytes": 3554,
+      "sha256": "6e4db5c832e5080a90168cb278248738b9f64ce7e3c4f2fd79a58631957bb749"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_real_components_and_spati0/trial.json",
+      "bytes": 48190,
+      "sha256": "18cfe3404e7d699875a8d0d5fab63ed8322640c0940f72bfc671ade2b58d6602"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_real_components_and_spati1/trial.json",
+      "bytes": 44703,
+      "sha256": "c16b0e016f94687400af0265778366347f1ddfabc09e77ce0b75d2424ebda3f6"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_real_components_and_spati2/trial.json",
+      "bytes": 48397,
+      "sha256": "6357598e675fad67d4f714ab669f9392ade18c7f2761ebd92c115b163ebe5671"
+    },
+    {
+      "path": "wave/replica-a/pytest/test_real_components_and_spati3/trial.json",
+      "bytes": 44913,
+      "sha256": "a1bfa0401d651f0b722bf875ae846e0882c906d442b669f86076be2a8945d8ea"
+    },
+    {
+      "path": "wave/replica-b/command.json",
+      "bytes": 344,
+      "sha256": "6577b635929fe22b579ff1fa0b04a66eacc36d420097510035d9cd952e2c2405"
+    },
+    {
+      "path": "wave/replica-b/junit.xml",
+      "bytes": 3500,
+      "sha256": "bc2af9a66fb1ab4bd57b567308cd1fce37f6d9bf277ed18e97a48f3f99ca5446"
+    },
+    {
+      "path": "wave/replica-b/process.json",
+      "bytes": 288,
+      "sha256": "d5d3a9f6ac28ac5ed0eb2497e63a00ac2375072a68ccd5ebe1e62bc33682a19d"
+    },
+    {
+      "path": "wave/replica-b/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "wave/replica-b/stdout.txt",
+      "bytes": 102,
+      "sha256": "5b706ab30b504462482a2a3614f9c03d647f78db4e133147927b1694df0a3af4"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_bounded_first_increment_c0/newton.json",
+      "bytes": 2386,
+      "sha256": "b33426a17845b1b1b15903b13413e626fec4e5609a8d3b53ab176330655813fa"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_bounded_first_increment_c1/newton.json",
+      "bytes": 2397,
+      "sha256": "ae2d5adfca15c7284b5b06f59ef146fd0728fe8c5f0d9823ac59a15a02bd6ce1"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_bounded_first_increment_c2/newton.json",
+      "bytes": 2471,
+      "sha256": "2eff68a16e5f07d46c87c42ae837c9a17dc9f26aef41f20cbd1ea83e0b7da5c3"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_bounded_first_increment_c3/newton.json",
+      "bytes": 2444,
+      "sha256": "17362c6c3c590ef2247a378e9854817aaad399008767f342801c1ce0de19a68e"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_genuine_curved_plastic_be0/predecessor.json",
+      "bytes": 30581,
+      "sha256": "bf136e96b3e32761e5ff97b29d71416b45cfc4489f38fcdfcafe14ce68b585b4"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_genuine_curved_plastic_be0/trial-history.json",
+      "bytes": 3554,
+      "sha256": "6e4db5c832e5080a90168cb278248738b9f64ce7e3c4f2fd79a58631957bb749"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_real_components_and_spati0/trial.json",
+      "bytes": 48190,
+      "sha256": "18cfe3404e7d699875a8d0d5fab63ed8322640c0940f72bfc671ade2b58d6602"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_real_components_and_spati1/trial.json",
+      "bytes": 44703,
+      "sha256": "c16b0e016f94687400af0265778366347f1ddfabc09e77ce0b75d2424ebda3f6"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_real_components_and_spati2/trial.json",
+      "bytes": 48397,
+      "sha256": "6357598e675fad67d4f714ab669f9392ade18c7f2761ebd92c115b163ebe5671"
+    },
+    {
+      "path": "wave/replica-b/pytest/test_real_components_and_spati3/trial.json",
+      "bytes": 44913,
+      "sha256": "a1bfa0401d651f0b722bf875ae846e0882c906d442b669f86076be2a8945d8ea"
+    },
+    {
+      "path": "smoke-a/junit.xml",
+      "bytes": 2990,
+      "sha256": "67f79c400bf38cd6b5aef4a0dae3ec3c62e2ffae713aad8cbed89d15b1d369e4"
+    },
+    {
+      "path": "smoke-a/process.json",
+      "bytes": 291,
+      "sha256": "e4a4003698fddc39c86059c1c1daefdeb58af31c7d72a6f5222884d26fb124da"
+    },
+    {
+      "path": "smoke-a/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "smoke-a/stdout.txt",
+      "bytes": 2913,
+      "sha256": "7f9817b46bfbb666b47b5f3bbc24547664b195788c565b1135628500c96f03e8"
+    },
+    {
+      "path": "smoke-a/source/_ge_beam3_shell_joint_trial.py",
+      "bytes": 10902,
+      "sha256": "40b41b08946cd84b9a6fccde06821040432da7324e501c55ddbf0cdb5f3189dc"
+    },
+    {
+      "path": "smoke-a/source/test_ge_beam3_shell_joint_trial.py",
+      "bytes": 7744,
+      "sha256": "aa63d52b6beb0b4137c2f150c11991a3b717cc0156409f4415aad73411d71a4e"
+    },
+    {
+      "path": "smoke-b/junit.xml",
+      "bytes": 4891,
+      "sha256": "4dd19d7e6a939bf8cfb9d833f41bd971c2a37cc1dc0be018aacf0edbaca201d7"
+    },
+    {
+      "path": "smoke-b/process.json",
+      "bytes": 289,
+      "sha256": "b99f5d3c1c8e564ee8dcd0d43f19070d1a12eaf032514ddebb17e594968ffc80"
+    },
+    {
+      "path": "smoke-b/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "smoke-b/stdout.txt",
+      "bytes": 4691,
+      "sha256": "465f81d026b5931add78799e81de4f1debff42e03013b41c6fdcfc577c66b1bf"
+    },
+    {
+      "path": "smoke-b/source/_ge_beam3_shell_joint_trial.py",
+      "bytes": 10920,
+      "sha256": "87ea612904b0b72086b96a12f543dbd872680392559ffc151b059e63d6cfdd1a"
+    },
+    {
+      "path": "smoke-b/source/test_ge_beam3_shell_joint_trial.py",
+      "bytes": 7744,
+      "sha256": "aa63d52b6beb0b4137c2f150c11991a3b717cc0156409f4415aad73411d71a4e"
+    },
+    {
+      "path": "smoke-c/junit.xml",
+      "bytes": 3347,
+      "sha256": "6ab52b1252bdbdaedc009010e3fb9f540db312e8cde591e3ce3b98c83582e17a"
+    },
+    {
+      "path": "smoke-c/process.json",
+      "bytes": 285,
+      "sha256": "4225f0c0f4036629ee4e76e780ac8849ba4d0358aa873638e351d90d297e8470"
+    },
+    {
+      "path": "smoke-c/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "smoke-c/stdout.txt",
+      "bytes": 101,
+      "sha256": "ad282707ffe614c335933e3dbf20c31c9b0572e271914917e1cec2a81a17173f"
+    },
+    {
+      "path": "smoke-c/pytest/test_bounded_first_increment_c0/newton.json",
+      "bytes": 2386,
+      "sha256": "b33426a17845b1b1b15903b13413e626fec4e5609a8d3b53ab176330655813fa"
+    },
+    {
+      "path": "smoke-c/pytest/test_bounded_first_increment_c1/newton.json",
+      "bytes": 2397,
+      "sha256": "ae2d5adfca15c7284b5b06f59ef146fd0728fe8c5f0d9823ac59a15a02bd6ce1"
+    },
+    {
+      "path": "smoke-c/pytest/test_bounded_first_increment_c2/newton.json",
+      "bytes": 2471,
+      "sha256": "2eff68a16e5f07d46c87c42ae837c9a17dc9f26aef41f20cbd1ea83e0b7da5c3"
+    },
+    {
+      "path": "smoke-c/pytest/test_bounded_first_increment_c3/newton.json",
+      "bytes": 2444,
+      "sha256": "17362c6c3c590ef2247a378e9854817aaad399008767f342801c1ce0de19a68e"
+    },
+    {
+      "path": "smoke-c/pytest/test_real_components_and_spati0/trial.json",
+      "bytes": 48190,
+      "sha256": "18cfe3404e7d699875a8d0d5fab63ed8322640c0940f72bfc671ade2b58d6602"
+    },
+    {
+      "path": "smoke-c/pytest/test_real_components_and_spati1/trial.json",
+      "bytes": 44703,
+      "sha256": "c16b0e016f94687400af0265778366347f1ddfabc09e77ce0b75d2424ebda3f6"
+    },
+    {
+      "path": "smoke-c/pytest/test_real_components_and_spati2/trial.json",
+      "bytes": 48397,
+      "sha256": "6357598e675fad67d4f714ab669f9392ade18c7f2761ebd92c115b163ebe5671"
+    },
+    {
+      "path": "smoke-c/pytest/test_real_components_and_spati3/trial.json",
+      "bytes": 44913,
+      "sha256": "a1bfa0401d651f0b722bf875ae846e0882c906d442b669f86076be2a8945d8ea"
+    },
+    {
+      "path": "history-smoke-a/junit.xml",
+      "bytes": 402,
+      "sha256": "76387929a362fa50234852fa335a3e0501327eac950ed0b7e3b45fd2c631cf81"
+    },
+    {
+      "path": "history-smoke-a/process.json",
+      "bytes": 286,
+      "sha256": "6a9b52c3728b279f869c59e058e61cc57405d7b333f0ac748bcc4e448d522bc2"
+    },
+    {
+      "path": "history-smoke-a/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "history-smoke-a/stdout.txt",
+      "bytes": 115,
+      "sha256": "0d8130c7e3b37e7d7606fbdaff43f76ce4b2fedc6cf8f6e82ff702c9d5aff2d9"
+    },
+    {
+      "path": "history-smoke-a/pytest/test_genuine_curved_plastic_be0/predecessor.json",
+      "bytes": 30581,
+      "sha256": "bf136e96b3e32761e5ff97b29d71416b45cfc4489f38fcdfcafe14ce68b585b4"
+    },
+    {
+      "path": "history-smoke-a/pytest/test_genuine_curved_plastic_be0/trial-history.json",
+      "bytes": 3554,
+      "sha256": "6e4db5c832e5080a90168cb278248738b9f64ce7e3c4f2fd79a58631957bb749"
+    },
+    {
+      "path": "frozen-source/_ge_beam3_shell_joint_trial.py",
+      "bytes": 10920,
+      "sha256": "87ea612904b0b72086b96a12f543dbd872680392559ffc151b059e63d6cfdd1a"
+    },
+    {
+      "path": "frozen-source/test_ge_beam3_shell_joint_trial.py",
+      "bytes": 9916,
+      "sha256": "1a0263a96ff5ed11700a4768d7be4b063c8b1f835df76a46302c9056e961e041"
+    },
+    {
+      "path": "frozen-source/GE_BEAM3_FINISH_CHECKLIST.md",
+      "bytes": 21314,
+      "sha256": "7fe3162137ae7d06550565b04cb6dd67f4de49898299999a3eec5c750e86f0d2"
+    },
+    {
+      "path": "frozen-source/GE_BEAM3_POSE_JOINT_EQUATIONS.md",
+      "bytes": 7043,
+      "sha256": "856737f6c0e675a83b884d0f715b473b80e8db2d5c0aa5452de0fff20032929e"
+    }
+  ],
+  "archive_copy_verified": true
+}
