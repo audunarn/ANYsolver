@@ -10,9 +10,9 @@ verification. The latter implementation is
 processes are terminal. The older checkpoints below are preserved chronology,
 not instructions to repeat closed work.
 
-Three delivery gates remain: independent-author review of the current native
-candidate and its supported engineering scope; the distinctly identified public
-interface after acceptance; and the final isolated wheel plus unchanged-path
+Two delivery gates remain after independent acceptance of the bounded core and
+durable coupled facade: the distinctly identified public interface after
+acceptance; and the final isolated wheel plus unchanged-path
 performance verification. The older accepted straight P3 `ge-beam3` facade
 does not qualify the newer private curved/native classes by association.
 No public/default activation, release or complete qualification is claimed.
@@ -52,7 +52,13 @@ both straight/curved and Q4/S3 connections, exact inner/recovery/spectral
 agreement, idle-time reconstruction, near-limit/strict serialization,
 preflight rejection, before/after-commit cancellation, genuine failed-step
 prefix replay and copied-input isolation. Both launched process trees ended
-empty. Frozen replicas and independent commit-bound facade review follow.
+empty. Frozen implementation `8c6d931328fa2879e1da13bd3cdae3c4ec8e3d8c`
+then passed both separate39-test replicas in53.67s and54.07s, with empty child
+trees. All nine scientific files match the corrected rehearsal byte-for-byte.
+The independently authored commit-bound facade review accepts this scope with
+empty findings. It did not review the replicas; their comparison is separately
+recorded in `ge_beam3_durable_coupled_verification.json`. All67 source/log/result
+files were archived externally and verified against original bytes and SHA-256.
 
 The separate isolated dependency preparation reused the hash-verified cp313
 wheel set; it did not build/publish a solver wheel or modify any environment
