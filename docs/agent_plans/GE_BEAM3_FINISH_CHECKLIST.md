@@ -170,8 +170,26 @@ Euler/N32/buckling campaigns occurred. The 121-file archive, tested source,
 smoke, receipts and logs are bound by
 `docs/reference_cases/ge_beam3_owned_combined_verification.json`.
 
-This does not yet expose generalized nodal dead forces through
-`NativeBeamAnalysis.solve_nodal`; those remain in the distinct existing retained
-programme. Do not call the complete force/continuation/public interface finished
-because the combined-couple route is integrated. Independent review, final
-installed delivery and the objective beam-shell connection remain required.
+Generalized nodal dead forces use the distinct retained programme below, not
+the physical-fibre `solve_nodal` owner. Independent review, final installed
+delivery and the objective beam-shell connection remain required.
+
+## Generalized nodal programme integration
+
+The explicit `solve_nodal_program` route now owns the existing retained nodal
+dead-force programme, with matching import, prefix, recovery and current-mode
+methods. Its absolute target schedule is frozen in a distinct checkpoint
+schema; continuation may resume only that same schedule. No accepted-state
+conversion, force-law change, section change or rotation-law change is made.
+Cancellation/failure returns only the native owner's last accepted capsule.
+Cross-owner records, tampered hashes, changed programmes and model mutation
+fail closed. Existing fibre nodal and generalized distributed interfaces stay
+unchanged; neither is silently overloaded with another state's semantics.
+
+Development smoke inventories passed separately: 24 integration/control tests
+in 18.53 seconds; two additional curved/connected plastic loading, unloading,
+reversal, recovery and prefix-continuation tests in 27.70 seconds. The complete
+26-test integration inventory is ready for two frozen fresh-process replicas,
+with the existing retained nodal-owner tests as a separate regression inventory.
+Use the existing child/wave limits and preserve all outputs; do not repeat
+completed combined-couple, Euler, N32 or buckling campaigns.

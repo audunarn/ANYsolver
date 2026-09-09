@@ -368,6 +368,27 @@ its own integration. Model mutation or concurrent use fails closed.
             return solve_modes(self.model, self._initial(), zeros, self._inertias, zeros,
                                num_modes=num_modes, cancellation_token=cancellation_token)
 
+    def solve_nodal_program(self, program, **kwargs):
+        """Generalized dead forces: resume the same frozen absolute schedule."""
+        from ._ge_beam3_analysis_nodal_program import solve
+        return solve(self, program, **kwargs)
+
+    def import_nodal_program_checkpoint(self, program, backend, *, expected_sha256):
+        from ._ge_beam3_analysis_nodal_program import adopt
+        return adopt(self, program, backend, expected_sha256=expected_sha256)
+
+    def recover_nodal_program(self, program, checkpoint, *, expected_sha256):
+        from ._ge_beam3_analysis_nodal_program import recover
+        return recover(self, program, checkpoint, expected_sha256=expected_sha256)
+
+    def nodal_program_checkpoint_prefix(self, program, checkpoint, accepted_steps, *, expected_sha256):
+        from ._ge_beam3_analysis_nodal_program import prefix
+        return prefix(self, program, checkpoint, accepted_steps, expected_sha256=expected_sha256)
+
+    def nodal_program_modes(self, program, checkpoint, *, expected_sha256, **kwargs):
+        from ._ge_beam3_analysis_nodal_program import modes
+        return modes(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
+
     def _translation_route(self):
         if self._family == 'PHYSICAL_FIBRE_NODAL':
             from . import _ge_beam3_analysis_fibre_translation as route
