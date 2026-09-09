@@ -56,3 +56,13 @@ def test_no_mechanics_import():
     for node in ast.walk(tree):
         if isinstance(node,ast.ImportFrom):assert not (node.module or '').startswith(('anysolver','tests','docs'))
         if isinstance(node,ast.Import):assert all(not n.name.startswith(('anysolver','tests','docs')) for n in node.names)
+
+@pytest.mark.parametrize('knots',(np.linspace(0.,1.,65),np.linspace(0.,1.,385),np.array([0.,.03,.21,.39,.9,1.])))
+def test_validation_points_not_collocation_nodes_or_midpoints(knots):
+    sites=p.validation_grid(knots).reshape(-1,2)
+    assert len(sites)==len(knots)-1
+    for i,row in enumerate(sites):
+        fractions=(row-knots[i])/(knots[i+1]-knots[i])
+        assert min(abs(fractions[:,None]-np.array([0.,.5,1.])[None]).ravel())>.2
+    # The previous fixed257-point check is exactly nodes/midpoints at384cells.
+    if len(knots)==385:assert np.max(abs(np.linspace(0.,1.,257)*768-np.round(np.linspace(0.,1.,257)*768)))<1e-10

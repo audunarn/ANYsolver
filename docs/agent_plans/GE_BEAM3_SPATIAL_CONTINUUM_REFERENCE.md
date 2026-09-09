@@ -64,3 +64,20 @@ or independent authorship review. Physical loading-path/continuation authority
 and full postbuckling qualification remain open even if comparisons pass.
 Full GE-B3 programme remains ACTIVE including beam-shell connections.
 NO_GO_PRODUCTION_RESTRICTION_UNCHANGED. No public selection, merge or release.
+
+## Preserved validation-grid incident
+
+Initial4d10de1 BVP7/BVP9 solves and tight replicas completed, with all four
+engineering comparisons below2%. Same-author review found the fixed257-site
+differential check sampled only collocation nodes/midpoints when BVP9 refined
+to384intervals. Its near6e-14residual therefore is not independent off-mesh
+validation. Original solutions, comparisons, receipts and old audit are
+preserved as initial diagnostics, not promoted as corrected validation.
+
+Successor changes ONLY validation sampling: two interior Gauss sites in every
+actual collocation interval, fractions(1+/-1/sqrt(3))/2. These are explicitly
+not nodes or midpoints. Test uniform64/384interval and nonuniform grids.
+All ODE, boundary equations, solver profiles, source fields, tolerances and
+engineering comparisons remain unchanged. Metadata names this validation
+policy and exact site count. Use new frozen source/exclusive output directories;
+never edit original output or rerun a consumed helper in place.

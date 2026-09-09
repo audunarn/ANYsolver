@@ -79,6 +79,13 @@ def initial_guess(record,u):
         result.append(y)
     return np.vstack(result)
 
+def validation_grid(knots):
+    """Non-collocation sites in EVERY actual interval, not a coincident grid."""
+    knots=np.asarray(knots)
+    if knots.ndim!=1 or len(knots)<2 or not np.isfinite(knots).all() or np.any(np.diff(knots)<=0):raise ValueError('strict collocation knots')
+    fractions=np.array([.5-.5/np.sqrt(3.),.5+.5/np.sqrt(3.)])
+    return (knots[:-1,None]+np.diff(knots)[:,None]*fractions).ravel()
+
 def solve(record,profile='BVP7',progress=lambda row:None):
     if profile not in ('BVP7','BVP9') or record.get('amplitude') not in (-.006,-.003,.003,.006):
         raise ValueError('registered spatial reference profile/amplitude')
@@ -100,13 +107,14 @@ def solve(record,profile='BVP7',progress=lambda row:None):
     result=solve_bvp(fun,bc,u,guess,p=np.array([record['load']]),tol=tol,bc_tol=1e-11,max_nodes=cap)
     if not result.success or not np.isfinite(result.y).all():raise RuntimeError('spatial continuum failed: '+result.message)
     bc_error=float(np.max(abs(boundary(result.y[:,0],result.y[:,-1],result.p,record['amplitude']))))
-    sample=np.linspace(0.,1.,257);values=result.sol(sample);derivative=result.sol(sample,1);expected=fun(sample,values,result.p)
+    sample=validation_grid(result.x);values=result.sol(sample);derivative=result.sol(sample,1);expected=fun(sample,values,result.p)
     ode_error=float(np.max(abs(derivative-expected)/(1+abs(expected))))
     norm_error=max(float(np.max(abs(np.sum(values[13*i+3:13*i+7]**2,axis=0)-1.))) for i in range(4))
     if bc_error>1e-11 or ode_error>10*tol or norm_error>10*tol:raise RuntimeError('spatial continuum consistency')
     progress(dict(stage='spatial-continuum-complete',profile=profile,load=float(result.p[0]),nodes=len(result.x),callbacks=calls))
     return result,dict(profile=profile,load=float(result.p[0]),nodes=len(result.x),iterations=result.niter,
-        callbacks=calls,boundary_error=bc_error,differential_error=ode_error,quaternion_norm_error=norm_error)
+        callbacks=calls,boundary_error=bc_error,differential_error=ode_error,quaternion_norm_error=norm_error,
+        validation_policy='GAUSS_INTERIOR_EVERY_ACTUAL_COLLOCATION_INTERVAL_V1',validation_sites=len(sample))
 
 def sample(result,x):
     x=np.asarray(x)
