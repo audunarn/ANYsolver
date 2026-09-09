@@ -25,10 +25,11 @@ work and close required application gaps; do not restart passed campaigns.
 
 ## Required completion, in order
 
-1. **Standalone workflow closure.** Finish remaining generalized nodal-force
-   and continuation/public routing for supported straight/curved section
-   families. The captured-state buckling route below is now implemented and
-   verified for its declared scope; do not rebuild it. Audit evidence against the
+1. **Standalone workflow audit.** Generalized nodal-force and combined-couple
+   ownership are now integrated and verified below. The captured-state buckling
+   route is also implemented and verified for its declared scope; do not rebuild
+   these routes. Finish the continuation/public routing audit for supported
+   straight/curved section families. Audit evidence against the
    requested engineering requirements; run only genuinely missing checks or
    regressions affected by a correction. Do not infer full parity from modal
    subsets, manufacture accepted histories, or relabel unstable states.
@@ -189,7 +190,35 @@ unchanged; neither is silently overloaded with another state's semantics.
 Development smoke inventories passed separately: 24 integration/control tests
 in 18.53 seconds; two additional curved/connected plastic loading, unloading,
 reversal, recovery and prefix-continuation tests in 27.70 seconds. The complete
-26-test integration inventory is ready for two frozen fresh-process replicas,
-with the existing retained nodal-owner tests as a separate regression inventory.
-Use the existing child/wave limits and preserve all outputs; do not repeat
-completed combined-couple, Euler, N32 or buckling campaigns.
+26-test integration inventory passed both frozen fresh-process replicas at
+`1afdd570109d2996ea04aa1c844c99a5529b9c5f` (53.17/52.67 seconds). The separate
+retained nodal-owner regression passed 22 tests in 24.54 seconds. All fifteen
+scientific files match byte-for-byte by relative path between replicas. All
+three child trees terminated empty within the existing bounds; the complete
+wave took approximately 55 seconds. The 95-file archive includes both development
+smokes, final wave, tested source, commands, logs and process receipts, with each
+copied file verified against its original. Its binding is
+`docs/reference_cases/ge_beam3_owned_nodal_program_verification.json`.
+No retry, mechanics correction or completed campaign rerun occurred.
+
+## Delivery audit: do not confuse completed subsets with overall qualification
+
+The next work is a single current-candidate requirement/evidence audit and
+delivery review, not a new exploratory mechanics programme. Reuse these already
+completed subsets and preserve their exact scope:
+
+| Required capability | Current evidence and remaining boundary |
+| --- | --- |
+| Straight/curved force, coupled generalized and physical-fibre ownership | Model-owned native analysis and translation inventories; cancellation, combined-couple and nodal-program closeouts above. All current entry points remain private candidates. |
+| Accepted material/rotation history, recovery and restart | Actual force and translation owners, load/unload/reversal, failed-step and cancellation replay; no owner conversion or fabricated history. |
+| Current-rest modes and buckling | Force-modal 91-test replicas; native buckling 21-test replicas; saved Euler comparison. Active/nonsmooth material states and nonconservative work remain excluded from conservative spectral claims. |
+| Curved postcritical continuation | Completed N32 scoped branch at `221b4fe`, 23 workers; genuine three-target signed advances from accepted nonzero seeds. Not a loading path from rest. |
+| Curved signed-spectrum accuracy | Completed N32 comparison at `9559f66`, worst signed-rate error 1.3895%, MAC at least 0.9999839. Both equilibria have one negative direction; no stable-postbuckling claim. Historical N24 failure remains unchanged. |
+| Full reference/finite-state/slenderness acceptance | Map the preserved local and engineering campaigns to the actual current operator and admitted domain. A passing historical straight facade or a few endpoint spectra cannot substitute for this mapping. |
+| Current public opt-in and isolated wheel | Still open. The existing `ge-beam3` facade is the older accepted straight P3 implementation; the last installed native wheel predates the latest interfaces. Do not silently redirect it or call that wheel current. |
+| Independent-author review | Still open for the current complete delivery candidate. Internal tests and saved-data audits are not independent-author review. |
+| Objective eccentric/curved finite-rotation beam-shell connection | Still open and required for overall completion. Existing shell operators and defaults remain unchanged. |
+
+No production-qualification flag, default, version, tag, publication or public
+selector has been changed by these interface closeouts. Overall goal remains
+active; do not mark it complete while the delivery or connection gates are open.
