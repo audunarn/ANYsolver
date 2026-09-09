@@ -354,19 +354,25 @@ its own integration. Model mutation or concurrent use fails closed.
 
     def reference_modes(self, *, num_modes=6, cancellation_token=None, bounds=None):
         """Distinct retained physical-inertia pencil; never a static mass matrix."""
+        cancellation_safe_point(cancellation_token, 'native-reference-modal.capture')
         if self._family == 'PHYSICAL_FIBRE_NODAL':
             if bounds is None:
                 raise NativeBeamWorkflowError('physical-fibre reference modes require explicit spectral bounds')
             from ._ge_beam3_fibre_reference_modal import solve
             return solve(self,bounds=bounds,num_modes=num_modes,cancellation_token=cancellation_token)
-        _require(bounds is None,'explicit bounds belong to the physical-fibre reference factor solver')
         from ._ge_beam3_native_generalized_modal import solve_modes
         self._family_required('GENERALIZED_DISTRIBUTED')
         _require(type(num_modes) is int and num_modes > 0, 'positive modal count required')
+        options = {}
+        if bounds is not None:
+            from ._ge_beam3_analysis_translation_modal import _controls
+            from ._ge_beam3_native_generalized_paired_modal import solve_modes
+            _controls(self, bounds, num_modes, 1e-10, 1e-12)
+            options['bounds'] = bounds
         with self._operation():
             zeros = np.zeros(self.model.mesh.dof_manager.total_dofs)
-            return solve_modes(self.model, self._initial(), zeros, self._inertias, zeros,
-                               num_modes=num_modes, cancellation_token=cancellation_token)
+            return solve_modes(self.model, self._initial(cancellation_token), zeros, self._inertias, zeros,
+                               num_modes=num_modes, cancellation_token=cancellation_token, **options)
 
     def solve_nodal_program(self, program, **kwargs):
         """Generalized dead forces: resume the same frozen absolute schedule."""

@@ -106,6 +106,52 @@ work and close required application gaps; do not restart passed campaigns.
 
 ## Required completion, in order
 
+### Current delivery audit (2026-09-09, after `b8cbebb`)
+
+This audit retains the full requested goal. "Verified subset" below is not a
+production qualification decision. The current classes and evidence were
+inspected; historical status-file footers are not treated as current blockers
+when an explicitly preserved successor closes them.
+
+| Requirement | Current source/evidence | Audit disposition |
+| --- | --- | --- |
+| Three physical nodes, six external DOFs each | `NativeGeneralizedStaticElement`, `NativeFibreStaticElement`, reconstructible `NativeBeamDefinition`; exact three-node/18-DOF guards and native transaction tests | Implemented and tested; no inheritance from legacy B3. |
+| Straight/curved stress-free geometry, objective rotations, work and native sections | Centered curved reference and retained generalized/fibre operators; preserved definition, native-state, force/recovery and covariance evidence | Verified subsets; final independent equation/engineering review still required. |
+| Coupled 6x6 anisotropy and nonlinear section/material histories | Resultant ellipsoid and physical axial/biaxial fibre families; force, nodal-program, spatial-couple, translation and plastic replay evidence | Actual supported workflows; not a claim of arbitrary section adapters or automatic 3D-J2 conversion. |
+| Broad slenderness and continuum accuracy | `c8c1487` ratios100/10000/1000000; completed reference groups `582a3dc`; Euler and ring records | Preserve their exact domains. The older six-mode NO-GO and callback-limited modal-group attempt are not the accepted successor. No all-domain theorem is inferred. |
+| Large deformation and postcritical continuation | `221b4fe` actual signed N32 advances; `9559f66` independent signed-rate comparison, worst1.3895% and MAC>=0.9999839 | Genuine postcritical seeded continuation. Both compared states have a negative direction; no stable-postbuckling or path-from-rest claim. |
+| State safety, recovery, restart and failed-step preservation | Model-owned force/nodal/couple/translation interfaces, immutable histories and cancellation closeouts | Verified native workflows. Never rebind a foreign or different-family checkpoint. |
+| Reference/current modes and buckling | Force-current and physical-fibre integrations, larger N32 consumption, original-factor buckling and new coupled `2571764` | Actual inertia-retaining workflows. Reference generalized explicit-bounds routing gap is corrected below. Active yield/nonconservative work remains excluded from conservative spectra. |
+| Objective eccentric/curved shell connection | Pose equations, V2 variational work mapping, global accepted histories, `2571764` modal/buckling integration | Verified private connection scope: one owned elastic Q4/S3 V2D, generalized beam subdomain, authenticated joint. This is not generic mixed FEModel routing or arbitrary shell/fibre coupling. |
+| Preserve B2/B3/Q4/S3/defaults | Source diff against base09351645: Q4/S3/corotational/package files unchanged; `elements.py` differs only by the accepted14-line P3 `ge-beam3` factory addition | Existing mechanics preserved. The older public P3 selector must not be labelled the current curved candidate. |
+| Current explicitly selectable production delivery | Current native classes/analysis are private and carry unqualified candidate identities | OPEN. A reviewed public boundary must distinguish the current core from P3 and preserve historical restart identities. |
+| Independent-author review | Current status records explicitly remain pending/false | OPEN. Same-author numerical oracles, tests and archive audits do not supply this requirement. |
+| Final isolated wheel and performance gate | Last installed wheel20528db predates current interfaces; its dependency wheelhouse remains preserved | OPEN. Build the final frozen delivery candidate once; verify installed behavior and the unchanged-path performance boundary. Do not call the old wheel current. |
+
+The audit does not authorize public activation, relabel candidate flags, shrink
+the requested goal, or schedule another full mechanics campaign. Use it as the
+review/delivery worklist. A final independent review must judge whether the
+engineering subsets support the stated product scope; missing evidence must
+be closed explicitly, not hidden by a broader name.
+
+### Reference-interface correction found by this audit
+
+`NativeBeamAnalysis.reference_modes` previously rejected explicit spectral bounds
+for generalized sections while permitting them for physical-fibre and current
+state modes. It now routes explicit generalized bounds to the existing paired
+factor solver; the no-bounds historical route and numerical operators remain
+unchanged. Initial-state capture also receives the existing cancellation token,
+with cancellation checked at the entry point before initialization.
+
+The first9-test smoke passed8 and failed the new pre-initialization cancellation
+assertion. Preserve its source and logs. The entry cancellation correction then
+passed the complete9-test rehearsal in9.57s. Four actual straight/curved x
+supported/free reference computations are byte-identical to the existing direct
+factor solver, with exactly six numerical rigid modes in the free cases. Five
+preflight controls reject cancellation, invalid bounds/counts, dirty models and
+concurrent use before initialization. Frozen replicas and affected default-route
+regression follow; this is an interface repair, not new mechanics authority.
+
 1. **Standalone workflow audit.** Generalized nodal-force and combined-couple
    ownership are now integrated and verified below. The captured-state buckling
    route is also implemented and verified for its declared scope; do not rebuild
