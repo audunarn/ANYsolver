@@ -25,8 +25,10 @@ def orthogonal_coordinates(c, mass, checkpoint=lambda: None):
 
 
 def _pair(high,low,checkpoint):
+    from ._native_modal_capacity import limits
+    coordinates,_,_=limits()
     if (np.shape(high)!=np.shape(low) or np.ndim(high)!=2
-            or not 1<=high.shape[0]<=256 or not 1<=high.shape[1]<=256):
+            or not 1<=high.shape[0]<=coordinates or not 1<=high.shape[1]<=coordinates):
         raise ValueError('bounded matching explicit mode halves required')
     return _add(_capture(high,checkpoint),_capture(low,checkpoint))
 
@@ -39,15 +41,24 @@ def paired_expansion(mapping, coordinates, checkpoint=lambda: None):
 
 
 def paired_map(operator,high,low,checkpoint=lambda:None):
-    if np.ndim(operator)!=2 or not 1<=len(operator)<=8192:
+    from ._native_modal_capacity import limits,active
+    _,rows,_=limits()
+    if np.ndim(operator)!=2 or not 1<=len(operator)<=rows:
         raise ValueError('bounded paired action required')
-    return _rounded(_multiply(_capture(operator,checkpoint),_pair(high,low,checkpoint),checkpoint))
+    multiply=_multiply
+    if active():
+        from ._native_large_factor_chain import multiply
+    return _rounded(multiply(_capture(operator,checkpoint),_pair(high,low,checkpoint),checkpoint))
 
 
 def paired_actions(left,right,g,b,high,low,values,checkpoint=lambda:None):
     """Original signed actions/congruences, with no collapsed vector input."""
     def cap(a):return _capture(a,checkpoint)
-    def mul(a,b):return _multiply(a,b,checkpoint)
+    from ._native_modal_capacity import active
+    multiply=_multiply
+    if active():
+        from ._native_large_factor_chain import multiply
+    def mul(a,b):return multiply(a,b,checkpoint)
     v=_pair(high,low,checkpoint)
     ll,rr,gg,bb=map(cap,(left,right,g,b))
     strain=mul(ll,mul(rr,v));speed=mul(bb,v)

@@ -43,6 +43,10 @@ def dot_terms(a,b):
 
 def mm(a,b,checkpoint=lambda:None):
     if a.ndim!=2 or b.ndim!=2 or a.shape[1]!=b.shape[0]: raise ValueError('matching matrix dimensions')
+    from ._native_modal_capacity import active
+    if active() and np.count_nonzero(a)*2<a.size:
+        from ._native_large_factor_chain import sparse_float_product
+        return sparse_float_product(a,b,dot_terms,checkpoint)
     rows=[]
     for row in a:
         checkpoint(); rows.append([fsum(dot_terms(row,col)) for col in b.T])
@@ -149,20 +153,22 @@ def apply_mode_map(result,operator,checkpoint=lambda:None):
 
 
 def solve_paired_factor_chain_modes(left_factor,right_factor,geometric,kinetic,free,algebraic,*,bounds,num_modes=6,root_width=1e-10,relative_width=1e-12,cancellation_token=None):
+    from ._native_modal_capacity import limits
+    coordinates,rows,links=limits()
     start=monotonic()
     def checkpoint(stage='reassembly'):
         cancellation_safe_point(cancellation_token,'compensated_spectrum.'+stage)
         if monotonic()-start>600.: raise ValueError('compensated spectrum deadline')
     checkpoint('capture')
     left,right,g,b=(_owned(x) for x in (left_factor,right_factor,geometric,kinetic))
-    if (left.ndim!=2 or right.ndim!=2 or not 1<=left.shape[0]<=8192
-            or not 1<=right.shape[0]<=512 or not 1<=right.shape[1]<=256
+    if (left.ndim!=2 or right.ndim!=2 or not 1<=left.shape[0]<=rows
+            or not 1<=right.shape[0]<=links or not 1<=right.shape[1]<=coordinates
             or left.shape[1]!=right.shape[0]):
         raise ValueError('bounded matching owned factor chain')
     # Rounded expansion is only a preconditioner for a complete dynamic map.
     # The signed pencil and returned-vector audit use the original chain.
     f=mm(left,right,checkpoint)
-    if (b.ndim!=2 or f.ndim!=2 or not 1<=b.shape[0]<=8192 or not 1<=b.shape[1]<=256
+    if (b.ndim!=2 or f.ndim!=2 or not 1<=b.shape[0]<=rows or not 1<=b.shape[1]<=coordinates
             or f.shape[1]!=b.shape[1]): raise ValueError('bounded matching factors')
     if (type(bounds) is not tuple or len(bounds)!=2 or any(type(v) not in (float,int) or not isfinite(v) for v in bounds)
             or bounds[0]>=bounds[1] or type(num_modes) is not int or num_modes<1

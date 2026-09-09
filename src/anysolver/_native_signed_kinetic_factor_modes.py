@@ -17,9 +17,11 @@ from ._relative_reference_svd import relative_reference_svd
 
 
 def _reduce(factor, geometric, mass, free_dofs, algebraic_dofs, checkpoint, kinetic):
+    from ._native_modal_capacity import limits
+    coordinates,rows,_=limits()
     checkpoint('reduction.start')
     f, g, m = (np.array(x, dtype=float, copy=True) for x in (factor, geometric, mass))
-    if (f.ndim != 2 or not 1 <= f.shape[1] <= 256 or f.shape[0] > 8192
+    if (f.ndim != 2 or not 1 <= f.shape[1] <= coordinates or f.shape[0] > rows
             or g.shape != (f.shape[1],)*2 or m.shape != g.shape
             or not all(np.isfinite(x).all() for x in (f, g, m))):
         raise ValueError('bounded finite signed split required')

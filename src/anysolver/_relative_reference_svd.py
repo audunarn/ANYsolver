@@ -10,9 +10,11 @@ from scipy.linalg import lapack
 
 
 def relative_reference_svd(matrix):
+    from ._native_modal_capacity import limits
+    coordinates,rows,_=limits()
     a = np.array(matrix, dtype=float, copy=True)
-    if (a.ndim != 2 or not 1 <= a.shape[1] <= min(a.shape[0], 256)
-            or a.shape[0] > 8192 or not np.isfinite(a).all()):
+    if (a.ndim != 2 or not 1 <= a.shape[1] <= min(a.shape[0], coordinates)
+            or a.shape[0] > rows or not np.isfinite(a).all()):
         raise ValueError('finite tall bounded reference matrix required')
     # G estimates accuracy with both row and column preprocessing; U/J
     # explicitly accumulates right rotations. N/N/N forbids optional killing
