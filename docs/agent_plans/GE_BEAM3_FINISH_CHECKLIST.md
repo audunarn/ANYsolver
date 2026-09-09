@@ -245,8 +245,16 @@ numerical rigid modes and positive next roots. The 16-macro compression smoke
 also passes the 2% gate. These results do not qualify ring buckling or all rings.
 
 Separate smoke inventories: three tests (5.50s), four refinement/covariance
-tests (26.91s), and one compression test (12.99s). Freeze the final eight-test
-inventory and run two fresh replicas under the existing process bounds. Check
-all eleven emitted scientific files for byte equality, recompute refinement
-errors from saved displacement/reference arrays, and retain every smoke output.
-No repeated arch, Euler, N32 or force-workflow campaign is required.
+tests (26.91s), and one compression test (12.99s). Frozen test commit
+`01a250f2e469d6444f8f63e0eaf3b1eb5c4cf0b5` passed all eight tests in each of
+two fresh replicas. All eleven emitted scientific files are byte-identical;
+both worker trees terminated empty in 56.50 seconds or less. Saved displacement
+and reference arrays reproduce the reported errors, with decreasing positive
+pressure errors and finest compression error 1.6961%. Every smoke output is
+retained in the 62-file archive bound by
+`docs/reference_cases/ge_beam3_closed_ring_verification.json`. An initial
+read-only PowerShell audit stopped on a reserved variable name; correcting the
+reader did not rerun a worker or change evidence. No runtime source changed.
+No repeated arch, Euler, N32 or force-workflow campaign is required. This closes
+the declared ring engineering subset, not independent-author review, general
+ring buckling, all-geometry qualification or the beam-shell connection.
