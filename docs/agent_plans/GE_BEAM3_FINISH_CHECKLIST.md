@@ -258,3 +258,20 @@ reader did not rerun a worker or change evidence. No runtime source changed.
 No repeated arch, Euler, N32 or force-workflow campaign is required. This closes
 the declared ring engineering subset, not independent-author review, general
 ring buckling, all-geometry qualification or the beam-shell connection.
+
+## Objective connection operator implemented
+
+`_ge_beam3_pose_joint.py` implements the rigid eccentric pose constraint and
+multiplier residual, analytic chart Hessian, actual spatial Newton Jacobian,
+and exact mixed additive/spatial port transformation. Its equations and scope
+are recorded in `GE_BEAM3_POSE_JOINT_EQUATIONS.md`. It does not change beam or
+shell operators or masquerade as a qualified assembled connection.
+
+The first development invocation stopped on a syntax error during collection;
+its exact source and log are preserved. The corrected pose-only 33-test suite
+passed in 1.80 seconds. The completed suite adds mixed-port derivatives and
+singular-chart guards; it must pass frozen duplicate verification before its
+component evidence is accepted. The next substantive connection task is binding
+real Q4/S3 and native-beam state owners, followed by assembled work/equilibrium,
+history, restart and modal/buckling checks. Do not substitute arbitrary pose
+arrays or a linear MPC for those owner and global-solver requirements.
