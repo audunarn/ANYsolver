@@ -65,10 +65,13 @@ within that family are permitted; cross-family or beam-shell assembly awaits
 its own integration. Model mutation or concurrent use fails closed.
 """
 
-    def __init__(self, definitions, boundaries):
-        _require(type(definitions) is tuple and 1 <= len(definitions) <= 16
+    def __init__(self, definitions, boundaries, *, retained_refinement=False):
+        _require(type(retained_refinement) is bool, 'explicit retained refinement flag required')
+        self._retained_refinement = retained_refinement
+        limit = 32 if retained_refinement else 16
+        _require(type(definitions) is tuple and 1 <= len(definitions) <= limit
                  and all(type(d) is NativeBeamDefinition for d in definitions),
-                 'one to sixteen explicit native definitions required')
+                 'bounded explicit native definitions required')
         _require(type(boundaries) is tuple and all(type(b) is BoundaryCondition for b in boundaries),
                  'explicit boundary-condition tuple required')
         elements = []; inertias = {}; nodes = {}; ids = []
@@ -97,8 +100,7 @@ its own integration. Model mutation or concurrent use fails closed.
         self._family = 'GENERALIZED_DISTRIBUTED' if type(elements[0]) is NativeGeneralizedStaticElement else 'PHYSICAL_FIBRE_NODAL'
         self._lock = Lock()
         self._structure = self._snapshot()
-        self.identity = sha256(canonical(dict(definitions=[sha256(b).hexdigest() for b in self._definitions],
-                                              structure=self._structure.decode('ascii'), owner=self._family))).hexdigest()
+        self.identity = self._graph_identity()
         self._identity = self.identity
         self._guard()
 
@@ -131,9 +133,16 @@ its own integration. Model mutation or concurrent use fails closed.
                               dofs=m.mesh.dof_manager.total_dofs,
                               materials=sorted(m.materials), elements=sorted(m.mesh.elements)))
 
+    def _graph_identity(self):
+        _require(type(self._retained_refinement) is bool, 'retained refinement flag changed')
+        data = dict(definitions=[sha256(b).hexdigest() for b in self._definitions],
+                    structure=self._structure.decode('ascii'), owner=self._family)
+        if self._retained_refinement:
+            data['retained_refinement'] = 'GE_BEAM3_N32_RETAINED_ANALYSIS_V1'
+        return sha256(canonical(data)).hexdigest()
+
     def _guard(self):
-        graph = sha256(canonical(dict(definitions=[sha256(b).hexdigest() for b in self._definitions],
-                                     structure=self._structure.decode('ascii'), owner=self._family))).hexdigest()
+        graph = self._graph_identity()
         _require(self.identity == self._identity == graph and self._snapshot() == self._structure,
                  'native beam analysis model changed')
         _require(tuple(self.model.mesh.elements[i] for i in sorted(self.model.mesh.elements)) == self._elements,
@@ -314,6 +323,24 @@ its own integration. Model mutation or concurrent use fails closed.
             zeros = np.zeros(self.model.mesh.dof_manager.total_dofs)
             return solve_modes(self.model, self._initial(), zeros, self._inertias, zeros,
                                num_modes=num_modes, cancellation_token=cancellation_token)
+
+    def solve_translation(self, program, **kwargs):
+        """Actual retained displacement control; distinct from force checkpoints."""
+        from ._ge_beam3_analysis_translation import solve
+        return solve(self, program, **kwargs)
+
+    def import_translation_checkpoint(self, program, backend, *, expected_sha256, **kwargs):
+        """Adopt only after native mechanical replay of the exact external bytes."""
+        from ._ge_beam3_analysis_translation import adopt
+        return adopt(self, program, backend, expected_sha256=expected_sha256, **kwargs)
+
+    def recover_translation(self, program, checkpoint, *, expected_sha256, **kwargs):
+        from ._ge_beam3_analysis_translation import recover
+        return recover(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
+
+    def translation_checkpoint_prefix(self, program, checkpoint, accepted_steps, *, expected_sha256, **kwargs):
+        from ._ge_beam3_analysis_translation import prefix
+        return prefix(self, program, checkpoint, accepted_steps, expected_sha256=expected_sha256, **kwargs)
 
     def current_modes(self, checkpoint, *, expected_sha256, num_modes=6, cancellation_token=None):
         """Only the backend's conservative elastic-interior current-rest scope."""

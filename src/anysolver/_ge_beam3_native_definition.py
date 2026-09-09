@@ -19,6 +19,7 @@ from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
 from ._ge_beam3_p5_seeded.core import canonical
 
 SCHEMA = 'GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1'
+PRECISE_SCHEMA = 'GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_PRECISE_V2'
 STATIC_POLICY = 'EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY'
 DYNAMIC_POLICY = 'RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION'
 MAX_BYTES = 2 * 1024 * 1024
@@ -41,6 +42,18 @@ def _require(ok, message):
 
 def _keys(value, keys):
     _require(type(value) is dict and set(value) == set(keys), 'exact native definition schema required')
+
+
+def _definition_keys(value):
+    _require(type(value) is dict, 'exact native definition object required')
+    if value.get('schema') == PRECISE_SCHEMA:
+        from ._ge_beam3_precise_geometric_work import POLICY
+        _keys(value, KEYS | {'arithmetic_policy'})
+        _require(value['family'] == 'RESULTANT_ELLIPSOID' and value['arithmetic_policy'] == POLICY,
+                 'exact generalized precise arithmetic policy required')
+    else:
+        _keys(value, KEYS)
+        _require(value['schema'] == SCHEMA, 'native definition schema mismatch')
 
 
 def _load(raw):
@@ -67,7 +80,7 @@ def _load(raw):
         _require(canonical(value) == raw, 'canonical definition bytes required')
     except (UnicodeError, RecursionError, json.JSONDecodeError) as error:
         raise DefinitionError('invalid bounded definition JSON') from error
-    _keys(value, KEYS)
+    _definition_keys(value)
     return value
 
 
@@ -118,17 +131,20 @@ def _describe(element, inertia):
         section = dict(policy=FIBRE_POLICY, fibres=[asdict(f) for f in core.section.fibres],
                        background_factor=core.section.background_factor)
         family = 'PHYSICAL_AXIAL_BIAXIAL_FIBRE'
-    return dict(schema=SCHEMA, family=family, formulation_id=element.formulation_id,
+    result = dict(schema=SCHEMA, family=family, formulation_id=element.formulation_id,
                 element_id=element.element_id, node_ids=list(element.node_ids), reference=reference,
                 section=section, section_inertia=inertia, quadrature=core.order,
                 element_identity=element.identity, operator_identity=core.identity,
                 section_identity=core.section.identity, static_policy=STATIC_POLICY,
                 dynamic_policy=DYNAMIC_POLICY, production_qualified=False)
+    if type(element) is NativeGeneralizedStaticElement and core.arithmetic_policy is not None:
+        result.update(schema=PRECISE_SCHEMA, arithmetic_policy=core.arithmetic_policy)
+    return result
 
 
 def _build(data):
-    _keys(data, KEYS)
-    _require(data['schema'] == SCHEMA and data['production_qualified'] is False
+    _definition_keys(data)
+    _require(data['production_qualified'] is False
              and data['static_policy'] == STATIC_POLICY and data['dynamic_policy'] == DYNAMIC_POLICY,
              'native definition scope/policy mismatch')
     ids = data['node_ids']
@@ -169,7 +185,8 @@ def _build(data):
     else:
         raise DefinitionError('unknown native beam section family; no legacy fallback')
     inertia = _inertia(data['section_inertia'])
-    element = cls(data['element_id'], tuple(ids), ref, law, order=data['quadrature'])
+    extra = {'arithmetic_policy': data['arithmetic_policy']} if data['schema'] == PRECISE_SCHEMA else {}
+    element = cls(data['element_id'], tuple(ids), ref, law, order=data['quadrature'], **extra)
     # Reconstruct all derived identities. Hashes alone never substitute for data.
     _require(canonical(_describe(element, inertia)) == canonical(data),
              'reconstructed native definition/identity differs')
