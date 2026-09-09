@@ -10,12 +10,43 @@ verification. The latter implementation is
 processes are terminal. The older checkpoints below are preserved chronology,
 not instructions to repeat closed work.
 
-Two delivery gates remain after independent acceptance of the bounded core and
-durable coupled facade: the distinctly identified public interface after
-acceptance; and the final isolated wheel plus unchanged-path
-performance verification. The older accepted straight P3 `ge-beam3` facade
+The explicit `ge-beam3-native` workflow interface is frozen at
+`6b09ea9d60c5ea662a2230d39cfb98b2978963e3`, runtime subtree
+`314995f39fd773a9afe0fd9a5011ba50c9126342`. Its independent source review
+accepts the exact scoped boundary with empty findings. Both35-test replicas
+passed in under30s; all six scientific files match each other and the34-test
+development smoke. The40-file archive and review are bound by
+`ge_beam3_public_workflows_verification.json`. Final isolated wheel,
+unchanged-path performance and independent artifact adjudication remain.
+The older accepted straight P3 `ge-beam3` facade
 does not qualify the newer private curved/native classes by association.
 No public/default activation, release or complete qualification is claimed.
+
+### Final delivery harness freeze
+
+The final harness builds one unchanged-version wheel from a clean Git export,
+checks every installed solver Python file against that export, and compares20
+scientific records from the source control and two isolated wheel replicas.
+All dependency runtime/data bytes are checked against the frozen cp313 wheels.
+Only then it runs12 serial, alternating B2/B3 baseline-source versus installed
+candidate pairs. Each process warms every operation. Real linear and nonlinear
+solver calls, actual nonlinear checkpoint replay, nonzero physical internal
+forces and nonempty physical recovery replace weak matrix/serialization proxies.
+Median paired wall-time ratios must be at most1.05 per operation/family;
+MAD/p95, CPU and process memory remain diagnostics. Each child is bounded by
+the existing600s/24GiB Job and the complete wave by1800s. No automatic retries.
+
+Preserved development incidents: the first unit smoke had7passes/3failures
+because the test expected ValueError while the correct rejection raised the
+existing PackageGateError. No malformed timing was accepted. Independent
+source review additionally found the inherited zero-force placeholder,
+incomplete wheel-to-installed dependency binding and missing final parent
+deadline check; these were corrected in the unfrozen harness. The corrected
+10-test unit rehearsal passed, as did the real B2/B3 performance smoke.
+The first installed-probe rehearsal rejected JSON lists where exact binary64
+shell arrays were required. Only the external probe's reconstruction was fixed;
+public/runtime validation remained unchanged. The corrected complete20-record
+public workflow rehearsal passed in17.79s. Prior logs/outputs remain external.
 
 The request to finish does not waive these gates. Freeze further exploratory
 work; reopen mechanics only for a concrete correctness finding or an explicit
