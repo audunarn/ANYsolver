@@ -1,0 +1,741 @@
+{
+  "schema": "GE_BEAM3_VARIATIONAL_SHELL_VERIFICATION_V2",
+  "revision": "52888479adbf505c54d9adef74d6607929789c9c",
+  "tree": "870ea8498cfa37d5628f8a712e94c536fa55d93b",
+  "archive": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\ge-beam3-variational-shell-5288847-20260909",
+  "files": [
+    {
+      "relative": "incident-probe-b\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-probe-b\\command.json",
+      "bytes": 1048,
+      "sha256": "76DBBBCD9F26BCB0987B4C0F3B5DF8FFA54201B3F772D15517FE3301AEE2D5A5"
+    },
+    {
+      "relative": "incident-probe-b\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-probe-b\\process.json",
+      "bytes": 285,
+      "sha256": "F3BEF9F9BA997BE1C3FEDC76B06DE7626CB45C73DEAD9E38B569892D8BF6A087"
+    },
+    {
+      "relative": "incident-probe-b\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-probe-b\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "incident-probe-b\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-probe-b\\stdout.txt",
+      "bytes": 453,
+      "sha256": "773FC9A7ADD41795ACCB86CA72B40805E287C268D3CCAEA0217CA36014CA1587"
+    },
+    {
+      "relative": "smoke-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\command.json",
+      "bytes": 350,
+      "sha256": "B7FE2A5512647ADD5FA6E536DE0C37A140A087076658E10C5A9D2A1EFE9AE6D3"
+    },
+    {
+      "relative": "smoke-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\junit.xml",
+      "bytes": 1184,
+      "sha256": "18A76CD823F9EB56ED5C0942BC84905CECF68201AE95343916CD258AC5B49BDB"
+    },
+    {
+      "relative": "smoke-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\process.json",
+      "bytes": 285,
+      "sha256": "9B589BD07E1915B26115204CA68520C05FEDAAD0A1DE5D3534F6CE5AF910F8C9"
+    },
+    {
+      "relative": "smoke-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "smoke-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\stdout.txt",
+      "bytes": 114,
+      "sha256": "A5DB633ACF62325F3681F50EF13395C397A0AB2207ECB4D21DFAD37E719F1EBE"
+    },
+    {
+      "relative": "smoke-a\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "smoke-a\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "smoke-a\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "smoke-a\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    },
+    {
+      "relative": "smoke-a\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "bytes": 12295,
+      "sha256": "4C68E98DD316964C8709A4E4C355FB667FEB306F9D36156710E6EE6FA9D79116"
+    },
+    {
+      "relative": "smoke-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 6209,
+      "sha256": "42FA8C4F83315AAD71E099915B7BEFA6F03D25F19D96B1B09AD9DF70794AFEAB"
+    },
+    {
+      "relative": "smoke-a\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-smoke-a\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "bytes": 7450,
+      "sha256": "8EED1EADBEB3DD169EA5FEACD672BF93118BD3328788CC4CB6D696C3E755FA96"
+    },
+    {
+      "relative": "coupled-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\command.json",
+      "bytes": 350,
+      "sha256": "0FFDB4F0F984CC0FF7F937F791105E62B1FD1C51C09E17EC76B76345793638BE"
+    },
+    {
+      "relative": "coupled-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\junit.xml",
+      "bytes": 545,
+      "sha256": "B05BD0F926B181CB5BA75AFB755A946813972D138A5487DEE3792149B63C40BB"
+    },
+    {
+      "relative": "coupled-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\process.json",
+      "bytes": 288,
+      "sha256": "A2CB08D7CD187015F7AC7BC04E4334E84D7EA204098F5218609C01F7B697584B"
+    },
+    {
+      "relative": "coupled-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "coupled-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\stdout.txt",
+      "bytes": 115,
+      "sha256": "036AB353E9652E167CFCEDBAF1A373DE2A84E57E4B406BC360A3E475B58BB26D"
+    },
+    {
+      "relative": "coupled-a\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "coupled-a\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "coupled-a\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "bytes": 12295,
+      "sha256": "4C68E98DD316964C8709A4E4C355FB667FEB306F9D36156710E6EE6FA9D79116"
+    },
+    {
+      "relative": "coupled-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 6209,
+      "sha256": "42FA8C4F83315AAD71E099915B7BEFA6F03D25F19D96B1B09AD9DF70794AFEAB"
+    },
+    {
+      "relative": "coupled-a\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-coupled-a\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "bytes": 7456,
+      "sha256": "5A763742CE3CA1538A7809E3E4AC2DA9E4FF4E05205205173162EC5E1817C0F7"
+    },
+    {
+      "relative": "rehearsal-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\command.json",
+      "bytes": 332,
+      "sha256": "C368A1AEBF147EDA306B1597FDACB4FC41CB15E0ACC57787D8F840E9E9391846"
+    },
+    {
+      "relative": "rehearsal-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\junit.xml",
+      "bytes": 2446,
+      "sha256": "70792C2A0B26F9C07B62600A404C920AD8EC5923B3E640EE735B5DEB9FC45008"
+    },
+    {
+      "relative": "rehearsal-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\process.json",
+      "bytes": 288,
+      "sha256": "308766A433B3A822E3EC2D3A637243B8050B6874A10CCF6407E58A68D52A7D34"
+    },
+    {
+      "relative": "rehearsal-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "rehearsal-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\stdout.txt",
+      "bytes": 102,
+      "sha256": "E721D307F38508F47FDB655F2D751C093FA7FAE424220D55A5BC99D33742CA90"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "bytes": 667,
+      "sha256": "470D09575ACAC5496478DFC97DD8DA4F812BE7AD4031AD0610CED3DF626E6EDF"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "bytes": 491,
+      "sha256": "05D8BDCC4C0E2B0C5C910604AC276595A2483C0FA486D39B42602416B938CE18"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "rehearsal-a\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    },
+    {
+      "relative": "rehearsal-a\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "bytes": 12295,
+      "sha256": "4C68E98DD316964C8709A4E4C355FB667FEB306F9D36156710E6EE6FA9D79116"
+    },
+    {
+      "relative": "rehearsal-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 6209,
+      "sha256": "42FA8C4F83315AAD71E099915B7BEFA6F03D25F19D96B1B09AD9DF70794AFEAB"
+    },
+    {
+      "relative": "rehearsal-a\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-20260909-rehearsal-a\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "bytes": 9460,
+      "sha256": "CDCB3DA050C5FD9AE495BC98630F23EF2BFCED50FE5239039EA819DFD43485B6"
+    },
+    {
+      "relative": "wave\\wave.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\wave.json",
+      "bytes": 1029,
+      "sha256": "43657485F8B00B2E3AC627F948EA680C18260313C54C66D10B9B7E41DACD53F7"
+    },
+    {
+      "relative": "wave\\replica-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\command.json",
+      "bytes": 356,
+      "sha256": "7D1C5DBDE27515C05903C7CC0592B829E8DC0C662974B60EFA959BAC39861073"
+    },
+    {
+      "relative": "wave\\replica-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\junit.xml",
+      "bytes": 2446,
+      "sha256": "E97B5FB03425AC8352CD27F5AEE309FA2C031750EFAC23F3A473E4099A0DAABE"
+    },
+    {
+      "relative": "wave\\replica-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\process.json",
+      "bytes": 288,
+      "sha256": "F9E0B2D4CFC606ABEA658ED76CD06008A696E8406077389E52056DA63F329855"
+    },
+    {
+      "relative": "wave\\replica-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\replica-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\stdout.txt",
+      "bytes": 102,
+      "sha256": "29A1CCA4023EB5E6B4431C517D437044002E36591DF831B3ABF9D8C42731A9E7"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "bytes": 667,
+      "sha256": "470D09575ACAC5496478DFC97DD8DA4F812BE7AD4031AD0610CED3DF626E6EDF"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "bytes": 491,
+      "sha256": "05D8BDCC4C0E2B0C5C910604AC276595A2483C0FA486D39B42602416B938CE18"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-a\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    },
+    {
+      "relative": "wave\\replica-b\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\command.json",
+      "bytes": 356,
+      "sha256": "D9889FE1BA97F63CE365899DF8E967B68E3354E02EAEDBA6A32341D9647BFBFF"
+    },
+    {
+      "relative": "wave\\replica-b\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\junit.xml",
+      "bytes": 2446,
+      "sha256": "45F42E35D28CBDB29A4B01CEC3B6A3F9CAAB6C4BC26D5D7992DDC40D363B7B8A"
+    },
+    {
+      "relative": "wave\\replica-b\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\process.json",
+      "bytes": 287,
+      "sha256": "E403859777B70BBD18B5B83B9855F7653A9B8BFD5B453E5FCC6B3206606E1E5E"
+    },
+    {
+      "relative": "wave\\replica-b\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\replica-b\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\stdout.txt",
+      "bytes": 102,
+      "sha256": "DF39499D41344DF782FDDA7F4B506BDF55EB9FD0E3C8E2F7AD90E809DF8ADAA2"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "bytes": 667,
+      "sha256": "470D09575ACAC5496478DFC97DD8DA4F812BE7AD4031AD0610CED3DF626E6EDF"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "bytes": 491,
+      "sha256": "05D8BDCC4C0E2B0C5C910604AC276595A2483C0FA486D39B42602416B938CE18"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\replica-b\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    },
+    {
+      "relative": "wave\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\source\\src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "bytes": 12295,
+      "sha256": "4C68E98DD316964C8709A4E4C355FB667FEB306F9D36156710E6EE6FA9D79116"
+    },
+    {
+      "relative": "wave\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 6209,
+      "sha256": "42FA8C4F83315AAD71E099915B7BEFA6F03D25F19D96B1B09AD9DF70794AFEAB"
+    },
+    {
+      "relative": "wave\\source\\tests\\test_ge_beam3_shell_joint_trial.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\source\\tests\\test_ge_beam3_shell_joint_trial.py",
+      "bytes": 9916,
+      "sha256": "1A0263A96FF5ED11700A4768D7BE4B063C8B1F835DF76A46302C9056E961E041"
+    },
+    {
+      "relative": "wave\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "bytes": 9460,
+      "sha256": "CDCB3DA050C5FD9AE495BC98630F23EF2BFCED50FE5239039EA819DFD43485B6"
+    },
+    {
+      "relative": "wave\\v1-regression\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\command.json",
+      "bytes": 364,
+      "sha256": "269BD7EDA8F8BD46FBC7390215DAE94B7E1B3C78DD6BB2760C942EAEE7DAD780"
+    },
+    {
+      "relative": "wave\\v1-regression\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\junit.xml",
+      "bytes": 3500,
+      "sha256": "C32A9E1E7C567E91EF50D4561D6C0D279A488EAAF52594B430715B9F1B6E01D3"
+    },
+    {
+      "relative": "wave\\v1-regression\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\process.json",
+      "bytes": 288,
+      "sha256": "DF1E9D5B013B26BC33445A8E11768F8FE0C7476BBEE2DCDA91DF9CA46D0AE0BD"
+    },
+    {
+      "relative": "wave\\v1-regression\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\v1-regression\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\stdout.txt",
+      "bytes": 102,
+      "sha256": "5AF87371E3B9A2C03C686E97814357187DD7FABE4B496728F664E67D1B52964F"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_bounded_first_increment_c0\\newton.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_bounded_first_increment_c0\\newton.json",
+      "bytes": 2386,
+      "sha256": "B33426A17845B1B1B15903B13413E626FEC4E5609A8D3B53AB176330655813FA"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_bounded_first_increment_c1\\newton.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_bounded_first_increment_c1\\newton.json",
+      "bytes": 2397,
+      "sha256": "AE2D5ADFCA15C7284B5B06F59EF146FD0728FE8C5F0D9823AC59A15A02BD6CE1"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_bounded_first_increment_c2\\newton.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_bounded_first_increment_c2\\newton.json",
+      "bytes": 2471,
+      "sha256": "2EFF68A16E5F07D46C87C42AE837C9A17DC9F26AEF41F20CBD1EA83E0B7DA5C3"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_bounded_first_increment_c3\\newton.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_bounded_first_increment_c3\\newton.json",
+      "bytes": 2444,
+      "sha256": "17362C6C3C590EF2247A378E9854817AAAD399008767F342801C1CE0DE19A68E"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_genuine_curved_plastic_be0\\predecessor.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_genuine_curved_plastic_be0\\predecessor.json",
+      "bytes": 30581,
+      "sha256": "BF136E96B3E32761E5FF97B29D71416B45CFC4489F38FCDFCAFE14CE68B585B4"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_genuine_curved_plastic_be0\\trial-history.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_genuine_curved_plastic_be0\\trial-history.json",
+      "bytes": 3554,
+      "sha256": "6E4DB5C832E5080A90168CB278248738B9F64CE7E3C4F2FD79A58631957BB749"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_real_components_and_spati0\\trial.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_real_components_and_spati0\\trial.json",
+      "bytes": 48190,
+      "sha256": "18CFE3404E7D699875A8D0D5FAB63ED8322640C0940F72BFC671ADE2B58D6602"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_real_components_and_spati1\\trial.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_real_components_and_spati1\\trial.json",
+      "bytes": 44703,
+      "sha256": "C16B0E016F94687400AF0265778366347F1DDFABC09E77CE0B75D2424EBDA3F6"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_real_components_and_spati2\\trial.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_real_components_and_spati2\\trial.json",
+      "bytes": 48397,
+      "sha256": "6357598E675FAD67D4F714AB669F9392ADE18C7F2761EBD92C115B163EBE5671"
+    },
+    {
+      "relative": "wave\\v1-regression\\pytest\\test_real_components_and_spati3\\trial.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-variational-shell-5288847-20260909-wave\\v1-regression\\pytest\\test_real_components_and_spati3\\trial.json",
+      "bytes": 44913,
+      "sha256": "A1BFA0401D651F0B722BF875AE846E0882C906D442B669F86076BE2A8945D8EA"
+    }
+  ],
+  "science": [
+    {
+      "relative": "test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "test_real_numbering_covariance0\\numbering.json",
+      "bytes": 667,
+      "sha256": "470D09575ACAC5496478DFC97DD8DA4F812BE7AD4031AD0610CED3DF626E6EDF"
+    },
+    {
+      "relative": "test_real_numbering_covariance1\\numbering.json",
+      "bytes": 491,
+      "sha256": "05D8BDCC4C0E2B0C5C910604AC276595A2483C0FA486D39B42602416B938CE18"
+    },
+    {
+      "relative": "test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    }
+  ],
+  "v1_regression": [
+    {
+      "relative": "test_bounded_first_increment_c0\\newton.json",
+      "bytes": 2386,
+      "sha256": "B33426A17845B1B1B15903B13413E626FEC4E5609A8D3B53AB176330655813FA"
+    },
+    {
+      "relative": "test_bounded_first_increment_c1\\newton.json",
+      "bytes": 2397,
+      "sha256": "AE2D5ADFCA15C7284B5B06F59EF146FD0728FE8C5F0D9823AC59A15A02BD6CE1"
+    },
+    {
+      "relative": "test_bounded_first_increment_c2\\newton.json",
+      "bytes": 2471,
+      "sha256": "2EFF68A16E5F07D46C87C42AE837C9A17DC9F26AEF41F20CBD1EA83E0B7DA5C3"
+    },
+    {
+      "relative": "test_bounded_first_increment_c3\\newton.json",
+      "bytes": 2444,
+      "sha256": "17362C6C3C590EF2247A378E9854817AAAD399008767F342801C1CE0DE19A68E"
+    },
+    {
+      "relative": "test_genuine_curved_plastic_be0\\predecessor.json",
+      "bytes": 30581,
+      "sha256": "BF136E96B3E32761E5FF97B29D71416B45CFC4489F38FCDFCAFE14CE68B585B4"
+    },
+    {
+      "relative": "test_genuine_curved_plastic_be0\\trial-history.json",
+      "bytes": 3554,
+      "sha256": "6E4DB5C832E5080A90168CB278248738B9F64CE7E3C4F2FD79A58631957BB749"
+    },
+    {
+      "relative": "test_real_components_and_spati0\\trial.json",
+      "bytes": 48190,
+      "sha256": "18CFE3404E7D699875A8D0D5FAB63ED8322640C0940F72BFC671ADE2B58D6602"
+    },
+    {
+      "relative": "test_real_components_and_spati1\\trial.json",
+      "bytes": 44703,
+      "sha256": "C16B0E016F94687400AF0265778366347F1DDFABC09E77CE0B75D2424EBDA3F6"
+    },
+    {
+      "relative": "test_real_components_and_spati2\\trial.json",
+      "bytes": 48397,
+      "sha256": "6357598E675FAD67D4F714AB669F9392ADE18C7F2761EBD92C115B163EBE5671"
+    },
+    {
+      "relative": "test_real_components_and_spati3\\trial.json",
+      "bytes": 44913,
+      "sha256": "A1BFA0401D651F0B722BF875AE846E0882C906D442B669F86076BE2A8945D8EA"
+    }
+  ],
+  "observations": [
+    {
+      "record": "test_loaded_coupled_symmetry_r0",
+      "symmetry": 1.602380940994803e-16
+    },
+    {
+      "record": "test_loaded_coupled_symmetry_r1",
+      "symmetry": 1.0924498526392928e-16
+    },
+    {
+      "record": "test_real_shell_energy_work_ta0",
+      "errors": {
+        "energy_objectivity": 8.187894806610529e-16,
+        "symmetry": 2.1329100168097182e-16,
+        "tangent": 1.3372567472091157e-10,
+        "work": 1.554274486892382e-10,
+        "wrench_objectivity": 5.787493784762373e-14
+      }
+    },
+    {
+      "record": "test_real_shell_energy_work_ta1",
+      "errors": {
+        "energy_objectivity": 4.81385764583564e-16,
+        "symmetry": 1.8319975627694277e-16,
+        "tangent": 3.6514709090078494e-10,
+        "work": 1.176751474041282e-10,
+        "wrench_objectivity": 1.7494593630696088e-13
+      }
+    }
+  ],
+  "tests": {
+    "rehearsal": 16,
+    "replica_a": 16,
+    "replica_b": 16,
+    "v1_regression": 22
+  },
+  "wave": {
+    "elapsed": 25.316897100012284,
+    "production_qualified": false,
+    "results": {
+      "replica-a": {
+        "after": [
+          250468750,
+          0,
+          309821440
+        ],
+        "before": [
+          250468750,
+          0,
+          309821440
+        ],
+        "cleanup_error": null,
+        "elapsed": 25.233242899994366,
+        "ended_utc": "2026-09-09T19:39:30.446199+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 39012,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T19:39:05.212958+02:00",
+        "success": true
+      },
+      "replica-b": {
+        "after": [
+          247812500,
+          0,
+          310894592
+        ],
+        "before": [
+          247812500,
+          0,
+          310894592
+        ],
+        "cleanup_error": null,
+        "elapsed": 25.12644300001557,
+        "ended_utc": "2026-09-09T19:39:30.345272+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 47936,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T19:39:05.218828+02:00",
+        "success": true
+      },
+      "v1-regression": {
+        "after": [
+          161718750,
+          0,
+          296427520
+        ],
+        "before": [
+          161718750,
+          0,
+          296427520
+        ],
+        "cleanup_error": null,
+        "elapsed": 16.387952699995367,
+        "ended_utc": "2026-09-09T19:39:21.607074+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 49368,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T19:39:05.219118+02:00",
+        "success": true
+      }
+    },
+    "revision": "52888479adbf505c54d9adef74d6607929789c9c"
+  },
+  "production_qualified": false,
+  "independent_author_review": false,
+  "archive_verified_files": 88,
+  "retained_local_operators_unchanged": true,
+  "coupled_spectral_qualified": false
+}

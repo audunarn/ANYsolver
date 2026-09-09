@@ -14,8 +14,22 @@ equations, exact incident identity and restrictions. Initial seven local-map/
 work checks passed in 5.09s and two loaded global symmetry/restart checks passed
 in 20.90s. The complete 16-test rehearsal passed in 22.71s, including all real
 D3/D4 operator reorderings and policy/malformed-state rejection. Frozen replicas
-and the affected V1 regression follow. This does not reopen completed
+and the affected V1 regression passed as recorded below. This does not reopen completed
 beam campaigns or remove the remaining public delivery/independent review gates.
+
+Frozen correction `52888479adbf505c54d9adef74d6607929789c9c` passed 16 tests
+in each fresh replica. All eight scientific files match the rehearsal and both
+replicas byte-for-byte. The separate 22-test V1 regression passed; all ten
+records match the preserved `fa7ab2c` archive. Both loaded coupled symmetry
+errors are now below 1.7e-16, without averaging a nonsymmetric operator. Energy/
+work and directional tangent errors meet their unchanged gates. The three
+worker trees ended empty in at most 25.24s; total wave duration was 25.32s.
+All 88 archived files (including the original failed V1 spectral probe) were
+checked by size and SHA-256, bound in
+`docs/reference_cases/ge_beam3_variational_shell_verification.json`.
+This corrects the conservative connection mapping only. Coupled spectral
+integration, independent-author review and the current standalone public
+delivery remain open; production qualification remains false.
 
 Current navigation checkpoint, 2026-09-09. This is not scientific evidence,
 a new formulation, an authorization record, or a replacement for any accepted
