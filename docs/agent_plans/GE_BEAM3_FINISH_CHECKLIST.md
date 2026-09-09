@@ -1,5 +1,22 @@
 # GE-B3 finish checklist
 
+## Immediate checkpoint: private coupling conservativity correction
+
+The loaded V1 coupled operator failed the required conservative symmetry gate
+(Q4 4.8553e-5, S3 V2D 5.9533e-5 versus 1e-11), although its actual equilibrium
+and replay checks pass. Preserve those histories without claiming conservative
+spectral authority. The cause is the rotate-only local-force mapping; do not
+hide it by symmetrization or alter qualified Q4/S3 mechanics.
+
+The isolated V2 connection successor differentiates the complete deformational
+map and binds a distinct policy. See `GE_BEAM3_VARIATIONAL_SHELL_MAP.md` for the
+equations, exact incident identity and restrictions. Initial seven local-map/
+work checks passed in 5.09s and two loaded global symmetry/restart checks passed
+in 20.90s. The complete 16-test rehearsal passed in 22.71s, including all real
+D3/D4 operator reorderings and policy/malformed-state rejection. Frozen replicas
+and the affected V1 regression follow. This does not reopen completed
+beam campaigns or remove the remaining public delivery/independent review gates.
+
 Current navigation checkpoint, 2026-09-09. This is not scientific evidence,
 a new formulation, an authorization record, or a replacement for any accepted
 or failed result. Use this single checklist for completion updates rather than

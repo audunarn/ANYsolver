@@ -53,8 +53,12 @@ definition before and after this call. Existing operator expressions are intact.
     assembly.guard()
     br, bj, _, responses, _ = assembly.beam.assemble(mechanical, parameter, beam_origins)
     cancellation_safe_point(cancellation_token, 'shell-joint.beam-complete')
-    sr, sj, candidate = corotational_element_response(assembly.model, 1, assembly.element, u,
-        True, committed_state=shell_origin, num_layers=assembly.layers, tangent_mode='consistent')
+    if assembly.variational_shell:
+        from ._ge_beam3_variational_shell import response
+        sr, sj, candidate = response(assembly.model, assembly.element, u, shell_origin, assembly.layers)
+    else:
+        sr, sj, candidate = corotational_element_response(assembly.model, 1, assembly.element, u,
+            True, committed_state=shell_origin, num_layers=assembly.layers, tangent_mode='consistent')
     bi = assembly.beam.index[assembly.beam_node]
     shell = u.reshape(-1, 6)[assembly.shell_node]
     ports = assembly.joint.evaluate_ports(
@@ -91,7 +95,10 @@ This is a trial/diagnostic seam, not a supported coupled analysis driver.
 """
 
     def __init__(self, beam_context, *, topology, coordinates, reference_normal,
-                 thickness, elastic_modulus, poisson_ratio, shell_node, beam_node):
+                 thickness, elastic_modulus, poisson_ratio, shell_node, beam_node, variational_shell=False):
+        if type(variational_shell) is not bool:
+            raise ValueError('explicit variational shell policy required')
+        self.variational_shell = variational_shell
         if type(beam_context) not in (Context, NodalContext, CoupledBeamSubdomain):
             raise ValueError('exact retained generalized beam owner required')
         beam_context.guard()
@@ -148,7 +155,11 @@ This is a trial/diagnostic seam, not a supported coupled analysis driver.
     def _descriptor(self):
         material = self.model.get_material('joint-shell')
         e = self.element
-        return dict(policy='GE_BEAM3_REAL_SHELL_RETAINED_BEAM_TRIAL_ONLY_V1',
+        policy = 'GE_BEAM3_REAL_SHELL_RETAINED_BEAM_TRIAL_ONLY_V1'
+        if self.variational_shell:
+            from ._ge_beam3_variational_shell import POLICY
+            policy = POLICY
+        return dict(policy=policy,
             topology=self.topology, beam=self.beam.identity,
             nodes=[(i, self.model.mesh.nodes[i].coords()) for i in sorted(self.model.mesh.nodes)],
             shell_nodes=e.node_ids, shell_formulation=e.formulation_id,
@@ -165,7 +176,7 @@ This is a trial/diagnostic seam, not a supported coupled analysis driver.
     def guard(self):
         self.beam.guard(); self.joint.guard()
         cls = QualifiedE4PLShellElement if self.topology == 'Q4' else NativeParityE4PLS3V2DShellElement
-        if (type(self.element) is not cls or self.model.mesh.elements != {1: self.element}
+        if (type(self.variational_shell) is not bool or type(self.element) is not cls or self.model.mesh.elements != {1: self.element}
                 or self.beam.identity != self.beam_identity
                 or canonical(self.shell_origin) != self.origin_bytes
                 or sha256(canonical(self._descriptor())).hexdigest() != self.identity):
