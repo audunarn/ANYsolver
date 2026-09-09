@@ -25,9 +25,10 @@ work and close required application gaps; do not restart passed campaigns.
 
 ## Required completion, in order
 
-1. **Standalone workflow closure.** Finish the current native application
-   interface for supported straight/curved section families, load/state
-   ownership and buckling workflows. Audit existing evidence against the
+1. **Standalone workflow closure.** Finish the remaining model-owned
+   force/couple/continuation routing for supported straight/curved section
+   families. The captured-state buckling route below is now implemented and
+   verified for its declared scope; do not rebuild it. Audit evidence against the
    requested engineering requirements; run only genuinely missing checks or
    regressions affected by a correction. Do not infer full parity from modal
    subsets, manufacture accepted histories, or relabel unstable states.
@@ -76,7 +77,7 @@ receipts and emitted checkpoint records are bound by
 This is integration regression evidence, not independent review or completion
 of the remaining scientific gates. Full goal remains active and incomplete.
 
-## Buckling interface now implemented; frozen verification next
+## Buckling interface verified
 
 `NativeBeamAnalysis.buckling_modes` captures the actual generalized or physical
 fibre force checkpoint, without state advancement or state-owner conversion.
@@ -101,9 +102,32 @@ The corrected 17-test smoke and the stricter 19-test integration rehearsal
 passed. The final source additionally includes direct regression for the
 incorrect fixed-static-lift shortcut and explicit input-roundoff witnesses.
 
-Next verify that frozen source twice, and process the already accepted N8 Euler
-factor packets with `ge_beam3_buckling_saved_euler.py`. That script verifies the
-old archive and actual preload checkpoint hashes before numerical processing;
-it must never rerun those preload solves. Record these as numerical/interface
-verification, not reclassification of the historical Euler campaign or full
-standalone qualification.
+Frozen implementation `47cbcd51f04e7f287c78c712a6bba971d40e5373` passed 21 tests
+in each of two fresh replicas (43.89/43.33 seconds). All ten scientific output
+files are byte-identical. The new explicit fixed-lift regression demonstrates
+that holding the current static lift fixed would produce the wrong critical
+multiplier. Both original-factor and original stress-resultant saddle-pencil
+comparisons pass; straight/curved, connected, coupled, covariance, mass
+independence, state preservation, mutation and unsupported-state checks pass.
+
+The initial saved-Euler checks stopped at an installed-versus-source import
+binding error. No numerical result was produced by either failed checker.
+Runner-only correction `ad1593e0b19ff9ec0d4b179fdc06836d740d64b0` has no `src/`
+or test delta from the tested implementation. It binds and verifies the frozen
+source package after checking the saved archive. The passing tests were not
+rerun for that runner-only correction.
+
+Two corrected N8 saved-factor checks completed in 2.32/2.42 seconds and emitted
+byte-identical scientific records. Neither reran a preload solve. Two
+compressive preloads give both bending predictions within 0.074% of their
+Euler references (required: below 2%); the tensile point has no positive
+multiplier in the explicitly tested window (0,4]. All original-factor mode
+residuals are below 3e-12. This is numerical/interface verification, not
+reclassification of the historical Euler campaign or full beam qualification.
+
+The 98-file archive, all failures, passing records, commands, source and hashes
+are bound in `docs/reference_cases/ge_beam3_native_buckling_verification.json`.
+All launched process trees are terminal and empty. Preserve this completed
+work; do not rerun the Euler, N32 or buckling waves as a substitute for the
+remaining delivery gates. No independent-author review or default activation
+is claimed. Overall goal remains active.
