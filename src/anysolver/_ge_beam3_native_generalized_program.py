@@ -128,7 +128,12 @@ def assemble_at(parameter,model,displacements,store,num_layers,**kwargs):
 
 
 def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_iterations=24,line_search=True,
-                            initial_checkpoint=None,expected_sha256=None,step_policy=None):
+                            initial_checkpoint=None,expected_sha256=None,step_policy=None,
+                            cancellation_token=None,progress_callback=None):
+    from .control import cancellation_safe_point
+    cancellation_safe_point(cancellation_token,'native-distributed.capture')
+    if progress_callback is not None and not callable(progress_callback):
+        raise ValueError('callable distributed progress observer required')
     from .boundary import LoadCase
     from .nonlinear_static import solve_static_nonlinear,NonlinearConvergenceSettings
     from ._ge_beam3_native_force_adaptation import describe,require_capacity,settings
@@ -177,7 +182,8 @@ def solve_distributed_model(model,proportional,*,constant=None,steps=2,max_itera
             record_increment_snapshots=True,equilibrate_initial_state=False,
             initial_displacements=None if initial is None else initial['displacements'],
             initial_element_states=None if initial is None else initial['states'],
-            convergence_settings=convergence)
+            convergence_settings=convergence,cancellation_token=cancellation_token,progress_callback=progress_callback)
+        cancellation_safe_point(cancellation_token,'native-distributed.complete')
         programme.require(model);proportional.require(model.mesh);constant.require(model.mesh)
         evidence=dict(programme_sha256=programme.input_sha256,model_sha256=programme.identity,
             events=tuple(programme.events),general_matrix_required=True,production_qualified=False,restart_authorized=initial is not None)

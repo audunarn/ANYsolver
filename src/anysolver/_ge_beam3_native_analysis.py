@@ -14,6 +14,7 @@ from threading import Lock
 import numpy as np
 
 from .boundary import BoundaryCondition, LoadCase
+from .control import cancellation_safe_point
 from .fe_core import FEModel
 from ._ge_beam3_native_definition import NativeBeamDefinition, _describe
 from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
@@ -168,9 +169,13 @@ its own integration. Model mutation or concurrent use fails closed.
         if self._family != family:
             raise NativeBeamWorkflowError('requested workflow has a different native section/state owner')
 
-    def _initial(self):
-        return {e.element_id:e.init_model_bound_nonlinear_state(self.model.mesh, e.section, 1)
-                for e in self._elements}
+    def _initial(self, cancellation_token=None):
+        states = {}
+        for e in self._elements:
+            cancellation_safe_point(cancellation_token, 'native-force.initialize-element')
+            states[e.element_id] = e.init_model_bound_nonlinear_state(self.model.mesh, e.section, 1)
+        cancellation_safe_point(cancellation_token, 'native-force.initialized')
+        return states
 
     def _envelope(self, backend):
         self._guard()
@@ -207,10 +212,13 @@ its own integration. Model mutation or concurrent use fails closed.
         return backend, data['backend_sha256']
 
     def solve_distributed(self, proportional, *, steps=2, max_iterations=24,
-                          checkpoint=None, expected_sha256=None):
+                          checkpoint=None, expected_sha256=None,
+                          cancellation_token=None, progress_callback=None):
         """Generalized native Newton; resume changes loads, never state owners."""
         from ._ge_beam3_native_generalized_program import solve_distributed_model
         from ._ge_beam3_native_generalized_restart import LoadPoint, encode_checkpoint, decode_checkpoint
+        cancellation_safe_point(cancellation_token, 'native-force.capture')
+        _require(progress_callback is None or callable(progress_callback), 'callable force progress observer required')
         _controls(steps, max_iterations)
         self._family_required('GENERALIZED_DISTRIBUTED')
         _require(type(proportional) is DistributedPattern, 'exact distributed pattern required')
@@ -222,23 +230,31 @@ its own integration. Model mutation or concurrent use fails closed.
             backend = digest = None
             if checkpoint is None:
                 chain = (dict(load_point=LoadPoint(0., constant, proportional),
-                              displacements=np.zeros(self.model.mesh.dof_manager.total_dofs), states=self._initial()),)
+                              displacements=np.zeros(self.model.mesh.dof_manager.total_dofs), states=self._initial(cancellation_token)),)
             else:
                 backend, digest = self._backend(checkpoint, expected_sha256)
                 chain = decode_checkpoint(self.model, backend, expected_sha256=digest)
                 constant = chain[-1]['load_point'].effective(self.model)
+            cancellation_safe_point(cancellation_token, 'native-force.captured')
             result, _ = solve_distributed_model(self.model, proportional, steps=steps,
-                max_iterations=max_iterations, initial_checkpoint=backend, expected_sha256=digest)
+                max_iterations=max_iterations, initial_checkpoint=backend, expected_sha256=digest,
+                cancellation_token=cancellation_token, progress_callback=progress_callback)
             chain += tuple(dict(load_point=LoadPoint(float(s.load_factor), constant, proportional),
                                 displacements=s.displacements, states=s.element_states) for s in result.snapshots)
             self._guard()
-            return NativeBeamRun(result.status, self._envelope(encode_checkpoint(self.model, chain)), result)
+            cancellation_safe_point(cancellation_token, 'native-force.checkpoint')
+            raw = self._envelope(encode_checkpoint(self.model, chain))
+            cancellation_safe_point(cancellation_token, 'native-force.complete')
+            return NativeBeamRun(result.status, raw, result)
 
     def solve_nodal(self, forces, *, target_factor=1., steps=2, max_iterations=24,
-                    checkpoint=None, expected_sha256=None):
+                    checkpoint=None, expected_sha256=None,
+                    cancellation_token=None, progress_callback=None):
         """Physical-fibre native Newton with a fixed spatial dead-force pattern."""
         from .nonlinear_static import solve_static_nonlinear
         from ._ge_beam3_native_fibre_restart import _forces, encode_checkpoint, decode_checkpoint
+        cancellation_safe_point(cancellation_token, 'native-force.capture')
+        _require(progress_callback is None or callable(progress_callback), 'callable force progress observer required')
         _controls(steps, max_iterations)
         self._family_required('PHYSICAL_FIBRE_NODAL')
         _require(type(target_factor) is float and isfinite(target_factor), 'explicit finite load factor required')
@@ -248,13 +264,14 @@ its own integration. Model mutation or concurrent use fails closed.
             _forces(forces, tuple(sorted(self.model.mesh.nodes)), self.model.mesh.dof_manager.total_dofs)
             if checkpoint is None:
                 chain = (dict(load_factor=0., displacements=np.zeros(self.model.mesh.dof_manager.total_dofs),
-                              states=self._initial()),)
+                              states=self._initial(cancellation_token)),)
                 initial = None
             else:
                 backend, digest = self._backend(checkpoint, expected_sha256)
                 original, chain = decode_checkpoint(self.model, backend, expected_sha256=digest)
                 _require(canonical(original) == canonical(forces), 'restart force pattern changed')
                 initial = chain[-1]
+            cancellation_safe_point(cancellation_token, 'native-force.captured')
             accepted = chain[-1]['load_factor']
             def load(factor):
                 value = LoadCase('native-beam-owned-dead-force')
@@ -266,11 +283,15 @@ its own integration. Model mutation or concurrent use fails closed.
                 tolerance=1e-12, num_layers=1, min_step_fraction=1., record_increment_snapshots=True,
                 equilibrate_initial_state=False,
                 initial_element_states=None if initial is None else initial['states'],
-                initial_displacements=None if initial is None else initial['displacements'])
+                initial_displacements=None if initial is None else initial['displacements'],
+                cancellation_token=cancellation_token, progress_callback=progress_callback)
             chain += tuple(dict(load_factor=float(accepted+s.load_factor*(target_factor-accepted)),
                                 displacements=s.displacements, states=s.element_states) for s in result.snapshots)
             self._guard()
-            return NativeBeamRun(result.status, self._envelope(encode_checkpoint(self.model, forces, chain)), result)
+            cancellation_safe_point(cancellation_token, 'native-force.checkpoint')
+            raw = self._envelope(encode_checkpoint(self.model, forces, chain))
+            cancellation_safe_point(cancellation_token, 'native-force.complete')
+            return NativeBeamRun(result.status, raw, result)
 
     def _decode(self, checkpoint, expected):
         backend, digest = self._backend(checkpoint, expected)
