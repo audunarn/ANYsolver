@@ -6608,6 +6608,17 @@ def _assemble_external_load_tangent_under_lease(
         model,
         context="external-load tangent assembly preflight",
     )
+    if load_case is not None and any(
+        type(e).__module__ == "anysolver._ge_beam3_native_fibre_static_element"
+        for e in model.mesh.elements.values()
+    ):
+        from ._ge_beam3_native_load_admission import assemble_nodal_forces
+
+        assemble_nodal_forces(
+            load_case, model.mesh, model.mesh.dof_manager,
+            guard=lambda *, stage: exact_qualified_guard(model, context=stage),
+            activity=_element_activity(model),
+        )
     total_dofs = model.mesh.dof_manager.total_dofs
     start_time = time.time()
     if load_case is None:

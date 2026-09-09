@@ -449,7 +449,13 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         checkout_ref,
         setup_ref,
         upload_ref,
+        upload_ref,
     ]
+    build_block = job_block(publish, "build")
+    assert build_block.index('python scripts/verify_release_runtime.py') < build_block.index(upload_ref)
+    assert '--manifest scripts/release_043_runtime.json' in build_block
+    assert '--wheel dist/anysolver-0.4.3-py3-none-any.whl' in build_block
+    assert 'name: release-runtime-bridge' in build_block
     assert action_sequence(job_block(publish, "testpypi")) == [
         download_ref,
         publish_ref,
@@ -632,7 +638,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert probe_environment(mesh_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.2"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.3"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
@@ -642,7 +648,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert probe_environment(fileio_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.2"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.3"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",

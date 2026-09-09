@@ -651,6 +651,18 @@ def _state_records(
         if element_id in seen:
             raise NonlinearCheckpointError(f"duplicate element state ID {element_id}")
         seen.add(element_id)
+        element = getattr(getattr(_guard_model, "mesh", None), "elements", {}).get(element_id)
+        protocol = getattr(element, "native_material_state_protocol", None)
+        if protocol is not None:
+            from ._native_material_protocol import PROTOCOL
+            serializer = getattr(element, "serialize_native_material_state", None)
+            if protocol != PROTOCOL or not callable(serializer):
+                raise NonlinearCheckpointError("Native material state has no declared checkpoint serializer")
+            state = serializer(_guard_model.mesh, state)
+            _checkpoint_observation_guard(
+                _exact_guard, _guard_model,
+                context=f"nonlinear checkpoint native material serialization for {element_id}",
+            )
         records.append(
             {
                 "element_id": element_id,

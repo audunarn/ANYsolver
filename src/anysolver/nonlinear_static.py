@@ -83,6 +83,8 @@ from .nonlinear_analysis_diagnostics import (
     record_nonlinear_assembly_execution,
 )
 from .nonlinear_state import (
+    _register_nonlinear_state_cleanup,
+    _run_with_nonlinear_state_cleanup,
     NonlinearStateStore,
     StateMaterializationPolicy,
     StateTransactionError,
@@ -1753,6 +1755,37 @@ def _owned_initial_element_states(
         _exact_guard(model, context="nonlinear static initial-state ID observation")
         if element_id in owned:
             raise ValueError("initial_element_states contains duplicate element IDs")
+        element = model.mesh.elements.get(element_id)
+        if type(element).__module__ == "anysolver._ge_beam3_native_generalized_element":
+            from ._ge_beam3_native_generalized_restart import capture_solver_state
+
+            owned[element_id] = capture_solver_state(
+                model, element_id, state, exact_guard=_exact_guard
+            )
+            continue
+        if type(element).__module__ == "anysolver._ge_beam3_native_distributed_element":
+            from ._ge_beam3_native_distributed_restart import capture_solver_state
+
+            owned[element_id] = capture_solver_state(
+                model, element_id, state, exact_guard=_exact_guard
+            )
+            continue
+        if type(element).__module__ == "anysolver._ge_beam3_native_line_static_element":
+            from ._ge_beam3_native_line_restart import capture_solver_state
+
+            owned[element_id] = capture_solver_state(
+                model, element_id, state, exact_guard=_exact_guard
+            )
+            continue
+        if type(element).__module__ == "anysolver._ge_beam3_native_fibre_static_element":
+            # Private typed candidate only; the helper checks the exact class.
+            # Keep the closed generic copier unchanged for all existing elements.
+            from ._ge_beam3_native_fibre_restart import capture_solver_state
+
+            owned[element_id] = capture_solver_state(
+                model, element_id, state, exact_guard=_exact_guard
+            )
+            continue
         owned[element_id] = _guarded_owned_nonlinear_snapshot(
             model,
             state,
@@ -2998,7 +3031,7 @@ def _activate_nonlinear_state_storage(
                 committed_states.has_native_rotations
             )
         diagnostic.update(committed_states.diagnostics())
-        return committed_states
+        return _register_nonlinear_state_cleanup(committed_states)
     if str(kinematics) != "von_karman":
         if native_required:
             raise NotImplementedError(
@@ -3098,7 +3131,7 @@ def _activate_nonlinear_state_storage(
                 )
         diagnostic["activated"] = True
         diagnostic.update(store.diagnostics())
-        return store
+        return _register_nonlinear_state_cleanup(store)
     except Exception as exc:
         if native_required:
             diagnostic["fallback_reason"] = (
@@ -4506,6 +4539,20 @@ def _solve_static_nonlinear_under_lease(
         _qualified_runtime_guard(lease_model, context=context)
         return result
 
+    native_generalized_model = any(
+        type(e).__module__ == "anysolver._ge_beam3_native_generalized_element"
+        for e in model.mesh.elements.values()
+    )
+    if native_generalized_model:
+        from ._ge_beam3_native_generalized_program import require_active, require_solver_initial
+
+        require_active(model)
+        require_solver_initial(model, initial_element_states, initial_displacements)
+        if (str(control).lower() != "force" or load_program is not None or initial_fields
+                or fracture_config is not None or imperfection is not None
+                or restart_checkpoint is not None or emit_restart_checkpoint):
+            raise ValueError("private generalized statics require their authenticated force programme")
+
     lease_namespace = getattr(_qualified_runtime_guard, "__dict__", {})
     owned_items_provider = (
         dict.get(lease_namespace, "_qualified_owned_element_items")
@@ -4613,6 +4660,20 @@ def _solve_static_nonlinear_under_lease(
         imperfection,
         _exact_guard=exact_guard,
     )
+    if any(type(e).__module__ == "anysolver._ge_beam3_native_fibre_static_element" for e in model.mesh.elements.values()):
+        from ._ge_beam3_native_load_admission import assemble_nodal_forces
+
+        native_load_cases = (load_case, constant_load_case) + (
+            tuple(stage.load_case for stage in load_program.stages)
+            if load_program is not None else ()
+        )
+        for native_load_case in native_load_cases:
+            if native_load_case is not None:
+                assemble_nodal_forces(
+                    native_load_case, model.mesh, model.mesh.dof_manager,
+                    guard=lambda *, stage: exact_guard(model, context=stage),
+                    activity=model.mesh.element_activity,
+                )
     if num_steps <= 0:
         raise ValueError("num_steps must be positive")
     control_name = control
@@ -4882,6 +4943,60 @@ def _solve_static_nonlinear_under_lease(
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
     )
+    native_spatial_couples = False
+    native_combined_couples = False
+    native_generalized_combined_couples = False
+    if native_generalized_model:
+        from ._ge_beam3_native_generalized_program import require_active, require_solver_initial
+
+        require_active(model)
+        require_solver_initial(model, initial_element_states, initial_displacements)
+        if follower_active:
+            raise ValueError("generalized distributed statics do not admit follower pressure")
+        general_tangent = True
+        info["equilibrium_tangent"] = "GENERAL_GENERALIZED_SECTION_DISTRIBUTED_STATIC_SCHUR"
+        info["native_generalized_general_matrix"] = True
+        from ._ge_beam3_native_generalized_combined_couples import active_for
+
+        native_generalized_combined_couples = active_for(model)
+        if native_generalized_combined_couples:
+            info['equilibrium_tangent'] = 'K_generalized_static_Schur-K_spatial_nodal_chart_external'
+            info['native_generalized_combined_couple_general_matrix'] = True
+    native_distributed_model = any(
+        type(e).__module__ == 'anysolver._ge_beam3_native_distributed_element'
+        for e in model.mesh.elements.values()
+    )
+    if native_distributed_model:
+        from ._ge_beam3_native_distributed_program import require_active, require_solver_initial
+
+        require_active(model)
+        require_solver_initial(model, initial_element_states, initial_displacements)
+        if (control_name != 'force' or load_program is not None or follower_active or fracture_config is not None
+                or initial_fields):
+            raise ValueError('private distributed couples require authenticated standalone force control')
+        general_tangent = True
+        info['equilibrium_tangent'] = 'GENERAL_DISTRIBUTED_COUPLE_STATIC_SCHUR'
+        info['native_distributed_couple_general_matrix'] = True
+        from ._ge_beam3_native_combined_couples import active_for
+
+        native_combined_couples = active_for(model)
+        if native_combined_couples:
+            info['equilibrium_tangent'] = 'K_distributed_static_Schur-K_spatial_nodal_chart_external'
+            info['native_combined_couple_general_matrix'] = True
+    native_line_model = any(
+        type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
+        for e in model.mesh.elements.values()
+    )
+    if native_line_model:
+        from ._ge_beam3_native_spatial_couples import active_for
+
+        native_spatial_couples = active_for(model)
+        if native_spatial_couples:
+            if control_name != 'force' or load_program is not None or follower_active or fracture_config is not None:
+                raise ValueError('private spatial couples require standalone force control')
+            general_tangent = True
+            info['equilibrium_tangent'] = 'K_internal-K_spatial_couple_chart_external'
+            info['native_spatial_couple_general_matrix'] = True
     imperfection_provenance: List[Dict[str, Any]] = []
     if imperfection is not None:
         imperfection_provenance = list(getattr(model, "imperfection_metadata", []))
@@ -4978,11 +5093,48 @@ def _solve_static_nonlinear_under_lease(
                 "its committed displacement"
             )
     elif control_name == "force":
-        q, initial_affine_scale = _reduced_coordinates_with_affine_scale(
-            T,
-            u0,
-            initial_displacements,
-        )
+        if initial_displacements is not None and model.mesh.elements and all(
+            type(element).__module__ == "anysolver._ge_beam3_native_fibre_static_element"
+            for element in model.mesh.elements.values()
+        ):
+            from ._ge_beam3_native_fibre_restart import supported_solver_coordinates
+
+            q, initial_affine_scale = supported_solver_coordinates(
+                model, T, u0, initial_displacements
+            )
+        elif initial_displacements is not None and model.mesh.elements and all(
+            type(element).__module__ == "anysolver._ge_beam3_native_line_static_element"
+            for element in model.mesh.elements.values()
+        ):
+            from ._ge_beam3_native_line_restart import supported_solver_coordinates
+
+            q, initial_affine_scale = supported_solver_coordinates(
+                model, T, u0, initial_displacements
+            )
+        elif initial_displacements is not None and model.mesh.elements and all(
+            type(element).__module__ == "anysolver._ge_beam3_native_generalized_element"
+            for element in model.mesh.elements.values()
+        ):
+            from ._ge_beam3_native_generalized_restart import supported_solver_coordinates
+
+            q, initial_affine_scale = supported_solver_coordinates(
+                model, T, u0, initial_displacements
+            )
+        elif initial_displacements is not None and model.mesh.elements and all(
+            type(element).__module__ == "anysolver._ge_beam3_native_distributed_element"
+            for element in model.mesh.elements.values()
+        ):
+            from ._ge_beam3_native_distributed_restart import supported_solver_coordinates
+
+            q, initial_affine_scale = supported_solver_coordinates(
+                model, T, u0, initial_displacements
+            )
+        else:
+            q, initial_affine_scale = _reduced_coordinates_with_affine_scale(
+                T,
+                u0,
+                initial_displacements,
+            )
         if initial_displacements is None:
             force_affine_path_mode = "PROPORTIONAL_PRESCRIBED_FIELD"
             force_exact_base_offset = np.zeros(int(T.shape[0]), dtype=float)
@@ -5355,6 +5507,25 @@ def _solve_static_nonlinear_under_lease(
                 if tangent
                 else None
             )
+            if native_spatial_couples or native_combined_couples or native_generalized_combined_couples:
+                if native_generalized_combined_couples:
+                    from ._ge_beam3_native_generalized_combined_couples import external_at
+                elif native_combined_couples:
+                    from ._ge_beam3_native_combined_couples import external_at
+                else:
+                    from ._ge_beam3_native_spatial_couples import external_at
+
+                extra, extra_tangent = external_at(
+                    model, committed_states, displacements, path_factor, tangent=tangent
+                )
+                force = force + extra
+                if tangent:
+                    zero_tangent = zero_tangent + extra_tangent
+            if native_line_model or native_distributed_model or native_generalized_model:
+                with np.errstate(over='ignore', invalid='ignore'):
+                    load_norm = float(np.linalg.norm(force))
+                if not np.all(np.isfinite(force)) or not np.isfinite(load_norm):
+                    raise ValueError('native external load exceeds finite norm range')
             return force, zero_tangent, factors, active_stage
 
         weighted_cases: List[Tuple[Optional["LoadCase"], float]] = [
@@ -5692,6 +5863,21 @@ def _solve_static_nonlinear_under_lease(
             dtype=float,
         ).reshape(-1)
 
+    def assemble_force_system(path_factor, *args, **kwargs):
+        # Private load-aware candidate only; all existing formulations retain
+        # their original assembler and load semantics.
+        if native_generalized_model:
+            from ._ge_beam3_native_generalized_program import assemble_at
+            return assemble_at(path_factor, *args, **kwargs)
+        if native_distributed_model:
+            from ._ge_beam3_native_distributed_program import assemble_at
+            return assemble_at(path_factor, *args, **kwargs)
+        if any(type(e).__module__ == 'anysolver._ge_beam3_native_line_static_element'
+               for e in model.mesh.elements.values()):
+            from ._ge_beam3_native_line_program import assemble_at
+            return assemble_at(path_factor, *args, **kwargs)
+        return _assemble_nonlinear_system(*args, **kwargs)
+
     def newton_increment(q_start, path_factor, reference, line_search):
         """One load increment.  Plain full Newton when ``line_search`` is
         False (the fast path); backtracking-line-search Newton otherwise.
@@ -5707,7 +5893,8 @@ def _solve_static_nonlinear_under_lease(
         )
         q_trial = q_start.copy()
         u = full_displacement(q_trial, path_factor)
-        F_int, K_T, trial_states = _assemble_nonlinear_system(
+        F_int, K_T, trial_states = assemble_force_system(
+            path_factor,
             model,
             u,
             committed_states,
@@ -5780,7 +5967,8 @@ def _solve_static_nonlinear_under_lease(
             if not line_search:
                 q_trial = q_trial + dq
                 u = full_displacement(q_trial, path_factor)
-                F_int, K_T, trial_states = _assemble_nonlinear_system(
+                F_int, K_T, trial_states = assemble_force_system(
+                    path_factor,
                     model,
                     u,
                     committed_states,
@@ -5826,7 +6014,8 @@ def _solve_static_nonlinear_under_lease(
                 q_candidate = q_trial + scale * dq
                 u = full_displacement(q_candidate, path_factor)
                 with_tangent = trial == 0
-                F_c, K_c, states_c = _assemble_nonlinear_system(
+                F_c, K_c, states_c = assemble_force_system(
+                    path_factor,
                     model,
                     u,
                     committed_states,
@@ -5853,7 +6042,8 @@ def _solve_static_nonlinear_under_lease(
                 rn_c = float(np.linalg.norm(r_c))
                 if np.isfinite(rn_c) and rn_c < residual_norm:
                     if not with_tangent:
-                        F_c, K_c, states_c = _assemble_nonlinear_system(
+                        F_c, K_c, states_c = assemble_force_system(
+                            path_factor,
                             model,
                             u,
                             committed_states,
@@ -5977,7 +6167,8 @@ def _solve_static_nonlinear_under_lease(
                 step_index += 1
                 u = full_displacement(q, lam)
                 control_value = float(np.linalg.norm(u))
-                reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
+                reaction_internal, _unused, _reaction_states = assemble_force_system(
+                    lam,
                     model,
                     u,
                     committed_states,
@@ -6432,7 +6623,8 @@ def solve_static_nonlinear(
             post_observation=post_observation,
         )
 
-        return solve_under_lease(
+        return _run_with_nonlinear_state_cleanup(
+            solve_under_lease,
             model,
             load_case=load_case,
             constant_load_case=constant_load_case,

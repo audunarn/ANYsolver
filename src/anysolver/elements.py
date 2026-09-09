@@ -6035,6 +6035,20 @@ def create_element(
     **kwargs: Any,
 ) -> Element:
     normalized_type = str(element_type).lower()
+    if normalized_type == "ge-beam3":
+        # The qualified geometrically exact three-node beam is deliberately
+        # kept out of ``ELEMENT_TYPES``.  That registry also feeds legacy
+        # beam dispatch and batching paths, while GE-B3 has its own rotation
+        # transaction and state contract.  Keep this one exact opt-in route
+        # local so no existing beam spelling changes meaning.
+        from .ge_beam3_element import GeometricallyExactBeam3D3NElement
+
+        return GeometricallyExactBeam3D3NElement(
+            element_id,
+            node_ids,
+            material_name,
+            **kwargs,
+        )
     if normalized_type in {"e4-pl-s3-v2d", "qualified-s3-v2d"}:
         return create_shell_element(
             element_id,

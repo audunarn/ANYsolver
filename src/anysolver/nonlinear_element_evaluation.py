@@ -86,6 +86,19 @@ def evaluate_nonlinear_element(
         node_ids,
         reference_directors,
     )
+    native_material_protocol = getattr(element, "native_material_state_protocol", None)
+    if native_material_protocol is not None:
+        from ._native_material_protocol import PROTOCOL
+        if native_material_protocol != PROTOCOL:
+            raise NativeNonlinearEvaluationError("Unsupported native material protocol")
+        context = committed_states.native_material_context(state_token, int(element_id))
+        context.require_view(native_trial)
+        result = element.compute_nonlinear_response(
+            mesh, material, element_displacements, committed_state, num_layers, tangent,
+            native_rotation_trial=native_trial, native_material_context=context,
+        )
+        context.require_view(native_trial)
+        return result
     return element.compute_nonlinear_response(
         mesh,
         material,

@@ -22,6 +22,7 @@ from __future__ import annotations
 import copy
 import threading
 import time
+from contextvars import ContextVar
 from collections.abc import Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
@@ -37,6 +38,11 @@ from ._native_rotation_state import (
     NativeRotationValidationError,
     create_native_rotation_state_store,
     validate_proper_rotation_matrices,
+)
+from ._native_material_protocol import (
+    PROTOCOL as _NATIVE_MATERIAL_PROTOCOL,
+    NativeMaterialContext,
+    NativeMaterialValidator,
 )
 
 
@@ -189,8 +195,11 @@ class _NativeElementStateBinding:
     dof_mapping: np.ndarray = field(repr=False, compare=False, hash=False)
     reference_directors: np.ndarray = field(repr=False, compare=False, hash=False)
     state_consistency_required: bool = False
+    material_validator: Optional[NativeMaterialValidator] = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if self.material_validator is not None and type(self.material_validator) is not NativeMaterialValidator:
+            raise NativeRotationValidationError("Exact native material validator required")
         nodes = tuple(int(value) for value in self.node_ids)
         if not nodes or len(set(nodes)) != len(nodes):
             raise NativeRotationValidationError(
@@ -232,6 +241,50 @@ class _NativeElementStateBinding:
 
 _NATIVE_ELEMENT_BINDINGS_ATTRIBUTE = "_anysolver_native_element_state_bindings_v1"
 _NATIVE_DIRECTOR_CONSISTENCY_TOLERANCE = 1.0e-12
+
+# A synchronous solve owns only stores explicitly activated in its context.
+# Nested/concurrent solves do not share a mutable global cleanup registry.
+_SOLVE_STATE_CLEANUP: ContextVar[Optional[list[Any]]] = ContextVar(
+    "anysolver_nonlinear_state_cleanup", default=None
+)
+
+
+def _register_nonlinear_state_cleanup(store: Any) -> Any:
+    if not isinstance(store, NonlinearStateStore):
+        raise TypeError("Only a solver-owned nonlinear state store can be registered")
+    owned = _SOLVE_STATE_CLEANUP.get()
+    if owned is not None and not any(item is store for item in owned):
+        owned.append(store)
+    return store
+
+
+def _run_with_nonlinear_state_cleanup(operation: Any, *args: Any, **kwargs: Any) -> Any:
+    """Discard this solve's remaining trials on return, failure or cancellation.
+
+    Committed material/kinematic generations are never advanced or rolled back.
+    Cleanup failures are reported after attempting every owned store; they must
+    not silently turn an interrupted solve into a clean checkpoint.
+    """
+    owned: list[Any] = []
+    token = _SOLVE_STATE_CLEANUP.set(owned)
+    try:
+        return operation(*args, **kwargs)
+    finally:
+        _SOLVE_STATE_CLEANUP.reset(token)
+        failures = []
+        for store in reversed(owned):
+            try:
+                if store.has_active_trial:
+                    store.discard_trial(store.active_trial_token())
+                rotations = store.native_rotation_store
+                if store.has_active_trial or (rotations is not None and rotations.has_active_trial):
+                    raise StateTransactionError("Nonlinear solve left an inconsistent active trial")
+            except Exception as exc:
+                failures.append(exc)
+        if failures:
+            raise StateTransactionError(
+                f"Nonlinear solve cleanup failed for {len(failures)} owned state store(s)"
+            ) from failures[0]
 
 
 @dataclass(frozen=True, slots=True)
@@ -1576,6 +1629,35 @@ class NonlinearStateStore(Mapping[int, Any]):
             trial_token=trial_token,
         )
 
+    def native_material_context(self, token: StateTrialToken, element_id: int) -> NativeMaterialContext:
+        """Issue a live context only for an explicitly model-bound protocol."""
+        with self._lock:
+            self._require_active(token)
+            binding = (self._native_element_bindings or {}).get(int(element_id))
+            if binding is None or binding.material_validator is None:
+                raise StateTransactionError("Element has no native material protocol binding")
+            return NativeMaterialContext(self, token, int(element_id), binding.node_ids,
+                                         binding.reference_directors)
+
+    def _validate_native_material_candidate(self, element_id: int, state: Any, full: Any) -> None:
+        binding = (self._native_element_bindings or {}).get(element_id)
+        if binding is None or binding.material_validator is None:
+            return
+        token = self.active_trial_token()
+        if element_id in self._deleted_fallback:
+            raise StateTransactionError("Native material protocol does not authorize deletion")
+        if element_id in self._element_to_batch or element_id not in self._fallback_committed:
+            raise StateTransactionError("Native material protocol requires explicit unbatched committed state")
+        values = np.asarray(full, dtype=np.float64)
+        if values.ndim != 1 or int(np.max(binding.dof_mapping)) >= values.size:
+            raise StateTransactionError("Native material validation requires complete global displacement")
+        binding.material_validator.validate(
+            _owned_copy(state), previous_state=_owned_copy(self._fallback_committed[element_id]),
+            native_view=self._native_view_for_binding(element_id, trial=True),
+            displacement=np.array(values[binding.dof_mapping], copy=True), phase="trial",
+        )
+        self._require_active(token)
+
     def _validate_native_element_state(
         self,
         element_id: int,
@@ -1762,6 +1844,7 @@ class NonlinearStateStore(Mapping[int, Any]):
             self._require_active(token)
             key = int(element_id)
             start = time.perf_counter()
+            self._validate_native_material_candidate(key, state, self._native_trial_full_displacement)
             if (
                 self._native_element_bindings is not None
                 and key in self._native_element_bindings
@@ -1855,6 +1938,12 @@ class NonlinearStateStore(Mapping[int, Any]):
             if self._native_element_bindings is not None:
                 assert next_fallback is not None
                 for element_id in self._native_element_bindings:
+                    if self._native_element_bindings[element_id].material_validator is not None:
+                        if element_id not in self._fallback_trial:
+                            raise StateTransactionError("Native material element produced no candidate state")
+                        self._validate_native_material_candidate(
+                            element_id, self._fallback_trial[element_id], accepted_full_displacement
+                        )
                     if not self._native_element_bindings[
                         element_id
                     ].state_consistency_required:
@@ -2501,11 +2590,23 @@ def create_model_native_rotation_store(
                     f"Native element {element_id} corner director normals disagree "
                     "with its committed rotation history"
                 )
+        material_validator = None
+        material_protocol = getattr(element, "native_material_state_protocol", None)
+        if material_protocol is not None:
+            provider = getattr(element, "create_native_material_validator", None)
+            if material_protocol != _NATIVE_MATERIAL_PROTOCOL or not callable(provider):
+                raise NativeRotationValidationError("Unsupported native material validation protocol")
+            if state_consistency_required:
+                raise NativeRotationValidationError("Native material protocol cannot replace the S3 state protocol")
+            material_validator = provider(mesh)
+            if type(material_validator) is not NativeMaterialValidator:
+                raise NativeRotationValidationError("Exact native material validator required")
         element_bindings[element_id] = _NativeElementStateBinding(
             node_ids=element_node_ids,
             dof_mapping=dof_mapping,
             reference_directors=reference_directors,
             state_consistency_required=state_consistency_required,
+            material_validator=material_validator,
         )
         for local_node, node_id in enumerate(element_node_ids):
             if node_id not in nodes:
@@ -2556,6 +2657,13 @@ def create_model_native_rotation_store(
         committed_rotation_matrices=rotation_by_node,
     )
     assert result is not None
+    for element_id, binding in element_bindings.items():
+        if binding.material_validator is not None:
+            binding.material_validator.validate(
+                _owned_copy(committed_states.get(element_id)), previous_state=None,
+                native_view=result.element_view(element_id, binding.node_ids, binding.reference_directors),
+                displacement=np.array(full[binding.dof_mapping], copy=True), phase="committed",
+            )
     setattr(
         result,
         _NATIVE_ELEMENT_BINDINGS_ATTRIBUTE,
