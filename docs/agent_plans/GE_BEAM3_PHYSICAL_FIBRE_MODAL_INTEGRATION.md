@@ -29,8 +29,8 @@ generalized reference-mode behaviour is unchanged. Both routes remain private
 integration candidates pending full qualification and public current-core routing.
 
 Development checks passed28 tests in33.89 seconds before reference integration,
-then59 tests in71.39 seconds including reference integration. Separate inventories,
-not119 total unique tests. Added coverage includes full stationary Schur equality,
+then59 tests in71.39 seconds including reference integration. These are separate
+inventories and are not added. Coverage includes full stationary Schur equality,
 unloaded plastic state/recovery preservation, yield rejection, independent dense
 physical-pencil comparison on a moderate small fixture, deterministic modal bytes,
 reference/current consistency, six free-body zero modes and positive elastic modes,
