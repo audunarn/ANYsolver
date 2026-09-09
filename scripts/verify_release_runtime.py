@@ -53,13 +53,53 @@ def compare(accepted: Path, release: Path) -> dict:
                 qualification_scope_unchanged=True, defaults_unchanged=True)
 
 
+def compare_manifest(manifest: Path, release: Path) -> dict:
+    record = json.loads(manifest.read_text())
+    if (set(record) != {'schema', 'accepted_commit', 'accepted_wheel_sha256', 'runtime'}
+            or record['schema'] != 'anysolver.release-runtime-manifest.v1'
+            or record['accepted_commit'] != '5fc032e48d25c0a0b866363514b73ac7baf8803c'
+            or record['accepted_wheel_sha256'] != ACCEPTED_SHA256
+            or len(record['runtime']) != 317):
+        raise ValueError('accepted runtime manifest authority mismatch')
+    with ZipFile(release) as wheel:
+        if len(wheel.namelist()) != len(set(wheel.namelist())):
+            raise ValueError('duplicate wheel entries')
+        paths = {n for n in wheel.namelist() if n.startswith('anysolver/') and not n.endswith('/')}
+        if paths != set(record['runtime']):
+            raise ValueError('runtime path set mismatch')
+        for name in sorted(paths):
+            raw = wheel.read(name).replace(b'\r\n', b'\n')
+            if name == 'anysolver/__init__.py':
+                if raw.count(b'__version__ = "0.4.3"') != 1:
+                    raise ValueError('release version assignment mismatch')
+                raw = raw.replace(b'__version__ = "0.4.3"', b'__version__ = "0.4.2"')
+            if sha256(raw).hexdigest() != record['runtime'][name]:
+                raise ValueError('runtime hash mismatch: ' + name)
+        names = [n for n in wheel.namelist() if n.endswith('.dist-info/METADATA')]
+        if len(names) != 1:
+            raise ValueError('wheel metadata count')
+        headers = BytesParser().parsebytes(wheel.read(names[0]))
+        if headers['Version'] != '0.4.3' or headers['Name'].lower() != 'anysolver':
+            raise ValueError('release metadata mismatch')
+    raw = release.read_bytes()
+    return dict(schema='anysolver.release-runtime-bridge.v1',
+                accepted_wheel_sha256=ACCEPTED_SHA256,
+                release_wheel_sha256=sha256(raw).hexdigest(),
+                release_wheel_bytes=len(raw), runtime_file_count=317,
+                normalized_changes=['anysolver/__init__.py'], version_only=True,
+                qualification_scope_unchanged=True, defaults_unchanged=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--accepted-wheel', required=True, type=Path)
+    authority = parser.add_mutually_exclusive_group(required=True)
+    authority.add_argument('--accepted-wheel', type=Path)
+    authority.add_argument('--manifest', type=Path)
     parser.add_argument('--wheel', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()
-    record = compare(args.accepted_wheel, args.wheel)
+    record = (compare(args.accepted_wheel, args.wheel) if args.accepted_wheel
+              else compare_manifest(args.manifest, args.wheel))
     raw = (json.dumps(record, sort_keys=True, separators=(',', ':'), allow_nan=False)+'\n').encode()
     with args.output.open('xb') as stream:
         stream.write(raw)

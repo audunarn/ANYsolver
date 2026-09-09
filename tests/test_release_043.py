@@ -69,3 +69,28 @@ def test_release_bridge_rejects_more_than_version_delta(tmp_path, monkeypatch, f
     else:
         with pytest.raises(ValueError):
             bridge.compare(old, new)
+
+
+@pytest.mark.parametrize('fault', ('none', 'manifest_hash', 'mechanics', 'missing'))
+def test_publication_manifest_checks_all_accepted_runtime_files(tmp_path, fault):
+    manifest = ROOT / 'scripts/release_043_runtime.json'
+    record = json.loads(manifest.read_text())
+    if fault == 'manifest_hash':
+        record['runtime']['anysolver/e4_pl_element.py'] = '0'*64
+        manifest = tmp_path / 'bad-manifest.json'
+        manifest.write_text(json.dumps(record))
+    wheel = tmp_path / 'release.whl'
+    with ZipFile(wheel, 'w') as z:
+        for name in record['runtime']:
+            if fault == 'missing' and name == 'anysolver/e4_pl_element.py':
+                continue
+            raw = (ROOT / 'src' / name).read_bytes()
+            if fault == 'mechanics' and name == 'anysolver/e4_pl_element.py':
+                raw += b'\n# forbidden change\n'
+            z.writestr(name, raw)
+        z.writestr('anysolver-0.4.3.dist-info/METADATA', 'Name: ANYsolver\nVersion: 0.4.3\n')
+    if fault == 'none':
+        assert bridge.compare_manifest(manifest, wheel)['runtime_file_count'] == 317
+    else:
+        with pytest.raises(ValueError, match='runtime'):
+            bridge.compare_manifest(manifest, wheel)

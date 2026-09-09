@@ -45,6 +45,12 @@ jobs:
       - run: python -m pip install build twine
       - run: python -m build
       - run: python -m twine check dist/*
+      - name: Verify the exact accepted runtime before publication
+        run: >-
+          python scripts/verify_release_runtime.py
+          --manifest scripts/release_043_runtime.json
+          --wheel dist/anysolver-0.4.3-py3-none-any.whl
+          --output release-runtime-bridge.json
       - run: >-
           python scripts/check_license_compliance.py
           --artifact dist/*.whl --artifact dist/*.tar.gz
@@ -56,6 +62,10 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-runtime-bridge
+          path: release-runtime-bridge.json
 
   testpypi:
     if: github.event_name == 'workflow_dispatch'

@@ -449,7 +449,13 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         checkout_ref,
         setup_ref,
         upload_ref,
+        upload_ref,
     ]
+    build_block = job_block(publish, "build")
+    assert build_block.index('python scripts/verify_release_runtime.py') < build_block.index(upload_ref)
+    assert '--manifest scripts/release_043_runtime.json' in build_block
+    assert '--wheel dist/anysolver-0.4.3-py3-none-any.whl' in build_block
+    assert 'name: release-runtime-bridge' in build_block
     assert action_sequence(job_block(publish, "testpypi")) == [
         download_ref,
         publish_ref,
