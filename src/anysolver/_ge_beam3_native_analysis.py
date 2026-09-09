@@ -408,3 +408,14 @@ its own integration. Model mutation or concurrent use fails closed.
             return modes(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
         from ._ge_beam3_analysis_translation_modal import solve
         return solve(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
+
+    def buckling_modes(self, checkpoint, *, expected_sha256, bounds, num_modes=6, cancellation_token=None):
+        """Frozen-current conservative multipliers, not nonlinear limit loads.
+
+        Retains all free nodal and cell coordinates and the real force-state
+        owner. Active yielding, follower couples and unsupported states fail
+        closed; accepted history and existing shell buckling are unchanged.
+        """
+        from ._ge_beam3_native_buckling import solve
+        return solve(self, checkpoint, expected_sha256=expected_sha256, bounds=bounds,
+                     num_modes=num_modes, cancellation_token=cancellation_token)
