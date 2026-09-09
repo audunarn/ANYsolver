@@ -19,7 +19,7 @@ from ._ge_beam3_native_definition import NativeBeamDefinition, _describe
 from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
 from ._ge_beam3_native_fibre_static_element import NativeFibreStaticElement
 from ._ge_beam3_native_generalized_loading import DistributedPattern
-from ._ge_beam3_native_line_loading import LinePattern, nodal_force_vector
+from ._ge_beam3_native_line_loading import LinePattern
 from ._ge_beam3_p5_seeded.core import canonical
 
 SCHEMA = 'GE_BEAM3_MODEL_OWNED_ANALYSIS_CHECKPOINT_V1'
@@ -351,17 +351,34 @@ its own integration. Model mutation or concurrent use fails closed.
     def translation_checkpoint_prefix(self, program, checkpoint, accepted_steps, *, expected_sha256, **kwargs):
         return self._translation_route().prefix(self, program, checkpoint, accepted_steps, expected_sha256=expected_sha256, **kwargs)
 
-    def current_modes(self, checkpoint, *, expected_sha256, num_modes=6, cancellation_token=None):
+    def current_modes(self, checkpoint, *, expected_sha256, num_modes=6, cancellation_token=None, bounds=None):
         """Only the backend's conservative elastic-interior current-rest scope."""
+        from .control import cancellation_safe_point
+        cancellation_safe_point(cancellation_token,'native-force-current-modal.capture')
+        if self._family == 'PHYSICAL_FIBRE_NODAL':
+            if bounds is None:
+                raise NativeBeamWorkflowError('physical-fibre force-state modes require explicit spectral bounds')
+            from ._ge_beam3_native_fibre_current_modal import solve
+            return solve(self,checkpoint,expected_sha256=expected_sha256,bounds=bounds,
+                num_modes=num_modes,cancellation_token=cancellation_token)
         from ._ge_beam3_native_generalized_modal import solve_modes
         self._family_required('GENERALIZED_DISTRIBUTED')
         _require(type(num_modes) is int and num_modes > 0, 'positive modal count required')
+        options={}
+        if bounds is not None:
+            from ._ge_beam3_analysis_translation_modal import _controls
+            from ._ge_beam3_native_generalized_paired_modal import solve_modes
+            _controls(self,bounds,num_modes,1e-10,1e-12)
+            options['bounds']=bounds
         with self._operation():
             state = self._decode(checkpoint, expected_sha256)[-1]
-            pattern = state['load_point'].effective(self.model)
-            external = nodal_force_vector(self.model, pattern.line)
+            # Captured native operators already subtract the complete line
+            # load gradient, including nodal work. This owner has no additional
+            # independent nodal force pattern; subtracting the line again
+            # incorrectly rejects an actual conservative equilibrium.
+            external = np.zeros(self.model.mesh.dof_manager.total_dofs)
             return solve_modes(self.model, state['states'], state['displacements'], self._inertias, external,
-                               num_modes=num_modes, cancellation_token=cancellation_token)
+                               num_modes=num_modes, cancellation_token=cancellation_token,**options)
 
     def translation_modes(self, program, checkpoint, *, expected_sha256, **kwargs):
         """Conservative current-rest modes; preserve the native continuation owner."""

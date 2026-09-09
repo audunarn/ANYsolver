@@ -135,15 +135,27 @@ def prepare(model, element_states, displacement, section_inertias,
 
 
 def _prepare_with_operator(model,element_states,displacement,section_inertias,
-        nodal_spatial_dead_forces,*,operator_factory,policy,cancellation_token=None):
+        nodal_spatial_dead_forces,*,operator_factory,policy,cancellation_token=None,section_family='GENERALIZED'):
     """Internal shared state/ownership capture; callers bind their numeric policy."""
     started = monotonic()
+    if section_family not in ('GENERALIZED','PHYSICAL_FIBRE'):
+        raise ValueError('registered native spectral section family required')
+    fibre = section_family=='PHYSICAL_FIBRE'
+    element_type=NativeGeneralizedStaticElement
+    material_policy=MATERIAL_POLICY
+    def material_guard():pass
+    if fibre:
+        from ._ge_beam3_native_fibre_static_element import NativeFibreStaticElement
+        from ._ge_beam3_retained_fibre_modal import _section_guard,MATERIAL_POLICY as FIBRE_MATERIAL_POLICY
+        element_type=NativeFibreStaticElement;material_policy=FIBRE_MATERIAL_POLICY
+        def material_guard():_section_guard(model)
     elements = tuple(sorted(model.mesh.elements.items()))
     nodal = model.mesh.dof_manager.total_dofs
     if not elements or not 1 <= nodal+6*len(elements) <= 256:
         raise ValueError('bounded native generalized spectral model required')
-    if any(type(e) is not NativeGeneralizedStaticElement for _,e in elements):
-        raise ValueError('exact native generalized elements required')
+    if any(type(e) is not element_type for _,e in elements):
+        raise ValueError('exact native spectral section-family elements required')
+    material_guard()
     ids = {i for i,_ in elements}
     if any(type(v) is not dict or set(v)!=ids or any(type(i) is not int for i in v)
         for v in (element_states,section_inertias)):
@@ -164,7 +176,7 @@ def _prepare_with_operator(model,element_states,displacement,section_inertias,
         e._check(model.mesh)
         if model.materials.get(e.material_name) is not e.section:
             raise ValueError('native section ownership changed')
-        if np.any(element_states[eid]['load_pattern'].density(eid)):
+        if not fibre and np.any(element_states[eid]['load_pattern'].density(eid)):
             raise ValueError('nonconservative distributed couples forbidden in conservative spectra')
     _,_,transform,offset,independent,info = build_constraint_transformation(
         sparse.eye(nodal,format='csr'),np.zeros(nodal),model)
@@ -192,6 +204,7 @@ def _prepare_with_operator(model,element_states,displacement,section_inertias,
 
     def check():
         activity()
+        material_guard()
         if tuple(sorted(model.mesh.elements.items()))!=elements or snapshot()!=identity:
             raise ValueError('native generalized spectral inputs changed')
         for _,e in elements:
@@ -207,13 +220,13 @@ def _prepare_with_operator(model,element_states,displacement,section_inertias,
         dofs = list(e.get_dof_mapping(model.mesh))
         owned[eid] = e.validate_model_bound_nonlinear_state(model.mesh,e.section,
             owned[eid],1,expected_committed_total_u=total[dofs])
-        signatures.add(owned[eid]['load_pattern'].signature)
+        if not fibre:signatures.add(owned[eid]['load_pattern'].signature)
         for index,node in enumerate(e.node_ids):
             frame = owned[eid]['committed_nodal_rotation_matrices'][index]
             if node in shared and not np.array_equal(shared[node],frame):
                 raise ValueError('shared physical nodal rotation authority differs')
             shared[node] = frame
-    if len(signatures)!=1:
+    if not fibre and len(signatures)!=1:
         raise ValueError('one complete accepted distributed load pattern required')
     size = nodal+6*len(elements)
     k=np.zeros((size,size));m=np.zeros_like(k);force=np.zeros(size)
@@ -240,7 +253,7 @@ def _prepare_with_operator(model,element_states,displacement,section_inertias,
     body=dict(stiffness=_owned(k),mass=_owned(m),net_residual=_owned(force),
         nodal_spatial_dead_forces=external,free_dofs=free,algebraic_dofs=algebraic,
         internal_layout=tuple(layout),operators=tuple(operators))
-    packet=Pencil(**body,identity=sha(dict(policy=policy,inputs=identity,**body)),policy=policy)
+    packet=Pencil(**body,identity=sha(dict(policy=policy,inputs=identity,**body)),policy=policy,material_policy=material_policy)
     packet_hash=sha(packet)
 
     def guard():
