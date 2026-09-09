@@ -1,0 +1,1263 @@
+{
+  "schema": "GE_BEAM3_COUPLED_SPECTRAL_VERIFICATION_V1",
+  "revision": "25717646a5e3c958c3b7f87c1ce69decfb6cb1ea",
+  "tree": "34a2b2fb5ec91177fce56aa3e039d46627581c18",
+  "archive": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\ANYrelease\\ge-beam3-coupled-spectral-2571764-20260909",
+  "files": [
+    {
+      "relative": "modal-smoke-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\command.json",
+      "bytes": 347,
+      "sha256": "260CCBA10F15EB7AEF51312C8BF94DC0B66BA809B35278F8287EAA60A2394AFB"
+    },
+    {
+      "relative": "modal-smoke-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\junit.xml",
+      "bytes": 544,
+      "sha256": "19D91FF208657D9127007DCE2254929BAD5277DDCDD87F389790AA2455FA5062"
+    },
+    {
+      "relative": "modal-smoke-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\process.json",
+      "bytes": 285,
+      "sha256": "7F54D6F92B744979F8E8C457ADB381BBD6A64442B52906900B84189707FDCBA5"
+    },
+    {
+      "relative": "modal-smoke-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "modal-smoke-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\stdout.txt",
+      "bytes": 115,
+      "sha256": "BBB729E45903777AD53310A0B5D3BFF83727D842B09BC233A3719436194D323E"
+    },
+    {
+      "relative": "modal-smoke-a\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113784,
+      "sha256": "5D6E7FF624E38D582CA6BE4EB10393D886701C58229A03A7A265DA69223D1E0B"
+    },
+    {
+      "relative": "modal-smoke-a\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103217,
+      "sha256": "6063018DDAB72CABB378018F11166060A346D546F39EDA2B8A4C57FDEAA23EFA"
+    },
+    {
+      "relative": "modal-smoke-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 13039,
+      "sha256": "E147FD50E43D24BC2571B193AB0B56045A77C472F027D680CB81C312D918DE32"
+    },
+    {
+      "relative": "modal-smoke-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "modal-smoke-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-smoke-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 6176,
+      "sha256": "AA632D1E29247D83915C7465AD72477C869C0C46D09A4F531C7422E0B27473D8"
+    },
+    {
+      "relative": "modal-rehearsal-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\command.json",
+      "bytes": 320,
+      "sha256": "6C895885CFB7C4828048DF9F29C014591EE3AAF5502F6DF302DC5999668F8E4F"
+    },
+    {
+      "relative": "modal-rehearsal-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\junit.xml",
+      "bytes": 2518,
+      "sha256": "F685661693C88FA8561D2B046E5E4130EA41B72B399F7E86C9C0B72561878430"
+    },
+    {
+      "relative": "modal-rehearsal-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\process.json",
+      "bytes": 287,
+      "sha256": "78DF9F8445DC1C4F43CF8907E6369B7F2D094CDD2098D47E77D01D8D92D8B5DE"
+    },
+    {
+      "relative": "modal-rehearsal-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "modal-rehearsal-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\stdout.txt",
+      "bytes": 102,
+      "sha256": "8BDAC48A683A7C0DEBEE62617F9460C2485212F9C37642F68612E8ED5C866C28"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113784,
+      "sha256": "5D6E7FF624E38D582CA6BE4EB10393D886701C58229A03A7A265DA69223D1E0B"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103217,
+      "sha256": "6063018DDAB72CABB378018F11166060A346D546F39EDA2B8A4C57FDEAA23EFA"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "bytes": 278491,
+      "sha256": "C88CD7255C385D2E4A6750D589444E3C2C150845775229067E1DCD7BC5B6488B"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "bytes": 262444,
+      "sha256": "8955D735B4DBB5705738AC9C33BBBAF6A33B4D55429902AD51BB3002F8597239"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "bytes": 154884,
+      "sha256": "72400339A77F11606D0307173F83C0827DF72BE284076F0397886299852CCDB4"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "bytes": 134685,
+      "sha256": "B3E6D0A5162EE7FDC926798DFB1BAC89F51A508FE13F5F0C6C61FC272715BAB5"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "bytes": 322987,
+      "sha256": "8D3E1ABCC791B6681D9C05CE61F81B5D789A25AB5BFDECF111D31637B0A104FA"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "bytes": 298144,
+      "sha256": "9B556D0DBE8B8E8954A6036C84D3FA54C3C18919118670F0499C9449482D0E3A"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "D5D41DAD2EDA6507B33C2950AA23EE78882CC6EBD0EF31C4C64B12053E4AB867"
+    },
+    {
+      "relative": "modal-rehearsal-a\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "77030AF5AEFFF2B5C7227194082BFDA781BB8495E23EE2200BA76C0D169B191A"
+    },
+    {
+      "relative": "modal-rehearsal-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 13245,
+      "sha256": "AC9E8A9F382459D06312DF495F1BA654B29FB632B1AAED711E3C0FAF83345914"
+    },
+    {
+      "relative": "modal-rehearsal-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "modal-rehearsal-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-modes-20260909-rehearsal-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 6176,
+      "sha256": "AA632D1E29247D83915C7465AD72477C869C0C46D09A4F531C7422E0B27473D8"
+    },
+    {
+      "relative": "buckling-smoke-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\command.json",
+      "bytes": 342,
+      "sha256": "0EEABDDF0F7CD396156C65EFC592CDCD34408E482BAE2F2986B740D322319568"
+    },
+    {
+      "relative": "buckling-smoke-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\junit.xml",
+      "bytes": 853,
+      "sha256": "4AEE4F310C72CBABE65D9076AEAADAA394333912249788457991CC4995222E76"
+    },
+    {
+      "relative": "buckling-smoke-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\process.json",
+      "bytes": 287,
+      "sha256": "1DC13DE716D94C088095306DE4081EEB3B43BFE90BA24FF696D041810FE4ECB8"
+    },
+    {
+      "relative": "buckling-smoke-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "buckling-smoke-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\stdout.txt",
+      "bytes": 116,
+      "sha256": "B48922EFBBFA36643CBFE18356BA60C140096C08C1FCA6A5A1E693A02400C168"
+    },
+    {
+      "relative": "buckling-smoke-a\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "bytes": 62946,
+      "sha256": "DEE2ECBA21A36E1482D1150B730B39AFE0A4C77A32835CDE0CE9A5F23EE2E6DA"
+    },
+    {
+      "relative": "buckling-smoke-a\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "bytes": 51794,
+      "sha256": "F46A813E41AEFF58436EC87C359D39EF3E8E1987C92EC68C8FB774D92E44B80C"
+    },
+    {
+      "relative": "buckling-smoke-a\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "bytes": 109679,
+      "sha256": "5C275B4CA37AB59AF28C93318C06C978B564A6D579C2FFCE1E38D91AA32E50AB"
+    },
+    {
+      "relative": "buckling-smoke-a\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "bytes": 95813,
+      "sha256": "2A06B5705C871F28D94D601F743FDC61878090BC9A074505D5090781118800A1"
+    },
+    {
+      "relative": "buckling-smoke-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 14497,
+      "sha256": "50DF5AC2163A724168FB1F8A349F5A985C0AF31EAF0B181B9D147B15350E712D"
+    },
+    {
+      "relative": "buckling-smoke-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "buckling-smoke-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-buckling-20260909-smoke-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 8731,
+      "sha256": "FEBF0EF52DFC901499D2CC990EF14192EB3B6081C4B6036D0BEC5B73315D6FDB"
+    },
+    {
+      "relative": "admission-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\command.json",
+      "bytes": 367,
+      "sha256": "D7243F75376F450012EC80CCD7CE134B2D47214C1FB7E3ADDD87D5DF25F93F3F"
+    },
+    {
+      "relative": "admission-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\junit.xml",
+      "bytes": 703,
+      "sha256": "5737895FFE243B10F561B7E8C3F2D0F882C3D85C92901E230C4D7A65BD2F8D2A"
+    },
+    {
+      "relative": "admission-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\process.json",
+      "bytes": 288,
+      "sha256": "9E5A13795785A84A0597479EA784D0886BD85778132B161473F8BD200CFCC1B2"
+    },
+    {
+      "relative": "admission-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "admission-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\stdout.txt",
+      "bytes": 116,
+      "sha256": "DE8A86124BC6F1B3FAA1DCE7284EA1F0557681CFA72E993E7523321093FB195D"
+    },
+    {
+      "relative": "admission-a\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "bytes": 47268,
+      "sha256": "9A1746949B98D746590065CAE0A0957409DF06BA790A3C0244ADA84F266F0FA4"
+    },
+    {
+      "relative": "admission-a\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "bytes": 75437,
+      "sha256": "1C54DE9CBB12FAF165600F05A8060C6CAD4E291C05AF69B2A5EE30656E591C3C"
+    },
+    {
+      "relative": "admission-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 14497,
+      "sha256": "50DF5AC2163A724168FB1F8A349F5A985C0AF31EAF0B181B9D147B15350E712D"
+    },
+    {
+      "relative": "admission-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "admission-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-admission-a\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 12043,
+      "sha256": "0C00EDD3A23E9D254A22FEB429A10F3EA1E24CD01D9C29EE18246B0DBF183EF3"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\command.json",
+      "bytes": 366,
+      "sha256": "2406A59DD5D538AC82CCB53F37A32B98FD23C283D78FE3F84343C3578A589F39"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\junit.xml",
+      "bytes": 2446,
+      "sha256": "08107F64CDB4638FE6F0F3B3BE80501399EF7B37444AB29BBF52ECD17E918BD2"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\process.json",
+      "bytes": 288,
+      "sha256": "C3E263BB020F172A3A5337FCA81D13D1759AB99114F9EAD62400970F20F3133A"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\stdout.txt",
+      "bytes": 102,
+      "sha256": "66AFFDAE5B17855314778536619AA9B857CAFFA0BADDD3C1EE37CC0586B9AD7D"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_real_numbering_covariance0\\numbering.json",
+      "bytes": 667,
+      "sha256": "470D09575ACAC5496478DFC97DD8DA4F812BE7AD4031AD0610CED3DF626E6EDF"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_real_numbering_covariance1\\numbering.json",
+      "bytes": 491,
+      "sha256": "05D8BDCC4C0E2B0C5C910604AC276595A2483C0FA486D39B42602416B938CE18"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "failed-rehearsal-b\\shell-regression\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\shell-regression\\pytest\\test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    },
+    {
+      "relative": "failed-rehearsal-b\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 14524,
+      "sha256": "24D42A9174F69763CBC3BD60259EDC30E4981F1B9203F5B90BE741E13D17EB87"
+    },
+    {
+      "relative": "failed-rehearsal-b\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "failed-rehearsal-b\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 14137,
+      "sha256": "AC7F3B23D30E64B016ABD993CFB865DBC2E43F2165B5DA1AB4531D6ABF59D787"
+    },
+    {
+      "relative": "failed-rehearsal-b\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\source\\tests\\test_ge_beam3_variational_shell.py",
+      "bytes": 9460,
+      "sha256": "CDCB3DA050C5FD9AE495BC98630F23EF2BFCED50FE5239039EA819DFD43485B6"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\command.json",
+      "bytes": 346,
+      "sha256": "15D9B103031F9F3E913652BC83BCE45376418D946C4B6A45A3A41B4859CA61D2"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\junit.xml",
+      "bytes": 32412,
+      "sha256": "F86FEB87C13C8DD6BB8D2A9AC46CA62621F65CB64B69EA70976071CFB1E8280D"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\process.json",
+      "bytes": 292,
+      "sha256": "7AF8B3038143A954AAFF4241E4406EA7F17C41B801CC15CCC9A9CAF43940502D"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\stdout.txt",
+      "bytes": 18421,
+      "sha256": "0339815FD723E80A0A6F6563865D192A7064A7F428D6C39E75C310BD90225669"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "bytes": 47268,
+      "sha256": "9A1746949B98D746590065CAE0A0957409DF06BA790A3C0244ADA84F266F0FA4"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "bytes": 75437,
+      "sha256": "1C54DE9CBB12FAF165600F05A8060C6CAD4E291C05AF69B2A5EE30656E591C3C"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113805,
+      "sha256": "CFFC8C1C9F0EE1FE682F17E9C6172E0418955A42B0324142FF79715B7408D8F7"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103238,
+      "sha256": "C14FF7A87F211A84BA00115C2F11DB6437EE981CF50145C85F37407FB3A8E044"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "bytes": 278512,
+      "sha256": "5E72C28F21F790B610DC862734494B9D57056B50B2062A28EBB35809EA9C608B"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "bytes": 262465,
+      "sha256": "F6F2715CDEAFD1F748A87709121730D2F4D5D861055CD31013A0FB4396DB4ED2"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "bytes": 154905,
+      "sha256": "82B30056DB735C90025325C5B1AD3C87C06A890D7D7637C968B66D1BE2394DDA"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "bytes": 134728,
+      "sha256": "48F970DEF5AE97F8612897B57AB515EDA2AC7362A953972BD08C033E8EAD4A33"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "bytes": 323008,
+      "sha256": "5D9A4A48630C03B8273FCC1A9E596D86A869786790426E0A97B7DC7453E087B2"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "bytes": 298165,
+      "sha256": "61AB98A91C6BBE1AD34605ACE934E5CE4234A8ED61400A6BA68FE19B809C9EC5"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "bytes": 51804,
+      "sha256": "ADE2837262FF53113D44D6E9AC2DD38E2CD8281D732309860E90731C40C92A82"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "bytes": 56393,
+      "sha256": "DCEDD5DC0E6129EF4F320ACEFEEDD593F8A3B0B6A975679F4910A980A7701049"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "bytes": 57284,
+      "sha256": "B3BBD70E62A902FBF65EF6D5A7A938E282058C85939AAAF0D2D914907ACC3DEA"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "bytes": 57286,
+      "sha256": "4191FA8CB46A69CF1340A01F5F37A0EA6C8B65E715BFA6BC0027A3E6969E0346"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "D5D41DAD2EDA6507B33C2950AA23EE78882CC6EBD0EF31C4C64B12053E4AB867"
+    },
+    {
+      "relative": "failed-rehearsal-b\\spectral\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-b\\spectral\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "77030AF5AEFFF2B5C7227194082BFDA781BB8495E23EE2200BA76C0D169B191A"
+    },
+    {
+      "relative": "rehearsal-c\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\command.json",
+      "bytes": 326,
+      "sha256": "3EBDE9038212035D2E2260F0E954797E645C30BF4305E3320ADD13F10E16EF8B"
+    },
+    {
+      "relative": "rehearsal-c\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\junit.xml",
+      "bytes": 4115,
+      "sha256": "E1D95E88281D17A927534EEA8938631CD600BF7AF72EA49A8FB422F4D744CFE3"
+    },
+    {
+      "relative": "rehearsal-c\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\process.json",
+      "bytes": 287,
+      "sha256": "BC403BC067183111D3F77CA1C88B0110BD6AD035237437AE59B7C6AD685FA10B"
+    },
+    {
+      "relative": "rehearsal-c\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "rehearsal-c\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\stdout.txt",
+      "bytes": 112,
+      "sha256": "C0DA43E06A787E6FC82D575980F74F641146F4B5899354BC92EDE31C3CA01748"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "bytes": 47268,
+      "sha256": "9A1746949B98D746590065CAE0A0957409DF06BA790A3C0244ADA84F266F0FA4"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "bytes": 75437,
+      "sha256": "1C54DE9CBB12FAF165600F05A8060C6CAD4E291C05AF69B2A5EE30656E591C3C"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113805,
+      "sha256": "CFFC8C1C9F0EE1FE682F17E9C6172E0418955A42B0324142FF79715B7408D8F7"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103238,
+      "sha256": "C14FF7A87F211A84BA00115C2F11DB6437EE981CF50145C85F37407FB3A8E044"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "bytes": 278512,
+      "sha256": "5E72C28F21F790B610DC862734494B9D57056B50B2062A28EBB35809EA9C608B"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "bytes": 262465,
+      "sha256": "F6F2715CDEAFD1F748A87709121730D2F4D5D861055CD31013A0FB4396DB4ED2"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "bytes": 154905,
+      "sha256": "82B30056DB735C90025325C5B1AD3C87C06A890D7D7637C968B66D1BE2394DDA"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "bytes": 134728,
+      "sha256": "48F970DEF5AE97F8612897B57AB515EDA2AC7362A953972BD08C033E8EAD4A33"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "bytes": 323008,
+      "sha256": "5D9A4A48630C03B8273FCC1A9E596D86A869786790426E0A97B7DC7453E087B2"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "bytes": 298165,
+      "sha256": "61AB98A91C6BBE1AD34605ACE934E5CE4234A8ED61400A6BA68FE19B809C9EC5"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "bytes": 64251,
+      "sha256": "1BD12CD3A05F693DCC690000D8AF29808E155F7FEF387EEB7077DE0A68FFF07F"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "bytes": 53109,
+      "sha256": "10A947C954CC08EA5C2E7E15A0413D2FA7B8F65B3765B1C232FF0F9942ED9B13"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "bytes": 111574,
+      "sha256": "FCFD85CDAC074BA823828DA4B3EB81DDB10F75D0E7A58A942D96FF382EA034A9"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "bytes": 97811,
+      "sha256": "7D9B7A6D1BB50A698B0546F07FAFB9E4BC2C3DEB2951707CD3A3D8CD63E11DF3"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "bytes": 56393,
+      "sha256": "DCEDD5DC0E6129EF4F320ACEFEEDD593F8A3B0B6A975679F4910A980A7701049"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "bytes": 57284,
+      "sha256": "B3BBD70E62A902FBF65EF6D5A7A938E282058C85939AAAF0D2D914907ACC3DEA"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "bytes": 57286,
+      "sha256": "4191FA8CB46A69CF1340A01F5F37A0EA6C8B65E715BFA6BC0027A3E6969E0346"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "D5D41DAD2EDA6507B33C2950AA23EE78882CC6EBD0EF31C4C64B12053E4AB867"
+    },
+    {
+      "relative": "rehearsal-c\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "77030AF5AEFFF2B5C7227194082BFDA781BB8495E23EE2200BA76C0D169B191A"
+    },
+    {
+      "relative": "rehearsal-c\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 14524,
+      "sha256": "24D42A9174F69763CBC3BD60259EDC30E4981F1B9203F5B90BE741E13D17EB87"
+    },
+    {
+      "relative": "rehearsal-c\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "rehearsal-c\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-20260909-rehearsal-c\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 14521,
+      "sha256": "541FFDB35B287B5F13F3E8A45AF43507932F5E7F1AB478676BFC95099B0D6D10"
+    },
+    {
+      "relative": "wave\\wave.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\wave.json",
+      "bytes": 722,
+      "sha256": "1455BFC8AD73DA027D466ACD15FED9F0902FA048D93573ED492792D67D58FCC1"
+    },
+    {
+      "relative": "wave\\replica-a\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\command.json",
+      "bytes": 350,
+      "sha256": "C62D62AF33456B189F14792B24F6C564114C4D9BCBFF696DB195080B8A724E40"
+    },
+    {
+      "relative": "wave\\replica-a\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\junit.xml",
+      "bytes": 4115,
+      "sha256": "987EE1643AEEE1C050404CF55791B5E0010E427FD896D58BA5EC3AAB62C3319F"
+    },
+    {
+      "relative": "wave\\replica-a\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\process.json",
+      "bytes": 287,
+      "sha256": "8B3802180C2655A424F1C97D5341FD5CDDC8526D633DEF239BE3F22E261B94E3"
+    },
+    {
+      "relative": "wave\\replica-a\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\replica-a\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\stdout.txt",
+      "bytes": 112,
+      "sha256": "85E72030AA472F5AE09E3D40B3E030834CC9A4E77A01144F3DC2D5A038514E35"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "bytes": 47268,
+      "sha256": "9A1746949B98D746590065CAE0A0957409DF06BA790A3C0244ADA84F266F0FA4"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "bytes": 75437,
+      "sha256": "1C54DE9CBB12FAF165600F05A8060C6CAD4E291C05AF69B2A5EE30656E591C3C"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113805,
+      "sha256": "CFFC8C1C9F0EE1FE682F17E9C6172E0418955A42B0324142FF79715B7408D8F7"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103238,
+      "sha256": "C14FF7A87F211A84BA00115C2F11DB6437EE981CF50145C85F37407FB3A8E044"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "bytes": 278512,
+      "sha256": "5E72C28F21F790B610DC862734494B9D57056B50B2062A28EBB35809EA9C608B"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "bytes": 262465,
+      "sha256": "F6F2715CDEAFD1F748A87709121730D2F4D5D861055CD31013A0FB4396DB4ED2"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "bytes": 154905,
+      "sha256": "82B30056DB735C90025325C5B1AD3C87C06A890D7D7637C968B66D1BE2394DDA"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "bytes": 134728,
+      "sha256": "48F970DEF5AE97F8612897B57AB515EDA2AC7362A953972BD08C033E8EAD4A33"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "bytes": 323008,
+      "sha256": "5D9A4A48630C03B8273FCC1A9E596D86A869786790426E0A97B7DC7453E087B2"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "bytes": 298165,
+      "sha256": "61AB98A91C6BBE1AD34605ACE934E5CE4234A8ED61400A6BA68FE19B809C9EC5"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "bytes": 64251,
+      "sha256": "1BD12CD3A05F693DCC690000D8AF29808E155F7FEF387EEB7077DE0A68FFF07F"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "bytes": 53109,
+      "sha256": "10A947C954CC08EA5C2E7E15A0413D2FA7B8F65B3765B1C232FF0F9942ED9B13"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "bytes": 111574,
+      "sha256": "FCFD85CDAC074BA823828DA4B3EB81DDB10F75D0E7A58A942D96FF382EA034A9"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "bytes": 97811,
+      "sha256": "7D9B7A6D1BB50A698B0546F07FAFB9E4BC2C3DEB2951707CD3A3D8CD63E11DF3"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "bytes": 56393,
+      "sha256": "DCEDD5DC0E6129EF4F320ACEFEEDD593F8A3B0B6A975679F4910A980A7701049"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "bytes": 57284,
+      "sha256": "B3BBD70E62A902FBF65EF6D5A7A938E282058C85939AAAF0D2D914907ACC3DEA"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "bytes": 57286,
+      "sha256": "4191FA8CB46A69CF1340A01F5F37A0EA6C8B65E715BFA6BC0027A3E6969E0346"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "D5D41DAD2EDA6507B33C2950AA23EE78882CC6EBD0EF31C4C64B12053E4AB867"
+    },
+    {
+      "relative": "wave\\replica-a\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-a\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "77030AF5AEFFF2B5C7227194082BFDA781BB8495E23EE2200BA76C0D169B191A"
+    },
+    {
+      "relative": "wave\\replica-b\\command.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\command.json",
+      "bytes": 350,
+      "sha256": "A0FA3DCAF15B96D92FD1F2214ED598D3D7205534587C11C485F275C6FBA0E8CC"
+    },
+    {
+      "relative": "wave\\replica-b\\junit.xml",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\junit.xml",
+      "bytes": 4115,
+      "sha256": "D05C89134E5F20EC20A36981CCE9422DC8F6F1A0AE239801FB2EB702D859D948"
+    },
+    {
+      "relative": "wave\\replica-b\\process.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\process.json",
+      "bytes": 287,
+      "sha256": "4E58DCA2A10F6B2AC39D3EB3B4BBD8053A994C85A8DCF4D2C4AED6060B3B76D8"
+    },
+    {
+      "relative": "wave\\replica-b\\stderr.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "relative": "wave\\replica-b\\stdout.txt",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\stdout.txt",
+      "bytes": 112,
+      "sha256": "F44FA8DE68DF97DCBB4FCBDC30B44D2E887484056E0825F34BA45C4B8D8129C3"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_active_plastic_cou0\\active-plastic.json",
+      "bytes": 47268,
+      "sha256": "9A1746949B98D746590065CAE0A0957409DF06BA790A3C0244ADA84F266F0FA4"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_active_plastic_cou1\\active-plastic.json",
+      "bytes": 75437,
+      "sha256": "1C54DE9CBB12FAF165600F05A8060C6CAD4E291C05AF69B2A5EE30656E591C3C"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113805,
+      "sha256": "CFFC8C1C9F0EE1FE682F17E9C6172E0418955A42B0324142FF79715B7408D8F7"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103238,
+      "sha256": "C14FF7A87F211A84BA00115C2F11DB6437EE981CF50145C85F37407FB3A8E044"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_2\\modes.json",
+      "bytes": 278512,
+      "sha256": "5E72C28F21F790B610DC862734494B9D57056B50B2062A28EBB35809EA9C608B"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_3\\modes.json",
+      "bytes": 262465,
+      "sha256": "F6F2715CDEAFD1F748A87709121730D2F4D5D861055CD31013A0FB4396DB4ED2"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_4\\modes.json",
+      "bytes": 154905,
+      "sha256": "82B30056DB735C90025325C5B1AD3C87C06A890D7D7637C968B66D1BE2394DDA"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_5\\modes.json",
+      "bytes": 134728,
+      "sha256": "48F970DEF5AE97F8612897B57AB515EDA2AC7362A953972BD08C033E8EAD4A33"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_6\\modes.json",
+      "bytes": 323008,
+      "sha256": "5D9A4A48630C03B8273FCC1A9E596D86A869786790426E0A97B7DC7453E087B2"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_actual_coupled_modes_and_7\\modes.json",
+      "bytes": 298165,
+      "sha256": "61AB98A91C6BBE1AD34605ACE934E5CE4234A8ED61400A6BA68FE19B809C9EC5"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_buckling_without_mass_and0\\buckling.json",
+      "bytes": 64251,
+      "sha256": "1BD12CD3A05F693DCC690000D8AF29808E155F7FEF387EEB7077DE0A68FFF07F"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_buckling_without_mass_and1\\buckling.json",
+      "bytes": 53109,
+      "sha256": "10A947C954CC08EA5C2E7E15A0413D2FA7B8F65B3765B1C232FF0F9942ED9B13"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_buckling_without_mass_and2\\buckling.json",
+      "bytes": 111574,
+      "sha256": "FCFD85CDAC074BA823828DA4B3EB81DDB10F75D0E7A58A942D96FF382EA034A9"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_buckling_without_mass_and3\\buckling.json",
+      "bytes": 97811,
+      "sha256": "7D9B7A6D1BB50A698B0546F07FAFB9E4BC2C3DEB2951707CD3A3D8CD63E11DF3"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_exact_zero_versus_small_r0\\small-offset.json",
+      "bytes": 56393,
+      "sha256": "DCEDD5DC0E6129EF4F320ACEFEEDD593F8A3B0B6A975679F4910A980A7701049"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_exact_zero_versus_small_r1\\small-offset.json",
+      "bytes": 57284,
+      "sha256": "B3BBD70E62A902FBF65EF6D5A7A938E282058C85939AAAF0D2D914907ACC3DEA"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_exact_zero_versus_small_r2\\small-offset.json",
+      "bytes": 57286,
+      "sha256": "4191FA8CB46A69CF1340A01F5F37A0EA6C8B65E715BFA6BC0027A3E6969E0346"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_inertia_changes_roots_not0\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "D5D41DAD2EDA6507B33C2950AA23EE78882CC6EBD0EF31C4C64B12053E4AB867"
+    },
+    {
+      "relative": "wave\\replica-b\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\replica-b\\pytest\\test_inertia_changes_roots_not1\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "77030AF5AEFFF2B5C7227194082BFDA781BB8495E23EE2200BA76C0D169B191A"
+    },
+    {
+      "relative": "wave\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\source\\src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "bytes": 14524,
+      "sha256": "24D42A9174F69763CBC3BD60259EDC30E4981F1B9203F5B90BE741E13D17EB87"
+    },
+    {
+      "relative": "wave\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\source\\src\\anysolver\\_ge_beam3_variational_shell.py",
+      "bytes": 7234,
+      "sha256": "B0DB7A83633F4A835C06E940A6F0DE36AB958F7E816C37A23C6EBC16259A2A60"
+    },
+    {
+      "relative": "wave\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\ge-beam3-coupled-spectral-2571764-20260909-wave\\source\\tests\\test_ge_beam3_coupled_modes.py",
+      "bytes": 14521,
+      "sha256": "541FFDB35B287B5F13F3E8A45AF43507932F5E7F1AB478676BFC95099B0D6D10"
+    }
+  ],
+  "science": [
+    {
+      "relative": "test_actual_active_plastic_cou0\\active-plastic.json",
+      "bytes": 47268,
+      "sha256": "9A1746949B98D746590065CAE0A0957409DF06BA790A3C0244ADA84F266F0FA4"
+    },
+    {
+      "relative": "test_actual_active_plastic_cou1\\active-plastic.json",
+      "bytes": 75437,
+      "sha256": "1C54DE9CBB12FAF165600F05A8060C6CAD4E291C05AF69B2A5EE30656E591C3C"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_0\\modes.json",
+      "bytes": 113805,
+      "sha256": "CFFC8C1C9F0EE1FE682F17E9C6172E0418955A42B0324142FF79715B7408D8F7"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_1\\modes.json",
+      "bytes": 103238,
+      "sha256": "C14FF7A87F211A84BA00115C2F11DB6437EE981CF50145C85F37407FB3A8E044"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_2\\modes.json",
+      "bytes": 278512,
+      "sha256": "5E72C28F21F790B610DC862734494B9D57056B50B2062A28EBB35809EA9C608B"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_3\\modes.json",
+      "bytes": 262465,
+      "sha256": "F6F2715CDEAFD1F748A87709121730D2F4D5D861055CD31013A0FB4396DB4ED2"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_4\\modes.json",
+      "bytes": 154905,
+      "sha256": "82B30056DB735C90025325C5B1AD3C87C06A890D7D7637C968B66D1BE2394DDA"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_5\\modes.json",
+      "bytes": 134728,
+      "sha256": "48F970DEF5AE97F8612897B57AB515EDA2AC7362A953972BD08C033E8EAD4A33"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_6\\modes.json",
+      "bytes": 323008,
+      "sha256": "5D9A4A48630C03B8273FCC1A9E596D86A869786790426E0A97B7DC7453E087B2"
+    },
+    {
+      "relative": "test_actual_coupled_modes_and_7\\modes.json",
+      "bytes": 298165,
+      "sha256": "61AB98A91C6BBE1AD34605ACE934E5CE4234A8ED61400A6BA68FE19B809C9EC5"
+    },
+    {
+      "relative": "test_buckling_without_mass_and0\\buckling.json",
+      "bytes": 64251,
+      "sha256": "1BD12CD3A05F693DCC690000D8AF29808E155F7FEF387EEB7077DE0A68FFF07F"
+    },
+    {
+      "relative": "test_buckling_without_mass_and1\\buckling.json",
+      "bytes": 53109,
+      "sha256": "10A947C954CC08EA5C2E7E15A0413D2FA7B8F65B3765B1C232FF0F9942ED9B13"
+    },
+    {
+      "relative": "test_buckling_without_mass_and2\\buckling.json",
+      "bytes": 111574,
+      "sha256": "FCFD85CDAC074BA823828DA4B3EB81DDB10F75D0E7A58A942D96FF382EA034A9"
+    },
+    {
+      "relative": "test_buckling_without_mass_and3\\buckling.json",
+      "bytes": 97811,
+      "sha256": "7D9B7A6D1BB50A698B0546F07FAFB9E4BC2C3DEB2951707CD3A3D8CD63E11DF3"
+    },
+    {
+      "relative": "test_exact_zero_versus_small_r0\\small-offset.json",
+      "bytes": 56393,
+      "sha256": "DCEDD5DC0E6129EF4F320ACEFEEDD593F8A3B0B6A975679F4910A980A7701049"
+    },
+    {
+      "relative": "test_exact_zero_versus_small_r1\\small-offset.json",
+      "bytes": 57284,
+      "sha256": "B3BBD70E62A902FBF65EF6D5A7A938E282058C85939AAAF0D2D914907ACC3DEA"
+    },
+    {
+      "relative": "test_exact_zero_versus_small_r2\\small-offset.json",
+      "bytes": 57286,
+      "sha256": "4191FA8CB46A69CF1340A01F5F37A0EA6C8B65E715BFA6BC0027A3E6969E0346"
+    },
+    {
+      "relative": "test_inertia_changes_roots_not0\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "D5D41DAD2EDA6507B33C2950AA23EE78882CC6EBD0EF31C4C64B12053E4AB867"
+    },
+    {
+      "relative": "test_inertia_changes_roots_not1\\mass-covariance.json",
+      "bytes": 249,
+      "sha256": "77030AF5AEFFF2B5C7227194082BFDA781BB8495E23EE2200BA76C0D169B191A"
+    }
+  ],
+  "shell_regression": [
+    {
+      "relative": "test_fit_map_independent_value0\\fit.json",
+      "bytes": 5031,
+      "sha256": "FB8159A122DBA83E118C0F64A30130D2D74B45480BDFB067970F11E788955617"
+    },
+    {
+      "relative": "test_fit_map_independent_value1\\fit.json",
+      "bytes": 8274,
+      "sha256": "1C8469AA8C6F52AF1428833BA1ACF001D4A20BE28E7374A1E74BEE9CCE920A54"
+    },
+    {
+      "relative": "test_loaded_coupled_symmetry_r0\\coupled.json",
+      "bytes": 54259,
+      "sha256": "B0F210F187261ECAE0BD42A9010F97ACE9EA1A253069EC9ADC9A04C48390515E"
+    },
+    {
+      "relative": "test_loaded_coupled_symmetry_r1\\coupled.json",
+      "bytes": 78576,
+      "sha256": "B61A243CD8A83CC45A5EF75313008F69FB44D8291CF4CF54D6DACAF3A62430DF"
+    },
+    {
+      "relative": "test_real_numbering_covariance0\\numbering.json",
+      "bytes": 667,
+      "sha256": "470D09575ACAC5496478DFC97DD8DA4F812BE7AD4031AD0610CED3DF626E6EDF"
+    },
+    {
+      "relative": "test_real_numbering_covariance1\\numbering.json",
+      "bytes": 491,
+      "sha256": "05D8BDCC4C0E2B0C5C910604AC276595A2483C0FA486D39B42602416B938CE18"
+    },
+    {
+      "relative": "test_real_shell_energy_work_ta0\\shell.json",
+      "bytes": 12004,
+      "sha256": "D5830E791E608ABEAEFEC64C9FA9993EA373BA3D1513E00D735D1004B15EF229"
+    },
+    {
+      "relative": "test_real_shell_energy_work_ta1\\shell.json",
+      "bytes": 11089,
+      "sha256": "486D2B7A7151534689B7A4561ADD6EB3805565207DD9765CAD67AF15082A432A"
+    }
+  ],
+  "observations": [
+    {
+      "record": "test_actual_coupled_modes_and_0\\modes.json",
+      "oracle_error": 7.466249840604178e-15
+    },
+    {
+      "record": "test_actual_coupled_modes_and_1\\modes.json",
+      "oracle_error": 1.8096635301390052e-14
+    },
+    {
+      "record": "test_actual_coupled_modes_and_2\\modes.json",
+      "oracle_error": 2.3869795029440866e-15
+    },
+    {
+      "record": "test_actual_coupled_modes_and_3\\modes.json",
+      "oracle_error": 3.941291737419306e-15
+    },
+    {
+      "record": "test_actual_coupled_modes_and_4\\modes.json",
+      "oracle_error": 2.275957200481571e-15
+    },
+    {
+      "record": "test_actual_coupled_modes_and_5\\modes.json",
+      "oracle_error": 7.355227538141662e-16
+    },
+    {
+      "record": "test_actual_coupled_modes_and_6\\modes.json",
+      "oracle_error": 1.5432100042289676e-14
+    },
+    {
+      "record": "test_actual_coupled_modes_and_7\\modes.json",
+      "oracle_error": 2.971928259043466e-14
+    },
+    {
+      "record": "test_buckling_without_mass_and0\\buckling.json",
+      "oracle_error": 1.1623768092732561e-13
+    },
+    {
+      "record": "test_buckling_without_mass_and1\\buckling.json",
+      "oracle_error": 2.1724125566583593e-14
+    },
+    {
+      "record": "test_buckling_without_mass_and2\\buckling.json",
+      "oracle_error": 3.3345218445473913e-13
+    },
+    {
+      "record": "test_buckling_without_mass_and3\\buckling.json",
+      "oracle_error": 1.2147027496690996e-14
+    }
+  ],
+  "tests": {
+    "rehearsal_c": 27,
+    "replica_a": 27,
+    "replica_b": 27,
+    "shell_regression": 16,
+    "failed_rehearsal_b": {
+      "passed": 24,
+      "failed": 3
+    }
+  },
+  "wave": {
+    "elapsed": 76.8560495999991,
+    "production_qualified": false,
+    "results": {
+      "replica-a": {
+        "after": [
+          757031250,
+          0,
+          319045632
+        ],
+        "before": [
+          757031250,
+          0,
+          319045632
+        ],
+        "cleanup_error": null,
+        "elapsed": 76.77239749999717,
+        "ended_utc": "2026-09-09T20:10:04.586797+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 67168,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:08:47.814401+02:00",
+        "success": true
+      },
+      "replica-b": {
+        "after": [
+          758437500,
+          0,
+          318222336
+        ],
+        "before": [
+          758437500,
+          0,
+          318222336
+        ],
+        "cleanup_error": null,
+        "elapsed": 76.57102130001294,
+        "ended_utc": "2026-09-09T20:10:04.385838+02:00",
+        "error": null,
+        "exit_code": 0,
+        "pid": 57352,
+        "reason": "COMPLETED",
+        "started_utc": "2026-09-09T20:08:47.814812+02:00",
+        "success": true
+      }
+    },
+    "revision": "25717646a5e3c958c3b7f87c1ce69decfb6cb1ea"
+  },
+  "production_qualified": false,
+  "independent_author_review": false,
+  "critical_nonlinear_load_authorized": false,
+  "archive_verified_files": 167,
+  "existing_beam_shell_operators_and_defaults_unchanged": true
+}

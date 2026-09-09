@@ -63,7 +63,23 @@ window or tolerance changed for the checker correction. The separate affected
 16-test variational-shell regression passed in 22.94s. Equations and the precise
 checker incident are in `GE_BEAM3_VARIATIONAL_SHELL_MAP.md`.
 
-Freeze and deterministic spectral replicas follow. Do not rerun the old Euler,
+Frozen implementation `25717646a5e3c958c3b7f87c1ce69decfb6cb1ea` passed all
+27 tests in each fresh replica. All nineteen scientific files match the
+corrected rehearsal and both replicas byte-for-byte. The separate 16-test shell
+regression's eight scientific records match the preserved `5288847` archive.
+All worker trees ended empty. Each replica took at most 76.78s; the complete
+two-worker frozen wave took 76.86s. Maximum independent full-saddle comparison
+error is 3.335e-13, below the unchanged 1e-11 gate.
+
+The 167-file external archive includes all smokes, the failed checker rehearsal,
+the corrected rehearsal, frozen sources, commands, receipts, JUnit and scientific
+outputs. Every copy was verified by bytes and SHA-256 and is bound in
+`docs/reference_cases/ge_beam3_coupled_spectral_verification.json`. This closes
+the declared coupled current-rest modal/buckling integration subset, not an
+independent-author scientific review, complete engineering qualification,
+finite-velocity dynamics or production activation.
+
+Do not rerun the old Euler,
 ring, N32 or continuum campaigns. After this spectral integration closeout,
 return to the current standalone requirement/evidence audit and independent
 delivery review, rather than inventing another exploratory coupling programme.
