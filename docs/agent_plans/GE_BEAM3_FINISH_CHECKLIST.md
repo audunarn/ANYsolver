@@ -21,9 +21,44 @@ The request to finish does not waive these gates. Freeze further exploratory
 work; reopen mechanics only for a concrete correctness finding or an explicit
 uncovered requirement identified against the delivery audit below. Do not
 re-execute the Euler, N32, ring or continuum campaigns simply to refresh dates.
-The current required independent-author review is not supplied by the same
-author's tests or numerical oracle. A separate reviewer must be explicitly
-designated; no permission to spawn reviewer agents is inferred.
+The user explicitly authorized an independently spawned reviewer on 2026-09-09.
+That reviewer accepted the frozen bounded pre-delivery core at `2f2e2e2`, with
+the exact scope and limitations recorded in
+`docs/reference_cases/ge_beam3_native_delivery_independent_review.json`.
+This is not a final public-facade, wheel or full-goal qualification approval.
+
+## Independent review and durable coupled-operation boundary
+
+The reviewer found no substantiated mechanics/state-safety defect in the
+inspected core, but identified a required delivery constraint: a live coupled
+inner owner expires 120 seconds after construction, including idle time. Keep
+this historical bound unchanged. `_ge_beam3_durable_coupled.py` therefore owns
+copied definitions, supports, programme, shell, loads and physical inertia,
+not a persistent live Context. Each solve/recovery/modal/buckling operation
+constructs a fresh bounded inner owner and replays authenticated canonical
+history. No deadline is reset or extended, and no state object is rebound.
+The original 2MiB inner checkpoint policy and all mechanical expressions remain
+unchanged. The outer envelope binds the complete durable definition and backend
+hash; incomplete/foreign/malformed inputs cannot create an accepted state.
+
+Independent preliminary review caught an outer-envelope sizing defect: JSON
+escaping could make a valid near-limit inner checkpoint unreturnable. The
+unfrozen facade was corrected to use its own strict outer decoder and a bound
+of six times the historical inner bound plus4096 bytes. This covers worst-case
+ASCII escaping without loosening inner replay limits. The pre-review28-test
+smoke remains preserved; its passing result did not cover or disprove that
+review finding. The corrected39-test rehearsal passed in51.38s. It covers
+both straight/curved and Q4/S3 connections, exact inner/recovery/spectral
+agreement, idle-time reconstruction, near-limit/strict serialization,
+preflight rejection, before/after-commit cancellation, genuine failed-step
+prefix replay and copied-input isolation. Both launched process trees ended
+empty. Frozen replicas and independent commit-bound facade review follow.
+
+The separate isolated dependency preparation reused the hash-verified cp313
+wheel set; it did not build/publish a solver wheel or modify any environment
+outside the fresh external target. Public delivery and final wheel/performance
+acceptance remain open. No new default, historical qualification or mechanics
+claim is introduced by this orchestration correction.
 
 ## Preserved checkpoint: private coupling conservativity correction
 
