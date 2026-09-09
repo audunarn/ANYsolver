@@ -335,3 +335,41 @@ matches its source byte count and SHA-256. Original ACLs, data, tests and proces
 results were not altered or rerun. This is an administrative access incident,
 not a failed scientific result. Existing element mechanics and defaults have
 zero delta from the preceding checkpoint. Overall qualification is still open.
+
+## Coupled accepted history and shell-supported beam subdomain
+
+`_ge_beam3_shell_joint_state.py` adds the global accepted-state owner. Its
+checkpoint is explicitly distinct from every standalone beam or shell restart
+schema. Both material origins remain fixed through Newton and line search.
+Only global equilibrium, all retained compatibility rows, joint constraints and
+the complete correction test can issue a record. Both histories are then committed
+as one immutable state. Cancellation before commit issues neither history;
+cancellation after commit preserves the genuine new prefix. Rejected or cancelled
+restart replay issues no partial input history. Recovery uses the accepted
+beam origins and verifies its reproduced station histories.
+
+The new `_ge_beam3_coupled_beam_subdomain.py` reuses the exact retained assembly,
+history validation and multiplicative-update functions. It does not inherit or
+fabricate standalone accepted-state issuance. Its reference seed is unaccepted.
+Beam supports may come entirely from the real shell joint; the existing standalone
+support requirements remain unchanged. The global preflight rejects remaining
+rigid motions per connected component using physical support rows, not a stiffness
+condition-number cutoff that would incorrectly reject slender members.
+
+The shell/beam trial seam now shares its unchanged mechanical expressions with
+this owner. The old diagnostic interface still demands its genuine standalone
+predecessor and rejects a free subdomain; only the coupled owner can accept that
+subdomain. Shell origins are the owned elastic Q4/S3 V2D states; generalized beam
+origins may be plastic. Nodal spatial dead forces and the frozen native distributed
+beam programme are explicit. New arbitrary shell material adapters, physical-fibre
+coupling, generic mixed FEModel routing, coupled spectral analysis and qualification
+flags are not silently enabled by this owner.
+
+Separate development inventories passed: 29 transaction/replay tests (39.67s),
+two actual curved plastic-beam coupling tests (37.82s), and ten free-beam/support/
+reference-covariance tests (35.18s). Additional correction-norm and replay-cancellation
+controls, and missing-rigid-support rejection, passed in their bounded smoke checks.
+In particular, angular correction cannot be diluted by a large translation or beam
+length. No mechanical coefficient, existing element operator, default or historical
+scientific evidence changes. Complete frozen verification follows this checkpoint;
+the overall goal, independent review and final delivery remain open.
