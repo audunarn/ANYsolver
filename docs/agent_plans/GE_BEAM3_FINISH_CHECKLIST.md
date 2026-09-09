@@ -269,9 +269,17 @@ shell operators or masquerade as a qualified assembled connection.
 
 The first development invocation stopped on a syntax error during collection;
 its exact source and log are preserved. The corrected pose-only 33-test suite
-passed in 1.80 seconds. The completed suite adds mixed-port derivatives and
-singular-chart guards; it must pass frozen duplicate verification before its
-component evidence is accepted. The next substantive connection task is binding
+passed in 1.80 seconds; the 43-test mixed-port rehearsal passed in 1.96 seconds.
+Frozen implementation `efdad53fa9d3283ed61a4b6156f19c5dc7a46909` adds bounded
+malformed-decoder tests. The complete 47-test rehearsal passed, followed by
+47 tests in each of two fresh replicas, all without failures/errors/skips.
+All thirteen scientific files match byte-for-byte across the three runs.
+Each child completed in under four seconds with an empty tree; maximum
+independently reconstructed spatial and mixed-port derivative errors are
+7.690e-11 and 7.364e-11, below the unchanged 1e-7 directional gate. The
+99-file archive, including the original collection failure, is bound by
+`docs/reference_cases/ge_beam3_pose_joint_verification.json`.
+The next substantive connection task is binding
 real Q4/S3 and native-beam state owners, followed by assembled work/equilibrium,
 history, restart and modal/buckling checks. Do not substitute arbitrary pose
 arrays or a linear MPC for those owner and global-solver requirements.
