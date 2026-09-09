@@ -1,0 +1,147 @@
+{
+  "base": "09351645ba17a0a5b130a1c7a48007d36dd08ada",
+  "claims": {
+    "independent_author_review": false,
+    "production_qualified": false,
+    "runtime_import_closure_proved": false,
+    "static_syntax_audit_only": true
+  },
+  "dynamic_import_or_execution_sites": [
+    {
+      "call": "import_module(module_name)",
+      "line": 296,
+      "path": "src/anysolver/outcomes.py"
+    },
+    {
+      "call": "import_module(module_name)",
+      "line": 946,
+      "path": "src/anysolver/quantities.py"
+    }
+  ],
+  "forbidden_literal_imports": [],
+  "legacy_class_ast_equal": {
+    "BeamElement": true,
+    "QuadraticBeamElement": true,
+    "ShellElement": true
+  },
+  "preserved_exact_files": {
+    "pyproject.toml": {
+      "blob": "16da1c1ca1be9f56de4c0c3505cdfabb8752bd99",
+      "bytes": 1687,
+      "sha256": "ae192e5825446c73b31b302177907029e3f026a40ad0ff6891e593140687999c"
+    },
+    "src/anysolver/corotational.py": {
+      "blob": "c0b86fae0b1680e52150b07f33a9d01ac457740d",
+      "bytes": 25617,
+      "sha256": "9777bee6230cd4c5120c9fd7e59905120dddc646206121272b92a0113490d399"
+    },
+    "src/anysolver/e4_pl_element.py": {
+      "blob": "b0a53a47ca68cf9ff9ab6925fbdfb4f31301344a",
+      "bytes": 293258,
+      "sha256": "7fc46a18046e043512a5fb2c3f61ed0b95b834e4dde764f63c500a885e87ea38"
+    },
+    "src/anysolver/e4_pl_s3_v2d_element.py": {
+      "blob": "8b57778dada6a499c032991e20f3a5fc5c60314e",
+      "bytes": 97002,
+      "sha256": "2187cb8ac71a2292e413f306c331666d6caa2e6102c2ed0a30bcc9ddbf10e560"
+    }
+  },
+  "python_source_count": 315,
+  "revision": "bd744cc777439516acab88b12c5f359a39eae0ee",
+  "runtime_tree": "8ea77c9ab0d8b358a129bb9fecda4a3d121aaebb",
+  "schema": "GE_BEAM3_DELIVERY_SOURCE_AUDIT_V1",
+  "shared_modified_paths": [
+    {
+      "base_blob": "1a59bd7cd1dbe026fef493738acb8908ea46ac52",
+      "base_bytes": 28467,
+      "base_sha256": "3c3fa00afdc26a306d3c79ae799d880055b05eaa5b1bd416f6eeeeb8eb6b906b",
+      "candidate_blob": "2aa4911f538b6cb08e66dbb4590d0d1545dd7560",
+      "candidate_bytes": 28661,
+      "candidate_sha256": "efc0620067546a703cdaff693f49868323e8740b1706890e9702baafbc72334e",
+      "numstat": "6\t0\tsrc/anysolver/__init__.py",
+      "path": "src/anysolver/__init__.py"
+    },
+    {
+      "base_blob": "6f2089916d3d45307b8209f6385628b3bd7154c9",
+      "base_bytes": 94701,
+      "base_sha256": "a6c9b7c7cf51d409ff05ef6488ef3dcdac8b6fb83c3b5e85cd411e6e7ad84fe5",
+      "candidate_blob": "03e79e6fa9aed99b09c62ec7434cd4dc9a65b084",
+      "candidate_bytes": 94783,
+      "candidate_sha256": "b97d9aae942923841dcdcfbb5da8533923c99510fc4225b996c4bd777f24f70c",
+      "numstat": "3\t2\tsrc/anysolver/arc_length.py",
+      "path": "src/anysolver/arc_length.py"
+    },
+    {
+      "base_blob": "772274cc80d5c59b5d65270d729d847c0c70a040",
+      "base_bytes": 30984,
+      "base_sha256": "7c679aa9242c6efca4e7c932d5b27350a590ce96efc66b2e54ea5157f6678529",
+      "candidate_blob": "c67bb3e51c199433ae48f55586c5fc81d2c401b8",
+      "candidate_bytes": 31356,
+      "candidate_sha256": "302a73ed598a05b79ad620e11dcdfd14de7c43337fd28099dac79a05806983b7",
+      "numstat": "7\t0\tsrc/anysolver/boundary.py",
+      "path": "src/anysolver/boundary.py"
+    },
+    {
+      "base_blob": "88ab3b1cc895bb060d3b1841de9789e981f97ee5",
+      "base_bytes": 244061,
+      "base_sha256": "6046e7c7ae48fb7e39b753e270d57cb33002b35acec2daff7a735f922e2e881a",
+      "candidate_blob": "4dfe4212b9ee9947969b087809e72b9973e88e07",
+      "candidate_bytes": 244692,
+      "candidate_sha256": "f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37",
+      "numstat": "14\t0\tsrc/anysolver/elements.py",
+      "path": "src/anysolver/elements.py"
+    },
+    {
+      "base_blob": "bf5216273520acd96c71d78dfa17626f5330cb97",
+      "base_bytes": 289815,
+      "base_sha256": "08e1340135b214e8169b1a6d08087f5278f6b6acd657ba1839eba9d59ba760cd",
+      "candidate_blob": "c9d7c9f08ad18f34ff32e8e72b56a322c64da9cd",
+      "candidate_bytes": 290289,
+      "candidate_sha256": "6544fe430a00e410c5e1cd84b78f692339337c21e457a12654667f1a270eff79",
+      "numstat": "11\t0\tsrc/anysolver/matrix_assembly.py",
+      "path": "src/anysolver/matrix_assembly.py"
+    },
+    {
+      "base_blob": "74651acaf01356f721d89e1b125cfde62d1f3045",
+      "base_bytes": 3320,
+      "base_sha256": "66063733ec6899813158c388ccabdfbb0e7ee016e4baa2d32f4c3c229a35c5e8",
+      "candidate_blob": "4a1b10a458ae14206238623dd489e9d6cbace9ab",
+      "candidate_bytes": 4077,
+      "candidate_sha256": "8eb966598028f5099d2e251c1bb161e2d17f51e35a9501aa3e0a13f1396dff92",
+      "numstat": "13\t0\tsrc/anysolver/nonlinear_element_evaluation.py",
+      "path": "src/anysolver/nonlinear_element_evaluation.py"
+    },
+    {
+      "base_blob": "ee10d1207cb53578174d8f01fdeb03d38e94877d",
+      "base_bytes": 55405,
+      "base_sha256": "208df8b7e564e4df84d0ba8fb3f5a796c6ca5238f8b6ad9523120b3a7c21cc23",
+      "candidate_blob": "a6b714ee043dc0ce5e5650783f942305a11f24cc",
+      "candidate_bytes": 56181,
+      "candidate_sha256": "44951edf08cbf3efdcb56341ac7020025f5bf1b009912b7079c98af7abfdf137",
+      "numstat": "12\t0\tsrc/anysolver/nonlinear_restart.py",
+      "path": "src/anysolver/nonlinear_restart.py"
+    },
+    {
+      "base_blob": "7a71416493ce9a47071e5a1eeb7a811ccd6660d0",
+      "base_bytes": 109713,
+      "base_sha256": "69114c016185c0ca426c69e3fffed04dd3671091da330f1668c0c3228aad1191",
+      "candidate_blob": "31f95b57d5041b5e44993102aed8fc44a2e5d9b9",
+      "candidate_bytes": 115917,
+      "candidate_sha256": "9a81355dac4ab9d45cdb7f9100b7676cdfa1e842f24031f028e9588e84ecd474",
+      "numstat": "108\t0\tsrc/anysolver/nonlinear_state.py",
+      "path": "src/anysolver/nonlinear_state.py"
+    },
+    {
+      "base_blob": "eafe759b76635405961bcc932adcd843c96949e2",
+      "base_bytes": 268092,
+      "base_sha256": "9c15f2246e2e179417d80bb5f07279162320822b63ff785a8fdf7184b5828bb2",
+      "candidate_blob": "a1c2507fdf2cb0157b780f48750222fcff7afa92",
+      "candidate_bytes": 278281,
+      "candidate_sha256": "c9b488bbfabaeda5b9824e1f774d70a9e9d10ce58f3fbb026b954b4eaa5ac821",
+      "numstat": "205\t13\tsrc/anysolver/nonlinear_static.py",
+      "path": "src/anysolver/nonlinear_static.py"
+    }
+  ],
+  "source": "raw git blobs, no working-tree newline normalization",
+  "tree": "c42edb6afc5e587facb23d394a9c1829ffbf815a"
+}

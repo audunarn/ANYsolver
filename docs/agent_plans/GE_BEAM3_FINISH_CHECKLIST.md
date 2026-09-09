@@ -131,6 +131,38 @@ work and close required application gaps; do not restart passed campaigns.
 
 ## Required completion, in order
 
+### Delivery-boundary audit and normal linear-static route
+
+The raw-Git audit at `bd744cc777439516acab88b12c5f359a39eae0ee` binds runtime
+tree `8ea77c9ab0d8b358a129bb9fecda4a3d121aaebb`. All 315 package Python files
+parse; none contains a literal import from docs/tests/SymPy/mpmath. The two
+dynamic import sites are the pre-existing exact-result-type checks in
+`outcomes.py` and `quantities.py`; they remain listed for review rather than
+being silently treated as a complete runtime import-closure proof.
+
+Nine pre-existing package paths differ from the original base: package exports,
+arc-length cleanup, load admission, the earlier explicit P3 selector, external
+load-tangent admission, native element evaluation, restart, state ownership and
+nonlinear-static orchestration. Their exact before/after blob identities are in
+`docs/reference_cases/ge_beam3_delivery_source_audit.json`. In particular, the
+shared state cleanup is a real integration delta: unchanged element mechanics
+must not be misreported as zero changes to the whole solver. The complete ASTs
+of legacy BeamElement, QuadraticBeamElement and ShellElement are unchanged;
+the qualified Q4, S3 V2D, corotational and package metadata files are byte-identical
+to the base. Shared-path review and the final regression/performance gate remain
+required.
+
+The normal `anysolver.assembly.solve_linear` path already dispatches the current
+native generalized and physical-fibre elements. New targeted integration tests
+exercise both families on straight and curved geometry, compare each solution
+and the statically recovered internal increment against the original full
+42-coordinate system, verify work and force/moment balance, reject legacy B2/B3
+mechanics calls, and prove unchanged reference state. Two cancellation tests
+require rejection before native stiffness evaluation. No runtime implementation,
+mechanics, public selector or checkpoint schema was changed to add this check.
+Linearized internal recovery here is a diagnostic increment, never an accepted
+nonlinear history. The initial six-test smoke passed; frozen verification follows.
+
 ### Current delivery audit (2026-09-09, after `b8cbebb`)
 
 This audit retains the full requested goal. "Verified subset" below is not a
@@ -146,6 +178,7 @@ when an explicitly preserved successor closes them.
 | Broad slenderness and continuum accuracy | `c8c1487` ratios100/10000/1000000; completed reference groups `582a3dc`; Euler and ring records | Preserve their exact domains. The older six-mode NO-GO and callback-limited modal-group attempt are not the accepted successor. No all-domain theorem is inferred. |
 | Large deformation and postcritical continuation | `221b4fe` actual signed N32 advances; `9559f66` independent signed-rate comparison, worst1.3895% and MAC>=0.9999839 | Genuine postcritical seeded continuation. Both compared states have a negative direction; no stable-postbuckling or path-from-rest claim. |
 | State safety, recovery, restart and failed-step preservation | Model-owned force/nodal/couple/translation interfaces, immutable histories and cancellation closeouts | Verified native workflows. Never rebind a foreign or different-family checkpoint. |
+| Linear static | Normal `assembly.solve_linear` with current native generalized/fibre classes; new full-stationary-system comparison | Existing route exercised for straight/curved reference problems. No nonlinear history is created by a linear solution. |
 | Reference/current modes and buckling | Force-current and physical-fibre integrations, larger N32 consumption, original-factor buckling and new coupled `2571764` | Actual inertia-retaining workflows. Reference generalized explicit-bounds routing gap is corrected below. Active yield/nonconservative work remains excluded from conservative spectra. |
 | Objective eccentric/curved shell connection | Pose equations, V2 variational work mapping, global accepted histories, `2571764` modal/buckling integration | Verified private connection scope: one owned elastic Q4/S3 V2D, generalized beam subdomain, authenticated joint. This is not generic mixed FEModel routing or arbitrary shell/fibre coupling. |
 | Preserve B2/B3/Q4/S3/defaults | Source diff against base09351645: Q4/S3/corotational/package files unchanged; `elements.py` differs only by the accepted14-line P3 `ge-beam3` factory addition | Existing mechanics preserved. The older public P3 selector must not be labelled the current curved candidate. |
