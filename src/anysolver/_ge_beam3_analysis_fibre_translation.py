@@ -108,3 +108,23 @@ def prefix(analysis, program, checkpoint, accepted_steps, *, expected_sha256):
         _, records = context.restore(backend, expected_sha256=digest)
         _require(accepted_steps <= len(records), 'fibre prefix exceeds accepted chain')
         return _envelope(analysis, data, context.checkpoint(records[:accepted_steps]), WORKFLOW, None)
+
+
+def modes(analysis, program, checkpoint, *, expected_sha256, bounds, num_modes=6,
+          root_width=1e-10, relative_width=1e-12, cancellation_token=None):
+    from ._ge_beam3_analysis_translation_modal import _controls, NativeTranslationModes
+    from ._native_paired_factor_chain_modes import solve_paired_factor_chain_modes
+    from ._ge_beam3_retained_fibre_modal import prepare
+    from .control import cancellation_safe_point
+    data = _program(analysis, program)
+    _controls(analysis, bounds, num_modes, root_width, relative_width)
+    with analysis._operation():
+        cancellation_safe_point(cancellation_token, 'fibre-modal.model-capture')
+        backend, digest = _decode(analysis, data, checkpoint, expected_sha256)
+        packet, guard = prepare(_model(analysis), program, backend, analysis._inertias,
+            expected_sha256=digest, cancellation_token=cancellation_token)
+        result = solve_paired_factor_chain_modes(packet.left, packet.right, packet.geometric, packet.kinetic,
+            packet.free_dofs, packet.algebraic_dofs, bounds=bounds, num_modes=num_modes,
+            root_width=root_width, relative_width=relative_width, cancellation_token=cancellation_token)
+        guard()
+        return NativeTranslationModes(analysis.identity, expected_sha256, packet, result)

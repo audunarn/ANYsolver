@@ -65,7 +65,7 @@ def test_foreign_envelope_rejected_before_modal_capture(monkeypatch):
 
 
 def test_physical_fibre_modes_never_use_generalized_material_owner():
-    with pytest.raises(ValueError, match='section/state owner'):
+    with pytest.raises(ValueError, match='external translation checkpoint hash'):
         fibre_analysis().translation_modes(fibre_program(), b'invalid', expected_sha256='0'*64, bounds=(-1.,100.))
 
 

@@ -314,8 +314,14 @@ its own integration. Model mutation or concurrent use fails closed.
                 raw = encode_checkpoint(self.model, forces, chain[:accepted_steps+1])
             return self._envelope(raw)
 
-    def reference_modes(self, *, num_modes=6, cancellation_token=None):
+    def reference_modes(self, *, num_modes=6, cancellation_token=None, bounds=None):
         """Distinct retained physical-inertia pencil; never a static mass matrix."""
+        if self._family == 'PHYSICAL_FIBRE_NODAL':
+            if bounds is None:
+                raise NativeBeamWorkflowError('physical-fibre reference modes require explicit spectral bounds')
+            from ._ge_beam3_fibre_reference_modal import solve
+            return solve(self,bounds=bounds,num_modes=num_modes,cancellation_token=cancellation_token)
+        _require(bounds is None,'explicit bounds belong to the physical-fibre reference factor solver')
         from ._ge_beam3_native_generalized_modal import solve_modes
         self._family_required('GENERALIZED_DISTRIBUTED')
         _require(type(num_modes) is int and num_modes > 0, 'positive modal count required')
@@ -359,5 +365,8 @@ its own integration. Model mutation or concurrent use fails closed.
 
     def translation_modes(self, program, checkpoint, *, expected_sha256, **kwargs):
         """Conservative current-rest modes; preserve the native continuation owner."""
+        if self._family == 'PHYSICAL_FIBRE_NODAL':
+            from ._ge_beam3_analysis_fibre_translation import modes
+            return modes(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
         from ._ge_beam3_analysis_translation_modal import solve
         return solve(self, program, checkpoint, expected_sha256=expected_sha256, **kwargs)
