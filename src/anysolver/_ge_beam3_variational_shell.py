@@ -89,7 +89,7 @@ def deformation(reference, displacement):
             np.array([v.hessian for v in values]))
 
 
-def response(model, element, displacement, origin, layers):
+def response(model, element, displacement, origin, layers, *, split=False):
     """Spatial wrench rows, additive columns, and unchanged local trial state.
 
 g=D.T f; H=D.T K D + sum(f_i Hess(d_i)). Spatial rows then follow
@@ -103,8 +103,16 @@ P.T r=g and P.T J=H-dP.T r. No post-hoc symmetrization is performed.
     # a conservative potential for active plastic/unsupported section states.
     if material.yield_stress != 0. or material.hardening_curve is not None or element.shell_section is not None:
         raise ValueError('variational shell successor requires its owned elastic section')
-    f, k, candidate = element.compute_nonlinear_response(model.mesh, material,
-        local, origin, layers, True)
+    if split and element.num_nodes == 4:
+        f, k, candidate, components = element.compute_nonlinear_response(model.mesh, material,
+            local, origin, layers, True, _return_tangent_components=True)
+        km, kg = components['material'], components['geometric']
+    else:
+        f, k, candidate = element.compute_nonlinear_response(model.mesh, material,
+            local, origin, layers, True)
+        # The admitted elastic S3 V2D local strains are linear in local_u.
+        # Its finite geometric variation belongs entirely to this pullback.
+        km, kg = k, np.zeros_like(k)
     f, k = np.asarray(f), np.asarray(k)
     if not np.isfinite(f).all() or not np.isfinite(k).all():
         raise ValueError('nonfinite local shell response')
@@ -125,4 +133,13 @@ P.T r=g and P.T J=H-dP.T r. No post-hoc symmetrization is performed.
     for s, da in blocks:
         correction[s, s] = np.einsum('ijk,i->jk', da, residual[s])
     tangent = np.linalg.solve(p.T, h-correction)
+    if split:
+        inverse = np.linalg.solve(p, np.eye(len(u)))
+        b = differential@inverse
+        material = b.T@km@b
+        geometric = np.linalg.solve(p.T, differential.T@kg@differential
+            +np.einsum('i,ijk->jk', f, second)-correction)@inverse
+        if np.linalg.norm(material+geometric-tangent@inverse) > 1e-11*max(1., np.linalg.norm(tangent@inverse)):
+            raise ValueError('shell variational material/geometric split mismatch')
+        return residual, tangent, candidate, material, geometric
     return residual, tangent, candidate

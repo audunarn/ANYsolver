@@ -36,6 +36,40 @@ a new formulation, an authorization record, or a replacement for any accepted
 or failed result. Use this single checklist for completion updates rather than
 creating another exploratory programme for every interface change.
 
+## Coupled current-rest modal and buckling integration
+
+The private V2 coupled owner now has a real-state spectral adapter in
+`_ge_beam3_coupled_modes.py`. It preserves all physical beam-cell inertia,
+uses the unchanged shell mass policies, and enforces the exact eccentric joint
+velocity map. Geometric massless directions are explicit: small nonzero offsets
+are never treated as zero by an inertia-eigenvalue threshold. The existing
+paired-factor kernel verifies the original signed form and physical kinetic
+factor. Actual loaded state and material origins are replayed before capture;
+active/nonsmooth yield and nonconservative programmes fail closed.
+
+The separate buckling entry requires no mass data. All reduced kinematic
+coordinates remain in its material/geometric multiplier pencil. It does not
+reuse a lambda=1 static trace lift for other multipliers. These are frozen-current
+linearized predictions, not nonlinear critical loads or stable postbuckling.
+Both owner and assembly locks are released after success, cancellation or failure.
+
+Separate development inventories: two initial mode checks (7.56s); 16 modal,
+covariance and guard tests (49.38s); four buckling checks (18.05s); three real
+plastic/nonconservative admission checks (12.83s). The first full rehearsal
+passed 24 and failed three checker assertions about algebraic-infinity roots
+outside the registered window. Its raw source/logs remain failed evidence.
+The corrected full 27-test rehearsal passed in 76.75s; no runtime mechanics,
+window or tolerance changed for the checker correction. The separate affected
+16-test variational-shell regression passed in 22.94s. Equations and the precise
+checker incident are in `GE_BEAM3_VARIATIONAL_SHELL_MAP.md`.
+
+Freeze and deterministic spectral replicas follow. Do not rerun the old Euler,
+ring, N32 or continuum campaigns. After this spectral integration closeout,
+return to the current standalone requirement/evidence audit and independent
+delivery review, rather than inventing another exploratory coupling programme.
+Current-core public selection and the final installed wheel remain open.
+Production qualification and overall goal completion remain false.
+
 The user has asked to finish after more than four days. Preserve the existing
 work and close required application gaps; do not restart passed campaigns.
 

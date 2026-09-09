@@ -86,3 +86,74 @@ restart with V1/V2 cross-policy rejection. Matrix and process observations stay
 external. Tests are not independent-author review or coupled modal/buckling
 qualification. Existing completed beam campaigns must not be rerun for this
 isolated connection correction.
+
+## Current-rest coupled spectrum and buckling integration
+
+`_ge_beam3_coupled_modes.py` consumes only a state issued by the actual V2
+global owner. It holds both owner/assembly locks and rechecks state, definition,
+inertia inputs and cancellation. V1 work maps, foreign histories, nonconservative
+couple programmes, missing/invalid inertia, and active/nonsmooth yield fail
+closed. A rejected spectral query does not advance or discard accepted history.
+
+The shell split uses unchanged Q4 material/geometric component evaluation. The
+admitted elastic S3 V2D local strains are linear, so its local tangent is material
+and its finite geometric term arises from the complete pullback above. In
+spatial coordinates B=Dd P^{-1}, Kmat=B^T k_mat B. The geometric contribution
+is obtained separately from k_geo, map Hessians and chart-derivative work;
+it is not computed by subtracting a large rounded total material stiffness.
+The known six-rigid-motion complement factors Kmat. Positive quotient energy,
+rigid nulls and reconstruction must pass 1e-11; no eigenvalue clipping is used.
+
+The beam keeps its eighteen resultant variables long enough to capture the
+original compliance/compatibility factor chain. Only those inertia-free stress
+unknowns are eliminated. All physical cell rotations remain. The six rigid-joint
+constraints give delta_xb=delta_xs-skew(d)delta_theta_s and
+delta_theta_b=delta_theta_s, with the current physical offset d. The complete
+constraint lift is checked against the original joint Jacobian. Shell and beam
+namespaces remain distinct; the slave port must have six free coordinates.
+
+Modal queries require explicit positive shell density and the complete SPD 6x6
+beam section-inertia map. The unchanged Q4 consistent mass (including its existing
+rotary policy) and unchanged S3 V2D translational mass are used, with a copied
+material for the mass-only density input. The frozen shell definition is not
+mutated. Every physical beam-cell kinetic factor is checked against its original
+24-coordinate current-rest mass. No static cell-inertia reduction is allowed.
+
+Massless beam trace rotations and S3 rotations are identified from their exact
+kinematic policy. At an eccentric S3 attachment, the spin parallel to d remains
+massless but the two transverse rotations carry genuine eccentric inertia.
+Zero d and small nonzero d are distinct; no mass-eigenvalue cutoff can conflate
+them. Only the analytical skew(d)d=0 roundoff identity is enforced in the lift.
+Partial attachment rotation supports fail closed until their kinetic basis is
+derived. The existing paired-factor kernel reassembles the original signed
+form and kinetic factor; a rounded full stiffness is diagnostic only.
+
+Buckling capture requires **no mass data** and returns no captured physical
+mass. It retains all reduced kinematic variables, including massless traces,
+in F^T F v=lambda(-G)v. It never uses the modal trace lift evaluated at lambda=1
+for the whole multiplier problem. Results are frozen-current conservative
+linearized predictions, not nonlinear critical loads or stable postbuckling.
+Finite-velocity dynamics, gyroscopic terms and arbitrary shell section/plastic
+extensions are not authorized by this current-rest integration.
+
+Verification uses independent numerical solutions of the full singular
+mass/stiffness or material/geometric saddle pencils, retaining beam stress
+unknowns, all physical cell rotations and joint multipliers. It covers initial
+and loaded straight/curved attachments to Q4/S3, global reference rotation,
+mass scaling without state change, exact-zero/small-offset inertia distinction,
+and genuine active plastic-state rejection with unchanged recovery. These are
+independent numerical reconstructions, not independent-author review or a
+replacement for external engineering convergence/qualification evidence.
+
+The first complete spectral rehearsal (`ge-beam3-coupled-spectral-20260909-rehearsal-b`)
+passed 24 tests and failed three checker assertions. Tightening the independent
+direct generalized-eigenvalue checker had incorrectly demanded real values for
+all rounded algebraic-infinity branches, including complex reciprocal values
+around 1e13 outside the registered multiplier window (0,1000]. The separate
+16-test shell regression passed. Preserve all failed outputs and tested source.
+The successor checker solves the same full saddle as the inverse problem
+P0^{-1}(-G)v=mu v, so algebraic infinity becomes mu=0. The unchanged requested
+window is mu>=1/1000; its realness and multiplier comparison still require
+1e-11. Every inverse root's real/imaginary parts remain diagnostic output.
+No mechanic, operator, window, physical mode, tolerance or result is modified
+or retrospectively reclassified by this checker-only correction.
