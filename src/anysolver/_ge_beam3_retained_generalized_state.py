@@ -20,6 +20,7 @@ from ._ge_beam3_p5.arrays import _frames
 from ._ge_beam3_p5_seeded.core import canonical, sha
 from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
 from ._native_reference_modal import _owned
+from ._ge_beam3_operator_validation_scope import operator_call
 
 SCHEMA='GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_ACCEPTED_CHAIN_V1'
 POLICY='CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_FORCE_V1'
@@ -153,8 +154,9 @@ class Context:
         r=np.zeros(self.count);j=np.zeros((self.count,self.count));responses=[];works=[]
         for i,(eid,e) in enumerate(self.elements):
             nodes=self.nodes[i];op=e.operator
-            a=op.evaluate(state.positions[nodes],state.position_low[nodes],state.nodal_frames[nodes],
-                state.cell_rotations[i],state.resultants[i],origin=origins[i],check=self.guard)
+            a=operator_call(op,'evaluate',self.guard,self.started,
+                state.positions[nodes],state.position_low[nodes],state.nodal_frames[nodes],
+                state.cell_rotations[i],state.resultants[i],origin=origins[i])
             work=line_work(op.reference,state.positions[nodes],state.position_low[nodes],state.cell_rotations[i],
                 parameter*self.program.pattern.force(eid),order=op.order)
             rc=a.residual-work.gradient
@@ -211,7 +213,8 @@ class Context:
         if type(state) is not State or state.model_sha256!=self.identity:raise ValueError('recovery model binding')
         self.guard();rows=[]
         for i,(eid,e) in enumerate(self.elements):
-            recovered=e.operator.recover(state.mechanical.cell_rotations[i],state.mechanical.resultants[i],origin=state.origins[i],check=self.guard)
+            recovered=operator_call(e.operator,'recover',self.guard,self.started,
+                state.mechanical.cell_rotations[i],state.mechanical.resultants[i],origin=state.origins[i])
             if canonical([r['history'] for r in recovered])!=canonical(state.histories[i].stations):raise ValueError('recovery history mismatch')
             rows.append(dict(element_id=eid,stations=recovered))
         self.guard();return tuple(rows)

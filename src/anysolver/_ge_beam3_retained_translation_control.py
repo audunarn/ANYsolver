@@ -17,6 +17,7 @@ from ._ge_beam3_native_line_loading import LinePattern
 from ._ge_beam3_p5_seeded.core import canonical, sha
 from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
 from ._native_reference_modal import _owned
+from ._ge_beam3_operator_validation_scope import operator_call
 
 SCHEMA = 'GE_BEAM3_RETAINED_GENERALIZED_TRANSLATION_ACCEPTED_CHAIN_V1'
 POLICY = 'CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_TRANSLATION_V1'
@@ -162,8 +163,8 @@ class Context:
     def _recover_validated(self, state):
         self.guard(); rows = []
         for i, (eid, element) in enumerate(self.physical.elements):
-            stations = element.operator.recover(state.mechanical.cell_rotations[i], state.mechanical.resultants[i],
-                                                origin=state.origins[i], check=self.guard)
+            stations = operator_call(element.operator, 'recover', self.guard, self.physical.started,
+                state.mechanical.cell_rotations[i], state.mechanical.resultants[i], origin=state.origins[i])
             if canonical([row['history'] for row in stations]) != canonical(state.histories[i].stations):
                 raise ValueError('controlled recovery history mismatch')
             rows.append(dict(element_id=eid, stations=stations))
