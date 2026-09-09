@@ -1,6 +1,23 @@
 # GE-B3 finish checklist
 
-## Current delivery checkpoint: finish, do not restart campaigns
+## Current checkpoint: accepted scoped delivery, 2026-09-09
+
+The independent reviewer accepted the exact final artifact at
+`5fc032e48d25c0a0b866363514b73ac7baf8803c` for the reviewed
+`GE_BEAM3_NATIVE_OWNED_WORKFLOWS_V1` domain, with empty findings. The final
+wheel/package/performance gates passed; no engineering campaign was restarted.
+All33 formal child trees are terminal. All20 installed scientific records agree
+across source control and two isolated wheel replicas, and all12 paired B2/B3
+performance comparisons meet the1.05 median-ratio gate. Final gate-unit tests:
+10passed. Runtime remains `314995f39fd773a9afe0fd9a5011ba50c9126342`.
+
+See `docs/GE_BEAM3_DELIVERY_STATUS.md` for the exact artifact, interfaces,
+accepted scope, limitations and archive identities. No delivery gate remains
+open for that profile. This is not arbitrary-material/global mixed-model,
+stable-postbuckling, finite-velocity, publication or default-activation authority.
+The historical checkpoints below are chronology, not instructions to repeat work.
+
+## Preserved pre-artifact delivery checkpoint
 
 As of 2026-09-09, the conservative coupled modal/buckling integration and the
 bounded generalized reference-mode interface repair have passing frozen
