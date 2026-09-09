@@ -64,3 +64,13 @@ minus model-owned calls. Require exact original physical packet contents
 (separately owned model/packet identity may differ), exact numerical mode bytes
 against the archived gate, and fresh byte-identical replicas. This is replay and
 factor capture only, never a Newton continuation or reference campaign rerun.
+
+Implementation1e60aa591a4ac1cecbe51ffa1aff8593f6968fb2 first model-owned
+wave is preserved as failed: both signed workers stopped at archive parsing
+(4.23/4.33s), before model construction or numerical evaluation. Its separate
+focused regression passed. The reader wrongly applied the historical entries/
+trailing-newline manifest schema to the newly frozen path-map/no-newline archive.
+The successor changes only that reader and its tests; both stored manifest and
+all accepted numerical evidence remain immutable. The consumed first root is
+never reused; its second cycle was not launched. New frozen verification uses
+a fresh root after targeted archive-schema, duplicate/nonfinite and hash tests.

@@ -4,9 +4,8 @@ from hashlib import sha256
 from pathlib import Path
 from docs.reference_cases.ge_beam3_fibre_arch_probe import guard,ROOT
 from docs.reference_cases.ge_beam3_retained_prestress_wave import write
-from docs.reference_cases.ge_beam3_retained_prestress_protocol import strict_bytes,canonical
+from docs.reference_cases.ge_beam3_retained_prestress_protocol import strict_bytes,canonical,read,digest
 from docs.reference_cases.e4_pl_s3_v2_bounded_process import THREAD_ENVIRONMENT
-from docs.reference_cases.ge_beam3_next_spatial_native import member
 from docs.reference_cases.ge_beam3_n32_snapshot_capture import sources,PREFIX,GUARD_POLICY
 from docs.reference_cases.ge_beam3_n32_owned_capture import POLICY
 from docs.reference_cases.ge_beam3_n32_spectrum_worker import inputs,PACKETS
@@ -17,11 +16,34 @@ MODES={'plus':'ceeb0f302dfb30b598e2c5de582430d88b0c449d81366ad265819da1c575842d'
        'minus':'8336b410243a6a2635e55746186ff9f8523086108542202b927d8a3b49cbe513'}
 
 
+def numerical_source(sign,root=NUMERICAL):
+    """Read the hash-bound path-map manifest, not the older entries schema."""
+    if sign not in MODES:raise ValueError('registered numerical sign')
+    raw=read(root/'manifest.json')
+    if sha256(raw).hexdigest()!=MANIFEST:raise ValueError('registered numerical archive manifest')
+    # This archive's frozen canonical format has no trailing newline.
+    # Adapt only the parser input; never rewrite or rehash normalized evidence.
+    rows=strict_bytes(raw+b'\n')
+    if type(rows) is not dict:raise ValueError('numerical path-map manifest required')
+    for name,row in rows.items():
+        if (type(name) is not str or type(row) is not dict or set(row)!={'bytes','sha256'}
+                or type(row['bytes']) is not int or row['bytes']<0):
+            raise ValueError('exact numerical manifest row')
+        digest(row['sha256'])
+    name='first/'+sign+'/output/modes.json';row=rows.get(name)
+    if row is None or row['sha256']!=MODES[sign]:raise ValueError('registered numerical member')
+    result=read(root/name)
+    if len(result)!=row['bytes'] or sha256(result).hexdigest()!=MODES[sign]:
+        raise ValueError('numerical member bytes')
+    strict_bytes(result)
+    return result
+
+
 def run(revision,sign,output):
     guard(revision)
     if any(os.environ.get(k)!=v for k,v in THREAD_ENVIRONMENT.items()):raise ValueError('one numerical thread')
     supplied,v=sources(sign);saved,_=inputs(sign)
-    expected=member(NUMERICAL,MANIFEST,'first/'+sign+'/output/modes.json',MODES[sign])
+    expected=numerical_source(sign)
     root=Path(output).resolve()
     if root.is_relative_to(ROOT):raise ValueError('exclusive external output')
     root.mkdir(exist_ok=False);sys.path.insert(0,str(ROOT/'src'))
@@ -62,7 +84,8 @@ def run(revision,sign,output):
         modes=native(result.modes);write(root/'modes.json',modes)
         if modes!=expected:raise ValueError('model-owned modes differ from saved-factor numerical verification')
         made._guard();guard(revision)
-        if sources(sign)[0]!=supplied or canonical(inputs(sign)[0])!=canonical(saved):
+        if (sources(sign)[0]!=supplied or canonical(inputs(sign)[0])!=canonical(saved)
+                or numerical_source(sign)!=expected):
             raise ValueError('preserved source inputs changed')
         write(root/'complete.json',dict(schema='GE_BEAM3_N32_MODEL_OWNED_MODAL_INTEGRATION_V1',revision=revision,
             sign=sign,definition_graph=made.identity,snapshot_sha256=result.snapshot_sha256,
