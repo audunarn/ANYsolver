@@ -373,3 +373,22 @@ In particular, angular correction cannot be diluted by a large translation or be
 length. No mechanical coefficient, existing element operator, default or historical
 scientific evidence changes. Complete frozen verification follows this checkpoint;
 the overall goal, independent review and final delivery remain open.
+
+Frozen implementation `36941641c40625abf3e8dce0c3ea6f703a244348` passed the
+complete 34-test state/restart inventory and 11-test free-beam inventory in
+rehearsal and in both fresh replicas. Their 21 and six scientific files,
+respectively, are byte-identical across all three executions. The separate
+22-test affected trial regression also passed; all ten of its scientific files
+match the preserved `fa7ab2c` archive byte-for-byte. No mechanics rerun of the
+old Euler, ring, N32 or continuum campaigns was performed.
+
+All seven child trees terminated empty under the existing bounds. Maximum
+observed concurrency was three, maximum child duration 77.29 seconds, and total
+wave duration approximately 154.33 seconds. The 179-file archive (frozen source,
+all development smokes, final commands, process receipts, JUnit and scientific
+outputs) is bound by `docs/reference_cases/ge_beam3_coupled_state_verification.json`.
+Every archived file was checked against its source byte count and SHA-256.
+The independent-author review flag and production-qualification flag remain
+false. This completes the declared coupled static-owner subset, not coupled
+modal/buckling qualification, arbitrary shell material/fibre coupling, current-core
+public opt-in delivery, or the overall goal.
