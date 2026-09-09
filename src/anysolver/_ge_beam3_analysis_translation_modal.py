@@ -10,6 +10,7 @@ from math import isfinite
 from ._ge_beam3_native_analysis import _require
 from ._ge_beam3_analysis_translation import _owner, _operation, _backend, _check_backend_header, seeded
 from ._native_paired_factor_chain_modes import solve_paired_factor_chain_modes
+from ._native_modal_capacity import POLICY as LARGE_POLICY,solve_large_factor_chain_modes
 
 
 @dataclass(frozen=True)
@@ -21,7 +22,13 @@ class NativeTranslationModes:
     production_qualified: bool = field(default=False, init=False)
 
 
-def _controls(analysis, bounds, count, root_width, relative_width):
+@dataclass(frozen=True)
+class NativeLargeTranslationModes(NativeTranslationModes):
+    snapshot_sha256: str
+    modal_capacity_policy: str=field(default=LARGE_POLICY,init=False)
+
+
+def _controls(analysis, bounds, count, root_width, relative_width, modal_policy=None):
     _require(type(bounds) is tuple and len(bounds) == 2
         and all(type(x) in (float,int) and isfinite(x) for x in bounds) and bounds[0] < bounds[1]
         and type(count) is int and count > 0
@@ -31,14 +38,20 @@ def _controls(analysis, bounds, count, root_width, relative_width):
     # Reject unsupported dimensions before replay or factor construction.
     elements = len(analysis._elements)
     size = analysis.model.mesh.dof_manager.total_dofs+6*elements
-    _require(size <= 256 and 18*elements <= 512, 'accepted-state modal solver coordinate bound exceeded')
+    _require(modal_policy is None or type(modal_policy) is str and modal_policy==LARGE_POLICY,
+        'registered modal capacity policy required')
+    if modal_policy is not None:
+        _require(getattr(analysis,'_retained_refinement',False) is True,
+            'large modal policy requires explicit retained refinement ownership')
+    coordinates,links=(256,512) if modal_policy is None else (640,640)
+    _require(size <= coordinates and 18*elements <= links, 'accepted-state modal solver coordinate bound exceeded')
 
 
 def solve(analysis, program, checkpoint, *, expected_sha256, bounds, num_modes=6,
           root_width=1e-10, relative_width=1e-12, seed=None, expected_seed_sha256=None,
-          cancellation_token=None, compliance_guard_policy=None):
+          cancellation_token=None, compliance_guard_policy=None, modal_policy=None):
     owner, workflow, seed_digest = _owner(analysis, program, seed, expected_seed_sha256)
-    _controls(analysis, bounds, num_modes, root_width, relative_width)
+    _controls(analysis, bounds, num_modes, root_width, relative_width, modal_policy)
     if owner is seeded:
         from . import _ge_beam3_elastic_seed_modal as modal
     else:
@@ -54,8 +67,18 @@ def solve(analysis, program, checkpoint, *, expected_sha256, bounds, num_modes=6
         else:
             packet, guard = modal.prepare(analysis.model, program, backend, analysis._inertias,
                 expected_sha256=digest, cancellation_token=cancellation_token)
-        modes = solve_paired_factor_chain_modes(packet.left, packet.right, packet.geometric, packet.kinetic,
-            packet.free_dofs, packet.algebraic_dofs, bounds=bounds, num_modes=num_modes,
-            root_width=root_width, relative_width=relative_width, cancellation_token=cancellation_token)
+        solve_modes=solve_paired_factor_chain_modes
+        if modal_policy is not None:
+            from ._ge_beam3_analysis_modal_snapshot import seal
+            snapshot,guard=seal(analysis,program,packet,guard,cancellation_token)
+            solve_modes=solve_large_factor_chain_modes
+        try:
+            modes = solve_modes(packet.left, packet.right, packet.geometric, packet.kinetic,
+                packet.free_dofs, packet.algebraic_dofs, bounds=bounds, num_modes=num_modes,
+                root_width=root_width, relative_width=relative_width, cancellation_token=cancellation_token)
+        finally:
+            if modal_policy is not None:guard()
+        if modal_policy is not None:
+            return NativeLargeTranslationModes(analysis.identity,expected_sha256,packet,modes,snapshot)
         guard()
         return NativeTranslationModes(analysis.identity, expected_sha256, packet, modes)
