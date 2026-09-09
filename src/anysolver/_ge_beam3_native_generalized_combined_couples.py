@@ -150,7 +150,12 @@ def external_at(model,store,displacements,parameter,*,tangent):
 
 
 def solve_combined_static(model,nodal_moments,*,distributed_pattern=None,constant_distributed=None,constant_moments=None,
-                         steps=2,max_iterations=24,line_search=True,initial_checkpoint=None,expected_sha256=None,step_policy=None):
+                         steps=2,max_iterations=24,line_search=True,initial_checkpoint=None,expected_sha256=None,step_policy=None,
+                         cancellation_token=None,progress_callback=None):
+    from .control import cancellation_safe_point
+    cancellation_safe_point(cancellation_token,'native-combined.capture')
+    if progress_callback is not None and not callable(progress_callback):
+        raise ValueError('callable combined progress observer required')
     from ._ge_beam3_native_force_adaptation import describe
     describe(step_policy,steps,max_iterations,line_search)
     if _RUN.get() is not None:raise ValueError('nested spatial couple programme forbidden')
@@ -169,7 +174,9 @@ def solve_combined_static(model,nodal_moments,*,distributed_pattern=None,constan
     try:
         result,distributed_events=solve_distributed_model(model,DistributedPattern(LinePattern(()),()) if distributed_pattern is None else distributed_pattern,
             constant=constant_distributed,steps=steps,max_iterations=max_iterations,line_search=line_search,
-            initial_checkpoint=initial_checkpoint,expected_sha256=expected_sha256,step_policy=step_policy)
+            initial_checkpoint=initial_checkpoint,expected_sha256=expected_sha256,step_policy=step_policy,
+            cancellation_token=cancellation_token,progress_callback=progress_callback)
+        cancellation_safe_point(cancellation_token,'native-combined.complete')
         run.require(model)
         if sha(dict(proportional=_rows(nodal_moments),constant=_rows(constant_moments)))!=original:raise ValueError('caller spatial couple inputs changed')
         evidence=dict(program=run.descriptor(),program_sha256=run.identity,distributed_assembly_events=distributed_events,external_events=tuple(run.events),

@@ -24,6 +24,8 @@ from ._ge_beam3_native_line_loading import LinePattern
 from ._ge_beam3_p5_seeded.core import canonical
 
 SCHEMA = 'GE_BEAM3_MODEL_OWNED_ANALYSIS_CHECKPOINT_V1'
+FORCE_WORKFLOW_SCHEMA = 'GE_BEAM3_MODEL_OWNED_FORCE_WORKFLOW_CHECKPOINT_V1'
+COMBINED_WORKFLOW = 'GENERALIZED_COMBINED_SPATIAL_COUPLES_V1'
 MAX_CHECKPOINT_BYTES = 64*1024**2
 
 
@@ -177,15 +179,27 @@ its own integration. Model mutation or concurrent use fails closed.
         cancellation_safe_point(cancellation_token, 'native-force.initialized')
         return states
 
-    def _envelope(self, backend):
+    def _force_workflow_schema(self, workflow):
+        if workflow is None:
+            return SCHEMA
+        _require(type(workflow) is str and workflow == COMBINED_WORKFLOW, 'unknown native force workflow')
+        self._family_required('GENERALIZED_DISTRIBUTED')
+        return FORCE_WORKFLOW_SCHEMA
+
+    def _envelope(self, backend, *, workflow=None):
         self._guard()
-        raw = canonical(dict(schema=SCHEMA, definition_graph_sha256=self.identity,
+        schema = self._force_workflow_schema(workflow)
+        data = dict(schema=schema, definition_graph_sha256=self.identity,
                              owner=self._family, backend=backend.decode('ascii'),
-                             backend_sha256=sha256(backend).hexdigest(), production_qualified=False))
+                             backend_sha256=sha256(backend).hexdigest(), production_qualified=False)
+        if workflow is not None:
+            data['workflow'] = workflow
+        raw = canonical(data)
         _require(len(raw) <= MAX_CHECKPOINT_BYTES, 'native analysis checkpoint byte bound')
         return raw
 
-    def _backend(self, raw, expected):
+    def _backend(self, raw, expected, *, workflow=None):
+        schema = self._force_workflow_schema(workflow)
         _require(type(raw) is bytes and 0 < len(raw) <= MAX_CHECKPOINT_BYTES
                  and type(expected) is str and sha256(raw).hexdigest() == expected,
                  'external analysis checkpoint authority mismatch')
@@ -202,9 +216,12 @@ its own integration. Model mutation or concurrent use fails closed.
         except (UnicodeError, RecursionError, json.JSONDecodeError) as error:
             raise NativeBeamAnalysisError('invalid analysis checkpoint JSON') from error
         keys = {'schema', 'definition_graph_sha256', 'owner', 'backend', 'backend_sha256', 'production_qualified'}
+        if workflow is not None:
+            keys.add('workflow')
         _require(type(data) is dict and set(data) == keys and canonical(data) == raw,
                  'canonical complete analysis checkpoint required')
-        _require(data['schema'] == SCHEMA and data['definition_graph_sha256'] == self.identity
+        _require(data['schema'] == schema and data.get('workflow') == workflow
+                 and data['definition_graph_sha256'] == self.identity
                  and data['owner'] == self._family and data['production_qualified'] is False
                  and type(data['backend']) is str, 'analysis definition/state owner mismatch')
         backend = data['backend'].encode('ascii')
@@ -419,3 +436,22 @@ its own integration. Model mutation or concurrent use fails closed.
         from ._ge_beam3_native_buckling import solve
         return solve(self, checkpoint, expected_sha256=expected_sha256, bounds=bounds,
                      num_modes=num_modes, cancellation_token=cancellation_token)
+
+    def solve_spatial_couples(self, nodal_moments, **kwargs):
+        """Generalized distributed forces/couples plus fixed-spatial nodal couples.
+
+        Uses its own complete load-history envelope. It does not relabel
+        nonconservative spatial work as a conservative force checkpoint.
+        """
+        from ._ge_beam3_analysis_combined import solve
+        return solve(self, nodal_moments, **kwargs)
+
+    def recover_spatial_couples(self, checkpoint, *, expected_sha256):
+        """Physical section recovery from the authenticated combined history."""
+        from ._ge_beam3_analysis_combined import recover
+        return recover(self, checkpoint, expected_sha256=expected_sha256)
+
+    def spatial_couple_checkpoint_prefix(self, checkpoint, accepted_steps, *, expected_sha256):
+        """Select only already accepted combined-load snapshots, without a solve."""
+        from ._ge_beam3_analysis_combined import prefix
+        return prefix(self, checkpoint, accepted_steps, expected_sha256=expected_sha256)

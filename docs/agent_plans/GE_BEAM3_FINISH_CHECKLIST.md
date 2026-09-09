@@ -25,8 +25,8 @@ work and close required application gaps; do not restart passed campaigns.
 
 ## Required completion, in order
 
-1. **Standalone workflow closure.** Finish the remaining model-owned
-   force/couple/continuation routing for supported straight/curved section
+1. **Standalone workflow closure.** Finish remaining generalized nodal-force
+   and continuation/public routing for supported straight/curved section
    families. The captured-state buckling route below is now implemented and
    verified for its declared scope; do not rebuild it. Audit evidence against the
    requested engineering requirements; run only genuinely missing checks or
@@ -131,3 +131,41 @@ All launched process trees are terminal and empty. Preserve this completed
 work; do not rerun the Euler, N32 or buckling waves as a substitute for the
 remaining delivery gates. No independent-author review or default activation
 is claimed. Overall goal remains active.
+
+## Combined spatial-couple API implemented; frozen verification next
+
+The model-owned API now exposes `solve_spatial_couples`,
+`recover_spatial_couples` and `spatial_couple_checkpoint_prefix`. These call the
+existing native generalized distributed-force/distributed-couple/nodal-couple
+solver and its complete authenticated history protocol. Section operators,
+work maps, tolerances and rotation/material laws are unchanged. On continuation
+the supplied patterns are load increments from the accepted point, matching
+the underlying protocol; they are not absolute target loads.
+
+A distinct workflow envelope binds the definition graph and combined backend.
+Existing V1 envelopes retain their schema and serialization. A combined history
+cannot be silently resumed, recovered or spectrally evaluated through a V1
+conservative-force route. Nonconservative spatial work remains nonconservative.
+The actual native chain owns every accepted predecessor, effective load,
+rotation update and material origin. Controls include existing adaptive
+cutback/line search, progress and cooperative cancellation.
+
+The complete 24-test development inventory passed in 490.08 seconds. It covers
+straight elastic, curved plastic and connected plastic models; byte equality
+with direct native solves and checkpoint encoders; physical recovery/work;
+prefix continuation and unloading; failed-step preservation; strict envelope
+and control rejection; cancellation; and a prescribed rejected factorization
+whose cutback returns exactly to the fixed-step accepted history.
+
+For frozen verification, partition this same inventory into three case shards
+of three tests each and one common-controls shard of fifteen tests, twice in
+fresh processes. Add the separate existing 33-test V1 analysis inventory once.
+Use at most three workers, each 600 seconds/24 GiB/one numerical thread, and a
+1800-second wave. No automatic retry, coverage reduction, or mechanical rerun
+of the completed Euler/N32/buckling campaigns.
+
+This does not yet expose generalized nodal dead forces through
+`NativeBeamAnalysis.solve_nodal`; those remain in the distinct existing retained
+programme. Do not call the complete force/continuation/public interface finished
+because the combined-couple route is integrated. Independent review, final
+installed delivery and the objective beam-shell connection remain required.
