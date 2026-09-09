@@ -37,6 +37,12 @@ def test_actual_seed_schur_and_control_free(seed):
     assert not packet.control_constraint_in_physical_stiffness
     assert not packet.physical_loading_path_from_rest and not packet.production_qualified
     assert c.checkpoint(()) == raw and max(metrics) <= 1e-11
+    from docs.reference_cases.ge_beam3_spatial_stability_worker import serialize_packet
+    from docs.reference_cases.ge_beam3_retained_prestress_protocol import canonical as plain_json
+    encoded = serialize_packet(packet)
+    assert plain_json(encoded) == canonical(packet)
+    assert encoded['seed_sha256'] == sha256(seed).hexdigest()
+    assert len(encoded['geometric']) == len(packet.geometric)
     check()
 
 

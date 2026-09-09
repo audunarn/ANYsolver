@@ -13,6 +13,11 @@ ARCHIVE = Path('C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-spa
 MANIFEST = 'ab327928e6a5b4ad8c0e3b72b564e9321e56e29693764ec8f418d2e2a3f061c9'
 
 
+def serialize_packet(packet):
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    return strict_bytes(canonical(packet))
+
+
 def inputs(sign):
     if sign not in ('plus', 'minus'): raise ValueError('registered sign')
     raw = (ARCHIVE/'manifest.json').read_bytes()
@@ -53,7 +58,7 @@ def capture(revision, sign, root):
     check(); guard(revision)
     if inputs(sign) != source: raise ValueError('endpoint changed during capture')
     write(root/'packet.json', dict(schema='GE_BEAM3_N24_SPATIAL_FACTORS_V1', revision=revision,
-        sign=sign, archive_sha256=MANIFEST, packet=packet, production_qualified=False))
+        sign=sign, archive_sha256=MANIFEST, packet=serialize_packet(packet), production_qualified=False))
 
 
 def verify(revision, path, expected, digits, root):
