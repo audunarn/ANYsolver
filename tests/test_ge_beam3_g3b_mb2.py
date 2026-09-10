@@ -187,7 +187,10 @@ def test_additive_scope_and_immutable_parent_authority():
                'scripts/run_ge_beam3_g3b.py', 'docs/GE_BEAM3_G3B_M_B2_DEVELOPMENT.md',
                'docs/reference_cases/ge_beam3_g3b_mb2_development_v1.json',
                'tests/test_ge_beam3_g3b_mb3.py', 'docs/GE_BEAM3_G3B_M_B3_DEVELOPMENT.md',
-               'docs/reference_cases/ge_beam3_g3b_mb3_development_v1.json'}
+               'docs/reference_cases/ge_beam3_g3b_mb3_development_v1.json',
+               'src/anysolver/_ge_beam3_g3b_q4_reference.py', 'tests/test_ge_beam3_g3b_mq4.py',
+               'docs/GE_BEAM3_G3B_M_Q4_DEVELOPMENT.md',
+               'docs/reference_cases/ge_beam3_g3b_mq4_development_v1.json'}
     diff = subprocess.check_output(git+['diff', '--name-status', parent, '--'], cwd=ROOT, timeout=20).decode()
     for line in diff.splitlines():
         status, name = line.split('\t'); assert status == 'A' and name in allowed
