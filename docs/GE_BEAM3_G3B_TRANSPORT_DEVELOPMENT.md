@@ -49,4 +49,3 @@ This checkpoint cannot qualify G3b or authorize public mixed models.
 Next: implement the reference-only mixed graph transaction owner and S18
 atomic publication, cache/epoch isolation and authenticated restart/replay;
 then request independent implementation review and freeze formal G3b confirmation.
-
