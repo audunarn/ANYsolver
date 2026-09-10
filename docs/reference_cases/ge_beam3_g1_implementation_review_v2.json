@@ -1,0 +1,81 @@
+{
+  "decision": "ACCEPTED_G1_IMPLEMENTATION_REVIEW",
+  "findings": [],
+  "reviewer": {
+    "activity": "Independent read-only contract, source, test and confirmation-harness review, plus bounded development reproductions. No edits, commits or formal execution.",
+    "identity": "/root/g1_correction_review",
+    "implementation_authorship": "None; corrective review guidance only",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Implementation-review acceptance for proceeding to the separately bound G1 S01-S08 formal confirmation only. This is not formal scientific acceptance, general-static parity, full beam qualification, public integration or authorization to execute G2.",
+    "candidate_preservation": "Verified frozen HEAD and tree independently. Worktree remained clean after reproduction. Seven changed paths relative to 9ab7889892ba74638fbbffbe1aad010448d457db are confined to the private owner/material-validation correction, tests, confirmation coordinator, inventory and successor documentation.",
+    "correction_assessment": {
+      "G1-IR-01": "Closed for the reviewed scope. Public free selection is bytes-backed and read-only; assignment, item mutation and writable views reject. Operative selection is checked against captured fixed-support authority before evaluation.",
+      "G1-IR-02": "Closed for the reviewed scope. Authority is checked after cancellation callbacks, before store commit and at the end of native material validation during actual store preparation.",
+      "additional_input_channels": "Unsupported model load cases and DOF-manager constraints now reject rather than being silently ignored.",
+      "intermediate_preparation_failure": "The initial uncommitted correction still accepted unsupported graph mutation injected during last-element material preparation. This was independently reproduced for virgin and accepted prefixes, reported, corrected and independently verified on the frozen candidate."
+    },
+    "coverage_assessment": "Reviewed all four private G1 modules and the registered elastic/integration tests. No additional mechanics defect was identified. Exact elastic response, independent station KKT reconstruction, nonzero-residual Schur correction, analytic chart operations, accepted recovery and authenticated replay remain intact. The coordinator checks the exact 49-node mechanics inventory and every setup/call/teardown result; infrastructure tests remain a separate inventory.",
+    "formal_confirmation": "Not executed by this reviewer. Two fresh bounded formal cycles and subsequent evidence inspection remain required.",
+    "harness_assessment": "Reviewed clean commit/tree and content binding, independent-review authentication, fresh exclusive output directories, serial bounded Windows process trees, seven one-thread environment settings, inactivity checks, required operation checkpoints, scientific packet equality and atomic no-overwrite aggregate publication. Successful restart observation now follows authenticated resume, not serialization alone. No unresolved blocking harness finding remains.",
+    "historical_evidence": "The original review and formal-block status files remain unchanged. Both P1 findings against 635888afa6d5f0ed9523f10ed4339670276d61c3 remain preserved; this successor review does not overwrite or reinterpret them.",
+    "intermediate_reproductions": [
+      {
+        "diagnostics": "Reviewer tool-output chunk 2d4913",
+        "observed": "Original public free-assignment and final-callback paths rejected correctly, but actual in-store material-preparation mutation still advanced generation/history from 0 to 1 and from 1 to 2; subsequent checkpoint rejected.",
+        "status": "Confirmed intermediate failure, corrected before frozen review"
+      },
+      {
+        "diagnostics": "Reviewer tool-output chunk e7e1b1",
+        "observed": "DOFManager.constrain_dof was silently accepted by solve and checkpoint. The later load-case branch did not execute because the reviewer used an invalid load-construction keyword; that diagnostic ended with exit code 1 and was not automatically retried.",
+        "status": "Confirmed manager-channel failure corrected; load-channel correction subsequently verified on frozen candidate"
+      }
+    ],
+    "reproduction_process": {
+      "automatic_retry": false,
+      "child_timeout_seconds": 60,
+      "classification": "DEVELOPMENT_REVIEW_ONLY",
+      "command": "Inline read-only supervisor using docs.reference_cases.e4_pl_s3_v2_bounded_process._ProcessJob",
+      "diagnostics": "Reviewer tool-output chunk 2f296e; no diagnostic files created",
+      "elapsed_seconds": 5.441511499999933,
+      "exit_code": 0,
+      "final_active_processes": 0,
+      "grouped_checks_passed": 13,
+      "memory_limit_bytes": 25769803776,
+      "numerical_threads": 1,
+      "peak_tree_bytes": 183635968,
+      "verified": [
+        "Public free assignment, item mutation, writable flags and writable views reject without accepted-state change",
+        "Virgin and accepted-prefix checkpoint replay remains byte-identical after rejected alias operations",
+        "Final callback constraint, DOF-manager support, model-load and private-free mutations reject for virgin and accepted prefixes",
+        "Last-element validation mutation inside nonlinear_state.commit rejects for virgin and accepted prefixes",
+        "Rejected operations preserve committed bytes, both generations and accepted history and leave no active trial",
+        "Private free-selection replacement rejects before _evaluate is entered"
+      ]
+    },
+    "reviewed": [
+      "C:/Github/AGENTS.md",
+      "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "docs/GE_BEAM3_G1A_EXACT_ELASTIC_CONTRACT.md",
+      "docs/GE_BEAM3_G1_STATUS.md",
+      "docs/GE_BEAM3_G1_STATE_SAFETY_CONFIRMATION.md",
+      "docs/reference_cases/ge_beam3_g1_independent_review_v1.json",
+      "docs/reference_cases/ge_beam3_g1_formal_confirmation_status_v1.json",
+      "docs/reference_cases/ge_beam3_g1_confirmation_inventory.json",
+      "src/anysolver/_ge_beam3_g1_elastic.py",
+      "src/anysolver/_ge_beam3_g1_operator.py",
+      "src/anysolver/_ge_beam3_g1_element.py",
+      "src/anysolver/_ge_beam3_g1_analysis.py",
+      "tests/test_ge_beam3_g1_elastic.py",
+      "tests/test_ge_beam3_g1_integration.py",
+      "tests/test_ge_beam3_g1_confirmation.py",
+      "tests/test_ge_beam3_g1_elastic_admission.py",
+      "scripts/run_ge_beam3_g1.py",
+      "scripts/confirm_ge_beam3_g1.py",
+      "Relevant existing nonlinear-state preparation/publication, native rotation, FE model, load and process-control implementation"
+    ],
+    "subject_tree": "44295f73a5bb3af004052a42d58994265d9e9ec4"
+  },
+  "subject_commit": "f4c1093f23609d9891a02f2a93e70b440304f952"
+}

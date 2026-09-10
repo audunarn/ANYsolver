@@ -1,0 +1,78 @@
+{
+  "decision": "ACCEPTED_G1_SCOPED_CONFIRMATION",
+  "findings": [],
+  "reviewer": {
+    "activity": "Independent read-only inspection and hash verification of formal evidence, frozen inputs, implementation review, process records, test outcomes, checkpoints and archived copies. No mechanics rerun, edits or commits.",
+    "identity": "/root/g1_correction_review",
+    "implementation_authorship": "None",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "G1 S01-S08 confirmation for the private one-or-two-element exact-elastic workflow only. No general-static parity, full beam qualification, public integration, release or G2 execution is established.",
+    "aggregate": {
+      "canonical": true,
+      "cycles": 2,
+      "sha256": "df8ae5735d6ac036c0b4139d444d2f6b820eb7c0e8b79a8ddedbbf223bb3e355",
+      "terminal": "PROVISIONAL_GO_GE_BEAM3_G1_ELASTIC_STATIC_ONLY"
+    },
+    "archive": {
+      "canonical_formal_files_byte_verified": 16,
+      "location": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g1-confirmation-20260910-f4c1093/formal",
+      "retention_note": "All archived formal evidence files match their originals byte-for-byte. Two pytest scratch checkpoint files remain in the retained temporary originals and are not required canonical evidence."
+    },
+    "candidate_integrity": "Verified candidate HEAD remained f4c1093f23609d9891a02f2a93e70b440304f952 with a clean worktree during evidence inspection. All 329 frozen file bindings match both the candidate Git content and current checkout content.",
+    "cycles": [
+      {
+        "cycle": 1,
+        "elapsed_seconds": 37.495976000000155,
+        "final_active_processes": 0,
+        "mechanics_tests_passed": 49,
+        "passed_setup_call_teardown_records": 147,
+        "peak_tree_bytes": 202031104,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      {
+        "cycle": 2,
+        "elapsed_seconds": 37.90073009999992,
+        "final_active_processes": 0,
+        "mechanics_tests_passed": 49,
+        "passed_setup_call_teardown_records": 147,
+        "peak_tree_bytes": 202371072,
+        "returncode": 0,
+        "status": "PASSED"
+      }
+    ],
+    "execution_assessment": "Both separate cycle directories contain complete canonical process, checkpoint and test records. Exact ordered inventories and all setup/call/teardown outcomes agree, with no missing, duplicate, skipped or failed records. Raw stdout/stderr hashes match their process records. Recorded child duration and memory remain below the reviewed 600-second and 24-GiB limits; both trees report zero final active processes. The reviewed coordinator enforces one numerical thread, inactivity monitoring and serial execution without automatic retry. Timings and memory are diagnostics, not performance claims.",
+    "implementation_review_sha256": "869d237c0374bb7d326ba48d75b4955e4c0ddbb93daa3639eba4e81d7bba8991",
+    "input_binding_sha256": "95d21a3205477daf3599b89ade902d68b102b2b8389d20c92eec04d233b472c1",
+    "milestones": [
+      "capture",
+      "local_solve",
+      "trial_assembly",
+      "acceptance",
+      "restart",
+      "output"
+    ],
+    "original_evidence_location": "C:/Users/AudunArnesenNyhus/AppData/Local/Temp/ge-beam3-g1-formal-f4c1093-20260910-v1",
+    "preservation": "The original blocked implementation review and its two P1 findings remain historical evidence. This confirmation applies to the corrected successor and does not reinterpret the original failures.",
+    "publication_assessment": "The canonical aggregate matches its validated pending publication bytes, binds the frozen inputs and independently accepted implementation review, and reports only the reviewed G1 scope. No failure record is present.",
+    "runtime_verification": {
+      "distribution_versions_verified": 317,
+      "executable_bytes": 106328,
+      "executable_sha256": "fda7026477256845afab371e354c4d512896665f1761939cb5887d0a9dec257a",
+      "python": "C:/Python/Python314/python.exe",
+      "version": "3.14.2"
+    },
+    "scientific_packet": {
+      "byte_identical_across_cycles": true,
+      "bytes": 14968,
+      "qualification_flag": false,
+      "schema": "GE_BEAM3_G1_DEVELOPMENT_PACKET_V1",
+      "sha256": "29519c05031ee3da3e05f7337f02e3fb1f462eed6d51d4defb7c39a60be01394"
+    },
+    "subject_tree": "44295f73a5bb3af004052a42d58994265d9e9ec4",
+    "test_records_byte_identical": true
+  },
+  "subject_commit": "f4c1093f23609d9891a02f2a93e70b440304f952"
+}

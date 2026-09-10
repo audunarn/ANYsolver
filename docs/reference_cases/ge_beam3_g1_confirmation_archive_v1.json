@@ -1,0 +1,216 @@
+{
+  "files": [
+    {
+      "bytes": 195,
+      "path": "anysolver-g1-development-mfzy1x1k/development-process.json",
+      "sha256": "062fab53b6ec5af120225916ce347209644c0151cbbc678f210e1e0a5c2f6f92"
+    },
+    {
+      "bytes": 14968,
+      "path": "anysolver-g1-development-mfzy1x1k/scientific-development.json",
+      "sha256": "fc7fd6685eabfbc2f66449673eb1cba408c6a98b3814d48bf9cbd434cc62fc83"
+    },
+    {
+      "bytes": 0,
+      "path": "anysolver-g1-development-mfzy1x1k/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 4920,
+      "path": "anysolver-g1-development-mfzy1x1k/stdout.log",
+      "sha256": "35b026e5910f712f39cfa320a368ce0eafa69f79f4f6914eb59b4932bfc7e505"
+    },
+    {
+      "bytes": 195,
+      "path": "anysolver-g1-development-vu308411/development-process.json",
+      "sha256": "69f3278141da7edea2822036f0e25bfc6387485093d5c8e661b4935107af63ff"
+    },
+    {
+      "bytes": 0,
+      "path": "anysolver-g1-development-vu308411/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2190,
+      "path": "anysolver-g1-development-vu308411/stdout.log",
+      "sha256": "625c62267f39b514af278bc981213f813d5d5a12ed154be13125926cf6502950"
+    },
+    {
+      "bytes": 5638,
+      "path": "formal/aggregate.json",
+      "sha256": "df8ae5735d6ac036c0b4139d444d2f6b820eb7c0e8b79a8ddedbbf223bb3e355"
+    },
+    {
+      "bytes": 5638,
+      "path": "formal/aggregate.json.pending",
+      "sha256": "df8ae5735d6ac036c0b4139d444d2f6b820eb7c0e8b79a8ddedbbf223bb3e355"
+    },
+    {
+      "bytes": 94,
+      "path": "formal/cycle-1/checkpoints.json",
+      "sha256": "ab5f408815adb95f4fa018ada192a17bc2af4c618e6b61cd92244dfe771cc27a"
+    },
+    {
+      "bytes": 14968,
+      "path": "formal/cycle-1/packet.json",
+      "sha256": "29519c05031ee3da3e05f7337f02e3fb1f462eed6d51d4defb7c39a60be01394"
+    },
+    {
+      "bytes": 377,
+      "path": "formal/cycle-1/process.json",
+      "sha256": "ce0037608bab75a9eb75ad1dfb477877bbd8792bbf36cf3401d3f36257c2dba3"
+    },
+    {
+      "bytes": 0,
+      "path": "formal/cycle-1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5559,
+      "path": "formal/cycle-1/stdout.log",
+      "sha256": "7a985b3000259335a4d9a8aa57763ae1ad0e49b8ae6432f412339ff307ad054b"
+    },
+    {
+      "bytes": 30729,
+      "path": "formal/cycle-1/tests.json",
+      "sha256": "7ffadf378d9f241df3da676da0b78c89595f87cb2ec049f11cbd87b42371233b"
+    },
+    {
+      "bytes": 94,
+      "path": "formal/cycle-2/checkpoints.json",
+      "sha256": "ab5f408815adb95f4fa018ada192a17bc2af4c618e6b61cd92244dfe771cc27a"
+    },
+    {
+      "bytes": 14968,
+      "path": "formal/cycle-2/packet.json",
+      "sha256": "29519c05031ee3da3e05f7337f02e3fb1f462eed6d51d4defb7c39a60be01394"
+    },
+    {
+      "bytes": 376,
+      "path": "formal/cycle-2/process.json",
+      "sha256": "8a979c835d861d54b55a3407f01f691c906477aa5f7b7e49172e0cbb1584d9a5"
+    },
+    {
+      "bytes": 0,
+      "path": "formal/cycle-2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5559,
+      "path": "formal/cycle-2/stdout.log",
+      "sha256": "d6eda0c6e385fae1e9f0e5825bc3ebadee97a7da39e50ec01602caa5f2c01568"
+    },
+    {
+      "bytes": 30729,
+      "path": "formal/cycle-2/tests.json",
+      "sha256": "7ffadf378d9f241df3da676da0b78c89595f87cb2ec049f11cbd87b42371233b"
+    },
+    {
+      "bytes": 54086,
+      "path": "formal/frozen-inputs.json",
+      "sha256": "95d21a3205477daf3599b89ade902d68b102b2b8389d20c92eec04d233b472c1"
+    },
+    {
+      "bytes": 6795,
+      "path": "formal/independent-review.json",
+      "sha256": "869d237c0374bb7d326ba48d75b4955e4c0ddbb93daa3639eba4e81d7bba8991"
+    },
+    {
+      "bytes": 94,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/cycle-1/checkpoints.json",
+      "sha256": "ab5f408815adb95f4fa018ada192a17bc2af4c618e6b61cd92244dfe771cc27a"
+    },
+    {
+      "bytes": 14968,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/cycle-1/packet.json",
+      "sha256": "29519c05031ee3da3e05f7337f02e3fb1f462eed6d51d4defb7c39a60be01394"
+    },
+    {
+      "bytes": 376,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/cycle-1/process.json",
+      "sha256": "c175def325622cff12c706cd4a354f5dd4ab3c0f195988e804e8015f5d704796"
+    },
+    {
+      "bytes": 0,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/cycle-1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5559,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/cycle-1/stdout.log",
+      "sha256": "354ff290490befe61cf9255246aedf3ba648823b6f5724c249e418a5b9cb2fd7"
+    },
+    {
+      "bytes": 30729,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/cycle-1/tests.json",
+      "sha256": "7ffadf378d9f241df3da676da0b78c89595f87cb2ec049f11cbd87b42371233b"
+    },
+    {
+      "bytes": 54086,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/frozen-inputs.json",
+      "sha256": "7766c24e8b10b529539b84de281b0c5aca7565c921d1085f099df01b394096ce"
+    },
+    {
+      "bytes": 5544,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/rehearsal.json",
+      "sha256": "8676c2468aa1dc40265a6ce40d48495805725559debcf8d8a0870f0efe23ec75"
+    },
+    {
+      "bytes": 5544,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v1/rehearsal.json.pending",
+      "sha256": "8676c2468aa1dc40265a6ce40d48495805725559debcf8d8a0870f0efe23ec75"
+    },
+    {
+      "bytes": 94,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/cycle-1/checkpoints.json",
+      "sha256": "ab5f408815adb95f4fa018ada192a17bc2af4c618e6b61cd92244dfe771cc27a"
+    },
+    {
+      "bytes": 14968,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/cycle-1/packet.json",
+      "sha256": "29519c05031ee3da3e05f7337f02e3fb1f462eed6d51d4defb7c39a60be01394"
+    },
+    {
+      "bytes": 376,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/cycle-1/process.json",
+      "sha256": "b716ca762edb2622f3afa10f2da0d6c296e2c52deadedc2971f7c5b5ec61ee39"
+    },
+    {
+      "bytes": 0,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/cycle-1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5559,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/cycle-1/stdout.log",
+      "sha256": "2fa29371a480ac120d378262e99b53ba64185aa14d930f480b532366adf816c5"
+    },
+    {
+      "bytes": 30729,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/cycle-1/tests.json",
+      "sha256": "7ffadf378d9f241df3da676da0b78c89595f87cb2ec049f11cbd87b42371233b"
+    },
+    {
+      "bytes": 54086,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/frozen-inputs.json",
+      "sha256": "5948334b57a885b56dc9b6f318efe7d5cbea3b6532ec65c48dfe29f57f41fe62"
+    },
+    {
+      "bytes": 5544,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/rehearsal.json",
+      "sha256": "82fab994dffc379c9ccafae15e83ace288469a8f77427eed83e1aca6feada4bf"
+    },
+    {
+      "bytes": 5544,
+      "path": "ge-beam3-g1-correction-rehearsal-20260910-v2/rehearsal.json.pending",
+      "sha256": "82fab994dffc379c9ccafae15e83ace288469a8f77427eed83e1aca6feada4bf"
+    },
+    {
+      "bytes": 6795,
+      "path": "implementation-review.json",
+      "sha256": "869d237c0374bb7d326ba48d75b4955e4c0ddbb93daa3639eba4e81d7bba8991"
+    }
+  ],
+  "root": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g1-confirmation-20260910-f4c1093",
+  "schema": "GE_BEAM3_G1_CONFIRMATION_ARCHIVE_V1"
+}
