@@ -1,4 +1,4 @@
-"""First G3b development fixture; independent assembly, not formal acceptance."""
+"""Second G3b development fixture; independent assembly, not formal acceptance."""
 from copy import deepcopy
 import json
 import os
@@ -6,17 +6,17 @@ from pathlib import Path
 from unittest.mock import patch
 import numpy as np
 import pytest
-from anysolver.elements import BeamElement
+from anysolver.elements import QuadraticBeamElement
 from anysolver.fe_core import FEModel, Material
 from anysolver._ge_beam3_g1_element import ElasticElement
 from anysolver._ge_beam3_g1_elastic import ElasticSection, canonical
 from anysolver._ge_beam3_g1_operator import ElasticOperator
 from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
-from anysolver._ge_beam3_g3b_reference import B2TranslationReferenceProblem, POLICY
+from anysolver._ge_beam3_g3b_reference import B3TranslationReferenceProblem, B3_POLICY
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = json.loads((ROOT/'docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json').read_text())
-MB2 = next(g for g in FIXTURE['mixed_graphs'] if g['id'] == 'M_B2')
+MB3 = next(g for g in FIXTURE['mixed_graphs'] if g['id'] == 'M_B3')
 
 
 def invariant(a, b):
@@ -26,25 +26,25 @@ def invariant(a, b):
 
 
 def parts():
-    nodes = {n: np.array(x, dtype=float) for n, x in MB2['nodes']}
-    d = MB2['native_element']; ids = tuple(d['nodes'])
+    nodes = {n: np.array(x, dtype=float) for n, x in MB3['nodes']}
+    d = MB3['native_element']; ids = tuple(d['nodes'])
     native = ElasticElement(d['id'], ids, Reference([nodes[n] for n in ids], np.tile(np.eye(3), (3, 1, 1))),
                             ElasticSection.isotropic(**FIXTURE['materials']['native_isotropic']))
     m = FIXTURE['materials']['legacy_scalar']
     section = {k: deepcopy(v) for k, v in m.items() if k not in ('E', 'G', 'nu')}
-    legacy = BeamElement(MB2['other_element']['id'], list(MB2['other_element']['nodes']), cross_section=section)
+    legacy = QuadraticBeamElement(MB3['other_element']['id'], list(MB3['other_element']['nodes']), cross_section=section)
     material = Material('G3b frozen scalar', m['E'], m['nu'])
     assert material.shear_modulus == m['G']
-    return native, legacy, material, dict(nodes=nodes, fixed_nodes=tuple(MB2['fixed_nodes']), tie=deepcopy(MB2['tie']))
+    return native, legacy, material, dict(nodes=nodes, fixed_nodes=tuple(MB3['fixed_nodes']), tie=deepcopy(MB3['tie']))
 
 
 def make():
     native, legacy, material, kw = parts()
-    return B2TranslationReferenceProblem(native, legacy, material, **kw)
+    return B3TranslationReferenceProblem(native, legacy, material, **kw)
 
 
 def load(p, *, moment=True):
-    f = np.zeros(30); i = p.ids.index(MB2['load_node'])*6
+    f = np.zeros(36); i = p.ids.index(MB3['load_node'])*6
     f[i:i+3] = FIXTURE['programs']['mixed_force']
     if moment: f[i+3:i+6] = FIXTURE['programs']['mixed_moment']
     return f
@@ -60,16 +60,16 @@ def independent_full_reference():
     x = native.operator.reference.coordinates
     h = native.operator.evaluate(x, np.zeros((3, 3)), native.operator.reference.nodal_triads,
                                  np.tile(np.eye(3), (2, 1, 1)), np.zeros(18))['hessian']
-    H = np.zeros((54, 54))
+    H = np.zeros((60, 60))
     native_dofs = [6*ids.index(n)+j for n in native.node_ids for j in range(6)]
-    native_all = native_dofs+list(range(30, 54))
+    native_all = native_dofs+list(range(36, 60))
     for i, gi in enumerate(native_all):
         for j, gj in enumerate(native_all): H[gi, gj] += h[i, j]
     legacy_dofs = [6*ids.index(n)+j for n in legacy.node_ids for j in range(6)]
     b = legacy.compute_stiffness_matrix(model.mesh, material)
     for i, gi in enumerate(legacy_dofs):
         for j, gj in enumerate(legacy_dofs): H[gi, gj] += b[i, j]
-    J = np.zeros((15, 54)); row = 0
+    J = np.zeros((15, 60)); row = 0
     for n in sorted(kw['fixed_nodes']):
         for d in range(6): J[row, 6*ids.index(n)+d] = 1; row += 1
     for d in range(3):
@@ -78,23 +78,24 @@ def independent_full_reference():
     return H, J, native, legacy, material, model, native_dofs, legacy_dofs
 
 
-def test_mb2_reference_kkt_smoke():
+def test_mb3_reference_kkt_smoke():
     p = make(); f = load(p); result = p.solve(f)
     H, J, native, legacy, material, model, nd, ld = independent_full_reference()
     system = np.block([[H, J.T], [J, np.zeros((15, 15))]])
+    assert p.size == 36 and p.T.shape == (36, 21) and system.shape == (75, 75)
     ref = np.linalg.solve(system, np.r_[f, np.zeros(24+15)])
-    invariant(result['u'], ref[:30]); invariant(result['internal'], ref[30:54])
-    invariant(result['multipliers'], ref[54:]); invariant(p.J, J[:, :30])
-    invariant(result['energy'], ref[:54] @ H @ ref[:54]/2)
+    invariant(result['u'], ref[:36]); invariant(result['internal'], ref[36:60])
+    invariant(result['multipliers'], ref[60:]); invariant(p.J, J[:, :36])
+    invariant(result['energy'], ref[:60] @ H @ ref[:60]/2)
     invariant(result['energy']*2, result['u'] @ f)
-    force = result['support_reactions'].reshape(5, 6)+f.reshape(5, 6)
+    force = result['support_reactions'].reshape(6, 6)+f.reshape(6, 6)
     invariant(force[:, :3].sum(axis=0), np.zeros(3))
     invariant((force[:, 3:]+np.cross(p.positions, force[:, :3])).sum(axis=0), np.zeros(3))
-    tie = result['tie_forces'].reshape(5, 6)
+    tie = result['tie_forces'].reshape(6, 6)
     invariant(tie[:, :3].sum(axis=0), np.zeros(3)); assert not np.any(tie[:, 3:])
     invariant(tie[p.ids.index(103)], -tie[p.ids.index(201)])
     assert len(result['native_stations']) == 8
-    expected = native.operator.cell.recover(ref[36:54])
+    expected = native.operator.cell.recover(ref[42:60])
     for a, b in zip(result['native_stations'], expected):
         invariant(a['strain'], b['strain']); invariant(a['resultants'], b['resultants'])
     recovery = legacy.compute_stresses(model.mesh, ref[ld], material)
@@ -102,16 +103,63 @@ def test_mb2_reference_kkt_smoke():
         if isinstance(recovery[key], str): assert result['legacy_recovery'][key] == recovery[key]
         else: invariant(result['legacy_recovery'][key], recovery[key])
     assert p.native._mesh is None and p.native._validator is None
-    assert result['qualification'] is False and result['policy'] == POLICY
+    assert result['qualification'] is False and result['policy'] == B3_POLICY
+
+
+@pytest.mark.parametrize('case', ['midpoint', 'curved', 'eccentricity', 'generalized', 'b2_type', 'subclass', 'null_policy', 'b2_policy'])
+def test_b3_specific_admission_precedes_both_operators(case):
+    from anysolver.elements import BeamElement
+    from anysolver._ge_beam3_g3b_reference import POLICY
+    native, legacy, material, kw = parts()
+    problem = B3TranslationReferenceProblem
+    if case == 'midpoint': kw['nodes'][202][0] += 1e-9
+    elif case == 'curved': kw['nodes'][202][1] += .01
+    elif case == 'eccentricity': legacy.eccentricity[1] = .01
+    elif case == 'generalized': legacy.generalized_section = object()
+    elif case == 'b2_type': legacy = BeamElement(2, [201, 203], cross_section=legacy.cross_section)
+    elif case == 'subclass':
+        class Unregistered(B3TranslationReferenceProblem): pass
+        problem = Unregistered
+    elif case == 'null_policy': kw['policy'] = None
+    else: kw['policy'] = POLICY
+    with patch.object(ElasticOperator, 'evaluate', side_effect=AssertionError('native mechanics called')):
+        with patch.object(QuadraticBeamElement, 'compute_stiffness_matrix', side_effect=AssertionError('B3 mechanics called')):
+            with pytest.raises(ValueError): problem(native, legacy, material, **kw)
+    assert native._mesh is None and native._validator is None
+
+
+@pytest.mark.parametrize('case', ['midpoint', 'eccentricity', 'generalized', 'family', 'nullspace', 'constraint_rows'])
+def test_b3_specific_capture_mutations(case):
+    p = make(); f = load(p)
+    if case == 'midpoint': p.model.mesh.nodes[202].x += .01
+    elif case == 'eccentricity': p.legacy.eccentricity[0] = .01
+    elif case == 'generalized': p.legacy.generalized_section = object()
+    elif case == 'family':
+        from anysolver._ge_beam3_g3b_reference import B2TranslationReferenceProblem
+        p.__class__ = B2TranslationReferenceProblem
+    elif case == 'nullspace': p.T = p.T*.5
+    else: p.J = p.J*.5
+    with pytest.raises(ValueError): p.solve(f)
+
+
+def test_b3_nonzero_rhs_reuse_preserves_reference_capture():
+    p = make(); f = load(p); baseline = p.solve(f)
+    for factor in FIXTURE['programs']['rhs_factors']:
+        result = p.solve(factor*f)
+        invariant(result['u'], factor*baseline['u'])
+        invariant(result['multipliers'], factor*baseline['multipliers'])
+        invariant(result['energy'], factor**2*baseline['energy'])
+    assert canonical(p.solve(f)) == canonical(baseline)
+    assert p.native._mesh is None and p.native._validator is None
 
 
 def test_translation_tie_has_no_rotational_work_or_equality():
-    p = make(); f = np.zeros(30); a = 6*p.ids.index(103); b = 6*p.ids.index(201)
+    p = make(); f = np.zeros(36); a = 6*p.ids.index(103); b = 6*p.ids.index(201)
     f[a+3] = FIXTURE['programs']['mixed_moment'][0]
     r = p.solve(f)
     assert abs(r['u'][a+3]) > 1e-8 and abs(r['u'][b+3]) <= 1e-11
-    assert not np.any(p.J[12:, np.array([6*i+j for i in range(5) for j in (3, 4, 5)])])
-    delta = p.T @ np.linspace(-.2, .3, 15)
+    assert not np.any(p.J[12:, np.array([6*i+j for i in range(6) for j in (3, 4, 5)])])
+    delta = p.T @ np.linspace(-.2, .3, 21)
     invariant(delta @ r['tie_forces'], 0.)
     invariant(delta @ (p.K @ r['u']-f), 0.)
 
@@ -130,7 +178,7 @@ def test_unsupported_mixed_admission_precedes_operator_evaluation(case):
     elif case == 'orphan': kw['nodes'][999] = np.zeros(3)
     elif case == 'boolean': kw['tie']['slave'] = True
     with patch.object(ElasticOperator, 'evaluate', side_effect=AssertionError('mechanics called')):
-        with pytest.raises(ValueError): B2TranslationReferenceProblem(native, legacy, material, **kw)
+        with pytest.raises(ValueError): B3TranslationReferenceProblem(native, legacy, material, **kw)
     assert native._mesh is None and native._validator is None
 
 
@@ -141,7 +189,7 @@ def test_frozen_reference_mutations_rejected(mutation):
     elif mutation == 'material': p.material.elastic_modulus *= 2
     elif mutation == 'connectivity': p.legacy.node_ids.reverse()
     elif mutation == 'section': p.legacy._A *= 2
-    elif mutation == 'operator': p.K = p.K+np.eye(30)
+    elif mutation == 'operator': p.K = p.K+np.eye(36)
     elif mutation == 'activity': p.model.mesh.element_activity = {}
     elif mutation == 'constraints': p.model.constraint_equations.append('unregistered tie')
     else: p.model.load_cases.append(object())
@@ -163,11 +211,11 @@ def test_cancel_and_independent_reuse(phase):
         with pytest.raises(ValueError): p.solve(f, rotation_targets=np.eye(3))
 
 
-def test_mb2_deterministic_development_packet(tmp_path):
+def test_mb3_deterministic_development_packet(tmp_path):
     a, b = make(), make(); f = load(a)
-    packet = canonical(dict(schema='G3B_M_B2_DEVELOPMENT_V1', qualification=False, result=a.solve(f)))
-    assert packet == canonical(dict(schema='G3B_M_B2_DEVELOPMENT_V1', qualification=False, result=b.solve(f)))
-    path = Path(os.environ.get('G3B_DIAGNOSTIC_PAYLOAD', str(tmp_path/'mb2.json')))
+    packet = canonical(dict(schema='G3B_M_B3_DEVELOPMENT_V1', qualification=False, result=a.solve(f)))
+    assert packet == canonical(dict(schema='G3B_M_B3_DEVELOPMENT_V1', qualification=False, result=b.solve(f)))
+    path = Path(os.environ.get('G3B_MB3_DIAGNOSTIC_PAYLOAD', str(tmp_path/'mb3.json')))
     with path.open('xb') as stream: stream.write(packet)
 
 
@@ -178,23 +226,25 @@ def test_legacy_zero_force_stub_is_never_used():
     assert np.linalg.norm(result['support_reactions']) > 0
 
 
-def test_additive_scope_and_immutable_parent_authority():
-    import hashlib
+def test_successor_extent_preserves_mechanics_and_historical_records():
     import subprocess
-    parent = 'ebd3b203e4df72186bd82b2f6d7e6609e18685c6'
+    parent = '5da2a9c6efad7feb6a573196f3791b7872717bbe'
     git = ['git', '-c', 'safe.directory='+ROOT.as_posix()]
-    allowed = {'src/anysolver/_ge_beam3_g3b_reference.py', 'tests/test_ge_beam3_g3b_mb2.py',
-               'scripts/run_ge_beam3_g3b.py', 'docs/GE_BEAM3_G3B_M_B2_DEVELOPMENT.md',
-               'docs/reference_cases/ge_beam3_g3b_mb2_development_v1.json',
-               'tests/test_ge_beam3_g3b_mb3.py', 'docs/GE_BEAM3_G3B_M_B3_DEVELOPMENT.md',
-               'docs/reference_cases/ge_beam3_g3b_mb3_development_v1.json'}
+    allowed = {
+        'src/anysolver/_ge_beam3_g3b_reference.py': 'M',
+        'scripts/run_ge_beam3_g3b.py': 'M',
+        'tests/test_ge_beam3_g3b_mb2.py': 'M',
+        'tests/test_ge_beam3_g3b_mb3.py': 'A',
+        'docs/GE_BEAM3_G3B_M_B3_DEVELOPMENT.md': 'A',
+        'docs/reference_cases/ge_beam3_g3b_mb3_development_v1.json': 'A'}
     diff = subprocess.check_output(git+['diff', '--name-status', parent, '--'], cwd=ROOT, timeout=20).decode()
     for line in diff.splitlines():
-        status, name = line.split('\t'); assert status == 'A' and name in allowed
+        status, path = line.split('\t'); assert allowed.get(path) == status
     extra = subprocess.check_output(git+['ls-files', '--others', '--exclude-standard'], cwd=ROOT, timeout=20).decode()
-    assert set(extra.splitlines()) <= allowed
-    contract = json.loads((ROOT/'docs/reference_cases/ge_beam3_g3_graph_contract_v1.json').read_text())
-    for binding in contract['source_bindings']+contract['text_bindings']:
-        raw = (ROOT/binding['path']).read_bytes().replace(b'\r\n', b'\n')
-        assert len(raw) == binding['bytes'] and hashlib.sha256(raw).hexdigest() == binding['sha256']
-    assert 'g3b' not in (ROOT/'src/anysolver/__init__.py').read_text()
+    assert set(extra.splitlines()) <= {p for p, s in allowed.items() if s == 'A'}
+    # The preceding M_B2 mechanics regression is unchanged; only its declared
+    # additive boundary admits this successor's three research/test paths.
+    old = subprocess.check_output(git+['show', parent+':tests/test_ge_beam3_g3b_mb2.py'], cwd=ROOT, timeout=20)
+    current = (ROOT/'tests/test_ge_beam3_g3b_mb2.py').read_bytes().replace(b'\r\n', b'\n')
+    marker = b'def test_additive_scope_and_immutable_parent_authority():'
+    assert old.split(marker)[0] == current.split(marker)[0]

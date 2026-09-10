@@ -1,0 +1,123 @@
+{
+  "archive": {
+    "bytes_excluding_manifest": 22805,
+    "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-mb3-development-20260910-5da2a9c",
+    "files": 11,
+    "manifest_sha256": "158846bbd37a787d2c71df6a0013ddadf6e469ce5701e9303169c9774f5a2beb",
+    "original_temp_outputs_retained": true
+  },
+  "inventories": {
+    "g3b_mb2_regression_tests": 25,
+    "g3b_mb3_development_tests": 40
+  },
+  "limits": {
+    "automatic_retry": false,
+    "inactivity_seconds": 120,
+    "memory_bytes": 25769803776,
+    "numerical_threads": 1,
+    "wall_seconds": 600
+  },
+  "mb2_preservation": {
+    "byte_identical": true,
+    "bytes": 4465,
+    "prior_archive": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-mb2-development-20260910-ebd3b20/final25/packet.json",
+    "sha256": "f8b5caa5fa48931ca66688c7bdf36a362886bb5e0ed657af071ca35d8357623b"
+  },
+  "next": "Frozen M_Q4/M_S3 reference-linear interfaces, then M_Q4_WEIGHTED; full G3b S18 owner/restart and independent review before formal confirmation.",
+  "parent": {
+    "commit": "5da2a9c6efad7feb6a573196f3791b7872717bbe",
+    "tree": "63907df9bbe3938ed713232713944c9ab7243e65"
+  },
+  "runs": [
+    {
+      "active_processes": 0,
+      "label": "smoke1",
+      "peak_tree_bytes": 218832896,
+      "pytest_seconds": 2.15,
+      "returncode": 0,
+      "status": "PASSED",
+      "tests_passed": 1,
+      "wrapper_seconds": 3.2349768999993103
+    },
+    {
+      "active_processes": 0,
+      "label": "mb3-40",
+      "peak_tree_bytes": 231911424,
+      "pytest_seconds": 2.56,
+      "returncode": 0,
+      "status": "PASSED",
+      "tests_passed": 40,
+      "wrapper_seconds": 3.339159399998607
+    },
+    {
+      "active_processes": 0,
+      "label": "mb2-25",
+      "peak_tree_bytes": 231997440,
+      "pytest_seconds": 2.39,
+      "returncode": 0,
+      "status": "PASSED",
+      "tests_passed": 25,
+      "wrapper_seconds": 3.132666600002267
+    }
+  ],
+  "schema": "GE_BEAM3_G3B_M_B3_DEVELOPMENT_RECORD_V1",
+  "scope": {
+    "candidate_class": "B3TranslationReferenceProblem",
+    "defaults_changed": false,
+    "engineering_mode": "REFERENCE_LINEAR_BOTH_FAMILIES",
+    "fixture": "M_B3",
+    "formal_qualification": false,
+    "formulation_changes": false,
+    "free_dofs": 21,
+    "global_dofs": 36,
+    "independent_full_kkt_dimension": 75,
+    "independent_implementation_review": false,
+    "preserved_native_internal_coordinates": 24,
+    "public_routing": false,
+    "restart_supported": false,
+    "transaction_owner": false
+  },
+  "source_bindings_lf": [
+    {
+      "bytes": 13043,
+      "path": "src/anysolver/_ge_beam3_g3b_reference.py",
+      "sha256": "6ea552022921ca4933d4fde51711458f4b91921315d789bcd24f9123a78cc2f3"
+    },
+    {
+      "bytes": 3446,
+      "path": "scripts/run_ge_beam3_g3b.py",
+      "sha256": "c46d9c213db9778dafd45f8066ff80d495f996fd689034eb2747e70776fdefd7"
+    },
+    {
+      "bytes": 10821,
+      "path": "tests/test_ge_beam3_g3b_mb2.py",
+      "sha256": "869250a7984f7d13d04567ce8a7d99c8e649e8dd390e33f46e01f44a8b0c764e"
+    },
+    {
+      "bytes": 13446,
+      "path": "tests/test_ge_beam3_g3b_mb3.py",
+      "sha256": "48d7b8c775d375c415e99e79cf097f39b5bc03290146c0c87ca002e2bd118f17"
+    },
+    {
+      "bytes": 4118,
+      "path": "docs/GE_BEAM3_G3B_M_B3_DEVELOPMENT.md",
+      "sha256": "2e4140a497941abed144aa112b131b8c4131c364dfe6fd4229ba73e3a1a7917a"
+    },
+    {
+      "bytes": 12973,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_contract_v1.json",
+      "sha256": "dbc54f55b51d67c782844488a0f86ce6bed442c9cc530dbd823ea95f8bf90eb5"
+    },
+    {
+      "bytes": 26455,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+      "sha256": "68a288ec12821740cdd25960b6eb1020f00fec6579fe21ac9dbac5b5c2275e05"
+    },
+    {
+      "bytes": 48265,
+      "path": "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
+      "sha256": "c5b192c9c3f6ee2c68a42ab4a0cfbcdbe81581381b800c13aacce0bb219a3383"
+    }
+  ],
+  "status": "DEVELOPMENT_SMOKE_PASSED_NOT_G3B_QUALIFICATION"
+}
