@@ -195,3 +195,94 @@ def test_accepted_journal_cannot_be_mutated_or_detached():
     owner = problem(); owner.solve(loads(owner))
     owner._accepted[0]["nodal"][-1] += .1
     with pytest.raises(ValueError, match="journal"): owner.checkpoint()
+
+
+def accepted_snapshot(owner):
+    rotations = owner.store.native_rotation_store
+    return canonical(dict(state=owner.store.materialize(), u=rotations.committed_full_displacement,
+                          Q=rotations.committed_rotation_matrices, generation=owner.store.generation,
+                          rotation_generation=rotations.generation, history=owner._accepted,
+                          journal=owner._journal_digest))
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_free_dof_public_alias_is_immutable(accepted):
+    owner = problem()
+    if accepted: owner.solve(loads(owner))
+    before = accepted_snapshot(owner)
+    with pytest.raises(AttributeError): owner.free = owner.free[:-1]
+    with pytest.raises(ValueError): owner.free[-1] = 0
+    with pytest.raises(ValueError): owner.free.setflags(write=True)
+    with pytest.raises(ValueError): owner.free.view().setflags(write=True)
+    assert accepted_snapshot(owner) == before
+    data = owner.checkpoint()
+    assert ElasticAnalysis.resume(data, sha256(data).hexdigest()).checkpoint() == data
+
+
+@pytest.mark.parametrize("mutation", ["omitted", "writable", "size"])
+def test_free_dof_private_replacement_rejected_before_evaluation(mutation):
+    owner = problem(); before = accepted_snapshot(owner)
+    if mutation == "omitted": owner._free = owner.free[:-1]
+    elif mutation == "writable": owner._free = owner.free.copy()
+    else: owner.size -= 1
+    force = np.zeros(30); force[-1] = .001
+    with patch.object(owner, "_evaluate", side_effect=AssertionError("must reject before evaluation")):
+        with pytest.raises(ValueError, match="free-DOF"): owner.solve(force)
+    assert accepted_snapshot(owner) == before and not owner.store.has_active_trial
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+@pytest.mark.parametrize("mutation", ["constraint", "free", "fixed", "node", "section", "manager_support", "model_load"])
+def test_final_callback_mutation_preserves_accepted_prefix(accepted, mutation):
+    owner = problem(); force = np.zeros(owner.size)
+    if accepted: owner.solve(force)
+    before = accepted_snapshot(owner); calls = []
+    def callback():
+        calls.append(True)
+        if len(calls) == 2:
+            if mutation == "constraint": owner.model.constraint_equations.append("unsupported")
+            elif mutation == "free": owner._free = owner.free[:-1]
+            elif mutation == "fixed": owner.fixed = tuple(range(12))
+            elif mutation == "node": owner.model.add_node(6, 3., 0., 0.)
+            elif mutation == "manager_support": owner.model.mesh.dof_manager.constrain_dof(owner.size-1)
+            elif mutation == "model_load":
+                from anysolver.boundary import LoadCase
+                owner.model.add_load_case(LoadCase("unsupported model load"))
+            else: owner.model.materials[owner.elements[0].material_name] = section(True)
+        return False
+    with pytest.raises(ValueError): owner.solve(force, cancel=callback)
+    assert len(calls) == 2
+    assert accepted_snapshot(owner) == before and not owner.store.has_active_trial
+
+
+def test_prepublication_preparation_mutation_is_rejected():
+    owner = problem(); before = accepted_snapshot(owner)
+    original = owner.store.native_element_rotation_view
+    def prepare(*args, **kwargs):
+        result = original(*args, **kwargs)
+        owner.model.constraint_equations.append("unsupported")
+        return result
+    with patch.object(owner.store, "native_element_rotation_view", side_effect=prepare):
+        with pytest.raises(ValueError): owner.solve(np.zeros(owner.size))
+    assert accepted_snapshot(owner) == before and not owner.store.has_active_trial
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_store_commit_material_preparation_mutation_is_atomic(accepted):
+    owner = problem(); force = np.zeros(owner.size)
+    if accepted: owner.solve(force)
+    before = accepted_snapshot(owner); victim = owner.elements[-1]
+    original_validate = victim._validate; original_commit = owner.store.commit
+    preparing = []; triggered = []
+    def commit(*args, **kwargs):
+        preparing.append(True)
+        try: return original_commit(*args, **kwargs)
+        finally: preparing.pop()
+    def validate(*args, **kwargs):
+        original_validate(*args, **kwargs)
+        if preparing:
+            triggered.append(True)
+            owner.model.constraint_equations.append("unsupported during commit")
+    with patch.object(owner.store, "commit", side_effect=commit), patch.object(victim, "_validate", side_effect=validate):
+        with pytest.raises(ValueError, match="unsupported graph"): owner.solve(force)
+    assert triggered and accepted_snapshot(owner) == before and not owner.store.has_active_trial

@@ -65,7 +65,10 @@ class ElasticAnalysis:
         for n in self.model.mesh.nodes:
             if len(set(self.model.mesh.dof_manager.get_node_dofs(n)[3:]) & set(self.fixed)) not in (0, 3):
                 raise ValueError("G1 requires complete rotational support triples")
-        self.free = np.array([d for d in range(self.size) if d not in self.fixed], dtype=int)
+        # Bytes-backed indexing has no writable owner or writable alias. Public
+        # access is read-only; the guard also authenticates private replacement.
+        self._free = np.frombuffer(np.array([d for d in range(self.size)
+                                            if d not in self.fixed], dtype=np.int64).tobytes(), dtype=np.int64)
         self._lock = threading.Lock()
         self._definition = canonical(dict(elements=[describe(e) for e in self.elements], fixed=list(self.fixed)))
         self._runtime = runtime_digest()
@@ -76,22 +79,39 @@ class ElasticAnalysis:
         self._journal_digest = sha(self._accepted)
         self._initial_digest = self._state_digest()
         self._graph = self._graph_identity()
+        for e in self.elements:
+            e._owner_guard = self._guard
+
+    @property
+    def free(self):
+        return self._free
 
     def _graph_identity(self):
         return sha(dict(definition=json.loads(self._definition),
                         nodes=[(n, node.coords(), list(self.model.mesh.dof_manager.get_node_dofs(n)))
                                for n, node in sorted(self.model.mesh.nodes.items())],
                         elements=[(i, e.to_dict()) for i, e in sorted(self.model.mesh.elements.items())],
-                        fixed=self.fixed))
+                        fixed=self.fixed, free=self.free, size=self.size))
 
     def _guard(self):
+        expected = tuple(d for d in range(self.model.mesh.dof_manager.total_dofs)
+                         if d not in json.loads(self._definition)["fixed"])
+        if (self.size != self.model.mesh.dof_manager.total_dofs or
+                type(self._free) is not np.ndarray or self._free.dtype != np.dtype(np.int64) or
+                self._free.shape != (len(expected),) or self._free.flags.writeable or
+                not isinstance(self._free.base, bytes) or tuple(self._free) != expected):
+            raise ValueError("G1 frozen free-DOF authority changed")
         if sha(self._accepted) != self._journal_digest or len(self._accepted) != self.store.generation:
             raise ValueError("accepted journal/owner generation changed")
         if self._graph_identity() != self._graph or canonical(dict(elements=[describe(e) for e in self.elements], fixed=list(self.fixed))) != self._definition:
             raise ValueError("G1 frozen graph changed")
-        if self.model.constraint_equations or self.model.boundary_conditions or self.model.mesh.point_masses or self.model.mesh.element_activity is not None:
+        if (self.model.constraint_equations or self.model.boundary_conditions or self.model.load_cases or
+                self.model.mesh.dof_manager._constrained_dofs or self.model.mesh.point_masses or
+                self.model.mesh.element_activity is not None):
             raise ValueError("G1 unsupported graph feature")
         for e in self.elements:
+            if e._owner_guard != self._guard:
+                raise ValueError("G1 owner preparation guard changed")
             e._check(self.model.mesh)
             if self.model.materials.get(e.material_name) is not e.section:
                 raise ValueError("G1 section binding changed")
@@ -148,6 +168,8 @@ class ElasticAnalysis:
             def check():
                 if cancel():
                     raise InterruptedError("G1 cancelled; accepted prefix retained")
+                # A callback is external code even when it returns False.
+                self._guard()
                 if monotonic()-started > 600:
                     raise TimeoutError("G1 global solve deadline")
             try:
@@ -169,6 +191,8 @@ class ElasticAnalysis:
                                           state_hash=sha(pending), u=total.tolist())
                         next_history = self._accepted+(next_entry,)
                         next_digest = sha(next_history)
+                        # Revalidate after preparation and before publication.
+                        self._guard()
                         self.store.commit(token, accepted_full_displacement=total, accepted_full_coordinates=coordinates)
                         self._accepted = next_history
                         self._journal_digest = next_digest

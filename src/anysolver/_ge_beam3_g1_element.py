@@ -31,6 +31,7 @@ class ElasticElement(Element):
         self.identity = sha(self.to_dict())
         self._mesh = None; self._validator = None; self._issued = None
         self._load = None
+        self._owner_guard = None
 
     def to_dict(self):
         return dict(formulation_id=FORMULATION, element_id=self.element_id, node_ids=self.node_ids,
@@ -135,6 +136,11 @@ class ElasticElement(Element):
                 raise ValueError("unknown validation phase")
             if not np.array_equal(state["committed_nodal_rotation_matrices"], matrices):
                 raise ValueError("elastic shared pose mismatch")
+            # The store calls this again during commit preparation. Validate
+            # owner authority after all material/pose validation, before any
+            # shared-state pointer is published.
+            if self._owner_guard is not None:
+                self._owner_guard()
         validator = NativeMaterialValidator(validate)
         self._validator = validator
         return validator
