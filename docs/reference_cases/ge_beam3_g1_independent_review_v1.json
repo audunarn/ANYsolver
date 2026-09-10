@@ -1,0 +1,69 @@
+{
+  "decision": "BLOCKED_G1_IMPLEMENTATION_REVIEW",
+  "findings": [
+    {
+      "description": "The solver uses mutable public self.free as the authoritative equilibrium and Newton selection, but neither _graph_identity nor _guard authenticates it against the frozen fixed supports. Removing a free DOF silently creates an undeclared support, permits an unconverged physical state to commit, and produces a checkpoint that its own authenticated replay rejects.",
+      "file": "src/anysolver/_ge_beam3_g1_analysis.py",
+      "gate": "G1 frozen constraints, state ownership, S07 equilibrium and S08 continuation",
+      "id": "G1-IR-01",
+      "line": 68,
+      "observed": "solve returned success and committed generation 1 with displacement norm 0.0 and reaction -0.001 at the undeclared restrained DOF. Resume raised ValueError: accepted history replay mismatch.",
+      "priority": "P1",
+      "reproduction": "Construct the admitted one-element straight fixture with nodes (1,2,3), coordinates [(0,0,0),(.5,0,0),(1,0,0)], identity reference triads, registered isotropic section, and fixed_dofs=tuple(range(6)). Execute: owner.free = owner.free[:-1]; f = np.zeros(owner.size); f[-1] = .001; result = owner.solve(f); data = owner.checkpoint(); ElasticAnalysis.resume(data, sha256(data).hexdigest()).",
+      "required_change": "Derive the operative free selection from frozen support authority, prevent writable aliases, and detect replacement or mutation before evaluation/publication. Add a regression requiring rejection before any accepted-state change.",
+      "title": "Freeze and authenticate the free-DOF selection"
+    },
+    {
+      "description": "The convergence branch invokes the user cancellation callback after the last _evaluate graph check, then publishes without rechecking unsupported graph features. Store preparation validates element state and pose, but does not validate the analysis constraint collections. Therefore an input mutation during the final callback can be accepted instead of invalidating the owner before publication.",
+      "file": "src/anysolver/_ge_beam3_g1_analysis.py",
+      "gate": "G1 fail-closed input mutation and atomic state publication; S03/S04",
+      "id": "G1-IR-02",
+      "line": 172,
+      "observed": "solve returned success with committed generation 1, accepted history length 1 and two callback invocations. checkpoint then raised ValueError: G1 unsupported graph feature. The invalidating mutation was detected only after committed state had advanced.",
+      "priority": "P1",
+      "reproduction": "Construct the same admitted virgin fixture. Set calls=[0]. Define callback(): calls[0] += 1; if calls[0] == 2: owner.model.constraint_equations.append('new unsupported constraint'); return False. Execute result = owner.solve(np.zeros(owner.size), cancel=callback), followed by owner.checkpoint().",
+      "required_change": "Include frozen graph/constraint/load authority in final preparation after callbacks and protect that authority through publication. Add a regression that mutates an unsupported model feature during the last callback and verifies unchanged committed bytes and generation.",
+      "title": "Revalidate graph authority at the commit boundary"
+    }
+  ],
+  "reviewer": {
+    "activity": "Read-only source and contract review plus two bounded development reproductions; no edits, commits or formal tests.",
+    "identity": "/root/g1_independent_review",
+    "implementation_authorship": "None",
+    "independent": true
+  },
+  "scope": {
+    "candidate_preservation": "Worktree remained clean; reviewed analysis source has no difference from the subject commit.",
+    "coverage_assessment": "Existing mutation and concurrency tests do not exercise either confirmed failure. Passing development tests therefore do not establish the frozen state-safety obligations. No additional mechanics defect is asserted from static inspection.",
+    "formal_confirmation": "Not executed; both findings block the current G1 gate.",
+    "future_scope": "General MPCs, partial orientation constraints, mixed graphs, history-bearing materials and G2-G5 remain deferred and are not reported as defects.",
+    "reproduction_process": {
+      "child_timeout_seconds": 60,
+      "classification": "DEVELOPMENT_REVIEW_ONLY",
+      "command": "python -B -c <inline supervisor using docs.reference_cases.e4_pl_s3_v2_bounded_process._ProcessJob>",
+      "diagnostics": "Captured in reviewer tool-output chunk f470f0; no diagnostic files created.",
+      "elapsed_seconds": 2.7341142,
+      "exit_code": 0,
+      "final_active_processes": 0,
+      "memory_limit_bytes": 25769803776,
+      "numerical_threads": 1,
+      "peak_tree_bytes": 185241600
+    },
+    "reviewed": [
+      "C:/Github/AGENTS.md",
+      "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "docs/GE_BEAM3_G1A_EXACT_ELASTIC_CONTRACT.md",
+      "docs/GE_BEAM3_G1_STATUS.md",
+      "src/anysolver/_ge_beam3_g1_elastic.py",
+      "src/anysolver/_ge_beam3_g1_operator.py",
+      "src/anysolver/_ge_beam3_g1_element.py",
+      "src/anysolver/_ge_beam3_g1_analysis.py",
+      "tests/test_ge_beam3_g1_elastic.py",
+      "tests/test_ge_beam3_g1_integration.py",
+      "scripts/run_ge_beam3_g1.py",
+      "Relevant existing assembler, nonlinear state, material protocol, chart and process-control implementation"
+    ],
+    "subject_tree": "bf948f65e9133f2a7b7b481ef6c089ee2eccdc7a"
+  },
+  "subject_commit": "635888afa6d5f0ed9523f10ed4339670276d61c3"
+}
