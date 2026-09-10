@@ -1,0 +1,1444 @@
+{
+  "acceptance": {
+    "derivative_steps": [
+      0.0001,
+      1e-05,
+      1e-06
+    ],
+    "directional": 1e-07,
+    "exact_affine": true,
+    "invariant": 1e-11,
+    "normalization": "NORM_DIFF_OVER_MAX_1_NORM_A_NORM_B",
+    "scales": {
+      "force": 1,
+      "length": 1,
+      "moment": 1
+    }
+  },
+  "admission": {
+    "accepted_cross_family_rotational_adapters": [],
+    "implicit_fallback": false,
+    "mixed_translation": "DISJOINT_IDS_TRANSLATIONS_ONLY_REFERENCE_LINEAR",
+    "native_shared_pose": "ONE_OWNER_SHARED_Q_ELEMENT_OWNED_TRIADS",
+    "s17_positive_status": "DEFERRED_SEPARATE_ADAPTER_CONTRACT_AND_QUALIFICATION"
+  },
+  "cache_graphs": [
+    "N_BRACED5",
+    "M_Q4"
+  ],
+  "families": {
+    "B2": {
+      "class": "anysolver.elements.BeamElement",
+      "formulation": "LEGACY_B2_SCALAR_SECTION",
+      "scope": "REFERENCE_LINEAR_ONLY"
+    },
+    "B3": {
+      "class": "anysolver.elements.QuadraticBeamElement",
+      "formulation": "LEGACY_B3_SCALAR_SECTION",
+      "scope": "REFERENCE_LINEAR_ONLY"
+    },
+    "NATIVE": {
+      "class": "anysolver._ge_beam3_g1_element.ElasticElement",
+      "formulation": "CANDIDATE_GE_BEAM3_G1_ELASTIC_STATIC_V1",
+      "scope": "NATIVE_EXACT_ELASTIC"
+    },
+    "Q4": {
+      "class": "anysolver.e4_pl_element.QualifiedE4PLShellElement",
+      "formulation": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+      "scope": "REFERENCE_LINEAR_ONLY"
+    },
+    "S3": {
+      "class": "anysolver.e4_pl_s3_v2d_element.NativeParityE4PLS3V2DShellElement",
+      "formulation": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+      "scope": "REFERENCE_LINEAR_ONLY"
+    }
+  },
+  "graph_rejections": [
+    "duplicate_node_id",
+    "duplicate_element_id",
+    "conflicting_shared_coordinates",
+    "orphan_node",
+    "unsupported_disconnected_component",
+    "invalid_midpoint",
+    "unknown_connectivity_node",
+    "cyclic_affine_mpc",
+    "duplicate_slave",
+    "rotational_affine_dof",
+    "element_limit_9",
+    "node_limit_33",
+    "unexpected_subclass"
+  ],
+  "limits": {
+    "accepted_history": 128,
+    "automatic_retry": false,
+    "child_seconds": 600,
+    "elements": 8,
+    "external_dofs": 192,
+    "formal_cycles": 2,
+    "inactivity_seconds": 120,
+    "max_workers": 3,
+    "nodes": 32,
+    "numerical_threads": 1,
+    "process_tree_memory_bytes": 25769803776,
+    "restart_bytes": 8388608,
+    "wave_seconds": 1800
+  },
+  "materials": {
+    "legacy_scalar": {
+      "E": 100,
+      "G": 40,
+      "Iy": 0.2,
+      "Iz": 0.3,
+      "J": 0.1,
+      "area": 1,
+      "nu": 0.25,
+      "orientation": [
+        0,
+        1,
+        0
+      ],
+      "shear_factor_y": 0.8,
+      "shear_factor_z": 0.7
+    },
+    "native_isotropic": {
+      "E": 100,
+      "G": 40,
+      "Iy": 0.2,
+      "Iz": 0.3,
+      "J": 0.1,
+      "area": 1,
+      "shear_y": 0.8,
+      "shear_z": 0.7
+    },
+    "shell": {
+      "E": 1000,
+      "nu": 0.3,
+      "reference_normal": [
+        0,
+        0,
+        1
+      ],
+      "thickness": 0.2
+    }
+  },
+  "mixed_graphs": [
+    {
+      "fixed_nodes": [
+        101,
+        203
+      ],
+      "id": "M_B2",
+      "load_node": 103,
+      "native_element": {
+        "id": 1,
+        "nodes": [
+          101,
+          102,
+          103
+        ],
+        "orientation": [
+          0,
+          1,
+          0
+        ],
+        "roll": 0,
+        "section": "native_isotropic"
+      },
+      "nodes": [
+        [
+          101,
+          [
+            -1,
+            0,
+            0
+          ]
+        ],
+        [
+          102,
+          [
+            -0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          103,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          203,
+          [
+            1,
+            0,
+            0
+          ]
+        ]
+      ],
+      "other_element": {
+        "id": 2,
+        "nodes": [
+          201,
+          203
+        ]
+      },
+      "other_family": "B2",
+      "status": "PLANNED_NOT_EXECUTED",
+      "tie": {
+        "components": [
+          0,
+          1,
+          2
+        ],
+        "masters": [
+          [
+            201,
+            "1"
+          ]
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "slave": 103
+      }
+    },
+    {
+      "fixed_nodes": [
+        101,
+        203
+      ],
+      "id": "M_B3",
+      "load_node": 103,
+      "native_element": {
+        "id": 1,
+        "nodes": [
+          101,
+          102,
+          103
+        ],
+        "orientation": [
+          0,
+          1,
+          0
+        ],
+        "roll": 0,
+        "section": "native_isotropic"
+      },
+      "nodes": [
+        [
+          101,
+          [
+            -1,
+            0,
+            0
+          ]
+        ],
+        [
+          102,
+          [
+            -0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          103,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          202,
+          [
+            0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          203,
+          [
+            1,
+            0,
+            0
+          ]
+        ]
+      ],
+      "other_element": {
+        "id": 2,
+        "nodes": [
+          201,
+          202,
+          203
+        ]
+      },
+      "other_family": "B3",
+      "status": "PLANNED_NOT_EXECUTED",
+      "tie": {
+        "components": [
+          0,
+          1,
+          2
+        ],
+        "masters": [
+          [
+            201,
+            "1"
+          ]
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "slave": 103
+      }
+    },
+    {
+      "fixed_nodes": [
+        101,
+        202,
+        203
+      ],
+      "id": "M_Q4",
+      "load_node": 103,
+      "native_element": {
+        "id": 1,
+        "nodes": [
+          101,
+          102,
+          103
+        ],
+        "orientation": [
+          0,
+          1,
+          0
+        ],
+        "roll": 0,
+        "section": "native_isotropic"
+      },
+      "nodes": [
+        [
+          101,
+          [
+            -1,
+            0,
+            0
+          ]
+        ],
+        [
+          102,
+          [
+            -0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          103,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          202,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          203,
+          [
+            1,
+            1,
+            0
+          ]
+        ],
+        [
+          204,
+          [
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      "other_element": {
+        "id": 2,
+        "nodes": [
+          201,
+          202,
+          203,
+          204
+        ]
+      },
+      "other_family": "Q4",
+      "status": "PLANNED_NOT_EXECUTED",
+      "tie": {
+        "components": [
+          0,
+          1,
+          2
+        ],
+        "masters": [
+          [
+            201,
+            "1"
+          ]
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "slave": 103
+      }
+    },
+    {
+      "fixed_nodes": [
+        101,
+        202,
+        203
+      ],
+      "id": "M_S3",
+      "load_node": 103,
+      "native_element": {
+        "id": 1,
+        "nodes": [
+          101,
+          102,
+          103
+        ],
+        "orientation": [
+          0,
+          1,
+          0
+        ],
+        "roll": 0,
+        "section": "native_isotropic"
+      },
+      "nodes": [
+        [
+          101,
+          [
+            -1,
+            0,
+            0
+          ]
+        ],
+        [
+          102,
+          [
+            -0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          103,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          202,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          203,
+          [
+            1,
+            1,
+            0
+          ]
+        ]
+      ],
+      "other_element": {
+        "id": 2,
+        "nodes": [
+          201,
+          202,
+          203
+        ]
+      },
+      "other_family": "S3",
+      "status": "PLANNED_NOT_EXECUTED",
+      "tie": {
+        "components": [
+          0,
+          1,
+          2
+        ],
+        "masters": [
+          [
+            201,
+            "1"
+          ]
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "slave": 103
+      }
+    },
+    {
+      "fixed_nodes": [
+        101,
+        202,
+        203
+      ],
+      "id": "M_Q4_WEIGHTED",
+      "load_node": 103,
+      "native_element": {
+        "id": 1,
+        "nodes": [
+          101,
+          102,
+          103
+        ],
+        "orientation": [
+          0,
+          1,
+          0
+        ],
+        "roll": 0,
+        "section": "native_isotropic"
+      },
+      "nodes": [
+        [
+          101,
+          [
+            -0.5,
+            0.5,
+            0
+          ]
+        ],
+        [
+          102,
+          [
+            0,
+            0.5,
+            0
+          ]
+        ],
+        [
+          103,
+          [
+            0.5,
+            0.5,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          202,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          203,
+          [
+            1,
+            1,
+            0
+          ]
+        ],
+        [
+          204,
+          [
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      "other_element": {
+        "id": 2,
+        "nodes": [
+          201,
+          202,
+          203,
+          204
+        ]
+      },
+      "other_family": "Q4",
+      "status": "PLANNED_NOT_EXECUTED",
+      "tie": {
+        "components": [
+          0,
+          1,
+          2
+        ],
+        "masters": [
+          [
+            201,
+            "1/4"
+          ],
+          [
+            202,
+            "1/4"
+          ],
+          [
+            203,
+            "1/4"
+          ],
+          [
+            204,
+            "1/4"
+          ]
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "slave": 103
+      }
+    }
+  ],
+  "mutation_fields": [
+    "coordinates",
+    "connectivity",
+    "section",
+    "roll",
+    "constraints",
+    "support",
+    "load",
+    "activity",
+    "free_dofs",
+    "final_callback",
+    "last_prepare"
+  ],
+  "native_graphs": [
+    {
+      "components": 1,
+      "cycle_rank": 0,
+      "elements": [
+        {
+          "id": 1,
+          "nodes": [
+            100,
+            110,
+            101
+          ],
+          "orientation": [
+            0,
+            1,
+            0
+          ],
+          "roll": 0,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 2,
+          "nodes": [
+            100,
+            210,
+            201
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0.37,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 3,
+          "nodes": [
+            100,
+            310,
+            301
+          ],
+          "orientation": [
+            0,
+            1,
+            0
+          ],
+          "roll": -0.23,
+          "section": "native_isotropic"
+        }
+      ],
+      "fixed_nodes": [
+        101,
+        201,
+        301
+      ],
+      "id": "N_BRANCH3",
+      "load_nodes": [
+        100
+      ],
+      "nodes": [
+        [
+          100,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          101,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          110,
+          [
+            0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          210,
+          [
+            0,
+            0.5,
+            0
+          ]
+        ],
+        [
+          301,
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        [
+          310,
+          [
+            0,
+            0,
+            0.5
+          ]
+        ]
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "components": 1,
+      "cycle_rank": 1,
+      "elements": [
+        {
+          "id": 1,
+          "nodes": [
+            10,
+            11,
+            20
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 2,
+          "nodes": [
+            20,
+            21,
+            30
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0.37,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 3,
+          "nodes": [
+            30,
+            31,
+            40
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": -0.23,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 4,
+          "nodes": [
+            40,
+            41,
+            10
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0,
+          "section": "native_isotropic"
+        }
+      ],
+      "fixed_nodes": [
+        10
+      ],
+      "id": "N_RING4",
+      "load_nodes": [
+        30
+      ],
+      "nodes": [
+        [
+          10,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          20,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          30,
+          [
+            1,
+            1,
+            0
+          ]
+        ],
+        [
+          40,
+          [
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          11,
+          [
+            0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          21,
+          [
+            1,
+            0.5,
+            0
+          ]
+        ],
+        [
+          31,
+          [
+            0.5,
+            1,
+            0
+          ]
+        ],
+        [
+          41,
+          [
+            0,
+            0.5,
+            0
+          ]
+        ]
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "components": 1,
+      "cycle_rank": 2,
+      "elements": [
+        {
+          "id": 1,
+          "nodes": [
+            10,
+            11,
+            20
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 2,
+          "nodes": [
+            20,
+            21,
+            30
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0.37,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 3,
+          "nodes": [
+            30,
+            31,
+            40
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": -0.23,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 4,
+          "nodes": [
+            40,
+            41,
+            10
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 5,
+          "nodes": [
+            10,
+            51,
+            30
+          ],
+          "orientation": [
+            0,
+            0,
+            1
+          ],
+          "roll": 0.37,
+          "section": "native_isotropic"
+        }
+      ],
+      "fixed_nodes": [
+        10
+      ],
+      "id": "N_BRACED5",
+      "load_nodes": [
+        30
+      ],
+      "nodes": [
+        [
+          10,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          20,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          30,
+          [
+            1,
+            1,
+            0
+          ]
+        ],
+        [
+          40,
+          [
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          11,
+          [
+            0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          21,
+          [
+            1,
+            0.5,
+            0
+          ]
+        ],
+        [
+          31,
+          [
+            0.5,
+            1,
+            0
+          ]
+        ],
+        [
+          41,
+          [
+            0,
+            0.5,
+            0
+          ]
+        ],
+        [
+          51,
+          [
+            0.5,
+            0.5,
+            0
+          ]
+        ]
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "components": 2,
+      "cycle_rank": 0,
+      "elements": [
+        {
+          "id": 1,
+          "nodes": [
+            101,
+            102,
+            103
+          ],
+          "orientation": [
+            0,
+            1,
+            0
+          ],
+          "roll": 0,
+          "section": "native_isotropic"
+        },
+        {
+          "id": 2,
+          "nodes": [
+            201,
+            202,
+            203
+          ],
+          "orientation": [
+            0,
+            1,
+            0
+          ],
+          "roll": 0.37,
+          "section": "native_isotropic"
+        }
+      ],
+      "fixed_nodes": [
+        101,
+        201
+      ],
+      "id": "N_DISJOINT2",
+      "load_nodes": [
+        103,
+        203
+      ],
+      "nodes": [
+        [
+          101,
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        [
+          102,
+          [
+            0.5,
+            0,
+            0
+          ]
+        ],
+        [
+          103,
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        [
+          201,
+          [
+            0,
+            2,
+            0
+          ]
+        ],
+        [
+          202,
+          [
+            0.5,
+            2,
+            0
+          ]
+        ],
+        [
+          203,
+          [
+            1,
+            2,
+            0
+          ]
+        ]
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    }
+  ],
+  "parent": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+  "planned_tests": [
+    {
+      "fixtures": "native_graphs",
+      "gate": "S15",
+      "name": "test_g3_native_graph_order_and_incidence",
+      "oracle": "Exact component/cycle counts; no duplicate/orphan IDs; canonical COO/CSR and shuffled insertion identical",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "native_graphs",
+      "gate": "S15",
+      "name": "test_g3_native_shared_pose_and_roll",
+      "oracle": "One issued Q per shared node, distinct material triads, rigid modes per component and supported quotient",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_and_finite",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "native_graphs",
+      "gate": "S15",
+      "name": "test_g3_native_stationary_schur",
+      "oracle": "Independent full internal/external stationary assembly vs condensed constrained linearization with nonzero internal residual",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_and_finite",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "native_graphs",
+      "gate": "S15",
+      "name": "test_g3_native_continuation_covariance",
+      "oracle": "Registered force/target programs, exact reversal/renumber/global maps; reactions, physical work, recovery",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "finite",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "graph_rejections",
+      "gate": "S15",
+      "name": "test_g3_invalid_graph_admission",
+      "oracle": "Reject before element work, callback or state allocation; no silent removal/projection",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "negative",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "mixed_graphs",
+      "gate": "S16",
+      "name": "test_g3_mixed_translation_reference_kkt",
+      "oracle": "Independently assembled blocks and full KKT vs affine nullspace solve; physical reactions/energy/work",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_linear",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "mixed_graphs",
+      "gate": "S16",
+      "name": "test_g3_mixed_no_rotation_leak",
+      "oracle": "Independent rotations; zero rotational tie columns; nonzero force transfer; no moment equality",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_linear",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "M_Q4_WEIGHTED",
+      "gate": "S16",
+      "name": "test_g3_mixed_weighted_trace",
+      "oracle": "Exact rational unity/position reproduction; weighted force/moment/work transport",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_linear",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "mixed_graphs",
+      "gate": "S16",
+      "name": "test_g3_mixed_finite_mode_rejection",
+      "oracle": "Finite rotation program rejected before state/evaluation",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "negative",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "rotational_rejections",
+      "gate": "S17",
+      "name": "test_g3_shared_rotation_admission_rejections",
+      "oracle": "Empty accepted adapter allowlist; exact family/normal/authority rejection; no fallback",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "negative",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "N_BRACED5",
+      "gate": "S18",
+      "name": "test_g3_graph_last_prepare_rollback",
+      "oracle": "Final callback/last-element preparation corruption, cancellation, stale/foreign token; unchanged accepted bytes",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "finite",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "M_Q4",
+      "gate": "S18",
+      "name": "test_g3_mixed_atomic_replay",
+      "oracle": "Disjoint states, failed preparation rollback, graph fingerprint and external hash/replay",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_linear",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "cache_graphs",
+      "gate": "S18",
+      "name": "test_g3_graph_cache_and_rhs_isolation",
+      "oracle": "Identical operator multi-RHS only; epoch/pose/section/constraints change miss or reject; histories isolated",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "reference_and_finite",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    },
+    {
+      "fixtures": "cache_graphs",
+      "gate": "S18",
+      "name": "test_g3_base_dispatch_and_restart_rejection",
+      "oracle": "G1/G2 unbound/super solve cannot accept G3; reject foreign/resealed envelopes",
+      "path": "tests/test_ge_beam3_g3_graph_integration.py",
+      "regime": "negative",
+      "status": "PLANNED_NOT_IMPLEMENTED"
+    }
+  ],
+  "programs": {
+    "force": [
+      0.01,
+      -0.02,
+      0.015
+    ],
+    "mixed_force": [
+      0,
+      0.002,
+      0.001
+    ],
+    "mixed_moment": [
+      0.002,
+      0.003,
+      -0.001
+    ],
+    "moment": [
+      0.002,
+      0.003,
+      -0.001
+    ],
+    "native_line_couple": [
+      2e-05,
+      3e-05,
+      -1e-05
+    ],
+    "native_line_force": [
+      0.0001,
+      -0.0002,
+      0.0001
+    ],
+    "orientation_graphs": [
+      "N_BRANCH3",
+      "N_RING4"
+    ],
+    "orientation_support": "FIRST_LISTED_FIXED_NODE",
+    "orientation_vectors": [
+      [
+        0.02,
+        -0.01,
+        0.015
+      ],
+      [
+        -0.015,
+        0.02,
+        0.01
+      ]
+    ],
+    "parameters": [
+      0,
+      0.5,
+      1,
+      0.25,
+      0
+    ],
+    "rhs_factors": [
+      1,
+      -0.5
+    ]
+  },
+  "rotational_rejections": {
+    "families": [
+      "B2",
+      "B3",
+      "Q4",
+      "S3"
+    ],
+    "mutations": [
+      "shared_six_dof_node",
+      "rotational_affine_row",
+      "unregistered_relative_pose",
+      "wrong_family_adapter",
+      "stale_adapter_authority",
+      "wrong_normal_authority",
+      "owned_joint_context_substitution"
+    ]
+  },
+  "schema": "GE_BEAM3_G3_FIXTURES_V1",
+  "slices": [
+    {
+      "gate_ids": [
+        "S15",
+        "S18"
+      ],
+      "id": "G3a",
+      "next": true,
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "gate_ids": [
+        "S16",
+        "S18"
+      ],
+      "id": "G3b",
+      "next": false,
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "gate_ids": [
+        "S17"
+      ],
+      "id": "G3c",
+      "next": false,
+      "status": "POSITIVE_ADAPTER_DEFERRED"
+    }
+  ],
+  "status": "FROZEN_DESIGN_NOT_IMPLEMENTED_OR_QUALIFIED",
+  "variants": {
+    "common_rotation_vector": [
+      2.9,
+      -1.2,
+      0.7
+    ],
+    "common_translation": [
+      0.7,
+      -1.2,
+      0.9
+    ],
+    "connectivity": "REVERSE_EACH_NATIVE_END_MID_END_WITH_PROPER_TRIAD_TRANSFORM",
+    "insertion": "REVERSE_NODE_AND_ELEMENT_INSERTION",
+    "renumber": "MAP_SORTED_NODE_ORDINAL_i_TO_1001_PLUS_7_TIMES_REVERSED_ORDINAL_i"
+  }
+}
