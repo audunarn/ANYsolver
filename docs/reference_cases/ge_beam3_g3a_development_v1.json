@@ -1,0 +1,178 @@
+{
+  "archive": {
+    "file_bytes": 760831,
+    "file_count": 39,
+    "manifest_sha256": "0177b98a1e1d423d15e3255c68f2173d4c892c4933184086b3a4b01cd6b0a64b",
+    "path": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3a-development-20260910-e78c1b6"
+  },
+  "boundary": {
+    "default_changes": false,
+    "element_mechanics_changes": false,
+    "mixed_adapters": [],
+    "other_repositories_changed": false,
+    "parent_tracked_files_unchanged": true,
+    "persistent_factor_cache": false,
+    "public_routing_changes": false
+  },
+  "branch": "codex/ge-beam3-g3a-native-graph-v1",
+  "development_packet": {
+    "byte_identical": true,
+    "bytes": 21614,
+    "paths": [
+      "1irj39xh/packet.json",
+      "9ry4a1b7/packet.json"
+    ],
+    "scope": "ONE_BRANCH_PACKET_IN_TWO_FRESH_DEVELOPMENT_RUNS_NOT_FORMAL_CYCLES",
+    "sha256": "b0607eb6b3499246532a3766e586c4135dd3c7eecbfe4049d7c74fe783ca6d8f"
+  },
+  "final_wave": {
+    "elapsed_seconds_from_file_timestamps": 193.555,
+    "maximum_children": 3,
+    "runs": [
+      {
+        "end_utc": "2026-09-10T13:45:48.3909601Z",
+        "id": "9ry4a1b7",
+        "process": {
+          "active_processes": 0,
+          "elapsed_seconds": 193.55462149999948,
+          "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+          "peak_tree_bytes": 226287616,
+          "returncode": 0,
+          "status": "PASSED"
+        },
+        "start_utc": "2026-09-10T13:42:34.8355253Z",
+        "tests": 58
+      },
+      {
+        "end_utc": "2026-09-10T13:44:04.1851911Z",
+        "id": "e7e_t7fu",
+        "process": {
+          "active_processes": 0,
+          "elapsed_seconds": 59.029464799999914,
+          "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+          "peak_tree_bytes": 202407936,
+          "returncode": 0,
+          "status": "PASSED"
+        },
+        "start_utc": "2026-09-10T13:43:05.1551245Z",
+        "tests": 49
+      },
+      {
+        "end_utc": "2026-09-10T13:43:59.7191906Z",
+        "id": "8lvit43j",
+        "process": {
+          "active_processes": 0,
+          "elapsed_seconds": 42.4094157999989,
+          "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+          "peak_tree_bytes": 206536704,
+          "returncode": 0,
+          "status": "PASSED"
+        },
+        "start_utc": "2026-09-10T13:43:17.3090918Z",
+        "tests": 54
+      }
+    ],
+    "wall_limit_seconds": 1800
+  },
+  "formal_cycles": 0,
+  "historical_development_runs": [
+    {
+      "id": "bxt3b8zf",
+      "reason": "New guard omitted FEModel default material entry; fixed without mechanics change",
+      "status": "FAILED"
+    },
+    {
+      "id": "txx5zst7",
+      "kind": "Corrected three-arm smoke",
+      "status": "PASSED",
+      "tests": 1
+    },
+    {
+      "id": "aryk2f1v",
+      "kind": "Initial graph rehearsal before final hardening",
+      "status": "PASSED",
+      "tests": 50
+    },
+    {
+      "id": "74_g6zus",
+      "kind": "Initial G1 regression",
+      "status": "PASSED",
+      "tests": 49
+    },
+    {
+      "id": "m4jsm41u",
+      "kind": "Initial G2 regression",
+      "status": "PASSED",
+      "tests": 54
+    },
+    {
+      "id": "1irj39xh",
+      "kind": "Added hardening and work regressions",
+      "status": "PASSED",
+      "tests": 8
+    }
+  ],
+  "inventories": {
+    "boundary": {
+      "runner": "python -B -m unittest discover -s tests -p test_ge_beam3_g3a_boundary.py -v",
+      "status": "PASSED",
+      "tests": 5
+    },
+    "g1_regression": {
+      "run": "e7e_t7fu",
+      "tests": 49
+    },
+    "g2_regression": {
+      "run": "8lvit43j",
+      "tests": 54
+    },
+    "g3a": {
+      "run": "9ry4a1b7",
+      "tests": 58
+    }
+  },
+  "later_gates": [
+    "G3b_MIXED_TRANSLATION",
+    "G3c_CROSS_FAMILY_POSE",
+    "G4_HISTORY_SECTIONS",
+    "G5_PUBLIC_ROUTING"
+  ],
+  "next_gate": "INDEPENDENT_G3A_IMPLEMENTATION_REVIEW_THEN_FROZEN_FORMAL_CONFIRMATION",
+  "parent_commit": "e78c1b667694b43141912c1d85f894de2b41a848",
+  "parent_tree": "ec23282230399da6a5c882f025f1bf53b16bc52b",
+  "qualification": false,
+  "schema": "GE_BEAM3_G3A_DEVELOPMENT_STATUS_V1",
+  "source_bindings": [
+    {
+      "bytes_lf": 20580,
+      "path": "src/anysolver/_ge_beam3_g3_analysis.py",
+      "sha256_lf": "efb8a6783d26d4552c72a0fc95c97c62cf3e500346ac536d1e96a2ee1762eeb1"
+    },
+    {
+      "bytes_lf": 9387,
+      "path": "src/anysolver/_ge_beam3_g3_constraints.py",
+      "sha256_lf": "ebe12ff2449e5326a62dcef7b155a0a32fd033470991d1080724306b87f0dd62"
+    },
+    {
+      "bytes_lf": 3324,
+      "path": "scripts/run_ge_beam3_g3a.py",
+      "sha256_lf": "2c35176499c38514780c83450de49be3dbdef4cf195cb05f242c6b39cccdea19"
+    },
+    {
+      "bytes_lf": 28185,
+      "path": "tests/test_ge_beam3_g3a_graph.py",
+      "sha256_lf": "e98a177c2aedd3fc5557a710037e1fdf5705cc419a117e2bd85e97c2b70f6cab"
+    },
+    {
+      "bytes_lf": 3826,
+      "path": "tests/test_ge_beam3_g3a_boundary.py",
+      "sha256_lf": "a692e84797417d1ed7ebdbe97ea42134704805135180cdb708c23318dc5814e7"
+    },
+    {
+      "bytes_lf": 5530,
+      "path": "docs/GE_BEAM3_G3A_IMPLEMENTATION_STATUS.md",
+      "sha256_lf": "b9db596576372732e897c3c93a2eb013bdebfd33f339590f0906b5a633932ef0"
+    }
+  ],
+  "status": "IMPLEMENTED_DEVELOPMENT_PASSED_INDEPENDENT_REVIEW_PENDING"
+}
