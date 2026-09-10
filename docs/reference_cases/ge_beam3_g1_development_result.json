@@ -1,0 +1,83 @@
+{
+  "aliases_or_defaults_changed": false,
+  "candidate_commit": "635888afa6d5f0ed9523f10ed4339670276d61c3",
+  "candidate_tree": "bf948f65e9133f2a7b7b481ef6c089ee2eccdc7a",
+  "design_commit": "00866ca",
+  "development_runs": [
+    {
+      "active_processes": 0,
+      "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g1a-20260910-635888a/cycle-1",
+      "files": [
+        {
+          "bytes": 2908,
+          "name": "stdout.log",
+          "sha256": "b6b651fa7173147f3b1dc27be9e65549a1d2bfb7335b6294f9c9b01cae24ff8f"
+        },
+        {
+          "bytes": 0,
+          "name": "stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 196,
+          "name": "development-process.json",
+          "sha256": "652a008c4be59939ef52fc6650d835baf72f2ca5b77f108089765b4e5e7a687a"
+        },
+        {
+          "bytes": 14968,
+          "name": "scientific-development.json",
+          "sha256": "c173c210ea0eed11501c9a13a6f391f727c1d67ed995bd4e631b509e9d2d5574"
+        }
+      ],
+      "status": "PASSED"
+    },
+    {
+      "active_processes": 0,
+      "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g1a-20260910-635888a/cycle-2",
+      "files": [
+        {
+          "bytes": 2908,
+          "name": "stdout.log",
+          "sha256": "6fdd417bc31dc97ce1b01a6a993da731b54e6bbbeacfdf60d538dc024f4df3b9"
+        },
+        {
+          "bytes": 0,
+          "name": "stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 196,
+          "name": "development-process.json",
+          "sha256": "83337ca500124353e4ff5b571012b202c1cb2b58ebedaafd961ca5bbfce11431"
+        },
+        {
+          "bytes": 14968,
+          "name": "scientific-development.json",
+          "sha256": "c173c210ea0eed11501c9a13a6f391f727c1d67ed995bd4e631b509e9d2d5574"
+        }
+      ],
+      "status": "PASSED"
+    }
+  ],
+  "development_tests_per_run": 27,
+  "formal_acceptance": false,
+  "formal_cycles_executed": 0,
+  "g1_obligations": {
+    "S01": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S02": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S03": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S04": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S05": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S06": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S07": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED",
+    "S08": "DEVELOPMENT_TESTED_NOT_FORMALLY_ACCEPTED"
+  },
+  "independent_implementation_review": false,
+  "next_step": "INDEPENDENT_IMPLEMENTATION_REVIEW_AND_FROZEN_FORMAL_G1_CONFIRMATION_BEFORE_G2",
+  "old_runtime_files_changed": 0,
+  "packet_byte_identical": true,
+  "planning_tests_passed": 39,
+  "preserved_initial_failure": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g1a-20260910-635888a/initial-interface-failure",
+  "schema": "GE_BEAM3_G1_DEVELOPMENT_RESULT_V1",
+  "status": "IMPLEMENTED_DEVELOPMENT_VERIFIED_PENDING_INDEPENDENT_REVIEW"
+}
