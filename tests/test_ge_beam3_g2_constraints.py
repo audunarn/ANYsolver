@@ -19,6 +19,14 @@ from test_ge_beam3_g1_elastic import reference, section
 FIXTURE = json.loads((Path(__file__).resolve().parents[1]/"docs/reference_cases/ge_beam3_g2_fixtures_v1.json").read_text())
 
 
+def invariant(actual, expected):
+    """Frozen dimensionless invariant criterion; never NumPy default rtol."""
+    a, b = np.asarray(actual), np.asarray(expected)
+    error = np.linalg.norm(a-b)/max(1., np.linalg.norm(a), np.linalg.norm(b))
+    assert np.isfinite(error) and error <= FIXTURE["tolerances"]["invariant"]
+    return float(error)
+
+
 def affine(d, masters=(), offset=0., rate=0.):
     return dict(dependent=d, masters=list(masters), offset=offset, rate=rate)
 
@@ -79,7 +87,7 @@ def test_S09_exact_nested_affine():
         rhs = np.r_[np.zeros(5), 0., .001+.002*load, 0.]
         independent = np.linalg.solve(np.block([[K, A.T], [A, np.zeros((3, 3))]]), rhs)
         result = owner.solve(np.zeros(30), control=load)
-        np.testing.assert_allclose(result["u"][::6], independent[:5], atol=1e-11, rtol=1e-11)
+        invariant(result["u"][::6], independent[:5])
 
 
 @pytest.mark.parametrize("rows", [
@@ -103,7 +111,7 @@ def test_S09_prescribed_translation_and_reaction():
 
 def derivative_checks(constraints, q, committed, Q, expected_values):
     g, J, H, _ = constraints.evaluate(q, committed, Q)
-    np.testing.assert_allclose(g, expected_values(q), atol=1e-11, rtol=0)
+    invariant(g, expected_values(q))
     d = np.linspace(-.3, .2, len(q)); mu = np.linspace(.1, .3, len(g))
     assert np.linalg.norm(H-H.transpose(0, 2, 1)) < 1e-11
     for h in FIXTURE["derivative_steps"]:
@@ -123,7 +131,7 @@ def test_S10_partial_orientation_derivatives(count):
     derivative_checks(c, q, committed, Q, values)
     _, J, _, _ = c.evaluate(np.zeros(18), committed, Q, targets=[np.eye(3)])
     assert np.linalg.matrix_rank(J) == count
-    np.testing.assert_allclose(J @ null_space(J), 0., atol=1e-11)
+    invariant(J @ null_space(J), 0.)
     rows = [affine(j) for j in range(3)]
     if count == 1: rows += [affine(13), affine(14)]
     elif count == 2: rows += [affine(13)]
@@ -132,7 +140,7 @@ def test_S10_partial_orientation_derivatives(count):
     owner = ConstrainedAnalysis((ElasticElement(1, (1, 2, 3), reference(), section()),), support)
     force = np.zeros(18); force[17] = .001; owner.solve(force)
     root = Rotation.from_matrix(owner.store.native_rotation_store.committed_rotation_matrices[0]).as_rotvec()
-    np.testing.assert_allclose(root[:count], 0., atol=1e-11)
+    invariant(root[:count], 0.)
     if count < 3: assert abs(root[2]) > 1e-8
 
 
@@ -143,7 +151,7 @@ def test_S11_noncommuting_targets_and_restart(tmp_path):
     restored = ConstrainedAnalysis.resume(data, sha256(data).hexdigest())
     a = owner.solve(np.zeros(18), targets=[target2]); b = restored.solve(np.zeros(18), targets=[target2])
     assert canonical(a) == canonical(b) and owner.checkpoint() == restored.checkpoint()
-    np.testing.assert_allclose(owner.store.native_rotation_store.committed_rotation_matrices[0], target2, atol=1e-11)
+    invariant(owner.store.native_rotation_store.committed_rotation_matrices[0], target2)
     path = tmp_path/"restart.json"; owner.publish(path); before = path.read_bytes()
     with pytest.raises(ValueError): owner.publish(path)
     assert path.read_bytes() == before
@@ -173,8 +181,8 @@ def test_S12_relative_pose_derivatives_and_work():
     derivative_checks(c, q, np.zeros(18), Q, values)
     _, J, _, _ = c.evaluate(np.zeros(18), np.zeros(18), Q)
     mu = np.array([.2, -.1, .3, .01, .02, -.03]); force = -J.T @ mu
-    np.testing.assert_allclose(force[:3]+force[12:15], 0., atol=1e-11)
-    np.testing.assert_allclose(force[3:6]+force[15:18]+np.cross(offset, force[12:15]), 0., atol=1e-11)
+    invariant(force[:3]+force[12:15], 0.)
+    invariant(force[3:6]+force[15:18]+np.cross(offset, force[12:15]), 0.)
     for d in null_space(J).T: assert abs(force @ d) < 1e-11
     # Actual elastic element with a rigid end-to-end pose constraint. The tie
     # transmits external work; no replacement stiffness or fabricated mass.
@@ -185,8 +193,8 @@ def test_S12_relative_pose_derivatives_and_work():
     owner = ConstrainedAnalysis((ElasticElement(1, (1, 2, 3), reference(), section()),), tie)
     applied = np.zeros(18); applied[12:15] = [.01, -.02, .015]
     actual = owner.solve(applied)
-    np.testing.assert_allclose(actual["u"], 0., atol=1e-11)
-    np.testing.assert_allclose(actual["reactions"]+applied, 0., atol=1e-11)
+    invariant(actual["u"], 0.)
+    invariant(actual["reactions"]+applied, 0.)
     data = owner.checkpoint()
     assert ConstrainedAnalysis.resume(data, sha256(data).hexdigest()).checkpoint() == data
 
@@ -198,12 +206,12 @@ def test_S13_nullspace_and_multiplier_agree():
         r, K, _ = owner._evaluate(total, f, np.zeros((2, 3)), np.zeros((2, 3)))
         N = null_space(J); reduced = -N @ np.linalg.solve(N.T @ K @ N, N.T @ r)
         full = np.linalg.solve(np.block([[K, J.T], [J, np.zeros((len(g), len(g)))]]), -np.r_[r, g])
-        np.testing.assert_allclose(full[:owner.size], reduced, atol=1e-11, rtol=1e-11)
+        invariant(full[:owner.size], reduced)
     finally:
         if owner.store.has_active_trial: owner.store.discard_trial(owner.store.active_trial_token())
     result = owner.solve(f)
     assert result["residual_norm"] < 1e-11
-    np.testing.assert_allclose(result["reactions"][:3]+f[-6:-3], 0., atol=1e-11)
+    invariant(result["reactions"][:3]+f[-6:-3], 0.)
 
 
 def test_S13_redundant_constraints_reject():
@@ -229,9 +237,11 @@ def test_S14_numbering_and_global_covariance(kind):
     actual = owner.solve(force)
     for i, n in enumerate(ids):
         j = order.index(n)
-        np.testing.assert_allclose(actual["u"][6*j:6*j+3], W @ expected["u"][6*i:6*i+3], atol=1e-11)
-        np.testing.assert_allclose(actual["spatial_reactions"][6*j:6*j+3], W @ expected["spatial_reactions"][6*i:6*i+3], atol=1e-11)
-        np.testing.assert_allclose(actual["spatial_reactions"][6*j+3:6*j+6], W @ expected["spatial_reactions"][6*i+3:6*i+6], atol=1e-11)
+        invariant(actual["u"][6*j:6*j+3], W @ expected["u"][6*i:6*i+3])
+        invariant(actual["spatial_reactions"][6*j:6*j+3], W @ expected["spatial_reactions"][6*i:6*i+3])
+        invariant(actual["spatial_reactions"][6*j+3:6*j+6], W @ expected["spatial_reactions"][6*i+3:6*i+6])
+        invariant(owner.store.native_rotation_store.committed_rotation_matrices[j] @ W,
+                  W @ base.store.native_rotation_store.committed_rotation_matrices[i])
 
 
 @pytest.mark.parametrize("kind", ["callback", "prepare", "cancel", "model_load"])

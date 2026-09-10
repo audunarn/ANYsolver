@@ -155,6 +155,10 @@ class ElasticAnalysis:
         return force, matrix, trial
 
     def solve(self, nodal, *, lines=None, couples=None, cancel=lambda: False):
+        # This entry point owns only G1's fixed-support equations and journal.
+        # A subclass must not bypass its own constraints via explicit base dispatch.
+        if type(self) is not ElasticAnalysis:
+            raise ValueError("G1 solve requires an exact G1 owner")
         with self._exclusive():
             if self.store.has_active_trial:
                 raise RuntimeError("pending external trial must be discarded")

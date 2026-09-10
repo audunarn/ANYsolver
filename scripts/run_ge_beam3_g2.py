@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("tests", nargs="*", default=["tests/test_ge_beam3_g2_constraints.py"])
+    p.add_argument("tests", nargs="*", default=["tests/test_ge_beam3_g2_constraints.py", "tests/test_ge_beam3_g2_corrections.py"])
     a = p.parse_args()
-    allowed = {"tests/test_ge_beam3_g2_constraints.py", "tests/test_ge_beam3_g1_elastic.py", "tests/test_ge_beam3_g1_integration.py"}
+    allowed = {"tests/test_ge_beam3_g2_constraints.py", "tests/test_ge_beam3_g2_corrections.py", "tests/test_ge_beam3_g2_confirmation.py", "tests/test_ge_beam3_g1_elastic.py", "tests/test_ge_beam3_g1_integration.py"}
     if os.name != "nt" or any(t.split("::")[0] not in allowed for t in a.tests): raise ValueError("registered Windows development lane required")
     spec = importlib.util.spec_from_file_location("g2_bounds", ROOT/"docs/reference_cases/e4_pl_s3_v2_bounded_process.py")
     m = importlib.util.module_from_spec(spec); sys.modules[spec.name] = m; spec.loader.exec_module(m)

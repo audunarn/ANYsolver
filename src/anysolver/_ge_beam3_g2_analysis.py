@@ -60,6 +60,15 @@ class ConstrainedAnalysis(ElasticAnalysis):
         return self.constraints.evaluate(total, r.committed_full_displacement, r.committed_rotation_matrices,
                                          control=control, targets=targets)
 
+    def _system(self, total, multipliers, nodal, lines, couples, control, targets):
+        """Actual constrained Newton operator, also checked by directional tests."""
+        g, J, H, rate = self._constraint_trial(total, control, targets)
+        r, K, _ = self._evaluate(total, nodal, lines, couples)
+        residual = np.r_[r+J.T @ multipliers, g]
+        tangent = np.block([[K+np.einsum("i,ijk->jk", multipliers, H), J.T],
+                            [J, np.zeros((len(g), len(g)))]])
+        return residual, tangent, r, J, rate
+
     def solve(self, nodal, *, control=0., targets=None, lines=None, couples=None, cancel=lambda: False):
         with self._exclusive():
             if self.store.has_active_trial: raise RuntimeError("pending external trial must be discarded")
@@ -78,12 +87,7 @@ class ConstrainedAnalysis(ElasticAnalysis):
                 if monotonic()-started > 600: raise TimeoutError("G2 global deadline")
             def system(u, multipliers):
                 check()
-                g, J, H, rate = self._constraint_trial(u, load, frames)
-                r, K, _ = self._evaluate(u, nodal, lines, couples)
-                residual = np.r_[r+J.T @ multipliers, g]
-                tangent = np.block([[K+np.einsum("i,ijk->jk", multipliers, H), J.T],
-                                    [J, np.zeros((len(g), len(g)))]])
-                return residual, tangent, r, J, rate
+                return self._system(u, multipliers, nodal, lines, couples, load, frames)
             try:
                 for iteration in range(25):
                     residual, tangent, r, J, rate = system(total, mu)
