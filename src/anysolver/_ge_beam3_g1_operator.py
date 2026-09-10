@@ -1,8 +1,7 @@
 """Additive elastic 42-variable centered beam, analytic variations only."""
 from time import monotonic
 import numpy as np
-from scipy.linalg import solve
-from ._ge_beam3_g1_elastic import ElasticSection, ElasticCell, owned, sha
+from ._ge_beam3_g1_elastic import ElasticSection, ElasticCell, owned, sha, solve
 from ._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
 from ._ge_beam3_reference_identity import CapturedReferenceIdentity
 from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, transpose, so3_exp, so3_log

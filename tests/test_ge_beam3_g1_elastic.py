@@ -129,3 +129,9 @@ def test_isotropic_adapter_boolean_and_overflow_rejection():
         ElasticSection.isotropic(E=True, G=40., area=1., Iy=.2, Iz=.3, J=.1, shear_y=.8, shear_z=.7)
     with np.errstate(over="ignore"), pytest.raises(ValueError):
         section().response(np.ones(6)*1e200)
+
+
+def test_unhealthy_factorization_is_not_warning_only():
+    from anysolver._ge_beam3_g1_elastic import solve
+    with pytest.raises(np.linalg.LinAlgError):
+        solve(np.diag([1., 1e-30]), np.ones(2))

@@ -2,11 +2,25 @@
 from dataclasses import dataclass
 from hashlib import sha256
 import json
+import warnings
 import numpy as np
-from scipy.linalg import solve
+from scipy.linalg import solve as _scipy_solve, LinAlgWarning
 from .beam_sections import generalized_beam_stiffness
 
 POLICY = "GE_BEAM3_G1_LINEAR_ELASTIC_SECTION_V1"
+
+
+def solve(a, b, *, assume_a="gen"):
+    """An unhealthy factorization is a failure, never a warning-only result."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", LinAlgWarning)
+        try:
+            result = _scipy_solve(a, b, assume_a=assume_a, check_finite=True)
+        except LinAlgWarning as exc:
+            raise np.linalg.LinAlgError("G1 unhealthy factorization; cutback required") from exc
+    if not np.isfinite(result).all():
+        raise np.linalg.LinAlgError("G1 nonfinite factorization result")
+    return result
 
 
 def canonical(value):

@@ -8,13 +8,12 @@ import threading
 from time import monotonic
 import uuid
 import numpy as np
-from scipy.linalg import solve
 from .fe_core import FEModel
 from .nonlinear_static import _assemble_nonlinear_system
 from .nonlinear_state import NonlinearStateStore, create_model_native_rotation_store
 from ._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
 from ._ge_beam3_p5.chart import exp_chart_terms
-from ._ge_beam3_g1_elastic import ElasticSection, owned, canonical, sha
+from ._ge_beam3_g1_elastic import ElasticSection, owned, canonical, sha, solve
 from ._ge_beam3_g1_element import ElasticElement
 
 SCHEMA = "GE_BEAM3_G1_ELASTIC_RESTART_V1"
