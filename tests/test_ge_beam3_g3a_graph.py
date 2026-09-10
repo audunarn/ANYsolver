@@ -498,13 +498,7 @@ def test_publication_guard_and_fallible_diagnostics_are_atomic(kind):
         with patch("anysolver._ge_beam3_g3_analysis.progress", side_effect=fail):
             with pytest.raises(OSError): owner.solve(.5*loads(owner))
     else:
-        calls = []
-        # Zero change converges at the first system: cancel at final acceptance.
-        def cancel():
-            calls.append(True)
-            return len(calls) == 2
-        with pytest.raises(InterruptedError): owner.solve(loads(owner), cancel=cancel)
-        assert len(calls) == 2
+        cancel_at_final_acceptance(owner, loads(owner))
     assert snapshot(owner) == before and not owner.store.has_active_trial
 
 
@@ -542,18 +536,58 @@ def test_final_callback_constraint_mutation_is_atomic(accepted):
     assert len(calls) == 2 and snapshot(owner) == before and not owner.store.has_active_trial
 
 
+def cancel_at_final_acceptance(owner, force):
+    import sys
+    original = owner._system; systems = []; calls = []; triggered = []
+    def observe(u, multipliers, *args, **kwargs):
+        result = original(u, multipliers, *args, **kwargs)
+        systems.append((u.copy(), multipliers.copy(), float(np.linalg.norm(result[0]))))
+        return result
+    def cancel():
+        calls.append(True)
+        if (len(systems) < 2 or any(row[2] > 1e-11 for row in systems[-2:]) or
+                not np.array_equal(systems[-2][0], systems[-1][0]) or
+                not np.array_equal(systems[-2][1], systems[-1][1])):
+            return False
+        # The accepted line search is re-evaluated at the next main iteration.
+        # Prove this callback is solve -> check -> cancel, not system -> check.
+        caller = sys._getframe(2).f_code
+        assert caller.co_name == "solve" and caller.co_filename == original.__func__.__code__.co_filename
+        assert owner.store.has_active_trial
+        triggered.append(True)
+        return True
+    with patch.object(owner, "_system", side_effect=observe):
+        with pytest.raises(InterruptedError): owner.solve(force, cancel=cancel)
+    assert triggered == [True] and len(systems) >= 3
+    # Multipliers reset at solve entry: a loaded accepted prefix is not an
+    # initially converged KKT system even when force is unchanged.
+    assert systems[0][2] > 1e-11
+    assert all(row[2] <= 1e-11 for row in systems[-2:])
+    return dict(callback_count=len(calls), system_count=len(systems),
+                initial_residual_norm=systems[0][2], final_residual_norms=[row[2] for row in systems[-2:]],
+                converged_state_repeated=True, final_acceptance_callback=True)
+
+
 @pytest.mark.parametrize("name", list(GRAPHS))
 @pytest.mark.parametrize("phase", ["entry", "prepublication"])
 def test_per_graph_cancel_preserves_accepted_prefix(name, phase):
     owner = make(name); f = loads(owner, name); owner.solve(f)
-    before = snapshot(owner); checkpoint = owner.checkpoint(); calls = []
-    def cancel():
-        calls.append(True)
-        return len(calls) == (1 if phase == "entry" else 2)
-    with pytest.raises(InterruptedError): owner.solve(f, cancel=cancel)
+    before = snapshot(owner); checkpoint = owner.checkpoint()
+    if phase == "entry":
+        calls = []
+        def cancel():
+            calls.append(True)
+            assert not owner.store.has_active_trial
+            return True
+        with pytest.raises(InterruptedError): owner.solve(f, cancel=cancel)
+        assert calls == [True]
+        observation = dict(callback_count=1, system_count=0)
+    else:
+        observation = cancel_at_final_acceptance(owner, f)
     assert snapshot(owner) == before and not owner.store.has_active_trial
     verify_prefix_and_continue(owner, checkpoint, .5*f)
-    record("cancel-"+name+"-"+phase, dict(prefix_sha256=sha256(before).hexdigest(), replay=True))
+    record("cancel-"+name+"-"+phase, dict(prefix_sha256=sha256(before).hexdigest(), replay=True,
+                                       observation=observation))
 
 
 @pytest.mark.parametrize("kind", ["stale", "foreign"])

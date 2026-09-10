@@ -1,5 +1,25 @@
 # G3a correction and bounded formal confirmation protocol
 
+## Cancellation-observation successor
+
+Candidate `28af8a4a4641cdebf85315dd7fb82fb3bc6e93a6` and its passing
+101-test rehearsal remain preserved but are not formally accepted. Independent
+review G3A-IR-03 found that callback number two was a line-search callback,
+not necessarily the final acceptance callback: solve resets multipliers even
+when reapplying an accepted nonzero load. This successor changes tests and
+this protocol only relative to that candidate. No runtime/runner change.
+
+For every prepublication cancellation, observe unchanged native system calls.
+Require the first KKT residual to exceed the frozen convergence threshold,
+then two consecutive converged returns at exactly identical displacement and
+multiplier inputs (accepted line search and main-iteration reevaluation).
+Cancel only afterward and assert the calling code is solve -> check -> cancel,
+not system -> check -> cancel. Record residual norms and call counts. Preserve
+the existing snapshot, no-trial, authenticated replay and continuation checks.
+The older single-graph final_cancel case uses the same verified observation.
+The ordered 101-test and 54-record inventories remain unchanged. Repeat the
+corrected smoke, full rehearsal and independent review before formal execution.
+
 Parent: blocked review `edad651af3460aa33283686e4f9345190a3b0094`.
 Original candidate `5a4a4ac`, development evidence and independent review v1
 remain immutable. This successor changes only the private G3 restart preflight,
