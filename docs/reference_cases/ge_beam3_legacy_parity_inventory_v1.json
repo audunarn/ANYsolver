@@ -1,0 +1,4576 @@
+{
+  "schema": "anysolver.ge-beam3.legacy-parity-inventory.v1",
+  "baseline_commit": "74703a3202251edc0beafb21cd31f52c9304ceb8",
+  "baseline_tree": "64a18a8fe137946ec2f0d4841821a19066a2707f",
+  "matrix_sha256": "0d59ef2b7f58635282b6ddbc771b2463e0c22b4f13ba3a9290da50753e19e0e6",
+  "source_bindings": {
+    "docs/GE_BEAM3_DELIVERY_STATUS.md": {
+      "blob": "f59e04c07d831330d21089a58eef2b5a5e0fa690",
+      "bytes": 4624,
+      "sha256": "5bbf0df49eb3af23a65f89bb42df2632d741c7cfd56e603272b8a72a45cebaf8"
+    },
+    "docs/GE_BEAM3_NATIVE_WORKFLOWS.md": {
+      "blob": "15053da97c9414f637ea8170a1452805d1d4316f",
+      "bytes": 6215,
+      "sha256": "d2598fb9a2def5e9156b2f9c72bfe52702d075deff07893f1eea7088be66bd3b"
+    },
+    "docs/reference_cases/ge_beam3_final_delivery_independent_review.json": {
+      "blob": "53032223db440d9368256f89b8723ab30b73575f",
+      "bytes": 3810,
+      "sha256": "1fc16b7e3283b9f4b182f00131a6cf1bf6ccdf65077d2ed1fb91acac21ce0df8"
+    },
+    "src/anysolver/_ge_beam3_durable_coupled.py": {
+      "blob": "efc48300657251885a57f06b2d58b0ea0acd6f1b",
+      "bytes": 13239,
+      "sha256": "e06ff9b159b4c9a6dfabdc0101a8a155332e4134eb39952658aaec41ebfc4eeb"
+    },
+    "src/anysolver/_ge_beam3_native_analysis.py": {
+      "blob": "6de38ba8011be915d3e2a0da5d5685aefcc900f7",
+      "bytes": 28262,
+      "sha256": "2411560ba81f5e8715b36e0bea17348aa97074591be227c7374a53b62697cb92"
+    },
+    "src/anysolver/activity.py": {
+      "blob": "3da61672ff0ad6a59849603c55f336b0e42406fb",
+      "bytes": 61360,
+      "sha256": "938d4b20494f256fd49a97e2cd618aae815d31f34fea62ea35e62690cb85a130"
+    },
+    "src/anysolver/analysis_session.py": {
+      "blob": "7d22973163456301da5fd7721751fb64ed76545d",
+      "bytes": 22834,
+      "sha256": "4388ec623e3202558505b4a5867222deebbec4a79a8b898e5807f749bca32ba9"
+    },
+    "src/anysolver/arc_length.py": {
+      "blob": "03e79e6fa9aed99b09c62ec7434cd4dc9a65b084",
+      "bytes": 94783,
+      "sha256": "b97d9aae942923841dcdcfbb5da8533923c99510fc4225b996c4bd777f24f70c"
+    },
+    "src/anysolver/assembly.py": {
+      "blob": "73b8421dabe2558516ffba7bf3469d0df5ddbb9a",
+      "bytes": 69582,
+      "sha256": "81e96cec9c367e73a08029f366ef848dd5065b756d47a46947ef103f48baecf3"
+    },
+    "src/anysolver/beam_sections.py": {
+      "blob": "22a66eb07ff466ec209e9814b5ae2a6dc7915c71",
+      "bytes": 9695,
+      "sha256": "28f0e4fa648721480ff3b592a897f364ad85cef478d40e7f53151def06f86895"
+    },
+    "src/anysolver/boundary.py": {
+      "blob": "c67bb3e51c199433ae48f55586c5fc81d2c401b8",
+      "bytes": 31356,
+      "sha256": "302a73ed598a05b79ad620e11dcdfd14de7c43337fd28099dac79a05806983b7"
+    },
+    "src/anysolver/buckling.py": {
+      "blob": "c00d8cb5116c8815f7a13aed61e4738b0b9de349",
+      "bytes": 69928,
+      "sha256": "2b73bd79f2f118f41bc372132522bfb4bc619e865b2f6932e5c87d6af4ffb6ae"
+    },
+    "src/anysolver/constraint_audit.py": {
+      "blob": "aa349b3e523edb784b764e91ab215e80f10c1b90",
+      "bytes": 23631,
+      "sha256": "cd941e15286f70497a13da21005db723d86194e8b4ee288d0b1c079b4b55a994"
+    },
+    "src/anysolver/contact.py": {
+      "blob": "2461ff679c51dcdb8355f7e22f1a424262d1957c",
+      "bytes": 225950,
+      "sha256": "defc181738beaed4952659e4372ad0d5ae1845b0528814a59b6c0f988933a9c6"
+    },
+    "src/anysolver/corotational.py": {
+      "blob": "c0b86fae0b1680e52150b07f33a9d01ac457740d",
+      "bytes": 25617,
+      "sha256": "9777bee6230cd4c5120c9fd7e59905120dddc646206121272b92a0113490d399"
+    },
+    "src/anysolver/dynamics.py": {
+      "blob": "83d34867ac4a09cceda1544256466aafb716ee76",
+      "bytes": 109214,
+      "sha256": "4566b5b42b37f2f0e0737b76fbe7e811f3edcfa3c441c8724051e7f5a3e11978"
+    },
+    "src/anysolver/elements.py": {
+      "blob": "4dfe4212b9ee9947969b087809e72b9973e88e07",
+      "bytes": 244692,
+      "sha256": "f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37"
+    },
+    "src/anysolver/fe_core.py": {
+      "blob": "f9ec8f810137c4bdb2876125287158adec98d8ad",
+      "bytes": 28913,
+      "sha256": "375eb484531a9fa160d85297a01d011da5da069044c3c1b517177052a15e7f66"
+    },
+    "src/anysolver/ge_beam3_element.py": {
+      "blob": "70542da7fea26dcb2da5b5f9da5fc0b0b8d484ab",
+      "bytes": 35008,
+      "sha256": "753f2916d16e02acc51de00cf2c2af42eff0caa7b55b430581aad0eabe4e1c4e"
+    },
+    "src/anysolver/ge_beam3_native.py": {
+      "blob": "93ac324f6b605877038ebddb5ba893d3863c8d63",
+      "bytes": 6923,
+      "sha256": "b87da370d67e6d5baa3933a7f22fa253e56acc7ae951b484ff7c7c2176113e50"
+    },
+    "src/anysolver/initial_field_state.py": {
+      "blob": "e5c178cae7fd7aa1ee26f228d35f623154367c1f",
+      "bytes": 1709,
+      "sha256": "59e3652ec56d348c79c71beba2dff059a3ddf96979b21cd57ea8b83a26fa7e42"
+    },
+    "src/anysolver/mass_properties.py": {
+      "blob": "2b482920f0143f0721b18a2a40d97b1df0d9e838",
+      "bytes": 12609,
+      "sha256": "5aa9adaeeccdaa78cdaf4ddee7eb7b7f4970df1f1c8456de21524b16d13b3b3d"
+    },
+    "src/anysolver/matrix_assembly.py": {
+      "blob": "c9d7c9f08ad18f34ff32e8e72b56a322c64da9cd",
+      "bytes": 290289,
+      "sha256": "6544fe430a00e410c5e1cd84b78f692339337c21e457a12654667f1a270eff79"
+    },
+    "src/anysolver/mesh_gen.py": {
+      "blob": "728464b1c4d2dff984811186c8df89fc7c6216ce",
+      "bytes": 25711,
+      "sha256": "d2cb91faa3f2b90a76d278be774d7f313470849f18a5ad02e3bea9fb8058b372"
+    },
+    "src/anysolver/modal.py": {
+      "blob": "41dd0cb883306e7e0bdc9cc094641cb350d77ea6",
+      "bytes": 91991,
+      "sha256": "aa87308b8f63a2b546d65f0051c41b5a6ef0503ad0ca5ebb4b0f8b4aebe8305e"
+    },
+    "src/anysolver/nonlinear_performance_batch_b.py": {
+      "blob": "0574b3e1ea2e2f0471dbedaa41806971974db8cf",
+      "bytes": 46901,
+      "sha256": "fc1219e58fd28d2484aeca47d2e6c1e48c9d7cde4bda40f80b5f585836f9c049"
+    },
+    "src/anysolver/nonlinear_restart.py": {
+      "blob": "a6b714ee043dc0ce5e5650783f942305a11f24cc",
+      "bytes": 56181,
+      "sha256": "44951edf08cbf3efdcb56341ac7020025f5bf1b009912b7079c98af7abfdf137"
+    },
+    "src/anysolver/nonlinear_static.py": {
+      "blob": "a1c2507fdf2cb0157b780f48750222fcff7afa92",
+      "bytes": 278281,
+      "sha256": "c9b488bbfabaeda5b9824e1f774d70a9e9d10ce58f3fbb026b954b4eaa5ac821"
+    },
+    "src/anysolver/recovery.py": {
+      "blob": "d1d0fd30735288652f4d351071a1a09e67f807e6",
+      "bytes": 162946,
+      "sha256": "ae1bbd01366f62269f25ea576f99ca924cf879ac083911c01083aa536a9cb4e0"
+    },
+    "tests/test_analysis_session.py": {
+      "blob": "4758f4353ddf114337a1db5709568249569d26c5",
+      "bytes": 15494,
+      "sha256": "405690cc8c04a09acec88e61c9c8427ed46a4808a43ded624644050afea78a7d"
+    },
+    "tests/test_beam_axis_conventions.py": {
+      "blob": "f7d3c618d514c0054de2ec1c78631e2b95c0289e",
+      "bytes": 6299,
+      "sha256": "024892cd158b70629e2751dafcd9baa8a5b86c0f0bb41348ee4f4ed212a86f67"
+    },
+    "tests/test_corotational.py": {
+      "blob": "7844752648f1763ede15e27f641e3ea9decabc5b",
+      "bytes": 20329,
+      "sha256": "b1ba919768eecd0db8a3a3d4fdbe00967357ed13c3f5409bcca8d70af432ab52"
+    },
+    "tests/test_element_activity_integration.py": {
+      "blob": "9961c63577ee5b4fa67ce61a06551143ba5acaac",
+      "bytes": 3770,
+      "sha256": "d8b63c9675a0867cd00a97d93d2d3a5e686a5909eb88ce12f2ceb9b8b8d95e4c"
+    },
+    "tests/test_fe_solver_anystructure_fem_mode.py": {
+      "blob": "55eb3c434b8fd490f6a578d002570875709e9863",
+      "bytes": 18991,
+      "sha256": "e89a549906339169743bed416b993eb4adaa231225c141a572559a58899cdbd3"
+    },
+    "tests/test_fe_solver_buckling.py": {
+      "blob": "8fa5fc1fa98e4e2416626af2230ee95b7b8c4968",
+      "bytes": 20423,
+      "sha256": "bf29855a56e415a024c456eb3de841fd942c12fb289c9f613687dd966a0b78c0"
+    },
+    "tests/test_fe_solver_contact.py": {
+      "blob": "78dc0c9b4313ec7dd99296b9c3168246c320cecd",
+      "bytes": 41084,
+      "sha256": "bea5aac8d2d7e940b8a26405abf8c0b34640e80c00a9c75170902041783a0cab"
+    },
+    "tests/test_fe_solver_corotational_beam.py": {
+      "blob": "17c24c85db1d1f5dfc3f8c9ff5422c9e9dd702f3",
+      "bytes": 3999,
+      "sha256": "c60f821e28f20c2f84d5660ee7c08fe9dd1bc69209075f899270490160b94346"
+    },
+    "tests/test_fe_solver_dynamics.py": {
+      "blob": "aa2e00a2c909e6ee249c1d60b89bfaf38ddf195d",
+      "bytes": 3969,
+      "sha256": "d0cf44e532b85b00fdf1f55720f33bc8ed3c0454e890c72184254f594ccc6cc8"
+    },
+    "tests/test_fe_solver_element_qualification.py": {
+      "blob": "be66c3a8303ea4ae9e0cabd0c856f8dbc4767960",
+      "bytes": 7728,
+      "sha256": "d8da799f6cabd6f755e6f160e4a993bf5d8750d450d6b48ecadaa3dbce1e5af9"
+    },
+    "tests/test_fe_solver_element_quality.py": {
+      "blob": "52b9257dc7169c83fcd9feb8af13a0ec02ad1137",
+      "bytes": 10111,
+      "sha256": "3369275e8130fc9d81bd4be1f405d09bdfdd50b0534803345211bd5e04dc3af3"
+    },
+    "tests/test_fe_solver_infrastructure.py": {
+      "blob": "b7ae67bc6108d52a094200365dcfc5f4e8884e64",
+      "bytes": 37776,
+      "sha256": "ee7b52d72732f1096209118d9cd257b0e85082143ac9db75773f75a6f7f66c7a"
+    },
+    "tests/test_fe_solver_mass_modal.py": {
+      "blob": "f0332730dd61b72c1515fbc458ac2cdd07d5426b",
+      "bytes": 12029,
+      "sha256": "ba1baa5c07a72746a26d4ac88d10821c1e3a05974722671228e3286f46ca43c9"
+    },
+    "tests/test_fe_solver_nonlinear_limit_point.py": {
+      "blob": "ff79eae5739abb20b8c5eecd1f0a52dfb7e4ecda",
+      "bytes": 3806,
+      "sha256": "cc58de27260f2fe48d88c91e92c98af2df7b6f319cddd72ea0789be7694187f7"
+    },
+    "tests/test_follower_pressure.py": {
+      "blob": "a431d3c7f26e44a8748b33ec42959b00d5b71174",
+      "bytes": 25698,
+      "sha256": "314b50d8139c07d0ae7f858c489f94e5b288d860ac6c5e7394148af728433b53"
+    },
+    "tests/test_ge_beam3_analysis_fibre_translation.py": {
+      "blob": "4e1dac6bf5a1ea5da4f557e8d2e5c787b10d86e7",
+      "bytes": 8227,
+      "sha256": "aec1eb14a291e67ef35ab878a509fd8edade4f77798c50ca40a33a7f5fef5468"
+    },
+    "tests/test_ge_beam3_analysis_nodal_program.py": {
+      "blob": "15b2c012240a55bb31dc353a89a8b7cb92c6acdd",
+      "bytes": 9501,
+      "sha256": "b6bf52840e24558a18f3e806ca2b55ca48b972748433e5a978ae3008d1cfa8a5"
+    },
+    "tests/test_ge_beam3_coupled_modes.py": {
+      "blob": "f8a1dbd8bb25eaf757402a09ffde2e4d2021e8b8",
+      "bytes": 14521,
+      "sha256": "541ffdb35b287b5f13f3e8a45af43507932f5e7f1ab478676bfc95099b0d6d10"
+    },
+    "tests/test_ge_beam3_durable_coupled.py": {
+      "blob": "5859cf3c393f50ba7fbbfcd65ffc98503525be53",
+      "bytes": 10589,
+      "sha256": "a8ee38e56206f2c025e4e7a5dd2a5cb0781abc13b5eac4ccbcdc48d467e406d5"
+    },
+    "tests/test_ge_beam3_mixed_p3_optin.py": {
+      "blob": "e977cce3823fd39b5558dd5da571c8a6866aac58",
+      "bytes": 20672,
+      "sha256": "7f01dfa38c008ee91ae73a07a2193f30127d37d6271922cccd617e21c6587f09"
+    },
+    "tests/test_ge_beam3_native_analysis.py": {
+      "blob": "a76b795badbf9c50d580af2b3b611009f8559bd2",
+      "bytes": 11018,
+      "sha256": "2741d45ed531a26b26678fc4008c22f7f425e20813bb7c4c43d166083161f2da"
+    },
+    "tests/test_ge_beam3_native_arc.py": {
+      "blob": "f6d8525864d0b999ef3de360b9eeb3c3495952f1",
+      "bytes": 9280,
+      "sha256": "ceebcabceacd152dd4a318a1bff883f01bd30030589517fc51b2f84b85032cc3"
+    },
+    "tests/test_ge_beam3_native_buckling.py": {
+      "blob": "b8ee1d3c6307032a43d564de981f16730ab45bb1",
+      "bytes": 12754,
+      "sha256": "1543c5e3370e86d4aa4b452ece331b7338d0b651ea753ab5dcb7d02513211ded"
+    },
+    "tests/test_ge_beam3_native_delivery_gate.py": {
+      "blob": "476117178885b659ca19411c8c832ddecb4420c3",
+      "bytes": 2130,
+      "sha256": "cdfc5f803d335225984231fdf244f77bdc7b587a3cc5b81c7dfe83592dda7dd1"
+    },
+    "tests/test_ge_beam3_native_distributed.py": {
+      "blob": "5cf71c7504fae59ec96c43d6a06c5834abe5ba4c",
+      "bytes": 13957,
+      "sha256": "36c4c2dc0df167d05d6d721bf767f380ebb567361dc274e7e29c59a6e3f7cca5"
+    },
+    "tests/test_ge_beam3_native_fibre_restart.py": {
+      "blob": "344c34c996e953abf36e13d57ac5a80a38aa0bc3",
+      "bytes": 9778,
+      "sha256": "1702f126cf413d4a65804622ee1284c5a609cc8ae3b92c46000af1e8dcf69078"
+    },
+    "tests/test_ge_beam3_native_generalized.py": {
+      "blob": "28dc0786fb7308c798bc35c71d74dc01847643af",
+      "bytes": 14528,
+      "sha256": "2af38199adfabff451a16e22df26ba4f5fabf2e3a0ee234fb8f82f0ea8e277a2"
+    },
+    "tests/test_ge_beam3_native_spatial_couples.py": {
+      "blob": "de87a20b23ed05f38735b5ce6bc6fddcfd69841f",
+      "bytes": 13574,
+      "sha256": "a2a07798bb9dc1f008c1ab84506551cdfe069c77951f2de11bfe56c9e516714d"
+    },
+    "tests/test_ge_beam3_public_workflows.py": {
+      "blob": "6e5994ce7a35151e5e52ee3dedad1b9d742116e0",
+      "bytes": 6758,
+      "sha256": "69d1c4677bd0e8d063d3c5085301e682581dbfa95ec7301032d089467f2722c8"
+    },
+    "tests/test_generalized_beam_sections.py": {
+      "blob": "3ebd765b39387060ba65f1d976f1ac9881c71fd9",
+      "bytes": 16170,
+      "sha256": "2ade92b833d770ba429ba7c7adf708d3fa4e1debd8739c3725246c2d7ffceafc"
+    },
+    "tests/test_generalized_section_api_workflows.py": {
+      "blob": "73e4b861df0598281da236510d9c721e8fbb96ea",
+      "bytes": 9293,
+      "sha256": "3b171131bd4298aa10a4f1fe53d14222eeb1c5c17cd6c0ee2cc47a48c9a98bc2"
+    },
+    "tests/test_generalized_section_mass_properties.py": {
+      "blob": "827a0e60a366023193a8ad305fca8c8db77db738",
+      "bytes": 8549,
+      "sha256": "f5e4569c01a999af88c47cbfbcfbd446ef0a5391f7f3b5d9a25b06dd89efef6b"
+    },
+    "tests/test_generalized_state_recovery.py": {
+      "blob": "c14cf4f5555dd345840684486d59621411fedbfb",
+      "bytes": 10603,
+      "sha256": "4af5f289bd4eda15507cb348581986a922e669a3ce73a2ac5b15027b4abb675a"
+    },
+    "tests/test_initial_fields_and_staged_history.py": {
+      "blob": "ef61e1a69aafb4ad0c6065a29ed654c5e8e29c1e",
+      "bytes": 22633,
+      "sha256": "521ff0193c198b8576e44acf187f63f8937c45778bfca4650c05fc1f6c5d651f"
+    },
+    "tests/test_material_history_recovery.py": {
+      "blob": "30e59c5b8c3552e2dfa5e0fe81e6269b311e38e5",
+      "bytes": 13814,
+      "sha256": "3a5344e238064f8dbfeb10353d56be933d9705fd89642e4f8025bf1ace278cc3"
+    },
+    "tests/test_mesher_improvements.py": {
+      "blob": "a866d104d14a49b08c3667fcbf5f1baae1ae4f92",
+      "bytes": 4506,
+      "sha256": "25f62657230f031e0ebf14ba82cf2fcdf71e0f1370a194d91196ef0e2963aac2"
+    },
+    "tests/test_nonlinear_impact_plasticity.py": {
+      "blob": "d2bf46d16bd2e07e8282be0c61a4044f3d46da0c",
+      "bytes": 26556,
+      "sha256": "a4830975c04f1ad8fb2d885b4b2018eb6e498495e50dcb9c41b7916c33ffdc1d"
+    },
+    "tests/test_nonlinear_performance.py": {
+      "blob": "401fcf32dcd4699f1d45ecd5fb75b4527a4de552",
+      "bytes": 22905,
+      "sha256": "e61268c3dc7fa25f6af8719115dd81144ad19ac8c3d3120849951d51d74dccc5"
+    },
+    "tests/test_nonlinear_restart_checkpoint.py": {
+      "blob": "6e88ebf727a5ada365b921ef152de3a36ab03d3b",
+      "bytes": 15559,
+      "sha256": "8f928c4c31c7bf653cdf9d2ba98a39ee0c73e58742462e3220b4a62e2552ef7e"
+    },
+    "tests/test_orthotropic_elements.py": {
+      "blob": "9fbaa50a09c9e33e476fe98c9623a03d59d9ae64",
+      "bytes": 24309,
+      "sha256": "6840b4f23acbba4444b0b934ca4affa56aa07a87009714eb9b25935ebe30cabd"
+    },
+    "tests/test_phase2.py": {
+      "blob": "ec6580e09914360e419749cdb6cf9540b08ccb49",
+      "bytes": 8282,
+      "sha256": "0922819c8939018a8bd404ee62de2f1d7bf1b06b0718303aa2c664d3591f92a0"
+    },
+    "tests/test_quadratic_beam_nonlinear.py": {
+      "blob": "4b690a0323865756ecedc0e1bcc7c5b202e2ae19",
+      "bytes": 6539,
+      "sha256": "7c5664c0d51a6b9f074e208d9025271383723e1e0186805d1e8040c3b149f9f3"
+    },
+    "tests/test_recovery_qualification.py": {
+      "blob": "4170f0175723abc42c925b3c060c0c3940657171",
+      "bytes": 15667,
+      "sha256": "9c7166983b155c32ea9bc2fcc70818c9a1ed82879a8319667477f709459ab43a"
+    },
+    "tests/test_solver_control_contracts.py": {
+      "blob": "a768e868bc3720678760e798765cf2aa56d68d85",
+      "bytes": 28610,
+      "sha256": "d4c1dec90aea023bf37d0c98552c609185cc83318f094d77bc2beb06d80c0dae"
+    }
+  },
+  "legacy_public_members": {
+    "Element": [
+      "compute_geometric_stiffness_matrix",
+      "compute_internal_forces",
+      "compute_mass_matrix",
+      "compute_nonlinear_response",
+      "compute_stiffness_matrix",
+      "compute_stresses",
+      "dofs_per_node",
+      "get_dof_mapping",
+      "get_node_coordinates",
+      "num_nodes",
+      "to_dict",
+      "total_dofs"
+    ],
+    "BeamElement": [
+      "compute_geometric_stiffness_matrix",
+      "compute_mass_matrix",
+      "compute_nonlinear_response",
+      "compute_stiffness_matrix",
+      "compute_stresses",
+      "dofs_per_node",
+      "get_node_coordinates",
+      "num_nodes"
+    ],
+    "QuadraticBeamElement": [
+      "compute_geometric_stiffness_matrix",
+      "compute_mass_matrix",
+      "compute_nonlinear_response",
+      "compute_shape_functions",
+      "compute_stiffness_matrix",
+      "dofs_per_node",
+      "get_node_coordinates",
+      "num_nodes",
+      "total_dofs"
+    ]
+  },
+  "public_member_rows": {
+    "num_nodes": [
+      "P01"
+    ],
+    "dofs_per_node": [
+      "P01"
+    ],
+    "total_dofs": [
+      "P01"
+    ],
+    "get_dof_mapping": [
+      "P01"
+    ],
+    "get_node_coordinates": [
+      "P02",
+      "U01"
+    ],
+    "compute_shape_functions": [
+      "P02"
+    ],
+    "compute_stiffness_matrix": [
+      "P03",
+      "P04"
+    ],
+    "compute_mass_matrix": [
+      "P06",
+      "P20"
+    ],
+    "compute_geometric_stiffness_matrix": [
+      "P23"
+    ],
+    "compute_nonlinear_response": [
+      "P13",
+      "P14",
+      "P15"
+    ],
+    "compute_stresses": [
+      "P19",
+      "U05"
+    ],
+    "compute_internal_forces": [
+      "U07"
+    ],
+    "to_dict": [
+      "P18",
+      "U09"
+    ]
+  },
+  "test_module_corpus": {
+    "tests/test_advanced_s4_batches.py": {
+      "blob": "cade0388bc372642543ece9e4b2a33f37fcada9b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_analysis_session.py": {
+      "blob": "4758f4353ddf114337a1db5709568249569d26c5",
+      "rows": [
+        "P29"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_anyfileio_version_compatibility.py": {
+      "blob": "1b305a1ec51e18192af9c19500507b1902af90aa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_anymesher_version_compatibility.py": {
+      "blob": "2ae5e39a5dfaec5803001ea3e41f96145d65742c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_arc_length.py": {
+      "blob": "eb881535a3037da5869a41c1ed60d8cd5367b408",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_batch_b_activation.py": {
+      "blob": "61193cf09e38492722f60237eb71e8443719b9dc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_beam_axis_conventions.py": {
+      "blob": "f7d3c618d514c0054de2ec1c78631e2b95c0289e",
+      "rows": [
+        "P02",
+        "P03",
+        "P23"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_beam_shell_verification.py": {
+      "blob": "f376080d5f9f6366c7f8a8a0547de360cccc8ae9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_constraint_audit.py": {
+      "blob": "08f23b0a37993f973e8025a4e599cddb67f9ba05",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_contact_work_buffer.py": {
+      "blob": "d4770633be5d177ffe3e9c2671ae9e2c5c6e2a43",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_corotational.py": {
+      "blob": "7844752648f1763ede15e27f641e3ea9decabc5b",
+      "rows": [
+        "P14",
+        "U04"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_corotational_performance.py": {
+      "blob": "5860150523d9ce2884cb5795d63b1cad48682459",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_damage_matrix_performance.py": {
+      "blob": "b7559ca4d3117d6be33269321a503968cad368ee",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_dyadic_bilinear.py": {
+      "blob": "22104282ced0dc73370379a49238701d188cebb1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_dyadic_factor_chain.py": {
+      "blob": "b123f37be34e8c8c979fe2f3afe52376ce59c6c7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e3_baseline.py": {
+      "blob": "c42850c80abc8195886d2c3e1f0de320082d7763",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e3_closeout.py": {
+      "blob": "8107b4e4fcb11d5c0fef8636f92d8f2ee65266a8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e3_hw29_identity.py": {
+      "blob": "0f23e8a7244e2898a89dcfde95a36d757b966844",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e3_mitc9i_reference.py": {
+      "blob": "4f98241b9df648f7999be4eb292555f7795774c2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e3_route_selection.py": {
+      "blob": "fdae0446f6cf6fb1d24fca4de15bd97493e30b33",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_baseline.py": {
+      "blob": "48a0499fbf04d0e29c254fbf088748be9fb20152",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_closeout.py": {
+      "blob": "6b98a17f07a756a5fcdeaf788263842597667de0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_core_identity.py": {
+      "blob": "0d6a5dea56f001ec2e3f726b785446e29e88bd10",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_burnin.py": {
+      "blob": "9c2079d30671007d18f191f2bbb095f3af602661",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_component_snapshot_integrity.py": {
+      "blob": "0a1d7710caa0cbcaf790d7d485a560fd0ac6e750",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_current_state_input_ownership.py": {
+      "blob": "3dfddd6009bf9ee63795bc31445728ba0e2396bb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_default_activation.py": {
+      "blob": "b864ac8db104b2fe1bc0c8cf8bf23536c5813645",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_dormant_element.py": {
+      "blob": "1518bccfc055a4bb592889f55c34703914815d8e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_functional_constructor_policy.py": {
+      "blob": "c0ceda2e51f2355cdc963ea8b6e523fe9b0aa3d0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_guarded_observations.py": {
+      "blob": "f909497e985290dc60458dbedbccc222d4716283",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_identity.py": {
+      "blob": "a3f00ee15ba5392cb524b19a566dc5300be6c9c4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_mixed_current_state_route.py": {
+      "blob": "89beb4abc777a953d42ee8239027b7562e0ea7ea",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_orchestrator_operation_lease.py": {
+      "blob": "3277a5448cd964a78aa664841e546b4a05ebbf2e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_parity_matrix.py": {
+      "blob": "c8ce970343687808a1c1e3d8befa1f936aced194",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_planar_physical_recovery.py": {
+      "blob": "4a49f571731871e7463ba3cb957c4d694669abe0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1a_authority.py": {
+      "blob": "4888a25773350a978f10b1b5a8c29cc96ad11e9b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1a_exact.py": {
+      "blob": "d6b800a4316cbbd96fe4185d2b2eb7335c27424b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1aa_local_qualification_synthesis.py": {
+      "blob": "33f5140533943bf0bf3179282ec215b6da947ee7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_assembled_stability.py": {
+      "blob": "7cb2600cf34a56202dca9d11e3e8aabf73e023f6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_closeout.py": {
+      "blob": "1dd0cdb01cb4f7c2bf683d278faa19fbd2ac0572",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_contract.py": {
+      "blob": "b694cd21c4598523df5d6865d9a19ee853a46ffb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_implementation_authority.py": {
+      "blob": "a5e06794918977ba7e469c9f0abbc485f9fb5c0f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_locking_refinement.py": {
+      "blob": "49edb5cd45622dee90f5d58da573645cd7a46932",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_nonintrusion_recovery.py": {
+      "blob": "16a904fd7f0685a950cd80a835ec46ef29a25f7c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_preregistration_authority.py": {
+      "blob": "070638b7edc51e1a80236105b38f9f859032e478",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1b_runner_bounds.py": {
+      "blob": "a1d8519397ff683942ed3d636d80626ffd0b6c7e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1c_locking_repair.py": {
+      "blob": "abcd0c2ce27225dccd462b9c5a085ef83632f618",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1d_ultrathin_conditioning.py": {
+      "blob": "0e9610d3f28c614e06f050342b91dd1cc1e57476",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1e_assembled_readjudication.py": {
+      "blob": "cea8222557a25ff106ea1653c10f903731b9584a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1f_closeout.py": {
+      "blob": "5c2eb80c480d5cf1175074a55f765a45ff1e0442",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1f_preregistration_authority.py": {
+      "blob": "320b2e6c68c48d949d8c80c66e5ed17b2982aaa1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1g_closeout.py": {
+      "blob": "fd8d53b0143100c8ca0ed36a5d9437b286990513",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1g_rigid_range_coercivity.py": {
+      "blob": "21535280b9bc675da78e54ec97e666ce7270302b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1h_domain_coercivity.py": {
+      "blob": "077ff69af57247a2f7f00a04b20e73ba5c70fc58",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1i_assembled_qualification.py": {
+      "blob": "03e5b0a042cbf0a0741ad4ef1529fa69c6636a00",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1r_closeout.py": {
+      "blob": "712e9f09f9818a3565af343ffd3b6e4aece453b1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1r_preregistration_authority.py": {
+      "blob": "d586f0987c0534f1b98f2fab61b6d0abd53039fa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_closeout.py": {
+      "blob": "08fbe608d106ba0b383f05d1902f498cb50a2485",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_frame_and_fields.py": {
+      "blob": "3ae097adb8dad0fa2895cb20814c3a4fbb70c276",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_global_supports.py": {
+      "blob": "f2c44145c0d2d3b5fa1e4de93d6319c44e26eeeb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_local_algebra.py": {
+      "blob": "b6a40ee1f52e659371abf3788180274bfbd5593e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_preregistration_authority.py": {
+      "blob": "815f3bd9e0e3cee601bcc75852c223d9a34aa71f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_recovery.py": {
+      "blob": "34d1cff4ecd8715673b1d30a483f884854f3e941",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1s_terminal_and_agreement.py": {
+      "blob": "6ac7fc40333e9fd2b4839230fdfa4c7bb6358f26",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_closeout.py": {
+      "blob": "112b2358d81188d126298ec3c8bc64a478ace326",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_contract.py": {
+      "blob": "7030603cf35bf1bfa489520baf8780ec3622fe96",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_exact_backend.py": {
+      "blob": "34a0e79204d4678674ce69aeeb641e87da095124",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_frame_and_fields.py": {
+      "blob": "5c9718b778dfd7e65c0a58bac4b497735ce1fdf7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_global_supports.py": {
+      "blob": "a689341b71841754038a70f616bee0f2f690a4ba",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_local_algebra.py": {
+      "blob": "03dfa0345e948038806851ecf5c84f1f5279d5f7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_preregistration_authority.py": {
+      "blob": "24ac6313d5487140f7c000dc7403a25dbfe8cf93",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_recovery.py": {
+      "blob": "4b620b6264bbaf4ab22cbe47596a6e7bbfefc257",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1t_terminal_and_agreement.py": {
+      "blob": "63f1c19cd5ada1058212ba588553534984d3ae9f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_authority_guard.py": {
+      "blob": "adc53f89636aebc5c548491bbf2e1a362c0f605d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_closeout.py": {
+      "blob": "faf32d20b9a1cd32d7e8cfac05cf47a3f18876ab",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_contract.py": {
+      "blob": "e065bd7e493a085d3e21a5a609fcecfda1f0a87e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_exact_backend.py": {
+      "blob": "1d9cf9e22d0f2b4459fe8a0b8ee948688b8a8d95",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_frame_and_fields.py": {
+      "blob": "e0fe5c38260ad80a1d3a2b672cc0e8e73e189dae",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_global_supports.py": {
+      "blob": "a23e768473ef5eac546c2bb897ed208f77f00cc6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_local_algebra.py": {
+      "blob": "b5fc48a2ca84e515ab4fe383900f4ee1f0f5600c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_preregistration_authority.py": {
+      "blob": "803edc27a84ee26c25d08dbbdbcd7d5e014b7c38",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_recovery.py": {
+      "blob": "157d9bc2925398eb7db6be233b4488f3079a1065",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1u_terminal_and_agreement.py": {
+      "blob": "16472d1cf9f74805d99c6bf6f1e535db0cf1c0ca",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_authority_guard.py": {
+      "blob": "60977680c1b3e43233c17b9c929e99be667fe7c1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_closeout.py": {
+      "blob": "970fdecc58e2c8d7f6509f1455e005222ec23af3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_commissioning.py": {
+      "blob": "de4d0a886bd305e78a6182723eb6a28f3b6cd9b6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_contract.py": {
+      "blob": "62ffd64ba7d2edebbeaf64d8488bccfe568b7dbf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_exact_backend.py": {
+      "blob": "c4560258f268a9c9fec7aee3733c5b0c52993d0c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_frame_and_fields.py": {
+      "blob": "407837ee261b55975c83b5fa7740d25a938588ba",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_global_supports.py": {
+      "blob": "e72badf4b776559cc801cc12828d1f3ce3a1bcc3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_local_algebra.py": {
+      "blob": "0a3639c4cba2f5b60265c3cdbdaffcd7ca952fd2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_preregistration_authority.py": {
+      "blob": "de42d6f655f60e1656a6626e3187436fc89573ad",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_recovery.py": {
+      "blob": "551c18d78464a414440ee3aa11fef73e7ec84a19",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1v_terminal_and_agreement.py": {
+      "blob": "4f824ee04acb572e755106693abcc2bf39552de0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1w_bounded_proof.py": {
+      "blob": "cd3ed52aced4ce67ae263a72e93cbcabc1bc9918",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1x_bounded_transport.py": {
+      "blob": "d7cc00c580108d4a7a688e81fa74e762bfd91731",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1y2_pipelined_local_algebra.py": {
+      "blob": "7cff32a25acf4621596e7b4cf7f664c697732d62",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1y3_mitc_checker_repair.py": {
+      "blob": "da1820557d4a42e7bfe1248e043b282142aae546",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1y_bounded_local_algebra.py": {
+      "blob": "014dd3b05046f5b683719b7492771086d0e2d951",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1z2_q3star_support_closure.py": {
+      "blob": "ff88cbba0b919c702a331388a4038fc461795d79",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q1z_bounded_support_kkt.py": {
+      "blob": "3d505f21114b204bca29145ffb8c5059966e7fbd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q4_current_tangent.py": {
+      "blob": "5afe36f7ad36bd17551c4b1fae495e4cf2802263",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q4_state_lifecycle.py": {
+      "blob": "0bac100a19a72db1221db66c1a661703538bd2e5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_q4_stationary_conditioning.py": {
+      "blob": "94ff6ef31d9aed4a2256a5ff9d4c59ad64d53278",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_assembly_fast_total.py": {
+      "blob": "492c6a3f0a6f9b87a56fe609c67f050185f54e69",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_bubble_policy.py": {
+      "blob": "8d064726a760070627a5fbec16e34e49d58618ab",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_committed_state.py": {
+      "blob": "7ca6df5f21f32cec57b288ec6d30586c7a3df359",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_contact_virtual_work.py": {
+      "blob": "40c6ae8f3c3b96d7411b70275c7de9dc666c701a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_current_tangent_buckling.py": {
+      "blob": "4c43ffeda8b6705a955abfb755770c03011cbc8f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_descriptor_hardening.py": {
+      "blob": "48d27956e0d475687ab757aaf477ca2a928fa41e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_descriptor_spectrum.py": {
+      "blob": "41134b6256d3308444e712d4072bca04aeeb8919",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_direct_nonlinear_response.py": {
+      "blob": "83409bc65e359e51e01398957c3812172e40eaba",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_domain_coercivity.py": {
+      "blob": "a126d68bc357fbc2590d1b7adca29cf3625bdd9d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_dynamic_guard.py": {
+      "blob": "9bf100e68b4257fa4b046848f8a723044fc7370d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_exact_oracle.py": {
+      "blob": "09844d5161e308da8445852047c0965b1fa5af42",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_fast_total.py": {
+      "blob": "cf0125c4ead92c3d0e98adfdc0cc240a090b51cc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_formulation_contract.py": {
+      "blob": "4f42269232b81cab461539af2c0fb1e13ae74bd6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_generalized_initial_fields.py": {
+      "blob": "3bd7bf7f3a875d436ea6ee8d954ede3308d5dee5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_generalized_nonlinear.py": {
+      "blob": "7eba1307ca9b4f4ef05ee125d5b6246fbce35871",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_geometric_stiffness.py": {
+      "blob": "51f42956275002eec7f71a6e3f3a3e4acc9abcac",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_guard_persistence.py": {
+      "blob": "f509c7547f510331fff98c18ec563c3e8d022baa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_independent_linear_reference.py": {
+      "blob": "ba48ba71784aa4b33c3f4812e63a31a6b8049dfc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_mass.py": {
+      "blob": "041d7c3eba031e6277538932d7b0ad5862555f44",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_mixed_eigen_performance.py": {
+      "blob": "e7894f48114f28af842fef628cff3886fbd30bbe",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_mixed_mesh_manifest.py": {
+      "blob": "e43de79f90d64857f8800b05895bd7f321145be9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_mixed_mesh_qualification_runner.py": {
+      "blob": "f8a2dca7ec4ed84e2514d0879efe1cc7ed6dfa19",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_mixed_structural_qualification.py": {
+      "blob": "e7624a36d54915917646bddac71c9f4f827c3b9e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_modal.py": {
+      "blob": "4af2cc75f3316f8813de9387971ea932b490257e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_modal_provenance.py": {
+      "blob": "a09daf4ad8e1f9956282053888cffa6fb929e342",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_model_bound_nonlinear_hook.py": {
+      "blob": "36b176d256acccfb1232598d945fe3b6c3c18b5c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_native_tl_covariance.py": {
+      "blob": "ce5d0215ec5fe0b09e48ea28935e8e3515dbfcb0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_native_tl_full_d3.py": {
+      "blob": "cd5ec7c649f62946e4c0bdb7c515d1c07434bd42",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_native_tl_kernel.py": {
+      "blob": "bc03f38db4d7139f0f6cd8790828ba207d7ca37d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_native_tl_response.py": {
+      "blob": "1cfdfc3b26c55e02cf97f50442a0c760b6d2fd41",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_nonlinear_workflows.py": {
+      "blob": "fedf6f341d1564b18a7c5c82adb72795b4cc8d9d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_objective_pl.py": {
+      "blob": "3e5e874f84e88d4e75e7b3f64e92dededbdc9f5d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_opt_in.py": {
+      "blob": "82471cbc68638427581164039c320cc0d105c63f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_patch_recovery.py": {
+      "blob": "3cff6cc079df3aa4ab8dbe6d102efc22712457c5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_physical_director_reversal.py": {
+      "blob": "477d683f6c4beb30e4a4450339f5cb20e4c6569a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_physical_recovery.py": {
+      "blob": "f97f60ab78d559b65056bf740c008139ddfe444c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_prestressed_modal_buckling.py": {
+      "blob": "468192e492cb4fd70acc137cd4db527270215e85",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_q4_burnin_authority.py": {
+      "blob": "7ee50a8a0f34eb0efafceabb57270b1d4817d902",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_qv9_v1_nogo_closeout.py": {
+      "blob": "a57570bb29738270ef1789ab036034990430f561",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_reference_batch.py": {
+      "blob": "eeb37fff4e74ce214e0abd6831b453f88459279b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_reference_surface_offset.py": {
+      "blob": "b31ff922f86dd055cd9f84439c6bed9d96dba772",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_restart_history.py": {
+      "blob": "bffd90e3ca13445696491282026be9bb4ea851fc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_shared_rotation_kinematics.py": {
+      "blob": "90e267550b2b409ec42bd757a38541f249ff1228",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_state_lifecycle.py": {
+      "blob": "5c5477aa94e92f3cca4801e52505c16346d451aa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_state_schema_closure.py": {
+      "blob": "59f4c518df385c69f596c0258a9936408cb4ce95",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_transient_algebraic.py": {
+      "blob": "e7e5573fe8d649c46f9397a11a3cb879f0d7ce34",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_authority.py": {
+      "blob": "94de7f375456c4edb460c00753a9db7428f503b7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_bounded_process.py": {
+      "blob": "ad101e7d1ec0b87385632203ed5d1b8bbb7d56e9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_candidate_binding.py": {
+      "blob": "c57a4b65944768a255c1c7102e1eb7bd7b445376",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_component_cache.py": {
+      "blob": "e885c0607fbb356d53e3dcf33fdd2d8652011354",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_dkmt_derivation.py": {
+      "blob": "cfa9c6e2ab3c421c6fb4f190dd4426f7c168e61c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_flat_candidate_review.py": {
+      "blob": "884d402897552c3af93f6bfa494bc1e7b02b6b56",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_flat_funnel.py": {
+      "blob": "611014a44639bb95ebddd42b62938734c9f8aa49",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_flat_funnel_checker.py": {
+      "blob": "a79dd506217ff9f5c8a98d91decdd220871c8bb1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_flat_funnel_producer.py": {
+      "blob": "0bcc250c7b33fc75f1f47ca0dd86bf60da99258e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_independent_reference.py": {
+      "blob": "6aeb372c5db09dda7bd19f0bf2bd71993388e50f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_mixed_scope.py": {
+      "blob": "595ca0d6756aba0dcd50e83b0944ba31479de5ac",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_production.py": {
+      "blob": "872d1c9c5b65c37ed6dea805eba212b8efb0d5bd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_production_reference.py": {
+      "blob": "17eedc16b348d157430befdfd1eb015d42cea9fa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_stage4a_authority.py": {
+      "blob": "1b2c830678ea584d54e4631e3212aa1c36efc976",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2_stage4a_coordinator.py": {
+      "blob": "e0effa18210e87b0acccf3a47b5d3e21c3126f6c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2b_interface_closeout.py": {
+      "blob": "776822c84f532fc5c9443a7eb14d4fecaff9326d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2b_interface_funnel.py": {
+      "blob": "38527d9e75bcc45cdccd0c56849a87d5d7202aea",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2b_production.py": {
+      "blob": "2de27a8d0823d8b9f2d5d1073d9eb791ef4d805a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2c_production.py": {
+      "blob": "63fb341ba89baf05775767cd650d730208706e6f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2d_linear_native_parity.py": {
+      "blob": "942d366d42ad4766876eb8f7b5dca7bc9da2ab8d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v2d_native_state_corotational.py": {
+      "blob": "b3301d6964da1197ca66b3e1b88ebcc67950c6c6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v3_equation_authority.py": {
+      "blob": "740ce1b9a7744e05d1c1028386c81386f665eab2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v3_preregistration.py": {
+      "blob": "a8e4ace8355132196cdbe96fff996010c7180de6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v3a_implementation_screen.py": {
+      "blob": "aad949ef840b389697c75eb6470fd39dff936bd7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4a_preregistration.py": {
+      "blob": "113f4769e3900807c0187d69eece1b79c3532f40",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4a_q4_subcell_screen.py": {
+      "blob": "1428f273c60fb7a764882effa2f1378179cd38b5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4b_drill_release_screen.py": {
+      "blob": "4f66e194d005418a4136dac95bd9fcb310f3a183",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4b_preregistration.py": {
+      "blob": "fab692bc4b99fd5ebe201feb7cfa6c91c6d62042",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4c_physical_first_screen.py": {
+      "blob": "0414c471d25dc004755b90854dc6f64702f55449",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4c_preregistration.py": {
+      "blob": "05a60db0abc1d64d001acf7631cf95a219cc2bb2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4d_hermite_edge_screen.py": {
+      "blob": "a5ecac870f41221e6b5c806076ee1f8b160617e7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4d_preregistration.py": {
+      "blob": "3c90ebb247a289ea931d233acf15b65d57e97607",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4e_preregistration.py": {
+      "blob": "8f1596c8e02e5275f38b7a66410ab611b03e8cff",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v4e_shear_diagnosis.py": {
+      "blob": "7bf9240291886def34b67979fed74e73ca1323d0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5a_min3_screen.py": {
+      "blob": "9ae0806b21ce7ddfb24f7adbcd8d8f43a859cdb5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5a_preregistration.py": {
+      "blob": "575077d6897319ee31ca5cefc9513aa03eca693d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5b_relaxation_authority.py": {
+      "blob": "65b8a35d15939e2d87f3bb12667e9d621150dc48",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5b_relaxed_screen.py": {
+      "blob": "ade7155738acb81c31723602ed820a9f37357db7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5c_stage4a.py": {
+      "blob": "900681b1200c37dbd37c776ab38c5fd287266e45",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5d_response_metric.py": {
+      "blob": "ede8597dc6a3610d50254d6763d881b7a33b5251",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5e_stage4a_spatial.py": {
+      "blob": "9cdf6e062f769fbd9055bcd14ded10a30670d53e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5f_production_parity.py": {
+      "blob": "192c1999797eb96af7efea6fc46029b76c1a1281",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5g_stage4b_extension_authority.py": {
+      "blob": "e24459b75b903d1469d786365bf1fe1736e3afcb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5h_closeout.py": {
+      "blob": "89f3e831847f7f2979f83d0624fe79244fe5bd25",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5h_local_parity.py": {
+      "blob": "15550438efa27aa99aab81b09ba8539658adad73",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5i_r1_closeout.py": {
+      "blob": "c9d5d85e82e5b7401b26ca5cfc3b3500395e1f90",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5i_r1_diagnosis.py": {
+      "blob": "1c98e57000c7ee63bac78c1e4f845262f8e4f67e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5i_stage4b.py": {
+      "blob": "cd2223773b2618a270e3ade10ca5c92e692ab5ee",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5i_stage4b_closeout.py": {
+      "blob": "462c6312dc2a937044d7a89957f5afc2d0428011",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5k_closeout.py": {
+      "blob": "c1b5b1fa21abaab5c44560330a3f280ea9e915b6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5k_protocol.py": {
+      "blob": "2450a27575a495d8d60e2d33a6ed5d270ddbcc2e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5k_repair.py": {
+      "blob": "dbdc281d319c00096e3a3c9f2799e8b62743f749",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5l_closeout.py": {
+      "blob": "2c00a42bd685b26c396ba310c705f6254b95bb51",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5l_protocol.py": {
+      "blob": "9ce46f22506357bc473a63fd408627eecf95cb25",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5l_stage4b.py": {
+      "blob": "c9d6ce16511eee2e25e010a937b9a6ac4f2def2b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5m_closeout.py": {
+      "blob": "1b292fdb99767556d9e13e5895e2422db7c5e3c3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5m_parity.py": {
+      "blob": "95d1e9efa5d2ea91f54aa6a8bfa986844096ddfd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5m_protocol.py": {
+      "blob": "a0152f7cc6594cf72d270c550164eedf5007f375",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5n_activation_audit.py": {
+      "blob": "2e3596cbe12cb0fff8e5e85c52dc5e88b875d6e1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v5n_closeout.py": {
+      "blob": "e553ad0083a09c718462dcdebd51b281d8737d29",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6_native_parity_source_authority.py": {
+      "blob": "68cc4de81baf02149502a861a16ba359294e4482",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6_native_parity_source_closeout.py": {
+      "blob": "a5adf78f76ea9efa773744fd31f79d2887d9116f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6a_linear_native_parity_closeout.py": {
+      "blob": "a9f7c596d444e9fa716bb7f21945a3c2f5f76d35",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6a_linear_native_parity_contract.py": {
+      "blob": "cc6c14c1313d711c05c78e5a5c9b9e28a333eb62",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6b_native_state_corotational_closeout.py": {
+      "blob": "f9612f69470322b989a4e7a262568f926ab67425",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6b_native_state_corotational_contract.py": {
+      "blob": "db90e6ad1ed8dd68e43044682db93278ec647189",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6c_offset_load_restart.py": {
+      "blob": "7d5d297259ee81c053a0fc70f0383eb907252e74",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6c_offset_load_restart_closeout.py": {
+      "blob": "334a83bc216b8eb48981a24005051a89a0040c05",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6c_offset_load_restart_contract.py": {
+      "blob": "fe96fb73674fb8f0c3f63735de8e8894fee1050c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6d_activity_contact_batch.py": {
+      "blob": "d34c61cb54f76be6c673e58dd7876f26834bd16d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6d_activity_contact_batch_closeout.py": {
+      "blob": "142a806a3b8228cd34968e9b871038c8a2f11c6a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6d_activity_contact_batch_contract.py": {
+      "blob": "8963a9693510a5323a789d9b63311fe0e8e4c9d6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6e_final_parity.py": {
+      "blob": "4e56f0df78bfd6ee8374d34bfaa3e694d808e749",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6e_final_parity_closeout.py": {
+      "blob": "ab856c572adf39239c576e3b7703f5e11bbc1ddf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6f_final_parity_audit.py": {
+      "blob": "30e6d5e879d400c4cd5e27048ac15b0670aff0f4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6g_closeout.py": {
+      "blob": "35eece211e9feb44a762a3d4b6739a50d0d192e6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6g_recovery_current_eigen.py": {
+      "blob": "ff7d65d8248e63e3c171736fbe098fb6a1474d4f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6h_closeout.py": {
+      "blob": "3e9a9e1599207d4e5b165014dc20c46063db4362",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6h_stage4a_authority.py": {
+      "blob": "550e3bf4543b1ef701cdbe7993d20ee61849b51f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6i_stage4a_execution_authority.py": {
+      "blob": "86c059a201ec8e312d6a1d6b230783ff48974c0d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6i_stage4a_execution_closeout.py": {
+      "blob": "7c618c0160a11f04ed249641e562bec6d1e01bce",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6j_stage4a_execution_authority.py": {
+      "blob": "68fa81ddcbeb25a2e4bd5588be31d0cfb1521092",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6j_stage4a_execution_closeout.py": {
+      "blob": "323576cde3936cea5a91c58ed4ae6853e9185e5a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6k_stage4a_execution_authority.py": {
+      "blob": "feac8452db3055f24c77c826912a21f2eec2468b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6k_stage4a_execution_closeout.py": {
+      "blob": "ca6c62fa6bfd4e398d0c96b780d50d3df241e9fd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6k_stage4a_request_authority.py": {
+      "blob": "3f0e4bc44b0d359f891d71f4369260217035aba3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6k_stage4a_request_publisher.py": {
+      "blob": "dbfb8316af6a47ec06c0e6ebb75d90a6d7ad0626",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6l_stage4a_execution_authority.py": {
+      "blob": "b91fe349d6bd125180e4499a6b23251d12741b5b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6l_stage4a_execution_closeout.py": {
+      "blob": "6da00c7fbc599aff2f46c769e9675a40d6031b09",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6l_stage4a_request_authority.py": {
+      "blob": "4a8938bec9734dd180565f66f7810677a2da3a80",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6m_bounded_timeout_closeout.py": {
+      "blob": "3b2f280f1c3c46991bbb9519b0e280c1b2f15439",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6m_stage4a_execution_authority.py": {
+      "blob": "5e340875d810c34426e0dd3751beca9f9e63b090",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6m_stage4a_execution_closeout.py": {
+      "blob": "d2a28e9ad113dc199eb815c5d82ca7ff987881b9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6m_stage4a_request_authority.py": {
+      "blob": "c010f6db4c08cb5de8176e770c306998de110081",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6n_lease_optimization_closeout.py": {
+      "blob": "3fb0dcd2dc8c54562ae07543087ce53b6192d0c8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6n_stage4a_profile.py": {
+      "blob": "c642da46233ef99c69f5244765e38e572938c243",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6o_stage4a_execution_closeout.py": {
+      "blob": "3ef8880f088270f1f5ef28f6faeab2e7b0b1d80a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6o_stage4a_missing_leaf_graph.py": {
+      "blob": "7ceda98d1c79763e23f4c0f5591f730204cb2e64",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6o_stage4a_request_authority.py": {
+      "blob": "56b3e184fdb909d346ab95b053aa58ab45ebee07",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6p_stage4a_closeout.py": {
+      "blob": "eb1cca7ca169546acae8a95bcb417030eb5f3fdb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6p_stage4a_completion.py": {
+      "blob": "82e8d2cf2d9c8242cb4749527b466a985f6a71c5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6p_stage4a_execution_authority.py": {
+      "blob": "cc088ce72f970db5e4b9d19eeacfa9f23497badb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6q_25pct_spatial.py": {
+      "blob": "018c48230d98bf15e9781874ce4ea0520048a9d7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6r_gate_decision.py": {
+      "blob": "1cdc72949bda3d1218bb58d75e1150a897338dd7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6s_stage4b.py": {
+      "blob": "25e7701ea1bf13bfc17edef19c3fb77586c65c1b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6s_stage4b_closeout.py": {
+      "blob": "ae22f13630030d30d3ca92e32fd147f452be6143",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6t_global_cache.py": {
+      "blob": "1e8b10ec11bdb1f9ee44f73d71a8004031ffd9d0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6t_global_cache_authority.py": {
+      "blob": "d5cacc66438a3ccce12f41e9a08c432504dcbd08",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6t_global_cache_closeout.py": {
+      "blob": "d0d32c2820698b1b51147e855e6ea8acde8e592d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6u_performance.py": {
+      "blob": "060e11fb2d7753709bdede18192f9f89eeae7239",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6u_performance_closeout.py": {
+      "blob": "fdde3922deecdb08cf6ce459752f29d026c10593",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6v_activation_gap_audit.py": {
+      "blob": "b140e434ad722bd08e69111dbfee422577e43ddf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6v_activation_gap_closeout.py": {
+      "blob": "389860eced73b93d3c5266429065039d05f983be",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6w_final_qualification.py": {
+      "blob": "446751f9ad2a70f8e641a38532b7b136f55c5645",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_s3_v6w_final_qualification_closeout.py": {
+      "blob": "9fc46726f700e3f7d5fb749ec8ae30759770424a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_transient_authority.py": {
+      "blob": "f1b35535fc5e0f0f2610fc1f1bed5485de588c9b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_warped_qualification.py": {
+      "blob": "2e47ed5774be4b3d5e47b9dd1f39c2dc632a7af5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_pl_workflow_parity.py": {
+      "blob": "3dfb195bf1af796fddd9294938f6b7542df70390",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_route.py": {
+      "blob": "2fb4b3b3e25d4bcd549aa7e72bdd2e7545ac4b4f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_e4_ws_feasibility.py": {
+      "blob": "a5fd80c82c8cb26f52fe3a04d50522fd83d815e6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_element_activity.py": {
+      "blob": "55790eb60ed8d7183ff7fa2baa5cbe11065de0f0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_element_activity_integration.py": {
+      "blob": "9961c63577ee5b4fa67ce61a06551143ba5acaac",
+      "rows": [
+        "P24",
+        "P27"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_experimental_csr_assembly.py": {
+      "blob": "ab43a800cfb8ffdbb86e5a91f5e5ba772560792a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_external_references.py": {
+      "blob": "f8c5cbb62c398394f836e7c9841a3b3daa255b94",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_extracted_package_wiring.py": {
+      "blob": "3af6d2ea898f3c6458ce9a6a4372fc1f91f9d651",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_anystructure_fem_mode.py": {
+      "blob": "55eb3c434b8fd490f6a578d002570875709e9863",
+      "rows": [
+        "P10",
+        "P28",
+        "P31"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_architecture.py": {
+      "blob": "d9cdcc16a28c1838ec2963bd34ce3e6edade3bc4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_buckling.py": {
+      "blob": "8fa5fc1fa98e4e2416626af2230ee95b7b8c4968",
+      "rows": [
+        "P08",
+        "U10"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_capacity_workflow.py": {
+      "blob": "edcb52a6fd6524a6212d08f16dc1278798572e66",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_contact.py": {
+      "blob": "78dc0c9b4313ec7dd99296b9c3168246c320cecd",
+      "rows": [
+        "P26",
+        "U06"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_corotational_beam.py": {
+      "blob": "17c24c85db1d1f5dfc3f8c9ff5422c9e9dd702f3",
+      "rows": [
+        "P11"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_cylinder_benchmarks.py": {
+      "blob": "2183374f9b69a5e5769b6b494f449b60c84c0e78",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_dynamics.py": {
+      "blob": "aa2e00a2c909e6ee249c1d60b89bfaf38ddf195d",
+      "rows": [
+        "P24",
+        "P25"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_element_qualification.py": {
+      "blob": "be66c3a8303ea4ae9e0cabd0c856f8dbc4767960",
+      "rows": [
+        "P03",
+        "P22"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_element_quality.py": {
+      "blob": "52b9257dc7169c83fcd9feb8af13a0ec02ad1137",
+      "rows": [
+        "P19"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_fracture.py": {
+      "blob": "907674715cec4e46be9ab32b670e8ef2bb3fc640",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_infrastructure.py": {
+      "blob": "b7ae67bc6108d52a094200365dcfc5f4e8884e64",
+      "rows": [
+        "P01",
+        "P07",
+        "P29"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_mass_modal.py": {
+      "blob": "f0332730dd61b72c1515fbc458ac2cdd07d5426b",
+      "rows": [
+        "P11",
+        "P21",
+        "P22"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_nonlinear_dnv.py": {
+      "blob": "3b435b767d83293b2296a80d6b37fe0599f44770",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_nonlinear_limit_point.py": {
+      "blob": "ff79eae5739abb20b8c5eecd1f0a52dfb7e4ecda",
+      "rows": [
+        "P32"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_fe_solver_nonlinear_static.py": {
+      "blob": "f37b47966fd6ea9f3d8ad3350aa344c84937458f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_plasticity_qualification.py": {
+      "blob": "16bdffe0d86ee96d1eebeaf5d5ffbf5045adb254",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_recovery_policy.py": {
+      "blob": "da3a8308f668d72596c1ee482178a65da4ddb74f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_reference_cases.py": {
+      "blob": "d43ff80041af048ab539db97aa1373a18ea55abd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_s4_validity.py": {
+      "blob": "06966eeb791288b756600dfa032d61bfa17fa4e4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_shell_verification.py": {
+      "blob": "d3e18d8bba1860df83408496511048ce8c350d00",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_theory.py": {
+      "blob": "d7e404830f54d4885485c26a2b007a49707f31c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_triangular_shell.py": {
+      "blob": "a4ce969dd63c491fe95fdddd211b6b7805d84378",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_fe_solver_triangular_shell_backend.py": {
+      "blob": "66ae9edd3f4d93832f4d96384f8935a6872521b4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_follower_pressure.py": {
+      "blob": "a431d3c7f26e44a8748b33ec42959b00d5b71174",
+      "rows": [
+        "P12"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_adaptive_arc_checkpoint.py": {
+      "blob": "1e6ba316774da611714746bb150e97606fb424e0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_adaptive_arc_program.py": {
+      "blob": "2c1ed7f373a0494b3a0d25f172f5c3398711dc2b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_adaptive_continuation.py": {
+      "blob": "bf196aeac5c893be79a55a0c9a7fda3e7d31419f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_adaptive_modal_installed.py": {
+      "blob": "8b2731e3b75f7d8229fbb7f45b91481d3cfd3b79",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_adaptive_modal_installed_checkpoint.py": {
+      "blob": "6daac51e9ca0c32020b61540177f496d77a3a9f7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_analysis_combined.py": {
+      "blob": "5f627d368e61705b0f4ebf81d94440dd866a2bf8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_analysis_fibre_translation.py": {
+      "blob": "4e1dac6bf5a1ea5da4f557e8d2e5c787b10d86e7",
+      "rows": [
+        "P15"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_analysis_nodal_program.py": {
+      "blob": "15b2c012240a55bb31dc353a89a8b7cb92c6acdd",
+      "rows": [
+        "P11"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_analysis_translation.py": {
+      "blob": "178c09889c9bcf172f747b40969561a3a74d900f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_analysis_translation_modal.py": {
+      "blob": "eb9c4fe4f40bef381ea4c1ad0dd15497b723610c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arc_geometry.py": {
+      "blob": "840cdb94ad8e823fce1467523dc92a3105cbd842",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arc_geometry_checkpoint.py": {
+      "blob": "4c60c3d237da1d07202dc5e532b1b8c7944eb72e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arc_program.py": {
+      "blob": "de862be872b9d1676af0bbfd4b1199616e5bb53f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arc_program_checkpoint.py": {
+      "blob": "99d9fd79e85cbc1e3b345c9efaa293aeb1e81a93",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arc_spatial_refinement.py": {
+      "blob": "7ec8d8fa44ee1b2de8eb7265fbc37ac88676ab6e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arch_field_comparison.py": {
+      "blob": "53681493222159a5365abc91bff4d3f7825c85fb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arch_field_probe.py": {
+      "blob": "a6f8248e7e329afc1f78936dc4e7abfda5a0317f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arch_seeded_crossing.py": {
+      "blob": "7d75618f46f7eabfdc8d60e55ac981f2336df75a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_arch_source_cost.py": {
+      "blob": "3e59d2985128e15246bba3b6afdfea1f56407c8d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_authoritative_cell_seed.py": {
+      "blob": "cd47c436fa0268c22060546662baf3cd52a5058b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_call_observer.py": {
+      "blob": "ca9811bb65536e1927e96410580cca866010d392",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_cell_identity.py": {
+      "blob": "5b55f99db7e834fa787bcde3e731b6b70e272ffa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_diagnostic.py": {
+      "blob": "624fe02d107fd1da80f08a0cc2f96ace14b2bd85",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_line_load.py": {
+      "blob": "1e071b893ba7ed89cc712e18afc097854c00d2f0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_line_load_evidence.py": {
+      "blob": "8a2c86b52eec17524eef91e3f25b8164ef28bc07",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_mixed.py": {
+      "blob": "f235785bedc32631dbf3f683092d24c04c440486",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_native.py": {
+      "blob": "e3e93be4fbdf792ac580e50872477ba6501acf5e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_native_checkpoint.py": {
+      "blob": "20656f03ee4c95cd232257224af296ad98134e62",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_native_installed.py": {
+      "blob": "1b362c432b7fe2fbc35b5f095883c45c7bbf93cb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_centered_reference.py": {
+      "blob": "cce588e316489ab9c1315341e9e8ff2df3289004",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_closed_ring.py": {
+      "blob": "9c052de6aa13ef5a7835d339c9f0f18df9209441",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_common_kinematic_chain_checkpoint.py": {
+      "blob": "5f154778b7451a4167c66f451dda7817dce336f5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_common_kinematic_factor_probe.py": {
+      "blob": "d72664306ecc8c802fae02ab7f62922b27f02b2c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_complementary_plastic_checkpoint.py": {
+      "blob": "2309d3c786301ac7765efc33626a34661fbf5be0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_complementary_section.py": {
+      "blob": "47ceb69d624ea5347f942bb12885f05e96ea2965",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_compliance_snapshot_guard.py": {
+      "blob": "ca04276869ca43953805d3e14ec6624e22ee9a06",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_control_programs_installed.py": {
+      "blob": "6d2f3d953d132103412734a3f4e0b54ef4034dc7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_control_programs_installed_checkpoint.py": {
+      "blob": "b532e942db3be2a6a9f9920b21ba92a61b0b2146",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_controlled_fibre_modes.py": {
+      "blob": "464a6bd2618e4fb570f36e6f0e6c1bb035e4ac82",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_controlled_fibre_modes_checkpoint.py": {
+      "blob": "3e7e2b938a9590cd28989b16dbc2219537b71734",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_controlled_history_objectivity.py": {
+      "blob": "7ae5152fc76d6977f14a339d9fa7d2f0fba69bba",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_controlled_onset_protocol.py": {
+      "blob": "20cc8177ccea48050172030cc6c5a5495fc62fa8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_coupled_free_beam.py": {
+      "blob": "499cab611a33602affa50c1b9f2b1e943ce6587a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_coupled_modes.py": {
+      "blob": "f8a1dbd8bb25eaf757402a09ffde2e4d2021e8b8",
+      "rows": [
+        "P06",
+        "P22",
+        "P23",
+        "U10"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_curved_contrast_probe.py": {
+      "blob": "2550b2cf4204658f96a42da55f8c213eebd2087b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_linear_ritz_reference.py": {
+      "blob": "c4f8d84c12535bb1ee19decaffc992c972d25dca",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_moment_probe.py": {
+      "blob": "36ccc275354524db454c8a118065c35da8a3a9c6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_moment_reference.py": {
+      "blob": "38b1c63bb5585d1663d5acc4104a17798e0bdb17",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_moment_saved_evidence.py": {
+      "blob": "fac4553552229f894eb3af1df98e90c027c961d6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p4_closeout.py": {
+      "blob": "653ed92c4bb265b9f64f62563ebf7a02a74a3a42",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p4_formal_runner.py": {
+      "blob": "70826dd81c4fabf0e7d0173f311fbc2be501dd31",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p4_implementation_review.py": {
+      "blob": "dcc752725d7245a675bdb00fd69014e365842a43",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p4_preregistration.py": {
+      "blob": "b054558cba68ea0a6a11b962b2299d86ab2846c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p4_reference.py": {
+      "blob": "4d9203fc50ccbbf59788ea0535b7b432c3ab1805",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p4_scientific_executor.py": {
+      "blob": "ad86ed24c32123f9a043fa88881dce268acfddbb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_algebra_probe.py": {
+      "blob": "289b546d1e8f480ab4d05bae3b2d57ea3752a99e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_lateral_mode_reference.py": {
+      "blob": "aa0040aa3bc7cb19760d12732b336e6f4b5a2843",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_lateral_reference.py": {
+      "blob": "937b4115f0fdf51e8f3d37449816eea7c373337f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_onset32_extent.py": {
+      "blob": "b38149b4a574f51f45a02dc449084c46848f4376",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_onset32_wave.py": {
+      "blob": "3ab4bf705446293ada4373e0afd6ec897c1a3e2f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_onset_probe.py": {
+      "blob": "6f47a9d44d3bcbd2bd253cf190ba561e1bd91659",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_onset_wave.py": {
+      "blob": "654596b1edd773c1b3bd3b5dcfbc802e2ba30212",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_path_probe.py": {
+      "blob": "efc4a594180e25c4a9ecaebf37e07d5692a6e2de",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_reference.py": {
+      "blob": "560b6b8840800b1d45fd1b47813755738b97cd69",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_refinement_wave.py": {
+      "blob": "2e49e307a976377318c81edae43dcbebd0a42984",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_arch_stability_inspection.py": {
+      "blob": "29a6b3c58ae7bf2233436fe3e242bb99fb12c583",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_assembly_history_probe.py": {
+      "blob": "3faca27ad44246943bcb67f22fa3bc67f3112bad",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_assembly_restart_probe.py": {
+      "blob": "9c5897eb7f81ce6b6916678b08fd7c04f8a95624",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_centered_chord.py": {
+      "blob": "25a06b12e2ca21fc43ab4dbd1604bd3b158d2682",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_centered_chord32_closeout.py": {
+      "blob": "4cfdff7148b479fdec336de44d49ea4f04dbd284",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_centered_chord32_diagnostic.py": {
+      "blob": "6e5b159601f853232bbf9c9f8339f51a623e7492",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_chain_probe.py": {
+      "blob": "bc3ec77afa6553654761355126f22349e9e50ddb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_chord_cancellation_diagnostic.py": {
+      "blob": "eb3154ebcdf43b98c96e839c5c1162d285bc4779",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_chord_chart_probe.py": {
+      "blob": "f5180fddf7a5d2c75adb4bb5fbf1ee463a5bf1b0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_compensated32_closeout.py": {
+      "blob": "4c9a8c57bf68604be6cd6854502c52327abbbd58",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_compensated32_diagnostic.py": {
+      "blob": "c876fd479e68c2f96b70106b9983ddb2238974e3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_compensated_assembly.py": {
+      "blob": "9aeebd1c767289daaa49761c315ddaa1cf5d9908",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_compensated_mixed.py": {
+      "blob": "e7ce6b2d79b693a9f926b8d308d55be4c439dcc8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_compensated_onset.py": {
+      "blob": "9afa25bb53ed11f3e6ec5a292ba6f3a58141f631",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_compensated_onset_closeout.py": {
+      "blob": "72a68824cd3c476919adfb2af8eb2b753c2422ac",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_conservative_path_probe.py": {
+      "blob": "29c88dcb0e8f0e5cb39dfb9d656021813de74fed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_continuation_probe.py": {
+      "blob": "3b31775d1ad391350fe0ff0b536d22d660259a1b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_continuum_history_reference.py": {
+      "blob": "dbd3c8eac9f70a48aac57242cbd9e40288d9c97f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_continuum_probe.py": {
+      "blob": "5986b458ed311d8ab7dc0a74fdc60c950b5b9157",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_control32_diagnostic.py": {
+      "blob": "271cfe633254df87a34c0259a9b22b50cb4e9b36",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_control_observation.py": {
+      "blob": "b08458c0fe3ee4d97065fb46aec0f3a084596aed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_coordinate_checkpoint.py": {
+      "blob": "3d31edc38c79f4907c19568d9c5eaa28b07c0e3c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_coordinate_installed.py": {
+      "blob": "7dc04d5862dbce50ef1fadd8a6e02605d36cb675",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_coordinate_state.py": {
+      "blob": "c3699268b7d2df62ed86619d96e2009253c00251",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_directional_probe.py": {
+      "blob": "c8d50bf3ab449978b39713ec75992312ba5fb535",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_displacement_control_probe.py": {
+      "blob": "9334825d8ca7992a580f319aa7f0dcf72fc08eae",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_dynamic_assembly_probe.py": {
+      "blob": "d5096783e0a98ff7f649395f729e6d795b6a6daf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_dynamic_restart_probe.py": {
+      "blob": "9d9a74bc17fef958271d6afb6445f1f270420cef",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_energy_seed_probe.py": {
+      "blob": "9f6956574996f632f09034984cf06930b37d10f2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_factor_probe.py": {
+      "blob": "7a42d50b90254a107b525a11b980b8187ab16239",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_failure_snapshot.py": {
+      "blob": "3ef3495aaeca176df2fb525c82d4d5d7ff70554c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_finite_inertia_probe.py": {
+      "blob": "08075b8aca6b3e741f287601b4b9142d7a14baa7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_finite_path_probe.py": {
+      "blob": "137d484d7130e7612f4b814e81f997a1574b5e8c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_finite_probe.py": {
+      "blob": "d3fcd740886235c77a50231349130d27ba28eb46",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_flexibility_probe.py": {
+      "blob": "383fc50e871fa83455adfccda967383b746cb2d2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_force_accuracy32_diagnostic.py": {
+      "blob": "4130a675cd855b035094619433a9a30d15c6fa56",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_force_accurate_assembly.py": {
+      "blob": "93a5cf33d5dd5efed53e21fda2f72a582fccea91",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_history_path_probe.py": {
+      "blob": "446e470113649a07c47008ce599aa6c73b1f56fa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_implicit_dynamics_probe.py": {
+      "blob": "431ab07066333a1b6d4ef0fa690a11b5330e41c1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_initial_conditions_probe.py": {
+      "blob": "e2379da1ed5a5e5299e0db13790e7f9112100ac0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_installed_candidate.py": {
+      "blob": "9a11b9e1a6068c2bf4947d1d88b6010bb3d61113",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_local_force_accuracy.py": {
+      "blob": "67207a3d4aa59a4757cc3ed595dc1b5d41b6a6a4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_local_residual_diagnostic.py": {
+      "blob": "95319af75ea56ce39ed7e47d2f95abb0c11687b4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_local_trace_probe.py": {
+      "blob": "a08f6ef9454310f65973787b8797d608240ef601",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_mass_probe.py": {
+      "blob": "facd9a678b9f62a0b82d539eff71663daa8e7e71",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_midpoint_dynamics_probe.py": {
+      "blob": "31eeaa79e2bdb1b6ad3ffc5e5106c6df4b6bb4d7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_modal_chain_probe.py": {
+      "blob": "3f83d678646bbc227d2bd1c6a4a18563b3038b70",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_chart_probe.py": {
+      "blob": "b7235a559d0a3c798618e410c19185de9507dcb4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_committed_modal.py": {
+      "blob": "0165a1d2add194c74f0ed8eb0b8216cdcafd3c16",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_controls.py": {
+      "blob": "12b42bb9d39962aa707a3fb4f0cfab6e593c34cc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_coordinate_diagnostic.py": {
+      "blob": "c57868ffd1073744a50fc0630338b1ce62a132a4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_driver_probe.py": {
+      "blob": "f1260cdd2e8a1f35885b62945a8a64c1b6fcc1ed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_material_probe.py": {
+      "blob": "7c8a58116c656b0d536471a0db0830d8c9adbc3b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_modal.py": {
+      "blob": "3422a793a5eb626af9a7c10ec21ae9719a68fcb9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_native_restart_recovery.py": {
+      "blob": "2fe5bed825c0711d952d4302fb6bfc14835358f7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_nonlinear_continuum_reference.py": {
+      "blob": "bf103567acb08b7bd9e54a7ed9f0d8b41a6aed45",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_nonlinear_mixed_probe.py": {
+      "blob": "cd65e4a699e0e1b5160df9c0b2471bc249ed677f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_nonlinear_time_comparison.py": {
+      "blob": "b82ddfbcdee44361489474ce6817e213dfc59869",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_package_candidate.py": {
+      "blob": "2fa961b2399d7f74e06372cf512e8eab36471bad",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_package_checkpoint.py": {
+      "blob": "954259dbda674f0b783cafb89a48b6eb19de5471",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_postcritical_reference.py": {
+      "blob": "3cf84d1c4a2b5b3c075c5ebe46705289cb3facd4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_prestress_probe.py": {
+      "blob": "849d661e9e0f13a6826fac7bcbefcdf6eed5221e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_refinement_wave.py": {
+      "blob": "9d6c5d87924cb5be154507bb78498091aff53f7b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_restart_probe.py": {
+      "blob": "9dcc5418ff91367e46c1c40b53c38bb9768cd91e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_retained_response_probe.py": {
+      "blob": "e05a2bf5cc8d427d375517f6d95f875171659ede",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_saved_force_precision.py": {
+      "blob": "8dfd3f3a11f4658118ac0cb74b9aca21662d9ac2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_section_probe.py": {
+      "blob": "864af5ffdf96647003b0a678ac08bbbdb033dc4c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_seeded_equilibrium_probe.py": {
+      "blob": "5807dd61064dfd6d196033dc19803c71fa5eb1de",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_spin_split_probe.py": {
+      "blob": "5ff4709b9a0f732b15c23d40e8b01158ba7dd01d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_p5_temporal_accuracy.py": {
+      "blob": "e115cffac1e8cb5c5d718842c3f7343b638f19c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_reference_modes_probe.py": {
+      "blob": "baa9e255fd9518ac49ff347c38fd03551abc0439",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_curved_spectra_saved_evidence.py": {
+      "blob": "711049fbf07820a20a78db95b9bd4dbfe9650b88",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_dead_line_comparison.py": {
+      "blob": "5b916a2a66c7645092ad946f126a66fdcbbf77c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_dead_line_reference.py": {
+      "blob": "67f3cc975ab0f35502346b5d7b8fb0e9fec1de21",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_dead_line_saved.py": {
+      "blob": "142e015fb8bfa727d35b8e37ebc8a5b48f952400",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_decimal_cell_force_audit.py": {
+      "blob": "a42eec58bd8248c1074accc0e7714e554bfd53d1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_decimal_factor_audit.py": {
+      "blob": "c51123327c6bbadc14cd929b9202f340f94f4cb9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_decimal_inertia_audit.py": {
+      "blob": "31a75cbe6c77c9ff380a37cecc96dc765807f6b2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_decimal_mode_audit.py": {
+      "blob": "636fa434cb2b2f48a873d937e2a7e380557d9de8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_decimal_signed_chain_audit.py": {
+      "blob": "b7016ebfce83ab5efb0d0b21f99cdf35ede2796b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_displacement_program.py": {
+      "blob": "318bdf9269407d37253d873756b22121529e645c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_displacement_program_checkpoint.py": {
+      "blob": "dcb29c2fe04a6a7b6acb09e0ebc6948d2a83b5b2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_durable_coupled.py": {
+      "blob": "5859cf3c393f50ba7fbbfcd65ffc98503525be53",
+      "rows": [
+        "P18",
+        "P28"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_dyadic_sign_saved.py": {
+      "blob": "a8cd7bc2d9ec132a807ec9f21bb74641bad3240f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_elastic_seed_continuation.py": {
+      "blob": "14a5c1fda1e92377b5d0abe71d2ca71b1ed5571f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_equilibrium_line_program.py": {
+      "blob": "94647ccd988f77d721f6294ec2559525dc759622",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_equilibrium_multielement.py": {
+      "blob": "e785e9618258c3031218551e7461e2fd51cfd007",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_equilibrium_schur_solver.py": {
+      "blob": "195592e870d4f1b5e71c7212133a4e3edb939c2b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_exact_negative_work.py": {
+      "blob": "f2c9b8a75c7a0146fd6d83350df50606505eee79",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_factor_chain_installed_checkpoint.py": {
+      "blob": "773cf284dd58aa8d459f58d933df92cd0ac5728b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_factor_chain_modes_installed.py": {
+      "blob": "cfc56ab8f6dc6cf7f029368f17db666de990474a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_factor_chain_native_modes.py": {
+      "blob": "910d3cdda95501708daa838fa74f9de0a6d9426b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_arch_comparison.py": {
+      "blob": "74f833d88a6c6d1e397a95f2087c4b9520920846",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_arch_probe.py": {
+      "blob": "b5bf6d2c72637e1ff08296e3249ba0fd763c286a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_arch_refinement.py": {
+      "blob": "995769e0b528fe3a6e8905f9653bb03ab8c2105a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_arch_six_probe.py": {
+      "blob": "416141a3e16b793a2fa5b0d8b59e23b7b65cc13b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_cell.py": {
+      "blob": "78e3a6c1751c8335b7bc6f5975fe47c4cc24a878",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_cell_checkpoint.py": {
+      "blob": "51987163256ddcd3f7067cba0c48233af23619b2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_control_checkpoint.py": {
+      "blob": "ec4a1e6485fbc3ea6a0e1a20e462a95bf21b99c6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_dense_admission.py": {
+      "blob": "dca3dd5e46fd46c0c9932afed61905b287827362",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_distributed_couples.py": {
+      "blob": "73d167efd586ed2a3f1d166c927ffb353c84eaee",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_force_modal_connected.py": {
+      "blob": "962f7acb6a2d5ed7dbfe74182cc436a550a84b8c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_kinematic_cell.py": {
+      "blob": "230d514b04f81f3efd87ab7bdef7f5f5496d678d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_line_program.py": {
+      "blob": "a1ca35e815784a5c3284abc5de93bfee321042f0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_modes_checkpoint.py": {
+      "blob": "dbc203ac8a82ce8837b081b1beb28acd275279c3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_schur_solver.py": {
+      "blob": "5c6dfa6088bf42fb0a4c4652a4602e65a61c23e8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_section.py": {
+      "blob": "e0897056dc8f678b68789fe99876b7c9192d1b98",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_section_checkpoint.py": {
+      "blob": "ef48ca4c63b6172a6fdf1510021fe8a4aa6f9119",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fibre_static_boundary.py": {
+      "blob": "3c14b218e8931a3a6e64c0adfdacdf565263e623",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fine_onset_protocol.py": {
+      "blob": "6e7ce49c3d8df73186791fa8e8530b96329092ed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_fine_upper_protocol.py": {
+      "blob": "065aca88e2b917c0903a0f78b56aab4250be2bdc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_first_force_step_audit.py": {
+      "blob": "573bce8956940129800a192c5559821f780f373e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_force_program_checkpoint.py": {
+      "blob": "cff107697e20747de5d1c957a8edf06050a533bb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_force_program_installed.py": {
+      "blob": "bb4637f25980d7c8b220d87ad9dbddaa24a875f0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_force_program_installed_checkpoint.py": {
+      "blob": "296be146c5cbe100fc94e3c53c944eddba8454c3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_front_aware_inertia.py": {
+      "blob": "2eb4400a6da7d5327f1b2abfb31632e067505cac",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_full_resultant_force_probe.py": {
+      "blob": "064e4a91653b1327e483bcef3e70ac6e04831913",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_full_resultant_legendre_probe.py": {
+      "blob": "6f9ddd5a1fa73aa8df968cc15ad576d1fd176933",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_cell.py": {
+      "blob": "04225a6b36846ce151744634ee3e5618bd80a89f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_ellipsoid_section.py": {
+      "blob": "ccc5a9b4bb5c9aa0a682cc578dc0610056c1e510",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_energy_slenderness.py": {
+      "blob": "88189634f592a6408751a673fcc05367c1c953c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_factor_modal.py": {
+      "blob": "509133ffdaff3847d13763f1225edcf0420b14f6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_force_conditioning.py": {
+      "blob": "a774e3b6f134c4f9002d1afa49b14a19853fe6f1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_owned_current_modes.py": {
+      "blob": "bb9c8fe3901c30e3527bb63dd3adac12cdef28f9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_paired_modal.py": {
+      "blob": "81a5b7a3ce82d2d995d80e05333d95629b3e6dd2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_generalized_slenderness_diagnostic.py": {
+      "blob": "bc8725a92afef71b8d8d5e4b19b167ca2c731cd1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_high_contrast_force_diagnostic.py": {
+      "blob": "3a1ac892ceaa52d8be173e6a173d928816d1b57b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_integration_boundary_audit.py": {
+      "blob": "e1c0744c7f06c64e0fb648e0762e889809022965",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_internal_residual_secant.py": {
+      "blob": "8e122d30bc152e3120cd7e8eb7a845887e0bde16",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_kinematic_fibre_checkpoint.py": {
+      "blob": "a5e84de97377a4804ebbc31e0401abfa68d54294",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_large_modal_archive.py": {
+      "blob": "1b1982ab742131f761a54c1d62392029affddaa3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_large_modal_ownership.py": {
+      "blob": "1cf55eeab065b11737951e9f2390441540148e14",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_line_fibre_modes.py": {
+      "blob": "748501bd46a540fc7bed7a04004cf5494a6e8ffe",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_line_modal_comparison.py": {
+      "blob": "e3085d7f34fbb5931ebdd09322a898d65ed08861",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_line_modal_reference.py": {
+      "blob": "9419beeb7126b888102978b832058557bd2b688b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_line_modal_saved.py": {
+      "blob": "37b99bbeebeaacf5ba200da2b805e51e5e52db9d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_load_program.py": {
+      "blob": "f17c98e05b1a8e652ca64e33eb3090380c441c15",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_arch_refinement.py": {
+      "blob": "e03d3682b385bf7230d09e42c838c97542f95a0a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_arch_spectra_probe.py": {
+      "blob": "64fb5471add77d5ac1a1ba76ff38e2efd9d6f7a1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_factor_split_probe.py": {
+      "blob": "5f091bba7e7a05674aada0b618da8869e698cf39",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_modal.py": {
+      "blob": "e57bc31829be1badfd7dd570cf23f6b346b345c2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_modal_checkpoint.py": {
+      "blob": "4641193cdd0a4e91af2c578b5a2123411c67004e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_refinement_protocol.py": {
+      "blob": "7c4d29308416392cd540c131ce93d628fe13bf74",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_ritz_reference.py": {
+      "blob": "18aaf93ba8d57d7293e54afb5a82b4085a2ade1d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_six_saved.py": {
+      "blob": "d953f9e78360513df1107601a8287ab4c40f33af",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_spectra_saved.py": {
+      "blob": "5b36f1b2d3e9b73750bd9ca56e9cb9c05c732363",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_twelve_preparation.py": {
+      "blob": "59e27318a72f0c22296511d8588a8d88c584f7b0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_loaded_twelve_saved.py": {
+      "blob": "fed04d8ce1377469dda0990df9412ef9a846dd4b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_local_force_linear_audit.py": {
+      "blob": "b756e93315ab36721c1abbc02ef75654b638ccf1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_authority_runner.py": {
+      "blob": "31c0cc0f6aa97080a1c53ef817ae6c6740cf4d2f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_core.py": {
+      "blob": "c6e4006a6e9d799a1c3da5f58d7f53bcb20e2283",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_exact_reference.py": {
+      "blob": "b56dd3fa1d87fe0e2aca3035fc1ce756aa44f326",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_finite_gate.py": {
+      "blob": "27f49ba68197888b0d13b703ac081c0fc692a8e7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_formal_closeout.py": {
+      "blob": "85a2e3becbc7821d25f2e9fde4a9e392c8a0f532",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_formal_runner.py": {
+      "blob": "9c7d9cb00b297262fc379a38ffb88c9d7b483f1c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_independent_checker.py": {
+      "blob": "5a9769f27f9ee99faafba3bffccdd74cda7fa19a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_formal_checker.py": {
+      "blob": "edb1ab2d54096e322d9edbf2dfbf49c5d0cba960",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_formal_closeout.py": {
+      "blob": "5d48e27d6955da153960156179dc473c7bc36aa0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_formal_producer.py": {
+      "blob": "f5611626fd78e67afa85a935e03e8cce0752256b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_formal_runner.py": {
+      "blob": "5bc553b5a879f1681a29986f783615a50e6fb2fa",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_load_mass_recovery.py": {
+      "blob": "a1fbddc7cf74f9f3394bb40f8661b1e0597b2754",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_modal_buckling.py": {
+      "blob": "c46d38819e3b1a5ff3cced1730bffc8e276521e5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_preregistration.py": {
+      "blob": "7d7dd7816ee9fab56767051a92efe35a404e679e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_recovery_correction.py": {
+      "blob": "dd2f9e7e4584dc3feaa1a098d890eb15f77bb499",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_solver_chart.py": {
+      "blob": "21d0f7e3a6252b30422df882e88164f1669f3fdd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p2_state_restart.py": {
+      "blob": "56923e9f4391a2ff119f1b04db0f3a50b6bbba67",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p3_formal_closeout.py": {
+      "blob": "2bf3eea0d122524b894b3a22f0c232d776603909",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p3_formal_executor.py": {
+      "blob": "dbfe5a53ee85d723e8f72136a42c9efe95c427a2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p3_optin.py": {
+      "blob": "e977cce3823fd39b5558dd5da571c8a6866aac58",
+      "rows": [
+        "P01",
+        "P03"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_mixed_p3_package.py": {
+      "blob": "471a4f5af4336d9327973e55421c488f39ad04c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p3_performance.py": {
+      "blob": "508d393cd5077ba5ccad288e82ac30a2f943badf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_mixed_p3_preregistration.py": {
+      "blob": "4a8580698f4e1dd00ea7e86ad61a4e7762a4d792",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_modal_work_diagnostic.py": {
+      "blob": "d5bcec9c3b1bdfa7903b59b2e6d7b4d8186daa54",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_moment_recovery_audit.py": {
+      "blob": "45ef6e91c49aa92439d8cab4da557b8b76e188d7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_n32_branch_continuation.py": {
+      "blob": "5d8ce9bf28fce41c02bd960ddcc6ae4b40c69d03",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_n32_inertia.py": {
+      "blob": "0eb8b344c13a4aaab072b701bf9d5c6fc37909f0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_n32_owned_capture.py": {
+      "blob": "5953eb8699d495e82a21257d8095355b7c12f45f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_n32_refinement_capacity.py": {
+      "blob": "2d9d132584192f95c62e7f26ad8ddcc602405dab",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_n32_snapshot_capture.py": {
+      "blob": "e3fe1631c3504f0066af0d1be8e20af3e5cf0ee4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_n32_spectrum.py": {
+      "blob": "1da86bbd0456e32152a592ee5f1da54ef95f95f4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_analysis.py": {
+      "blob": "a76b795badbf9c50d580af2b3b611009f8559bd2",
+      "rows": [
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P16",
+        "P17",
+        "P20",
+        "P21",
+        "P22",
+        "P24",
+        "P26",
+        "P27",
+        "P29",
+        "U03"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_arc.py": {
+      "blob": "f6d8525864d0b999ef3de360b9eeb3c3495952f1",
+      "rows": [
+        "P17",
+        "P32"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_arc_adaptive.py": {
+      "blob": "b8769c73123df6d827e552325befb84be4353fe8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_arc_safety.py": {
+      "blob": "9f659f25e7fb433e95c85446269b326469405aae",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_arc_source.py": {
+      "blob": "a4b48e19fc6da021491700fea84e708f62650f4d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_buckling.py": {
+      "blob": "b8ee1d3c6307032a43d564de981f16730ab45bb1",
+      "rows": [
+        "P23"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_combined_couples.py": {
+      "blob": "a7e7578d89fffed8e34d49c3b63b1554f74e53d5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_combined_restart.py": {
+      "blob": "807c66f36055504003764a076e24eb2f82b17a8c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_continuum_frequencies.py": {
+      "blob": "e21957075d37e6ec067acdd13c9243dcecc914cc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_definition.py": {
+      "blob": "b55d154ee4bb4e7ceb2ebe1b575701475e4e50be",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_delivery_gate.py": {
+      "blob": "476117178885b659ca19411c8c832ddecb4420c3",
+      "rows": [
+        "P30",
+        "U07"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_directional_work.py": {
+      "blob": "4aad1b2dda7bdccc4778011e0b9e3506741a0bd7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_distributed.py": {
+      "blob": "5cf71c7504fae59ec96c43d6a06c5834abe5ba4c",
+      "rows": [
+        "P11",
+        "P12"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_distributed_restart.py": {
+      "blob": "d1c1ce63b6a78ccc3b2dbec3edf5173d2274407d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_fibre_connected_restart.py": {
+      "blob": "63712176955606a82610efecc43ca89b02d11215",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_fibre_current_modal.py": {
+      "blob": "17a24cc5213c8251f0f0a39327e495583f06ce91",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_fibre_restart.py": {
+      "blob": "344c34c996e953abf36e13d57ac5a80a38aa0bc3",
+      "rows": [
+        "P15"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_fibre_static_element.py": {
+      "blob": "115c992ba149dc1b3dc8fa33ccda46feea310308",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_force_adaptation.py": {
+      "blob": "0ede9a3e8c9c1e2d309b1ee429bea3e0570a734c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_generalized.py": {
+      "blob": "28dc0786fb7308c798bc35c71d74dc01847643af",
+      "rows": [
+        "P05",
+        "U02"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_generalized_combined_couples.py": {
+      "blob": "e615edf04f6b7fd2e71d975f0421196833230107",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_generalized_combined_restart.py": {
+      "blob": "49b44f737739e2df1cfee7b0f49326d34fa157ba",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_generalized_modal.py": {
+      "blob": "50c8d85a11fd1332ab3706bb2e48f475b8cfa067",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_generalized_parameter.py": {
+      "blob": "1f17a1c49b4163cd34b54024149606b1e1ee8e48",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_generalized_restart.py": {
+      "blob": "ff8b3c5e7c375ff6bb0770e974b46fadeedb4ee5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_history_profile.py": {
+      "blob": "d0bc67c0ccfe8ee580c378077c76c83685bbecb5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_line_loading.py": {
+      "blob": "b3ac0bf94c5c6d1dd2a1963ac174ff0180f8e98e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_line_program.py": {
+      "blob": "65893e1a84a220aa30adc36509b4ef238b1927da",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_line_restart.py": {
+      "blob": "9cea7b629834167ef99f49d7b0e3ab4a5df1e745",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_linear_route.py": {
+      "blob": "5449b3662f2534254c04ecc92091ef3855226dbf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_load_admission.py": {
+      "blob": "c4af758f372b399dcca02981ec67687f9e712d10",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_load_checkpoint.py": {
+      "blob": "80a945378631b1dd9cb4a68d9e24ebf1176cbecb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_load_state.py": {
+      "blob": "53d12db6f6531273d4cb81000837ba1689b882d7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_modal_groups.py": {
+      "blob": "a1c1fc97968074be765d26436a489949d532b6ca",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_plastic_checkpoint.py": {
+      "blob": "c4f9c3b2fd88110cbde51f735c3e1140da58b56a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_prestress_engineering.py": {
+      "blob": "a887f4ea23c83eb1a7194b21db2fdecad5eb35d1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_spatial_couples.py": {
+      "blob": "de87a20b23ed05f38735b5ce6bc6fddcfd69841f",
+      "rows": [
+        "P12"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_native_spatial_restart.py": {
+      "blob": "7745a81623221efc4a65558d6e4c2b9274d40450",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_spectral_prestress.py": {
+      "blob": "abbffadddcbc7dbb5615b8cc335e180428722c82",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_translation.py": {
+      "blob": "1d4beffd540fdef19e64a0c45ea40da41d89fcd2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_translation_safety.py": {
+      "blob": "9cb725fb664a2c995ed11036c45dd33bc97e57dc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_native_uniform_arch.py": {
+      "blob": "a016845b729c5695804e7f16fa27db9daa39c680",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_next_spatial_native.py": {
+      "blob": "b4d8820a22f20901003a1250aaab1b867beb93ed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_operator_validation_scope.py": {
+      "blob": "ce8d4900e5fd45494221db7879a5561440f82de5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_owned_force_cancellation.py": {
+      "blob": "1038c0f98757dc0a090467949ddf5edfa5e52543",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_owned_reference_factor_modes.py": {
+      "blob": "a4d00ded8fcc893de5708d1cedb577eaa1d55478",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_paired_modal_consumers.py": {
+      "blob": "5a0ef2d59a1683e79c62865a3a3582ab869cc8dc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_paired_mode_experiment.py": {
+      "blob": "f4fb4c67f76c51fb46689b5ced01d8cb8b8c0164",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_paired_plastic_modal_probe.py": {
+      "blob": "ed23fdf1cc2a88a97de2a40515a38e9290a4f634",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_piecewise_physical_reference.py": {
+      "blob": "db53d3c494fee4a412f854fc6540de045c6f8e14",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_plastic_arc_audit.py": {
+      "blob": "76f077a91c927147d9990c0f63bc55b1d6973e18",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_plastic_arc_lifecycle_protocol.py": {
+      "blob": "13e645c9fb22002d8eb2e789f26e731e7e78ae6c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_plastic_cell_conjugate_probe.py": {
+      "blob": "972b39cbe4a33e90ac70b01ed2637ce331a24f9b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_plastic_modal_checkpoint.py": {
+      "blob": "5e0ec2d9bdee4d3d737af4737c1c1b8d452612e4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_plastic_state_checkpoint.py": {
+      "blob": "0e6adafe24c4a2b904481c1d8d688fc4000797ce",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_pose_joint.py": {
+      "blob": "49b563dff036071e7cd38a88c04882ea0e583bdc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_precise_continuation.py": {
+      "blob": "3fe64bee7e09bb833c0b69c105ab947b3f9b5c18",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_precise_geometric_work.py": {
+      "blob": "8bf8f5d9f77ce62470ef51bf40d10fdf102efc73",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_precise_work_enrollment.py": {
+      "blob": "d6b47d7e0c5812eba2a1298fb82fbef970ec30c4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_preserved_adaptive_arch.py": {
+      "blob": "de68901755b60129e186a27acdf8f7ebd1badc5a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_preserved_arch_load_comparison.py": {
+      "blob": "212c3e1355da32c42ff42a0ea9be3c23b15102e2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_public_workflows.py": {
+      "blob": "6e5994ce7a35151e5e52ee3dedad1b9d742116e0",
+      "rows": [
+        "P01",
+        "P02",
+        "P04",
+        "P10",
+        "P13",
+        "P14",
+        "P18",
+        "P19",
+        "P25",
+        "P28",
+        "P31",
+        "U01",
+        "U05",
+        "U09"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_ge_beam3_reassembled_installed_failure_checkpoint.py": {
+      "blob": "0e2c95a6effa8bf3d351c736bf03d33e765f6525",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reassembled_modes_checkpoint.py": {
+      "blob": "a8f4ee7d613926f96f94d3445258722c1cf7f930",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reassembled_modes_installed.py": {
+      "blob": "51f195080256ff2fab0b2ebac57997aa47bbf6cf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reassembled_native_modes.py": {
+      "blob": "72346eb9dd8a68a51db1702f0e915d3c68a803f2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reassembled_spectrum_probe.py": {
+      "blob": "04ebd6a07bb917d807467ad6dc40bd59f7adfd91",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reassembly_factor_covariance_audit.py": {
+      "blob": "b0698ae6e263e70f6ce0fde6d2ab6af0541de793",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reference_determinant_cache.py": {
+      "blob": "c1c3dc13c86eb32e8c8ca5ac0dc9f4f6f4adf732",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reference_factor_spectrum_checkpoint.py": {
+      "blob": "8d8857c45dc55774c038d1b272d38ae484583c0c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_reference_identity.py": {
+      "blob": "fe130d95a6095b5e0630f6aad52bdc875f355ea0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_relative_reference_spectrum_checkpoint.py": {
+      "blob": "ee1122e0a96a2761f3c2276524e968b2bfb3cc00",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_relative_spectrum_engineering.py": {
+      "blob": "df926001e83684c1c9831fdef70d731a43ad94eb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_relative_spectrum_installed.py": {
+      "blob": "741ecc7d044383891e591fa702167d2942dcfb6b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_relative_spectrum_installed_checkpoint.py": {
+      "blob": "1b16befaa77769f771c73e0b3e8aca789afdffc8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_relative_svd_probe.py": {
+      "blob": "16c1727468df76934e4377eff91dd716fd350e7f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_relative_virgin_reference_modes.py": {
+      "blob": "93ce9ca7634eb0503f4208843ebe6fd302b97e8f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_arc.py": {
+      "blob": "93857c3728b5b6302c123ad320b5ebc6f433dc2b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_arc_modal.py": {
+      "blob": "61bf7b85e603355276d36433409938f7bbcab208",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_arch.py": {
+      "blob": "eb54d5401414088c4bb42e3a3baaa838e0dc2c6f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_arch_loaded.py": {
+      "blob": "5d45a8363e23c6725ac5a30370ad16cb33302dbf",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_arch_point_wave.py": {
+      "blob": "cae041e72cc60e775fb24df02de4c6aa84311309",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_fibre.py": {
+      "blob": "284ce1051761caac571bf07c83f91f8e30e0cdec",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_fibre_checkpoint.py": {
+      "blob": "0bbdc3b11b773507857851aec273be3c2d047783",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_fibre_control.py": {
+      "blob": "2198e9ce83e0db56d27085a320ad8d286f24d00e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_fibre_modal.py": {
+      "blob": "c17c5f3afa7f256bea0e3205a48784c5fdeffb79",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_fibre_modes.py": {
+      "blob": "e2b418ea4b4650c70d751ef2d7dd87a2460fc4f8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_fibre_state.py": {
+      "blob": "7be6cf8736566577330bcf98780eeb88bb5f9249",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_force_state.py": {
+      "blob": "2a1545c4fce21a69289e83ae87b63c55e73a7542",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_generalized_force_probe.py": {
+      "blob": "52b46e8440eacfc68dd2b0b8f38903f796cebb70",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_generalized_modal.py": {
+      "blob": "d1582a6db573c355c8a6bc380c841fe121523bed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_generalized_ownership.py": {
+      "blob": "5924ce250f3e947ddfe8d69cfac71c72cbafc823",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_generalized_state.py": {
+      "blob": "1799ea26c84884d5a408521b0c68e67b9c6813c3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_guard_cost.py": {
+      "blob": "84143033053eadabe7463956a35985f0b0104e21",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_nodal_loading.py": {
+      "blob": "7642cd27cb5625ec49563a38baad720efd4fcfbd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_plastic.py": {
+      "blob": "30066fe08ac9ec38a6398daab50c577f7ebbce24",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_plastic_force_probe.py": {
+      "blob": "4d60ecb71d82e1b9bbf7c4f4ca195ca347b41c57",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_plastic_modes.py": {
+      "blob": "2625fcfc850bd17efa16846b7c0bc0540bbeb251",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_plastic_state.py": {
+      "blob": "6b55222ea8ca1b77f9bd0812bcbfe744eab38766",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_post_plastic_modal.py": {
+      "blob": "fab3a6a43ba47011825d105cd8c684df9cabd03f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_prestress.py": {
+      "blob": "feaa96c7faa070fdda3fb72c2efc022e13a4e405",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_prestress_wave.py": {
+      "blob": "0e9d5a8f739d117e2ac9006d2e8a16bf59d1281e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_recovery_objectivity.py": {
+      "blob": "d5bb4c4604ebea6974642b4909f797b072c1e11e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_refinement_capacity.py": {
+      "blob": "a10a240902e8e15d2d8bd3fedb1b9abff660a625",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_resultant_checkpoint.py": {
+      "blob": "55f0561037e6d1f4f869fe6364b6d2683878cfd5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_state_checkpoint.py": {
+      "blob": "3df56b8af89c62cb086dc9ddef736f2408cb8b32",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_translation_control.py": {
+      "blob": "9cd5619ed5f8b25a9d8de8aed5cd3296857b3be4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_retained_translation_modal.py": {
+      "blob": "37fffadb373472a047ba71a5e7fde885a0e0661a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_returned_mode_capture.py": {
+      "blob": "d937f5ecf16189c5c476eb15b53b865633735524",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_saved_arc_stability_intervals.py": {
+      "blob": "bc172a284a06690d247bc21fa067068c3fb4e75e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_saved_continuum_lateral_comparison.py": {
+      "blob": "785b8e0161fd072c245f7d0f97c8f7e5bb580bc0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_saved_pencil_reproduction.py": {
+      "blob": "b968404858a30fee0c7de04e80cf24ab0548adbe",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_saved_signed_rayleigh.py": {
+      "blob": "46591c18070e38839a5526175010d70b37817448",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_scaled_front_inertia.py": {
+      "blob": "5d94fb37a7c5a4efcbc3b8f0167a6bd0d1963ab9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_schur_line_program.py": {
+      "blob": "f6beced293911430dfe0ec017f563e836005e303",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_seeded_development_checkpoint.py": {
+      "blob": "746aa4617dbadb3c951e0400d6ede6ec115eb6c3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_seeded_fibre_control.py": {
+      "blob": "38f7f2c013cff3b29b83f5a42300bcccdb647a97",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_seeded_load_program.py": {
+      "blob": "08569541a5b87317550b5de0ceb235cddc8b8c16",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_seeded_numerics.py": {
+      "blob": "f70740d24572882d2169d299c412ff7227f5ab45",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_seeded_reduction_diagnostic.py": {
+      "blob": "818e3f6624fa36d059fb25a70eccd5a4a8253638",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_shell_joint_state.py": {
+      "blob": "3e089126354bcb1097678ba2307e669d7b401b7f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_shell_joint_trial.py": {
+      "blob": "375d0632e9538d94f88633f7b7e279010dd7454d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_lifecycle.py": {
+      "blob": "b4d0261f921d1c9061cb1733fbaba4758ac54524",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_loaded_modes.py": {
+      "blob": "63f66d640dba2a35fc3fabe0c0826c41d92eaa7f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_loaded_spectrum.py": {
+      "blob": "e8a358aa7358b40b6e3c424664aa1d05a2f8db97",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_mode_shapes.py": {
+      "blob": "67f2667f2bf241d5758b9b790b30c754f4be3e2f",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_modes_checkpoint.py": {
+      "blob": "72d2a699508417de79d1a387c1b7e844ad74d09d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_modes_installed.py": {
+      "blob": "b0ab092a7f971257f4b8d0ea1be2ec8ad7599ea9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_modes_installed_checkpoint.py": {
+      "blob": "f3859b698bf0f8d6e9a8fe7bed12494720fba30e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_spectrum_checkpoint.py": {
+      "blob": "167e3f0a7386d4a3cd25b133deeeaf0f558c09b7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_signed_spectrum_probe.py": {
+      "blob": "7be76bda401b52ff250d0018fe48b7d6909c439e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_slender_spectrum_probe.py": {
+      "blob": "fe125a597e09c46ae1e999fab2a14702d924f95b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_continuum.py": {
+      "blob": "8ff8394c0365e7018beaf16387946a7e8e76e3f8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_energy_inertia.py": {
+      "blob": "14b1dc6cfa87e036a6878e366577a520dff5777d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_equilibrium_probe.py": {
+      "blob": "1e3999bf26a5b4cde891d882e71cfcf77270bd63",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_moment_probe.py": {
+      "blob": "c9037a07e80794012d476334bb72cb415888bc55",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_next_reference.py": {
+      "blob": "123a14e1b74c591271d235eff786cfa6fd000a9c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_nodal_moments.py": {
+      "blob": "6b47d7169b4a25b92daa2e73fdbcc0b8741c28c7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_physical_pencil.py": {
+      "blob": "5ada1b5ff894ba1376cf2848f4ab3cf45f882f9c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_physical_reference.py": {
+      "blob": "0ae7180fdc907131b8fba48a9e63c4abfc22ff2e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_refinement24.py": {
+      "blob": "c89900b5d39e23c49db9bf7dfe59377b27e695ca",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_second_variation.py": {
+      "blob": "2079963d3294a68600b399d520bc3b6c0b78ca1e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spatial_stability_factors.py": {
+      "blob": "98fefa4aa69caeeb64eebc2f03d6b8931ec16d74",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_spectral_allocation.py": {
+      "blob": "22bcbb95c6b03ec8d5fdcc6e6265970def088637",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_station_resultant_cell.py": {
+      "blob": "2919ea9c11fade91931e4305f631b1390479c3ac",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_station_resultant_checkpoint.py": {
+      "blob": "303e7c27b94d5de4089c10d401ad71e806e884c2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_straight_prestress_checkpoint.py": {
+      "blob": "83ce6ed67056cc44ba01e17ae7cd407151059351",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_straight_prestress_reference.py": {
+      "blob": "d26b5ca2b97924d39daf07c816d8cab676542c53",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_uniform_arch_eight.py": {
+      "blob": "ee2bd3d5b75e3f2477267adcdd79ebe4731ef4ba",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_uniform_arch_fields.py": {
+      "blob": "7e69403baf9b48cf5148d972e9974a03c4e1140b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_uniform_arch_peak.py": {
+      "blob": "da09bfc5997a4dcef2200a84cc2fa1fc8d38ca78",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_uniform_arch_reference.py": {
+      "blob": "fd0f8a9355aa27a7acd32a6ba1b03ef38adc0d53",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_uniform_arch_refinement.py": {
+      "blob": "82d5f29b83d4af59d07a991baac3a81acd830816",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_uniform_arch_sixteen.py": {
+      "blob": "d4d18a020d52b884220b18e4649d9ce782dac09a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_variational_shell.py": {
+      "blob": "6f2a94d0a5712e337f2c27e039b1207e87db5541",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_ge_beam3_virgin_reference_modes.py": {
+      "blob": "c8658a51fe405df188ed4deb16e69cb866c0aec6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_generalized_beam_sections.py": {
+      "blob": "3ebd765b39387060ba65f1d976f1ac9881c71fd9",
+      "rows": [
+        "P04",
+        "P20",
+        "P23",
+        "U02",
+        "U03",
+        "U05"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_generalized_section_api_workflows.py": {
+      "blob": "73e4b861df0598281da236510d9c721e8fbb96ea",
+      "rows": [
+        "P10",
+        "P31"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_generalized_section_mass_properties.py": {
+      "blob": "827a0e60a366023193a8ad305fca8c8db77db738",
+      "rows": [
+        "P06",
+        "P20",
+        "U05"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_generalized_shell_sections.py": {
+      "blob": "f199fd1aabc21d32ad5fee73583b9e37016194e0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_generalized_state_recovery.py": {
+      "blob": "c14cf4f5555dd345840684486d59621411fedbfb",
+      "rows": [
+        "P23"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_geometry_panel.py": {
+      "blob": "3fb373f649fab95522924ff8622086e6b4abfd0b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_hht_alpha.py": {
+      "blob": "0d0a8cafaa87206690a927fb1dbc1f81656232fc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_hill48_plane_stress_plasticity.py": {
+      "blob": "4d379b4e8db94dd7817db06828479a623a9bebe1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_impact_reduced_assembly.py": {
+      "blob": "deca0c911bc7c9fc499a72e3fd8fdd826dc40723",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_impact_tangent_reuse.py": {
+      "blob": "505e4894497d6c2d923bd6a107467fb9b89eba67",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_initial_fields_and_staged_history.py": {
+      "blob": "ef61e1a69aafb4ad0c6065a29ed654c5e8e29c1e",
+      "rows": [
+        "P16"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_license_compliance.py": {
+      "blob": "cba854392a72fda2df91b54f52e6f82676a276a1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_local_patch_transition.py": {
+      "blob": "e867d045337fe589be89bb814cfdf7a8f610cc74",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_material_history_recovery.py": {
+      "blob": "30e59c5b8c3552e2dfa5e0fe81e6269b311e38e5",
+      "rows": [
+        "P15",
+        "P19"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_mesh_load_bc_verification.py": {
+      "blob": "496c1eb9e0c02b0c68067d679b3f45da2083eddd",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_mesher_improvements.py": {
+      "blob": "a866d104d14a49b08c3667fcbf5f1baae1ae4f92",
+      "rows": [
+        "P28"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_mixed_shell_quadrature_grouping.py": {
+      "blob": "d71f7c61fbbfdf6395939fd2418b6b6742fac36e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_namespace_neutral_deepcopy.py": {
+      "blob": "b06942e274e6c380ca4a2a17e4ae01eba7d005ed",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_dyadic_interval_inertia.py": {
+      "blob": "209a68c324164ee8f9c9e3c69c2e3855f02230a7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_exact_shift_inertia.py": {
+      "blob": "6e5e7b661d727131c2e48896a164ec7d5bccec23",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_factor_chain_modes.py": {
+      "blob": "8aa5ba65d07e120d09c18fbb6c134dc6c60e2cf2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_fraction_free_inertia.py": {
+      "blob": "dbec6f320856dfad940e236e2f1e74a6265e0fe2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_large_factor_modal.py": {
+      "blob": "f301ecf8103ad5009e3a70756280415beb8d5ce5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_reassembled_factor_modes.py": {
+      "blob": "e0d1578a96f4e35574d3bfe749c97df2bdab12a2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_reference_factor_spectrum.py": {
+      "blob": "dc20f5b9f531a74b6262f07539e38678b7ab75b0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_rotation_state.py": {
+      "blob": "09eaab37c0efb94168c60171eee85761834f75eb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_native_signed_factor_modes.py": {
+      "blob": "df4eb342be065bf18dd0815b4284622758d61236",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nodal_stress_recovery.py": {
+      "blob": "ba45276535d777b87e63ef9c7993aee9ad1a6270",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_analysis_diagnostics.py": {
+      "blob": "50425499db42043f242f9f392b7a9b62dc464bff",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_impact_plasticity.py": {
+      "blob": "d2bf46d16bd2e07e8282be0c61a4044f3d46da0c",
+      "rows": [
+        "P25"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_nonlinear_performance.py": {
+      "blob": "401fcf32dcd4699f1d45ecd5fb75b4527a4de552",
+      "rows": [
+        "P30"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_nonlinear_performance_batch_b.py": {
+      "blob": "dafd1d71a93274ee97bef2de7e4f59cb4ac55e71",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_performance_batch_c.py": {
+      "blob": "77688a526ff765221a890735d64d9d2d51fe5c75",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_restart_checkpoint.py": {
+      "blob": "6e88ebf727a5ada365b921ef152de3a36ab03d3b",
+      "rows": [
+        "P17",
+        "P18"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_nonlinear_state_batches.py": {
+      "blob": "766e7b3d831ca9d6cf220ce4bf90666a0e86b617",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_state_cleanup.py": {
+      "blob": "3a72344686d1e27b5094f31dfa14dc95ffa71e00",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_state_lifecycle.py": {
+      "blob": "38182c0a89db491aa905cafcbdd0b51cf68f140a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_nonlinear_static_state_lifecycle.py": {
+      "blob": "5c2fb1e6f21a18eb831610563018baa79d13dae2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_orthotropic_elements.py": {
+      "blob": "9fbaa50a09c9e33e476fe98c9623a03d59d9ae64",
+      "rows": [
+        "P05"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_orthotropic_material_contract.py": {
+      "blob": "6430d65cad999e4419c5c02d3deed3cec0535a4c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_orthotropic_workflow_integration.py": {
+      "blob": "ac96674b4900cd0d729e57aa32c94f6c4bab9577",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_performance_improvements.py": {
+      "blob": "c7a36c3ae7c9eea1a0604fe1edc8d7125b04bc7d",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_phase2.py": {
+      "blob": "ec6580e09914360e419749cdb6cf9540b08ccb49",
+      "rows": [
+        "P09"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_plane_stress_analytical_tangent.py": {
+      "blob": "5ea676a5b8ffa4c0aeb6901deaa999efb88ed72b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_production_readiness.py": {
+      "blob": "d9a52d447c1f84119b390e2f811dd6bdcdf7bb5c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_production_validation.py": {
+      "blob": "739e25c1f0dee9f5d41d6b3437f842b644bd6b19",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_quadratic_beam_nonlinear.py": {
+      "blob": "4b690a0323865756ecedc0e1bcc7c5b202e2ae19",
+      "rows": [
+        "P01",
+        "P02",
+        "P13",
+        "P15",
+        "U01"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_qualified_assembly_exception_precedence.py": {
+      "blob": "a1589fc56fc4c91304632923d9151e15409e4fac",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_qualified_mutation_epoch.py": {
+      "blob": "6a297ad9c2dd9d5f14b9a27043a5accebaa4e4e7",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_qualified_q4_assembly_authority.py": {
+      "blob": "d7bfe821abb29fbfd20ef4f2d30e74d7710ca2eb",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_recovery_batches.py": {
+      "blob": "55bfe22b18dc3e2e433058db0c5a8df26527a445",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_recovery_qualification.py": {
+      "blob": "4170f0175723abc42c925b3c060c0c3940657171",
+      "rows": [
+        "P19"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_relative_reference_svd.py": {
+      "blob": "649e1ab815342638dd58042989a80d4f39d44176",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_release_043.py": {
+      "blob": "75b6e6e22b67a5f857084b9dbf8f15210735d947",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_runtime_api.py": {
+      "blob": "098c3bb3efe0b89aec66c6c1aac6f1a98f56f47c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s3_v2d_default_activation.py": {
+      "blob": "9f0e6e88def0e426b6478527cf9621f4625dac71",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_a_open_a1_rank.py": {
+      "blob": "997b9ea75154df7aac7474d5df67780c0f6587df",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_a_open_a2_inf_sup.py": {
+      "blob": "b7309363db08f214e7fe560fd82757b2db9d1a5a",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_a_open_qualification.py": {
+      "blob": "e843f68779f074e6a64f15392d7f441b5f073a2c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_c_quotient_exact.py": {
+      "blob": "83f2404027c3abe2871ce1920c6ba60501334673",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_c_quotient_qualification.py": {
+      "blob": "a2f750bf98a2184716f1a6fff3103c42c6edf120",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e0_closeout.py": {
+      "blob": "da39ad3e169c5f333ab18e9185dd900204490a0c",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e0_source_gate.py": {
+      "blob": "016bd2c0d9ba35475a05c36816eb9dd9c1ed3da3",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e1_a_exact_rank.py": {
+      "blob": "051580466a0c3dc12bffaa202108dd2e20ec5acc",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e1_a_qualification.py": {
+      "blob": "0153a5042dca64c5f4ac881cdcae8b24a9fc0822",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e1_closeout.py": {
+      "blob": "968177ac8734a367f33ff6be046373ca03b16773",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e1_r_exact_regularizer.py": {
+      "blob": "f0a74f2704ece3de1be13260fd41be9898470540",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_candidate_e1_r_qualification.py": {
+      "blob": "d31f3069c66ea409a2a5d4a5ec5518cf09c009a0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_director_field.py": {
+      "blob": "341960744ad626672ee827f007e12617cac446ef",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_drill_constraint_derivation.py": {
+      "blob": "8a92be6575441d1f70364324b15f75840128a5c5",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_e2_a_closeout.py": {
+      "blob": "8a13e04b8514c8e02d494e0890035eac349625d2",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_e2_a_exact_kinematics.py": {
+      "blob": "93a771d2e032ee0b880cff4445a2bd76e2ff6101",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_e2_a_qualification.py": {
+      "blob": "fad4396f6cd9095142d241964c1746f7379f89f9",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_eq21_eq25_reference.py": {
+      "blob": "9d50c0370c290aaeb22aa9ce8a501ade314c4d25",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_geometry_handoff.py": {
+      "blob": "05cd2e7d51ad1a07137d987dfd01ece668e47806",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_improved_qualification.py": {
+      "blob": "ce507ac8bd21904acdb31273dbe8bae429f26a77",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_improved_qualification_closeout.py": {
+      "blob": "adc24a1cc7739d7a232914aa8efbc8c588d038a8",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_nullspace_semantics_proof.py": {
+      "blob": "68aa50b719cc98a6179173de4d2de8c6dff42d37",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_restricted_activity.py": {
+      "blob": "d782421c9d09f5213ca1f1e2a9c01b3ca0f26ab0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_restricted_integration.py": {
+      "blob": "f97026fb4156ba7e4c7ad08128dff06e0221094b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_stage_m_candidate_a_discretization.py": {
+      "blob": "4983b4536b53b323ef05d153970a099c11bc49d4",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_s4_stage_m_mechanics.py": {
+      "blob": "7cc365688637286de7bd99d466c8ec621c9e7953",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_sesam_fem.py": {
+      "blob": "133ef44eac87b50fadea89130a76d13138f697fe",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_sol_ultra_benchmark_script.py": {
+      "blob": "55a4c518659f15f66cb56df7abedf5a8d473b787",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_sol_ultra_comparison_script.py": {
+      "blob": "accc2e74314b4a1091f3f252b03c6b26307b53f1",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_sol_ultra_numerical_verification.py": {
+      "blob": "f108234f3d8ad6752bd5dae9b822b2843715e820",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_sol_ultra_thread_scaling_script.py": {
+      "blob": "67d4758f4d30e629c0d4f7b3a6f6d08a4a6f64c0",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_solver_control_contracts.py": {
+      "blob": "a768e868bc3720678760e798765cf2aa56d68d85",
+      "rows": [
+        "P08",
+        "P09",
+        "P17",
+        "P18",
+        "U08"
+      ],
+      "role": "ROW_REFERENCE"
+    },
+    "tests/test_threading_policy.py": {
+      "blob": "be4eb7a9a25daa9e5ae2b7903ff6d49696ca5c7e",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_transient_reduced_output.py": {
+      "blob": "29ee9c353a7961dafa694c2bfaf0994b0522141b",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    },
+    "tests/test_vectorized_hill48.py": {
+      "blob": "c15cb3fb08047e5f32dd6fd8d9567839988933e6",
+      "rows": [],
+      "role": "NOT_USED_AS_DIRECT_PARITY_EVIDENCE"
+    }
+  },
+  "mechanics_executed": false
+}
