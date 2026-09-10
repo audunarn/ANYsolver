@@ -1,0 +1,74 @@
+{
+  "decision": "ACCEPTED_G3A_IMPLEMENTATION_REVIEW",
+  "findings": [],
+  "reviewer": {
+    "activity": "Independent source, correction, coverage, inventory, confirmation-runner and development-evidence review. The final successor pass was read-only; no mechanics rerun or formal execution. Review documents only were written in separate closeout worktrees at the primary agent's request.",
+    "identity": "/root/g2_correction_review",
+    "implementation_authorship": "None; independent review guidance only",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Implementation and runner acceptance for proceeding to separately bound G3a S15/native S18 formal confirmation only. This is not formal scientific acceptance, all-G3 closure, general-static parity, G3b/G3c admission, full beam qualification, public integration, default activation or release.",
+    "candidate_preservation": "Independently verified clean execution HEAD e2b54cf9f61c651139b4bac5f92d5a5683cd8a88 and tree a176826934d95f62f6877ab6ad2cf3dcc16d8666. Only tests/test_ge_beam3_g3a_graph.py and the correction protocol differ from preserved 28af8a4. Runtime, constraint equations, runner and ordered inventories are unchanged between those candidates. Earlier blocked candidates, findings and development evidence remain preserved separately.",
+    "correction_assessment": {
+      "G3A-IR-01": "Closed for the frozen native scope. All four graphs now receive full stationary/Schur comparisons with nonzero internal residual, all twelve covariance cases, and explicit shared-Q and unchanged element-owned-triad checks across the five-step histories.",
+      "G3A-IR-02": "Closed for the frozen native scope. All four graphs have entry and actual final-acceptance cancellation, virgin and nonzero accepted-prefix preparation rollback, unchanged state and checkpoint checks, authenticated replay and continuation. Six N_BRACED5 stale/foreign token cases exercise commit, discard and state submission while preserving the owner's valid pending state and both owners' committed histories.",
+      "G3A-IR-03": "Closed. Cancellation is no longer selected by callback count. The observation-only helper requires a nonzero initial KKT residual, two converged evaluations at identical displacement/multiplier inputs, and an executing production solve -> check -> cancel stack rather than system -> check -> cancel. The source-file/name assertion remains valid under the formal runner's solve wrapper. The older final_cancel case uses the corrected helper too.",
+      "restart_preflight": "The earlier late inert-metadata observation is addressed. Graph policy, empty adapter allowlist, IDs, incidence, components and counts are reconstructed and compared canonically before ElasticElement construction; real topology is checked again before owner construction. Twelve registered metadata mutations reject before element/state work. The earlier independent pure-data audit accepted four independently reconstructed valid inventories and rejected 48 mutations; that runtime is unchanged in the final successor."
+    },
+    "development_evidence": {
+      "classification": "Development prerequisites only; not formal confirmation or replacement accepted G1/G2 evidence.",
+      "earlier_regressions": "Inspected the separate passing 49-test G1 and 54-test G2 logs and process records on runtime unchanged in the final successor. Both exited 0 with zero active processes.",
+      "final_acceptance_observations": "All four recorded prepublication cases show callback_count=4 and system_count=3, a nonzero initial residual, two identical converged final residuals, repeated-state confirmation and the asserted final-acceptance callback. The largest final residual among these cases is 3.926720139028045e-15. Their committed-prefix replay checks passed.",
+      "frozen_rehearsal": {
+        "active_processes": 0,
+        "bound_input_files": 343,
+        "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Temp/ge-beam3-g3a-rehearsal-e2b54cf-20260910",
+        "elapsed_seconds": 382.87479520000124,
+        "exit_code": 0,
+        "passed_phase_records": 303,
+        "passed_tests": 101,
+        "peak_tree_bytes": 251691008,
+        "rehearsal_sha256": "7c8d6c7a786675888054586c348b93bd2f7446c3fff7630255222bc2f48e76d4",
+        "scientific_records": 54,
+        "verification": "Independently verified canonical frozen identity, exact ordered test/phase inventory, stdout/stderr hashes, empty stderr, all six completed-operation checkpoints, packet and all 54 scientific-record hashes. Staged and published REHEARSAL_ONLY bytes are identical and share a filesystem object. No formal aggregate or failure record exists in the rehearsal directory."
+      },
+      "infrastructure": "Inspected the accurately labeled captured-tool console transcript for the frozen candidate: 38 passed in 2.17 seconds, exit 0. This is console evidence, not a fabricated bounded-process log.",
+      "packet": {
+        "bytes": 21614,
+        "qualification": false,
+        "schema": "GE_BEAM3_G3A_DEVELOPMENT_PACKET_V1",
+        "sha256": "5d5f33919b558fee98c3621dc34fb562de1dc13e99754ce277c9b5937d676d65"
+      },
+      "targeted_smoke": "Inspected the 11-test cancellation smoke log and process record: 74.2656688 seconds, peak 213024768 bytes, exit 0, zero active processes. The subsequent wrapper-compatible assertion is covered by the complete frozen rehearsal."
+    },
+    "formal_confirmation": "Not executed by this reviewer and not granted by rehearsal success. Two fresh bounded formal cycles with byte-identical scientific evidence and independent final evidence inspection remain required.",
+    "implementation_assessment": "The previously reviewed exact native-only owner, bounded admission, shared rotation ownership, graph/store/cache/load guards, inherited-dispatch rejection, analytical constraints, preparation checks and authenticated replay remain unchanged by the cancellation-observation successor. No unresolved substantive implementation finding remains.",
+    "inventories": {
+      "g1_regression_tests": 49,
+      "g2_regression_tests": 54,
+      "g3a_tests": 101,
+      "infrastructure_tests": 38,
+      "supplemental_scientific_records": 54
+    },
+    "reviewed": [
+      "C:/Github/AGENTS.md",
+      "Frozen G3 graph/junction contract and native fixtures",
+      "docs/GE_BEAM3_G3A_CORRECTION_CONFIRMATION.md",
+      "src/anysolver/_ge_beam3_g3_analysis.py and restart-preflight correction",
+      "Previously reviewed native graph constraints and inherited ownership/state seams",
+      "tests/test_ge_beam3_g3a_graph.py and both correction diffs",
+      "scripts/confirm_ge_beam3_g3a.py",
+      "tests/test_ge_beam3_g3a_confirmation.py",
+      "docs/reference_cases/ge_beam3_g3a_confirmation_inventory.json",
+      "docs/reference_cases/ge_beam3_g3a_correction_records.json",
+      "Inherited Windows bounded-process supervisor",
+      "Preserved blocked reviews and candidate-preservation diffs",
+      "Targeted smoke, separate G1/G2 regression logs and frozen infrastructure console transcript",
+      "Complete frozen rehearsal inputs, phase records, process/log/checkpoint evidence, packet and all 54 supplemental records"
+    ],
+    "runner_assessment": "Reviewed the complete separate coordinator and infrastructure tests. Formal execution requires a clean exact candidate/tree and externally hashed accepted five-key independent review before output creation or mechanics import. The runner binds source/test/helper/fixture/contract inputs, Python executable/version and installed distributions; rechecks identity before and after cycles and before publication; requires exact ordered passed setup/call/teardown records and completed-operation checkpoints; uses serial fresh bounded Windows process trees with one numerical thread, 24 GiB, 600-second child and 120-second inactivity limits; retries nothing automatically; compares scientific records across cycles; and publishes through verified staging plus atomic no-overwrite linking. No unresolved substantive runner finding remains.",
+    "subject_tree": "a176826934d95f62f6877ab6ad2cf3dcc16d8666"
+  },
+  "subject_commit": "e2b54cf9f61c651139b4bac5f92d5a5683cd8a88"
+}
