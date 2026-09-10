@@ -31,7 +31,7 @@ def strict(data, *, compact=False):
         return result
     def bad(value): raise ValueError("nonfinite value")
     value = json.loads(data, object_pairs_hook=pairs, parse_constant=bad)
-    expected = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode() if compact else canonical(value)
+    expected = (json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)+"\n").encode() if compact else canonical(value)
     if expected != data: raise ValueError("noncanonical JSON")
     return value
 

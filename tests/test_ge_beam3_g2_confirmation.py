@@ -119,11 +119,11 @@ def test_coordinator_determinism_and_failure_no_aggregate(tmp_path, monkeypatch,
         packet = dict(schema="GE_BEAM3_G2_DEVELOPMENT_PACKET_V1", qualification=False,
                       first={}, second={}, recovery={}, checkpoint_sha256="0"*64)
         if mutation == "packet" and len(calls) == 2: packet["first"] = dict(changed=True)
-        (directory/"packet.json").write_bytes(json.dumps(packet, sort_keys=True, separators=(",", ":")).encode())
+        (directory/"packet.json").write_bytes((json.dumps(packet, sort_keys=True, separators=(",", ":"))+"\n").encode())
         (directory/"corrections").mkdir()
         for i, name in enumerate(records):
             if mutation == "missing" and i == 0: continue
-            value = b'{"value":2}' if mutation == "correction" and len(calls) == 2 else b'{"value":1}'
+            value = b'{"value":2}\n' if mutation == "correction" and len(calls) == 2 else b'{"value":1}\n'
             (directory/"corrections"/name).write_bytes(value)
     monkeypatch.setattr(c, "identity", identity); monkeypatch.setattr(c, "run_child", child)
     monkeypatch.setattr(c.sys, "argv", ["confirm", "--candidate", "candidate", "--review", str(path),
@@ -142,3 +142,12 @@ def test_coordinator_determinism_and_failure_no_aggregate(tmp_path, monkeypatch,
 @pytest.mark.parametrize("raw", [b'{"x":1,"x":2}', b'{"x":NaN}', b'{"x":Infinity}'])
 def test_compact_scientific_duplicate_nonfinite_rejection(raw):
     with pytest.raises(ValueError): c.strict(raw, compact=True)
+
+
+def test_compact_native_serializer_compatibility():
+    from anysolver._ge_beam3_g1_elastic import canonical
+    body = dict(schema="example", value=[1., -0.0], qualification=False)
+    raw = canonical(body)
+    assert c.strict(raw, compact=True) == body
+    assert raw.endswith(b"\n")
+    with pytest.raises(ValueError): c.strict(raw[:-1], compact=True)
