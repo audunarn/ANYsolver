@@ -19,6 +19,7 @@ def main():
     allowed.add("tests/test_ge_beam3_g3b_mb3.py")
     allowed.add("tests/test_ge_beam3_g3b_mq4.py")
     allowed.add("tests/test_ge_beam3_g3b_ms3.py")
+    allowed.add("tests/test_ge_beam3_g3b_weighted.py")
     if os.name != "nt" or any(t.split("::")[0] not in allowed for t in a.tests): raise ValueError("registered Windows development lane required")
     spec = importlib.util.spec_from_file_location("g3b_bounds", ROOT/"docs/reference_cases/e4_pl_s3_v2_bounded_process.py")
     m = importlib.util.module_from_spec(spec); sys.modules[spec.name] = m; spec.loader.exec_module(m)
@@ -29,7 +30,8 @@ def main():
                G3_PROGRESS="1", G3B_DIAGNOSTIC_PAYLOAD=str(out/"packet.json"),
                G3B_MB3_DIAGNOSTIC_PAYLOAD=str(out/"mb3-packet.json"),
                G3B_MQ4_DIAGNOSTIC_PAYLOAD=str(out/"mq4-packet.json"),
-               G3B_MS3_DIAGNOSTIC_PAYLOAD=str(out/"ms3-packet.json"), G1_DIAGNOSTIC_PAYLOAD=str(out/"g1-packet.json"))
+               G3B_MS3_DIAGNOSTIC_PAYLOAD=str(out/"ms3-packet.json"),
+               G3B_WEIGHTED_DIAGNOSTIC_PAYLOAD=str(out/"weighted-packet.json"), G1_DIAGNOSTIC_PAYLOAD=str(out/"g1-packet.json"))
     job = m._ProcessJob(24*1024**3); start = time.monotonic(); last = start; previous = None; status = "FAILED"
     try:
         with (out/"stdout.log").open("xb") as stdout, (out/"stderr.log").open("xb") as stderr:

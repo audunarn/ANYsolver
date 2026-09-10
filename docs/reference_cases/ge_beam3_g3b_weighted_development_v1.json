@@ -1,0 +1,261 @@
+{
+  "archive": {
+    "bytes_excluding_manifest": 85768,
+    "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-weighted-development-20260910-df9a683",
+    "files": 23,
+    "manifest_sha256": "71c1c810b735816f09d47e457b3c301c53aeed580b0312a5f0fb4f64151e3e85",
+    "original_temp_outputs_retained": true
+  },
+  "inventories": {
+    "g3b_mb2_regression_tests": 25,
+    "g3b_mb3_regression_tests": 40,
+    "g3b_mq4_regression_tests": 42,
+    "g3b_ms3_regression_tests": 45,
+    "g3b_weighted_development_tests": 54
+  },
+  "limits": {
+    "automatic_retry": false,
+    "inactivity_seconds": 120,
+    "memory_bytes": 25769803776,
+    "numerical_threads": 1,
+    "wall_seconds": 600
+  },
+  "next": "Frozen numbering/reversal/global transport across the five interfaces; then common G3b S18 owner/restart, independent review and formal confirmation.",
+  "parent": {
+    "commit": "df9a68310943b2e8455d2a06905bd714321bee14",
+    "tree": "725c435f594386d616d805813585cae84cdf8c60"
+  },
+  "prior_packet_preservation": {
+    "mb2_byte_identical": true,
+    "mb3_byte_identical": true,
+    "mq4_byte_identical": true,
+    "ms3_byte_identical": true,
+    "packets": [
+      {
+        "bytes": 4465,
+        "path": "mb2-25/packet.json",
+        "sha256": "f8b5caa5fa48931ca66688c7bdf36a362886bb5e0ed657af071ca35d8357623b"
+      },
+      {
+        "bytes": 4675,
+        "path": "mb3-40/mb3-packet.json",
+        "sha256": "7bc0525083fb4be09744de3c1e12d29a48662149d22c6c6de550e6e7760c3796"
+      },
+      {
+        "bytes": 13315,
+        "path": "mq4-42/mq4-packet.json",
+        "sha256": "88c30dbf8911cafd7c6d1ed0f0c38d34593b8a487236a4580ffd78e29a817397"
+      },
+      {
+        "bytes": 9759,
+        "path": "ms3-45/ms3-packet.json",
+        "sha256": "da4e100fbd9bd15e1411dc732df1529f0d4b7902c7a30aefd1d7a7947192f895"
+      }
+    ],
+    "prior_archive": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-ms3-development-20260910-10a16c5"
+  },
+  "runs": [
+    {
+      "label": "smoke1",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 2.3256540000002133,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 202993664,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 1.72,
+      "tests_failed": 0,
+      "tests_passed": 1
+    },
+    {
+      "label": "weighted-54",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.6375782000031904,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 218050560,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 3.08,
+      "tests_failed": 0,
+      "tests_passed": 54
+    },
+    {
+      "label": "mb2-25",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.234432500001276,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 234893312,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.51,
+      "tests_failed": 0,
+      "tests_passed": 25
+    },
+    {
+      "label": "mb3-40",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.4336807999970915,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 234983424,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.67,
+      "tests_failed": 0,
+      "tests_passed": 40
+    },
+    {
+      "label": "mq4-42",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.3332334000006085,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 217952256,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.77,
+      "tests_failed": 0,
+      "tests_passed": 42
+    },
+    {
+      "label": "ms3-45",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.131670700000541,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 220209152,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.58,
+      "tests_failed": 0,
+      "tests_passed": 45
+    }
+  ],
+  "schema": "GE_BEAM3_G3B_WEIGHTED_DEVELOPMENT_RECORD_V1",
+  "scope": {
+    "candidate_class": "WeightedQ4TranslationReferenceProblem",
+    "defaults_changed": false,
+    "engineering_mode": "REFERENCE_LINEAR_BOTH_FAMILIES",
+    "exact_trace_weights": [
+      "1/4",
+      "1/4",
+      "1/4",
+      "1/4"
+    ],
+    "fixture": "M_Q4_WEIGHTED",
+    "formal_qualification": false,
+    "formulation_changes": false,
+    "free_dofs": 21,
+    "global_dofs": 42,
+    "independent_full_kkt_dimension": 87,
+    "independent_implementation_review": false,
+    "physical_normal": [
+      0,
+      0,
+      1
+    ],
+    "preserved_native_internal_coordinates": 24,
+    "public_routing": false,
+    "restart_supported": false,
+    "support_rows": 18,
+    "trace_position": [
+      "1/2",
+      "1/2",
+      "0"
+    ],
+    "transaction_owner": false,
+    "translation_tie_rows": 3
+  },
+  "source_bindings_lf": [
+    {
+      "bytes": 13791,
+      "path": "src/anysolver/_ge_beam3_g3b_weighted_reference.py",
+      "sha256": "911710008be9b30c2737fda69ef534b9b08fce0a368705bb573bda3a143332f7"
+    },
+    {
+      "bytes": 12981,
+      "path": "src/anysolver/_ge_beam3_g3b_q4_reference.py",
+      "sha256": "d6d6c8dfa46b9562075fe38087567a55565c55ea5d016c6bc007dd3ece0b1901"
+    },
+    {
+      "bytes": 12912,
+      "path": "src/anysolver/_ge_beam3_g3b_s3_reference.py",
+      "sha256": "5f55cee1d72136142d76601dc28c6949f05e2fd72ccd98c831990fcca3642593"
+    },
+    {
+      "bytes": 13043,
+      "path": "src/anysolver/_ge_beam3_g3b_reference.py",
+      "sha256": "6ea552022921ca4933d4fde51711458f4b91921315d789bcd24f9123a78cc2f3"
+    },
+    {
+      "bytes": 293258,
+      "path": "src/anysolver/e4_pl_element.py",
+      "sha256": "7fc46a18046e043512a5fb2c3f61ed0b95b834e4dde764f63c500a885e87ea38"
+    },
+    {
+      "bytes": 28913,
+      "path": "src/anysolver/fe_core.py",
+      "sha256": "375eb484531a9fa160d85297a01d011da5da069044c3c1b517177052a15e7f66"
+    },
+    {
+      "bytes": 3821,
+      "path": "scripts/run_ge_beam3_g3b.py",
+      "sha256": "9d8ed6d8de80f49e49b3e7f2e046c266c2886f075d86eb7921328be6c112a3a0"
+    },
+    {
+      "bytes": 11508,
+      "path": "tests/test_ge_beam3_g3b_mb2.py",
+      "sha256": "97a56b66b653efba9a5d0b85351326d47b5ec2adcbd3b9c4229d35e46498aa7d"
+    },
+    {
+      "bytes": 14133,
+      "path": "tests/test_ge_beam3_g3b_mb3.py",
+      "sha256": "f603661ac4c63aec33bf5b1a716f69b8a27bdceb9628d4a8c93dbbaddcf89835"
+    },
+    {
+      "bytes": 14587,
+      "path": "tests/test_ge_beam3_g3b_mq4.py",
+      "sha256": "d5015695c72be072961c50cad221f0c29f132a68a26a4c6905f0536eb8047f47"
+    },
+    {
+      "bytes": 15410,
+      "path": "tests/test_ge_beam3_g3b_ms3.py",
+      "sha256": "15d93fe384ec2e59220e02ee509faa9ad7e0a81e4dff7b01acd57169c67405d4"
+    },
+    {
+      "bytes": 18407,
+      "path": "tests/test_ge_beam3_g3b_weighted.py",
+      "sha256": "a5698f8d926d1d192f81ff070c440e7f8ec8abd6ac474d5094dda2369f607393"
+    },
+    {
+      "bytes": 4474,
+      "path": "docs/GE_BEAM3_G3B_WEIGHTED_DEVELOPMENT.md",
+      "sha256": "a985749200a2bb0f93c034672acc73415f756093b14c2c54febd6fa55615dc93"
+    },
+    {
+      "bytes": 12973,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_contract_v1.json",
+      "sha256": "dbc54f55b51d67c782844488a0f86ce6bed442c9cc530dbd823ea95f8bf90eb5"
+    },
+    {
+      "bytes": 26455,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+      "sha256": "68a288ec12821740cdd25960b6eb1020f00fec6579fe21ac9dbac5b5c2275e05"
+    },
+    {
+      "bytes": 48265,
+      "path": "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
+      "sha256": "c5b192c9c3f6ee2c68a42ab4a0cfbcdbe81581381b800c13aacce0bb219a3383"
+    }
+  ],
+  "status": "DEVELOPMENT_SMOKE_PASSED_NOT_G3B_QUALIFICATION"
+}
