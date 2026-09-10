@@ -239,7 +239,10 @@ def test_successor_extent_preserves_mechanics_and_historical_records():
         'docs/reference_cases/ge_beam3_g3b_mb3_development_v1.json': 'A',
         'src/anysolver/_ge_beam3_g3b_q4_reference.py': 'A', 'tests/test_ge_beam3_g3b_mq4.py': 'A',
         'docs/GE_BEAM3_G3B_M_Q4_DEVELOPMENT.md': 'A',
-        'docs/reference_cases/ge_beam3_g3b_mq4_development_v1.json': 'A'}
+        'docs/reference_cases/ge_beam3_g3b_mq4_development_v1.json': 'A',
+        'src/anysolver/_ge_beam3_g3b_s3_reference.py': 'A', 'tests/test_ge_beam3_g3b_ms3.py': 'A',
+        'docs/GE_BEAM3_G3B_M_S3_DEVELOPMENT.md': 'A',
+        'docs/reference_cases/ge_beam3_g3b_ms3_development_v1.json': 'A'}
     diff = subprocess.check_output(git+['diff', '--name-status', parent, '--'], cwd=ROOT, timeout=20).decode()
     for line in diff.splitlines():
         status, path = line.split('\t'); assert allowed.get(path) == status
