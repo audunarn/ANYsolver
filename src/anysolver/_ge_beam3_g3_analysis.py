@@ -88,6 +88,46 @@ def rigid_basis(constraints, components):
     return owned(R)
 
 
+def restart_graph_preflight(definition, graph):
+    """Reconstruct serialized graph authority without element or state work."""
+    rows = definition["elements"]
+    if type(rows) is not list or not 1 <= len(rows) <= 8:
+        raise ValueError("G3 restart element bound")
+    ids = []; connectivity = []
+    for row in rows:
+        if type(row) is not dict:
+            raise ValueError("G3 restart element schema")
+        eid, nodes = row.get("element_id"), row.get("node_ids")
+        if (type(eid) is not int or eid <= 0 or type(nodes) is not list or len(nodes) != 3 or
+                any(type(n) is not int or n <= 0 for n in nodes) or len(set(nodes)) != 3):
+            raise ValueError("G3 restart connectivity schema")
+        ids.append(eid); connectivity.append((eid, nodes))
+    if len(set(ids)) != len(ids): raise ValueError("G3 duplicate restart elements")
+    nodes = sorted({n for _, row in connectivity for n in row})
+    if len(nodes) > 32 or 6*len(nodes)+24*len(rows) > 384:
+        raise ValueError("G3 restart graph bound")
+    incidence = {n: [] for n in nodes}; adjacency = {n: set() for n in nodes}
+    for eid, row in sorted(connectivity):
+        for n in row: incidence[n].append(eid)
+        for a, b in zip(row, row[1:]):
+            adjacency[a].add(b); adjacency[b].add(a)
+    remaining = set(nodes); components = []
+    while remaining:
+        active = [min(remaining)]; found = set()
+        while active:
+            n = active.pop()
+            if n in found: continue
+            found.add(n); active.extend(sorted(adjacency[n]-found, reverse=True))
+        remaining -= found; components.append(sorted(found))
+    expected = dict(policy=POLICY, adapter_allowlist=[], components=components,
+                    cycle_rank=2*len(rows)-len(nodes)+len(components),
+                    incidence=[[n, incidence[n]] for n in nodes], element_ids=sorted(ids),
+                    node_ids=nodes, external_dofs=6*len(nodes), internal_coordinates=24*len(rows))
+    # Canonical comparison rejects bool/int substitution and extra/missing keys.
+    if canonical(graph) != canonical(expected):
+        raise ValueError("G3 restart graph preflight mismatch")
+
+
 
 class NativeGraphAnalysis:
     """One shared pose store, element-owned internals, bounded native graph."""
@@ -317,10 +357,9 @@ class NativeGraphAnalysis:
             raise ValueError("G3 canonical checkpoint schema")
         if body["schema"] != SCHEMA or body["runtime"] != runtime_digest(): raise ValueError("G3 checkpoint family/runtime mismatch")
         definition = body["definition"]
-        if set(definition) != {"elements", "fixed"} or definition["fixed"] != [] or type(body["history"]) is not list or len(body["history"]) > 128:
+        if type(definition) is not dict or set(definition) != {"elements", "fixed"} or definition["fixed"] != [] or type(body["history"]) is not list or len(body["history"]) > 128:
             raise ValueError("G3 definition/history schema")
-        if type(definition["elements"]) is not list or not 1 <= len(definition["elements"]) <= 8:
-            raise ValueError("G3 restart element bound")
+        restart_graph_preflight(definition, body["graph"])
         constraints = GraphConstraintSet.from_descriptor(body["constraints"])
         elements = []
         from ._ge_beam3_g1_elastic import POLICY
@@ -332,8 +371,9 @@ class NativeGraphAnalysis:
             ref = Reference(d["coordinates"], d["nodal_triads"], regularity_relative_tolerance=d["regularity_relative_tolerance"],
                             rotation_tolerance=d["rotation_tolerance"], frame_tolerance=d["frame_tolerance"])
             elements.append(ElasticElement(d["element_id"], tuple(d["node_ids"]), ref, ElasticSection(s["stiffness"], s["name"]), order=d["order"]))
+        if canonical(topology(tuple(elements), constraints)) != canonical(body["graph"]):
+            raise ValueError("G3 graph policy/identity mismatch")
         made = cls(tuple(elements), constraints)
-        if made.inventory != body["graph"]: raise ValueError("G3 graph policy/identity mismatch")
         progress("restart")
         if made._initial_digest != body["initial"]: raise ValueError("G3 initial identity mismatch")
         for entry in body["history"]:

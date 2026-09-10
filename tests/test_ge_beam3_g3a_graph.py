@@ -19,6 +19,22 @@ FIXTURE = json.loads((ROOT/"docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.j
 GRAPHS = {g["id"]: g for g in FIXTURE["native_graphs"]}
 
 
+def record(name, body):
+    import os
+    directory = os.environ.get("G3_CORRECTION_RECORDS")
+    if directory:
+        with (Path(directory)/(name+".json")).open("xb") as stream:
+            stream.write(canonical(body))
+
+
+def verify_prefix_and_continue(owner, checkpoint, force):
+    assert not owner.store.has_active_trial and owner.checkpoint() == checkpoint
+    restored = NativeGraphAnalysis.resume(checkpoint, sha256(checkpoint).hexdigest())
+    assert restored.checkpoint() == checkpoint
+    assert canonical(owner.solve(force)) == canonical(restored.solve(force))
+    assert owner.checkpoint() == restored.checkpoint()
+
+
 def invariant(a, b):
     a, b = np.asarray(a), np.asarray(b)
     error = np.linalg.norm(a-b)/max(1., np.linalg.norm(a), np.linalg.norm(b))
@@ -184,11 +200,20 @@ def test_reference_graph_rigid_spaces_and_sorted_assembly(name):
 @pytest.mark.parametrize("name", list(GRAPHS))
 def test_native_load_program_recovery_and_checkpoint(name):
     owner = make(name)
+    triads = {e.element_id: e.operator.reference.nodal_triads.copy() for e in owner.elements}
+    pose_records = []
     for factor in FIXTURE["programs"]["parameters"]:
         f = loads(owner, name, factor); result = owner.solve(f)
         assert result["residual_norm"] <= 1e-11
         balance(owner, result, f)
         assert sum(map(len, owner.recover().values())) == 8*len(owner.elements)
+        Q = owner.store.native_rotation_store.committed_rotation_matrices
+        state = owner.store.materialize(); ids = owner.inventory["node_ids"]
+        for e in owner.elements:
+            np.testing.assert_array_equal(e.operator.reference.nodal_triads, triads[e.element_id])
+            for j, n in enumerate(e.node_ids):
+                np.testing.assert_array_equal(state[e.element_id]["committed_nodal_rotation_matrices"][j], Q[ids.index(n)])
+        pose_records.append(dict(factor=factor, Q=Q.copy(), result=result))
     assert owner.store.generation == 5 and not owner.store.has_active_trial
     data = owner.checkpoint()
     restored = NativeGraphAnalysis.resume(data, sha256(data).hexdigest())
@@ -196,6 +221,8 @@ def test_native_load_program_recovery_and_checkpoint(name):
     assert canonical(restored.recover()) == canonical(owner.recover())
     f = loads(owner, name, .5)
     assert canonical(owner.solve(f)) == canonical(restored.solve(f))
+    record("poses-"+name, dict(incidence=owner.inventory["incidence"], triads=triads, steps=pose_records,
+                               checkpoint_sha256=sha256(data).hexdigest()))
 
 
 @pytest.mark.parametrize("name", FIXTURE["programs"]["orientation_graphs"])
@@ -224,7 +251,7 @@ def test_noncommuting_shared_pose_and_support_work(name):
         balance(owner, result, loads(owner, name))
 
 
-@pytest.mark.parametrize("name", ["N_BRANCH3", "N_BRACED5"])
+@pytest.mark.parametrize("name", list(GRAPHS))
 def test_full_stationary_schur_nonzero_internal_residual_and_load_work(name):
     from anysolver._ge_beam3_g1_operator import schur
     owner = make(name); n = owner.size; size = n+24*len(owner.elements)
@@ -258,6 +285,7 @@ def test_full_stationary_schur_nonzero_internal_residual_and_load_work(name):
     invariant(result["spatial_reactions"].reshape(-1, 6)[:, :3].sum(axis=0), -length*line)
     data = owner.checkpoint()
     assert NativeGraphAnalysis.resume(data, sha256(data).hexdigest()).checkpoint() == data
+    record("schur-"+name, dict(full=actual, reduced=reduced, internal=internal, reactions=result["spatial_reactions"]))
 
 
 @pytest.mark.parametrize("route", [ElasticAnalysis.solve, ConstrainedAnalysis.solve])
@@ -271,11 +299,12 @@ def test_base_dispatch_rejected_before_mutation(route, accepted):
     assert snapshot(owner) == before and not owner.store.has_active_trial
 
 
+@pytest.mark.parametrize("name", list(GRAPHS))
 @pytest.mark.parametrize("accepted", [False, True])
-def test_last_element_prepare_failure_retains_complete_graph(accepted):
-    owner = make("N_BRACED5"); f = loads(owner, "N_BRACED5")
+def test_last_element_prepare_failure_retains_complete_graph(accepted, name):
+    owner = make(name); f = loads(owner, name)
     if accepted: owner.solve(f)
-    before = snapshot(owner); victim = owner.elements[-1]
+    before = snapshot(owner); checkpoint = owner.checkpoint(); victim = owner.elements[-1]
     original = victim._validate; commit = owner.store.commit
     preparing = []; triggered = []
     def publication(*args, **kwargs):
@@ -289,6 +318,11 @@ def test_last_element_prepare_failure_retains_complete_graph(accepted):
     with patch.object(owner.store, "commit", side_effect=publication), patch.object(victim, "_validate", side_effect=validate):
         with pytest.raises(ValueError): owner.solve(.5*f)
     assert triggered and snapshot(owner) == before and not owner.store.has_active_trial
+    # Remove only the deliberately injected unregistered authority marker.
+    assert owner.model.constraint_equations == ["mutated in final prepare"]
+    owner.model.constraint_equations.pop()
+    verify_prefix_and_continue(owner, checkpoint, .25*f)
+    record("prepare-"+name+"-"+str(accepted), dict(prefix_sha256=sha256(before).hexdigest(), replay=True))
 
 
 @pytest.mark.parametrize("kind", ["cache", "free", "constraint", "node", "section", "load", "order", "callback", "activity"])
@@ -322,14 +356,15 @@ def test_reference_multi_rhs_is_ephemeral_and_epoch_isolated():
     invariant(together, other.reference_rhs(np.column_stack([f, -.5*f])))
 
 
+@pytest.mark.parametrize("name", list(GRAPHS))
 @pytest.mark.parametrize("kind", ["global", "renumber", "reverse"])
-def test_loaded_graph_covariance(kind):
-    a = make("N_BRACED5")
+def test_loaded_graph_covariance(kind, name):
+    a = make(name)
     W = Rotation.from_rotvec([2.9, -1.2, .7]).as_matrix() if kind == "global" else np.eye(3)
     shift = np.array([.7, -1.2, .9]) if kind == "global" else np.zeros(3)
-    elements, constraints, mapping = parts("N_BRACED5", W=W, shift=shift, renumber=kind == "renumber", reverse=kind == "reverse")
+    elements, constraints, mapping = parts(name, W=W, shift=shift, renumber=kind == "renumber", reverse=kind == "reverse")
     b = NativeGraphAnalysis(elements, constraints)
-    x = a.solve(loads(a, "N_BRACED5")); y = b.solve(loads(b, "N_BRACED5", W=W, mapping=mapping))
+    x = a.solve(loads(a, name)); y = b.solve(loads(b, name, W=W, mapping=mapping))
     ai = a.inventory["node_ids"]; bi = b.inventory["node_ids"]
     for n in ai:
         i, j = ai.index(n), bi.index(mapping[n])
@@ -338,7 +373,8 @@ def test_loaded_graph_covariance(kind):
         invariant(y["spatial_reactions"][6*j+3:6*j+6], W @ x["spatial_reactions"][6*i+3:6*i+6])
         invariant(b.store.native_rotation_store.committed_rotation_matrices[j],
                   W @ a.store.native_rotation_store.committed_rotation_matrices[i] @ W.T)
-    balance(b, y, loads(b, "N_BRACED5", W=W, mapping=mapping))
+    balance(b, y, loads(b, name, W=W, mapping=mapping))
+    record("covariance-"+name+"-"+kind, dict(original=x, transported=y, mapping=mapping))
 
 
 @pytest.mark.parametrize("kind", ["duplicate_element", "unknown", "orphan", "unsupported", "midpoint", "subclass", "element_bound", "owned"])
@@ -504,3 +540,73 @@ def test_final_callback_constraint_mutation_is_atomic(accepted):
         return False
     with pytest.raises(ValueError): owner.solve(np.zeros(owner.size), cancel=callback)
     assert len(calls) == 2 and snapshot(owner) == before and not owner.store.has_active_trial
+
+
+@pytest.mark.parametrize("name", list(GRAPHS))
+@pytest.mark.parametrize("phase", ["entry", "prepublication"])
+def test_per_graph_cancel_preserves_accepted_prefix(name, phase):
+    owner = make(name); f = loads(owner, name); owner.solve(f)
+    before = snapshot(owner); checkpoint = owner.checkpoint(); calls = []
+    def cancel():
+        calls.append(True)
+        return len(calls) == (1 if phase == "entry" else 2)
+    with pytest.raises(InterruptedError): owner.solve(f, cancel=cancel)
+    assert snapshot(owner) == before and not owner.store.has_active_trial
+    verify_prefix_and_continue(owner, checkpoint, .5*f)
+    record("cancel-"+name+"-"+phase, dict(prefix_sha256=sha256(before).hexdigest(), replay=True))
+
+
+@pytest.mark.parametrize("kind", ["stale", "foreign"])
+@pytest.mark.parametrize("operation", ["commit", "discard", "set_state"])
+def test_braced_graph_issued_token_isolation(kind, operation):
+    from anysolver.nonlinear_state import StateTransactionError
+    owner = make("N_BRACED5"); f = loads(owner, "N_BRACED5"); owner.solve(f)
+    other = make("N_BRACED5")
+    before, foreign_before = snapshot(owner), snapshot(other); checkpoint = owner.checkpoint()
+    def issue(target):
+        q = target.store.native_rotation_store.committed_full_displacement
+        shape = (len(target.elements), 3)
+        target._evaluate(q, np.zeros(target.size), np.zeros(shape), np.zeros(shape))
+        return target.store.active_trial_token()
+    if kind == "stale":
+        wrong = issue(owner); owner.store.discard_trial(wrong)
+    else: wrong = issue(other)
+    live = issue(owner)
+    pending = canonical(owner.store.materialize(trial_token=live))
+    try:
+        with pytest.raises(StateTransactionError):
+            if operation == "commit": owner.store.commit(wrong)
+            elif operation == "discard": owner.store.discard_trial(wrong)
+            else: owner.store.set_trial_state(wrong, owner.elements[0].element_id, owner.store[owner.elements[0].element_id])
+        assert owner.store.active_trial_token() is live
+        assert canonical(owner.store.materialize(trial_token=live)) == pending
+        assert snapshot(owner) == before and snapshot(other) == foreign_before
+    finally:
+        discard(owner); discard(other)
+    assert not other.store.has_active_trial
+    verify_prefix_and_continue(owner, checkpoint, .25*f)
+    assert snapshot(other) == foreign_before
+    record("token-"+kind+"-"+operation, dict(prefix_sha256=sha256(before).hexdigest(),
+                                            other_sha256=sha256(foreign_before).hexdigest(), replay=True))
+
+
+@pytest.mark.parametrize("field", ["policy", "adapter_allowlist", "node_ids", "element_ids",
+                                  "components", "cycle_rank", "incidence", "external_dofs",
+                                  "internal_coordinates", "missing", "extra", "boolean"])
+def test_restart_graph_authority_precedes_native_construction(field):
+    owner = make(); data = owner.checkpoint(); body = json.loads(data); before = snapshot(owner)
+    graph = body["graph"]
+    if field == "policy": graph[field] = "MIXED"
+    elif field == "adapter_allowlist": graph[field] = ["unregistered"]
+    elif field in ("node_ids", "element_ids"): graph[field] = graph[field][::-1]
+    elif field in ("components", "incidence"): graph[field] = []
+    elif field == "missing": del graph["policy"]
+    elif field == "extra": graph["extra"] = 0
+    elif field == "boolean": graph["cycle_rank"] = False
+    else: graph[field] += 1
+    raw = canonical(body)
+    with patch.object(ElasticElement, "__init__", side_effect=AssertionError("native construction forbidden")), \
+         patch.object(ElasticElement, "init_model_bound_nonlinear_state", side_effect=AssertionError("native state forbidden")):
+        with pytest.raises(ValueError, match="preflight"): NativeGraphAnalysis.resume(raw, sha256(raw).hexdigest())
+    assert snapshot(owner) == before and owner.checkpoint() == data and not owner.store.has_active_trial
+    record("preflight-"+field, dict(native_work=False, prefix_sha256=sha256(before).hexdigest()))
