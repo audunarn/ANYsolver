@@ -1,0 +1,292 @@
+{
+  "acceptance": {
+    "directional_tangent_error": "1e-7",
+    "existing_native_guards": "PRESERVE_WITHOUT_RELAXATION",
+    "normalization": "REGISTERED_DIMENSIONLESS_SCALES_MAX_1_NORM_A_NORM_B",
+    "normalized_invariant_error": "1e-11",
+    "scientific_aggregate_agreement": "BYTE_IDENTICAL"
+  },
+  "allowed_extent": [
+    "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+    "docs/reference_cases/ge_beam3_general_static_integration_contract_v1.json",
+    "scripts/audit_ge_beam3_static_contract.py",
+    "tests/test_ge_beam3_static_contract.py"
+  ],
+  "case_status": "PREREGISTERED_OBLIGATIONS_NOT_EXECUTED",
+  "constraint_kinds": [
+    "AFFINE_TRANSLATION",
+    "ORIENTATION_SUPPORT",
+    "RELATIVE_POSE"
+  ],
+  "contract_id": "GE_BEAM3_GENERAL_STATIC_INTEGRATION_V1",
+  "default_changes": false,
+  "execution": {
+    "automatic_retry": false,
+    "child_seconds": 600,
+    "formal_cycles": 2,
+    "inactivity_seconds": 120,
+    "max_workers": 3,
+    "numerical_threads": 1,
+    "process_tree_memory_gib": 24,
+    "wave_seconds": 1800
+  },
+  "gates": {
+    "G1": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08"
+    ],
+    "G2": [
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14"
+    ],
+    "G3": [
+      "S15",
+      "S16",
+      "S17",
+      "S18"
+    ],
+    "G4": [
+      "S19",
+      "S20",
+      "S21",
+      "S22",
+      "S23",
+      "S24"
+    ],
+    "G5": [
+      "S25",
+      "S26"
+    ]
+  },
+  "implementation_started": false,
+  "internal_variables": {
+    "external": 18,
+    "internal": 24,
+    "physical_cell_rotations": 6,
+    "resultants": 18,
+    "static_mass_substitution": false
+  },
+  "mechanics_changes": false,
+  "next_gate": "G1_SHARED_TRANSACTION_TWO_ELEMENT_EXACT_ELASTIC_STATIC_ADAPTER",
+  "orientation_chart_limit": "STRICTLY_LESS_THAN_0.9_PI_RELATIVE_ANGLE",
+  "ownership": {
+    "acceptance": "PREPARE_ALL_THEN_ATOMIC_SNAPSHOT_PUBLICATION",
+    "material_origin": "IMMUTABLE_COMMITTED_STATION_STATE",
+    "nodal_pose": "ONE_ANALYSIS_OWNER_SHARED_SO3",
+    "reference_triads": "ELEMENT_OWNED_PHYSICAL_MATERIAL_AXES",
+    "trial_base": "COMMITTED_NOT_PREVIOUS_REJECTED_TRIAL"
+  },
+  "parent_commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+  "parent_tree": "321c5155befdcac010a39a43e35528e4aa429cc8",
+  "primary_parity_rows": [
+    "P01",
+    "P04",
+    "P07",
+    "P08",
+    "P09",
+    "P10",
+    "P17",
+    "P18",
+    "P20"
+  ],
+  "qualification_claim": false,
+  "related_parity_rows": [
+    "P05",
+    "P06",
+    "P11",
+    "P15",
+    "P16",
+    "P19",
+    "P28",
+    "P29"
+  ],
+  "restart_policy": "EXTERNAL_DIGEST_AND_AUTHENTICATED_ACCEPTED_HISTORY_REPLAY",
+  "restart_required_groups": [
+    "schema_and_runtime_provenance",
+    "graph_and_ordered_ids",
+    "definitions_and_formulation_ids",
+    "physical_reference_triads",
+    "section_law_schema_parameters",
+    "constraint_definitions_and_order",
+    "load_and_control_history",
+    "committed_translations_chart_and_shared_Q",
+    "element_internal_state_and_station_origins",
+    "epoch_and_hash_chain",
+    "solver_chart_quadrature_policies",
+    "acceptance_provenance"
+  ],
+  "rotational_mpc_policy": "EXPLICIT_MANIFOLD_SEMANTICS_ANALYTIC_FIRST_AND_SECOND_DERIVATIVES",
+  "runtime_commit": "74703a3202251edc0beafb21cd31f52c9304ceb8",
+  "runtime_release": "0.4.3",
+  "runtime_tree": "64a18a8fe137946ec2f0d4841821a19066a2707f",
+  "schema": "anysolver.ge-beam3.general-static-contract.v1",
+  "section_policy": "EXACT_ELASTIC_FIRST_EXISTING_NATIVE_HISTORY_LAWS_LATER",
+  "source_bindings": [
+    {
+      "bytes": 37848,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "fb1471e1d7150c190fcfeb6e579d3be0b2016235",
+      "path": "docs/GE_BEAM3_LEGACY_PARITY_MATRIX.md",
+      "sha256": "e98bde88ef40e2160670e37900acd63dfa1926ff1ed8a72a7e30d684ef331f75"
+    },
+    {
+      "bytes": 34692,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "ece066510a5da29135d8d0ec57c13500d7e2cb74",
+      "path": "docs/reference_cases/ge_beam3_legacy_parity_matrix_v1.json",
+      "sha256": "0d59ef2b7f58635282b6ddbc771b2463e0c22b4f13ba3a9290da50753e19e0e6"
+    },
+    {
+      "bytes": 167610,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "10afae00e26f78f67693e842480aa5f15c4161c3",
+      "path": "docs/reference_cases/ge_beam3_legacy_parity_inventory_v1.json",
+      "sha256": "ff15d7c33d2e3c8234d512562cd15048f01a7cf3e949c16fc8cb1cb80c92d885"
+    },
+    {
+      "bytes": 6215,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "15053da97c9414f637ea8170a1452805d1d4316f",
+      "path": "docs/GE_BEAM3_NATIVE_WORKFLOWS.md",
+      "sha256": "d2598fb9a2def5e9156b2f9c72bfe52702d075deff07893f1eea7088be66bd3b"
+    },
+    {
+      "bytes": 4624,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "f59e04c07d831330d21089a58eef2b5a5e0fa690",
+      "path": "docs/GE_BEAM3_DELIVERY_STATUS.md",
+      "sha256": "5bbf0df49eb3af23a65f89bb42df2632d741c7cfd56e603272b8a72a45cebaf8"
+    },
+    {
+      "bytes": 244692,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "4dfe4212b9ee9947969b087809e72b9973e88e07",
+      "path": "src/anysolver/elements.py",
+      "sha256": "f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37"
+    },
+    {
+      "bytes": 69582,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "73b8421dabe2558516ffba7bf3469d0df5ddbb9a",
+      "path": "src/anysolver/assembly.py",
+      "sha256": "81e96cec9c367e73a08029f366ef848dd5065b756d47a46947ef103f48baecf3"
+    },
+    {
+      "bytes": 23631,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "aa349b3e523edb784b764e91ab215e80f10c1b90",
+      "path": "src/anysolver/constraint_audit.py",
+      "sha256": "cd941e15286f70497a13da21005db723d86194e8b4ee288d0b1c079b4b55a994"
+    },
+    {
+      "bytes": 9695,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "22a66eb07ff466ec209e9814b5ae2a6dc7915c71",
+      "path": "src/anysolver/beam_sections.py",
+      "sha256": "28f0e4fa648721480ff3b592a897f364ad85cef478d40e7f53151def06f86895"
+    },
+    {
+      "bytes": 30265,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "74d15c5de0d5907d624ad091d71e872e63f5ea7e",
+      "path": "src/anysolver/_native_rotation_state.py",
+      "sha256": "0aaaa40badb5a13b47e0a9ea2bb712bd5bebdace71e57a9ac7d9e969a56a61b8"
+    },
+    {
+      "bytes": 1904,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "7190d43a291fd273c9c8fc00a9b4b85aa9db56bb",
+      "path": "src/anysolver/_native_material_protocol.py",
+      "sha256": "5d1e6316df3192db47993801fc2600fd9a69991aa26a7a354694a8b3dafc78b0"
+    },
+    {
+      "bytes": 11232,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "a0218c39c1ad931069f58ab525cce719c18b55aa",
+      "path": "src/anysolver/_ge_beam3_native_definition.py",
+      "sha256": "2e583858b171b69e719dbcb98657ce3196dab36d868eb13ffd3fc5c76fe7c68f"
+    },
+    {
+      "bytes": 28262,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "6de38ba8011be915d3e2a0da5d5685aefcc900f7",
+      "path": "src/anysolver/_ge_beam3_native_analysis.py",
+      "sha256": "2411560ba81f5e8715b36e0bea17348aa97074591be227c7374a53b62697cb92"
+    },
+    {
+      "bytes": 17425,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "cd30b4c503d3d60e2b8463c0dc00cbd6a23b096b",
+      "path": "src/anysolver/_ge_beam3_native_generalized_element.py",
+      "sha256": "9da93e9966820b1cb49bfca44775dd17641feb81c0915a6a1b72047a0d852d4a"
+    },
+    {
+      "bytes": 14312,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "69b5eb63dd8b85657740fe45da15456f613549a9",
+      "path": "src/anysolver/_ge_beam3_native_fibre_static_element.py",
+      "sha256": "80fbe8d5761b580bdb802acb77c7a91de913f1e5aed14eff81144368480915f1"
+    },
+    {
+      "bytes": 15894,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "00d91146ccd1d6b756e1cb2c118c725c0f469eef",
+      "path": "src/anysolver/_ge_beam3_native_generalized_restart.py",
+      "sha256": "c3368df861969d37a33d24818dfa5c7899379914ebefa1b68782d43aabfca409"
+    },
+    {
+      "bytes": 13744,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "225833bcf44b1cfa05eeb09b4e7df68ee87f8c7e",
+      "path": "src/anysolver/_ge_beam3_native_fibre_restart.py",
+      "sha256": "888357554688eab56e7ba000fb0f4f122c8df9dfd01f7d25a4aaac5bd1127f40"
+    },
+    {
+      "bytes": 36331,
+      "commit": "8808886f2394450a606a2e5972ac8f4e64b17a1f",
+      "git_blob": "aee30ebeacbef87b4e985533ce9571b36f6a4b4d",
+      "path": "scripts/release_043_runtime.json",
+      "sha256": "0926115315d70aa3b3eecc6609722d4b15e8e84b3c9a03b1ce22a35549cac02d"
+    }
+  ],
+  "status": "FROZEN_DESIGN_NOT_IMPLEMENTED_OR_QUALIFIED",
+  "terminal_precedence": [
+    "BLOCKED_GE_BEAM3_STATIC_AUTHORITY",
+    "BLOCKED_GE_BEAM3_STATIC_PROCESS_OR_EVIDENCE",
+    "NO_GO_GE_BEAM3_STATIC_STATE_OR_RESTART",
+    "NO_GO_GE_BEAM3_STATIC_CONSTRAINT_OR_WORK",
+    "NO_GO_GE_BEAM3_STATIC_SECTION_OR_INTERNAL_ALGEBRA",
+    "NO_GO_GE_BEAM3_STATIC_ASSEMBLY_OR_REGRESSION",
+    "PROVISIONAL_GO_GE_BEAM3_SCOPED_STATIC_INTEGRATION"
+  ],
+  "text_bindings": [
+    {
+      "bytes": 20244,
+      "encoding": "UTF8_LF",
+      "path": "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "sha256": "ec6c571319f09fd20380579c0d01bec93cd74f877fea4f2f34b377c97a585748"
+    },
+    {
+      "bytes": 9122,
+      "encoding": "UTF8_LF",
+      "path": "scripts/audit_ge_beam3_static_contract.py",
+      "sha256": "5920c0b16a275786f741c5d3fcdbe9a5703d0c45abbcf3e96d3ddd00460ac2d4"
+    },
+    {
+      "bytes": 5246,
+      "encoding": "UTF8_LF",
+      "path": "tests/test_ge_beam3_static_contract.py",
+      "sha256": "e8d1e50becc18c455094c6caf8aab98eb7f08b5a4944465feb8130940f8fab30"
+    }
+  ]
+}
