@@ -77,6 +77,7 @@ class LocalTrial:
     spatial_force: np.ndarray
     spatial_row_chart_tangent: np.ndarray
     definition_sha256: str
+    station_diagnostics: object = field(default=None)
     production_qualified: bool=field(default=False,init=False)
     recovery_complete: bool=field(default=False,init=False)
     state_committed: bool=field(default=False,init=False)
@@ -164,6 +165,12 @@ class LocalBeam:
         f,k,state=element.compute_nonlinear_response(model.mesh,material,kin.deformation,None,3,True)
         if state is not None: raise ValueError('unexpected local history')
         f=array(np.asarray(f),(6*n,)); k=array(np.asarray(k),(6*n,6*n))
+        from ._ge_beam3_g3c_recovery import recover
+        recovery=recover(d,kin,transform,element,material,entry_seal)
+        recovered_force=np.einsum('s,sij,si->j',recovery.weights,
+                                 recovery.strain_differential,recovery.resultants)
+        if np.linalg.norm(recovered_force-f)>1e-11*max(1.,np.linalg.norm(f),np.linalg.norm(recovered_force)):
+            raise ValueError('station virtual work differs from actual local force')
         if np.linalg.norm(k-k.T)>1e-11*max(1.,np.linalg.norm(k)):
             raise ValueError('nonconservative local tangent')
         D,S=kin.differential,kin.second
@@ -178,4 +185,4 @@ class LocalBeam:
         self.descriptor()
         if self._body!=entry_body or self._seal!=entry_seal:
             raise ValueError('local definition replaced during evaluation')
-        return LocalTrial(kin,f,k,owned(g),owned(H),owned(r),owned(spatial_J),entry_seal)
+        return LocalTrial(kin,f,k,owned(g),owned(H),owned(r),owned(spatial_J),entry_seal,recovery)

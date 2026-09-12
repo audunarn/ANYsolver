@@ -178,3 +178,104 @@ def test_runner_rejects_changed_bound_source_and_payload(tmp_path):
         target=tmp_path/name; original=target.read_bytes(); target.write_bytes(original+b'\n')
         with pytest.raises(ValueError): runner.verify_equation_bindings(c,tmp_path)
         target.write_bytes(original)
+
+def reference_stations(p,z,q):
+    # Independent value reconstruction followed by exact elastic flexibility
+    # (B2) or polynomial interpolation (B3). No recovery helper is imported.
+    d=p.descriptor(); n=len(d['node_ids']); ref=np.array(d['coordinates'])
+    x=ref+z.reshape(n,6)[:,:3]
+    Q=np.array([exp(row[3:])@a for row,a in zip(z.reshape(n,6),q)])
+    R=Q[d['node_ids'].index(d['anchor_node'])]
+    axis=ref[-1]-ref[0]; L=np.linalg.norm(axis); axis/=L
+    normal=np.array(d['section']['orientation']); normal-=axis*(axis@normal); normal/=np.linalg.norm(normal)
+    A=np.column_stack((axis,np.cross(normal,axis),normal))
+    local=np.column_stack(((x-x.mean(axis=0))@R-(ref-ref.mean(axis=0)),[log(R.T@a) for a in Q]))
+    values=np.column_stack((local[:,:3]@A,local[:,3:]@A))
+    s=d['section']; E=d['E']; G=E/(2*(1+d['nu']))
+    S=np.array([E*s['area'],G*s['area']*s['shear_factor_y'],G*s['area']*s['shear_factor_z'],G*s['J'],E*s['Iy'],E*s['Iz']])
+    points,weights=np.polynomial.legendre.leggauss(3); weights*=L/2
+    if n==2:
+        delta=values[1]-values[0]
+        v=np.array([L*(delta[0]/L+.5*np.sum((delta[1:3]/L)**2)),delta[3],
+            values[0,4]+delta[2]/L,values[1,4]+delta[2]/L,
+            values[0,5]-delta[1]/L,values[1,5]-delta[1]/L])
+        H=[]
+        for xi in points:
+            t=(xi+1)/2
+            H.append([[1,0,0,0,0,0],[0,0,0,0,-1/L,-1/L],
+                [0,0,1/L,1/L,0,0],[0,1,0,0,0,0],[0,0,t-1,t,0,0],[0,0,0,0,t-1,t]])
+        H=np.array(H); flex=np.einsum('s,sij,i,sik->jk',weights,H,1/S,H)
+        basic=np.linalg.solve(flex,v); resultants=H@basic; strain=resultants/S
+    else:
+        polys=[np.polynomial.Polynomial.fit([-1,0,1],values[:,i],2).convert() for i in range(6)]
+        val=np.array([poly(points) for poly in polys]).T
+        grad=np.array([poly.deriv()(points)*2/L for poly in polys]).T
+        strain=np.column_stack((grad[:,0]+.5*(grad[:,1]**2+grad[:,2]**2),
+            grad[:,1]-val[:,5],grad[:,2]+val[:,4],grad[:,3:]))
+        resultants=strain*S
+    return strain,resultants,.5*np.einsum('s,si,si->',weights,strain,resultants)
+
+@pytest.mark.parametrize('n',(2,3))
+def test_station_source_equations_and_potential(n):
+    p=make(n); z,q=state(n); trial=p.evaluate(z,q); recovery=trial.station_diagnostics
+    strains,resultants,energy=reference_stations(p,z,q)
+    equal(recovery.strains,strains); equal(recovery.resultants,resultants); equal(recovery.energy,energy)
+    work=np.einsum('s,sij,si->j',recovery.weights,recovery.strain_differential,recovery.resultants)
+    equal(work,trial.local_force)
+    assert recovery.definition_sha256==trial.definition_sha256 and recovery.energy>=0
+    for a in (recovery.strains,recovery.resultants,recovery.strain_differential,recovery.reference_frame):
+        with pytest.raises(ValueError): a.flags.writeable=True
+
+@pytest.mark.parametrize('n',(2,3))
+def test_energy_first_variation_and_station_work(n):
+    p=make(n); z,q=state(n); v=np.cos(np.arange(6*n)+.9); v/=np.linalg.norm(v)
+    out=p.evaluate(z,q)
+    for h in (1e-4,1e-5,1e-6):
+        plus=p.evaluate(z+h*v,q); minus=p.evaluate(z-h*v,q)
+        derivative=(plus.station_diagnostics.energy-minus.station_diagnostics.energy)/(2*h)
+        assert err(derivative,out.chart_force@v)<=1e-7
+        ds=(plus.station_diagnostics.strains-minus.station_diagnostics.strains)/(2*h)
+        expected=np.einsum('sij,j->si',out.station_diagnostics.strain_differential,out.kinematics.differential@v)
+        assert err(ds,expected)<=1e-7
+
+@pytest.mark.parametrize('n',(2,3))
+def test_station_reversal_uses_physical_local_z_convention(n):
+    p=make(n); r=make(n,True); z,q=state(n)
+    a=p.evaluate(z,q).station_diagnostics
+    b=r.evaluate(z.reshape(n,6)[::-1].copy().ravel(),q[::-1].copy()).station_diagnostics
+    signs=np.array([1,1,-1,1,1,-1])
+    equal(b.strains,a.strains[::-1]*signs); equal(b.resultants,a.resultants[::-1]*signs)
+    equal(a.energy,b.energy)
+
+@pytest.mark.parametrize('n',(2,3))
+def test_recovery_coordinate_reexpression(n):
+    p=make(n); d=p.descriptor(); z,q=state(n); ref=np.array(d['coordinates'])
+    W=exp(np.array([.2,-.3,.1])); shift=np.array([2.,-3.,1.]); moved_ref=ref@W.T+shift
+    if n==3: moved_ref[1]=(moved_ref[0]+moved_ref[2])/2
+    section=dict(d['section'],orientation=(W@np.array(d['section']['orientation'])).tolist())
+    other=LocalBeam(d['family'],tuple(d['node_ids']),moved_ref,d['anchor_node'],d['E'],d['nu'],section)
+    u=np.column_stack((z.reshape(n,6)[:,:3]@W.T,z.reshape(n,6)[:,3:]@W.T)).ravel()
+    a=p.evaluate(z,q).station_diagnostics
+    b=other.evaluate(u,np.array([W@qi@W.T for qi in q])).station_diagnostics
+    equal(a.strains,b.strains); equal(a.resultants,b.resultants); equal(a.energy,b.energy)
+    equal(b.current_frame,W@a.current_frame); equal(b.reference_frame,W@a.reference_frame)
+
+@pytest.mark.parametrize('n',(2,3))
+def test_recovery_common_rigid_zero_and_superposed_motion(n):
+    p=make(n); ref=np.array(p.descriptor()['coordinates']); W=exp(np.array([0.,1.4*np.pi,0.]))
+    u=np.zeros((n,6)); u[:,:3]=ref@W.T+[2,-3,1]-ref
+    rigid=p.evaluate(u.ravel(),np.tile(W,(n,1,1))).station_diagnostics
+    equal(rigid.energy,0.); equal(rigid.strains,np.zeros((3,6)))
+    z,q=state(n); a=p.evaluate(z,q).station_diagnostics
+    current=np.array([exp(row[3:])@qi for row,qi in zip(z.reshape(n,6),q)])
+    u[:,:3]=(ref+z.reshape(n,6)[:,:3])@W.T+[2,-3,1]-ref
+    b=p.evaluate(u.ravel(),np.array([W@qi for qi in current])).station_diagnostics
+    equal(a.energy,b.energy); equal(a.strains,b.strains); equal(a.resultants,b.resultants)
+    equal(b.current_frame,W@a.current_frame)
+
+def test_scalar_shear_floor_is_explicit_unresolved_physical_recovery():
+    from anysolver._ge_beam3_g3c_recovery import PhysicalRecoveryBlocked
+    s=dict(SECTION,area=1e-14,Iy=1e-12,Iz=1e-12,J=1e-12,shear_factor_y=1,shear_factor_z=1)
+    p=LocalBeam('B2',(1,2),np.array([[0.,0.,0.],[1.,0.,0.]]),1,1,0,s)
+    with pytest.raises(PhysicalRecoveryBlocked,match='BLOCKED_G3C_B2_PHYSICAL_RECOVERY_SHEAR_CLAMP'):
+        p.evaluate(np.zeros(12),np.tile(np.eye(3),(2,1,1)))

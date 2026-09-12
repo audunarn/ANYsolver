@@ -50,6 +50,15 @@ def authority():
     contract=(ROOT/'docs/reference_cases/ge_beam3_g3c_objective_beam_frame_contract_v1.json').read_bytes().replace(b'\r\n',b'\n')
     if sha256(contract).hexdigest()!=r['scope']['contract_sha256']: raise ValueError('changed equation contract')
     verify_equation_bindings(environment.strict(contract))
+    recovery_review=(ROOT/'docs/reference_cases/ge_beam3_g3c_recovery_equation_review_v1.json').read_bytes().replace(b'\r\n',b'\n')
+    if sha256(recovery_review).hexdigest()!='a765474f6fe0ed25412b63937444ddccb82113952143acea2c94776c98a8fc80':
+        raise ValueError('changed independent recovery equation review')
+    recovery_contract=(ROOT/'docs/GE_BEAM3_G3C_LOCAL_RECOVERY_EQUATIONS.md').read_bytes().replace(b'\r\n',b'\n')
+    if sha256(recovery_contract).hexdigest()!='0f81a43804b4874402d7ff09dc158de95888bc4f7e3c734e76548688f7235e67':
+        raise ValueError('changed recovery equations')
+    foundation=(ROOT/'docs/reference_cases/ge_beam3_g3c_local_foundation_review_v1.json').read_bytes().replace(b'\r\n',b'\n')
+    if sha256(foundation).hexdigest()!='b380258cfc54aa9725dfdb11596ce66c803a491410b19411518bd843b0bcff92':
+        raise ValueError('changed foundation review')
     environment.verify(CAPSULE,CAPSULE_SHA)
 def worker(out,lease_hash):
     if not(sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):
