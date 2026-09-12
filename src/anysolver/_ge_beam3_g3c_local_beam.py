@@ -96,6 +96,8 @@ class LocalBeam:
     def __setattr__(self,name,value):
         if hasattr(self,name): raise AttributeError('write-once local definition')
         object.__setattr__(self,name,value)
+    def __delattr__(self,name):
+        raise AttributeError('local definition cannot be deleted')
     def __init__(self,family,node_ids,coordinates,anchor_node,E,nu,section):
         if family not in ('B2','B3'): raise ValueError('exact B2/B3 family required')
         n=2 if family=='B2' else 3

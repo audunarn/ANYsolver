@@ -149,6 +149,7 @@ def test_coherent_definition_swap_during_trial_rejects(monkeypatch):
     other=LocalBeam('B2',tuple(d['node_ids']),np.array(d['coordinates']),d['anchor_node'],200,.25,SECTION)
     for name in ('_body','_seal'):
         with pytest.raises(AttributeError): setattr(p,name,getattr(other,name))
+        with pytest.raises(AttributeError): delattr(p,name)
     original=module.deformation
     def changed(*args):
         result=original(*args)
