@@ -125,3 +125,29 @@ def test_formal_review_missing_precedes_output(tmp_path,monkeypatch):
         "--environment-sha256","c"*64,"--output",str(output)])
     with pytest.raises(ValueError,match="independent review"): c.main()
     assert not output.exists()
+
+
+@pytest.mark.parametrize("temporary",("absent","directory","file","unregistered","typed_difference"))
+def test_lazy_pytest_directory_is_not_scientific_evidence(tmp_path,temporary):
+    node="tests/test_ge_beam3_g3b_owner_corrections.py::test_complete_journal_schema_precedes_owner_construction[fixture]"
+    row=dict(lane="owner_corrections",nodes=[node])
+    for name in ("lease.json","attempt.json","stdout.log","stderr.log","process.json","imports.json"):
+        (tmp_path/name).write_bytes(b'{}\n')
+    c.write(tmp_path/"tests.json",dict(lane=row["lane"],collected=[node],exitcode=0,
+        reports=[dict(node=node,phase=p,outcome="passed") for p in ("setup","call","teardown")]))
+    c.write(tmp_path/"checkpoints.json",sorted(["capture","local solve","assembly","recovery","output",
+        "native_prepared","other_prepared","acceptance","restart"]))
+    (tmp_path/"corrections").mkdir()
+    accepted={"qualification":False} if temporary=="typed_difference" else {}
+    rejected={"qualification":0} if temporary=="typed_difference" else {"invalid":True}
+    c.write(tmp_path/"corrections"/(sha256(node.encode()).hexdigest()+".json"),
+        dict(schema="G3B_OWNER_CORRECTION_CASE_V1",node=node,qualification=False,
+             observed=dict(lane="mq4",mutation="fixture",accepted=accepted,rejected_envelope=rejected,
+                           rejection_before_owner_construction=True)))
+    if temporary=="directory": (tmp_path/"pytest").mkdir()
+    elif temporary=="file": (tmp_path/"pytest").write_text("not a directory")
+    elif temporary=="unregistered": (tmp_path/"unregistered.json").write_text("{}")
+    if temporary in ("absent","directory","typed_difference"):
+        assert c.authority.strict(c.scientific(tmp_path,row))["lane"]==row["lane"]
+    else:
+        with pytest.raises(ValueError): c.scientific(tmp_path,row)

@@ -221,10 +221,15 @@ def run_child(directory,lease,deadline):
 def scientific(directory,registered):
     lane=registered["lane"]
     expected_files={"lease.json","attempt.json","stdout.log","stderr.log","process.json",
-                    "tests.json","checkpoints.json","imports.json","corrections","pytest"}
+                    "tests.json","checkpoints.json","imports.json","corrections"}
     if lane in PACKETS: expected_files.add(PACKETS[lane][0])
     actual={p.name for p in directory.iterdir()}
-    if actual!=expected_files: raise ValueError("unexpected/missing lane output inventory")
+    # pytest creates --basetemp lazily, only if a fixture needs it. It is an
+    # optional diagnostic directory, never evidence of scientific coverage.
+    if actual not in (expected_files,expected_files|{"pytest"}):
+        raise ValueError("unexpected/missing lane output inventory")
+    if "pytest" in actual and not (directory/"pytest").is_dir():
+        raise ValueError("pytest diagnostic must be a directory")
     tests=(directory/"tests.json").read_bytes(); authority.lane_result(tests,registered)
     phases=authority.strict((directory/"checkpoints.json").read_bytes())
     needed={"capture","local solve","assembly","recovery","output"}
@@ -247,13 +252,13 @@ def scientific(directory,registered):
             if "test_recovery_closure_mutation" in node:
                 if (set(observed)!={"lane","boundary","target","accepted_before","accepted_after",
                                    "replay_after","factor_reused"} or observed["factor_reused"] is not True or
-                        observed["accepted_after"]!=observed["replay_after"] or
-                        observed["accepted_after"]["history"][:-1]!=observed["accepted_before"]["history"] or
+                        authority.canonical(observed["accepted_after"])!=authority.canonical(observed["replay_after"]) or
+                        authority.canonical(observed["accepted_after"]["history"][:-1])!=authority.canonical(observed["accepted_before"]["history"]) or
                         observed["accepted_after"]["generation"]!=observed["accepted_before"]["generation"]+1):
                     raise ValueError("incomplete correction recovery observation")
             elif (set(observed)!={"lane","mutation","accepted","rejected_envelope","rejection_before_owner_construction"} or
                     observed["rejection_before_owner_construction"] is not True or
-                    observed["accepted"]==observed["rejected_envelope"]):
+                    authority.canonical(observed["accepted"])==authority.canonical(observed["rejected_envelope"])):
                 raise ValueError("incomplete correction preflight observation")
             records.append(dict(node=node,bytes=len(raw),sha256=sha256(raw).hexdigest()))
         packet=authority.canonical(records)

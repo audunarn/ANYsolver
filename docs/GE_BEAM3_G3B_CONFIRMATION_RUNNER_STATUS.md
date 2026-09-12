@@ -64,3 +64,26 @@ Before the first rehearsal freeze: current runner units passed 16 tests in
 and real-collection infrastructure lane passed 62 tests in an 18.342-second
 bounded process (raw `anysolver-g3b-development-txpxeqkv`). Zero children remained.
 Git whitespace checks pass, and there is no src/, package or workflow delta.
+
+## V1 rehearsal incident and V2 correction
+
+V1 clean candidate `c2c8d3da4cd48056d391ffbac950e593ee86344c` ran in the
+fresh external directory
+`C:/Users/AUDUNA~1/AppData/Local/Temp/anysolver-g3b-rehearsal-3e46d524fdc74f9c81244a255f6813f8`.
+All eight Cycle 1 test lanes passed; all children exited and were reaped.
+The 170 correction records were completed. The coordinator then correctly
+withheld its aggregate on an infrastructure schema failure: it required a
+`pytest` diagnostic directory even when no fixture requested a temporary path.
+Cycle 2 did not start. This failed rehearsal is preserved and never resumed.
+
+V2 changes only the coordinator output-inventory check to admit the absence of
+that optional diagnostic directory (while rejecting a file at that name or any
+unregistered output), adds four targeted regression cases, and records this
+incident. All required scientific files, test counts, case records, packet
+hashes, limits, input checks, element mechanics and tolerances stay unchanged.
+Read-only validation of all preserved case records also exposed a validator
+comparison fault: Python considers False equal to 0, but the qualification-field
+mutation is intentionally type-distinct JSON. V2 uses canonical byte comparison
+for journal equality/difference, and includes a fifth targeted regression. No
+case is dropped or reclassified. The next rehearsal must use a new clean commit
+and new external directory.
