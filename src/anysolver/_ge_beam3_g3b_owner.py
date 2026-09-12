@@ -2,6 +2,7 @@
 from typing import NamedTuple
 from hashlib import sha256
 import json
+import inspect
 import threading
 import weakref
 
@@ -15,6 +16,7 @@ from ._ge_beam3_g3b_reference import (
 from ._ge_beam3_g3b_q4_reference import Q4TranslationReferenceProblem
 from ._ge_beam3_g3b_s3_reference import S3TranslationReferenceProblem
 from ._ge_beam3_g3b_weighted_reference import WeightedQ4TranslationReferenceProblem
+from ._ge_beam3_g3b_result_schema import validate_result
 
 SCHEMA = "GE_BEAM3_G3B_REFERENCE_OWNER_RESTART_V1"
 POLICY = "REFERENCE_LINEAR_SNAPSHOT_ONLY_NO_FINITE_POSE_OR_MATERIAL_HISTORY"
@@ -106,11 +108,29 @@ class MixedReferenceOwner:
     @staticmethod
     def _capture_dispatch(problem):
         other=problem.legacy if hasattr(problem,"legacy") else problem.shell
-        objects=((problem,("_guard","_describe","_operator_data","solve")),
-                 (problem.native.operator,("guard","evaluate")),
-                 (other,("compute_stiffness_matrix","compute_stresses")),
-                 (MixedReferenceOwner,("_guard","solve","checkpoint","restore","_capture_dispatch","_bundle")))
-        captured=[]
+        native=problem.native
+        operator=native.operator
+        # Anchor live edges as well as methods: retaining a detached old cell
+        # must not let an equivalent replacement evade the method checks.
+        edges=((problem,"native"),(problem,"legacy" if hasattr(problem,"legacy") else "shell"),
+               (native,"operator"),(operator,"cell"),(operator,"section"),
+               (operator,"reference"),(operator,"_ref"),(operator.cell,"section"))
+        captured=[(obj,name,getattr(obj,name)) for obj,name in edges]
+        objects=(problem,native,operator,operator.cell,operator.section,
+                 operator.reference,operator._ref,other)
+        # Closed object graph, including inherited recovery helpers and guard
+        # dependencies. Inspect descriptors without evaluating properties.
+        for obj in objects:
+            names={name for cls in type(obj).__mro__ for name in vars(cls)
+                   if not name.startswith("__")}
+            for name in sorted(names):
+                descriptor=inspect.getattr_static(type(obj),name)
+                if isinstance(descriptor,property):
+                    captured.append((type(obj),name,descriptor))
+                elif inspect.isfunction(descriptor) or isinstance(descriptor,(staticmethod,classmethod)):
+                    value=getattr(obj,name)
+                    captured.append((obj,name,getattr(value,"__func__",value)))
+        objects=((MixedReferenceOwner,("_guard","solve","checkpoint","restore","_capture_dispatch","_bundle")),)
         for obj,names in objects:
             for name in names:
                 value=getattr(obj,name)
@@ -247,6 +267,7 @@ class MixedReferenceOwner:
             count+=len(entry["loads"])
             if count>MAX_ENTRIES: raise ValueError("mixed checkpoint entry bound")
             for f in entry["loads"]: owned(f,(problem.size,))
+            for result in entry["results"]: validate_result(problem,result)
         made=cls(problem)
         try:
             for entry in body["history"]:
