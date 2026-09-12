@@ -49,7 +49,8 @@ class HistoryContractTests(unittest.TestCase):
         with self.assertRaises(ValueError): contract.validate_contract(changed)
 
     def test_bounds_hashes_and_inherited_scope(self):
-        for key, value in (('child_seconds',601),('restart_bytes',9*1024**2),('automatic_retry',True)):
+        for key, value in (('child_seconds',601),('child_seconds',600.0),('numerical_threads',True),
+                           ('restart_bytes',9*1024**2),('automatic_retry',True)):
             changed=copy.deepcopy(self.c); changed['limits'][key]=value
             with self.assertRaises(ValueError): contract.validate_contract(changed)
         changed=copy.deepcopy(self.c); changed['bindings'][0]['blob']='0'*40

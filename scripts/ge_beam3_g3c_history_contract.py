@@ -70,18 +70,18 @@ def validate_contract(c):
         raise ValueError('contract schema/stage')
     if c['implementation_authorized'] is not False or c['execution_authorized'] is not False:
         raise ValueError('design cannot authorize mechanics')
-    if c['history_matrix'] != matrix() or c['prefix_matrix_sha256'] != sha256(canonical(prefixes())).hexdigest():
+    if canonical(c['history_matrix']) != canonical(matrix()) or c['prefix_matrix_sha256'] != sha256(canonical(prefixes())).hexdigest():
         raise ValueError('complete ordered matrix changed')
-    if c['counts'] != dict(graph_variants=25, history_probes=375, accepted_stage_events=3075,
-                          restart_prefix_probes=3450, formal_cycles=2):
+    if canonical(c['counts']) != canonical(dict(graph_variants=25, history_probes=375, accepted_stage_events=3075,
+                          restart_prefix_probes=3450, formal_cycles=2)):
         raise ValueError('coverage reduced or relabeled')
     expected = dict(child_seconds=600, wave_seconds=1800, memory_bytes=24*1024**3,
                     numerical_threads=1, max_workers=3, inactivity_seconds=120,
                     automatic_retry=False, restart_bytes=8*1024**2, accepted_history=128)
-    if c['limits'] != expected:
+    if canonical(c['limits']) != canonical(expected):
         raise ValueError('execution limits changed')
-    if c['tolerances'] != dict(invariant=1e-11, directional=1e-7, steps=[1e-4, 1e-5, 1e-6],
-                               deterministic='BYTE_EQUALITY'):
+    if canonical(c['tolerances']) != canonical(dict(invariant=1e-11, directional=1e-7, steps=[1e-4, 1e-5, 1e-6],
+                               deterministic='BYTE_EQUALITY')):
         raise ValueError('scientific tolerances changed')
     if c['restart_schema'] != 'GE_BEAM3_G3C_STABLE_GRAPH_RESTART_V1':
         raise ValueError('wrong successor restart schema')
