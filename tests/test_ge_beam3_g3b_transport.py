@@ -315,6 +315,7 @@ def test_transport_extent():
         "docs/reference_cases/ge_beam3_g3b_transport_development_v1.json":"A",
         "scripts/run_ge_beam3_g3b.py":"M"}
     allowed.update({"tests/test_ge_beam3_g3b_"+lane+".py":"M" for lane in LANES})
+    allowed.update({p:'A' for p in ["src/anysolver/_ge_beam3_g3b_owner.py","tests/test_ge_beam3_g3b_owner.py","docs/GE_BEAM3_G3B_OWNER_CONTRACT.md","docs/reference_cases/ge_beam3_g3b_owner_development_v1.json"]})
     for line in subprocess.check_output(git+["diff","--name-status",PARENT,"--"],cwd=ROOT,timeout=20).decode().splitlines():
         status,path=line.split("\t"); assert allowed.get(path)==status
     extra=subprocess.check_output(git+["ls-files","--others","--exclude-standard"],cwd=ROOT,timeout=20).decode().splitlines()

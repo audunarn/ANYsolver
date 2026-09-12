@@ -257,6 +257,7 @@ def test_ms3_extent_and_frozen_parent_bindings():
         'src/anysolver/_ge_beam3_g3b_weighted_reference.py':'A','tests/test_ge_beam3_g3b_weighted.py':'A',
         'docs/GE_BEAM3_G3B_WEIGHTED_DEVELOPMENT.md':'A','docs/reference_cases/ge_beam3_g3b_weighted_development_v1.json':'A'}
     allowed.update({p:'A' for p in ["tests/test_ge_beam3_g3b_transport.py","docs/GE_BEAM3_G3B_TRANSPORT_DEVELOPMENT.md","docs/reference_cases/ge_beam3_g3b_transport_development_v1.json"]})
+    allowed.update({p:'A' for p in ["src/anysolver/_ge_beam3_g3b_owner.py","tests/test_ge_beam3_g3b_owner.py","docs/GE_BEAM3_G3B_OWNER_CONTRACT.md","docs/reference_cases/ge_beam3_g3b_owner_development_v1.json"]})
     diff = subprocess.check_output(git+['diff','--name-status',parent,'--'],cwd=ROOT,timeout=20).decode()
     for line in diff.splitlines():
         status,path = line.split('\t'); assert allowed.get(path) == status
