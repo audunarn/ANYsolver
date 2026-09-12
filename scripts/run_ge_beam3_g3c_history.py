@@ -84,8 +84,36 @@ def worker(out, expected):
     final_candidate,final_inputs,final_review=authority(out/'review.json',lease['review_sha256'])
     if (final_candidate!=candidate or final_inputs!=inputs or final_review!=review or inventory.count!=1):
         raise ValueError('history final authority/inventory changed')
+    completion=completion_expected(lease)
+    completion.update(collected_nodes=inventory.count,passed_nodes=inventory.passed,
+                      nonpassing=inventory.nonpassing,exit_code=int(code))
+    write(out/'completion.json',completion)
     print('G3C CHECKPOINT history complete',flush=True)
     return int(code or inventory.nonpassing or inventory.passed!=1)
+
+
+def fingerprint(path):
+    raw=environment.regular(path).read_bytes()
+    return dict(bytes=len(raw),sha256=sha256(raw).hexdigest())
+
+
+def completion_expected(lease):
+    return dict(kind='G3C_HISTORY_WORKER_COMPLETION',scope_id=SCOPE,lane=lease['lane'],
+        candidate=lease['candidate'],inputs_sha256=sha256(canonical(lease['inputs'])).hexdigest(),
+        inventory=lease['inventory'],collected_nodes=1,passed_nodes=1,nonpassing=False,exit_code=0,
+        lease_sha256=sha256(canonical(lease)).hexdigest())
+
+
+def verify_child_files(out, record, lease):
+    if set(record['files'])!={'stdout.log','stderr.log','completion.json'}:
+        raise ValueError('complete raw worker evidence required')
+    for name in ('stdout.log','stderr.log','completion.json'):
+        actual=fingerprint(out/name)
+        if canonical(actual)!=canonical(record['files'][name]): raise ValueError('worker file hash/bytes mismatch')
+        if name!='stderr.log' and actual['bytes']==0: raise ValueError('empty worker evidence')
+    completion=environment.strict(environment.regular(out/'completion.json').read_bytes())
+    if canonical(completion)!=canonical(completion_expected(lease)):
+        raise ValueError('actual one-node pass/inventory evidence required')
 
 
 def child(out, lease, review, deadline):
@@ -118,7 +146,11 @@ def child(out, lease, review, deadline):
         accounting=inherited.close_tree(job,process,lambda row:write(out/'cleanup-failure.json',row))
     record=dict(kind='G3C_HISTORY_CHILD_DIAGNOSTIC',scope_id=SCOPE,status=status,lane=lease['lane'],
         elapsed_seconds=time.monotonic()-start,returncode=process.returncode,active_processes=accounting[1],
-        peak_tree_bytes=accounting[2],lease_sha256=lease_hash)
+        peak_tree_bytes=accounting[2],lease_sha256=lease_hash,
+        files={name:fingerprint(out/name) for name in ('stdout.log','stderr.log','completion.json') if (out/name).exists()})
+    if status=='PASSED':
+        try: verify_child_files(out,record,lease)
+        except (ValueError,OSError): record['status']='FAILED_EVIDENCE'
     write(out/'process.json',record)
     return record
 
@@ -136,7 +168,7 @@ def verify_prior_smoke(root, candidate, inputs, review_hash):
         result=environment.strict(environment.regular(root/lane/'process.json').read_bytes())
         verify_review(canonical(lease['implementation_review']),review_hash,candidate,inputs)
         if (set(result)!={'kind','scope_id','status','lane','elapsed_seconds','returncode',
-                          'active_processes','peak_tree_bytes','lease_sha256'}
+                          'active_processes','peak_tree_bytes','lease_sha256','files'}
                 or any(type(result[k]) is not int for k in ('returncode','active_processes','peak_tree_bytes'))
                 or type(result['elapsed_seconds']) is not float or result['lane']!=lane or result['scope_id']!=SCOPE
                 or result['kind']!='G3C_HISTORY_CHILD_DIAGNOSTIC'
@@ -146,6 +178,7 @@ def verify_prior_smoke(root, candidate, inputs, review_hash):
                 or result['active_processes']!=0 or not 0.<=result['elapsed_seconds']<=600.
                 or not 0<=result['peak_tree_bytes']<=24*1024**3 or result['lease_sha256']!=sha256(raw).hexdigest()):
             raise ValueError('smoke receipt authority/resource mismatch')
+        verify_child_files(root/lane,result,lease)
 
 
 def run_wave(out, lanes, lease_base, review):

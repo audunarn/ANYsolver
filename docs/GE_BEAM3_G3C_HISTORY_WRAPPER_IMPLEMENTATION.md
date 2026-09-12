@@ -31,7 +31,7 @@ candidate bytes are explicitly noncommitted and cannot be imported as state.
 
 - Inert wrapper inventory: five unittest nodes, including a synthetic callback
   mutation probe. These are orchestration tests, not numerical evidence.
-- Inert runner inventory: four unittest nodes. Mock workers test scheduling
+- Inert runner inventory: five unittest nodes. Mock workers test scheduling
   only; they do not prove actual numerical-process overlap.
 - Smoke inventory: five concrete parameterized family nodes, one per child.
   Each genuinely commits zero and first finite stage, verifies native full/
@@ -57,6 +57,14 @@ terminal handling. Nothing retries automatically. Logs and wave/process status
 remain external diagnostics, never canonical scientific GO evidence.
 
 The restart wave additionally requires all five same-candidate smoke receipts.
+Independent pre-execution review of freeze 44cfddc found that the first receipt
+validator did not bind raw logs or actual worker pass counts. The correction
+adds exact stdout/stderr/completion byte counts and hashes to terminal receipts,
+plus a canonical worker completion record binding the actual collected/passed
+count, nonpassing flag, inventory, candidate, input hash and lease hash. Missing,
+replaced or truncated evidence and rehashed nonpassing completion records block
+the restart prerequisite. The pre-correction freeze and review remain preserved;
+no numerical execution occurred there.
 After smoke, report observed duration before further campaigns. Ten full
 rehearsal histories, all 375 histories/3450 prefixes, complete mutation and
 transport/recovery obligations, MO01-MO18 and two deterministic formal cycles

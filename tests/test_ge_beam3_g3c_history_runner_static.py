@@ -2,6 +2,7 @@
 from hashlib import sha256
 from pathlib import Path
 import sys
+import tempfile
 import threading
 import unittest
 from unittest.mock import patch
@@ -67,6 +68,55 @@ class RunnerStaticTests(unittest.TestCase):
         self.assertFalse(failures[0]['terminal_zero_proven'])
         self.assertNotIn('numpy',sys.modules)
         self.assertNotIn('anysolver',sys.modules)
+
+    def test_prior_smoke_requires_logs_and_actual_completion_evidence(self):
+        # Synthetic process receipts only; never offered to a real run.
+        for mutation in ('none','missing_stdout','changed_stderr','truncated_stdout',
+                         'rehashed_nonpass','rehashed_bool_count','missing_family'):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory(prefix='g3c-inert-receipt-') as directory:
+                root=Path(directory); candidate=dict(commit='1'*40,tree='2'*40)
+                inputs={'a':dict(bytes=1,sha256='3'*64)}
+                review=dict(decision='ACCEPTED_G3C_STABLE_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
+                    reviewer=dict(independent=True),subject_commit=candidate['commit'],
+                    scope=dict(subject_tree=candidate['tree'],source_map_sha256=runner.inherited.MAP_SHA,
+                        inputs_sha256=sha256(runner.canonical(inputs)).hexdigest(),scope_id=runner.SCOPE))
+                review_hash=sha256(runner.canonical(review)).hexdigest()
+                results={}
+                for lane,inventory in runner.SMOKES.items():
+                    out=root/lane; out.mkdir()
+                    lease=dict(kind='G3C_STABLE_PRIVATE_DEVELOPMENT',scope_id=runner.SCOPE,
+                        candidate=candidate,inputs=inputs,source_map_sha256=runner.inherited.MAP_SHA,
+                        review_sha256=review_hash,implementation_review=review,lane=lane,inventory=inventory)
+                    runner.write(out/'lease.json',lease)
+                    (out/'stdout.log').write_bytes(b'synthetic stdout, not a real pass\n')
+                    (out/'stderr.log').write_bytes(b'synthetic stderr\n')
+                    runner.write(out/'completion.json',runner.completion_expected(lease))
+                    record=dict(kind='G3C_HISTORY_CHILD_DIAGNOSTIC',scope_id=runner.SCOPE,status='PASSED',
+                        lane=lane,elapsed_seconds=1.,returncode=0,active_processes=0,peak_tree_bytes=1000,
+                        lease_sha256=sha256(runner.canonical(lease)).hexdigest(),
+                        files={name:runner.fingerprint(out/name) for name in ('stdout.log','stderr.log','completion.json')})
+                    runner.write(out/'process.json',record); results[lane]=record
+                wave=dict(scope_id=runner.SCOPE,kind='G3C_HISTORY_WAVE_DIAGNOSTIC',status='PASSED',
+                          elapsed_seconds=5.,results=results,wave='smoke')
+                runner.write(root/'wave.json',wave)
+                runner.verify_prior_smoke(root,candidate,inputs,review_hash)
+                out=root/'smoke-b2'
+                if mutation=='missing_stdout': (out/'stdout.log').unlink()
+                elif mutation=='changed_stderr': (out/'stderr.log').write_bytes(b'replaced')
+                elif mutation=='truncated_stdout': (out/'stdout.log').write_bytes(b'')
+                elif mutation in ('rehashed_nonpass','rehashed_bool_count'):
+                    completion=runner.environment.strict((out/'completion.json').read_bytes())
+                    completion['passed_nodes']=0 if mutation=='rehashed_nonpass' else True
+                    (out/'completion.json').write_bytes(runner.canonical(completion))
+                    results['smoke-b2']['files']['completion.json']=runner.fingerprint(out/'completion.json')
+                    (out/'process.json').write_bytes(runner.canonical(results['smoke-b2']))
+                    (root/'wave.json').write_bytes(runner.canonical(wave))
+                elif mutation=='missing_family':
+                    results.pop('smoke-loop'); (root/'wave.json').write_bytes(runner.canonical(wave))
+                if mutation!='none':
+                    with self.assertRaises((ValueError,OSError)):
+                        runner.verify_prior_smoke(root,candidate,inputs,review_hash)
+        self.assertNotIn('numpy',sys.modules)
 
 
 if __name__=='__main__': unittest.main()
