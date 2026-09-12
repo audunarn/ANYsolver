@@ -1,6 +1,7 @@
 """First actual mixed-owner development gate. Not full G3c confirmation."""
 from copy import deepcopy
 import json
+import threading
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
@@ -138,6 +139,50 @@ def test_closed_runtime_dispatch_and_no_restart_admission(monkeypatch):
     original=beam.LocalBeam.evaluate
     def changed(*args,**kwargs): return original(*args,**kwargs)
     monkeypatch.setattr(beam.LocalBeam,'evaluate',changed)
-    with pytest.raises(ValueError,match='captured'): owner.solve(load(0))
+    with pytest.raises(ValueError,match='dispatch'): owner.solve(load(0))
     monkeypatch.setattr(beam.LocalBeam,'evaluate',original)
+    with pytest.raises(ValueError,match='captured'): owner.snapshot_bytes()
+
+def test_replaced_lock_is_rejected_before_publication_and_original_released():
+    owner=MixedGraphOwner(); published=owner._published; original=owner._lock
+    def replace(stage):
+        if stage=='before_publish': object.__setattr__(owner,'_lock',threading.Lock())
+    with pytest.raises(ValueError,match='captured'): owner.solve(load(0),hook=replace)
+    assert owner._published is published and not original.locked()
+    object.__setattr__(owner,'_lock',original)
+    with pytest.raises(ValueError,match='captured'): owner.snapshot_bytes()
+
+@pytest.mark.parametrize('module_name',['owner','definition'])
+def test_replaced_common_transform_is_rejected_and_poisoned(monkeypatch,module_name):
+    from anysolver import _ge_beam3_g3c_owner as implementation
+    from anysolver import _ge_beam3_g3c_definition as definition
+    target=implementation if module_name=='owner' else definition
+    owner=MixedGraphOwner(common_motion='CM0'); published=owner._published; original=target.SHIFT
+    def replace(stage):
+        if stage=='pose': monkeypatch.setattr(target,'SHIFT',(99,-3,1))
+    with pytest.raises(ValueError): owner.solve(dict(kind='PREPARE_COMMON_MOTION',step=1),hook=replace)
+    assert owner._published is published and not owner._owned_lock.locked()
+    monkeypatch.setattr(target,'SHIFT',original)
+    with pytest.raises(ValueError,match='captured'): owner.snapshot_bytes()
+
+@pytest.mark.parametrize('family',['section','reference'])
+def test_imported_class_dispatch_cannot_change(monkeypatch,family):
+    from anysolver._ge_beam3_g1_elastic import ElasticSection
+    from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
+    owner=MixedGraphOwner(); published=owner._published
+    cls,name=(ElasticSection,'response') if family=='section' else (Reference,'frame')
+    original=getattr(cls,name)
+    def changed(*a,**kw): return original(*a,**kw)
+    monkeypatch.setattr(cls,name,changed)
+    with pytest.raises(ValueError,match='dispatch'): owner.solve(load(0))
+    assert owner._published is published and not owner._owned_lock.locked()
+
+def test_authority_read_exception_permanently_poisoned(monkeypatch):
+    from anysolver import _ge_beam3_g3c_definition as definition
+    owner=MixedGraphOwner(); published=owner._published; original=definition.bound
+    def unreadable(*args): raise ValueError('injected frozen authority read failure')
+    monkeypatch.setattr(definition,'bound',unreadable)
+    with pytest.raises(ValueError,match='authority read'): owner.snapshot_bytes()
+    assert owner._published is published and not owner._owned_lock.locked()
+    monkeypatch.setattr(definition,'bound',original)
     with pytest.raises(ValueError,match='captured'): owner.snapshot_bytes()

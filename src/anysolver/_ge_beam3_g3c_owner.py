@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 import inspect
 import json
-import marshal
 import sys
 import threading
 from time import monotonic
@@ -20,6 +19,7 @@ from . import _ge_beam3_pose_joint as joint_module
 from . import nonlinear_state as state_module
 from . import elements as legacy_module
 from . import _native_rotation_state as rotation_module
+from . import _ge_beam3_g3c_definition as definition_module
 from ._ge_beam3_g3c_definition import expand, command, CONTRACT_SHA, U, SHIFT
 from ._ge_beam3_g1_analysis import runtime_digest
 from ._ge_beam3_g1_elastic import ElasticSection, canonical, owned, sha, solve
@@ -38,15 +38,24 @@ def dispatch():
     modules=(native_module,operator_module,beam_module,shell_module,joint_module,
              state_module,legacy_module,rotation_module,sys.modules[__name__])
     found=[]
+    def functions(name,value):
+        if isinstance(value,property):
+            return [(name+'.'+k,fn) for k,fn in (('get',value.fget),('set',value.fset),('del',value.fdel)) if fn is not None]
+        if isinstance(value,(staticmethod,classmethod)): value=value.__func__
+        return [(name,value)] if inspect.isfunction(value) else []
     for module in modules:
         for name,value in sorted(vars(module).items()):
-            functions=[(name,value)] if inspect.isfunction(value) else []
-            if inspect.isclass(value) and value.__module__==module.__name__:
-                for method,fn in sorted(vars(value).items()):
-                    if isinstance(fn,(staticmethod,classmethod)): fn=fn.__func__
-                    if inspect.isfunction(fn): functions.append((name+'.'+method,fn))
-            for name,fn in functions:
-                found.append((module.__name__,name,fn,marshal.dumps(fn.__code__)))
+            made=functions(name,value)
+            if inspect.isclass(value):
+                # Include imported classes and inherited methods/properties,
+                # notably Reference and ElasticSection, not just local classes.
+                for base in value.__mro__:
+                    for method,fn in sorted(vars(base).items()):
+                        made.extend(functions(name+'.'+base.__module__+'.'+base.__qualname__+'.'+method,fn))
+            for name,fn in made:
+                # Code objects are immutable; replacing __code__ changes this
+                # identity. marshal encodings are not an identity primitive.
+                found.append((module.__name__,name,fn,id(fn.__code__)))
     return tuple(found)
 
 def close(a,b,label):
@@ -74,7 +83,7 @@ def generation(state,history):
 
 class MixedGraphOwner:
     __slots__=('_definition','_expanded','_programs','_seal','_runtime','_dispatch',
-               '_published','_initial','_lock','_active','_serial','_poisoned')
+               '_published','_initial','_lock','_owned_lock','_active','_serial','_poisoned')
     def __setattr__(self,name,value): raise AttributeError('owned graph attributes are immutable')
     def __delattr__(self,name): raise AttributeError('owned graph attributes are immutable')
 
@@ -85,6 +94,7 @@ class MixedGraphOwner:
             _programs=canonical(programs),_runtime=sha(dict(source=runtime_digest(),environment=ENVIRONMENT)),
             _dispatch=dispatch(),_lock=threading.Lock(),_active=None,_serial=0,_poisoned=False).items():
             object.__setattr__(self,name,value)
+        object.__setattr__(self,'_owned_lock',self._lock)
         object.__setattr__(self,'_seal',sha((self._definition.hex(),self._expanded.hex(),self._programs.hex())))
         progress('initialization')
         g=expanded['graph']; n=len(g['nodes']); zero=np.zeros(6*n); q=np.tile(np.eye(3),(n,1,1))
@@ -117,34 +127,46 @@ class MixedGraphOwner:
         floor=64*np.finfo(float).eps*max(JR.shape)*max(1.,singular[0])
         if len(singular)<R.shape[1] or singular[-1]<=floor: raise ValueError('unsupported component rigid space')
 
-    def _guard(self,origin=None,*,full=False):
-        if (type(self) is not MixedGraphOwner or self._poisoned or
-            sha((self._definition.hex(),self._expanded.hex(),self._programs.hex()))!=self._seal or
-            dispatch()!=self._dispatch or
-            (origin is not None and self._published is not origin) or
-            sha256(self._published.state).hexdigest()!=self._published.state_sha256 or
-            sha256(self._published.history).hexdigest()!=self._published.history_sha256):
+    def _guard(self,origin=None,*,full=False,lock=None):
+        try:
+            current=dispatch()
+            if current!=self._dispatch:
+                before={(m,n):(f,c) for m,n,f,c in self._dispatch}
+                after={(m,n):(f,c) for m,n,f,c in current}
+                names=sorted(k for k in before.keys()|after.keys() if before.get(k)!=after.get(k))
+                raise ValueError('runtime dispatch changed: '+repr(names[:5]))
+            if (type(self) is not MixedGraphOwner or self._poisoned or
+                self._lock is not self._owned_lock or
+                (lock is not None and self._lock is not lock) or
+                U!=((0,-1,0),(1,0,0),(0,0,1)) or SHIFT!=(2,-3,1) or
+                definition_module.U!=U or definition_module.SHIFT!=SHIFT or
+                sha((self._definition.hex(),self._expanded.hex(),self._programs.hex()))!=self._seal or
+                (origin is not None and self._published is not origin) or
+                sha256(self._published.state).hexdigest()!=self._published.state_sha256 or
+                sha256(self._published.history).hexdigest()!=self._published.history_sha256):
+                raise ValueError('captured graph/runtime/generation changed')
+            if full:
+                definition,expanded,programs=expand(**{k:json.loads(self._definition)[k] for k in ('fixture_id','variant','common_motion')})
+                if (canonical(definition)!=self._definition or canonical(expanded)!=self._expanded or
+                    canonical(programs)!=self._programs or sha(dict(source=runtime_digest(),environment=ENVIRONMENT))!=self._runtime):
+                    raise ValueError('frozen source or definition changed')
+        except BaseException:
             object.__setattr__(self,'_poisoned',True)
-            raise ValueError('captured graph/runtime/generation changed')
-        if full:
-            definition,expanded,programs=expand(**{k:json.loads(self._definition)[k] for k in ('fixture_id','variant','common_motion')})
-            if (canonical(definition)!=self._definition or canonical(expanded)!=self._expanded or
-                canonical(programs)!=self._programs or sha(dict(source=runtime_digest(),environment=ENVIRONMENT))!=self._runtime):
-                object.__setattr__(self,'_poisoned',True)
-                raise ValueError('frozen source or definition changed')
+            raise
 
     @property
     def size(self): return 6*len(json.loads(self._expanded)['graph']['nodes'])
 
     def snapshot_bytes(self):
         # Diagnostic snapshot only; no import/restart API until full preflight gate.
-        if not self._lock.acquire(False): raise RuntimeError('owner in use')
+        lock=self._owned_lock
+        if not lock.acquire(False): raise RuntimeError('owner in use')
         try:
-            self._guard(full=True)
+            self._guard(full=True,lock=lock)
             return canonical(dict(kind='UNQUALIFIED_G3C_GENERATION_DIAGNOSTIC',
                 state=json.loads(self._published.state),history=json.loads(self._published.history),
                 state_sha256=self._published.state_sha256,history_sha256=self._published.history_sha256))
-        finally: self._lock.release()
+        finally: lock.release()
 
     def _native_model(self,state):
         data=json.loads(self._expanded); g=data['graph']; ids=[r[0] for r in g['nodes']]
@@ -307,10 +329,11 @@ class MixedGraphOwner:
 
     def _run(self,cmd,total,mu,*,hook,solve_graph):
         if type(self) is not MixedGraphOwner or (hook is not None and not callable(hook)): raise ValueError('exact owner/callback')
-        if not self._lock.acquire(False): raise RuntimeError('owner already in use')
+        lock=self._owned_lock
+        if not lock.acquire(False): raise RuntimeError('owner already in use')
         sandbox=None; start=monotonic(); origin=self._published
         try:
-            self._guard(origin,full=True)
+            self._guard(origin,full=True,lock=lock)
             history=json.loads(origin.history); state=json.loads(origin.state)
             cmd=command(cmd,history,json.loads(self._definition)['common_motion'])
             total=owned(state['total_u'] if total is None else total,(self.size,)).copy()
@@ -319,10 +342,10 @@ class MixedGraphOwner:
             def check(stage):
                 if monotonic()-start>=600: raise TimeoutError('graph child deadline')
                 if self._active is not nonce: raise ValueError('foreign/stale graph trial capability')
-                self._guard(origin)
+                self._guard(origin,lock=lock)
                 if hook is not None:
                     hook(stage)
-                    self._guard(origin,full=True)
+                    self._guard(origin,full=True,lock=lock)
                     if self._active is not nonce: raise ValueError('changed graph trial capability')
                 progress(stage)
             check('pose')
@@ -351,7 +374,7 @@ class MixedGraphOwner:
                     result=dict(total_u=owned(total),rotations=owned(next_state['rotations']),multipliers=owned(mu),
                         residual=r,iterations=iteration,state_sha256=made.state_sha256,epoch=next_state['epoch'],
                         production_qualified=False,physical_recovery_complete=False)
-                    check('before_publish'); self._guard(origin,full=True)
+                    check('before_publish'); self._guard(origin,full=True,lock=lock)
                     # All sandbox work is terminal before the sole publication.
                     # The finally path now only clears an owned nonce/releases
                     # the already-held primitive lock; no family dispatch remains.
@@ -374,4 +397,4 @@ class MixedGraphOwner:
         finally:
             if sandbox is not None: self._discard(sandbox)
             object.__setattr__(self,'_active',None)
-            self._lock.release()
+            lock.release()

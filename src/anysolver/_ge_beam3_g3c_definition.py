@@ -12,8 +12,8 @@ CONTRACT = 'docs/reference_cases/ge_beam3_g3c_mixed_owner_contract_v1.json'
 CONTRACT_SHA = '471d05d2db6c604c39e30320e279e3a8ccd47186cb549969a596a00c62d967e5'
 REVIEW = 'docs/reference_cases/ge_beam3_g3c_mixed_owner_design_review_v1.json'
 REVIEW_SHA = 'c7efca597db0739b83eeeda98f55dd714cea1c4a05e35dbfc6a7f269cc8c91e3'
-U = [[0,-1,0],[1,0,0],[0,0,1]]
-SHIFT = [2,-3,1]
+U = ((0,-1,0),(1,0,0),(0,0,1))
+SHIFT = (2,-3,1)
 
 def canonical(v):
     return (json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
