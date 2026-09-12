@@ -1,4 +1,9 @@
-"""Separate frozen static (3), scalar (3), and full-Jet (4) inventories."""
+"""Separate frozen static (3), scalar (3), and full-Jet (4) inventories.
+
+38a983f author lanes passed but independent review found set-deduplicated
+signed-zero coverage. Preserve its raw runs; this successor tests both signs
+explicitly and checks value/gradient/Hessian groups separately. Kernel unchanged.
+"""
 import ast
 from copy import deepcopy
 from decimal import Decimal as D, localcontext
@@ -35,12 +40,20 @@ def flattened(jets):
             *(float(v) for v in j.gradient), *(float(v) for row in j.hessian for v in row)]]
 
 
+def groups(jets):
+    return ([float(j.value) for j in jets],
+            [float(v) for j in jets for v in j.gradient],
+            [float(v) for j in jets for row in j.hessian for v in row])
+
+
 def jet_check(actual, reference, higher):
-    a, r, hi = flattened(actual), flattened(reference), flattened(higher)
-    assert norm_error(r, hi) <= 1e-60, 'independent high precision did not agree'
-    error = norm_error(a, hi)
-    assert error <= TOLERANCE, error
-    return error
+    errors = []
+    for a, r, hi in zip(groups(actual), groups(reference), groups(higher)):
+        assert norm_error(r, hi) <= 1e-60, 'independent high precision did not agree'
+        error = norm_error(a, hi)
+        assert error <= TOLERANCE, error
+        errors.append(error)
+    return max(errors)
 
 
 def scalar_reference(kind, value):
@@ -123,9 +136,11 @@ class TestScalarAccuracy:
         assert len(kernel.LOG) == 41
 
     def test_exp_coefficient_values_and_derivatives(self):
-        grid = sorted(set([0., -0., np.nextafter(0., 1.),
+        grid = [-0., *sorted(set([0., np.nextafter(0., 1.),
             *np.logspace(-300, -1, 22), *np.linspace(1., (2*np.pi)**2, 32),
-            *neighbours((1e-8, 1., np.pi**2, (1.4*np.pi)**2))]))
+            *neighbours((1e-8, 1., np.pi**2, (1.4*np.pi)**2))]))]
+        zero_signs = [bool(np.signbit(x)) for x in grid if x == 0.]
+        assert zero_signs == [True, False]
         worst = 0.
         for x in grid:
             jets = kernel._exp_coefficients(Jet2.variable(float(x), 0, 1))
@@ -136,7 +151,7 @@ class TestScalarAccuracy:
                 for a, b in zip((jet.value, jet.gradient[0], jet.hessian[0, 0]), reference):
                     error = norm_error([a], [b]); worst = max(worst, error)
                     assert error <= TOLERANCE, (kind, x, error)
-        checkpoint('exp_scalar', arguments=len(grid), maximum_error=worst)
+        checkpoint('exp_scalar', arguments=len(grid), signed_zero_cases=len(zero_signs), maximum_error=worst)
 
     def test_log_coefficient_values_and_derivatives(self):
         lower = np.nextafter(math_cos_limit(), 1.)
@@ -206,7 +221,8 @@ class TestFullJetAccuracy:
             a, b = kernel.so3_exp(moved), kernel.so3_exp(jets)
             expected = [[sum((transform[i, k]*b[k][l]*transform[j, l] for k in range(3) for l in range(3)),
                             start=Jet2.constant(0., 3)) for j in range(3)] for i in range(3)]
-            assert norm_error(flattened(sum(a, [])), flattened(sum(expected, []))) <= TOLERANCE
+            for actual_group, expected_group in zip(groups(sum(a, [])), groups(sum(expected, []))):
+                assert norm_error(actual_group, expected_group) <= TOLERANCE
 
     def test_domain_guards_and_no_clipping(self):
         for x in (-1., -np.nextafter(0., 1.), np.nan, np.inf, -np.inf):
