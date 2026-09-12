@@ -94,4 +94,25 @@ class GuardTests(unittest.TestCase):
     def test_no_mechanics_import_before_authority(self):
         self.assertNotIn('numpy',sys.modules);self.assertNotIn('anysolver',sys.modules)
 
+    def test_whole_invocation_watchdog(self):
+        timers=[];exits=[]
+        class Timer:
+            def __init__(self,delay,callback):
+                self.delay=delay;self.callback=callback;self.started=False;self.cancelled=False;timers.append(self)
+            def start(self):self.started=True
+            def cancel(self):self.cancelled=True
+        w=r.WaveWatchdog(timer=Timer,exit_process=exits.append)
+        self.assertEqual([t.delay for t in timers],[1780,1800])
+        self.assertTrue(all(t.started and t.daemon for t in timers))
+        def blocked_authority(*args):
+            timers[0].callback()  # deadline before a job exists
+            return ({},{},b'{}\n')
+        with patch.object(r,'WaveWatchdog',return_value=w),patch.object(r,'authority',side_effect=blocked_authority):
+            with self.assertRaises(TimeoutError):r.execute(SimpleNamespace(review=None,review_sha256=None))
+        self.assertEqual(exits,[124]);self.assertTrue(all(t.cancelled for t in timers))
+        w=r.WaveWatchdog(timer=Timer,exit_process=exits.append);j=Job();w.attach(j)
+        w.expire();self.assertTrue(j.killed)
+        with self.assertRaises(TimeoutError):w.check()  # no publication after expiration
+        w.hard_exit();self.assertEqual(exits,[124,124,124]);w.close()
+
 if __name__=='__main__':unittest.main()

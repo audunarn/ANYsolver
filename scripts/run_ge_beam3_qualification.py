@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 
@@ -161,9 +162,48 @@ def worker(out,lease_sha):
     print('BEAM CHECKPOINT evidence complete',flush=True)
     return 0
 
+class WaveWatchdog:
+    """Active coordinator deadline, including authority IO and finalization.
+
+    Start drain with twenty seconds left; an independent hard timer exits even
+    if draining or coordinator IO stalls. Windows job handles are kill-on-close.
+    """
+    def __init__(self,timer=threading.Timer,exit_process=os._exit):
+        self.expired=threading.Event();self.job=None;self.exit_process=exit_process
+        self.soft=timer(1780,self.expire);self.hard=timer(1800,self.hard_exit)
+        for t in (self.hard,self.soft):t.daemon=True;t.start()
+
+    def check(self):
+        if self.expired.is_set():raise TimeoutError('whole invocation deadline')
+
+    def attach(self,job):
+        self.job=job
+        self.check()
+
+    def expire(self):
+        self.expired.set()
+        try:
+            if self.job is not None:self.job.terminate()
+        finally:self.exit_process(124)
+
+    def hard_exit(self):
+        self.expired.set()
+        self.exit_process(124)
+
+    def close(self):
+        self.soft.cancel();self.hard.cancel()
+
+
 def execute(args):
+    watchdog=WaveWatchdog()
+    try:return execute_guarded(args,watchdog)
+    finally:watchdog.close()
+
+
+def execute_guarded(args,watchdog):
     wave_start=time.monotonic()
     expected=authority(args.review,args.review_sha256)
+    watchdog.check()
     out=Path(tempfile.mkdtemp(prefix='anysolver-beam-qualification-'))
     print('DIAGNOSTICS '+str(out),flush=True)
     lease=dict(schema=SCOPE,run_id=str(uuid.uuid4()),gate=args.gate,lane=args.lane,
@@ -172,10 +212,12 @@ def execute(args):
     with (out/'review.json').open('xb') as stream:stream.write(expected[2])
     job=job_type()(MEMORY);record=dict(status='FAILED');process=None
     try:
+        watchdog.attach(job)
         env=dict(os.environ,**{key:'1' for key in THREADS})
         env.update(PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',PYTEST_ADDOPTS='',PYTHONDONTWRITEBYTECODE='1')
         with (out/'stdout.log').open('xb') as stdout,(out/'stderr.log').open('xb') as stderr:
             child_start=time.monotonic()
+            watchdog.check()
             process=job.launch([sys.executable,'-I','-S','-B','-u',str(Path(__file__).resolve()),'--worker',str(out),
                 sha256(read(out/'lease.json')).hexdigest()],cwd=ROOT,env=env,stdout=stdout,stderr=stderr)
             record=monitor(job,process,lambda:((out/'stdout.log').stat().st_size,(out/'stderr.log').stat().st_size),start=child_start)
@@ -190,8 +232,6 @@ def execute(args):
                 or science['full_g3c_qualified'] or science['production_qualified']):raise ValueError('completion mismatch')
             if authority(args.review,args.review_sha256)!=expected:raise ValueError('coordinator final authority')
             if time.monotonic()-wave_start>=1800:raise ValueError('wave deadline')
-            if (out/'scientific.json').exists():raise ValueError('exclusive publication')
-            os.rename(out/'scientific.pending.json',out/'scientific.json')
     except BaseException as exc:
         record.update(status='FAILED',exception=type(exc).__name__)
         raise
@@ -208,6 +248,10 @@ def execute(args):
                       files={p.name:fingerprint(p.read_bytes()) for p in out.iterdir() if p.is_file()})
         write(out/'process.json',record)
         print(canonical(record).decode(),flush=True)
+    if record['status']=='PASSED':
+        watchdog.check()
+        if (out/'scientific.json').exists():raise ValueError('exclusive publication')
+        os.rename(out/'scientific.pending.json',out/'scientific.json')
     return int(record['status']!='PASSED')
 
 def main():

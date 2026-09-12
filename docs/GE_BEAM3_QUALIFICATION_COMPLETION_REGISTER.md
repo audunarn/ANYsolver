@@ -59,7 +59,7 @@ commit/tree, all tracked source hashes, contract/reviews and capsule before
 mechanics imports and after execution. Test checkpoints provide inexpensive
 progress; no full manifest rebuilt inside mechanical loops.
 
-Separate current inventories:7 exact design tests;9 inert runner guard tests;
+Separate current inventories:7 exact design tests;10 inert runner guard tests;
 2 selected smoke nodes;8 complete numerical-core nodes. Only the first two
 inventories have run at this checkpoint. Fake-job guard tests prove timeout,
 inactivity/memory drain, parent-exit/live-child handling, exception cleanup,
@@ -78,3 +78,6 @@ Bounds: one numerical thread,24 GiB,600 seconds including15-second drain reserve
 one child, not an unbounded multi-wave scheduler. No automatic retry. Corrected
 candidates need independent review and fresh attempts. Freeze/main/public source
 boundaries are checked before execution; old historical runners remain unchanged.
+An active whole-invocation watchdog starts before authority IO, initiates drain
+at1780 seconds and independently exits at1800 seconds if IO or drain is stuck.
+Canonical promotion follows process finalization and a deadline check.
