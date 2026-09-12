@@ -1,6 +1,7 @@
 """Bounded private shell development; no graph or recovery qualification."""
 import itertools
 import json
+from dataclasses import replace
 import numpy as np
 import pytest
 from anysolver import _ge_beam3_g3c_local_shell as s
@@ -65,6 +66,87 @@ def permutations(n):
     if n == 3: return list(itertools.permutations(range(3)))
     return [tuple((i+k)%4 for i in base) for base in ((0,1,2,3),(0,3,2,1)) for k in range(4)]
 
+def field_tensor(values,frame,factor):
+    values=np.asarray(values); out=np.zeros((len(values),3,3))
+    for g,(a,b,c) in enumerate(values):
+        out[g]=a*np.outer(frame[:,0],frame[:,0])+b*np.outer(frame[:,1],frame[:,1])+factor*c*(
+            np.outer(frame[:,0],frame[:,1])+np.outer(frame[:,1],frame[:,0]))
+    return out
+
+def diagnostic_fields(data):
+    frame=np.asarray(data['reference_frame'])
+    if 'source_physical' in data:
+        fields={}; raw=data['source_physical']
+        for key,factor in [('membrane_strain',.5),('curvature',.5),('membrane_resultants',1.),
+                           ('bending_resultants',1.),('compatible_membrane_strain',.5),('compatible_curvature',.5)]:
+            if key in raw: fields[key]=field_tensor(raw[key],frame,factor)
+        for key in ('transverse_shear_strain','transverse_shear_resultants','compatible_transverse_shear_strain'):
+            if key in raw: fields[key]=np.asarray(raw[key])@frame[:,:2].T
+        for key,value in fields.items(): equal(data['reference_global_fields'][key],value)
+        return fields,{k:np.asarray(v) for k,v in data['current_global_fields'].items()}
+    fields={'membrane_strain':field_tensor(data['strain'],frame,.5),
+            'membrane_resultants':field_tensor(data['resultants'],frame,1.)}
+    equal(fields['membrane_strain'],data['reference_global_strain'])
+    equal(fields['membrane_resultants'],data['reference_global_resultants'])
+    return fields,dict(membrane_strain=np.asarray(data['current_global_strain']),
+                        membrane_resultants=np.asarray(data['current_global_resultants']))
+
+def diagnostic_derivatives(data):
+    frame=np.asarray(data['reference_frame'])
+    if 'compatible_differential' in data:
+        B=np.asarray(data['compatible_differential']).copy()
+        sign=data['source_physical']['numbered_frame_director_sign']
+        B*=np.array([1,1,sign,sign,sign,1,sign,1])[None,:,None]
+    else: B=np.asarray(data['strain_differential'])
+    result={}
+    for name,offset in [('membrane_strain',0)]+([('curvature',3)] if B.shape[1]==8 else []):
+        t=np.zeros((len(B),3,3,B.shape[2])); t[:,0,0,:]=B[:,offset,:];t[:,1,1,:]=B[:,offset+1,:]
+        t[:,0,1,:]=t[:,1,0,:]=.5*B[:,offset+2,:]
+        result[name]=np.einsum('ai,gijk,bj->gabk',frame,t,frame)
+    if B.shape[1]==8: result['transverse_shear_strain']=np.einsum('ai,gik->gak',frame[:,:2],B[:,6:,:])
+    return result
+
+def transport_check(base,out,*,dof_order=None,coordinate=None,shift=None,motion=None,motion_shift=None,reverse=False):
+    coordinate=np.eye(3) if coordinate is None else coordinate
+    motion=np.eye(3) if motion is None else motion
+    shift=np.zeros(3) if shift is None else shift
+    motion_shift=np.zeros(3) if motion_shift is None else motion_shift
+    count=len(base.local_force); dof_order=np.arange(count) if dof_order is None else dof_order
+    G=np.kron(np.eye(count//3),coordinate)
+    for b,c in zip(base.channels,out.channels):
+        assert (b.name,b.sign,b.numerical)==(c.name,c.sign,c.numerical)
+        equal(c.energy,b.energy);equal(c.force,G@b.force[dof_order])
+        equal(c.tangent,G@b.tangent[np.ix_(dof_order,dof_order)]@G.T)
+        if b.numerical:
+            assert b.stations==c.stations==b'null\n';continue
+        x,y=json.loads(b.stations),json.loads(c.stations)
+        equal(x['current_frame'],base.kinematics.frame@np.asarray(x['reference_frame']))
+        equal(y['current_frame'],out.kinematics.frame@np.asarray(y['reference_frame']))
+        assert x['differential_coordinates']==y['differential_coordinates']
+        positions=np.asarray(x['reference_station_positions'])@coordinate.T+shift
+        target=np.asarray(y['reference_station_positions'])
+        order=np.array([np.argmin(np.linalg.norm(positions-p,axis=1)) for p in target])
+        assert len(set(order))==len(order)
+        equal(target,positions[order]);equal(y['weights'],np.asarray(x['weights'])[order])
+        expected=(np.asarray(x['current_station_positions'])@coordinate.T+shift)@motion.T+motion_shift
+        equal(y['current_station_positions'],expected[order])
+        bx,bc=diagnostic_fields(x);yx,yc=diagnostic_fields(y)
+        # Work-channel compatible VK/linear records have no director interpretation.
+        is_physical='source_physical' in x
+        for key,value in bx.items():
+            sign=-1 if reverse and is_physical and ('curvature' in key or 'bending' in key or 'shear' in key) else 1
+            expected=coordinate@value@coordinate.T if value.ndim==3 else value@coordinate.T
+            equal(yx[key],sign*expected[order])
+            world=motion@coordinate
+            expected=world@bc[key]@world.T if value.ndim==3 else bc[key]@world.T
+            equal(yc[key],sign*expected[order])
+        for key,value in diagnostic_derivatives(x).items():
+            sign=-1 if reverse and is_physical and key!='membrane_strain' else 1
+            v=value[order][...,dof_order]
+            if value.ndim==4: expected=np.einsum('ai,gijk,bj,lk->gabl',coordinate,v,coordinate,G)
+            else: expected=np.einsum('ai,gik,lk->gal',coordinate,v,G)
+            equal(diagnostic_derivatives(y)[key],sign*expected)
+
 @pytest.mark.parametrize('shape', SHAPES)
 def test_independent_pose_actual_reference_rank_and_rigid_modes(shape):
     p = make(shape); desc = p.descriptor(); ref = np.array(desc['coordinates']); n = len(ref)
@@ -112,6 +194,7 @@ def test_common_pi_1_4pi_and_rebase_and_work_wrench(shape):
     base = p.evaluate(rebased, Q)
     equal(base.kinematics.deformation,before.kinematics.deformation)
     equal(base.spatial_force,before.spatial_force); equal(base.energy,before.energy)
+    transport_check(before,base)
     # State fields may differ by last-bit reconstruction; compare decoded numeric
     # values, never pretend a graph accepted-origin replay is being tested here.
     def compare(a,b,key=None):
@@ -133,6 +216,7 @@ def test_common_pi_1_4pi_and_rebase_and_work_wrench(shape):
         W = exp(vector); changed = rebased.copy()
         changed.reshape(n,6)[:,:3] = (ref+rebased.reshape(n,6)[:,:3])@W.T+[2,-3,1]-ref
         out = p.evaluate(changed,np.array([W@qi for qi in Q]))
+        transport_check(base,out,motion=W,motion_shift=np.array([2.,-3.,1.]))
         equal(out.kinematics.deformation,base.kinematics.deformation); equal(out.energy,base.energy)
         expected = base.spatial_force.reshape(n,6)
         equal(out.spatial_force.reshape(n,6),np.c_[expected[:,:3]@W.T,expected[:,3:]@W.T])
@@ -146,13 +230,16 @@ def test_all_numberings_passive_coordinates_and_director_reversal(shape):
     for ordering in permutations(n):
         order = np.array(ordering); dofs = np.arange(6*n).reshape(n,6)[order].ravel()
         out = make(shape, order=order).evaluate(u[dofs].copy(),qa[order].copy())
+        transport_check(base,out,dof_order=dofs)
         equal(out.energy,base.energy); equal(out.chart_force,base.chart_force[dofs])
         equal(out.chart_hessian,base.chart_hessian[np.ix_(dofs,dofs)])
     W = exp(np.array([0.,0.,np.pi/2])); moved = make(shape,W=W,shift=np.array([2.,-3.,1.]))
     z = np.c_[u.reshape(n,6)[:,:3]@W.T,u.reshape(n,6)[:,3:]@W.T].ravel()
     out = moved.evaluate(z,np.array([W@q@W.T for q in qa])); equal(out.energy,base.energy)
+    transport_check(base,out,coordinate=W,shift=np.array([2.,-3.,1.]))
     equal(out.spatial_force.reshape(n,6),np.c_[base.spatial_force.reshape(n,6)[:,:3]@W.T,base.spatial_force.reshape(n,6)[:,3:]@W.T])
     reversed_director = make(shape,polarity=-1).evaluate(u,qa)
+    transport_check(base,reversed_director,reverse=True)
     equal(reversed_director.energy,base.energy); equal(reversed_director.local_force,base.local_force)
 
 @pytest.mark.parametrize('shape', SHAPES)
@@ -220,13 +307,15 @@ def test_owned_definition_detached_results_reentry_and_finite_sums(monkeypatch):
     with pytest.raises(AttributeError): p._body=b'{}'
     with pytest.raises(AttributeError): del p._body
     original=s.family_objects
+    passed_u,passed_qa=u.copy(),qa.copy()
     def change_caller(desc):
-        u[:]=1.; qa[:]=0.
-        with pytest.raises(RuntimeError): p.evaluate(u,qa)
+        passed_u[:]=1.; passed_qa[:]=0.
+        with pytest.raises(RuntimeError): p.evaluate(passed_u,passed_qa)
         return original(desc)
     monkeypatch.setattr(s,'family_objects',change_caller)
-    out=p.evaluate(u.copy(),qa.copy())
+    out=p.evaluate(passed_u,passed_qa)
     equal(out.local_force,before.local_force)
+    assert np.all(passed_u==1.) and np.all(passed_qa==0.)
     with pytest.raises(ValueError): s.channel('x',1,np.inf,np.zeros(2),np.eye(2))
     with pytest.raises(ValueError): s.equal(np.full(2,1e308),np.full(2,1e308),'overflow')
     with pytest.raises(ValueError): s.canonical(dict(x=float('nan')))
@@ -235,3 +324,19 @@ def test_owned_definition_detached_results_reentry_and_finite_sums(monkeypatch):
                   normal=np.array([0.,0.,1.]),material_direction=np.array([1.,0.,0.]))
         args.update(kw)
         with pytest.raises(ValueError): s.LocalShell(**args)
+
+@pytest.mark.parametrize('shape',('square','right'))
+def test_station_transport_oracle_rejects_mutated_channel_data(shape):
+    p=make(shape);u,qa=state(p);base=p.evaluate(u,qa)
+    for kind in ('position','current_position','weight','derivative','frame','current_tensor','physical_field'):
+        data=json.loads(base.channels[0].stations)
+        if kind=='position': data['reference_station_positions'][0][0]+=.01
+        elif kind=='current_position': data['current_station_positions'][0][0]+=.01
+        elif kind=='weight': data['weights'][0]*=2
+        elif kind=='derivative': data['compatible_differential' if shape=='square' else 'strain_differential'][0][0][0]+=.01
+        elif kind=='frame': data['current_frame'][0][0]+=.01
+        elif kind=='current_tensor': data['current_global_fields']['membrane_resultants'][0][0][0]+=.01
+        else: data['source_physical']['membrane_strain'][0][0]+=.01
+        first=replace(base.channels[0],stations=s.canonical(data))
+        bad=replace(base,channels=(first,*base.channels[1:]))
+        with pytest.raises(AssertionError): transport_check(base,bad)

@@ -72,6 +72,8 @@ class Kinematics:
     second: np.ndarray
     frame: np.ndarray
     rotations: np.ndarray
+    reference_positions: np.ndarray
+    current_positions: np.ndarray
 
 def deformation(reference, displacement, accepted_rotations):
     n = len(reference)
@@ -95,7 +97,8 @@ def deformation(reference, displacement, accepted_rotations):
         values.extend(so3_log(matmul(rt, q[i])))
     return Kinematics(owned([v.value for v in values]), owned([v.gradient for v in values]),
         owned([v.hessian for v in values]), owned([[v.value for v in row] for row in rotation]),
-        owned([[[v.value for v in row] for row in qi] for qi in q]))
+        owned([[[v.value for v in row] for row in qi] for qi in q]),
+        ref, owned(ref+u.reshape(n,6)[:,:3]))
 
 @dataclass(frozen=True)
 class WorkChannel:
@@ -121,13 +124,28 @@ def tensor(values, frame, shear_scale=1.):
         out.append(frame@local@frame.T)
     return owned(out)
 
-def membrane_stations(strain, resultant, differential, weights, frame, positions, pose):
+def physical_fields(public, frame, pose):
+    """Separate source fields in global components; never a composite resultant."""
+    reference = {}
+    for name, factor in [('membrane_strain', .5), ('curvature', .5),
+                         ('membrane_resultants', 1.), ('bending_resultants', 1.),
+                         ('compatible_membrane_strain', .5), ('compatible_curvature', .5)]:
+        if name in public: reference[name] = tensor(public[name], frame, factor)
+    for name in ('transverse_shear_strain', 'transverse_shear_resultants', 'compatible_transverse_shear_strain'):
+        if name in public: reference[name] = owned(np.asarray(public[name])@frame[:,:2].T)
+    current = {k: owned(pose@v@pose.T if v.ndim == 3 else v@pose.T) for k,v in reference.items()}
+    return dict(reference_global_fields=reference, current_global_fields=current,
+                reference_frame=owned(frame), current_frame=owned(pose@frame))
+
+def membrane_stations(strain, resultant, differential, weights, frame, positions, current_positions, pose):
     strain_global = tensor(strain, frame, .5)
     resultant_global = tensor(resultant, frame)
     return dict(strain=owned(strain), resultants=owned(resultant),
         strain_differential=owned(differential), weights=owned(weights),
         reference_frame=owned(frame), current_frame=owned(pose@frame),
         reference_station_positions=owned(positions),
+        current_station_positions=owned(current_positions),
+        differential_coordinates='REFERENCE_GLOBAL_LOCAL_DEFORMATION_D',
         reference_global_strain=strain_global, reference_global_resultants=resultant_global,
         current_global_strain=owned(pose@strain_global@pose.T),
         current_global_resultants=owned(pose@resultant_global@pose.T),
@@ -145,8 +163,14 @@ def q4_channels(element, mesh, material, kin, components):
     weak_force = owned(np.einsum('g,gij,gi->j', weights, B, mixed['resultants']))
     equal(weak_force, components['physical']@d, 'mixed stationary weak work')
     public = element.compute_stresses(mesh, d, material, return_global=True)
+    physical_frame = element._physical_director_context(frame)[0]
+    interpolation = owned([element.compute_shape_functions(float(r),float(t))[0] for r,t in source._GAUSS])
     baseline = dict(source_mixed=mixed, source_physical=public,
         compatible_differential=B, weights=weights, current_pose=pose,
+        differential_coordinates='NUMBERED_ENGINEERING_ROWS_REFERENCE_GLOBAL_LOCAL_D_COLUMNS',
+        reference_station_positions=owned(interpolation@kin.reference_positions),
+        current_station_positions=owned(interpolation@kin.current_positions),
+        **physical_fields(public, physical_frame, pose),
         current_global_membrane_resultants=pose@public['global_membrane_resultant_tensors']@pose.T,
         current_global_bending_resultants=pose@public['global_bending_resultant_tensors']@pose.T,
         current_global_shear_resultants=public['global_transverse_shear_resultants']@pose.T,
@@ -166,8 +190,8 @@ def q4_channels(element, mesh, material, kin, components):
          [0., 0., (1-material.poisson_ratio)/2]])
     A = element.thickness*C
     coordinates = element.get_node_coordinates(mesh)
-    positions = [element.compute_shape_functions(float(r), float(s))[0]@coordinates
-                 for r, s in element.gauss_points]
+    interpolation = owned([element.compute_shape_functions(float(r), float(s))[0] for r,s in element.gauss_points])
+    positions = interpolation@coordinates
     for nonlinear, name, sign in [(True, 'COMPATIBLE_VK_MEMBRANE', 1),
                                    (False, 'REMOVED_COMPATIBLE_LINEAR_MEMBRANE', -1)]:
         energy = 0.; force = np.zeros(24); stiffness = np.zeros((24, 24))
@@ -186,7 +210,7 @@ def q4_channels(element, mesh, material, kin, components):
                 stiffness += w*gw.T@np.array([[N[0], N[2]], [N[2], N[1]]])@gw
             strains.append(e); resultants.append(N); operators.append(beff@T0); source_weights.append(w)
         stations = membrane_stations(strains, resultants, operators, source_weights,
-                                     centre_frame, positions, pose)
+                                     centre_frame, positions, interpolation@kin.current_positions, pose)
         records.append(channel(name, sign, energy, T0.T@force, T0.T@stiffness@T0, stations))
     return tuple(records)
 
@@ -204,9 +228,13 @@ def s3_channels(element, mesh, material, kin, components, candidate):
     equal(np.einsum('g,gij,gi->j', weights, B, resultants), components['physical']@d,
           'S3 actual station weak work')
     public = element.compute_stresses(mesh, d, material, return_global=True)
+    interpolation = owned(public['external_barycentric_coordinates'])
     physical = dict(source_physical=public, strain_differential=owned(B), weights=owned(weights),
         station_strain=owned(candidate['station_generalized_strain']), resultants=resultants,
-        reference_frame=owned(geometry['frame']), current_frame=owned(kin.frame@geometry['frame']),
+        **physical_fields(public, geometry['frame'], kin.frame),
+        differential_coordinates='SOURCE_ENGINEERING_ROWS_REFERENCE_GLOBAL_LOCAL_D_COLUMNS',
+        reference_station_positions=owned(public['physical_station_coordinates']),
+        current_station_positions=owned(interpolation@kin.current_positions),
         recovery_scope='SOURCE_S3_LOCAL_STATION_VALUES', current_pose=kin.frame)
     return tuple(channel(name, 1, .5*d@components[key]@d, components[key]@d, components[key],
                          None if numerical else physical, numerical=numerical)
