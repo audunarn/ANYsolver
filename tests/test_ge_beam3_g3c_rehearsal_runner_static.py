@@ -16,6 +16,41 @@ import test_ge_beam3_g3c_rehearsal_mutations_static as syntax
 
 
 class RunnerStaticTests(unittest.TestCase):
+    def test_rehashed_attack_reason_origin_and_bytes_rejected(self):
+        raw=syntax.fake_origin('J_B2_PAIR','NONE',.01,2)
+        digest=sha256(raw).hexdigest()
+        assignment=r.ASSIGNMENTS['replay-00']; probe=assignment['probes'][0]
+        attack,record=r.mutations.attack_fixture(raw,probe['category'],probe['member'],{})
+        record.update(passed=True,origin=assignment['origin'],input_sha256=digest)
+        for mutation in ('none','reason','before','attack'):
+            with tempfile.TemporaryDirectory() as d:
+                out=Path(d); (out/'packets').mkdir(); changed=copy.deepcopy(record); data=attack
+                if mutation=='reason': changed['expected_error']='invented failure'
+                if mutation=='before': changed['before_sha256']='0'*64
+                if mutation=='attack':
+                    data=attack+b' '; changed['after_sha256']=sha256(data).hexdigest()
+                r.packets.exclusive(out/'packets'/'attack-000.bin',data)
+                value=dict(files={'attack-000.bin':r.packets.fingerprint(data)},results=[changed])
+                r.packets.publish(out/'artifacts.json',value)
+                call=lambda:r.verify_exact_attacks(out,dict(implementation_review={}),assignment,(raw,digest))
+                if mutation=='none': call()
+                else:
+                    with self.assertRaises(ValueError): call()
+
+    def test_shared_wave_deadline_includes_preflight_and_finalization(self):
+        with patch.object(r.time,'monotonic',return_value=2000.):
+            with self.assertRaises(TimeoutError): r.check_deadline(1999.)
+            with patch.object(r,'child') as child:
+                with self.assertRaises(TimeoutError): r.run_wave(Path('.'),r.WAVES['none'],{},b'',started=0.)
+                child.assert_not_called()
+        # The same main start must be passed through both authority checks,
+        # prior-chain checks and final atomic publication, not reset by a wave.
+        import inspect
+        source=inspect.getsource(r.main)
+        self.assertEqual(source.count('started=time.monotonic()'),1)
+        self.assertIn('lease,review,started)',source)
+        self.assertIn("write(out/'wave.json',result,deadline)",source)
+
     def test_exact_separate_wave_inventories(self):
         self.assertEqual([len(v) for v in r.WAVES.values()],[5,5,2,2,4,6,6,6,6,2])
         probes=[p for a in r.ASSIGNMENTS.values() for p in a.get('probes',[])]

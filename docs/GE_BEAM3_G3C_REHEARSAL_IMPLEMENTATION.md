@@ -51,3 +51,20 @@ remaining transport/atomicity and two formal cycles remain open, as do G4/G5.
 Before execution, independent review must cover actual constructors, exact
 exception allowlists, complete receipt DAG and failure/no-partial behavior.
 No main update, publication, qualified shell change or public activation occurs.
+
+## Pre-execution review correction
+
+Initial freeze 062f760 was blocked before numerical execution. RI-01 found
+rehashed negative receipts could change the reason or before-hash. The corrected
+parent verifier reconstructs the registered attack bytes and complete expected
+record from the verified producer origin and frozen source/review input; it
+compares exact raw bytes, original hash, intended diagnostic, member and phase.
+Rehashed reason, before-hash and attack-byte regression probes must all reject.
+
+RI-02 found the wave clock omitted coordinator validation. One monotonic start
+now precedes coordinator parsing/authority and is shared through prerequisites,
+worker deadlines, final authority and staged publication. No worker launches
+after that budget is exhausted. Published elapsed time includes these phases.
+Manifest/completion/status JSON uses exclusive same-volume pending files and
+Windows atomic rename; a timed-out publication retains only pending diagnostics.
+No automatic recovery or overwrite is performed by the runner.

@@ -14,12 +14,13 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import run_ge_beam3_g3c_history as old
 import ge_beam3_g3c_rehearsal_contract as design
 import ge_beam3_g3c_rehearsal_packets as packets
+import ge_beam3_g3c_rehearsal_mutations as mutations
 import ge_beam3_g3c_history_owner as history
 
 inherited=old.inherited
 environment=old.environment
 canonical=old.canonical
-write=old.write
+write=packets.publish
 BASE='6d4eeb8dacac07122706e3bd7c81bd36d28ea662'
 BASE_TREE='738a05169d728d3c5c7184199abdb4aa8c7cb67c'
 SCOPE='G3C_AUTHENTIC_HISTORY_REHEARSAL_V1'
@@ -71,7 +72,13 @@ def verify_review(raw,expected,candidate,inputs):
         raise ValueError('rehearsal implementation scope required')
 
 
-def authority(review_path,expected):
+def check_deadline(deadline):
+    if deadline is not None and time.monotonic()>=deadline:
+        raise TimeoutError('complete coordinator wave deadline exceeded')
+
+
+def authority(review_path,expected,deadline=None):
+    check_deadline(deadline)
     candidate=inherited.clean_identity()
     if inherited.git('rev-parse',BASE+'^{tree}')!=BASE_TREE: raise ValueError('rehearsal base tree')
     inherited.git('merge-base','--is-ancestor',BASE,'HEAD')
@@ -89,7 +96,9 @@ def authority(review_path,expected):
     inherited.source_map.audit(mapping,implemented=True)
     inputs=inherited.inputs(); review=environment.regular(review_path).read_bytes()
     verify_review(review,expected,candidate,inputs)
+    check_deadline(deadline)
     environment.verify(inherited.infrastructure.CAPSULE,inherited.infrastructure.CAPSULE_SHA)
+    check_deadline(deadline)
     return candidate,inputs,review
 
 
@@ -145,10 +154,29 @@ def verify_child_files(out,record,lease):
             if len(artifact['files'])!=expected_count: raise ValueError('negative file count mismatch')
 
 
-def prior_chain(reference,wave,candidate,inputs,review_hash):
+def verify_exact_attacks(out,lease,assignment,origin):
+    raw,digest=origin
+    artifact=environment.strict(environment.regular(out/'artifacts.json').read_bytes())
+    if assignment['kind']=='positive':
+        if packets.read_bound(out/'packets','positive-replay.json',artifact['files']['positive-replay.json'])!=raw:
+            raise ValueError('positive replay differs from bound producer bytes')
+    else:
+        for index,probe in enumerate(assignment['probes']):
+            expected_raw,expected_record=mutations.attack_fixture(raw,probe['category'],probe['member'],lease['implementation_review'])
+            expected_record.update(passed=True,origin=assignment['origin'],input_sha256=digest)
+            if canonical(artifact['results'][index])!=canonical(expected_record):
+                raise ValueError('registered attack identity/reason mismatch')
+            suffix='json' if probe['member']=='changed_implementation_review' else 'bin'
+            name=f'attack-{index:03d}.{suffix}'
+            if packets.read_bound(out/'packets',name,artifact['files'][name])!=expected_raw:
+                raise ValueError('registered attack bytes mismatch')
+
+
+def prior_chain(reference,wave,candidate,inputs,review_hash,deadline=None):
     """Root externally bound; every predecessor and child checked, no cycles."""
     keys=list(WAVES); index=keys.index(wave); collected={}
     for expected_wave in reversed(keys[:index]):
+        check_deadline(deadline)
         if type(reference) is not dict or set(reference)!={'path','bytes','sha256'}:
             raise ValueError('required predecessor wave reference')
         path=environment.regular(Path(reference['path']))
@@ -163,6 +191,7 @@ def prior_chain(reference,wave,candidate,inputs,review_hash):
                 or set(value['results'])!=set(WAVES[expected_wave])):
             raise ValueError('complete ordered prerequisite wave required')
         for lane in WAVES[expected_wave]:
+            check_deadline(deadline)
             out=path.parent/lane
             lease_raw=environment.regular(out/'lease.json').read_bytes(); lease=environment.strict(lease_raw)
             process=environment.strict(environment.regular(out/'process.json').read_bytes())
@@ -183,12 +212,15 @@ def prior_chain(reference,wave,candidate,inputs,review_hash):
         reference=value['previous']
     if reference is not None: raise ValueError('unexpected predecessor root')
     for lane,(out,lease) in collected.items():
+        check_deadline(deadline)
         assignment=ASSIGNMENTS[lane]
         if assignment['kind']=='history': continue
         _,digest=origin_packet(assignment,collected)
         artifacts=environment.strict(environment.regular(out/'artifacts.json').read_bytes())
         if any(row['input_sha256']!=digest for row in artifacts['results']):
             raise ValueError('probe origin differs from producer manifest')
+        verify_exact_attacks(out,lease,assignment,origin_packet(assignment,collected))
+    check_deadline(deadline)
     return collected
 
 
@@ -276,14 +308,22 @@ def child(out, lease, review, deadline):
         peak_tree_bytes=accounting[2],lease_sha256=lease_hash,
         files={name:fingerprint(out/name) for name in ('stdout.log','stderr.log','completion.json','artifacts.json') if (out/name).exists()})
     if status=='PASSED':
-        try: verify_child_files(out,record,lease)
+        try:
+            check_deadline(deadline)
+            verify_child_files(out,record,lease)
+            if ASSIGNMENTS[lease['lane']]['kind']!='history':
+                collected=prior_chain(lease['previous'],lease['wave'],lease['candidate'],lease['inputs'],lease['review_sha256'],deadline)
+                verify_exact_attacks(out,lease,ASSIGNMENTS[lease['lane']],origin_packet(ASSIGNMENTS[lease['lane']],collected))
+            check_deadline(deadline)
         except (ValueError,OSError): record['status']='FAILED_EVIDENCE'
     write(out/'process.json',record)
     return record
 
 
-def run_wave(out, lanes, lease_base, review):
-    started=time.monotonic(); deadline=started+1800; remaining=iter(lanes); active={}; results={}; failed=False
+def run_wave(out, lanes, lease_base, review,started=None):
+    started=time.monotonic() if started is None else started
+    deadline=started+1800; remaining=iter(lanes); active={}; results={}; failed=False
+    check_deadline(deadline)
     with ThreadPoolExecutor(max_workers=3) as pool:
         def launch():
             name=next(remaining,None)
@@ -316,6 +356,7 @@ def run_wave(out, lanes, lease_base, review):
 
 def main():
     if len(sys.argv)==4 and sys.argv[1]=='--worker': return worker(Path(sys.argv[2]),sys.argv[3])
+    started=time.monotonic(); deadline=started+1800
     parser=argparse.ArgumentParser()
     parser.add_argument('--wave',choices=WAVES,required=True)
     parser.add_argument('--review',type=Path,required=True)
@@ -325,25 +366,27 @@ def main():
     args=parser.parse_args()
     if os.name!='nt' or not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):
         raise ValueError('Windows -I -S -B coordinator required')
-    candidate,inputs,review=authority(args.review,args.review_sha256)
+    candidate,inputs,review=authority(args.review,args.review_sha256,deadline)
     previous=None
     if args.previous_wave is not None:
         raw=environment.regular(args.previous_wave).read_bytes()
         if sha256(raw).hexdigest()!=args.previous_sha256: raise ValueError('external predecessor digest')
         previous=dict(path=str(args.previous_wave.absolute()),**packets.fingerprint(raw))
     elif args.previous_sha256 is not None: raise ValueError('predecessor path missing')
-    prior_chain(previous,args.wave,candidate,inputs,args.review_sha256)
+    prior_chain(previous,args.wave,candidate,inputs,args.review_sha256,deadline)
     out=Path(tempfile.mkdtemp(prefix='anysolver-g3c-rehearsal-'))
     print('DIAGNOSTICS '+str(out),flush=True)
     lease=dict(kind='G3C_STABLE_PRIVATE_DEVELOPMENT',scope_id=SCOPE,candidate=candidate,inputs=inputs,
                source_map_sha256=inherited.MAP_SHA,review_sha256=args.review_sha256,
                implementation_review=environment.strict(review),runtime_sha256=history.runtime_identity(),
                previous=previous,wave=args.wave)
-    result=run_wave(out,WAVES[args.wave],lease,review)
-    if authority(args.review,args.review_sha256)!=(candidate,inputs,review): raise ValueError('wave final authority')
-    prior_chain(previous,args.wave,candidate,inputs,args.review_sha256)
+    result=run_wave(out,WAVES[args.wave],lease,review,started)
+    if authority(args.review,args.review_sha256,deadline)!=(candidate,inputs,review): raise ValueError('wave final authority')
+    prior_chain(previous,args.wave,candidate,inputs,args.review_sha256,deadline)
+    check_deadline(deadline)
+    result['elapsed_seconds']=time.monotonic()-started
     result.update(wave=args.wave,previous=previous)
-    write(out/'wave.json',result)  # diagnostic only, never full G3c GO
+    write(out/'wave.json',result,deadline)  # diagnostic only, never full G3c GO
     print(canonical(result).decode(),flush=True)
     return int(result['status']!='PASSED')
 

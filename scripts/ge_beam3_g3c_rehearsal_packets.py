@@ -3,6 +3,7 @@ from hashlib import sha256
 from pathlib import Path
 import os
 import stat
+import time
 import ge_beam3_g3c_restart_preflight as p
 import ge_beam3_g3c_rehearsal_contract as design
 
@@ -41,6 +42,19 @@ def exclusive(path, raw):
             raise ValueError('reparse output path')
     with Path(path).open('xb') as stream:
         stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+
+
+def publish(path,value,deadline=None):
+    """Same-volume Windows exclusive promotion, retaining interrupted pending bytes."""
+    path=Path(path); pending=path.with_name(path.name+'.pending')
+    raw=p.canonical(value)
+    exclusive(pending,raw)
+    if contained(pending.parent,pending.name).read_bytes()!=raw: raise ValueError('staged artifact mismatch')
+    p.strict(raw)
+    if deadline is not None and time.monotonic()>=deadline: raise TimeoutError('publication deadline')
+    if path.exists(): raise FileExistsError(str(path))
+    # Windows rename fails if destination exists; no overwrite or recovery retry.
+    os.rename(pending,path)
 
 
 def store(root, raw, case, prefix, runtime):

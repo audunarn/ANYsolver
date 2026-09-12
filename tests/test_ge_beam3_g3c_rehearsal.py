@@ -33,7 +33,7 @@ def history_run(context):
         print('G3C CHECKPOINT stored authentic prefix '+str(index),flush=True)
     value=packets.manifest(p.digest(lease),row['case_id'],row['accepted_stages'],lease['runtime_sha256'],rows)
     packets.verify_directory(out/'packets',value,p.digest(lease),row['case_id'],row['accepted_stages'],lease['runtime_sha256'])
-    packets.exclusive(out/'artifacts.json',p.canonical(value))
+    packets.publish(out/'artifacts.json',value)
 
 
 def expected_rejection(call,expected):
@@ -92,7 +92,7 @@ def negative_run(context):
         results.append(dict(record,passed=True,origin=assignment['origin'],input_sha256=digest))
         print('G3C CHECKPOINT mutation '+category+' '+member+' rejected at '+phase,flush=True)
     value=dict(kind='G3C_REHEARSAL_ATTACK_DIAGNOSTICS',lease_sha256=p.digest(lease),assignment=assignment,files=files,results=results)
-    packets.exclusive(out/'artifacts.json',p.canonical(value))
+    packets.publish(out/'artifacts.json',value)
 
 
 def test_registered_rehearsal(rehearsal_context):

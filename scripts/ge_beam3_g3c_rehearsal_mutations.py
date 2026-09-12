@@ -166,3 +166,20 @@ def packet_attack(raw, category, member):
     if error is None: raise ValueError('missing exact rejection diagnostic')
     return changed,dict(category=category,member=member,rejection=design.rejection(category,member),
                         expected_error=error,before_sha256=sha256(raw).hexdigest(),after_sha256=sha256(changed).hexdigest())
+
+
+def attack_fixture(raw,category,member,review):
+    """Derive exact expected negative bytes/identity from bound original input."""
+    if category=='R10_NORMAL_SOURCE':
+        path=p.ROOT/(p.DEFINITION if member=='mocked_source_hash' else 'docs/reference_cases/ge_beam3_g3c_fixtures_v1.json')
+        original=path.read_bytes(); changed=original+b'\n# negative read fixture\n'
+        error='external runtime mismatch' if member=='mocked_source_hash' else 'frozen authority changed: docs/reference_cases/ge_beam3_g3c_fixtures_v1.json'
+        record=dict(source_path=str(path))
+    elif (category,member)==('R09_RUNTIME','changed_implementation_review'):
+        original=p.canonical(review); value=p.strict(original); value['subject_commit']='0'*40
+        changed=p.canonical(value); error='implementation review hash mismatch'; record={}
+    else: return packet_attack(raw,category,member)
+    if changed==original: raise ValueError('no-op authority attack')
+    record.update(category=category,member=member,rejection=design.rejection(category,member),
+                  expected_error=error,before_sha256=sha256(original).hexdigest(),after_sha256=sha256(changed).hexdigest())
+    return changed,record

@@ -13,6 +13,14 @@ import test_ge_beam3_g3c_rehearsal_mutations_static as fake
 
 
 class PacketTests(unittest.TestCase):
+    def test_expired_publication_leaves_pending_not_canonical(self):
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/'completion.json'
+            with self.assertRaises(TimeoutError): a.publish(path,dict(passed=True),deadline=0.)
+            self.assertFalse(path.exists())
+            self.assertTrue(path.with_name('completion.json.pending').is_file())
+            with self.assertRaises(FileExistsError): a.publish(path,dict(passed=True))
+
     def test_exclusive_containment_and_hashes(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d); raw=b'raw diagnostic\n'; a.exclusive(root/'x',raw)
