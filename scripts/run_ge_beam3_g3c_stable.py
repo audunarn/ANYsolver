@@ -141,6 +141,31 @@ def worker(out, expected):
     return int(code or inventory.nonpassing or inventory.passed != EXPECTED_NODES[lane])
 
 
+def close_tree(job, process, cleanup_failure):
+    """Prove terminal zero before returning; always close the owned handle.
+
+    A drain failure is external process-failure evidence, never a successful
+    terminal record. Closing the kill-on-close job remains mandatory even if
+    waiting or accounting raises. This does not retry the scientific worker.
+    """
+    try:
+        if job.accounting()[1] and not job.terminate():
+            raise RuntimeError('complete process-tree drain was not proven')
+        if process is not None:
+            process.wait(timeout=15)
+        accounting = job.accounting()
+        if accounting[1] != 0:
+            raise RuntimeError('process tree still active after drain')
+        return accounting
+    except BaseException as error:
+        cleanup_failure(dict(kind='G3C_STABLE_CLEANUP_FAILURE',
+                             exception_type=type(error).__name__, message=str(error),
+                             terminal_zero_proven=False))
+        raise
+    finally:
+        job.close()
+
+
 def main():
     if len(sys.argv) == 4 and sys.argv[1] == '--worker':
         return worker(Path(sys.argv[2]), sys.argv[3])
@@ -183,25 +208,20 @@ def main():
                 if progress != previous:
                     previous = progress; last = now
                 if now-start >= 600 or now-last >= 120 or peak > 24*1024**3:
-                    status = 'RESOURCE_BLOCKED'; job.terminate(); break
+                    status = 'RESOURCE_BLOCKED'; break
                 if process.poll() is not None and active == 0:
                     status = 'PASSED' if process.returncode == 0 else 'FAILED'; break
                 time.sleep(.1)
-            process.wait(timeout=15)
-        record = dict(kind='G3C_STABLE_PRIVATE_DEVELOPMENT', status=status, lane=args.lane,
-            elapsed_seconds=time.monotonic()-start, returncode=process.returncode,
-            active_processes=job.accounting()[1], peak_tree_bytes=peak, lease_sha256=lease_hash)
-        write(out/'process.json', record)
-        print((out/'stdout.log').read_text(errors='replace'))
-        print((out/'stderr.log').read_text(errors='replace'))
-        print(canonical(record).decode(), flush=True)
-        return int(status != 'PASSED')
     finally:
-        if job.accounting()[1]:
-            job.terminate()
-        if process is not None:
-            process.wait(timeout=15)
-        job.close()
+        final_accounting = close_tree(job, process, lambda row: write(out/'cleanup-failure.json', row))
+    record = dict(kind='G3C_STABLE_PRIVATE_DEVELOPMENT', status=status, lane=args.lane,
+        elapsed_seconds=time.monotonic()-start, returncode=process.returncode,
+        active_processes=final_accounting[1], peak_tree_bytes=final_accounting[2], lease_sha256=lease_hash)
+    write(out/'process.json', record)
+    print((out/'stdout.log').read_text(errors='replace'))
+    print((out/'stderr.log').read_text(errors='replace'))
+    print(canonical(record).decode(), flush=True)
+    return int(status != 'PASSED')
 
 
 if __name__ == '__main__':

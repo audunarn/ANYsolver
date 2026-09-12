@@ -5,6 +5,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import Mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
@@ -50,6 +51,39 @@ class ImplementationTests(unittest.TestCase):
         text = mapping.normalized(ROOT/'scripts/run_ge_beam3_g3c_stable.py').decode()
         for limit in ('now-start >= 600', 'now-last >= 120', '24*1024**3'):
             self.assertIn(limit, text)
+
+    def test_complete_tree_cleanup_and_failure_diagnostics(self):
+        for terminate_result, final_active in ((False, 1), (True, 1), (True, 0)):
+            job, process = Mock(), Mock()
+            job.accounting.side_effect = [(1, 1, 3), (2, final_active, 4)]
+            job.terminate.return_value = terminate_result
+            failures = []
+            if not terminate_result or final_active:
+                with self.assertRaises(RuntimeError):
+                    runner.close_tree(job, process, failures.append)
+                self.assertEqual(len(failures), 1)
+                self.assertIs(failures[0]['terminal_zero_proven'], False)
+            else:
+                self.assertEqual(runner.close_tree(job, process, failures.append), (2, 0, 4))
+                self.assertEqual(failures, [])
+            job.close.assert_called_once()
+            job.terminate.assert_called_once()
+
+    def test_wait_and_diagnostic_failures_still_close_job(self):
+        for diagnostic_fails in (False, True):
+            job, process = Mock(), Mock()
+            job.accounting.return_value = (1, 0, 3)
+            process.wait.side_effect = TimeoutError('injected wait failure')
+            errors = []
+            def record(row):
+                errors.append(row)
+                if diagnostic_fails:
+                    raise OSError('injected diagnostic failure')
+            with self.assertRaises((TimeoutError, OSError)):
+                runner.close_tree(job, process, record)
+            self.assertEqual(len(errors), 1)
+            job.close.assert_called_once()
+            job.terminate.assert_not_called()
 
 
 if __name__ == '__main__':

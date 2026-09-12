@@ -31,7 +31,8 @@ restart API or manufactured acceptance is added.
 
 ## Separate inventories
 
-- Static implementation: four standard-library tests, no mechanics.
+- Static implementation: six standard-library tests, no mechanics, including
+  mocked failed-drain/wait/diagnostic cleanup cases.
 - Runtime routing/authority: ten tests, including coefficient and helper
   mutations, authentic shared types, foreign-state rejection and nonzero curved
   load-work derivatives. These are implementation diagnostics, not added graph
@@ -51,7 +52,9 @@ Then use the same command with lane diagnostic and bridge, keeping inventories
 separate. No automatic retry. Failed or resource-blocked records are retained;
 each invocation uses a fresh exclusive external directory. Children are limited
 to 600 seconds, 24 GiB/tree and one numerical thread; no progress for 120 seconds
-terminates the full tree. This sequence is serial (below the allowed concurrency
+terminates the full tree. Terminal zero must be proved before process.json is
+written; failed cleanup is recorded separately, and the owned job handle closes
+even if waiting or diagnostic writing fails. This sequence is serial (below the allowed concurrency
 of three). Each lane is a separate wave, below the 1800-second wave bound.
 No scientific aggregate or partial qualification certificate is emitted.
 
