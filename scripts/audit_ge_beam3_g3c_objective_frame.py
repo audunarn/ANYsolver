@@ -69,9 +69,9 @@ def validate(c):
     require(canonical(c['anchors'])==canonical(ANCHORS),'physical anchor registry')
     require(canonical(c['limits'])==canonical(LIMITS),'resource limits')
     require(c['extent']==EXTENT and c['next_tests']==TESTS,'closed extent/inventory')
-    require(c['admission']==dict(accepted_adapter_ids=[],G3_complete=False,
+    require(canonical(c['admission'])==canonical(dict(accepted_adapter_ids=[],G3_complete=False,
        public_legacy_changed=False,Q4_S3_changed=False,defaults_changed=False,
-       full_domain_parity=False,runtime_implementation_authorized=False),'no acceptance')
+       full_domain_parity=False,runtime_implementation_authorized=False)),'no acceptance')
     require([s['path'] for s in c['sources']]==SOURCES,'source registry')
     require(set(c['payloads'])==set(EXTENT)-{CONTRACT},'payload registry')
     for s in c['sources']:

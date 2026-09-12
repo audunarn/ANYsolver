@@ -47,16 +47,24 @@ class DirectAnchorContractTests(unittest.TestCase):
         self.assertEqual(a.canonical(value),a.read(a.CONTRACT))
 
     def test_mutated_authority_rejects(self):
-        for kind in ('anchor','bool_anchor','limit','policy','admission','source','inventory'):
+        for kind in ('anchor','bool_anchor','limit','policy','admission','int_admission','float_admission','source','inventory'):
             c=deepcopy(a.strict(a.read(a.CONTRACT)))
             if kind=='anchor': c['anchors'][0][2]=102
             elif kind=='bool_anchor': c['anchors'][0][1]=True
             elif kind=='limit': c['limits']['child_seconds']=601
             elif kind=='policy': c['policy']='legacy'
             elif kind=='admission': c['admission']['G3_complete']=True
+            elif kind=='int_admission': c['admission']['runtime_implementation_authorized']=0
+            elif kind=='float_admission': c['admission']['G3_complete']=0.0
             elif kind=='source': c['sources'].pop()
             else: c['next_tests'].pop()
             with self.subTest(kind=kind),self.assertRaises(ValueError): a.validate(c)
+        original=a.strict(a.read(a.CONTRACT))
+        for flag,value in original['admission'].items():
+            if type(value) is not bool: continue
+            for alias in (0,0.0):
+                c=deepcopy(original); c['admission'][flag]=alias
+                with self.subTest(flag=flag,alias=repr(alias)),self.assertRaises(ValueError): a.validate(c)
 
     def test_exact_common_motion_equations(self):
         rotations=(I,W,rx(F(-1),F(0)),mm(W,rx(F(-1),F(0))))
