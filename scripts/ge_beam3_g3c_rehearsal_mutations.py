@@ -4,6 +4,7 @@ import math
 from hashlib import sha256
 import ge_beam3_g3c_restart_preflight as p
 import ge_beam3_g3c_rehearsal_contract as design
+import ge_beam3_g3c_rehearsal_bridge_contract as bridge_contract
 
 
 def different_hash(value):
@@ -79,7 +80,7 @@ def packet_attack(raw, category, member):
             elif member=='native_42_shape': response['full']['residual'].pop(); error='array shape'
             else: state['total_u'].pop(); error='array shape'
         elif category=='R06_OLD_SCHEMA':
-            value['schema']={'G1':'GE_BEAM3_G1_ELASTIC_STATE_V1','G2':'GE_BEAM3_G2_RESTART_V1','G3a':'GE_BEAM3_G3A_RESTART_V1','G3b':'GE_BEAM3_G3B_RESTART_V1','predecessor_G3c':'GE_BEAM3_G3C_MIXED_ELASTIC_RESTART_V1','legacy':'LEGACY_BEAM_RESTART_V1'}[member]
+            value['schema']=bridge_contract.source_literals()[member]
             error='literal schema'
         elif category=='R07_SELECTOR':
             key={'unknown_graph':'fixture_id','unknown_variant':'variant','unknown_motion':'common_motion'}[member]

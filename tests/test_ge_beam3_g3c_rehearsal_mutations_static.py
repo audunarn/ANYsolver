@@ -1,5 +1,6 @@
 """Fabricated syntax only; never a numerical accepted state or evidence."""
 import copy
+import ast
 from hashlib import sha256
 from pathlib import Path
 import sys
@@ -32,6 +33,22 @@ def fake_origin(graph,motion,scale,prefix):
 
 
 class MutationStaticTests(unittest.TestCase):
+    def test_r06_emits_actual_source_schema_at_both_origins(self):
+        contract=m.bridge_contract.expected()
+        for graph,motion,scale,prefix in [('J_B2_PAIR','NONE',.01,2),('J_MULTIFAMILY_LOOP','CM3',10.,9)]:
+            raw=fake_origin(graph,motion,scale,prefix)
+            for member,row in contract['source_schemas'].items():
+                source=(ROOT/row['path']).read_bytes().replace(b'\r\n',b'\n')
+                self.assertEqual(dict(bytes=len(source),sha256=sha256(source).hexdigest()),row['fingerprint'])
+                assignments=[n.value.value for n in ast.parse(source).body
+                    if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id==row['constant'] for t in n.targets)]
+                self.assertEqual(assignments,[row['literal']])
+                changed,record=m.packet_attack(raw,'R06_OLD_SCHEMA',member)
+                self.assertEqual(p.strict(changed)['schema'],assignments[0])
+                self.assertEqual(record['expected_error'],'literal schema')
+            changed,_=m.packet_attack(raw,'R06_OLD_SCHEMA','predecessor_G3c')
+            self.assertEqual(p.strict(changed)['schema'],contract['hypothetical']['literal'])
+
     def test_every_packet_member_has_exact_inert_behavior(self):
         for graph,motion,scale,prefix in [('J_B2_PAIR','NONE',.01,2),('J_MULTIFAMILY_LOOP','CM3',10.,9)]:
             raw=fake_origin(graph,motion,scale,prefix)
