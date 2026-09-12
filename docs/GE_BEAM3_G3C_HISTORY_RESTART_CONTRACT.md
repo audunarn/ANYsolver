@@ -98,6 +98,9 @@ a newly evaluated eta=0 diagnostic; never overwrite its original accepted row.
 The new history wrapper may expose only a fixed nonpublishing diagnostic under
 the same owned lock/guard with unconditional sandbox discard. It must not
 disable token checks or add a general caller-supplied-origin route.
+Use the real owner nonce and published origin with genuine sandbox cleanup;
+do not bypass command validation. The composition wrapper must not maintain a
+second independently published accepted generation after owner.solve.
 
 ## Numbering, common motion and exact serialization
 
@@ -167,7 +170,21 @@ unchanged source-commit/recovery flags. Recompute expected dimensions from the
 registered fixture, not claimed input counts. Only after this pass may empty
 native histories be converted to tuples for authentic source validators.
 
-Preflight validates syntax, source identities and hash consistency. It cannot
+Here, preflight identity means externally known source/runtime/environment
+authority, fixture-derived integer IDs/order and canonical commitment syntax.
+It does NOT mean that a well-formed native element_identity or adapter
+definition_sha256 has already been numerically established. Those identities
+include reference/quadrature-derived values from the real constructors. Do not
+call NumPy/constructors early to manufacture a supposedly inert identity check.
+Carry these fields as untrusted commitments until genuine replay reconstructs
+and compares them. Likewise, a final native previous_state_sha256 or adapter
+previous_sha256 cannot be proved from an unavailable historical payload during
+preflight; validate available link syntax/epoch relationships first and prove
+every such commitment against each actual replayed prefix. No external
+precomputed numerical identity registry is introduced by this design.
+
+Preflight validates syntax, bound source identities and available hash
+consistency. It cannot
 prove numerical state correctness. Construct a fresh virgin owner and replay
 each command through real solve/prepare/commit; compare EVERY prefix hash,
 native accepted origin and final canonical state. Resume returns no owner on
