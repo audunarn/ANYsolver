@@ -20,6 +20,7 @@ REVIEW_SHA='c7efca597db0739b83eeeda98f55dd714cea1c4a05e35dbfc6a7f269cc8c91e3'
 TEST='tests/test_ge_beam3_g3c_owner_bridge.py'
 SMOKE=[TEST+'::test_b2_pair_zero_equilibrium_commits_actual_native_states']
 DIAGNOSTIC=['tests/test_ge_beam3_g3c_owner_diagnostic.py::test_component_directional_diagnostic']
+ELEMENTARY=['tests/test_ge_beam3_g3c_elementary_diagnostic.py::test_elementary_rotation_diagnostic']
 
 def canonical(v): return (json.dumps(v,sort_keys=True,separators=(',', ':'),allow_nan=False)+'\n').encode()
 def write(path,v):
@@ -78,7 +79,7 @@ def worker(out,lease_hash):
     if inputs()!=lease['inputs'] or clean_identity()!=lease['candidate']: raise ValueError('candidate changed before test')
     sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(CAPSULE.parent/'site')]
     import pytest
-    selected={'smoke':SMOKE,'full':[TEST],'diagnostic':DIAGNOSTIC}.get(lease['lane'])
+    selected={'smoke':SMOKE,'full':[TEST],'diagnostic':DIAGNOSTIC,'elementary':ELEMENTARY}.get(lease['lane'])
     if selected is None: raise ValueError('unregistered mixed owner lane')
     code=pytest.main(['-vv','-s','-p','no:cacheprovider','--basetemp',str(out/'pytest'),*selected])
     if inputs()!=lease['inputs'] or clean_identity()!=lease['candidate']: raise ValueError('candidate changed during test')
@@ -87,8 +88,8 @@ def worker(out,lease_hash):
 def main():
     if len(sys.argv)==4 and sys.argv[1]=='--worker':
         return worker(Path(sys.argv[2]),sys.argv[3])
-    if sys.argv[1:] not in ([],['--smoke'],['--diagnostic']) or os.name!='nt': raise ValueError('fixed Windows mixed owner lane required')
-    lane={'--smoke':'smoke','--diagnostic':'diagnostic'}.get(sys.argv[1] if len(sys.argv)>1 else '', 'full')
+    if sys.argv[1:] not in ([],['--smoke'],['--diagnostic'],['--elementary-diagnostic']) or os.name!='nt': raise ValueError('fixed Windows mixed owner lane required')
+    lane={'--smoke':'smoke','--diagnostic':'diagnostic','--elementary-diagnostic':'elementary'}.get(sys.argv[1] if len(sys.argv)>1 else '', 'full')
     if not(sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):
         raise ValueError('launch with -I -S -B')
     authority()
