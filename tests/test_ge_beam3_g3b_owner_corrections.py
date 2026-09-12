@@ -3,6 +3,7 @@ from copy import copy
 from hashlib import sha256
 import importlib.util
 import json
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,10 +18,19 @@ spec.loader.exec_module(baseline)
 LANES=baseline.LANES
 
 
+def record(request, **observed):
+    destination=os.environ.get("G3B_CORRECTION_RECORDS")
+    if destination is None: return
+    payload=dict(schema="G3B_OWNER_CORRECTION_CASE_V1",node=request.node.nodeid,
+                 qualification=False,observed=observed)
+    path=Path(destination)/(sha256(request.node.nodeid.encode()).hexdigest()+".json")
+    with path.open("xb") as stream: stream.write(canonical(payload))
+
+
 @pytest.mark.parametrize("lane",LANES)
 @pytest.mark.parametrize("boundary",("first","second","final"))
 @pytest.mark.parametrize("target",("recover","guard","_identity","cell","section_descriptor","other_recovery"))
-def test_recovery_closure_mutation_preserves_accepted_prefix(lane,boundary,target):
+def test_recovery_closure_mutation_preserves_accepted_prefix(lane,boundary,target,request):
     module,p,owner,f=baseline.setup(lane)
     owner.solve((f,)); before=owner.checkpoint(); factor=owner._factor
     operator=p.native.operator; cell=operator.cell; changes=[]; hits=[]
@@ -47,13 +57,16 @@ def test_recovery_closure_mutation_preserves_accepted_prefix(lane,boundary,targe
     restored=MixedReferenceOwner.restore(module.make(),before,sha256(before).hexdigest())
     assert canonical(restored.solve((-.5*f,)))==canonical(owner.solve((-.5*f,)))
     assert restored.checkpoint()==owner.checkpoint()
+    record(request,lane=lane,boundary=boundary,target=target,
+        accepted_before=json.loads(before),accepted_after=json.loads(owner.checkpoint()),
+        replay_after=json.loads(restored.checkpoint()),factor_reused=owner._factor is factor)
 
 
 @pytest.mark.parametrize("lane",LANES)
 @pytest.mark.parametrize("kind",("missing_u","extra","missing_station","station_extra","station_shape",
     "station_bool","history","recovery_missing","recovery_extra","recovery_bool","policy",
     "qualification","node_bool","multipliers","energy","late_entry"))
-def test_complete_journal_schema_precedes_owner_construction(lane,kind):
+def test_complete_journal_schema_precedes_owner_construction(lane,kind,request):
     module,p,owner,f=baseline.setup(lane); owner.solve((f,)); owner.solve((-.5*f,))
     body=json.loads(owner.checkpoint())
     result=body["history"][-1 if kind=="late_entry" else 0]["results"][0]
@@ -83,3 +96,5 @@ def test_complete_journal_schema_precedes_owner_construction(lane,kind):
             MixedReferenceOwner.restore(fresh,data,sha256(data).hexdigest())
     # No provisional owner/claim was created during inert preflight.
     MixedReferenceOwner(fresh).solve((f,))
+    record(request,lane=lane,mutation=kind,accepted=json.loads(owner.checkpoint()),
+           rejected_envelope=json.loads(data),rejection_before_owner_construction=True)
