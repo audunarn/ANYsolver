@@ -18,6 +18,7 @@ CAPSULE_SHA='2ce154b866565e1d03019651b1ae7fdd070e5554f38d72adf21d8080558b6756'
 REVIEW='docs/reference_cases/ge_beam3_g3c_equation_review_v1.json'
 REVIEW_SHA='4d92a728de4c012e1dd986ffbc2c21f674891809cad152c6a1b9b0fb64f8818f'
 TEST='tests/test_ge_beam3_g3c_local_beam.py'
+FINITE_TEST='tests/test_ge_beam3_g3c_finite_local.py'
 
 def canonical(v): return (json.dumps(v,sort_keys=True,separators=(',', ':'),allow_nan=False)+'\n').encode()
 def write(path,v):
@@ -71,7 +72,7 @@ def worker(out,lease_hash):
     if inputs()!=lease['inputs']: raise ValueError('candidate changed before test')
     sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(CAPSULE.parent/'site')]
     import pytest
-    code=pytest.main(['-vv','-s','-p','no:cacheprovider','--basetemp',str(out/'pytest'),TEST])
+    code=pytest.main(['-vv','-s','-p','no:cacheprovider','--basetemp',str(out/'pytest'),TEST,FINITE_TEST])
     if inputs()!=lease['inputs']: raise ValueError('candidate changed during test')
     print('G3C CHECKPOINT complete',flush=True)
     return int(code)
