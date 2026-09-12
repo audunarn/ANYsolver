@@ -221,6 +221,7 @@ def test_owner_extent_and_prior_tests_unchanged():
         "docs/GE_BEAM3_G3B_OWNER_CONTRACT.md":"A",
         "docs/reference_cases/ge_beam3_g3b_owner_development_v1.json":"A",
         "scripts/run_ge_beam3_g3b.py":"M"}
+    allowed.update({p:"A" for p in ["scripts/ge_beam3_g3b_confirmation_authority.py","tests/test_ge_beam3_g3b_confirmation_authority.py","docs/GE_BEAM3_G3B_FORMAL_CONFIRMATION_CONTRACT.md","docs/reference_cases/ge_beam3_g3b_confirmation_inventory_v1.json"]})
     allowed.update({p:"A" for p in ["docs/GE_BEAM3_G3B_LOCAL_REVIEW_STATUS.md","docs/reference_cases/ge_beam3_g3b_local_safety_review_v1.json","src/anysolver/_ge_beam3_g3b_result_schema.py","tests/test_ge_beam3_g3b_owner_corrections.py","docs/GE_BEAM3_G3B_OWNER_CORRECTIONS.md"]})
     markers=dict(mb2="test_additive_scope_and_immutable_parent_authority",
         mb3="test_successor_extent_preserves_mechanics_and_historical_records",
