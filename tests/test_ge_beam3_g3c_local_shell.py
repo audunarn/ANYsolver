@@ -1,7 +1,7 @@
 """Bounded private shell development; no graph or recovery qualification."""
 import itertools
 import json
-from dataclasses import replace
+from dataclasses import fields, is_dataclass, replace
 import numpy as np
 import pytest
 from anysolver import _ge_beam3_g3c_local_shell as s
@@ -30,6 +30,17 @@ def err(a, b):
     return norms[0]/max(1., *norms[1:])
 
 def equal(a, b): assert err(a, b) <= 1e-11
+
+def identical(a,b):
+    if isinstance(a,np.ndarray):
+        assert isinstance(b,np.ndarray) and np.array_equal(a,b)
+    elif is_dataclass(a):
+        assert type(a) is type(b)
+        for f in fields(a): identical(getattr(a,f.name),getattr(b,f.name))
+    elif isinstance(a,tuple):
+        assert len(a)==len(b)
+        for x,y in zip(a,b): identical(x,y)
+    else: assert a==b
 
 def make(shape, order=None, W=None, shift=None, polarity=1):
     if shape in ('square', 'rectangle'):
@@ -113,6 +124,7 @@ def transport_check(base,out,*,dof_order=None,coordinate=None,shift=None,motion=
     motion_shift=np.zeros(3) if motion_shift is None else motion_shift
     count=len(base.local_force); dof_order=np.arange(count) if dof_order is None else dof_order
     G=np.kron(np.eye(count//3),coordinate)
+    equal(out.kinematics.frame,motion@coordinate@base.kinematics.frame@coordinate.T)
     for b,c in zip(base.channels,out.channels):
         assert (b.name,b.sign,b.numerical)==(c.name,c.sign,c.numerical)
         equal(c.energy,b.energy);equal(c.force,G@b.force[dof_order])
@@ -131,6 +143,9 @@ def transport_check(base,out,*,dof_order=None,coordinate=None,shift=None,motion=
         expected=(np.asarray(x['current_station_positions'])@coordinate.T+shift)@motion.T+motion_shift
         equal(y['current_station_positions'],expected[order])
         bx,bc=diagnostic_fields(x);yx,yc=diagnostic_fields(y)
+        for reference,current,pose in ((bx,bc,base.kinematics.frame),(yx,yc,out.kinematics.frame)):
+            for key,value in reference.items():
+                equal(current[key],pose@value@pose.T if value.ndim==3 else value@pose.T)
         # Work-channel compatible VK/linear records have no director interpretation.
         is_physical='source_physical' in x
         for key,value in bx.items():
@@ -314,7 +329,7 @@ def test_owned_definition_detached_results_reentry_and_finite_sums(monkeypatch):
         return original(desc)
     monkeypatch.setattr(s,'family_objects',change_caller)
     out=p.evaluate(passed_u,passed_qa)
-    equal(out.local_force,before.local_force)
+    identical(out,before)
     assert np.all(passed_u==1.) and np.all(passed_qa==0.)
     with pytest.raises(ValueError): s.channel('x',1,np.inf,np.zeros(2),np.eye(2))
     with pytest.raises(ValueError): s.equal(np.full(2,1e308),np.full(2,1e308),'overflow')
@@ -340,3 +355,34 @@ def test_station_transport_oracle_rejects_mutated_channel_data(shape):
         first=replace(base.channels[0],stations=s.canonical(data))
         bad=replace(base,channels=(first,*base.channels[1:]))
         with pytest.raises(AssertionError): transport_check(base,bad)
+    # A coherent all-zero current-field implementation would satisfy pairwise
+    # covariance. The within-record reference-to-current identity must reject it.
+    changed=[]
+    for c in base.channels:
+        data=json.loads(c.stations)
+        if data is not None:
+            if 'current_global_fields' in data:
+                for key,value in data['current_global_fields'].items(): data['current_global_fields'][key]=np.zeros_like(value).tolist()
+            else:
+                data['current_global_strain']=np.zeros_like(data['current_global_strain']).tolist()
+                data['current_global_resultants']=np.zeros_like(data['current_global_resultants']).tolist()
+            c=replace(c,stations=s.canonical(data))
+        changed.append(c)
+    bad=replace(base,channels=tuple(changed))
+    with pytest.raises(AssertionError): transport_check(bad,bad)
+
+def test_snapshot_oracle_detects_a_borrowed_chart_coordinate_mutant(monkeypatch):
+    p=make('right');u,qa=state(p);before=p.evaluate(u,qa)
+    passed=u.copy(); original_array=s.array; original_family=s.family_objects
+    def borrow_only_passed(value,shape):
+        return value if value is passed else original_array(value,shape)
+    def mutate_after_deformation(desc):
+        passed[:]=1.
+        return original_family(desc)
+    monkeypatch.setattr(s,'array',borrow_only_passed)
+    monkeypatch.setattr(s,'family_objects',mutate_after_deformation)
+    bad=p.evaluate(passed,qa)
+    # Local force alone misses the hazard; P/dP are formed after the mutation.
+    equal(bad.local_force,before.local_force)
+    assert err(bad.spatial_force,before.spatial_force)>1e-7
+    with pytest.raises(AssertionError): identical(bad,before)
