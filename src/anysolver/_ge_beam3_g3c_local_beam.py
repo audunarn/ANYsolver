@@ -167,8 +167,8 @@ class LocalBeam:
         f=array(np.asarray(f),(6*n,)); k=array(np.asarray(k),(6*n,6*n))
         from ._ge_beam3_g3c_recovery import recover
         recovery=recover(d,kin,transform,element,material,entry_seal)
-        recovered_force=np.einsum('s,sij,si->j',recovery.weights,
-                                 recovery.strain_differential,recovery.resultants)
+        recovered_force=owned(np.einsum('s,sij,si->j',recovery.weights,
+                                 recovery.strain_differential,recovery.resultants))
         if np.linalg.norm(recovered_force-f)>1e-11*max(1.,np.linalg.norm(f),np.linalg.norm(recovered_force)):
             raise ValueError('station virtual work differs from actual local force')
         if np.linalg.norm(k-k.T)>1e-11*max(1.,np.linalg.norm(k)):

@@ -279,3 +279,15 @@ def test_scalar_shear_floor_is_explicit_unresolved_physical_recovery():
     p=LocalBeam('B2',(1,2),np.array([[0.,0.,0.],[1.,0.,0.]]),1,1,0,s)
     with pytest.raises(PhysicalRecoveryBlocked,match='BLOCKED_G3C_B2_PHYSICAL_RECOVERY_SHEAR_CLAMP'):
         p.evaluate(np.zeros(12),np.tile(np.eye(3),(2,1,1)))
+
+@pytest.mark.parametrize('contraction',('i,ij,ij->','s,sij,si->j'))
+@pytest.mark.parametrize('bad',(float('nan'),float('inf')))
+def test_nonfinite_recovery_aggregates_cannot_pass_norm_checks(monkeypatch,contraction,bad):
+    original=np.einsum
+    def injected(spec,*args,**kwargs):
+        if spec==contraction:
+            return bad if spec=='i,ij,ij->' else np.full(12,bad)
+        return original(spec,*args,**kwargs)
+    monkeypatch.setattr(np,'einsum',injected)
+    p=make(2); z,q=state(2)
+    with pytest.raises(ValueError): p.evaluate(z,q)

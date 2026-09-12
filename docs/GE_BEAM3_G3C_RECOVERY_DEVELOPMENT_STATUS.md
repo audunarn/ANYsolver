@@ -24,6 +24,15 @@ Full-domain legacy parity is not claimed. The retained registered fixtures
 are unclamped and their work/energy checks pass.
 
 Independent implementation review of this frozen checkpoint remains required.
+The first review of90e49b3 identified missing finite checks on integrated
+energy and recovered nodal-work sums. Both now reject nonfinite contractions
+before norm comparisons; four NaN/Inf injection regressions were added.
+The fresh corrected run passed33 nodes in4.00seconds, child15.4151546seconds,
+peak200491008bytes, exit0 and active0. Earlier raw records remain hash-bound.
+Independent re-review of this correction remains required. The original
+six-file development/equation archive is preserved at
+ANYrelease/ge-beam3-g3c-recovery-development-20260912-90e49b3, manifest
+37e51ec44797b842068825a76db9ede7ad7209a154d6f4d853460c14e613be49.
 Returned recovery_complete remains false until the complete reviewed local
 gate is accepted; station_diagnostics is development data, not a public API.
 Complete finite local evidence, all25 graph variants, graph ownership,

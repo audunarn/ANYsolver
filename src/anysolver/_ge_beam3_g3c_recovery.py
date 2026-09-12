@@ -84,7 +84,7 @@ def recover(definition, kin, transform, element, material, seal):
     else: raise ValueError('unregistered scalar recovery family')
     strain=owned(rows); resultant=owned(strain*S); differential=owned(jacobians)
     integrated=.5*float(np.einsum('i,ij,ij->',weights,strain,resultant))
-    if not np.isfinite(energy) or energy<0 or abs(integrated-energy)>1e-11*max(1.,abs(energy),abs(integrated)):
+    if not np.isfinite(energy) or not np.isfinite(integrated) or energy<0 or abs(integrated-energy)>1e-11*max(1.,abs(energy),abs(integrated)):
         raise ValueError('station and actual local potential disagree')
     frame=transform[:3,:3].T
     return StationDiagnostics(owned(points),owned(weights),strain,resultant,
