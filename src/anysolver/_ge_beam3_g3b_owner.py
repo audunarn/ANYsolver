@@ -183,10 +183,15 @@ class MixedReferenceOwner:
                 (on_prepare is not None and not callable(on_prepare)) or not callable(cancel)):
             raise ValueError("one/two reference RHS vectors; no finite/rotational admission")
         lock=self._lock
+        before=None
+        captured=None
         if not lock.acquire(blocking=False): raise RuntimeError("mixed owner busy")
-        before=self._bundle
-        captured={name:getattr(self,name) for name in MixedReferenceOwner.__slots__ if name!="__weakref__"}
         try:
+            # Bookkeeping itself can fail. Enter the protected region before
+            # reading publication/snapshot state, and obtain rollback authority
+            # from the registry, never an overridable property view.
+            before=_PUBLICATIONS[self]
+            captured={name:getattr(self,name) for name in MixedReferenceOwner.__slots__ if name!="__weakref__"}
             _VALIDATE(self,before)
             rhs=tuple(owned(f,(self._problem.size,)) for f in loads)
             body=_parse(before.data)
@@ -232,8 +237,9 @@ class MixedReferenceOwner:
             _PUBLICATIONS[self]=pending
             return returned
         except BaseException:
-            for name,value in captured.items(): object.__setattr__(self,name,value)
-            _PUBLICATIONS[self]=before
+            if captured is not None:
+                for name,value in captured.items(): object.__setattr__(self,name,value)
+            if before is not None: _PUBLICATIONS[self]=before
             raise
         finally:
             lock.release()

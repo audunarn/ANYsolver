@@ -98,3 +98,26 @@ def test_complete_journal_schema_precedes_owner_construction(lane,kind,request):
     MixedReferenceOwner(fresh).solve((f,))
     record(request,lane=lane,mutation=kind,accepted=json.loads(owner.checkpoint()),
            rejected_envelope=json.loads(data),rejection_before_owner_construction=True)
+
+
+@pytest.mark.parametrize("lane",LANES)
+@pytest.mark.parametrize("failure",("raising_view","forged_view"))
+def test_entry_bookkeeping_rejection_releases_lock(lane,failure,request):
+    from anysolver._ge_beam3_g3b_owner import _Bundle
+    module,p,owner,f=baseline.setup(lane); owner.solve((f,))
+    before=owner.checkpoint(); factor=owner._factor
+    fake_data=canonical(dict(forged=True)); fake=_Bundle(fake_data,sha256(fake_data).hexdigest())
+    def unavailable(self):
+        if failure=="raising_view": raise RuntimeError("injected entry publication access failure")
+        return fake
+    with patch.object(MixedReferenceOwner,"_bundle",property(unavailable)):
+        with pytest.raises((RuntimeError,ValueError)):
+            owner.solve((-.5*f,))
+        assert not owner._lock.locked()
+    assert owner.checkpoint()==before and owner._factor is factor
+    restored=MixedReferenceOwner.restore(module.make(),before,sha256(before).hexdigest())
+    assert canonical(owner.solve((-.5*f,)))==canonical(restored.solve((-.5*f,)))
+    assert owner.checkpoint()==restored.checkpoint()
+    record(request,lane=lane,boundary="entry",target=failure,
+        accepted_before=json.loads(before),accepted_after=json.loads(owner.checkpoint()),
+        replay_after=json.loads(restored.checkpoint()),factor_reused=owner._factor is factor)

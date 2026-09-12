@@ -25,7 +25,7 @@ PACKETS={
     "ms3":("ms3-packet.json",9759,"da4e100fbd9bd15e1411dc732df1529f0d4b7902c7a30aefd1d7a7947192f895"),
     "weighted":("weighted-packet.json",13494,"d2e7f3694e1abe20a41a60aed428be64a3a42ece392ffecff90ea3c0d236c71d"),
     "transport":("transport-packet.json",198387,"8be4188c9febfe0be3f26d100f01870cbc077951505c769d78e115a6cc70765f"),
-    "owner":("owner-packet.json",135368,"941947533990a8437b3aee797efe6c465e7418824654f614359d7fb068c4cb50")}
+    "owner":("owner-packet.json",135368,"acee4a3a6350a99fa830e2007ce664e6386afe86036d00d1e436a6f4ba6ca49f")}
 
 
 def write(path,value): environment.write(path,authority.canonical(value))
@@ -249,7 +249,7 @@ def scientific(directory,registered):
                     value["qualification"] is not False or type(value["observed"]) is not dict):
                 raise ValueError("correction case schema mismatch")
             observed=value["observed"]
-            if "test_recovery_closure_mutation" in node:
+            if "test_recovery_closure_mutation" in node or "test_entry_bookkeeping_rejection" in node:
                 if (set(observed)!={"lane","boundary","target","accepted_before","accepted_after",
                                    "replay_after","factor_reused"} or observed["factor_reused"] is not True or
                         authority.canonical(observed["accepted_after"])!=authority.canonical(observed["replay_after"]) or

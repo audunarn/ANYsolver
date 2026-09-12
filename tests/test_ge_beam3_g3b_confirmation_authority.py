@@ -133,9 +133,17 @@ def test_real_collection_matches_frozen_lane(lane):
     assert nodes==row["nodes"]
 
 
-def test_preparation_has_no_runtime_or_mechanics_delta():
+def test_confirmation_has_only_owner_entry_runtime_delta():
     base="f67aed07ed877aec679837e0a44e2db5cb398f74"
     git=["git","-c","safe.directory="+ROOT.as_posix()]
-    assert not subprocess.check_output(git+["diff","--name-only",base,"--","src/"],cwd=ROOT,timeout=20).strip()
+    path="src/anysolver/_ge_beam3_g3b_owner.py"
+    changed=subprocess.check_output(git+["diff","--name-only",base,"--","src/"],cwd=ROOT,timeout=20).decode().splitlines()
+    assert changed==[path]
+    old=ast.parse(subprocess.check_output(git+["show",base+":"+path],cwd=ROOT,timeout=20))
+    new=ast.parse((ROOT/path).read_text())
+    for tree in (old,new):
+        owner=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=="MixedReferenceOwner")
+        owner.body=[n for n in owner.body if not (isinstance(n,ast.FunctionDef) and n.name=="solve")]
+    assert ast.dump(old)==ast.dump(new)
     assert not subprocess.check_output(git+["diff","--name-only",base,"--","pyproject.toml",".github"],cwd=ROOT,timeout=20).strip()
     subprocess.run(git+["diff","--check",base],cwd=ROOT,timeout=20,check=True)

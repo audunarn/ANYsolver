@@ -9,10 +9,10 @@ from pathlib import Path
 import re
 
 ROOT=Path(__file__).resolve().parents[1]
-INVENTORY=ROOT/"docs/reference_cases/ge_beam3_g3b_confirmation_inventory_v1.json"
+INVENTORY=ROOT/"docs/reference_cases/ge_beam3_g3b_confirmation_inventory_v2.json"
 SCOPE="G3B_S16_MIXED_S18_REFERENCE_LINEAR_ONLY"
 LANES=("mb2","mb3","mq4","ms3","weighted","transport","owner","owner_corrections")
-COUNTS=(25,40,42,45,54,39,60,170)
+COUNTS=(25,40,42,45,54,39,60,180)
 ACCEPTED="ACCEPTED_G3B_IMPLEMENTATION_AND_RUNNER_REVIEW"
 REVIEW_KEYS={"decision","findings","reviewer","scope","subject_commit"}
 
@@ -48,7 +48,7 @@ def hash_id(value,length=64):
 def inventory(raw):
     body=strict(raw)
     if (type(body) is not dict or set(body)!={"schema","scope","lanes"} or
-            body["schema"]!="GE_BEAM3_G3B_CONFIRMATION_INVENTORY_V1" or body["scope"]!=SCOPE or
+            body["schema"]!="GE_BEAM3_G3B_CONFIRMATION_INVENTORY_V2" or body["scope"]!=SCOPE or
             type(body["lanes"]) is not list or len(body["lanes"])!=len(LANES)):
         raise ValueError("inventory schema/scope")
     for row,lane,count in zip(body["lanes"],LANES,COUNTS):
