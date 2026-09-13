@@ -288,23 +288,56 @@ class GuardTests(unittest.TestCase):
         lease=dict(candidate=candidate,lane='local',assignment_index=0,assignment=assignment,input_packets={})
         with tempfile.TemporaryDirectory() as directory:
             out=Path(directory)
-            def store(value):
+            def store(value,completion_mutator=None):
                 for name in ('scientific.node.json','completion.json'):
                     path=out/name
                     if path.exists():path.unlink()
                 r.write(out/'scientific.node.json',value);raw=(out/'scientific.node.json').read_bytes()
                 nodes=r.physical_assignment_nodes(assignment)
-                r.write(out/'completion.json',dict(assignment_index=0,assignment=assignment,
-                    selected=nodes,passed=nodes,scientific=r.fingerprint(raw)))
+                completion=dict(assignment_index=0,assignment=assignment,
+                    selected=nodes,passed=nodes,scientific=r.fingerprint(raw))
+                if completion_mutator is not None:completion_mutator(completion)
+                r.write(out/'completion.json',completion)
             store(template);r.physical_verify_node(out,lease)
             mutations=[]
             bad=copy.deepcopy(template);bad['records'][0]['histories']=375.0;mutations.append(bad)
             bad=copy.deepcopy(template);bad['records'][0]['obligations']['MO01']='UNBOUND';mutations.append(bad)
             bad=copy.deepcopy(template);bad['full_g3c_qualified']=None;mutations.append(bad)
             bad=copy.deepcopy(template);bad['production_qualified']=[];mutations.append(bad)
+            bad=copy.deepcopy(template);bad['assignment_index']=False;mutations.append(bad)
             for bad in mutations:
                 store(bad)
                 with self.assertRaises(ValueError):r.physical_verify_node(out,lease)
+            for mutate in (
+                lambda value:value.__setitem__('assignment_index',False),
+                lambda value:value.__setitem__('assignment_index',0.0),
+                lambda value:value['scientific'].__setitem__('bytes',float(value['scientific']['bytes'])),
+                lambda value:value['scientific'].__setitem__('bytes',False),
+            ):
+                store(template,mutate)
+                with self.assertRaises(ValueError):r.physical_verify_node(out,lease)
+
+    def test_physical_process_metadata_types_are_exact(self):
+        assignment=r.physical_inventory('smoke')[0]
+        lease=dict(assignment_index=0,assignment=assignment)
+        with tempfile.TemporaryDirectory() as directory:
+            out=Path(directory);r.write(out/'scientific.node.json',{'accepted':True})
+            files={'scientific.node.json':r.fingerprint((out/'scientific.node.json').read_bytes())}
+            template=dict(status='PASSED',active_processes=0,peak_tree_bytes=0,drained=True,
+                elapsed_seconds=0.0,kind='GE_BEAM3_G3C_PHYSICAL_CHILD_PROCESS_V1',
+                assignment_index=0,assignment_sha256=sha256(r.canonical(assignment)).hexdigest(),
+                returncode=0,files=files)
+            def store(value):
+                path=out/'process.json'
+                if path.exists():path.unlink()
+                r.write(path,value)
+            store(template);r.physical_verify_process(out,lease)
+            for field,value in (('active_processes',False),('assignment_index',False),
+                                ('assignment_index',0.0),('returncode',False),('returncode',0.0)):
+                bad=copy.deepcopy(template);bad[field]=value;store(bad)
+                with self.assertRaises(ValueError):r.physical_verify_process(out,lease)
+            bad=copy.deepcopy(template);bad['files']['scientific.node.json']['bytes']=False;store(bad)
+            with self.assertRaises(ValueError):r.physical_verify_process(out,lease)
 
     def test_strict_json(self):
         for raw in (b'{"x":1,"x":2}\n',b'{"x":NaN}\n',b'{"x":Infinity}\n'):

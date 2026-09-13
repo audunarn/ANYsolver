@@ -170,11 +170,25 @@ THREADS=('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM
 def canonical(v):
     return (json.dumps(v,sort_keys=True,separators=(',', ':'),allow_nan=False)+'\n').encode('ascii')
 
+def exact_json(actual,expected):
+    """JSON equality that never treats bool/int/float as interchangeable."""
+    if type(actual)is not type(expected):return False
+    if type(actual)is dict:
+        return set(actual)==set(expected) and all(exact_json(actual[k],expected[k]) for k in actual)
+    if type(actual)is list:
+        return len(actual)==len(expected) and all(exact_json(a,b) for a,b in zip(actual,expected))
+    return actual==expected
+
 def write(path,value):
     with path.open('xb') as stream:stream.write(canonical(value))
 
 def read(path):return environment.regular(path).read_bytes()
 def fingerprint(raw):return dict(bytes=len(raw),sha256=sha256(raw).hexdigest())
+
+def exact_fingerprint(actual,raw):
+    return (type(actual)is dict and set(actual)=={'bytes','sha256'}
+            and type(actual['bytes'])is int and actual['bytes']>=0
+            and type(actual['sha256'])is str and exact_json(actual,fingerprint(raw)))
 
 def git(*args):
     return subprocess.check_output(['git','-c','safe.directory='+ROOT.as_posix(),
@@ -532,13 +546,18 @@ def physical_lease_expected(lease,expected,review_sha):
                     'whole_inventory_sha256','runtime_sha256','input_packets'}
         or lease['kind']!='G3C_PHYSICAL_PRIVATE_DEVELOPMENT' or lease['schema']!=SCOPE
         or lease['gate']!='g3c-physical' or type(index)is not int or not 0<=index<len(full)
-        or lease['candidate']!=candidate or lease['inputs']!=rows or lease['review_sha256']!=review_sha
+        or not exact_json(lease['candidate'],candidate) or not exact_json(lease['inputs'],rows)
+        or lease['review_sha256']!=review_sha
         or canonical(lease['implementation_review'])!=review or lease['contract_sha256']!=PHYSICAL_PLAN_SHA
-        or lease['assignment']!=full[index]
+        or not exact_json(lease['assignment'],full[index])
         or lease['whole_inventory_sha256']!=sha256(canonical(full)).hexdigest()
         or lease['runtime_sha256']!=physical_support().runtime_identity()
         or type(lease['input_packets'])is not dict):raise ValueError('physical assignment lease')
     uuid.UUID(lease['run_id'])
+    kind=lease['assignment']['kind']
+    expected_packets=({'prefix','final'} if kind=='prefix' else {'origin'} if kind in
+                      ('preflight','mutation','authority-mutation') else set())
+    if set(lease['input_packets'])!=expected_packets:raise ValueError('physical packet assignment schema')
     for row in lease['input_packets'].values():validate_packet_descriptor(row)
     return full
 
@@ -620,14 +639,16 @@ def physical_verify_node(out,lease):
     nodes=physical_assignment_nodes(lease['assignment'])
     if (set(science)!={'schema','candidate','lane','assignment_index','assignment','records','full_g3c_qualified','production_qualified'}
         or science['schema']!='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1'
-        or science['candidate']!=lease['candidate'] or science['lane']!=lease['lane']
-        or science['assignment_index']!=lease['assignment_index'] or science['assignment']!=lease['assignment']
+        or not exact_json(science['candidate'],lease['candidate']) or science['lane']!=lease['lane']
+        or type(science['assignment_index'])is not int
+        or science['assignment_index']!=lease['assignment_index']
+        or not exact_json(science['assignment'],lease['assignment'])
         or type(science['records'])is not list or not science['records']
         or science['full_g3c_qualified']is not False or science['production_qualified']is not False):
         raise ValueError('physical node science')
     expected_completion=dict(assignment_index=lease['assignment_index'],assignment=lease['assignment'],
         selected=nodes,passed=nodes,scientific=fingerprint(raw))
-    if completion!=expected_completion:raise ValueError('physical node completion')
+    if not exact_json(completion,expected_completion):raise ValueError('physical node completion')
     assignment=lease['assignment']
     if assignment['kind']=='history':
         record=science['records'][0]
@@ -670,7 +691,7 @@ def physical_verify_node(out,lease):
         record=science['records'][0];receipt=record.get('receipt');probe=assignment['probe']
         if (len(science['records'])!=1
             or set(record)!={'kind','assignment','input_sha256','receipt','passed'}
-            or record['kind']!='mutation' or record['assignment']!=probe
+            or record['kind']!='mutation' or not exact_json(record['assignment'],probe)
             or record['input_sha256']!=lease['input_packets']['origin']['sha256']
             or record['passed']is not True or type(receipt)is not dict
             or set(receipt)!={'category','member','rejection','expected_error','before_sha256','after_sha256'}
@@ -685,7 +706,7 @@ def physical_verify_node(out,lease):
         record=science['records'][0];probe=assignment['probe']
         if (len(science['records'])!=1
             or set(record)!={'kind','assignment','origin_sha256','before_sha256','after_sha256','expected_error','passed'}
-            or record['kind']!='authority-mutation' or record['assignment']!=probe
+            or record['kind']!='authority-mutation' or not exact_json(record['assignment'],probe)
             or record['origin_sha256']!=lease['input_packets']['origin']['sha256']
             or record['before_sha256']==record['after_sha256']
             or type(record['expected_error'])is not str or not record['expected_error']
@@ -699,7 +720,8 @@ def physical_verify_node(out,lease):
         for record in science['records']:
             if (type(record)is not dict or record.get('production_qualified')is not False
                 or record.get('full_g3c_qualified')is not False
-                or record.get('assignment')!=expected_assignment or type(record.get('test'))is not str):
+                or not exact_json(record.get('assignment'),expected_assignment)
+                or type(record.get('test'))is not str):
                 raise ValueError('physical owner record')
             names.append('test_physical_'+record['test'])
         aliases={'test_physical_inventory':'test_physical_inventory_and_obligation_map',
@@ -788,17 +810,18 @@ def physical_verify_process(out,lease):
     value=environment.strict(read(out/'process.json'))
     expected_keys={'status','active_processes','peak_tree_bytes','drained','elapsed_seconds','kind',
                    'assignment_index','assignment_sha256','returncode','files'}
-    if (set(value)!=expected_keys or value['status']!='PASSED' or value['active_processes']!=0
+    if (set(value)!=expected_keys or value['status']!='PASSED'
+        or type(value['active_processes'])is not int or value['active_processes']!=0
         or value['drained']is not True or type(value['peak_tree_bytes'])is not int
         or not 0<=value['peak_tree_bytes']<=MEMORY or type(value['elapsed_seconds'])is not float
         or not math.isfinite(value['elapsed_seconds']) or not 0<=value['elapsed_seconds']<600
         or value['kind']!='GE_BEAM3_G3C_PHYSICAL_CHILD_PROCESS_V1'
-        or value['assignment_index']!=lease['assignment_index']
+        or type(value['assignment_index'])is not int or value['assignment_index']!=lease['assignment_index']
         or value['assignment_sha256']!=sha256(canonical(lease['assignment'])).hexdigest()
-        or value['returncode']!=0 or type(value['files'])is not dict):
+        or type(value['returncode'])is not int or value['returncode']!=0 or type(value['files'])is not dict):
         raise ValueError('physical accepted process record')
     actual={p.name:fingerprint(read(p)) for p in out.iterdir() if p.is_file() and p.name!='process.json'}
-    if value['files']!=actual:raise ValueError('physical process file DAG')
+    if not exact_json(value['files'],actual):raise ValueError('physical process file DAG')
     return value
 
 def physical_make_receipt(root,base,inventory_rows,wave_process,science_raw):
@@ -918,7 +941,7 @@ def verify_physical_priors(paths,expected,lane):
         if (set(value)!={'schema','candidate','lane','inventory_sha256','records','passed','terminal',
                         'full_g3c_qualified','production_qualified','self_sha256'}
             or sha256(canonical(body)).hexdigest()!=value.get('self_sha256','') or value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1'
-            or value.get('candidate')!=candidate or value.get('lane')!=expected_lane
+            or not exact_json(value.get('candidate'),candidate) or value.get('lane')!=expected_lane
             or value.get('passed')is not True
             or value.get('inventory_sha256')!=sha256(canonical(inventory_rows)).hexdigest()
             or value.get('terminal')!='COMPLETE_GE_BEAM3_G3C_PHYSICAL_'+expected_lane.upper()+'_ONLY'
@@ -930,10 +953,12 @@ def verify_physical_priors(paths,expected,lane):
             science=row.get('science') if type(row)is dict else None
             if (set(row)!={'assignment_index','science_sha256','science'}
                 or type(row['assignment_index'])is not int or row['assignment_index']!=index
-                or type(science)is not dict or row['science_sha256']!=sha256(canonical(science)).hexdigest()
+                or type(science)is not dict or type(row['science_sha256'])is not str
+                or row['science_sha256']!=sha256(canonical(science)).hexdigest()
                 or science.get('schema')!='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1'
-                or science.get('candidate')!=candidate or science.get('lane')!=expected_lane
-                or science.get('assignment_index')!=index or science.get('assignment')!=inventory_rows[index]
+                or not exact_json(science.get('candidate'),candidate) or science.get('lane')!=expected_lane
+                or type(science.get('assignment_index'))is not int or science.get('assignment_index')!=index
+                or not exact_json(science.get('assignment'),inventory_rows[index])
                 or science.get('full_g3c_qualified')is not False
                 or science.get('production_qualified')is not False):
                 raise ValueError('physical prerequisite record')
@@ -942,20 +967,25 @@ def verify_physical_priors(paths,expected,lane):
         if (set(receipt)!={'schema','candidate','lane','inventory_sha256','implementation_review_sha256',
                           'inputs_sha256','wave_process','science','nodes','passed','self_sha256'}
             or receipt['schema']!='GE_BEAM3_G3C_PHYSICAL_EVIDENCE_RECEIPT_V1'
-            or receipt['candidate']!=candidate or receipt['lane']!=expected_lane
+            or not exact_json(receipt['candidate'],candidate) or receipt['lane']!=expected_lane
             or receipt['inventory_sha256']!=sha256(canonical(inventory_rows)).hexdigest()
             or receipt['implementation_review_sha256']!=review_sha
             or receipt['inputs_sha256']!=sha256(canonical(inputs)).hexdigest()
-            or receipt['science']!=fingerprint(raw) or receipt['passed']is not True
+            or not exact_fingerprint(receipt['science'],raw) or receipt['passed']is not True
             or type(receipt['nodes'])is not list or len(receipt['nodes'])!=len(inventory_rows)
             or sha256(canonical(receipt_body)).hexdigest()!=receipt['self_sha256']):
             raise ValueError('physical prerequisite receipt')
         wave_raw=read(path.parent/'process.json')
-        if receipt['wave_process']!=fingerprint(wave_raw):raise ValueError('physical prerequisite wave process')
+        if not exact_fingerprint(receipt['wave_process'],wave_raw):raise ValueError('physical prerequisite wave process')
         wave=environment.strict(wave_raw)
-        if (wave.get('schema')!='GE_BEAM3_G3C_PHYSICAL_WAVE_PROCESS_V1' or wave.get('lane')!=expected_lane
+        if (set(wave)!={'schema','lane','passed','required_nodes','terminal_nodes','elapsed_seconds',
+                       'active_processes','results'}
+            or wave.get('schema')!='GE_BEAM3_G3C_PHYSICAL_WAVE_PROCESS_V1' or wave.get('lane')!=expected_lane
             or wave.get('passed')is not True or type(wave.get('required_nodes'))is not int
             or type(wave.get('terminal_nodes'))is not int or type(wave.get('active_processes'))is not int
+            or type(wave.get('elapsed_seconds'))is not float or not math.isfinite(wave['elapsed_seconds'])
+            or wave['elapsed_seconds']<0 or type(wave.get('results'))is not dict
+            or set(wave['results'])!={str(i) for i in range(len(inventory_rows))}
             or wave.get('required_nodes')!=len(inventory_rows)
             or wave.get('terminal_nodes')!=len(inventory_rows) or wave.get('active_processes')!=0):
             raise ValueError('physical prerequisite wave completion')
@@ -966,11 +996,13 @@ def verify_physical_priors(paths,expected,lane):
                 raise ValueError('physical prerequisite node receipt')
             for key,name in (('lease','lease.json'),('review','review.json'),('completion','completion.json'),
                              ('process','process.json'),('science','scientific.node.json')):
-                if node[key]!=fingerprint(read(out/name)):raise ValueError('physical prerequisite node hash')
+                if not exact_fingerprint(node[key],read(out/name)):raise ValueError('physical prerequisite node hash')
             lease=environment.strict(read(out/'lease.json'))
             if read(out/'review.json')!=review_raw:raise ValueError('physical prerequisite review bytes')
             physical_lease_expected(lease,expected,review_sha)
             physical_verify_node(out,lease);physical_verify_process(out,lease)
+            if not exact_json(wave['results'][str(index)],environment.strict(read(out/'process.json'))):
+                raise ValueError('physical prerequisite wave/node process DAG')
             if records[index]['science_sha256']!=node['science']['sha256']:
                 raise ValueError('physical prerequisite aggregate DAG')
 

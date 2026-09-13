@@ -947,3 +947,23 @@ The next correction adds a doubly guarded nonpublishing history trial/snapshot,
 uses exclusive same-volume hard-link promotion, and enforces exact false flags,
 integer counts and the frozen complete MO mapping. Thirty inert shared-runner
 guards pass after these changes; numerical mechanics remains unexecuted.
+
+Successor freeze `8925f0d77750d4cfec7002481f024cf4aaa0ac70`, tree
+`776e9671552dd76d45776c79eadc05b9d342495e`, was also rejected before mechanics
+execution. Its preserved independent review is 1547 bytes, SHA-256
+`4590537cfcefbc29f2532afe3ce7aed917bacc19d237996951691ba4fdad157e`.
+All preceding findings were closed, but the review demonstrated that Python
+value equality still admitted type-confused evidence metadata such as
+`false == 0` and `0.0 == 0` in assignment, completion, process and fingerprint
+records. This is an evidence-guard defect only; it does not change the private
+owner mechanics or authorize scientific execution.
+
+The next metadata-only correction uses recursive exact-type JSON comparison
+for candidate, assignment, completion and process DAG values; validates every
+fingerprint as the exact two-key `{bytes, sha256}` object; and closes the wave
+process schema and node-process DAG. Regression probes cover booleans and
+floating-point values substituted for assignment indices, process counts,
+return codes and byte counts. Thirty-one inert runner guards and the two
+standard-library-only owner inventory/schema tests pass. Numerical mechanics
+remains unexecuted pending a clean successor freeze and an independently
+accepted implementation review.
