@@ -178,6 +178,47 @@ class GuardTests(unittest.TestCase):
                          arguments('smoke','R-HISTORY'),arguments('local',finalize=True)):
                 with self.assertRaises(ValueError):r.execute_physical(args,watchdog)
 
+    def test_physical_correction_mode_is_exact_and_correction_only(self):
+        expected=({'commit':'a','tree':'b'},{},b'{}\n');watchdog=SimpleNamespace()
+        def arguments(partition_id=None,finalize=False,lane='rehearsal',failed=Path('failed.json')):
+            return SimpleNamespace(review=Path('review.json'),review_sha256='c'*64,lane=lane,prior=[],
+                partition_id=partition_id,finalize_partitions=finalize,inherit_correction=True,
+                failed_guards_process=failed)
+        with patch.object(r,'authority',return_value=expected):
+            for args in (arguments(),arguments('R-PREFIX-D'),arguments('R-GUARDS',True),
+                         arguments('R-GUARDS',lane='formal'),arguments('R-GUARDS',failed=None)):
+                with self.assertRaises(ValueError):r.execute_physical(args,watchdog)
+            with patch.object(r,'execute_physical_correction_guards',return_value=17) as guards:
+                self.assertEqual(r.execute_physical(arguments('R-GUARDS'),watchdog),17);guards.assert_called_once()
+            with patch.object(r,'execute_physical_correction_union',return_value=19) as union:
+                self.assertEqual(r.execute_physical(arguments(finalize=True),watchdog),19);union.assert_called_once()
+
+    def test_physical_runtime_compatibility_is_exact_and_nonimplicit(self):
+        support=r.physical_support();live=support.runtime_identity()
+        body=dict(schema=support.CORRECTION_COMPATIBILITY_SCHEMA,mode='R-GUARDS',
+            predecessor=dict(commit=r.PHYSICAL_PREDECESSOR['commit'],tree=r.PHYSICAL_PREDECESSOR['tree'],
+                runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,review_sha256=r.PHYSICAL_PREDECESSOR_REVIEW_SHA),
+            successor=dict(commit='a'*40,tree='b'*40,runtime_sha256=live,review_sha256='c'*64),
+            addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
+            design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
+            unchanged_inputs_sha256='d'*64,allowed_changed_paths=sorted(r.PHYSICAL_CORRECTION_CHANGED_PATHS))
+        value=dict(body,self_sha256=support.packet.digest(body))
+        self.assertEqual(support.validate_runtime_compatibility(value,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live),live)
+        for mutate in (
+            lambda x:x['predecessor'].__setitem__('runtime_sha256','0'*64),
+            lambda x:x['successor'].__setitem__('runtime_sha256','0'*64),
+            lambda x:x.__setitem__('mode','FOREIGN'),lambda x:x.__setitem__('self_sha256','0'*64)):
+            bad=copy.deepcopy(value);mutate(bad)
+            if bad['self_sha256']==value['self_sha256'] and bad.get('mode')!='FOREIGN':
+                bad['self_sha256']=support.packet.digest({k:v for k,v in bad.items()if k!='self_sha256'})
+            with self.assertRaises(ValueError):
+                support.validate_runtime_compatibility(bad,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live)
+        with self.assertRaisesRegex(ValueError,'runtime compatibility unnecessary'):
+            support.resume(b'{}\n','0'*64,expected_runtime_sha256=live,runtime_compatibility=value)
+        with self.assertRaises(ValueError):
+            r.physical_runtime_compatibility(({'commit':'a','tree':'b'},{'x':{'sha256':'0'}},b'{}\n'),
+                                             (r.PHYSICAL_PREDECESSOR,{'x':{'sha256':'1'}},b'{}\n'))
+
     def test_physical_union_requires_ordered_original_indices(self):
         values=[]
         for partition_id,indices,_ in r.PHYSICAL_PARTITIONS:
@@ -211,7 +252,12 @@ class GuardTests(unittest.TestCase):
         scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
             inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
             partition_addendum_sha256=r.PHYSICAL_PARTITION_ADDENDUM_SHA,
-            execution_authorized=True,full_g3c_qualified=False,production_qualified=False)
+            execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
+            correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
+            correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
+            predecessor_commit=r.PHYSICAL_PREDECESSOR['commit'],
+            predecessor_runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,
+            correction_inheritance_authorized=True)
         review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
             reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
         raw=r.canonical(review);digest=sha256(raw).hexdigest()
@@ -232,7 +278,12 @@ class GuardTests(unittest.TestCase):
         scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
             inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
             partition_addendum_sha256=r.PHYSICAL_PARTITION_ADDENDUM_SHA,
-            execution_authorized=True,full_g3c_qualified=False,production_qualified=False)
+            execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
+            correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
+            correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
+            predecessor_commit=r.PHYSICAL_PREDECESSOR['commit'],
+            predecessor_runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,
+            correction_inheritance_authorized=True)
         review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
             reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
         review_raw=r.canonical(review);inventory=r.physical_inventory('local')

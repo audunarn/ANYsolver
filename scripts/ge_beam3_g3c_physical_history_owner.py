@@ -25,6 +25,10 @@ GRAPHS=('J_B2_PAIR','J_B3_PAIR','J_Q4_PAIR','J_S3_PAIR','J_MULTIFAMILY_LOOP')
 VARIANTS=('BASE','SHUFFLED_INSERTION','RENUMBERED','CONNECTIVITY_REVERSED','PROPER_GLOBAL_TRANSFORM')
 SCALES=(.01,1.,10.)
 MOTIONS=('NONE','CM0','CM1','CM2','CM3')
+CORRECTION_COMPATIBILITY_SCHEMA='GE_BEAM3_G3C_PHYSICAL_RUNTIME_COMPATIBILITY_V1'
+CORRECTION_PREDECESSOR_RUNTIME='41a0dddda886672479294953871e83be3073ed38e129e12f3fa210bfbf3ce87c'
+CORRECTION_ADDENDUM_SHA='2c03f72a0e9c50c6a22fe5b7f47fd66f786aa3eadc23bedeb4dab1f2045a8696'
+CORRECTION_DESIGN_REVIEW_SHA='0fbaedb533e501a5136407d5dc039b5393b4bbf53064c273c7e974917ba9fec9'
 
 
 def commands(motion,scale):
@@ -90,6 +94,34 @@ def guard_signature(guard):
     fn=guard.__func__
     return (fn,fn.__code__,repr(fn.__defaults__),tuple((k,v,getattr(v,'__code__',None))
             for k,v in sorted((fn.__kwdefaults__ or {}).items())))
+
+
+def validate_runtime_compatibility(value, expected_runtime, live_runtime):
+    """Admit exactly one reviewed predecessor runtime; never weaken normal replay."""
+    keys={'schema','mode','predecessor','successor','addendum_sha256','design_review_sha256',
+          'unchanged_inputs_sha256','allowed_changed_paths','self_sha256'}
+    if type(value)is not dict or set(value)!=keys:raise ValueError('runtime compatibility schema')
+    body={key:item for key,item in value.items()if key!='self_sha256'}
+    predecessor=value.get('predecessor');successor=value.get('successor')
+    if (value.get('schema')!=CORRECTION_COMPATIBILITY_SCHEMA or value.get('mode')!='R-GUARDS'
+        or type(predecessor)is not dict or set(predecessor)!={'commit','tree','runtime_sha256','review_sha256'}
+        or predecessor!={'commit':'f6a62518be52a414604aa5e1beddd4601093faca',
+                         'tree':'1230eea2b64ca6e585ad23b389e514f1d5c493c4',
+                         'runtime_sha256':CORRECTION_PREDECESSOR_RUNTIME,
+                         'review_sha256':'52f8df02bd22c635bf828bf93190a34ec1463b20268a1a822e4e0f3c6c042eaf'}
+        or type(successor)is not dict or set(successor)!={'commit','tree','runtime_sha256','review_sha256'}
+        or successor.get('runtime_sha256')!=live_runtime
+        or value.get('addendum_sha256')!=CORRECTION_ADDENDUM_SHA
+        or value.get('design_review_sha256')!=CORRECTION_DESIGN_REVIEW_SHA
+        or type(value.get('unchanged_inputs_sha256'))is not str
+        or type(value.get('allowed_changed_paths'))is not list
+        or value.get('self_sha256')!=packet.digest(body)
+        or expected_runtime!=CORRECTION_PREDECESSOR_RUNTIME):
+        raise ValueError('runtime compatibility authority')
+    packet.hash_value(value['unchanged_inputs_sha256'])
+    if any(type(path)is not str or not path for path in value['allowed_changed_paths']):
+        raise ValueError('runtime compatibility paths')
+    return live_runtime
 
 
 class HistoryOwner:
@@ -275,7 +307,7 @@ genuine owned nonce/sandbox. There is no caller pose, origin, load or callback.
             lock.release()
 
 
-def resume(raw, expected_sha256, *, expected_runtime_sha256):
+def resume(raw, expected_sha256, *, expected_runtime_sha256, runtime_compatibility=None):
     """Fresh genuine replay only; returns no owner on any mismatch.
 
 The expected hashes are independent external authority. We never derive the
@@ -283,7 +315,10 @@ expected checkpoint digest from the untrusted input as an admission shortcut.
 No caller owner/candidate/state injection or persistent numerical cache exists.
 """
     code = dispatch()
-    if runtime_identity() != expected_runtime_sha256: raise ValueError('external runtime mismatch')
+    live_runtime=runtime_identity()
+    if live_runtime != expected_runtime_sha256:
+        validate_runtime_compatibility(runtime_compatibility,expected_runtime_sha256,live_runtime)
+    elif runtime_compatibility is not None:raise ValueError('runtime compatibility unnecessary')
     checked = packet.preflight(raw, expected_sha256, expected_runtime_sha256=expected_runtime_sha256)
     if dispatch() != code: raise ValueError('preflight dispatch changed')
     value = packet.strict(checked.raw)
@@ -301,6 +336,6 @@ No caller owner/candidate/state injection or persistent numerical cache exists.
             raise ValueError('genuine replay prefix mismatch: '+str(index+1))
         print('G3C CHECKPOINT restart prefix '+str(index+1),flush=True)
     if owner.checkpoint_bytes() != raw: raise ValueError('complete replay checkpoint mismatch')
-    if dispatch() != code or runtime_identity() != expected_runtime_sha256:
+    if dispatch() != code or runtime_identity() != live_runtime:
         raise ValueError('replay runtime changed')
     return owner
