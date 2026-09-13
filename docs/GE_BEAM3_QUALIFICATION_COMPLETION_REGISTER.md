@@ -21,7 +21,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
 | B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
-| Q4 physical recovery | Exact affine identities accepted at d49aacd; stable-chart b26d97f smoke passed; full rehearsal exposed a private station-association defect; prior scoped d0057065 NO_GO preserved | Correct exact point association, review fresh freeze, then smoke/rehearsal and two formal cycles; no public mechanics change |
+| Q4 physical recovery | Exact identities accepted at d49aacd; station-association484286c smoke and first9 rehearsal nodes passed; tiny-response force comparison blocks complete rehearsal; prior scoped NO_GO preserved | Independently derive/review cancellation-safe private chart evaluation, then fresh complete confirmation; unchanged public mechanics and tolerance |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
@@ -659,3 +659,71 @@ as canonical data to the preceding manifest; only source bindings changed.
 Separate23 inert runner tests passed in0.667 seconds. These are not scientific
 acceptance: clean implementation review and fresh smoke/rehearsal/formal runs
 remain required. Public mechanics, independent checker and tolerances unchanged.
+
+## 484286c numerical recovery: tiny-response rehearsal block
+
+Frozen commit484286c2e41d4a347fd8fe6ef06e9fe4457102fb,
+tree16bff223011d6e221eb7f4d51c07096eba02438f, independently accepted for
+bounded execution by review SHA-256
+12bb7e415e5cb4180fde490db7c772db47ef97d3fb5d52ed8455f70e939afb84.
+Smoke95eed2a8-d9a1-4630-905e-2264acc1ff1f passed both nodes in36.2918801s,
+return codes0, all process trees drained. Its smoke-only scientific record is
+13420 bytes, SHA-256
+f3b721854c7c22c2be837bd2915c11acedc7938b529d7e31fee6779f63273e94.
+
+Complete rehearsal1cdb780f-90fa-487a-a7f1-adae7d55c4bb stopped in117.3230987s.
+The first9 nodes completed with verified canonical packets, including actual
+station fields,64-coordinate Schur, chart work/Hessian, directional derivatives,
+rigid/common motion and D4/director/passive/rebase tests. Twelve of15 nodes
+launched; all descendants drained. Graph and race nodes were aborted on peer
+failure and do not count as complete acceptance, even where pytest printed PASS.
+
+Tiny SQUARE amplitude1e-6 physical spatial force comparison had relative error
+1.2442263651131688e-8 against the unchanged1e-11 gate. No complete rehearsal
+aggregate or formal cycle exists. Terminal is
+BLOCKED_G3C_Q4_AFFINE_RECOVERY_PROCESS_OR_EVIDENCE, not a manufactured NO_GO.
+Source audits identify cancellation in forming X+u, centered covariance and
+R.T*x_centered-X_centered as plausible contributors; the exact allocation of
+error between independent implementations is not established by this assertion.
+Any private stable-arithmetic correction must preserve the mathematical fit,
+potential, all derivatives, physical input states and tolerances under a reviewed
+source-equivalence addendum. No tiny case may be dropped or absolute floor added.
+
+Independent evidence review SHA-256
+3fab4089cd13f667f13ba6149a3b4c505e316a5ff7449f2e3d8a8dd262eb697f;
+recursive99-file manifest SHA-256
+65fb8a88cfa3585b4e1c00bde3a76e74801716391afd01d9bf6cb26364f808a0.
+Originals remain intact. Separate durable archives contain18 smoke files and81
+rehearsal files, each copied with byte/SHA verification:
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-484286c-smoke-20260913/
+and beam-q4-affine-484286c-rehearsal-20260913/ under the same parent.
+The rehearsal archive also holds the independent reviews and raw-file manifest.
+
+## Parallel read-only next-gate audit (not acceptance)
+
+The successor mixed owner can reuse accepted PhysicalB2Adapter and, only after
+local acceptance, AffineQ4PhysicalRecovery. Both expose chart force/Hessian;
+assemble these once without a second pullback. New owner/state/restart policies
+must bind operator, recovery,64-variable representation, numerical-chart and
+station-association identities and reject old packets before construction.
+All ten Q4 graph-reference constructions are already in the local finite registry,
+but their150 solved histories remain part of the complete375-history gate, not
+replaced by manufactured local observations. MO01-MO18 stay open as registered.
+
+Read-only P12/U08/P25 baseline audit found nodal six-vector loads, direct element
+DOF load-vector scatter and consistent gravity as actual legacy routes. The
+public pressure/follower route is shell-specific; a native beam line-load/couple
+integration API was not established. Later B3 fixtures must distinguish supplied
+consistent vectors from built-in distributed-load integration. Partial supports
+and MPCs are real routes; searches alone do not prove a dedicated member-end
+release or thermal API is unsupported. Freeze actual route/constructor/state
+audits before assigning an unsupported disposition.
+
+Legacy linear Newmark assembles reference K/M. Nonlinear contact permits
+corotational internal forces but uses reference-inertia M*a and kinetic v^T M v/2,
+with activity/damage updates. This does not establish objective finite-spin
+SO(3)/gyroscopic dynamics. P25 stays legacy-domain-unestablished; no capability
+is silently added or discarded. Later B3 baseline fixtures should cover axial,
+bending/torsion initial velocity, damping/prescribed histories and supported
+corotational/reference-inertia impact with rollback before any finite-spin claim.
+These audits ran no numerical tests and do not close any parity row.
