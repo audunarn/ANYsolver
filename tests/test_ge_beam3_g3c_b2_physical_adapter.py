@@ -244,6 +244,21 @@ def test_definition_and_old_identity_rejection(monkeypatch):
     detached=adapter.descriptor();detached['E']=123
     assert adapter.descriptor()['E']==desc['E']
     other=module.PhysicalB2Adapter(*args[:3],2*desc['E'],*args[4:])
+    observed=module.PhysicalB2Adapter(*args)
+    original_descriptor=module.PhysicalB2Adapter.descriptor
+    def swap_after_descriptor(self):
+        description=original_descriptor(self)
+        if self is observed:
+            object.__setattr__(self,'_body',other._body)
+            object.__setattr__(self,'_seal',other._seal)
+        return description
+    with monkeypatch.context() as patch:
+        patch.setattr(module.PhysicalB2Adapter,'descriptor',swap_after_descriptor)
+        patch.setattr(module,'deformation',never)
+        patch.setattr(module,'core_evaluate',never)
+        with pytest.raises(module.AdmissionError,match='entry observation'):
+            observed.evaluate(u,q)
+    assert not called
     def swap(*a,**kw):
         result=original(*a,**kw)
         object.__setattr__(adapter,'_body',other._body);object.__setattr__(adapter,'_seal',other._seal)

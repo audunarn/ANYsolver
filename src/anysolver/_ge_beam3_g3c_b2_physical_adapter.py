@@ -119,8 +119,10 @@ class PhysicalB2Adapter:
         return value
 
     def evaluate(self, displacement, accepted_rotations):
-        description = self.descriptor()
         entry_body, entry_seal = self._body, self._seal
+        description = self.descriptor()
+        if self._body != entry_body or self._seal != entry_seal:
+            raise AdmissionError('physical definition replaced during entry observation')
         u, qa = array(displacement, (12,)), rotations(accepted_rotations, 2)
         ref = np.array(description['coordinates'])
         try:
