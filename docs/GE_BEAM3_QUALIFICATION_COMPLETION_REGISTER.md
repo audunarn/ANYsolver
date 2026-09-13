@@ -987,3 +987,15 @@ facade and its prior evidence instead establish
 The correction changes only the private owner witness and its mutation test;
 qualified Q4 mechanics and recovery remain untouched. A new clean freeze and
 independent review are required before any new smoke execution.
+
+Correction freeze `1321a0b5ca2311997f10d4fee1a0422ef2462158`, tree
+`ab3c7dcc57df56ae4e6bb135708b8de0002076f4`, was rejected in pre-execution
+review. The preserved review is 1534 bytes, SHA-256
+`0c569ef5648eb40ecad692e529c94c6bf54b1d5af00d3f8dfaba0b3a6101873b`.
+Although its station Schur formula matches the accepted facade, the
+private witness did not explicitly bind the condensed Schur Hessian to the
+physical station Hessian and did not include the two Hessian fields in its
+fingerprint. A coherent equal perturbation of direct and Schur fields could
+therefore evade that witness. The successor adds the missing equality,
+fingerprints both fields and adds the coherent-mutation regression. No mechanics
+ran under this correction freeze.

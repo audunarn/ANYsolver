@@ -106,6 +106,8 @@ def recovery_witness(family,trial):
         condensed=(trial.direct_chart_hessian
                    -trial.internal_coupling64.T@trial.internal_inverse64@trial.internal_coupling64)
         physical_equal(condensed,trial.schur_chart_hessian,'Q4 full64 Schur')
+        physical_equal(trial.schur_chart_hessian,trial.physical_chart_hessian,
+                       'Q4 condensed/physical Hessian')
         physical_equal(trial.source_stationary_matrix@trial.source_solution,
                        trial.source_coupling.T,'Q4 source35 stationarity')
         physical_equal(trial.internal_block64@trial.internal_inverse64,np.eye(64),'Q4 right inverse')
@@ -113,7 +115,8 @@ def recovery_witness(family,trial):
         for st in trial.stations:
             physical_equal(st.constitutive@st.strain,st.resultant,'Q4 constitutive recovery')
         witness=(trial.stations,trial.internal_block64,trial.internal_inverse64,
-                 trial.internal_coupling64,trial.internal_residual64,trial.physical_energy)
+                 trial.internal_coupling64,trial.direct_chart_hessian,
+                 trial.schur_chart_hessian,trial.internal_residual64,trial.physical_energy)
     elif family=='B3':
         witness=trial.station_diagnostics
         if witness is None: raise ValueError('missing B3 physical recovery')

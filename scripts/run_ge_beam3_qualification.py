@@ -787,7 +787,7 @@ def physical_verify_node(out,lease):
                 probes+=['Q4:'+kind for kind in ('tuple','entry','descriptor','registry','operator')]
             if row['caller_copy']is not True or row['rejections']!=probes:raise ValueError('physical observation record')
         if 'recovery_witness' in by_name:
-            expected_mutations=3 if expected_assignment['graph'] in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') else 0
+            expected_mutations=4 if expected_assignment['graph'] in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') else 0
             value=exact('recovery_witness',('mutations',))['mutations']
             if type(value)is not int or value!=expected_mutations:
                 raise ValueError('physical recovery-witness record')

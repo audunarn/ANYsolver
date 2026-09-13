@@ -352,5 +352,9 @@ def test_physical_recovery_witness_guards():
             # The uncondensed direct block contains only the geometric term.
             # Omitting the independently bound station Schur term must fail.
             with pytest.raises(ValueError):mechanics.recovery_witness('Q4',replace(result,schur_chart_hessian=result.direct_chart_hessian))
-            count+=3
+            coherent=np.eye(24)
+            with pytest.raises(ValueError):mechanics.recovery_witness('Q4',replace(result,
+                direct_chart_hessian=result.direct_chart_hessian+coherent,
+                schur_chart_hessian=result.schur_chart_hessian+coherent))
+            count+=4
     record('recovery_witness',mutations=count)
