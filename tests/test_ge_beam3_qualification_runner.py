@@ -317,6 +317,15 @@ class GuardTests(unittest.TestCase):
                 store(template,mutate)
                 with self.assertRaises(ValueError):r.physical_verify_node(out,lease)
 
+    def test_physical_atomicity_stages_follow_registered_variants(self):
+        assignments=[row['assignment'] for row in r.physical_inventory('local') if row['kind']=='owner']
+        stages=[r.physical_atomicity_stages(row) for row in assignments]
+        self.assertEqual(len(stages),25)
+        self.assertTrue(all(row[1:]==['prepare','native_committed','before_publish'] for row in stages))
+        self.assertEqual(stages[0][0],'family:11')
+        self.assertEqual(stages[2][0],'family:20055')
+        self.assertGreater(len({row[0] for row in stages}),2)
+
     def test_physical_process_metadata_types_are_exact(self):
         assignment=r.physical_inventory('smoke')[0]
         lease=dict(assignment_index=0,assignment=assignment)

@@ -999,3 +999,18 @@ fingerprint. A coherent equal perturbation of direct and Schur fields could
 therefore evade that witness. The successor adds the missing equality,
 fingerprints both fields and adds the coherent-mutation regression. No mechanics
 ran under this correction freeze.
+
+The accepted closure successor's five-history smoke then passed in 200 seconds;
+its canonical aggregate is 6645 bytes, SHA-256
+`5197fa6d67218458f358c20c5c0a9cb357239085a7f7faf489049fc82a30be76`,
+and its full receipt DAG validates recursively. The following local wave was
+preserved as blocked process/evidence: inert composition plus four numerical
+assignments passed, while a fifth completed all seven mechanics nodes but was
+rejected by the coordinator. Its root process record is 7163 bytes, SHA-256
+`14202bc02c70ecc2fc4a450c27bf41bd81a9fcbb1b4a1a88b6c7aae0916d84ba`.
+The rejected assignment was `J_B2_PAIR::RENUMBERED`; it correctly injected late
+failure at `family:20055`, while the coordinator had incorrectly hard-coded the
+base-variant family ID `11`. The successor derives the complete atomicity stage
+list from the hash-bound standard-library-only graph/variant authority and tests
+all 25 local assignments without importing numerical mechanics. No local
+aggregate was published, and the consumed local wave will not be reused.

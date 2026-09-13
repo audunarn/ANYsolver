@@ -524,6 +524,17 @@ def physical_assignment_nodes(assignment):
     if kind=='authority-mutation':return []
     raise ValueError('physical assignment kind')
 
+def physical_atomicity_stages(assignment):
+    """Derive the injected late-failure stages from frozen inert authority."""
+    if (type(assignment)is not dict or set(assignment)!={'graph','variant'}
+        or assignment['graph'] not in physical_support().GRAPHS
+        or assignment['variant'] not in physical_support().VARIANTS):
+        raise ValueError('physical atomicity assignment')
+    _,source=physical_support().packet.authorities()
+    expanded=source.expand_inert(assignment['graph'],assignment['variant'])[1]
+    last=next(e['id'] for e in reversed(expanded['graph']['elements']) if e['family']!='NATIVE')
+    return ['family:'+str(last),'prepare','native_committed','before_publish']
+
 def packet_descriptor(path):
     raw=read(path)
     return dict(path=str(path.resolve()),bytes=len(raw),sha256=sha256(raw).hexdigest())
@@ -764,8 +775,7 @@ def physical_verify_node(out,lease):
             if (type(errors)is not list or len(errors)!=3 or any(type(v)is not float or not math.isfinite(v) or v<0 or v>1e-7 for v in errors)):
                 raise ValueError('physical directional record')
         if 'atomicity' in by_name:
-            last=14 if expected_assignment['graph']=='J_MULTIFAMILY_LOOP' else 11
-            if exact('atomicity',('stages',))['stages']!=['family:'+str(last),'prepare','native_committed','before_publish']:
+            if exact('atomicity',('stages',))['stages']!=physical_atomicity_stages(expected_assignment):
                 raise ValueError('physical atomicity record')
         if 'tokens' in by_name:
             value=exact('tokens',('rejections',))['rejections']
