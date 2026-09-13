@@ -1122,3 +1122,17 @@ prevent regrouping. A no-mechanics guard finalizer combines the six accepted
 segments, after which the existing no-mechanics correction union may combine
 records 0 through 233. This remains rehearsal-only and retains
 `full_g3c_qualified=false` and `production_qualified=false`.
+
+The first segmented attempt under commit
+`1a70429846424ed39841b66150e6f7c6e420a370` stopped safely after launching
+assignments 90 through 94. Assignments 92 through 94 passed. Assignments 90 and
+91 completed all registered tests and emitted scientific records, but the
+coordinator rejected their preflight record because its evidence validator
+still expected the former nine compatibility mutations after V3 added three
+new authority fields. The root process record is 6,402 bytes, SHA-256
+`642e530f899d6a40386f71994f2ff23ece08103bca0dac88896c124cb9c1068a`.
+No canonical segment aggregate or receipt was published. This is a
+process/evidence-schema incident, not a mechanics result; none of its child
+records may be reused. The successor changes only the exact registered negative
+count from nine to twelve and adds an inert regression before independent
+re-review and fresh segment authority.

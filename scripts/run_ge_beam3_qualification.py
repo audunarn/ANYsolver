@@ -136,6 +136,7 @@ PHYSICAL_INHERITED_FINGERPRINTS={
 PHYSICAL_FAILED_GUARDS_FINGERPRINT={'bytes':75379,'sha256':'7fd9a5ce935a5018c9e0656f3ddc56c279fe077399d0891a46025da79dd22903'}
 PHYSICAL_INTERRUPTED_GUARDS_MANIFEST={'files':1039,'bytes':67930103,
     'sha256':'cdaaf2feeb38ba4e771c55ef66d9ff8ad32536fd9fea98fc2dff812910518ba6'}
+PHYSICAL_CORRECTION_COMPATIBILITY_NEGATIVE_COUNT=12
 NUMERICAL_PLAN='docs/GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_CONTRACT.md'
 NUMERICAL_PLAN_SHA='21cec54b2469e291c8f90a2c042e3cf693a14f7bc10efd5111ea842ca65a218c'
 NUMERICAL_REVIEW='docs/reference_cases/ge_beam3_q4_affine_numerical_design_review_v1.json'
@@ -973,7 +974,8 @@ def physical_verify_node(out,lease):
                 or schema.get('passed')is not True
                 or set(negative)!={'kind','rejections','passed'}
                 or negative.get('kind')!='runtime_compatibility_negatives'
-                or type(negative.get('rejections'))is not int or negative.get('rejections')!=9
+                or type(negative.get('rejections'))is not int
+                or negative.get('rejections')!=PHYSICAL_CORRECTION_COMPATIBILITY_NEGATIVE_COUNT
                 or negative.get('passed')is not True
                 or set(positive)!={'kind','input_sha256','predecessor_runtime_sha256',
                                   'successor_runtime_sha256','replay_sha256','passed'}

@@ -12,6 +12,7 @@ EXPECTED_RUNTIME_SHA256=None
 RUNTIME_COMPATIBILITY=None
 SCIENTIFIC_RECORDS=[]
 p=history.packet
+RUNTIME_COMPATIBILITY_NEGATIVE_COUNT=12
 
 
 def input_packet():
@@ -102,6 +103,7 @@ def test_runtime_compatibility_negatives():
         changed=copy.deepcopy(base);changed[key]=replacement
         changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)
     changed=copy.deepcopy(base);changed['self_sha256']='0'*64;attacks.append(changed)
+    assert len(attacks)==RUNTIME_COMPATIBILITY_NEGATIVE_COUNT
     for value in attacks:
         try:history.validate_runtime_compatibility(value,EXPECTED_RUNTIME_SHA256,current)
         except ValueError:pass

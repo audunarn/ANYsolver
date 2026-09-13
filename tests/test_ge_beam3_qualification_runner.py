@@ -245,6 +245,15 @@ class GuardTests(unittest.TestCase):
                     bad['self_sha256']=support.packet.digest({k:v for k,v in bad.items()if k!='self_sha256'})
                 with self.assertRaises(ValueError):
                     support.validate_runtime_compatibility(bad,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live)
+            tree=ast.parse((Path(__file__).resolve().parent/'test_ge_beam3_g3c_physical_correction_guards.py').read_text())
+            declared=[]
+            for node in tree.body:
+                if isinstance(node,ast.Assign) and any(
+                        isinstance(target,ast.Name)
+                        and target.id=='RUNTIME_COMPATIBILITY_NEGATIVE_COUNT'
+                        for target in node.targets):
+                    declared.append(ast.literal_eval(node.value))
+            self.assertEqual(declared,[r.PHYSICAL_CORRECTION_COMPATIBILITY_NEGATIVE_COUNT])
         with self.assertRaisesRegex(ValueError,'runtime compatibility unnecessary'):
             support.resume(b'{}\n','0'*64,expected_runtime_sha256=live,runtime_compatibility=value)
         with self.assertRaises(ValueError):
