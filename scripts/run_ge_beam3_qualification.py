@@ -1,6 +1,7 @@
 """Shared bounded beam gate runner; only explicitly registered gates execute."""
 import argparse
 import ast
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from hashlib import sha256
 import importlib.util
 import json
@@ -14,6 +15,8 @@ import tempfile
 import threading
 import time
 import uuid
+
+_JOB_TYPE_LOCK=threading.Lock()
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
@@ -34,7 +37,25 @@ TESTS={'b2-core':(TEST,'numeric_core'),
        'b2-adapter':('tests/test_ge_beam3_g3c_b2_physical_adapter.py','adapter'),
        'q4-audit':('tests/test_ge_beam3_q4_recovery_coefficient_audit.py','q4_audit'),
        'q4-affine-exact':('tests/test_ge_beam3_q4_affine_recovery.py','q4_affine'),
-       'q4-affine-numerical':('tests/test_ge_beam3_q4_affine_numerical_recovery.py','q4_affine_numerical')}
+       'q4-affine-numerical':('tests/test_ge_beam3_q4_affine_numerical_recovery.py','q4_affine_numerical'),
+       'g3c-physical':('tests/test_ge_beam3_g3c_physical_owner.py','physical_owner')}
+PHYSICAL_BASE='ba4f4d793bb9494f3c116030c99577a1b3ebefe6'
+PHYSICAL_BASE_TREE='47c29d6e5d60dc133544cedade3a11a78ee13b3c'
+PHYSICAL_PLAN='docs/GE_BEAM3_G3C_PHYSICAL_MIXED_OWNER_CONTRACT.md'
+PHYSICAL_PLAN_SHA='f6638863e6e222c795e980194c9a71cf42eb83bdcba6af2a8c409164ad4d957b'
+PHYSICAL_DESIGN_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_owner_contract_review_v1.json'
+PHYSICAL_DESIGN_SHA='47829c5c1c896ed2eb28131ffedadd25cc83bc5bed79bc2517cfe308f7dc8988'
+PHYSICAL_OWNER_TEST='tests/test_ge_beam3_g3c_physical_owner.py'
+PHYSICAL_HISTORY_TEST='tests/test_ge_beam3_g3c_physical_history_restart.py'
+PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
+    'src/anysolver/_ge_beam3_g3c_physical_owner.py',
+    'src/anysolver/_ge_beam3_g3c_physical_authority.py',
+    'scripts/ge_beam3_g3c_physical_history_owner.py',
+    'scripts/ge_beam3_g3c_physical_restart_preflight.py',
+    PHYSICAL_OWNER_TEST,PHYSICAL_HISTORY_TEST,
+    'tests/test_ge_beam3_qualification_runner.py',
+    'scripts/run_ge_beam3_qualification.py',
+    'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md'}
 NUMERICAL_PLAN='docs/GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_CONTRACT.md'
 NUMERICAL_PLAN_SHA='21cec54b2469e291c8f90a2c042e3cf693a14f7bc10efd5111ea842ca65a218c'
 NUMERICAL_REVIEW='docs/reference_cases/ge_beam3_q4_affine_numerical_design_review_v1.json'
@@ -164,8 +185,57 @@ def inputs():
     names=git('ls-files','-z').split('\0')
     return {name:fingerprint(read(ROOT/name).replace(b'\r\n',b'\n')) for name in sorted(names) if name}
 
+PHYSICAL_OWNER_STATIC_NODES=(
+    'test_physical_inventory_and_obligation_map',
+    'test_physical_inert_schema_guards')
+PHYSICAL_OWNER_NUMERICAL_NODES=(
+    'test_physical_family_work','test_physical_directional','test_physical_atomicity',
+    'test_physical_token_and_definition_guards','test_physical_independent_joint_work_transport',
+    'test_physical_observation_and_cache_guards','test_physical_recovery_witness_guards')
+PHYSICAL_HISTORY_NODE='test_physical_history_assignment'
+PHYSICAL_PREFLIGHT_NODE='test_physical_preflight_guards'
+PHYSICAL_MUTATION_NODE='test_physical_mutation_assignment'
+
+def physical_support():
+    """Inert inventory module only; it imports no anysolver or numerical package."""
+    import ge_beam3_g3c_physical_history_owner as support
+    return support
+
+def physical_test_nodes(path):
+    tree=ast.parse(read(ROOT/path))
+    return [n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
+
+def physical_inventory(lane):
+    support=physical_support()
+    owner_nodes=physical_test_nodes(PHYSICAL_OWNER_TEST)
+    history_nodes=physical_test_nodes(PHYSICAL_HISTORY_TEST)
+    expected_owner=list(PHYSICAL_OWNER_STATIC_NODES+PHYSICAL_OWNER_NUMERICAL_NODES)
+    expected_history=[PHYSICAL_HISTORY_NODE,PHYSICAL_PREFLIGHT_NODE,PHYSICAL_MUTATION_NODE]
+    if owner_nodes!=expected_owner or history_nodes!=expected_history:
+        raise ValueError('registered physical test inventory changed')
+    if lane=='local':
+        rows=[dict(kind='owner-static',nodes=[PHYSICAL_OWNER_TEST+'::'+n for n in PHYSICAL_OWNER_STATIC_NODES])]
+        rows += [dict(kind='owner',assignment=dict(graph=graph,variant=variant),
+                      nodes=[PHYSICAL_OWNER_TEST+'::'+n for n in PHYSICAL_OWNER_NUMERICAL_NODES])
+                 for graph in support.GRAPHS for variant in support.VARIANTS]
+        return rows
+    if lane in ('smoke','formal'):
+        return support.work_inventory(lane)
+    if lane!='rehearsal':raise ValueError('unregistered physical lane')
+    rows=list(support.work_inventory('rehearsal'))
+    origins=[]
+    for item in support.mutation_inventory():
+        origin=item['origin']
+        if origin not in origins:origins.append(origin)
+    rows += [dict(kind='preflight',origin=o) for o in origins]
+    for item in support.mutation_inventory():
+        probe={k:v for k,v in item.items() if k!='executor'}
+        rows.append(dict(kind='authority-mutation' if item['executor']=='authority' else 'mutation',probe=probe))
+    return rows
+
 def inventory(lane,gate='b2-core'):
     if gate not in TESTS:raise ValueError('unregistered gate')
+    if gate=='g3c-physical':return physical_inventory(lane)
     test_path,inventory_key=TESTS[gate]
     contract=environment.strict(read(ROOT/CONTRACT).replace(b'\r\n',b'\n'))
     names=(NUMERICAL_TESTS if gate=='q4-affine-numerical' else AFFINE_TESTS if gate=='q4-affine-exact' else
@@ -182,6 +252,16 @@ def inventory(lane,gate='b2-core'):
 def verify_review(raw,digest,candidate,rows,gate='b2-core'):
     if sha256(raw).hexdigest()!=digest:raise ValueError('review hash')
     r=environment.strict(raw)
+    if gate=='g3c-physical':
+        expected_scope={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
+            'inputs_sha256':sha256(canonical(rows)).hexdigest(),'contract_sha256':PHYSICAL_PLAN_SHA,
+            'execution_authorized':True,'full_g3c_qualified':False,'production_qualified':False}
+        if (set(r)!={'decision','findings','reviewer','scope','subject_commit'}
+            or r['decision']!='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT'
+            or r['findings'] or r['reviewer'].get('independent') is not True
+            or r['subject_commit']!=candidate['commit'] or r['scope']!=expected_scope):
+            raise ValueError('physical implementation review authority')
+        return r
     if (set(r)!={'decision','findings','reviewer','scope','subject_commit'}
         or r['decision']!='ACCEPTED_GE_BEAM3_REGISTERED_GATE_FOR_BOUNDED_EXECUTION' or r['findings']
         or r['reviewer'].get('independent') is not True
@@ -197,6 +277,29 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
     if gate not in TESTS:raise ValueError('unregistered gate')
     if git('status','--porcelain','--untracked-files=all'):raise ValueError('dirty candidate')
     candidate=dict(commit=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}'))
+    if gate=='g3c-physical':
+        if git('rev-parse',PHYSICAL_BASE+'^{tree}')!=PHYSICAL_BASE_TREE:
+            raise ValueError('physical successor base tree')
+        git('merge-base','--is-ancestor',PHYSICAL_BASE,'HEAD')
+        changed=set(filter(None,git('diff','--name-only',PHYSICAL_BASE,'HEAD').splitlines()))
+        if changed!=PHYSICAL_IMPLEMENTATION_PATHS:
+            raise ValueError('physical successor implementation extent changed')
+        for path,digest in ((PHYSICAL_PLAN,PHYSICAL_PLAN_SHA),(PHYSICAL_DESIGN_REVIEW,PHYSICAL_DESIGN_SHA),
+                            (JOB,JOB_SHA)):
+            if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
+                raise ValueError('physical frozen authority input')
+        design=environment.strict(read(ROOT/PHYSICAL_DESIGN_REVIEW).replace(b'\r\n',b'\n'))
+        if (set(design)!={'decision','findings','reviewer','scope','subject_commit'}
+            or design['decision']!='ACCEPTED_GE_BEAM3_G3C_PHYSICAL_OWNER_CONTRACT_DESIGN_ONLY'
+            or design['findings'] or design['reviewer'].get('independent') is not True
+            or design['subject_commit']!='d6f3b041b7b6f3ef8c2ccfa42711137799192cac'
+            or design['scope'].get('contract_sha256')!=PHYSICAL_PLAN_SHA
+            ):
+            raise ValueError('physical design review authority')
+        inventory('local',gate);inventory('smoke',gate);inventory('rehearsal',gate);inventory('formal',gate)
+        rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
+        environment.verify(CAPSULE,CAPSULE_SHA)
+        return candidate,rows,raw
     git('merge-base','--is-ancestor',BASE,'HEAD')
     changed=set(filter(None,git('diff','--name-only',BASE,'HEAD').splitlines()))
     if not changed<=ALLOWED:raise ValueError('production or unregistered extent changed')
@@ -339,9 +442,13 @@ def affine_adjudication(records,lane):
                 coefficient_count=21375,physical_recovery_qualified=False,full_g3c_qualified=False)
 
 def job_type():
-    spec=importlib.util.spec_from_file_location('beam_bounded_job',ROOT/JOB)
-    m=importlib.util.module_from_spec(spec);sys.modules[spec.name]=m;spec.loader.exec_module(m)
-    return m._ProcessJob
+    # Importlib and sys.modules mutation are not thread-safe.  Physical waves
+    # launch three children concurrently, so serialize only this inexpensive
+    # class load rather than the child processes themselves.
+    with _JOB_TYPE_LOCK:
+        spec=importlib.util.spec_from_file_location('beam_bounded_job',ROOT/JOB)
+        m=importlib.util.module_from_spec(spec);sys.modules[spec.name]=m;spec.loader.exec_module(m)
+        return m._ProcessJob
 
 def worker(out,lease_sha):
     raw=read(out/'lease.json')
@@ -381,6 +488,356 @@ def worker(out,lease_sha):
     write(out/'scientific.pending.json',scientific)
     write(out/'completion.json',dict(selected=recorder.passed,scientific=fingerprint(read(out/'scientific.pending.json'))))
     print('BEAM CHECKPOINT evidence complete',flush=True)
+    return 0
+
+def physical_assignment_nodes(assignment):
+    kind=assignment['kind']
+    if kind in ('owner-static','owner'):return assignment['nodes']
+    if kind in ('history','prefix'):return [PHYSICAL_HISTORY_TEST+'::'+PHYSICAL_HISTORY_NODE]
+    if kind=='preflight':return [PHYSICAL_HISTORY_TEST+'::'+PHYSICAL_PREFLIGHT_NODE]
+    if kind=='mutation':return [PHYSICAL_HISTORY_TEST+'::'+PHYSICAL_MUTATION_NODE]
+    if kind=='authority-mutation':return []
+    raise ValueError('physical assignment kind')
+
+def packet_descriptor(path):
+    raw=read(path)
+    return dict(path=str(path.resolve()),bytes=len(raw),sha256=sha256(raw).hexdigest())
+
+def validate_packet_descriptor(row):
+    if type(row)is not dict or set(row)!={'path','bytes','sha256'}:raise ValueError('physical packet descriptor')
+    sha_value(row['sha256'])
+    path=Path(row['path'])
+    if type(row['bytes'])is not int or row['bytes']<=0 or not path.is_absolute():raise ValueError('physical packet bound')
+    raw=read(path)
+    if len(raw)!=row['bytes'] or sha256(raw).hexdigest()!=row['sha256']:raise ValueError('physical packet changed')
+    return raw
+
+def physical_lease_expected(lease,expected,review_sha):
+    candidate,rows,review=expected
+    lane=lease.get('lane');index=lease.get('assignment_index')
+    full=physical_inventory(lane)
+    if (set(lease)!={'kind','schema','run_id','gate','lane','candidate','inputs','review_sha256',
+                    'implementation_review','contract_sha256','assignment_index','assignment',
+                    'whole_inventory_sha256','runtime_sha256','input_packets'}
+        or lease['kind']!='G3C_PHYSICAL_PRIVATE_DEVELOPMENT' or lease['schema']!=SCOPE
+        or lease['gate']!='g3c-physical' or type(index)is not int or not 0<=index<len(full)
+        or lease['candidate']!=candidate or lease['inputs']!=rows or lease['review_sha256']!=review_sha
+        or canonical(lease['implementation_review'])!=review or lease['contract_sha256']!=PHYSICAL_PLAN_SHA
+        or lease['assignment']!=full[index]
+        or lease['whole_inventory_sha256']!=sha256(canonical(full)).hexdigest()
+        or lease['runtime_sha256']!=physical_support().runtime_identity()
+        or type(lease['input_packets'])is not dict):raise ValueError('physical assignment lease')
+    uuid.UUID(lease['run_id'])
+    for row in lease['input_packets'].values():validate_packet_descriptor(row)
+    return full
+
+def physical_authority_probe(lease):
+    probe=lease['assignment']['probe'];review=canonical(lease['implementation_review'])
+    original_review_sha=lease['review_sha256'];error=None
+    if (probe['category'],probe['member'])==('R09_RUNTIME','changed_implementation_review'):
+        changed=environment.strict(review);changed['subject_commit']='0'*40;raw=canonical(changed)
+        try:verify_review(raw,original_review_sha,lease['candidate'],lease['inputs'],'g3c-physical')
+        except ValueError as exc:error=str(exc)
+        if error!='review hash':raise ValueError('changed review mutation not rejected exactly')
+        before=sha256(review).hexdigest();after=sha256(raw).hexdigest()
+    elif probe['category']=='R10_NORMAL_SOURCE' and probe['member'] in ('mocked_normal_authority_read','mocked_source_hash'):
+        rows=json.loads(json.dumps(lease['inputs']))
+        target=('docs/reference_cases/ge_beam3_g3c_fixtures_v1.json' if probe['member']=='mocked_normal_authority_read'
+                else 'src/anysolver/_ge_beam3_g3c_definition.py')
+        before=rows[target]['sha256'];rows[target]['sha256']='0'*64 if before!='0'*64 else '1'*64
+        try:verify_review(review,original_review_sha,lease['candidate'],rows,'g3c-physical')
+        except ValueError as exc:error=str(exc)
+        if error!='physical implementation review authority':raise ValueError('source mutation not rejected exactly')
+        after=rows[target]['sha256']
+    else:raise ValueError('unregistered authority mutation')
+    return [dict(kind='authority-mutation',assignment=probe,
+                 origin_sha256=lease['input_packets']['origin']['sha256'],
+                 before_sha256=before,after_sha256=after,expected_error=error,passed=True)]
+
+def physical_worker(out,lease_sha):
+    if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):raise ValueError('isolated physical worker required')
+    raw=read(out/'lease.json')
+    if sha256(raw).hexdigest()!=lease_sha:raise ValueError('physical lease hash')
+    lease=environment.strict(raw)
+    expected=authority(out/'review.json',lease['review_sha256'],'g3c-physical')
+    physical_lease_expected(lease,expected,lease['review_sha256'])
+    claim_attempt(out,lease['run_id'])
+    if any(os.environ.get(key)!='1' for key in THREADS):raise ValueError('physical numerical thread environment')
+    print('BEAM CHECKPOINT physical authority complete',flush=True)
+    assignment=lease['assignment'];nodes=physical_assignment_nodes(assignment)
+    if assignment['kind']=='authority-mutation':
+        records=physical_authority_probe(lease);passed=[]
+    else:
+        sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(CAPSULE.parent/'site')]
+        from anysolver import _ge_beam3_g3c_physical_authority as runtime_authority
+        runtime_authority.capture(raw)
+        import pytest
+        class Context:
+            def __init__(self):self.collected=[];self.passed=[];self._RECORDS=[]
+            def pytest_collection_modifyitems(self,items):
+                self.collected=[i.nodeid for i in items]
+                if self.collected!=nodes:raise ValueError('physical collected inventory changed')
+                module=items[0].module
+                module.ASSIGNMENT=(assignment.get('assignment') if assignment['kind']=='owner' else
+                    assignment if assignment['kind'] in ('history','prefix') else
+                    assignment.get('probe') if assignment['kind']=='mutation' else None)
+                module.OUTPUT_DIRECTORY=str(out)
+                module.INPUT_PACKETS=lease['input_packets']
+                module.EXPECTED_RUNTIME_SHA256=lease['runtime_sha256']
+                self.module=module
+            def pytest_runtest_logreport(self,report):
+                if report.when=='call' and report.passed:self.passed.append(report.nodeid)
+            def pytest_sessionfinish(self,session,exitstatus):
+                self._RECORDS=list(getattr(self.module,'SCIENTIFIC_RECORDS',())) if hasattr(self,'module') else []
+        context=Context()
+        code=pytest.main(['-vv','-s','-p','no:cacheprovider','--basetemp',str(out/'pytest'),*nodes],plugins=[context])
+        if code or context.collected!=nodes or context.passed!=nodes or not context._RECORDS:return 1
+        records=context._RECORDS;passed=context.passed
+    if authority(out/'review.json',lease['review_sha256'],'g3c-physical')!=expected:raise ValueError('physical final authority changed')
+    science=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=lease['candidate'],lane=lease['lane'],
+        assignment_index=lease['assignment_index'],assignment=assignment,records=records,
+        full_g3c_qualified=False,production_qualified=False)
+    write(out/'scientific.node.json',science)
+    write(out/'completion.json',dict(assignment_index=lease['assignment_index'],assignment=assignment,
+        selected=nodes,passed=passed,scientific=fingerprint(read(out/'scientific.node.json'))))
+    print('BEAM CHECKPOINT physical evidence complete',flush=True)
+    return 0
+
+def physical_verify_node(out,lease):
+    raw=read(out/'scientific.node.json');science=environment.strict(raw)
+    completion=environment.strict(read(out/'completion.json'))
+    nodes=physical_assignment_nodes(lease['assignment'])
+    if (set(science)!={'schema','candidate','lane','assignment_index','assignment','records','full_g3c_qualified','production_qualified'}
+        or science['schema']!='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1'
+        or science['candidate']!=lease['candidate'] or science['lane']!=lease['lane']
+        or science['assignment_index']!=lease['assignment_index'] or science['assignment']!=lease['assignment']
+        or type(science['records'])is not list or not science['records']
+        or science['full_g3c_qualified'] or science['production_qualified']):raise ValueError('physical node science')
+    expected_completion=dict(assignment_index=lease['assignment_index'],assignment=lease['assignment'],
+        selected=nodes,passed=nodes,scientific=fingerprint(raw))
+    if completion!=expected_completion:raise ValueError('physical node completion')
+    assignment=lease['assignment']
+    if assignment['kind']=='history':
+        record=science['records'][0]
+        if (len(science['records'])!=1 or set(record)!={'kind','case_id','events','packets','passed'}
+            or record.get('kind')!='history' or record.get('case_id')!=assignment['case']['case_id']
+            or record.get('events')!=assignment['stages'] or record.get('passed')is not True
+            or type(record.get('packets'))is not list or len(record['packets'])!=assignment['stages']+1):
+            raise ValueError('physical history record')
+        for index,row in enumerate(record['packets']):
+            if (set(row)!={'name','bytes','sha256','prefix'} or row['name']!=f'prefix-{index:02d}.json'
+                or row['prefix']!=index or Path(row['name']).name!=row['name']):raise ValueError('physical prefix manifest')
+            actual=packet_descriptor(out/row['name'])
+            if {k:actual[k] for k in ('bytes','sha256')}!={k:row[k] for k in ('bytes','sha256')}:
+                raise ValueError('physical prefix bytes')
+    elif assignment['kind']=='prefix':
+        record=science['records'][0];packets=lease['input_packets']
+        if (len(science['records'])!=1
+            or set(record)!={'kind','case_id','prefix','input_sha256','final_sha256','passed'}
+            or record['kind']!='prefix' or record['case_id']!=assignment['case']['case_id']
+            or record['prefix']!=assignment['prefix']
+            or record['input_sha256']!=packets['prefix']['sha256']
+            or record['final_sha256']!=packets['final']['sha256'] or record['passed']is not True):
+            raise ValueError('physical prefix record')
+    elif assignment['kind']=='preflight':
+        record=science['records'][0]
+        if (len(science['records'])!=1
+            or set(record)!={'kind','input_sha256','rejections','passed'}
+            or record['kind']!='successor_schema_negatives'
+            or record['input_sha256']!=lease['input_packets']['origin']['sha256']
+            or record['rejections']!=4 or record['passed']is not True):
+            raise ValueError('physical preflight record')
+    elif assignment['kind']=='mutation':
+        record=science['records'][0];receipt=record.get('receipt');probe=assignment['probe']
+        if (len(science['records'])!=1
+            or set(record)!={'kind','assignment','input_sha256','receipt','passed'}
+            or record['kind']!='mutation' or record['assignment']!=probe
+            or record['input_sha256']!=lease['input_packets']['origin']['sha256']
+            or record['passed']is not True or type(receipt)is not dict
+            or set(receipt)!={'category','member','rejection','expected_error','before_sha256','after_sha256'}
+            or receipt['category']!=probe['category'] or receipt['member']!=probe['member']
+            or receipt['before_sha256']!=record['input_sha256']
+            or receipt['after_sha256']==receipt['before_sha256']
+            or type(receipt['rejection'])is not str or not receipt['rejection']
+            or type(receipt['expected_error'])is not str or not receipt['expected_error']):
+            raise ValueError('physical mutation record')
+        sha_value(receipt['after_sha256'])
+    elif assignment['kind']=='authority-mutation':
+        record=science['records'][0];probe=assignment['probe']
+        if (len(science['records'])!=1
+            or set(record)!={'kind','assignment','origin_sha256','before_sha256','after_sha256','expected_error','passed'}
+            or record['kind']!='authority-mutation' or record['assignment']!=probe
+            or record['origin_sha256']!=lease['input_packets']['origin']['sha256']
+            or record['before_sha256']==record['after_sha256']
+            or type(record['expected_error'])is not str or not record['expected_error']
+            or record['passed']is not True):
+            raise ValueError('physical authority-mutation record')
+        sha_value(record['before_sha256']);sha_value(record['after_sha256'])
+    elif assignment['kind'] in ('owner-static','owner'):
+        expected_names={node.rsplit('::',1)[-1] for node in nodes}
+        names=[];expected_assignment=assignment.get('assignment') if assignment['kind']=='owner' else None
+        for record in science['records']:
+            if (type(record)is not dict or record.get('production_qualified')is not False
+                or record.get('full_g3c_qualified')is not False
+                or record.get('assignment')!=expected_assignment or type(record.get('test'))is not str):
+                raise ValueError('physical owner record')
+            names.append('test_physical_'+record['test'])
+        aliases={'test_physical_inventory':'test_physical_inventory_and_obligation_map',
+                 'test_physical_inert_schema':'test_physical_inert_schema_guards',
+                 'test_physical_family_work':'test_physical_family_work',
+                 'test_physical_directional':'test_physical_directional',
+                 'test_physical_atomicity':'test_physical_atomicity',
+                 'test_physical_tokens':'test_physical_token_and_definition_guards',
+                 'test_physical_independent_joint_work_transport':'test_physical_independent_joint_work_transport',
+                 'test_physical_observation_cache':'test_physical_observation_and_cache_guards',
+                 'test_physical_recovery_witness':'test_physical_recovery_witness_guards'}
+        if {aliases.get(name,name) for name in names}!=expected_names or len(names)!=len(expected_names):
+            raise ValueError('physical owner record inventory')
+    else:raise ValueError('physical record assignment kind')
+    return science
+
+def physical_child(out,lease,review,watchdog,deadline):
+    out.mkdir()
+    with (out/'review.json').open('xb')as stream:stream.write(review)
+    write(out/'lease.json',lease);lease_hash=sha256(read(out/'lease.json')).hexdigest()
+    job=job_type()(MEMORY);process=None;record=dict(status='FAILED');watchdog.attach(job)
+    try:
+        env=dict(os.environ,**{key:'1' for key in THREADS})
+        env.update(PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',PYTEST_ADDOPTS='',PYTHONDONTWRITEBYTECODE='1')
+        with (out/'stdout.log').open('xb')as stdout,(out/'stderr.log').open('xb')as stderr:
+            start=time.monotonic()
+            process=job.launch([sys.executable,'-I','-S','-B','-u',str(Path(__file__).resolve()),
+                '--physical-worker',str(out),lease_hash],cwd=ROOT,env=env,stdout=stdout,stderr=stderr)
+            record=monitor(job,process,lambda:((out/'stdout.log').stat().st_size,(out/'stderr.log').stat().st_size),start=start)
+        if time.monotonic()>=deadline:record['status']='RESOURCE_BLOCKED'
+        if record['status']=='PASSED':physical_verify_node(out,lease)
+    except BaseException as exc:
+        record.update(status='FAILED_EVIDENCE',exception=type(exc).__name__)
+    finally:
+        if job.accounting()[1]:job.terminate()
+        record['active_processes']=job.accounting()[1]
+        if record['active_processes']:record['status']='FAILED_TO_DRAIN'
+        job.close();watchdog.detach(job)
+        record.update(kind='GE_BEAM3_G3C_PHYSICAL_CHILD_PROCESS_V1',assignment_index=lease['assignment_index'],
+            assignment_sha256=sha256(canonical(lease['assignment'])).hexdigest(),returncode=None if process is None else process.poll(),
+            files={p.name:fingerprint(p.read_bytes()) for p in out.iterdir() if p.is_file()})
+        write(out/'process.json',record)
+    return record
+
+def physical_history_packets(directory,assignment):
+    science=environment.strict(read(directory/'scientific.node.json'));record=science['records'][0]
+    return {row['prefix']:packet_descriptor(directory/row['name']) for row in record['packets']}
+
+def physical_inputs_for(assignment,history_outputs):
+    kind=assignment['kind']
+    if kind in ('owner-static','owner','history'):return {}
+    origin=(assignment['origin'] if kind=='preflight' else assignment['probe']['origin'] if kind in ('mutation','authority-mutation')
+            else dict(case_id=assignment['case']['case_id'],prefix=assignment['prefix']))
+    if origin['case_id'] not in history_outputs or origin['prefix'] not in history_outputs[origin['case_id']]:
+        raise ValueError('physical producer packet unavailable')
+    row=history_outputs[origin['case_id']][origin['prefix']]
+    if kind=='prefix':
+        final=history_outputs[origin['case_id']][assignment['case']['accepted_stages']]
+        return dict(prefix=row,final=final)
+    return dict(origin=row)
+
+def physical_run_phase(root,indexes,base,review,watchdog,deadline,history_outputs,results):
+    remaining=iter(indexes);active={};failed=False
+    with ThreadPoolExecutor(max_workers=3)as pool:
+        def launch():
+            nonlocal failed
+            index=next(remaining,None)
+            if index is None:return False
+            try:packets=physical_inputs_for(base['inventory'][index],history_outputs)
+            except BaseException as exc:
+                failed=True
+                results[index]=dict(status='FAILED_DEPENDENCY',exception=type(exc).__name__,active_processes=0)
+                return False
+            lease=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',schema=SCOPE,run_id=str(uuid.uuid4()),
+                gate='g3c-physical',lane=base['lane'],candidate=base['candidate'],inputs=base['inputs'],
+                review_sha256=base['review_sha256'],implementation_review=base['implementation_review'],
+                contract_sha256=PHYSICAL_PLAN_SHA,assignment_index=index,assignment=base['inventory'][index],
+                whole_inventory_sha256=sha256(canonical(base['inventory'])).hexdigest(),
+                runtime_sha256=base['runtime_sha256'],input_packets=packets)
+            active[pool.submit(physical_child,root/f'node-{index:04d}',lease,review,watchdog,deadline)]=(index,lease)
+            return True
+        for _ in range(min(3,len(indexes))):launch()
+        while active:
+            done,_=wait(active,timeout=.25,return_when=FIRST_COMPLETED)
+            if time.monotonic()>=deadline:failed=True
+            for future in done:
+                index,lease=active.pop(future)
+                try:record=future.result()
+                except BaseException as exc:record=dict(status='FAILED',exception=type(exc).__name__)
+                results[index]=record
+                if record.get('status')!='PASSED':failed=True
+                else:
+                    assignment=base['inventory'][index]
+                    if assignment['kind']=='history':
+                        history_outputs[assignment['case']['case_id']]=physical_history_packets(root/f'node-{index:04d}',assignment)
+                print('BEAM PHYSICAL NODE',index,record.get('status'),flush=True)
+            if not failed:
+                while len(active)<3 and launch():pass
+        for index in remaining:results[index]=dict(status='NOT_LAUNCHED')
+    return not failed
+
+def verify_physical_priors(paths,candidate,lane):
+    required={'local':(), 'smoke':('local',), 'rehearsal':('local','smoke'), 'formal':('local','smoke','rehearsal')}[lane]
+    if len(paths)!=len(required):raise ValueError('exact physical prerequisite count')
+    for path,expected_lane in zip(paths,required):
+        raw=read(Path(path));value=environment.strict(raw)
+        body={k:v for k,v in value.items()if k!='self_sha256'}
+        inventory_rows=physical_inventory(expected_lane);records=value.get('records')
+        if (set(value)!={'schema','candidate','lane','inventory_sha256','records','passed','terminal',
+                        'full_g3c_qualified','production_qualified','self_sha256'}
+            or sha256(canonical(body)).hexdigest()!=value.get('self_sha256','') or value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1'
+            or value.get('candidate')!=candidate or value.get('lane')!=expected_lane or value.get('passed')is not True
+            or value.get('inventory_sha256')!=sha256(canonical(inventory_rows)).hexdigest()
+            or value.get('terminal')!='COMPLETE_GE_BEAM3_G3C_PHYSICAL_'+expected_lane.upper()+'_ONLY'
+            or type(records)is not list or len(records)!=len(inventory_rows)
+            or value.get('full_g3c_qualified') or value.get('production_qualified')):
+            raise ValueError('physical prerequisite aggregate')
+        for index,row in enumerate(records):
+            science=row.get('science') if type(row)is dict else None
+            if (set(row)!={'assignment_index','science_sha256','science'} or row['assignment_index']!=index
+                or type(science)is not dict or row['science_sha256']!=sha256(canonical(science)).hexdigest()
+                or science.get('schema')!='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1'
+                or science.get('candidate')!=candidate or science.get('lane')!=expected_lane
+                or science.get('assignment_index')!=index or science.get('assignment')!=inventory_rows[index]
+                or science.get('full_g3c_qualified') or science.get('production_qualified')):
+                raise ValueError('physical prerequisite record')
+
+def execute_physical(args,watchdog):
+    started=time.monotonic();expected=authority(args.review,args.review_sha256,'g3c-physical')
+    if args.lane=='formal':raise ValueError('formal physical partition/authorization addendum not frozen')
+    verify_physical_priors(args.prior or [],expected[0],args.lane)
+    inventory_rows=physical_inventory(args.lane);runtime=physical_support().runtime_identity()
+    root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-'));print('DIAGNOSTICS '+str(root),flush=True)
+    base=dict(lane=args.lane,candidate=expected[0],inputs=expected[1],review_sha256=args.review_sha256,
+        implementation_review=environment.strict(expected[2]),runtime_sha256=runtime,inventory=inventory_rows)
+    history=[i for i,a in enumerate(inventory_rows)if a['kind'] in ('owner-static','owner','history')]
+    dependent=[i for i,a in enumerate(inventory_rows)if a['kind'] not in ('owner-static','owner','history')]
+    deadline=started+1800;outputs={};results={};passed=physical_run_phase(root,history,base,expected[2],watchdog,deadline,outputs,results)
+    if passed and dependent:passed=physical_run_phase(root,dependent,base,expected[2],watchdog,deadline,outputs,results)
+    if time.monotonic()>=deadline:passed=False
+    if authority(args.review,args.review_sha256,'g3c-physical')!=expected:passed=False
+    process=dict(schema='GE_BEAM3_G3C_PHYSICAL_WAVE_PROCESS_V1',lane=args.lane,passed=passed,
+        required_nodes=len(inventory_rows),terminal_nodes=len(results),elapsed_seconds=time.monotonic()-started,
+        active_processes=sum(1 for r in results.values()if r.get('active_processes',0)),results={str(k):results[k] for k in sorted(results)})
+    write(root/'process.json',process)
+    if not passed:
+        print(canonical(process).decode(),flush=True);return 1
+    records=[]
+    for index in range(len(inventory_rows)):
+        raw=read(root/f'node-{index:04d}'/'scientific.node.json')
+        records.append(dict(assignment_index=index,science_sha256=sha256(raw).hexdigest(),science=environment.strict(raw)))
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1',candidate=expected[0],lane=args.lane,
+        inventory_sha256=sha256(canonical(inventory_rows)).hexdigest(),records=records,passed=True,
+        terminal=('COMPLETE_GE_BEAM3_G3C_PHYSICAL_'+args.lane.upper()+'_ONLY'),
+        full_g3c_qualified=False,production_qualified=False)
+    value['self_sha256']=sha256(canonical(value)).hexdigest()
+    write(root/'scientific.json',value)
+    print(canonical(process).decode(),flush=True)
     return 0
 
 
@@ -454,7 +911,10 @@ class WaveWatchdog:
 
 def execute(args):
     watchdog=WaveWatchdog()
-    try:return (execute_numerical(args,watchdog) if args.gate=='q4-affine-numerical' else execute_guarded(args,watchdog))
+    try:
+        if args.gate=='q4-affine-numerical':return execute_numerical(args,watchdog)
+        if args.gate=='g3c-physical':return execute_physical(args,watchdog)
+        return execute_guarded(args,watchdog)
     finally:watchdog.close()
 
 
@@ -1113,6 +1573,7 @@ def execute_guarded(args,watchdog):
 def main():
     if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):raise ValueError('use -I -S -B')
     if len(sys.argv)==4 and sys.argv[1]=='--worker':return worker(Path(sys.argv[2]),sys.argv[3])
+    if len(sys.argv)==4 and sys.argv[1]=='--physical-worker':return physical_worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==5 and sys.argv[1]=='--numerical-node':return numerical_worker(Path(sys.argv[2]),int(sys.argv[3]),sys.argv[4])
     if len(sys.argv)==6 and sys.argv[1]=='--q4-checker':
         return q4_checker(Path(sys.argv[2]),sys.argv[3],sys.argv[4],sys.argv[5])
@@ -1121,9 +1582,10 @@ def main():
     if os.name!='nt':raise ValueError('Windows process-tree execution required')
     parser=argparse.ArgumentParser()
     parser.add_argument('--gate',choices=list(TESTS),required=True)
-    parser.add_argument('--lane',choices=['smoke','core'],required=True)
+    parser.add_argument('--lane',choices=['smoke','core','local','rehearsal','formal'],required=True)
     parser.add_argument('--review',type=Path,required=True)
     parser.add_argument('--review-sha256',required=True)
+    parser.add_argument('--prior',type=Path,action='append')
     return execute(parser.parse_args())
 
 if __name__=='__main__':raise SystemExit(main())

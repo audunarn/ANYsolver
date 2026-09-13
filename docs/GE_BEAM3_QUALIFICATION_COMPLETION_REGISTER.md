@@ -858,3 +858,52 @@ adapters. Coupled SPD matrices alone are not proof of Hill-recovery parity;
 initial rotations/resultants used as solve seeds are not physical initial-strain
 or prestress APIs. Freeze these distinctions in the G4 fixture inventory rather
 than inferring unsupported status. No G4 tests were run for this preparation.
+
+## Physical mixed-owner successor design frozen at d6f3b041
+
+The successor integration contract is frozen at commit
+d6f3b041b7b6f3ef8c2ccfa42711137799192cac, tree
+4658e1e7362aedc0c6b19f86175a61dd4acdab7a. Its sole contract file is20613
+bytes and has normalized SHA-256
+f6638863e6e222c795e980194c9a71cf42eb83bdcba6af2a8c409164ad4d957b.
+Independent design review at successor commit487e5bf has empty findings; its
+canonical review is993 bytes, SHA-256
+47829c5c1c896ed2eb28131ffedadd25cc83bc5bed79bc2517cfe308f7dc8988.
+The review authorizes only the exact additive implementation extent. It does
+not authorize mechanics execution, full G3c acceptance, production use or a
+public/default change.
+
+The frozen successor inventory retains five graph families, five ordered graph
+variants, three force scales and five common-motion programs:375 histories,
+3075 accepted-stage events and3450 authentic restart-prefix probes per formal
+cycle. The predecessor142 negative probes remain a separately counted inherited
+inventory; successor identity/recovery/cache additions must be explicitly
+frozen before execution. Smoke remains five BASE/NONE/.01 family cases, and the
+complete BASE rehearsal remains ten histories,70 events and80 prefixes. No
+numerical mechanics has run under the new identities yet.
+
+The additive implementation now has one exact-class physical owner, one fixed
+authority wrapper, one composition-only history wrapper and one inert preflight.
+The owner routes B2 through the accepted PhysicalB2Adapter and Q4 through the
+accepted AffineQ4PhysicalRecovery while retaining native, B3, S3 and joint
+mechanics unchanged. Q4 source equilibrium includes its numerical channels,
+but its physical recovery/work witness excludes them. B2/B3 material-candidate
+digests are canonical null. Every accepted publication revalidates the captured
+nonce, original acquired lock, dispatch, Q4 cache and origin after fallible
+observations; failure cannot publish a generation.
+
+The shared runner now freezes26 local work units (two inert inventory/schema
+nodes and25 complete graph/variant owner assignments), five smoke histories,
+234 rehearsal units (ten histories,80 fresh prefix replays, two successor-schema
+preflights and all142 inherited mutation probes) and3825 formal units (375
+histories plus3450 prefix replays). Six source/review mutations remain in an
+inert runner authority lane and136 operate on separately hash-bound packet
+bytes. Formal dispatch is deliberately disabled until measured rehearsal data,
+the exact partition addendum and its independent review exist.
+
+Before the implementation freeze,27 shared-runner guard tests passed in1.20
+seconds and the two standard-library-only successor inventory/schema tests
+passed in0.26 seconds. AST compilation and git diff checks passed. These are
+nonmechanical checks only: no owner trial, graph solve, restart replay or
+scientific mechanics node has executed. A clean implementation freeze and
+independent review remain mandatory before the local or smoke lanes.

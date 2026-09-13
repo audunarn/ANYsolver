@@ -141,6 +141,119 @@ class GuardTests(unittest.TestCase):
                          [r.NUMERICAL_TESTS[0],r.NUMERICAL_SMOKE])
         with self.assertRaises(ValueError):r.inventory('all')
 
+    def test_physical_registered_inventories_are_exact_and_inert(self):
+        inventories={lane:r.inventory(lane,'g3c-physical') for lane in ('local','smoke','rehearsal','formal')}
+        self.assertEqual({lane:len(rows) for lane,rows in inventories.items()},
+                         {'local':26,'smoke':5,'rehearsal':234,'formal':3825})
+        self.assertEqual(sum(row['kind']=='history' for row in inventories['formal']),375)
+        self.assertEqual(sum(row['kind']=='prefix' for row in inventories['formal']),3450)
+        self.assertEqual(sum(row['kind']=='authority-mutation' for row in inventories['rehearsal']),6)
+        self.assertEqual(sum(row['kind']=='mutation' for row in inventories['rehearsal']),136)
+        self.assertEqual([row['case']['case_id'] for row in inventories['smoke']],
+                         [graph+'::BASE::S0::NONE' for graph in r.physical_support().GRAPHS])
+        self.assertNotIn('numpy',sys.modules);self.assertNotIn('anysolver',sys.modules)
+
+    def test_physical_review_schema_and_mutations(self):
+        candidate=dict(commit='a'*40,tree='b'*40)
+        rows={'docs/reference_cases/ge_beam3_g3c_fixtures_v1.json':dict(bytes=1,sha256='c'*64),
+              'src/anysolver/_ge_beam3_g3c_definition.py':dict(bytes=1,sha256='d'*64)}
+        scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
+            inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
+            execution_authorized=True,full_g3c_qualified=False,production_qualified=False)
+        review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
+            reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
+        raw=r.canonical(review);digest=sha256(raw).hexdigest()
+        r.verify_review(raw,digest,candidate,rows,'g3c-physical')
+        base=dict(candidate=candidate,inputs=rows,implementation_review=review,review_sha256=digest,
+                  input_packets={'origin':dict(path='X',bytes=1,sha256='f'*64)})
+        probes=[row for row in r.physical_support().mutation_inventory() if row['executor']=='authority']
+        for row in probes:
+            records=r.physical_authority_probe(dict(base,assignment=dict(kind='authority-mutation',
+                probe={k:v for k,v in row.items() if k!='executor'})))
+            self.assertEqual(len(records),1);self.assertTrue(records[0]['passed'])
+        for field,value in (('findings',['x']),('subject_commit','e'*40),('scope',{})):
+            bad=dict(review,**{field:value});encoded=r.canonical(bad)
+            with self.assertRaises(ValueError):r.verify_review(encoded,sha256(encoded).hexdigest(),candidate,rows,'g3c-physical')
+
+    def test_physical_lease_and_prerequisite_bindings(self):
+        candidate=dict(commit='a'*40,tree='b'*40);rows={'x':dict(bytes=1,sha256='c'*64)}
+        scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
+            inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
+            execution_authorized=True,full_g3c_qualified=False,production_qualified=False)
+        review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
+            reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
+        review_raw=r.canonical(review);inventory=r.physical_inventory('local')
+        lease=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',schema=r.SCOPE,run_id=str(uuid.uuid4()),
+            gate='g3c-physical',lane='local',candidate=candidate,inputs=rows,
+            review_sha256=sha256(review_raw).hexdigest(),implementation_review=review,
+            contract_sha256=r.PHYSICAL_PLAN_SHA,assignment_index=0,assignment=inventory[0],
+            whole_inventory_sha256=sha256(r.canonical(inventory)).hexdigest(),
+            runtime_sha256=r.physical_support().runtime_identity(),input_packets={})
+        expected=(candidate,rows,review_raw);r.physical_lease_expected(lease,expected,lease['review_sha256'])
+        for key,value in (('assignment_index',1),('assignment',inventory[1]),('runtime_sha256','0'*64),
+                          ('whole_inventory_sha256','1'*64),('input_packets',{'x':{}})):
+            bad=copy.deepcopy(lease);bad[key]=value
+            with self.assertRaises((ValueError,OSError)):r.physical_lease_expected(bad,expected,lease['review_sha256'])
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'local.json'
+            prior_inventory=r.physical_inventory('local');prior_records=[]
+            for index,assignment in enumerate(prior_inventory):
+                science=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=candidate,lane='local',
+                    assignment_index=index,assignment=assignment,records=[{}],
+                    full_g3c_qualified=False,production_qualified=False)
+                prior_records.append(dict(assignment_index=index,
+                    science_sha256=sha256(r.canonical(science)).hexdigest(),science=science))
+            body=dict(schema='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1',candidate=candidate,lane='local',
+                      inventory_sha256=sha256(r.canonical(prior_inventory)).hexdigest(),records=prior_records,
+                      passed=True,terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_LOCAL_ONLY',
+                      full_g3c_qualified=False,production_qualified=False)
+            value=dict(body,self_sha256=sha256(r.canonical(body)).hexdigest());r.write(path,value)
+            r.verify_physical_priors([path],candidate,'smoke')
+            bad=dict(value,self_sha256='0'*64);path.unlink();r.write(path,bad)
+            with self.assertRaises(ValueError):r.verify_physical_priors([path],candidate,'smoke')
+            bad=dict(value,inventory_sha256='0'*64);bad['self_sha256']=sha256(r.canonical(
+                {k:v for k,v in bad.items() if k!='self_sha256'})).hexdigest()
+            path.unlink();r.write(path,bad)
+            with self.assertRaises(ValueError):r.verify_physical_priors([path],candidate,'smoke')
+
+    def test_physical_packet_dependency_map(self):
+        rehearsal=r.physical_inventory('rehearsal');histories={}
+        for row in rehearsal:
+            if row['kind']=='history':
+                histories[row['case']['case_id']]={i:dict(path='X',bytes=1,sha256=str(i%10)*64)
+                                                   for i in range(row['stages']+1)}
+        prefix=next(row for row in rehearsal if row['kind']=='prefix')
+        packets=r.physical_inputs_for(prefix,histories)
+        self.assertEqual(set(packets),{'prefix','final'})
+        preflight=next(row for row in rehearsal if row['kind']=='preflight')
+        self.assertEqual(set(r.physical_inputs_for(preflight,histories)),{'origin'})
+        missing=copy.deepcopy(histories);missing.pop(prefix['case']['case_id'])
+        with self.assertRaises(ValueError):r.physical_inputs_for(prefix,missing)
+
+    def test_physical_node_record_schema_rejects_extra_fields(self):
+        assignment=next(row for row in r.physical_inventory('rehearsal')
+                        if row['kind']=='authority-mutation')
+        lease=dict(candidate=dict(commit='a'*40,tree='b'*40),lane='rehearsal',assignment_index=0,
+                   assignment=assignment,input_packets={'origin':dict(path='X',bytes=1,sha256='c'*64)})
+        record=dict(kind='authority-mutation',assignment=assignment['probe'],origin_sha256='c'*64,
+                    before_sha256='d'*64,after_sha256='e'*64,expected_error='review hash',passed=True)
+        science=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=lease['candidate'],
+                     lane='rehearsal',assignment_index=0,assignment=assignment,records=[record],
+                     full_g3c_qualified=False,production_qualified=False)
+        with tempfile.TemporaryDirectory() as directory:
+            out=Path(directory);r.write(out/'scientific.node.json',science)
+            raw=(out/'scientific.node.json').read_bytes()
+            r.write(out/'completion.json',dict(assignment_index=0,assignment=assignment,
+                selected=[],passed=[],scientific=r.fingerprint(raw)))
+            r.physical_verify_node(out,lease)
+            science['records'][0]['unregistered']=False;(out/'scientific.node.json').unlink()
+            r.write(out/'scientific.node.json',science)
+            raw=(out/'scientific.node.json').read_bytes()
+            (out/'completion.json').unlink()
+            r.write(out/'completion.json',dict(assignment_index=0,assignment=assignment,
+                selected=[],passed=[],scientific=r.fingerprint(raw)))
+            with self.assertRaises(ValueError):r.physical_verify_node(out,lease)
+
     def test_strict_json(self):
         for raw in (b'{"x":1,"x":2}\n',b'{"x":NaN}\n',b'{"x":Infinity}\n'):
             with self.assertRaises(ValueError):r.environment.strict(raw)
