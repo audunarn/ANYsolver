@@ -1073,3 +1073,23 @@ membership, explicit mode selection, dependency ordering, original-index and
 type-confusion mutations, exclusive publication and the finalizer's lack of a
 mechanics execution route. No mechanics may run until this implementation is
 committed cleanly and independently accepted for bounded development.
+
+Implementation freeze `c9dc5210c2e7db79892de69553d1c84439112571`, tree
+`9dca2375ad1dde556e90d13c6b71b436c3268359`, was rejected before execution.
+Its complete input DAG SHA-256 is
+`805553beb5a3559f30dfdd5a9d0d9aa6c8f91c788380b2c636d98fedaa5ff462`.
+The independent review found two evidence-only defects: node packet descriptors
+were validated individually but not joined to the exact accepted `R-HISTORY`
+lineage selected by the chain, and accepted node/partition/union directories
+did not reject rehashed unregistered files. All 36 inert guards passed, and no
+mechanics ran under this freeze.
+
+The successor joins every dependent lease's origin/prefix/final descriptors to
+the selected history partition by exact path, byte count and SHA-256; it also
+requires each later receipt to reproduce the complete predecessor descriptor
+prefix exactly. Closed-world validators now require the exact root and node
+file/directory sets, reject reparse and special entries, and retain only the
+registered diagnostic logs. Rehashed-foreign-packet, divergent-chain,
+extra-root and extra-node mutations are covered. Thirty-eight isolated inert
+guards pass. A new clean freeze and independent review are required before any
+smoke or local mechanics rerun.

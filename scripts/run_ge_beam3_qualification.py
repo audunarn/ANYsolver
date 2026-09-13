@@ -619,6 +619,37 @@ def validate_packet_descriptor(row):
     if len(raw)!=row['bytes'] or sha256(raw).hexdigest()!=row['sha256']:raise ValueError('physical packet changed')
     return raw
 
+def physical_closed_world(directory,expected_files,expected_directories=()):
+    directory=Path(directory);expected_files=set(expected_files);expected_directories=set(expected_directories)
+    actual_files=set();actual_directories=set()
+    for path in directory.iterdir():
+        if path.is_symlink() or (hasattr(path,'is_junction') and path.is_junction()):
+            raise ValueError('physical evidence reparse entry')
+        if path.is_file():
+            environment.regular(path);actual_files.add(path.name)
+        elif path.is_dir():actual_directories.add(path.name)
+        else:raise ValueError('physical evidence special entry')
+    if actual_files!=expected_files or actual_directories!=expected_directories:
+        raise ValueError('physical evidence closed world')
+
+def physical_expected_node_files(assignment):
+    names={'lease.json','review.json','worker-attempt.json','stdout.log','stderr.log',
+           'scientific.node.json','completion.json','process.json'}
+    if assignment['kind']=='history':
+        names.update('prefix-%02d.json'%index for index in range(assignment['stages']+1))
+    return names
+
+def physical_join_input_packets(lease,history_outputs):
+    expected=physical_inputs_for(lease['assignment'],history_outputs)
+    if not exact_json(lease['input_packets'],expected):
+        raise ValueError('physical packet lineage join')
+
+def physical_join_prerequisite_chain(current,predecessor):
+    if type(current)is not list or type(predecessor)is not list or len(predecessor)>len(current):
+        raise ValueError('physical prerequisite lineage schema')
+    if not exact_json(current[:len(predecessor)],predecessor):
+        raise ValueError('physical prerequisite lineage join')
+
 def physical_lease_expected(lease,expected,review_sha):
     candidate,rows,review=expected
     lane=lease.get('lane');index=lease.get('assignment_index')
@@ -887,6 +918,7 @@ def atomic_canonical(path,value,watchdog):
     watchdog.check();os.link(pending,path);pending.unlink()
 
 def physical_verify_process(out,lease):
+    physical_closed_world(out,physical_expected_node_files(lease['assignment']))
     value=environment.strict(read(out/'process.json'))
     expected_keys={'status','active_processes','peak_tree_bytes','drained','elapsed_seconds','kind',
                    'assignment_index','assignment_sha256','returncode','files'}
@@ -900,7 +932,7 @@ def physical_verify_process(out,lease):
         or value['assignment_sha256']!=sha256(canonical(lease['assignment'])).hexdigest()
         or type(value['returncode'])is not int or value['returncode']!=0 or type(value['files'])is not dict):
         raise ValueError('physical accepted process record')
-    actual={p.name:fingerprint(read(p)) for p in out.iterdir() if p.is_file() and p.name!='process.json'}
+    actual={name:fingerprint(read(out/name)) for name in sorted(physical_expected_node_files(lease['assignment'])-{'process.json'})}
     if not exact_json(value['files'],actual):raise ValueError('physical process file DAG')
     return value
 
@@ -1055,6 +1087,8 @@ def verify_physical_priors(paths,expected,lane):
             or type(receipt['nodes'])is not list or len(receipt['nodes'])!=len(inventory_rows)
             or sha256(canonical(receipt_body)).hexdigest()!=receipt['self_sha256']):
             raise ValueError('physical prerequisite receipt')
+        physical_closed_world(path.parent,{'process.json','receipt.json',path.name},
+            {'node-%04d'%index for index in range(len(inventory_rows))})
         wave_raw=read(path.parent/'process.json')
         if not exact_fingerprint(receipt['wave_process'],wave_raw):raise ValueError('physical prerequisite wave process')
         wave=environment.strict(wave_raw)
@@ -1088,6 +1122,7 @@ def verify_physical_priors(paths,expected,lane):
 
 def physical_evidence_descriptor(path,kind,identity):
     path=Path(path).resolve();science=read(path)
+    if path.name!='scientific.json':raise ValueError('physical canonical evidence filename')
     return dict(kind=kind,identity=identity,path=str(path),science=fingerprint(science),
         receipt=fingerprint(read(path.parent/'receipt.json')),
         process=fingerprint(read(path.parent/'process.json')))
@@ -1098,7 +1133,7 @@ def physical_verify_evidence_descriptor(value):
         or type(value['path'])is not str):
         raise ValueError('physical evidence descriptor schema')
     path=Path(value['path'])
-    if not path.is_absolute() or str(path.resolve())!=value['path']:
+    if not path.is_absolute() or str(path.resolve())!=value['path'] or path.name!='scientific.json':
         raise ValueError('physical evidence descriptor path')
     for key,name in (('science',path.name),('receipt','receipt.json'),('process','process.json')):
         target=path if key=='science' else path.parent/name
@@ -1191,7 +1226,12 @@ def physical_validate_partition(path,expected,partition_id,stack=()):
         prerequisite_paths.append(physical_verify_evidence_descriptor(descriptor))
     verify_physical_priors(prerequisite_paths[:2],expected,'rehearsal')
     for prior_id,prior_path in zip(PHYSICAL_PARTITION_IDS[:ordinal],prerequisite_paths[2:]):
-        physical_validate_partition(prior_path,expected,prior_id,stack+(partition_id,))
+        _,prior_receipt=physical_validate_partition(prior_path,expected,prior_id,stack+(partition_id,))
+        physical_join_prerequisite_chain(receipt['prerequisites'],prior_receipt['prerequisites'])
+    history_outputs=(physical_history_outputs_from_partition(path) if partition_id=='R-HISTORY'
+                     else physical_history_outputs_from_partition(prerequisite_paths[2]))
+    physical_closed_world(path.parent,{'process.json','receipt.json','scientific.json'},
+        {'node-%04d'%index for index in indices})
     wave_raw=read(path.parent/'process.json')
     if not exact_fingerprint(receipt['wave_process'],wave_raw):raise ValueError('physical partition process hash')
     wave=environment.strict(wave_raw)
@@ -1218,6 +1258,7 @@ def physical_validate_partition(path,expected,partition_id,stack=()):
         lease=environment.strict(read(out/'lease.json'))
         if read(out/'review.json')!=review_raw:raise ValueError('physical partition review bytes')
         physical_lease_expected(lease,expected,review_sha);physical_verify_node(out,lease);physical_verify_process(out,lease)
+        physical_join_input_packets(lease,history_outputs)
         if not exact_json(wave['results'][str(index)],environment.strict(read(out/'process.json'))):
             raise ValueError('physical partition process DAG')
         record=records[indices.index(index)]
@@ -1316,7 +1357,8 @@ def physical_validate_union(path,expected):
         or value.get('full_g3c_qualified')is not False or value.get('production_qualified')is not False
         or type(records)is not list or len(records)!=len(inventory_rows)):
         raise ValueError('physical union aggregate')
-    if [row.get('assignment_index') if type(row)is dict else None for row in records]!=list(range(len(inventory_rows))):
+    if not exact_json([row.get('assignment_index') if type(row)is dict else None for row in records],
+                      list(range(len(inventory_rows)))):
         raise ValueError('physical union ordering')
     receipt=environment.strict(read(path.parent/'receipt.json'));receipt_body={k:v for k,v in receipt.items()if k!='self_sha256'}
     expected_ids=['smoke','local']+list(PHYSICAL_PARTITION_IDS)
@@ -1337,8 +1379,13 @@ def physical_validate_union(path,expected):
     paths=[physical_verify_evidence_descriptor(row) for row in receipt['prerequisites']]
     verify_physical_priors(paths[:2],expected,'rehearsal')
     partition_records={}
-    for partition_id,prior in zip(PHYSICAL_PARTITION_IDS,paths[2:]):
-        partition_records[partition_id]=physical_validate_partition(prior,expected,partition_id)[0]['records']
+    for ordinal,(partition_id,prior) in enumerate(zip(PHYSICAL_PARTITION_IDS,paths[2:])):
+        partition_value,partition_receipt=physical_validate_partition(prior,expected,partition_id)
+        physical_join_prerequisite_chain(receipt['prerequisites'],partition_receipt['prerequisites'])
+        if not exact_json(receipt['prerequisites'][2+ordinal],
+                          physical_evidence_descriptor(prior,'partition',partition_id)):
+            raise ValueError('physical union partition lineage join')
+        partition_records[partition_id]=partition_value['records']
     expected_records=physical_union_records([dict(partition_id=partition_id,records=partition_records[partition_id])
                                              for partition_id in PHYSICAL_PARTITION_IDS])
     if not exact_json(records,expected_records):raise ValueError('physical union partition DAG')
@@ -1355,6 +1402,7 @@ def physical_validate_union(path,expected):
         or process.get('active_processes')!=0 or type(process.get('elapsed_seconds'))is not float
         or not math.isfinite(process['elapsed_seconds']) or process['elapsed_seconds']<0):
         raise ValueError('physical union process')
+    physical_closed_world(path.parent,{'process.json','receipt.json','scientific.json'})
     return value,receipt
 
 def execute_physical_union(args,watchdog,expected):

@@ -285,6 +285,20 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(set(r.physical_inputs_for(preflight,histories)),{'origin'})
         missing=copy.deepcopy(histories);missing.pop(prefix['case']['case_id'])
         with self.assertRaises(ValueError):r.physical_inputs_for(prefix,missing)
+        lease=dict(assignment=prefix,input_packets=packets);r.physical_join_input_packets(lease,histories)
+        with tempfile.TemporaryDirectory() as directory:
+            foreign=Path(directory)/'foreign.json';foreign.write_bytes(b'{"valid":"foreign"}\n')
+            bad=copy.deepcopy(lease);bad['input_packets']['prefix']=r.packet_descriptor(foreign)
+            with self.assertRaises(ValueError):r.physical_join_input_packets(bad,histories)
+
+    def test_physical_prerequisite_lineage_is_exact(self):
+        current=[dict(kind='base',identity=identity,path='X'+str(index),science={'bytes':1,'sha256':'a'*64},
+                      receipt={'bytes':1,'sha256':'b'*64},process={'bytes':1,'sha256':'c'*64})
+                 for index,identity in enumerate(('smoke','local','R-HISTORY','R-PREFIX-A'))]
+        r.physical_join_prerequisite_chain(current,current[:3])
+        mutated=copy.deepcopy(current[:3]);mutated[0]['path']='FOREIGN'
+        for predecessor in (current[1:3],mutated,current+[dict(current[0])]):
+            with self.assertRaises(ValueError):r.physical_join_prerequisite_chain(current,predecessor)
 
     def test_physical_node_record_schema_rejects_extra_fields(self):
         assignment=next(row for row in r.physical_inventory('rehearsal')
@@ -389,8 +403,11 @@ class GuardTests(unittest.TestCase):
         assignment=r.physical_inventory('smoke')[0]
         lease=dict(assignment_index=0,assignment=assignment)
         with tempfile.TemporaryDirectory() as directory:
-            out=Path(directory);r.write(out/'scientific.node.json',{'accepted':True})
-            files={'scientific.node.json':r.fingerprint((out/'scientific.node.json').read_bytes())}
+            out=Path(directory)
+            for name in r.physical_expected_node_files(assignment)-{'process.json'}:
+                r.write(out/name,{'name':name})
+            files={name:r.fingerprint((out/name).read_bytes())
+                   for name in sorted(r.physical_expected_node_files(assignment)-{'process.json'})}
             template=dict(status='PASSED',active_processes=0,peak_tree_bytes=0,drained=True,
                 elapsed_seconds=0.0,kind='GE_BEAM3_G3C_PHYSICAL_CHILD_PROCESS_V1',
                 assignment_index=0,assignment_sha256=sha256(r.canonical(assignment)).hexdigest(),
@@ -406,6 +423,17 @@ class GuardTests(unittest.TestCase):
                 with self.assertRaises(ValueError):r.physical_verify_process(out,lease)
             bad=copy.deepcopy(template);bad['files']['scientific.node.json']['bytes']=False;store(bad)
             with self.assertRaises(ValueError):r.physical_verify_process(out,lease)
+            store(template);r.write(out/'unregistered.json',{'accepted':False})
+            with self.assertRaises(ValueError):r.physical_verify_process(out,lease)
+
+    def test_physical_root_closed_world_rejects_extra_files_and_directories(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);r.write(root/'scientific.json',{'accepted':True})
+            r.physical_closed_world(root,{'scientific.json'})
+            r.write(root/'extra.json',{'accepted':False})
+            with self.assertRaises(ValueError):r.physical_closed_world(root,{'scientific.json'})
+            (root/'extra.json').unlink();(root/'extra').mkdir()
+            with self.assertRaises(ValueError):r.physical_closed_world(root,{'scientific.json'})
 
     def test_strict_json(self):
         for raw in (b'{"x":1,"x":2}\n',b'{"x":NaN}\n',b'{"x":Infinity}\n'):
