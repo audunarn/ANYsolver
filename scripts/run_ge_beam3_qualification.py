@@ -102,6 +102,9 @@ PHYSICAL_OWNER_TEST='tests/test_ge_beam3_g3c_physical_owner.py'
 PHYSICAL_HISTORY_TEST='tests/test_ge_beam3_g3c_physical_history_restart.py'
 PHYSICAL_CORRECTION_TEST='tests/test_ge_beam3_g3c_physical_correction_guards.py'
 PHYSICAL_FORMAL_TEST='tests/test_ge_beam3_g3c_physical_formal_case.py'
+PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_formal_shard_implementation_review_v1_initial.json'
+PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW_SHA='351aec568c44a02b0b78d57bb40568753f6657a6c8d51e959a651dfaf63f0d68'
+PHYSICAL_FORMAL_MEASUREMENT_CASE_ORDINALS=(0,224,374)
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
     'src/anysolver/_ge_beam3_g3c_physical_owner.py',
@@ -110,6 +113,7 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     'scripts/ge_beam3_g3c_physical_restart_preflight.py',
     PHYSICAL_OWNER_TEST,PHYSICAL_HISTORY_TEST,
     PHYSICAL_FORMAL_ADDENDUM,PHYSICAL_FORMAL_DESIGN_REVIEW,PHYSICAL_FORMAL_TEST,
+    PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW,
     'tests/test_ge_beam3_qualification_runner.py',
     'scripts/run_ge_beam3_qualification.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
@@ -418,6 +422,15 @@ def physical_formal_partition(shards,mode='measurement'):
     body=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_PARTITION_V1',mode=mode,shards=made)
     return dict(body=body,self_sha256=sha256(canonical(body)).hexdigest())
 
+def physical_formal_measurement_partition():
+    """Frozen nonclassifying timing sample: three cases and 1/2/3 prefixes."""
+    shards=[]
+    for case_ordinal in PHYSICAL_FORMAL_MEASUREMENT_CASE_ORDINALS:
+        shards.append(physical_formal_shard(case_ordinal,'history-producer'))
+        for start,stop in ((0,1),(1,3),(3,6)):
+            shards.append(physical_formal_shard(case_ordinal,'prefix-range',start,stop))
+    return physical_formal_partition(shards,'measurement')
+
 def physical_formal_common_manifest(candidate,inputs,implementation_review,runtime_sha,partition,cycle=0):
     if (type(candidate)is not dict or set(candidate)!={'commit','tree'}
         or any(type(candidate[k])is not str or len(candidate[k])!=40 for k in candidate)
@@ -468,9 +481,51 @@ def physical_formal_manifest_descriptor(path):
     physical_validate_formal_common(environment.strict(raw))
     return dict(path=str(path),bytes=len(raw),sha256=sha256(raw).hexdigest())
 
+def physical_formal_producer_receipt(out,lease,common):
+    assignment=lease['assignment'];case=assignment['case']
+    if assignment['kind']!='history-producer':raise ValueError('formal producer receipt kind')
+    packets={f'prefix-{prefix:02d}':packet_descriptor(out/f'prefix-{prefix:02d}.json')
+             for prefix in range(case['accepted_stages']+1)}
+    body=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_PRODUCER_RECEIPT_V1',mode=common['mode'],
+        cycle=common['cycle'],common_manifest_sha256=lease['common_manifest']['sha256'],
+        producer_shard_id=lease['shard_id'],case_ordinal=assignment['case_ordinal'],case_id=case['case_id'],
+        science=fingerprint(read(out/'scientific.shard.json')),completion=fingerprint(read(out/'completion.json')),
+        packets=packets,passed=True)
+    return dict(body=body,self_sha256=sha256(canonical(body)).hexdigest())
+
+def physical_validate_formal_producer_receipt(path,common):
+    path=Path(path).resolve();raw=read(path);value=environment.strict(raw)
+    if type(value)is not dict or set(value)!={'body','self_sha256'}:raise ValueError('formal producer receipt schema')
+    body=value['body']
+    if (type(body)is not dict or set(body)!={'schema','mode','cycle','common_manifest_sha256','producer_shard_id',
+        'case_ordinal','case_id','science','completion','packets','passed'}
+        or body['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_PRODUCER_RECEIPT_V1'
+        or body['mode']!=common['mode'] or body['cycle']!=common['cycle'] or body['passed']is not True
+        or value['self_sha256']!=sha256(canonical(body)).hexdigest()):raise ValueError('formal producer receipt content')
+    ordinal=body['case_ordinal']
+    if type(ordinal)is not int or type(ordinal)is bool or not 0<=ordinal<375:raise ValueError('formal producer receipt ordinal')
+    expected=physical_formal_shard(ordinal,'history-producer');case=expected['case']
+    if body['case_id']!=case['case_id']:raise ValueError('formal producer receipt case')
+    producer_dir=path.parent;producer_lease=environment.strict(read(producer_dir/'lease.json'))
+    if (producer_lease.get('shard_id')!=body['producer_shard_id']
+        or not exact_json(producer_lease.get('assignment'),expected)
+        or body['common_manifest_sha256']!=producer_lease.get('common_manifest',{}).get('sha256')):
+        raise ValueError('formal producer receipt lease')
+    physical_validate_formal_lease(producer_lease,common)
+    if (not exact_fingerprint(body['science'],read(producer_dir/'scientific.shard.json'))
+        or not exact_fingerprint(body['completion'],read(producer_dir/'completion.json'))):
+        raise ValueError('formal producer receipt science')
+    expected_packets={f'prefix-{prefix:02d}':packet_descriptor(producer_dir/f'prefix-{prefix:02d}.json')
+                      for prefix in range(case['accepted_stages']+1)}
+    if not exact_json(body['packets'],expected_packets):raise ValueError('formal producer receipt packets')
+    physical_validate_formal_process(producer_dir,producer_lease)
+    return body
+
 def physical_validate_formal_lease(lease,common):
-    if (type(lease)is not dict or set(lease)!={'kind','schema','run_id','mode','cycle','common_manifest',
-        'shard_id','assignment','input_packets'}
+    assignment=lease.get('assignment') if type(lease)is dict else None
+    extra={'producer_receipt'} if type(assignment)is dict and assignment.get('kind')=='prefix-range' else set()
+    if (type(lease)is not dict or set(lease)!=({'kind','schema','run_id','mode','cycle','common_manifest',
+        'shard_id','assignment','input_packets'}|extra)
         or lease['kind']!='G3C_PHYSICAL_PRIVATE_DEVELOPMENT'
         or lease['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_LEASE_V1'
         or lease['mode']!=common['mode'] or lease['cycle']!=common['cycle']):
@@ -487,13 +542,22 @@ def physical_validate_formal_lease(lease,common):
     else:expected={f'prefix-{i:02d}' for i in range(assignment['prefix_start'],assignment['prefix_stop'])}|{'final'}
     if type(packets)is not dict or set(packets)!=expected:raise ValueError('formal shard packet set')
     for row in packets.values():validate_packet_descriptor(row)
+    if assignment['kind']=='prefix-range':
+        descriptor=lease['producer_receipt'];receipt_raw=validate_packet_descriptor(descriptor)
+        receipt=physical_validate_formal_producer_receipt(descriptor['path'],common)
+        if fingerprint(receipt_raw)!={k:descriptor[k] for k in ('bytes','sha256')}:
+            raise ValueError('formal producer receipt descriptor')
+        expected_packets={f'prefix-{prefix:02d}':receipt['packets'][f'prefix-{prefix:02d}']
+            for prefix in range(assignment['prefix_start'],assignment['prefix_stop'])}
+        expected_packets['final']=receipt['packets'][f"prefix-{assignment['case']['accepted_stages']:02d}"]
+        if not exact_json(packets,expected_packets):raise ValueError('formal replay producer lineage')
     return assignment
 
 def physical_formal_expected_files(assignment,process=True):
     names={'lease.json','review.json','worker-attempt.json','stdout.log','stderr.log',
            'scientific.shard.json','completion.json'}
     if assignment['kind']=='history-producer':
-        names.add('accepted-diagnostic.json')
+        names.update(('accepted-diagnostic.json','producer.receipt.json'))
         names.update(f'prefix-{index:02d}.json' for index in range(assignment['case']['accepted_stages']+1))
     if process:names.add('process.json')
     return names
@@ -517,7 +581,9 @@ def physical_validate_formal_shard_science(out,lease,common):
         if type(record)is not dict or set(record)!={'kind','case_ordinal','history_assignment_index','history','transport','passed'}:
             raise ValueError('formal producer record schema')
         history_row=record['history'];transport=record['transport']
-        if (record['kind']!='history-producer' or record['case_ordinal']!=assignment['case_ordinal']
+        if (record['kind']!='history-producer'
+            or type(record['case_ordinal'])is not int or record['case_ordinal']!=assignment['case_ordinal']
+            or type(record['history_assignment_index'])is not int
             or record['history_assignment_index']!=assignment['history_assignment_index'] or record['passed']is not True
             or type(history_row)is not dict or set(history_row)!={'kind','case_id','events','directional_errors','packets','passed'}
             or history_row['kind']!='history' or history_row['case_id']!=case_id
@@ -529,7 +595,7 @@ def physical_validate_formal_shard_science(out,lease,common):
             raise ValueError('formal producer history')
         for prefix,row in enumerate(history_row['packets']):
             if (type(row)is not dict or set(row)!={'name','bytes','sha256','prefix'}
-                or row['name']!=f'prefix-{prefix:02d}.json' or row['prefix']!=prefix
+                or row['name']!=f'prefix-{prefix:02d}.json' or type(row['prefix'])is not int or row['prefix']!=prefix
                 or type(row['bytes'])is not int or row['bytes']<=0):raise ValueError('formal producer packet row')
             sha_value(row['sha256']);actual=packet_descriptor(out/row['name'])
             if actual['bytes']!=row['bytes'] or actual['sha256']!=row['sha256']:
@@ -548,8 +614,9 @@ def physical_validate_formal_shard_science(out,lease,common):
     else:
         if (type(record)is not dict or set(record)!={'kind','case_ordinal','prefix_start','prefix_stop',
             'assignment_indexes','records','fresh_owners','passed'} or record['kind']!='prefix-range'
-            or record['case_ordinal']!=assignment['case_ordinal']
-            or record['prefix_start']!=assignment['prefix_start'] or record['prefix_stop']!=assignment['prefix_stop']
+            or type(record['case_ordinal'])is not int or record['case_ordinal']!=assignment['case_ordinal']
+            or type(record['prefix_start'])is not int or record['prefix_start']!=assignment['prefix_start']
+            or type(record['prefix_stop'])is not int or record['prefix_stop']!=assignment['prefix_stop']
             or not exact_json(record['assignment_indexes'],assignment['assignment_indexes'])
             or type(record['fresh_owners'])is not int or record['fresh_owners']!=assignment['prefix_stop']-assignment['prefix_start']
             or type(record['records'])is not list or len(record['records'])!=record['fresh_owners']
@@ -560,7 +627,8 @@ def physical_validate_formal_shard_science(out,lease,common):
                 input_sha256=lease['input_packets'][f'prefix-{prefix:02d}']['sha256'],
                 final_sha256=lease['input_packets']['final']['sha256'],passed=True)
             if (type(row)is not dict or set(row)!={'assignment_index','record'}
-                or row['assignment_index']!=index or not exact_json(row['record'],expected_record)):
+                or type(row['assignment_index'])is not int or row['assignment_index']!=index
+                or not exact_json(row['record'],expected_record)):
                 raise ValueError('formal prefix record association')
     expected_completion=dict(shard_id=lease['shard_id'],assignment=assignment,
         scientific=fingerprint(raw),passed=True)
@@ -588,7 +656,8 @@ def physical_validate_formal_process(out,lease):
     if not exact_json(value['files'],actual):raise ValueError('formal process file DAG')
     return value
 
-def physical_formal_child(root,common_path,shard_id,review,packets,watchdog,deadline):
+def physical_formal_child(root,common_path,shard_id,review,packets,watchdog,deadline,producer_receipt=None):
+    if time.monotonic()>=deadline:raise ValueError('formal measurement wave deadline')
     common_raw=read(common_path);common_value=environment.strict(common_raw)
     common=physical_validate_formal_common(common_value)
     selected=[row for row in common['partition']['body']['shards'] if row['shard_id']==shard_id]
@@ -599,6 +668,10 @@ def physical_formal_child(root,common_path,shard_id,review,packets,watchdog,dead
         schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_LEASE_V1',run_id=str(uuid.uuid4()),
         mode=common['mode'],cycle=common['cycle'],common_manifest=physical_formal_manifest_descriptor(common_path),
         shard_id=shard_id,assignment=selected[0]['assignment'],input_packets=packets)
+    if lease['assignment']['kind']=='prefix-range':
+        if producer_receipt is None:raise ValueError('formal replay producer receipt required')
+        lease['producer_receipt']=producer_receipt
+    elif producer_receipt is not None:raise ValueError('formal producer cannot inherit receipt')
     physical_validate_formal_lease(lease,common);write(out/'lease.json',lease)
     lease_sha=sha256(read(out/'lease.json')).hexdigest();job=job_type()(MEMORY);process=None
     record=dict(status='FAILED');watchdog.attach(job)
@@ -613,6 +686,8 @@ def physical_formal_child(root,common_path,shard_id,review,packets,watchdog,dead
         if time.monotonic()>=deadline:record['status']='RESOURCE_BLOCKED'
         if record['status']=='PASSED':
             physical_validate_formal_shard_science(out,lease,common)
+            if lease['assignment']['kind']=='history-producer':
+                write(out/'producer.receipt.json',physical_formal_producer_receipt(out,lease,common))
     except BaseException as exc:
         record.update(status='FAILED_EVIDENCE',exception=type(exc).__name__)
     finally:
@@ -628,6 +703,99 @@ def physical_formal_child(root,common_path,shard_id,review,packets,watchdog,dead
     if record.get('status')=='PASSED':physical_validate_formal_process(out,lease)
     return record,out
 
+def physical_formal_measurement_batch(root,common_path,specs,review,packet_bindings,watchdog,deadline):
+    """Run one bounded group; all launched children reach a terminal state."""
+    if type(specs)is not list or not 1<=len(specs)<=3:raise ValueError('formal measurement batch size')
+    if time.monotonic()>=deadline:raise ValueError('formal measurement wave deadline')
+    results={}
+    with ThreadPoolExecutor(max_workers=len(specs))as pool:
+        futures={pool.submit(physical_formal_child,root,common_path,spec['shard_id'],review,
+            packet_bindings[spec['shard_id']]['packets'],watchdog,deadline,
+            packet_bindings[spec['shard_id']].get('producer_receipt')):spec for spec in specs}
+        for future,spec in futures.items():
+            try:record,out=future.result();results[spec['shard_id']]=(record,out)
+            except BaseException as exc:
+                results[spec['shard_id']]=(dict(status='FAILED_EVIDENCE',exception=type(exc).__name__),None)
+    return [results[spec['shard_id']] for spec in specs]
+
+def execute_physical_formal_measurement(args,watchdog,expected):
+    """Disposable timing rehearsal; it cannot publish or classify formal science."""
+    started=time.monotonic();deadline=started+1760
+    partition=physical_formal_measurement_partition();runtime=physical_support().runtime_identity()
+    common_value=physical_formal_common_manifest(expected[0],expected[1],environment.strict(expected[2]),
+        runtime,partition,cycle=0)
+    root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-formal-measurement-'))
+    print('DIAGNOSTICS '+str(root),flush=True)
+    common_path=root/'common.json';write(common_path,common_value)
+    common=physical_validate_formal_common(environment.strict(read(common_path)))
+    specs=common['partition']['body']['shards'];results={};passed=True;validation_sha=None
+    try:
+        producers=[spec for spec in specs if spec['assignment']['kind']=='history-producer']
+        bindings={spec['shard_id']:dict(packets={}) for spec in producers}
+        for offset in range(0,len(producers),3):
+            batch=producers[offset:offset+3]
+            for spec,result in zip(batch,physical_formal_measurement_batch(root,common_path,batch,
+                    expected[2],bindings,watchdog,deadline)):
+                results[spec['shard_id']]=result
+            watchdog.check()
+        if any(record.get('status')!='PASSED' or out is None for record,out in results.values()):
+            passed=False
+        producer_receipts={}
+        if passed:
+            for spec in producers:
+                out=results[spec['shard_id']][1];descriptor=packet_descriptor(out/'producer.receipt.json')
+                body=physical_validate_formal_producer_receipt(out/'producer.receipt.json',common)
+                producer_receipts[spec['assignment']['case_ordinal']]=(descriptor,body)
+        replays=[spec for spec in specs if spec['assignment']['kind']=='prefix-range']
+        replay_bindings={}
+        if passed:
+            for spec in replays:
+                assignment=spec['assignment'];receipt_descriptor,receipt=producer_receipts[assignment['case_ordinal']]
+                packets={f'prefix-{prefix:02d}':receipt['packets'][f'prefix-{prefix:02d}']
+                    for prefix in range(assignment['prefix_start'],assignment['prefix_stop'])}
+                packets['final']=receipt['packets'][f"prefix-{assignment['case']['accepted_stages']:02d}"]
+                replay_bindings[spec['shard_id']]=dict(packets=packets,producer_receipt=receipt_descriptor)
+            for offset in range(0,len(replays),3):
+                batch=replays[offset:offset+3]
+                for spec,result in zip(batch,physical_formal_measurement_batch(root,common_path,batch,
+                        expected[2],replay_bindings,watchdog,deadline)):
+                    results[spec['shard_id']]=result
+                watchdog.check()
+                if any(results[spec['shard_id']][0].get('status')!='PASSED' for spec in batch):
+                    passed=False;break
+        if passed and len(results)==len(specs):
+            sciences=[]
+            for spec in specs:
+                out=results[spec['shard_id']][1]
+                lease=environment.strict(read(out/'lease.json'))
+                physical_validate_formal_process(out,lease)
+                sciences.append(physical_validate_formal_shard_science(out,lease,common))
+            validation=physical_formal_scientific_union(sciences,common)
+            validation_sha=validation['self_sha256']
+            if authority(args.review,args.review_sha256,'g3c-physical')!=expected:
+                raise ValueError('formal measurement final authority')
+            if time.monotonic()>=deadline:raise ValueError('formal measurement wave deadline')
+        else:passed=False
+    except BaseException as exc:
+        passed=False;failure=type(exc).__name__
+    summaries=[]
+    for spec in specs:
+        record,out=results.get(spec['shard_id'],(dict(status='NOT_LAUNCHED'),None))
+        summaries.append(dict(shard_id=spec['shard_id'],assignment_sha256=spec['assignment_sha256'],
+            status=record.get('status'),elapsed_seconds=record.get('elapsed_seconds'),
+            peak_tree_bytes=record.get('peak_tree_bytes'),active_processes=record.get('active_processes'),
+            output=None if out is None else str(out)))
+    process=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_MEASUREMENT_PROCESS_V1',candidate=expected[0],
+        mode='measurement',classification='NONCLASSIFYING',partition_sha256=partition['self_sha256'],
+        required_shards=len(specs),terminal_shards=sum(row['status']!='NOT_LAUNCHED' for row in summaries),
+        validation_sha256=validation_sha,passed=passed,elapsed_seconds=time.monotonic()-started,
+        active_processes=sum((row['active_processes'] or 0) for row in summaries),shards=summaries,
+        formal_execution_authorized=False,
+        full_g3c_qualified=False,production_qualified=False)
+    if not passed:process['failure']=locals().get('failure','SHARD_FAILURE')
+    write(root/'measurement-process.json',process);print(canonical(process).decode(),flush=True)
+    return int(not passed)
+
 def physical_formal_scientific_union(shard_sciences,common):
     """Stdlib-only, order-independent flattening back to assignment records."""
     if type(shard_sciences)is not list or not shard_sciences:raise ValueError('formal shard science inventory')
@@ -635,6 +803,8 @@ def physical_formal_scientific_union(shard_sciences,common):
     expected_shards=common['partition']['body']['shards']
     if len(by_id)!=len(shard_sciences) or set(by_id)!={row['shard_id'] for row in expected_shards}:
         raise ValueError('formal shard science coverage')
+    common_value=dict(body=common,self_sha256=sha256(canonical(common)).hexdigest())
+    common_sha=sha256(canonical(common_value)).hexdigest()
     assignments=common['assignments'];records={};transports=[]
     for spec in expected_shards:
         science=by_id[spec['shard_id']];assignment=spec['assignment']
@@ -643,19 +813,68 @@ def physical_formal_scientific_union(shard_sciences,common):
             or science['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1'
             or science['mode']!=common['mode'] or science['cycle']!=common['cycle']
             or not exact_json(science['candidate'],common['candidate'])
+            or science['common_manifest_sha256']!=common_sha
             or science['shard_id']!=spec['shard_id'] or not exact_json(science['assignment'],assignment)
             or science['full_g3c_qualified']is not False or science['production_qualified']is not False):
             raise ValueError('formal shard union schema')
         row=science['record']
         if assignment['kind']=='history-producer':
-            index=assignment['history_assignment_index'];payload=row['history'];transports.append(row['transport'])
+            if (type(row)is not dict or set(row)!={'kind','case_ordinal','history_assignment_index','history','transport','passed'}
+                or row['kind']!='history-producer' or type(row['case_ordinal'])is not int
+                or row['case_ordinal']!=assignment['case_ordinal']
+                or type(row['history_assignment_index'])is not int
+                or row['history_assignment_index']!=assignment['history_assignment_index'] or row['passed']is not True):
+                raise ValueError('formal producer union record')
+            index=assignment['history_assignment_index'];payload=row['history'];transport=row['transport']
+            if (type(payload)is not dict or set(payload)!={'kind','case_id','events','directional_errors','packets','passed'}
+                or payload['kind']!='history' or payload['case_id']!=assignment['case']['case_id']
+                or type(payload['events'])is not int or payload['events']!=assignment['case']['accepted_stages']
+                or type(payload['directional_errors'])is not list or len(payload['directional_errors'])!=3
+                or any(type(v)is not float or not math.isfinite(v) or not 0<=v<=1e-7 for v in payload['directional_errors'])
+                or type(payload['packets'])is not list or len(payload['packets'])!=payload['events']+1
+                or payload['passed']is not True):raise ValueError('formal producer union history')
+            for prefix,packet_row in enumerate(payload['packets']):
+                if (type(packet_row)is not dict or set(packet_row)!={'name','bytes','sha256','prefix'}
+                    or packet_row['name']!=f'prefix-{prefix:02d}.json' or type(packet_row['bytes'])is not int
+                    or packet_row['bytes']<=0 or type(packet_row['prefix'])is not int or packet_row['prefix']!=prefix):
+                    raise ValueError('formal producer union packet')
+                sha_value(packet_row['sha256'])
+            if (type(transport)is not dict or set(transport)!={'accepted_diagnostic_sha256','definition_sha256',
+                'expanded_sha256','programs_sha256','final_state_sha256','case_id','graph','variant','force_scale',
+                'common_motion','immutable','passed'} or transport['case_id']!=assignment['case']['case_id']
+                or transport['graph']!=assignment['case']['graph'] or transport['variant']!=assignment['case']['variant']
+                or transport['force_scale']!=assignment['case']['force_scale']
+                or transport['common_motion']!=assignment['case']['common_motion']
+                or transport['immutable']is not True or transport['passed']is not True):
+                raise ValueError('formal producer union transport')
+            for name in ('accepted_diagnostic_sha256','definition_sha256','expanded_sha256','programs_sha256','final_state_sha256'):
+                sha_value(transport[name])
+            transports.append(transport)
             if index in records:raise ValueError('duplicate formal history record')
             records[index]=payload
         else:
+            if (type(row)is not dict or set(row)!={'kind','case_ordinal','prefix_start','prefix_stop',
+                'assignment_indexes','records','fresh_owners','passed'} or row['kind']!='prefix-range'
+                or type(row['case_ordinal'])is not int or row['case_ordinal']!=assignment['case_ordinal']
+                or type(row['prefix_start'])is not int or row['prefix_start']!=assignment['prefix_start']
+                or type(row['prefix_stop'])is not int or row['prefix_stop']!=assignment['prefix_stop']
+                or not exact_json(row['assignment_indexes'],assignment['assignment_indexes'])
+                or type(row['fresh_owners'])is not int or row['fresh_owners']!=row['prefix_stop']-row['prefix_start']
+                or type(row['records'])is not list or len(row['records'])!=row['fresh_owners']
+                or row['passed']is not True):raise ValueError('formal prefix union record')
             for item in row['records']:
+                if type(item)is not dict or set(item)!={'assignment_index','record'} or type(item['assignment_index'])is not int:
+                    raise ValueError('formal prefix union item')
                 index=item['assignment_index']
+                prefix_assignment=assignments[index] if 0<=index<len(assignments) else None;payload=item['record']
+                if (type(prefix_assignment)is not dict or prefix_assignment.get('kind')!='prefix'
+                    or type(payload)is not dict or set(payload)!={'kind','case_id','prefix','input_sha256','final_sha256','passed'}
+                    or payload['kind']!='prefix' or payload['case_id']!=prefix_assignment['case']['case_id']
+                    or type(payload['prefix'])is not int or payload['prefix']!=prefix_assignment['prefix']
+                    or payload['passed']is not True):raise ValueError('formal prefix union payload')
+                sha_value(payload['input_sha256']);sha_value(payload['final_sha256'])
                 if index in records:raise ValueError('duplicate formal prefix record')
-                records[index]=item['record']
+                records[index]=payload
     expected_indexes=({spec['assignment']['history_assignment_index'] for spec in expected_shards
                        if spec['assignment']['kind']=='history-producer'}|
         {index for spec in expected_shards if spec['assignment']['kind']=='prefix-range'
@@ -679,7 +898,7 @@ def physical_formal_scientific_union(shard_sciences,common):
     if len(transports)!=len({row['case_id'] for row in transports}):raise ValueError('duplicate formal transport record')
     transports.sort(key=lambda row:order[row['case_id']])
     value=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_AGGREGATE_V1',candidate=common['candidate'],
-        mode=common['mode'],cycle=common['cycle'],assignment_inventory_sha256=PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA,
+        mode=common['mode'],assignment_inventory_sha256=PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA,
         records=made,transport_records=transports,passed=True,
         terminal=('COMPLETE_GE_BEAM3_G3C_PHYSICAL_FORMAL_'+common['mode'].upper()+'_ONLY'),
         full_g3c_qualified=False,production_qualified=False)
@@ -693,6 +912,8 @@ def physical_formal_worker(out,lease_sha):
     lease=environment.strict(lease_raw);common_raw=validate_packet_descriptor(lease['common_manifest'])
     common_value=environment.strict(common_raw);common=physical_validate_formal_common(common_value)
     assignment=physical_validate_formal_lease(lease,common)
+    if common['mode']!='measurement' or common['cycle']!=0:
+        raise ValueError('formal execution authorization not frozen')
     expected=authority(out/'review.json',common['review_sha256'],'g3c-physical')
     if (not exact_json(common['candidate'],expected[0]) or not exact_json(common['inputs'],expected[1])
         or not exact_json(common['implementation_review'],environment.strict(expected[2]))):
@@ -712,6 +933,9 @@ def physical_formal_worker(out,lease_sha):
             if self.collected!=[node]:raise ValueError('formal collected inventory')
             module=items[0].module;module.ASSIGNMENT=assignment;module.OUTPUT_DIRECTORY=str(out)
             module.INPUT_PACKETS=lease['input_packets'];module.EXPECTED_RUNTIME_SHA256=common['runtime_sha256']
+            module.COMMON_MANIFEST_PATH=lease['common_manifest']['path']
+            module.COMMON_MANIFEST_BYTES=lease['common_manifest']['bytes']
+            module.COMMON_MANIFEST_SHA256=lease['common_manifest']['sha256']
             self.module=module
         def pytest_runtest_logreport(self,report):
             if report.when=='call' and report.passed:self.passed.append(report.nodeid)
@@ -858,6 +1082,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                             (PHYSICAL_PARTITION_REVIEW,PHYSICAL_PARTITION_REVIEW_SHA),
                             (PHYSICAL_FORMAL_ADDENDUM,PHYSICAL_FORMAL_ADDENDUM_SHA),
                             (PHYSICAL_FORMAL_DESIGN_REVIEW,PHYSICAL_FORMAL_DESIGN_REVIEW_SHA),
+                            (PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW,
+                             PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW_SHA),
                             (PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_ADDENDUM_SHA),
                             (PHYSICAL_CORRECTION_REVIEW,PHYSICAL_CORRECTION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
@@ -2810,6 +3036,13 @@ def execute_physical(args,watchdog):
     correction=getattr(args,'inherit_correction',False);failed=getattr(args,'failed_guards_process',None)
     interrupted=getattr(args,'interrupted_guards_root',None);segment=getattr(args,'guard_segment_id',None)
     finalize_segments=getattr(args,'finalize_guard_segments',False)
+    formal_measurement=getattr(args,'physical_formal_measurement',False)
+    if formal_measurement:
+        if (args.lane!='formal' or correction or failed is not None or interrupted is not None
+            or segment is not None or finalize_segments or args.partition_id is not None
+            or args.finalize_partitions or args.prior):
+            raise ValueError('formal measurement mode is exclusive')
+        return execute_physical_formal_measurement(args,watchdog,expected)
     if correction:
         if args.lane!='rehearsal' or failed is None or interrupted is None:
             raise ValueError('correction inheritance rehearsal authority')
@@ -3616,6 +3849,7 @@ def main():
     parser.add_argument('--interrupted-guards-root',type=Path)
     parser.add_argument('--guard-segment-id',choices=PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS)
     parser.add_argument('--finalize-guard-segments',action='store_true')
+    parser.add_argument('--physical-formal-measurement',action='store_true')
     return execute(parser.parse_args())
 
 if __name__=='__main__':raise SystemExit(main())

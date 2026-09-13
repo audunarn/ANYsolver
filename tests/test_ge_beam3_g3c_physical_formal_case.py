@@ -16,6 +16,9 @@ ASSIGNMENT=None
 OUTPUT_DIRECTORY=None
 INPUT_PACKETS=None
 EXPECTED_RUNTIME_SHA256=None
+COMMON_MANIFEST_PATH=None
+COMMON_MANIFEST_BYTES=None
+COMMON_MANIFEST_SHA256=None
 FORMAL_SHARD_RECORD=None
 p=history.packet
 
@@ -55,6 +58,18 @@ def registered_case(ordinal,row):
     if not exact(row,matrix[ordinal]):raise ValueError('formal case authority')
     if history.runtime_identity()!=EXPECTED_RUNTIME_SHA256:raise ValueError('formal runtime mismatch')
     return matrix[ordinal]
+
+
+def common_identity():
+    path=Path(COMMON_MANIFEST_PATH)
+    if path.is_symlink() or not path.is_absolute() or not path.is_file():raise ValueError('formal common manifest file')
+    raw=path.read_bytes()
+    if (type(COMMON_MANIFEST_BYTES)is not int or type(COMMON_MANIFEST_BYTES)is bool
+        or COMMON_MANIFEST_BYTES<=0 or len(raw)!=COMMON_MANIFEST_BYTES
+        or type(COMMON_MANIFEST_SHA256)is not str or sha256(raw).hexdigest()!=COMMON_MANIFEST_SHA256):
+        raise ValueError('formal common manifest identity')
+    if history.runtime_identity()!=EXPECTED_RUNTIME_SHA256:raise ValueError('formal runtime changed')
+    return COMMON_MANIFEST_SHA256
 
 
 def accepted_transport(owner,row,final_raw):
@@ -135,19 +150,24 @@ def test_physical_formal_shard_assignment():
         or type(indexes)is not list or len(indexes)!=stop-start
         or set(INPUT_PACKETS)!={f'prefix-{i:02d}' for i in range(start,stop)}|{'final'}):
         raise ValueError('formal prefix-range authority')
-    final=packet(INPUT_PACKETS['final']);final_sha=sha256(final).hexdigest();owners=[];records=[]
+    final=packet(INPUT_PACKETS['final']);final_sha=sha256(final).hexdigest();records=[];fresh_owners=0
     for offset,prefix in enumerate(range(start,stop)):
+        common_identity()
+        if not exact(ASSIGNMENT,dict(kind='prefix-range',case_ordinal=ordinal,case=row,
+            prefix_start=start,prefix_stop=stop,assignment_indexes=indexes)):
+            raise ValueError('formal prefix assignment changed')
         raw=packet(INPUT_PACKETS[f'prefix-{prefix:02d}']);digest=sha256(raw).hexdigest()
         parsed=p.preflight(raw,digest,expected_runtime_sha256=EXPECTED_RUNTIME_SHA256)
         if parsed.epoch!=prefix:raise AssertionError('formal prefix epoch')
         owner=history.resume(raw,digest,expected_runtime_sha256=EXPECTED_RUNTIME_SHA256)
-        owners.append(owner)
+        fresh_owners+=1
         for command in commands[prefix:]:owner.solve(command)
         if owner.checkpoint_bytes()!=final:raise AssertionError('formal prefix continuation')
         records.append(dict(assignment_index=indexes[offset],record=dict(kind='prefix',
             case_id=row['case_id'],prefix=prefix,input_sha256=digest,
             final_sha256=final_sha,passed=True)))
         print('PHYSICAL FORMAL prefix',row['case_id'],prefix,flush=True)
-    if len({id(owner) for owner in owners})!=len(owners):raise AssertionError('fresh formal prefix owners')
+        del owner
+        common_identity()
     FORMAL_SHARD_RECORD=dict(kind=kind,case_ordinal=ordinal,prefix_start=start,prefix_stop=stop,
-        assignment_indexes=indexes,records=records,fresh_owners=len(owners),passed=True)
+        assignment_indexes=indexes,records=records,fresh_owners=fresh_owners,passed=True)
