@@ -274,3 +274,42 @@ immutable. A correction retains every mutation dimension and scientific equation
 while using verified prepared data and targeted checks without repeated35-system
 solves. Full producer execution retains all nonlinear work and Schur checks.
 Independent re-review of the corrected frozen implementation is required.
+
+## Accepted affine exact-identity gate (2026-09-13)
+
+Corrected freeze d49aacdd64dd9226e431f72e3078fbfb6cabb957, tree
+dc328e01e612b6988dda3b04080a4c3340c1808c, received independent implementation
+acceptance (review SHA-256
+0ae75786e5abca64205e54314b0d9973f179467cbc1dc74001599548149c1d8b).
+Fourteen inert guards, separate two-node smoke, six-node complete rehearsal,
+and two six-node formal cycles passed. All 21375 ordered coefficients are zero;
+each full cycle includes six independent checker executions and 39 targeted
+mutations. Source 35-variable and recovery 64-variable stationary witnesses,
+nonlinear work and Schur identities are checked, not inferred from terminal text.
+
+Rehearsal and both formal scientific packets are byte-identical: 4545849 bytes,
+SHA-256 6713663ca84ac7dba4f8c3a4dd9de2a255f509250087d3b10fb3917d29cac026.
+Independent evidence review SHA-256
+a40277da9d95692e690f51e19dc069a7229455bcf76b84ea11f5f0dbd71dda7f
+accepts UNCLASSIFIED_G3C_Q4_AFFINE_RECOVERY_EXACT_IDENTITIES_ONLY with no findings.
+All 95 raw files are preserved and independently compared across original,
+durable archive and reviewer copies (285 comparisons). The recursive manifest
+SHA-256 f5983d496cdac583c8ce4d13c49bcd882579aa0751864389bcc588d8b6e2e529
+binds every nested proof/checker artifact. Archive root:
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-d49aacd-20260913/.
+Phases: 95yf6brs smoke; fa4y9mvs rehearsal; cps9vc1m formal1; etvs3go9 formal2.
+Whole invocations took 38.51, 117.84, 119.71 and 116.93 seconds respectively;
+all drained with zero active processes. Timings are diagnostics, not speed claims.
+
+This closes exact identities only. Physical recovery and full G3c remain
+unqualified. The rejected natural retained-space result remains valid in its
+original scope; it is neither erased nor reclassified. Public Q4/S3 and legacy
+B2/B3 mechanics, defaults and historical evidence are unchanged.
+
+Next gate: independently review and freeze the private numerical affine Q4
+recovery contract, including actual chart first/second derivatives, physical
+work/Hessian, constitutive resultants, numerical-energy separation and immutable
+state/provenance guards. Then implement, review, rehearse and run two formal
+cycles. Full MO01-MO18, G3c 375/3075/3450 per cycle, G4/G5 and the remaining
+P01-P32/U01-U10 parity obligations remain open. No integration, default activation
+or publication is authorized by this scoped acceptance.
