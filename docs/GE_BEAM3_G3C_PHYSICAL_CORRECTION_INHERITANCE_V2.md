@@ -10,25 +10,29 @@ or 234-assignment rehearsal inventory.  It does not authorize formal G3c.
 
 The predecessor evidence, failed `R-GUARDS` incident, and dual-runtime design
 bound by `GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_ADDENDUM.md` remain
-unchanged.  The only newly permitted production-tree edit is private authority
-plumbing in `src/anysolver/_ge_beam3_g3c_physical_authority.py`; it may retain
-and expose the SHA-256 of the exact correction-compatibility record embedded in
-the runner-validated captured lease.  It must not alter graph expansion,
-mechanics, recovery, state, or runtime-identity semantics.
+unchanged.  No `src/anysolver` file may change: the predecessor packets bind
+those bytes directly.  One new correction-only script may retain and expose the
+SHA-256 of the exact correction-compatibility record embedded in the
+runner-validated captured lease.  It must be inert outside correction execution
+and must not alter graph expansion, mechanics, recovery, state, or
+runtime-identity semantics.
 
 ## Captured-lease join
 
 Before pytest or any numerical construction, the worker independently validates
 the clean candidate, complete tracked-input DAG, implementation review, exact
 assignment and exact correction-compatibility record.  It then captures those
-same canonical lease bytes through the private physical authority module.
+same canonical lease bytes through both the unchanged private physical authority
+module and the correction-only one-shot lease-binding module.
 
-The authority module stores only the existing lease fingerprint/source rows and
-the SHA-256 of the embedded compatibility record.  A correction replay must
+The correction-only module stores only the full lease SHA-256 and the SHA-256 of
+the embedded compatibility record.  A correction replay must
 require its supplied record to equal that captured fingerprint.  A structurally
 valid or self-rehashed foreign record is therefore rejected, including changes
 to successor commit, tree, review, runtime, unchanged-input digest, or allowed
-paths.  Calls before capture, leases without correction authority, and normal
+paths.  Capture is one-shot and occurs only after the worker has independently
+validated the complete lease against its clean Git/input/review authority.
+Calls before capture, leases without correction authority, and normal
 non-correction replay cannot obtain compatibility.
 
 ## Immutable dual-runtime comparison
