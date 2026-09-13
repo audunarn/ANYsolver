@@ -18,7 +18,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import ge_beam3_g3b_environment as environment
 
 SCOPE='GE_BEAM3_BOUNDED_REGISTERED_GATE_V2'
-BASE='c5a1ba0d96e1a27ab8001259f4eb8fd1defa0501'
+BASE='8767dbaaf4003daa24369628a1e6e119a642e0bf'
 CONTRACT='docs/reference_cases/ge_beam3_g3c_b2_physical_contract_v1.json'
 CONTRACT_SHA='6d202e2c25bc62c0987f090a7b5c092bc788318bbb37e27c1261e67af592996b'
 DESIGN_REVIEW='docs/reference_cases/ge_beam3_g3c_b2_physical_contract_review_v1.json'
@@ -31,7 +31,46 @@ TEST='tests/test_ge_beam3_g3c_b2_physical_core.py'
 TESTS={'b2-core':(TEST,'numeric_core'),
        'b2-adapter':('tests/test_ge_beam3_g3c_b2_physical_adapter.py','adapter'),
        'q4-audit':('tests/test_ge_beam3_q4_recovery_coefficient_audit.py','q4_audit'),
-       'q4-affine-exact':('tests/test_ge_beam3_q4_affine_recovery.py','q4_affine')}
+       'q4-affine-exact':('tests/test_ge_beam3_q4_affine_recovery.py','q4_affine'),
+       'q4-affine-numerical':('tests/test_ge_beam3_q4_affine_numerical_recovery.py','q4_affine_numerical')}
+NUMERICAL_PLAN='docs/GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_CONTRACT.md'
+NUMERICAL_PLAN_SHA='21cec54b2469e291c8f90a2c042e3cf693a14f7bc10efd5111ea842ca65a218c'
+NUMERICAL_REVIEW='docs/reference_cases/ge_beam3_q4_affine_numerical_design_review_v1.json'
+NUMERICAL_REVIEW_SHA='e2a28209165d72046093ec08d06b8243399f820ab8db0b6fb7beeeab0e96055f'
+NUMERICAL_TESTS=['test_affine_recovery_'+suffix for suffix in (
+    'definition_and_source_identity','zero_and_station_constitutive','independent_material_fields',
+    '64_stationarity_and_schur','actual_chart_work_hessian','directional_derivatives_all_steps',
+    'six_rigid_modes_and_common_motion','d4_and_director_transports','passive_and_same_pose_rebase',
+    'all_graph_q4_reference_variants','tiny_physical_energy_and_numerical_separation',
+    'definition_observation_races','immutable_detached_results_and_reentry',
+    'unsupported_routes_and_cancellation','actual_mutation_rejection')]
+NUMERICAL_SMOKE='test_affine_recovery_smoke_square_station_work'
+NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1},
+    {'station':54},{'independent':54},{'schur':54},{'work':54},{'directional':27},
+    {'rigid':3,'common_motion':12},{'d4':24,'director':6},{'passive':3,'rebase':3},
+    {'graph':20},{'tiny':6,'channels':54},{'races':7},{'immutability':7},{'rejections':19},{'mutations':39}]
+NUMERICAL_SHAPES=('SQUARE','RECTANGLE','RHOMBUS')
+NUMERICAL_BASE_IDS=[s+'::'+v for s in NUMERICAL_SHAPES for v in ('0.01','1','10')]
+NUMERICAL_GRAPH_IDS=[g+'::'+v for g in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') for v in
+    ('BASE','SHUFFLED_INSERTION','RENUMBERED','CONNECTIVITY_REVERSED','PROPER_GLOBAL_TRANSFORM')]
+NUMERICAL_CONTEXT_IDS=[s+'::'+p for s in NUMERICAL_BASE_IDS for p in ('ZERO','MEMBRANE','BENDING','SHEAR','CHECKERBOARD','MIXED')]
+NUMERICAL_TABLE_IDS=[
+    {'definitions':NUMERICAL_BASE_IDS+NUMERICAL_GRAPH_IDS,'source_graph':['source_graph'],'extension_lemma':['ideal_recipe_extension']},
+    {'station':NUMERICAL_CONTEXT_IDS},{'independent':NUMERICAL_CONTEXT_IDS},{'schur':NUMERICAL_CONTEXT_IDS},{'work':NUMERICAL_CONTEXT_IDS},
+    {'directional':[i+'::h='+h for i in NUMERICAL_BASE_IDS for h in ('0.0001','1e-05','1e-06')]},
+    {'rigid':[s+'::1' for s in NUMERICAL_SHAPES],'common_motion':[s+'::1::motion='+str(i) for s in NUMERICAL_SHAPES for i in range(4)]},
+    {'d4':[s+'::1::D4:'+str(i) for s in NUMERICAL_SHAPES for i in range(8)],
+     'director':[s+'::1::DIRECTOR:'+str(i) for s in NUMERICAL_SHAPES for i in (-1,1)]},
+    {'passive':[s+'::1::PASSIVE' for s in NUMERICAL_SHAPES],'rebase':[s+'::1' for s in NUMERICAL_SHAPES]},
+    {'graph':[g+'::'+p for g in NUMERICAL_GRAPH_IDS for p in ('ZERO','MIXED')]},
+    {'tiny':[s+'::1::amplitude='+a for s in NUMERICAL_SHAPES for a in ('1e-06','0.001')],'channels':NUMERICAL_CONTEXT_IDS},
+    {'races':['descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation']},
+    {'immutability':['all_detached_arrays','caller_arrays_preserved','same_input_repeat','reentry','changed_accepted_matrix','concurrent_evaluation','operator_cache_tamper']},
+    {'rejections':['nonaffine','director','material_direction','node_ids','generalized_section','history_section','offset','initial_fields','foreign_policy',
+       'GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1','OLD_RETAINED_35_VARIABLE_SYSTEM','FOREIGN',
+       'nonfinite_q','nonfinite_accepted','wrong_q_shape','wrong_rotation_shape','before_work','before_publication','invalid_callback']},
+    {'mutations':[s+'::'+m for s in NUMERICAL_SHAPES for m in ('station_order','weight','frame','M','resultant','n','Dn','Hn',
+       'force_weighted_Hessian','chart_second','coupling_sign','inverse','numerical_energy_leak')]}]
 AFFINE_TESTS=['test_affine_exact_arithmetic_and_schema','test_affine_source_and_representation_boundaries',
               'test_affine_square_chart_polynomial','test_affine_rectangle_chart_polynomial',
               'test_affine_rhombus_chart_polynomial','test_affine_stationary_schur_and_mutations']
@@ -47,8 +86,13 @@ Q4_PLAN_SHA='65f51816fe678acd38dffa9578f7cf2864d7cea518fc0e16e659899632cc3ce8'
 ALLOWED={
     'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
-    'docs/reference_cases/ge_beam3_q4_affine_recovery_producer.py',
-    'docs/reference_cases/ge_beam3_q4_affine_recovery_checker.py',TESTS['q4-affine-exact'][0],
+    'src/anysolver/_ge_beam3_g3c_affine_q4_recovery.py',
+    'src/anysolver/_ge_beam3_g3c_affine_q4_registry.py',
+    'docs/reference_cases/ge_beam3_q4_affine_numerical_checker.py',
+    'docs/reference_cases/ge_beam3_q4_affine_numerical_chart.py',
+    'docs/GE_BEAM3_Q4_AFFINE_RECOVERY_EXTENSION_LEMMA.md',
+    'docs/reference_cases/ge_beam3_q4_affine_extension_lemma_review_v1.json',
+    TESTS['q4-affine-numerical'][0],
 }
 INTEGRATION_REVIEW='docs/reference_cases/ge_beam3_8073635_integration_contract_review.json'
 INTEGRATION_SHA='3be7021fd63a259cca5c48d0e6b47e6a261805f10b4909374f5a9610c17a7b59'
@@ -77,13 +121,14 @@ def inventory(lane,gate='b2-core'):
     if gate not in TESTS:raise ValueError('unregistered gate')
     test_path,inventory_key=TESTS[gate]
     contract=environment.strict(read(ROOT/CONTRACT).replace(b'\r\n',b'\n'))
-    names=(AFFINE_TESTS if gate=='q4-affine-exact' else
+    names=(NUMERICAL_TESTS if gate=='q4-affine-numerical' else AFFINE_TESTS if gate=='q4-affine-exact' else
            Q4_TESTS if gate=='q4-audit' else contract['test_nodes'][inventory_key])
     tree=ast.parse(read(ROOT/test_path))
     actual=[n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
-    if actual!=names:raise ValueError('registered test inventory changed')
+    if actual!=names+([NUMERICAL_SMOKE] if gate=='q4-affine-numerical' else []):raise ValueError('registered test inventory changed')
     if lane=='smoke':
-        names=[names[2],names[7]] if gate=='b2-core' else (names[:2] if gate in ('q4-audit','q4-affine-exact') else [names[0]])
+        names=([names[0],NUMERICAL_SMOKE] if gate=='q4-affine-numerical' else
+               [names[2],names[7]] if gate=='b2-core' else (names[:2] if gate in ('q4-audit','q4-affine-exact') else [names[0]]))
     elif lane!='core':raise ValueError('unregistered lane')
     return [test_path+'::'+name for name in names]
 
@@ -96,7 +141,7 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
         or r['subject_commit']!=candidate['commit']
         or r['scope']!={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
                         'inputs_sha256':sha256(canonical(rows)).hexdigest(),
-                        'contract_sha256':AFFINE_PLAN_SHA if gate=='q4-affine-exact' else
+                        'contract_sha256':NUMERICAL_PLAN_SHA if gate=='q4-affine-numerical' else AFFINE_PLAN_SHA if gate=='q4-affine-exact' else
                                          Q4_PLAN_SHA if gate=='q4-audit' else CONTRACT_SHA}):
         raise ValueError('implementation review authority')
     return r
@@ -127,6 +172,24 @@ def authority(review_path,review_sha,gate='b2-core'):
             or affine['reviewer'].get('independent') is not True
             or affine['scope'].get('gate')!='q4-affine-exact' or affine['scope'].get('plan_sha256')!=AFFINE_PLAN_SHA):
             raise ValueError('affine independent design acceptance')
+    if gate=='q4-affine-numerical':
+        for path,digest in ((NUMERICAL_PLAN,NUMERICAL_PLAN_SHA),(NUMERICAL_REVIEW,NUMERICAL_REVIEW_SHA),
+            ('docs/GE_BEAM3_Q4_AFFINE_RECOVERY_EXTENSION_LEMMA.md','156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762'),
+            ('docs/reference_cases/ge_beam3_q4_affine_extension_lemma_review_v1.json','e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e'),
+            ('docs/reference_cases/ge_beam3_d49aacd_affine_evidence_review.json','a40277da9d95692e690f51e19dc069a7229455bcf76b84ea11f5f0dbd71dda7f'),
+            ('docs/reference_cases/ge_beam3_d49aacd_affine_evidence_manifest.json','f5983d496cdac583c8ce4d13c49bcd882579aa0751864389bcc588d8b6e2e529')):
+            if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:raise ValueError('numerical prerequisite authority')
+        design=environment.strict(read(ROOT/NUMERICAL_REVIEW))
+        if (set(design)!={'decision','findings','reviewer','scope','subject_commit'} or design['findings']
+            or design['decision']!='ACCEPTED_GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_DESIGN_ONLY'
+            or design['reviewer'].get('independent') is not True
+            or design['scope'].get('plan_sha256')!=NUMERICAL_PLAN_SHA
+            or design['scope'].get('execution_authorized') is not False):raise ValueError('numerical design review')
+        lemma=environment.strict(read(ROOT/'docs/reference_cases/ge_beam3_q4_affine_extension_lemma_review_v1.json'))
+        if (lemma['decision']!='ACCEPTED_GE_BEAM3_Q4_AFFINE_EXTENSION_LEMMA' or lemma['findings']
+            or lemma['reviewer'].get('independent') is not True
+            or lemma['scope'].get('lemma_sha256')!='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762'):
+            raise ValueError('extension lemma prerequisite review')
     inventory('core',gate)
     rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
     environment.verify(CAPSULE,CAPSULE_SHA)
@@ -214,6 +277,7 @@ def worker(out,lease_sha):
     raw=read(out/'lease.json')
     if sha256(raw).hexdigest()!=lease_sha:raise ValueError('lease hash')
     lease=environment.strict(raw)
+    if lease['gate']=='q4-affine-numerical':raise ValueError('numerical gate requires one-node assignment')
     print('BEAM CHECKPOINT initialization',flush=True)
     expected=authority(out/'review.json',lease['review_sha256'],lease['gate'])
     validate_lease(lease,expected,lease['review_sha256'],lease['lane'],out)
@@ -288,7 +352,7 @@ class WaveWatchdog:
     if draining or coordinator IO stalls. Windows job handles are kill-on-close.
     """
     def __init__(self,timer=threading.Timer,exit_process=os._exit):
-        self.expired=threading.Event();self.job=None;self.exit_process=exit_process
+        self.expired=threading.Event();self.job=None;self.jobs=[];self.exit_process=exit_process
         self.soft=timer(1780,self.expire);self.hard=timer(1800,self.hard_exit)
         for t in (self.hard,self.soft):t.daemon=True;t.start()
 
@@ -297,12 +361,17 @@ class WaveWatchdog:
 
     def attach(self,job):
         self.job=job
+        self.jobs.append(job)
         self.check()
+
+    def detach(self,job):
+        self.jobs.remove(job)
+        if self.job is job:self.job=None
 
     def expire(self):
         self.expired.set()
         try:
-            if self.job is not None:self.job.terminate()
+            for job in tuple(self.jobs):job.terminate()
         finally:self.exit_process(124)
 
     def hard_exit(self):
@@ -315,8 +384,243 @@ class WaveWatchdog:
 
 def execute(args):
     watchdog=WaveWatchdog()
-    try:return execute_guarded(args,watchdog)
+    try:return (execute_numerical(args,watchdog) if args.gate=='q4-affine-numerical' else execute_guarded(args,watchdog))
     finally:watchdog.close()
+
+
+def numerical_assignment(lease,index):
+    """No free-form module dispatch: each assignment is one registered node."""
+    if lease['gate']!='q4-affine-numerical' or type(index)is not int or not 0<=index<len(lease['selected']):
+        raise ValueError('numerical assignment index')
+    return dict(schema='GE_BEAM3_REGISTERED_NODE_ASSIGNMENT_V1',run_id=lease['run_id'],
+        index=index,node=lease['selected'][index],gate=lease['gate'],lane=lease['lane'],
+        candidate=lease['candidate'],inputs_sha256=sha256(canonical(lease['inputs'])).hexdigest(),
+        whole_inventory_sha256=sha256(canonical(lease['selected'])).hexdigest(),
+        parent_lease_sha256=sha256(canonical(lease)).hexdigest())
+
+
+def validate_assignment(value,lease,index):
+    if canonical(value)!=canonical(numerical_assignment(lease,index)):raise ValueError('node assignment authority')
+
+
+def numerical_worker(out,index,assignment_sha):
+    lease_raw=read(out/'lease.json');lease=environment.strict(lease_raw)
+    if canonical(lease)!=lease_raw:raise ValueError('noncanonical parent lease')
+    expected=authority(out/'review.json',lease['review_sha256'],'q4-affine-numerical')
+    validate_lease(lease,expected,lease['review_sha256'],lease['lane'],out)
+    directory=out/('node-%02d'%index)
+    raw=read(directory/'assignment.json')
+    if sha256(raw).hexdigest()!=assignment_sha:raise ValueError('assignment hash')
+    assignment=environment.strict(raw);validate_assignment(assignment,lease,index)
+    claim_attempt(directory,lease['run_id'])
+    if any(os.environ.get(k)!='1' for k in THREADS):raise ValueError('numerical threads')
+    print('BEAM CHECKPOINT node initialization '+assignment['node'],flush=True)
+    os.environ['BEAM_QUALIFICATION_OUTPUT']=str(directory)
+    sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(CAPSULE.parent/'site'),str(ROOT/'docs/reference_cases')]
+    import pytest
+    class Recorder:
+        def __init__(self):self.passed=[];self.bad=[];self.module=None
+        def pytest_collection_modifyitems(self,items):
+            if [i.nodeid for i in items]!=[assignment['node']]:raise ValueError('single node collection')
+            self.module=items[0].module
+        def pytest_runtest_logreport(self,report):
+            if report.failed or report.skipped:self.bad.append(report.nodeid)
+            if report.when=='call' and report.passed:self.passed.append(report.nodeid)
+    recorder=Recorder()
+    code=pytest.main(['-vv','-s','-p','no:cacheprovider','--basetemp',str(directory/'pytest'),assignment['node']],plugins=[recorder])
+    # Assertions, skips and unexpected exceptions are process/evidence failures,
+    # not a typed scientific contradiction and never produce canonical evidence.
+    if code!=0 or recorder.bad or recorder.passed!=[assignment['node']]:return 1
+    records=recorder.module.SCIENTIFIC_RECORDS
+    contradictions=recorder.module.CONTRADICTIONS
+    if type(records)is not list or not records or type(contradictions)is not list:raise ValueError('node evidence missing')
+    from ge_beam3_q4_affine_numerical_checker import verify_contradiction
+    verified=[]
+    for payload in contradictions:
+        if (payload.get('candidate_identity')!=lease['candidate']['commit']
+            or payload.get('source_identity')!=sha256(canonical(lease['inputs'])).hexdigest()):
+            raise ValueError('contradiction source/candidate identity')
+        verification=verify_contradiction(payload)
+        if type(verification)is not dict or verification.get('accepted') is not True:raise ValueError('contradiction not independently accepted')
+        verified.append(dict(payload=payload,verification=verification))
+    if authority(out/'review.json',lease['review_sha256'],lease['gate'])!=expected:raise ValueError('node final authority')
+    if read(directory/'assignment.json')!=raw or read(out/'lease.json')!=lease_raw:raise ValueError('node authority changed')
+    result=dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1',node=assignment['node'],index=index,
+        candidate=lease['candidate'],inputs_sha256=assignment['inputs_sha256'],
+        whole_inventory_sha256=assignment['whole_inventory_sha256'],lane=lease['lane'],
+        records=records,contradictions=verified,status='CONTRADICTION' if verified else 'PASSED',
+        physical_recovery_scope='REGISTERED_AFFINE_LOCAL_ONLY',full_g3c_qualified=False,production_qualified=False)
+    write(directory/'scientific.pending.json',result)
+    write(directory/'completion.json',dict(assignment_sha256=assignment_sha,node=assignment['node'],
+        scientific=fingerprint(read(directory/'scientific.pending.json'))))
+    print('BEAM CHECKPOINT node evidence complete',flush=True)
+    return 0
+
+
+def validate_numerical_result(raw,completion,lease,index,assignment_sha):
+    value=environment.strict(raw);assignment=numerical_assignment(lease,index)
+    if canonical(value)!=raw:raise ValueError('noncanonical node science')
+    if (set(value)!={'schema','node','index','candidate','inputs_sha256','whole_inventory_sha256','lane',
+                    'records','contradictions','status','physical_recovery_scope','full_g3c_qualified','production_qualified'}
+        or value['schema']!='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1'
+        or value['node']!=assignment['node'] or type(value['index'])is not int or value['index']!=index
+        or value['candidate']!=lease['candidate'] or value['lane']!=lease['lane']
+        or value['inputs_sha256']!=assignment['inputs_sha256']
+        or value['whole_inventory_sha256']!=assignment['whole_inventory_sha256']
+        or type(value['records'])is not list or not value['records']
+        or type(value['contradictions'])is not list
+        or value['status']!=('CONTRADICTION' if value['contradictions'] else 'PASSED')
+        or value['physical_recovery_scope']!='REGISTERED_AFFINE_LOCAL_ONLY'
+        or value['full_g3c_qualified'] is not False or value['production_qualified'] is not False
+        or completion!={'assignment_sha256':assignment_sha,'node':assignment['node'],'scientific':fingerprint(raw)}):
+        raise ValueError('numerical node evidence authority')
+    validate_numerical_tables(value['node'],value['records'])
+    for item in value['contradictions']:
+        if (type(item)is not dict or set(item)!={'payload','verification'} or type(item['payload'])is not dict
+            or type(item['verification'])is not dict or item['verification'].get('accepted') is not True):
+            raise ValueError('malformed typed contradiction')
+    return value
+
+
+def validate_numerical_tables(node,records):
+    name=node.split('::')[-1]
+    tables=({'smoke':2} if name==NUMERICAL_SMOKE else NUMERICAL_TABLES[NUMERICAL_TESTS.index(name)])
+    identities=({'smoke':['SQUARE::1::ZERO','SQUARE::1::MIXED']} if name==NUMERICAL_SMOKE else NUMERICAL_TABLE_IDS[NUMERICAL_TESTS.index(name)])
+    if len(records)!=1:raise ValueError('one complete named-node record required')
+    record=records[0]
+    if (type(record)is not dict or set(record)!={'test','tables','full_g3c_qualified','production_qualified'}
+        or record['test']!=name.removeprefix('test_affine_recovery_')
+        or record['full_g3c_qualified'] is not False or record['production_qualified'] is not False
+        or type(record['tables'])is not dict or set(record['tables'])!=set(tables)):
+        raise ValueError('numerical named table schema')
+    for key,count in tables.items():
+        rows=record['tables'][key]
+        if (type(rows)is not list or len(rows)!=count or any(type(row)is not dict or type(row.get('id'))is not str or not row['id'] for row in rows)
+            or [row['id'] for row in rows]!=identities[key]):raise ValueError('numerical table coverage')
+
+
+def numerical_union(lease,nodes):
+    if len(nodes)!=len(lease['selected']) or [n['node'] for n in nodes]!=lease['selected']:
+        raise ValueError('incomplete or reordered numerical union')
+    if [n['index'] for n in nodes]!=list(range(len(nodes))):raise ValueError('duplicated numerical nodes')
+    contradictions=[dict(node=n['node'],evidence=c) for n in nodes for c in n['contradictions']]
+    terminal=('NOT_ADJUDICATED_SMOKE_ONLY' if lease['lane']=='smoke' else
+        'NO_GO_G3C_Q4_AFFINE_RECOVERY_VARIATIONAL_OR_STATE' if contradictions else
+        'PROVISIONAL_GO_G3C_Q4_AFFINE_LOCAL_PHYSICAL_RECOVERY_ONLY')
+    return dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_UNION_V1',gate=lease['gate'],lane=lease['lane'],
+        candidate=lease['candidate'],inputs_sha256=sha256(canonical(lease['inputs'])).hexdigest(),
+        selected=lease['selected'],nodes=nodes,terminal=terminal,contradictions=contradictions,
+        physical_recovery_qualified=lease['lane']=='core' and not contradictions,
+        full_g3c_qualified=False,production_qualified=False)
+
+
+def monitor_batch(entries,watchdog,clock=time.monotonic,sleep=time.sleep):
+    """Independent tree accounting prevents a busy sibling masking inactivity."""
+    if not 1<=len(entries)<=3:raise ValueError('numerical batch worker count')
+    for e in entries:e.update(last=e['start'],seen=None,peak=0,record=None)
+    while any(e['record'] is None for e in entries):
+        watchdog.check()
+        for e in entries:
+            if e['record'] is not None:continue
+            cpu,active,mem=e['job'].accounting();now=clock();e['peak']=max(e['peak'],mem)
+            progress=(cpu,*e['progress']())
+            if progress!=e['seen']:e['seen']=progress;e['last']=now
+            reason=('wall' if now-e['start']>=585 else 'inactivity' if now-e['last']>=120 else
+                    'memory' if mem>MEMORY else None)
+            code=e['process'].poll()
+            if reason:
+                e['record']=dict(status='RESOURCE_BLOCKED',reason=reason,drained=False)
+            elif code is not None and active==0:
+                e['record']=dict(status='PASSED' if code==0 else 'FAILED',drained=True)
+            if e['record'] is not None:
+                e['record'].update(returncode=e['process'].poll(),active_processes=e['job'].accounting()[1],
+                    peak_tree_bytes=e['peak'],elapsed_seconds=clock()-e['start'])
+                if e['record']['active_processes'] and not reason:e['record']['status']='FAILED_TO_DRAIN'
+        if any(e['record'] and e['record']['status']!='PASSED' for e in entries):
+            # Drain the three independent jobs concurrently, not three successive
+            # fifteen-second drains that could exceed a sibling's 600s ceiling.
+            drains=[]
+            for e in entries:
+                if e['job'].accounting()[1]:
+                    def drain(entry=e):
+                        try:entry['drained']=bool(entry['job'].terminate())
+                        except BaseException:entry['drained']=False
+                    thread=threading.Thread(target=drain,daemon=True);drains.append((e,thread));thread.start()
+            drain_deadline=time.monotonic()+15
+            for e,thread in drains:thread.join(max(0,drain_deadline-time.monotonic()))
+            for e in entries:
+                if e['record'] is None:e['record']=dict(status='ABORTED_PEER_FAILURE')
+                e['record'].update(drained=e.get('drained',e['job'].accounting()[1]==0),
+                    active_processes=e['job'].accounting()[1],returncode=e['process'].poll(),
+                    peak_tree_bytes=e['peak'],elapsed_seconds=clock()-e['start'])
+                if e['record']['active_processes']:e['record']['status']='FAILED_TO_DRAIN'
+            return
+        if any(e['record'] is None for e in entries):sleep(.1)
+
+
+def execute_numerical(args,watchdog):
+    expected=authority(args.review,args.review_sha256,args.gate);watchdog.check()
+    out=Path(tempfile.mkdtemp(prefix='anysolver-beam-qualification-'))
+    print('DIAGNOSTICS '+str(out),flush=True)
+    lease=dict(schema=SCOPE,run_id=str(uuid.uuid4()),gate=args.gate,lane=args.lane,candidate=expected[0],
+        inputs=expected[1],review_sha256=args.review_sha256,selected=inventory(args.lane,args.gate))
+    write(out/'lease.json',lease)
+    with (out/'review.json').open('xb') as stream:stream.write(expected[2])
+    env=dict(os.environ,**{key:'1' for key in THREADS})
+    env.update(PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',PYTEST_ADDOPTS='',PYTHONDONTWRITEBYTECODE='1')
+    nodes=[];process_records=[];failed=False;start=time.monotonic()
+    try:
+        for offset in range(0,len(lease['selected']),3):
+            entries=[]
+            try:
+                for index in range(offset,min(offset+3,len(lease['selected']))):
+                    watchdog.check();directory=out/('node-%02d'%index);directory.mkdir(exist_ok=False)
+                    assignment=numerical_assignment(lease,index);write(directory/'assignment.json',assignment)
+                    digest=sha256(read(directory/'assignment.json')).hexdigest()
+                    job=job_type()(MEMORY);watchdog.attach(job)
+                    entry=dict(index=index,job=job,record=None,directory=directory,assignment_sha=digest,streams=[])
+                    entries.append(entry)
+                    stdout=(directory/'stdout.log').open('xb');entry['streams'].append(stdout)
+                    stderr=(directory/'stderr.log').open('xb');entry['streams'].append(stderr)
+                    entry['start']=time.monotonic()
+                    entry['process']=job.launch([sys.executable,'-I','-S','-B','-u',str(Path(__file__).resolve()),
+                        '--numerical-node',str(out),str(index),digest],cwd=ROOT,env=env,stdout=stdout,stderr=stderr)
+                    entry['progress']=lambda d=directory:((d/'stdout.log').stat().st_size,(d/'stderr.log').stat().st_size)
+                monitor_batch(entries,watchdog)
+            finally:
+                for e in entries:
+                    try:
+                        if e['job'].accounting()[1] and e.get('record') is None:e['job'].terminate()
+                        active=e['job'].accounting()[1]
+                        record=e.get('record') or dict(status='FAILED',drained=active==0)
+                        record.update(index=e['index'],node=lease['selected'][e['index']],active_processes=active)
+                        if active:record['status']='FAILED_TO_DRAIN'
+                        for stream in e['streams']:stream.close()
+                        write(e['directory']/'process.json',record);process_records.append(record)
+                    finally:
+                        e['job'].close();watchdog.detach(e['job'])
+            if any(r['status']!='PASSED' or r['active_processes'] for r in process_records):failed=True;break
+            for e in entries:
+                pending=read(e['directory']/'scientific.pending.json')
+                completion=environment.strict(read(e['directory']/'completion.json'))
+                nodes.append(validate_numerical_result(pending,completion,lease,e['index'],e['assignment_sha']))
+        if not failed:
+            if authority(args.review,args.review_sha256,args.gate)!=expected:raise ValueError('numerical union final authority')
+            watchdog.check();science=numerical_union(lease,nodes)
+            write(out/'scientific.pending.json',science)
+    except BaseException:
+        failed=True
+        raise
+    finally:
+        write(out/'process.json',dict(status='BLOCKED' if failed else 'PASSED',run_id=lease['run_id'],
+            completed_nodes=process_records,launched_nodes=len(process_records),required_nodes=len(lease['selected']),
+            elapsed_seconds=time.monotonic()-start,
+            terminal='BLOCKED_G3C_Q4_AFFINE_RECOVERY_PROCESS_OR_EVIDENCE' if failed else 'COMPLETE_PROCESS_INVENTORY'))
+    if not failed:
+        watchdog.check()
+        if (out/'scientific.json').exists():raise ValueError('exclusive numerical union')
+        os.rename(out/'scientific.pending.json',out/'scientific.json')
+    return int(failed)
 
 
 def execute_guarded(args,watchdog):
@@ -381,6 +685,7 @@ def execute_guarded(args,watchdog):
 def main():
     if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):raise ValueError('use -I -S -B')
     if len(sys.argv)==4 and sys.argv[1]=='--worker':return worker(Path(sys.argv[2]),sys.argv[3])
+    if len(sys.argv)==5 and sys.argv[1]=='--numerical-node':return numerical_worker(Path(sys.argv[2]),int(sys.argv[3]),sys.argv[4])
     if len(sys.argv)==6 and sys.argv[1]=='--q4-checker':
         return q4_checker(Path(sys.argv[2]),sys.argv[3],sys.argv[4],sys.argv[5])
     if len(sys.argv)==6 and sys.argv[1]=='--q4-affine-checker':

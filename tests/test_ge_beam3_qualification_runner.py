@@ -34,6 +34,9 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(len(r.inventory('smoke','q4-audit')),2)
         self.assertEqual(len(r.inventory('core','q4-affine-exact')),6)
         self.assertEqual(len(r.inventory('smoke','q4-affine-exact')),2)
+        self.assertEqual(len(r.inventory('core','q4-affine-numerical')),15)
+        self.assertEqual([p.split('::')[-1] for p in r.inventory('smoke','q4-affine-numerical')],
+                         [r.NUMERICAL_TESTS[0],r.NUMERICAL_SMOKE])
         with self.assertRaises(ValueError):r.inventory('all')
 
     def test_strict_json(self):
@@ -186,5 +189,92 @@ class GuardTests(unittest.TestCase):
         w.expire();self.assertTrue(j.killed)
         with self.assertRaises(TimeoutError):w.check()  # no publication after expiration
         w.hard_exit();self.assertEqual(exits,[124,124,124]);w.close()
+
+    def test_numerical_assignment_binds_single_node_and_whole_inventory(self):
+        selected=['test.py::n'+str(i) for i in range(15)]
+        lease=dict(schema=r.SCOPE,run_id=str(uuid.uuid4()),gate='q4-affine-numerical',lane='core',
+            candidate=dict(commit='a'*40,tree='b'*40),inputs={},review_sha256='c'*64,selected=selected)
+        assignment=r.numerical_assignment(lease,4);r.validate_assignment(assignment,lease,4)
+        for key,value in (('index',5),('node',selected[5]),('lane','smoke'),('parent_lease_sha256','0'*64),
+                          ('whole_inventory_sha256','0'*64),('inputs_sha256','0'*64),('run_id',str(uuid.uuid4()))):
+            bad=dict(assignment,**{key:value})
+            with self.assertRaises(ValueError):r.validate_assignment(bad,lease,4)
+        for wrong in (-1,15,True,'1'):
+            with self.assertRaises(ValueError):r.numerical_assignment(lease,wrong)
+        with self.assertRaises(ValueError):r.numerical_assignment(dict(lease,gate='q4-affine-exact'),0)
+
+    def test_numerical_batch_independent_limits_and_worker_cap(self):
+        class Watch:
+            def check(self):pass
+        for failure in ('inactivity','memory','wall'):
+            clock=Clock();entries=[]
+            for i in range(3):
+                job=Job()
+                if failure=='memory' and i==0:job.mem=r.MEMORY+1
+                def progress(j=job,index=i):
+                    if index or failure=='wall':j.cpu+=1
+                    return (0,0)
+                entries.append(dict(job=job,process=job,start=0,progress=progress))
+            r.monitor_batch(entries,Watch(),clock,clock.sleep)
+            self.assertEqual(entries[0]['record']['status'],'RESOURCE_BLOCKED')
+            self.assertTrue(all(e['job'].killed and e['record']['active_processes']==0 for e in entries))
+            self.assertLess(clock.value,600)
+        for count in (0,4):
+            with self.assertRaises(ValueError):r.monitor_batch([{}]*count,Watch())
+
+    def test_numerical_batch_does_not_accept_live_descendant(self):
+        clock=Clock();job=Job();job.code=0
+        entry=dict(job=job,process=job,start=0,progress=lambda:(0,0))
+        r.monitor_batch([entry],SimpleNamespace(check=lambda:None),clock,clock.sleep)
+        self.assertEqual(entry['record']['status'],'RESOURCE_BLOCKED')
+        self.assertTrue(job.killed)
+
+    def test_numerical_result_schema_and_union_completeness(self):
+        lease=dict(run_id=str(uuid.uuid4()),gate='q4-affine-numerical',lane='core',candidate={},inputs={},
+                   selected=['fixture.py::'+name for name in r.NUMERICAL_TESTS])
+        values=[]
+        for i in range(15):
+            a=r.numerical_assignment(lease,i);digest=sha256(r.canonical(a)).hexdigest()
+            value=dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1',node=a['node'],index=i,candidate={},
+                inputs_sha256=a['inputs_sha256'],whole_inventory_sha256=a['whole_inventory_sha256'],lane='core',
+                records=[dict(test=r.NUMERICAL_TESTS[i].removeprefix('test_affine_recovery_'),
+                    tables={key:[{'id':identity} for identity in ids] for key,ids in r.NUMERICAL_TABLE_IDS[i].items()},
+                    full_g3c_qualified=False,production_qualified=False)],contradictions=[],status='PASSED',
+                physical_recovery_scope='REGISTERED_AFFINE_LOCAL_ONLY',full_g3c_qualified=False,production_qualified=False)
+            raw=r.canonical(value);completion=dict(assignment_sha256=digest,node=a['node'],scientific=r.fingerprint(raw))
+            self.assertEqual(r.validate_numerical_result(raw,completion,lease,i,digest),value);values.append(value)
+            for key,bad_value in (('index',True),('records',[]),('status','CONTRADICTION'),('production_qualified',True)):
+                bad=dict(value,**{key:bad_value});bad_raw=r.canonical(bad)
+                with self.assertRaises(ValueError):r.validate_numerical_result(bad_raw,
+                    dict(completion,scientific=r.fingerprint(bad_raw)),lease,i,digest)
+        self.assertEqual(r.numerical_union(lease,values)['terminal'],'PROVISIONAL_GO_G3C_Q4_AFFINE_LOCAL_PHYSICAL_RECOVERY_ONLY')
+        for bad in (values[:-1],values[::-1],values+values[:1]):
+            with self.assertRaises(ValueError):r.numerical_union(lease,bad)
+        values[3]['contradictions']=[dict(payload={'inert':True},verification={'accepted':True})]
+        values[3]['status']='CONTRADICTION'
+        self.assertEqual(r.numerical_union(lease,values)['terminal'],'NO_GO_G3C_Q4_AFFINE_RECOVERY_VARIATIONAL_OR_STATE')
+
+    def test_numerical_ordered_table_identity_not_only_count(self):
+        for i,name in enumerate(r.NUMERICAL_TESTS):
+            value=dict(test=name.removeprefix('test_affine_recovery_'),tables={
+                key:[{'id':identity} for identity in ids] for key,ids in r.NUMERICAL_TABLE_IDS[i].items()},
+                full_g3c_qualified=False,production_qualified=False)
+            r.validate_numerical_tables('fixture.py::'+name,[value])
+            for key in value['tables']:
+                bad=copy.deepcopy(value);bad['tables'][key][0]['id']='substituted-but-unique'
+                with self.assertRaises(ValueError):r.validate_numerical_tables('fixture.py::'+name,[bad])
+                if len(value['tables'][key])>1:
+                    bad=copy.deepcopy(value);bad['tables'][key]=bad['tables'][key][::-1]
+                    with self.assertRaises(ValueError):r.validate_numerical_tables('fixture.py::'+name,[bad])
+
+    def test_numerical_watchdog_drains_all_jobs(self):
+        class Timer:
+            def __init__(self,*args):pass
+            def start(self):pass
+            def cancel(self):pass
+        exits=[];watch=r.WaveWatchdog(timer=Timer,exit_process=exits.append)
+        jobs=[Job() for _ in range(3)]
+        for job in jobs:watch.attach(job)
+        watch.expire();self.assertEqual(exits,[124]);self.assertTrue(all(j.killed for j in jobs));watch.close()
 
 if __name__=='__main__':unittest.main()

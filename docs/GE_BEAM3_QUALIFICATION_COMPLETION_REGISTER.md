@@ -313,3 +313,47 @@ state/provenance guards. Then implement, review, rehearse and run two formal
 cycles. Full MO01-MO18, G3c 375/3075/3450 per cycle, G4/G5 and the remaining
 P01-P32/U01-U10 parity obligations remain open. No integration, default activation
 or publication is authorized by this scoped acceptance.
+
+## Numerical affine recovery implementation preparation
+
+Contract 2a94542c84813139c8b4651201fc05272627bac9 is accepted for design and
+implementation only by independent review SHA-256
+e2a28209165d72046093ec08d06b8243399f820ab8db0b6fb7beeeab0e96055f,
+bound at 8767dbaaf4003daa24369628a1e6e119a642e0bf. The source-extension lemma
+SHA-256 156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762
+has independent ideal-recipe acceptance (review SHA-256
+e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e).
+It does not claim rounded coordinates are exactly affine or accept numerical
+implementation. Reviews and rationales are also preserved under
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-numerical-design-20260913/.
+
+New private facade/registry, independently authored numerical chart/checker,
+and shared-runner extension implement the registered 15-node numerical inventory
+and separate two-node smoke. Existing public mechanics and historical packets
+are unchanged. The runner uses one isolated process-tree job per named node,
+ordered batches of at most three, and the existing bounds. It cannot relabel a
+crash as a physical contradiction or publish a missing-node all-pass union.
+
+This is preparation, not numerical acceptance: no numerical smoke, rehearsal
+or formal cycle has run. Frozen independent implementation review is still
+required. Preliminary review identified strict admission, explicit stationary
+residual/Schur verification and cancellation sensitivity of tiny response as
+important checks. Proper-rotation/increment/gap guards and actual stationary
+comparisons are implemented; tiny-response accuracy must be demonstrated by
+the real unchanged-tolerance inventory, not assumed from syntax or exact tests.
+Full physical recovery, MO01-MO18, full G3c, G4/G5 and all applicable parity rows
+remain required before final integration.
+
+Pre-freeze independent facade review found a cache observation race: a callback
+could replace and reseal prepared data before its baseline was captured. The
+private implementation now captures cache identity/seal at entry and guards
+every observation, allowing only a controlled first publication. Both actual
+resealed-cache array/cancellation regressions are in the frozen numerical
+inventory; they have not executed yet. The shared runner now validates exact
+ordered row identities, not just counts, and has a distinct single-node protocol.
+
+Separate inert inventory: 20 tests passed in 0.173 seconds with standard-library
+fake jobs only. The printed injected RuntimeError/124 packet is an expected
+negative guard test, not a mechanics failure or consumed qualification attempt.
+Syntax and git diff --check also passed. No numerical test or scientific output
+exists for this new implementation yet; independent frozen review is next.
