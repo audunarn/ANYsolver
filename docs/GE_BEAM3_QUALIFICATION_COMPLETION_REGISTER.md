@@ -1014,3 +1014,13 @@ base-variant family ID `11`. The successor derives the complete atomicity stage
 list from the hash-bound standard-library-only graph/variant authority and tests
 all 25 local assignments without importing numerical mechanics. No local
 aggregate was published, and the consumed local wave will not be reused.
+
+Atomicity-validator freeze `5e7f1ad1f5215322def69a2abb581db561a67367`,
+tree `8b300611e906ce5ab9b8b6fb12b3c4fadba5269e`, was rejected before further
+execution. Its review is 1416 bytes, SHA-256
+`e59847d5563008b0417ca44b6d49191d4a7a5a105115a709d70d12ffe2b8c415`.
+The atomicity correction was sound, but the adjacent observation/cache receipt
+validator retained the same base-only family-ID assumption. The successor uses
+one hash-bound inert adapter-ID derivation for both atomicity and observation
+stages and compares both stage lists against independently expanded authority
+for all 25 assignments. No mechanics ran under this freeze.

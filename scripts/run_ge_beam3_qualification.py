@@ -524,16 +524,27 @@ def physical_assignment_nodes(assignment):
     if kind=='authority-mutation':return []
     raise ValueError('physical assignment kind')
 
-def physical_atomicity_stages(assignment):
-    """Derive the injected late-failure stages from frozen inert authority."""
+def physical_adapter_ids(assignment):
+    """Derive registered nonnative element IDs from frozen inert authority."""
     if (type(assignment)is not dict or set(assignment)!={'graph','variant'}
         or assignment['graph'] not in physical_support().GRAPHS
         or assignment['variant'] not in physical_support().VARIANTS):
-        raise ValueError('physical atomicity assignment')
+        raise ValueError('physical adapter assignment')
     _,source=physical_support().packet.authorities()
     expanded=source.expand_inert(assignment['graph'],assignment['variant'])[1]
-    last=next(e['id'] for e in reversed(expanded['graph']['elements']) if e['family']!='NATIVE')
-    return ['family:'+str(last),'prepare','native_committed','before_publish']
+    ids=[e['id'] for e in expanded['graph']['elements'] if e['family']!='NATIVE']
+    if not ids or any(type(value)is not int for value in ids):
+        raise ValueError('physical adapter identity')
+    return ids
+
+def physical_atomicity_stages(assignment):
+    return ['family:'+str(physical_adapter_ids(assignment)[-1]),
+            'prepare','native_committed','before_publish']
+
+def physical_observation_stages(assignment):
+    ids=physical_adapter_ids(assignment)
+    return list(dict.fromkeys(('pose','family:'+str(ids[0]),'family:'+str(ids[-1]),
+                               'prepare','before_publish')))
 
 def packet_descriptor(path):
     raw=read(path)
@@ -788,8 +799,7 @@ def physical_verify_node(out,lease):
                 raise ValueError('physical joint-work record')
         if 'observation_cache' in by_name:
             row=exact('observation_cache',('caller_copy','rejections'));graph=expected_assignment['graph']
-            families=[11,12,13,14] if graph=='J_MULTIFAMILY_LOOP' else [11]
-            stages=list(dict.fromkeys(('pose','family:'+str(families[0]),'family:'+str(families[-1]),'prepare','before_publish')))
+            stages=physical_observation_stages(expected_assignment)
             probes=[stage+':'+kind for stage in stages for kind in
                     ('foreign_nonce','cleared_nonce','replace_lock','release_lock','dispatch')]
             probes+=['coherent_definition_swap','concurrent_capture']

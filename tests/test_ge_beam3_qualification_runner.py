@@ -319,12 +319,18 @@ class GuardTests(unittest.TestCase):
 
     def test_physical_atomicity_stages_follow_registered_variants(self):
         assignments=[row['assignment'] for row in r.physical_inventory('local') if row['kind']=='owner']
-        stages=[r.physical_atomicity_stages(row) for row in assignments]
-        self.assertEqual(len(stages),25)
-        self.assertTrue(all(row[1:]==['prepare','native_committed','before_publish'] for row in stages))
-        self.assertEqual(stages[0][0],'family:11')
-        self.assertEqual(stages[2][0],'family:20055')
-        self.assertGreater(len({row[0] for row in stages}),2)
+        _,source=r.physical_support().packet.authorities()
+        for assignment in assignments:
+            expanded=source.expand_inert(assignment['graph'],assignment['variant'])[1]
+            ids=[e['id'] for e in expanded['graph']['elements'] if e['family']!='NATIVE']
+            self.assertEqual(r.physical_adapter_ids(assignment),ids)
+            self.assertEqual(r.physical_atomicity_stages(assignment),
+                ['family:'+str(ids[-1]),'prepare','native_committed','before_publish'])
+            self.assertEqual(r.physical_observation_stages(assignment),list(dict.fromkeys(
+                ('pose','family:'+str(ids[0]),'family:'+str(ids[-1]),'prepare','before_publish'))))
+        self.assertEqual(len(assignments),25)
+        renumbered=next(row for row in assignments if row=={'graph':'J_B2_PAIR','variant':'RENUMBERED'})
+        self.assertEqual(r.physical_observation_stages(renumbered)[1],'family:20055')
 
     def test_physical_process_metadata_types_are_exact(self):
         assignment=r.physical_inventory('smoke')[0]
