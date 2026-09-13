@@ -28,6 +28,8 @@ class Job:
 class GuardTests(unittest.TestCase):
     def test_registered_inventory(self):
         self.assertEqual(len(r.inventory('core')),8);self.assertEqual(len(r.inventory('smoke')),2)
+        self.assertEqual(len(r.inventory('core','b2-adapter')),3)
+        self.assertEqual(len(r.inventory('smoke','b2-adapter')),1)
         with self.assertRaises(ValueError):r.inventory('all')
 
     def test_strict_json(self):
@@ -36,12 +38,13 @@ class GuardTests(unittest.TestCase):
 
     def test_review_hash_identity_and_inputs(self):
         candidate=dict(commit='a'*40,tree='b'*40);rows={'x':dict(bytes=1,sha256='c'*64)}
-        value=dict(decision='ACCEPTED_GE_BEAM3_B2_CORE_FOR_BOUNDED_EXECUTION',findings=[],
-            reviewer=dict(independent=True),subject_commit=candidate['commit'],scope=dict(scope_id=r.SCOPE,
+        value=dict(decision='ACCEPTED_GE_BEAM3_REGISTERED_GATE_FOR_BOUNDED_EXECUTION',findings=[],
+            reviewer=dict(independent=True),subject_commit=candidate['commit'],scope=dict(scope_id=r.SCOPE,gate='b2-core',
             subject_tree=candidate['tree'],inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.CONTRACT_SHA))
         raw=r.canonical(value);h=sha256(raw).hexdigest();r.verify_review(raw,h,candidate,rows)
         with self.assertRaises(ValueError):r.verify_review(raw,'0'*64,candidate,rows)
         with self.assertRaises(ValueError):r.verify_review(raw,h,candidate,{})
+        with self.assertRaises(ValueError):r.verify_review(raw,h,candidate,rows,'b2-adapter')
         for key,v in (('subject_commit','d'*40),('findings',['defect']),('reviewer',dict(independent=False))):
             bad=dict(value,**{key:v});b=r.canonical(bad)
             with self.assertRaises(ValueError):r.verify_review(b,sha256(b).hexdigest(),candidate,rows)
@@ -108,7 +111,7 @@ class GuardTests(unittest.TestCase):
             timers[0].callback()  # deadline before a job exists
             return ({},{},b'{}\n')
         with patch.object(r,'WaveWatchdog',return_value=w),patch.object(r,'authority',side_effect=blocked_authority):
-            with self.assertRaises(TimeoutError):r.execute(SimpleNamespace(review=None,review_sha256=None))
+            with self.assertRaises(TimeoutError):r.execute(SimpleNamespace(review=None,review_sha256=None,gate='b2-core'))
         self.assertEqual(exits,[124]);self.assertTrue(all(t.cancelled for t in timers))
         w=r.WaveWatchdog(timer=Timer,exit_process=exits.append);j=Job();w.attach(j)
         w.expire();self.assertTrue(j.killed)

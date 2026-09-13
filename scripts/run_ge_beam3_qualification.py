@@ -17,8 +17,8 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 import ge_beam3_g3b_environment as environment
 
-SCOPE='GE_BEAM3_BOUNDED_LOCAL_CORE_V1'
-BASE='6a612bdb3be93e5e61d84f375b8ffa5b1731f524'
+SCOPE='GE_BEAM3_BOUNDED_REGISTERED_GATE_V2'
+BASE='22289a62fda9bb09def91c21b297b2cf06533a19'
 CONTRACT='docs/reference_cases/ge_beam3_g3c_b2_physical_contract_v1.json'
 CONTRACT_SHA='6d202e2c25bc62c0987f090a7b5c092bc788318bbb37e27c1261e67af592996b'
 DESIGN_REVIEW='docs/reference_cases/ge_beam3_g3c_b2_physical_contract_review_v1.json'
@@ -28,11 +28,20 @@ CAPSULE_SHA='2ce154b866565e1d03019651b1ae7fdd070e5554f38d72adf21d8080558b6756'
 JOB='docs/reference_cases/e4_pl_s3_v2_bounded_process.py'
 JOB_SHA='c5b192c9c3f6ee2c68a42ab4a0cfbcdbe81581381b800c13aacce0bb219a3383'
 TEST='tests/test_ge_beam3_g3c_b2_physical_core.py'
+TESTS={'b2-core':(TEST,'numeric_core'),
+       'b2-adapter':('tests/test_ge_beam3_g3c_b2_physical_adapter.py','adapter')}
 ALLOWED={
-    'src/anysolver/_ge_beam3_g3c_b2_physical.py',TEST,
+    'src/anysolver/_ge_beam3_g3c_b2_physical_adapter.py',TESTS['b2-adapter'][0],
     'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
+    'docs/GE_BEAM3_B2_PHYSICAL_ADAPTER_PLAN.md','docs/GE_BEAM3_Q4_RECOVERY_COEFFICIENT_AUDIT_PLAN.md',
+    'docs/reference_cases/ge_beam3_q4_exact_field.py',
+    'docs/reference_cases/ge_beam3_q4_recovery_coefficient_producer.py',
+    'docs/reference_cases/ge_beam3_q4_recovery_coefficient_checker.py',
+    'docs/reference_cases/ge_beam3_8073635_integration_contract_review.json',
 }
+INTEGRATION_REVIEW='docs/reference_cases/ge_beam3_8073635_integration_contract_review.json'
+INTEGRATION_SHA='3be7021fd63a259cca5c48d0e6b47e6a261805f10b4909374f5a9610c17a7b59'
 MEMORY=24*1024**3
 THREADS=('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS','BLIS_NUM_THREADS','NUMBA_NUM_THREADS','TBB_NUM_THREADS')
 
@@ -54,42 +63,49 @@ def inputs():
     names=git('ls-files','-z').split('\0')
     return {name:fingerprint(read(ROOT/name).replace(b'\r\n',b'\n')) for name in sorted(names) if name}
 
-def inventory(lane):
+def inventory(lane,gate='b2-core'):
+    if gate not in TESTS:raise ValueError('unregistered gate')
+    test_path,inventory_key=TESTS[gate]
     contract=environment.strict(read(ROOT/CONTRACT).replace(b'\r\n',b'\n'))
-    names=contract['test_nodes']['numeric_core']
-    tree=ast.parse(read(ROOT/TEST))
+    names=contract['test_nodes'][inventory_key]
+    tree=ast.parse(read(ROOT/test_path))
     actual=[n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
     if actual!=names:raise ValueError('registered test inventory changed')
-    if lane=='smoke':names=[names[2],names[7]]
+    if lane=='smoke':names=[names[2],names[7]] if gate=='b2-core' else [names[0]]
     elif lane!='core':raise ValueError('unregistered lane')
-    return [TEST+'::'+name for name in names]
+    return [test_path+'::'+name for name in names]
 
-def verify_review(raw,digest,candidate,rows):
+def verify_review(raw,digest,candidate,rows,gate='b2-core'):
     if sha256(raw).hexdigest()!=digest:raise ValueError('review hash')
     r=environment.strict(raw)
     if (set(r)!={'decision','findings','reviewer','scope','subject_commit'}
-        or r['decision']!='ACCEPTED_GE_BEAM3_B2_CORE_FOR_BOUNDED_EXECUTION' or r['findings']
+        or r['decision']!='ACCEPTED_GE_BEAM3_REGISTERED_GATE_FOR_BOUNDED_EXECUTION' or r['findings']
         or r['reviewer'].get('independent') is not True
         or r['subject_commit']!=candidate['commit']
-        or r['scope']!={'scope_id':SCOPE,'subject_tree':candidate['tree'],
+        or r['scope']!={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
                         'inputs_sha256':sha256(canonical(rows)).hexdigest(),'contract_sha256':CONTRACT_SHA}):
         raise ValueError('implementation review authority')
     return r
 
-def authority(review_path,review_sha):
+def authority(review_path,review_sha,gate='b2-core'):
+    if gate not in TESTS:raise ValueError('unregistered gate')
     if git('status','--porcelain','--untracked-files=all'):raise ValueError('dirty candidate')
     candidate=dict(commit=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}'))
     git('merge-base','--is-ancestor',BASE,'HEAD')
     changed=set(filter(None,git('diff','--name-only',BASE,'HEAD').splitlines()))
     if not changed<=ALLOWED:raise ValueError('production or unregistered extent changed')
-    for path,digest in ((CONTRACT,CONTRACT_SHA),(DESIGN_REVIEW,DESIGN_SHA),(JOB,JOB_SHA)):
+    for path,digest in ((CONTRACT,CONTRACT_SHA),(DESIGN_REVIEW,DESIGN_SHA),(JOB,JOB_SHA),(INTEGRATION_REVIEW,INTEGRATION_SHA)):
         if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:raise ValueError('frozen authority input')
     contract=environment.strict(read(ROOT/CONTRACT).replace(b'\r\n',b'\n'))
     for key in ('source','proposal'):
         item=contract[key]
         if sha256(read(ROOT/item['path']).replace(b'\r\n',b'\n')).hexdigest()!=item['sha256']:raise ValueError('source equation changed')
-    inventory('core')
-    rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows)
+    design=environment.strict(read(ROOT/INTEGRATION_REVIEW).replace(b'\r\n',b'\n'))
+    for path,key in (('docs/GE_BEAM3_B2_PHYSICAL_ADAPTER_PLAN.md','b2_adapter_plan_sha256'),
+                     ('docs/GE_BEAM3_Q4_RECOVERY_COEFFICIENT_AUDIT_PLAN.md','q4_audit_plan_sha256')):
+        if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=design['scope'][key]:raise ValueError('integration plan changed')
+    inventory('core',gate)
+    rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
     environment.verify(CAPSULE,CAPSULE_SHA)
     return candidate,rows,raw
 
@@ -113,9 +129,9 @@ def monitor(job,process,progress,clock=time.monotonic,sleep=time.sleep,start=Non
 def validate_lease(lease,expected,review_sha,lane,out):
     candidate,rows,_=expected
     if (set(lease)!={'schema','run_id','gate','lane','candidate','inputs','review_sha256','selected'}
-        or lease['schema']!=SCOPE or lease['gate']!='b2-core' or lease['lane']!=lane
+        or lease['schema']!=SCOPE or lease['gate'] not in TESTS or lease['lane']!=lane
         or lease['candidate']!=candidate or lease['inputs']!=rows
-        or lease['review_sha256']!=review_sha or lease['selected']!=inventory(lane)
+        or lease['review_sha256']!=review_sha or lease['selected']!=inventory(lane,lease['gate'])
         or str(uuid.UUID(lease['run_id']))!=lease['run_id']):raise ValueError('lease authority')
 
 def claim_attempt(out,run_id):
@@ -131,7 +147,7 @@ def worker(out,lease_sha):
     if sha256(raw).hexdigest()!=lease_sha:raise ValueError('lease hash')
     lease=environment.strict(raw)
     print('BEAM CHECKPOINT initialization',flush=True)
-    expected=authority(out/'review.json',lease['review_sha256'])
+    expected=authority(out/'review.json',lease['review_sha256'],lease['gate'])
     validate_lease(lease,expected,lease['review_sha256'],lease['lane'],out)
     claim_attempt(out,lease['run_id'])
     if any(os.environ.get(key)!='1' for key in THREADS):raise ValueError('numerical thread environment')
@@ -153,8 +169,8 @@ def worker(out,lease_sha):
     if code!=0 or recorder.bad or recorder.passed!=lease['selected']:return 1
     records=recorder.module.SCIENTIFIC_RECORDS
     if not records:raise ValueError('missing numerical scientific records')
-    if authority(out/'review.json',lease['review_sha256'])!=expected:raise ValueError('final authority changed')
-    scientific=dict(schema='GE_BEAM3_LOCAL_CORE_SCIENCE_V1',gate='b2-core',lane=lease['lane'],
+    if authority(out/'review.json',lease['review_sha256'],lease['gate'])!=expected:raise ValueError('final authority changed')
+    scientific=dict(schema='GE_BEAM3_REGISTERED_GATE_SCIENCE_V2',gate=lease['gate'],lane=lease['lane'],
                     candidate=lease['candidate'],selected=lease['selected'],records=records,
                     full_g3c_qualified=False,production_qualified=False)
     write(out/'scientific.pending.json',scientific)
@@ -202,12 +218,12 @@ def execute(args):
 
 def execute_guarded(args,watchdog):
     wave_start=time.monotonic()
-    expected=authority(args.review,args.review_sha256)
+    expected=authority(args.review,args.review_sha256,args.gate)
     watchdog.check()
     out=Path(tempfile.mkdtemp(prefix='anysolver-beam-qualification-'))
     print('DIAGNOSTICS '+str(out),flush=True)
     lease=dict(schema=SCOPE,run_id=str(uuid.uuid4()),gate=args.gate,lane=args.lane,
-               candidate=expected[0],inputs=expected[1],review_sha256=args.review_sha256,selected=inventory(args.lane))
+               candidate=expected[0],inputs=expected[1],review_sha256=args.review_sha256,selected=inventory(args.lane,args.gate))
     write(out/'lease.json',lease)
     with (out/'review.json').open('xb') as stream:stream.write(expected[2])
     job=job_type()(MEMORY);record=dict(status='FAILED');process=None
@@ -226,11 +242,11 @@ def execute_guarded(args,watchdog):
             pending=read(out/'scientific.pending.json');science=environment.strict(pending)
             if (completion!={'selected':lease['selected'],'scientific':fingerprint(pending)}
                 or set(science)!={'schema','gate','lane','candidate','selected','records','full_g3c_qualified','production_qualified'}
-                or science['schema']!='GE_BEAM3_LOCAL_CORE_SCIENCE_V1' or science['gate']!='b2-core'
+                or science['schema']!='GE_BEAM3_REGISTERED_GATE_SCIENCE_V2' or science['gate']!=lease['gate']
                 or science['lane']!=lease['lane'] or type(science['records']) is not list or not science['records']
                 or science['candidate']!=lease['candidate'] or science['selected']!=lease['selected']
                 or science['full_g3c_qualified'] or science['production_qualified']):raise ValueError('completion mismatch')
-            if authority(args.review,args.review_sha256)!=expected:raise ValueError('coordinator final authority')
+            if authority(args.review,args.review_sha256,args.gate)!=expected:raise ValueError('coordinator final authority')
             if time.monotonic()-wave_start>=1800:raise ValueError('wave deadline')
     except BaseException as exc:
         record.update(status='FAILED',exception=type(exc).__name__)
@@ -259,7 +275,7 @@ def main():
     if len(sys.argv)==4 and sys.argv[1]=='--worker':return worker(Path(sys.argv[2]),sys.argv[3])
     if os.name!='nt':raise ValueError('Windows process-tree execution required')
     parser=argparse.ArgumentParser()
-    parser.add_argument('--gate',choices=['b2-core'],required=True)
+    parser.add_argument('--gate',choices=list(TESTS),required=True)
     parser.add_argument('--lane',choices=['smoke','core'],required=True)
     parser.add_argument('--review',type=Path,required=True)
     parser.add_argument('--review-sha256',required=True)

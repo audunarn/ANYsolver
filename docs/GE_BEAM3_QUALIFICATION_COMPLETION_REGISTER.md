@@ -20,7 +20,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | MO16 old B2 | Exact obstruction reviewed at62231d6 | New physical operator and graph identity |
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
-| B2 matrix adapter | Not implemented | Chart/transport/work/state tests under new identity |
+| B2 matrix adapter | Private implementation and three tests written under8073635 design; not executed | Independent frozen implementation review, smoke and two full cycles |
 | Q4 physical recovery | Open; naive single-field formula disproved, general impossibility unproved | Source derivation or explicitly reviewed private successor |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
@@ -116,3 +116,30 @@ Next gate: the separately identified physical B2 matrix adapter, retaining both
 chart derivative orders, spatial connection, physical recovery work and unchanged
 historical identities. The external adapter design and Q4 coefficient-audit drafts
 are planning inputs only, not execution authority or completed qualification.
+
+## Physical integration successor
+
+Worktree `ge-beam3-g3c-physical-integration-v1` starts from22289a6; the executed
+B2-core worktree and artifacts are preserved unchanged. Contract8073635 fixes
+the adapter identity/admission and Q4 two-fixture coefficient audit. Independent
+design review SHA-256
+`3be7021fd63a259cca5c48d0e6b47e6a261805f10b4909374f5a9610c17a7b59`
+accepts implementation only, not execution or completed recovery.
+
+Private B2 adapter and its three registered tests are implemented, pending
+independent execution review. The shared runner now distinguishes core and
+adapter gate authority; gate identity is bound in the review, lease, collection
+and scientific result. Ten inert guards and seven exact contract tests passed
+after this extension. No adapter numerical test has run at this checkpoint.
+
+Independent Q4 producer and checker source reconstructions are implemented with
+shared arithmetic only. They cover the complete40300 degree-three/four inventory
+and the degree-two physical operator. The checker was authored from public source
+equations without importing or reading producer mechanics. It compares every
+proof header, frame, station, exact check, coefficient and physical matrix.
+Implementation/execution review, arithmetic/mutation tests and bounded run wiring
+remain required. These files are not Q4 recovery acceptance and have not run.
+
+Wider geometry admission parity remains OPEN. Initial adapter admission reuses
+the old pure chart, not the old physical operator. Its range is not represented
+as full geometry parity, and successful local tests cannot discharge that row.
