@@ -20,8 +20,8 @@ publication or default change. No repeated approval needed inside this boundary.
 | MO16 old B2 | Exact obstruction reviewed at62231d6 | New physical operator and graph identity |
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
-| B2 matrix adapter | Private implementation and three tests written under8073635 design; not executed | Independent frozen implementation review, smoke and two full cycles |
-| Q4 physical recovery | Open; naive single-field formula disproved, general impossibility unproved | Source derivation or explicitly reviewed private successor |
+| B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
+| Q4 physical recovery | Open; d0057065 natural retained-space reconstruction NO_GO independently confirmed | Affine chart-image constitutive/work recovery derivation; no public mechanics change |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
@@ -167,3 +167,71 @@ producer, checker or mutation test has executed yet. Independent implementation
 review, bounded smoke/rehearsal, two deterministic complete cycles and evidence
 review remain required. Any negative audit result is confined to its named
 retained-space representation, not a universal impossibility or public Q4 change.
+
+## Accepted local closeouts and exact Q4 audit — 2026-09-13
+
+The chronological preparation sections above are preserved as historical status,
+not the current gate state. The following supersedes their pending-run statements.
+
+Physical B2 adapter freeze5121102cdd82a99c091ac2c1403afc79d5869742,
+tree5d75a1597a47e898071c19f213bcd5b88e671cbe, passed its three-node full
+inventory;86 actual records per full packet. Complete canonical results are
+3167246 bytes, SHA-256
+54efcaebebd0f8b292a3913a0d1eb7c088480a254a968038f91ffb1a34a1381d.
+The accepted implementation/evidence reviews and original manifest are imported
+unchanged from evidence-only commit8505f3586745dcf95ad1b4daca787fce0f7b64ef.
+
+Explicit phase completion: original first full B2 packets are the complete
+rehearsals; original second full packets are formal1. New supplemental formal2
+packets ran from clean detached exact freezes: core dc60774 suffixugejvs6b and
+adapter5121102 suffix6w58uko_. Both returned0/drained with zero active processes,
+45.26s/45.83s whole invocation, respectively. Their canonical scientific bytes
+match both earlier full packets exactly. Original packet labels and prior
+manifests remain unchanged; cross-run ordering is recorded from the actual
+execution sequence, not invented embedded timestamps. Independent supplemental
+review SHA-25695edd0b65da47a55a6d4d9312b9315d7532f744fc40302ddd3581ae68d6628ee
+accepted both phase sequences with empty findings. The supplemental manifest
+binds all64 files, originals, durable locations and prior review identities.
+This closes the local core/adapter execution phases only, not full graph or
+wider geometry parity.
+
+Q4 audit freeze d0057065ce2027b546e4382c271d3fd514cbd6c8,
+tree f99f5d29ce80604256b7dba7a4463f130b95f0cb, completed separate2-node smoke,
+5-node complete rehearsal and two5-node formal cycles. Twelve inert guards
+had passed before execution. Both independently authored checker replicas per
+fixture agreed exactly. All40300 coefficients, both24x24 physical matrices,
+6 assembly mutations and8 proof mutations were inspected independently.
+
+Rehearsal/formal1/formal2 canonical science is7025874 bytes, SHA-256
+24e5593fb4228e33dd598e82ba5d8616b5435848cfe63fe9de553d468d65de68.
+The genuine scientific terminal is
+NO_GO_G3C_Q4_NATURAL_RETAINED_SPACE_FINITE_IDENTITY.
+Square has83 nonzero coefficients, rhombus99. First ordered witness is square
+degree3 indices[0,2,2]: difference7/7200, stationary-73/7200, source-1/90.
+Passing process/test guards means this negative scientific result is authentic;
+it does not mean physical recovery passed.
+
+All processes drained normally. Whole full-run durations were95.80s,96.11s and
+95.19s, each below309MB peak process-tree memory. All74 raw files, including
+nested proof/checker files, are preserved under
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-audit-d0057065-20260913/
+with suffixes telga08c(smoke),u4zkv4fh(rehearsal),qxgfye66(formal1),voneivi9(formal2).
+Every original-to-archive and reviewer-stage copy was verified by byte count and
+SHA-256. Independent evidence review SHA-256
+8208fff573ee5f435963dfba2fde4efa4bfaea6994c9ecdd7bbc871dc1766bf1
+accepted the scoped NO_GO with empty findings. Canonical review/manifest and
+implementation review are under docs/reference_cases/ge_beam3_d0057065_*.
+
+This NO_GO rejects the named natural retained-space enrichment on unrestricted
+local variables. It does not invalidate public Q4 qualification, prove universal
+physical-recovery impossibility, or authorize reduced G3c scope. Source-only
+independent derivation identifies a different promising physical recovery on
+the actual affine-reference Procrustes chart image. It requires a new explicit
+recovery representation, exact proof and full work/Schur tests before acceptance.
+No new recovery implementation or execution is accepted by this closeout.
+
+Next gate: independently freeze and test affine chart-image constitutive and
+variational-work recovery. Full MO01-MO18,375/3075/3450 G3c cycles, G4/G5 and all
+applicable P01-P32/U01-U10 rows remain required. Public legacy B2/B3, qualified
+Q4/S3, defaults and historical evidence remain unchanged. No release/integration
+qualification is inferred from these local results.
