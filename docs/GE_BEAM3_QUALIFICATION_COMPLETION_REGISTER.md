@@ -21,7 +21,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
 | B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
-| Q4 physical recovery | Open; d0057065 natural retained-space reconstruction NO_GO independently confirmed | Affine chart-image constitutive/work recovery derivation; no public mechanics change |
+| Q4 physical recovery | Exact affine identities accepted at d49aacd; numerical physical recovery still open; prior scoped d0057065 NO_GO preserved | Freeze numerical chart work/Hessian, constitutive fields and state/provenance gate; no public mechanics change |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
