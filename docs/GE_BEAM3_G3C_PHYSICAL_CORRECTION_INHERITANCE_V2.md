@@ -57,14 +57,19 @@ successor runtime identities, input packet hash, and successor replay hash.
 Correction aggregate, receipt, process, result, and node schemas require exact
 key sets and exact scalar types.  Boolean, integer, and floating-point values are
 never interchangeable.  The correction-union publisher performs a final full
-authority check after validation and immediately before reporting success.
+authority check after staged validation and immediately before exclusive
+promotion of the accepted evidence.  No accepted file may exist if this final
+check fails.
 
 ## Execution boundary
 
 After an independent design review and an independent implementation review,
 only the corrected `R-GUARDS` rehearsal partition and inert corrected union may
-run.  The six accepted predecessor partitions are inherited through their exact
-closed-world evidence DAG and are never recomputed.  Success still means only
+run.  The five accepted predecessor rehearsal partitions (`R-HISTORY` and
+`R-PREFIX-A` through `R-PREFIX-D`) plus accepted smoke and local evidence are
+inherited through their exact closed-world evidence DAG and are never
+recomputed.  The failed predecessor `R-GUARDS` attempt is incident evidence only
+and is explicitly excluded from inherited accepted records.  Success still means only
 `COMPLETE_GE_BEAM3_G3C_PHYSICAL_CORRECTED_REHEARSAL_ONLY`; full G3c, production
 qualification, selector/default changes, integration, versions and publication
 remain unauthorized.
