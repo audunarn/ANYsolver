@@ -11,6 +11,8 @@ The accepted predecessor freeze is commit
 `f6a62518be52a414604aa5e1beddd4601093faca`, tree
 `1230eea2b64ca6e585ad23b389e514f1d5c493c4`, with implementation-review SHA-256
 `52f8df02bd22c635bf828bf93190a34ec1463b20268a1a822e4e0f3c6c042eaf`.
+Its authenticated physical replay runtime is
+`41a0dddda886672479294953871e83be3073ed38e129e12f3fa210bfbf3ce87c`.
 The successor correction starts at commit
 `4c8ebe1150aecd0dca01b40ef0eac81f731f2f19`, tree
 `d8ea4ab6f6cec40b260e09f0efaff7df645074ec`.  Its only changes are the
@@ -91,6 +93,46 @@ Before a successor guard child is launched, the runner shall:
 6. use only the validated predecessor R-HISTORY packet outputs as immutable
    inputs to the successor guard probes.
 
+### Dual-runtime compatibility
+
+The physical replay runtime includes `scripts/run_ge_beam3_qualification.py`.
+Changing the reviewed runner therefore creates a different successor runtime even
+when every mechanics and state-definition source is unchanged.  The successor
+must not compare an inherited packet to the successor runtime, rewrite its stored
+runtime, monkeypatch a runtime function, or disable a runtime guard.
+
+Instead, correction mode uses an explicit immutable compatibility record with
+exact keys for predecessor commit/tree/runtime/review, successor
+commit/tree/runtime/review, this addendum and its design review, the unchanged
+production/source set, and the exact allowed changed-path set.  The record and its
+SHA-256 are embedded in every successor guard lease and receipt.
+
+The runner validates the two contexts separately:
+
+- **predecessor evidence context:** accepted smoke/local/history/prefix evidence
+  and every inherited packet are authenticated with the predecessor candidate,
+  full input DAG, review bytes, and predecessor runtime;
+- **successor execution context:** the clean current commit, full input DAG,
+  implementation review, runtime, mutation correction, and process harness are
+  authenticated before launch and at finalization.
+
+The replay owner may accept the predecessor runtime only through a dedicated
+keyword-only compatibility argument whose value exactly equals the embedded
+record.  It first requires the packet runtime to equal the frozen predecessor
+runtime, then runs the unchanged packet preflight against that predecessor
+runtime.  It separately requires the live runtime to equal the successor runtime
+before construction and after replay, retains the existing dispatch/code guards,
+and compares the replay result normally.  Calls without the compatibility record
+retain the original exact-runtime behavior.  No public or non-correction caller
+can obtain implicit compatibility.
+
+The successor authority proves that no `src/anysolver` mechanics file, physical
+packet schema/validation definition, graph definition, fixture, tolerance, case,
+or scientific test changed.  The only replay-owner delta permitted is the
+reviewed exact compatibility admission described above.  The runner recomputes
+and binds normalized blob hashes for the unchanged source set at capture and
+finalization.
+
 The successor `R-GUARDS` aggregate contains only nodes 90 through 233 under the
 successor candidate.  Its receipt binds the seven inherited evidence descriptors,
 the predecessor authority, the correction authority, and the failed process
@@ -108,7 +150,12 @@ Tests must reject wrong predecessor candidate/review/input hashes, altered
 accepted files, reordered or omitted prerequisites, a different failed incident,
 extra files or reparse entries, correction mode on another partition/lane,
 mixed predecessor chains, changed record bytes, and any attempt to hide the two
-candidate identities.
+candidate identities.  They must also reject absent, malformed, wrong-old,
+wrong-current, and foreign runtime compatibility records; a changed production,
+state-definition, graph, fixture, tolerance, case, or scientific-test blob; and a
+compatibility record used outside the correction guard path.  One positive inert
+test must demonstrate that an unchanged predecessor packet is authenticated with
+the old runtime while live replay is pinned to the new runtime.
 
 The only successful terminals are:
 
