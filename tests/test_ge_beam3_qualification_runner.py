@@ -50,7 +50,8 @@ def inert_row(table,identity):
     elif table=='extension_lemma':row.update(lemma_sha256='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762',review_sha256='e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e')
     elif table=='station_join':row.update(station_association_id=r.STATION_ASSOCIATION_ID,verified=True,rejections=4)
     elif table=='chart_authority':row.update(chart_numerics_id=r.CHART_ID,addendum_sha256=r.CHART_ADDENDUM_SHA,
-        review_sha256=r.CHART_REVIEW_SHA,sources=dict(r.CHART_SOURCES),verified=True)
+        review_sha256=r.CHART_REVIEW_SHA,increment_addendum_sha256=r.INCREMENT_ADDENDUM_SHA,
+        increment_review_sha256=r.INCREMENT_REVIEW_SHA,sources=dict(r.CHART_SOURCES),verified=True)
     elif table=='fingerprint':row.update(distinct_fingerprints=20,nonfinite_rejections=5,evidence_sha256='0'*64,verified=True)
     elif table=='station':row.update(checks={key:0. for key in ('d','D','D2','R','Q','x')},energy=0.,stations=4)
     elif table=='independent':row['stations']=[{key:0. for key in ('M','strain','resultant','frame','constitutive')} for _ in range(4)]
@@ -79,11 +80,19 @@ def inert_row(table,identity):
         if identity in ('before_work','before_publication','invalid_callback'):
             row.update(callbacks=2 if identity=='before_publication' else 1,family_entries=1 if identity=='before_publication' else 0,published=False)
         else:row['rejected_before_family']=True
+    elif table=='eigen_derivatives':row.update(derivative_coordinates=24,derivative_pairs=576,
+        derivative_residuals={key:0. for key in ('first_normalization','second_normalization','first_stationarity','second_stationarity','second_symmetry')})
+    elif table=='chart_mutations':
+        compared=identity in ('missing_delta_covariance','naive_reference_subtraction','omitted_delta_derivatives')
+        row['rejection']=('INDEPENDENT_CHART_COMPARISON' if compared else 'BRANCH_REJECTION' if identity in ('wrong_davenport_branch','wrong_polar_branch')
+            else 'DERIVATIVE_IDENTITY_REJECTION' if identity in ('eigen_first_derivative','eigen_second_derivative') else 'NONCONVERGENCE_REJECTION')
+        if compared:row['relative_error']=1e-8
     elif table=='mutations':
         mutation=identity.split('::',1)[1]
         row['rejection']=('INDEPENDENT_HESSIAN' if mutation in ('force_weighted_Hessian','chart_second') else
             'STATION_EQUILIBRIUM' if mutation=='coupling_sign' else 'STATION_INVERSE' if mutation=='inverse' else
             'MATERIAL_ENERGY' if mutation=='numerical_energy_leak' else 'INDEPENDENT_STATION_COMPARISON')
+    if table=='tiny':row['chart']={key:0. for key in ('d','D','D2','R','Q','x')}
     return row
 
 
@@ -375,7 +384,7 @@ class GuardTests(unittest.TestCase):
             for table,ids in tables.items():
                 # Distinct schema branches include ZERO/nonzero, all negative
                 # probe IDs, graph renumberings and both director polarities.
-                selected=ids if table in ('immutability','rejections','graph','director') else [ids[0],ids[-1]]
+                selected=ids if table in ('immutability','rejections','graph','director','chart_mutations') else [ids[0],ids[-1]]
                 for identity in selected:
                     if (table,identity) in checked:continue
                     checked.add((table,identity));row=inert_row(table,identity)

@@ -727,3 +727,56 @@ is silently added or discarded. Later B3 baseline fixtures should cover axial,
 bending/torsion initial velocity, damping/prescribed histories and supported
 corotational/reference-inertia impact with rollback before any finite-spin claim.
 These audits ran no numerical tests and do not close any parity row.
+
+## Increment-resolved chart implementation under accepted design
+
+Source-equivalence design86f2a0081b97435a4b9584a40efec9773be2105a,
+treecf34bcb595a6bf7a51fae88c291a3fbf5868a2c2, is accepted for implementation
+only. Addendum SHA-256
+7e637ff69453715e5251614d76e08d2be7c7fd8ac4932c5fd7a4cc939023caf0;
+canonical independent review SHA-256
+04bda4789cc3529fbae2fd52f2881e8b8f7a6e48447cb6ec91c8275581ff6655.
+The design, review and rationale are copied with byte/SHA verification to
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-increment-chart-design-86f2a00-20260913/.
+
+The private producer now has a separate increment-chart implementation using
+Decimal80 refinement of the same Davenport eigenstationarity and analytical
+bordered derivatives. The independent checker uses separately authored Decimal
+proper-polar Cayley refinement and analytical Sylvester derivatives. Both retain
+actual centered X/u increments and construct R-I/relative rotation increments
+directly. Old public and private chart files remain preserved. The new mandatory
+numerical identity is GE_BEAM3_Q4_AFFINE_INCREMENT_RESOLVED_CHART_NUMERICS_V1.
+No numerical refinement repairs the actual supplied accepted rotation matrices.
+
+Pre-freeze review caught and corrected a checker mistake that discarded accurate
+centered translations; its values now use Decimal centering while retaining the
+analytical centering derivatives. The same review requires explicit normalized
+eigenpair derivative identities and actual stationary wrong-polar-branch rejection
+in addition to existing chart comparisons. These corrections/regressions are
+being completed before any numerical run. The separate23 inert runner guards
+passed in0.690 seconds; no scientific acceptance is inferred. The original15
+nodes,130 physical states and1e-11/1e-7 gates are unchanged. Clean implementation
+review, refreshed hash-bound fixture data and fresh bounded confirmation remain
+prerequisites; the last full rehearsal remains BLOCKED.
+
+Pre-freeze obligations are now implemented: actual same-path normalized
+eigenpair derivative verification covers24 first coordinates and576 ordered
+second pairs; nine chart-mutation guards include actual first/second derivative
+corruption, missing covariance increment, obsolete subtraction, omitted DeltaR
+derivatives, wrong dominant eigenbranch, both bounded nonconvergence paths and
+a proper stationary nonmaximizing polar branch. All six existing tiny states
+also compare complete d/D/D2. These tests have not run numerically yet.
+
+Fixture-only correction5 passed once in20.0064323 seconds, peak157876224 bytes,
+exit0, drained active0. Preparation authority SHA-256
+f3b30fc56e31d18e157495343d84e2e927528fd7e0e399b54f7c3de456ffbc7b;
+reviewed launcher SHA-256
+118b1e56ce81a8dff7e19c2a895e5adc5b3261c5ea044b74d5797566d98534f6.
+The manifest is82237 bytes, SHA-256
+a2b19f46cdb41bbf7981d824525c6f4f0553815d0aaf00e2faf37e5e0d59f53a.
+All130 observations and generator bindings equal correction4; only source
+bindings changed. All five raw preparation files are additionally copied with
+byte/SHA verification to
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-fixture-correction5-20260913/.
+Final separate23 inert guards passed in0.674 seconds; AST/diff checks passed.
+Clean independent implementation acceptance still precedes numerical execution.

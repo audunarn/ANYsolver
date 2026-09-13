@@ -39,13 +39,19 @@ NUMERICAL_PLAN='docs/GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_CONTRACT.md'
 NUMERICAL_PLAN_SHA='21cec54b2469e291c8f90a2c042e3cf693a14f7bc10efd5111ea842ca65a218c'
 NUMERICAL_REVIEW='docs/reference_cases/ge_beam3_q4_affine_numerical_design_review_v1.json'
 NUMERICAL_REVIEW_SHA='e2a28209165d72046093ec08d06b8243399f820ab8db0b6fb7beeeab0e96055f'
-CHART_ID='GE_BEAM3_Q4_AFFINE_STABLE_CHART_NUMERICS_V1'
+CHART_ID='GE_BEAM3_Q4_AFFINE_INCREMENT_RESOLVED_CHART_NUMERICS_V1'
+INCREMENT_ADDENDUM='docs/GE_BEAM3_Q4_AFFINE_CANCELLATION_SAFE_CHART_ADDENDUM.md'
+INCREMENT_ADDENDUM_SHA='7e637ff69453715e5251614d76e08d2be7c7fd8ac4932c5fd7a4cc939023caf0'
+INCREMENT_REVIEW='docs/reference_cases/ge_beam3_q4_affine_increment_chart_design_review_v1.json'
+INCREMENT_REVIEW_SHA='04bda4789cc3529fbae2fd52f2881e8b8f7a6e48447cb6ec91c8275581ff6655'
 STATION_ASSOCIATION_ID='GE_BEAM3_Q4_NATURAL_COORDINATE_BIJECTION_V1'
 CHART_ADDENDUM='docs/GE_BEAM3_Q4_AFFINE_STABLE_CHART_ADDENDUM.md'
 CHART_ADDENDUM_SHA='1eb29b8814e6555e7d16569e2c8d30c828a60458dea4a2801c10f4d58d2c2176'
 CHART_REVIEW='docs/reference_cases/ge_beam3_q4_affine_stable_chart_design_review_v1.json'
 CHART_REVIEW_SHA='ca6de27e79186c9e0b37bf21e765322aa8e46dc323eb858db039951fec7efeab'
 CHART_SOURCES={
+ 'src/anysolver/_ge_beam3_g3c_affine_q4_chart.py':'2a26742ec7680a5e75934fb32ee8601d3877cd0befb250489f991f1b9d198a9f',
+ 'docs/reference_cases/ge_beam3_q4_affine_numerical_chart.py':'b7cc92f70d35e3b8f2ab10202cb2f3ad1116e92775425888e482293b323c23ac',
  'src/anysolver/_ge_beam3_g3c_so3_numerics.py':'588ace39570658f1a83c0110d3a019ebad770d6091b271ff4bbc40b97f96e12e',
  'docs/GE_BEAM3_G3C_SO3_NUMERICS_CONTRACT.md':'269bcd4e1fda151e7c22c396a70c43498e8450b222c263dd2655b9ca45998496',
  'docs/reference_cases/ge_beam3_g3c_so3_numerics_implementation_review_v1.json':'4debde89b44c990478487dda4852d7734b852ca01dfb2d3626e782c2328756f1',
@@ -63,7 +69,7 @@ NUMERICAL_SMOKE='test_affine_recovery_smoke_square_station_work'
 NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1,'fingerprint':1,'chart_authority':1,'station_join':1},
     {'station':54},{'independent':54},{'schur':54},{'work':54},{'directional':27},
     {'rigid':3,'common_motion':12},{'d4':24,'director':6},{'passive':3,'rebase':3},
-    {'graph':20},{'tiny':6,'channels':54},{'races':20},{'immutability':9},{'rejections':19},{'mutations':42}]
+    {'graph':20},{'tiny':6,'channels':54},{'races':20},{'immutability':9},{'rejections':19},{'mutations':42,'chart_mutations':9,'eigen_derivatives':1}]
 NUMERICAL_SHAPES=('SQUARE','RECTANGLE','RHOMBUS')
 NUMERICAL_BASE_IDS=[s+'::'+v for s in NUMERICAL_SHAPES for v in ('0.01','1','10')]
 NUMERICAL_GRAPH_IDS=[g+'::'+v for g in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') for v in
@@ -88,7 +94,11 @@ NUMERICAL_TABLE_IDS=[
        'GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1','OLD_RETAINED_35_VARIABLE_SYSTEM','FOREIGN',
        'nonfinite_q','nonfinite_accepted','wrong_q_shape','wrong_rotation_shape','before_work','before_publication','invalid_callback']},
     {'mutations':[s+'::'+m for s in NUMERICAL_SHAPES for m in ('station_order','weight','frame','M','resultant','n','Dn','Hn',
-       'force_weighted_Hessian','chart_second','coupling_sign','inverse','numerical_energy_leak','nonlinear_point_join')]}]
+       'force_weighted_Hessian','chart_second','coupling_sign','inverse','numerical_energy_leak','nonlinear_point_join')],
+     'chart_mutations':['missing_delta_covariance','naive_reference_subtraction','omitted_delta_derivatives',
+                        'wrong_davenport_branch','wrong_polar_branch','davenport_nonconvergence','polar_nonconvergence',
+                        'eigen_first_derivative','eigen_second_derivative'],
+     'eigen_derivatives':['SQUARE::1::amplitude=1e-06']}]
 NUMERICAL_SOURCE_HASHES={
  'src/anysolver/e4_pl_element.py':'7fc46a18046e043512a5fb2c3f61ed0b95b834e4dde764f63c500a885e87ea38',
  'src/anysolver/elements.py':'f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37',
@@ -103,7 +113,7 @@ PHYSICAL_TABLES=frozenset(('work','common_motion','d4','director','passive','reb
 PHYSICAL_SHAPES={'physical_energy':[],'physical_force':[24],'physical_hessian':[24,24],
     'source_physical_energy':[],'source_physical_force':[24],'source_physical_hessian':[24,24]}
 OBSERVATION_MANIFEST='docs/reference_cases/ge_beam3_q4_affine_observation_manifest_v1.json'
-OBSERVATION_MANIFEST_SHA='8ccaeb717fbbe05aab4a9024ffcc40fd33da5236bb6aeb626af654216fcb9d74'
+OBSERVATION_MANIFEST_SHA='a2b19f46cdb41bbf7981d824525c6f4f0553815d0aaf00e2faf37e5e0d59f53a'
 AFFINE_TESTS=['test_affine_exact_arithmetic_and_schema','test_affine_source_and_representation_boundaries',
               'test_affine_square_chart_polynomial','test_affine_rectangle_chart_polynomial',
               'test_affine_rhombus_chart_polynomial','test_affine_stationary_schur_and_mutations']
@@ -121,6 +131,8 @@ ALLOWED={
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
     'src/anysolver/_ge_beam3_g3c_affine_q4_recovery.py',
     'src/anysolver/_ge_beam3_g3c_affine_q4_chart.py',CHART_ADDENDUM,CHART_REVIEW,
+    'src/anysolver/_ge_beam3_g3c_affine_q4_increment_chart.py',INCREMENT_ADDENDUM,INCREMENT_REVIEW,
+    'docs/reference_cases/ge_beam3_q4_affine_increment_chart.py',
     'src/anysolver/_ge_beam3_g3c_affine_q4_registry.py',
     'docs/reference_cases/ge_beam3_q4_affine_numerical_checker.py',
     'docs/reference_cases/ge_beam3_q4_affine_numerical_chart.py',
@@ -208,6 +220,15 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
             or affine['scope'].get('gate')!='q4-affine-exact' or affine['scope'].get('plan_sha256')!=AFFINE_PLAN_SHA):
             raise ValueError('affine independent design acceptance')
     if gate=='q4-affine-numerical':
+        for path,digest in ((INCREMENT_ADDENDUM,INCREMENT_ADDENDUM_SHA),(INCREMENT_REVIEW,INCREMENT_REVIEW_SHA)):
+            if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:raise ValueError('increment chart authority')
+        increment_review=environment.strict(read(ROOT/INCREMENT_REVIEW))
+        if (set(increment_review)!={'decision','findings','reviewer','scope','subject_commit'} or increment_review['findings']
+            or increment_review['decision']!='ACCEPTED_GE_BEAM3_Q4_AFFINE_INCREMENT_CHART_DESIGN_ONLY'
+            or increment_review['reviewer'].get('independent') is not True
+            or increment_review['scope'].get('addendum_sha256')!=INCREMENT_ADDENDUM_SHA
+            or increment_review['scope'].get('original_contract_sha256')!=NUMERICAL_PLAN_SHA
+            or increment_review['scope'].get('execution_authorized') is not False):raise ValueError('increment chart design review')
         for path,digest in {CHART_ADDENDUM:CHART_ADDENDUM_SHA,CHART_REVIEW:CHART_REVIEW_SHA,**CHART_SOURCES}.items():
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:raise ValueError('stable chart source authority')
         chart_review=environment.strict(read(ROOT/CHART_REVIEW))
@@ -766,8 +787,9 @@ def validate_numerical_row(table,row):
         exact_keys(row,base|{'station_association_id','verified','rejections'})
         if row['station_association_id']!=STATION_ASSOCIATION_ID or row['verified'] is not True or type(row['rejections'])is not int or row['rejections']!=4:raise ValueError('station coordinate association evidence')
     elif table=='chart_authority':
-        exact_keys(row,base|{'chart_numerics_id','addendum_sha256','review_sha256','sources','verified'})
+        exact_keys(row,base|{'chart_numerics_id','addendum_sha256','review_sha256','increment_addendum_sha256','increment_review_sha256','sources','verified'})
         if (row['chart_numerics_id']!=CHART_ID or row['addendum_sha256']!=CHART_ADDENDUM_SHA
+            or row['increment_addendum_sha256']!=INCREMENT_ADDENDUM_SHA or row['increment_review_sha256']!=INCREMENT_REVIEW_SHA
             or row['review_sha256']!=CHART_REVIEW_SHA or row['sources']!=CHART_SOURCES
             or row['verified'] is not True):raise ValueError('stable chart caller authority')
     elif table=='fingerprint':
@@ -799,8 +821,11 @@ def validate_numerical_row(table,row):
         exact_keys(row,base|{'rigid_columns','total_positive_modes','eigenvalues'});array_fingerprint(row['eigenvalues'],[24])
         if type(row['rigid_columns'])is not int or row['rigid_columns']!=6 or type(row['total_positive_modes'])is not int or row['total_positive_modes']!=18:raise ValueError('rigid mode inventory')
     elif table in ('common_motion','passive','rebase','tiny'):
-        exact_keys(row,base|{'energy','checks'});energy=finite_number(row['energy'])
+        exact_keys(row,base|{'energy','checks'}|({'chart'} if table=='tiny' else set()));energy=finite_number(row['energy'])
         if table=='tiny' and energy<=0:raise ValueError('positive tiny physical energy required')
+        if table=='tiny':
+            exact_keys(row['chart'],('d','D','D2','R','Q','x'))
+            for value in row['chart'].values():residual(value)
     elif table=='d4':
         exact_keys(row,base|{'station_map','checks'})
         k=int(identity.rsplit(':',1)[1]);corners=(0,1,2,3) if k<4 else (0,3,2,1)
@@ -841,6 +866,18 @@ def validate_numerical_row(table,row):
         else:
             exact_keys(row,base|{'rejected_before_family'})
             if row['rejected_before_family'] is not True:raise ValueError('admission rejection receipt')
+    elif table=='eigen_derivatives':
+        exact_keys(row,base|{'derivative_coordinates','derivative_pairs','derivative_residuals'})
+        if type(row['derivative_coordinates'])is not int or row['derivative_coordinates']!=24 or type(row['derivative_pairs'])is not int or row['derivative_pairs']!=576:raise ValueError('eigen derivative inventory')
+        exact_keys(row['derivative_residuals'],('first_normalization','second_normalization','first_stationarity','second_stationarity','second_symmetry'))
+        for value in row['derivative_residuals'].values():residual(value)
+    elif table=='chart_mutations':
+        compared=identity in ('missing_delta_covariance','naive_reference_subtraction','omitted_delta_derivatives')
+        exact_keys(row,base|{'rejection'}|({'relative_error'} if compared else set()))
+        expected=('INDEPENDENT_CHART_COMPARISON' if compared else 'BRANCH_REJECTION' if identity in ('wrong_davenport_branch','wrong_polar_branch')
+                  else 'DERIVATIVE_IDENTITY_REJECTION' if identity in ('eigen_first_derivative','eigen_second_derivative') else 'NONCONVERGENCE_REJECTION')
+        if row['rejection']!=expected:raise ValueError('increment chart mutation mechanism')
+        if compared and finite_number(row['relative_error'])<=1e-11:raise ValueError('increment mutation did not violate frozen tolerance')
     elif table=='mutations':
         exact_keys(row,base|{'rejection'});mutation=identity.split('::',1)[1]
         enum=('INDEPENDENT_HESSIAN' if mutation in ('force_weighted_Hessian','chart_second') else

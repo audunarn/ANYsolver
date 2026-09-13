@@ -7,7 +7,7 @@ import math
 import json
 from hashlib import sha256
 import numpy as np
-import ge_beam3_q4_affine_numerical_chart as chart
+import ge_beam3_q4_affine_increment_chart as chart
 
 GAUSS = tuple((r/math.sqrt(3),s/math.sqrt(3)) for r,s in ((-1,-1),(1,-1),(1,1),(-1,1)))
 

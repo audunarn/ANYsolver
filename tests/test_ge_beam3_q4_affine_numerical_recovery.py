@@ -9,6 +9,7 @@ from hashlib import sha256
 import json
 import math
 from itertools import permutations
+from decimal import Decimal, localcontext, ROUND_HALF_EVEN
 import os
 from pathlib import Path
 import sys
@@ -22,6 +23,7 @@ from anysolver import _ge_beam3_g3c_affine_q4_recovery as candidate
 from anysolver import _ge_beam3_g3c_affine_q4_registry as registry
 import ge_beam3_q4_affine_numerical_checker as checker
 from anysolver import _ge_beam3_g3c_affine_q4_chart as stable_chart
+from anysolver import _ge_beam3_g3c_affine_q4_increment_chart as increment_chart
 from anysolver import _ge_beam3_g3c_so3_numerics as stable_so3
 from anysolver import _ge_beam3_variational_shell as original_fit
 from anysolver import _ge_beam3_mixed_ad as original_ad
@@ -252,8 +254,22 @@ def fingerprint_fixture():
 
 
 def chart_authority():
-    assert candidate.CHART_NUMERICS_ID==stable_chart.NUMERICS_ID=='GE_BEAM3_Q4_AFFINE_STABLE_CHART_NUMERICS_V1'
-    assert candidate.deformation is stable_chart.deformation
+    assert candidate.CHART_NUMERICS_ID==increment_chart.NUMERICS_ID=='GE_BEAM3_Q4_AFFINE_INCREMENT_RESOLVED_CHART_NUMERICS_V1'
+    assert candidate.deformation is increment_chart.deformation
+    assert increment_chart.Jet2 is original_ad.Jet2
+    assert increment_chart._exp_coefficients is stable_so3._exp_coefficients
+    assert increment_chart._log_factor is stable_so3._log_factor
+    assert increment_chart._polynomial is stable_so3._polynomial and increment_chart.LOG is stable_so3.LOG
+    assert checker.chart.__name__=='ge_beam3_q4_affine_increment_chart'
+    checker_ast=ast.parse(Path(checker.chart.__file__).read_text(encoding='utf-8'))
+    for statement in ast.walk(checker_ast):
+        if isinstance(statement,ast.Import):assert all(item.name in ('math','numpy','ge_beam3_q4_affine_numerical_chart') for item in statement.names)
+        if isinstance(statement,ast.ImportFrom):assert statement.module=='decimal' and statement.level==0
+    producer_ast=ast.parse(Path(increment_chart.__file__).read_text(encoding='utf-8'))
+    for statement in ast.walk(producer_ast):
+        if isinstance(statement,(ast.Import,ast.ImportFrom)):
+            names=[item.name for item in statement.names] if isinstance(statement,ast.Import) else [statement.module or '']
+            assert not any('checker' in name or 'reference_cases' in name for name in names)
     assert candidate._exp_terms is stable_chart._exp_terms
     assert stable_chart.rotation_jets is original_fit.rotation_jets
     assert stable_chart.Jet2 is original_ad.Jet2
@@ -263,6 +279,8 @@ def chart_authority():
     assert registry._exp_terms is original_joint._exp_terms
     assert registry._exp_terms.__globals__['so3_exp'] is original_ad.so3_exp
     sources={
+      'src/anysolver/_ge_beam3_g3c_affine_q4_chart.py':'2a26742ec7680a5e75934fb32ee8601d3877cd0befb250489f991f1b9d198a9f',
+      'docs/reference_cases/ge_beam3_q4_affine_numerical_chart.py':'b7cc92f70d35e3b8f2ab10202cb2f3ad1116e92775425888e482293b323c23ac',
       'src/anysolver/_ge_beam3_g3c_so3_numerics.py':'588ace39570658f1a83c0110d3a019ebad770d6091b271ff4bbc40b97f96e12e',
       'docs/GE_BEAM3_G3C_SO3_NUMERICS_CONTRACT.md':'269bcd4e1fda151e7c22c396a70c43498e8450b222c263dd2655b9ca45998496',
       'docs/reference_cases/ge_beam3_g3c_so3_numerics_implementation_review_v1.json':'4debde89b44c990478487dda4852d7734b852ca01dfb2d3626e782c2328756f1',
@@ -271,11 +289,16 @@ def chart_authority():
       'src/anysolver/_ge_beam3_g3c_affine_q4_registry.py':'5f208b716d89ba778193d1261fb5975db4ece68c93fa2efce97e5c129c56acf1'}
     addendum='1eb29b8814e6555e7d16569e2c8d30c828a60458dea4a2801c10f4d58d2c2176'
     review='ca6de27e79186c9e0b37bf21e765322aa8e46dc323eb858db039951fec7efeab'
+    increment_addendum='7e637ff69453715e5251614d76e08d2be7c7fd8ac4932c5fd7a4cc939023caf0'
+    increment_review='04bda4789cc3529fbae2fd52f2881e8b8f7a6e48447cb6ec91c8275581ff6655'
     for path,digest in {**sources,'docs/GE_BEAM3_Q4_AFFINE_STABLE_CHART_ADDENDUM.md':addendum,
-      'docs/reference_cases/ge_beam3_q4_affine_stable_chart_design_review_v1.json':review}.items():
+      'docs/reference_cases/ge_beam3_q4_affine_stable_chart_design_review_v1.json':review,
+      'docs/GE_BEAM3_Q4_AFFINE_CANCELLATION_SAFE_CHART_ADDENDUM.md':increment_addendum,
+      'docs/reference_cases/ge_beam3_q4_affine_increment_chart_design_review_v1.json':increment_review}.items():
         assert sha256((ROOT/path).read_bytes().replace(b'\r\n',b'\n')).hexdigest()==digest
-    return dict(id='stable_chart_bindings',chart_numerics_id=stable_chart.NUMERICS_ID,
-        addendum_sha256=addendum,review_sha256=review,sources=sources,verified=True)
+    return dict(id='stable_chart_bindings',chart_numerics_id=increment_chart.NUMERICS_ID,
+        addendum_sha256=addendum,review_sha256=review,increment_addendum_sha256=increment_addendum,
+        increment_review_sha256=increment_review,sources=sources,verified=True)
 
 
 def station_join_fixture():
@@ -303,7 +326,7 @@ def test_affine_recovery_definition_and_source_identity():
         c=registry.construction(identity);f=facade(identity)
         assert c.recipe_sha256==sha256(c.recipe).hexdigest()
         descriptor=f.descriptor()
-        assert descriptor['chart_numerics_id']==stable_chart.NUMERICS_ID
+        assert descriptor['chart_numerics_id']==increment_chart.NUMERICS_ID
         assert descriptor['station_association_id']=='GE_BEAM3_Q4_NATURAL_COORDINATE_BIJECTION_V1'
         assert not hasattr(f,'commit') and not hasattr(f,'restart')
         rows.append(dict(id=identity,recipe_sha256=c.recipe_sha256,descriptor_sha256=sha256(canonical(descriptor)).hexdigest()))
@@ -563,8 +586,9 @@ def test_affine_recovery_tiny_physical_energy_and_numerical_separation():
         for amplitude in (1e-6,1e-3):
             c,q,qa=context(shape+'::1',amplitude=amplitude);trial=evaluate(c,q,qa);expected=independent(c,q,qa)
             assert trial.physical_energy>0 and expected['physical_energy']>0
+            chart_checks=check_chart(c,trial,expected)
             checks=check_physical(c,q,qa,trial,expected,table='tiny',row_id=c.construction_id+'::amplitude='+str(amplitude))
-            tiny.append(dict(id=c.construction_id+'::amplitude='+str(amplitude),checks=checks,energy=float(trial.physical_energy)))
+            tiny.append(dict(id=c.construction_id+'::amplitude='+str(amplitude),checks=checks,chart=chart_checks,energy=float(trial.physical_energy)))
     for identity,pose,c,q,qa in base_contexts():
         trial=evaluate(c,q,qa);physical=sum(s.weight*.5*(s.strain@s.resultant) for s in trial.stations)
         close(trial.physical_energy,physical,scale=physical_scales(c)[0] if pose=='ZERO' else abs(physical))
@@ -591,14 +615,16 @@ def test_affine_recovery_definition_observation_races(monkeypatch):
             object.__setattr__(f,'_body',other._body);object.__setattr__(f,'_seal',other._seal)
         elif route in ('preentry_chart_cache','preentry_station_cache'):
             f.evaluate(q,qa)
-            old=json.loads(f._body);del old['chart_numerics_id' if route=='preentry_chart_cache' else 'station_association_id']
+            old=json.loads(f._body)
+            if route=='preentry_chart_cache':old['chart_numerics_id']=stable_chart.NUMERICS_ID
+            else:del old['station_association_id']
             prior=replace(f._prepared,definition_sha256=sha256(canonical(old)).hexdigest())
             object.__setattr__(f,'_prepared',prior);object.__setattr__(f,'_prepared_seal',candidate._fingerprint(prior))
         elif route.startswith('preentry_'):
             body=json.loads(f._body)
             key=route.removeprefix('preentry_')
             if key=='chart_missing':del body['chart_numerics_id']
-            elif key=='chart_old':body['chart_numerics_id']='GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1'
+            elif key=='chart_old':body['chart_numerics_id']=stable_chart.NUMERICS_ID
             elif key=='chart_wrong':body['chart_numerics_id']='FOREIGN_CHART_NUMERICS'
             elif key=='station_missing':del body['station_association_id']
             elif key=='station_old':body['station_association_id']='RAW_POSITIONAL_STATION_ZIP'
@@ -681,9 +707,11 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
         patch.setattr(original_shell,'_exp_terms',forbidden)
         patch.setattr(original_ad,'so3_exp',forbidden);patch.setattr(original_ad,'so3_log',forbidden)
         patch.setattr(original_joint,'_exp_terms',forbidden)
-        patch.setattr(stable_chart,'so3_exp',counted('exp',stable_so3.so3_exp))
-        patch.setattr(stable_chart,'so3_log',counted('log',stable_so3.so3_log))
-        patch.setattr(stable_chart,'rotation_jets',counted('fit',original_fit.rotation_jets))
+        patch.setattr(stable_chart,'deformation',forbidden)
+        patch.setattr(stable_chart,'rotation_jets',forbidden)
+        patch.setattr(increment_chart,'_exp_delta',counted('exp',increment_chart._exp_delta))
+        patch.setattr(increment_chart,'_log_delta',counted('log',increment_chart._log_delta))
+        patch.setattr(increment_chart,'_rotation_jets_from_increments',counted('fit',increment_chart._rotation_jets_from_increments))
         patch.setattr(candidate,'_exp_terms',counted('connection',stable_chart._exp_terms))
         again=f.evaluate(q,qa)
     assert not entered and all(value>0 for value in used.values())
@@ -765,6 +793,90 @@ def test_affine_recovery_unsupported_routes_and_cancellation(monkeypatch):
     record('unsupported_routes_and_cancellation',rejections=rows)
 
 
+def increment_mutations(monkeypatch):
+    c,q,qa=context('SQUARE::1',amplitude=1e-6)
+    expected=checker.chart.evaluate(c.coordinates,q,qa)
+    captured=[];verify=increment_chart._verify_eigen_derivatives
+    def observe_derivatives(*args):
+        result=verify(*args)
+        captured.append((tuple(np.array(v,copy=True) if isinstance(v,np.ndarray) else v for v in args),result))
+        return result
+    with monkeypatch.context() as patch:
+        patch.setattr(increment_chart,'_verify_eigen_derivatives',observe_derivatives)
+        baseline=increment_chart.deformation(c.coordinates,q,qa)
+    assert len(captured)==1
+    witness,derivative_receipt=captured[0]
+    assert derivative_receipt['derivative_coordinates']==24 and derivative_receipt['derivative_pairs']==576
+    assert set(derivative_receipt['derivative_residuals'])=={'first_normalization','second_normalization','first_stationarity','second_stationarity','second_symmetry'}
+    assert all(math.isfinite(v) and 0<=v<=1e-11 for v in derivative_receipt['derivative_residuals'].values())
+    check_chart(c,type('Trial',(),{'kinematics':baseline})(),expected)
+    rows=[];translations=q.reshape(4,6)[:,:3]
+    covariance=increment_chart._decimal_covariance
+    def missing_delta(reference,u):
+        xc,uc,K,ki=covariance(reference,u)
+        _,_,baseline_K,_=covariance(reference,np.zeros_like(u))
+        return xc,uc,baseline_K,ki
+    def naive(rotation,delta,reference,u):
+        value=original_ad.matvec(original_ad.transpose(rotation),[a+b for a,b in zip(reference,u)])
+        return [a-b for a,b in zip(value,reference)]
+    rotation_helper=increment_chart._rotation_jets_from_increments
+    def omit_delta_derivatives(*args):
+        R,delta,xc,uc,receipt=rotation_helper(*args)
+        delta=[[original_ad.Jet2.constant(v.value,24) for v in row] for row in delta]
+        return R,delta,xc,uc,receipt
+    for name,hook,mutation,quantity in (
+        ('missing_delta_covariance','_decimal_covariance',missing_delta,'d'),
+        ('naive_reference_subtraction','_translation_deformation',naive,'d'),
+        ('omitted_delta_derivatives','_rotation_jets_from_increments',omit_delta_derivatives,'D')):
+        with monkeypatch.context() as patch:
+            patch.setattr(increment_chart,hook,mutation)
+            bad=increment_chart.deformation(c.coordinates,q,qa)
+        actual=bad.deformation if quantity=='d' else bad.differential
+        scales=scale_vector(c)
+        a=actual/scales if quantity=='d' else actual*scales[None,:]/scales[:,None]
+        b=expected[quantity]/scales if quantity=='d' else expected[quantity]*scales[None,:]/scales[:,None]
+        error=norm(a-b)/norm(b)
+        assert math.isfinite(error) and error>1e-11
+        rows.append(dict(id=name,rejection='INDEPENDENT_CHART_COMPARISON',relative_error=error))
+    with localcontext() as decimal_context:
+        decimal_context.prec=80;decimal_context.rounding=ROUND_HALF_EVEN
+        _,_,K,_=covariance(c.coordinates,translations)
+        eigenvalues,vectors=np.linalg.eigh(np.array(K,dtype=float))
+        basis=increment_chart._orthogonal_seed(vectors)
+        wrong=basis[0];lam=increment_chart._dot(wrong,[increment_chart._dot(row,wrong) for row in K])
+        with pytest.raises(increment_chart.ChartBranchError):increment_chart._certify_branch(K,wrong,lam,basis)
+        # Prevent a real Newton update, retaining all16 actual residual tests.
+        def no_step(matrix,rhs):return [Decimal(0)]*len(rhs)
+        with monkeypatch.context() as patch:
+            patch.setattr(increment_chart,'_solve',no_step)
+            altered=np.array(eigenvalues,copy=True);altered[-1]+=.1
+            with pytest.raises(increment_chart.ChartNonconvergence):increment_chart._refine_eigenpair(K,altered,vectors)
+    rows.extend([dict(id='wrong_davenport_branch',rejection='BRANCH_REJECTION'),
+                 dict(id='wrong_polar_branch',rejection='BRANCH_REJECTION'),
+                 dict(id='davenport_nonconvergence',rejection='NONCONVERGENCE_REJECTION')])
+    # Registered SQUARE ZERO has diagonal planar covariance. A pi rotation
+    # about its normal is exactly proper and stationary, but not maximizing.
+    # Exercise the whole independent fit so residual/properness cannot mask
+    # a missing maximizing-branch check.
+    zero,zero_qa=registry.pose(c.construction_id,'ZERO')
+    with monkeypatch.context() as patch:
+        patch.setattr(checker.chart,'_proper_seed',lambda seed:[[Decimal(-1),Decimal(0),Decimal(0)],
+            [Decimal(0),Decimal(-1),Decimal(0)],[Decimal(0),Decimal(0),Decimal(1)]])
+        with pytest.raises(checker.chart.IncrementChartError,match='not maximizing'):
+            checker.chart.evaluate(c.coordinates,zero,zero_qa)
+    with monkeypatch.context() as patch:
+        patch.setattr(checker.chart,'_cayley_step',lambda rotation,omega:rotation)
+        with pytest.raises(checker.chart.IncrementChartError,match='did not converge'):
+            checker.chart.evaluate(c.coordinates,q,qa)
+    rows.append(dict(id='polar_nonconvergence',rejection='NONCONVERGENCE_REJECTION'))
+    for name,index in (('eigen_first_derivative',4),('eigen_second_derivative',5)):
+        changed=list(witness);changed[index]=np.array(changed[index],copy=True)
+        changed[index][(0,)*changed[index].ndim]+=1.
+        with pytest.raises(increment_chart.ChartEvaluationError,match='eigen-derivative identity failed'):verify(*changed)
+        rows.append(dict(id=name,rejection='DERIVATIVE_IDENTITY_REJECTION'))
+    return rows,dict(id='SQUARE::1::amplitude=1e-06',**derivative_receipt)
+
+
 def test_affine_recovery_actual_mutation_rejection(monkeypatch):
     rows=[]
     for shape in registry.SHAPES:
@@ -844,7 +956,8 @@ def test_affine_recovery_actual_mutation_rejection(monkeypatch):
                 assert any(float(a.nonlinear[2])*float(b.nonlinear[2])<0 for a,b in zip(good,bad))
             rows.append(dict(id=shape+'::nonlinear_point_join',rejection='INDEPENDENT_STATION_COMPARISON'))
         assert sha256(candidate.canonical(candidate._payload(prepared))).hexdigest()==before
-    assert len(rows)==42;record('actual_mutation_rejection',mutations=rows)
+    chart_mutations,derivatives=increment_mutations(monkeypatch)
+    assert len(rows)==42;record('actual_mutation_rejection',mutations=rows,chart_mutations=chart_mutations,eigen_derivatives=[derivatives])
 
 
 def test_affine_recovery_smoke_square_station_work():

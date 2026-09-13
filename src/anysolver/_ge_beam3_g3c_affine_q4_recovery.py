@@ -11,7 +11,7 @@ from threading import Lock
 import numpy as np
 from ._ge_beam3_g3c_local_shell import (owned, array, rotations, canonical,
     family_objects, tensor)
-from ._ge_beam3_g3c_affine_q4_chart import deformation, _exp_terms, NUMERICS_ID as CHART_NUMERICS_ID
+from ._ge_beam3_g3c_affine_q4_increment_chart import deformation, _exp_terms, NUMERICS_ID as CHART_NUMERICS_ID
 from ._ge_beam3_g3c_affine_q4_registry import construction
 
 POLICY = 'GE_BEAM3_G3C_AFFINE_Q4_PHYSICAL_FACADE_V1'
