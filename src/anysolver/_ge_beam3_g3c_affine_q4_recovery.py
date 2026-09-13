@@ -6,6 +6,7 @@ The unchanged qualified kernel remains the authority for the trial potential.
 from dataclasses import dataclass, fields
 from hashlib import sha256
 import json
+import math
 from threading import Lock
 import numpy as np
 from ._ge_beam3_g3c_local_shell import (owned, array, rotations, canonical,
@@ -30,10 +31,37 @@ class AffineRecoveryCancelled(RuntimeError):
     pass
 
 def _payload(value):
+    """Injective private fingerprint encoding; returned API bytes stay bytes.
+
+    Every container/scalar has a disjoint type tag, so a caller dictionary
+    resembling a bytes tag cannot collide with bytes or a dataclass payload.
+    This encoding does not change any inherited public JSON/restart serializer.
+    """
     if hasattr(type(value), '__dataclass_fields__'):
-        return {f.name: _payload(getattr(value,f.name)) for f in fields(value)}
-    if type(value) is tuple: return [_payload(v) for v in value]
-    return value
+        return dict(kind='dataclass',name=type(value).__module__+'.'+type(value).__qualname__,
+                    fields=[[f.name,_payload(getattr(value,f.name))] for f in fields(value)])
+    if type(value) is bytes:
+        return dict(kind='bytes',hex=value.hex())
+    if type(value) is np.ndarray:
+        if value.dtype != np.dtype('float64') or not np.isfinite(value).all():
+            raise ValueError('finite binary64 fingerprint array required')
+        return dict(kind='ndarray',dtype=value.dtype.str,shape=list(value.shape),
+                    hex=np.ascontiguousarray(value).tobytes().hex())
+    if isinstance(value,np.generic):
+        return dict(kind='numpy_scalar',dtype=value.dtype.str,value=_payload(value.item()))
+    if type(value) in (tuple,list):
+        return dict(kind=type(value).__name__,items=[_payload(v) for v in value])
+    if type(value) is dict:
+        if any(type(k) is not str for k in value):
+            raise ValueError('string fingerprint mapping keys required')
+        return dict(kind='mapping',items=[[k,_payload(value[k])] for k in sorted(value)])
+    if value is None: return dict(kind='none')
+    if type(value) is float:
+        if not math.isfinite(value): raise ValueError('nonfinite fingerprint scalar')
+        return dict(kind='float',hex=value.hex())
+    if type(value) in (str,int,bool):
+        return dict(kind=type(value).__name__,value=value)
+    raise ValueError('unsupported private fingerprint value')
 
 def _fingerprint(value):
     return sha256(canonical(_payload(value))).hexdigest()

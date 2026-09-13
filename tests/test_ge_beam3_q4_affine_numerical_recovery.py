@@ -4,7 +4,7 @@ Every node is self-contained. Reference matrices are reused only inside a node;
 no scientific result from a different child is an input to this module.
 """
 import ast
-from dataclasses import fields, is_dataclass, replace, FrozenInstanceError
+from dataclasses import dataclass, fields, is_dataclass, replace, FrozenInstanceError
 from hashlib import sha256
 import json
 import math
@@ -212,6 +212,38 @@ def record(name,**tables):
     SCIENTIFIC_RECORDS.append(dict(test=name,tables=tables,full_g3c_qualified=False,production_qualified=False))
 
 
+def fingerprint_fixture():
+    """Actual private encoding checks, including the bytes that blocked smoke."""
+    @dataclass(frozen=True)
+    class Packet:
+        candidate: bytes
+        children: tuple
+    octets=b'\x00\xff\x80"\n\\'
+    packet=Packet(octets,(b'accepted-state',np.array([0.,-0.])))
+    values=[None,False,True,0,1,0.,-0.,1.,'','0',b'',b'0',octets,[1],(1,),
+            {'kind':'bytes','value':octets.hex()},np.array([1.],dtype=np.float64),
+            np.float64(1.),np.array([[1.]],dtype=np.float64),packet]
+    digests=[candidate._fingerprint(value) for value in values]
+    assert len(digests)==20 and len(set(digests))==20
+    for value,digest in zip(values,digests):
+        encoded=canonical(candidate._payload(value))
+        assert sha256(encoded).hexdigest()==digest==candidate._fingerprint(value)
+        assert canonical(json.loads(encoded))==encoded
+    # A mapping that exactly resembles a byte tag must remain a mapping, not
+    # collide with the bytes it resembles. This does not guess tag key names.
+    assert candidate._fingerprint(octets)!=candidate._fingerprint(candidate._payload(octets))
+    array=np.array([1.,2.]);snapshot=canonical(candidate._payload(array));prior=candidate._fingerprint(array)
+    array[0]=3.
+    assert snapshot!=canonical(candidate._payload(array)) and prior!=candidate._fingerprint(array)
+    assert candidate._fingerprint(replace(packet,candidate=octets+b'\x00'))!=candidate._fingerprint(packet)
+    assert candidate._fingerprint(replace(packet,children=(b'different-state',)))!=candidate._fingerprint(packet)
+    invalid=(float('nan'),float('inf'),-float('inf'),np.array([float('nan')]),np.array([float('inf')]))
+    for value in invalid:
+        with pytest.raises((ValueError,TypeError)):candidate._fingerprint(value)
+    return dict(id='typed_payload_encoding',distinct_fingerprints=20,nonfinite_rejections=5,
+        evidence_sha256=sha256(canonical(digests)).hexdigest(),verified=True)
+
+
 def test_affine_recovery_definition_and_source_identity():
     hashes={}
     for name,digest in SOURCES.items():
@@ -235,7 +267,8 @@ def test_affine_recovery_definition_and_source_identity():
     assert lemma['decision']=='ACCEPTED_GE_BEAM3_Q4_AFFINE_EXTENSION_LEMMA'
     assert lemma['scope']['lemma_sha256']==sha256(lemma_raw).hexdigest()
     record('definition_and_source_identity',definitions=rows,source_graph=[dict(id='source_graph',hashes=hashes)],
-           extension_lemma=[dict(id='ideal_recipe_extension',lemma_sha256=sha256(lemma_raw).hexdigest(),review_sha256=sha256(review_raw).hexdigest())])
+           extension_lemma=[dict(id='ideal_recipe_extension',lemma_sha256=sha256(lemma_raw).hexdigest(),review_sha256=sha256(review_raw).hexdigest())],
+           fingerprint=[fingerprint_fixture()])
 
 
 def test_affine_recovery_zero_and_station_constitutive():
@@ -522,6 +555,11 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
     c,q,qa=context('SQUARE::1');f=candidate.AffineQ4PhysicalRecovery(c.construction_id)
     mutable_q=np.array(q,copy=True);mutable_qa=np.array(qa,copy=True)
     first=f.evaluate(mutable_q,mutable_qa)
+    assert type(first.candidate)is bytes and type(first.descriptor_bytes)is bytes
+    full_fingerprint=candidate._fingerprint(first)
+    assert full_fingerprint==sha256(canonical(candidate._payload(first))).hexdigest()
+    assert candidate._fingerprint(replace(first,candidate=first.candidate+b'\xff'))!=full_fingerprint
+    assert candidate._fingerprint(replace(first,descriptor_bytes=first.descriptor_bytes+b'\x00'))!=full_fingerprint
     def arrays(value):
         if isinstance(value,np.ndarray):yield value
         elif is_dataclass(value):
@@ -541,6 +579,7 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
     with pytest.raises((FrozenInstanceError,AttributeError)):first.physical_energy=0
     mutable_q[:]=0;mutable_qa[:]=0
     assert [array_digest(a) for a in arrays(first)]==snapshots
+    assert candidate._fingerprint(first)==full_fingerprint
     again=f.evaluate(q,qa)
     assert [array_digest(a) for a in arrays(again)]==snapshots
     for a,b in zip(arrays(first),arrays(again)):assert not np.shares_memory(a,b) or not a.flags.writeable
@@ -574,7 +613,8 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
         dict(id='reentry',rejections=len(inner),verified=True,prior_arrays_sha256=evidence),
         dict(id='changed_accepted_matrix',verified=True,prior_arrays_sha256=evidence),
         dict(id='concurrent_evaluation',verified=True,prior_arrays_sha256=evidence),
-        dict(id='operator_cache_tamper',verified=True,prior_arrays_sha256=evidence)])
+        dict(id='operator_cache_tamper',verified=True,prior_arrays_sha256=evidence),
+        dict(id='nested_candidate_bytes',verified=True,prior_arrays_sha256=evidence,fingerprint_sha256=full_fingerprint)])
 
 
 def test_affine_recovery_unsupported_routes_and_cancellation(monkeypatch):

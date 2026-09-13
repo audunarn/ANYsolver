@@ -433,3 +433,70 @@ Independent fixture-preparation review SHA-256
 accepts only the generated input-hash data after inspecting all 130 ordered
 observations, 357 source bindings and the cleanly drained process receipt.
 It does not accept a308d89 or authorize numerical execution.
+
+## Numerical smoke ee3b41e: blocked private serialization
+
+Clean freeze ee3b41e9102db238d7090ce3f9da074df5a74095, tree
+a99199bb57eea342f02be5a4eaec6f6feb1e482e, received independent implementation
+acceptance (review SHA-256
+ce4107e8570bef1fd2949ecac5cb2518f623bb77dec91a4d0c255ede7fec5264).
+The separate two-node smoke then ran once under run identity
+b89933e5-7c09-4b60-b22a-fdedef53790a and ended
+BLOCKED_G3C_Q4_AFFINE_RECOVERY_PROCESS_OR_EVIDENCE. The station/work node raised
+ValueError at private result fingerprinting: accepted-state bytes were passed
+to the inherited JSON diagnostic encoder, which correctly rejects bytes.
+This is a serialization exception, not an independently verified physical NO_GO.
+The definition node printed a pytest pass but was aborted during post-test
+finalization; it is not counted as complete canonical accepted evidence.
+Both process trees drained to zero active descendants; no canonical aggregate
+was created. No complete rehearsal or formal cycle was launched.
+
+All 13 raw files are preserved both in the original
+C:/Users/AudunArnesenNyhus/AppData/Local/Temp/anysolver-beam-qualification-8zp_hrkt/
+and byte/SHA-verified archive
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-numerical-ee3b41e-blocked-smoke-20260913/.
+The process receipt is 757 bytes, SHA-256
+8e03d97d4d6db7606244c14bba86e27ed49346c75f21a2b4acc3fdc3fbbce65e.
+The consumed smoke authority will not be reused. A private type-separated
+fingerprint encoding correction and regressions are being prepared; the public
+serializer, Q4 potential and qualification evidence remain unchanged. Fresh
+source-bound fixture data, a clean corrected freeze and independent review are
+required before any new numerical smoke.
+
+Independent blocked-smoke review SHA-256
+011158a48625ef9d06716b509925629b272b618a3f5a72c473b6d008a1e8b949
+and recursive 13-file manifest SHA-256
+8278ffe3bc8e541e529296e3b3bf3bff2ce1d9dbfaf4f9c8f01a4ab857d45d5b
+confirm this disposition and original/archive equality. Both are preserved in
+the durable archive alongside the original accepted implementation review.
+
+Serialization correction: private fingerprints use disjoint type tags for
+bytes, arrays, finite scalars, dataclasses and containers; returned accepted-state
+bytes and the inherited serializer are unchanged. Independently reviewed
+fixture-only preparation correction2 passed once in 19.3823118 seconds, peak
+157507584 bytes, return code zero and zero active descendants. Its manifest is
+81946 bytes, SHA-256
+c844fcdf8ee83c6d5373d1eba5283b3ffc3db093703db8be9ebf557e529734c4.
+All 130 observation hashes and generator bindings are unchanged from correction1;
+only the private facade source binding differs. Preparation authority SHA-256
+3ac41121c87ac5a14321bbd04465ab9c5842291ddb680d77ecc73dbcb212b70f,
+launcher SHA-256
+dcb8a933c4517ef055924668f2de981498d2b6cc7cd1f2611958ec903d0774c3.
+Original fixture-only logs remain under
+C:/Users/AudunArnesenNyhus/AppData/Local/Temp/beam-affine-fixture-20260913-correction2/.
+This preparation does not rerun the consumed smoke or establish numerical
+qualification; a new clean implementation review is still required.
+
+Independent correction2 fixture review SHA-256
+db2bd4ad162202ae4899e2339e5f662b1b9123b748cfa878056a43febc1ca299
+accepts only fixture preparation and confirms unchanged observation data.
+All six preparation files, including launcher and review, are copied with byte
+and SHA verification to
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-fixture-correction2-20260913/.
+
+The serialization successor's 23 separate inert guards passed in 0.675 seconds.
+Node1 now includes 20 type-separated fingerprint cases and five nonfinite
+rejections; node13 checks real result candidate/descriptor bytes, alteration
+detection and immutable prior outputs. These actual numerical-node regressions
+are not counted as executed by the inert suite. Strict result schemas include
+their evidence fields. AST and whitespace checks passed before the new freeze.

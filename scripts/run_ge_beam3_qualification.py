@@ -47,17 +47,17 @@ NUMERICAL_TESTS=['test_affine_recovery_'+suffix for suffix in (
     'definition_observation_races','immutable_detached_results_and_reentry',
     'unsupported_routes_and_cancellation','actual_mutation_rejection')]
 NUMERICAL_SMOKE='test_affine_recovery_smoke_square_station_work'
-NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1},
+NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1,'fingerprint':1},
     {'station':54},{'independent':54},{'schur':54},{'work':54},{'directional':27},
     {'rigid':3,'common_motion':12},{'d4':24,'director':6},{'passive':3,'rebase':3},
-    {'graph':20},{'tiny':6,'channels':54},{'races':12},{'immutability':7},{'rejections':19},{'mutations':39}]
+    {'graph':20},{'tiny':6,'channels':54},{'races':12},{'immutability':8},{'rejections':19},{'mutations':39}]
 NUMERICAL_SHAPES=('SQUARE','RECTANGLE','RHOMBUS')
 NUMERICAL_BASE_IDS=[s+'::'+v for s in NUMERICAL_SHAPES for v in ('0.01','1','10')]
 NUMERICAL_GRAPH_IDS=[g+'::'+v for g in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') for v in
     ('BASE','SHUFFLED_INSERTION','RENUMBERED','CONNECTIVITY_REVERSED','PROPER_GLOBAL_TRANSFORM')]
 NUMERICAL_CONTEXT_IDS=[s+'::'+p for s in NUMERICAL_BASE_IDS for p in ('ZERO','MEMBRANE','BENDING','SHEAR','CHECKERBOARD','MIXED')]
 NUMERICAL_TABLE_IDS=[
-    {'definitions':NUMERICAL_BASE_IDS+NUMERICAL_GRAPH_IDS,'source_graph':['source_graph'],'extension_lemma':['ideal_recipe_extension']},
+    {'definitions':NUMERICAL_BASE_IDS+NUMERICAL_GRAPH_IDS,'source_graph':['source_graph'],'extension_lemma':['ideal_recipe_extension'],'fingerprint':['typed_payload_encoding']},
     {'station':NUMERICAL_CONTEXT_IDS},{'independent':NUMERICAL_CONTEXT_IDS},{'schur':NUMERICAL_CONTEXT_IDS},{'work':NUMERICAL_CONTEXT_IDS},
     {'directional':[i+'::h='+h for i in NUMERICAL_BASE_IDS for h in ('0.0001','1e-05','1e-06')]},
     {'rigid':[s+'::1' for s in NUMERICAL_SHAPES],'common_motion':[s+'::1::motion='+str(i) for s in NUMERICAL_SHAPES for i in range(4)]},
@@ -68,7 +68,7 @@ NUMERICAL_TABLE_IDS=[
     {'tiny':[s+'::1::amplitude='+a for s in NUMERICAL_SHAPES for a in ('1e-06','0.001')],'channels':NUMERICAL_CONTEXT_IDS},
     {'races':['descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation',
               'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition']},
-    {'immutability':['all_detached_arrays','caller_arrays_preserved','same_input_repeat','reentry','changed_accepted_matrix','concurrent_evaluation','operator_cache_tamper']},
+    {'immutability':['all_detached_arrays','caller_arrays_preserved','same_input_repeat','reentry','changed_accepted_matrix','concurrent_evaluation','operator_cache_tamper','nested_candidate_bytes']},
     {'rejections':['nonaffine','director','material_direction','node_ids','generalized_section','history_section','offset','initial_fields','foreign_policy',
        'GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1','OLD_RETAINED_35_VARIABLE_SYSTEM','FOREIGN',
        'nonfinite_q','nonfinite_accepted','wrong_q_shape','wrong_rotation_shape','before_work','before_publication','invalid_callback']},
@@ -88,7 +88,7 @@ PHYSICAL_TABLES=frozenset(('work','common_motion','d4','director','passive','reb
 PHYSICAL_SHAPES={'physical_energy':[],'physical_force':[24],'physical_hessian':[24,24],
     'source_physical_energy':[],'source_physical_force':[24],'source_physical_hessian':[24,24]}
 OBSERVATION_MANIFEST='docs/reference_cases/ge_beam3_q4_affine_observation_manifest_v1.json'
-OBSERVATION_MANIFEST_SHA='7c1c64461d4598a81a32b560bdfdd088f4c0becbef07cd417cfcdc203ccf8568'
+OBSERVATION_MANIFEST_SHA='c844fcdf8ee83c6d5373d1eba5283b3ffc3db093703db8be9ebf557e529734c4'
 AFFINE_TESTS=['test_affine_exact_arithmetic_and_schema','test_affine_source_and_representation_boundaries',
               'test_affine_square_chart_polynomial','test_affine_rectangle_chart_polynomial',
               'test_affine_rhombus_chart_polynomial','test_affine_stationary_schur_and_mutations']
@@ -737,6 +737,12 @@ def validate_numerical_row(table,row):
     elif table=='extension_lemma':
         exact_keys(row,base|{'lemma_sha256','review_sha256'})
         if row['lemma_sha256']!='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762' or row['review_sha256']!='e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e':raise ValueError('lemma evidence binding')
+    elif table=='fingerprint':
+        exact_keys(row,base|{'distinct_fingerprints','nonfinite_rejections','evidence_sha256','verified'})
+        sha_value(row['evidence_sha256'])
+        if row['verified'] is not True:raise ValueError('typed fingerprint evidence required')
+        if type(row['distinct_fingerprints'])is not int or row['distinct_fingerprints']!=20:raise ValueError('typed fingerprint inventory')
+        if type(row['nonfinite_rejections'])is not int or row['nonfinite_rejections']!=5:raise ValueError('nonfinite fingerprint inventory')
     elif table=='station':
         exact_keys(row,base|{'checks','energy','stations'});finite_number(row['energy'])
         if type(row['stations'])is not int or row['stations']!=4:raise ValueError('station count')
@@ -788,11 +794,12 @@ def validate_numerical_row(table,row):
         exact_keys(row,base|{'rejected_before_family'})
         if row['rejected_before_family'] is not True:raise ValueError('state safety rejection required')
     elif table=='immutability':
-        extra={'array_count'} if identity=='all_detached_arrays' else {'rejections'} if identity=='reentry' else set()
+        extra={'array_count'} if identity=='all_detached_arrays' else {'rejections'} if identity=='reentry' else {'fingerprint_sha256'} if identity=='nested_candidate_bytes' else set()
         exact_keys(row,base|{'verified','prior_arrays_sha256'}|extra);sha_value(row['prior_arrays_sha256'])
         if row['verified'] is not True:raise ValueError('immutable output evidence required')
         if identity=='all_detached_arrays' and (type(row['array_count'])is not int or row['array_count']<=30):raise ValueError('detached array inventory')
         if identity=='reentry' and (type(row['rejections'])is not int or row['rejections']!=2):raise ValueError('reentry checks')
+        if identity=='nested_candidate_bytes':sha_value(row['fingerprint_sha256'])
     elif table=='rejections':
         if identity in ('before_work','before_publication','invalid_callback'):
             exact_keys(row,base|{'callbacks','family_entries','published'})
