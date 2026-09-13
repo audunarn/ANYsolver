@@ -187,8 +187,8 @@ def _combine_schur_terms(material,geometric):
     return _poly_add(material,geometric)
 
 
-def _nonlinear_station_work(M,n,C,weight,Z,inverse):
-    """Check full polynomial stationarity/work/Schur in every reduced DOF.
+def _nonlinear_station_context(M,n,C,weight,Z,inverse):
+    """Prepare checked exact station/work polynomials once, without any solve.
 
     Build the internal fields through the actual saddle inverse, rather than
     assign them F and C F and then label that assignment a stationary solve.
@@ -217,21 +217,42 @@ def _nonlinear_station_work(M,n,C,weight,Z,inverse):
             force=_poly_add(force,_poly_scale(_poly_mul(J[i][j],resultants[i]),weight))
         _require_equal(force,_poly_derivative(energy,j),'nonlinear external work coefficient')
         work.append(force)
+    return {'fields':fields,'resultants':resultants,'energy':energy,'J':J,
+            'work':work,'constitutive':C,'weight':weight}
+
+
+def _nonlinear_hessian_terms(context,j,k):
+    """Compute a selected actual material/geometric entry from checked context."""
+    if not (0<=j<18 and 0<=k<18):
+        raise ValueError('unregistered reduced coordinate')
+    C,weight,J=context['constitutive'],context['weight'],context['J']
+    resultants=context['resultants']
+    material={}
+    geometric={}
+    for a in range(8):
+        for b in range(8):
+            if C[a][b]:
+                material=_poly_add(material,_poly_scale(_poly_mul(J[a][j],J[b][k]),weight*C[a][b]))
+        second=_poly_derivative(J[a][j],k)
+        geometric=_poly_add(geometric,_poly_scale(_poly_mul(resultants[a],second),weight))
+    return material,geometric
+
+
+def _verify_nonlinear_hessian_entry(context,j,k):
+    material,geometric=_nonlinear_hessian_terms(context,j,k)
+    hessian=_combine_schur_terms(material,geometric)
+    _require_equal(hessian,_poly_derivative(context['work'][j],k),'nonlinear external Schur coefficient')
+    _require_equal(hessian,_poly_derivative(_poly_derivative(context['energy'],j),k),'energy second derivative coefficient')
+
+
+def _nonlinear_station_work(M,n,C,weight,Z,inverse):
+    """Verify all nonlinear entries; mutation tests can reuse prepared context."""
+    context=_nonlinear_station_context(M,n,C,weight,Z,inverse)
     # Each of the 324 Hessian entries is checked as an exact polynomial. The
     # force-weighted second derivative is deliberately distinct from J^T C J.
     for j in range(18):
         for k in range(18):
-            material={}
-            geometric={}
-            for a in range(8):
-                for b in range(8):
-                    if C[a][b]:
-                        material=_poly_add(material,_poly_scale(_poly_mul(J[a][j],J[b][k]),weight*C[a][b]))
-                second=_poly_derivative(J[a][j],k)
-                geometric=_poly_add(geometric,_poly_scale(_poly_mul(resultants[a],second),weight))
-            hessian=_combine_schur_terms(material,geometric)
-            _require_equal(hessian,_poly_derivative(work[j],k),'nonlinear external Schur coefficient')
-            _require_equal(hessian,_poly_derivative(_poly_derivative(energy,j),k),'energy second derivative coefficient')
+            _verify_nonlinear_hessian_entry(context,j,k)
 
 
 def audit(fixture_id,checkpoint=None):

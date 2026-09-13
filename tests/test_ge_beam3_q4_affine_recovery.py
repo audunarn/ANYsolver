@@ -140,6 +140,12 @@ def test_affine_rhombus_chart_polynomial():fixture_proof(FIXTURES[2])
 
 def test_affine_stationary_schur_and_mutations(monkeypatch):
     from ge_beam3_q4_affine_recovery_checker import reconstruct,verify_against_reconstruction
+    def forbidden_producer_recomputation(*args,**kwargs):
+        raise AssertionError('mutation node must not rerun producer audit or solve')
+    # These function bindings are producer-owned; the independent checker keeps
+    # its own reconstruction/solver. Pytest restores both at node teardown.
+    monkeypatch.setattr(producer,'audit',forbidden_producer_recomputation)
+    monkeypatch.setattr(producer,'solve',forbidden_producer_recomputation)
     rows=[];out=Path(os.environ['BEAM_QUALIFICATION_OUTPUT'])
     for fixture in FIXTURES:
         expected=canonical(reconstruct(fixture,lambda s:print('AFFINE mutation '+fixture+' '+s,flush=True)))
@@ -151,50 +157,101 @@ def test_affine_stationary_schur_and_mutations(monkeypatch):
             if sha256(raw).hexdigest()!=digest:raise ValueError('bound hash mismatch')
             return verify_against_reconstruction(strict(raw),strict(expected))
         def increment(value):value[0]=str(Fraction(value[0])+1)
-        # Actual assembly alterations; baseline reconstruction is protected once perfixture.
-        hooks={n:getattr(producer,n) for n in ('_frames','_geometry','_nonlinear_station_work','_nonlinear_coefficients',
-                    '_constraints','_station_saddle','_combine_schur_terms')}
-        def frames(nodes):
-            mixed,centre=hooks['_frames'](nodes)
-            return [[r[1],-r[0],r[2]] for r in mixed],centre
-        def weight(*a):
-            n,dx,dy,w,j=hooks['_geometry'](*a);return n,dx,dy,2*w,j
-        def mixed_map(M,*a):
-            M[0][0]+=1
-            return hooks['_nonlinear_station_work'](M,*a)
-        def nonlinear(*a):return [[2*x for x in r] for r in hooks['_nonlinear_coefficients'](*a)]
-        def constraint(*a):
-            C,R,p,Z=hooks['_constraints'](*a);C[0][0]+=1;return C,R,p,Z
-        def nullspace(*a):
-            C,R,p,Z=hooks['_constraints'](*a);Z[0][0]+=1;return C,R,p,Z
-        def coupling(*a):
-            B,I,C,X=hooks['_station_saddle'](*a);C=[[-v for v in r] for r in C];return B,I,C,X
-        def inverse(*a):
-            B,I,C,X=hooks['_station_saddle'](*a);I[0][0]+=1;return B,I,C,X
-        cases=[('geometry',None,None),('frame','_frames',frames),('weight','_geometry',weight),
-            ('M','_nonlinear_station_work',mixed_map),('n','_nonlinear_coefficients',nonlinear),
-            ('constraint','_constraints',constraint),('Z','_constraints',nullspace),
-            ('station_coupling_sign','_station_saddle',coupling),('inverse','_station_saddle',inverse),
-            ('nonlinear_geometric_term','_combine_schur_terms',lambda material,geometric:material.copy())]
-        for name,hook,changed in cases:
-            called=[]
-            with monkeypatch.context() as patch:
-                if hook is None:
-                    nodes=producer.FIXTURES[fixture]
-                    patch.setitem(producer.FIXTURES,fixture,tuple((str(Fraction(x)+1),y) for x,y in nodes))
-                else:
-                    def observed(*a,_changed=changed,**kw):called.append(True);return _changed(*a,**kw)
-                    patch.setattr(producer,hook,observed)
-                try:altered=producer.audit(fixture,lambda s:print('AFFINE mutation '+name+' '+s,flush=True))
-                except (ValueError,ArithmeticError) as error:
-                    result=dict(id=name,rejection='ASSEMBLY_GUARD',exception_type=type(error).__name__)
-                else:
-                    with pytest.raises(ValueError,match='independent affine proof mismatch'):
-                        verify_against_reconstruction(altered,strict(expected))
-                    result=dict(id=name,rejection='INDEPENDENT_CHECKER')
-            if hook is not None:assert called
+        # Prepared context comes only from the already verified immutable proof.
+        # Never solve the original 35-variable system or regenerate the full
+        # coefficient inventory in a corruption subcase.
+        baseline=strict(original)
+        def decode(value):
+            if type(value)is list and len(value)==8 and all(type(x)is str for x in value):
+                return Field.from_coefficients(value)
+            return [decode(v) for v in value]
+        def encode(value):
+            if isinstance(value,Field):return value.coefficients()
+            return [encode(v) for v in value]
+        nodes=decode(baseline['nodes']);mixed=decode(baseline['frames']['mixed'])
+        centre=decode(baseline['frames']['inherited']);C=decode(baseline['constitutive'])
+        Z=decode(baseline['nullspace']);station=baseline['stations'][0]
+        r,s=decode(station['natural']);weight=decode(station['weight'])
+        M=decode(station['mixed_strain_map']);n=decode(station['nonlinear_map'])
+        inverse=decode(station['internal_inverse'])
+        local=producer._local_coordinates(nodes,mixed);inherited=producer._local_coordinates(nodes,centre)
+        rotation=producer.matmul(producer.transpose(mixed),centre)
+        transform=producer._engineering_transform(rotation)
+        _,dx,dy,_,_=producer._geometry(inherited,r,s)
+        constraints,rref,pivots,prepared_Z=producer._constraints(nodes,centre)
+        block,prepared_inverse,coupling,solution=producer._station_saddle(C,weight)
+        sigma,epsilon=producer._source_fields(local,r,s)
+        prepared_M=[[-v for v in row] for row in producer.matmul(epsilon,
+            decode(baseline['stationary_solution'])[14:])]
+        prepared_n=producer.matmul(transform,producer._nonlinear_coefficients(dx,dy))+producer.zeros(5,10)
+        actual_mixed,actual_centre=producer._frames(nodes)
+        # Positive primitive checks precede every negative; their references
+        # come from a complete independent reconstruction, not a cached producer.
+        for actual,want in ((actual_mixed,mixed),(actual_centre,centre),(prepared_M,M),(prepared_n,n),
+            (constraints,decode(baseline['constraints'])),(rref,decode(baseline['rref'])),(prepared_Z,Z),
+            (block,decode(station['internal_block'])),(prepared_inverse,inverse)):
+            assert encode(actual)==encode(want)
+        assert pivots==baseline['pivots']
+        assert producer._geometry(local,r,s)[3]==weight
+
+        def compare_component(name,path,value):
+            altered=strict(original);target=altered
+            for key in path[:-1]:target=target[key]
+            target[path[-1]]=encode(value)
+            with pytest.raises(ValueError,match='independent affine proof mismatch'):
+                verify_against_reconstruction(altered,strict(expected))
+            results.append(dict(id=name,rejection='INDEPENDENT_COMPONENT_CHECKER'))
             assert sha256(expected).hexdigest()==expected_sha
-            results.append(result)
+        changed_nodes=decode(baseline['nodes'])
+        for node in changed_nodes:
+            node[0]*=2;node[1]*=2
+        # Exercise changed geometry through the real frame/coordinate primitive;
+        # the exact registered node authority is independently compared afterward.
+        changed_frame,_=producer._frames(changed_nodes)
+        producer._local_coordinates(changed_nodes,changed_frame)
+        compare_component('geometry',['nodes'],changed_nodes)
+        rotated=[[row[1],-row[0],row[2]] for row in actual_mixed]
+        compare_component('frame',['frames','mixed'],rotated)
+        compare_component('weight',['stations',0,'weight'],2*producer._geometry(local,r,s)[3])
+        changed_M=[row[:] for row in prepared_M];changed_M[0][0]+=1
+        compare_component('M',['stations',0,'mixed_strain_map'],changed_M)
+        changed_n=producer.matmul(transform,[[2*v for v in row] for row in producer._nonlinear_coefficients(dx,dy)])+producer.zeros(5,10)
+        compare_component('n',['stations',0,'nonlinear_map'],changed_n)
+        constraints[0][0]+=1
+        compare_component('constraint',['constraints'],constraints)
+        prepared_Z[0][0]+=1
+        compare_component('Z',['nullspace'],prepared_Z)
+        changed_coupling=[[-v for v in row] for row in coupling]
+        with pytest.raises(ArithmeticError,match='targeted station equilibrium'):
+            producer._require_equal(producer.matmul(block,solution),
+                [[-v for v in row] for row in changed_coupling],'targeted station equilibrium')
+        results.append(dict(id='station_coupling_sign',rejection='STATION_EQUILIBRIUM_INVARIANT'))
+        changed_inverse=[row[:] for row in prepared_inverse];changed_inverse[0][0]+=1
+        identity=[[Field(int(i==j)) for j in range(16)] for i in range(16)]
+        with pytest.raises(ArithmeticError,match='targeted station inverse'):
+            producer._require_equal(producer.matmul(block,changed_inverse),identity,'targeted station inverse')
+        compare_component('inverse',['stations',0,'internal_inverse'],changed_inverse)
+        # Prepare one station's equilibrium/work polynomials without a solve.
+        # Select a genuinely nonzero force-weighted Hessian entry and check it
+        # normally before removing that term from the same actual calculation.
+        context=producer._nonlinear_station_context(M,n,C,weight,Z,inverse)
+        selected=None
+        for j in range(18):
+            for k in range(18):
+                if any(producer._poly_derivative(context['J'][a][j],k) for a in range(8)):
+                    _,geometric=producer._nonlinear_hessian_terms(context,j,k)
+                    if geometric:selected=(j,k);break
+            if selected is not None:break
+        assert selected is not None
+        producer._verify_nonlinear_hessian_entry(context,*selected)
+        called=[]
+        def omit_geometric(material,geometric):called.append(bool(geometric));return material.copy()
+        with monkeypatch.context() as patch:
+            patch.setattr(producer,'_combine_schur_terms',omit_geometric)
+            with pytest.raises(ArithmeticError,match='nonlinear external Schur coefficient|energy second derivative coefficient'):
+                producer._verify_nonlinear_hessian_entry(context,*selected)
+        assert any(called)
+        results.append(dict(id='nonlinear_geometric_term',rejection='NONLINEAR_SCHUR_INVARIANT'))
         for name in ('coefficient','identity','bound_hash'):
             altered=strict(original)
             if name=='coefficient':increment(altered['coefficient_records'][0]['coefficient'])
@@ -207,6 +264,7 @@ def test_affine_stationary_schur_and_mutations(monkeypatch):
         assert len(results)==13 and len({r['id'] for r in results})==13
         assert read(out/fixture/'proof.json')==original and sha256(expected).hexdigest()==expected_sha
         rows.append(dict(fixture_id=fixture,independent_baseline_sha256=expected_sha,baseline_immutable=True,
-                         registered_mutation_dimensions=12,additional_geometric_term_omission=True,mutations=results))
+                         registered_mutation_dimensions=12,additional_geometric_term_omission=True,
+                         full_producer_audits_in_mutations=0,prepared_contexts=1,mutations=results))
     SCIENTIFIC_RECORDS.append(dict(test='affine_stationary_schur_and_mutations',fixtures=rows,
         independent_reconstructions=3,physical_recovery_qualified=False,full_g3c_qualified=False))

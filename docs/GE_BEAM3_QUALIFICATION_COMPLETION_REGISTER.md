@@ -264,3 +264,13 @@ smoke, complete rehearsal and two formal cycles remain required.
 
 The final goal remains full physical recovery, mixed G3c and the entire parity
 matrix. Exact-gate success alone cannot set physical_recovery_qualified=true.
+
+Freeze df7f4ac was not accepted for execution: independent review SHA-256
+ed6f377fdb2fb34d8fbbbdb2852f21e863a96a50df2dfc39436c0c18dd26656d
+found up to30 redundant complete producer audits in the mutation node. No
+mechanics run or attempt was made against that freeze. The review is preserved
+under ANYrelease/beam-q4-affine-df7f4ac-preexecution-review/ and the commit remains
+immutable. A correction retains every mutation dimension and scientific equation
+while using verified prepared data and targeted checks without repeated35-system
+solves. Full producer execution retains all nonlinear work and Schur checks.
+Independent re-review of the corrected frozen implementation is required.
