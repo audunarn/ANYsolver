@@ -10,8 +10,8 @@ import math
 from threading import Lock
 import numpy as np
 from ._ge_beam3_g3c_local_shell import (owned, array, rotations, canonical,
-    deformation, family_objects, tensor)
-from ._ge_beam3_pose_joint import _exp_terms
+    family_objects, tensor)
+from ._ge_beam3_g3c_affine_q4_chart import deformation, _exp_terms, NUMERICS_ID as CHART_NUMERICS_ID
 from ._ge_beam3_g3c_affine_q4_registry import construction
 
 POLICY = 'GE_BEAM3_G3C_AFFINE_Q4_PHYSICAL_FACADE_V1'
@@ -22,7 +22,8 @@ OPERATOR_ID = 'E4_PL_QUALIFIED_Q4_HYBRID_V2'
 def _expected_descriptor(c):
     """Complete authority reconstruction, never a digest of caller-supplied facts."""
     return canonical(dict(policy=POLICY,recovery_id=RECOVERY_ID,representation_id=REPRESENTATION_ID,
-        operator_id=OPERATOR_ID,construction_id=c.construction_id,recipe_sha256=c.recipe_sha256,
+        operator_id=OPERATOR_ID,chart_numerics_id=CHART_NUMERICS_ID,
+        construction_id=c.construction_id,recipe_sha256=c.recipe_sha256,
         family='Q4',node_ids=c.node_ids,coordinates=c.coordinates,normal=c.normal,
         material_direction=c.material_direction,director_polarity=c.director_polarity,
         E=100.,nu=.25,thickness=.1,layers=3,origin='OWNED_VIRGIN_ONLY'))

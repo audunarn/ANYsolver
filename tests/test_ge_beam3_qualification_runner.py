@@ -48,6 +48,8 @@ def inert_row(table,identity):
     if table=='definitions':row.update(recipe_sha256='0'*64,descriptor_sha256='0'*64)
     elif table=='source_graph':row['hashes']=dict(r.NUMERICAL_SOURCE_HASHES)
     elif table=='extension_lemma':row.update(lemma_sha256='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762',review_sha256='e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e')
+    elif table=='chart_authority':row.update(chart_numerics_id=r.CHART_ID,addendum_sha256=r.CHART_ADDENDUM_SHA,
+        review_sha256=r.CHART_REVIEW_SHA,sources=dict(r.CHART_SOURCES),verified=True)
     elif table=='fingerprint':row.update(distinct_fingerprints=20,nonfinite_rejections=5,evidence_sha256='0'*64,verified=True)
     elif table=='station':row.update(checks={key:0. for key in ('d','D','D2','R','Q','x')},energy=0.,stations=4)
     elif table=='independent':row['stations']=[{key:0. for key in ('M','strain','resultant','frame','constitutive')} for _ in range(4)]

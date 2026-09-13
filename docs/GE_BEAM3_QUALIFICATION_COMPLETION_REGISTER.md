@@ -556,3 +556,38 @@ Tiny-deformation subtraction accuracy remains explicitly unresolved. This
 addendum does not authorize numerical execution by itself. The accompanying
 driver fix is an explicit local/global coupling comparison correction only;
 no mechanical source was changed in this authority-preparation step.
+
+The clean addendum freeze 086eff0cea8e1bd9c585c9eb0b49a631411813c8,
+tree fb38d4f48fd5975ab98a363601d451bf66c612d8, received independent
+ACCEPTED_GE_BEAM3_Q4_AFFINE_STABLE_CHART_DESIGN_ONLY review SHA-256
+ca6de27e79186c9e0b37bf21e765322aa8e46dc323eb858db039951fec7efeab.
+The canonical review is copied as
+docs/reference_cases/ge_beam3_q4_affine_stable_chart_design_review_v1.json.
+Design, review and rationale are also preserved with verified bytes/hashes in
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-stable-chart-design-086eff0-20260913/.
+Implementation is now permitted within that exact caller map; numerical
+execution still requires the next clean implementation freeze and review.
+
+Stable-chart implementation preparation is complete in the new private chart
+and facade routing only; the original fit, kernel, public helpers and registry
+arithmetic remain unchanged. The mandatory chart-numerics ID is in the complete
+descriptor/cache authority. Existing numerical nodes now include actual callable
+binding/interception checks and missing/old/wrong/resealed-ID probes (16 state
+race entries); the full physical inventory remains 15 nodes and 130 observations.
+These actual numerical regressions have not run for this implementation.
+
+Fixture-only correction3 passed once with return code zero and no descendants
+in 20.9072180 seconds, peak 155029504 bytes. All 130 state hashes and generator
+bindings match the prior preparation. The new manifest is 82086 bytes, SHA-256
+b25f08d0f5a902ecea52d3a37bfeb455967ccaa2220ca39ff2dd5a9b5794e831;
+only the new chart and private facade source bindings differ. Preparation
+authority SHA-256
+0289ef22a8022d7efe55313d770ab62424d71a7ef1085774d462eb79e42b1776;
+reviewed launcher SHA-256
+0155ee9e58ba377f767186aeadf9abeb850704764e261b3ac532e86354297de9.
+All five original preparation files are additionally copied with byte/SHA
+verification to
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-fixture-correction3-20260913/.
+The separate 23 inert guards passed in 0.670 seconds; AST, pinned-input and
+whitespace checks passed. A clean implementation review remains prerequisite
+to fresh smoke, complete rehearsal and formal confirmation.

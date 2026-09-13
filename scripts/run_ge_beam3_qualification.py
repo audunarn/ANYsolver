@@ -39,6 +39,18 @@ NUMERICAL_PLAN='docs/GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_CONTRACT.md'
 NUMERICAL_PLAN_SHA='21cec54b2469e291c8f90a2c042e3cf693a14f7bc10efd5111ea842ca65a218c'
 NUMERICAL_REVIEW='docs/reference_cases/ge_beam3_q4_affine_numerical_design_review_v1.json'
 NUMERICAL_REVIEW_SHA='e2a28209165d72046093ec08d06b8243399f820ab8db0b6fb7beeeab0e96055f'
+CHART_ID='GE_BEAM3_Q4_AFFINE_STABLE_CHART_NUMERICS_V1'
+CHART_ADDENDUM='docs/GE_BEAM3_Q4_AFFINE_STABLE_CHART_ADDENDUM.md'
+CHART_ADDENDUM_SHA='1eb29b8814e6555e7d16569e2c8d30c828a60458dea4a2801c10f4d58d2c2176'
+CHART_REVIEW='docs/reference_cases/ge_beam3_q4_affine_stable_chart_design_review_v1.json'
+CHART_REVIEW_SHA='ca6de27e79186c9e0b37bf21e765322aa8e46dc323eb858db039951fec7efeab'
+CHART_SOURCES={
+ 'src/anysolver/_ge_beam3_g3c_so3_numerics.py':'588ace39570658f1a83c0110d3a019ebad770d6091b271ff4bbc40b97f96e12e',
+ 'docs/GE_BEAM3_G3C_SO3_NUMERICS_CONTRACT.md':'269bcd4e1fda151e7c22c396a70c43498e8450b222c263dd2655b9ca45998496',
+ 'docs/reference_cases/ge_beam3_g3c_so3_numerics_implementation_review_v1.json':'4debde89b44c990478487dda4852d7734b852ca01dfb2d3626e782c2328756f1',
+ 'docs/reference_cases/ge_beam3_g3c_so3_numerics_confirmation_receipt_v1.json':'aa7225cae347662bf92b3c02f8a1ff541d40e67f13db21900d0ad3269f88b91f',
+ 'docs/reference_cases/ge_beam3_g3c_so3_numerics_result_v1.json':'c8b938bbdbcce329aa83afc00037905d158142d7d2e417acee159bab95aba6fd',
+ 'src/anysolver/_ge_beam3_g3c_affine_q4_registry.py':'5f208b716d89ba778193d1261fb5975db4ece68c93fa2efce97e5c129c56acf1'}
 NUMERICAL_TESTS=['test_affine_recovery_'+suffix for suffix in (
     'definition_and_source_identity','zero_and_station_constitutive','independent_material_fields',
     '64_stationarity_and_schur','actual_chart_work_hessian','directional_derivatives_all_steps',
@@ -47,17 +59,17 @@ NUMERICAL_TESTS=['test_affine_recovery_'+suffix for suffix in (
     'definition_observation_races','immutable_detached_results_and_reentry',
     'unsupported_routes_and_cancellation','actual_mutation_rejection')]
 NUMERICAL_SMOKE='test_affine_recovery_smoke_square_station_work'
-NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1,'fingerprint':1},
+NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1,'fingerprint':1,'chart_authority':1},
     {'station':54},{'independent':54},{'schur':54},{'work':54},{'directional':27},
     {'rigid':3,'common_motion':12},{'d4':24,'director':6},{'passive':3,'rebase':3},
-    {'graph':20},{'tiny':6,'channels':54},{'races':12},{'immutability':8},{'rejections':19},{'mutations':39}]
+    {'graph':20},{'tiny':6,'channels':54},{'races':16},{'immutability':9},{'rejections':19},{'mutations':39}]
 NUMERICAL_SHAPES=('SQUARE','RECTANGLE','RHOMBUS')
 NUMERICAL_BASE_IDS=[s+'::'+v for s in NUMERICAL_SHAPES for v in ('0.01','1','10')]
 NUMERICAL_GRAPH_IDS=[g+'::'+v for g in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') for v in
     ('BASE','SHUFFLED_INSERTION','RENUMBERED','CONNECTIVITY_REVERSED','PROPER_GLOBAL_TRANSFORM')]
 NUMERICAL_CONTEXT_IDS=[s+'::'+p for s in NUMERICAL_BASE_IDS for p in ('ZERO','MEMBRANE','BENDING','SHEAR','CHECKERBOARD','MIXED')]
 NUMERICAL_TABLE_IDS=[
-    {'definitions':NUMERICAL_BASE_IDS+NUMERICAL_GRAPH_IDS,'source_graph':['source_graph'],'extension_lemma':['ideal_recipe_extension'],'fingerprint':['typed_payload_encoding']},
+    {'definitions':NUMERICAL_BASE_IDS+NUMERICAL_GRAPH_IDS,'source_graph':['source_graph'],'extension_lemma':['ideal_recipe_extension'],'fingerprint':['typed_payload_encoding'],'chart_authority':['stable_chart_bindings']},
     {'station':NUMERICAL_CONTEXT_IDS},{'independent':NUMERICAL_CONTEXT_IDS},{'schur':NUMERICAL_CONTEXT_IDS},{'work':NUMERICAL_CONTEXT_IDS},
     {'directional':[i+'::h='+h for i in NUMERICAL_BASE_IDS for h in ('0.0001','1e-05','1e-06')]},
     {'rigid':[s+'::1' for s in NUMERICAL_SHAPES],'common_motion':[s+'::1::motion='+str(i) for s in NUMERICAL_SHAPES for i in range(4)]},
@@ -67,8 +79,9 @@ NUMERICAL_TABLE_IDS=[
     {'graph':[g+'::'+p for g in NUMERICAL_GRAPH_IDS for p in ('ZERO','MIXED')]},
     {'tiny':[s+'::1::amplitude='+a for s in NUMERICAL_SHAPES for a in ('1e-06','0.001')],'channels':NUMERICAL_CONTEXT_IDS},
     {'races':['descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation',
-              'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition']},
-    {'immutability':['all_detached_arrays','caller_arrays_preserved','same_input_repeat','reentry','changed_accepted_matrix','concurrent_evaluation','operator_cache_tamper','nested_candidate_bytes']},
+              'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition',
+              'preentry_chart_missing','preentry_chart_old','preentry_chart_wrong','preentry_chart_cache']},
+    {'immutability':['all_detached_arrays','caller_arrays_preserved','same_input_repeat','reentry','changed_accepted_matrix','concurrent_evaluation','operator_cache_tamper','nested_candidate_bytes','old_chart_entrypoints_intercepted']},
     {'rejections':['nonaffine','director','material_direction','node_ids','generalized_section','history_section','offset','initial_fields','foreign_policy',
        'GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1','OLD_RETAINED_35_VARIABLE_SYSTEM','FOREIGN',
        'nonfinite_q','nonfinite_accepted','wrong_q_shape','wrong_rotation_shape','before_work','before_publication','invalid_callback']},
@@ -88,7 +101,7 @@ PHYSICAL_TABLES=frozenset(('work','common_motion','d4','director','passive','reb
 PHYSICAL_SHAPES={'physical_energy':[],'physical_force':[24],'physical_hessian':[24,24],
     'source_physical_energy':[],'source_physical_force':[24],'source_physical_hessian':[24,24]}
 OBSERVATION_MANIFEST='docs/reference_cases/ge_beam3_q4_affine_observation_manifest_v1.json'
-OBSERVATION_MANIFEST_SHA='c844fcdf8ee83c6d5373d1eba5283b3ffc3db093703db8be9ebf557e529734c4'
+OBSERVATION_MANIFEST_SHA='b25f08d0f5a902ecea52d3a37bfeb455967ccaa2220ca39ff2dd5a9b5794e831'
 AFFINE_TESTS=['test_affine_exact_arithmetic_and_schema','test_affine_source_and_representation_boundaries',
               'test_affine_square_chart_polynomial','test_affine_rectangle_chart_polynomial',
               'test_affine_rhombus_chart_polynomial','test_affine_stationary_schur_and_mutations']
@@ -105,6 +118,7 @@ ALLOWED={
     'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
     'src/anysolver/_ge_beam3_g3c_affine_q4_recovery.py',
+    'src/anysolver/_ge_beam3_g3c_affine_q4_chart.py',CHART_ADDENDUM,CHART_REVIEW,
     'src/anysolver/_ge_beam3_g3c_affine_q4_registry.py',
     'docs/reference_cases/ge_beam3_q4_affine_numerical_checker.py',
     'docs/reference_cases/ge_beam3_q4_affine_numerical_chart.py',
@@ -192,6 +206,15 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
             or affine['scope'].get('gate')!='q4-affine-exact' or affine['scope'].get('plan_sha256')!=AFFINE_PLAN_SHA):
             raise ValueError('affine independent design acceptance')
     if gate=='q4-affine-numerical':
+        for path,digest in {CHART_ADDENDUM:CHART_ADDENDUM_SHA,CHART_REVIEW:CHART_REVIEW_SHA,**CHART_SOURCES}.items():
+            if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:raise ValueError('stable chart source authority')
+        chart_review=environment.strict(read(ROOT/CHART_REVIEW))
+        if (set(chart_review)!={'decision','findings','reviewer','scope','subject_commit'} or chart_review['findings']
+            or chart_review['decision']!='ACCEPTED_GE_BEAM3_Q4_AFFINE_STABLE_CHART_DESIGN_ONLY'
+            or chart_review['reviewer'].get('independent') is not True
+            or chart_review['scope'].get('addendum_sha256')!=CHART_ADDENDUM_SHA
+            or chart_review['scope'].get('original_contract_sha256')!=NUMERICAL_PLAN_SHA
+            or chart_review['scope'].get('execution_authorized') is not False):raise ValueError('stable chart design review')
         for path,digest in ((NUMERICAL_PLAN,NUMERICAL_PLAN_SHA),(NUMERICAL_REVIEW,NUMERICAL_REVIEW_SHA),
             ('docs/GE_BEAM3_Q4_AFFINE_RECOVERY_EXTENSION_LEMMA.md','156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762'),
             ('docs/reference_cases/ge_beam3_q4_affine_extension_lemma_review_v1.json','e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e'),
@@ -737,6 +760,11 @@ def validate_numerical_row(table,row):
     elif table=='extension_lemma':
         exact_keys(row,base|{'lemma_sha256','review_sha256'})
         if row['lemma_sha256']!='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762' or row['review_sha256']!='e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e':raise ValueError('lemma evidence binding')
+    elif table=='chart_authority':
+        exact_keys(row,base|{'chart_numerics_id','addendum_sha256','review_sha256','sources','verified'})
+        if (row['chart_numerics_id']!=CHART_ID or row['addendum_sha256']!=CHART_ADDENDUM_SHA
+            or row['review_sha256']!=CHART_REVIEW_SHA or row['sources']!=CHART_SOURCES
+            or row['verified'] is not True):raise ValueError('stable chart caller authority')
     elif table=='fingerprint':
         exact_keys(row,base|{'distinct_fingerprints','nonfinite_rejections','evidence_sha256','verified'})
         sha_value(row['evidence_sha256'])

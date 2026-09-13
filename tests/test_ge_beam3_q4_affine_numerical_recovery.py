@@ -20,6 +20,12 @@ sys.path.insert(0,str(ROOT/'docs/reference_cases'))
 from anysolver import _ge_beam3_g3c_affine_q4_recovery as candidate
 from anysolver import _ge_beam3_g3c_affine_q4_registry as registry
 import ge_beam3_q4_affine_numerical_checker as checker
+from anysolver import _ge_beam3_g3c_affine_q4_chart as stable_chart
+from anysolver import _ge_beam3_g3c_so3_numerics as stable_so3
+from anysolver import _ge_beam3_variational_shell as original_fit
+from anysolver import _ge_beam3_mixed_ad as original_ad
+from anysolver import _ge_beam3_g3c_local_shell as original_shell
+from anysolver import _ge_beam3_pose_joint as original_joint
 
 SCIENTIFIC_RECORDS=[]
 CONTRADICTIONS=[]
@@ -244,6 +250,33 @@ def fingerprint_fixture():
         evidence_sha256=sha256(canonical(digests)).hexdigest(),verified=True)
 
 
+def chart_authority():
+    assert candidate.CHART_NUMERICS_ID==stable_chart.NUMERICS_ID=='GE_BEAM3_Q4_AFFINE_STABLE_CHART_NUMERICS_V1'
+    assert candidate.deformation is stable_chart.deformation
+    assert candidate._exp_terms is stable_chart._exp_terms
+    assert stable_chart.rotation_jets is original_fit.rotation_jets
+    assert stable_chart.Jet2 is original_ad.Jet2
+    assert stable_chart.so3_exp is stable_so3.so3_exp and stable_chart.so3_log is stable_so3.so3_log
+    assert stable_chart._exp_terms.__globals__['so3_exp'] is stable_so3.so3_exp
+    assert candidate._spatial_connection.__globals__['_exp_terms'] is stable_chart._exp_terms
+    assert registry._exp_terms is original_joint._exp_terms
+    assert registry._exp_terms.__globals__['so3_exp'] is original_ad.so3_exp
+    sources={
+      'src/anysolver/_ge_beam3_g3c_so3_numerics.py':'588ace39570658f1a83c0110d3a019ebad770d6091b271ff4bbc40b97f96e12e',
+      'docs/GE_BEAM3_G3C_SO3_NUMERICS_CONTRACT.md':'269bcd4e1fda151e7c22c396a70c43498e8450b222c263dd2655b9ca45998496',
+      'docs/reference_cases/ge_beam3_g3c_so3_numerics_implementation_review_v1.json':'4debde89b44c990478487dda4852d7734b852ca01dfb2d3626e782c2328756f1',
+      'docs/reference_cases/ge_beam3_g3c_so3_numerics_confirmation_receipt_v1.json':'aa7225cae347662bf92b3c02f8a1ff541d40e67f13db21900d0ad3269f88b91f',
+      'docs/reference_cases/ge_beam3_g3c_so3_numerics_result_v1.json':'c8b938bbdbcce329aa83afc00037905d158142d7d2e417acee159bab95aba6fd',
+      'src/anysolver/_ge_beam3_g3c_affine_q4_registry.py':'5f208b716d89ba778193d1261fb5975db4ece68c93fa2efce97e5c129c56acf1'}
+    addendum='1eb29b8814e6555e7d16569e2c8d30c828a60458dea4a2801c10f4d58d2c2176'
+    review='ca6de27e79186c9e0b37bf21e765322aa8e46dc323eb858db039951fec7efeab'
+    for path,digest in {**sources,'docs/GE_BEAM3_Q4_AFFINE_STABLE_CHART_ADDENDUM.md':addendum,
+      'docs/reference_cases/ge_beam3_q4_affine_stable_chart_design_review_v1.json':review}.items():
+        assert sha256((ROOT/path).read_bytes().replace(b'\r\n',b'\n')).hexdigest()==digest
+    return dict(id='stable_chart_bindings',chart_numerics_id=stable_chart.NUMERICS_ID,
+        addendum_sha256=addendum,review_sha256=review,sources=sources,verified=True)
+
+
 def test_affine_recovery_definition_and_source_identity():
     hashes={}
     for name,digest in SOURCES.items():
@@ -256,6 +289,7 @@ def test_affine_recovery_definition_and_source_identity():
         c=registry.construction(identity);f=facade(identity)
         assert c.recipe_sha256==sha256(c.recipe).hexdigest()
         descriptor=f.descriptor()
+        assert descriptor['chart_numerics_id']==stable_chart.NUMERICS_ID
         assert not hasattr(f,'commit') and not hasattr(f,'restart')
         rows.append(dict(id=identity,recipe_sha256=c.recipe_sha256,descriptor_sha256=sha256(canonical(descriptor)).hexdigest()))
     lemma_raw=(ROOT/'docs/GE_BEAM3_Q4_AFFINE_RECOVERY_EXTENSION_LEMMA.md').read_bytes().replace(b'\r\n',b'\n')
@@ -268,7 +302,7 @@ def test_affine_recovery_definition_and_source_identity():
     assert lemma['scope']['lemma_sha256']==sha256(lemma_raw).hexdigest()
     record('definition_and_source_identity',definitions=rows,source_graph=[dict(id='source_graph',hashes=hashes)],
            extension_lemma=[dict(id='ideal_recipe_extension',lemma_sha256=sha256(lemma_raw).hexdigest(),review_sha256=sha256(review_raw).hexdigest())],
-           fingerprint=[fingerprint_fixture()])
+           fingerprint=[fingerprint_fixture()],chart_authority=[chart_authority()])
 
 
 def test_affine_recovery_zero_and_station_constitutive():
@@ -525,16 +559,25 @@ def test_affine_recovery_definition_observation_races(monkeypatch):
     c,q,qa=context('SQUARE::1');rows=[]
     original_descriptor=candidate.AffineQ4PhysicalRecovery.descriptor
     for route in ('descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation',
-                  'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition'):
+                  'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition',
+                  'preentry_chart_missing','preentry_chart_old','preentry_chart_wrong','preentry_chart_cache'):
         f=candidate.AffineQ4PhysicalRecovery(c.construction_id);other=candidate.AffineQ4PhysicalRecovery('RECTANGLE::1')
         if route.startswith('cache_'):f.evaluate(q,qa)
         if route=='preentry_cached_definition':
             f.evaluate(q,qa)
             object.__setattr__(f,'_body',other._body);object.__setattr__(f,'_seal',other._seal)
+        elif route=='preentry_chart_cache':
+            f.evaluate(q,qa)
+            old=json.loads(f._body);del old['chart_numerics_id']
+            prior=replace(f._prepared,definition_sha256=sha256(canonical(old)).hexdigest())
+            object.__setattr__(f,'_prepared',prior);object.__setattr__(f,'_prepared_seal',candidate._fingerprint(prior))
         elif route.startswith('preentry_'):
             body=json.loads(f._body)
             key=route.removeprefix('preentry_')
-            if key=='E':body[key]=200.
+            if key=='chart_missing':del body['chart_numerics_id']
+            elif key=='chart_old':body['chart_numerics_id']='GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1'
+            elif key=='chart_wrong':body['chart_numerics_id']='FOREIGN_CHART_NUMERICS'
+            elif key=='E':body[key]=200.
             elif key=='coordinates':body[key][0][0]+=.125
             elif key=='material_direction':body[key]=[0.,1.,0.]
             else:body[key]='GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1'
@@ -598,7 +641,26 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
     mutable_q[:]=0;mutable_qa[:]=0
     assert [array_digest(a) for a in arrays(first)]==snapshots
     assert candidate._fingerprint(first)==full_fingerprint
-    again=f.evaluate(q,qa)
+    # Intercept obsolete mechanical entrypoints during this existing genuine
+    # repeat. Registry's captured original _exp_terms/so3_exp aliases remain
+    # intact: source recipes intentionally retain their original arithmetic.
+    entered=[];used={'exp':0,'log':0,'fit':0,'connection':0}
+    def forbidden(*args,**kwargs):entered.append(True);raise AssertionError('obsolete mechanical chart entered')
+    def counted(name,function):
+        def call(*args,**kwargs):used[name]+=1;return function(*args,**kwargs)
+        return call
+    with monkeypatch.context() as patch:
+        patch.setattr(original_shell,'deformation',forbidden)
+        patch.setattr(original_shell,'so3_exp',forbidden);patch.setattr(original_shell,'so3_log',forbidden)
+        patch.setattr(original_shell,'_exp_terms',forbidden)
+        patch.setattr(original_ad,'so3_exp',forbidden);patch.setattr(original_ad,'so3_log',forbidden)
+        patch.setattr(original_joint,'_exp_terms',forbidden)
+        patch.setattr(stable_chart,'so3_exp',counted('exp',stable_so3.so3_exp))
+        patch.setattr(stable_chart,'so3_log',counted('log',stable_so3.so3_log))
+        patch.setattr(stable_chart,'rotation_jets',counted('fit',original_fit.rotation_jets))
+        patch.setattr(candidate,'_exp_terms',counted('connection',stable_chart._exp_terms))
+        again=f.evaluate(q,qa)
+    assert not entered and all(value>0 for value in used.values())
     assert [array_digest(a) for a in arrays(again)]==snapshots
     for a,b in zip(arrays(first),arrays(again)):assert not np.shares_memory(a,b) or not a.flags.writeable
     inner=[]
@@ -632,7 +694,8 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
         dict(id='changed_accepted_matrix',verified=True,prior_arrays_sha256=evidence),
         dict(id='concurrent_evaluation',verified=True,prior_arrays_sha256=evidence),
         dict(id='operator_cache_tamper',verified=True,prior_arrays_sha256=evidence),
-        dict(id='nested_candidate_bytes',verified=True,prior_arrays_sha256=evidence,fingerprint_sha256=full_fingerprint)])
+        dict(id='nested_candidate_bytes',verified=True,prior_arrays_sha256=evidence,fingerprint_sha256=full_fingerprint),
+        dict(id='old_chart_entrypoints_intercepted',verified=True,prior_arrays_sha256=evidence)])
 
 
 def test_affine_recovery_unsupported_routes_and_cancellation(monkeypatch):
