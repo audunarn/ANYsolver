@@ -21,7 +21,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
 | B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
-| Q4 physical recovery | Exact identities accepted at d49aacd; station-association484286c smoke and first9 rehearsal nodes passed; tiny-response force comparison blocks complete rehearsal; prior scoped NO_GO preserved | Independently derive/review cancellation-safe private chart evaluation, then fresh complete confirmation; unchanged public mechanics and tolerance |
+| Q4 physical recovery | Registered affine-local physical recovery accepted at62796d0: complete15-node rehearsal and two byte-identical formal cycles, independent evidence review; earlier exact acceptance and scoped failures preserved | Successor mixed-owner integration with new operator/state/restart identities; no arbitrary-geometry/history/public qualification inferred |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
@@ -780,3 +780,81 @@ byte/SHA verification to
 C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-fixture-correction5-20260913/.
 Final separate23 inert guards passed in0.674 seconds; AST/diff checks passed.
 Clean independent implementation acceptance still precedes numerical execution.
+
+## Q4 affine-local physical recovery accepted at62796d0
+
+Executed freeze62796d0340ee27c8cfe60fe96a7c9d2b371f3a1a,
+tree9d84605b06662ea5b50e694a09ce9b328ebfee2f, received clean independent
+implementation acceptance SHA-256
+594117d7b2f9f64c0b885f495edf65daea0977b1e3cc04f2d6c9f986a5fd2197.
+All four executions completed with no live descendants or retries:
+
+| Inventory | Run identity | Nodes | Diagnostic elapsed seconds |
+| --- | --- | --- | --- |
+| Smoke |080cf9bf-6585-47d7-8e29-bc2422b4ea60|2|36.4537183|
+| Complete rehearsal |c6a82e78-72c8-4764-a253-9f1ea51b29a5|15|172.1498852|
+| Formal cycle1 |991c63d7-56ee-4679-841f-39fa7f876317|15|171.9646121|
+| Formal cycle2 |17999395-b319-4429-a680-49455d0324f5|15|172.8685731|
+
+The two formal aggregates and rehearsal are byte-identical:453394 bytes,
+SHA-256 de4fde319f0c7e45eb549cfa8f71f94b60413213e28828ca414cbcbbf636b1ee.
+Terminal: PROVISIONAL_GO_G3C_Q4_AFFINE_LOCAL_PHYSICAL_RECOVERY_ONLY.
+There are zero contradictions. physical_recovery_qualified=true means only
+REGISTERED_AFFINE_LOCAL_ONLY; full_g3c_qualified=false and production_qualified=false.
+The two-node smoke retains NOT_ADJUDICATED_SMOKE_ONLY and is not formal evidence.
+
+Independent final evidence acceptance SHA-256
+cdcd2e880d3e136cf05228e4c7f9c29b0ae1e2d693d6646d7a9e3b47b0472142
+binds the complete recursive manifest SHA-256
+65b56f19787cf842be45a97aeb66b4a1196de3667b530b83ea2f7e83361bea8f.
+Every assignment, completion, strict node schema, actual observation, process
+receipt and recomputed canonical union was independently checked. Every original
+raw file also matches its durable archive by byte count and SHA. Separate raw
+inventories are18 smoke files,109 rehearsal files,109 formal1 files and109
+formal2 files. Archive roots share
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ with names
+beam-q4-affine-62796d0-smoke-20260913,
+beam-q4-affine-62796d0-rehearsal-20260913,
+beam-q4-affine-62796d0-formal1-20260913 and
+beam-q4-affine-62796d0-formal2-20260913. Originals remain intact.
+
+The former square1e-6 spatial-force error is2.3508589944454843e-16; the maximum
+over six tiny states is5.5723852450554e-16. Actual obsolete subtraction still
+fails at3.0206982866178414e-10 against unchanged1e-11. All24/576 same-path
+eigen derivative checks,42 physical mutations,9 chart mutations,20 observation
+races,9 immutable/reentry and19 unsupported/cancellation rows were present.
+No scientific threshold, public mechanics, registry state or default changed.
+Timings are diagnostics, not an optimization speed claim.
+
+Canonical repository records are ge_beam3_62796d0_affine_result.json,
+ge_beam3_62796d0_affine_evidence_review.json,
+ge_beam3_62796d0_affine_evidence_manifest.json and
+ge_beam3_62796d0_affine_implementation_review.json under docs/reference_cases/.
+This gate closes the registered virgin affine-local recovery dependency only.
+Next: freeze/implement the successor mixed owner, retaining every MO01-MO18
+obligation and the full375/3075/3450 history/stage/prefix inventory per cycle.
+General geometry, history-bearing sections, fullG3c, G4/G5, installed-wheel
+qualification and protected integration remain open. Public Q4/S3, legacy
+B2/B3, historical packets and defaults are unchanged.
+
+### Read-only G4 preparation retained (not acceptance)
+
+S19/S20/S24 should start with a single successor graph containing distinct
+elastic, generalized-ellipsoid and physical-fibre stations. Reuse actual test
+families test_ge_beam3_native_generalized.py, test_ge_beam3_g1_integration.py,
+test_ge_beam3_analysis_fibre_translation.py and test_ge_beam3_fibre_section.py;
+verify trial-all/prepare-all atomic publication, last-prepare failure, loading/
+unloading/reversal, final-state replay and accepted physical work/recovery.
+Existing single-family owners do not establish mixed-history acceptance.
+S21 adds line-search/cutback, force/displacement/arc continuation, cancellation
+and full internal-residual/Schur comparisons. S22/S23 reuse actual mutation and
+continuation families in test_ge_beam3_native_fibre_restart.py and
+test_ge_beam3_native_generalized_restart.py, but require new graph identities,
+ordered station origins and authentic fresh-owner replay.
+
+Orthotropic directional shear/torsion/Hill and initial-field routes in
+test_orthotropic_elements.py need explicit native material-axis/initial-state
+adapters. Coupled SPD matrices alone are not proof of Hill-recovery parity;
+initial rotations/resultants used as solve seeds are not physical initial-strain
+or prestress APIs. Freeze these distinctions in the G4 fixture inventory rather
+than inferring unsupported status. No G4 tests were run for this preparation.
