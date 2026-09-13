@@ -88,12 +88,31 @@ def test_runtime_compatibility_negatives():
     current=history.runtime_identity();base=RUNTIME_COMPATIBILITY
     history.validate_runtime_compatibility(base,EXPECTED_RUNTIME_SHA256,current)
     attacks=[]
-    for field in ('predecessor','successor'):
-        changed=copy.deepcopy(base);changed[field]['runtime_sha256']='0'*64;changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)
-    changed=copy.deepcopy(base);changed['mode']='FOREIGN';changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)
+    edits=(('predecessor','runtime_sha256','0'*64),('successor','commit','0'*40),
+           ('successor','tree','0'*40),('successor','runtime_sha256','0'*64),
+           ('successor','review_sha256','0'*64))
+    for field,key,replacement in edits:
+        changed=copy.deepcopy(base);changed[field][key]=replacement
+        changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)
+    for key,replacement in (('mode','FOREIGN'),('unchanged_inputs_sha256','0'*64),
+                            ('allowed_changed_paths',base['allowed_changed_paths'][:-1])):
+        changed=copy.deepcopy(base);changed[key]=replacement
+        changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)
     changed=copy.deepcopy(base);changed['self_sha256']='0'*64;attacks.append(changed)
     for value in attacks:
         try:history.validate_runtime_compatibility(value,EXPECTED_RUNTIME_SHA256,current)
         except ValueError:pass
         else:raise AssertionError('runtime compatibility mutation accepted')
     SCIENTIFIC_RECORDS.append(dict(kind='runtime_compatibility_negatives',rejections=len(attacks),passed=True))
+
+
+def test_runtime_compatibility_positive():
+    """One real predecessor packet is replayed under the captured successor lease."""
+    raw,digest=input_packet();before=bytes(raw)
+    owner=compatible_resume(raw,digest);replayed=owner.checkpoint_bytes()
+    assert raw==before and replayed!=raw
+    assert history.compatible_checkpoint_equal(raw,replayed,EXPECTED_RUNTIME_SHA256,history.runtime_identity())
+    SCIENTIFIC_RECORDS.append(dict(kind='runtime_compatibility_positive',input_sha256=digest,
+        predecessor_runtime_sha256=EXPECTED_RUNTIME_SHA256,
+        successor_runtime_sha256=history.runtime_identity(),
+        replay_sha256=sha256(replayed).hexdigest(),passed=True))

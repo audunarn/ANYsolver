@@ -17,6 +17,7 @@ SCHEMA = 'GE_BEAM3_G3C_PHYSICAL_GRAPH_RESTART_V1'
 POLICY = 'GE_BEAM3_G3C_PHYSICAL_MIXED_ELASTIC_OWNER_V1'
 ENVIRONMENT = '2ce154b866565e1d03019651b1ae7fdd070e5554f38d72adf21d8080558b6756'
 HISTORY_SOURCES = (
+    'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',
     'scripts/ge_beam3_g3c_physical_restart_preflight.py',
     'scripts/run_ge_beam3_qualification.py',
@@ -25,10 +26,26 @@ GRAPHS=('J_B2_PAIR','J_B3_PAIR','J_Q4_PAIR','J_S3_PAIR','J_MULTIFAMILY_LOOP')
 VARIANTS=('BASE','SHUFFLED_INSERTION','RENUMBERED','CONNECTIVITY_REVERSED','PROPER_GLOBAL_TRANSFORM')
 SCALES=(.01,1.,10.)
 MOTIONS=('NONE','CM0','CM1','CM2','CM3')
-CORRECTION_COMPATIBILITY_SCHEMA='GE_BEAM3_G3C_PHYSICAL_RUNTIME_COMPATIBILITY_V1'
+CORRECTION_COMPATIBILITY_SCHEMA='GE_BEAM3_G3C_PHYSICAL_RUNTIME_COMPATIBILITY_V2'
 CORRECTION_PREDECESSOR_RUNTIME='41a0dddda886672479294953871e83be3073ed38e129e12f3fa210bfbf3ce87c'
 CORRECTION_ADDENDUM_SHA='2c03f72a0e9c50c6a22fe5b7f47fd66f786aa3eadc23bedeb4dab1f2045a8696'
 CORRECTION_DESIGN_REVIEW_SHA='0fbaedb533e501a5136407d5dc039b5393b4bbf53064c273c7e974917ba9fec9'
+CORRECTION_REVISION_SHA='dae0dd3081ff45ab66a266b2706bdee6049e556d01c09003de2ba1749ce0be76'
+CORRECTION_REVISION_REVIEW_SHA='339367400bc48eeb07eb09eca353097297e7dae2907f23ae53b53dab5199c26b'
+CORRECTION_ALLOWED_CHANGED_PATHS=(
+    'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_ADDENDUM.md',
+    'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_V2.md',
+    'docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_review_v1.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review_v2.json',
+    'scripts/ge_beam3_g3c_correction_lease_binding.py',
+    'scripts/ge_beam3_g3c_physical_history_owner.py',
+    'scripts/ge_beam3_g3c_rehearsal_mutations.py',
+    'scripts/run_ge_beam3_qualification.py',
+    'tests/test_ge_beam3_g3c_physical_correction_guards.py',
+    'tests/test_ge_beam3_g3c_rehearsal_mutations_static.py',
+    'tests/test_ge_beam3_qualification_runner.py',
+)
 
 
 def commands(motion,scale):
@@ -97,9 +114,10 @@ def guard_signature(guard):
 
 
 def validate_runtime_compatibility(value, expected_runtime, live_runtime):
-    """Admit exactly one reviewed predecessor runtime; never weaken normal replay."""
+    """Admit only the exact token retained by the captured validated lease."""
     keys={'schema','mode','predecessor','successor','addendum_sha256','design_review_sha256',
-          'unchanged_inputs_sha256','allowed_changed_paths','self_sha256'}
+          'revision_sha256','revision_review_sha256','unchanged_inputs_sha256',
+          'allowed_changed_paths','self_sha256'}
     if type(value)is not dict or set(value)!=keys:raise ValueError('runtime compatibility schema')
     body={key:item for key,item in value.items()if key!='self_sha256'}
     predecessor=value.get('predecessor');successor=value.get('successor')
@@ -111,17 +129,37 @@ def validate_runtime_compatibility(value, expected_runtime, live_runtime):
                          'review_sha256':'52f8df02bd22c635bf828bf93190a34ec1463b20268a1a822e4e0f3c6c042eaf'}
         or type(successor)is not dict or set(successor)!={'commit','tree','runtime_sha256','review_sha256'}
         or successor.get('runtime_sha256')!=live_runtime
+        or any(type(successor.get(key))is not str for key in successor)
+        or len(successor.get('commit',''))!=40 or len(successor.get('tree',''))!=40
         or value.get('addendum_sha256')!=CORRECTION_ADDENDUM_SHA
         or value.get('design_review_sha256')!=CORRECTION_DESIGN_REVIEW_SHA
+        or value.get('revision_sha256')!=CORRECTION_REVISION_SHA
+        or value.get('revision_review_sha256')!=CORRECTION_REVISION_REVIEW_SHA
         or type(value.get('unchanged_inputs_sha256'))is not str
         or type(value.get('allowed_changed_paths'))is not list
+        or value.get('allowed_changed_paths')!=list(CORRECTION_ALLOWED_CHANGED_PATHS)
         or value.get('self_sha256')!=packet.digest(body)
         or expected_runtime!=CORRECTION_PREDECESSOR_RUNTIME):
         raise ValueError('runtime compatibility authority')
-    packet.hash_value(value['unchanged_inputs_sha256'])
-    if any(type(path)is not str or not path for path in value['allowed_changed_paths']):
-        raise ValueError('runtime compatibility paths')
+    for digest in (successor['runtime_sha256'],successor['review_sha256'],
+                   value['unchanged_inputs_sha256'],value['self_sha256']):
+        packet.hash_value(digest)
+    import ge_beam3_g3c_correction_lease_binding as binding
+    if binding.compatibility_identity()!=packet.digest(value):
+        raise ValueError('runtime compatibility not captured by lease')
     return live_runtime
+
+
+def compatible_checkpoint_equal(predecessor_raw, successor_raw, predecessor_runtime, successor_runtime):
+    """Compare immutable packets through one authenticated runtime-only view."""
+    predecessor=packet.strict(predecessor_raw);successor=packet.strict(successor_raw)
+    if (packet.canonical(predecessor)!=predecessor_raw or packet.canonical(successor)!=successor_raw
+        or predecessor.get('runtime_sha256')!=predecessor_runtime
+        or successor.get('runtime_sha256')!=successor_runtime
+        or set(predecessor)!=set(successor)):
+        return False
+    view=dict(successor,runtime_sha256=predecessor_runtime)
+    return packet.canonical(view)==predecessor_raw
 
 
 class HistoryOwner:
@@ -335,7 +373,10 @@ No caller owner/candidate/state injection or persistent numerical cache exists.
                 or current['final_sha256'] != entry['accepted_state_sha256']):
             raise ValueError('genuine replay prefix mismatch: '+str(index+1))
         print('G3C CHECKPOINT restart prefix '+str(index+1),flush=True)
-    if owner.checkpoint_bytes() != raw: raise ValueError('complete replay checkpoint mismatch')
+    replayed=owner.checkpoint_bytes()
+    if (replayed!=raw if runtime_compatibility is None else
+            not compatible_checkpoint_equal(raw,replayed,expected_runtime_sha256,live_runtime)):
+        raise ValueError('complete replay checkpoint mismatch')
     if dispatch() != code or runtime_identity() != live_runtime:
         raise ValueError('replay runtime changed')
     return owner

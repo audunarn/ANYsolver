@@ -201,23 +201,61 @@ class GuardTests(unittest.TestCase):
             successor=dict(commit='a'*40,tree='b'*40,runtime_sha256=live,review_sha256='c'*64),
             addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
             design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
+            revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
+            revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
             unchanged_inputs_sha256='d'*64,allowed_changed_paths=sorted(r.PHYSICAL_CORRECTION_CHANGED_PATHS))
         value=dict(body,self_sha256=support.packet.digest(body))
-        self.assertEqual(support.validate_runtime_compatibility(value,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live),live)
-        for mutate in (
-            lambda x:x['predecessor'].__setitem__('runtime_sha256','0'*64),
-            lambda x:x['successor'].__setitem__('runtime_sha256','0'*64),
-            lambda x:x.__setitem__('mode','FOREIGN'),lambda x:x.__setitem__('self_sha256','0'*64)):
-            bad=copy.deepcopy(value);mutate(bad)
-            if bad['self_sha256']==value['self_sha256'] and bad.get('mode')!='FOREIGN':
-                bad['self_sha256']=support.packet.digest({k:v for k,v in bad.items()if k!='self_sha256'})
-            with self.assertRaises(ValueError):
-                support.validate_runtime_compatibility(bad,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live)
+        import ge_beam3_g3c_correction_lease_binding as binding
+        captured=support.packet.digest(value)
+        with patch.object(binding,'compatibility_identity',return_value=captured):
+            self.assertEqual(support.validate_runtime_compatibility(value,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live),live)
+            for mutate in (
+                lambda x:x['predecessor'].__setitem__('runtime_sha256','0'*64),
+                lambda x:x['successor'].__setitem__('commit','0'*40),
+                lambda x:x['successor'].__setitem__('tree','0'*40),
+                lambda x:x['successor'].__setitem__('runtime_sha256','0'*64),
+                lambda x:x['successor'].__setitem__('review_sha256','0'*64),
+                lambda x:x.__setitem__('mode','FOREIGN'),
+                lambda x:x.__setitem__('unchanged_inputs_sha256','0'*64),
+                lambda x:x.__setitem__('allowed_changed_paths',x['allowed_changed_paths'][:-1]),
+                lambda x:x.__setitem__('self_sha256','0'*64)):
+                bad=copy.deepcopy(value);mutate(bad)
+                if bad['self_sha256']==value['self_sha256']:
+                    bad['self_sha256']=support.packet.digest({k:v for k,v in bad.items()if k!='self_sha256'})
+                with self.assertRaises(ValueError):
+                    support.validate_runtime_compatibility(bad,r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,live)
         with self.assertRaisesRegex(ValueError,'runtime compatibility unnecessary'):
             support.resume(b'{}\n','0'*64,expected_runtime_sha256=live,runtime_compatibility=value)
         with self.assertRaises(ValueError):
             r.physical_runtime_compatibility(({'commit':'a','tree':'b'},{'x':{'sha256':'0'}},b'{}\n'),
                                              (r.PHYSICAL_PREDECESSOR,{'x':{'sha256':'1'}},b'{}\n'))
+
+    def test_physical_correction_tests_and_dual_runtime_view_are_registered(self):
+        preflight=next(row for row in r.physical_inventory('rehearsal') if row['kind']=='preflight')
+        selected=r.physical_assignment_nodes(preflight,True)
+        self.assertEqual([node.rsplit('::',1)[-1] for node in selected],[
+            'test_physical_correction_preflight_guards','test_runtime_compatibility_negatives',
+            'test_runtime_compatibility_positive'])
+        support=r.physical_support();old='1'*64;new='2'*64
+        predecessor=support.packet.canonical(dict(schema='X',runtime_sha256=old,value=3))
+        successor=support.packet.canonical(dict(schema='X',runtime_sha256=new,value=3))
+        self.assertTrue(support.compatible_checkpoint_equal(predecessor,successor,old,new))
+        changed=support.packet.canonical(dict(schema='X',runtime_sha256=new,value=4))
+        self.assertFalse(support.compatible_checkpoint_equal(predecessor,changed,old,new))
+
+    def test_physical_correction_bundle_requires_final_authority_before_promotion(self):
+        watchdog=SimpleNamespace(check=lambda:None)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);stage=root/'staged';stage.mkdir()
+            for name in ('process.json','scientific.json','receipt.json'):r.write(stage/name,{'name':name})
+            def rejected():raise ValueError('late authority mutation')
+            with self.assertRaisesRegex(ValueError,'late authority mutation'):
+                r.promote_physical_correction_bundle(stage,root,watchdog,rejected)
+            self.assertTrue(stage.is_dir())
+            self.assertFalse(any((root/name).exists() for name in ('process.json','scientific.json','receipt.json')))
+            r.promote_physical_correction_bundle(stage,root,watchdog,lambda:None)
+            self.assertFalse(stage.exists())
+            self.assertTrue(all((root/name).is_file() for name in ('process.json','scientific.json','receipt.json')))
 
     def test_physical_union_requires_ordered_original_indices(self):
         values=[]
@@ -255,6 +293,8 @@ class GuardTests(unittest.TestCase):
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
             correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
             correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
+            correction_revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
+            correction_revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
             predecessor_commit=r.PHYSICAL_PREDECESSOR['commit'],
             predecessor_runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,
             correction_inheritance_authorized=True)
@@ -281,6 +321,8 @@ class GuardTests(unittest.TestCase):
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
             correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
             correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
+            correction_revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
+            correction_revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
             predecessor_commit=r.PHYSICAL_PREDECESSOR['commit'],
             predecessor_runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,
             correction_inheritance_authorized=True)
