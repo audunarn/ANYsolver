@@ -155,7 +155,13 @@ def packet_attack(raw, category, member):
             else: adapter['deformation'][0]=math.nextafter(adapter['deformation'][0],math.inf)
         elif category=='R23_ADAPTER_DIAGNOSTIC':
             key={'candidate_sha':'diagnostic_sha256','origin_sha':'origin_sha256','previous_sha':'previous_sha256','well_shaped_adapter_definition_sha256':'definition_sha256'}[member]
-            adapter[key]=different_hash(adapter[key]); error='adapter origin/link' if member=='origin_sha' else None
+            # Elastic B2/B3 adapter rows deliberately carry no material
+            # candidate.  The candidate-sha negative must therefore create a
+            # non-null hash instead of trying to mutate the authoritative null.
+            if member=='candidate_sha':
+                adapter[key]='0'*64 if adapter[key] is None else different_hash(adapter[key])
+            else: adapter[key]=different_hash(adapter[key])
+            error='adapter origin/link' if member=='origin_sha' else None
         elif category=='R24_SOURCE_FLAGS': adapter[member]=True; error='literal '+member
         else: raise ValueError('missing mutation constructor')
         repair(value)

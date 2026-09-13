@@ -77,5 +77,19 @@ class MutationStaticTests(unittest.TestCase):
         with self.assertRaises(ValueError): m.packet_attack(raw,'R09_RUNTIME','changed_implementation_review')
         self.assertEqual(p.strict(a[0])['history'][:-1],p.strict(raw)['history'][:-1])
 
+    def test_null_beam_candidate_attack_is_deterministic(self):
+        raw=fake_origin('J_B2_PAIR','NONE',.01,2)
+        value=p.strict(raw)
+        adapter=value['final_state']['adapter_rows'][0]
+        adapter['diagnostic_sha256']=None
+        raw=p.canonical(m.repair(value))
+
+        changed,record=m.packet_attack(raw,'R23_ADAPTER_DIAGNOSTIC','candidate_sha')
+
+        self.assertEqual(p.strict(changed)['final_state']['adapter_rows'][0]['diagnostic_sha256'],'0'*64)
+        self.assertEqual(record['expected_error'],'genuine replay prefix mismatch: 2')
+        self.assertEqual(record['rejection'],'GENUINE_REPLAY_MISMATCH')
+        self.assertEqual(record,m.packet_attack(raw,'R23_ADAPTER_DIAGNOSTIC','candidate_sha')[1])
+
 
 if __name__=='__main__': unittest.main()
