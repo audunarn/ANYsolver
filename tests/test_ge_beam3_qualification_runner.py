@@ -154,6 +154,140 @@ class GuardTests(unittest.TestCase):
                          [graph+'::BASE::S0::NONE' for graph in r.physical_support().GRAPHS])
         self.assertNotIn('numpy',sys.modules);self.assertNotIn('anysolver',sys.modules)
 
+    def test_physical_formal_case_association_is_exact_and_complete(self):
+        rows=r.physical_formal_case_associations();inventory=r.physical_inventory('formal')
+        self.assertEqual(len(rows),375)
+        self.assertEqual(sha256(r.canonical([row['case'] for row in rows])).hexdigest(),
+                         r.PHYSICAL_FORMAL_HISTORY_INVENTORY_SHA)
+        self.assertEqual(sha256(r.canonical(inventory)).hexdigest(),r.PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA)
+        history=[row['history_assignment_index'] for row in rows]
+        prefixes=[index for row in rows for index in row['prefix_assignment_indexes']]
+        self.assertEqual(history,list(range(375)))
+        self.assertEqual(prefixes,list(range(375,3825)))
+        self.assertEqual(sum(row['case']['accepted_stages'] for row in rows),3075)
+        self.assertEqual(len(prefixes),3450)
+        for row in rows:
+            self.assertEqual(inventory[row['history_assignment_index']]['case'],row['case'])
+            self.assertEqual([inventory[index]['prefix'] for index in row['prefix_assignment_indexes']],
+                             list(range(row['case']['accepted_stages']+1)))
+        for value in (-1,False,375,0.0):
+            with self.assertRaises(ValueError):r.physical_formal_shard(value,'history-producer')
+
+    def test_physical_formal_partition_requires_unique_exact_coverage(self):
+        associations=r.physical_formal_case_associations()
+        shards=[]
+        for row in associations:
+            ordinal=row['case_ordinal'];count=len(row['prefix_assignment_indexes'])
+            shards.append(r.physical_formal_shard(ordinal,'history-producer'))
+            shards.append(r.physical_formal_shard(ordinal,'prefix-range',0,count))
+        partition=r.physical_formal_partition(shards,'formal')
+        self.assertEqual(len(partition['body']['shards']),750)
+        self.assertEqual(partition['self_sha256'],sha256(r.canonical(partition['body'])).hexdigest())
+        for changed in (shards[:-1],shards+[shards[-1]],shards[1:]):
+            with self.assertRaises(ValueError):r.physical_formal_partition(changed,'formal')
+        measurement=r.physical_formal_partition([
+            r.physical_formal_shard(0,'history-producer'),r.physical_formal_shard(0,'prefix-range',0,1)],'measurement')
+        self.assertEqual(measurement['body']['mode'],'measurement')
+
+    def test_physical_formal_common_manifest_is_closed_and_mutation_detecting(self):
+        shards=[r.physical_formal_shard(0,'history-producer'),r.physical_formal_shard(0,'prefix-range',0,1)]
+        partition=r.physical_formal_partition(shards,'measurement')
+        candidate={'commit':'a'*40,'tree':'b'*40};inputs={'x':{'bytes':1,'sha256':'c'*64}}
+        review={'decision':'synthetic-inert-test'}
+        value=r.physical_formal_common_manifest(candidate,inputs,review,'d'*64,partition)
+        self.assertEqual(r.physical_validate_formal_common(value)['mode'],'measurement')
+        mutators=(
+            lambda x:x['body'].__setitem__('cycle',1),
+            lambda x:x['body'].__setitem__('history_inventory_sha256','0'*64),
+            lambda x:x['body']['limits'].__setitem__('workers',4),
+            lambda x:x['body']['associations'][0].__setitem__('history_assignment_index',1),
+            lambda x:x['body']['partition']['body']['shards'][0].__setitem__('shard_id','foreign'),
+            lambda x:x.__setitem__('self_sha256','0'*64))
+        for mutate in mutators:
+            bad=copy.deepcopy(value);mutate(bad)
+            if bad['self_sha256']==value['self_sha256']:
+                bad['self_sha256']=sha256(r.canonical(bad['body'])).hexdigest()
+            with self.assertRaises(ValueError):r.physical_validate_formal_common(bad)
+
+    def test_physical_formal_lease_rejects_cross_case_packets(self):
+        shards=[r.physical_formal_shard(0,'prefix-range',0,1)]
+        partition=r.physical_formal_partition(shards,'measurement')
+        value=r.physical_formal_common_manifest({'commit':'a'*40,'tree':'b'*40},{},{},'c'*64,partition)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);r.write(root/'common.json',value);r.write(root/'prefix.json',{'prefix':0});r.write(root/'final.json',{'final':True})
+            descriptor=r.physical_formal_manifest_descriptor(root/'common.json')
+            shard=shards[0];lease=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',
+                schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_LEASE_V1',run_id=str(uuid.uuid4()),
+                mode='measurement',cycle=0,common_manifest=descriptor,shard_id='measurement-0000',assignment=shard,
+                input_packets={'prefix-00':r.packet_descriptor(root/'prefix.json'),'final':r.packet_descriptor(root/'final.json')})
+            r.physical_validate_formal_lease(lease,value['body'])
+            for mutate in (
+                lambda x:x.__setitem__('cycle',1),lambda x:x.__setitem__('shard_id','measurement-9999'),
+                lambda x:x['assignment'].__setitem__('case_ordinal',1),lambda x:x['input_packets'].__setitem__('prefix-01',x['input_packets'].pop('prefix-00'))):
+                bad=copy.deepcopy(lease);mutate(bad)
+                with self.assertRaises(ValueError):r.physical_validate_formal_lease(bad,value['body'])
+
+    def test_physical_formal_execution_remains_locked_and_worker_import_is_guarded(self):
+        args=SimpleNamespace(review=Path('review.json'),review_sha256='c'*64,lane='formal',prior=[],
+            partition_id=None,finalize_partitions=False,inherit_correction=False,failed_guards_process=None,
+            interrupted_guards_root=None,guard_segment_id=None,finalize_guard_segments=False)
+        expected=({'commit':'a','tree':'b'},{},b'{}\n')
+        with patch.object(r,'authority',return_value=expected),patch.object(r,'physical_run_phase',
+                side_effect=AssertionError('formal mechanics dispatched')):
+            with self.assertRaisesRegex(ValueError,'formal physical partition/authorization addendum not frozen'):
+                r.execute_physical(args,SimpleNamespace())
+        source=Path(r.__file__).read_text(encoding='utf-8');tree=ast.parse(source)
+        worker=next(node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name=='physical_formal_worker')
+        calls=[node.func.id for node in ast.walk(worker) if isinstance(node,ast.Call) and isinstance(node.func,ast.Name)]
+        self.assertLess(calls.index('authority'),calls.index('claim_attempt'))
+        authority_line=next(node.lineno for node in ast.walk(worker) if isinstance(node,ast.Call)
+            and isinstance(node.func,ast.Name) and node.func.id=='authority')
+        imports=[node for node in ast.walk(worker) if isinstance(node,(ast.Import,ast.ImportFrom))
+                 and (getattr(node,'module','')or'').startswith('anysolver')]
+        self.assertTrue(imports);self.assertTrue(all(node.lineno>authority_line for node in imports))
+
+    def test_physical_formal_process_schema_is_exact(self):
+        assignment=r.physical_formal_shard(0,'prefix-range',0,1)
+        lease={'shard_id':'measurement-0000','assignment':assignment}
+        with tempfile.TemporaryDirectory() as directory:
+            out=Path(directory)
+            for name in r.physical_formal_expected_files(assignment,process=False):r.write(out/name,{'name':name})
+            files={path.name:r.fingerprint(path.read_bytes()) for path in out.iterdir() if path.is_file()}
+            value=dict(status='PASSED',active_processes=0,peak_tree_bytes=0,drained=True,
+                elapsed_seconds=0.0,kind='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_PROCESS_V1',
+                shard_id=lease['shard_id'],assignment_sha256=sha256(r.canonical(assignment)).hexdigest(),
+                returncode=0,files=files)
+            r.write(out/'process.json',value);r.physical_validate_formal_process(out,lease)
+            for field,replacement in (('active_processes',False),('elapsed_seconds',600.0),
+                                      ('shard_id','foreign'),('returncode',False)):
+                bad=copy.deepcopy(value);bad[field]=replacement;(out/'process.json').unlink();r.write(out/'process.json',bad)
+                with self.assertRaises(ValueError):r.physical_validate_formal_process(out,lease)
+            (out/'process.json').unlink();r.write(out/'process.json',value);r.write(out/'extra.json',{})
+            with self.assertRaises(ValueError):r.physical_validate_formal_process(out,lease)
+
+    def test_physical_formal_union_is_assignment_ordered_and_deterministic(self):
+        producer=r.physical_formal_shard(0,'history-producer');prefix=r.physical_formal_shard(0,'prefix-range',0,1)
+        partition=r.physical_formal_partition([producer,prefix],'measurement')
+        common=r.physical_formal_common_manifest({'commit':'a'*40,'tree':'b'*40},{},{},'c'*64,partition)['body']
+        case=producer['case'];history_record=dict(kind='history',case_id=case['case_id'],events=case['accepted_stages'],
+            directional_errors=[0.,0.,0.],packets=[],passed=True)
+        transport=dict(accepted_diagnostic_sha256='0'*64,definition_sha256='1'*64,expanded_sha256='2'*64,
+            programs_sha256='3'*64,final_state_sha256='4'*64,case_id=case['case_id'],graph=case['graph'],
+            variant=case['variant'],force_scale=case['force_scale'],common_motion=case['common_motion'],immutable=True,passed=True)
+        prefix_record=dict(kind='prefix',case_id=case['case_id'],prefix=0,input_sha256='5'*64,final_sha256='6'*64,passed=True)
+        def science(shard_id,assignment,record):
+            return dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1',mode='measurement',cycle=0,
+                candidate=common['candidate'],common_manifest_sha256='7'*64,shard_id=shard_id,assignment=assignment,
+                record=record,full_g3c_qualified=False,production_qualified=False)
+        rows=[science('measurement-0000',producer,dict(kind='history-producer',case_ordinal=0,
+            history_assignment_index=0,history=history_record,transport=transport,passed=True)),
+            science('measurement-0001',prefix,dict(kind='prefix-range',case_ordinal=0,prefix_start=0,prefix_stop=1,
+                assignment_indexes=prefix['assignment_indexes'],records=[dict(assignment_index=375,record=prefix_record)],
+                fresh_owners=1,passed=True))]
+        first=r.physical_formal_scientific_union(rows,common);second=r.physical_formal_scientific_union(list(reversed(rows)),common)
+        self.assertEqual(r.canonical(first),r.canonical(second));self.assertEqual([x['assignment_index'] for x in first['records']],[0,375])
+        with self.assertRaises(ValueError):r.physical_formal_scientific_union(rows+[rows[0]],common)
+
     def test_physical_rehearsal_partition_manifest_is_exact(self):
         rows=r.physical_inventory('rehearsal');manifest=r.physical_partition_manifest(rows)
         self.assertEqual(sha256(r.canonical(rows)).hexdigest(),r.PHYSICAL_PARTITION_INVENTORY_SHA)
@@ -362,6 +496,9 @@ class GuardTests(unittest.TestCase):
         scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
             inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
             partition_addendum_sha256=r.PHYSICAL_PARTITION_ADDENDUM_SHA,
+            formal_addendum_sha256=r.PHYSICAL_FORMAL_ADDENDUM_SHA,
+            formal_design_review_sha256=r.PHYSICAL_FORMAL_DESIGN_REVIEW_SHA,
+            formal_measurement_authorized=True,formal_execution_authorized=False,
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
             correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
             correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
@@ -393,6 +530,9 @@ class GuardTests(unittest.TestCase):
         scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
             inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
             partition_addendum_sha256=r.PHYSICAL_PARTITION_ADDENDUM_SHA,
+            formal_addendum_sha256=r.PHYSICAL_FORMAL_ADDENDUM_SHA,
+            formal_design_review_sha256=r.PHYSICAL_FORMAL_DESIGN_REVIEW_SHA,
+            formal_measurement_authorized=True,formal_execution_authorized=False,
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
             correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,
             correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,

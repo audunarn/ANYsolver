@@ -49,6 +49,12 @@ PHYSICAL_PARTITION_ADDENDUM='docs/GE_BEAM3_G3C_PHYSICAL_REHEARSAL_PARTITION_ADDE
 PHYSICAL_PARTITION_ADDENDUM_SHA='449a37b98bdc2fcbaf81a9a51d83712ac63988020fb632eab904595f10cf8e27'
 PHYSICAL_PARTITION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_rehearsal_partition_review_v1.json'
 PHYSICAL_PARTITION_REVIEW_SHA='3868f1480cfdb8cb4883dc115ba6afd1e2a4069126245893fa4a9cf2b38671ab'
+PHYSICAL_FORMAL_ADDENDUM='docs/GE_BEAM3_G3C_PHYSICAL_FORMAL_EXECUTION_ADDENDUM.md'
+PHYSICAL_FORMAL_ADDENDUM_SHA='03289611222de86c5887abe53dc74c3bfdc700c0ee1bb548878918c9c2d3f746'
+PHYSICAL_FORMAL_DESIGN_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_formal_execution_design_review_v1.json'
+PHYSICAL_FORMAL_DESIGN_REVIEW_SHA='55cbdfdf18242fc113caeb3e12b9cca3fa4c3b1b7c69d55875bfa60ddcc76d1d'
+PHYSICAL_FORMAL_HISTORY_INVENTORY_SHA='c8e934143fd896d3d1c072c55819e35f05b8a2b1592c75b2f7207b543cba9fb9'
+PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA='94fb5e294a802fe6b2515408b680b908330b66578453d2cfe93a35827c5c247e'
 PHYSICAL_PARTITION_INVENTORY_SHA='a53103c9d3162dbfdc04e647c81fa36aaad6fa80f9a13b1cd4abcae124c96733'
 PHYSICAL_PARTITION_MANIFEST_SHA='0b1beffb58ddbed1bb53891e11a7f5e0c8ad7b646cc539e4a908d7e4321ade86'
 PHYSICAL_CORRECTION_ADDENDUM='docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_ADDENDUM.md'
@@ -95,6 +101,7 @@ PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA='8ae0c6560960ef9bf9035838abb5daae
 PHYSICAL_OWNER_TEST='tests/test_ge_beam3_g3c_physical_owner.py'
 PHYSICAL_HISTORY_TEST='tests/test_ge_beam3_g3c_physical_history_restart.py'
 PHYSICAL_CORRECTION_TEST='tests/test_ge_beam3_g3c_physical_correction_guards.py'
+PHYSICAL_FORMAL_TEST='tests/test_ge_beam3_g3c_physical_formal_case.py'
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
     'src/anysolver/_ge_beam3_g3c_physical_owner.py',
@@ -102,6 +109,7 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     'scripts/ge_beam3_g3c_physical_history_owner.py',
     'scripts/ge_beam3_g3c_physical_restart_preflight.py',
     PHYSICAL_OWNER_TEST,PHYSICAL_HISTORY_TEST,
+    PHYSICAL_FORMAL_ADDENDUM,PHYSICAL_FORMAL_DESIGN_REVIEW,PHYSICAL_FORMAL_TEST,
     'tests/test_ge_beam3_qualification_runner.py',
     'scripts/run_ge_beam3_qualification.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
@@ -343,6 +351,388 @@ def physical_inventory(lane):
         rows.append(dict(kind='authority-mutation' if item['executor']=='authority' else 'mutation',probe=probe))
     return rows
 
+def physical_formal_case_associations():
+    """Exact join from375 case work units to the unchanged3825 assignments."""
+    support=physical_support();cases=support.history_matrix();assignments=physical_inventory('formal')
+    if (len(cases)!=375 or sha256(canonical(cases)).hexdigest()!=PHYSICAL_FORMAL_HISTORY_INVENTORY_SHA
+        or len(assignments)!=3825
+        or sha256(canonical(assignments)).hexdigest()!=PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA):
+        raise ValueError('formal physical inventory authority')
+    cursor=len(cases);rows=[]
+    for ordinal,case in enumerate(cases):
+        history_assignment=dict(kind='history',case=case,stages=case['accepted_stages'])
+        if not exact_json(assignments[ordinal],history_assignment):raise ValueError('formal history association')
+        prefix_indexes=list(range(cursor,cursor+case['accepted_stages']+1))
+        for prefix,index in enumerate(prefix_indexes):
+            if not exact_json(assignments[index],dict(kind='prefix',case=case,prefix=prefix)):
+                raise ValueError('formal prefix association')
+        rows.append(dict(case_ordinal=ordinal,case=case,history_assignment_index=ordinal,
+                         prefix_assignment_indexes=prefix_indexes))
+        cursor+=case['accepted_stages']+1
+    if cursor!=len(assignments):raise ValueError('formal assignment association coverage')
+    return rows
+
+def _physical_formal_shard(associations,case_ordinal,kind,prefix_start=None,prefix_stop=None):
+    if type(case_ordinal)is not int or type(case_ordinal)is bool or not 0<=case_ordinal<len(associations):
+        raise ValueError('formal case ordinal')
+    row=associations[case_ordinal]
+    if kind=='history-producer':
+        if prefix_start is not None or prefix_stop is not None:raise ValueError('producer prefix range forbidden')
+        return dict(kind=kind,case_ordinal=case_ordinal,case=row['case'],
+                    history_assignment_index=row['history_assignment_index'])
+    if kind!='prefix-range':raise ValueError('formal shard kind')
+    if (type(prefix_start)is not int or type(prefix_start)is bool
+        or type(prefix_stop)is not int or type(prefix_stop)is bool
+        or not 0<=prefix_start<prefix_stop<=len(row['prefix_assignment_indexes'])):
+        raise ValueError('formal prefix shard range')
+    return dict(kind=kind,case_ordinal=case_ordinal,case=row['case'],
+        prefix_start=prefix_start,prefix_stop=prefix_stop,
+        assignment_indexes=row['prefix_assignment_indexes'][prefix_start:prefix_stop])
+
+def physical_formal_shard(case_ordinal,kind,prefix_start=None,prefix_stop=None):
+    return _physical_formal_shard(physical_formal_case_associations(),case_ordinal,kind,prefix_start,prefix_stop)
+
+def physical_formal_partition(shards,mode='measurement'):
+    """Validate a closed measured work partition without authorizing execution."""
+    if mode not in ('measurement','formal'):raise ValueError('formal partition mode')
+    if type(shards)is not list or not shards:raise ValueError('formal partition shards')
+    made=[];seen_history=set();seen_prefix=set();associations=physical_formal_case_associations()
+    for ordinal,item in enumerate(shards):
+        if type(item)is not dict:raise ValueError('formal partition row')
+        shard=_physical_formal_shard(associations,item.get('case_ordinal'),item.get('kind'),
+            item.get('prefix_start'),item.get('prefix_stop'))
+        if not exact_json(item,shard):raise ValueError('formal partition row authority')
+        if shard['kind']=='history-producer':
+            if shard['case_ordinal'] in seen_history:raise ValueError('duplicate formal producer')
+            seen_history.add(shard['case_ordinal'])
+        else:
+            for index in shard['assignment_indexes']:
+                if index in seen_prefix:raise ValueError('duplicate formal prefix')
+                seen_prefix.add(index)
+        made.append(dict(shard_id=f'{mode}-{ordinal:04d}',assignment=shard,
+                         assignment_sha256=sha256(canonical(shard)).hexdigest()))
+    if mode=='formal':
+        if seen_history!=set(range(375)):raise ValueError('formal producer coverage')
+        if seen_prefix!={index for row in associations for index in row['prefix_assignment_indexes']}:
+            raise ValueError('formal prefix coverage')
+    body=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_PARTITION_V1',mode=mode,shards=made)
+    return dict(body=body,self_sha256=sha256(canonical(body)).hexdigest())
+
+def physical_formal_common_manifest(candidate,inputs,implementation_review,runtime_sha,partition,cycle=0):
+    if (type(candidate)is not dict or set(candidate)!={'commit','tree'}
+        or any(type(candidate[k])is not str or len(candidate[k])!=40 for k in candidate)
+        or type(inputs)is not dict or type(implementation_review)is not dict):
+        raise ValueError('formal common authority')
+    for value in candidate.values():
+        if any(c not in '0123456789abcdef' for c in value):raise ValueError('formal git identity')
+    sha_value(runtime_sha)
+    if type(cycle)is not int or type(cycle)is bool or cycle not in (0,1,2):raise ValueError('formal cycle')
+    if type(partition)is not dict or partition.get('body',{}).get('mode') not in ('measurement','formal'):
+        raise ValueError('formal partition manifest')
+    expected_partition=physical_formal_partition(
+        [row['assignment'] for row in partition['body'].get('shards',[])],partition['body'].get('mode'))
+    if not exact_json(partition,expected_partition):raise ValueError('formal partition changed')
+    mode=partition['body']['mode']
+    if (mode=='measurement')!=(cycle==0):raise ValueError('formal cycle and mode')
+    cases=physical_support().history_matrix();assignments=physical_inventory('formal')
+    body=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',
+        schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_COMMON_MANIFEST_V1',mode=mode,cycle=cycle,
+        candidate=candidate,inputs=inputs,implementation_review=implementation_review,
+        review_sha256=sha256(canonical(implementation_review)).hexdigest(),
+        runtime_sha256=runtime_sha,contract_sha256=PHYSICAL_PLAN_SHA,
+        formal_addendum_sha256=PHYSICAL_FORMAL_ADDENDUM_SHA,
+        formal_design_review_sha256=PHYSICAL_FORMAL_DESIGN_REVIEW_SHA,
+        history_inventory_sha256=PHYSICAL_FORMAL_HISTORY_INVENTORY_SHA,
+        assignment_inventory_sha256=PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA,
+        cases=cases,assignments=assignments,associations=physical_formal_case_associations(),partition=partition,
+        limits=dict(workers=3,threads=1,memory_bytes=MEMORY,child_seconds=600,
+                    inactivity_seconds=120,wave_seconds=1800),
+        full_g3c_qualified=False,production_qualified=False)
+    return dict(body=body,self_sha256=sha256(canonical(body)).hexdigest())
+
+def physical_validate_formal_common(value):
+    if type(value)is not dict or set(value)!={'body','self_sha256'}:raise ValueError('formal common schema')
+    body=value['body']
+    if type(body)is not dict or set(body)!={'kind','schema','mode','cycle','candidate','inputs',
+        'implementation_review','review_sha256','runtime_sha256','contract_sha256','formal_addendum_sha256',
+        'formal_design_review_sha256','history_inventory_sha256','assignment_inventory_sha256','cases',
+        'assignments','associations','partition','limits','full_g3c_qualified','production_qualified'}:
+        raise ValueError('formal common body schema')
+    made=physical_formal_common_manifest(body['candidate'],body['inputs'],body['implementation_review'],
+                                         body['runtime_sha256'],body['partition'],body['cycle'])
+    if not exact_json(value,made):raise ValueError('formal common content')
+    return body
+
+def physical_formal_manifest_descriptor(path):
+    path=Path(path).resolve();raw=read(path)
+    physical_validate_formal_common(environment.strict(raw))
+    return dict(path=str(path),bytes=len(raw),sha256=sha256(raw).hexdigest())
+
+def physical_validate_formal_lease(lease,common):
+    if (type(lease)is not dict or set(lease)!={'kind','schema','run_id','mode','cycle','common_manifest',
+        'shard_id','assignment','input_packets'}
+        or lease['kind']!='G3C_PHYSICAL_PRIVATE_DEVELOPMENT'
+        or lease['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_LEASE_V1'
+        or lease['mode']!=common['mode'] or lease['cycle']!=common['cycle']):
+        raise ValueError('formal shard lease schema')
+    uuid.UUID(lease['run_id'])
+    descriptor=lease['common_manifest'];raw=validate_packet_descriptor(descriptor)
+    if not exact_json(physical_validate_formal_common(environment.strict(raw)),common):
+        raise ValueError('formal common descriptor')
+    match=[row for row in common['partition']['body']['shards'] if row['shard_id']==lease['shard_id']]
+    if len(match)!=1 or not exact_json(lease['assignment'],match[0]['assignment']):
+        raise ValueError('formal leased shard')
+    assignment=lease['assignment'];packets=lease['input_packets']
+    if assignment['kind']=='history-producer':expected=set()
+    else:expected={f'prefix-{i:02d}' for i in range(assignment['prefix_start'],assignment['prefix_stop'])}|{'final'}
+    if type(packets)is not dict or set(packets)!=expected:raise ValueError('formal shard packet set')
+    for row in packets.values():validate_packet_descriptor(row)
+    return assignment
+
+def physical_formal_expected_files(assignment,process=True):
+    names={'lease.json','review.json','worker-attempt.json','stdout.log','stderr.log',
+           'scientific.shard.json','completion.json'}
+    if assignment['kind']=='history-producer':
+        names.add('accepted-diagnostic.json')
+        names.update(f'prefix-{index:02d}.json' for index in range(assignment['case']['accepted_stages']+1))
+    if process:names.add('process.json')
+    return names
+
+def physical_validate_formal_shard_science(out,lease,common):
+    assignment=physical_validate_formal_lease(lease,common)
+    raw=read(out/'scientific.shard.json');science=environment.strict(raw)
+    completion=environment.strict(read(out/'completion.json'))
+    common_sha=lease['common_manifest']['sha256']
+    if (type(science)is not dict or set(science)!={'schema','mode','cycle','candidate','common_manifest_sha256',
+        'shard_id','assignment','record','full_g3c_qualified','production_qualified'}
+        or science['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1'
+        or science['mode']!=common['mode'] or science['cycle']!=common['cycle']
+        or not exact_json(science['candidate'],common['candidate'])
+        or science['common_manifest_sha256']!=common_sha or science['shard_id']!=lease['shard_id']
+        or not exact_json(science['assignment'],assignment)
+        or science['full_g3c_qualified']is not False or science['production_qualified']is not False):
+        raise ValueError('formal shard science schema')
+    record=science['record'];case=assignment['case'];case_id=case['case_id']
+    if assignment['kind']=='history-producer':
+        if type(record)is not dict or set(record)!={'kind','case_ordinal','history_assignment_index','history','transport','passed'}:
+            raise ValueError('formal producer record schema')
+        history_row=record['history'];transport=record['transport']
+        if (record['kind']!='history-producer' or record['case_ordinal']!=assignment['case_ordinal']
+            or record['history_assignment_index']!=assignment['history_assignment_index'] or record['passed']is not True
+            or type(history_row)is not dict or set(history_row)!={'kind','case_id','events','directional_errors','packets','passed'}
+            or history_row['kind']!='history' or history_row['case_id']!=case_id
+            or type(history_row['events'])is not int or history_row['events']!=case['accepted_stages']
+            or history_row['passed']is not True
+            or type(history_row['directional_errors'])is not list or len(history_row['directional_errors'])!=3
+            or any(type(v)is not float or not math.isfinite(v) or not 0<=v<=1e-7 for v in history_row['directional_errors'])
+            or type(history_row['packets'])is not list or len(history_row['packets'])!=case['accepted_stages']+1):
+            raise ValueError('formal producer history')
+        for prefix,row in enumerate(history_row['packets']):
+            if (type(row)is not dict or set(row)!={'name','bytes','sha256','prefix'}
+                or row['name']!=f'prefix-{prefix:02d}.json' or row['prefix']!=prefix
+                or type(row['bytes'])is not int or row['bytes']<=0):raise ValueError('formal producer packet row')
+            sha_value(row['sha256']);actual=packet_descriptor(out/row['name'])
+            if actual['bytes']!=row['bytes'] or actual['sha256']!=row['sha256']:
+                raise ValueError('formal producer packet bytes')
+        if (type(transport)is not dict or set(transport)!={'accepted_diagnostic_sha256','definition_sha256',
+            'expanded_sha256','programs_sha256','final_state_sha256','case_id','graph','variant','force_scale',
+            'common_motion','immutable','passed'} or transport['case_id']!=case_id
+            or transport['graph']!=case['graph'] or transport['variant']!=case['variant']
+            or transport['force_scale']!=case['force_scale'] or transport['common_motion']!=case['common_motion']
+            or transport['immutable']is not True
+            or transport['passed']is not True):raise ValueError('formal transport record')
+        for name in ('accepted_diagnostic_sha256','definition_sha256','expanded_sha256','programs_sha256','final_state_sha256'):
+            sha_value(transport[name])
+        if sha256(read(out/'accepted-diagnostic.json')).hexdigest()!=transport['accepted_diagnostic_sha256']:
+            raise ValueError('formal diagnostic bytes')
+    else:
+        if (type(record)is not dict or set(record)!={'kind','case_ordinal','prefix_start','prefix_stop',
+            'assignment_indexes','records','fresh_owners','passed'} or record['kind']!='prefix-range'
+            or record['case_ordinal']!=assignment['case_ordinal']
+            or record['prefix_start']!=assignment['prefix_start'] or record['prefix_stop']!=assignment['prefix_stop']
+            or not exact_json(record['assignment_indexes'],assignment['assignment_indexes'])
+            or type(record['fresh_owners'])is not int or record['fresh_owners']!=assignment['prefix_stop']-assignment['prefix_start']
+            or type(record['records'])is not list or len(record['records'])!=record['fresh_owners']
+            or record['passed']is not True):raise ValueError('formal prefix shard record')
+        for offset,row in enumerate(record['records']):
+            prefix=assignment['prefix_start']+offset;index=assignment['assignment_indexes'][offset]
+            expected_record=dict(kind='prefix',case_id=case_id,prefix=prefix,
+                input_sha256=lease['input_packets'][f'prefix-{prefix:02d}']['sha256'],
+                final_sha256=lease['input_packets']['final']['sha256'],passed=True)
+            if (type(row)is not dict or set(row)!={'assignment_index','record'}
+                or row['assignment_index']!=index or not exact_json(row['record'],expected_record)):
+                raise ValueError('formal prefix record association')
+    expected_completion=dict(shard_id=lease['shard_id'],assignment=assignment,
+        scientific=fingerprint(raw),passed=True)
+    if not exact_json(completion,expected_completion):raise ValueError('formal shard completion')
+    return science
+
+def physical_validate_formal_process(out,lease):
+    expected_files=physical_formal_expected_files(lease['assignment'])
+    expected_directories={'pytest'} if (out/'pytest').is_dir() else set()
+    physical_closed_world(out,expected_files,expected_directories)
+    value=environment.strict(read(out/'process.json'))
+    if (type(value)is not dict or set(value)!={'status','active_processes','peak_tree_bytes','drained',
+        'elapsed_seconds','kind','shard_id','assignment_sha256','returncode','files'}
+        or value['status']!='PASSED' or type(value['active_processes'])is not int or value['active_processes']!=0
+        or value['drained']is not True or type(value['peak_tree_bytes'])is not int
+        or not 0<=value['peak_tree_bytes']<=MEMORY or type(value['elapsed_seconds'])is not float
+        or not math.isfinite(value['elapsed_seconds']) or not 0<=value['elapsed_seconds']<600
+        or value['kind']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_PROCESS_V1'
+        or value['shard_id']!=lease['shard_id']
+        or value['assignment_sha256']!=sha256(canonical(lease['assignment'])).hexdigest()
+        or type(value['returncode'])is not int or value['returncode']!=0 or type(value['files'])is not dict):
+        raise ValueError('formal accepted process')
+    actual={path.name:fingerprint(read(path)) for path in sorted(out.iterdir())
+            if path.is_file() and path.name!='process.json'}
+    if not exact_json(value['files'],actual):raise ValueError('formal process file DAG')
+    return value
+
+def physical_formal_child(root,common_path,shard_id,review,packets,watchdog,deadline):
+    common_raw=read(common_path);common_value=environment.strict(common_raw)
+    common=physical_validate_formal_common(common_value)
+    selected=[row for row in common['partition']['body']['shards'] if row['shard_id']==shard_id]
+    if len(selected)!=1:raise ValueError('formal child shard selection')
+    out=Path(root)/('shard-'+shard_id);out.mkdir()
+    with (out/'review.json').open('xb')as stream:stream.write(review)
+    lease=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',
+        schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_LEASE_V1',run_id=str(uuid.uuid4()),
+        mode=common['mode'],cycle=common['cycle'],common_manifest=physical_formal_manifest_descriptor(common_path),
+        shard_id=shard_id,assignment=selected[0]['assignment'],input_packets=packets)
+    physical_validate_formal_lease(lease,common);write(out/'lease.json',lease)
+    lease_sha=sha256(read(out/'lease.json')).hexdigest();job=job_type()(MEMORY);process=None
+    record=dict(status='FAILED');watchdog.attach(job)
+    try:
+        env=dict(os.environ,**{key:'1' for key in THREADS})
+        env.update(PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',PYTEST_ADDOPTS='',PYTHONDONTWRITEBYTECODE='1')
+        with (out/'stdout.log').open('xb')as stdout,(out/'stderr.log').open('xb')as stderr:
+            started=time.monotonic()
+            process=job.launch([sys.executable,'-I','-S','-B','-u',str(Path(__file__).resolve()),
+                '--physical-formal-worker',str(out),lease_sha],cwd=ROOT,env=env,stdout=stdout,stderr=stderr)
+            record=monitor(job,process,lambda:((out/'stdout.log').stat().st_size,(out/'stderr.log').stat().st_size),start=started)
+        if time.monotonic()>=deadline:record['status']='RESOURCE_BLOCKED'
+        if record['status']=='PASSED':
+            physical_validate_formal_shard_science(out,lease,common)
+    except BaseException as exc:
+        record.update(status='FAILED_EVIDENCE',exception=type(exc).__name__)
+    finally:
+        if job.accounting()[1]:job.terminate()
+        record['active_processes']=job.accounting()[1]
+        if record['active_processes']:record['status']='FAILED_TO_DRAIN'
+        job.close();watchdog.detach(job)
+        record.update(kind='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_PROCESS_V1',shard_id=shard_id,
+            assignment_sha256=sha256(canonical(lease['assignment'])).hexdigest(),
+            returncode=None if process is None else process.poll(),
+            files={path.name:fingerprint(path.read_bytes()) for path in out.iterdir() if path.is_file()})
+        write(out/'process.json',record)
+    if record.get('status')=='PASSED':physical_validate_formal_process(out,lease)
+    return record,out
+
+def physical_formal_scientific_union(shard_sciences,common):
+    """Stdlib-only, order-independent flattening back to assignment records."""
+    if type(shard_sciences)is not list or not shard_sciences:raise ValueError('formal shard science inventory')
+    by_id={row.get('shard_id'):row for row in shard_sciences if type(row)is dict}
+    expected_shards=common['partition']['body']['shards']
+    if len(by_id)!=len(shard_sciences) or set(by_id)!={row['shard_id'] for row in expected_shards}:
+        raise ValueError('formal shard science coverage')
+    assignments=common['assignments'];records={};transports=[]
+    for spec in expected_shards:
+        science=by_id[spec['shard_id']];assignment=spec['assignment']
+        if (set(science)!={'schema','mode','cycle','candidate','common_manifest_sha256','shard_id','assignment',
+            'record','full_g3c_qualified','production_qualified'}
+            or science['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1'
+            or science['mode']!=common['mode'] or science['cycle']!=common['cycle']
+            or not exact_json(science['candidate'],common['candidate'])
+            or science['shard_id']!=spec['shard_id'] or not exact_json(science['assignment'],assignment)
+            or science['full_g3c_qualified']is not False or science['production_qualified']is not False):
+            raise ValueError('formal shard union schema')
+        row=science['record']
+        if assignment['kind']=='history-producer':
+            index=assignment['history_assignment_index'];payload=row['history'];transports.append(row['transport'])
+            if index in records:raise ValueError('duplicate formal history record')
+            records[index]=payload
+        else:
+            for item in row['records']:
+                index=item['assignment_index']
+                if index in records:raise ValueError('duplicate formal prefix record')
+                records[index]=item['record']
+    expected_indexes=({spec['assignment']['history_assignment_index'] for spec in expected_shards
+                       if spec['assignment']['kind']=='history-producer'}|
+        {index for spec in expected_shards if spec['assignment']['kind']=='prefix-range'
+         for index in spec['assignment']['assignment_indexes']})
+    if set(records)!=expected_indexes:raise ValueError('formal union record coverage')
+    if common['mode']=='formal' and expected_indexes!=set(range(3825)):
+        raise ValueError('formal complete assignment coverage')
+    made=[]
+    for index in sorted(records):
+        assignment=assignments[index];record=records[index]
+        expected_kind=assignment['kind']
+        if (expected_kind=='history' and (record.get('kind')!='history' or record.get('case_id')!=assignment['case']['case_id'])):
+            raise ValueError('formal history union association')
+        if (expected_kind=='prefix' and (record.get('kind')!='prefix' or record.get('case_id')!=assignment['case']['case_id']
+            or record.get('prefix')!=assignment['prefix'])):raise ValueError('formal prefix union association')
+        science=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=common['candidate'],lane='formal',
+            assignment_index=index,assignment=assignment,records=[record],
+            full_g3c_qualified=False,production_qualified=False)
+        made.append(dict(assignment_index=index,science_sha256=sha256(canonical(science)).hexdigest(),science=science))
+    order={row['case_id']:index for index,row in enumerate(common['cases'])}
+    if len(transports)!=len({row['case_id'] for row in transports}):raise ValueError('duplicate formal transport record')
+    transports.sort(key=lambda row:order[row['case_id']])
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_AGGREGATE_V1',candidate=common['candidate'],
+        mode=common['mode'],cycle=common['cycle'],assignment_inventory_sha256=PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA,
+        records=made,transport_records=transports,passed=True,
+        terminal=('COMPLETE_GE_BEAM3_G3C_PHYSICAL_FORMAL_'+common['mode'].upper()+'_ONLY'),
+        full_g3c_qualified=False,production_qualified=False)
+    value['self_sha256']=sha256(canonical(value)).hexdigest();return value
+
+def physical_formal_worker(out,lease_sha):
+    if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):
+        raise ValueError('isolated formal worker required')
+    lease_raw=read(out/'lease.json')
+    if sha256(lease_raw).hexdigest()!=lease_sha:raise ValueError('formal lease hash')
+    lease=environment.strict(lease_raw);common_raw=validate_packet_descriptor(lease['common_manifest'])
+    common_value=environment.strict(common_raw);common=physical_validate_formal_common(common_value)
+    assignment=physical_validate_formal_lease(lease,common)
+    expected=authority(out/'review.json',common['review_sha256'],'g3c-physical')
+    if (not exact_json(common['candidate'],expected[0]) or not exact_json(common['inputs'],expected[1])
+        or not exact_json(common['implementation_review'],environment.strict(expected[2]))):
+        raise ValueError('formal common implementation authority')
+    claim_attempt(out,lease['run_id'])
+    if any(os.environ.get(key)!='1' for key in THREADS):raise ValueError('formal numerical thread environment')
+    print('BEAM CHECKPOINT formal authority complete',flush=True)
+    sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(CAPSULE.parent/'site')]
+    from anysolver import _ge_beam3_g3c_physical_authority as runtime_authority
+    runtime_authority.capture(canonical(common))
+    import pytest
+    node=PHYSICAL_FORMAL_TEST+'::test_physical_formal_shard_assignment'
+    class Context:
+        def __init__(self):self.collected=[];self.passed=[];self.record=None
+        def pytest_collection_modifyitems(self,items):
+            self.collected=[item.nodeid for item in items]
+            if self.collected!=[node]:raise ValueError('formal collected inventory')
+            module=items[0].module;module.ASSIGNMENT=assignment;module.OUTPUT_DIRECTORY=str(out)
+            module.INPUT_PACKETS=lease['input_packets'];module.EXPECTED_RUNTIME_SHA256=common['runtime_sha256']
+            self.module=module
+        def pytest_runtest_logreport(self,report):
+            if report.when=='call' and report.passed:self.passed.append(report.nodeid)
+        def pytest_sessionfinish(self,session,exitstatus):
+            self.record=getattr(self.module,'FORMAL_SHARD_RECORD',None) if hasattr(self,'module') else None
+    context=Context();code=pytest.main(['-vv','-s','-p','no:cacheprovider','--basetemp',str(out/'pytest'),node],plugins=[context])
+    if code or context.collected!=[node] or context.passed!=[node] or type(context.record)is not dict:return 1
+    if authority(out/'review.json',common['review_sha256'],'g3c-physical')!=expected:
+        raise ValueError('formal final authority changed')
+    descriptor=physical_formal_manifest_descriptor(Path(lease['common_manifest']['path']))
+    if not exact_json(descriptor,lease['common_manifest']):raise ValueError('formal common changed')
+    science=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1',mode=common['mode'],
+        cycle=common['cycle'],candidate=common['candidate'],common_manifest_sha256=descriptor['sha256'],
+        shard_id=lease['shard_id'],assignment=assignment,record=context.record,
+        full_g3c_qualified=False,production_qualified=False)
+    write(out/'scientific.shard.json',science)
+    write(out/'completion.json',dict(shard_id=lease['shard_id'],assignment=assignment,
+        scientific=fingerprint(read(out/'scientific.shard.json')),passed=True))
+    physical_validate_formal_shard_science(out,lease,common)
+    print('BEAM CHECKPOINT formal shard complete',flush=True);return 0
+
 def physical_partition_manifest(inventory_rows=None):
     """Return the exact design-reviewed partition of the unchanged rehearsal."""
     rows=physical_inventory('rehearsal') if inventory_rows is None else inventory_rows
@@ -420,6 +810,9 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
         expected_scope={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
             'inputs_sha256':sha256(canonical(rows)).hexdigest(),'contract_sha256':PHYSICAL_PLAN_SHA,
             'partition_addendum_sha256':PHYSICAL_PARTITION_ADDENDUM_SHA,
+            'formal_addendum_sha256':PHYSICAL_FORMAL_ADDENDUM_SHA,
+            'formal_design_review_sha256':PHYSICAL_FORMAL_DESIGN_REVIEW_SHA,
+            'formal_measurement_authorized':True,'formal_execution_authorized':False,
             'execution_authorized':True,'full_g3c_qualified':False,'production_qualified':False}
         if not exact_json(candidate,PHYSICAL_PREDECESSOR):
             expected_scope.update(correction_addendum_sha256=PHYSICAL_CORRECTION_ADDENDUM_SHA,
@@ -463,6 +856,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
         for path,digest in ((PHYSICAL_PLAN,PHYSICAL_PLAN_SHA),(PHYSICAL_DESIGN_REVIEW,PHYSICAL_DESIGN_SHA),
                             (PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_ADDENDUM_SHA),
                             (PHYSICAL_PARTITION_REVIEW,PHYSICAL_PARTITION_REVIEW_SHA),
+                            (PHYSICAL_FORMAL_ADDENDUM,PHYSICAL_FORMAL_ADDENDUM_SHA),
+                            (PHYSICAL_FORMAL_DESIGN_REVIEW,PHYSICAL_FORMAL_DESIGN_REVIEW_SHA),
                             (PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_ADDENDUM_SHA),
                             (PHYSICAL_CORRECTION_REVIEW,PHYSICAL_CORRECTION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
@@ -486,6 +881,18 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                 'partition_manifest_sha256':PHYSICAL_PARTITION_MANIFEST_SHA,
                 'production_qualified':False}):
                 raise ValueError('physical partition design review authority')
+        formal_review=environment.strict(read(ROOT/PHYSICAL_FORMAL_DESIGN_REVIEW).replace(b'\r\n',b'\n'))
+        if (set(formal_review)!={'decision','findings','reviewer','scope','subject_commit'}
+            or formal_review['decision']!='ACCEPTED_GE_BEAM3_G3C_PHYSICAL_FORMAL_EXECUTION_DESIGN_ONLY'
+            or formal_review['findings'] or formal_review['reviewer'].get('independent') is not True
+            or formal_review['subject_commit']!='509d77310959cb10a9529ed8162d72715b4c2e90'
+            or formal_review['scope']!={'design_sha256':PHYSICAL_FORMAL_ADDENDUM_SHA,
+                'formal_assignment_inventory_sha256':PHYSICAL_FORMAL_ASSIGNMENT_INVENTORY_SHA,
+                'formal_execution_authorized':False,'full_g3c_qualified':False,
+                'history_inventory_sha256':PHYSICAL_FORMAL_HISTORY_INVENTORY_SHA,
+                'implementation_authorized':True,'nonclassifying_measurement_preparation_authorized':True,
+                'production_qualified':False,'subject_tree':'f77b7c42d24186a2defacaa300015bddbd71eed1'}):
+            raise ValueError('physical formal design review authority')
         for path,digest in ((PHYSICAL_CORRECTION_REVISION,PHYSICAL_CORRECTION_REVISION_SHA),
                             (PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_REVISION_REVIEW_SHA),
                             (PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_SHA),
@@ -526,7 +933,7 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                 'segment_manifest_sha256':PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
                 'subject_tree':'c0213c726e324330970ac3271ffaaa69ddba53bb'}):
             raise ValueError('physical correction recovery review authority')
-        physical_partition_manifest();physical_correction_guard_segment_manifest()
+        physical_partition_manifest();physical_correction_guard_segment_manifest();physical_formal_case_associations()
         inventory('local',gate);inventory('smoke',gate);inventory('rehearsal',gate);inventory('formal',gate)
         rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
         environment.verify(CAPSULE,CAPSULE_SHA)
@@ -3189,6 +3596,7 @@ def main():
     if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):raise ValueError('use -I -S -B')
     if len(sys.argv)==4 and sys.argv[1]=='--worker':return worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==4 and sys.argv[1]=='--physical-worker':return physical_worker(Path(sys.argv[2]),sys.argv[3])
+    if len(sys.argv)==4 and sys.argv[1]=='--physical-formal-worker':return physical_formal_worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==5 and sys.argv[1]=='--numerical-node':return numerical_worker(Path(sys.argv[2]),int(sys.argv[3]),sys.argv[4])
     if len(sys.argv)==6 and sys.argv[1]=='--q4-checker':
         return q4_checker(Path(sys.argv[2]),sys.argv[3],sys.argv[4],sys.argv[5])
