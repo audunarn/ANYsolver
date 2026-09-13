@@ -21,7 +21,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
 | B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
-| Q4 physical recovery | Exact affine identities accepted at d49aacd; numerical contract accepted at 2a94542; implementation a308d89 rejected before execution and undergoing guard/evidence corrections; prior scoped d0057065 NO_GO preserved | Independent corrected-freeze review, smoke, complete rehearsal and two formal numerical cycles; no public mechanics change |
+| Q4 physical recovery | Exact affine identities accepted at d49aacd; eb84fd5 numerical smoke passed; complete rehearsal blocked on derivative accuracy and comparison-frame defects; prior scoped d0057065 NO_GO preserved | Review private stable-chart dependency correction, then fresh smoke/rehearsal and two formal cycles; no public mechanics change |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
@@ -500,3 +500,59 @@ rejections; node13 checks real result candidate/descriptor bytes, alteration
 detection and immutable prior outputs. These actual numerical-node regressions
 are not counted as executed by the inert suite. Strict result schemas include
 their evidence fields. AST and whitespace checks passed before the new freeze.
+
+## eb84fd5 smoke passed; complete rehearsal blocked
+
+Freeze eb84fd581bfeae267a644e7800465659d9e5f686, tree
+dab8b2bfc0451dd3588bb041f206d9ae8dc520d2, received independent implementation
+acceptance SHA-256
+80c77861c334bbd74a332dceb3f7c931152d91bbb326a6d77767ad548b59db30.
+The fresh two-node smoke passed, including actual typed fingerprint probes and
+ZERO/MIXED square station/work comparisons. Run
+dfda4a98-6f72-467f-9149-6992a0a272ed completed with both trees drained; its
+canonical NOT_ADJUDICATED_SMOKE_ONLY record is 12187 bytes, SHA-256
+882ecf7ffafde511c89a54323bf42fffd0439766af369e1c7269c74986e5aa8b.
+No qualification is inferred from this smoke.
+
+The complete rehearsal run 0be67944-c48c-4bd7-9c65-ff784d1b515a stopped in
+its first three-node batch. The station/chart node reported relative D2 error
+8.175879658173228e-10 against the unchanged 1e-11 threshold for the small-scale
+square MEMBRANE context. The independent-field node compared a 24-by-35 local
+coupling to a 35-by-24 global right-hand side without the required transpose and
+frame transport. All three workers drained; twelve nodes were never launched,
+and no rehearsal canonical aggregate or formal cycle exists. Disposition is
+BLOCKED_G3C_Q4_AFFINE_RECOVERY_PROCESS_OR_EVIDENCE, not a fabricated physical NO_GO.
+
+Independent evidence review SHA-256
+ea7268a4083e893b0ce8c1bfe3e664f0eb4f35d612decf244eeb7a1cc7eae776
+and recursive file manifest SHA-256
+00ce4c821d932ac0bf493cc76a0ee1d186043b9badfb94ef8f309586e2f911d9
+preserve both outcomes. Separate original/archive inventories are 18 files for
+smoke and 18 for rehearsal. Every copied file was byte/SHA verified; originals
+remain. Durable roots are
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-eb84fd5-smoke-20260913/
+and
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-eb84fd5-rehearsal-20260913/.
+
+Read-only source diagnosis identifies cancellation in the inherited Log-factor
+second derivative at the registered small nonzero polar angle. This is consistent
+with the observed discrepancy, not a numerical proof by itself. The existing
+independently confirmed private SO(3) kernel evaluates the same derivatives
+stably. A source-authority addendum must bind the exact private chart and spatial
+connection callers before implementation. Preserve the original Davenport fit,
+public helpers, equations, fixture recipes and thresholds. The coupling driver
+correction uses explicit local-to-global frame transport and independently
+checks both stationary equilibrium and the condensed operator; it does not
+transpose stored mechanics. No new numerical execution is authorized until the
+correction is cleanly frozen and independently reviewed.
+
+Proposed source-authority addendum
+GE_BEAM3_Q4_AFFINE_STABLE_CHART_ADDENDUM.md, 12416 bytes, SHA-256
+1eb29b8814e6555e7d16569e2c8d30c828a60458dea4a2801c10f4d58d2c2176,
+is frozen for independent design review before chart implementation. It binds
+the already confirmed private SO(3) evaluator and a minimal new caller map,
+with a mandatory new chart-numerics definition ID and unchanged original fit.
+Tiny-deformation subtraction accuracy remains explicitly unresolved. This
+addendum does not authorize numerical execution by itself. The accompanying
+driver fix is an explicit local/global coupling comparison correction only;
+no mechanical source was changed in this authority-preparation step.

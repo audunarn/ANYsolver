@@ -308,8 +308,26 @@ def test_affine_recovery_independent_material_fields():
                 close(getattr(s,prefix+'_resultant_tensors')/scale,resultant_tensors/scale,scale=resultant_scale)
                 close(getattr(s,prefix+'_shear_strain'),expected[prefix+'_shear_strain'][i],scale=strain_scale)
                 close(getattr(s,prefix+'_shear_resultant'),expected[prefix+'_shear_resultant'][i],scale=resultant_scale)
-        close(trial.source_stationary_matrix,expected['Hsource']);close(trial.source_coupling,expected['source_load'])
-        close(trial.source_solution,expected['source_solution'])
+        # The source exposes q-local/internal coupling (24x35); the independent
+        # checker exposes its transposed RHS in reference-global coordinates.
+        # Preserve both APIs and explicitly transport only the comparison.
+        H=trial.source_stationary_matrix;coupling=trial.source_coupling;solution=trial.source_solution
+        assert H.shape==(35,35) and coupling.shape==(24,35) and solution.shape==(35,24)
+        assert expected['Hsource'].shape==(35,35)
+        assert expected['source_load'].shape==(35,24) and expected['source_solution'].shape==(35,24)
+        T=np.kron(np.eye(8),trial.stations[0].numbered_frame)
+        close(T.T@T,np.eye(24))
+        rhs_global=coupling.T@T.T;solution_global=solution@T.T
+        close(H,expected['Hsource']);close(rhs_global,expected['source_load'])
+        close(solution_global,expected['source_solution'])
+        # Test actual source equilibrium in both representations without solving
+        # again. Row/column balancing avoids mixing stationary units in the norm.
+        balance=np.sqrt(np.max(np.abs(H),axis=1))
+        assert np.isfinite(balance).all() and np.all(balance>0)
+        balanced=H/balance[:,None]/balance[None,:]
+        close(balanced@(solution*balance[:,None]),coupling.T/balance[:,None])
+        close(balanced@(solution_global*balance[:,None]),rhs_global/balance[:,None])
+        close(-rhs_global.T@solution_global,expected['Kstationary'])
         rows.append(dict(id=identity+'::'+pose,stations=checks))
     assert len(rows)==54;record('independent_material_fields',independent=rows)
 
